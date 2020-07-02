@@ -8,7 +8,7 @@
 #include "thermal_face.h"
 #include "cvi_face_utils.hpp"
 #include "cv183x_facelib_v0.0.1.h"
-#include <cvi_tracer.h>
+//#include <cvi_tracer.h>
 
 #define THERMAL_FACE_N                  1
 #define THERMAL_FACE_C                  3

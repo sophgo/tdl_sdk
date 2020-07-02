@@ -9,7 +9,6 @@
 #include "cvi_face_types.hpp"
 #include "cvi_object_types.hpp"
 #include "draw.h"
-#include "db_repo.h"
 
 typedef void* cv183x_facelib_handle_t;
 
@@ -236,7 +235,6 @@ int Cv183xFaceVerify1v1(const cv183x_facelib_handle_t handle, const cvi_face_fea
  * @return  Ok:0, Error:-1
 **/
 int Cv183xFaceIdentify1vN(const cv183x_facelib_handle_t handle, cvi_face_t *face_info, float threshold);
-int Cv183x_person_Info(const cv183x_facelib_handle_t facelib_handle, int face_id, cvi_person_t *person);
 
 /**
  * @brief   Read image from a file
