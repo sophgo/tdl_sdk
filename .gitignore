@@ -1,0 +1,7 @@
+install
+*.o
+*.so
+*.a
+*.swp
+.vscode/
+prebuilt
