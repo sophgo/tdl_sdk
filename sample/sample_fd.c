@@ -29,14 +29,21 @@ static 	SAMPLE_VI_CONFIG_S stViConfig;
 static VI_PIPE ViPipe = 0;
 static VPSS_GRP VpssGrp = 0;
 static VPSS_CHN VpssChn = VPSS_CHN0;
-static CVI_S32 vpssgrp_width = 1080;
-static CVI_S32 vpssgrp_height = 1920;
+static VPSS_CHN VpssChn_1 = VPSS_CHN1;
+static CVI_S32 vpssgrp_width = 1920;
+static CVI_S32 vpssgrp_height = 1080;
 
 
 static int GetVideoframe(VIDEO_FRAME_INFO_S *stVideoFrame,VIDEO_FRAME_INFO_S *stfdFrame)
 {
 	int s32Ret = CVI_SUCCESS;
 	s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, stfdFrame, 1000);
+	if (s32Ret != CVI_SUCCESS) {
+		printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
+		return s32Ret;
+	}
+
+	s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn_1, stVideoFrame, 1000);
 	if (s32Ret != CVI_SUCCESS) {
 		printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
 		return s32Ret;
@@ -54,10 +61,16 @@ static int ReleaseVideoframe(VIDEO_FRAME_INFO_S *stVideoFrame,VIDEO_FRAME_INFO_S
 		return s32Ret;
 	}
 
+	s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn_1, stVideoFrame);
+	if (s32Ret != CVI_SUCCESS) {
+		printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
+		return s32Ret;
+	}
+
 	return s32Ret;
 }
 
-static int DoFd(cv183x_facelib_handle_t facelib_handle,VIDEO_FRAME_INFO_S *stVideoFrame,VIDEO_FRAME_INFO_S *stfdFrame)
+static int DoFd(cv183x_facelib_handle_t facelib_handle,VIDEO_FRAME_INFO_S *stVideoFrame, VIDEO_FRAME_INFO_S *stfdFrame)
 {
 	cvi_face_t face;
 	int face_count = 0;
@@ -96,9 +109,9 @@ static void Run()
 			assert(0 && "get video frame error!\n");
 		}
 
-		DoFd(facelib_handle,&stVideoFrame,&stfdFrame);
+		DoFd(facelib_handle,&stVideoFrame, &stfdFrame);
 
-		s32Ret = ReleaseVideoframe(&stVideoFrame,&stfdFrame);
+		s32Ret = ReleaseVideoframe(&stVideoFrame, &stfdFrame);
 		if(s32Ret != CVI_SUCCESS) {
 			Exit();
 			assert(0 && "release video frame error!\n");
@@ -121,17 +134,16 @@ static void SampleHandleSig(CVI_S32 signo)
 static void SetFacelibAttr(cv183x_facelib_config_t *facelib_config)
 {
 	memset(facelib_config,0,sizeof(cv183x_facelib_config_t));
-    facelib_config->repo_path = "/mnt/data/repo.db";
     facelib_config->attr.threshold_1v1 = 0.65;
     facelib_config->attr.threshold_1vN = 0.65;
     facelib_config->attr.threshold_facereg = 0.65;
     facelib_config->attr.pitch = 10;
     facelib_config->attr.yaw = 10;
     facelib_config->attr.roll = 10;
-    facelib_config->attr.face_quality = 0;//?
-    facelib_config->attr.face_pixel_min = 0;//?
-    facelib_config->attr.light_sens = 0;//?
-    facelib_config->attr.move_sens = 0;//?
+    facelib_config->attr.face_quality = 0;
+    facelib_config->attr.face_pixel_min = 0;
+    facelib_config->attr.light_sens = 0;
+    facelib_config->attr.move_sens = 0;
     facelib_config->attr.threshold_liveness = 0.5;
     facelib_config->attr.wdr_en = 0;
 	facelib_config->yolo_en = 0;
@@ -141,11 +153,10 @@ static void SetFacelibAttr(cv183x_facelib_config_t *facelib_config)
 	facelib_config->config_yolo = 0;
 	facelib_config->config_liveness = 0;
 	facelib_config->model_face_fd = "/mnt/data/retina_mobile.cvimodel";
-	facelib_config->model_face_extr = "/mnt/data/bmface.cvimodel";
-	facelib_config->model_face_liveness = "/mnt/data/liveness_batch9.cvimodel";
-	facelib_config->model_yolo3 = "/mnt/data/cvimodel/yolo_v3_320_int8_lw_memopt.cvimodel";
-	facelib_config->model_face_thermal = "mnt/data/thermal_face_detection.bf16sigmoid.cvimodel";
-	facelib_config->db_repo_path = "/mnt/data/feature.db";
+	// facelib_config->model_face_extr = "/mnt/data/bmface.cvimodel";
+	// facelib_config->model_face_liveness = "/mnt/data/liveness_batch9.cvimodel";
+	// facelib_config->model_yolo3 = "/mnt/data/cvimodel/yolo_v3_320_int8_lw_memopt.cvimodel";
+	// facelib_config->model_face_thermal = "mnt/data/thermal_face_detection.bf16sigmoid.cvimodel";
 }
 
 static void SetVIConfig(SAMPLE_VI_CONFIG_S* stViConfig)
@@ -153,7 +164,7 @@ static void SetVIConfig(SAMPLE_VI_CONFIG_S* stViConfig)
 	CVI_S32 s32WorkSnsId = 0;
 
 	SAMPLE_SNS_TYPE_E  enSnsType        = SONY_IMX307_MIPI_2M_30FPS_12BIT;
-	WDR_MODE_E	   enWDRMode	    = WDR_MODE_NONE;
+	WDR_MODE_E	   enWDRMode	    	= WDR_MODE_NONE;
 	DYNAMIC_RANGE_E    enDynamicRange   = DYNAMIC_RANGE_SDR8;
 	PIXEL_FORMAT_E     enPixFormat	    = PIXEL_FORMAT_YUV_PLANAR_420;
 	VIDEO_FORMAT_E     enVideoFormat    = VIDEO_FORMAT_LINEAR;
@@ -196,10 +207,12 @@ static CVI_S32 InitVPSS()
 	stVpssChnAttr[VpssChn].stFrameRate.s32SrcFrameRate = 30;
 	stVpssChnAttr[VpssChn].stFrameRate.s32DstFrameRate = 30;
 	stVpssChnAttr[VpssChn].u32Depth = 1;
+	stVpssChnAttr[VpssChn].bMirror = CVI_FALSE;
+    stVpssChnAttr[VpssChn].bFlip = CVI_FALSE;
 	stVpssChnAttr[VpssChn].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
 	stVpssChnAttr[VpssChn].stAspectRatio.bEnableBgColor = CVI_TRUE;
 	stVpssChnAttr[VpssChn].stAspectRatio.u32BgColor  = COLOR_RGB_BLACK;
-	stVpssChnAttr[VpssChn].stNormalize.bEnable = CVI_TRUE;
+	stVpssChnAttr[VpssChn].stNormalize.bEnable = CVI_FALSE;
 	stVpssChnAttr[VpssChn].stNormalize.factor[0] = (128/ 255.001236);
 	stVpssChnAttr[VpssChn].stNormalize.factor[1] = (128/ 255.001236);
 	stVpssChnAttr[VpssChn].stNormalize.factor[2] = (128 / 255.001236);
@@ -207,6 +220,21 @@ static CVI_S32 InitVPSS()
 	stVpssChnAttr[VpssChn].stNormalize.mean[1] = 0;
 	stVpssChnAttr[VpssChn].stNormalize.mean[2] = 0;
 	stVpssChnAttr[VpssChn].stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+
+	abChnEnable[VpssChn_1] = CVI_TRUE;
+	stVpssChnAttr[VpssChn_1].u32Width = 608;
+	stVpssChnAttr[VpssChn_1].u32Height = 608;
+	stVpssChnAttr[VpssChn_1].enVideoFormat = VIDEO_FORMAT_LINEAR;
+	stVpssChnAttr[VpssChn_1].enPixelFormat = PIXEL_FORMAT_RGB_888;
+	stVpssChnAttr[VpssChn_1].stFrameRate.s32SrcFrameRate = 30;
+	stVpssChnAttr[VpssChn_1].stFrameRate.s32DstFrameRate = 30;
+	stVpssChnAttr[VpssChn_1].u32Depth = 1;
+	stVpssChnAttr[VpssChn_1].bMirror = CVI_FALSE;
+    stVpssChnAttr[VpssChn_1].bFlip = CVI_FALSE;
+	stVpssChnAttr[VpssChn_1].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
+	stVpssChnAttr[VpssChn_1].stAspectRatio.bEnableBgColor = CVI_TRUE;
+	stVpssChnAttr[VpssChn_1].stAspectRatio.u32BgColor  = COLOR_RGB_BLACK;
+	stVpssChnAttr[VpssChn_1].stNormalize.bEnable         = CVI_FALSE;
 
 	CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
 
@@ -257,13 +285,6 @@ static int InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
 	VI_CHN_ATTR_S      stChnAttr;
 	VI_PIPE_ATTR_S     stPipeAttr;
 
-	/************************************************
-	 * step1:  Config VI
-	 ************************************************/
-
-	/************************************************
-	 * step2:  Get input size
-	 ************************************************/
 	s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(stViConfig->astViInfo[s32WorkSnsId].stSnsInfo.enSnsType, &enPicSize);
 	if (s32Ret != CVI_SUCCESS) {
 		SAMPLE_PRT("SAMPLE_COMM_VI_GetSizeBySensor failed with %#x\n", s32Ret);
@@ -276,20 +297,19 @@ static int InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
 		return s32Ret;
 	}
 
-	/************************************************
-	 * step3:  Init SYS and common VB
-	 ************************************************/
 	memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
 	stVbConf.u32MaxPoolCnt		= 2;
 
 	u32BlkSize = COMMON_GetPicBufferSize(stSize.u32Width, stSize.u32Height, SAMPLE_PIXEL_FORMAT,
-		DATA_BITWIDTH_8, stViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode, DEFAULT_ALIGN);
+										 DATA_BITWIDTH_8, stViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode,
+										 DEFAULT_ALIGN);
 	u32BlkRotSize = COMMON_GetPicBufferSize(stSize.u32Height, stSize.u32Width, SAMPLE_PIXEL_FORMAT,
-		DATA_BITWIDTH_8, stViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode, DEFAULT_ALIGN);
+											DATA_BITWIDTH_8, stViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode,
+											DEFAULT_ALIGN);
 	u32BlkSize = MAX(u32BlkSize, u32BlkRotSize);
-	u32BlkRGBSize = COMMON_GetPicBufferSize(1080, 1920, PIXEL_FORMAT_RGB_888,
-		DATA_BITWIDTH_8, stViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode, DEFAULT_ALIGN);
-		printf("=========u32BlkRGBSize:%d========\n",u32BlkRGBSize);
+	u32BlkRGBSize = COMMON_GetPicBufferSize(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888,
+											DATA_BITWIDTH_8, stViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode,
+											DEFAULT_ALIGN);
 	stVbConf.astCommPool[0].u32BlkSize	= u32BlkSize;
 	stVbConf.astCommPool[0].u32BlkCnt	= 32;
 	stVbConf.astCommPool[0].enRemapMode = VB_REMAP_MODE_CACHED;
@@ -304,10 +324,13 @@ static int InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
 		return -1;
 	}
 
-	/************************************************
-	 * step4:  Init VI ISP
-	 ************************************************/
+	s32Ret = SAMPLE_COMM_VI_StartSensor(stViConfig);
+	if (s32Ret != CVI_SUCCESS) {
+		CVI_TRACE_LOG(CVI_DBG_ERR, "system start sensor failed with %#x\n", s32Ret);
+		return s32Ret;
+	}
 	SAMPLE_COMM_VI_StartDev(&stViConfig->astViInfo[ViDev]);
+	SAMPLE_COMM_VI_StartMIPI(stViConfig);
 
 	stPipeAttr.bYuvSkip = CVI_FALSE;
 	stPipeAttr.u32MaxW = stSize.u32Width;
@@ -340,6 +363,7 @@ static int InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
         CVI_TRACE_LOG(CVI_DBG_ERR, "VI_CreateIsp failed with %#x!\n", s32Ret);
         return s32Ret;
     }
+
 	SAMPLE_COMM_VI_StartViChn(&stViConfig->astViInfo[ViDev]);
 }
 

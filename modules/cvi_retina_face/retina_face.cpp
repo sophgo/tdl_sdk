@@ -171,8 +171,8 @@ static vector<cvi_face_info_t> retina_face_parse(float ratio, int image_width, i
     return bboxes_nms;
 }
 
-void init_network_retina(char *model_path) {
-
+void init_network_retina(char *model_path)
+{
     int ret = CVI_NN_RegisterModel(model_path, &model_handle);
     if (ret != CVI_RC_SUCCESS) {
         printf("CVI_NN_RegisterModel failed, err %d\n", ret);
@@ -287,32 +287,9 @@ void retina_face_inference(VIDEO_FRAME_INFO_S *stDstFrame, cvi_face_t *meta, int
 
     CVI_NN_Forward(model_handle, input_tensors, input_num, output_tensors, output_num);
 
-    //printf("zhxjun CVI_NN_Forward done\n");
     float ratio = 1.0;
     vector<cvi_face_info_t> faceList = retina_face_parse(ratio, RETINA_FACE_WIDTH, RETINA_FACE_HEIGHT);
-    //printf("zhxjun retina_face_parse done\n");
-    //if (is_only_keep_largest_face) {
-    //keep largest face
-    
-#ifdef ACCESS_GUARD 
 
-    if (true&&faceList.size()>0) {
-        float max_area = 0;
-        int max_index = 0;
-
-        // printf("detect %d face(s), only keep the largest one. \n",faceList.size());
-        for (int i = 0; i < faceList.size(); ++i) {
-            auto &bbox = faceList[i].bbox;
-            float curr_area = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
-            if (curr_area > max_area) {
-                max_area = curr_area;
-                max_index = i;
-            }
-        }
-        faceList = { faceList[max_index] };
-    }
-
-#endif
     init_face_meta(meta, faceList.size());
     meta->width = RETINA_FACE_WIDTH;
     meta->height = RETINA_FACE_HEIGHT;

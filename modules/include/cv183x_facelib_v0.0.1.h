@@ -50,8 +50,6 @@ typedef struct {
 	char *model_face_liveness;
 	char *model_yolo3;
 	char *model_face_thermal;
-	char *repo_path;
-	char *db_repo_path;
 	cv183x_facelib_attr_t attr;
 } cv183x_facelib_config_t;
 
