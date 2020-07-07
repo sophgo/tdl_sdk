@@ -1,5 +1,8 @@
 #pragma once
+#include "cvi_comm_video.h"
 #include "cviruntime.h"
+
+#include <vector>
 
 namespace cviai {
 
@@ -21,15 +24,39 @@ struct ModelConfig {
   bool skip_postprocess = false;
 };
 
-class core {
-public:
-  bool modelOpen(const char *filepath, ModelConfig *config = nullptr);
+struct QuantizeInfo {
+  float mean;
+  float threshold;
+};
+
+struct ModelInputInfo {
+  CVI_SHAPE shape;
+  std::vector<QuantizeInfo> v_qi;
+};
+
+class Core {
+ public:
+  ~Core();
+  bool modelOpen(const char *filepath);
   bool modelClose();
-private:
+  int run(VIDEO_FRAME_INFO_S *stOutFrame);
+
+ protected:
+  virtual int preProcessing(CVI_MODEL_HANDLE handle, VIDEO_FRAME_INFO_S *frame,
+                            CVI_TENSOR *input_tensors, const int32_t &input_num) = 0;
+  virtual int postProcessing(CVI_MODEL_HANDLE handle, VIDEO_FRAME_INFO_S *frame,
+                             CVI_TENSOR *output_tensors, const int32_t &output_num) = 0;
+
+  ModelConfig *mp_config = nullptr;
+  std::vector<ModelInputInfo> mv_mii;
+
+ private:
+  static bool isModelInputInfoValid(const std::vector<ModelInputInfo> &v_mii);
+
   CVI_MODEL_HANDLE mp_model_handle = nullptr;
   CVI_TENSOR *mp_input_tensors = nullptr;
   CVI_TENSOR *mp_output_tensors = nullptr;
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
 };
-}
+}  // namespace cviai
