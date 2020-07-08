@@ -1,6 +1,9 @@
 #ifndef _CVI_CORE_TYPES_H_
 #define _CVI_CORE_TYPES_H_
 
+#include <stdint.h>
+#include <stdlib.h>
+
 typedef enum {
   TYPE_INT8 = 0,
   TYPE_UINT8,

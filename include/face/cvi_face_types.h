@@ -1,6 +1,6 @@
 #ifndef _CVI_FACE_TYPES_H_
 #define _CVI_FACE_TYPES_H_
-#include "core/core_types.h"
+#include "core/cvi_core_types.h"
 
 typedef enum {
   EMOTION_UNKNOWN = 0,
