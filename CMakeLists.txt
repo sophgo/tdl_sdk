@@ -50,6 +50,9 @@ endif()
 
 add_definitions(-DENABLE_TRACE)
 
+# Check if OpenCV exists.
+include(cmake/opencv.cmake)
+
 # Check if MLIR SDK exists.
 include(cmake/mlir.cmake)
 
@@ -102,6 +105,7 @@ message("==================================================")
 
 
 include_directories(${CMAKE_SOURCE_DIR}/include
+                    ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES}
                     ${TRACER_INCLUDES})
