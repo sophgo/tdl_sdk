@@ -22,7 +22,7 @@ typedef uint32_t cvi_face_id_t;
 
 typedef struct {
   char name[128];
-  cvi_detect_rect_t bbox;
+  cvi_bbox_t bbox;
   cvi_pts_t face_pts;
   cvi_feature_t face_feature;
   cvi_face_emotion_e emotion;

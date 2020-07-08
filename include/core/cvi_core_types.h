@@ -21,7 +21,7 @@ typedef struct {
   float x2;
   float y2;
   float score;
-} cvi_detect_rect_t;
+} cvi_bbox_t;
 
 typedef struct {
   int8_t* ptr;

@@ -4,7 +4,7 @@
 
 typedef struct {
   char name[128];
-  cvi_detect_rect_t bbox;
+  cvi_bbox_t bbox;
   int classes;
 } cvi_object_info_t;
 
