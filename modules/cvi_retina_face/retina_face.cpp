@@ -294,6 +294,7 @@ void retina_face_inference(VIDEO_FRAME_INFO_S *stDstFrame, cvi_face_t *meta, int
     meta->width = RETINA_FACE_WIDTH;
     meta->height = RETINA_FACE_HEIGHT;
 
+    *face_count = meta->size;
     for (int i = 0; i < meta->size; ++i) {
         meta->face_info[i].bbox.x1 = faceList[i].bbox.x1;
         meta->face_info[i].bbox.x2 = faceList[i].bbox.x2;

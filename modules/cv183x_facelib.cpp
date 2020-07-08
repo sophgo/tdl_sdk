@@ -30,21 +30,6 @@ using namespace std;
 using namespace cv;
 typedef CachedRepo<512> Repository;
 
-
-typedef struct cv183x_db_feature {
-    int8_t *raw;
-    float *raw_unit;
-
-    uint64_t raw_gaddr;
-    bmmem_t bm_device;
-    uint32_t size;
-    uint32_t num;
-    // Only used in TPU
-    int8_t *gemm_result_vaddr;
-    uint64_t gemm_result_gaddr;
-    float *db_buffer;
-} cv183x_db_feature_t;
-
 typedef struct {
     unique_ptr<Repository> repo;
     cv183x_facelib_attr_t attr;
@@ -68,35 +53,33 @@ int Cv183xFaceLibOpen(const cv183x_facelib_config_t *facelib_config, cv183x_face
         init_network_retina(facelib_config->model_face_fd);
         printf("init_network_retina done\n");
     }
-    
-    if (facelib_config->model_face_extr) {
+
+    if (facelib_config->config_liveness && (facelib_config->model_face_liveness != NULL)) {
+        init_network_liveness(facelib_config->model_face_liveness);
+        printf("init_network_liveness done\n");
+    }
+
+    if (facelib_config->model_face_extr != NULL) {
         ret = init_network_face_attribute(facelib_config->model_face_extr);
         printf("init_network_face_attribute ret:%d\n",ret);
     }
-    
-    
-    // if (facelib_config->config_liveness && (facelib_config->model_face_liveness != NULL))
+
+    // if (facelib_config->config_yolo && (facelib_config->model_yolo3 != NULL))
     // {
-        init_network_liveness(facelib_config->model_face_liveness);
-        printf("init_network_liveness done\n");
+    //     init_network_yolov3(facelib_config->model_yolo3);
+    //     printf("init_network_yolov3 done\n");
     // }
 
-    if (facelib_config->config_yolo && (facelib_config->model_yolo3 != NULL))
-    {
-        init_network_yolov3(facelib_config->model_yolo3);
-        printf("init_network_yolov3 done\n");
-    }
-
-    ret = bm_init_chip(0, &context->bm_ctx, "cv1880v2");
-    if (ret != BM_SUCCESS) {
-      fprintf(stderr, "cvi_init failed, err %d\n", ret);
-      return CVI_FAILURE;
-    }
-    cvk_reg_info_t req_info;
-    strncpy(req_info.chip_ver_str, "cv1880v2", sizeof(req_info.chip_ver_str) - 1);
-    req_info.cmdbuf_size = 0x10000000;
-    req_info.cmdbuf = static_cast<uint8_t *>(malloc(req_info.cmdbuf_size));
-    context->cvk_ctx = cvikernel_register(&req_info);
+    // ret = bm_init_chip(0, &context->bm_ctx, "cv183x");
+    // if (ret != BM_SUCCESS) {
+    //   fprintf(stderr, "cvi_init failed, err %d\n", ret);
+    //   return CVI_FAILURE;
+    // }
+    // cvk_reg_info_t req_info;
+    // strncpy(req_info.chip_ver_str, "cv1880v2", sizeof(req_info.chip_ver_str) - 1);
+    // req_info.cmdbuf_size = 0x10000000;
+    // req_info.cmdbuf = static_cast<uint8_t *>(malloc(req_info.cmdbuf_size));
+    // context->cvk_ctx = cvikernel_register(&req_info);
 
    *handle = context;
     return 0;
@@ -115,50 +98,6 @@ int Cv183xFaceLibClose(cv183x_facelib_handle_t handle) {
     bm_exit(fctx->bm_ctx);
     delete fctx;
     return 0;
-}
-
-int Cv183xLoadIdentify(cv183x_facelib_handle_t handle, bool use_tpu) {
-    // if (use_tpu) {
-    //     printf("Currently unsupported.\n");
-    //     return -1;
-    // }
-    // cv183x_facelib_context_t *context = static_cast<cv183x_facelib_context_t*>(handle);
-    // context->enable_feature_tpu = use_tpu;
-    // Cv183xResetVerify(handle);
-    // cv183x_db_feature_t *dbmeta = context->db_feature;
-    // // Get from db function.
-    // uint8_t *from_db = nullptr;
-    // dbmeta->num = cvi_repo_get_features(&(context->db_repo), 0, 0, &from_db);
-    // if (dbmeta->num == 0) {
-    //     printf("Error! DB is empty.\n");
-    //     return -1;
-    // }
-    // dbmeta->size = NUM_FACE_FEATURE_DIM * dbmeta->num;
-    // uint32_t data_num;
-    // if (context->enable_feature_tpu) {
-    //     if (dbmeta->bm_device == NULL) {
-    //         uint32_t total_sz = dbmeta->size + dbmeta->num * sizeof(int32_t);
-    //         dbmeta->bm_device = bmmem_device_alloc_raw(context->bm_ctx, total_sz);
-    //     }
-    //     dbmeta->raw_gaddr = bmmem_device_addr(dbmeta->bm_device);
-    //     dbmeta->raw = (int8_t *)bmmem_device_v_addr(dbmeta->bm_device);
-    //     dbmeta->gemm_result_gaddr = dbmeta->raw_gaddr + dbmeta->size;
-    //     dbmeta->gemm_result_vaddr = dbmeta->raw + dbmeta->size;
-    //     memcpy(dbmeta->raw, (int8_t *)from_db, dbmeta->size);
-    //     free(from_db);
-    // } else {
-    //     dbmeta->raw = (int8_t *)from_db;
-    //     dbmeta->gemm_result_gaddr = -1;
-    //     dbmeta->gemm_result_vaddr = nullptr;
-    // }
-    // dbmeta->raw_unit = new float[dbmeta->num * sizeof(float)];
-    // cvm_gen_db_i8_unit_length(dbmeta->raw, dbmeta->raw_unit, NUM_FACE_FEATURE_DIM, dbmeta->num);
-    // if (dbmeta->bm_device != NULL) {
-    //     bmmem_device_flush(context->bm_ctx, dbmeta->bm_device);
-    // }
-    // // Create buffer
-    // dbmeta->db_buffer = new float[dbmeta->num];
-    // return 0;
 }
 
 static Repository::feature_t convert_feature(const cvi_face_feature_t *feature) {
@@ -236,16 +175,6 @@ int Cv183xFaceVerify1v1(const cv183x_facelib_handle_t handle, const cvi_face_fea
     }
     return 0;
 }
-
-// int Cv183x_person_Info(const cv183x_facelib_handle_t facelib_handle, int face_id, cvi_person_t *person)
-// {
-//     cv183x_facelib_context_t *ctx = static_cast<cv183x_facelib_context_t*>(facelib_handle);
-
-//     int ret ;
-//     ret =  cvi_repo_get_person(&(ctx->db_repo), face_id, person);
-//     printf("face id = %d\n",face_id);
-//     printf("person name = %s\n",person->image_name);
-// }
 
 int Cv183xFaceIdentify1vN(const cv183x_facelib_handle_t handle, cvi_face_t *meta, float threshold) {
     if (!meta->size) {

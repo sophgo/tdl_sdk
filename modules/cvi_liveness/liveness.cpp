@@ -51,7 +51,6 @@ static void prepare_input_tensor(vector<cv::Mat> &input_mat) {
 }
 
 static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *sink_buffer, cvi_face_t *meta) {
-    // printf("image_preprocess 1 u32Height:%d,u32Width:%d u32Stride:%d\n",frame->stVFrame.u32Height,frame->stVFrame.u32Width,frame->stVFrame.u32Stride[0]);
     cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3);
     frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0],
                                                            frame->stVFrame.u32Length[0]);
@@ -65,7 +64,6 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame, VIDEO
         printf("src Image is empty!\n");
         return vector<vector<cv::Mat>> {};
     }
-    //printf("image_preprocess 2 sink_buffer u32Height:%d u32Width:%d u32Stride:%d\n",sink_buffer->stVFrame.u32Height,sink_buffer->stVFrame.u32Width,sink_buffer->stVFrame.u32Stride[0]);
 
     cv::Mat ir_frame(sink_buffer->stVFrame.u32Height, sink_buffer->stVFrame.u32Width, CV_8UC3);
     sink_buffer->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(sink_buffer->stVFrame.u64PhyAddr[0],
@@ -91,7 +89,6 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame, VIDEO
         box.height = face_info.bbox.y2 - box.y;
 
         if (box.width <= MIN_FACE_WIDTH || box.height <= MIN_FACE_HEIGHT) continue;
-        //printf("image_preprocess 7 box x:%d y:%d width:%d height:%d\n",box.x,box.y,box.width,box.height);
         cv::Mat crop_rgb_frame = rgb_frame(box);
         cv::Mat crop_ir_frame = template_matching(crop_rgb_frame, ir_frame, box);
 
@@ -140,17 +137,15 @@ int init_network_liveness(char *model_path) {
 }
 
 void liveness_inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *sink_buffer, cvi_face_t *meta) {
-    if (meta->size <= 0)
-    {
-        printf("meta->size <= 0\n");
+    if (meta->size <= 0) {
+        cout << "meta->size <= 0" << endl;
         return;
     }
 
     vector<vector<cv::Mat>> input_mats = image_preprocess(frame, sink_buffer, meta);
-    if (input_mats.empty())
-    {
-        printf("input_mat.empty \n");
-         return;
+    if (input_mats.empty()) {
+        cout << "input_mat.empty" << endl;
+        return;
     }
 
     for (int i = 0; i < meta->size; i++) {

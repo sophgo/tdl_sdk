@@ -82,14 +82,6 @@ int Cv183xFaceLibOpen(const cv183x_facelib_config_t *facelib_config, cv183x_face
 int Cv183xFaceLibClose(const cv183x_facelib_handle_t handle);
 
 /**
- * @brief          Load feature from DB into array for verify functions
- * @param handle   In: handle, handle to the libdrary internal data
- * @param use_tpu  Use TPU to do verify, currently unsupported
- * @return         Ok:0, Error:-1
- */
-int Cv183xLoadIdentify(cv183x_facelib_handle_t handle, bool use_tpu);
-
-/**
  * @brief   Get face attribute settings
  * @param   In: handle, handle to the libdrary internal data
  * @param   Out: facelib_attr, pointer of face attribute stting data

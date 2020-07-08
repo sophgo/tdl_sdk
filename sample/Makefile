@@ -15,7 +15,7 @@ OPENCV_LIB = -L$(SDK_PATH)/opencv/lib -lopencv_imgcodecs -lopencv_core -lopencv_
 OPENCV_INC = $(SDK_PATH)/opencv/include
 
 SNS_LIB = -lsns_full
-LIBS += -L$(MW_PATH)/lib -lsample -lvpu -lisp -lvenc -lcvi_vcodec -lbmjpu -lawb -lm -lsys -lpthread -lasound $(SNS_LIB) $(MLIR_LIB) $(OPENCV_LIB)
+LIBS += -L$(MW_PATH)/lib -lsample -lvpu -lisp -lvenc -lcvi_vcodec -lbmjpu -lawb -lm -lsys -lpthread $(SNS_LIB) $(MLIR_LIB) $(OPENCV_LIB)
 LIBS += -lcvimath
 LIBS += -L$(PWD)/../ -lcvialgo
 #LIBS += -L$(TRACER_PATH)/build -lcvitracer
