@@ -60,22 +60,11 @@ bool Core::modelClose() {
   return CVI_RC_SUCCESS;
 }
 
-int Core::run(VIDEO_FRAME_INFO_S *stFrame) {
-  int ret = preProcessing(mp_model_handle, stFrame, mp_input_tensors, m_input_num);
-  if (ret != CVI_RC_SUCCESS) {
-    printf("Preprocess failed: %d\n", ret);
-    return ret;
-  }
-  ret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num, mp_output_tensors,
-                       m_output_num);
+int Core::run() {
+  int ret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num, mp_output_tensors,
+                           m_output_num);
   if (ret != CVI_RC_SUCCESS) {
     printf("NN forward failed: %d\n", ret);
-    return ret;
-  }
-  ret = postProcessing(mp_model_handle, stFrame, mp_output_tensors, m_output_num);
-  if (ret != CVI_RC_SUCCESS) {
-    printf("Postprocess failed: %d\n", ret);
-    return ret;
   }
   return ret;
 }

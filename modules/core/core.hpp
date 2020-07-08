@@ -39,24 +39,21 @@ class Core {
   ~Core();
   bool modelOpen(const char *filepath);
   bool modelClose();
-  int run(VIDEO_FRAME_INFO_S *stOutFrame);
 
  protected:
-  virtual int preProcessing(CVI_MODEL_HANDLE handle, VIDEO_FRAME_INFO_S *frame,
-                            CVI_TENSOR *input_tensors, const int32_t &input_num) = 0;
-  virtual int postProcessing(CVI_MODEL_HANDLE handle, VIDEO_FRAME_INFO_S *frame,
-                             CVI_TENSOR *output_tensors, const int32_t &output_num) = 0;
+  int run();
 
+  // Class settings
   ModelConfig *mp_config = nullptr;
   std::vector<ModelInputInfo> mv_mii;
-
- private:
-  static bool isModelInputInfoValid(const std::vector<ModelInputInfo> &v_mii);
-
+  // Runtime related
   CVI_MODEL_HANDLE mp_model_handle = nullptr;
   CVI_TENSOR *mp_input_tensors = nullptr;
   CVI_TENSOR *mp_output_tensors = nullptr;
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
+
+ private:
+  static bool isModelInputInfoValid(const std::vector<ModelInputInfo> &v_mii);
 };
 }  // namespace cviai
