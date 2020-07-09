@@ -14,7 +14,7 @@ class FaceAttribute : public Core {
 
  private:
   void prepareInputTensor(cv::Mat src_image, cvi_face_info_t &face_info);
-  void OutputParser(cvi_face_t *meta, int meta_i);
+  void outputParser(cvi_face_t *meta, int meta_i);
 
   float *attribute_buffer = nullptr;
 };

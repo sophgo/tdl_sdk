@@ -67,7 +67,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvi_face_t *meta) {
 
     prepareInputTensor(image, face_info);
     run(stOutFrame);
-    OutputParser(meta, i);
+    outputParser(meta, i);
   }
   return CVI_RC_SUCCESS;
 }
@@ -129,7 +129,7 @@ std::pair<float, AgeFeature> ExtractAge(float *out, const int age_prob_size) {
   return std::make_pair(expect_age, features);
 }
 
-void FaceAttribute::OutputParser(cvi_face_t *meta, int meta_i) {
+void FaceAttribute::outputParser(cvi_face_t *meta, int meta_i) {
   FaceAttributeInfo result;
 
   // feature
