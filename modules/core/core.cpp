@@ -27,6 +27,8 @@ bool Core::modelOpen(const char *filepath) {
   CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_ALL_TENSORS, mp_config->debug_mode);
   CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS, mp_config->skip_preprocess);
   CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_POSTPROCESS, mp_config->skip_postprocess);
+  CVI_NN_SetConfig(mp_model_handle, OPTION_INPUT_MEM_TYPE, mp_config->input_mem_type);
+  CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_MEM_TYPE, mp_config->output_mem_type);
 
   ret = CVI_NN_GetInputOutputTensors(mp_model_handle, &mp_input_tensors, &m_input_num,
                                      &mp_output_tensors, &m_output_num);
@@ -60,7 +62,23 @@ bool Core::modelClose() {
   return CVI_RC_SUCCESS;
 }
 
-int Core::run() {
+int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
+  if (mp_config->input_mem_type == 2) {
+    // FIXME: Need to support multi-input and different fmt
+    CVI_VIDEO_FRAME_INFO info;
+    info.type = CVI_FRAME_PLANAR;
+    info.shape.dim_size = mv_mii[0].shape.dim_size;
+    info.shape.dim[0] = mv_mii[0].shape.dim[0];
+    info.shape.dim[1] = mv_mii[0].shape.dim[1];
+    info.shape.dim[2] = mv_mii[0].shape.dim[2];
+    info.shape.dim[3] = mv_mii[0].shape.dim[3];
+    info.fmt = CVI_FMT_INT8;
+    for (size_t i = 0; i < 3; ++i) {
+      info.stride[i] = srcFrame->stVFrame.u32Stride[i];
+      info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[i];
+    }
+    CVI_NN_SetTensorWithVideoFrame(mp_input_tensors, &info);
+  }
   int ret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num, mp_output_tensors,
                            m_output_num);
   if (ret != CVI_RC_SUCCESS) {

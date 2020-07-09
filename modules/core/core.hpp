@@ -22,6 +22,8 @@ struct ModelConfig {
   bool debug_mode = false;
   bool skip_preprocess = false;
   bool skip_postprocess = false;
+  int input_mem_type = 1;
+  int output_mem_type = 1;
 };
 
 struct QuantizeInfo {
@@ -41,7 +43,7 @@ class Core {
   bool modelClose();
 
  protected:
-  int run();
+  int run(VIDEO_FRAME_INFO_S *srcFrame);
 
   // Class settings
   ModelConfig *mp_config = nullptr;

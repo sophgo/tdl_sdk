@@ -66,7 +66,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvi_face_t *meta) {
     cvi_face_info_t face_info = bbox_rescale(stOutFrame, meta, i);
 
     prepareInputTensor(image, face_info);
-    run();
+    run(stOutFrame);
     OutputParser(meta, i);
   }
   return CVI_RC_SUCCESS;
