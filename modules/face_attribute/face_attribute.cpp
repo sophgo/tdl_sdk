@@ -8,6 +8,9 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
+#define FACE_ATTRIBUTE_MEAN (-0.99609375)
+#define FACE_ATTRIBUTE_INPUT_THRESHOLD (1 / 128.0)
+
 #define FACE_OUT_NAME "BMFace_dense_MatMul_folded"
 #define AGE_OUT_NAME "Age_Conv_Conv2D"
 #define EMOTION_OUT_NAME "Emotion_Conv_Conv2D"
@@ -24,17 +27,6 @@ namespace cviai {
 FaceAttribute::FaceAttribute() {
   mp_config = new ModelConfig;
   mp_config->skip_preprocess = true;
-
-  ModelInputInfo mii;
-  mii.shape.dim[0] = 1;
-  mii.shape.dim[1] = 3;
-  mii.shape.dim[2] = 112;
-  mii.shape.dim[3] = 112;
-  mii.shape.dim_size = 4;
-  for (size_t i = 0; i < (size_t)mii.shape.dim[1]; i++) {
-    mii.v_qi.push_back({(-0.99609375), (1 / 128.0)});
-  }
-  mv_mii.push_back(mii);
 
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }
@@ -73,17 +65,17 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvi_face_t *meta) {
 }
 
 void FaceAttribute::prepareInputTensor(cv::Mat src_image, cvi_face_info_t &face_info) {
-  cv::Mat image(mv_mii[0].shape.dim[3], mv_mii[0].shape.dim[2], src_image.type());
-
-  face_align(src_image, image, face_info, mv_mii[0].shape.dim[2], mv_mii[0].shape.dim[3]);
-
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  cv::Mat image(input->shape.dim[3], input->shape.dim[2], src_image.type());
+
+  face_align(src_image, image, face_info, input->shape.dim[2], input->shape.dim[3]);
+
   cv::Mat tmpchannels[3];
   cv::split(image, tmpchannels);
 
   for (int i = 0; i < 3; ++i) {
-    tmpchannels[i].convertTo(tmpchannels[i], CV_32F, mv_mii[0].v_qi[i].threshold,
-                             mv_mii[0].v_qi[i].mean);
+    tmpchannels[i].convertTo(tmpchannels[i], CV_32F, FACE_ATTRIBUTE_INPUT_THRESHOLD,
+                             FACE_ATTRIBUTE_MEAN);
 
     int size = tmpchannels[i].rows * tmpchannels[i].cols;
     for (int r = 0; r < tmpchannels[i].rows; ++r) {

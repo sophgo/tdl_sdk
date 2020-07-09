@@ -26,16 +26,6 @@ struct ModelConfig {
   int output_mem_type = 1;
 };
 
-struct QuantizeInfo {
-  float mean;
-  float threshold;
-};
-
-struct ModelInputInfo {
-  CVI_SHAPE shape;
-  std::vector<QuantizeInfo> v_qi;
-};
-
 class Core {
  public:
   ~Core();
@@ -44,18 +34,16 @@ class Core {
 
  protected:
   int run(VIDEO_FRAME_INFO_S *srcFrame);
+  CVI_TENSOR *getInputTensor(int idx);
+  CVI_TENSOR *getOutputTensor(int idx);
 
   // Class settings
   ModelConfig *mp_config = nullptr;
-  std::vector<ModelInputInfo> mv_mii;
   // Runtime related
   CVI_MODEL_HANDLE mp_model_handle = nullptr;
   CVI_TENSOR *mp_input_tensors = nullptr;
   CVI_TENSOR *mp_output_tensors = nullptr;
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
-
- private:
-  static bool isModelInputInfoValid(const std::vector<ModelInputInfo> &v_mii);
 };
 }  // namespace cviai

@@ -14,19 +14,6 @@ RetinaFace::RetinaFace() {
   mp_config->skip_preprocess = true;
   mp_config->input_mem_type = 2;
 
-  ModelInputInfo mii;
-  mii.shape.dim[0] = 1;
-  mii.shape.dim[1] = 3;
-  mii.shape.dim[2] = 608;
-  mii.shape.dim[3] = 608;
-  mii.shape.dim_size = 4;
-  for (size_t i = 0; i < (size_t)mii.shape.dim[1]; i++) {
-    // #define RETINA_FACE_SCALE_FACTOR    (float(128) / 255.001236)
-    // FIXME: Terry help.
-    mii.v_qi.push_back({(128 / 255.001236), (1 / 128.0)});
-  }
-  mv_mii.push_back(mii);
-
   std::vector<anchor_cfg> cfg;
   anchor_cfg tmp;
   tmp.SCALES = {32, 16};
@@ -75,13 +62,14 @@ RetinaFace::~RetinaFace() {}
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_face_t *meta, int *face_count) {
   int ret = run(srcFrame);
 
+  CVI_TENSOR *input = getInputTensor(0);
   float ratio = 1.0;
   std::vector<cvi_face_info_t> faceList;
-  outputParser(ratio, mv_mii[0].shape.dim[2], mv_mii[0].shape.dim[3], &faceList);
+  outputParser(ratio, input->shape.dim[2], input->shape.dim[3], &faceList);
 
   initFaceMeta(meta, faceList.size());
-  meta->width = mv_mii[0].shape.dim[2];
-  meta->height = mv_mii[0].shape.dim[3];
+  meta->width = input->shape.dim[2];
+  meta->height = input->shape.dim[3];
 
   *face_count = meta->size;
   for (int i = 0; i < meta->size; ++i) {

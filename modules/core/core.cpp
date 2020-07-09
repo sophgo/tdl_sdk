@@ -37,11 +37,6 @@ bool Core::modelOpen(const char *filepath) {
     return ret;
   }
 
-  if (!isModelInputInfoValid(mv_mii)) {
-    printf("Invalid model input setup");
-    return CVI_RC_FAILURE;
-  }
-
   return ret;
 }
 
@@ -65,13 +60,14 @@ bool Core::modelClose() {
 int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
   if (mp_config->input_mem_type == 2) {
     // FIXME: Need to support multi-input and different fmt
+    CVI_TENSOR *input = getInputTensor(0);
     CVI_VIDEO_FRAME_INFO info;
     info.type = CVI_FRAME_PLANAR;
-    info.shape.dim_size = mv_mii[0].shape.dim_size;
-    info.shape.dim[0] = mv_mii[0].shape.dim[0];
-    info.shape.dim[1] = mv_mii[0].shape.dim[1];
-    info.shape.dim[2] = mv_mii[0].shape.dim[2];
-    info.shape.dim[3] = mv_mii[0].shape.dim[3];
+    info.shape.dim_size = input->shape.dim_size;
+    info.shape.dim[0] = input->shape.dim[0];
+    info.shape.dim[1] = input->shape.dim[1];
+    info.shape.dim[2] = input->shape.dim[2];
+    info.shape.dim[3] = input->shape.dim[3];
     info.fmt = CVI_FMT_INT8;
     for (size_t i = 0; i < 3; ++i) {
       info.stride[i] = srcFrame->stVFrame.u32Stride[i];
@@ -87,24 +83,18 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
   return ret;
 }
 
-bool Core::isModelInputInfoValid(const std::vector<ModelInputInfo> &v_mii) {
-  if (v_mii.empty()) {
-    printf("Vector of ModelInputInfo cannot be empty.\n");
-    return false;
+CVI_TENSOR *Core::getInputTensor(int idx) {
+  if (idx >= m_input_num) {
+    return NULL;
   }
-  for (size_t i = 0; i < v_mii.size(); i++) {
-    if (v_mii[i].shape.dim_size != 4) {
-      printf("Currently does not supprt dim_size != 4. Idx %u\n", (uint32_t)i);
-      return false;
-    }
-    uint32_t c = v_mii[i].shape.dim[1];
-    if (c != v_mii[i].v_qi.size()) {
-      printf("Quantize info size not equal to channel size.\n (%d vs %u)", c,
-             (uint32_t)v_mii[i].v_qi.size());
-      return false;
-    }
+  return mp_input_tensors + idx;
+}
+
+CVI_TENSOR *Core::getOutputTensor(int idx) {
+  if (idx >= m_output_num) {
+    return NULL;
   }
-  return true;
+  return mp_output_tensors + idx;
 }
 
 }  // namespace cviai
