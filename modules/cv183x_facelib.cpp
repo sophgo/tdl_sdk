@@ -64,11 +64,10 @@ int Cv183xFaceLibOpen(const cv183x_facelib_config_t *facelib_config, cv183x_face
         printf("init_network_face_attribute ret:%d\n",ret);
     }
 
-    // if (facelib_config->config_yolo && (facelib_config->model_yolo3 != NULL))
-    // {
-    //     init_network_yolov3(facelib_config->model_yolo3);
-    //     printf("init_network_yolov3 done\n");
-    // }
+    if (facelib_config->config_yolo && (facelib_config->model_yolo3 != NULL)) {
+        init_network_yolov3(facelib_config->model_yolo3);
+        printf("init_network_yolov3 done\n");
+    }
 
     // ret = bm_init_chip(0, &context->bm_ctx, "cv183x");
     // if (ret != BM_SUCCESS) {
@@ -505,6 +504,13 @@ int Cv183x_Jpg2PNG(char *src_jpg,char *dst_png)
     imwrite(dst_png,face);
 
     return s32Ret;
+}
+
+int Cv183xObjDetect(const cv183x_facelib_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame,
+                    cvi_object_meta_t *obj_meta, int det_type) {
+    yolov3_inference(stObjDetFrame, obj_meta, det_type);
+
+    return 0;
 }
 
 int CviThermalFaceLibOpen(const cv183x_facelib_config_t *facelib_config, cv183x_facelib_handle_t *handle)

@@ -3,6 +3,7 @@
 
 #include "cv183x_facelib_v0.0.1.h"
 
-void draw_face_meta(VIDEO_FRAME_INFO_S *draw_frame, cvi_face_t *face_meta);
+void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_face_t *face_meta);
+void DrawObjMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_object_meta_t *meta);
 
 #endif

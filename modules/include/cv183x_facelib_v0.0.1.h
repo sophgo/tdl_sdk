@@ -332,7 +332,8 @@ int Cv183xImageRotate(cv183x_image_t *source_image, cv183x_image_t *output_image
 
 
 
-void yolo3_inference(VIDEO_FRAME_INFO_S *frame, cvi_object_meta_t *meta, int det_type);
+int Cv183xObjDetect(const cv183x_facelib_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame,
+                    cvi_object_meta_t *obj_meta, int det_type);
 
 
 void Cv183x_face_Encode(VIDEO_FRAME_INFO_S *stOutFrame, cvi_face_t *face,char *capture_img,char *recored_img);

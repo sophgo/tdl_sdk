@@ -296,7 +296,7 @@ static void YoloV3Parse(vector<float*> features, vector<CVI_SHAPE> &output_shape
     }
 }
 
-void yolo3_inference(VIDEO_FRAME_INFO_S *frame, cvi_object_meta_t *meta, int det_type) {
+void yolov3_inference(VIDEO_FRAME_INFO_S *frame, cvi_object_meta_t *meta, int det_type) {
     CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, input_tensors, input_num);
     prepare_yolo_input_tensor(frame, input);
 

@@ -135,7 +135,7 @@ static void Run()
 
 		DoFd(facelib_handle, &stfdFrame, &stLivenessFrame, &face);
 
-		draw_face_meta(&stVOFrame, &face);
+		DrawFaceMeta(&stVOFrame, &face);
 
 		// set_vpss_aspect(2,0,0,720,1280);
 		s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);
@@ -327,7 +327,7 @@ static CVI_S32 InitVPSS()
 	return s32Ret;
 }
 
-static int InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
+static CVI_S32 InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
 {
 	VB_CONFIG_S stVbConf;
 	PIC_SIZE_E enPicSize;
@@ -346,13 +346,13 @@ static int InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
 
 	s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(stViConfig->astViInfo[s32WorkSnsId].stSnsInfo.enSnsType, &enPicSize);
 	if (s32Ret != CVI_SUCCESS) {
-		SAMPLE_PRT("SAMPLE_COMM_VI_GetSizeBySensor failed with %#x\n", s32Ret);
+		printf("SAMPLE_COMM_VI_GetSizeBySensor failed with %#x\n", s32Ret);
 		return s32Ret;
 	}
 
 	s32Ret = SAMPLE_COMM_SYS_GetPicSize(enPicSize, &stSize);
 	if (s32Ret != CVI_SUCCESS) {
-		SAMPLE_PRT("SAMPLE_COMM_SYS_GetPicSize failed with %#x\n", s32Ret);
+		printf("SAMPLE_COMM_SYS_GetPicSize failed with %#x\n", s32Ret);
 		return s32Ret;
 	}
 
@@ -371,26 +371,27 @@ static int InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
 											DEFAULT_ALIGN);
 	stVbConf.astCommPool[0].u32BlkSize	= u32BlkSize;
 	stVbConf.astCommPool[0].u32BlkCnt	= 32;
-	stVbConf.astCommPool[0].enRemapMode = VB_REMAP_MODE_CACHED;
+	stVbConf.astCommPool[0].enRemapMode = VB_REMAP_MODE_NOCACHE;
 	stVbConf.astCommPool[1].u32BlkSize	= u32BlkRGBSize;
 	stVbConf.astCommPool[1].u32BlkCnt	= 2;
-	stVbConf.astCommPool[1].enRemapMode = VB_REMAP_MODE_CACHED;
-	SAMPLE_PRT("common pool[0] BlkSize %d\n", u32BlkSize);
+	stVbConf.astCommPool[1].enRemapMode = VB_REMAP_MODE_NOCACHE;
+	printf("common pool[0] BlkSize %d\n", u32BlkSize);
 
 	s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
 	if (s32Ret != CVI_SUCCESS) {
-		SAMPLE_PRT("system init failed with %#x\n", s32Ret);
+		printf("system init failed with %#x\n", s32Ret);
 		return -1;
 	}
 
 	s32Ret = SAMPLE_COMM_VI_StartSensor(stViConfig);
 	if (s32Ret != CVI_SUCCESS) {
-		CVI_TRACE_LOG(CVI_DBG_ERR, "system start sensor failed with %#x\n", s32Ret);
+		printf("system start sensor failed with %#x\n", s32Ret);
 		return s32Ret;
 	}
 	SAMPLE_COMM_VI_StartDev(&stViConfig->astViInfo[ViDev]);
 	SAMPLE_COMM_VI_StartMIPI(stViConfig);
 
+	memset(&stPipeAttr, 0, sizeof(VI_PIPE_ATTR_S));
 	stPipeAttr.bYuvSkip = CVI_FALSE;
 	stPipeAttr.u32MaxW = stSize.u32Width;
 	stPipeAttr.u32MaxH = stSize.u32Height;
@@ -401,29 +402,29 @@ static int InitVI(SAMPLE_VI_CONFIG_S* stViConfig)
 	stPipeAttr.bNrEn = CVI_TRUE;
 	s32Ret = CVI_VI_CreatePipe(ViPipe, &stPipeAttr);
 	if (s32Ret != CVI_SUCCESS) {
-		SAMPLE_PRT("CVI_VI_CreatePipe failed with %#x!\n", s32Ret);
+		printf("CVI_VI_CreatePipe failed with %#x!\n", s32Ret);
 		return s32Ret;
 	}
 
 	s32Ret = CVI_VI_StartPipe(ViPipe);
 	if (s32Ret != CVI_SUCCESS) {
-		SAMPLE_PRT("CVI_VI_StartPipe failed with %#x!\n", s32Ret);
+		printf("CVI_VI_StartPipe failed with %#x!\n", s32Ret);
 		return s32Ret;
 	}
 
 	s32Ret = CVI_VI_GetPipeAttr(ViPipe, &stPipeAttr);
 	if (s32Ret != CVI_SUCCESS) {
-		SAMPLE_PRT("CVI_VI_StartPipe failed with %#x!\n", s32Ret);
+		printf("CVI_VI_StartPipe failed with %#x!\n", s32Ret);
 		return s32Ret;
 	}
 
     s32Ret = SAMPLE_COMM_VI_CreateIsp(stViConfig);
     if (s32Ret != CVI_SUCCESS) {
-        CVI_TRACE_LOG(CVI_DBG_ERR, "VI_CreateIsp failed with %#x!\n", s32Ret);
+        printf("VI_CreateIsp failed with %#x!\n", s32Ret);
         return s32Ret;
     }
 
-	SAMPLE_COMM_VI_StartViChn(&stViConfig->astViInfo[ViDev]);
+	return SAMPLE_COMM_VI_StartViChn(&stViConfig->astViInfo[ViDev]);
 }
 
 int InitVO(SAMPLE_VO_CONFIG_S* stVoConfig)
@@ -457,13 +458,13 @@ int main(void)
 
 	s32Ret = SetVoConfig(&stVoConfig);
 	if (s32Ret != CVI_SUCCESS) {
-		SAMPLE_PRT("SetVoConfig failed with %d\n", s32Ret);
+		printf("SetVoConfig failed with %d\n", s32Ret);
 		return s32Ret;
 	}
 
 	s32Ret = InitVO(&stVoConfig);
 	if (s32Ret != CVI_SUCCESS) {
-		SAMPLE_PRT("CVI_Init_Video_Output failed with %d\n", s32Ret);
+		printf("CVI_Init_Video_Output failed with %d\n", s32Ret);
 		return s32Ret;
 	}
 	CVI_VO_HideChn(VoLayer,VoChn);
