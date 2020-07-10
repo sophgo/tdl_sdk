@@ -2,7 +2,7 @@
 #define _CVI_FACE_HELPER_H_
 #include "cvi_face_types.h"
 
-const char* getEmotionString(cvi_face_emotion_e emotion) {
+inline const char* getEmotionString(cvi_face_emotion_e emotion) {
   switch (emotion) {
     case EMOTION_HAPPY:
       return "Happy";
@@ -24,7 +24,7 @@ const char* getEmotionString(cvi_face_emotion_e emotion) {
   return "";
 }
 
-const char* getGenderString(cvi_face_gender_e gender) {
+inline const char* getGenderString(cvi_face_gender_e gender) {
   switch (gender) {
     case GENDER_MALE:
       return "Male";
@@ -36,7 +36,7 @@ const char* getGenderString(cvi_face_gender_e gender) {
   return "";
 }
 
-const char* getRaceString(cvi_face_race_e race) {
+inline const char* getRaceString(cvi_face_race_e race) {
   switch (race) {
     case RACE_CAUCASIAN:
       return "Caucasian";

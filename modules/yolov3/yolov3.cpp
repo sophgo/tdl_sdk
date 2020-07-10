@@ -1,8 +1,6 @@
 #include "yolov3.hpp"
 #include "core_utils.hpp"
 
-#define YOLOV3_N 1
-#define YOLOV3_C 3
 #define YOLOV3_CLASSES              80
 #define YOLOV3_CONF_THRESHOLD       0.5
 #define YOLOV3_NMS_THRESHOLD        0.45
@@ -135,6 +133,8 @@ void Yolov3::outputParser(cvi_object_t *obj, cvi_obj_det_type_t det_type) {
     obj->objects[i].bbox.score = results[i].score;
     obj->objects[i].classes = results[i].label;
     strncpy(obj->objects[i].name, names[results[i].label].c_str(), sizeof(obj->objects[i].name));
+    printf("YOLO3: %s (%d): %lf %lf %lf %lf, score=%.2f\n", obj->objects[i].name, obj->objects[i].classes,
+                 obj->objects[i].bbox.x1, obj->objects[i].bbox.x2, obj->objects[i].bbox.y1, obj->objects[i].bbox.y2, results[i].score);
   }
 }
 
@@ -195,7 +195,7 @@ void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w
             continue;
         }
 
-        bool skip_class = ((det_type & CVI_DET_TYPE_ALL) == 0);
+        bool skip_class = (det_type & CVI_DET_TYPE_ALL);
         if ((det_type & CVI_DET_TYPE_VEHICLE)) {
           if ((obj_result.label >= 1) && obj_result.label <= 7) skip_class = false;
         }

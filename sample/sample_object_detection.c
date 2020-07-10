@@ -18,7 +18,7 @@
 #include "cvi_isp.h"
 #include "cvi_ae.h"
 
-#include "cv183x_facelib_v0.0.1.h"
+#include "cviai.h"
 #include "sample_comm.h"
 #include "draw_utils.h"
 
@@ -27,7 +27,7 @@
 #define YOLOV3_SCALE                (float)(1 / 255.0)
 #define YOLOV3_QUANTIZE_SCALE       YOLOV3_SCALE * (128.0 / 1.00000488758)
 
-cv183x_facelib_handle_t facelib_handle = NULL;
+cviai_handle_t facelib_handle = NULL;
 
 static VI_PIPE vi_pipe = 0;
 static CVI_S32 work_sns_id = 0;
@@ -76,13 +76,13 @@ static int ReleaseVideoframe(VIDEO_FRAME_INFO_S *obj_det_frame, VIDEO_FRAME_INFO
 	return ret;
 }
 
-static int DoObjDet(cv183x_facelib_handle_t facelib_handle, VIDEO_FRAME_INFO_S *obj_det_frame, cvi_object_meta_t *obj_meta)
+static int DoObjDet(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *obj_det_frame, cvi_object_t *obj_meta)
 {
 	CVI_S32 ret = CVI_SUCCESS;
 
-	Cv183xObjDetect(facelib_handle, obj_det_frame, obj_meta, 0);
+	CVI_AI_ObjDetect(facelib_handle, obj_det_frame, obj_meta, 0);
 
-	return 0;
+	return ret;
 }
 
 static void Exit()
@@ -101,7 +101,7 @@ static void Run()
 {
 	CVI_S32 ret = CVI_SUCCESS;
 	VIDEO_FRAME_INFO_S obj_det_frame, video_output_frame;
-	cvi_object_meta_t obj_meta;
+	cvi_object_t obj_meta;
 
 	while (true) {
 		ret = GetVideoframe(&obj_det_frame, &video_output_frame);
@@ -115,11 +115,11 @@ static void Run()
 		DrawObjMeta(&video_output_frame, &obj_meta);
 
 		// set_vpss_aspect(2,0,0,720,1280);
-		ret = CVI_VO_SendFrame(vo_layer, vo_channel, &video_output_frame, -1);
-		if (ret != CVI_SUCCESS) {
-			printf("CVI_VO_SendFrame failed with %#x\n", ret);
-		}
-		CVI_VO_ShowChn(vo_layer,vo_channel);
+		// ret = CVI_VO_SendFrame(vo_layer, vo_channel, &video_output_frame, -1);
+		// if (ret != CVI_SUCCESS) {
+		// 	printf("CVI_VO_SendFrame failed with %#x\n", ret);
+		// }
+		// CVI_VO_ShowChn(vo_layer,vo_channel);
 
 		ret = ReleaseVideoframe(&obj_det_frame, &video_output_frame);
 		if(ret != CVI_SUCCESS) {
@@ -141,10 +141,9 @@ static void SampleHandleSig(CVI_S32 signo)
 	}
 }
 
-static void SetFacelibAttr(cv183x_facelib_config_t *facelib_config)
+static void SetFacelibAttr(cviai_config_t *facelib_config)
 {
-	memset(facelib_config, 0, sizeof(cv183x_facelib_config_t));
-	facelib_config->config_yolo = 1;
+	memset(facelib_config, 0, sizeof(cviai_config_t));
 	facelib_config->model_yolo3 = "/mnt/data/yolo_v3_320.cvimodel";
 }
 
@@ -212,7 +211,7 @@ static CVI_S32 InitVPSS()
 	vpss_channel_attr[vpss_channel].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
 	vpss_channel_attr[vpss_channel].stAspectRatio.bEnableBgColor = CVI_TRUE;
 	vpss_channel_attr[vpss_channel].stAspectRatio.u32BgColor  = COLOR_RGB_BLACK;
-	vpss_channel_attr[vpss_channel].stNormalize.bEnable = CVI_FALSE;
+	vpss_channel_attr[vpss_channel].stNormalize.bEnable = CVI_TRUE;
 	vpss_channel_attr[vpss_channel].stNormalize.factor[0] = YOLOV3_QUANTIZE_SCALE;
 	vpss_channel_attr[vpss_channel].stNormalize.factor[1] = YOLOV3_QUANTIZE_SCALE;
 	vpss_channel_attr[vpss_channel].stNormalize.factor[2] = YOLOV3_QUANTIZE_SCALE;
@@ -383,7 +382,7 @@ int main(void)
 	CVI_S32 ret = CVI_SUCCESS;
 	SAMPLE_VI_CONFIG_S video_input_config;
 	SAMPLE_VO_CONFIG_S video_output_config;
-	cv183x_facelib_config_t facelib_config;
+	cviai_config_t facelib_config;
 
 	signal(SIGINT, SampleHandleSig);
 	signal(SIGTERM, SampleHandleSig);
@@ -415,7 +414,7 @@ int main(void)
 	}
 
 	SetFacelibAttr(&facelib_config);
-	ret = Cv183xFaceLibOpen(&facelib_config, &facelib_handle);
+	ret = CVI_AI_InitHandle(&facelib_config, &facelib_handle);
     if (ret != CVI_SUCCESS) {
         printf("Facelib open failed with %#x!\n", ret);
         return ret;

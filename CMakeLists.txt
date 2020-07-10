@@ -110,3 +110,4 @@ include_directories(${CMAKE_SOURCE_DIR}/include
                     ${MIDDLEWARE_INCLUDES}
                     ${TRACER_INCLUDES})
 add_subdirectory(modules)
+add_subdirectory(sample)

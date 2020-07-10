@@ -1,3 +1,4 @@
+#include "string.h"
 #include "draw_utils.h"
 
 #define min(x,y) (((x)<=(y))?(x):(y))
@@ -7,6 +8,20 @@
 #define DEFAULT_RECT_COLOR_G          (208. / 255.)
 #define DEFAULT_RECT_COLOR_B          (217. / 255.)
 #define DEFAULT_RECT_THINKNESS        4
+
+typedef struct {
+    float r;
+    float g;
+    float b;
+} color_rgb;
+
+enum
+{
+  PLANE_Y = 0,
+  PLANE_U,
+  PLANE_V,
+  PLANE_NUM
+};
 
 static float GetYuvColor(int chanel, color_rgb *color)
 {
@@ -110,7 +125,7 @@ void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_face_t *face_meta)
 
   float width = draw_frame->stVFrame.u32Width;
   float height = draw_frame->stVFrame.u32Height;
-  float ratio_x,ratio_y,bbox_y_height,bbox_x_height,bbox_padding_top,bbox_padding_left;
+  float ratio_x, ratio_y, bbox_y_height,bbox_x_height, bbox_padding_top = 0, bbox_padding_left = 0;
   if(width >=height) {
       ratio_x = width / face_meta->width;
       bbox_y_height = face_meta->height * height / width;
@@ -129,7 +144,7 @@ void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_face_t *face_meta)
   rgb_color.b = 0.0;
 
   for (int i = 0; i < face_meta->size; ++i) {
-    cvi_face_detect_rect_t bbox = face_meta->face_info[i].bbox;
+    cvi_bbox_t bbox = face_meta->face_info[i].bbox;
     float x1,x2,y1,y2;
     if(width >=height) {
         x1 = bbox.x1 * ratio_x;
@@ -147,14 +162,14 @@ void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_face_t *face_meta)
   }
 }
 
-void DrawObjMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_object_meta_t *meta)
+void DrawObjMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_object_t *meta)
 {
     if (0 == meta->size) {
         return;
     }
     float width = draw_frame->stVFrame.u32Width;
     float height = draw_frame->stVFrame.u32Height;
-    float ratio_x,ratio_y,bbox_y_height,bbox_x_height,bbox_padding_top,bbox_padding_left;
+    float ratio_x,ratio_y,bbox_y_height,bbox_x_height,bbox_padding_top = 0, bbox_padding_left = 0;
     if(width >=height)
     {
         ratio_x = width / meta->width;
@@ -174,7 +189,7 @@ void DrawObjMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_object_meta_t *meta)
     rgb_color.b = DEFAULT_RECT_COLOR_B;
 
   for (int i = 0; i < meta->size; ++i) {
-    cvi_face_detect_rect_t bbox = meta->objects[i].bbox;
+    cvi_bbox_t bbox = meta->objects[i].bbox;
     float x1,x2,y1,y2;
     if(width >=height)
     {
