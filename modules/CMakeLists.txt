@@ -4,6 +4,7 @@ add_subdirectory(core)
 add_subdirectory(utils)
 add_subdirectory(face_attribute)
 add_subdirectory(retina_face)
+add_subdirectory(yolov3)
 
 project(cviai)
 #set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all-symbols")

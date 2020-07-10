@@ -31,6 +31,7 @@ class Core {
   ~Core();
   bool modelOpen(const char *filepath);
   bool modelClose();
+  float getInputScale();
 
  protected:
   int run(VIDEO_FRAME_INFO_S *srcFrame);
@@ -45,5 +46,6 @@ class Core {
   CVI_TENSOR *mp_output_tensors = nullptr;
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
+  float m_input_scale = 0;
 };
 }  // namespace cviai

@@ -97,4 +97,8 @@ CVI_TENSOR *Core::getOutputTensor(int idx) {
   return mp_output_tensors + idx;
 }
 
+float Core::getInputScale() {
+  return m_input_scale;
+}
+
 }  // namespace cviai
