@@ -7,7 +7,7 @@
 
 #include "cviai_types_free.h"
 
-#define freeCviTypes(X)                         \
+#define CVI_AI_Free(X)                          \
   _Generic((X), cvi_feature_t                   \
            : CVI_AI_FreeFeature, cvi_pts_t      \
            : CVI_AI_FreePts, cvi_face_info_t    \
