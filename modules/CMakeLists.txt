@@ -11,5 +11,6 @@ project(cviai)
 add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:core>
                                    $<TARGET_OBJECTS:utils>
                                    $<TARGET_OBJECTS:face_attribute>
-                                   $<TARGET_OBJECTS:retina_face>)
+                                   $<TARGET_OBJECTS:retina_face>
+                                   cviai_types_free.cpp)
 target_link_libraries(${PROJECT_NAME} ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS})
