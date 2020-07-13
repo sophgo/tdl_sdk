@@ -11,7 +11,7 @@ Core::~Core() {
   }
 }
 
-bool Core::modelOpen(const char *filepath) {
+int Core::modelOpen(const char *filepath) {
   CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
   if (ret != CVI_RC_SUCCESS) {
     printf("CVI_NN_RegisterModel failed, err %d\n", ret);
@@ -40,7 +40,7 @@ bool Core::modelOpen(const char *filepath) {
   return ret;
 }
 
-bool Core::modelClose() {
+int Core::modelClose() {
   if (mp_model_handle != nullptr) {
     if (int ret = CVI_NN_CleanupModel(mp_model_handle) != CVI_RC_SUCCESS) {
       printf("CVI_NN_CleanupModel failed, err %d\n", ret);
@@ -73,7 +73,10 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
       info.stride[i] = srcFrame->stVFrame.u32Stride[i];
       info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[i];
     }
-    CVI_NN_SetTensorWithVideoFrame(mp_input_tensors, &info);
+    if (int ret = CVI_NN_SetTensorWithVideoFrame(mp_input_tensors, &info) != CVI_RC_SUCCESS) {
+      printf("NN set tensor with vi failed: %d\n", ret);
+      return ret;
+    }
   }
   int ret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num, mp_output_tensors,
                            m_output_num);
@@ -97,8 +100,6 @@ CVI_TENSOR *Core::getOutputTensor(int idx) {
   return mp_output_tensors + idx;
 }
 
-float Core::getInputScale() {
-  return m_input_scale;
-}
+float Core::getInputScale() { return m_input_scale; }
 
 }  // namespace cviai

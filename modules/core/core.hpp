@@ -29,12 +29,12 @@ struct ModelConfig {
 class Core {
  public:
   ~Core();
-  bool modelOpen(const char *filepath);
-  bool modelClose();
+  int modelOpen(const char *filepath);
+  int modelClose();
   float getInputScale();
 
  protected:
-  int run(VIDEO_FRAME_INFO_S *srcFrame);
+  virtual int run(VIDEO_FRAME_INFO_S *srcFrame);
   CVI_TENSOR *getInputTensor(int idx);
   CVI_TENSOR *getOutputTensor(int idx);
 
