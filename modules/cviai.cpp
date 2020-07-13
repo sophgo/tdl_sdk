@@ -19,9 +19,18 @@ typedef struct {
   cviai_model_t yolov3;
 } cviai_context_t;
 
-int CVI_AI_InitHandle(cviai_handle_t *handle) {
-  cviai_context_t *context = new cviai_context_t;
-  *handle = context;
+int CVI_AI_CreateHandle(cviai_handle_t *handle) {
+  cviai_context_t *ctx = new cviai_context_t;
+  *handle = ctx;
+  return CVI_RC_SUCCESS;
+}
+
+int CVI_AI_DestroyHandle(cviai_handle_t handle) {
+  cviai_context_t *ctx = new cviai_context_t;
+  if (ctx->yolov3.instance != nullptr) {
+    delete ctx->yolov3.instance;
+  }
+  delete ctx;
   return CVI_RC_SUCCESS;
 }
 

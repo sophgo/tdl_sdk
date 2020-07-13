@@ -25,7 +25,8 @@ typedef enum { CVI_AI_SUPPORTED_MODEL_YOLOV3, CVI_AI_SUPPORTED_MODEL_END } CVI_A
 #ifdef __cplusplus
 extern "C" {
 #endif
-int CVI_AI_InitHandle(cviai_handle_t *handle);
+int CVI_AI_CreateHandle(cviai_handle_t *handle);
+int CVI_AI_DestroyHandle(cviai_handle_t handle);
 int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath);
 int CVI_AI_ObjDetect(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvi_object_t *obj,

@@ -406,7 +406,7 @@ int main(void)
 		return ret;
 	}
 
-	ret = CVI_AI_InitHandle(&facelib_handle);
+	ret = CVI_AI_CreateHandle(&facelib_handle);
     ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YOLOV3,
 	                          "/mnt/data/yolo_v3_320.cvimodel");
     if (ret != CVI_SUCCESS) {
@@ -416,5 +416,6 @@ int main(void)
 
 	Run();
 
+    CVI_AI_DestroyHandle(facelib_handle);
 	Exit();
 }

@@ -58,8 +58,6 @@ Yolov3::Yolov3() {
   };
 }
 
-Yolov3::~Yolov3() {}
-
 int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_object_t *obj,
                       cvi_obj_det_type_t det_type) {
   int ret = run(srcFrame);
