@@ -9,13 +9,7 @@
 #include "cviai_types_free.h"
 typedef void *cviai_handle_t;
 
-typedef struct {
-  char *model_face_fd;
-  char *model_face_extr;
-  char *model_face_liveness;
-  char *model_yolo3;
-  char *model_face_thermal;
-} cviai_config_t;
+typedef enum { CVI_AI_SUPPORTED_MODEL_YOLOV3, CVI_AI_SUPPORTED_MODEL_END } CVI_AI_SUPPORTED_MODEL_E;
 
 // clang-format off
 #define CVI_AI_Free(X)                               \
@@ -31,7 +25,9 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int CVI_AI_InitHandle(const cviai_config_t *config, cviai_handle_t *handle);
+int CVI_AI_InitHandle(cviai_handle_t *handle);
+int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                        const char *filepath);
 int CVI_AI_ObjDetect(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvi_object_t *obj,
                      cvi_obj_det_type_t det_type);
 #ifdef __cplusplus

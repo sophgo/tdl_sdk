@@ -141,12 +141,6 @@ static void SampleHandleSig(CVI_S32 signo)
 	}
 }
 
-static void SetFacelibAttr(cviai_config_t *facelib_config)
-{
-	memset(facelib_config, 0, sizeof(cviai_config_t));
-	facelib_config->model_yolo3 = "/mnt/data/yolo_v3_320.cvimodel";
-}
-
 static void SetVIConfig(SAMPLE_VI_CONFIG_S* video_input_config)
 {
 	SAMPLE_COMM_VI_GetSensorInfo(video_input_config);
@@ -382,7 +376,6 @@ int main(void)
 	CVI_S32 ret = CVI_SUCCESS;
 	SAMPLE_VI_CONFIG_S video_input_config;
 	SAMPLE_VO_CONFIG_S video_output_config;
-	cviai_config_t facelib_config;
 
 	signal(SIGINT, SampleHandleSig);
 	signal(SIGTERM, SampleHandleSig);
@@ -413,8 +406,9 @@ int main(void)
 		return ret;
 	}
 
-	SetFacelibAttr(&facelib_config);
-	ret = CVI_AI_InitHandle(&facelib_config, &facelib_handle);
+	ret = CVI_AI_InitHandle(&facelib_handle);
+    ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YOLOV3,
+	                          "/mnt/data/yolo_v3_320.cvimodel");
     if (ret != CVI_SUCCESS) {
         printf("Facelib open failed with %#x!\n", ret);
         return ret;
