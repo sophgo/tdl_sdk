@@ -5,16 +5,16 @@
 #include "face/cvi_face_types.h"
 #include "object/cvi_object_types.h"
 
-#include "cviai_types_free.h"
 #include "cvi_sys.h"
-typedef void* cviai_handle_t;
+#include "cviai_types_free.h"
+typedef void *cviai_handle_t;
 
 typedef struct {
-	char *model_face_fd;
-	char *model_face_extr;
-	char *model_face_liveness;
-	char *model_yolo3;
-	char *model_face_thermal;
+  char *model_face_fd;
+  char *model_face_extr;
+  char *model_face_liveness;
+  char *model_yolo3;
+  char *model_face_thermal;
 } cviai_config_t;
 
 // clang-format off
@@ -32,7 +32,8 @@ typedef struct {
 extern "C" {
 #endif
 int CVI_AI_InitHandle(const cviai_config_t *config, cviai_handle_t *handle);
-int CVI_AI_ObjDetect(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvi_object_t *obj, cvi_obj_det_type_t det_type);
+int CVI_AI_ObjDetect(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvi_object_t *obj,
+                     cvi_obj_det_type_t det_type);
 #ifdef __cplusplus
 }
 #endif
