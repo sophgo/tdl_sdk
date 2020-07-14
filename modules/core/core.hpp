@@ -2,6 +2,7 @@
 #include "cvi_comm_video.h"
 #include "cviruntime.h"
 
+#include <memory>
 #include <vector>
 
 namespace cviai {
@@ -28,7 +29,7 @@ struct ModelConfig {
 
 class Core {
  public:
-  virtual ~Core();
+  virtual ~Core() = default;
   int modelOpen(const char *filepath);
   int modelClose();
   float getInputScale();
@@ -39,7 +40,7 @@ class Core {
   CVI_TENSOR *getOutputTensor(int idx);
 
   // Class settings
-  ModelConfig *mp_config = nullptr;
+  std::unique_ptr<ModelConfig> mp_config;
   // Runtime related
   CVI_MODEL_HANDLE mp_model_handle = nullptr;
   CVI_TENSOR *mp_input_tensors = nullptr;

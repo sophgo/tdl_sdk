@@ -6,10 +6,10 @@
 
 namespace cviai {
 
-class FaceAttribute : public Core {
+class FaceAttribute final : public Core {
  public:
   FaceAttribute();
-  ~FaceAttribute();
+  virtual ~FaceAttribute();
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvi_face_t *meta);
 
  private:

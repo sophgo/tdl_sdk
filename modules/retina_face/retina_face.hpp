@@ -8,10 +8,10 @@
 
 namespace cviai {
 
-class RetinaFace : public Core {
+class RetinaFace final : public Core {
  public:
   RetinaFace();
-  ~RetinaFace();
+  virtual ~RetinaFace();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_face_t *meta, int *face_count);
 
  private:

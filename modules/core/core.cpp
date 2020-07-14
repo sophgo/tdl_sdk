@@ -4,13 +4,6 @@
 
 namespace cviai {
 
-Core::~Core() {
-  modelClose();
-  if (mp_config != nullptr) {
-    delete mp_config;
-  }
-}
-
 int Core::modelOpen(const char *filepath) {
   CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
   if (ret != CVI_RC_SUCCESS) {
@@ -18,7 +11,7 @@ int Core::modelOpen(const char *filepath) {
     return ret;
   }
   printf("CVI_NN_RegisterModel successed\n");
-  if (mp_config == nullptr) {
+  if (!mp_config) {
     printf("config not set\n");
     return CVI_RC_FAILURE;
   }

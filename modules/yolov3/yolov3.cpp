@@ -39,7 +39,7 @@ using namespace std;
 namespace cviai {
 
 Yolov3::Yolov3() {
-  mp_config = new ModelConfig;
+  mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_preprocess = true;
   mp_config->input_mem_type = 2;
 
