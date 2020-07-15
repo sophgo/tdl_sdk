@@ -31,6 +31,7 @@ typedef struct {
   float age;
   float liveness_score;
   float mask_score;
+  float face_quality;
 } cvi_face_info_t;
 
 typedef struct {
