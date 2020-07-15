@@ -80,7 +80,7 @@ static int DoObjDet(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *obj_det_f
 {
 	CVI_S32 ret = CVI_SUCCESS;
 
-	CVI_AI_ObjDetect(facelib_handle, obj_det_frame, obj_meta, 0);
+	CVI_AI_Yolov3(facelib_handle, obj_det_frame, obj_meta, 0);
 
 	return ret;
 }
@@ -137,6 +137,7 @@ static void SampleHandleSig(CVI_S32 signo)
 	signal(SIGTERM, SIG_IGN);
 
 	if (SIGINT == signo || SIGTERM == signo) {
+		CVI_AI_DestroyHandle(facelib_handle);
 		Exit();
 	}
 }
