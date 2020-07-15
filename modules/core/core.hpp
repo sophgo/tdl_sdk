@@ -17,7 +17,7 @@ namespace cviai {
  */
 struct ModelConfig {
   // FIXME: something strange...
-  // int32_t batch_size = 0;
+  int32_t batch_size = 0;
   bool init_input_buffer = true;
   bool init_output_buffer = true;
   bool debug_mode = false;

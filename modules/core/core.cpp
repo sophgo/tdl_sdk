@@ -15,6 +15,9 @@ int Core::modelOpen(const char *filepath) {
     printf("config not set\n");
     return CVI_RC_FAILURE;
   }
+  if (mp_config->batch_size != 0) {
+    CVI_NN_SetConfig(mp_model_handle, OPTION_BATCH_SIZE, mp_config->batch_size);
+  }
   CVI_NN_SetConfig(mp_model_handle, OPTION_PREPARE_BUF_FOR_INPUTS, mp_config->init_input_buffer);
   CVI_NN_SetConfig(mp_model_handle, OPTION_PREPARE_BUF_FOR_OUTPUTS, mp_config->init_output_buffer);
   CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_ALL_TENSORS, mp_config->debug_mode);
