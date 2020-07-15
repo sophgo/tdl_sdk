@@ -9,7 +9,11 @@
 #include "cviai_types_free.h"
 typedef void *cviai_handle_t;
 
-typedef enum { CVI_AI_SUPPORTED_MODEL_YOLOV3, CVI_AI_SUPPORTED_MODEL_END } CVI_AI_SUPPORTED_MODEL_E;
+typedef enum {
+  CVI_AI_SUPPORTED_MODEL_RETINAFACE,
+  CVI_AI_SUPPORTED_MODEL_YOLOV3,
+  CVI_AI_SUPPORTED_MODEL_END
+} CVI_AI_SUPPORTED_MODEL_E;
 
 // clang-format off
 #define CVI_AI_Free(X)                               \
@@ -29,6 +33,8 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle);
 int CVI_AI_DestroyHandle(cviai_handle_t handle);
 int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath);
+int CVI_AI_CloseAllModel(cviai_handle_t handle);
+int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 int CVI_AI_Yolov3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvi_object_t *obj,
                   cvi_obj_det_type_t det_type);
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvi_face_t *faces,
