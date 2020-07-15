@@ -9,7 +9,7 @@ CC := $(TOOLCHAIN_PATH)/aarch64-linux-gnu-gcc
 CXX := $(TOOLCHAIN_PATH)/aarch64-linux-gnu-g++
 endif
 
-TARGET := libcvialgo.so
+TARGET := libcviai.so
 
 LDFLAGS = -shared -fPIC -o
 
