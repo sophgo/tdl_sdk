@@ -101,10 +101,10 @@ static void prepare_yolo_input_tensor(VIDEO_FRAME_INFO_S *frame, CVI_TENSOR *inp
     for (size_t i = 0; i < 3; i++) {
         frame->stVFrame.pu8VirAddr[i] = (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[i], frame->stVFrame.u32Length[i]);
         const void* src = (const void*)frame->stVFrame.pu8VirAddr[i];
-        
+
         memcpy(dst, src, cp_size);
         dst += cp_size;
-        
+
         CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Length[i]);
     }
 

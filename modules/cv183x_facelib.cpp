@@ -25,6 +25,7 @@ struct timeval tv1,tv2;
 #include "cvi_liveness/liveness.h"
 #include "cvi_yolove3/run_yolo.h"
 #include "cvi_thermal_face_detect/thermal_face.h"
+#include "cvi_face_quality/face_quality.h"
 
 using namespace std;
 using namespace cv;
@@ -69,6 +70,11 @@ int Cv183xFaceLibOpen(const cv183x_facelib_config_t *facelib_config, cv183x_face
         printf("init_network_yolov3 done\n");
     }
 
+    if (facelib_config->model_face_qual != NULL) {
+        init_network_face_quality(facelib_config->model_face_qual);
+        printf("init_network_face_quality done");
+    }
+
     // ret = bm_init_chip(0, &context->bm_ctx, "cv183x");
     // if (ret != BM_SUCCESS) {
     //   fprintf(stderr, "cvi_init failed, err %d\n", ret);
@@ -90,6 +96,7 @@ int Cv183xFaceLibClose(cv183x_facelib_handle_t handle) {
     clean_network_retina();
     clean_network_face_attribute();
     clean_network_liveness();
+    clean_network_face_quality();
 
     if (fctx->cvk_ctx) {
       fctx->cvk_ctx->ops->cleanup(fctx->cvk_ctx);
@@ -540,6 +547,13 @@ int CviThermalFaceDetect(const cv183x_facelib_handle_t handle, VIDEO_FRAME_INFO_
                          cvi_face_t *faces, int *face_count)
 {
     thermal_face_inference(frame, faces, face_count);
+
+    return 0;
+}
+
+int Cv183xFaceQualityCheck(cv183x_facelib_handle_t handle, VIDEO_FRAME_INFO_S *stFrame, cvi_face_t *face)
+{
+    face_quality_inference(stFrame, face);
 
     return 0;
 }

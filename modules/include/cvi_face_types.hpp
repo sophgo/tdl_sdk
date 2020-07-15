@@ -43,6 +43,7 @@ typedef struct {
     char race[16];
     float age;
     float mask_score;
+    float face_quality;
 } cvi_face_info_t;
 
 typedef struct {

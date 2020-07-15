@@ -50,6 +50,7 @@ typedef struct {
 	char *model_face_liveness;
 	char *model_yolo3;
 	char *model_face_thermal;
+	char *model_face_qual;
 	cv183x_facelib_attr_t attr;
 } cv183x_facelib_config_t;
 
@@ -139,8 +140,7 @@ int Cv183xFaceRecognize(cv183x_facelib_handle_t handle, VIDEO_FRAME_INFO_S *imag
  * @param   Out: result: 0, the image passes the quality check, non-zero: the image does not meet the requirement
  * @return  Ok:0, Error:-1
 **/
-int Cv183xFaceQualityCheck(const cv183x_facelib_handle_t handle, const cv183x_image_t *image, 
-						   const cvi_face_info_t *face_info, int checker_id, int *result);
+int Cv183xFaceQualityCheck(cv183x_facelib_handle_t handle, VIDEO_FRAME_INFO_S *stFrame, cvi_face_t *face);
 
 /**
  * @brief   Insert entry into repository with id, name and features of a person

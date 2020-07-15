@@ -13,7 +13,7 @@ TARGET := libcvialgo.so
 
 LDFLAGS = -shared -fPIC -o
 
-SRC_CPP := $(wildcard ./modules/*.cpp)
+SRC_CPP := $(wildcard ./modules/cv183x_facelib.cpp)
 SRC_CPP += $(wildcard ./modules/cvi_face_attribute/*.cpp)
 SRC_CPP += $(wildcard ./modules/cvi_feature_matching/*.cpp)
 SRC_CPP += $(wildcard ./modules/cvi_liveness/*.cpp)
@@ -21,6 +21,7 @@ SRC_CPP += $(wildcard ./modules/cvi_retina_face/*.cpp)
 SRC_CPP += $(wildcard ./modules/cvi_utils/*.cpp)
 SRC_CPP += $(wildcard ./modules/cvi_yolove3/*.cpp)
 SRC_CPP += $(wildcard ./modules/cvi_thermal_face_detect/*.cpp)
+SRC_CPP += $(wildcard ./modules/cvi_face_quality/*.cpp)
 SRC_C += $(shell find ./modules -name *.c)
 OBJS := $(SRC_C:%.c=%.o)
 OBJS += $(SRC_CPP:%.cpp=%.o)

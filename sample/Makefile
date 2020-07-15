@@ -5,7 +5,8 @@ CXX := $(TOOLCHAIN_PATH)/aarch64-linux-gnu-g++
 
 TARGET := sample_fd
 
-SRC_C += $(shell find ./ -name '*.c')
+SRC_C := $(wildcard ./sample_fd.c)
+#SRC_C += $(wildcard ./draw_utils.c)
 OBJS := $(SRC_C:%.c=%.o)
 OBJS += $(SRC_CPP:%.cpp=%.o)
 
