@@ -30,16 +30,16 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
 )
 
-#add_executable(sample_fd
-#    sample_fd.c
-#    draw_utils.c
-#)
+add_executable(sample_fd
+    sample_fd.c
+    draw_utils.c
+)
 
 add_executable(sample_object_detection
     sample_object_detection.c
     draw_utils.c
 )
 
-#target_link_libraries(sample_fd ${SAMPLE_LIBS})
+target_link_libraries(sample_fd cviai ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
 target_link_libraries(sample_object_detection cviai ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
 

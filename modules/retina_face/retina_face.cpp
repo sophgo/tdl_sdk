@@ -6,13 +6,14 @@
 #define NAME_BBOX "face_rpn_bbox_pred_"
 #define NAME_SCORE "face_rpn_cls_score_reshape_"
 #define NAME_LANDMARK "face_rpn_landmark_pred_"
+#define FACE_POINTS_SIZE 5
 
 namespace cviai {
 
 RetinaFace::RetinaFace() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_preprocess = true;
-  mp_config->input_mem_type = 2;
+  mp_config->input_mem_type = CVI_MEM_DEVICE;;
 }
 
 RetinaFace::~RetinaFace() {}
@@ -59,6 +60,7 @@ int RetinaFace::initAfterModelOpened() {
     m_anchors[landmark_str] =
         anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
   }
+
   return CVI_RC_SUCCESS;
 }
 
@@ -182,6 +184,9 @@ void RetinaFace::initFaceMeta(cvi_face_t *meta, int size) {
     meta->face_info[i].liveness_score = -1;
     meta->face_info[i].mask_score = -1;
 
+    meta->face_info[i].face_pts.size = FACE_POINTS_SIZE;
+    meta->face_info[i].face_pts.x = new float[meta->face_info[i].face_pts.size];
+    meta->face_info[i].face_pts.y = new float[meta->face_info[i].face_pts.size];
     for (uint32_t j = 0; j < meta->face_info[i].face_pts.size; ++j) {
       meta->face_info[i].face_pts.x[j] = -1;
       meta->face_info[i].face_pts.y[j] = -1;
