@@ -5,6 +5,15 @@
 #include "object/cvi_object_types.h"
 
 #ifdef __cplusplus
+void CVI_AI_FreeCpp(cvi_feature_t *feature);
+void CVI_AI_FreeCpp(cvi_pts_t *pts);
+void CVI_AI_FreeCpp(cvi_face_info_t *face_info);
+void CVI_AI_FreeCpp(cvi_face_t *face);
+void CVI_AI_FreeCpp(cvi_object_info_t *face_info);
+void CVI_AI_FreeCpp(cvi_object_t *face);
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 

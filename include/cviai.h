@@ -16,9 +16,11 @@ typedef enum {
   CVI_AI_SUPPORTED_MODEL_END
 } CVI_AI_SUPPORTED_MODEL_E;
 
+#ifdef __cplusplus
+#define CVI_AI_Free(X) CVI_AI_FreeCpp(X)
+#else
 // clang-format off
-#define CVI_AI_Free(X)                               \
-  _Generic((X),                                      \
+#define CVI_AI_Free(X) _Generic((X),                 \
            cvi_feature_t: CVI_AI_FreeFeature,        \
            cvi_pts_t: CVI_AI_FreePts,                \
            cvi_face_info_t: CVI_AI_FreeFaceInfo,     \
@@ -26,6 +28,7 @@ typedef enum {
            cvi_object_info_t: CVI_AI_FreeObjectInfo, \
            cvi_object_t: CVI_AI_FreeObject)(X)
 // clang-format on
+#endif
 
 #ifdef __cplusplus
 extern "C" {
