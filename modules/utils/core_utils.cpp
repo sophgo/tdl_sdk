@@ -25,7 +25,7 @@ void Dequantize(int8_t *q_data, float *data, float threshold, size_t size) {
   }
 }
 
-void clip_boxes(int width, int height, cvi_bbox_t &box) {
+void clip_boxes(int width, int height, cvai_bbox_t &box) {
   if (box.x1 < 0) {
     box.x1 = 0;
   }

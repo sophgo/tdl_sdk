@@ -1,7 +1,7 @@
 #pragma once
 
-#include "face/cvi_face_helper.h"
-#include "face/cvi_face_types.h"
+#include "face/cvai_face_helper.h"
+#include "face/cvai_face_types.h"
 
 #include <vector>
 
@@ -141,9 +141,9 @@ class FaceAttributeInfo final {
   GenderFeature gender_prob;
   RaceFeature race_prob;
   AgeFeature age_prob;
-  cvi_face_emotion_e emotion = EMOTION_UNKNOWN;
-  cvi_face_gender_e gender = GENDER_UNKNOWN;
-  cvi_face_race_e race = RACE_UNKNOWN;
+  cvai_face_emotion_e emotion = EMOTION_UNKNOWN;
+  cvai_face_gender_e gender = GENDER_UNKNOWN;
+  cvai_face_race_e race = RACE_UNKNOWN;
   float age = -1.0;
 };
 }  // namespace cviai

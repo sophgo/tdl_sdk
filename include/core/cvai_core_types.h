@@ -21,18 +21,18 @@ typedef struct {
   float x2;
   float y2;
   float score;
-} cvi_bbox_t;
+} cvai_bbox_t;
 
 typedef struct {
   int8_t* ptr;
   uint32_t size;
   feature_type_e type;
-} cvi_feature_t;
+} cvai_feature_t;
 
 typedef struct {
   float* x;
   float* y;
   uint32_t size;
-} cvi_pts_t;
+} cvai_pts_t;
 
 #endif

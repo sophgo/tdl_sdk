@@ -64,12 +64,12 @@ int RetinaFace::initAfterModelOpened() {
   return CVI_RC_SUCCESS;
 }
 
-int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_face_t *meta, int *face_count) {
+int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *face_count) {
   int ret = run(srcFrame);
 
   CVI_TENSOR *input = getInputTensor(0);
   float ratio = 1.0;
-  std::vector<cvi_face_info_t> faceList;
+  std::vector<cvai_face_info_t> faceList;
   outputParser(ratio, input->shape.dim[2], input->shape.dim[3], &faceList);
 
   initFaceMeta(meta, faceList.size());
@@ -92,8 +92,8 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_face_t *meta, int *f
 }
 
 void RetinaFace::outputParser(float ratio, int image_width, int image_height,
-                              std::vector<cvi_face_info_t> *bboxes_nms) {
-  std::vector<cvi_face_info_t> BBoxes;
+                              std::vector<cvai_face_info_t> *bboxes_nms) {
+  std::vector<cvai_face_info_t> BBoxes;
 
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
     std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
@@ -126,7 +126,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height,
     std::vector<anchor_box> anchors = m_anchors[landmark_str];
     for (size_t num = 0; num < num_anchor; num++) {
       for (size_t j = 0; j < count; j++) {
-        cvi_face_info_t box;
+        cvai_face_info_t box;
         box.face_pts.size = 5;
         box.face_pts.x = new float[box.face_pts.size];
         box.face_pts.y = new float[box.face_pts.size];
@@ -164,11 +164,11 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height,
   }
 }
 
-void RetinaFace::initFaceMeta(cvi_face_t *meta, int size) {
+void RetinaFace::initFaceMeta(cvai_face_t *meta, int size) {
   meta->size = size;
-  meta->face_info = (cvi_face_info_t *)malloc(sizeof(cvi_face_info_t) * meta->size);
+  meta->face_info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
 
-  memset(meta->face_info, 0, sizeof(cvi_face_info_t) * meta->size);
+  memset(meta->face_info, 0, sizeof(cvai_face_info_t) * meta->size);
 
   for (int i = 0; i < meta->size; ++i) {
     meta->face_info[i].bbox.x1 = -1;

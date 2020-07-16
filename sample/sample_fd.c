@@ -87,7 +87,7 @@ void set_vpss_aspect(CVI_S32 vpsschn, CVI_S32 x, CVI_S32 y, CVI_S32 width, CVI_S
 }
 
 
-static int DoFd(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *stfdFrame, cvi_face_t *face)
+static int DoFd(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *stfdFrame, cvai_face_t *face)
 {
 	int face_count = 0;
 
@@ -113,7 +113,7 @@ static void Run()
 {
 	CVI_S32 s32Ret = CVI_SUCCESS;
 	VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
-	cvi_face_t face;
+	cvai_face_t face;
 
 	while (true) {
 		s32Ret = GetVideoframe(&stfdFrame, &stVOFrame);

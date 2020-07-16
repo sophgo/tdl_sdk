@@ -76,7 +76,7 @@ static int ReleaseVideoframe(VIDEO_FRAME_INFO_S *obj_det_frame, VIDEO_FRAME_INFO
 	return ret;
 }
 
-static int DoObjDet(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *obj_det_frame, cvi_object_t *obj_meta)
+static int DoObjDet(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *obj_det_frame, cvai_object_t *obj_meta)
 {
 	CVI_S32 ret = CVI_SUCCESS;
 
@@ -101,7 +101,7 @@ static void Run()
 {
 	CVI_S32 ret = CVI_SUCCESS;
 	VIDEO_FRAME_INFO_S obj_det_frame, video_output_frame;
-	cvi_object_t obj_meta;
+	cvai_object_t obj_meta;
 
 	while (true) {
 		ret = GetVideoframe(&obj_det_frame, &video_output_frame);

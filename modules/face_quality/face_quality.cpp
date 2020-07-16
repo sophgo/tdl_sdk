@@ -19,7 +19,7 @@ FaceQuality::FaceQuality() {
   mp_config = std::make_unique<ModelConfig>();
 }
 
-int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvi_face_t *meta) {
+int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   int img_width = frame->stVFrame.u32Width;
   int img_height = frame->stVFrame.u32Height;
   cv::Mat image(img_height, img_width, CV_8UC3);
@@ -39,7 +39,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvi_face_t *meta) {
   std::vector<float> mean = {MEAN_B, MEAN_G, MEAN_R};
   std::vector<float> scale = {SCALE_B, SCALE_G, SCALE_R};
   for (int i = 0; i < meta->size; i++) {
-    cvi_face_info_t face_info = bbox_rescale(frame, meta, i);
+    cvai_face_info_t face_info = bbox_rescale(frame, meta, i);
     cv::Mat crop_frame(input->shape.dim[3], input->shape.dim[2], image.type());
     face_align(image, crop_frame, face_info, input->shape.dim[2], input->shape.dim[3]);
 

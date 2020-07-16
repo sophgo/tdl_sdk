@@ -58,8 +58,8 @@ Yolov3::Yolov3() {
   };
 }
 
-int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_object_t *obj,
-                      cvi_obj_det_type_t det_type) {
+int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
+                      cvai_obj_det_type_t det_type) {
   int ret = run(srcFrame);
 
   outputParser(obj, det_type);
@@ -67,7 +67,7 @@ int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_object_t *obj,
   return ret;
 }
 
-void Yolov3::outputParser(cvi_object_t *obj, cvi_obj_det_type_t det_type) {
+void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
   vector<float *> features;
   vector<string> output_name = {YOLOV3_OUTPUT1, YOLOV3_OUTPUT2, YOLOV3_OUTPUT3};
   vector<CVI_SHAPE> output_shape;
@@ -126,11 +126,11 @@ void Yolov3::outputParser(cvi_object_t *obj, cvi_obj_det_type_t det_type) {
 
   // fill obj
   obj->size = results.size();
-  obj->objects = (cvi_object_info_t *)malloc(sizeof(cvi_object_info_t) * obj->size);
+  obj->objects = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj->size);
   obj->width = yolov3_w;
   obj->height = yolov3_h;
 
-  memset(obj->objects, 0, sizeof(cvi_object_info_t) * obj->size);
+  memset(obj->objects, 0, sizeof(cvai_object_info_t) * obj->size);
   for (int i = 0; i < obj->size; ++i) {
     obj->objects[i].bbox.x1 = results[i].x1;
     obj->objects[i].bbox.y1 = results[i].y1;
@@ -177,7 +177,7 @@ void Yolov3::doYolo(YOLOLayer &l) {
 }
 
 void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w, int ori_h,
-                            vector<object_detect_rect_t> &results, cvi_obj_det_type_t det_type) {
+                            vector<object_detect_rect_t> &results, cvai_obj_det_type_t det_type) {
   for (int i = 0; i < num; ++i) {
     std::string labelstr = "";
     int obj_class = -1;

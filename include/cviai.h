@@ -1,9 +1,9 @@
 #ifndef _CVIAI_H_
 #define _CVIAI_H_
-#include "core/cvi_core_types.h"
-#include "face/cvi_face_helper.h"
-#include "face/cvi_face_types.h"
-#include "object/cvi_object_types.h"
+#include "core/cvai_core_types.h"
+#include "face/cvai_face_helper.h"
+#include "face/cvai_face_types.h"
+#include "object/cvai_object_types.h"
 
 #include "cvi_sys.h"
 #include "cviai_types_free.h"
@@ -20,13 +20,13 @@ typedef enum {
 #define CVI_AI_Free(X) CVI_AI_FreeCpp(X)
 #else
 // clang-format off
-#define CVI_AI_Free(X) _Generic((X),                 \
-           cvi_feature_t*: CVI_AI_FreeFeature,        \
-           cvi_pts_t*: CVI_AI_FreePts,                \
-           cvi_face_info_t*: CVI_AI_FreeFaceInfo,     \
-           cvi_face_t*: CVI_AI_FreeFace,              \
-           cvi_object_info_t*: CVI_AI_FreeObjectInfo, \
-           cvi_object_t*: CVI_AI_FreeObject)(X)
+#define CVI_AI_Free(X) _Generic((X),                   \
+           cvai_feature_t*: CVI_AI_FreeFeature,        \
+           cvai_pts_t*: CVI_AI_FreePts,                \
+           cvai_face_info_t*: CVI_AI_FreeFaceInfo,     \
+           cvai_face_t*: CVI_AI_FreeFace,              \
+           cvai_object_info_t*: CVI_AI_FreeObjectInfo, \
+           cvai_object_t*: CVI_AI_FreeObject)(X)
 // clang-format on
 #endif
 
@@ -39,10 +39,10 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath);
 int CVI_AI_CloseAllModel(cviai_handle_t handle);
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
-int CVI_AI_FaceAttribute(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvi_face_t *faces);
-int CVI_AI_Yolov3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvi_object_t *obj,
-                  cvi_obj_det_type_t det_type);
-int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvi_face_t *faces,
+int CVI_AI_FaceAttribute(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
+int CVI_AI_Yolov3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvai_object_t *obj,
+                  cvai_obj_det_type_t det_type);
+int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
                       int *face_count);
 
 #ifdef __cplusplus

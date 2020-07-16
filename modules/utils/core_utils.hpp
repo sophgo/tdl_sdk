@@ -1,5 +1,5 @@
 #pragma once
-#include "core/cvi_core_types.h"
+#include "core/cvai_core_types.h"
 
 #include <algorithm>
 #include <vector>
@@ -8,7 +8,7 @@ namespace cviai {
 
 void SoftMaxForBuffer(float *src, float *dst, size_t size);
 void Dequantize(int8_t *q_data, float *data, float threshold, size_t size);
-void clip_boxes(int width, int height, cvi_bbox_t &box);
+void clip_boxes(int width, int height, cvai_bbox_t &box);
 
 inline float FastExp(float x) {
   union {
@@ -41,7 +41,7 @@ void NonMaximumSuppression(std::vector<T> &bboxes, std::vector<T> &bboxes_nms, f
     bboxes_nms.emplace_back(bboxes[select_idx]);
     mask_merged[select_idx] = 1;
 
-    cvi_bbox_t select_bbox = bboxes[select_idx].bbox;
+    cvai_bbox_t select_bbox = bboxes[select_idx].bbox;
     float area1 = static_cast<float>((select_bbox.x2 - select_bbox.x1 + 1) *
                                      (select_bbox.y2 - select_bbox.y1 + 1));
     float x1 = static_cast<float>(select_bbox.x1);
@@ -53,7 +53,7 @@ void NonMaximumSuppression(std::vector<T> &bboxes, std::vector<T> &bboxes_nms, f
     for (int i = select_idx; i < num_bbox; i++) {
       if (mask_merged[i] == 1) continue;
 
-      cvi_bbox_t &bbox_i(bboxes[i].bbox);
+      cvai_bbox_t &bbox_i(bboxes[i].bbox);
       float x = std::max<float>(x1, static_cast<float>(bbox_i.x1));
       float y = std::max<float>(y1, static_cast<float>(bbox_i.y1));
       float w = std::min<float>(x2, static_cast<float>(bbox_i.x2)) - x + 1;

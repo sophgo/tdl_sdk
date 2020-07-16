@@ -1,5 +1,5 @@
 #include "face_attribute.hpp"
-#include "face/cvi_face_helper.h"
+#include "face/cvai_face_helper.h"
 #include "face_attribute_types.hpp"
 
 #include "core_utils.hpp"
@@ -38,7 +38,7 @@ FaceAttribute::~FaceAttribute() {
   }
 }
 
-int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvi_face_t *meta) {
+int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) {
   uint32_t img_width = stOutFrame->stVFrame.u32Width;
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
   cv::Mat image(img_height, img_width, CV_8UC3);
@@ -55,7 +55,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvi_face_t *meta) {
   CVI_SYS_Munmap((void *)stOutFrame->stVFrame.pu8VirAddr[0], stOutFrame->stVFrame.u32Length[0]);
 
   for (int i = 0; i < meta->size; ++i) {
-    cvi_face_info_t face_info = bbox_rescale(stOutFrame, meta, i);
+    cvai_face_info_t face_info = bbox_rescale(stOutFrame, meta, i);
 
     prepareInputTensor(image, face_info);
     run(stOutFrame);
@@ -64,7 +64,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvi_face_t *meta) {
   return CVI_RC_SUCCESS;
 }
 
-void FaceAttribute::prepareInputTensor(cv::Mat src_image, cvi_face_info_t &face_info) {
+void FaceAttribute::prepareInputTensor(cv::Mat src_image, cvai_face_info_t &face_info) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   cv::Mat image(input->shape.dim[3], input->shape.dim[2], src_image.type());
 
@@ -121,7 +121,7 @@ std::pair<float, AgeFeature> ExtractAge(float *out, const int age_prob_size) {
   return std::make_pair(expect_age, features);
 }
 
-void FaceAttribute::outputParser(cvi_face_t *meta, int meta_i) {
+void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   FaceAttributeInfo result;
 
   // feature
@@ -139,7 +139,7 @@ void FaceAttribute::outputParser(cvi_face_t *meta, int meta_i) {
   int8_t *race_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t race_prob_size = CVI_NN_TensorCount(out);
   Dequantize(race_blob, attribute_buffer, RACE_OUT_THRESH, race_prob_size);
-  auto race = ExtractFeatures<cvi_face_race_e, RaceFeature>(attribute_buffer, race_prob_size);
+  auto race = ExtractFeatures<cvai_face_race_e, RaceFeature>(attribute_buffer, race_prob_size);
   result.race = race.first;
   result.race_prob = std::move(race.second);
 
@@ -149,7 +149,7 @@ void FaceAttribute::outputParser(cvi_face_t *meta, int meta_i) {
   size_t gender_prob_size = CVI_NN_TensorCount(out);
   Dequantize(gender_blob, attribute_buffer, GENDER_OUT_THRESH, gender_prob_size);
   auto gender =
-      ExtractFeatures<cvi_face_gender_e, GenderFeature>(attribute_buffer, gender_prob_size);
+      ExtractFeatures<cvai_face_gender_e, GenderFeature>(attribute_buffer, gender_prob_size);
   result.gender = gender.first;
   result.gender_prob = std::move(gender.second);
 
@@ -168,7 +168,7 @@ void FaceAttribute::outputParser(cvi_face_t *meta, int meta_i) {
   size_t emotion_prob_size = CVI_NN_TensorCount(out);
   Dequantize(emotion_blob, attribute_buffer, EMOTION_OUT_THRESH, emotion_prob_size);
   auto emotion =
-      ExtractFeatures<cvi_face_emotion_e, EmotionFeature>(attribute_buffer, emotion_prob_size);
+      ExtractFeatures<cvai_face_emotion_e, EmotionFeature>(attribute_buffer, emotion_prob_size);
   result.emotion = emotion.first;
   result.emotion_prob = std::move(emotion.second);
 

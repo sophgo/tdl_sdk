@@ -23,7 +23,7 @@ using namespace std;
 namespace cviai {
 
 static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *sink_buffer,
-                                                cvi_face_t *meta) {
+                                                cvai_face_t *meta) {
     cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3);
     frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0],
                                                            frame->stVFrame.u32Length[0]);
@@ -54,7 +54,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame, VIDEO
 
     vector<vector<cv::Mat>> input_mat(meta->size, vector<cv::Mat> ());
     for (int i = 0; i < meta->size; i++) {
-        cvi_face_info_t face_info = bbox_rescale(frame, meta, i);
+        cvai_face_info_t face_info = bbox_rescale(frame, meta, i);
         cv::Rect box;
         box.x = face_info.bbox.x1;
         box.y = face_info.bbox.y1;
@@ -89,7 +89,7 @@ Liveness::Liveness() {
   mp_config->batch_size = 9;
 }
 
-int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame, cvi_face_t *meta) {
+int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *meta) {
   if (meta->size <= 0) {
     cout << "meta->size <= 0" << endl;
     return CVI_RC_FAILURE;

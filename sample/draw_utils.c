@@ -117,7 +117,7 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
   CVI_SYS_Munmap(vir_addr, image_size);
 }
 
-void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_face_t *face_meta)
+void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvai_face_t *face_meta)
 {
   if (0 == face_meta->size) {
     return;
@@ -144,7 +144,7 @@ void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_face_t *face_meta)
   rgb_color.b = 0.0;
 
   for (int i = 0; i < face_meta->size; ++i) {
-    cvi_bbox_t bbox = face_meta->face_info[i].bbox;
+    cvai_bbox_t bbox = face_meta->face_info[i].bbox;
     float x1,x2,y1,y2;
     if(width >=height) {
         x1 = bbox.x1 * ratio_x;
@@ -162,7 +162,7 @@ void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_face_t *face_meta)
   }
 }
 
-void DrawObjMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_object_t *meta)
+void DrawObjMeta(VIDEO_FRAME_INFO_S *draw_frame, cvai_object_t *meta)
 {
     if (0 == meta->size) {
         return;
@@ -189,7 +189,7 @@ void DrawObjMeta(VIDEO_FRAME_INFO_S *draw_frame, cvi_object_t *meta)
     rgb_color.b = DEFAULT_RECT_COLOR_B;
 
   for (int i = 0; i < meta->size; ++i) {
-    cvi_bbox_t bbox = meta->objects[i].bbox;
+    cvai_bbox_t bbox = meta->objects[i].bbox;
     float x1,x2,y1,y2;
     if(width >=height)
     {

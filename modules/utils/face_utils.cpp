@@ -79,7 +79,7 @@ static cv::Mat get_similarity_transform(const vector<cv::Point2f> &src_pts,
 
 namespace cviai {
 
-cvi_face_info_t bbox_rescale(VIDEO_FRAME_INFO_S *frame, cvi_face_t *face_meta, int face_idx) {
+cvai_face_info_t bbox_rescale(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face_meta, int face_idx) {
   float width = frame->stVFrame.u32Width;
   float height = frame->stVFrame.u32Height;
   float ratio_x, ratio_y, bbox_y_height, bbox_x_height, bbox_padding_top, bbox_padding_left;
@@ -96,8 +96,8 @@ cvi_face_info_t bbox_rescale(VIDEO_FRAME_INFO_S *frame, cvi_face_t *face_meta, i
     bbox_padding_left = (face_meta->width - bbox_x_height) / 2;
   }
 
-  cvi_bbox_t bbox = face_meta->face_info[face_idx].bbox;
-  cvi_face_info_t face_info;
+  cvai_bbox_t bbox = face_meta->face_info[face_idx].bbox;
+  cvai_face_info_t face_info;
   float x1, x2, y1, y2;
 
   if (width >= height) {
@@ -132,7 +132,7 @@ cvi_face_info_t bbox_rescale(VIDEO_FRAME_INFO_S *frame, cvi_face_t *face_meta, i
   return face_info;
 }
 
-int face_align(const cv::Mat &image, cv::Mat &aligned, const cvi_face_info_t &face_info, int width,
+int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info, int width,
                int height) {
   assert(width == 96 || width == 112);
   assert(height == 112);
