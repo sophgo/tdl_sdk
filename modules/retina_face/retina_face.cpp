@@ -1,5 +1,6 @@
 #include "retina_face.hpp"
 
+#include "cviai_types_free.h"
 #include "retina_face_utils.hpp"
 
 #define FACE_THRESHOLD 0.5
@@ -13,7 +14,8 @@ namespace cviai {
 RetinaFace::RetinaFace() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_preprocess = true;
-  mp_config->input_mem_type = CVI_MEM_DEVICE;;
+  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  ;
 }
 
 RetinaFace::~RetinaFace() {}
@@ -184,9 +186,12 @@ void RetinaFace::initFaceMeta(cvai_face_t *meta, int size) {
     meta->face_info[i].liveness_score = -1;
     meta->face_info[i].mask_score = -1;
 
+    CVI_AI_FreeCpp(&meta->face_info[i].face_pts);
     meta->face_info[i].face_pts.size = FACE_POINTS_SIZE;
-    meta->face_info[i].face_pts.x = new float[meta->face_info[i].face_pts.size];
-    meta->face_info[i].face_pts.y = new float[meta->face_info[i].face_pts.size];
+    meta->face_info[i].face_pts.x =
+        (float *)malloc(sizeof(float) * meta->face_info[i].face_pts.size);
+    meta->face_info[i].face_pts.y =
+        (float *)malloc(sizeof(float) * meta->face_info[i].face_pts.size);
     for (uint32_t j = 0; j < meta->face_info[i].face_pts.size; ++j) {
       meta->face_info[i].face_pts.x[j] = -1;
       meta->face_info[i].face_pts.y[j] = -1;
