@@ -32,7 +32,7 @@ int Core::modelOpen(const char *filepath) {
     printf("CVI_NN_GetINputsOutputs failed\n");
     return ret;
   }
-
+  ret = initAfterModelOpened();
   return ret;
 }
 

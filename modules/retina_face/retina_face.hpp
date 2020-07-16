@@ -15,6 +15,7 @@ class RetinaFace final : public Core {
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_face_t *meta, int *face_count);
 
  private:
+  virtual int initAfterModelOpened() override;
   void outputParser(float ratio, int image_width, int image_height,
                     std::vector<cvi_face_info_t> *bboxes_nms);
   void initFaceMeta(cvi_face_t *meta, int size);

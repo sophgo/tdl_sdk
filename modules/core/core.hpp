@@ -35,6 +35,7 @@ class Core {
   float getInputScale();
 
  protected:
+  virtual int initAfterModelOpened() { return CVI_RC_SUCCESS; }
   int run(VIDEO_FRAME_INFO_S *srcFrame);
   CVI_TENSOR *getInputTensor(int idx);
   CVI_TENSOR *getOutputTensor(int idx);

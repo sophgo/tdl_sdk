@@ -13,7 +13,11 @@ RetinaFace::RetinaFace() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_preprocess = true;
   mp_config->input_mem_type = 2;
+}
 
+RetinaFace::~RetinaFace() {}
+
+int RetinaFace::initAfterModelOpened() {
   std::vector<anchor_cfg> cfg;
   anchor_cfg tmp;
   tmp.SCALES = {32, 16};
@@ -55,9 +59,8 @@ RetinaFace::RetinaFace() {
     m_anchors[landmark_str] =
         anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
   }
+  return CVI_RC_SUCCESS;
 }
-
-RetinaFace::~RetinaFace() {}
 
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvi_face_t *meta, int *face_count) {
   int ret = run(srcFrame);
