@@ -28,7 +28,7 @@ namespace cviai {
 
 FaceAttribute::FaceAttribute() {
   mp_config = std::make_unique<ModelConfig>();
-  mp_config->skip_preprocess = true;
+  mp_config->skip_postprocess = true;
 
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }

@@ -9,6 +9,8 @@
 #include "face_attribute/face_attribute.hpp"
 #include "retina_face/retina_face.hpp"
 #include "yolov3/yolov3.hpp"
+#include "liveness/liveness.hpp"
+#include "face_quality/face_quality.hpp"
 
 using namespace std;
 using namespace cviai;
@@ -136,4 +138,53 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
   }
 
   return retina_face->inference(frame, faces, face_count);
+}
+
+int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
+                    cvai_face_t *face) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_LIVENESS];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      printf("Model path for Liveness is empty.\n");
+      return CVI_RC_FAILURE;
+    }
+    m_t.instance = new Liveness();
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+      printf("Open model failed (%s).\n", m_t.model_path.c_str());
+      return CVI_RC_FAILURE;
+    }
+  }
+
+  Liveness *liveness = dynamic_cast<Liveness *>(m_t.instance);
+  if (liveness == nullptr) {
+    printf("No instance found for Liveness.\n");
+    return CVI_RC_FAILURE;
+  }
+
+  return liveness->inference(rgbFrame, irFrame, face);
+}
+
+int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEQUALITY];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      printf("Model path for FaceQuality is empty.\n");
+      return CVI_RC_FAILURE;
+    }
+    m_t.instance = new FaceQuality();
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+      printf("Open model failed (%s).\n", m_t.model_path.c_str());
+      return CVI_RC_FAILURE;
+    }
+  }
+
+  FaceQuality *face_quality = dynamic_cast<FaceQuality *>(m_t.instance);
+  if (face_quality == nullptr) {
+    printf("No instance found for FaceQuality.\n");
+    return CVI_RC_FAILURE;
+  }
+
+  return face_quality->inference(frame, face);
 }

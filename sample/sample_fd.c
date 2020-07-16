@@ -138,7 +138,7 @@ static void Run()
 			assert(0 && "release video frame error!\n");
 		}
 
-		// CVI_AI_FreeFace(&face);
+		CVI_AI_Free(&face);
 		if (face.face_info != NULL) free(face.face_info);
 	}
 }
