@@ -72,7 +72,8 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
   CVI_TENSOR *input = getInputTensor(0);
   float ratio = 1.0;
   std::vector<cvai_face_info_t> faceList;
-  outputParser(ratio, input->shape.dim[2], input->shape.dim[3], &faceList);
+  std::vector<cvai_face_info_t> BBoxes;
+  outputParser(ratio, input->shape.dim[2], input->shape.dim[3], &BBoxes, &faceList);
 
   initFaceMeta(meta, faceList.size());
   meta->width = input->shape.dim[2];
@@ -90,12 +91,17 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
       meta->face_info[i].face_pts.y[j] = faceList[i].face_pts.y[j];
     }
   }
+
+  for (size_t i = 0; i < BBoxes.size(); ++i) {
+    CVI_AI_FreeCpp(&BBoxes[i].face_pts);
+  }
+
   return ret;
 }
 
 void RetinaFace::outputParser(float ratio, int image_width, int image_height,
+                              std::vector<cvai_face_info_t> *BBoxes,
                               std::vector<cvai_face_info_t> *bboxes_nms) {
-  std::vector<cvai_face_info_t> BBoxes;
 
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
     std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
@@ -128,15 +134,14 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height,
     std::vector<anchor_box> anchors = m_anchors[landmark_str];
     for (size_t num = 0; num < num_anchor; num++) {
       for (size_t j = 0; j < count; j++) {
-        cvai_face_info_t box;
-        box.face_pts.size = 5;
-        box.face_pts.x = new float[box.face_pts.size];
-        box.face_pts.y = new float[box.face_pts.size];
-
         float conf = score_blob[j + count * num];
         if (conf <= FACE_THRESHOLD) {
           continue;
         }
+        cvai_face_info_t box;
+        box.face_pts.size = 5;
+        box.face_pts.x = (float *)malloc(sizeof(float) * box.face_pts.size);
+        box.face_pts.y = (float *)malloc(sizeof(float) * box.face_pts.size);
         box.bbox.score = conf;
 
         cv::Vec4f regress;
@@ -153,13 +158,13 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height,
         }
         landmark_pred(anchors[j + count * num], ratio, box.face_pts);
 
-        BBoxes.push_back(box);
+        BBoxes->push_back(box);
       }
     }
   }
 
   bboxes_nms->clear();
-  NonMaximumSuppression(BBoxes, *bboxes_nms, 0.4, 'u');
+  NonMaximumSuppression(*BBoxes, *bboxes_nms, 0.4, 'u');
 
   for (auto &box : *bboxes_nms) {
     clip_boxes(image_width, image_height, box.bbox);

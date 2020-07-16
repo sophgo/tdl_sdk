@@ -17,6 +17,7 @@ class RetinaFace final : public Core {
  private:
   virtual int initAfterModelOpened() override;
   void outputParser(float ratio, int image_width, int image_height,
+                    std::vector<cvai_face_info_t> *BBoxes,
                     std::vector<cvai_face_info_t> *bboxes_nms);
   void initFaceMeta(cvai_face_t *meta, int size);
 

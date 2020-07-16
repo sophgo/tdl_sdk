@@ -114,6 +114,7 @@ static void Run()
 	CVI_S32 s32Ret = CVI_SUCCESS;
 	VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
 	cvai_face_t face;
+	memset(&face, 0, sizeof(cvai_face_t));
 
 	while (true) {
 		s32Ret = GetVideoframe(&stfdFrame, &stVOFrame);
