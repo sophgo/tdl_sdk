@@ -43,11 +43,6 @@ else()
   set(GCC_STRIP_FLAG "")
 endif()
 
-# Check if tracer exists.
-if ("${TRACER_ROOT}" STREQUAL "")
-  message(FATAL_ERROR "TRACER_ROOT not set.")
-endif()
-
 add_definitions(-DENABLE_TRACE)
 
 # Check if OpenCV exists.
