@@ -7,6 +7,7 @@ add_subdirectory(face_quality)
 add_subdirectory(liveness)
 add_subdirectory(retina_face)
 add_subdirectory(yolov3)
+add_subdirectory(thermal_face_detection)
 
 #set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all-symbols")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
@@ -18,6 +19,7 @@ add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:core>
 				   $<TARGET_OBJECTS:liveness>
                                    $<TARGET_OBJECTS:retina_face>
 				   $<TARGET_OBJECTS:yolov3>
+				   $<TARGET_OBJECTS:thermal_face_detection>
 				   cviai_types_free.cpp
 				   cviai.cpp)
 target_link_libraries(${PROJECT_NAME} ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS})
