@@ -24,7 +24,8 @@ namespace cviai {
 
 static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
                                                 VIDEO_FRAME_INFO_S *sink_buffer,
-                                                cvai_face_t *meta) {
+                                                cvai_face_t *meta,
+                                                cvai_liveness_ir_position_e ir_pos) {
   cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3);
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
@@ -64,7 +65,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
 
     if (box.width <= MIN_FACE_WIDTH || box.height <= MIN_FACE_HEIGHT) continue;
     cv::Mat crop_rgb_frame = rgb_frame(box);
-    cv::Mat crop_ir_frame = template_matching(crop_rgb_frame, ir_frame, box);
+    cv::Mat crop_ir_frame = template_matching(crop_rgb_frame, ir_frame, box, ir_pos);
 
     cv::Mat color, ir;
     cv::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
@@ -85,9 +86,11 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
   return input_mat;
 }
 
-Liveness::Liveness() {
+Liveness::Liveness(cvai_liveness_ir_position_e ir_position) {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->batch_size = 9;
+
+  m_ir_pos = ir_position;
 }
 
 int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
@@ -97,7 +100,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     return CVI_RC_FAILURE;
   }
 
-  vector<vector<cv::Mat>> input_mats = image_preprocess(rgbFrame, irFrame, meta);
+  vector<vector<cv::Mat>> input_mats = image_preprocess(rgbFrame, irFrame, meta, m_ir_pos);
   if (input_mats.empty()) {
     cout << "input_mat.empty" << endl;
     return CVI_RC_FAILURE;
