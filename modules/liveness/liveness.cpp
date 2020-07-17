@@ -3,6 +3,7 @@
 
 #include "core_utils.hpp"
 #include "face_utils.hpp"
+#include "cviai_types_free.h"
 
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
@@ -62,6 +63,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
     box.y = face_info.bbox.y1;
     box.width = face_info.bbox.x2 - box.x;
     box.height = face_info.bbox.y2 - box.y;
+    CVI_AI_FreeCpp(&face_info);
 
     if (box.width <= MIN_FACE_WIDTH || box.height <= MIN_FACE_HEIGHT) continue;
     cv::Mat crop_rgb_frame = rgb_frame(box);

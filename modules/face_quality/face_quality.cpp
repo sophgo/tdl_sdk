@@ -1,6 +1,7 @@
 #include "face_quality.hpp"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
+#include "cviai_types_free.h"
 
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
@@ -59,6 +60,8 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     float *score = (float *)CVI_NN_TensorPtr(out);
     meta->face_info[i].face_quality = score[1];
     // cout << score[0] << "," << score[1] << endl;
+
+    CVI_AI_FreeCpp(&face_info);
   }
   // sleep(3);
 

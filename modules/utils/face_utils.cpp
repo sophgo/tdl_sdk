@@ -100,6 +100,13 @@ cvai_face_info_t bbox_rescale(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face_meta,
   cvai_face_info_t face_info;
   float x1, x2, y1, y2;
 
+  memset(&face_info, 0, sizeof(cvai_face_info_t));
+  face_info.face_pts.size = face_meta->face_info[face_idx].face_pts.size;
+  face_info.face_pts.x =
+        (float *)malloc(sizeof(float) * face_meta->face_info[face_idx].face_pts.size);
+  face_info.face_pts.y =
+        (float *)malloc(sizeof(float) * face_meta->face_info[face_idx].face_pts.size);
+
   if (width >= height) {
     x1 = bbox.x1 * ratio_x;
     x2 = bbox.x2 * ratio_x;

@@ -174,6 +174,8 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height,
 
 void RetinaFace::initFaceMeta(cvai_face_t *meta, int size) {
   meta->size = size;
+  if (meta->size == 0) return;
+
   meta->face_info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
 
   memset(meta->face_info, 0, sizeof(cvai_face_info_t) * meta->size);

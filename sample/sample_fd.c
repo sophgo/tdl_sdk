@@ -85,7 +85,8 @@ static int DoFd(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *stfdFrame, cv
   int face_count = 0;
 
   CVI_AI_RetinaFace(facelib_handle, stfdFrame, face, &face_count);
-  printf("face_count %d\n", face_count);
+  printf("face_count %d\n", face->size);
+  CVI_AI_FaceAttribute(facelib_handle, stfdFrame, face);
 
   return 0;
 }
@@ -131,7 +132,6 @@ static void Run() {
     }
 
     CVI_AI_Free(&face);
-    if (face.face_info != NULL) free(face.face_info);
   }
 }
 
@@ -419,6 +419,8 @@ int main(void) {
   int ret = CVI_AI_CreateHandle(&facelib_handle);
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
                             "/mnt/data/retina_face.cvimodel");
+  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
+                            "/mnt/data/bmface.cvimodel");
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
