@@ -7,81 +7,82 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
-#define RESIZE_SIZE             112
-#define LIVENESS_SCALE          (1 / 255.0)
-#define LIVENESS_N              1
-#define LIVENESS_C              6
-#define LIVENESS_WIDTH          32
-#define LIVENESS_HEIGHT         32
-#define CROP_NUM                9
-#define MIN_FACE_WIDTH          25
-#define MIN_FACE_HEIGHT         25
-#define OUTPUT_NAME             "fc2_dequant"
+#define RESIZE_SIZE 112
+#define LIVENESS_SCALE (1 / 255.0)
+#define LIVENESS_N 1
+#define LIVENESS_C 6
+#define LIVENESS_WIDTH 32
+#define LIVENESS_HEIGHT 32
+#define CROP_NUM 9
+#define MIN_FACE_WIDTH 25
+#define MIN_FACE_HEIGHT 25
+#define OUTPUT_NAME "fc2_dequant"
 
 using namespace std;
 
 namespace cviai {
 
-static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *sink_buffer,
+static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
+                                                VIDEO_FRAME_INFO_S *sink_buffer,
                                                 cvai_face_t *meta) {
-    cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3);
-    frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0],
-                                                           frame->stVFrame.u32Length[0]);
-    char *va_rgb = (char *)frame->stVFrame.pu8VirAddr[0];
-    for (int i = 0; i < rgb_frame.rows; i++) {
-        memcpy(rgb_frame.ptr(i, 0), va_rgb + frame->stVFrame.u32Stride[0] * i, rgb_frame.cols * 3);
+  cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3);
+  frame->stVFrame.pu8VirAddr[0] =
+      (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+  char *va_rgb = (char *)frame->stVFrame.pu8VirAddr[0];
+  for (int i = 0; i < rgb_frame.rows; i++) {
+    memcpy(rgb_frame.ptr(i, 0), va_rgb + frame->stVFrame.u32Stride[0] * i, rgb_frame.cols * 3);
+  }
+  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+
+  if (!rgb_frame.data) {
+    printf("src Image is empty!\n");
+    return vector<vector<cv::Mat>>{};
+  }
+
+  cv::Mat ir_frame(sink_buffer->stVFrame.u32Height, sink_buffer->stVFrame.u32Width, CV_8UC3);
+  sink_buffer->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(sink_buffer->stVFrame.u64PhyAddr[0],
+                                                               sink_buffer->stVFrame.u32Length[0]);
+  va_rgb = (char *)sink_buffer->stVFrame.pu8VirAddr[0];
+  for (int i = 0; i < ir_frame.rows; i++) {
+    memcpy(ir_frame.ptr(i, 0), va_rgb + sink_buffer->stVFrame.u32Stride[0] * i, ir_frame.cols * 3);
+  }
+  CVI_SYS_Munmap((void *)sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Length[0]);
+
+  if (!ir_frame.data) {
+    printf("sink Image is empty!\n");
+    return vector<vector<cv::Mat>>{};
+  }
+
+  vector<vector<cv::Mat>> input_mat(meta->size, vector<cv::Mat>());
+  for (int i = 0; i < meta->size; i++) {
+    cvai_face_info_t face_info = bbox_rescale(frame, meta, i);
+    cv::Rect box;
+    box.x = face_info.bbox.x1;
+    box.y = face_info.bbox.y1;
+    box.width = face_info.bbox.x2 - box.x;
+    box.height = face_info.bbox.y2 - box.y;
+
+    if (box.width <= MIN_FACE_WIDTH || box.height <= MIN_FACE_HEIGHT) continue;
+    cv::Mat crop_rgb_frame = rgb_frame(box);
+    cv::Mat crop_ir_frame = template_matching(crop_rgb_frame, ir_frame, box);
+
+    cv::Mat color, ir;
+    cv::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+    cv::resize(crop_ir_frame, ir, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+
+    vector<cv::Mat> colors = TTA_9_cropps(color);
+    vector<cv::Mat> irs = TTA_9_cropps(ir);
+
+    vector<cv::Mat> input_v;
+    for (size_t i = 0; i < colors.size(); i++) {
+      cv::Mat temp;
+      cv::merge(vector<cv::Mat>{colors[i], irs[i]}, temp);
+      input_v.push_back(temp);
     }
-    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+    input_mat[i] = input_v;
+  }
 
-    if(!rgb_frame.data) {
-        printf("src Image is empty!\n");
-        return vector<vector<cv::Mat>> {};
-    }
-
-    cv::Mat ir_frame(sink_buffer->stVFrame.u32Height, sink_buffer->stVFrame.u32Width, CV_8UC3);
-    sink_buffer->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(sink_buffer->stVFrame.u64PhyAddr[0],
-                                                                 sink_buffer->stVFrame.u32Length[0]);
-    va_rgb = (char *)sink_buffer->stVFrame.pu8VirAddr[0];
-    for (int i = 0; i < ir_frame.rows; i++) {
-	    memcpy(ir_frame.ptr(i, 0), va_rgb + sink_buffer->stVFrame.u32Stride[0] * i, ir_frame.cols * 3);
-    }
-    CVI_SYS_Munmap((void *)sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Length[0]);
-
-    if(!ir_frame.data) {
-        printf("sink Image is empty!\n");
-        return vector<vector<cv::Mat>> {};
-    }
-
-    vector<vector<cv::Mat>> input_mat(meta->size, vector<cv::Mat> ());
-    for (int i = 0; i < meta->size; i++) {
-        cvai_face_info_t face_info = bbox_rescale(frame, meta, i);
-        cv::Rect box;
-        box.x = face_info.bbox.x1;
-        box.y = face_info.bbox.y1;
-        box.width = face_info.bbox.x2 - box.x;
-        box.height = face_info.bbox.y2 - box.y;
-
-        if (box.width <= MIN_FACE_WIDTH || box.height <= MIN_FACE_HEIGHT) continue;
-        cv::Mat crop_rgb_frame = rgb_frame(box);
-        cv::Mat crop_ir_frame = template_matching(crop_rgb_frame, ir_frame, box);
-
-        cv::Mat color, ir;
-        cv::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
-        cv::resize(crop_ir_frame, ir, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
-
-        vector<cv::Mat> colors = TTA_9_cropps(color);
-        vector<cv::Mat> irs = TTA_9_cropps(ir);
-
-        vector<cv::Mat> input_v;
-        for (size_t i = 0; i < colors.size(); i++) {
-            cv::Mat temp;
-            cv::merge(vector<cv::Mat> {colors[i], irs[i]}, temp);
-            input_v.push_back(temp);
-        }
-        input_mat[i] = input_v;
-    }
-
-    return input_mat;
+  return input_mat;
 }
 
 Liveness::Liveness() {
@@ -89,7 +90,8 @@ Liveness::Liveness() {
   mp_config->batch_size = 9;
 }
 
-int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *meta) {
+int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
+                        cvai_face_t *meta) {
   if (meta->size <= 0) {
     cout << "meta->size <= 0" << endl;
     return CVI_RC_FAILURE;

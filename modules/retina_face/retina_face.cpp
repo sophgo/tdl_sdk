@@ -102,7 +102,6 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
 void RetinaFace::outputParser(float ratio, int image_width, int image_height,
                               std::vector<cvai_face_info_t> *BBoxes,
                               std::vector<cvai_face_info_t> *bboxes_nms) {
-
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
     std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
 

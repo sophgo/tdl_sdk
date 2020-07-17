@@ -7,10 +7,10 @@
 #include "cviai.h"
 
 #include "face_attribute/face_attribute.hpp"
+#include "face_quality/face_quality.hpp"
+#include "liveness/liveness.hpp"
 #include "retina_face/retina_face.hpp"
 #include "yolov3/yolov3.hpp"
-#include "liveness/liveness.hpp"
-#include "face_quality/face_quality.hpp"
 
 using namespace std;
 using namespace cviai;
@@ -140,8 +140,8 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
   return retina_face->inference(frame, faces, face_count);
 }
 
-int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
-                    cvai_face_t *face) {
+int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
+                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_LIVENESS];
   if (m_t.instance == nullptr) {

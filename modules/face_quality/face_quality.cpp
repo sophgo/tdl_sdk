@@ -5,26 +5,24 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
-#define SCALE_B                         (1.0 / (255.0 * 0.229))
-#define SCALE_G                         (1.0 / (255.0 * 0.224))
-#define SCALE_R                         (1.0 / (255.0 * 0.225))
-#define MEAN_B                          -(0.485 / 0.229)
-#define MEAN_G                          -(0.456 / 0.224)
-#define MEAN_R                          -(0.406 / 0.225)
-#define NAME_SCORE                      "score_Softmax_dequant"
+#define SCALE_B (1.0 / (255.0 * 0.229))
+#define SCALE_G (1.0 / (255.0 * 0.224))
+#define SCALE_R (1.0 / (255.0 * 0.225))
+#define MEAN_B -(0.485 / 0.229)
+#define MEAN_G -(0.456 / 0.224)
+#define MEAN_R -(0.406 / 0.225)
+#define NAME_SCORE "score_Softmax_dequant"
 
 namespace cviai {
 
-FaceQuality::FaceQuality() {
-  mp_config = std::make_unique<ModelConfig>();
-}
+FaceQuality::FaceQuality() { mp_config = std::make_unique<ModelConfig>(); }
 
 int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   int img_width = frame->stVFrame.u32Width;
   int img_height = frame->stVFrame.u32Height;
   cv::Mat image(img_height, img_width, CV_8UC3);
-  frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0],
-                                                         frame->stVFrame.u32Length[0]);
+  frame->stVFrame.pu8VirAddr[0] =
+      (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   char *va_rgb = (char *)frame->stVFrame.pu8VirAddr[0];
   int dst_width = image.cols;
   int dst_height = image.rows;
@@ -50,16 +48,15 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       tmpchannels[i].convertTo(tmpchannels[i], CV_32F, scale[i], mean[i]);
       int size = tmpchannels[i].rows * tmpchannels[i].cols;
       for (int r = 0; r < tmpchannels[i].rows; ++r) {
-        memcpy((float *)CVI_NN_TensorPtr(input) + size*i + tmpchannels[i].cols*r,
-                                         tmpchannels[i].ptr(r, 0), tmpchannels[i].cols *
-                                         sizeof(float));
+        memcpy((float *)CVI_NN_TensorPtr(input) + size * i + tmpchannels[i].cols * r,
+               tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
       }
     }
 
     run(frame);
 
     CVI_TENSOR *out = CVI_NN_GetTensorByName(NAME_SCORE, mp_output_tensors, m_output_num);
-    float* score = (float *)CVI_NN_TensorPtr(out);
+    float *score = (float *)CVI_NN_TensorPtr(out);
     meta->face_info[i].face_quality = score[1];
     // cout << score[0] << "," << score[1] << endl;
   }

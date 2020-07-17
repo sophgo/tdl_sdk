@@ -46,8 +46,8 @@ int CVI_AI_Yolov3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvai
                   cvai_obj_det_type_t det_type);
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
                       int *face_count);
-int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
-                    cvai_face_t *face);
+int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
+                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face);
 int CVI_AI_FaceQuality(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
 
 #ifdef __cplusplus
