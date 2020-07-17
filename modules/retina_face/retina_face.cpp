@@ -71,13 +71,15 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
 
   CVI_TENSOR *input = getInputTensor(0);
   float ratio = 1.0;
+  int image_width = input->shape.dim[3];
+  int image_height = input->shape.dim[2];
   std::vector<cvai_face_info_t> faceList;
   std::vector<cvai_face_info_t> BBoxes;
-  outputParser(ratio, input->shape.dim[2], input->shape.dim[3], &BBoxes, &faceList);
+  outputParser(ratio, image_width, image_height, &BBoxes, &faceList);
 
   initFaceMeta(meta, faceList.size());
-  meta->width = input->shape.dim[2];
-  meta->height = input->shape.dim[3];
+  meta->width = image_width;
+  meta->height = image_height;
 
   *face_count = meta->size;
   for (int i = 0; i < meta->size; ++i) {
