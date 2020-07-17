@@ -1,11 +1,14 @@
 #include "cviai_types_free.h"
 
+#include <string.h>
+
 void CVI_AI_FreeCpp(cvai_feature_t *feature) {
   if (feature->ptr != NULL) {
     free(feature->ptr);
     feature->ptr = NULL;
   }
   feature->size = 0;
+  feature->type = TYPE_INT8;
 }
 
 void CVI_AI_FreeCpp(cvai_pts_t *pts) {
@@ -26,24 +29,35 @@ void CVI_AI_FreeCpp(cvai_face_info_t *face_info) {
 }
 
 void CVI_AI_FreeCpp(cvai_face_t *face) {
-  if (face->size) CVI_AI_FreeCpp(face->face_info);
+  if (face->face_info != NULL) {
+    CVI_AI_FreeCpp(face->face_info);
+    free(face->face_info);
+    face->face_info = NULL;
+  }
+  face->size = 0;
+  face->width = 0;
+  face->height = 0;
 }
 
-void CVI_AI_FreeCpp(cvai_object_info_t *face_info) {
-  // Do nothing
+void CVI_AI_FreeCpp(cvai_object_info_t *obj_info) {
+  memset(obj_info, 0, sizeof(cvai_object_info_t));
 }
 
-void CVI_AI_FreeCpp(cvai_object_t *face) {
-  // Do nothing
+void CVI_AI_FreeCpp(cvai_object_t *obj) {
+  if (obj->objects != NULL) {
+    free(obj->objects);
+    obj->objects = NULL;
+  }
+  obj->size = 0;
+  obj->width = 0;
+  obj->height = 0;
 }
 
 void CVI_AI_FreeFeature(cvai_feature_t *feature) { CVI_AI_FreeCpp(feature); }
 
 void CVI_AI_FreePts(cvai_pts_t *pts) { CVI_AI_FreeCpp(pts); }
 
-void CVI_AI_FreeFaceInfo(cvai_face_info_t *face_info) {
-  CVI_AI_FreeCpp(face_info);
-}
+void CVI_AI_FreeFaceInfo(cvai_face_info_t *face_info) { CVI_AI_FreeCpp(face_info); }
 
 void CVI_AI_FreeFace(cvai_face_t *face) { CVI_AI_FreeCpp(face); }
 
