@@ -31,7 +31,7 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle) {
 }
 
 int CVI_AI_DestroyHandle(cviai_handle_t handle) {
-  cviai_context_t *ctx = new cviai_context_t;
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
   delete ctx;
   return CVI_RC_SUCCESS;
@@ -45,7 +45,7 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
 }
 
 int CVI_AI_CloseAllModel(cviai_handle_t handle) {
-  cviai_context_t *ctx = new cviai_context_t;
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   for (auto &m_inst : ctx->model_cont) {
     m_inst.second.instance->modelClose();
     delete m_inst.second.instance;
@@ -56,7 +56,7 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle) {
 }
 
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
-  cviai_context_t *ctx = new cviai_context_t;
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[config];
   if (m_t.instance == nullptr) {
     return CVI_RC_FAILURE;

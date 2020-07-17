@@ -42,13 +42,6 @@ int Core::modelClose() {
       printf("CVI_NN_CleanupModel failed, err %d\n", ret);
       return ret;
     }
-    // FIXME: Don't know should free or not.
-    if (mp_input_tensors != nullptr) {
-      free(mp_input_tensors);
-    }
-    if (mp_output_tensors != nullptr) {
-      free(mp_output_tensors);
-    }
   }
   return CVI_RC_SUCCESS;
 }

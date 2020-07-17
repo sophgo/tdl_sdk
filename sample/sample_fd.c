@@ -24,6 +24,8 @@
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
+static volatile bool bExit = false;
+
 cviai_handle_t facelib_handle = NULL;
 static SAMPLE_VI_CONFIG_S stViConfig;
 // static	SAMPLE_VO_CONFIG_S stVoConfig;
@@ -108,7 +110,7 @@ static void Run() {
   cvai_face_t face;
   memset(&face, 0, sizeof(cvai_face_t));
 
-  while (true) {
+  while (bExit == false) {
     s32Ret = GetVideoframe(&stfdFrame, &stVOFrame);
     if (s32Ret != CVI_SUCCESS) {
       Exit();
@@ -140,7 +142,7 @@ static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGTERM, SIG_IGN);
 
   if (SIGINT == signo || SIGTERM == signo) {
-    Exit();
+    bExit = true;
   }
 }
 

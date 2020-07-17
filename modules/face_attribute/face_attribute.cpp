@@ -35,7 +35,7 @@ FaceAttribute::FaceAttribute() {
 
 FaceAttribute::~FaceAttribute() {
   if (attribute_buffer != nullptr) {
-    delete attribute_buffer;
+    delete[] attribute_buffer;
     attribute_buffer = nullptr;
   }
 }
