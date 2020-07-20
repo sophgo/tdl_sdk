@@ -13,6 +13,7 @@ endif()
 
 set(MIDDLEWARE_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include/
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/
 )
 
 set(MIDDLEWARE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
