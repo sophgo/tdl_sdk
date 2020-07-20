@@ -79,14 +79,14 @@ void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
   }
 
   CVI_TENSOR *input = getInputTensor(0);
-  int yolov3_w = input->shape.dim[2];
-  int yolov3_h = input->shape.dim[3];
+  int yolov3_h = input->shape.dim[2];
+  int yolov3_w = input->shape.dim[3];
 
   // Yolov3 has 3 different size outputs
   vector<YOLOLayer> net_outputs;
   for (unsigned int i = 0; i < features.size(); i++) {
     YOLOLayer l = {features[i], int(output_shape[i].dim[0]), int(output_shape[i].dim[1]),
-                   int(output_shape[i].dim[2]), int(output_shape[i].dim[3])};
+                   int(output_shape[i].dim[3]), int(output_shape[i].dim[2])};
     net_outputs.push_back(l);
   }
 
@@ -118,7 +118,7 @@ void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
   }
 
   DoNmsSort(total_dets, total_boxes, m_yolov3_param.m_classes, m_yolov3_param.m_nms_threshold);
-  getYOLOResults(total_dets, total_boxes, m_yolov3_param.m_threshold, yolov3_h, yolov3_w, results,
+  getYOLOResults(total_dets, total_boxes, m_yolov3_param.m_threshold, yolov3_w, yolov3_h, results,
                  det_type);
   for (int i = 0; i < total_boxes; ++i) {
     delete[] total_dets[i].prob;
@@ -205,7 +205,7 @@ void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w
       continue;
     }
 
-    bool skip_class = (det_type & CVI_DET_TYPE_ALL);
+    bool skip_class = (det_type != CVI_DET_TYPE_ALL);
     if ((det_type & CVI_DET_TYPE_VEHICLE)) {
       if ((obj_result.label >= 1) && obj_result.label <= 7) skip_class = false;
     }

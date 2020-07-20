@@ -26,6 +26,8 @@
 #define YOLOV3_SCALE (float)(1 / 255.0)
 #define YOLOV3_QUANTIZE_SCALE YOLOV3_SCALE *(128.0 / 1.00000488758)
 
+static volatile bool bExit = false;
+
 cviai_handle_t facelib_handle = NULL;
 
 static VI_PIPE vi_pipe = 0;
@@ -99,7 +101,7 @@ static void Run() {
   VIDEO_FRAME_INFO_S obj_det_frame, video_output_frame;
   cvai_object_t obj_meta;
 
-  while (true) {
+  while (bExit == false) {
     ret = GetVideoframe(&obj_det_frame, &video_output_frame);
     if (ret != CVI_SUCCESS) {
       Exit();
@@ -132,8 +134,7 @@ static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGTERM, SIG_IGN);
 
   if (SIGINT == signo || SIGTERM == signo) {
-    CVI_AI_DestroyHandle(facelib_handle);
-    Exit();
+    bExit = true;
   }
 }
 
