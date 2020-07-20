@@ -1,7 +1,7 @@
 #include "face_quality.hpp"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
 #include "cviai_types_free.h"
+#include "face_utils.hpp"
 
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"

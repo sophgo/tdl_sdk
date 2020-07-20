@@ -16,13 +16,13 @@ cv::Mat template_matching(const cv::Mat &crop_rgb_frame, const cv::Mat &ir_frame
   int adj_width_start = 0;
   int adj_width_end = 0;
   int adj_height_start = max(0, box.y);
-  int adj_height_end = min(ir_frame.rows, box.y + box.height + int(0.5*box.height));
+  int adj_height_end = min(ir_frame.rows, box.y + box.height + int(0.5 * box.height));
 
   if (ir_pos == LIVENESS_IR_RIGHT) {
     adj_width_start = max(0, box.x);
-    adj_width_end = min(ir_frame.cols, box.x + box.width + int(1.5*box.width));
+    adj_width_end = min(ir_frame.cols, box.x + box.width + int(1.5 * box.width));
   } else {
-    adj_width_start = max(0, box.x - int(1.5*box.width));
+    adj_width_start = max(0, box.x - int(1.5 * box.width));
     adj_width_end = min(ir_frame.cols, box.x + box.width);
   }
 

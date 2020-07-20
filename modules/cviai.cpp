@@ -141,7 +141,8 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
 }
 
 int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
-                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face, cvai_liveness_ir_position_e ir_position) {
+                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
+                    cvai_liveness_ir_position_e ir_position) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_LIVENESS];
   if (m_t.instance == nullptr) {

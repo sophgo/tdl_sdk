@@ -10,9 +10,9 @@
 #define MEAN_B -(0.485 / 0.229)
 #define MEAN_G -(0.456 / 0.224)
 #define MEAN_R -(0.406 / 0.225)
-#define FACE_THRESHOLD                  0.05
-#define NAME_BBOX                       "regression_Concat_dequant"
-#define NAME_SCORE                      "classification_Sigmoid_dequant"
+#define FACE_THRESHOLD 0.05
+#define NAME_BBOX "regression_Concat_dequant"
+#define NAME_SCORE "classification_Sigmoid_dequant"
 
 namespace cviai {
 
@@ -23,12 +23,12 @@ static std::vector<cvai_bbox_t> generate_anchors(int base_size, const std::vecto
   std::vector<float> areas(num_anchors, 0);
 
   for (size_t i = 0; i < anchors.size(); i++) {
-    anchors[i].x2 = base_size * scales[i%scales.size()];
-    anchors[i].y2 = base_size * scales[i%scales.size()];
+    anchors[i].x2 = base_size * scales[i % scales.size()];
+    anchors[i].y2 = base_size * scales[i % scales.size()];
     areas[i] = anchors[i].x2 * anchors[i].y2;
 
-    anchors[i].x2 = sqrt(areas[i] / ratios[i/scales.size()]);
-    anchors[i].y2 = anchors[i].x2 * ratios[i/scales.size()];
+    anchors[i].x2 = sqrt(areas[i] / ratios[i / scales.size()]);
+    anchors[i].y2 = anchors[i].x2 * ratios[i / scales.size()];
 
     anchors[i].x1 -= anchors[i].x2 * 0.5;
     anchors[i].x2 -= anchors[i].x2 * 0.5;
@@ -41,21 +41,21 @@ static std::vector<cvai_bbox_t> generate_anchors(int base_size, const std::vecto
 
 static std::vector<cvai_bbox_t> shift(const std::vector<int> &shape, int stride,
                                       const std::vector<cvai_bbox_t> &anchors) {
-  std::vector<int> shift_x(shape[0]*shape[1], 0);
-  std::vector<int> shift_y(shape[0]*shape[1], 0);
+  std::vector<int> shift_x(shape[0] * shape[1], 0);
+  std::vector<int> shift_y(shape[0] * shape[1], 0);
 
   for (int i = 0; i < shape[0]; i++) {
     for (int j = 0; j < shape[1]; j++) {
-      shift_x[i*shape[1] + j] = (j + 0.5) * stride;
+      shift_x[i * shape[1] + j] = (j + 0.5) * stride;
     }
   }
   for (int i = 0; i < shape[0]; i++) {
     for (int j = 0; j < shape[1]; j++) {
-      shift_y[i*shape[1] + j] = (i + 0.5) * stride;
+      shift_y[i * shape[1] + j] = (i + 0.5) * stride;
     }
   }
 
-  std::vector<cvai_bbox_t> shifts(shape[0]*shape[1], cvai_bbox_t());
+  std::vector<cvai_bbox_t> shifts(shape[0] * shape[1], cvai_bbox_t());
   for (size_t i = 0; i < shifts.size(); i++) {
     shifts[i].x1 = shift_x[i];
     shifts[i].y1 = shift_y[i];
@@ -66,10 +66,10 @@ static std::vector<cvai_bbox_t> shift(const std::vector<int> &shape, int stride,
   std::vector<cvai_bbox_t> all_anchors(anchors.size() * shifts.size(), cvai_bbox_t());
   for (size_t i = 0; i < shifts.size(); i++) {
     for (size_t j = 0; j < anchors.size(); j++) {
-      all_anchors[i*anchors.size() + j].x1 = anchors[j].x1 + shifts[i].x1;
-      all_anchors[i*anchors.size() + j].y1 = anchors[j].y1 + shifts[i].y1;
-      all_anchors[i*anchors.size() + j].x2 = anchors[j].x2 + shifts[i].x2;
-      all_anchors[i*anchors.size() + j].y2 = anchors[j].y2 + shifts[i].y2;
+      all_anchors[i * anchors.size() + j].x1 = anchors[j].x1 + shifts[i].x1;
+      all_anchors[i * anchors.size() + j].y1 = anchors[j].y1 + shifts[i].y1;
+      all_anchors[i * anchors.size() + j].x2 = anchors[j].x2 + shifts[i].x2;
+      all_anchors[i * anchors.size() + j].y2 = anchors[j].y2 + shifts[i].y2;
     }
   }
 
@@ -133,7 +133,8 @@ int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   int img_width = srcFrame->stVFrame.u32Width;
   int img_height = srcFrame->stVFrame.u32Height;
   cv::Mat image(img_height, img_width, CV_8UC3);
-  srcFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(srcFrame->stVFrame.u64PhyAddr[0], srcFrame->stVFrame.u32Length[0]);
+  srcFrame->stVFrame.pu8VirAddr[0] =
+      (CVI_U8 *)CVI_SYS_Mmap(srcFrame->stVFrame.u64PhyAddr[0], srcFrame->stVFrame.u32Length[0]);
   char *va_rgb = (char *)srcFrame->stVFrame.pu8VirAddr[0];
   int dst_width = image.cols;
   int dst_height = image.rows;
@@ -156,9 +157,9 @@ int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
 
     int size = tmpchannels[i].rows * tmpchannels[i].cols;
     for (int r = 0; r < tmpchannels[i].rows; ++r) {
-      memcpy((float *)CVI_NN_TensorPtr(input) + size*i + tmpchannels[i].cols*r,
-                                       tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
-      }
+      memcpy((float *)CVI_NN_TensorPtr(input) + size * i + tmpchannels[i].cols * r,
+             tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
+    }
   }
 
   int ret = run(srcFrame);
@@ -180,13 +181,14 @@ int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   return ret;
 }
 
-void ThermalFace::outputParser(int image_width, int image_height, std::vector<cvai_face_info_t> *bboxes_nms) {
+void ThermalFace::outputParser(int image_width, int image_height,
+                               std::vector<cvai_face_info_t> *bboxes_nms) {
   std::vector<cvai_face_info_t> BBoxes;
 
   std::string score_str = NAME_SCORE;
   CVI_TENSOR *out = CVI_NN_GetTensorByName(score_str.c_str(), mp_output_tensors, m_output_num);
   float *score_blob = (float *)CVI_NN_TensorPtr(out);
- 
+
   std::string bbox_str = NAME_BBOX;
   out = CVI_NN_GetTensorByName(bbox_str.c_str(), mp_output_tensors, m_output_num);
   float *bbox_blob = (float *)CVI_NN_TensorPtr(out);
@@ -196,7 +198,7 @@ void ThermalFace::outputParser(int image_width, int image_height, std::vector<cv
 
     float conf = score_blob[i];
     if (conf <= FACE_THRESHOLD) {
-        continue;
+      continue;
     }
     box.bbox.score = conf;
 

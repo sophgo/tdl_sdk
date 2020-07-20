@@ -24,10 +24,7 @@ typedef enum {
   RACE_END
 } cvai_face_race_e;
 
-typedef enum {
-  LIVENESS_IR_LEFT = 0,
-  LIVENESS_IR_RIGHT
-} cvai_liveness_ir_position_e;
+typedef enum { LIVENESS_IR_LEFT = 0, LIVENESS_IR_RIGHT } cvai_liveness_ir_position_e;
 
 typedef uint32_t cvai_face_id_t;
 

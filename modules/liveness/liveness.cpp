@@ -2,8 +2,8 @@
 #include "template_matching.hpp"
 
 #include "core_utils.hpp"
-#include "face_utils.hpp"
 #include "cviai_types_free.h"
+#include "face_utils.hpp"
 
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
@@ -24,8 +24,7 @@ using namespace std;
 namespace cviai {
 
 static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
-                                                VIDEO_FRAME_INFO_S *sink_buffer,
-                                                cvai_face_t *meta,
+                                                VIDEO_FRAME_INFO_S *sink_buffer, cvai_face_t *meta,
                                                 cvai_liveness_ir_position_e ir_pos) {
   cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3);
   frame->stVFrame.pu8VirAddr[0] =
