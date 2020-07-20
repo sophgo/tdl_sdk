@@ -9,6 +9,10 @@
 #include "cviai_types_free.h"
 typedef void *cviai_handle_t;
 
+/**
+ * @brief Supported NN model list. Can be used to config function behavior.
+ *
+ */
 typedef enum {
   CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
   CVI_AI_SUPPORTED_MODEL_RETINAFACE,
@@ -18,6 +22,12 @@ typedef enum {
   CVI_AI_SUPPORTED_MODEL_END
 } CVI_AI_SUPPORTED_MODEL_E;
 
+/**
+ * @brief Free the content inside the structure, not the structure itself.
+ *        Support the following structure types written in _Generic.
+ *
+ * @param X Input data structure.
+ */
 #ifdef __cplusplus
 #define CVI_AI_Free(X) CVI_AI_FreeCpp(X)
 #else
@@ -35,12 +45,50 @@ typedef enum {
 #ifdef __cplusplus
 extern "C" {
 #endif
+/**
+ * @brief Create a cviai_handle_t.
+ *
+ * @param handle An AI SDK handle.
+ * @return int Return CVI_RC_SUCCESS if succeed.
+ */
 int CVI_AI_CreateHandle(cviai_handle_t *handle);
+
+/**
+ * @brief Destroy a cviai_handle_t.
+ *
+ * @param handle An AI SDK handle.
+ * @return int Return CVI_RC_SUCCESS if success to destroy handle.
+ */
 int CVI_AI_DestroyHandle(cviai_handle_t handle);
+
+/**
+ * @brief Set the model path for supported networks.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param filepath File path to the cvimodel file.
+ * @return int Return CVI_RC_SUCCESS if load model succeed.
+ */
 int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath);
+
+/**
+ * @brief Close all opened models and delete the model instances.
+ *
+ * @param handle An AI SDK handle.
+ * @return int Return CVI_RC_SUCCESS if succeed.
+ */
 int CVI_AI_CloseAllModel(cviai_handle_t handle);
+
+/**
+ * @brief Close the chosen model and delete its model instance.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @return int Return CVI_RC_SUCCESS if close succeed.
+ */
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
+
 int CVI_AI_FaceAttribute(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
 int CVI_AI_Yolov3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvai_object_t *obj,
                   cvai_obj_det_type_t det_type);
