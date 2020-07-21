@@ -29,6 +29,7 @@ typedef struct {
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
   cviai_context_t *ctx = new cviai_context_t;
   ctx->vpss_engine_inst = new VpssEngine();
+  ctx->vpss_engine_inst->init(false);
   *handle = ctx;
   return CVI_RC_SUCCESS;
 }
