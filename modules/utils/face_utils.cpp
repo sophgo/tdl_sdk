@@ -79,9 +79,7 @@ static cv::Mat get_similarity_transform(const vector<cv::Point2f> &src_pts,
 
 namespace cviai {
 
-cvai_face_info_t bbox_rescale(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face_meta, int face_idx) {
-  float width = frame->stVFrame.u32Width;
-  float height = frame->stVFrame.u32Height;
+cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta, int face_idx) {
   float ratio_x, ratio_y, bbox_y_height, bbox_x_height, bbox_padding_top, bbox_padding_left;
 
   if (width >= height) {

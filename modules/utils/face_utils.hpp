@@ -6,7 +6,7 @@
 #include "opencv2/opencv.hpp"
 
 namespace cviai {
-cvai_face_info_t bbox_rescale(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face_meta, int face_idx);
+cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta, int face_idx);
 int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info, int width,
                int height);
 }  // namespace cviai
