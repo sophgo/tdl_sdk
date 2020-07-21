@@ -32,16 +32,24 @@ static SAMPLE_VI_CONFIG_S stViConfig;
 
 static VI_PIPE ViPipe = 0;
 static VPSS_GRP VpssGrp = 0;
-static VPSS_CHN VpssChn = VPSS_CHN0;
+static VPSS_CHN VpssChnFD = VPSS_CHN0;
+static VPSS_CHN VpssChnFR = VPSS_CHN1;
 static VPSS_CHN VpssChnVO = VPSS_CHN2;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 // static CVI_U32 VoLayer = 0;
 // static CVI_U32 VoChn = 0;
 
-static int GetVideoframe(VIDEO_FRAME_INFO_S *stfdFrame, VIDEO_FRAME_INFO_S *stVOFrame) {
+static int GetVideoframe(VIDEO_FRAME_INFO_S *stfdFrame, VIDEO_FRAME_INFO_S *stfrFrame,
+                         VIDEO_FRAME_INFO_S *stVOFrame) {
   int s32Ret = CVI_SUCCESS;
-  s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, stfdFrame, 1000);
+  s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChnFD, stfdFrame, 1000);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
+    return s32Ret;
+  }
+
+  s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChnFR, stfrFrame, 1000);
   if (s32Ret != CVI_SUCCESS) {
     printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
     return s32Ret;
@@ -56,9 +64,16 @@ static int GetVideoframe(VIDEO_FRAME_INFO_S *stfdFrame, VIDEO_FRAME_INFO_S *stVO
   return s32Ret;
 }
 
-static int ReleaseVideoframe(VIDEO_FRAME_INFO_S *stfdFrame, VIDEO_FRAME_INFO_S *stVOFrame) {
+static int ReleaseVideoframe(VIDEO_FRAME_INFO_S *stfdFrame, VIDEO_FRAME_INFO_S *stfrFrame,
+                             VIDEO_FRAME_INFO_S *stVOFrame) {
   int s32Ret = CVI_SUCCESS;
-  s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, stfdFrame);
+  s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChnFD, stfdFrame);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
+    return s32Ret;
+  }
+
+  s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChnFR, stfrFrame);
   if (s32Ret != CVI_SUCCESS) {
     printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
     return s32Ret;
@@ -73,30 +88,22 @@ static int ReleaseVideoframe(VIDEO_FRAME_INFO_S *stfdFrame, VIDEO_FRAME_INFO_S *
   return s32Ret;
 }
 
-void set_vpss_aspect(CVI_S32 vpsschn, CVI_S32 x, CVI_S32 y, CVI_S32 width, CVI_S32 height) {
-  VPSS_CHN_ATTR_S stChnAttr;
-  CVI_VPSS_GetChnAttr(0, vpsschn, &stChnAttr);
-  stChnAttr.stAspectRatio.stVideoRect.s32X = x;
-  stChnAttr.stAspectRatio.stVideoRect.s32Y = y;
-  stChnAttr.stAspectRatio.stVideoRect.u32Width = width;
-  stChnAttr.stAspectRatio.stVideoRect.u32Height = height;
-  CVI_VPSS_SetChnAttr(0, vpsschn, &stChnAttr);
-}
-
-static int DoFd(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *stfdFrame, cvai_face_t *face) {
+static int DoFd(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *stfdFrame,
+                VIDEO_FRAME_INFO_S *stfrFrame, cvai_face_t *face) {
   int face_count = 0;
 
   CVI_AI_RetinaFace(facelib_handle, stfdFrame, face, &face_count);
   printf("face_count %d\n", face->size);
+  CVI_AI_FaceAttribute(facelib_handle, stfrFrame, face);
 
   return 0;
 }
 
 static void Exit() {
-  SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, VpssChn, VpssGrp);
+  SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, VpssChnFD, VpssGrp);
 
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
-  abChnEnable[VpssChn] = CVI_TRUE;
+  abChnEnable[VpssChnFD] = CVI_TRUE;
   abChnEnable[VpssChnVO] = CVI_TRUE;
 
   SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
@@ -105,19 +112,20 @@ static void Exit() {
 
 static void Run() {
   CVI_S32 s32Ret = CVI_SUCCESS;
-  VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
+  VIDEO_FRAME_INFO_S stfdFrame, stfrFrame, stVOFrame;
   cvai_face_t face;
   memset(&face, 0, sizeof(cvai_face_t));
 
   while (bExit == false) {
-    s32Ret = GetVideoframe(&stfdFrame, &stVOFrame);
+    s32Ret = GetVideoframe(&stfdFrame, &stfrFrame, &stVOFrame);
     if (s32Ret != CVI_SUCCESS) {
       Exit();
       assert(0 && "get video frame error!\n");
     }
 
-    DoFd(facelib_handle, &stfdFrame, &face);
+    DoFd(facelib_handle, &stfdFrame, &stfrFrame, &face);
 
+    sleep(3);
     DrawFaceMeta(&stVOFrame, &face);
 
     // s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);
@@ -126,7 +134,7 @@ static void Run() {
     // }
     // CVI_VO_ShowChn(VoLayer,VoChn);
 
-    s32Ret = ReleaseVideoframe(&stfdFrame, &stVOFrame);
+    s32Ret = ReleaseVideoframe(&stfdFrame, &stfrFrame, &stVOFrame);
     if (s32Ret != CVI_SUCCESS) {
       Exit();
       assert(0 && "release video frame error!\n");
@@ -204,27 +212,42 @@ static CVI_S32 InitVPSS() {
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   VPSS_CHN_ATTR_S stVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
 
-  abChnEnable[VpssChn] = CVI_TRUE;
-  stVpssChnAttr[VpssChn].u32Width = 608;
-  stVpssChnAttr[VpssChn].u32Height = 608;
-  stVpssChnAttr[VpssChn].enVideoFormat = VIDEO_FORMAT_LINEAR;
-  stVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_RGB_888_PLANAR;
-  stVpssChnAttr[VpssChn].stFrameRate.s32SrcFrameRate = 30;
-  stVpssChnAttr[VpssChn].stFrameRate.s32DstFrameRate = 30;
-  stVpssChnAttr[VpssChn].u32Depth = 1;
-  stVpssChnAttr[VpssChn].bMirror = CVI_FALSE;
-  stVpssChnAttr[VpssChn].bFlip = CVI_FALSE;
-  stVpssChnAttr[VpssChn].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
-  stVpssChnAttr[VpssChn].stAspectRatio.bEnableBgColor = CVI_TRUE;
-  stVpssChnAttr[VpssChn].stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
-  stVpssChnAttr[VpssChn].stNormalize.bEnable = CVI_TRUE;
-  stVpssChnAttr[VpssChn].stNormalize.factor[0] = (128 / 255.001236);
-  stVpssChnAttr[VpssChn].stNormalize.factor[1] = (128 / 255.001236);
-  stVpssChnAttr[VpssChn].stNormalize.factor[2] = (128 / 255.001236);
-  stVpssChnAttr[VpssChn].stNormalize.mean[0] = 0;
-  stVpssChnAttr[VpssChn].stNormalize.mean[1] = 0;
-  stVpssChnAttr[VpssChn].stNormalize.mean[2] = 0;
-  stVpssChnAttr[VpssChn].stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  abChnEnable[VpssChnFD] = CVI_TRUE;
+  stVpssChnAttr[VpssChnFD].u32Width = 608;
+  stVpssChnAttr[VpssChnFD].u32Height = 608;
+  stVpssChnAttr[VpssChnFD].enVideoFormat = VIDEO_FORMAT_LINEAR;
+  stVpssChnAttr[VpssChnFD].enPixelFormat = PIXEL_FORMAT_RGB_888_PLANAR;
+  stVpssChnAttr[VpssChnFD].stFrameRate.s32SrcFrameRate = 30;
+  stVpssChnAttr[VpssChnFD].stFrameRate.s32DstFrameRate = 30;
+  stVpssChnAttr[VpssChnFD].u32Depth = 1;
+  stVpssChnAttr[VpssChnFD].bMirror = CVI_FALSE;
+  stVpssChnAttr[VpssChnFD].bFlip = CVI_FALSE;
+  stVpssChnAttr[VpssChnFD].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
+  stVpssChnAttr[VpssChnFD].stAspectRatio.bEnableBgColor = CVI_TRUE;
+  stVpssChnAttr[VpssChnFD].stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
+  stVpssChnAttr[VpssChnFD].stNormalize.bEnable = CVI_TRUE;
+  stVpssChnAttr[VpssChnFD].stNormalize.factor[0] = (128 / 255.001236);
+  stVpssChnAttr[VpssChnFD].stNormalize.factor[1] = (128 / 255.001236);
+  stVpssChnAttr[VpssChnFD].stNormalize.factor[2] = (128 / 255.001236);
+  stVpssChnAttr[VpssChnFD].stNormalize.mean[0] = 0;
+  stVpssChnAttr[VpssChnFD].stNormalize.mean[1] = 0;
+  stVpssChnAttr[VpssChnFD].stNormalize.mean[2] = 0;
+  stVpssChnAttr[VpssChnFD].stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+
+  abChnEnable[VpssChnFR] = CVI_TRUE;
+  stVpssChnAttr[VpssChnFR].u32Width = 640;
+  stVpssChnAttr[VpssChnFR].u32Height = 480;
+  stVpssChnAttr[VpssChnFR].enVideoFormat = VIDEO_FORMAT_LINEAR;
+  stVpssChnAttr[VpssChnFR].enPixelFormat = PIXEL_FORMAT_RGB_888;
+  stVpssChnAttr[VpssChnFR].stFrameRate.s32SrcFrameRate = 30;
+  stVpssChnAttr[VpssChnFR].stFrameRate.s32DstFrameRate = 30;
+  stVpssChnAttr[VpssChnFR].u32Depth = 1;
+  stVpssChnAttr[VpssChnFR].bMirror = CVI_FALSE;
+  stVpssChnAttr[VpssChnFR].bFlip = CVI_FALSE;
+  stVpssChnAttr[VpssChnFR].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
+  stVpssChnAttr[VpssChnFR].stAspectRatio.bEnableBgColor = CVI_TRUE;
+  stVpssChnAttr[VpssChnFR].stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
+  stVpssChnAttr[VpssChnFR].stNormalize.bEnable = CVI_FALSE;
 
   abChnEnable[VpssChnVO] = CVI_TRUE;
   stVpssChnAttr[VpssChnVO].u32Width = 1280;
@@ -268,7 +291,7 @@ static CVI_S32 InitVPSS() {
     return s32Ret;
   }
 
-  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, VpssChn, VpssGrp);
+  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, VpssChnFD, VpssGrp);
   if (s32Ret != CVI_SUCCESS) {
     printf("vi bind vpss failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
@@ -420,6 +443,8 @@ int main(void) {
   int ret = CVI_AI_CreateHandle(&facelib_handle);
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
                             "/mnt/data/retina_face.cvimodel");
+  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
+                            "/mnt/data/bmface.cvimodel");
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
