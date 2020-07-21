@@ -1,6 +1,7 @@
 #pragma once
 #include "cvi_comm_video.h"
 #include "cviruntime.h"
+#include "vpss_engine.hpp"
 
 #include <memory>
 #include <vector>
@@ -32,6 +33,7 @@ class Core {
   virtual ~Core() = default;
   int modelOpen(const char *filepath);
   int modelClose();
+  int setVpssEngine(VpssEngine *engine);
   float getInputScale();
 
  protected:
@@ -49,5 +51,7 @@ class Core {
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
   float m_input_scale = 0;
+
+  VpssEngine *mp_vpss_inst = nullptr;
 };
 }  // namespace cviai

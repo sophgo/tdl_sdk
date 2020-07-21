@@ -14,7 +14,7 @@ void VpssEngine::enableLog() {
   LOG_LEVEL_CONF_S log_conf;
   log_conf.enModId = (MOD_ID_E)6;  // vpss
   CVI_LOG_GetLevelConf(&log_conf);
-  printf("Set Vpss Log Level: %d, log will save into cvi_mmf.log\n", log_conf.s32Level);
+  printf("Set Vpss Log Level: %d, log will save into cvi_mmf_aisdk.log\n", log_conf.s32Level);
   log_conf.s32Level = 7;
   CVI_LOG_SetLevelConf(&log_conf);
 

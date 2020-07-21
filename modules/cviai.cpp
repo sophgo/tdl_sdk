@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "cviai.h"
+#include "vpss_engine.hpp"
 
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"
@@ -22,10 +23,12 @@ typedef struct {
 
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
+  VpssEngine *vpss_engine_inst = nullptr;
 } cviai_context_t;
 
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
   cviai_context_t *ctx = new cviai_context_t;
+  ctx->vpss_engine_inst = new VpssEngine();
   *handle = ctx;
   return CVI_RC_SUCCESS;
 }
@@ -33,6 +36,7 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle) {
 int CVI_AI_DestroyHandle(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
+  delete ctx->vpss_engine_inst;
   delete ctx;
   return CVI_RC_SUCCESS;
 }
@@ -76,6 +80,7 @@ int CVI_AI_FaceAttribute(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_
       return CVI_RC_FAILURE;
     }
     m_t.instance = new FaceAttribute();
+    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_RC_FAILURE;
@@ -101,6 +106,7 @@ int CVI_AI_Yolov3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_
       return CVI_RC_FAILURE;
     }
     m_t.instance = new Yolov3();
+    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_RC_FAILURE;
@@ -125,6 +131,7 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
       return CVI_RC_FAILURE;
     }
     m_t.instance = new RetinaFace();
+    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_RC_FAILURE;
@@ -151,6 +158,7 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
       return CVI_RC_FAILURE;
     }
     m_t.instance = new Liveness(ir_position);
+    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_RC_FAILURE;
@@ -175,6 +183,7 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
       return CVI_RC_FAILURE;
     }
     m_t.instance = new FaceQuality();
+    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_RC_FAILURE;

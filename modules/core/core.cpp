@@ -89,6 +89,15 @@ CVI_TENSOR *Core::getOutputTensor(int idx) {
   return mp_output_tensors + idx;
 }
 
+int Core::setVpssEngine(VpssEngine *engine) {
+  if (mp_vpss_inst != nullptr) {
+    printf("Vpss engine instance already set.\n");
+    return CVI_RC_FAILURE;
+  }
+  mp_vpss_inst = engine;
+  return CVI_RC_SUCCESS;
+}
+
 float Core::getInputScale() { return m_input_scale; }
 
 }  // namespace cviai

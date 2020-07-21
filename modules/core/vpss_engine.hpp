@@ -1,3 +1,4 @@
+#pragma once
 #include <cvi_comm_video.h>
 
 namespace cviai {
