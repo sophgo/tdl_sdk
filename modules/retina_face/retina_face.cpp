@@ -3,11 +3,15 @@
 #include "cviai_types_free.h"
 #include "retina_face_utils.hpp"
 
+#include "cvi_vpss.h"
+#include "sample_comm.h"
+
 #define FACE_THRESHOLD 0.5
 #define NAME_BBOX "face_rpn_bbox_pred_"
 #define NAME_SCORE "face_rpn_cls_score_reshape_"
 #define NAME_LANDMARK "face_rpn_landmark_pred_"
 #define FACE_POINTS_SIZE 5
+#define RETINA_FACE_SCALE (128 / 255.001236)
 
 namespace cviai {
 
@@ -62,11 +66,38 @@ int RetinaFace::initAfterModelOpened() {
         anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
   }
 
+  VPSS_CHN_ATTR_S vpssChnAttr;
+  CVI_TENSOR *input = getInputTensor(0);
+  vpssChnAttr.u32Width = input->shape.dim[3];
+  vpssChnAttr.u32Height = input->shape.dim[2];
+  vpssChnAttr.enVideoFormat = VIDEO_FORMAT_LINEAR;
+  vpssChnAttr.enPixelFormat = PIXEL_FORMAT_RGB_888_PLANAR;
+  vpssChnAttr.stFrameRate.s32SrcFrameRate = 30;
+  vpssChnAttr.stFrameRate.s32DstFrameRate = 30;
+  vpssChnAttr.u32Depth = 1;
+  vpssChnAttr.bMirror = CVI_FALSE;
+  vpssChnAttr.bFlip = CVI_FALSE;
+  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_AUTO;
+  vpssChnAttr.stAspectRatio.bEnableBgColor = CVI_TRUE;
+  vpssChnAttr.stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
+  vpssChnAttr.stNormalize.bEnable = CVI_TRUE;
+  vpssChnAttr.stNormalize.factor[0] = RETINA_FACE_SCALE;
+  vpssChnAttr.stNormalize.factor[1] = RETINA_FACE_SCALE;
+  vpssChnAttr.stNormalize.factor[2] = RETINA_FACE_SCALE;
+  vpssChnAttr.stNormalize.mean[0] = 0;
+  vpssChnAttr.stNormalize.mean[1] = 0;
+  vpssChnAttr.stNormalize.mean[2] = 0;
+  vpssChnAttr.stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  m_vpss_chn_attr.push_back(vpssChnAttr);
+
   return CVI_RC_SUCCESS;
 }
 
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *face_count) {
-  int ret = run(srcFrame);
+  VIDEO_FRAME_INFO_S stDstFrame;
+  getScaleFrame(srcFrame, VPSS_CHN0, m_vpss_chn_attr[0], &stDstFrame);
+
+  int ret = run(&stDstFrame);
 
   CVI_TENSOR *input = getInputTensor(0);
   float ratio = 1.0;
@@ -95,6 +126,12 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
 
   for (size_t i = 0; i < BBoxes.size(); ++i) {
     CVI_AI_FreeCpp(&BBoxes[i].face_pts);
+  }
+
+  ret = CVI_VPSS_ReleaseChnFrame(mp_vpss_inst->getGrpId(), VPSS_CHN0, &stDstFrame);
+  if (ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_ReleaseChnFrame failed with %#x\n", ret);
+    return ret;
   }
 
   return ret;

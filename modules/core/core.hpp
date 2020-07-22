@@ -1,5 +1,6 @@
 #pragma once
 #include "cvi_comm_video.h"
+#include "cvi_comm_vpss.h"
 #include "cviruntime.h"
 #include "vpss_engine.hpp"
 
@@ -41,6 +42,8 @@ class Core {
   int run(VIDEO_FRAME_INFO_S *srcFrame);
   CVI_TENSOR *getInputTensor(int idx);
   CVI_TENSOR *getOutputTensor(int idx);
+  int getScaleFrame(VIDEO_FRAME_INFO_S *frame, VPSS_CHN chn, VPSS_CHN_ATTR_S chnFrame,
+                    VIDEO_FRAME_INFO_S *outFrame);
 
   // Class settings
   std::unique_ptr<ModelConfig> mp_config;
@@ -53,5 +56,6 @@ class Core {
   float m_input_scale = 0;
 
   VpssEngine *mp_vpss_inst = nullptr;
+  std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
 };
 }  // namespace cviai

@@ -217,14 +217,7 @@ static CVI_S32 InitVPSS() {
   stVpssChnAttr[VpssChn].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
   stVpssChnAttr[VpssChn].stAspectRatio.bEnableBgColor = CVI_TRUE;
   stVpssChnAttr[VpssChn].stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
-  stVpssChnAttr[VpssChn].stNormalize.bEnable = CVI_TRUE;
-  stVpssChnAttr[VpssChn].stNormalize.factor[0] = (128 / 255.001236);
-  stVpssChnAttr[VpssChn].stNormalize.factor[1] = (128 / 255.001236);
-  stVpssChnAttr[VpssChn].stNormalize.factor[2] = (128 / 255.001236);
-  stVpssChnAttr[VpssChn].stNormalize.mean[0] = 0;
-  stVpssChnAttr[VpssChn].stNormalize.mean[1] = 0;
-  stVpssChnAttr[VpssChn].stNormalize.mean[2] = 0;
-  stVpssChnAttr[VpssChn].stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  stVpssChnAttr[VpssChn].stNormalize.bEnable = CVI_FALSE;
 
   abChnEnable[VpssChnVO] = CVI_TRUE;
   stVpssChnAttr[VpssChnVO].u32Width = 1280;
