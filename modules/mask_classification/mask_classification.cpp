@@ -1,8 +1,6 @@
 #include "mask_classification.hpp"
 
 #include "cviai_types_free.h"
-
-#include "core_utils.hpp"
 #include "face_utils.hpp"
 
 #include "cvi_sys.h"
@@ -45,11 +43,13 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
   int input_w = input->shape.dim[3];
   int input_h = input->shape.dim[2];
   for (int i = 0; i < meta->size; i++) {
+    cvai_face_info_t face_info = bbox_rescale(img_width, img_height, meta, i);
+
     cv::Rect box;
-    box.x = meta->face_info[i].bbox.x1;
-    box.y = meta->face_info[i].bbox.y1;
-    box.width = meta->face_info[i].bbox.x2 - box.x;
-    box.height = meta->face_info[i].bbox.y2 - box.y;
+    box.x = face_info.bbox.x1;
+    box.y = face_info.bbox.y1;
+    box.width = face_info.bbox.x2 - box.x;
+    box.height = face_info.bbox.y2 - box.y;
 
     cv::Mat crop_image = image(box);
     cv::Mat resized_image;
