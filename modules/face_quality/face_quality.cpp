@@ -12,7 +12,7 @@
 #define MEAN_B -(0.485 / 0.229)
 #define MEAN_G -(0.456 / 0.224)
 #define MEAN_R -(0.406 / 0.225)
-#define NAME_SCORE "score_Softmax_dequant"
+#define NAME_SCORE "score_Softmax"
 
 namespace cviai {
 
@@ -35,12 +35,13 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
-  std::vector<float> mean = {MEAN_B, MEAN_G, MEAN_R};
-  std::vector<float> scale = {SCALE_B, SCALE_G, SCALE_R};
+  std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
+  std::vector<float> scale = {SCALE_R, SCALE_G, SCALE_B};
   for (int i = 0; i < meta->size; i++) {
-    cvai_face_info_t face_info = bbox_rescale(frame, meta, i);
-    cv::Mat crop_frame(input->shape.dim[3], input->shape.dim[2], image.type());
-    face_align(image, crop_frame, face_info, input->shape.dim[2], input->shape.dim[3]);
+    cvai_face_info_t face_info = bbox_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                                              meta, i);
+    cv::Mat crop_frame(input->shape.dim[2], input->shape.dim[3], image.type());
+    face_align(image, crop_frame, face_info, input->shape.dim[3], input->shape.dim[2]);
 
     cv::Mat tmpchannels[3];
     cv::split(crop_frame, tmpchannels);
@@ -59,11 +60,9 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     CVI_TENSOR *out = CVI_NN_GetTensorByName(NAME_SCORE, mp_output_tensors, m_output_num);
     float *score = (float *)CVI_NN_TensorPtr(out);
     meta->face_info[i].face_quality = score[1];
-    // cout << score[0] << "," << score[1] << endl;
 
     CVI_AI_FreeCpp(&face_info);
   }
-  // sleep(3);
 
   return CVI_RC_SUCCESS;
 }

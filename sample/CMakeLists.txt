@@ -40,6 +40,11 @@ add_executable(sample_fd_fr
     draw_utils.c
 )
 
+add_executable(sample_face_quality
+    sample_face_quality.c
+    draw_utils.c
+)
+
 add_executable(sample_object_detection
     sample_object_detection.c
     draw_utils.c
@@ -47,5 +52,6 @@ add_executable(sample_object_detection
 
 target_link_libraries(sample_fd cviai ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
 target_link_libraries(sample_fd_fr cviai ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
+target_link_libraries(sample_face_quality cviai ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
 target_link_libraries(sample_object_detection cviai ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
 

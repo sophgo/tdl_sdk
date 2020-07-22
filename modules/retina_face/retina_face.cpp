@@ -15,7 +15,6 @@ RetinaFace::RetinaFace() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
-  ;
 }
 
 RetinaFace::~RetinaFace() {}
