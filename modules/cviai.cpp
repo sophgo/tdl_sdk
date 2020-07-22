@@ -12,6 +12,7 @@
 #include "liveness/liveness.hpp"
 #include "retina_face/retina_face.hpp"
 #include "yolov3/yolov3.hpp"
+#include "mask_classification/mask_classification.hpp"
 
 using namespace std;
 using namespace cviai;
@@ -72,7 +73,7 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   return CVI_RC_SUCCESS;
 }
 
-int CVI_AI_FaceAttribute(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
+int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE];
   if (m_t.instance == nullptr) {
@@ -97,7 +98,7 @@ int CVI_AI_FaceAttribute(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_
   return face_attr->inference(frame, faces);
 }
 
-int CVI_AI_Yolov3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                   cvai_obj_det_type_t det_type) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_YOLOV3];
@@ -198,4 +199,29 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
   }
 
   return face_quality->inference(frame, face);
+}
+
+int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      printf("Model path for FaceQuality is empty.\n");
+      return CVI_RC_FAILURE;
+    }
+    m_t.instance = new MaskClassification();
+    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+      printf("Open model failed (%s).\n", m_t.model_path.c_str());
+      return CVI_RC_FAILURE;
+    }
+  }
+
+  MaskClassification *mask_classification = dynamic_cast<MaskClassification *>(m_t.instance);
+  if (mask_classification == nullptr) {
+    printf("No instance found for FaceQuality.\n");
+    return CVI_RC_FAILURE;
+  }
+
+  return mask_classification->inference(frame, face);
 }

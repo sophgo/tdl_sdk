@@ -19,6 +19,7 @@ typedef enum {
   CVI_AI_SUPPORTED_MODEL_YOLOV3,
   CVI_AI_SUPPORTED_MODEL_LIVENESS,
   CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
+  CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION,
   CVI_AI_SUPPORTED_MODEL_END
 } CVI_AI_SUPPORTED_MODEL_E;
 
@@ -89,15 +90,16 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle);
  */
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
-int CVI_AI_FaceAttribute(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
-int CVI_AI_Yolov3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvai_object_t *obj,
+int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
+int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *stObjDetFrame, cvai_object_t *obj,
                   cvai_obj_det_type_t det_type);
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
                       int *face_count);
 int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
                     VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
                     cvai_liveness_ir_position_e ir_position);
-int CVI_AI_FaceQuality(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
 
 #ifdef __cplusplus
 }

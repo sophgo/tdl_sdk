@@ -41,7 +41,7 @@ namespace cviai {
 Yolov3::Yolov3() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_preprocess = true;
-  mp_config->input_mem_type = 2;
+  mp_config->input_mem_type = CVI_MEM_DEVICE;
 
   m_input_scale = YOLOV3_SCALE;
 

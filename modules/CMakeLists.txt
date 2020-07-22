@@ -5,6 +5,7 @@ add_subdirectory(utils)
 add_subdirectory(face_attribute)
 add_subdirectory(face_quality)
 add_subdirectory(liveness)
+add_subdirectory(mask_classification)
 add_subdirectory(retina_face)
 add_subdirectory(yolov3)
 add_subdirectory(thermal_face_detection)
@@ -17,6 +18,7 @@ add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:core>
                                    $<TARGET_OBJECTS:face_attribute>
 				   $<TARGET_OBJECTS:face_quality>
 				   $<TARGET_OBJECTS:liveness>
+				   $<TARGET_OBJECTS:mask_classification>
                                    $<TARGET_OBJECTS:retina_face>
 				   $<TARGET_OBJECTS:yolov3>
 				   $<TARGET_OBJECTS:thermal_face_detection>
