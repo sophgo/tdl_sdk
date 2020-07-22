@@ -97,9 +97,11 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
  * @param filepath GIven image path.
  * @param blk VB block id.
  * @param frame Output read image.
+ * @param format Set output format, only supports RGB, BGR, planar.
  * @return int Return CVI_RC_SUCCESS if read succeed.
  */
-int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame);
+int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
+                     PIXEL_FORMAT_E format);
 
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces);

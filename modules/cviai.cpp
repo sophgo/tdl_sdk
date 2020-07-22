@@ -76,23 +76,54 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   return CVI_RC_SUCCESS;
 }
 
-int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame) {
+int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
+                     PIXEL_FORMAT_E format) {
   cv::Mat img = cv::imread(filepath);
-  if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, PIXEL_FORMAT_RGB_888_PLANAR) !=
-      CVI_SUCCESS) {
+  if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, format) != CVI_SUCCESS) {
     printf("Create VBFrame failed.\n");
     return CVI_RC_FAILURE;
   }
 
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
-  for (int j = 0; j < img.rows; j++) {
-    cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
-    for (int i = 0; i < img.cols; i++) {
-      vFrame->pu8VirAddr[0][i + j * vFrame->u32Stride[0]] = ptr[i][2];
-      vFrame->pu8VirAddr[1][i + j * vFrame->u32Stride[1]] = ptr[i][1];
-      vFrame->pu8VirAddr[2][i + j * vFrame->u32Stride[2]] = ptr[i][0];
-    }
+  switch (format) {
+    case PIXEL_FORMAT_RGB_888: {
+      for (int j = 0; j < img.rows; j++) {
+        cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
+        for (int i = 0; i < img.cols; i++) {
+          uint32_t offset = (i + j * vFrame->u32Stride[0]) * 3;
+          vFrame->pu8VirAddr[0][offset] = ptr[i][2];
+          vFrame->pu8VirAddr[0][offset + 1] = ptr[i][1];
+          vFrame->pu8VirAddr[0][offset + 2] = ptr[i][0];
+        }
+      }
+    } break;
+    case PIXEL_FORMAT_BGR_888: {
+      for (int j = 0; j < img.rows; j++) {
+        cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
+        for (int i = 0; i < img.cols; i++) {
+          uint32_t offset = (i + j * vFrame->u32Stride[0]) * 3;
+          vFrame->pu8VirAddr[0][offset] = ptr[i][0];
+          vFrame->pu8VirAddr[0][offset + 1] = ptr[i][1];
+          vFrame->pu8VirAddr[0][offset + 2] = ptr[i][2];
+        }
+      }
+    } break;
+    case PIXEL_FORMAT_RGB_888_PLANAR: {
+      for (int j = 0; j < img.rows; j++) {
+        cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
+        for (int i = 0; i < img.cols; i++) {
+          vFrame->pu8VirAddr[0][i + j * vFrame->u32Stride[0]] = ptr[i][2];
+          vFrame->pu8VirAddr[1][i + j * vFrame->u32Stride[1]] = ptr[i][1];
+          vFrame->pu8VirAddr[2][i + j * vFrame->u32Stride[2]] = ptr[i][0];
+        }
+      }
+    } break;
+    default:
+      printf("Unsupported format: %u.\n", format);
+      return CVI_RC_FAILURE;
+      break;
   }
+
   return CVI_RC_SUCCESS;
 }
 
