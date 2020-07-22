@@ -5,14 +5,17 @@
 #include <vector>
 
 #include "cviai.h"
+#include "utils/vpss_helper.h"
 #include "vpss_engine.hpp"
 
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"
 #include "liveness/liveness.hpp"
+#include "mask_classification/mask_classification.hpp"
 #include "retina_face/retina_face.hpp"
 #include "yolov3/yolov3.hpp"
-#include "mask_classification/mask_classification.hpp"
+
+#include "opencv2/opencv.hpp"
 
 using namespace std;
 using namespace cviai;
@@ -73,7 +76,28 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   return CVI_RC_SUCCESS;
 }
 
-int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
+int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame) {
+  cv::Mat img = cv::imread(filepath);
+  if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, PIXEL_FORMAT_RGB_888_PLANAR) !=
+      CVI_SUCCESS) {
+    printf("Create VBFrame failed.\n");
+    return CVI_RC_FAILURE;
+  }
+
+  VIDEO_FRAME_S *vFrame = &frame->stVFrame;
+  for (int j = 0; j < img.rows; j++) {
+    cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
+    for (int i = 0; i < img.cols; i++) {
+      vFrame->pu8VirAddr[0][i + j * vFrame->u32Stride[0]] = ptr[i][2];
+      vFrame->pu8VirAddr[1][i + j * vFrame->u32Stride[1]] = ptr[i][1];
+      vFrame->pu8VirAddr[2][i + j * vFrame->u32Stride[2]] = ptr[i][0];
+    }
+  }
+  return CVI_RC_SUCCESS;
+}
+
+int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                         cvai_face_t *faces) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE];
   if (m_t.instance == nullptr) {
@@ -201,7 +225,8 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
   return face_quality->inference(frame, face);
 }
 
-int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
+int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_face_t *face) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION];
   if (m_t.instance == nullptr) {

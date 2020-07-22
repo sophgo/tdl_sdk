@@ -6,8 +6,8 @@
 #define VIP_WIDTH_ALIGN 32
 #define SCALAR_4096_ALIGN_BUG 0x1000
 
-int MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
-                    uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
+inline int MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
+                           uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
   COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
   // Init SYS and Common VB,
   // Running w/ Vi don't need to do it again. Running Vpss along need init below
@@ -34,8 +34,8 @@ int MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E en
   return 0;
 }
 
-void VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
-                             PIXEL_FORMAT_E enSrcFormat) {
+inline void VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth,
+                                    CVI_U32 srcHeight, PIXEL_FORMAT_E enSrcFormat) {
   memset(pstVpssGrpAttr, 0, sizeof(VPSS_GRP_ATTR_S));
   pstVpssGrpAttr->stFrameRate.s32SrcFrameRate = -1;
   pstVpssGrpAttr->stFrameRate.s32DstFrameRate = -1;
@@ -45,8 +45,9 @@ void VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, 
   pstVpssGrpAttr->u8VpssDev = 0;
 }
 
-void VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_U32 dstHeight,
-                             PIXEL_FORMAT_E enDstFormat, CVI_BOOL keepAspectRatio) {
+inline void VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth,
+                                    CVI_U32 dstHeight, PIXEL_FORMAT_E enDstFormat,
+                                    CVI_BOOL keepAspectRatio) {
   pastVpssChnAttr->u32Width = dstWidth;
   pastVpssChnAttr->u32Height = dstHeight;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -66,10 +67,10 @@ void VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth,
   pastVpssChnAttr->stNormalize.bEnable = CVI_FALSE;
 }
 
-int VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
-                     uint32_t enSrcStride, PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth,
-                     uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat, bool keepAspectRatio,
-                     bool enableLog) {
+inline int VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
+                            uint32_t enSrcStride, PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth,
+                            uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat, bool keepAspectRatio,
+                            bool enableLog) {
   printf("VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight, enDstWidth,
          enDstHeight);
   CVI_S32 s32Ret = CVI_SUCCESS;
@@ -118,8 +119,8 @@ int VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeigh
   return 0;
 }
 
-int GET_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth,
-                       CVI_U32 srcHeight, PIXEL_FORMAT_E pixelFormat) {
+inline int CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth,
+                                 CVI_U32 srcHeight, PIXEL_FORMAT_E pixelFormat) {
   // Create Src Video Frame
   VIDEO_FRAME_S *vFrame = &vbFrame->stVFrame;
   vFrame->enCompressMode = COMPRESS_MODE_NONE;
