@@ -3,8 +3,7 @@
 #include "cviai_types_free.h"
 #include "retina_face_utils.hpp"
 
-#include "cvi_vpss.h"
-#include "sample_comm.h"
+#include "utils/vpss_helper.h"
 
 #define FACE_THRESHOLD 0.5
 #define NAME_BBOX "face_rpn_bbox_pred_"
@@ -79,7 +78,7 @@ int RetinaFace::initAfterModelOpened() {
   vpssChnAttr.bFlip = CVI_FALSE;
   vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_AUTO;
   vpssChnAttr.stAspectRatio.bEnableBgColor = CVI_TRUE;
-  vpssChnAttr.stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
+  vpssChnAttr.stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
   vpssChnAttr.stNormalize.bEnable = CVI_TRUE;
   vpssChnAttr.stNormalize.factor[0] = RETINA_FACE_SCALE;
   vpssChnAttr.stNormalize.factor[1] = RETINA_FACE_SCALE;

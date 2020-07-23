@@ -1,5 +1,12 @@
 #pragma once
-#include <sample_comm.h>
+#include <cvi_buffer.h>
+#include <cvi_comm_vb.h>
+#include <cvi_comm_vpss.h>
+
+#include <cvi_math.h>
+#include <cvi_sys.h>
+#include <cvi_vb.h>
+#include <cvi_vpss.h>
 
 #include <string.h>
 
@@ -26,13 +33,29 @@ static inline int MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight,
   stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[1].u32BlkCnt = 12;
 
-  int s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
+  CVI_S32 s32Ret = CVI_FAILURE;
 
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
+
+  s32Ret = CVI_VB_SetConfig(&stVbConf);
   if (s32Ret != CVI_SUCCESS) {
-    printf("SAMPLE_COMM_SYS_Init failed with %#x\n", s32Ret);
+    printf("CVI_VB_SetConf failed!\n");
     return s32Ret;
   }
-  return CVI_SUCCESS;
+  s32Ret = CVI_VB_Init();
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VB_Init failed!\n");
+    return s32Ret;
+  }
+  s32Ret = CVI_SYS_Init();
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_SYS_Init failed!\n");
+    CVI_VB_Exit();
+    return s32Ret;
+  }
+
+  return s32Ret;
 }
 
 inline void VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth,
@@ -61,7 +84,7 @@ inline void VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 ds
   pastVpssChnAttr->bFlip = CVI_FALSE;
   if (keepAspectRatio) {
     pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_AUTO;
-    pastVpssChnAttr->stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
+    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
   } else {
     pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_NONE;
   }
@@ -74,7 +97,7 @@ inline int VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enS
                             bool enableLog) {
   printf("VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight, enDstWidth,
          enDstHeight);
-  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_S32 s32Ret = CVI_FAILURE;
 
   // Tunr on Vpss Log
   if (enableLog) {
@@ -95,29 +118,39 @@ inline int VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enS
 
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
   VPSS_GRP_ATTR_S stVpssGrpAttr;
-  VPSS_CHN VpssChn = VPSS_CHN0;
-  CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
-  VPSS_CHN_ATTR_S astVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
+  VPSS_CHN_ATTR_S stVpssChnAttr;
 
   VPSS_GRP_DEFAULT_HELPER(&stVpssGrpAttr, enSrcWidth, enSrcHeight, enSrcFormat);
-  VPSS_CHN_DEFAULT_HELPER(&astVpssChnAttr[VpssChn], enDstWidth, enDstHeight, enDstFormat,
-                          keepAspectRatio);
+  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr, enDstWidth, enDstHeight, enDstFormat, keepAspectRatio);
 
   /*start vpss*/
-  abChnEnable[0] = CVI_TRUE;
-  s32Ret = SAMPLE_COMM_VPSS_Init(VpssGrpId, abChnEnable, &stVpssGrpAttr, astVpssChnAttr);
+  s32Ret = CVI_VPSS_CreateGrp(VpssGrpId, &stVpssGrpAttr);
   if (s32Ret != CVI_SUCCESS) {
-    printf("init vpss group failed. s32Ret: 0x%x !\n", s32Ret);
+    printf("CVI_VPSS_CreateGrp(grp:%d) failed with %#x!\n", VpssGrpId, s32Ret);
+    return s32Ret;
+  }
+  s32Ret = CVI_VPSS_ResetGrp(VpssGrpId);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", VpssGrpId, s32Ret);
+    return s32Ret;
+  }
+  s32Ret = CVI_VPSS_SetChnAttr(VpssGrpId, VPSS_CHN0, &stVpssChnAttr);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
+    return s32Ret;
+  }
+  s32Ret = CVI_VPSS_EnableChn(VpssGrpId, VPSS_CHN0);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
+    return s32Ret;
+  }
+  s32Ret = CVI_VPSS_StartGrp(VpssGrpId);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_StartGrp failed with %#x\n", s32Ret);
     return s32Ret;
   }
 
-  s32Ret = SAMPLE_COMM_VPSS_Start(VpssGrpId, abChnEnable, &stVpssGrpAttr, astVpssChnAttr);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
-    return s32Ret;
-  }
-
-  return CVI_SUCCESS;
+  return s32Ret;
 }
 
 inline int CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth,
