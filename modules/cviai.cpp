@@ -90,7 +90,7 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
       for (int j = 0; j < img.rows; j++) {
         cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
         for (int i = 0; i < img.cols; i++) {
-          uint32_t offset = (i + j * vFrame->u32Stride[0]) * 3;
+          uint32_t offset = i * 3 + j * vFrame->u32Stride[0];
           vFrame->pu8VirAddr[0][offset] = ptr[i][2];
           vFrame->pu8VirAddr[0][offset + 1] = ptr[i][1];
           vFrame->pu8VirAddr[0][offset + 2] = ptr[i][0];
@@ -101,7 +101,7 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
       for (int j = 0; j < img.rows; j++) {
         cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
         for (int i = 0; i < img.cols; i++) {
-          uint32_t offset = (i + j * vFrame->u32Stride[0]) * 3;
+          uint32_t offset = i * 3 + j * vFrame->u32Stride[0];
           vFrame->pu8VirAddr[0][offset] = ptr[i][0];
           vFrame->pu8VirAddr[0][offset + 1] = ptr[i][1];
           vFrame->pu8VirAddr[0][offset + 2] = ptr[i][2];
