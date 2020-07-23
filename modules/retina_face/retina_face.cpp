@@ -95,7 +95,8 @@ int RetinaFace::initAfterModelOpened() {
 
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *face_count) {
   VIDEO_FRAME_INFO_S stDstFrame;
-  getScaleFrame(srcFrame, VPSS_CHN0, m_vpss_chn_attr[0], &stDstFrame);
+  mp_vpss_inst->sendFrame(srcFrame, &m_vpss_chn_attr[0], 1);
+  mp_vpss_inst->getFrame(&stDstFrame, 0);
 
   int ret = run(&stDstFrame);
 

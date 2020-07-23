@@ -18,7 +18,7 @@ void VpssEngine::enableLog() {
   log_conf.s32Level = 7;
   CVI_LOG_SetLevelConf(&log_conf);
 
-  CVI_LOG_EnableLog2File(CVI_TRUE, (char*)"cvi_mmf_aisdk.log");
+  CVI_LOG_EnableLog2File(CVI_TRUE, (char *)"cvi_mmf_aisdk.log");
   m_enable_log = true;
 }
 
@@ -36,17 +36,19 @@ int VpssEngine::init(bool enable_log) {
   uint32_t width = 100;
   uint32_t height = 100;
   PIXEL_FORMAT_E format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_enabled_chn = 2;
+  CVI_BOOL chn_enable[VPSS_MAX_PHY_CHN_NUM] = {0};
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
   VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, width, height, format);
-  for (uint8_t i = 0; i < m_enabled_chn_num; i++) {
+  for (uint8_t i = 0; i < m_enabled_chn; i++) {
     VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr[i], width, height, format, true);
-    m_chn_enable[i] = CVI_TRUE;
+    chn_enable[i] = CVI_TRUE;
   }
 
   /*start vpss*/
   m_grpid = -1;
   for (uint8_t i = 0; i < VPSS_MAX_GRP_NUM; i++) {
-    int s32Ret = SAMPLE_COMM_VPSS_Init(i, m_chn_enable, &vpss_grp_attr, vpss_chn_attr);
+    int s32Ret = SAMPLE_COMM_VPSS_Init(i, chn_enable, &vpss_grp_attr, vpss_chn_attr);
     if (s32Ret == CVI_SUCCESS) {
       m_grpid = i;
       break;
@@ -57,7 +59,7 @@ int VpssEngine::init(bool enable_log) {
     return CVI_RC_FAILURE;
   }
 
-  int s32Ret = SAMPLE_COMM_VPSS_Start(m_grpid, m_chn_enable, &vpss_grp_attr, vpss_chn_attr);
+  int s32Ret = SAMPLE_COMM_VPSS_Start(m_grpid, chn_enable, &vpss_grp_attr, vpss_chn_attr);
   if (s32Ret != CVI_SUCCESS) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return CVI_RC_FAILURE;
@@ -71,9 +73,24 @@ int VpssEngine::stop() {
     printf("Vpss is not init yet.\n");
     return CVI_RC_FAILURE;
   }
-  int s32Ret = SAMPLE_COMM_VPSS_Stop(m_grpid, m_chn_enable);
+
+  for (uint32_t j = 0; j < m_enabled_chn; j++) {
+    int s32Ret = CVI_VPSS_DisableChn(m_grpid, j);
+    if (s32Ret != CVI_SUCCESS) {
+      printf("failed with %#x!\n", s32Ret);
+      return CVI_FAILURE;
+    }
+  }
+
+  int s32Ret = CVI_VPSS_StopGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
-    printf("Stop vpss group failed. s32Ret: 0x%x !\n", s32Ret);
+    printf("failed with %#x!\n", s32Ret);
+    return CVI_RC_FAILURE;
+  }
+
+  s32Ret = CVI_VPSS_DestroyGrp(m_grpid);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("failed with %#x!\n", s32Ret);
     return CVI_RC_FAILURE;
   }
 
@@ -86,5 +103,35 @@ int VpssEngine::stop() {
 
 VPSS_GRP VpssEngine::getGrpId() { return m_grpid; }
 
-CVI_BOOL* const VpssEngine::getEnabledChn() { return m_chn_enable; }
+int VpssEngine::sendFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
+                          const uint32_t enable_chns) {
+  if (enable_chns > m_enabled_chn) {
+    printf("Error, exceed enabled chn. Enabled: %x, required %x\n", m_enabled_chn, enable_chns);
+    return CVI_RC_FAILURE;
+  }
+  VPSS_GRP_ATTR_S vpss_grp_attr;
+  VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                          frame->stVFrame.enPixelFormat);
+  int ret = CVI_VPSS_SetGrpAttr(m_grpid, &vpss_grp_attr);
+
+  for (uint32_t i = 0; i < enable_chns; i++) {
+    ret = CVI_VPSS_SetChnAttr(m_grpid, i, &chn_attr[i]);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_SetChnAttr failed with %#x\n", ret);
+      return CVI_RC_FAILURE;
+    }
+  }
+
+  CVI_VPSS_SendFrame(m_grpid, frame, -1);
+  return CVI_RC_SUCCESS;
+}
+
+int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout) {
+  int ret = CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
+  if (ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
+    return CVI_RC_FAILURE;
+  }
+  return CVI_RC_SUCCESS;
+}
 }  // namespace cviai

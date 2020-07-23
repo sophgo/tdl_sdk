@@ -42,8 +42,6 @@ class Core {
   int run(VIDEO_FRAME_INFO_S *srcFrame);
   CVI_TENSOR *getInputTensor(int idx);
   CVI_TENSOR *getOutputTensor(int idx);
-  int getScaleFrame(VIDEO_FRAME_INFO_S *frame, VPSS_CHN chn, VPSS_CHN_ATTR_S chnFrame,
-                    VIDEO_FRAME_INFO_S *outFrame);
 
   // Class settings
   std::unique_ptr<ModelConfig> mp_config;

@@ -101,29 +101,4 @@ int Core::setVpssEngine(VpssEngine *engine) {
 
 float Core::getInputScale() { return m_input_scale; }
 
-int Core::getScaleFrame(VIDEO_FRAME_INFO_S *frame, VPSS_CHN chn, VPSS_CHN_ATTR_S chnAttr,
-                        VIDEO_FRAME_INFO_S *outFrame) {
-  VPSS_GRP_ATTR_S vpss_grp_attr;
-  VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                          frame->stVFrame.enPixelFormat);
-  int ret = CVI_VPSS_SetGrpAttr(mp_vpss_inst->getGrpId(), &vpss_grp_attr);
-
-  ret = CVI_VPSS_SetChnAttr(mp_vpss_inst->getGrpId(), chn,
-                            &chnAttr);
-  if (ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_SetChnAttr failed with %#x\n", ret);
-    return ret;
-  }
-
-  CVI_VPSS_SendFrame(mp_vpss_inst->getGrpId(), frame, -1);
-
-  ret = CVI_VPSS_GetChnFrame(mp_vpss_inst->getGrpId(), chn, outFrame, 100);
-  if (ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-    return ret;
-  }
-
-  return CVI_SUCCESS;
-}
-
 }  // namespace cviai
