@@ -21,6 +21,7 @@ typedef enum {
   CVI_AI_SUPPORTED_MODEL_LIVENESS,
   CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
   CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION,
+  CVI_AI_SUPPORTED_MODEL_THERMALFACE,
   CVI_AI_SUPPORTED_MODEL_END
 } CVI_AI_SUPPORTED_MODEL_E;
 
@@ -125,6 +126,7 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
 int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
 int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                               cvai_face_t *face);
+int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
 
 #ifdef __cplusplus
 }

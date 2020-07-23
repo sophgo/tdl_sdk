@@ -14,6 +14,7 @@
 #include "mask_classification/mask_classification.hpp"
 #include "retina_face/retina_face.hpp"
 #include "yolov3/yolov3.hpp"
+#include "thermal_face_detection/thermal_face.hpp"
 
 #include "opencv2/opencv.hpp"
 
@@ -293,4 +294,29 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
   }
 
   return mask_classification->inference(frame, face);
+}
+
+int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_THERMALFACE];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      printf("Model path for ThermalFace is empty.\n");
+      return CVI_RC_FAILURE;
+    }
+    m_t.instance = new ThermalFace();
+    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+      printf("Open model failed (%s).\n", m_t.model_path.c_str());
+      return CVI_RC_FAILURE;
+    }
+  }
+
+  ThermalFace *thermal_face = dynamic_cast<ThermalFace *>(m_t.instance);
+  if (thermal_face == nullptr) {
+    printf("No instance found for ThermalFace.\n");
+    return CVI_RC_FAILURE;
+  }
+
+  return thermal_face->inference(frame, faces);
 }
