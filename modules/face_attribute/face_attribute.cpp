@@ -57,8 +57,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) 
   CVI_SYS_Munmap((void *)stOutFrame->stVFrame.pu8VirAddr[0], stOutFrame->stVFrame.u32Length[0]);
 
   for (int i = 0; i < meta->size; ++i) {
-    cvai_face_info_t face_info = bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height,
-                                              meta, i);
+    cvai_face_info_t face_info =
+        bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
 
     prepareInputTensor(image, face_info);
     run(stOutFrame);

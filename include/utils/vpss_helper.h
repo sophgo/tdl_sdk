@@ -6,8 +6,9 @@
 #define VIP_WIDTH_ALIGN 32
 #define SCALAR_4096_ALIGN_BUG 0x1000
 
-static inline int MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
-                           uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
+static inline int MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight,
+                                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth,
+                                  uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
   COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
   // Init SYS and Common VB,
   // Running w/ Vi don't need to do it again. Running Vpss along need init below

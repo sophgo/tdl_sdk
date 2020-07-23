@@ -6,20 +6,18 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
-#define R_SCALE                         (1 / (255.0 * 0.229))
-#define G_SCALE                         (1 / (255.0 * 0.224))
-#define B_SCALE                         (1 / (255.0 * 0.225))
-#define R_MEAN                          (-0.485 / 0.229)
-#define G_MEAN                          (-0.456 / 0.224)
-#define B_MEAN                          (-0.406 / 0.225)
-#define CROP_PCT                        0.875
-#define MASK_OUT_NAME                   "logits_Gemm_dequant"
+#define R_SCALE (1 / (255.0 * 0.229))
+#define G_SCALE (1 / (255.0 * 0.224))
+#define B_SCALE (1 / (255.0 * 0.225))
+#define R_MEAN (-0.485 / 0.229)
+#define G_MEAN (-0.456 / 0.224)
+#define B_MEAN (-0.406 / 0.225)
+#define CROP_PCT 0.875
+#define MASK_OUT_NAME "logits_Gemm_dequant"
 
 namespace cviai {
 
-MaskClassification::MaskClassification() {
-  mp_config = std::make_unique<ModelConfig>();
-}
+MaskClassification::MaskClassification() { mp_config = std::make_unique<ModelConfig>(); }
 
 MaskClassification::~MaskClassification() {}
 
@@ -55,11 +53,12 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     cv::Mat resized_image;
     int min_edge = std::min(crop_image.rows, crop_image.cols);
     int size = floor(input_h / CROP_PCT);
-    cv::resize(crop_image, resized_image, cv::Size(int(size * crop_image.cols / min_edge),
-                                                   int(size * crop_image.rows / min_edge)));
+    cv::resize(
+        crop_image, resized_image,
+        cv::Size(int(size * crop_image.cols / min_edge), int(size * crop_image.rows / min_edge)));
 
-    cv::Rect central_roi(int((resized_image.cols - input_w) / 2), int((resized_image.rows - input_h) / 2),
-                         input_w, input_h);
+    cv::Rect central_roi(int((resized_image.cols - input_w) / 2),
+                         int((resized_image.rows - input_h) / 2), input_w, input_h);
     cv::Mat central_image = resized_image(central_roi);
 
     prepareInputTensor(central_image);
@@ -67,7 +66,7 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     run(stOutFrame);
 
     CVI_TENSOR *out = CVI_NN_GetTensorByName(MASK_OUT_NAME, mp_output_tensors, m_output_num);
-    float* out_data = (float *)CVI_NN_TensorPtr(out);
+    float *out_data = (float *)CVI_NN_TensorPtr(out);
 
     float max = std::max(out_data[0], out_data[1]);
     float f0 = std::exp(out_data[0] - max);
@@ -94,8 +93,8 @@ void MaskClassification::prepareInputTensor(cv::Mat &image) {
   for (int i = 0; i < 3; ++i) {
     tmpchannels[i].convertTo(tmpchannels[i], CV_32F, scale[i], mean[i]);
     for (int r = 0; r < tmpchannels[i].rows; ++r) {
-      memcpy((float *)CVI_NN_TensorPtr(input) + size*i + tmpchannels[i].cols*r,
-                                       tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
+      memcpy((float *)CVI_NN_TensorPtr(input) + size * i + tmpchannels[i].cols * r,
+             tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
     }
   }
 }
