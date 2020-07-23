@@ -136,10 +136,10 @@ inline int CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U
   switch (vFrame->enPixelFormat) {
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * vFrame->u32Height, VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * 3, VIP_WIDTH_ALIGN);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0], SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[1] = 0;
       vFrame->u32Length[2] = 0;
     } break;
