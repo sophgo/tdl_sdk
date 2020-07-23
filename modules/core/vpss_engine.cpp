@@ -31,24 +31,20 @@ int VpssEngine::init(bool enable_log) {
     enableLog();
   }
   VPSS_GRP_ATTR_S vpss_grp_attr;
-  VPSS_CHN_ATTR_S vpss_chn_attr[VPSS_MAX_PHY_CHN_NUM];
+  VPSS_CHN_ATTR_S vpss_chn_attr;
   // Not magic number, only for init.
   uint32_t width = 100;
   uint32_t height = 100;
   PIXEL_FORMAT_E format = PIXEL_FORMAT_RGB_888_PLANAR;
   m_enabled_chn = 2;
-  CVI_BOOL chn_enable[VPSS_MAX_PHY_CHN_NUM] = {0};
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
   VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, width, height, format);
-  for (uint8_t i = 0; i < m_enabled_chn; i++) {
-    VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr[i], width, height, format, true);
-    chn_enable[i] = CVI_TRUE;
-  }
+  VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr, width, height, format, true);
 
   /*start vpss*/
   m_grpid = -1;
   for (uint8_t i = 0; i < VPSS_MAX_GRP_NUM; i++) {
-    int s32Ret = SAMPLE_COMM_VPSS_Init(i, chn_enable, &vpss_grp_attr, vpss_chn_attr);
+    int s32Ret = CVI_VPSS_CreateGrp(i, &vpss_grp_attr);
     if (s32Ret == CVI_SUCCESS) {
       m_grpid = i;
       break;
@@ -58,12 +54,33 @@ int VpssEngine::init(bool enable_log) {
     printf("All vpss grp init failed!\n");
     return CVI_RC_FAILURE;
   }
+  int s32Ret = CVI_VPSS_ResetGrp(m_grpid);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", m_grpid, s32Ret);
+    return CVI_RC_FAILURE;
+  }
 
-  int s32Ret = SAMPLE_COMM_VPSS_Start(m_grpid, chn_enable, &vpss_grp_attr, vpss_chn_attr);
+  for (uint32_t i = 0; i < m_enabled_chn; i++) {
+    s32Ret = CVI_VPSS_SetChnAttr(m_grpid, i, &vpss_chn_attr);
+
+    if (s32Ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
+      return CVI_RC_FAILURE;
+    }
+
+    s32Ret = CVI_VPSS_EnableChn(m_grpid, i);
+
+    if (s32Ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
+      return CVI_RC_FAILURE;
+    }
+  }
+  s32Ret = CVI_VPSS_StartGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return CVI_RC_FAILURE;
   }
+
   m_is_vpss_init = true;
   return CVI_RC_SUCCESS;
 }
