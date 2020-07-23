@@ -101,4 +101,6 @@ int Core::setVpssEngine(VpssEngine *engine) {
 
 float Core::getInputScale() { return m_input_scale; }
 
+void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
+
 }  // namespace cviai
