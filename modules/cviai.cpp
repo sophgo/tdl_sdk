@@ -23,6 +23,7 @@ using namespace cviai;
 typedef struct {
   Core *instance = nullptr;
   std::string model_path = "";
+  bool skip_vpss_preprocess = false;
 } cviai_model_t;
 
 typedef struct {
@@ -75,6 +76,13 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   m_t.instance->modelClose();
   delete m_t.instance;
   m_t.instance = nullptr;
+  return CVI_RC_SUCCESS;
+}
+
+int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                 bool skip) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  ctx->model_cont[config].skip_vpss_preprocess = skip;
   return CVI_RC_SUCCESS;
 }
 
@@ -203,6 +211,8 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
     printf("No instance found for RetinaFace.\n");
     return CVI_RC_FAILURE;
   }
+
+  retina_face->skipVpssPreprocess(m_t.skip_vpss_preprocess);
 
   return retina_face->inference(frame, faces, face_count);
 }

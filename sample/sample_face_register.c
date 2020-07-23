@@ -72,10 +72,12 @@ int main(void) {
   cvai_face_t face;
   memset(&face, 0, sizeof(cvai_face_t));
 
+  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
   CVI_AI_RetinaFace(facelib_handle, &stfdFrame, &face, &face_count);
   printf("face_count %d\n", face.size);
   CVI_AI_FaceAttribute(facelib_handle, &frFrame, &face);
 
+  CVI_AI_Free(&face);
   CVI_VB_ReleaseBlock(blk);
   CVI_VB_ReleaseBlock(blk_fr);
   CVI_AI_DestroyHandle(facelib_handle);

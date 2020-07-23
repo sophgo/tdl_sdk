@@ -75,6 +75,17 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath);
 
 /**
+ * @brief Set skip vpss preprocess for supported networks.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param skip To skip preprocess or not.
+ * @return int Return CVI_RC_SUCCESS if load model succeed.
+ */
+int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                 bool skip);
+
+/**
  * @brief Close all opened models and delete the model instances.
  *
  * @param handle An AI SDK handle.
