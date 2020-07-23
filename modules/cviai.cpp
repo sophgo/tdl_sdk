@@ -302,20 +302,20 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
       printf("Model path for ThermalFace is empty.\n");
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
     m_t.instance = new ThermalFace();
     m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
   }
 
   ThermalFace *thermal_face = dynamic_cast<ThermalFace *>(m_t.instance);
   if (thermal_face == nullptr) {
     printf("No instance found for ThermalFace.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   return thermal_face->inference(frame, faces);
