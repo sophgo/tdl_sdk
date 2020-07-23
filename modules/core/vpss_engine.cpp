@@ -171,11 +171,10 @@ int VpssEngine::sendCropChnFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO
 }
 
 int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout) {
-  int ret = CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
-  if (ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-    return ret;
-  }
-  return ret;
+  return CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
+}
+
+int VpssEngine::releaseFrame(VIDEO_FRAME_INFO_S *frame, int chn_idx) {
+  return CVI_VPSS_ReleaseChnFrame(m_grpid, chn_idx, frame);
 }
 }  // namespace cviai

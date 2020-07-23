@@ -100,10 +100,14 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
   } else {
     VIDEO_FRAME_INFO_S stDstFrame;
     mp_vpss_inst->sendFrame(srcFrame, &m_vpss_chn_attr[0], 1);
-    mp_vpss_inst->getFrame(&stDstFrame, 0);
+    ret = mp_vpss_inst->getFrame(&stDstFrame, 0);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
+      return ret;
+    }
     ret = run(&stDstFrame);
 
-    ret = CVI_VPSS_ReleaseChnFrame(mp_vpss_inst->getGrpId(), VPSS_CHN0, &stDstFrame);
+    ret = mp_vpss_inst->releaseFrame(&stDstFrame, 0);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame failed with %#x\n", ret);
       return ret;
