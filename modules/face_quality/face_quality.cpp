@@ -64,7 +64,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     CVI_AI_FreeCpp(&face_info);
   }
 
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 }  // namespace cviai

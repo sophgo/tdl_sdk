@@ -9,12 +9,12 @@ int Core::modelOpen(const char *filepath) {
   CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
   if (ret != CVI_RC_SUCCESS) {
     printf("CVI_NN_RegisterModel failed, err %d\n", ret);
-    return ret;
+    return CVI_FAILURE;
   }
   printf("CVI_NN_RegisterModel successed\n");
   if (!mp_config) {
     printf("config not set\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
   if (mp_config->batch_size != 0) {
     CVI_NN_SetConfig(mp_model_handle, OPTION_BATCH_SIZE, mp_config->batch_size);
@@ -31,7 +31,8 @@ int Core::modelOpen(const char *filepath) {
                                      &mp_output_tensors, &m_output_num);
   if (ret != CVI_RC_SUCCESS) {
     printf("CVI_NN_GetINputsOutputs failed\n");
-    return ret;
+    return CVI_FAILURE;
+    ;
   }
   ret = initAfterModelOpened();
   return ret;
@@ -41,10 +42,10 @@ int Core::modelClose() {
   if (mp_model_handle != nullptr) {
     if (int ret = CVI_NN_CleanupModel(mp_model_handle) != CVI_RC_SUCCESS) {
       printf("CVI_NN_CleanupModel failed, err %d\n", ret);
-      return ret;
+      return CVI_FAILURE;
     }
   }
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
@@ -65,15 +66,16 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
     }
     if (int ret = CVI_NN_SetTensorWithVideoFrame(mp_input_tensors, &info) != CVI_RC_SUCCESS) {
       printf("NN set tensor with vi failed: %d\n", ret);
-      return ret;
+      return CVI_FAILURE;
     }
   }
   int ret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num, mp_output_tensors,
                            m_output_num);
   if (ret != CVI_RC_SUCCESS) {
     printf("NN forward failed: %d\n", ret);
+    return CVI_FAILURE;
   }
-  return ret;
+  return CVI_SUCCESS;
 }
 
 CVI_TENSOR *Core::getInputTensor(int idx) {
@@ -93,10 +95,10 @@ CVI_TENSOR *Core::getOutputTensor(int idx) {
 int Core::setVpssEngine(VpssEngine *engine) {
   if (mp_vpss_inst != nullptr) {
     printf("Vpss engine instance already set.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
   mp_vpss_inst = engine;
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 float Core::getInputScale() { return m_input_scale; }

@@ -57,7 +57,7 @@ int VpssEngine::init(bool enable_log) {
   int s32Ret = CVI_VPSS_ResetGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
     printf("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", m_grpid, s32Ret);
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   for (uint32_t i = 0; i < m_enabled_chn; i++) {
@@ -65,30 +65,30 @@ int VpssEngine::init(bool enable_log) {
 
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
 
     s32Ret = CVI_VPSS_EnableChn(m_grpid, i);
 
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
   }
   s32Ret = CVI_VPSS_StartGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   m_is_vpss_init = true;
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int VpssEngine::stop() {
   if (!m_is_vpss_init) {
     printf("Vpss is not init yet.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   for (uint32_t j = 0; j < m_enabled_chn; j++) {
@@ -102,20 +102,20 @@ int VpssEngine::stop() {
   int s32Ret = CVI_VPSS_StopGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", s32Ret);
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   s32Ret = CVI_VPSS_DestroyGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", s32Ret);
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   if (m_enable_log) {
     CVI_LOG_EnableLog2File(CVI_FALSE, CVI_NULL);
   }
   m_is_vpss_init = false;
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 VPSS_GRP VpssEngine::getGrpId() { return m_grpid; }
@@ -124,7 +124,7 @@ int VpssEngine::sendFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_
                           const uint32_t enable_chns) {
   if (enable_chns > m_enabled_chn) {
     printf("Error, exceed enabled chn. Enabled: %x, required %x\n", m_enabled_chn, enable_chns);
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
   VPSS_GRP_ATTR_S vpss_grp_attr;
   VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
@@ -135,12 +135,12 @@ int VpssEngine::sendFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_
     ret = CVI_VPSS_SetChnAttr(m_grpid, i, &chn_attr[i]);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_SetChnAttr failed with %#x\n", ret);
-      return CVI_RC_FAILURE;
+      return ret;
     }
   }
 
   CVI_VPSS_SendFrame(m_grpid, frame, -1);
-  return CVI_RC_SUCCESS;
+  return ret;
 }
 
 int VpssEngine::sendCropGrpFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
@@ -148,7 +148,7 @@ int VpssEngine::sendCropGrpFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO
   int ret = CVI_VPSS_SetGrpCrop(m_grpid, crop_attr);
   if (ret != CVI_SUCCESS) {
     printf("CVI_VPSS_SetGrpCrop failed with %#x\n", ret);
-    return CVI_RC_FAILURE;
+    return ret;
   }
   return sendFrame(frame, chn_attr, enable_chns);
 }
@@ -157,14 +157,14 @@ int VpssEngine::sendCropChnFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO
                                  const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
   if (enable_chns > m_enabled_chn) {
     printf("Error, exceed enabled chn. Enabled: %x, required %x\n", m_enabled_chn, enable_chns);
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   for (uint32_t i = 0; i < enable_chns; i++) {
     int ret = CVI_VPSS_SetChnCrop(m_grpid, i, &crop_attr[i]);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_SetChnCrop failed with %#x\n", ret);
-      return CVI_RC_FAILURE;
+      return ret;
     }
   }
   return sendFrame(frame, chn_attr, enable_chns);
@@ -174,8 +174,8 @@ int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t tim
   int ret = CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
   if (ret != CVI_SUCCESS) {
     printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-    return CVI_RC_FAILURE;
+    return ret;
   }
-  return CVI_RC_SUCCESS;
+  return ret;
 }
 }  // namespace cviai

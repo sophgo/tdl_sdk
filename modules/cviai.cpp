@@ -37,7 +37,7 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle) {
   ctx->vpss_engine_inst = new VpssEngine();
   ctx->vpss_engine_inst->init(false);
   *handle = ctx;
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int CVI_AI_DestroyHandle(cviai_handle_t handle) {
@@ -45,14 +45,14 @@ int CVI_AI_DestroyHandle(cviai_handle_t handle) {
   CVI_AI_CloseAllModel(handle);
   delete ctx->vpss_engine_inst;
   delete ctx;
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   ctx->model_cont[config].model_path = filepath;
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int CVI_AI_CloseAllModel(cviai_handle_t handle) {
@@ -65,26 +65,26 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle) {
     }
   }
   ctx->model_cont.clear();
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[config];
   if (m_t.instance == nullptr) {
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
   m_t.instance->modelClose();
   delete m_t.instance;
   m_t.instance = nullptr;
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  bool skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   ctx->model_cont[config].skip_vpss_preprocess = skip;
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
@@ -92,7 +92,7 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
   cv::Mat img = cv::imread(filepath);
   if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, format) != CVI_SUCCESS) {
     printf("Create VBFrame failed.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
@@ -132,11 +132,11 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
     } break;
     default:
       printf("Unsupported format: %u.\n", format);
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
       break;
   }
 
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -146,20 +146,20 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
       printf("Model path for FaceAttribute is empty.\n");
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
     m_t.instance = new FaceAttribute();
     m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
   }
 
   FaceAttribute *face_attr = dynamic_cast<FaceAttribute *>(m_t.instance);
   if (face_attr == nullptr) {
     printf("No instance found for RetinaFace.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   return face_attr->inference(frame, faces);
@@ -172,20 +172,20 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
       printf("Model path for Yolov3 is empty.\n");
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
     m_t.instance = new Yolov3();
     m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
   }
 
   Yolov3 *yolov3 = dynamic_cast<Yolov3 *>(m_t.instance);
   if (yolov3 == nullptr) {
     printf("No instance found for Yolov3.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
   return yolov3->inference(frame, obj, det_type);
 }
@@ -197,20 +197,20 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
       printf("Model path for RetinaFace is empty.\n");
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
     m_t.instance = new RetinaFace();
     m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
   }
 
   RetinaFace *retina_face = dynamic_cast<RetinaFace *>(m_t.instance);
   if (retina_face == nullptr) {
     printf("No instance found for RetinaFace.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   retina_face->skipVpssPreprocess(m_t.skip_vpss_preprocess);
@@ -226,20 +226,20 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
       printf("Model path for Liveness is empty.\n");
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
     m_t.instance = new Liveness(ir_position);
     m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
   }
 
   Liveness *liveness = dynamic_cast<Liveness *>(m_t.instance);
   if (liveness == nullptr) {
     printf("No instance found for Liveness.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   return liveness->inference(rgbFrame, irFrame, face);
@@ -251,20 +251,20 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
       printf("Model path for FaceQuality is empty.\n");
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
     m_t.instance = new FaceQuality();
     m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
   }
 
   FaceQuality *face_quality = dynamic_cast<FaceQuality *>(m_t.instance);
   if (face_quality == nullptr) {
     printf("No instance found for FaceQuality.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   return face_quality->inference(frame, face);
@@ -277,20 +277,20 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
       printf("Model path for FaceQuality is empty.\n");
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
     m_t.instance = new MaskClassification();
     m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
+      return CVI_FAILURE;
     }
   }
 
   MaskClassification *mask_classification = dynamic_cast<MaskClassification *>(m_t.instance);
   if (mask_classification == nullptr) {
     printf("No instance found for FaceQuality.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   return mask_classification->inference(frame, face);

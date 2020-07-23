@@ -77,7 +77,7 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     printf("Face %d, Mask score: %f\n", i, score);
   }
 
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 void MaskClassification::prepareInputTensor(cv::Mat &image) {

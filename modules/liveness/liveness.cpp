@@ -99,13 +99,13 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
                         cvai_face_t *meta) {
   if (meta->size <= 0) {
     cout << "meta->size <= 0" << endl;
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   vector<vector<cv::Mat>> input_mats = image_preprocess(rgbFrame, irFrame, meta, m_ir_pos);
   if (input_mats.empty()) {
     cout << "input_mat.empty" << endl;
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
 
   for (int i = 0; i < meta->size; i++) {
@@ -138,7 +138,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     cout << "Face[" << i << "] liveness score: " << score << endl;
   }
 
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 void Liveness::prepareInputTensor(vector<cv::Mat> &input_mat) {

@@ -65,7 +65,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) 
     outputParser(meta, i);
     CVI_AI_FreeCpp(&face_info);
   }
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 void FaceAttribute::prepareInputTensor(cv::Mat src_image, cvai_face_info_t &face_info) {

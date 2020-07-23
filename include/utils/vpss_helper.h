@@ -30,9 +30,9 @@ static inline int MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight,
 
   if (s32Ret != CVI_SUCCESS) {
     printf("SAMPLE_COMM_SYS_Init failed with %#x\n", s32Ret);
-    return -1;
+    return s32Ret;
   }
-  return 0;
+  return CVI_SUCCESS;
 }
 
 inline void VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth,
@@ -108,16 +108,16 @@ inline int VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enS
   s32Ret = SAMPLE_COMM_VPSS_Init(VpssGrpId, abChnEnable, &stVpssGrpAttr, astVpssChnAttr);
   if (s32Ret != CVI_SUCCESS) {
     printf("init vpss group failed. s32Ret: 0x%x !\n", s32Ret);
-    return -1;
+    return s32Ret;
   }
 
   s32Ret = SAMPLE_COMM_VPSS_Start(VpssGrpId, abChnEnable, &stVpssGrpAttr, astVpssChnAttr);
   if (s32Ret != CVI_SUCCESS) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
-    return -1;
+    return s32Ret;
   }
 
-  return 0;
+  return CVI_SUCCESS;
 }
 
 inline int CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth,

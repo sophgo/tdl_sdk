@@ -90,7 +90,7 @@ int RetinaFace::initAfterModelOpened() {
   vpssChnAttr.stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
   m_vpss_chn_attr.push_back(vpssChnAttr);
 
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *face_count) {

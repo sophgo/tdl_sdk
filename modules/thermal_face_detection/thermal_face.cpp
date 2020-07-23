@@ -126,7 +126,7 @@ int ThermalFace::initAfterModelOpened() {
     m_all_anchors.insert(m_all_anchors.end(), shifted_anchors.begin(), shifted_anchors.end());
   }
 
-  return CVI_RC_SUCCESS;
+  return CVI_SUCCESS;
 }
 
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
