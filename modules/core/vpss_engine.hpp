@@ -13,6 +13,10 @@ class VpssEngine {
   VPSS_GRP getGrpId();
   int sendFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
                 const uint32_t enable_chns);
+  int sendCropGrpFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
+                       const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns);
+  int sendCropChnFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
+                       const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns);
   int getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout = 100);
 
  private:
