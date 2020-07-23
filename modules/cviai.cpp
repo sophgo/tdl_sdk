@@ -56,9 +56,11 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
 int CVI_AI_CloseAllModel(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   for (auto &m_inst : ctx->model_cont) {
-    m_inst.second.instance->modelClose();
-    delete m_inst.second.instance;
-    m_inst.second.instance = nullptr;
+    if (m_inst.second.instance) {
+      m_inst.second.instance->modelClose();
+      delete m_inst.second.instance;
+      m_inst.second.instance = nullptr;
+    }
   }
   ctx->model_cont.clear();
   return CVI_RC_SUCCESS;
@@ -86,14 +88,15 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
 
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
   switch (format) {
+    //  FIXME:: VPSS pixel format order is reversed to opencv
     case PIXEL_FORMAT_RGB_888: {
       for (int j = 0; j < img.rows; j++) {
         cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
         for (int i = 0; i < img.cols; i++) {
           uint32_t offset = i * 3 + j * vFrame->u32Stride[0];
-          vFrame->pu8VirAddr[0][offset] = ptr[i][2];
+          vFrame->pu8VirAddr[0][offset] = ptr[i][0];
           vFrame->pu8VirAddr[0][offset + 1] = ptr[i][1];
-          vFrame->pu8VirAddr[0][offset + 2] = ptr[i][0];
+          vFrame->pu8VirAddr[0][offset + 2] = ptr[i][2];
         }
       }
     } break;
@@ -102,9 +105,9 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
         cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);
         for (int i = 0; i < img.cols; i++) {
           uint32_t offset = i * 3 + j * vFrame->u32Stride[0];
-          vFrame->pu8VirAddr[0][offset] = ptr[i][0];
+          vFrame->pu8VirAddr[0][offset] = ptr[i][2];
           vFrame->pu8VirAddr[0][offset + 1] = ptr[i][1];
-          vFrame->pu8VirAddr[0][offset + 2] = ptr[i][2];
+          vFrame->pu8VirAddr[0][offset + 2] = ptr[i][0];
         }
       }
     } break;

@@ -125,7 +125,6 @@ static void Run() {
 
     DoFd(facelib_handle, &stfdFrame, &stfrFrame, &face);
 
-    sleep(3);
     DrawFaceMeta(&stVOFrame, &face);
 
     // s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);
@@ -225,14 +224,7 @@ static CVI_S32 InitVPSS() {
   stVpssChnAttr[VpssChnFD].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
   stVpssChnAttr[VpssChnFD].stAspectRatio.bEnableBgColor = CVI_TRUE;
   stVpssChnAttr[VpssChnFD].stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
-  stVpssChnAttr[VpssChnFD].stNormalize.bEnable = CVI_TRUE;
-  stVpssChnAttr[VpssChnFD].stNormalize.factor[0] = (128 / 255.001236);
-  stVpssChnAttr[VpssChnFD].stNormalize.factor[1] = (128 / 255.001236);
-  stVpssChnAttr[VpssChnFD].stNormalize.factor[2] = (128 / 255.001236);
-  stVpssChnAttr[VpssChnFD].stNormalize.mean[0] = 0;
-  stVpssChnAttr[VpssChnFD].stNormalize.mean[1] = 0;
-  stVpssChnAttr[VpssChnFD].stNormalize.mean[2] = 0;
-  stVpssChnAttr[VpssChnFD].stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  stVpssChnAttr[VpssChnFD].stNormalize.bEnable = CVI_FALSE;
 
   abChnEnable[VpssChnFR] = CVI_TRUE;
   stVpssChnAttr[VpssChnFR].u32Width = 640;
