@@ -128,6 +128,17 @@ int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
  * @return int Return CVI_SUCCESS.
  */
 int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread);
+
+/**
+ * @brief Get the vpss group ids used by the handle.
+ *
+ * @param handle An AI SDK handle.
+ * @param groups Return the list of used vpss group id.
+ * @param num Return the length of the list.
+ * @return int Return CVI_SUCCESS.
+ */
+int CVI_AI_GetVpssGrpIds(cviai_handle_t handle, uint32_t **groups, int *num);
+
 /**
  * @brief Close all opened models and delete the model instances.
  *
