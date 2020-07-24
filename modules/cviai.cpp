@@ -13,8 +13,8 @@
 #include "liveness/liveness.hpp"
 #include "mask_classification/mask_classification.hpp"
 #include "retina_face/retina_face.hpp"
-#include "yolov3/yolov3.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
+#include "yolov3/yolov3.hpp"
 
 #include "opencv2/opencv.hpp"
 
@@ -25,17 +25,18 @@ typedef struct {
   Core *instance = nullptr;
   std::string model_path = "";
   bool skip_vpss_preprocess = false;
+  uint32_t vpss_thread = 0;
 } cviai_model_t;
 
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
-  VpssEngine *vpss_engine_inst = nullptr;
+  std::vector<VpssEngine *> vec_vpss_engine;
 } cviai_context_t;
 
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
   cviai_context_t *ctx = new cviai_context_t;
-  ctx->vpss_engine_inst = new VpssEngine();
-  ctx->vpss_engine_inst->init(false);
+  ctx->vec_vpss_engine.push_back(new VpssEngine());
+  ctx->vec_vpss_engine[0]->init(false);
   *handle = ctx;
   return CVI_SUCCESS;
 }
@@ -43,7 +44,9 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle) {
 int CVI_AI_DestroyHandle(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
-  delete ctx->vpss_engine_inst;
+  for (auto it : ctx->vec_vpss_engine) {
+    delete it;
+  }
   delete ctx;
   return CVI_SUCCESS;
 }
@@ -84,6 +87,27 @@ int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
                                  bool skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   ctx->model_cont[config].skip_vpss_preprocess = skip;
+  return CVI_SUCCESS;
+}
+
+int CVI_AI_ChangeVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                            const uint32_t thread) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  uint32_t vpss_thread = thread;
+  if (thread >= ctx->vec_vpss_engine.size()) {
+    auto inst = new VpssEngine();
+    if (inst->init(false) != CVI_SUCCESS) {
+      printf("Vpss init failed\n");
+      return CVI_FAILURE;
+    }
+    ctx->vec_vpss_engine.push_back(inst);
+    if (thread != ctx->vec_vpss_engine.size() - 1) {
+      printf("Thread %u is not in use, thus %u is changed to %u automatically.\n", vpss_thread,
+             thread, vpss_thread);
+      vpss_thread = ctx->vec_vpss_engine.size() - 1;
+    }
+  }
+  ctx->model_cont[config].vpss_thread = vpss_thread;
   return CVI_SUCCESS;
 }
 
@@ -149,7 +173,7 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
       return CVI_FAILURE;
     }
     m_t.instance = new FaceAttribute();
-    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
+    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
@@ -175,7 +199,6 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
       return CVI_FAILURE;
     }
     m_t.instance = new Yolov3();
-    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
@@ -187,6 +210,7 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
     printf("No instance found for Yolov3.\n");
     return CVI_FAILURE;
   }
+  yolov3->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return yolov3->inference(frame, obj, det_type);
 }
 
@@ -200,7 +224,6 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
       return CVI_FAILURE;
     }
     m_t.instance = new RetinaFace();
-    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
@@ -212,9 +235,8 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
     printf("No instance found for RetinaFace.\n");
     return CVI_FAILURE;
   }
-
+  retina_face->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   retina_face->skipVpssPreprocess(m_t.skip_vpss_preprocess);
-
   return retina_face->inference(frame, faces, face_count);
 }
 
@@ -229,7 +251,7 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
       return CVI_FAILURE;
     }
     m_t.instance = new Liveness(ir_position);
-    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
+    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
@@ -241,7 +263,7 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
     printf("No instance found for Liveness.\n");
     return CVI_FAILURE;
   }
-
+  liveness->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return liveness->inference(rgbFrame, irFrame, face);
 }
 
@@ -254,7 +276,7 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
       return CVI_FAILURE;
     }
     m_t.instance = new FaceQuality();
-    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
+    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
@@ -266,7 +288,7 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
     printf("No instance found for FaceQuality.\n");
     return CVI_FAILURE;
   }
-
+  face_quality->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return face_quality->inference(frame, face);
 }
 
@@ -280,7 +302,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
       return CVI_FAILURE;
     }
     m_t.instance = new MaskClassification();
-    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
+    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
@@ -292,7 +314,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
     printf("No instance found for FaceQuality.\n");
     return CVI_FAILURE;
   }
-
+  mask_classification->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return mask_classification->inference(frame, face);
 }
 
@@ -305,7 +327,7 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
       return CVI_FAILURE;
     }
     m_t.instance = new ThermalFace();
-    m_t.instance->setVpssEngine(ctx->vpss_engine_inst);
+    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
@@ -317,6 +339,6 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
     printf("No instance found for ThermalFace.\n");
     return CVI_FAILURE;
   }
-
+  thermal_face->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return thermal_face->inference(frame, faces);
 }

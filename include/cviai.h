@@ -86,6 +86,19 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
 int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, bool skip);
 
 /**
+ * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
+ * to change a thread if the process is not sequential.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param thread The vpss thread index user desired. Note this param will changed if previous index
+ * is not used.
+ * @return int Return CVI_SUCCESS if successfully changed.
+ */
+int CVI_AI_ChangeVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                            const uint32_t thread);
+
+/**
  * @brief Close all opened models and delete the model instances.
  *
  * @param handle An AI SDK handle.
