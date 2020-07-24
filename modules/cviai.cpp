@@ -59,31 +59,6 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
   return CVI_SUCCESS;
 }
 
-int CVI_AI_CloseAllModel(cviai_handle_t handle) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  for (auto &m_inst : ctx->model_cont) {
-    if (m_inst.second.instance) {
-      m_inst.second.instance->modelClose();
-      delete m_inst.second.instance;
-      m_inst.second.instance = nullptr;
-    }
-  }
-  ctx->model_cont.clear();
-  return CVI_SUCCESS;
-}
-
-int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[config];
-  if (m_t.instance == nullptr) {
-    return CVI_FAILURE;
-  }
-  m_t.instance->modelClose();
-  delete m_t.instance;
-  m_t.instance = nullptr;
-  return CVI_SUCCESS;
-}
-
 int CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, char **filepath) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   char *path = (char *)malloc(ctx->model_cont[config].model_path.size());
@@ -130,6 +105,31 @@ int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
 int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   *thread = ctx->model_cont[config].vpss_thread;
+  return CVI_SUCCESS;
+}
+
+int CVI_AI_CloseAllModel(cviai_handle_t handle) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  for (auto &m_inst : ctx->model_cont) {
+    if (m_inst.second.instance) {
+      m_inst.second.instance->modelClose();
+      delete m_inst.second.instance;
+      m_inst.second.instance = nullptr;
+    }
+  }
+  ctx->model_cont.clear();
+  return CVI_SUCCESS;
+}
+
+int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[config];
+  if (m_t.instance == nullptr) {
+    return CVI_FAILURE;
+  }
+  m_t.instance->modelClose();
+  delete m_t.instance;
+  m_t.instance = nullptr;
   return CVI_SUCCESS;
 }
 
