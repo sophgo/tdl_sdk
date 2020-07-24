@@ -76,6 +76,16 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath);
 
 /**
+ * @brief Get set model path from supported models.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param filepath Output model path.
+ * @return int Return CVI_SUCCESS.
+ */
+int CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, char **filepath);
+
+/**
  * @brief Set skip vpss preprocess for supported networks.
  *
  * @param handle An AI SDK handle.
@@ -84,6 +94,17 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
  * @return int Return CVI_SUCCESS if load model succeed.
  */
 int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, bool skip);
+
+/**
+ * @brief Get skip preprocess value for given supported model.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param skip Output setting value.
+ * @return int Return CVI_SUCCESS.
+ */
+int CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                 bool *skip);
 
 /**
  * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
@@ -95,9 +116,18 @@ int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
  * is not used.
  * @return int Return CVI_SUCCESS if successfully changed.
  */
-int CVI_AI_ChangeVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                            const uint32_t thread);
+int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                         const uint32_t thread);
 
+/**
+ * @brief Get the set thread index for given supported model.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param thread Output thread index.
+ * @return int Return CVI_SUCCESS.
+ */
+int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread);
 /**
  * @brief Close all opened models and delete the model instances.
  *

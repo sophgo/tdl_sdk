@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <unistd.h>
 #include <memory>
 #include <string>
@@ -83,6 +84,14 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   return CVI_SUCCESS;
 }
 
+int CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, char **filepath) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  char *path = (char *)malloc(ctx->model_cont[config].model_path.size());
+  snprintf(path, strlen(path), "%s", ctx->model_cont[config].model_path.c_str());
+  *filepath = path;
+  return CVI_SUCCESS;
+}
+
 int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  bool skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -90,8 +99,15 @@ int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
   return CVI_SUCCESS;
 }
 
-int CVI_AI_ChangeVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                            const uint32_t thread) {
+int CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                 bool *skip) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  *skip = ctx->model_cont[config].skip_vpss_preprocess;
+  return CVI_SUCCESS;
+}
+
+int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                         const uint32_t thread) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   uint32_t vpss_thread = thread;
   if (thread >= ctx->vec_vpss_engine.size()) {
@@ -108,6 +124,12 @@ int CVI_AI_ChangeVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E conf
     }
   }
   ctx->model_cont[config].vpss_thread = vpss_thread;
+  return CVI_SUCCESS;
+}
+
+int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  *thread = ctx->model_cont[config].vpss_thread;
   return CVI_SUCCESS;
 }
 
