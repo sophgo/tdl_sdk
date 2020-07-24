@@ -331,7 +331,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION];
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
-      printf("Model path for FaceQuality is empty.\n");
+      printf("Model path for MaskClassification is empty.\n");
       return CVI_FAILURE;
     }
     m_t.instance = new MaskClassification();
@@ -344,7 +344,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
 
   MaskClassification *mask_classification = dynamic_cast<MaskClassification *>(m_t.instance);
   if (mask_classification == nullptr) {
-    printf("No instance found for FaceQuality.\n");
+    printf("No instance found for MaskClassification.\n");
     return CVI_FAILURE;
   }
   mask_classification->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
