@@ -52,7 +52,7 @@ extern "C" {
  * @brief Create a cviai_handle_t.
  *
  * @param handle An AI SDK handle.
- * @return int Return CVI_RC_SUCCESS if succeed.
+ * @return int Return CVI_SUCCESS if succeed.
  */
 int CVI_AI_CreateHandle(cviai_handle_t *handle);
 
@@ -60,7 +60,7 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle);
  * @brief Destroy a cviai_handle_t.
  *
  * @param handle An AI SDK handle.
- * @return int Return CVI_RC_SUCCESS if success to destroy handle.
+ * @return int Return CVI_SUCCESS if success to destroy handle.
  */
 int CVI_AI_DestroyHandle(cviai_handle_t handle);
 
@@ -70,7 +70,7 @@ int CVI_AI_DestroyHandle(cviai_handle_t handle);
  * @param handle An AI SDK handle.
  * @param config Supported model type config.
  * @param filepath File path to the cvimodel file.
- * @return int Return CVI_RC_SUCCESS if load model succeed.
+ * @return int Return CVI_SUCCESS if load model succeed.
  */
 int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath);
@@ -81,7 +81,7 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
  * @param handle An AI SDK handle.
  * @param config Supported model type config.
  * @param skip To skip preprocess or not.
- * @return int Return CVI_RC_SUCCESS if load model succeed.
+ * @return int Return CVI_SUCCESS if load model succeed.
  */
 int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, bool skip);
 
@@ -102,7 +102,7 @@ int CVI_AI_ChangeVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E conf
  * @brief Close all opened models and delete the model instances.
  *
  * @param handle An AI SDK handle.
- * @return int Return CVI_RC_SUCCESS if succeed.
+ * @return int Return CVI_SUCCESS if succeed.
  */
 int CVI_AI_CloseAllModel(cviai_handle_t handle);
 
@@ -111,7 +111,7 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle);
  *
  * @param handle An AI SDK handle.
  * @param config Supported model type config.
- * @return int Return CVI_RC_SUCCESS if close succeed.
+ * @return int Return CVI_SUCCESS if close succeed.
  */
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
@@ -122,7 +122,7 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
  * @param blk VB block id.
  * @param frame Output read image.
  * @param format Set output format, only supports RGB, BGR, planar.
- * @return int Return CVI_RC_SUCCESS if read succeed.
+ * @return int Return CVI_SUCCESS if read succeed.
  */
 int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
                      PIXEL_FORMAT_E format);
