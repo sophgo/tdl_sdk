@@ -93,10 +93,6 @@ CVI_TENSOR *Core::getOutputTensor(int idx) {
 }
 
 int Core::setVpssEngine(VpssEngine *engine) {
-  if (mp_vpss_inst != nullptr) {
-    printf("Vpss engine instance already set.\n");
-    return CVI_FAILURE;
-  }
   mp_vpss_inst = engine;
   return CVI_SUCCESS;
 }
