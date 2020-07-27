@@ -18,41 +18,37 @@
 
 namespace cviai {
 
-static float saturate(const float &val, const float &minVal, const float &maxVal)
-{
-    return std::min(std::max(val, minVal), maxVal);
+static float saturate(const float &val, const float &minVal, const float &maxVal) {
+  return std::min(std::max(val, minVal), maxVal);
 }
 
-static float cal_distance(const cv::Point &p1, const cv::Point &p2)
-{
-    float x = p1.x - p2.x;
-    float y = p1.y - p2.y;
-    return sqrtf(x * x + y * y);
+static float cal_distance(const cv::Point &p1, const cv::Point &p2) {
+  float x = p1.x - p2.x;
+  float y = p1.y - p2.y;
+  return sqrtf(x * x + y * y);
 }
 
-static float cal_angle(const cv::Point &pt1, const cv::Point &pt2)
-{
-    return 360 - cvFastArctan(pt2.y - pt1.y, pt2.x - pt1.x);
+static float cal_angle(const cv::Point &pt1, const cv::Point &pt2) {
+  return 360 - cvFastArctan(pt2.y - pt1.y, pt2.x - pt1.x);
 }
 
-static float cal_slant(int ln, int lf, const float Rn, float theta)
-{
-    float dz = 0;
-    float slant = 0;
-    const float m1 = ((float)ln * ln) / ((float)lf * lf);
-    const float m2 = (cos(theta)) * (cos(theta));
-    const float Rn_sq = Rn * Rn;
+static float cal_slant(int ln, int lf, const float Rn, float theta) {
+  float dz = 0;
+  float slant = 0;
+  const float m1 = ((float)ln * ln) / ((float)lf * lf);
+  const float m2 = (cos(theta)) * (cos(theta));
+  const float Rn_sq = Rn * Rn;
 
-    if (m2 == 1) {
-        dz = sqrt(Rn_sq / (m1 + Rn_sq));
-    }
-    if (m2 >= 0 && m2 < 1) {
-        dz = sqrt((Rn_sq - m1 - 2 * m2 * Rn_sq +
-            sqrt(((m1 - Rn_sq) * (m1 - Rn_sq)) + 4 * m1 * m2 * Rn_sq)) /
-            (2 * (1 - m2) * Rn_sq));
-    }
-    slant = acos(dz);
-    return slant;
+  if (m2 == 1) {
+    dz = sqrt(Rn_sq / (m1 + Rn_sq));
+  }
+  if (m2 >= 0 && m2 < 1) {
+    dz = sqrt(
+        (Rn_sq - m1 - 2 * m2 * Rn_sq + sqrt(((m1 - Rn_sq) * (m1 - Rn_sq)) + 4 * m1 * m2 * Rn_sq)) /
+        (2 * (1 - m2) * Rn_sq));
+  }
+  slant = acos(dz);
+  return slant;
 }
 
 static int get_face_direction(cvai_pts_t face_pts, float &roll, float &pitch, float &yaw) {
@@ -78,19 +74,16 @@ static int get_face_direction(cvai_pts_t face_pts, float &roll, float &pitch, fl
   normal.z = -cos(slant);
 
   yaw = acos((std::abs(normal.z)) / (std::sqrt(normal.x * normal.x + normal.z * normal.z)));
-  if (noseTip.x < noseBase.x)
-    yaw = -yaw;
+  if (noseTip.x < noseBase.x) yaw = -yaw;
   yaw = saturate(yaw, -1.f, 1.f);
 
   pitch = acos(std::sqrt((normal.x * normal.x + normal.z * normal.z) /
-               (normal.x * normal.x + normal.y * normal.y + normal.z * normal.z)));
-  if (noseTip.y > noseBase.y)
-    pitch = -pitch;
+                         (normal.x * normal.x + normal.y * normal.y + normal.z * normal.z)));
+  if (noseTip.y > noseBase.y) pitch = -pitch;
   pitch = saturate(pitch, -1.f, 1.f);
 
   roll = cal_angle(leye, reye);
-  if (roll > 180)
-    roll = roll - 360;
+  if (roll > 180) roll = roll - 360;
   roll /= 90;
   roll = saturate(roll, -1.f, 1.f);
 
