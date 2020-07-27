@@ -237,7 +237,7 @@ static CVI_S32 InitVPSS() {
   stVpssChnAttr[VpssChnFR].u32Width = 640;
   stVpssChnAttr[VpssChnFR].u32Height = 480;
   stVpssChnAttr[VpssChnFR].enVideoFormat = VIDEO_FORMAT_LINEAR;
-  stVpssChnAttr[VpssChnFR].enPixelFormat = PIXEL_FORMAT_BGR_888;
+  stVpssChnAttr[VpssChnFR].enPixelFormat = PIXEL_FORMAT_RGB_888;
   stVpssChnAttr[VpssChnFR].stFrameRate.s32SrcFrameRate = 30;
   stVpssChnAttr[VpssChnFR].stFrameRate.s32DstFrameRate = 30;
   stVpssChnAttr[VpssChnFR].u32Depth = 1;

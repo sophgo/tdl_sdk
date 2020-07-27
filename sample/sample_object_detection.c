@@ -293,7 +293,7 @@ static CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *video_input_config) {
       video_input_config->astViInfo[work_sns_id].stChnInfo.enCompressMode, DEFAULT_ALIGN);
   block_size = MAX(block_size, block_rot_size);
   block_rgb_size = COMMON_GetPicBufferSize(
-      vpss_group_width, vpss_group_height, PIXEL_FORMAT_RGB_888, DATA_BITWIDTH_8,
+      vpss_group_width, vpss_group_height, PIXEL_FORMAT_BGR_888, DATA_BITWIDTH_8,
       video_input_config->astViInfo[work_sns_id].stChnInfo.enCompressMode, DEFAULT_ALIGN);
   vb_config.astCommPool[0].u32BlkSize = block_size;
   vb_config.astCommPool[0].u32BlkCnt = 32;

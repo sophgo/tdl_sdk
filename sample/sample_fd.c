@@ -305,7 +305,7 @@ static CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *stViConfig) {
       stViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode, DEFAULT_ALIGN);
   u32BlkSize = MAX(u32BlkSize, u32BlkRotSize);
   u32BlkRGBSize = COMMON_GetPicBufferSize(
-      vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, DATA_BITWIDTH_8,
+      vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_BGR_888, DATA_BITWIDTH_8,
       stViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode, DEFAULT_ALIGN);
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[0].u32BlkCnt = 32;

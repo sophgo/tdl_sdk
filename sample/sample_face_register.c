@@ -62,7 +62,7 @@ int main(void) {
 
   VB_BLK blk_fr;
   VIDEO_FRAME_INFO_S frFrame;
-  ret = CVI_AI_ReadImage("/mnt/data/rgb_frame.jpg", &blk_fr, &frFrame, PIXEL_FORMAT_RGB_888);
+  ret = CVI_AI_ReadImage("/mnt/data/rgb_frame.jpg", &blk_fr, &frFrame, PIXEL_FORMAT_BGR_888);
   if (ret != CVI_SUCCESS) {
     printf("Read image failed with %#x!\n", ret);
     return ret;
