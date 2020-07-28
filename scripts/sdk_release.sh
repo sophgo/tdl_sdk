@@ -20,7 +20,8 @@ elif [[ "$1" == "soc" ]]; then
                                -DCMAKE_INSTALL_PREFIX=$IVE_SDK_INSTALL_PATH \
                                -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
                                -DCMAKE_TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
-    ninja -j8 && ninja install
+    ninja -j8 || exit 1
+    ninja install || exit 1
     popd
 elif [[ "$1" == "soc32" ]]; then
     mkdir -p $TMP_WORKING_DIR/build_sdk
@@ -35,7 +36,8 @@ elif [[ "$1" == "soc32" ]]; then
                                -DCMAKE_INSTALL_PREFIX=$IVE_SDK_INSTALL_PATH \
                                -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
                                -DCMAKE_TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
-    ninja -j8 && ninja install
+    ninja -j8 || exit 1
+    ninja install || exit 1
     popd
 else
   echo "Unsupported build type."

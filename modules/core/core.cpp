@@ -64,7 +64,8 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
       info.stride[i] = srcFrame->stVFrame.u32Stride[i];
       info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[i];
     }
-    if (int ret = CVI_NN_SetTensorWithVideoFrame(mp_input_tensors, &info) != CVI_RC_SUCCESS) {
+    if (int ret = CVI_NN_SetTensorWithVideoFrame(mp_model_handle, mp_input_tensors, &info) !=
+                  CVI_RC_SUCCESS) {
       printf("NN set tensor with vi failed: %d\n", ret);
       return CVI_FAILURE;
     }
