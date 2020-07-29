@@ -53,7 +53,7 @@ class Core {
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
   float m_input_scale = 0;
-  bool m_skip_vpss_preprocess = false;
+  bool m_skip_vpss_preprocess = true;
 
   VpssEngine *mp_vpss_inst = nullptr;
   std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
