@@ -53,16 +53,8 @@ int main(void) {
   }
 
   VB_BLK blk;
-  VIDEO_FRAME_INFO_S stfdFrame;
-  ret = CVI_AI_ReadImage("/mnt/data/rgb_frame.jpg", &blk, &stfdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-  if (ret != CVI_SUCCESS) {
-    printf("Read image failed with %#x!\n", ret);
-    return ret;
-  }
-
-  VB_BLK blk_fr;
-  VIDEO_FRAME_INFO_S frFrame;
-  ret = CVI_AI_ReadImage("/mnt/data/rgb_frame.jpg", &blk_fr, &frFrame, PIXEL_FORMAT_BGR_888);
+  VIDEO_FRAME_INFO_S stFrame;
+  ret = CVI_AI_ReadImage("/mnt/data/rgb_frame.jpg", &blk, &stFrame, PIXEL_FORMAT_BGR_888);
   if (ret != CVI_SUCCESS) {
     printf("Read image failed with %#x!\n", ret);
     return ret;
@@ -73,12 +65,11 @@ int main(void) {
   memset(&face, 0, sizeof(cvai_face_t));
 
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
-  CVI_AI_RetinaFace(facelib_handle, &stfdFrame, &face, &face_count);
+  CVI_AI_RetinaFace(facelib_handle, &stFrame, &face, &face_count);
   printf("face_count %d\n", face.size);
-  CVI_AI_FaceAttribute(facelib_handle, &frFrame, &face);
+  CVI_AI_FaceAttribute(facelib_handle, &stFrame, &face);
 
   CVI_AI_Free(&face);
   CVI_VB_ReleaseBlock(blk);
-  CVI_VB_ReleaseBlock(blk_fr);
   CVI_AI_DestroyHandle(facelib_handle);
 }
