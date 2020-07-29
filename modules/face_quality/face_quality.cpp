@@ -93,7 +93,7 @@ static int get_face_direction(cvai_pts_t face_pts, float &roll, float &pitch, fl
 FaceQuality::FaceQuality() { mp_config = std::make_unique<ModelConfig>(); }
 
 int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
-  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_BGR_888) {
+  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     printf("Error: pixel format not match.\n");
     return CVI_FAILURE;
   }
