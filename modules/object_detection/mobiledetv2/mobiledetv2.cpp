@@ -169,12 +169,12 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
                                            float bbox_dequant_thresh, int8_t quant_thresh,
                                            int8_t *logits, int8_t *bboxes, size_t size,
                                            const vector<AnchorBox> &anchors) {
-  int8x16_t thresh_vec = vdupq_n_s8(quant_thresh);
-
   for (size_t score_index = 0; score_index < size; score_index += m_model_config.num_classes) {
+#ifdef __aarch64__
     // calculate how much scores greater than threshold using NEON intrinsics
     // don't record the index here, because it needs if-branches and couple memory write ops.
     // we check index later if there is at least one object.
+    int8x16_t thresh_vec = vdupq_n_s8(quant_thresh);
     size_t end = score_index + m_model_config.num_classes;
     size_t rest = end % 16;
     int8x16_t sum_vec = vdupq_n_s8(0);
@@ -185,13 +185,22 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
     }
 
     uint32_t num_objects = vaddvq_s8(sum_vec);
-    if (unlikely(num_objects)) {
+    if (likely(num_objects == 0)) {
       for (size_t class_idx = end - rest; class_idx < end; class_idx++) {
         if (logits[class_idx] >= quant_thresh) {
           num_objects++;
         }
       }
     }
+#else   // __aarch64__
+    uint32_t num_objects = 0;
+    for (size_t class_idx = score_index; class_idx < score_index + m_model_config.num_classes;
+         class_idx++) {
+      if (unlikely(logits[class_idx] >= quant_thresh)) {
+        num_objects++;
+      }
+    }
+#endif  // __aarch64__
     ////////////////////////////////////////////////////////
 
     if (unlikely(num_objects)) {
@@ -214,8 +223,6 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
           decode_box(dequant_box, anchors[box_index / 4], det);
           clip_bbox(det, m_model_config.image_size);
           det_vec->push_back(det);
-          num_objects--;
-          if (num_objects <= 0) break;
         }
       }
     }
