@@ -1,4 +1,5 @@
 #include "yolov3.hpp"
+#include "coco_utils.hpp"
 #include "core_utils.hpp"
 
 #define YOLOV3_CLASSES 80
@@ -11,28 +12,6 @@
 #define YOLOV3_OUTPUT1 "layer82-conv_dequant"
 #define YOLOV3_OUTPUT2 "layer94-conv_dequant"
 #define YOLOV3_OUTPUT3 "layer106-conv_dequant"
-
-static std::vector<std::string> names = {
-    "person",        "bicycle",       "car",           "motorbike",
-    "aeroplane",     "bus",           "train",         "truck",
-    "boat",          "traffic light", "fire hydrant",  "stop sign",
-    "parking meter", "bench",         "bird",          "cat",
-    "dog",           "horse",         "sheep",         "cow",
-    "elephant",      "bear",          "zebra",         "giraffe",
-    "backpack",      "umbrella",      "handbag",       "tie",
-    "suitcase",      "frisbee",       "skis",          "snowboard",
-    "sports ball",   "kite",          "baseball bat",  "baseball glove",
-    "skateboard",    "surfboard",     "tennis racket", "bottle",
-    "wine glass",    "cup",           "fork",          "knife",
-    "spoon",         "bowl",          "banana",        "apple",
-    "sandwich",      "orange",        "broccoli",      "carrot",
-    "hot dog",       "pizza",         "donut",         "cake",
-    "chair",         "sofa",          "pottedplant",   "bed",
-    "diningtable",   "toilet",        "tvmonitor",     "laptop",
-    "mouse",         "remote",        "keyboard",      "cell phone",
-    "microwave",     "oven",          "toaster",       "sink",
-    "refrigerator",  "book",          "clock",         "vase",
-    "scissors",      "teddy bear",    "hair drier",    "toothbrush"};
 
 using namespace std;
 
@@ -138,7 +117,8 @@ void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
     obj->objects[i].bbox.y2 = results[i].y2;
     obj->objects[i].bbox.score = results[i].score;
     obj->objects[i].classes = results[i].label;
-    strncpy(obj->objects[i].name, names[results[i].label].c_str(), sizeof(obj->objects[i].name));
+    strncpy(obj->objects[i].name, coco_utils::class_names_80[results[i].label].c_str(),
+            sizeof(obj->objects[i].name));
     printf("YOLO3: %s (%d): %lf %lf %lf %lf, score=%.2f\n", obj->objects[i].name,
            obj->objects[i].classes, obj->objects[i].bbox.x1, obj->objects[i].bbox.x2,
            obj->objects[i].bbox.y1, obj->objects[i].bbox.y2, results[i].score);
@@ -187,12 +167,12 @@ void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w
     for (int j = 0; j < m_yolov3_param.m_classes; ++j) {
       if (dets[i].prob[j] > threshold) {
         if (obj_class < 0) {
-          labelstr = names[j];
+          labelstr = coco_utils::class_names_80[j];
           obj_class = j;
           obj_result.label = obj_class;
           obj_result.score = dets[i].prob[j];
         } else {
-          labelstr += ", " + names[j];
+          labelstr += ", " + coco_utils::class_names_80[j];
           if (dets[i].prob[j] > obj_result.score) {
             obj_result.score = dets[i].prob[j];
             obj_result.label = obj_class;

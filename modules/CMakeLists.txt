@@ -7,7 +7,7 @@ add_subdirectory(face_quality)
 add_subdirectory(liveness)
 add_subdirectory(mask_classification)
 add_subdirectory(retina_face)
-add_subdirectory(yolov3)
+add_subdirectory(object_detection/yolov3)
 add_subdirectory(thermal_face_detection)
 
 #set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all-symbols")

@@ -13,9 +13,9 @@
 #include "face_quality/face_quality.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_classification/mask_classification.hpp"
+#include "object_detection/yolov3/yolov3.hpp"
 #include "retina_face/retina_face.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
-#include "yolov3/yolov3.hpp"
 
 #include "opencv2/opencv.hpp"
 
