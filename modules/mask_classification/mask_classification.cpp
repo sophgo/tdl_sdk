@@ -13,7 +13,7 @@
 #define G_MEAN (-0.456 / 0.224)
 #define B_MEAN (-0.406 / 0.225)
 #define CROP_PCT 0.875
-#define MASK_OUT_NAME "logits_Gemm_dequant"
+#define MASK_OUT_NAME "logits_dequant"
 
 namespace cviai {
 
