@@ -4,5 +4,6 @@ install
 *.so
 *.a
 *.swp
+*~
 .vscode/
 prebuilt
