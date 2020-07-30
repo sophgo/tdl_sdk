@@ -222,9 +222,9 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
     ret = CVI_FAILURE;
   }
 
-  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0],
-                 frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
-                 frame->stVFrame.u32Length[2]);
+  CVI_SYS_Munmap(
+      (void *)frame->stVFrame.pu8VirAddr[0],
+      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2]);
 
   return ret;
 }
