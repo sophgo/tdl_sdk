@@ -170,7 +170,7 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
                                            int8_t *logits, int8_t *bboxes, size_t size,
                                            const vector<AnchorBox> &anchors) {
   for (size_t score_index = 0; score_index < size; score_index += m_model_config.num_classes) {
-#ifdef __aarch64__
+#if defined(__arm64__) || defined(__aarch64__)
     // calculate how much scores greater than threshold using NEON intrinsics
     // don't record the index here, because it needs if-branches and couple memory write ops.
     // we check index later if there is at least one object.
@@ -192,7 +192,7 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
         }
       }
     }
-#else   // __aarch64__
+#else   // TODO: use int8x8_t to speedup
     uint32_t num_objects = 0;
     for (size_t class_idx = score_index; class_idx < score_index + m_model_config.num_classes;
          class_idx++) {
@@ -200,7 +200,7 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
         num_objects++;
       }
     }
-#endif  // __aarch64__
+#endif  // defined(__arm64__) || defined(__aarch64__)
     ////////////////////////////////////////////////////////
 
     if (unlikely(num_objects)) {
