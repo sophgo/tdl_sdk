@@ -232,6 +232,7 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
     return CVI_FAILURE;
   }
 
+  int ret = CVI_SUCCESS;
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
   switch (format) {
     //  FIXME:: VPSS pixel format order is reversed to opencv
@@ -269,11 +270,14 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
     } break;
     default:
       printf("Unsupported format: %u.\n", format);
-      return CVI_FAILURE;
+      ret = CVI_FAILURE;
       break;
   }
 
-  return CVI_SUCCESS;
+  CVI_SYS_Munmap((void *)vFrame->pu8VirAddr[0], vFrame->u32Length[0] + vFrame->u32Length[1] +
+                 vFrame->u32Length[2]);
+
+  return ret;
 }
 
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
