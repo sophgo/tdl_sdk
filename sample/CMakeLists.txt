@@ -55,6 +55,7 @@ function(buildninstall)
   install(FILES ${PARSED_ARGS_NAME}.c DESTINATION sample)
 endfunction(buildninstall)
 
+buildninstall(NAME init)
 buildninstall(NAME sample_fd SRCS draw_utils.c)
 buildninstall(NAME sample_fd_fr SRCS draw_utils.c)
 buildninstall(NAME sample_face_quality SRCS draw_utils.c)
