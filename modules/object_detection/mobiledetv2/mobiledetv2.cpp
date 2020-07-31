@@ -165,43 +165,65 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh, float score
 
 MobileDetV2::~MobileDetV2() {}
 
+#if defined(__arm64__) || defined(__aarch64__)
+static inline __attribute__((always_inline)) uint32_t sum_q(int8x16_t v) { return vaddvq_s8(v); }
+#else
+static inline __attribute__((always_inline)) uint32_t sum_q(int8x16_t v) {
+  /**
+   * v: [0][1][2][3][4][5][6][7][8][9][10][11][12][13][14][15]
+   *
+   *             [ 8][ 9][10][11][12][13][14][15]
+   * folding:   +[ 0][ 1][ 2][ 3][ 4][ 5][ 6][ 7]
+   *           ---------------------------------
+   *             [ 0][ 1][ 2][ 3][ 4][ 5][ 6][ 7]
+   *               \   /   \   /   \  /    \  /
+   * padd_16:      [ 0]    [ 1]    [ 2]    [ 3]
+   *                 \      /        \      /
+   * padd_32:          [ 0]            [ 1]
+   *                    |                |
+   * return:           [ 0]     +      [ 1]
+   */
+  int8x8_t folding = vadd_s8(vget_high_s8(v), vget_low_s8(v));
+  int16x4_t padd_16 = vpaddl_s8(folding);
+  int32x2_t padd_32 = vpaddl_s16(padd_16);
+  return (uint32_t)(vget_lane_s32(padd_32, 0) + vget_lane_s32(padd_32, 1));
+}
+#endif
+
+static inline __attribute__((always_inline)) uint32_t get_num_objec_in_grid(int8_t *logits,
+                                                                            size_t count,
+                                                                            int8_t quant_thresh) {
+  // calculate how much scores greater than threshold using NEON intrinsics
+  // don't record the index here, because it needs if-branches and couple memory write ops.
+  // we check index later if there is at least one object.
+  int8x16_t thresh_vec = vdupq_n_s8(quant_thresh);
+  size_t rest = count % 16;
+  int8x16_t sum_vec = vdupq_n_s8(0);
+  for (size_t class_idx = 0; class_idx < count - rest; class_idx += 16) {
+    int8x16_t value = vld1q_s8(logits + class_idx);
+    uint8x16_t cmp = vcgeq_s8(value, thresh_vec);
+    sum_vec = vsubq_s8(sum_vec, (int8x16_t)cmp);
+  }
+
+  uint32_t num_objects = sum_q(sum_vec);
+  if (likely(num_objects == 0)) {
+    for (size_t class_idx = count - rest; class_idx < count; class_idx++) {
+      if (logits[class_idx] >= quant_thresh) {
+        num_objects++;
+      }
+    }
+  }
+
+  return num_objects;
+}
+
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
                                            float bbox_dequant_thresh, int8_t quant_thresh,
                                            int8_t *logits, int8_t *bboxes, size_t size,
                                            const vector<AnchorBox> &anchors) {
   for (size_t score_index = 0; score_index < size; score_index += m_model_config.num_classes) {
-#if defined(__arm64__) || defined(__aarch64__)
-    // calculate how much scores greater than threshold using NEON intrinsics
-    // don't record the index here, because it needs if-branches and couple memory write ops.
-    // we check index later if there is at least one object.
-    int8x16_t thresh_vec = vdupq_n_s8(quant_thresh);
-    size_t end = score_index + m_model_config.num_classes;
-    size_t rest = end % 16;
-    int8x16_t sum_vec = vdupq_n_s8(0);
-    for (size_t class_idx = score_index; class_idx < end - rest; class_idx += 16) {
-      int8x16_t value = vld1q_s8(logits + class_idx);
-      uint8x16_t cmp = vcgeq_s8(value, thresh_vec);
-      sum_vec = vsubq_s8(sum_vec, (int8x16_t)cmp);
-    }
-
-    uint32_t num_objects = vaddvq_s8(sum_vec);
-    if (likely(num_objects == 0)) {
-      for (size_t class_idx = end - rest; class_idx < end; class_idx++) {
-        if (logits[class_idx] >= quant_thresh) {
-          num_objects++;
-        }
-      }
-    }
-#else   // TODO: use int8x8_t to speedup
-    uint32_t num_objects = 0;
-    for (size_t class_idx = score_index; class_idx < score_index + m_model_config.num_classes;
-         class_idx++) {
-      if (unlikely(logits[class_idx] >= quant_thresh)) {
-        num_objects++;
-      }
-    }
-#endif  // defined(__arm64__) || defined(__aarch64__)
-    ////////////////////////////////////////////////////////
+    uint32_t num_objects =
+        get_num_objec_in_grid(logits + score_index, m_model_config.num_classes, quant_thresh);
 
     if (unlikely(num_objects)) {
       // create detection if any object exists in this grid
