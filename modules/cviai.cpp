@@ -38,7 +38,11 @@ typedef struct {
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
   cviai_context_t *ctx = new cviai_context_t;
   ctx->vec_vpss_engine.push_back(new VpssEngine());
-  ctx->vec_vpss_engine[0]->init(false);
+  if (ctx->vec_vpss_engine[0]->init(false) != CVI_SUCCESS) {
+    delete ctx->vec_vpss_engine[0];
+    delete ctx;
+    return CVI_FAILURE;
+  }
   *handle = ctx;
   return CVI_SUCCESS;
 }
@@ -49,7 +53,11 @@ int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
   }
   cviai_context_t *ctx = new cviai_context_t;
   ctx->vec_vpss_engine.push_back(new VpssEngine());
-  ctx->vec_vpss_engine[0]->init(false, vpssGroupId);
+  if (ctx->vec_vpss_engine[0]->init(false, vpssGroupId) != CVI_SUCCESS) {
+    delete ctx->vec_vpss_engine[0];
+    delete ctx;
+    return CVI_FAILURE;
+  }
   *handle = ctx;
   return CVI_SUCCESS;
 }
@@ -101,6 +109,7 @@ int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
     auto inst = new VpssEngine();
     if (inst->init(false) != CVI_SUCCESS) {
       printf("Vpss init failed\n");
+      delete inst;
       return CVI_FAILURE;
     }
 
@@ -128,6 +137,7 @@ int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
     auto inst = new VpssEngine();
     if (inst->init(false, vpssGroupId) != CVI_SUCCESS) {
       printf("Vpss init failed\n");
+      delete inst;
       return CVI_FAILURE;
     }
 
