@@ -3,6 +3,12 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CVIAI_ROOT=$(readlink -f $SCRIPT_DIR/../)
 TMP_WORKING_DIR=$CVIAI_ROOT/tmp
 
+if [[ "$2" == "Asan" ]]; then
+    BUILD_TYPE=Asan
+else
+    BUILD_TYPE=SDKRelease
+fi
+
 echo "Creating tmp working directory."
 if [[ "$1" == "cmodel" ]]; then
     echo "Temporarily not supported."
@@ -12,7 +18,7 @@ elif [[ "$1" == "soc" ]]; then
     pushd $TMP_WORKING_DIR/build_sdk
     cmake -G Ninja $CVIAI_ROOT -DCVI_TARGET=soc \
                                -DENABLE_SYSTRACE=OFF \
-                               -DCMAKE_BUILD_TYPE=SDKRelease \
+                               -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
                                -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
@@ -28,7 +34,7 @@ elif [[ "$1" == "soc32" ]]; then
     pushd $TMP_WORKING_DIR/build_sdk
     cmake -G Ninja $CVIAI_ROOT -DCVI_TARGET=soc \
                                -DENABLE_SYSTRACE=OFF \
-                               -DCMAKE_BUILD_TYPE=SDKRelease \
+                               -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
                                -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
