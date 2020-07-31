@@ -50,12 +50,21 @@ typedef enum {
 extern "C" {
 #endif
 /**
- * @brief Create a cviai_handle_t.
+ * @brief Create a cviai_handle_t, will automatically find a vpss group id.
  *
  * @param handle An AI SDK handle.
  * @return int Return CVI_SUCCESS if succeed.
  */
 int CVI_AI_CreateHandle(cviai_handle_t *handle);
+
+/**
+ * @brief Create a cviai_handle_t, need to manually assign a vpss group id.
+ *
+ * @param handle An AI SDK handle.
+ * @param vpssGroupdId Assign a group id to cviai_handle_t.
+ * @return int Return CVI_SUCCESS if succeed.
+ */
+int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId);
 
 /**
  * @brief Destroy a cviai_handle_t.
@@ -119,6 +128,21 @@ int CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
  */
 int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                          const uint32_t thread);
+
+/**
+ * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
+ * to change a thread if the process is not sequential. This function requires manually assigning a
+ * vpss group id.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param thread The vpss thread index user desired. Note this param will changed if previous index
+ * is not used.
+ * @param vpssGroupId Assign a vpss group id if a new vpss instance needs to be created.
+ * @return int Return CVI_SUCCESS if successfully changed.
+ */
+int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                          const uint32_t thread, const VPSS_GRP vpssGroupId);
 
 /**
  * @brief Get the set thread index for given supported model.

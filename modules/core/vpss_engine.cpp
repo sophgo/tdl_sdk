@@ -22,7 +22,7 @@ void VpssEngine::enableLog() {
   m_enable_log = true;
 }
 
-int VpssEngine::init(bool enable_log) {
+int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   if (m_is_vpss_init) {
     printf("Vpss already init.\n");
     return CVI_RC_FAILURE;
@@ -43,11 +43,19 @@ int VpssEngine::init(bool enable_log) {
 
   /*start vpss*/
   m_grpid = -1;
-  for (uint8_t i = 0; i < VPSS_MAX_GRP_NUM; i++) {
-    int s32Ret = CVI_VPSS_CreateGrp(i, &vpss_grp_attr);
-    if (s32Ret == CVI_SUCCESS) {
-      m_grpid = i;
-      break;
+  if (grp_id != (CVI_U32)-1) {
+    if (CVI_VPSS_CreateGrp(grp_id, &vpss_grp_attr) == CVI_SUCCESS) {
+      m_grpid = grp_id;
+    } else {
+      printf("User assign group id %u failed to create vpss instance.\n", grp_id);
+      return CVI_FAILURE;
+    }
+  } else {
+    for (uint8_t i = 0; i < VPSS_MAX_GRP_NUM; i++) {
+      if (CVI_VPSS_CreateGrp(i, &vpss_grp_attr) == CVI_SUCCESS) {
+        m_grpid = i;
+        break;
+      }
     }
   }
   if (m_grpid == (CVI_U32)-1) {

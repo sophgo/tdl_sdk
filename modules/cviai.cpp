@@ -43,6 +43,17 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle) {
   return CVI_SUCCESS;
 }
 
+int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
+  if (vpssGroupId == (VPSS_GRP)-1) {
+    return CVI_FAILURE;
+  }
+  cviai_context_t *ctx = new cviai_context_t;
+  ctx->vec_vpss_engine.push_back(new VpssEngine());
+  ctx->vec_vpss_engine[0]->init(false, vpssGroupId);
+  *handle = ctx;
+  return CVI_SUCCESS;
+}
+
 int CVI_AI_DestroyHandle(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
@@ -92,12 +103,44 @@ int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
       printf("Vpss init failed\n");
       return CVI_FAILURE;
     }
+
     ctx->vec_vpss_engine.push_back(inst);
     if (thread != ctx->vec_vpss_engine.size() - 1) {
-      printf("Thread %u is not in use, thus %u is changed to %u automatically.\n", vpss_thread,
-             thread, vpss_thread);
+      printf(
+          "Thread %u is not in use, thus %u is changed to %u automatically. Used vpss group id is "
+          "%u.\n",
+          vpss_thread, thread, vpss_thread, inst->getGrpId());
       vpss_thread = ctx->vec_vpss_engine.size() - 1;
     }
+  }
+  ctx->model_cont[config].vpss_thread = vpss_thread;
+  return CVI_SUCCESS;
+}
+
+int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                          const uint32_t thread, const VPSS_GRP vpssGroupId) {
+  if (vpssGroupId == (VPSS_GRP)-1) {
+    return CVI_FAILURE;
+  }
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  uint32_t vpss_thread = thread;
+  if (thread >= ctx->vec_vpss_engine.size()) {
+    auto inst = new VpssEngine();
+    if (inst->init(false, vpssGroupId) != CVI_SUCCESS) {
+      printf("Vpss init failed\n");
+      return CVI_FAILURE;
+    }
+
+    ctx->vec_vpss_engine.push_back(inst);
+    if (thread != ctx->vec_vpss_engine.size() - 1) {
+      printf(
+          "Thread %u is not in use, thus %u is changed to %u automatically. Used vpss group id is "
+          "%u.\n",
+          vpss_thread, thread, vpss_thread, inst->getGrpId());
+      vpss_thread = ctx->vec_vpss_engine.size() - 1;
+    }
+  } else {
+    printf("Thread %u already exists, given group id %u will not be used.\n", thread, vpssGroupId);
   }
   ctx->model_cont[config].vpss_thread = vpss_thread;
   return CVI_SUCCESS;

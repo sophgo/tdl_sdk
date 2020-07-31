@@ -8,7 +8,7 @@ class VpssEngine {
  public:
   VpssEngine();
   ~VpssEngine();
-  int init(bool enable_log);
+  int init(bool enable_log, VPSS_GRP grp_id = (VPSS_GRP)-1);
   int stop();
   VPSS_GRP getGrpId();
   int sendFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
