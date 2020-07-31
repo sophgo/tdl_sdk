@@ -162,7 +162,7 @@ int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
  * @param num Return the length of the list.
  * @return int Return CVI_SUCCESS.
  */
-int CVI_AI_GetVpssGrpIds(cviai_handle_t handle, uint32_t **groups, int *num);
+int CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num);
 
 /**
  * @brief Close all opened models and delete the model instances.

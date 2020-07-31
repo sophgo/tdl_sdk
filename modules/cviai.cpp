@@ -152,9 +152,9 @@ int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
   return CVI_SUCCESS;
 }
 
-int CVI_AI_GetVpssGrpIds(cviai_handle_t handle, uint32_t **groups, int *num) {
+int CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  uint32_t *ids = (uint32_t *)malloc(ctx->vec_vpss_engine.size());
+  VPSS_GRP *ids = (VPSS_GRP *)malloc(ctx->vec_vpss_engine.size());
   for (size_t i = 0; i < ctx->vec_vpss_engine.size(); i++) {
     ids[i] = ctx->vec_vpss_engine[i]->getGrpId();
   }
