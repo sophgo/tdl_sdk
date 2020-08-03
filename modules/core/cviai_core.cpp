@@ -286,6 +286,17 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
 int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
                      PIXEL_FORMAT_E format) {
   cv::Mat img = cv::imread(filepath);
+  // FIXME: Dirty code
+  int width = 1920;
+  int height = 1080;
+  if (img.cols > img.rows && img.cols > width) {
+    height = ((float)width / img.cols) * img.rows;
+    cv::resize(img, img, cv::Size(width, height));
+  } else if (img.cols <= img.rows && img.rows > height) {
+    width = ((float)height / img.rows) * img.cols;
+    cv::resize(img, img, cv::Size(width, height));
+  }
+  // FIXME: Dirty code end
   if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, format) != CVI_SUCCESS) {
     printf("Create VBFrame failed.\n");
     return CVI_FAILURE;
