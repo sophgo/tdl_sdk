@@ -10,7 +10,7 @@
 
 #include "cviai.h"
 #include "sample_comm.h"
-#include "utils/vpss_helper.h"
+#include "core/utils/vpss_helper.h"
 
 cviai_handle_t facelib_handle = NULL;
 

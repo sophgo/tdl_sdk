@@ -34,6 +34,6 @@ set(SAMPLE_LIBS
 add_executable(reg_face_attribute reg_face_attribute.c)
 add_executable(reg_face_quality reg_face_quality.c)
 
-target_link_libraries(reg_face_attribute cviai ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
-target_link_libraries(reg_face_quality cviai ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
+target_link_libraries(reg_face_attribute cviai_core ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
+target_link_libraries(reg_face_quality cviai_core ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS} ${SAMPLE_LIBS})
 

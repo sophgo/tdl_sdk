@@ -47,10 +47,10 @@ function(buildninstall)
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
   )
   add_executable(${PARSED_ARGS_NAME} ${PARSED_ARGS_NAME}.c ${PARSED_ARGS_SRCS})
-  target_link_libraries(${PARSED_ARGS_NAME} cviai ${MLIR_LIBS}
-                                                  ${OPENCV_LIBS}
-                                                  ${MIDDLEWARE_LIBS}
-                                                  ${SAMPLE_LIBS})
+  target_link_libraries(${PARSED_ARGS_NAME} cviai_core ${MLIR_LIBS}
+                                                       ${OPENCV_LIBS}
+                                                       ${MIDDLEWARE_LIBS}
+                                                       ${SAMPLE_LIBS})
   install(TARGETS ${PARSED_ARGS_NAME} DESTINATION bin)
   install(FILES ${PARSED_ARGS_NAME}.c DESTINATION sample)
 endfunction(buildninstall)

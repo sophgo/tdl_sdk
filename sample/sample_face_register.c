@@ -18,10 +18,10 @@
 #include "cvi_vb.h"
 #include "cvi_vi.h"
 
+#include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "draw_utils.h"
 #include "sample_comm.h"
-#include "utils/vpss_helper.h"
 
 cviai_handle_t facelib_handle = NULL;
 
