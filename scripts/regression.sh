@@ -5,7 +5,7 @@ run() {
     echo "TEST $1 $2: $result"
 }
 # For normal CI check
-CI_PROGRAMS=(init)
+CI_PROGRAMS=(sample_init)
 
 for ((i=0; i < ${#CI_PROGRAMS[@]}; i++))
 do
