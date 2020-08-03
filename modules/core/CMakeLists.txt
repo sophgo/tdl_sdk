@@ -28,4 +28,3 @@ add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:core>
                                    cviai_core.cpp)
 target_link_libraries(${PROJECT_NAME} ${TRACER_LIBS} ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION include/cviai)
