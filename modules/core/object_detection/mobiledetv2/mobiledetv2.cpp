@@ -40,8 +40,6 @@ static vector<size_t> sort_indexes(const Detections &v) {
   return idx;
 }
 
-static float inverse_sigmoid(float y) { return std::log(y / (1 - y)); }
-
 static vector<size_t> calculate_area(const Detections &dets) {
   vector<size_t> areas(dets.size());
   for (size_t i = 0; i < dets.size(); i++) {
@@ -154,7 +152,13 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh, float score
       m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_size);
   m_anchors = generator.get_anchor_boxes();
 
-  float inverse_th = inverse_sigmoid(m_score_threshold);
+  /**
+   *  To speedup post-process of MobileDetV2, we apply inverse function of sigmoid to threshold
+   *  and compare with logits directly. That improve post-process speed because of skipping
+   *  compute sigmoid on whole class logits tensors.
+   *  The inverse function of sigmoid is f(x) = ln(y / 1-y)
+   */
+  float inverse_th = std::log(m_score_threshold / (1 - m_score_threshold));
   for (auto stride : m_model_config.strides) {
     int8_t quant_score_thresh =
         static_cast<int8_t>(round(inverse_th * 128 / m_model_config.class_dequant_thresh[stride]));
@@ -190,9 +194,9 @@ static inline __attribute__((always_inline)) uint32_t sum_q(int8x16_t v) {
 }
 #endif
 
-static inline __attribute__((always_inline)) uint32_t get_num_objec_in_grid(int8_t *logits,
-                                                                            size_t count,
-                                                                            int8_t quant_thresh) {
+static inline __attribute__((always_inline)) uint32_t get_num_object_in_grid(int8_t *logits,
+                                                                             size_t count,
+                                                                             int8_t quant_thresh) {
   // calculate how much scores greater than threshold using NEON intrinsics
   // don't record the index here, because it needs if-branches and couple memory write ops.
   // we check index later if there is at least one object.
@@ -223,10 +227,10 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
                                            const vector<AnchorBox> &anchors) {
   for (size_t score_index = 0; score_index < size; score_index += m_model_config.num_classes) {
     uint32_t num_objects =
-        get_num_objec_in_grid(logits + score_index, m_model_config.num_classes, quant_thresh);
+        get_num_object_in_grid(logits + score_index, m_model_config.num_classes, quant_thresh);
 
+    // create detection if any object exists in this grid
     if (unlikely(num_objects)) {
-      // create detection if any object exists in this grid
       size_t end = score_index + m_model_config.num_classes;
 
       // find objects in this grid
