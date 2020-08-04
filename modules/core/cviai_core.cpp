@@ -305,7 +305,6 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
   int ret = CVI_SUCCESS;
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
   switch (format) {
-    //  FIXME:: VPSS pixel format order is reversed to opencv
     case PIXEL_FORMAT_RGB_888: {
       for (int j = 0; j < img.rows; j++) {
         cv::Vec3b *ptr = img.ptr<cv::Vec3b>(j);

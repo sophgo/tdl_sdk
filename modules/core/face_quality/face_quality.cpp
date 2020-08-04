@@ -143,7 +143,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
     float roll = 0, pitch = 0, yaw = 0;
     get_face_direction(face_info.face_pts, roll, pitch, yaw);
-    if (abs(pitch) > 0.4 || abs(yaw) > 0.4) {
+    if (abs(pitch) > 0.45 || abs(yaw) > 0.45) {
       meta->face_info[i].face_quality = 0;
     }
 
