@@ -46,12 +46,12 @@ CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
   float *unit_length = new float[featureArray.feature_length * featureArray.data_num];
   switch (featureArray.type) {
     case TYPE_INT8: {
-      cvm_gen_db_i8_unit_length((int8_t *)featureArray.ptr, unit_length,
-                                featureArray.feature_length, featureArray.data_num);
+      cvm_gen_precached_i8_unit_length((int8_t *)featureArray.ptr, unit_length,
+                                       featureArray.feature_length, featureArray.data_num);
     } break;
     case TYPE_UINT8: {
-      cvm_gen_db_unit_length((uint8_t *)featureArray.ptr, unit_length, featureArray.feature_length,
-                             featureArray.data_num);
+      cvm_gen_precached_u8_unit_length((uint8_t *)featureArray.ptr, unit_length,
+                                       featureArray.feature_length, featureArray.data_num);
     } break;
     default: {
       printf("Unsupported register data type %x.\n", featureArray.type);
