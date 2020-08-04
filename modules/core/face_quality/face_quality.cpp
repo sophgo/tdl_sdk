@@ -7,12 +7,12 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
-#define SCALE_B (1.0 / (255.0 * 0.229))
+#define SCALE_R (1.0 / (255.0 * 0.229))
 #define SCALE_G (1.0 / (255.0 * 0.224))
-#define SCALE_R (1.0 / (255.0 * 0.225))
-#define MEAN_B -(0.485 / 0.229)
+#define SCALE_B (1.0 / (255.0 * 0.225))
+#define MEAN_R -(0.485 / 0.229)
 #define MEAN_G -(0.456 / 0.224)
-#define MEAN_R -(0.406 / 0.225)
+#define MEAN_B -(0.406 / 0.225)
 #define NAME_SCORE "score_Softmax"
 
 #define PI 3.14159265358979f
