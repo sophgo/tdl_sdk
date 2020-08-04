@@ -28,6 +28,7 @@ function(buildninstall)
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${TRACER_PATH}
     ${MIDDLEWARE_SDK_ROOT}/sample/common
+    ${IVE_INCLUDES}
   )
   set(SAMPLE_LIBS
     ${MLIR_SDK_ROOT}/lib/libcvikernel.so
@@ -50,12 +51,14 @@ function(buildninstall)
   target_link_libraries(${PARSED_ARGS_NAME} cviai_core ${MLIR_LIBS}
                                                        ${OPENCV_LIBS}
                                                        ${MIDDLEWARE_LIBS}
+                                                       ${IVE_LIBS}
                                                        ${SAMPLE_LIBS})
   install(TARGETS ${PARSED_ARGS_NAME} DESTINATION bin)
   install(FILES ${PARSED_ARGS_NAME}.c DESTINATION sample)
 endfunction(buildninstall)
 
 buildninstall(NAME sample_init)
+buildninstall(NAME sample_read_image)
 buildninstall(NAME sample_fd SRCS draw_utils.c)
 buildninstall(NAME sample_fd_fr SRCS draw_utils.c)
 buildninstall(NAME sample_face_quality SRCS draw_utils.c)

@@ -54,6 +54,9 @@ include(cmake/mlir.cmake)
 # Check if middleware exists.
 include (cmake/middleware.cmake)
 
+# Check if ive exists.
+include (${IVE_SDK_ROOT}/cmake/ive.cmake)
+
 # Check if Tracer SDK exists.
 include(cmake/tracer.cmake)
 
