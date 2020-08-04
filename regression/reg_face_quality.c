@@ -90,7 +90,7 @@ int main(void) {
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
                             "/mnt/data/retina_face.cvimodel");
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
-                            "/mnt/data/fqnet-v4-resnet18_px25.cvimodel");
+                            "/mnt/data/fqnet-v5_shufflenetv2-softmax.cvimodel");
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
