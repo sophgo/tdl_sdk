@@ -201,7 +201,8 @@ static inline __attribute__((always_inline)) uint32_t get_num_object_in_grid(int
   // don't record the index here, because it needs if-branches and couple memory write ops.
   // we check index later if there is at least one object.
   int8x16_t thresh_vec = vdupq_n_s8(quant_thresh);
-  const size_t rest = 10;  // 90 classs % 16 = 10, hardcode because it's easy for unrolling loop by compilier
+  const size_t rest = 10;  // 90 classs % 16 = 10, use hardcode value because it's easy for
+                           // unrolling loop by compilier
   int8x16_t sum_vec = vdupq_n_s8(0);
   for (size_t class_idx = 0; class_idx < count - rest; class_idx += 16) {
     int8x16_t value = vld1q_s8(logits + class_idx);
@@ -210,7 +211,7 @@ static inline __attribute__((always_inline)) uint32_t get_num_object_in_grid(int
   }
 
   uint32_t num_objects = sum_q(sum_vec);
-  
+
   int8_t *rest_arr = logits + (count - rest);
   for (size_t start = 0; start < rest; start++) {
     if (*(rest_arr + start) >= quant_thresh) {
