@@ -13,6 +13,7 @@
 #include "face_quality/face_quality.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_classification/mask_classification.hpp"
+#include "mask_face_recognition/mask_face_recognition.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "retina_face/retina_face.hpp"
@@ -551,4 +552,30 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
   }
   thermal_face->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return thermal_face->inference(frame, faces);
+}
+
+int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                               cvai_face_t *faces) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      printf("Model path for MaskFaceRecognition is empty.\n");
+      return CVI_FAILURE;
+    }
+    m_t.instance = new MaskFaceRecognition();
+    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
+      printf("Open model failed (%s).\n", m_t.model_path.c_str());
+      return CVI_FAILURE;
+    }
+  }
+
+  MaskFaceRecognition *mask_face_rec = dynamic_cast<MaskFaceRecognition *>(m_t.instance);
+  if (mask_face_rec == nullptr) {
+    printf("No instance found for MaskFaceRecognition.\n");
+    return CVI_FAILURE;
+  }
+
+  return mask_face_rec->inference(frame, faces);
 }

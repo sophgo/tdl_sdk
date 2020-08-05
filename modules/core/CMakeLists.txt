@@ -10,6 +10,7 @@ add_subdirectory(retina_face)
 add_subdirectory(object_detection/yolov3)
 add_subdirectory(thermal_face_detection)
 add_subdirectory(object_detection/mobiledetv2)
+add_subdirectory(mask_face_recognition)
 
 #set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all-symbols")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
@@ -20,6 +21,7 @@ add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:core>
                                    $<TARGET_OBJECTS:face_quality>
                                    $<TARGET_OBJECTS:liveness>
                                    $<TARGET_OBJECTS:mobiledetv2>
+                                   $<TARGET_OBJECTS:mask_face_recognition>
                                    $<TARGET_OBJECTS:mask_classification>
                                    $<TARGET_OBJECTS:retina_face>
                                    $<TARGET_OBJECTS:yolov3>
