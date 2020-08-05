@@ -30,6 +30,7 @@ static volatile bool bExit = false;
 
 cviai_handle_t facelib_handle = NULL;
 
+static SAMPLE_VI_CONFIG_S vi_config;
 static VI_PIPE vi_pipe = 0;
 static CVI_S32 work_sns_id = 0;
 static VPSS_GRP vpss_group = 0;
@@ -91,8 +92,9 @@ static void Exit() {
   CVI_BOOL chn_enable[VPSS_MAX_PHY_CHN_NUM] = {0};
   chn_enable[vpss_channel] = CVI_TRUE;
   chn_enable[vpss_channel_vo] = CVI_TRUE;
-
   SAMPLE_COMM_VPSS_Stop(vpss_group, chn_enable);
+
+  SAMPLE_COMM_VI_DestroyVi(&vi_config);
   SAMPLE_COMM_SYS_Exit();
 }
 
@@ -366,14 +368,13 @@ int InitVO(SAMPLE_VO_CONFIG_S *video_output_config) {
 
 int main(void) {
   CVI_S32 ret = CVI_SUCCESS;
-  SAMPLE_VI_CONFIG_S video_input_config;
   SAMPLE_VO_CONFIG_S video_output_config;
 
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  SetVIConfig(&video_input_config);
-  ret = InitVI(&video_input_config);
+  SetVIConfig(&vi_config);
+  ret = InitVI(&vi_config);
   if (ret != CVI_SUCCESS) {
     printf("Init video input failed with %d\n", ret);
     return ret;

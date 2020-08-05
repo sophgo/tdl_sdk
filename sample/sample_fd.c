@@ -98,8 +98,9 @@ static void Exit() {
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   abChnEnable[VpssChn] = CVI_TRUE;
   abChnEnable[VpssChnVO] = CVI_TRUE;
-
   SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
+
+  SAMPLE_COMM_VI_DestroyVi(&stViConfig);
   SAMPLE_COMM_SYS_Exit();
 }
 
