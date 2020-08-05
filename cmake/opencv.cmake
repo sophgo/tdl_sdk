@@ -16,13 +16,15 @@ set(OPENCV_INCLUDES
     ${OPENCV_ROOT}/include/opencv/
 )
 
-set(OPENCV_LIBS ${OPENCV_ROOT}/lib/libopencv_calib3d.so
+set(OPENCV_LIBS_MIN ${OPENCV_ROOT}/lib/libopencv_core.so
+                    ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so
+                    ${OPENCV_ROOT}/lib/libopencv_imgproc.so)
+
+set(OPENCV_LIBS ${OPENCV_LIBS_MIN}
+                ${OPENCV_ROOT}/lib/libopencv_calib3d.so
                 ${OPENCV_ROOT}/lib/libopencv_features2d.so
                 ${OPENCV_ROOT}/lib/libopencv_flann.so
-                ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so
-                ${OPENCV_ROOT}/lib/libopencv_imgproc.so
-                ${OPENCV_ROOT}/lib/libopencv_ml.so
-                ${OPENCV_ROOT}/lib/libopencv_core.so)
+                ${OPENCV_ROOT}/lib/libopencv_ml.so)
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
   install(DIRECTORY ${OPENCV_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/opencv)

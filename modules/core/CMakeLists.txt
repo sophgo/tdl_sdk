@@ -26,5 +26,5 @@ add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:core>
                                    $<TARGET_OBJECTS:thermal_face_detection>
                                    cviai_types_free.cpp
                                    cviai_core.cpp)
-target_link_libraries(${PROJECT_NAME} ${TRACER_LIBS} ${MLIR_LIBS} ${OPENCV_LIBS} ${MIDDLEWARE_LIBS})
+target_link_libraries(${PROJECT_NAME} ${TRACER_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
