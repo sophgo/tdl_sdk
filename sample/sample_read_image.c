@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
   }
   // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
   VIDEO_FRAME_INFO_S fdFrame;
-  ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame);
+  ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame, false);
   if (ret != CVI_SUCCESS) {
     printf("Convert to video frame failed with %#x!\n", ret);
     return ret;
