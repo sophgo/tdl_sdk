@@ -109,3 +109,4 @@ include_directories(${CMAKE_SOURCE_DIR}/include
                     ${TRACER_INCLUDES})
 add_subdirectory(modules)
 add_subdirectory(sample)
+add_subdirectory(regression)
