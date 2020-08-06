@@ -42,18 +42,10 @@ FaceAttribute::~FaceAttribute() {
 int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) {
   uint32_t img_width = stOutFrame->stVFrame.u32Width;
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
-  cv::Mat image(img_height, img_width, CV_8UC3);
   stOutFrame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_Mmap(stOutFrame->stVFrame.u64PhyAddr[0], stOutFrame->stVFrame.u32Length[0]);
-  char *va_rgb = (char *)stOutFrame->stVFrame.pu8VirAddr[0];
-  uint32_t dst_width = image.cols;
-  uint32_t dst_height = image.rows;
-
-  for (size_t i = 0; i < (size_t)dst_height; i++) {
-    memcpy(image.ptr(i, 0), va_rgb + stOutFrame->stVFrame.u32Stride[0] * i, dst_width * 3);
-  }
-
-  CVI_SYS_Munmap((void *)stOutFrame->stVFrame.pu8VirAddr[0], stOutFrame->stVFrame.u32Length[0]);
+  cv::Mat image(img_height, img_width, CV_8UC3, stOutFrame->stVFrame.pu8VirAddr[0],
+                stOutFrame->stVFrame.u32Stride[0]);
 
   for (int i = 0; i < meta->size; ++i) {
     cvai_face_info_t face_info =
@@ -64,10 +56,13 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) 
     outputParser(meta, i);
     CVI_AI_FreeCpp(&face_info);
   }
+
+  CVI_SYS_Munmap((void *)stOutFrame->stVFrame.pu8VirAddr[0], stOutFrame->stVFrame.u32Length[0]);
+
   return CVI_SUCCESS;
 }
 
-void FaceAttribute::prepareInputTensor(cv::Mat src_image, cvai_face_info_t &face_info) {
+void FaceAttribute::prepareInputTensor(const cv::Mat &src_image, cvai_face_info_t &face_info) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   cv::Mat image(input->shape.dim[2], input->shape.dim[3], src_image.type());
 

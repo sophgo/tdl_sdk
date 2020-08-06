@@ -101,17 +101,10 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
   int img_width = frame->stVFrame.u32Width;
   int img_height = frame->stVFrame.u32Height;
-  cv::Mat image(img_height, img_width, CV_8UC3);
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
-  char *va_rgb = (char *)frame->stVFrame.pu8VirAddr[0];
-  int dst_width = image.cols;
-  int dst_height = image.rows;
-
-  for (int i = 0; i < dst_height; i++) {
-    memcpy(image.ptr(i, 0), va_rgb + frame->stVFrame.u32Stride[0] * i, dst_width * 3);
-  }
-  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+  cv::Mat image(img_height, img_width, CV_8UC3, frame->stVFrame.pu8VirAddr[0],
+                frame->stVFrame.u32Stride[0]);
 
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
@@ -149,6 +142,8 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
     CVI_AI_FreeCpp(&face_info);
   }
+
+  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
 
   return CVI_SUCCESS;
 }

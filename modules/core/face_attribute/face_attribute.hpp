@@ -13,7 +13,7 @@ class FaceAttribute final : public Core {
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta);
 
  private:
-  void prepareInputTensor(cv::Mat src_image, cvai_face_info_t &face_info);
+  void prepareInputTensor(const cv::Mat &src_image, cvai_face_info_t &face_info);
   void outputParser(cvai_face_t *meta, int meta_i);
 
   float *attribute_buffer = nullptr;
