@@ -11,7 +11,7 @@
 #define FACE_ATTRIBUTE_MEAN (-0.99609375)
 #define FACE_ATTRIBUTE_INPUT_THRESHOLD (1 / 128.0)
 
-#define FACE_OUT_NAME "BMFace_dense_MatMul_folded"
+#define FACE_OUT_NAME "pre_fc1"
 
 namespace cviai {
 

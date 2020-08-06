@@ -57,3 +57,4 @@ buildninstall(NAME sample_face_quality SRCS draw_utils.c INC ${SAMPLE_INC} DEPS 
 buildninstall(NAME sample_object_detection SRCS draw_utils.c INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_face_register INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_mask_classification SRCS draw_utils.c INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_mask_face_recognition INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
