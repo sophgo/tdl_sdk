@@ -29,6 +29,13 @@ typedef enum { LIVENESS_IR_LEFT = 0, LIVENESS_IR_RIGHT } cvai_liveness_ir_positi
 typedef uint32_t cvai_face_id_t;
 
 typedef struct {
+  float quality;
+  float roll;
+  float pitch;
+  float yaw;
+} cvai_face_quality_t;
+
+typedef struct {
   char name[128];
   cvai_bbox_t bbox;
   cvai_pts_t face_pts;
@@ -39,7 +46,7 @@ typedef struct {
   float age;
   float liveness_score;
   float mask_score;
-  float face_quality;
+  cvai_face_quality_t face_quality;
 } cvai_face_info_t;
 
 typedef struct {

@@ -52,9 +52,11 @@ static int genFeatureFile(const char *img_name_list, const char *result_file) {
     if (face_count > 0) {
       CVI_AI_FaceQuality(facelib_handle, &frFrame, &face);
 
-      fprintf(fp_feature, "%f\n", face.face_info[0].face_quality);
+      fprintf(fp_feature, "%f\n", face.face_info[0].face_quality.quality);
     }
-    if (face_count == 0 || face.face_info[0].face_quality < 0.5) {
+    if (face_count == 0 || face.face_info[0].face_quality.quality < 0.5 ||
+        abs(face.face_info[0].face_quality.pitch) > 0.45 ||
+        abs(face.face_info[0].face_quality.yaw) > 0.45) {
       fail_num++;
     }
 
