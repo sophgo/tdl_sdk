@@ -37,18 +37,18 @@ static float cal_slant(int ln, int lf, const float Rn, float theta) {
   float dz = 0;
   float slant = 0;
   const float m1 = ((float)ln * ln) / ((float)lf * lf);
-  const float m2 = (cos(theta)) * (cos(theta));
+  const float m2 = (std::cos(theta)) * (std::cos(theta));
   const float Rn_sq = Rn * Rn;
 
   if (m2 == 1) {
-    dz = sqrt(Rn_sq / (m1 + Rn_sq));
+    dz = std::sqrt(Rn_sq / (m1 + Rn_sq));
   }
   if (m2 >= 0 && m2 < 1) {
-    dz = sqrt(
-        (Rn_sq - m1 - 2 * m2 * Rn_sq + sqrt(((m1 - Rn_sq) * (m1 - Rn_sq)) + 4 * m1 * m2 * Rn_sq)) /
-        (2 * (1 - m2) * Rn_sq));
+    dz = std::sqrt((Rn_sq - m1 - 2 * m2 * Rn_sq +
+                    std::sqrt(((m1 - Rn_sq) * (m1 - Rn_sq)) + 4 * m1 * m2 * Rn_sq)) /
+                   (2 * (1 - m2) * Rn_sq));
   }
-  slant = acos(dz);
+  slant = std::acos(dz);
   return slant;
 }
 
@@ -70,16 +70,16 @@ static int get_face_direction(cvai_pts_t face_pts, float &roll, float &pitch, fl
   float slant = cal_slant(noseBase_noseTip_distance, midEye_midMouth_distance, 0.5, theta);
 
   CvPoint3D32f normal;
-  normal.x = sin(slant) * (cos((360 - tilt) * (PI / 180.0)));
-  normal.y = sin(slant) * (sin((360 - tilt) * (PI / 180.0)));
-  normal.z = -cos(slant);
+  normal.x = std::sin(slant) * (std::cos((360 - tilt) * (PI / 180.0)));
+  normal.y = std::sin(slant) * (std::sin((360 - tilt) * (PI / 180.0)));
+  normal.z = -std::cos(slant);
 
-  yaw = acos((std::abs(normal.z)) / (std::sqrt(normal.x * normal.x + normal.z * normal.z)));
+  yaw = std::acos((std::abs(normal.z)) / (std::sqrt(normal.x * normal.x + normal.z * normal.z)));
   if (noseTip.x < noseBase.x) yaw = -yaw;
   yaw = saturate(yaw, -1.f, 1.f);
 
-  pitch = acos(std::sqrt((normal.x * normal.x + normal.z * normal.z) /
-                         (normal.x * normal.x + normal.y * normal.y + normal.z * normal.z)));
+  pitch = std::acos(std::sqrt((normal.x * normal.x + normal.z * normal.z) /
+                              (normal.x * normal.x + normal.y * normal.y + normal.z * normal.z)));
   if (noseTip.y > noseBase.y) pitch = -pitch;
   pitch = saturate(pitch, -1.f, 1.f);
 

@@ -1,7 +1,7 @@
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <cassert>
+#include <cmath>
 
 #include "anchor_generator.h"
 
@@ -34,8 +34,8 @@ static vector<anchor_box> _ratio_enum(anchor_box anchor, const vector<float> &ra
     float size = win.w * win.h;
     float scale = size / ratios[i];
 
-    win.w = round(sqrt(scale));
-    win.h = round(win.w * ratios[i]);
+    win.w = std::round(std::sqrt(scale));
+    win.h = std::round(win.w * ratios[i]);
 
     anchor_box tmp = _mkanchors(win);
     anchors.push_back(tmp);

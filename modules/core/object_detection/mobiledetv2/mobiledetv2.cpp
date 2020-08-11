@@ -139,7 +139,7 @@ static void decode_box(const float *const box, const AnchorBox &anchor, const Pt
   det->y2 = ycenter + h / 2;
 }
 
-static void clip_bbox(PtrDectRect box, size_t image_size) {
+static void clip_bbox(const size_t image_size, const PtrDectRect &box) {
   if (box->x1 < 0) box->x1 = 0;
   if (box->y1 < 0) box->y1 = 0;
   if (box->x2 >= image_size) box->x2 = image_size - 1;
@@ -257,7 +257,7 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
           float dequant_box[4];
           Dequantize(bboxes + box_index, dequant_box, bbox_dequant_thresh, 4);
           decode_box(dequant_box, anchors[box_index / 4], det);
-          clip_bbox(det, m_model_config.image_size);
+          clip_bbox(m_model_config.image_size, det);
           det_vec->push_back(det);
         }
       }

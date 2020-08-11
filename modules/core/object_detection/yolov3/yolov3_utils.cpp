@@ -27,7 +27,7 @@ void ActivateArray(float *x, const int n, bool fast_exp = true) {
     if (fast_exp) {
       x[i] = 1. / (1. + cviai::FastExp(-x[i]));
     } else {
-      x[i] = 1. / (1. + exp(-x[i]));
+      x[i] = 1. / (1. + std::exp(-x[i]));
     }
   }
 };
@@ -83,8 +83,8 @@ box GetRegionBox(const float *data, const float *biases, int n, int index, int i
     b.w = cviai::FastExp(data[index + 2 * stride]) * biases[2 * n] / w;
     b.h = cviai::FastExp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
   } else {
-    b.w = exp(data[index + 2 * stride]) * biases[2 * n] / w;
-    b.h = exp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
+    b.w = std::exp(data[index + 2 * stride]) * biases[2 * n] / w;
+    b.h = std::exp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
   }
   return b;
 };
@@ -98,8 +98,8 @@ box GetYoloBox(const float *data, const float *biases, int n, int index, int i, 
     b.w = cviai::FastExp(data[index + 2 * stride]) * biases[2 * n] / w;
     b.h = cviai::FastExp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
   } else {
-    b.w = exp(data[index + 2 * stride]) * biases[2 * n] / w;
-    b.h = exp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
+    b.w = std::exp(data[index + 2 * stride]) * biases[2 * n] / w;
+    b.h = std::exp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
   }
 
   return b;
@@ -117,7 +117,7 @@ void Softmax(const float *input, int n, float temp, int stride, float *output, b
     if (fast_exp) {
       e = cviai::FastExp(input[i * stride] / temp - largest / temp);
     } else {
-      e = exp(input[i * stride] / temp - largest / temp);
+      e = std::exp(input[i * stride] / temp - largest / temp);
     }
     sum += e;
     output[i * stride] = e;
@@ -200,6 +200,9 @@ detection *MakeNetworkBoxes(YOLOLayer &net_output, float threshold, int *num,
   int i;
   int nboxes = GetNumOfDetections(net_output, yolo_param);
   if (num != nullptr) *num = nboxes;
+  if (nboxes == 0) {
+    return nullptr;
+  }
   detection *dets = new detection[nboxes];
   for (i = 0; i < nboxes; ++i) {
     dets[i].prob = new float[yolo_param.m_classes];
@@ -317,9 +320,13 @@ void GetYoloDetections(YOLOLayer l, int w, int h, int net_width, int net_height,
 detection *GetNetworkBoxes(YOLOLayer net_output, int classes, int w, int h, float threshold,
                            int relative, int *num, YOLOParamter yolo_param, int index) {
   detection *dets = MakeNetworkBoxes(net_output, threshold, num, yolo_param);
-
+  if (dets == nullptr) {
+    return nullptr;
+  }
   vector<int> mask;
-  for (int i = 0; i < 3; i++) {
+  const int mask_size = 3;
+  mask.reserve(mask_size);
+  for (int i = 0; i < mask_size; i++) {
     mask.push_back(yolo_param.m_mask[index][i]);
   }
   GetYoloDetections(net_output, w, h, w, h, threshold, relative, dets, yolo_param, mask);

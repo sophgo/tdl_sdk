@@ -50,7 +50,8 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
   return CVI_SUCCESS;
 }
 
-void MaskFaceRecognition::prepareInputTensor(cv::Mat src_image, cvai_face_info_t &face_info) {
+void MaskFaceRecognition::prepareInputTensor(const cv::Mat &src_image,
+                                             cvai_face_info_t &face_info) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   cv::Mat image(input->shape.dim[2], input->shape.dim[3], src_image.type());
 

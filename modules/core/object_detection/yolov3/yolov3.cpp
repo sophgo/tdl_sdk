@@ -23,6 +23,7 @@ Yolov3::Yolov3() {
   mp_config->input_mem_type = CVI_MEM_DEVICE;
 
   m_input_scale = YOLOV3_SCALE;
+  m_det_buf_size = YOLOV3_DEFAULT_DET_BUFFER;
 
   m_yolov3_param = {
       YOLOV3_CLASSES,                                                                  // m_classes
@@ -36,6 +37,8 @@ Yolov3::Yolov3() {
       {{6, 7, 8}, {3, 4, 5}, {0, 1, 2}}  // m_mask
   };
 }
+
+Yolov3::~Yolov3() { free(mp_total_dets); }
 
 int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
                       cvai_obj_det_type_t det_type) {
@@ -70,8 +73,9 @@ void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
   }
 
   vector<object_detect_rect_t> results;
-  static int det_buf_size = YOLOV3_DEFAULT_DET_BUFFER;
-  static detection *total_dets = new detection[det_buf_size];
+  if (mp_total_dets == nullptr) {
+    mp_total_dets = (detection *)malloc(sizeof(detection) * m_det_buf_size);
+  }
   int total_boxes = 0;
 
   for (size_t i = 0; i < net_outputs.size(); i++) {
@@ -82,13 +86,14 @@ void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
         GetNetworkBoxes(net_outputs.at(i), m_yolov3_param.m_classes, yolov3_w, yolov3_h,
                         m_yolov3_param.m_threshold, 1, &nboxes, m_yolov3_param, i);
 
-    int next_size = total_boxes + nboxes;
-    if (next_size > det_buf_size) {
-      total_dets = (detection *)realloc(total_dets, next_size * sizeof(detection));
-      det_buf_size = next_size;
+    uint32_t next_size = total_boxes + nboxes;
+    // Not a good design?
+    if (next_size > m_det_buf_size) {
+      mp_total_dets = (detection *)realloc(mp_total_dets, next_size * sizeof(detection));
+      m_det_buf_size = next_size;
     }
 
-    memcpy(total_dets + total_boxes, dets, sizeof(detection) * nboxes);
+    memcpy(mp_total_dets + total_boxes, dets, sizeof(detection) * nboxes);
     total_boxes += nboxes;
 
     // we do not use FreeDetections because we use just use memcpy,
@@ -96,11 +101,11 @@ void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
     delete[] dets;
   }
 
-  DoNmsSort(total_dets, total_boxes, m_yolov3_param.m_classes, m_yolov3_param.m_nms_threshold);
-  getYOLOResults(total_dets, total_boxes, m_yolov3_param.m_threshold, yolov3_w, yolov3_h, results,
-                 det_type);
+  DoNmsSort(mp_total_dets, total_boxes, m_yolov3_param.m_classes, m_yolov3_param.m_nms_threshold);
+  getYOLOResults(mp_total_dets, total_boxes, m_yolov3_param.m_threshold, yolov3_w, yolov3_h,
+                 results, det_type);
   for (int i = 0; i < total_boxes; ++i) {
-    delete[] total_dets[i].prob;
+    delete[] mp_total_dets[i].prob;
   }
 
   // fill obj

@@ -9,6 +9,7 @@ namespace cviai {
 class Yolov3 final : public Core {
  public:
   Yolov3();
+  ~Yolov3();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj, cvai_obj_det_type_t det_type);
 
  private:
@@ -18,5 +19,7 @@ class Yolov3 final : public Core {
                       std::vector<object_detect_rect_t> &results, cvai_obj_det_type_t det_type);
 
   YOLOParamter m_yolov3_param;
+  detection *mp_total_dets = nullptr;
+  uint32_t m_det_buf_size;
 };
 }  // namespace cviai

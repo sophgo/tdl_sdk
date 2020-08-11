@@ -27,7 +27,7 @@ static std::vector<cvai_bbox_t> generate_anchors(int base_size, const std::vecto
     anchors[i].y2 = base_size * scales[i % scales.size()];
     areas[i] = anchors[i].x2 * anchors[i].y2;
 
-    anchors[i].x2 = sqrt(areas[i] / ratios[i / scales.size()]);
+    anchors[i].x2 = std::sqrt(areas[i] / ratios[i / scales.size()]);
     anchors[i].y2 = anchors[i].x2 * ratios[i / scales.size()];
 
     anchors[i].x1 -= anchors[i].x2 * 0.5;
@@ -116,6 +116,7 @@ int ThermalFace::initAfterModelOpened() {
 
   CVI_TENSOR *input = getInputTensor(0);
   std::vector<std::vector<int>> image_shapes;
+  image_shapes.reserve(strides.size());
   for (int s : strides) {
     image_shapes.push_back({(input->shape.dim[2] + s - 1) / s, (input->shape.dim[3] + s - 1) / s});
   }

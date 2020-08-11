@@ -106,9 +106,8 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
     }
     ret = run(&stDstFrame);
 
-    ret = mp_vpss_inst->releaseFrame(&stDstFrame, 0);
+    ret |= mp_vpss_inst->releaseFrame(&stDstFrame, 0);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_ReleaseChnFrame failed with %#x\n", ret);
       return ret;
     }
   }

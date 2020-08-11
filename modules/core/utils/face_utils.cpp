@@ -80,20 +80,6 @@ static cv::Mat get_similarity_transform(const vector<cv::Point2f> &src_pts,
 namespace cviai {
 
 cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta, int face_idx) {
-  float ratio_x, ratio_y, bbox_y_height, bbox_x_height, bbox_padding_top, bbox_padding_left;
-
-  if (width >= height) {
-    ratio_x = width / face_meta->width;
-    bbox_y_height = face_meta->height * height / width;
-    ratio_y = height / bbox_y_height;
-    bbox_padding_top = (face_meta->height - bbox_y_height) / 2;
-  } else {
-    ratio_y = height / face_meta->height;
-    bbox_x_height = face_meta->width * width / height;
-    ratio_x = width / bbox_x_height;
-    bbox_padding_left = (face_meta->width - bbox_x_height) / 2;
-  }
-
   cvai_bbox_t bbox = face_meta->face_info[face_idx].bbox;
   cvai_face_info_t face_info;
   float x1, x2, y1, y2;
@@ -106,6 +92,11 @@ cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta,
       (float *)malloc(sizeof(float) * face_meta->face_info[face_idx].face_pts.size);
 
   if (width >= height) {
+    float ratio_x, ratio_y, bbox_y_height, bbox_padding_top;
+    ratio_x = width / face_meta->width;
+    bbox_y_height = face_meta->height * height / width;
+    ratio_y = height / bbox_y_height;
+    bbox_padding_top = (face_meta->height - bbox_y_height) / 2;
     x1 = bbox.x1 * ratio_x;
     x2 = bbox.x2 * ratio_x;
     y1 = (bbox.y1 - bbox_padding_top) * ratio_y;
@@ -117,6 +108,11 @@ cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta,
           (face_meta->face_info[face_idx].face_pts.y[j] - bbox_padding_top) * ratio_y;
     }
   } else {
+    float ratio_x, ratio_y, bbox_x_height, bbox_padding_left;
+    ratio_y = height / face_meta->height;
+    bbox_x_height = face_meta->width * width / height;
+    ratio_x = width / bbox_x_height;
+    bbox_padding_left = (face_meta->width - bbox_x_height) / 2;
     x1 = (bbox.x1 - bbox_padding_left) * ratio_x;
     x2 = (bbox.x2 - bbox_padding_left) * ratio_x;
     y1 = bbox.y1 * ratio_y;

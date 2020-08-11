@@ -55,7 +55,7 @@ CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
     } break;
     default: {
       printf("Unsupported register data type %x.\n", featureArray.type);
-      delete unit_length;
+      delete[] unit_length;
       return CVI_FAILURE;
     } break;
   }
