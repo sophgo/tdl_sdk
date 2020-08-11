@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
   memset(&face, 0, sizeof(cvai_face_t));
   CVI_AI_RetinaFace(ai_handle, &fdFrame, &face, &face_count);
   printf("Face found %x.\n", face_count);
+  CVI_AI_FaceAttribute(ai_handle, &fdFrame, &face);
   CVI_AI_Free(&face);
 
   // Free image and handles.

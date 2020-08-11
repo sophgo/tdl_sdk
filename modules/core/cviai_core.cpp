@@ -356,20 +356,18 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
       printf("Model path for FaceAttribute is empty.\n");
       return CVI_FAILURE;
     }
-    m_t.instance = new FaceAttribute();
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
+    m_t.instance = new FaceAttribute(true);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
     }
   }
-
   FaceAttribute *face_attr = dynamic_cast<FaceAttribute *>(m_t.instance);
   if (face_attr == nullptr) {
     printf("No instance found for RetinaFace.\n");
     return CVI_FAILURE;
   }
-
+  face_attr->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return face_attr->inference(frame, faces);
 }
 

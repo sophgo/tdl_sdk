@@ -1,5 +1,9 @@
 #include "face_utils.hpp"
 
+#include <cvi_comm_gdc.h>
+#include <cvi_gdc.h>
+#include "core/utils/vpss_helper.h"
+
 #include "opencv2/imgproc.hpp"
 
 #include <algorithm>
@@ -133,8 +137,8 @@ cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta,
   return face_info;
 }
 
-int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info, int width,
-               int height) {
+inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width, const int height,
+                              cv::Mat *tfm) {
   assert(width == 96 || width == 112);
   assert(height == 112);
   if ((width != 96 && width != 112) || height != 112) {
@@ -171,9 +175,63 @@ int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &f
     e.x += (width - ref_width) / 2.0f;
     e.y += (height - ref_height) / 2.0f;
   }
-  cv::Mat tfm = get_similarity_transform(detect_points, reference_points, true);
-  cv::warpAffine(image, aligned, tfm, cv::Size(width, height), cv::INTER_NEAREST);
+  *tfm = get_similarity_transform(detect_points, reference_points, true);
+  return 0;
+}
 
+int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info,
+               const int width, const int height) {
+  cv::Mat tfm;
+  if (getTfmFromFaceInfo(face_info, width, height, &tfm) != 0) {
+    return -1;
+  }
+  cv::warpAffine(image, aligned, tfm, cv::Size(width, height), cv::INTER_NEAREST);
+  return 0;
+}
+
+int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFrame,
+                   const cvai_face_info_t &face_info) {
+  if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
+      inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
+    return -1;
+  }
+  cv::Mat tfm;
+  if (getTfmFromFaceInfo(face_info, outFrame->stVFrame.u32Width, outFrame->stVFrame.u32Height,
+                         &tfm) != 0) {
+    return -1;
+  }
+  double t =
+      (tfm.at<double>(0, 0) / tfm.at<double>(0, 1) - tfm.at<double>(1, 0) / tfm.at<double>(1, 1));
+  double a = 1 / tfm.at<double>(0, 1) / t;
+  double b = -1 / tfm.at<double>(1, 1) / t;
+  double c =
+      (-tfm.at<double>(0, 2) / tfm.at<double>(0, 1) + tfm.at<double>(1, 2) / tfm.at<double>(1, 1)) /
+      t;
+  vector<cv::Point2f> search_points;
+  const float sp_x = outFrame->stVFrame.u32Width - 1;
+  const float sp_y = outFrame->stVFrame.u32Height - 1;
+  search_points = {{0.0, 0.0}, {sp_x, 0.0}, {0.0, sp_y}, {sp_x, sp_y}};
+  AFFINE_ATTR_S stAffineAttr;
+  stAffineAttr.u32RegionNum = 1;
+  POINT2F_S *face_box = stAffineAttr.astRegionAttr[0];
+  int i = 0;
+  for (auto &e : search_points) {
+    face_box[i].x = e.x * a + e.y * b + c;
+    face_box[i].y =
+        (e.x - tfm.at<double>(0, 2) - face_box[i].x * tfm.at<double>(0, 0)) / tfm.at<double>(0, 1);
+    ++i;
+  }
+
+  GDC_HANDLE hHandle;
+  GDC_TASK_ATTR_S stTask;
+  stTask.stImgIn = *inFrame;
+  stTask.stImgOut = *outFrame;
+  CVI_GDC_BeginJob(&hHandle);
+  CVI_GDC_AddAffineTask(hHandle, &stTask, &stAffineAttr);
+  if (CVI_GDC_EndJob(hHandle) != CVI_SUCCESS) {
+    printf("Affine failed.\n");
+    return -1;
+  }
   return 0;
 }
 

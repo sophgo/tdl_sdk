@@ -9,5 +9,7 @@ namespace cviai {
 cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta, int face_idx);
 int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info, int width,
                int height);
+int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFrame,
+                   const cvai_face_info_t &face_info);
 }  // namespace cviai
 #endif

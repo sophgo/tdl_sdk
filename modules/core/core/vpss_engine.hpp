@@ -11,11 +11,11 @@ class VpssEngine {
   int init(bool enable_log, VPSS_GRP grp_id = (VPSS_GRP)-1);
   int stop();
   VPSS_GRP getGrpId();
-  int sendFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
+  int sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
                 const uint32_t enable_chns);
-  int sendCropGrpFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
+  int sendCropGrpFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
                        const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns);
-  int sendCropChnFrame(VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
+  int sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
                        const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns);
   int getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout = 100);
   int releaseFrame(VIDEO_FRAME_INFO_S *frame, int chn_idx);
