@@ -102,7 +102,8 @@ message("Install dir      ${CMAKE_INSTALL_PREFIX}")
 message("==================================================")
 
 
-include_directories(${CMAKE_SOURCE_DIR}/include
+include_directories(${CMAKE_SOURCE_DIR}/3rdparty
+                    ${CMAKE_SOURCE_DIR}/include
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES}
