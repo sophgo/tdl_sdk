@@ -67,13 +67,13 @@ float BoxUnion(box a, box b);
 float BoxIou(box a, box b);
 int NmsComparator(const void *pa, const void *pb);
 
-box GetRegionBox(float *data, float *biases, int n, int index, int i, int j, int w, int h,
-                 int stride, bool fast_exp);
-box GetYoloBox(float *x, float *biases, int n, int index, int i, int j, int lw, int lh, int w,
-               int h, int stride, bool fast_exp);
-void Softmax(float *input, int n, float temp, int stride, float *output, bool fast_exp);
-void SoftmaxCpu(float *input, int n, int batch, int batch_offset, int groups, int group_offset,
-                int stride, float temp, float *output);
+box GetRegionBox(const float *data, const float *biases, int n, int index, int i, int j, int w,
+                 int h, int stride, bool fast_exp);
+box GetYoloBox(const float *data, const float *biases, int n, int index, int i, int j, int lw,
+               int lh, int w, int h, int stride, bool fast_exp);
+void Softmax(const float *input, int n, float temp, int stride, float *output, bool fast_exp);
+void SoftmaxCpu(const float *input, int n, int batch, int batch_offset, int groups,
+                int group_offset, int stride, float temp, float *output);
 void DoNmsSort(detection *dets, int total, int classes, float threshold);
 void FillNetworkBoxes(YOLOLayer net_output, int w, int h, float threshold, int relative,
                       detection *dets, YOLOParamter yolo_param);

@@ -19,7 +19,7 @@ void SoftMaxForBuffer(float *src, float *dst, size_t size) {
   }
 }
 
-void Dequantize(int8_t *q_data, float *data, float threshold, size_t size) {
+void Dequantize(const int8_t *q_data, float *data, float threshold, size_t size) {
   for (size_t i = 0; i < size; ++i) {
     data[i] = float(q_data[i]) * threshold / 128.0;
   }

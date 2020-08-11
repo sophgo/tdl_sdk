@@ -46,7 +46,7 @@ class MobileDetV2 final : public Core {
 
   MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45, float score_thresh = 0.6);
   virtual ~MobileDetV2();
-  int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *meta, cvai_obj_det_type_t det_type);
+  int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_t det_type);
 
   // TODO: define in common header
   typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
@@ -58,8 +58,8 @@ class MobileDetV2 final : public Core {
                        std::vector<std::pair<int8_t *, size_t>> *bbox_tensor_ptr);
   void generate_dets_for_each_stride(Detections *det_vec);
   void generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
-                                float bbox_de_quant_thresh, int8_t quant_thresh, int8_t *logits,
-                                int8_t *bboxes, size_t class_tensor_size,
+                                float bbox_dequant_thresh, int8_t quant_thresh,
+                                const int8_t *logits, int8_t *bboxes, size_t class_tensor_size,
                                 const std::vector<AnchorBox> &anchors);
   std::vector<std::vector<AnchorBox>> m_anchors;
   ModelConfig m_model_config;

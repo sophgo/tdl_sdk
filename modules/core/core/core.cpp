@@ -19,11 +19,16 @@ int Core::modelOpen(const char *filepath) {
   if (mp_config->batch_size != 0) {
     CVI_NN_SetConfig(mp_model_handle, OPTION_BATCH_SIZE, mp_config->batch_size);
   }
-  CVI_NN_SetConfig(mp_model_handle, OPTION_PREPARE_BUF_FOR_INPUTS, mp_config->init_input_buffer);
-  CVI_NN_SetConfig(mp_model_handle, OPTION_PREPARE_BUF_FOR_OUTPUTS, mp_config->init_output_buffer);
-  CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_ALL_TENSORS, mp_config->debug_mode);
-  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS, mp_config->skip_preprocess);
-  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_POSTPROCESS, mp_config->skip_postprocess);
+  CVI_NN_SetConfig(mp_model_handle, OPTION_PREPARE_BUF_FOR_INPUTS,
+                   static_cast<int>(mp_config->init_input_buffer));
+  CVI_NN_SetConfig(mp_model_handle, OPTION_PREPARE_BUF_FOR_OUTPUTS,
+                   static_cast<int>(mp_config->init_output_buffer));
+  CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_ALL_TENSORS,
+                   static_cast<int>(mp_config->debug_mode));
+  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS,
+                   static_cast<int>(mp_config->skip_preprocess));
+  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_POSTPROCESS,
+                   static_cast<int>(mp_config->skip_postprocess));
   CVI_NN_SetConfig(mp_model_handle, OPTION_INPUT_MEM_TYPE, mp_config->input_mem_type);
   CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_MEM_TYPE, mp_config->output_mem_type);
 
@@ -40,7 +45,7 @@ int Core::modelOpen(const char *filepath) {
 
 int Core::modelClose() {
   if (mp_model_handle != nullptr) {
-    if (int ret = CVI_NN_CleanupModel(mp_model_handle) != CVI_RC_SUCCESS) {
+    if (int ret = CVI_NN_CleanupModel(mp_model_handle) != CVI_RC_SUCCESS) {  // NOLINT
       printf("CVI_NN_CleanupModel failed, err %d\n", ret);
       return CVI_FAILURE;
     }
@@ -64,8 +69,9 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
       info.stride[i] = srcFrame->stVFrame.u32Stride[i];
       info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[i];
     }
-    if (int ret = CVI_NN_SetTensorWithVideoFrame(mp_model_handle, mp_input_tensors, &info) !=
-                  CVI_RC_SUCCESS) {
+    if (int ret =
+            CVI_NN_SetTensorWithVideoFrame(mp_model_handle, mp_input_tensors, &info) !=  // NOLINT
+            CVI_RC_SUCCESS) {
       printf("NN set tensor with vi failed: %d\n", ret);
       return CVI_FAILURE;
     }

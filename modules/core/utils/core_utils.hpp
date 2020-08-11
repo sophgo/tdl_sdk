@@ -7,7 +7,7 @@
 namespace cviai {
 
 void SoftMaxForBuffer(float *src, float *dst, size_t size);
-void Dequantize(int8_t *q_data, float *data, float threshold, size_t size);
+void Dequantize(const int8_t *q_data, float *data, float threshold, size_t size);
 void clip_boxes(int width, int height, cvai_bbox_t &box);
 
 inline float FastExp(float x) {

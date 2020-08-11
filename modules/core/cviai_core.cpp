@@ -31,6 +31,14 @@ typedef struct {
   uint32_t vpss_thread = 0;
 } cviai_model_t;
 
+// specialize std::hash for enum CVI_AI_SUPPORTED_MODEL_E
+namespace std {
+template <>
+struct hash<CVI_AI_SUPPORTED_MODEL_E> {
+  size_t operator()(CVI_AI_SUPPORTED_MODEL_E value) const { return static_cast<size_t>(value); }
+};
+}  // namespace std
+
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
   std::vector<VpssEngine *> vec_vpss_engine;
@@ -177,7 +185,7 @@ int CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num
 int CVI_AI_CloseAllModel(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   for (auto &m_inst : ctx->model_cont) {
-    if (m_inst.second.instance) {
+    if (m_inst.second.instance != nullptr) {
       m_inst.second.instance->modelClose();
       delete m_inst.second.instance;
       m_inst.second.instance = nullptr;

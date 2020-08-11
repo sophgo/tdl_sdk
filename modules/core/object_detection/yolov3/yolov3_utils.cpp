@@ -69,13 +69,13 @@ int NmsComparator(const void *pa, const void *pb) {
   }
   if (diff < 0)
     return 1;
-  else if (diff > 0)
+  else if (diff > 0)  // NOLINT
     return -1;
   return 0;
 };
 
-box GetRegionBox(float *data, float *biases, int n, int index, int i, int j, int w, int h,
-                 int stride, bool fast_exp) {
+box GetRegionBox(const float *data, const float *biases, int n, int index, int i, int j, int w,
+                 int h, int stride, bool fast_exp) {
   box b;
   b.x = (i + data[index + 0 * stride]) / w;
   b.y = (j + data[index + 1 * stride]) / h;
@@ -89,8 +89,8 @@ box GetRegionBox(float *data, float *biases, int n, int index, int i, int j, int
   return b;
 };
 
-box GetYoloBox(float *data, float *biases, int n, int index, int i, int j, int lw, int lh, int w,
-               int h, int stride, bool fast_exp = true) {
+box GetYoloBox(const float *data, const float *biases, int n, int index, int i, int j, int lw,
+               int lh, int w, int h, int stride, bool fast_exp = true) {
   box b;
   b.x = (i + data[index + 0 * stride]) / lw;
   b.y = (j + data[index + 1 * stride]) / lh;
@@ -105,7 +105,7 @@ box GetYoloBox(float *data, float *biases, int n, int index, int i, int j, int l
   return b;
 }
 
-void Softmax(float *input, int n, float temp, int stride, float *output, bool fast_exp) {
+void Softmax(const float *input, int n, float temp, int stride, float *output, bool fast_exp) {
   int i;
   float sum = 0;
   float largest = -FLT_MAX;
@@ -127,8 +127,8 @@ void Softmax(float *input, int n, float temp, int stride, float *output, bool fa
   }
 };
 
-void SoftmaxCpu(float *input, int n, int batch, int batch_offset, int groups, int group_offset,
-                int stride, float temp, float *output) {
+void SoftmaxCpu(const float *input, int n, int batch, int batch_offset, int groups,
+                int group_offset, int stride, float temp, float *output) {
   int g, b;
   for (b = 0; b < batch; ++b) {
     for (g = 0; g < groups; ++g) {
@@ -173,7 +173,7 @@ void DoNmsSort(detection *dets, int total, int classes, float threshold) {
 int GetNumOfDetections(YOLOLayer &net_output, YOLOParamter yolo_param) {
   if (yolo_param.type == v2) {
     return net_output.width * net_output.height * yolo_param.m_anchor_nums;
-  } else if (yolo_param.type == v3) {
+  } else if (yolo_param.type == v3) {  // NOLINT
     int i, n;
     int count = 0;
     float *output = net_output.data;
@@ -199,7 +199,7 @@ detection *MakeNetworkBoxes(YOLOLayer &net_output, float threshold, int *num,
                             YOLOParamter yolo_param) {
   int i;
   int nboxes = GetNumOfDetections(net_output, yolo_param);
-  if (num) *num = nboxes;
+  if (num != nullptr) *num = nboxes;
   detection *dets = new detection[nboxes];
   for (i = 0; i < nboxes; ++i) {
     dets[i].prob = new float[yolo_param.m_classes];
@@ -225,7 +225,7 @@ void CorrectBoundingBox(detection *dets, int n, int w, int h, int net_width, int
     b.y = (b.y - (net_height - new_h) / 2. / net_height) / ((float)new_h / net_height);
     b.w *= (float)net_width / new_w;
     b.h *= (float)net_height / new_h;
-    if (!relative) {
+    if (relative == 0) {
       b.x *= w;
       b.w *= w;
       b.y *= h;
@@ -260,7 +260,7 @@ void GetRegionDetections(YOLOLayer &net_out, int w, int h, int net_width, int ne
                                       layer_w, layer_h, layer_w * layer_h, true);
       dets[index].objectness = scale > threshold ? scale : 0;
 
-      if (dets[index].objectness) {
+      if (dets[index].objectness != 0.0f) {
         for (j = 0; j < yolov2_param.m_classes; ++j) {
           int class_index =
               EntryIndex(layer_w, layer_h, yolov2_param.m_classes, 0, n * layer_w * layer_h + i,
@@ -351,7 +351,7 @@ void GetYOLOResults(detection *dets, int num, float threshold, YOLOParamter yolo
       "refrigerator",  "book",          "clock",         "vase",
       "scissors",      "teddy bear",    "hair drier",    "toothbrush"};
   for (int i = 0; i < num; ++i) {
-    std::string labelstr = "";
+    std::string labelstr;
     int obj_class = -1;
     object_detect_rect_t obj_result;
     obj_result.score = 0;

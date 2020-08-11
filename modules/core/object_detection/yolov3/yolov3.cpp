@@ -159,7 +159,7 @@ void Yolov3::doYolo(YOLOLayer &l) {
 void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w, int ori_h,
                             vector<object_detect_rect_t> &results, cvai_obj_det_type_t det_type) {
   for (int i = 0; i < num; ++i) {
-    std::string labelstr = "";
+    std::string labelstr;
     int obj_class = -1;
     object_detect_rect_t obj_result;
     obj_result.score = 0;
@@ -186,13 +186,13 @@ void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w
     }
 
     bool skip_class = (det_type != CVI_DET_TYPE_ALL);
-    if ((det_type & CVI_DET_TYPE_VEHICLE)) {
+    if ((det_type & CVI_DET_TYPE_VEHICLE) != 0) {
       if ((obj_result.label >= 1) && obj_result.label <= 7) skip_class = false;
     }
-    if ((det_type & CVI_DET_TYPE_PEOPLE)) {
+    if ((det_type & CVI_DET_TYPE_PEOPLE) != 0) {
       if (obj_result.label == 0) skip_class = false;
     }
-    if ((det_type & CVI_DET_TYPE_PET)) {
+    if ((det_type & CVI_DET_TYPE_PET) != 0) {
       if ((obj_result.label == 16) || (obj_result.label == 17)) skip_class = false;
     }
     if (skip_class) continue;

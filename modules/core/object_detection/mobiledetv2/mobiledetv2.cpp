@@ -1,4 +1,12 @@
+#ifdef __ARM_ARCH
 #include <arm_neon.h>
+#else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#include "neon2sse/NEON_2_SSE.h"
+#pragma clang diagnostic pop
+#endif
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -194,7 +202,7 @@ static inline __attribute__((always_inline)) uint32_t sum_q(int8x16_t v) {
 }
 #endif
 
-static inline __attribute__((always_inline)) uint32_t get_num_object_in_grid(int8_t *logits,
+static inline __attribute__((always_inline)) uint32_t get_num_object_in_grid(const int8_t *logits,
                                                                              size_t count,
                                                                              int8_t quant_thresh) {
   // calculate how much scores greater than threshold using NEON intrinsics
@@ -212,7 +220,7 @@ static inline __attribute__((always_inline)) uint32_t get_num_object_in_grid(int
 
   uint32_t num_objects = sum_q(sum_vec);
 
-  int8_t *rest_arr = logits + (count - rest);
+  const int8_t *rest_arr = logits + (count - rest);
   for (size_t start = 0; start < rest; start++) {
     if (*(rest_arr + start) >= quant_thresh) {
       num_objects++;
@@ -223,9 +231,11 @@ static inline __attribute__((always_inline)) uint32_t get_num_object_in_grid(int
 
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
                                            float bbox_dequant_thresh, int8_t quant_thresh,
-                                           int8_t *logits, int8_t *bboxes, size_t size,
+                                           const int8_t *logits, int8_t *bboxes,
+                                           size_t class_tensor_size,
                                            const vector<AnchorBox> &anchors) {
-  for (size_t score_index = 0; score_index < size; score_index += m_model_config.num_classes) {
+  for (size_t score_index = 0; score_index < class_tensor_size;
+       score_index += m_model_config.num_classes) {
     uint32_t num_objects =
         get_num_object_in_grid(logits + score_index, m_model_config.num_classes, quant_thresh);
 

@@ -35,7 +35,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
   }
   CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
 
-  if (!rgb_frame.data) {
+  if (rgb_frame.data == nullptr) {
     printf("src Image is empty!\n");
     return vector<vector<cv::Mat>>{};
   }
@@ -49,7 +49,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
   }
   CVI_SYS_Munmap((void *)sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Length[0]);
 
-  if (!ir_frame.data) {
+  if (ir_frame.data == nullptr) {
     printf("sink Image is empty!\n");
     return vector<vector<cv::Mat>>{};
   }

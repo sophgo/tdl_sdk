@@ -9,7 +9,7 @@ namespace cviai {
 class Yolov3 final : public Core {
  public:
   Yolov3();
-  int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *meta, cvai_obj_det_type_t det_type);
+  int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj, cvai_obj_det_type_t det_type);
 
  private:
   void outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type);
