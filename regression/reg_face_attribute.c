@@ -68,7 +68,18 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
       CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &rgb_frame);
     }
 
-    if (face_count > 0) {
+    int face_idx = 0;
+    float max_area = 0;
+    for (int i = 0; i < face.size; i++) {
+      cvai_bbox_t bbox = face.face_info[i].bbox;
+      float curr_area = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
+      if (curr_area > max_area) {
+        max_area = curr_area;
+        face_idx = i;
+      }
+    }
+
+    if (face_count > 0 && (face_quality == false || face.face_info[face_idx].face_quality.quality > 0.05)) {
       CVI_AI_FaceAttribute(facelib_handle, &bgr_frame, &face);
 
       char *file_name;
@@ -85,8 +96,8 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
         printf("Write file open error!");
         return CVI_FAILURE;
       }
-      for (int i = 0; i < face.face_info[0].face_feature.size; i++) {
-        fprintf(fp_feature, "%d\n", (int)face.face_info[0].face_feature.ptr[i]);
+      for (int i = 0; i < face.face_info[face_idx].face_feature.size; i++) {
+        fprintf(fp_feature, "%d\n", (int)face.face_info[face_idx].face_feature.ptr[i]);
       }
       fclose(fp_feature);
     }
