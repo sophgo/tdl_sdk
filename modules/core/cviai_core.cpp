@@ -343,7 +343,10 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
 
   CVI_SYS_Munmap((void *)vFrame->pu8VirAddr[0],
                  vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2]);
-
+  // FIXME: Middleware bug
+  vFrame->pu8VirAddr[0] = NULL;
+  vFrame->pu8VirAddr[1] = NULL;
+  vFrame->pu8VirAddr[2] = NULL;
   return ret;
 }
 
