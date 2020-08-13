@@ -25,7 +25,8 @@ set(SAMPLE_LIBS
 
 add_executable(reg_face_attribute reg_face_attribute.c)
 add_executable(reg_face_quality reg_face_quality.c)
+add_executable(reg_lfw reg_lfw.c)
 
 target_link_libraries(reg_face_attribute cviai_core ${SAMPLE_LIBS})
 target_link_libraries(reg_face_quality cviai_core ${SAMPLE_LIBS})
-
+target_link_libraries(reg_lfw cviai_core m ${SAMPLE_LIBS})

@@ -33,7 +33,7 @@ static CVI_S32 vpssgrp_height = 1080;
 int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face_quality) {
   FILE *fp;
   if((fp = fopen(img_name_list, "r")) == NULL) {
-    printf("file open error!");
+    printf("file open error: %s!\n", img_name_list);
     return CVI_FAILURE;
   }
 
@@ -166,7 +166,7 @@ static int8_t* loadFeature(const char *dir_path, int count)
 
     FILE *fp_db;
     if((fp_db = fopen(base_name, "r")) == NULL) {
-      printf("file open error!\n");
+      printf("file open error %s!\n", base_name);
       continue;
     }
 
