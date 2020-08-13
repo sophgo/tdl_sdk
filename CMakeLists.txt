@@ -85,8 +85,8 @@ else()
     message(FATAL_ERROR "No build type!!!")
 endif()
 if (NOT DISABLE_CLANGTIDY)
-    set(CMAKE_C_CLANG_TIDY clang-tidy -checks=-*,readability-*,clang-analyzer-*,performance-*)
-    set(CMAKE_CXX_CLANG_TIDY clang-tidy -checks=-*,readability-*,clang-analyzer-*,performance-*)
+    set(CMAKE_C_CLANG_TIDY clang-tidy-5.0 -checks=-*,readability-*,clang-analyzer-*,performance-*)
+    set(CMAKE_CXX_CLANG_TIDY clang-tidy-5.0 -checks=-*,readability-*,clang-analyzer-*,performance-*)
 endif()
 
 # Get current commit
