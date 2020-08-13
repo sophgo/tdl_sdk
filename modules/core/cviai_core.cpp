@@ -22,6 +22,7 @@
 #include "thermal_face_detection/thermal_face.hpp"
 
 #include "opencv2/opencv.hpp"
+#include "tracer.h"
 
 using namespace std;
 using namespace cviai;
@@ -363,6 +364,7 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
 
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE];
   if (m_t.instance == nullptr) {
@@ -387,6 +389,7 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
 
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                   cvai_obj_det_type_t det_type) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_YOLOV3];
   if (m_t.instance == nullptr) {
@@ -412,6 +415,7 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
 
 int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                           cvai_obj_det_type_t det_type) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0];
   if (m_t.instance == nullptr) {
@@ -436,6 +440,7 @@ int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
 
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
                       int *face_count) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_RETINAFACE];
   if (m_t.instance == nullptr) {
@@ -463,6 +468,7 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
 int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
                     VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
                     cvai_liveness_ir_position_e ir_position) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_LIVENESS];
   if (m_t.instance == nullptr) {
@@ -488,6 +494,7 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
 }
 
 int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEQUALITY];
   if (m_t.instance == nullptr) {
@@ -514,6 +521,7 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
 
 int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                               cvai_face_t *face) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION];
   if (m_t.instance == nullptr) {
@@ -539,6 +547,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
 }
 
 int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_THERMALFACE];
   if (m_t.instance == nullptr) {
@@ -565,6 +574,7 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
 
 int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                cvai_face_t *faces) {
+  ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION];
   if (m_t.instance == nullptr) {

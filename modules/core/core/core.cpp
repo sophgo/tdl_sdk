@@ -1,11 +1,14 @@
 #include "core.hpp"
 #include "core/utils/vpss_helper.h"
 
+#include "tracer.h"
+
 #include <cstdlib>
 
 namespace cviai {
 
 int Core::modelOpen(const char *filepath) {
+  ScopedTrace st(__func__);
   CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
   if (ret != CVI_RC_SUCCESS) {
     printf("CVI_NN_RegisterModel failed, err %d\n", ret);
@@ -39,11 +42,14 @@ int Core::modelOpen(const char *filepath) {
     return CVI_FAILURE;
     ;
   }
+  Tracer::TraceBegin("InitAtferModelOpened");
   ret = initAfterModelOpened();
+  Tracer::TraceEnd();
   return ret;
 }
 
 int Core::modelClose() {
+  ScopedTrace st(__func__);
   if (mp_model_handle != nullptr) {
     if (int ret = CVI_NN_CleanupModel(mp_model_handle) != CVI_RC_SUCCESS) {  // NOLINT
       printf("CVI_NN_CleanupModel failed, err %d\n", ret);
@@ -54,6 +60,7 @@ int Core::modelClose() {
 }
 
 int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
+  ScopedTrace st(__func__);
   if (mp_config->input_mem_type == 2) {
     // FIXME: Need to support multi-input and different fmt
     CVI_TENSOR *input = getInputTensor(0);

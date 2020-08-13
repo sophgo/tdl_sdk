@@ -1,11 +1,12 @@
 #include "face_utils.hpp"
 
-#include <cvi_comm_gdc.h>
-#include <cvi_gdc.h>
 #include "core/utils/vpss_helper.h"
 
 #include "opencv2/imgproc.hpp"
+#include "tracer.h"
 
+#include <cvi_comm_gdc.h>
+#include <cvi_gdc.h>
 #include <algorithm>
 
 using namespace std;
@@ -181,6 +182,7 @@ inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width
 
 int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info,
                const int width, const int height) {
+  ScopedTrace st(__func__);
   cv::Mat tfm;
   if (getTfmFromFaceInfo(face_info, width, height, &tfm) != 0) {
     return -1;
@@ -191,6 +193,7 @@ int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &f
 
 int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFrame,
                    const cvai_face_info_t &face_info) {
+  ScopedTrace st(__func__);
   if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
       inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     return -1;
