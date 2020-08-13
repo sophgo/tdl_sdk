@@ -9,6 +9,8 @@
 #include "core/utils/vpss_helper.h"
 #include "vpss_engine.hpp"
 
+#include "cviai_experimantal.h"
+
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"
 #include "liveness/liveness.hpp"
@@ -42,7 +44,16 @@ struct hash<CVI_AI_SUPPORTED_MODEL_E> {
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
   std::vector<VpssEngine *> vec_vpss_engine;
+  bool use_gdc_wrap = false;
 } cviai_context_t;
+
+//*************************************************
+// Experimental features
+void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  ctx->use_gdc_wrap = use_gdc;
+}
+//*************************************************
 
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
   cviai_context_t *ctx = new cviai_context_t;
@@ -359,7 +370,7 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
       printf("Model path for FaceAttribute is empty.\n");
       return CVI_FAILURE;
     }
-    m_t.instance = new FaceAttribute(true);
+    m_t.instance = new FaceAttribute(ctx->use_gdc_wrap);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_FAILURE;
