@@ -30,3 +30,7 @@ add_executable(reg_lfw reg_lfw.c)
 target_link_libraries(reg_face_attribute cviai_core ${SAMPLE_LIBS})
 target_link_libraries(reg_face_quality cviai_core ${SAMPLE_LIBS})
 target_link_libraries(reg_lfw cviai_core m ${SAMPLE_LIBS})
+
+install(TARGETS reg_face_attribute DESTINATION bin)
+install(TARGETS reg_face_quality DESTINATION bin)
+install(TARGETS reg_lfw DESTINATION bin)
