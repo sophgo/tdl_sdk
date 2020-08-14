@@ -1,8 +1,4 @@
-#include <assert.h>
-#include <errno.h>
 #include <signal.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,16 +69,6 @@ static int ReleaseVideoframe(VIDEO_FRAME_INFO_S *stfdFrame, VIDEO_FRAME_INFO_S *
   return s32Ret;
 }
 
-void set_vpss_aspect(CVI_S32 vpsschn, CVI_S32 x, CVI_S32 y, CVI_S32 width, CVI_S32 height) {
-  VPSS_CHN_ATTR_S stChnAttr;
-  CVI_VPSS_GetChnAttr(0, vpsschn, &stChnAttr);
-  stChnAttr.stAspectRatio.stVideoRect.s32X = x;
-  stChnAttr.stAspectRatio.stVideoRect.s32Y = y;
-  stChnAttr.stAspectRatio.stVideoRect.u32Width = width;
-  stChnAttr.stAspectRatio.stVideoRect.u32Height = height;
-  CVI_VPSS_SetChnAttr(0, vpsschn, &stChnAttr);
-}
-
 static int DoFd(cviai_handle_t facelib_handle, VIDEO_FRAME_INFO_S *stfdFrame, cvai_face_t *face) {
   int face_count = 0;
 
@@ -113,8 +99,7 @@ static void Run() {
   while (bExit == false) {
     s32Ret = GetVideoframe(&stfdFrame, &stVOFrame);
     if (s32Ret != CVI_SUCCESS) {
-      Exit();
-      assert(0 && "get video frame error!\n");
+      break;
     }
 
     DoFd(facelib_handle, &stfdFrame, &face);
@@ -129,8 +114,7 @@ static void Run() {
 
     s32Ret = ReleaseVideoframe(&stfdFrame, &stVOFrame);
     if (s32Ret != CVI_SUCCESS) {
-      Exit();
-      assert(0 && "release video frame error!\n");
+      break;
     }
 
     CVI_AI_Free(&face);
@@ -209,7 +193,7 @@ static CVI_S32 InitVPSS() {
   stVpssChnAttr[VpssChn].u32Width = 608;
   stVpssChnAttr[VpssChn].u32Height = 608;
   stVpssChnAttr[VpssChn].enVideoFormat = VIDEO_FORMAT_LINEAR;
-  stVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_RGB_888_PLANAR;
+  stVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_RGB_888;
   stVpssChnAttr[VpssChn].stFrameRate.s32SrcFrameRate = 30;
   stVpssChnAttr[VpssChn].stFrameRate.s32DstFrameRate = 30;
   stVpssChnAttr[VpssChn].u32Depth = 1;
@@ -418,6 +402,8 @@ int main(void) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
   }
+  // Do vpss frame transform in retina face
+  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
   Run();
 
