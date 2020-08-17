@@ -2,6 +2,7 @@
 #define _CVIAI_FRSERVICE_H_
 #include "frservice/cviai_frservice_types.h"
 
+#include "core/cviai_core.h"
 #include "core/face/cvai_face_types.h"
 
 #include <cvi_sys.h>
@@ -18,7 +19,7 @@ extern "C" {
  * @param handle An FR Service handle.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle);
+CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_handle_t *ai_handle);
 
 /**
  * @brief Destroy a cviai_frservice_handle_t.

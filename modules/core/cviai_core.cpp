@@ -1,3 +1,9 @@
+#include "core/cviai_core.h"
+#include "cviai_core_internal.hpp"
+
+#include "opencv2/opencv.hpp"
+#include "tracer.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <memory>
@@ -5,48 +11,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "core/cviai_core.h"
-#include "core/utils/vpss_helper.h"
-#include "vpss_engine.hpp"
-
-#include "cviai_experimental.h"
-
-#include "face_attribute/face_attribute.hpp"
-#include "face_quality/face_quality.hpp"
-#include "liveness/liveness.hpp"
-#include "mask_classification/mask_classification.hpp"
-#include "mask_face_recognition/mask_face_recognition.hpp"
-#include "object_detection/mobiledetv2/mobiledetv2.hpp"
-#include "object_detection/yolov3/yolov3.hpp"
-#include "retina_face/retina_face.hpp"
-#include "thermal_face_detection/thermal_face.hpp"
-
-#include "opencv2/opencv.hpp"
-#include "tracer.h"
-
 using namespace std;
 using namespace cviai;
-
-typedef struct {
-  Core *instance = nullptr;
-  std::string model_path = "";
-  bool skip_vpss_preprocess = false;
-  uint32_t vpss_thread = 0;
-} cviai_model_t;
-
-// specialize std::hash for enum CVI_AI_SUPPORTED_MODEL_E
-namespace std {
-template <>
-struct hash<CVI_AI_SUPPORTED_MODEL_E> {
-  size_t operator()(CVI_AI_SUPPORTED_MODEL_E value) const { return static_cast<size_t>(value); }
-};
-}  // namespace std
-
-typedef struct {
-  std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
-  std::vector<VpssEngine *> vec_vpss_engine;
-  bool use_gdc_wrap = false;
-} cviai_context_t;
 
 //*************************************************
 // Experimental features

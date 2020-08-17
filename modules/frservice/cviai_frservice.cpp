@@ -1,5 +1,7 @@
 #include "frservice/cviai_frservice.h"
 
+#include "cviai_core_internal.hpp"
+
 #include <cvimath/cvimath.h>
 
 typedef struct {
@@ -10,6 +12,7 @@ typedef struct {
 
 typedef struct {
   cvai_frservice_feature_array_ext_t feature_array_ext;
+  cviai_handle_t *ai_handle = nullptr;
 } cviai_frservice_context_t;
 
 inline void FreeFeatureArrayExt(cvai_frservice_feature_array_ext_t *feature_array_ext) {
@@ -27,8 +30,9 @@ inline void FreeFeatureArrayExt(cvai_frservice_feature_array_ext_t *feature_arra
   }
 }
 
-CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle) {
+CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_handle_t *ai_handle) {
   cviai_frservice_context_t *ctx = new cviai_frservice_context_t;
+  ctx->ai_handle = ai_handle;
   *handle = ctx;
   return CVI_SUCCESS;
 }
