@@ -179,7 +179,13 @@ int VpssEngine::sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CRO
 }
 
 int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout) {
-  return CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
+  int ret = CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
+  VPSS_CROP_INFO_S crop_attr;
+  memset(&crop_attr, 0, sizeof(VPSS_CROP_INFO_S));
+  for (int i = 0; i < VPSS_MAX_PHY_CHN_NUM; i++) {
+    CVI_VPSS_SetChnCrop(m_grpid, i, &crop_attr);
+  }
+  return ret;
 }
 
 int VpssEngine::releaseFrame(VIDEO_FRAME_INFO_S *frame, int chn_idx) {

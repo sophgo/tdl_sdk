@@ -90,6 +90,13 @@ VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_
     pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_NONE;
   }
   pastVpssChnAttr->stNormalize.bEnable = CVI_FALSE;
+  pastVpssChnAttr->stNormalize.factor[0] = 0;
+  pastVpssChnAttr->stNormalize.factor[1] = 0;
+  pastVpssChnAttr->stNormalize.factor[2] = 0;
+  pastVpssChnAttr->stNormalize.mean[0] = 0;
+  pastVpssChnAttr->stNormalize.mean[1] = 0;
+  pastVpssChnAttr->stNormalize.mean[2] = 0;
+  pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
 inline int __attribute__((always_inline))

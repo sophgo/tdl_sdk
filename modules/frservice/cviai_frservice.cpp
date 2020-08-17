@@ -1,6 +1,7 @@
 #include "frservice/cviai_frservice.h"
 
 #include "cviai_core_internal.hpp"
+#include "digital_tracking/digital_tracking.hpp"
 
 #include <cvimath/cvimath.h>
 
@@ -12,7 +13,8 @@ typedef struct {
 
 typedef struct {
   cvai_frservice_feature_array_ext_t feature_array_ext;
-  cviai_handle_t *ai_handle = nullptr;
+  cviai_handle_t ai_handle = NULL;
+  cviai::service::DigitalTracking *m_dt = nullptr;
 } cviai_frservice_context_t;
 
 inline void FreeFeatureArrayExt(cvai_frservice_feature_array_ext_t *feature_array_ext) {
@@ -30,8 +32,12 @@ inline void FreeFeatureArrayExt(cvai_frservice_feature_array_ext_t *feature_arra
   }
 }
 
-CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_handle_t *ai_handle) {
+CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_handle_t ai_handle) {
+  if (ai_handle == NULL) {
+    return CVI_FAILURE;
+  }
   cviai_frservice_context_t *ctx = new cviai_frservice_context_t;
+  memset(&ctx->feature_array_ext.feature_array, 0, sizeof(cvai_frservice_feature_array_t));
   ctx->ai_handle = ai_handle;
   *handle = ctx;
   return CVI_SUCCESS;
@@ -40,6 +46,7 @@ CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_ha
 CVI_S32 CVI_AI_FRService_DestroyHandle(cviai_frservice_handle_t handle) {
   cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
   FreeFeatureArrayExt(&ctx->feature_array_ext);
+  delete ctx->m_dt;
   delete ctx;
   return CVI_SUCCESS;
 }
@@ -161,4 +168,17 @@ CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint
   free(k_value);
 
   return CVI_SUCCESS;
+}
+
+CVI_S32 CVIAI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
+                                    const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
+                                    const float face_skip_ratio, const float trans_ratio,
+                                    VIDEO_FRAME_INFO_S *outFrame) {
+  cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
+  if (ctx->m_dt == nullptr) {
+    ctx->m_dt = new cviai::service::DigitalTracking();
+  }
+
+  ctx->m_dt->setVpssEngine(CVI_AI_GetVpssEngine(ctx->ai_handle, 0));
+  return ctx->m_dt->run(inFrame, meta, outFrame, face_skip_ratio, trans_ratio);
 }

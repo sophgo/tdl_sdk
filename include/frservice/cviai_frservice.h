@@ -19,7 +19,7 @@ extern "C" {
  * @param handle An FR Service handle.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_handle_t *ai_handle);
+CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_handle_t ai_handle);
 
 /**
  * @brief Destroy a cviai_frservice_handle_t.
@@ -62,6 +62,23 @@ CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle, const
  */
 CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint8_t *feature,
                                      const feature_type_e type, const uint32_t k, uint32_t **index);
+
+/**
+ * @brief Zoom in to the largest face from the output of face detection results.
+ *
+ * @param handle An FR Service handle.
+ * @param inFrame Input frame.
+ * @param meta THe result from face detection.
+ * @param face_skip_ratio Skip the faces that are too small comparing to the area of the image.
+ * Default is 0.05.
+ * @param trans_ratio Change to zoom in ratio. Default is 0.1.
+ * @param outFrame Output result image, will keep aspect ratio.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+CVI_S32 CVIAI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
+                                    const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
+                                    const float face_skip_ratio, const float trans_ratio,
+                                    VIDEO_FRAME_INFO_S *outFrame);
 
 #ifdef __cplusplus
 }

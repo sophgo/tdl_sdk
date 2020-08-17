@@ -37,10 +37,11 @@ typedef struct {
   bool use_gdc_wrap = false;
 } cviai_context_t;
 
-inline cviai::VpssEngine *CVI_AI_GetVpssEngine(cviai_handle_t *handle, uint32_t index) {
-  cviai_context_t *ctx = new cviai_context_t;
+inline cviai::VpssEngine *CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t index) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   if (index >= ctx->vec_vpss_engine.size()) {
     return nullptr;
   }
+  printf("Size %lu\n", ctx->vec_vpss_engine.size());
   return ctx->vec_vpss_engine[index];
 }
