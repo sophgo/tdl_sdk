@@ -103,7 +103,7 @@ static void Run() {
     if (face.size > 0) {
       CVI_AI_MaskClassification(facelib_handle, &rgb_frame, &face);
 
-      if (face.face_info[0].mask_score > 0.5) {
+      if (face.info[0].mask_score > 0.5) {
         CVI_AI_MaskFaceRecognition(facelib_handle, &bgr_frame, &face);
       } else {
         CVI_AI_FaceAttribute(facelib_handle, &bgr_frame, &face);

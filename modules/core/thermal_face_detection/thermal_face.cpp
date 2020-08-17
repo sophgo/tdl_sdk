@@ -173,10 +173,10 @@ int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   meta->height = input->shape.dim[2];
 
   for (int i = 0; i < meta->size; ++i) {
-    meta->face_info[i].bbox.x1 = faceList[i].bbox.x1;
-    meta->face_info[i].bbox.x2 = faceList[i].bbox.x2;
-    meta->face_info[i].bbox.y1 = faceList[i].bbox.y1;
-    meta->face_info[i].bbox.y2 = faceList[i].bbox.y2;
+    meta->info[i].bbox.x1 = faceList[i].bbox.x1;
+    meta->info[i].bbox.x2 = faceList[i].bbox.x2;
+    meta->info[i].bbox.y1 = faceList[i].bbox.y1;
+    meta->info[i].bbox.y2 = faceList[i].bbox.y2;
   }
 
   return ret;
@@ -223,23 +223,23 @@ void ThermalFace::outputParser(int image_width, int image_height,
 
 void ThermalFace::initFaceMeta(cvai_face_t *meta, int size) {
   meta->size = size;
-  meta->face_info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
+  meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
 
-  memset(meta->face_info, 0, sizeof(cvai_face_info_t) * meta->size);
+  memset(meta->info, 0, sizeof(cvai_face_info_t) * meta->size);
 
   for (int i = 0; i < meta->size; ++i) {
-    meta->face_info[i].bbox.x1 = -1;
-    meta->face_info[i].bbox.x2 = -1;
-    meta->face_info[i].bbox.y1 = -1;
-    meta->face_info[i].bbox.y2 = -1;
+    meta->info[i].bbox.x1 = -1;
+    meta->info[i].bbox.x2 = -1;
+    meta->info[i].bbox.y1 = -1;
+    meta->info[i].bbox.y2 = -1;
 
-    meta->face_info[i].name[0] = '\0';
-    meta->face_info[i].emotion = EMOTION_UNKNOWN;
-    meta->face_info[i].gender = GENDER_UNKNOWN;
-    meta->face_info[i].race = RACE_UNKNOWN;
-    meta->face_info[i].age = -1;
-    meta->face_info[i].liveness_score = -1;
-    meta->face_info[i].mask_score = -1;
+    meta->info[i].name[0] = '\0';
+    meta->info[i].emotion = EMOTION_UNKNOWN;
+    meta->info[i].gender = GENDER_UNKNOWN;
+    meta->info[i].race = RACE_UNKNOWN;
+    meta->info[i].age = -1;
+    meta->info[i].liveness_score = -1;
+    meta->info[i].mask_score = -1;
   }
 }
 

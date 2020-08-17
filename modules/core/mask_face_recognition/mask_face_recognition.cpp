@@ -77,11 +77,11 @@ void MaskFaceRecognition::outputParser(cvai_face_t *meta, int meta_i) {
   int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t face_feature_size = CVI_NN_TensorCount(out);
 
-  CVI_AI_FreeCpp(&meta->face_info[meta_i].face_feature);
-  meta->face_info[meta_i].face_feature.ptr = (int8_t *)malloc(sizeof(int8_t) * face_feature_size);
-  meta->face_info[meta_i].face_feature.size = face_feature_size;
-  meta->face_info[meta_i].face_feature.type = TYPE_INT8;
-  memcpy(meta->face_info[meta_i].face_feature.ptr, face_blob, face_feature_size);
+  CVI_AI_FreeCpp(&meta->info[meta_i].face_feature);
+  meta->info[meta_i].face_feature.ptr = (int8_t *)malloc(sizeof(int8_t) * face_feature_size);
+  meta->info[meta_i].face_feature.size = face_feature_size;
+  meta->info[meta_i].face_feature.type = TYPE_INT8;
+  memcpy(meta->info[meta_i].face_feature.ptr, face_blob, face_feature_size);
 }
 
 }  // namespace cviai

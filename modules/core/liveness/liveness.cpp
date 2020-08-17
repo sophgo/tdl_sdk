@@ -134,7 +134,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     float f1 = std::exp(conf1 - max);
     float score = f1 / (f0 + f1);
 
-    meta->face_info[i].liveness_score = score;
+    meta->info[i].liveness_score = score;
     cout << "Face[" << i << "] liveness score: " << score << endl;
   }
 

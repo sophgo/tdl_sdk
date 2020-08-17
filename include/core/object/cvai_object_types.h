@@ -19,7 +19,7 @@ typedef struct {
   int size;
   int width;
   int height;
-  cvai_object_info_t *objects;
+  cvai_object_info_t *info;
 } cvai_object_t;
 
 #endif

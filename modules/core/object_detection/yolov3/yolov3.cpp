@@ -110,23 +110,23 @@ void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
 
   // fill obj
   obj->size = results.size();
-  obj->objects = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj->size);
+  obj->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj->size);
   obj->width = yolov3_w;
   obj->height = yolov3_h;
 
-  memset(obj->objects, 0, sizeof(cvai_object_info_t) * obj->size);
+  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
   for (int i = 0; i < obj->size; ++i) {
-    obj->objects[i].bbox.x1 = results[i].x1;
-    obj->objects[i].bbox.y1 = results[i].y1;
-    obj->objects[i].bbox.x2 = results[i].x2;
-    obj->objects[i].bbox.y2 = results[i].y2;
-    obj->objects[i].bbox.score = results[i].score;
-    obj->objects[i].classes = results[i].label;
-    strncpy(obj->objects[i].name, coco_utils::class_names_80[results[i].label].c_str(),
-            sizeof(obj->objects[i].name));
-    printf("YOLO3: %s (%d): %lf %lf %lf %lf, score=%.2f\n", obj->objects[i].name,
-           obj->objects[i].classes, obj->objects[i].bbox.x1, obj->objects[i].bbox.x2,
-           obj->objects[i].bbox.y1, obj->objects[i].bbox.y2, results[i].score);
+    obj->info[i].bbox.x1 = results[i].x1;
+    obj->info[i].bbox.y1 = results[i].y1;
+    obj->info[i].bbox.x2 = results[i].x2;
+    obj->info[i].bbox.y2 = results[i].y2;
+    obj->info[i].bbox.score = results[i].score;
+    obj->info[i].classes = results[i].label;
+    strncpy(obj->info[i].name, coco_utils::class_names_80[results[i].label].c_str(),
+            sizeof(obj->info[i].name));
+    printf("YOLO3: %s (%d): %lf %lf %lf %lf, score=%.2f\n", obj->info[i].name, obj->info[i].classes,
+           obj->info[i].bbox.x1, obj->info[i].bbox.x2, obj->info[i].bbox.y1, obj->info[i].bbox.y2,
+           results[i].score);
   }
 }
 

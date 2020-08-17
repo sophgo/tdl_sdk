@@ -73,7 +73,7 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     float f1 = std::exp(out_data[1] - max);
     float score = f0 / (f0 + f1);
 
-    meta->face_info[i].mask_score = score;
+    meta->info[i].mask_score = score;
   }
 
   return CVI_SUCCESS;

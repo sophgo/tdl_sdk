@@ -127,7 +127,7 @@ static void Run() {
       assert(0 && "release video frame error!\n");
     }
 
-    if (obj_meta.objects != NULL) free(obj_meta.objects);
+    if (obj_meta.info != NULL) free(obj_meta.info);
   }
 }
 

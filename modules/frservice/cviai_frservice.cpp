@@ -74,20 +74,20 @@ CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle, const
     printf("Feature array not registered yet.\n");
     return CVI_FAILURE;
   }
-  if (face->face_info->face_feature.ptr == NULL) {
+  if (face->info->face_feature.ptr == NULL) {
     printf("No feature in face.\n");
     return CVI_FAILURE;
   }
-  if (ctx->feature_array_ext.feature_array.type != face->face_info->face_feature.type) {
+  if (ctx->feature_array_ext.feature_array.type != face->info->face_feature.type) {
     printf("The registered feature array type %x is not the same as the input type %x.\n",
-           ctx->feature_array_ext.feature_array.type, face->face_info->face_feature.type);
+           ctx->feature_array_ext.feature_array.type, face->info->face_feature.type);
     return CVI_FAILURE;
   }
   uint32_t *k_index = (uint32_t *)malloc(sizeof(uint32_t) * k);
   float *k_value = (float *)malloc(sizeof(float) * k);
   switch (ctx->feature_array_ext.feature_array.type) {
     case TYPE_INT8: {
-      cvm_cpu_i8data_ip_match((int8_t *)face->face_info->face_feature.ptr,
+      cvm_cpu_i8data_ip_match((int8_t *)face->info->face_feature.ptr,
                               (int8_t *)ctx->feature_array_ext.feature_array.ptr,
                               ctx->feature_array_ext.feature_unit_length, k_index, k_value,
                               ctx->feature_array_ext.feature_array_buffer,
@@ -95,7 +95,7 @@ CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle, const
                               ctx->feature_array_ext.feature_array.data_num, k);
     } break;
     case TYPE_UINT8: {
-      cvm_cpu_u8data_ip_match((uint8_t *)face->face_info->face_feature.ptr,
+      cvm_cpu_u8data_ip_match((uint8_t *)face->info->face_feature.ptr,
                               (uint8_t *)ctx->feature_array_ext.feature_array.ptr,
                               ctx->feature_array_ext.feature_unit_length, k_index, k_value,
                               ctx->feature_array_ext.feature_array_buffer,

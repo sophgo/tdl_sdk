@@ -85,16 +85,14 @@ static cv::Mat get_similarity_transform(const vector<cv::Point2f> &src_pts,
 namespace cviai {
 
 cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta, int face_idx) {
-  cvai_bbox_t bbox = face_meta->face_info[face_idx].bbox;
+  cvai_bbox_t bbox = face_meta->info[face_idx].bbox;
   cvai_face_info_t face_info;
   float x1, x2, y1, y2;
 
   memset(&face_info, 0, sizeof(cvai_face_info_t));
-  face_info.face_pts.size = face_meta->face_info[face_idx].face_pts.size;
-  face_info.face_pts.x =
-      (float *)malloc(sizeof(float) * face_meta->face_info[face_idx].face_pts.size);
-  face_info.face_pts.y =
-      (float *)malloc(sizeof(float) * face_meta->face_info[face_idx].face_pts.size);
+  face_info.face_pts.size = face_meta->info[face_idx].face_pts.size;
+  face_info.face_pts.x = (float *)malloc(sizeof(float) * face_meta->info[face_idx].face_pts.size);
+  face_info.face_pts.y = (float *)malloc(sizeof(float) * face_meta->info[face_idx].face_pts.size);
 
   if (width >= height) {
     float ratio_x, ratio_y, bbox_y_height, bbox_padding_top;
@@ -108,9 +106,9 @@ cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta,
     y2 = (bbox.y2 - bbox_padding_top) * ratio_y;
 
     for (int j = 0; j < 5; ++j) {
-      face_info.face_pts.x[j] = face_meta->face_info[face_idx].face_pts.x[j] * ratio_x;
+      face_info.face_pts.x[j] = face_meta->info[face_idx].face_pts.x[j] * ratio_x;
       face_info.face_pts.y[j] =
-          (face_meta->face_info[face_idx].face_pts.y[j] - bbox_padding_top) * ratio_y;
+          (face_meta->info[face_idx].face_pts.y[j] - bbox_padding_top) * ratio_y;
     }
   } else {
     float ratio_x, ratio_y, bbox_x_height, bbox_padding_left;
@@ -125,8 +123,8 @@ cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta,
 
     for (int j = 0; j < 5; ++j) {
       face_info.face_pts.x[j] =
-          (face_meta->face_info[face_idx].face_pts.x[j] - bbox_padding_left) * ratio_x;
-      face_info.face_pts.y[j] = face_meta->face_info[face_idx].face_pts.y[j] * ratio_y;
+          (face_meta->info[face_idx].face_pts.x[j] - bbox_padding_left) * ratio_x;
+      face_info.face_pts.y[j] = face_meta->info[face_idx].face_pts.y[j] * ratio_y;
     }
   }
 
@@ -187,7 +185,9 @@ int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &f
   if (getTfmFromFaceInfo(face_info, width, height, &tfm) != 0) {
     return -1;
   }
+  Tracer::TraceBegin("sw warp affine");
   cv::warpAffine(image, aligned, tfm, cv::Size(width, height), cv::INTER_NEAREST);
+  Tracer::TraceEnd();
   return 0;
 }
 
@@ -203,6 +203,7 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
                          &tfm) != 0) {
     return -1;
   }
+  Tracer::TraceBegin("hw warp affine");
   double t =
       (tfm.at<double>(0, 0) / tfm.at<double>(0, 1) - tfm.at<double>(1, 0) / tfm.at<double>(1, 1));
   double a = 1 / tfm.at<double>(0, 1) / t;
@@ -232,9 +233,11 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
   CVI_GDC_BeginJob(&hHandle);
   CVI_GDC_AddAffineTask(hHandle, &stTask, &stAffineAttr);
   if (CVI_GDC_EndJob(hHandle) != CVI_SUCCESS) {
+    Tracer::TraceEnd();
     printf("Affine failed.\n");
     return -1;
   }
+  Tracer::TraceEnd();
   return 0;
 }
 

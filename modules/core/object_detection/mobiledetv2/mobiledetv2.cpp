@@ -103,20 +103,20 @@ static Detections nms(const Detections &dets, float iou_threshold) {
 static void convert_det_struct(const Detections &dets, cvai_object_t *out, int im_height,
                                int im_width) {
   out->size = dets.size();
-  out->objects = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * out->size);
+  out->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * out->size);
   out->height = im_height;
   out->width = im_width;
 
-  memset(out->objects, 0, sizeof(cvai_object_info_t) * out->size);
+  memset(out->info, 0, sizeof(cvai_object_info_t) * out->size);
   for (int i = 0; i < out->size; ++i) {
-    out->objects[i].bbox.x1 = dets[i]->x1;
-    out->objects[i].bbox.y1 = dets[i]->y1;
-    out->objects[i].bbox.x2 = dets[i]->x2;
-    out->objects[i].bbox.y2 = dets[i]->y2;
-    out->objects[i].bbox.score = dets[i]->score;
-    out->objects[i].classes = coco_utils::map_90_class_id_to_80(dets[i]->label);
-    const string &classname = coco_utils::class_names_80[out->objects[i].classes];
-    strncpy(out->objects[i].name, classname.c_str(), sizeof(out->objects[i].name));
+    out->info[i].bbox.x1 = dets[i]->x1;
+    out->info[i].bbox.y1 = dets[i]->y1;
+    out->info[i].bbox.x2 = dets[i]->x2;
+    out->info[i].bbox.y2 = dets[i]->y2;
+    out->info[i].bbox.score = dets[i]->score;
+    out->info[i].classes = coco_utils::map_90_class_id_to_80(dets[i]->label);
+    const string &classname = coco_utils::class_names_80[out->info[i].classes];
+    strncpy(out->info[i].name, classname.c_str(), sizeof(out->info[i].name));
   }
 }
 

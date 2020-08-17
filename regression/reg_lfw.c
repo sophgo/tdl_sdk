@@ -23,7 +23,7 @@ static int getMaxFace(const cvai_face_t *face)
   int face_idx = 0;
   float max_area = 0;
   for (int i = 0; i < face->size; i++) {
-    cvai_bbox_t bbox = face->face_info[i].bbox;
+    cvai_bbox_t bbox = face->info[i].bbox;
     float curr_area = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
     if (curr_area > max_area) {
       max_area = curr_area;
@@ -96,8 +96,8 @@ static int genScore(int *eval_label, float *eval_score, const char *pair_path) {
     int face_idx1 = getMaxFace(&face1);
     int face_idx2 = getMaxFace(&face2);
 
-    float feature_diff = evalDifference(&face1.face_info[face_idx1].face_feature,
-                                        &face2.face_info[face_idx2].face_feature);
+    float feature_diff = evalDifference(&face1.info[face_idx1].face_feature,
+                                        &face2.info[face_idx2].face_feature);
     float score = 1.0 - (0.5 * feature_diff);
 
     eval_label[i] = atoi(label);

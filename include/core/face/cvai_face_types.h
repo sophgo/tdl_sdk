@@ -53,7 +53,7 @@ typedef struct {
   int size;
   int width;
   int height;
-  cvai_face_info_t* face_info;
+  cvai_face_info_t* info;
 } cvai_face_t;
 
 #endif

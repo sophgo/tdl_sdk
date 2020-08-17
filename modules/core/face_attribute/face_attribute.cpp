@@ -237,11 +237,11 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t face_feature_size = CVI_NN_TensorCount(out);
   // Create feature
-  CVI_AI_FreeCpp(&meta->face_info[meta_i].face_feature);
-  meta->face_info[meta_i].face_feature.ptr = (int8_t *)malloc(sizeof(int8_t) * face_feature_size);
-  meta->face_info[meta_i].face_feature.size = face_feature_size;
-  meta->face_info[meta_i].face_feature.type = TYPE_INT8;
-  memcpy(meta->face_info[meta_i].face_feature.ptr, face_blob, face_feature_size);
+  CVI_AI_FreeCpp(&meta->info[meta_i].face_feature);
+  meta->info[meta_i].face_feature.ptr = (int8_t *)malloc(sizeof(int8_t) * face_feature_size);
+  meta->info[meta_i].face_feature.size = face_feature_size;
+  meta->info[meta_i].face_feature.type = TYPE_INT8;
+  memcpy(meta->info[meta_i].face_feature.ptr, face_blob, face_feature_size);
 
   // race
   out = CVI_NN_GetTensorByName(RACE_OUT_NAME, mp_output_tensors, m_output_num);
@@ -281,10 +281,10 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   result.emotion = emotion.first;
   result.emotion_prob = std::move(emotion.second);
 
-  meta->face_info[meta_i].race = result.race;
-  meta->face_info[meta_i].gender = result.gender;
-  meta->face_info[meta_i].emotion = result.emotion;
-  meta->face_info[meta_i].age = result.age;
+  meta->info[meta_i].race = result.race;
+  meta->info[meta_i].gender = result.gender;
+  meta->info[meta_i].emotion = result.emotion;
+  meta->info[meta_i].age = result.age;
 
 #ifdef ENABLE_FACE_ATTRIBUTE_DEBUG
   std::cout << "Emotion   |" << getEmotionString(result.emotion) << std::endl;

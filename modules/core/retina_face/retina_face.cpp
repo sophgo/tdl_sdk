@@ -126,14 +126,14 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
 
   *face_count = meta->size;
   for (int i = 0; i < meta->size; ++i) {
-    meta->face_info[i].bbox.x1 = faceList[i].bbox.x1;
-    meta->face_info[i].bbox.x2 = faceList[i].bbox.x2;
-    meta->face_info[i].bbox.y1 = faceList[i].bbox.y1;
-    meta->face_info[i].bbox.y2 = faceList[i].bbox.y2;
+    meta->info[i].bbox.x1 = faceList[i].bbox.x1;
+    meta->info[i].bbox.x2 = faceList[i].bbox.x2;
+    meta->info[i].bbox.y1 = faceList[i].bbox.y1;
+    meta->info[i].bbox.y2 = faceList[i].bbox.y2;
 
     for (int j = 0; j < 5; ++j) {
-      meta->face_info[i].face_pts.x[j] = faceList[i].face_pts.x[j];
-      meta->face_info[i].face_pts.y[j] = faceList[i].face_pts.y[j];
+      meta->info[i].face_pts.x[j] = faceList[i].face_pts.x[j];
+      meta->info[i].face_pts.y[j] = faceList[i].face_pts.y[j];
     }
   }
 
@@ -219,33 +219,31 @@ void RetinaFace::initFaceMeta(cvai_face_t *meta, int size) {
   meta->size = size;
   if (meta->size == 0) return;
 
-  meta->face_info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
+  meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
 
-  memset(meta->face_info, 0, sizeof(cvai_face_info_t) * meta->size);
+  memset(meta->info, 0, sizeof(cvai_face_info_t) * meta->size);
 
   for (int i = 0; i < meta->size; ++i) {
-    meta->face_info[i].bbox.x1 = -1;
-    meta->face_info[i].bbox.x2 = -1;
-    meta->face_info[i].bbox.y1 = -1;
-    meta->face_info[i].bbox.y2 = -1;
+    meta->info[i].bbox.x1 = -1;
+    meta->info[i].bbox.x2 = -1;
+    meta->info[i].bbox.y1 = -1;
+    meta->info[i].bbox.y2 = -1;
 
-    meta->face_info[i].name[0] = '\0';
-    meta->face_info[i].emotion = EMOTION_UNKNOWN;
-    meta->face_info[i].gender = GENDER_UNKNOWN;
-    meta->face_info[i].race = RACE_UNKNOWN;
-    meta->face_info[i].age = -1;
-    meta->face_info[i].liveness_score = -1;
-    meta->face_info[i].mask_score = -1;
+    meta->info[i].name[0] = '\0';
+    meta->info[i].emotion = EMOTION_UNKNOWN;
+    meta->info[i].gender = GENDER_UNKNOWN;
+    meta->info[i].race = RACE_UNKNOWN;
+    meta->info[i].age = -1;
+    meta->info[i].liveness_score = -1;
+    meta->info[i].mask_score = -1;
 
-    CVI_AI_FreeCpp(&meta->face_info[i].face_pts);
-    meta->face_info[i].face_pts.size = FACE_POINTS_SIZE;
-    meta->face_info[i].face_pts.x =
-        (float *)malloc(sizeof(float) * meta->face_info[i].face_pts.size);
-    meta->face_info[i].face_pts.y =
-        (float *)malloc(sizeof(float) * meta->face_info[i].face_pts.size);
-    for (uint32_t j = 0; j < meta->face_info[i].face_pts.size; ++j) {
-      meta->face_info[i].face_pts.x[j] = -1;
-      meta->face_info[i].face_pts.y[j] = -1;
+    CVI_AI_FreeCpp(&meta->info[i].face_pts);
+    meta->info[i].face_pts.size = FACE_POINTS_SIZE;
+    meta->info[i].face_pts.x = (float *)malloc(sizeof(float) * meta->info[i].face_pts.size);
+    meta->info[i].face_pts.y = (float *)malloc(sizeof(float) * meta->info[i].face_pts.size);
+    for (uint32_t j = 0; j < meta->info[i].face_pts.size; ++j) {
+      meta->info[i].face_pts.x[j] = -1;
+      meta->info[i].face_pts.y[j] = -1;
     }
   }
 }
