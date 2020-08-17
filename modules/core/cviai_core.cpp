@@ -9,7 +9,7 @@
 #include "core/utils/vpss_helper.h"
 #include "vpss_engine.hpp"
 
-#include "cviai_experimantal.h"
+#include "cviai_experimental.h"
 
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"

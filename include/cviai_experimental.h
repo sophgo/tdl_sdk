@@ -1,5 +1,5 @@
-#ifndef _CVIAI_H_
-#define _CVIAI_H_
+#ifndef _CVIAI_EXPERIMENTAL_H_
+#define _CVIAI_EXPERIMENTAL_H_
 
 #include "cviai.h"
 
@@ -19,4 +19,4 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc);
 }
 #endif
 
-#endif
+#endif  // End of _CVIAI_EXPERIMENTAL_H_
