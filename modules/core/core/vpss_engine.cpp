@@ -25,7 +25,7 @@ void VpssEngine::enableLog() {
 int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   if (m_is_vpss_init) {
     printf("Vpss already init.\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
   if (enable_log) {
     enableLog();
@@ -37,7 +37,6 @@ int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   uint32_t height = 100;
   PIXEL_FORMAT_E format = PIXEL_FORMAT_RGB_888_PLANAR;
   m_enabled_chn = 2;
-  CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
   VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, width, height, format);
   VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr, width, height, format, true);
 
@@ -60,7 +59,7 @@ int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   }
   if (m_grpid == (CVI_U32)-1) {
     printf("All vpss grp init failed!\n");
-    return CVI_RC_FAILURE;
+    return CVI_FAILURE;
   }
   int s32Ret = CVI_VPSS_ResetGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
@@ -137,8 +136,12 @@ int VpssEngine::sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S
   VPSS_GRP_ATTR_S vpss_grp_attr;
   VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
                           frame->stVFrame.enPixelFormat);
+  // Auto choose 1 if more than one channel.
+  // Will auto changed to 0 if is SINGLE_MODE when set attr.
+  if (enable_chns > 1) {
+    vpss_grp_attr.u8VpssDev = 1;
+  }
   int ret = CVI_VPSS_SetGrpAttr(m_grpid, &vpss_grp_attr);
-
   for (uint32_t i = 0; i < enable_chns; i++) {
     ret = CVI_VPSS_SetChnAttr(m_grpid, i, &chn_attr[i]);
     if (ret != CVI_SUCCESS) {
