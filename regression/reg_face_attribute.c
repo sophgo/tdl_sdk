@@ -239,8 +239,8 @@ int main(void) {
     return ret;
   }
 
-  VPSS_INIT_HELPER(VpssGrp, vpssgrp_width, vpssgrp_height, 0,
-                   PIXEL_FORMAT_BGR_888, 608, 608, PIXEL_FORMAT_RGB_888, true, false);
+  VPSS_INIT_HELPER(VpssGrp, vpssgrp_width, vpssgrp_height, 0, PIXEL_FORMAT_BGR_888, 608, 608,
+                   PIXEL_FORMAT_RGB_888, VPSS_MODE_SINGLE, true, false);
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
   if (ret != CVI_SUCCESS) {

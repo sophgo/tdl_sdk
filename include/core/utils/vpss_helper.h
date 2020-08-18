@@ -102,7 +102,8 @@ VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_
 inline int __attribute__((always_inline))
 VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, uint32_t enSrcStride,
                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
-                 PIXEL_FORMAT_E enDstFormat, bool keepAspectRatio, bool enableLog) {
+                 PIXEL_FORMAT_E enDstFormat, VPSS_MODE_E mode, bool keepAspectRatio,
+                 bool enableLog) {
   printf("VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight, enDstWidth,
          enDstHeight);
   CVI_S32 s32Ret = CVI_FAILURE;
@@ -124,7 +125,7 @@ VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, u
     CVI_LOG_EnableLog2File(CVI_TRUE, (char *)"cvi_mmf.log");
   }
 
-  CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
+  CVI_SYS_SetVPSSMode(mode);
   VPSS_GRP_ATTR_S stVpssGrpAttr;
   VPSS_CHN_ATTR_S stVpssChnAttr;
 
