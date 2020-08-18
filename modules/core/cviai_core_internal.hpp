@@ -42,6 +42,5 @@ inline cviai::VpssEngine *CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t i
   if (index >= ctx->vec_vpss_engine.size()) {
     return nullptr;
   }
-  printf("Size %lu\n", ctx->vec_vpss_engine.size());
   return ctx->vec_vpss_engine[index];
 }

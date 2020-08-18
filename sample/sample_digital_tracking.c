@@ -75,7 +75,6 @@ int main(int argc, char *argv[]) {
 
     // Free frame from digital zoom
     if (ret == CVI_SUCCESS) {
-      printf("Out frame %u %u\n", outFrame.stVFrame.u32Width, outFrame.stVFrame.u32Height);
       IVE_IMAGE_S outImage;
       // Map the image.
       CVI_U32 imageLength = outFrame.stVFrame.u32Length[0] + outFrame.stVFrame.u32Length[1] +
@@ -90,6 +89,7 @@ int main(int argc, char *argv[]) {
       // Unmap image.
       CVI_SYS_Munmap((void *)outFrame.stVFrame.pu8VirAddr[0], imageLength);
       // Release frame.
+      CVI_SYS_FreeI(ive_handle, &outImage);
       CVI_VPSS_ReleaseChnFrame(groups[0], 0, &outFrame);
     }
   }
