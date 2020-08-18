@@ -31,6 +31,21 @@ int main(void) {
   }
   // Free the pointer created from CVI_AI_GetModelPath.
   free(path);
+
+  // Get the used group ids by AI SDK.
+  uint32_t *groups = NULL;
+  uint32_t nums = 0;
+  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVI_SUCCESS) {
+    printf("Get used group id failed.\n");
+    return ret;
+  }
+  printf("Used group id = %u:\n", nums);
+  for (uint32_t i = 0; i < nums; i++) {
+    printf("%u ", groups[i]);
+  }
+  printf("\n");
+  free(groups);
+
   // Destroy handle.
   ret = CVI_AI_DestroyHandle(handle);
   return ret;
