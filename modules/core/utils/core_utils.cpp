@@ -40,4 +40,16 @@ void clip_boxes(int width, int height, cvai_bbox_t &box) {
   }
 }
 
+CVI_FRAME_TYPE pixelFormatToFrameType(PIXEL_FORMAT_E format) {
+  switch (format) {
+    case PIXEL_FORMAT_RGB_888_PLANAR:
+      return CVI_FRAME_PLANAR;
+    case PIXEL_FORMAT_RGB_888:
+    case PIXEL_FORMAT_BGR_888:
+      return CVI_FRAME_PACKAGE;
+    default:
+      return CVI_FRAME_PLANAR;
+  }
+}
+
 }  // namespace cviai

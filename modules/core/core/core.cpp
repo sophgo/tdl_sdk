@@ -1,5 +1,6 @@
 #include "core.hpp"
 #include "core/utils/vpss_helper.h"
+#include "core_utils.hpp"
 
 #include "tracer.h"
 
@@ -65,7 +66,7 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
     // FIXME: Need to support multi-input and different fmt
     CVI_TENSOR *input = getInputTensor(0);
     CVI_VIDEO_FRAME_INFO info;
-    info.type = CVI_FRAME_PLANAR;
+    info.type = pixelFormatToFrameType(srcFrame->stVFrame.enPixelFormat);
     info.shape.dim_size = input->shape.dim_size;
     info.shape.dim[0] = input->shape.dim[0];
     info.shape.dim[1] = input->shape.dim[1];

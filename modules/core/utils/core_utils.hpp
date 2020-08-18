@@ -1,5 +1,7 @@
 #pragma once
 #include "core/core/cvai_core_types.h"
+#include "cvi_comm_video.h"
+#include "cviruntime.h"
 
 #include <algorithm>
 #include <vector>
@@ -9,6 +11,7 @@ namespace cviai {
 void SoftMaxForBuffer(float *src, float *dst, size_t size);
 void Dequantize(const int8_t *q_data, float *data, float threshold, size_t size);
 void clip_boxes(int width, int height, cvai_bbox_t &box);
+CVI_FRAME_TYPE pixelFormatToFrameType(PIXEL_FORMAT_E format);
 
 inline float FastExp(float x) {
   union {
