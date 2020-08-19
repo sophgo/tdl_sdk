@@ -11,7 +11,7 @@ class FaceAttribute final : public Core {
  public:
   FaceAttribute(bool use_wrap_hw);
   virtual ~FaceAttribute();
-  int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta);
+  int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, int face_idx);
 
  private:
   virtual int initAfterModelOpened() override;

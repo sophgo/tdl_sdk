@@ -80,7 +80,7 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
     }
 
     if (face_count > 0 && (face_quality == false || face.info[face_idx].face_quality.quality > 0.05)) {
-      CVI_AI_FaceAttribute(facelib_handle, &bgr_frame, &face);
+      CVI_AI_FaceAttributeOne(facelib_handle, &bgr_frame, &face, face_idx);
 
       char *file_name;
       file_name = strrchr(line, '/');

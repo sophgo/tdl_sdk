@@ -330,6 +330,11 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
 
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces) {
+  return CVI_AI_FaceAttributeOne(handle, frame, faces, -1);
+}
+
+int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                            cvai_face_t *faces, int face_idx) {
   ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE];
@@ -350,7 +355,7 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
     return CVI_FAILURE;
   }
   face_attr->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  return face_attr->inference(frame, faces);
+  return face_attr->inference(frame, faces, face_idx);
 }
 
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,

@@ -83,7 +83,7 @@ FaceAttribute::~FaceAttribute() {
   }
 }
 
-int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) {
+int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, int face_idx) {
   if (m_use_wrap_hw) {
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
@@ -94,6 +94,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) 
       return -1;
     }
     for (int i = 0; i < meta->size; ++i) {
+      if (face_idx != -1 && i != face_idx) continue;
+
       cvai_face_info_t face_info =
           bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
       VIDEO_FRAME_INFO_S frame;
@@ -121,6 +123,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) 
                   stOutFrame->stVFrame.u32Stride[0]);
 
     for (int i = 0; i < meta->size; ++i) {
+      if (face_idx != -1 && i != face_idx) continue;
+
       cvai_face_info_t face_info =
           bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
       prepareInputTensor(*stOutFrame, image, face_info);
