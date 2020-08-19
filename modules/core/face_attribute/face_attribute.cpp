@@ -42,29 +42,13 @@ FaceAttribute::FaceAttribute(bool use_wrap_hw) : m_use_wrap_hw(use_wrap_hw) {
 int FaceAttribute::initAfterModelOpened() {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   VPSS_CHN_ATTR_S vpssChnAttr;
-  vpssChnAttr.u32Width = input->shape.dim[3];
-  vpssChnAttr.u32Height = input->shape.dim[2];
-  vpssChnAttr.enVideoFormat = VIDEO_FORMAT_LINEAR;
-  vpssChnAttr.enPixelFormat = PIXEL_FORMAT_RGB_888_PLANAR;
-  vpssChnAttr.stFrameRate.s32SrcFrameRate = 30;
-  vpssChnAttr.stFrameRate.s32DstFrameRate = 30;
-  vpssChnAttr.u32Depth = 1;
-  vpssChnAttr.bMirror = CVI_FALSE;
-  vpssChnAttr.bFlip = CVI_FALSE;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_AUTO;
-  vpssChnAttr.stAspectRatio.bEnableBgColor = CVI_TRUE;
-  vpssChnAttr.stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
-  vpssChnAttr.stNormalize.bEnable = CVI_TRUE;
-  vpssChnAttr.stNormalize.factor[0] = FACE_ATTRIBUTE_QUANTIZE_SCALE;
-  vpssChnAttr.stNormalize.factor[1] = FACE_ATTRIBUTE_QUANTIZE_SCALE;
-  vpssChnAttr.stNormalize.factor[2] = FACE_ATTRIBUTE_QUANTIZE_SCALE;
-  vpssChnAttr.stNormalize.mean[0] =
-      (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE;
-  vpssChnAttr.stNormalize.mean[1] =
-      (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE;
-  vpssChnAttr.stNormalize.mean[2] =
-      (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE;
-  vpssChnAttr.stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  const float factor[] = {FACE_ATTRIBUTE_QUANTIZE_SCALE, FACE_ATTRIBUTE_QUANTIZE_SCALE,
+                          FACE_ATTRIBUTE_QUANTIZE_SCALE};
+  const float mean[] = {(-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE,
+                        (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE,
+                        (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE};
+  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean);
   m_vpss_chn_attr.push_back(vpssChnAttr);
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_gdc_frame, vpssChnAttr.u32Width, vpssChnAttr.u32Height,
                             PIXEL_FORMAT_RGB_888_PLANAR) != CVI_SUCCESS) {

@@ -99,6 +99,32 @@ VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
+inline void __attribute__((always_inline))
+VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
+                   const CVI_U32 dstHeight, const PIXEL_FORMAT_E enDstFormat,
+                   const CVI_FLOAT *factor, const CVI_FLOAT *mean) {
+  pastVpssChnAttr->u32Width = dstWidth;
+  pastVpssChnAttr->u32Height = dstHeight;
+  pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
+  pastVpssChnAttr->enPixelFormat = enDstFormat;
+  pastVpssChnAttr->stFrameRate.s32SrcFrameRate = -1;
+  pastVpssChnAttr->stFrameRate.s32DstFrameRate = -1;
+  pastVpssChnAttr->u32Depth = 1;
+  pastVpssChnAttr->bMirror = CVI_FALSE;
+  pastVpssChnAttr->bFlip = CVI_FALSE;
+  pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_AUTO;
+  pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
+  pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
+  pastVpssChnAttr->stNormalize.bEnable = CVI_TRUE;
+  for (uint32_t i = 0; i < 3; i++) {
+    pastVpssChnAttr->stNormalize.factor[i] = factor[i];
+  }
+  for (uint32_t i = 0; i < 3; i++) {
+    pastVpssChnAttr->stNormalize.mean[i] = mean[i];
+  }
+  pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+}
+
 inline int __attribute__((always_inline))
 VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, uint32_t enSrcStride,
                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,

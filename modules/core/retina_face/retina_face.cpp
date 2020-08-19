@@ -64,28 +64,12 @@ int RetinaFace::initAfterModelOpened() {
         anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
   }
 
-  VPSS_CHN_ATTR_S vpssChnAttr;
   CVI_TENSOR *input = getInputTensor(0);
-  vpssChnAttr.u32Width = input->shape.dim[3];
-  vpssChnAttr.u32Height = input->shape.dim[2];
-  vpssChnAttr.enVideoFormat = VIDEO_FORMAT_LINEAR;
-  vpssChnAttr.enPixelFormat = PIXEL_FORMAT_RGB_888_PLANAR;
-  vpssChnAttr.stFrameRate.s32SrcFrameRate = 30;
-  vpssChnAttr.stFrameRate.s32DstFrameRate = 30;
-  vpssChnAttr.u32Depth = 1;
-  vpssChnAttr.bMirror = CVI_FALSE;
-  vpssChnAttr.bFlip = CVI_FALSE;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_AUTO;
-  vpssChnAttr.stAspectRatio.bEnableBgColor = CVI_TRUE;
-  vpssChnAttr.stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
-  vpssChnAttr.stNormalize.bEnable = CVI_TRUE;
-  vpssChnAttr.stNormalize.factor[0] = RETINA_FACE_SCALE;
-  vpssChnAttr.stNormalize.factor[1] = RETINA_FACE_SCALE;
-  vpssChnAttr.stNormalize.factor[2] = RETINA_FACE_SCALE;
-  vpssChnAttr.stNormalize.mean[0] = 0;
-  vpssChnAttr.stNormalize.mean[1] = 0;
-  vpssChnAttr.stNormalize.mean[2] = 0;
-  vpssChnAttr.stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  VPSS_CHN_ATTR_S vpssChnAttr;
+  const float factor[] = {RETINA_FACE_SCALE, RETINA_FACE_SCALE, RETINA_FACE_SCALE};
+  const float mean[] = {0, 0, 0};
+  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean);
   m_vpss_chn_attr.push_back(vpssChnAttr);
 
   return CVI_SUCCESS;
