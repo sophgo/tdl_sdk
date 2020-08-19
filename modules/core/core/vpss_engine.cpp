@@ -127,8 +127,10 @@ int VpssEngine::stop() {
 
 VPSS_GRP VpssEngine::getGrpId() { return m_grpid; }
 
-int VpssEngine::sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
-                          const uint32_t enable_chns) {
+int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
+                              const VPSS_CROP_INFO_S *grp_crop_attr,
+                              const VPSS_CROP_INFO_S *chn_crop_attr,
+                              const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
   if (enable_chns > m_enabled_chn) {
     printf("Error, exceed enabled chn. Enabled: %x, required %x\n", m_enabled_chn, enable_chns);
     return CVI_FAILURE;
@@ -142,6 +144,18 @@ int VpssEngine::sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S
     vpss_grp_attr.u8VpssDev = 1;
   }
   int ret = CVI_VPSS_SetGrpAttr(m_grpid, &vpss_grp_attr);
+  if (ret != CVI_SUCCESS) {
+    printf("CVI_VPSS_SetGrpAttr failed with %#x\n", ret);
+    return ret;
+  }
+  if (grp_crop_attr != NULL) {
+    int ret = CVI_VPSS_SetGrpCrop(m_grpid, grp_crop_attr);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_SetGrpCrop failed with %#x\n", ret);
+      return ret;
+    }
+  }
+
   for (uint32_t i = 0; i < enable_chns; i++) {
     ret = CVI_VPSS_SetChnAttr(m_grpid, i, &chn_attr[i]);
     if (ret != CVI_SUCCESS) {
@@ -150,41 +164,41 @@ int VpssEngine::sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S
     }
   }
 
-  CVI_VPSS_SendFrame(m_grpid, frame, -1);
+  if (chn_crop_attr != NULL) {
+    for (uint32_t i = 0; i < enable_chns; i++) {
+      int ret = CVI_VPSS_SetChnCrop(m_grpid, i, &chn_crop_attr[i]);
+      if (ret != CVI_SUCCESS) {
+        printf("CVI_VPSS_SetChnCrop failed with %#x\n", ret);
+        return ret;
+      }
+    }
+  }
+
+  ret = CVI_VPSS_SendFrame(m_grpid, frame, -1);
   return ret;
+}
+
+int VpssEngine::sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
+                          const uint32_t enable_chns) {
+  return sendFrameBase(frame, NULL, NULL, chn_attr, enable_chns);
 }
 
 int VpssEngine::sendCropGrpFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
                                  const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
-  int ret = CVI_VPSS_SetGrpCrop(m_grpid, crop_attr);
-  if (ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_SetGrpCrop failed with %#x\n", ret);
-    return ret;
-  }
-  return sendFrame(frame, chn_attr, enable_chns);
+  return sendFrameBase(frame, crop_attr, NULL, chn_attr, enable_chns);
 }
 
 int VpssEngine::sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
                                  const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
-  if (enable_chns > m_enabled_chn) {
-    printf("Error, exceed enabled chn. Enabled: %x, required %x\n", m_enabled_chn, enable_chns);
-    return CVI_FAILURE;
-  }
-
-  for (uint32_t i = 0; i < enable_chns; i++) {
-    int ret = CVI_VPSS_SetChnCrop(m_grpid, i, &crop_attr[i]);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_SetChnCrop failed with %#x\n", ret);
-      return ret;
-    }
-  }
-  return sendFrame(frame, chn_attr, enable_chns);
+  return sendFrameBase(frame, NULL, crop_attr, chn_attr, enable_chns);
 }
 
 int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout) {
   int ret = CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
+  // Reset crop settings
   VPSS_CROP_INFO_S crop_attr;
   memset(&crop_attr, 0, sizeof(VPSS_CROP_INFO_S));
+  CVI_VPSS_SetGrpCrop(m_grpid, &crop_attr);
   for (int i = 0; i < VPSS_MAX_PHY_CHN_NUM; i++) {
     CVI_VPSS_SetChnCrop(m_grpid, i, &crop_attr);
   }

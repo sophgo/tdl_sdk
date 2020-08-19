@@ -21,6 +21,9 @@ class VpssEngine {
   int releaseFrame(VIDEO_FRAME_INFO_S *frame, int chn_idx);
 
  private:
+  int sendFrameBase(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *grp_crop_attr,
+                    const VPSS_CROP_INFO_S *chn_crop_attr, const VPSS_CHN_ATTR_S *chn_attr,
+                    const uint32_t enable_chns);
   void enableLog();
 
   bool m_enable_log = false;
