@@ -35,10 +35,9 @@ int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   // Not magic number, only for init.
   uint32_t width = 100;
   uint32_t height = 100;
-  PIXEL_FORMAT_E format = PIXEL_FORMAT_RGB_888_PLANAR;
   m_enabled_chn = 2;
-  VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, width, height, format);
-  VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr, width, height, format, true);
+  VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, width, height, PIXEL_FORMAT_YUV_PLANAR_420);
+  VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr, width, height, PIXEL_FORMAT_RGB_888_PLANAR, true);
 
   /*start vpss*/
   m_grpid = -1;
