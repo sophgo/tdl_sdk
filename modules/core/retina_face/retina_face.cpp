@@ -114,6 +114,7 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
     meta->info[i].bbox.x2 = faceList[i].bbox.x2;
     meta->info[i].bbox.y1 = faceList[i].bbox.y1;
     meta->info[i].bbox.y2 = faceList[i].bbox.y2;
+    meta->info[i].bbox.score = faceList[i].bbox.score;
 
     for (int j = 0; j < 5; ++j) {
       meta->info[i].face_pts.x[j] = faceList[i].face_pts.x[j];
