@@ -192,6 +192,13 @@ int VpssEngine::sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CRO
   return sendFrameBase(frame, NULL, crop_attr, chn_attr, enable_chns);
 }
 
+int VpssEngine::sendCropGrpChnFrame(const VIDEO_FRAME_INFO_S *frame,
+                                    const VPSS_CROP_INFO_S *grp_crop_attr,
+                                    const VPSS_CROP_INFO_S *chn_crop_attr,
+                                    const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
+  return sendFrameBase(frame, grp_crop_attr, chn_crop_attr, chn_attr, enable_chns);
+}
+
 int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout) {
   int ret = CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
   // Reset crop settings

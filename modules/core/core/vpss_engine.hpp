@@ -17,6 +17,9 @@ class VpssEngine {
                        const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns);
   int sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
                        const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns);
+  int sendCropGrpChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *grp_crop_attr,
+                          const VPSS_CROP_INFO_S *chn_crop_attr, const VPSS_CHN_ATTR_S *chn_attr,
+                          const uint32_t enable_chns);
   int getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout = 100);
   int releaseFrame(VIDEO_FRAME_INFO_S *frame, int chn_idx);
 
