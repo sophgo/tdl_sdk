@@ -2,13 +2,16 @@
 #include "coco_utils.hpp"
 #include "core_utils.hpp"
 
+#include "core/utils/vpss_helper.h"
+
 #define YOLOV3_CLASSES 80
 #define YOLOV3_CONF_THRESHOLD 0.5
 #define YOLOV3_NMS_THRESHOLD 0.45
 #define YOLOV3_ANCHOR_NUM 3
 #define YOLOV3_COORDS 4
 #define YOLOV3_DEFAULT_DET_BUFFER 100
-#define YOLOV3_SCALE (float)((1 / 255.0) * (128.0 / 1.00000488758))
+#define YOLOV3_SCALE (float)(1 / 255.0)
+#define YOLOV3_QUANTIZE_SCALE YOLOV3_SCALE *(128.0 / 1.00000488758)
 #define YOLOV3_OUTPUT1 "layer82-conv_dequant"
 #define YOLOV3_OUTPUT2 "layer94-conv_dequant"
 #define YOLOV3_OUTPUT3 "layer106-conv_dequant"
@@ -22,7 +25,6 @@ Yolov3::Yolov3() {
   mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
 
-  m_input_scale = YOLOV3_SCALE;
   m_det_buf_size = YOLOV3_DEFAULT_DET_BUFFER;
 
   m_yolov3_param = {
@@ -40,9 +42,38 @@ Yolov3::Yolov3() {
 
 Yolov3::~Yolov3() { free(mp_total_dets); }
 
+int Yolov3::initAfterModelOpened() {
+  CVI_TENSOR *input = getInputTensor(0);
+  VPSS_CHN_ATTR_S vpssChnAttr;
+  const float factor[] = {YOLOV3_QUANTIZE_SCALE, YOLOV3_QUANTIZE_SCALE, YOLOV3_QUANTIZE_SCALE};
+  const float mean[] = {0, 0, 0};
+  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean);
+  m_vpss_chn_attr.push_back(vpssChnAttr);
+
+  return CVI_SUCCESS;
+}
+
 int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
                       cvai_obj_det_type_t det_type) {
-  int ret = run(srcFrame);
+  int ret = CVI_SUCCESS;
+  if (m_skip_vpss_preprocess) {
+    ret = run(srcFrame);
+  } else {
+    VIDEO_FRAME_INFO_S stDstFrame;
+    mp_vpss_inst->sendFrame(srcFrame, &m_vpss_chn_attr[0], 1);
+    ret = mp_vpss_inst->getFrame(&stDstFrame, 0);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
+      return ret;
+    }
+    ret = run(&stDstFrame);
+
+    ret |= mp_vpss_inst->releaseFrame(&stDstFrame, 0);
+    if (ret != CVI_SUCCESS) {
+      return ret;
+    }
+  }
 
   outputParser(obj, det_type);
 

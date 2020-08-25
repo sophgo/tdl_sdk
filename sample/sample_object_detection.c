@@ -400,8 +400,9 @@ int main(void) {
   }
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YOLOV3,
-                            "/mnt/data/yolo_v3_320.cvimodel");
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YOLOV3,
+                             "/mnt/data/yolo_v3_320.cvimodel");
+  ret |= CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_YOLOV3, true);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
