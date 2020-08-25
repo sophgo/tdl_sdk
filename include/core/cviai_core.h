@@ -69,6 +69,14 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle);
 int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId);
 
 /**
+ * @brief Create a cviai_handle_t for tamper detection.
+ *
+ * @param handle An AI SDK handle.
+ * @return int Return CVI_SUCCESS if succeed.
+ */
+int CVI_AI_CreateHandle_TD(cviai_handle_t *handle);
+
+/**
  * @brief Destroy a cviai_handle_t.
  *
  * @param handle An AI SDK handle.
@@ -235,6 +243,8 @@ int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
                           cvai_obj_det_type_t det_type);
 int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                cvai_face_t *faces);
+int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                           float *moving_score);
 
 #ifdef __cplusplus
 }

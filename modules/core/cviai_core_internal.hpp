@@ -14,6 +14,7 @@
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "retina_face/retina_face.hpp"
+#include "tamper_detection/tamper_detection.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
 
 typedef struct {
@@ -36,6 +37,10 @@ typedef struct {
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   bool use_gdc_wrap = false;
 } cviai_context_t;
+
+typedef struct {
+  TamperDetectorMD *td_model = nullptr;
+} cviai_tamper_detection_ctx;
 
 inline cviai::VpssEngine *CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t index) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);

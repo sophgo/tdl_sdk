@@ -60,3 +60,4 @@ buildninstall(NAME sample_mask_classification SRCS draw_utils.c INC ${SAMPLE_INC
 buildninstall(NAME sample_mask_face_recognition INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 
 buildninstall(NAME sample_digital_tracking INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${IVE_LIBS})
+buildninstall(NAME sample_tamper_detection INC ${SAMPLE_INC} DEPS cviai_core ${IVE_LIBS})

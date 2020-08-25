@@ -9,10 +9,12 @@ add_subdirectory(object_detection/yolov3)
 add_subdirectory(thermal_face_detection)
 add_subdirectory(object_detection/mobiledetv2)
 add_subdirectory(mask_face_recognition)
+add_subdirectory(tamper_detection)
 
 #set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all-symbols")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
-                    ${CMAKE_CURRENT_SOURCE_DIR}/utils)
+                    ${CMAKE_CURRENT_SOURCE_DIR}/utils
+                    ${IVE_INCLUDES})
 set(CORE_SRCS $<TARGET_OBJECTS:core>
               $<TARGET_OBJECTS:utils>
               $<TARGET_OBJECTS:face_attribute>
@@ -24,9 +26,10 @@ set(CORE_SRCS $<TARGET_OBJECTS:core>
               $<TARGET_OBJECTS:retina_face>
               $<TARGET_OBJECTS:yolov3>
               $<TARGET_OBJECTS:thermal_face_detection>
+              $<TARGET_OBJECTS:tamper_detection>
               cviai_types_free.cpp
               cviai_core.cpp)
-set(CORE_DEPS ${TRACER_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS})
+          set(CORE_DEPS ${TRACER_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 
 project(cviai_core)
 add_library(${PROJECT_NAME} SHARED ${CORE_SRCS})

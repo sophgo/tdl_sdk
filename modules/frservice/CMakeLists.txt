@@ -1,7 +1,8 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../service)
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../service
+                    ${IVE_INCLUDES})
 
 set(FRS_SRCS $<TARGET_OBJECTS:digital_tracking>
              cviai_frservice.cpp)
