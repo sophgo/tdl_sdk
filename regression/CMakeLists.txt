@@ -11,6 +11,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${TRACER_PATH}
     ${MIDDLEWARE_SDK_ROOT}/sample/common
+    ${CMAKE_SOURCE_DIR}/3rdparty
 )
 
 set(SAMPLE_LIBS
@@ -27,8 +28,10 @@ add_executable(reg_face_attribute reg_face_attribute.c)
 add_executable(reg_face_quality reg_face_quality.c)
 add_executable(reg_lfw reg_lfw.c)
 add_executable(reg_wider_face reg_wider_face.c)
+add_executable(reg_coco reg_coco.c)
 
 target_link_libraries(reg_face_attribute cviai_core ${SAMPLE_LIBS})
 target_link_libraries(reg_face_quality cviai_core ${SAMPLE_LIBS})
 target_link_libraries(reg_lfw cviai_core m ${SAMPLE_LIBS})
 target_link_libraries(reg_wider_face cviai_core m ${SAMPLE_LIBS})
+target_link_libraries(reg_coco cviai_core cviai_evaluation ${SAMPLE_LIBS})

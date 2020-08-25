@@ -52,4 +52,35 @@ CVI_FRAME_TYPE pixelFormatToFrameType(PIXEL_FORMAT_E format) {
   }
 }
 
+cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const float nn_width,
+                        const float nn_height, const cvai_bbox_t bbox) {
+  float x1, x2, y1, y2;
+  if (frame_width >= frame_height) {
+    float ratio_x = frame_width / nn_width;
+    float bbox_y_height = nn_height * frame_height / frame_width;
+    float ratio_y = frame_height / bbox_y_height;
+    float bbox_padding_top = (nn_height - bbox_y_height) / 2;
+    x1 = bbox.x1 * ratio_x;
+    x2 = bbox.x2 * ratio_x;
+    y1 = (bbox.y1 - bbox_padding_top) * ratio_y;
+    y2 = (bbox.y2 - bbox_padding_top) * ratio_y;
+  } else {
+    float ratio_y = frame_height / nn_height;
+    float bbox_x_height = nn_width * frame_width / frame_height;
+    float ratio_x = frame_width / bbox_x_height;
+    float bbox_padding_left = (nn_width - bbox_x_height) / 2;
+    x1 = (bbox.x1 - bbox_padding_left) * ratio_x;
+    x2 = (bbox.x2 - bbox_padding_left) * ratio_x;
+    y1 = bbox.y1 * ratio_y;
+    y2 = bbox.y2 * ratio_y;
+  }
+  cvai_bbox_t new_bbox;
+  new_bbox.score = bbox.score;
+  new_bbox.x1 = std::max(std::min(x1, (float)(frame_width - 1)), (float)0);
+  new_bbox.x2 = std::max(std::min(x2, (float)(frame_width - 1)), (float)0);
+  new_bbox.y1 = std::max(std::min(y1, (float)(frame_height - 1)), (float)0);
+  new_bbox.y2 = std::max(std::min(y2, (float)(frame_height - 1)), (float)0);
+  return new_bbox;
+}
+
 }  // namespace cviai

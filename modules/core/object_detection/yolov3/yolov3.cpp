@@ -75,12 +75,13 @@ int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
     }
   }
 
-  outputParser(obj, det_type);
+  outputParser(srcFrame, obj, det_type);
 
   return ret;
 }
 
-void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
+void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
+                          cvai_obj_det_type_t det_type) {
   vector<float *> features;
   vector<string> output_name = {YOLOV3_OUTPUT1, YOLOV3_OUTPUT2, YOLOV3_OUTPUT3};
   vector<CVI_SHAPE> output_shape;
@@ -155,9 +156,18 @@ void Yolov3::outputParser(cvai_object_t *obj, cvai_obj_det_type_t det_type) {
     obj->info[i].classes = results[i].label;
     strncpy(obj->info[i].name, coco_utils::class_names_80[results[i].label].c_str(),
             sizeof(obj->info[i].name));
-    printf("YOLO3: %s (%d): %lf %lf %lf %lf, score=%.2f\n", obj->info[i].name, obj->info[i].classes,
-           obj->info[i].bbox.x1, obj->info[i].bbox.x2, obj->info[i].bbox.y1, obj->info[i].bbox.y2,
-           results[i].score);
+    // printf("YOLO3: %s (%d): %lf %lf %lf %lf, score=%.2f\n", obj->info[i].name,
+    // obj->info[i].classes,
+    //        obj->info[i].bbox.x1, obj->info[i].bbox.x2, obj->info[i].bbox.y1,
+    //        obj->info[i].bbox.y2, results[i].score);
+  }
+  if (!m_skip_vpss_preprocess) {
+    for (int i = 0; i < obj->size; ++i) {
+      obj->info[i].bbox = box_rescale(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
+                                      obj->width, obj->height, obj->info[i].bbox);
+    }
+    obj->width = srcFrame->stVFrame.u32Width;
+    obj->height = srcFrame->stVFrame.u32Height;
   }
 }
 

@@ -13,6 +13,9 @@ void Dequantize(const int8_t *q_data, float *data, float threshold, size_t size)
 void clip_boxes(int width, int height, cvai_bbox_t &box);
 CVI_FRAME_TYPE pixelFormatToFrameType(PIXEL_FORMAT_E format);
 
+cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const float nn_width,
+                        const float nn_height, const cvai_bbox_t bbox);
+
 inline float FastExp(float x) {
   union {
     unsigned int i;
