@@ -125,6 +125,50 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
+inline void __attribute__((always_inline))
+VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
+                      const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
+                      const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
+                      const CVI_FLOAT *mean) {
+  uint32_t ratioWidth, ratioHeight;
+  if (srcWidth >= srcHeight) {
+    float bboxYHeight = srcHeight * srcHeight / dstWidth;
+    float ratioY = srcHeight / bboxYHeight;
+    ratioWidth = dstWidth;
+    ratioHeight = srcHeight * ratioY;
+  } else {
+    float bboxXHeight = srcWidth * dstWidth / dstHeight;
+    float ratioX = dstWidth / bboxXHeight;
+    ratioWidth = srcWidth * ratioX;
+    ratioHeight = dstHeight;
+  }
+
+  pastVpssChnAttr->u32Width = dstWidth;
+  pastVpssChnAttr->u32Height = dstHeight;
+  pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
+  pastVpssChnAttr->enPixelFormat = enDstFormat;
+  pastVpssChnAttr->stFrameRate.s32SrcFrameRate = -1;
+  pastVpssChnAttr->stFrameRate.s32DstFrameRate = -1;
+  pastVpssChnAttr->u32Depth = 1;
+  pastVpssChnAttr->bMirror = CVI_FALSE;
+  pastVpssChnAttr->bFlip = CVI_FALSE;
+  pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.s32X = 0;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.s32Y = 0;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = ratioWidth;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = ratioHeight;
+  pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
+  pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT((int)mean[0], (int)mean[1], (int)mean[2]);
+  pastVpssChnAttr->stNormalize.bEnable = CVI_TRUE;
+  for (uint32_t i = 0; i < 3; i++) {
+    pastVpssChnAttr->stNormalize.factor[i] = factor[i];
+  }
+  for (uint32_t i = 0; i < 3; i++) {
+    pastVpssChnAttr->stNormalize.mean[i] = mean[i];
+  }
+  pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+}
+
 inline int __attribute__((always_inline))
 VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, uint32_t enSrcStride,
                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
