@@ -15,8 +15,8 @@
 
 cviai_handle_t facelib_handle = NULL;
 
-static CVI_S32 vpssgrp_width = 1920;
-static CVI_S32 vpssgrp_height = 1080;
+static CVI_S32 vpssgrp_width = 2048;
+static CVI_S32 vpssgrp_height = 1536;
 
 static void genPath(const char *base, const char *tail, char *result)
 {
@@ -114,27 +114,28 @@ static int genResult(char *dataset_dir, char *result_dir)
       char image_path[1000];
       genPath(group_path, group_entry->d_name, image_path);
 
-      VB_BLK blk;
-      VIDEO_FRAME_INFO_S frame;
-      CVI_S32 ret = CVI_AI_ReadImage(image_path, &blk, &frame, PIXEL_FORMAT_RGB_888);
-      if (ret != CVI_SUCCESS) {
-        printf("Read image failed. %s!\n", image_path);
-        return ret;
-      }
-
-      int face_count = 0;
-      cvai_face_t face;
-      memset(&face, 0, sizeof(cvai_face_t));
-
-      CVI_AI_RetinaFace(facelib_handle, &frame, &face, &face_count);
-      printf("%s, %d\n", image_path, face_count);
-
       char result_path[1000];
       strcpy(result_path, result_group_path);
       strcat(result_path, "/");
       strncat(result_path, group_entry->d_name, strlen(group_entry->d_name)-4);
       strcat(result_path, ".txt");
       remove(result_path);
+
+      VB_BLK blk;
+      VIDEO_FRAME_INFO_S frame;
+      int face_count = 0;
+      cvai_face_t face;
+      memset(&face, 0, sizeof(cvai_face_t));
+
+      CVI_S32 ret = CVI_AI_ReadImage(image_path, &blk, &frame, PIXEL_FORMAT_RGB_888);
+      if (ret != CVI_SUCCESS) {
+        printf("Read image failed. %s!\n", image_path);
+      } else {
+        CVI_AI_RetinaFace(facelib_handle, &frame, &face, &face_count);
+        CVI_VB_ReleaseBlock(blk);
+      }
+
+      printf("%s, %d\n", image_path, face_count);
 
       FILE *fp;
       if((fp = fopen(result_path, "w+")) == NULL) {
@@ -154,7 +155,6 @@ static int genResult(char *dataset_dir, char *result_dir)
       fclose(fp);
 
       CVI_AI_Free(&face);
-      CVI_VB_ReleaseBlock(blk);
     }
     closedir(group_dir);
   }
@@ -169,6 +169,7 @@ int main(int argc, char *argv[])
     printf("Usage: reg_wider_face <dataset dir path> <result dir path>.\n");
     printf("dataset dir path: Wider face validation folder. eg. /mnt/data/WIDER_val\n");
     printf("result dir path: Result directory path. eg. /mnt/data/wider_result\n");
+    printf("Using wider face matlab code to evaluate AUC!!\n");
     return CVI_FAILURE;
   }
 
