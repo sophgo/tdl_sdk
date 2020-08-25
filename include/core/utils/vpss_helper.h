@@ -114,7 +114,7 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
   pastVpssChnAttr->bFlip = CVI_FALSE;
   pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_AUTO;
   pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
-  pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
+  pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT((int)mean[0], (int)mean[1], (int)mean[2]);
   pastVpssChnAttr->stNormalize.bEnable = CVI_TRUE;
   for (uint32_t i = 0; i < 3; i++) {
     pastVpssChnAttr->stNormalize.factor[i] = factor[i];
