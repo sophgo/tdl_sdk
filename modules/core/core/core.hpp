@@ -52,7 +52,6 @@ class Core {
   CVI_TENSOR *mp_output_tensors = nullptr;
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
-  float m_input_scale = 0;
   bool m_skip_vpss_preprocess = false;
 
   VpssEngine *mp_vpss_inst = nullptr;
