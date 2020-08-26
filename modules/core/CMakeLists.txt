@@ -28,6 +28,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:core>
               $<TARGET_OBJECTS:thermal_face_detection>
               $<TARGET_OBJECTS:tamper_detection>
               cviai_types_free.cpp
+              cviai_rescale_bbox.cpp
               cviai_core.cpp)
           set(CORE_DEPS ${TRACER_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 

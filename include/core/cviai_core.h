@@ -1,6 +1,7 @@
 #ifndef _CVIAI_CORE_H_
 #define _CVIAI_CORE_H_
 #include "core/core/cvai_core_types.h"
+#include "core/cviai_rescale_bbox.h"
 #include "core/cviai_types_free.h"
 #include "core/face/cvai_face_helper.h"
 #include "core/face/cvai_face_types.h"
@@ -45,6 +46,29 @@ typedef enum {
            cvai_face_t*: CVI_AI_FreeFace,              \
            cvai_object_info_t*: CVI_AI_FreeObjectInfo, \
            cvai_object_t*: CVI_AI_FreeObject)(X)
+// clang-format on
+#endif
+
+/**
+ * @brief Rescale the output coordinate to original image. Only supports the following modes,
+ *        CVI_AI_RescaleBBoxCenter: Padding in four directions.
+ *        CVI_AI_RescaleBBoxRB: Padding in right, bottom directions.
+ *        Support the following structure types written in _Generic.
+ *
+ * @param videoFrame Original input image.
+ * @param X Input data structure.
+ */
+#ifdef __cplusplus
+#define CVI_AI_RescaleBBoxCenter(videoFrame, X) CVI_AI_RescaleBBoxCenterCpp(videoFrame, X)
+#define CVI_AI_RescaleBBoxRB(videoFrame, X) CVI_AI_RescaleBBoxRBCpp(videoFrame, X)
+#else
+// clang-format off
+#define CVI_AI_RescaleBBoxCenter(videoFrame, X) _Generic((X), \
+           cvai_face_t*: CVI_AI_RescaleBBoxCenterFace,        \
+           cvai_object_t*: CVI_AI_RescaleBBoxCenterObj)(videoFrame, X)
+#define CVI_AI_RescaleBBoxRB(videoFrame, X) _Generic((X),     \
+           cvai_face_t*: CVI_AI_RescaleBBoxRBFace,            \
+           cvai_object_t*: CVI_AI_RescaleBBoxRBObj)(videoFrame, X)
 // clang-format on
 #endif
 
