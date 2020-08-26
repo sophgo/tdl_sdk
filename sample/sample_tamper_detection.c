@@ -30,7 +30,6 @@ int main(int argc, char **argv) {
   char *line = NULL;
   size_t len = 0;
   ssize_t read;
-  //   size_t read;
 
   inFile = fopen(imagefile_list_path, "r");
   if (inFile == NULL) {
@@ -55,9 +54,7 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
   *strchrnul(image_name, '\n') = '\0';
-  //   printf("image_name: %s\n", image_name);
   image_path = cstrconcat(imagefile_path, image_name);
-  //   printf("image_path: %s\n", image_path);
 
   IVE_HANDLE handle = CVI_IVE_CreateHandle();
   // Read image using IVE.
@@ -76,7 +73,7 @@ int main(int argc, char **argv) {
 
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle_TD(&ai_handle);
+  ret = CVI_AI_CreateHandle(&ai_handle);
   if (ret != CVI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
@@ -86,31 +83,22 @@ int main(int argc, char **argv) {
 
   CVI_SYS_FreeI(handle, &frame);
 
-  // bool isTamper = false;
   for (int img_counter = 1; img_counter < image_num; img_counter++) {
-    // if (img_counter > 11) break;
-
     image_name = NULL;
     if ((read = getline(&image_name, &len, inFile)) == -1) {
       printf("get line error\n");
       exit(EXIT_FAILURE);
     }
     *strchrnul(image_name, '\n') = '\0';
-    // printf("image_name: %s\n", image_name);
     image_path = cstrconcat(imagefile_path, image_name);
-    // printf("image_path: %s\n", image_path);
 
     frame = CVI_IVE_ReadImage(handle, image_path, IVE_IMAGE_TYPE_U8C3_PLANAR);
-    // printf("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV\n");
-    // CVI_AI_TamperDetection(ai_handle, &cameraFrame, &moving_score);
-    // printf("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV\n");
     ret = CVI_IVE_Image2VideoFrameInfo(&frame, &cameraFrame, false);
     if (ret != CVI_SUCCESS) {
       printf("Convert to video frame failed with %#x!\n", ret);
       return ret;
     }
 
-    // printf("===================================== \n");
     CVI_AI_TamperDetection(ai_handle, &cameraFrame, &moving_score);
 
     printf("[%d] moving: %f\n", img_counter, moving_score);
@@ -119,6 +107,7 @@ int main(int argc, char **argv) {
   }
 
   CVI_IVE_DestroyHandle(handle);
+  CVI_AI_DestroyHandle(ai_handle);
 
   fclose(inFile);
 

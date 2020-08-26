@@ -49,19 +49,13 @@ int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
   return CVI_SUCCESS;
 }
 
-int CVI_AI_CreateHandle_TD(cviai_handle_t *handle) {
-  cviai_tamper_detection_ctx *ctx = new cviai_tamper_detection_ctx;
-
-  *handle = ctx;
-  return CVI_SUCCESS;
-}
-
 int CVI_AI_DestroyHandle(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
   for (auto it : ctx->vec_vpss_engine) {
     delete it;
   }
+  delete ctx->td_model;
   delete ctx;
   return CVI_SUCCESS;
 }
@@ -611,7 +605,7 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                            float *moving_score) {
   ScopedTrace st(__func__);
-  cviai_tamper_detection_ctx *ctx = static_cast<cviai_tamper_detection_ctx *>(handle);
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   TamperDetectorMD *td_model = ctx->td_model;
   if (td_model == nullptr) {
     printf("Init Tamper Detection Model.\n");

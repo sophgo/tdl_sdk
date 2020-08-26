@@ -35,12 +35,9 @@ struct hash<CVI_AI_SUPPORTED_MODEL_E> {
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
+  TamperDetectorMD *td_model = nullptr;
   bool use_gdc_wrap = false;
 } cviai_context_t;
-
-typedef struct {
-  TamperDetectorMD *td_model = nullptr;
-} cviai_tamper_detection_ctx;
 
 inline cviai::VpssEngine *CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t index) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
