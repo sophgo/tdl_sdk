@@ -38,7 +38,7 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
 
   CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
 
-  for (int i = 0; i < meta->size; ++i) {
+  for (uint32_t i = 0; i < meta->size; ++i) {
     cvai_face_info_t face_info =
         bbox_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, meta, i);
 

@@ -16,9 +16,9 @@ typedef struct {
 } cvai_object_info_t;
 
 typedef struct {
-  int size;
-  int width;
-  int height;
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
   cvai_object_info_t *info;
 } cvai_object_t;
 

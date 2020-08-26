@@ -43,7 +43,7 @@ int MaskClassification::initAfterModelOpened() {
 int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) {
   uint32_t img_width = stOutFrame->stVFrame.u32Width;
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
-  for (int i = 0; i < meta->size; i++) {
+  for (uint32_t i = 0; i < meta->size; i++) {
     cvai_face_info_t face_info = bbox_rescale(img_width, img_height, meta, i);
     int box_x1 = face_info.bbox.x1;
     int box_y1 = face_info.bbox.y1;

@@ -108,7 +108,7 @@ static void convert_det_struct(const Detections &dets, cvai_object_t *out, int i
   out->width = im_width;
 
   memset(out->info, 0, sizeof(cvai_object_info_t) * out->size);
-  for (int i = 0; i < out->size; ++i) {
+  for (uint32_t i = 0; i < out->size; ++i) {
     out->info[i].bbox.x1 = dets[i]->x1;
     out->info[i].bbox.y1 = dets[i]->y1;
     out->info[i].bbox.x2 = dets[i]->x2;

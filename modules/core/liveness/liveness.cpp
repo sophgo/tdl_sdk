@@ -55,7 +55,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
   }
 
   vector<vector<cv::Mat>> input_mat(meta->size, vector<cv::Mat>());
-  for (int i = 0; i < meta->size; i++) {
+  for (uint32_t i = 0; i < meta->size; i++) {
     cvai_face_info_t face_info =
         bbox_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, meta, i);
     cv::Rect box;
@@ -108,7 +108,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     return CVI_FAILURE;
   }
 
-  for (int i = 0; i < meta->size; i++) {
+  for (uint32_t i = 0; i < meta->size; i++) {
     float conf0 = 0.0;
     float conf1 = 0.0;
 

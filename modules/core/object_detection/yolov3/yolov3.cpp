@@ -147,7 +147,7 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
   obj->height = yolov3_h;
 
   memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
-  for (int i = 0; i < obj->size; ++i) {
+  for (uint32_t i = 0; i < obj->size; ++i) {
     obj->info[i].bbox.x1 = results[i].x1;
     obj->info[i].bbox.y1 = results[i].y1;
     obj->info[i].bbox.x2 = results[i].x2;
@@ -162,7 +162,7 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
     //        obj->info[i].bbox.y2, results[i].score);
   }
   if (!m_skip_vpss_preprocess) {
-    for (int i = 0; i < obj->size; ++i) {
+    for (uint32_t i = 0; i < obj->size; ++i) {
       obj->info[i].bbox = box_rescale_c(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                                         obj->width, obj->height, obj->info[i].bbox);
     }

@@ -172,7 +172,7 @@ int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   meta->width = input->shape.dim[3];
   meta->height = input->shape.dim[2];
 
-  for (int i = 0; i < meta->size; ++i) {
+  for (uint32_t i = 0; i < meta->size; ++i) {
     meta->info[i].bbox.x1 = faceList[i].bbox.x1;
     meta->info[i].bbox.x2 = faceList[i].bbox.x2;
     meta->info[i].bbox.y1 = faceList[i].bbox.y1;
@@ -227,7 +227,7 @@ void ThermalFace::initFaceMeta(cvai_face_t *meta, int size) {
 
   memset(meta->info, 0, sizeof(cvai_face_info_t) * meta->size);
 
-  for (int i = 0; i < meta->size; ++i) {
+  for (uint32_t i = 0; i < meta->size; ++i) {
     meta->info[i].bbox.x1 = -1;
     meta->info[i].bbox.x2 = -1;
     meta->info[i].bbox.y1 = -1;

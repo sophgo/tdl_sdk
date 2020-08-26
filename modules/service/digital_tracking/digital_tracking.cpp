@@ -37,7 +37,7 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
 
     rect = Rect(width, 0, height, 0);
     const float total_size = width * height;
-    for (int i = 0; i < meta->size; ++i) {
+    for (uint32_t i = 0; i < meta->size; ++i) {
       cvai_bbox_t bbox = meta->info[i].bbox;
       const float box_size = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
       if (box_size / total_size < face_skip_ratio) {

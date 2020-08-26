@@ -28,7 +28,7 @@ void CocoEval::getImageIdPair(const int index, std::string *path, int *id) {
 
 void CocoEval::insertObjectData(const int id, const cvai_object_t *obj) {
   printf("Image id %d insert object %d\n", id, obj->size);
-  for (int32_t j = 0; j < obj->size; j++) {
+  for (uint32_t j = 0; j < obj->size; j++) {
     cvai_object_info_t &info = obj->info[j];
     float width = info.bbox.x2 - info.bbox.x1;
     float height = info.bbox.y2 - info.bbox.y1;

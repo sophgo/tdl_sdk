@@ -78,8 +78,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
           stOutFrame->stVFrame.enPixelFormat);
       return -1;
     }
-    for (int i = 0; i < meta->size; ++i) {
-      if (face_idx != -1 && i != face_idx) continue;
+    for (uint32_t i = 0; i < meta->size; ++i) {
+      if (face_idx != -1 && i != (uint32_t)face_idx) continue;
 
       cvai_face_info_t face_info =
           bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
@@ -107,8 +107,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
     cv::Mat image(img_height, img_width, CV_8UC3, stOutFrame->stVFrame.pu8VirAddr[0],
                   stOutFrame->stVFrame.u32Stride[0]);
 
-    for (int i = 0; i < meta->size; ++i) {
-      if (face_idx != -1 && i != face_idx) continue;
+    for (uint32_t i = 0; i < meta->size; ++i) {
+      if (face_idx != -1 && i != (uint32_t)face_idx) continue;
 
       cvai_face_info_t face_info =
           bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
