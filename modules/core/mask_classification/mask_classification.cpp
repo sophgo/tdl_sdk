@@ -35,7 +35,7 @@ int MaskClassification::initAfterModelOpened() {
   const float mean[] = {(-1) * R_MEAN * 128 / THRESHOLD, (-1) * G_MEAN * 128 / THRESHOLD,
                         (-1) * B_MEAN * 128 / THRESHOLD};
   VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean);
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
   m_vpss_chn_attr.push_back(vpssChnAttr);
   return 0;
 }

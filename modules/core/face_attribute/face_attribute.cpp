@@ -48,7 +48,7 @@ int FaceAttribute::initAfterModelOpened() {
                         (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE,
                         (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE};
   VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean);
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
   m_vpss_chn_attr.push_back(vpssChnAttr);
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_gdc_frame, vpssChnAttr.u32Width, vpssChnAttr.u32Height,
                             PIXEL_FORMAT_RGB_888_PLANAR) != CVI_SUCCESS) {

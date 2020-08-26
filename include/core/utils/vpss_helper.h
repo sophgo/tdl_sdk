@@ -102,7 +102,7 @@ VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_
 inline void __attribute__((always_inline))
 VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
                    const CVI_U32 dstHeight, const PIXEL_FORMAT_E enDstFormat,
-                   const CVI_FLOAT *factor, const CVI_FLOAT *mean) {
+                   const CVI_FLOAT *factor, const CVI_FLOAT *mean, const bool padReverse) {
   pastVpssChnAttr->u32Width = dstWidth;
   pastVpssChnAttr->u32Height = dstHeight;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -114,8 +114,12 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
   pastVpssChnAttr->bFlip = CVI_FALSE;
   pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_AUTO;
   pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
-  pastVpssChnAttr->stAspectRatio.u32BgColor =
-      RGB_8BIT((int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]), (int)(mean[2] / factor[2]));
+  if (padReverse) {
+    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(
+        (int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]), (int)(mean[2] / factor[2]));
+  } else {
+    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
+  }
   pastVpssChnAttr->stNormalize.bEnable = CVI_TRUE;
   for (uint32_t i = 0; i < 3; i++) {
     pastVpssChnAttr->stNormalize.factor[i] = factor[i];
@@ -130,7 +134,7 @@ inline void __attribute__((always_inline))
 VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
                       const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
                       const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
-                      const CVI_FLOAT *mean) {
+                      const CVI_FLOAT *mean, const bool padReverse) {
   uint32_t ratioWidth, ratioHeight;
   if (srcWidth >= srcHeight) {
     float bboxYHeight = srcHeight * srcHeight / dstWidth;
@@ -159,8 +163,12 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
   pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = ratioWidth;
   pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = ratioHeight;
   pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
-  pastVpssChnAttr->stAspectRatio.u32BgColor =
-      RGB_8BIT((int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]), (int)(mean[2] / factor[2]));
+  if (padReverse) {
+    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(
+        (int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]), (int)(mean[2] / factor[2]));
+  } else {
+    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
+  }
   pastVpssChnAttr->stNormalize.bEnable = CVI_TRUE;
   for (uint32_t i = 0; i < 3; i++) {
     pastVpssChnAttr->stNormalize.factor[i] = factor[i];
