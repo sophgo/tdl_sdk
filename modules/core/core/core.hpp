@@ -53,6 +53,7 @@ class Core {
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
   bool m_skip_vpss_preprocess = false;
+  bool m_reverse_device_mem = false;
 
   VpssEngine *mp_vpss_inst = nullptr;
   std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;

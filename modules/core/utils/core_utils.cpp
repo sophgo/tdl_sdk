@@ -40,18 +40,6 @@ void clip_boxes(int width, int height, cvai_bbox_t &box) {
   }
 }
 
-CVI_FRAME_TYPE pixelFormatToFrameType(PIXEL_FORMAT_E format) {
-  switch (format) {
-    case PIXEL_FORMAT_RGB_888_PLANAR:
-      return CVI_FRAME_PLANAR;
-    case PIXEL_FORMAT_RGB_888:
-    case PIXEL_FORMAT_BGR_888:
-      return CVI_FRAME_PACKAGE;
-    default:
-      return CVI_FRAME_PLANAR;
-  }
-}
-
 cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, const float nn_width,
                           const float nn_height, const cvai_bbox_t bbox) {
   float x1, x2, y1, y2;

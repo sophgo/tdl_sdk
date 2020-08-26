@@ -66,7 +66,7 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
     // FIXME: Need to support multi-input and different fmt
     CVI_TENSOR *input = getInputTensor(0);
     CVI_VIDEO_FRAME_INFO info;
-    info.type = pixelFormatToFrameType(srcFrame->stVFrame.enPixelFormat);
+    info.type = CVI_FRAME_PLANAR;
     info.shape.dim_size = input->shape.dim_size;
     info.shape.dim[0] = input->shape.dim[0];
     info.shape.dim[1] = input->shape.dim[1];
@@ -74,8 +74,13 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
     info.shape.dim[3] = input->shape.dim[3];
     info.fmt = CVI_FMT_INT8;
     for (size_t i = 0; i < 3; ++i) {
-      info.stride[i] = srcFrame->stVFrame.u32Stride[i];
-      info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[i];
+      if (m_reverse_device_mem == true) {
+        info.stride[i] = srcFrame->stVFrame.u32Stride[2 - i];
+        info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[2 - i];
+      } else {
+        info.stride[i] = srcFrame->stVFrame.u32Stride[i];
+        info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[i];
+      }
     }
     if (int ret =
             CVI_NN_SetTensorWithVideoFrame(mp_model_handle, mp_input_tensors, &info) !=  // NOLINT

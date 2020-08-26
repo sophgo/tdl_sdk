@@ -572,6 +572,8 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
     return CVI_FAILURE;
   }
   thermal_face->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+  thermal_face->skipVpssPreprocess(m_t.skip_vpss_preprocess);
+
   return thermal_face->inference(frame, faces);
 }
 

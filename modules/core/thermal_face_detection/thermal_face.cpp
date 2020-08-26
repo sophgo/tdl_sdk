@@ -1,18 +1,19 @@
 #include "thermal_face.hpp"
 #include "core/cviai_types_free.h"
+#include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 
 #include "cvi_sys.h"
 
-#define SCALE_B (1.0 / (255.0 * 0.229))
-#define SCALE_G (1.0 / (255.0 * 0.224))
-#define SCALE_R (1.0 / (255.0 * 0.225))
-#define MEAN_B -(0.485 / 0.229)
-#define MEAN_G -(0.456 / 0.224)
-#define MEAN_R -(0.406 / 0.225)
-#define FACE_THRESHOLD 0.05
-#define NAME_BBOX "regression_Concat_dequant"
-#define NAME_SCORE "classification_Sigmoid_dequant"
+#define SCALE_B (1.0 / (255.0 * 0.229)) * (128 / 2.64064478874)
+#define SCALE_G (1.0 / (255.0 * 0.224)) * (128 / 2.64064478874)
+#define SCALE_R (1.0 / (255.0 * 0.225)) * (128 / 2.64064478874)
+#define MEAN_B (0.485 / 0.229) * (128 / 2.64064478874)
+#define MEAN_G (0.456 / 0.224) * (128 / 2.64064478874)
+#define MEAN_R (0.406 / 0.225) * (128 / 2.64064478874)
+#define FACE_THRESHOLD 0.5
+#define NAME_BBOX "regression_dequant"
+#define NAME_SCORE "classification_dequant"
 
 namespace cviai {
 
@@ -101,8 +102,10 @@ static void bbox_pred(const cvai_bbox_t &anchor, cv::Vec4f regress, std::vector<
 
 ThermalFace::ThermalFace() {
   mp_config = std::make_unique<ModelConfig>();
-  // mp_config->skip_preprocess = true;
-  // mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_config->skip_preprocess = true;
+  mp_config->input_mem_type = CVI_MEM_DEVICE;
+
+  m_reverse_device_mem = true;
 }
 
 ThermalFace::~ThermalFace() {}
@@ -131,39 +134,33 @@ int ThermalFace::initAfterModelOpened() {
 }
 
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
-  int img_width = srcFrame->stVFrame.u32Width;
-  int img_height = srcFrame->stVFrame.u32Height;
-  cv::Mat image(img_height, img_width, CV_8UC3);
-  srcFrame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_Mmap(srcFrame->stVFrame.u64PhyAddr[0], srcFrame->stVFrame.u32Length[0]);
-  char *va_rgb = (char *)srcFrame->stVFrame.pu8VirAddr[0];
-  int dst_width = image.cols;
-  int dst_height = image.rows;
-
-  for (int i = 0; i < dst_height; i++) {
-    memcpy(image.ptr(i, 0), va_rgb + srcFrame->stVFrame.u32Stride[0] * i, dst_width * 3);
-  }
-  CVI_SYS_Munmap((void *)srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Length[0]);
-
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
-  cv::Mat tmpchannels[3];
-  cv::split(image, tmpchannels);
+  int ret = CVI_SUCCESS;
+  if (m_skip_vpss_preprocess) {
+    ret = run(srcFrame);
+  } else {
+    VIDEO_FRAME_INFO_S stDstFrame;
+    VPSS_CHN_ATTR_S vpssChnAttr;
+    const float factor[] = {SCALE_R, SCALE_G, SCALE_B};
+    const float mean[] = {MEAN_R, MEAN_G, MEAN_B};
+    VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
+                          input->shape.dim[3], input->shape.dim[2], PIXEL_FORMAT_RGB_888_PLANAR,
+                          factor, mean, true);
+    mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
+    ret = mp_vpss_inst->getFrame(&stDstFrame, 0);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
+      return ret;
+    }
 
-  std::vector<float> scale = {SCALE_B, SCALE_G, SCALE_R};
-  std::vector<float> mean = {MEAN_B, MEAN_G, MEAN_R};
-  for (int i = 0; i < 3; i++) {
-    tmpchannels[i].convertTo(tmpchannels[i], CV_32F, scale[i], mean[i]);
-    copyMakeBorder(tmpchannels[i], tmpchannels[i], 0, 32, 0, 0, cv::BORDER_CONSTANT, 0.0);
+    ret = run(&stDstFrame);
 
-    int size = tmpchannels[i].rows * tmpchannels[i].cols;
-    for (int r = 0; r < tmpchannels[i].rows; ++r) {
-      memcpy((float *)CVI_NN_TensorPtr(input) + size * i + tmpchannels[i].cols * r,
-             tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
+    ret |= mp_vpss_inst->releaseFrame(&stDstFrame, 0);
+    if (ret != CVI_SUCCESS) {
+      return ret;
     }
   }
-
-  int ret = run(srcFrame);
 
   std::vector<cvai_face_info_t> faceList;
   outputParser(input->shape.dim[3], input->shape.dim[2], &faceList);
@@ -177,6 +174,7 @@ int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
     meta->info[i].bbox.x2 = faceList[i].bbox.x2;
     meta->info[i].bbox.y1 = faceList[i].bbox.y1;
     meta->info[i].bbox.y2 = faceList[i].bbox.y2;
+    meta->info[i].bbox.score = faceList[i].bbox.score;
   }
 
   return ret;
@@ -223,6 +221,8 @@ void ThermalFace::outputParser(int image_width, int image_height,
 
 void ThermalFace::initFaceMeta(cvai_face_t *meta, int size) {
   meta->size = size;
+  if (meta->size == 0) return;
+
   meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
 
   memset(meta->info, 0, sizeof(cvai_face_info_t) * meta->size);
