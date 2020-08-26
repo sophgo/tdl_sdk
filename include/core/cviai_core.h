@@ -24,6 +24,7 @@ typedef enum {
   CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION,
   CVI_AI_SUPPORTED_MODEL_THERMALFACE,
   CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION,
+  CVI_AI_SUPPORTED_MODEL_FACERECOGNITION,
   CVI_AI_SUPPORTED_MODEL_END
 } CVI_AI_SUPPORTED_MODEL_E;
 
@@ -215,6 +216,10 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces);
 int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                             cvai_face_t *faces, int face_idx);
+int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                           cvai_face_t *faces);
+int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_face_t *faces, int face_idx);
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                   cvai_obj_det_type_t det_type);
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,

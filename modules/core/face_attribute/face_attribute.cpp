@@ -16,7 +16,8 @@
 #define FACE_ATTRIBUTE_MEAN (-0.99609375)
 #define FACE_ATTRIBUTE_INPUT_THRESHOLD (1 / 128.0)
 
-#define FACE_OUT_NAME "BMFace_dense_MatMul_folded"
+#define ATTRIBUTE_OUT_NAME "BMFace_dense_MatMul_folded"
+#define RECOGNITION_OUT_NAME "pre_fc1"
 #define AGE_OUT_NAME "Age_Conv_Conv2D"
 #define EMOTION_OUT_NAME "Emotion_Conv_Conv2D"
 #define GENDER_OUT_NAME "Gender_Conv_Conv2D"
@@ -123,6 +124,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
   return CVI_SUCCESS;
 }
 
+void FaceAttribute::setWithAttribute(bool with_attr) { m_with_attribute = with_attr; }
+
 int FaceAttribute::prepareInputTensorGDC(const VIDEO_FRAME_INFO_S &frame,
                                          VIDEO_FRAME_INFO_S *outframe,
                                          cvai_face_info_t &face_info) {
@@ -221,7 +224,10 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   FaceAttributeInfo result;
 
   // feature
-  CVI_TENSOR *out = CVI_NN_GetTensorByName(FACE_OUT_NAME, mp_output_tensors, m_output_num);
+  std::string feature_out_name =
+      (m_with_attribute == true) ? ATTRIBUTE_OUT_NAME : RECOGNITION_OUT_NAME;
+  CVI_TENSOR *out =
+      CVI_NN_GetTensorByName(feature_out_name.c_str(), mp_output_tensors, m_output_num);
   int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t face_feature_size = CVI_NN_TensorCount(out);
   // Create feature
@@ -230,6 +236,10 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   meta->info[meta_i].face_feature.size = face_feature_size;
   meta->info[meta_i].face_feature.type = TYPE_INT8;
   memcpy(meta->info[meta_i].face_feature.ptr, face_blob, face_feature_size);
+
+  if (m_with_attribute == false) {
+    return;
+  }
 
   // race
   out = CVI_NN_GetTensorByName(RACE_OUT_NAME, mp_output_tensors, m_output_num);

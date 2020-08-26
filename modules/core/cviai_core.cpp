@@ -328,6 +328,37 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
   return ret;
 }
 
+int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                           cvai_face_t *faces) {
+  return CVI_AI_FaceRecognitionOne(handle, frame, faces, -1);
+}
+
+int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_face_t *faces, int face_idx) {
+  ScopedTrace st(__func__);
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACERECOGNITION];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      printf("Model path for FaceAttribute is empty.\n");
+      return CVI_FAILURE;
+    }
+    m_t.instance = new FaceAttribute(ctx->use_gdc_wrap);
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
+      printf("Open model failed (%s).\n", m_t.model_path.c_str());
+      return CVI_FAILURE;
+    }
+  }
+  FaceAttribute *face_attr = dynamic_cast<FaceAttribute *>(m_t.instance);
+  if (face_attr == nullptr) {
+    printf("No instance found for FaceAttribute.\n");
+    return CVI_FAILURE;
+  }
+  face_attr->setWithAttribute(false);
+  face_attr->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+  return face_attr->inference(frame, faces, face_idx);
+}
+
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces) {
   return CVI_AI_FaceAttributeOne(handle, frame, faces, -1);
@@ -351,7 +382,7 @@ int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fra
   }
   FaceAttribute *face_attr = dynamic_cast<FaceAttribute *>(m_t.instance);
   if (face_attr == nullptr) {
-    printf("No instance found for RetinaFace.\n");
+    printf("No instance found for FaceAttribute.\n");
     return CVI_FAILURE;
   }
   face_attr->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
