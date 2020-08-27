@@ -5,12 +5,12 @@
 
 #include "cvi_sys.h"
 
-#define SCALE_B (1.0 / (255.0 * 0.229)) * (128 / 2.64064478874)
+#define SCALE_R (1.0 / (255.0 * 0.229)) * (128 / 2.64064478874)
 #define SCALE_G (1.0 / (255.0 * 0.224)) * (128 / 2.64064478874)
-#define SCALE_R (1.0 / (255.0 * 0.225)) * (128 / 2.64064478874)
-#define MEAN_B (0.485 / 0.229) * (128 / 2.64064478874)
+#define SCALE_B (1.0 / (255.0 * 0.225)) * (128 / 2.64064478874)
+#define MEAN_R (0.485 / 0.229) * (128 / 2.64064478874)
 #define MEAN_G (0.456 / 0.224) * (128 / 2.64064478874)
-#define MEAN_R (0.406 / 0.225) * (128 / 2.64064478874)
+#define MEAN_B (0.406 / 0.225) * (128 / 2.64064478874)
 #define FACE_THRESHOLD 0.5
 #define NAME_BBOX "regression_dequant"
 #define NAME_SCORE "classification_dequant"
@@ -104,8 +104,6 @@ ThermalFace::ThermalFace() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
-
-  m_reverse_device_mem = true;
 }
 
 ThermalFace::~ThermalFace() {}
