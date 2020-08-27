@@ -74,7 +74,7 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
     info.shape.dim[3] = input->shape.dim[3];
     info.fmt = CVI_FMT_INT8;
     for (size_t i = 0; i < 3; ++i) {
-      if (m_reverse_device_mem == true) {
+      if (m_reverse_device_mem) {
         info.stride[i] = srcFrame->stVFrame.u32Stride[2 - i];
         info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[2 - i];
       } else {

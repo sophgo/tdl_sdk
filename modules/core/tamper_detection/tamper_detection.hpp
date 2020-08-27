@@ -6,7 +6,7 @@ class TamperDetectorMD {
   TamperDetectorMD() = delete;
   // TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum=0.05, int update_interval=10);
   TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum, int update_interval);
-  void update(VIDEO_FRAME_INFO_S *frame);
+  int update(VIDEO_FRAME_INFO_S *frame);
   int detect(VIDEO_FRAME_INFO_S *frame);
   int detect(VIDEO_FRAME_INFO_S *frame, float *moving_score);
   IVE_IMAGE_S &getMean();

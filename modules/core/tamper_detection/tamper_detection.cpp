@@ -101,13 +101,14 @@ TamperDetectorMD::TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentu
 #endif
 }
 
-void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
+int TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   // printf("[update] start\n");
   CVI_S32 ret = CVI_SUCCESS;
   IVE_IMAGE_S new_frame;
   ret = CVI_IVE_VideoFrameInfo2Image(frame, &new_frame);
   if (ret != CVI_SUCCESS) {
     printf("Convert to video frame failed with %#x!\n", ret);
+    return ret;
   }
 #if DEBUG
   std::cout << "==== [update] input frame ====" << std::endl;
@@ -139,10 +140,10 @@ void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   IVE_SUB_CTRL_S iveSubCtrl;
   iveSubCtrl.enMode = IVE_SUB_MODE_ABS;  // ABS_DIFF
   // Run IVE sub.
-  ret = CVI_IVE_Sub(this->ive_handle, &new_frame, &this->mean, &frame_diff_1, &iveSubCtrl, 0);
+  ret |= CVI_IVE_Sub(this->ive_handle, &new_frame, &this->mean, &frame_diff_1, &iveSubCtrl, false);
   if (ret != CVI_SUCCESS) {
     std::cout << "error: sub" << std::endl;
-    exit(1);
+    return ret;
   }
 #if DEBUG
   std::cout << "==== [update] frame diff (1) ====" << std::endl;
@@ -154,7 +155,8 @@ void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   IVE_ADD_CTRL_S iveAddCtrl;
   iveAddCtrl.aX = 1.0;
   iveAddCtrl.bY = 1.0;
-  ret = CVI_IVE_Add(this->ive_handle, &frame_diff_1, &frame_diff_1, &frame_diff_1, &iveAddCtrl, 0);
+  ret |= CVI_IVE_Add(this->ive_handle, &frame_diff_1, &frame_diff_1, &frame_diff_1, &iveAddCtrl,
+                     false);
 #if DEBUG
   std::cout << "==== [update] frame diff (2) ====" << std::endl;
   CVI_IVE_BufFlush(this->ive_handle, &frame_diff_1);
@@ -173,10 +175,10 @@ void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   print_IVE_IMAGE_S(this->mean, DEBUG_PRINT_CHANNELS_NUM);
 #endif
   // Update mean
-  ret = CVI_IVE_Add(this->ive_handle, &this->mean, &new_frame, &this->mean, &iveAddCtrl, 0);
+  ret |= CVI_IVE_Add(this->ive_handle, &this->mean, &new_frame, &this->mean, &iveAddCtrl, false);
   if (ret != CVI_SUCCESS) {
     std::cout << "error: add" << std::endl;
-    exit(1);
+    return ret;
   }
 #if DEBUG
   std::cout << "==== [update] new mean ====" << std::endl;
@@ -192,10 +194,10 @@ void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   print_IVE_IMAGE_S(this->diff, DEBUG_PRINT_CHANNELS_NUM);
 #endif
   // Update diff
-  ret = CVI_IVE_Add(this->ive_handle, &this->diff, &frame_diff_1, &this->diff, &iveAddCtrl, 0);
+  ret |= CVI_IVE_Add(this->ive_handle, &this->diff, &frame_diff_1, &this->diff, &iveAddCtrl, false);
   if (ret != CVI_SUCCESS) {
     std::cout << "error: add" << std::endl;
-    exit(1);
+    return ret;
   }
 #if DEBUG
   std::cout << "==== [update] new diff ====" << std::endl;
@@ -204,7 +206,7 @@ void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
 #endif
 
   iveSubCtrl.enMode = IVE_SUB_MODE_NORMAL;
-  ret = CVI_IVE_Sub(this->ive_handle, &this->diff, &min_diff, &frame_diff_1, &iveSubCtrl, 0);
+  ret |= CVI_IVE_Sub(this->ive_handle, &this->diff, &min_diff, &frame_diff_1, &iveSubCtrl, false);
 #if DEBUG
   std::cout << "==== [update] min diff ====" << std::endl;
   CVI_IVE_BufFlush(this->ive_handle, &min_diff);
@@ -219,7 +221,7 @@ void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   iveThreshCtrl.u8LowThr = 0;
   iveThreshCtrl.u8MinVal = 0;
   iveThreshCtrl.u8MaxVal = 255;
-  ret = CVI_IVE_Thresh(this->ive_handle, &u8c1_image, &u8c1_image, &iveThreshCtrl, 0);
+  ret |= CVI_IVE_Thresh(this->ive_handle, &u8c1_image, &u8c1_image, &iveThreshCtrl, false);
 #if DEBUG
   std::cout << "==== [update] diff sub (move) (thr) ====" << std::endl;
   CVI_IVE_BufFlush(this->ive_handle, &frame_diff_1);
@@ -230,17 +232,18 @@ void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   memset(frame_diff_2.pu8VirAddr[2], 255, imgSize);
   // Flush to DRAM before IVE function.
   CVI_IVE_BufFlush(this->ive_handle, &frame_diff_2);
-  ret = CVI_IVE_Sub(this->ive_handle, &frame_diff_2, &frame_diff_1, &frame_diff_2, &iveSubCtrl, 0);
+  ret |= CVI_IVE_Sub(this->ive_handle, &frame_diff_2, &frame_diff_1, &frame_diff_2, &iveSubCtrl,
+                     false);
 #if DEBUG
   std::cout << "==== [update] frame_diff_2 ====" << std::endl;
   CVI_IVE_BufFlush(this->ive_handle, &frame_diff_2);
   print_IVE_IMAGE_S(frame_diff_2, DEBUG_PRINT_CHANNELS_NUM);
 #endif
 
-  ret = CVI_IVE_And(this->ive_handle, &this->diff, &frame_diff_1, &frame_diff_1, 0);
-  ret = CVI_IVE_And(this->ive_handle, &min_diff, &frame_diff_2, &frame_diff_2, 0);
+  ret |= CVI_IVE_And(this->ive_handle, &this->diff, &frame_diff_1, &frame_diff_1, false);
+  ret |= CVI_IVE_And(this->ive_handle, &min_diff, &frame_diff_2, &frame_diff_2, false);
   u8c1_image.tpu_block = this->diff.tpu_block;
-  ret = CVI_IVE_Or(this->ive_handle, &frame_diff_1, &frame_diff_2, &u8c1_image, 0);
+  ret |= CVI_IVE_Or(this->ive_handle, &frame_diff_1, &frame_diff_2, &u8c1_image, false);
 #if DEBUG
   std::cout << "==== [update] final diff ====" << std::endl;
   CVI_IVE_BufRequest(this->ive_handle, &this->diff);
@@ -253,6 +256,7 @@ void TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   CVI_SYS_FreeI(this->ive_handle, &min_diff);
 
   this->counter = 1;
+  return ret;
 }
 
 int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
@@ -295,7 +299,7 @@ int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
   IVE_SUB_CTRL_S iveSubCtrl;
   iveSubCtrl.enMode = IVE_SUB_MODE_ABS;  // ABS_DIFF
   // Run IVE sub.
-  ret = CVI_IVE_Sub(this->ive_handle, &new_frame, &this->mean, &frame_diff, &iveSubCtrl, 0);
+  ret |= CVI_IVE_Sub(this->ive_handle, &new_frame, &this->mean, &frame_diff, &iveSubCtrl, false);
   if (ret != CVI_SUCCESS) {
     std::cout << "error: sub" << std::endl;
     exit(1);
@@ -307,7 +311,7 @@ int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
 #endif
 
   iveSubCtrl.enMode = IVE_SUB_MODE_NORMAL;
-  ret = CVI_IVE_Sub(this->ive_handle, &frame_diff, &this->diff, &frame_move, &iveSubCtrl, 0);
+  ret |= CVI_IVE_Sub(this->ive_handle, &frame_diff, &this->diff, &frame_move, &iveSubCtrl, false);
 #if DEBUG
   std::cout << "==== [detect] move ====" << std::endl;
   CVI_IVE_BufFlush(this->ive_handle, &frame_move);
@@ -320,14 +324,14 @@ int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
   iveThreshCtrl.u8LowThr = 0;
   iveThreshCtrl.u8MinVal = 0;
   iveThreshCtrl.u8MaxVal = 255;
-  ret = CVI_IVE_Thresh(this->ive_handle, &u8c1_image_1, &u8c1_image_1, &iveThreshCtrl, 0);
+  ret |= CVI_IVE_Thresh(this->ive_handle, &u8c1_image_1, &u8c1_image_1, &iveThreshCtrl, false);
 #if DEBUG
   std::cout << "==== [detect] move (thr) ====" << std::endl;
   CVI_IVE_BufRequest(this->ive_handle, &frame_move);
   print_IVE_IMAGE_S(frame_move, DEBUG_PRINT_CHANNELS_NUM);
 #endif
 
-  ret = CVI_IVE_And(this->ive_handle, &frame_diff, &frame_move, &frame_diff, 0);
+  ret |= CVI_IVE_And(this->ive_handle, &frame_diff, &frame_move, &frame_diff, false);
 #if DEBUG
   std::cout << "==== [detect] frame_diff (move) ====" << std::endl;
   CVI_IVE_BufFlush(this->ive_handle, &frame_diff);
@@ -363,7 +367,7 @@ int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
   CVI_SYS_FreeI(this->ive_handle, &frame_diff);
   CVI_SYS_FreeI(this->ive_handle, &frame_move);
 
-  return 0;
+  return ret;
 }
 
 int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame) {

@@ -224,8 +224,7 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   FaceAttributeInfo result;
 
   // feature
-  std::string feature_out_name =
-      (m_with_attribute == true) ? ATTRIBUTE_OUT_NAME : RECOGNITION_OUT_NAME;
+  std::string feature_out_name = (m_with_attribute) ? ATTRIBUTE_OUT_NAME : RECOGNITION_OUT_NAME;
   CVI_TENSOR *out =
       CVI_NN_GetTensorByName(feature_out_name.c_str(), mp_output_tensors, m_output_num);
   int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
@@ -237,7 +236,7 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   meta->info[meta_i].face_feature.type = TYPE_INT8;
   memcpy(meta->info[meta_i].face_feature.ptr, face_blob, face_feature_size);
 
-  if (m_with_attribute == false) {
+  if (!m_with_attribute) {
     return;
   }
 
