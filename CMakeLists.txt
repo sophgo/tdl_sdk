@@ -61,7 +61,7 @@ include (${IVE_SDK_ROOT}/cmake/ive.cmake)
 include(cmake/tracer.cmake)
 
 set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=c11 ${SSE_FLAGS}")
-set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++14 ${SSE_FLAGS}")
+set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 ${SSE_FLAGS}")
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_INIT} -O3" )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_INIT} -O3" )

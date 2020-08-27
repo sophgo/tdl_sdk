@@ -2,10 +2,12 @@
 
 #include "coco/coco.hpp"
 #include "lfw/lfw.hpp"
+#include "wider_face/wider_face.hpp"
 
 typedef struct {
   cviai::evaluation::CocoEval *coco_eval = nullptr;
   cviai::evaluation::lfwEval *lfw_eval = nullptr;
+  cviai::evaluation::widerFaceEval *widerface_eval = nullptr;
 } cviai_eval_context_t;
 
 CVI_S32 CVI_AI_Eval_CreateHandle(cviai_eval_handle_t *handle) {
@@ -145,5 +147,51 @@ CVI_S32 CVI_AI_Eval_LfwClearEvalData(cviai_eval_handle_t handle) {
     return CVI_FAILURE;
   }
   ctx->lfw_eval->resetEvalData();
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_WiderFaceInit(cviai_eval_handle_t handle, const char *datasetDir,
+                                  const char *resultDir, uint32_t *imageNum) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->widerface_eval == nullptr) {
+    ctx->widerface_eval = new cviai::evaluation::widerFaceEval(datasetDir, resultDir);
+  } else {
+    ctx->widerface_eval->getEvalData(datasetDir, resultDir);
+  }
+  *imageNum = ctx->widerface_eval->getTotalImage();
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_WiderFaceGetImagePath(cviai_eval_handle_t handle, const uint32_t index,
+                                          char **filepath) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->widerface_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  std::string filestr;
+  ctx->widerface_eval->getImageFilePath(index, &filestr);
+  auto stringlength = strlen(filestr.c_str()) + 1;
+  *filepath = (char *)malloc(stringlength);
+  strncpy(*filepath, filestr.c_str(), stringlength);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_WiderFaceResultSave2File(cviai_eval_handle_t handle, const int index,
+                                             const VIDEO_FRAME_INFO_S *frame,
+                                             const cvai_face_t *face) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->widerface_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->widerface_eval->saveFaceData(index, frame, face);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_WiderFaceClearInput(cviai_eval_handle_t handle) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->widerface_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->widerface_eval->resetData();
   return CVI_SUCCESS;
 }

@@ -43,6 +43,19 @@ CVI_S32 CVI_AI_Eval_LfwSave2File(cviai_eval_handle_t handle, const char *filepat
 CVI_S32 CVI_AI_Eval_LfwClearInput(cviai_eval_handle_t handle);
 
 CVI_S32 CVI_AI_Eval_LfwClearEvalData(cviai_eval_handle_t handle);
+
+CVI_S32 CVI_AI_Eval_WiderFaceInit(cviai_eval_handle_t handle, const char *datasetDir,
+                                  const char *resultDir, uint32_t *imageNum);
+
+CVI_S32 CVI_AI_Eval_WiderFaceGetImagePath(cviai_eval_handle_t handle, const uint32_t index,
+                                          char **filepath);
+
+CVI_S32 CVI_AI_Eval_WiderFaceResultSave2File(cviai_eval_handle_t handle, const int index,
+                                             const VIDEO_FRAME_INFO_S *frame,
+                                             const cvai_face_t *face);
+
+CVI_S32 CVI_AI_Eval_WiderFaceClearInput(cviai_eval_handle_t handle);
+
 #ifdef __cplusplus
 }
 #endif
