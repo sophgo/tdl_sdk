@@ -1,14 +1,5 @@
-#include <dirent.h>
-#include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <math.h>
-#include <sys/stat.h> 
-
-#include <cvimath/cvimath.h>
 
 #include "cviai.h"
 #include "core/utils/vpss_helper.h"
@@ -18,7 +9,7 @@ cviai_handle_t facelib_handle = NULL;
 int main(int argc, char *argv[])
 {
   if (argc != 3) {
-    printf("Usage: %s <root folder> <evaluate json>.\n", argv[0]);
+    printf("Usage: %s <image root folder> <evaluate json>.\n", argv[0]);
     return CVI_FAILURE;
   }
 
@@ -39,17 +30,14 @@ int main(int argc, char *argv[])
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
-                            "/mnt/data/retina_face.cvimodel");
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE,
                             "/mnt/data/thermalfd-v1_resnet18-bifpn-sh.cvimodel");
   if (ret != CVI_SUCCESS) {
-    printf("Set model retinaface failed with %#x!\n", ret);
+    printf("Set model thermalface failed with %#x!\n", ret);
     return ret;
   }
 
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, false);
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
