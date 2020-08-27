@@ -29,13 +29,12 @@ int lfwEval::getEvalData(const char *fiilepath) {
 
     const char *delim = " ";
     char *label = strtok(line, delim);
-    printf("%s\n", label);
     char *name1 = strtok(NULL, delim);
-    printf("%s\n", name1);
     char *name2 = strtok(NULL, delim);
-    printf("%s\n", name2);
     m_data.push_back({atoi(label), name1, name2});
   }
+  m_eval_label.resize(m_data.size());
+  m_eval_score.resize(m_data.size());
   fclose(fp);
   return CVI_SUCCESS;
 }
@@ -45,7 +44,7 @@ uint32_t lfwEval::getTotalImage() { return m_data.size(); }
 void lfwEval::getImageLabelPair(const int index, std::string *path1, std::string *path2,
                                 int *label) {
   *path1 = m_data[index].path1;
-  *path1 = m_data[index].path2;
+  *path2 = m_data[index].path2;
   *label = m_data[index].label;
 }
 
