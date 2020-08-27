@@ -34,7 +34,7 @@ add_executable(reg_thermal reg_thermal.c)
 
 target_link_libraries(reg_face_attribute cviai_core ${SAMPLE_LIBS})
 target_link_libraries(reg_face_quality cviai_core ${SAMPLE_LIBS})
-target_link_libraries(reg_lfw cviai_core m ${SAMPLE_LIBS})
+target_link_libraries(reg_lfw cviai_core cviai_evaluation ${SAMPLE_LIBS})
 target_link_libraries(reg_wider_face cviai_core m ${SAMPLE_LIBS})
 target_link_libraries(reg_mobiledetv2 cviai_core cviai_evaluation ${SAMPLE_LIBS})
 target_link_libraries(reg_yolov3 cviai_core cviai_evaluation ${SAMPLE_LIBS})

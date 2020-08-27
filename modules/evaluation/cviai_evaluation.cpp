@@ -1,9 +1,11 @@
 #include "evaluation/cviai_evaluation.h"
 
 #include "coco/coco.hpp"
+#include "lfw/lfw.hpp"
 
 typedef struct {
   cviai::evaluation::CocoEval *coco_eval = nullptr;
+  cviai::evaluation::lfwEval *lfw_eval = nullptr;
 } cviai_eval_context_t;
 
 CVI_S32 CVI_AI_Eval_CreateHandle(cviai_eval_handle_t *handle) {
@@ -78,5 +80,70 @@ CVI_S32 CVI_AI_Eval_CocoClearObject(cviai_eval_handle_t handle) {
     return CVI_FAILURE;
   }
   ctx->coco_eval->resetWriteJsonObject();
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_LfwInit(cviai_eval_handle_t handle, const char *filepath, uint32_t *imageNum) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lfw_eval == nullptr) {
+    ctx->lfw_eval = new cviai::evaluation::lfwEval(filepath);
+  } else {
+    ctx->lfw_eval->getEvalData(filepath);
+  }
+  *imageNum = ctx->lfw_eval->getTotalImage();
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_LfwGetImageLabelPair(cviai_eval_handle_t handle, const uint32_t index,
+                                         char **filepath, char **filepath2, int *label) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lfw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  std::string filestr, filestr2;
+  ctx->lfw_eval->getImageLabelPair(index, &filestr, &filestr2, label);
+  auto stringlength = strlen(filestr.c_str()) + 1;
+  *filepath = (char *)malloc(stringlength);
+  strncpy(*filepath, filestr.c_str(), stringlength);
+  stringlength = strlen(filestr2.c_str()) + 1;
+  *filepath2 = (char *)malloc(stringlength);
+  strncpy(*filepath2, filestr2.c_str(), stringlength);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_LfwInsertFace(cviai_eval_handle_t handle, const int index, const int label,
+                                  const cvai_face_t *face1, const cvai_face_t *face2) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lfw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->lfw_eval->insertFaceData(index, label, face1, face2);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_LfwSave2File(cviai_eval_handle_t handle, const char *filepath) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lfw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->lfw_eval->saveEval2File(filepath);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_LfwClearInput(cviai_eval_handle_t handle) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lfw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->lfw_eval->resetData();
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_LfwClearEvalData(cviai_eval_handle_t handle) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lfw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->lfw_eval->resetEvalData();
   return CVI_SUCCESS;
 }
