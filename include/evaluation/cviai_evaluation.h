@@ -15,15 +15,15 @@ CVI_S32 CVI_AI_Eval_CreateHandle(cviai_eval_handle_t *handle);
 
 CVI_S32 CVI_AI_Eval_DestroyHandle(cviai_eval_handle_t handle);
 
-CVI_S32 CVI_AI_Eval_CocoInit(cviai_eval_handle_t handle, const char *path_prefix,
-                             const char *json_path, uint32_t *image_num);
+CVI_S32 CVI_AI_Eval_CocoInit(cviai_eval_handle_t handle, const char *pathPrefix,
+                             const char *jsonPath, uint32_t *imageNum);
 
 CVI_S32 CVI_AI_Eval_CocoGetImageIdPair(cviai_eval_handle_t handle, const uint32_t index,
                                        char **filepath, int *id);
 
 CVI_S32 CVI_AI_Eval_CocoInsertObject(cviai_eval_handle_t handle, const int id, cvai_object_t *obj);
 
-CVI_S32 CVI_AI_Eval_CocoSave2Json(cviai_eval_handle_t handle);
+CVI_S32 CVI_AI_Eval_CocoSave2Json(cviai_eval_handle_t handle, const char *filepath);
 
 CVI_S32 CVI_AI_Eval_CocoClearInput(cviai_eval_handle_t handle);
 

@@ -45,8 +45,8 @@ void CocoEval::resetReadJsonObject() { m_json_read.clear(); }
 
 void CocoEval::resetWriteJsonObject() { m_json_write.clear(); }
 
-void CocoEval::saveJsonObject2File() {
-  std::ofstream result("result.json");
+void CocoEval::saveJsonObject2File(const char *filepath) {
+  std::ofstream result(filepath);
   result << m_json_write;
   result.close();
 }

@@ -19,15 +19,15 @@ CVI_S32 CVI_AI_Eval_DestroyHandle(cviai_eval_handle_t handle) {
   return CVI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_Eval_CocoInit(cviai_eval_handle_t handle, const char *path_prefix,
-                             const char *json_path, uint32_t *image_num) {
+CVI_S32 CVI_AI_Eval_CocoInit(cviai_eval_handle_t handle, const char *pathPrefix,
+                             const char *jsonPath, uint32_t *imageNum) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   if (ctx->coco_eval == nullptr) {
-    ctx->coco_eval = new cviai::evaluation::CocoEval(path_prefix, json_path);
+    ctx->coco_eval = new cviai::evaluation::CocoEval(pathPrefix, jsonPath);
   } else {
-    ctx->coco_eval->getEvalData(path_prefix, json_path);
+    ctx->coco_eval->getEvalData(pathPrefix, jsonPath);
   }
-  *image_num = ctx->coco_eval->getTotalImage();
+  *imageNum = ctx->coco_eval->getTotalImage();
   return CVI_SUCCESS;
 }
 
@@ -54,12 +54,12 @@ CVI_S32 CVI_AI_Eval_CocoInsertObject(cviai_eval_handle_t handle, const int id, c
   return CVI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_Eval_CocoSave2Json(cviai_eval_handle_t handle) {
+CVI_S32 CVI_AI_Eval_CocoSave2Json(cviai_eval_handle_t handle, const char *filepath) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   if (ctx->coco_eval == nullptr) {
     return CVI_FAILURE;
   }
-  ctx->coco_eval->saveJsonObject2File();
+  ctx->coco_eval->saveJsonObject2File(filepath);
   return CVI_SUCCESS;
 }
 

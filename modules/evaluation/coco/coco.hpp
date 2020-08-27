@@ -13,7 +13,7 @@ class CocoEval {
   void insertObjectData(const int id, const cvai_object_t *obj);
   void resetReadJsonObject();
   void resetWriteJsonObject();
-  void saveJsonObject2File();
+  void saveJsonObject2File(const char *filepath);
   ~CocoEval();
 
  private:

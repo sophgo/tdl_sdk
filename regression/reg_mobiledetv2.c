@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&obj);
     CVI_VB_ReleaseBlock(blk);
   }
-  CVI_AI_Eval_CocoSave2Json(eval_handle);
+  CVI_AI_Eval_CocoSave2Json(eval_handle, "result.json");
   CVI_AI_Eval_CocoClearInput(eval_handle);
   CVI_AI_Eval_CocoClearObject(eval_handle);
 
