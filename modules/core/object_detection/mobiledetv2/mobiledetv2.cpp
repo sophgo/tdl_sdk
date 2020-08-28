@@ -27,6 +27,23 @@
 #include "misc.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 
+#include "core/utils/vpss_helper.h"
+
+static const float STD_R = (255.0 * 0.229);
+static const float STD_G = (255.0 * 0.224);
+static const float STD_B = (255.0 * 0.225);
+static const float MODEL_MEAN_R = 0.485 * 255.0;
+static const float MODEL_MEAN_G = 0.456 * 255.0;
+static const float MODEL_MEAN_B = 0.406 * 255.0;
+static const float quant_thresh = 2.641289710998535;
+
+#define FACTOR_R (128.0 / (STD_R * quant_thresh))
+#define FACTOR_G (128.0 / (STD_G * quant_thresh))
+#define FACTOR_B (128.0 / (STD_B * quant_thresh))
+#define MEAN_R ((128.0 * MODEL_MEAN_R) / (STD_R * quant_thresh))
+#define MEAN_G ((128.0 * MODEL_MEAN_G) / (STD_G * quant_thresh))
+#define MEAN_B ((128.0 * MODEL_MEAN_B) / (STD_B * quant_thresh))
+
 using namespace std;
 
 namespace cviai {
@@ -177,6 +194,18 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh, float score
 
 MobileDetV2::~MobileDetV2() {}
 
+int MobileDetV2::initAfterModelOpened() {
+  CVI_TENSOR *input = getInputTensor(0);
+  VPSS_CHN_ATTR_S vpssChnAttr;
+  const float factor[] = {FACTOR_R, FACTOR_G, FACTOR_B};
+  const float mean[] = {MEAN_R, MEAN_G, MEAN_B};
+  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
+  m_vpss_chn_attr.push_back(vpssChnAttr);
+
+  return CVI_SUCCESS;
+}
+
 #if defined(__arm64__) || defined(__aarch64__)
 static inline __attribute__((always_inline)) uint32_t sum_q(int8x16_t v) { return vaddvq_s8(v); }
 #else
@@ -311,7 +340,24 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
                            cvai_obj_det_type_t det_type) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
-  int ret = run(frame);
+  int ret = CVI_SUCCESS;
+  if (m_skip_vpss_preprocess) {
+    ret = run(frame);
+  } else {
+    VIDEO_FRAME_INFO_S stDstFrame;
+    mp_vpss_inst->sendFrame(frame, &m_vpss_chn_attr[0], 1);
+    ret = mp_vpss_inst->getFrame(&stDstFrame, 0);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
+      return ret;
+    }
+    ret = run(&stDstFrame);
+
+    ret |= mp_vpss_inst->releaseFrame(&stDstFrame, 0);
+    if (ret != CVI_SUCCESS) {
+      return ret;
+    }
+  }
 
   Detections dets;
   generate_dets_for_each_stride(&dets);
@@ -325,6 +371,16 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
   final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
 
   convert_det_struct(final_dets, meta, input->shape.dim[2], input->shape.dim[3]);
+
+  if (!m_skip_vpss_preprocess) {
+    for (uint32_t i = 0; i < meta->size; ++i) {
+      meta->info[i].bbox = box_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                                         meta->width, meta->height, meta->info[i].bbox);
+    }
+    meta->width = frame->stVFrame.u32Width;
+    meta->height = frame->stVFrame.u32Height;
+  }
+
   return ret;
 }
 

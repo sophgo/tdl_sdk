@@ -438,6 +438,9 @@ int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
     printf("No instance found for MobileDetV2.\n");
     return CVI_RC_FAILURE;
   }
+  detector->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+  detector->skipVpssPreprocess(m_t.skip_vpss_preprocess);
+
   return detector->inference(frame, obj, det_type);
 }
 

@@ -41,11 +41,13 @@ int main(int argc, char *argv[]) {
   }
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
-                            "/mnt/data/cvimodel/mobiledetv2.cvimodel");
+                            "/mnt/data/cvimodel/mobiledetv2_d0.cvimodel");
   if (ret != CVI_SUCCESS) {
     printf("Set model yolov3 failed with %#x!\n", ret);
     return ret;
   }
+
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, false);
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);

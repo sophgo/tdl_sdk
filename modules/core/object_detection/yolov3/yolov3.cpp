@@ -48,7 +48,7 @@ int Yolov3::initAfterModelOpened() {
   const float factor[] = {YOLOV3_QUANTIZE_SCALE, YOLOV3_QUANTIZE_SCALE, YOLOV3_QUANTIZE_SCALE};
   const float mean[] = {0, 0, 0};
   VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, true);
   m_vpss_chn_attr.push_back(vpssChnAttr);
 
   return CVI_SUCCESS;
