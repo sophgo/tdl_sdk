@@ -131,34 +131,23 @@ int ThermalFace::initAfterModelOpened() {
   return CVI_SUCCESS;
 }
 
+int ThermalFace::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
+  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  VPSS_CHN_ATTR_S vpssChnAttr;
+  const float factor[] = {SCALE_R, SCALE_G, SCALE_B};
+  const float mean[] = {MEAN_R, MEAN_G, MEAN_B};
+  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
+                        input->shape.dim[3], input->shape.dim[2], PIXEL_FORMAT_RGB_888_PLANAR,
+                        factor, mean, true);
+  mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
+  return mp_vpss_inst->getFrame(dstFrame, 0);
+}
+
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
   int ret = CVI_SUCCESS;
-  if (m_skip_vpss_preprocess) {
-    ret = run(srcFrame);
-  } else {
-    VIDEO_FRAME_INFO_S stDstFrame;
-    VPSS_CHN_ATTR_S vpssChnAttr;
-    const float factor[] = {SCALE_R, SCALE_G, SCALE_B};
-    const float mean[] = {MEAN_R, MEAN_G, MEAN_B};
-    VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                          input->shape.dim[3], input->shape.dim[2], PIXEL_FORMAT_RGB_888_PLANAR,
-                          factor, mean, true);
-    mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
-    ret = mp_vpss_inst->getFrame(&stDstFrame, 0);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-      return ret;
-    }
-
-    ret = run(&stDstFrame);
-
-    ret |= mp_vpss_inst->releaseFrame(&stDstFrame, 0);
-    if (ret != CVI_SUCCESS) {
-      return ret;
-    }
-  }
+  ret = run(srcFrame);
 
   std::vector<cvai_face_info_t> faceList;
   outputParser(input->shape.dim[3], input->shape.dim[2], &faceList);

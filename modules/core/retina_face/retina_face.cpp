@@ -78,23 +78,7 @@ int RetinaFace::initAfterModelOpened() {
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *face_count) {
   int ret = CVI_SUCCESS;
 
-  if (m_skip_vpss_preprocess) {
-    ret = run(srcFrame);
-  } else {
-    VIDEO_FRAME_INFO_S stDstFrame;
-    mp_vpss_inst->sendFrame(srcFrame, &m_vpss_chn_attr[0], 1);
-    ret = mp_vpss_inst->getFrame(&stDstFrame, 0);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-      return ret;
-    }
-    ret = run(&stDstFrame);
-
-    ret |= mp_vpss_inst->releaseFrame(&stDstFrame, 0);
-    if (ret != CVI_SUCCESS) {
-      return ret;
-    }
-  }
+  ret = run(srcFrame);
 
   CVI_TENSOR *input = getInputTensor(0);
   float ratio = 1.0;

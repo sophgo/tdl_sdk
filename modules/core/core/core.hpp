@@ -40,6 +40,7 @@ class Core {
 
  protected:
   virtual int initAfterModelOpened() { return CVI_SUCCESS; }
+  virtual int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame);
   int run(VIDEO_FRAME_INFO_S *srcFrame);
   CVI_TENSOR *getInputTensor(int idx);
   CVI_TENSOR *getOutputTensor(int idx);
@@ -53,9 +54,12 @@ class Core {
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
   bool m_skip_vpss_preprocess = false;
-  bool m_reverse_device_mem = false;
 
   VpssEngine *mp_vpss_inst = nullptr;
   std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
+
+ private:
+  inline int __attribute__((always_inline)) runVideoForward(VIDEO_FRAME_INFO_S *srcFrame);
+  bool m_reverse_device_mem = false;
 };
 }  // namespace cviai

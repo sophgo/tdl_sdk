@@ -197,8 +197,10 @@ MobileDetV2::~MobileDetV2() {}
 int MobileDetV2::initAfterModelOpened() {
   CVI_TENSOR *input = getInputTensor(0);
   VPSS_CHN_ATTR_S vpssChnAttr;
-  const float factor[] = {FACTOR_R, FACTOR_G, FACTOR_B};
-  const float mean[] = {MEAN_R, MEAN_G, MEAN_B};
+  const float factor[] = {static_cast<float>(FACTOR_R), static_cast<float>(FACTOR_G),
+                          static_cast<float>(FACTOR_B)};
+  const float mean[] = {static_cast<float>(MEAN_R), static_cast<float>(MEAN_G),
+                        static_cast<float>(MEAN_B)};
   VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
                      PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
   m_vpss_chn_attr.push_back(vpssChnAttr);
@@ -341,23 +343,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
   int ret = CVI_SUCCESS;
-  if (m_skip_vpss_preprocess) {
-    ret = run(frame);
-  } else {
-    VIDEO_FRAME_INFO_S stDstFrame;
-    mp_vpss_inst->sendFrame(frame, &m_vpss_chn_attr[0], 1);
-    ret = mp_vpss_inst->getFrame(&stDstFrame, 0);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-      return ret;
-    }
-    ret = run(&stDstFrame);
-
-    ret |= mp_vpss_inst->releaseFrame(&stDstFrame, 0);
-    if (ret != CVI_SUCCESS) {
-      return ret;
-    }
-  }
+  ret = run(frame);
 
   Detections dets;
   generate_dets_for_each_stride(&dets);
