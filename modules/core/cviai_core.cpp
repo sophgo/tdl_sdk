@@ -441,6 +441,31 @@ int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
   return detector->inference(frame, obj, det_type);
 }
 
+int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                          cvai_obj_det_type_t det_type) {
+  ScopedTrace st(__func__);
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      printf("Model path for MobiledetV2 is empty.\n");
+      return CVI_RC_FAILURE;
+    }
+    m_t.instance = new MobileDetV2(MobileDetV2::Model::d2);
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
+      printf("Open model failed (%s).\n", m_t.model_path.c_str());
+      return CVI_RC_FAILURE;
+    }
+  }
+
+  MobileDetV2 *detector = dynamic_cast<MobileDetV2 *>(m_t.instance);
+  if (detector == nullptr) {
+    printf("No instance found for MobileDetV2.\n");
+    return CVI_RC_FAILURE;
+  }
+  return detector->inference(frame, obj, det_type);
+}
+
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
                       int *face_count) {
   ScopedTrace st(__func__);
