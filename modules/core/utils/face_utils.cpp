@@ -132,6 +132,7 @@ cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta,
   face_info.bbox.x2 = max(min(x2, width - 1), (float)0);
   face_info.bbox.y1 = max(min(y1, height - 1), (float)0);
   face_info.bbox.y2 = max(min(y2, height - 1), (float)0);
+  face_info.bbox.score = face_meta->info[face_idx].bbox.score;
 
   return face_info;
 }
