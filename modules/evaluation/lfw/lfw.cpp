@@ -66,6 +66,8 @@ void lfwEval::resetData() { m_data.clear(); }
 void lfwEval::resetEvalData() {
   m_eval_label.clear();
   m_eval_score.clear();
+  m_eval_label.resize(m_data.size());
+  m_eval_score.resize(m_data.size());
 }
 
 void lfwEval::saveEval2File(const char *filepath) {
