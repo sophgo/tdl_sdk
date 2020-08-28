@@ -23,6 +23,9 @@ CVI_S32 CVI_AI_Eval_DestroyHandle(cviai_eval_handle_t handle) {
   return CVI_SUCCESS;
 }
 
+/****************************************************************
+ * Coco evaluation functions
+ **/
 CVI_S32 CVI_AI_Eval_CocoInit(cviai_eval_handle_t handle, const char *pathPrefix,
                              const char *jsonPath, uint32_t *imageNum) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
@@ -85,6 +88,9 @@ CVI_S32 CVI_AI_Eval_CocoClearObject(cviai_eval_handle_t handle) {
   return CVI_SUCCESS;
 }
 
+/****************************************************************
+ * LFW evaluation functions
+ **/
 CVI_S32 CVI_AI_Eval_LfwInit(cviai_eval_handle_t handle, const char *filepath, uint32_t *imageNum) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   if (ctx->lfw_eval == nullptr) {
@@ -150,6 +156,9 @@ CVI_S32 CVI_AI_Eval_LfwClearEvalData(cviai_eval_handle_t handle) {
   return CVI_SUCCESS;
 }
 
+/****************************************************************
+ * Wider Face evaluation functions
+ **/
 CVI_S32 CVI_AI_Eval_WiderFaceInit(cviai_eval_handle_t handle, const char *datasetDir,
                                   const char *resultDir, uint32_t *imageNum) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);

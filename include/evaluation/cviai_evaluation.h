@@ -16,6 +16,9 @@ CVI_S32 CVI_AI_Eval_CreateHandle(cviai_eval_handle_t *handle);
 
 CVI_S32 CVI_AI_Eval_DestroyHandle(cviai_eval_handle_t handle);
 
+/****************************************************************
+ * Coco evaluation functions
+ **/
 CVI_S32 CVI_AI_Eval_CocoInit(cviai_eval_handle_t handle, const char *pathPrefix,
                              const char *jsonPath, uint32_t *imageNum);
 
@@ -30,6 +33,9 @@ CVI_S32 CVI_AI_Eval_CocoClearInput(cviai_eval_handle_t handle);
 
 CVI_S32 CVI_AI_Eval_CocoClearObject(cviai_eval_handle_t handle);
 
+/****************************************************************
+ * LFW evaluation functions
+ **/
 CVI_S32 CVI_AI_Eval_LfwInit(cviai_eval_handle_t handle, const char *filepath, uint32_t *imageNum);
 
 CVI_S32 CVI_AI_Eval_LfwGetImageLabelPair(cviai_eval_handle_t handle, const uint32_t index,
@@ -44,6 +50,9 @@ CVI_S32 CVI_AI_Eval_LfwClearInput(cviai_eval_handle_t handle);
 
 CVI_S32 CVI_AI_Eval_LfwClearEvalData(cviai_eval_handle_t handle);
 
+/****************************************************************
+ * Wider Face evaluation functions
+ **/
 CVI_S32 CVI_AI_Eval_WiderFaceInit(cviai_eval_handle_t handle, const char *datasetDir,
                                   const char *resultDir, uint32_t *imageNum);
 
