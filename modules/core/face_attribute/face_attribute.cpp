@@ -83,10 +83,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 
       cvai_face_info_t face_info =
           bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
-      VIDEO_FRAME_INFO_S frame;
-      prepareInputTensorGDC(*stOutFrame, &frame, face_info);
-      run(&frame);
-      mp_vpss_inst->releaseFrame(&frame, 0);
+      prepareInputTensorGDC(*stOutFrame, face_info);
+      run(&m_gdc_frame);
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
     }
@@ -127,16 +125,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 void FaceAttribute::setWithAttribute(bool with_attr) { m_with_attribute = with_attr; }
 
 int FaceAttribute::prepareInputTensorGDC(const VIDEO_FRAME_INFO_S &frame,
-                                         VIDEO_FRAME_INFO_S *outframe,
                                          cvai_face_info_t &face_info) {
-  face_align_gdc(&frame, &m_gdc_frame, face_info);
-  mp_vpss_inst->sendFrame(&m_gdc_frame, &m_vpss_chn_attr[0], 1);
-  int ret = mp_vpss_inst->getFrame(outframe, 0);
-  if (ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-    return ret;
-  }
-  return ret;
+  return face_align_gdc(&frame, &m_gdc_frame, face_info);
 }
 
 void FaceAttribute::prepareInputTensor(const VIDEO_FRAME_INFO_S &frame, const cv::Mat &src_image,

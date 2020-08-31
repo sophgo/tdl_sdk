@@ -16,8 +16,7 @@ class FaceAttribute final : public Core {
 
  private:
   virtual int initAfterModelOpened() override;
-  int prepareInputTensorGDC(const VIDEO_FRAME_INFO_S &frame, VIDEO_FRAME_INFO_S *outframe,
-                            cvai_face_info_t &face_info);
+  int prepareInputTensorGDC(const VIDEO_FRAME_INFO_S &frame, cvai_face_info_t &face_info);
   void prepareInputTensor(const VIDEO_FRAME_INFO_S &frame, const cv::Mat &src_image,
                           cvai_face_info_t &face_info);
   void outputParser(cvai_face_t *meta, int meta_i);
