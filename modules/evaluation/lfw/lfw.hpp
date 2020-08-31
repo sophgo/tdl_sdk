@@ -1,6 +1,8 @@
 #pragma once
 #include "core/face/cvai_face_types.h"
-#include "nlohmann_json/single_include/nlohmann/json.hpp"
+
+#include <string>
+#include <vector>
 
 namespace cviai {
 namespace evaluation {

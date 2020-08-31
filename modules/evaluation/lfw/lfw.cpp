@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 static int compare(const void *arg1, const void *arg2) {
   return static_cast<int>(*(float *)arg1 < *(float *)arg2);
