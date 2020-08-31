@@ -100,6 +100,36 @@ VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_
 }
 
 inline void __attribute__((always_inline))
+VPSS_CHN_RATIO_MANUAL_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_U32 dstHeight,
+                             PIXEL_FORMAT_E enDstFormat, CVI_U32 ratioX, CVI_U32 ratioY,
+                             CVI_U32 ratioWidth, CVI_U32 ratioHeight) {
+  pastVpssChnAttr->u32Width = dstWidth;
+  pastVpssChnAttr->u32Height = dstHeight;
+  pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
+  pastVpssChnAttr->enPixelFormat = enDstFormat;
+
+  pastVpssChnAttr->stFrameRate.s32SrcFrameRate = -1;
+  pastVpssChnAttr->stFrameRate.s32DstFrameRate = -1;
+  pastVpssChnAttr->u32Depth = 1;
+  pastVpssChnAttr->bMirror = CVI_FALSE;
+  pastVpssChnAttr->bFlip = CVI_FALSE;
+  pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.s32Y = ratioX;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.s32X = ratioY;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = ratioWidth;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = ratioHeight;
+  pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
+  pastVpssChnAttr->stNormalize.bEnable = CVI_FALSE;
+  pastVpssChnAttr->stNormalize.factor[0] = 0;
+  pastVpssChnAttr->stNormalize.factor[1] = 0;
+  pastVpssChnAttr->stNormalize.factor[2] = 0;
+  pastVpssChnAttr->stNormalize.mean[0] = 0;
+  pastVpssChnAttr->stNormalize.mean[1] = 0;
+  pastVpssChnAttr->stNormalize.mean[2] = 0;
+  pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+}
+
+inline void __attribute__((always_inline))
 VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
                    const CVI_U32 dstHeight, const PIXEL_FORMAT_E enDstFormat,
                    const CVI_FLOAT *factor, const CVI_FLOAT *mean, const bool padReverse) {
