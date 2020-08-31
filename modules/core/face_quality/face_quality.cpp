@@ -144,6 +144,9 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   }
 
   CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+  frame->stVFrame.pu8VirAddr[0] = NULL;
+  frame->stVFrame.pu8VirAddr[1] = NULL;
+  frame->stVFrame.pu8VirAddr[2] = NULL;
 
   return CVI_SUCCESS;
 }

@@ -26,7 +26,6 @@
 cviai_handle_t facelib_handle = NULL;
 
 static VPSS_GRP VpssGrp = 0;
-static VPSS_CHN VpssChn = VPSS_CHN0;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
@@ -43,8 +42,8 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
 
     printf("%s\n", line);
     VB_BLK blk_fr;
-    VIDEO_FRAME_INFO_S bgr_frame;
-    CVI_S32 ret = CVI_AI_ReadImage(line, &blk_fr, &bgr_frame, PIXEL_FORMAT_BGR_888);
+    VIDEO_FRAME_INFO_S rgb_frame;
+    CVI_S32 ret = CVI_AI_ReadImage(line, &blk_fr, &rgb_frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -53,19 +52,9 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
     int face_count = 0;
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_RetinaFace(facelib_handle, &bgr_frame, &face, &face_count);
+    CVI_AI_RetinaFace(facelib_handle, &rgb_frame, &face, &face_count);
     if (face_count > 0 && face_quality == true) {
-      VIDEO_FRAME_INFO_S rgb_frame;
-      VPSS_GRP_ATTR_S vpss_grp_attr;
-      VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, bgr_frame.stVFrame.u32Width, bgr_frame.stVFrame.u32Height,
-                              bgr_frame.stVFrame.enPixelFormat);
-      CVI_VPSS_SetGrpAttr(VpssGrp, &vpss_grp_attr);
-      CVI_VPSS_SendFrame(VpssGrp, &bgr_frame, -1);
-      CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &rgb_frame, 1000);
-
       CVI_AI_FaceQuality(facelib_handle, &rgb_frame, &face);
-
-      CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &rgb_frame);
     }
 
     int face_idx = 0;
@@ -80,7 +69,7 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
     }
 
     if (face_count > 0 && (face_quality == false || face.info[face_idx].face_quality.quality > 0.05)) {
-      CVI_AI_FaceAttributeOne(facelib_handle, &bgr_frame, &face, face_idx);
+      CVI_AI_FaceAttributeOne(facelib_handle, &rgb_frame, &face, face_idx);
 
       char *file_name;
       file_name = strrchr(line, '/');
@@ -238,9 +227,6 @@ int main(void) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
-
-  VPSS_INIT_HELPER(VpssGrp, vpssgrp_width, vpssgrp_height, 0, PIXEL_FORMAT_BGR_888, 608, 608,
-                   PIXEL_FORMAT_RGB_888, VPSS_MODE_SINGLE, true, false);
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
   if (ret != CVI_SUCCESS) {

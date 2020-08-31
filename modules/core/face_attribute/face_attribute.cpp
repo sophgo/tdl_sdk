@@ -91,8 +91,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       CVI_AI_FreeCpp(&face_info);
     }
   } else {
-    if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_BGR_888) {
-      printf("Supported format is PIXEL_FORMAT_BGR_888. Current: %x\n",
+    if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
+      printf("Supported format is PIXEL_FORMAT_RGB_888. Current: %x\n",
              stOutFrame->stVFrame.enPixelFormat);
       return -1;
     }
