@@ -52,11 +52,9 @@ set(SAMPLE_LIBS
 buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_read_image INC ${SAMPLE_INC} DEPS cviai_core ${IVE_LIBS})
 buildninstall(NAME sample_fd INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
-buildninstall(NAME sample_fd_fr INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_face_quality INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_object_detection INC ${SAMPLE_INC} DEPS cviai_core cviai_objservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_face_register INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
-buildninstall(NAME sample_mask_classification INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_mask_face_recognition INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 
 buildninstall(NAME sample_digital_tracking INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${IVE_LIBS})
