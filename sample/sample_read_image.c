@@ -3,8 +3,8 @@
 #include "ive/ive.h"
 
 int main(int argc, char *argv[]) {
-  if (argc != 3) {
-    printf("Usage: sample_read_image <retina_model_path> <image>.\n");
+  if (argc != 4) {
+    printf("Usage: %s <retina_model_path> <attribute_model_path> <image>.\n", argv[0]);
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
@@ -34,10 +34,16 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
+  if (ret != CVI_SUCCESS) {
+    printf("Set model retinaface failed with %#x!\n", ret);
+    return ret;
+  }
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, false);
 
   // Read image using IVE.
   IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
-  IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, argv[2], IVE_IMAGE_TYPE_U8C3_PACKAGE);
+  IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, argv[3], IVE_IMAGE_TYPE_U8C3_PACKAGE);
   if (image.u16Width == 0) {
     printf("Read image failed with %x!\n", ret);
     return ret;
