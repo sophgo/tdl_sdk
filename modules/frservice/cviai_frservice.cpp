@@ -171,10 +171,10 @@ CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint
   return CVI_SUCCESS;
 }
 
-CVI_S32 CVIAI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
-                                    const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
-                                    const float face_skip_ratio, const float trans_ratio,
-                                    VIDEO_FRAME_INFO_S *outFrame) {
+CVI_S32 CVI_AI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
+                                     const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
+                                     const float face_skip_ratio, const float trans_ratio,
+                                     VIDEO_FRAME_INFO_S *outFrame) {
   cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
   if (ctx->m_dt == nullptr) {
     ctx->m_dt = new cviai::service::DigitalTracking();

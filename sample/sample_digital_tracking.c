@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   VIDEO_FRAME_INFO_S outFrame;
   // Try to zoom in with 20 runs.
   for (uint32_t i = 0; i < 20; i++) {
-    ret = CVIAI_FRService_DigitalZoom(frs_handle, &fdFrame, &face, 0.05f, 0.1f, &outFrame);
+    ret = CVI_AI_FRService_DigitalZoom(frs_handle, &fdFrame, &face, 0.05f, 0.1f, &outFrame);
 
     // Free frame from digital zoom
     if (ret == CVI_SUCCESS) {
