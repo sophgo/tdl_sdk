@@ -13,9 +13,11 @@
 #define VIP_WIDTH_ALIGN 32
 #define SCALAR_4096_ALIGN_BUG 0x1000
 
+// Legacy support
 static inline int __attribute__((always_inline))
-MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
-                uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
+MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
+                 const uint32_t inBlkCount, uint32_t enDstWidth, uint32_t enDstHeight,
+                 PIXEL_FORMAT_E enDstFormat, const uint32_t outBlkCount) {
   COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
   // Init SYS and Common VB,
   // Running w/ Vi don't need to do it again. Running Vpss along need init below
@@ -27,11 +29,11 @@ MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcF
   u32BlkSize = COMMON_GetPicBufferSize(enSrcWidth, enSrcHeight, enSrcFormat, DATA_BITWIDTH_8,
                                        enCompressMode, DEFAULT_ALIGN);
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[0].u32BlkCnt = 12;
+  stVbConf.astCommPool[0].u32BlkCnt = inBlkCount;
   u32BlkSize = COMMON_GetPicBufferSize(enDstWidth, enDstHeight, enDstFormat, DATA_BITWIDTH_8,
                                        enCompressMode, DEFAULT_ALIGN);
   stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[1].u32BlkCnt = 12;
+  stVbConf.astCommPool[1].u32BlkCnt = outBlkCount;
 
   CVI_S32 s32Ret = CVI_FAILURE;
 
@@ -56,6 +58,13 @@ MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcF
   }
 
   return s32Ret;
+}
+
+static inline int __attribute__((always_inline))
+MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
+                uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
+  return MMF_INIT_HELPER2(enSrcWidth, enSrcHeight, enSrcFormat, 12, enDstWidth, enDstHeight,
+                          enDstFormat, 12);
 }
 
 inline void __attribute__((always_inline))
