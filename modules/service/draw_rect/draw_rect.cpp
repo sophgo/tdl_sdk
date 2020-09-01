@@ -1,5 +1,9 @@
-#include "draw_utils.h"
-#include "string.h"
+#include "draw_rect.hpp"
+
+#include "core_utils.hpp"
+
+#include <cvi_sys.h>
+#include <string.h>
 
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
 #define max(x, y) (((x) >= (y)) ? (x) : (y))
@@ -8,6 +12,9 @@
 #define DEFAULT_RECT_COLOR_G (208. / 255.)
 #define DEFAULT_RECT_COLOR_B (217. / 255.)
 #define DEFAULT_RECT_THINKNESS 4
+
+namespace cviai {
+namespace service {
 
 typedef struct {
   float r;
@@ -34,6 +41,7 @@ static float GetYuvColor(int chanel, color_rgb *color) {
   return (yuv_color < 0) ? 0 : ((yuv_color > 255.) ? 255 : yuv_color);
 }
 
+// TODO: Need refactor
 static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
                      color_rgb color, int rect_thinkness) {
   int width = frame->stVFrame.u32Width;
@@ -87,11 +95,11 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
     // draw rect vertical line
     for (int h = draw_y1; h <= draw_y2; ++h) {
       for (int w = draw_x1; w < draw_x1 + draw_rect_thinkness; ++w) {
-        memset((void *)frame->stVFrame.pu8VirAddr[i] + h * stride + w, draw_color,
+        memset((void *)(frame->stVFrame.pu8VirAddr[i] + h * stride + w), draw_color,
                sizeof(draw_color));
       }
       for (int w = draw_x2 - draw_rect_thinkness; (w < draw_x2) && (w >= 0); ++w) {
-        memset((void *)frame->stVFrame.pu8VirAddr[i] + h * stride + w, draw_color,
+        memset((void *)(frame->stVFrame.pu8VirAddr[i] + h * stride + w), draw_color,
                sizeof(draw_color));
       }
     }
@@ -99,11 +107,11 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
     // draw rect horizontal line
     for (int w = draw_x1; w <= draw_x2; ++w) {
       for (int h = draw_y1; h < draw_y1 + draw_rect_thinkness; ++h) {
-        memset((void *)frame->stVFrame.pu8VirAddr[i] + h * stride + w, draw_color,
+        memset((void *)(frame->stVFrame.pu8VirAddr[i] + h * stride + w), draw_color,
                sizeof(draw_color));
       }
       for (int h = draw_y2 - draw_rect_thinkness; (h < draw_y2) && (h >= 0); ++h) {
-        memset((void *)frame->stVFrame.pu8VirAddr[i] + h * stride + w, draw_color,
+        memset((void *)(frame->stVFrame.pu8VirAddr[i] + h * stride + w), draw_color,
                sizeof(draw_color));
       }
     }
@@ -113,88 +121,24 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
   CVI_SYS_Munmap(vir_addr, image_size);
 }
 
-void DrawFaceMeta(VIDEO_FRAME_INFO_S *draw_frame, cvai_face_t *face_meta) {
-  if (0 == face_meta->size) {
-    return;
-  }
-
-  float width = draw_frame->stVFrame.u32Width;
-  float height = draw_frame->stVFrame.u32Height;
-  float ratio_x, ratio_y, bbox_y_height, bbox_x_height, bbox_padding_top = 0, bbox_padding_left = 0;
-  if (width >= height) {
-    ratio_x = width / face_meta->width;
-    bbox_y_height = face_meta->height * height / width;
-    ratio_y = height / bbox_y_height;
-    bbox_padding_top = (face_meta->height - bbox_y_height) / 2;
-  } else {
-    ratio_y = height / face_meta->height;
-    bbox_x_height = face_meta->width * width / height;
-    ratio_x = width / bbox_x_height;
-    bbox_padding_left = (face_meta->width - bbox_x_height) / 2;
-  }
-
-  color_rgb rgb_color;
-  rgb_color.r = 0.0;
-  rgb_color.g = 1.0;
-  rgb_color.b = 0.0;
-
-  for (int i = 0; i < face_meta->size; ++i) {
-    cvai_bbox_t bbox = face_meta->info[i].bbox;
-    float x1, x2, y1, y2;
-    if (width >= height) {
-      x1 = bbox.x1 * ratio_x;
-      x2 = bbox.x2 * ratio_x;
-      y1 = (bbox.y1 - bbox_padding_top) * ratio_y;
-      y2 = (bbox.y2 - bbox_padding_top) * ratio_y;
-    } else {
-      x1 = (bbox.x1 - bbox_padding_left) * ratio_x;
-      x2 = (bbox.x2 - bbox_padding_left) * ratio_x;
-      y1 = bbox.y1 * ratio_y;
-      y2 = bbox.y2 * ratio_y;
-    }
-
-    DrawRect(draw_frame, x1, x2, y1, y2, rgb_color, DEFAULT_RECT_THINKNESS);
-  }
-}
-
-void DrawObjMeta(VIDEO_FRAME_INFO_S *draw_frame, cvai_object_t *meta) {
-  if (0 == meta->size) {
-    return;
-  }
-  float width = draw_frame->stVFrame.u32Width;
-  float height = draw_frame->stVFrame.u32Height;
-  float ratio_x, ratio_y, bbox_y_height, bbox_x_height, bbox_padding_top = 0, bbox_padding_left = 0;
-  if (width >= height) {
-    ratio_x = width / meta->width;
-    bbox_y_height = meta->height * height / width;
-    ratio_y = height / bbox_y_height;
-    bbox_padding_top = (meta->height - bbox_y_height) / 2;
-  } else {
-    ratio_y = height / meta->height;
-    bbox_x_height = meta->width * width / height;
-    ratio_x = width / bbox_x_height;
-    bbox_padding_left = (meta->width - bbox_x_height) / 2;
+template <typename T>
+int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame) {
+  if (meta->size == 0) {
+    return CVI_SUCCESS;
   }
   color_rgb rgb_color;
   rgb_color.r = DEFAULT_RECT_COLOR_R;
   rgb_color.g = DEFAULT_RECT_COLOR_G;
   rgb_color.b = DEFAULT_RECT_COLOR_B;
-
-  for (int i = 0; i < meta->size; ++i) {
-    cvai_bbox_t bbox = meta->info[i].bbox;
-    float x1, x2, y1, y2;
-    if (width >= height) {
-      x1 = bbox.x1 * ratio_x;
-      x2 = bbox.x2 * ratio_x;
-      y1 = (bbox.y1 - bbox_padding_top) * ratio_y;
-      y2 = (bbox.y2 - bbox_padding_top) * ratio_y;
-    } else {
-      x1 = (bbox.x1 - bbox_padding_left) * ratio_x;
-      x2 = (bbox.x2 - bbox_padding_left) * ratio_x;
-      y1 = bbox.y1 * ratio_y;
-      y2 = bbox.y2 * ratio_y;
-    }
-
-    DrawRect(draw_frame, x1, x2, y1, y2, rgb_color, DEFAULT_RECT_THINKNESS);
+  for (size_t i = 0; i < meta->size; i++) {
+    cvai_bbox_t bbox = box_rescale_c(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height,
+                                     meta->width, meta->height, meta->info[i].bbox);
+    DrawRect(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, rgb_color, DEFAULT_RECT_THINKNESS);
   }
+  return CVI_SUCCESS;
 }
+
+template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame);
+template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame);
+}  // namespace service
+}  // namespace cviai

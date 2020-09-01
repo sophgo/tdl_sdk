@@ -80,6 +80,14 @@ CVI_S32 CVIAI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
                                     const float face_skip_ratio, const float trans_ratio,
                                     VIDEO_FRAME_INFO_S *outFrame);
 
+/**
+ * @brief Draw rect to YUV frame with given face meta.
+ *
+ * @param meta meta structure.
+ * @param frame In/ out YUV frame.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame);
 #ifdef __cplusplus
 }
 #endif

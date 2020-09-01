@@ -19,7 +19,6 @@
 #include "cvi_vi.h"
 
 #include "cviai.h"
-#include "draw_utils.h"
 #include "sample_comm.h"
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -89,7 +88,7 @@ static void Run() {
     printf("face_count %d\n", face.size);
     CVI_AI_MaskClassification(facelib_handle, &stfdFrame, &face);
 
-    DrawFaceMeta(&stfdFrame, &face);
+    CVI_AI_FRService_DrawRect(&face, &stfdFrame);
 
     s32Ret = ReleaseVideoframe(&stfdFrame);
     if (s32Ret != CVI_SUCCESS) {

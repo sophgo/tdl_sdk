@@ -1,6 +1,5 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "draw_utils.h"
 #include "sample_comm.h"
 
 #include <cvi_ae.h>
@@ -128,7 +127,7 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      DrawFaceMeta(&stVOFrame, &face);
+      CVI_AI_FRService_DrawRect(&face, &stVOFrame);
       s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);
       if (s32Ret != CVI_SUCCESS) {
         printf("CVI_VO_SendFrame failed with %#x\n", s32Ret);

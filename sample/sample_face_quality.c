@@ -19,7 +19,6 @@
 #include "cvi_vi.h"
 
 #include "cviai.h"
-#include "draw_utils.h"
 #include "sample_comm.h"
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -126,7 +125,7 @@ static void Run() {
 
     DoFd(facelib_handle, &stfdFrame, &stfrFrame, &face);
 
-    DrawFaceMeta(&stVOFrame, &face);
+    CVI_AI_FRService_DrawRect(&face, &stVOFrame);
 
     // s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);
     // if (s32Ret != CVI_SUCCESS) {

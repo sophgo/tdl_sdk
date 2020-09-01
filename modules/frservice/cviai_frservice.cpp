@@ -2,6 +2,7 @@
 
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
+#include "draw_rect/draw_rect.hpp"
 
 #include <cvimath/cvimath.h>
 
@@ -181,4 +182,8 @@ CVI_S32 CVIAI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
 
   ctx->m_dt->setVpssEngine(CVI_AI_GetVpssEngine(ctx->ai_handle, 0));
   return ctx->m_dt->run(inFrame, meta, outFrame, face_skip_ratio, trans_ratio);
+}
+
+CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame) {
+  return cviai::service::DrawMeta(meta, frame);
 }
