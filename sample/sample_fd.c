@@ -37,8 +37,8 @@ static CVI_S32 InitVI(const VI_PIPE viPipe, SAMPLE_VI_CONFIG_S *pstViConfig);
 static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig);
 
 static CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
-                        const CVI_S32 grpWidth, const CVI_S32 grpHeight, const VI_PIPE viPipe,
-                        const CVI_BOOL isVOOpened);
+                        const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
+                        const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened);
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
@@ -70,8 +70,10 @@ int main(int argc, char *argv[]) {
     return s32Ret;
   }
 
+  const CVI_U32 voWidth = 1280;
+  const CVI_U32 voHeight = 720;
   if (isVoOpened) {
-    s32Ret = InitVO(1280, 720, &stVoConfig);
+    s32Ret = InitVO(voWidth, voHeight, &stVoConfig);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_Init_Video_Output failed with %d\n", s32Ret);
       return s32Ret;
@@ -79,7 +81,8 @@ int main(int argc, char *argv[]) {
     CVI_VO_HideChn(VoLayer, VoChn);
   }
 
-  s32Ret = InitVPSS(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, ViPipe, isVoOpened);
+  s32Ret = InitVPSS(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight, ViPipe,
+                    isVoOpened);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video process group 0 failed with %d\n", s32Ret);
     return s32Ret;
@@ -243,20 +246,20 @@ CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *st
 }
 
 CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
-                 const CVI_S32 grpWidth, const CVI_S32 grpHeight, const VI_PIPE viPipe,
-                 const CVI_BOOL isVOOpened) {
+                 const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
+                 const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   VPSS_GRP_ATTR_S stVpssGrpAttr;
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   VPSS_CHN_ATTR_S stVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
 
   abChnEnable[vpssChn] = CVI_TRUE;
-  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChn], 1280, 720, PIXEL_FORMAT_RGB_888, true);
+  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChn], voWidth, voHeight, PIXEL_FORMAT_RGB_888, true);
 
   if (isVOOpened) {
     abChnEnable[vpssChnVO] = CVI_TRUE;
-    VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChnVO], 1280, 720, PIXEL_FORMAT_YUV_PLANAR_420,
-                            true);
+    VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChnVO], voWidth, voHeight,
+                            PIXEL_FORMAT_YUV_PLANAR_420, true);
   }
 
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
