@@ -83,7 +83,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 
       cvai_face_info_t face_info =
           bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
-      prepareInputTensorGDC(*stOutFrame, face_info);
+      face_align_gdc(stOutFrame, &m_gdc_frame, face_info);
       run(&m_gdc_frame);
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
@@ -123,11 +123,6 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 }
 
 void FaceAttribute::setWithAttribute(bool with_attr) { m_with_attribute = with_attr; }
-
-int FaceAttribute::prepareInputTensorGDC(const VIDEO_FRAME_INFO_S &frame,
-                                         cvai_face_info_t &face_info) {
-  return face_align_gdc(&frame, &m_gdc_frame, face_info);
-}
 
 void FaceAttribute::prepareInputTensor(const VIDEO_FRAME_INFO_S &frame, const cv::Mat &src_image,
                                        cvai_face_info_t &face_info) {
