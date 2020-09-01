@@ -237,7 +237,7 @@ CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *st
   if (s32Ret != CVI_SUCCESS) {
     printf("SAMPLE_COMM_VO_StartVO failed with %#x\n", s32Ret);
   }
-  CVI_VO_SetChnRotation(0, 0, ROTATION_90);
+  CVI_VO_SetChnRotation(0, 0, ROTATION_270);
   printf("SAMPLE_COMM_VO_StartVO done\n");
   return s32Ret;
 }
