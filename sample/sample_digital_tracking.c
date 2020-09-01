@@ -79,7 +79,8 @@ int main(int argc, char *argv[]) {
       // Map the image.
       CVI_U32 imageLength = outFrame.stVFrame.u32Length[0] + outFrame.stVFrame.u32Length[1] +
                             outFrame.stVFrame.u32Length[2];
-      outFrame.stVFrame.pu8VirAddr[0] = CVI_SYS_Mmap(outFrame.stVFrame.u64PhyAddr[0], imageLength);
+      outFrame.stVFrame.pu8VirAddr[0] =
+          CVI_SYS_MmapCache(outFrame.stVFrame.u64PhyAddr[0], imageLength);
       // Convert to IVE image. Note this function does not map or unmap for you.
       ret = CVI_IVE_VideoFrameInfo2Image(&outFrame, &outImage);
       // Write image to file.
@@ -88,6 +89,7 @@ int main(int argc, char *argv[]) {
       CVI_IVE_WriteImage(ive_handle, name, &outImage);
       // Unmap image.
       CVI_SYS_Munmap((void *)outFrame.stVFrame.pu8VirAddr[0], imageLength);
+      outFrame.stVFrame.pu8VirAddr[0] = NULL;
       // Release frame.
       CVI_SYS_FreeI(ive_handle, &outImage);
       CVI_VPSS_ReleaseChnFrame(groups[0], 0, &outFrame);

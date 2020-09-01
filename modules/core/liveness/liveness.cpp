@@ -28,12 +28,13 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
                                                 cvai_liveness_ir_position_e ir_pos) {
   cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3);
   frame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   char *va_rgb = (char *)frame->stVFrame.pu8VirAddr[0];
   for (int i = 0; i < rgb_frame.rows; i++) {
     memcpy(rgb_frame.ptr(i, 0), va_rgb + frame->stVFrame.u32Stride[0] * i, rgb_frame.cols * 3);
   }
   CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+  frame->stVFrame.pu8VirAddr[0] = NULL;
 
   if (rgb_frame.data == nullptr) {
     printf("src Image is empty!\n");

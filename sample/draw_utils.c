@@ -53,7 +53,7 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
   CVI_VOID *vir_addr = CVI_NULL;
   size_t image_size =
       frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-  vir_addr = CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], image_size);
+  vir_addr = CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
   CVI_U32 plane_offset = 0;
 
   for (int i = PLANE_Y; i < PLANE_NUM; i++) {
@@ -107,8 +107,9 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
                sizeof(draw_color));
       }
     }
+    frame->stVFrame.pu8VirAddr[i] = NULL;
   }
-
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
   CVI_SYS_Munmap(vir_addr, image_size);
 }
 

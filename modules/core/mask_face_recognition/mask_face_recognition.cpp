@@ -27,7 +27,7 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
   uint32_t img_height = frame->stVFrame.u32Height;
   cv::Mat image(img_height, img_width, CV_8UC3);
   frame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   char *va_rgb = (char *)frame->stVFrame.pu8VirAddr[0];
   uint32_t dst_width = image.cols;
   uint32_t dst_height = image.rows;
@@ -37,6 +37,7 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
   }
 
   CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+  frame->stVFrame.pu8VirAddr[0] = NULL;
 
   for (uint32_t i = 0; i < meta->size; ++i) {
     cvai_face_info_t face_info =

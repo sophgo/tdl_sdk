@@ -98,7 +98,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
     uint32_t img_height = stOutFrame->stVFrame.u32Height;
     bool do_unmap = false;
     if (stOutFrame->stVFrame.pu8VirAddr[0] == NULL) {
-      stOutFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(
+      stOutFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
           stOutFrame->stVFrame.u64PhyAddr[0], stOutFrame->stVFrame.u32Length[0]);
       do_unmap = true;
     }
@@ -117,6 +117,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
     }
     if (do_unmap) {
       CVI_SYS_Munmap((void *)stOutFrame->stVFrame.pu8VirAddr[0], stOutFrame->stVFrame.u32Length[0]);
+      stOutFrame->stVFrame.pu8VirAddr[0] = NULL;
     }
   }
   return CVI_SUCCESS;
@@ -144,13 +145,14 @@ void FaceAttribute::prepareInputTensor(const VIDEO_FRAME_INFO_S &frame, const cv
     mp_vpss_inst->sendFrame(&m_gdc_frame, &vpssChnAttr, 1);
     VIDEO_FRAME_INFO_S rgb_frame;
     mp_vpss_inst->getFrame(&rgb_frame, 0);
-    rgb_frame.stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_Mmap(rgb_frame.stVFrame.u64PhyAddr[0], rgb_frame.stVFrame.u32Length[0]);
+    rgb_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(rgb_frame.stVFrame.u64PhyAddr[0],
+                                                                   rgb_frame.stVFrame.u32Length[0]);
     cv::Mat rgb_image(image.rows, image.cols, CV_8UC3, rgb_frame.stVFrame.pu8VirAddr[0],
                       rgb_frame.stVFrame.u32Stride[0]);
     cv::imwrite("opencv.png", image);
     cv::imwrite("wrap_hw.png", rgb_image);
     CVI_SYS_Munmap((void *)rgb_frame.stVFrame.pu8VirAddr[0], rgb_frame.stVFrame.u32Length[0]);
+    rgb_frame.stVFrame.pu8VirAddr[0] = NULL;
     mp_vpss_inst->releaseFrame(&rgb_frame, 0);
   }
   // FIXME: End
