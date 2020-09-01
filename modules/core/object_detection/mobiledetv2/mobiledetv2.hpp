@@ -29,6 +29,7 @@ class MobileDetV2 final : public Core {
     std::vector<int> strides;
     std::map<int, std::string> class_out_names;
     std::map<int, std::string> bbox_out_names;
+    std::map<int, std::string> obj_max_names;
     std::map<int, float> class_dequant_thresh;
     std::map<int, float> bbox_dequant_thresh;
     static ModelConfig create_config(MobileDetV2::Model model);
@@ -44,7 +45,7 @@ class MobileDetV2 final : public Core {
     int label;
   };
 
-  MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45, float score_thresh = 0.6);
+  MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45, float score_thresh = 0.3);
   virtual ~MobileDetV2();
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_t det_type);
 
@@ -56,12 +57,13 @@ class MobileDetV2 final : public Core {
   int initAfterModelOpened() override;
   void get_tensor_ptr_size(const std::string &tname, int8_t **ptr, size_t *size);
   void get_raw_outputs(std::vector<std::pair<int8_t *, size_t>> *cls_tensor_ptr,
+                       std::vector<std::pair<int8_t *, size_t>> *objectness_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *bbox_tensor_ptr);
   void generate_dets_for_each_stride(Detections *det_vec);
   void generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
                                 float bbox_dequant_thresh, int8_t quant_thresh,
-                                const int8_t *logits, int8_t *bboxes, size_t class_tensor_size,
-                                const std::vector<AnchorBox> &anchors);
+                                const int8_t *logits, const int8_t *objectness, int8_t *bboxes,
+                                size_t class_tensor_size, const std::vector<AnchorBox> &anchors);
   std::vector<std::vector<AnchorBox>> m_anchors;
   ModelConfig m_model_config;
   float m_iou_threshold;

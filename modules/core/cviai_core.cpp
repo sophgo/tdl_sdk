@@ -448,7 +448,7 @@ int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
                           cvai_obj_det_type_t det_type) {
   ScopedTrace st(__func__);
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0];
+  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2];
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
       printf("Model path for MobiledetV2 is empty.\n");
@@ -466,6 +466,9 @@ int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
     printf("No instance found for MobileDetV2.\n");
     return CVI_RC_FAILURE;
   }
+
+  detector->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+  detector->skipVpssPreprocess(m_t.skip_vpss_preprocess);
   return detector->inference(frame, obj, det_type);
 }
 

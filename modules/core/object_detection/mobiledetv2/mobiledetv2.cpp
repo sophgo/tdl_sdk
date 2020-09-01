@@ -1,12 +1,3 @@
-#ifdef __ARM_ARCH
-#include <arm_neon.h>
-#else
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#include "neon2sse/NEON_2_SSE.h"
-#pragma clang diagnostic pop
-#endif
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -208,70 +199,15 @@ int MobileDetV2::initAfterModelOpened() {
   return CVI_SUCCESS;
 }
 
-#if defined(__arm64__) || defined(__aarch64__)
-static inline __attribute__((always_inline)) uint32_t sum_q(int8x16_t v) { return vaddvq_s8(v); }
-#else
-static inline __attribute__((always_inline)) uint32_t sum_q(int8x16_t v) {
-  /**
-   * v: [0][1][2][3][4][5][6][7][8][9][10][11][12][13][14][15]
-   *
-   *             [ 8][ 9][10][11][12][13][14][15]
-   * folding:   +[ 0][ 1][ 2][ 3][ 4][ 5][ 6][ 7]
-   *           ---------------------------------
-   *             [ 0][ 1][ 2][ 3][ 4][ 5][ 6][ 7]
-   *               \   /   \   /   \  /    \  /
-   * padd_16:      [ 0]    [ 1]    [ 2]    [ 3]
-   *                 \      /        \      /
-   * padd_32:          [ 0]            [ 1]
-   *                    |                |
-   * return:           [ 0]     +      [ 1]
-   */
-  int8x8_t folding = vadd_s8(vget_high_s8(v), vget_low_s8(v));
-  int16x4_t padd_16 = vpaddl_s8(folding);
-  int32x2_t padd_32 = vpaddl_s16(padd_16);
-  return (uint32_t)(vget_lane_s32(padd_32, 0) + vget_lane_s32(padd_32, 1));
-}
-#endif
-
-static inline __attribute__((always_inline)) uint32_t get_num_object_in_grid(const int8_t *logits,
-                                                                             size_t count,
-                                                                             int8_t quant_thresh) {
-  // calculate how much scores greater than threshold using NEON intrinsics
-  // don't record the index here, because it needs if-branches and couple memory write ops.
-  // we check index later if there is at least one object.
-  int8x16_t thresh_vec = vdupq_n_s8(quant_thresh);
-  const size_t rest = 10;  // 90 classs % 16 = 10, use hardcode value because it's easy for
-                           // unrolling loop by compilier
-  int8x16_t sum_vec = vdupq_n_s8(0);
-  for (size_t class_idx = 0; class_idx < count - rest; class_idx += 16) {
-    int8x16_t value = vld1q_s8(logits + class_idx);
-    uint8x16_t cmp = vcgeq_s8(value, thresh_vec);
-    sum_vec = vsubq_s8(sum_vec, (int8x16_t)cmp);
-  }
-
-  uint32_t num_objects = sum_q(sum_vec);
-
-  const int8_t *rest_arr = logits + (count - rest);
-  for (size_t start = 0; start < rest; start++) {
-    if (*(rest_arr + start) >= quant_thresh) {
-      num_objects++;
-    }
-  }
-  return num_objects;
-}
-
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
                                            float bbox_dequant_thresh, int8_t quant_thresh,
-                                           const int8_t *logits, int8_t *bboxes,
-                                           size_t class_tensor_size,
+                                           const int8_t *logits, const int8_t *objectness,
+                                           int8_t *bboxes, size_t class_tensor_size,
                                            const vector<AnchorBox> &anchors) {
-  for (size_t score_index = 0; score_index < class_tensor_size;
-       score_index += m_model_config.num_classes) {
-    uint32_t num_objects =
-        get_num_object_in_grid(logits + score_index, m_model_config.num_classes, quant_thresh);
-
-    // create detection if any object exists in this grid
-    if (unlikely(num_objects)) {
+  for (size_t obj_index = 0; obj_index < class_tensor_size; obj_index++) {
+    if (unlikely(*(objectness + obj_index) >= quant_thresh)) {
+      // create detection if any object exists in this grid
+      size_t score_index = obj_index * 90;
       size_t end = score_index + m_model_config.num_classes;
 
       // find objects in this grid
@@ -298,18 +234,19 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
 
 void MobileDetV2::generate_dets_for_each_stride(Detections *det_vec) {
   vector<pair<int8_t *, size_t>> cls_raw_out;
+  vector<pair<int8_t *, size_t>> objectness_raw_out;
   vector<pair<int8_t *, size_t>> bbox_raw_out;
-  get_raw_outputs(&cls_raw_out, &bbox_raw_out);
+  get_raw_outputs(&cls_raw_out, &objectness_raw_out, &bbox_raw_out);
 
   auto class_thresh_iter = m_model_config.class_dequant_thresh.begin();
   auto bbox_thresh_iter = m_model_config.bbox_dequant_thresh.begin();
 
   for (size_t stride_index = 0; stride_index < cls_raw_out.size(); stride_index++) {
-    generate_dets_for_tensor(det_vec, class_thresh_iter->second, bbox_thresh_iter->second,
-                             m_quant_inverse_score_threshold[stride_index],
-                             cls_raw_out[stride_index].first, bbox_raw_out[stride_index].first,
-                             static_cast<int>(cls_raw_out[stride_index].second),
-                             m_anchors[stride_index]);
+    generate_dets_for_tensor(
+        det_vec, class_thresh_iter->second, bbox_thresh_iter->second,
+        m_quant_inverse_score_threshold[stride_index], cls_raw_out[stride_index].first,
+        objectness_raw_out[stride_index].first, bbox_raw_out[stride_index].first,
+        static_cast<int>(objectness_raw_out[stride_index].second), m_anchors[stride_index]);
 
     class_thresh_iter++;
     bbox_thresh_iter++;
@@ -324,6 +261,7 @@ void MobileDetV2::get_tensor_ptr_size(const std::string &tname, int8_t **ptr, si
 }
 
 void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tensor_ptr,
+                                  std::vector<pair<int8_t *, size_t>> *objectness_tensor_ptr,
                                   std::vector<pair<int8_t *, size_t>> *bbox_tensor_ptr) {
   for (auto stride : m_model_config.strides) {
     int8_t *tensor = nullptr;
@@ -335,6 +273,11 @@ void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tenso
     tsize = 0;
     get_tensor_ptr_size(m_model_config.bbox_out_names[stride], &tensor, &tsize);
     bbox_tensor_ptr->push_back({tensor, tsize});
+
+    tensor = nullptr;
+    tsize = 0;
+    get_tensor_ptr_size(m_model_config.obj_max_names[stride], &tensor, &tsize);
+    objectness_tensor_ptr->push_back({tensor, tsize});
   }
 }
 
@@ -344,7 +287,6 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
 
   int ret = CVI_SUCCESS;
   ret = run(frame);
-
   Detections dets;
   generate_dets_for_each_stride(&dets);
 
@@ -384,6 +326,12 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                             {32, "class_stride_32"},
                             {64, "class_stride_64"},
                             {128, "class_stride_128"}};
+
+  config.obj_max_names = {{8, "class_stride_8_obj_max"},
+                          {16, "class_stride_16_obj_max"},
+                          {32, "class_stride_32_obj_max"},
+                          {64, "class_stride_64_obj_max"},
+                          {128, "class_stride_128_obj_max"}};
 
   config.bbox_out_names = {{8, "box_stride_8"},
                            {16, "box_stride_16"},
