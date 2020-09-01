@@ -1,6 +1,7 @@
 #include "draw_rect.hpp"
 
 #include "core_utils.hpp"
+#include "opencv2/opencv.hpp"
 
 #include <cvi_sys.h>
 #include <string.h>
@@ -43,7 +44,8 @@ static float GetYuvColor(int chanel, color_rgb *color) {
 
 // TODO: Need refactor
 static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
-                     color_rgb color, int rect_thinkness) {
+                     const char *name, color_rgb color, int rect_thinkness) {
+  std::string name_str = name;
   int width = frame->stVFrame.u32Width;
   int height = frame->stVFrame.u32Height;
   x1 = max(min(x1, width - 1), 0);
@@ -115,6 +117,22 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
                sizeof(draw_color));
       }
     }
+
+    cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
+    cv::Point cv_point = cv::Point(x1, y1 - 2);
+    double font_scale = 2;
+    int thickness = 8;
+    if (i != 0) {
+      cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
+      cv_point = cv::Point(x1 / 2, (y1 - 2) / 2);
+      font_scale /= 2;
+      // FIXME: Should div but don't know why it's not correct.
+      // thickness /= 2;
+    }
+    // FIXME: Color incorrect.
+    cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
+    cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_SIMPLEX, font_scale,
+                cv::Scalar(draw_color), thickness, 8);
     frame->stVFrame.pu8VirAddr[i] = NULL;
   }
   CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
@@ -133,7 +151,8 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame) {
   for (size_t i = 0; i < meta->size; i++) {
     cvai_bbox_t bbox = box_rescale_c(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height,
                                      meta->width, meta->height, meta->info[i].bbox);
-    DrawRect(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, rgb_color, DEFAULT_RECT_THINKNESS);
+    DrawRect(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, meta->info[i].name, rgb_color,
+             DEFAULT_RECT_THINKNESS);
   }
   return CVI_SUCCESS;
 }
