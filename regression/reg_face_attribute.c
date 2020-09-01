@@ -29,12 +29,31 @@ static VPSS_GRP VpssGrp = 0;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
+static void removePreviousFile(const char *dir_path)
+{
+  DIR * dirp;
+  struct dirent * entry;
+  dirp = opendir(dir_path);
+
+  while ((entry = readdir(dirp)) != NULL) {
+    if (entry->d_type != 8 && entry->d_type != 0) continue;
+
+    char base_name[500] = "\0";
+    strcat(base_name, dir_path);
+    strcat(base_name, entry->d_name);
+    remove(base_name);
+  }
+  closedir(dirp);
+}
+
 int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face_quality) {
   FILE *fp;
   if((fp = fopen(img_name_list, "r")) == NULL) {
     printf("file open error: %s!\n", img_name_list);
     return CVI_FAILURE;
   }
+
+  removePreviousFile(feature_dir);
 
   char line[1024];
   while(fscanf(fp, "%[^\n]", line)!=EOF) {
@@ -97,23 +116,6 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
   fclose(fp);
 
   return CVI_SUCCESS;
-}
-
-static void RemovePreviousFile(const char *dir_path)
-{
-  DIR * dirp;
-  struct dirent * entry;
-  dirp = opendir(dir_path);
-
-  while ((entry = readdir(dirp)) != NULL) {
-    if (entry->d_type != 8 && entry->d_type != 0) continue;
-
-    char base_name[500] = "\0";
-    strcat(base_name, dir_path);
-    strcat(base_name, entry->d_name);
-    remove(base_name);
-  }
-  closedir(dirp);
 }
 
 static int loadCount(const char *dir_path)
@@ -263,10 +265,6 @@ int main(void) {
   }
 
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
-
-  RemovePreviousFile(DB_FEATURE_DIR);
-  RemovePreviousFile(IN_FEATURE_DIR);
-  RemovePreviousFile(NOT_FEATURE_DIR);
 
   genFeatureFile("/mnt/data/db_name.txt", DB_FEATURE_DIR, true);
   genFeatureFile("/mnt/data/in_db_name.txt", IN_FEATURE_DIR, false);
