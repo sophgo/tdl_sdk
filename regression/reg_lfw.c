@@ -10,8 +10,6 @@
 #include "cviai.h"
 #include "core/utils/vpss_helper.h"
 
-#define RESULT_FILE_PATH   "/mnt/data/lfw_result.txt"
-
 cviai_handle_t facelib_handle = NULL;
 
 static CVI_S32 vpssgrp_width = 1920;
@@ -19,8 +17,8 @@ static CVI_S32 vpssgrp_height = 1080;
 
 int main(int argc, char *argv[])
 {
-  if (argc != 2) {
-    printf("Usage: reg_lfw <pair_txt_path>.\n");
+  if (argc != 5) {
+    printf("Usage: reg_lfw <retina path> <bmface path> <pair_txt_path> <result file path>.\n");
     printf("Pair txt format: lable image1_path image2_path.\n");
     return CVI_FAILURE;
   }
@@ -40,10 +38,8 @@ int main(int argc, char *argv[])
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
-                            "/mnt/data/retina_face.cvimodel");
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
-                            "/mnt/data/bmface.cvimodel");
+  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
@@ -59,7 +55,7 @@ int main(int argc, char *argv[])
   }
 
   uint32_t imageNum;
-  CVI_AI_Eval_LfwInit(eval_handle, argv[1], &imageNum);
+  CVI_AI_Eval_LfwInit(eval_handle, argv[3], &imageNum);
     for (uint32_t i = 0; i < imageNum; i++) {
       char *name1 = NULL;
       char *name2 = NULL;
@@ -103,7 +99,7 @@ int main(int argc, char *argv[])
       CVI_VB_ReleaseBlock(blk2);
     }
 
-  CVI_AI_Eval_LfwSave2File(eval_handle, RESULT_FILE_PATH);
+  CVI_AI_Eval_LfwSave2File(eval_handle, argv[4]);
   CVI_AI_Eval_LfwClearInput(eval_handle);
   CVI_AI_Eval_LfwClearEvalData(eval_handle);
 

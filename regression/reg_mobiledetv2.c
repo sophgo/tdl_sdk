@@ -17,7 +17,7 @@ uint32_t coco_ids[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 13, 14, 15, 1
                        74, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85, 86, 87, 88, 89, 90};
 
 int main(int argc, char *argv[]) {
-  if (argc != 3) {
+  if (argc != 4) {
     printf("Usage: %s <mobiledetv2> <root folder> <evaluate json>.\n", argv[0]);
     return CVI_FAILURE;
   }

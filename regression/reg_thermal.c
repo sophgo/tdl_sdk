@@ -8,7 +8,7 @@ cviai_handle_t facelib_handle = NULL;
 
 int main(int argc, char *argv[])
 {
-  if (argc != 3) {
+  if (argc != 4) {
     printf("Usage: %s <thermal model path> <image root folder> <evaluate json>.\n", argv[0]);
     return CVI_FAILURE;
   }

@@ -61,8 +61,8 @@ static int run(const char *img_list, int *mask_count, int *total) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 3) {
-    printf("Usage: %s <mask image list> <unmask image list>.\n", argv[0]);
+  if (argc != 4) {
+    printf("Usage: %s <mask classifier model path> <mask image list> <unmask image list>.\n", argv[0]);
     return CVI_FAILURE;
   }
 
@@ -80,8 +80,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION,
-                            "/mnt/data/mask_classifier.cvimodel");
+  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
@@ -89,8 +88,8 @@ int main(int argc, char *argv[]) {
 
   int mask = 0, unmask = 0;
   int mask_total = 0, unmask_total = 0;
-  run(argv[1], &mask, &mask_total);
-  run(argv[2], &unmask, &unmask_total);
+  run(argv[2], &mask, &mask_total);
+  run(argv[3], &unmask, &unmask_total);
 
   printf("Num of mask face -> tpr: %d/%d, fpr: %d/%d\n", mask, mask_total, unmask, unmask_total);
 

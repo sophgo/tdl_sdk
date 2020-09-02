@@ -19,7 +19,7 @@ static CVI_S32 vpssgrp_width = 2048;
 static CVI_S32 vpssgrp_height = 1536;
 
 int main(int argc, char *argv[]) {
-  if (argc != 3) {
+  if (argc != 4) {
     printf("Usage: %s <retina_face_path> <dataset dir path> <result dir path>.\n", argv[0]);
     printf("dataset dir path: Wider face validation folder. eg. /mnt/data/WIDER_val\n");
     printf("result dir path: Result directory path. eg. /mnt/data/wider_result\n");

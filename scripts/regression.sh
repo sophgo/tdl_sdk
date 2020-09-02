@@ -18,6 +18,11 @@ if [[ "$1" != "daily" ]]; then
 fi
 
 run reg_wider_face /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/dataset/wider_face /mnt/data/result/wider_face_result
+run reg_lfw /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/bmface.cvimodel /mnt/data/dataset/lfw.txt /mnt/data/result/lfw_result.txt
+run reg_face_attribute
+run reg_face_quality
+run reg_mask_classification /mnt/data/cvimodel/mask_classifier.cvimodel /mnt/data/dataset/mask.txt /mnt/data/dataset/unmask.txt
+
 run reg_yolov3 /mnt/data/cvimodel/yolo_v3_416.cvimodel /mnt/data/dataset/coco /mnt/data/result/yolo_result.json
 run reg_mobiledetv2 /mnt/data/cvimodel/mobiledetv2_d0.cvimodel /mnt/data/dataset/coco /mnt/data/result/mobiledetv2_result.json
 run reg_thermal /mnt/data/thermalfd-v1_resnet18-bifpn-sh.cvimodel /mnt/data/dataset/coco /mnt/data/result/thermal_result.json
