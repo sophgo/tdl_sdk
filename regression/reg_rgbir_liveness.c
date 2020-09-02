@@ -10,8 +10,6 @@
 #include "cviai.h"
 #include "core/utils/vpss_helper.h"
 
-#define RESULT_FILE_PATH   "/mnt/data/rgbir_liveness_result.txt"
-
 cviai_handle_t handle = NULL;
 
 static CVI_S32 vpssgrp_width = 1920;
@@ -19,13 +17,14 @@ static CVI_S32 vpssgrp_height = 1080;
 
 int main(int argc, char *argv[])
 {
-  if (argc != 5) {
-    printf("Usage: reg_liveness <face detect model path> <liveness model path> \
-           <root_dir> <pair_txt_path>.\n");
+  if (argc != 6) {
+    printf("Usage: %s <face detect model path> <liveness model path> \
+           <root_dir> <pair_txt_path> <result_path>.\n", argv[0]);
     printf("Face detect model path: Path to face detect cvimodel.\n");
     printf("Liveness model path: Path to liveness cvimodel.\n");
     printf("Root dir: Image root directory.\n");
     printf("Pair txt path: Image list txt file path. <format: image1_path image2_path label>.\n");
+    printf("Result path: Path to result file.\n");
     return CVI_FAILURE;
   }
 
@@ -108,6 +107,7 @@ int main(int argc, char *argv[])
 
       printf("label: %d, score: %f\n", label, face.info[0].liveness_score);
       CVI_AI_Eval_LfwInsertLabelScore(eval_handle, idx, label, face.info[0].liveness_score);
+      idx++;
     }
 
     CVI_AI_Free(&face);
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     CVI_VB_ReleaseBlock(blk2);
   }
 
-  CVI_AI_Eval_LfwSave2File(eval_handle, RESULT_FILE_PATH);
+  CVI_AI_Eval_LfwSave2File(eval_handle, argv[5]);
   CVI_AI_Eval_LfwClearInput(eval_handle);
   CVI_AI_Eval_LfwClearEvalData(eval_handle);
 
