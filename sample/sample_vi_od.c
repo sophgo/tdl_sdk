@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
     printf(
         "Usage: %s <model_name> <model_path> <open vo 1 or 0>.\n"
         "\t model_name: detection model name should be one of {mobiledetv2-d0, mobiledetv2-d2, "
-        "yolov3-416, yolov3-320}",
+        "yolov3-416, yolov3-320}\n",
         argv[0]);
     return CVI_FAILURE;
   }
