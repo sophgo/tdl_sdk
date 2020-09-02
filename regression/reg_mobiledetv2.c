@@ -18,7 +18,7 @@ uint32_t coco_ids[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 13, 14, 15, 1
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage: %s <root folder> <evaluate json>.\n", argv[0]);
+    printf("Usage: %s <mobiledetv2> <root folder> <evaluate json>.\n", argv[0]);
     return CVI_FAILURE;
   }
 
@@ -40,8 +40,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
-                            "/mnt/data/cvimodel/mobiledetv2_d0.cvimodel");
+  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("Set model yolov3 failed with %#x!\n", ret);
     return ret;
@@ -57,7 +56,7 @@ int main(int argc, char *argv[]) {
   }
 
   uint32_t image_num;
-  CVI_AI_Eval_CocoInit(eval_handle, argv[1], argv[2], &image_num);
+  CVI_AI_Eval_CocoInit(eval_handle, argv[2], argv[3], &image_num);
 
   for (uint32_t i = 0; i < image_num; i++) {
     char *filename = NULL;

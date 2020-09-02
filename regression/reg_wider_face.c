@@ -20,7 +20,7 @@ static CVI_S32 vpssgrp_height = 1536;
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage: reg_wider_face <dataset dir path> <result dir path>.\n");
+    printf("Usage: %s <retina_face_path> <dataset dir path> <result dir path>.\n", argv[0]);
     printf("dataset dir path: Wider face validation folder. eg. /mnt/data/WIDER_val\n");
     printf("result dir path: Result directory path. eg. /mnt/data/wider_result\n");
     printf("Using wider face matlab code to evaluate AUC!!\n");
@@ -42,8 +42,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
-                            "/mnt/data/retina_face.cvimodel");
+  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
@@ -59,7 +58,7 @@ int main(int argc, char *argv[]) {
   }
 
   uint32_t imageNum;
-  CVI_AI_Eval_WiderFaceInit(eval_handle, argv[1], argv[2], &imageNum);
+  CVI_AI_Eval_WiderFaceInit(eval_handle, argv[2], argv[3], &imageNum);
   for (uint32_t i = 0; i < imageNum; i++) {
     char *filepath = NULL;
     CVI_AI_Eval_WiderFaceGetImagePath(eval_handle, i, &filepath);

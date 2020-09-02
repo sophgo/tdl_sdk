@@ -9,7 +9,7 @@ cviai_handle_t facelib_handle = NULL;
 int main(int argc, char *argv[])
 {
   if (argc != 3) {
-    printf("Usage: %s <image root folder> <evaluate json>.\n", argv[0]);
+    printf("Usage: %s <thermal model path> <image root folder> <evaluate json>.\n", argv[0]);
     return CVI_FAILURE;
   }
 
@@ -30,8 +30,7 @@ int main(int argc, char *argv[])
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE,
-                            "/mnt/data/thermalfd-v1_resnet18-bifpn-sh.cvimodel");
+  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("Set model thermalface failed with %#x!\n", ret);
     return ret;
@@ -47,7 +46,7 @@ int main(int argc, char *argv[])
   }
 
   uint32_t image_num;
-  CVI_AI_Eval_CocoInit(eval_handle, argv[1], argv[2], &image_num);
+  CVI_AI_Eval_CocoInit(eval_handle, argv[2], argv[3], &image_num);
 
   for (uint32_t i = 0; i < image_num; i++) {
     char *filename = NULL;

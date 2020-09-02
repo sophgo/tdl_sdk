@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage: sample_digital_tracking <retina_model_path> <image>.\n");
+    printf("Usage: %s <retina_model_path> <image>.\n", argv[0]);
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
