@@ -13,6 +13,7 @@
 #include "coco_utils.hpp"
 #include "core/core/cvai_core_types.h"
 #include "core_utils.hpp"
+#include "cvi_comm_vpss.h"
 #include "cvi_sys.h"
 #include "cviruntime.h"
 #include "misc.hpp"
@@ -185,19 +186,24 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh, float score
 
 MobileDetV2::~MobileDetV2() {}
 
-int MobileDetV2::initAfterModelOpened() {
-  CVI_TENSOR *input = getInputTensor(0);
+int MobileDetV2::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
+  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   VPSS_CHN_ATTR_S vpssChnAttr;
   const float factor[] = {static_cast<float>(FACTOR_R), static_cast<float>(FACTOR_G),
                           static_cast<float>(FACTOR_B)};
   const float mean[] = {static_cast<float>(MEAN_R), static_cast<float>(MEAN_G),
                         static_cast<float>(MEAN_B)};
-  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-  m_vpss_chn_attr.push_back(vpssChnAttr);
 
-  return CVI_SUCCESS;
+  VPSS_GRP group = mp_vpss_inst->getGrpId();
+  CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, VPSS_SCALE_COEF_OPENCV_BILINEAR);
+  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
+                        input->shape.dim[3], input->shape.dim[2], PIXEL_FORMAT_RGB_888_PLANAR,
+                        factor, mean, false, true);
+  mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
+  return mp_vpss_inst->getFrame(dstFrame, 0);
 }
+
+int MobileDetV2::initAfterModelOpened() { return CVI_SUCCESS; }
 
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
                                            float bbox_dequant_thresh, int8_t quant_thresh,
@@ -302,8 +308,9 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
 
   if (!m_skip_vpss_preprocess) {
     for (uint32_t i = 0; i < meta->size; ++i) {
-      meta->info[i].bbox = box_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                                         meta->width, meta->height, meta->info[i].bbox);
+      meta->info[i].bbox =
+          box_rescale_small_ratio_major(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                                        meta->width, meta->height, meta->info[i].bbox);
     }
     meta->width = frame->stVFrame.u32Width;
     meta->height = frame->stVFrame.u32Height;

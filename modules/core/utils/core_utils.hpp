@@ -12,6 +12,10 @@ void SoftMaxForBuffer(float *src, float *dst, size_t size);
 void Dequantize(const int8_t *q_data, float *data, float threshold, size_t size);
 void clip_boxes(int width, int height, cvai_bbox_t &box);
 
+cvai_bbox_t box_rescale_small_ratio_major(const float frame_width, const float frame_height,
+                                          const float nn_width, const float nn_height,
+                                          const cvai_bbox_t bbox);
+
 cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, const float nn_width,
                           const float nn_height, const cvai_bbox_t bbox);
 cvai_bbox_t box_rescale_rb(const float frame_width, const float frame_height, const float nn_width,

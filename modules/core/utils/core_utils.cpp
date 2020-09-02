@@ -71,6 +71,28 @@ cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, con
   return new_bbox;
 }
 
+cvai_bbox_t box_rescale_small_ratio_major(const float frame_width, const float frame_height,
+                                          const float nn_width, const float nn_height,
+                                          const cvai_bbox_t bbox) {
+  float x1, x2, y1, y2;
+  float ratio_height = (nn_height / frame_height);
+  float ratio_width = (nn_width / frame_width);
+  float ratio = 1.0 / std::min(ratio_height, ratio_width);
+
+  x1 = bbox.x1 * ratio;
+  x2 = bbox.x2 * ratio;
+  y1 = bbox.y1 * ratio;
+  y2 = bbox.y2 * ratio;
+
+  cvai_bbox_t new_bbox;
+  new_bbox.score = bbox.score;
+  new_bbox.x1 = std::max(std::min(x1, (float)(frame_width - 1)), (float)0);
+  new_bbox.x2 = std::max(std::min(x2, (float)(frame_width - 1)), (float)0);
+  new_bbox.y1 = std::max(std::min(y1, (float)(frame_height - 1)), (float)0);
+  new_bbox.y2 = std::max(std::min(y2, (float)(frame_height - 1)), (float)0);
+  return new_bbox;
+}
+
 cvai_bbox_t box_rescale_rb(const float frame_width, const float frame_height, const float nn_width,
                            const float nn_height, const cvai_bbox_t bbox) {
   float x1, x2, y1, y2;

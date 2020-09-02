@@ -8,6 +8,7 @@
 #include <cvi_vb.h>
 #include <cvi_vpss.h>
 
+#include <math.h>
 #include <string.h>
 
 #define VIP_WIDTH_ALIGN 32
@@ -169,17 +170,28 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
+#define max(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a > _b ? _a : _b;      \
+  })
+
+#define min(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a < _b ? _a : _b;      \
+  })
+
 inline void __attribute__((always_inline))
 VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
                       const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
                       const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
-                      const CVI_FLOAT *mean, const bool padReverse) {
-  float ratio = 1.0;
-  if ((float)srcWidth / dstWidth > (float)srcHeight / dstHeight) {
-    ratio = (float)srcWidth / dstWidth;
-  } else {
-    ratio = (float)srcHeight / dstHeight;
-  }
+                      const CVI_FLOAT *mean, const bool padReverse, const bool smallRatioMajor) {
+  float ratio_w = (float)dstWidth / srcWidth;
+  float ratio_h = (float)dstHeight / srcHeight;
+  float ratio = smallRatioMajor ? min(ratio_w, ratio_h) : max(ratio_w, ratio_h);
 
   pastVpssChnAttr->u32Width = dstWidth;
   pastVpssChnAttr->u32Height = dstHeight;
@@ -211,6 +223,9 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
   }
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
+
+#undef max
+#undef min
 
 inline int __attribute__((always_inline))
 VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, uint32_t enSrcStride,
