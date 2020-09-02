@@ -1,8 +1,4 @@
-#include <assert.h>
 #include <errno.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,14 +10,16 @@
 #include <cvimath/cvimath.h>
 
 #include "cviai.h"
-#include "sample_comm.h"
 #include "core/utils/vpss_helper.h"
 
 #define FEATURE_LENGTH  512
 #define NAME_LENGTH     1024
-#define DB_FEATURE_DIR  "/mnt/data/db_feature/"
-#define IN_FEATURE_DIR  "/mnt/data/in_db_feature/"
-#define NOT_FEATURE_DIR  "/mnt/data/not_db_feature/"
+#define DB_IMAGE_DIR  "/db/"
+#define IN_IMAGE_DIR  "/in_db/"
+#define NOT_IMAGE_DIR  "/not_db/"
+#define DB_FEATURE_DIR  "/db_feature/"
+#define IN_FEATURE_DIR  "/in_db_feature/"
+#define NOT_FEATURE_DIR  "/not_db_feature/"
 
 cviai_handle_t facelib_handle = NULL;
 
@@ -46,18 +44,22 @@ static void removePreviousFile(const char *dir_path)
   closedir(dirp);
 }
 
-int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face_quality) {
-  FILE *fp;
-  if((fp = fopen(img_name_list, "r")) == NULL) {
-    printf("file open error: %s!\n", img_name_list);
+int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_quality) {
+  DIR * dirp;
+  struct dirent * entry;
+  dirp = opendir(img_dir);
+
+  if (0 != mkdir(feature_dir, S_IRWXO) && EEXIST != errno) {
+    printf("Create %s failed.\n", feature_dir);
     return CVI_FAILURE;
   }
-
   removePreviousFile(feature_dir);
 
-  char line[1024];
-  while(fscanf(fp, "%[^\n]", line)!=EOF) {
-    fgetc(fp);
+  while ((entry = readdir(dirp)) != NULL) {
+    if (entry->d_type != 8 && entry->d_type != 0) continue;
+    char line[500] = "\0";
+    strcat(line, img_dir);
+    strcat(line, entry->d_name);
 
     printf("%s\n", line);
     VB_BLK blk_fr;
@@ -72,7 +74,7 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
     CVI_AI_RetinaFace(facelib_handle, &rgb_frame, &face, &face_count);
-    if (face_count > 0 && face_quality == true) {
+    if (face_count > 0 && do_face_quality == true) {
       CVI_AI_FaceQuality(facelib_handle, &rgb_frame, &face);
     }
 
@@ -87,7 +89,7 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
       }
     }
 
-    if (face_count > 0 && (face_quality == false || face.info[face_idx].face_quality.quality > 0.05)) {
+    if (face_count > 0 && (do_face_quality == false || face.info[face_idx].face_quality.quality > 0.05)) {
       CVI_AI_FaceAttributeOne(facelib_handle, &rgb_frame, &face, face_idx);
 
       char *file_name;
@@ -113,7 +115,7 @@ int genFeatureFile(const char *img_name_list, const char *feature_dir, bool face
     CVI_AI_Free(&face);
     CVI_VB_ReleaseBlock(blk_fr);
   }
-  fclose(fp);
+  closedir(dirp);
 
   return CVI_SUCCESS;
 }
@@ -237,11 +239,22 @@ static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not
   return 0;
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
+  if (argc != 6) {
+    printf("Usage: %s <face detect model path> <face attribute model path> \
+           <face quality model path> <image_root_dir> <feature_root_dir>.\n", argv[0]);
+    printf("Face detect model path: Path to face detect cvimodel.\n");
+    printf("Face attribute model path: Path to face attribute cvimodel.\n");
+    printf("Face quality model path: Path to face quaity cvimodel.\n");
+    printf("Image root dir: Image root directory.\n");
+    printf("Feature root dir: Root directory to temporarily save feature file.\n");
+    return CVI_FAILURE;
+  }
+
   CVI_S32 ret = CVI_SUCCESS;
 
-  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, SAMPLE_PIXEL_FORMAT, vpssgrp_width,
-                        vpssgrp_height, SAMPLE_PIXEL_FORMAT);
+  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,
+                        vpssgrp_height, PIXEL_FORMAT_RGB_888);
   if (ret != CVI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
@@ -253,12 +266,9 @@ int main(void) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
-                            "/mnt/data/retina_face.cvimodel");
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
-                            "/mnt/data/bmface.cvimodel");
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
-                            "/mnt/data/fqnet-v5_shufflenetv2-softmax.cvimodel");
+  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
@@ -266,26 +276,46 @@ int main(void) {
 
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
-  genFeatureFile("/mnt/data/db_name.txt", DB_FEATURE_DIR, true);
-  genFeatureFile("/mnt/data/in_db_name.txt", IN_FEATURE_DIR, false);
-  genFeatureFile("/mnt/data/not_db_name.txt", NOT_FEATURE_DIR, false);
+  char db_dir_full[500] = "\0";
+  char in_dir_full[500] = "\0";
+  char not_dir_full[500] = "\0";
+  strcat(db_dir_full, argv[4]);
+  strcat(db_dir_full, DB_IMAGE_DIR);
+  strcat(in_dir_full, argv[4]);
+  strcat(in_dir_full, IN_IMAGE_DIR);
+  strcat(not_dir_full, argv[4]);
+  strcat(not_dir_full, NOT_IMAGE_DIR);
+
+  char db_feature_full[500] = "\0";
+  char in_feature_full[500] = "\0";
+  char not_feature_full[500] = "\0";
+  strcat(db_feature_full, argv[5]);
+  strcat(db_feature_full, DB_FEATURE_DIR);
+  strcat(in_feature_full, argv[5]);
+  strcat(in_feature_full, IN_FEATURE_DIR);
+  strcat(not_feature_full, argv[5]);
+  strcat(not_feature_full, NOT_FEATURE_DIR);
+
+  genFeatureFile(db_dir_full, db_feature_full, true);
+  genFeatureFile(in_dir_full, in_feature_full, false);
+  genFeatureFile(not_dir_full, not_feature_full, false);
 
   CVI_AI_DestroyHandle(facelib_handle);
   CVI_VPSS_StopGrp(VpssGrp);
   CVI_VPSS_DestroyGrp(VpssGrp);
   CVI_SYS_Exit();
 
-  int db_count = loadCount(DB_FEATURE_DIR);
-  int in_count = loadCount(IN_FEATURE_DIR);
-  int not_count = loadCount(NOT_FEATURE_DIR);
+  int db_count = loadCount(db_feature_full);
+  int in_count = loadCount(in_feature_full);
+  int not_count = loadCount(not_feature_full);
   printf("db count: %d, in count: %d, not count: %d\n", db_count, in_count, not_count);
 
-  char **db_name = loadName(DB_FEATURE_DIR, db_count);
-  char **in_name = loadName(IN_FEATURE_DIR, in_count);
-  char **not_name = loadName(NOT_FEATURE_DIR, not_count);
-  int8_t *db_feature = loadFeature(DB_FEATURE_DIR, db_count);
-  int8_t *in_feature = loadFeature(IN_FEATURE_DIR, in_count);
-  int8_t *not_feature = loadFeature(NOT_FEATURE_DIR, not_count);
+  char **db_name = loadName(db_feature_full, db_count);
+  char **in_name = loadName(in_feature_full, in_count);
+  char **not_name = loadName(not_feature_full, not_count);
+  int8_t *db_feature = loadFeature(db_feature_full, db_count);
+  int8_t *in_feature = loadFeature(in_feature_full, in_count);
+  int8_t *not_feature = loadFeature(not_feature_full, not_count);
 
   evaluateResult(db_feature, in_feature, not_feature, db_name, in_name, db_count, in_count, not_count);
 
