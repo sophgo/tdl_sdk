@@ -13,9 +13,11 @@ static int compare(const void *arg1, const void *arg2) {
 namespace cviai {
 namespace evaluation {
 
-lfwEval::lfwEval(const char *fiilepath) { getEvalData(fiilepath); }
+lfwEval::lfwEval(const char *fiilepath, bool label_pos_first) {
+  getEvalData(fiilepath, label_pos_first);
+}
 
-int lfwEval::getEvalData(const char *fiilepath) {
+int lfwEval::getEvalData(const char *fiilepath, bool label_pos_first) {
   FILE *fp;
   if ((fp = fopen(fiilepath, "r")) == NULL) {
     printf("file open error: %s!\n", fiilepath);
@@ -29,10 +31,14 @@ int lfwEval::getEvalData(const char *fiilepath) {
     fgetc(fp);
 
     const char *delim = " ";
-    char *label = strtok(line, delim);
-    char *name1 = strtok(NULL, delim);
-    char *name2 = strtok(NULL, delim);
-    m_data.push_back({atoi(label), name1, name2});
+    char *seg1 = strtok(line, delim);
+    char *seg2 = strtok(NULL, delim);
+    char *seg3 = strtok(NULL, delim);
+    if (label_pos_first) {
+      m_data.push_back({atoi(seg1), seg2, seg3});
+    } else {
+      m_data.push_back({atoi(seg3), seg1, seg2});
+    }
   }
   m_eval_label.resize(m_data.size());
   m_eval_score.resize(m_data.size());
@@ -58,6 +64,11 @@ void lfwEval::insertFaceData(const int index, const int label, const cvai_face_t
       evalDifference(&face1->info[face_idx1].face_feature, &face2->info[face_idx2].face_feature);
   float score = 1.0 - (0.5 * feature_diff);
 
+  m_eval_label[index] = label;
+  m_eval_score[index] = score;
+}
+
+void lfwEval::insertLabelScore(const int &index, const int &label, const float &score) {
   m_eval_label[index] = label;
   m_eval_score[index] = score;
 }
@@ -106,16 +117,13 @@ void lfwEval::evalAUC(const std::vector<int> &y, std::vector<float> &pred, const
   int pos = 0;
   int neg = 0;
   float pred_sort[data_size];
-  float max_value = 0;
   for (uint32_t i = 0; i < data_size; i++) {
     if (y[i] == 1) pos++;
     if (y[i] == 0) neg++;
     pred_sort[i] = pred[i];
-    if (max_value < pred[i]) max_value = pred[i];
   }
 
   qsort((void *)pred_sort, data_size, sizeof(float), compare);
-  printf("%f, %f\n", pred_sort[0], max_value);
 
   FILE *fp;
   if ((fp = fopen(filepath, "w")) == NULL) {

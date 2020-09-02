@@ -36,13 +36,17 @@ CVI_S32 CVI_AI_Eval_CocoClearObject(cviai_eval_handle_t handle);
 /****************************************************************
  * LFW evaluation functions
  **/
-CVI_S32 CVI_AI_Eval_LfwInit(cviai_eval_handle_t handle, const char *filepath, uint32_t *imageNum);
+CVI_S32 CVI_AI_Eval_LfwInit(cviai_eval_handle_t handle, const char *filepath, bool label_pos_first,
+                            uint32_t *imageNum);
 
 CVI_S32 CVI_AI_Eval_LfwGetImageLabelPair(cviai_eval_handle_t handle, const uint32_t index,
                                          char **filepath, char **filepath2, int *label);
 
 CVI_S32 CVI_AI_Eval_LfwInsertFace(cviai_eval_handle_t handle, const int index, const int label,
                                   const cvai_face_t *face1, const cvai_face_t *face2);
+
+CVI_S32 CVI_AI_Eval_LfwInsertLabelScore(cviai_eval_handle_t handle, const int index,
+                                        const int label, const float score);
 
 CVI_S32 CVI_AI_Eval_LfwSave2File(cviai_eval_handle_t handle, const char *filepath);
 

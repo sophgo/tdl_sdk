@@ -32,6 +32,7 @@ add_executable(reg_mobiledetv2 reg_mobiledetv2.c)
 add_executable(reg_yolov3 reg_yolov3.c)
 add_executable(reg_thermal reg_thermal.c)
 add_executable(reg_mask_classification reg_mask_classification.c)
+add_executable(reg_rgbir_liveness reg_rgbir_liveness.c)
 
 target_link_libraries(reg_face_attribute cviai_core ${SAMPLE_LIBS})
 target_link_libraries(reg_face_quality cviai_core ${SAMPLE_LIBS})
@@ -41,3 +42,4 @@ target_link_libraries(reg_mobiledetv2 cviai_core cviai_evaluation ${SAMPLE_LIBS}
 target_link_libraries(reg_yolov3 cviai_core cviai_evaluation ${SAMPLE_LIBS})
 target_link_libraries(reg_thermal cviai_core cviai_evaluation ${SAMPLE_LIBS})
 target_link_libraries(reg_mask_classification cviai_core ${SAMPLE_LIBS})
+target_link_libraries(reg_rgbir_liveness cviai_core cviai_evaluation ${SAMPLE_LIBS})

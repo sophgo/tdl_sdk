@@ -14,12 +14,13 @@ typedef struct {
 
 class lfwEval {
  public:
-  lfwEval(const char *fiilepath);
-  int getEvalData(const char *fiilepath);
+  lfwEval(const char *fiilepath, bool label_pos_first);
+  int getEvalData(const char *fiilepath, bool label_pos_first);
   uint32_t getTotalImage();
   void getImageLabelPair(const int index, std::string *path1, std::string *path2, int *label);
   void insertFaceData(const int index, const int label, const cvai_face_t *face1,
                       const cvai_face_t *face2);
+  void insertLabelScore(const int &index, const int &label, const float &score);
   void resetData();
   void resetEvalData();
   void saveEval2File(const char *filepath);

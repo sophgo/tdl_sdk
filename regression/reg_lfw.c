@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
   }
 
   uint32_t imageNum;
-  CVI_AI_Eval_LfwInit(eval_handle, argv[3], &imageNum);
+  CVI_AI_Eval_LfwInit(eval_handle, argv[3], true, &imageNum);
     for (uint32_t i = 0; i < imageNum; i++) {
       char *name1 = NULL;
       char *name2 = NULL;

@@ -91,12 +91,13 @@ CVI_S32 CVI_AI_Eval_CocoClearObject(cviai_eval_handle_t handle) {
 /****************************************************************
  * LFW evaluation functions
  **/
-CVI_S32 CVI_AI_Eval_LfwInit(cviai_eval_handle_t handle, const char *filepath, uint32_t *imageNum) {
+CVI_S32 CVI_AI_Eval_LfwInit(cviai_eval_handle_t handle, const char *filepath, bool label_pos_first,
+                            uint32_t *imageNum) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   if (ctx->lfw_eval == nullptr) {
-    ctx->lfw_eval = new cviai::evaluation::lfwEval(filepath);
+    ctx->lfw_eval = new cviai::evaluation::lfwEval(filepath, label_pos_first);
   } else {
-    ctx->lfw_eval->getEvalData(filepath);
+    ctx->lfw_eval->getEvalData(filepath, label_pos_first);
   }
   *imageNum = ctx->lfw_eval->getTotalImage();
   return CVI_SUCCESS;
@@ -126,6 +127,16 @@ CVI_S32 CVI_AI_Eval_LfwInsertFace(cviai_eval_handle_t handle, const int index, c
     return CVI_FAILURE;
   }
   ctx->lfw_eval->insertFaceData(index, label, face1, face2);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_LfwInsertLabelScore(cviai_eval_handle_t handle, const int index,
+                                        const int label, const float score) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lfw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->lfw_eval->insertLabelScore(index, label, score);
   return CVI_SUCCESS;
 }
 
