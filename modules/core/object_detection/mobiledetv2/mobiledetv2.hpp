@@ -45,7 +45,7 @@ class MobileDetV2 final : public Core {
     int label;
   };
 
-  MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45, float score_thresh = 0.3);
+  MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45, float score_thresh = 0.4);
   virtual ~MobileDetV2();
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_t det_type);
 
