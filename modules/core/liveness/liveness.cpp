@@ -26,30 +26,19 @@ namespace cviai {
 static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
                                                 VIDEO_FRAME_INFO_S *sink_buffer, cvai_face_t *meta,
                                                 cvai_liveness_ir_position_e ir_pos) {
-  cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3);
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
-  char *va_rgb = (char *)frame->stVFrame.pu8VirAddr[0];
-  for (int i = 0; i < rgb_frame.rows; i++) {
-    memcpy(rgb_frame.ptr(i, 0), va_rgb + frame->stVFrame.u32Stride[0] * i, rgb_frame.cols * 3);
-  }
-  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
-  frame->stVFrame.pu8VirAddr[0] = NULL;
-
+  cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
+                    frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   if (rgb_frame.data == nullptr) {
     printf("src Image is empty!\n");
     return vector<vector<cv::Mat>>{};
   }
 
-  cv::Mat ir_frame(sink_buffer->stVFrame.u32Height, sink_buffer->stVFrame.u32Width, CV_8UC3);
-  sink_buffer->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(sink_buffer->stVFrame.u64PhyAddr[0],
-                                                               sink_buffer->stVFrame.u32Length[0]);
-  va_rgb = (char *)sink_buffer->stVFrame.pu8VirAddr[0];
-  for (int i = 0; i < ir_frame.rows; i++) {
-    memcpy(ir_frame.ptr(i, 0), va_rgb + sink_buffer->stVFrame.u32Stride[0] * i, ir_frame.cols * 3);
-  }
-  CVI_SYS_Munmap((void *)sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Length[0]);
-
+  sink_buffer->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
+      sink_buffer->stVFrame.u64PhyAddr[0], sink_buffer->stVFrame.u32Length[0]);
+  cv::Mat ir_frame(sink_buffer->stVFrame.u32Height, sink_buffer->stVFrame.u32Width, CV_8UC3,
+                   sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Stride[0]);
   if (ir_frame.data == nullptr) {
     printf("sink Image is empty!\n");
     return vector<vector<cv::Mat>>{};
@@ -85,6 +74,11 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
     }
     input_mat[i] = input_v;
   }
+
+  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+  frame->stVFrame.pu8VirAddr[0] = NULL;
+  CVI_SYS_Munmap((void *)sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Length[0]);
+  sink_buffer->stVFrame.pu8VirAddr[0] = NULL;
 
   return input_mat;
 }
