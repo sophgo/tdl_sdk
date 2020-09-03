@@ -105,6 +105,7 @@ message("==================================================")
 
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty
                     ${CMAKE_SOURCE_DIR}/include
+                    ${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES}

@@ -137,6 +137,11 @@ CVI_TENSOR *Core::getOutputTensor(int idx) {
   return mp_output_tensors + idx;
 }
 
+int Core::setIveInstance(IVE_HANDLE handle) {
+  ive_handle = handle;
+  return CVI_SUCCESS;
+}
+
 int Core::setVpssEngine(VpssEngine *engine) {
   mp_vpss_inst = engine;
   return CVI_SUCCESS;

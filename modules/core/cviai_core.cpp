@@ -24,6 +24,7 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
 
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
   cviai_context_t *ctx = new cviai_context_t;
+  ctx->ive_handle = CVI_IVE_CreateHandle();
   ctx->vec_vpss_engine.push_back(new VpssEngine());
   if (ctx->vec_vpss_engine[0]->init(false) != CVI_SUCCESS) {
     delete ctx->vec_vpss_engine[0];
@@ -52,6 +53,7 @@ int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
 int CVI_AI_DestroyHandle(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
+  CVI_IVE_DestroyHandle(ctx->ive_handle);
   for (auto it : ctx->vec_vpss_engine) {
     delete it;
   }
@@ -642,7 +644,7 @@ int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
   TamperDetectorMD *td_model = ctx->td_model;
   if (td_model == nullptr) {
     printf("Init Tamper Detection Model.\n");
-    ctx->td_model = new TamperDetectorMD(frame, (float)0.05, (int)10);
+    ctx->td_model = new TamperDetectorMD(ctx->ive_handle, frame, (float)0.05, (int)10);
     ctx->td_model->print_info();
 
     *moving_score = -1.0;

@@ -2,6 +2,7 @@
 #include "cvi_comm_video.h"
 #include "cvi_comm_vpss.h"
 #include "cviruntime.h"
+#include "ive/ive.h"
 #include "vpss_engine.hpp"
 
 #include <memory>
@@ -34,6 +35,7 @@ class Core {
   virtual ~Core() = default;
   int modelOpen(const char *filepath);
   int modelClose();
+  int setIveInstance(IVE_HANDLE handle);
   int setVpssEngine(VpssEngine *engine);
   float getInputScale();
   void skipVpssPreprocess(bool skip);
@@ -55,6 +57,7 @@ class Core {
   int32_t m_output_num = 0;
   bool m_skip_vpss_preprocess = false;
 
+  IVE_HANDLE ive_handle = NULL;
   VpssEngine *mp_vpss_inst = nullptr;
   std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
 

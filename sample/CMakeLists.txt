@@ -50,12 +50,12 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so)
 
 buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_fr INC ${SAMPLE_INC} DEPS cviai_core ${IVE_LIBS})
+buildninstall(NAME sample_read_fr INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_mask_fr INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} DEPS cviai_core cviai_objservice ${SAMPLE_LIBS})
 
 
-buildninstall(NAME sample_read_dt INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${IVE_LIBS})
-buildninstall(NAME sample_read_td INC ${SAMPLE_INC} DEPS cviai_core ${IVE_LIBS})
+buildninstall(NAME sample_read_dt INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice)
+buildninstall(NAME sample_read_td INC ${SAMPLE_INC} DEPS cviai_core)

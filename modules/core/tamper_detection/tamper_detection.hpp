@@ -5,7 +5,8 @@ class TamperDetectorMD {
  public:
   TamperDetectorMD() = delete;
   // TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum=0.05, int update_interval=10);
-  TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum, int update_interval);
+  TamperDetectorMD(IVE_HANDLE handle, VIDEO_FRAME_INFO_S *init_frame, float momentum,
+                   int update_interval);
   int update(VIDEO_FRAME_INFO_S *frame);
   int detect(VIDEO_FRAME_INFO_S *frame);
   int detect(VIDEO_FRAME_INFO_S *frame, float *moving_score);
@@ -17,7 +18,7 @@ class TamperDetectorMD {
   void print_info();
 
  private:
-  IVE_HANDLE ive_handle;
+  IVE_HANDLE ive_handle = NULL;
   int nChannels;
   CVI_U16 strideWidth, height, width, area;
   IVE_IMAGE_S mean;

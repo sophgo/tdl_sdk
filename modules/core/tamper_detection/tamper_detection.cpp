@@ -44,10 +44,10 @@ void print_IVE_IMAGE_S(IVE_IMAGE_S &ive_image, int c = 3) {
 // TamperDetectorMD::TamperDetectorMD(){
 // }
 
-TamperDetectorMD::TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum,
-                                   int update_interval) {
+TamperDetectorMD::TamperDetectorMD(IVE_HANDLE handle, VIDEO_FRAME_INFO_S *init_frame,
+                                   float momentum, int update_interval) {
   CVI_S32 ret = CVI_SUCCESS;
-  this->ive_handle = CVI_IVE_CreateHandle();
+  this->ive_handle = handle;
   this->nChannels = 3;
 
   IVE_IMAGE_S new_frame;

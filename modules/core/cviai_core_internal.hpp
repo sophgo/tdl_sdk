@@ -2,6 +2,7 @@
 #include "core/cviai_core.h"
 
 #include "core/utils/vpss_helper.h"
+#include "ive/ive.h"
 #include "vpss_engine.hpp"
 
 #include "cviai_experimental.h"
@@ -34,6 +35,7 @@ struct hash<CVI_AI_SUPPORTED_MODEL_E> {
 
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
+  IVE_HANDLE ive_handle = NULL;
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   TamperDetectorMD *td_model = nullptr;
   bool use_gdc_wrap = false;
