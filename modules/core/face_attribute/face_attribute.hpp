@@ -16,14 +16,12 @@ class FaceAttribute final : public Core {
 
  private:
   virtual int initAfterModelOpened() override;
-  void prepareInputTensor(const VIDEO_FRAME_INFO_S &frame, const cv::Mat &src_image,
-                          cvai_face_info_t &face_info);
   void outputParser(cvai_face_t *meta, int meta_i);
 
   const bool m_use_wrap_hw;
   bool m_with_attribute = true;
   float *attribute_buffer = nullptr;
   VB_BLK m_gdc_blk = (VB_BLK)-1;
-  VIDEO_FRAME_INFO_S m_gdc_frame;
+  VIDEO_FRAME_INFO_S m_wrap_frame;
 };
 }  // namespace cviai

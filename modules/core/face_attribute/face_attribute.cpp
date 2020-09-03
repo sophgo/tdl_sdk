@@ -33,10 +33,8 @@ namespace cviai {
 FaceAttribute::FaceAttribute(bool use_wrap_hw) : m_use_wrap_hw(use_wrap_hw) {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_postprocess = true;
-  if (m_use_wrap_hw) {
-    mp_config->skip_preprocess = true;
-    mp_config->input_mem_type = CVI_MEM_DEVICE;
-  }
+  mp_config->skip_preprocess = true;
+  mp_config->input_mem_type = CVI_MEM_DEVICE;
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }
 
@@ -51,9 +49,14 @@ int FaceAttribute::initAfterModelOpened() {
   VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
                      PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
   m_vpss_chn_attr.push_back(vpssChnAttr);
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_gdc_frame, vpssChnAttr.u32Width, vpssChnAttr.u32Height,
-                            PIXEL_FORMAT_RGB_888_PLANAR) != CVI_SUCCESS) {
+  PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;
+  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, vpssChnAttr.u32Width, vpssChnAttr.u32Height,
+                            format) != CVI_SUCCESS) {
     return -1;
+  }
+  if (!m_use_wrap_hw) {
+    m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
+        m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
   }
   return 0;
 }
@@ -64,6 +67,8 @@ FaceAttribute::~FaceAttribute() {
     attribute_buffer = nullptr;
   }
   if (m_gdc_blk != (VB_BLK)-1) {
+    CVI_SYS_Munmap((void *)m_wrap_frame.stVFrame.pu8VirAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
+    m_wrap_frame.stVFrame.pu8VirAddr[0] = NULL;
     CVI_VB_ReleaseBlock(m_gdc_blk);
   }
 }
@@ -83,8 +88,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 
       cvai_face_info_t face_info =
           bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
-      face_align_gdc(stOutFrame, &m_gdc_frame, face_info);
-      run(&m_gdc_frame);
+      face_align_gdc(stOutFrame, &m_wrap_frame, face_info);
+      run(&m_wrap_frame);
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
     }
@@ -110,8 +115,14 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 
       cvai_face_info_t face_info =
           bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta, i);
-      prepareInputTensor(*stOutFrame, image, face_info);
-      run(stOutFrame);
+      cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
+                         image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
+                         m_wrap_frame.stVFrame.u32Stride[0]);
+      face_align(image, warp_image, face_info);
+      CVI_SYS_IonFlushCache(m_wrap_frame.stVFrame.u64PhyAddr[0],
+                            m_wrap_frame.stVFrame.pu8VirAddr[0],
+                            m_wrap_frame.stVFrame.u32Length[0]);
+      run(&m_wrap_frame);
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
     }
@@ -124,52 +135,6 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 }
 
 void FaceAttribute::setWithAttribute(bool with_attr) { m_with_attribute = with_attr; }
-
-void FaceAttribute::prepareInputTensor(const VIDEO_FRAME_INFO_S &frame, const cv::Mat &src_image,
-                                       cvai_face_info_t &face_info) {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  cv::Mat image(input->shape.dim[2], input->shape.dim[3], src_image.type());
-  face_align(src_image, image, face_info);
-  // FIXME: Compare HW wrap test code
-  if (ENABLE_HW_WRAP_TEST == 1) {
-    VPSS_CHN_ATTR_S vpssChnAttr;
-    VPSS_CHN_DEFAULT_HELPER(&vpssChnAttr, frame.stVFrame.u32Width, frame.stVFrame.u32Height,
-                            PIXEL_FORMAT_RGB_888_PLANAR, true);
-    mp_vpss_inst->sendFrame(&frame, &vpssChnAttr, 1);
-    VIDEO_FRAME_INFO_S planar_frame;
-    mp_vpss_inst->getFrame(&planar_frame, 0);
-    face_align_gdc(&planar_frame, &m_gdc_frame, face_info);
-    mp_vpss_inst->releaseFrame(&planar_frame, 0);
-    VPSS_CHN_DEFAULT_HELPER(&vpssChnAttr, m_gdc_frame.stVFrame.u32Width,
-                            m_gdc_frame.stVFrame.u32Height, PIXEL_FORMAT_BGR_888, true);
-    mp_vpss_inst->sendFrame(&m_gdc_frame, &vpssChnAttr, 1);
-    VIDEO_FRAME_INFO_S rgb_frame;
-    mp_vpss_inst->getFrame(&rgb_frame, 0);
-    rgb_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(rgb_frame.stVFrame.u64PhyAddr[0],
-                                                                   rgb_frame.stVFrame.u32Length[0]);
-    cv::Mat rgb_image(image.rows, image.cols, CV_8UC3, rgb_frame.stVFrame.pu8VirAddr[0],
-                      rgb_frame.stVFrame.u32Stride[0]);
-    cv::imwrite("opencv.png", image);
-    cv::imwrite("wrap_hw.png", rgb_image);
-    CVI_SYS_Munmap((void *)rgb_frame.stVFrame.pu8VirAddr[0], rgb_frame.stVFrame.u32Length[0]);
-    rgb_frame.stVFrame.pu8VirAddr[0] = NULL;
-    mp_vpss_inst->releaseFrame(&rgb_frame, 0);
-  }
-  // FIXME: End
-  cv::Mat tmpchannels[3];
-  cv::split(image, tmpchannels);
-
-  for (int i = 0; i < 3; ++i) {
-    tmpchannels[i].convertTo(tmpchannels[i], CV_32F, FACE_ATTRIBUTE_INPUT_THRESHOLD,
-                             FACE_ATTRIBUTE_MEAN);
-
-    int size = tmpchannels[i].rows * tmpchannels[i].cols;
-    for (int r = 0; r < tmpchannels[i].rows; ++r) {
-      memcpy((float *)CVI_NN_TensorPtr(input) + size * i + tmpchannels[i].cols * r,
-             tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
-    }
-  }
-}
 
 template <typename U, typename V>
 std::pair<U, V> ExtractFeatures(float *out, int size) {
