@@ -1,16 +1,9 @@
-#include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <dirent.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <math.h>
 
 #include "cviai.h"
-#include "sample_comm.h"
 #include "core/utils/vpss_helper.h"
 
 cviai_handle_t facelib_handle = NULL;
@@ -18,24 +11,19 @@ cviai_handle_t facelib_handle = NULL;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
-static int genFeatureFile(const char *img_name_list, const char *result_file) {
-  FILE *fp;
-  if((fp = fopen(img_name_list, "r")) == NULL) {
-    printf("file open error!");
-    return CVI_FAILURE;
-  }
+static int genFeatureFile(const char *img_dir, int *num, int *total) {
+  DIR * dirp;
+  struct dirent * entry;
+  dirp = opendir(img_dir);
 
-  FILE *fp_feature;
-  if((fp_feature = fopen(result_file, "w+")) == NULL) {
-    printf("Write file open error!");
-    return CVI_FAILURE;
-  }
-
-  char line[1024];
   int fail_num = 0;
   int idx = 0;
-  while(fscanf(fp, "%[^\n]", line)!=EOF) {
-    fgetc(fp);
+  while ((entry = readdir(dirp)) != NULL) {
+    if (entry->d_type != 8) continue;
+    char line[500] = "\0";
+    strcat(line, img_dir);
+    strcat(line, "/");
+    strcat(line, entry->d_name);
 
     printf("%s\n", line);
     VB_BLK blk_fr;
@@ -52,9 +40,8 @@ static int genFeatureFile(const char *img_name_list, const char *result_file) {
     CVI_AI_RetinaFace(facelib_handle, &frFrame, &face, &face_count);
     if (face_count > 0) {
       CVI_AI_FaceQuality(facelib_handle, &frFrame, &face);
-
-      fprintf(fp_feature, "%f\n", face.info[0].face_quality.quality);
     }
+
     if (face_count == 0 || face.info[0].face_quality.quality < 0.5 ||
         fabs(face.info[0].face_quality.pitch) > 0.45 ||
         fabs(face.info[0].face_quality.yaw) > 0.45) {
@@ -67,18 +54,28 @@ static int genFeatureFile(const char *img_name_list, const char *result_file) {
     idx++;
   }
 
-  printf("fail_num: %d\n", fail_num);
-  fclose(fp_feature);
-  fclose(fp);
+  *num = fail_num;
+  *total = idx;
+  closedir(dirp);
 
   return CVI_SUCCESS;
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
+  if (argc != 5) {
+    printf("Usage: %s <face detect model path> <face quality model path> \
+           <pos_image_root_dir> <neg_image_root_dir>.\n", argv[0]);
+    printf("Face detect model path: Path to face detect cvimodel.\n");
+    printf("Face attribute model path: Path to face attribute cvimodel.\n");
+    printf("Pos image root dir: Path to the positive data directory.\n");
+    printf("Neg image root dir: Path to the negative data directory.\n");
+    return CVI_FAILURE;
+  }
+
   CVI_S32 ret = CVI_SUCCESS;
 
-  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, SAMPLE_PIXEL_FORMAT, vpssgrp_width,
-                        vpssgrp_height, SAMPLE_PIXEL_FORMAT);
+  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,
+                        vpssgrp_height, PIXEL_FORMAT_RGB_888);
   if (ret != CVI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
@@ -90,10 +87,8 @@ int main(void) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
-                            "/mnt/data/retina_face.cvimodel");
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
-                            "/mnt/data/fqnet-v5_shufflenetv2-softmax.cvimodel");
+  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[2]);
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
@@ -101,7 +96,13 @@ int main(void) {
 
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
-  genFeatureFile("/mnt/data/pic2/list.txt", "/mnt/data/pic2/result.txt");
+  int pos_num = 0, pos_total = 0;
+  int neg_num = 0, neg_total = 0;
+  genFeatureFile(argv[3], &pos_num, &pos_total);
+  genFeatureFile(argv[4], &neg_num, &neg_total);
+
+  printf("pos num: %d / pos total %d\n", pos_num, pos_total);
+  printf("neg num: %d / neg total %d\n", neg_num, neg_total);
 
   CVI_AI_DestroyHandle(facelib_handle);
 }
