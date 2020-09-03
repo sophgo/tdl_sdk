@@ -30,12 +30,17 @@ int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   if (enable_log) {
     enableLog();
   }
+  if (CVI_SYS_GetVPSSMode() == VPSS_MODE_DUAL) {
+    // FIXME: Currently hardcoded due to no define in mmf.
+    m_available_max_chn = VPSS_MAX_CHN_NUM - 1;
+  }
+
   VPSS_GRP_ATTR_S vpss_grp_attr;
   VPSS_CHN_ATTR_S vpss_chn_attr;
   // Not magic number, only for init.
   uint32_t width = 100;
   uint32_t height = 100;
-  m_enabled_chn = 2;
+  m_enabled_chn = 1;
   VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, width, height, PIXEL_FORMAT_YUV_PLANAR_420);
   VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr, width, height, PIXEL_FORMAT_RGB_888_PLANAR, true);
 
@@ -138,17 +143,28 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
                               const VPSS_CROP_INFO_S *grp_crop_attr,
                               const VPSS_CROP_INFO_S *chn_crop_attr,
                               const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
-  if (enable_chns > m_enabled_chn) {
-    printf("Error, exceed enabled chn. Enabled: %x, required %x\n", m_enabled_chn, enable_chns);
-    return CVI_FAILURE;
+  if (enable_chns >= m_enabled_chn) {
+    for (uint32_t i = m_enabled_chn; i < enable_chns; i++) {
+      CVI_VPSS_EnableChn(m_grpid, i);
+    }
+  } else {
+    for (uint32_t i = enable_chns; i < m_enabled_chn; i++) {
+      CVI_VPSS_DisableChn(m_grpid, i);
+    }
   }
+  m_enabled_chn = enable_chns;
+
   VPSS_GRP_ATTR_S vpss_grp_attr;
   VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
                           frame->stVFrame.enPixelFormat);
   // Auto choose 1 if more than one channel.
   // Will auto changed to 0 if is SINGLE_MODE when set attr.
-  if (enable_chns > 1) {
+  if (m_enabled_chn > 1) {
     vpss_grp_attr.u8VpssDev = 1;
+    if (m_enabled_chn > m_available_max_chn) {
+      printf("Exceed max available channel %u. Current: %u.\n", m_available_max_chn, m_enabled_chn);
+      return CVI_FAILURE;
+    }
   }
   int ret = CVI_VPSS_SetGrpAttr(m_grpid, &vpss_grp_attr);
   if (ret != CVI_SUCCESS) {
@@ -163,7 +179,7 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
     }
   }
 
-  for (uint32_t i = 0; i < enable_chns; i++) {
+  for (uint32_t i = 0; i < m_enabled_chn; i++) {
     ret = CVI_VPSS_SetChnAttr(m_grpid, i, &chn_attr[i]);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_SetChnAttr failed with %#x\n", ret);
@@ -172,7 +188,7 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
   }
 
   if (chn_crop_attr != NULL) {
-    for (uint32_t i = 0; i < enable_chns; i++) {
+    for (uint32_t i = 0; i < m_enabled_chn; i++) {
       int ret = CVI_VPSS_SetChnCrop(m_grpid, i, &chn_crop_attr[i]);
       if (ret != CVI_SUCCESS) {
         printf("CVI_VPSS_SetChnCrop failed with %#x\n", ret);
@@ -213,7 +229,7 @@ int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t tim
   VPSS_CROP_INFO_S crop_attr;
   memset(&crop_attr, 0, sizeof(VPSS_CROP_INFO_S));
   CVI_VPSS_SetGrpCrop(m_grpid, &crop_attr);
-  for (int i = 0; i < VPSS_MAX_PHY_CHN_NUM; i++) {
+  for (uint32_t i = 0; i < m_enabled_chn; i++) {
     CVI_VPSS_SetChnCrop(m_grpid, i, &crop_attr);
   }
   return ret;

@@ -35,5 +35,6 @@ class VpssEngine {
   bool m_is_vpss_init = false;
   VPSS_GRP m_grpid = -1;
   uint32_t m_enabled_chn = -1;
+  uint32_t m_available_max_chn = VPSS_MAX_CHN_NUM;
 };
 }  // namespace cviai
