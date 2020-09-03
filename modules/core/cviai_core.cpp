@@ -1,6 +1,17 @@
 #include "core/cviai_core.h"
 #include "cviai_core_internal.hpp"
 
+#include "cviai_experimental.h"
+#include "face_attribute/face_attribute.hpp"
+#include "face_quality/face_quality.hpp"
+#include "liveness/liveness.hpp"
+#include "mask_classification/mask_classification.hpp"
+#include "mask_face_recognition/mask_face_recognition.hpp"
+#include "object_detection/mobiledetv2/mobiledetv2.hpp"
+#include "object_detection/yolov3/yolov3.hpp"
+#include "retina_face/retina_face.hpp"
+#include "thermal_face_detection/thermal_face.hpp"
+
 #include "opencv2/opencv.hpp"
 #include "tracer.h"
 
