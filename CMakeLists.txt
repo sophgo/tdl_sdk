@@ -16,6 +16,7 @@ if("${CVI_PLATFORM}" STREQUAL "")
   message(AUTHOR_WARNING "Platform not provided, set to ${CVI_PLATFORM}.")
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if("${CVI_TARGET}" STREQUAL "soc")
   add_definitions(-DCVI_SOC)
   if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
@@ -83,10 +84,6 @@ elseif("${CMAKE_BUILD_TYPE}" STREQUAL "UBsan")
     set( CMAKE_EXE_LINKER_FLAGS "-lubsan")
 else()
     message(FATAL_ERROR "No build type!!!")
-endif()
-if (NOT DISABLE_CLANGTIDY)
-    set(CMAKE_C_CLANG_TIDY clang-tidy-5.0 -checks=-*,readability-*,clang-analyzer-*,performance-*)
-    set(CMAKE_CXX_CLANG_TIDY clang-tidy-5.0 -checks=-*,readability-*,clang-analyzer-*,performance-*)
 endif()
 
 # Get current commit

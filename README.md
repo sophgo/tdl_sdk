@@ -13,7 +13,6 @@ $ mkdir build
 $ cd build
 $ cmake -G Ninja .. -DCVI_TARGET=soc \
                     -DENABLE_SYSTRACE=ON \
-                    -DDISABLE_CLANGTIDY=OFF \
                     -DTOOLCHAIN_ROOT_DIR=<toolchain_root_dir> \
                     -DCMAKE_TOOLCHAIN_FILE=${PWD}/../toolchain/toolchain-aarch64-linux.cmake \
                     -DMLIR_SDK_ROOT=<mlir_root_dir> \
@@ -32,7 +31,6 @@ $ mkdir build_soc
 $ cd build
 $ cmake -G Ninja .. -DCVI_TARGET=soc \
                     -DENABLE_SYSTRACE=ON \
-                    -DDISABLE_CLANGTIDY=OFF \
                     -DTOOLCHAIN_ROOT_DIR=<toolchain_root_dir> \
                     -DCMAKE_TOOLCHAIN_FILE=${PWD}/../toolchain/toolchain-gnueabihf-linux.cmake \
                     -DMLIR_SDK_ROOT=<mlir_root_dir> \

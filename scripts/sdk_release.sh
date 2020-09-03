@@ -18,7 +18,6 @@ elif [[ "$1" == "soc" ]]; then
     pushd $TMP_WORKING_DIR/build_sdk
     cmake -G Ninja $CVIAI_ROOT -DCVI_TARGET=soc \
                                -DENABLE_SYSTRACE=OFF \
-                               -DDISABLE_CLANGTIDY=ON \
                                -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
                                -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
@@ -36,7 +35,6 @@ elif [[ "$1" == "soc32" ]]; then
     pushd $TMP_WORKING_DIR/build_sdk
     cmake -G Ninja $CVIAI_ROOT -DCVI_TARGET=soc \
                                -DENABLE_SYSTRACE=OFF \
-                               -DDISABLE_CLANGTIDY=ON \
                                -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
                                -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
