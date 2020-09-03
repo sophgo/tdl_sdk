@@ -129,7 +129,7 @@ void FaceAttribute::prepareInputTensor(const VIDEO_FRAME_INFO_S &frame, const cv
                                        cvai_face_info_t &face_info) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   cv::Mat image(input->shape.dim[2], input->shape.dim[3], src_image.type());
-  face_align(src_image, image, face_info, input->shape.dim[3], input->shape.dim[2]);
+  face_align(src_image, image, face_info);
   // FIXME: Compare HW wrap test code
   if (ENABLE_HW_WRAP_TEST == 1) {
     VPSS_CHN_ATTR_S vpssChnAttr;

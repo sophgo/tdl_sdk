@@ -179,15 +179,14 @@ inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width
   return 0;
 }
 
-int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info,
-               const int width, const int height) {
+int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info) {
   ScopedTrace st(__func__);
   cv::Mat tfm;
-  if (getTfmFromFaceInfo(face_info, width, height, &tfm) != 0) {
+  if (getTfmFromFaceInfo(face_info, aligned.cols, aligned.rows, &tfm) != 0) {
     return -1;
   }
   Tracer::TraceBegin("sw warp affine");
-  cv::warpAffine(image, aligned, tfm, cv::Size(width, height), cv::INTER_NEAREST);
+  cv::warpAffine(image, aligned, tfm, aligned.size(), cv::INTER_NEAREST);
   Tracer::TraceEnd();
   return 0;
 }
