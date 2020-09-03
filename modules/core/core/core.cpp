@@ -148,5 +148,6 @@ int Core::setVpssEngine(VpssEngine *engine) {
 }
 
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
+void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
 
 }  // namespace cviai

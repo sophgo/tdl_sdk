@@ -39,6 +39,7 @@ class Core {
   int setVpssEngine(VpssEngine *engine);
   float getInputScale();
   void skipVpssPreprocess(bool skip);
+  void setModelThreshold(float threshold);
 
  protected:
   virtual int initAfterModelOpened() { return CVI_SUCCESS; }
@@ -56,6 +57,7 @@ class Core {
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
   bool m_skip_vpss_preprocess = false;
+  float m_model_threshold = 0.5;
 
   IVE_HANDLE ive_handle = NULL;
   VpssEngine *mp_vpss_inst = nullptr;

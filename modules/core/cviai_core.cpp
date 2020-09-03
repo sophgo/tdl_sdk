@@ -102,6 +102,20 @@ int CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
   return CVI_SUCCESS;
 }
 
+int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             float threshold) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  ctx->model_cont[config].model_threshold = threshold;
+  return CVI_SUCCESS;
+}
+
+int CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             float *threshold) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  *threshold = ctx->model_cont[config].model_threshold;
+  return CVI_SUCCESS;
+}
+
 int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                          const uint32_t thread) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -507,8 +521,11 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
     printf("No instance found for RetinaFace.\n");
     return CVI_FAILURE;
   }
+
   retina_face->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   retina_face->skipVpssPreprocess(m_t.skip_vpss_preprocess);
+  retina_face->setModelThreshold(m_t.model_threshold);
+
   return retina_face->inference(frame, faces, face_count);
 }
 

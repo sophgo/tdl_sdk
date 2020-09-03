@@ -4,7 +4,6 @@
 #include "core/cviai_types_free.h"
 #include "core/utils/vpss_helper.h"
 
-#define FACE_THRESHOLD 0.5
 #define NAME_BBOX "face_rpn_bbox_pred_"
 #define NAME_SCORE "face_rpn_cls_score_reshape_"
 #define NAME_LANDMARK "face_rpn_landmark_pred_"
@@ -148,7 +147,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height,
     for (size_t num = 0; num < num_anchor; num++) {
       for (size_t j = 0; j < count; j++) {
         float conf = score_blob[j + count * num];
-        if (conf <= FACE_THRESHOLD) {
+        if (conf <= m_model_threshold) {
           continue;
         }
         cvai_face_info_t box;

@@ -47,17 +47,16 @@ static int softmax_by_channel(float *input, float *output, const std::vector<int
   for (int N = 0; N < shape[0]; ++N) {
     for (int H = 0; H < shape[2]; ++H) {
       for (int W = 0; W < shape[3]; ++W) {
-        float max_val = std::numeric_limits<float>::lowest();
         for (int C = 0; C < shape[1]; ++C) {
           iter[C] =
               (N * shape[1] * shape[2] * shape[3]) + (C * shape[2] * shape[3]) + (H * shape[3]) + W;
         }
 
-        for (int C = 0; C < shape[1]; ++C) {
+        float max_val = input[iter[0]];
+        for (int C = 1; C < shape[1]; ++C) {
           max_val = std::max(input[iter[C]], max_val);
         }
 
-        // find softmax divisor
         float sum_of_ex = 0.0f;
         for (int C = 0; C < shape[1]; ++C) {
           float x = input[iter[C]] - max_val;
@@ -65,7 +64,6 @@ static int softmax_by_channel(float *input, float *output, const std::vector<int
           sum_of_ex += ex[C];
         }
 
-        // calculate softmax
         for (int C = 0; C < shape[1]; ++C) {
           output[iter[C]] = ex[C] / sum_of_ex;
         }

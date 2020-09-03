@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
   }
 
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_AI_SetModelThreshold(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, 0.005);
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);

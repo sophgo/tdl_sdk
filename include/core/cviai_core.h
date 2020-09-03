@@ -143,6 +143,10 @@ int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
 int CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  bool *skip);
 
+int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             float threshold);
+int CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             float *threshold);
 /**
  * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
  * to change a thread if the process is not sequential.
