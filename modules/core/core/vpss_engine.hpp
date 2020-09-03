@@ -11,6 +11,8 @@ class VpssEngine {
   int init(bool enable_log, VPSS_GRP grp_id = (VPSS_GRP)-1);
   int stop();
   VPSS_GRP getGrpId();
+  int setResizeMethod(const VPSS_CHN chn, const VPSS_SCALE_COEF_E coef);
+  int getResizeMethod(const VPSS_CHN chn, VPSS_SCALE_COEF_E *coef);
   int sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
                 const uint32_t enable_chns);
   int sendCropGrpFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,

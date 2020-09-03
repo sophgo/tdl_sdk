@@ -126,6 +126,14 @@ int VpssEngine::stop() {
 
 VPSS_GRP VpssEngine::getGrpId() { return m_grpid; }
 
+int VpssEngine::setResizeMethod(const VPSS_CHN chn, const VPSS_SCALE_COEF_E coef) {
+  return CVI_VPSS_SetChnScaleCoefLevel(m_grpid, chn, coef);
+}
+
+int VpssEngine::getResizeMethod(const VPSS_CHN chn, VPSS_SCALE_COEF_E *coef) {
+  return CVI_VPSS_GetChnScaleCoefLevel(m_grpid, chn, coef);
+}
+
 int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
                               const VPSS_CROP_INFO_S *grp_crop_attr,
                               const VPSS_CROP_INFO_S *chn_crop_attr,
