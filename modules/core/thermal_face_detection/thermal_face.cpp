@@ -138,7 +138,7 @@ int ThermalFace::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_
   const float mean[] = {MEAN_R, MEAN_G, MEAN_B};
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                         input->shape.dim[3], input->shape.dim[2], PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, true, false);
+                        factor, mean, true);
   mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
   return mp_vpss_inst->getFrame(dstFrame, 0);
 }

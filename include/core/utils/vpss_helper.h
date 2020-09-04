@@ -188,10 +188,10 @@ inline void __attribute__((always_inline))
 VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
                       const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
                       const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
-                      const CVI_FLOAT *mean, const bool padReverse, const bool smallRatioMajor) {
+                      const CVI_FLOAT *mean, const bool padReverse) {
   float ratio_w = (float)dstWidth / srcWidth;
   float ratio_h = (float)dstHeight / srcHeight;
-  float ratio = smallRatioMajor ? min(ratio_w, ratio_h) : max(ratio_w, ratio_h);
+  float ratio = min(ratio_w, ratio_h);
 
   pastVpssChnAttr->u32Width = dstWidth;
   pastVpssChnAttr->u32Height = dstHeight;

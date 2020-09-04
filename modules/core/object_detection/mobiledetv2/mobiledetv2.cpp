@@ -198,7 +198,7 @@ int MobileDetV2::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_
   CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, VPSS_SCALE_COEF_OPENCV_BILINEAR);
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                         input->shape.dim[3], input->shape.dim[2], PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false, true);
+                        factor, mean, false);
   mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
   return mp_vpss_inst->getFrame(dstFrame, 0);
 }
