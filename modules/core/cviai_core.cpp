@@ -439,7 +439,10 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
     printf("No instance found for Yolov3.\n");
     return CVI_FAILURE;
   }
+
   yolov3->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+  yolov3->setModelThreshold(m_t.model_threshold);
+
   return yolov3->inference(frame, obj, det_type);
 }
 

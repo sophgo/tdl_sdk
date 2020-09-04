@@ -5,7 +5,6 @@
 #include "core/utils/vpss_helper.h"
 
 #define YOLOV3_CLASSES 80
-#define YOLOV3_CONF_THRESHOLD 0.5
 #define YOLOV3_NMS_THRESHOLD 0.45
 #define YOLOV3_ANCHOR_NUM 3
 #define YOLOV3_COORDS 4
@@ -30,7 +29,6 @@ Yolov3::Yolov3() {
   m_yolov3_param = {
       YOLOV3_CLASSES,                                                                  // m_classes
       {10, 13, 16, 30, 33, 23, 30, 61, 62, 45, 59, 119, 116, 90, 156, 198, 373, 326},  // m_biases
-      YOLOV3_CONF_THRESHOLD,             // m_threshold
       YOLOV3_NMS_THRESHOLD,              // m_nms_threshold
       YOLOV3_ANCHOR_NUM,                 // m_anchor_nums
       YOLOV3_COORDS,                     // m_coords
@@ -98,9 +96,8 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
     int nboxes = 0;
 
     doYolo(net_outputs.at(i));
-    detection *dets =
-        GetNetworkBoxes(net_outputs.at(i), m_yolov3_param.m_classes, yolov3_w, yolov3_h,
-                        m_yolov3_param.m_threshold, 1, &nboxes, m_yolov3_param, i);
+    detection *dets = GetNetworkBoxes(net_outputs.at(i), m_yolov3_param.m_classes, yolov3_w,
+                                      yolov3_h, m_model_threshold, 1, &nboxes, m_yolov3_param, i);
 
     uint32_t next_size = total_boxes + nboxes;
     // Not a good design?
@@ -118,8 +115,8 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
   }
 
   DoNmsSort(mp_total_dets, total_boxes, m_yolov3_param.m_classes, m_yolov3_param.m_nms_threshold);
-  getYOLOResults(mp_total_dets, total_boxes, m_yolov3_param.m_threshold, yolov3_w, yolov3_h,
-                 results, det_type);
+  getYOLOResults(mp_total_dets, total_boxes, m_model_threshold, yolov3_w, yolov3_h, results,
+                 det_type);
   for (int i = 0; i < total_boxes; ++i) {
     delete[] mp_total_dets[i].prob;
   }
@@ -169,7 +166,7 @@ void Yolov3::doYolo(YOLOLayer &l) {
         ActivateArray(data + obj_index, 1, true);
         float objectness = data[obj_index];
 
-        if (objectness >= m_yolov3_param.m_threshold) {
+        if (objectness >= m_model_threshold) {
           int box_index =
               EntryIndex(w, h, m_yolov3_param.m_classes, b, n * w * h + p, 0, output_size);
           ActivateArray(data + box_index, 1, true);

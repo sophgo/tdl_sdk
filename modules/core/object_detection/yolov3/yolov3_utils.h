@@ -35,7 +35,6 @@ typedef struct {
 typedef struct {
   int m_classes;
   float m_biases[20];
-  float m_threshold;
   float m_nms_threshold;
   int m_anchor_nums;
   int m_coords;

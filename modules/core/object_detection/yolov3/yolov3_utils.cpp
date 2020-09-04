@@ -170,7 +170,7 @@ void DoNmsSort(detection *dets, int total, int classes, float threshold) {
   }
 };
 
-int GetNumOfDetections(YOLOLayer &net_output, YOLOParamter yolo_param) {
+int GetNumOfDetections(YOLOLayer &net_output, float threshold, YOLOParamter yolo_param) {
   if (yolo_param.type == v2) {
     return net_output.width * net_output.height * yolo_param.m_anchor_nums;
   } else if (yolo_param.type == v3) {  // NOLINT
@@ -183,7 +183,7 @@ int GetNumOfDetections(YOLOLayer &net_output, YOLOParamter yolo_param) {
     for (i = 0; i < w * h; ++i) {
       for (n = 0; n < yolo_param.m_anchor_nums; ++n) {
         int obj_index = EntryIndex(w, h, yolo_param.m_classes, 0, n * w * h + i, 4, output_size);
-        if (output[obj_index] > yolo_param.m_threshold) {
+        if (output[obj_index] > threshold) {
           ++count;
         }
       }
@@ -198,7 +198,7 @@ int GetNumOfDetections(YOLOLayer &net_output, YOLOParamter yolo_param) {
 detection *MakeNetworkBoxes(YOLOLayer &net_output, float threshold, int *num,
                             YOLOParamter yolo_param) {
   int i;
-  int nboxes = GetNumOfDetections(net_output, yolo_param);
+  int nboxes = GetNumOfDetections(net_output, threshold, yolo_param);
   if (num != nullptr) *num = nboxes;
   if (nboxes == 0) {
     return nullptr;
@@ -295,7 +295,7 @@ void GetYoloDetections(YOLOLayer l, int w, int h, int net_width, int net_height,
       int obj_index = EntryIndex(layer_w, layer_h, yolov3_param.m_classes, 0,
                                  n * layer_w * layer_h + i, yolov3_param.m_coords, output_size);
       float objectness = predictions[obj_index];
-      if (objectness <= yolov3_param.m_threshold) continue;
+      if (objectness <= threshold) continue;
       int box_index = EntryIndex(layer_w, layer_h, yolov3_param.m_classes, 0,
                                  n * layer_w * layer_h + i, 0, output_size);
       // Need use right biases(anchors)
@@ -309,7 +309,7 @@ void GetYoloDetections(YOLOLayer l, int w, int h, int net_width, int net_height,
         int class_index = EntryIndex(layer_w, layer_h, yolov3_param.m_classes, 0,
                                      n * layer_w * layer_h + i, 4 + 1 + j, output_size);
         float prob = objectness * predictions[class_index];
-        dets[count].prob[j] = (prob > yolov3_param.m_threshold) ? prob : 0;
+        dets[count].prob[j] = (prob > threshold) ? prob : 0;
       }
       ++count;
     }

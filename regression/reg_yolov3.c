@@ -46,6 +46,8 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV3, 0.005);
+
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
   if (ret != CVI_SUCCESS) {
