@@ -8,6 +8,8 @@
 #include <memory>
 #include <vector>
 
+#define DEFAULT_MODEL_THRESHOLD 0.5
+
 namespace cviai {
 
 /*
@@ -37,9 +39,10 @@ class Core {
   int modelClose();
   int setIveInstance(IVE_HANDLE handle);
   int setVpssEngine(VpssEngine *engine);
-  float getInputScale();
   void skipVpssPreprocess(bool skip);
-  void setModelThreshold(float threshold);
+  virtual void setModelThreshold(float threshold);
+
+  float getModelThreshold() { return m_model_threshold; };
 
  protected:
   virtual int initAfterModelOpened() { return CVI_SUCCESS; }
@@ -57,7 +60,7 @@ class Core {
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
   bool m_skip_vpss_preprocess = false;
-  float m_model_threshold = 0.5;
+  float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
 
   IVE_HANDLE ive_handle = NULL;
   VpssEngine *mp_vpss_inst = nullptr;

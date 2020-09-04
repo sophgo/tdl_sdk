@@ -48,6 +48,7 @@ class MobileDetV2 final : public Core {
   MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45, float score_thresh = 0.4);
   virtual ~MobileDetV2();
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_t det_type);
+  virtual void setModelThreshold(float threshold);
 
   // TODO: define in common header
   typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
@@ -68,7 +69,6 @@ class MobileDetV2 final : public Core {
   std::vector<std::vector<AnchorBox>> m_anchors;
   ModelConfig m_model_config;
   float m_iou_threshold;
-  float m_score_threshold;
 
   // score threshold for quantized inverse threshold
   std::vector<int8_t> m_quant_inverse_score_threshold;

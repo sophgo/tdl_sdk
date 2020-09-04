@@ -14,7 +14,7 @@ typedef struct {
   cviai::Core *instance = nullptr;
   std::string model_path = "";
   bool skip_vpss_preprocess = false;
-  float model_threshold = 0.5;
+  float model_threshold = -1;
   uint32_t vpss_thread = 0;
 } cviai_model_t;
 

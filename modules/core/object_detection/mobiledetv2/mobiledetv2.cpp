@@ -155,10 +155,22 @@ static void clip_bbox(const size_t image_size, const PtrDectRect &box) {
   if (box->y2 >= image_size) box->y2 = image_size - 1;
 }
 
+static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<int> strides,
+                                                  std::map<int, float> dequant_thresh) {
+  std::vector<int8_t> inverse_threshold;
+  float inverse_th = std::log(threshld / (1 - threshld));
+  for (int stride : strides) {
+    int8_t quant_score_thresh =
+        static_cast<int8_t>(round(inverse_th * 128 / dequant_thresh[stride]));
+
+    inverse_threshold.push_back(quant_score_thresh);
+  }
+
+  return inverse_threshold;
+}
+
 MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh, float score_thresh)
-    : m_model_config(MDetV2Config::create_config(model)),
-      m_iou_threshold(iou_thresh),
-      m_score_threshold(score_thresh) {
+    : m_model_config(MDetV2Config::create_config(model)), m_iou_threshold(iou_thresh) {
   mp_config = std::make_unique<cviai::ModelConfig>();
   mp_config->skip_postprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
@@ -169,22 +181,26 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh, float score
       m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_size);
   m_anchors = generator.get_anchor_boxes();
 
+  m_model_threshold = score_thresh;
   /**
    *  To speedup post-process of MobileDetV2, we apply inverse function of sigmoid to threshold
    *  and compare with logits directly. That improve post-process speed because of skipping
    *  compute sigmoid on whole class logits tensors.
    *  The inverse function of sigmoid is f(x) = ln(y / 1-y)
    */
-  float inverse_th = std::log(m_score_threshold / (1 - m_score_threshold));
-  for (auto stride : m_model_config.strides) {
-    int8_t quant_score_thresh =
-        static_cast<int8_t>(round(inverse_th * 128 / m_model_config.class_dequant_thresh[stride]));
-
-    m_quant_inverse_score_threshold.push_back(quant_score_thresh);
-  }
+  m_quant_inverse_score_threshold = constructInverseThresh(
+      m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
 }
 
 MobileDetV2::~MobileDetV2() {}
+
+void MobileDetV2::setModelThreshold(float threshold) {
+  if (m_model_threshold != threshold) {
+    m_model_threshold = threshold;
+    m_quant_inverse_score_threshold = constructInverseThresh(
+        m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
+  }
+}
 
 int MobileDetV2::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
