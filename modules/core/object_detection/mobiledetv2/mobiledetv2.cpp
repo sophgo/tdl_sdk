@@ -378,6 +378,18 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       break;
     case Model::d1:
       config.image_size = 640;
+      config.class_dequant_thresh = {{8, 14.168907165527344},
+                                     {16, 15.155534744262695},
+                                     {32, 16.111759185791016},
+                                     {64, 15.438838958740234},
+                                     {128, 14.437296867370605}};
+
+      config.bbox_dequant_thresh = {{8, 2.5651912689208984},
+                                    {16, 2.8889713287353516},
+                                    {32, 2.650554656982422},
+                                    {64, 2.727674961090088},
+                                    {128, 2.260598659515381}};
+      config.default_score_threshold = 0.3;
       break;
     case Model::d2:
       config.image_size = 768;
