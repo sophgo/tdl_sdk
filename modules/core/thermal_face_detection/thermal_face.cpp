@@ -11,7 +11,6 @@
 #define MEAN_R (0.485 / 0.229) * (128 / 2.64064478874)
 #define MEAN_G (0.456 / 0.224) * (128 / 2.64064478874)
 #define MEAN_B (0.406 / 0.225) * (128 / 2.64064478874)
-#define FACE_THRESHOLD 0.5
 #define NAME_BBOX "regression_dequant"
 #define NAME_SCORE "classification_dequant"
 
@@ -183,7 +182,7 @@ void ThermalFace::outputParser(int image_width, int image_height,
     cvai_face_info_t box;
 
     float conf = score_blob[i];
-    if (conf <= FACE_THRESHOLD) {
+    if (conf <= m_model_threshold) {
       continue;
     }
     box.bbox.score = conf;
