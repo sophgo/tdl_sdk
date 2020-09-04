@@ -32,6 +32,7 @@ class MobileDetV2 final : public Core {
     std::map<int, std::string> obj_max_names;
     std::map<int, float> class_dequant_thresh;
     std::map<int, float> bbox_dequant_thresh;
+    float default_score_threshold;
     static ModelConfig create_config(MobileDetV2::Model model);
   };
 
@@ -45,7 +46,7 @@ class MobileDetV2 final : public Core {
     int label;
   };
 
-  MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45, float score_thresh = 0.4);
+  MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45);
   virtual ~MobileDetV2();
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_t det_type);
   virtual void setModelThreshold(float threshold);
@@ -56,7 +57,6 @@ class MobileDetV2 final : public Core {
 
  private:
   int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) override;
-  int initAfterModelOpened() override;
   void get_tensor_ptr_size(const std::string &tname, int8_t **ptr, size_t *size);
   void get_raw_outputs(std::vector<std::pair<int8_t *, size_t>> *cls_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *objectness_tensor_ptr,

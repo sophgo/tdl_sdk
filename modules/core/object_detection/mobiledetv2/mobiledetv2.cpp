@@ -169,7 +169,7 @@ static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<in
   return inverse_threshold;
 }
 
-MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh, float score_thresh)
+MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
     : m_model_config(MDetV2Config::create_config(model)), m_iou_threshold(iou_thresh) {
   mp_config = std::make_unique<cviai::ModelConfig>();
   mp_config->skip_postprocess = true;
@@ -181,7 +181,7 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh, float score
       m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_size);
   m_anchors = generator.get_anchor_boxes();
 
-  m_model_threshold = score_thresh;
+  m_model_threshold = m_model_config.default_score_threshold;
   /**
    *  To speedup post-process of MobileDetV2, we apply inverse function of sigmoid to threshold
    *  and compare with logits directly. That improve post-process speed because of skipping
@@ -218,8 +218,6 @@ int MobileDetV2::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_
   mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
   return mp_vpss_inst->getFrame(dstFrame, 0);
 }
-
-int MobileDetV2::initAfterModelOpened() { return CVI_SUCCESS; }
 
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
                                            float bbox_dequant_thresh, int8_t quant_thresh,
@@ -376,6 +374,7 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {32, 2.6431756019592285},
                                     {64, 2.9647181034088135},
                                     {128, 12.42608642578125}};
+      config.default_score_threshold = 0.4;
       break;
     case Model::d1:
       config.image_size = 640;
@@ -393,6 +392,7 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {32, 2.8060667514801025},
                                     {64, 2.563389301300049},
                                     {128, 2.2213821411132812}};
+      config.default_score_threshold = 0.3;
       break;
   }
 
