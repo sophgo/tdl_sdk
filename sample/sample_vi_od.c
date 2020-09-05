@@ -57,7 +57,7 @@ typedef struct _ModelConfig {
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVI_SUCCESS;
 
-  if (strstr(model_name, "mobiledetv2") != NULL) {
+  if (strstr(model_name, "mobiledetv2")) {
     config->factor[0] = MOBDETV2_FACTOR_R;
     config->factor[1] = MOBDETV2_FACTOR_G;
     config->factor[2] = MOBDETV2_FACTOR_B;
@@ -69,6 +69,10 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
       config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0;
       config->inference = CVI_AI_MobileDetV2_D0;
       config->input_size = 512;
+    } else if (strcmp(model_name, "mobiledetv2-d1") == 0) {
+      config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1;
+      config->inference = CVI_AI_MobileDetV2_D1;
+      config->input_size = 640;
     } else if (strcmp(model_name, "mobiledetv2-d2") == 0) {
       config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2;
       config->inference = CVI_AI_MobileDetV2_D2;

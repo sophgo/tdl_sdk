@@ -498,6 +498,9 @@ int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
       printf("Open model failed (%s).\n", m_t.model_path.c_str());
       return CVI_RC_FAILURE;
     }
+    if (m_t.model_threshold == -1) {
+      m_t.model_threshold = m_t.instance->getModelThreshold();
+    }
   }
 
   MobileDetV2 *detector = dynamic_cast<MobileDetV2 *>(m_t.instance);
@@ -507,6 +510,7 @@ int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
   }
   detector->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   detector->skipVpssPreprocess(m_t.skip_vpss_preprocess);
+  detector->setModelThreshold(m_t.model_threshold);
 
   return detector->inference(frame, obj, det_type);
 }
