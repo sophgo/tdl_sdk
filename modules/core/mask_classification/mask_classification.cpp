@@ -23,6 +23,10 @@ MaskClassification::MaskClassification() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
+
+  m_use_vpss_crop = true;
+  m_crop_attr.bEnable = true;
+  m_crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
 }
 
 MaskClassification::~MaskClassification() {}
@@ -54,19 +58,8 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     int box_new_x1 = (box_w - new_edge) / 2.f + box_x1;
     int box_new_y1 = (box_h - new_edge) / 2.f + box_y1;
 
-    VPSS_CROP_INFO_S crop_attr;
-    crop_attr.bEnable = true;
-    crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-    crop_attr.stCropRect = {box_new_x1, box_new_y1, (uint32_t)new_edge, (uint32_t)new_edge};
-    VIDEO_FRAME_INFO_S frame;
-    mp_vpss_inst->sendCropChnFrame(stOutFrame, &crop_attr, &m_vpss_chn_attr[0], 1);
-    int ret = mp_vpss_inst->getFrame(&frame, 0);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-      return ret;
-    }
-    run(&frame);
-    mp_vpss_inst->releaseFrame(&frame, 0);
+    m_crop_attr.stCropRect = {box_new_x1, box_new_y1, (uint32_t)new_edge, (uint32_t)new_edge};
+    run(stOutFrame);
 
     CVI_TENSOR *out = CVI_NN_GetTensorByName(MASK_OUT_NAME, mp_output_tensors, m_output_num);
     float *out_data = (float *)CVI_NN_TensorPtr(out);

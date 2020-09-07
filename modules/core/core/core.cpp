@@ -61,7 +61,12 @@ int Core::modelClose() {
 }
 
 int Core::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
-  mp_vpss_inst->sendFrame(srcFrame, &m_vpss_chn_attr[0], 1);
+  if (!m_use_vpss_crop) {
+    mp_vpss_inst->sendFrame(srcFrame, &m_vpss_chn_attr[0], 1);
+  } else {
+    mp_vpss_inst->sendCropChnFrame(srcFrame, &m_crop_attr, &m_vpss_chn_attr[0], 1);
+  }
+
   return mp_vpss_inst->getFrame(dstFrame, 0);
 }
 

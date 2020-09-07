@@ -1,3 +1,4 @@
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,16 +11,17 @@ cviai_handle_t facelib_handle = NULL;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
-static int run(const char *img_list, int *mask_count, int *total) {
-  FILE *fp;
-  if((fp = fopen(img_list, "r")) == NULL) {
-    printf("File [%s] open error!\n", img_list);
-    return CVI_FAILURE;
-  }
+static int run(const char *img_dir, int *mask_count, int *total) {
+  DIR * dirp;
+  struct dirent * entry;
+  dirp = opendir(img_dir);
 
-  char line[1024];
-  while(fscanf(fp, "%[^\n]", line)!=EOF) {
-    fgetc(fp);
+  while ((entry = readdir(dirp)) != NULL) {
+    if (entry->d_type != 8 && entry->d_type != 0) continue;
+    char line[500] = "\0";
+    strcat(line, img_dir);
+    strcat(line, "/");
+    strcat(line, entry->d_name);
 
     printf("%s\n", line);
     VB_BLK blk_fr;
@@ -55,14 +57,14 @@ static int run(const char *img_list, int *mask_count, int *total) {
     CVI_AI_Free(&face);
     CVI_VB_ReleaseBlock(blk_fr);
   }
-  fclose(fp);
+  closedir(dirp);
 
   return CVI_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
-    printf("Usage: %s <mask classifier model path> <mask image list> <unmask image list>.\n", argv[0]);
+    printf("Usage: %s <mask classifier model path> <mask image dir> <unmask image dir>.\n", argv[0]);
     return CVI_FAILURE;
   }
 

@@ -60,11 +60,13 @@ class Core {
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
   bool m_skip_vpss_preprocess = false;
+  bool m_use_vpss_crop = false;
   float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
 
   IVE_HANDLE ive_handle = NULL;
   VpssEngine *mp_vpss_inst = nullptr;
   std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
+  VPSS_CROP_INFO_S m_crop_attr;
 
  private:
   inline int __attribute__((always_inline)) runVideoForward(VIDEO_FRAME_INFO_S *srcFrame);
