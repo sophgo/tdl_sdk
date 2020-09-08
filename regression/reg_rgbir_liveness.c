@@ -1,25 +1,26 @@
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <math.h>
 
 #include <cvimath/cvimath.h>
 
-#include "cviai.h"
 #include "core/utils/vpss_helper.h"
+#include "cviai.h"
 
 cviai_handle_t handle = NULL;
 
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   if (argc != 6) {
-    printf("Usage: %s <face detect model path> <liveness model path> \
-           <root_dir> <pair_txt_path> <result_path>.\n", argv[0]);
+    printf(
+        "Usage: %s <face detect model path> <liveness model path> \
+           <root_dir> <pair_txt_path> <result_path>.\n",
+        argv[0]);
     printf("Face detect model path: Path to face detect cvimodel.\n");
     printf("Liveness model path: Path to liveness cvimodel.\n");
     printf("Root dir: Image root directory.\n");

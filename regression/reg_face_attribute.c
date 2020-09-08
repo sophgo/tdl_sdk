@@ -1,25 +1,25 @@
+#include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <cvimath/cvimath.h>
 
-#include "cviai.h"
 #include "core/utils/vpss_helper.h"
+#include "cviai.h"
 
-#define FEATURE_LENGTH  512
-#define NAME_LENGTH     1024
-#define DB_IMAGE_DIR  "/db/"
-#define IN_IMAGE_DIR  "/in_db/"
-#define NOT_IMAGE_DIR  "/not_db/"
-#define DB_FEATURE_DIR  "/db_feature/"
-#define IN_FEATURE_DIR  "/in_db_feature/"
-#define NOT_FEATURE_DIR  "/not_db_feature/"
+#define FEATURE_LENGTH 512
+#define NAME_LENGTH 1024
+#define DB_IMAGE_DIR "/db/"
+#define IN_IMAGE_DIR "/in_db/"
+#define NOT_IMAGE_DIR "/not_db/"
+#define DB_FEATURE_DIR "/db_feature/"
+#define IN_FEATURE_DIR "/in_db_feature/"
+#define NOT_FEATURE_DIR "/not_db_feature/"
 
 cviai_handle_t facelib_handle = NULL;
 
@@ -27,10 +27,9 @@ static VPSS_GRP VpssGrp = 0;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
-static void removePreviousFile(const char *dir_path)
-{
-  DIR * dirp;
-  struct dirent * entry;
+static void removePreviousFile(const char *dir_path) {
+  DIR *dirp;
+  struct dirent *entry;
   dirp = opendir(dir_path);
 
   while ((entry = readdir(dirp)) != NULL) {
@@ -45,8 +44,8 @@ static void removePreviousFile(const char *dir_path)
 }
 
 int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_quality) {
-  DIR * dirp;
-  struct dirent * entry;
+  DIR *dirp;
+  struct dirent *entry;
   dirp = opendir(img_dir);
 
   if (0 != mkdir(feature_dir, S_IRWXO) && EEXIST != errno) {
@@ -89,7 +88,8 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       }
     }
 
-    if (face_count > 0 && (do_face_quality == false || face.info[face_idx].face_quality.quality > 0.05)) {
+    if (face_count > 0 &&
+        (do_face_quality == false || face.info[face_idx].face_quality.quality > 0.05)) {
       CVI_AI_FaceAttributeOne(facelib_handle, &rgb_frame, &face, face_idx);
 
       char *file_name;
@@ -102,7 +102,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       strcat(base_name, ".txt");
 
       FILE *fp_feature;
-      if((fp_feature = fopen(base_name, "w+")) == NULL) {
+      if ((fp_feature = fopen(base_name, "w+")) == NULL) {
         printf("Write file open error!");
         return CVI_FAILURE;
       }
@@ -120,10 +120,9 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
   return CVI_SUCCESS;
 }
 
-static int loadCount(const char *dir_path)
-{
-  DIR * dirp;
-  struct dirent * entry;
+static int loadCount(const char *dir_path) {
+  DIR *dirp;
+  struct dirent *entry;
   dirp = opendir(dir_path);
 
   int count = 0;
@@ -136,10 +135,9 @@ static int loadCount(const char *dir_path)
   return count;
 }
 
-static char** loadName(const char *dir_path, int count)
-{
-  DIR * dirp;
-  struct dirent * entry;
+static char **loadName(const char *dir_path, int count) {
+  DIR *dirp;
+  struct dirent *entry;
   dirp = opendir(dir_path);
 
   char **name = calloc(count, sizeof(char *));
@@ -159,10 +157,9 @@ static char** loadName(const char *dir_path, int count)
   return name;
 }
 
-static int8_t* loadFeature(const char *dir_path, int count)
-{
-  DIR * dirp;
-  struct dirent * entry;
+static int8_t *loadFeature(const char *dir_path, int count) {
+  DIR *dirp;
+  struct dirent *entry;
   dirp = opendir(dir_path);
 
   int8_t *feature = calloc(count * FEATURE_LENGTH, sizeof(int8_t));
@@ -175,15 +172,15 @@ static int8_t* loadFeature(const char *dir_path, int count)
     strcat(base_name, entry->d_name);
 
     FILE *fp_db;
-    if((fp_db = fopen(base_name, "r")) == NULL) {
+    if ((fp_db = fopen(base_name, "r")) == NULL) {
       printf("file open error %s!\n", base_name);
       continue;
     }
 
     int line = 0;
     int idx = 0;
-    while(fscanf(fp_db, "%d\n", &line) != EOF) {
-      feature[i*FEATURE_LENGTH + idx] = line;
+    while (fscanf(fp_db, "%d\n", &line) != EOF) {
+      feature[i * FEATURE_LENGTH + idx] = line;
       idx++;
     }
 
@@ -197,9 +194,8 @@ static int8_t* loadFeature(const char *dir_path, int count)
 }
 
 static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not_db_feature,
-                          char **db_name, char **in_name,
-                          int db_count, int in_count, int not_count)
-{
+                          char **db_name, char **in_name, int db_count, int in_count,
+                          int not_count) {
   float *db_f = calloc(db_count * FEATURE_LENGTH, sizeof(float));
   cvm_gen_db_i8_unit_length(db_feature, db_f, FEATURE_LENGTH, db_count);
 
@@ -210,10 +206,9 @@ static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not
     unsigned int *k_index = calloc(db_count, sizeof(unsigned int));
     float *k_value = calloc(db_count, sizeof(float));
     float *buffer = calloc(db_count * FEATURE_LENGTH, sizeof(float));
-    cvm_cpu_i8data_ip_match(&in_db_feature[i * FEATURE_LENGTH], db_feature, db_f, k_index, k_value, buffer,
-                            FEATURE_LENGTH, db_count, 1);
-    if (k_value[0] < threshold ||
-        strcmp(in_name[i], db_name[k_index[0]]) != 0) frr++;
+    cvm_cpu_i8data_ip_match(&in_db_feature[i * FEATURE_LENGTH], db_feature, db_f, k_index, k_value,
+                            buffer, FEATURE_LENGTH, db_count, 1);
+    if (k_value[0] < threshold || strcmp(in_name[i], db_name[k_index[0]]) != 0) frr++;
 
     free(k_index);
     free(k_value);
@@ -223,8 +218,8 @@ static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not
     unsigned int *k_index = calloc(db_count, sizeof(unsigned int));
     float *k_value = calloc(db_count, sizeof(float));
     float *buffer = calloc(db_count * FEATURE_LENGTH, sizeof(float));
-    cvm_cpu_i8data_ip_match(&not_db_feature[i * FEATURE_LENGTH], db_feature, db_f, k_index, k_value, buffer,
-                            FEATURE_LENGTH, db_count, 1);
+    cvm_cpu_i8data_ip_match(&not_db_feature[i * FEATURE_LENGTH], db_feature, db_f, k_index, k_value,
+                            buffer, FEATURE_LENGTH, db_count, 1);
     if (k_value[0] > threshold) far++;
     free(k_index);
     free(k_value);
@@ -241,8 +236,10 @@ static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not
 
 int main(int argc, char *argv[]) {
   if (argc != 6) {
-    printf("Usage: %s <face detect model path> <face attribute model path> \
-           <face quality model path> <image_root_dir> <feature_root_dir>.\n", argv[0]);
+    printf(
+        "Usage: %s <face detect model path> <face attribute model path> \
+           <face quality model path> <image_root_dir> <feature_root_dir>.\n",
+        argv[0]);
     printf("Face detect model path: Path to face detect cvimodel.\n");
     printf("Face attribute model path: Path to face attribute cvimodel.\n");
     printf("Face quality model path: Path to face quaity cvimodel.\n");
@@ -317,7 +314,8 @@ int main(int argc, char *argv[]) {
   int8_t *in_feature = loadFeature(in_feature_full, in_count);
   int8_t *not_feature = loadFeature(not_feature_full, not_count);
 
-  evaluateResult(db_feature, in_feature, not_feature, db_name, in_name, db_count, in_count, not_count);
+  evaluateResult(db_feature, in_feature, not_feature, db_name, in_name, db_count, in_count,
+                 not_count);
 
   free(db_feature);
   free(in_feature);

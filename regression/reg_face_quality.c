@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "cviai.h"
 #include "core/utils/vpss_helper.h"
+#include "cviai.h"
 
 cviai_handle_t facelib_handle = NULL;
 
@@ -12,8 +12,8 @@ static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
 static int genFeatureFile(const char *img_dir, int *num, int *total) {
-  DIR * dirp;
-  struct dirent * entry;
+  DIR *dirp;
+  struct dirent *entry;
   dirp = opendir(img_dir);
 
   int fail_num = 0;
@@ -63,8 +63,10 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
 
 int main(int argc, char *argv[]) {
   if (argc != 5) {
-    printf("Usage: %s <face detect model path> <face quality model path> \
-           <pos_image_root_dir> <neg_image_root_dir>.\n", argv[0]);
+    printf(
+        "Usage: %s <face detect model path> <face quality model path> \
+           <pos_image_root_dir> <neg_image_root_dir>.\n",
+        argv[0]);
     printf("Face detect model path: Path to face detect cvimodel.\n");
     printf("Face attribute model path: Path to face attribute cvimodel.\n");
     printf("Pos image root dir: Path to the positive data directory.\n");

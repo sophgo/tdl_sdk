@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cviai.h"
 #include "core/utils/vpss_helper.h"
+#include "cviai.h"
 
 cviai_handle_t facelib_handle = NULL;
 
@@ -12,8 +12,8 @@ static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
 static int run(const char *img_dir, int *mask_count, int *total) {
-  DIR * dirp;
-  struct dirent * entry;
+  DIR *dirp;
+  struct dirent *entry;
   dirp = opendir(img_dir);
 
   while ((entry = readdir(dirp)) != NULL) {
@@ -64,7 +64,8 @@ static int run(const char *img_dir, int *mask_count, int *total) {
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
-    printf("Usage: %s <mask classifier model path> <mask image dir> <unmask image dir>.\n", argv[0]);
+    printf("Usage: %s <mask classifier model path> <mask image dir> <unmask image dir>.\n",
+           argv[0]);
     return CVI_FAILURE;
   }
 
