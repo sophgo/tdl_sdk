@@ -58,8 +58,9 @@ include (cmake/middleware.cmake)
 # Check if ive exists.
 include (${IVE_SDK_ROOT}/cmake/ive.cmake)
 
-# Check if Tracer SDK exists.
-include(cmake/tracer.cmake)
+# Perfetto
+include(cmake/perfetto.cmake)
+
 
 set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=c11 ${SSE_FLAGS}")
 set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 ${SSE_FLAGS}")

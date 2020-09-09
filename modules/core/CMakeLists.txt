@@ -15,7 +15,8 @@ add_subdirectory(tamper_detection)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils
                     ${IVE_INCLUDES})
-set(CORE_SRCS $<TARGET_OBJECTS:core>
+set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
+              $<TARGET_OBJECTS:core>
               $<TARGET_OBJECTS:utils>
               $<TARGET_OBJECTS:face_attribute>
               $<TARGET_OBJECTS:face_quality>
@@ -30,7 +31,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:core>
               cviai_types_free.cpp
               cviai_rescale_bbox.cpp
               cviai_core.cpp)
-set(CORE_DEPS ${TRACER_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
+set(CORE_DEPS ${PERFETTO_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 
 project(cviai_core)
 add_library(${PROJECT_NAME} SHARED ${CORE_SRCS})

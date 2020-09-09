@@ -12,8 +12,8 @@
 #include "retina_face/retina_face.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
 
+#include "cviai_trace.h"
 #include "opencv2/opencv.hpp"
-#include "tracer.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -34,6 +34,14 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
 //*************************************************
 
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
+#if __GNUC__ >= 7
+  perfetto::TracingInitArgs args;
+  args.backends |= perfetto::kInProcessBackend;
+  args.backends |= perfetto::kSystemBackend;
+
+  perfetto::Tracing::Initialize(args);
+  perfetto::TrackEvent::Register();
+#endif
   cviai_context_t *ctx = new cviai_context_t;
   ctx->ive_handle = CVI_IVE_CreateHandle();
   ctx->vec_vpss_engine.push_back(new VpssEngine());
@@ -369,7 +377,7 @@ int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
 
 int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                               cvai_face_t *faces, int face_idx) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACERECOGNITION];
   if (m_t.instance == nullptr) {
@@ -400,7 +408,7 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
 
 int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                             cvai_face_t *faces, int face_idx) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceAttributeOne");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE];
   if (m_t.instance == nullptr) {
@@ -425,7 +433,7 @@ int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fra
 
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                   cvai_obj_det_type_t det_type) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_Yolov3");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_YOLOV3];
   if (m_t.instance == nullptr) {
@@ -458,7 +466,7 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
 
 int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                           cvai_obj_det_type_t det_type) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D0");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0];
   if (m_t.instance == nullptr) {
@@ -491,7 +499,7 @@ int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
 
 int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                           cvai_obj_det_type_t det_type) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D1");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1];
   if (m_t.instance == nullptr) {
@@ -523,7 +531,7 @@ int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
 
 int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                           cvai_obj_det_type_t det_type) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2];
   if (m_t.instance == nullptr) {
@@ -557,7 +565,7 @@ int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
 
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
                       int *face_count) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_RetinaFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_RETINAFACE];
   if (m_t.instance == nullptr) {
@@ -592,7 +600,7 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
 int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
                     VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
                     cvai_liveness_ir_position_e ir_position) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_Liveness");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_LIVENESS];
   if (m_t.instance == nullptr) {
@@ -618,7 +626,7 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
 }
 
 int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceQuality");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEQUALITY];
   if (m_t.instance == nullptr) {
@@ -645,7 +653,7 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
 
 int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                               cvai_face_t *face) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_MaskClassification");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION];
   if (m_t.instance == nullptr) {
@@ -671,7 +679,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
 }
 
 int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_ThermalFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_THERMALFACE];
   if (m_t.instance == nullptr) {
@@ -705,7 +713,7 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
 
 int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                cvai_face_t *faces) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_MaskFaceRecognition");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION];
   if (m_t.instance == nullptr) {
@@ -732,7 +740,7 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 
 int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                            float *moving_score) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "CVI_AI_TamperDetection");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   TamperDetectorMD *td_model = ctx->td_model;
   if (td_model == nullptr) {

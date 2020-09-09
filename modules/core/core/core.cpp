@@ -2,14 +2,14 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 
-#include "tracer.h"
+#include "cviai_trace.h"
 
 #include <cstdlib>
 
 namespace cviai {
 
 int Core::modelOpen(const char *filepath) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "Core::modelOpen");
   CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
   if (ret != CVI_RC_SUCCESS) {
     printf("CVI_NN_RegisterModel failed, err %d\n", ret);
@@ -43,14 +43,14 @@ int Core::modelOpen(const char *filepath) {
     return CVI_FAILURE;
     ;
   }
-  Tracer::TraceBegin("InitAtferModelOpened");
+  TRACE_EVENT_BEGIN("cviai_core", "InitAtferModelOpened");
   ret = initAfterModelOpened();
-  Tracer::TraceEnd();
+  TRACE_EVENT_END("cviai_core");
   return ret;
 }
 
 int Core::modelClose() {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "Core::modelClose");
   if (mp_model_handle != nullptr) {
     if (int ret = CVI_NN_CleanupModel(mp_model_handle) != CVI_RC_SUCCESS) {  // NOLINT
       printf("CVI_NN_CleanupModel failed, err %d\n", ret);
@@ -71,7 +71,7 @@ int Core::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S 
 }
 
 int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
-  ScopedTrace st(__func__);
+  TRACE_EVENT("cviai_core", "Core::run");
   int ret = CVI_SUCCESS;
   if (mp_config->input_mem_type == 2) {
     if (m_skip_vpss_preprocess) {

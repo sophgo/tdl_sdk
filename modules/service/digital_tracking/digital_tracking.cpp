@@ -2,7 +2,6 @@
 
 #include "core/utils/vpss_helper.h"
 
-#include <cvi_tracer.h>
 #include <algorithm>
 
 #define DEFAULT_DT_ZOOM_TRANS_RATIO 0.1f
@@ -63,8 +62,6 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
   transformRect(trans_ratio, m_prev_rect, &rect);
   fitFrame(width, height, &rect);
 
-  CVI_SYS_TraceEnd();
-  CVI_SYS_TraceBegin("VPSS Crop + Resize");
   VPSS_CHN_ATTR_S chnAttr;
   VPSS_CHN_DEFAULT_HELPER(&chnAttr, width, height, srcFrame->stVFrame.enPixelFormat, true);
   VPSS_CROP_INFO_S cropAttr;
@@ -74,7 +71,6 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
                          (uint32_t)(rect.b - rect.t)};
   mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, 1);
   mp_vpss_inst->getFrame(dstFrame, 0);
-  CVI_SYS_TraceEnd();
 
   m_prev_rect = rect;
   return CVI_SUCCESS;

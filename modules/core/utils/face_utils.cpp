@@ -3,7 +3,6 @@
 #include "core/utils/vpss_helper.h"
 
 #include "opencv2/imgproc.hpp"
-#include "tracer.h"
 
 #include <cvi_comm_gdc.h>
 #include <cvi_gdc.h>
@@ -180,20 +179,16 @@ inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width
 }
 
 int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info) {
-  ScopedTrace st(__func__);
   cv::Mat tfm;
   if (getTfmFromFaceInfo(face_info, aligned.cols, aligned.rows, &tfm) != 0) {
     return -1;
   }
-  Tracer::TraceBegin("sw warp affine");
   cv::warpAffine(image, aligned, tfm, aligned.size(), cv::INTER_NEAREST);
-  Tracer::TraceEnd();
   return 0;
 }
 
 int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFrame,
                    const cvai_face_info_t &face_info) {
-  ScopedTrace st(__func__);
   if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
       inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     return -1;
@@ -203,7 +198,6 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
                          &tfm) != 0) {
     return -1;
   }
-  Tracer::TraceBegin("hw warp affine");
   double t =
       (tfm.at<double>(0, 0) / tfm.at<double>(0, 1) - tfm.at<double>(1, 0) / tfm.at<double>(1, 1));
   double a = 1 / tfm.at<double>(0, 1) / t;
@@ -233,11 +227,9 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
   CVI_GDC_BeginJob(&hHandle);
   CVI_GDC_AddAffineTask(hHandle, &stTask, &stAffineAttr);
   if (CVI_GDC_EndJob(hHandle) != CVI_SUCCESS) {
-    Tracer::TraceEnd();
     printf("Affine failed.\n");
     return -1;
   }
-  Tracer::TraceEnd();
   return 0;
 }
 

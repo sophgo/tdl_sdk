@@ -23,7 +23,6 @@ elif [[ "$1" == "soc" ]]; then
                                -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
                                -DIVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
-                               -DTRACER_SDK_ROOT=$TRACER_INSTALL_PATH \
                                -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
                                -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
                                -DCMAKE_TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
@@ -40,7 +39,6 @@ elif [[ "$1" == "soc32" ]]; then
                                -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
                                -DIVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
-                               -DTRACER_SDK_ROOT=$TRACER_INSTALL_PATH \
                                -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
                                -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
                                -DCMAKE_TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
