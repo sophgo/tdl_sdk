@@ -290,10 +290,15 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
     printf("Unsupported convert format: %u -> %u.\n", inFormat, outFormat);
     ret = CVI_FAILURE;
   }
-
+  uint32_t image_size =
+      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0], image_size);
   CVI_SYS_Munmap(
       (void *)frame->stVFrame.pu8VirAddr[0],
       frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2]);
+  frame->stVFrame.pu8VirAddr[0] = NULL;
+  frame->stVFrame.pu8VirAddr[1] = NULL;
+  frame->stVFrame.pu8VirAddr[2] = NULL;
 
   return ret;
 }
@@ -346,7 +351,8 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
       ret = CVI_FAILURE;
       break;
   }
-
+  uint32_t image_size = vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
+  CVI_SYS_IonFlushCache(vFrame->u64PhyAddr[0], vFrame->pu8VirAddr[0], image_size);
   CVI_SYS_Munmap((void *)vFrame->pu8VirAddr[0],
                  vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2]);
   // FIXME: Middleware bug
