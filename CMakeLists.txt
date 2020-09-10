@@ -29,9 +29,6 @@ include (cmake/middleware.cmake)
 include (${IVE_SDK_ROOT}/cmake/ive.cmake)
 
 # Perfetto
-if (ENABLE_PERFETTO)
-  add_definitions(-DENABLE_TRACE)
-endif()
 include(cmake/perfetto.cmake)
 
 

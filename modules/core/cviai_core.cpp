@@ -2,6 +2,7 @@
 #include "cviai_core_internal.hpp"
 
 #include "cviai_experimental.h"
+#include "cviai_perfetto.h"
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"
 #include "liveness/liveness.hpp"
@@ -25,6 +26,17 @@
 using namespace std;
 using namespace cviai;
 
+void CVI_AI_PerfettoInit() {
+#if __GNUC__ >= 7
+  perfetto::TracingInitArgs args;
+  args.backends |= perfetto::kInProcessBackend;
+  args.backends |= perfetto::kSystemBackend;
+
+  perfetto::Tracing::Initialize(args);
+  perfetto::TrackEvent::Register();
+#endif
+}
+
 //*************************************************
 // Experimental features
 void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
@@ -34,16 +46,6 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
 //*************************************************
 
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
-#if ENABLE_TRACE
-#if __GNUC__ >= 7
-  perfetto::TracingInitArgs args;
-  args.backends |= perfetto::kInProcessBackend;
-  args.backends |= perfetto::kSystemBackend;
-
-  perfetto::Tracing::Initialize(args);
-  perfetto::TrackEvent::Register();
-#endif
-#endif
   cviai_context_t *ctx = new cviai_context_t;
   ctx->ive_handle = CVI_IVE_CreateHandle();
   ctx->vec_vpss_engine.push_back(new VpssEngine());
