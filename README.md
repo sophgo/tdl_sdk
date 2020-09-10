@@ -40,4 +40,5 @@ $ ninja -j8
 
 1. ``OPENCV_ROOT`` may be inside ``<mlir_root_dir>/opencv``
 2. ``mmf.tar.gz`` contains all the required libraries.
+3. Perfetto only supports GCC version >= 7. Please update your local toolchain to meet the requirement.
 
