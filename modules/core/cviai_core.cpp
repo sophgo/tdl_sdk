@@ -12,7 +12,7 @@
 #include "retina_face/retina_face.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
 
-#include "cviai_trace.h"
+#include "cviai_trace.hpp"
 #include "opencv2/opencv.hpp"
 
 #include <stdio.h>

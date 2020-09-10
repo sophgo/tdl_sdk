@@ -2,7 +2,7 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 
-#include "cviai_trace.h"
+#include "cviai_trace.hpp"
 
 #include <cstdlib>
 
