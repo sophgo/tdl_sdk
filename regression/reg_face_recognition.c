@@ -12,6 +12,7 @@
 #include "core/core/cvai_core_types.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "cviai_perfetto.h"
 
 #define FEATURE_LENGTH 512
 #define NAME_LENGTH 1024
@@ -289,6 +290,7 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
+  CVI_AI_PerfettoInit();
   CVI_S32 ret = CVI_SUCCESS;
 
   ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,

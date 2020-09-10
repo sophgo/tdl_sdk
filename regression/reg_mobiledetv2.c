@@ -9,6 +9,7 @@
 
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "cviai_perfetto.h"
 
 uint32_t coco_ids[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 13, 14, 15, 16, 17,
                        18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 31, 32, 33, 34, 35, 36,
@@ -22,6 +23,7 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
+  CVI_AI_PerfettoInit();
   CVI_S32 ret = CVI_SUCCESS;
 
   uint32_t vpssgrp_width = 1280;
