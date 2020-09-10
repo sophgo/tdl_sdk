@@ -15,12 +15,6 @@ set(MLIR_INCLUDES
     ${MLIR_SDK_ROOT}/include/
 )
 
-if("${CVI_TARGET}" STREQUAL "soc")
-    set(CVI_CMODEL)
-else()
-    set(CVI_CMODEL ${MLIR_SDK_ROOT}/lib/libcvicmodel.so)
-endif()
-
 set(MLIR_LIBS
     ${CVI_CMODEL}
     ${MLIR_SDK_ROOT}/lib/libcnpy.so

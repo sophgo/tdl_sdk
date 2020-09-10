@@ -34,6 +34,7 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
 //*************************************************
 
 int CVI_AI_CreateHandle(cviai_handle_t *handle) {
+#if ENABLE_TRACE
 #if __GNUC__ >= 7
   perfetto::TracingInitArgs args;
   args.backends |= perfetto::kInProcessBackend;
@@ -41,6 +42,7 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle) {
 
   perfetto::Tracing::Initialize(args);
   perfetto::TrackEvent::Register();
+#endif
 #endif
   cviai_context_t *ctx = new cviai_context_t;
   ctx->ive_handle = CVI_IVE_CreateHandle();
