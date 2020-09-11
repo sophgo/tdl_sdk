@@ -231,12 +231,11 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx,
 }
 
 inline int __attribute__((always_inline))
-CVI_AI_FaceAttributeBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
-                         int face_idx, bool set_attribute) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
+CVI_AI_FaceAttributeBase(const CVI_AI_SUPPORTED_MODEL_E index, const cviai_handle_t handle,
+                         VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces, int face_idx,
+                         bool set_attribute) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  FaceAttribute *face_attr = getInferenceInstance<FaceAttribute>(
-      CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, ctx, ctx->use_gdc_wrap);
+  FaceAttribute *face_attr = getInferenceInstance<FaceAttribute>(index, ctx, ctx->use_gdc_wrap);
   if (face_attr == nullptr) {
     printf("No instance found for FaceAttribute.\n");
     return CVI_FAILURE;
@@ -248,25 +247,29 @@ CVI_AI_FaceAttributeBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
 int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                            cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognition");
-  return CVI_AI_FaceAttributeBase(handle, frame, faces, -1, false);
+  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces, -1,
+                                  false);
 }
 
 int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                               cvai_face_t *faces, int face_idx) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
-  return CVI_AI_FaceAttributeBase(handle, frame, faces, face_idx, false);
+  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces,
+                                  face_idx, false);
 }
 
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceAttribute");
-  return CVI_AI_FaceAttributeBase(handle, frame, faces, -1, true);
+  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, handle, frame, faces, -1,
+                                  true);
 }
 
 int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                             cvai_face_t *faces, int face_idx) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceAttributeOne");
-  return CVI_AI_FaceAttributeBase(handle, frame, faces, face_idx, true);
+  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, handle, frame, faces,
+                                  face_idx, true);
 }
 
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
