@@ -372,3 +372,15 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
 
   return CVI_SUCCESS;
 }
+
+inline void __attribute__((always_inline)) CACHED_VBFRAME_FLUSH_UNMAP(VIDEO_FRAME_INFO_S *frame) {
+  uint32_t image_size =
+      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0], image_size);
+  CVI_SYS_Munmap(
+      (void *)frame->stVFrame.pu8VirAddr[0],
+      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2]);
+  frame->stVFrame.pu8VirAddr[0] = NULL;
+  frame->stVFrame.pu8VirAddr[1] = NULL;
+  frame->stVFrame.pu8VirAddr[2] = NULL;
+}

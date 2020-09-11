@@ -30,6 +30,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:tamper_detection>
               cviai_types_free.cpp
               cviai_rescale_bbox.cpp
+              cviai_mmf.cpp
               cviai_core.cpp)
 set(CORE_DEPS ${PERFETTO_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 

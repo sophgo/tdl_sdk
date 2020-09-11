@@ -2,7 +2,6 @@
 #include "core/cviai_core.h"
 
 #include "core/core.hpp"
-#include "core/utils/vpss_helper.h"
 #include "ive/ive.h"
 #include "vpss_engine.hpp"
 

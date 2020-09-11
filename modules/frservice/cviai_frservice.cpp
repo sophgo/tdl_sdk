@@ -5,6 +5,7 @@
 #include "draw_rect/draw_rect.hpp"
 
 #include <cvimath/cvimath.h>
+#include <string.h>
 
 typedef struct {
   cvai_frservice_feature_array_t feature_array;
