@@ -8,7 +8,7 @@ namespace cviai {
 
 class Liveness final : public Core {
  public:
-  Liveness(cvai_liveness_ir_position_e ir_position);
+  explicit Liveness(cvai_liveness_ir_position_e ir_position);
   int inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *meta);
 
  private:

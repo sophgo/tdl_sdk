@@ -9,7 +9,7 @@ namespace cviai {
 
 class FaceAttribute final : public Core {
  public:
-  FaceAttribute(bool use_wrap_hw);
+  explicit FaceAttribute(bool use_wrap_hw);
   virtual ~FaceAttribute();
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, int face_idx);
   void setWithAttribute(bool with_attr);

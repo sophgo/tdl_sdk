@@ -103,7 +103,11 @@ int CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, 
 int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  bool skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  ctx->model_cont[config].skip_vpss_preprocess = skip;
+  auto &m_t = ctx->model_cont[config];
+  m_t.skip_vpss_preprocess = skip;
+  if (m_t.instance != nullptr) {
+    m_t.instance->skipVpssPreprocess(m_t.skip_vpss_preprocess);
+  }
   return CVI_SUCCESS;
 }
 
@@ -117,7 +121,11 @@ int CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
 int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                              float threshold) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  ctx->model_cont[config].model_threshold = threshold;
+  auto &m_t = ctx->model_cont[config];
+  m_t.model_threshold = threshold;
+  if (m_t.instance != nullptr) {
+    m_t.instance->setModelThreshold(m_t.model_threshold);
+  }
   return CVI_SUCCESS;
 }
 
@@ -179,7 +187,11 @@ int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
   } else {
     printf("Thread %u already exists, given group id %u will not be used.\n", thread, vpssGroupId);
   }
-  ctx->model_cont[config].vpss_thread = vpss_thread;
+  auto &m_t = ctx->model_cont[config];
+  m_t.vpss_thread = vpss_thread;
+  if (m_t.instance != nullptr) {
+    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+  }
   return CVI_SUCCESS;
 }
 
@@ -374,97 +386,81 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
   return ret;
 }
 
+template <class C, typename... Arguments>
+inline C *__attribute__((always_inline))
+getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx,
+                     Arguments &&... arg) {
+  cviai_model_t &m_t = ctx->model_cont[index];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      printf("Model path for FaceAttribute is empty.\n");
+      return nullptr;
+    }
+    m_t.instance = new C(arg...);
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
+      printf("Open model failed (%s).\n", m_t.model_path.c_str());
+      return nullptr;
+    }
+    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+    m_t.instance->skipVpssPreprocess(m_t.skip_vpss_preprocess);
+    if (m_t.model_threshold == -1) {
+      m_t.model_threshold = m_t.instance->getModelThreshold();
+    } else {
+      m_t.instance->setModelThreshold(m_t.model_threshold);
+    }
+  }
+  C *class_inst = dynamic_cast<C *>(m_t.instance);
+  return class_inst;
+}
+
+inline int __attribute__((always_inline))
+CVI_AI_FaceAttributeBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
+                         int face_idx, bool set_attribute) {
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  FaceAttribute *face_attr = getInferenceInstance<FaceAttribute>(
+      CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, ctx, ctx->use_gdc_wrap);
+  if (face_attr == nullptr) {
+    printf("No instance found for FaceAttribute.\n");
+    return CVI_FAILURE;
+  }
+  face_attr->setWithAttribute(set_attribute);
+  return face_attr->inference(frame, faces, face_idx);
+}
+
 int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                            cvai_face_t *faces) {
-  return CVI_AI_FaceRecognitionOne(handle, frame, faces, -1);
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognition");
+  return CVI_AI_FaceAttributeBase(handle, frame, faces, -1, false);
 }
 
 int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                               cvai_face_t *faces, int face_idx) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACERECOGNITION];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for FaceAttribute is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new FaceAttribute(ctx->use_gdc_wrap);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-  }
-  FaceAttribute *face_attr = dynamic_cast<FaceAttribute *>(m_t.instance);
-  if (face_attr == nullptr) {
-    printf("No instance found for FaceAttribute.\n");
-    return CVI_FAILURE;
-  }
-  face_attr->setWithAttribute(false);
-  face_attr->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  return face_attr->inference(frame, faces, face_idx);
+  return CVI_AI_FaceAttributeBase(handle, frame, faces, face_idx, false);
 }
 
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces) {
-  return CVI_AI_FaceAttributeOne(handle, frame, faces, -1);
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceAttribute");
+  return CVI_AI_FaceAttributeBase(handle, frame, faces, -1, true);
 }
 
 int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                             cvai_face_t *faces, int face_idx) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceAttributeOne");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for FaceAttribute is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new FaceAttribute(ctx->use_gdc_wrap);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-  }
-  FaceAttribute *face_attr = dynamic_cast<FaceAttribute *>(m_t.instance);
-  if (face_attr == nullptr) {
-    printf("No instance found for FaceAttribute.\n");
-    return CVI_FAILURE;
-  }
-  face_attr->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  return face_attr->inference(frame, faces, face_idx);
+  return CVI_AI_FaceAttributeBase(handle, frame, faces, face_idx, true);
 }
 
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                   cvai_obj_det_type_t det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_Yolov3");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_YOLOV3];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for Yolov3 is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new Yolov3();
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-
-    if (m_t.model_threshold == -1) {
-      m_t.model_threshold = m_t.instance->getModelThreshold();
-    }
-  }
-
-  Yolov3 *yolov3 = dynamic_cast<Yolov3 *>(m_t.instance);
+  Yolov3 *yolov3 = getInferenceInstance<Yolov3>(CVI_AI_SUPPORTED_MODEL_YOLOV3, ctx);
   if (yolov3 == nullptr) {
     printf("No instance found for Yolov3.\n");
     return CVI_FAILURE;
   }
-
-  yolov3->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  yolov3->setModelThreshold(m_t.model_threshold);
-
   return yolov3->inference(frame, obj, det_type);
 }
 
@@ -472,32 +468,12 @@ int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
                           cvai_obj_det_type_t det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D0");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for MobiledetV2 is empty.\n");
-      return CVI_RC_FAILURE;
-    }
-    m_t.instance = new MobileDetV2(MobileDetV2::Model::d0);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
-    }
-
-    if (m_t.model_threshold == -1) {
-      m_t.model_threshold = m_t.instance->getModelThreshold();
-    }
-  }
-
-  MobileDetV2 *detector = dynamic_cast<MobileDetV2 *>(m_t.instance);
+  MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
+                                                            ctx, MobileDetV2::Model::d0);
   if (detector == nullptr) {
     printf("No instance found for MobileDetV2.\n");
     return CVI_RC_FAILURE;
   }
-  detector->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  detector->skipVpssPreprocess(m_t.skip_vpss_preprocess);
-  detector->setModelThreshold(m_t.model_threshold);
-
   return detector->inference(frame, obj, det_type);
 }
 
@@ -505,31 +481,12 @@ int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
                           cvai_obj_det_type_t det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D1");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for MobiledetV2 is empty.\n");
-      return CVI_RC_FAILURE;
-    }
-    m_t.instance = new MobileDetV2(MobileDetV2::Model::d1);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
-    }
-    if (m_t.model_threshold == -1) {
-      m_t.model_threshold = m_t.instance->getModelThreshold();
-    }
-  }
-
-  MobileDetV2 *detector = dynamic_cast<MobileDetV2 *>(m_t.instance);
+  MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
+                                                            ctx, MobileDetV2::Model::d1);
   if (detector == nullptr) {
     printf("No instance found for MobileDetV2.\n");
     return CVI_RC_FAILURE;
   }
-  detector->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  detector->skipVpssPreprocess(m_t.skip_vpss_preprocess);
-  detector->setModelThreshold(m_t.model_threshold);
-
   return detector->inference(frame, obj, det_type);
 }
 
@@ -537,33 +494,12 @@ int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
                           cvai_obj_det_type_t det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for MobiledetV2 is empty.\n");
-      return CVI_RC_FAILURE;
-    }
-    m_t.instance = new MobileDetV2(MobileDetV2::Model::d2);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_RC_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_RC_FAILURE;
-    }
-
-    if (m_t.model_threshold == -1) {
-      m_t.model_threshold = m_t.instance->getModelThreshold();
-    }
-  }
-
-  MobileDetV2 *detector = dynamic_cast<MobileDetV2 *>(m_t.instance);
+  MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
+                                                            ctx, MobileDetV2::Model::d2);
   if (detector == nullptr) {
     printf("No instance found for MobileDetV2.\n");
     return CVI_RC_FAILURE;
   }
-
-  detector->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  detector->skipVpssPreprocess(m_t.skip_vpss_preprocess);
-  detector->setModelThreshold(m_t.model_threshold);
-
   return detector->inference(frame, obj, det_type);
 }
 
@@ -571,33 +507,12 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
                       int *face_count) {
   TRACE_EVENT("cviai_core", "CVI_AI_RetinaFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_RETINAFACE];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for RetinaFace is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new RetinaFace();
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-
-    if (m_t.model_threshold == -1) {
-      m_t.model_threshold = m_t.instance->getModelThreshold();
-    }
-  }
-
-  RetinaFace *retina_face = dynamic_cast<RetinaFace *>(m_t.instance);
+  RetinaFace *retina_face =
+      getInferenceInstance<RetinaFace>(CVI_AI_SUPPORTED_MODEL_RETINAFACE, ctx);
   if (retina_face == nullptr) {
     printf("No instance found for RetinaFace.\n");
     return CVI_FAILURE;
   }
-
-  retina_face->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  retina_face->skipVpssPreprocess(m_t.skip_vpss_preprocess);
-  retina_face->setModelThreshold(m_t.model_threshold);
-
   return retina_face->inference(frame, faces, face_count);
 }
 
@@ -606,52 +521,24 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
                     cvai_liveness_ir_position_e ir_position) {
   TRACE_EVENT("cviai_core", "CVI_AI_Liveness");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_LIVENESS];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for Liveness is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new Liveness(ir_position);
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-  }
-
-  Liveness *liveness = dynamic_cast<Liveness *>(m_t.instance);
+  Liveness *liveness =
+      getInferenceInstance<Liveness>(CVI_AI_SUPPORTED_MODEL_LIVENESS, ctx, ir_position);
   if (liveness == nullptr) {
     printf("No instance found for Liveness.\n");
     return CVI_FAILURE;
   }
-  liveness->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return liveness->inference(rgbFrame, irFrame, face);
 }
 
 int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceQuality");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_FACEQUALITY];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for FaceQuality is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new FaceQuality();
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-  }
-
-  FaceQuality *face_quality = dynamic_cast<FaceQuality *>(m_t.instance);
+  FaceQuality *face_quality =
+      getInferenceInstance<FaceQuality>(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx);
   if (face_quality == nullptr) {
     printf("No instance found for FaceQuality.\n");
     return CVI_FAILURE;
   }
-  face_quality->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return face_quality->inference(frame, face);
 }
 
@@ -659,59 +546,24 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
                               cvai_face_t *face) {
   TRACE_EVENT("cviai_core", "CVI_AI_MaskClassification");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for MaskClassification is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new MaskClassification();
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-  }
-
-  MaskClassification *mask_classification = dynamic_cast<MaskClassification *>(m_t.instance);
+  MaskClassification *mask_classification =
+      getInferenceInstance<MaskClassification>(CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, ctx);
   if (mask_classification == nullptr) {
     printf("No instance found for MaskClassification.\n");
     return CVI_FAILURE;
   }
-  mask_classification->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
   return mask_classification->inference(frame, face);
 }
 
 int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_ThermalFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_THERMALFACE];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for ThermalFace is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new ThermalFace();
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-
-    if (m_t.model_threshold == -1) {
-      m_t.model_threshold = m_t.instance->getModelThreshold();
-    }
-  }
-
-  ThermalFace *thermal_face = dynamic_cast<ThermalFace *>(m_t.instance);
+  ThermalFace *thermal_face =
+      getInferenceInstance<ThermalFace>(CVI_AI_SUPPORTED_MODEL_THERMALFACE, ctx);
   if (thermal_face == nullptr) {
     printf("No instance found for ThermalFace.\n");
     return CVI_FAILURE;
   }
-  thermal_face->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  thermal_face->skipVpssPreprocess(m_t.skip_vpss_preprocess);
-  thermal_face->setModelThreshold(m_t.model_threshold);
-
   return thermal_face->inference(frame, faces);
 }
 
@@ -719,21 +571,8 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
                                cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_MaskFaceRecognition");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      printf("Model path for MaskFaceRecognition is empty.\n");
-      return CVI_FAILURE;
-    }
-    m_t.instance = new MaskFaceRecognition();
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[0]);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      printf("Open model failed (%s).\n", m_t.model_path.c_str());
-      return CVI_FAILURE;
-    }
-  }
-
-  MaskFaceRecognition *mask_face_rec = dynamic_cast<MaskFaceRecognition *>(m_t.instance);
+  MaskFaceRecognition *mask_face_rec =
+      getInferenceInstance<MaskFaceRecognition>(CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, ctx);
   if (mask_face_rec == nullptr) {
     printf("No instance found for MaskFaceRecognition.\n");
     return CVI_FAILURE;
