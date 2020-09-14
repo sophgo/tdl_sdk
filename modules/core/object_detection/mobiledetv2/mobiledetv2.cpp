@@ -323,8 +323,8 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
   if (!m_skip_vpss_preprocess) {
     for (uint32_t i = 0; i < meta->size; ++i) {
       meta->info[i].bbox =
-          box_rescale_small_ratio_major(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                                        meta->width, meta->height, meta->info[i].bbox);
+          box_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, meta->width,
+                      meta->height, meta->info[i].bbox, BOX_RESCALE_TYPE::RB);
     }
     meta->width = frame->stVFrame.u32Width;
     meta->height = frame->stVFrame.u32Height;

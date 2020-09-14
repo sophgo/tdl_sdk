@@ -144,8 +144,9 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
   }
   if (!m_skip_vpss_preprocess) {
     for (uint32_t i = 0; i < obj->size; ++i) {
-      obj->info[i].bbox = box_rescale_c(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                                        obj->width, obj->height, obj->info[i].bbox);
+      obj->info[i].bbox =
+          box_rescale(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height, obj->width,
+                      obj->height, obj->info[i].bbox, BOX_RESCALE_TYPE::CENTER);
     }
     obj->width = srcFrame->stVFrame.u32Width;
     obj->height = srcFrame->stVFrame.u32Height;

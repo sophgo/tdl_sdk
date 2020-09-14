@@ -69,8 +69,8 @@ int widerFaceEval::saveFaceData(const int index, const VIDEO_FRAME_INFO_S* frame
   fprintf(fp, "%s\n", exfp.stem().c_str());
   fprintf(fp, "%d\n", face->size);
   for (uint32_t i = 0; i < face->size; i++) {
-    cvai_bbox_t bbox = box_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                                     face->width, face->height, face->info[i].bbox);
+    cvai_bbox_t bbox = box_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, face->width,
+                                   face->height, face->info[i].bbox, BOX_RESCALE_TYPE::CENTER);
     fprintf(fp, "%f %f %f %f %f\n", bbox.x1, bbox.y1, bbox.x2 - bbox.x1, bbox.y2 - bbox.y1,
             bbox.score);
   }

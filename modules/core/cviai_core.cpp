@@ -284,43 +284,35 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
   return yolov3->inference(frame, obj, det_type);
 }
 
-int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D0");
+inline int __attribute__((always_inline))
+MobileDetV2Base(const MobileDetV2::Model model_type, cviai_handle_t handle,
+                VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj, cvai_obj_det_type_t det_type) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
                                                             ctx, MobileDetV2::Model::d0);
   if (detector == nullptr) {
-    printf("No instance found for MobileDetV2.\n");
+    printf("No instance found for detector.\n");
     return CVI_RC_FAILURE;
   }
   return detector->inference(frame, obj, det_type);
+}
+
+int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                          cvai_obj_det_type_t det_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D0");
+  return MobileDetV2Base(MobileDetV2::Model::d0, handle, frame, obj, det_type);
 }
 
 int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                           cvai_obj_det_type_t det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D1");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
-                                                            ctx, MobileDetV2::Model::d1);
-  if (detector == nullptr) {
-    printf("No instance found for MobileDetV2.\n");
-    return CVI_RC_FAILURE;
-  }
-  return detector->inference(frame, obj, det_type);
+  return MobileDetV2Base(MobileDetV2::Model::d1, handle, frame, obj, det_type);
 }
 
 int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                           cvai_obj_det_type_t det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
-                                                            ctx, MobileDetV2::Model::d2);
-  if (detector == nullptr) {
-    printf("No instance found for MobileDetV2.\n");
-    return CVI_RC_FAILURE;
-  }
-  return detector->inference(frame, obj, det_type);
+  return MobileDetV2Base(MobileDetV2::Model::d2, handle, frame, obj, det_type);
 }
 
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,

@@ -149,8 +149,9 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame) {
   rgb_color.g = DEFAULT_RECT_COLOR_G;
   rgb_color.b = DEFAULT_RECT_COLOR_B;
   for (size_t i = 0; i < meta->size; i++) {
-    cvai_bbox_t bbox = box_rescale_c(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height,
-                                     meta->width, meta->height, meta->info[i].bbox);
+    cvai_bbox_t bbox =
+        box_rescale(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height, meta->width,
+                    meta->height, meta->info[i].bbox, BOX_RESCALE_TYPE::CENTER);
     DrawRect(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, meta->info[i].name, rgb_color,
              DEFAULT_RECT_THINKNESS);
   }

@@ -12,14 +12,16 @@ void SoftMaxForBuffer(float *src, float *dst, size_t size);
 void Dequantize(const int8_t *q_data, float *data, float threshold, size_t size);
 void clip_boxes(int width, int height, cvai_bbox_t &box);
 
-cvai_bbox_t box_rescale_small_ratio_major(const float frame_width, const float frame_height,
-                                          const float nn_width, const float nn_height,
-                                          const cvai_bbox_t bbox);
+enum BOX_RESCALE_TYPE { CENTER, RB };
 
 cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, const float nn_width,
-                          const float nn_height, const cvai_bbox_t bbox);
+                          const float nn_height, const cvai_bbox_t bbox, float *ratio,
+                          float *pad_width, float *pad_height);
 cvai_bbox_t box_rescale_rb(const float frame_width, const float frame_height, const float nn_width,
-                           const float nn_height, const cvai_bbox_t bbox);
+                           const float nn_height, const cvai_bbox_t bbox, float *ratio);
+
+cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const float nn_width,
+                        const float nn_height, const cvai_bbox_t bbox, const BOX_RESCALE_TYPE type);
 
 inline float FastExp(float x) {
   union {

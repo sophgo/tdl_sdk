@@ -1,4 +1,5 @@
 #include "face_utils.hpp"
+#include "core_utils.hpp"
 
 #include "core/utils/vpss_helper.h"
 
@@ -84,54 +85,20 @@ static cv::Mat get_similarity_transform(const vector<cv::Point2f> &src_pts,
 namespace cviai {
 
 cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta, int face_idx) {
-  cvai_bbox_t bbox = face_meta->info[face_idx].bbox;
   cvai_face_info_t face_info;
-  float x1, x2, y1, y2;
-
   memset(&face_info, 0, sizeof(cvai_face_info_t));
+
+  float ratio, pad_width, pad_height;
+  face_info.bbox = box_rescale_c(width, height, face_meta->width, face_meta->height,
+                                 face_meta->info[face_idx].bbox, &ratio, &pad_width, &pad_height);
+
   face_info.face_pts.size = face_meta->info[face_idx].face_pts.size;
   face_info.face_pts.x = (float *)malloc(sizeof(float) * face_meta->info[face_idx].face_pts.size);
   face_info.face_pts.y = (float *)malloc(sizeof(float) * face_meta->info[face_idx].face_pts.size);
-
-  if (width >= height) {
-    float ratio_x, ratio_y, bbox_y_height, bbox_padding_top;
-    ratio_x = width / face_meta->width;
-    bbox_y_height = face_meta->height * height / width;
-    ratio_y = height / bbox_y_height;
-    bbox_padding_top = (face_meta->height - bbox_y_height) / 2;
-    x1 = bbox.x1 * ratio_x;
-    x2 = bbox.x2 * ratio_x;
-    y1 = (bbox.y1 - bbox_padding_top) * ratio_y;
-    y2 = (bbox.y2 - bbox_padding_top) * ratio_y;
-
-    for (int j = 0; j < 5; ++j) {
-      face_info.face_pts.x[j] = face_meta->info[face_idx].face_pts.x[j] * ratio_x;
-      face_info.face_pts.y[j] =
-          (face_meta->info[face_idx].face_pts.y[j] - bbox_padding_top) * ratio_y;
-    }
-  } else {
-    float ratio_x, ratio_y, bbox_x_height, bbox_padding_left;
-    ratio_y = height / face_meta->height;
-    bbox_x_height = face_meta->width * width / height;
-    ratio_x = width / bbox_x_height;
-    bbox_padding_left = (face_meta->width - bbox_x_height) / 2;
-    x1 = (bbox.x1 - bbox_padding_left) * ratio_x;
-    x2 = (bbox.x2 - bbox_padding_left) * ratio_x;
-    y1 = bbox.y1 * ratio_y;
-    y2 = bbox.y2 * ratio_y;
-
-    for (int j = 0; j < 5; ++j) {
-      face_info.face_pts.x[j] =
-          (face_meta->info[face_idx].face_pts.x[j] - bbox_padding_left) * ratio_x;
-      face_info.face_pts.y[j] = face_meta->info[face_idx].face_pts.y[j] * ratio_y;
-    }
+  for (int j = 0; j < 5; ++j) {
+    face_info.face_pts.x[j] = (face_meta->info[face_idx].face_pts.x[j] - pad_width) * ratio;
+    face_info.face_pts.y[j] = (face_meta->info[face_idx].face_pts.y[j] - pad_height) * ratio;
   }
-
-  face_info.bbox.x1 = max(min(x1, width - 1), (float)0);
-  face_info.bbox.x2 = max(min(x2, width - 1), (float)0);
-  face_info.bbox.y1 = max(min(y1, height - 1), (float)0);
-  face_info.bbox.y2 = max(min(y2, height - 1), (float)0);
-  face_info.bbox.score = face_meta->info[face_idx].bbox.score;
 
   return face_info;
 }
