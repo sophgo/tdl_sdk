@@ -95,13 +95,13 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
   int ret = CVI_SUCCESS;
   switch (format) {
     case PIXEL_FORMAT_RGB_888: {
-      BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, false);
-    } break;
-    case PIXEL_FORMAT_BGR_888: {
       BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, true);
     } break;
+    case PIXEL_FORMAT_BGR_888: {
+      BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, false);
+    } break;
     case PIXEL_FORMAT_RGB_888_PLANAR: {
-      BufferRGBPacked2PlanarCopy(img.data, img.cols, img.rows, img.step, frame, false);
+      BufferRGBPacked2PlanarCopy(img.data, img.cols, img.rows, img.step, frame, true);
     } break;
     default:
       printf("Unsupported format: %u.\n", format);
