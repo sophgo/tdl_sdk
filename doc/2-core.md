@@ -1,0 +1,194 @@
+# Core
+
+## Assigning new ``VPSS_GRP`` to AI SDK for multi-threading
+
+We don't recommend to use the same ``VPSS_GRP`` in different threads, so we provide a function to change thread id for any model in one handle.
+
+```c
+// Auto assign group id
+int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                         const uint32_t thread);
+// Manually assign group id
+int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                          const uint32_t thread, const VPSS_GRP vpssGroupId);
+```
+
+You can get the current thread id for any model.
+
+```c
+int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread);
+```
+
+To get the relationship between thread and the ``VPSS_GRP`` thread uses, you can call ``CVI_AI_GetVpssGrpIds``. The output array ``groups`` gives all the used ``VPSS_GRP`` in order.
+
+```c
+  // Get the used group ids by AI SDK.
+  uint32_t *groups = NULL;
+  uint32_t nums = 0;
+  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVI_SUCCESS) {
+    printf("Get used group id failed.\n");
+    return ret;
+  }
+  printf("Used group id = %u:\n", nums);
+  for (uint32_t i = 0; i < nums; i++) {
+    printf("%u ", groups[i]);
+  }
+  printf("\n");
+  free(groups);
+```
+
+## Reading Image
+
+There are two ways to read image from file.
+
+1. The ``CVI_AI_ReadImage`` function inside module ``core``
+2. IVE library
+
+### ``CVI_AI_ReadImage``
+
+``CVI_AI_ReadImage`` uses ``VB_BLK`` from Middleware SDK. You must release ``VB_BLK`` with ``CVI_VB_ReleaseBlock`` to prevent memory leaks.
+
+```c
+  const char *path = "hi.jpg";
+  VB_BLK blk;
+  VIDEO_FRAME_INFO_S rgb_frame;
+  CVI_S32 ret = CVI_AI_ReadImage(path, &blk, &rgb_frame, PIXEL_FORMAT_RGB_888);
+  if (ret != CVI_SUCCESS) {
+    printf("Read image failed with %#x!\n", ret);
+    return ret;
+  }
+
+  // ...Do something...
+
+  CVI_VB_ReleaseBlock(blk);
+```
+
+VI, VPSS, and ``VB_BLK`` shares the same memory pool. It is neccesarily to calculate the required space when initializing Middleware, or you can use the helper function provided by AI SDK.
+
+```c
+  const CVI_S32 vpssgrp_width = 1920;
+  const CVI_S32 vpssgrp_height = 1080;
+  const CVI_S32 image_num = 12;
+  // We allocate the pool with size of 24 * (RGB_PACKED_IMAGE in the size of 1920 * 1080)
+  // The first four parameters are the input info, and the last four are the output info.
+  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888,
+                         image_num, vpssgrp_width, vpssgrp_height,
+                         PIXEL_FORMAT_RGB_888, image_num);
+  if (ret != CVI_SUCCESS) {
+    printf("Init sys failed with %#x!\n", ret);
+    return ret;
+  }
+```
+
+### IVE library
+
+IVE library does not occupied spaces in Middleware's memory pool. IVE uses a different image structure, so it must be converted to ``VIDEO_FRAME_INFO_S`` before use.
+
+```c
+  const char *path = "hi.jpg";
+  IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
+  IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, path, IVE_IMAGE_TYPE_U8C3_PACKAGE);
+  if (image.u16Width == 0) {
+    printf("Read image failed with %x!\n", ret);
+    return ret;
+  }
+  // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
+  VIDEO_FRAME_INFO_S frame;
+  ret = CVI_IVE_Image2VideoFrameInfo(&image, &frame, false);
+  if (ret != CVI_SUCCESS) {
+    printf("Convert to video frame failed with %#x!\n", ret);
+    return ret;
+  }
+
+  // ...Do something...
+
+  // Free image and handles.
+  CVI_SYS_FreeI(ive_handle, &image);
+  CVI_IVE_DestroyHandle(ive_handle);
+```
+
+## Buffer to ``VIDEO_FRAME_INFO_S``
+
+We provide a function ``CVI_AI_Buffer2VBFrame`` in AI SDK to help users to convert pure buffer to ``VIDEO_FRAME_INFO_S``. This works similar to ``CVI_AI_ReadImage``, so ``CVI_VB_ReleaseBlock`` is also required to free the ``VB_BLK``.
+
+```c
+int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height, uint32_t stride,
+                          const PIXEL_FORMAT_E inFormat, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
+                          const PIXEL_FORMAT_E outFormat);
+```
+
+## Model related settings
+
+### Set model path
+
+The model path must be set before the corresponding inference function is called.
+
+```c
+int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                        const char *filepath);
+```
+
+### Skip VPSS preprocess
+
+If you already done the "scaling and quantization" step with the Middleware's binding mode, you can skip the VPSS preprocess with the following API for any model.
+
+```c
+int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, bool skip);
+```
+
+### Set model threshold
+
+The threshold for any model can be set any time. If you set the threshold after the inference function, AI SDK will use the default threshold saved in the model.
+
+```c
+int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             float threshold);
+```
+
+### Closing models
+
+AI SDK will close the model for you if you destroy the handle, but we still provide the API to close the all the models or indivitually. This is because a user may run out of memory if a user want to switch between features while runtime, providing this API allows users to free spaces without destroying the handle.
+
+```c
+int CVI_AI_CloseAllModel(cviai_handle_t handle);
+
+int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
+```
+
+### Inference calls
+
+The following functions are the inference calls. A model will be loaded when the function is called for the first time or after close model functions are called.
+
+```c
+int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                         cvai_face_t *faces);
+int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                            cvai_face_t *faces, int face_idx);
+int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                           cvai_face_t *faces);
+int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_face_t *faces, int face_idx);
+int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
+                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
+                    cvai_liveness_ir_position_e ir_position);
+int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_face_t *face);
+int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                               cvai_face_t *faces);
+int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
+int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
+                      int *face_count);
+
+int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                          cvai_obj_det_type_t det_type);
+int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                          cvai_obj_det_type_t det_type);
+int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                          cvai_obj_det_type_t det_type);
+int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                  cvai_obj_det_type_t det_type);
+
+int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                           float *moving_score);
+```
