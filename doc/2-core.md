@@ -1,6 +1,6 @@
 # Core
 
-## Assigning new ``VPSS_GRP`` to AI SDK for multi-threading
+## Multi-threading
 
 We don't recommend to use the same ``VPSS_GRP`` in different threads, so we provide a function to change thread id for any model in one handle.
 
@@ -245,7 +245,7 @@ typedef struct {
 } cvai_object_info_t;
 ```
 
-## Rescale output result to original frame size
+## Recovering coordinate
 
 To get the coordinate correspond to the frame size, we provide two generic type APIs.
 
