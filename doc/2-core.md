@@ -157,38 +157,123 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
 ### Inference calls
 
-The following functions are the inference calls. A model will be loaded when the function is called for the first time or after close model functions are called.
+A model will be loaded when the function is called for the first time or after close model functions are called. The following functions are the example of the API calls.
 
 ```c
+// Face recognition
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces);
-int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                            cvai_face_t *faces, int face_idx);
-int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                           cvai_face_t *faces);
-int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                              cvai_face_t *faces, int face_idx);
-int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
-int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
-                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
-                    cvai_liveness_ir_position_e ir_position);
-int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                              cvai_face_t *face);
-int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                               cvai_face_t *faces);
-int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
-int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
-                      int *face_count);
-
-int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type);
-int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type);
-int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type);
+// Object detection
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                   cvai_obj_det_type_t det_type);
+```
 
-int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                           float *moving_score);
+## Model output structures
+
+The output result from a model stores in a apecific structure. Face related data stores in ``cvai_face_t``, and object related data stores in ``cvai_object_t``. THe code snippet shows how to use the structure.
+
+```c
+  cvai_face_t face;
+  // memset before use.
+  memset(&face, 0, sizeof(cvai_face_t));
+
+  CVI_AI_FaceAttribute(handle, frame, &face);
+
+  // Free to avoid memory leaks.
+  CVI_AI_Free(&face);
+```
+
+``CVI_AI_Free`` is defined as a generic type, it supports the following structures.
+
+```c
+#ifdef __cplusplus
+#define CVI_AI_Free(X) CVI_AI_FreeCpp(X)
+#else
+// clang-format off
+#define CVI_AI_Free(X) _Generic((X),                   \
+           cvai_feature_t*: CVI_AI_FreeFeature,        \
+           cvai_pts_t*: CVI_AI_FreePts,                \
+           cvai_face_info_t*: CVI_AI_FreeFaceInfo,     \
+           cvai_face_t*: CVI_AI_FreeFace,              \
+           cvai_object_info_t*: CVI_AI_FreeObjectInfo, \
+           cvai_object_t*: CVI_AI_FreeObject)(X)
+// clang-format on
+#endif
+```
+
+These structures are defined in ``include/core/face/cvai_face_types.h``, and `` include/core/object/cvai_object_types.h``. The ``size`` is the length of the variable ``info``. The ``width`` and ``height`` stores in the structure are the reference size used by variable ``info``.
+
+```c
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+  cvai_face_info_t* info;
+} cvai_face_t;
+
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+  cvai_object_info_t *info;
+} cvai_object_t;
+```
+
+### Reference size
+
+The structure ``cvai_bbox_t`` stores in ``cvai_face_info_t`` and ``cvai_object_info_t`` are the bounding box of the found face or object. The coordinates store in ``cvai_bbox_t`` correspond to the ``width`` and ``height`` instead of the size of the input frame. Usually the ``width`` and ``height`` will equal to the size of the output model. The structure ``cvai_pts_t`` in ``cvai_face_info_t`` also refers to the ``width`` and ``height``.
+
+```c
+typedef struct {
+  char name[128];
+  cvai_bbox_t bbox;
+  cvai_pts_t face_pts;
+  cvai_feature_t face_feature;
+  cvai_face_emotion_e emotion;
+  cvai_face_gender_e gender;
+  cvai_face_race_e race;
+  float age;
+  float liveness_score;
+  float mask_score;
+  cvai_face_quality_t face_quality;
+} cvai_face_info_t;
+
+typedef struct {
+  char name[128];
+  cvai_bbox_t bbox;
+  int classes;
+} cvai_object_info_t;
+```
+
+## Rescale output result to original frame size
+
+To get the coordinate correspond to the frame size, we provide two generic type APIs.
+
+```c
+#ifdef __cplusplus
+#define CVI_AI_RescaleBBoxCenter(videoFrame, X) CVI_AI_RescaleBBoxCenterCpp(videoFrame, X)
+#define CVI_AI_RescaleBBoxRB(videoFrame, X) CVI_AI_RescaleBBoxRBCpp(videoFrame, X)
+#else
+#define CVI_AI_RescaleBBoxCenter(videoFrame, X) _Generic((X), \
+           cvai_face_t*: CVI_AI_RescaleBBoxCenterFace,        \
+           cvai_object_t*: CVI_AI_RescaleBBoxCenterObj)(videoFrame, X)
+#define CVI_AI_RescaleBBoxRB(videoFrame, X) _Generic((X),     \
+           cvai_face_t*: CVI_AI_RescaleBBoxRBFace,            \
+           cvai_object_t*: CVI_AI_RescaleBBoxRBObj)(videoFrame, X)
+#endif
+```
+
+If you use the inference calls from AI SDK without VPSS binding mode, you can call ``CVI_AI_RescaleBBoxCenter`` to recover the results. However, if you use VPSS binding mode instead of the VPSS inside the inference calls, the function you use depends on the ``stAspectRatio`` settings. If the setting is ``ASPECT_RATIO_AUTO``, you use ``CVI_AI_RescaleBBoxCenter``. If the setting is ``ASPECT_RATIO_MANUAL``, you can call ``CVI_AI_RescaleBBoxRB`` if you only pad the image
+ in the direction of right or bottom.
+
+```c
+  cvai_face_t face;
+  // memset before use.
+  memset(&face, 0, sizeof(cvai_face_t));
+
+  CVI_AI_FaceAttribute(handle, frame, &face);
+  CVI_AI_RescaleBBoxCenter(frame, &face);
+
+  // Free to avoid memory leaks.
+  CVI_AI_Free(&face);
 ```
