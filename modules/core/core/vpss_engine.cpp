@@ -47,19 +47,18 @@ int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   /*start vpss*/
   m_grpid = -1;
   if (grp_id != (CVI_U32)-1) {
-    if (CVI_VPSS_CreateGrp(grp_id, &vpss_grp_attr) == CVI_SUCCESS) {
-      m_grpid = grp_id;
-    } else {
+    if (CVI_VPSS_CreateGrp(grp_id, &vpss_grp_attr) != CVI_SUCCESS) {
       printf("User assign group id %u failed to create vpss instance.\n", grp_id);
       return CVI_FAILURE;
     }
+    m_grpid = grp_id;
   } else {
-    for (uint8_t i = 0; i < VPSS_MAX_GRP_NUM; i++) {
-      if (CVI_VPSS_CreateGrp(i, &vpss_grp_attr) == CVI_SUCCESS) {
-        m_grpid = i;
-        break;
-      }
+    int id = CVI_VPSS_GetAvailableGrp();
+    if (CVI_VPSS_CreateGrp(id, &vpss_grp_attr) != CVI_SUCCESS) {
+      printf("User assign group id %u failed to create vpss instance.\n", grp_id);
+      return CVI_FAILURE;
     }
+    m_grpid = id;
   }
   if (m_grpid == (CVI_U32)-1) {
     printf("All vpss grp init failed!\n");
