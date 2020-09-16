@@ -1,6 +1,6 @@
 #include "face_quality.hpp"
 
-#include "core/cviai_types_free.h"
+#include "core/cviai_types_mem.h"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
 

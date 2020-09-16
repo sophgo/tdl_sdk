@@ -28,7 +28,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:yolov3>
               $<TARGET_OBJECTS:thermal_face_detection>
               $<TARGET_OBJECTS:tamper_detection>
-              cviai_types_free.cpp
+              cviai_types_mem.cpp
               cviai_rescale_bbox.cpp
               cviai_mmf.cpp
               cviai_core.cpp)

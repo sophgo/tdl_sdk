@@ -1,4 +1,5 @@
-#include "core/cviai_types_free.h"
+#include "core/cviai_types_mem.h"
+#include "core/cviai_types_mem_internal.h"
 
 #include <string.h>
 

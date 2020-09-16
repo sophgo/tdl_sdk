@@ -1,6 +1,7 @@
 #include "face_utils.hpp"
 #include "core_utils.hpp"
 
+#include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 
 #include "opencv2/imgproc.hpp"
@@ -91,10 +92,7 @@ cvai_face_info_t bbox_rescale(float width, float height, cvai_face_t *face_meta,
   float ratio, pad_width, pad_height;
   face_info.bbox = box_rescale_c(width, height, face_meta->width, face_meta->height,
                                  face_meta->info[face_idx].bbox, &ratio, &pad_width, &pad_height);
-
-  face_info.face_pts.size = face_meta->info[face_idx].face_pts.size;
-  face_info.face_pts.x = (float *)malloc(sizeof(float) * face_meta->info[face_idx].face_pts.size);
-  face_info.face_pts.y = (float *)malloc(sizeof(float) * face_meta->info[face_idx].face_pts.size);
+  CVI_AI_MemAlloc(face_meta->info[face_idx].face_pts.size, &face_info.face_pts);
   for (int j = 0; j < 5; ++j) {
     face_info.face_pts.x[j] = (face_meta->info[face_idx].face_pts.x[j] - pad_width) * ratio;
     face_info.face_pts.y[j] = (face_meta->info[face_idx].face_pts.y[j] - pad_height) * ratio;

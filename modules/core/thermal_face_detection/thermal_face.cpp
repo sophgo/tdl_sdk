@@ -1,5 +1,5 @@
 #include "thermal_face.hpp"
-#include "core/cviai_types_free.h"
+#include "core/cviai_types_mem.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 

@@ -2,7 +2,7 @@
 #define _CVIAI_CORE_H_
 #include "core/core/cvai_core_types.h"
 #include "core/cviai_rescale_bbox.h"
-#include "core/cviai_types_free.h"
+#include "core/cviai_types_mem.h"
 #include "core/face/cvai_face_helper.h"
 #include "core/face/cvai_face_types.h"
 #include "core/object/cvai_object_types.h"

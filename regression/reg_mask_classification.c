@@ -44,6 +44,7 @@ static int run(const char *img_dir, int *mask_count, int *total) {
     face.info[0].bbox.y1 = 0;
     face.info[0].bbox.x2 = frame.stVFrame.u32Width;
     face.info[0].bbox.y2 = frame.stVFrame.u32Height;
+    // FIXME: Why allocate this?
     face.info[0].face_pts.size = 5;
     face.info[0].face_pts.x = (float *)malloc(sizeof(float) * face.info[0].face_pts.size);
     face.info[0].face_pts.y = (float *)malloc(sizeof(float) * face.info[0].face_pts.size);

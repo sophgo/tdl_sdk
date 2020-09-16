@@ -1,6 +1,7 @@
 #include "mask_face_recognition.hpp"
 
-#include "core/cviai_types_free.h"
+#include "core/cviai_types_mem.h"
+#include "core/cviai_types_mem_internal.h"
 #include "core/face/cvai_face_helper.h"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
@@ -78,10 +79,7 @@ void MaskFaceRecognition::outputParser(cvai_face_t *meta, int meta_i) {
   int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t face_feature_size = CVI_NN_TensorCount(out);
 
-  CVI_AI_FreeCpp(&meta->info[meta_i].face_feature);
-  meta->info[meta_i].face_feature.ptr = (int8_t *)malloc(sizeof(int8_t) * face_feature_size);
-  meta->info[meta_i].face_feature.size = face_feature_size;
-  meta->info[meta_i].face_feature.type = TYPE_INT8;
+  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &meta->info[meta_i].face_feature);
   memcpy(meta->info[meta_i].face_feature.ptr, face_blob, face_feature_size);
 }
 

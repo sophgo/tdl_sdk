@@ -1,7 +1,8 @@
 #include "retina_face.hpp"
 #include "retina_face_utils.hpp"
 
-#include "core/cviai_types_free.h"
+#include "core/cviai_types_mem.h"
+#include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 
 #define NAME_BBOX "face_rpn_bbox_pred_"
@@ -205,10 +206,7 @@ void RetinaFace::initFaceMeta(cvai_face_t *meta, int size) {
     meta->info[i].liveness_score = -1;
     meta->info[i].mask_score = -1;
 
-    CVI_AI_FreeCpp(&meta->info[i].face_pts);
-    meta->info[i].face_pts.size = FACE_POINTS_SIZE;
-    meta->info[i].face_pts.x = (float *)malloc(sizeof(float) * meta->info[i].face_pts.size);
-    meta->info[i].face_pts.y = (float *)malloc(sizeof(float) * meta->info[i].face_pts.size);
+    CVI_AI_MemAlloc(FACE_POINTS_SIZE, &meta->info[i].face_pts);
     for (uint32_t j = 0; j < meta->info[i].face_pts.size; ++j) {
       meta->info[i].face_pts.x[j] = -1;
       meta->info[i].face_pts.y[j] = -1;
