@@ -11,16 +11,16 @@ namespace cviai {
 
 int Core::modelOpen(const char *filepath) {
   TRACE_EVENT("cviai_core", "Core::modelOpen");
+  if (!mp_config) {
+    syslog(LOG_ERR, "config not set\n");
+    return CVI_FAILURE;
+  }
   CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
   if (ret != CVI_RC_SUCCESS) {
     syslog(LOG_ERR, "CVI_NN_RegisterModel failed, err %d\n", ret);
     return CVI_FAILURE;
   }
   syslog(LOG_INFO, "CVI_NN_RegisterModel successed\n");
-  if (!mp_config) {
-    syslog(LOG_ERR, "config not set\n");
-    return CVI_FAILURE;
-  }
   if (mp_config->batch_size != 0) {
     CVI_NN_SetConfig(mp_model_handle, OPTION_BATCH_SIZE, mp_config->batch_size);
   }
