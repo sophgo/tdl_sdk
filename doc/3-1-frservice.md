@@ -41,7 +41,7 @@ FRService provides feature matching tool to analyze the result from model that g
 
 ```c
 CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
-                                              const cvai_frservice_feature_array_t featureArray);
+                                              const cvai_service_feature_array_t featureArray);
 ```
 
 Second, use ``CVI_AI_FRService_FaceInfoMatching`` to match to output result with the feature array. The length of the top ``index`` equals to ``k``.

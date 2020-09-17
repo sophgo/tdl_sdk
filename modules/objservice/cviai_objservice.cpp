@@ -1,12 +1,15 @@
-#include "objservice/cviai_objservice.h"
+#include "service/cviai_objservice.h"
 
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
 #include "draw_rect/draw_rect.hpp"
+#include "feature_matching/feature_matching.hpp"
 
 #include <cvimath/cvimath.h>
+#include <syslog.h>
 
 typedef struct {
+  cvai_service_feature_array_ext_t feature_array_ext;
   cviai_handle_t ai_handle = NULL;
   cviai::service::DigitalTracking *m_dt = nullptr;
 } cviai_objservice_context_t;
@@ -14,6 +17,7 @@ typedef struct {
 CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle,
                                        cviai_handle_t ai_handle) {
   if (ai_handle == NULL) {
+    syslog(LOG_ERR, "ai_handle is empty.");
     return CVI_FAILURE;
   }
   cviai_objservice_context_t *ctx = new cviai_objservice_context_t;
@@ -27,6 +31,27 @@ CVI_S32 CVI_AI_OBJService_DestroyHandle(cviai_objservice_handle_t handle) {
   delete ctx->m_dt;
   delete ctx;
   return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
+                                               const cvai_service_feature_array_t featureArray) {
+  cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
+  return RegisterFeatureArray(featureArray, &ctx->feature_array_ext);
+}
+
+CVI_S32 CVI_AI_OBJService_FaceInfoMatching(cviai_objservice_handle_t handle,
+                                           const cvai_object_info_t *object_info, const uint32_t k,
+                                           uint32_t **index) {
+  cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
+  return FeatureMatchingRaw((uint8_t *)object_info->feature.ptr, object_info->feature.type, k,
+                            index, &ctx->feature_array_ext);
+}
+
+CVI_S32 CVI_AI_OBJService_RawMatching(cviai_objservice_handle_t handle, const uint8_t *feature,
+                                      const feature_type_e type, const uint32_t k,
+                                      uint32_t **index) {
+  cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
+  return FeatureMatchingRaw(feature, type, k, index, &ctx->feature_array_ext);
 }
 
 CVI_S32 CVI_AI_OBJService_DigitalZoom(cviai_objservice_handle_t handle,

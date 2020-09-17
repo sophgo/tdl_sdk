@@ -1,6 +1,6 @@
 #ifndef _CVIAI_FRSERVICE_H_
 #define _CVIAI_FRSERVICE_H_
-#include "frservice/cviai_frservice_types.h"
+#include "service/cviai_service_types.h"
 
 #include "core/cviai_core.h"
 #include "core/face/cvai_face_types.h"
@@ -37,25 +37,27 @@ CVI_S32 CVI_AI_FRService_DestroyHandle(cviai_frservice_handle_t handle);
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
-                                              const cvai_frservice_feature_array_t featureArray);
+                                              const cvai_service_feature_array_t featureArray);
 
 /**
  * @brief Do a single cviai_face_t feature matching with registed feature array.
  *
  * @param handle An FR Service handle.
- * @param face The cvai_face_t from NN output with feature data.
+ * @param face_info The cvai_face_info_t from NN output with feature data.
  * @param k Output top k results.
  * @param index Output top k index.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle, const cvai_face_t *face,
-                                          const uint32_t k, uint32_t **index);
+CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle,
+                                          cvai_face_info_t *face_info, const uint32_t k,
+                                          uint32_t **index);
 
 /**
  * @brief Do a single raw data with registed feature array.
  *
  * @param handle An FR Service handle.
- * @param face The cvai_face_t from NN output with feature data.
+ * @param feature Raw feature vector.
+ * @param type The data type of the feature vector.
  * @param k Output top k results.
  * @param index Output top k index.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.

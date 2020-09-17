@@ -1,5 +1,6 @@
 #ifndef _CVIAI_OBJSERVICE_H_
 #define _CVIAI_OBJSERVICE_H_
+#include "service/cviai_service_types.h"
 
 #include "core/cviai_core.h"
 #include "core/object/cvai_object_types.h"
@@ -28,6 +29,42 @@ CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle, cviai_
  */
 CVI_S32 CVI_AI_OBJService_DestroyHandle(cviai_objservice_handle_t handle);
 
+/**
+ * @brief Register a feature array to OBJ Service.
+ *
+ * @param handle An OBJ Service handle.
+ * @param featureArray Input registered feature array.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
+                                               const cvai_service_feature_array_t featureArray);
+
+/**
+ * @brief Do a single cviai_face_t feature matching with registed feature array.
+ *
+ * @param handle An OBJ Service handle.
+ * @param object_info The cvai_object_info_t from NN output with feature data.
+ * @param k Output top k results.
+ * @param index Output top k index.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+CVI_S32 CVI_AI_OBJService_FaceInfoMatching(cviai_objservice_handle_t handle,
+                                           const cvai_object_info_t *object_info, const uint32_t k,
+                                           uint32_t **index);
+
+/**
+ * @brief Do a single raw data with registed feature array.
+ *
+ * @param handle An OBJ Service handle.
+ * @param feature Raw feature vector.
+ * @param type The data type of the feature vector.
+ * @param k Output top k results.
+ * @param index Output top k index.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+CVI_S32 CVI_AI_OBJService_RawMatching(cviai_objservice_handle_t handle, const uint8_t *feature,
+                                      const feature_type_e type, const uint32_t k,
+                                      uint32_t **index);
 /**
  * @brief Zoom in to the largest face from the output of object detection results.
  *
