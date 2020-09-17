@@ -3,6 +3,8 @@
 #include "core/utils/vpss_helper.h"
 #include "opencv2/opencv.hpp"
 
+#include <syslog.h>
+
 inline void BufferRGBPackedCopy(const uint8_t *buffer, uint32_t width, uint32_t height,
                                 uint32_t stride, VIDEO_FRAME_INFO_S *frame, bool invert) {
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
@@ -61,7 +63,7 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
                           const PIXEL_FORMAT_E inFormat, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
                           const PIXEL_FORMAT_E outFormat) {
   if (CREATE_VBFRAME_HELPER(blk, frame, width, height, outFormat) != CVI_SUCCESS) {
-    printf("Create VBFrame failed.\n");
+    syslog(LOG_ERR, "Create VBFrame failed.\n");
     return CVI_FAILURE;
   }
 
@@ -77,7 +79,7 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
   } else if (inFormat == PIXEL_FORMAT_RGB_888 && outFormat == PIXEL_FORMAT_RGB_888_PLANAR) {
     BufferRGBPacked2PlanarCopy(buffer, width, height, stride, frame, false);
   } else {
-    printf("Unsupported convert format: %u -> %u.\n", inFormat, outFormat);
+    syslog(LOG_ERR, "Unsupported convert format: %u -> %u.\n", inFormat, outFormat);
     ret = CVI_FAILURE;
   }
   CACHED_VBFRAME_FLUSH_UNMAP(frame);
@@ -88,7 +90,7 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
                      PIXEL_FORMAT_E format) {
   cv::Mat img = cv::imread(filepath);
   if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, format) != CVI_SUCCESS) {
-    printf("Create VBFrame failed.\n");
+    syslog(LOG_ERR, "Create VBFrame failed.\n");
     return CVI_FAILURE;
   }
 
@@ -104,7 +106,7 @@ int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *fram
       BufferRGBPacked2PlanarCopy(img.data, img.cols, img.rows, img.step, frame, true);
     } break;
     default:
-      printf("Unsupported format: %u.\n", format);
+      syslog(LOG_ERR, "Unsupported format: %u.\n", format);
       ret = CVI_FAILURE;
       break;
   }

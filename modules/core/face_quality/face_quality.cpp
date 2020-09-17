@@ -7,6 +7,8 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
+#include <syslog.h>
+
 #define SCALE_R (1.0 / (255.0 * 0.229))
 #define SCALE_G (1.0 / (255.0 * 0.224))
 #define SCALE_B (1.0 / (255.0 * 0.225))
@@ -95,7 +97,7 @@ FaceQuality::FaceQuality() { mp_config = std::make_unique<ModelConfig>(); }
 
 int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
-    printf("Error: pixel format not match.\n");
+    syslog(LOG_ERR, "Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
     return CVI_FAILURE;
   }
 

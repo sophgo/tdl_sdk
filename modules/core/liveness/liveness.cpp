@@ -8,6 +8,8 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
+#include <syslog.h>
+
 #define RESIZE_SIZE 112
 #define LIVENESS_SCALE (1 / 255.0)
 #define LIVENESS_N 1
@@ -31,7 +33,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
   cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
                     frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   if (rgb_frame.data == nullptr) {
-    printf("src Image is empty!\n");
+    syslog(LOG_ERR, "src image is empty!\n");
     return vector<vector<cv::Mat>>{};
   }
 
@@ -40,7 +42,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
   cv::Mat ir_frame(sink_buffer->stVFrame.u32Height, sink_buffer->stVFrame.u32Width, CV_8UC3,
                    sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Stride[0]);
   if (ir_frame.data == nullptr) {
-    printf("sink Image is empty!\n");
+    syslog(LOG_ERR, "sink image is empty!\n");
     return vector<vector<cv::Mat>>{};
   }
 

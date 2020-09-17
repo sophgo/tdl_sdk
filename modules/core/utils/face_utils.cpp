@@ -8,6 +8,7 @@
 
 #include <cvi_comm_gdc.h>
 #include <cvi_gdc.h>
+#include <syslog.h>
 #include <algorithm>
 
 using namespace std;
@@ -192,7 +193,7 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
   CVI_GDC_BeginJob(&hHandle);
   CVI_GDC_AddAffineTask(hHandle, &stTask, &stAffineAttr);
   if (CVI_GDC_EndJob(hHandle) != CVI_SUCCESS) {
-    printf("Affine failed.\n");
+    syslog(LOG_ERR, "Affine failed.\n");
     return -1;
   }
   return 0;

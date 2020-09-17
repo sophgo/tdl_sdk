@@ -11,6 +11,8 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
+#include <syslog.h>
+
 #define ENABLE_HW_WRAP_TEST 0
 
 #define FACE_ATTRIBUTE_QUANTIZE_SCALE (0.996098577)
@@ -78,7 +80,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
   if (m_use_wrap_hw) {
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
-      printf(
+      syslog(
+          LOG_ERR,
           "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, PIXEL_FORMAT_YUV_PLANAR_420. Current: "
           "%x\n",
           stOutFrame->stVFrame.enPixelFormat);
@@ -96,7 +99,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
     }
   } else {
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
-      printf("Supported format is PIXEL_FORMAT_RGB_888. Current: %x\n",
+      syslog(LOG_ERR, "Supported format is PIXEL_FORMAT_RGB_888. Current: %x\n",
              stOutFrame->stVFrame.enPixelFormat);
       return -1;
     }

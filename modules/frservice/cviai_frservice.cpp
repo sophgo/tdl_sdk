@@ -6,6 +6,7 @@
 
 #include <cvimath/cvimath.h>
 #include <string.h>
+#include <syslog.h>
 
 typedef struct {
   cvai_frservice_feature_array_t feature_array;
@@ -67,7 +68,7 @@ CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
                                        featureArray.feature_length, featureArray.data_num);
     } break;
     default: {
-      printf("Unsupported register data type %x.\n", featureArray.type);
+      syslog(LOG_ERR, "Unsupported register data type %x.\n", featureArray.type);
       delete[] unit_length;
       return CVI_FAILURE;
     } break;
@@ -84,15 +85,15 @@ CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle, const
                                           const uint32_t k, uint32_t **index) {
   cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
   if (ctx->feature_array_ext.feature_array_buffer == nullptr) {
-    printf("Feature array not registered yet.\n");
+    syslog(LOG_ERR, "Feature array not registered yet.\n");
     return CVI_FAILURE;
   }
   if (face->info->face_feature.ptr == NULL) {
-    printf("No feature in face.\n");
+    syslog(LOG_ERR, "No feature in face.\n");
     return CVI_FAILURE;
   }
   if (ctx->feature_array_ext.feature_array.type != face->info->face_feature.type) {
-    printf("The registered feature array type %x is not the same as the input type %x.\n",
+    syslog(LOG_ERR, "The registered feature array type %x is not the same as the input type %x.\n",
            ctx->feature_array_ext.feature_array.type, face->info->face_feature.type);
     return CVI_FAILURE;
   }
@@ -116,7 +117,8 @@ CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle, const
                               ctx->feature_array_ext.feature_array.data_num, k);
     } break;
     default: {
-      printf("Unsupported register data type %x.\n", ctx->feature_array_ext.feature_array.type);
+      syslog(LOG_ERR, "Unsupported register data type %x.\n",
+             ctx->feature_array_ext.feature_array.type);
       free(k_index);
       free(k_value);
       return CVI_FAILURE;
@@ -133,11 +135,11 @@ CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint
                                      uint32_t **index) {
   cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
   if (ctx->feature_array_ext.feature_array_buffer == nullptr) {
-    printf("Feature array not registered yet.\n");
+    syslog(LOG_ERR, "Feature array not registered yet.\n");
     return CVI_FAILURE;
   }
   if (ctx->feature_array_ext.feature_array.type != type) {
-    printf("The registered feature array type %x is not the same as the input type %x.\n",
+    syslog(LOG_ERR, "The registered feature array type %x is not the same as the input type %x.\n",
            ctx->feature_array_ext.feature_array.type, type);
     return CVI_FAILURE;
   }
@@ -160,7 +162,8 @@ CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint
                               ctx->feature_array_ext.feature_array.data_num, k);
     } break;
     default: {
-      printf("Unsupported register data type %x.\n", ctx->feature_array_ext.feature_array.type);
+      syslog(LOG_ERR, "Unsupported register data type %x.\n",
+             ctx->feature_array_ext.feature_array.type);
       free(k_index);
       free(k_value);
       return CVI_FAILURE;

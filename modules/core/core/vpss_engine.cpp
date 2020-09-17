@@ -3,6 +3,7 @@
 #include "core/utils/vpss_helper.h"
 #include "cviruntime.h"
 
+#include <syslog.h>
 namespace cviai {
 
 VpssEngine::VpssEngine() {}
@@ -14,7 +15,8 @@ void VpssEngine::enableLog() {
   LOG_LEVEL_CONF_S log_conf;
   log_conf.enModId = (MOD_ID_E)6;  // vpss
   CVI_LOG_GetLevelConf(&log_conf);
-  printf("Set Vpss Log Level: %d, log will save into cvi_mmf_aisdk.log\n", log_conf.s32Level);
+  syslog(LOG_INFO, "Set Vpss Log Level: %d, log will save into cvi_mmf_aisdk.log\n",
+         log_conf.s32Level);
   log_conf.s32Level = 7;
   CVI_LOG_SetLevelConf(&log_conf);
 
@@ -24,7 +26,7 @@ void VpssEngine::enableLog() {
 
 int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   if (m_is_vpss_init) {
-    printf("Vpss already init.\n");
+    syslog(LOG_WARNING, "Vpss already init.\n");
     return CVI_FAILURE;
   }
   if (enable_log) {
@@ -48,25 +50,25 @@ int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
   m_grpid = -1;
   if (grp_id != (CVI_U32)-1) {
     if (CVI_VPSS_CreateGrp(grp_id, &vpss_grp_attr) != CVI_SUCCESS) {
-      printf("User assign group id %u failed to create vpss instance.\n", grp_id);
+      syslog(LOG_ERR, "User assign group id %u failed to create vpss instance.\n", grp_id);
       return CVI_FAILURE;
     }
     m_grpid = grp_id;
   } else {
     int id = CVI_VPSS_GetAvailableGrp();
     if (CVI_VPSS_CreateGrp(id, &vpss_grp_attr) != CVI_SUCCESS) {
-      printf("User assign group id %u failed to create vpss instance.\n", grp_id);
+      syslog(LOG_ERR, "User assign group id %u failed to create vpss instance.\n", grp_id);
       return CVI_FAILURE;
     }
     m_grpid = id;
   }
   if (m_grpid == (CVI_U32)-1) {
-    printf("All vpss grp init failed!\n");
+    syslog(LOG_ERR, "All vpss grp init failed!\n");
     return CVI_FAILURE;
   }
   int s32Ret = CVI_VPSS_ResetGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", m_grpid, s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", m_grpid, s32Ret);
     return CVI_FAILURE;
   }
 
@@ -74,20 +76,20 @@ int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
     s32Ret = CVI_VPSS_SetChnAttr(m_grpid, i, &vpss_chn_attr);
 
     if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
+      syslog(LOG_ERR, "CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
       return CVI_FAILURE;
     }
 
     s32Ret = CVI_VPSS_EnableChn(m_grpid, i);
 
     if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
+      syslog(LOG_ERR, "CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
       return CVI_FAILURE;
     }
   }
   s32Ret = CVI_VPSS_StartGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
-    printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
+    syslog(LOG_ERR, "start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return CVI_FAILURE;
   }
 
@@ -97,27 +99,27 @@ int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
 
 int VpssEngine::stop() {
   if (!m_is_vpss_init) {
-    printf("Vpss is not init yet.\n");
+    syslog(LOG_ERR, "Vpss is not init yet.\n");
     return CVI_FAILURE;
   }
 
   for (uint32_t j = 0; j < m_enabled_chn; j++) {
     int s32Ret = CVI_VPSS_DisableChn(m_grpid, j);
     if (s32Ret != CVI_SUCCESS) {
-      printf("failed with %#x!\n", s32Ret);
+      syslog(LOG_ERR, "CVI_VPSS_DisableChn failed with %#x!\n", s32Ret);
       return CVI_FAILURE;
     }
   }
 
   int s32Ret = CVI_VPSS_StopGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
-    printf("failed with %#x!\n", s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_StopGrp failed with %#x!\n", s32Ret);
     return CVI_FAILURE;
   }
 
   s32Ret = CVI_VPSS_DestroyGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
-    printf("failed with %#x!\n", s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_DestroyGrp failed with %#x!\n", s32Ret);
     return CVI_FAILURE;
   }
 
@@ -161,19 +163,20 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
   if (m_enabled_chn > 1) {
     vpss_grp_attr.u8VpssDev = 1;
     if (m_enabled_chn > m_available_max_chn) {
-      printf("Exceed max available channel %u. Current: %u.\n", m_available_max_chn, m_enabled_chn);
+      syslog(LOG_ERR, "Exceed max available channel %u. Current: %u.\n", m_available_max_chn,
+             m_enabled_chn);
       return CVI_FAILURE;
     }
   }
   int ret = CVI_VPSS_SetGrpAttr(m_grpid, &vpss_grp_attr);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_SetGrpAttr failed with %#x\n", ret);
+    syslog(LOG_ERR, "CVI_VPSS_SetGrpAttr failed with %#x\n", ret);
     return ret;
   }
   if (grp_crop_attr != NULL) {
     int ret = CVI_VPSS_SetGrpCrop(m_grpid, grp_crop_attr);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_SetGrpCrop failed with %#x\n", ret);
+      syslog(LOG_ERR, "CVI_VPSS_SetGrpCrop failed with %#x\n", ret);
       return ret;
     }
   }
@@ -181,7 +184,7 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
   for (uint32_t i = 0; i < m_enabled_chn; i++) {
     ret = CVI_VPSS_SetChnAttr(m_grpid, i, &chn_attr[i]);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_SetChnAttr failed with %#x\n", ret);
+      syslog(LOG_ERR, "CVI_VPSS_SetChnAttr failed with %#x\n", ret);
       return ret;
     }
   }
@@ -190,7 +193,7 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
     for (uint32_t i = 0; i < m_enabled_chn; i++) {
       int ret = CVI_VPSS_SetChnCrop(m_grpid, i, &chn_crop_attr[i]);
       if (ret != CVI_SUCCESS) {
-        printf("CVI_VPSS_SetChnCrop failed with %#x\n", ret);
+        syslog(LOG_ERR, "CVI_VPSS_SetChnCrop failed with %#x\n", ret);
         return ret;
       }
     }

@@ -10,6 +10,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <syslog.h>
 
 #define VIP_WIDTH_ALIGN 32
 #define SCALAR_4096_ALIGN_BUG 0x1000
@@ -43,17 +44,17 @@ MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrc
 
   s32Ret = CVI_VB_SetConfig(&stVbConf);
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_VB_SetConf failed!\n");
+    syslog(LOG_ERR, "CVI_VB_SetConf failed!\n");
     return s32Ret;
   }
   s32Ret = CVI_VB_Init();
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_VB_Init failed!\n");
+    syslog(LOG_ERR, "CVI_VB_Init failed!\n");
     return s32Ret;
   }
   s32Ret = CVI_SYS_Init();
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_SYS_Init failed!\n");
+    syslog(LOG_ERR, "CVI_SYS_Init failed!\n");
     CVI_VB_Exit();
     return s32Ret;
   }
@@ -232,8 +233,8 @@ VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, u
                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
                  PIXEL_FORMAT_E enDstFormat, VPSS_MODE_E mode, bool keepAspectRatio,
                  bool enableLog) {
-  printf("VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight, enDstWidth,
-         enDstHeight);
+  syslog(LOG_ERR, "VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight,
+         enDstWidth, enDstHeight);
   CVI_S32 s32Ret = CVI_FAILURE;
 
   // Tunr on Vpss Log
@@ -241,13 +242,13 @@ VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, u
     LOG_LEVEL_CONF_S log_conf;
     log_conf.enModId = (MOD_ID_E)6;  // vpss
     CVI_LOG_GetLevelConf(&log_conf);
-    printf("Set Vpss Log Level: %d, log will save into cvi_mmf.log\n", log_conf.s32Level);
+    syslog(LOG_ERR, "Set Vpss Log Level: %d, log will save into cvi_mmf.log\n", log_conf.s32Level);
     log_conf.s32Level = 7;
     CVI_LOG_SetLevelConf(&log_conf);
 
     log_conf.enModId = (MOD_ID_E)14;  // VI
     CVI_LOG_GetLevelConf(&log_conf);
-    printf("Set VI Log Level: %d, log will save into cvi_mmf.log\n", log_conf.s32Level);
+    syslog(LOG_ERR, "Set VI Log Level: %d, log will save into cvi_mmf.log\n", log_conf.s32Level);
     log_conf.s32Level = 7;
     CVI_LOG_SetLevelConf(&log_conf);
     CVI_LOG_EnableLog2File(CVI_TRUE, (char *)"cvi_mmf.log");
@@ -263,27 +264,27 @@ VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, u
   /*start vpss*/
   s32Ret = CVI_VPSS_CreateGrp(VpssGrpId, &stVpssGrpAttr);
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_CreateGrp(grp:%d) failed with %#x!\n", VpssGrpId, s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_CreateGrp(grp:%d) failed with %#x!\n", VpssGrpId, s32Ret);
     return s32Ret;
   }
   s32Ret = CVI_VPSS_ResetGrp(VpssGrpId);
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", VpssGrpId, s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", VpssGrpId, s32Ret);
     return s32Ret;
   }
   s32Ret = CVI_VPSS_SetChnAttr(VpssGrpId, VPSS_CHN0, &stVpssChnAttr);
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
     return s32Ret;
   }
   s32Ret = CVI_VPSS_EnableChn(VpssGrpId, VPSS_CHN0);
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
     return s32Ret;
   }
   s32Ret = CVI_VPSS_StartGrp(VpssGrpId);
   if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_VPSS_StartGrp failed with %#x\n", s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_StartGrp failed with %#x\n", s32Ret);
     return s32Ret;
   }
 
@@ -350,7 +351,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     default:
-      printf("Currently unsupported format %u\n", vFrame->enPixelFormat);
+      syslog(LOG_ERR, "Currently unsupported format %u\n", vFrame->enPixelFormat);
       return CVI_FAILURE;
       break;
   }
@@ -358,7 +359,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
   CVI_U32 u32MapSize = vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
   *blk = CVI_VB_GetBlock(VB_INVALID_POOLID, u32MapSize);
   if (*blk == VB_INVALID_HANDLE) {
-    printf("Can't acquire vb block Size: %d\n", u32MapSize);
+    syslog(LOG_ERR, "Can't acquire vb block Size: %d\n", u32MapSize);
     return CVI_FAILURE;
   }
   vbFrame->u32PoolId = CVI_VB_Handle2PoolId(*blk);
