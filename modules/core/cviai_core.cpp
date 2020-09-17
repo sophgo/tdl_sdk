@@ -10,6 +10,7 @@
 #include "mask_face_recognition/mask_face_recognition.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
+#include "osnet/osnet.hpp"
 #include "retina_face/retina_face.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
 
@@ -322,6 +323,29 @@ int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2, MobileDetV2::Model::d2, handle,
                          frame, obj, det_type);
+}
+
+inline int __attribute__((always_inline))
+CVI_AI_OSNetBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                 int obj_idx) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  OSNet *osnet = getInferenceInstance<OSNet>(CVI_AI_SUPPORTED_MODEL_OSNET, ctx);
+  if (osnet == nullptr) {
+    syslog(LOG_ERR, "No instance found for OSNet.\n");
+    return CVI_FAILURE;
+  }
+  return osnet->inference(frame, obj, -1);
+}
+
+int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                    int obj_idx) {
+  TRACE_EVENT("cviai_core", "CVI_AI_OSNetOne");
+  return CVI_AI_OSNetBase(handle, frame, obj, obj_idx);
+}
+
+int CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
+  TRACE_EVENT("cviai_core", "CVI_AI_OSNet");
+  return CVI_AI_OSNetBase(handle, frame, obj, -1);
 }
 
 int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,

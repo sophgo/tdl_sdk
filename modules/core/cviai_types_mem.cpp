@@ -40,9 +40,7 @@ void CVI_AI_FreeCpp(cvai_face_t *face) {
   face->height = 0;
 }
 
-void CVI_AI_FreeCpp(cvai_object_info_t *obj_info) {
-  memset(obj_info, 0, sizeof(cvai_object_info_t));
-}
+void CVI_AI_FreeCpp(cvai_object_info_t *obj_info) { CVI_AI_FreeCpp(&obj_info->feature); }
 
 void CVI_AI_FreeCpp(cvai_object_t *obj) {
   if (obj->info != NULL) {

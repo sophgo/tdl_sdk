@@ -12,6 +12,7 @@ typedef enum {
 typedef struct {
   char name[128];
   cvai_bbox_t bbox;
+  cvai_feature_t feature;
   int classes;
 } cvai_object_info_t;
 
