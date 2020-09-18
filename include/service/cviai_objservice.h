@@ -40,7 +40,7 @@ CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
                                                const cvai_service_feature_array_t featureArray);
 
 /**
- * @brief Do a single cviai_face_t feature matching with registed feature array.
+ * @brief Do a single cvai_object_info_t feature matching with registed feature array.
  *
  * @param handle An OBJ Service handle.
  * @param object_info The cvai_object_info_t from NN output with feature data.
@@ -48,9 +48,9 @@ CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
  * @param index Output top k index.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_FaceInfoMatching(cviai_objservice_handle_t handle,
-                                           const cvai_object_info_t *object_info, const uint32_t k,
-                                           uint32_t **index);
+CVI_S32 CVI_AI_OBJService_ObjectInfoMatching(cviai_objservice_handle_t handle,
+                                             const cvai_object_info_t *object_info,
+                                             const uint32_t k, uint32_t **index);
 
 /**
  * @brief Do a single raw data with registed feature array.

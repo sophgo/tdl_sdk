@@ -39,9 +39,9 @@ CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
   return RegisterFeatureArray(featureArray, &ctx->feature_array_ext);
 }
 
-CVI_S32 CVI_AI_OBJService_FaceInfoMatching(cviai_objservice_handle_t handle,
-                                           const cvai_object_info_t *object_info, const uint32_t k,
-                                           uint32_t **index) {
+CVI_S32 CVI_AI_OBJService_ObjectInfoMatching(cviai_objservice_handle_t handle,
+                                             const cvai_object_info_t *object_info,
+                                             const uint32_t k, uint32_t **index) {
   cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
   return FeatureMatchingRaw((uint8_t *)object_info->feature.ptr, object_info->feature.type, k,
                             index, &ctx->feature_array_ext);
