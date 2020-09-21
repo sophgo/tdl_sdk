@@ -58,6 +58,8 @@ CVI_S32 CVI_AI_OBJService_DigitalZoom(cviai_objservice_handle_t handle,
                                       VIDEO_FRAME_INFO_S *outFrame);
 ```
 
+Related sample codes: ``sample_read_dt.c``
+
 ## Draw Rect
 
 Available: FRService, OBJService
@@ -69,3 +71,5 @@ CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *f
 
 CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame);
 ```
+
+Related sample codes: ``sample_vi_fd.c``, ``sample_vi_fq.c``, ``sample_vi_mask_fr.c``

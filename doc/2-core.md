@@ -168,6 +168,8 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
                   cvai_obj_det_type_t det_type);
 ```
 
+Related sample codes: ``sample_read_fr.c``, ``sample_read_fr2``, ``sample_vi_od.c``
+
 ## Model output structures
 
 The output result from a model stores in a apecific structure. Face related data stores in ``cvai_face_t``, and object related data stores in ``cvai_object_t``. THe code snippet shows how to use the structure.
