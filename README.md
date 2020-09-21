@@ -1,5 +1,7 @@
 # CVIAI
 
+Programming guide is available under ``doc/``.
+
 ## How to build
 
 ### SoC mode
@@ -18,10 +20,10 @@ $ cmake -G Ninja .. -DTOOLCHAIN_ROOT_DIR=<toolchain_root_dir> \
                     -DIVE_SDK_ROOT=<ive_root_dir> \
                     -DMIDDLEWARE_SDK_ROOT=<middleware_root_dir> \
                     -DCMAKE_BUILD_TYPE=Release
-$ ninja && ninja install
+$ ninja -j8 && ninja install
 ```
 
-1. 32-bit
+2. 32-bit
 
 ```
 $ mkdir build_soc
@@ -33,12 +35,11 @@ $ cmake -G Ninja .. -DTOOLCHAIN_ROOT_DIR=<toolchain_root_dir> \
                     -DIVE_SDK_ROOT=<ive_root_dir> \
                     -DMIDDLEWARE_SDK_ROOT=<middleware_root_dir> \
                     -DCMAKE_BUILD_TYPE=Release
-$ ninja -j8
+$ ninja -j8 && ninja install
 ```
 
-**Note**:
+**Note**
 
-1. ``OPENCV_ROOT`` may be inside ``<mlir_root_dir>/opencv``
-2. ``mmf.tar.gz`` contains all the required libraries.
+1. ``OPENCV_ROOT`` may be inside ``<mlir_root_dir>/opencv``.
+2. ``mmf.tar.gz`` contains all the required libraries, use ``mw.tar.gz`` instead.
 3. Perfetto only supports GCC version >= 7. Please update your local toolchain to meet the requirement.
-
