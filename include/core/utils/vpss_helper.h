@@ -12,10 +12,49 @@
 #include <string.h>
 #include <syslog.h>
 
+#define MMF_INIT_HELPER_BLKCNT_DEFAULT 12
 #define VIP_WIDTH_ALIGN 32
 #define SCALAR_4096_ALIGN_BUG 0x1000
+#define max(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a > _b ? _a : _b;      \
+  })
 
-// Legacy support
+#define min(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a < _b ? _a : _b;      \
+  })
+
+static inline int __attribute__((always_inline)) MMF_INIT(const VB_CONFIG_S *stVbConf) {
+  CVI_S32 s32Ret = CVI_FAILURE;
+
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
+
+  s32Ret = CVI_VB_SetConfig(stVbConf);
+  if (s32Ret != CVI_SUCCESS) {
+    syslog(LOG_ERR, "CVI_VB_SetConf failed!\n");
+    return s32Ret;
+  }
+  s32Ret = CVI_VB_Init();
+  if (s32Ret != CVI_SUCCESS) {
+    syslog(LOG_ERR, "CVI_VB_Init failed!\n");
+    return s32Ret;
+  }
+  s32Ret = CVI_SYS_Init();
+  if (s32Ret != CVI_SUCCESS) {
+    syslog(LOG_ERR, "CVI_SYS_Init failed!\n");
+    CVI_VB_Exit();
+    return s32Ret;
+  }
+
+  return s32Ret;
+}
+
 static inline int __attribute__((always_inline))
 MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
                  const uint32_t inBlkCount, uint32_t enDstWidth, uint32_t enDstHeight,
@@ -37,36 +76,14 @@ MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrc
   stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[1].u32BlkCnt = outBlkCount;
 
-  CVI_S32 s32Ret = CVI_FAILURE;
-
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
-
-  s32Ret = CVI_VB_SetConfig(&stVbConf);
-  if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_VB_SetConf failed!\n");
-    return s32Ret;
-  }
-  s32Ret = CVI_VB_Init();
-  if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_VB_Init failed!\n");
-    return s32Ret;
-  }
-  s32Ret = CVI_SYS_Init();
-  if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_SYS_Init failed!\n");
-    CVI_VB_Exit();
-    return s32Ret;
-  }
-
-  return s32Ret;
+  return MMF_INIT(&stVbConf);
 }
 
 static inline int __attribute__((always_inline))
 MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
                 uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
-  return MMF_INIT_HELPER2(enSrcWidth, enSrcHeight, enSrcFormat, 12, enDstWidth, enDstHeight,
-                          enDstFormat, 12);
+  return MMF_INIT_HELPER2(enSrcWidth, enSrcHeight, enSrcFormat, MMF_INIT_HELPER_BLKCNT_DEFAULT,
+                          enDstWidth, enDstHeight, enDstFormat, MMF_INIT_HELPER_BLKCNT_DEFAULT);
 }
 
 inline void __attribute__((always_inline))
@@ -170,20 +187,6 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
   }
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
-
-#define max(a, b)           \
-  ({                        \
-    __typeof__(a) _a = (a); \
-    __typeof__(b) _b = (b); \
-    _a > _b ? _a : _b;      \
-  })
-
-#define min(a, b)           \
-  ({                        \
-    __typeof__(a) _a = (a); \
-    __typeof__(b) _b = (b); \
-    _a < _b ? _a : _b;      \
-  })
 
 inline void __attribute__((always_inline))
 VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
