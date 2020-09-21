@@ -1,5 +1,55 @@
 # Quick Start
 
+These are the files you may need to use the AI SDK.
+
+``` shell
+# Include header
+cviai_experimental.h
+cviai.h
+
+# Static library
+libcviai_core-static.a
+libcviai_evaluation-static.a
+libcviai_frservice-static.a
+libcviai_objservice-static.a
+
+# Dynamic library
+libcviai_core.so
+libcviai_evaluation.so
+libcviai_frservice.so
+libcviai_objservice.so
+```
+
+Include the headers in your ``*.cpp`` file.
+
+```c
+#include "cviai.h"
+
+int main(void) {
+
+  return 0;
+}
+```
+
+Link the libraries to your binary.
+
+| Function            | Linked libraries                         |
+|---------------------|------------------------------------------|
+| CVI_AI_*            | libcviai_core.so                         |
+| CVI_AI_FRService_*  | libcviai_core.so, libcviai_frservice.so  |
+| CVI_AI_OBJService_* | libcviai_core.so, libcviai_objservice.so |
+| CVI_AI_Eval_*       | libcviai_evaluation                      |
+
+THe following snippet is a cmake example.
+
+```cmake
+project(sample_binary)
+set(CVIAI_SDK_ROOT "/path-to-the-directory")
+include_directories(${CVIAI_SDK_ROOT}/include)
+add_executable(${PROJECT_NAME} main.c)
+target_link_libraries(${PROJECT_NAME} ${CVIAI_SDK_ROOT}/lib/libcviai_core.so)
+```
+
 ## Basic
 
 AI SDK is a C style SDK with prefix ``CVI_AI_``. Let's take a quick example of creating an AI SDK handle. The handle is defined as ``void *`` just like typical C library.
