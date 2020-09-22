@@ -1,2 +1,4 @@
 add_subdirectory(digital_tracking)
 add_subdirectory(draw_rect)
+add_subdirectory(tracker)
+add_subdirectory(area_detect)

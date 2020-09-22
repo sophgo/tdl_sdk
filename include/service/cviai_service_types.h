@@ -24,4 +24,19 @@ typedef struct {
   feature_type_e type;
 } cvai_service_feature_array_t;
 
+typedef enum {
+  UNKNOWN = 0,
+  NO_INTERSECT,
+  ON_LINE,
+  CROSS_LINE_POS,
+  CROSS_LINE_NEG,
+  INSIDE_POLYGON,
+  OUTSIDE_POLYGON
+} cvai_area_detect_e;
+
+typedef struct {
+  int64_t unique_id;
+  cvai_bbox_t bbox;
+} area_detect_t;
+
 #endif  // End of _CVIAI_SERVICE_TYPES_H_

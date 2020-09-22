@@ -74,6 +74,8 @@ message("==================================================")
 
 
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty
+                    ${CMAKE_SOURCE_DIR}/3rdparty
+                    ${CMAKE_SOURCE_DIR}/3rdparty/eigen-3.3.7/include/eigen3
                     ${CMAKE_SOURCE_DIR}/include
                     ${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}

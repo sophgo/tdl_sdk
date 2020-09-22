@@ -1,5 +1,6 @@
 #include "service/cviai_objservice.h"
 
+#include "area_detect/area_detect.hpp"
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
 #include "draw_rect/draw_rect.hpp"
@@ -12,6 +13,7 @@ typedef struct {
   cvai_service_feature_array_ext_t feature_array_ext;
   cviai_handle_t ai_handle = NULL;
   cviai::service::DigitalTracking *m_dt = nullptr;
+  cviai::service::AreaDetect *m_ad = nullptr;
 } cviai_objservice_context_t;
 
 CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle,
@@ -29,6 +31,7 @@ CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle,
 CVI_S32 CVI_AI_OBJService_DestroyHandle(cviai_objservice_handle_t handle) {
   cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
   delete ctx->m_dt;
+  delete ctx->m_ad;
   delete ctx;
   return CVI_SUCCESS;
 }
@@ -69,4 +72,30 @@ CVI_S32 CVI_AI_OBJService_DigitalZoom(cviai_objservice_handle_t handle,
 
 CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame) {
   return cviai::service::DrawMeta(meta, frame);
+}
+
+CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle,
+                                       const VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts) {
+  cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
+  if (ctx->m_ad == nullptr) {
+    ctx->m_ad = new cviai::service::AreaDetect();
+  }
+  return ctx->m_ad->setArea(frame, *pts);
+}
+
+CVI_S32 CVI_AI_OBJService_DetectIntersect(cviai_objservice_handle_t handle,
+                                          const VIDEO_FRAME_INFO_S *frame,
+                                          const area_detect_t *input, const uint32_t input_length,
+                                          cvai_area_detect_e **status) {
+  cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
+  if (ctx->m_ad == nullptr) {
+    return CVI_FAILURE;
+  }
+  int ret = CVI_SUCCESS;
+  std::vector<cvai_area_detect_e> stat;
+  if ((ret = ctx->m_ad->run(frame, input, input_length, &stat)) == CVI_SUCCESS) {
+    *status = (cvai_area_detect_e *)malloc(input_length * sizeof(cvai_area_detect_e));
+    memcpy(*status, stat.data(), input_length * sizeof(cvai_area_detect_e));
+  }
+  return ret;
 }

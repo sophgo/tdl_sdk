@@ -6,6 +6,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
 
 set(FRS_SRCS $<TARGET_OBJECTS:digital_tracking>
              $<TARGET_OBJECTS:draw_rect>
+             $<TARGET_OBJECTS:tracker>
+             $<TARGET_OBJECTS:area_detect>
              cviai_objservice.cpp)
 
 project(cviai_objservice)

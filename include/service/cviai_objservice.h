@@ -90,6 +90,32 @@ CVI_S32 CVI_AI_OBJService_DigitalZoom(cviai_objservice_handle_t handle,
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame);
+
+/**
+ * @brief Set intersect area for detection.
+ *
+ * @param handle An OBJService handle.
+ * @param frame Input frame.
+ * @param pts Intersect area or line. (pts must larger than 2 or more.)
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle,
+                                       const VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts);
+
+/**
+ * @brief Check if the object intersected with the set area or line.
+ *
+ * @param handle An OBJService handle.
+ * @param frame Input frame.
+ * @param input Input detected objects.
+ * @param input_length Input object numbers.
+ * @param status Output status of each object.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+CVI_S32 CVI_AI_OBJService_DetectIntersect(cviai_objservice_handle_t handle,
+                                          const VIDEO_FRAME_INFO_S *frame,
+                                          const area_detect_t *input, const uint32_t input_length,
+                                          cvai_area_detect_e **status);
 #ifdef __cplusplus
 }
 #endif
