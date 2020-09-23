@@ -95,6 +95,10 @@ typedef enum {
 } cvai_area_detect_e;
 ```
 
+**Note**
+
+1. In line mode, the first input point of an object will return status **unknown** cause there is no vector.
+
 ### Setting Detect Region
 
 The region is set using ``cvai_pts_t``. Note that the size of ``pts->size`` must larger than 2. The API will make the lines into a close loop if 3 more more points are found. The coordinate of the points cannot exceed the size of the given frame.
@@ -104,8 +108,9 @@ CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle,
                                        const VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts);
 ```
 
-The user has to give an object an unique id and a coordinate (x, y). The tracker inside the API will handle the rest.
+### Detect Intersection
 
+The user has to give an object an unique id and a coordinate (x, y). The tracker inside the API will handle the rest.
 
 ```c
 typedef struct {
