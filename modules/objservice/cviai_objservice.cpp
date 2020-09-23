@@ -84,7 +84,8 @@ CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle,
 
 CVI_S32 CVI_AI_OBJService_DetectIntersect(cviai_objservice_handle_t handle,
                                           const VIDEO_FRAME_INFO_S *frame,
-                                          const area_detect_t *input, const uint32_t input_length,
+                                          const area_detect_pts_t *input,
+                                          const uint32_t input_length,
                                           cvai_area_detect_e **status) {
   cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
   if (ctx->m_ad == nullptr) {

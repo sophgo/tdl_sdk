@@ -46,20 +46,20 @@ int AreaDetect::setArea(const VIDEO_FRAME_INFO_S *frame, const cvai_pts_t &pts) 
     if (first_pts != prev_pts) {
       m_boundaries.push_back(Eigen::Hyperplane<float, 2>::Through(prev_pts, first_pts));
       m_pts.push_back({prev_pts, first_pts});
-      printf("boundary size %lu\n", m_boundaries.size());
+      printf("boundary size %u\n", (uint32_t)m_boundaries.size());
     }
   }
   return CVI_SUCCESS;
 }
 
-int AreaDetect::run(const VIDEO_FRAME_INFO_S *frame, const area_detect_t *input,
+int AreaDetect::run(const VIDEO_FRAME_INFO_S *frame, const area_detect_pts_t *input,
                     const uint32_t input_length, std::vector<cvai_area_detect_e> *detected) {
   detected->clear();
 
   if (m_boundaries.size() == 1) {
     for (uint32_t i = 0; i < input_length; ++i) {
-      const float center_pts_x = (input[i].bbox.x1 + input[i].bbox.x2) / 2;
-      const float center_pts_y = (input[i].bbox.y1 + input[i].bbox.y2) / 2;
+      const float &center_pts_x = input[i].x;
+      const float &center_pts_y = input[i].y;
       float x, y;
       bool has_prev = false;
       if (m_tracker.getLatestPos(input[i].unique_id, &x, &y) == CVI_SUCCESS) {
@@ -95,8 +95,8 @@ int AreaDetect::run(const VIDEO_FRAME_INFO_S *frame, const area_detect_t *input,
     }
   } else if (m_boundaries.size() >= 3) {
     for (uint32_t i = 0; i < input_length; ++i) {
-      const float center_pts_x = (input[i].bbox.x1 + input[i].bbox.x2) / 2;
-      const float center_pts_y = (input[i].bbox.y1 + input[i].bbox.y2) / 2;
+      const float &center_pts_x = input[i].x;
+      const float &center_pts_y = input[i].y;
       m_tracker.registerId(frame, input[i].unique_id, center_pts_x, center_pts_y);
       Eigen::Vector2f prev_pts(-1.f, center_pts_y);
       Eigen::Vector2f curr_pts(center_pts_x, center_pts_y);

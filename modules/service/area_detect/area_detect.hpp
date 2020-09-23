@@ -14,8 +14,8 @@ namespace service {
 class AreaDetect {
  public:
   int setArea(const VIDEO_FRAME_INFO_S *frame, const cvai_pts_t &pts);
-  int run(const VIDEO_FRAME_INFO_S *frame, const area_detect_t *input, const uint32_t input_length,
-          std::vector<cvai_area_detect_e> *status);
+  int run(const VIDEO_FRAME_INFO_S *frame, const area_detect_pts_t *input,
+          const uint32_t input_length, std::vector<cvai_area_detect_e> *status);
 
  private:
   bool onSegment(Eigen::Vector2f p, Eigen::Vector2f q, Eigen::Vector2f r);

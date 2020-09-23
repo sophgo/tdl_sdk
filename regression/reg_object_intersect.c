@@ -65,29 +65,37 @@ int main(int argc, char *argv[]) {
   CVI_AI_Free(&pts);
   // Setup fake paths
   const uint32_t input_length = 3;
-  area_detect_t *input = (area_detect_t *)malloc(input_length * sizeof(area_detect_t));
+  area_detect_pts_t *input = (area_detect_pts_t *)malloc(input_length * sizeof(area_detect_pts_t));
   input[0].unique_id = 12971892392312;
   input[1].unique_id = 14890129723233;
   input[2].unique_id = 23903582342343;
   const uint32_t frame_test = 2;
-  cvai_bbox_t box[input_length][frame_test];
-  bbox_setup(1.f, 1.f, 1.f, 1.f, &box[0][0]);
-  bbox_setup(-6.f, 12.f, -6.f, 12.f, &box[1][0]);
-  bbox_setup(1.f, 1.f, 1.f, 1.f, &box[2][0]);
-  bbox_setup(6.f, 6.f, 6.f, 6.f, &box[0][1]);
-  bbox_setup(2.f, 2.f, 2.f, 2.f, &box[1][1]);
-  bbox_setup(1.f, 1.f, 1.f, 1.f, &box[2][1]);
+  float x[input_length][frame_test];
+  x[0][0] = 1.f;
+  x[1][0] = -6.f;
+  x[2][0] = 1.f;
+  x[0][1] = 6.f;
+  x[1][1] = 2.f;
+  x[2][1] = 1.f;
+  float y[input_length][frame_test];
+  y[0][0] = 1.f;
+  y[1][0] = 12.f;
+  y[2][0] = 1.f;
+  y[0][1] = 6.f;
+  y[1][1] = 2.f;
+  y[2][1] = 1.f;
 
   // Test the result
   for (uint32_t i = 0; i < frame_test; i++) {
+    for (uint32_t j = 0; j < input_length; j++) {
+      input[j].x = x[j][i];
+      input[j].y = y[j][i];
+    }
     cvai_area_detect_e *status = NULL;
     CVI_AI_OBJService_DetectIntersect(obj_handle, &frame, input, input_length, &status);
     for (uint32_t j = 0; j < input_length; j++) {
-      input[j].bbox = box[j][i];
-      float center_x = (input[j].bbox.x1 + input[j].bbox.x2) / 2;
-      float center_y = (input[j].bbox.y1 + input[j].bbox.y2) / 2;
-      printf("[frame %u][id %lu](%f, %f) status %u \n", i, input[j].unique_id, center_x, center_y,
-             status[j]);
+      printf("[frame %u][id %lu](%f, %f) status %u \n", i, (long unsigned int)input[j].unique_id,
+             input[j].x, input[j].y, status[j]);
     }
     frame.stVFrame.u64PTS += 33;
     free(status);
@@ -103,26 +111,34 @@ int main(int argc, char *argv[]) {
   pts.x[1] = 3;
   pts.y[1] = 8;
   CVI_AI_OBJService_SetIntersect(obj_handle, &frame, &pts);
+  CVI_AI_Free(&pts);
   // Setup fake paths
   input[0].unique_id = 12984014844833;
   input[1].unique_id = 34139846148383;
   input[2].unique_id = 28282090010294;
-  bbox_setup(3.f, 4.f, 3.f, 4.f, &box[0][0]);
-  bbox_setup(0.f, 5.f, 0.f, 5.f, &box[1][0]);
-  bbox_setup(3.f, 10.f, 3.f, 10.f, &box[2][0]);
-  bbox_setup(4.f, 4.f, 4.f, 4.f, &box[0][1]);
-  bbox_setup(6.f, 5.f, 6.f, 5.f, &box[1][1]);
-  bbox_setup(3.f, 10.f, 3.f, 10.f, &box[2][1]);
+  x[0][0] = 3.f;
+  x[1][0] = 0.f;
+  x[2][0] = 3.f;
+  x[0][1] = 4.f;
+  x[1][1] = 6.f;
+  x[2][1] = 3.f;
+  y[0][0] = 4.f;
+  y[1][0] = 5.f;
+  y[2][0] = 10.f;
+  y[0][1] = 4.f;
+  y[1][1] = 5.f;
+  y[2][1] = 10.f;
   // Test the result
   for (uint32_t i = 0; i < frame_test; i++) {
+    for (uint32_t j = 0; j < input_length; j++) {
+      input[j].x = x[j][i];
+      input[j].y = y[j][i];
+    }
     cvai_area_detect_e *status = NULL;
     CVI_AI_OBJService_DetectIntersect(obj_handle, &frame, input, input_length, &status);
     for (uint32_t j = 0; j < input_length; j++) {
-      input[j].bbox = box[j][i];
-      float center_x = (input[j].bbox.x1 + input[j].bbox.x2) / 2;
-      float center_y = (input[j].bbox.y1 + input[j].bbox.y2) / 2;
-      printf("[frame %u][id %lu](%f, %f) status %u \n", i, input[j].unique_id, center_x, center_y,
-             status[j]);
+      printf("[frame %u][id %lu](%f, %f) status %u \n", i, input[j].unique_id, input[j].x,
+             input[j].y, status[j]);
     }
     frame.stVFrame.u64PTS += 33;
     free(status);

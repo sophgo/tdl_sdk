@@ -35,8 +35,9 @@ typedef enum {
 } cvai_area_detect_e;
 
 typedef struct {
-  int64_t unique_id;
-  cvai_bbox_t bbox;
-} area_detect_t;
+  uint64_t unique_id;
+  float x;
+  float y;
+} area_detect_pts_t;
 
 #endif  // End of _CVIAI_SERVICE_TYPES_H_
