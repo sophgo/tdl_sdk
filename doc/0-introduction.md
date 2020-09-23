@@ -12,8 +12,6 @@ The ``evaluation`` library currently contains Coco, LFW, and Wider Face evaluati
 
 ## Service
 
-The ``service`` module is composed of several of sub-modules. Currently only ``frservice`` is available.
+The ``service`` module is composed of several of sub-modules. Currently only ``frservice`` and ``objservice`` are available.
 
-### FRService
-
-The ``frservice`` library provides some post data analysis functions related to the provided networks, such as inner product for int8 feature matching, or digital tracking for face detection.
+We provides some post-data analysis functions related to the provided networks, such as inner product for int8 feature matching, or digital tracking for detected results. Find out more details in chapter 3.

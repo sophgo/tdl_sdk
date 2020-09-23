@@ -73,3 +73,53 @@ CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S
 ```
 
 Related sample codes: ``sample_vi_fd.c``, ``sample_vi_fq.c``, ``sample_vi_mask_fr.c``
+
+
+## Object Intersect
+
+Available: OBJService
+
+The function provides user to draw a line or a polygon to see if the given sequental path interacts with the set region. If a polygon is given, the status will return if the input point is **on line**, **inside** or **outside** the polygon. If a line is given, the status will return if a vector is **no intersect**, **on line**, **towards negative**, or **towards positive**.
+
+The status enumeration.
+
+```c
+typedef enum {
+  UNKNOWN = 0,
+  NO_INTERSECT,
+  ON_LINE,
+  CROSS_LINE_POS,
+  CROSS_LINE_NEG,
+  INSIDE_POLYGON,
+  OUTSIDE_POLYGON
+} cvai_area_detect_e;
+```
+
+### Setting Detect Region
+
+The region is set using ``cvai_pts_t``. Note that the size of ``pts->size`` must larger than 2. The API will make the lines into a close loop if 3 more more points are found. The coordinate of the points cannot exceed the size of the given frame.
+
+```c
+CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle,
+                                       const VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts);
+```
+
+The user has to give an object an unique id and a coordinate (x, y). The tracker inside the API will handle the rest.
+
+
+```c
+typedef struct {
+  uint64_t unique_id;
+  float x;
+  float y;
+} area_detect_pts_t;
+```
+
+The output is an ``cvai_area_detect_e`` array. Its size is equal to the ``input_length``. You'll need to free ``status`` after use to prevent memory leaks.
+
+```c
+CVI_S32 CVI_AI_OBJService_DetectIntersect(cviai_objservice_handle_t handle,
+                                          const VIDEO_FRAME_INFO_S *frame,
+                                          const area_detect_pts_t *input,
+                                          const uint32_t input_length, cvai_area_detect_e **status);
+```
