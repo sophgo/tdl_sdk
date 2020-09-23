@@ -85,3 +85,6 @@ include_directories(${CMAKE_SOURCE_DIR}/3rdparty
 add_subdirectory(modules)
 add_subdirectory(sample)
 add_subdirectory(regression)
+
+# Install doc
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc DESTINATION doc)
