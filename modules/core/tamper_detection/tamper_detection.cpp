@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <syslog.h>
 #include <chrono>
 #include <fstream>
 #include <iomanip>
@@ -7,6 +6,7 @@
 
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "cviai_log.hpp"
 #include "ive/ive.h"
 
 #include "tamper_detection.hpp"
@@ -54,7 +54,7 @@ TamperDetectorMD::TamperDetectorMD(IVE_HANDLE handle, VIDEO_FRAME_INFO_S *init_f
   IVE_IMAGE_S new_frame;
   ret = CVI_IVE_VideoFrameInfo2Image(init_frame, &new_frame);
   if (ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "Convert to video frame failed with %#x!\n", ret);
+    LOGE("Convert to video frame failed with %#x!\n", ret);
   }
   this->strideWidth = new_frame.u16Stride[0];
   this->height = new_frame.u16Height;
@@ -108,7 +108,7 @@ int TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   IVE_IMAGE_S new_frame;
   ret = CVI_IVE_VideoFrameInfo2Image(frame, &new_frame);
   if (ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "Convert to video frame failed with %#x!\n", ret);
+    LOGE("Convert to video frame failed with %#x!\n", ret);
     return ret;
   }
 #if DEBUG
@@ -275,7 +275,7 @@ int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
   // imageLength); Convert to IVE image. Note this function does not map or unmap for you.
   ret = CVI_IVE_VideoFrameInfo2Image(frame, &new_frame);
   if (ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "Convert to video frame failed with %#x!\n", ret);
+    LOGE("Convert to video frame failed with %#x!\n", ret);
   }
 
 #if DEBUG

@@ -1,10 +1,8 @@
 #include "core.hpp"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-
 #include "cviai_trace.hpp"
 
-#include <syslog.h>
 #include <cstdlib>
 
 namespace cviai {
@@ -12,15 +10,15 @@ namespace cviai {
 int Core::modelOpen(const char *filepath) {
   TRACE_EVENT("cviai_core", "Core::modelOpen");
   if (!mp_config) {
-    syslog(LOG_ERR, "config not set\n");
+    LOGE("config not set\n");
     return CVI_FAILURE;
   }
   CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
   if (ret != CVI_RC_SUCCESS) {
-    syslog(LOG_ERR, "CVI_NN_RegisterModel failed, err %d\n", ret);
+    LOGE("CVI_NN_RegisterModel failed, err %d\n", ret);
     return CVI_FAILURE;
   }
-  syslog(LOG_INFO, "CVI_NN_RegisterModel successed\n");
+  LOGI("CVI_NN_RegisterModel successed\n");
   if (mp_config->batch_size != 0) {
     CVI_NN_SetConfig(mp_model_handle, OPTION_BATCH_SIZE, mp_config->batch_size);
   }
@@ -40,7 +38,7 @@ int Core::modelOpen(const char *filepath) {
   ret = CVI_NN_GetInputOutputTensors(mp_model_handle, &mp_input_tensors, &m_input_num,
                                      &mp_output_tensors, &m_output_num);
   if (ret != CVI_RC_SUCCESS) {
-    syslog(LOG_ERR, "CVI_NN_GetINputsOutputs failed\n");
+    LOGE("CVI_NN_GetINputsOutputs failed\n");
     return CVI_FAILURE;
     ;
   }
@@ -54,7 +52,7 @@ int Core::modelClose() {
   TRACE_EVENT("cviai_core", "Core::modelClose");
   if (mp_model_handle != nullptr) {
     if (int ret = CVI_NN_CleanupModel(mp_model_handle) != CVI_RC_SUCCESS) {  // NOLINT
-      syslog(LOG_ERR, "CVI_NN_CleanupModel failed, err %d\n", ret);
+      LOGE("CVI_NN_CleanupModel failed, err %d\n", ret);
       return CVI_FAILURE;
     }
   }
@@ -86,7 +84,7 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
   } else {
     if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num,  // NOLINT
                                    mp_output_tensors, m_output_num) != CVI_RC_SUCCESS) {
-      syslog(LOG_ERR, "NN forward failed: %d\n", rcret);
+      LOGE("NN forward failed: %d\n", rcret);
       ret |= CVI_FAILURE;
     }
   }
@@ -118,12 +116,12 @@ int Core::runVideoForward(VIDEO_FRAME_INFO_S *srcFrame) {
   if (int ret =
           CVI_NN_SetTensorWithVideoFrame(mp_model_handle, mp_input_tensors, &info) !=  // NOLINT
           CVI_RC_SUCCESS) {
-    syslog(LOG_ERR, "NN set tensor with vi failed: %d\n", ret);
+    LOGE("NN set tensor with vi failed: %d\n", ret);
     return CVI_FAILURE;
   }
   if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num,  // NOLINT
                                  mp_output_tensors, m_output_num) != CVI_RC_SUCCESS) {
-    syslog(LOG_ERR, "NN forward failed: %d\n", rcret);
+    LOGE("NN forward failed: %d\n", rcret);
     ret |= CVI_FAILURE;
   }
   return ret;

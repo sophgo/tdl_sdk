@@ -1,9 +1,9 @@
 #pragma once
 
+#include "cviai_log.hpp"
 #include "service/cviai_service_types.h"
 
 #include <cvimath/cvimath.h>
-#include <syslog.h>
 
 typedef struct {
   cvai_service_feature_array_t feature_array;
@@ -41,7 +41,7 @@ RegisterFeatureArray(const cvai_service_feature_array_t feature_array,
                                        feature_array.feature_length, feature_array.data_num);
     } break;
     default: {
-      syslog(LOG_ERR, "Unsupported register data type %x.\n", feature_array.type);
+      LOGE("Unsupported register data type %x.\n", feature_array.type);
       delete[] unit_length;
       return CVI_FAILURE;
     } break;
@@ -58,12 +58,12 @@ inline int __attribute__((always_inline))
 FeatureMatchingRaw(const uint8_t *feature, const feature_type_e &type, const uint32_t k,
                    uint32_t **index, cvai_service_feature_array_ext_t *feature_array_ext) {
   if (feature_array_ext->feature_array_buffer == nullptr) {
-    syslog(LOG_ERR, "Feature array not registered yet.\n");
+    LOGE("Feature array not registered yet.\n");
     return CVI_FAILURE;
   }
   if (feature_array_ext->feature_array.type != type) {
-    syslog(LOG_ERR, "The registered feature array type %x is not the same as the input type %x.\n",
-           feature_array_ext->feature_array.type, type);
+    LOGE("The registered feature array type %x is not the same as the input type %x.\n",
+         feature_array_ext->feature_array.type, type);
     return CVI_FAILURE;
   }
   uint32_t *k_index = (uint32_t *)malloc(sizeof(uint32_t) * k);
@@ -84,7 +84,7 @@ FeatureMatchingRaw(const uint8_t *feature, const feature_type_e &type, const uin
                               feature_array_ext->feature_array.data_num, k);
     } break;
     default: {
-      syslog(LOG_ERR, "Unsupported register data type %x.\n", type);
+      LOGE("Unsupported register data type %x.\n", type);
       free(k_index);
       free(k_value);
       return CVI_FAILURE;

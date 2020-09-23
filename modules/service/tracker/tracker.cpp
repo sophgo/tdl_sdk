@@ -3,7 +3,6 @@
 #include "core/cviai_types_mem_internal.h"
 
 #include <string.h>
-#include <syslog.h>
 
 #define DEFAULT_DT_ZOOM_TRANS_RATIO 0.1f
 #include <iostream>

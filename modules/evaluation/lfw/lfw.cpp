@@ -1,11 +1,11 @@
 #include "lfw.hpp"
+#include "cviai_log.hpp"
 
 #include <cvi_type.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
 
 static int compare(const void *arg1, const void *arg2) {
   return static_cast<int>(*(float *)arg1 < *(float *)arg2);
@@ -21,7 +21,7 @@ lfwEval::lfwEval(const char *fiilepath, bool label_pos_first) {
 int lfwEval::getEvalData(const char *fiilepath, bool label_pos_first) {
   FILE *fp;
   if ((fp = fopen(fiilepath, "r")) == NULL) {
-    syslog(LOG_ERR, "file open error: %s!\n", fiilepath);
+    LOGE("file open error: %s!\n", fiilepath);
     return CVI_FAILURE;
   }
   m_data.clear();
@@ -128,7 +128,7 @@ void lfwEval::evalAUC(const std::vector<int> &y, std::vector<float> &pred, const
 
   FILE *fp;
   if ((fp = fopen(filepath, "w")) == NULL) {
-    syslog(LOG_ERR, "LFW result file open error!");
+    LOGE("LFW result file open error!");
     return;
   }
 

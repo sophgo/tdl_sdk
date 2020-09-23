@@ -8,8 +8,6 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
-#include <syslog.h>
-
 #define STD_R (255.f * 0.229f)
 #define STD_G (255.f * 0.224f)
 #define STD_B (255.f * 0.225f)

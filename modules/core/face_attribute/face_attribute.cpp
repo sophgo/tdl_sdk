@@ -1,17 +1,15 @@
 #include "face_attribute.hpp"
-#include "face_attribute_types.hpp"
-
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/face/cvai_face_helper.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
+#include "cviai_log.hpp"
+#include "face_attribute_types.hpp"
 #include "face_utils.hpp"
 
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
-
-#include <syslog.h>
 
 #define ENABLE_HW_WRAP_TEST 0
 
@@ -79,8 +77,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
   if (m_use_wrap_hw) {
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
-      syslog(
-          LOG_ERR,
+      LOGE(
           "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, PIXEL_FORMAT_YUV_PLANAR_420. Current: "
           "%x\n",
           stOutFrame->stVFrame.enPixelFormat);
@@ -98,8 +95,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
     }
   } else {
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
-      syslog(LOG_ERR, "Supported format is PIXEL_FORMAT_RGB_888. Current: %x\n",
-             stOutFrame->stVFrame.enPixelFormat);
+      LOGE("Supported format is PIXEL_FORMAT_RGB_888. Current: %x\n",
+           stOutFrame->stVFrame.enPixelFormat);
       return -1;
     }
     uint32_t img_width = stOutFrame->stVFrame.u32Width;

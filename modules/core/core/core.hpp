@@ -1,6 +1,7 @@
 #pragma once
 #include "cvi_comm_video.h"
 #include "cvi_comm_vpss.h"
+#include "cviai_log.hpp"
 #include "cviruntime.h"
 #include "ive/ive.h"
 #include "vpss_engine.hpp"

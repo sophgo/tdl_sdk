@@ -1,6 +1,6 @@
 #include "coco.hpp"
+#include "cviai_log.hpp"
 
-#include <syslog.h>
 #include <fstream>
 #include <string>
 
@@ -28,7 +28,7 @@ void CocoEval::getImageIdPair(const int index, std::string *path, int *id) {
 }
 
 void CocoEval::insertObjectData(const int id, const cvai_object_t *obj) {
-  syslog(LOG_INFO, "Image id %d insert object %d\n", id, obj->size);
+  LOGI("Image id %d insert object %d\n", id, obj->size);
   for (uint32_t j = 0; j < obj->size; j++) {
     cvai_object_info_t &info = obj->info[j];
     float width = info.bbox.x2 - info.bbox.x1;

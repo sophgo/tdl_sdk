@@ -1,5 +1,6 @@
 #include "core/cviai_core.h"
 #include "cviai_core_internal.hpp"
+#include "cviai_log.hpp"
 
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
@@ -17,7 +18,6 @@
 #include "cviai_trace.hpp"
 
 #include <stdio.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <memory>
 #include <string>
@@ -62,11 +62,11 @@ int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
   ctx->ive_handle = CVI_IVE_CreateHandle();
   ctx->vec_vpss_engine.push_back(new VpssEngine());
   if (ctx->vec_vpss_engine[0]->init(false, vpssGroupId) != CVI_SUCCESS) {
-    syslog(LOG_ERR, "cviai_handle_t create failed.");
+    LOGE("cviai_handle_t create failed.");
     removeCtx(ctx);
     return CVI_FAILURE;
   }
-  syslog(LOG_INFO, "cviai_handle_t created.");
+  LOGI("cviai_handle_t created.");
   *handle = ctx;
   return CVI_SUCCESS;
 }
@@ -75,7 +75,7 @@ int CVI_AI_DestroyHandle(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
   removeCtx(ctx);
-  syslog(LOG_INFO, "cviai_handle_t destroyed.");
+  LOGI("cviai_handle_t destroyed.");
   return CVI_SUCCESS;
 }
 
@@ -142,23 +142,21 @@ int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
   if (thread >= ctx->vec_vpss_engine.size()) {
     auto inst = new VpssEngine();
     if (inst->init(false, vpssGroupId) != CVI_SUCCESS) {
-      syslog(LOG_ERR, "Vpss init failed\n");
+      LOGE("Vpss init failed\n");
       delete inst;
       return CVI_FAILURE;
     }
 
     ctx->vec_vpss_engine.push_back(inst);
     if (thread != ctx->vec_vpss_engine.size() - 1) {
-      syslog(
-          LOG_WARNING,
+      LOGW(
           "Thread %u is not in use, thus %u is changed to %u automatically. Used vpss group id is "
           "%u.\n",
           vpss_thread, thread, vpss_thread, inst->getGrpId());
       vpss_thread = ctx->vec_vpss_engine.size() - 1;
     }
   } else {
-    syslog(LOG_WARNING, "Thread %u already exists, given group id %u will not be used.\n", thread,
-           vpssGroupId);
+    LOGW("Thread %u already exists, given group id %u will not be used.\n", thread, vpssGroupId);
   }
   auto &m_t = ctx->model_cont[config];
   m_t.vpss_thread = vpss_thread;
@@ -217,12 +215,12 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx,
   cviai_model_t &m_t = ctx->model_cont[index];
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
-      syslog(LOG_ERR, "Model path for FaceAttribute is empty.\n");
+      LOGE("Model path for FaceAttribute is empty.\n");
       return nullptr;
     }
     m_t.instance = new C(arg...);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      syslog(LOG_ERR, "Open model failed (%s).\n", m_t.model_path.c_str());
+      LOGE("Open model failed (%s).\n", m_t.model_path.c_str());
       return nullptr;
     }
     m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
@@ -244,7 +242,7 @@ CVI_AI_FaceAttributeBase(const CVI_AI_SUPPORTED_MODEL_E index, const cviai_handl
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   FaceAttribute *face_attr = getInferenceInstance<FaceAttribute>(index, ctx, ctx->use_gdc_wrap);
   if (face_attr == nullptr) {
-    syslog(LOG_ERR, "No instance found for FaceAttribute.\n");
+    LOGE("No instance found for FaceAttribute.\n");
     return CVI_FAILURE;
   }
   face_attr->setWithAttribute(set_attribute);
@@ -285,7 +283,7 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Yolov3 *yolov3 = getInferenceInstance<Yolov3>(CVI_AI_SUPPORTED_MODEL_YOLOV3, ctx);
   if (yolov3 == nullptr) {
-    syslog(LOG_ERR, "No instance found for Yolov3.\n");
+    LOGE("No instance found for Yolov3.\n");
     return CVI_FAILURE;
   }
   return yolov3->inference(frame, obj, det_type);
@@ -298,7 +296,7 @@ MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model m
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(index, ctx, model_type);
   if (detector == nullptr) {
-    syslog(LOG_ERR, "No instance found for detector.\n");
+    LOGE("No instance found for detector.\n");
     return CVI_RC_FAILURE;
   }
   return detector->inference(frame, obj, det_type);
@@ -331,7 +329,7 @@ CVI_AI_OSNetBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_ob
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   OSNet *osnet = getInferenceInstance<OSNet>(CVI_AI_SUPPORTED_MODEL_OSNET, ctx);
   if (osnet == nullptr) {
-    syslog(LOG_ERR, "No instance found for OSNet.\n");
+    LOGE("No instance found for OSNet.\n");
     return CVI_FAILURE;
   }
   return osnet->inference(frame, obj, -1);
@@ -355,7 +353,7 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
   RetinaFace *retina_face =
       getInferenceInstance<RetinaFace>(CVI_AI_SUPPORTED_MODEL_RETINAFACE, ctx);
   if (retina_face == nullptr) {
-    syslog(LOG_ERR, "No instance found for RetinaFace.\n");
+    LOGE("No instance found for RetinaFace.\n");
     return CVI_FAILURE;
   }
   return retina_face->inference(frame, faces, face_count);
@@ -369,7 +367,7 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
   Liveness *liveness =
       getInferenceInstance<Liveness>(CVI_AI_SUPPORTED_MODEL_LIVENESS, ctx, ir_position);
   if (liveness == nullptr) {
-    syslog(LOG_ERR, "No instance found for Liveness.\n");
+    LOGE("No instance found for Liveness.\n");
     return CVI_FAILURE;
   }
   return liveness->inference(rgbFrame, irFrame, face);
@@ -381,7 +379,7 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
   FaceQuality *face_quality =
       getInferenceInstance<FaceQuality>(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx);
   if (face_quality == nullptr) {
-    syslog(LOG_ERR, "No instance found for FaceQuality.\n");
+    LOGE("No instance found for FaceQuality.\n");
     return CVI_FAILURE;
   }
   return face_quality->inference(frame, face);
@@ -394,7 +392,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
   MaskClassification *mask_classification =
       getInferenceInstance<MaskClassification>(CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, ctx);
   if (mask_classification == nullptr) {
-    syslog(LOG_ERR, "No instance found for MaskClassification.\n");
+    LOGE("No instance found for MaskClassification.\n");
     return CVI_FAILURE;
   }
   return mask_classification->inference(frame, face);
@@ -406,7 +404,7 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
   ThermalFace *thermal_face =
       getInferenceInstance<ThermalFace>(CVI_AI_SUPPORTED_MODEL_THERMALFACE, ctx);
   if (thermal_face == nullptr) {
-    syslog(LOG_ERR, "No instance found for ThermalFace.\n");
+    LOGE("No instance found for ThermalFace.\n");
     return CVI_FAILURE;
   }
   return thermal_face->inference(frame, faces);
@@ -419,7 +417,7 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   MaskFaceRecognition *mask_face_rec =
       getInferenceInstance<MaskFaceRecognition>(CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, ctx);
   if (mask_face_rec == nullptr) {
-    syslog(LOG_ERR, "No instance found for MaskFaceRecognition.\n");
+    LOGE("No instance found for MaskFaceRecognition.\n");
     return CVI_FAILURE;
   }
 
@@ -432,7 +430,7 @@ int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   TamperDetectorMD *td_model = ctx->td_model;
   if (td_model == nullptr) {
-    syslog(LOG_INFO, "Init Tamper Detection Model.\n");
+    LOGI("Init Tamper Detection Model.\n");
     ctx->td_model = new TamperDetectorMD(ctx->ive_handle, frame, (float)0.05, (int)10);
     ctx->td_model->print_info();
 

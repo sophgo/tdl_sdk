@@ -1,12 +1,11 @@
 #include "wider_face.hpp"
-
 #include "core_utils.hpp"
+#include "cviai_log.hpp"
 
 #include <cvi_type.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <syslog.h>
 #include <experimental/filesystem>
 
 namespace cviai {
@@ -63,7 +62,7 @@ int widerFaceEval::saveFaceData(const int index, const VIDEO_FRAME_INFO_S* frame
 
   FILE* fp;
   if ((fp = fopen(result_path.c_str(), "w+")) == NULL) {
-    syslog(LOG_ERR, "Write file open error. %s!\n", result_path.c_str());
+    LOGE("Write file open error. %s!\n", result_path.c_str());
     return CVI_FAILURE;
   }
 

@@ -1,14 +1,13 @@
 #include "face_utils.hpp"
-#include "core_utils.hpp"
-
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
+#include "core_utils.hpp"
+#include "cviai_log.hpp"
 
 #include "opencv2/imgproc.hpp"
 
 #include <cvi_comm_gdc.h>
 #include <cvi_gdc.h>
-#include <syslog.h>
 #include <algorithm>
 
 using namespace std;
@@ -193,7 +192,7 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
   CVI_GDC_BeginJob(&hHandle);
   CVI_GDC_AddAffineTask(hHandle, &stTask, &stAffineAttr);
   if (CVI_GDC_EndJob(hHandle) != CVI_SUCCESS) {
-    syslog(LOG_ERR, "Affine failed.\n");
+    LOGE("Affine failed.\n");
     return -1;
   }
   return 0;

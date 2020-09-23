@@ -1,8 +1,7 @@
 #include "digital_tracking.hpp"
-
 #include "core/utils/vpss_helper.h"
+#include "cviai_log.hpp"
 
-#include <syslog.h>
 #include <algorithm>
 
 #define DEFAULT_DT_ZOOM_TRANS_RATIO 0.1f
@@ -20,7 +19,7 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
                          VIDEO_FRAME_INFO_S *dstFrame, const float face_skip_ratio,
                          const float trans_ratio) {
   if (mp_vpss_inst == nullptr) {
-    syslog(LOG_ERR, "vpss_inst not set.\n");
+    LOGE("vpss_inst not set.\n");
     return CVI_FAILURE;
   }
   uint32_t width = srcFrame->stVFrame.u32Width;

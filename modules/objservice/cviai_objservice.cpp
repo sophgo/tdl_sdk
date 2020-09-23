@@ -7,7 +7,6 @@
 #include "feature_matching/feature_matching.hpp"
 
 #include <cvimath/cvimath.h>
-#include <syslog.h>
 
 typedef struct {
   cvai_service_feature_array_ext_t feature_array_ext;
@@ -19,7 +18,7 @@ typedef struct {
 CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle,
                                        cviai_handle_t ai_handle) {
   if (ai_handle == NULL) {
-    syslog(LOG_ERR, "ai_handle is empty.");
+    LOGE("ai_handle is empty.");
     return CVI_FAILURE;
   }
   cviai_objservice_context_t *ctx = new cviai_objservice_context_t;

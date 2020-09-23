@@ -1,8 +1,8 @@
 #include "area_detect.hpp"
 #include "core/cviai_types_mem.h"
+#include "cviai_log.hpp"
 
 #include <string.h>
-#include <syslog.h>
 
 namespace cviai {
 namespace service {
@@ -16,23 +16,23 @@ inline bool checkValid(const float width, const float height, const float x, con
 
 int AreaDetect::setArea(const VIDEO_FRAME_INFO_S *frame, const cvai_pts_t &pts) {
   if (pts.size < 2) {
-    syslog(LOG_ERR, "Registered points must larger than 2.");
+    LOGE("Registered points must larger than 2.");
     return CVI_FAILURE;
   }
   m_boundaries.clear();
   m_pts.clear();
 
   if (!checkValid(frame->stVFrame.u32Width, frame->stVFrame.u32Height, pts.x[0], pts.y[0])) {
-    syslog(LOG_ERR, "Registered points exceeded frame area. (W, H, x, y) = %u %u %3.f %3.f",
-           frame->stVFrame.u32Width, frame->stVFrame.u32Height, pts.x[0], pts.y[0]);
+    LOGE("Registered points exceeded frame area. (W, H, x, y) = %u %u %3.f %3.f",
+         frame->stVFrame.u32Width, frame->stVFrame.u32Height, pts.x[0], pts.y[0]);
     return CVI_FAILURE;
   }
   Eigen::Vector2f first_pts(pts.x[0], pts.y[0]);
   Eigen::Vector2f prev_pts = first_pts;
   for (uint32_t i = 1; i < pts.size; i++) {
     if (!checkValid(frame->stVFrame.u32Width, frame->stVFrame.u32Height, pts.x[i], pts.y[i])) {
-      syslog(LOG_ERR, "Registered points exceeded frame area. (W, H, x, y) = %u %u %3.f %3.f",
-             frame->stVFrame.u32Width, frame->stVFrame.u32Height, pts.x[i], pts.y[i]);
+      LOGE("Registered points exceeded frame area. (W, H, x, y) = %u %u %3.f %3.f",
+           frame->stVFrame.u32Width, frame->stVFrame.u32Height, pts.x[i], pts.y[i]);
       return CVI_FAILURE;
     }
     Eigen::Vector2f curr_pts(pts.x[i], pts.y[i]);
