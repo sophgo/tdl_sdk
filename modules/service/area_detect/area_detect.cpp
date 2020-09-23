@@ -46,9 +46,9 @@ int AreaDetect::setArea(const VIDEO_FRAME_INFO_S *frame, const cvai_pts_t &pts) 
     if (first_pts != prev_pts) {
       m_boundaries.push_back(Eigen::Hyperplane<float, 2>::Through(prev_pts, first_pts));
       m_pts.push_back({prev_pts, first_pts});
-      printf("boundary size %u\n", (uint32_t)m_boundaries.size());
     }
   }
+  LOGI("Boundary registered: size %u\n", (uint32_t)m_boundaries.size());
   return CVI_SUCCESS;
 }
 
