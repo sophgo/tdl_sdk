@@ -142,8 +142,8 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       log_reg_pass(fp_pass, file_name, face_count, face.info[face_idx].face_quality.quality);
       fclose(fp_feature);
     } else {
-      log_reg_fail(fp_fail, file_name, face_count, face.info[face_idx].face_quality.quality,
-                   quality_thresh);
+      log_reg_fail(fp_fail, file_name, face_count,
+                   face_count > 0 ? face.info[face_idx].face_quality.quality : 0, quality_thresh);
     }
 
     CVI_AI_Free(&face);
