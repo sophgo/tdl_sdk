@@ -61,7 +61,7 @@ int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
   cviai_context_t *ctx = new cviai_context_t;
   ctx->ive_handle = CVI_IVE_CreateHandle();
   ctx->vec_vpss_engine.push_back(new VpssEngine());
-  if (ctx->vec_vpss_engine[0]->init(false, vpssGroupId) != CVI_SUCCESS) {
+  if (ctx->vec_vpss_engine[0]->init(vpssGroupId) != CVI_SUCCESS) {
     LOGE("cviai_handle_t create failed.");
     removeCtx(ctx);
     return CVI_FAILURE;
@@ -141,7 +141,7 @@ int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
   uint32_t vpss_thread = thread;
   if (thread >= ctx->vec_vpss_engine.size()) {
     auto inst = new VpssEngine();
-    if (inst->init(false, vpssGroupId) != CVI_SUCCESS) {
+    if (inst->init(vpssGroupId) != CVI_SUCCESS) {
       LOGE("Vpss init failed\n");
       delete inst;
       return CVI_FAILURE;

@@ -10,26 +10,10 @@ VpssEngine::VpssEngine() {}
 
 VpssEngine::~VpssEngine() {}
 
-void VpssEngine::enableLog() {
-  // Tunr on Vpss Log
-  LOG_LEVEL_CONF_S log_conf;
-  log_conf.enModId = (MOD_ID_E)6;  // vpss
-  CVI_LOG_GetLevelConf(&log_conf);
-  LOGI("Set Vpss Log Level: %d, log will save into cvi_mmf_aisdk.log\n", log_conf.s32Level);
-  log_conf.s32Level = 7;
-  CVI_LOG_SetLevelConf(&log_conf);
-
-  CVI_LOG_EnableLog2File(CVI_TRUE, (char *)"cvi_mmf_aisdk.log");
-  m_enable_log = true;
-}
-
-int VpssEngine::init(bool enable_log, VPSS_GRP grp_id) {
+int VpssEngine::init(VPSS_GRP grp_id) {
   if (m_is_vpss_init) {
     LOGW("Vpss already init.\n");
     return CVI_FAILURE;
-  }
-  if (enable_log) {
-    enableLog();
   }
   if (CVI_SYS_GetVPSSMode() == VPSS_MODE_DUAL) {
     // FIXME: Currently hardcoded due to no define in mmf.

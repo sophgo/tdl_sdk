@@ -234,28 +234,10 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
 inline int __attribute__((always_inline))
 VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, uint32_t enSrcStride,
                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
-                 PIXEL_FORMAT_E enDstFormat, VPSS_MODE_E mode, bool keepAspectRatio,
-                 bool enableLog) {
+                 PIXEL_FORMAT_E enDstFormat, VPSS_MODE_E mode, bool keepAspectRatio) {
   syslog(LOG_ERR, "VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight,
          enDstWidth, enDstHeight);
   CVI_S32 s32Ret = CVI_FAILURE;
-
-  // Tunr on Vpss Log
-  if (enableLog) {
-    LOG_LEVEL_CONF_S log_conf;
-    log_conf.enModId = (MOD_ID_E)6;  // vpss
-    CVI_LOG_GetLevelConf(&log_conf);
-    syslog(LOG_ERR, "Set Vpss Log Level: %d, log will save into cvi_mmf.log\n", log_conf.s32Level);
-    log_conf.s32Level = 7;
-    CVI_LOG_SetLevelConf(&log_conf);
-
-    log_conf.enModId = (MOD_ID_E)14;  // VI
-    CVI_LOG_GetLevelConf(&log_conf);
-    syslog(LOG_ERR, "Set VI Log Level: %d, log will save into cvi_mmf.log\n", log_conf.s32Level);
-    log_conf.s32Level = 7;
-    CVI_LOG_SetLevelConf(&log_conf);
-    CVI_LOG_EnableLog2File(CVI_TRUE, (char *)"cvi_mmf.log");
-  }
 
   CVI_SYS_SetVPSSMode(mode);
   VPSS_GRP_ATTR_S stVpssGrpAttr;
