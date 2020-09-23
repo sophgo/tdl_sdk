@@ -137,8 +137,8 @@ int main(int argc, char *argv[]) {
     cvai_area_detect_e *status = NULL;
     CVI_AI_OBJService_DetectIntersect(obj_handle, &frame, input, input_length, &status);
     for (uint32_t j = 0; j < input_length; j++) {
-      printf("[frame %u][id %lu](%f, %f) status %u \n", i, input[j].unique_id, input[j].x,
-             input[j].y, status[j]);
+      printf("[frame %u][id %lu](%f, %f) status %u \n", i, (long unsigned int)input[j].unique_id,
+             input[j].x, input[j].y, status[j]);
     }
     frame.stVFrame.u64PTS += 33;
     free(status);
