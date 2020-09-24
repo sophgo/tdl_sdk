@@ -11,8 +11,8 @@
 #include <numeric>
 #include <queue>
 
-#define GALLERY_DIR "bounding_box_test"
-#define QUERY_DIR "query"
+#define GALLERY_DIR "/bounding_box_test/"
+#define QUERY_DIR "/query/"
 #define MAX_RANK 50
 
 static float cosine_distance(const cvai_feature_t *features1, const cvai_feature_t *features2) {
