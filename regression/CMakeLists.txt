@@ -51,3 +51,18 @@ target_link_libraries(reg_rgbir_liveness cviai_core cviai_evaluation ${SAMPLE_LI
 target_link_libraries(reg_mask_fr cviai_core cviai_evaluation ${SAMPLE_LIBS})
 target_link_libraries(reg_object_intersect cviai_core cviai_objservice)
 target_link_libraries(reg_reid cviai_core cviai_evaluation ${SAMPLE_LIBS})
+
+install(TARGETS reg_face_attribute DESTINATION regression)
+install(TARGETS reg_face_recognition DESTINATION regression)
+install(TARGETS reg_face_quality DESTINATION regression)
+install(TARGETS reg_lfw DESTINATION regression)
+install(TARGETS reg_wider_face DESTINATION regression)
+install(TARGETS reg_mobiledetv2 DESTINATION regression)
+install(TARGETS reg_yolov3 DESTINATION regression)
+install(TARGETS reg_thermal DESTINATION regression)
+install(TARGETS reg_mask_classification DESTINATION regression)
+install(TARGETS reg_rgbir_liveness DESTINATION regression)
+install(TARGETS reg_mask_fr DESTINATION regression)
+install(TARGETS reg_object_intersect DESTINATION regression)
+install(TARGETS reg_reid DESTINATION regression)
+
