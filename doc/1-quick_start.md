@@ -38,7 +38,7 @@ Link the libraries to your binary.
 | CVI_AI_*            | libcviai_core.so                         |
 | CVI_AI_FRService_*  | libcviai_core.so, libcviai_frservice.so  |
 | CVI_AI_OBJService_* | libcviai_core.so, libcviai_objservice.so |
-| CVI_AI_Eval_*       | libcviai_evaluation                      |
+| CVI_AI_Eval_*       | libcviai_evaluation.so                   |
 
 THe following snippet is a cmake example.
 
