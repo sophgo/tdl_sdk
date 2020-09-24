@@ -332,7 +332,7 @@ CVI_AI_OSNetBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_ob
     LOGE("No instance found for OSNet.\n");
     return CVI_FAILURE;
   }
-  return osnet->inference(frame, obj, -1);
+  return osnet->inference(frame, obj, obj_idx);
 }
 
 int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,

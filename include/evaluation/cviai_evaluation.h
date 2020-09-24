@@ -69,6 +69,17 @@ CVI_S32 CVI_AI_Eval_WiderFaceResultSave2File(cviai_eval_handle_t handle, const i
 
 CVI_S32 CVI_AI_Eval_WiderFaceClearInput(cviai_eval_handle_t handle);
 
+/****************************************************************
+ * Market1501 evaluation functions
+ **/
+CVI_S32 CVI_AI_Eval_Market1501Init(cviai_eval_handle_t handle, const char *filepath);
+CVI_S32 CVI_AI_Eval_Market1501GetImageNum(cviai_eval_handle_t handle, bool is_query, uint32_t *num);
+CVI_S32 CVI_AI_Eval_Market1501GetPathIdPair(cviai_eval_handle_t handle, const uint32_t index,
+                                            bool is_query, char **filepath, int *cam_id, int *pid);
+CVI_S32 CVI_AI_Eval_Market1501InsertFeature(cviai_eval_handle_t handle, const int index,
+                                            bool is_query, const cvai_feature_t *feature);
+CVI_S32 CVI_AI_Eval_Market1501EvalCMC(cviai_eval_handle_t handle);
+
 #ifdef __cplusplus
 }
 #endif

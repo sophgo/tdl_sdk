@@ -15,7 +15,7 @@
 #define MODEL_MEAN_G (0.456f * 255.f)
 #define MODEL_MEAN_B (0.406f * 255.f)
 
-#define OSNET_OUT_NAME "feature_dequant"
+#define OSNET_OUT_NAME "feature"
 
 namespace cviai {
 
@@ -29,13 +29,15 @@ OSNet::OSNet() {
 
 int OSNet::initAfterModelOpened() {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  float quant_thresh = CVI_NN_TensorQuantScale(input);
-  float factor_r = 128.f / (STD_R * quant_thresh);
-  float factor_g = 128.f / (STD_G * quant_thresh);
-  float factor_b = 128.f / (STD_B * quant_thresh);
-  float mean_r = (128.f * MODEL_MEAN_R) / (STD_R * quant_thresh);
-  float mean_g = (128.f * MODEL_MEAN_G) / (STD_G * quant_thresh);
-  float mean_b = (128.f * MODEL_MEAN_B) / (STD_B * quant_thresh);
+  // FIXME: quant_thresh is not correct
+  // float quant_thresh = CVI_NN_TensorQuantScale(input);
+
+  float factor_r = 128.f / (STD_R * 2.64064479);
+  float factor_g = 128.f / (STD_G * 2.64064479);
+  float factor_b = 128.f / (STD_B * 2.64064479);
+  float mean_r = (128.f * MODEL_MEAN_R) / (STD_R * 2.64064479);
+  float mean_g = (128.f * MODEL_MEAN_G) / (STD_G * 2.64064479);
+  float mean_b = (128.f * MODEL_MEAN_B) / (STD_B * 2.64064479);
   VPSS_CHN_ATTR_S vpssChnAttr;
   const float factor[] = {factor_r, factor_g, factor_b};
   const float mean[] = {mean_r, mean_g, mean_b};

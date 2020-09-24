@@ -2,10 +2,12 @@
 
 #include "coco/coco.hpp"
 #include "lfw/lfw.hpp"
+#include "market1501/market1501.hpp"
 #include "wider_face/wider_face.hpp"
 
 typedef struct {
   cviai::evaluation::CocoEval *coco_eval = nullptr;
+  cviai::evaluation::market1501Eval *market1501_eval = nullptr;
   cviai::evaluation::lfwEval *lfw_eval = nullptr;
   cviai::evaluation::widerFaceEval *widerface_eval = nullptr;
 } cviai_eval_context_t;
@@ -213,5 +215,67 @@ CVI_S32 CVI_AI_Eval_WiderFaceClearInput(cviai_eval_handle_t handle) {
     return CVI_FAILURE;
   }
   ctx->widerface_eval->resetData();
+  return CVI_SUCCESS;
+}
+
+/****************************************************************
+ * Market1501 evaluation functions
+ **/
+CVI_S32 CVI_AI_Eval_Market1501Init(cviai_eval_handle_t handle, const char *filepath) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->market1501_eval == nullptr) {
+    ctx->market1501_eval = new cviai::evaluation::market1501Eval(filepath);
+  } else {
+    ctx->market1501_eval->getEvalData(filepath);
+  }
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_Market1501GetImageNum(cviai_eval_handle_t handle, bool is_query,
+                                          uint32_t *num) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->market1501_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+
+  *num = ctx->market1501_eval->getImageNum(is_query);
+  printf("query_dir: %d\n", *num);
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_Market1501GetPathIdPair(cviai_eval_handle_t handle, const uint32_t index,
+                                            bool is_query, char **filepath, int *cam_id, int *pid) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->market1501_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+
+  std::string filestr;
+  ctx->market1501_eval->getPathIdPair(index, is_query, &filestr, cam_id, pid);
+  auto stringlength = strlen(filestr.c_str()) + 1;
+  *filepath = (char *)malloc(stringlength);
+  strncpy(*filepath, filestr.c_str(), stringlength);
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_Market1501InsertFeature(cviai_eval_handle_t handle, const int index,
+                                            bool is_query, const cvai_feature_t *feature) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->market1501_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->market1501_eval->insertFeature(index, is_query, feature);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_Market1501EvalCMC(cviai_eval_handle_t handle) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->market1501_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->market1501_eval->evalCMC();
   return CVI_SUCCESS;
 }
