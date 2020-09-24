@@ -335,6 +335,22 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[1] = 0;
       vFrame->u32Length[2] = 0;
     } break;
+    case PIXEL_FORMAT_FP32_C1: {
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(float), VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[1] = 0;
+      vFrame->u32Stride[2] = 0;
+      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
+      vFrame->u32Length[1] = 0;
+      vFrame->u32Length[2] = 0;
+    } break;
+    case PIXEL_FORMAT_BF16_C1: {
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(uint16_t), VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[1] = 0;
+      vFrame->u32Stride[2] = 0;
+      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
+      vFrame->u32Length[1] = 0;
+      vFrame->u32Length[2] = 0;
+    } break;
     default:
       syslog(LOG_ERR, "Currently unsupported format %u\n", vFrame->enPixelFormat);
       return CVI_FAILURE;

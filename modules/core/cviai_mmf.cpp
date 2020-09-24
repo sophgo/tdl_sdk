@@ -4,6 +4,7 @@
 #include "core/utils/vpss_helper.h"
 #include "opencv2/opencv.hpp"
 
+// TODO: use memcpy
 inline void BufferRGBPackedCopy(const uint8_t *buffer, uint32_t width, uint32_t height,
                                 uint32_t stride, VIDEO_FRAME_INFO_S *frame, bool invert) {
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
@@ -58,6 +59,17 @@ inline void BufferRGBPacked2PlanarCopy(const uint8_t *buffer, uint32_t width, ui
   }
 }
 
+template <typename T>
+inline void BufferC12C1Copy(const uint8_t *buffer, uint32_t width, uint32_t height, uint32_t stride,
+                            VIDEO_FRAME_INFO_S *frame) {
+  VIDEO_FRAME_S *vFrame = &frame->stVFrame;
+  for (uint32_t j = 0; j < height; j++) {
+    const uint8_t *ptr = buffer + j * stride;
+    uint8_t *vframec0ptr = vFrame->pu8VirAddr[0] + j * vFrame->u32Stride[0];
+    memcpy(vframec0ptr, ptr, width * sizeof(T));
+  }
+}
+
 int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height, uint32_t stride,
                           const PIXEL_FORMAT_E inFormat, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
                           const PIXEL_FORMAT_E outFormat) {
@@ -77,6 +89,10 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
     BufferRGBPacked2PlanarCopy(buffer, width, height, stride, frame, true);
   } else if (inFormat == PIXEL_FORMAT_RGB_888 && outFormat == PIXEL_FORMAT_RGB_888_PLANAR) {
     BufferRGBPacked2PlanarCopy(buffer, width, height, stride, frame, false);
+  } else if (inFormat == PIXEL_FORMAT_BF16_C1 && outFormat == PIXEL_FORMAT_BF16_C1) {
+    BufferC12C1Copy<uint16_t>(buffer, width, height, stride, frame);
+  } else if (inFormat == PIXEL_FORMAT_FP32_C1 && outFormat == PIXEL_FORMAT_FP32_C1) {
+    BufferC12C1Copy<float>(buffer, width, height, stride, frame);
   } else {
     LOGE("Unsupported convert format: %u -> %u.\n", inFormat, outFormat);
     ret = CVI_FAILURE;
