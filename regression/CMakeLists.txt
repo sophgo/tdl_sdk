@@ -4,7 +4,32 @@ cmake_minimum_required(VERSION 3.2.2)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 project(ai_sdk_regression)
 
-include_directories(
+function(buildninstall)
+  # From https://stackoverflow.com/questions/23327687/how-to-write-a-cmake-function-with-more-than-one-parameter-groups
+  cmake_parse_arguments(
+    PARSED_ARGS # prefix of output variables
+    "" # list of names of the boolean arguments (only defined ones will be true)
+    "NAME" # list of names of mono-valued arguments
+    "INC;SRCS;DEPS" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  # note: if it remains unparsed arguments, here, they can be found in variable PARSED_ARGS_UNPARSED_ARGUMENTS
+  if(NOT PARSED_ARGS_NAME)
+    message(FATAL_ERROR "You must provide a name")
+  endif(NOT PARSED_ARGS_NAME)
+  project(${PARSED_ARGS_NAME})
+  # For debug purpose.
+  # message("Provided additional sources are:")
+  # foreach(src ${PARSED_ARGS_SRCS})
+  #   message("- ${src}")
+  # endforeach(src)
+  include_directories(${PARSED_ARGS_INC})
+  add_executable(${PROJECT_NAME} ${PROJECT_NAME}.c ${PARSED_ARGS_SRCS})
+  target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
+  install(TARGETS ${PROJECT_NAME} DESTINATION regression)
+endfunction(buildninstall)
+
+set(REG_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
@@ -24,45 +49,16 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
 )
 
-add_executable(reg_face_attribute reg_face_attribute.c)
-add_executable(reg_face_recognition reg_face_recognition.c)
-add_executable(reg_face_quality reg_face_quality.c)
-add_executable(reg_lfw reg_lfw.c)
-add_executable(reg_wider_face reg_wider_face.c)
-add_executable(reg_mobiledetv2 reg_mobiledetv2.c)
-add_executable(reg_yolov3 reg_yolov3.c)
-add_executable(reg_thermal reg_thermal.c)
-add_executable(reg_mask_classification reg_mask_classification.c)
-add_executable(reg_rgbir_liveness reg_rgbir_liveness.c)
-add_executable(reg_mask_fr reg_mask_fr.c)
-add_executable(reg_object_intersect reg_object_intersect.c)
-add_executable(reg_reid reg_reid.c)
-
-target_link_libraries(reg_face_attribute cviai_core ${SAMPLE_LIBS})
-target_link_libraries(reg_face_recognition cviai_core ${SAMPLE_LIBS})
-target_link_libraries(reg_face_quality cviai_core ${SAMPLE_LIBS})
-target_link_libraries(reg_lfw cviai_core cviai_evaluation ${SAMPLE_LIBS})
-target_link_libraries(reg_wider_face cviai_core cviai_evaluation ${SAMPLE_LIBS})
-target_link_libraries(reg_mobiledetv2 cviai_core cviai_evaluation ${SAMPLE_LIBS})
-target_link_libraries(reg_yolov3 cviai_core cviai_evaluation ${SAMPLE_LIBS})
-target_link_libraries(reg_thermal cviai_core cviai_evaluation ${SAMPLE_LIBS})
-target_link_libraries(reg_mask_classification cviai_core ${SAMPLE_LIBS})
-target_link_libraries(reg_rgbir_liveness cviai_core cviai_evaluation ${SAMPLE_LIBS})
-target_link_libraries(reg_mask_fr cviai_core cviai_evaluation ${SAMPLE_LIBS})
-target_link_libraries(reg_object_intersect cviai_core cviai_objservice)
-target_link_libraries(reg_reid cviai_core cviai_evaluation ${SAMPLE_LIBS})
-
-install(TARGETS reg_face_attribute DESTINATION regression)
-install(TARGETS reg_face_recognition DESTINATION regression)
-install(TARGETS reg_face_quality DESTINATION regression)
-install(TARGETS reg_lfw DESTINATION regression)
-install(TARGETS reg_wider_face DESTINATION regression)
-install(TARGETS reg_mobiledetv2 DESTINATION regression)
-install(TARGETS reg_yolov3 DESTINATION regression)
-install(TARGETS reg_thermal DESTINATION regression)
-install(TARGETS reg_mask_classification DESTINATION regression)
-install(TARGETS reg_rgbir_liveness DESTINATION regression)
-install(TARGETS reg_mask_fr DESTINATION regression)
-install(TARGETS reg_object_intersect DESTINATION regression)
-install(TARGETS reg_reid DESTINATION regression)
-
+buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_quality INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME reg_lfw INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_wider_face INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_mobiledetv2 INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_yolov3 INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_thermal INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_object_intersect INC ${REG_INCLUDES} DEPS cviai_core cviai_objservice)
+buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
