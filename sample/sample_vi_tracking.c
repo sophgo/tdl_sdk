@@ -12,6 +12,7 @@
 #include <cvi_vb.h>
 #include <cvi_vi.h>
 
+#include <inttypes.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,28 +20,6 @@
 #include <unistd.h>
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
-// preprocess factors of YoloV3
-#define YOLOV3_SCALE (float)(1 / 255.0)
-#define YOLOV3_QUANTIZE_SCALE YOLOV3_SCALE *(128.0 / 1.00000488758)
-
-// preprocess factors of MobileDetV2
-static const float MOBDETV2_STD_R = (255.0 * 0.229);
-static const float MOBDETV2_STD_G = (255.0 * 0.224);
-static const float MOBDETV2_STD_B = (255.0 * 0.225);
-static const float MOBDETV2_MODEL_MEAN_R = 0.485 * 255.0;
-static const float MOBDETV2_MODEL_MEAN_G = 0.456 * 255.0;
-static const float MOBDETV2_MODEL_MEAN_B = 0.406 * 255.0;
-static const float MOBDETV2_QUANT_THRESH = 2.641289710998535;
-#define MOBDETV2_FACTOR_R (128.0 / (MOBDETV2_STD_R * MOBDETV2_QUANT_THRESH))
-#define MOBDETV2_FACTOR_G (128.0 / (MOBDETV2_STD_G * MOBDETV2_QUANT_THRESH))
-#define MOBDETV2_FACTOR_B (128.0 / (MOBDETV2_STD_B * MOBDETV2_QUANT_THRESH))
-#define MOBDETV2_MEAN_R \
-  (-1.0 * ((128.0 * MOBDETV2_MODEL_MEAN_R) / (MOBDETV2_STD_R * MOBDETV2_QUANT_THRESH)))
-#define MOBDETV2_MEAN_G \
-  (-1.0 * ((128.0 * MOBDETV2_MODEL_MEAN_G) / (MOBDETV2_STD_G * MOBDETV2_QUANT_THRESH)))
-#define MOBDETV2_MEAN_B \
-  (-1.0 * ((128.0 * MOBDETV2_MODEL_MEAN_B) / (MOBDETV2_STD_B * MOBDETV2_QUANT_THRESH)))
 
 static volatile bool bExit = false;
 
@@ -58,13 +37,6 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVI_SUCCESS;
 
   if (strstr(model_name, "mobiledetv2")) {
-    config->factor[0] = MOBDETV2_FACTOR_R;
-    config->factor[1] = MOBDETV2_FACTOR_G;
-    config->factor[2] = MOBDETV2_FACTOR_B;
-    config->mean[0] = MOBDETV2_MEAN_R;
-    config->mean[1] = MOBDETV2_MEAN_G;
-    config->mean[2] = MOBDETV2_MEAN_B;
-
     if (strcmp(model_name, "mobiledetv2-d0") == 0) {
       config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0;
       config->inference = CVI_AI_MobileDetV2_D0;
@@ -82,12 +54,6 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
     }
   } else if (strstr(model_name, "yolov3")) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
-    config->factor[0] = YOLOV3_QUANTIZE_SCALE;
-    config->factor[1] = YOLOV3_QUANTIZE_SCALE;
-    config->factor[2] = YOLOV3_QUANTIZE_SCALE;
-    config->mean[0] = 0;
-    config->mean[1] = 0;
-    config->mean[2] = 0;
     config->inference = CVI_AI_Yolov3;
 
     if (strcmp(model_name, "yolov3-320") == 0) {
@@ -119,10 +85,10 @@ static CVI_S32 InitVI(const VI_PIPE viPipe, SAMPLE_VI_CONFIG_S *pstViConfig);
 
 static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig);
 
-static CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChnQuant,
-                        const VPSS_CHN vpssChnVI, const VPSS_CHN vpssChnVO, const CVI_U32 grpWidth,
-                        const CVI_U32 grpHeight, const CVI_U32 voWidth, const CVI_U32 voHeight,
-                        const VI_PIPE viPipe, const CVI_BOOL isVOOpened, ModelConfig *model_config);
+static CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
+                        const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
+                        const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened,
+                        ModelConfig *model_config);
 
 int main(int argc, char *argv[]) {
   if (argc != 5) {
@@ -151,8 +117,7 @@ int main(int argc, char *argv[]) {
   // Init VI, VO, Vpss
   VI_PIPE ViPipe = 0;
   VPSS_GRP VpssGrp = 0;
-  VPSS_CHN VpssChnQuant = VPSS_CHN0;
-  VPSS_CHN VpssChnVI = VPSS_CHN1;
+  VPSS_CHN VpssChn = VPSS_CHN0;
   VPSS_CHN VpssChnVO = VPSS_CHN2;
   CVI_S32 GrpWidth = 1920;
   CVI_S32 GrpHeight = 1080;
@@ -177,8 +142,8 @@ int main(int argc, char *argv[]) {
     CVI_VO_HideChn(VoLayer, VoChn);
   }
 
-  s32Ret = InitVPSS(VpssGrp, VpssChnQuant, VpssChnVI, VpssChnVO, GrpWidth, GrpHeight, voWidth,
-                    voHeight, ViPipe, isVoOpened, &model_config);
+  s32Ret = InitVPSS(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight, ViPipe,
+                    isVoOpened, &model_config);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video process group 0 failed with %d\n", s32Ret);
     return s32Ret;
@@ -187,45 +152,57 @@ int main(int argc, char *argv[]) {
   //****************************************************************
 
   cviai_handle_t facelib_handle = NULL;
+  cviai_objservice_handle_t obj_handle = NULL;
   int ret = CVI_AI_CreateHandle2(&facelib_handle, 1);
+  ret |= CVI_AI_OBJService_CreateHandle(&obj_handle, facelib_handle);
   ret = CVI_AI_SetModelPath(facelib_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
   }
-  // Do vpss frame transform in retina face
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, model_config.model_id, true);
+
+  CVI_AI_SetSkipVpssPreprocess(facelib_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
 
-  VIDEO_FRAME_INFO_S stFrame, stodFrame, stVOFrame;
+  // Create intersect area
+  printf("Creating line intersect.\n");
+  cvai_pts_t pts;
+  pts.size = 2;
+  pts.x = (float *)malloc(pts.size * sizeof(float));
+  pts.y = (float *)malloc(pts.size * sizeof(float));
+  pts.x[0] = 640;
+  pts.y[0] = 0;
+  pts.x[1] = 640;
+  pts.y[1] = 719;
+  CVI_AI_OBJService_SetIntersect(obj_handle, &pts);
+
+  VIDEO_FRAME_INFO_S stFrame, stVOFrame;
   cvai_object_t obj_meta;
+  cvai_tracker_t tracker_meta;
   memset(&obj_meta, 0, sizeof(cvai_object_t));
+  memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
   while (bExit == false) {
-    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChnQuant, &stodFrame, 1000);
+    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stFrame, 1000);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
     }
 
-    model_config.inference(facelib_handle, &stodFrame, &obj_meta, CVI_DET_TYPE_PEOPLE);
-    printf("nums of object %u\n", obj_meta.size);
-
-    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChnVI, &stFrame, 1000);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
-      break;
-    }
-
+    // Main functions.
+    cvai_area_detect_e *status = NULL;
+    model_config.inference(facelib_handle, &stFrame, &obj_meta, CVI_DET_TYPE_PEOPLE);
     CVI_AI_OSNet(facelib_handle, &stFrame, &obj_meta);
-
-    s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChnVI, &stFrame);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
-      break;
+    CVI_AI_Deepsort(facelib_handle, &obj_meta, &tracker_meta);
+    CVI_AI_OBJService_DetectIntersect(obj_handle, &stFrame, &obj_meta, &status);
+    for (uint32_t i = 0; i < obj_meta.size; i++) {
+      printf("[%u][%" PRIu64 "] %s object state = %u, intersection = %u.\n", i,
+             obj_meta.info[i].unique_id, obj_meta.info[i].name, tracker_meta.info[i].state,
+             status[i]);
     }
+    // Intersect main functions ends here.
 
-    s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChnQuant, &stodFrame);
+    s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
       break;
@@ -252,15 +229,17 @@ int main(int argc, char *argv[]) {
     }
 
     CVI_AI_Free(&obj_meta);
+    CVI_AI_Free(&tracker_meta);
+    free(status);
   }
 
+  CVI_AI_OBJService_DestroyHandle(obj_handle);
   CVI_AI_DestroyHandle(facelib_handle);
 
   // Exit vpss stuffs
-  SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, VpssChnQuant, VpssGrp);
+  SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, VpssChn, VpssGrp);
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
-  abChnEnable[VpssChnQuant] = CVI_TRUE;
-  abChnEnable[VpssChnVI] = CVI_TRUE;
+  abChnEnable[VpssChn] = CVI_TRUE;
   abChnEnable[VpssChnVO] = CVI_TRUE;
   SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
 
@@ -356,22 +335,17 @@ CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *st
   return s32Ret;
 }
 
-CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChnQuant, const VPSS_CHN vpssChnVI,
-                 const VPSS_CHN vpssChnVO, const CVI_U32 grpWidth, const CVI_U32 grpHeight,
-                 const CVI_U32 voWidth, const CVI_U32 voHeight, const VI_PIPE viPipe,
-                 const CVI_BOOL isVOOpened, ModelConfig *model_config) {
+CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
+                 const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
+                 const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened,
+                 ModelConfig *model_config) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   VPSS_GRP_ATTR_S stVpssGrpAttr;
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   VPSS_CHN_ATTR_S stVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
 
-  abChnEnable[vpssChnQuant] = CVI_TRUE;
-  VPSS_CHN_SQ_HELPER(&stVpssChnAttr[vpssChnQuant], model_config->input_size,
-                     model_config->input_size, PIXEL_FORMAT_RGB_888_PLANAR, model_config->factor,
-                     model_config->mean, false);
-
-  abChnEnable[vpssChnVI] = CVI_TRUE;
-  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChnVI], voWidth, voHeight, PIXEL_FORMAT_RGB_888_PLANAR,
+  abChnEnable[vpssChn] = CVI_TRUE;
+  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChn], voWidth, voHeight, PIXEL_FORMAT_RGB_888_PLANAR,
                           true);
 
   if (isVOOpened) {
@@ -397,7 +371,7 @@ CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChnQuant, const VPSS
     return s32Ret;
   }
 
-  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(viPipe, vpssChnQuant, vpssGrp);
+  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(viPipe, vpssChn, vpssGrp);
   if (s32Ret != CVI_SUCCESS) {
     printf("vi bind vpss failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
