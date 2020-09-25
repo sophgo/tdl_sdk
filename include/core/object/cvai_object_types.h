@@ -9,22 +9,6 @@ typedef enum {
   CVI_DET_TYPE_PET = (1 << 2)
 } cvai_obj_det_type_t;
 
-typedef enum {
-  CVI_TRACKER_NEW = 0,
-  CVI_TRACKER_UNSTABLE,
-  CVI_TRACKER_STABLE,
-} cvai_trk_state_type_t;
-
-typedef struct {
-  cvai_trk_state_type_t state;
-  // cvai_bbox_t bbox;    /* tracker computed bbox */
-} cvai_tracker_info_t;
-
-typedef struct {
-  uint32_t size;
-  cvai_tracker_info_t *info;
-} cvai_tracker_t;
-
 typedef struct {
   char name[128];
   uint64_t unique_id;

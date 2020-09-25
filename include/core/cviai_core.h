@@ -45,6 +45,7 @@ typedef enum {
 #define CVI_AI_Free(X) _Generic((X),                   \
            cvai_feature_t*: CVI_AI_FreeFeature,        \
            cvai_pts_t*: CVI_AI_FreePts,                \
+           cvai_tracker_t*: CVI_AI_FreeTracker,        \
            cvai_face_info_t*: CVI_AI_FreeFaceInfo,     \
            cvai_face_t*: CVI_AI_FreeFace,              \
            cvai_object_info_t*: CVI_AI_FreeObjectInfo, \

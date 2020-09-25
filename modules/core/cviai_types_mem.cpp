@@ -24,6 +24,14 @@ void CVI_AI_FreeCpp(cvai_pts_t *pts) {
   pts->size = 0;
 }
 
+void CVI_AI_FreeCpp(cvai_tracker_t *tracker) {
+  if (tracker->info != NULL) {
+    free(tracker->info);
+    tracker->info = NULL;
+  }
+  tracker->size = 0;
+}
+
 void CVI_AI_FreeCpp(cvai_face_info_t *face_info) {
   CVI_AI_FreeCpp(&face_info->face_pts);
   CVI_AI_FreeCpp(&face_info->face_feature);
@@ -55,6 +63,8 @@ void CVI_AI_FreeCpp(cvai_object_t *obj) {
 void CVI_AI_FreeFeature(cvai_feature_t *feature) { CVI_AI_FreeCpp(feature); }
 
 void CVI_AI_FreePts(cvai_pts_t *pts) { CVI_AI_FreeCpp(pts); }
+
+void CVI_AI_FreeTracker(cvai_tracker_t *tracker) { CVI_AI_FreeCpp(tracker); }
 
 void CVI_AI_FreeFaceInfo(cvai_face_info_t *face_info) { CVI_AI_FreeCpp(face_info); }
 

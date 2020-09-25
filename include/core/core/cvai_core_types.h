@@ -35,4 +35,20 @@ typedef struct {
   uint32_t size;
 } cvai_pts_t;
 
+typedef enum {
+  CVI_TRACKER_NEW = 0,
+  CVI_TRACKER_UNSTABLE,
+  CVI_TRACKER_STABLE,
+} cvai_trk_state_type_t;
+
+typedef struct {
+  cvai_trk_state_type_t state;
+  // cvai_bbox_t bbox;    /* Reserved tracker computed bbox */
+} cvai_tracker_info_t;
+
+typedef struct {
+  uint32_t size;
+  cvai_tracker_info_t* info;
+} cvai_tracker_t;
+
 #endif
