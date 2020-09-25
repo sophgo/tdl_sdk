@@ -48,6 +48,7 @@ static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
     printf("image %s, cam %d, pid %d\n", image, cam_id, pid);
     free(image);
 
+    CVI_AI_Free(&obj);
     CVI_VB_ReleaseBlock(blk);
   }
 
