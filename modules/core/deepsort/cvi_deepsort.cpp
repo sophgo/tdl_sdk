@@ -186,7 +186,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
   /* Generate tracker result */
   /*   format: [i] <is_matched, tracker_id, tracker_state, tracker_bbox> */
   std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> result_(BBoxes.size());
-  LOGI("Create Result_ (%lu)", result_.size());
+  LOGI("Create Result_ (%zu)", result_.size());
 
   /* Update the kalman trackers (Matched) */
   LOGI("Update the kalman trackers (Matched)");
@@ -232,7 +232,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
     id_counter += 1;
     const BBOX &bbox_ = BBoxes[bbox_idx];
     const FEATURE &feature_ = Features[bbox_idx];
-    LOGI("create >> id: %lu, bbox: [%f,%f,%f,%f]", id_counter, bbox_(0, 0), bbox_(0, 1),
+    LOGI("create >> id: %" PRIu64 ", bbox: [%f,%f,%f,%f]", id_counter, bbox_(0, 0), bbox_(0, 1),
          bbox_(0, 2), bbox_(0, 3));
     KalmanTracker tracker_(id_counter, bbox_, feature_);
     k_trackers.push_back(tracker_);
