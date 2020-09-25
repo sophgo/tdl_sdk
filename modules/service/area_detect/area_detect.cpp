@@ -55,7 +55,7 @@ int AreaDetect::run(const VIDEO_FRAME_INFO_S *frame, const uint64_t &unique_id,
                     cvai_area_detect_e *detect) {
   if (unique_id == (uint64_t)-1) {
     *detect = cvai_area_detect_e::UNKNOWN;
-    LOGW("Invalid unique_id %lu.\n", (long unsigned int)unique_id);
+    LOGW("Invalid unique_id %" PRIu64 ".\n", unique_id);
     return CVI_SUCCESS;
   }
   if (m_boundaries.size() == 1) {
