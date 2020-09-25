@@ -34,10 +34,4 @@ typedef enum {
   OUTSIDE_POLYGON
 } cvai_area_detect_e;
 
-typedef struct {
-  uint64_t unique_id;
-  float x;
-  float y;
-} area_detect_pts_t;
-
 #endif  // End of _CVIAI_SERVICE_TYPES_H_
