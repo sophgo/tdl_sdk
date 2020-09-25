@@ -1,5 +1,5 @@
 #pragma once
-#include <cvi_comm_video.h>
+#include <cvi_type.h>
 #include <map>
 #include <string>
 #include <utility>
@@ -15,7 +15,7 @@ typedef struct {
 
 class Tracker {
  public:
-  int registerId(const VIDEO_FRAME_INFO_S *frame, const int64_t &id, const float x, const float y);
+  int registerId(const CVI_U64 &timestamp, const int64_t &id, const float x, const float y);
   int getLatestPos(const int64_t &id, float *x, float *y);
 
  private:

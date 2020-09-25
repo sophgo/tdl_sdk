@@ -83,29 +83,23 @@ CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle, const c
 
 CVI_S32 CVI_AI_OBJService_DetectIntersect(cviai_objservice_handle_t handle,
                                           const VIDEO_FRAME_INFO_S *frame,
-                                          const cvai_object_t *meta, cvai_area_detect_e **status) {
+                                          const cvai_object_t *obj_meta,
+                                          cvai_area_detect_e **status) {
   cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
   if (ctx->m_ad == nullptr) {
-    return CVI_FAILURE;
-  }
-  if (meta->width != frame->stVFrame.u32Width || meta->height != frame->stVFrame.u32Height) {
-    LOGE(
-        "Frame width or height not match the size of meta->width or meta->height. Please rescale "
-        "bounding box first before detecting intersect.\n");
+    LOGE("Please set intersect area first.\n");
     return CVI_FAILURE;
   }
   int ret = CVI_SUCCESS;
   if (*status != NULL) {
     free(*status);
   }
-  *status = (cvai_area_detect_e *)malloc(meta->size * sizeof(cvai_area_detect_e));
-  for (uint32_t i = 0; i < meta->size; ++i) {
-    float &&center_pts_x = (meta->info[i].bbox.x1 + meta->info[i].bbox.x2) / 2;
-    float &&center_pts_y = (meta->info[i].bbox.y1 + meta->info[i].bbox.y2) / 2;
-    if ((ret = ctx->m_ad->run(frame, meta->info[i].unique_id, center_pts_x, center_pts_y,
-                              &(*status)[i])) != CVI_SUCCESS) {
-      break;
-    }
+  *status = (cvai_area_detect_e *)malloc(obj_meta->size * sizeof(cvai_area_detect_e));
+  for (uint32_t i = 0; i < obj_meta->size; ++i) {
+    float &&center_pts_x = (obj_meta->info[i].bbox.x1 + obj_meta->info[i].bbox.x2) / 2;
+    float &&center_pts_y = (obj_meta->info[i].bbox.y1 + obj_meta->info[i].bbox.y2) / 2;
+    ctx->m_ad->run(frame->stVFrame.u64PTS, obj_meta->info[i].unique_id, center_pts_x, center_pts_y,
+                   &(*status)[i]);
   }
   return ret;
 }

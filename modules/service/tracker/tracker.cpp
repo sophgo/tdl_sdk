@@ -4,13 +4,10 @@
 
 #include <string.h>
 
-#define DEFAULT_DT_ZOOM_TRANS_RATIO 0.1f
-#include <iostream>
 namespace cviai {
 namespace service {
-int Tracker::registerId(const VIDEO_FRAME_INFO_S *frame, const int64_t &id, const float x,
-                        const float y) {
-  m_timestamp = frame->stVFrame.u64PTS;
+int Tracker::registerId(const CVI_U64 &timestamp, const int64_t &id, const float x, const float y) {
+  m_timestamp = timestamp;
   tracker_pts_t pts;
   pts.x = x;
   pts.y = y;

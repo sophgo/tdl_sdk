@@ -5,7 +5,6 @@
 #include "service/cviai_service_types.h"
 #include "tracker/tracker.hpp"
 
-#include <cvi_comm_video.h>
 #include <utility>
 
 namespace cviai {
@@ -14,8 +13,8 @@ namespace service {
 class AreaDetect {
  public:
   int setArea(const cvai_pts_t &pts);
-  int run(const VIDEO_FRAME_INFO_S *frame, const uint64_t &unique_id, const float center_pts_x,
-          const float center_pts_y, cvai_area_detect_e *detect);
+  void run(const uint64_t &timestamp, const uint64_t &unique_id, const float center_pts_x,
+           const float center_pts_y, cvai_area_detect_e *detect);
 
  private:
   bool onSegment(Eigen::Vector2f p, Eigen::Vector2f q, Eigen::Vector2f r);

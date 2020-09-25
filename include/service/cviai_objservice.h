@@ -105,13 +105,14 @@ CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle, const c
  *
  * @param handle An OBJService handle.
  * @param frame Input frame.
- * @param meta Object meta structure.
+ * @param obj_meta Object meta structure.
  * @param status Output status of each object.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 CVI_S32 CVI_AI_OBJService_DetectIntersect(cviai_objservice_handle_t handle,
                                           const VIDEO_FRAME_INFO_S *frame,
-                                          const cvai_object_t *meta, cvai_area_detect_e **status);
+                                          const cvai_object_t *obj_meta,
+                                          cvai_area_detect_e **status);
 #ifdef __cplusplus
 }
 #endif

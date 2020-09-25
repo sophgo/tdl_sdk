@@ -2,6 +2,7 @@
 #include "core/cviai_types_mem.h"
 #include "cviai_log.hpp"
 
+#include <cvi_type.h>
 #include <string.h>
 
 namespace cviai {
@@ -50,13 +51,12 @@ int AreaDetect::setArea(const cvai_pts_t &pts) {
   return CVI_SUCCESS;
 }
 
-int AreaDetect::run(const VIDEO_FRAME_INFO_S *frame, const uint64_t &unique_id,
-                    const float center_pts_x, const float center_pts_y,
-                    cvai_area_detect_e *detect) {
+void AreaDetect::run(const uint64_t &timestamp, const uint64_t &unique_id, const float center_pts_x,
+                     const float center_pts_y, cvai_area_detect_e *detect) {
   if (unique_id == (uint64_t)-1) {
     *detect = cvai_area_detect_e::UNKNOWN;
     LOGW("Invalid unique_id %" PRIu64 ".\n", unique_id);
-    return CVI_SUCCESS;
+    return;
   }
   if (m_boundaries.size() == 1) {
     float x, y;
@@ -64,14 +64,14 @@ int AreaDetect::run(const VIDEO_FRAME_INFO_S *frame, const uint64_t &unique_id,
     if (m_tracker.getLatestPos(unique_id, &x, &y) == CVI_SUCCESS) {
       has_prev = true;
     }
-    m_tracker.registerId(frame, unique_id, center_pts_x, center_pts_y);
+    m_tracker.registerId(timestamp, unique_id, center_pts_x, center_pts_y);
     Eigen::Vector2f curr_pts(center_pts_x, center_pts_y);
     auto &line = m_boundaries[0];
     float curr_dis = line.signedDistance(curr_pts);
     if (curr_dis == 0) {
       if (onSegment(m_pts[0].first, curr_pts, m_pts[0].second)) {
         *detect = cvai_area_detect_e::ON_LINE;
-        return CVI_SUCCESS;
+        return;
       }
     }
     if (has_prev) {
@@ -92,7 +92,7 @@ int AreaDetect::run(const VIDEO_FRAME_INFO_S *frame, const uint64_t &unique_id,
       *detect = cvai_area_detect_e::UNKNOWN;
     }
   } else if (m_boundaries.size() >= 3) {
-    m_tracker.registerId(frame, unique_id, center_pts_x, center_pts_y);
+    m_tracker.registerId(timestamp, unique_id, center_pts_x, center_pts_y);
     Eigen::Vector2f prev_pts(-1.f, center_pts_y);
     Eigen::Vector2f curr_pts(center_pts_x, center_pts_y);
     int stat = 1;
@@ -121,10 +121,11 @@ int AreaDetect::run(const VIDEO_FRAME_INFO_S *frame, const uint64_t &unique_id,
       *detect = cvai_area_detect_e::OUTSIDE_POLYGON;
     }
   } else {
+    *detect = cvai_area_detect_e::UNKNOWN;
     LOGE("Boundary setting error %u\n", (uint32_t)m_boundaries.size());
-    return CVI_FAILURE;
+    return;
   }
-  return CVI_SUCCESS;
+  return;
 }
 
 bool AreaDetect::onSegment(Eigen::Vector2f p, Eigen::Vector2f q, Eigen::Vector2f r) {
