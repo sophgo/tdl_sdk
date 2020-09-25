@@ -56,6 +56,7 @@ buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} DEPS cviai_core cviai_frservic
 buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_mask_fr INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} DEPS cviai_core cviai_objservice ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_tracking INC ${SAMPLE_INC} DEPS cviai_core cviai_objservice ${SAMPLE_LIBS})
 
 
 buildninstall(NAME sample_read_dt INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice)
