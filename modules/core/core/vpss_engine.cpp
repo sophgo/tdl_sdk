@@ -106,9 +106,6 @@ int VpssEngine::stop() {
     return CVI_FAILURE;
   }
 
-  if (m_enable_log) {
-    CVI_LOG_EnableLog2File(CVI_FALSE, CVI_NULL);
-  }
   m_is_vpss_init = false;
   return CVI_SUCCESS;
 }
