@@ -5,6 +5,7 @@
 #include "ive/ive.h"
 #include "vpss_engine.hpp"
 
+#include "deepsort/cvi_deepsort.hpp"
 #include "tamper_detection/tamper_detection.hpp"
 
 #include <unordered_map>
@@ -30,6 +31,7 @@ typedef struct {
   IVE_HANDLE ive_handle = NULL;
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   TamperDetectorMD *td_model = nullptr;
+  Deepsort *ds_tracker = nullptr;
   bool use_gdc_wrap = false;
 } cviai_context_t;
 

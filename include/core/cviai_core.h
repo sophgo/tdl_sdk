@@ -275,6 +275,7 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
                                cvai_face_t *faces);
 int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                            float *moving_score);
+int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t);
 
 #ifdef __cplusplus
 }

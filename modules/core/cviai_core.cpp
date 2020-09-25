@@ -4,6 +4,7 @@
 
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
+#include "deepsort/cvi_deepsort.hpp"
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"
 #include "liveness/liveness.hpp"
@@ -48,6 +49,7 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
 
 inline void __attribute__((always_inline)) removeCtx(cviai_context_t *ctx) {
   delete ctx->td_model;
+  delete ctx->ds_tracker;
   CVI_IVE_DestroyHandle(ctx->ive_handle);
   for (auto it : ctx->vec_vpss_engine) {
     delete it;
@@ -438,4 +440,16 @@ int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
     return 0;
   }
   return ctx->td_model->detect(frame, moving_score);
+}
+
+int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Deepsort *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    printf("Init Deepsort Tracker.\n");
+    ctx->ds_tracker = new Deepsort();
+  }
+  ctx->ds_tracker->track(obj, tracker_t);
+  return 0;
 }

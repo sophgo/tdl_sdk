@@ -11,6 +11,7 @@ add_subdirectory(thermal_face_detection)
 add_subdirectory(object_detection/mobiledetv2)
 add_subdirectory(mask_face_recognition)
 add_subdirectory(tamper_detection)
+add_subdirectory(deepsort)
 
 #set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all-symbols")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
@@ -30,6 +31,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:yolov3>
               $<TARGET_OBJECTS:thermal_face_detection>
               $<TARGET_OBJECTS:tamper_detection>
+              $<TARGET_OBJECTS:deepsort>
               cviai_types_mem.cpp
               cviai_rescale_bbox.cpp
               cviai_mmf.cpp
