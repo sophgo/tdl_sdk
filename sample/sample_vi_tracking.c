@@ -188,19 +188,25 @@ int main(int argc, char *argv[]) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
     }
-
-    // Main functions.
+    //*******************************************
+    // Tracking function calls.
     cvai_area_detect_e *status = NULL;
+    // Step 1. Object detect inference.
     model_config.inference(facelib_handle, &stFrame, &obj_meta, CVI_DET_TYPE_PEOPLE);
+    // Step 2. Object feature generator.
     CVI_AI_OSNet(facelib_handle, &stFrame, &obj_meta);
+    // Step 3. Tracker.
     CVI_AI_Deepsort(facelib_handle, &obj_meta, &tracker_meta);
+    // Step 4. Detect intersection.
     CVI_AI_OBJService_DetectIntersect(obj_handle, &stFrame, &obj_meta, &status);
+    // Step 5. printf results.
     for (uint32_t i = 0; i < obj_meta.size; i++) {
       printf("[%u][%" PRIu64 "] %s object state = %u, intersection = %u.\n", i,
              obj_meta.info[i].unique_id, obj_meta.info[i].name, tracker_meta.info[i].state,
              status[i]);
     }
-    // Intersect main functions ends here.
+    // Tracking function calls ends here.
+    //*******************************************
 
     s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
