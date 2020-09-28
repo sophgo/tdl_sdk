@@ -1,12 +1,12 @@
 #include "cvi_deepsort.hpp"
-#include <algorithm>
+#include "core/cviai_types_mem_internal.h"
 #include "cvi_deepsort_utils.hpp"
+#include "cviai_log.hpp"
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-
-#include "cviai_log.hpp"
 
 Deepsort::Deepsort() {
   id_counter = 0;
@@ -41,8 +41,7 @@ int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t) {
 
   auto result_ = track(bboxes, features);
 
-  tracker_t->size = bbox_num;
-  tracker_t->info = new cvai_tracker_info_t[bbox_num];
+  CVI_AI_MemAlloc(bbox_num, tracker_t);
 
   assert(result_.size() == static_cast<size_t>(bbox_num));
   for (size_t i = 0; i < result_.size(); i++) {

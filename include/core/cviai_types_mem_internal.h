@@ -22,6 +22,14 @@ inline void CVI_AI_MemAlloc(const uint32_t size, cvai_pts_t *pts) {
   }
 }
 
+inline void CVI_AI_MemAlloc(const uint32_t size, cvai_tracker_t *tracker) {
+  if (tracker->size != size) {
+    free(tracker->info);
+    tracker->info = (cvai_tracker_info_t *)malloc(size * sizeof(cvai_tracker_info_t));
+    tracker->size = size;
+  }
+}
+
 inline void __attribute__((always_inline))
 featurePtrConvert2Float(cvai_feature_t *feature, float *output) {
   switch (feature->type) {
