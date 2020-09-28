@@ -25,15 +25,15 @@ int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t) {
   uint32_t bbox_num = obj->size;
   for (uint32_t i = 0; i < bbox_num; i++) {
     BBOX bbox_;
-    uint32_t feature_size = obj->info->feature.size;
+    uint32_t feature_size = obj->info[i].feature.size;
     FEATURE feature_(feature_size);
-    bbox_(0, 0) = obj->info->bbox.x1;
-    bbox_(0, 1) = obj->info->bbox.y1;
-    bbox_(0, 2) = obj->info->bbox.x2 - obj->info->bbox.x1;
-    bbox_(0, 3) = obj->info->bbox.y2 - obj->info->bbox.y1;
-    int type_size = size_of_feature_type(obj->info->feature.type);
+    bbox_(0, 0) = obj->info[i].bbox.x1;
+    bbox_(0, 1) = obj->info[i].bbox.y1;
+    bbox_(0, 2) = obj->info[i].bbox.x2 - obj->info[i].bbox.x1;
+    bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
+    int type_size = size_of_feature_type(obj->info[i].feature.type);
     for (uint32_t d = 0; d < feature_size; d++) {
-      feature_(d) = static_cast<float>(obj->info->feature.ptr[d * type_size]);
+      feature_(d) = static_cast<float>(obj->info[i].feature.ptr[d * type_size]);
     }
     bboxes.push_back(bbox_);
     features.push_back(feature_);
@@ -50,16 +50,16 @@ int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t) {
     TRACKER_STATE &t_state = std::get<2>(result_[i]);
     // BBOX &t_bbox = std::get<3>(result_[i]);
     if (!matched) {
-      tracker_t->info->state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (t_state == TRACKER_STATE::PROBATION) {
-      tracker_t->info->state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (t_state == TRACKER_STATE::ACCREDITATION) {
-      tracker_t->info->state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       assert(0);
     }
-    obj->info->unique_id = t_id;
+    obj->info[i].unique_id = t_id;
   }
 
   return 0;
