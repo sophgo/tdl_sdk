@@ -1,11 +1,9 @@
 #pragma once
-#include "core/cviai_core.h"
-
 #include "core/core.hpp"
-#include "ive/ive.h"
-#include "vpss_engine.hpp"
-
+#include "core/cviai_core.h"
+#include "core/vpss_engine.hpp"
 #include "deepsort/cvi_deepsort.hpp"
+#include "ive/ive.h"
 #include "tamper_detection/tamper_detection.hpp"
 
 #include <unordered_map>

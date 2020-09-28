@@ -13,10 +13,8 @@ add_subdirectory(mask_face_recognition)
 add_subdirectory(tamper_detection)
 add_subdirectory(deepsort)
 
-#set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all-symbols")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
-                    ${CMAKE_CURRENT_SOURCE_DIR}/utils
-                    ${IVE_INCLUDES})
+                    ${CMAKE_CURRENT_SOURCE_DIR}/utils)
 set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:core>
               $<TARGET_OBJECTS:utils>

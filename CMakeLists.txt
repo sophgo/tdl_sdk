@@ -73,15 +73,13 @@ message("Enable Perfetto  ${ENABLE_PERFETTO}")
 message("==================================================")
 
 
+# 3rdpart includes
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty
-                    ${CMAKE_SOURCE_DIR}/3rdparty
                     ${CMAKE_SOURCE_DIR}/3rdparty/eigen-3.3.7/include/eigen3
-                    ${CMAKE_SOURCE_DIR}/include
                     ${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
-                    ${MIDDLEWARE_INCLUDES}
-                    ${TRACER_INCLUDES})
+                    ${MIDDLEWARE_INCLUDES})
 add_subdirectory(modules)
 add_subdirectory(sample)
 add_subdirectory(regression)
