@@ -39,9 +39,9 @@ int main(void) {
     printf("Get used group id failed.\n");
     return ret;
   }
-  printf("Used group id = %u:\n", nums);
+  printf("Used group id: %u\n", nums);
   for (uint32_t i = 0; i < nums; i++) {
-    printf("%u ", groups[i]);
+    printf(" |- [%u] group id used: %u ", i, groups[i]);
   }
   printf("\n");
   free(groups);
