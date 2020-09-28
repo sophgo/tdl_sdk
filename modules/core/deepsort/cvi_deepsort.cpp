@@ -33,7 +33,7 @@ int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t) {
     bbox_(0, 3) = obj->info->bbox.y2 - obj->info->bbox.y1;
     int type_size = size_of_feature_type(obj->info->feature.type);
     for (uint32_t d = 0; d < feature_size; d++) {
-      feature_(d) = static_cast<float>(obj->info->feature.ptr[i * type_size]);
+      feature_(d) = static_cast<float>(obj->info->feature.ptr[d * type_size]);
     }
     bboxes.push_back(bbox_);
     features.push_back(feature_);
