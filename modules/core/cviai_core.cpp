@@ -44,6 +44,7 @@ void CVI_AI_PerfettoInit() {
 void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   ctx->use_gdc_wrap = use_gdc;
+  LOGI("Experimental feature GDC hardware %s.\n", use_gdc ? "enabled" : "disabled");
 }
 //*************************************************
 
