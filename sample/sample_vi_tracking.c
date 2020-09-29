@@ -239,6 +239,7 @@ int main(int argc, char *argv[]) {
     free(status);
   }
 
+  CVI_AI_Free(&pts);
   CVI_AI_OBJService_DestroyHandle(obj_handle);
   CVI_AI_DestroyHandle(facelib_handle);
 
