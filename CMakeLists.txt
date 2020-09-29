@@ -31,7 +31,6 @@ include (${IVE_SDK_ROOT}/cmake/ive.cmake)
 # Perfetto
 include(cmake/perfetto.cmake)
 
-
 set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=c11")
 set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17")
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
