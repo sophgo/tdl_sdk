@@ -96,7 +96,7 @@ COST_MATRIX KalmanTracker::getCostMatrix_Feature(const std::vector<KalmanTracker
                                                  const std::vector<int> &BBox_IDXes) {
   assert(!Tracker_IDXes.empty() && !BBox_IDXes.empty());
   COST_MATRIX cost_m(Tracker_IDXes.size(), BBox_IDXes.size());
-  uint32_t feature_size = BBoxes[0].cols();
+  uint32_t feature_size = Features[0].cols();
   FEATURES features_m_(BBox_IDXes.size(), feature_size);
   for (size_t i = 0; i < BBox_IDXes.size(); i++) {
     int bbox_idx = BBox_IDXes[i];
