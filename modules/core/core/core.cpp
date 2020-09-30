@@ -22,10 +22,6 @@ int Core::modelOpen(const char *filepath) {
   if (mp_config->batch_size != 0) {
     CVI_NN_SetConfig(mp_model_handle, OPTION_BATCH_SIZE, mp_config->batch_size);
   }
-  CVI_NN_SetConfig(mp_model_handle, OPTION_PREPARE_BUF_FOR_INPUTS,
-                   static_cast<int>(mp_config->init_input_buffer));
-  CVI_NN_SetConfig(mp_model_handle, OPTION_PREPARE_BUF_FOR_OUTPUTS,
-                   static_cast<int>(mp_config->init_output_buffer));
   CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_ALL_TENSORS,
                    static_cast<int>(mp_config->debug_mode));
   CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS,
