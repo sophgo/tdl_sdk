@@ -43,3 +43,8 @@ $ ninja -j8 && ninja install
 1. ``OPENCV_ROOT`` may be inside ``<mlir_root_dir>/opencv``.
 2. ``mmf.tar.gz`` contains all the required libraries, use ``mw.tar.gz`` instead.
 3. Perfetto only supports GCC version >= 7. Please update your local toolchain to meet the requirement.
+
+## Coding Rules
+
+1. Files in ``include`` should be C style. C++ style stuffs should stay in ``modules``.
+2. :)
