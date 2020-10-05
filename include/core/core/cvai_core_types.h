@@ -51,4 +51,24 @@ typedef struct {
   cvai_tracker_info_t* info;
 } cvai_tracker_t;
 
+inline const int getFeatureTypeSize(feature_type_e type) {
+  uint32_t size = 1;
+  switch (type) {
+    case TYPE_INT8:
+    case TYPE_UINT8:
+      break;
+    case TYPE_INT16:
+    case TYPE_UINT16:
+    case TYPE_BF16:
+      size = 2;
+      break;
+    case TYPE_INT32:
+    case TYPE_UINT32:
+    case TYPE_FLOAT:
+      size = 4;
+      break;
+  }
+  return size;
+}
+
 #endif

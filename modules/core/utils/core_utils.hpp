@@ -34,8 +34,8 @@ inline float FastExp(float x) {
 }
 
 template <typename T>
-void NonMaximumSuppression(std::vector<T> &bboxes, std::vector<T> &bboxes_nms, float threshold,
-                           char method) {
+void NonMaximumSuppression(std::vector<T> &bboxes, std::vector<T> &bboxes_nms,
+                           const float threshold, const char method) {
   std::sort(bboxes.begin(), bboxes.end(),
             [](auto &a, auto &b) { return a.bbox.score > b.bbox.score; });
 
