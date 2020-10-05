@@ -215,35 +215,6 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle);
  */
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
-/**
- * @brief Convert given image buffer to VB frame.
- *
- * @param buffer The input image buffer.
- * @param width Input image width.
- * @param height Input image height.
- * @param stride Input image stride.
- * @param inFormat Input image buffer format.
- * @param blk VB block id.
- * @param frame Output read image.
- * @param outFormat Set output format, only supports RGB, BGR, planar.
- * @return int Return CVI_SUCCESS if read succeed.
- */
-int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height, uint32_t stride,
-                          const PIXEL_FORMAT_E inFormat, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                          const PIXEL_FORMAT_E outFormat);
-
-/**
- * @brief Read image from given path and return a VIDEO_FRAME_INFO_S allocated from VB block.
- *
- * @param filepath GIven image path.
- * @param blk VB block id.
- * @param frame Output read image.
- * @param format Set output format, only supports RGB, BGR, planar.
- * @return int Return CVI_SUCCESS if read succeed.
- */
-int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                     const PIXEL_FORMAT_E format);
-
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces);
 int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,

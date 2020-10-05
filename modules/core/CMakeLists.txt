@@ -32,7 +32,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:deepsort>
               cviai_types_mem.cpp
               cviai_rescale_bbox.cpp
-              cviai_mmf.cpp
+              cviai_media.cpp
               cviai_core.cpp)
 set(CORE_DEPS ${PERFETTO_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 
