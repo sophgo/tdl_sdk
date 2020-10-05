@@ -110,6 +110,26 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
     CVI_AI_FreeCpp(&BBoxes[i].face_pts);
   }
 
+  if (!m_skip_vpss_preprocess) {
+    for (uint32_t i = 0; i < meta->size; ++i) {
+      cvai_face_info_t info =
+          bbox_rescale(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height, meta, i);
+      meta->info[i].bbox.x1 = info.bbox.x1;
+      meta->info[i].bbox.x2 = info.bbox.x2;
+      meta->info[i].bbox.y1 = info.bbox.y1;
+      meta->info[i].bbox.y2 = info.bbox.y2;
+      meta->info[i].bbox.score = info.bbox.score;
+      for (int j = 0; j < 5; ++j) {
+        meta->info[i].face_pts.x[j] = info.face_pts.x[j];
+        meta->info[i].face_pts.y[j] = info.face_pts.y[j];
+      }
+      CVI_AI_FreeCpp(&info);
+    }
+
+    meta->width = srcFrame->stVFrame.u32Width;
+    meta->height = srcFrame->stVFrame.u32Height;
+  }
+
   return ret;
 }
 
