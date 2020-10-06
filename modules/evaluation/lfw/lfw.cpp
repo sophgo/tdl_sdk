@@ -90,9 +90,19 @@ void lfwEval::saveEval2File(const char *filepath) {
 int lfwEval::getMaxFace(const cvai_face_t *face) {
   int face_idx = 0;
   float max_area = 0;
+  float center_diff_x = 0;
+  float center_diff_y = 0;
+  float center_img_width = face->width / 2;
+  float center_img_height = face->height / 2;
+
   for (uint32_t i = 0; i < face->size; i++) {
     cvai_bbox_t bbox = face->info[i].bbox;
-    float curr_area = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
+
+    center_diff_x = (bbox.x2 + bbox.x1) / 2 - center_img_width;
+    center_diff_y = (bbox.y2 + bbox.y1) / 2 - center_img_height;
+    float weight = (center_diff_x * center_diff_x + center_diff_y * center_diff_y) * 2;
+
+    float curr_area = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1) - weight;
     if (curr_area > max_area) {
       max_area = curr_area;
       face_idx = i;

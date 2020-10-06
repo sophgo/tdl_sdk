@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
-
+  CVI_AI_SetModelThreshold(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, 0.8);
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
   cviai_eval_handle_t eval_handle;
