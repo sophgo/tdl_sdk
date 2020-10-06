@@ -6,7 +6,7 @@
 #include "core/utils/vpss_helper.h"
 
 #define NAME_BBOX "face_rpn_bbox_pred_"
-#define NAME_SCORE "face_rpn_cls_score_reshape_"
+#define NAME_SCORE "face_rpn_cls_prob_reshape_"
 #define NAME_LANDMARK "face_rpn_landmark_pred_"
 #define FACE_POINTS_SIZE 5
 #define RETINA_FACE_SCALE (128 / 255.001236)
@@ -145,9 +145,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height,
     CVI_SHAPE score_shape = CVI_NN_TensorShape(out);
     size_t score_size =
         score_shape.dim[0] * score_shape.dim[1] * score_shape.dim[2] * score_shape.dim[3];
-    softmax_by_channel(
-        score_blob, score_blob,
-        {score_shape.dim[0], score_shape.dim[1], score_shape.dim[2], score_shape.dim[3]});
+
     score_blob += score_size / 2;
 
     std::string bbox_str = NAME_BBOX + key;
