@@ -4,6 +4,7 @@
 #include <vector>
 #include "cvi_deepsort_types_internal.hpp"
 #include "cvi_distance_metric.hpp"
+#include "cvi_kalman_filter.hpp"
 #include "cvi_kalman_types.hpp"
 #include "cvi_tracker.hpp"
 
@@ -35,6 +36,8 @@ class KalmanTracker : public Tracker {
   int unmatched_times;
   KalmanTracker();
   KalmanTracker(const uint64_t &id, const BBOX &bbox, const FEATURE &feature);
+  KalmanTracker(const uint64_t &id, const BBOX &bbox, const FEATURE &feature,
+                const cvai_kalman_tracker_config_t &ktracker_conf);
 
   void update_state(bool is_matched);
   void update_bbox(const BBOX &bbox);
@@ -53,6 +56,20 @@ class KalmanTracker : public Tracker {
                                         const std::vector<FEATURE> &Features,
                                         const std::vector<int> &Tracker_IDs,
                                         const std::vector<int> &BBox_IDs);
+  static void gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
+                                         const std::vector<KalmanTracker> &K_Trackers,
+                                         const std::vector<BBOX> &BBoxes,
+                                         const std::vector<int> &Tracker_IDXes,
+                                         const std::vector<int> &BBox_IDXes,
+                                         float gate_value = __FLT_MAX__);
+
+  static void gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
+                                         const std::vector<KalmanTracker> &K_Trackers,
+                                         const std::vector<BBOX> &BBoxes,
+                                         const std::vector<int> &Tracker_IDXes,
+                                         const std::vector<int> &BBox_IDXes,
+                                         const cvai_kalman_filter_config_t &kfilter_conf,
+                                         float gate_value = __FLT_MAX__);
 
   /* DEBUG CODE */
   int get_FeatureUpdateCounter() const;

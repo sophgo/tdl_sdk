@@ -8,15 +8,22 @@
 #include <iostream>
 #include <sstream>
 
+static void show_deepsort_config(cvai_deepsort_config_t &ds_conf);
+
 Deepsort::Deepsort() {
   id_counter = 0;
   kf_ = KalmanFilter();
+
+  conf = get_DefaultConfig();
+  // show_deepsort_config(conf);
 }
 
-Deepsort::Deepsort(int feature_size) {
+Deepsort::Deepsort(cvai_deepsort_config_t ds_conf) {
   id_counter = 0;
   kf_ = KalmanFilter();
-  // this->feature_size = feature_size;
+
+  conf = ds_conf;
+  // show_deepsort_config(conf);
 }
 
 int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t) {
@@ -40,7 +47,6 @@ int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t) {
   }
 
   auto result_ = track(bboxes, features);
-
   CVI_AI_MemAlloc(bbox_num, tracker_t);
 
   assert(result_.size() == static_cast<size_t>(bbox_num));
@@ -76,7 +82,8 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
 
   LOGI("Kalman Trackers predict\n");
   for (KalmanTracker &tracker_ : k_trackers) {
-    kf_.predict(tracker_.kalman_state_, tracker_.x_, tracker_.P_);
+    // kf_.predict(tracker_.kalman_state_, tracker_.x_, tracker_.P_);
+    kf_.predict(tracker_.kalman_state_, tracker_.x_, tracker_.P_, conf.kfilter_conf);
   }
 
   std::vector<std::pair<int, int>> matched_pairs;
@@ -96,6 +103,10 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
           << "Unmatched BBox IDXes: " << get_INFO_Vector_Int(unmatched_bbox_idxes, 3) << std::endl;
   LOGI("%s", ss_LOG_.str().c_str());
 
+  /* Append probation trackers */
+  unmatched_tracker_idxes.insert(unmatched_tracker_idxes.end(), probation_tracker_idxes.begin(),
+                                 probation_tracker_idxes.end());
+
   LOGI("Cascade Match\n");
   /* Match accreditation trackers */
   /* - Cascade Match */
@@ -113,9 +124,8 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
     if (tmp_tracker_idxes.empty()) {
       continue;
     }
-    // LOG(INFO) << "  [" << t << "] match";
     MatchResult match_result = match(BBoxes, Features, tmp_tracker_idxes, unmatched_bbox_idxes,
-                                     "Feature_CosineDistance", MAX_DISTANCE_CONSINE);
+                                     "Feature_CosineDistance", conf.max_distance_consine);
     if (match_result.matched_pairs.empty()) {
       continue;
     }
@@ -136,27 +146,26 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
   }
 
   LOGI("Feature (Cosine) Match Result:\n");
-
   ss_LOG_.str("");
-  ss_LOG_ << get_INFO_Match_Pair(matched_pairs, tracker_ids, 3) << std::endl;
+  ss_LOG_ << std::endl << get_INFO_Match_Pair(matched_pairs, tracker_ids, 3) << std::endl;
   LOGI("%s", ss_LOG_.str().c_str());
 
   /* Remove trackers' idx, which unmatched_times > T, from
    * unmatched_tracker_idxes */
-  const int T_ = MAX_UNMATCHED_TIMES_FOR_BBOX_MATCHING;
   for (auto it = unmatched_tracker_idxes.begin(); it != unmatched_tracker_idxes.end();) {
-    if (k_trackers[*it].unmatched_times > T_) {
+    if (k_trackers[*it].unmatched_times > conf.max_unmatched_times_for_bbox_matching) {
       tmp_tracker_idxes.push_back(*it);
       it = unmatched_tracker_idxes.erase(it);
     } else {
       it++;
     }
   }
-  /* Append probation trackers */
-  unmatched_tracker_idxes.insert(unmatched_tracker_idxes.end(), probation_tracker_idxes.begin(),
-                                 probation_tracker_idxes.end());
+  // /* Append probation trackers */
+  // unmatched_tracker_idxes.insert(unmatched_tracker_idxes.end(),
+  // probation_tracker_idxes.begin(),
+  //                                probation_tracker_idxes.end());
+
   ss_LOG_.str("");
-  // ss_GLOG_.clear();
   ss_LOG_ << std::endl
           << std::setw(32)
           << "Unmatched Tracker IDXes: " << get_INFO_Vector_Int(unmatched_tracker_idxes, 3)
@@ -166,14 +175,16 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
   LOGI("%s", ss_LOG_.str().c_str());
   /* Match remain trackers */
   /* - BBox IoU Distance */
-  MatchResult match_result_bbox = match(BBoxes, Features, unmatched_tracker_idxes,
-                                        unmatched_bbox_idxes, "BBox_IoUDistance", MAX_DISTANCE_IOU);
+  MatchResult match_result_bbox =
+      match(BBoxes, Features, unmatched_tracker_idxes, unmatched_bbox_idxes, "BBox_IoUDistance",
+            conf.max_distance_iou);
 
   LOGI("BBOX (IoU) Match Result:\n");
   ss_LOG_.str("");
   ss_LOG_ << get_INFO_Match_Pair(match_result_bbox.matched_pairs, tracker_ids, 3) << std::endl;
   LOGI("%s", ss_LOG_.str().c_str());
 
+  /* Match remain trackers */
   matched_pairs.insert(matched_pairs.end(), match_result_bbox.matched_pairs.begin(),
                        match_result_bbox.matched_pairs.end());
   unmatched_bbox_idxes = match_result_bbox.unmatched_bbox_idxes;
@@ -192,12 +203,14 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
   for (size_t i = 0; i < matched_pairs.size(); i++) {
     int tracker_idx = matched_pairs[i].first;
     int bbox_idx = matched_pairs[i].second;
-    // LOG(INFO) << "update >> tracker idx: " << tracker_idx << ", bbox idx: " << bbox_idx;
-    LOGI("update >> tracker idx: %d, bbox idx: %d", tracker_idx, bbox_idx);
+    // LOGI("update >> tracker idx: %d, bbox idx: %d", tracker_idx, bbox_idx);
     KalmanTracker &tracker_ = k_trackers[tracker_idx];
     const BBOX &bbox_ = BBoxes[bbox_idx];
     const FEATURE &feature_ = Features[bbox_idx];
-    kf_.update(tracker_.kalman_state_, tracker_.x_, tracker_.P_, bbox_tlwh2xyah(bbox_));
+    // kf_.update(tracker_.kalman_state_, tracker_.x_, tracker_.P_,
+    // bbox_tlwh2xyah(bbox_));
+    kf_.update(tracker_.kalman_state_, tracker_.x_, tracker_.P_, bbox_tlwh2xyah(bbox_),
+               conf.kfilter_conf);
     tracker_.update_bbox(bbox_);
     tracker_.update_feature(feature_);
     tracker_.update_state(true);
@@ -209,7 +222,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
   LOGI("Update the kalman trackers (Unmatched)");
   for (size_t i = 0; i < unmatched_tracker_idxes.size(); i++) {
     int tracker_idx = unmatched_tracker_idxes[i];
-    LOGI("update >> tracker idx: %d", tracker_idx);
+    // LOGI("update >> tracker idx: %d", tracker_idx);
     KalmanTracker &tracker_ = k_trackers[tracker_idx];
     tracker_.update_state(false);
   }
@@ -231,9 +244,8 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
     id_counter += 1;
     const BBOX &bbox_ = BBoxes[bbox_idx];
     const FEATURE &feature_ = Features[bbox_idx];
-    LOGI("create >> id: %" PRIu64 ", bbox: [%f,%f,%f,%f]", id_counter, bbox_(0, 0), bbox_(0, 1),
-         bbox_(0, 2), bbox_(0, 3));
-    KalmanTracker tracker_(id_counter, bbox_, feature_);
+    // KalmanTracker tracker_(id_counter, bbox_, feature_);
+    KalmanTracker tracker_(id_counter, bbox_, feature_, conf.ktracker_conf);
     k_trackers.push_back(tracker_);
     result_[bbox_idx] =
         std::make_tuple(false, tracker_.id, tracker_.tracker_state_, tracker_.getBBox_TLWH());
@@ -252,8 +264,6 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
       assert(0);
     }
   }
-
-  // show_INFO_KalmanTrackers();
 
   return result_;
 }
@@ -276,8 +286,11 @@ MatchResult Deepsort::match(const std::vector<BBOX> &BBoxes, const std::vector<F
     LOGI("Feature Cost Matrix (Consine Distance)");
     // std::cout << cost_matrix << std::endl;
     float gate_value = max_distance;
-    gateCostMatrix_Mahalanobis(cost_matrix, kf_, k_trackers, BBoxes, Tracker_IDXes, BBox_IDXes,
-                               gate_value);
+    // KalmanTracker::gateCostMatrix_Mahalanobis(cost_matrix, kf_, k_trackers,
+    //                                           BBoxes, Tracker_IDXes, BBox_IDXes,
+    //                                           gate_value);
+    KalmanTracker::gateCostMatrix_Mahalanobis(cost_matrix, kf_, k_trackers, BBoxes, Tracker_IDXes,
+                                              BBox_IDXes, conf.kfilter_conf, gate_value);
     LOGI("Cost Matrix (before Munkres)");
     // std::cout << cost_matrix << std::endl;
 
@@ -333,30 +346,86 @@ MatchResult Deepsort::match(const std::vector<BBOX> &BBoxes, const std::vector<F
   return result_;
 }
 
-float chi2inv95[10] = {0, 3.8415, 5.9915, 7.8147, 9.4877, 11.070, 12.592, 14.067, 15.507, 16.919};
-void Deepsort::gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
-                                          const std::vector<KalmanTracker> &K_Trackers,
-                                          const std::vector<BBOX> &BBoxes,
-                                          const std::vector<int> &Tracker_IDXes,
-                                          const std::vector<int> &BBox_IDXes, float gate_value) {
-  float chi2_threshold = chi2inv95[4];
-  BBOXES measurement_bboxes(BBox_IDXes.size(), 4);
-  // BBOXES measurement_bboxes(BBox_IDXes.size());
-  for (size_t i = 0; i < BBox_IDXes.size(); i++) {
-    int bbox_idx = BBox_IDXes[i];
-    measurement_bboxes.row(i) = bbox_tlwh2xyah(BBoxes[bbox_idx]);
-  }
-  for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
-    int tracker_idx = Tracker_IDXes[i];
-    const KalmanTracker &tracker_ = K_Trackers[tracker_idx];
-    ROW_VECTOR maha2_d =
-        KF_.mahalanobis(tracker_.kalman_state_, tracker_.x_, tracker_.P_, measurement_bboxes);
-    for (int j = 0; j < maha2_d.cols(); j++) {
-      if (maha2_d(0, j) > chi2_threshold) {
-        cost_matrix(i, j) = gate_value;
-      }
-    }
-  }
+void Deepsort::setConfig(cvai_deepsort_config_t ds_conf) {
+  memcpy(&conf, &ds_conf, sizeof(cvai_deepsort_config_t));
+  show_deepsort_config(conf);
+}
+
+cvai_deepsort_config_t Deepsort::get_DefaultConfig() {
+  cvai_deepsort_config_t conf;
+  conf.max_distance_consine = 0.05;
+  conf.max_distance_iou = 0.7;
+  conf.max_unmatched_times_for_bbox_matching = 2;
+
+  conf.ktracker_conf.accreditation_threshold = 3;
+  conf.ktracker_conf.feature_budget_size = 8;
+  conf.ktracker_conf.feature_update_interval = 1;
+  conf.ktracker_conf.max_unmatched_num = 40;
+
+  conf.ktracker_conf.P_std_alpha[0] = 2 * 1 / 20.0;
+  conf.ktracker_conf.P_std_alpha[1] = 2 * 1 / 20.0;
+  conf.ktracker_conf.P_std_alpha[2] = 0.0;
+  conf.ktracker_conf.P_std_alpha[3] = 2 * 1.0 / 20.0;
+  conf.ktracker_conf.P_std_alpha[4] = 10 * 1.0 / 160.0;
+  conf.ktracker_conf.P_std_alpha[5] = 10 * 1.0 / 160.0;
+  conf.ktracker_conf.P_std_alpha[6] = 0.0;
+  conf.ktracker_conf.P_std_alpha[7] = 10 * 1.0 / 160.0;
+  conf.ktracker_conf.P_std_x_idx[0] = 3;
+  conf.ktracker_conf.P_std_x_idx[1] = 3;
+  conf.ktracker_conf.P_std_x_idx[2] = -1;
+  conf.ktracker_conf.P_std_x_idx[3] = 3;
+  conf.ktracker_conf.P_std_x_idx[4] = 3;
+  conf.ktracker_conf.P_std_x_idx[5] = 3;
+  conf.ktracker_conf.P_std_x_idx[6] = -1;
+  conf.ktracker_conf.P_std_x_idx[7] = 3;
+  conf.ktracker_conf.P_std_beta[0] = 0.0;
+  conf.ktracker_conf.P_std_beta[1] = 0.0;
+  conf.ktracker_conf.P_std_beta[2] = 0.25;
+  conf.ktracker_conf.P_std_beta[3] = 0.0;
+  conf.ktracker_conf.P_std_beta[4] = 0.0;
+  conf.ktracker_conf.P_std_beta[5] = 0.0;
+  conf.ktracker_conf.P_std_beta[6] = 0.1;
+  conf.ktracker_conf.P_std_beta[7] = 0.0;
+
+  conf.kfilter_conf.Q_std_alpha[0] = 1 / 20.0;
+  conf.kfilter_conf.Q_std_alpha[1] = 1 / 20.0;
+  conf.kfilter_conf.Q_std_alpha[2] = 0.0;
+  conf.kfilter_conf.Q_std_alpha[3] = 1 / 20.0;
+  conf.kfilter_conf.Q_std_alpha[4] = 1 / 160.0;
+  conf.kfilter_conf.Q_std_alpha[5] = 1 / 160.0;
+  conf.kfilter_conf.Q_std_alpha[6] = 0.0;
+  conf.kfilter_conf.Q_std_alpha[7] = 1 / 160.0;
+  conf.kfilter_conf.Q_std_x_idx[0] = 3;
+  conf.kfilter_conf.Q_std_x_idx[1] = 3;
+  conf.kfilter_conf.Q_std_x_idx[2] = -1;
+  conf.kfilter_conf.Q_std_x_idx[3] = 3;
+  conf.kfilter_conf.Q_std_x_idx[4] = 3;
+  conf.kfilter_conf.Q_std_x_idx[5] = 3;
+  conf.kfilter_conf.Q_std_x_idx[6] = -1;
+  conf.kfilter_conf.Q_std_x_idx[7] = 3;
+  conf.kfilter_conf.Q_std_beta[0] = 0.0;
+  conf.kfilter_conf.Q_std_beta[1] = 0.0;
+  conf.kfilter_conf.Q_std_beta[2] = 0.25;
+  conf.kfilter_conf.Q_std_beta[3] = 0.0;
+  conf.kfilter_conf.Q_std_beta[4] = 0.0;
+  conf.kfilter_conf.Q_std_beta[5] = 0.0;
+  conf.kfilter_conf.Q_std_beta[6] = 0.1;
+  conf.kfilter_conf.Q_std_beta[7] = 0.0;
+
+  conf.kfilter_conf.R_std_alpha[0] = 1 / 20.0;
+  conf.kfilter_conf.R_std_alpha[1] = 1 / 20.0;
+  conf.kfilter_conf.R_std_alpha[2] = 0.0;
+  conf.kfilter_conf.R_std_alpha[3] = 2 * 1 / 20.0;
+  conf.kfilter_conf.R_std_x_idx[0] = 3;
+  conf.kfilter_conf.R_std_x_idx[1] = 3;
+  conf.kfilter_conf.R_std_x_idx[2] = -1;
+  conf.kfilter_conf.R_std_x_idx[3] = 3;
+  conf.kfilter_conf.R_std_beta[0] = 0.0;
+  conf.kfilter_conf.R_std_beta[1] = 0.0;
+  conf.kfilter_conf.R_std_beta[2] = 0.25;
+  conf.kfilter_conf.R_std_beta[3] = 0.0;
+
+  return conf;
 }
 
 /* DEBUG CODE*/
@@ -398,4 +467,74 @@ bool Deepsort::get_Tracker_ByID(uint64_t id, KalmanTracker &tracker) const {
     }
   }
   return false;
+}
+
+static void show_deepsort_config(cvai_deepsort_config_t &ds_conf) {
+  std::cout << "[Deepsort] Max Distance Consine : " << ds_conf.max_distance_consine << std::endl;
+  std::cout << "[Deepsort] Max Distance IoU     : " << ds_conf.max_distance_iou << std::endl;
+  std::cout << "[Deepsort] Max Unmatched Times for BBox Matching : "
+            << ds_conf.max_unmatched_times_for_bbox_matching << std::endl;
+  std::cout << "[Kalman Tracker] Max Unmatched Num       : "
+            << ds_conf.ktracker_conf.max_unmatched_num << std::endl;
+  std::cout << "[Kalman Tracker] Accreditation Threshold : "
+            << ds_conf.ktracker_conf.accreditation_threshold << std::endl;
+  std::cout << "[Kalman Tracker] Feature Budget Size     : "
+            << ds_conf.ktracker_conf.feature_budget_size << std::endl;
+  std::cout << "[Kalman Tracker] Feature Update Interval : "
+            << ds_conf.ktracker_conf.feature_update_interval << std::endl;
+  std::cout << "[Kalman Tracker] P-alpha : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.ktracker_conf.P_std_alpha[0];
+  for (int i = 1; i < 8; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_std_alpha[i];
+  }
+  std::cout << std::endl;
+  std::cout << "[Kalman Tracker] P-beta : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.ktracker_conf.P_std_beta[0];
+  for (int i = 1; i < 8; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_std_beta[i];
+  }
+  std::cout << std::endl;
+  std::cout << "[Kalman Tracker] P-x_idx : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.ktracker_conf.P_std_x_idx[0];
+  for (int i = 1; i < 8; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_std_x_idx[i];
+  }
+  std::cout << std::endl;
+
+  std::cout << "[Kalman Filter] Q-alpha : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.kfilter_conf.Q_std_alpha[0];
+  for (int i = 1; i < 8; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_std_alpha[i];
+  }
+  std::cout << std::endl;
+  std::cout << "[Kalman Filter] Q-beta : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.kfilter_conf.Q_std_beta[0];
+  for (int i = 1; i < 8; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_std_beta[i];
+  }
+  std::cout << std::endl;
+  std::cout << "[Kalman Filter] Q-x_idx : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.kfilter_conf.Q_std_x_idx[0];
+  for (int i = 1; i < 8; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_std_x_idx[i];
+  }
+  std::cout << std::endl;
+  std::cout << "[Kalman Filter] R-alpha : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.kfilter_conf.R_std_alpha[0];
+  for (int i = 1; i < 4; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_std_alpha[i];
+  }
+  std::cout << std::endl;
+  std::cout << "[Kalman Filter] R-beta : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.kfilter_conf.R_std_beta[0];
+  for (int i = 1; i < 4; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_std_beta[i];
+  }
+  std::cout << std::endl;
+  std::cout << "[Kalman Filter] R-x_idx : " << std::endl;
+  std::cout << std::setw(6) << ds_conf.kfilter_conf.R_std_x_idx[0];
+  for (int i = 1; i < 4; i++) {
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_std_x_idx[i];
+  }
+  std::cout << std::endl;
 }

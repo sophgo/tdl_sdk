@@ -468,3 +468,48 @@ int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
   }
   return ctx->td_model->detect(frame, moving_score);
 }
+
+int CVI_AI_Deepsort_Init(const cviai_handle_t handle) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_Init");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Deepsort *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    printf("Init Deepsort Tracker.\n");
+    ctx->ds_tracker = new Deepsort();
+  }
+  return 0;
+}
+
+int CVI_AI_Deepsort_Track(const cviai_handle_t handle, cvai_object_t *obj,
+                          cvai_tracker_t *tracker_t) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_Track");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Deepsort *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize deepsort first.\n");
+    return CVI_FAILURE;
+  }
+  ctx->ds_tracker->track(obj, tracker_t);
+  return 0;
+}
+
+int CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_SetConf");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Deepsort *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize deepsort first.\n");
+    return CVI_FAILURE;
+  }
+  ds_tracker->setConfig(*ds_conf);
+
+  return 0;
+}
+
+int CVI_AI_Deepsort_GetDefaultConfig(cvai_deepsort_config_t *ds_conf) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_GetDefaultConfig");
+  cvai_deepsort_config_t default_conf = Deepsort::get_DefaultConfig();
+  memcpy(ds_conf, &default_conf, sizeof(cvai_deepsort_config_t));
+
+  return 0;
+}

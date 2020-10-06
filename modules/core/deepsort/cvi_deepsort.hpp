@@ -9,8 +9,7 @@
 
 #include "core/cviai_core.h"
 
-#define MAX_DISTANCE_IOU (float)0.7
-#define MAX_DISTANCE_CONSINE (float)0.1
+#define USE_COSINE_DISTANCE_FOR_FEATURE true
 
 struct MatchResult {
   std::vector<std::pair<int, int>> matched_pairs;
@@ -21,12 +20,16 @@ struct MatchResult {
 class Deepsort {
  public:
   Deepsort();
-  Deepsort(int feature_size);
+  Deepsort(cvai_deepsort_config_t ds_conf);
+
+  static cvai_deepsort_config_t get_DefaultConfig();
 
   std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> track(
       const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features);
 
   int track(cvai_object_t *obj, cvai_tracker_t *tracker_t);
+
+  void setConfig(cvai_deepsort_config_t ds_conf);
 
   /* DEBUG CODE */
   void show_INFO_KalmanTrackers();
@@ -35,11 +38,13 @@ class Deepsort {
 
  private:
   uint64_t id_counter;
-  // uint32_t feature_size;
   std::vector<KalmanTracker> k_trackers;
   KalmanFilter kf_;
   std::vector<int> accreditation_tracker_idxes;
   std::vector<int> probation_tracker_idxes;
+
+  /* deepsort config */
+  cvai_deepsort_config_t conf;
 
   MatchResult match(const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features,
                     const std::vector<int> &Tracker_IDXes, const std::vector<int> &BBox_IDXes,
@@ -47,13 +52,6 @@ class Deepsort {
                     float max_distance = __FLT_MAX__);
   void compute_distance();
   void solve_assignment();
-
-  static void gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
-                                         const std::vector<KalmanTracker> &K_Trackers,
-                                         const std::vector<BBOX> &BBoxes,
-                                         const std::vector<int> &Tracker_IDXes,
-                                         const std::vector<int> &BBox_IDXes,
-                                         float gate_value = __FLT_MAX__);
 };
 
 #endif /* _CVI_DEEPSORT_HPP_*/

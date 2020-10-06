@@ -3,7 +3,7 @@
 
 #include <Eigen/Eigen>
 #include <vector>
-// #include "core/deepsort/cvai_deepsort_types.h"
+#include "core/deepsort/cvai_deepsort_types.h"
 
 typedef Eigen::Matrix<float, 1, 4> BBOX;
 typedef Eigen::Matrix<float, -1, 4> BBOXES;

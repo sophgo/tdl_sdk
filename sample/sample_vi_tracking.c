@@ -165,6 +165,14 @@ int main(int argc, char *argv[]) {
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
 
+  // Init Deepsort
+  CVI_AI_Deepsort_Init(facelib_handle);
+  cvai_deepsort_config_t ds_conf;
+  CVI_AI_Deepsort_GetDefaultConfig(&ds_conf);
+  ds_conf.max_distance_iou = 0.8;
+  ds_conf.ktracker_conf.feature_budget_size = 10;
+  CVI_AI_Deepsort_SetConfig(facelib_handle, &ds_conf);
+
   // Create intersect area
   printf("Creating line intersect.\n");
   cvai_pts_t pts;
@@ -196,7 +204,7 @@ int main(int argc, char *argv[]) {
     // Step 2. Object feature generator.
     CVI_AI_OSNet(facelib_handle, &stFrame, &obj_meta);
     // Step 3. Tracker.
-    CVI_AI_Deepsort(facelib_handle, &obj_meta, &tracker_meta);
+    CVI_AI_Deepsort_Track(facelib_handle, &obj_meta, &tracker_meta);
     // Step 4. Detect intersection.
     CVI_AI_OBJService_DetectIntersect(obj_handle, &stFrame, &obj_meta, &status);
     // Step 5. printf results.

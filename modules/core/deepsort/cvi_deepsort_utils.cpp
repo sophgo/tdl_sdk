@@ -4,8 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "cviai_log.hpp"
-
 BBOX bbox_tlwh2tlbr(const BBOX &bbox_tlwh) {
   BBOX bbox_tlbr;
   bbox_tlbr(0) = bbox_tlwh(0);
@@ -81,7 +79,6 @@ int size_of_feature_type(feature_type_e type) {
     case feature_type_e::TYPE_UINT8:
       return 1;
     default:
-      LOGE("Feature Type Error.\n");
       assert(0);
       return -1;
   }
