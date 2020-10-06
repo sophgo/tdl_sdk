@@ -15,7 +15,8 @@ set(MIDDLEWARE_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include/
 )
 
-set(MIDDLEWARE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libini.so
+set(MIDDLEWARE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libcvitracer.so
+                    ${MIDDLEWARE_SDK_ROOT}/lib/libini.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so)
 
