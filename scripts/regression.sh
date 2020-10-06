@@ -30,3 +30,5 @@ run reg_thermal /mnt/data/cvimodel/thermalfd-v1_resnet18-bifpn-sh.cvimodel /mnt/
 run reg_rgbir_liveness /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/liveness_batch9.cvimodel /mnt/data/face_spoof_RGBIR/ /mnt/data/face_spoof_RGBIR/list_wo_backlight.txt /mnt/data/rgbir_liveness_result.txt
 run reg_mask_fr /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/masked_fr_r50.cvimodel /mnt/data/mask_fr_images/images /mnt/data/mask_fr_images/pair_list.txt /mnt/data/mask_fr_result.txt
 run reg_reid /mnt/data/cvimodel/reid_mobilenetv2_x1_0.cvimodel /mnt/data/Market-1501-v15.09.15/
+run reg_face_align /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/WFLW/test_data
+

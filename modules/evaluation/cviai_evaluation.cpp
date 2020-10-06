@@ -3,6 +3,7 @@
 #include "coco/coco.hpp"
 #include "lfw/lfw.hpp"
 #include "market1501/market1501.hpp"
+#include "wflw/wflw.hpp"
 #include "wider_face/wider_face.hpp"
 
 typedef struct {
@@ -10,6 +11,7 @@ typedef struct {
   cviai::evaluation::market1501Eval *market1501_eval = nullptr;
   cviai::evaluation::lfwEval *lfw_eval = nullptr;
   cviai::evaluation::widerFaceEval *widerface_eval = nullptr;
+  cviai::evaluation::wflwEval *wflw_eval = nullptr;
 } cviai_eval_context_t;
 
 CVI_S32 CVI_AI_Eval_CreateHandle(cviai_eval_handle_t *handle) {
@@ -277,5 +279,53 @@ CVI_S32 CVI_AI_Eval_Market1501EvalCMC(cviai_eval_handle_t handle) {
     return CVI_FAILURE;
   }
   ctx->market1501_eval->evalCMC();
+  return CVI_SUCCESS;
+}
+
+/****************************************************************
+ * WLFW evaluation functions
+ **/
+CVI_S32 CVI_AI_Eval_WflwInit(cviai_eval_handle_t handle, const char *filepath, uint32_t *imageNum) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->wflw_eval == nullptr) {
+    ctx->wflw_eval = new cviai::evaluation::wflwEval(filepath);
+  } else {
+    ctx->wflw_eval->getEvalData(filepath);
+  }
+  *imageNum = ctx->wflw_eval->getTotalImage();
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_WflwGetImage(cviai_eval_handle_t handle, const uint32_t index,
+                                 char **fileName) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->wflw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  std::string filestr;
+  ctx->wflw_eval->getImage(index, &filestr);
+  auto stringlength = strlen(filestr.c_str()) + 1;
+  *fileName = (char *)malloc(stringlength);
+  strncpy(*fileName, filestr.c_str(), stringlength);
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_WflwInsertPoints(cviai_eval_handle_t handle, const int index,
+                                     const cvai_pts_t points, const int width, const int height) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->wflw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->wflw_eval->insertPoints(index, points, width, height);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_WflwDistance(cviai_eval_handle_t handle) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->wflw_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->wflw_eval->distance();
   return CVI_SUCCESS;
 }

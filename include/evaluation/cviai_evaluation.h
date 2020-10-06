@@ -80,6 +80,15 @@ CVI_S32 CVI_AI_Eval_Market1501InsertFeature(cviai_eval_handle_t handle, const in
                                             bool is_query, const cvai_feature_t *feature);
 CVI_S32 CVI_AI_Eval_Market1501EvalCMC(cviai_eval_handle_t handle);
 
+/****************************************************************
+ * WLFW evaluation functions
+ **/
+CVI_S32 CVI_AI_Eval_WflwInit(cviai_eval_handle_t handle, const char *filepath, uint32_t *imageNum);
+CVI_S32 CVI_AI_Eval_WflwGetImage(cviai_eval_handle_t handle, const uint32_t index, char **fileName);
+CVI_S32 CVI_AI_Eval_WflwInsertPoints(cviai_eval_handle_t handle, const int index,
+                                     const cvai_pts_t points, const int width, const int height);
+CVI_S32 CVI_AI_Eval_WflwDistance(cviai_eval_handle_t handle);
+
 #ifdef __cplusplus
 }
 #endif
