@@ -40,3 +40,29 @@ inline cviai::VpssEngine *CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t i
   }
   return ctx->vec_vpss_engine[index];
 }
+
+inline int CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId,
+                                      uint32_t *vpss_thread,
+                                      std::vector<cviai::VpssEngine *> *vec_engine) {
+  *vpss_thread = thread;
+  if (thread >= vec_engine->size()) {
+    auto inst = new cviai::VpssEngine();
+    if (inst->init(vpssGroupId) != CVI_SUCCESS) {
+      LOGE("Vpss init failed\n");
+      delete inst;
+      return CVI_FAILURE;
+    }
+
+    vec_engine->push_back(inst);
+    if (thread != vec_engine->size() - 1) {
+      LOGW(
+          "Thread %u is not in use, thus %u is changed to %u automatically. Used vpss group id is "
+          "%u.\n",
+          *vpss_thread, thread, *vpss_thread, inst->getGrpId());
+      *vpss_thread = vec_engine->size() - 1;
+    }
+  } else {
+    LOGW("Thread %u already exists, given group id %u will not be used.\n", thread, vpssGroupId);
+  }
+  return CVI_SUCCESS;
+}

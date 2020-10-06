@@ -1,10 +1,40 @@
 #include "core/cviai_utils.h"
+#include "cviai_core_internal.hpp"
 
 #include "core/cviai_core.h"
 #include "core/cviai_types_mem_internal.h"
+#include "core/utils/vpss_helper.h"
 #include "utils/core_utils.hpp"
 
 #include <string.h>
+
+int CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
+                           VIDEO_FRAME_INFO_S *output, const float quantized_factor,
+                           const float quantized_mean, const uint32_t thread) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  uint32_t vpss_thread;
+  if (int ret = CVI_AI_AddVpssEngineThread(thread, -1, &vpss_thread, &ctx->vec_vpss_engine) !=
+                CVI_SUCCESS) {
+    return ret;
+  }
+  const float factor[] = {quantized_factor, quantized_factor, quantized_factor};
+  const float mean[] = {quantized_mean, quantized_mean, quantized_mean};
+  VPSS_CHN_ATTR_S chn_attr;
+  VPSS_CHN_SQ_HELPER(&chn_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                     frame->stVFrame.enPixelFormat, factor, mean, false);
+  auto &vpss_inst = ctx->vec_vpss_engine[vpss_thread];
+  vpss_inst->sendFrame(frame, &chn_attr, 1);
+  vpss_inst->getFrame(output, 0);
+  return CVI_SUCCESS;
+}
+
+int CVI_AI_SQPreprocess(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
+                        VIDEO_FRAME_INFO_S *output, const float factor, const float mean,
+                        const float quantize_threshold, const uint32_t thread) {
+  float quantized_factor = factor * 128 / quantize_threshold;
+  float quantized_mean = (-1) * mean * 128 / quantize_threshold;
+  return CVI_AI_SQPreprocessRaw(handle, frame, output, quantized_factor, quantized_mean, thread);
+}
 
 template <typename FACE>
 inline void __attribute__((always_inline)) CVI_AI_InfoCopyToNew(

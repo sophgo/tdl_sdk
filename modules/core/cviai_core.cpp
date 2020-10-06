@@ -141,25 +141,10 @@ int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
 int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                           const uint32_t thread, const VPSS_GRP vpssGroupId) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  uint32_t vpss_thread = thread;
-  if (thread >= ctx->vec_vpss_engine.size()) {
-    auto inst = new VpssEngine();
-    if (inst->init(vpssGroupId) != CVI_SUCCESS) {
-      LOGE("Vpss init failed\n");
-      delete inst;
-      return CVI_FAILURE;
-    }
-
-    ctx->vec_vpss_engine.push_back(inst);
-    if (thread != ctx->vec_vpss_engine.size() - 1) {
-      LOGW(
-          "Thread %u is not in use, thus %u is changed to %u automatically. Used vpss group id is "
-          "%u.\n",
-          vpss_thread, thread, vpss_thread, inst->getGrpId());
-      vpss_thread = ctx->vec_vpss_engine.size() - 1;
-    }
-  } else {
-    LOGW("Thread %u already exists, given group id %u will not be used.\n", thread, vpssGroupId);
+  uint32_t vpss_thread;
+  if (int ret = CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread,
+                                           &ctx->vec_vpss_engine) != CVI_SUCCESS) {
+    return ret;
   }
   auto &m_t = ctx->model_cont[config];
   m_t.vpss_thread = vpss_thread;
