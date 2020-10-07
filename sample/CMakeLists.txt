@@ -48,13 +48,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_jpeg.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libtinyalsa.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_AEC.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libaec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcvi_RES.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so)
 
 set(AUDIO_SAMPLE_LIBS
