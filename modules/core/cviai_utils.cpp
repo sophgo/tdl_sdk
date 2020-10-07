@@ -36,6 +36,16 @@ int CVI_AI_SQPreprocess(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
   return CVI_AI_SQPreprocessRaw(handle, frame, output, quantized_factor, quantized_mean, thread);
 }
 
+int CVI_AI_Dequantize(const int8_t *quantizedData, float *data, const uint32_t bufferSize,
+                      const float dequantizeThreshold) {
+  cviai::Dequantize(quantizedData, data, dequantizeThreshold, bufferSize);
+  return CVI_SUCCESS;
+}
+int CVI_AI_SoftMax(const float *inputBuffer, float *outputBuffer, const uint32_t bufferSize) {
+  cviai::SoftMaxForBuffer(inputBuffer, outputBuffer, bufferSize);
+  return CVI_SUCCESS;
+}
+
 template <typename FACE>
 inline void __attribute__((always_inline)) CVI_AI_InfoCopyToNew(
     const FACE *info, FACE *infoNew,

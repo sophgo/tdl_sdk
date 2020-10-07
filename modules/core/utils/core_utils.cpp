@@ -5,7 +5,7 @@
 #include <algorithm>
 
 namespace cviai {
-void SoftMaxForBuffer(float *src, float *dst, size_t size) {
+void SoftMaxForBuffer(const float *src, float *dst, size_t size) {
   float sum = 0;
 
   const float max = *std::max_element(src, src + size);

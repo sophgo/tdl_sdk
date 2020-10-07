@@ -44,6 +44,28 @@ int CVI_AI_SQPreprocess(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
                         const float quantize_threshold, const uint32_t thread);
 
 /**
+ * @brief Dequantize an int8_t output result from NN.
+ *
+ * @param quantizedData Input quantized data.
+ * @param data Output float data.
+ * @param bufferSize Size of the buffer.
+ * @param dequantizeThreshold Dequantize threshold.
+ * @return int Return CVI_SUCCESS on success.
+ */
+int CVI_AI_Dequantize(const int8_t *quantizedData, float *data, const uint32_t bufferSize,
+                      const float dequantizeThreshold);
+
+/**
+ * @brief Do softmax on buffer.
+ *
+ * @param inputBuffer Input float buffer.
+ * @param outputBuffer Output result.
+ * @param bufferSize Size of the buffer.
+ * @return int Return CVI_SUCCESS on success.
+ */
+int CVI_AI_SoftMax(const float *inputBuffer, float *outputBuffer, const uint32_t bufferSize);
+
+/**
  * @brief Do non maximum suppression on cvai_face_t.
  *
  * @param face Input cvai_face_t.
