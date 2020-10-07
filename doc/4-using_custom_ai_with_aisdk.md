@@ -1,4 +1,6 @@
-# Using Service with Custom AI
+# Using Custom AI with AI SDK
+
+To use your custom AI with AI SDK, you need to know how AI SDK fills the result into structures. If you follow the format of the SDK, you'll be able to use your custom AI with the other modules in AI SDK.
 
 ## Putting Results into AI Structures
 
@@ -166,15 +168,4 @@ To free the structure, just simply call ``CVI_AI_Free``. It supports the followi
            cvai_face_t*: CVI_AI_FreeFace,              \
            cvai_object_info_t*: CVI_AI_FreeObjectInfo, \
            cvai_object_t*: CVI_AI_FreeObject)(X)
-```
-
-## Using with Service
-
-If you follow the format above, you'll be able to put your structure directly into any service function. For example, you can call ``DrawRect`` after your own face detection.
-
-```c
-cvai_face_t faceMeta;
-YOUR_OWN_FACE_DETECTION(frame, &faceMeta);
-CVI_AI_FRService_DrawRect(&faceMeta, frame);
-// ... Output result to screen ...
 ```
