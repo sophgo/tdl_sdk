@@ -7,3 +7,4 @@ install*
 *~
 .vscode/
 prebuilt
+doxygen/latex
