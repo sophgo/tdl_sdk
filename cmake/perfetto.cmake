@@ -1,9 +1,11 @@
-project(perfetto)
-set (PERFETTO_GNUCXX_MINIMUM_VERSION "7.0")
-if (${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER_EQUAL ${PERFETTO_GNUCXX_MINIMUM_VERSION})
-  add_library(${PROJECT_NAME} STATIC ${CMAKE_SOURCE_DIR}/3rdparty/perfetto/perfetto.cc)
-  # install(FILES ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
-  set(PERFETTO_LIBS ${PROJECT_NAME})
-else()
-  set(PERFETTO_LIBS)
-endif()
+include(FetchContent)
+FetchContent_Declare(
+  cvi_perfetto
+  GIT_REPOSITORY http://10.58.65.3:8480/yangwen.huang/cvi_perfetto.git
+  GIT_TAG        origin/master
+)
+
+FetchContent_MakeAvailable(cvi_perfetto)
+message("Content downloaded to ${cvi_perfetto_SOURCE_DIR}")
+add_subdirectory(${cvi_perfetto_SOURCE_DIR}/sdk)
+include_directories(${cvi_perfetto_SOURCE_DIR}/sdk)

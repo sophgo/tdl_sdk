@@ -16,21 +16,6 @@ if(NOT DEFINED TOOLCHAIN_ROOT_DIR)
   message(FATAL_ERROR "TOOLCHAIN_ROOT_DIR is not set. Aborting.")
 endif()
 
-# Check if OpenCV exists.
-include(cmake/opencv.cmake)
-
-# Check if MLIR SDK exists.
-include(cmake/mlir.cmake)
-
-# Check if middleware exists.
-include (cmake/middleware.cmake)
-
-# Check if ive exists.
-include (${IVE_SDK_ROOT}/cmake/ive.cmake)
-
-# Perfetto
-include(cmake/perfetto.cmake)
-
 set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
 set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=c11")
 set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17")
@@ -72,6 +57,20 @@ message("Install dir      ${CMAKE_INSTALL_PREFIX}")
 message("Enable Perfetto  ${ENABLE_PERFETTO}")
 message("==================================================")
 
+# Check if OpenCV exists.
+include(cmake/opencv.cmake)
+
+# Check if MLIR SDK exists.
+include(cmake/mlir.cmake)
+
+# Check if middleware exists.
+include (cmake/middleware.cmake)
+
+# Check if ive exists.
+include (${IVE_SDK_ROOT}/cmake/ive.cmake)
+
+# Perfetto
+include(cmake/perfetto.cmake)
 
 # 3rdpart includes
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty

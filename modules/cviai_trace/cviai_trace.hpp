@@ -1,6 +1,6 @@
 #pragma once
 #if __GNUC__ >= 7
-#include "perfetto/perfetto.h"
+#include "perfetto.h"
 PERFETTO_DEFINE_CATEGORIES(
     perfetto::Category("cviai_core").SetDescription("Events from cviai_core"),
     perfetto::Category("cviai_frservice").SetDescription("Events from cviai_frservice"),
