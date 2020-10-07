@@ -32,6 +32,7 @@ endfunction(buildninstall)
 
 set(SAMPLE_INC
     ${MIDDLEWARE_SDK_ROOT}/include
+    #    ${MIDDLEWARE_SDK_ROOT}/sample/audio/3rdparty/include/
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -47,7 +48,23 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_jpeg.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libtinyalsa.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_AEC.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaec.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcvi_RES.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so)
+
+set(AUDIO_SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libtinyalsa.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_AEC.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaec.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcvi_RES.so)
 
 buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_read_fr INC ${SAMPLE_INC} DEPS cviai_core)
@@ -61,3 +78,4 @@ buildninstall(NAME sample_vi_tracking INC ${SAMPLE_INC} DEPS cviai_core cviai_ob
 
 buildninstall(NAME sample_read_dt INC ${SAMPLE_INC} DEPS cviai_core cviai_frservice)
 buildninstall(NAME sample_read_td INC ${SAMPLE_INC} DEPS cviai_core)
+buildninstall(NAME sample_read_esc INC ${SAMPLE_INC} DEPS cviai_core pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})

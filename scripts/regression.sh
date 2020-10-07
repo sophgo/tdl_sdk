@@ -31,4 +31,4 @@ run reg_rgbir_liveness /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimode
 run reg_mask_fr /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/masked_fr_r50.cvimodel /mnt/data/mask_fr_images/images /mnt/data/mask_fr_images/pair_list.txt /mnt/data/mask_fr_result.txt
 run reg_reid /mnt/data/cvimodel/reid_mobilenetv2_x1_0.cvimodel /mnt/data/Market-1501-v15.09.15/
 run reg_face_align /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/WFLW/test_data
-
+run reg_es_classification /mnt/data/cvimodel/es_classification.cvimodel /mnt/data/ESC50/

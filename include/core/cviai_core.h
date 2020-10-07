@@ -94,6 +94,7 @@ typedef enum {
   CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
   CVI_AI_SUPPORTED_MODEL_YOLOV3,
   CVI_AI_SUPPORTED_MODEL_OSNET,
+  CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION,
   CVI_AI_SUPPORTED_MODEL_END
 } CVI_AI_SUPPORTED_MODEL_E;
 
@@ -517,6 +518,25 @@ int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracke
  */
 int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                            float *moving_score);
+
+/**@}*/
+
+/**
+ * \addtogroup core_audio Audio
+ * \ingroup core_ai
+ */
+/**@{*/
+
+/**
+ * @brief Do Environment sound detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param index The index of environment sound classes.
+ * @return int Return CVI_SUCCESS on success.
+ */
+int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+		            int *index);
 
 /**@}*/
 

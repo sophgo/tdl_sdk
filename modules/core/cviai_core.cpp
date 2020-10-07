@@ -5,6 +5,7 @@
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
 #include "deepsort/cvi_deepsort.hpp"
+#include "es_classification/es_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"
 #include "liveness/liveness.hpp"
@@ -452,4 +453,15 @@ int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
     return 0;
   }
   return ctx->td_model->detect(frame, moving_score);
+}
+int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, int *index) {
+  TRACE_EVENT("cviai_core", "CVI_AI_ESClassification");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  ESClassification *es_classification =
+      getInferenceInstance<ESClassification>(CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, ctx);
+  if (es_classification == nullptr) {
+    LOGE("No instance found for ESClassification.\n");
+    return CVI_FAILURE;
+  }
+  return es_classification->inference(frame, index);
 }
