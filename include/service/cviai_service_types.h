@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 /** @struct cvai_service_feature_array_t
- * @brief Feature array structure used in FR Service
+ *  @brief Feature array structure used in FR Service
  *
  * @var cvai_service_feature_array_t::ptr
  * ptr is the raw 1-D array of the feature array. Format is feature 1, feature 2...

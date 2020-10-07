@@ -146,8 +146,25 @@ int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
 int CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  bool *skip);
 
+/**
+ * @brief Set the threshold of an AI inference.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param threshold Threshold in float, usually a number between 0 and 1.
+ * @return int Return CVI_SUCCESS on success.
+ */
 int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                              float threshold);
+
+/**
+ * @brief Get the threshold of an AI inference.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param threshold Threshold in float.
+ * @return int Return CVI_SUCCESS on success.
+ */
 int CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                              float *threshold);
 /**
@@ -216,7 +233,7 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle);
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
 /**
- * \defgroup Face Detection AI inference.
+ * \defgroup core_fd Face Detection AI inference.
  */
 /**@{*/
 
@@ -245,7 +262,7 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
 /**@}*/
 
 /**
- * \defgroup Face Recognition AI inference.
+ * \defgroup core_fr Face Recognition AI inference.
  */
 /**@{*/
 
@@ -311,7 +328,7 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 /**@}*/
 
 /**
- * \defgroup Face classification AI inference.
+ * \defgroup core_fc Face classification AI inference.
  */
 /**@{*/
 
@@ -354,7 +371,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
 /**@}*/
 
 /**
- * \defgroup Object Detection AI inference.
+ * \defgroup core_od Object Detection AI inference.
  */
 /**@{*/
 
@@ -409,7 +426,7 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
 /**@}*/
 
 /**
- * \defgroup Object Recognition AI inference.
+ * \defgroup core_or Object Recognition AI inference.
  */
 /**@{*/
 
@@ -439,7 +456,7 @@ int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_objec
 /**@}*/
 
 /**
- * \defgroup Tracker.
+ * \defgroup core_tracker Tracker.
  */
 /**@{*/
 
@@ -456,7 +473,7 @@ int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracke
 /**@}*/
 
 /**
- * \defgroup Others.
+ * \defgroup core_others Others.
  */
 /**@{*/
 
