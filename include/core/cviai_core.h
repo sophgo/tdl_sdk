@@ -216,6 +216,40 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle);
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
 /**
+ * \defgroup Face Detection AI inference.
+ */
+/**@{*/
+
+/**
+ * @brief RetinaFace face detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param faces Output detect result. The name, bbox, and face points will be given.
+ * @param face_count Output how many faces are found.
+ * @return int Return CVI_SUCCESS on success.
+ */
+int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
+                      int *face_count);
+
+/**
+ * @brief Detect face with thermal images.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input thermal video frame.
+ * @param faces Output detect result. The bbox will be given.
+ * @return int Return CVI_SUCCESS on success.
+ */
+int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
+
+/**@}*/
+
+/**
+ * \defgroup Face Recognition AI inference.
+ */
+/**@{*/
+
+/**
  * @brief Do face recognition and attribute with bbox info stored in faces.
  *
  * @param handle An AI SDK handle.
@@ -264,28 +298,32 @@ int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
                               cvai_face_t *faces, int face_idx);
 
 /**
- * @brief Yolov3 object detection.
+ * @brief Do face recognition with mask wearing.
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
- * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
+ * @param faces cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                  cvai_obj_det_type_t det_type);
+int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                               cvai_face_t *faces);
+
+/**@}*/
 
 /**
- * @brief RetinaFace face detection.
+ * \defgroup Face classification AI inference.
+ */
+/**@{*/
+
+/**
+ * @brief FaceQuality. Gives a score to present how good the image quality of a face is.
  *
  * @param handle An AI SDK handle.
- * @param frame Input video frame.
- * @param faces Output detect result. The name, bbox, and face points will be given.
- * @param face_count Output how many faces are found.
+ * @param rgbFrame Input video frame.
+ * @param face cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
-                      int *face_count);
+int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
 
 /**
  * @brief Liveness. Gives a score to present how real the face is. The score will be low if the face
@@ -303,16 +341,6 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
                     cvai_liveness_ir_position_e ir_position);
 
 /**
- * @brief FaceQuality. Gives a score to present how good the image quality of a face is.
- *
- * @param handle An AI SDK handle.
- * @param rgbFrame Input video frame.
- * @param face cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
- * @return int Return CVI_SUCCESS on success.
- */
-int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
-
-/**
  * @brief Mask classification. Tells if a face is wearing a mask.
  *
  * @param handle An AI SDK handle.
@@ -323,15 +351,12 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
 int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                               cvai_face_t *face);
 
+/**@}*/
+
 /**
- * @brief Detect face with thermal images.
- *
- * @param handle An AI SDK handle.
- * @param frame Input thermal video frame.
- * @param faces Output detect result. The bbox will be given.
- * @return int Return CVI_SUCCESS on success.
+ * \defgroup Object Detection AI inference.
  */
-int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
+/**@{*/
 
 /**
  * @brief MobileDetV2 D0 object detection, the most lightweight MobileDetV2.
@@ -370,17 +395,23 @@ int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
                           cvai_obj_det_type_t det_type);
 
 /**
- * @brief Do object recognition with bbox info stored in obj. Only do inference on the given index
- * of cvai_object_info_t.
+ * @brief Yolov3 object detection.
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
- * @param faces cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
- * @param face_index The index of cvai_object_info_t inside cvai_object_t.
+ * @param obj Output detect result. The name, bbox, and classes will be given.
+ * @param det_type Specify detection type.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                    int obj_idx);
+int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                  cvai_obj_det_type_t det_type);
+
+/**@}*/
+
+/**
+ * \defgroup Object Recognition AI inference.
+ */
+/**@{*/
 
 /**
  * @brief Do object recognition with bbox info stored in obj.
@@ -393,15 +424,41 @@ int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_objec
 int CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
 
 /**
- * @brief Do face recognition with mask wearing.
+ * @brief Do object recognition with bbox info stored in obj. Only do inference on the given index
+ * of cvai_object_info_t.
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
- * @param faces cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
+ * @param faces cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
+ * @param face_index The index of cvai_object_info_t inside cvai_object_t.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                               cvai_face_t *faces);
+int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                    int obj_idx);
+
+/**@}*/
+
+/**
+ * \defgroup Tracker.
+ */
+/**@{*/
+
+/**
+ * @brief A deepsort tracker.
+ *
+ * @param handle An AI SDK handle.
+ * @param obj Input detected object with feature.
+ * @param tracker_t Output tracker results.
+ * @return int Return CVI_SUCCESS on success.
+ */
+int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t);
+
+/**@}*/
+
+/**
+ * \defgroup Others.
+ */
+/**@{*/
 
 /**
  * @brief Do background subtraction.
@@ -414,15 +471,7 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                            float *moving_score);
 
-/**
- * @brief A deepsort tracker.
- *
- * @param handle An AI SDK handle.
- * @param obj Input detected object with feature.
- * @param tracker_t Output tracker results.
- * @return int Return CVI_SUCCESS on success.
- */
-int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t);
+/**@}*/
 
 #ifdef __cplusplus
 }

@@ -223,6 +223,35 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx,
   return class_inst;
 }
 
+// Face detection
+
+int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
+                      int *face_count) {
+  TRACE_EVENT("cviai_core", "CVI_AI_RetinaFace");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  RetinaFace *retina_face =
+      getInferenceInstance<RetinaFace>(CVI_AI_SUPPORTED_MODEL_RETINAFACE, ctx);
+  if (retina_face == nullptr) {
+    LOGE("No instance found for RetinaFace.\n");
+    return CVI_FAILURE;
+  }
+  return retina_face->inference(frame, faces, face_count);
+}
+
+int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
+  TRACE_EVENT("cviai_core", "CVI_AI_ThermalFace");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  ThermalFace *thermal_face =
+      getInferenceInstance<ThermalFace>(CVI_AI_SUPPORTED_MODEL_THERMALFACE, ctx);
+  if (thermal_face == nullptr) {
+    LOGE("No instance found for ThermalFace.\n");
+    return CVI_FAILURE;
+  }
+  return thermal_face->inference(frame, faces);
+}
+
+// Face recognition
+
 inline int __attribute__((always_inline))
 CVI_AI_FaceAttributeBase(const CVI_AI_SUPPORTED_MODEL_E index, const cviai_handle_t handle,
                          VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces, int face_idx,
@@ -235,20 +264,6 @@ CVI_AI_FaceAttributeBase(const CVI_AI_SUPPORTED_MODEL_E index, const cviai_handl
   }
   face_attr->setWithAttribute(set_attribute);
   return face_attr->inference(frame, faces, face_idx);
-}
-
-int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                           cvai_face_t *faces) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognition");
-  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces, -1,
-                                  false);
-}
-
-int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                              cvai_face_t *faces, int face_idx) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
-  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces,
-                                  face_idx, false);
 }
 
 int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -265,17 +280,76 @@ int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fra
                                   face_idx, true);
 }
 
-int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                  cvai_obj_det_type_t det_type) {
-  TRACE_EVENT("cviai_core", "CVI_AI_Yolov3");
+int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                           cvai_face_t *faces) {
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognition");
+  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces, -1,
+                                  false);
+}
+
+int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_face_t *faces, int face_idx) {
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
+  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces,
+                                  face_idx, false);
+}
+
+int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                               cvai_face_t *faces) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MaskFaceRecognition");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Yolov3 *yolov3 = getInferenceInstance<Yolov3>(CVI_AI_SUPPORTED_MODEL_YOLOV3, ctx);
-  if (yolov3 == nullptr) {
-    LOGE("No instance found for Yolov3.\n");
+  MaskFaceRecognition *mask_face_rec =
+      getInferenceInstance<MaskFaceRecognition>(CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, ctx);
+  if (mask_face_rec == nullptr) {
+    LOGE("No instance found for MaskFaceRecognition.\n");
     return CVI_FAILURE;
   }
-  return yolov3->inference(frame, obj, det_type);
+
+  return mask_face_rec->inference(frame, faces);
 }
+
+// Face classification
+
+int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceQuality");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  FaceQuality *face_quality =
+      getInferenceInstance<FaceQuality>(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx);
+  if (face_quality == nullptr) {
+    LOGE("No instance found for FaceQuality.\n");
+    return CVI_FAILURE;
+  }
+  return face_quality->inference(frame, face);
+}
+
+int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
+                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
+                    cvai_liveness_ir_position_e ir_position) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Liveness");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Liveness *liveness =
+      getInferenceInstance<Liveness>(CVI_AI_SUPPORTED_MODEL_LIVENESS, ctx, ir_position);
+  if (liveness == nullptr) {
+    LOGE("No instance found for Liveness.\n");
+    return CVI_FAILURE;
+  }
+  return liveness->inference(rgbFrame, irFrame, face);
+}
+
+int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_face_t *face) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MaskClassification");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  MaskClassification *mask_classification =
+      getInferenceInstance<MaskClassification>(CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, ctx);
+  if (mask_classification == nullptr) {
+    LOGE("No instance found for MaskClassification.\n");
+    return CVI_FAILURE;
+  }
+  return mask_classification->inference(frame, face);
+}
+
+// Object detection
 
 inline int __attribute__((always_inline))
 MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model model_type,
@@ -311,6 +385,20 @@ int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
                          frame, obj, det_type);
 }
 
+int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                  cvai_obj_det_type_t det_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Yolov3");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Yolov3 *yolov3 = getInferenceInstance<Yolov3>(CVI_AI_SUPPORTED_MODEL_YOLOV3, ctx);
+  if (yolov3 == nullptr) {
+    LOGE("No instance found for Yolov3.\n");
+    return CVI_FAILURE;
+  }
+  return yolov3->inference(frame, obj, det_type);
+}
+
+// Object recognition
+
 inline int __attribute__((always_inline))
 CVI_AI_OSNetBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                  int obj_idx) {
@@ -323,94 +411,32 @@ CVI_AI_OSNetBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_ob
   return osnet->inference(frame, obj, obj_idx);
 }
 
+int CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
+  TRACE_EVENT("cviai_core", "CVI_AI_OSNet");
+  return CVI_AI_OSNetBase(handle, frame, obj, -1);
+}
+
 int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
                     int obj_idx) {
   TRACE_EVENT("cviai_core", "CVI_AI_OSNetOne");
   return CVI_AI_OSNetBase(handle, frame, obj, obj_idx);
 }
 
-int CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
-  TRACE_EVENT("cviai_core", "CVI_AI_OSNet");
-  return CVI_AI_OSNetBase(handle, frame, obj, -1);
-}
+// Tracker
 
-int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
-                      int *face_count) {
-  TRACE_EVENT("cviai_core", "CVI_AI_RetinaFace");
+int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  RetinaFace *retina_face =
-      getInferenceInstance<RetinaFace>(CVI_AI_SUPPORTED_MODEL_RETINAFACE, ctx);
-  if (retina_face == nullptr) {
-    LOGE("No instance found for RetinaFace.\n");
-    return CVI_FAILURE;
+  Deepsort *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    printf("Init Deepsort Tracker.\n");
+    ctx->ds_tracker = new Deepsort();
   }
-  return retina_face->inference(frame, faces, face_count);
+  ctx->ds_tracker->track(obj, tracker_t);
+  return 0;
 }
 
-int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
-                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
-                    cvai_liveness_ir_position_e ir_position) {
-  TRACE_EVENT("cviai_core", "CVI_AI_Liveness");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Liveness *liveness =
-      getInferenceInstance<Liveness>(CVI_AI_SUPPORTED_MODEL_LIVENESS, ctx, ir_position);
-  if (liveness == nullptr) {
-    LOGE("No instance found for Liveness.\n");
-    return CVI_FAILURE;
-  }
-  return liveness->inference(rgbFrame, irFrame, face);
-}
-
-int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceQuality");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  FaceQuality *face_quality =
-      getInferenceInstance<FaceQuality>(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx);
-  if (face_quality == nullptr) {
-    LOGE("No instance found for FaceQuality.\n");
-    return CVI_FAILURE;
-  }
-  return face_quality->inference(frame, face);
-}
-
-int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                              cvai_face_t *face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MaskClassification");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  MaskClassification *mask_classification =
-      getInferenceInstance<MaskClassification>(CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, ctx);
-  if (mask_classification == nullptr) {
-    LOGE("No instance found for MaskClassification.\n");
-    return CVI_FAILURE;
-  }
-  return mask_classification->inference(frame, face);
-}
-
-int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
-  TRACE_EVENT("cviai_core", "CVI_AI_ThermalFace");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  ThermalFace *thermal_face =
-      getInferenceInstance<ThermalFace>(CVI_AI_SUPPORTED_MODEL_THERMALFACE, ctx);
-  if (thermal_face == nullptr) {
-    LOGE("No instance found for ThermalFace.\n");
-    return CVI_FAILURE;
-  }
-  return thermal_face->inference(frame, faces);
-}
-
-int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                               cvai_face_t *faces) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MaskFaceRecognition");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  MaskFaceRecognition *mask_face_rec =
-      getInferenceInstance<MaskFaceRecognition>(CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, ctx);
-  if (mask_face_rec == nullptr) {
-    LOGE("No instance found for MaskFaceRecognition.\n");
-    return CVI_FAILURE;
-  }
-
-  return mask_face_rec->inference(frame, faces);
-}
+// Others
 
 int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                            float *moving_score) {
@@ -426,16 +452,4 @@ int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
     return 0;
   }
   return ctx->td_model->detect(frame, moving_score);
-}
-
-int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t) {
-  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Deepsort *ds_tracker = ctx->ds_tracker;
-  if (ds_tracker == nullptr) {
-    printf("Init Deepsort Tracker.\n");
-    ctx->ds_tracker = new Deepsort();
-  }
-  ctx->ds_tracker->track(obj, tracker_t);
-  return 0;
 }
