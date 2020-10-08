@@ -27,6 +27,7 @@ extern "C" {
  * @ingroup core_cviaifrservice
  *
  * @param handle An FR Service handle.
+ * @param ai_handle A cviai handle.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_handle_t ai_handle);

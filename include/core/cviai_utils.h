@@ -21,8 +21,8 @@ extern "C" {
  * @param handle An AI SDK handle.
  * @param frame Input frame.
  * @param output Output frame.
- * @param factor Quantized factor.
- * @param mean Quantized mean, must be positive.
+ * @param quantized_factor Quantized factor.
+ * @param quantized_mean Quantized mean, must be positive.
  * @param thread Working thread id of vpss thread. A new thread will be created if thread doesn't
  * exist.
  * @return int Return CVI_SUCCESS on success.

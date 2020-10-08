@@ -35,7 +35,7 @@ inline const char* getEmotionString(cvai_face_emotion_e emotion) {
  * @brief Convert cvai_face_gender_e to human readable string.
  * @ingroup core_cviaicore
  *
- * @param emotion Input cvai_face_gender_e enum.
+ * @param gender Input cvai_face_gender_e enum.
  * @return const char* Gender string.
  */
 inline const char* getGenderString(cvai_face_gender_e gender) {
@@ -54,7 +54,7 @@ inline const char* getGenderString(cvai_face_gender_e gender) {
  * @brief Convert cvai_face_race_e to human readable string.
  * @ingroup core_cviaicore
  *
- * @param emotion Input cvai_face_race_e enum.
+ * @param race Input cvai_face_race_e enum.
  * @return const char* Race string.
  */
 inline const char* getRaceString(cvai_face_race_e race) {

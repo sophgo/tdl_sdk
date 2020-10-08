@@ -27,6 +27,7 @@ extern "C" {
  * @ingroup core_cviaiobjservice
  *
  * @param handle An OBJ Service handle.
+ * @param ai_handle A cviai handle.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle, cviai_handle_t ai_handle);
@@ -86,7 +87,7 @@ CVI_S32 CVI_AI_OBJService_RawMatching(cviai_objservice_handle_t handle, const ui
  * @param handle An OBJ Service handle.
  * @param inFrame Input frame.
  * @param meta THe result from face detection.
- * @param object_skip_ratio Skip the objects that are too small comparing to the area of the image.
+ * @param obj_skip_ratio Skip the objects that are too small comparing to the area of the image.
  * Default is 0.05.
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
  * @param outFrame Output result image, will keep aspect ratio.

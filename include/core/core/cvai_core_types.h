@@ -28,6 +28,16 @@ typedef enum {
  * @ingroup core_cviaicore
  * @brief A structure to describe an area in a given image with confidence score.
  *
+ * @var cvai_bbox_t::x1
+ * The left-upper x coordinate.
+ * @var cvai_bbox_t::y1
+ * The left-upper y coordinate.
+ * @var cvai_bbox_t::x2
+ * The right-bottom x coordinate.
+ * @var cvai_bbox_t::y2
+ * The right-bottom y coordinate.
+ * @var cvai_bbox_t::score
+ * The confidence score.
  */
 
 typedef struct {
