@@ -4,16 +4,29 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/**
+ * \defgroup core_cviaicore CVIAI Core Module
+ */
+
+/** @enum feature_type_e
+ * @brief A variable type enum to present the data type stored in cvai_feature_t.
+ * @see cvai_feature_t
+ */
 typedef enum {
-  TYPE_INT8 = 0,
-  TYPE_UINT8,
-  TYPE_INT16,
-  TYPE_UINT16,
-  TYPE_INT32,
-  TYPE_UINT32,
-  TYPE_BF16,
-  TYPE_FLOAT
+  TYPE_INT8 = 0, /**< Equals to int8_t. */
+  TYPE_UINT8,    /**< Equals to uint8_t. */
+  TYPE_INT16,    /**< Equals to int16_t. */
+  TYPE_UINT16,   /**< Equals to uint16_t. */
+  TYPE_INT32,    /**< Equals to int32_t. */
+  TYPE_UINT32,   /**< Equals to uint32_t. */
+  TYPE_BF16,     /**< Equals to bf17. */
+  TYPE_FLOAT     /**< Equals to float. */
 } feature_type_e;
+
+/** @struct cvai_bbox_t
+ * @brief A structure to describe an area in a given image with confidence score.
+ *
+ */
 
 typedef struct {
   float x1;
@@ -23,12 +36,35 @@ typedef struct {
   float score;
 } cvai_bbox_t;
 
+/** @struct cvai_feature_t
+ * @brief A structure to describe feature. Note that the length of the buffer is size *
+ * getFeatureTypeSize(type)
+ *
+ * @var cvai_feature_t::ptr
+ * The raw pointer of a feature. Need to convert to correct type with feature_type_e.
+ * @var cvai_feature_t::size
+ * The buffer size of ptr in unit of type.
+ * @var cvai_feature_t::type
+ * An enum to describe the type of ptr.
+ * @see feature_type_e
+ * @see getFeatureTypeSize()
+ */
 typedef struct {
   int8_t* ptr;
   uint32_t size;
   feature_type_e type;
 } cvai_feature_t;
 
+/** @struct cvai_pts_t
+ * @brief A structure to describe (x, y) array.
+ *
+ * @var cvai_pts_t::x
+ * The raw pointer of the x coordinate.
+ * @var cvai_pts_t::y
+ * The raw pointer of the x coordinate.
+ * @var cvai_pts_t::size
+ * The buffer size of x and y in the unit of float.
+ */
 typedef struct {
   float* x;
   float* y;
@@ -51,6 +87,12 @@ typedef struct {
   cvai_tracker_info_t* info;
 } cvai_tracker_t;
 
+/**
+ * @brief A helper function to get the unit size of feature_type_e.
+ *
+ * @param type Input feature_type_e.
+ * @return const int The unit size of a variable type.
+ */
 inline const int getFeatureTypeSize(feature_type_e type) {
   uint32_t size = 1;
   switch (type) {

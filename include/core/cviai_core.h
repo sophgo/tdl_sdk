@@ -9,30 +9,8 @@
 
 #include <cvi_comm_vb.h>
 #include <cvi_sys.h>
-typedef void *cviai_handle_t;
 
-/**
- * @brief Supported NN model list. Can be used to config function behavior.
- *
- */
-typedef enum {
-  CVI_AI_SUPPORTED_MODEL_RETINAFACE,
-  CVI_AI_SUPPORTED_MODEL_THERMALFACE,
-  CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
-  CVI_AI_SUPPORTED_MODEL_FACERECOGNITION,
-  CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION,
-  CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
-  CVI_AI_SUPPORTED_MODEL_LIVENESS,
-  CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION,
-  CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
-  CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
-  CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
-  CVI_AI_SUPPORTED_MODEL_YOLOV3,
-  CVI_AI_SUPPORTED_MODEL_OSNET,
-  CVI_AI_SUPPORTED_MODEL_END
-} CVI_AI_SUPPORTED_MODEL_E;
-
-/**
+/** @def CVI_AI_Free
  * @brief Free the content inside the structure, not the structure itself.
  *        Support the following structure types written in _Generic.
  *
@@ -53,28 +31,71 @@ typedef enum {
 // clang-format on
 #endif
 
-/**
- * @brief Rescale the output coordinate to original image. Only supports the following modes,
- *        CVI_AI_RescaleBBoxCenter: Padding in four directions.
- *        CVI_AI_RescaleBBoxRB: Padding in right, bottom directions.
- *        Support the following structure types written in _Generic.
+/** @def CVI_AI_RescaleBBoxCenter
+ * @brief Rescale the output coordinate to original image. Padding in four directions. Support the
+ * following structure types written in _Generic.
+ *
+ * @param videoFrame Original input image.
+ * @param X Input data structure.
+ */
+
+/** @def CVI_AI_RescaleBBoxRB
+ * @brief Rescale the output coordinate to original image. Padding in right, bottom directions.
+ * Support the following structure types written in _Generic.
  *
  * @param videoFrame Original input image.
  * @param X Input data structure.
  */
 #ifdef __cplusplus
-#define CVI_AI_RescaleBBoxCenter(videoFrame, X) CVI_AI_RescaleBBoxCenterCpp(videoFrame, X)
-#define CVI_AI_RescaleBBoxRB(videoFrame, X) CVI_AI_RescaleBBoxRBCpp(videoFrame, X)
+#define CVI_AI_RescaleBBoxCenter(videoFrame, X) CVI_AI_RescaleBBoxCenterCpp(videoFrame, X);
+#define CVI_AI_RescaleBBoxRB(videoFrame, X) CVI_AI_RescaleBBoxRBCpp(videoFrame, X);
 #else
 // clang-format off
 #define CVI_AI_RescaleBBoxCenter(videoFrame, X) _Generic((X), \
            cvai_face_t*: CVI_AI_RescaleBBoxCenterFace,        \
-           cvai_object_t*: CVI_AI_RescaleBBoxCenterObj)(videoFrame, X)
+           cvai_object_t*: CVI_AI_RescaleBBoxCenterObj)(videoFrame, X);
 #define CVI_AI_RescaleBBoxRB(videoFrame, X) _Generic((X),     \
            cvai_face_t*: CVI_AI_RescaleBBoxRBFace,            \
-           cvai_object_t*: CVI_AI_RescaleBBoxRBObj)(videoFrame, X)
+           cvai_object_t*: CVI_AI_RescaleBBoxRBObj)(videoFrame, X);
 // clang-format on
 #endif
+
+/** @typedef cviai_handle_t
+ * @brief An cviai handle
+ */
+typedef void *cviai_handle_t;
+
+/**
+ * \addtogroup core_ai AI Inference Functions
+ * \ingroup core_cviaicore
+ */
+
+/**
+ * \addtogroup core_ai_settings AI Inference Setting Functions
+ * \ingroup core_ai
+ */
+/**@{*/
+
+/** @enum CVI_AI_SUPPORTED_MODEL_E
+ * @brief Supported NN model list. Can be used to config function behavior.
+ *
+ */
+typedef enum {
+  CVI_AI_SUPPORTED_MODEL_RETINAFACE,
+  CVI_AI_SUPPORTED_MODEL_THERMALFACE,
+  CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
+  CVI_AI_SUPPORTED_MODEL_FACERECOGNITION,
+  CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION,
+  CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
+  CVI_AI_SUPPORTED_MODEL_LIVENESS,
+  CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION,
+  CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
+  CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
+  CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
+  CVI_AI_SUPPORTED_MODEL_YOLOV3,
+  CVI_AI_SUPPORTED_MODEL_OSNET,
+  CVI_AI_SUPPORTED_MODEL_END
+} CVI_AI_SUPPORTED_MODEL_E;
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,7 +112,7 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle);
  * @brief Create a cviai_handle_t, need to manually assign a vpss group id.
  *
  * @param handle An AI SDK handle.
- * @param vpssGroupdId Assign a group id to cviai_handle_t.
+ * @param vpssGroupId Assign a group id to cviai_handle_t.
  * @return int Return CVI_SUCCESS if succeed.
  */
 int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId);
@@ -158,7 +179,7 @@ int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E con
                              float threshold);
 
 /**
- * @brief Get the threshold of an AI inference.
+ * @brief Get the threshold of an AI Inference
  *
  * @param handle An AI SDK handle.
  * @param config Supported model type config.
@@ -232,8 +253,11 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle);
  */
 int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
+/**@}*/
+
 /**
- * \defgroup core_fd Face Detection AI inference.
+ * \addtogroup core_fd Face Detection AI Inference
+ * \ingroup core_ai
  */
 /**@{*/
 
@@ -262,7 +286,8 @@ int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
 /**@}*/
 
 /**
- * \defgroup core_fr Face Recognition AI inference.
+ * \addtogroup core_fr Face Recognition AI Inference
+ * \ingroup core_ai
  */
 /**@{*/
 
@@ -284,7 +309,7 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param faces cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
- * @param face_index The index of cvai_face_info_t inside cvai_face_t.
+ * @param face_idx The index of cvai_face_info_t inside cvai_face_t.
  * @return int Return CVI_SUCCESS on success.
  */
 int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -308,7 +333,7 @@ int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param faces cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
- * @param face_index The index of cvai_face_info_t inside cvai_face_t.
+ * @param face_idx The index of cvai_face_info_t inside cvai_face_t.
  * @return int Return CVI_SUCCESS on success.
  */
 int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -328,7 +353,8 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 /**@}*/
 
 /**
- * \defgroup core_fc Face classification AI inference.
+ * \addtogroup core_fc Face classification AI Inference
+ * \ingroup core_ai
  */
 /**@{*/
 
@@ -336,7 +362,7 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
  * @brief FaceQuality. Gives a score to present how good the image quality of a face is.
  *
  * @param handle An AI SDK handle.
- * @param rgbFrame Input video frame.
+ * @param frame Input video frame.
  * @param face cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
  * @return int Return CVI_SUCCESS on success.
  */
@@ -361,7 +387,7 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
  * @brief Mask classification. Tells if a face is wearing a mask.
  *
  * @param handle An AI SDK handle.
- * @param rgbFrame Input video frame.
+ * @param frame Input video frame.
  * @param face cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
  * @return int Return CVI_SUCCESS on success.
  */
@@ -371,7 +397,8 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
 /**@}*/
 
 /**
- * \defgroup core_od Object Detection AI inference.
+ * \addtogroup core_od Object Detection AI Inference
+ * \ingroup core_ai
  */
 /**@{*/
 
@@ -426,7 +453,8 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
 /**@}*/
 
 /**
- * \defgroup core_or Object Recognition AI inference.
+ * \addtogroup core_pr Person Re-Id AI Inference
+ * \ingroup core_ai
  */
 /**@{*/
 
@@ -435,7 +463,7 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
- * @param faces cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
+ * @param obj cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
  * @return int Return CVI_SUCCESS on success.
  */
 int CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
@@ -446,8 +474,8 @@ int CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
- * @param faces cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
- * @param face_index The index of cvai_object_info_t inside cvai_object_t.
+ * @param obj cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
+ * @param obj_idx The index of cvai_object_info_t inside cvai_object_t.
  * @return int Return CVI_SUCCESS on success.
  */
 int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
@@ -456,7 +484,8 @@ int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_objec
 /**@}*/
 
 /**
- * \defgroup core_tracker Tracker.
+ * \addtogroup core_tracker Tracker
+ * \ingroup core_ai
  */
 /**@{*/
 
@@ -473,7 +502,8 @@ int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracke
 /**@}*/
 
 /**
- * \defgroup core_others Others.
+ * \addtogroup core_others Others
+ * \ingroup core_ai
  */
 /**@{*/
 
