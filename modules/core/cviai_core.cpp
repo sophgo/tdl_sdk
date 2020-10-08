@@ -423,6 +423,20 @@ int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_objec
   return CVI_AI_OSNetBase(handle, frame, obj, obj_idx);
 }
 
+// Audio AI Inference
+
+int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, int *index) {
+  TRACE_EVENT("cviai_core", "CVI_AI_ESClassification");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  ESClassification *es_classification =
+      getInferenceInstance<ESClassification>(CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, ctx);
+  if (es_classification == nullptr) {
+    LOGE("No instance found for ESClassification.\n");
+    return CVI_FAILURE;
+  }
+  return es_classification->inference(frame, index);
+}
+
 // Tracker
 
 int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t) {
@@ -453,15 +467,4 @@ int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
     return 0;
   }
   return ctx->td_model->detect(frame, moving_score);
-}
-int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, int *index) {
-  TRACE_EVENT("cviai_core", "CVI_AI_ESClassification");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  ESClassification *es_classification =
-      getInferenceInstance<ESClassification>(CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, ctx);
-  if (es_classification == nullptr) {
-    LOGE("No instance found for ESClassification.\n");
-    return CVI_FAILURE;
-  }
-  return es_classification->inference(frame, index);
 }
