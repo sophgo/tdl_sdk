@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     }
     free(filename);
     cvai_object_t obj;
-    cvai_obj_det_type_t det_type = CVI_DET_TYPE_ALL;
+    cvai_obj_det_type_e det_type = CVI_DET_TYPE_ALL;
     CVI_AI_Yolov3(ai_handle, &frame, &obj, det_type);
     for (int j = 0; j < obj.size; j++) {
       obj.info[j].classes = coco_ids[obj.info[j].classes];

@@ -24,7 +24,7 @@
 static volatile bool bExit = false;
 
 typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *,
-                             cvai_obj_det_type_t);
+                             cvai_obj_det_type_e);
 typedef struct _ModelConfig {
   CVI_AI_SUPPORTED_MODEL_E model_id;
   int input_size;

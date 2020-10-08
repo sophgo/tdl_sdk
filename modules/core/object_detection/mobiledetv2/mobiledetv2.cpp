@@ -302,7 +302,7 @@ void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tenso
 }
 
 int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
-                           cvai_obj_det_type_t det_type) {
+                           cvai_obj_det_type_e det_type) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
   int ret = CVI_SUCCESS;

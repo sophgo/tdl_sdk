@@ -417,7 +417,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
  * @return int Return CVI_SUCCESS on success.
  */
 int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type);
+                          cvai_obj_det_type_e det_type);
 
 /**
  * @brief MobileDetV2 D1 object detection, the not so lightweight MobileDetV2.
@@ -429,7 +429,7 @@ int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
  * @return int Return CVI_SUCCESS on success.
  */
 int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type);
+                          cvai_obj_det_type_e det_type);
 
 /**
  * @brief MobileDetV2 D2 object detection, the heaviest MobileDetV2.
@@ -441,7 +441,7 @@ int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
  * @return int Return CVI_SUCCESS on success.
  */
 int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type);
+                          cvai_obj_det_type_e det_type);
 
 /**
  * @brief Yolov3 object detection.
@@ -453,7 +453,7 @@ int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai
  * @return int Return CVI_SUCCESS on success.
  */
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                  cvai_obj_det_type_t det_type);
+                  cvai_obj_det_type_e det_type);
 
 /**@}*/
 

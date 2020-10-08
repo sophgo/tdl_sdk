@@ -355,7 +355,7 @@ int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
 inline int __attribute__((always_inline))
 MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model model_type,
                 cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                cvai_obj_det_type_t det_type) {
+                cvai_obj_det_type_e det_type) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(index, ctx, model_type);
   if (detector == nullptr) {
@@ -366,28 +366,28 @@ MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model m
 }
 
 int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type) {
+                          cvai_obj_det_type_e det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D0");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, MobileDetV2::Model::d0, handle,
                          frame, obj, det_type);
 }
 
 int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type) {
+                          cvai_obj_det_type_e det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D1");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1, MobileDetV2::Model::d1, handle,
                          frame, obj, det_type);
 }
 
 int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type) {
+                          cvai_obj_det_type_e det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2, MobileDetV2::Model::d2, handle,
                          frame, obj, det_type);
 }
 
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                  cvai_obj_det_type_t det_type) {
+                  cvai_obj_det_type_e det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_Yolov3");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Yolov3 *yolov3 = getInferenceInstance<Yolov3>(CVI_AI_SUPPORTED_MODEL_YOLOV3, ctx);

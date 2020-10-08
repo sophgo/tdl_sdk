@@ -165,7 +165,7 @@ int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                          cvai_face_t *faces);
 // Object detection
 int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                  cvai_obj_det_type_t det_type);
+                  cvai_obj_det_type_e det_type);
 ```
 
 Related sample codes: ``sample_read_fr.c``, ``sample_read_fr2``, ``sample_vi_od.c``

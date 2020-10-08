@@ -53,7 +53,7 @@ int Yolov3::initAfterModelOpened() {
 }
 
 int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
-                      cvai_obj_det_type_t det_type) {
+                      cvai_obj_det_type_e det_type) {
   int ret = CVI_SUCCESS;
   ret = run(srcFrame);
 
@@ -63,7 +63,7 @@ int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
 }
 
 void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
-                          cvai_obj_det_type_t det_type) {
+                          cvai_obj_det_type_e det_type) {
   vector<float *> features;
   vector<string> output_name = {YOLOV3_OUTPUT1, YOLOV3_OUTPUT2, YOLOV3_OUTPUT3};
   vector<CVI_SHAPE> output_shape;
@@ -185,7 +185,7 @@ void Yolov3::doYolo(YOLOLayer &l) {
 }
 
 void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w, int ori_h,
-                            vector<object_detect_rect_t> &results, cvai_obj_det_type_t det_type) {
+                            vector<object_detect_rect_t> &results, cvai_obj_det_type_e det_type) {
   for (int i = 0; i < num; ++i) {
     std::string labelstr;
     int obj_class = -1;
