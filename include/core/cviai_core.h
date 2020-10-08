@@ -535,8 +535,7 @@ int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
  * @param index The index of environment sound classes.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-		            int *index);
+int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, int *index);
 
 /**@}*/
 
