@@ -2,6 +2,10 @@
 #define _CVI_FACE_TYPES_H_
 #include "core/core/cvai_core_types.h"
 
+/** @enum cvai_face_emotion_e
+ *  @ingroup core_cviaicore
+ *  @brief Emotion enum for attribute related AI models.
+ */
 typedef enum {
   EMOTION_UNKNOWN = 0,
   EMOTION_HAPPY,
@@ -14,8 +18,16 @@ typedef enum {
   EMOTION_END
 } cvai_face_emotion_e;
 
+/** @enum cvai_face_gender_e
+ *  @ingroup core_cviaicore
+ *  @brief Gender enum for attribute related AI models.
+ */
 typedef enum { GENDER_UNKNOWN = 0, GENDER_MALE, GENDER_FEMALE, GENDER_END } cvai_face_gender_e;
 
+/** @enum cvai_face_race_e
+ *  @ingroup core_cviaicore
+ *  @brief Race enum for attribute related AI models.
+ */
 typedef enum {
   RACE_UNKNOWN = 0,
   RACE_CAUCASIAN,
@@ -24,16 +36,65 @@ typedef enum {
   RACE_END
 } cvai_face_race_e;
 
+/** @enum cvai_liveness_ir_position_e
+ *  @ingroup core_cviaicore
+ *  @brief Give liveness AI inference the hint the physical position of the IR camera is on the left
+ * or right side of the RGB camera.
+ */
 typedef enum { LIVENESS_IR_LEFT = 0, LIVENESS_IR_RIGHT } cvai_liveness_ir_position_e;
 
-typedef uint32_t cvai_face_id_t;
-
+/** @struct cvai_face_quality_t
+ *  @ingroup core_cviaicore
+ *  @brief The data structure for the face quality output.
+ *
+ *  @var cvai_face_quality_t::quality
+ *  The quality value for the face.
+ *  @var cvai_face_quality_t::roll
+ *  The roll angle of the head facing.
+ *  @var cvai_face_quality_t::pitch
+ *  The pitch angle of the head facing.
+ *  @var cvai_face_quality_t::yaw
+ *  The yaw angle of the head facing.
+ */
 typedef struct {
   float quality;
   float roll;
   float pitch;
   float yaw;
 } cvai_face_quality_t;
+
+/** @struct cvai_face_info_t
+ *  @ingroup core_cviaicore
+ *  @brief The data structure for storing a single face information.
+ *
+ *  @var cvai_face_info_t::name
+ *  A human readable name.
+ *  @var cvai_face_info_t::unique_id
+ *  The unique id of a face.
+ *  @var cvai_face_info_t::bbox
+ *  The bounding box of a face. Refers to the width, height from cvai_face_t.
+ *  @var cvai_face_info_t::face_pts
+ *  The point to describe the point on the face.
+ *  @var cvai_face_info_t::face_feature
+ *  The feature to describe a face.
+ *  @var cvai_face_info_t::emotion
+ *  The emotion from attribute.
+ *  @var cvai_face_info_t::gender
+ *  The gender from attribute.
+ *  @var cvai_face_info_t::race
+ *  The race from attribute.
+ *  @var cvai_face_info_t::age
+ *  The age.
+ *  @var cvai_face_info_t::liveness_score
+ *  The liveness score.
+ *  @var cvai_face_info_t::mask_score
+ *  The mask score.
+ *  @var cvai_face_info_t::face_quality
+ *  The face quality.
+ *
+ *  @see cvai_face_quality_t
+ *  @see cvai_face_t
+ */
 
 typedef struct {
   char name[128];
@@ -50,6 +111,21 @@ typedef struct {
   cvai_face_quality_t face_quality;
 } cvai_face_info_t;
 
+/** @struct cvai_face_t
+ *  @ingroup core_cviaicore
+ *  @brief The data structure for storing face meta.
+ *
+ *  @var cvai_face_t::size
+ *  The size of the info.
+ *  @var cvai_face_t::width
+ *  The current width. Affects the coordinate recovery of bbox and face_pts.
+ *  @var cvai_face_t::height
+ *  The current height. Affects the coordinate recovery of bbox and face_pts.
+ *  @var cvai_face_t::info
+ *  The information of each face.
+ *
+ *  @see cvai_face_info_t
+ */
 typedef struct {
   uint32_t size;
   uint32_t width;

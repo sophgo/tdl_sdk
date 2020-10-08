@@ -9,6 +9,7 @@
  */
 
 /** @enum feature_type_e
+ * @ingroup core_cviaicore
  * @brief A variable type enum to present the data type stored in cvai_feature_t.
  * @see cvai_feature_t
  */
@@ -24,6 +25,7 @@ typedef enum {
 } feature_type_e;
 
 /** @struct cvai_bbox_t
+ * @ingroup core_cviaicore
  * @brief A structure to describe an area in a given image with confidence score.
  *
  */
@@ -37,6 +39,7 @@ typedef struct {
 } cvai_bbox_t;
 
 /** @struct cvai_feature_t
+ * @ingroup core_cviaicore
  * @brief A structure to describe feature. Note that the length of the buffer is size *
  * getFeatureTypeSize(type)
  *
@@ -56,6 +59,7 @@ typedef struct {
 } cvai_feature_t;
 
 /** @struct cvai_pts_t
+ * @ingroup core_cviaicore
  * @brief A structure to describe (x, y) array.
  *
  * @var cvai_pts_t::x
@@ -71,17 +75,37 @@ typedef struct {
   uint32_t size;
 } cvai_pts_t;
 
+/** @enum cvai_trk_state_type_t
+ * @ingroup core_cviaicore
+ * @brief Enum describing the tracking state.
+ */
 typedef enum {
   CVI_TRACKER_NEW = 0,
   CVI_TRACKER_UNSTABLE,
   CVI_TRACKER_STABLE,
 } cvai_trk_state_type_t;
 
+/** @struct cvai_tracker_info_t
+ * @ingroup core_cviaicore
+ * @brief Tracking info of a object.
+ *
+ * @var cvai_tracker_info_t::state
+ * The tracking state of the object.
+ */
 typedef struct {
   cvai_trk_state_type_t state;
   // cvai_bbox_t bbox;    /* Reserved tracker computed bbox */
 } cvai_tracker_info_t;
 
+/** @struct cvai_tracker_t
+ * @ingroup core_cviaicore
+ * @brief Tracking meta.
+ *
+ * @var cvai_tracker_t::size
+ * The size of the info.
+ * @var cvai_tracker_t::info
+ * The object tracking array.
+ */
 typedef struct {
   uint32_t size;
   cvai_tracker_info_t* info;
@@ -89,6 +113,7 @@ typedef struct {
 
 /**
  * @brief A helper function to get the unit size of feature_type_e.
+ * @ingroup core_cviaicore
  *
  * @param type Input feature_type_e.
  * @return const int The unit size of a variable type.

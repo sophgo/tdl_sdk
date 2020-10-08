@@ -5,7 +5,12 @@
 
 #include <stdint.h>
 
+/**
+ * \defgroup core_cviaiservice CVIAI Service Module
+ */
+
 /** @struct cvai_service_feature_array_t
+ *  @ingroup core_cviaiservice
  *  @brief Feature array structure used in FR Service
  *
  * @var cvai_service_feature_array_t::ptr
@@ -24,6 +29,10 @@ typedef struct {
   feature_type_e type;
 } cvai_service_feature_array_t;
 
+/** @enum cvai_area_detect_e
+ *  @ingroup core_cviaiservice
+ *  @brief The intersect state for intersect detection.
+ */
 typedef enum {
   UNKNOWN = 0,
   NO_INTERSECT,

@@ -9,6 +9,12 @@ extern "C" {
 #endif
 
 /**
+ * \addtogroup core_utils AI Utilities for Preprocessing and Post-processing
+ * \ingroup core_cviaicore
+ */
+/**@{*/
+
+/**
  * @brief Do quantize scale for a given VIDEO_FRAME_INFO_S, but the quantized_factor and
  *        quantized_mean have to calculate manually.
  *
@@ -88,6 +94,8 @@ int CVI_AI_FaceNMS(const cvai_face_t *face, cvai_face_t *faceNMS, const float th
  */
 int CVI_AI_ObjectNMS(const cvai_object_t *obj, cvai_object_t *objNMS, const float threshold,
                      const char method);
+
+/**@}*/
 
 #ifdef __cplusplus
 }

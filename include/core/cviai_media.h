@@ -8,6 +8,12 @@ extern "C" {
 #endif
 
 /**
+ * \addtogroup core_media Convert Buffer or File to VIDEO_FRAME_INFO_S
+ * \ingroup core_cviaicore
+ */
+/**@{*/
+
+/**
  * @brief Convert given image buffer to VB frame.
  *
  * @param buffer The input image buffer.
@@ -35,6 +41,8 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
  */
 int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
                      const PIXEL_FORMAT_E format);
+
+/**@}*/
 
 #ifdef __cplusplus
 }

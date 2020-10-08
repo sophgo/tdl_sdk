@@ -7,6 +7,15 @@
 
 #include <cvi_sys.h>
 
+/**
+ * @addtogroup core_cviaifrservice CVIAI FRService
+ * @ingroup core_cviaiservice
+ */
+
+/** @typedef cviai_frservice_handle_t
+ *  @ingroup core_cviaifrservice
+ *  @brief A cviai frservice handle.
+ */
 typedef void *cviai_frservice_handle_t;
 
 #ifdef __cplusplus
@@ -15,6 +24,7 @@ extern "C" {
 
 /**
  * @brief Create a cviai_frservice_handle_t.
+ * @ingroup core_cviaifrservice
  *
  * @param handle An FR Service handle.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
@@ -23,6 +33,7 @@ CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_ha
 
 /**
  * @brief Destroy a cviai_frservice_handle_t.
+ * @ingroup core_cviaifrservice
  *
  * @param handle An FR Service handle.
  * @return CVI_S32 Return CVI_SUCCESS if success to destroy handle.
@@ -31,6 +42,7 @@ CVI_S32 CVI_AI_FRService_DestroyHandle(cviai_frservice_handle_t handle);
 
 /**
  * @brief Register a feature array to FR Service.
+ * @ingroup core_cviaifrservice
  *
  * @param handle An FR Service handle.
  * @param featureArray Input registered feature array.
@@ -41,6 +53,7 @@ CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
 
 /**
  * @brief Do a single cviai_face_t feature matching with registed feature array.
+ * @ingroup core_cviaifrservice
  *
  * @param handle An FR Service handle.
  * @param face_info The cvai_face_info_t from NN output with feature data.
@@ -54,6 +67,7 @@ CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle,
 
 /**
  * @brief Do a single raw data with registed feature array.
+ * @ingroup core_cviaifrservice
  *
  * @param handle An FR Service handle.
  * @param feature Raw feature vector.
@@ -67,6 +81,7 @@ CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint
 
 /**
  * @brief Zoom in to the largest face from the output of face detection results.
+ * @ingroup core_cviaifrservice
  *
  * @param handle An FR Service handle.
  * @param inFrame Input frame.
@@ -84,6 +99,7 @@ CVI_S32 CVI_AI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
 
 /**
  * @brief Draw rect to YUV frame with given face meta.
+ * @ingroup core_cviaifrservice
  *
  * @param meta meta structure.
  * @param frame In/ out YUV frame.

@@ -9,6 +9,7 @@ extern "C" {
 
 /**
  * @brief Enable GDC hardware acceleration.
+ * @ingroup core_ai_settings
  *
  * @param handle An AI SDK handle.
  * @param use_gdc Set true to use hardware.

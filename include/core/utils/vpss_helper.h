@@ -12,8 +12,27 @@
 #include <string.h>
 #include <syslog.h>
 
+/**
+ * \addtogroup core_vpss Vpss Helper Functions
+ * \ingroup core_cviaicore
+ */
+
+/** @def MMF_INIT_HELPER_BLKCNT_DEFAULT
+ * @ingroup core_vpss
+ * @brief The default number of image MMF_INIT_HELPER will open for 2 mem pool.
+ */
 #define MMF_INIT_HELPER_BLKCNT_DEFAULT 12
+
+/** @def VIP_WIDTH_ALIGN
+ * @ingroup core_vpss
+ * @brief HW image width alignment.
+ */
 #define VIP_WIDTH_ALIGN 32
+
+/** @def SCALAR_4096_ALIGN_BUG
+ * @ingroup core_vpss
+ * @brief HW image channel alignment.
+ */
 #define SCALAR_4096_ALIGN_BUG 0x1000
 #define max(a, b)           \
   ({                        \
@@ -29,6 +48,13 @@
     _a < _b ? _a : _b;      \
   })
 
+/**
+ * @brief Middleware init helper function.
+ * @ingroup core_vpss
+ *
+ * @param stVbConf The middleware config structure.
+ * @return int Return CVI_SUCCESS on success.
+ */
 static inline int __attribute__((always_inline)) MMF_INIT(const VB_CONFIG_S *stVbConf) {
   CVI_S32 s32Ret = CVI_FAILURE;
 
@@ -55,6 +81,20 @@ static inline int __attribute__((always_inline)) MMF_INIT(const VB_CONFIG_S *stV
   return s32Ret;
 }
 
+/**
+ * @brief A helper function to open one input and one output memory pool for developers.
+ * @ingroup core_vpss
+ *
+ * @param enSrcWidth Desired input image width.
+ * @param enSrcHeight Desired input image height.
+ * @param enSrcFormat Desired input image format.
+ * @param inBlkCount Max available images in the input pool.
+ * @param enDstWidth Desired output image width.
+ * @param enDstHeight Desired output image height.
+ * @param enDstFormat Desired output image format.
+ * @param outBlkCount Max available images in the output pool.
+ * @return int Return CVI_SUCCESS on success.
+ */
 static inline int __attribute__((always_inline))
 MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
                  const uint32_t inBlkCount, uint32_t enDstWidth, uint32_t enDstHeight,
@@ -79,6 +119,19 @@ MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrc
   return MMF_INIT(&stVbConf);
 }
 
+/**
+ * @brief A helper function to open one input and one output memory pool with default image number
+ * for developers.
+ * @ingroup core_vpss
+ *
+ * @param enSrcWidth Desired input image width.
+ * @param enSrcHeight Desired input image height.
+ * @param enSrcFormat Desired input image format.
+ * @param enDstWidth Desired output image width.
+ * @param enDstHeight Desired output image height.
+ * @param enDstFormat Desired output image format..
+ * @return int Return CVI_SUCCESS on success.
+ */
 static inline int __attribute__((always_inline))
 MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
                 uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
@@ -86,6 +139,14 @@ MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcF
                           enDstWidth, enDstHeight, enDstFormat, MMF_INIT_HELPER_BLKCNT_DEFAULT);
 }
 
+/**
+ * @brief A helper function to get default VPSS_GRP_ATTR_S value with given image information.
+ * @ingroup core_vpss
+ *
+ * @param srcWidth Input image width.
+ * @param srcHeight Input image height.
+ * @param enSrcFormat Input image format.
+ */
 inline void __attribute__((always_inline))
 VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
                         PIXEL_FORMAT_E enSrcFormat) {
@@ -98,6 +159,15 @@ VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U
   pstVpssGrpAttr->u8VpssDev = 0;
 }
 
+/**
+ * @brief A helper function to get default VPSS_CHN_ATTR_S value with given image information.
+ * @ingroup core_vpss
+ *
+ * @param dstWidth Output image width.
+ * @param dstHeight Output image height.
+ * @param enDstFormat Output image format.
+ * @param keepAspectRatio Keep aspect ratio or not.
+ */
 inline void __attribute__((always_inline))
 VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_U32 dstHeight,
                         PIXEL_FORMAT_E enDstFormat, CVI_BOOL keepAspectRatio) {
@@ -127,6 +197,21 @@ VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
+/**
+ * @brief A helper function with manual ratio control to get default VPSS_CHN_ATTR_S value with
+ * given image information.
+ * @ingroup core_vpss
+ *
+ * @param dstWidth Output image width.
+ * @param dstHeight Output image height.
+ * @param enDstFormat Output image format.
+ * @param ratioX The upper-left x coordinate.
+ * @param ratioY The upper-left y coordinate.
+ * @param ratioWidth The desired width of the image from group. Black will be filled if (ratioX +
+ * ratioWidth) < dstWidth.
+ * @param ratioHeight The desired height of the image grom group. Black will be filled if (ratioY +
+ * ratioWidth) < dstHeight.
+ */
 inline void __attribute__((always_inline))
 VPSS_CHN_RATIO_MANUAL_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_U32 dstHeight,
                              PIXEL_FORMAT_E enDstFormat, CVI_U32 ratioX, CVI_U32 ratioY,
@@ -157,6 +242,19 @@ VPSS_CHN_RATIO_MANUAL_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth,
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
+/**
+ * @brief A helper function to help developers to create a quantization + scaling step for AI
+ * preprocessing using vpss hardware.
+ * @ingroup core_vpss
+ *
+ * @param dstWidth Output image width.
+ * @param dstHeight Output image height.
+ * @param enDstFormat Output image format.
+ * @param factor The quantized factor, size = 3.
+ * @param mean The quantized mean, size = 3.
+ * @param padReverse If your code do quantization + scale before padding, set this to true. Default
+ * if false.
+ */
 inline void __attribute__((always_inline))
 VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
                    const CVI_U32 dstHeight, const PIXEL_FORMAT_E enDstFormat,
@@ -188,6 +286,21 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
+/**
+ * @brief A helper function to help developers to create a quantization + scaling step for AI
+ * preprocessing using vpss hardware, but only pad right and bottom instead of four directions.
+ * @ingroup core_vpss
+ *
+ * @param srcWidth Input image width.
+ * @param srcHeight Intput image height.
+ * @param dstWidth Output image width.
+ * @param dstHeight Output image height.
+ * @param enDstFormat Output image format.
+ * @param factor The quantized factor, size = 3.
+ * @param mean The quantized mean, size = 3.
+ * @param padReverse If your code do quantization + scale before padding, set this to true. Default
+ * if false.
+ */
 inline void __attribute__((always_inline))
 VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
                       const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
@@ -231,6 +344,19 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
 #undef max
 #undef min
 
+/**
+ * @brief A helper function to init vpss hardware with given image information.
+
+ * @param enSrcWidth Input image width.
+ * @param enSrcHeight Intput image height.
+ * @param enSrcStride Input image stride.
+ * @param enSrcFormat Input image format.
+ * @param enDstWidth Output image width.
+ * @param enDstHeight Output image height.
+ * @param enDstFormat Output image format.
+ * @param mode The mode of VPSS. Support single mode (1->4) and dual mode (1->3, 1->1)
+ * @param keepAspectRatio Keep aspect ratio or not.
+ */
 inline int __attribute__((always_inline))
 VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, uint32_t enSrcStride,
                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
@@ -276,6 +402,16 @@ VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, u
   return s32Ret;
 }
 
+/**
+ * @brief A helper function to create a VIDEO_FRAME_INFO_S buffer from given image information.
+ * @ingroup core_vpss
+ *
+ * @param blk The ion instance of VIDEO_FRAME_INFO_S.
+ * @param vbFrame Output VIDEO_FRAME_INFO_S buffer.
+ * @param srcWidth Desired image width.
+ * @param srcHeight Desired image height.
+ * @param pixelFormat Desired image format.
+ */
 inline int __attribute__((always_inline))
 CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeight,
                       PIXEL_FORMAT_E pixelFormat) {
@@ -375,6 +511,12 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
   return CVI_SUCCESS;
 }
 
+/**
+ * @brief A helper function to unmap virtual address and set to NULL.
+ * @ingroup core_vpss
+ *
+ * @param frame Input frame.
+ */
 inline void __attribute__((always_inline)) CACHED_VBFRAME_FLUSH_UNMAP(VIDEO_FRAME_INFO_S *frame) {
   uint32_t image_size =
       frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];

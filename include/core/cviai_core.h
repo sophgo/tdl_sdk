@@ -11,6 +11,7 @@
 #include <cvi_sys.h>
 
 /** @def CVI_AI_Free
+ *  @ingroup core_cviaicore
  * @brief Free the content inside the structure, not the structure itself.
  *        Support the following structure types written in _Generic.
  *
@@ -32,6 +33,7 @@
 #endif
 
 /** @def CVI_AI_RescaleBBoxCenter
+ * @ingroup core_cviaicore
  * @brief Rescale the output coordinate to original image. Padding in four directions. Support the
  * following structure types written in _Generic.
  *
@@ -40,6 +42,7 @@
  */
 
 /** @def CVI_AI_RescaleBBoxRB
+ * @ingroup core_cviaicore
  * @brief Rescale the output coordinate to original image. Padding in right, bottom directions.
  * Support the following structure types written in _Generic.
  *
@@ -61,6 +64,7 @@
 #endif
 
 /** @typedef cviai_handle_t
+ * @ingroup core_cviaicore
  * @brief An cviai handle
  */
 typedef void *cviai_handle_t;
@@ -460,7 +464,7 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
 /**@{*/
 
 /**
- * @brief Do object recognition with bbox info stored in obj.
+ * @brief Do person Re-Id with bbox info stored in obj.
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
@@ -470,8 +474,8 @@ int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_o
 int CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
 
 /**
- * @brief Do object recognition with bbox info stored in obj. Only do inference on the given index
- * of cvai_object_info_t.
+ * @brief Do person Re-Id with bbox info stored in obj. Only do inference on the given index of
+ * cvai_object_info_t.
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
