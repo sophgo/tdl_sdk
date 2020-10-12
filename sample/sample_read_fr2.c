@@ -1,6 +1,5 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "ive/ive.h"
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
