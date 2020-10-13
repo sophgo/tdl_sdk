@@ -1,7 +1,9 @@
 #include "thermal_face.hpp"
 #include "core/cviai_types_mem.h"
+#include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
+#include "face_utils.hpp"
 
 #include "cvi_sys.h"
 
@@ -148,28 +150,16 @@ int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   int ret = CVI_SUCCESS;
   ret = run(srcFrame);
 
-  std::vector<cvai_face_info_t> faceList;
-  outputParser(input->shape.dim[3], input->shape.dim[2], &faceList);
-
-  initFaceMeta(meta, faceList.size());
-  meta->width = input->shape.dim[3];
-  meta->height = input->shape.dim[2];
-
-  for (uint32_t i = 0; i < meta->size; ++i) {
-    meta->info[i].bbox.x1 = faceList[i].bbox.x1;
-    meta->info[i].bbox.x2 = faceList[i].bbox.x2;
-    meta->info[i].bbox.y1 = faceList[i].bbox.y1;
-    meta->info[i].bbox.y2 = faceList[i].bbox.y2;
-    meta->info[i].bbox.score = faceList[i].bbox.score;
-  }
+  outputParser(input->shape.dim[3], input->shape.dim[2], srcFrame->stVFrame.u32Width,
+               srcFrame->stVFrame.u32Height, meta);
 
   return ret;
 }
 
-void ThermalFace::outputParser(int image_width, int image_height,
-                               std::vector<cvai_face_info_t> *bboxes_nms) {
-  std::vector<cvai_face_info_t> BBoxes;
-
+void ThermalFace::outputParser(const int image_width, const int image_height, const int frame_width,
+                               const int frame_height, cvai_face_t *meta) {
+  std::vector<cvai_face_info_t> vec_bbox;
+  std::vector<cvai_face_info_t> vec_bbox_nms;
   std::string score_str = NAME_SCORE;
   CVI_TENSOR *out = CVI_NN_GetTensorByName(score_str.c_str(), mp_output_tensors, m_output_num);
   float *score_blob = (float *)CVI_NN_TensorPtr(out);
@@ -195,37 +185,45 @@ void ThermalFace::outputParser(int image_width, int image_height,
     regress = cv::Vec4f(dx, dy, dw, dh);
     bbox_pred(m_all_anchors[i], regress, {0.1, 0.1, 0.2, 0.2}, box.bbox);
 
-    BBoxes.push_back(box);
+    vec_bbox.push_back(box);
   }
+  // DO nms on output result
+  vec_bbox_nms.clear();
+  NonMaximumSuppression(vec_bbox, vec_bbox_nms, 0.5, 'u');
 
-  NonMaximumSuppression(BBoxes, *bboxes_nms, 0.5, 'u');
-
-  for (auto &box : *bboxes_nms) {
-    clip_boxes(image_width, image_height, box.bbox);
+  // Init face meta
+  meta->width = image_width;
+  meta->height = image_height;
+  if (vec_bbox_nms.size() == 0) {
+    meta->size = vec_bbox_nms.size();
+    meta->info = NULL;
+    return;
   }
-}
-
-void ThermalFace::initFaceMeta(cvai_face_t *meta, int size) {
-  meta->size = size;
-  if (meta->size == 0) return;
-
-  meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
-
-  memset(meta->info, 0, sizeof(cvai_face_info_t) * meta->size);
-
-  for (uint32_t i = 0; i < meta->size; ++i) {
-    meta->info[i].bbox.x1 = -1;
-    meta->info[i].bbox.x2 = -1;
-    meta->info[i].bbox.y1 = -1;
-    meta->info[i].bbox.y2 = -1;
-
-    meta->info[i].name[0] = '\0';
-    meta->info[i].emotion = EMOTION_UNKNOWN;
-    meta->info[i].gender = GENDER_UNKNOWN;
-    meta->info[i].race = RACE_UNKNOWN;
-    meta->info[i].age = -1;
-    meta->info[i].liveness_score = -1;
-    meta->info[i].mask_score = -1;
+  CVI_AI_MemAllocInit(vec_bbox_nms.size(), 0, meta);
+  if (m_skip_vpss_preprocess) {
+    for (uint32_t i = 0; i < meta->size; ++i) {
+      clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
+      meta->info[i].bbox.x1 = vec_bbox_nms[i].bbox.x1;
+      meta->info[i].bbox.x2 = vec_bbox_nms[i].bbox.x2;
+      meta->info[i].bbox.y1 = vec_bbox_nms[i].bbox.y1;
+      meta->info[i].bbox.y2 = vec_bbox_nms[i].bbox.y2;
+      meta->info[i].bbox.score = vec_bbox_nms[i].bbox.score;
+    }
+  } else {
+    // Recover coordinate if internal vpss engine is used.
+    meta->width = frame_width;
+    meta->height = frame_height;
+    for (uint32_t i = 0; i < meta->size; ++i) {
+      clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
+      cvai_face_info_t info =
+          bbox_rescale(image_width, image_height, frame_width, frame_height, vec_bbox_nms[i]);
+      meta->info[i].bbox.x1 = info.bbox.x1;
+      meta->info[i].bbox.x2 = info.bbox.x2;
+      meta->info[i].bbox.y1 = info.bbox.y1;
+      meta->info[i].bbox.y2 = info.bbox.y2;
+      meta->info[i].bbox.score = info.bbox.score;
+      CVI_AI_FreeCpp(&info);
+    }
   }
 }
 
