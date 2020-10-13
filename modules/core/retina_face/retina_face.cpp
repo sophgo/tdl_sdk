@@ -171,7 +171,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
       meta->info[i].bbox.y2 = vec_bbox_nms[i].bbox.y2;
       meta->info[i].bbox.score = vec_bbox_nms[i].bbox.score;
 
-      for (int j = 0; j < 5; ++j) {
+      for (int j = 0; j < FACE_POINTS_SIZE; ++j) {
         meta->info[i].face_pts.x[j] = vec_bbox_nms[i].face_pts.x[j];
         meta->info[i].face_pts.y[j] = vec_bbox_nms[i].face_pts.y[j];
       }
@@ -189,7 +189,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
       meta->info[i].bbox.y1 = info.bbox.y1;
       meta->info[i].bbox.y2 = info.bbox.y2;
       meta->info[i].bbox.score = info.bbox.score;
-      for (int j = 0; j < 5; ++j) {
+      for (int j = 0; j < FACE_POINTS_SIZE; ++j) {
         meta->info[i].face_pts.x[j] = info.face_pts.x[j];
         meta->info[i].face_pts.y[j] = info.face_pts.y[j];
       }
