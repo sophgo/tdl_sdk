@@ -74,11 +74,10 @@ int main(int argc, char *argv[]) {
       return ret;
     }
 
-    int face_count = 0;
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
 
-    CVI_AI_RetinaFace(facelib_handle, &frame, &face, &face_count);
+    CVI_AI_RetinaFace(facelib_handle, &frame, &face);
 
     printf("img_name: %s\n", full_img);
     if (face.size > 0) {

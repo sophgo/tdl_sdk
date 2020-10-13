@@ -109,8 +109,7 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    int face_count = 0;
-    CVI_AI_RetinaFace(facelib_handle, &stfdFrame, &face, &face_count);
+    CVI_AI_RetinaFace(facelib_handle, &stfdFrame, &face);
     printf("face_count %d\n", face.size);
 
     int s32Ret = CVI_SUCCESS;

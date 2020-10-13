@@ -112,7 +112,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   std::vector<float> scale = {SCALE_R, SCALE_G, SCALE_B};
   for (uint32_t i = 0; i < meta->size; i++) {
     cvai_face_info_t face_info =
-        bbox_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, meta, i);
+        bbox_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
     cv::Mat crop_frame(input->shape.dim[2], input->shape.dim[3], image.type());
     face_align(image, crop_frame, face_info);
 

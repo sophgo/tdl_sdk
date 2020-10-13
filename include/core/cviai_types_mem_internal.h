@@ -1,5 +1,6 @@
 #ifndef _CVIAI_TYPES_MEM_INTERNAL_H_
 #define _CVIAI_TYPES_MEM_INTERNAL_H_
+#include "core/cviai_types_mem.h"
 #include "core/face/cvai_face_types.h"
 #include "core/object/cvai_object_types.h"
 #include "cviai_log.hpp"
@@ -31,6 +32,41 @@ inline void CVI_AI_MemAlloc(const uint32_t size, cvai_tracker_t *tracker) {
     free(tracker->info);
     tracker->info = (cvai_tracker_info_t *)malloc(size * sizeof(cvai_tracker_info_t));
     tracker->size = size;
+  }
+}
+
+inline void CVI_AI_MemAlloc(const uint32_t size, cvai_face_t *meta) {
+  if (meta->size != size) {
+    for (uint32_t i = 0; i < meta->size; i++) {
+      CVI_AI_FreeCpp(&meta->info[i]);
+      free(meta->info);
+    }
+    meta->size = size;
+    meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
+  }
+}
+
+inline void CVI_AI_MemAllocInit(const uint32_t size, const uint32_t pts_num, cvai_face_t *meta) {
+  CVI_AI_MemAlloc(size, meta);
+  for (uint32_t i = 0; i < meta->size; ++i) {
+    meta->info[i].bbox.x1 = -1;
+    meta->info[i].bbox.x2 = -1;
+    meta->info[i].bbox.y1 = -1;
+    meta->info[i].bbox.y2 = -1;
+
+    meta->info[i].name[0] = '\0';
+    meta->info[i].emotion = EMOTION_UNKNOWN;
+    meta->info[i].gender = GENDER_UNKNOWN;
+    meta->info[i].race = RACE_UNKNOWN;
+    meta->info[i].age = -1;
+    meta->info[i].liveness_score = -1;
+    meta->info[i].mask_score = -1;
+
+    CVI_AI_MemAlloc(pts_num, &meta->info[i].face_pts);
+    for (uint32_t j = 0; j < meta->info[i].face_pts.size; ++j) {
+      meta->info[i].face_pts.x[j] = -1;
+      meta->info[i].face_pts.y[j] = -1;
+    }
   }
 }
 

@@ -67,7 +67,6 @@ int main(int argc, char *argv[]) {
     CVI_AI_Eval_WiderFaceGetImagePath(eval_handle, i, &filepath);
     VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
-    int face_count = 0;
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
 
@@ -77,7 +76,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
     printf("Run image %s\n", filepath);
-    CVI_AI_RetinaFace(facelib_handle, &frame, &face, &face_count);
+    CVI_AI_RetinaFace(facelib_handle, &frame, &face);
     CVI_AI_Eval_WiderFaceResultSave2File(eval_handle, i, &frame, &face);
     CVI_VB_ReleaseBlock(blk);
     CVI_AI_Free(&face);

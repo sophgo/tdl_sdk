@@ -45,11 +45,10 @@ int main(int argc, char *argv[]) {
   CVI_AI_ReadImage(argv[3], &blk, &fdFrame, PIXEL_FORMAT_RGB_888);
 
   // Run inference and print result.
-  int face_count = 0;
   cvai_face_t face;
   memset(&face, 0, sizeof(cvai_face_t));
-  CVI_AI_RetinaFace(ai_handle, &fdFrame, &face, &face_count);
-  printf("Face found %x.\n", face_count);
+  CVI_AI_RetinaFace(ai_handle, &fdFrame, &face);
+  printf("Face found %x.\n", face.size);
   CVI_AI_FaceAttribute(ai_handle, &fdFrame, &face);
   CVI_AI_Free(&face);
 

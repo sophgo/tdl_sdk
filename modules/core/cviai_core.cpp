@@ -226,8 +226,7 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx,
 
 // Face detection
 
-int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
-                      int *face_count) {
+int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_RetinaFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   RetinaFace *retina_face =
@@ -236,7 +235,7 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
     LOGE("No instance found for RetinaFace.\n");
     return CVI_FAILURE;
   }
-  return retina_face->inference(frame, faces, face_count);
+  return retina_face->inference(frame, faces);
 }
 
 int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {

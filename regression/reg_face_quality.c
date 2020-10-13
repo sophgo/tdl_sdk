@@ -35,15 +35,14 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
       return ret;
     }
 
-    int face_count = 0;
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_RetinaFace(facelib_handle, &frFrame, &face, &face_count);
-    if (face_count > 0) {
+    CVI_AI_RetinaFace(facelib_handle, &frFrame, &face);
+    if (face.size > 0) {
       CVI_AI_FaceQuality(facelib_handle, &frFrame, &face);
     }
 
-    if (face_count == 0 || face.info[0].face_quality.quality < 0.5 ||
+    if (face.size == 0 || face.info[0].face_quality.quality < 0.5 ||
         fabs(face.info[0].face_quality.pitch) > 0.45 ||
         fabs(face.info[0].face_quality.yaw) > 0.45) {
       fail_num++;

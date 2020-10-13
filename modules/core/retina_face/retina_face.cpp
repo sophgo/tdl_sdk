@@ -75,7 +75,7 @@ int RetinaFace::initAfterModelOpened() {
   return CVI_SUCCESS;
 }
 
-int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *face_count) {
+int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   int ret = CVI_SUCCESS;
 
   ret = run(srcFrame);
@@ -84,58 +84,15 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *
   float ratio = 1.0;
   int image_width = input->shape.dim[3];
   int image_height = input->shape.dim[2];
-  std::vector<cvai_face_info_t> faceList;
-  std::vector<cvai_face_info_t> BBoxes;
-  outputParser(ratio, image_width, image_height, &BBoxes, &faceList);
-
-  initFaceMeta(meta, faceList.size());
-  meta->width = image_width;
-  meta->height = image_height;
-
-  *face_count = meta->size;
-  for (uint32_t i = 0; i < meta->size; ++i) {
-    meta->info[i].bbox.x1 = faceList[i].bbox.x1;
-    meta->info[i].bbox.x2 = faceList[i].bbox.x2;
-    meta->info[i].bbox.y1 = faceList[i].bbox.y1;
-    meta->info[i].bbox.y2 = faceList[i].bbox.y2;
-    meta->info[i].bbox.score = faceList[i].bbox.score;
-
-    for (int j = 0; j < 5; ++j) {
-      meta->info[i].face_pts.x[j] = faceList[i].face_pts.x[j];
-      meta->info[i].face_pts.y[j] = faceList[i].face_pts.y[j];
-    }
-  }
-
-  for (size_t i = 0; i < BBoxes.size(); ++i) {
-    CVI_AI_FreeCpp(&BBoxes[i].face_pts);
-  }
-
-  if (!m_skip_vpss_preprocess) {
-    for (uint32_t i = 0; i < meta->size; ++i) {
-      cvai_face_info_t info =
-          bbox_rescale(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height, meta, i);
-      meta->info[i].bbox.x1 = info.bbox.x1;
-      meta->info[i].bbox.x2 = info.bbox.x2;
-      meta->info[i].bbox.y1 = info.bbox.y1;
-      meta->info[i].bbox.y2 = info.bbox.y2;
-      meta->info[i].bbox.score = info.bbox.score;
-      for (int j = 0; j < 5; ++j) {
-        meta->info[i].face_pts.x[j] = info.face_pts.x[j];
-        meta->info[i].face_pts.y[j] = info.face_pts.y[j];
-      }
-      CVI_AI_FreeCpp(&info);
-    }
-
-    meta->width = srcFrame->stVFrame.u32Width;
-    meta->height = srcFrame->stVFrame.u32Height;
-  }
-
+  outputParser(ratio, image_width, image_height, srcFrame->stVFrame.u32Width,
+               srcFrame->stVFrame.u32Height, meta);
   return ret;
 }
 
-void RetinaFace::outputParser(float ratio, int image_width, int image_height,
-                              std::vector<cvai_face_info_t> *BBoxes,
-                              std::vector<cvai_face_info_t> *bboxes_nms) {
+void RetinaFace::outputParser(float ratio, int image_width, int image_height, int frame_width,
+                              int frame_height, cvai_face_t *meta) {
+  std::vector<cvai_face_info_t> vec_bbox;
+  std::vector<cvai_face_info_t> vec_bbox_nms;
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
     std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
 
@@ -188,47 +145,61 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height,
           box.face_pts.y[k] = landmark_blob[j + count * (num * 10 + k * 2 + 1)];
         }
         landmark_pred(anchors[j + count * num], ratio, box.face_pts);
-
-        BBoxes->push_back(box);
+        vec_bbox.push_back(box);
       }
     }
   }
+  // DO nms on output result
+  vec_bbox_nms.clear();
+  NonMaximumSuppression(vec_bbox, vec_bbox_nms, 0.4, 'u');
 
-  bboxes_nms->clear();
-  NonMaximumSuppression(*BBoxes, *bboxes_nms, 0.4, 'u');
-
-  for (auto &box : *bboxes_nms) {
-    clip_boxes(image_width, image_height, box.bbox);
+  // Init face meta
+  meta->width = image_width;
+  meta->height = image_height;
+  meta->size = vec_bbox_nms.size();
+  if (vec_bbox_nms.size() == 0) {
+    meta->info = NULL;
+    return;
   }
-}
+  CVI_AI_MemAllocInit(vec_bbox_nms.size(), FACE_POINTS_SIZE, meta);
+  if (m_skip_vpss_preprocess) {
+    for (uint32_t i = 0; i < meta->size; ++i) {
+      clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
+      meta->info[i].bbox.x1 = vec_bbox_nms[i].bbox.x1;
+      meta->info[i].bbox.x2 = vec_bbox_nms[i].bbox.x2;
+      meta->info[i].bbox.y1 = vec_bbox_nms[i].bbox.y1;
+      meta->info[i].bbox.y2 = vec_bbox_nms[i].bbox.y2;
+      meta->info[i].bbox.score = vec_bbox_nms[i].bbox.score;
 
-void RetinaFace::initFaceMeta(cvai_face_t *meta, int size) {
-  meta->size = size;
-  if (meta->size == 0) return;
-
-  meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
-
-  memset(meta->info, 0, sizeof(cvai_face_info_t) * meta->size);
-
-  for (uint32_t i = 0; i < meta->size; ++i) {
-    meta->info[i].bbox.x1 = -1;
-    meta->info[i].bbox.x2 = -1;
-    meta->info[i].bbox.y1 = -1;
-    meta->info[i].bbox.y2 = -1;
-
-    meta->info[i].name[0] = '\0';
-    meta->info[i].emotion = EMOTION_UNKNOWN;
-    meta->info[i].gender = GENDER_UNKNOWN;
-    meta->info[i].race = RACE_UNKNOWN;
-    meta->info[i].age = -1;
-    meta->info[i].liveness_score = -1;
-    meta->info[i].mask_score = -1;
-
-    CVI_AI_MemAlloc(FACE_POINTS_SIZE, &meta->info[i].face_pts);
-    for (uint32_t j = 0; j < meta->info[i].face_pts.size; ++j) {
-      meta->info[i].face_pts.x[j] = -1;
-      meta->info[i].face_pts.y[j] = -1;
+      for (int j = 0; j < 5; ++j) {
+        meta->info[i].face_pts.x[j] = vec_bbox_nms[i].face_pts.x[j];
+        meta->info[i].face_pts.y[j] = vec_bbox_nms[i].face_pts.y[j];
+      }
     }
+  } else {
+    // Recover coordinate if internal vpss engine is used.
+    meta->width = frame_width;
+    meta->height = frame_height;
+    for (uint32_t i = 0; i < meta->size; ++i) {
+      clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
+      cvai_face_info_t info =
+          bbox_rescale(image_width, image_height, frame_width, frame_height, vec_bbox_nms[i]);
+      meta->info[i].bbox.x1 = info.bbox.x1;
+      meta->info[i].bbox.x2 = info.bbox.x2;
+      meta->info[i].bbox.y1 = info.bbox.y1;
+      meta->info[i].bbox.y2 = info.bbox.y2;
+      meta->info[i].bbox.score = info.bbox.score;
+      for (int j = 0; j < 5; ++j) {
+        meta->info[i].face_pts.x[j] = info.face_pts.x[j];
+        meta->info[i].face_pts.y[j] = info.face_pts.y[j];
+      }
+      CVI_AI_FreeCpp(&info);
+    }
+  }
+
+  // Clear original bbox. bbox_nms does not need to free since it points to bbox.
+  for (size_t i = 0; i < vec_bbox.size(); ++i) {
+    CVI_AI_FreeCpp(&vec_bbox[i].face_pts);
   }
 }
 

@@ -98,11 +98,10 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       return ret;
     }
 
-    int face_count = 0;
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_RetinaFace(facelib_handle, &rgb_frame, &face, &face_count);
-    if (face_count > 0 && do_face_quality == true) {
+    CVI_AI_RetinaFace(facelib_handle, &rgb_frame, &face);
+    if (face.size > 0 && do_face_quality == true) {
       CVI_AI_FaceQuality(facelib_handle, &rgb_frame, &face);
     }
 
@@ -121,7 +120,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     file_name = strrchr(line, '/');
     file_name++;
 
-    if (face_count > 0 &&
+    if (face.size > 0 &&
         (do_face_quality == false || face.info[face_idx].face_quality.quality > quality_thresh)) {
       CVI_AI_FaceRecognitionOne(facelib_handle, &rgb_frame, &face, face_idx);
 
@@ -139,11 +138,11 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
         fprintf(fp_feature, "%d\n", (int)face.info[face_idx].face_feature.ptr[i]);
       }
 
-      log_reg_pass(fp_pass, file_name, face_count, face.info[face_idx].face_quality.quality);
+      log_reg_pass(fp_pass, file_name, face.size, face.info[face_idx].face_quality.quality);
       fclose(fp_feature);
     } else {
-      log_reg_fail(fp_fail, file_name, face_count,
-                   face_count > 0 ? face.info[face_idx].face_quality.quality : 0, quality_thresh);
+      log_reg_fail(fp_fail, file_name, face.size,
+                   face.size > 0 ? face.info[face_idx].face_quality.quality : 0, quality_thresh);
     }
 
     CVI_AI_Free(&face);

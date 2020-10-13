@@ -58,11 +58,10 @@ int main(int argc, char *argv[]) {
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
   // Run inference and print result.
-  int face_count = 0;
   cvai_face_t face;
   memset(&face, 0, sizeof(cvai_face_t));
-  CVI_AI_RetinaFace(ai_handle, &fdFrame, &face, &face_count);
-  printf("Face found %x.\n", face_count);
+  CVI_AI_RetinaFace(ai_handle, &fdFrame, &face);
+  printf("Face found %x.\n", face.size);
 
   // Get the group ids used by ai sdk.
   VPSS_GRP *groups = NULL;

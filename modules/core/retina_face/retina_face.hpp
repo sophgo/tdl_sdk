@@ -12,14 +12,12 @@ class RetinaFace final : public Core {
  public:
   RetinaFace();
   virtual ~RetinaFace();
-  int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta, int *face_count);
+  int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta);
 
  private:
   virtual int initAfterModelOpened() override;
-  void outputParser(float ratio, int image_width, int image_height,
-                    std::vector<cvai_face_info_t> *BBoxes,
-                    std::vector<cvai_face_info_t> *bboxes_nms);
-  void initFaceMeta(cvai_face_t *meta, int size);
+  void outputParser(float ratio, int image_width, int image_height, int frame_width,
+                    int frame_height, cvai_face_t *meta);
 
   std::vector<int> m_feat_stride_fpn = {32, 16, 8};
   std::map<std::string, std::vector<anchor_box>> m_anchors;

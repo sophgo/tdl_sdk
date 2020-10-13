@@ -273,11 +273,9 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param faces Output detect result. The name, bbox, and face points will be given.
- * @param face_count Output how many faces are found.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces,
-                      int *face_count);
+int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
 
 /**
  * @brief Detect face with thermal images.

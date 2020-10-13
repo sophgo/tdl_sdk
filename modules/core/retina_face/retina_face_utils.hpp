@@ -11,7 +11,8 @@
 
 namespace cviai {
 
-static void bbox_pred(const anchor_box &anchor, cv::Vec4f regress, float ratio, cvai_bbox_t &bbox) {
+inline void __attribute__((always_inline))
+bbox_pred(const anchor_box &anchor, cv::Vec4f regress, float ratio, cvai_bbox_t &bbox) {
   float width = anchor.x2 - anchor.x1 + 1;
   float height = anchor.y2 - anchor.y1 + 1;
   float ctr_x = anchor.x1 + 0.5 * (width - 1.0);
@@ -28,7 +29,8 @@ static void bbox_pred(const anchor_box &anchor, cv::Vec4f regress, float ratio, 
   bbox.y2 = (pred_ctr_y + 0.5 * (pred_h - 1.0)) * ratio;
 }
 
-static void landmark_pred(const anchor_box &anchor, float ratio, cvai_pts_t &facePt) {
+inline void __attribute__((always_inline))
+landmark_pred(const anchor_box &anchor, float ratio, cvai_pts_t &facePt) {
   float width = anchor.x2 - anchor.x1 + 1;
   float height = anchor.y2 - anchor.y1 + 1;
   float ctr_x = anchor.x1 + 0.5 * (width - 1.0);

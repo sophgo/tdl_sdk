@@ -121,8 +121,8 @@ int main(int argc, char *argv[]) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
     }
-    int face_count = 0;
-    CVI_AI_RetinaFace(facelib_handle, &rgbFrame, &face, &face_count);
+
+    CVI_AI_RetinaFace(facelib_handle, &rgbFrame, &face);
     printf("face_count %d\n", face.size);
     if (face.size > 0) {
       CVI_AI_MaskClassification(facelib_handle, &rgbFrame, &face);

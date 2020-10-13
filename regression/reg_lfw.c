@@ -81,13 +81,12 @@ int main(int argc, char *argv[]) {
     free(name1);
     free(name2);
 
-    int face_count = 0;
     cvai_face_t face1, face2;
     memset(&face1, 0, sizeof(cvai_face_t));
     memset(&face2, 0, sizeof(cvai_face_t));
 
-    CVI_AI_RetinaFace(facelib_handle, &frame1, &face1, &face_count);
-    CVI_AI_RetinaFace(facelib_handle, &frame2, &face2, &face_count);
+    CVI_AI_RetinaFace(facelib_handle, &frame1, &face1);
+    CVI_AI_RetinaFace(facelib_handle, &frame2, &face2);
 
     CVI_AI_FaceAttribute(facelib_handle, &frame1, &face1);
     CVI_AI_FaceAttribute(facelib_handle, &frame2, &face2);

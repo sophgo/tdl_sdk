@@ -100,11 +100,10 @@ int main(int argc, char *argv[]) {
       return ret;
     }
 
-    int face_count = 0;
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
 
-    CVI_AI_RetinaFace(handle, &frame1, &face, &face_count);
+    CVI_AI_RetinaFace(handle, &frame1, &face);
     if (face.size > 0) {
       CVI_AI_Liveness(handle, &frame1, &frame2, &face, LIVENESS_IR_LEFT);
 

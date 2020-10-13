@@ -98,16 +98,14 @@ int main(int argc, char *argv[]) {
       return ret;
     }
 
-    int face_count1 = 0;
-    int face_count2 = 0;
     cvai_face_t face1, face2;
     memset(&face1, 0, sizeof(cvai_face_t));
     memset(&face2, 0, sizeof(cvai_face_t));
 
-    CVI_AI_RetinaFace(facelib_handle, &frame1, &face1, &face_count1);
-    CVI_AI_RetinaFace(facelib_handle, &frame2, &face2, &face_count2);
+    CVI_AI_RetinaFace(facelib_handle, &frame1, &face1);
+    CVI_AI_RetinaFace(facelib_handle, &frame2, &face2);
 
-    if (face_count1 > 0 && face_count2 > 0) {
+    if (face1.size > 0 && face2.size > 0) {
       CVI_AI_MaskFaceRecognition(facelib_handle, &frame1, &face1);
       CVI_AI_MaskFaceRecognition(facelib_handle, &frame2, &face2);
 
