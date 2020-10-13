@@ -61,11 +61,18 @@ inline void CVI_AI_MemAllocInit(const uint32_t size, const uint32_t pts_num, cva
     meta->info[i].age = -1;
     meta->info[i].liveness_score = -1;
     meta->info[i].mask_score = -1;
-
-    CVI_AI_MemAlloc(pts_num, &meta->info[i].face_pts);
-    for (uint32_t j = 0; j < meta->info[i].face_pts.size; ++j) {
-      meta->info[i].face_pts.x[j] = -1;
-      meta->info[i].face_pts.y[j] = -1;
+    memset(&meta->info[i].face_quality, 0, sizeof(cvai_face_quality_t));
+    memset(&meta->info[i].face_feature, 0, sizeof(cvai_feature_t));
+    if (pts_num > 0) {
+      meta->info[i].face_pts.x = (float *)malloc(sizeof(float) * pts_num);
+      meta->info[i].face_pts.y = (float *)malloc(sizeof(float) * pts_num);
+      meta->info[i].face_pts.size = pts_num;
+      for (uint32_t j = 0; j < meta->info[i].face_pts.size; ++j) {
+        meta->info[i].face_pts.x[j] = -1;
+        meta->info[i].face_pts.y[j] = -1;
+      }
+    } else {
+      memset(&meta->info[i].face_pts, 0, sizeof(meta->info[i].face_pts));
     }
   }
 }

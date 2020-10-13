@@ -156,8 +156,8 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
   // Init face meta
   meta->width = image_width;
   meta->height = image_height;
-  meta->size = vec_bbox_nms.size();
   if (vec_bbox_nms.size() == 0) {
+    meta->size = vec_bbox_nms.size();
     meta->info = NULL;
     return;
   }

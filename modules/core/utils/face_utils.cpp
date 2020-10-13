@@ -94,7 +94,7 @@ cvai_face_info_t bbox_rescale(const float width, const float height, const float
   face_info_new.bbox = box_rescale_c(new_width, new_height, width, height, face_info.bbox, &ratio,
                                      &pad_width, &pad_height);
   CVI_AI_MemAlloc(face_info.face_pts.size, &face_info_new.face_pts);
-  for (int j = 0; j < 5; ++j) {
+  for (uint32_t j = 0; j < face_info_new.face_pts.size; ++j) {
     face_info_new.face_pts.x[j] = (face_info.face_pts.x[j] - pad_width) * ratio;
     face_info_new.face_pts.y[j] = (face_info.face_pts.y[j] - pad_height) * ratio;
   }
@@ -104,10 +104,8 @@ cvai_face_info_t bbox_rescale(const float width, const float height, const float
 
 cvai_face_info_t bbox_rescale(const float new_width, const float new_height,
                               const cvai_face_t &face_meta, const int face_idx) {
-  cvai_face_info_t face_info;
-  memset(&face_info, 0, sizeof(cvai_face_info_t));
-  bbox_rescale(face_meta.width, face_meta.height, new_width, new_height, face_meta.info[face_idx]);
-  return face_info;
+  return bbox_rescale(face_meta.width, face_meta.height, new_width, new_height,
+                      face_meta.info[face_idx]);
 }
 
 inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width, const int height,
