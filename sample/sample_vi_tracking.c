@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
     // Step 2. Object feature generator.
     CVI_AI_OSNet(facelib_handle, &stFrame, &obj_meta);
     // Step 3. Tracker.
-    CVI_AI_Deepsort_Track(facelib_handle, &obj_meta, &tracker_meta);
+    CVI_AI_Deepsort(facelib_handle, &obj_meta, &tracker_meta);
     // Step 4. Detect intersection.
     CVI_AI_OBJService_DetectIntersect(obj_handle, &stFrame, &obj_meta, &status);
     // Step 5. printf results.

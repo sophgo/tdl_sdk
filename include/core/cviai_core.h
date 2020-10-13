@@ -520,15 +520,13 @@ int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fra
 int CVI_AI_Deepsort_Init(const cviai_handle_t handle);
 
 /**
- * @brief Run deepsort track.
+ * @brief Get default deepsort config.
  *
  * @param handle An AI SDK handle.
- * @param obj Input detected object with feature.
- * @param tracker_t Output tracker results.
+ * @param ds_conf A deepsort config.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_Deepsort_Track(const cviai_handle_t handle, cvai_object_t *obj,
-                          cvai_tracker_t *tracker_t);
+int CVI_AI_Deepsort_GetDefaultConfig(cvai_deepsort_config_t *ds_conf);
 
 /**
  * @brief Set deepsort with specific config.
@@ -540,13 +538,14 @@ int CVI_AI_Deepsort_Track(const cviai_handle_t handle, cvai_object_t *obj,
 int CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf);
 
 /**
- * @brief Get default deepsort config.
+ * @brief Run deepsort track.
  *
  * @param handle An AI SDK handle.
- * @param ds_conf A deepsort config.
+ * @param obj Input detected object with feature.
+ * @param tracker_t Output tracker results.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_Deepsort_GetDefaultConfig(cvai_deepsort_config_t *ds_conf);
+int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t);
 
 /**@}*/
 
