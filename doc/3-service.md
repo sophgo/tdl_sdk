@@ -6,14 +6,16 @@ Service module is consist of FRService and OBJService.
 
 Available: FRService, OBJService
 
-FRService, OBJService provide feature matching tool to analyze the result from model that generates feature such as Face Attribute, OSNet. First, use ``RegisterFeatureArray`` to register a feature array for output comparison.
+FRService, OBJService provide feature matching tool to analyze the result from model that generates feature such as Face Attribute, OSNet. First, use ``RegisterFeatureArray`` to register a feature array for output comparison. Currently only supports method ``INNER_PRODUCT``.
 
 ```c
 CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
-                                              const cvai_service_feature_array_t featureArray);
+                                              const cvai_service_feature_array_t featureArray,
+                                              const cvai_service_feature_matching_e method);
 
 CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
-                                               const cvai_service_feature_array_t featureArray);
+                                               const cvai_service_feature_array_t featureArray,
+                                               const cvai_service_feature_matching_e method);
 ```
 
 Second, use ``FaceInfoMatching`` or ``ObjectInfoMatching`` to match to output result with the feature array. The length of the top ``index`` equals to ``k``.

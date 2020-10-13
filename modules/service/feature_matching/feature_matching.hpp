@@ -28,8 +28,8 @@ FreeFeatureArrayExt(cvai_service_feature_array_ext_t *feature_array_ext) {
 }
 
 inline int __attribute__((always_inline))
-RegisterFeatureArray(const cvai_service_feature_array_t feature_array,
-                     cvai_service_feature_array_ext_t *feature_array_ext) {
+RegisterIPFeatureArray(const cvai_service_feature_array_t feature_array,
+                       cvai_service_feature_array_ext_t *feature_array_ext) {
   float *unit_length = new float[feature_array.feature_length * feature_array.data_num];
   switch (feature_array.type) {
     case TYPE_INT8: {
@@ -55,8 +55,8 @@ RegisterFeatureArray(const cvai_service_feature_array_t feature_array,
 }
 
 inline int __attribute__((always_inline))
-FeatureMatchingRaw(const uint8_t *feature, const feature_type_e &type, const uint32_t k,
-                   uint32_t **index, cvai_service_feature_array_ext_t *feature_array_ext) {
+FeatureMatchingIPRaw(const uint8_t *feature, const feature_type_e &type, const uint32_t k,
+                     uint32_t **index, cvai_service_feature_array_ext_t *feature_array_ext) {
   if (feature_array_ext->feature_array_buffer == nullptr) {
     LOGE("Feature array not registered yet.\n");
     return CVI_FAILURE;

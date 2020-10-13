@@ -8,6 +8,7 @@
 #include <string.h>
 
 typedef struct {
+  cvai_service_feature_matching_e matching_method;
   cvai_service_feature_array_ext_t feature_array_ext;
   cviai_handle_t ai_handle = NULL;
   cviai::service::DigitalTracking *m_dt = nullptr;
@@ -34,24 +35,38 @@ CVI_S32 CVI_AI_FRService_DestroyHandle(cviai_frservice_handle_t handle) {
 }
 
 CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
-                                              const cvai_service_feature_array_t featureArray) {
+                                              const cvai_service_feature_array_t featureArray,
+                                              const cvai_service_feature_matching_e method) {
   cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
-  return RegisterFeatureArray(featureArray, &ctx->feature_array_ext);
+  ctx->matching_method = method;
+  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
+    return RegisterIPFeatureArray(featureArray, &ctx->feature_array_ext);
+  }
+  LOGE("Unsupported method %u\n", ctx->matching_method);
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle,
                                           const cvai_face_info_t *face_info, const uint32_t k,
                                           uint32_t **index) {
   cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
-  return FeatureMatchingRaw((uint8_t *)face_info->face_feature.ptr, face_info->face_feature.type, k,
-                            index, &ctx->feature_array_ext);
+  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
+    return FeatureMatchingIPRaw((uint8_t *)face_info->face_feature.ptr,
+                                face_info->face_feature.type, k, index, &ctx->feature_array_ext);
+  }
+  LOGE("Unsupported method %u\n", ctx->matching_method);
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint8_t *feature,
                                      const feature_type_e type, const uint32_t k,
                                      uint32_t **index) {
   cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
-  return FeatureMatchingRaw(feature, type, k, index, &ctx->feature_array_ext);
+  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
+    return FeatureMatchingIPRaw(feature, type, k, index, &ctx->feature_array_ext);
+  }
+  LOGE("Unsupported method %u\n", ctx->matching_method);
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_FRService_DigitalZoom(cviai_frservice_handle_t handle,

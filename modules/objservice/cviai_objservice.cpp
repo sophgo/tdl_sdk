@@ -9,6 +9,7 @@
 #include <cvimath/cvimath.h>
 
 typedef struct {
+  cvai_service_feature_matching_e matching_method;
   cvai_service_feature_array_ext_t feature_array_ext;
   cviai_handle_t ai_handle = NULL;
   cviai::service::DigitalTracking *m_dt = nullptr;
@@ -36,24 +37,38 @@ CVI_S32 CVI_AI_OBJService_DestroyHandle(cviai_objservice_handle_t handle) {
 }
 
 CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
-                                               const cvai_service_feature_array_t featureArray) {
+                                               const cvai_service_feature_array_t featureArray,
+                                               const cvai_service_feature_matching_e method) {
   cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
-  return RegisterFeatureArray(featureArray, &ctx->feature_array_ext);
+  ctx->matching_method = method;
+  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
+    return RegisterIPFeatureArray(featureArray, &ctx->feature_array_ext);
+  }
+  LOGE("Unsupported method %u\n", ctx->matching_method);
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_OBJService_ObjectInfoMatching(cviai_objservice_handle_t handle,
                                              const cvai_object_info_t *object_info,
                                              const uint32_t k, uint32_t **index) {
   cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
-  return FeatureMatchingRaw((uint8_t *)object_info->feature.ptr, object_info->feature.type, k,
-                            index, &ctx->feature_array_ext);
+  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
+    return FeatureMatchingIPRaw((uint8_t *)object_info->feature.ptr, object_info->feature.type, k,
+                                index, &ctx->feature_array_ext);
+  }
+  LOGE("Unsupported method %u\n", ctx->matching_method);
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_OBJService_RawMatching(cviai_objservice_handle_t handle, const uint8_t *feature,
                                       const feature_type_e type, const uint32_t k,
                                       uint32_t **index) {
   cviai_objservice_context_t *ctx = static_cast<cviai_objservice_context_t *>(handle);
-  return FeatureMatchingRaw(feature, type, k, index, &ctx->feature_array_ext);
+  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
+    return FeatureMatchingIPRaw(feature, type, k, index, &ctx->feature_array_ext);
+  }
+  LOGE("Unsupported method %u\n", ctx->matching_method);
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_OBJService_DigitalZoom(cviai_objservice_handle_t handle,

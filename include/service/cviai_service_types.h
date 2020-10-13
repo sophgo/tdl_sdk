@@ -9,6 +9,15 @@
  * \defgroup core_cviaiservice CVIAI Service Module
  */
 
+/** @enum cvai_service_feature_matching_e
+ *  @ingroup core_cviaiservice
+ *  @brief Supported feature matching method in Service
+ *
+ * @var cvai_service_feature_matching_e::INNER_PRODUCT
+ * Do feature matching using inner product method.
+ */
+typedef enum { INNER_PRODUCT } cvai_service_feature_matching_e;
+
 /** @struct cvai_service_feature_array_t
  *  @ingroup core_cviaiservice
  *  @brief Feature array structure used in FR Service

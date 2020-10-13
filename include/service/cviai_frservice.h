@@ -47,10 +47,12 @@ CVI_S32 CVI_AI_FRService_DestroyHandle(cviai_frservice_handle_t handle);
  *
  * @param handle An FR Service handle.
  * @param featureArray Input registered feature array.
+ * @param method Set feature matching method.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
-                                              const cvai_service_feature_array_t featureArray);
+                                              const cvai_service_feature_array_t featureArray,
+                                              const cvai_service_feature_matching_e method);
 
 /**
  * @brief Do a single cviai_face_t feature matching with registed feature array.
