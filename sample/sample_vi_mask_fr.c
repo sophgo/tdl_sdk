@@ -1,13 +1,8 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "sample_comm.h"
+#include "vi_vo_utils.h"
 
-#include <cvi_ae.h>
-#include <cvi_ae_comm.h>
-#include <cvi_awb_comm.h>
-#include <cvi_buffer.h>
-#include <cvi_comm_isp.h>
-#include <cvi_isp.h>
 #include <cvi_sys.h>
 #include <cvi_vb.h>
 #include <cvi_vi.h>
@@ -31,15 +26,6 @@ static void SampleHandleSig(CVI_S32 signo) {
   }
 }
 
-static CVI_S32 InitVI(const VI_PIPE viPipe, SAMPLE_VI_CONFIG_S *pstViConfig);
-
-static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig);
-
-static CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChn1,
-                        const VPSS_CHN vpssChnVO, const CVI_U32 grpWidth, const CVI_U32 grpHeight,
-                        const CVI_U32 voWidth, const CVI_U32 voHeight, const VI_PIPE viPipe,
-                        const CVI_BOOL isVOOpened);
-
 int main(int argc, char *argv[]) {
   if (argc != 6) {
     printf(
@@ -60,7 +46,6 @@ int main(int argc, char *argv[]) {
   VI_PIPE ViPipe = 0;
   VPSS_GRP VpssGrp = 0;
   VPSS_CHN VpssChn = VPSS_CHN0;
-  VPSS_CHN VpssChn1 = VPSS_CHN1;
   VPSS_CHN VpssChnVO = VPSS_CHN2;
   CVI_S32 GrpWidth = 1920;
   CVI_S32 GrpHeight = 1080;
@@ -85,8 +70,8 @@ int main(int argc, char *argv[]) {
     CVI_VO_HideChn(VoLayer, VoChn);
   }
 
-  s32Ret = InitVPSS(VpssGrp, VpssChn, VpssChn1, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight,
-                    ViPipe, isVoOpened);
+  s32Ret = InitVPSS(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight, ViPipe,
+                    isVoOpened);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video process group 0 failed with %d\n", s32Ret);
     return s32Ret;
@@ -107,16 +92,11 @@ int main(int argc, char *argv[]) {
   // Do vpss frame transform in retina face
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
-  VIDEO_FRAME_INFO_S rgbFrame, bgrFrame, stVOFrame;
+  VIDEO_FRAME_INFO_S rgbFrame, stVOFrame;
   cvai_face_t face;
   memset(&face, 0, sizeof(cvai_face_t));
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &rgbFrame, 1000);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
-      break;
-    }
-    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn1, &bgrFrame, 1000);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
@@ -128,7 +108,7 @@ int main(int argc, char *argv[]) {
       CVI_AI_MaskClassification(facelib_handle, &rgbFrame, &face);
 
       if (face.info[0].mask_score > 0.5) {
-        CVI_AI_MaskFaceRecognition(facelib_handle, &bgrFrame, &face);
+        CVI_AI_MaskFaceRecognition(facelib_handle, &rgbFrame, &face);
       } else {
         CVI_AI_FaceAttribute(facelib_handle, &rgbFrame, &face);
       }
@@ -138,11 +118,6 @@ int main(int argc, char *argv[]) {
     s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &rgbFrame);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
-      break;
-    }
-    s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn1, &bgrFrame);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_ReleaseChnFrame chn1 NG\n");
       break;
     }
 
@@ -180,137 +155,4 @@ int main(int argc, char *argv[]) {
 
   SAMPLE_COMM_VI_DestroyVi(&stViConfig);
   SAMPLE_COMM_SYS_Exit();
-}
-
-CVI_S32 InitVI(const VI_PIPE viPipe, SAMPLE_VI_CONFIG_S *pstViConfig) {
-  CVI_S32 s32Ret = CVI_SUCCESS;
-  SAMPLE_SNS_TYPE_E enSnsType = SONY_IMX307_MIPI_2M_30FPS_12BIT;
-  WDR_MODE_E enWDRMode = WDR_MODE_NONE;
-  DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
-  PIXEL_FORMAT_E enPixFormat = PIXEL_FORMAT_YUV_PLANAR_420;
-  VIDEO_FORMAT_E enVideoFormat = VIDEO_FORMAT_LINEAR;
-  COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
-  VI_VPSS_MODE_E enMastPipeMode = VI_OFFLINE_VPSS_OFFLINE;
-
-  VI_CHN viChn = 0;
-  VI_DEV viDev = 0;
-  CVI_S32 s32WorkSnsId = 0;
-  PIC_SIZE_E enPicSize;
-  SIZE_S stSize;
-
-  SAMPLE_COMM_VI_GetSensorInfo(pstViConfig);
-
-  pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.enSnsType = enSnsType;
-  pstViConfig->s32WorkingViNum = 1;
-  pstViConfig->as32WorkingViId[0] = 0;
-  pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.MipiDev = 0xFF;
-  pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.s32BusId = 3;
-  pstViConfig->astViInfo[s32WorkSnsId].stDevInfo.ViDev = viDev;
-  pstViConfig->astViInfo[s32WorkSnsId].stDevInfo.enWDRMode = enWDRMode;
-  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.enMastPipeMode = enMastPipeMode;
-  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.aPipe[0] = viPipe;
-  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.aPipe[1] = -1;
-  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.aPipe[2] = -1;
-  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.aPipe[3] = -1;
-  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.ViChn = viChn;
-  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enPixFormat = enPixFormat;
-  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enDynamicRange = enDynamicRange;
-  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enVideoFormat = enVideoFormat;
-  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode = enCompressMode;
-
-  s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(enSnsType, &enPicSize);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("SAMPLE_COMM_VI_GetSizeBySensor failed with %#x\n", s32Ret);
-    return s32Ret;
-  }
-  s32Ret = SAMPLE_COMM_SYS_GetPicSize(enPicSize, &stSize);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("SAMPLE_COMM_SYS_GetPicSize failed with %#x\n", s32Ret);
-    return s32Ret;
-  }
-  s32Ret = MMF_INIT_HELPER(stSize.u32Width, stSize.u32Height, enPixFormat, stSize.u32Width,
-                           stSize.u32Height, enPixFormat);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("sys init failed. s32Ret: 0x%x !\n", s32Ret);
-    return s32Ret;
-  }
-
-  s32Ret = SAMPLE_PLAT_VI_INIT(pstViConfig);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("vi init failed. s32Ret: 0x%x !\n", s32Ret);
-    return s32Ret;
-  }
-  return s32Ret;
-}
-
-CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig) {
-  CVI_S32 s32Ret = CVI_SUCCESS;
-  s32Ret = SAMPLE_COMM_VO_GetDefConfig(stVoConfig);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("SAMPLE_COMM_VO_GetDefConfig failed with %#x\n", s32Ret);
-    return s32Ret;
-  }
-  RECT_S dispRect = {0, 0, height, width};
-  SIZE_S imgSize = {height, width};
-
-  stVoConfig->VoDev = 0;
-  stVoConfig->enVoIntfType = VO_INTF_MIPI;
-  stVoConfig->enIntfSync = VO_OUTPUT_720x1280_60;
-  stVoConfig->stDispRect = dispRect;
-  stVoConfig->stImageSize = imgSize;
-  stVoConfig->enPixFormat = PIXEL_FORMAT_YUV_PLANAR_420;
-  stVoConfig->enVoMode = VO_MODE_1MUX;
-
-  s32Ret = SAMPLE_COMM_VO_StartVO(stVoConfig);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("SAMPLE_COMM_VO_StartVO failed with %#x\n", s32Ret);
-  }
-  CVI_VO_SetChnRotation(0, 0, ROTATION_270);
-  printf("SAMPLE_COMM_VO_StartVO done\n");
-  return s32Ret;
-}
-
-CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChn1,
-                 const VPSS_CHN vpssChnVO, const CVI_U32 grpWidth, const CVI_U32 grpHeight,
-                 const CVI_U32 voWidth, const CVI_U32 voHeight, const VI_PIPE viPipe,
-                 const CVI_BOOL isVOOpened) {
-  CVI_S32 s32Ret = CVI_SUCCESS;
-  VPSS_GRP_ATTR_S stVpssGrpAttr;
-  CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
-  VPSS_CHN_ATTR_S stVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
-
-  abChnEnable[vpssChn] = CVI_TRUE;
-  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChn], voWidth, voHeight, PIXEL_FORMAT_RGB_888, true);
-  abChnEnable[vpssChn1] = CVI_TRUE;
-  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChn], voWidth, voHeight, PIXEL_FORMAT_BGR_888, true);
-  if (isVOOpened) {
-    abChnEnable[vpssChnVO] = CVI_TRUE;
-    VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChnVO], voWidth, voHeight,
-                            PIXEL_FORMAT_YUV_PLANAR_420, true);
-  }
-
-  CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
-
-  VPSS_GRP_DEFAULT_HELPER(&stVpssGrpAttr, grpWidth, grpHeight, PIXEL_FORMAT_YUV_PLANAR_420);
-
-  /*start vpss*/
-  s32Ret = SAMPLE_COMM_VPSS_Init(vpssGrp, abChnEnable, &stVpssGrpAttr, stVpssChnAttr);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("init vpss group failed. s32Ret: 0x%x !\n", s32Ret);
-    return s32Ret;
-  }
-
-  s32Ret = SAMPLE_COMM_VPSS_Start(vpssGrp, abChnEnable, &stVpssGrpAttr, stVpssChnAttr);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
-    return s32Ret;
-  }
-
-  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(viPipe, vpssChn, vpssGrp);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("vi bind vpss failed. s32Ret: 0x%x !\n", s32Ret);
-    return s32Ret;
-  }
-
-  return s32Ret;
 }
