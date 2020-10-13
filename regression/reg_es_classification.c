@@ -21,7 +21,7 @@ static int run(const char *img_dir, float *Acc) {
     strcat(line, img_dir);
     strcat(line, "/");
     strcat(line, entry->d_name);
-    printf("%s\n", line);
+
     char *delim = "_";
     char *pch;
     pch = strtok(entry->d_name, delim);
@@ -51,8 +51,7 @@ static int run(const char *img_dir, float *Acc) {
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage: %s <mask classifier model path> <mask image dir> <unmask image dir>.\n",
-           argv[0]);
+    printf("Usage: %s <es classifier model path> <data dir>.\n", argv[0]);
     return CVI_FAILURE;
   }
 
@@ -66,7 +65,7 @@ int main(int argc, char *argv[]) {
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, argv[1]);
   if (ret != CVI_SUCCESS) {
-    printf("Set model retinaface failed with %#x!\n", ret);
+    printf("Set model esc failed with %#x!\n", ret);
     return ret;
   }
 

@@ -91,7 +91,6 @@ void *thread_uplink_audio(void *arg) {
 
 CVI_S32 SAMPLE_AUDIO_GET_AUDIO_FRAME_BY_FRAME(CVI_VOID) {
   printf("This section is treated as sample code flow for porting\n");
-  printf("Do not execute as function internally\n");
 
   // STEP 1: cvitek_audin_set
   //_update_audin_config
@@ -130,7 +129,6 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  // IVE_HANDLE handle = CVI_IVE_CreateHandle();
   SAMPLE_AUDIO_GET_AUDIO_FRAME_BY_FRAME();
   VIDEO_FRAME_INFO_S Frame;
   Frame.stVFrame.pu8VirAddr[0] = buffer;
@@ -148,13 +146,13 @@ int main(int argc, char **argv) {
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, argv[1]);
   if (ret != CVI_SUCCESS) {
-    printf("Set model retinaface failed with %#x!\n", ret);
+    printf("Set model esc failed with %#x!\n", ret);
     return ret;
   }
 
   int index = -1;
   CVI_AI_ESClassification(ai_handle, &Frame, &index);
-  printf("index:%s\n", ES_Classes[index]);
+  printf("esc class: %s\n", ES_Classes[index]);
 
   CVI_AI_DestroyHandle(ai_handle);
 
