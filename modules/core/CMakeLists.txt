@@ -1,4 +1,5 @@
 add_subdirectory(core)
+add_subdirectory(custom)
 add_subdirectory(utils)
 add_subdirectory(face_attribute)
 add_subdirectory(face_quality)
@@ -18,6 +19,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils)
 set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:core>
+              $<TARGET_OBJECTS:custom>
               $<TARGET_OBJECTS:utils>
               $<TARGET_OBJECTS:face_attribute>
               $<TARGET_OBJECTS:face_quality>
@@ -36,6 +38,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               cviai_rescale_bbox.cpp
               cviai_media.cpp
               cviai_utils.cpp
+              cviai_custom.cpp
               cviai_core.cpp)
 set(CORE_DEPS ${PERFETTO_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 

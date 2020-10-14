@@ -26,6 +26,7 @@ struct hash<CVI_AI_SUPPORTED_MODEL_E> {
 
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
+  std::vector<cviai_model_t> custom_cont;
   IVE_HANDLE ive_handle = NULL;
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   TamperDetectorMD *td_model = nullptr;

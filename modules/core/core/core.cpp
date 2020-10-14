@@ -16,6 +16,7 @@ int Core::modelOpen(const char *filepath) {
   CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
   if (ret != CVI_RC_SUCCESS) {
     LOGE("CVI_NN_RegisterModel failed, err %d\n", ret);
+    modelClose();
     return CVI_FAILURE;
   }
   LOGI("CVI_NN_RegisterModel successed\n");
@@ -35,13 +36,19 @@ int Core::modelOpen(const char *filepath) {
                                      &mp_output_tensors, &m_output_num);
   if (ret != CVI_RC_SUCCESS) {
     LOGE("CVI_NN_GetINputsOutputs failed\n");
+    modelClose();
     return CVI_FAILURE;
     ;
   }
   TRACE_EVENT_BEGIN("cviai_core", "InitAtferModelOpened");
   ret = initAfterModelOpened();
+  if (ret != CVI_RC_SUCCESS) {
+    LOGE("Failed to init after open model.\n");
+    modelClose();
+    return CVI_FAILURE;
+  }
   TRACE_EVENT_END("cviai_core");
-  return ret;
+  return CVI_SUCCESS;
 }
 
 int Core::modelClose() {
@@ -51,6 +58,7 @@ int Core::modelClose() {
       LOGE("CVI_NN_CleanupModel failed, err %d\n", ret);
       return CVI_FAILURE;
     }
+    mp_model_handle = nullptr;
   }
   return CVI_SUCCESS;
 }

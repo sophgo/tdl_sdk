@@ -43,6 +43,8 @@ class Core {
 
   float getModelThreshold() { return m_model_threshold; };
 
+  bool isInitialized() { return mp_model_handle == nullptr ? false : true; }
+
  protected:
   virtual int initAfterModelOpened() { return CVI_SUCCESS; }
   virtual int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame);

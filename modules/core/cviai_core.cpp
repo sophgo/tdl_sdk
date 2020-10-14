@@ -181,7 +181,15 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle) {
       m_inst.second.instance = nullptr;
     }
   }
+  for (auto &m_inst : ctx->custom_cont) {
+    if (m_inst.instance != nullptr) {
+      m_inst.instance->modelClose();
+      delete m_inst.instance;
+      m_inst.instance = nullptr;
+    }
+  }
   ctx->model_cont.clear();
+  ctx->custom_cont.clear();
   return CVI_SUCCESS;
 }
 
@@ -197,10 +205,9 @@ int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   return CVI_SUCCESS;
 }
 
-template <class C, typename... Arguments>
+template <class C, typename V, typename... Arguments>
 inline C *__attribute__((always_inline))
-getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx,
-                     Arguments &&... arg) {
+getInferenceInstance(const V index, cviai_context_t *ctx, Arguments &&... arg) {
   cviai_model_t &m_t = ctx->model_cont[index];
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
