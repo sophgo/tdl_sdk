@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   //****************************************************************
   // Init VI, VO, Vpss
+  CVI_U32 DevNum = 0;
   VI_PIPE ViPipe = 0;
   VPSS_GRP VpssGrp = 0;
   VPSS_CHN VpssChn = VPSS_CHN0;
@@ -92,10 +93,14 @@ int main(int argc, char *argv[]) {
   CVI_U32 VoChn = 0;
   SAMPLE_VI_CONFIG_S stViConfig;
   SAMPLE_VO_CONFIG_S stVoConfig;
-  s32Ret = InitVI(ViPipe, &stViConfig);
+  s32Ret = InitVI(&stViConfig, &DevNum);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video input failed with %d\n", s32Ret);
     return s32Ret;
+  }
+  if (ViPipe >= DevNum) {
+    printf("Not enough devices. Found %u, required index %u.\n", DevNum, ViPipe);
+    return CVI_FAILURE;
   }
 
   const CVI_U32 voWidth = 1280;

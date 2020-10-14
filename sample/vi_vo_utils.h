@@ -5,7 +5,7 @@
 #include <cvi_vi.h>
 #include "sample_comm.h"
 
-CVI_S32 InitVI(const VI_PIPE viPipe, SAMPLE_VI_CONFIG_S *pstViConfig);
+CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum);
 
 CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig);
 
