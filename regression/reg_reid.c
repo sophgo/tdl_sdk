@@ -57,7 +57,7 @@ static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage: %s <reid model path> <image_root_dir> <feature_dir>.\n", argv[0]);
+    printf("Usage: %s <reid model path> <image_root_dir>.\n", argv[0]);
     printf("Reid model path: Path to the reid cvimodel.\n");
     printf("Image root dir: Root directory to the test images.\n");
     return CVI_FAILURE;
