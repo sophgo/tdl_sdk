@@ -29,15 +29,14 @@ OSNet::OSNet() {
 
 int OSNet::initAfterModelOpened() {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  // FIXME: quant_thresh is not correct
-  // float quant_thresh = CVI_NN_TensorQuantScale(input);
+  float quant_scale = CVI_NN_TensorQuantScale(input);
 
-  float factor_r = 128.f / (STD_R * 2.64064479);
-  float factor_g = 128.f / (STD_G * 2.64064479);
-  float factor_b = 128.f / (STD_B * 2.64064479);
-  float mean_r = (128.f * MODEL_MEAN_R) / (STD_R * 2.64064479);
-  float mean_g = (128.f * MODEL_MEAN_G) / (STD_G * 2.64064479);
-  float mean_b = (128.f * MODEL_MEAN_B) / (STD_B * 2.64064479);
+  float factor_r = quant_scale / STD_R;
+  float factor_g = quant_scale / STD_G;
+  float factor_b = quant_scale / STD_B;
+  float mean_r = quant_scale * MODEL_MEAN_R / STD_R;
+  float mean_g = quant_scale * MODEL_MEAN_G / STD_G;
+  float mean_b = quant_scale * MODEL_MEAN_B / STD_B;
   VPSS_CHN_ATTR_S vpssChnAttr;
   const float factor[] = {factor_r, factor_g, factor_b};
   const float mean[] = {mean_r, mean_g, mean_b};
