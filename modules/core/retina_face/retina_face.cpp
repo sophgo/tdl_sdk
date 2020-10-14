@@ -9,7 +9,6 @@
 #define NAME_SCORE "face_rpn_cls_prob_reshape_"
 #define NAME_LANDMARK "face_rpn_landmark_pred_"
 #define FACE_POINTS_SIZE 5
-#define RETINA_FACE_SCALE (128 / 255.001236)
 
 namespace cviai {
 
@@ -66,7 +65,8 @@ int RetinaFace::initAfterModelOpened() {
 
   CVI_TENSOR *input = getInputTensor(0);
   VPSS_CHN_ATTR_S vpssChnAttr;
-  const float factor[] = {RETINA_FACE_SCALE, RETINA_FACE_SCALE, RETINA_FACE_SCALE};
+  float quant_scale = CVI_NN_TensorQuantScale(input);
+  const float factor[] = {quant_scale, quant_scale, quant_scale};
   const float mean[] = {0, 0, 0};
   VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
                      PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
