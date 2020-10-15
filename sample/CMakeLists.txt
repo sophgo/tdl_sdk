@@ -60,6 +60,7 @@ set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcvi_RES.so)
 
 buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core)
+buildninstall(NAME sample_read_fr_custom INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_read_fr INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_read_fr2 INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS cviai_core cviai_frservice ${SAMPLE_LIBS})

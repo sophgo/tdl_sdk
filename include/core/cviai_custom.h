@@ -112,6 +112,26 @@ int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t i
                                          const bool keepAspectRatio);
 
 /**
+ * @brief This function is similar to CVI_AI_Custom_SetVpssPreprocessParam but you can directly set
+ * the quantized facetor and quantized mean by yourself.
+ *
+ * @param handle An AI SDK handle.
+ * @param id Id of the instance.
+ * @param qFactor The quantized scaling factor.
+ * @param qMean The quantized scaling mean.
+ * @param length The length of the fector and mean array. Must be 1 (will duplicate to 3) or 3.
+ * @param keepAspectRatio Whether the image should keep aspect ratio when resize to input size of
+ * the cvimodel.
+ * @return int Return CVI_SUCCESS on success.
+ *
+ * @see CVI_AI_Custom_SetVpssPreprocessParam
+ * @see CVI_AI_Custom_SetPreprocessFuncPtr
+ */
+int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
+                                            const float *qFactor, const float *qMean,
+                                            const uint32_t length, const bool keepAspectRatio);
+
+/**
  * @brief
  *
  * @param handle An AI SDK handle.
@@ -162,6 +182,22 @@ int CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id);
 /**@{*/
 
 /**
+ * @brief Get the input tensor size with given tensor name. Once this function is called, you cannot
+ * change the settings of the model unless you call CVI_AI_Custom_CloseModel.
+ *
+ * @param handle An AI SDK handle.
+ * @param id Id of the instance.
+ * @param tensorName The input tensor name.
+ * @param n The batch size of the tensor.
+ * @param c The channel size of the tensor.
+ * @param h The height of the tensor.
+ * @param w The width of the tensor.
+ * @return int Return CVI_SUCCESS on success.
+ */
+int CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
+                                     const char *tensorName, uint32_t *n, uint32_t *c, uint32_t *h,
+                                     uint32_t *w);
+/**
  * @brief Do custom model inference. Once this function is called, you cannot change the settings of
  * the model unless you call CVI_AI_Custom_CloseModel.
  *
@@ -188,7 +224,7 @@ int CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id, VIDEO_F
  * @see CVI_AI_Custom_SetSkipPostProcess
  */
 int CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id, const char *tensorName,
-                                  int8_t *tensor, uint32_t *tensorCount, uint16_t *unitSize);
+                                  int8_t **tensor, uint32_t *tensorCount, uint16_t *unitSize);
 
 /**@}*/
 

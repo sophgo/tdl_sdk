@@ -95,6 +95,21 @@ int CVI_AI_FaceNMS(const cvai_face_t *face, cvai_face_t *faceNMS, const float th
 int CVI_AI_ObjectNMS(const cvai_object_t *obj, cvai_object_t *objNMS, const float threshold,
                      const char method);
 
+/**
+ * @brief
+ *
+ * @param inFrame Input frame.
+ * @param metaWidth The face meta width used for coordinate recovery.
+ * @param metaHeight The face meta height used for coordinate recovery.
+ * @param info The face info.
+ * @param outFrame Output face align result. Frame must be preallocated.
+ * @param enableGDC Enable GDC hardware support.
+ * @return int Return CVI_SUCCESS on success.
+ */
+int CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWidth,
+                         const uint32_t metaHeight, const cvai_face_info_t *info,
+                         VIDEO_FRAME_INFO_S *outFrame, const bool enableGDC);
+
 /**@}*/
 
 #ifdef __cplusplus
