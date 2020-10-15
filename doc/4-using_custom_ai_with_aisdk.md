@@ -169,3 +169,108 @@ To free the structure, just simply call ``CVI_AI_Free``. It supports the followi
            cvai_object_info_t*: CVI_AI_FreeObjectInfo, \
            cvai_object_t*: CVI_AI_FreeObject)(X)
 ```
+
+## Custom AI framework
+
+In AI SDK, we provide a framework to let user easily run their own model with hardware support. The functions are defined in ``cviai_custom.h``. The following example is the simpliest way to use the framework with your own model. If your model needs extra preprocessing, you can do it before ``CVI_AI_Custom_RunInference``.
+
+```c
+  // Initialization
+  uint32_t id;
+  // Add inference instance. Remember the returned id to access instance.
+  CVI_AI_Custom_AddInference(handle, &id);
+  // Set model path.
+  CVI_AI_Custom_SetModelPath(handle, id, filepath);
+  // Must set if you want to use VPSS in custom AI framework.
+  const float factor = FACTOR;
+  const float mean = MEAN;
+  const float threshold = THRESHOLD;
+  CVI_AI_Custom_SetVpssPreprocessParam(handle, id, &factor, &mean, 1, threshold, false);
+
+  // ... Do preprocessing if necessary.
+
+  // Run inference
+  CVI_AI_Custom_RunInference(handle, id, &frame);
+  // Post-processing.
+  int8_t *tensor = NULL;
+  uint32_t tensorCount = 0;
+  uint16_t unitSize = 0;
+  CVI_AI_Custom_GetOutputTensor(handle, id, TENSORNAME, &tensor, &tensorCount, &unitSize);
+
+  // ... Do postprocessing.
+```
+
+### Custom AI Settings
+
+There are two ways to send the data into inference. The option is set using ``use_tensor_input`` in ``CVI_AI_Custom_SetPreprocessFuncPtr``.
+
+```c
+typedef void (*preProcessFunc)(VIDEO_FRAME_INFO_S *stInFrame, VIDEO_FRAME_INFO_S *stOutFrame);
+
+int CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t id,
+                                       preProcessFunc func, const bool use_tensor_input,
+                                       const bool use_vpss_sq);
+```
+
+If ``use_tensor_input`` is set to ``true``, you must pass a function that defines how the ``VIDEO_FRAME_INFO_S`` should copy the data into tensor input. The option ``use_vpss_sq`` will also be ignored. If ``use_tensor_input`` is set to ``false``, ``preProcessFunc`` can be set to ``NULL``. If both ``use_tensor_input`` and ``use_vpss_sq`` are set to ``false``, the ``VIDEO_FRAME_INFO_S`` will be directly passed into TPU inference.
+
+If you set ``use_vpss_sq`` to ``true``, you must set the the factor, mean, and quantization threshold for VPSS with these functions.
+
+```c
+int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
+                                         const float *factor, const float *mean,
+                                         const uint32_t length, const float quantizationThreshold,
+                                         const bool keepAspectRatio);
+
+int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
+                                            const float *qFactor, const float *qMean,
+                                            const uint32_t length, const bool keepAspectRatio);
+```
+
+The first function will calculate the quantized factor and quantized mean for you, while the second function will directly pass the values to the vpss. The ``length`` represents the buffer size of factor and mean. If set to 1, all the channels will use the same values. ``length`` can only be 1 or 3. If ``keepAspectRatio`` is set to true, the black will be padded at the right and the bottom.
+
+If you want to dequantize your output, call the following function and set to ``true``.
+
+```c
+int CVI_AI_Custom_SetSkipPostProcess(cviai_handle_t handle, const uint32_t id, const bool skip);
+```
+
+This function is a little bit different from ``CVI_AI_CloseModel``. The close model in custom framework will not delete the instance but only close the model.
+
+```c
+int CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id);
+```
+
+Calling ``CVI_AI_CloseAllModel`` will still close all the models and delete all the instance.
+
+### Custom AI Inference
+
+You are not able to change the settings after these functions are called unless you called ``CVI_AI_Custom_CloseModel``. If your preprocessing code needs to know the size of the input tensor, you can get the size with ``CVI_AI_Custom_GetInputTensorNCHW``. Setting the ``tensorName`` to ``NULL`` will return the first input tensor.
+
+```c
+int CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
+                                     const char *tensorName, uint32_t *n, uint32_t *c, uint32_t *h,
+                                     uint32_t *w);
+
+int CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id, VIDEO_FRAME_INFO_S *frame);
+```
+
+After ``CVI_AI_Custom_RunInference`` is called, you can get the inference result with ``CVI_AI_Custom_GetOutputTensor``. Setting the ``tensorName`` to ``NULL`` will return the first output tensor. Whether the skip postprocessing is set to true or false, the return tensor is stored in ``int8_t``. The number of elements and the size of each element are also returned. You'll need to cast to the correct data type before use.
+
+```c
+int CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id, const char *tensorName,
+                                  int8_t **tensor, uint32_t *tensorCount, uint16_t *unitSize);
+```
+
+The rest of the functions in ``cviai_custom.h`` work just like the functions in ``cviai_core.h``.
+
+```c
+int CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id, char **filepath);
+
+int CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint32_t id, const uint32_t thread);
+
+int CVI_AI_Custom_SetVpssThread2(cviai_handle_t handle, const uint32_t id, const uint32_t thread,
+                                 const VPSS_GRP vpssGroupId);
+
+int CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id, uint32_t *thread);
+```
