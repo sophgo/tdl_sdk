@@ -57,29 +57,9 @@ typedef struct {
  * @param entry entry of offset]
  **/
 int EntryIndex(int w, int h, int classes, int batch, int location, int entry, int outputs);
-
 void ActivateArray(float *x, const int n, bool fast_exp);
-
-float Overlap(float x1, float w1, float x2, float w2);
-float BoxIntersection(box a, box b);
-float BoxUnion(box a, box b);
-float BoxIou(box a, box b);
-int NmsComparator(const void *pa, const void *pb);
-
-box GetRegionBox(const float *data, const float *biases, int n, int index, int i, int j, int w,
-                 int h, int stride, bool fast_exp);
-box GetYoloBox(const float *data, const float *biases, int n, int index, int i, int j, int lw,
-               int lh, int w, int h, int stride, bool fast_exp);
-void Softmax(const float *input, int n, float temp, int stride, float *output, bool fast_exp);
-void SoftmaxCpu(const float *input, int n, int batch, int batch_offset, int groups,
-                int group_offset, int stride, float temp, float *output);
 void DoNmsSort(detection *dets, int total, int classes, float threshold);
-void FillNetworkBoxes(YOLOLayer net_output, int w, int h, float threshold, int relative,
-                      detection *dets, YOLOParamter yolo_param);
 detection *GetNetworkBoxes(YOLOLayer net_output, int classes, int w, int h, float threshold,
                            int relative, int *num, YOLOParamter yolo_param, int index);
-void GetYOLOResults(detection *dets, int num, float threshold, YOLOParamter yolo_param, int ori_w,
-                    int ori_h, void (*call_back)(int, int, int, int, int, float));
-void FreeDetections(detection *dets, int n);
 
 #endif
