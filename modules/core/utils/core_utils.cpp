@@ -1,4 +1,6 @@
 #include "core_utils.hpp"
+#include "cviai_log.hpp"
+#include "neon_utils.hpp"
 
 #include <math.h>
 #include <string.h>
@@ -106,6 +108,47 @@ cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const
   cvai_bbox_t box;
   memset(&box, 0, sizeof(cvai_bbox_t));
   return box;
+}
+
+void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const float *qMean,
+                       VIDEO_FRAME_INFO_S *outFrame) {
+  if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 ||
+      outFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR) {
+    LOGE("Input must be PIXEL_FORMAT_RGB_888. Output must be PIXEL_FORMAT_RGB_888_PLANAR.\n");
+    return;
+  }
+  bool do_unmap_in = false, do_unmap_out = false;
+  if (inFrame->stVFrame.pu8VirAddr[0] == NULL) {
+    inFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(inFrame->stVFrame.u64PhyAddr[0],
+                                                                  inFrame->stVFrame.u32Length[0]);
+    do_unmap_in = true;
+  }
+  if (outFrame->stVFrame.pu8VirAddr[0] == NULL) {
+    outFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(outFrame->stVFrame.u64PhyAddr[0],
+                                                                   outFrame->stVFrame.u32Length[0]);
+    do_unmap_out = true;
+  }
+  cv::Mat image(cv::Size(inFrame->stVFrame.u32Width, inFrame->stVFrame.u32Height), CV_8UC3,
+                inFrame->stVFrame.pu8VirAddr[0], inFrame->stVFrame.u32Stride[0]);
+  std::vector<cv::Mat> channels;
+  for (uint32_t i = 0; i < 3; i++) {
+    channels.push_back(cv::Mat(cv::Size(outFrame->stVFrame.u32Width, outFrame->stVFrame.u32Height),
+                               CV_8UC1, outFrame->stVFrame.pu8VirAddr[0],
+                               outFrame->stVFrame.u32Stride[0]));
+  }
+  const std::vector<float> mean = {qFactor[0], qFactor[1], qFactor[2]};
+  const std::vector<float> factor = {qMean[0], qMean[1], qMean[2]};
+  NormalizeAndSplitToU8(image, mean, factor, channels);
+  CVI_SYS_IonFlushCache(outFrame->stVFrame.u64PhyAddr[0], outFrame->stVFrame.pu8VirAddr[0],
+                        outFrame->stVFrame.u32Length[0]);
+  if (do_unmap_in) {
+    CVI_SYS_Munmap((void *)inFrame->stVFrame.pu8VirAddr[0], inFrame->stVFrame.u32Length[0]);
+    inFrame->stVFrame.pu8VirAddr[0] = NULL;
+  }
+  if (do_unmap_out) {
+    CVI_SYS_Munmap((void *)outFrame->stVFrame.pu8VirAddr[0], outFrame->stVFrame.u32Length[0]);
+    outFrame->stVFrame.pu8VirAddr[0] = NULL;
+  }
 }
 
 }  // namespace cviai
