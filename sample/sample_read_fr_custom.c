@@ -118,8 +118,8 @@ int main(int argc, char *argv[]) {
 }
 
 // Some model defines
-#define FACE_ATTRIBUTE_QUANTIZE_SCALE (0.996098577)
-#define FACE_ATTRIBUTE_MEAN (-0.99609375)
+#define FACE_ATTRIBUTE_FACTOR (1 / 128.f)
+#define FACE_ATTRIBUTE_MEAN (0.99609375)
 #define FACE_ATTRIBUTE_TENSORNAME "BMFace_dense_MatMul_folded"
 
 // This is a function pointer that will be inserted into the custom AI framework.
@@ -139,9 +139,9 @@ int CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t *id)
   printf("Init id %u, model %s.\n", *id, savedFilePath);
   free(savedFilePath);
   // Must set if you want to use VPSS in custom AI framework.
-  const float factor = FACE_ATTRIBUTE_QUANTIZE_SCALE;
-  const float mean = (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE;
-  CVI_AI_Custom_SetVpssPreprocessParamRaw(handle, *id, &factor, &mean, 1, false);
+  const float factor = FACE_ATTRIBUTE_FACTOR;
+  const float mean = FACE_ATTRIBUTE_MEAN;
+  CVI_AI_Custom_SetVpssPreprocessParam(handle, *id, &factor, &mean, 1, false);
   // Optional in this case. You can pass function pointer into the framework if you like.
   CVI_AI_Custom_SetPreprocessFuncPtr(handle, *id, PreProcessing, false, true);
   // Don't do dequantization if choose to skip.
