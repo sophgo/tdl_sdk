@@ -11,8 +11,6 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
-#define ENABLE_HW_WRAP_TEST 0
-
 #define FACE_ATTRIBUTE_FACTOR (1 / 128.f)
 #define FACE_ATTRIBUTE_MEAN (0.99609375)
 
