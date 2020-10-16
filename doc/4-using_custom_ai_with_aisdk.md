@@ -214,13 +214,12 @@ int CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t id,
 
 If ``use_tensor_input`` is set to ``true``, you must pass a function that defines how the ``VIDEO_FRAME_INFO_S`` should copy the data into tensor input. The option ``use_vpss_sq`` will also be ignored. If ``use_tensor_input`` is set to ``false``, ``preProcessFunc`` can be set to ``NULL``. If both ``use_tensor_input`` and ``use_vpss_sq`` are set to ``false``, the ``VIDEO_FRAME_INFO_S`` will be directly passed into TPU inference.
 
-If you set ``use_vpss_sq`` to ``true``, you must set the the factor, mean, and quantization threshold for VPSS with these functions.
+If you set ``use_vpss_sq`` to ``true``, you must set the the factor and mean for VPSS with these functions. The framework will get the quantization threshold from loaded cvimodel.
 
 ```c
 int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
                                          const float *factor, const float *mean,
-                                         const uint32_t length, const float quantizationThreshold,
-                                         const bool keepAspectRatio);
+                                         const uint32_t length, const bool keepAspectRatio);
 
 int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
                                             const float *qFactor, const float *qMean,

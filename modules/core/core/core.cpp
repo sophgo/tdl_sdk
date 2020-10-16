@@ -41,12 +41,40 @@ int Core::modelOpen(const char *filepath) {
     ;
   }
   TRACE_EVENT_BEGIN("cviai_core", "InitAtferModelOpened");
-  ret = initAfterModelOpened();
+  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  float quant_scale = CVI_NN_TensorQuantScale(input);
+  float factor[3] = {0, 0, 0};
+  float mean[3] = {0, 0, 0};
+  bool pad_reverse = false;
+  bool keep_aspect_ratio = true;
+  bool use_model_threshold = quant_scale == 0 ? false : true;
+  ret = initAfterModelOpened(factor, mean, pad_reverse, keep_aspect_ratio, use_model_threshold);
   if (ret != CVI_RC_SUCCESS) {
     LOGE("Failed to init after open model.\n");
     modelClose();
     return CVI_FAILURE;
   }
+  m_vpss_chn_attr.clear();
+  VPSS_CHN_ATTR_S vpssChnAttr;
+  if (use_model_threshold) {
+    for (uint32_t i = 0; i < 3; i++) {
+      factor[i] *= quant_scale;
+      mean[i] *= quant_scale;
+    }
+    // FIXME: Behavior will changed in 1822.
+    float factor_limit = 8191.f / 8192;
+    for (uint32_t i = 0; i < 3; i++) {
+      if (factor[i] > factor_limit) {
+        factor[i] = factor_limit;
+      }
+    }
+  }
+  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
+  if (!keep_aspect_ratio) {
+    vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
+  }
+  m_vpss_chn_attr.push_back(vpssChnAttr);
   TRACE_EVENT_END("cviai_core");
   return CVI_SUCCESS;
 }

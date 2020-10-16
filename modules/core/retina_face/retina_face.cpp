@@ -20,7 +20,8 @@ RetinaFace::RetinaFace() {
 
 RetinaFace::~RetinaFace() {}
 
-int RetinaFace::initAfterModelOpened() {
+int RetinaFace::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                     bool &keep_aspect_ratio, bool &use_model_threshold) {
   std::vector<anchor_cfg> cfg;
   anchor_cfg tmp;
   tmp.SCALES = {32, 16};
@@ -63,15 +64,10 @@ int RetinaFace::initAfterModelOpened() {
         anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
   }
 
-  CVI_TENSOR *input = getInputTensor(0);
-  VPSS_CHN_ATTR_S vpssChnAttr;
-  float quant_scale = CVI_NN_TensorQuantScale(input);
-  const float factor[] = {quant_scale, quant_scale, quant_scale};
-  const float mean[] = {0, 0, 0};
-  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-  m_vpss_chn_attr.push_back(vpssChnAttr);
-
+  for (int i = 0; i < 3; i++) {
+    factor[i] = 1;
+  }
+  use_model_threshold = true;
   return CVI_SUCCESS;
 }
 

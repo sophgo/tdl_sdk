@@ -109,7 +109,8 @@ ThermalFace::ThermalFace() {
 
 ThermalFace::~ThermalFace() {}
 
-int ThermalFace::initAfterModelOpened() {
+int ThermalFace::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                      bool &keep_aspect_ratio, bool &use_model_threshold) {
   std::vector<int> pyramid_levels = {3, 4, 5, 6, 7};
   std::vector<int> strides = {8, 16, 32, 64, 128};
   std::vector<int> sizes = {24, 48, 96, 192, 384};

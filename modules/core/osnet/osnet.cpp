@@ -27,23 +27,16 @@ OSNet::OSNet() {
   m_use_vpss_crop = true;
 }
 
-int OSNet::initAfterModelOpened() {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  float quant_scale = CVI_NN_TensorQuantScale(input);
-
-  float factor_r = quant_scale / STD_R;
-  float factor_g = quant_scale / STD_G;
-  float factor_b = quant_scale / STD_B;
-  float mean_r = quant_scale * MODEL_MEAN_R / STD_R;
-  float mean_g = quant_scale * MODEL_MEAN_G / STD_G;
-  float mean_b = quant_scale * MODEL_MEAN_B / STD_B;
-  VPSS_CHN_ATTR_S vpssChnAttr;
-  const float factor[] = {factor_r, factor_g, factor_b};
-  const float mean[] = {mean_r, mean_g, mean_b};
-  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-  m_vpss_chn_attr.push_back(vpssChnAttr);
+int OSNet::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                bool &keep_aspect_ratio, bool &use_model_threshold) {
+  factor[0] = 1 / STD_R;
+  factor[1] = 1 / STD_G;
+  factor[2] = 1 / STD_B;
+  mean[0] = MODEL_MEAN_R / STD_R;
+  mean[1] = MODEL_MEAN_G / STD_G;
+  mean[2] = MODEL_MEAN_B / STD_B;
+  keep_aspect_ratio = false;
+  use_model_threshold = true;
   return 0;
 }
 

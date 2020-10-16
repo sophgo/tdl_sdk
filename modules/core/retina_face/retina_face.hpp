@@ -15,7 +15,8 @@ class RetinaFace final : public Core {
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta);
 
  private:
-  virtual int initAfterModelOpened() override;
+  virtual int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                   bool &keep_aspect_ratio, bool &use_model_threshold) override;
   void outputParser(float ratio, int image_width, int image_height, int frame_width,
                     int frame_height, cvai_face_t *meta);
 

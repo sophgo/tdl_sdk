@@ -82,14 +82,13 @@ getCustomInstance(const uint32_t id, cviai_context_t *ctx) {
 
 int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
                                          const float *factor, const float *mean,
-                                         const uint32_t length, const float quantizationThreshold,
-                                         const bool keepAspectRatio) {
+                                         const uint32_t length, const bool keepAspectRatio) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   auto *inst_ptr = getCustomInstance(id, ctx);
   if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  return inst_ptr->setSQParam(factor, mean, length, quantizationThreshold, keepAspectRatio);
+  return inst_ptr->setSQParam(factor, mean, length, true, keepAspectRatio);
 }
 
 int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
@@ -100,7 +99,7 @@ int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_
   if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  return inst_ptr->setSQParamRaw(qFactor, qMean, length, keepAspectRatio);
+  return inst_ptr->setSQParam(qFactor, qMean, length, false, keepAspectRatio);
 }
 
 int CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t id,

@@ -31,16 +31,15 @@ MaskClassification::MaskClassification() {
 
 MaskClassification::~MaskClassification() {}
 
-int MaskClassification::initAfterModelOpened() {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  VPSS_CHN_ATTR_S vpssChnAttr;
-  const float factor[] = {R_SCALE * 0.5 / THRESHOLD, G_SCALE * 0.5 / THRESHOLD,
-                          B_SCALE * 0.5 / THRESHOLD};
-  const float mean[] = {(-1) * R_MEAN * 128 / THRESHOLD, (-1) * G_MEAN * 128 / THRESHOLD,
-                        (-1) * B_MEAN * 128 / THRESHOLD};
-  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-  m_vpss_chn_attr.push_back(vpssChnAttr);
+int MaskClassification::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                             bool &keep_aspect_ratio, bool &use_model_threshold) {
+  factor[0] = R_SCALE * 0.5 / THRESHOLD;
+  factor[1] = G_SCALE * 0.5 / THRESHOLD;
+  factor[2] = B_SCALE * 0.5 / THRESHOLD;
+  mean[0] = (-1) * R_MEAN * 128 / THRESHOLD;
+  mean[1] = (-1) * G_MEAN * 128 / THRESHOLD;
+  mean[2] = (-1) * B_MEAN * 128 / THRESHOLD;
+  use_model_threshold = false;
   return 0;
 }
 

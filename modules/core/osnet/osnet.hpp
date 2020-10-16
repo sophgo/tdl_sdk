@@ -13,6 +13,7 @@ class OSNet final : public Core {
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int obj_idx);
 
  private:
-  virtual int initAfterModelOpened() override;
+  virtual int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                   bool &keep_aspect_ratio, bool &use_model_threshold) override;
 };
 }  // namespace cviai

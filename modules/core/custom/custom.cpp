@@ -16,55 +16,33 @@ Custom::Custom() {
   mp_config->input_mem_type = CVI_MEM_DEVICE;
 }
 
-int Custom::initAfterModelOpened() {
+int Custom::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                 bool &keep_aspect_ratio, bool &use_model_threshold) {
   if (mp_config->input_mem_type == CVI_MEM_DEVICE && !m_skip_vpss_preprocess && m_factor.empty()) {
     LOGE("VPSS is set to use. Please set factor, mean and initialize first.\n");
     return CVI_FAILURE;
   }
-  m_vpss_chn_attr.clear();
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  // FIXME: quant_thresh is not correct
-  // float quant_thresh = CVI_NN_TensorQuantScale(input);
-  float quan_scale, mean_quan_scale;
-  if (m_quant_threshold == 128.f) {
-    quan_scale = 1;
-    mean_quan_scale = 1;
-  } else {
-    quan_scale = 128.f / m_quant_threshold;
-    mean_quan_scale = (-1) * quan_scale;
-  }
-  float factor[3], mean[3];
   if (m_factor.size() == 1) {
-    float q_factor = m_factor[0] * quan_scale;
-    float q_mean = m_mean[0] * mean_quan_scale;
     for (int i = 0; i < 3; i++) {
-      factor[i] = q_factor;
-      mean[i] = q_mean;
+      factor[i] = m_factor[0];
+      mean[i] = m_mean[0];
     }
   } else if (m_factor.size() == 3) {
     for (int i = 0; i < 3; i++) {
-      float q_factor = m_factor[i] * quan_scale;
-      float q_mean = m_mean[i] * mean_quan_scale;
-      factor[i] = q_factor;
-      mean[i] = q_mean;
+      factor[i] = m_factor[i];
+      mean[i] = m_mean[i];
     }
   } else {
     LOGE("factor and mean must have 1 or 3 values. Current: %zu.\n", m_factor.size());
     return CVI_FAILURE;
   }
-
-  VPSS_CHN_ATTR_S vpssChnAttr;
-  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-  if (!m_keep_aspect_ratio) {
-    vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-  }
-  m_vpss_chn_attr.push_back(vpssChnAttr);
+  keep_aspect_ratio = m_keep_aspect_ratio;
+  use_model_threshold = m_use_model_threashold;
   return CVI_SUCCESS;
 }
 
 int Custom::setSQParam(const float *factor, const float *mean, const uint32_t length,
-                       const float threshold, const bool keep_aspect_ratio) {
+                       const bool use_model_threshold, const bool keep_aspect_ratio) {
   if (length != 1 && length != 3) {
     LOGE("Scale parameter only supports legnth of 1 or 3. Given: %u.\n", length);
     return CVI_FAILURE;
@@ -75,14 +53,9 @@ int Custom::setSQParam(const float *factor, const float *mean, const uint32_t le
     m_factor.push_back(factor[i]);
     m_mean.push_back(mean[i]);
   }
-  m_quant_threshold = threshold;
+  m_use_model_threashold = use_model_threshold;
   m_keep_aspect_ratio = keep_aspect_ratio;
   return CVI_SUCCESS;
-}
-
-int Custom::setSQParamRaw(const float *factor, const float *mean, const uint32_t length,
-                          const bool keep_aspect_ratio) {
-  return setSQParam(factor, mean, length, 128.f, keep_aspect_ratio);
 }
 
 int Custom::setPreProcessFunc(preProcessFunc func, bool use_tensor_input, bool use_vpss_sq) {

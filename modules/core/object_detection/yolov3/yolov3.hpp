@@ -13,7 +13,8 @@ class Yolov3 final : public Core {
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj, cvai_obj_det_type_e det_type);
 
  private:
-  int initAfterModelOpened() override;
+  int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse, bool &keep_aspect_ratio,
+                           bool &use_model_threshold) override;
   void outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj, cvai_obj_det_type_e det_type);
   void doYolo(YOLOLayer &l);
   void getYOLOResults(detection *dets, int num, float threshold, int ori_w, int ori_h,

@@ -13,7 +13,8 @@ class ThermalFace final : public Core {
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta);
 
  private:
-  virtual int initAfterModelOpened() override;
+  virtual int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                   bool &keep_aspect_ratio, bool &use_model_threshold) override;
   virtual int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame,
                              VIDEO_FRAME_INFO_S *dstFrame) override;
   void outputParser(const int image_width, const int image_height, const int frame_width,

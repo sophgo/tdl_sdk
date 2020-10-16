@@ -38,19 +38,16 @@ FaceAttribute::FaceAttribute(bool use_wrap_hw) : m_use_wrap_hw(use_wrap_hw) {
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }
 
-int FaceAttribute::initAfterModelOpened() {
+int FaceAttribute::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                        bool &keep_aspect_ratio, bool &use_model_threshold) {
+  for (uint32_t i = 0; i < 3; i++) {
+    factor[i] = FACE_ATTRIBUTE_QUANTIZE_SCALE;
+    mean[i] = (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE;
+  }
+  use_model_threshold = false;
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  VPSS_CHN_ATTR_S vpssChnAttr;
-  const float factor[] = {FACE_ATTRIBUTE_QUANTIZE_SCALE, FACE_ATTRIBUTE_QUANTIZE_SCALE,
-                          FACE_ATTRIBUTE_QUANTIZE_SCALE};
-  const float mean[] = {(-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE,
-                        (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE,
-                        (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE};
-  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-  m_vpss_chn_attr.push_back(vpssChnAttr);
   PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, vpssChnAttr.u32Width, vpssChnAttr.u32Height,
+  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, input->shape.dim[3], input->shape.dim[2],
                             format) != CVI_SUCCESS) {
     return -1;
   }

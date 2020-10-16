@@ -91,15 +91,15 @@ int CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id, uint32
 
 /**
  * @brief If choose to use VPSS to do scaling and quantization. You'll have to set the factor, mean,
- * quantization threshold, and whether the image should keep aspect ratio. If you don't want to use
- * VPSS, you'll have to setup the preprocess function pointer.
+ * and whether the image should keep aspect ratio. The framework will get the quantization threshold
+ * from loaded cvimodel If you don't want to use VPSS, you'll have to setup the preprocess function
+ * pointer.
  *
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
  * @param factor The scaling factor.
  * @param mean The scaling mean.
  * @param length The length of the fector and mean array. Must be 1 (will duplicate to 3) or 3.
- * @param quantizationThreshold The quantization threshold of the cvimodel.
  * @param keepAspectRatio Whether the image should keep aspect ratio when resize to input size of
  * the cvimodel.
  * @return int Return CVI_SUCCESS on success.
@@ -108,8 +108,7 @@ int CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id, uint32
  */
 int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
                                          const float *factor, const float *mean,
-                                         const uint32_t length, const float quantizationThreshold,
-                                         const bool keepAspectRatio);
+                                         const uint32_t length, const bool keepAspectRatio);
 
 /**
  * @brief This function is similar to CVI_AI_Custom_SetVpssPreprocessParam but you can directly set

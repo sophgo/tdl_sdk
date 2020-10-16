@@ -100,8 +100,8 @@ int main(int argc, char *argv[]) {
           printf("[Face %u] At feature index %u is not the same %d != %d.\n", i, j,
                  (int32_t)custom_face.info[i].face_feature.ptr[j],
                  (int32_t)face.info[i].face_feature.ptr[j]);
-          break;
           is_same = false;
+          break;
         }
       }
     }

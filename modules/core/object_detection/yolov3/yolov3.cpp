@@ -40,15 +40,12 @@ Yolov3::Yolov3() {
 
 Yolov3::~Yolov3() { free(mp_total_dets); }
 
-int Yolov3::initAfterModelOpened() {
-  CVI_TENSOR *input = getInputTensor(0);
-  VPSS_CHN_ATTR_S vpssChnAttr;
-  const float factor[] = {YOLOV3_QUANTIZE_SCALE, YOLOV3_QUANTIZE_SCALE, YOLOV3_QUANTIZE_SCALE};
-  const float mean[] = {0, 0, 0};
-  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, true);
-  m_vpss_chn_attr.push_back(vpssChnAttr);
-
+int Yolov3::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                 bool &keep_aspect_ratio, bool &use_model_threshold) {
+  for (int i = 0; i < 3; i++) {
+    factor[i] = YOLOV3_QUANTIZE_SCALE;
+  }
+  use_model_threshold = false;
   return CVI_SUCCESS;
 }
 

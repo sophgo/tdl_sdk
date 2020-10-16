@@ -46,7 +46,10 @@ class Core {
   bool isInitialized() { return mp_model_handle == nullptr ? false : true; }
 
  protected:
-  virtual int initAfterModelOpened() { return CVI_SUCCESS; }
+  virtual int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                                   bool &keep_aspect_ratio, bool &use_model_threshold) {
+    return CVI_SUCCESS;
+  }
   virtual int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame);
   int run(VIDEO_FRAME_INFO_S *srcFrame);
   CVI_TENSOR *getInputTensor(int idx);
