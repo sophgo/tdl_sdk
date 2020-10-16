@@ -126,7 +126,7 @@ int CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWidth,
           outFrame->stVFrame.u64PhyAddr[0], outFrame->stVFrame.u32Length[0]);
       do_unmap_out = true;
     }
-    cv::Mat image(inFrame->stVFrame.u32Width, inFrame->stVFrame.u32Height, CV_8UC3,
+    cv::Mat image(cv::Size(inFrame->stVFrame.u32Width, inFrame->stVFrame.u32Height), CV_8UC3,
                   inFrame->stVFrame.pu8VirAddr[0], inFrame->stVFrame.u32Stride[0]);
     cv::Mat warp_image(cv::Size(outFrame->stVFrame.u32Width, outFrame->stVFrame.u32Height),
                        image.type(), outFrame->stVFrame.pu8VirAddr[0],
