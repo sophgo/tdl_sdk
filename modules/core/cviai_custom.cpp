@@ -39,11 +39,7 @@ int CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id, char **
     LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
     return CVI_FAILURE;
   }
-  cviai_model_t &mt = ctx->custom_cont[id];
-  char *path = (char *)malloc(mt.model_path.size());
-  snprintf(path, strlen(path), "%s", mt.model_path.c_str());
-  *filepath = path;
-  return CVI_SUCCESS;
+  return GetModelName(ctx->custom_cont[id], filepath);
 }
 
 int CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint32_t id, const uint32_t thread) {
@@ -53,23 +49,35 @@ int CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint32_t id, const 
 int CVI_AI_Custom_SetVpssThread2(cviai_handle_t handle, const uint32_t id, const uint32_t thread,
                                  const VPSS_GRP vpssGroupId) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  uint32_t vpss_thread;
-  if (int ret = CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread,
-                                           &ctx->vec_vpss_engine) != CVI_SUCCESS) {
-    return ret;
+  if (id >= (uint32_t)ctx->custom_cont.size()) {
+    LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
+    return CVI_FAILURE;
   }
-  auto &m_t = ctx->custom_cont[id];
-  m_t.vpss_thread = vpss_thread;
-  if (m_t.instance != nullptr) {
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  }
-  return CVI_SUCCESS;
+  return setVPSSThread(ctx->custom_cont[id], ctx->vec_vpss_engine, thread, vpssGroupId);
 }
 
 int CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id, uint32_t *thread) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  if (id >= (uint32_t)ctx->custom_cont.size()) {
+    LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
+    return CVI_FAILURE;
+  }
   *thread = ctx->custom_cont[id].vpss_thread;
   return CVI_SUCCESS;
+}
+
+inline cviai::Custom *__attribute__((always_inline))
+getCustomInstance(const uint32_t id, cviai_context_t *ctx) {
+  if (id >= (uint32_t)ctx->custom_cont.size()) {
+    LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
+    return nullptr;
+  }
+  cviai_model_t &mt = ctx->custom_cont[id];
+  if (mt.instance->isInitialized()) {
+    LOGE("Inference already init.\n");
+    return nullptr;
+  }
+  return dynamic_cast<cviai::Custom *>(mt.instance);
 }
 
 int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
@@ -77,16 +85,10 @@ int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t i
                                          const uint32_t length, const float quantizationThreshold,
                                          const bool keepAspectRatio) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  if (id >= (uint32_t)ctx->custom_cont.size()) {
-    LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
+  auto *inst_ptr = getCustomInstance(id, ctx);
+  if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  cviai_model_t &mt = ctx->custom_cont[id];
-  if (mt.instance->isInitialized()) {
-    LOGE("Inference already init.\n");
-    return CVI_FAILURE;
-  }
-  auto *inst_ptr = dynamic_cast<cviai::Custom *>(mt.instance);
   return inst_ptr->setSQParam(factor, mean, length, quantizationThreshold, keepAspectRatio);
 }
 
@@ -94,16 +96,10 @@ int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_
                                             const float *qFactor, const float *qMean,
                                             const uint32_t length, const bool keepAspectRatio) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  if (id >= (uint32_t)ctx->custom_cont.size()) {
-    LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
+  auto *inst_ptr = getCustomInstance(id, ctx);
+  if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  cviai_model_t &mt = ctx->custom_cont[id];
-  if (mt.instance->isInitialized()) {
-    LOGE("Inference already init.\n");
-    return CVI_FAILURE;
-  }
-  auto *inst_ptr = dynamic_cast<cviai::Custom *>(mt.instance);
   return inst_ptr->setSQParamRaw(qFactor, qMean, length, keepAspectRatio);
 }
 
@@ -111,36 +107,35 @@ int CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t id,
                                        preProcessFunc func, const bool use_tensor_input,
                                        const bool use_vpss_sq) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  if (id >= (uint32_t)ctx->custom_cont.size()) {
-    LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
+  auto *inst_ptr = getCustomInstance(id, ctx);
+  if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  cviai_model_t &mt = ctx->custom_cont[id];
-  if (mt.instance->isInitialized()) {
-    LOGE("Inference already init.\n");
-    return CVI_FAILURE;
-  }
-  auto *inst_ptr = dynamic_cast<cviai::Custom *>(mt.instance);
   return inst_ptr->setPreProcessFunc(func, use_tensor_input, use_vpss_sq);
 }
 
 int CVI_AI_Custom_SetSkipPostProcess(cviai_handle_t handle, const uint32_t id, const bool skip) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  auto *inst_ptr = getCustomInstance(id, ctx);
+  if (inst_ptr == nullptr) {
+    return CVI_FAILURE;
+  }
+  return inst_ptr->setSkipPostProcess(skip);
+}
+
+int CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   if (id >= (uint32_t)ctx->custom_cont.size()) {
     LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
     return CVI_FAILURE;
   }
   cviai_model_t &mt = ctx->custom_cont[id];
-  if (mt.instance->isInitialized()) {
-    LOGE("Inference already init.\n");
-    return CVI_FAILURE;
-  }
-  auto *inst_ptr = dynamic_cast<cviai::Custom *>(mt.instance);
-  return inst_ptr->setSkipPostProcess(skip);
+  mt.instance->modelClose();
+  return CVI_SUCCESS;
 }
 
 inline cviai::Custom *__attribute__((always_inline))
-getCustomInstance(const uint32_t id, cviai_context_t *ctx) {
+getCustomInstanceInit(const uint32_t id, cviai_context_t *ctx) {
   if (id >= (uint32_t)ctx->custom_cont.size()) {
     LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
     return nullptr;
@@ -164,7 +159,7 @@ int CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
                                      const char *tensorName, uint32_t *n, uint32_t *c, uint32_t *h,
                                      uint32_t *w) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  auto *inst_ptr = getCustomInstance(id, ctx);
+  auto *inst_ptr = getCustomInstanceInit(id, ctx);
   if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
@@ -173,8 +168,9 @@ int CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
 
 int CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id,
                                VIDEO_FRAME_INFO_S *frame) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Custom_RetinaFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  auto *inst_ptr = getCustomInstance(id, ctx);
+  auto *inst_ptr = getCustomInstanceInit(id, ctx);
   if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
@@ -184,25 +180,9 @@ int CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id,
 int CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id, const char *tensorName,
                                   int8_t **tensor, uint32_t *tensorCount, uint16_t *unitSize) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  if (id >= (uint32_t)ctx->custom_cont.size()) {
-    LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
+  auto *inst_ptr = getCustomInstanceInit(id, ctx);
+  if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  cviai_model_t &mt = ctx->custom_cont[id];
-  if (mt.instance->isInitialized() == false) {
-    LOGE("Inference not init.\n");
-    return CVI_FAILURE;
-  }
-  auto *inst_ptr = dynamic_cast<cviai::Custom *>(mt.instance);
   return inst_ptr->getOutputTensor(tensorName, tensor, tensorCount, unitSize);
-}
-
-int CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->custom_cont[id];
-  if (m_t.instance == nullptr) {
-    return CVI_FAILURE;
-  }
-  m_t.instance->modelClose();
-  return CVI_SUCCESS;
 }

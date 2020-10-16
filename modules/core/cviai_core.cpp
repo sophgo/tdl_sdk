@@ -92,10 +92,7 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
 
 int CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, char **filepath) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  char *path = (char *)malloc(ctx->model_cont[config].model_path.size());
-  snprintf(path, strlen(path), "%s", ctx->model_cont[config].model_path.c_str());
-  *filepath = path;
-  return CVI_SUCCESS;
+  return GetModelName(ctx->model_cont[config], filepath);
 }
 
 int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
@@ -142,17 +139,7 @@ int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
 int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                           const uint32_t thread, const VPSS_GRP vpssGroupId) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  uint32_t vpss_thread;
-  if (int ret = CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread,
-                                           &ctx->vec_vpss_engine) != CVI_SUCCESS) {
-    return ret;
-  }
-  auto &m_t = ctx->model_cont[config];
-  m_t.vpss_thread = vpss_thread;
-  if (m_t.instance != nullptr) {
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  }
-  return CVI_SUCCESS;
+  return setVPSSThread(ctx->model_cont[config], ctx->vec_vpss_engine, thread, vpssGroupId);
 }
 
 int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread) {

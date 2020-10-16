@@ -34,7 +34,15 @@ typedef struct {
   bool use_gdc_wrap = false;
 } cviai_context_t;
 
-inline cviai::VpssEngine *CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t index) {
+inline int __attribute__((always_inline)) GetModelName(cviai_model_t &model, char **filepath) {
+  char *path = (char *)malloc(model.model_path.size());
+  snprintf(path, strlen(path), "%s", model.model_path.c_str());
+  *filepath = path;
+  return CVI_SUCCESS;
+}
+
+inline cviai::VpssEngine *__attribute__((always_inline))
+CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t index) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   if (index >= ctx->vec_vpss_engine.size()) {
     return nullptr;
@@ -42,9 +50,9 @@ inline cviai::VpssEngine *CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t i
   return ctx->vec_vpss_engine[index];
 }
 
-inline int CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId,
-                                      uint32_t *vpss_thread,
-                                      std::vector<cviai::VpssEngine *> *vec_engine) {
+inline int __attribute__((always_inline))
+CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId, uint32_t *vpss_thread,
+                           std::vector<cviai::VpssEngine *> *vec_engine) {
   *vpss_thread = thread;
   if (thread >= vec_engine->size()) {
     auto inst = new cviai::VpssEngine();
@@ -64,6 +72,21 @@ inline int CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpss
     }
   } else {
     LOGW("Thread %u already exists, given group id %u will not be used.\n", thread, vpssGroupId);
+  }
+  return CVI_SUCCESS;
+}
+
+inline int __attribute__((always_inline))
+setVPSSThread(cviai_model_t &model, std::vector<cviai::VpssEngine *> &v_engine,
+              const uint32_t thread, const VPSS_GRP vpssGroupId) {
+  uint32_t vpss_thread;
+  if (int ret =
+          CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread, &v_engine) != CVI_SUCCESS) {
+    return ret;
+  }
+  model.vpss_thread = vpss_thread;
+  if (model.instance != nullptr) {
+    model.instance->setVpssEngine(v_engine[model.vpss_thread]);
   }
   return CVI_SUCCESS;
 }

@@ -253,16 +253,12 @@ int CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
                                      uint32_t *w);
 
 int CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id, VIDEO_FRAME_INFO_S *frame);
-```
 
-After ``CVI_AI_Custom_RunInference`` is called, you can get the inference result with ``CVI_AI_Custom_GetOutputTensor``. Setting the ``tensorName`` to ``NULL`` will return the first output tensor. Whether the skip postprocessing is set to true or false, the return tensor is stored in ``int8_t``. The number of elements and the size of each element are also returned. You'll need to cast to the correct data type before use.
-
-```c
 int CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id, const char *tensorName,
                                   int8_t **tensor, uint32_t *tensorCount, uint16_t *unitSize);
 ```
 
-The rest of the functions in ``cviai_custom.h`` work just like the functions in ``cviai_core.h``.
+After ``CVI_AI_Custom_RunInference`` is called, you can get the inference result with ``CVI_AI_Custom_GetOutputTensor``. Setting the ``tensorName`` to ``NULL`` will return the first output tensor. Whether the skip postprocessing is set to true or false, the return tensor is stored in ``int8_t``. The number of elements and the size of each element are also returned. You'll need to cast to the correct data type before use. The rest of the functions in ``cviai_custom.h`` work just like the functions in ``cviai_core.h``.
 
 ```c
 int CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id, char **filepath);
