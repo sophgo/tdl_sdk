@@ -13,8 +13,8 @@
 
 #define ENABLE_HW_WRAP_TEST 0
 
-#define FACE_ATTRIBUTE_QUANTIZE_SCALE (0.996098577)
-#define FACE_ATTRIBUTE_MEAN (-0.99609375)
+#define FACE_ATTRIBUTE_FACTOR (1 / 128.f)
+#define FACE_ATTRIBUTE_MEAN (0.99609375)
 
 #define ATTRIBUTE_OUT_NAME "BMFace_dense_MatMul_folded"
 #define RECOGNITION_OUT_NAME "pre_fc1"
@@ -41,10 +41,11 @@ FaceAttribute::FaceAttribute(bool use_wrap_hw) : m_use_wrap_hw(use_wrap_hw) {
 int FaceAttribute::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
                                         bool &keep_aspect_ratio, bool &use_model_threshold) {
   for (uint32_t i = 0; i < 3; i++) {
-    factor[i] = FACE_ATTRIBUTE_QUANTIZE_SCALE;
-    mean[i] = (-1) * FACE_ATTRIBUTE_MEAN * 128 / FACE_ATTRIBUTE_QUANTIZE_SCALE;
+    factor[i] = FACE_ATTRIBUTE_FACTOR;
+    mean[i] = FACE_ATTRIBUTE_MEAN;
   }
-  use_model_threshold = false;
+  use_model_threshold = true;
+
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, input->shape.dim[3], input->shape.dim[2],
