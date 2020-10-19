@@ -3,8 +3,6 @@
 #include "ive/ive.h"
 #include "vpss_engine.hpp"
 
-#include <cvi_comm_video.h>
-#include <cvi_comm_vpss.h>
 #include <cviruntime.h>
 #include <memory>
 #include <vector>

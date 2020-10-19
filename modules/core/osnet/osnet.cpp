@@ -2,10 +2,8 @@
 
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
-#include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 
-#include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
 #define STD_R (255.f * 0.229f)

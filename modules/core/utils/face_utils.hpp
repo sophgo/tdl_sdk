@@ -2,8 +2,9 @@
 #define _CVI_FACE_UTILS_H_
 
 #include "core/face/cvai_face_types.h"
-#include "cvi_comm_video.h"
 #include "opencv2/opencv.hpp"
+
+#include <cvi_comm_video.h>
 
 namespace cviai {
 cvai_face_info_t bbox_rescale(const float width, const float height, const float new_width,

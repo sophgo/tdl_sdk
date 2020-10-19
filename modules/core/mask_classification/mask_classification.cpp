@@ -1,7 +1,6 @@
 #include "mask_classification.hpp"
 
 #include "core/cviai_types_mem.h"
-#include "core/utils/vpss_helper.h"
 #include "face_utils.hpp"
 
 #include "cvi_sys.h"

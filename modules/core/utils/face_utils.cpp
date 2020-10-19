@@ -1,6 +1,5 @@
 #include "face_utils.hpp"
 #include "core/cviai_types_mem_internal.h"
-#include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cviai_log.hpp"
 

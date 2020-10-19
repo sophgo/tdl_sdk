@@ -1,6 +1,7 @@
 #include "core/cviai_core.h"
 #include "cviai_core_internal.hpp"
 #include "cviai_log.hpp"
+#include "cviai_trace.hpp"
 
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
@@ -16,8 +17,6 @@
 #include "osnet/osnet.hpp"
 #include "retina_face/retina_face.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
-
-#include "cviai_trace.hpp"
 
 #include <stdio.h>
 #include <unistd.h>

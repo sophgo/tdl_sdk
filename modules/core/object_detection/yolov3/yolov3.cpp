@@ -2,8 +2,6 @@
 #include "coco_utils.hpp"
 #include "core_utils.hpp"
 
-#include "core/utils/vpss_helper.h"
-
 #define YOLOV3_CLASSES 80
 #define YOLOV3_NMS_THRESHOLD 0.45
 #define YOLOV3_ANCHOR_NUM 3

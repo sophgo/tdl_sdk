@@ -1,8 +1,6 @@
 #include "vpss_engine.hpp"
-#include "cviai_log.hpp"
-
 #include "core/utils/vpss_helper.h"
-#include "cviruntime.h"
+#include "cviai_log.hpp"
 
 namespace cviai {
 

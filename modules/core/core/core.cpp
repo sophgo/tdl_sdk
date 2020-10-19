@@ -1,9 +1,6 @@
 #include "core.hpp"
 #include "core/utils/vpss_helper.h"
-#include "core_utils.hpp"
 #include "cviai_trace.hpp"
-
-#include <cstdlib>
 
 namespace cviai {
 

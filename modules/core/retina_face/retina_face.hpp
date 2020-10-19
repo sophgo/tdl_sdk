@@ -3,7 +3,6 @@
 #include "core/face/cvai_face_types.h"
 
 #include "anchor_generator.h"
-
 #include "opencv2/opencv.hpp"
 
 namespace cviai {

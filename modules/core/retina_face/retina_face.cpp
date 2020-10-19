@@ -3,7 +3,7 @@
 
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
-#include "core/utils/vpss_helper.h"
+#include "face_utils.hpp"
 
 #define NAME_BBOX "face_rpn_bbox_pred_"
 #define NAME_SCORE "face_rpn_cls_prob_reshape_"

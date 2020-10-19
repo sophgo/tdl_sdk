@@ -2,12 +2,12 @@
 #include "core/cviai_core.h"
 #include "cviai_core_internal.hpp"
 #include "cviai_log.hpp"
+#include "cviai_trace.hpp"
 
-#include <string.h>
 #include "custom/custom.hpp"
 #include "cviai_experimental.h"
-#include "cviai_perfetto.h"
-#include "cviai_trace.hpp"
+
+#include <string.h>
 
 int CVI_AI_Custom_AddInference(cviai_handle_t handle, uint32_t *id) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);

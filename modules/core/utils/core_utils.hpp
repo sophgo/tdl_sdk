@@ -1,10 +1,8 @@
 #pragma once
 #include "core/core/cvai_core_types.h"
-#include "cvi_comm_video.h"
-#include "cviruntime.h"
 
-#include <cvi_sys.h>
-#include <cvi_vb.h>
+#include <cvi_comm_video.h>
+#include <cviruntime.h>
 #include <algorithm>
 #include <vector>
 

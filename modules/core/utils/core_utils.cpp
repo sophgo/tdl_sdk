@@ -2,6 +2,7 @@
 #include "cviai_log.hpp"
 #include "neon_utils.hpp"
 
+#include <cvi_sys.h>
 #include <math.h>
 #include <string.h>
 #include <algorithm>
