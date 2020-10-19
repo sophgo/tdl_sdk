@@ -77,7 +77,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
           "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, PIXEL_FORMAT_YUV_PLANAR_420. Current: "
           "%x\n",
           stOutFrame->stVFrame.enPixelFormat);
-      return -1;
+      return CVI_FAILURE;
     }
     for (uint32_t i = 0; i < meta->size; ++i) {
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
@@ -93,7 +93,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
       LOGE("Supported format is PIXEL_FORMAT_RGB_888. Current: %x\n",
            stOutFrame->stVFrame.enPixelFormat);
-      return -1;
+      return CVI_FAILURE;
     }
     uint32_t img_width = stOutFrame->stVFrame.u32Width;
     uint32_t img_height = stOutFrame->stVFrame.u32Height;

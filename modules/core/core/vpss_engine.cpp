@@ -74,6 +74,7 @@ int VpssEngine::init(VPSS_GRP grp_id) {
     return CVI_FAILURE;
   }
 
+  memset(&m_crop_attr_reset, 0, sizeof(VPSS_CROP_INFO_S));
   m_is_vpss_init = true;
   return CVI_SUCCESS;
 }
@@ -156,6 +157,9 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
       LOGE("CVI_VPSS_SetGrpCrop failed with %#x\n", ret);
       return ret;
     }
+  } else {
+    // Reset crop settings
+    CVI_VPSS_SetGrpCrop(m_grpid, &m_crop_attr_reset);
   }
 
   for (uint32_t i = 0; i < m_enabled_chn; i++) {
@@ -173,6 +177,10 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
         LOGE("CVI_VPSS_SetChnCrop failed with %#x\n", ret);
         return ret;
       }
+    }
+  } else {
+    for (uint32_t i = 0; i < m_enabled_chn; i++) {
+      CVI_VPSS_SetChnCrop(m_grpid, i, &m_crop_attr_reset);
     }
   }
 
@@ -204,13 +212,6 @@ int VpssEngine::sendCropGrpChnFrame(const VIDEO_FRAME_INFO_S *frame,
 
 int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout) {
   int ret = CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
-  // Reset crop settings
-  VPSS_CROP_INFO_S crop_attr;
-  memset(&crop_attr, 0, sizeof(VPSS_CROP_INFO_S));
-  CVI_VPSS_SetGrpCrop(m_grpid, &crop_attr);
-  for (uint32_t i = 0; i < m_enabled_chn; i++) {
-    CVI_VPSS_SetChnCrop(m_grpid, i, &crop_attr);
-  }
   return ret;
 }
 

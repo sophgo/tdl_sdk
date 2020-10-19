@@ -40,10 +40,9 @@ int Core::modelOpen(const char *filepath) {
   TRACE_EVENT_BEGIN("cviai_core", "InitAtferModelOpened");
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   float quant_scale = CVI_NN_TensorQuantScale(input);
-  float factor[3] = {0, 0, 0};
-  float mean[3] = {0, 0, 0};
-  bool pad_reverse = false;
-  bool keep_aspect_ratio = true;
+  // Assigning default values.
+  float factor[3] = {0, 0, 0}, mean[3] = {0, 0, 0};
+  bool pad_reverse = false, keep_aspect_ratio = true;
   bool use_model_threshold = quant_scale == 0 ? false : true;
   ret = initAfterModelOpened(factor, mean, pad_reverse, keep_aspect_ratio, use_model_threshold);
   if (ret != CVI_SUCCESS) {
@@ -85,6 +84,40 @@ int Core::modelClose() {
     }
     mp_model_handle = nullptr;
   }
+  return CVI_SUCCESS;
+}
+
+CVI_TENSOR *Core::getInputTensor(int idx) {
+  if (idx >= m_input_num) {
+    return NULL;
+  }
+  return mp_input_tensors + idx;
+}
+
+CVI_TENSOR *Core::getOutputTensor(int idx) {
+  if (idx >= m_output_num) {
+    return NULL;
+  }
+  return mp_output_tensors + idx;
+}
+
+int Core::setIveInstance(IVE_HANDLE handle) {
+  ive_handle = handle;
+  return CVI_SUCCESS;
+}
+
+int Core::setVpssEngine(VpssEngine *engine) {
+  mp_vpss_inst = engine;
+  return CVI_SUCCESS;
+}
+
+void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
+void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
+float Core::getModelThreshold() { return m_model_threshold; };
+bool Core::isInitialized() { return mp_model_handle == nullptr ? false : true; }
+
+int Core::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
+                               bool &keep_aspect_ratio, bool &use_model_threshold) {
   return CVI_SUCCESS;
 }
 
@@ -155,32 +188,5 @@ int Core::runVideoForward(VIDEO_FRAME_INFO_S *srcFrame) {
   }
   return ret;
 }
-
-CVI_TENSOR *Core::getInputTensor(int idx) {
-  if (idx >= m_input_num) {
-    return NULL;
-  }
-  return mp_input_tensors + idx;
-}
-
-CVI_TENSOR *Core::getOutputTensor(int idx) {
-  if (idx >= m_output_num) {
-    return NULL;
-  }
-  return mp_output_tensors + idx;
-}
-
-int Core::setIveInstance(IVE_HANDLE handle) {
-  ive_handle = handle;
-  return CVI_SUCCESS;
-}
-
-int Core::setVpssEngine(VpssEngine *engine) {
-  mp_vpss_inst = engine;
-  return CVI_SUCCESS;
-}
-
-void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
-void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
 
 }  // namespace cviai

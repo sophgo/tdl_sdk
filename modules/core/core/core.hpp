@@ -38,16 +38,12 @@ class Core {
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
   virtual void setModelThreshold(float threshold);
-
-  float getModelThreshold() { return m_model_threshold; };
-
-  bool isInitialized() { return mp_model_handle == nullptr ? false : true; }
+  float getModelThreshold();
+  bool isInitialized();
 
  protected:
   virtual int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                   bool &keep_aspect_ratio, bool &use_model_threshold) {
-    return CVI_SUCCESS;
-  }
+                                   bool &keep_aspect_ratio, bool &use_model_threshold);
   virtual int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame);
   int run(VIDEO_FRAME_INFO_S *srcFrame);
   CVI_TENSOR *getInputTensor(int idx);
@@ -55,23 +51,26 @@ class Core {
 
   // Class settings
   std::unique_ptr<ModelConfig> mp_config;
-  // Runtime related
-  CVI_MODEL_HANDLE mp_model_handle = nullptr;
+  // cvimodel related
   CVI_TENSOR *mp_input_tensors = nullptr;
   CVI_TENSOR *mp_output_tensors = nullptr;
   int32_t m_input_num = 0;
   int32_t m_output_num = 0;
+  // Preprocessing & post processing related
   bool m_skip_vpss_preprocess = false;
   bool m_use_vpss_crop = false;
   float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
+  VPSS_CROP_INFO_S m_crop_attr;
 
+  // Handle
+  CVI_MODEL_HANDLE mp_model_handle = nullptr;
   IVE_HANDLE ive_handle = NULL;
   VpssEngine *mp_vpss_inst = nullptr;
-  std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
-  VPSS_CROP_INFO_S m_crop_attr;
 
  private:
   inline int __attribute__((always_inline)) runVideoForward(VIDEO_FRAME_INFO_S *srcFrame);
   bool m_reverse_device_mem = false;
+
+  std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
 };
 }  // namespace cviai
