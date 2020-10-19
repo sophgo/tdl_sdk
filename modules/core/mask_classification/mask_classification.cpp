@@ -6,13 +6,12 @@
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
-#define R_SCALE (1 / 0.229)
-#define G_SCALE (1 / 0.224)
-#define B_SCALE (1 / 0.225)
-#define R_MEAN (-0.485 / 0.229)
-#define G_MEAN (-0.456 / 0.224)
-#define B_MEAN (-0.406 / 0.225)
-#define THRESHOLD 2.641289710998535
+#define R_SCALE (1 / (256.0 * 0.229))
+#define G_SCALE (1 / (256.0 * 0.224))
+#define B_SCALE (1 / (256.0 * 0.225))
+#define R_MEAN (0.485 / 0.229)
+#define G_MEAN (0.456 / 0.224)
+#define B_MEAN (0.406 / 0.225)
 #define CROP_PCT 0.875
 #define MASK_OUT_NAME "logits_dequant"
 
@@ -32,13 +31,14 @@ MaskClassification::~MaskClassification() {}
 
 int MaskClassification::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
                                              bool &keep_aspect_ratio, bool &use_model_threshold) {
-  factor[0] = R_SCALE * 0.5 / THRESHOLD;
-  factor[1] = G_SCALE * 0.5 / THRESHOLD;
-  factor[2] = B_SCALE * 0.5 / THRESHOLD;
-  mean[0] = (-1) * R_MEAN * 128 / THRESHOLD;
-  mean[1] = (-1) * G_MEAN * 128 / THRESHOLD;
-  mean[2] = (-1) * B_MEAN * 128 / THRESHOLD;
-  use_model_threshold = false;
+  factor[0] = R_SCALE;
+  factor[1] = G_SCALE;
+  factor[2] = B_SCALE;
+  mean[0] = R_MEAN;
+  mean[1] = G_MEAN;
+  mean[2] = B_MEAN;
+  use_model_threshold = true;
+
   return 0;
 }
 
