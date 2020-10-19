@@ -49,7 +49,7 @@ int Core::modelOpen(const char *filepath) {
   bool keep_aspect_ratio = true;
   bool use_model_threshold = quant_scale == 0 ? false : true;
   ret = initAfterModelOpened(factor, mean, pad_reverse, keep_aspect_ratio, use_model_threshold);
-  if (ret != CVI_RC_SUCCESS) {
+  if (ret != CVI_SUCCESS) {
     LOGE("Failed to init after open model.\n");
     modelClose();
     return CVI_FAILURE;
