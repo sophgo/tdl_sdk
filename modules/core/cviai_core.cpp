@@ -64,6 +64,10 @@ int CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle2(ha
 int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
   cviai_context_t *ctx = new cviai_context_t;
   ctx->ive_handle = CVI_IVE_CreateHandle();
+  if (ctx->ive_handle == NULL) {
+    LOGE("IVE handle init failed.\n");
+    return CVI_FAILURE;
+  }
   ctx->vec_vpss_engine.push_back(new VpssEngine());
   if (ctx->vec_vpss_engine[0]->init(vpssGroupId) != CVI_SUCCESS) {
     LOGE("cviai_handle_t create failed.");
@@ -86,7 +90,14 @@ int CVI_AI_DestroyHandle(cviai_handle_t handle) {
 int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                         const char *filepath) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  ctx->model_cont[config].model_path = filepath;
+  cviai_model_t &m_t = ctx->model_cont[config];
+  if (m_t.instance != nullptr) {
+    if (m_t.instance->isInitialized()) {
+      LOGE("Inference already init. Please call CVI_AI_CloseModel to reset.\n");
+      return CVI_FAILURE;
+    }
+  }
+  m_t.model_path = filepath;
   return CVI_SUCCESS;
 }
 

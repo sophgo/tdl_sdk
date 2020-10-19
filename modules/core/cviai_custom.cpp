@@ -15,6 +15,7 @@ int CVI_AI_Custom_AddInference(cviai_handle_t handle, uint32_t *id) {
   model.instance = new cviai::Custom();
   ctx->custom_cont.push_back(model);
   *id = ctx->custom_cont.size() - 1;
+  LOGI("Custom AI instance added.");
   return CVI_SUCCESS;
 }
 
@@ -26,7 +27,7 @@ int CVI_AI_Custom_SetModelPath(cviai_handle_t handle, const uint32_t id, const c
   }
   cviai_model_t &mt = ctx->custom_cont[id];
   if (mt.instance->isInitialized()) {
-    LOGE("Inference already init.\n");
+    LOGE("Inference already init. Please call CVI_AI_Custom_CloseModel to reset.\n");
     return CVI_FAILURE;
   }
   mt.model_path = filepath;
@@ -74,7 +75,7 @@ getCustomInstance(const uint32_t id, cviai_context_t *ctx) {
   }
   cviai_model_t &mt = ctx->custom_cont[id];
   if (mt.instance->isInitialized()) {
-    LOGE("Inference already init.\n");
+    LOGE("Inference already init. Please call CVI_AI_Custom_CloseModel to reset.\n");
     return nullptr;
   }
   return dynamic_cast<cviai::Custom *>(mt.instance);
