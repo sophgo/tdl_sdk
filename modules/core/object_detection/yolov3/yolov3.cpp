@@ -8,7 +8,6 @@
 #define YOLOV3_COORDS 4
 #define YOLOV3_DEFAULT_DET_BUFFER 100
 #define YOLOV3_SCALE (float)(1 / 255.0)
-#define YOLOV3_QUANTIZE_SCALE YOLOV3_SCALE *(128.0 / 1.00000488758)
 #define YOLOV3_OUTPUT1 "layer82-conv_dequant"
 #define YOLOV3_OUTPUT2 "layer94-conv_dequant"
 #define YOLOV3_OUTPUT3 "layer106-conv_dequant"
@@ -41,9 +40,10 @@ Yolov3::~Yolov3() { free(mp_total_dets); }
 int Yolov3::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
                                  bool &keep_aspect_ratio, bool &use_model_threshold) {
   for (int i = 0; i < 3; i++) {
-    factor[i] = YOLOV3_QUANTIZE_SCALE;
+    factor[i] = YOLOV3_SCALE;
   }
-  use_model_threshold = false;
+  use_model_threshold = true;
+
   return CVI_SUCCESS;
 }
 

@@ -18,8 +18,8 @@ uint32_t coco_ids[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 13, 14, 15, 1
                        74, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85, 86, 87, 88, 89, 90};
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf("Usage: %s <yolo_model_path> <root folder> <evaluate json>.\n", argv[0]);
+  if (argc != 5) {
+    printf("Usage: %s <yolo_model_path> <root folder> <evaluate json> <result_json>.\n", argv[0]);
     return CVI_FAILURE;
   }
 
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&obj);
     CVI_VB_ReleaseBlock(blk);
   }
-  CVI_AI_Eval_CocoSave2Json(eval_handle, "result.json");
+  CVI_AI_Eval_CocoSave2Json(eval_handle, argv[4]);
   CVI_AI_Eval_CocoClearInput(eval_handle);
   CVI_AI_Eval_CocoClearObject(eval_handle);
 
