@@ -70,9 +70,9 @@ inline void BufferC12C1Copy(const uint8_t *buffer, uint32_t width, uint32_t heig
   }
 }
 
-int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height, uint32_t stride,
-                          const PIXEL_FORMAT_E inFormat, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                          const PIXEL_FORMAT_E outFormat) {
+CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height,
+                              uint32_t stride, const PIXEL_FORMAT_E inFormat, VB_BLK *blk,
+                              VIDEO_FRAME_INFO_S *frame, const PIXEL_FORMAT_E outFormat) {
   if (CREATE_VBFRAME_HELPER(blk, frame, width, height, outFormat) != CVI_SUCCESS) {
     LOGE("Create VBFrame failed.\n");
     return CVI_FAILURE;
@@ -101,8 +101,8 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
   return ret;
 }
 
-int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                     PIXEL_FORMAT_E format) {
+CVI_S32 CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
+                         PIXEL_FORMAT_E format) {
   cv::Mat img = cv::imread(filepath);
   if (img.empty()) {
     LOGE("Cannot read image %s.\n", filepath);

@@ -28,9 +28,10 @@ extern "C" {
  * @param outFormat Set output format, only supports RGB, BGR, planar.
  * @return int Return CVI_SUCCESS if read succeed.
  */
-DLL_EXPORT int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height,
-                                     uint32_t stride, const PIXEL_FORMAT_E inFormat, VB_BLK *blk,
-                                     VIDEO_FRAME_INFO_S *frame, const PIXEL_FORMAT_E outFormat);
+DLL_EXPORT CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height,
+                                         uint32_t stride, const PIXEL_FORMAT_E inFormat,
+                                         VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
+                                         const PIXEL_FORMAT_E outFormat);
 
 /**
  * @brief Read image from given path and return a VIDEO_FRAME_INFO_S allocated from VB block.
@@ -41,8 +42,8 @@ DLL_EXPORT int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint
  * @param format Set output format, only supports RGB, BGR, planar.
  * @return int Return CVI_SUCCESS if read succeed.
  */
-DLL_EXPORT int CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                                const PIXEL_FORMAT_E format);
+DLL_EXPORT CVI_S32 CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
+                                    const PIXEL_FORMAT_E format);
 
 /**@}*/
 

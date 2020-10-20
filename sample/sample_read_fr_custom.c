@@ -5,11 +5,11 @@
 #include <string.h>
 
 // This function is a wrapper of how you init a custom AI.
-int CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t *id);
+CVI_S32 CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t *id);
 
 // This function is a wrapper of how you run your model.
-int CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id, VIDEO_FRAME_INFO_S *frame,
-                               cvai_face_t *faces);
+CVI_S32 CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id,
+                                   VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
@@ -126,7 +126,7 @@ static void PreProcessing(VIDEO_FRAME_INFO_S *stInFrame, VIDEO_FRAME_INFO_S *stO
   *stOutFrame = *stInFrame;
 }
 
-int CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t *id) {
+CVI_S32 CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t *id) {
   // Add inference instance.
   CVI_AI_Custom_AddInference(handle, id);
   // Set model path.
@@ -147,8 +147,8 @@ int CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t *id)
   return CVI_SUCCESS;
 }
 
-int CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id, VIDEO_FRAME_INFO_S *frame,
-                               cvai_face_t *faces) {
+CVI_S32 CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id,
+                                   VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
   VB_BLK blk;
   VIDEO_FRAME_INFO_S outFrame;
   uint32_t n = 0, c = 0, h = 0, w = 0;

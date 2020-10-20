@@ -49,9 +49,9 @@ inline void __attribute__((always_inline)) removeCtx(cviai_context_t *ctx) {
   delete ctx;
 }
 
-int CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle2(handle, -1); }
+CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle2(handle, -1); }
 
-int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
+CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
   cviai_context_t *ctx = new cviai_context_t;
   ctx->ive_handle = CVI_IVE_CreateHandle();
   if (ctx->ive_handle == NULL) {
@@ -69,7 +69,7 @@ int CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
   return CVI_SUCCESS;
 }
 
-int CVI_AI_DestroyHandle(cviai_handle_t handle) {
+CVI_S32 CVI_AI_DestroyHandle(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
   removeCtx(ctx);
@@ -77,8 +77,8 @@ int CVI_AI_DestroyHandle(cviai_handle_t handle) {
   return CVI_SUCCESS;
 }
 
-int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                        const char *filepath) {
+CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                            const char *filepath) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[config];
   if (m_t.instance != nullptr) {
@@ -91,13 +91,14 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
   return CVI_SUCCESS;
 }
 
-int CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, char **filepath) {
+CVI_S32 CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                            char **filepath) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   return GetModelName(ctx->model_cont[config], filepath);
 }
 
-int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                                 bool skip) {
+CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                     bool skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   auto &m_t = ctx->model_cont[config];
   m_t.skip_vpss_preprocess = skip;
@@ -107,15 +108,15 @@ int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
   return CVI_SUCCESS;
 }
 
-int CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                                 bool *skip) {
+CVI_S32 CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                     bool *skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   *skip = ctx->model_cont[config].skip_vpss_preprocess;
   return CVI_SUCCESS;
 }
 
-int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                             float threshold) {
+CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                 float threshold) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   auto &m_t = ctx->model_cont[config];
   m_t.model_threshold = threshold;
@@ -125,31 +126,32 @@ int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E con
   return CVI_SUCCESS;
 }
 
-int CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                             float *threshold) {
+CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                 float *threshold) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   *threshold = ctx->model_cont[config].model_threshold;
   return CVI_SUCCESS;
 }
 
-int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                         const uint32_t thread) {
+CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             const uint32_t thread) {
   return CVI_AI_SetVpssThread2(handle, config, thread, -1);
 }
 
-int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                          const uint32_t thread, const VPSS_GRP vpssGroupId) {
+CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                              const uint32_t thread, const VPSS_GRP vpssGroupId) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   return setVPSSThread(ctx->model_cont[config], ctx->vec_vpss_engine, thread, vpssGroupId);
 }
 
-int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread) {
+CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             uint32_t *thread) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   *thread = ctx->model_cont[config].vpss_thread;
   return CVI_SUCCESS;
 }
 
-int CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num) {
+CVI_S32 CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   VPSS_GRP *ids = (VPSS_GRP *)malloc(ctx->vec_vpss_engine.size() * sizeof(VPSS_GRP));
   for (size_t i = 0; i < ctx->vec_vpss_engine.size(); i++) {
@@ -160,7 +162,7 @@ int CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num
   return CVI_SUCCESS;
 }
 
-int CVI_AI_CloseAllModel(cviai_handle_t handle) {
+CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   for (auto &m_inst : ctx->model_cont) {
     if (m_inst.second.instance != nullptr) {
@@ -181,7 +183,7 @@ int CVI_AI_CloseAllModel(cviai_handle_t handle) {
   return CVI_SUCCESS;
 }
 
-int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
+CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[config];
   if (m_t.instance == nullptr) {
@@ -221,7 +223,8 @@ getInferenceInstance(const V index, cviai_context_t *ctx, Arguments &&... arg) {
 
 // Face detection
 
-int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
+CVI_S32 CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                          cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_RetinaFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   RetinaFace *retina_face =
@@ -233,7 +236,8 @@ int CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cv
   return retina_face->inference(frame, faces);
 }
 
-int CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces) {
+CVI_S32 CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                           cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_ThermalFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   ThermalFace *thermal_face =
@@ -261,36 +265,36 @@ CVI_AI_FaceAttributeBase(const CVI_AI_SUPPORTED_MODEL_E index, const cviai_handl
   return face_attr->inference(frame, faces, face_idx);
 }
 
-int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                         cvai_face_t *faces) {
+CVI_S32 CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                             cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceAttribute");
   return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, handle, frame, faces, -1,
                                   true);
 }
 
-int CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                            cvai_face_t *faces, int face_idx) {
+CVI_S32 CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                cvai_face_t *faces, int face_idx) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceAttributeOne");
   return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, handle, frame, faces,
                                   face_idx, true);
 }
 
-int CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                           cvai_face_t *faces) {
+CVI_S32 CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                               cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognition");
   return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces, -1,
                                   false);
 }
 
-int CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                              cvai_face_t *faces, int face_idx) {
+CVI_S32 CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                  cvai_face_t *faces, int face_idx) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
   return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces,
                                   face_idx, false);
 }
 
-int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                               cvai_face_t *faces) {
+CVI_S32 CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                   cvai_face_t *faces) {
   TRACE_EVENT("cviai_core", "CVI_AI_MaskFaceRecognition");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MaskFaceRecognition *mask_face_rec =
@@ -305,7 +309,8 @@ int CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 
 // Face classification
 
-int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
+CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                           cvai_face_t *face) {
   TRACE_EVENT("cviai_core", "CVI_AI_FaceQuality");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   FaceQuality *face_quality =
@@ -317,9 +322,9 @@ int CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, c
   return face_quality->inference(frame, face);
 }
 
-int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
-                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
-                    cvai_liveness_ir_position_e ir_position) {
+CVI_S32 CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
+                        VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
+                        cvai_liveness_ir_position_e ir_position) {
   TRACE_EVENT("cviai_core", "CVI_AI_Liveness");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Liveness *liveness =
@@ -331,8 +336,8 @@ int CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
   return liveness->inference(rgbFrame, irFrame, face);
 }
 
-int CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                              cvai_face_t *face) {
+CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                  cvai_face_t *face) {
   TRACE_EVENT("cviai_core", "CVI_AI_MaskClassification");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MaskClassification *mask_classification =
@@ -359,29 +364,29 @@ MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model m
   return detector->inference(frame, obj, det_type);
 }
 
-int CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_e det_type) {
+CVI_S32 CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                              cvai_obj_det_type_e det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D0");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, MobileDetV2::Model::d0, handle,
                          frame, obj, det_type);
 }
 
-int CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_e det_type) {
+CVI_S32 CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                              cvai_obj_det_type_e det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D1");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1, MobileDetV2::Model::d1, handle,
                          frame, obj, det_type);
 }
 
-int CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                          cvai_obj_det_type_e det_type) {
+CVI_S32 CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                              cvai_obj_det_type_e det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2, MobileDetV2::Model::d2, handle,
                          frame, obj, det_type);
 }
 
-int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                  cvai_obj_det_type_e det_type) {
+CVI_S32 CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                      cvai_obj_det_type_e det_type) {
   TRACE_EVENT("cviai_core", "CVI_AI_Yolov3");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Yolov3 *yolov3 = getInferenceInstance<Yolov3>(CVI_AI_SUPPORTED_MODEL_YOLOV3, ctx);
@@ -406,20 +411,21 @@ CVI_AI_OSNetBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_ob
   return osnet->inference(frame, obj, obj_idx);
 }
 
-int CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
+CVI_S32 CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
   TRACE_EVENT("cviai_core", "CVI_AI_OSNet");
   return CVI_AI_OSNetBase(handle, frame, obj, -1);
 }
 
-int CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                    int obj_idx) {
+CVI_S32 CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                        int obj_idx) {
   TRACE_EVENT("cviai_core", "CVI_AI_OSNetOne");
   return CVI_AI_OSNetBase(handle, frame, obj, obj_idx);
 }
 
 // Audio AI Inference
 
-int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, int *index) {
+CVI_S32 CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                int *index) {
   TRACE_EVENT("cviai_core", "CVI_AI_ESClassification");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   ESClassification *es_classification =
@@ -433,7 +439,7 @@ int CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fra
 
 // Tracker
 
-int CVI_AI_Deepsort_Init(const cviai_handle_t handle) {
+CVI_S32 CVI_AI_Deepsort_Init(const cviai_handle_t handle) {
   TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_Init");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Deepsort *ds_tracker = ctx->ds_tracker;
@@ -444,7 +450,7 @@ int CVI_AI_Deepsort_Init(const cviai_handle_t handle) {
   return 0;
 }
 
-int CVI_AI_Deepsort_GetDefaultConfig(cvai_deepsort_config_t *ds_conf) {
+CVI_S32 CVI_AI_Deepsort_GetDefaultConfig(cvai_deepsort_config_t *ds_conf) {
   TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_GetDefaultConfig");
   cvai_deepsort_config_t default_conf = Deepsort::get_DefaultConfig();
   memcpy(ds_conf, &default_conf, sizeof(cvai_deepsort_config_t));
@@ -452,7 +458,7 @@ int CVI_AI_Deepsort_GetDefaultConfig(cvai_deepsort_config_t *ds_conf) {
   return 0;
 }
 
-int CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf) {
+CVI_S32 CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf) {
   TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_SetConf");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Deepsort *ds_tracker = ctx->ds_tracker;
@@ -465,7 +471,8 @@ int CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_
   return 0;
 }
 
-int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t) {
+CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj,
+                        cvai_tracker_t *tracker_t) {
   TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_Track");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Deepsort *ds_tracker = ctx->ds_tracker;
@@ -479,8 +486,8 @@ int CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracke
 
 // Others
 
-int CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                           float *moving_score) {
+CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                               float *moving_score) {
   TRACE_EVENT("cviai_core", "CVI_AI_TamperDetection");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   TamperDetectorMD *td_model = ctx->td_model;

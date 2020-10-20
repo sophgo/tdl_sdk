@@ -6,17 +6,17 @@ We don't recommend to use the same ``VPSS_GRP`` in different threads, so we prov
 
 ```c
 // Auto assign group id
-int CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                         const uint32_t thread);
+CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             const uint32_t thread);
 // Manually assign group id
-int CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                          const uint32_t thread, const VPSS_GRP vpssGroupId);
+CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                              const uint32_t thread, const VPSS_GRP vpssGroupId);
 ```
 
 You can get the current thread id for any model.
 
 ```c
-int CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread);
+CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, uint32_t *thread);
 ```
 
 To get the relationship between thread and the ``VPSS_GRP`` thread uses, you can call ``CVI_AI_GetVpssGrpIds``. The output array ``groups`` gives all the used ``VPSS_GRP`` in order.
@@ -112,9 +112,10 @@ IVE library does not occupied spaces in Middleware's memory pool. IVE uses a dif
 We provide a function ``CVI_AI_Buffer2VBFrame`` in AI SDK to help users to convert pure buffer to ``VIDEO_FRAME_INFO_S``. This works similar to ``CVI_AI_ReadImage``, so ``CVI_VB_ReleaseBlock`` is also required to free the ``VB_BLK``.
 
 ```c
-int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height, uint32_t stride,
-                          const PIXEL_FORMAT_E inFormat, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                          const PIXEL_FORMAT_E outFormat);
+CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height,
+                              uint32_t stride, const PIXEL_FORMAT_E inFormat,
+                              VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
+                              const PIXEL_FORMAT_E outFormat);
 ```
 
 ## Model related settings
@@ -124,8 +125,8 @@ int CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height
 The model path must be set before the corresponding inference function is called.
 
 ```c
-int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                        const char *filepath);
+CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                            const char *filepath);
 ```
 
 ### Skip VPSS preprocess
@@ -133,7 +134,7 @@ int CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
 If you already done the "scaling and quantization" step with the Middleware's binding mode, you can skip the VPSS preprocess with the following API for any model.
 
 ```c
-int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, bool skip);
+CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config, bool skip);
 ```
 
 ### Set model threshold
@@ -141,7 +142,7 @@ int CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
 The threshold for any model can be set any time. If you set the threshold after the inference function, AI SDK will use the default threshold saved in the model.
 
 ```c
-int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                              float threshold);
 ```
 
@@ -150,9 +151,9 @@ int CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E con
 AI SDK will close the model for you if you destroy the handle, but we still provide the API to close the all the models or indivitually. This is because a user may run out of memory if a user want to switch between features while runtime, providing this API allows users to free spaces without destroying the handle.
 
 ```c
-int CVI_AI_CloseAllModel(cviai_handle_t handle);
+CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle);
 
-int CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
+CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 ```
 
 ### Inference calls
@@ -161,11 +162,11 @@ A model will be loaded when the function is called for the first time or after c
 
 ```c
 // Face recognition
-int CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                         cvai_face_t *faces);
+CVI_S32 CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                             cvai_face_t *faces);
 // Object detection
-int CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                  cvai_obj_det_type_e det_type);
+CVI_S32 CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
+                      cvai_obj_det_type_e det_type);
 ```
 
 Related sample codes: ``sample_read_fr.c``, ``sample_read_fr2``, ``sample_vi_od.c``

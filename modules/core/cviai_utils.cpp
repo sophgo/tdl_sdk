@@ -9,9 +9,9 @@
 
 #include <string.h>
 
-int CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
-                           VIDEO_FRAME_INFO_S *output, const float quantized_factor,
-                           const float quantized_mean, const uint32_t thread) {
+CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
+                               VIDEO_FRAME_INFO_S *output, const float quantized_factor,
+                               const float quantized_mean, const uint32_t thread) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   uint32_t vpss_thread;
   if (int ret = CVI_AI_AddVpssEngineThread(thread, -1, &vpss_thread, &ctx->vec_vpss_engine) !=
@@ -29,20 +29,20 @@ int CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *fram
   return CVI_SUCCESS;
 }
 
-int CVI_AI_SQPreprocess(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
-                        VIDEO_FRAME_INFO_S *output, const float factor, const float mean,
-                        const float quantize_threshold, const uint32_t thread) {
+CVI_S32 CVI_AI_SQPreprocess(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
+                            VIDEO_FRAME_INFO_S *output, const float factor, const float mean,
+                            const float quantize_threshold, const uint32_t thread) {
   float quantized_factor = factor * 128 / quantize_threshold;
   float quantized_mean = (-1) * mean * 128 / quantize_threshold;
   return CVI_AI_SQPreprocessRaw(handle, frame, output, quantized_factor, quantized_mean, thread);
 }
 
-int CVI_AI_Dequantize(const int8_t *quantizedData, float *data, const uint32_t bufferSize,
-                      const float dequantizeThreshold) {
+CVI_S32 CVI_AI_Dequantize(const int8_t *quantizedData, float *data, const uint32_t bufferSize,
+                          const float dequantizeThreshold) {
   cviai::Dequantize(quantizedData, data, dequantizeThreshold, bufferSize);
   return CVI_SUCCESS;
 }
-int CVI_AI_SoftMax(const float *inputBuffer, float *outputBuffer, const uint32_t bufferSize) {
+CVI_S32 CVI_AI_SoftMax(const float *inputBuffer, float *outputBuffer, const uint32_t bufferSize) {
   cviai::SoftMaxForBuffer(inputBuffer, outputBuffer, bufferSize);
   return CVI_SUCCESS;
 }
@@ -62,7 +62,7 @@ inline void __attribute__((always_inline)) CVI_AI_InfoCopyToNew(
 }
 
 template <typename T, typename U>
-inline int CVI_AI_NMS(const T *input, T *nms, const float threshold, const char method) {
+inline CVI_S32 CVI_AI_NMS(const T *input, T *nms, const float threshold, const char method) {
   if (method != 'u' && method != 'm') {
     LOGE("Unsupported NMS method. Only supports u or m");
     return CVI_FAILURE;
@@ -84,19 +84,19 @@ inline int CVI_AI_NMS(const T *input, T *nms, const float threshold, const char 
   return CVI_SUCCESS;
 }
 
-int CVI_AI_FaceNMS(const cvai_face_t *face, cvai_face_t *faceNMS, const float threshold,
-                   const char method) {
+CVI_S32 CVI_AI_FaceNMS(const cvai_face_t *face, cvai_face_t *faceNMS, const float threshold,
+                       const char method) {
   return CVI_AI_NMS<cvai_face_t, cvai_face_info_t>(face, faceNMS, threshold, method);
 }
 
-int CVI_AI_ObjectNMS(const cvai_object_t *obj, cvai_object_t *objNMS, const float threshold,
-                     const char method) {
+CVI_S32 CVI_AI_ObjectNMS(const cvai_object_t *obj, cvai_object_t *objNMS, const float threshold,
+                         const char method) {
   return CVI_AI_NMS<cvai_object_t, cvai_object_info_t>(obj, objNMS, threshold, method);
 }
 
-int CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWidth,
-                         const uint32_t metaHeight, const cvai_face_info_t *info,
-                         VIDEO_FRAME_INFO_S *outFrame, const bool enableGDC) {
+CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWidth,
+                             const uint32_t metaHeight, const cvai_face_info_t *info,
+                             VIDEO_FRAME_INFO_S *outFrame, const bool enableGDC) {
   if (enableGDC) {
     if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
