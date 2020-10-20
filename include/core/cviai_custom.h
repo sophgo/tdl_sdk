@@ -30,7 +30,7 @@ extern "C" {
  * @param id Returned id of the instance.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_Custom_AddInference(cviai_handle_t handle, uint32_t *id);
+DLL_EXPORT int CVI_AI_Custom_AddInference(cviai_handle_t handle, uint32_t *id);
 
 /**
  * @brief Set the model path for custom networks.
@@ -40,7 +40,8 @@ int CVI_AI_Custom_AddInference(cviai_handle_t handle, uint32_t *id);
  * @param filepath File path to the cvimodel file.
  * @return int Return CVI_SUCCESS if load model succeed.
  */
-int CVI_AI_Custom_SetModelPath(cviai_handle_t handle, const uint32_t id, const char *filepath);
+DLL_EXPORT int CVI_AI_Custom_SetModelPath(cviai_handle_t handle, const uint32_t id,
+                                          const char *filepath);
 
 /**
  * @brief Get set model path from custom models.
@@ -50,7 +51,8 @@ int CVI_AI_Custom_SetModelPath(cviai_handle_t handle, const uint32_t id, const c
  * @param filepath Output model path.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id, char **filepath);
+DLL_EXPORT int CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id,
+                                          char **filepath);
 
 /**
  * @brief Set different vpss thread for custom models. Vpss group id is not thread safe. We
@@ -62,7 +64,8 @@ int CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id, char **
  * is not used.
  * @return int Return CVI_SUCCESS if successfully changed.
  */
-int CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint32_t id, const uint32_t thread);
+DLL_EXPORT int CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint32_t id,
+                                           const uint32_t thread);
 
 /**
  * @brief Set different vpss thread for custom models. Vpss group id is not thread safe. We
@@ -76,8 +79,8 @@ int CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint32_t id, const 
  * @param vpssGroupId Assign a vpss group id if a new vpss instance needs to be created.
  * @return int Return CVI_SUCCESS if successfully changed.
  */
-int CVI_AI_Custom_SetVpssThread2(cviai_handle_t handle, const uint32_t id, const uint32_t thread,
-                                 const VPSS_GRP vpssGroupId);
+DLL_EXPORT int CVI_AI_Custom_SetVpssThread2(cviai_handle_t handle, const uint32_t id,
+                                            const uint32_t thread, const VPSS_GRP vpssGroupId);
 
 /**
  * @brief Get the set thread index for given custom model id.
@@ -87,7 +90,8 @@ int CVI_AI_Custom_SetVpssThread2(cviai_handle_t handle, const uint32_t id, const
  * @param thread Output thread index.
  * @return int Return CVI_SUCCESS.
  */
-int CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id, uint32_t *thread);
+DLL_EXPORT int CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id,
+                                           uint32_t *thread);
 
 /**
  * @brief If choose to use VPSS to do scaling and quantization. You'll have to set the factor, mean,
@@ -106,9 +110,10 @@ int CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id, uint32
  *
  * @see CVI_AI_Custom_SetPreprocessFuncPtr
  */
-int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
-                                         const float *factor, const float *mean,
-                                         const uint32_t length, const bool keepAspectRatio);
+DLL_EXPORT int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
+                                                    const float *factor, const float *mean,
+                                                    const uint32_t length,
+                                                    const bool keepAspectRatio);
 
 /**
  * @brief This function is similar to CVI_AI_Custom_SetVpssPreprocessParam but you can directly set
@@ -126,9 +131,10 @@ int CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t i
  * @see CVI_AI_Custom_SetVpssPreprocessParam
  * @see CVI_AI_Custom_SetPreprocessFuncPtr
  */
-int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
-                                            const float *qFactor, const float *qMean,
-                                            const uint32_t length, const bool keepAspectRatio);
+DLL_EXPORT int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
+                                                       const float *qFactor, const float *qMean,
+                                                       const uint32_t length,
+                                                       const bool keepAspectRatio);
 
 /**
  * @brief
@@ -147,9 +153,9 @@ int CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_
  *
  * @see CVI_AI_Custom_SetVpssPreprocessParam
  */
-int CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t id,
-                                       preProcessFunc func, const bool use_tensor_input,
-                                       const bool use_vpss_sq);
+DLL_EXPORT int CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t id,
+                                                  preProcessFunc func, const bool use_tensor_input,
+                                                  const bool use_vpss_sq);
 
 /**
  * @brief Skip post processing step of the cvimodel. Affects the result of the output tensor.
@@ -161,7 +167,8 @@ int CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t id,
  *
  * @see CVI_AI_Custom_GetOutputTensor
  */
-int CVI_AI_Custom_SetSkipPostProcess(cviai_handle_t handle, const uint32_t id, const bool skip);
+DLL_EXPORT int CVI_AI_Custom_SetSkipPostProcess(cviai_handle_t handle, const uint32_t id,
+                                                const bool skip);
 
 /**
  * @brief Close the chosen custom model. Will not delete the instance.
@@ -170,7 +177,7 @@ int CVI_AI_Custom_SetSkipPostProcess(cviai_handle_t handle, const uint32_t id, c
  * @param id Id of the instance.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id);
+DLL_EXPORT int CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id);
 
 /**@}*/
 
@@ -193,9 +200,9 @@ int CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id);
  * @param w The width of the tensor.
  * @return int Return CVI_SUCCESS on success.
  */
-int CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
-                                     const char *tensorName, uint32_t *n, uint32_t *c, uint32_t *h,
-                                     uint32_t *w);
+DLL_EXPORT int CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
+                                                const char *tensorName, uint32_t *n, uint32_t *c,
+                                                uint32_t *h, uint32_t *w);
 /**
  * @brief Do custom model inference. Once this function is called, you cannot change the settings of
  * the model unless you call CVI_AI_Custom_CloseModel.
@@ -207,7 +214,8 @@ int CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
  *
  * @see CVI_AI_Custom_CloseModel
  */
-int CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id, VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT int CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id,
+                                          VIDEO_FRAME_INFO_S *frame);
 
 /**
  * @brief
@@ -222,8 +230,9 @@ int CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id, VIDEO_F
  *
  * @see CVI_AI_Custom_SetSkipPostProcess
  */
-int CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id, const char *tensorName,
-                                  int8_t **tensor, uint32_t *tensorCount, uint16_t *unitSize);
+DLL_EXPORT int CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id,
+                                             const char *tensorName, int8_t **tensor,
+                                             uint32_t *tensorCount, uint16_t *unitSize);
 
 /**@}*/
 

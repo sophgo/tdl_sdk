@@ -20,8 +20,9 @@ cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, con
 cvai_bbox_t box_rescale_rb(const float frame_width, const float frame_height, const float nn_width,
                            const float nn_height, const cvai_bbox_t bbox, float *ratio);
 
-cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const float nn_width,
-                        const float nn_height, const cvai_bbox_t bbox, const BOX_RESCALE_TYPE type);
+cvai_bbox_t __attribute__((visibility("default")))
+box_rescale(const float frame_width, const float frame_height, const float nn_width,
+            const float nn_height, const cvai_bbox_t bbox, const BOX_RESCALE_TYPE type);
 
 void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const float *qMean,
                        VIDEO_FRAME_INFO_S *outFrame);

@@ -4,7 +4,7 @@
 
 namespace cviai {
 
-class VpssEngine {
+class __attribute__((visibility("default"))) VpssEngine {
  public:
   VpssEngine();
   ~VpssEngine();

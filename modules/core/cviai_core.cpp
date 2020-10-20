@@ -28,16 +28,7 @@
 using namespace std;
 using namespace cviai;
 
-void CVI_AI_PerfettoInit() {
-#if __GNUC__ >= 7
-  perfetto::TracingInitArgs args;
-  args.backends |= perfetto::kInProcessBackend;
-  args.backends |= perfetto::kSystemBackend;
-
-  perfetto::Tracing::Initialize(args);
-  perfetto::TrackEvent::Register();
-#endif
-}
+void CVI_AI_PerfettoInit() { prefettoInit(); }
 
 //*************************************************
 // Experimental features

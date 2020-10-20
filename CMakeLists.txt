@@ -70,7 +70,10 @@ include (cmake/middleware.cmake)
 include (${IVE_SDK_ROOT}/cmake/ive.cmake)
 
 # Perfetto
-include(cmake/perfetto.cmake)
+if (ENABLE_PERFETTO)
+  include(cmake/perfetto.cmake)
+  add_definitions(-DENABLE_TRACE)
+endif()
 
 # 3rdpart includes
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty

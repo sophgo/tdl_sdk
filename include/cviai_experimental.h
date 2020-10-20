@@ -14,7 +14,7 @@ extern "C" {
  * @param handle An AI SDK handle.
  * @param use_gdc Set true to use hardware.
  */
-void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc);
+DLL_EXPORT void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc);
 
 #ifdef __cplusplus
 }

@@ -11,7 +11,7 @@ extern "C" {
  * @brief Init Perfetto tracer.
  *
  */
-void CVI_AI_PerfettoInit();
+DLL_EXPORT void CVI_AI_PerfettoInit();
 
 #ifdef __cplusplus
 }

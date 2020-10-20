@@ -30,7 +30,8 @@ extern "C" {
  * @param ai_handle A cviai handle.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_handle_t ai_handle);
+DLL_EXPORT CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle,
+                                                 cviai_handle_t ai_handle);
 
 /**
  * @brief Destroy a cviai_frservice_handle_t.
@@ -39,7 +40,7 @@ CVI_S32 CVI_AI_FRService_CreateHandle(cviai_frservice_handle_t *handle, cviai_ha
  * @param handle An FR Service handle.
  * @return CVI_S32 Return CVI_SUCCESS if success to destroy handle.
  */
-CVI_S32 CVI_AI_FRService_DestroyHandle(cviai_frservice_handle_t handle);
+DLL_EXPORT CVI_S32 CVI_AI_FRService_DestroyHandle(cviai_frservice_handle_t handle);
 
 /**
  * @brief Register a feature array to FR Service.
@@ -50,9 +51,9 @@ CVI_S32 CVI_AI_FRService_DestroyHandle(cviai_frservice_handle_t handle);
  * @param method Set feature matching method.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
-                                              const cvai_service_feature_array_t featureArray,
-                                              const cvai_service_feature_matching_e method);
+DLL_EXPORT CVI_S32 CVI_AI_FRService_RegisterFeatureArray(
+    cviai_frservice_handle_t handle, const cvai_service_feature_array_t featureArray,
+    const cvai_service_feature_matching_e method);
 
 /**
  * @brief Do a single cviai_face_t feature matching with registed feature array.
@@ -64,9 +65,9 @@ CVI_S32 CVI_AI_FRService_RegisterFeatureArray(cviai_frservice_handle_t handle,
  * @param index Output top k index.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle,
-                                          cvai_face_info_t *face_info, const uint32_t k,
-                                          uint32_t **index);
+DLL_EXPORT CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle,
+                                                     cvai_face_info_t *face_info, const uint32_t k,
+                                                     uint32_t **index);
 
 /**
  * @brief Do a single raw data with registed feature array.
@@ -79,8 +80,9 @@ CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle,
  * @param index Output top k index.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint8_t *feature,
-                                     const feature_type_e type, const uint32_t k, uint32_t **index);
+DLL_EXPORT CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle,
+                                                const uint8_t *feature, const feature_type_e type,
+                                                const uint32_t k, uint32_t **index);
 
 /**
  * @brief Zoom in to the largest face from the output of face detection results.
@@ -95,10 +97,9 @@ CVI_S32 CVI_AI_FRService_RawMatching(cviai_frservice_handle_t handle, const uint
  * @param outFrame Output result image, will keep aspect ratio.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
-                                     const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
-                                     const float face_skip_ratio, const float trans_ratio,
-                                     VIDEO_FRAME_INFO_S *outFrame);
+DLL_EXPORT CVI_S32 CVI_AI_FRService_DigitalZoom(
+    cviai_frservice_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
+    const float face_skip_ratio, const float trans_ratio, VIDEO_FRAME_INFO_S *outFrame);
 
 /**
  * @brief Draw rect to YUV frame with given face meta.
@@ -108,7 +109,7 @@ CVI_S32 CVI_AI_FRService_DigitalZoom(cviai_frservice_handle_t handle,
  * @param frame In/ out YUV frame.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame);
 #ifdef __cplusplus
 }
 #endif

@@ -1,4 +1,10 @@
 # Modules
+project(modules)
+# Hide symbols
+if("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
+  add_compile_options(-fvisibility=hidden)
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cviai_trace
                     ${CMAKE_CURRENT_SOURCE_DIR}/log
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)

@@ -30,7 +30,8 @@ extern "C" {
  * @param ai_handle A cviai handle.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle, cviai_handle_t ai_handle);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle,
+                                                  cviai_handle_t ai_handle);
 
 /**
  * @brief Destroy a cviai_objservice_handle_t.
@@ -39,7 +40,7 @@ CVI_S32 CVI_AI_OBJService_CreateHandle(cviai_objservice_handle_t *handle, cviai_
  * @param handle An OBJ Service handle.
  * @return CVI_S32 Return CVI_SUCCESS if success to destroy handle.
  */
-CVI_S32 CVI_AI_OBJService_DestroyHandle(cviai_objservice_handle_t handle);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_DestroyHandle(cviai_objservice_handle_t handle);
 
 /**
  * @brief Register a feature array to OBJ Service.
@@ -50,9 +51,9 @@ CVI_S32 CVI_AI_OBJService_DestroyHandle(cviai_objservice_handle_t handle);
  * @param method Set feature matching method.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
-                                               const cvai_service_feature_array_t featureArray,
-                                               const cvai_service_feature_matching_e method);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(
+    cviai_objservice_handle_t handle, const cvai_service_feature_array_t featureArray,
+    const cvai_service_feature_matching_e method);
 
 /**
  * @brief Do a single cvai_object_info_t feature matching with registed feature array.
@@ -64,9 +65,9 @@ CVI_S32 CVI_AI_OBJService_RegisterFeatureArray(cviai_objservice_handle_t handle,
  * @param index Output top k index.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_ObjectInfoMatching(cviai_objservice_handle_t handle,
-                                             const cvai_object_info_t *object_info,
-                                             const uint32_t k, uint32_t **index);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_ObjectInfoMatching(cviai_objservice_handle_t handle,
+                                                        const cvai_object_info_t *object_info,
+                                                        const uint32_t k, uint32_t **index);
 
 /**
  * @brief Do a single raw data with registed feature array.
@@ -79,9 +80,9 @@ CVI_S32 CVI_AI_OBJService_ObjectInfoMatching(cviai_objservice_handle_t handle,
  * @param index Output top k index.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_RawMatching(cviai_objservice_handle_t handle, const uint8_t *feature,
-                                      const feature_type_e type, const uint32_t k,
-                                      uint32_t **index);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_RawMatching(cviai_objservice_handle_t handle,
+                                                 const uint8_t *feature, const feature_type_e type,
+                                                 const uint32_t k, uint32_t **index);
 /**
  * @brief Zoom in to the largest face from the output of object detection results.
  * @ingroup core_cviaiobjservice
@@ -95,10 +96,9 @@ CVI_S32 CVI_AI_OBJService_RawMatching(cviai_objservice_handle_t handle, const ui
  * @param outFrame Output result image, will keep aspect ratio.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_DigitalZoom(cviai_objservice_handle_t handle,
-                                      const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta,
-                                      const float obj_skip_ratio, const float trans_ratio,
-                                      VIDEO_FRAME_INFO_S *outFrame);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_DigitalZoom(
+    cviai_objservice_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta,
+    const float obj_skip_ratio, const float trans_ratio, VIDEO_FRAME_INFO_S *outFrame);
 
 /**
  * @brief Draw rect to YUV frame with given object meta.
@@ -108,7 +108,7 @@ CVI_S32 CVI_AI_OBJService_DigitalZoom(cviai_objservice_handle_t handle,
  * @param frame In/ out YUV frame.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame);
 
 /**
  * @brief Set intersect area for detection.
@@ -118,7 +118,8 @@ CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S
  * @param pts Intersect area or line. (pts must larger than 2 or more.)
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle, const cvai_pts_t *pts);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle,
+                                                  const cvai_pts_t *pts);
 
 /**
  * @brief Check if the object intersected with the set area or line.
@@ -130,10 +131,10 @@ CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle, const c
  * @param status Output status of each object.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-CVI_S32 CVI_AI_OBJService_DetectIntersect(cviai_objservice_handle_t handle,
-                                          const VIDEO_FRAME_INFO_S *frame,
-                                          const cvai_object_t *obj_meta,
-                                          cvai_area_detect_e **status);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_DetectIntersect(cviai_objservice_handle_t handle,
+                                                     const VIDEO_FRAME_INFO_S *frame,
+                                                     const cvai_object_t *obj_meta,
+                                                     cvai_area_detect_e **status);
 #ifdef __cplusplus
 }
 #endif

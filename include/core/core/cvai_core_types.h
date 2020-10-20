@@ -148,4 +148,5 @@ inline const int getFeatureTypeSize(feature_type_e type) {
   return size;
 }
 
+#define DLL_EXPORT __attribute__((visibility("default")))
 #endif
