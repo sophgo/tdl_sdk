@@ -51,8 +51,8 @@ CVI_S32 CVI_AI_FRService_FaceInfoMatching(cviai_frservice_handle_t handle,
                                           uint32_t **index) {
   cviai_frservice_context_t *ctx = static_cast<cviai_frservice_context_t *>(handle);
   if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
-    return FeatureMatchingIPRaw((uint8_t *)face_info->face_feature.ptr,
-                                face_info->face_feature.type, k, index, &ctx->feature_array_ext);
+    return FeatureMatchingIPRaw((uint8_t *)face_info->feature.ptr, face_info->feature.type, k,
+                                index, &ctx->feature_array_ext);
   }
   LOGE("Unsupported method %u\n", ctx->matching_method);
   return CVI_FAILURE;

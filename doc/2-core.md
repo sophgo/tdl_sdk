@@ -229,8 +229,8 @@ The structure ``cvai_bbox_t`` stores in ``cvai_face_info_t`` and ``cvai_object_i
 typedef struct {
   char name[128];
   cvai_bbox_t bbox;
-  cvai_pts_t face_pts;
-  cvai_feature_t face_feature;
+  cvai_pts_t pts;
+  cvai_feature_t feature;
   cvai_face_emotion_e emotion;
   cvai_face_gender_e gender;
   cvai_face_race_e race;

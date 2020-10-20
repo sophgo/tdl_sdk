@@ -83,11 +83,10 @@ int main(int argc, char *argv[]) {
     custom_face.info = (cvai_face_info_t *)malloc(custom_face.size * sizeof(cvai_face_info_t));
     memset(custom_face.info, 0, custom_face.size * sizeof(cvai_face_info_t));
     for (uint32_t i = 0; i < face.size; i++) {
-      custom_face.info[i].face_feature.ptr = (int8_t *)malloc(face.info[i].face_feature.size);
-      custom_face.info[i].face_feature.size = face.info[i].face_feature.size;
-      custom_face.info[i].face_feature.type = face.info[i].face_feature.type;
-      memcpy(custom_face.info[i].face_feature.ptr, face.info[i].face_feature.ptr,
-             face.info[i].face_feature.size);
+      custom_face.info[i].feature.ptr = (int8_t *)malloc(face.info[i].feature.size);
+      custom_face.info[i].feature.size = face.info[i].feature.size;
+      custom_face.info[i].feature.type = face.info[i].feature.type;
+      memcpy(custom_face.info[i].feature.ptr, face.info[i].feature.ptr, face.info[i].feature.size);
     }
 
     printf("Run original Face Attribute.\n");
@@ -95,11 +94,10 @@ int main(int argc, char *argv[]) {
 
     bool is_same = true;
     for (uint32_t i = 0; i < face.size; i++) {
-      for (uint32_t j = 0; j < face.info[i].face_feature.size; j++) {
-        if (custom_face.info[i].face_feature.ptr[j] != face.info[i].face_feature.ptr[j]) {
+      for (uint32_t j = 0; j < face.info[i].feature.size; j++) {
+        if (custom_face.info[i].feature.ptr[j] != face.info[i].feature.ptr[j]) {
           printf("[Face %u] At feature index %u is not the same %d != %d.\n", i, j,
-                 (int32_t)custom_face.info[i].face_feature.ptr[j],
-                 (int32_t)face.info[i].face_feature.ptr[j]);
+                 (int32_t)custom_face.info[i].feature.ptr[j], (int32_t)face.info[i].feature.ptr[j]);
           is_same = false;
           break;
         }
@@ -177,7 +175,7 @@ int CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id, VIDEO_F
       printf("Failed to get tensor %s.\n", FACE_ATTRIBUTE_TENSORNAME);
       return CVI_FAILURE;
     }
-    cvai_feature_t *feature = &faces->info[i].face_feature;
+    cvai_feature_t *feature = &faces->info[i].feature;
     if (feature->size != tensorCount) {
       free(feature->ptr);
       feature->ptr = (int8_t *)malloc(unitSize * tensorCount);

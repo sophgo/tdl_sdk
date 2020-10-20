@@ -134,8 +134,8 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
         printf("Write file open error!");
         return CVI_FAILURE;
       }
-      for (int i = 0; i < face.info[face_idx].face_feature.size; i++) {
-        fprintf(fp_feature, "%d\n", (int)face.info[face_idx].face_feature.ptr[i]);
+      for (int i = 0; i < face.info[face_idx].feature.size; i++) {
+        fprintf(fp_feature, "%d\n", (int)face.info[face_idx].feature.ptr[i]);
       }
 
       log_reg_pass(fp_pass, file_name, face.size, face.info[face_idx].face_quality.quality);

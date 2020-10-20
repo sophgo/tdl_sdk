@@ -62,7 +62,7 @@ void lfwEval::insertFaceData(const int index, const int label, const cvai_face_t
   int face_idx2 = getMaxFace(face2);
 
   float feature_diff =
-      evalDifference(&face1->info[face_idx1].face_feature, &face2->info[face_idx2].face_feature);
+      evalDifference(&face1->info[face_idx1].feature, &face2->info[face_idx2].feature);
   float score = 1.0 - (0.5 * feature_diff);
 
   m_eval_label[index] = label;

@@ -52,12 +52,12 @@ static float cal_slant(int ln, int lf, const float Rn, float theta) {
   return slant;
 }
 
-static int get_face_direction(cvai_pts_t face_pts, float &roll, float &pitch, float &yaw) {
-  cv::Point leye = cv::Point(face_pts.x[0], face_pts.y[0]);
-  cv::Point reye = cv::Point(face_pts.x[1], face_pts.y[1]);
-  cv::Point noseTip = cv::Point(face_pts.x[2], face_pts.y[2]);
-  cv::Point lmouth = cv::Point(face_pts.x[3], face_pts.y[3]);
-  cv::Point rmouth = cv::Point(face_pts.x[4], face_pts.y[4]);
+static int get_face_direction(cvai_pts_t pts, float &roll, float &pitch, float &yaw) {
+  cv::Point leye = cv::Point(pts.x[0], pts.y[0]);
+  cv::Point reye = cv::Point(pts.x[1], pts.y[1]);
+  cv::Point noseTip = cv::Point(pts.x[2], pts.y[2]);
+  cv::Point lmouth = cv::Point(pts.x[3], pts.y[3]);
+  cv::Point rmouth = cv::Point(pts.x[4], pts.y[4]);
   cv::Point midEye = cv::Point((leye.x + reye.x) * 0.5, (leye.y + reye.y) * 0.5);
   cv::Point midMouth = cv::Point((lmouth.x + rmouth.x) * 0.5, (lmouth.y + rmouth.y) * 0.5);
   cv::Point noseBase = cv::Point((midMouth.x + midEye.x) * 0.5, (midMouth.y + midEye.y) * 0.5);
@@ -135,7 +135,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     meta->info[i].face_quality.quality = score[1];
 
     float roll = 0, pitch = 0, yaw = 0;
-    get_face_direction(face_info.face_pts, roll, pitch, yaw);
+    get_face_direction(face_info.pts, roll, pitch, yaw);
     meta->info[i].face_quality.roll = roll;
     meta->info[i].face_quality.pitch = pitch;
     meta->info[i].face_quality.yaw = yaw;

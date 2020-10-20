@@ -92,10 +92,10 @@ cvai_face_info_t bbox_rescale(const float width, const float height, const float
   float ratio, pad_width, pad_height;
   face_info_new.bbox = box_rescale_c(new_width, new_height, width, height, face_info.bbox, &ratio,
                                      &pad_width, &pad_height);
-  CVI_AI_MemAlloc(face_info.face_pts.size, &face_info_new.face_pts);
-  for (uint32_t j = 0; j < face_info_new.face_pts.size; ++j) {
-    face_info_new.face_pts.x[j] = (face_info.face_pts.x[j] - pad_width) * ratio;
-    face_info_new.face_pts.y[j] = (face_info.face_pts.y[j] - pad_height) * ratio;
+  CVI_AI_MemAlloc(face_info.pts.size, &face_info_new.pts);
+  for (uint32_t j = 0; j < face_info_new.pts.size; ++j) {
+    face_info_new.pts.x[j] = (face_info.pts.x[j] - pad_width) * ratio;
+    face_info_new.pts.y[j] = (face_info.pts.y[j] - pad_height) * ratio;
   }
 
   return face_info_new;
@@ -121,8 +121,8 @@ inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width
   vector<cv::Point2f> detect_points;
   for (int j = 0; j < 5; ++j) {
     cv::Point2f e;
-    e.x = face_info.face_pts.x[j];
-    e.y = face_info.face_pts.y[j];
+    e.x = face_info.pts.x[j];
+    e.y = face_info.pts.y[j];
     detect_points.emplace_back(e);
   }
 

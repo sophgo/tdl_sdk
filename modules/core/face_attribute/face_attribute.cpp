@@ -178,8 +178,8 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t face_feature_size = CVI_NN_TensorCount(out);
   // Create feature
-  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &meta->info[meta_i].face_feature);
-  memcpy(meta->info[meta_i].face_feature.ptr, face_blob, face_feature_size);
+  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &meta->info[meta_i].feature);
+  memcpy(meta->info[meta_i].feature.ptr, face_blob, face_feature_size);
 
   if (!m_with_attribute) {
     return;

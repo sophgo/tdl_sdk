@@ -73,9 +73,9 @@ typedef struct {
  *  The unique id of a face.
  *  @var cvai_face_info_t::bbox
  *  The bounding box of a face. Refers to the width, height from cvai_face_t.
- *  @var cvai_face_info_t::face_pts
+ *  @var cvai_face_info_t::pts
  *  The point to describe the point on the face.
- *  @var cvai_face_info_t::face_feature
+ *  @var cvai_face_info_t::feature
  *  The feature to describe a face.
  *  @var cvai_face_info_t::emotion
  *  The emotion from attribute.
@@ -100,8 +100,8 @@ typedef struct {
   char name[128];
   uint64_t unique_id;
   cvai_bbox_t bbox;
-  cvai_pts_t face_pts;
-  cvai_feature_t face_feature;
+  cvai_pts_t pts;
+  cvai_feature_t feature;
   cvai_face_emotion_e emotion;
   cvai_face_gender_e gender;
   cvai_face_race_e race;
@@ -118,9 +118,9 @@ typedef struct {
  *  @var cvai_face_t::size
  *  The size of the info.
  *  @var cvai_face_t::width
- *  The current width. Affects the coordinate recovery of bbox and face_pts.
+ *  The current width. Affects the coordinate recovery of bbox and pts.
  *  @var cvai_face_t::height
- *  The current height. Affects the coordinate recovery of bbox and face_pts.
+ *  The current height. Affects the coordinate recovery of bbox and pts.
  *  @var cvai_face_t::info
  *  The information of each face.
  *

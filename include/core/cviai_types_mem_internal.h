@@ -62,17 +62,17 @@ inline void CVI_AI_MemAllocInit(const uint32_t size, const uint32_t pts_num, cva
     meta->info[i].liveness_score = -1;
     meta->info[i].mask_score = -1;
     memset(&meta->info[i].face_quality, 0, sizeof(cvai_face_quality_t));
-    memset(&meta->info[i].face_feature, 0, sizeof(cvai_feature_t));
+    memset(&meta->info[i].feature, 0, sizeof(cvai_feature_t));
     if (pts_num > 0) {
-      meta->info[i].face_pts.x = (float *)malloc(sizeof(float) * pts_num);
-      meta->info[i].face_pts.y = (float *)malloc(sizeof(float) * pts_num);
-      meta->info[i].face_pts.size = pts_num;
-      for (uint32_t j = 0; j < meta->info[i].face_pts.size; ++j) {
-        meta->info[i].face_pts.x[j] = -1;
-        meta->info[i].face_pts.y[j] = -1;
+      meta->info[i].pts.x = (float *)malloc(sizeof(float) * pts_num);
+      meta->info[i].pts.y = (float *)malloc(sizeof(float) * pts_num);
+      meta->info[i].pts.size = pts_num;
+      for (uint32_t j = 0; j < meta->info[i].pts.size; ++j) {
+        meta->info[i].pts.x[j] = -1;
+        meta->info[i].pts.y[j] = -1;
       }
     } else {
-      memset(&meta->info[i].face_pts, 0, sizeof(meta->info[i].face_pts));
+      memset(&meta->info[i].pts, 0, sizeof(meta->info[i].pts));
     }
   }
 }
@@ -81,18 +81,17 @@ inline void CVI_AI_FaceInfoCopyToNew(const cvai_face_info_t *info, cvai_face_inf
   memcpy(infoNew->name, info->name, sizeof(info->name));
   infoNew->unique_id = info->unique_id;
   infoNew->bbox = info->bbox;
-  infoNew->face_pts.size = info->face_pts.size;
-  uint32_t pts_size = infoNew->face_pts.size * sizeof(float);
-  infoNew->face_pts.x = (float *)malloc(pts_size);
-  infoNew->face_pts.y = (float *)malloc(pts_size);
-  memcpy(infoNew->face_pts.x, info->face_pts.x, pts_size);
-  memcpy(infoNew->face_pts.y, info->face_pts.y, pts_size);
-  infoNew->face_feature.size = info->face_feature.size;
-  infoNew->face_feature.type = info->face_feature.type;
-  uint32_t feature_size =
-      infoNew->face_feature.size * getFeatureTypeSize(infoNew->face_feature.type);
-  infoNew->face_feature.ptr = (int8_t *)malloc(feature_size);
-  memcpy(infoNew->face_feature.ptr, info->face_feature.ptr, feature_size);
+  infoNew->pts.size = info->pts.size;
+  uint32_t pts_size = infoNew->pts.size * sizeof(float);
+  infoNew->pts.x = (float *)malloc(pts_size);
+  infoNew->pts.y = (float *)malloc(pts_size);
+  memcpy(infoNew->pts.x, info->pts.x, pts_size);
+  memcpy(infoNew->pts.y, info->pts.y, pts_size);
+  infoNew->feature.size = info->feature.size;
+  infoNew->feature.type = info->feature.type;
+  uint32_t feature_size = infoNew->feature.size * getFeatureTypeSize(infoNew->feature.type);
+  infoNew->feature.ptr = (int8_t *)malloc(feature_size);
+  memcpy(infoNew->feature.ptr, info->feature.ptr, feature_size);
   infoNew->emotion = info->emotion;
   infoNew->gender = info->gender;
   infoNew->race = info->race;

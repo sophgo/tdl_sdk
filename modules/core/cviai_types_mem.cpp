@@ -33,8 +33,8 @@ void CVI_AI_FreeCpp(cvai_tracker_t *tracker) {
 }
 
 void CVI_AI_FreeCpp(cvai_face_info_t *face_info) {
-  CVI_AI_FreeCpp(&face_info->face_pts);
-  CVI_AI_FreeCpp(&face_info->face_feature);
+  CVI_AI_FreeCpp(&face_info->pts);
+  CVI_AI_FreeCpp(&face_info->feature);
 }
 
 void CVI_AI_FreeCpp(cvai_face_t *face) {

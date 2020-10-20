@@ -123,9 +123,9 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
           continue;
         }
         cvai_face_info_t box;
-        box.face_pts.size = 5;
-        box.face_pts.x = (float *)malloc(sizeof(float) * box.face_pts.size);
-        box.face_pts.y = (float *)malloc(sizeof(float) * box.face_pts.size);
+        box.pts.size = 5;
+        box.pts.x = (float *)malloc(sizeof(float) * box.pts.size);
+        box.pts.y = (float *)malloc(sizeof(float) * box.pts.size);
         box.bbox.score = conf;
 
         cv::Vec4f regress;
@@ -136,11 +136,11 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
         regress = cv::Vec4f(dx, dy, dw, dh);
         bbox_pred(anchors[j + count * num], regress, ratio, box.bbox);
 
-        for (size_t k = 0; k < box.face_pts.size; k++) {
-          box.face_pts.x[k] = landmark_blob[j + count * (num * 10 + k * 2)];
-          box.face_pts.y[k] = landmark_blob[j + count * (num * 10 + k * 2 + 1)];
+        for (size_t k = 0; k < box.pts.size; k++) {
+          box.pts.x[k] = landmark_blob[j + count * (num * 10 + k * 2)];
+          box.pts.y[k] = landmark_blob[j + count * (num * 10 + k * 2 + 1)];
         }
-        landmark_pred(anchors[j + count * num], ratio, box.face_pts);
+        landmark_pred(anchors[j + count * num], ratio, box.pts);
         vec_bbox.push_back(box);
       }
     }
@@ -168,8 +168,8 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
       meta->info[i].bbox.score = vec_bbox_nms[i].bbox.score;
 
       for (int j = 0; j < FACE_POINTS_SIZE; ++j) {
-        meta->info[i].face_pts.x[j] = vec_bbox_nms[i].face_pts.x[j];
-        meta->info[i].face_pts.y[j] = vec_bbox_nms[i].face_pts.y[j];
+        meta->info[i].pts.x[j] = vec_bbox_nms[i].pts.x[j];
+        meta->info[i].pts.y[j] = vec_bbox_nms[i].pts.y[j];
       }
     }
   } else {
@@ -186,8 +186,8 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
       meta->info[i].bbox.y2 = info.bbox.y2;
       meta->info[i].bbox.score = info.bbox.score;
       for (int j = 0; j < FACE_POINTS_SIZE; ++j) {
-        meta->info[i].face_pts.x[j] = info.face_pts.x[j];
-        meta->info[i].face_pts.y[j] = info.face_pts.y[j];
+        meta->info[i].pts.x[j] = info.pts.x[j];
+        meta->info[i].pts.y[j] = info.pts.y[j];
       }
       CVI_AI_FreeCpp(&info);
     }
@@ -195,7 +195,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
 
   // Clear original bbox. bbox_nms does not need to free since it points to bbox.
   for (size_t i = 0; i < vec_bbox.size(); ++i) {
-    CVI_AI_FreeCpp(&vec_bbox[i].face_pts);
+    CVI_AI_FreeCpp(&vec_bbox[i].pts);
   }
 }
 

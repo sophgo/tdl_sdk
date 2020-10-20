@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
     printf("img_name: %s\n", full_img);
     if (face.size > 0) {
-      CVI_AI_Eval_WflwInsertPoints(eval_handle, i, face.info[0].face_pts, frame.stVFrame.u32Width,
+      CVI_AI_Eval_WflwInsertPoints(eval_handle, i, face.info[0].pts, frame.stVFrame.u32Width,
                                    frame.stVFrame.u32Height);
     }
 
