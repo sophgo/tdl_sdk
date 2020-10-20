@@ -41,9 +41,9 @@ inline void BufferRGBPacked2PlanarCopy(const uint8_t *buffer, uint32_t width, ui
       const uint8_t *ptr = buffer + j * stride;
       for (uint32_t i = 0; i < width; i++) {
         const uint8_t *ptr_pxl = i * 3 + ptr;
-        vFrame->pu8VirAddr[0][i + j * vFrame->u32Stride[0]] = ptr_pxl[0];
+        vFrame->pu8VirAddr[0][i + j * vFrame->u32Stride[0]] = ptr_pxl[2];
         vFrame->pu8VirAddr[1][i + j * vFrame->u32Stride[1]] = ptr_pxl[1];
-        vFrame->pu8VirAddr[2][i + j * vFrame->u32Stride[2]] = ptr_pxl[2];
+        vFrame->pu8VirAddr[2][i + j * vFrame->u32Stride[2]] = ptr_pxl[0];
       }
     }
   } else {
@@ -51,9 +51,9 @@ inline void BufferRGBPacked2PlanarCopy(const uint8_t *buffer, uint32_t width, ui
       const uint8_t *ptr = buffer + j * stride;
       for (uint32_t i = 0; i < width; i++) {
         const uint8_t *ptr_pxl = i * 3 + ptr;
-        vFrame->pu8VirAddr[0][i + j * vFrame->u32Stride[0]] = ptr_pxl[2];
+        vFrame->pu8VirAddr[0][i + j * vFrame->u32Stride[0]] = ptr_pxl[0];
         vFrame->pu8VirAddr[1][i + j * vFrame->u32Stride[1]] = ptr_pxl[1];
-        vFrame->pu8VirAddr[2][i + j * vFrame->u32Stride[2]] = ptr_pxl[0];
+        vFrame->pu8VirAddr[2][i + j * vFrame->u32Stride[2]] = ptr_pxl[2];
       }
     }
   }
