@@ -8,7 +8,6 @@ run() {
 }
 # For normal CI check
 run sample_init
-run sample_read_fd /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/image/ryan.png
 run sample_read_fr /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/bmface.cvimodel /mnt/data/image/ryan.png
 run sample_read_fr_custom /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/bmface.cvimodel /mnt/data/image/ryan.png
 run sample_read_dt /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/image/ryan.png
