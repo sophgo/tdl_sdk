@@ -27,14 +27,13 @@ static const float STD_B = (255.0 * 0.225);
 static const float MODEL_MEAN_R = 0.485 * 255.0;
 static const float MODEL_MEAN_G = 0.456 * 255.0;
 static const float MODEL_MEAN_B = 0.406 * 255.0;
-static const float quant_thresh = 2.641289710998535;
 
-#define FACTOR_R (128.0 / (STD_R * quant_thresh))
-#define FACTOR_G (128.0 / (STD_G * quant_thresh))
-#define FACTOR_B (128.0 / (STD_B * quant_thresh))
-#define MEAN_R ((128.0 * MODEL_MEAN_R) / (STD_R * quant_thresh))
-#define MEAN_G ((128.0 * MODEL_MEAN_G) / (STD_G * quant_thresh))
-#define MEAN_B ((128.0 * MODEL_MEAN_B) / (STD_B * quant_thresh))
+#define FACTOR_R (1.0 / STD_R)
+#define FACTOR_G (1.0 / STD_G)
+#define FACTOR_B (1.0 / STD_B)
+#define MEAN_R (MODEL_MEAN_R / STD_R)
+#define MEAN_G (MODEL_MEAN_G / STD_G)
+#define MEAN_B (MODEL_MEAN_B / STD_B)
 
 using namespace std;
 
@@ -205,10 +204,13 @@ void MobileDetV2::setModelThreshold(float threshold) {
 int MobileDetV2::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   VPSS_CHN_ATTR_S vpssChnAttr;
-  const float factor[] = {static_cast<float>(FACTOR_R), static_cast<float>(FACTOR_G),
-                          static_cast<float>(FACTOR_B)};
-  const float mean[] = {static_cast<float>(MEAN_R), static_cast<float>(MEAN_G),
-                        static_cast<float>(MEAN_B)};
+  float quant_scale = CVI_NN_TensorQuantScale(input);
+  const float factor[] = {static_cast<float>(FACTOR_R * quant_scale),
+                          static_cast<float>(FACTOR_G * quant_scale),
+                          static_cast<float>(FACTOR_B * quant_scale)};
+  const float mean[] = {static_cast<float>(MEAN_R * quant_scale),
+                        static_cast<float>(MEAN_G * quant_scale),
+                        static_cast<float>(MEAN_B * quant_scale)};
 
   VPSS_GRP group = mp_vpss_inst->getGrpId();
   CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, VPSS_SCALE_COEF_OPENCV_BILINEAR);

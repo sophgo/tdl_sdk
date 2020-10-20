@@ -25,7 +25,7 @@ run reg_face_quality /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/
 run reg_mask_classification /mnt/data/cvimodel/mask_classifier.cvimodel /mnt/data/dataset/mask /mnt/data/dataset/unmask
 
 run reg_yolov3 /mnt/data/cvimodel/yolo_v3_416.cvimodel /mnt/data/dataset/val2017 /mnt/data/dataset/instances_val2017.json /mnt/data/coco_result.json
-run reg_mobiledetv2 /mnt/data/cvimodel/mobiledetv2_d0.cvimodel /mnt/data/dataset/coco /mnt/data/result/mobiledetv2_result.json
+run reg_mobiledetv2 /mnt/data/cvimodel/mobiledetv2_d0.cvimodel /mnt/data/dataset/val2017 /mnt/data/dataset/instances_val2017.json /mnt/data/coco_result.json
 run reg_thermal /mnt/data/cvimodel/thermalfd-v1_resnet18-bifpn-sh.cvimodel /mnt/data/dataset/thermal_val /mnt/data/result/thermal_val/valid.json
 run reg_rgbir_liveness /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/liveness_batch9.cvimodel /mnt/data/face_spoof_RGBIR/ /mnt/data/face_spoof_RGBIR/list_wo_backlight.txt /mnt/data/rgbir_liveness_result.txt
 run reg_mask_fr /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/masked_fr_r50.cvimodel /mnt/data/mask_fr_images/images /mnt/data/mask_fr_images/pair_list.txt /mnt/data/mask_fr_result.txt
