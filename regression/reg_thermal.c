@@ -8,8 +8,9 @@
 cviai_handle_t facelib_handle = NULL;
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf("Usage: %s <thermal model path> <image root folder> <evaluate json>.\n", argv[0]);
+  if (argc != 5) {
+    printf("Usage: %s <thermal model path> <image root folder> <evaluate json> <result json>.\n",
+           argv[0]);
     return CVI_FAILURE;
   }
 
@@ -18,8 +19,8 @@ int main(int argc, char *argv[]) {
   CVI_S32 vpssgrp_width = 1280;
   CVI_S32 vpssgrp_height = 720;
 
-  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_BGR_888, vpssgrp_width,
-                        vpssgrp_height, PIXEL_FORMAT_BGR_888);
+  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,
+                        vpssgrp_height, PIXEL_FORMAT_RGB_888);
   if (ret != CVI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
@@ -80,10 +81,11 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_Eval_CocoInsertObject(eval_handle, id, &obj);
     CVI_AI_Free(&face);
+    CVI_AI_Free(&obj);
     CVI_VB_ReleaseBlock(blk);
   }
 
-  CVI_AI_Eval_CocoSave2Json(eval_handle, "result.json");
+  CVI_AI_Eval_CocoSave2Json(eval_handle, argv[4]);
   CVI_AI_Eval_CocoClearInput(eval_handle);
   CVI_AI_Eval_CocoClearObject(eval_handle);
 

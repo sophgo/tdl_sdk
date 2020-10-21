@@ -215,15 +215,15 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
     meta->width = frame_width;
     meta->height = frame_height;
     for (uint32_t i = 0; i < meta->size; ++i) {
+      float ratio = 0;
       clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
-      cvai_face_info_t info =
-          bbox_rescale(image_width, image_height, frame_width, frame_height, vec_bbox_nms[i]);
-      meta->info[i].bbox.x1 = info.bbox.x1;
-      meta->info[i].bbox.x2 = info.bbox.x2;
-      meta->info[i].bbox.y1 = info.bbox.y1;
-      meta->info[i].bbox.y2 = info.bbox.y2;
-      meta->info[i].bbox.score = info.bbox.score;
-      CVI_AI_FreeCpp(&info);
+      cvai_bbox_t bbox = box_rescale_rb(frame_width, frame_height, image_width, image_height,
+                                        vec_bbox_nms[i].bbox, &ratio);
+      meta->info[i].bbox.x1 = bbox.x1;
+      meta->info[i].bbox.x2 = bbox.x2;
+      meta->info[i].bbox.y1 = bbox.y1;
+      meta->info[i].bbox.y2 = bbox.y2;
+      meta->info[i].bbox.score = bbox.score;
     }
   }
 }
