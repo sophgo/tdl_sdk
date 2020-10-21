@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.14.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+project(cviai)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
