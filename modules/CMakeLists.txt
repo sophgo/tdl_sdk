@@ -18,5 +18,4 @@ add_subdirectory(evaluation)
 # Temporarily don't install custom module until complete.
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cviai
         PATTERN "cviai_perfetto.h" EXCLUDE
-        PATTERN "core/cviai_custom.h" EXCLUDE
         PATTERN "core/cviai_types_mem_internal.h" EXCLUDE)
