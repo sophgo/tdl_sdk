@@ -7,12 +7,12 @@
 
 #include "cvi_sys.h"
 
-#define SCALE_R (1.0 / (255.0 * 0.229)) * (128 / 2.64064478874)
-#define SCALE_G (1.0 / (255.0 * 0.224)) * (128 / 2.64064478874)
-#define SCALE_B (1.0 / (255.0 * 0.225)) * (128 / 2.64064478874)
-#define MEAN_R (0.485 / 0.229) * (128 / 2.64064478874)
-#define MEAN_G (0.456 / 0.224) * (128 / 2.64064478874)
-#define MEAN_B (0.406 / 0.225) * (128 / 2.64064478874)
+#define SCALE_R float(1.0 / (255.0 * 0.229))
+#define SCALE_G float(1.0 / (255.0 * 0.224))
+#define SCALE_B float(1.0 / (255.0 * 0.225))
+#define MEAN_R float(0.485 / 0.229)
+#define MEAN_G float(0.456 / 0.224)
+#define MEAN_B float(0.406 / 0.225)
 #define NAME_BBOX "regression_dequant"
 #define NAME_SCORE "classification_dequant"
 
@@ -136,8 +136,10 @@ int ThermalFace::initAfterModelOpened(float *factor, float *mean, bool &pad_reve
 int ThermalFace::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   VPSS_CHN_ATTR_S vpssChnAttr;
-  const float factor[] = {SCALE_R, SCALE_G, SCALE_B};
-  const float mean[] = {MEAN_R, MEAN_G, MEAN_B};
+  float quant_scale = CVI_NN_TensorQuantScale(input);
+  const float factor[] = {SCALE_R * quant_scale, SCALE_G * quant_scale, SCALE_B * quant_scale};
+  const float mean[] = {MEAN_R * quant_scale, MEAN_G * quant_scale, MEAN_B * quant_scale};
+
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                         input->shape.dim[3], input->shape.dim[2], PIXEL_FORMAT_RGB_888_PLANAR,
                         factor, mean, true);
