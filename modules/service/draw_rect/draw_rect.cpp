@@ -44,7 +44,7 @@ static float GetYuvColor(int chanel, color_rgb *color) {
 
 // TODO: Need refactor
 static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
-                     const char *name, color_rgb color, int rect_thinkness) {
+                     const char *name, color_rgb color, int rect_thinkness, const bool draw_text) {
   std::string name_str = name;
   int width = frame->stVFrame.u32Width;
   int height = frame->stVFrame.u32Height;
@@ -118,6 +118,9 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
       }
     }
 
+    if (!draw_text) {
+      continue;
+    }
     cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
     cv::Point cv_point = cv::Point(x1, y1 - 2);
     double font_scale = 2;
@@ -140,7 +143,7 @@ static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, fl
 }
 
 template <typename T>
-int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame) {
+int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText) {
   if (meta->size == 0) {
     return CVI_SUCCESS;
   }
@@ -153,12 +156,14 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame) {
         box_rescale(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height, meta->width,
                     meta->height, meta->info[i].bbox, BOX_RESCALE_TYPE::CENTER);
     DrawRect(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, meta->info[i].name, rgb_color,
-             DEFAULT_RECT_THINKNESS);
+             DEFAULT_RECT_THINKNESS, drawText);
   }
   return CVI_SUCCESS;
 }
 
-template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame);
-template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame);
+template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                                   const bool drawText);
+template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                                     const bool drawText);
 }  // namespace service
 }  // namespace cviai

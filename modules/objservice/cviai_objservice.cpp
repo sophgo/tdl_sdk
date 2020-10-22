@@ -84,8 +84,9 @@ CVI_S32 CVI_AI_OBJService_DigitalZoom(cviai_objservice_handle_t handle,
   return ctx->m_dt->run(inFrame, meta, outFrame, obj_skip_ratio, trans_ratio);
 }
 
-CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame) {
-  return cviai::service::DrawMeta(meta, frame);
+CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                   const bool drawText) {
+  return cviai::service::DrawMeta(meta, frame, drawText);
 }
 
 CVI_S32 CVI_AI_OBJService_SetIntersect(cviai_objservice_handle_t handle, const cvai_pts_t *pts) {

@@ -106,9 +106,11 @@ DLL_EXPORT CVI_S32 CVI_AI_OBJService_DigitalZoom(
  *
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
+ * @param drawText Choose to draw name of the object.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                              const bool drawText);
 
 /**
  * @brief Set intersect area for detection.

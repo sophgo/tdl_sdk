@@ -107,9 +107,11 @@ DLL_EXPORT CVI_S32 CVI_AI_FRService_DigitalZoom(
  *
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
+ * @param drawText Choose to draw name of the face.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                             const bool drawText);
 #ifdef __cplusplus
 }
 #endif

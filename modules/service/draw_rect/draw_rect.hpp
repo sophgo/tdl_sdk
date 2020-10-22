@@ -7,6 +7,6 @@
 namespace cviai {
 namespace service {
 template <typename T>
-int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame);
+int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText);
 }
 }  // namespace cviai

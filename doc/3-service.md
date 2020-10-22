@@ -69,9 +69,11 @@ Available: FRService, OBJService
 ``DrawRect`` is a function that draws all the bounding boxes and their tag names on the frame.
 
 ```c
-CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame);
+CVI_S32 CVI_AI_FRService_DrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                  bool drawText);
 
-CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame);
+CVI_S32 CVI_AI_OBJService_DrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                   bool drawText);
 ```
 
 Related sample codes: ``sample_vi_fd.c``, ``sample_vi_fq.c``, ``sample_vi_mask_fr.c``
