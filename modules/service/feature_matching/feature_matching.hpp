@@ -3,7 +3,19 @@
 #include "cviai_log.hpp"
 #include "service/cviai_service_types.h"
 
+#include <cvi_type.h>
+#include <cvikernel/cvikernel.h>
 #include <cvimath/cvimath.h>
+#include <cviruntime_context.h>
+
+namespace cviai {
+namespace service {
+
+typedef struct {
+  CVI_RT_MEM rtmem = NULL;   // Set to NULL if not initialized
+  uint64_t paddr = -1;       // Set to maximum of uint64_t if not initaulized
+  uint8_t *vaddr = nullptr;  // Set to nullptr if not initualized
+} rtinfo;
 
 typedef struct {
   cvai_service_feature_array_t feature_array;
@@ -11,87 +23,41 @@ typedef struct {
   float *feature_array_buffer = nullptr;
 } cvai_service_feature_array_ext_t;
 
-inline void __attribute__((always_inline))
-FreeFeatureArrayExt(cvai_service_feature_array_ext_t *feature_array_ext) {
-  if (feature_array_ext->feature_unit_length != nullptr) {
-    delete feature_array_ext->feature_unit_length;
-    feature_array_ext->feature_unit_length = nullptr;
-  }
-  if (feature_array_ext->feature_array_buffer != nullptr) {
-    delete feature_array_ext->feature_array_buffer;
-    feature_array_ext->feature_array_buffer = nullptr;
-  }
-  if (feature_array_ext->feature_array.ptr != NULL) {
-    free(feature_array_ext->feature_array.ptr);
-    feature_array_ext->feature_array.ptr = NULL;
-  }
-}
+typedef struct {
+  uint32_t feature_length;
+  uint32_t data_num;
+  rtinfo feature_input;
+  rtinfo feature_array;
+  rtinfo buffer_array;
+  size_t *slice_num = nullptr;
+  float *feature_unit_length = nullptr;
+  uint32_t *array_buffer_32 = nullptr;
+  float *array_buffer_f = nullptr;
+} cvai_service_feature_array_tpu_ext_t;
 
-inline int __attribute__((always_inline))
-RegisterIPFeatureArray(const cvai_service_feature_array_t feature_array,
-                       cvai_service_feature_array_ext_t *feature_array_ext) {
-  float *unit_length = new float[feature_array.feature_length * feature_array.data_num];
-  switch (feature_array.type) {
-    case TYPE_INT8: {
-      cvm_gen_precached_i8_unit_length((int8_t *)feature_array.ptr, unit_length,
-                                       feature_array.feature_length, feature_array.data_num);
-    } break;
-    case TYPE_UINT8: {
-      cvm_gen_precached_u8_unit_length((uint8_t *)feature_array.ptr, unit_length,
-                                       feature_array.feature_length, feature_array.data_num);
-    } break;
-    default: {
-      LOGE("Unsupported register data type %x.\n", feature_array.type);
-      delete[] unit_length;
-      return CVI_FAILURE;
-    } break;
-  }
-  FreeFeatureArrayExt(feature_array_ext);
-  feature_array_ext->feature_array = feature_array;
-  feature_array_ext->feature_unit_length = unit_length;
-  feature_array_ext->feature_array_buffer =
-      new float[feature_array.feature_length * feature_array.data_num];
-  return CVI_SUCCESS;
-}
+class FeatureMatching {
+ public:
+  ~FeatureMatching();
+  int init();
+  static int createHandle(CVI_RT_HANDLE *rt_handle, cvk_context_t **cvk_ctx);
+  static int destroyHandle(CVI_RT_HANDLE rt_handle, cvk_context_t *cvk_ctx);
+  int registerData(const cvai_service_feature_array_t &feature_array,
+                   const cvai_service_feature_matching_e &matching_method);
 
-inline int __attribute__((always_inline))
-FeatureMatchingIPRaw(const uint8_t *feature, const feature_type_e &type, const uint32_t k,
-                     uint32_t **index, cvai_service_feature_array_ext_t *feature_array_ext) {
-  if (feature_array_ext->feature_array_buffer == nullptr) {
-    LOGE("Feature array not registered yet.\n");
-    return CVI_FAILURE;
-  }
-  if (feature_array_ext->feature_array.type != type) {
-    LOGE("The registered feature array type %x is not the same as the input type %x.\n",
-         feature_array_ext->feature_array.type, type);
-    return CVI_FAILURE;
-  }
-  uint32_t *k_index = (uint32_t *)malloc(sizeof(uint32_t) * k);
-  float *k_value = (float *)malloc(sizeof(float) * k);
-  switch (type) {
-    case TYPE_INT8: {
-      cvm_cpu_i8data_ip_match((int8_t *)feature, (int8_t *)feature_array_ext->feature_array.ptr,
-                              feature_array_ext->feature_unit_length, k_index, k_value,
-                              feature_array_ext->feature_array_buffer,
-                              feature_array_ext->feature_array.feature_length,
-                              feature_array_ext->feature_array.data_num, k);
-    } break;
-    case TYPE_UINT8: {
-      cvm_cpu_u8data_ip_match((uint8_t *)feature, (uint8_t *)feature_array_ext->feature_array.ptr,
-                              feature_array_ext->feature_unit_length, k_index, k_value,
-                              feature_array_ext->feature_array_buffer,
-                              feature_array_ext->feature_array.feature_length,
-                              feature_array_ext->feature_array.data_num, k);
-    } break;
-    default: {
-      LOGE("Unsupported register data type %x.\n", type);
-      free(k_index);
-      free(k_value);
-      return CVI_FAILURE;
-    } break;
-  }
-  *index = k_index;
-  free(k_value);
+  int run(const uint8_t *feature, const feature_type_e &type, const uint32_t k, uint32_t **index);
 
-  return CVI_SUCCESS;
-}
+ private:
+  int innerProductRegister(const cvai_service_feature_array_t &feature_array);
+  int innerProductRun(const uint8_t *feature, const feature_type_e &type, const uint32_t k,
+                      uint32_t *index);
+  CVI_RT_HANDLE m_rt_handle;
+  cvk_context_t *m_cvk_ctx = NULL;
+
+  cvai_service_feature_matching_e m_matching_method;
+  bool m_is_cpu = true;
+
+  cvai_service_feature_array_tpu_ext_t m_tpu_ipfeature;
+  cvai_service_feature_array_ext_t m_cpu_ipfeature;
+};
+}  // namespace service
+}  // namespace cviai

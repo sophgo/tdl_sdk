@@ -91,5 +91,6 @@ buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai_core cviai_eval
 buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_blas INC ${REG_INCLUDES} DEPS cviai_core DEPS cviai_core cviai_service)
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core)

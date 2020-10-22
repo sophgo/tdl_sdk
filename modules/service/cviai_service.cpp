@@ -9,9 +9,8 @@
 #include <cvimath/cvimath.h>
 
 typedef struct {
-  cvai_service_feature_matching_e matching_method;
-  cvai_service_feature_array_ext_t feature_array_ext;
   cviai_handle_t ai_handle = NULL;
+  cviai::service::FeatureMatching *m_fm = nullptr;
   cviai::service::DigitalTracking *m_dt = nullptr;
   cviai::service::AreaDetect *m_ad = nullptr;
 } cviai_service_context_t;
@@ -29,6 +28,7 @@ CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle, cviai_handle
 
 CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  delete ctx->m_fm;
   delete ctx->m_dt;
   delete ctx->m_ad;
   delete ctx;
@@ -39,46 +39,37 @@ CVI_S32 CVI_AI_Service_RegisterFeatureArray(cviai_service_handle_t handle,
                                             const cvai_service_feature_array_t featureArray,
                                             const cvai_service_feature_matching_e method) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  ctx->matching_method = method;
-  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
-    return RegisterIPFeatureArray(featureArray, &ctx->feature_array_ext);
+  int ret = CVI_SUCCESS;
+  if (ctx->m_fm == nullptr) {
+    ctx->m_fm = new cviai::service::FeatureMatching();
+    if ((ret = ctx->m_fm->init()) != CVI_SUCCESS) {
+      LOGE("Feature matching instance initialization failed with %#x!\n", ret);
+      delete ctx->m_fm;
+      ctx->m_fm = nullptr;
+      return ret;
+    }
   }
-  LOGE("Unsupported method %u\n", ctx->matching_method);
-  return CVI_FAILURE;
+  return ctx->m_fm->registerData(featureArray, method);
 }
 
 CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
                                         const cvai_face_info_t *face_info, const uint32_t k,
                                         uint32_t **index) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
-    return FeatureMatchingIPRaw((uint8_t *)face_info->feature.ptr, face_info->feature.type, k,
-                                index, &ctx->feature_array_ext);
-  }
-  LOGE("Unsupported method %u\n", ctx->matching_method);
-  return CVI_FAILURE;
+  return ctx->m_fm->run((uint8_t *)face_info->feature.ptr, face_info->feature.type, k, index);
 }
 
 CVI_S32 CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
                                           const cvai_object_info_t *object_info, const uint32_t k,
                                           uint32_t **index) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
-    return FeatureMatchingIPRaw((uint8_t *)object_info->feature.ptr, object_info->feature.type, k,
-                                index, &ctx->feature_array_ext);
-  }
-  LOGE("Unsupported method %u\n", ctx->matching_method);
-  return CVI_FAILURE;
+  return ctx->m_fm->run((uint8_t *)object_info->feature.ptr, object_info->feature.type, k, index);
 }
 
 CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const uint8_t *feature,
                                    const feature_type_e type, const uint32_t k, uint32_t **index) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->matching_method == cvai_service_feature_matching_e::INNER_PRODUCT) {
-    return FeatureMatchingIPRaw(feature, type, k, index, &ctx->feature_array_ext);
-  }
-  LOGE("Unsupported method %u\n", ctx->matching_method);
-  return CVI_FAILURE;
+  return ctx->m_fm->run(feature, type, k, index);
 }
 
 CVI_S32 CVI_AI_Service_FaceDigitalZoom(cviai_service_handle_t handle,
