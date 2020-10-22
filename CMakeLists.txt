@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.0)
+cmake_minimum_required(VERSION 3.18.4)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(cviai)
 
@@ -70,16 +70,11 @@ include (cmake/middleware.cmake)
 # Check if ive exists.
 include (${IVE_SDK_ROOT}/cmake/ive.cmake)
 
-# Perfetto
-if (ENABLE_PERFETTO)
-  include(cmake/perfetto.cmake)
-  add_definitions(-DENABLE_TRACE)
-endif()
+# 3rdparty libraries
+include(cmake/thirdparty.cmake)
 
 # 3rdpart includes
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty
-                    ${CMAKE_SOURCE_DIR}/3rdparty/eigen-3.3.7/include/eigen3
-                    ${IVE_INCLUDES}
+include_directories(${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})

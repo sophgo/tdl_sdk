@@ -1,6 +1,6 @@
 #pragma once
 #include "core/object/cvai_object_types.h"
-#include "nlohmann_json/single_include/nlohmann/json.hpp"
+#include "json.hpp"
 
 namespace cviai {
 namespace evaluation {
