@@ -228,8 +228,9 @@ int MobileDetV2::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_
                         vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
                         factor, mean, false);
   mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
-  return mp_vpss_inst->getFrame(dstFrame, 0);
+  auto ret = mp_vpss_inst->getFrame(dstFrame, 0);
   CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, enCoef);
+  return ret;
 }
 
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
