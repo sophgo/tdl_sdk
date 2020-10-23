@@ -225,28 +225,28 @@ CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E co
                               const CVI_U32 frameWidth, const CVI_U32 frameHeight,
                               VPSS_CHN_ATTR_S *chnAttr) {
   CVI_S32 ret = CVI_SUCCESS;
+  cviai::Core *instance = nullptr;
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  if (config == CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0) switch (config) {
-      case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0: {
-        MobileDetV2 *detector =
-            getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d0);
-        ret = detector->getChnAttribute(frameWidth, frameHeight, chnAttr);
-      } break;
-      case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1: {
-        MobileDetV2 *detector =
-            getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d1);
-        ret = detector->getChnAttribute(frameWidth, frameHeight, chnAttr);
-      } break;
-      case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2: {
-        MobileDetV2 *detector =
-            getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d2);
-        ret = detector->getChnAttribute(frameWidth, frameHeight, chnAttr);
-      } break;
-      default: {
-        LOGE("Currently model %u does not support exporting channel attribute.\n", config);
-        ret = CVI_FAILURE;
-      } break;
-    }
+  switch (config) {
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d0);
+    } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d1);
+    } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d2);
+    } break;
+    default: {
+      LOGE("Currently model %u does not support exporting channel attribute.\n", config);
+      ret = CVI_FAILURE;
+    } break;
+  }
+  if (instance == nullptr) {
+    LOGE("Instance is null.\n");
+    return CVI_FAILURE;
+  }
+  ret = instance->getChnAttribute(frameWidth, frameHeight, chnAttr);
   return ret;
 }
 
