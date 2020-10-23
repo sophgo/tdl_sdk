@@ -221,6 +221,35 @@ getInferenceInstance(const V index, cviai_context_t *ctx, Arguments &&... arg) {
   return class_inst;
 }
 
+CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                              const CVI_U32 frameWidth, const CVI_U32 frameHeight,
+                              VPSS_CHN_ATTR_S *chnAttr) {
+  CVI_S32 ret = CVI_SUCCESS;
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  if (config == CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0) switch (config) {
+      case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0: {
+        MobileDetV2 *detector =
+            getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d0);
+        ret = detector->getChnAttribute(frameWidth, frameHeight, chnAttr);
+      } break;
+      case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1: {
+        MobileDetV2 *detector =
+            getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d1);
+        ret = detector->getChnAttribute(frameWidth, frameHeight, chnAttr);
+      } break;
+      case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2: {
+        MobileDetV2 *detector =
+            getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d2);
+        ret = detector->getChnAttribute(frameWidth, frameHeight, chnAttr);
+      } break;
+      default: {
+        LOGE("Currently model %u does not support exporting channel attribute.\n", config);
+        ret = CVI_FAILURE;
+      } break;
+    }
+  return ret;
+}
+
 // Face detection
 
 CVI_S32 CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,

@@ -48,6 +48,8 @@ class MobileDetV2 final : public Core {
 
   explicit MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45);
   virtual ~MobileDetV2();
+  int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse, bool &keep_aspect_ratio,
+                           bool &use_model_threshold);
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_e det_type);
   virtual void setModelThreshold(float threshold) override;
 

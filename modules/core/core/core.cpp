@@ -66,7 +66,7 @@ int Core::modelOpen(const char *filepath) {
     }
   }
   VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
+                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, pad_reverse);
   if (!keep_aspect_ratio) {
     vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
   }
@@ -112,6 +112,35 @@ int Core::setVpssEngine(VpssEngine *engine) {
 }
 
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
+
+int Core::getChnAttribute(const uint32_t width, const uint32_t height, VPSS_CHN_ATTR_S *attr) {
+  if (!m_export_chn_attr) {
+    return CVI_FAILURE;
+  }
+  if (!m_skip_vpss_preprocess) {
+    LOGW("VPSS preprocessing is enabled. Remember to skip vpss preprocess.\n");
+  }
+  switch (m_rescale_type) {
+    case RESCALE_CENTER: {
+      *attr = m_vpss_chn_attr[0];
+    } break;
+    case RESCALE_RB: {
+      CVI_TENSOR *input =
+          CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+      auto &factor = m_vpss_chn_attr[0].stNormalize.factor;
+      auto &mean = m_vpss_chn_attr[0].stNormalize.mean;
+      VPSS_CHN_SQ_RB_HELPER(attr, width, height, input->shape.dim[3], input->shape.dim[2],
+                            PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
+      attr->stAspectRatio.u32BgColor = m_vpss_chn_attr[0].stAspectRatio.u32BgColor;
+    } break;
+    default: {
+      LOGW("Unsupported rescale type.\n");
+      return CVI_FAILURE;
+    } break;
+  }
+  return CVI_SUCCESS;
+}
+
 void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
 float Core::getModelThreshold() { return m_model_threshold; };
 bool Core::isInitialized() { return mp_model_handle == nullptr ? false : true; }

@@ -9,6 +9,7 @@
 #include "core/object/cvai_object_types.h"
 
 #include <cvi_comm_vb.h>
+#include <cvi_comm_vpss.h>
 #include <cvi_sys.h>
 
 /** @def CVI_AI_Free
@@ -261,6 +262,20 @@ DLL_EXPORT CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle);
  * @return int Return CVI_SUCCESS if close succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
+
+/**
+ * @brief Export vpss channel attribute.
+ *
+ * @param handle An AI SDK handle.
+ * @param config Supported model type config.
+ * @param frameWidth The input frame width.
+ * @param frameHeight The input frame height.
+ * @param chnAttr Exported channel attribute.
+ * @return int Return CVI_SUCCESS on success, CVI_FAILURE if exporting not supported.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                         const CVI_U32 frameWidth, const CVI_U32 frameHeight,
+                                         VPSS_CHN_ATTR_S *chnAttr);
 
 /**@}*/
 

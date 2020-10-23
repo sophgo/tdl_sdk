@@ -1,4 +1,5 @@
 #pragma once
+#include "core/core/cvai_core_types.h"
 #include "cviai_log.hpp"
 #include "ive/ive.h"
 #include "vpss_engine.hpp"
@@ -37,6 +38,7 @@ class Core {
   int setIveInstance(IVE_HANDLE handle);
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
+  virtual int getChnAttribute(const uint32_t width, const uint32_t height, VPSS_CHN_ATTR_S *attr);
   virtual void setModelThreshold(float threshold);
   float getModelThreshold();
   bool isInitialized();
@@ -58,9 +60,12 @@ class Core {
   int32_t m_output_num = 0;
   // Preprocessing & post processing related
   bool m_skip_vpss_preprocess = false;
+  bool m_export_chn_attr = false;
+  meta_rescale_type_e m_rescale_type = RESCALE_CENTER;
   bool m_use_vpss_crop = false;
   float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
   VPSS_CROP_INFO_S m_crop_attr;
+  std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
 
   // Handle
   CVI_MODEL_HANDLE mp_model_handle = nullptr;
@@ -70,7 +75,5 @@ class Core {
  private:
   inline int __attribute__((always_inline)) runVideoForward(VIDEO_FRAME_INFO_S *srcFrame);
   bool m_reverse_device_mem = false;
-
-  std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
 };
 }  // namespace cviai
