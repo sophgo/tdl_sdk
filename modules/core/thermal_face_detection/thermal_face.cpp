@@ -129,20 +129,24 @@ int ThermalFace::initAfterModelOpened(float *factor, float *mean, bool &pad_reve
     std::vector<cvai_bbox_t> shifted_anchors = shift(image_shapes[i], strides[i], anchors);
     m_all_anchors.insert(m_all_anchors.end(), shifted_anchors.begin(), shifted_anchors.end());
   }
-
+  factor[0] = static_cast<float>(SCALE_R);
+  factor[1] = static_cast<float>(SCALE_G);
+  factor[2] = static_cast<float>(SCALE_B);
+  mean[0] = static_cast<float>(MEAN_R);
+  mean[1] = static_cast<float>(MEAN_G);
+  mean[2] = static_cast<float>(MEAN_B);
+  use_model_threshold = true;
+  m_rescale_type = RESCALE_RB;
   return CVI_SUCCESS;
 }
 
 int ThermalFace::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  VPSS_CHN_ATTR_S vpssChnAttr;
-  float quant_scale = CVI_NN_TensorQuantScale(input);
-  const float factor[] = {SCALE_R * quant_scale, SCALE_G * quant_scale, SCALE_B * quant_scale};
-  const float mean[] = {MEAN_R * quant_scale, MEAN_G * quant_scale, MEAN_B * quant_scale};
-
+  auto &vpssChnAttr = m_vpss_chn_attr[0];
+  auto &factor = vpssChnAttr.stNormalize.factor;
+  auto &mean = vpssChnAttr.stNormalize.mean;
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        input->shape.dim[3], input->shape.dim[2], PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, true);
+                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
+                        factor, mean, false);
   mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
   return mp_vpss_inst->getFrame(dstFrame, 0);
 }
@@ -197,6 +201,7 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
   // Init face meta
   meta->width = image_width;
   meta->height = image_height;
+  meta->rescale_type = m_rescale_type;
   if (vec_bbox_nms.size() == 0) {
     meta->size = vec_bbox_nms.size();
     meta->info = NULL;

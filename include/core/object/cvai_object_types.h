@@ -57,6 +57,7 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
+  meta_rescale_type_e rescale_type;
   cvai_object_info_t *info;
 } cvai_object_t;
 

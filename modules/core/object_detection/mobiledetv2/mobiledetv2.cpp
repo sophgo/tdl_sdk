@@ -109,11 +109,12 @@ static Detections nms(const Detections &dets, float iou_threshold) {
 }
 
 static void convert_det_struct(const Detections &dets, cvai_object_t *out, int im_height,
-                               int im_width) {
+                               int im_width, meta_rescale_type_e type) {
   out->size = dets.size();
   out->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * out->size);
   out->height = im_height;
   out->width = im_width;
+  out->rescale_type = type;
 
   memset(out->info, 0, sizeof(cvai_object_info_t) * out->size);
   for (uint32_t i = 0; i < out->size; ++i) {
@@ -330,7 +331,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
   };
   final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
 
-  convert_det_struct(final_dets, meta, input->shape.dim[2], input->shape.dim[3]);
+  convert_det_struct(final_dets, meta, input->shape.dim[2], input->shape.dim[3], m_rescale_type);
 
   if (!m_skip_vpss_preprocess) {
     for (uint32_t i = 0; i < meta->size; ++i) {

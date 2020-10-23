@@ -121,6 +121,7 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
   obj->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj->size);
   obj->width = yolov3_w;
   obj->height = yolov3_h;
+  obj->rescale_type = m_rescale_type;
 
   memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
   for (uint32_t i = 0; i < obj->size; ++i) {
