@@ -228,6 +228,12 @@ CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E co
   cviai::Core *instance = nullptr;
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   switch (config) {
+    case CVI_AI_SUPPORTED_MODEL_RETINAFACE: {
+      instance = getInferenceInstance<RetinaFace>(config, ctx);
+    } break;
+    case CVI_AI_SUPPORTED_MODEL_THERMALFACE: {
+      instance = getInferenceInstance<ThermalFace>(config, ctx);
+    } break;
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0: {
       instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d0);
     } break;
@@ -237,9 +243,11 @@ CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E co
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2: {
       instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d2);
     } break;
+    case CVI_AI_SUPPORTED_MODEL_YOLOV3: {
+      instance = getInferenceInstance<Yolov3>(config, ctx);
+    } break;
     default: {
       LOGE("Currently model %u does not support exporting channel attribute.\n", config);
-      ret = CVI_FAILURE;
     } break;
   }
   if (instance == nullptr) {

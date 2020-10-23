@@ -68,6 +68,7 @@ int RetinaFace::initAfterModelOpened(float *factor, float *mean, bool &pad_rever
     factor[i] = 1;
   }
   use_model_threshold = true;
+  m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
 

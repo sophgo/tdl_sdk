@@ -136,6 +136,7 @@ int ThermalFace::initAfterModelOpened(float *factor, float *mean, bool &pad_reve
   mean[1] = static_cast<float>(MEAN_G);
   mean[2] = static_cast<float>(MEAN_B);
   use_model_threshold = true;
+  m_export_chn_attr = true;
   m_rescale_type = RESCALE_RB;
   return CVI_SUCCESS;
 }

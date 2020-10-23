@@ -43,7 +43,7 @@ int Yolov3::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
     factor[i] = YOLOV3_SCALE;
   }
   use_model_threshold = true;
-
+  m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
 
