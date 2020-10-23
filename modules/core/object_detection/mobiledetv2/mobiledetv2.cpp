@@ -327,8 +327,22 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
   Detections final_dets = nms(dets, m_iou_threshold);
 
   // remove all detections not belong to COCO 80 classes
-  auto condition = [](const PtrDectRect &det) {
-    return coco_utils::map_90_class_id_to_80(det->label) == -1;
+  auto condition = [det_type](const PtrDectRect &det) {
+    int label = coco_utils::map_90_class_id_to_80(det->label);
+    if (label == -1) {
+      return true;
+    }
+    bool skip_class = (det_type != CVI_DET_TYPE_ALL);
+    if ((det_type & CVI_DET_TYPE_VEHICLE) != 0) {
+      if ((label >= 1) && label <= 7) skip_class = false;
+    }
+    if ((det_type & CVI_DET_TYPE_PEOPLE) != 0) {
+      if (label == 0) skip_class = false;
+    }
+    if ((det_type & CVI_DET_TYPE_PET) != 0) {
+      if ((label == 16) || (label == 17)) skip_class = false;
+    }
+    return skip_class;
   };
   final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
 
