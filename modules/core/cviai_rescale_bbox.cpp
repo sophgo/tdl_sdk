@@ -10,6 +10,8 @@ CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t
     cviai::info_rescale_nocopy_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, face->width,
                                  face->height, &face->info[i]);
   }
+  face->width = frame->stVFrame.u32Width;
+  face->height = frame->stVFrame.u32Height;
   return CVI_SUCCESS;
 }
 
@@ -23,6 +25,8 @@ CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object
         cviai::box_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, obj->width,
                              obj->height, obj->info[i].bbox, &ratio, &pad_width, &pad_height);
   }
+  obj->width = frame->stVFrame.u32Width;
+  obj->height = frame->stVFrame.u32Height;
   return CVI_SUCCESS;
 }
 CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
@@ -33,6 +37,8 @@ CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *fa
     cviai::info_rescale_nocopy_rb(frame->stVFrame.u32Width, frame->stVFrame.u32Height, face->width,
                                   face->height, &face->info[i]);
   }
+  face->width = frame->stVFrame.u32Width;
+  face->height = frame->stVFrame.u32Height;
   return CVI_SUCCESS;
 }
 CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
@@ -44,6 +50,8 @@ CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *
     obj->info[i].bbox = cviai::box_rescale_rb(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
                                               obj->width, obj->height, obj->info[i].bbox, &ratio);
   }
+  obj->width = frame->stVFrame.u32Width;
+  obj->height = frame->stVFrame.u32Height;
   return CVI_SUCCESS;
 }
 
