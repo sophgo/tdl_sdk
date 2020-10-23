@@ -156,9 +156,19 @@ CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle);
 CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 ```
 
+### Acquiring VPSS_CHN_ATTR_S from built-in models
+
+The model will be loaded when the function is called. Make sure you complete your settings before calling this funciton. If you want to use VPSS binding mode instead of built-in VPSS instance inside AI SDK, you can get the VPSS_CHN_ATTR_S from the supported built-in models. If the model does not support exporting, ``CVI_FAILURE`` will return.
+
+```c
+CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                              const CVI_U32 frameWidth, const CVI_U32 frameHeight,
+                              VPSS_CHN_ATTR_S *chnAttr);
+```
+
 ### Inference calls
 
-A model will be loaded when the function is called for the first time or after close model functions are called. The following functions are the example of the API calls.
+A model will be loaded when the function is called for the first time. The following functions are the example of the API calls.
 
 ```c
 // Face recognition
