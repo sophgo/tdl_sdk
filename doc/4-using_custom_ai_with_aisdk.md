@@ -46,8 +46,8 @@ typedef struct {
 The rescale function in AI SDK will restore the coordinate of the box and the points by calculating the ratio of the ``width``, ``height`` and the new ``width``, ``height`` from ``VIDEO_FRAME_INFO_S``. Make sure to call rescale manually after you fill the data into ``cvai_face_t``.
 
 ```c
-CVI_S32 CVI_AI_RescaleBBoxCenter(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
-CVI_S32 CVI_AI_RescaleBBoxRB(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+CVI_S32 CVI_AI_RescaleMetaCenter(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+CVI_S32 CVI_AI_RescaleMetaRB(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
 ```
 
 Now let's take a look at ``cvai_face_info_t``.

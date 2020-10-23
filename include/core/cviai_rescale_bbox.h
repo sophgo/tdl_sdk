@@ -8,20 +8,20 @@
 #include <cvi_sys.h>
 
 #ifdef __cplusplus
-DLL_EXPORT CVI_S32 CVI_AI_RescaleBBoxCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
-DLL_EXPORT CVI_S32 CVI_AI_RescaleBBoxCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
-DLL_EXPORT CVI_S32 CVI_AI_RescaleBBoxRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
-DLL_EXPORT CVI_S32 CVI_AI_RescaleBBoxRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+DLL_EXPORT CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+DLL_EXPORT CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+DLL_EXPORT CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+DLL_EXPORT CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-DLL_EXPORT CVI_S32 CVI_AI_RescaleBBoxCenterFace(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
-DLL_EXPORT CVI_S32 CVI_AI_RescaleBBoxCenterObj(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
-DLL_EXPORT CVI_S32 CVI_AI_RescaleBBoxRBFace(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
-DLL_EXPORT CVI_S32 CVI_AI_RescaleBBoxRBObj(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+DLL_EXPORT CVI_S32 CVI_AI_RescaleMetaCenterFace(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+DLL_EXPORT CVI_S32 CVI_AI_RescaleMetaCenterObj(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+DLL_EXPORT CVI_S32 CVI_AI_RescaleMetaRBFace(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+DLL_EXPORT CVI_S32 CVI_AI_RescaleMetaRBObj(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
 
 #ifdef __cplusplus
 }

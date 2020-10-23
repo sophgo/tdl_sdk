@@ -154,7 +154,7 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText) 
   for (size_t i = 0; i < meta->size; i++) {
     cvai_bbox_t bbox =
         box_rescale(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height, meta->width,
-                    meta->height, meta->info[i].bbox, BOX_RESCALE_TYPE::CENTER);
+                    meta->height, meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
     DrawRect(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, meta->info[i].name, rgb_color,
              DEFAULT_RECT_THINKNESS, drawText);
   }

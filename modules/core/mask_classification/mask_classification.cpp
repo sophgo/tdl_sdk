@@ -1,7 +1,7 @@
 #include "mask_classification.hpp"
 
 #include "core/cviai_types_mem.h"
-#include "face_utils.hpp"
+#include "rescale_utils.hpp"
 
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
@@ -46,11 +46,12 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
   uint32_t img_width = stOutFrame->stVFrame.u32Width;
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
   for (uint32_t i = 0; i < meta->size; i++) {
-    cvai_face_info_t face_info = bbox_rescale(img_width, img_height, *meta, i);
+    cvai_face_info_t face_info = info_rescale_c(img_width, img_height, *meta, i);
     int box_x1 = face_info.bbox.x1;
     int box_y1 = face_info.bbox.y1;
     uint32_t box_w = face_info.bbox.x2 - face_info.bbox.x1;
     uint32_t box_h = face_info.bbox.y2 - face_info.bbox.y1;
+    CVI_AI_FreeCpp(&face_info);
     uint32_t min_edge = std::min(box_w, box_h);
     float new_edge = min_edge * CROP_PCT;
     int box_new_x1 = (box_w - new_edge) / 2.f + box_x1;

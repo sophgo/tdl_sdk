@@ -42,7 +42,7 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
 
   for (uint32_t i = 0; i < meta->size; ++i) {
     cvai_face_info_t face_info =
-        bbox_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
+        info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
 
     prepareInputTensor(image, face_info);
     run(frame);

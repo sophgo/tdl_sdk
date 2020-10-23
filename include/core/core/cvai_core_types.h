@@ -24,6 +24,12 @@ typedef enum {
   TYPE_FLOAT     /**< Equals to float. */
 } feature_type_e;
 
+/** @enum meta_rescale_type_e
+ * @ingroup core_cviaicore
+ * @brief A variable type enum that records the resize padding method.
+ */
+typedef enum { RESCALE_UNKNOWN, RESCALE_NOASPECT, RESCALE_CENTER, RESCALE_RB } meta_rescale_type_e;
+
 /** @struct cvai_bbox_t
  * @ingroup core_cviaicore
  * @brief A structure to describe an area in a given image with confidence score.

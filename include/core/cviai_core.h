@@ -33,7 +33,7 @@
 // clang-format on
 #endif
 
-/** @def CVI_AI_RescaleBBoxCenter
+/** @def CVI_AI_RescaleMetaCenter
  * @ingroup core_cviaicore
  * @brief Rescale the output coordinate to original image. Padding in four directions. Support the
  * following structure types written in _Generic.
@@ -42,7 +42,7 @@
  * @param X Input data structure.
  */
 
-/** @def CVI_AI_RescaleBBoxRB
+/** @def CVI_AI_RescaleMetaRB
  * @ingroup core_cviaicore
  * @brief Rescale the output coordinate to original image. Padding in right, bottom directions.
  * Support the following structure types written in _Generic.
@@ -51,16 +51,16 @@
  * @param X Input data structure.
  */
 #ifdef __cplusplus
-#define CVI_AI_RescaleBBoxCenter(videoFrame, X) CVI_AI_RescaleBBoxCenterCpp(videoFrame, X);
-#define CVI_AI_RescaleBBoxRB(videoFrame, X) CVI_AI_RescaleBBoxRBCpp(videoFrame, X);
+#define CVI_AI_RescaleMetaCenter(videoFrame, X) CVI_AI_RescaleMetaCenterCpp(videoFrame, X);
+#define CVI_AI_RescaleMetaRB(videoFrame, X) CVI_AI_RescaleMetaRBCpp(videoFrame, X);
 #else
 // clang-format off
-#define CVI_AI_RescaleBBoxCenter(videoFrame, X) _Generic((X), \
-           cvai_face_t*: CVI_AI_RescaleBBoxCenterFace,        \
-           cvai_object_t*: CVI_AI_RescaleBBoxCenterObj)(videoFrame, X);
-#define CVI_AI_RescaleBBoxRB(videoFrame, X) _Generic((X),     \
-           cvai_face_t*: CVI_AI_RescaleBBoxRBFace,            \
-           cvai_object_t*: CVI_AI_RescaleBBoxRBObj)(videoFrame, X);
+#define CVI_AI_RescaleMetaCenter(videoFrame, X) _Generic((X), \
+           cvai_face_t*: CVI_AI_RescaleMetaCenterFace,        \
+           cvai_object_t*: CVI_AI_RescaleMetaCenterObj)(videoFrame, X);
+#define CVI_AI_RescaleMetaRB(videoFrame, X) _Generic((X),     \
+           cvai_face_t*: CVI_AI_RescaleMetaRBFace,            \
+           cvai_object_t*: CVI_AI_RescaleMetaRBObj)(videoFrame, X);
 // clang-format on
 #endif
 

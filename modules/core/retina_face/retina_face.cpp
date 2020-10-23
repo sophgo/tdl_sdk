@@ -179,7 +179,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
     for (uint32_t i = 0; i < meta->size; ++i) {
       clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
       cvai_face_info_t info =
-          bbox_rescale(image_width, image_height, frame_width, frame_height, vec_bbox_nms[i]);
+          info_rescale_c(image_width, image_height, frame_width, frame_height, vec_bbox_nms[i]);
       meta->info[i].bbox.x1 = info.bbox.x1;
       meta->info[i].bbox.x2 = info.bbox.x2;
       meta->info[i].bbox.y1 = info.bbox.y1;

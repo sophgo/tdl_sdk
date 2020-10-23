@@ -43,7 +43,7 @@ int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int ob
     if (obj_idx != -1 && i != (uint32_t)obj_idx) continue;
     cvai_bbox_t box =
         box_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta->width,
-                    meta->height, meta->info[i].bbox, BOX_RESCALE_TYPE::CENTER);
+                    meta->height, meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
     m_crop_attr.bEnable = true;
     m_crop_attr.enCropCoordinate = VPSS_CROP_ABS_COOR;
     m_crop_attr.stCropRect = {(int32_t)box.x1, (int32_t)box.y1, (uint32_t)(box.x2 - box.x1),

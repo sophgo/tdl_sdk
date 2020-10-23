@@ -47,7 +47,7 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
   vector<vector<cv::Mat>> input_mat(meta->size, vector<cv::Mat>());
   for (uint32_t i = 0; i < meta->size; i++) {
     cvai_face_info_t face_info =
-        bbox_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
+        info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
     cv::Rect box;
     box.x = face_info.bbox.x1;
     box.y = face_info.bbox.y1;

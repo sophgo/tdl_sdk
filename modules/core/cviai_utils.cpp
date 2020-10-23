@@ -106,7 +106,7 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
           inFrame->stVFrame.enPixelFormat);
       return CVI_FAILURE;
     }
-    cvai_face_info_t face_info = cviai::bbox_rescale(
+    cvai_face_info_t face_info = cviai::info_rescale_c(
         metaWidth, metaHeight, inFrame->stVFrame.u32Width, inFrame->stVFrame.u32Height, *info);
     cviai::face_align_gdc(inFrame, outFrame, face_info);
   } else {
@@ -131,7 +131,7 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
     cv::Mat warp_image(cv::Size(outFrame->stVFrame.u32Width, outFrame->stVFrame.u32Height),
                        image.type(), outFrame->stVFrame.pu8VirAddr[0],
                        outFrame->stVFrame.u32Stride[0]);
-    cvai_face_info_t face_info = cviai::bbox_rescale(
+    cvai_face_info_t face_info = cviai::info_rescale_c(
         metaWidth, metaHeight, inFrame->stVFrame.u32Width, inFrame->stVFrame.u32Height, *info);
     cviai::face_align(image, warp_image, face_info);
     CVI_SYS_IonFlushCache(outFrame->stVFrame.u64PhyAddr[0], outFrame->stVFrame.pu8VirAddr[0],

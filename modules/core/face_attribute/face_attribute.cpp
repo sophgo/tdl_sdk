@@ -83,7 +83,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
 
       cvai_face_info_t face_info =
-          bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
+          info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       face_align_gdc(stOutFrame, &m_wrap_frame, face_info);
       run(&m_wrap_frame);
       outputParser(meta, i);
@@ -110,7 +110,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
 
       cvai_face_info_t face_info =
-          bbox_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
+          info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
                          image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
                          m_wrap_frame.stVFrame.u32Stride[0]);

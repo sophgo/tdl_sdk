@@ -254,19 +254,19 @@ To get the coordinate correspond to the frame size, we provide two generic type 
 
 ```c
 #ifdef __cplusplus
-#define CVI_AI_RescaleBBoxCenter(videoFrame, X) CVI_AI_RescaleBBoxCenterCpp(videoFrame, X)
-#define CVI_AI_RescaleBBoxRB(videoFrame, X) CVI_AI_RescaleBBoxRBCpp(videoFrame, X)
+#define CVI_AI_RescaleMetaCenter(videoFrame, X) CVI_AI_RescaleMetaCenterCpp(videoFrame, X)
+#define CVI_AI_RescaleMetaRB(videoFrame, X) CVI_AI_RescaleMetaRBCpp(videoFrame, X)
 #else
-#define CVI_AI_RescaleBBoxCenter(videoFrame, X) _Generic((X), \
-           cvai_face_t*: CVI_AI_RescaleBBoxCenterFace,        \
-           cvai_object_t*: CVI_AI_RescaleBBoxCenterObj)(videoFrame, X)
-#define CVI_AI_RescaleBBoxRB(videoFrame, X) _Generic((X),     \
-           cvai_face_t*: CVI_AI_RescaleBBoxRBFace,            \
-           cvai_object_t*: CVI_AI_RescaleBBoxRBObj)(videoFrame, X)
+#define CVI_AI_RescaleMetaCenter(videoFrame, X) _Generic((X), \
+           cvai_face_t*: CVI_AI_RescaleMetaCenterFace,        \
+           cvai_object_t*: CVI_AI_RescaleMetaCenterObj)(videoFrame, X)
+#define CVI_AI_RescaleMetaRB(videoFrame, X) _Generic((X),     \
+           cvai_face_t*: CVI_AI_RescaleMetaRBFace,            \
+           cvai_object_t*: CVI_AI_RescaleMetaRBObj)(videoFrame, X)
 #endif
 ```
 
-If you use the inference calls from AI SDK without VPSS binding mode, you can call ``CVI_AI_RescaleBBoxCenter`` to recover the results. However, if you use VPSS binding mode instead of the VPSS inside the inference calls, the function you use depends on the ``stAspectRatio`` settings. If the setting is ``ASPECT_RATIO_AUTO``, you use ``CVI_AI_RescaleBBoxCenter``. If the setting is ``ASPECT_RATIO_MANUAL``, you can call ``CVI_AI_RescaleBBoxRB`` if you only pad the image
+If you use the inference calls from AI SDK without VPSS binding mode, you can call ``CVI_AI_RescaleMetaCenter`` to recover the results. However, if you use VPSS binding mode instead of the VPSS inside the inference calls, the function you use depends on the ``stAspectRatio`` settings. If the setting is ``ASPECT_RATIO_AUTO``, you use ``CVI_AI_RescaleMetaCenter``. If the setting is ``ASPECT_RATIO_MANUAL``, you can call ``CVI_AI_RescaleMetaRB`` if you only pad the image
  in the direction of right or bottom.
 
 ```c
@@ -275,7 +275,7 @@ If you use the inference calls from AI SDK without VPSS binding mode, you can ca
   memset(&face, 0, sizeof(cvai_face_t));
 
   CVI_AI_FaceAttribute(handle, frame, &face);
-  CVI_AI_RescaleBBoxCenter(frame, &face);
+  CVI_AI_RescaleMetaCenter(frame, &face);
 
   // Free to avoid memory leaks.
   CVI_AI_Free(&face);

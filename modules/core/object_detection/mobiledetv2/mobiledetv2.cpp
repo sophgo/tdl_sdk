@@ -326,7 +326,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
     for (uint32_t i = 0; i < meta->size; ++i) {
       meta->info[i].bbox =
           box_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, meta->width,
-                      meta->height, meta->info[i].bbox, BOX_RESCALE_TYPE::RB);
+                      meta->height, meta->info[i].bbox, meta_rescale_type_e::RESCALE_RB);
     }
     meta->width = frame->stVFrame.u32Width;
     meta->height = frame->stVFrame.u32Height;
