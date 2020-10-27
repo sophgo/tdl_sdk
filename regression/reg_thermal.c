@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
     VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
     if (CVI_AI_ReadImage(filename, &blk, &frame, PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
-      printf("Read image failed.\n");
-      break;
+      printf("Read image [%s] failed.\n", filename);
+      return CVI_FAILURE;
     }
     free(filename);
 
