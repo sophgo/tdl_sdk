@@ -15,6 +15,6 @@ Python tools for evaluate algorithm result.
 
 ```
 $ python3 eval_coco.py ~/data/coco/instances_val2017.json ~/data/coco/result.json
-$ python3 eval_thermal.py ~/data/thermal_val/annotations.json ~/data/thermal_val/result.json
+$ python3 eval_coco.py ~/data/thermal_val/annotations.json ~/data/thermal_val/result.json
 $ python3 eval_widerface.py ~/data/wider_face/wider_result ~/mlir/python
 ```

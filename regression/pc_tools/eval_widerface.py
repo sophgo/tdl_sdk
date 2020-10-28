@@ -16,8 +16,8 @@ def evaluation(pred_folder, mlir_python_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('result_dir', metavar='result', help='Result directory')
-    parser.add_argument('mlir_python', metavar='result', help='MLIR python path')
+    parser.add_argument('result_dir', metavar='result_dir', help='Result directory')
+    parser.add_argument('mlir_python', metavar='mlir_path', help='MLIR python path')
     args = parser.parse_args()
 
     args.result_dir = args.result_dir.rstrip('/')

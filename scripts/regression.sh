@@ -18,7 +18,7 @@ if [[ "$1" != "daily" ]]; then
   exit 0
 fi
 
-run reg_wider_face /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/dataset/wider_face /mnt/data/result/wider_face_result
+run reg_wider_face /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/dataset/wider_face/WIDER_val /mnt/data/result/wider_face_result
 run reg_lfw /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/bmface.cvimodel /mnt/data/dataset/lfw.txt /mnt/data/result/lfw_result.txt
 run reg_face_attribute /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/bmface.cvimodel /mnt/data/cvimodel/fqnet-v5_shufflenetv2-softmax.cvimodel /mnt/data/face_zkt_3000 /mnt/data/face_attribute_feature/
 run reg_face_quality /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/fqnet-v5_shufflenetv2-softmax.cvimodel /mnt/data/pic2 /mnt/data/neg_14_28
