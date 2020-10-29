@@ -16,4 +16,5 @@ if __name__ == '__main__':
     # coco_eval.params.imgIds = img_ids
     coco_eval.evaluate()
     coco_eval.accumulate()
+    print(args.result)
     coco_eval.summarize()

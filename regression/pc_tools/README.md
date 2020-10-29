@@ -18,3 +18,9 @@ $ python3 eval_coco.py ~/data/coco/instances_val2017.json ~/data/coco/result.jso
 $ python3 eval_coco.py ~/data/thermal_val/annotations.json ~/data/thermal_val/result.json
 $ python3 eval_widerface.py ~/data/wider_face/wider_result ~/mlir/python
 ```
+
+Download result file and run evaluation
+
+```
+bash test.sh ~/data/ ~/llvm-project/llvm/projects/mlir/python/
+```
