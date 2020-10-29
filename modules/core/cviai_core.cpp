@@ -234,6 +234,9 @@ CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E co
     case CVI_AI_SUPPORTED_MODEL_THERMALFACE: {
       instance = getInferenceInstance<ThermalFace>(config, ctx);
     } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::lite);
+    } break;
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0: {
       instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d0);
     } break;
@@ -399,6 +402,13 @@ MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model m
     return CVI_RC_FAILURE;
   }
   return detector->inference(frame, obj, det_type);
+}
+
+CVI_S32 CVI_AI_MobileDetV2_Lite(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                cvai_object_t *obj, cvai_obj_det_type_e det_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Lite");
+  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE, MobileDetV2::Model::lite, handle,
+                         frame, obj, det_type);
 }
 
 CVI_S32 CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,

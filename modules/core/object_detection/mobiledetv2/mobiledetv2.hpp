@@ -11,9 +11,10 @@ namespace cviai {
 class MobileDetV2 final : public Core {
  public:
   enum class Model {
-    d0,  // MobileDetV2-D0
-    d1,  // MobileDetV2-D1
-    d2   // MobileDetV2-D2
+    d0,    // MobileDetV2-D0
+    d1,    // MobileDetV2-D1
+    d2,    // MobileDetV2-D2
+    lite,  // MobileDetV2-Lite
   };
 
   struct ModelConfig {

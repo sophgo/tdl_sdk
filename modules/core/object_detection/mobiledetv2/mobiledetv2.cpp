@@ -241,7 +241,7 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
   for (size_t obj_index = 0; obj_index < class_tensor_size; obj_index++) {
     if (unlikely(*(objectness + obj_index) >= quant_thresh)) {
       // create detection if any object exists in this grid
-      size_t score_index = obj_index * 90;
+      size_t score_index = obj_index * m_model_config.num_classes;
       size_t end = score_index + m_model_config.num_classes;
 
       // find objects in this grid
@@ -432,6 +432,22 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {32, 2.8060667514801025},
                                     {64, 2.563389301300049},
                                     {128, 2.2213821411132812}};
+      config.default_score_threshold = 0.3;
+      break;
+    case Model::lite:
+      config.num_classes = 9;
+      config.image_size = 512;
+      config.class_dequant_thresh = {{8, 12.48561954498291},
+                                     {16, 11.416889190673828},
+                                     {32, 13.258634567260742},
+                                     {64, 13.312114715576172},
+                                     {128, 9.732277870178223}};
+
+      config.bbox_dequant_thresh = {{8, 2.7503433227539062},
+                                    {16, 2.9586639404296875},
+                                    {32, 2.537200927734375},
+                                    {64, 2.3935775756835938},
+                                    {128, 2.543354034423828}};
       config.default_score_threshold = 0.3;
       break;
   }
