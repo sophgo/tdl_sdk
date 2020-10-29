@@ -9,6 +9,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum) {
     syslog(LOG_ERR | LOG_LOCAL7, "Init pasre failed.\n");
     return CVI_FAILURE;
   }
+  *devNum = stIniCfg.devNum;
 
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
   PIXEL_FORMAT_E enPixFormat = PIXEL_FORMAT_YUV_PLANAR_420;
