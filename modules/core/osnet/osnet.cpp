@@ -20,7 +20,6 @@ namespace cviai {
 OSNet::OSNet() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_postprocess = true;
-  mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
   m_use_vpss_crop = true;
 }

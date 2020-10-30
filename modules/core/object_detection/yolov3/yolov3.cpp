@@ -18,7 +18,6 @@ namespace cviai {
 
 Yolov3::Yolov3() {
   mp_config = std::make_unique<ModelConfig>();
-  mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
 
   m_det_buf_size = YOLOV3_DEFAULT_DET_BUFFER;

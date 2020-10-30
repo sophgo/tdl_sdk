@@ -31,7 +31,6 @@ namespace cviai {
 FaceAttribute::FaceAttribute(bool use_wrap_hw) : m_use_wrap_hw(use_wrap_hw) {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_postprocess = true;
-  mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }

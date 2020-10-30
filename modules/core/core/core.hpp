@@ -24,10 +24,8 @@ struct ModelConfig {
   // FIXME: something strange...
   int32_t batch_size = 0;
   bool debug_mode = false;
-  bool skip_preprocess = false;
   bool skip_postprocess = false;
   int input_mem_type = 1;
-  int output_mem_type = 1;
 };
 
 class Core {
@@ -74,6 +72,5 @@ class Core {
 
  private:
   inline int __attribute__((always_inline)) runVideoForward(VIDEO_FRAME_INFO_S *srcFrame);
-  bool m_reverse_device_mem = false;
 };
 }  // namespace cviai

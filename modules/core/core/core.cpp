@@ -22,12 +22,11 @@ int Core::modelOpen(const char *filepath) {
   }
   CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_ALL_TENSORS,
                    static_cast<int>(mp_config->debug_mode));
-  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS,
-                   static_cast<int>(mp_config->skip_preprocess));
+  // For models before version 1.2
+  bool skip_preprocess = (mp_config->input_mem_type == CVI_MEM_DEVICE) ? true : false;
+  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS, static_cast<int>(skip_preprocess));
   CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_POSTPROCESS,
                    static_cast<int>(mp_config->skip_postprocess));
-  CVI_NN_SetConfig(mp_model_handle, OPTION_INPUT_MEM_TYPE, mp_config->input_mem_type);
-  CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_MEM_TYPE, mp_config->output_mem_type);
 
   ret = CVI_NN_GetInputOutputTensors(mp_model_handle, &mp_input_tensors, &m_input_num,
                                      &mp_output_tensors, &m_output_num);
@@ -163,7 +162,7 @@ int Core::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S 
 int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
   TRACE_EVENT("cviai_core", "Core::run");
   int ret = CVI_SUCCESS;
-  if (mp_config->input_mem_type == 2) {
+  if (mp_config->input_mem_type == CVI_MEM_DEVICE) {
     if (m_skip_vpss_preprocess) {
       ret |= runVideoForward(srcFrame);
     } else {
@@ -184,34 +183,17 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
 }
 
 int Core::runVideoForward(VIDEO_FRAME_INFO_S *srcFrame) {
-  // FIXME: Need to support multi-input and different fmt
   int ret = CVI_SUCCESS;
-  CVI_TENSOR *input = getInputTensor(0);
-  CVI_VIDEO_FRAME_INFO info;
-  info.type = CVI_FRAME_PLANAR;
-  info.shape.dim_size = input->shape.dim_size;
-  info.shape.dim[0] = input->shape.dim[0];
-  info.shape.dim[1] = input->shape.dim[1];
-  info.shape.dim[2] = input->shape.dim[2];
-  info.shape.dim[3] = input->shape.dim[3];
-  info.fmt = CVI_FMT_INT8;
-  for (size_t i = 0; i < 3; ++i) {
-    if (m_reverse_device_mem) {
-      info.stride[i] = srcFrame->stVFrame.u32Stride[2 - i];
-      info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[2 - i];
-    } else {
-      info.stride[i] = srcFrame->stVFrame.u32Stride[i];
-      info.pyaddr[i] = srcFrame->stVFrame.u64PhyAddr[i];
-    }
-  }
   if (int ret =
-          CVI_NN_SetTensorWithVideoFrame(mp_model_handle, mp_input_tensors, &info) !=  // NOLINT
-          CVI_RC_SUCCESS) {
+          CVI_NN_FeedTensorWithFrames(mp_model_handle, mp_input_tensors, CVI_FRAME_PLANAR,
+                                      CVI_FMT_INT8, 3, srcFrame->stVFrame.u64PhyAddr,
+                                      srcFrame->stVFrame.u32Height, srcFrame->stVFrame.u32Width,
+                                      srcFrame->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
     LOGE("NN set tensor with vi failed: %d\n", ret);
     return CVI_FAILURE;
   }
-  if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num,  // NOLINT
-                                 mp_output_tensors, m_output_num) != CVI_RC_SUCCESS) {
+  if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num, mp_output_tensors,
+                                 m_output_num) != CVI_RC_SUCCESS) {
     LOGE("NN forward failed: %d\n", rcret);
     ret |= CVI_FAILURE;
   }

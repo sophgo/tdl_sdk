@@ -174,7 +174,6 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
   mp_config = std::make_unique<cviai::ModelConfig>();
   mp_config->skip_postprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
-  mp_config->skip_preprocess = true;
 
   RetinaNetAnchorGenerator generator = RetinaNetAnchorGenerator(
       m_model_config.min_level, m_model_config.max_level, m_model_config.num_scales,

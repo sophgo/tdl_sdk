@@ -11,7 +11,6 @@ namespace cviai {
 Custom::Custom() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_postprocess = true;
-  mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
 }
 
@@ -69,7 +68,6 @@ int Custom::setPreProcessFunc(preProcessFunc func, bool use_tensor_input, bool u
     m_skip_vpss_preprocess = !use_vpss_sq;
   }
   if (use_tensor_input) {
-    mp_config->skip_preprocess = false;
     mp_config->input_mem_type = CVI_MEM_SYSTEM;
   }
   return CVI_SUCCESS;

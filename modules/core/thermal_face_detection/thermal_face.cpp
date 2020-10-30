@@ -103,7 +103,6 @@ static void bbox_pred(const cvai_bbox_t &anchor, cv::Vec4f regress, std::vector<
 
 ThermalFace::ThermalFace() {
   mp_config = std::make_unique<ModelConfig>();
-  mp_config->skip_preprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
 }
 
