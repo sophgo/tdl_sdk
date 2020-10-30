@@ -8,8 +8,6 @@ if __name__ == '__main__':
     result = [[0,0], [0,0], [0,0]]
     with open(args.result, 'r') as fp:
         content = fp.readlines()
-        last_tpr = 0.0
-        last_fpr = 0.0
 
         for line in content:
             tpr = float(line.split(',')[1][5:])

@@ -11,7 +11,6 @@ def evaluation(pred_folder, mlir_python_path):
     cmd += 'octave --no-window-system --eval \"wider_eval(\'{}\', \'{}\')\" 2>&1;'.format(folder_name, 'face')
     cmd += 'rm -rf {};'.format(folder_name)
     cmd += 'popd;'
-    print("exec:{}".format(cmd))
     subprocess.call(cmd, shell=True, executable='/bin/bash')
 
 if __name__ == '__main__':
