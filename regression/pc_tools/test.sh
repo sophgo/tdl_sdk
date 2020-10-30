@@ -40,5 +40,9 @@ python3 eval_lfw.py "${REGRESSION_FOLDER}/${MASK_FR_OUTPUT}"
 RGBIR_LIVENESS_OUTPUT="rgbir_liveness_result.txt"
 python3 eval_lfw.py "${REGRESSION_FOLDER}/${RGBIR_LIVENESS_OUTPUT}"
 
+# console log
+CONSOLE_LOG="consolelog.txt"
+python3 parse_console.py "${REGRESSION_FOLDER}/${CONSOLE_LOG}"
+
 rm -rf ${REGRESSION_FOLDER}
 rm log
