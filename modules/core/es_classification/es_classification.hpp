@@ -13,6 +13,7 @@ class ESClassification final : public Core {
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index);
 
  private:
+  ESCFFT fft;
   cv::Mat_<float> hannWindow;
   cv::Mat_<float> STFT(cv::Mat_<float> *data);
   int get_top_k(float *result, size_t count);

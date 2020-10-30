@@ -19,6 +19,7 @@ ESClassification::ESClassification() {
   for (int k = 1; k <= WIN_LENGTH; k++) {
     hannWindow(0, k - 1 + insert_cnt) = float(0.5 * (1 - cos(2 * pi * k / (WIN_LENGTH + 1))));
   }
+  fft.init(size_t(N_FFT));
 }
 
 ESClassification::~ESClassification() {}
@@ -69,8 +70,6 @@ cv::Mat_<float> ESClassification::STFT(cv::Mat_<float> *data) {
   int number_coefficients = N_FFT / 2 + 1;
   cv::Mat_<float> feature_vector(number_feature_vectors, number_coefficients, 0.0f);
 
-  ESCFFT fft;
-  fft.init(size_t(N_FFT));
   for (int i = 0; i <= pad_size - N_FFT; i += HOP_LENGTH) {
     cv::Mat_<float> framef = cv::Mat_<float>(1, N_FFT, (float *)(data_padbuffer.data) + i).clone();
     framef = framef.mul(hannWindow);
