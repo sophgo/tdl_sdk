@@ -108,8 +108,7 @@ ThermalFace::ThermalFace() {
 
 ThermalFace::~ThermalFace() {}
 
-int ThermalFace::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                      bool &keep_aspect_ratio, bool &use_model_threshold) {
+int ThermalFace::initAfterModelOpened(std::vector<initSetup> *data) {
   std::vector<int> pyramid_levels = {3, 4, 5, 6, 7};
   std::vector<int> strides = {8, 16, 32, 64, 128};
   std::vector<int> sizes = {24, 48, 96, 192, 384};
@@ -128,20 +127,24 @@ int ThermalFace::initAfterModelOpened(float *factor, float *mean, bool &pad_reve
     std::vector<cvai_bbox_t> shifted_anchors = shift(image_shapes[i], strides[i], anchors);
     m_all_anchors.insert(m_all_anchors.end(), shifted_anchors.begin(), shifted_anchors.end());
   }
-  factor[0] = static_cast<float>(SCALE_R);
-  factor[1] = static_cast<float>(SCALE_G);
-  factor[2] = static_cast<float>(SCALE_B);
-  mean[0] = static_cast<float>(MEAN_R);
-  mean[1] = static_cast<float>(MEAN_G);
-  mean[2] = static_cast<float>(MEAN_B);
-  use_model_threshold = true;
+  if (data->size() != 1) {
+    LOGE("Thermal face only has 1 input.\n");
+    return CVI_FAILURE;
+  }
+  (*data)[0].factor[0] = static_cast<float>(SCALE_R);
+  (*data)[0].factor[1] = static_cast<float>(SCALE_G);
+  (*data)[0].factor[2] = static_cast<float>(SCALE_B);
+  (*data)[0].mean[0] = static_cast<float>(MEAN_R);
+  (*data)[0].mean[1] = static_cast<float>(MEAN_G);
+  (*data)[0].mean[2] = static_cast<float>(MEAN_B);
+  (*data)[0].rescale_type = RESCALE_RB;
+  (*data)[0].use_quantize_scale = true;
   m_export_chn_attr = true;
-  m_rescale_type = RESCALE_RB;
   return CVI_SUCCESS;
 }
 
 int ThermalFace::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
-  auto &vpssChnAttr = m_vpss_chn_attr[0];
+  auto &vpssChnAttr = m_vpss_config[0].chn_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
@@ -201,7 +204,7 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
   // Init face meta
   meta->width = image_width;
   meta->height = image_height;
-  meta->rescale_type = m_rescale_type;
+  meta->rescale_type = m_vpss_config[0].rescale_type;
   if (vec_bbox_nms.size() == 0) {
     meta->size = vec_bbox_nms.size();
     meta->info = NULL;

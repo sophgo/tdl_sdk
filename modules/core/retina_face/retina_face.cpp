@@ -19,8 +19,7 @@ RetinaFace::RetinaFace() {
 
 RetinaFace::~RetinaFace() {}
 
-int RetinaFace::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                     bool &keep_aspect_ratio, bool &use_model_threshold) {
+int RetinaFace::initAfterModelOpened(std::vector<initSetup> *data) {
   std::vector<anchor_cfg> cfg;
   anchor_cfg tmp;
   tmp.SCALES = {32, 16};
@@ -63,10 +62,14 @@ int RetinaFace::initAfterModelOpened(float *factor, float *mean, bool &pad_rever
         anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
   }
 
-  for (int i = 0; i < 3; i++) {
-    factor[i] = 1;
+  if (data->size() != 1) {
+    LOGE("Retina face only has 1 input.\n");
+    return CVI_FAILURE;
   }
-  use_model_threshold = true;
+  for (int i = 0; i < 3; i++) {
+    (*data)[0].factor[i] = 1;
+  }
+  (*data)[0].use_quantize_scale = true;
   m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
@@ -176,7 +179,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
     // Recover coordinate if internal vpss engine is used.
     meta->width = frame_width;
     meta->height = frame_height;
-    meta->rescale_type = m_rescale_type;
+    meta->rescale_type = m_vpss_config[0].rescale_type;
     for (uint32_t i = 0; i < meta->size; ++i) {
       clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
       cvai_face_info_t info =

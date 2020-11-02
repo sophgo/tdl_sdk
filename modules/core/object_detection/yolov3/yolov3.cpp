@@ -36,12 +36,15 @@ Yolov3::Yolov3() {
 
 Yolov3::~Yolov3() { free(mp_total_dets); }
 
-int Yolov3::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                 bool &keep_aspect_ratio, bool &use_model_threshold) {
-  for (int i = 0; i < 3; i++) {
-    factor[i] = YOLOV3_SCALE;
+int Yolov3::initAfterModelOpened(std::vector<initSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("Yolov3 only has 1 input.\n");
+    return CVI_FAILURE;
   }
-  use_model_threshold = true;
+  for (int i = 0; i < 3; i++) {
+    (*data)[0].factor[i] = YOLOV3_SCALE;
+  }
+  (*data)[0].use_quantize_scale = true;
   m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
@@ -120,7 +123,7 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
   obj->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj->size);
   obj->width = yolov3_w;
   obj->height = yolov3_h;
-  obj->rescale_type = m_rescale_type;
+  obj->rescale_type = m_vpss_config[0].rescale_type;
 
   memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
   for (uint32_t i = 0; i < obj->size; ++i) {

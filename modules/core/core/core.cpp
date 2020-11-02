@@ -34,42 +34,50 @@ int Core::modelOpen(const char *filepath) {
     LOGE("CVI_NN_GetINputsOutputs failed\n");
     modelClose();
     return CVI_FAILURE;
-    ;
   }
   TRACE_EVENT_BEGIN("cviai_core", "InitAtferModelOpened");
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  float quant_scale = CVI_NN_TensorQuantScale(input);
   // Assigning default values.
-  float factor[3] = {0, 0, 0}, mean[3] = {0, 0, 0};
-  bool pad_reverse = false, keep_aspect_ratio = true;
-  bool use_model_threshold = quant_scale == 0 ? false : true;
-  ret = initAfterModelOpened(factor, mean, pad_reverse, keep_aspect_ratio, use_model_threshold);
+  std::vector<initSetup> data(m_input_num);
+  for (uint32_t i = 0; i < (uint32_t)m_input_num; i++) {
+    CVI_TENSOR *tensor = mp_input_tensors + i;
+    float quant_scale = CVI_NN_TensorQuantScale(tensor);
+    data[i].use_quantize_scale = quant_scale == 0 ? false : true;
+  }
+  ret = initAfterModelOpened(&data);
   if (ret != CVI_SUCCESS) {
     LOGE("Failed to init after open model.\n");
     modelClose();
     return CVI_FAILURE;
   }
-  m_vpss_chn_attr.clear();
-  VPSS_CHN_ATTR_S vpssChnAttr;
-  if (use_model_threshold) {
-    for (uint32_t i = 0; i < 3; i++) {
-      factor[i] *= quant_scale;
-      mean[i] *= quant_scale;
-    }
-    // FIXME: Behavior will changed in 1822.
-    float factor_limit = 8191.f / 8192;
-    for (uint32_t i = 0; i < 3; i++) {
-      if (factor[i] > factor_limit) {
-        factor[i] = factor_limit;
+  m_vpss_config.clear();
+  for (uint32_t i = 0; i < (uint32_t)m_input_num; i++) {
+    if (data[i].use_quantize_scale) {
+      CVI_TENSOR *tensor = mp_input_tensors + i;
+      float quant_scale = CVI_NN_TensorQuantScale(tensor);
+      for (uint32_t j = 0; j < 3; j++) {
+        data[i].factor[j] *= quant_scale;
+        data[i].mean[j] *= quant_scale;
+      }
+      // FIXME: Behavior will changed in 1822.
+      float factor_limit = 8191.f / 8192;
+      for (uint32_t j = 0; j < 3; j++) {
+        if (data[i].factor[j] > factor_limit) {
+          data[i].factor[j] = factor_limit;
+        }
       }
     }
+    VPSSConfig vcfg;
+    vcfg.rescale_type = data[i].rescale_type;
+    vcfg.crop_attr.bEnable = data[i].use_crop;
+    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, input->shape.dim[3], input->shape.dim[2],
+                       PIXEL_FORMAT_RGB_888_PLANAR, data[i].factor, data[i].mean,
+                       data[i].pad_reverse);
+    if (!data[i].keep_aspect_ratio) {
+      vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
+    }
+    m_vpss_config.push_back(vcfg);
   }
-  VPSS_CHN_SQ_HELPER(&vpssChnAttr, input->shape.dim[3], input->shape.dim[2],
-                     PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, pad_reverse);
-  if (!keep_aspect_ratio) {
-    vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-  }
-  m_vpss_chn_attr.push_back(vpssChnAttr);
   TRACE_EVENT_END("cviai_core");
   return CVI_SUCCESS;
 }
@@ -119,18 +127,18 @@ int Core::getChnAttribute(const uint32_t width, const uint32_t height, VPSS_CHN_
   if (!m_skip_vpss_preprocess) {
     LOGW("VPSS preprocessing is enabled. Remember to skip vpss preprocess.\n");
   }
-  switch (m_rescale_type) {
+  switch (m_vpss_config[0].rescale_type) {
     case RESCALE_CENTER: {
-      *attr = m_vpss_chn_attr[0];
+      *attr = m_vpss_config[0].chn_attr;
     } break;
     case RESCALE_RB: {
       CVI_TENSOR *input =
           CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-      auto &factor = m_vpss_chn_attr[0].stNormalize.factor;
-      auto &mean = m_vpss_chn_attr[0].stNormalize.mean;
+      auto &factor = m_vpss_config[0].chn_attr.stNormalize.factor;
+      auto &mean = m_vpss_config[0].chn_attr.stNormalize.mean;
       VPSS_CHN_SQ_RB_HELPER(attr, width, height, input->shape.dim[3], input->shape.dim[2],
                             PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-      attr->stAspectRatio.u32BgColor = m_vpss_chn_attr[0].stAspectRatio.u32BgColor;
+      attr->stAspectRatio.u32BgColor = m_vpss_config[0].chn_attr.stAspectRatio.u32BgColor;
     } break;
     default: {
       LOGW("Unsupported rescale type.\n");
@@ -144,16 +152,14 @@ void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
 float Core::getModelThreshold() { return m_model_threshold; };
 bool Core::isInitialized() { return mp_model_handle == nullptr ? false : true; }
 
-int Core::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                               bool &keep_aspect_ratio, bool &use_model_threshold) {
-  return CVI_SUCCESS;
-}
+int Core::initAfterModelOpened(std::vector<initSetup> *data) { return CVI_SUCCESS; }
 
 int Core::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
-  if (!m_use_vpss_crop) {
-    mp_vpss_inst->sendFrame(srcFrame, &m_vpss_chn_attr[0], 1);
+  if (!m_vpss_config[0].crop_attr.bEnable) {
+    mp_vpss_inst->sendFrame(srcFrame, &m_vpss_config[0].chn_attr, 1);
   } else {
-    mp_vpss_inst->sendCropChnFrame(srcFrame, &m_crop_attr, &m_vpss_chn_attr[0], 1);
+    mp_vpss_inst->sendCropChnFrame(srcFrame, &m_vpss_config[0].crop_attr,
+                                   &m_vpss_config[0].chn_attr, 1);
   }
 
   return mp_vpss_inst->getFrame(dstFrame, 0);

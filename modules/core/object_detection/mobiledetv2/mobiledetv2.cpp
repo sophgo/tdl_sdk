@@ -201,17 +201,20 @@ void MobileDetV2::setModelThreshold(float threshold) {
   }
 }
 
-int MobileDetV2::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                      bool &keep_aspect_ratio, bool &use_model_threshold) {
-  factor[0] = static_cast<float>(FACTOR_R);
-  factor[1] = static_cast<float>(FACTOR_G);
-  factor[2] = static_cast<float>(FACTOR_B);
-  mean[0] = static_cast<float>(MEAN_R);
-  mean[1] = static_cast<float>(MEAN_G);
-  mean[2] = static_cast<float>(MEAN_B);
-  use_model_threshold = true;
+int MobileDetV2::initAfterModelOpened(std::vector<initSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("Mobiledetv2 only has 1 input.\n");
+    return CVI_FAILURE;
+  }
+  (*data)[0].factor[0] = static_cast<float>(FACTOR_R);
+  (*data)[0].factor[1] = static_cast<float>(FACTOR_G);
+  (*data)[0].factor[2] = static_cast<float>(FACTOR_B);
+  (*data)[0].mean[0] = static_cast<float>(MEAN_R);
+  (*data)[0].mean[1] = static_cast<float>(MEAN_G);
+  (*data)[0].mean[2] = static_cast<float>(MEAN_B);
+  (*data)[0].use_quantize_scale = true;
+  (*data)[0].rescale_type = RESCALE_RB;
   m_export_chn_attr = true;
-  m_rescale_type = RESCALE_RB;
   return CVI_SUCCESS;
 }
 
@@ -220,7 +223,7 @@ int MobileDetV2::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_
   VPSS_SCALE_COEF_E enCoef;
   CVI_VPSS_GetChnScaleCoefLevel(group, VPSS_CHN0, &enCoef);
   CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, VPSS_SCALE_COEF_OPENCV_BILINEAR);
-  auto &vpssChnAttr = m_vpss_chn_attr[0];
+  auto &vpssChnAttr = m_vpss_config[0].chn_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
@@ -345,7 +348,8 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
   };
   final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
 
-  convert_det_struct(final_dets, meta, input->shape.dim[2], input->shape.dim[3], m_rescale_type);
+  convert_det_struct(final_dets, meta, input->shape.dim[2], input->shape.dim[3],
+                     m_vpss_config[0].rescale_type);
 
   if (!m_skip_vpss_preprocess) {
     for (uint32_t i = 0; i < meta->size; ++i) {

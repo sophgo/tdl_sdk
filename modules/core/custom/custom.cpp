@@ -14,28 +14,31 @@ Custom::Custom() {
   mp_config->input_mem_type = CVI_MEM_DEVICE;
 }
 
-int Custom::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                 bool &keep_aspect_ratio, bool &use_model_threshold) {
+int Custom::initAfterModelOpened(std::vector<initSetup> *data) {
   if (mp_config->input_mem_type == CVI_MEM_DEVICE && !m_skip_vpss_preprocess && m_factor.empty()) {
     LOGE("VPSS is set to use. Please set factor, mean and initialize first.\n");
     return CVI_FAILURE;
   }
+  if (data->size() != 1) {
+    LOGE("Currently only supports single input.\n");
+    return CVI_FAILURE;
+  }
   if (m_factor.size() == 1) {
     for (int i = 0; i < 3; i++) {
-      factor[i] = m_factor[0];
-      mean[i] = m_mean[0];
+      (*data)[0].factor[i] = m_factor[0];
+      (*data)[0].mean[i] = m_mean[0];
     }
   } else if (m_factor.size() == 3) {
     for (int i = 0; i < 3; i++) {
-      factor[i] = m_factor[i];
-      mean[i] = m_mean[i];
+      (*data)[0].factor[i] = m_factor[i];
+      (*data)[0].mean[i] = m_mean[i];
     }
   } else {
     LOGE("factor and mean must have 1 or 3 values. Current: %zu.\n", m_factor.size());
     return CVI_FAILURE;
   }
-  keep_aspect_ratio = m_keep_aspect_ratio;
-  use_model_threshold = m_use_model_threashold;
+  (*data)[0].keep_aspect_ratio = m_keep_aspect_ratio;
+  (*data)[0].use_quantize_scale = m_use_model_threashold;
   return CVI_SUCCESS;
 }
 

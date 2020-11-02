@@ -15,8 +15,7 @@ class FaceAttribute final : public Core {
   void setWithAttribute(bool with_attr);
 
  private:
-  virtual int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                   bool &keep_aspect_ratio, bool &use_model_threshold) override;
+  virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
   void outputParser(cvai_face_t *meta, int meta_i);
 
   const bool m_use_wrap_hw;

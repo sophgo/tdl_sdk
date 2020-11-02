@@ -35,13 +35,16 @@ FaceAttribute::FaceAttribute(bool use_wrap_hw) : m_use_wrap_hw(use_wrap_hw) {
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }
 
-int FaceAttribute::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                        bool &keep_aspect_ratio, bool &use_model_threshold) {
-  for (uint32_t i = 0; i < 3; i++) {
-    factor[i] = FACE_ATTRIBUTE_FACTOR;
-    mean[i] = FACE_ATTRIBUTE_MEAN;
+int FaceAttribute::initAfterModelOpened(std::vector<initSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("Face attribute only has 1 input.\n");
+    return CVI_FAILURE;
   }
-  use_model_threshold = true;
+  for (uint32_t i = 0; i < 3; i++) {
+    (*data)[0].factor[i] = FACE_ATTRIBUTE_FACTOR;
+    (*data)[0].mean[i] = FACE_ATTRIBUTE_MEAN;
+  }
+  (*data)[0].use_quantize_scale = true;
 
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;

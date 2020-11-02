@@ -17,8 +17,7 @@ class Custom final : public Core {
                       uint16_t *unit_size);
 
  private:
-  virtual int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                   bool &keep_aspect_ratio, bool &use_model_threshold) override;
+  virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
   preProcessFunc preprocessfunc = NULL;
 
   bool m_keep_aspect_ratio = true;

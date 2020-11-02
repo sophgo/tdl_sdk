@@ -21,19 +21,22 @@ OSNet::OSNet() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_postprocess = true;
   mp_config->input_mem_type = CVI_MEM_DEVICE;
-  m_use_vpss_crop = true;
 }
 
-int OSNet::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                bool &keep_aspect_ratio, bool &use_model_threshold) {
-  factor[0] = 1 / STD_R;
-  factor[1] = 1 / STD_G;
-  factor[2] = 1 / STD_B;
-  mean[0] = MODEL_MEAN_R / STD_R;
-  mean[1] = MODEL_MEAN_G / STD_G;
-  mean[2] = MODEL_MEAN_B / STD_B;
-  keep_aspect_ratio = false;
-  use_model_threshold = true;
+int OSNet::initAfterModelOpened(std::vector<initSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("OSNet only has 1 input.\n");
+    return CVI_FAILURE;
+  }
+  (*data)[0].factor[0] = 1 / STD_R;
+  (*data)[0].factor[1] = 1 / STD_G;
+  (*data)[0].factor[2] = 1 / STD_B;
+  (*data)[0].mean[0] = MODEL_MEAN_R / STD_R;
+  (*data)[0].mean[1] = MODEL_MEAN_G / STD_G;
+  (*data)[0].mean[2] = MODEL_MEAN_B / STD_B;
+  (*data)[0].keep_aspect_ratio = false;
+  (*data)[0].use_quantize_scale = true;
+  (*data)[0].use_crop = true;
   return 0;
 }
 
@@ -43,10 +46,9 @@ int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int ob
     cvai_bbox_t box =
         box_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta->width,
                     meta->height, meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
-    m_crop_attr.bEnable = true;
-    m_crop_attr.enCropCoordinate = VPSS_CROP_ABS_COOR;
-    m_crop_attr.stCropRect = {(int32_t)box.x1, (int32_t)box.y1, (uint32_t)(box.x2 - box.x1),
-                              (uint32_t)(box.y2 - box.y1)};
+    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_ABS_COOR;
+    m_vpss_config[0].crop_attr.stCropRect = {
+        (int32_t)box.x1, (int32_t)box.y1, (uint32_t)(box.x2 - box.x1), (uint32_t)(box.y2 - box.y1)};
     run(stOutFrame);
 
     // feature

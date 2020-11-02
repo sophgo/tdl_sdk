@@ -28,6 +28,22 @@ struct ModelConfig {
   int input_mem_type = 1;
 };
 
+struct initSetup {
+  float factor[3] = {0};
+  float mean[3] = {0};
+  meta_rescale_type_e rescale_type = RESCALE_CENTER;
+  bool pad_reverse = false;
+  bool keep_aspect_ratio = true;
+  bool use_quantize_scale = false;
+  bool use_crop = false;
+};
+
+struct VPSSConfig {
+  meta_rescale_type_e rescale_type = RESCALE_CENTER;
+  VPSS_CROP_INFO_S crop_attr;
+  VPSS_CHN_ATTR_S chn_attr;
+};
+
 class Core {
  public:
   virtual ~Core() = default;
@@ -42,8 +58,7 @@ class Core {
   bool isInitialized();
 
  protected:
-  virtual int initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                   bool &keep_aspect_ratio, bool &use_model_threshold);
+  virtual int initAfterModelOpened(std::vector<initSetup> *data);
   virtual int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame);
   int run(VIDEO_FRAME_INFO_S *srcFrame);
   CVI_TENSOR *getInputTensor(int idx);
@@ -59,11 +74,8 @@ class Core {
   // Preprocessing & post processing related
   bool m_skip_vpss_preprocess = false;
   bool m_export_chn_attr = false;
-  meta_rescale_type_e m_rescale_type = RESCALE_CENTER;
-  bool m_use_vpss_crop = false;
   float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
-  VPSS_CROP_INFO_S m_crop_attr;
-  std::vector<VPSS_CHN_ATTR_S> m_vpss_chn_attr;
+  std::vector<VPSSConfig> m_vpss_config;
 
   // Handle
   CVI_MODEL_HANDLE mp_model_handle = nullptr;

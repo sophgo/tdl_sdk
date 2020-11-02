@@ -20,23 +20,22 @@ namespace cviai {
 MaskClassification::MaskClassification() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->input_mem_type = CVI_MEM_DEVICE;
-
-  m_use_vpss_crop = true;
-  m_crop_attr.bEnable = true;
-  m_crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
 }
 
 MaskClassification::~MaskClassification() {}
 
-int MaskClassification::initAfterModelOpened(float *factor, float *mean, bool &pad_reverse,
-                                             bool &keep_aspect_ratio, bool &use_model_threshold) {
-  factor[0] = R_SCALE;
-  factor[1] = G_SCALE;
-  factor[2] = B_SCALE;
-  mean[0] = R_MEAN;
-  mean[1] = G_MEAN;
-  mean[2] = B_MEAN;
-  use_model_threshold = true;
+int MaskClassification::initAfterModelOpened(std::vector<initSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("Mask classification only has 1 input.\n");
+    return CVI_FAILURE;
+  }
+  (*data)[0].factor[0] = R_SCALE;
+  (*data)[0].factor[1] = G_SCALE;
+  (*data)[0].factor[2] = B_SCALE;
+  (*data)[0].mean[0] = R_MEAN;
+  (*data)[0].mean[1] = G_MEAN;
+  (*data)[0].mean[2] = B_MEAN;
+  (*data)[0].use_quantize_scale = true;
 
   return 0;
 }
@@ -56,7 +55,9 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     int box_new_x1 = (box_w - new_edge) / 2.f + box_x1;
     int box_new_y1 = (box_h - new_edge) / 2.f + box_y1;
 
-    m_crop_attr.stCropRect = {box_new_x1, box_new_y1, (uint32_t)new_edge, (uint32_t)new_edge};
+    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
+    m_vpss_config[0].crop_attr.stCropRect = {box_new_x1, box_new_y1, (uint32_t)new_edge,
+                                             (uint32_t)new_edge};
     run(stOutFrame);
 
     CVI_TENSOR *out = CVI_NN_GetTensorByName(MASK_OUT_NAME, mp_output_tensors, m_output_num);
