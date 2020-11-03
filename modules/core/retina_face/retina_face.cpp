@@ -126,6 +126,7 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
           continue;
         }
         cvai_face_info_t box;
+        memset(&box, 0, sizeof(box));
         box.pts.size = 5;
         box.pts.x = (float *)malloc(sizeof(float) * box.pts.size);
         box.pts.y = (float *)malloc(sizeof(float) * box.pts.size);
