@@ -218,8 +218,11 @@ int MobileDetV2::initAfterModelOpened(std::vector<initSetup> *data) {
   return CVI_SUCCESS;
 }
 
-int MobileDetV2::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
+int MobileDetV2::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
+                                std::vector<VIDEO_FRAME_INFO_S *> *dstFrames) {
   VPSS_GRP group = mp_vpss_inst->getGrpId();
+  auto *srcFrame = srcFrames[0];
+  auto *dstFrame = (*dstFrames)[0];
   VPSS_SCALE_COEF_E enCoef;
   CVI_VPSS_GetChnScaleCoefLevel(group, VPSS_CHN0, &enCoef);
   CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, VPSS_SCALE_COEF_OPENCV_BILINEAR);
@@ -322,7 +325,8 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
   int ret = CVI_SUCCESS;
-  ret = run(frame);
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+  ret = run(frames);
   Detections dets;
   generate_dets_for_each_stride(&dets);
 

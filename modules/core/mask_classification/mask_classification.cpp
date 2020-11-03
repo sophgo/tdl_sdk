@@ -58,7 +58,9 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
     m_vpss_config[0].crop_attr.stCropRect = {box_new_x1, box_new_y1, (uint32_t)new_edge,
                                              (uint32_t)new_edge};
-    run(stOutFrame);
+
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
+    run(frames);
 
     CVI_TENSOR *out = CVI_NN_GetTensorByName(MASK_OUT_NAME, mp_output_tensors, m_output_num);
     float *out_data = (float *)CVI_NN_TensorPtr(out);

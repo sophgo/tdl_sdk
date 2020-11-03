@@ -52,7 +52,8 @@ int Yolov3::initAfterModelOpened(std::vector<initSetup> *data) {
 int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
                       cvai_obj_det_type_e det_type) {
   int ret = CVI_SUCCESS;
-  ret = run(srcFrame);
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
+  ret = run(frames);
 
   outputParser(srcFrame, obj, det_type);
 

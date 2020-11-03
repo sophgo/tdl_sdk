@@ -128,7 +128,8 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       }
     }
 
-    run(frame);
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+    run(frames);
 
     CVI_TENSOR *out = CVI_NN_GetTensorByName(NAME_SCORE, mp_output_tensors, m_output_num);
     float *score = (float *)CVI_NN_TensorPtr(out);

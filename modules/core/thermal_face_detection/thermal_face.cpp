@@ -143,7 +143,10 @@ int ThermalFace::initAfterModelOpened(std::vector<initSetup> *data) {
   return CVI_SUCCESS;
 }
 
-int ThermalFace::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
+int ThermalFace::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
+                                std::vector<VIDEO_FRAME_INFO_S *> *dstFrames) {
+  auto *srcFrame = srcFrames[0];
+  auto *dstFrame = (*dstFrames)[0];
   auto &vpssChnAttr = m_vpss_config[0].chn_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;
@@ -157,8 +160,8 @@ int ThermalFace::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
 
-  int ret = CVI_SUCCESS;
-  ret = run(srcFrame);
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
+  int ret = run(frames);
 
   outputParser(input->shape.dim[3], input->shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, meta);

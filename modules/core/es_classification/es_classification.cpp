@@ -36,7 +36,8 @@ int ESClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   mag = cv::abs(mag);
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
   memcpy((float *)CVI_NN_TensorPtr(input), (float *)mag.data, CVI_NN_TensorSize(input));
-  run(stOutFrame);
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
+  run(frames);
 
   CVI_TENSOR *out = CVI_NN_GetTensorByName(ESC_OUT_NAME, mp_output_tensors, m_output_num);
   *index = get_top_k((float *)CVI_NN_TensorPtr(out), CVI_NN_TensorCount(out));

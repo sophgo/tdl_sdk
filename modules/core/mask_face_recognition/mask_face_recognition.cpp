@@ -45,7 +45,8 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
 
     prepareInputTensor(image, face_info);
-    run(frame);
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+    run(frames);
     outputParser(meta, i);
     CVI_AI_FreeCpp(&face_info);
   }

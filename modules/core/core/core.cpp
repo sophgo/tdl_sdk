@@ -154,28 +154,35 @@ bool Core::isInitialized() { return mp_model_handle == nullptr ? false : true; }
 
 int Core::initAfterModelOpened(std::vector<initSetup> *data) { return CVI_SUCCESS; }
 
-int Core::vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) {
-  if (!m_vpss_config[0].crop_attr.bEnable) {
-    mp_vpss_inst->sendFrame(srcFrame, &m_vpss_config[0].chn_attr, 1);
-  } else {
-    mp_vpss_inst->sendCropChnFrame(srcFrame, &m_vpss_config[0].crop_attr,
-                                   &m_vpss_config[0].chn_attr, 1);
+int Core::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
+                         std::vector<VIDEO_FRAME_INFO_S *> *dstFrames) {
+  int ret = CVI_SUCCESS;
+  for (uint32_t i = 0; i < (uint32_t)srcFrames.size(); i++) {
+    if (!m_vpss_config[i].crop_attr.bEnable) {
+      mp_vpss_inst->sendFrame(srcFrames[i], &m_vpss_config[i].chn_attr, 1);
+    } else {
+      mp_vpss_inst->sendCropChnFrame(srcFrames[i], &m_vpss_config[i].crop_attr,
+                                     &m_vpss_config[i].chn_attr, 1);
+    }
+    ret |= mp_vpss_inst->getFrame((*dstFrames)[i], 0);
   }
-
-  return mp_vpss_inst->getFrame(dstFrame, 0);
+  return ret;
 }
 
-int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
+int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   TRACE_EVENT("cviai_core", "Core::run");
   int ret = CVI_SUCCESS;
   if (mp_config->input_mem_type == CVI_MEM_DEVICE) {
     if (m_skip_vpss_preprocess) {
-      ret |= runVideoForward(srcFrame);
+      ret |= runVideoForward(frames);
     } else {
-      VIDEO_FRAME_INFO_S stDstFrame;
-      ret |= vpssPreprocess(srcFrame, &stDstFrame);
-      ret |= runVideoForward(&stDstFrame);
-      ret |= mp_vpss_inst->releaseFrame(&stDstFrame, 0);
+      std::vector<VIDEO_FRAME_INFO_S *> dstFrames(frames.size(), new VIDEO_FRAME_INFO_S);
+      ret |= vpssPreprocess(frames, &dstFrames);
+      ret |= runVideoForward(dstFrames);
+      for (uint32_t i = 0; i < (uint32_t)dstFrames.size(); i++) {
+        ret |= mp_vpss_inst->releaseFrame(dstFrames[i], 0);
+        delete dstFrames[i];
+      }
     }
   } else {
     if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num,  // NOLINT
@@ -188,13 +195,27 @@ int Core::run(VIDEO_FRAME_INFO_S *srcFrame) {
   return ret;
 }
 
-int Core::runVideoForward(VIDEO_FRAME_INFO_S *srcFrame) {
+int Core::runVideoForward(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   int ret = CVI_SUCCESS;
+  std::vector<uint64_t> paddrs;
+  for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
+    VIDEO_FRAME_INFO_S *frame = frames[i];
+    switch (frame->stVFrame.enPixelFormat) {
+      case PIXEL_FORMAT_RGB_888_PLANAR:
+        paddrs.push_back(frame->stVFrame.u64PhyAddr[0]);
+        paddrs.push_back(frame->stVFrame.u64PhyAddr[1]);
+        paddrs.push_back(frame->stVFrame.u64PhyAddr[2]);
+        break;
+      default:
+        LOGE("Unsupported image type: %x.\n", frame->stVFrame.enPixelFormat);
+        return CVI_FAILURE;
+    }
+  }
   if (int ret =
           CVI_NN_FeedTensorWithFrames(mp_model_handle, mp_input_tensors, CVI_FRAME_PLANAR,
-                                      CVI_FMT_INT8, 3, srcFrame->stVFrame.u64PhyAddr,
-                                      srcFrame->stVFrame.u32Height, srcFrame->stVFrame.u32Width,
-                                      srcFrame->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
+                                      CVI_FMT_INT8, paddrs.size(), paddrs.data(),
+                                      frames[0]->stVFrame.u32Height, frames[0]->stVFrame.u32Width,
+                                      frames[0]->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
     LOGE("NN set tensor with vi failed: %d\n", ret);
     return CVI_FAILURE;
   }

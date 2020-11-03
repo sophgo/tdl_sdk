@@ -75,9 +75,8 @@ int RetinaFace::initAfterModelOpened(std::vector<initSetup> *data) {
 }
 
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
-  int ret = CVI_SUCCESS;
-
-  ret = run(srcFrame);
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
+  int ret = run(frames);
 
   CVI_TENSOR *input = getInputTensor(0);
   float ratio = 1.0;
@@ -197,7 +196,6 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
       CVI_AI_FreeCpp(&info);
     }
   }
-
   // Clear original bbox. bbox_nms does not need to free since it points to bbox.
   for (size_t i = 0; i < vec_bbox.size(); ++i) {
     CVI_AI_FreeCpp(&vec_bbox[i].pts);

@@ -58,7 +58,8 @@ class MobileDetV2 final : public Core {
   typedef std::vector<PtrDectRect> Detections;
 
  private:
-  int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame) override;
+  int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
+                     std::vector<VIDEO_FRAME_INFO_S *> *dstFrames) override;
   void get_tensor_ptr_size(const std::string &tname, int8_t **ptr, size_t *size);
   void get_raw_outputs(std::vector<std::pair<int8_t *, size_t>> *cls_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *objectness_tensor_ptr,

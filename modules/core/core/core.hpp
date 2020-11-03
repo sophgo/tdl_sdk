@@ -59,8 +59,9 @@ class Core {
 
  protected:
   virtual int initAfterModelOpened(std::vector<initSetup> *data);
-  virtual int vpssPreprocess(const VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame);
-  int run(VIDEO_FRAME_INFO_S *srcFrame);
+  virtual int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
+                             std::vector<VIDEO_FRAME_INFO_S *> *dstFrames);
+  int run(std::vector<VIDEO_FRAME_INFO_S *> &frames);
   CVI_TENSOR *getInputTensor(int idx);
   CVI_TENSOR *getOutputTensor(int idx);
 
@@ -83,6 +84,7 @@ class Core {
   VpssEngine *mp_vpss_inst = nullptr;
 
  private:
-  inline int __attribute__((always_inline)) runVideoForward(VIDEO_FRAME_INFO_S *srcFrame);
+  inline int __attribute__((always_inline))
+  runVideoForward(std::vector<VIDEO_FRAME_INFO_S *> &frames);
 };
 }  // namespace cviai

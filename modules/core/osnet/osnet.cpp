@@ -49,7 +49,8 @@ int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int ob
     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_ABS_COOR;
     m_vpss_config[0].crop_attr.stCropRect = {
         (int32_t)box.x1, (int32_t)box.y1, (uint32_t)(box.x2 - box.x1), (uint32_t)(box.y2 - box.y1)};
-    run(stOutFrame);
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
+    run(frames);
 
     // feature
     CVI_TENSOR *out = CVI_NN_GetTensorByName(OSNET_OUT_NAME, mp_output_tensors, m_output_num);

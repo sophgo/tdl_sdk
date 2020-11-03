@@ -96,18 +96,21 @@ int Custom::getNCHW(const char *tensor_name, uint32_t *n, uint32_t *c, uint32_t 
 }
 
 int Custom::inference(VIDEO_FRAME_INFO_S *stInFrame) {
+  std::vector<VIDEO_FRAME_INFO_S *> frames;
   if (preprocessfunc != NULL) {
     VIDEO_FRAME_INFO_S stOutFrame;
     memset(&stOutFrame, 0, sizeof(VIDEO_FRAME_INFO_S));
     preprocessfunc(stInFrame, &stOutFrame);
-    auto ret = run(&stOutFrame);
+    frames.emplace_back(&stOutFrame);
+    auto ret = run(frames);
     if (stOutFrame.stVFrame.u64PhyAddr[0] != 0 &&
         (stInFrame->stVFrame.u64PhyAddr[0] != stOutFrame.stVFrame.u64PhyAddr[0])) {
       CVI_VPSS_ReleaseChnFrame(0, 0, &stOutFrame);
     }
     return ret;
   }
-  return run(stInFrame);
+  frames.emplace_back(stInFrame);
+  return run(frames);
 }
 
 int Custom::getOutputTensor(const char *tensor_name, int8_t **tensor, uint32_t *tensor_count,

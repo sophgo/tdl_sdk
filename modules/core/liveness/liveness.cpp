@@ -112,7 +112,8 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
 
     prepareInputTensor(input);
 
-    run(rgbFrame);
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {rgbFrame};
+    run(frames);
 
     CVI_TENSOR *out = CVI_NN_GetTensorByName(OUTPUT_NAME, mp_output_tensors, m_output_num);
     float *out_data = (float *)CVI_NN_TensorPtr(out);
