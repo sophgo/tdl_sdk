@@ -133,17 +133,17 @@ int Core::getChnAttribute(const uint32_t width, const uint32_t height, const uin
   if (!m_skip_vpss_preprocess) {
     LOGW("VPSS preprocessing is enabled. Remember to skip vpss preprocess.\n");
   }
-  switch (m_vpss_config[0].rescale_type) {
+  switch (m_vpss_config[idx].rescale_type) {
     case RESCALE_CENTER: {
-      *attr = m_vpss_config[0].chn_attr;
+      *attr = m_vpss_config[idx].chn_attr;
     } break;
     case RESCALE_RB: {
       CVI_TENSOR *input = mp_input_tensors + idx;
-      auto &factor = m_vpss_config[0].chn_attr.stNormalize.factor;
-      auto &mean = m_vpss_config[0].chn_attr.stNormalize.mean;
+      auto &factor = m_vpss_config[idx].chn_attr.stNormalize.factor;
+      auto &mean = m_vpss_config[idx].chn_attr.stNormalize.mean;
       VPSS_CHN_SQ_RB_HELPER(attr, width, height, input->shape.dim[3], input->shape.dim[2],
                             PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-      attr->stAspectRatio.u32BgColor = m_vpss_config[0].chn_attr.stAspectRatio.u32BgColor;
+      attr->stAspectRatio.u32BgColor = m_vpss_config[idx].chn_attr.stAspectRatio.u32BgColor;
     } break;
     default: {
       LOGW("Unsupported rescale type.\n");
