@@ -77,51 +77,6 @@ inline void CVI_AI_MemAllocInit(const uint32_t size, const uint32_t pts_num, cva
   }
 }
 
-inline void CVI_AI_FaceInfoCopyToNew(const cvai_face_info_t *info, cvai_face_info_t *infoNew) {
-  memcpy(infoNew->name, info->name, sizeof(info->name));
-  infoNew->unique_id = info->unique_id;
-  infoNew->bbox = info->bbox;
-  infoNew->pts.size = info->pts.size;
-  if (infoNew->pts.size != 0) {
-    uint32_t pts_size = infoNew->pts.size * sizeof(float);
-    infoNew->pts.x = (float *)malloc(pts_size);
-    infoNew->pts.y = (float *)malloc(pts_size);
-    memcpy(infoNew->pts.x, info->pts.x, pts_size);
-    memcpy(infoNew->pts.y, info->pts.y, pts_size);
-  } else {
-    infoNew->pts.x = NULL;
-    infoNew->pts.y = NULL;
-  }
-  infoNew->feature.type = info->feature.type;
-  infoNew->feature.size = info->feature.size;
-  if (infoNew->feature.size != 0) {
-    uint32_t feature_size = infoNew->feature.size * getFeatureTypeSize(infoNew->feature.type);
-    infoNew->feature.ptr = (int8_t *)malloc(feature_size);
-    memcpy(infoNew->feature.ptr, info->feature.ptr, feature_size);
-  } else {
-    infoNew->feature.ptr = NULL;
-  }
-  infoNew->emotion = info->emotion;
-  infoNew->gender = info->gender;
-  infoNew->race = info->race;
-  infoNew->age = info->age;
-  infoNew->liveness_score = info->liveness_score;
-  infoNew->mask_score = info->mask_score;
-  infoNew->face_quality = info->face_quality;
-}
-
-inline void CVI_AI_ObjInfoCopyToNew(const cvai_object_info_t *info, cvai_object_info_t *infoNew) {
-  memcpy(infoNew->name, info->name, sizeof(info->name));
-  infoNew->unique_id = info->unique_id;
-  infoNew->bbox = info->bbox;
-  infoNew->feature.size = info->feature.size;
-  infoNew->feature.type = info->feature.type;
-  uint32_t feature_size = infoNew->feature.size * getFeatureTypeSize(infoNew->feature.type);
-  infoNew->feature.ptr = (int8_t *)malloc(feature_size);
-  memcpy(infoNew->feature.ptr, info->feature.ptr, feature_size);
-  infoNew->classes = info->classes;
-}
-
 inline void __attribute__((always_inline))
 featurePtrConvert2Float(cvai_feature_t *feature, float *output) {
   switch (feature->type) {

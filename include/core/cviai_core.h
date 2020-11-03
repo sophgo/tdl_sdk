@@ -34,6 +34,26 @@
 // clang-format on
 #endif
 
+/** @def CVI_AI_CopyInfo
+ *  @ingroup core_cviaicore
+ * @brief Fully copy the info structure. (including allocating new memory for you.)
+ *
+ * @param IN Input info structure.
+ * @param OUT Output info structure (uninitialized structure required).
+ */
+#ifdef __cplusplus
+#define CVI_AI_CopyInfo(IN, OUT) CVI_AI_CopyInfoCpp(IN, OUT)
+#else
+// clang-format off
+#define CVI_AI_CopyInfoG(OUT) _Generic((OUT),                       \
+           cvai_face_info_t*: CVI_AI_CopyFaceInfo,                  \
+           cvai_object_info_t*: CVI_AI_CopyObjectInfo)
+#define CVI_AI_CopyInfo(IN, OUT) _Generic((IN),                     \
+           cvai_face_info_t*: CVI_AI_CopyInfoG(OUT),                \
+           cvai_object_info_t*: CVI_AI_CopyInfoG(OUT))((IN), (OUT))
+// clang-format on
+#endif
+
 /** @def CVI_AI_RescaleMetaCenter
  * @ingroup core_cviaicore
  * @brief Rescale the output coordinate to original image. Padding in four directions. Support the

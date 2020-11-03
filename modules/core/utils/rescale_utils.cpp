@@ -81,7 +81,7 @@ cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const
 cvai_face_info_t info_rescale_c(const float width, const float height, const float new_width,
                                 const float new_height, const cvai_face_info_t &face_info) {
   cvai_face_info_t face_info_new;
-  CVI_AI_FaceInfoCopyToNew(&face_info, &face_info_new);
+  CVI_AI_CopyInfoCpp(&face_info, &face_info_new);
 
   float ratio, pad_width, pad_height;
   face_info_new.bbox = box_rescale_c(new_width, new_height, width, height, face_info.bbox, &ratio,
@@ -97,7 +97,7 @@ cvai_face_info_t info_rescale_c(const float width, const float height, const flo
 cvai_face_info_t info_rescale_rb(const float width, const float height, const float new_width,
                                  const float new_height, const cvai_face_info_t &face_info) {
   cvai_face_info_t face_info_new;
-  CVI_AI_FaceInfoCopyToNew(&face_info, &face_info_new);
+  CVI_AI_CopyInfoCpp(&face_info, &face_info_new);
 
   float ratio;
   face_info_new.bbox = box_rescale_rb(new_width, new_height, width, height, face_info.bbox, &ratio);

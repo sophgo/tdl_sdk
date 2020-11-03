@@ -3,6 +3,8 @@
 
 #include <string.h>
 
+// Free
+
 void CVI_AI_FreeCpp(cvai_feature_t *feature) {
   if (feature->ptr != NULL) {
     free(feature->ptr);
@@ -73,3 +75,62 @@ void CVI_AI_FreeFace(cvai_face_t *face) { CVI_AI_FreeCpp(face); }
 void CVI_AI_FreeObjectInfo(cvai_object_info_t *obj_info) { CVI_AI_FreeCpp(obj_info); }
 
 void CVI_AI_FreeObject(cvai_object_t *obj) { CVI_AI_FreeCpp(obj); }
+
+// Copy
+
+void CVI_AI_CopyInfoCpp(const cvai_face_info_t *info, cvai_face_info_t *infoNew) {
+  memcpy(infoNew->name, info->name, sizeof(info->name));
+  infoNew->unique_id = info->unique_id;
+  infoNew->bbox = info->bbox;
+  infoNew->pts.size = info->pts.size;
+  if (infoNew->pts.size != 0) {
+    uint32_t pts_size = infoNew->pts.size * sizeof(float);
+    infoNew->pts.x = (float *)malloc(pts_size);
+    infoNew->pts.y = (float *)malloc(pts_size);
+    memcpy(infoNew->pts.x, info->pts.x, pts_size);
+    memcpy(infoNew->pts.y, info->pts.y, pts_size);
+  } else {
+    infoNew->pts.x = NULL;
+    infoNew->pts.y = NULL;
+  }
+  infoNew->feature.type = info->feature.type;
+  infoNew->feature.size = info->feature.size;
+  if (infoNew->feature.size != 0) {
+    uint32_t feature_size = infoNew->feature.size * getFeatureTypeSize(infoNew->feature.type);
+    infoNew->feature.ptr = (int8_t *)malloc(feature_size);
+    memcpy(infoNew->feature.ptr, info->feature.ptr, feature_size);
+  } else {
+    infoNew->feature.ptr = NULL;
+  }
+  infoNew->emotion = info->emotion;
+  infoNew->gender = info->gender;
+  infoNew->race = info->race;
+  infoNew->age = info->age;
+  infoNew->liveness_score = info->liveness_score;
+  infoNew->mask_score = info->mask_score;
+  infoNew->face_quality = info->face_quality;
+}
+
+void CVI_AI_CopyInfoCpp(const cvai_object_info_t *info, cvai_object_info_t *infoNew) {
+  memcpy(infoNew->name, info->name, sizeof(info->name));
+  infoNew->unique_id = info->unique_id;
+  infoNew->bbox = info->bbox;
+  infoNew->feature.type = info->feature.type;
+  infoNew->feature.size = info->feature.size;
+  if (infoNew->feature.size != 0) {
+    uint32_t feature_size = infoNew->feature.size * getFeatureTypeSize(infoNew->feature.type);
+    infoNew->feature.ptr = (int8_t *)malloc(feature_size);
+    memcpy(infoNew->feature.ptr, info->feature.ptr, feature_size);
+  } else {
+    infoNew->feature.ptr = NULL;
+  }
+  infoNew->classes = info->classes;
+}
+
+void CVI_AI_CopyFaceInfo(const cvai_face_info_t *info, cvai_face_info_t *infoNew) {
+  CVI_AI_CopyInfoCpp(info, infoNew);
+}
+
+void CVI_AI_CopyObjectInfo(const cvai_object_info_t *info, cvai_object_info_t *infoNew) {
+  CVI_AI_CopyInfoCpp(info, infoNew);
+}

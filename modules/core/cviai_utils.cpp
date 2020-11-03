@@ -47,20 +47,6 @@ CVI_S32 CVI_AI_SoftMax(const float *inputBuffer, float *outputBuffer, const uint
   return CVI_SUCCESS;
 }
 
-template <typename FACE>
-inline void __attribute__((always_inline)) CVI_AI_InfoCopyToNew(
-    const FACE *info, FACE *infoNew,
-    typename std::enable_if<std::is_same<FACE, cvai_face_info_t>::value>::type * = 0) {
-  CVI_AI_FaceInfoCopyToNew(info, infoNew);
-}
-
-template <typename OBJ>
-inline void __attribute__((always_inline)) CVI_AI_InfoCopyToNew(
-    const OBJ *info, OBJ *infoNew,
-    typename std::enable_if<std::is_same<OBJ, cvai_object_info_t>::value>::type * = 0) {
-  CVI_AI_ObjInfoCopyToNew(info, infoNew);
-}
-
 template <typename T, typename U>
 inline CVI_S32 CVI_AI_NMS(const T *input, T *nms, const float threshold, const char method) {
   if (method != 'u' && method != 'm') {
@@ -79,7 +65,7 @@ inline CVI_S32 CVI_AI_NMS(const T *input, T *nms, const float threshold, const c
   nms->height = input->height;
   nms->info = (U *)malloc(nms->size * sizeof(U));
   for (unsigned int i = 0; i < nms->size; i++) {
-    CVI_AI_InfoCopyToNew<U>(&bboxes_nms[i], &nms->info[i]);
+    CVI_AI_CopyInfoCpp(&bboxes_nms[i], &nms->info[i]);
   }
   return CVI_SUCCESS;
 }
