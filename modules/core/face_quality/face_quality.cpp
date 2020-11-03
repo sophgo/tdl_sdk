@@ -1,6 +1,7 @@
 #include "face_quality.hpp"
 
 #include "core/cviai_types_mem.h"
+#include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
 
@@ -10,12 +11,10 @@
 #define SCALE_R (1.0 / (255.0 * 0.229))
 #define SCALE_G (1.0 / (255.0 * 0.224))
 #define SCALE_B (1.0 / (255.0 * 0.225))
-#define MEAN_R -(0.485 / 0.229)
-#define MEAN_G -(0.456 / 0.224)
-#define MEAN_B -(0.406 / 0.225)
+#define MEAN_R (0.485 / 0.229)
+#define MEAN_G (0.456 / 0.224)
+#define MEAN_B (0.406 / 0.225)
 #define NAME_SCORE "score_Softmax"
-
-#define PI 3.14159265358979f
 
 namespace cviai {
 
@@ -91,7 +90,36 @@ static int get_face_direction(cvai_pts_t pts, float &roll, float &pitch, float &
   return 0;
 }
 
-FaceQuality::FaceQuality() { mp_config = std::make_unique<ModelConfig>(); }
+FaceQuality::FaceQuality() {
+  mp_config = std::make_unique<ModelConfig>();
+  mp_config->input_mem_type = CVI_MEM_DEVICE;
+}
+
+int FaceQuality::initAfterModelOpened(std::vector<initSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("Face quality only has 1 input.\n");
+    return CVI_FAILURE;
+  }
+
+  std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
+  std::vector<float> scale = {SCALE_R, SCALE_G, SCALE_B};
+  for (uint32_t i = 0; i < 3; i++) {
+    (*data)[0].factor[i] = scale[i];
+    (*data)[0].mean[i] = mean[i];
+  }
+  (*data)[0].use_quantize_scale = true;
+
+  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, input->shape.dim[3], input->shape.dim[2],
+                            PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
+    return -1;
+  }
+
+  m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
+      m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
+
+  return 0;
+}
 
 int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
@@ -106,29 +134,18 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   cv::Mat image(img_height, img_width, CV_8UC3, frame->stVFrame.pu8VirAddr[0],
                 frame->stVFrame.u32Stride[0]);
 
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-
-  std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
-  std::vector<float> scale = {SCALE_R, SCALE_G, SCALE_B};
   for (uint32_t i = 0; i < meta->size; i++) {
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
-    cv::Mat crop_frame(input->shape.dim[2], input->shape.dim[3], image.type());
-    face_align(image, crop_frame, face_info);
+    cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
+                       image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
+                       m_wrap_frame.stVFrame.u32Stride[0]);
 
-    cv::Mat tmpchannels[3];
-    cv::split(crop_frame, tmpchannels);
+    face_align(image, warp_image, face_info);
+    CVI_SYS_IonFlushCache(m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.pu8VirAddr[0],
+                          m_wrap_frame.stVFrame.u32Length[0]);
 
-    for (int i = 0; i < 3; i++) {
-      tmpchannels[i].convertTo(tmpchannels[i], CV_32F, scale[i], mean[i]);
-      int size = tmpchannels[i].rows * tmpchannels[i].cols;
-      for (int r = 0; r < tmpchannels[i].rows; ++r) {
-        memcpy((float *)CVI_NN_TensorPtr(input) + size * i + tmpchannels[i].cols * r,
-               tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
-      }
-    }
-
-    std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
     run(frames);
 
     CVI_TENSOR *out = CVI_NN_GetTensorByName(NAME_SCORE, mp_output_tensors, m_output_num);
