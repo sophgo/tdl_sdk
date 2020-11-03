@@ -163,7 +163,7 @@ The model will be loaded when the function is called. Make sure you complete you
 ```c
 CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                               const CVI_U32 frameWidth, const CVI_U32 frameHeight,
-                              VPSS_CHN_ATTR_S *chnAttr);
+                              const CVI_U32 idx, VPSS_CHN_ATTR_S *chnAttr);
 ```
 
 ### Inference calls

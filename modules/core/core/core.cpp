@@ -120,8 +120,14 @@ int Core::setVpssEngine(VpssEngine *engine) {
 
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
 
-int Core::getChnAttribute(const uint32_t width, const uint32_t height, VPSS_CHN_ATTR_S *attr) {
+int Core::getChnAttribute(const uint32_t width, const uint32_t height, const uint32_t idx,
+                          VPSS_CHN_ATTR_S *attr) {
   if (!m_export_chn_attr) {
+    LOGE("This model does not support exporting channel attributes.\n");
+    return CVI_FAILURE;
+  }
+  if (idx >= (uint32_t)m_input_num) {
+    LOGE("Input index exceed input tensor num.\n");
     return CVI_FAILURE;
   }
   if (!m_skip_vpss_preprocess) {
@@ -132,8 +138,7 @@ int Core::getChnAttribute(const uint32_t width, const uint32_t height, VPSS_CHN_
       *attr = m_vpss_config[0].chn_attr;
     } break;
     case RESCALE_RB: {
-      CVI_TENSOR *input =
-          CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+      CVI_TENSOR *input = mp_input_tensors + idx;
       auto &factor = m_vpss_config[0].chn_attr.stNormalize.factor;
       auto &mean = m_vpss_config[0].chn_attr.stNormalize.mean;
       VPSS_CHN_SQ_RB_HELPER(attr, width, height, input->shape.dim[3], input->shape.dim[2],

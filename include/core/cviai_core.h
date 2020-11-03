@@ -271,12 +271,13 @@ DLL_EXPORT CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MOD
  * @param config Supported model type config.
  * @param frameWidth The input frame width.
  * @param frameHeight The input frame height.
+ * @param idx The idx of the input tensor.
  * @param chnAttr Exported channel attribute.
  * @return int Return CVI_SUCCESS on success, CVI_FAILURE if exporting not supported.
  */
 DLL_EXPORT CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                          const CVI_U32 frameWidth, const CVI_U32 frameHeight,
-                                         VPSS_CHN_ATTR_S *chnAttr);
+                                         const CVI_U32 idx, VPSS_CHN_ATTR_S *chnAttr);
 
 /**@}*/
 

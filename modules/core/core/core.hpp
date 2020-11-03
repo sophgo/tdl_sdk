@@ -52,7 +52,8 @@ class Core {
   int setIveInstance(IVE_HANDLE handle);
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
-  virtual int getChnAttribute(const uint32_t width, const uint32_t height, VPSS_CHN_ATTR_S *attr);
+  virtual int getChnAttribute(const uint32_t width, const uint32_t height, const uint32_t idx,
+                              VPSS_CHN_ATTR_S *attr);
   virtual void setModelThreshold(float threshold);
   float getModelThreshold();
   bool isInitialized();
