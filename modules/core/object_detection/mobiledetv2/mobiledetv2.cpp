@@ -219,10 +219,10 @@ int MobileDetV2::initAfterModelOpened(std::vector<initSetup> *data) {
 }
 
 int MobileDetV2::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                                std::vector<VIDEO_FRAME_INFO_S *> *dstFrames) {
+                                std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {
   VPSS_GRP group = mp_vpss_inst->getGrpId();
   auto *srcFrame = srcFrames[0];
-  auto *dstFrame = (*dstFrames)[0];
+  auto *dstFrame = (*dstFrames)[0].get();
   VPSS_SCALE_COEF_E enCoef;
   CVI_VPSS_GetChnScaleCoefLevel(group, VPSS_CHN0, &enCoef);
   CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, VPSS_SCALE_COEF_OPENCV_BILINEAR);

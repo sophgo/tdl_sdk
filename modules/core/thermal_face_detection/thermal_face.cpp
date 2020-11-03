@@ -144,9 +144,9 @@ int ThermalFace::initAfterModelOpened(std::vector<initSetup> *data) {
 }
 
 int ThermalFace::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                                std::vector<VIDEO_FRAME_INFO_S *> *dstFrames) {
+                                std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {
   auto *srcFrame = srcFrames[0];
-  auto *dstFrame = (*dstFrames)[0];
+  auto *dstFrame = (*dstFrames)[0].get();
   auto &vpssChnAttr = m_vpss_config[0].chn_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;

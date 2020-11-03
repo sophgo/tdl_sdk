@@ -155,7 +155,7 @@ bool Core::isInitialized() { return mp_model_handle == nullptr ? false : true; }
 int Core::initAfterModelOpened(std::vector<initSetup> *data) { return CVI_SUCCESS; }
 
 int Core::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                         std::vector<VIDEO_FRAME_INFO_S *> *dstFrames) {
+                         std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {
   int ret = CVI_SUCCESS;
   for (uint32_t i = 0; i < (uint32_t)srcFrames.size(); i++) {
     if (!m_vpss_config[i].crop_attr.bEnable) {
@@ -164,7 +164,7 @@ int Core::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
       mp_vpss_inst->sendCropChnFrame(srcFrames[i], &m_vpss_config[i].crop_attr,
                                      &m_vpss_config[i].chn_attr, 1);
     }
-    ret |= mp_vpss_inst->getFrame((*dstFrames)[i], 0);
+    ret |= mp_vpss_inst->getFrame((*dstFrames)[i].get(), 0);
   }
   return ret;
 }
@@ -172,34 +172,38 @@ int Core::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
 int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   TRACE_EVENT("cviai_core", "Core::run");
   int ret = CVI_SUCCESS;
+  std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
   if (mp_config->input_mem_type == CVI_MEM_DEVICE) {
     if (m_skip_vpss_preprocess) {
-      ret |= runVideoForward(frames);
+      ret |= registerFrame2Tensor(frames);
     } else {
-      std::vector<VIDEO_FRAME_INFO_S *> dstFrames(frames.size(), new VIDEO_FRAME_INFO_S);
-      ret |= vpssPreprocess(frames, &dstFrames);
-      ret |= runVideoForward(dstFrames);
-      for (uint32_t i = 0; i < (uint32_t)dstFrames.size(); i++) {
-        ret |= mp_vpss_inst->releaseFrame(dstFrames[i], 0);
-        delete dstFrames[i];
+      if (m_vpss_config.size() != frames.size()) {
+        LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
+             m_vpss_config.size(), frames.size());
+        return CVI_FAILURE;
       }
-    }
-  } else {
-    if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num,  // NOLINT
-                                   mp_output_tensors, m_output_num) != CVI_RC_SUCCESS) {
-      LOGE("NN forward failed: %d\n", rcret);
-      ret |= CVI_FAILURE;
+      dstFrames.resize(frames.size(), {new VIDEO_FRAME_INFO_S, [this](VIDEO_FRAME_INFO_S *f) {
+                                         this->mp_vpss_inst->releaseFrame(f, 0);
+                                         delete f;
+                                       }});
+      ret |= vpssPreprocess(frames, &dstFrames);
+      ret |= registerFrame2Tensor(dstFrames);
     }
   }
-
+  if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num,  // NOLINT
+                                 mp_output_tensors, m_output_num) != CVI_RC_SUCCESS) {
+    LOGE("NN forward failed: %d\n", rcret);
+    ret |= CVI_FAILURE;
+  }
   return ret;
 }
 
-int Core::runVideoForward(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
+template <typename T>
+int Core::registerFrame2Tensor(std::vector<T> &frames) {
   int ret = CVI_SUCCESS;
   std::vector<uint64_t> paddrs;
   for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
-    VIDEO_FRAME_INFO_S *frame = frames[i];
+    T frame = frames[i];
     switch (frame->stVFrame.enPixelFormat) {
       case PIXEL_FORMAT_RGB_888_PLANAR:
         paddrs.push_back(frame->stVFrame.u64PhyAddr[0]);
@@ -218,11 +222,6 @@ int Core::runVideoForward(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
                                       frames[0]->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
     LOGE("NN set tensor with vi failed: %d\n", ret);
     return CVI_FAILURE;
-  }
-  if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num, mp_output_tensors,
-                                 m_output_num) != CVI_RC_SUCCESS) {
-    LOGE("NN forward failed: %d\n", rcret);
-    ret |= CVI_FAILURE;
   }
   return ret;
 }

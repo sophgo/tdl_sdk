@@ -15,7 +15,7 @@ class ThermalFace final : public Core {
  private:
   virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
   virtual int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                             std::vector<VIDEO_FRAME_INFO_S *> *dstFrames) override;
+                             std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) override;
   void outputParser(const int image_width, const int image_height, const int frame_width,
                     const int frame_height, cvai_face_t *meta);
 
