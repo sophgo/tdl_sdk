@@ -3,14 +3,15 @@
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/face/cvai_face_helper.h"
+#include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
 
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
-#define FACE_ATTRIBUTE_MEAN (-0.99609375)
-#define FACE_ATTRIBUTE_INPUT_THRESHOLD (1 / 128.0)
+#define FACE_ATTRIBUTE_MEAN (0.99609375)
+#define FACE_ATTRIBUTE_SCALE (1 / 128.f)
 
 #define FACE_OUT_NAME "pre_fc1"
 
@@ -19,9 +20,33 @@ namespace cviai {
 MaskFaceRecognition::MaskFaceRecognition() {
   mp_config = std::make_unique<ModelConfig>();
   mp_config->skip_postprocess = true;
+  mp_config->input_mem_type = CVI_MEM_DEVICE;
 }
 
 MaskFaceRecognition::~MaskFaceRecognition() {}
+
+int MaskFaceRecognition::initAfterModelOpened(std::vector<initSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("Face attribute only has 1 input.\n");
+    return CVI_FAILURE;
+  }
+  for (uint32_t i = 0; i < 3; i++) {
+    (*data)[0].factor[i] = FACE_ATTRIBUTE_SCALE;
+    (*data)[0].mean[i] = FACE_ATTRIBUTE_MEAN;
+  }
+  (*data)[0].use_quantize_scale = true;
+
+  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, input->shape.dim[3], input->shape.dim[2],
+                            PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
+    return -1;
+  }
+
+  m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
+      m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
+
+  return 0;
+}
 
 int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   uint32_t img_width = frame->stVFrame.u32Width;
@@ -43,36 +68,20 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
   for (uint32_t i = 0; i < meta->size; ++i) {
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
+    cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
+                       image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
+                       m_wrap_frame.stVFrame.u32Stride[0]);
 
-    prepareInputTensor(image, face_info);
-    std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+    face_align(image, warp_image, face_info);
+    CVI_SYS_IonFlushCache(m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.pu8VirAddr[0],
+                          m_wrap_frame.stVFrame.u32Length[0]);
+
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
     run(frames);
     outputParser(meta, i);
     CVI_AI_FreeCpp(&face_info);
   }
   return CVI_SUCCESS;
-}
-
-void MaskFaceRecognition::prepareInputTensor(const cv::Mat &src_image,
-                                             cvai_face_info_t &face_info) {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  cv::Mat image(input->shape.dim[2], input->shape.dim[3], src_image.type());
-
-  face_align(src_image, image, face_info);
-
-  cv::Mat tmpchannels[3];
-  cv::split(image, tmpchannels);
-
-  for (int i = 0; i < 3; ++i) {
-    tmpchannels[i].convertTo(tmpchannels[i], CV_32F, FACE_ATTRIBUTE_INPUT_THRESHOLD,
-                             FACE_ATTRIBUTE_MEAN);
-
-    int size = tmpchannels[i].rows * tmpchannels[i].cols;
-    for (int r = 0; r < tmpchannels[i].rows; ++r) {
-      memcpy((float *)CVI_NN_TensorPtr(input) + size * i + tmpchannels[i].cols * r,
-             tmpchannels[i].ptr(r, 0), tmpchannels[i].cols * sizeof(float));
-    }
-  }
 }
 
 void MaskFaceRecognition::outputParser(cvai_face_t *meta, int meta_i) {

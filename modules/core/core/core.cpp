@@ -63,6 +63,7 @@ int Core::modelOpen(const char *filepath) {
       float factor_limit = 8191.f / 8192;
       for (uint32_t j = 0; j < 3; j++) {
         if (data[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, data[i].factor[j]);
           data[i].factor[j] = factor_limit;
         }
       }
