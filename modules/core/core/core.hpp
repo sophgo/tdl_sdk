@@ -42,6 +42,7 @@ struct VPSSConfig {
   meta_rescale_type_e rescale_type = RESCALE_CENTER;
   VPSS_CROP_INFO_S crop_attr;
   VPSS_CHN_ATTR_S chn_attr;
+  CVI_FRAME_TYPE frame_type = CVI_FRAME_PLANAR;
 };
 
 class Core {

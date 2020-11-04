@@ -69,10 +69,23 @@ int Core::modelOpen(const char *filepath) {
       }
     }
     VPSSConfig vcfg;
+    int32_t width, height;
+    PIXEL_FORMAT_E format;
+    // FIXME: Future support for nhwc input. Currently disabled.
+    if (false) {
+      width = input->shape.dim[2];
+      height = input->shape.dim[1];
+      format = PIXEL_FORMAT_RGB_888;
+      vcfg.frame_type = CVI_FRAME_PACKAGE;
+    } else {
+      width = input->shape.dim[3];
+      height = input->shape.dim[2];
+      format = PIXEL_FORMAT_RGB_888_PLANAR;
+      vcfg.frame_type = CVI_FRAME_PLANAR;
+    }
     vcfg.rescale_type = data[i].rescale_type;
     vcfg.crop_attr.bEnable = data[i].use_crop;
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, input->shape.dim[3], input->shape.dim[2],
-                       PIXEL_FORMAT_RGB_888_PLANAR, data[i].factor, data[i].mean,
+    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, format, data[i].factor, data[i].mean,
                        data[i].pad_reverse);
     if (!data[i].keep_aspect_ratio) {
       vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
@@ -143,7 +156,7 @@ int Core::getChnAttribute(const uint32_t width, const uint32_t height, const uin
       auto &factor = m_vpss_config[idx].chn_attr.stNormalize.factor;
       auto &mean = m_vpss_config[idx].chn_attr.stNormalize.mean;
       VPSS_CHN_SQ_RB_HELPER(attr, width, height, input->shape.dim[3], input->shape.dim[2],
-                            PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
+                            m_vpss_config[idx].chn_attr.enPixelFormat, factor, mean, false);
       attr->stAspectRatio.u32BgColor = m_vpss_config[idx].chn_attr.stAspectRatio.u32BgColor;
     } break;
     default: {
@@ -222,10 +235,10 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
     }
   }
   if (int ret =
-          CVI_NN_FeedTensorWithFrames(mp_model_handle, mp_input_tensors, CVI_FRAME_PLANAR,
-                                      CVI_FMT_INT8, paddrs.size(), paddrs.data(),
-                                      frames[0]->stVFrame.u32Height, frames[0]->stVFrame.u32Width,
-                                      frames[0]->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
+          CVI_NN_FeedTensorWithFrames(
+              mp_model_handle, mp_input_tensors, m_vpss_config[0].frame_type, CVI_FMT_INT8,
+              paddrs.size(), paddrs.data(), frames[0]->stVFrame.u32Height,
+              frames[0]->stVFrame.u32Width, frames[0]->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
     LOGE("NN set tensor with vi failed: %d\n", ret);
     return CVI_FAILURE;
   }
