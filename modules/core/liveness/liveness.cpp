@@ -139,19 +139,20 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
 
 void Liveness::prepareInputTensor(vector<cv::Mat> &input_mat) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  float *input_ptr = (float *)CVI_NN_TensorPtr(input);
+  int8_t *input_ptr = (int8_t *)CVI_NN_TensorPtr(input);
+  float quant_scale = CVI_NN_TensorQuantScale(input);
 
   for (int j = 0; j < CROP_NUM; j++) {
     cv::Mat tmpchannels[LIVENESS_C];
     cv::split(input_mat[j], tmpchannels);
 
     for (int c = 0; c < LIVENESS_C; ++c) {
-      tmpchannels[c].convertTo(tmpchannels[c], CV_32F, LIVENESS_SCALE, 0);
+      tmpchannels[c].convertTo(tmpchannels[c], CV_8SC1, LIVENESS_SCALE * quant_scale, 0);
 
       int size = tmpchannels[c].rows * tmpchannels[c].cols;
       for (int r = 0; r < tmpchannels[c].rows; ++r) {
         memcpy(input_ptr + size * c + tmpchannels[c].cols * r, tmpchannels[c].ptr(r, 0),
-               tmpchannels[c].cols * sizeof(float));
+               tmpchannels[c].cols);
       }
     }
     input_ptr += CVI_NN_TensorCount(input) / CROP_NUM;

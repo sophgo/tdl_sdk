@@ -22,9 +22,7 @@ int Core::modelOpen(const char *filepath) {
   }
   CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_ALL_TENSORS,
                    static_cast<int>(mp_config->debug_mode));
-  // For models before version 1.2
-  bool skip_preprocess = (mp_config->input_mem_type == CVI_MEM_DEVICE) ? true : false;
-  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS, static_cast<int>(skip_preprocess));
+  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS, static_cast<int>(true));
   CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_POSTPROCESS,
                    static_cast<int>(mp_config->skip_postprocess));
 
