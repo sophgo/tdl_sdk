@@ -36,7 +36,7 @@ typedef struct {
 
 inline int __attribute__((always_inline)) GetModelName(cviai_model_t &model, char **filepath) {
   char *path = (char *)malloc(model.model_path.size());
-  snprintf(path, strlen(path), "%s", model.model_path.c_str());
+  snprintf(path, model.model_path.size(), "%s", model.model_path.c_str());
   *filepath = path;
   return CVI_SUCCESS;
 }
