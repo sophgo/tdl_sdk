@@ -121,9 +121,12 @@ int main(int argc, char *argv[]) {
 #define FACE_ATTRIBUTE_TENSORNAME "BMFace_dense_MatMul_folded"
 
 // This is a function pointer that will be inserted into the custom AI framework.
-static void PreProcessing(VIDEO_FRAME_INFO_S *stInFrame, VIDEO_FRAME_INFO_S *stOutFrame) {
+static void PreProcessing(VIDEO_FRAME_INFO_S *inFrames, VIDEO_FRAME_INFO_S *outFrames,
+                          CVI_U32 numOfFrames) {
   printf("This is a function passed into custom framework.\n");
-  *stOutFrame = *stInFrame;
+  for (uint32_t i = 0; i < numOfFrames; i++) {
+    outFrames[i] = inFrames[i];
+  }
 }
 
 CVI_S32 CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t *id) {
@@ -137,13 +140,13 @@ CVI_S32 CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t 
   printf("Init id %u, model %s.\n", *id, savedFilePath);
   free(savedFilePath);
   // Must set if you want to use VPSS in custom AI framework.
+  // Cause face attribute only has 1 input, so we only set idx = 0;
+  const uint32_t tensor_idx = 0;
   const float factor = FACE_ATTRIBUTE_FACTOR;
   const float mean = FACE_ATTRIBUTE_MEAN;
-  CVI_AI_Custom_SetVpssPreprocessParam(handle, *id, &factor, &mean, 1, false);
+  CVI_AI_Custom_SetVpssPreprocessParam(handle, *id, tensor_idx, &factor, &mean, 1, false);
   // Optional in this case. You can pass function pointer into the framework if you like.
   CVI_AI_Custom_SetPreprocessFuncPtr(handle, *id, PreProcessing, false, true);
-  // Don't do dequantization if choose to skip.
-  CVI_AI_Custom_SetSkipPostProcess(handle, *id, true);
   return CVI_SUCCESS;
 }
 
@@ -164,8 +167,8 @@ CVI_S32 CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id,
   for (uint32_t i = 0; i < faces->size; ++i) {
     // This is the preprocessing of the model.
     CVI_AI_FaceAlignment(frame, faces->width, faces->height, &faces->info[i], &outFrame, false);
-    // Inference.
-    CVI_AI_Custom_RunInference(handle, id, &outFrame);
+    // Inference. Face attribute only has 1 input.
+    CVI_AI_Custom_RunInference(handle, id, &outFrame, 1);
     // Post-processing.
     int8_t *tensor = NULL;
     uint32_t tensorCount = 0;

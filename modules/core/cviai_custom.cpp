@@ -83,25 +83,27 @@ getCustomInstance(const uint32_t id, cviai_context_t *ctx) {
 }
 
 CVI_S32 CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
-                                             const float *factor, const float *mean,
-                                             const uint32_t length, const bool keepAspectRatio) {
+                                             const uint32_t inputIndex, const float *factor,
+                                             const float *mean, const uint32_t length,
+                                             const bool keepAspectRatio) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   auto *inst_ptr = getCustomInstance(id, ctx);
   if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  return inst_ptr->setSQParam(factor, mean, length, true, keepAspectRatio);
+  return inst_ptr->setSQParam(inputIndex, factor, mean, length, true, keepAspectRatio);
 }
 
 CVI_S32 CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
-                                                const float *qFactor, const float *qMean,
-                                                const uint32_t length, const bool keepAspectRatio) {
+                                                const uint32_t inputIndex, const float *qFactor,
+                                                const float *qMean, const uint32_t length,
+                                                const bool keepAspectRatio) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   auto *inst_ptr = getCustomInstance(id, ctx);
   if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  return inst_ptr->setSQParam(qFactor, qMean, length, false, keepAspectRatio);
+  return inst_ptr->setSQParam(inputIndex, qFactor, qMean, length, false, keepAspectRatio);
 }
 
 CVI_S32 CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t id,
@@ -113,16 +115,6 @@ CVI_S32 CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t
     return CVI_FAILURE;
   }
   return inst_ptr->setPreProcessFunc(func, use_tensor_input, use_vpss_sq);
-}
-
-CVI_S32 CVI_AI_Custom_SetSkipPostProcess(cviai_handle_t handle, const uint32_t id,
-                                         const bool skip) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  auto *inst_ptr = getCustomInstance(id, ctx);
-  if (inst_ptr == nullptr) {
-    return CVI_FAILURE;
-  }
-  return inst_ptr->setSkipPostProcess(skip);
 }
 
 CVI_S32 CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id) {
@@ -165,18 +157,18 @@ CVI_S32 CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t i
   if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  return inst_ptr->getNCHW(tensorName, n, c, h, w);
+  return inst_ptr->getInputShape(tensorName, n, c, h, w);
 }
 
 CVI_S32 CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id,
-                                   VIDEO_FRAME_INFO_S *frame) {
+                                   VIDEO_FRAME_INFO_S *frame, uint32_t numOfFrames) {
   TRACE_EVENT("cviai_core", "CVI_AI_Custom_RetinaFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   auto *inst_ptr = getCustomInstanceInit(id, ctx);
   if (inst_ptr == nullptr) {
     return CVI_FAILURE;
   }
-  return inst_ptr->inference(frame);
+  return inst_ptr->inference(frame, numOfFrames);
 }
 
 CVI_S32 CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id,

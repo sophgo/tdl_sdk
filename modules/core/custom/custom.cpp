@@ -15,47 +15,64 @@ Custom::Custom() {
 }
 
 int Custom::initAfterModelOpened(std::vector<initSetup> *data) {
-  if (mp_config->input_mem_type == CVI_MEM_DEVICE && !m_skip_vpss_preprocess && m_factor.empty()) {
-    LOGE("VPSS is set to use. Please set factor, mean and initialize first.\n");
-    return CVI_FAILURE;
-  }
-  if (data->size() != 1) {
-    LOGE("Currently only supports single input.\n");
-    return CVI_FAILURE;
-  }
-  if (m_factor.size() == 1) {
-    for (int i = 0; i < 3; i++) {
-      (*data)[0].factor[i] = m_factor[0];
-      (*data)[0].mean[i] = m_mean[0];
+  for (uint32_t idx = 0; idx < data->size(); idx++) {
+    CustomSQParam *p_sqparam = nullptr;
+    for (uint32_t j = 0; j < m_sq_params.size(); j++) {
+      if (m_sq_params[j].idx == idx) {
+        p_sqparam = &m_sq_params[j];
+      }
     }
-  } else if (m_factor.size() == 3) {
-    for (int i = 0; i < 3; i++) {
-      (*data)[0].factor[i] = m_factor[i];
-      (*data)[0].mean[i] = m_mean[i];
+    if (p_sqparam == nullptr) {
+      LOGE("Error! Factor and mean of input index %u is not set.\n", idx);
+      return CVI_FAILURE;
     }
-  } else {
-    LOGE("factor and mean must have 1 or 3 values. Current: %zu.\n", m_factor.size());
-    return CVI_FAILURE;
+    if (p_sqparam->factor.size() == 1) {
+      for (int i = 0; i < 3; i++) {
+        (*data)[idx].factor[i] = p_sqparam->factor[0];
+        (*data)[idx].mean[i] = p_sqparam->mean[0];
+      }
+    } else if (p_sqparam->factor.size() == 3) {
+      for (int i = 0; i < 3; i++) {
+        (*data)[idx].factor[i] = p_sqparam->factor[i];
+        (*data)[idx].mean[i] = p_sqparam->mean[i];
+      }
+    } else {
+      LOGE("factor and mean must have 1 or 3 values. Current: %zu.\n", p_sqparam->factor.size());
+      return CVI_FAILURE;
+    }
+    (*data)[idx].keep_aspect_ratio = p_sqparam->keep_aspect_ratio;
+    (*data)[idx].use_quantize_scale = p_sqparam->use_model_threashold;
   }
-  (*data)[0].keep_aspect_ratio = m_keep_aspect_ratio;
-  (*data)[0].use_quantize_scale = m_use_model_threashold;
+  m_processed_frames.resize(m_input_num);
   return CVI_SUCCESS;
 }
 
-int Custom::setSQParam(const float *factor, const float *mean, const uint32_t length,
-                       const bool use_model_threshold, const bool keep_aspect_ratio) {
+int Custom::setSQParam(const uint32_t idx, const float *factor, const float *mean,
+                       const uint32_t length, const bool use_model_threshold,
+                       const bool keep_aspect_ratio) {
   if (length != 1 && length != 3) {
     LOGE("Scale parameter only supports legnth of 1 or 3. Given: %u.\n", length);
     return CVI_FAILURE;
   }
-  m_factor.clear();
-  m_mean.clear();
-  for (uint32_t i = 0; i < length; i++) {
-    m_factor.push_back(factor[i]);
-    m_mean.push_back(mean[i]);
+  CustomSQParam *p_sqparam = nullptr;
+  for (uint32_t i = 0; i < m_sq_params.size(); i++) {
+    if (m_sq_params[i].idx == idx) {
+      p_sqparam = &m_sq_params[i];
+    }
   }
-  m_use_model_threashold = use_model_threshold;
-  m_keep_aspect_ratio = keep_aspect_ratio;
+  if (p_sqparam == nullptr) {
+    m_sq_params.push_back(CustomSQParam());
+    p_sqparam = &m_sq_params[m_sq_params.size() - 1];
+  }
+  p_sqparam->idx = idx;
+  p_sqparam->factor.clear();
+  p_sqparam->mean.clear();
+  for (uint32_t i = 0; i < length; i++) {
+    p_sqparam->factor.push_back(factor[i]);
+    p_sqparam->mean.push_back(mean[i]);
+  }
+  p_sqparam->use_model_threashold = use_model_threshold;
+  p_sqparam->keep_aspect_ratio = keep_aspect_ratio;
   return CVI_SUCCESS;
 }
 
@@ -76,12 +93,8 @@ int Custom::setPreProcessFunc(preProcessFunc func, bool use_tensor_input, bool u
   return CVI_SUCCESS;
 }
 
-int Custom::setSkipPostProcess(const bool skip) {
-  mp_config->skip_postprocess = skip;
-  return CVI_SUCCESS;
-}
-
-int Custom::getNCHW(const char *tensor_name, uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *w) {
+int Custom::getInputShape(const char *tensor_name, uint32_t *n, uint32_t *c, uint32_t *h,
+                          uint32_t *w) {
   CVI_TENSOR *input = CVI_NN_GetTensorByName(tensor_name, mp_input_tensors, m_input_num);
   if (input == NULL) {
     LOGE("Tensor %s not found.\n", tensor_name);
@@ -95,21 +108,47 @@ int Custom::getNCHW(const char *tensor_name, uint32_t *n, uint32_t *c, uint32_t 
   return CVI_SUCCESS;
 }
 
-int Custom::inference(VIDEO_FRAME_INFO_S *stInFrame) {
+int Custom::getInputNum() { return m_input_num; }
+
+int Custom::getInputShape(const uint32_t idx, uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *w) {
+  if (idx >= (uint32_t)m_input_num) {
+    LOGE("Index exceed maximum input. (max: %d)\n", m_input_num);
+    return CVI_FAILURE;
+  }
+  CVI_TENSOR *input = mp_input_tensors + idx;
+  *n = input->shape.dim[0];
+  *c = input->shape.dim[1];
+  *h = input->shape.dim[2];
+  *w = input->shape.dim[3];
+  return CVI_SUCCESS;
+}
+
+int Custom::inference(VIDEO_FRAME_INFO_S *inFrames, uint32_t num_of_frames) {
+  if (num_of_frames != (uint32_t)m_input_num) {
+    LOGE("The number of input frames does not match the number of input tensors. (%u != %d)\n",
+         num_of_frames, m_input_num);
+    return CVI_FAILURE;
+  }
   std::vector<VIDEO_FRAME_INFO_S *> frames;
   if (preprocessfunc != NULL) {
-    VIDEO_FRAME_INFO_S stOutFrame;
-    memset(&stOutFrame, 0, sizeof(VIDEO_FRAME_INFO_S));
-    preprocessfunc(stInFrame, &stOutFrame);
-    frames.emplace_back(&stOutFrame);
-    auto ret = run(frames);
-    if (stOutFrame.stVFrame.u64PhyAddr[0] != 0 &&
-        (stInFrame->stVFrame.u64PhyAddr[0] != stOutFrame.stVFrame.u64PhyAddr[0])) {
-      CVI_VPSS_ReleaseChnFrame(0, 0, &stOutFrame);
+    memset(m_processed_frames.data(), 0, sizeof(VIDEO_FRAME_INFO_S) * num_of_frames);
+    preprocessfunc(inFrames, m_processed_frames.data(), num_of_frames);
+    for (uint32_t i = 0; i < num_of_frames; i++) {
+      frames.emplace_back(&m_processed_frames[i]);
     }
+    auto ret = run(frames);
+    for (uint32_t i = 0; i < num_of_frames; i++) {
+      if (m_processed_frames[i].stVFrame.u64PhyAddr[0] != 0 &&
+          (inFrames[i].stVFrame.u64PhyAddr[0] != m_processed_frames[i].stVFrame.u64PhyAddr[0])) {
+        CVI_VPSS_ReleaseChnFrame(0, 0, &m_processed_frames[i]);
+      }
+    }
+
     return ret;
   }
-  frames.emplace_back(stInFrame);
+  for (uint32_t i = 0; i < num_of_frames; i++) {
+    frames.emplace_back(&inFrames[i]);
+  }
   return run(frames);
 }
 

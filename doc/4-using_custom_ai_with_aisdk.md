@@ -190,7 +190,7 @@ In AI SDK, we provide a framework to let user easily run their own model with ha
   // ... Do preprocessing if necessary.
 
   // Run inference
-  CVI_AI_Custom_RunInference(handle, id, &frame);
+  CVI_AI_Custom_RunInference(handle, id, &frame, numOfFrames);
   // Post-processing.
   int8_t *tensor = NULL;
   uint32_t tensorCount = 0;
@@ -214,25 +214,23 @@ CVI_S32 CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, const uint32_t
 
 If ``use_tensor_input`` is set to ``true``, you must pass a function that defines how the ``VIDEO_FRAME_INFO_S`` should copy the data into tensor input. The option ``use_vpss_sq`` will also be ignored. If ``use_tensor_input`` is set to ``false``, ``preProcessFunc`` can be set to ``NULL``. If both ``use_tensor_input`` and ``use_vpss_sq`` are set to ``false``, the ``VIDEO_FRAME_INFO_S`` will be directly passed into TPU inference.
 
-If you set ``use_vpss_sq`` to ``true``, you must set the the factor and mean for VPSS with these functions. The framework will get the quantization threshold from loaded cvimodel.
+If you set ``use_vpss_sq`` to ``true``, you must set the the factor and mean for VPSS with these functions. The framework will get the quantization threshold from loaded cvimodel. Make sure you select the correct input index for your model.
 
 ```c
 CVI_S32 CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
+                                             const uint32_t inputIndex,
                                              const float *factor, const float *mean,
-                                             const uint32_t length, const bool keepAspectRatio);
+                                             const uint32_t length,
+                                             const bool keepAspectRatio);
 
 CVI_S32 CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
+                                                const uint32_t inputIndex,
                                                 const float *qFactor, const float *qMean,
-                                                const uint32_t length, const bool keepAspectRatio);
+                                                const uint32_t length,
+                                                const bool keepAspectRatio);
 ```
 
 The first function will calculate the quantized factor and quantized mean for you, while the second function will directly pass the values to the vpss. The ``length`` represents the buffer size of factor and mean. If set to 1, all the channels will use the same values. ``length`` can only be 1 or 3. If ``keepAspectRatio`` is set to true, the black will be padded at the right and the bottom.
-
-If you want to dequantize your output, call the following function and set to ``true``.
-
-```c
-CVI_S32 CVI_AI_Custom_SetSkipPostProcess(cviai_handle_t handle, const uint32_t id, const bool skip);
-```
 
 This function is a little bit different from ``CVI_AI_CloseModel``. The close model in custom framework will not delete the instance but only close the model.
 
@@ -251,7 +249,7 @@ CVI_S32 CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t i
                                          const char *tensorName, uint32_t *n,
                                          uint32_t *c, uint32_t *h, uint32_t *w);
 
-CVI_S32 CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id, VIDEO_FRAME_INFO_S *frame);
+CVI_S32 CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id, VIDEO_FRAME_INFO_S *frame, uint32_t NumOfFrames);
 
 CVI_S32 CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id,
                                       const char *tensorName, int8_t **tensor,

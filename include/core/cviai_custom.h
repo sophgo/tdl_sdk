@@ -11,7 +11,8 @@
  * @ingroup core_ai_custom
  * @brief A preprocess function pointer.
  */
-typedef void (*preProcessFunc)(VIDEO_FRAME_INFO_S *stInFrame, VIDEO_FRAME_INFO_S *stOutFrame);
+typedef void (*preProcessFunc)(VIDEO_FRAME_INFO_S *inFrames, VIDEO_FRAME_INFO_S *outFrames,
+                               CVI_U32 numOfFrames);
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,6 +102,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint
  *
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
+ * @param inputIndex The input tensor index.
  * @param factor The scaling factor.
  * @param mean The scaling mean.
  * @param length The length of the fector and mean array. Must be 1 (will duplicate to 3) or 3.
@@ -111,6 +113,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint
  * @see CVI_AI_Custom_SetPreprocessFuncPtr
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, const uint32_t id,
+                                                        const uint32_t inputIndex,
                                                         const float *factor, const float *mean,
                                                         const uint32_t length,
                                                         const bool keepAspectRatio);
@@ -121,6 +124,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, c
  *
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
+ * @param inputIndex The input tensor index.
  * @param qFactor The quantized scaling factor.
  * @param qMean The quantized scaling mean.
  * @param length The length of the fector and mean array. Must be 1 (will duplicate to 3) or 3.
@@ -132,6 +136,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, c
  * @see CVI_AI_Custom_SetPreprocessFuncPtr
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle, const uint32_t id,
+                                                           const uint32_t inputIndex,
                                                            const float *qFactor, const float *qMean,
                                                            const uint32_t length,
                                                            const bool keepAspectRatio);
@@ -157,19 +162,6 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, con
                                                       preProcessFunc func,
                                                       const bool use_tensor_input,
                                                       const bool use_vpss_sq);
-
-/**
- * @brief Skip post processing step of the cvimodel. Affects the result of the output tensor.
- *
- * @param handle An AI SDK handle.
- * @param id Id of the instance.
- * @param skip The boolen setting.
- * @return int Return CVI_SUCCESS on success.
- *
- * @see CVI_AI_Custom_GetOutputTensor
- */
-DLL_EXPORT CVI_S32 CVI_AI_Custom_SetSkipPostProcess(cviai_handle_t handle, const uint32_t id,
-                                                    const bool skip);
 
 /**
  * @brief Close the chosen custom model. Will not delete the instance.
@@ -204,6 +196,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_
 DLL_EXPORT CVI_S32 CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
                                                     const char *tensorName, uint32_t *n,
                                                     uint32_t *c, uint32_t *h, uint32_t *w);
+
 /**
  * @brief Do custom model inference. Once this function is called, you cannot change the settings of
  * the model unless you call CVI_AI_Custom_CloseModel.
@@ -211,12 +204,13 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
  * @param frame Input video frame.
+ * @param numOfFrames Number of input frames.
  * @return int Return CVI_SUCCESS on success.
  *
  * @see CVI_AI_Custom_CloseModel
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint32_t id,
-                                              VIDEO_FRAME_INFO_S *frame);
+                                              VIDEO_FRAME_INFO_S *frame, uint32_t numOfFrames);
 
 /**
  * @brief
@@ -229,7 +223,6 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint3
  * @param unitSize The size for each element of the tensor.
  * @return int Return CVI_SUCCESS on success.
  *
- * @see CVI_AI_Custom_SetSkipPostProcess
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id,
                                                  const char *tensorName, int8_t **tensor,
