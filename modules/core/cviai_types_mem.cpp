@@ -41,7 +41,9 @@ void CVI_AI_FreeCpp(cvai_face_info_t *face_info) {
 
 void CVI_AI_FreeCpp(cvai_face_t *face) {
   if (face->info != NULL) {
-    CVI_AI_FreeCpp(face->info);
+    for (uint32_t i = 0; i < face->size; i++) {
+      CVI_AI_FreeCpp(&face->info[i]);
+    }
     free(face->info);
     face->info = NULL;
   }
@@ -54,6 +56,9 @@ void CVI_AI_FreeCpp(cvai_object_info_t *obj_info) { CVI_AI_FreeCpp(&obj_info->fe
 
 void CVI_AI_FreeCpp(cvai_object_t *obj) {
   if (obj->info != NULL) {
+    for (uint32_t i = 0; i < obj->size; i++) {
+      CVI_AI_FreeCpp(&obj->info[i]);
+    }
     free(obj->info);
     obj->info = NULL;
   }
