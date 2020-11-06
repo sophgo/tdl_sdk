@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
     obj.width = -1;
     obj.height = -1;
 
+    memset(obj.info, 0, sizeof(cvai_object_info_t) * obj.size);
     for (int i = 0; i < obj.size; i++) {
       obj.info[i].bbox = face.info[i].bbox;
       obj.info[i].classes = 0;
