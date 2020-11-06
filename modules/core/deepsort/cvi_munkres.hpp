@@ -19,20 +19,21 @@ enum ALGO_STAGE { ZERO = 0, ONE, TWO, THREE, FOUR, FINAL, DONE };
 class CVIMunkres {
  public:
   CVIMunkres(Eigen::MatrixXf *matrix);
+  ~CVIMunkres();
 
   int solve();
   void show_result();
   // std::vector<std::pair<int, int>> compute(cv::Mat &cost_matrix);
-  int *match_result;
+  int *m_match_result;
 
  private:
   // variables
-  int rows, cols, m_size;
-  bool *covered_R, *covered_C;
-  Eigen::MatrixXf *original_matrix;
-  Eigen::MatrixXf cost_matrix;
-  int **state_matrix;
-  int prime_index[2];
+  int m_rows, m_cols, m_size;
+  bool *m_covered_R, *m_covered_C;
+  Eigen::MatrixXf *m_original_matrix;
+  Eigen::MatrixXf m_cost_matrix;
+  int **m_state_matrix;
+  int m_prime_index[2];
 
   void substract_min_by_row();
   void substract_min_by_col();

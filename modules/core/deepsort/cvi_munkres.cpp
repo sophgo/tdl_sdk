@@ -11,47 +11,59 @@
 #define DEBUG 0
 
 CVIMunkres::CVIMunkres(Eigen::MatrixXf *matrix) {
-  original_matrix = matrix;
-  rows = matrix->rows();
-  cols = matrix->cols();
-  m_size = MAX(rows, cols);
+  m_original_matrix = matrix;
+  m_rows = matrix->rows();
+  m_cols = matrix->cols();
+  m_size = MAX(m_rows, m_cols);
 
-  covered_C = new bool[m_size];
-  covered_R = new bool[m_size];
-  prime_index[0] = -1;
-  prime_index[1] = -1;
-  match_result = nullptr;
+  m_covered_C = new bool[m_size];
+  m_covered_R = new bool[m_size];
+  m_prime_index[0] = -1;
+  m_prime_index[1] = -1;
+  m_match_result = new int[m_rows];
 
   /* Initialization */
-  state_matrix = new int *[m_size];
-  cost_matrix = Eigen::MatrixXf(m_size, m_size);
+  m_state_matrix = new int *[m_size];
+  m_cost_matrix = Eigen::MatrixXf(m_size, m_size);
 
   for (int i = 0; i < m_size; i++) {
-    state_matrix[i] = new int[m_size];
+    m_state_matrix[i] = new int[m_size];
     for (int j = 0; j < m_size; j++) {
-      state_matrix[i][j] = NODE_STATE::NONE;
-      if (i < rows && j < cols) {
-        cost_matrix(i, j) = (*matrix)(i, j);
+      m_state_matrix[i][j] = NODE_STATE::NONE;
+      if (i < m_rows && j < m_cols) {
+        m_cost_matrix(i, j) = (*matrix)(i, j);
       } else {
-        cost_matrix(i, j) = PADDING_VALUE;
+        m_cost_matrix(i, j) = PADDING_VALUE;
       }
     }
 
-    covered_R[i] = false;
-    covered_C[i] = false;
+    m_covered_R[i] = false;
+    m_covered_C[i] = false;
   }
 
 #if DEBUG
   std::cout << "CVIMunkres::cost_matrix" << std::endl;
-  std::cout << cost_matrix << std::endl;
+  std::cout << m_cost_matrix << std::endl;
   std::cout << "CVIMunkres::original_matrix" << std::endl;
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < cols; j++) {
-      std::cout << original_matrix[i][j] << ", ";
+  for (int i = 0; i < m_rows; i++) {
+    for (int j = 0; j < m_cols; j++) {
+      std::cout << m_original_matrix[i][j] << ", ";
     }
     std::cout << std::endl;
   }
 #endif /* DEBUG */
+}
+
+CVIMunkres::~CVIMunkres() {
+  delete[] m_covered_C;
+  delete[] m_covered_R;
+
+  for (int i = 0; i < m_size; i++) {
+    delete[] m_state_matrix[i];
+  }
+  delete[] m_state_matrix;
+
+  delete[] m_match_result;
 }
 
 int CVIMunkres::solve() {
@@ -101,25 +113,25 @@ int CVIMunkres::stage_0() {
 #if DEBUG
   std::cout << "stage 0" << std::endl;
 #endif /* DEBUG */
-  if (rows > cols) {
+  if (m_rows > m_cols) {
     substract_min_by_col();
-  } else if (rows < cols) {
+  } else if (m_rows < m_cols) {
     substract_min_by_row();
-  } else { /* rows == cols */
+  } else { /* m_rows == m_cols */
     substract_min_by_col();
     substract_min_by_row();
   }
 #if DEBUG
   std::cout << "cost_matrix" << std::endl;
-  std::cout << cost_matrix << std::endl;
+  std::cout << m_cost_matrix << std::endl;
 #endif /* DEBUG */
 
   for (int i = 0; i < m_size; i++) {
     for (int j = 0; j < m_size; j++) {
-      if (cost_matrix(i, j) == 0 && !covered_R[i] && !covered_C[j]) {
-        state_matrix[i][j] = NODE_STATE::STAR;
-        covered_R[i] = true;
-        covered_C[j] = true;
+      if (m_cost_matrix(i, j) == 0 && !m_covered_R[i] && !m_covered_C[j]) {
+        m_state_matrix[i][j] = NODE_STATE::STAR;
+        m_covered_R[i] = true;
+        m_covered_C[j] = true;
         break;
       }
     }
@@ -133,18 +145,18 @@ int CVIMunkres::stage_1() {
   std::cout << "stage 1" << std::endl;
 #endif /* DEBUG */
   for (int i = 0; i < m_size; i++) {
-    covered_R[i] = false;
-    covered_C[i] = false;
+    m_covered_R[i] = false;
+    m_covered_C[i] = false;
   }
 
   int star_counter = 0;
   for (int i = 0; i < m_size; i++) {
     for (int j = 0; j < m_size; j++) {
-      if (state_matrix[i][j] == NODE_STATE::PRIME) {
-        state_matrix[i][j] = NODE_STATE::NONE;
-      } else if (state_matrix[i][j] == NODE_STATE::STAR) {
+      if (m_state_matrix[i][j] == NODE_STATE::PRIME) {
+        m_state_matrix[i][j] = NODE_STATE::NONE;
+      } else if (m_state_matrix[i][j] == NODE_STATE::STAR) {
         star_counter += 1;
-        covered_C[j] = true;
+        m_covered_C[j] = true;
       }
     }
   }
@@ -169,16 +181,16 @@ int CVIMunkres::stage_2() {
       return ALGO_STAGE::FOUR;
     }
 
-    state_matrix[i][j] = NODE_STATE::PRIME;
+    m_state_matrix[i][j] = NODE_STATE::PRIME;
 #if DEBUG
     show_state_matrix();
 #endif /* DEBUG */
     if (find_star_by_row(i, j)) {
-      covered_R[i] = true;
-      covered_C[j] = false;
+      m_covered_R[i] = true;
+      m_covered_C[j] = false;
     } else {
-      prime_index[0] = i;
-      prime_index[1] = j;
+      m_prime_index[0] = i;
+      m_prime_index[1] = j;
       return ALGO_STAGE::THREE;
     }
 
@@ -197,11 +209,11 @@ int CVIMunkres::stage_3() {
 #endif /* DEBUG */
   int **node_sequence = new int *[2 * m_size + 1];
   node_sequence[0] = new int[2];
-  node_sequence[0][0] = prime_index[0];
-  node_sequence[0][1] = prime_index[1];
+  node_sequence[0][0] = m_prime_index[0];
+  node_sequence[0][1] = m_prime_index[1];
   int node_counter = 1;
 
-  int r = -1, c = prime_index[1];
+  int r = -1, c = m_prime_index[1];
 #if DEBUG
   std::cout << r << ", " << c << std::endl;
 #endif /* DEBUG */
@@ -229,13 +241,17 @@ int CVIMunkres::stage_3() {
     std::cout << "(" << i << ") [" << std::setw(2) << r << "," << std::setw(2) << c << "]\n";
 #endif /* DEBUG */
     if (i % 2 == 0) {
-      assert(state_matrix[r][c] == NODE_STATE::PRIME);
-      state_matrix[r][c] = NODE_STATE::STAR;
+      assert(m_state_matrix[r][c] == NODE_STATE::PRIME);
+      m_state_matrix[r][c] = NODE_STATE::STAR;
     } else {
-      assert(state_matrix[r][c] == NODE_STATE::STAR);
-      state_matrix[r][c] = NODE_STATE::NONE;
+      assert(m_state_matrix[r][c] == NODE_STATE::STAR);
+      m_state_matrix[r][c] = NODE_STATE::NONE;
     }
+
+    delete[] node_sequence[i];
   }
+
+  delete[] node_sequence;
 
 #if DEBUG
   show_state_matrix();
@@ -248,23 +264,23 @@ int CVIMunkres::stage_4() {
   std::cout << "stage 4" << std::endl;
   show_state_matrix();
   std::cout << "cost matrix (before)" << std::endl;
-  std::cout << cost_matrix << std::endl;
+  std::cout << m_cost_matrix << std::endl;
 #endif /* DEBUG */
   float min = find_uncovered_min();
 
   for (int i = 0; i < m_size; i++) {
     for (int j = 0; j < m_size; j++) {
-      if (covered_R[i] && covered_C[j]) {
-        cost_matrix(i, j) += min;
-      } else if (!covered_R[i] && !covered_C[j]) {
-        cost_matrix(i, j) -= min;
+      if (m_covered_R[i] && m_covered_C[j]) {
+        m_cost_matrix(i, j) += min;
+      } else if (!m_covered_R[i] && !m_covered_C[j]) {
+        m_cost_matrix(i, j) -= min;
       }
     }
   }
 
 #if DEBUG
   std::cout << "cost matrix (after)" << std::endl;
-  std::cout << cost_matrix << std::endl;
+  std::cout << m_cost_matrix << std::endl;
 #endif /* DEBUG */
 
   return ALGO_STAGE::TWO;
@@ -275,21 +291,20 @@ int CVIMunkres::stage_final() {
   std::cout << "stage final\n";
   show_state_matrix();
   std::cout << "cost matrix\n";
-  std::cout << cost_matrix << std::endl;
+  std::cout << m_cost_matrix << std::endl;
 #endif /* DEBUG */
 
-  match_result = new int[rows];
-  for (int i = 0; i < rows; i++) {
+  for (int i = 0; i < m_rows; i++) {
     bool is_match = false;
-    for (int j = 0; j < cols; j++) {
-      if (state_matrix[i][j] == NODE_STATE::STAR) {
-        match_result[i] = j;
+    for (int j = 0; j < m_cols; j++) {
+      if (m_state_matrix[i][j] == NODE_STATE::STAR) {
+        m_match_result[i] = j;
         is_match = true;
         break;
       }
     }
     if (!is_match) {
-      match_result[i] = -1;
+      m_match_result[i] = -1;
     }
   }
 
@@ -298,14 +313,14 @@ int CVIMunkres::stage_final() {
 
 bool CVIMunkres::find_uncovered_zero(int &r, int &c) {
   for (int i = 0; i < m_size; i++) {
-    if (covered_R[i]) {
+    if (m_covered_R[i]) {
       continue;
     }
     for (int j = 0; j < m_size; j++) {
-      if (covered_C[j]) {
+      if (m_covered_C[j]) {
         continue;
       }
-      if (cost_matrix(i, j) == 0) {
+      if (m_cost_matrix(i, j) == 0) {
         r = i;
         c = j;
         return true;
@@ -318,15 +333,15 @@ bool CVIMunkres::find_uncovered_zero(int &r, int &c) {
 float CVIMunkres::find_uncovered_min() {
   float min_value = __FLT_MAX__;
   for (int i = 0; i < m_size; i++) {
-    if (covered_R[i]) {
+    if (m_covered_R[i]) {
       continue;
     }
     for (int j = 0; j < m_size; j++) {
-      if (covered_C[j]) {
+      if (m_covered_C[j]) {
         continue;
       }
-      if (cost_matrix(i, j) < min_value) {
-        min_value = cost_matrix(i, j);
+      if (m_cost_matrix(i, j) < min_value) {
+        min_value = m_cost_matrix(i, j);
       }
     }
   }
@@ -338,7 +353,7 @@ float CVIMunkres::find_uncovered_min() {
 
 bool CVIMunkres::find_star_by_row(const int &row, int &c) {
   for (int j = 0; j < m_size; j++) {
-    if (state_matrix[row][j] == NODE_STATE::STAR) {
+    if (m_state_matrix[row][j] == NODE_STATE::STAR) {
       c = j;
       return true;
     }
@@ -348,7 +363,7 @@ bool CVIMunkres::find_star_by_row(const int &row, int &c) {
 
 bool CVIMunkres::find_prime_by_row(const int &row, int &c) {
   for (int j = 0; j < m_size; j++) {
-    if (state_matrix[row][j] == NODE_STATE::PRIME) {
+    if (m_state_matrix[row][j] == NODE_STATE::PRIME) {
       c = j;
       return true;
     }
@@ -358,7 +373,7 @@ bool CVIMunkres::find_prime_by_row(const int &row, int &c) {
 
 bool CVIMunkres::find_star_by_col(const int &col, int &r) {
   for (int i = 0; i < m_size; i++) {
-    if (state_matrix[i][col] == NODE_STATE::STAR) {
+    if (m_state_matrix[i][col] == NODE_STATE::STAR) {
       r = i;
       return true;
     }
@@ -373,29 +388,29 @@ bool CVIMunkres::find_star_by_col(const int &col, int &r) {
 
 void CVIMunkres::substract_min_by_row() {
   for (int i = 0; i < m_size; i++) {
-    float min_value = cost_matrix(i, 0);
+    float min_value = m_cost_matrix(i, 0);
     for (int j = 1; j < m_size; j++) {
-      if (min_value > cost_matrix(i, j)) {
-        min_value = cost_matrix(i, j);
+      if (min_value > m_cost_matrix(i, j)) {
+        min_value = m_cost_matrix(i, j);
       }
     }
 
     for (int j = 0; j < m_size; j++) {
-      cost_matrix(i, j) -= min_value;
+      m_cost_matrix(i, j) -= min_value;
     }
   }
 }
 
 void CVIMunkres::substract_min_by_col() {
   for (int j = 0; j < m_size; j++) {
-    float min_value = cost_matrix(0, j);
+    float min_value = m_cost_matrix(0, j);
     for (int i = 1; i < m_size; i++) {
-      if (min_value > cost_matrix(i, j)) {
-        min_value = cost_matrix(i, j);
+      if (min_value > m_cost_matrix(i, j)) {
+        min_value = m_cost_matrix(i, j);
       }
     }
     for (int i = 0; i < m_size; i++) {
-      cost_matrix(i, j) -= min_value;
+      m_cost_matrix(i, j) -= min_value;
     }
   }
 }
@@ -404,13 +419,13 @@ void CVIMunkres::show_state_matrix() {
   std::cout << "==============================================\n";
   std::cout << std::setw(8) << "STATE_M";
   for (int j = 0; j < m_size; j++) {
-    std::cout << std::setw(8) << covered_C[j];
+    std::cout << std::setw(8) << m_covered_C[j];
   }
   std::cout << std::endl;
   for (int i = 0; i < m_size; i++) {
-    std::cout << std::setw(8) << covered_R[i];
+    std::cout << std::setw(8) << m_covered_R[i];
     for (int j = 0; j < m_size; j++) {
-      std::cout << std::setw(8) << state_matrix[i][j];
+      std::cout << std::setw(8) << m_state_matrix[i][j];
     }
     std::cout << std::endl;
   }
@@ -419,12 +434,12 @@ void CVIMunkres::show_state_matrix() {
 
 void CVIMunkres::show_result() {
   float total_cost = 0.0;
-  for (int i = 0; i < rows; i++) {
-    if (match_result[i] != -1) {
-      int j = match_result[i];
+  for (int i = 0; i < m_rows; i++) {
+    if (m_match_result[i] != -1) {
+      int j = m_match_result[i];
       std::cout << "(" << std::setw(2) << i << "," << std::setw(2) << j << ") -> " << std::setw(8)
-                << std::setprecision(4) << (*original_matrix)(i, j) << std::endl;
-      total_cost += (*original_matrix)(i, j);
+                << std::setprecision(4) << (*m_original_matrix)(i, j) << std::endl;
+      total_cost += (*m_original_matrix)(i, j);
     }
   }
 

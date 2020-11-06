@@ -314,7 +314,7 @@ MatchResult Deepsort::match(const std::vector<BBOX> &BBoxes, const std::vector<F
   memset(matched_bbox_j, false, bbox_num * sizeof(bool));
 
   for (int i = 0; i < tracker_num; i++) {
-    int bbox_j = cvi_munkres_solver.match_result[i];
+    int bbox_j = cvi_munkres_solver.m_match_result[i];
     if (bbox_j != -1) {
       if (cost_matrix(i, bbox_j) < max_distance) {
         matched_tracker_i[i] = true;
