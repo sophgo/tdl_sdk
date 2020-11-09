@@ -79,16 +79,15 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   int ret = run(frames);
 
   CVI_TENSOR *input = getInputTensor(0);
-  float ratio = 1.0;
   int image_width = input->shape.dim[3];
   int image_height = input->shape.dim[2];
-  outputParser(ratio, image_width, image_height, srcFrame->stVFrame.u32Width,
-               srcFrame->stVFrame.u32Height, meta);
+  outputParser(image_width, image_height, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
+               meta);
   return ret;
 }
 
-void RetinaFace::outputParser(float ratio, int image_width, int image_height, int frame_width,
-                              int frame_height, cvai_face_t *meta) {
+void RetinaFace::outputParser(int image_width, int image_height, int frame_width, int frame_height,
+                              cvai_face_t *meta) {
   std::vector<cvai_face_info_t> vec_bbox;
   std::vector<cvai_face_info_t> vec_bbox_nms;
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
@@ -137,13 +136,13 @@ void RetinaFace::outputParser(float ratio, int image_width, int image_height, in
         float dw = bbox_blob[j + count * (2 + num * 4)];
         float dh = bbox_blob[j + count * (3 + num * 4)];
         regress = cv::Vec4f(dx, dy, dw, dh);
-        bbox_pred(anchors[j + count * num], regress, ratio, box.bbox);
+        bbox_pred(anchors[j + count * num], regress, box.bbox);
 
         for (size_t k = 0; k < box.pts.size; k++) {
           box.pts.x[k] = landmark_blob[j + count * (num * 10 + k * 2)];
           box.pts.y[k] = landmark_blob[j + count * (num * 10 + k * 2 + 1)];
         }
-        landmark_pred(anchors[j + count * num], ratio, box.pts);
+        landmark_pred(anchors[j + count * num], box.pts);
         vec_bbox.push_back(box);
       }
     }

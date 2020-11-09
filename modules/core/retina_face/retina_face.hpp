@@ -15,8 +15,8 @@ class RetinaFace final : public Core {
 
  private:
   virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
-  void outputParser(float ratio, int image_width, int image_height, int frame_width,
-                    int frame_height, cvai_face_t *meta);
+  void outputParser(int image_width, int image_height, int frame_width, int frame_height,
+                    cvai_face_t *meta);
 
   std::vector<int> m_feat_stride_fpn = {32, 16, 8};
   std::map<std::string, std::vector<anchor_box>> m_anchors;
