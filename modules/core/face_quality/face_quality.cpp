@@ -95,6 +95,14 @@ FaceQuality::FaceQuality() {
   mp_config->input_mem_type = CVI_MEM_DEVICE;
 }
 
+FaceQuality::~FaceQuality() {
+  if (m_gdc_blk != (VB_BLK)-1) {
+    CVI_SYS_Munmap((void *)m_wrap_frame.stVFrame.pu8VirAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
+    m_wrap_frame.stVFrame.pu8VirAddr[0] = NULL;
+    CVI_VB_ReleaseBlock(m_gdc_blk);
+  }
+}
+
 int FaceQuality::initAfterModelOpened(std::vector<initSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face quality only has 1 input.\n");

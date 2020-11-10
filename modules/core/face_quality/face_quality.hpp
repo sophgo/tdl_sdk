@@ -10,6 +10,7 @@ namespace cviai {
 class FaceQuality final : public Core {
  public:
   FaceQuality();
+  virtual ~FaceQuality();
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta);
 
  private:
