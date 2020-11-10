@@ -111,18 +111,11 @@ int VpssEngine::stop() {
 
 VPSS_GRP VpssEngine::getGrpId() { return m_grpid; }
 
-int VpssEngine::setResizeMethod(const VPSS_CHN chn, const VPSS_SCALE_COEF_E coef) {
-  return CVI_VPSS_SetChnScaleCoefLevel(m_grpid, chn, coef);
-}
-
-int VpssEngine::getResizeMethod(const VPSS_CHN chn, VPSS_SCALE_COEF_E *coef) {
-  return CVI_VPSS_GetChnScaleCoefLevel(m_grpid, chn, coef);
-}
-
 int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
                               const VPSS_CROP_INFO_S *grp_crop_attr,
                               const VPSS_CROP_INFO_S *chn_crop_attr,
-                              const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
+                              const VPSS_CHN_ATTR_S *chn_attr, const VPSS_SCALE_COEF_E *coeffs,
+                              const uint32_t enable_chns) {
   if (enable_chns >= m_enabled_chn) {
     for (uint32_t i = m_enabled_chn; i < enable_chns; i++) {
       CVI_VPSS_EnableChn(m_grpid, i);
@@ -184,30 +177,50 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
     }
   }
 
+  if (coeffs != NULL) {
+    for (uint32_t i = 0; i < m_enabled_chn; i++) {
+      int ret = CVI_VPSS_SetChnScaleCoefLevel(m_grpid, i, coeffs[i]);
+      if (ret != CVI_SUCCESS) {
+        LOGE("CVI_VPSS_GetChnScaleCoefLevel failed with %#x\n", ret);
+        return ret;
+      }
+    }
+  } else {
+    for (uint32_t i = 0; i < m_enabled_chn; i++) {
+      // Default value
+      CVI_VPSS_SetChnScaleCoefLevel(m_grpid, i, VPSS_SCALE_COEF_BICUBIC);
+    }
+  }
+
   ret = CVI_VPSS_SendFrame(m_grpid, frame, -1);
   return ret;
 }
 
 int VpssEngine::sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
                           const uint32_t enable_chns) {
-  return sendFrameBase(frame, NULL, NULL, chn_attr, enable_chns);
+  return sendFrameBase(frame, NULL, NULL, chn_attr, NULL, enable_chns);
+}
+
+int VpssEngine::sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
+                          const VPSS_SCALE_COEF_E *coeffs, const uint32_t enable_chns) {
+  return sendFrameBase(frame, NULL, NULL, chn_attr, coeffs, enable_chns);
 }
 
 int VpssEngine::sendCropGrpFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
                                  const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
-  return sendFrameBase(frame, crop_attr, NULL, chn_attr, enable_chns);
+  return sendFrameBase(frame, crop_attr, NULL, chn_attr, NULL, enable_chns);
 }
 
 int VpssEngine::sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
                                  const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
-  return sendFrameBase(frame, NULL, crop_attr, chn_attr, enable_chns);
+  return sendFrameBase(frame, NULL, crop_attr, chn_attr, NULL, enable_chns);
 }
 
 int VpssEngine::sendCropGrpChnFrame(const VIDEO_FRAME_INFO_S *frame,
                                     const VPSS_CROP_INFO_S *grp_crop_attr,
                                     const VPSS_CROP_INFO_S *chn_crop_attr,
                                     const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns) {
-  return sendFrameBase(frame, grp_crop_attr, chn_crop_attr, chn_attr, enable_chns);
+  return sendFrameBase(frame, grp_crop_attr, chn_crop_attr, chn_attr, NULL, enable_chns);
 }
 
 int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout) {

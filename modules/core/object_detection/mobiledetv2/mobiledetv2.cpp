@@ -220,22 +220,17 @@ int MobileDetV2::initAfterModelOpened(std::vector<initSetup> *data) {
 
 int MobileDetV2::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
                                 std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {
-  VPSS_GRP group = mp_vpss_inst->getGrpId();
   auto *srcFrame = srcFrames[0];
   auto *dstFrame = (*dstFrames)[0].get();
-  VPSS_SCALE_COEF_E enCoef;
-  CVI_VPSS_GetChnScaleCoefLevel(group, VPSS_CHN0, &enCoef);
-  CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, VPSS_SCALE_COEF_OPENCV_BILINEAR);
   auto &vpssChnAttr = m_vpss_config[0].chn_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                         vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
                         factor, mean, false);
-  mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
-  auto ret = mp_vpss_inst->getFrame(dstFrame, 0);
-  CVI_VPSS_SetChnScaleCoefLevel(group, VPSS_CHN0, enCoef);
-  return ret;
+  VPSS_SCALE_COEF_E coeff = VPSS_SCALE_COEF_OPENCV_BILINEAR;
+  mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &coeff, 1);
+  return mp_vpss_inst->getFrame(dstFrame, 0);
 }
 
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,

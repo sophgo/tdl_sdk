@@ -11,10 +11,10 @@ class __attribute__((visibility("default"))) VpssEngine {
   int init(VPSS_GRP grp_id = (VPSS_GRP)-1);
   int stop();
   VPSS_GRP getGrpId();
-  int setResizeMethod(const VPSS_CHN chn, const VPSS_SCALE_COEF_E coef);
-  int getResizeMethod(const VPSS_CHN chn, VPSS_SCALE_COEF_E *coef);
   int sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
                 const uint32_t enable_chns);
+  int sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
+                const VPSS_SCALE_COEF_E *coeffs, const uint32_t enable_chns);
   int sendCropGrpFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
                        const VPSS_CHN_ATTR_S *chn_attr, const uint32_t enable_chns);
   int sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
@@ -28,7 +28,7 @@ class __attribute__((visibility("default"))) VpssEngine {
  private:
   inline int sendFrameBase(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *grp_crop_attr,
                            const VPSS_CROP_INFO_S *chn_crop_attr, const VPSS_CHN_ATTR_S *chn_attr,
-                           const uint32_t enable_chns);
+                           const VPSS_SCALE_COEF_E *coeffs, const uint32_t enable_chns);
 
   bool m_enable_log = false;
   bool m_is_vpss_init = false;
