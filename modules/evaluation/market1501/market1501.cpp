@@ -1,5 +1,8 @@
 #include "market1501.hpp"
 
+#include "core/cviai_core.h"
+#include "core/cviai_types_mem_internal.h"
+
 #include <cvi_type.h>
 #include <dirent.h>
 #include <math.h>
@@ -31,9 +34,10 @@ namespace evaluation {
 
 market1501Eval::market1501Eval(const char *img_dir) { getEvalData(img_dir); }
 
+market1501Eval::~market1501Eval() { resetData(); }
+
 int market1501Eval::getEvalData(const char *img_dir) {
-  m_querys.clear();
-  m_gallerys.clear();
+  resetData();
 
   std::string root_dir = img_dir;
   std::string query_dir = root_dir + QUERY_DIR;
@@ -95,16 +99,26 @@ void market1501Eval::getPathIdPair(const int index, bool is_query, std::string *
 }
 
 void market1501Eval::insertFeature(const int index, bool is_query, const cvai_feature_t *feature) {
-  for (uint32_t i = 0; i < feature->size; ++i) {
-    if (is_query) {
-      m_querys[index].feature = *feature;
-    } else {
-      m_gallerys[index].feature = *feature;
-    }
+  if (is_query) {
+    memset(&m_querys[index].feature, 0, sizeof(cvai_feature_t));
+    CVI_AI_MemAlloc(sizeof(int8_t), feature->size, TYPE_INT8, &m_querys[index].feature);
+    memcpy(m_querys[index].feature.ptr, feature->ptr, feature->size);
+  } else {
+    memset(&m_gallerys[index].feature, 0, sizeof(cvai_feature_t));
+    CVI_AI_MemAlloc(sizeof(int8_t), feature->size, TYPE_INT8, &m_gallerys[index].feature);
+    memcpy(m_gallerys[index].feature.ptr, feature->ptr, feature->size);
   }
 }
 
 void market1501Eval::resetData() {
+  for (auto info : m_querys) {
+    CVI_AI_Free(&info.feature);
+  }
+
+  for (auto info : m_gallerys) {
+    CVI_AI_Free(&info.feature);
+  }
+
   m_querys.clear();
   m_gallerys.clear();
 }

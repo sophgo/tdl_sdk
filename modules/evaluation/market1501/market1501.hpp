@@ -16,6 +16,7 @@ typedef struct {
 class market1501Eval {
  public:
   market1501Eval(const char *fiilepath);
+  ~market1501Eval();
   int getEvalData(const char *fiilepath);
   uint32_t getImageNum(bool is_query);
   void getPathIdPair(const int index, bool is_query, std::string *path, int *cam_id, int *pid);

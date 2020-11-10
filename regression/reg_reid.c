@@ -32,6 +32,7 @@ static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
     memset(&obj, 0, sizeof(cvai_object_t));
     obj.size = 1;
     obj.info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj.size);
+    memset(obj.info, 0, sizeof(cvai_object_info_t) * obj.size);
     obj.width = rgb_frame.stVFrame.u32Width;
     obj.height = rgb_frame.stVFrame.u32Height;
     obj.info[0].bbox.x1 = 0;
