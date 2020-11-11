@@ -95,7 +95,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, con
                                               uint32_t **index);
 
 /**
- * @brief Zoom in to the largest face from the output of face detection results.
+ * @brief Zoom in to the union of faces from the output of face detection results.
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
@@ -104,7 +104,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, con
  * @param face_skip_ratio Skip the faces that are too small comparing to the area of the image.
  * Default is 0.05.
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
- * @param padding_ratio Bounding box padding ratio. Default is 0.3.
+ * @param padding_ratio Bounding box padding ratio. Default is 0.3. (0 ~ 1)
  * @param outFrame Output result image, will keep aspect ratio.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
@@ -114,7 +114,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDigitalZoom(
     VIDEO_FRAME_INFO_S *outFrame);
 
 /**
- * @brief Zoom in to the largest face from the output of object detection results.
+ * @brief Zoom in to the union of objects from the output of object detection results.
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
@@ -123,7 +123,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDigitalZoom(
  * @param obj_skip_ratio Skip the objects that are too small comparing to the area of the image.
  * Default is 0.05.
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
- * @param padding_ratio Bounding box padding ratio. Default is 0.3.
+ * @param padding_ratio Bounding box padding ratio. Default is 0.3. (0 ~ 1)
  * @param outFrame Output result image, will keep aspect ratio.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
