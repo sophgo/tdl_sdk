@@ -38,7 +38,12 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
     const float total_size = width * height;
     for (uint32_t i = 0; i < meta->size; ++i) {
       cvai_bbox_t bbox = meta->info[i].bbox;
-      const float box_size = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
+      const float &&ww = bbox.x2 - bbox.x1;
+      const float &&hh = bbox.y2 - bbox.y1;
+      if (ww < 4 || hh < 4) {
+        continue;
+      }
+      const float &&box_size = ww * hh;
       if (box_size / total_size < face_skip_ratio) {
         continue;
       }
@@ -51,6 +56,20 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
       rect.r = std::max(rect.r, x2);
       rect.t = std::min(rect.t, y1);
       rect.b = std::max(rect.b, y2);
+    }
+    if (rect.l > rect.r) {
+      std::swap(rect.l, rect.r);
+    }
+    if (std::abs(rect.l - rect.r) < 4) {
+      rect.l = 0;
+      rect.r = width;
+    }
+    if (rect.t > rect.b) {
+      std::swap(rect.t, rect.b);
+    }
+    if (std::abs(rect.t - rect.b) < 4) {
+      rect.t = 0;
+      rect.b = height;
     }
     rect.add_padding(m_padding_ratio);
     fitRatio(width, height, &rect);
