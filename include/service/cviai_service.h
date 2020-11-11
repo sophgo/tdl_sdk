@@ -104,12 +104,14 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, con
  * @param face_skip_ratio Skip the faces that are too small comparing to the area of the image.
  * Default is 0.05.
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
+ * @param padding_ratio Bounding box padding ratio. Default is 0.3.
  * @param outFrame Output result image, will keep aspect ratio.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDigitalZoom(
     cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
-    const float face_skip_ratio, const float trans_ratio, VIDEO_FRAME_INFO_S *outFrame);
+    const float face_skip_ratio, const float trans_ratio, const float padding_ratio,
+    VIDEO_FRAME_INFO_S *outFrame);
 
 /**
  * @brief Zoom in to the largest face from the output of object detection results.
@@ -121,12 +123,14 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDigitalZoom(
  * @param obj_skip_ratio Skip the objects that are too small comparing to the area of the image.
  * Default is 0.05.
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
+ * @param padding_ratio Bounding box padding ratio. Default is 0.3.
  * @param outFrame Output result image, will keep aspect ratio.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoom(
     cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta,
-    const float obj_skip_ratio, const float trans_ratio, VIDEO_FRAME_INFO_S *outFrame);
+    const float obj_skip_ratio, const float trans_ratio, const float padding_ratio,
+    VIDEO_FRAME_INFO_S *outFrame);
 
 /**
  * @brief Draw rect to YUV frame with given face meta.

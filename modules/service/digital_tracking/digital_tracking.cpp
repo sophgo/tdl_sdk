@@ -1,6 +1,8 @@
 #include "digital_tracking.hpp"
+#include "../draw_rect/draw_rect.hpp"
 #include "core/utils/vpss_helper.h"
 #include "cviai_log.hpp"
+#include "rescale_utils.hpp"
 
 #include <algorithm>
 
@@ -17,7 +19,7 @@ int DigitalTracking::setVpssEngine(VpssEngine *engine) {
 template <typename T>
 int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
                          VIDEO_FRAME_INFO_S *dstFrame, const float face_skip_ratio,
-                         const float trans_ratio) {
+                         const float trans_ratio, const float padding_ratio) {
   if (mp_vpss_inst == nullptr) {
     LOGE("vpss_inst not set.\n");
     return CVI_FAILURE;
@@ -29,15 +31,11 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
   if (0 == meta->size) {
     rect = Rect(0, width - 1, 0, height - 1);
   } else {
-    float ratio_x = float(width) / meta->width;
-    float bbox_y_height = meta->height * height / width;
-    float ratio_y = float(height) / bbox_y_height;
-    float bbox_padding_top = (meta->height - bbox_y_height) / 2;
-
     rect = Rect(width, 0, height, 0);
     const float total_size = width * height;
     for (uint32_t i = 0; i < meta->size; ++i) {
-      cvai_bbox_t bbox = meta->info[i].bbox;
+      cvai_bbox_t bbox = cviai::box_rescale(width, height, meta->width, meta->height,
+                                            meta->info[i].bbox, meta->rescale_type);
       const float &&ww = bbox.x2 - bbox.x1;
       const float &&hh = bbox.y2 - bbox.y1;
       if (ww < 4 || hh < 4) {
@@ -47,31 +45,25 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
       if (box_size / total_size < face_skip_ratio) {
         continue;
       }
-      float x1 = bbox.x1 * ratio_x;
-      float x2 = bbox.x2 * ratio_x;
-      float y1 = (bbox.y1 - bbox_padding_top) * ratio_y;
-      float y2 = (bbox.y2 - bbox_padding_top) * ratio_y;
 
-      rect.l = std::min(rect.l, x1);
-      rect.r = std::max(rect.r, x2);
-      rect.t = std::min(rect.t, y1);
-      rect.b = std::max(rect.b, y2);
-    }
-    if (rect.l > rect.r) {
-      std::swap(rect.l, rect.r);
+      rect.l = std::min(rect.l, bbox.x1);
+      rect.r = std::max(rect.r, bbox.x2);
+      rect.t = std::min(rect.t, bbox.y1);
+      rect.b = std::max(rect.b, bbox.y2);
     }
     if (std::abs(rect.l - rect.r) < 4) {
       rect.l = 0;
       rect.r = width;
-    }
-    if (rect.t > rect.b) {
-      std::swap(rect.t, rect.b);
+    } else if (rect.l > rect.r) {
+      std::swap(rect.l, rect.r);
     }
     if (std::abs(rect.t - rect.b) < 4) {
       rect.t = 0;
       rect.b = height;
+    } else if (rect.t > rect.b) {
+      std::swap(rect.t, rect.b);
     }
-    rect.add_padding(m_padding_ratio);
+    rect.add_padding(padding_ratio);
     fitRatio(width, height, &rect);
   }
 
@@ -84,13 +76,24 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
   VPSS_CHN_ATTR_S chnAttr;
   VPSS_CHN_DEFAULT_HELPER(&chnAttr, width, height, srcFrame->stVFrame.enPixelFormat, true);
   VPSS_CROP_INFO_S cropAttr;
+#ifdef DT_DEBUG
+  cropAttr.bEnable = false;
+#else
   cropAttr.bEnable = true;
+#endif
   cropAttr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
   cropAttr.stCropRect = {(int)rect.l, (int)rect.t, (uint32_t)(rect.r - rect.l),
                          (uint32_t)(rect.b - rect.t)};
   mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, 1);
   mp_vpss_inst->getFrame(dstFrame, 0);
-
+#ifdef DT_DEBUG
+  color_rgb rgb_color;
+  rgb_color.r = DEFAULT_RECT_COLOR_R;
+  rgb_color.g = DEFAULT_RECT_COLOR_G;
+  rgb_color.b = DEFAULT_RECT_COLOR_B;
+  cviai::service::DrawRect(dstFrame, rect.l, rect.r, rect.t, rect.b, "", rgb_color,
+                           DEFAULT_RECT_THINKNESS, false);
+#endif
   m_prev_rect = rect;
   return CVI_SUCCESS;
 }
@@ -105,9 +108,7 @@ void DigitalTracking::transformRect(const float trans_ratio, const Rect &prev_re
 
 void DigitalTracking::fitRatio(const float width, const float height, Rect *rect) {
   float origin_ratio = (double)height / width;
-  float curr_ratio = (rect->b - rect->t) / (rect->r - rect->l);
-
-  if (curr_ratio > origin_ratio) {
+  if ((rect->b - rect->t) > (rect->r - rect->l)) {
     float new_w = (rect->b - rect->t) / origin_ratio;
     float w_centor = (rect->l + rect->r) / 2;
     rect->l = w_centor - new_w / 2;
@@ -148,12 +149,10 @@ void DigitalTracking::fitFrame(const float width, const float height, Rect *rect
 template int DigitalTracking::run<cvai_face_t>(const VIDEO_FRAME_INFO_S *srcFrame,
                                                const cvai_face_t *meta,
                                                VIDEO_FRAME_INFO_S *dstFrame,
-                                               const float face_skip_ratio,
-                                               const float trans_ratio);
-template int DigitalTracking::run<cvai_object_t>(const VIDEO_FRAME_INFO_S *srcFrame,
-                                                 const cvai_object_t *meta,
-                                                 VIDEO_FRAME_INFO_S *dstFrame,
-                                                 const float face_skip_ratio,
-                                                 const float trans_ratio);
+                                               const float face_skip_ratio, const float trans_ratio,
+                                               const float padding_ratio);
+template int DigitalTracking::run<cvai_object_t>(
+    const VIDEO_FRAME_INFO_S *srcFrame, const cvai_object_t *meta, VIDEO_FRAME_INFO_S *dstFrame,
+    const float face_skip_ratio, const float trans_ratio, const float padding_ratio);
 }  // namespace service
 }  // namespace cviai

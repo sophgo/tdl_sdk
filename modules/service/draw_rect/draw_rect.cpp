@@ -9,19 +9,8 @@
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
 #define max(x, y) (((x) >= (y)) ? (x) : (y))
 
-#define DEFAULT_RECT_COLOR_R (53. / 255.)
-#define DEFAULT_RECT_COLOR_G (208. / 255.)
-#define DEFAULT_RECT_COLOR_B (217. / 255.)
-#define DEFAULT_RECT_THINKNESS 4
-
 namespace cviai {
 namespace service {
-
-typedef struct {
-  float r;
-  float g;
-  float b;
-} color_rgb;
 
 enum { PLANE_Y = 0, PLANE_U, PLANE_V, PLANE_NUM };
 
@@ -43,8 +32,8 @@ static float GetYuvColor(int chanel, color_rgb *color) {
 }
 
 // TODO: Need refactor
-static void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
-                     const char *name, color_rgb color, int rect_thinkness, const bool draw_text) {
+void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2, const char *name,
+              color_rgb color, int rect_thinkness, const bool draw_text) {
   std::string name_str = name;
   int width = frame->stVFrame.u32Width;
   int height = frame->stVFrame.u32Height;
