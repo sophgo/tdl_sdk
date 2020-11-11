@@ -141,4 +141,15 @@ featurePtrConvert2Float(cvai_feature_t *feature, float *output) {
   return;
 }
 
+inline void __attribute__((always_inline)) floatToBF16(float *input, uint16_t *output) {
+  union {
+    float a;
+    uint16_t b[2];
+  } bfb;
+
+  bfb.a = (*input);
+  bfb.b[0] = 0;
+  (*output) = bfb.b[1];
+}
+
 #endif  // End of _CVIAI_TYPES_MEM_INTERNAL_H_

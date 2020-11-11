@@ -1,5 +1,6 @@
 #include "es_classification.hpp"
 #include "core/cviai_types_mem.h"
+#include "core/cviai_types_mem_internal.h"
 #include "opencv2/opencv.hpp"
 
 #define N_FFT 1024
@@ -35,7 +36,16 @@ int ESClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   cv::Mat_<float> mag = STFT(&image);
   mag = cv::abs(mag);
   CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
-  memcpy((float *)CVI_NN_TensorPtr(input), (float *)mag.data, CVI_NN_TensorSize(input));
+
+  uint16_t *input_ptr = (uint16_t *)CVI_NN_TensorPtr(input);
+  for (int r = 0; r < mag.rows; ++r) {
+    for (int c = 0; c < mag.cols; ++c) {
+      uint16_t bf16_input = 0;
+      floatToBF16((float *)mag.ptr(r, c), &bf16_input);
+      memcpy(input_ptr + mag.cols * r + c, &bf16_input, sizeof(uint16_t));
+    }
+  }
+
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
   run(frames);
 
