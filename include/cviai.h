@@ -6,7 +6,6 @@
 #include "core/cviai_media.h"
 #include "core/cviai_utils.h"
 #include "evaluation/cviai_evaluation.h"
-#include "service/cviai_frservice.h"
-#include "service/cviai_objservice.h"
+#include "service/cviai_service.h"
 
 #endif

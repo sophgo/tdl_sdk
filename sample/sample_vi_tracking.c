@@ -124,9 +124,9 @@ int main(int argc, char *argv[]) {
   //****************************************************************
 
   cviai_handle_t facelib_handle = NULL;
-  cviai_objservice_handle_t obj_handle = NULL;
+  cviai_service_handle_t obj_handle = NULL;
   int ret = CVI_AI_CreateHandle2(&facelib_handle, 1);
-  ret |= CVI_AI_OBJService_CreateHandle(&obj_handle, facelib_handle);
+  ret |= CVI_AI_Service_CreateHandle(&obj_handle, facelib_handle);
   ret = CVI_AI_SetModelPath(facelib_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
   if (ret != CVI_SUCCESS) {
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
   pts.y[0] = 0;
   pts.x[1] = 640;
   pts.y[1] = 719;
-  CVI_AI_OBJService_SetIntersect(obj_handle, &pts);
+  CVI_AI_Service_SetIntersect(obj_handle, &pts);
 
   VIDEO_FRAME_INFO_S stFrame, stVOFrame;
   cvai_object_t obj_meta;
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
     // Step 3. Tracker.
     CVI_AI_Deepsort(facelib_handle, &obj_meta, &tracker_meta);
     // Step 4. Detect intersection.
-    CVI_AI_OBJService_DetectIntersect(obj_handle, &stFrame, &obj_meta, &status);
+    CVI_AI_Service_ObjectDetectIntersect(obj_handle, &stFrame, &obj_meta, &status);
     // Step 5. printf results.
     for (uint32_t i = 0; i < obj_meta.size; i++) {
       printf("[%u][%" PRIu64 "] %s object state = %u, intersection = %u.\n", i,
@@ -201,7 +201,7 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_OBJService_DrawRect(&obj_meta, &stVOFrame, true);
+      CVI_AI_Service_ObjectDrawRect(&obj_meta, &stVOFrame, true);
       s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);
       if (s32Ret != CVI_SUCCESS) {
         printf("CVI_VO_SendFrame failed with %#x\n", s32Ret);
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
   }
 
   CVI_AI_Free(&pts);
-  CVI_AI_OBJService_DestroyHandle(obj_handle);
+  CVI_AI_Service_DestroyHandle(obj_handle);
   CVI_AI_DestroyHandle(facelib_handle);
 
   // Exit vpss stuffs

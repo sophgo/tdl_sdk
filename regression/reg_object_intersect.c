@@ -35,8 +35,8 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   // Init cviai fr service handle.
-  cviai_objservice_handle_t obj_handle = NULL;
-  ret = CVI_AI_OBJService_CreateHandle(&obj_handle, ai_handle);
+  cviai_service_handle_t obj_handle = NULL;
+  ret = CVI_AI_Service_CreateHandle(&obj_handle, ai_handle);
   if (ret != CVI_SUCCESS) {
     printf("Create obj service handle failed with %#x!\n", ret);
     return ret;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   pts.y[1] = 0;
   pts.x[2] = 0;
   pts.y[2] = 6;
-  CVI_AI_OBJService_SetIntersect(obj_handle, &pts);
+  CVI_AI_Service_SetIntersect(obj_handle, &pts);
   CVI_AI_Free(&pts);
   // Setup fake paths
 
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
       obj1.info[j].bbox.y2 = y[j][i];
     }
     cvai_area_detect_e *status = NULL;
-    CVI_AI_OBJService_DetectIntersect(obj_handle, &frame, &obj1, &status);
+    CVI_AI_Service_ObjectDetectIntersect(obj_handle, &frame, &obj1, &status);
     for (uint32_t j = 0; j < input_length; j++) {
       printf("[frame %u][id %lu](%f, %f) status %u \n", i,
              (long unsigned int)obj1.info[j].unique_id, obj1.info[j].bbox.x1, obj1.info[j].bbox.y1,
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
   pts.y[0] = 3;
   pts.x[1] = 3;
   pts.y[1] = 8;
-  CVI_AI_OBJService_SetIntersect(obj_handle, &pts);
+  CVI_AI_Service_SetIntersect(obj_handle, &pts);
   CVI_AI_Free(&pts);
   // Setup fake paths
   obj1.info[0].unique_id = 12984014844833;
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
       obj1.info[j].bbox.y2 = y[j][i];
     }
     cvai_area_detect_e *status = NULL;
-    CVI_AI_OBJService_DetectIntersect(obj_handle, &frame, &obj1, &status);
+    CVI_AI_Service_ObjectDetectIntersect(obj_handle, &frame, &obj1, &status);
     for (uint32_t j = 0; j < input_length; j++) {
       printf("[frame %u][id %lu](%f, %f) status %u \n", i,
              (long unsigned int)obj1.info[j].unique_id, obj1.info[j].bbox.x1, obj1.info[j].bbox.y1,
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
     free(status);
   }
 
-  CVI_AI_OBJService_DestroyHandle(obj_handle);
+  CVI_AI_Service_DestroyHandle(obj_handle);
   CVI_AI_DestroyHandle(ai_handle);
   return ret;
 }

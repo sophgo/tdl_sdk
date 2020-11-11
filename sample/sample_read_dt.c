@@ -42,8 +42,8 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   // Init cviai fr service handle.
-  cviai_frservice_handle_t frs_handle = NULL;
-  ret = CVI_AI_FRService_CreateHandle(&frs_handle, ai_handle);
+  cviai_service_handle_t frs_handle = NULL;
+  ret = CVI_AI_Service_CreateHandle(&frs_handle, ai_handle);
   if (ret != CVI_SUCCESS) {
     printf("Create fr service handle failed with %#x!\n", ret);
     return ret;
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
   VIDEO_FRAME_INFO_S outFrame;
   // Try to zoom in with 20 runs.
   for (uint32_t i = 0; i < 20; i++) {
-    ret = CVI_AI_FRService_DigitalZoom(frs_handle, &fdFrame, &face, 0.05f, 0.1f, &outFrame);
+    ret = CVI_AI_Service_FaceDigitalZoom(frs_handle, &fdFrame, &face, 0.05f, 0.1f, &outFrame);
 
     // Free frame from digital zoom
     if (ret == CVI_SUCCESS) {
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 
   // Free image and handles.
   CVI_SYS_FreeI(ive_handle, &image);
-  CVI_AI_FRService_DestroyHandle(frs_handle);
+  CVI_AI_Service_DestroyHandle(frs_handle);
   CVI_AI_DestroyHandle(ai_handle);
   CVI_IVE_DestroyHandle(ive_handle);
   return ret;

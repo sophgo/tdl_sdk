@@ -10,14 +10,12 @@ cviai.h
 # Static library
 libcviai_core-static.a
 libcviai_evaluation-static.a
-libcviai_frservice-static.a
-libcviai_objservice-static.a
+libcviai_service-static.a
 
 # Dynamic library
 libcviai_core.so
 libcviai_evaluation.so
-libcviai_frservice.so
-libcviai_objservice.so
+libcviai_service.so
 ```
 
 Include the headers in your ``*.cpp`` file.
@@ -33,12 +31,11 @@ int main(void) {
 
 Link the libraries to your binary.
 
-| Function            | Linked libraries                         |
-|---------------------|------------------------------------------|
-| CVI_AI_*            | libcviai_core.so                         |
-| CVI_AI_FRService_*  | libcviai_core.so, libcviai_frservice.so  |
-| CVI_AI_OBJService_* | libcviai_core.so, libcviai_objservice.so |
-| CVI_AI_Eval_*       | libcviai_evaluation.so                   |
+| Function            | Linked libraries                      |
+|---------------------|---------------------------------------|
+| CVI_AI_*            | libcviai_core.so                      |
+| CVI_AI_Service_*    | libcviai_core.so, libcviai_service.so |
+| CVI_AI_Eval_*       | libcviai_evaluation.so                |
 
 THe following snippet is a cmake example.
 

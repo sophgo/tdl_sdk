@@ -5,8 +5,7 @@
     #include "perfetto.h"
     PERFETTO_DEFINE_CATEGORIES(
         perfetto::Category("cviai_core").SetDescription("Events from cviai_core"),
-        perfetto::Category("cviai_frservice").SetDescription("Events from cviai_frservice"),
-        perfetto::Category("cviai_objservice").SetDescription("Events from cviai_objservice"));
+        perfetto::Category("cviai_service").SetDescription("Events from cviai_service"));
   #else
     #error "Perfetto only supports GCC version >= 7."
   #endif
