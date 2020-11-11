@@ -91,7 +91,8 @@ CVI_S32 CVI_AI_Service_FaceDigitalZoom(cviai_service_handle_t handle,
   }
 
   ctx->m_dt->setVpssEngine(CVI_AI_GetVpssEngine(ctx->ai_handle, 0));
-  return ctx->m_dt->run(inFrame, meta, outFrame, face_skip_ratio, trans_ratio, padding_ratio);
+  return ctx->m_dt->run(inFrame, meta, outFrame, padding_ratio, padding_ratio, padding_ratio,
+                        padding_ratio, face_skip_ratio, trans_ratio);
 }
 
 CVI_S32 CVI_AI_Service_ObjectDigitalZoom(cviai_service_handle_t handle,
@@ -105,7 +106,25 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoom(cviai_service_handle_t handle,
   }
 
   ctx->m_dt->setVpssEngine(CVI_AI_GetVpssEngine(ctx->ai_handle, 0));
-  return ctx->m_dt->run(inFrame, meta, outFrame, obj_skip_ratio, trans_ratio, padding_ratio);
+  return ctx->m_dt->run(inFrame, meta, outFrame, padding_ratio, padding_ratio, padding_ratio,
+                        padding_ratio, obj_skip_ratio, trans_ratio);
+}
+
+CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
+                                            const VIDEO_FRAME_INFO_S *inFrame,
+                                            const cvai_object_t *meta, const float obj_skip_ratio,
+                                            const float trans_ratio, const float pad_ratio_left,
+                                            const float pad_ratio_right, const float pad_ratio_top,
+                                            const float pad_ratio_bottom,
+                                            VIDEO_FRAME_INFO_S *outFrame) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_dt == nullptr) {
+    ctx->m_dt = new cviai::service::DigitalTracking();
+  }
+
+  ctx->m_dt->setVpssEngine(CVI_AI_GetVpssEngine(ctx->ai_handle, 0));
+  return ctx->m_dt->run(inFrame, meta, outFrame, pad_ratio_left, pad_ratio_right, pad_ratio_top,
+                        pad_ratio_bottom, obj_skip_ratio, trans_ratio);
 }
 
 CVI_S32 CVI_AI_Service_FaceDrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,

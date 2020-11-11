@@ -133,6 +133,29 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoom(
     VIDEO_FRAME_INFO_S *outFrame);
 
 /**
+ * @brief Zoom in to the union of objects from the output of object detection results.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param inFrame Input frame.
+ * @param meta THe result from face detection.
+ * @param obj_skip_ratio Skip the objects that are too small comparing to the area of the image.
+ * Default is 0.05.
+ * @param trans_ratio Change to zoom in ratio. Default is 0.1.
+ * @param pad_ratio_left Left bounding box padding ratio. Default is 0.3. (-1 ~ 1)
+ * @param pad_ratio_right Right bounding box padding ratio. Default is 0.3. (-1 ~ 1)
+ * @param pad_ratio_top Top bounding box padding ratio. Default is 0.3. (-1 ~ 1)
+ * @param pad_ratio_bottom Bottom bounding box padding ratio. Default is 0.3. (-1 ~ 1)
+ * @param outFrame Output result image, will keep aspect ratio.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
+    cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta,
+    const float obj_skip_ratio, const float trans_ratio, const float pad_ratio_left,
+    const float pad_ratio_right, const float pad_ratio_top, const float pad_ratio_bottom,
+    VIDEO_FRAME_INFO_S *outFrame);
+
+/**
  * @brief Draw rect to YUV frame with given face meta.
  * @ingroup core_cviaiservice
  *

@@ -20,6 +20,14 @@ struct Rect {
     t -= h;
     b += h;
   }
+  void add_padding(float ratio_l, float ratio_r, float ratio_t, float ratio_b) {
+    float w = std::abs(r - l);
+    float h = std::abs(t - b);
+    l -= w * ratio_l;
+    r += w * ratio_r;
+    t -= h * ratio_t;
+    b += h * ratio_b;
+  }
 
   bool is_valid() { return (l != -1); }
 
@@ -34,8 +42,9 @@ class DigitalTracking {
   int setVpssEngine(VpssEngine *engine);
   template <typename T>
   int run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta, VIDEO_FRAME_INFO_S *dstFrame,
-          const float face_skip_ratio = 0.05f, const float trans_ratio = 0.1f,
-          const float padding_ratio = 0.3f);
+          const float pad_l = 0.3f, const float pad_r = 0.3f, const float pad_t = 0.3f,
+          const float pad_b = 0.3f, const float face_skip_ratio = 0.05f,
+          const float trans_ratio = 0.1f);
 
  private:
   inline void transformRect(const float trans_ratio, const Rect &prev_rect, Rect *curr_rect);

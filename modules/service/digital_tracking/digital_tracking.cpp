@@ -18,8 +18,9 @@ int DigitalTracking::setVpssEngine(VpssEngine *engine) {
 
 template <typename T>
 int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
-                         VIDEO_FRAME_INFO_S *dstFrame, const float face_skip_ratio,
-                         const float trans_ratio, const float padding_ratio) {
+                         VIDEO_FRAME_INFO_S *dstFrame, const float pad_l, const float pad_r,
+                         const float pad_t, const float pad_b, const float face_skip_ratio,
+                         const float trans_ratio) {
   if (mp_vpss_inst == nullptr) {
     LOGE("vpss_inst not set.\n");
     return CVI_FAILURE;
@@ -63,7 +64,7 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
     } else if (rect.t > rect.b) {
       std::swap(rect.t, rect.b);
     }
-    rect.add_padding(padding_ratio);
+    rect.add_padding(pad_l, pad_r, pad_t, pad_b);
     fitRatio(width, height, &rect);
   }
 
@@ -148,11 +149,15 @@ void DigitalTracking::fitFrame(const float width, const float height, Rect *rect
 
 template int DigitalTracking::run<cvai_face_t>(const VIDEO_FRAME_INFO_S *srcFrame,
                                                const cvai_face_t *meta,
-                                               VIDEO_FRAME_INFO_S *dstFrame,
-                                               const float face_skip_ratio, const float trans_ratio,
-                                               const float padding_ratio);
-template int DigitalTracking::run<cvai_object_t>(
-    const VIDEO_FRAME_INFO_S *srcFrame, const cvai_object_t *meta, VIDEO_FRAME_INFO_S *dstFrame,
-    const float face_skip_ratio, const float trans_ratio, const float padding_ratio);
+                                               VIDEO_FRAME_INFO_S *dstFrame, const float pad_l,
+                                               const float pad_r, const float pad_t,
+                                               const float pad_b, const float face_skip_ratio,
+                                               const float trans_ratio);
+template int DigitalTracking::run<cvai_object_t>(const VIDEO_FRAME_INFO_S *srcFrame,
+                                                 const cvai_object_t *meta,
+                                                 VIDEO_FRAME_INFO_S *dstFrame, const float pad_l,
+                                                 const float pad_r, const float pad_t,
+                                                 const float pad_b, const float face_skip_ratio,
+                                                 const float trans_ratio);
 }  // namespace service
 }  // namespace cviai
