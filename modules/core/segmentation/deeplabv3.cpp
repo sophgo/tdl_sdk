@@ -104,10 +104,13 @@ int Deeplabv3::outputParser() {
       for (int32_t w = 0; w < output_shape.dim[3]; ++w) {
         if (out[size_offset + width_offset + w] > max_prob[width_offset + w]) {
           m_label_frame.stVFrame.pu8VirAddr[0][width_offset + w] = (int8_t)c;
+          max_prob[width_offset + w] = out[size_offset + width_offset + w];
         }
       }
     }
   }
+
+  free(max_prob);
 
   return CVI_SUCCESS;
 }
