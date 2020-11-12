@@ -16,6 +16,7 @@
 #include "object_detection/yolov3/yolov3.hpp"
 #include "osnet/osnet.hpp"
 #include "retina_face/retina_face.hpp"
+#include "segmentation/deeplabv3.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
 
 #include <stdio.h>
@@ -482,6 +483,20 @@ CVI_S32 CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S 
     return CVI_FAILURE;
   }
   return es_classification->inference(frame, index);
+}
+
+// Segmentation
+
+CVI_S32 CVI_AI_DeeplabV3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                         VIDEO_FRAME_INFO_S *out_frame) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeeplabV3");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Deeplabv3 *deeplab = getInferenceInstance<Deeplabv3>(CVI_AI_SUPPORTED_MODEL_DEEPLABV3, ctx);
+  if (deeplab == nullptr) {
+    LOGE("No instance found for Deeplabv3.\n");
+    return CVI_FAILURE;
+  }
+  return deeplab->inference(frame, out_frame);
 }
 
 // Tracker

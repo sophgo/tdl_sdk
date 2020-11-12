@@ -122,6 +122,7 @@ typedef enum {
   CVI_AI_SUPPORTED_MODEL_YOLOV3,
   CVI_AI_SUPPORTED_MODEL_OSNET,
   CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION,
+  CVI_AI_SUPPORTED_MODEL_DEEPLABV3,
   CVI_AI_SUPPORTED_MODEL_END
 } CVI_AI_SUPPORTED_MODEL_E;
 
@@ -608,6 +609,24 @@ DLL_EXPORT CVI_S32 CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj,
                                    cvai_tracker_t *tracker_t);
 
+/**@}*/
+
+/**
+ * \addtogroup core_segmentation Segmentation Inference
+ * \ingroup core_ai
+ */
+/**@{*/
+
+/**
+ * @brief Deeplabv3 segmentation.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param out_frame Output frame which each pixel represents class label.
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_DeeplabV3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                    VIDEO_FRAME_INFO_S *out_frame);
 /**@}*/
 
 /**
