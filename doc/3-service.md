@@ -32,17 +32,23 @@ CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const uint8_t 
 
 Digital Zoom is an effect tool that zooms in to the largest detected bounding box in a frame. Users can create zoom-in effect easily with this tool.
 
-``face_skip_ratio`` or ``obj_skip_ratio`` is a threshold that skips the bounding box area smaller than the ``image_size * face_skip_ratio``. ``trans_ratio`` is a value that controls the zoom-in speed. The recommended initial value for these two parameters are ``0.05f`` and ``0.1f``.
+``face_skip_ratio`` or ``obj_skip_ratio`` is a threshold that skips the bounding box area smaller than the ``image_size * face_skip_ratio``. ``trans_ratio`` is a value that controls the zoom-in speed. The recommended initial value for these two parameters are ``0.05f`` and ``0.1f``. The ``padding_ratio`` pads the final union area before zoom if set.
 
 ```c
 CVI_S32 CVI_AI_Service_FaceDigitalZoom(cviai_service_handle_t handle,
-                                       const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
-                                       const float face_skip_ratio, const float trans_ratio,
+                                       const VIDEO_FRAME_INFO_S *inFrame,
+                                       const cvai_face_t *meta,
+                                       const float face_skip_ratio,
+                                       const float trans_ratio,
+                                       const float padding_ratio,
                                        VIDEO_FRAME_INFO_S *outFrame);
 
 CVI_S32 CVI_AI_Service_ObjectDigitalZoom(cviai_service_handle_t handle,
-                                         const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta,
-                                         const float obj_skip_ratio, const float trans_ratio,
+                                         const VIDEO_FRAME_INFO_S *inFrame,
+                                         const cvai_object_t *meta,
+                                         const float obj_skip_ratio,
+                                         const float trans_ratio,
+                                         const float padding_ratio,
                                          VIDEO_FRAME_INFO_S *outFrame);
 ```
 
