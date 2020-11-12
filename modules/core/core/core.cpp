@@ -6,39 +6,42 @@ namespace cviai {
 
 int Core::modelOpen(const char *filepath) {
   TRACE_EVENT("cviai_core", "Core::modelOpen");
-  if (!mp_config) {
+  if (!mp_mi) {
     LOGE("config not set\n");
     return CVI_FAILURE;
   }
-  CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_model_handle);
+
+  CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_mi->handle);
   if (ret != CVI_RC_SUCCESS) {
     LOGE("CVI_NN_RegisterModel failed, err %d\n", ret);
     modelClose();
     return CVI_FAILURE;
   }
   LOGI("CVI_NN_RegisterModel successed\n");
-  if (mp_config->batch_size != 0) {
-    CVI_NN_SetConfig(mp_model_handle, OPTION_BATCH_SIZE, mp_config->batch_size);
-  }
-  CVI_NN_SetConfig(mp_model_handle, OPTION_OUTPUT_ALL_TENSORS,
-                   static_cast<int>(mp_config->debug_mode));
-  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_PREPROCESS, static_cast<int>(true));
-  CVI_NN_SetConfig(mp_model_handle, OPTION_SKIP_POSTPROCESS,
-                   static_cast<int>(mp_config->skip_postprocess));
 
-  ret = CVI_NN_GetInputOutputTensors(mp_model_handle, &mp_input_tensors, &m_input_num,
-                                     &mp_output_tensors, &m_output_num);
+  if (mp_mi->conf.batch_size != 0) {
+    CVI_NN_SetConfig(mp_mi->handle, OPTION_BATCH_SIZE, mp_mi->conf.batch_size);
+  }
+  CVI_NN_SetConfig(mp_mi->handle, OPTION_OUTPUT_ALL_TENSORS,
+                   static_cast<int>(mp_mi->conf.debug_mode));
+  CVI_NN_SetConfig(mp_mi->handle, OPTION_SKIP_PREPROCESS, static_cast<int>(true));
+  CVI_NN_SetConfig(mp_mi->handle, OPTION_SKIP_POSTPROCESS,
+                   static_cast<int>(mp_mi->conf.skip_postprocess));
+
+  ret = CVI_NN_GetInputOutputTensors(mp_mi->handle, &mp_mi->in.tensors, &mp_mi->in.num,
+                                     &mp_mi->out.tensors, &mp_mi->out.num);
   if (ret != CVI_RC_SUCCESS) {
     LOGE("CVI_NN_GetINputsOutputs failed\n");
     modelClose();
     return CVI_FAILURE;
   }
   TRACE_EVENT_BEGIN("cviai_core", "InitAtferModelOpened");
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   // Assigning default values.
-  std::vector<initSetup> data(m_input_num);
-  for (uint32_t i = 0; i < (uint32_t)m_input_num; i++) {
-    CVI_TENSOR *tensor = mp_input_tensors + i;
+  std::vector<initSetup> data(mp_mi->in.num);
+  for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
+    CVI_TENSOR *tensor = mp_mi->in.tensors + i;
     float quant_scale = CVI_NN_TensorQuantScale(tensor);
     data[i].use_quantize_scale = quant_scale == 0 ? false : true;
   }
@@ -49,9 +52,9 @@ int Core::modelOpen(const char *filepath) {
     return CVI_FAILURE;
   }
   m_vpss_config.clear();
-  for (uint32_t i = 0; i < (uint32_t)m_input_num; i++) {
+  for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     if (data[i].use_quantize_scale) {
-      CVI_TENSOR *tensor = mp_input_tensors + i;
+      CVI_TENSOR *tensor = mp_mi->in.tensors + i;
       float quant_scale = CVI_NN_TensorQuantScale(tensor);
       for (uint32_t j = 0; j < 3; j++) {
         data[i].factor[j] *= quant_scale;
@@ -96,28 +99,28 @@ int Core::modelOpen(const char *filepath) {
 
 int Core::modelClose() {
   TRACE_EVENT("cviai_core", "Core::modelClose");
-  if (mp_model_handle != nullptr) {
-    if (int ret = CVI_NN_CleanupModel(mp_model_handle) != CVI_RC_SUCCESS) {  // NOLINT
+  if (mp_mi->handle != nullptr) {
+    if (int ret = CVI_NN_CleanupModel(mp_mi->handle) != CVI_RC_SUCCESS) {  // NOLINT
       LOGE("CVI_NN_CleanupModel failed, err %d\n", ret);
       return CVI_FAILURE;
     }
-    mp_model_handle = nullptr;
+    mp_mi->handle = nullptr;
   }
   return CVI_SUCCESS;
 }
 
 CVI_TENSOR *Core::getInputTensor(int idx) {
-  if (idx >= m_input_num) {
+  if (idx >= mp_mi->in.num) {
     return NULL;
   }
-  return mp_input_tensors + idx;
+  return mp_mi->in.tensors + idx;
 }
 
 CVI_TENSOR *Core::getOutputTensor(int idx) {
-  if (idx >= m_output_num) {
+  if (idx >= mp_mi->out.num) {
     return NULL;
   }
-  return mp_output_tensors + idx;
+  return mp_mi->out.tensors + idx;
 }
 
 int Core::setIveInstance(IVE_HANDLE handle) {
@@ -138,7 +141,7 @@ int Core::getChnAttribute(const uint32_t width, const uint32_t height, const uin
     LOGE("This model does not support exporting channel attributes.\n");
     return CVI_FAILURE;
   }
-  if (idx >= (uint32_t)m_input_num) {
+  if (idx >= (uint32_t)mp_mi->in.num) {
     LOGE("Input index exceed input tensor num.\n");
     return CVI_FAILURE;
   }
@@ -150,7 +153,7 @@ int Core::getChnAttribute(const uint32_t width, const uint32_t height, const uin
       *attr = m_vpss_config[idx].chn_attr;
     } break;
     case RESCALE_RB: {
-      CVI_TENSOR *input = mp_input_tensors + idx;
+      CVI_TENSOR *input = mp_mi->in.tensors + idx;
       auto &factor = m_vpss_config[idx].chn_attr.stNormalize.factor;
       auto &mean = m_vpss_config[idx].chn_attr.stNormalize.mean;
       VPSS_CHN_SQ_RB_HELPER(attr, width, height, input->shape.dim[3], input->shape.dim[2],
@@ -167,7 +170,7 @@ int Core::getChnAttribute(const uint32_t width, const uint32_t height, const uin
 
 void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
 float Core::getModelThreshold() { return m_model_threshold; };
-bool Core::isInitialized() { return mp_model_handle == nullptr ? false : true; }
+bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
 
 int Core::initAfterModelOpened(std::vector<initSetup> *data) { return CVI_SUCCESS; }
 
@@ -190,7 +193,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   TRACE_EVENT("cviai_core", "Core::run");
   int ret = CVI_SUCCESS;
   std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
-  if (mp_config->input_mem_type == CVI_MEM_DEVICE) {
+  if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
     if (m_skip_vpss_preprocess) {
       ret |= registerFrame2Tensor(frames);
     } else {
@@ -207,8 +210,8 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       ret |= registerFrame2Tensor(dstFrames);
     }
   }
-  if (int rcret = CVI_NN_Forward(mp_model_handle, mp_input_tensors, m_input_num,  // NOLINT
-                                 mp_output_tensors, m_output_num) != CVI_RC_SUCCESS) {
+  if (int rcret = CVI_NN_Forward(mp_mi->handle, mp_mi->in.tensors, mp_mi->in.num,  // NOLINT
+                                 mp_mi->out.tensors, mp_mi->out.num) != CVI_RC_SUCCESS) {
     LOGE("NN forward failed: %d\n", rcret);
     ret |= CVI_FAILURE;
   }
@@ -233,10 +236,10 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
     }
   }
   if (int ret =
-          CVI_NN_FeedTensorWithFrames(
-              mp_model_handle, mp_input_tensors, m_vpss_config[0].frame_type, CVI_FMT_INT8,
-              paddrs.size(), paddrs.data(), frames[0]->stVFrame.u32Height,
-              frames[0]->stVFrame.u32Width, frames[0]->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
+          CVI_NN_FeedTensorWithFrames(mp_mi->handle, mp_mi->in.tensors, m_vpss_config[0].frame_type,
+                                      CVI_FMT_INT8, paddrs.size(), paddrs.data(),
+                                      frames[0]->stVFrame.u32Height, frames[0]->stVFrame.u32Width,
+                                      frames[0]->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
     LOGE("NN set tensor with vi failed: %d\n", ret);
     return CVI_FAILURE;
   }

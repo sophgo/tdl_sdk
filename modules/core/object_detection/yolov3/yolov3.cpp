@@ -17,8 +17,8 @@ using namespace std;
 namespace cviai {
 
 Yolov3::Yolov3() {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 
   m_det_buf_size = YOLOV3_DEFAULT_DET_BUFFER;
 
@@ -65,9 +65,9 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
   vector<float *> features;
   vector<string> output_name = {YOLOV3_OUTPUT1, YOLOV3_OUTPUT2, YOLOV3_OUTPUT3};
   vector<CVI_SHAPE> output_shape;
-  for (int i = 0; i < m_output_num; i++) {
+  for (int i = 0; i < mp_mi->out.num; i++) {
     CVI_TENSOR *out =
-        CVI_NN_GetTensorByName(output_name[i].c_str(), mp_output_tensors, m_output_num);
+        CVI_NN_GetTensorByName(output_name[i].c_str(), mp_mi->out.tensors, mp_mi->out.num);
     output_shape.push_back(CVI_NN_TensorShape(out));
     features.push_back((float *)CVI_NN_TensorPtr(out));
   }

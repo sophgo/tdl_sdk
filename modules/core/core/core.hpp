@@ -12,20 +12,24 @@
 
 namespace cviai {
 
-/*
- * OPTION_BATCH_SIZE               = 1,
- * OPTION_PREPARE_BUF_FOR_INPUTS   = 2,  // Deprecated
- * OPTION_PREPARE_BUF_FOR_OUTPUTS  = 3,  // Deprecated
- * OPTION_OUTPUT_ALL_TENSORS       = 4,
- * OPTION_SKIP_PREPROCESS          = 5,
- * OPTION_SKIP_POSTPROCESS         = 6,
- */
-struct ModelConfig {
+struct CvimodelConfig {
   // FIXME: something strange...
   int32_t batch_size = 0;
   bool debug_mode = false;
   bool skip_postprocess = false;
   int input_mem_type = 1;
+};
+
+struct CvimodelPair {
+  CVI_TENSOR *tensors = nullptr;
+  int32_t num = 0;
+};
+
+struct CvimodelInfo {
+  CvimodelConfig conf;
+  CVI_MODEL_HANDLE handle = nullptr;
+  CvimodelPair in;
+  CvimodelPair out;
 };
 
 struct initSetup {
@@ -67,21 +71,18 @@ class Core {
   CVI_TENSOR *getInputTensor(int idx);
   CVI_TENSOR *getOutputTensor(int idx);
 
-  // Class settings
-  std::unique_ptr<ModelConfig> mp_config;
-  // cvimodel related
-  CVI_TENSOR *mp_input_tensors = nullptr;
-  CVI_TENSOR *mp_output_tensors = nullptr;
-  int32_t m_input_num = 0;
-  int32_t m_output_num = 0;
-  // Preprocessing & post processing related
+  // Preprocessing related control
   bool m_skip_vpss_preprocess = false;
   bool m_export_chn_attr = false;
-  float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
   std::vector<VPSSConfig> m_vpss_config;
 
-  // Handle
-  CVI_MODEL_HANDLE mp_model_handle = nullptr;
+  // Cvimodel related
+  std::unique_ptr<CvimodelInfo> mp_mi;
+
+  // Post processing related control
+  float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
+
+  // External handle
   IVE_HANDLE ive_handle = NULL;
   VpssEngine *mp_vpss_inst = nullptr;
 

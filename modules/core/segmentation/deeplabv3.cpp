@@ -14,8 +14,8 @@
 namespace cviai {
 
 Deeplabv3::Deeplabv3() {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 }
 
 Deeplabv3::~Deeplabv3() {
@@ -41,7 +41,8 @@ int Deeplabv3::initAfterModelOpened(std::vector<initSetup> *data) {
   (*data)[0].keep_aspect_ratio = false;
   m_export_chn_attr = true;
 
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_label_frame, input->shape.dim[3], input->shape.dim[2],
                             PIXEL_FORMAT_UINT8_C1) != CVI_SUCCESS) {
     return -1;
@@ -88,7 +89,7 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
 }
 
 int Deeplabv3::outputParser() {
-  CVI_TENSOR *tensor = CVI_NN_GetTensorByName(NAME_SCORE, mp_output_tensors, m_output_num);
+  CVI_TENSOR *tensor = CVI_NN_GetTensorByName(NAME_SCORE, mp_mi->out.tensors, mp_mi->out.num);
   float *out = (float *)CVI_NN_TensorPtr(tensor);
   CVI_SHAPE output_shape = CVI_NN_TensorShape(tensor);
   int size = output_shape.dim[2] * output_shape.dim[3];

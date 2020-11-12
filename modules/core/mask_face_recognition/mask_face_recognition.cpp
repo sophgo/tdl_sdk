@@ -18,9 +18,9 @@
 namespace cviai {
 
 MaskFaceRecognition::MaskFaceRecognition() {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->skip_postprocess = true;
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.skip_postprocess = true;
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 }
 
 MaskFaceRecognition::~MaskFaceRecognition() {
@@ -42,7 +42,8 @@ int MaskFaceRecognition::initAfterModelOpened(std::vector<initSetup> *data) {
   }
   (*data)[0].use_quantize_scale = true;
 
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, input->shape.dim[3], input->shape.dim[2],
                             PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
     return -1;
@@ -91,7 +92,7 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
 }
 
 void MaskFaceRecognition::outputParser(cvai_face_t *meta, int meta_i) {
-  CVI_TENSOR *out = CVI_NN_GetTensorByName(FACE_OUT_NAME, mp_output_tensors, m_output_num);
+  CVI_TENSOR *out = CVI_NN_GetTensorByName(FACE_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
   int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t face_feature_size = CVI_NN_TensorCount(out);
 

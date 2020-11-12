@@ -17,7 +17,7 @@ class MobileDetV2 final : public Core {
     lite,  // MobileDetV2-Lite
   };
 
-  struct ModelConfig {
+  struct CvimodelInfo {
     MobileDetV2::Model model;
     size_t min_level;
     size_t max_level;
@@ -34,7 +34,7 @@ class MobileDetV2 final : public Core {
     std::map<int, float> class_dequant_thresh;
     std::map<int, float> bbox_dequant_thresh;
     float default_score_threshold;
-    static ModelConfig create_config(MobileDetV2::Model model);
+    static CvimodelInfo create_config(MobileDetV2::Model model);
   };
 
   // TODO: remove duplicate struct
@@ -70,7 +70,7 @@ class MobileDetV2 final : public Core {
                                 const int8_t *logits, const int8_t *objectness, int8_t *bboxes,
                                 size_t class_tensor_size, const std::vector<AnchorBox> &anchors);
   std::vector<std::vector<AnchorBox>> m_anchors;
-  ModelConfig m_model_config;
+  CvimodelInfo m_model_config;
   float m_iou_threshold;
 
   // score threshold for quantized inverse threshold

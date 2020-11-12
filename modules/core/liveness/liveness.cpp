@@ -84,8 +84,8 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
 }
 
 Liveness::Liveness(cvai_liveness_ir_position_e ir_position) {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->batch_size = 9;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.batch_size = 9;
 
   m_ir_pos = ir_position;
 }
@@ -115,7 +115,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     std::vector<VIDEO_FRAME_INFO_S *> frames = {rgbFrame};
     run(frames);
 
-    CVI_TENSOR *out = CVI_NN_GetTensorByName(OUTPUT_NAME, mp_output_tensors, m_output_num);
+    CVI_TENSOR *out = CVI_NN_GetTensorByName(OUTPUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
     float *out_data = (float *)CVI_NN_TensorPtr(out);
     for (int j = 0; j < CROP_NUM; j++) {
       conf0 += out_data[j * 2];
@@ -138,7 +138,8 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
 }
 
 void Liveness::prepareInputTensor(vector<cv::Mat> &input_mat) {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   int8_t *input_ptr = (int8_t *)CVI_NN_TensorPtr(input);
   float quant_scale = CVI_NN_TensorQuantScale(input);
 

@@ -40,7 +40,7 @@ using namespace std;
 namespace cviai {
 using Detections = MobileDetV2::Detections;
 using PtrDectRect = MobileDetV2::PtrDectRect;
-using MDetV2Config = MobileDetV2::ModelConfig;
+using MDetV2Config = MobileDetV2::CvimodelInfo;
 
 static vector<size_t> sort_indexes(const Detections &v) {
   // initialize original index locations
@@ -171,9 +171,9 @@ static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<in
 
 MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
     : m_model_config(MDetV2Config::create_config(model)), m_iou_threshold(iou_thresh) {
-  mp_config = std::make_unique<cviai::ModelConfig>();
-  mp_config->skip_postprocess = true;
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<cviai::CvimodelInfo>();
+  mp_mi->conf.skip_postprocess = true;
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 
   RetinaNetAnchorGenerator generator = RetinaNetAnchorGenerator(
       m_model_config.min_level, m_model_config.max_level, m_model_config.num_scales,
@@ -288,7 +288,7 @@ void MobileDetV2::generate_dets_for_each_stride(Detections *det_vec) {
 }
 
 void MobileDetV2::get_tensor_ptr_size(const std::string &tname, int8_t **ptr, size_t *size) {
-  CVI_TENSOR *tensor = CVI_NN_GetTensorByName(tname.c_str(), mp_output_tensors, m_output_num);
+  CVI_TENSOR *tensor = CVI_NN_GetTensorByName(tname.c_str(), mp_mi->out.tensors, mp_mi->out.num);
   CVI_SHAPE tensor_shape = CVI_NN_TensorShape(tensor);
   *size = tensor_shape.dim[0] * tensor_shape.dim[1] * tensor_shape.dim[2] * tensor_shape.dim[3];
   *ptr = (int8_t *)CVI_NN_TensorPtr(tensor);
@@ -317,7 +317,8 @@ void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tenso
 
 int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
                            cvai_obj_det_type_e det_type) {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
 
   int ret = CVI_SUCCESS;
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};

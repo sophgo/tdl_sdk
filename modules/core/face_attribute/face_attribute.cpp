@@ -29,9 +29,9 @@
 namespace cviai {
 
 FaceAttribute::FaceAttribute(bool use_wrap_hw) : m_use_wrap_hw(use_wrap_hw) {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->skip_postprocess = true;
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.skip_postprocess = true;
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }
 
@@ -46,7 +46,8 @@ int FaceAttribute::initAfterModelOpened(std::vector<initSetup> *data) {
   }
   (*data)[0].use_quantize_scale = true;
 
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, input->shape.dim[3], input->shape.dim[2],
                             format) != CVI_SUCCESS) {
@@ -178,7 +179,7 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   // feature
   std::string feature_out_name = (m_with_attribute) ? ATTRIBUTE_OUT_NAME : RECOGNITION_OUT_NAME;
   CVI_TENSOR *out =
-      CVI_NN_GetTensorByName(feature_out_name.c_str(), mp_output_tensors, m_output_num);
+      CVI_NN_GetTensorByName(feature_out_name.c_str(), mp_mi->out.tensors, mp_mi->out.num);
   int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t face_feature_size = CVI_NN_TensorCount(out);
   // Create feature
@@ -190,7 +191,7 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   }
 
   // race
-  out = CVI_NN_GetTensorByName(RACE_OUT_NAME, mp_output_tensors, m_output_num);
+  out = CVI_NN_GetTensorByName(RACE_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
   int8_t *race_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t race_prob_size = CVI_NN_TensorCount(out);
   Dequantize(race_blob, attribute_buffer, RACE_OUT_THRESH, race_prob_size);
@@ -199,7 +200,7 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   result.race_prob = std::move(race.second);
 
   // gender
-  out = CVI_NN_GetTensorByName(GENDER_OUT_NAME, mp_output_tensors, m_output_num);
+  out = CVI_NN_GetTensorByName(GENDER_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
   int8_t *gender_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t gender_prob_size = CVI_NN_TensorCount(out);
   Dequantize(gender_blob, attribute_buffer, GENDER_OUT_THRESH, gender_prob_size);
@@ -209,7 +210,7 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   result.gender_prob = std::move(gender.second);
 
   // age
-  out = CVI_NN_GetTensorByName(AGE_OUT_NAME, mp_output_tensors, m_output_num);
+  out = CVI_NN_GetTensorByName(AGE_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
   int8_t *age_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t age_prob_size = CVI_NN_TensorCount(out);
   Dequantize(age_blob, attribute_buffer, AGE_OUT_THRESH, age_prob_size);
@@ -218,7 +219,7 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   result.age_prob = std::move(age.second);
 
   // emotion
-  out = CVI_NN_GetTensorByName(EMOTION_OUT_NAME, mp_output_tensors, m_output_num);
+  out = CVI_NN_GetTensorByName(EMOTION_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
   int8_t *emotion_blob = (int8_t *)CVI_NN_TensorPtr(out);
   size_t emotion_prob_size = CVI_NN_TensorCount(out);
   Dequantize(emotion_blob, attribute_buffer, EMOTION_OUT_THRESH, emotion_prob_size);

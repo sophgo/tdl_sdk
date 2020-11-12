@@ -102,8 +102,8 @@ static void bbox_pred(const cvai_bbox_t &anchor, cv::Vec4f regress, std::vector<
 }
 
 ThermalFace::ThermalFace() {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 }
 
 ThermalFace::~ThermalFace() {}
@@ -158,7 +158,8 @@ int ThermalFace::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFram
 }
 
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
 
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
@@ -174,11 +175,11 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
   std::vector<cvai_face_info_t> vec_bbox;
   std::vector<cvai_face_info_t> vec_bbox_nms;
   std::string score_str = NAME_SCORE;
-  CVI_TENSOR *out = CVI_NN_GetTensorByName(score_str.c_str(), mp_output_tensors, m_output_num);
+  CVI_TENSOR *out = CVI_NN_GetTensorByName(score_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
   float *score_blob = (float *)CVI_NN_TensorPtr(out);
 
   std::string bbox_str = NAME_BBOX;
-  out = CVI_NN_GetTensorByName(bbox_str.c_str(), mp_output_tensors, m_output_num);
+  out = CVI_NN_GetTensorByName(bbox_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
   float *bbox_blob = (float *)CVI_NN_TensorPtr(out);
 
   for (size_t i = 0; i < m_all_anchors.size(); i++) {

@@ -9,9 +9,9 @@
 namespace cviai {
 
 Custom::Custom() {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->skip_postprocess = true;
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.skip_postprocess = true;
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 }
 
 int Custom::initAfterModelOpened(std::vector<initSetup> *data) {
@@ -43,7 +43,7 @@ int Custom::initAfterModelOpened(std::vector<initSetup> *data) {
     (*data)[idx].keep_aspect_ratio = p_sqparam->keep_aspect_ratio;
     (*data)[idx].use_quantize_scale = p_sqparam->use_model_threashold;
   }
-  m_processed_frames.resize(m_input_num);
+  m_processed_frames.resize(mp_mi->in.num);
   return CVI_SUCCESS;
 }
 
@@ -88,14 +88,14 @@ int Custom::setPreProcessFunc(preProcessFunc func, bool use_tensor_input, bool u
     m_skip_vpss_preprocess = !use_vpss_sq;
   }
   if (use_tensor_input) {
-    mp_config->input_mem_type = CVI_MEM_SYSTEM;
+    mp_mi->conf.input_mem_type = CVI_MEM_SYSTEM;
   }
   return CVI_SUCCESS;
 }
 
 int Custom::getInputShape(const char *tensor_name, uint32_t *n, uint32_t *c, uint32_t *h,
                           uint32_t *w) {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(tensor_name, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input = CVI_NN_GetTensorByName(tensor_name, mp_mi->in.tensors, mp_mi->in.num);
   if (input == NULL) {
     LOGE("Tensor %s not found.\n", tensor_name);
     return CVI_FAILURE;
@@ -108,14 +108,14 @@ int Custom::getInputShape(const char *tensor_name, uint32_t *n, uint32_t *c, uin
   return CVI_SUCCESS;
 }
 
-int Custom::getInputNum() { return m_input_num; }
+int Custom::getInputNum() { return mp_mi->in.num; }
 
 int Custom::getInputShape(const uint32_t idx, uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *w) {
-  if (idx >= (uint32_t)m_input_num) {
-    LOGE("Index exceed maximum input. (max: %d)\n", m_input_num);
+  if (idx >= (uint32_t)mp_mi->in.num) {
+    LOGE("Index exceed maximum input. (max: %d)\n", mp_mi->in.num);
     return CVI_FAILURE;
   }
-  CVI_TENSOR *input = mp_input_tensors + idx;
+  CVI_TENSOR *input = mp_mi->in.tensors + idx;
   *n = input->shape.dim[0];
   *c = input->shape.dim[1];
   *h = input->shape.dim[2];
@@ -124,9 +124,9 @@ int Custom::getInputShape(const uint32_t idx, uint32_t *n, uint32_t *c, uint32_t
 }
 
 int Custom::inference(VIDEO_FRAME_INFO_S *inFrames, uint32_t num_of_frames) {
-  if (num_of_frames != (uint32_t)m_input_num) {
+  if (num_of_frames != (uint32_t)mp_mi->in.num) {
     LOGE("The number of input frames does not match the number of input tensors. (%u != %d)\n",
-         num_of_frames, m_input_num);
+         num_of_frames, mp_mi->in.num);
     return CVI_FAILURE;
   }
   std::vector<VIDEO_FRAME_INFO_S *> frames;
@@ -154,7 +154,7 @@ int Custom::inference(VIDEO_FRAME_INFO_S *inFrames, uint32_t num_of_frames) {
 
 int Custom::getOutputTensor(const char *tensor_name, int8_t **tensor, uint32_t *tensor_count,
                             uint16_t *unit_size) {
-  CVI_TENSOR *out = CVI_NN_GetTensorByName(tensor_name, mp_output_tensors, m_output_num);
+  CVI_TENSOR *out = CVI_NN_GetTensorByName(tensor_name, mp_mi->out.tensors, mp_mi->out.num);
   if (out == NULL) {
     LOGE("Tensor not found.\n");
     return CVI_FAILURE;

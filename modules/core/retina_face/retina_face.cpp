@@ -13,8 +13,8 @@
 namespace cviai {
 
 RetinaFace::RetinaFace() {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 }
 
 RetinaFace::~RetinaFace() {}
@@ -54,7 +54,8 @@ int RetinaFace::initAfterModelOpened(std::vector<initSetup> *data) {
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
     std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
     std::string landmark_str = NAME_LANDMARK + key;
-    CVI_TENSOR *out = CVI_NN_GetTensorByName(landmark_str.c_str(), mp_output_tensors, m_output_num);
+    CVI_TENSOR *out =
+        CVI_NN_GetTensorByName(landmark_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
     CVI_SHAPE landmark_shape = CVI_NN_TensorShape(out);
     int stride = m_feat_stride_fpn[i];
 
@@ -94,7 +95,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
     std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
 
     std::string score_str = NAME_SCORE + key;
-    CVI_TENSOR *out = CVI_NN_GetTensorByName(score_str.c_str(), mp_output_tensors, m_output_num);
+    CVI_TENSOR *out = CVI_NN_GetTensorByName(score_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
     float *score_blob = (float *)CVI_NN_TensorPtr(out);
     CVI_SHAPE score_shape = CVI_NN_TensorShape(out);
     size_t score_size =
@@ -103,11 +104,11 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
     score_blob += score_size / 2;
 
     std::string bbox_str = NAME_BBOX + key;
-    out = CVI_NN_GetTensorByName(bbox_str.c_str(), mp_output_tensors, m_output_num);
+    out = CVI_NN_GetTensorByName(bbox_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
     float *bbox_blob = (float *)CVI_NN_TensorPtr(out);
 
     std::string landmark_str = NAME_LANDMARK + key;
-    out = CVI_NN_GetTensorByName(landmark_str.c_str(), mp_output_tensors, m_output_num);
+    out = CVI_NN_GetTensorByName(landmark_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
     float *landmark_blob = (float *)CVI_NN_TensorPtr(out);
     CVI_SHAPE landmark_shape = CVI_NN_TensorShape(out);
 

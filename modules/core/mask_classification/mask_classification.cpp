@@ -18,8 +18,8 @@
 namespace cviai {
 
 MaskClassification::MaskClassification() {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 }
 
 MaskClassification::~MaskClassification() {}
@@ -62,7 +62,7 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
     run(frames);
 
-    CVI_TENSOR *out = CVI_NN_GetTensorByName(MASK_OUT_NAME, mp_output_tensors, m_output_num);
+    CVI_TENSOR *out = CVI_NN_GetTensorByName(MASK_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
     float *out_data = (float *)CVI_NN_TensorPtr(out);
 
     float max = std::max(out_data[0], out_data[1]);

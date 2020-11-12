@@ -18,9 +18,9 @@
 namespace cviai {
 
 OSNet::OSNet() {
-  mp_config = std::make_unique<ModelConfig>();
-  mp_config->skip_postprocess = true;
-  mp_config->input_mem_type = CVI_MEM_DEVICE;
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf.skip_postprocess = true;
+  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
 }
 
 int OSNet::initAfterModelOpened(std::vector<initSetup> *data) {
@@ -53,7 +53,7 @@ int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int ob
     run(frames);
 
     // feature
-    CVI_TENSOR *out = CVI_NN_GetTensorByName(OSNET_OUT_NAME, mp_output_tensors, m_output_num);
+    CVI_TENSOR *out = CVI_NN_GetTensorByName(OSNET_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
     int8_t *feature_blob = (int8_t *)CVI_NN_TensorPtr(out);
     size_t feature_size = CVI_NN_TensorCount(out);
     // Create feature

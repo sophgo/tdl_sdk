@@ -10,7 +10,7 @@
 namespace cviai {
 
 ESClassification::ESClassification() {
-  mp_config = std::make_unique<ModelConfig>();
+  mp_mi = std::make_unique<CvimodelInfo>();
   hannWindow = cv::Mat_<float>(1, N_FFT, 0.0f);
   float pi = 3.14159265358979323846;
   int insert_cnt = 0;
@@ -35,7 +35,8 @@ int ESClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   }
   cv::Mat_<float> mag = STFT(&image);
   mag = cv::abs(mag);
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_input_tensors, m_input_num);
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
 
   uint16_t *input_ptr = (uint16_t *)CVI_NN_TensorPtr(input);
   for (int r = 0; r < mag.rows; ++r) {
@@ -49,7 +50,7 @@ int ESClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
   run(frames);
 
-  CVI_TENSOR *out = CVI_NN_GetTensorByName(ESC_OUT_NAME, mp_output_tensors, m_output_num);
+  CVI_TENSOR *out = CVI_NN_GetTensorByName(ESC_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
   *index = get_top_k((float *)CVI_NN_TensorPtr(out), CVI_NN_TensorCount(out));
   return CVI_SUCCESS;
 }
