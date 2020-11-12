@@ -14,7 +14,7 @@
 #define MEAN_R (0.485 / 0.229)
 #define MEAN_G (0.456 / 0.224)
 #define MEAN_B (0.406 / 0.225)
-#define NAME_SCORE "score_Softmax"
+#define NAME_SCORE "score_Softmax_dequant"
 
 namespace cviai {
 
