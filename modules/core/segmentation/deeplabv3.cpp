@@ -69,7 +69,7 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
   vpssChnAttr.u32Width = frame->stVFrame.u32Width;
   vpssChnAttr.u32Height = frame->stVFrame.u32Height;
   vpssChnAttr.enVideoFormat = VIDEO_FORMAT_LINEAR;
-  vpssChnAttr.enPixelFormat = frame->stVFrame.enPixelFormat;
+  vpssChnAttr.enPixelFormat = PIXEL_FORMAT_UINT8_C1;
   vpssChnAttr.stFrameRate.s32SrcFrameRate = -1;
   vpssChnAttr.stFrameRate.s32DstFrameRate = -1;
   vpssChnAttr.u32Depth = 1;
@@ -93,8 +93,7 @@ int Deeplabv3::outputParser() {
   float *out = (float *)CVI_NN_TensorPtr(tensor);
   CVI_SHAPE output_shape = CVI_NN_TensorShape(tensor);
   int size = output_shape.dim[2] * output_shape.dim[3];
-  float *max_prob = (float *)malloc(size * sizeof(float));
-  memset(max_prob, 0, size * sizeof(float));
+  std::vector<float> max_prob(size, 0);
 
   for (int32_t c = 0; c < output_shape.dim[1]; ++c) {
     int size_offset = c * size;
@@ -110,8 +109,6 @@ int Deeplabv3::outputParser() {
       }
     }
   }
-
-  free(max_prob);
 
   return CVI_SUCCESS;
 }
