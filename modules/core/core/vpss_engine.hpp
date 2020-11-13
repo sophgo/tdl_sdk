@@ -30,7 +30,6 @@ class __attribute__((visibility("default"))) VpssEngine {
                            const VPSS_CROP_INFO_S *chn_crop_attr, const VPSS_CHN_ATTR_S *chn_attr,
                            const VPSS_SCALE_COEF_E *coeffs, const uint32_t enable_chns);
 
-  bool m_enable_log = false;
   bool m_is_vpss_init = false;
   VPSS_GRP m_grpid = -1;
   uint32_t m_enabled_chn = -1;
