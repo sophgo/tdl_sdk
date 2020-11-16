@@ -91,6 +91,7 @@ int Core::modelOpen(const char *filepath) {
     if (!data[i].keep_aspect_ratio) {
       vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
     }
+    vcfg.chn_coeff = data[i].resize_method;
     m_vpss_config.push_back(vcfg);
   }
   TRACE_EVENT_END("cviai_core");
@@ -135,8 +136,8 @@ int Core::setVpssEngine(VpssEngine *engine) {
 
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
 
-int Core::getChnAttribute(const uint32_t width, const uint32_t height, const uint32_t idx,
-                          VPSS_CHN_ATTR_S *attr) {
+int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
+                       cvai_vpssconfig_t *chn_config) {
   if (!m_export_chn_attr) {
     LOGE("This model does not support exporting channel attributes.\n");
     return CVI_FAILURE;
@@ -150,21 +151,24 @@ int Core::getChnAttribute(const uint32_t width, const uint32_t height, const uin
   }
   switch (m_vpss_config[idx].rescale_type) {
     case RESCALE_CENTER: {
-      *attr = m_vpss_config[idx].chn_attr;
+      chn_config->chn_attr = m_vpss_config[idx].chn_attr;
     } break;
     case RESCALE_RB: {
       CVI_TENSOR *input = mp_mi->in.tensors + idx;
       auto &factor = m_vpss_config[idx].chn_attr.stNormalize.factor;
       auto &mean = m_vpss_config[idx].chn_attr.stNormalize.mean;
-      VPSS_CHN_SQ_RB_HELPER(attr, width, height, input->shape.dim[3], input->shape.dim[2],
-                            m_vpss_config[idx].chn_attr.enPixelFormat, factor, mean, false);
-      attr->stAspectRatio.u32BgColor = m_vpss_config[idx].chn_attr.stAspectRatio.u32BgColor;
+      VPSS_CHN_SQ_RB_HELPER(&chn_config->chn_attr, width, height, input->shape.dim[3],
+                            input->shape.dim[2], m_vpss_config[idx].chn_attr.enPixelFormat, factor,
+                            mean, false);
+      chn_config->chn_attr.stAspectRatio.u32BgColor =
+          m_vpss_config[idx].chn_attr.stAspectRatio.u32BgColor;
     } break;
     default: {
       LOGW("Unsupported rescale type.\n");
       return CVI_FAILURE;
     } break;
   }
+  chn_config->chn_coeff = m_vpss_config[idx].chn_coeff;
   return CVI_SUCCESS;
 }
 
@@ -179,10 +183,11 @@ int Core::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
   int ret = CVI_SUCCESS;
   for (uint32_t i = 0; i < (uint32_t)srcFrames.size(); i++) {
     if (!m_vpss_config[i].crop_attr.bEnable) {
-      mp_vpss_inst->sendFrame(srcFrames[i], &m_vpss_config[i].chn_attr, 1);
+      mp_vpss_inst->sendFrame(srcFrames[i], &m_vpss_config[i].chn_attr, &m_vpss_config[i].chn_coeff,
+                              1);
     } else {
       mp_vpss_inst->sendCropChnFrame(srcFrames[i], &m_vpss_config[i].crop_attr,
-                                     &m_vpss_config[i].chn_attr, 1);
+                                     &m_vpss_config[i].chn_attr, &m_vpss_config[i].chn_coeff, 1);
     }
     ret |= mp_vpss_inst->getFrame((*dstFrames)[i].get(), 0);
   }

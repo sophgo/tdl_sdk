@@ -1,5 +1,6 @@
 #pragma once
 #include "core/core/cvai_core_types.h"
+#include "core/core/cvai_vpss_types.h"
 #include "cviai_log.hpp"
 #include "ive/ive.h"
 #include "vpss_engine.hpp"
@@ -40,11 +41,13 @@ struct initSetup {
   bool keep_aspect_ratio = true;
   bool use_quantize_scale = false;
   bool use_crop = false;
+  VPSS_SCALE_COEF_E resize_method = VPSS_SCALE_COEF_BICUBIC;
 };
 
 struct VPSSConfig {
   meta_rescale_type_e rescale_type = RESCALE_CENTER;
   VPSS_CROP_INFO_S crop_attr;
+  VPSS_SCALE_COEF_E chn_coeff = VPSS_SCALE_COEF_BICUBIC;
   VPSS_CHN_ATTR_S chn_attr;
   CVI_FRAME_TYPE frame_type = CVI_FRAME_PLANAR;
 };
@@ -57,8 +60,8 @@ class Core {
   int setIveInstance(IVE_HANDLE handle);
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
-  virtual int getChnAttribute(const uint32_t width, const uint32_t height, const uint32_t idx,
-                              VPSS_CHN_ATTR_S *attr);
+  virtual int getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
+                           cvai_vpssconfig_t *chn_config);
   virtual void setModelThreshold(float threshold);
   float getModelThreshold();
   bool isInitialized();

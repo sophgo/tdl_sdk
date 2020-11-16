@@ -216,6 +216,12 @@ int VpssEngine::sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CRO
   return sendFrameBase(frame, NULL, crop_attr, chn_attr, NULL, enable_chns);
 }
 
+int VpssEngine::sendCropChnFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *crop_attr,
+                                 const VPSS_CHN_ATTR_S *chn_attr, const VPSS_SCALE_COEF_E *coeffs,
+                                 const uint32_t enable_chns) {
+  return sendFrameBase(frame, NULL, crop_attr, chn_attr, coeffs, enable_chns);
+}
+
 int VpssEngine::sendCropGrpChnFrame(const VIDEO_FRAME_INFO_S *frame,
                                     const VPSS_CROP_INFO_S *grp_crop_attr,
                                     const VPSS_CROP_INFO_S *chn_crop_attr,

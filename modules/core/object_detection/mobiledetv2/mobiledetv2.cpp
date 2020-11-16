@@ -214,6 +214,7 @@ int MobileDetV2::initAfterModelOpened(std::vector<initSetup> *data) {
   (*data)[0].mean[2] = static_cast<float>(MEAN_B);
   (*data)[0].use_quantize_scale = true;
   (*data)[0].rescale_type = RESCALE_RB;
+  (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
   m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
@@ -228,8 +229,7 @@ int MobileDetV2::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFram
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                         vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
                         factor, mean, false);
-  VPSS_SCALE_COEF_E coeff = VPSS_SCALE_COEF_OPENCV_BILINEAR;
-  mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &coeff, 1);
+  mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &m_vpss_config[0].chn_coeff, 1);
   return mp_vpss_inst->getFrame(dstFrame, 0);
 }
 

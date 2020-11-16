@@ -1,6 +1,7 @@
 #ifndef _CVIAI_CORE_H_
 #define _CVIAI_CORE_H_
 #include "core/core/cvai_core_types.h"
+#include "core/core/cvai_vpss_types.h"
 #include "core/cviai_rescale_bbox.h"
 #include "core/cviai_types_mem.h"
 #include "core/deepsort/cvai_deepsort_types.h"
@@ -293,12 +294,12 @@ DLL_EXPORT CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MOD
  * @param frameWidth The input frame width.
  * @param frameHeight The input frame height.
  * @param idx The index of the input tensors.
- * @param chnAttr Exported channel attribute.
+ * @param chnAttr Exported VPSS channel config settings.
  * @return int Return CVI_SUCCESS on success, CVI_FAILURE if exporting not supported.
  */
-DLL_EXPORT CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                                         const CVI_U32 frameWidth, const CVI_U32 frameHeight,
-                                         const CVI_U32 idx, VPSS_CHN_ATTR_S *chnAttr);
+DLL_EXPORT CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                           const CVI_U32 frameWidth, const CVI_U32 frameHeight,
+                                           const CVI_U32 idx, cvai_vpssconfig_t *chnConfig);
 
 /**@}*/
 

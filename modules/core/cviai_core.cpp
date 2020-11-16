@@ -222,9 +222,9 @@ getInferenceInstance(const V index, cviai_context_t *ctx, Arguments &&... arg) {
   return class_inst;
 }
 
-CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                              const CVI_U32 frameWidth, const CVI_U32 frameHeight,
-                              const CVI_U32 idx, VPSS_CHN_ATTR_S *chnAttr) {
+CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                const CVI_U32 frameWidth, const CVI_U32 frameHeight,
+                                const CVI_U32 idx, cvai_vpssconfig_t *chnConfig) {
   CVI_S32 ret = CVI_SUCCESS;
   cviai::Core *instance = nullptr;
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -258,7 +258,7 @@ CVI_S32 CVI_AI_GetVpssChnAttr(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E co
     LOGE("Instance is null.\n");
     return CVI_FAILURE;
   }
-  ret = instance->getChnAttribute(frameWidth, frameHeight, idx, chnAttr);
+  ret = instance->getChnConfig(frameWidth, frameHeight, idx, chnConfig);
   return ret;
 }
 
