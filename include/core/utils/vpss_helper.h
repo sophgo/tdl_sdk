@@ -345,11 +345,74 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
 #undef min
 
 /**
- * @brief A helper function to init vpss hardware with given image information.
+ * @brief A helper function to init vpss hardware with given image information. This function DOES
+ NOT set VPSS mode for you.
 
  * @param enSrcWidth Input image width.
  * @param enSrcHeight Intput image height.
- * @param enSrcStride Input image stride.
+ * @param enSrcFormat Input image format.
+ * @param enDstWidth Output image width.
+ * @param enDstHeight Output image height.
+ * @param enDstFormat Output image format.
+ * @param enabledChannel Number of enabled channels.
+ * @param mode The mode of VPSS. Support single mode (1->4) and dual mode (1->3, 1->1)
+ * @param keepAspectRatio Keep aspect ratio or not.
+ */
+inline int __attribute__((always_inline))
+VPSS_INIT_HELPER2(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
+                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
+                  PIXEL_FORMAT_E enDstFormat, uint32_t enabledChannel, bool keepAspectRatio) {
+  syslog(LOG_INFO, "VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight,
+         enDstWidth, enDstHeight);
+  CVI_S32 s32Ret = CVI_FAILURE;
+
+  VPSS_GRP_ATTR_S stVpssGrpAttr;
+  VPSS_CHN_ATTR_S stVpssChnAttr;
+  VPSS_GRP_DEFAULT_HELPER(&stVpssGrpAttr, enSrcWidth, enSrcHeight, enSrcFormat);
+  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr, enDstWidth, enDstHeight, enDstFormat, keepAspectRatio);
+
+  /*start vpss*/
+  s32Ret = CVI_VPSS_CreateGrp(vpssGrpId, &stVpssGrpAttr);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("???? %d\n", vpssGrpId);
+    syslog(LOG_ERR, "CVI_VPSS_CreateGrp(grp:%d) failed with %#x!\n", vpssGrpId, s32Ret);
+    return s32Ret;
+  }
+  s32Ret = CVI_VPSS_ResetGrp(vpssGrpId);
+  if (s32Ret != CVI_SUCCESS) {
+    syslog(LOG_ERR, "CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", vpssGrpId, s32Ret);
+    return s32Ret;
+  }
+  if (enabledChannel > 3) {
+    syslog(LOG_ERR, "Maximum value for enabledChannel is 3.");
+  }
+  for (uint32_t i = 0; i < enabledChannel; i++) {
+    s32Ret = CVI_VPSS_SetChnAttr(vpssGrpId, i, &stVpssChnAttr);
+    if (s32Ret != CVI_SUCCESS) {
+      syslog(LOG_ERR, "CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
+      return s32Ret;
+    }
+    s32Ret = CVI_VPSS_EnableChn(vpssGrpId, i);
+    if (s32Ret != CVI_SUCCESS) {
+      syslog(LOG_ERR, "CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
+      return s32Ret;
+    }
+  }
+  s32Ret = CVI_VPSS_StartGrp(vpssGrpId);
+  if (s32Ret != CVI_SUCCESS) {
+    syslog(LOG_ERR, "CVI_VPSS_StartGrp failed with %#x\n", s32Ret);
+    return s32Ret;
+  }
+
+  return s32Ret;
+}
+
+/**
+ * @brief A helper function to init vpss hardware with given image information. This function sets
+ VPSS mode for you.
+
+ * @param enSrcWidth Input image width.
+ * @param enSrcHeight Intput image height.
  * @param enSrcFormat Input image format.
  * @param enDstWidth Output image width.
  * @param enDstHeight Output image height.
@@ -358,48 +421,12 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
  * @param keepAspectRatio Keep aspect ratio or not.
  */
 inline int __attribute__((always_inline))
-VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, uint32_t enSrcStride,
+VPSS_INIT_HELPER(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
                  PIXEL_FORMAT_E enDstFormat, VPSS_MODE_E mode, bool keepAspectRatio) {
-  syslog(LOG_ERR, "VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight,
-         enDstWidth, enDstHeight);
-  CVI_S32 s32Ret = CVI_FAILURE;
-
   CVI_SYS_SetVPSSMode(mode);
-  VPSS_GRP_ATTR_S stVpssGrpAttr;
-  VPSS_CHN_ATTR_S stVpssChnAttr;
-
-  VPSS_GRP_DEFAULT_HELPER(&stVpssGrpAttr, enSrcWidth, enSrcHeight, enSrcFormat);
-  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr, enDstWidth, enDstHeight, enDstFormat, keepAspectRatio);
-
-  /*start vpss*/
-  s32Ret = CVI_VPSS_CreateGrp(VpssGrpId, &stVpssGrpAttr);
-  if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_VPSS_CreateGrp(grp:%d) failed with %#x!\n", VpssGrpId, s32Ret);
-    return s32Ret;
-  }
-  s32Ret = CVI_VPSS_ResetGrp(VpssGrpId);
-  if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", VpssGrpId, s32Ret);
-    return s32Ret;
-  }
-  s32Ret = CVI_VPSS_SetChnAttr(VpssGrpId, VPSS_CHN0, &stVpssChnAttr);
-  if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
-    return s32Ret;
-  }
-  s32Ret = CVI_VPSS_EnableChn(VpssGrpId, VPSS_CHN0);
-  if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
-    return s32Ret;
-  }
-  s32Ret = CVI_VPSS_StartGrp(VpssGrpId);
-  if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_VPSS_StartGrp failed with %#x\n", s32Ret);
-    return s32Ret;
-  }
-
-  return s32Ret;
+  return VPSS_INIT_HELPER2(vpssGrpId, enSrcWidth, enSrcHeight, enSrcFormat, enDstWidth, enDstHeight,
+                           enDstFormat, 1, keepAspectRatio);
 }
 
 /**

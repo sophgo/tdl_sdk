@@ -29,6 +29,31 @@ function(buildninstall)
   install(TARGETS ${PROJECT_NAME} DESTINATION regression)
 endfunction(buildninstall)
 
+function(buildninstallcpp)
+  # From https://stackoverflow.com/questions/23327687/how-to-write-a-cmake-function-with-more-than-one-parameter-groups
+  cmake_parse_arguments(
+    PARSED_ARGS # prefix of output variables
+    "" # list of names of the boolean arguments (only defined ones will be true)
+    "NAME" # list of names of mono-valued arguments
+    "INC;SRCS;DEPS" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  # note: if it remains unparsed arguments, here, they can be found in variable PARSED_ARGS_UNPARSED_ARGUMENTS
+  if(NOT PARSED_ARGS_NAME)
+    message(FATAL_ERROR "You must provide a name")
+  endif(NOT PARSED_ARGS_NAME)
+  project(${PARSED_ARGS_NAME})
+  # For debug purpose.
+  # message("Provided additional sources are:")
+  # foreach(src ${PARSED_ARGS_SRCS})
+  #   message("- ${src}")
+  # endforeach(src)
+  include_directories(${PARSED_ARGS_INC})
+  add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PARSED_ARGS_SRCS})
+  target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
+  install(TARGETS ${PROJECT_NAME} DESTINATION regression)
+endfunction(buildninstallcpp)
+
 set(REG_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include
     ${MLIR_SDK_PATH}/opencv/include
@@ -64,3 +89,5 @@ buildninstall(NAME reg_object_intersect INC ${REG_INCLUDES} DEPS cviai_core cvia
 buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
+
+buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core)

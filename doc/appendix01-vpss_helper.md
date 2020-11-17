@@ -63,9 +63,14 @@ This function helps users to initialize the VPSS engine. All the settings for in
 
 ```c
 inline int __attribute__((always_inline))
-VPSS_INIT_HELPER(CVI_U32 VpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight, uint32_t enSrcStride,
+VPSS_INIT_HELPER(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
                  PIXEL_FORMAT_E enDstFormat, VPSS_MODE_E mode, bool keepAspectRatio);
+
+inline int __attribute__((always_inline))
+VPSS_INIT_HELPER2(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
+                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
+                  PIXEL_FORMAT_E enDstFormat, uint32_t enabledChannel, bool keepAspectRatio);
 ```
 
 ## Setup VPSS Channel Config

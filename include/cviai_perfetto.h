@@ -13,6 +13,10 @@ extern "C" {
  */
 DLL_EXPORT void CVI_AI_PerfettoInit();
 
+DLL_EXPORT void CVI_AI_TraceBegin(const char *name);
+
+DLL_EXPORT void CVI_AI_TraceEnd();
+
 #ifdef __cplusplus
 }
 #endif

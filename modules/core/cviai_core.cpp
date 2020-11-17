@@ -31,6 +31,12 @@ using namespace cviai;
 
 void CVI_AI_PerfettoInit() { prefettoInit(); }
 
+void CVI_AI_TraceBegin(const char *name) {
+  TRACE_EVENT_BEGIN("cviai_api", perfetto::StaticString{name});
+}
+
+void CVI_AI_TraceEnd() { TRACE_EVENT_END("cviai_api"); }
+
 //*************************************************
 // Experimental features
 void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {

@@ -4,6 +4,7 @@
   #if __GNUC__ >= 7
     #include "perfetto.h"
     PERFETTO_DEFINE_CATEGORIES(
+        perfetto::Category("cviai_api").SetDescription("Events from cviai_api"),
         perfetto::Category("cviai_core").SetDescription("Events from cviai_core"),
         perfetto::Category("cviai_service").SetDescription("Events from cviai_service"));
   #else
@@ -19,8 +20,7 @@ inline void __attribute__((always_inline)) prefettoInit() {
 #ifdef ENABLE_TRACE
   #if __GNUC__ >= 7
     perfetto::TracingInitArgs args;
-    args.backends |= perfetto::kInProcessBackend;
-    args.backends |= perfetto::kSystemBackend;
+    args.backends = perfetto::kSystemBackend;
 
     perfetto::Tracing::Initialize(args);
     perfetto::TrackEvent::Register();
