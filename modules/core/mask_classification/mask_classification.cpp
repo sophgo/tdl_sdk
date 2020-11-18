@@ -36,6 +36,7 @@ int MaskClassification::initAfterModelOpened(std::vector<initSetup> *data) {
   (*data)[0].mean[1] = G_MEAN;
   (*data)[0].mean[2] = B_MEAN;
   (*data)[0].use_quantize_scale = true;
+  (*data)[0].use_crop = true;
 
   return 0;
 }
