@@ -9,7 +9,7 @@
 
 #define SCALE (1 / 127.5)
 #define MEAN 1.f
-#define NAME_SCORE "score_Softmax"
+#define NAME_SCORE "Conv_160_dequant"
 
 namespace cviai {
 
@@ -41,17 +41,16 @@ int Deeplabv3::initAfterModelOpened(std::vector<initSetup> *data) {
   (*data)[0].keep_aspect_ratio = false;
   m_export_chn_attr = true;
 
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_label_frame, input->shape.dim[3], input->shape.dim[2],
-                            PIXEL_FORMAT_UINT8_C1) != CVI_SUCCESS) {
-    return -1;
+  CVI_TENSOR *output = CVI_NN_GetTensorByName(NAME_SCORE, mp_mi->out.tensors, mp_mi->out.num);
+  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_label_frame, output->shape.dim[3], output->shape.dim[2],
+                            PIXEL_FORMAT_YUV_400) != CVI_SUCCESS) {
+    return CVI_FAILURE;
   }
 
   m_label_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
       m_label_frame.stVFrame.u64PhyAddr[0], m_label_frame.stVFrame.u32Length[0]);
 
-  return 0;
+  return CVI_SUCCESS;
 }
 
 int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_frame) {
@@ -69,7 +68,7 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
   vpssChnAttr.u32Width = frame->stVFrame.u32Width;
   vpssChnAttr.u32Height = frame->stVFrame.u32Height;
   vpssChnAttr.enVideoFormat = VIDEO_FORMAT_LINEAR;
-  vpssChnAttr.enPixelFormat = PIXEL_FORMAT_UINT8_C1;
+  vpssChnAttr.enPixelFormat = PIXEL_FORMAT_YUV_400;
   vpssChnAttr.stFrameRate.s32SrcFrameRate = -1;
   vpssChnAttr.stFrameRate.s32DstFrameRate = -1;
   vpssChnAttr.u32Depth = 1;
@@ -100,15 +99,19 @@ int Deeplabv3::outputParser() {
 
     for (int32_t h = 0; h < output_shape.dim[2]; ++h) {
       int width_offset = h * output_shape.dim[3];
+      int frame_offset = h * m_label_frame.stVFrame.u32Stride[0];
 
       for (int32_t w = 0; w < output_shape.dim[3]; ++w) {
         if (out[size_offset + width_offset + w] > max_prob[width_offset + w]) {
-          m_label_frame.stVFrame.pu8VirAddr[0][width_offset + w] = (int8_t)c;
+          m_label_frame.stVFrame.pu8VirAddr[0][frame_offset + w] = (int8_t)c;
           max_prob[width_offset + w] = out[size_offset + width_offset + w];
         }
       }
     }
   }
+
+  CVI_SYS_IonFlushCache(m_label_frame.stVFrame.u64PhyAddr[0], m_label_frame.stVFrame.pu8VirAddr[0],
+                        m_label_frame.stVFrame.u32Length[0]);
 
   return CVI_SUCCESS;
 }
