@@ -21,6 +21,7 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 struct vpssPair {
   CVI_U32 groupId;
+  VB_BLK blk;
   VIDEO_FRAME_INFO_S frame;
 };
 
@@ -76,16 +77,9 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, true);
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
-  if (ret != CVI_SUCCESS) {
-    printf("Set model retinaface failed with %#x!\n", ret);
-    return ret;
-  }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, false);
 
-  VB_BLK blk;
   for (uint32_t i = 0; i < vpss_vec.size(); i++) {
-    CVI_AI_ReadImage(argv[2], &blk, &vpss_vec[i].frame, PIXEL_FORMAT_RGB_888);
+    CVI_AI_ReadImage(argv[2], &vpss_vec[i].blk, &vpss_vec[i].frame, PIXEL_FORMAT_RGB_888);
   }
 
   cvai_vpssconfig_t vpssConfig;
@@ -124,7 +118,9 @@ int main(int argc, char *argv[]) {
   t2.join();
 
   // Free image and handles.
-  CVI_VB_ReleaseBlock(blk);
+  for (uint32_t i = 0; i < vpss_vec.size(); i++) {
+    CVI_VB_ReleaseBlock(vpss_vec[i].blk);
+  }
   CVI_AI_DestroyHandle(ai_handle);
   return ret;
 }
