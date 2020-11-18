@@ -18,7 +18,7 @@ typedef struct {
 
 CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle, cviai_handle_t ai_handle) {
   if (ai_handle == NULL) {
-    LOGE("ai_handle is empty.");
+    LOGC("ai_handle is empty.");
     return CVI_FAILURE;
   }
   cviai_service_context_t *ctx = new cviai_service_context_t;
