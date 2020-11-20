@@ -17,6 +17,21 @@ DLL_EXPORT CVI_S32 CVI_AI_Eval_CreateHandle(cviai_eval_handle_t *handle);
 DLL_EXPORT CVI_S32 CVI_AI_Eval_DestroyHandle(cviai_eval_handle_t handle);
 
 /****************************************************************
+ * Cityscapes evaluation functions
+ **/
+DLL_EXPORT CVI_S32 CVI_AI_Eval_CityscapesInit(cviai_eval_handle_t handle, const char *image_dir,
+                                              const char *output_dir);
+
+DLL_EXPORT CVI_S32 CVI_AI_Eval_CityscapesGetImage(cviai_eval_handle_t handle, const uint32_t index,
+                                                  char **fileName);
+
+DLL_EXPORT CVI_S32 CVI_AI_Eval_CityscapesGetImageNum(cviai_eval_handle_t handle, uint32_t *num);
+
+DLL_EXPORT CVI_S32 CVI_AI_Eval_CityscapesWriteResult(cviai_eval_handle_t handle,
+                                                     VIDEO_FRAME_INFO_S *label_frame,
+                                                     const int index);
+
+/****************************************************************
  * Coco evaluation functions
  **/
 DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoInit(cviai_eval_handle_t handle, const char *pathPrefix,

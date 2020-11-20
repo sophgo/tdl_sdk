@@ -32,3 +32,4 @@ run reg_mask_fr /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/cvimodel/maske
 run reg_reid /mnt/data/cvimodel/reid_mobilenetv2_x1_0.cvimodel /mnt/data/Market-1501-v15.09.15/
 run reg_face_align /mnt/data/cvimodel/retina_face.cvimodel /mnt/data/WFLW/test_data
 run reg_es_classification /mnt/data/cvimodel/es_classification.cvimodel /mnt/data/ESC50/
+run reg_deeplabv3 /mnt/data/deeplabv3_mobilenetv2_1x1_tpu.cvimodel.no.last.resize /mnt/data/cityscapes/image_val/ /mnt/data/deeplab_result/

@@ -1,5 +1,6 @@
 #include "evaluation/cviai_evaluation.h"
 
+#include "cityscapes/cityscapes.hpp"
 #include "coco/coco.hpp"
 #include "lfw/lfw.hpp"
 #include "market1501/market1501.hpp"
@@ -7,6 +8,7 @@
 #include "wider_face/wider_face.hpp"
 
 typedef struct {
+  cviai::evaluation::cityscapesEval *cityscapes_eval = nullptr;
   cviai::evaluation::CocoEval *coco_eval = nullptr;
   cviai::evaluation::market1501Eval *market1501_eval = nullptr;
   cviai::evaluation::lfwEval *lfw_eval = nullptr;
@@ -24,6 +26,54 @@ CVI_S32 CVI_AI_Eval_DestroyHandle(cviai_eval_handle_t handle) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   delete ctx->coco_eval;
   delete ctx;
+  return CVI_SUCCESS;
+}
+
+/****************************************************************
+ * Cityscapes evaluation functions
+ **/
+CVI_S32 CVI_AI_Eval_CityscapesInit(cviai_eval_handle_t handle, const char *image_dir,
+                                   const char *output_dir) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->cityscapes_eval == nullptr) {
+    ctx->cityscapes_eval = new cviai::evaluation::cityscapesEval(image_dir, output_dir);
+  }
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_CityscapesGetImage(cviai_eval_handle_t handle, const uint32_t index,
+                                       char **fileName) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->cityscapes_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  std::string filestr;
+  ctx->cityscapes_eval->getImage(index, filestr);
+  auto stringlength = strlen(filestr.c_str()) + 1;
+  *fileName = (char *)malloc(stringlength);
+  strncpy(*fileName, filestr.c_str(), stringlength);
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_CityscapesGetImageNum(cviai_eval_handle_t handle, uint32_t *num) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->cityscapes_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->cityscapes_eval->getImageNum(num);
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_CityscapesWriteResult(cviai_eval_handle_t handle,
+                                          VIDEO_FRAME_INFO_S *label_frame, const int index) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->cityscapes_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  ctx->cityscapes_eval->writeResult(label_frame, index);
   return CVI_SUCCESS;
 }
 
