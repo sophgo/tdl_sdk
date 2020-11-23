@@ -40,6 +40,10 @@ python3 eval_lfw.py "${REGRESSION_FOLDER}/${MASK_FR_OUTPUT}"
 RGBIR_LIVENESS_OUTPUT="rgbir_liveness_result.txt"
 python3 eval_lfw.py "${REGRESSION_FOLDER}/${RGBIR_LIVENESS_OUTPUT}"
 
+# deeplabv3
+DEEPLABV3="deeplab_result"
+CITYSCAPES_RESULTS="${REGRESSION_FOLDER}/${DEEPLABV3}" CITYSCAPES_DATASET=${DATASET_PATH}/cityscapes/ csEvalPixelLevelSemanticLabeling
+
 # console log
 CONSOLE_LOG="consolelog.txt"
 python3 parse_console.py "${REGRESSION_FOLDER}/${CONSOLE_LOG}"

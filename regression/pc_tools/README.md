@@ -10,6 +10,7 @@ Python tools for evaluate algorithm result.
 2. pycocotools
 3. octave 4.4.1
 4. mlir repo
+5. pip install cityscapesscripts
 
 ### Command
 
