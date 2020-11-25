@@ -374,17 +374,15 @@ CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fram
 }
 
 CVI_S32 CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
-                        VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
-                        cvai_liveness_ir_position_e ir_position) {
+                        VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *rgb_face, cvai_face_t *ir_face) {
   TRACE_EVENT("cviai_core", "CVI_AI_Liveness");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Liveness *liveness =
-      getInferenceInstance<Liveness>(CVI_AI_SUPPORTED_MODEL_LIVENESS, ctx, ir_position);
+  Liveness *liveness = getInferenceInstance<Liveness>(CVI_AI_SUPPORTED_MODEL_LIVENESS, ctx);
   if (liveness == nullptr) {
     LOGE("No instance found for Liveness.\n");
     return CVI_FAILURE;
   }
-  return liveness->inference(rgbFrame, irFrame, face);
+  return liveness->inference(rgbFrame, irFrame, rgb_face, ir_face);
 }
 
 CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,

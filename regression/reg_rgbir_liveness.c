@@ -86,6 +86,7 @@ int main(int argc, char *argv[]) {
 
     VB_BLK blk1;
     VIDEO_FRAME_INFO_S frame1;
+    // printf("name1_full: %s\n", name1_full);
     CVI_S32 ret = CVI_AI_ReadImage(name1_full, &blk1, &frame1, PIXEL_FORMAT_BGR_888);
     if (ret != CVI_SUCCESS) {
       printf("Read image1 failed with %#x!\n", ret);
@@ -100,19 +101,28 @@ int main(int argc, char *argv[]) {
       return ret;
     }
 
-    cvai_face_t face;
-    memset(&face, 0, sizeof(cvai_face_t));
+    cvai_face_t rgb_face;
+    memset(&rgb_face, 0, sizeof(cvai_face_t));
 
-    CVI_AI_RetinaFace(handle, &frame1, &face);
-    if (face.size > 0) {
-      CVI_AI_Liveness(handle, &frame1, &frame2, &face, LIVENESS_IR_LEFT);
+    cvai_face_t ir_face;
+    memset(&ir_face, 0, sizeof(cvai_face_t));
 
-      printf("label: %d, score: %f\n", label, face.info[0].liveness_score);
-      CVI_AI_Eval_LfwInsertLabelScore(eval_handle, idx, label, face.info[0].liveness_score);
+    CVI_AI_RetinaFace(handle, &frame1, &rgb_face);
+    CVI_AI_RetinaFace(handle, &frame2, &ir_face);
+
+    if (rgb_face.size > 0) {
+      if (ir_face.size > 0) {
+        CVI_AI_Liveness(handle, &frame1, &frame2, &rgb_face, &ir_face);
+      } else {
+        rgb_face.info[0].liveness_score = -2.0;
+      }
+      printf("label: %d, score: %f\n", label, rgb_face.info[0].liveness_score);
+      CVI_AI_Eval_LfwInsertLabelScore(eval_handle, idx, label, rgb_face.info[0].liveness_score);
       idx++;
     }
 
-    CVI_AI_Free(&face);
+    CVI_AI_Free(&rgb_face);
+    CVI_AI_Free(&ir_face);
     CVI_VB_ReleaseBlock(blk1);
     CVI_VB_ReleaseBlock(blk2);
   }

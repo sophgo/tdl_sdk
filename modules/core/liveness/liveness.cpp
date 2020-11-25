@@ -17,6 +17,7 @@
 #define CROP_NUM 9
 #define MIN_FACE_WIDTH 25
 #define MIN_FACE_HEIGHT 25
+#define MATCH_IOU_THRESHOLD 0.2
 #define OUTPUT_NAME "fc2_dequant"
 
 using namespace std;
@@ -24,8 +25,8 @@ using namespace std;
 namespace cviai {
 
 static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
-                                                VIDEO_FRAME_INFO_S *sink_buffer, cvai_face_t *meta,
-                                                cvai_liveness_ir_position_e ir_pos) {
+                                                VIDEO_FRAME_INFO_S *sink_buffer,
+                                                cvai_face_t *rgb_meta, cvai_face_t *ir_meta) {
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
@@ -44,20 +45,65 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
     return vector<vector<cv::Mat>>{};
   }
 
-  vector<vector<cv::Mat>> input_mat(meta->size, vector<cv::Mat>());
-  for (uint32_t i = 0; i < meta->size; i++) {
-    cvai_face_info_t face_info =
-        info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
-    cv::Rect box;
-    box.x = face_info.bbox.x1;
-    box.y = face_info.bbox.y1;
-    box.width = face_info.bbox.x2 - box.x;
-    box.height = face_info.bbox.y2 - box.y;
-    CVI_AI_FreeCpp(&face_info);
+  vector<cv::Rect> rgb_boxs;
+  vector<cv::Rect> ir_boxs;
 
-    if (box.width <= MIN_FACE_WIDTH || box.height <= MIN_FACE_HEIGHT) continue;
-    cv::Mat crop_rgb_frame = rgb_frame(box);
-    cv::Mat crop_ir_frame = template_matching(crop_rgb_frame, ir_frame, box, ir_pos);
+  for (uint32_t i = 0; i < rgb_meta->size; i++) {
+    cvai_face_info_t rgb_face_info =
+        info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *rgb_meta, i);
+    cv::Rect rgb_box;
+    rgb_box.x = rgb_face_info.bbox.x1;
+    rgb_box.y = rgb_face_info.bbox.y1;
+    rgb_box.width = rgb_face_info.bbox.x2 - rgb_box.x;
+    rgb_box.height = rgb_face_info.bbox.y2 - rgb_box.y;
+    rgb_boxs.push_back(rgb_box);
+    CVI_AI_FreeCpp(&rgb_face_info);
+  }
+
+  for (uint32_t i = 0; i < ir_meta->size; i++) {
+    // cvai_face_info_t ir_face_info = rgb_face_info;
+    cvai_face_info_t ir_face_info = info_rescale_c(sink_buffer->stVFrame.u32Width,
+                                                   sink_buffer->stVFrame.u32Height, *ir_meta, i);
+
+    cv::Rect ir_box;
+    ir_box.x = ir_face_info.bbox.x1;
+    ir_box.y = ir_face_info.bbox.y1;
+    ir_box.width = ir_face_info.bbox.x2 - ir_box.x;
+    ir_box.height = ir_face_info.bbox.y2 - ir_box.y;
+    ir_boxs.push_back(ir_box);
+    CVI_AI_FreeCpp(&ir_face_info);
+  }
+
+  vector<pair<cv::Rect, cv::Rect>> match_result;
+  for (uint32_t i = 0; i < rgb_boxs.size(); i++) {
+    vector<float> iou_result;
+    for (uint32_t j = 0; j < ir_boxs.size(); j++) {
+      cv::Rect rect_uni = rgb_boxs[i] | ir_boxs[j];
+      cv::Rect rect_int = rgb_boxs[i] & ir_boxs[j];
+      // IOU for each pairs
+      float iou = rect_int.area() * 1.0 / rect_uni.area();
+      iou_result.push_back(iou);
+    }
+    if (iou_result.size() > 0) {
+      float maxElement = *max_element(iou_result.begin(), iou_result.end());
+      if (maxElement > MATCH_IOU_THRESHOLD) {
+        int match_index = max_element(iou_result.begin(), iou_result.end()) - iou_result.begin();
+        match_result.push_back({rgb_boxs[i], ir_boxs[match_index]});
+        ir_boxs.erase(ir_boxs.begin() + match_index);
+      }
+    }
+  }
+
+  vector<vector<cv::Mat>> input_mat(match_result.size(), vector<cv::Mat>());
+  for (uint32_t i = 0; i < match_result.size(); i++) {
+    cv::Rect rgb_box = match_result[i].first;
+    cv::Rect ir_box = match_result[i].second;
+
+    if (rgb_box.width <= MIN_FACE_WIDTH || rgb_box.height <= MIN_FACE_HEIGHT ||
+        ir_box.width <= MIN_FACE_WIDTH || ir_box.height <= MIN_FACE_HEIGHT)
+      continue;
+    cv::Mat crop_rgb_frame = rgb_frame(rgb_box);
+    cv::Mat crop_ir_frame = ir_frame(ir_box);
 
     cv::Mat color, ir;
     cv::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
@@ -83,27 +129,25 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
   return input_mat;
 }
 
-Liveness::Liveness(cvai_liveness_ir_position_e ir_position) {
+Liveness::Liveness() {
   mp_mi = std::make_unique<CvimodelInfo>();
   mp_mi->conf.batch_size = 9;
-
-  m_ir_pos = ir_position;
 }
 
 int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
-                        cvai_face_t *meta) {
-  if (meta->size <= 0) {
-    cout << "meta->size <= 0" << endl;
+                        cvai_face_t *rgb_meta, cvai_face_t *ir_meta) {
+  if (rgb_meta->size <= 0) {
+    cout << "rgb_meta->size <= 0" << endl;
     return CVI_FAILURE;
   }
 
-  vector<vector<cv::Mat>> input_mats = image_preprocess(rgbFrame, irFrame, meta, m_ir_pos);
+  vector<vector<cv::Mat>> input_mats = image_preprocess(rgbFrame, irFrame, rgb_meta, ir_meta);
   if (input_mats.empty()) {
     cout << "input_mat.empty" << endl;
     return CVI_FAILURE;
   }
 
-  for (uint32_t i = 0; i < meta->size; i++) {
+  for (uint32_t i = 0; i < input_mats.size(); i++) {
     float conf0 = 0.0;
     float conf1 = 0.0;
 
@@ -130,7 +174,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     float f1 = std::exp(conf1 - max);
     float score = f1 / (f0 + f1);
 
-    meta->info[i].liveness_score = score;
+    rgb_meta->info[i].liveness_score = score;
     // cout << "Face[" << i << "] liveness score: " << score << endl;
   }
 

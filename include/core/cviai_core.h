@@ -429,8 +429,8 @@ DLL_EXPORT CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_I
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
-                                   VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *face,
-                                   cvai_liveness_ir_position_e ir_position);
+                                   VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *rgb_face,
+                                   cvai_face_t *ir_face);
 
 /**
  * @brief Mask classification. Tells if a face is wearing a mask.
