@@ -32,7 +32,11 @@ using namespace cviai;
 void CVI_AI_PerfettoInit() { prefettoInit(); }
 
 void CVI_AI_TraceBegin(const char *name) {
+#ifdef SYSTRACE_FALLBACK
+  TRACE_EVENT_BEGIN("cviai_api", name);
+#else
   TRACE_EVENT_BEGIN("cviai_api", perfetto::StaticString{name});
+#endif
 }
 
 void CVI_AI_TraceEnd() { TRACE_EVENT_END("cviai_api"); }

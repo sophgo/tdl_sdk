@@ -1,14 +1,21 @@
 #pragma once
 // clang-format off
 #ifdef ENABLE_TRACE
-  #if __GNUC__ >= 7
-    #include "perfetto.h"
-    PERFETTO_DEFINE_CATEGORIES(
-        perfetto::Category("cviai_api").SetDescription("Events from cviai_api"),
-        perfetto::Category("cviai_core").SetDescription("Events from cviai_core"),
-        perfetto::Category("cviai_service").SetDescription("Events from cviai_service"));
+  #ifdef SYSTRACE_FALLBACK
+    #include "tracer.h"
+    #define TRACE_EVENT(X, Y) ScopedTrace t(Y)
+    #define TRACE_EVENT_BEGIN(X, Y) Tracer::TraceBegin(Y)
+    #define TRACE_EVENT_END(X) Tracer::TraceEnd()
   #else
-    #error "Perfetto only supports GCC version >= 7."
+    #if __GNUC__ >= 7
+      #include "perfetto.h"
+      PERFETTO_DEFINE_CATEGORIES(
+          perfetto::Category("cviai_api").SetDescription("Events from cviai_api"),
+          perfetto::Category("cviai_core").SetDescription("Events from cviai_core"),
+          perfetto::Category("cviai_service").SetDescription("Events from cviai_service"));
+    #else
+      #error "Perfetto only supports GCC version >= 7."
+    #endif
   #endif
 #else
   #define TRACE_EVENT(X, Y)
@@ -17,13 +24,15 @@
 #endif
 
 inline void __attribute__((always_inline)) prefettoInit() {
-#ifdef ENABLE_TRACE
-  #if __GNUC__ >= 7
-    perfetto::TracingInitArgs args;
-    args.backends = perfetto::kSystemBackend;
+#ifndef SYSTRACE_FALLBACK
+  #ifdef ENABLE_TRACE
+    #if __GNUC__ >= 7
+      perfetto::TracingInitArgs args;
+      args.backends = perfetto::kSystemBackend;
 
-    perfetto::Tracing::Initialize(args);
-    perfetto::TrackEvent::Register();
+      perfetto::Tracing::Initialize(args);
+      perfetto::TrackEvent::Register();
+    #endif
   #endif
 #endif
 }

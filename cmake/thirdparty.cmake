@@ -1,16 +1,30 @@
 project(thirdparty_fetchcontent)
 include(FetchContent)
 if (ENABLE_PERFETTO)
-  FetchContent_Declare(
-    cvi_perfetto
-    GIT_REPOSITORY http://10.58.65.3:8480/yangwen.huang/cvi_perfetto.git
-    GIT_TAG        origin/master
-  )
-  FetchContent_MakeAvailable(cvi_perfetto)
-  add_subdirectory(${cvi_perfetto_SOURCE_DIR}/sdk)
-  include_directories(${cvi_perfetto_SOURCE_DIR}/sdk)
-  add_definitions(-DENABLE_TRACE)
-  message("Content downloaded to ${cvi_perfetto_SOURCE_DIR}")
+    if (SYSTRACE_FALLBACK)
+    FetchContent_Declare(
+      cvi_tracer
+      GIT_REPOSITORY ssh://git@10.58.65.3:8422/sys_app/tracer.git
+      GIT_TAG        origin/master
+    )
+    if(NOT cvi_tracer_POPULATED)
+      FetchContent_Populate(cvi_tracer)
+    endif()
+    include_directories(${cvi_tracer_SOURCE_DIR})
+    add_definitions(-DENABLE_TRACE)
+    message("Content downloaded to ${cvi_tracer_SOURCE_DIR}")
+  else()
+    FetchContent_Declare(
+      cvi_perfetto
+      GIT_REPOSITORY http://10.58.65.3:8480/yangwen.huang/cvi_perfetto.git
+      GIT_TAG        origin/master
+    )
+    FetchContent_MakeAvailable(cvi_perfetto)
+    add_subdirectory(${cvi_perfetto_SOURCE_DIR}/sdk)
+    include_directories(${cvi_perfetto_SOURCE_DIR}/sdk)
+    add_definitions(-DENABLE_TRACE)
+    message("Content downloaded to ${cvi_perfetto_SOURCE_DIR}")
+  endif()
 endif()
 
 FetchContent_Declare(

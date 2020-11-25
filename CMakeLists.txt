@@ -43,6 +43,10 @@ else()
     message(FATAL_ERROR "No build type!!!")
 endif()
 
+# FIXME: Temporarily workaround
+set(SYSTRACE_FALLBACK ON)
+add_definitions(-DSYSTRACE_FALLBACK)
+
 # Get current commit
 execute_process(COMMAND git show --oneline -s OUTPUT_VARIABLE CURRENT_COMMIT)
 
