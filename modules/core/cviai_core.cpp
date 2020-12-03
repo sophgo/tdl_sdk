@@ -1,3 +1,5 @@
+#include "version.hpp"
+
 #include "core/cviai_core.h"
 #include "cviai_core_internal.hpp"
 #include "cviai_log.hpp"
@@ -75,7 +77,8 @@ CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId)
     removeCtx(ctx);
     return CVI_FAILURE;
   }
-  LOGI("cviai_handle_t created.");
+  const char timestamp[] = __DATE__ " " __TIME__;
+  LOGI("cviai_handle_t created, version %s-%s", CVIAI_TAG, timestamp);
   *handle = ctx;
   return CVI_SUCCESS;
 }

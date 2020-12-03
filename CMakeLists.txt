@@ -49,8 +49,17 @@ add_definitions(-DSYSTRACE_FALLBACK)
 
 # Get current commit
 execute_process(COMMAND git show --oneline -s OUTPUT_VARIABLE CURRENT_COMMIT)
+execute_process(COMMAND git describe OUTPUT_VARIABLE LATEST_TAG)
+if ("${LATEST_TAG}" STREQUAL "")
+  message(WARNING "Cannot fetch latest tag from git.")
+  set(LATEST_TAG "v0.0.0")
+endif()
+string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)*[^(\\\n).]+" LATEST_TAG ${LATEST_TAG})
+string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" MAJOR_VERSION ${LATEST_TAG})
+string(REGEX MATCH "^([^.]+)" SO_VERSION ${MAJOR_VERSION})
 
 message("==================================================")
+message("Latest tag       ${LATEST_TAG}")
 message("Commit           ${CURRENT_COMMIT}")
 message("[Summary]")
 message("Build type       ${CMAKE_BUILD_TYPE}")

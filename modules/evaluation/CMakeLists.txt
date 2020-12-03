@@ -19,6 +19,9 @@ set(EVA_SRCS $<TARGET_OBJECTS:coco>
 project(cviai_evaluation)
 add_library(${PROJECT_NAME} SHARED ${EVA_SRCS})
 target_link_libraries(${PROJECT_NAME} -lstdc++fs)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+                      VERSION ${MAJOR_VERSION}
+                      SOVERSION ${SO_VERSION})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 project(cviai_evaluation-static)

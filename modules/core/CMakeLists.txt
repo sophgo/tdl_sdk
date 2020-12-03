@@ -47,6 +47,9 @@ set(CORE_DEPS ${PERFETTO_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS
 project(cviai_core)
 add_library(${PROJECT_NAME} SHARED ${CORE_SRCS})
 target_link_libraries(${PROJECT_NAME} ${CORE_DEPS})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+                      VERSION ${MAJOR_VERSION}
+                      SOVERSION ${SO_VERSION})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 project(cviai_core-static)

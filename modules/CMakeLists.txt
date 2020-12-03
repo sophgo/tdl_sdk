@@ -5,7 +5,12 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
   add_compile_options(-fvisibility=hidden)
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cviai_trace
+set(CVIAI_TAG ${LATEST_TAG})
+set(CVIAI_VERSION ${MAJOR_VERSION})
+configure_file(version.hpp.in version.hpp @ONLY)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/cviai_trace
                     ${CMAKE_CURRENT_SOURCE_DIR}/log
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 add_subdirectory(cviai_trace) # Perfetto tracer comes first
