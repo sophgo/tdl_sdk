@@ -3,7 +3,7 @@
 #ifdef ENABLE_TRACE
   #ifdef SYSTRACE_FALLBACK
     #include "tracer.h"
-    #define TRACE_EVENT(X, Y) ScopedTrace t(Y)
+    #define TRACE_EVENT(X, Y) ScopedTrace scopedtrace(Y)
     #define TRACE_EVENT_BEGIN(X, Y) Tracer::TraceBegin(Y)
     #define TRACE_EVENT_END(X) Tracer::TraceEnd()
   #else
