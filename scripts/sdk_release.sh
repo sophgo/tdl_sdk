@@ -11,8 +11,8 @@ fi
 
 mkdir -p $TMP_WORKING_DIR/build_sdk
 pushd $TMP_WORKING_DIR/build_sdk
-wget https://github.com/Kitware/CMake/releases/download/v3.18.4/cmake-3.18.4-Linux-x86_64.tar.gz
-tar zxvf cmake-3.18.4-Linux-x86_64.tar.gz
+wget https://github.com/Kitware/CMake/releases/download/v3.18.4/cmake-3.18.4-Linux-x86_64.tar.gz -q
+tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
 CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
 echo "Creating tmp working directory."
 if [[ "$1" == "cmodel" ]]; then
