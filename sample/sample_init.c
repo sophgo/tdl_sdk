@@ -33,7 +33,7 @@ int main(void) {
   free(path);
 
   // Get the used group ids by AI SDK.
-  uint32_t *groups = NULL;
+  VPSS_GRP *groups = NULL;
   uint32_t nums = 0;
   if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVI_SUCCESS) {
     printf("Get used group id failed.\n");
