@@ -18,8 +18,7 @@ set(MIDDLEWARE_INCLUDES
 set(MIDDLEWARE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libcvitracer.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so)
+                    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so)
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
   install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/middleware)
