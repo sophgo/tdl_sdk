@@ -11,7 +11,7 @@ fi
 
 mkdir -p $TMP_WORKING_DIR/build_sdk
 pushd $TMP_WORKING_DIR/build_sdk
-wget https://github.com/Kitware/CMake/releases/download/v3.18.4/cmake-3.18.4-Linux-x86_64.tar.gz -q
+wget ftp://sa_admin:sa_admin@10.58.65.3//dependency_lib/prebuilt/cmake/cmake-3.18.4-Linux-x86_64.tar.gz -q
 tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
 CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
 echo "Creating tmp working directory."
