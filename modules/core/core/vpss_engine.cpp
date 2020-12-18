@@ -13,6 +13,11 @@ int VpssEngine::init(VPSS_GRP grp_id) {
     LOGW("Vpss already init.\n");
     return CVI_FAILURE;
   }
+  int s32Ret = CVI_SYS_Init();
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("CVI_SYS_Init failed!\n");
+    return s32Ret;
+  }
   if (CVI_SYS_GetVPSSMode() == VPSS_MODE_DUAL) {
     // FIXME: Currently hardcoded due to no define in mmf.
     m_available_max_chn = VPSS_MAX_CHN_NUM - 1;
@@ -47,7 +52,7 @@ int VpssEngine::init(VPSS_GRP grp_id) {
     LOGE("All vpss grp init failed!\n");
     return CVI_FAILURE;
   }
-  int s32Ret = CVI_VPSS_ResetGrp(m_grpid);
+  s32Ret = CVI_VPSS_ResetGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", m_grpid, s32Ret);
     return CVI_FAILURE;
