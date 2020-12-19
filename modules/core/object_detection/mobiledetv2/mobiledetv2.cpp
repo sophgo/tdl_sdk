@@ -96,14 +96,13 @@ static Detections nms(const Detections &dets, float iou_threshold) {
       auto h = std::max(0.0f, yy2 - yy1);
       auto inter = w * h;
       float ovr = static_cast<float>(inter) / (iarea + areas[j] - inter);
-      if (ovr > iou_threshold) suppressed[j] = 1;
+      if (ovr > iou_threshold && dets[j]->label == dets[i]->label) suppressed[j] = 1;
     }
   }
 
   Detections final_dets(num_to_keep);
-  size_t index = 0;
   for (size_t k = 0; k < num_to_keep; k++) {
-    final_dets[index++] = dets[keep[k]];
+    final_dets[k] = dets[keep[k]];
   }
   return final_dets;
 }
