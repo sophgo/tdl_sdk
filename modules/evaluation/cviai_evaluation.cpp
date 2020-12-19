@@ -115,30 +115,21 @@ CVI_S32 CVI_AI_Eval_CocoInsertObject(cviai_eval_handle_t handle, const int id, c
   return CVI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_Eval_CocoSave2Json(cviai_eval_handle_t handle, const char *filepath) {
+CVI_S32 CVI_AI_Eval_CocoStartEval(cviai_eval_handle_t handle, const char *filepath) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   if (ctx->coco_eval == nullptr) {
     return CVI_FAILURE;
   }
-  ctx->coco_eval->saveJsonObject2File(filepath);
+  ctx->coco_eval->start_eval(filepath);
   return CVI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_Eval_CocoClearInput(cviai_eval_handle_t handle) {
+CVI_S32 CVI_AI_Eval_CocoEndEval(cviai_eval_handle_t handle) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   if (ctx->coco_eval == nullptr) {
     return CVI_FAILURE;
   }
-  ctx->coco_eval->resetReadJsonObject();
-  return CVI_SUCCESS;
-}
-
-CVI_S32 CVI_AI_Eval_CocoClearObject(cviai_eval_handle_t handle) {
-  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
-  if (ctx->coco_eval == nullptr) {
-    return CVI_FAILURE;
-  }
-  ctx->coco_eval->resetWriteJsonObject();
+  ctx->coco_eval->end_eval();
   return CVI_SUCCESS;
 }
 

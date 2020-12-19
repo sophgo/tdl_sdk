@@ -43,12 +43,9 @@ DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoGetImageIdPair(cviai_eval_handle_t handle, co
 DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoInsertObject(cviai_eval_handle_t handle, const int id,
                                                 cvai_object_t *obj);
 
-DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoSave2Json(cviai_eval_handle_t handle, const char *filepath);
+DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoStartEval(cviai_eval_handle_t handle, const char *filepath);
 
-DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoClearInput(cviai_eval_handle_t handle);
-
-DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoClearObject(cviai_eval_handle_t handle);
-
+DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoEndEval(cviai_eval_handle_t handle);
 /****************************************************************
  * LFW evaluation functions
  **/

@@ -1,4 +1,5 @@
 #pragma once
+#include <fstream>
 #include "core/object/cvai_object_types.h"
 #include "json.hpp"
 
@@ -11,15 +12,15 @@ class CocoEval {
   uint32_t getTotalImage();
   void getImageIdPair(const int index, std::string *path, int *id);
   void insertObjectData(const int id, const cvai_object_t *obj);
-  void resetReadJsonObject();
-  void resetWriteJsonObject();
-  void saveJsonObject2File(const char *filepath);
+  void start_eval(const char *out_path);
+  void end_eval();
   ~CocoEval();
 
  private:
   const char *m_path_prefix;
   nlohmann::json m_json_read;
-  nlohmann::json m_json_write;
+  std::ofstream m_ofs_results;
+  int m_det_count;
 };
 }  // namespace evaluation
 }  // namespace cviai

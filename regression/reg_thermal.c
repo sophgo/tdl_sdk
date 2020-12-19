@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 
   uint32_t image_num;
   CVI_AI_Eval_CocoInit(eval_handle, argv[2], argv[3], &image_num);
-
+  CVI_AI_Eval_CocoStartEval(eval_handle, argv[4]);
   for (uint32_t i = 0; i < image_num; i++) {
     char *filename = NULL;
     int id = 0;
@@ -86,9 +86,7 @@ int main(int argc, char *argv[]) {
     CVI_VB_ReleaseBlock(blk);
   }
 
-  CVI_AI_Eval_CocoSave2Json(eval_handle, argv[4]);
-  CVI_AI_Eval_CocoClearInput(eval_handle);
-  CVI_AI_Eval_CocoClearObject(eval_handle);
+  CVI_AI_Eval_CocoEndEval(eval_handle);
 
   CVI_AI_Eval_DestroyHandle(eval_handle);
   CVI_AI_DestroyHandle(facelib_handle);
