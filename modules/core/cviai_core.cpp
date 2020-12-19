@@ -215,7 +215,7 @@ getInferenceInstance(const V index, cviai_context_t *ctx, Arguments &&... arg) {
   cviai_model_t &m_t = ctx->model_cont[index];
   if (m_t.instance == nullptr) {
     if (m_t.model_path.empty()) {
-      LOGE("Model path for FaceAttribute is empty.\n");
+      LOGE("Model path for %s is empty.\n", CVI_AI_GetModelName(index));
       return nullptr;
     }
     m_t.instance = new C(arg...);
