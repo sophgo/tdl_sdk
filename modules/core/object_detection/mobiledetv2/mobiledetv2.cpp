@@ -108,7 +108,8 @@ static Detections nms(const Detections &dets, float iou_threshold) {
 }
 
 static void convert_det_struct(const Detections &dets, cvai_object_t *out, int im_height,
-                               int im_width, meta_rescale_type_e type) {
+                               int im_width, meta_rescale_type_e type,
+                               const MobileDetV2::CvimodelInfo &config) {
   out->size = dets.size();
   out->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * out->size);
   out->height = im_height;
@@ -122,8 +123,8 @@ static void convert_det_struct(const Detections &dets, cvai_object_t *out, int i
     out->info[i].bbox.x2 = dets[i]->x2;
     out->info[i].bbox.y2 = dets[i]->y2;
     out->info[i].bbox.score = dets[i]->score;
-    out->info[i].classes = coco_utils::map_90_class_id_to_80(dets[i]->label);
-    const string &classname = coco_utils::class_names_80[out->info[i].classes];
+    out->info[i].classes = config.class_id_map(dets[i]->label);
+    const string &classname = config.class_names[out->info[i].classes];
     strncpy(out->info[i].name, classname.c_str(), sizeof(out->info[i].name));
   }
 }
@@ -150,6 +151,11 @@ static void decode_box(const float *const box, const AnchorBox &anchor, const Pt
 static void clip_bbox(const size_t image_size, const PtrDectRect &box) {
   if (box->x1 < 0) box->x1 = 0;
   if (box->y1 < 0) box->y1 = 0;
+  if (box->x2 < 0) box->x2 = 0;
+  if (box->y2 < 0) box->y2 = 0;
+
+  if (box->x1 >= image_size) box->x1 = image_size - 1;
+  if (box->y1 >= image_size) box->y1 = image_size - 1;
   if (box->x2 >= image_size) box->x2 = image_size - 1;
   if (box->y2 >= image_size) box->y2 = image_size - 1;
 }
@@ -314,20 +320,7 @@ void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tenso
   }
 }
 
-int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
-                           cvai_obj_det_type_e det_type) {
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-
-  int ret = CVI_SUCCESS;
-  std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-  ret = run(frames);
-  Detections dets;
-  generate_dets_for_each_stride(&dets);
-
-  Detections final_dets = nms(dets, m_iou_threshold);
-
-  // remove all detections not belong to COCO 80 classes
+void coco_class_90_filter(Detections &dets, cvai_obj_det_type_e det_type) {
   auto condition = [det_type](const PtrDectRect &det) {
     int label = coco_utils::map_90_class_id_to_80(det->label);
     if (label == -1) {
@@ -345,10 +338,27 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
     }
     return skip_class;
   };
-  final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
+  dets.erase(remove_if(dets.begin(), dets.end(), condition), dets.end());
+}
+
+int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
+                           cvai_obj_det_type_e det_type) {
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
+
+  int ret = CVI_SUCCESS;
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+
+  ret = run(frames);
+  Detections dets;
+  generate_dets_for_each_stride(&dets);
+
+  Detections final_dets = nms(dets, m_iou_threshold);
+
+  if (m_model_config.filter) m_model_config.filter(final_dets, det_type);
 
   convert_det_struct(final_dets, meta, input->shape.dim[2], input->shape.dim[3],
-                     m_vpss_config[0].rescale_type);
+                     m_vpss_config[0].rescale_type, m_model_config);
 
   if (!m_skip_vpss_preprocess) {
     for (uint32_t i = 0; i < meta->size; ++i) {
@@ -390,6 +400,9 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                            {64, "box_stride_64"},
                            {128, "box_stride_128"}};
 
+  config.filter = nullptr;
+  config.class_id_map = [](int orig_id) { return orig_id; };
+
   switch (model) {
     case Model::d0:
       config.image_size = 512;
@@ -405,6 +418,9 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 2.9647181034088135},
                                     {128, 12.42608642578125}};
       config.default_score_threshold = 0.4;
+      config.class_names = coco_utils::class_names_80;
+      config.class_id_map = coco_utils::map_90_class_id_to_80;
+      config.filter = coco_class_90_filter;
       break;
     case Model::d1:
       config.image_size = 640;
@@ -420,6 +436,9 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 2.727674961090088},
                                     {128, 2.260598659515381}};
       config.default_score_threshold = 0.3;
+      config.class_names = coco_utils::class_names_80;
+      config.class_id_map = coco_utils::map_90_class_id_to_80;
+      config.filter = coco_class_90_filter;
       break;
     case Model::d2:
       config.image_size = 768;
@@ -435,6 +454,9 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 2.563389301300049},
                                     {128, 2.2213821411132812}};
       config.default_score_threshold = 0.3;
+      config.class_names = coco_utils::class_names_80;
+      config.class_id_map = coco_utils::map_90_class_id_to_80;
+      config.filter = coco_class_90_filter;
       break;
     case Model::lite:
       config.num_classes = 9;
@@ -451,6 +473,26 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 2.3935775756835938},
                                     {128, 2.543354034423828}};
       config.default_score_threshold = 0.3;
+      config.class_names = {"person", "bicycle", "car",   "motorbike", "aeroplane",
+                            "bus",    "train",   "truck", "boat"};
+      break;
+    case Model::vehicle_d0:
+      config.num_classes = 3;
+      config.image_size = 512;
+      config.class_dequant_thresh = {{8, 8.599571228027344},
+                                     {16, 8.887327194213867},
+                                     {32, 9.710219383239746},
+                                     {64, 10.174678802490234},
+                                     {128, 10.896987915039062}};
+
+      config.bbox_dequant_thresh = {{8, 2.2055277824401855},
+                                    {16, 2.6225955486297607},
+                                    {32, 2.434586763381958},
+                                    {64, 4.202951431274414},
+                                    {128, 4.039170742034912}};
+      config.default_score_threshold = 0.3;
+      config.class_names = {"car", "truck", "motorbike"};
+
       break;
   }
 

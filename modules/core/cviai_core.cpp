@@ -251,6 +251,9 @@ CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E 
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE: {
       instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::lite);
     } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::vehicle_d0);
+    } break;
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0: {
       instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d0);
     } break;
@@ -414,6 +417,13 @@ MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model m
     return CVI_RC_FAILURE;
   }
   return detector->inference(frame, obj, det_type);
+}
+
+CVI_S32 CVI_AI_MobileDetV2_Vehicle_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                      cvai_object_t *obj) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Lite");
+  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0,
+                         MobileDetV2::Model::vehicle_d0, handle, frame, obj, CVI_DET_TYPE_ALL);
 }
 
 CVI_S32 CVI_AI_MobileDetV2_Lite(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,

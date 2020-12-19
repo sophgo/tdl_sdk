@@ -23,6 +23,15 @@ typedef struct _ModelConfig {
   InferenceFunc inference;
 } ModelConfig;
 
+#define CREATE_WRAPPER(realfunc)                                                     \
+  int inference_wrapper_##realfunc(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, \
+                                   cvai_object_t *objects, cvai_obj_det_type_e e) {  \
+    return realfunc(handle, frame, objects);                                         \
+  }
+
+#define WRAPPER(realfunc) inference_wrapper_##realfunc
+CREATE_WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0)
+
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVI_SUCCESS;
 
@@ -38,6 +47,9 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   } else if (strcmp(model_name, "mobiledetv2-d2") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2;
     config->inference = CVI_AI_MobileDetV2_D2;
+  } else if (strcmp(model_name, "mobiledetv2-vehicle-d0") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0;
+    config->inference = WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0);
   } else if (strcmp(model_name, "yolov3") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     config->inference = CVI_AI_Yolov3;
@@ -63,6 +75,7 @@ int main(int argc, char *argv[]) {
         "\t model_name: detection model name should be one of {mobiledetv2-lite, mobiledetv2-d0, "
         "mobiledetv2-d1, "
         "mobiledetv2-d2, "
+        "mobiledetv2-vehicle-d0, "
         "yolov3}\n"
         "\t threshold (optional): threshold for detection model\n",
         argv[0]);

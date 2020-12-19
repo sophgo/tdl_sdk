@@ -10,11 +10,26 @@ namespace cviai {
 
 class MobileDetV2 final : public Core {
  public:
+  // TODO: remove duplicate struct
+  struct object_detect_rect_t {
+    float x1;
+    float y1;
+    float x2;
+    float y2;
+    float score;
+    int label;
+  };
+
+  // TODO: define in common header
+  typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
+  typedef std::vector<PtrDectRect> Detections;
+
   enum class Model {
-    d0,    // MobileDetV2-D0
-    d1,    // MobileDetV2-D1
-    d2,    // MobileDetV2-D2
-    lite,  // MobileDetV2-Lite
+    d0,          // MobileDetV2-D0
+    d1,          // MobileDetV2-D1
+    d2,          // MobileDetV2-D2
+    lite,        // MobileDetV2-Lite
+    vehicle_d0,  // MobileDetV2-Vehicle-D0
   };
 
   struct CvimodelInfo {
@@ -34,28 +49,22 @@ class MobileDetV2 final : public Core {
     std::map<int, float> class_dequant_thresh;
     std::map<int, float> bbox_dequant_thresh;
     float default_score_threshold;
+
+    typedef int (*ClassMapFunc)(int);
+    ClassMapFunc class_id_map;
+    std::vector<std::string> class_names;
+    using Detections = MobileDetV2::Detections;
+    typedef void (*DetectonFilter)(Detections &, cvai_obj_det_type_e);
+
+    DetectonFilter filter;
     static CvimodelInfo create_config(MobileDetV2::Model model);
   };
 
-  // TODO: remove duplicate struct
-  struct object_detect_rect_t {
-    float x1;
-    float y1;
-    float x2;
-    float y2;
-    float score;
-    int label;
-  };
-
-  explicit MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.45);
+  explicit MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.5);
   virtual ~MobileDetV2();
   int initAfterModelOpened(std::vector<initSetup> *data) override;
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_e det_type);
   virtual void setModelThreshold(float threshold) override;
-
-  // TODO: define in common header
-  typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
-  typedef std::vector<PtrDectRect> Detections;
 
  private:
   int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,

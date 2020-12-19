@@ -117,6 +117,7 @@ typedef enum {
   CVI_AI_SUPPORTED_MODEL_LIVENESS,
   CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION,
   CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE,
+  CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0,
   CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
   CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
   CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
@@ -450,6 +451,17 @@ DLL_EXPORT CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_
  * \ingroup core_ai
  */
 /**@{*/
+
+/**
+ * @brief MobileDetV2 Vehicle object detection, This model cat detect "car", "truck", "motorbike"
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param obj Output detect result. The name, bbox, and classes will be given.
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_Vehicle_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                                 cvai_object_t *obj);
 
 /**
  * @brief MobileDetV2 Lite object detection, the most lightweight MobileDetV2 with 9 classes
