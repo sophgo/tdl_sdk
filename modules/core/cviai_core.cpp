@@ -11,6 +11,8 @@
 #include "es_classification/es_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"
+#include "license_plate_detection/license_plate_detection.hpp"
+#include "license_plate_recognition/license_plate_recognition.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_classification/mask_classification.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
@@ -565,6 +567,39 @@ CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj,
   }
   ctx->ds_tracker->track(obj, tracker_t);
   return 0;
+}
+
+// License Plate Detection & Recognition
+CVI_S32 CVI_AI_LicensePlateRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                       cvai_object_t *license_plate_meta) {
+  TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateRecognition");
+  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_Track");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  LicensePlateRecognition *lpr_model =
+      getInferenceInstance<LicensePlateRecognition>(CVI_AI_SUPPORTED_MODEL_LPRNET, ctx);
+  if (lpr_model == nullptr) {
+    // LOGE("No instance found for LicensePlateRecognition.\n");
+    printf("No instance found for LicensePlateRecognition.\n");
+    return CVI_FAILURE;
+  }
+
+  return lpr_model->inference(frame, license_plate_meta);
+}
+
+CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                     cvai_object_t *vehicle_meta,
+                                     cvai_object_t *license_plate_meta) {
+  TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateDetection");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  LicensePlateDetection *lpd_model =
+      getInferenceInstance<LicensePlateDetection>(CVI_AI_SUPPORTED_MODEL_WPODNET, ctx);
+  if (lpd_model == nullptr) {
+    // LOGE("No instance found for LicensePlateRecognition.\n");
+    printf("No instance found for LicensePlateDetection.\n");
+    return CVI_FAILURE;
+  }
+
+  return lpd_model->inference(frame, vehicle_meta, license_plate_meta);
 }
 
 // Others
