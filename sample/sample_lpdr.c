@@ -124,9 +124,9 @@ int main(int argc, char *argv[]) {
 
     for (size_t i = 0; i < license_plate_obj.size; i++) {
       if (license_plate_obj.info[i].bpts.size > 0) {
-        printf("Vec[%lu] ID number: %s\n", i, license_plate_obj.info[i].name);
+        printf("Vec[%zu] ID number: %s\n", i, license_plate_obj.info[i].name);
       } else {
-        printf("Vec[%lu] license plate not found.\n", i);
+        printf("Vec[%zu] license plate not found.\n", i);
       }
     }
   }
