@@ -14,9 +14,7 @@ static int compare(const void *arg1, const void *arg2) {
 namespace cviai {
 namespace evaluation {
 
-lfwEval::lfwEval(const char *fiilepath, bool label_pos_first) {
-  getEvalData(fiilepath, label_pos_first);
-}
+lfwEval::lfwEval() {}
 
 int lfwEval::getEvalData(const char *fiilepath, bool label_pos_first) {
   FILE *fp;

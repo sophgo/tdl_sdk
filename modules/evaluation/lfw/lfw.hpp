@@ -14,7 +14,7 @@ typedef struct {
 
 class lfwEval {
  public:
-  lfwEval(const char *fiilepath, bool label_pos_first);
+  lfwEval();
   int getEvalData(const char *fiilepath, bool label_pos_first);
   uint32_t getTotalImage();
   void getImageLabelPair(const int index, std::string *path1, std::string *path2, int *label);

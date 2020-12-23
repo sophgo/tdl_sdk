@@ -140,10 +140,13 @@ CVI_S32 CVI_AI_Eval_LfwInit(cviai_eval_handle_t handle, const char *filepath, bo
                             uint32_t *imageNum) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   if (ctx->lfw_eval == nullptr) {
-    ctx->lfw_eval = new cviai::evaluation::lfwEval(filepath, label_pos_first);
-  } else {
-    ctx->lfw_eval->getEvalData(filepath, label_pos_first);
+    ctx->lfw_eval = new cviai::evaluation::lfwEval();
   }
+
+  if (ctx->lfw_eval->getEvalData(filepath, label_pos_first) != CVI_SUCCESS) {
+    return CVI_FAILURE;
+  }
+
   *imageNum = ctx->lfw_eval->getTotalImage();
   return CVI_SUCCESS;
 }

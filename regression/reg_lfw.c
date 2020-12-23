@@ -16,15 +16,23 @@ cviai_handle_t facelib_handle = NULL;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
+typedef int (*Inference)(const cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_face_t *);
+
 int main(int argc, char *argv[]) {
-  if (argc != 5) {
-    printf("Usage: reg_lfw <retina path> <bmface path> <pair_txt_path> <result file path>.\n");
+  if (argc != 6) {
+    printf(
+        "Usage: reg_lfw <retina path> <model path> <pair_txt_path> <result file path> <is "
+        "attribute model>.\n");
     printf("Pair txt format: lable image1_path image2_path.\n");
     return CVI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
   CVI_S32 ret = CVI_SUCCESS;
+
+  CVI_AI_SUPPORTED_MODEL_E model_id = atoi(argv[5]) == 1 ? CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE
+                                                         : CVI_AI_SUPPORTED_MODEL_FACERECOGNITION;
+  Inference inference = atoi(argv[5]) == 1 ? CVI_AI_FaceAttribute : CVI_AI_FaceRecognition;
 
   ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,
                         vpssgrp_height, PIXEL_FORMAT_RGB_888);
@@ -40,7 +48,7 @@ int main(int argc, char *argv[]) {
   }
 
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, model_id, argv[2]);
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
@@ -56,7 +64,12 @@ int main(int argc, char *argv[]) {
   }
 
   uint32_t imageNum;
-  CVI_AI_Eval_LfwInit(eval_handle, argv[3], true, &imageNum);
+  ret = CVI_AI_Eval_LfwInit(eval_handle, argv[3], true, &imageNum);
+  if (ret != CVI_SUCCESS) {
+    printf("Lfw evaluation init failed with pairs file: %s!\n", argv[3]);
+    return ret;
+  }
+
   for (uint32_t i = 0; i < imageNum; i++) {
     char *name1 = NULL;
     char *name2 = NULL;
@@ -77,7 +90,7 @@ int main(int argc, char *argv[]) {
       printf("Read image2 failed with %#x!\n", ret);
       return ret;
     }
-    printf("label %d: image1 %s image2 %s\n", label, name1, name2);
+    printf("[%d/%d] label %d: image1 %s image2 %s\n", i + 1, imageNum, label, name1, name2);
     free(name1);
     free(name2);
 
@@ -88,8 +101,8 @@ int main(int argc, char *argv[]) {
     CVI_AI_RetinaFace(facelib_handle, &frame1, &face1);
     CVI_AI_RetinaFace(facelib_handle, &frame2, &face2);
 
-    CVI_AI_FaceAttribute(facelib_handle, &frame1, &face1);
-    CVI_AI_FaceAttribute(facelib_handle, &frame2, &face2);
+    inference(facelib_handle, &frame1, &face1);
+    inference(facelib_handle, &frame2, &face2);
 
     CVI_AI_Eval_LfwInsertFace(eval_handle, i, label, &face1, &face2);
 
