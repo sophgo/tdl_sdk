@@ -1,7 +1,22 @@
 
 #!/bin/bash
 
-while getopts "r:m:d:s:?" opt; do
+print_usage() {
+  echo ""
+  echo "Usage: regression.sh [-r] [-m] [-s] [-d] [-t] [-h] test_type"
+  echo ""
+  echo "Argument:"
+  echo -e "\ttest_type, set value to \"daily\" if it's a daily test"
+  echo ""
+  echo "Options:"
+  echo -e "\t-r, results output directory (default: /mnt/data/result}"
+  echo -e "\t-m, cvimodel directory (default: /mnt/data/cvimodel}"
+  echo -e "\t-s, sample input images directory (default: /mnt/data}"
+  echo -e "\t-d, dataset directory (default: /mnt/data/dataset}"
+  echo -e "\t-h, help"
+}
+
+while getopts "r:m:d:s:h?" opt; do
   case ${opt} in
     r)
       results_dir=$OPTARG
@@ -15,19 +30,13 @@ while getopts "r:m:d:s:?" opt; do
     d)
       dataset_dir=$OPTARG
       ;;
-    ?)
-      echo ""
-      echo "Usage: regression.sh [-r] [-m] [-s] [-d] [-t] test_type"
-      echo ""
-      echo "Argument:"
-      echo -e "\ttest_type, set value to \"daily\" if it's a daily test"
-      echo ""
-      echo "Options:"
-      echo -e "\t-r, results output directory (default: /mnt/data/result}"
-      echo -e "\t-m, cvimodel directory (default: /mnt/data/cvimodel}"
-      echo -e "\t-s, sample input images directory (default: /mnt/data}"
-      echo -e "\t-d, dataset directory (default: /mnt/data/dataset}"
+    h)
+      print_usage
       exit 0
+      ;;
+    \?)
+      print_usage
+      exit 128
       ;;
   esac
 done
