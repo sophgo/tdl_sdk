@@ -573,7 +573,6 @@ CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj,
 CVI_S32 CVI_AI_LicensePlateRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                        cvai_object_t *license_plate_meta) {
   TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateRecognition");
-  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_Track");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   LicensePlateRecognition *lpr_model =
       getInferenceInstance<LicensePlateRecognition>(CVI_AI_SUPPORTED_MODEL_LPRNET, ctx);
