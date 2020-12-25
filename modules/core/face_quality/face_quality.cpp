@@ -90,10 +90,7 @@ static int get_face_direction(cvai_pts_t pts, float &roll, float &pitch, float &
   return 0;
 }
 
-FaceQuality::FaceQuality() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-}
+FaceQuality::FaceQuality() : Core(CVI_MEM_DEVICE) {}
 
 FaceQuality::~FaceQuality() {
   if (m_gdc_blk != (VB_BLK)-1) {
@@ -103,7 +100,7 @@ FaceQuality::~FaceQuality() {
   }
 }
 
-int FaceQuality::initAfterModelOpened(std::vector<initSetup> *data) {
+int FaceQuality::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face quality only has 1 input.\n");
     return CVI_FAILURE;
@@ -117,17 +114,19 @@ int FaceQuality::initAfterModelOpened(std::vector<initSetup> *data) {
   }
   (*data)[0].use_quantize_scale = true;
 
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, input->shape.dim[3], input->shape.dim[2],
+  return CVI_SUCCESS;
+}
+
+int FaceQuality::onModelOpened() {
+  CVI_SHAPE shape = getInputShape(0);
+  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, shape.dim[3], shape.dim[2],
                             PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
-    return -1;
+    return CVI_FAILURE;
   }
 
   m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
       m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
-
-  return 0;
+  return CVI_SUCCESS;
 }
 
 int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
@@ -157,8 +156,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
     run(frames);
 
-    CVI_TENSOR *out = CVI_NN_GetTensorByName(NAME_SCORE, mp_mi->out.tensors, mp_mi->out.num);
-    float *score = (float *)CVI_NN_TensorPtr(out);
+    float *score = getOutputRawPtr<float>(NAME_SCORE);
     meta->info[i].face_quality.quality = score[1];
 
     float roll = 0, pitch = 0, yaw = 0;

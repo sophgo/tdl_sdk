@@ -17,14 +17,11 @@
 
 namespace cviai {
 
-MaskClassification::MaskClassification() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-}
+MaskClassification::MaskClassification() : Core(CVI_MEM_DEVICE) {}
 
 MaskClassification::~MaskClassification() {}
 
-int MaskClassification::initAfterModelOpened(std::vector<initSetup> *data) {
+int MaskClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Mask classification only has 1 input.\n");
     return CVI_FAILURE;
@@ -63,8 +60,7 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
     run(frames);
 
-    CVI_TENSOR *out = CVI_NN_GetTensorByName(MASK_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
-    float *out_data = (float *)CVI_NN_TensorPtr(out);
+    float *out_data = getOutputRawPtr<float>(MASK_OUT_NAME);
 
     float max = std::max(out_data[0], out_data[1]);
     float f0 = std::exp(out_data[0] - max);

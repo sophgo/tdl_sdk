@@ -13,6 +13,6 @@ class MaskClassification final : public Core {
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta);
 
  private:
-  virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
+  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 };
 }  // namespace cviai

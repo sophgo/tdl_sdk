@@ -16,10 +16,7 @@ using namespace std;
 
 namespace cviai {
 
-Yolov3::Yolov3() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-
+Yolov3::Yolov3() : Core(CVI_MEM_DEVICE) {
   m_det_buf_size = YOLOV3_DEFAULT_DET_BUFFER;
 
   m_yolov3_param = {
@@ -36,7 +33,7 @@ Yolov3::Yolov3() {
 
 Yolov3::~Yolov3() { free(mp_total_dets); }
 
-int Yolov3::initAfterModelOpened(std::vector<initSetup> *data) {
+int Yolov3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Yolov3 only has 1 input.\n");
     return CVI_FAILURE;
@@ -45,7 +42,6 @@ int Yolov3::initAfterModelOpened(std::vector<initSetup> *data) {
     (*data)[0].factor[i] = YOLOV3_SCALE;
   }
   (*data)[0].use_quantize_scale = true;
-  m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
 
@@ -65,16 +61,16 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
   vector<float *> features;
   vector<string> output_name = {YOLOV3_OUTPUT1, YOLOV3_OUTPUT2, YOLOV3_OUTPUT3};
   vector<CVI_SHAPE> output_shape;
-  for (int i = 0; i < mp_mi->out.num; i++) {
-    CVI_TENSOR *out =
-        CVI_NN_GetTensorByName(output_name[i].c_str(), mp_mi->out.tensors, mp_mi->out.num);
-    output_shape.push_back(CVI_NN_TensorShape(out));
-    features.push_back((float *)CVI_NN_TensorPtr(out));
+
+  for (auto name : output_name) {
+    output_shape.push_back(getOutputShape(name));
+    features.push_back(getOutputRawPtr<float>(name));
   }
 
-  CVI_TENSOR *input = getInputTensor(0);
-  int yolov3_h = input->shape.dim[2];
-  int yolov3_w = input->shape.dim[3];
+  CVI_SHAPE input_shape = getInputShape(0);
+
+  int yolov3_h = input_shape.dim[2];
+  int yolov3_w = input_shape.dim[3];
 
   // Yolov3 has 3 different size outputs
   vector<YOLOLayer> net_outputs;
@@ -141,7 +137,7 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
     //        obj->info[i].bbox.x1, obj->info[i].bbox.x2, obj->info[i].bbox.y1,
     //        obj->info[i].bbox.y2, results[i].score);
   }
-  if (!m_skip_vpss_preprocess) {
+  if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < obj->size; ++i) {
       obj->info[i].bbox =
           box_rescale(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height, obj->width,

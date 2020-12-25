@@ -12,14 +12,23 @@
 
 namespace cviai {
 
-RetinaFace::RetinaFace() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-}
+RetinaFace::RetinaFace() : Core(CVI_MEM_DEVICE) {}
 
 RetinaFace::~RetinaFace() {}
 
-int RetinaFace::initAfterModelOpened(std::vector<initSetup> *data) {
+int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("Retina face only has 1 input.\n");
+    return CVI_FAILURE;
+  }
+  for (int i = 0; i < 3; i++) {
+    (*data)[0].factor[i] = 1;
+  }
+  (*data)[0].use_quantize_scale = true;
+  return CVI_SUCCESS;
+}
+
+int RetinaFace::onModelOpened() {
   std::vector<anchor_cfg> cfg;
   anchor_cfg tmp;
   tmp.SCALES = {32, 16};
@@ -54,37 +63,25 @@ int RetinaFace::initAfterModelOpened(std::vector<initSetup> *data) {
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
     std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
     std::string landmark_str = NAME_LANDMARK + key;
-    CVI_TENSOR *out =
-        CVI_NN_GetTensorByName(landmark_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
-    CVI_SHAPE landmark_shape = CVI_NN_TensorShape(out);
+    CVI_SHAPE landmark_shape = getOutputShape(landmark_str.c_str());
     int stride = m_feat_stride_fpn[i];
 
     m_anchors[landmark_str] =
         anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
   }
-
-  if (data->size() != 1) {
-    LOGE("Retina face only has 1 input.\n");
-    return CVI_FAILURE;
-  }
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = 1;
-  }
-  (*data)[0].use_quantize_scale = true;
-  m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
 
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames;
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-  for (uint32_t b = 0; b < (uint32_t)input->shape.dim[0]; b++) {
+  CVI_SHAPE shape = getInputShape(0);
+  for (uint32_t b = 0; b < (uint32_t)shape.dim[0]; b++) {
     frames.push_back(&srcFrame[b]);
   }
   int ret = run(frames);
-  int image_width = input->shape.dim[3];
-  int image_height = input->shape.dim[2];
+
+  int image_width = shape.dim[3];
+  int image_height = shape.dim[2];
   outputParser(image_width, image_height, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                meta);
   return ret;
@@ -92,34 +89,29 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
 
 void RetinaFace::outputParser(int image_width, int image_height, int frame_width, int frame_height,
                               cvai_face_t *meta) {
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-  for (uint32_t b = 0; b < (uint32_t)input->shape.dim[0]; b++) {
+  CVI_SHAPE input_shape = getInputShape(0);
+  for (uint32_t b = 0; b < (uint32_t)input_shape.dim[0]; b++) {
     std::vector<cvai_face_info_t> vec_bbox;
     std::vector<cvai_face_info_t> vec_bbox_nms;
     for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
       std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
 
       std::string score_str = NAME_SCORE + key;
-      CVI_TENSOR *out =
-          CVI_NN_GetTensorByName(score_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
-      CVI_SHAPE score_shape = CVI_NN_TensorShape(out);
+      CVI_SHAPE score_shape = getOutputShape(score_str.c_str());
       size_t score_size = score_shape.dim[1] * score_shape.dim[2] * score_shape.dim[3];
-      float *score_blob = (float *)CVI_NN_TensorPtr(out) + (b * score_size);
+      float *score_blob = getOutputRawPtr<float>(score_str.c_str()) + (b * score_size);
       score_blob += score_size / 2;
 
       std::string bbox_str = NAME_BBOX + key;
-      out = CVI_NN_GetTensorByName(bbox_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
-      CVI_SHAPE blob_shape = CVI_NN_TensorShape(out);
+      CVI_SHAPE blob_shape = getOutputShape(bbox_str.c_str());
       size_t blob_size = blob_shape.dim[1] * blob_shape.dim[2] * blob_shape.dim[3];
-      float *bbox_blob = (float *)CVI_NN_TensorPtr(out) + (b * blob_size);
+      float *bbox_blob = getOutputRawPtr<float>(bbox_str.c_str()) + (b * blob_size);
 
       std::string landmark_str = NAME_LANDMARK + key;
-      out = CVI_NN_GetTensorByName(landmark_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
-      CVI_SHAPE landmark_shape = CVI_NN_TensorShape(out);
+      CVI_SHAPE landmark_shape = getOutputShape(landmark_str.c_str());
       size_t landmark_size = landmark_shape.dim[1] * landmark_shape.dim[2] * landmark_shape.dim[3];
-      float *landmark_blob = (float *)CVI_NN_TensorPtr(out) + (b * landmark_size);
-
+      float *landmark_blob = getOutputRawPtr<float>(landmark_str.c_str()) + (b * landmark_size);
+      ;
       int width = landmark_shape.dim[3];
       int height = landmark_shape.dim[2];
       size_t count = width * height;
@@ -169,7 +161,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
       return;
     }
     CVI_AI_MemAllocInit(vec_bbox_nms.size(), FACE_POINTS_SIZE, facemeta);
-    if (m_skip_vpss_preprocess) {
+    if (hasSkippedVpssPreprocess()) {
       for (uint32_t i = 0; i < facemeta->size; ++i) {
         clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
         facemeta->info[i].bbox.x1 = vec_bbox_nms[i].bbox.x1;

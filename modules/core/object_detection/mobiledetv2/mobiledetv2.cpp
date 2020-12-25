@@ -175,11 +175,9 @@ static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<in
 }
 
 MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
-    : m_model_config(MDetV2Config::create_config(model)), m_iou_threshold(iou_thresh) {
-  mp_mi = std::make_unique<cviai::CvimodelInfo>();
-  mp_mi->conf.skip_postprocess = true;
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-
+    : Core(CVI_MEM_DEVICE, true),
+      m_model_config(MDetV2Config::create_config(model)),
+      m_iou_threshold(iou_thresh) {
   RetinaNetAnchorGenerator generator = RetinaNetAnchorGenerator(
       m_model_config.min_level, m_model_config.max_level, m_model_config.num_scales,
       m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_size);
@@ -206,7 +204,7 @@ void MobileDetV2::setModelThreshold(float threshold) {
   }
 }
 
-int MobileDetV2::initAfterModelOpened(std::vector<initSetup> *data) {
+int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Mobiledetv2 only has 1 input.\n");
     return CVI_FAILURE;
@@ -220,7 +218,6 @@ int MobileDetV2::initAfterModelOpened(std::vector<initSetup> *data) {
   (*data)[0].use_quantize_scale = true;
   (*data)[0].rescale_type = RESCALE_RB;
   (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
-  m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
 
@@ -292,31 +289,24 @@ void MobileDetV2::generate_dets_for_each_stride(Detections *det_vec) {
   }
 }
 
-void MobileDetV2::get_tensor_ptr_size(const std::string &tname, int8_t **ptr, size_t *size) {
-  CVI_TENSOR *tensor = CVI_NN_GetTensorByName(tname.c_str(), mp_mi->out.tensors, mp_mi->out.num);
-  CVI_SHAPE tensor_shape = CVI_NN_TensorShape(tensor);
-  *size = tensor_shape.dim[0] * tensor_shape.dim[1] * tensor_shape.dim[2] * tensor_shape.dim[3];
-  *ptr = (int8_t *)CVI_NN_TensorPtr(tensor);
-}
-
 void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tensor_ptr,
                                   std::vector<pair<int8_t *, size_t>> *objectness_tensor_ptr,
                                   std::vector<pair<int8_t *, size_t>> *bbox_tensor_ptr) {
   for (auto stride : m_model_config.strides) {
-    int8_t *tensor = nullptr;
-    size_t tsize = 0;
-    get_tensor_ptr_size(m_model_config.class_out_names[stride], &tensor, &tsize);
-    cls_tensor_ptr->push_back({tensor, tsize});
+    {
+      const TensorInfo &info = getOutputTensorInfo(m_model_config.class_out_names[stride]);
+      cls_tensor_ptr->push_back({info.get<int8_t>(), info.tensor_elem});
+    }
 
-    tensor = nullptr;
-    tsize = 0;
-    get_tensor_ptr_size(m_model_config.bbox_out_names[stride], &tensor, &tsize);
-    bbox_tensor_ptr->push_back({tensor, tsize});
+    {
+      const TensorInfo &info = getOutputTensorInfo(m_model_config.bbox_out_names[stride]);
+      bbox_tensor_ptr->push_back({info.get<int8_t>(), info.tensor_elem});
+    }
 
-    tensor = nullptr;
-    tsize = 0;
-    get_tensor_ptr_size(m_model_config.obj_max_names[stride], &tensor, &tsize);
-    objectness_tensor_ptr->push_back({tensor, tsize});
+    {
+      const TensorInfo &info = getOutputTensorInfo(m_model_config.obj_max_names[stride]);
+      objectness_tensor_ptr->push_back({info.get<int8_t>(), info.tensor_elem});
+    }
   }
 }
 
@@ -343,9 +333,6 @@ void coco_class_90_filter(Detections &dets, cvai_obj_det_type_e det_type) {
 
 int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
                            cvai_obj_det_type_e det_type) {
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-
   int ret = CVI_SUCCESS;
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
 
@@ -357,10 +344,12 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
 
   if (m_model_config.filter) m_model_config.filter(final_dets, det_type);
 
-  convert_det_struct(final_dets, meta, input->shape.dim[2], input->shape.dim[3],
-                     m_vpss_config[0].rescale_type, m_model_config);
+  CVI_SHAPE shape = getInputShape(0);
 
-  if (!m_skip_vpss_preprocess) {
+  convert_det_struct(final_dets, meta, shape.dim[2], shape.dim[3], m_vpss_config[0].rescale_type,
+                     m_model_config);
+
+  if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < meta->size; ++i) {
       meta->info[i].bbox =
           box_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, meta->width,

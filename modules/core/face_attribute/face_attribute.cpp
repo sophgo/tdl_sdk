@@ -28,14 +28,12 @@
 
 namespace cviai {
 
-FaceAttribute::FaceAttribute(bool use_wrap_hw) : m_use_wrap_hw(use_wrap_hw) {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.skip_postprocess = true;
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
+FaceAttribute::FaceAttribute(bool use_wrap_hw)
+    : Core(CVI_MEM_DEVICE, true), m_use_wrap_hw(use_wrap_hw) {
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }
 
-int FaceAttribute::initAfterModelOpened(std::vector<initSetup> *data) {
+int FaceAttribute::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
     return CVI_FAILURE;
@@ -46,18 +44,22 @@ int FaceAttribute::initAfterModelOpened(std::vector<initSetup> *data) {
   }
   (*data)[0].use_quantize_scale = true;
 
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
+  return CVI_SUCCESS;
+}
+
+int FaceAttribute::onModelOpened() {
+  CVI_SHAPE shape = getInputShape(0);
   PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, input->shape.dim[3], input->shape.dim[2],
-                            format) != CVI_SUCCESS) {
-    return -1;
+  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, shape.dim[3], shape.dim[2], format) !=
+      CVI_SUCCESS) {
+    return CVI_FAILURE;
   }
+
   if (!m_use_wrap_hw) {
     m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
         m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
   }
-  return 0;
+  return CVI_SUCCESS;
 }
 
 FaceAttribute::~FaceAttribute() {
@@ -138,39 +140,53 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 void FaceAttribute::setWithAttribute(bool with_attr) { m_with_attribute = with_attr; }
 
 template <typename U, typename V>
-std::pair<U, V> ExtractFeatures(float *out, int size) {
-  SoftMaxForBuffer(out, out, size);
-  size_t max_idx = 0;
-  float max_val = -1e3;
+struct ExtractFeatures {
+  std::pair<U, V> operator()(float *out, const int size) {
+    SoftMaxForBuffer(out, out, size);
+    size_t max_idx = 0;
+    float max_val = -1e3;
 
-  for (int i = 0; i < size; i++) {
-    if (out[i] > max_val) {
-      max_val = out[i];
-      max_idx = i;
+    for (int i = 0; i < size; i++) {
+      if (out[i] > max_val) {
+        max_val = out[i];
+        max_idx = i;
+      }
     }
+
+    V features;
+    memcpy(features.features.data(), out, sizeof(float) * size);
+    return std::make_pair(U(max_idx + 1), features);
   }
+};
 
-  V features;
-  memcpy(features.features.data(), out, sizeof(float) * size);
-  return std::make_pair(U(max_idx + 1), features);
-}
-
-std::pair<float, AgeFeature> ExtractAge(float *out, const int age_prob_size) {
-  float expect_age = 0;
-  if (age_prob_size == 1) {
-    expect_age = out[0];
-  } else if (age_prob_size == 101) {
-    SoftMaxForBuffer(out, out, age_prob_size);
-    for (size_t i = 0; i < 101; i++) {
-      expect_age += (i * out[i]);
+template <>
+struct ExtractFeatures<float, AgeFeature> {
+  std::pair<float, AgeFeature> operator()(float *out, const int age_prob_size) {
+    float expect_age = 0;
+    if (age_prob_size == 1) {
+      expect_age = out[0];
+    } else if (age_prob_size == 101) {
+      SoftMaxForBuffer(out, out, age_prob_size);
+      for (size_t i = 0; i < 101; i++) {
+        expect_age += (i * out[i]);
+      }
+    } else {
+      expect_age = -1.0;
     }
-  } else {
-    expect_age = -1.0;
-  }
 
-  AgeFeature features;
-  memcpy(features.features.data(), out, sizeof(float) * age_prob_size);
-  return std::make_pair(expect_age, features);
+    AgeFeature features;
+    memcpy(features.features.data(), out, sizeof(float) * age_prob_size);
+    return std::make_pair(expect_age, features);
+  }
+};
+
+template <typename U, typename V>
+std::pair<U, V> getDequantTensor(const TensorInfo &tinfo, float threshold, float *buffer,
+                                 ExtractFeatures<U, V> functor) {
+  int8_t *blob = tinfo.get<int8_t>();
+  size_t prob_size = tinfo.tensor_elem;
+  Dequantize(blob, buffer, threshold, prob_size);
+  return functor(buffer, prob_size);
 }
 
 void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
@@ -178,10 +194,9 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
 
   // feature
   std::string feature_out_name = (m_with_attribute) ? ATTRIBUTE_OUT_NAME : RECOGNITION_OUT_NAME;
-  CVI_TENSOR *out =
-      CVI_NN_GetTensorByName(feature_out_name.c_str(), mp_mi->out.tensors, mp_mi->out.num);
-  int8_t *face_blob = (int8_t *)CVI_NN_TensorPtr(out);
-  size_t face_feature_size = CVI_NN_TensorCount(out);
+  const TensorInfo &tinfo = getOutputTensorInfo(feature_out_name);
+  int8_t *face_blob = tinfo.get<int8_t>();
+  size_t face_feature_size = tinfo.tensor_elem;
   // Create feature
   CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &meta->info[meta_i].feature);
   memcpy(meta->info[meta_i].feature.ptr, face_blob, face_feature_size);
@@ -191,40 +206,28 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   }
 
   // race
-  out = CVI_NN_GetTensorByName(RACE_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
-  int8_t *race_blob = (int8_t *)CVI_NN_TensorPtr(out);
-  size_t race_prob_size = CVI_NN_TensorCount(out);
-  Dequantize(race_blob, attribute_buffer, RACE_OUT_THRESH, race_prob_size);
-  auto race = ExtractFeatures<cvai_face_race_e, RaceFeature>(attribute_buffer, race_prob_size);
+  auto race = getDequantTensor(getOutputTensorInfo(RACE_OUT_NAME), RACE_OUT_THRESH,
+                               attribute_buffer, ExtractFeatures<cvai_face_race_e, RaceFeature>());
   result.race = race.first;
   result.race_prob = std::move(race.second);
 
   // gender
-  out = CVI_NN_GetTensorByName(GENDER_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
-  int8_t *gender_blob = (int8_t *)CVI_NN_TensorPtr(out);
-  size_t gender_prob_size = CVI_NN_TensorCount(out);
-  Dequantize(gender_blob, attribute_buffer, GENDER_OUT_THRESH, gender_prob_size);
   auto gender =
-      ExtractFeatures<cvai_face_gender_e, GenderFeature>(attribute_buffer, gender_prob_size);
+      getDequantTensor(getOutputTensorInfo(GENDER_OUT_NAME), GENDER_OUT_THRESH, attribute_buffer,
+                       ExtractFeatures<cvai_face_gender_e, GenderFeature>());
   result.gender = gender.first;
   result.gender_prob = std::move(gender.second);
 
   // age
-  out = CVI_NN_GetTensorByName(AGE_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
-  int8_t *age_blob = (int8_t *)CVI_NN_TensorPtr(out);
-  size_t age_prob_size = CVI_NN_TensorCount(out);
-  Dequantize(age_blob, attribute_buffer, AGE_OUT_THRESH, age_prob_size);
-  auto age = ExtractAge(attribute_buffer, age_prob_size);
+  auto age = getDequantTensor(getOutputTensorInfo(AGE_OUT_NAME), AGE_OUT_THRESH, attribute_buffer,
+                              ExtractFeatures<float, AgeFeature>());
   result.age = age.first;
   result.age_prob = std::move(age.second);
 
   // emotion
-  out = CVI_NN_GetTensorByName(EMOTION_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
-  int8_t *emotion_blob = (int8_t *)CVI_NN_TensorPtr(out);
-  size_t emotion_prob_size = CVI_NN_TensorCount(out);
-  Dequantize(emotion_blob, attribute_buffer, EMOTION_OUT_THRESH, emotion_prob_size);
   auto emotion =
-      ExtractFeatures<cvai_face_emotion_e, EmotionFeature>(attribute_buffer, emotion_prob_size);
+      getDequantTensor(getOutputTensorInfo(EMOTION_OUT_NAME), EMOTION_OUT_THRESH, attribute_buffer,
+                       ExtractFeatures<cvai_face_emotion_e, EmotionFeature>());
   result.emotion = emotion.first;
   result.emotion_prob = std::move(emotion.second);
 

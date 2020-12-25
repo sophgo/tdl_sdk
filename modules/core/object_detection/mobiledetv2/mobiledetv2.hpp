@@ -62,14 +62,14 @@ class MobileDetV2 final : public Core {
 
   explicit MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.5);
   virtual ~MobileDetV2();
-  int initAfterModelOpened(std::vector<initSetup> *data) override;
+  int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_e det_type);
   virtual void setModelThreshold(float threshold) override;
+  virtual bool allowExportChannelAttribute() const override { return true; }
 
  private:
   int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
                      std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) override;
-  void get_tensor_ptr_size(const std::string &tname, int8_t **ptr, size_t *size);
   void get_raw_outputs(std::vector<std::pair<int8_t *, size_t>> *cls_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *objectness_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *bbox_tensor_ptr);

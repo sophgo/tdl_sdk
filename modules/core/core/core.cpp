@@ -1,8 +1,28 @@
 #include "core.hpp"
+#include <stdexcept>
 #include "core/utils/vpss_helper.h"
 #include "cviai_trace.hpp"
 
 namespace cviai {
+
+Core::Core(CVI_MEM_TYPE_E input_mem_type, bool skip_postprocess, int32_t batch_size) {
+  mp_mi = std::make_unique<CvimodelInfo>();
+  mp_mi->conf = {.batch_size = batch_size,
+                 .debug_mode = false,
+                 .skip_postprocess = skip_postprocess,
+                 .input_mem_type = input_mem_type};
+}
+
+Core::Core() : Core(CVI_MEM_SYSTEM) {}
+
+#define CLOSE_MODEL_IF_FAILED(x, errmsg) \
+  do {                                   \
+    if (int ret = (x)) {                 \
+      LOGE(errmsg ", ret=%d\n", ret);    \
+      modelClose();                      \
+      return CVI_FAILURE;                \
+    }                                    \
+  } while (0)
 
 int Core::modelOpen(const char *filepath) {
   TRACE_EVENT("cviai_core", "Core::modelOpen");
@@ -11,12 +31,9 @@ int Core::modelOpen(const char *filepath) {
     return CVI_FAILURE;
   }
 
-  CVI_RC ret = CVI_NN_RegisterModel(filepath, &mp_mi->handle);
-  if (ret != CVI_RC_SUCCESS) {
-    LOGE("CVI_NN_RegisterModel failed, err %d\n", ret);
-    modelClose();
-    return CVI_FAILURE;
-  }
+  CLOSE_MODEL_IF_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
+                        "CVI_NN_RegisterModel failed");
+
   LOGI("CVI_NN_RegisterModel successed\n");
 
   if (mp_mi->conf.batch_size != 0) {
@@ -28,29 +45,28 @@ int Core::modelOpen(const char *filepath) {
   CVI_NN_SetConfig(mp_mi->handle, OPTION_SKIP_POSTPROCESS,
                    static_cast<int>(mp_mi->conf.skip_postprocess));
 
-  ret = CVI_NN_GetInputOutputTensors(mp_mi->handle, &mp_mi->in.tensors, &mp_mi->in.num,
-                                     &mp_mi->out.tensors, &mp_mi->out.num);
-  if (ret != CVI_RC_SUCCESS) {
-    LOGE("CVI_NN_GetINputsOutputs failed\n");
-    modelClose();
-    return CVI_FAILURE;
-  }
-  TRACE_EVENT_BEGIN("cviai_core", "InitAtferModelOpened");
+  CLOSE_MODEL_IF_FAILED(
+      CVI_NN_GetInputOutputTensors(mp_mi->handle, &mp_mi->in.tensors, &mp_mi->in.num,
+                                   &mp_mi->out.tensors, &mp_mi->out.num),
+      "CVI_NN_GetINputsOutputs failed");
+
+  setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
+  setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
+
+  TRACE_EVENT_BEGIN("cviai_core", "setupInputPreprocess");
   CVI_TENSOR *input =
       CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   // Assigning default values.
-  std::vector<initSetup> data(mp_mi->in.num);
+  std::vector<InputPreprecessSetup> data(mp_mi->in.num);
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     CVI_TENSOR *tensor = mp_mi->in.tensors + i;
     float quant_scale = CVI_NN_TensorQuantScale(tensor);
     data[i].use_quantize_scale = quant_scale == 0 ? false : true;
   }
-  ret = initAfterModelOpened(&data);
-  if (ret != CVI_SUCCESS) {
-    LOGE("Failed to init after open model.\n");
-    modelClose();
-    return CVI_FAILURE;
-  }
+
+  CLOSE_MODEL_IF_FAILED(setupInputPreprocess(&data), "Failed to setup preprocess setting.");
+  CLOSE_MODEL_IF_FAILED(onModelOpened(), "return failed in onModelOpened");
+
   m_vpss_config.clear();
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     if (data[i].use_quantize_scale) {
@@ -98,6 +114,20 @@ int Core::modelOpen(const char *filepath) {
   return CVI_SUCCESS;
 }
 
+void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
+                           std::map<std::string, TensorInfo> *tensor_info) {
+  for (int32_t i = 0; i < num_tensors; i++) {
+    TensorInfo tinfo;
+    tinfo.tensor_handle = tensor + i;
+    tinfo.tensor_name = CVI_NN_TensorName(tinfo.tensor_handle);
+    tinfo.shape = CVI_NN_TensorShape(tinfo.tensor_handle);
+    tinfo.raw_pointer = CVI_NN_TensorPtr(tinfo.tensor_handle);
+    tinfo.tensor_elem = CVI_NN_TensorCount(tinfo.tensor_handle);
+    tinfo.tensor_size = CVI_NN_TensorSize(tinfo.tensor_handle);
+    tensor_info->insert(std::pair<std::string, TensorInfo>(tinfo.tensor_name, tinfo));
+  }
+}
+
 int Core::modelClose() {
   TRACE_EVENT("cviai_core", "Core::modelClose");
   if (mp_mi->handle != nullptr) {
@@ -124,6 +154,44 @@ CVI_TENSOR *Core::getOutputTensor(int idx) {
   return mp_mi->out.tensors + idx;
 }
 
+const TensorInfo &Core::getOutputTensorInfo(const std::string &name) {
+  if (m_output_tensor_info.find(name) != m_output_tensor_info.end()) {
+    return m_output_tensor_info[name];
+  }
+  throw std::invalid_argument("cannot find output tensor name: " + name);
+}
+
+const TensorInfo &Core::getInputTensorInfo(const std::string &name) {
+  if (m_input_tensor_info.find(name) != m_input_tensor_info.end()) {
+    return m_input_tensor_info[name];
+  }
+  throw std::invalid_argument("cannot find input tensor name: " + name);
+}
+
+const TensorInfo &Core::getOutputTensorInfo(size_t index) {
+  size_t cur = 0;
+  for (auto iter = m_output_tensor_info.begin(); iter != m_output_tensor_info.end(); iter++) {
+    if (cur == index) {
+      return iter->second;
+    }
+  }
+  throw std::out_of_range("out of range");
+}
+
+const TensorInfo &Core::getInputTensorInfo(size_t index) {
+  size_t cur = 0;
+  for (auto iter = m_input_tensor_info.begin(); iter != m_input_tensor_info.end(); iter++) {
+    if (cur == index) {
+      return iter->second;
+    }
+  }
+  throw std::out_of_range("out of range");
+}
+
+size_t Core::getNumInputTensor() const { return static_cast<size_t>(mp_mi->in.num); }
+
+size_t Core::getNumOutputTensor() const { return static_cast<size_t>(mp_mi->out.num); }
+
 int Core::setIveInstance(IVE_HANDLE handle) {
   ive_handle = handle;
   return CVI_SUCCESS;
@@ -138,7 +206,7 @@ void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
 
 int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
                        cvai_vpssconfig_t *chn_config) {
-  if (!m_export_chn_attr) {
+  if (!allowExportChannelAttribute()) {
     LOGE("This model does not support exporting channel attributes.\n");
     return CVI_FAILURE;
   }
@@ -176,7 +244,47 @@ void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
 float Core::getModelThreshold() { return m_model_threshold; };
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
 
-int Core::initAfterModelOpened(std::vector<initSetup> *data) { return CVI_SUCCESS; }
+int Core::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) { return CVI_SUCCESS; }
+
+CVI_SHAPE Core::getInputShape(size_t index) { return getInputTensorInfo(index).shape; }
+
+CVI_SHAPE Core::getOutputShape(size_t index) { return getOutputTensorInfo(index).shape; }
+
+CVI_SHAPE Core::getInputShape(const std::string &name) { return getInputTensorInfo(name).shape; }
+
+CVI_SHAPE Core::getOutputShape(const std::string &name) { return getOutputTensorInfo(name).shape; }
+
+float Core::getInputQuantScale(size_t index) {
+  return CVI_NN_TensorQuantScale(getInputTensorInfo(index).tensor_handle);
+}
+
+float Core::getInputQuantScale(const std::string &name) {
+  return CVI_NN_TensorQuantScale(getInputTensorInfo(name).tensor_handle);
+}
+
+size_t Core::getOutputTensorElem(size_t index) { return getOutputTensorInfo(index).tensor_elem; }
+
+size_t Core::getOutputTensorElem(const std::string &name) {
+  return getOutputTensorInfo(name).tensor_elem;
+}
+
+size_t Core::getInputTensorElem(size_t index) { return getInputTensorInfo(index).tensor_elem; }
+
+size_t Core::getInputTensorElem(const std::string &name) {
+  return getInputTensorInfo(name).tensor_elem;
+}
+
+size_t Core::getOutputTensorSize(size_t index) { return getOutputTensorInfo(index).tensor_size; }
+
+size_t Core::getOutputTensorSize(const std::string &name) {
+  return getOutputTensorInfo(name).tensor_size;
+}
+
+size_t Core::getInputTensorSize(size_t index) { return getInputTensorInfo(index).tensor_size; }
+
+size_t Core::getInputTensorSize(const std::string &name) {
+  return getInputTensorInfo(name).tensor_size;
+}
 
 int Core::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
                          std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {

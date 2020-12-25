@@ -15,7 +15,8 @@ class MaskFaceRecognition final : public Core {
 
  private:
   void outputParser(cvai_face_t *meta, int meta_i);
-  virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
+  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
+  virtual int onModelOpened() override;
 
   VB_BLK m_gdc_blk = (VB_BLK)-1;
   VIDEO_FRAME_INFO_S m_wrap_frame;

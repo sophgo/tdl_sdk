@@ -13,12 +13,12 @@ class Yolov3 final : public Core {
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj, cvai_obj_det_type_e det_type);
 
  private:
-  int initAfterModelOpened(std::vector<initSetup> *data) override;
+  int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   void outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj, cvai_obj_det_type_e det_type);
   void doYolo(YOLOLayer &l);
   void getYOLOResults(detection *dets, int num, float threshold, int ori_w, int ori_h,
                       std::vector<object_detect_rect_t> &results, cvai_obj_det_type_e det_type);
-
+  virtual bool allowExportChannelAttribute() const override { return true; }
   YOLOParamter m_yolov3_param;
   detection *mp_total_dets = nullptr;
   uint32_t m_det_buf_size;

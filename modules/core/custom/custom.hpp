@@ -24,9 +24,11 @@ class Custom final : public Core {
   int inference(VIDEO_FRAME_INFO_S *inFrames, uint32_t num_of_frames);
   int getOutputTensor(const char *tensor_name, int8_t **tensor, uint32_t *tensor_count,
                       uint16_t *unit_size);
+  using Core::getInputShape;
 
  private:
-  virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
+  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
+  virtual int onModelOpened() override;
   preProcessFunc preprocessfunc = NULL;
 
   std::vector<CustomSQParam> m_sq_params;

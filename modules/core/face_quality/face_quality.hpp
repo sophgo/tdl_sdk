@@ -14,7 +14,8 @@ class FaceQuality final : public Core {
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta);
 
  private:
-  virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
+  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
+  virtual int onModelOpened() override;
 
   VB_BLK m_gdc_blk = (VB_BLK)-1;
   VIDEO_FRAME_INFO_S m_wrap_frame;

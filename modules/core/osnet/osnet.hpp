@@ -10,6 +10,6 @@ class OSNet final : public Core {
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int obj_idx);
 
  private:
-  virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
+  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 };
 }  // namespace cviai

@@ -13,10 +13,7 @@
 
 namespace cviai {
 
-Deeplabv3::Deeplabv3() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-}
+Deeplabv3::Deeplabv3() : Core(CVI_MEM_DEVICE) {}
 
 Deeplabv3::~Deeplabv3() {
   if (m_gdc_blk != (VB_BLK)-1) {
@@ -27,7 +24,7 @@ Deeplabv3::~Deeplabv3() {
   }
 }
 
-int Deeplabv3::initAfterModelOpened(std::vector<initSetup> *data) {
+int Deeplabv3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face quality only has 1 input.\n");
     return CVI_FAILURE;
@@ -39,17 +36,18 @@ int Deeplabv3::initAfterModelOpened(std::vector<initSetup> *data) {
   }
   (*data)[0].use_quantize_scale = true;
   (*data)[0].keep_aspect_ratio = false;
-  m_export_chn_attr = true;
+  return CVI_SUCCESS;
+}
 
-  CVI_TENSOR *output = CVI_NN_GetTensorByName(NAME_SCORE, mp_mi->out.tensors, mp_mi->out.num);
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_label_frame, output->shape.dim[3], output->shape.dim[2],
+int Deeplabv3::onModelOpened() {
+  CVI_SHAPE shape = getOutputShape(NAME_SCORE);
+  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_label_frame, shape.dim[3], shape.dim[2],
                             PIXEL_FORMAT_YUV_400) != CVI_SUCCESS) {
     return CVI_FAILURE;
   }
 
   m_label_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
       m_label_frame.stVFrame.u64PhyAddr[0], m_label_frame.stVFrame.u32Length[0]);
-
   return CVI_SUCCESS;
 }
 
@@ -88,9 +86,10 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
 }
 
 int Deeplabv3::outputParser() {
-  CVI_TENSOR *tensor = CVI_NN_GetTensorByName(NAME_SCORE, mp_mi->out.tensors, mp_mi->out.num);
-  float *out = (float *)CVI_NN_TensorPtr(tensor);
-  CVI_SHAPE output_shape = CVI_NN_TensorShape(tensor);
+  float *out = getOutputRawPtr<float>(NAME_SCORE);
+
+  CVI_SHAPE output_shape = getOutputShape(NAME_SCORE);
+  ;
   int size = output_shape.dim[2] * output_shape.dim[3];
   std::vector<float> max_prob(size, 0);
 

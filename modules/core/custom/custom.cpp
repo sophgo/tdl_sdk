@@ -8,13 +8,9 @@
 
 namespace cviai {
 
-Custom::Custom() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.skip_postprocess = true;
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-}
+Custom::Custom() : Core(CVI_MEM_DEVICE, true) {}
 
-int Custom::initAfterModelOpened(std::vector<initSetup> *data) {
+int Custom::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   for (uint32_t idx = 0; idx < data->size(); idx++) {
     CustomSQParam *p_sqparam = nullptr;
     for (uint32_t j = 0; j < m_sq_params.size(); j++) {
@@ -43,7 +39,11 @@ int Custom::initAfterModelOpened(std::vector<initSetup> *data) {
     (*data)[idx].keep_aspect_ratio = p_sqparam->keep_aspect_ratio;
     (*data)[idx].use_quantize_scale = p_sqparam->use_model_threashold;
   }
-  m_processed_frames.resize(mp_mi->in.num);
+  return CVI_SUCCESS;
+}
+
+int Custom::onModelOpened() {
+  m_processed_frames.resize(getInputNum());
   return CVI_SUCCESS;
 }
 
@@ -83,50 +83,43 @@ int Custom::setPreProcessFunc(preProcessFunc func, bool use_tensor_input, bool u
   }
   preprocessfunc = func;
   if (use_tensor_input) {
-    m_skip_vpss_preprocess = true;
+    skipVpssPreprocess(true);
   } else {
-    m_skip_vpss_preprocess = !use_vpss_sq;
+    skipVpssPreprocess(!use_vpss_sq);
   }
   if (use_tensor_input) {
-    mp_mi->conf.input_mem_type = CVI_MEM_SYSTEM;
+    setInputMemType(CVI_MEM_SYSTEM);
   }
   return CVI_SUCCESS;
 }
 
 int Custom::getInputShape(const char *tensor_name, uint32_t *n, uint32_t *c, uint32_t *h,
                           uint32_t *w) {
-  CVI_TENSOR *input = CVI_NN_GetTensorByName(tensor_name, mp_mi->in.tensors, mp_mi->in.num);
-  if (input == NULL) {
-    LOGE("Tensor %s not found.\n", tensor_name);
-    return CVI_FAILURE;
-  }
+  CVI_SHAPE shape = tensor_name ? getInputShape(tensor_name) : getInputShape(0);
 
-  *n = input->shape.dim[0];
-  *c = input->shape.dim[1];
-  *h = input->shape.dim[2];
-  *w = input->shape.dim[3];
+  *n = shape.dim[0];
+  *c = shape.dim[1];
+  *h = shape.dim[2];
+  *w = shape.dim[3];
   return CVI_SUCCESS;
 }
 
-int Custom::getInputNum() { return mp_mi->in.num; }
+int Custom::getInputNum() { return getNumInputTensor(); }
 
 int Custom::getInputShape(const uint32_t idx, uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *w) {
-  if (idx >= (uint32_t)mp_mi->in.num) {
-    LOGE("Index exceed maximum input. (max: %d)\n", mp_mi->in.num);
-    return CVI_FAILURE;
-  }
-  CVI_TENSOR *input = mp_mi->in.tensors + idx;
-  *n = input->shape.dim[0];
-  *c = input->shape.dim[1];
-  *h = input->shape.dim[2];
-  *w = input->shape.dim[3];
+  CVI_SHAPE shape = getInputShape(idx);
+
+  *n = shape.dim[0];
+  *c = shape.dim[1];
+  *h = shape.dim[2];
+  *w = shape.dim[3];
   return CVI_SUCCESS;
 }
 
 int Custom::inference(VIDEO_FRAME_INFO_S *inFrames, uint32_t num_of_frames) {
-  if (num_of_frames != (uint32_t)mp_mi->in.num) {
-    LOGE("The number of input frames does not match the number of input tensors. (%u != %d)\n",
-         num_of_frames, mp_mi->in.num);
+  if (num_of_frames != getNumInputTensor()) {
+    LOGE("The number of input frames does not match the number of input tensors. (%u != %zd)\n",
+         num_of_frames, getNumInputTensor());
     return CVI_FAILURE;
   }
   std::vector<VIDEO_FRAME_INFO_S *> frames;
@@ -154,14 +147,11 @@ int Custom::inference(VIDEO_FRAME_INFO_S *inFrames, uint32_t num_of_frames) {
 
 int Custom::getOutputTensor(const char *tensor_name, int8_t **tensor, uint32_t *tensor_count,
                             uint16_t *unit_size) {
-  CVI_TENSOR *out = CVI_NN_GetTensorByName(tensor_name, mp_mi->out.tensors, mp_mi->out.num);
-  if (out == NULL) {
-    LOGE("Tensor not found.\n");
-    return CVI_FAILURE;
-  }
-  *tensor = (int8_t *)CVI_NN_TensorPtr(out);
-  *tensor_count = CVI_NN_TensorCount(out);
-  *unit_size = CVI_NN_TensorSize(out) / *tensor_count;
+  const TensorInfo &info = tensor_name ? getOutputTensorInfo(tensor_name) : getOutputTensorInfo(0);
+
+  *tensor = info.get<int8_t>();
+  *tensor_count = info.tensor_elem;
+  *unit_size = info.tensor_size / *tensor_count;
   return CVI_SUCCESS;
 }
 

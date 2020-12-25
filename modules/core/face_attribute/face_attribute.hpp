@@ -15,7 +15,8 @@ class FaceAttribute final : public Core {
   void setWithAttribute(bool with_attr);
 
  private:
-  virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
+  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
+  virtual int onModelOpened() override;
   void outputParser(cvai_face_t *meta, int meta_i);
 
   const bool m_use_wrap_hw;

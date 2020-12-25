@@ -17,13 +17,9 @@
 
 namespace cviai {
 
-OSNet::OSNet() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.skip_postprocess = true;
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-}
+OSNet::OSNet() : Core(CVI_MEM_DEVICE, true) {}
 
-int OSNet::initAfterModelOpened(std::vector<initSetup> *data) {
+int OSNet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("OSNet only has 1 input.\n");
     return CVI_FAILURE;
@@ -53,9 +49,8 @@ int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int ob
     run(frames);
 
     // feature
-    CVI_TENSOR *out = CVI_NN_GetTensorByName(OSNET_OUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
-    int8_t *feature_blob = (int8_t *)CVI_NN_TensorPtr(out);
-    size_t feature_size = CVI_NN_TensorCount(out);
+    int8_t *feature_blob = getOutputRawPtr<int8_t>(OSNET_OUT_NAME);
+    size_t feature_size = getOutputTensorElem(OSNET_OUT_NAME);
     // Create feature
     CVI_AI_MemAlloc(sizeof(int8_t), feature_size, TYPE_INT8, &meta->info[i].feature);
     memcpy(meta->info[i].feature.ptr, feature_blob, feature_size);

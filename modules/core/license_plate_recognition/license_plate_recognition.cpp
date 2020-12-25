@@ -27,10 +27,7 @@
 
 namespace cviai {
 
-LicensePlateRecognition::LicensePlateRecognition() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.input_mem_type = CVI_MEM_SYSTEM;
-}
+LicensePlateRecognition::LicensePlateRecognition() : Core(CVI_MEM_SYSTEM) {}
 
 LicensePlateRecognition::~LicensePlateRecognition() {}
 
@@ -85,10 +82,7 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     }
     // no-use cv::merge(rgbChannels, cv_frame);
 
-    CVI_TENSOR *input =
-        CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-
-    uint16_t *input_ptr = (uint16_t *)CVI_NN_TensorPtr(input);
+    uint16_t *input_ptr = getInputRawPtr<uint16_t>(0);
     int rows = sub_cvFrame.rows;
     int cols = sub_cvFrame.cols;
     for (int c = 0; c < 3; c++) {
@@ -103,10 +97,7 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     run(frames);
 
-    CVI_TENSOR *out_tensor =
-        CVI_NN_GetTensorByName(OUTPUT_NAME, mp_mi->out.tensors, mp_mi->out.num);
-
-    float *out_code = (float *)CVI_NN_TensorPtr(out_tensor);
+    float *out_code = getOutputRawPtr<float>(OUTPUT_NAME);
 
     std::string id_number = greedy_decode(out_code);
 

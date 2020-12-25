@@ -72,10 +72,7 @@ static std::vector<cv::Mat> crop_vehicle(VIDEO_FRAME_INFO_S *frame, cvai_object_
   return vehicle_image_list;
 }
 
-LicensePlateDetection::LicensePlateDetection() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.input_mem_type = CVI_MEM_SYSTEM;
-}
+LicensePlateDetection::LicensePlateDetection() : Core(CVI_MEM_SYSTEM) {}
 
 LicensePlateDetection::~LicensePlateDetection() {}
 
@@ -101,14 +98,11 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
   // cv::imwrite("tmp_frame.jpg", cv_frame);
   std::stringstream s_str;
 
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-
+  uint16_t *input_ptr = getInputRawPtr<uint16_t>(0);
   for (uint32_t n = 0; n < input_mats.size(); n++) {
     // if (n>0){
     //   continue;
     // }
-    uint16_t *input_ptr = (uint16_t *)CVI_NN_TensorPtr(input);
     std::vector<cv::Mat> rgbChannels(3);
     cv::split(input_mats[n], rgbChannels);
 
@@ -127,19 +121,8 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     run(frames);
 
-    CVI_TENSOR *out_probability =
-        CVI_NN_GetTensorByName(OUTPUT_NAME_PROBABILITY, mp_mi->out.tensors, mp_mi->out.num);
-    CVI_TENSOR *out_transform =
-        CVI_NN_GetTensorByName(OUTPUT_NAME_TRANSFORM, mp_mi->out.tensors, mp_mi->out.num);
-
-#if DEBUG_LICENSE_PLATE_DETECTION
-    if (out_probability == nullptr || out_transform == nullptr) {
-      std::cout << "out_probability or out_transform is nullptr" << std::endl;
-    }
-#endif
-
-    float *out_p = (float *)CVI_NN_TensorPtr(out_probability);
-    float *out_t = (float *)CVI_NN_TensorPtr(out_transform);
+    float *out_p = getOutputRawPtr<float>(OUTPUT_NAME_PROBABILITY);
+    float *out_t = getOutputRawPtr<float>(OUTPUT_NAME_TRANSFORM);
 
     // TODO:
     //   return more corner points, use std::vector<CornerPts>

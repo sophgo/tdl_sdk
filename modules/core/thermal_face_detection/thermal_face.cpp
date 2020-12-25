@@ -101,14 +101,27 @@ static void bbox_pred(const cvai_bbox_t &anchor, cv::Vec4f regress, std::vector<
   bbox.y2 = (pred_ctr_y + 0.5 * (pred_h - 1.0));
 }
 
-ThermalFace::ThermalFace() {
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf.input_mem_type = CVI_MEM_DEVICE;
-}
+ThermalFace::ThermalFace() : Core(CVI_MEM_DEVICE) {}
 
 ThermalFace::~ThermalFace() {}
 
-int ThermalFace::initAfterModelOpened(std::vector<initSetup> *data) {
+int ThermalFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
+  if (data->size() != 1) {
+    LOGE("Thermal face only has 1 input.\n");
+    return CVI_FAILURE;
+  }
+  (*data)[0].factor[0] = static_cast<float>(SCALE_R);
+  (*data)[0].factor[1] = static_cast<float>(SCALE_G);
+  (*data)[0].factor[2] = static_cast<float>(SCALE_B);
+  (*data)[0].mean[0] = static_cast<float>(MEAN_R);
+  (*data)[0].mean[1] = static_cast<float>(MEAN_G);
+  (*data)[0].mean[2] = static_cast<float>(MEAN_B);
+  (*data)[0].rescale_type = RESCALE_RB;
+  (*data)[0].use_quantize_scale = true;
+  return CVI_SUCCESS;
+}
+
+int ThermalFace::onModelOpened() {
   std::vector<int> pyramid_levels = {3, 4, 5, 6, 7};
   std::vector<int> strides = {8, 16, 32, 64, 128};
   std::vector<int> sizes = {24, 48, 96, 192, 384};
@@ -127,19 +140,6 @@ int ThermalFace::initAfterModelOpened(std::vector<initSetup> *data) {
     std::vector<cvai_bbox_t> shifted_anchors = shift(image_shapes[i], strides[i], anchors);
     m_all_anchors.insert(m_all_anchors.end(), shifted_anchors.begin(), shifted_anchors.end());
   }
-  if (data->size() != 1) {
-    LOGE("Thermal face only has 1 input.\n");
-    return CVI_FAILURE;
-  }
-  (*data)[0].factor[0] = static_cast<float>(SCALE_R);
-  (*data)[0].factor[1] = static_cast<float>(SCALE_G);
-  (*data)[0].factor[2] = static_cast<float>(SCALE_B);
-  (*data)[0].mean[0] = static_cast<float>(MEAN_R);
-  (*data)[0].mean[1] = static_cast<float>(MEAN_G);
-  (*data)[0].mean[2] = static_cast<float>(MEAN_B);
-  (*data)[0].rescale_type = RESCALE_RB;
-  (*data)[0].use_quantize_scale = true;
-  m_export_chn_attr = true;
   return CVI_SUCCESS;
 }
 
@@ -158,13 +158,11 @@ int ThermalFace::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFram
 }
 
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
-  CVI_TENSOR *input =
-      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
 
-  outputParser(input->shape.dim[3], input->shape.dim[2], srcFrame->stVFrame.u32Width,
+  CVI_SHAPE shape = getInputShape(0);
+  outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, meta);
 
   return ret;
@@ -174,13 +172,11 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
                                const int frame_height, cvai_face_t *meta) {
   std::vector<cvai_face_info_t> vec_bbox;
   std::vector<cvai_face_info_t> vec_bbox_nms;
-  std::string score_str = NAME_SCORE;
-  CVI_TENSOR *out = CVI_NN_GetTensorByName(score_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
-  float *score_blob = (float *)CVI_NN_TensorPtr(out);
+
+  float *score_blob = getOutputRawPtr<float>(NAME_SCORE);
 
   std::string bbox_str = NAME_BBOX;
-  out = CVI_NN_GetTensorByName(bbox_str.c_str(), mp_mi->out.tensors, mp_mi->out.num);
-  float *bbox_blob = (float *)CVI_NN_TensorPtr(out);
+  float *bbox_blob = getOutputRawPtr<float>(NAME_BBOX);
 
   for (size_t i = 0; i < m_all_anchors.size(); i++) {
     cvai_face_info_t box;
@@ -215,7 +211,7 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
     return;
   }
   CVI_AI_MemAllocInit(vec_bbox_nms.size(), 0, meta);
-  if (m_skip_vpss_preprocess) {
+  if (hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < meta->size; ++i) {
       clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
       meta->info[i].bbox.x1 = vec_bbox_nms[i].bbox.x1;
