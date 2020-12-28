@@ -2,6 +2,7 @@
 
 #include "cityscapes/cityscapes.hpp"
 #include "coco/coco.hpp"
+#include "cvi_lpdr/cvi_lpdr.hpp"
 #include "lfw/lfw.hpp"
 #include "market1501/market1501.hpp"
 #include "wflw/wflw.hpp"
@@ -14,6 +15,7 @@ typedef struct {
   cviai::evaluation::lfwEval *lfw_eval = nullptr;
   cviai::evaluation::widerFaceEval *widerface_eval = nullptr;
   cviai::evaluation::wflwEval *wflw_eval = nullptr;
+  cviai::evaluation::LPDREval *lpdr_eval = nullptr;
 } cviai_eval_context_t;
 
 CVI_S32 CVI_AI_Eval_CreateHandle(cviai_eval_handle_t *handle) {
@@ -25,6 +27,7 @@ CVI_S32 CVI_AI_Eval_CreateHandle(cviai_eval_handle_t *handle) {
 CVI_S32 CVI_AI_Eval_DestroyHandle(cviai_eval_handle_t handle) {
   cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
   delete ctx->coco_eval;
+  delete ctx->lpdr_eval;
   delete ctx;
   return CVI_SUCCESS;
 }
@@ -371,5 +374,35 @@ CVI_S32 CVI_AI_Eval_WflwDistance(cviai_eval_handle_t handle) {
     return CVI_FAILURE;
   }
   ctx->wflw_eval->distance();
+  return CVI_SUCCESS;
+}
+
+/****************************************************************
+ * LPDR evaluation functions
+ **/
+CVI_S32 CVI_AI_Eval_LPDRInit(cviai_eval_handle_t handle, const char *pathPrefix,
+                             const char *jsonPath, uint32_t *imageNum) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lpdr_eval == nullptr) {
+    ctx->lpdr_eval = new cviai::evaluation::LPDREval(pathPrefix, jsonPath);
+  } else {
+    ctx->lpdr_eval->getEvalData(pathPrefix, jsonPath);
+    return CVI_FAILURE;
+  }
+  *imageNum = ctx->lpdr_eval->getTotalImage();
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Eval_LPDRGetImageIdPair(cviai_eval_handle_t handle, const uint32_t index,
+                                       char **filepath, int *id) {
+  cviai_eval_context_t *ctx = static_cast<cviai_eval_context_t *>(handle);
+  if (ctx->lpdr_eval == nullptr) {
+    return CVI_FAILURE;
+  }
+  std::string filestr;
+  ctx->lpdr_eval->getImageIdPair(index, &filestr, id);
+  auto stringlength = strlen(filestr.c_str()) + 1;
+  *filepath = (char *)malloc(stringlength);
+  strncpy(*filepath, filestr.c_str(), stringlength);
   return CVI_SUCCESS;
 }

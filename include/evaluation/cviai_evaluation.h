@@ -110,6 +110,15 @@ DLL_EXPORT CVI_S32 CVI_AI_Eval_WflwInsertPoints(cviai_eval_handle_t handle, cons
                                                 const int height);
 DLL_EXPORT CVI_S32 CVI_AI_Eval_WflwDistance(cviai_eval_handle_t handle);
 
+/****************************************************************
+ * LPDR evaluation functions
+ **/
+DLL_EXPORT CVI_S32 CVI_AI_Eval_LPDRInit(cviai_eval_handle_t handle, const char *pathPrefix,
+                                        const char *jsonPath, uint32_t *imageNum);
+
+DLL_EXPORT CVI_S32 CVI_AI_Eval_LPDRGetImageIdPair(cviai_eval_handle_t handle, const uint32_t index,
+                                                  char **filepath, int *id);
+
 #ifdef __cplusplus
 }
 #endif

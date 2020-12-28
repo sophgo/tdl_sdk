@@ -4,6 +4,7 @@ add_subdirectory(wider_face)
 add_subdirectory(market1501)
 add_subdirectory(wflw)
 add_subdirectory(cityscapes)
+add_subdirectory(cvi_lpdr)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils)
@@ -14,6 +15,7 @@ set(EVA_SRCS $<TARGET_OBJECTS:coco>
 	     $<TARGET_OBJECTS:market1501>
 	     $<TARGET_OBJECTS:wflw>
 	     $<TARGET_OBJECTS:cityscapes>
+	        $<TARGET_OBJECTS:cvi_lpdr>
              cviai_evaluation.cpp)
 
 project(cviai_evaluation)
