@@ -126,7 +126,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION)        \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_WPODNET)                 \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LPRNET)                  \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_DEEPLABV3)
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_DEEPLABV3)               \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_ALPHAPOSE)
 // clang-format on
 
 #define CVI_AI_NAME_WRAP(x) x,
@@ -694,6 +695,24 @@ DLL_EXPORT CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle,
                                                 cvai_object_t *vehicle_meta,
                                                 cvai_object_t *license_plate_meta);
 /**@}*/
+
+/**
+ * \addtogroup core_pose Pose Detection
+ * \ingroup core_ai
+ */
+/**@{*/
+/**
+ * @brief Alphapose.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param vehicle_meta Detected object info
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_AlphaPose(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                    cvai_object_t *objects);
+
+/**@{*/
 
 /**
  * \addtogroup core_others Others

@@ -13,6 +13,25 @@ typedef enum {
   CVI_DET_TYPE_PET = (1 << 2)
 } cvai_obj_det_type_e;
 
+/** @struct cvai_pose17_meta_t
+ * @ingroup core_cviaicore
+ * @brief A structure to describe person pose.
+ *
+ * @var cvai_pose17_meta_t::x
+ * Position x point.
+ * @var cvai_pose17_meta_t::y
+ * Position y point.
+ * @var cvai_pose17_meta_t::score
+ * Point score
+ *
+ * @see cvai_object_t
+ */
+typedef struct {
+  float x[17];
+  float y[17];
+  float score[17];
+} cvai_pose17_meta_t;
+
 /** @struct cvai_object_info_t
  * @ingroup core_cviaicore
  * @brief A structure to describe a found object.
@@ -39,6 +58,7 @@ typedef struct {
   cvai_pts_t bpts;
   cvai_feature_t feature;
   int classes;
+  cvai_pose17_meta_t pos_17;
 } cvai_object_info_t;
 
 /** @struct cvai_object_t

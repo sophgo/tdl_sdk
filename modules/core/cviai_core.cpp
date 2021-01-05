@@ -5,6 +5,7 @@
 #include "cviai_log.hpp"
 #include "cviai_trace.hpp"
 
+#include "alphapose/alphapose.hpp"
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
 #include "deepsort/cvi_deepsort.hpp"
@@ -599,6 +600,21 @@ CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle, VIDEO_FRAME_IN
   }
 
   return lpd_model->inference(frame, vehicle_meta, license_plate_meta);
+}
+
+// Pose Detection
+
+CVI_S32 CVI_AI_AlphaPose(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                         cvai_object_t *objects) {
+  TRACE_EVENT("cviai_core", "CVI_AI_AlphaPose");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  AlphaPose *model = getInferenceInstance<AlphaPose>(CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, ctx);
+  if (model == nullptr) {
+    LOGE("No instance found for AlphaPose.\n");
+    return CVI_FAILURE;
+  }
+
+  return model->inference(frame, objects);
 }
 
 // Others
