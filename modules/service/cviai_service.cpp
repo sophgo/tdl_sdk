@@ -167,3 +167,7 @@ CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t handle,
   }
   return ret;
 }
+
+CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame) {
+  return cviai::service::DrawPose17(meta, frame);
+}

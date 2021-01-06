@@ -204,6 +204,18 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t h
                                                         const VIDEO_FRAME_INFO_S *frame,
                                                         const cvai_object_t *obj_meta,
                                                         cvai_area_detect_e **status);
+
+/**
+ * @brief Draw limbs to YUV frame with given object pose.
+ * @ingroup core_cviaiservice
+ *
+ * @param meta meta structure.
+ * @param frame In/ out YUV frame.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta,
+                                                 VIDEO_FRAME_INFO_S *frame);
+
 #ifdef __cplusplus
 }
 #endif

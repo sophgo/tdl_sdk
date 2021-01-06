@@ -23,5 +23,8 @@ void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
 
 template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText);
+
+int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame);
+
 }  // namespace service
 }  // namespace cviai

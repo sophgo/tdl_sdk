@@ -9,6 +9,20 @@
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
 #define max(x, y) (((x) >= (y)) ? (x) : (y))
 
+static std::vector<std::pair<int, int>> l_pair = {{0, 1},   {0, 2},   {1, 3},   {2, 4},   {5, 6},
+                                                  {5, 7},   {7, 9},   {6, 8},   {8, 10},  {17, 11},
+                                                  {17, 12}, {11, 13}, {12, 14}, {13, 15}, {14, 16}};
+
+static std::vector<cv::Scalar> p_color = {
+    {0, 255, 255},  {0, 191, 255},  {0, 255, 102},  {0, 77, 255},   {0, 255, 0},    {77, 255, 255},
+    {77, 255, 204}, {77, 204, 255}, {191, 255, 77}, {77, 191, 255}, {191, 255, 77}, {204, 77, 255},
+    {77, 255, 204}, {191, 77, 255}, {77, 255, 191}, {127, 77, 255}, {77, 255, 127}, {0, 255, 255}};
+
+static std::vector<cv::Scalar> line_color = {
+    {0, 215, 255},   {0, 255, 204},  {0, 134, 255},  {0, 255, 50},  {77, 255, 222},
+    {77, 196, 255},  {77, 135, 255}, {191, 255, 77}, {77, 255, 77}, {77, 222, 255},
+    {255, 156, 127}, {0, 127, 255},  {255, 127, 77}, {0, 77, 255},  {255, 77, 36}};
+
 namespace cviai {
 namespace service {
 
@@ -154,5 +168,94 @@ template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *
                                    const bool drawText);
 template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
                                      const bool drawText);
+
+int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
+  frame->stVFrame.pu8VirAddr[0] =
+      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+  cv::Mat img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
+              frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
+  if (img.data == nullptr) {
+    return CVI_FAILURE;
+  }
+
+  for (uint32_t i = 0; i < obj->size; ++i) {
+    std::vector<cv::Point2f> kp_preds(17);
+    std::vector<float> kp_scores(17);
+
+    cvai_pose17_meta_t pose = obj->info[i].pose_17;
+    for (int i = 0; i < 17; ++i) {
+      kp_preds[i].x = pose.x[i];
+      kp_preds[i].y = pose.y[i];
+      kp_scores[i] = pose.score[i];
+    }
+
+    cv::Point2f extra_pred;
+    extra_pred.x = (kp_preds[5].x + kp_preds[6].x) / 2;
+    extra_pred.y = (kp_preds[5].y + kp_preds[6].y) / 2;
+    kp_preds.push_back(extra_pred);
+
+    float extra_score = (kp_scores[5] + kp_scores[6]) / 2;
+    kp_scores.push_back(extra_score);
+
+    // Draw keypoints
+    std::unordered_map<int, std::pair<int, int>> part_line;
+    for (uint32_t n = 0; n < kp_scores.size(); n++) {
+      if (kp_scores[n] <= 0.35) continue;
+
+      int cor_x = kp_preds[n].x;
+      int cor_y = kp_preds[n].y;
+      part_line[n] = std::make_pair(cor_x, cor_y);
+
+      cv::Mat bg;
+      img.copyTo(bg);
+      cv::circle(bg, cv::Size(cor_x, cor_y), 2, p_color[n], -1);
+      float transparency = max(float(0.0), min(float(1.0), kp_scores[n]));
+      cv::addWeighted(bg, transparency, img, 1 - transparency, 0, img);
+    }
+
+    // Draw limbs
+    for (uint32_t i = 0; i < l_pair.size(); i++) {
+      int start_p = l_pair[i].first;
+      int end_p = l_pair[i].second;
+      if (part_line.count(start_p) > 0 && part_line.count(end_p) > 0) {
+        std::pair<int, int> start_xy = part_line[start_p];
+        std::pair<int, int> end_xy = part_line[end_p];
+
+        float mX = (start_xy.first + end_xy.first) / 2;
+        float mY = (start_xy.second + end_xy.second) / 2;
+        float length = sqrt(pow((start_xy.second - end_xy.second), 2) +
+                            pow((start_xy.first - end_xy.first), 2));
+        float angle =
+            atan2(start_xy.second - end_xy.second, start_xy.first - end_xy.first) * 180.0 / M_PI;
+        float stickwidth = (kp_scores[start_p] + kp_scores[end_p]) + 1;
+        std::vector<cv::Point> polygon;
+        cv::ellipse2Poly(cv::Point(int(mX), int(mY)), cv::Size(int(length / 2), stickwidth),
+                         int(angle), 0, 360, 1, polygon);
+
+        cv::Mat bg;
+        img.copyTo(bg);
+        cv::fillConvexPoly(bg, polygon, line_color[i]);
+        float transparency =
+            max(float(0.0), min(float(1.0), float(0.5) * (kp_scores[start_p] + kp_scores[end_p])));
+        cv::addWeighted(bg, transparency, img, 1 - transparency, 0, img);
+      }
+    }
+  }
+
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0],
+                        frame->stVFrame.u32Length[0]);
+  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+  frame->stVFrame.pu8VirAddr[0] = NULL;
+
+  // frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0],
+  //                                                             frame->stVFrame.u32Length[0]);
+  // cv::Mat draw_img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
+  //             frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
+  // cv::cvtColor(draw_img, draw_img, CV_RGB2BGR);
+  // cv::imwrite("/mnt/data/out2.jpg", draw_img);
+
+  return CVI_SUCCESS;
+}
+
 }  // namespace service
 }  // namespace cviai

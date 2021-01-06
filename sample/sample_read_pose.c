@@ -55,8 +55,6 @@ int main(int argc, char *argv[]) {
   //   return ret;
   // }
 
-  // CVI_SYS_FreeI(ive_handle, &image);
-
   VB_BLK blk1;
   VIDEO_FRAME_INFO_S fdFrame;
   ret = CVI_AI_ReadImage(argv[3], &blk1, &fdFrame, PIXEL_FORMAT_RGB_888);
@@ -72,9 +70,13 @@ int main(int argc, char *argv[]) {
   printf("People found %x.\n", obj.size);
 
   CVI_AI_AlphaPose(ai_handle, &fdFrame, &obj);
+
+  CVI_AI_Service_ObjectDrawPose(&obj, &fdFrame);
+
   CVI_AI_Free(&obj);
 
   // Free image and handles.
+  // CVI_SYS_FreeI(ive_handle, &image);
   CVI_AI_DestroyHandle(ai_handle);
   // CVI_IVE_DestroyHandle(ive_handle);
 

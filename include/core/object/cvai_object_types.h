@@ -58,7 +58,7 @@ typedef struct {
   cvai_pts_t bpts;
   cvai_feature_t feature;
   int classes;
-  cvai_pose17_meta_t pos_17;
+  cvai_pose17_meta_t pose_17;
 } cvai_object_info_t;
 
 /** @struct cvai_object_t
