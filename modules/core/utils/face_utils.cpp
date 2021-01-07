@@ -165,6 +165,7 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
         (e.x - tfm.at<double>(0, 2) - face_box[i].x * tfm.at<double>(0, 0)) / tfm.at<double>(0, 1);
     ++i;
   }
+  stAffineAttr.stDestSize = {outFrame->stVFrame.u32Width, outFrame->stVFrame.u32Height};
 
   GDC_HANDLE hHandle;
   GDC_TASK_ATTR_S stTask;
