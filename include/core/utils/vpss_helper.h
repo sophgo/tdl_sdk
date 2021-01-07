@@ -444,6 +444,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
                       PIXEL_FORMAT_E pixelFormat) {
   // Create Src Video Frame
   VIDEO_FRAME_S *vFrame = &vbFrame->stVFrame;
+  memset(vFrame, 0, sizeof(VIDEO_FRAME_S));
   vFrame->enCompressMode = COMPRESS_MODE_NONE;
   vFrame->enPixelFormat = pixelFormat;
   vFrame->enVideoFormat = VIDEO_FORMAT_LINEAR;
