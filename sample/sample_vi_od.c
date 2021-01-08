@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
   cvai_object_t obj_meta;
   memset(&obj_meta, 0, sizeof(cvai_object_t));
   while (bExit == false) {
-    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stfdFrame, 1000);
+    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stfdFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;

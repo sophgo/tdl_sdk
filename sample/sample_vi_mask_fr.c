@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
   cvai_face_t face;
   memset(&face, 0, sizeof(cvai_face_t));
   while (bExit == false) {
-    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &rgbFrame, 1000);
+    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &rgbFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;

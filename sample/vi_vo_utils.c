@@ -4,7 +4,21 @@
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum) {
   CVI_S32 s32Ret = CVI_SUCCESS;
-  SAMPLE_INI_CFG_S stIniCfg;
+  SAMPLE_INI_CFG_S stIniCfg = {
+      .enSource = VI_PIPE_FRAME_SOURCE_DEV,
+      .devNum = 1,
+      .enSnsType = SONY_IMX327_MIPI_2M_30FPS_12BIT,
+      .enWDRMode = WDR_MODE_NONE,
+      .s32BusId = 3,
+      .s32SnsI2cAddr = -1,
+      .MipiDev = 0xFF,
+      .u8UseDualSns = 0,
+      .enSns2Type = SONY_IMX327_SLAVE_MIPI_2M_30FPS_12BIT,
+      .s32Sns2BusId = 0,
+      .s32Sns2I2cAddr = -1,
+      .Sns2MipiDev = 0xFF,
+  };
+
   if (!SAMPLE_COMM_VI_ParseIni(&stIniCfg)) {
     syslog(LOG_ERR | LOG_LOCAL7, "Init pasre failed.\n");
     return CVI_FAILURE;

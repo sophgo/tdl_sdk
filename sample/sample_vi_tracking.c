@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
   memset(&obj_meta, 0, sizeof(cvai_object_t));
   memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
   while (bExit == false) {
-    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stFrame, 1000);
+    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
