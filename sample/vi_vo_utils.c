@@ -121,8 +121,8 @@ CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *st
   SIZE_S imgSize = {height, width};
 
   stVoConfig->VoDev = 0;
-  stVoConfig->enVoIntfType = VO_INTF_MIPI;
-  stVoConfig->enIntfSync = VO_OUTPUT_720x1280_60;
+  stVoConfig->stVoPubAttr.enIntfType = VO_INTF_MIPI;
+  stVoConfig->stVoPubAttr.enIntfSync = VO_OUTPUT_720x1280_60;
   stVoConfig->stDispRect = dispRect;
   stVoConfig->stImageSize = imgSize;
   stVoConfig->enPixFormat = PIXEL_FORMAT_YUV_PLANAR_420;
