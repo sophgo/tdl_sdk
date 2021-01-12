@@ -20,20 +20,19 @@
 #define MATCH_IOU_THRESHOLD 0.2
 #define OUTPUT_NAME "fc2_dequant"
 
-using namespace std;
-
 namespace cviai {
 
-static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
-                                                VIDEO_FRAME_INFO_S *sink_buffer,
-                                                cvai_face_t *rgb_meta, cvai_face_t *ir_meta) {
+static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
+                                                          VIDEO_FRAME_INFO_S *sink_buffer,
+                                                          cvai_face_t *rgb_meta,
+                                                          cvai_face_t *ir_meta) {
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
                     frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   if (rgb_frame.data == nullptr) {
     LOGE("src image is empty!\n");
-    return vector<vector<cv::Mat>>{};
+    return std::vector<std::vector<cv::Mat>>{};
   }
 
   sink_buffer->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
@@ -42,11 +41,13 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
                    sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Stride[0]);
   if (ir_frame.data == nullptr) {
     LOGE("sink image is empty!\n");
-    return vector<vector<cv::Mat>>{};
+    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+    frame->stVFrame.pu8VirAddr[0] = NULL;
+    return std::vector<std::vector<cv::Mat>>{};
   }
 
-  vector<cv::Rect> rgb_boxs;
-  vector<cv::Rect> ir_boxs;
+  std::vector<cv::Rect> rgb_boxs;
+  std::vector<cv::Rect> ir_boxs;
 
   for (uint32_t i = 0; i < rgb_meta->size; i++) {
     cvai_face_info_t rgb_face_info =
@@ -74,9 +75,9 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
     CVI_AI_FreeCpp(&ir_face_info);
   }
 
-  vector<pair<cv::Rect, cv::Rect>> match_result;
+  std::vector<std::vector<cv::Mat>> input_mat(rgb_boxs.size(), std::vector<cv::Mat>());
   for (uint32_t i = 0; i < rgb_boxs.size(); i++) {
-    vector<float> iou_result;
+    std::vector<float> iou_result;
     for (uint32_t j = 0; j < ir_boxs.size(); j++) {
       cv::Rect rect_uni = rgb_boxs[i] | ir_boxs[j];
       cv::Rect rect_int = rgb_boxs[i] & ir_boxs[j];
@@ -84,20 +85,22 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
       float iou = rect_int.area() * 1.0 / rect_uni.area();
       iou_result.push_back(iou);
     }
+
+    int match_index = -1;
+    cv::Rect match_result;
     if (iou_result.size() > 0) {
       float maxElement = *max_element(iou_result.begin(), iou_result.end());
       if (maxElement > MATCH_IOU_THRESHOLD) {
-        int match_index = max_element(iou_result.begin(), iou_result.end()) - iou_result.begin();
-        match_result.push_back({rgb_boxs[i], ir_boxs[match_index]});
+        match_index = max_element(iou_result.begin(), iou_result.end()) - iou_result.begin();
+        match_result = ir_boxs[match_index];
         ir_boxs.erase(ir_boxs.begin() + match_index);
       }
     }
-  }
 
-  vector<vector<cv::Mat>> input_mat(match_result.size(), vector<cv::Mat>());
-  for (uint32_t i = 0; i < match_result.size(); i++) {
-    cv::Rect rgb_box = match_result[i].first;
-    cv::Rect ir_box = match_result[i].second;
+    if (match_index == -1) continue;
+
+    cv::Rect rgb_box = rgb_boxs[i];
+    cv::Rect ir_box = match_result;
 
     if (rgb_box.width <= MIN_FACE_WIDTH || rgb_box.height <= MIN_FACE_HEIGHT ||
         ir_box.width <= MIN_FACE_WIDTH || ir_box.height <= MIN_FACE_HEIGHT)
@@ -109,13 +112,13 @@ static vector<vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
     cv::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
     cv::resize(crop_ir_frame, ir, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
 
-    vector<cv::Mat> colors = TTA_9_cropps(color);
-    vector<cv::Mat> irs = TTA_9_cropps(ir);
+    std::vector<cv::Mat> colors = TTA_9_cropps(color);
+    std::vector<cv::Mat> irs = TTA_9_cropps(ir);
 
-    vector<cv::Mat> input_v;
-    for (size_t i = 0; i < colors.size(); i++) {
+    std::vector<cv::Mat> input_v;
+    for (uint32_t j = 0; j < colors.size(); j++) {
       cv::Mat temp;
-      cv::merge(vector<cv::Mat>{colors[i], irs[i]}, temp);
+      cv::merge(std::vector<cv::Mat>{colors[j], irs[j]}, temp);
       input_v.push_back(temp);
     }
     input_mat[i] = input_v;
@@ -134,13 +137,14 @@ Liveness::Liveness() : Core(CVI_MEM_SYSTEM, false, 9) {}
 int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
                         cvai_face_t *rgb_meta, cvai_face_t *ir_meta) {
   if (rgb_meta->size <= 0) {
-    cout << "rgb_meta->size <= 0" << endl;
+    LOGE("rgb_meta->size <= 0");
     return CVI_FAILURE;
   }
 
-  vector<vector<cv::Mat>> input_mats = image_preprocess(rgbFrame, irFrame, rgb_meta, ir_meta);
-  if (input_mats.empty()) {
-    cout << "input_mat.empty" << endl;
+  std::vector<std::vector<cv::Mat>> input_mats =
+      image_preprocess(rgbFrame, irFrame, rgb_meta, ir_meta);
+  if (input_mats.empty() || input_mats.size() != rgb_meta->size) {
+    LOGE("Get input_mats failed");
     return CVI_FAILURE;
   }
 
@@ -148,8 +152,11 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     float conf0 = 0.0;
     float conf1 = 0.0;
 
-    vector<cv::Mat> input = input_mats[i];
-    if (input.empty()) continue;
+    std::vector<cv::Mat> input = input_mats[i];
+    if (input.empty()) {
+      rgb_meta->info[i].liveness_score = -1.0;
+      continue;
+    }
 
     prepareInputTensor(input);
 
@@ -177,7 +184,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
   return CVI_SUCCESS;
 }
 
-void Liveness::prepareInputTensor(vector<cv::Mat> &input_mat) {
+void Liveness::prepareInputTensor(std::vector<cv::Mat> &input_mat) {
   const TensorInfo &tinfo = getInputTensorInfo(0);
   int8_t *input_ptr = tinfo.get<int8_t>();
   float quant_scale = getInputQuantScale(0);
