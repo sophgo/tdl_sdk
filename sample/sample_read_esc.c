@@ -16,58 +16,10 @@
 #define UPDATE_INTERVAL 10
 #define PERIOD_SIZE 640
 #define SAMPLE_RATE 16000
-#define FRAME_SIZE SAMPLE_RATE * 2  // PCM_FORMAT_S16_LE (2bytes)
+#define FRAME_SIZE SAMPLE_RATE * 2 * 3  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
 
-char ES_Classes[50][32] = {"Dog",
-                           "Rooster",
-                           "Pig",
-                           "Cow",
-                           "Frog",
-                           "Cat",
-                           "Hen",
-                           "Insects flying",
-                           "Sheep",
-                           "Crow",
-                           "Rain",
-                           "Sea waves",
-                           "Crackling fire",
-                           "Crickets",
-                           "Chirping birds",
-                           "Water drops",
-                           "Wind",
-                           "Pouring water",
-                           "Toilet flush",
-                           "Thunderstorm",
-                           "Crying baby",
-                           "Sneezing",
-                           "Clapping",
-                           "Breathing",
-                           "Coughing",
-                           "Footsteps",
-                           "Laughing",
-                           "Brushing teeth",
-                           "Snoring",
-                           "Drinking sipping",
-                           "Door knock",
-                           "Mouse click",
-                           "Keyboard typing",
-                           "Door wood creaks",
-                           "Can opening",
-                           "Washing machine",
-                           "Vacuum cleaner",
-                           "Clock alarm",
-                           "Clock tick",
-                           "Glass breaking",
-                           "Helicopter",
-                           "Chainsaw",
-                           "Siren",
-                           "Car horn",
-                           "Engine",
-                           "Train",
-                           "Church_bells",
-                           "Airplane",
-                           "Fireworks",
-                           "Hand saw"};
+char ES_Classes[8][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",    "Laughing",
+                          "Baby Cry",          "Glass breaking",    "Clock_alarm", "Office"};
 
 CVI_U8 buffer[FRAME_SIZE];
 void *thread_uplink_audio(void *arg) {
@@ -76,8 +28,8 @@ void *thread_uplink_audio(void *arg) {
   AEC_FRAME_S stAecFrm;
   memset(&stAecFrm, 0, sizeof(AEC_FRAME_S));
   memset(&stFrame, 0, sizeof(AUDIO_FRAME_S));
-  int loop = SAMPLE_RATE / PERIOD_SIZE;
-  int size = PERIOD_SIZE * 2;  // PCM_FORMAT_S16_LE (2bytes)
+  int loop = SAMPLE_RATE / PERIOD_SIZE * 3;  // 3 seconds
+  int size = PERIOD_SIZE * 2;                // PCM_FORMAT_S16_LE (2bytes)
   for (int i = 0; i < loop; ++i) {
     s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_FALSE);
     if (s32Ret != CVI_SUCCESS) {

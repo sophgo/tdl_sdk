@@ -14,8 +14,14 @@ class ESClassification final : public Core {
 
  private:
   ESCFFT fft;
-  cv::Mat_<float> hannWindow;
-  cv::Mat_<float> STFT(cv::Mat_<float> *data);
+  int pad_length;
+  int number_coefficients;
+  int hop_length[3] = {128, 256, 512};
+  int win_length[3] = {256, 512, 1024};
+  cv::Mat_<float> hannWindow[3];
+  cv::Mat_<float> STFT(cv::Mat_<float> *data, int channel);
   int get_top_k(float *result, size_t count);
+  int feat_width = 513;
+  int feat_height = 188;
 };
 }  // namespace cviai
