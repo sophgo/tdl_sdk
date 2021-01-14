@@ -424,7 +424,7 @@ MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model m
 
 CVI_S32 CVI_AI_MobileDetV2_Vehicle_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                       cvai_object_t *obj) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Lite");
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Vehicle_D0");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0,
                          MobileDetV2::Model::vehicle_d0, handle, frame, obj, CVI_DET_TYPE_ALL);
 }

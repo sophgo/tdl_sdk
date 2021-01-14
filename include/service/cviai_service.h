@@ -62,8 +62,8 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_RegisterFeatureArray(
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
-                                                   cvai_face_info_t *face_info, const uint32_t k,
-                                                   uint32_t **index);
+                                                   const cvai_face_info_t *face_info,
+                                                   const uint32_t k, uint32_t **index);
 
 /**
  * @brief Do a single cvai_object_info_t feature matching with registed feature array.
