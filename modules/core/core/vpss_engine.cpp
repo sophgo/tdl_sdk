@@ -6,7 +6,7 @@ namespace cviai {
 
 VpssEngine::VpssEngine() {}
 
-VpssEngine::~VpssEngine() {}
+VpssEngine::~VpssEngine() { stop(); }
 
 int VpssEngine::init(VPSS_GRP grp_id) {
   if (m_is_vpss_init) {
