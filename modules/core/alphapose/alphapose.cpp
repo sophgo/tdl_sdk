@@ -109,7 +109,7 @@ static void preprocess(const cvai_bbox_t &input_bbox, const cv::Mat &input_image
   cv::warpAffine(input_image, align_image, trans, cv::Size(int(pose_w), int(pose_h)),
                  cv::INTER_LINEAR);
   align_bbox = centerScaleToBox(center, scale);
-  // cv::cvtColor(align_image, align_image, CV_BGR2RGB);
+
   align_image.convertTo(align_image, CV_32FC3, 1.0 / 255);
   cv::Scalar mean = cv::Scalar(0.406, 0.457, 0.48);
   align_image -= mean;
@@ -118,7 +118,7 @@ static void preprocess(const cvai_bbox_t &input_bbox, const cv::Mat &input_image
 static void getMaxPred(const cv::Mat &pose_pred, cvai_pose17_meta_t &dst_pose) {
   int inner_size = pose_pred.size[2] * pose_pred.size[3];
   float *ptr = (float *)pose_pred.data;
-  for (int c = 0; c < 17; ++c) {
+  for (int c = 0; c < ALPHAPOSE_PTS_NUM; ++c) {
     dst_pose.score[c] = 0;
     dst_pose.x[c] = 0;
     dst_pose.y[c] = 0;
@@ -159,7 +159,7 @@ static void simplePostprocess(const std::vector<cv::Mat> &pose_pred_list,
     getMaxPred(pose_pred_list[i], dst_pose_list[i]);
     cv::Mat trans = getAffineTransform(
         center, scale, {(float)pose_pred_list[i].size[2], (float)pose_pred_list[i].size[3]}, true);
-    for (int c = 0; c < 17; ++c) {
+    for (int c = 0; c < ALPHAPOSE_PTS_NUM; ++c) {
       dst_pose_list[i].x[c] = trans.at<double>(0) * dst_pose_list[i].x[c] +
                               trans.at<double>(1) * dst_pose_list[i].y[c] + trans.at<double>(2);
       dst_pose_list[i].y[c] = trans.at<double>(3) * dst_pose_list[i].x[c] +
@@ -207,10 +207,6 @@ int AlphaPose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *objects) {
     }
 
     cvai_bbox_t predict_bbox = objects->info[i].bbox;
-    // predict_bbox = box_rescale(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-    // objects->width, objects->height, objects->info[i].bbox,
-    // meta_rescale_type_e::RESCALE_CENTER);
-
     prepareInputTensor(predict_bbox, img_rgb, align_bbox);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};

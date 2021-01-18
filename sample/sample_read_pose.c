@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   cvai_object_t obj;
   memset(&obj, 0, sizeof(cvai_object_t));
   CVI_AI_MobileDetV2_D0(ai_handle, &fdFrame, &obj, CVI_DET_TYPE_PEOPLE);
-  printf("People found %x.\n", obj.size);
+  printf("People found %d.\n", obj.size);
 
   CVI_AI_AlphaPose(ai_handle, &fdFrame, &obj);
 
