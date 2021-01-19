@@ -18,6 +18,7 @@ add_subdirectory(segmentation)
 add_subdirectory(license_plate_recognition)
 add_subdirectory(license_plate_detection)
 add_subdirectory(alphapose)
+add_subdirectory(fall_detection)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils)
@@ -41,7 +42,8 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
 	          $<TARGET_OBJECTS:segmentation>
 	          $<TARGET_OBJECTS:license_plate_recognition>
 	          $<TARGET_OBJECTS:license_plate_detection>
-	      $<TARGET_OBJECTS:alphapose>
+	          $<TARGET_OBJECTS:alphapose>
+              $<TARGET_OBJECTS:fall_detection>
               cviai_types_mem.cpp
               cviai_rescale_bbox.cpp
               cviai_media.cpp

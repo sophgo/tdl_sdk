@@ -12,6 +12,7 @@
 #include "es_classification/es_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
 #include "face_quality/face_quality.hpp"
+#include "fall_detection/fall_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "liveness/liveness.hpp"
@@ -615,6 +616,21 @@ CVI_S32 CVI_AI_AlphaPose(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
   }
 
   return model->inference(frame, objects);
+}
+
+// Fall Detection
+
+CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objects) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Fall");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  FallMD *fall_model = ctx->fall_model;
+  if (fall_model == nullptr) {
+    LOGI("Init Fall Detection Model.\n");
+    ctx->fall_model = new FallMD();
+    ctx->fall_model->detect(objects);
+    return 0;
+  }
+  return ctx->fall_model->detect(objects);
 }
 
 // Others

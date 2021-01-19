@@ -711,7 +711,20 @@ DLL_EXPORT CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle,
  */
 DLL_EXPORT CVI_S32 CVI_AI_AlphaPose(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                     cvai_object_t *objects);
+/**@}*/
 
+/**
+ * \addtogroup core_fall Fall Detection
+ * \ingroup core_ai
+ */
+/**@{*/
+/**
+ * @brief Fall.
+ *
+ * @param handle An AI SDK handle.
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objects);
 /**@{*/
 
 /**

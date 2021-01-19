@@ -3,6 +3,7 @@
 #include "core/cviai_core.h"
 #include "core/vpss_engine.hpp"
 #include "deepsort/cvi_deepsort.hpp"
+#include "fall_detection/fall_detection.hpp"
 #include "ive/ive.h"
 #include "tamper_detection/tamper_detection.hpp"
 
@@ -31,6 +32,7 @@ typedef struct {
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   TamperDetectorMD *td_model = nullptr;
   Deepsort *ds_tracker = nullptr;
+  FallMD *fall_model = nullptr;
   bool use_gdc_wrap = false;
 } cviai_context_t;
 
