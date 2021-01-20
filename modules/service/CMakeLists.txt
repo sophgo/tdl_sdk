@@ -3,6 +3,7 @@ add_subdirectory(draw_rect)
 add_subdirectory(tracker)
 add_subdirectory(area_detect)
 add_subdirectory(feature_matching)
+add_subdirectory(face_angle)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/core
@@ -15,6 +16,7 @@ set(FRS_SRCS $<TARGET_OBJECTS:digital_tracking>
              $<TARGET_OBJECTS:tracker>
              $<TARGET_OBJECTS:area_detect>
              $<TARGET_OBJECTS:feature_matching>
+	     $<TARGET_OBJECTS:face_angle>
              cviai_service.cpp)
 
 project(cviai_service)

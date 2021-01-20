@@ -44,6 +44,61 @@ static float GetYuvColor(int chanel, color_rgb *color) {
 
   return (yuv_color < 0) ? 0 : ((yuv_color > 255.) ? 255 : yuv_color);
 }
+// TODO: Need refactor
+void WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_rgb color,
+               int rect_thinkness, const bool draw_text) {
+  std::string name_str = name;
+  int width = frame->stVFrame.u32Width;
+  int height = frame->stVFrame.u32Height;
+  x = max(min(x, width - 1), 0);
+  y = max(min(y, height - 1), 0);
+
+  color.r *= 255;
+  color.g *= 255;
+  color.b *= 255;
+  char color_y = GetYuvColor(PLANE_Y, &color);
+  char color_u = GetYuvColor(PLANE_U, &color);
+  char color_v = GetYuvColor(PLANE_V, &color);
+
+  CVI_VOID *vir_addr = CVI_NULL;
+  size_t image_size =
+      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
+  vir_addr = CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+  CVI_U32 plane_offset = 0;
+
+  for (int i = PLANE_Y; i < PLANE_NUM; i++) {
+    frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
+    plane_offset += frame->stVFrame.u32Length[i];
+
+    char draw_color;
+    if (i == PLANE_Y) {
+      draw_color = color_y;
+    } else if (i == PLANE_U) {
+      draw_color = color_u;
+    } else {
+      draw_color = color_v;
+    }
+
+    cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
+    cv::Point cv_point = cv::Point(x, y - 2);
+    double font_scale = 1;
+    int thickness = 1;
+    if (i != 0) {
+      cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
+      cv_point = cv::Point(x / 2, (y - 2) / 2);
+      font_scale /= 2;
+      // FIXME: Should div but don't know why it's not correct.
+      // thickness /= 2;
+    }
+    // FIXME: Color incorrect.
+    cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
+    cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_COMPLEX_SMALL, font_scale,
+                cv::Scalar(draw_color), thickness, cv::LINE_AA);
+    frame->stVFrame.pu8VirAddr[i] = NULL;
+  }
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
+  CVI_SYS_Munmap(vir_addr, image_size);
+}
 
 // TODO: Need refactor
 void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2, const char *name,
@@ -143,6 +198,17 @@ void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
   }
   CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
   CVI_SYS_Munmap(vir_addr, image_size);
+}
+
+int WriteMeta(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText) {
+  color_rgb rgb_color;
+  rgb_color.r = DEFAULT_RECT_COLOR_R;
+  rgb_color.g = DEFAULT_RECT_COLOR_G;
+  rgb_color.b = DEFAULT_RECT_COLOR_B;
+  for (size_t i = 0; i < 1; i++) {
+    WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_RECT_THINKNESS, drawText);
+  }
+  return CVI_SUCCESS;
 }
 
 template <typename T>

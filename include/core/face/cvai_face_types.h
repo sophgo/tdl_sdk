@@ -63,6 +63,28 @@ typedef struct {
   float yaw;
 } cvai_face_quality_t;
 
+/** @struct cvai_head_pose_t
+ *  @ingroup core_cviaicore
+ *  @brief The data structure for the face quality output.
+ *
+ *  @var cvai_head_pose_t::faacialUnitNormalVector
+ *  The Normal vector for the face.
+ *  @var cvai_head_pose_t::roll
+ *  The roll angle of the head pose.
+ *  @var cvai_head_pose_t::pitch
+ *  The pitch angle of the head pose.
+ *  @var cvai_head_pose_t::yaw
+ *  The yaw angle of the head pose.
+ */
+typedef struct {
+  float yaw;
+  float pitch;
+  float roll;
+
+  // Facial normal means head direction.
+  float facialUnitNormalVector[3];  // 0: x-axis, 1: y-axis, 2: z-axis
+} cvai_head_pose_t;
+
 /** @struct cvai_face_info_t
  *  @ingroup core_cviaicore
  *  @brief The data structure for storing a single face information.
@@ -89,6 +111,14 @@ typedef struct {
  *  The liveness score.
  *  @var cvai_face_info_t::mask_score
  *  The mask score.
+ *  @var cvai_face_info_t::r_eye_score
+ *  The right eye score.
+ *  @var cvai_face_info_t::l_eye_score
+ *  The left eye score.
+ *  @var cvai_face_info_t::yawn_score
+ *  The yawn score.
+ *  @var cvai_face_info_t::head_pose
+ *  The head pose.
  *  @var cvai_face_info_t::face_quality
  *  The face quality.
  *
@@ -108,6 +138,10 @@ typedef struct {
   float age;
   float liveness_score;
   float mask_score;
+  float r_eye_score;
+  float l_eye_score;
+  float yawn_score;
+  cvai_head_pose_t head_pose;
   cvai_face_quality_t face_quality;
 } cvai_face_info_t;
 

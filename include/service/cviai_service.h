@@ -180,6 +180,20 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta,
                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText);
 
 /**
+ * @brief Draw text to YUV frame with given text.
+ * @ingroup core_cviaiservice
+ *
+ * @paran name text content.
+ * @param x the x coordinate of content.
+ * @param y the y coordinate of content.
+ * @param frame In/ out YUV frame.
+ * @param drawText Choose to draw name of the object.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y,
+                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText);
+
+/**
  * @brief Set intersect area for detection.
  * @ingroup core_cviaiservice
  *
@@ -204,6 +218,16 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t h
                                                         const VIDEO_FRAME_INFO_S *frame,
                                                         const cvai_object_t *obj_meta,
                                                         cvai_area_detect_e **status);
+
+/**
+ * @brief Calculate the head pose angle.
+ * @ingroup core_cviaiservice
+ *
+ * @param pts facial landmark structure.
+ * @param hp head pose structure.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp);
 
 /**
  * @brief Draw limbs to YUV frame with given object pose.

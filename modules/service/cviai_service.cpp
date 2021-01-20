@@ -4,6 +4,7 @@
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
 #include "draw_rect/draw_rect.hpp"
+#include "face_angle/face_angle.hpp"
 #include "feature_matching/feature_matching.hpp"
 
 #include <cvimath/cvimath.h>
@@ -127,7 +128,10 @@ CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta, VIDEO_FRAME_INF
                                       const bool drawText) {
   return cviai::service::DrawMeta(meta, frame, drawText);
 }
-
+CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame,
+                                       const bool drawText) {
+  return cviai::service::WriteMeta(name, x, y, frame, drawText);
+}
 CVI_S32 CVI_AI_Service_SetIntersect(cviai_service_handle_t handle, const cvai_pts_t *pts) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
   if (ctx->m_ad == nullptr) {
@@ -158,7 +162,9 @@ CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t handle,
   }
   return ret;
 }
-
+CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp) {
+  return cviai::service::Predict(pts, hp);
+}
 CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame) {
   return cviai::service::DrawPose17(meta, frame);
 }
