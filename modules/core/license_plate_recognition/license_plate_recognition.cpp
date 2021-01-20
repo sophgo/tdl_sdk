@@ -10,20 +10,14 @@
 #include "opencv2/opencv.hpp"
 
 #include <iostream>
+#include <sstream>
 
 #define LICENSE_PLATE_HEIGHT 24
 #define LICENSE_PLATE_WIDTH 94
 
-#define MEAN_R 0.485
-#define MEAN_G 0.456
-#define MEAN_B 0.406
-#define STD_R 0.229
-#define STD_G 0.224
-#define STD_B 0.225
-
 #define OUTPUT_NAME "id_code_ReduceMean_dequant"
 
-#include <sstream>
+#define DEBUG_LICENSE_PLATE_DETECTION 0
 
 namespace cviai {
 
@@ -33,18 +27,15 @@ LicensePlateRecognition::~LicensePlateRecognition() {}
 
 int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
                                        cvai_object_t *license_plate_meta) {
-  // std::cout << "LicensePlateRecognition::inference" << std::endl;
+#if DEBUG_LICENSE_PLATE_DETECTION
+  printf("[%s:%d] inference\n", __FILE__, __LINE__);
+  std::stringstream s_str;
+#endif
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat cv_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
                    frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
-  // cv::imwrite("tmp_frame.jpg", cv_frame);
-  std::stringstream s_str;
   for (size_t n = 0; n < license_plate_meta->size; n++) {
-    // if (n > 0){
-    //   continue;
-    // }
-    // std::cout << "n = " << n << std::endl;
     if (license_plate_meta->info[n].bpts.size == 0) {
       continue;
     }
@@ -67,47 +58,44 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     cv::Mat greyMat;
     cv::cvtColor(sub_cvFrame, greyMat, cv::COLOR_RGB2GRAY); /* BGR or RGB ? */
     cv::cvtColor(greyMat, sub_cvFrame, cv::COLOR_GRAY2RGB);
-    // s_str.str("");
-    // s_str << "tmp_license_plate_" << n << ".jpg";
+
+#if DEBUG_LICENSE_PLATE_DETECTION
+    s_str.str("");
+    s_str << "tmp_license_plate_" << n << ".jpg";
     // cv::imwrite(s_str.str().c_str(), greyMat);
-    sub_cvFrame.convertTo(sub_cvFrame, CV_32FC3);
+#endif
 
-    sub_cvFrame = sub_cvFrame / 255.0;
-    float mu[3] = {MEAN_R, MEAN_G, MEAN_B};
-    float sigma[3] = {STD_R, STD_G, STD_B};
-    std::vector<cv::Mat> rgbChannels(3);
-    cv::split(sub_cvFrame, rgbChannels);
-    for (int c = 0; c < 3; c++) {
-      rgbChannels[c] = (rgbChannels[c] - mu[c]) / sigma[c];
-    }
-    // no-use cv::merge(rgbChannels, cv_frame);
+    prepareInputTensor(sub_cvFrame);
 
-    uint16_t *input_ptr = getInputRawPtr<uint16_t>(0);
-    int rows = sub_cvFrame.rows;
-    int cols = sub_cvFrame.cols;
-    for (int c = 0; c < 3; c++) {
-      for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-          uint16_t bf16_input = 0;
-          floatToBF16((float *)rgbChannels[c].ptr(i, j), &bf16_input);
-          memcpy(input_ptr + rows * cols * c + cols * i + j, &bf16_input, sizeof(uint16_t));
-        }
-      }
-    }
-    std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-    run(frames);
+    std::vector<VIDEO_FRAME_INFO_S *> dummyFrames = {frame};
+    run(dummyFrames);
 
     float *out_code = getOutputRawPtr<float>(OUTPUT_NAME);
 
     std::string id_number = greedy_decode(out_code);
 
-    // std::cout << "ID Number: " << id_number << std::endl;
-
     strncpy(license_plate_meta->info[n].name, id_number.c_str(),
             sizeof(license_plate_meta->info[n].name));
-    // strcpy(license_plate_meta->info[n].name, id_number.c_str());
   }
   return CVI_SUCCESS;
+}
+
+void LicensePlateRecognition::prepareInputTensor(cv::Mat &input_mat) {
+  const TensorInfo &tinfo = getInputTensorInfo(0);
+  int8_t *input_ptr = tinfo.get<int8_t>();
+
+  cv::Mat tmpchannels[3];
+  cv::split(input_mat, tmpchannels);
+
+  for (int c = 0; c < 3; ++c) {
+    tmpchannels[c].convertTo(tmpchannels[c], CV_8UC1);
+
+    int size = tmpchannels[c].rows * tmpchannels[c].cols;
+    for (int r = 0; r < tmpchannels[c].rows; ++r) {
+      memcpy(input_ptr + size * c + tmpchannels[c].cols * r, tmpchannels[c].ptr(r, 0),
+             tmpchannels[c].cols);
+    }
+  }
 }
 
 }  // namespace cviai

@@ -15,8 +15,7 @@ class LicensePlateRecognition final : public Core {
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *license_plate_meta);
 
  private:
-  // virtual int initAfterModelOpened(std::vector<initSetup> *data) override;
-  void prepareInputTensor(std::vector<cv::Mat> &input_mat);
+  void prepareInputTensor(cv::Mat &input_mat);
 
   VB_BLK m_gdc_blk = (VB_BLK)-1;
   VIDEO_FRAME_INFO_S m_wrap_frame;
