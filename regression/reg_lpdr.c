@@ -1,30 +1,16 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "sample_comm.h"
-
-#include <cvi_sys.h>
-#include <cvi_vb.h>
-#include <cvi_vi.h>
 #include "cviai_perfetto.h"
 
 #include <dirent.h>
-#include <inttypes.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
-#include "ive/ive.h"
-
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
-#define USE_MOBILEDETV2_VEHICLE 0
-
 int main(int argc, char *argv[]) {
-  if (argc != 7) {
+  CVI_AI_PerfettoInit();
+  if (argc != 8) {
     printf(
         "Usage: %s <vehicle_detection_model_path>\n"
+        "          <use_mobiledet_vehicle (0/1)>\n"
         "          <license_plate_detection_model_path>\n"
         "          <license_plate_recognition_model_path>\n"
         "          <images_path>\n"
@@ -37,19 +23,19 @@ int main(int argc, char *argv[]) {
     printf("check model fail: %s\n", argv[1]);
     return CVI_FAILURE;
   }
-  if (access(argv[2], F_OK) != 0) {
+  if (access(argv[3], F_OK) != 0) {
     printf("check model fail: %s\n", argv[2]);
     return CVI_FAILURE;
   }
-  if (access(argv[3], F_OK) != 0) {
+  if (access(argv[4], F_OK) != 0) {
     printf("check model fail: %s\n", argv[3]);
     return CVI_FAILURE;
   }
-  if (access(argv[5], F_OK) != 0) {
+  if (access(argv[6], F_OK) != 0) {
     printf("check json fail: %s\n", argv[5]);
     return CVI_FAILURE;
   }
-  DIR *dir = opendir(argv[4]);
+  DIR *dir = opendir(argv[5]);
   if (dir) {
     closedir(dir);
   } else {
@@ -57,7 +43,6 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  CVI_AI_PerfettoInit();
   CVI_S32 ret = CVI_SUCCESS;
 
   // Init VB pool size.
@@ -72,13 +57,17 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle2(&ai_handle, 1);
-#if USE_MOBILEDETV2_VEHICLE
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, argv[1]);
-#else
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
-#endif
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[2]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET, argv[3]);
+  int use_vehicle = atoi(argv[2]);
+  if (use_vehicle == 1) {
+    ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, argv[1]);
+  } else if (use_vehicle == 0) {
+    ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
+  } else {
+    printf("Unknow det model type.\n");
+    return CVI_FAILURE;
+  }
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET, argv[4]);
   if (ret != CVI_SUCCESS) {
     printf("open failed with %#x!\n", ret);
     return ret;
@@ -92,16 +81,19 @@ int main(int argc, char *argv[]) {
   }
 
   uint32_t image_num;
-  CVI_AI_Eval_LPDRInit(eval_handle, argv[4], argv[5], &image_num);
+  CVI_AI_Eval_LPDRInit(eval_handle, argv[5], argv[6], &image_num);
 
   FILE *outFile;
-  outFile = fopen(argv[6], "w");
+  outFile = fopen(argv[7], "w");
   if (outFile == NULL) {
     printf("There is a problem opening the output file: %s\n", argv[6]);
     exit(EXIT_FAILURE);
   }
   fprintf(outFile, "%u\n", image_num);
 
+  cvai_object_t vehicle_obj, license_plate_obj;
+  memset(&vehicle_obj, 0, sizeof(cvai_object_t));
+  memset(&license_plate_obj, 0, sizeof(cvai_object_t));
   for (uint32_t n = 0; n < image_num; n++) {
     char *filename = NULL;
     int id = 0;
@@ -117,18 +109,16 @@ int main(int argc, char *argv[]) {
       return ret;
     }
 
-    cvai_object_t vehicle_obj;
-    printf("CVI_AI_MobileDetV2_D0 ... start\n");
-#if USE_MOBILEDETV2_VEHICLE
-    CVI_AI_MobileDetV2_Vehicle_D0(ai_handle, &frame, &vehicle_obj);
-#else
-    cvai_obj_det_type_e det_type = CVI_DET_TYPE_VEHICLE;
-    CVI_AI_MobileDetV2_D0(ai_handle, &frame, &vehicle_obj, det_type);
-#endif
+    if (use_vehicle == 1) {
+      printf("CVI_AI_MobileDetV2_Vehicle_D0 ... start\n");
+      CVI_AI_MobileDetV2_Vehicle_D0(ai_handle, &frame, &vehicle_obj);
+    } else {
+      printf("CVI_AI_MobileDetV2_D0 ... start\n");
+      CVI_AI_MobileDetV2_D0(ai_handle, &frame, &vehicle_obj, CVI_DET_TYPE_VEHICLE);
+    }
     printf("Find %u vehicles.\n", vehicle_obj.size);
 
     /* LP Detection */
-    cvai_object_t license_plate_obj;
     license_plate_obj.size = vehicle_obj.size;
     license_plate_obj.info =
         (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * vehicle_obj.size);

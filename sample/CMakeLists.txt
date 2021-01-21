@@ -69,6 +69,7 @@ buildninstall(NAME sample_vi_mask_fr INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS cvi
 buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} )
 buildninstall(NAME sample_vi_tracking INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_fall INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_lpdr INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 
 
 buildninstall(NAME sample_read_dt INC ${SAMPLE_INC} DEPS cviai_core cviai_service)

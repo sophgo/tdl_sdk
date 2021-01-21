@@ -579,8 +579,7 @@ CVI_S32 CVI_AI_LicensePlateRecognition(const cviai_handle_t handle, VIDEO_FRAME_
   LicensePlateRecognition *lpr_model =
       getInferenceInstance<LicensePlateRecognition>(CVI_AI_SUPPORTED_MODEL_LPRNET, ctx);
   if (lpr_model == nullptr) {
-    // LOGE("No instance found for LicensePlateRecognition.\n");
-    printf("No instance found for LicensePlateRecognition.\n");
+    LOGE("No instance found for LicensePlateRecognition.\n");
     return CVI_FAILURE;
   }
 
@@ -595,8 +594,7 @@ CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle, VIDEO_FRAME_IN
   LicensePlateDetection *lpd_model =
       getInferenceInstance<LicensePlateDetection>(CVI_AI_SUPPORTED_MODEL_WPODNET, ctx);
   if (lpd_model == nullptr) {
-    // LOGE("No instance found for LicensePlateRecognition.\n");
-    printf("No instance found for LicensePlateDetection.\n");
+    LOGE("No instance found for LicensePlateRecognition.\n");
     return CVI_FAILURE;
   }
 
