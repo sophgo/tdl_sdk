@@ -52,6 +52,14 @@ SAMPLE_VI_CONFIG_S stViConfig;
 char codec[] = "h264";
 
 int main(int argc, char **argv) {
+  if (argc != 5) {
+    printf(
+        "Usage: %s <retina_model_path> <mask_classification_model> <eye_classification_model> "
+        "<yawn_classification_model>.\n",
+        argv[0]);
+    return CVI_FAILURE;
+  }
+
   // VIDEO
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
