@@ -24,6 +24,7 @@
 #define NOT_FEATURE_DIR "/not_db_feature/"
 
 cviai_handle_t facelib_handle = NULL;
+cviai_service_handle_t service_handle = NULL;
 
 static VPSS_GRP VpssGrp = 0;
 static CVI_S32 vpssgrp_width = 1920;
@@ -230,38 +231,37 @@ static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not
                           char **db_name, char **in_name, char **not_in_name, int db_count,
                           int in_count, int not_count, float threshold, FILE *fp_far,
                           FILE *fp_frr) {
-  float *db_f = calloc(db_count * FEATURE_LENGTH, sizeof(float));
-  cvm_gen_db_i8_unit_length(db_feature, db_f, FEATURE_LENGTH, db_count);
+  cvai_service_feature_array_t feature_array;
+  feature_array.data_num = db_count;
+  feature_array.feature_length = FEATURE_LENGTH;
+  feature_array.ptr = db_feature;
+  feature_array.type = TYPE_INT8;
+
+  CVI_AI_Service_RegisterFeatureArray(service_handle, feature_array, COS_SIMILARITY);
 
   int frr = 0;
   int far = 0;
+  int topk = 1;
   for (int i = 0; i < in_count; i++) {
-    unsigned int *k_index = calloc(db_count, sizeof(unsigned int));
-    float *k_value = calloc(db_count, sizeof(float));
-    float *buffer = calloc(db_count * FEATURE_LENGTH, sizeof(float));
-    cvm_cpu_i8data_ip_match(&in_db_feature[i * FEATURE_LENGTH], db_feature, db_f, k_index, k_value,
-                            buffer, FEATURE_LENGTH, db_count, 1);
-    if (k_value[0] < threshold || strcmp(in_name[i], db_name[k_index[0]]) != 0) frr++;
+    uint32_t indices[topk];
+    float scores[topk];
+    uint32_t score_size;
+    CVI_AI_Service_RawMatching(service_handle, in_db_feature + (i * FEATURE_LENGTH), TYPE_INT8,
+                               topk, threshold, indices, scores, &score_size);
+    if (score_size == 0 || strcmp(in_name[i], db_name[indices[0]]) != 0) frr++;
 
-    log_comp_result(fp_frr, db_name[k_index[0]], in_name[i], k_value[0]);
-    free(k_index);
-    free(k_value);
-    free(buffer);
+    log_comp_result(fp_frr, db_name[indices[0]], in_name[i], scores[0]);
   }
   for (int i = 0; i < not_count; i++) {
-    unsigned int *k_index = calloc(db_count, sizeof(unsigned int));
-    float *k_value = calloc(db_count, sizeof(float));
-    float *buffer = calloc(db_count * FEATURE_LENGTH, sizeof(float));
-    cvm_cpu_i8data_ip_match(&not_db_feature[i * FEATURE_LENGTH], db_feature, db_f, k_index, k_value,
-                            buffer, FEATURE_LENGTH, db_count, 1);
-    if (k_value[0] > threshold) far++;
-    log_comp_result(fp_far, db_name[k_index[0]], not_in_name[i], k_value[0]);
-    free(k_index);
-    free(k_value);
-    free(buffer);
-  }
+    uint32_t indices[topk];
+    float scores[topk];
+    uint32_t score_size;
+    CVI_AI_Service_RawMatching(service_handle, not_db_feature + (i * FEATURE_LENGTH), TYPE_INT8,
+                               topk, threshold, indices, scores, &score_size);
 
-  free(db_f);
+    if (score_size > 0) far++;
+    log_comp_result(fp_far, db_name[indices[0]], not_in_name[i], scores[0]);
+  }
 
   if (threshold > 0.0) {
     printf("frr: %d\n", frr);
@@ -301,7 +301,13 @@ int main(int argc, char *argv[]) {
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create handle failed with %#x!\n", ret);
+    printf("Create ai handle failed with %#x!\n", ret);
+    return ret;
+  }
+
+  ret = CVI_AI_Service_CreateHandle(&service_handle, &facelib_handle);
+  if (ret != CVI_SUCCESS) {
+    printf("Create service handle failed with %#x!\n", ret);
     return ret;
   }
 
@@ -353,11 +359,6 @@ int main(int argc, char *argv[]) {
   genFeatureFile(in_dir_full, in_feature_full, false, quality_thresh, NULL, NULL);
   genFeatureFile(not_dir_full, not_feature_full, false, quality_thresh, NULL, NULL);
 
-  CVI_AI_DestroyHandle(facelib_handle);
-  CVI_VPSS_StopGrp(VpssGrp);
-  CVI_VPSS_DestroyGrp(VpssGrp);
-  CVI_SYS_Exit();
-
   int db_count = loadCount(db_feature_full);
   int in_count = loadCount(in_feature_full);
   int not_count = loadCount(not_feature_full);
@@ -372,6 +373,7 @@ int main(int argc, char *argv[]) {
 
   FILE *fp_far = fopen("far_results.txt", "w+");
   FILE *fp_frr = fopen("frr_results.txt", "w+");
+
   evaluateResult(db_feature, in_feature, not_feature, db_name, in_name, not_name, db_count,
                  in_count, not_count, sim_thresh, fp_far, fp_frr);
   fclose(fp_far);
@@ -393,5 +395,10 @@ int main(int argc, char *argv[]) {
   }
   free(not_name);
 
+  CVI_AI_Service_DestroyHandle(service_handle);
+  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_VPSS_StopGrp(VpssGrp);
+  CVI_VPSS_DestroyGrp(VpssGrp);
+  CVI_SYS_Exit();
   return ret;
 }

@@ -4,7 +4,10 @@
 #include <cviruntime.h>
 #include <string.h>
 #include <sys/sysinfo.h>
+#include <algorithm>
 #include <cmath>
+#include <numeric>
+#include <vector>
 
 namespace cviai {
 namespace service {
@@ -96,8 +99,8 @@ int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_ar
   int ret = CVI_SUCCESS;
   m_matching_method = matching_method;
   switch (m_matching_method) {
-    case INNER_PRODUCT: {
-      ret = innerProductRegister(feature_array);
+    case COS_SIMILARITY: {
+      ret = cosSimilarityRegister(feature_array);
     } break;
     default:
       LOGE("Unsupported mathinc method %u\n", m_matching_method);
@@ -107,16 +110,12 @@ int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_ar
   return ret;
 }
 
-int FeatureMatching::run(const uint8_t *feature, const feature_type_e &type, const uint32_t k,
-                         uint32_t **index) {
+int FeatureMatching::run(const uint8_t *feature, const feature_type_e &type, const uint32_t topk,
+                         uint32_t *indices, float *scores, uint32_t *size, float threshold) {
   int ret = CVI_SUCCESS;
-  uint32_t *k_index = (uint32_t *)malloc(sizeof(uint32_t) * k);
   switch (m_matching_method) {
-    case INNER_PRODUCT: {
-      if ((ret = innerProductRun(feature, type, k, k_index)) != CVI_SUCCESS) {
-        free(k_index);
-      }
-      *index = k_index;
+    case COS_SIMILARITY: {
+      ret = cosSimilarityRun(feature, type, topk, indices, scores, threshold, size);
     } break;
     default:
       LOGE("Unsupported mathinc method %u\n", m_matching_method);
@@ -126,7 +125,7 @@ int FeatureMatching::run(const uint8_t *feature, const feature_type_e &type, con
   return ret;
 }
 
-int FeatureMatching::innerProductRegister(const cvai_service_feature_array_t &feature_array) {
+int FeatureMatching::cosSimilarityRegister(const cvai_service_feature_array_t &feature_array) {
   const uint32_t total_length = feature_array.feature_length * feature_array.data_num;
   float *unit_length = new float[total_length];
   switch (feature_array.type) {
@@ -140,6 +139,7 @@ int FeatureMatching::innerProductRegister(const cvai_service_feature_array_t &fe
       return CVI_FAILURE;
     } break;
   }
+  m_data_num = feature_array.data_num;
   FreeFeatureArrayExt(&m_cpu_ipfeature);
   FreeFeatureArrayTpuExt(m_rt_handle, &m_tpu_ipfeature);
   if (feature_array.data_num < 1000) {
@@ -180,21 +180,51 @@ int FeatureMatching::innerProductRegister(const cvai_service_feature_array_t &fe
     }
     CVI_RT_MemFlush(m_rt_handle, info.rtmem);
   }
+
   return CVI_SUCCESS;
 }
 
-int FeatureMatching::innerProductRun(const uint8_t *feature, const feature_type_e &type,
-                                     const uint32_t k, uint32_t *k_index) {
+template <typename T>
+static std::vector<size_t> sort_indexes(const std::vector<T> &v) {
+  // initialize original index locations
+  std::vector<size_t> idx(v.size());
+  std::iota(idx.begin(), idx.end(), 0);
+
+  // sort indexes based on comparing values in v
+  // using std::stable_sort instead of std::sort
+  // to avoid unnecessary index re-orderings
+  // when v contains elements of equal values
+  std::stable_sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2) { return v[i1] > v[i2]; });
+
+  return idx;
+}
+
+int FeatureMatching::cosSimilarityRun(const uint8_t *feature, const feature_type_e &type,
+                                      const uint32_t topk, uint32_t *k_index, float *k_value,
+                                      float threshold, uint32_t *size) {
+  if (topk == 0 && threshold == 0.0f) {
+    LOGE("both topk and threshold are invalid value\n");
+    *size = 0;
+    return CVI_FAILURE;
+  }
+
   int ret = CVI_SUCCESS;
-  float *k_value = (float *)malloc(sizeof(float) * k);
+
+  *size = topk == 0 ? m_data_num : std::min<uint32_t>(m_data_num, topk);
+  ;
+
+  float *scores = new float[*size];
+  uint32_t *indices = new uint32_t[*size];
+
   switch (type) {
     case TYPE_INT8: {
       if (m_is_cpu) {
         cvm_cpu_i8data_ip_match((int8_t *)feature, (int8_t *)m_cpu_ipfeature.feature_array.ptr,
-                                m_cpu_ipfeature.feature_unit_length, k_index, k_value,
+                                m_cpu_ipfeature.feature_unit_length, indices, scores,
                                 m_cpu_ipfeature.feature_array_buffer,
                                 m_cpu_ipfeature.feature_array.feature_length,
-                                m_cpu_ipfeature.feature_array.data_num, k);
+                                m_cpu_ipfeature.feature_array.data_num, *size);
+
       } else {
         int8_t *i8_feature = (int8_t *)feature;
         memcpy(m_tpu_ipfeature.feature_input.vaddr, i8_feature, m_tpu_ipfeature.feature_length);
@@ -221,26 +251,52 @@ int FeatureMatching::innerProductRun(const uint8_t *feature, const feature_type_
           m_tpu_ipfeature.array_buffer_f[i] = ((int32_t *)m_tpu_ipfeature.array_buffer_32)[i] /
                                               (unit_i8 * m_tpu_ipfeature.feature_unit_length[i]);
         }
+
         // Get k result
-        for (uint32_t i = 0; i < k; i++) {
-          uint32_t largest = 0;
-          for (uint32_t j = 0; j < m_tpu_ipfeature.data_num; j++) {
-            if (m_tpu_ipfeature.array_buffer_f[j] > m_tpu_ipfeature.array_buffer_f[largest]) {
-              largest = j;
-            }
+        if (*size == m_tpu_ipfeature.data_num) {
+          std::vector<float> scores_v =
+              std::vector<float>(m_tpu_ipfeature.array_buffer_f,
+                                 m_tpu_ipfeature.array_buffer_f + m_tpu_ipfeature.data_num);
+          std::vector<size_t> sorted_indices = sort_indexes(scores_v);
+
+          for (uint32_t i = 0; i < *size; i++) {
+            indices[i] = sorted_indices[i];
+            scores[i] = m_tpu_ipfeature.array_buffer_f[indices[i]];
           }
-          k_value[i] = m_tpu_ipfeature.array_buffer_f[largest];
-          k_index[i] = largest;
-          m_tpu_ipfeature.array_buffer_f[largest] = 0;
+        } else {
+          for (uint32_t i = 0; i < *size; i++) {
+            uint32_t largest = 0;
+            for (uint32_t j = 0; j < m_tpu_ipfeature.data_num; j++) {
+              if (m_tpu_ipfeature.array_buffer_f[j] > m_tpu_ipfeature.array_buffer_f[largest]) {
+                largest = j;
+              }
+            }
+            scores[i] = m_tpu_ipfeature.array_buffer_f[largest];
+            indices[i] = largest;
+            m_tpu_ipfeature.array_buffer_f[largest] = 0;
+          }
         }
       }
+
+      uint32_t j = 0;
+      for (uint32_t i = 0; i < *size; i++) {
+        if (scores[i] >= threshold) {
+          k_value[j] = scores[i];
+          k_index[j] = indices[i];
+          j++;
+        }
+      }
+      *size = j;
     } break;
     default: {
       LOGE("Unsupported register data type %x.\n", type);
       ret = CVI_FAILURE;
     } break;
   }
-  free(k_value);
+
+  delete[] scores;
+  delete[] indices;
+
   return ret;
 }
 }  // namespace service

@@ -56,14 +56,20 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_RegisterFeatureArray(
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
- * @param face_info The cvai_face_info_t from NN output with feature data.
- * @param k Output top k results.
- * @param index Output top k index.
+ * @param object_info The cvai_object_info_t from NN output with feature data.
+ * @param threshold threshold. Set 0 to ignore.
+ * @param topk top-k matching results. Set 0 to ignore.
+ * @param indices Output top k indices. Array size should be same as number of dataset features if
+ * topk is ignored.
+ * @param sims Output simlarities. Array size should be same as number of dataset features if topk
+ * is ignored.
+ * @param size Output length of indices and sims array
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
                                                    const cvai_face_info_t *face_info,
-                                                   const uint32_t k, uint32_t **index);
+                                                   const uint32_t topk, float threshold,
+                                                   uint32_t *indices, float *sims, uint32_t *size);
 
 /**
  * @brief Do a single cvai_object_info_t feature matching with registed feature array.
@@ -71,13 +77,35 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle
  *
  * @param handle A service handle.
  * @param object_info The cvai_object_info_t from NN output with feature data.
- * @param k Output top k results.
- * @param index Output top k index.
+ * @param topk top-k matching results. Set 0 to ignore.
+ * @param threshold threshold. Set 0 to ignore.
+ * @param indices Output top k indices. Array size should be same as number of dataset features if
+ * topk is ignored.
+ * @param sims Output similarities. Array size should be same as number of dataset features if topk
+ * is ignored.
+ * @param size Output length of indices and sims array
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
                                                      const cvai_object_info_t *object_info,
-                                                     const uint32_t k, uint32_t **index);
+                                                     const uint32_t topk, float threshold,
+                                                     uint32_t *indices, float *sims,
+                                                     uint32_t *size);
+
+/**
+ * @brief Calculate similarity of two features
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param feature_rhs Righ hand side feature vector.
+ * @param feature_lhs Left hand side feature vector.
+ * @param score Output similarities of two features
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
+                                                      const cvai_feature_t *feature_rhs,
+                                                      const cvai_feature_t *feature_lhs,
+                                                      float *score);
 
 /**
  * @brief Do a single raw data with registed feature array.
@@ -86,13 +114,19 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t hand
  * @param handle A service handle.
  * @param feature Raw feature vector.
  * @param type The data type of the feature vector.
- * @param k Output top k results.
- * @param index Output top k index.
+ * @param topk Output top k results.
+ * @param threshold threshold. Set 0 to ignore.
+ * @param indices Output top k indices. Array size should be same as number of dataset features if
+ * topk is ignored.
+ * @param sims Output similarities. Array size should be same as number of dataset features if topk
+ * is ignored.
+ * @param size Output length of indices and sims array
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const uint8_t *feature,
-                                              const feature_type_e type, const uint32_t k,
-                                              uint32_t **index);
+DLL_EXPORT CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const void *feature,
+                                              const feature_type_e type, const uint32_t topk,
+                                              float threshold, uint32_t *indices, float *sims,
+                                              uint32_t *size);
 
 /**
  * @brief Zoom in to the union of faces from the output of face detection results.

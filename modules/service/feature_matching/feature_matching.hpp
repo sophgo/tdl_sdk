@@ -44,12 +44,13 @@ class FeatureMatching {
   int registerData(const cvai_service_feature_array_t &feature_array,
                    const cvai_service_feature_matching_e &matching_method);
 
-  int run(const uint8_t *feature, const feature_type_e &type, const uint32_t k, uint32_t **index);
+  int run(const uint8_t *feature, const feature_type_e &type, const uint32_t k, uint32_t *indices,
+          float *scores, uint32_t *size, float threshold);
 
  private:
-  int innerProductRegister(const cvai_service_feature_array_t &feature_array);
-  int innerProductRun(const uint8_t *feature, const feature_type_e &type, const uint32_t k,
-                      uint32_t *index);
+  int cosSimilarityRegister(const cvai_service_feature_array_t &feature_array);
+  int cosSimilarityRun(const uint8_t *feature, const feature_type_e &type, const uint32_t k,
+                       uint32_t *index, float *scores, float threshold, uint32_t *size);
   CVI_RT_HANDLE m_rt_handle;
   cvk_context_t *m_cvk_ctx = NULL;
 
@@ -58,6 +59,7 @@ class FeatureMatching {
 
   cvai_service_feature_array_tpu_ext_t m_tpu_ipfeature;
   cvai_service_feature_array_ext_t m_cpu_ipfeature;
+  uint32_t m_data_num;
 };
 }  // namespace service
 }  // namespace cviai

@@ -13,10 +13,10 @@
  *  @ingroup core_cviaiservice
  *  @brief Supported feature matching method in Service
  *
- * @var cvai_service_feature_matching_e::INNER_PRODUCT
+ * @var cvai_service_feature_matching_e::COS_SIMILARITY
  * Do feature matching using inner product method.
  */
-typedef enum { INNER_PRODUCT } cvai_service_feature_matching_e;
+typedef enum { COS_SIMILARITY } cvai_service_feature_matching_e;
 
 /** @struct cvai_service_feature_array_t
  *  @ingroup core_cviaiservice

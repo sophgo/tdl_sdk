@@ -53,24 +53,58 @@ CVI_S32 CVI_AI_Service_RegisterFeatureArray(cviai_service_handle_t handle,
   return ctx->m_fm->registerData(featureArray, method);
 }
 
+CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
+                                           const cvai_feature_t *feature_rhs,
+                                           const cvai_feature_t *feature_lhs, float *score) {
+  if (feature_lhs->type != feature_rhs->type) {
+    LOGE("feature type not matched! rhs=%d, lhs=%d\n", feature_rhs->type, feature_lhs->type);
+    return CVI_FAILURE;
+  }
+
+  if (feature_lhs->size != feature_rhs->size) {
+    LOGE("feature size not matched!, rhs: %u, lhs: %u\n", feature_rhs->size, feature_lhs->size);
+    return CVI_FAILURE;
+  }
+
+  if (feature_rhs->type == TYPE_INT8) {
+    int32_t value1 = 0, value2 = 0, value3 = 0;
+    for (uint32_t i = 0; i < feature_rhs->size; i++) {
+      value1 += (short)feature_rhs->ptr[i] * feature_rhs->ptr[i];
+      value2 += (short)feature_lhs->ptr[i] * feature_lhs->ptr[i];
+      value3 += (short)feature_rhs->ptr[i] * feature_lhs->ptr[i];
+    }
+
+    *score = (float)value3 / (sqrt((double)value1) * sqrt((double)value2));
+  } else {
+    LOGE("Unsupported feature type: %d\n", feature_rhs->type);
+    return CVI_FAILURE;
+  }
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
-                                        const cvai_face_info_t *face_info, const uint32_t k,
-                                        uint32_t **index) {
+                                        const cvai_face_info_t *face_info, const uint32_t topk,
+                                        float threshold, uint32_t *indices, float *sims,
+                                        uint32_t *size) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  return ctx->m_fm->run((uint8_t *)face_info->feature.ptr, face_info->feature.type, k, index);
+  return ctx->m_fm->run((uint8_t *)face_info->feature.ptr, face_info->feature.type, topk, indices,
+                        sims, size, threshold);
 }
 
 CVI_S32 CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
-                                          const cvai_object_info_t *object_info, const uint32_t k,
-                                          uint32_t **index) {
+                                          const cvai_object_info_t *object_info,
+                                          const uint32_t topk, float threshold, uint32_t *indices,
+                                          float *sims, uint32_t *size) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  return ctx->m_fm->run((uint8_t *)object_info->feature.ptr, object_info->feature.type, k, index);
+  return ctx->m_fm->run((uint8_t *)object_info->feature.ptr, object_info->feature.type, topk,
+                        indices, sims, size, threshold);
 }
 
-CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const uint8_t *feature,
-                                   const feature_type_e type, const uint32_t k, uint32_t **index) {
+CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const void *feature,
+                                   const feature_type_e type, const uint32_t topk, float threshold,
+                                   uint32_t *indices, float *scores, uint32_t *size) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  return ctx->m_fm->run(feature, type, k, index);
+  return ctx->m_fm->run((uint8_t *)feature, type, topk, indices, scores, size, threshold);
 }
 
 CVI_S32 CVI_AI_Service_FaceDigitalZoom(cviai_service_handle_t handle,

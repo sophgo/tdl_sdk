@@ -74,8 +74,8 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
 )
 
-buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
-buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cviai_core  ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_quality INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME reg_lfw INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_wider_face INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
@@ -91,7 +91,7 @@ buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai_core cviai_eval
 buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_blas INC ${REG_INCLUDES} DEPS cviai_core DEPS cviai_core cviai_service)
+buildninstall(NAME reg_feature_matching INC ${REG_INCLUDES} DEPS cviai_core DEPS cviai_core cviai_service)
 buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core)
