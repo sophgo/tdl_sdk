@@ -22,10 +22,6 @@ FreeFeatureArrayExt(cvai_service_feature_array_ext_t *feature_array_ext) {
     delete feature_array_ext->feature_array_buffer;
     feature_array_ext->feature_array_buffer = nullptr;
   }
-  if (feature_array_ext->feature_array.ptr != NULL) {
-    free(feature_array_ext->feature_array.ptr);
-    feature_array_ext->feature_array.ptr = NULL;
-  }
 }
 
 inline void __attribute__((always_inline))
@@ -211,7 +207,6 @@ int FeatureMatching::cosSimilarityRun(const uint8_t *feature, const feature_type
   int ret = CVI_SUCCESS;
 
   *size = topk == 0 ? m_data_num : std::min<uint32_t>(m_data_num, topk);
-  ;
 
   float *scores = new float[*size];
   uint32_t *indices = new uint32_t[*size];
