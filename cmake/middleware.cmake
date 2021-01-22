@@ -11,7 +11,12 @@ else()
   message(FATAL_ERROR "${MIDDLEWARE_SDK_ROOT} is not a valid folder.")
 endif()
 
+if("${CVI_PLATFORM}" STREQUAL "cv183x")
+  set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv183x/)
+endif()
+
 set(MIDDLEWARE_INCLUDES
+    ${ISP_HEADER_PATH}
     ${MIDDLEWARE_SDK_ROOT}/include/
 )
 

@@ -13,8 +13,15 @@ endif()
 if("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
   message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is not set. Aborting.")
 endif()
-if(NOT DEFINED TOOLCHAIN_ROOT_DIR)
-  message(FATAL_ERROR "TOOLCHAIN_ROOT_DIR is not set. Aborting.")
+
+if("${CVI_PLATFORM}" STREQUAL "")
+  set(CVI_PLATFORM "cv183x")
+  message(AUTHOR_WARNING "Platform not provided, set to ${CVI_PLATFORM}.")
+endif()
+
+if("${CVI_PLATFORM}" STREQUAL "cv183x")
+else()
+  message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
@@ -48,8 +55,8 @@ set(SYSTRACE_FALLBACK ON)
 add_definitions(-DSYSTRACE_FALLBACK)
 
 # Get current commit
-execute_process(COMMAND git show --oneline -s OUTPUT_VARIABLE CURRENT_COMMIT)
-execute_process(COMMAND git describe OUTPUT_VARIABLE LATEST_TAG)
+execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE CURRENT_COMMIT)
+execute_process(COMMAND git describe WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE LATEST_TAG)
 if ("${LATEST_TAG}" STREQUAL "")
   message(WARNING "Cannot fetch latest tag from git.")
   set(LATEST_TAG "v0.0.0")
