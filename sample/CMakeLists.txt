@@ -48,7 +48,9 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_jpeg.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so)
+    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so)
 
 set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so

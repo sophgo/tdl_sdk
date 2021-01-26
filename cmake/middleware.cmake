@@ -28,7 +28,9 @@ set(MIDDLEWARE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libnanomsg.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so)
+                    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+                    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+                    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so)
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
   install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/middleware)
