@@ -17,7 +17,8 @@ class LicensePlateDetection final : public Core {
                 cvai_object_t *license_plate_meta);
 
  private:
-  bool reconstruct(float *t_prob, float *t_trans, CornerPts &c_pts, float threshold_prob = 0.9);
+  bool reconstruct(float *t_prob, float *t_trans, CornerPts &c_pts, float &ret_prob,
+                   float threshold_prob = 0.9);
   void prepareInputTensor(cv::Mat &input_mat);
 
   VB_BLK m_gdc_blk = (VB_BLK)-1;

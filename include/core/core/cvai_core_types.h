@@ -91,6 +91,20 @@ typedef struct {
   uint32_t size;
 } cvai_pts_t;
 
+/** @struct cvai_4_pts_t
+ * @ingroup core_cviaicore
+ * @brief A structure to describe 4 2d points.
+ *
+ * @var cvai_pts_t::x
+ * The raw pointer of the x coordinate.
+ * @var cvai_pts_t::y
+ * The raw pointer of the x coordinate.
+ */
+typedef struct {
+  float x[4];
+  float y[4];
+} cvai_4_pts_t;
+
 /** @enum cvai_trk_state_type_t
  * @ingroup core_cviaicore
  * @brief Enum describing the tracking state.

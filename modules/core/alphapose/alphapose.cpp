@@ -226,7 +226,9 @@ int AlphaPose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *objects) {
 
   // TODO - Use cvi_pose_list_meta_t directly in simplePostprocess
   for (uint32_t i = 0; i < pose_list.size(); ++i) {
-    objects->info[i].pose_17 = pose_list[i];
+    objects->info[i].pedestrian_properity =
+        (cvai_pedestrian_meta *)malloc(sizeof(cvai_pedestrian_meta));
+    objects->info[i].pedestrian_properity->pose_17 = pose_list[i];
   }
 
   CVI_SYS_Munmap((void *)srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Length[0]);

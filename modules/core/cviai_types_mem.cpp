@@ -54,7 +54,17 @@ void CVI_AI_FreeCpp(cvai_face_t *face) {
 
 void CVI_AI_FreeCpp(cvai_object_info_t *obj_info) {
   CVI_AI_FreeCpp(&obj_info->feature);
+  // TODO: remove old field
   CVI_AI_FreeCpp(&obj_info->bpts);
+  if (obj_info->vehicle_properity) {
+    free(obj_info->vehicle_properity);
+    obj_info->vehicle_properity = NULL;
+  }
+
+  if (obj_info->pedestrian_properity) {
+    free(obj_info->pedestrian_properity);
+    obj_info->pedestrian_properity = NULL;
+  }
 }
 
 void CVI_AI_FreeCpp(cvai_object_t *obj) {

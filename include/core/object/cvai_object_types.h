@@ -32,6 +32,17 @@ typedef struct {
   float score[17];
 } cvai_pose17_meta_t;
 
+typedef struct {
+  cvai_4_pts_t license_pts;
+  cvai_bbox_t license_bbox;
+  char license_char[255];
+} cvai_vehicle_meta;
+
+typedef struct {
+  cvai_pose17_meta_t pose_17;
+  bool fall_score;
+} cvai_pedestrian_meta;
+
 /** @struct cvai_object_info_t
  * @ingroup core_cviaicore
  * @brief A structure to describe a found object.
@@ -43,7 +54,7 @@ typedef struct {
  * @var cvai_object_info_t::bbox
  * The bounding box of an object.
  * @var cvai_object_info_t::bpts
- * The bounding points of an object.
+ * The bounding points of an object. (Deprecated)
  * @var cvai_object_info_t::feature
  * The feature describing an object.
  * @var cvai_object_info_t::classes
@@ -58,8 +69,9 @@ typedef struct {
   cvai_pts_t bpts;
   cvai_feature_t feature;
   int classes;
-  cvai_pose17_meta_t pose_17;
-  bool fall_score;
+
+  cvai_vehicle_meta *vehicle_properity;
+  cvai_pedestrian_meta *pedestrian_properity;
 } cvai_object_info_t;
 
 /** @struct cvai_object_t

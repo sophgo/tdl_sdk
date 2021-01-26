@@ -91,12 +91,9 @@ int main(int argc, char *argv[]) {
       CVI_AI_AlphaPose(ai_handle, &fdFrame, &obj);
 
       CVI_AI_Fall(ai_handle, &obj);
-      if (obj.size > 0) {
-        printf("; fall score %d ", obj.info[0].fall_score);
-        // printf("\nread image : %s, fall score %d.\n", image_path, obj.info[0].fall_score);
+      if (obj.size > 0 && obj.info[0].pedestrian_properity != NULL) {
+        printf("; fall score %d ", obj.info[0].pedestrian_properity->fall_score);
       }
-
-      // CVI_AI_Service_ObjectDrawPose(&obj, &fdFrame);
 
       CVI_VB_ReleaseBlock(blk1);
       CVI_AI_Free(&obj);

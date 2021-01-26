@@ -248,7 +248,9 @@ int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
     std::vector<cv::Point2f> kp_preds(17);
     std::vector<float> kp_scores(17);
 
-    cvai_pose17_meta_t pose = obj->info[i].pose_17;
+    if (!obj->info[i].pedestrian_properity) continue;
+
+    cvai_pose17_meta_t pose = obj->info[i].pedestrian_properity->pose_17;
     for (int i = 0; i < 17; ++i) {
       kp_preds[i].x = pose.x[i];
       kp_preds[i].y = pose.y[i];

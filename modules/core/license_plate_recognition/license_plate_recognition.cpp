@@ -36,14 +36,15 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
   cv::Mat cv_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
                    frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   for (size_t n = 0; n < license_plate_meta->size; n++) {
-    if (license_plate_meta->info[n].bpts.size == 0) {
+    cvai_vehicle_meta *v_meta = license_plate_meta->info[n].vehicle_properity;
+    if (v_meta == NULL) {
       continue;
     }
     cv::Point2f src_points[4] = {
-        cv::Point2f(license_plate_meta->info[n].bpts.x[0], license_plate_meta->info[n].bpts.y[0]),
-        cv::Point2f(license_plate_meta->info[n].bpts.x[1], license_plate_meta->info[n].bpts.y[1]),
-        cv::Point2f(license_plate_meta->info[n].bpts.x[2], license_plate_meta->info[n].bpts.y[2]),
-        cv::Point2f(license_plate_meta->info[n].bpts.x[3], license_plate_meta->info[n].bpts.y[3]),
+        cv::Point2f(v_meta->license_pts.x[0], v_meta->license_pts.y[0]),
+        cv::Point2f(v_meta->license_pts.x[1], v_meta->license_pts.y[1]),
+        cv::Point2f(v_meta->license_pts.x[2], v_meta->license_pts.y[2]),
+        cv::Point2f(v_meta->license_pts.x[3], v_meta->license_pts.y[3]),
     };
     cv::Point2f dst_points[4] = {
         cv::Point2f(0, 0),
@@ -74,8 +75,11 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
 
     std::string id_number = greedy_decode(out_code);
 
+    // TODO: For backward compatibility, remove old field
     strncpy(license_plate_meta->info[n].name, id_number.c_str(),
             sizeof(license_plate_meta->info[n].name));
+
+    strncpy(v_meta->license_char, id_number.c_str(), sizeof(v_meta->license_char));
   }
   return CVI_SUCCESS;
 }

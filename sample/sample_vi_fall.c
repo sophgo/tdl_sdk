@@ -121,8 +121,8 @@ int main(int argc, char *argv[]) {
     CVI_AI_AlphaPose(ai_handle, &fdFrame, &obj);
 
     CVI_AI_Fall(ai_handle, &obj);
-    if (obj.size > 0) {
-      printf("; fall score %d ", obj.info[0].fall_score);
+    if (obj.size > 0 && obj.info[0].pedestrian_properity != NULL) {
+      printf("; fall score %d ", obj.info[0].pedestrian_properity->fall_score);
     }
 
     s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &fdFrame);
@@ -138,7 +138,9 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      if (obj.info[0].fall_score == 1) {
+
+      if (obj.info[0].pedestrian_properity != NULL &&
+          obj.info[0].pedestrian_properity->fall_score == 1) {
         strcpy(obj.info[0].name, "falling");
       } else {
         strcpy(obj.info[0].name, "");

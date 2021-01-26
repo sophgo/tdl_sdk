@@ -119,22 +119,17 @@ int main(int argc, char *argv[]) {
     printf("Find %u vehicles.\n", vehicle_obj.size);
 
     /* LP Detection */
-    license_plate_obj.size = vehicle_obj.size;
-    license_plate_obj.info =
-        (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * vehicle_obj.size);
-    memset(license_plate_obj.info, 0, sizeof(cvai_object_info_t) * vehicle_obj.size);
-
     printf("CVI_AI_LicensePlateDetection ... start\n");
-    CVI_AI_LicensePlateDetection(ai_handle, &frame, &vehicle_obj, &license_plate_obj);
+    CVI_AI_LicensePlateDetection(ai_handle, &frame, &vehicle_obj, NULL);
 
     /* LP Recognition */
     printf("CVI_AI_LicensePlateRecognition ... start\n");
-    CVI_AI_LicensePlateRecognition(ai_handle, &frame, &license_plate_obj);
+    CVI_AI_LicensePlateRecognition(ai_handle, &frame, &vehicle_obj);
 
     int counter = 0;
-    for (size_t i = 0; i < license_plate_obj.size; i++) {
-      if (license_plate_obj.info[i].bpts.size > 0) {
-        printf("Vec[%zu] ID number: %s\n", i, license_plate_obj.info[i].name);
+    for (size_t i = 0; i < vehicle_obj.size; i++) {
+      if (vehicle_obj.info[i].vehicle_properity) {
+        printf("Vec[%zu] ID number: %s\n", i, vehicle_obj.info[i].vehicle_properity->license_char);
         counter += 1;
       } else {
         printf("Vec[%zu] license plate not found.\n", i);
@@ -142,17 +137,16 @@ int main(int argc, char *argv[]) {
     }
 
     printf("counter = %d\n", counter);
-    fprintf(outFile, "%u,%u\n", n, license_plate_obj.size);
-    for (size_t i = 0; i < license_plate_obj.size; i++) {
-      if (license_plate_obj.info[i].bpts.size > 0) {
+    fprintf(outFile, "%u,%u\n", n, vehicle_obj.size);
+    for (size_t i = 0; i < vehicle_obj.size; i++) {
+      if (vehicle_obj.info[i].vehicle_properity) {
+        cvai_4_pts_t *license_pts = &vehicle_obj.info[i].vehicle_properity->license_pts;
+        const char *license_char = vehicle_obj.info[i].vehicle_properity->license_char;
         fprintf(outFile, "%s,%f,%f,%f,%f,%s,%f,%f,%f,%f,%f,%f,%f,%f\n", vehicle_obj.info[i].name,
                 vehicle_obj.info[i].bbox.x1, vehicle_obj.info[i].bbox.y1,
-                vehicle_obj.info[i].bbox.x2, vehicle_obj.info[i].bbox.y2,
-                license_plate_obj.info[i].name, license_plate_obj.info[i].bpts.x[0],
-                license_plate_obj.info[i].bpts.y[0], license_plate_obj.info[i].bpts.x[1],
-                license_plate_obj.info[i].bpts.y[1], license_plate_obj.info[i].bpts.x[2],
-                license_plate_obj.info[i].bpts.y[2], license_plate_obj.info[i].bpts.x[3],
-                license_plate_obj.info[i].bpts.y[3]);
+                vehicle_obj.info[i].bbox.x2, vehicle_obj.info[i].bbox.y2, license_char,
+                license_pts->x[0], license_pts->y[0], license_pts->x[1], license_pts->y[1],
+                license_pts->x[2], license_pts->y[2], license_pts->x[3], license_pts->y[3]);
       } else {
         fprintf(outFile, "%s,%f,%f,%f,%f,NULL,,,,,,,,\n", vehicle_obj.info[i].name,
                 vehicle_obj.info[i].bbox.x1, vehicle_obj.info[i].bbox.y1,
@@ -160,8 +154,8 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    free(filename);
     CVI_AI_Free(&vehicle_obj);
-    CVI_AI_Free(&license_plate_obj);
     CVI_VB_ReleaseBlock(blk);
   }
 

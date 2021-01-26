@@ -97,20 +97,42 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
     // TODO:
     //   return more corner points, use std::vector<CornerPts>
     CornerPts corner_pts;
-    bool detection_result = reconstruct(out_p, out_t, corner_pts, 0.9);
+    float score;
+    bool detection_result = reconstruct(out_p, out_t, corner_pts, score, 0.9);
 
     // TODO:
     //   add more points to bpts for false positive
     if (detection_result) {
-      license_plate_meta->info[n].bpts.size = 4;
-      license_plate_meta->info[n].bpts.x = (float *)malloc(sizeof(float) * 4);
-      license_plate_meta->info[n].bpts.y = (float *)malloc(sizeof(float) * 4);
+      // TODO: For backward compatibility, remove old field
+      if (license_plate_meta) {
+        license_plate_meta->info[n].bpts.size = 4;
+        license_plate_meta->info[n].bpts.x = (float *)malloc(sizeof(float) * 4);
+        license_plate_meta->info[n].bpts.y = (float *)malloc(sizeof(float) * 4);
+        for (int m = 0; m < 4; m++) {
+          license_plate_meta->info[n].bpts.x[m] =
+              corner_pts(0, m) / rs_scale[n] + vehicle_meta->info[n].bbox.x1;
+          license_plate_meta->info[n].bpts.y[m] =
+              corner_pts(1, m) / rs_scale[n] + vehicle_meta->info[n].bbox.y1;
+        }
+      }
+      /////////////////////////////////
+      vehicle_meta->info[n].vehicle_properity =
+          (cvai_vehicle_meta *)malloc(sizeof(cvai_vehicle_meta));
       for (int m = 0; m < 4; m++) {
-        license_plate_meta->info[n].bpts.x[m] =
+        vehicle_meta->info[n].vehicle_properity->license_pts.x[m] =
             corner_pts(0, m) / rs_scale[n] + vehicle_meta->info[n].bbox.x1;
-        license_plate_meta->info[n].bpts.y[m] =
+        vehicle_meta->info[n].vehicle_properity->license_pts.y[m] =
             corner_pts(1, m) / rs_scale[n] + vehicle_meta->info[n].bbox.y1;
       }
+
+      cvai_bbox_t &bbox = vehicle_meta->info[n].vehicle_properity->license_bbox;
+      cvai_4_pts_t &pts = vehicle_meta->info[n].vehicle_properity->license_pts;
+
+      bbox.x1 = std::min({pts.x[0], pts.x[1], pts.x[2], pts.x[3]});
+      bbox.x2 = std::max({pts.x[0], pts.x[1], pts.x[2], pts.x[3]});
+      bbox.y1 = std::min({pts.y[0], pts.y[1], pts.y[2], pts.y[3]});
+      bbox.y2 = std::max({pts.y[0], pts.y[1], pts.y[2], pts.y[3]});
+      bbox.score = score;
     }
   }
 
@@ -138,7 +160,7 @@ void LicensePlateDetection::prepareInputTensor(cv::Mat &input_mat) {
 }
 
 bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts &c_pts,
-                                        float threshold_prob) {
+                                        float &ret_prob, float threshold_prob) {
 #if DEBUG_LICENSE_PLATE_DETECTION
   printf("[%s:%d] reconstruct\n", __FILE__, __LINE__);
 #endif
@@ -180,7 +202,7 @@ bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts
       // TODO:
       //   [fix]  affine_pts = affine_pts.colwise() / tensor_wh;
 
-      lp_cands.push_back(LicensePlateObjBBox(0, affine_pts, prob_pos));
+      lp_cands.push_back(LicensePlateObjBBox(0, affine_pts, softmax));
     }
   }
   std::vector<LicensePlateObjBBox> selected_LP;
@@ -190,6 +212,7 @@ bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts
     for (auto it = selected_LP.begin(); it != selected_LP.end(); it++) {
       Eigen::Matrix<float, 2, 4> corner_pts = it->getCornerPts();
       c_pts = corner_pts;
+      ret_prob = it->prob();
       return true;
 #if DEBUG_LICENSE_PLATE_DETECTION
       cv::Point2f src_points[4] = {

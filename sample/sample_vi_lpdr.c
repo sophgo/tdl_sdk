@@ -121,21 +121,16 @@ int main(int argc, char *argv[]) {
     printf("Find %u vehicles.\n", vehicle_obj.size);
 
     /* LP Detection */
-    license_plate_obj.size = vehicle_obj.size;
-    license_plate_obj.info =
-        (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * vehicle_obj.size);
-    memset(license_plate_obj.info, 0, sizeof(cvai_object_info_t) * vehicle_obj.size);
-
     printf("CVI_AI_LicensePlateDetection ... start\n");
-    CVI_AI_LicensePlateDetection(ai_handle, &stfdFrame, &vehicle_obj, &license_plate_obj);
+    CVI_AI_LicensePlateDetection(ai_handle, &stfdFrame, &vehicle_obj, NULL);
 
     /* LP Recognition */
     printf("CVI_AI_LicensePlateRecognition ... start\n");
-    CVI_AI_LicensePlateRecognition(ai_handle, &stfdFrame, &license_plate_obj);
+    CVI_AI_LicensePlateRecognition(ai_handle, &stfdFrame, &vehicle_obj);
 
-    for (size_t i = 0; i < license_plate_obj.size; i++) {
-      if (license_plate_obj.info[i].bpts.size > 0) {
-        printf("Vec[%zu] ID number: %s\n", i, license_plate_obj.info[i].name);
+    for (size_t i = 0; i < vehicle_obj.size; i++) {
+      if (vehicle_obj.info[i].vehicle_properity) {
+        printf("Vec[%zu] ID number: %s\n", i, vehicle_obj.info[i].vehicle_properity->license_char);
       } else {
         printf("Vec[%zu] license plate not found.\n", i);
       }
@@ -168,7 +163,6 @@ int main(int argc, char *argv[]) {
     }
 
     CVI_AI_Free(&vehicle_obj);
-    CVI_AI_Free(&license_plate_obj);
   }
 
   CVI_AI_DestroyHandle(ai_handle);
