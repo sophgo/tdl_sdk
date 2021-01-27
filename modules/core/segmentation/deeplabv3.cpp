@@ -51,7 +51,8 @@ int Deeplabv3::onModelOpened() {
   return CVI_SUCCESS;
 }
 
-int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_frame) {
+int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_frame,
+                         cvai_class_filter_t *filter) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
     return CVI_FAILURE;
@@ -60,7 +61,7 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
   run(frames);
 
-  outputParser();
+  outputParser(filter);
 
   VPSS_CHN_ATTR_S vpssChnAttr;
   vpssChnAttr.u32Width = frame->stVFrame.u32Width;
@@ -85,17 +86,30 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
   return CVI_SUCCESS;
 }
 
-int Deeplabv3::outputParser() {
+inline bool is_preserved_class(cvai_class_filter_t *filter, int32_t c) {
+  if (c == 0) return true;  // "unlabled class" should be preserved
+
+  if (filter->num_preserved_classes > 0) {
+    for (uint32_t j = 0; j < filter->num_preserved_classes; j++) {
+      if (filter->preserved_class_ids[j] == (uint32_t)c) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+int Deeplabv3::outputParser(cvai_class_filter_t *filter) {
   float *out = getOutputRawPtr<float>(NAME_SCORE);
 
   CVI_SHAPE output_shape = getOutputShape(NAME_SCORE);
-  ;
+
   int size = output_shape.dim[2] * output_shape.dim[3];
   std::vector<float> max_prob(size, 0);
 
   for (int32_t c = 0; c < output_shape.dim[1]; ++c) {
     int size_offset = c * size;
-
     for (int32_t h = 0; h < output_shape.dim[2]; ++h) {
       int width_offset = h * output_shape.dim[3];
       int frame_offset = h * m_label_frame.stVFrame.u32Stride[0];
@@ -104,6 +118,18 @@ int Deeplabv3::outputParser() {
         if (out[size_offset + width_offset + w] > max_prob[width_offset + w]) {
           m_label_frame.stVFrame.pu8VirAddr[0][frame_offset + w] = (int8_t)c;
           max_prob[width_offset + w] = out[size_offset + width_offset + w];
+        }
+      }
+    }
+  }
+
+  if (filter) {
+    for (int32_t h = 0; h < output_shape.dim[2]; ++h) {
+      int frame_offset = h * m_label_frame.stVFrame.u32Stride[0];
+
+      for (int32_t w = 0; w < output_shape.dim[3]; ++w) {
+        if (!is_preserved_class(filter, m_label_frame.stVFrame.pu8VirAddr[0][frame_offset + w])) {
+          m_label_frame.stVFrame.pu8VirAddr[0][frame_offset + w] = 0;
         }
       }
     }

@@ -513,7 +513,7 @@ CVI_S32 CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S 
 // Segmentation
 
 CVI_S32 CVI_AI_DeeplabV3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                         VIDEO_FRAME_INFO_S *out_frame) {
+                         VIDEO_FRAME_INFO_S *out_frame, cvai_class_filter_t *filter) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeeplabV3");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Deeplabv3 *deeplab = getInferenceInstance<Deeplabv3>(CVI_AI_SUPPORTED_MODEL_DEEPLABV3, ctx);
@@ -521,7 +521,7 @@ CVI_S32 CVI_AI_DeeplabV3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
     LOGE("No instance found for Deeplabv3.\n");
     return CVI_FAILURE;
   }
-  return deeplab->inference(frame, out_frame);
+  return deeplab->inference(frame, out_frame, filter);
 }
 
 // Tracker

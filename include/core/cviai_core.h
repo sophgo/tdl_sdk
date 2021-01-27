@@ -662,10 +662,11 @@ DLL_EXPORT CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *o
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param out_frame Output frame which each pixel represents class label.
+ * @param filter Class id filter. Set NULL to ignore.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_DeeplabV3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                    VIDEO_FRAME_INFO_S *out_frame);
+                                    VIDEO_FRAME_INFO_S *out_frame, cvai_class_filter_t *filter);
 /**@}*/
 
 /**

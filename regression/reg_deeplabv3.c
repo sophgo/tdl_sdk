@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     }
 
     VIDEO_FRAME_INFO_S label_frame;
-    CVI_AI_DeeplabV3(ai_handle, &rgb_frame, &label_frame);
+    CVI_AI_DeeplabV3(ai_handle, &rgb_frame, &label_frame, NULL);
 
     CVI_AI_Eval_CityscapesWriteResult(eval_handle, &label_frame, i);
 

@@ -128,4 +128,18 @@ typedef struct {
   cvai_object_info_t *info;
 } cvai_object_t;
 
+/** @struct cvai_class_filter_t
+ *  @ingroup core_cviaicore
+ *  @brief Preserve class id of model output and filter out the others. This struct can be used in
+ *  Semantic Segmentation.
+ *  @var cvai_class_filter_t::preserved_class_ids
+ *  The class IDs to be preserved
+ *  @var cvai_class_filter_t::num_preserved_classes
+ *  Number of classes to be preserved
+ */
+typedef struct {
+  uint32_t *preserved_class_ids;
+  uint32_t num_preserved_classes;
+} cvai_class_filter_t;
+
 #endif
