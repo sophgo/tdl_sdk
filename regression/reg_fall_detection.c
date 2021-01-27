@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 
       CVI_AI_Fall(ai_handle, &obj);
       if (obj.size > 0 && obj.info[0].pedestrian_properity != NULL) {
-        printf("; fall score %d ", obj.info[0].pedestrian_properity->fall_score);
+        printf("; fall score %d ", obj.info[0].pedestrian_properity->fall);
       }
 
       CVI_VB_ReleaseBlock(blk1);

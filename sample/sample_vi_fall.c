@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_Fall(ai_handle, &obj);
     if (obj.size > 0 && obj.info[0].pedestrian_properity != NULL) {
-      printf("; fall score %d ", obj.info[0].pedestrian_properity->fall_score);
+      printf("; fall score %d ", obj.info[0].pedestrian_properity->fall);
     }
 
     s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &fdFrame);
@@ -139,8 +139,7 @@ int main(int argc, char *argv[]) {
         break;
       }
 
-      if (obj.info[0].pedestrian_properity != NULL &&
-          obj.info[0].pedestrian_properity->fall_score == 1) {
+      if (obj.info[0].pedestrian_properity && obj.info[0].pedestrian_properity->fall) {
         strcpy(obj.info[0].name, "falling");
       } else {
         strcpy(obj.info[0].name, "");

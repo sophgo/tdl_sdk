@@ -102,7 +102,7 @@ int FallMD::detect(cvai_object_t *obj) {
       // initialize fall_score from history fall status
       if (obj->info[i].pedestrian_properity == NULL) continue;
 
-      obj->info[i].pedestrian_properity->fall_score = this->isFall;
+      obj->info[i].pedestrian_properity->fall = this->isFall;
       std::vector<cv::Point2f> kp_preds(17);
       cvai_pose17_meta_t pose = obj->info[i].pedestrian_properity->pose_17;
       for (int kpi = 0; kpi < 17; ++kpi) {
@@ -189,13 +189,13 @@ int FallMD::detect(cvai_object_t *obj) {
               0.5 * sqrt(pow(history_bbox_x2 - history_bbox_x1, 2) +
                          pow(history_bbox_y2 - history_bbox_y1, 2))) {
             this->isFall = true;
-            obj->info[i].pedestrian_properity->fall_score = this->isFall;
+            obj->info[i].pedestrian_properity->fall = this->isFall;
           } else {
             // keep original fall status
           }
         } else {
           this->isFall = false;
-          obj->info[i].pedestrian_properity->fall_score = this->isFall;
+          obj->info[i].pedestrian_properity->fall = this->isFall;
         }
       } else {
         std::cout << "History initialization, don't make fall prediction\n" << std::endl;

@@ -32,15 +32,38 @@ typedef struct {
   float score[17];
 } cvai_pose17_meta_t;
 
+/** @struct cvai_vehicle_meta
+ * @ingroup core_cviaicore
+ * @brief A structure to describe a vehicle properity.
+ * @var cvai_vehicle_meta::license_pts
+ * The license plate 4 corner points.
+ * @var cvai_vehicle_meta::license_bbox
+ * The license bounding box.
+ * @var cvai_vehicle_meta::license_char
+ * The license characters
+ * @see cvai_4_pts_t
+ * @see cvai_bbox_t
+ * @see cvai_object_info_t
+ */
 typedef struct {
   cvai_4_pts_t license_pts;
   cvai_bbox_t license_bbox;
   char license_char[255];
 } cvai_vehicle_meta;
 
+/** @struct cvai_pedestrian_meta
+ * @ingroup core_cviaicore
+ * @brief A structure to describe a pedestrian properity.
+ * @var cvai_pedestrian_meta::pose_17
+ * The Person 17 keypoints detected by pose estimation models
+ * @var cvai_pedestrian_meta::fall
+ * Whether people is fall or not
+ * @see cvai_pose17_meta_t
+ * @see cvai_object_info_t
+ */
 typedef struct {
   cvai_pose17_meta_t pose_17;
-  bool fall_score;
+  bool fall;
 } cvai_pedestrian_meta;
 
 /** @struct cvai_object_info_t
@@ -48,7 +71,7 @@ typedef struct {
  * @brief A structure to describe a found object.
  *
  * @var cvai_object_info_t::name
- * A human readable name.
+ * A human readable class name.
  * @var cvai_object_info_t::unique_id
  * The unique id of an object.
  * @var cvai_object_info_t::bbox
@@ -59,8 +82,16 @@ typedef struct {
  * The feature describing an object.
  * @var cvai_object_info_t::classes
  * The class label of an object.
- *
+ * @var cvai_object_info_t::vehicle_properity
+ * The vehicle properity
+ * @var cvai_object_info_t::pedestrian_properity
+ * The pedestrian properity
  * @see cvai_object_t
+ * @see cvai_pedestrian_meta
+ * @see cvai_vehicle_meta
+ * @see cvai_bbox_t
+ * @see cvai_pts_t
+ * @see cvai_feature_t
  */
 typedef struct {
   char name[128];
