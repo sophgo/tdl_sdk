@@ -162,9 +162,8 @@ CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta, VIDEO_FRAME_INF
                                       const bool drawText) {
   return cviai::service::DrawMeta(meta, frame, drawText);
 }
-CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame,
-                                       const bool drawText) {
-  return cviai::service::WriteMeta(name, x, y, frame, drawText);
+CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame) {
+  return cviai::service::WriteMeta(name, x, y, frame);
 }
 CVI_S32 CVI_AI_Service_SetIntersect(cviai_service_handle_t handle, const cvai_pts_t *pts) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
@@ -201,4 +200,7 @@ CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp) {
 }
 CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame) {
   return cviai::service::DrawPose17(meta, frame);
+}
+CVI_S32 CVI_AI_Service_FaceDrawLandmarks(cvai_pts_t *landmarks, VIDEO_FRAME_INFO_S *frame) {
+  return cviai::service::DrawLandmarks(landmarks, frame);
 }

@@ -11,6 +11,7 @@
 
 #define OPENEYERECOGNIZE_SCALE (1.0 / (255.0))
 #define NAME_SCORE "prob_Sigmoid_dequant"
+#define INPUT_SIZE 64
 
 namespace cviai {
 
@@ -32,18 +33,19 @@ int YawnClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) 
   for (uint32_t i = 0; i < 1; i++) {
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
+
     cv::Mat warp_image(cv::Size(112, 112), CV_8UC3);
     face_align(image, warp_image, face_info);
     cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2GRAY);
 
-    cv::resize(warp_image, warp_image, cv::Size(64, 64), 0, 0, cv::INTER_CUBIC);
+    cv::resize(warp_image, warp_image, cv::Size(INPUT_SIZE, INPUT_SIZE), 0, 0, cv::INTER_CUBIC);
     prepareInputTensor(warp_image);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     run(frames);
 
     float *score = getOutputRawPtr<float>(NAME_SCORE);
-    meta->info[i].yawn_score = score[0];
+    meta->info[i].dms->yawn_score = score[0];
     CVI_AI_FreeCpp(&face_info);
   }
 

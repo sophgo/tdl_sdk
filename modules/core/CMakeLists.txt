@@ -19,6 +19,10 @@ add_subdirectory(license_plate_recognition)
 add_subdirectory(license_plate_detection)
 add_subdirectory(alphapose)
 add_subdirectory(fall_detection)
+add_subdirectory(eye_classification)
+add_subdirectory(yawn_classification)
+add_subdirectory(face_landmarker)
+
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils)
@@ -44,6 +48,9 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
 	          $<TARGET_OBJECTS:license_plate_detection>
 	          $<TARGET_OBJECTS:alphapose>
               $<TARGET_OBJECTS:fall_detection>
+              $<TARGET_OBJECTS:eye_classification>
+              $<TARGET_OBJECTS:yawn_classification>
+              $<TARGET_OBJECTS:face_landmarker>
               cviai_types_mem.cpp
               cviai_rescale_bbox.cpp
               cviai_media.cpp

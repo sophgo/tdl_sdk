@@ -11,6 +11,8 @@
 
 #define EYECLASSIFICATION_SCALE (1.0 / (255.0))
 #define NAME_SCORE "prob_Sigmoid_dequant"
+#define MINIMUM_SIZE 10
+#define INPUT_SIZE 32
 
 namespace cviai {
 
@@ -52,32 +54,32 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
                    int(std::min(face_info.pts.y[1] + q_w, face_info.bbox.y2)) -
                        int(std::max(face_info.pts.y[1] - q_w, face_info.bbox.y1)));
 
-    if (r_roi.width < 10 || r_roi.height < 10) {  // small images filter
-      meta->info[i].r_eye_score = 0.0;
+    if (r_roi.width < MINIMUM_SIZE || r_roi.height < MINIMUM_SIZE) {  // small images filter
+      meta->info[i].dms->reye_score = 0.0;
     } else {
       cv::Mat r_Image = image(r_roi);
-      cv::resize(r_Image, r_Image, cv::Size(32, 32));
+      cv::resize(r_Image, r_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
       prepareInputTensor(r_Image);
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
       run(frames);
 
       float *score = getOutputRawPtr<float>(NAME_SCORE);
-      meta->info[i].r_eye_score = score[0];
+      meta->info[i].dms->reye_score = score[0];
     }
     // left eye patch
-    if (l_roi.width < 10 || l_roi.height < 10) {  // mall images filter
-      meta->info[i].l_eye_score = 0.0;
+    if (l_roi.width < MINIMUM_SIZE || l_roi.height < MINIMUM_SIZE) {  // mall images filter
+      meta->info[i].dms->leye_score = 0.0;
     } else {
       cv::Mat l_Image = image(l_roi);
-      cv::resize(l_Image, l_Image, cv::Size(32, 32));
+      cv::resize(l_Image, l_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
       prepareInputTensor(l_Image);
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
       run(frames);
 
       float *score = getOutputRawPtr<float>(NAME_SCORE);
-      meta->info[i].l_eye_score = score[0];
+      meta->info[i].dms->leye_score = score[0];
     }
     CVI_AI_FreeCpp(&face_info);
   }

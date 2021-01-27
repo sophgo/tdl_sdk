@@ -10,7 +10,9 @@
 #include "cviai_perfetto.h"
 #include "deepsort/cvi_deepsort.hpp"
 #include "es_classification/es_classification.hpp"
+#include "eye_classification/eye_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
+#include "face_landmarker/face_landmarker.hpp"
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
@@ -24,6 +26,7 @@
 #include "retina_face/retina_face.hpp"
 #include "segmentation/deeplabv3.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
+#include "yawn_classification/yawn_classification.hpp"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -647,4 +650,49 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
     return 0;
   }
   return ctx->td_model->detect(frame, moving_score);
+}
+
+// Eye Classification
+
+CVI_S32 CVI_AI_EyeClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                 cvai_face_t *face) {
+  TRACE_EVENT("cviai_core", "CVI_AI_EyeClassifcation");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  EyeClassification *eye_classification =
+      getInferenceInstance<EyeClassification>(CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, ctx);
+  if (eye_classification == nullptr) {
+    LOGE("No instance found for EyeClassifcation.\n");
+    return CVI_FAILURE;
+  }
+  return eye_classification->inference(frame, face);
+}
+
+// Yawn Classification
+
+CVI_S32 CVI_AI_YawnClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                  cvai_face_t *face) {
+  TRACE_EVENT("cviai_core", "CVI_AI_YawnClassifcation");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  YawnClassification *yawn_classification =
+      getInferenceInstance<YawnClassification>(CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, ctx);
+  if (yawn_classification == nullptr) {
+    LOGE("No instance found for YawnClassifcation.\n");
+    return CVI_FAILURE;
+  }
+  return yawn_classification->inference(frame, face);
+}
+
+// Face Landmarker
+
+CVI_S32 CVI_AI_FaceLandmarker(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_face_t *face) {
+  TRACE_EVENT("cviai_core", "CVI_AI_FaceLandmarker");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  FaceLandmarker *face_landmarker =
+      getInferenceInstance<FaceLandmarker>(CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, ctx);
+  if (face_landmarker == nullptr) {
+    LOGE("No instance found for FaceLandmarker.\n");
+    return CVI_FAILURE;
+  }
+  return face_landmarker->inference(frame, face);
 }

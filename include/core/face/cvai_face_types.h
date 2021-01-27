@@ -85,6 +85,31 @@ typedef struct {
   float facialUnitNormalVector[3];  // 0: x-axis, 1: y-axis, 2: z-axis
 } cvai_head_pose_t;
 
+/** @struct cvai_dms_t
+ *  @ingroup core_cviaicore
+ *  @brief The data structure for storing face meta.
+ *
+ *  @var cvai_face_info_t::r_eye_score
+ *  The right eye score.
+ *  @var cvai_face_info_t::l_eye_score
+ *  The left eye score.
+ *  @var cvai_face_info_t::yawn_score
+ *  The yawn score.
+ *  @var cvai_pts_t::landmarks
+ *  The face landmarks.
+ *  @var cvai_face_info_t::head_pose
+ *  The head pose.
+ *
+ *  @see cvai_face_info_t
+ */
+typedef struct {
+  float reye_score;
+  float leye_score;
+  float yawn_score;
+  cvai_pts_t landmarks;
+  cvai_head_pose_t head_pose;
+} cvai_dms_t;
+
 /** @struct cvai_face_info_t
  *  @ingroup core_cviaicore
  *  @brief The data structure for storing a single face information.
@@ -111,16 +136,10 @@ typedef struct {
  *  The liveness score.
  *  @var cvai_face_info_t::mask_score
  *  The mask score.
- *  @var cvai_face_info_t::r_eye_score
- *  The right eye score.
- *  @var cvai_face_info_t::l_eye_score
- *  The left eye score.
- *  @var cvai_face_info_t::yawn_score
- *  The yawn score.
- *  @var cvai_face_info_t::head_pose
- *  The head pose.
  *  @var cvai_face_info_t::face_quality
  *  The face quality.
+ *  @var cvai_dms_t::dms
+ *  The dms info.
  *
  *  @see cvai_face_quality_t
  *  @see cvai_face_t
@@ -138,11 +157,8 @@ typedef struct {
   float age;
   float liveness_score;
   float mask_score;
-  float r_eye_score;
-  float l_eye_score;
-  float yawn_score;
-  cvai_head_pose_t head_pose;
   cvai_face_quality_t face_quality;
+  cvai_dms_t* dms;
 } cvai_face_info_t;
 
 /** @struct cvai_face_t

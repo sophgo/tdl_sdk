@@ -28,11 +28,8 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 typedef struct {
-  float reye_score;
-  float leye_score;
-  float yawn_score;
   float mask_score;
-  cvai_head_pose_t head_pose;
+  cvai_dms_t dms;
 } SMOOTH_FACE_INFO;
 
 static volatile bool bExit = false;
@@ -151,20 +148,27 @@ int main(int argc, char **argv) {
         break;
       }
       CVI_AI_RetinaFace(facelib_handle, &stVencFrame, &face);
+
+      // Just calculate the first one
       if (face.size > 0) {
+        face.info[0].dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
         // face angle
-        CVI_AI_Service_FaceAngle(&(face.info[0].pts), &face.info[0].head_pose);
+        CVI_AI_Service_FaceAngle(&(face.info[0].pts), &face.info[0].dms->head_pose);
         memset(status_n, 0, sizeof(status_n));
-        sprintf(status_n, "Yaw: %f Pitch: %f Roll: %f", face.info[0].head_pose.yaw,
-                face.info[0].head_pose.pitch, face.info[0].head_pose.roll);
-        CVI_AI_Service_ObjectWriteText(status_n, 800, 600, &stVOFrame, true);  // per frame info
+        sprintf(status_n, "Yaw: %f Pitch: %f Roll: %f", face.info[0].dms->head_pose.yaw,
+                face.info[0].dms->head_pose.pitch, face.info[0].dms->head_pose.roll);
+        CVI_AI_Service_ObjectWriteText(status_n, 800, 600, &stVOFrame);  // per frame info
         // calculate smooth
-        smooth_face_info.head_pose.yaw =
-            smooth_face_info.head_pose.yaw * 0.5 + face.info[0].head_pose.yaw * 0.5;
-        smooth_face_info.head_pose.pitch =
-            smooth_face_info.head_pose.pitch * 0.5 + face.info[0].head_pose.pitch * 0.5;
-        smooth_face_info.head_pose.roll =
-            smooth_face_info.head_pose.roll * 0.5 + face.info[0].head_pose.roll * 0.5;
+        smooth_face_info.dms.head_pose.yaw =
+            smooth_face_info.dms.head_pose.yaw * 0.5 + face.info[0].dms->head_pose.yaw * 0.5;
+        smooth_face_info.dms.head_pose.pitch =
+            smooth_face_info.dms.head_pose.pitch * 0.5 + face.info[0].dms->head_pose.pitch * 0.5;
+        smooth_face_info.dms.head_pose.roll =
+            smooth_face_info.dms.head_pose.roll * 0.5 + face.info[0].dms->head_pose.roll * 0.5;
+
+        // calculate landmark
+        CVI_AI_FaceLandmarker(facelib_handle, &stVencFrame, &face);
+        CVI_AI_Service_FaceDrawLandmarks(&(face.info[0].dms->landmarks), &stVOFrame);
 
         // mask detection
         CVI_AI_MaskClassification(facelib_handle, &stVencFrame, &face);
@@ -181,18 +185,18 @@ int main(int argc, char **argv) {
           strcpy(status_n, "Status: mask");
           mask_flag = false;
         }
-        CVI_AI_Service_ObjectWriteText(status_n, 800, 550, &stVOFrame, true);
+        CVI_AI_Service_ObjectWriteText(status_n, 800, 550, &stVOFrame);
 
         // eye classification
         CVI_AI_EyeClassification(facelib_handle, &stVencFrame, &face);
         // calculate smooth eye score
 
-        smooth_face_info.reye_score =
-            smooth_face_info.reye_score * 0.5 + face.info[0].r_eye_score * 0.5;
-        smooth_face_info.leye_score =
-            smooth_face_info.leye_score * 0.5 + face.info[0].l_eye_score * 0.5;
+        smooth_face_info.dms.reye_score =
+            smooth_face_info.dms.reye_score * 0.5 + face.info[0].dms->reye_score * 0.5;
+        smooth_face_info.dms.leye_score =
+            smooth_face_info.dms.leye_score * 0.5 + face.info[0].dms->leye_score * 0.5;
 
-        if (smooth_face_info.reye_score + smooth_face_info.leye_score > 1.3) {
+        if (smooth_face_info.dms.reye_score + smooth_face_info.dms.leye_score > 1.3) {
           if (eye_score_window < 30) eye_score_window += 1;
         } else {
           if (eye_score_window > 0) eye_score_window -= 1;
@@ -200,24 +204,24 @@ int main(int argc, char **argv) {
 
         // show the eye score per frame
         memset(status_n, 0, sizeof(status_n));
-        if (face.info[0].r_eye_score < eye_th) {
+        if (face.info[0].dms->reye_score < eye_th) {
           strcpy(status_n, "Right Eye: close");
         } else {
           strcpy(status_n, "Right Eye: open");
         }
-        CVI_AI_Service_ObjectWriteText(status_n, 800, 650, &stVOFrame, true);
+        CVI_AI_Service_ObjectWriteText(status_n, 800, 650, &stVOFrame);
 
         memset(status_n, 0, sizeof(status_n));
-        if (face.info[0].l_eye_score < eye_th) {
+        if (face.info[0].dms->leye_score < eye_th) {
           strcpy(status_n, "Left Eye: close");
         } else {
           strcpy(status_n, "Left Eye: open");
         }
-        CVI_AI_Service_ObjectWriteText(status_n, 1100, 650, &stVOFrame, true);
+        CVI_AI_Service_ObjectWriteText(status_n, 1100, 650, &stVOFrame);
 #if 0
         // show smooth eye score
         memset(status_n, 0, sizeof(status_n));
-        if (smooth_face_info.reye_score < 0.6) {
+        if (smooth_face_info.dms.reye_score < eye_th) {
           strcpy(status_n, "Right Eye: close");
         } else {
           strcpy(status_n, "Right Eye: open");
@@ -225,7 +229,7 @@ int main(int argc, char **argv) {
         CVI_AI_Service_ObjectWriteText(status_n, 30, 170, &stVOFrame, true);
 
         memset(status_n, 0, sizeof(status_n));
-        if (face.info[0].l_eye_score < 0.6) {
+        if (smooth_face_info.dms.leye_score < eye_th) {
           strcpy(status_n, "Left Eye: close");
         } else {
           strcpy(status_n, "Left Eye: open");
@@ -236,48 +240,48 @@ int main(int argc, char **argv) {
           // Yawn classification
           CVI_AI_YawnClassification(facelib_handle, &stVencFrame, &face);
           // calculate smooth yawn score
-          smooth_face_info.yawn_score =
-              smooth_face_info.yawn_score * 0.5 + face.info[0].yawn_score * 0.5;
+          smooth_face_info.dms.yawn_score =
+              smooth_face_info.dms.yawn_score * 0.5 + face.info[0].dms->yawn_score * 0.5;
 
-          if (smooth_face_info.yawn_score < yawn_th) {
+          if (smooth_face_info.dms.yawn_score < yawn_th) {
             if (yawn_score_window < 30) yawn_score_window += 1;
           } else {
             if (yawn_score_window > 0) yawn_score_window -= 1;
           }
           memset(status_n, 0, sizeof(status_n));
-          if (face.info[0].yawn_score < yawn_th) {
+          if (face.info[0].dms->yawn_score < yawn_th) {
             strcpy(status_n, "Yawn: close");
           } else {
             strcpy(status_n, "Yawn: open");
           }
-          CVI_AI_Service_ObjectWriteText(status_n, 800, 690, &stVOFrame, true);
+          CVI_AI_Service_ObjectWriteText(status_n, 800, 690, &stVOFrame);
         } else {
           if (yawn_score_window < 0) yawn_score_window += 1;
         }
 #if 0
           memset(status_n, 0, sizeof(status_n));
-          if (smooth_face_info.yawn_score < 0.6) {
+          if (smooth_face_info.dms.yawn_score < 0.6) {
             strcpy(status_n, "Yawn: close");
           } else {
             strcpy(status_n, "Yawn: open");
           }
-          CVI_AI_Service_ObjectWriteText(status_n, 30, 220, &stVOFrame, true);
+          CVI_AI_Service_ObjectWriteText(status_n, 30, 220, &stVOFrame);
 #endif
         memset(status_n, 0, sizeof(status_n));
         if (start_count > 90) {
           if (eye_score_window < eye_win_th || yawn_score_window < yawn_win_th) {
             strcpy(status_n, "Status: Drowsiness");
-            CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame, true);
-          } else if ((smooth_face_info.head_pose.yaw < yaw_th &&
-                      smooth_face_info.head_pose.yaw > -yaw_th &&
-                      smooth_face_info.head_pose.pitch < pitch_th &&
-                      smooth_face_info.head_pose.pitch > -pitch_th) ||
-                     smooth_face_info.yawn_score > yawn_th) {
+            CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
+          } else if ((smooth_face_info.dms.head_pose.yaw < yaw_th &&
+                      smooth_face_info.dms.head_pose.yaw > -yaw_th &&
+                      smooth_face_info.dms.head_pose.pitch < pitch_th &&
+                      smooth_face_info.dms.head_pose.pitch > -pitch_th) ||
+                     smooth_face_info.dms.yawn_score > yawn_th) {
             strcpy(status_n, "Status: Normal");
-            CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame, true);
+            CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
           } else {
             strcpy(status_n, "Status: Distraction");
-            CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame, true);
+            CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
           }
         } else {
           start_count++;
@@ -286,7 +290,7 @@ int main(int argc, char **argv) {
       } else {
         memset(status_n, 0, sizeof(status_n));
         sprintf(status_n, "No face");
-        CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame, true);
+        CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
       }
 
       s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);

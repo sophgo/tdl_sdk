@@ -225,7 +225,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta,
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y,
-                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText);
+                                                  VIDEO_FRAME_INFO_S *frame);
 
 /**
  * @brief Set intersect area for detection.
@@ -274,6 +274,8 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pos
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta,
                                                  VIDEO_FRAME_INFO_S *frame);
 
+DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawLandmarks(cvai_pts_t *landmarks,
+                                                    VIDEO_FRAME_INFO_S *frame);
 #ifdef __cplusplus
 }
 #endif
