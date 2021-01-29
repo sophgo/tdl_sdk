@@ -156,6 +156,9 @@ int main(int argc, char *argv[]) {
   }
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, model_config.model_id, false);
 
+  ret = CVI_AI_SelectDetectClass(facelib_handle, model_config.model_id, 3, CVI_AI_DET_TYPE_PERSON,
+                                 CVI_AI_DET_TYPE_BANANA, CVI_AI_DET_GROUP_VEHICLE);
+
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
   cvai_object_t obj_meta;
   memset(&obj_meta, 0, sizeof(cvai_object_t));

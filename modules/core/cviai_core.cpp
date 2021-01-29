@@ -28,6 +28,7 @@
 #include "thermal_face_detection/thermal_face.hpp"
 #include "yawn_classification/yawn_classification.hpp"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <memory>
@@ -190,6 +191,10 @@ CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle) {
       m_inst.second.instance->modelClose();
       delete m_inst.second.instance;
       m_inst.second.instance = nullptr;
+      if (m_inst.second.selected_classes) {
+        delete m_inst.second.selected_classes;
+        m_inst.second.selected_classes = nullptr;
+      }
     }
   }
   for (auto &m_inst : ctx->custom_cont) {
@@ -210,10 +215,52 @@ CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
   if (m_t.instance == nullptr) {
     return CVI_FAILURE;
   }
+  if (m_t.selected_classes) {
+    delete m_t.selected_classes;
+    m_t.selected_classes = nullptr;
+  }
+
   m_t.instance->modelClose();
   delete m_t.instance;
   m_t.instance = nullptr;
   return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                 uint32_t num_selection, ...) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  auto &m_t = ctx->model_cont[config];
+
+  va_list args;
+  va_start(args, num_selection);
+
+  if (m_t.selected_classes) delete m_t.selected_classes;
+  m_t.selected_classes = new std::vector<uint32_t>();
+  for (uint32_t i = 0; i < num_selection; i++) {
+    uint32_t selected_class = va_arg(args, uint32_t);
+
+    if (selected_class & CVI_AI_DET_GROUP_MASK_HEAD) {
+      uint32_t group_start = (selected_class & CVI_AI_DET_GROUP_MASK_START) >> 16;
+      uint32_t group_end = (selected_class & CVI_AI_DET_GROUP_MASK_END);
+      for (uint32_t i = group_start; i <= group_end; i++) {
+        m_t.selected_classes->push_back(i);
+      }
+    } else {
+      if (selected_class >= CVI_AI_DET_TYPE_END) {
+        LOGE("Invalid class id: %d\n", selected_class);
+        return CVI_FAILURE;
+      }
+      m_t.selected_classes->push_back(selected_class);
+    }
+  }
+
+  if (m_t.instance != nullptr) {
+    // TODO: only support MobileDetV2 for now
+    if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(m_t.instance)) {
+      mdetv2->select_classes(*m_t.selected_classes);
+    }
+  }
+  return CVI_FAILURE;
 }
 
 template <class C, typename V, typename... Arguments>
@@ -236,6 +283,13 @@ getInferenceInstance(const V index, cviai_context_t *ctx, Arguments &&... arg) {
       m_t.model_threshold = m_t.instance->getModelThreshold();
     } else {
       m_t.instance->setModelThreshold(m_t.model_threshold);
+    }
+
+    if (m_t.selected_classes) {
+      // TODO: only support MobileDetV2 for now
+      if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(m_t.instance)) {
+        mdetv2->select_classes(*m_t.selected_classes);
+      }
     }
   }
   C *class_inst = dynamic_cast<C *>(m_t.instance);

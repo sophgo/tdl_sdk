@@ -475,6 +475,9 @@ DLL_EXPORT CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_
 
 /**@}*/
 
+DLL_EXPORT CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                            uint32_t num_classes, ...);
+
 /**
  * \addtogroup core_od Object Detection AI Inference
  * \ingroup core_ai

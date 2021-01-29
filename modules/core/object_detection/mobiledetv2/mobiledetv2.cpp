@@ -12,6 +12,7 @@
 #include <opencv2/opencv.hpp>
 #include "coco_utils.hpp"
 #include "core/core/cvai_core_types.h"
+#include "core/object/cvai_object_types.h"
 #include "core_utils.hpp"
 #include "cvi_comm_vpss.h"
 #include "cvi_sys.h"
@@ -124,7 +125,7 @@ static void convert_det_struct(const Detections &dets, cvai_object_t *out, int i
     out->info[i].bbox.y2 = dets[i]->y2;
     out->info[i].bbox.score = dets[i]->score;
     out->info[i].classes = config.class_id_map(dets[i]->label);
-    const string &classname = config.class_names[out->info[i].classes];
+    const string &classname = coco_utils::class_names_91[out->info[i].classes];
     strncpy(out->info[i].name, classname.c_str(), sizeof(out->info[i].name));
   }
 }
@@ -192,6 +193,8 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
    */
   m_quant_inverse_score_threshold = constructInverseThresh(
       m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
+
+  m_filter.set();  // select all classes
 }
 
 MobileDetV2::~MobileDetV2() {}
@@ -310,25 +313,30 @@ void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tenso
   }
 }
 
+// TODO: remove old filter
 void coco_class_90_filter(Detections &dets, cvai_obj_det_type_e det_type) {
   auto condition = [det_type](const PtrDectRect &det) {
-    int label = coco_utils::map_90_class_id_to_80(det->label);
-    if (label == -1) {
-      return true;
-    }
+    int label = det->label;
     bool skip_class = (det_type != CVI_DET_TYPE_ALL);
     if ((det_type & CVI_DET_TYPE_VEHICLE) != 0) {
-      if ((label >= 1) && label <= 7) skip_class = false;
+      if ((label >= CVI_AI_DET_TYPE_BICYCLE) && label <= CVI_AI_DET_TYPE_BOAT) skip_class = false;
     }
     if ((det_type & CVI_DET_TYPE_PEOPLE) != 0) {
       if (label == 0) skip_class = false;
     }
     if ((det_type & CVI_DET_TYPE_PET) != 0) {
-      if ((label == 16) || (label == 17)) skip_class = false;
+      if ((label == CVI_AI_DET_TYPE_DOG) || (label == CVI_AI_DET_TYPE_CAT)) skip_class = false;
     }
     return skip_class;
   };
   dets.erase(remove_if(dets.begin(), dets.end(), condition), dets.end());
+}
+
+void MobileDetV2::select_classes(const std::vector<uint32_t> &selected_classes) {
+  m_filter.reset();
+  for (auto c : selected_classes) {
+    m_filter.set(c, true);
+  }
 }
 
 int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
@@ -342,7 +350,13 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
 
   Detections final_dets = nms(dets, m_iou_threshold);
 
-  if (m_model_config.filter) m_model_config.filter(final_dets, det_type);
+  if (!m_filter.all()) {  // filter if not all bit are set
+    auto condition = [this](const PtrDectRect &det) { return !m_filter.test(det->label); };
+    final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
+  } else if (det_type != CVI_DET_TYPE_ALL) {
+    // TODO: remove old filter
+    coco_class_90_filter(final_dets, det_type);
+  }
 
   CVI_SHAPE shape = getInputShape(0);
 
@@ -389,7 +403,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                            {64, "box_stride_64"},
                            {128, "box_stride_128"}};
 
-  config.filter = nullptr;
   config.class_id_map = [](int orig_id) { return orig_id; };
 
   switch (model) {
@@ -407,9 +420,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 2.9647181034088135},
                                     {128, 12.42608642578125}};
       config.default_score_threshold = 0.4;
-      config.class_names = coco_utils::class_names_80;
-      config.class_id_map = coco_utils::map_90_class_id_to_80;
-      config.filter = coco_class_90_filter;
       break;
     case Model::d1:
       config.image_size = 640;
@@ -425,9 +435,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 2.727674961090088},
                                     {128, 2.260598659515381}};
       config.default_score_threshold = 0.3;
-      config.class_names = coco_utils::class_names_80;
-      config.class_id_map = coco_utils::map_90_class_id_to_80;
-      config.filter = coco_class_90_filter;
       break;
     case Model::d2:
       config.image_size = 768;
@@ -443,9 +450,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 2.563389301300049},
                                     {128, 2.2213821411132812}};
       config.default_score_threshold = 0.3;
-      config.class_names = coco_utils::class_names_80;
-      config.class_id_map = coco_utils::map_90_class_id_to_80;
-      config.filter = coco_class_90_filter;
       break;
     case Model::lite:
       config.num_classes = 9;
@@ -462,8 +466,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 2.3935775756835938},
                                     {128, 2.543354034423828}};
       config.default_score_threshold = 0.3;
-      config.class_names = {"person", "bicycle", "car",   "motorbike", "aeroplane",
-                            "bus",    "train",   "truck", "boat"};
       break;
     case Model::vehicle_d0:
       config.num_classes = 3;
@@ -480,7 +482,12 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                                     {64, 4.202951431274414},
                                     {128, 4.039170742034912}};
       config.default_score_threshold = 0.3;
-      config.class_names = {"car", "truck", "motorbike"};
+      config.class_id_map = [](int orig_id) {
+        if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_CAR);
+        if (orig_id == 1) return static_cast<int>(CVI_AI_DET_TYPE_TRUCK);
+        if (orig_id == 2) return static_cast<int>(CVI_AI_DET_TYPE_MOTORBIKE);
+        return static_cast<int>(CVI_AI_DET_TYPE_END);
+      };
 
       break;
   }

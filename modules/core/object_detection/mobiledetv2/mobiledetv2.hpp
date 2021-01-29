@@ -1,7 +1,9 @@
 #pragma once
+#include <bitset>
 #include <limits>
 #include <memory>
 #include <vector>
+
 #include "anchors.hpp"
 #include "core.hpp"
 #include "core/object/cvai_object_types.h"
@@ -52,11 +54,6 @@ class MobileDetV2 final : public Core {
 
     typedef int (*ClassMapFunc)(int);
     ClassMapFunc class_id_map;
-    std::vector<std::string> class_names;
-    using Detections = MobileDetV2::Detections;
-    typedef void (*DetectonFilter)(Detections &, cvai_obj_det_type_e);
-
-    DetectonFilter filter;
     static CvimodelInfo create_config(MobileDetV2::Model model);
   };
 
@@ -66,6 +63,7 @@ class MobileDetV2 final : public Core {
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_e det_type);
   virtual void setModelThreshold(float threshold) override;
   virtual bool allowExportChannelAttribute() const override { return true; }
+  void select_classes(const std::vector<uint32_t> &selected_classes);
 
  private:
   int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
@@ -78,12 +76,15 @@ class MobileDetV2 final : public Core {
                                 float bbox_dequant_thresh, int8_t quant_thresh,
                                 const int8_t *logits, const int8_t *objectness, int8_t *bboxes,
                                 size_t class_tensor_size, const std::vector<AnchorBox> &anchors);
+  void filter_dets(Detections &dets);
+
   std::vector<std::vector<AnchorBox>> m_anchors;
   CvimodelInfo m_model_config;
   float m_iou_threshold;
 
   // score threshold for quantized inverse threshold
   std::vector<int8_t> m_quant_inverse_score_threshold;
+  std::bitset<CVI_AI_DET_TYPE_END> m_filter;
 };
 
 }  // namespace cviai

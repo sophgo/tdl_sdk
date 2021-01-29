@@ -26,7 +26,7 @@ static const std::vector<std::string> class_names_80 = {
     "refrigerator",  "book",          "clock",         "vase",
     "scissors",      "teddy bear",    "hair drier",    "toothbrush"};
 
-static const std::vector<std::string> class_names_90 = {
+static const std::vector<std::string> class_names_91 = {
     "person",       "bicycle",      "car",           "motorbike",     "aeroplane",
     "bus",          "train",        "truck",         "boat",          "traffic light",
     "fire hydrant", "street sign",  "stop sign",     "parking meter", "bench",
@@ -46,7 +46,5 @@ static const std::vector<std::string> class_names_90 = {
     "sink",         "refrigerator", "blender",       "book",          "clock",
     "vase",         "scissors",     "teddy bear",    "hair drier",    "toothbrush",
     "hair brush"};
-
-int map_90_class_id_to_80(int class_id);
 }  // namespace coco_utils
 }  // namespace cviai

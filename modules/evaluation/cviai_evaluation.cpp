@@ -2,6 +2,7 @@
 
 #include "cityscapes/cityscapes.hpp"
 #include "coco/coco.hpp"
+#include "coco_utils.hpp"
 #include "cvi_lpdr/cvi_lpdr.hpp"
 #include "lfw/lfw.hpp"
 #include "market1501/market1501.hpp"

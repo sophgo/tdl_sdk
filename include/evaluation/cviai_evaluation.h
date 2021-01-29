@@ -46,6 +46,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoInsertObject(cviai_eval_handle_t handle, cons
 DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoStartEval(cviai_eval_handle_t handle, const char *filepath);
 
 DLL_EXPORT CVI_S32 CVI_AI_Eval_CocoEndEval(cviai_eval_handle_t handle);
+
 /****************************************************************
  * LFW evaluation functions
  **/
