@@ -78,7 +78,7 @@ buildninstall(NAME sample_vi_deeplabv3 INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS c
 buildninstall(NAME sample_read_dt INC ${SAMPLE_INC} DEPS cviai_core cviai_service)
 buildninstall(NAME sample_read_td INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_read_esc INC ${SAMPLE_INC} DEPS cviai_core pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-buildninstall(NAME sample_lpdr INC ${SAMPLE_INC} DEPS cviai_core)
+buildninstall(NAME sample_read_lpdr INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_read_pose INC ${SAMPLE_INC} DEPS cviai_core cviai_service)
 buildninstall(NAME sample_vi_dms INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS cviai_core pthread cviai_service ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
 install(FILES vi_vo_utils.c vi_vo_utils.h DESTINATION sample)

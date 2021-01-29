@@ -137,7 +137,8 @@ int main(int argc, char *argv[]) {
 
 #if WRITE_RESULT_TO_FILE
     fprintf(outFile, "%s\n", image_path);
-    fprintf(outFile, "%d\n", counter);
+    fprintf(outFile, "%u,%d\n", vehicle_obj.size, counter);
+    // fprintf(outFile, "%d\n", counter);
     for (size_t i = 0; i < vehicle_obj.size; i++) {
       if (vehicle_obj.info[i].vehicle_properity) {
         cvai_pts_t *license_pts = &vehicle_obj.info[i].vehicle_properity->license_pts;
@@ -148,6 +149,10 @@ int main(int argc, char *argv[]) {
                 vehicle_obj.info[i].vehicle_properity->license_char, license_pts->x[0],
                 license_pts->y[0], license_pts->x[1], license_pts->y[1], license_pts->x[2],
                 license_pts->y[2], license_pts->x[3], license_pts->y[3]);
+      } else {
+        fprintf(outFile, "%s,%f,%f,%f,%f,NULL,,,,,,,,\n", vehicle_obj.info[i].name,
+                vehicle_obj.info[i].bbox.x1, vehicle_obj.info[i].bbox.y1,
+                vehicle_obj.info[i].bbox.x2, vehicle_obj.info[i].bbox.y2);
       }
     }
 #endif
