@@ -16,8 +16,14 @@ fi
 YOLOV3_OUTPUT="yolov3_result.json"
 python3 eval_coco.py ${DATASET_PATH}/coco/instances_val2017.json ${REGRESSION_FOLDER}/${YOLOV3_OUTPUT}
 
-# mobiledetv2_d0
-MOBILE_OUTPUT="mobiledetv2_result.json"
+# mobiledetv2
+MOBILE_OUTPUT="mobiledetv2_d0_result.json"
+python3 eval_coco.py ${DATASET_PATH}/coco/instances_val2017.json ${REGRESSION_FOLDER}/${MOBILE_OUTPUT}
+
+MOBILE_OUTPUT="mobiledetv2_d1_result.json"
+python3 eval_coco.py ${DATASET_PATH}/coco/instances_val2017.json ${REGRESSION_FOLDER}/${MOBILE_OUTPUT}
+
+MOBILE_OUTPUT="mobiledetv2_d2_result.json"
 python3 eval_coco.py ${DATASET_PATH}/coco/instances_val2017.json ${REGRESSION_FOLDER}/${MOBILE_OUTPUT}
 
 # thermal
@@ -29,7 +35,13 @@ WIDER_OUTPUT="wider_face_result"
 python3 eval_widerface.py  "${REGRESSION_FOLDER}/${WIDER_OUTPUT}" ${MLIR_PATH}
 
 # fr lfw
-FR_LFW_OUTPUT="lfw_result.txt"
+FR_LFW_OUTPUT="lfw_result_cviface-v3.txt"
+python3 eval_lfw.py "${REGRESSION_FOLDER}/${FR_LFW_OUTPUT}"
+
+FR_LFW_OUTPUT="lfw_result_cviface-v4.txt"
+python3 eval_lfw.py "${REGRESSION_FOLDER}/${FR_LFW_OUTPUT}"
+
+FR_LFW_OUTPUT="lfw_result_cviface-v5-m.txt"
 python3 eval_lfw.py "${REGRESSION_FOLDER}/${FR_LFW_OUTPUT}"
 
 # mask fr
