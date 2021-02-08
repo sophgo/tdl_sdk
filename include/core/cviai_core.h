@@ -300,6 +300,15 @@ DLL_EXPORT CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_
 DLL_EXPORT CVI_S32 CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num);
 
 /**
+ * @brief Set VPSS waiting time.
+ *
+ * @param handle An AI SDK handle.
+ * @param timeout Timeout value.
+ * @return int Return CVI_SUCCESS.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_SetVpssTimeout(cviai_handle_t handle, uint32_t timeout);
+
+/**
  * @brief Close all opened models and delete the model instances.
  *
  * @param handle An AI SDK handle.

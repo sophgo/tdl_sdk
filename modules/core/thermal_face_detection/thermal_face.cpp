@@ -153,8 +153,12 @@ int ThermalFace::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFram
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                         vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
                         factor, mean, false);
-  mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
-  return mp_vpss_inst->getFrame(dstFrame, 0);
+  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("Send frame failed with %#x!\n", ret);
+    return ret;
+  }
+  return mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
 }
 
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {

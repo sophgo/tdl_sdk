@@ -34,6 +34,7 @@ typedef struct {
   std::vector<cviai_model_t> custom_cont;
   IVE_HANDLE ive_handle = NULL;
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
+  uint32_t vpss_timeout_value = 100;  // default value.
   TamperDetectorMD *td_model = nullptr;
   Deepsort *ds_tracker = nullptr;
   FallMD *fall_model = nullptr;
@@ -45,6 +46,11 @@ inline int __attribute__((always_inline)) GetModelName(cviai_model_t &model, cha
   snprintf(path, model.model_path.size(), "%s", model.model_path.c_str());
   *filepath = path;
   return CVI_SUCCESS;
+}
+
+inline uint32_t __attribute__((always_inline)) CVI_AI_GetVpssTimeout(cviai_handle_t handle) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  return ctx->vpss_timeout_value;
 }
 
 inline cviai::VpssEngine *__attribute__((always_inline))

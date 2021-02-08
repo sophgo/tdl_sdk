@@ -184,6 +184,12 @@ CVI_S32 CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t 
   return CVI_SUCCESS;
 }
 
+CVI_S32 CVI_AI_SetVpssTimeout(cviai_handle_t handle, uint32_t timeout) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  ctx->vpss_timeout_value = timeout;
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   for (auto &m_inst : ctx->model_cont) {
@@ -292,6 +298,7 @@ getInferenceInstance(const V index, cviai_context_t *ctx, Arguments &&... arg) {
       }
     }
   }
+  m_t.instance->setVpssTimeout(ctx->vpss_timeout_value);
   C *class_inst = dynamic_cast<C *>(m_t.instance);
   return class_inst;
 }

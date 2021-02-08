@@ -11,6 +11,11 @@
 namespace cviai {
 namespace service {
 
+int DigitalTracking::setVpssTimeout(uint32_t timeout) {
+  m_vpss_timeout = timeout;
+  return CVI_SUCCESS;
+}
+
 int DigitalTracking::setVpssEngine(VpssEngine *engine) {
   mp_vpss_inst = engine;
   return CVI_SUCCESS;
@@ -86,7 +91,7 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
   cropAttr.stCropRect = {(int)rect.l, (int)rect.t, (uint32_t)(rect.r - rect.l),
                          (uint32_t)(rect.b - rect.t)};
   mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, 1);
-  mp_vpss_inst->getFrame(dstFrame, 0);
+  mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
 #ifdef DT_DEBUG
   color_rgb rgb_color;
   rgb_color.r = DEFAULT_RECT_COLOR_R;

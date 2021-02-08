@@ -11,7 +11,8 @@
 
 CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
                                VIDEO_FRAME_INFO_S *output, const float quantized_factor,
-                               const float quantized_mean, const uint32_t thread) {
+                               const float quantized_mean, const uint32_t thread,
+                               uint32_t timeout) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   uint32_t vpss_thread;
   if (int ret = CVI_AI_AddVpssEngineThread(thread, -1, &vpss_thread, &ctx->vec_vpss_engine) !=
@@ -24,17 +25,22 @@ CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *
   VPSS_CHN_SQ_HELPER(&chn_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
                      frame->stVFrame.enPixelFormat, factor, mean, false);
   auto &vpss_inst = ctx->vec_vpss_engine[vpss_thread];
-  vpss_inst->sendFrame(frame, &chn_attr, 1);
-  vpss_inst->getFrame(output, 0);
-  return CVI_SUCCESS;
+  int ret = vpss_inst->sendFrame(frame, &chn_attr, 1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("Send frame failed with %#x!\n", ret);
+    return ret;
+  }
+  return vpss_inst->getFrame(output, 0, timeout);
 }
 
 CVI_S32 CVI_AI_SQPreprocess(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
                             VIDEO_FRAME_INFO_S *output, const float factor, const float mean,
-                            const float quantize_threshold, const uint32_t thread) {
+                            const float quantize_threshold, const uint32_t thread,
+                            uint32_t timeout) {
   float quantized_factor = factor * 128 / quantize_threshold;
   float quantized_mean = (-1) * mean * 128 / quantize_threshold;
-  return CVI_AI_SQPreprocessRaw(handle, frame, output, quantized_factor, quantized_mean, thread);
+  return CVI_AI_SQPreprocessRaw(handle, frame, output, quantized_factor, quantized_mean, thread,
+                                timeout);
 }
 
 CVI_S32 CVI_AI_Dequantize(const int8_t *quantizedData, float *data, const uint32_t bufferSize,

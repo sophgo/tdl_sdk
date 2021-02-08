@@ -197,6 +197,11 @@ int Core::setIveInstance(IVE_HANDLE handle) {
   return CVI_SUCCESS;
 }
 
+int Core::setVpssTimeout(uint32_t timeout) {
+  m_vpss_timeout = timeout;
+  return CVI_SUCCESS;
+}
+
 int Core::setVpssEngine(VpssEngine *engine) {
   mp_vpss_inst = engine;
   return CVI_SUCCESS;
@@ -291,13 +296,18 @@ int Core::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
   int ret = CVI_SUCCESS;
   for (uint32_t i = 0; i < (uint32_t)srcFrames.size(); i++) {
     if (!m_vpss_config[i].crop_attr.bEnable) {
-      mp_vpss_inst->sendFrame(srcFrames[i], &m_vpss_config[i].chn_attr, &m_vpss_config[i].chn_coeff,
-                              1);
+      ret |= mp_vpss_inst->sendFrame(srcFrames[i], &m_vpss_config[i].chn_attr,
+                                     &m_vpss_config[i].chn_coeff, 1);
     } else {
-      mp_vpss_inst->sendCropChnFrame(srcFrames[i], &m_vpss_config[i].crop_attr,
-                                     &m_vpss_config[i].chn_attr, &m_vpss_config[i].chn_coeff, 1);
+      ret |= mp_vpss_inst->sendCropChnFrame(srcFrames[i], &m_vpss_config[i].crop_attr,
+                                            &m_vpss_config[i].chn_attr, &m_vpss_config[i].chn_coeff,
+                                            1);
     }
-    ret |= mp_vpss_inst->getFrame((*dstFrames)[i].get(), 0);
+    if (ret != CVI_SUCCESS) {
+      LOGE("Send frame failed with %#x at index %u!\n", ret, i);
+      break;
+    }
+    ret |= mp_vpss_inst->getFrame((*dstFrames)[i].get(), 0, m_vpss_timeout);
   }
   return ret;
 }
@@ -320,6 +330,9 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
                                          delete f;
                                        }});
       ret |= vpssPreprocess(frames, &dstFrames);
+      if (ret != CVI_SUCCESS) {
+        return ret;
+      }
       ret |= registerFrame2Tensor(dstFrames);
     }
   }

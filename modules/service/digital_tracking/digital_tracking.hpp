@@ -39,6 +39,7 @@ struct Rect {
 
 class DigitalTracking {
  public:
+  int setVpssTimeout(uint32_t timeout);
   int setVpssEngine(VpssEngine *engine);
   template <typename T>
   int run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta, VIDEO_FRAME_INFO_S *dstFrame,
@@ -52,6 +53,7 @@ class DigitalTracking {
   inline void fitFrame(const float width, const float height, Rect *rect);
 
   Rect m_prev_rect;
+  uint32_t m_vpss_timeout = 100;
   VpssEngine *mp_vpss_inst = nullptr;
 };
 }  // namespace service

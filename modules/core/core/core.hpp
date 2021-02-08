@@ -82,6 +82,8 @@ class Core {
   int modelOpen(const char *filepath);
   int modelClose();
   int setIveInstance(IVE_HANDLE handle);
+  int setVpssTimeout(uint32_t timeout);
+  const uint32_t getVpssTimeout() const { return m_vpss_timeout; }
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
   bool hasSkippedVpssPreprocess() const { return m_skip_vpss_preprocess; }
@@ -163,6 +165,10 @@ class Core {
   // External handle
   IVE_HANDLE ive_handle = NULL;
   VpssEngine *mp_vpss_inst = nullptr;
+
+ protected:
+  // vpss related control
+  int32_t m_vpss_timeout = 100;
 
  private:
   template <typename T>

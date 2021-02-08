@@ -116,6 +116,7 @@ CVI_S32 CVI_AI_Service_FaceDigitalZoom(cviai_service_handle_t handle,
     ctx->m_dt = new cviai::service::DigitalTracking();
   }
 
+  ctx->m_dt->setVpssTimeout(CVI_AI_GetVpssTimeout(ctx->ai_handle));
   ctx->m_dt->setVpssEngine(CVI_AI_GetVpssEngine(ctx->ai_handle, 0));
   return ctx->m_dt->run(inFrame, meta, outFrame, padding_ratio, padding_ratio, padding_ratio,
                         padding_ratio, face_skip_ratio, trans_ratio);
@@ -131,6 +132,7 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoom(cviai_service_handle_t handle,
     ctx->m_dt = new cviai::service::DigitalTracking();
   }
 
+  ctx->m_dt->setVpssTimeout(CVI_AI_GetVpssTimeout(ctx->ai_handle));
   ctx->m_dt->setVpssEngine(CVI_AI_GetVpssEngine(ctx->ai_handle, 0));
   return ctx->m_dt->run(inFrame, meta, outFrame, padding_ratio, padding_ratio, padding_ratio,
                         padding_ratio, obj_skip_ratio, trans_ratio);
@@ -148,6 +150,7 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
     ctx->m_dt = new cviai::service::DigitalTracking();
   }
 
+  ctx->m_dt->setVpssTimeout(CVI_AI_GetVpssTimeout(ctx->ai_handle));
   ctx->m_dt->setVpssEngine(CVI_AI_GetVpssEngine(ctx->ai_handle, 0));
   return ctx->m_dt->run(inFrame, meta, outFrame, pad_ratio_left, pad_ratio_right, pad_ratio_top,
                         pad_ratio_bottom, obj_skip_ratio, trans_ratio);

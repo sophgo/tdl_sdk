@@ -77,8 +77,12 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
   vpssChnAttr.stNormalize.bEnable = CVI_FALSE;
 
   VPSS_SCALE_COEF_E enCoef = VPSS_SCALE_COEF_NEAREST;
-  mp_vpss_inst->sendFrame(&m_label_frame, &vpssChnAttr, &enCoef, 1);
-  if (CVI_SUCCESS != mp_vpss_inst->getFrame(out_frame, 0)) {
+  int ret = mp_vpss_inst->sendFrame(&m_label_frame, &vpssChnAttr, &enCoef, 1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("Send frame failed with %#x!\n", ret);
+    return ret;
+  }
+  if (CVI_SUCCESS != mp_vpss_inst->getFrame(out_frame, 0, m_vpss_timeout)) {
     LOGE("Deeplabv3 resized output label failed.");
     return CVI_FAILURE;
   }
