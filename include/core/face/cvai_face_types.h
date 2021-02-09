@@ -65,7 +65,7 @@ typedef struct {
 
 /** @struct cvai_head_pose_t
  *  @ingroup core_cviaicore
- *  @brief The data structure for the face quality output.
+ *  @brief The data structure for the head pose output.
  *
  *  @var cvai_head_pose_t::faacialUnitNormalVector
  *  The Normal vector for the face.
@@ -85,6 +85,48 @@ typedef struct {
   float facialUnitNormalVector[3];  // 0: x-axis, 1: y-axis, 2: z-axis
 } cvai_head_pose_t;
 
+/** @struct cvai_dms_od_info_t
+ *  @ingroup core_cviaicore
+ *  @brief The data structure for the dms object detection output.
+ *
+ *  @var cvai_dms_od_info_t::name
+ *  The name for the object.
+ *  @var cvai_dms_od_info_t::classes
+ *  The class for the object.
+ *  @var cvai_dms_od_info_t::bbox
+ *  The bounding box for the object.
+ */
+
+typedef struct {
+  char name[128];
+  int classes;
+  cvai_bbox_t bbox;
+} cvai_dms_od_info_t;
+
+/** @struct cvai_dms_od_t
+ *  @ingroup core_cviaicore
+ *  @brief The data structure for the dms object detection output.
+ *
+ *  @var cvai_dms_od_t::size
+ *  The size for the objects.
+ *  @var cvai_dms_od_t::width
+ *  The frame width for the object detection input.
+ *  @var cvai_dms_od_t::height
+ *  The frame height for the object detection input.
+ *  @var cvai_dms_od_t::rescale_type
+ *  The rescale type for the objects.
+ *  @var cvai_dms_od_t::info
+ *  The info for the objects.
+ */
+
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+  meta_rescale_type_e rescale_type;
+  cvai_dms_od_info_t* info;
+} cvai_dms_od_t;
+
 /** @struct cvai_dms_t
  *  @ingroup core_cviaicore
  *  @brief The data structure for storing face meta.
@@ -95,19 +137,32 @@ typedef struct {
  *  The left eye score.
  *  @var cvai_face_info_t::yawn_score
  *  The yawn score.
- *  @var cvai_pts_t::landmarks
- *  The face landmarks.
+ *  @var cvai_face_info_t::phone_score
+ *  The phone score.
+ *  @var cvai_face_info_t::smoke_score
+ *  The smoke score.
+ *  @var cvai_pts_t::landmarks_106
+ *  The face 106 landmarks.
+ *  @var cvai_pts_t::landmarks_5
+ *  The face 5 landmarks which is the same as retinaface.
  *  @var cvai_face_info_t::head_pose
  *  The head pose.
+ *  @var cvai_face_od_t::dms_od
+ *  The dms od info.
  *
  *  @see cvai_face_info_t
  */
+
 typedef struct {
   float reye_score;
   float leye_score;
   float yawn_score;
-  cvai_pts_t landmarks;
+  float phone_score;
+  float smoke_score;
+  cvai_pts_t landmarks_106;
+  cvai_pts_t landmarks_5;
   cvai_head_pose_t head_pose;
+  cvai_dms_od_t* dms_od;
 } cvai_dms_t;
 
 /** @struct cvai_face_info_t

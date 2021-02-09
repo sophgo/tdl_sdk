@@ -152,8 +152,13 @@ int main(int argc, char **argv) {
       // Just calculate the first one
       if (face.size > 0) {
         face.info[0].dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
+
+        // calculate landmark
+        CVI_AI_FaceLandmarker(facelib_handle, &stVencFrame, &face);
+        CVI_AI_Service_FaceDrawLandmarks(&(face.info[0].dms->landmarks_106), &stVOFrame);
+
         // face angle
-        CVI_AI_Service_FaceAngle(&(face.info[0].pts), &face.info[0].dms->head_pose);
+        CVI_AI_Service_FaceAngle(&(face.info[0].dms->landmarks_5), &face.info[0].dms->head_pose);
         memset(status_n, 0, sizeof(status_n));
         sprintf(status_n, "Yaw: %f Pitch: %f Roll: %f", face.info[0].dms->head_pose.yaw,
                 face.info[0].dms->head_pose.pitch, face.info[0].dms->head_pose.roll);
@@ -165,10 +170,6 @@ int main(int argc, char **argv) {
             smooth_face_info.dms.head_pose.pitch * 0.5 + face.info[0].dms->head_pose.pitch * 0.5;
         smooth_face_info.dms.head_pose.roll =
             smooth_face_info.dms.head_pose.roll * 0.5 + face.info[0].dms->head_pose.roll * 0.5;
-
-        // calculate landmark
-        CVI_AI_FaceLandmarker(facelib_handle, &stVencFrame, &face);
-        CVI_AI_Service_FaceDrawLandmarks(&(face.info[0].dms->landmarks), &stVOFrame);
 
         // mask detection
         CVI_AI_MaskClassification(facelib_handle, &stVencFrame, &face);
