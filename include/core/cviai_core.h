@@ -121,11 +121,6 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0)                   \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1)                   \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2)                   \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_LANDSCAPE)       \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0_LANDSCAPE) \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0_LANDSCAPE)         \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1_LANDSCAPE)         \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2_LANDSCAPE)         \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV3)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_OSNET)                            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION)                 \
@@ -558,72 +553,6 @@ DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO
  */
 DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                          cvai_object_t *obj, cvai_obj_det_type_e det_type);
-
-/**
- * @brief MobileDetV2 Vehicle object detection, This model cat detect "car", "truck", "motorbike"
- *
- * @param handle An AI SDK handle.
- * @param frame Input video frame.
- * @param obj Output detect result. The name, bbox, and classes will be given.
- * @return int Return CVI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_Vehicle_D0_Landscape(cviai_handle_t handle,
-                                                           VIDEO_FRAME_INFO_S *frame,
-                                                           cvai_object_t *obj);
-
-/**
- * @brief MobileDetV2 Lite object detection, the most lightweight MobileDetV2 with 9 classes
- * detection. This model cat detect "person", "bicycle", "car", "motorbike", "aeroplane", "bus",
- * "train", "truck", and "boat"
- *
- * @param handle An AI SDK handle.
- * @param frame Input video frame.
- * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
- * @return int Return CVI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_Lite_Landscape(cviai_handle_t handle,
-                                                     VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                                                     cvai_obj_det_type_e det_type);
-
-/**
- * @brief MobileDetV2 D0 object detection, the most lightweight MobileDetV2.
- *
- * @param handle An AI SDK handle.
- * @param frame Input video frame.
- * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
- * @return int Return CVI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D0_Landscape(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                                   cvai_object_t *obj,
-                                                   cvai_obj_det_type_e det_type);
-
-/**
- * @brief MobileDetV2 D1 object detection, the not so lightweight MobileDetV2.
- *
- * @param handle An AI SDK handle.
- * @param frame Input video frame.
- * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
- * @return int Return CVI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D1_Landscape(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                                   cvai_object_t *obj,
-                                                   cvai_obj_det_type_e det_type);
-
-/**
- * @brief MobileDetV2 D2 object detection, the heaviest MobileDetV2.
- *
- * @param handle An AI SDK handle.
- * @param frame Input video frame.
- * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
- * @return int Return CVI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D2_Landscape(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                                   cvai_object_t *obj,
-                                                   cvai_obj_det_type_e det_type);
 
 /**
  * @brief Yolov3 object detection.

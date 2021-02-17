@@ -32,12 +32,6 @@ class MobileDetV2 final : public Core {
     d2,          // MobileDetV2-D2
     lite,        // MobileDetV2-Lite
     vehicle_d0,  // MobileDetV2-Vehicle-D0
-
-    d0_ls,          // MobileDetV2-D0-Landscape
-    d1_ls,          // MobileDetV2-D1-Landscape
-    d2_ls,          // MobileDetV2-D2-Landscape
-    lite_ls,        // MobileDetV2-Lite-Landscape
-    vehicle_d0_ls,  // MobileDetV2-Vehicle-D0-Landscape
   };
 
   struct CvimodelInfo {
@@ -70,6 +64,7 @@ class MobileDetV2 final : public Core {
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_e det_type);
   virtual void setModelThreshold(float threshold) override;
   virtual bool allowExportChannelAttribute() const override { return true; }
+  virtual int onModelOpened() override;
   void select_classes(const std::vector<uint32_t> &selected_classes);
 
  private:

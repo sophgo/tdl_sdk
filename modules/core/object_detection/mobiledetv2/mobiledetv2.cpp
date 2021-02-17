@@ -179,12 +179,6 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
     : Core(CVI_MEM_DEVICE, true),
       m_model_config(MDetV2Config::create_config(model)),
       m_iou_threshold(iou_thresh) {
-  RetinaNetAnchorGenerator generator = RetinaNetAnchorGenerator(
-      m_model_config.min_level, m_model_config.max_level, m_model_config.num_scales,
-      m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_width,
-      m_model_config.image_height);
-  m_anchors = generator.get_anchor_boxes();
-
   m_model_threshold = m_model_config.default_score_threshold;
   /**
    *  To speedup post-process of MobileDetV2, we apply inverse function of sigmoid to threshold
@@ -241,6 +235,19 @@ int MobileDetV2::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFram
     return ret;
   }
   return mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
+}
+
+int MobileDetV2::onModelOpened() {
+  CVI_SHAPE input_shape = getInputShape(0);
+  m_model_config.image_height = input_shape.dim[2];
+  m_model_config.image_width = input_shape.dim[3];
+
+  RetinaNetAnchorGenerator generator = RetinaNetAnchorGenerator(
+      m_model_config.min_level, m_model_config.max_level, m_model_config.num_scales,
+      m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_width,
+      m_model_config.image_height);
+  m_anchors = generator.get_anchor_boxes();
+  return CVI_SUCCESS;
 }
 
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
@@ -412,9 +419,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
 
   switch (model) {
     case Model::d0:
-    case Model::d0_ls:
-      config.image_height = model == Model::d0 ? 512 : 384;
-      config.image_width = 512;
       config.class_dequant_thresh = {{8, 17.464866638183594},
                                      {16, 15.640022277832031},
                                      {32, 14.935582160949707},
@@ -429,9 +433,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       config.default_score_threshold = 0.4;
       break;
     case Model::d1:
-    case Model::d1_ls:
-      config.image_height = model == Model::d1 ? 640 : 384;
-      config.image_width = 640;
       config.class_dequant_thresh = {{8, 14.168907165527344},
                                      {16, 15.155534744262695},
                                      {32, 16.111759185791016},
@@ -446,9 +447,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       config.default_score_threshold = 0.3;
       break;
     case Model::d2:
-    case Model::d2_ls:
-      config.image_height = model == Model::d2 ? 768 : 512;
-      config.image_width = 768;
       config.class_dequant_thresh = {{8, 11.755056381225586},
                                      {16, 12.826586723327637},
                                      {32, 13.664835929870605},
@@ -463,11 +461,7 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       config.default_score_threshold = 0.3;
       break;
     case Model::lite:
-    case Model::lite_ls:
       config.num_classes = 9;
-      config.image_height = model == Model::lite ? 512 : 384;
-      config.image_width = 512;
-
       config.class_dequant_thresh = {{8, 12.48561954498291},
                                      {16, 11.416889190673828},
                                      {32, 13.258634567260742},
@@ -482,10 +476,7 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       config.default_score_threshold = 0.3;
       break;
     case Model::vehicle_d0:
-    case Model::vehicle_d0_ls:
       config.num_classes = 3;
-      config.image_height = model == Model::lite ? 512 : 384;
-      config.image_width = 512;
       config.class_dequant_thresh = {{8, 8.599571228027344},
                                      {16, 8.887327194213867},
                                      {32, 9.710219383239746},
