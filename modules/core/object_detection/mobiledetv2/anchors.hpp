@@ -28,7 +28,7 @@ class RetinaNetAnchorGenerator {
 
   RetinaNetAnchorGenerator(int _min_level, int _max_level, int _num_scales,
                            const std::vector<std::pair<float, float>> &_aspect_ratios,
-                           float _anchor_scale, int _image_size);
+                           float _anchor_scale, int _image_width, int _image_height);
 
   /**
    * @brief   Create anchor configurations
@@ -50,7 +50,8 @@ class RetinaNetAnchorGenerator {
   int num_scales;
   std::vector<std::pair<float, float>> aspect_ratios;
   float anchor_scale;
-  int image_size;
+  int image_width;
+  int image_height;
   std::vector<std::vector<AnchorBox>> anchor_bboxes;
   std::map<int, std::vector<AnchorConfig>> anchor_configs;
 };

@@ -30,6 +30,7 @@ typedef struct _ModelConfig {
 
 #define WRAPPER(realfunc) inference_wrapper_##realfunc
 CREATE_WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0)
+CREATE_WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0_Landscape)
 
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVI_SUCCESS;
@@ -48,6 +49,21 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   } else if (strcmp(model_name, "mobiledetv2-vehicle-d0") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0;
     config->inference = WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0);
+  } else if (strcmp(model_name, "mobiledetv2-lite-ls") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_LANDSCAPE;
+    config->inference = CVI_AI_MobileDetV2_Lite_Landscape;
+  } else if (strcmp(model_name, "mobiledetv2-d0-ls") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0_LANDSCAPE;
+    config->inference = CVI_AI_MobileDetV2_D0_Landscape;
+  } else if (strcmp(model_name, "mobiledetv2-d1-ls") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1_LANDSCAPE;
+    config->inference = CVI_AI_MobileDetV2_D1_Landscape;
+  } else if (strcmp(model_name, "mobiledetv2-d2-ls") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2_LANDSCAPE;
+    config->inference = CVI_AI_MobileDetV2_D2_Landscape;
+  } else if (strcmp(model_name, "mobiledetv2-vehicle-d0-ls") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0_LANDSCAPE;
+    config->inference = WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0_Landscape);
   } else {
     ret = CVI_FAILURE;
   }
@@ -94,6 +110,11 @@ int parse_args(int argc, char *argv[], Argument *args) {
         "mobiledetv2-d0, "
         "mobiledetv2-d1, "
         "mobiledetv2-d2, "
+        "mobiledetv2-lite-ls, "
+        "mobiledetv2-d0-ls, "
+        "mobiledetv2-d1-ls, "
+        "mobiledetv2-d2-ls, "
+        "mobiledetv2-vehicle-d0-ls, "
         "mobiledetv2-vehicle-d0}, default: mobiledetv2-d0\n\n",
         argv[0]);
     return CVI_FAILURE;

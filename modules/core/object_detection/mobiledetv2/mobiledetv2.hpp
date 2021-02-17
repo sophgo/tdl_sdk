@@ -32,6 +32,12 @@ class MobileDetV2 final : public Core {
     d2,          // MobileDetV2-D2
     lite,        // MobileDetV2-Lite
     vehicle_d0,  // MobileDetV2-Vehicle-D0
+
+    d0_ls,          // MobileDetV2-D0-Landscape
+    d1_ls,          // MobileDetV2-D1-Landscape
+    d2_ls,          // MobileDetV2-D2-Landscape
+    lite_ls,        // MobileDetV2-Lite-Landscape
+    vehicle_d0_ls,  // MobileDetV2-Vehicle-D0-Landscape
   };
 
   struct CvimodelInfo {
@@ -42,7 +48,8 @@ class MobileDetV2 final : public Core {
     std::vector<std::pair<float, float>> aspect_ratios;
     float anchor_scale;
 
-    size_t image_size;
+    size_t image_width;
+    size_t image_height;
     int num_classes;
     std::vector<int> strides;
     std::map<int, std::string> class_out_names;

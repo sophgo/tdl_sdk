@@ -149,16 +149,16 @@ static void decode_box(const float *const box, const AnchorBox &anchor, const Pt
   det->y2 = ycenter + h / 2;
 }
 
-static void clip_bbox(const size_t image_size, const PtrDectRect &box) {
+static void clip_bbox(const size_t image_width, const size_t image_height, const PtrDectRect &box) {
   if (box->x1 < 0) box->x1 = 0;
   if (box->y1 < 0) box->y1 = 0;
   if (box->x2 < 0) box->x2 = 0;
   if (box->y2 < 0) box->y2 = 0;
 
-  if (box->x1 >= image_size) box->x1 = image_size - 1;
-  if (box->y1 >= image_size) box->y1 = image_size - 1;
-  if (box->x2 >= image_size) box->x2 = image_size - 1;
-  if (box->y2 >= image_size) box->y2 = image_size - 1;
+  if (box->x1 >= image_width) box->x1 = image_width - 1;
+  if (box->y1 >= image_height) box->y1 = image_height - 1;
+  if (box->x2 >= image_width) box->x2 = image_width - 1;
+  if (box->y2 >= image_height) box->y2 = image_height - 1;
 }
 
 static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<int> strides,
@@ -181,7 +181,8 @@ MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
       m_iou_threshold(iou_thresh) {
   RetinaNetAnchorGenerator generator = RetinaNetAnchorGenerator(
       m_model_config.min_level, m_model_config.max_level, m_model_config.num_scales,
-      m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_size);
+      m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_width,
+      m_model_config.image_height);
   m_anchors = generator.get_anchor_boxes();
 
   m_model_threshold = m_model_config.default_score_threshold;
@@ -267,7 +268,7 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
           float dequant_box[4];
           Dequantize(bboxes + box_index, dequant_box, bbox_dequant_thresh, 4);
           decode_box(dequant_box, anchors[box_index / 4], det);
-          clip_bbox(m_model_config.image_size, det);
+          clip_bbox(m_model_config.image_width, m_model_config.image_height, det);
           det_vec->push_back(det);
         }
       }
@@ -411,7 +412,9 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
 
   switch (model) {
     case Model::d0:
-      config.image_size = 512;
+    case Model::d0_ls:
+      config.image_height = model == Model::d0 ? 512 : 384;
+      config.image_width = 512;
       config.class_dequant_thresh = {{8, 17.464866638183594},
                                      {16, 15.640022277832031},
                                      {32, 14.935582160949707},
@@ -426,7 +429,9 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       config.default_score_threshold = 0.4;
       break;
     case Model::d1:
-      config.image_size = 640;
+    case Model::d1_ls:
+      config.image_height = model == Model::d1 ? 640 : 384;
+      config.image_width = 640;
       config.class_dequant_thresh = {{8, 14.168907165527344},
                                      {16, 15.155534744262695},
                                      {32, 16.111759185791016},
@@ -441,7 +446,9 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       config.default_score_threshold = 0.3;
       break;
     case Model::d2:
-      config.image_size = 768;
+    case Model::d2_ls:
+      config.image_height = model == Model::d2 ? 768 : 512;
+      config.image_width = 768;
       config.class_dequant_thresh = {{8, 11.755056381225586},
                                      {16, 12.826586723327637},
                                      {32, 13.664835929870605},
@@ -456,8 +463,11 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       config.default_score_threshold = 0.3;
       break;
     case Model::lite:
+    case Model::lite_ls:
       config.num_classes = 9;
-      config.image_size = 512;
+      config.image_height = model == Model::lite ? 512 : 384;
+      config.image_width = 512;
+
       config.class_dequant_thresh = {{8, 12.48561954498291},
                                      {16, 11.416889190673828},
                                      {32, 13.258634567260742},
@@ -472,8 +482,10 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       config.default_score_threshold = 0.3;
       break;
     case Model::vehicle_d0:
+    case Model::vehicle_d0_ls:
       config.num_classes = 3;
-      config.image_size = 512;
+      config.image_height = model == Model::lite ? 512 : 384;
+      config.image_width = 512;
       config.class_dequant_thresh = {{8, 8.599571228027344},
                                      {16, 8.887327194213867},
                                      {32, 9.710219383239746},
@@ -492,7 +504,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
         if (orig_id == 2) return static_cast<int>(CVI_AI_DET_TYPE_MOTORBIKE);
         return static_cast<int>(CVI_AI_DET_TYPE_END);
       };
-
       break;
   }
 

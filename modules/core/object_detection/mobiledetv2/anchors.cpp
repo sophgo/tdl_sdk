@@ -9,13 +9,15 @@ AnchorConfig::AnchorConfig(int _stride, float _octave_scale, std::pair<float, fl
 
 RetinaNetAnchorGenerator::RetinaNetAnchorGenerator(
     int _min_level, int _max_level, int _num_scales,
-    const std::vector<pair<float, float>> &_aspect_ratios, float _anchor_scale, int _image_size)
+    const std::vector<pair<float, float>> &_aspect_ratios, float _anchor_scale, int _image_width,
+    int _image_height)
     : min_level(_min_level),
       max_level(_max_level),
       num_scales(_num_scales),
       aspect_ratios(_aspect_ratios),
       anchor_scale(_anchor_scale),
-      image_size(_image_size) {
+      image_width(_image_width),
+      image_height(_image_height) {
   _generate_configs();
   _generate_boxes();
 }
@@ -38,8 +40,8 @@ void RetinaNetAnchorGenerator::_generate_boxes() {
     vector<AnchorBox> &boxes_level = anchor_bboxes[anchor_bboxes.size() - 1];
     int stride = anchor_configs[level][0].stride;
 
-    for (int y = stride / 2; y < image_size; y += stride) {
-      for (int x = stride / 2; x < image_size; x += stride) {
+    for (int y = stride / 2; y < image_height; y += stride) {
+      for (int x = stride / 2; x < image_width; x += stride) {
         for (auto config : anchor_configs[level]) {
           float octave_scale = config.octave_scale;
 

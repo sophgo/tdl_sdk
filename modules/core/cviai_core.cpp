@@ -331,6 +331,21 @@ CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E 
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2: {
       instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d2);
     } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_LANDSCAPE: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::lite_ls);
+    } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0_LANDSCAPE: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::vehicle_d0_ls);
+    } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0_LANDSCAPE: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d0_ls);
+    } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1_LANDSCAPE: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d1_ls);
+    } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2_LANDSCAPE: {
+      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d2_ls);
+    } break;
     case CVI_AI_SUPPORTED_MODEL_YOLOV3: {
       instance = getInferenceInstance<Yolov3>(config, ctx);
     } break;
@@ -520,6 +535,41 @@ CVI_S32 CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, 
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2, MobileDetV2::Model::d2, handle,
                          frame, obj, det_type);
+}
+
+CVI_S32 CVI_AI_MobileDetV2_Vehicle_D0_Landscape(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                                cvai_object_t *obj) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Vehicle_D0");
+  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0_LANDSCAPE,
+                         MobileDetV2::Model::vehicle_d0, handle, frame, obj, CVI_DET_TYPE_ALL);
+}
+
+CVI_S32 CVI_AI_MobileDetV2_Lite_Landscape(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                          cvai_object_t *obj, cvai_obj_det_type_e det_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Lite");
+  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_LANDSCAPE,
+                         MobileDetV2::Model::lite, handle, frame, obj, det_type);
+}
+
+CVI_S32 CVI_AI_MobileDetV2_D0_Landscape(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                        cvai_object_t *obj, cvai_obj_det_type_e det_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D0");
+  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0_LANDSCAPE, MobileDetV2::Model::d0,
+                         handle, frame, obj, det_type);
+}
+
+CVI_S32 CVI_AI_MobileDetV2_D1_Landscape(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                        cvai_object_t *obj, cvai_obj_det_type_e det_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D1");
+  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1_LANDSCAPE, MobileDetV2::Model::d1,
+                         handle, frame, obj, det_type);
+}
+
+CVI_S32 CVI_AI_MobileDetV2_D2_Landscape(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                        cvai_object_t *obj, cvai_obj_det_type_e det_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
+  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2_LANDSCAPE, MobileDetV2::Model::d2,
+                         handle, frame, obj, det_type);
 }
 
 CVI_S32 CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
