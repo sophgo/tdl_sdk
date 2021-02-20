@@ -90,6 +90,9 @@ include (cmake/middleware.cmake)
 # Check if ive exists.
 include (${IVE_SDK_ROOT}/cmake/ive.cmake)
 
+
+include (cmake/cvi_rtsp.cmake)
+
 # 3rdparty libraries
 include(cmake/thirdparty.cmake)
 
@@ -97,7 +100,8 @@ include(cmake/thirdparty.cmake)
 include_directories(${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
-                    ${MIDDLEWARE_INCLUDES})
+                    ${MIDDLEWARE_INCLUDES}
+                    ${cvi_rtsp_INCLUDE})
 add_subdirectory(modules)
 add_subdirectory(sample)
 add_subdirectory(regression)

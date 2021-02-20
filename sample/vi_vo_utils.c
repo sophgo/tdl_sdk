@@ -1,5 +1,7 @@
 
 #include "vi_vo_utils.h"
+#include <cvi_venc.h>
+#include <stdlib.h>
 #include "core/utils/vpss_helper.h"
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum) {
@@ -110,7 +112,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum) {
   return s32Ret;
 }
 
-CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig) {
+static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   s32Ret = SAMPLE_COMM_VO_GetDefConfig(stVoConfig);
   if (s32Ret != CVI_SUCCESS) {
@@ -178,4 +180,244 @@ CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN 
   }
 
   return s32Ret;
+}
+
+static void _initInputCfg(chnInputCfg *ipIc) {
+  ipIc->rcMode = -1;
+  ipIc->iqp = -1;
+  ipIc->pqp = -1;
+  ipIc->gop = -1;
+  ipIc->bitrate = -1;
+  ipIc->firstFrmstartQp = -1;
+  ipIc->num_frames = -1;
+  ipIc->framerate = 30;
+  ipIc->maxQp = -1;
+  ipIc->minQp = -1;
+  ipIc->maxIqp = -1;
+  ipIc->minIqp = -1;
+}
+
+static void rtsp_connect(const char *ip, void *arg) { printf("connect: %s\n", ip); }
+
+static void rtsp_disconnect(const char *ip, void *arg) { printf("disconnect: %s\n", ip); }
+
+static PIC_SIZE_E get_output_size(CVI_S32 width, CVI_S32 height) {
+  if (width == 1280 && height == 720) {
+    return PIC_720P;
+  } else if (width == 1920 && height == 1080) {
+    return PIC_1080P;
+  } else {
+    return PIC_BUTT;
+  }
+}
+
+static CVI_S32 InitRTSP(VencCodec codec, CVI_S32 frameWidth, CVI_S32 frameHeight,
+                        OutputContext *context) {
+  CVI_S32 s32Ret = CVI_SUCCESS;
+  VENC_CHN VencChn[] = {0};
+  PAYLOAD_TYPE_E enPayLoad = codec == CODEC_H264 ? PT_H264 : PT_H265;
+  PIC_SIZE_E enSize = get_output_size(frameWidth, frameHeight);
+  if (enSize == PIC_BUTT) {
+    printf("Unsupported resolution: (%#x, %#x)", frameWidth, frameHeight);
+    return CVI_FAILURE;
+  }
+
+  VENC_GOP_MODE_E enGopMode = VENC_GOPMODE_NORMALP;
+  VENC_GOP_ATTR_S stGopAttr;
+  SAMPLE_RC_E enRcMode;
+  CVI_U32 u32Profile = 0;
+
+  _initInputCfg(&context->input_cfg);
+  strcpy(context->input_cfg.codec, codec == CODEC_H264 ? "264" : "265");
+
+  context->input_cfg.rcMode = 0;  // cbr
+  context->input_cfg.iqp = 38;
+  context->input_cfg.pqp = 38;
+  context->input_cfg.gop = 50;
+  context->input_cfg.bitrate = 10240;  // if fps = 20
+  context->input_cfg.firstFrmstartQp = 34;
+  context->input_cfg.num_frames = -1;
+  context->input_cfg.framerate = 25;
+  context->input_cfg.srcFramerate = 25;
+  context->input_cfg.maxQp = 42;
+  context->input_cfg.minQp = 26;
+  context->input_cfg.maxIqp = 42;
+  context->input_cfg.minIqp = 26;
+
+  enRcMode = (SAMPLE_RC_E)context->input_cfg.rcMode;
+
+  s32Ret = SAMPLE_COMM_VENC_GetGopAttr(enGopMode, &stGopAttr);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("[Err]Venc Get GopAttr for %#x!\n", s32Ret);
+    return CVI_FAILURE;
+  }
+
+  s32Ret = SAMPLE_COMM_VENC_Start(&context->input_cfg, VencChn[0], enPayLoad, enSize, enRcMode,
+                                  u32Profile, CVI_FALSE, &stGopAttr);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("[Err]Venc Start failed for %#x!\n", s32Ret);
+    return CVI_FAILURE;
+  }
+
+  CVI_RTSP_CONFIG config = {0};
+  config.port = 554;
+
+  context->rtsp_context = NULL;
+  if (0 > CVI_RTSP_Create(&context->rtsp_context, &config)) {
+    printf("fail to create rtsp contex\n");
+    return CVI_FAILURE;
+  }
+
+  context->session = NULL;
+  CVI_RTSP_SESSION_ATTR attr = {0};
+  attr.video.codec = codec == CODEC_H264 ? RTSP_VIDEO_H264 : RTSP_VIDEO_H265;
+
+  snprintf(attr.name, sizeof(attr.name), "%s", codec == CODEC_H264 ? "h264" : "h265");
+
+  CVI_RTSP_CreateSession(context->rtsp_context, &attr, &context->session);
+
+  // set listener
+  context->listener.onConnect = rtsp_connect;
+  context->listener.argConn = context->rtsp_context;
+  context->listener.onDisconnect = rtsp_disconnect;
+
+  CVI_RTSP_SetListener(context->rtsp_context, &context->listener);
+
+  if (0 > CVI_RTSP_Start(context->rtsp_context)) {
+    printf("fail to start\n");
+    return CVI_FAILURE;
+  }
+  printf("init done\n");
+  return s32Ret;
+}
+
+CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeight,
+                   OutputContext *context) {
+  context->type = outputType;
+  CVI_S32 s32Ret = CVI_SUCCESS;
+  switch (outputType) {
+    case OUTPUT_TYPE_PANEL: {
+      printf("Init panel\n");
+      context->voChn = 0;
+      context->voLayer = 0;
+      SAMPLE_VO_CONFIG_S voConfig;
+      s32Ret = InitVO(frameWidth, frameHeight, &voConfig);
+      if (s32Ret != CVI_SUCCESS) {
+        printf("CVI_Init_Video_Output failed with %d\n", s32Ret);
+        return s32Ret;
+      }
+      CVI_VO_HideChn(context->voLayer, context->voChn);
+      return CVI_SUCCESS;
+    }
+    case OUTPUT_TYPE_RTSP: {
+      printf("Init rtsp\n");
+      return InitRTSP(CODEC_H264, frameWidth, frameHeight, context);
+    }
+    default:
+      printf("Unsupported output typed: %x\n", outputType);
+      return CVI_FAILURE;
+  };
+
+  return CVI_SUCCESS;
+}
+
+static CVI_S32 panel_send_frame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context) {
+  CVI_S32 s32Ret = CVI_VO_SendFrame(context->voLayer, context->voChn, stVencFrame, -1);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VO_SendFrame failed with %#x\n", s32Ret);
+  }
+  CVI_VO_ShowChn(context->voLayer, context->voChn);
+  return s32Ret;
+}
+
+static CVI_S32 rtsp_send_frame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context) {
+  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_RTSP_SESSION *session = context->session;
+
+  CVI_S32 s32SetFrameMilliSec = 20000;
+  VENC_STREAM_S stStream;
+  VENC_CHN_ATTR_S stVencChnAttr;
+  VENC_CHN_STATUS_S stStat;
+  VENC_CHN VencChn = 0;
+  s32Ret = CVI_VENC_SendFrame(VencChn, stVencFrame, s32SetFrameMilliSec);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VENC_SendFrame failed! %d\n", s32Ret);
+    return s32Ret;
+  }
+
+  s32Ret = CVI_VENC_GetChnAttr(VencChn, &stVencChnAttr);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VENC_GetChnAttr, VencChn[%d], s32Ret = %d\n", VencChn, s32Ret);
+    return s32Ret;
+  }
+
+  s32Ret = CVI_VENC_QueryStatus(VencChn, &stStat);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VENC_QueryStatus failed with %#x!\n", s32Ret);
+    return s32Ret;
+  }
+  if (!stStat.u32CurPacks) {
+    printf("NOTE: Current frame is NULL!\n");
+    return s32Ret;
+  }
+
+  stStream.pstPack = (VENC_PACK_S *)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
+  if (stStream.pstPack == NULL) {
+    printf("malloc memory failed!\n");
+    return s32Ret;
+  }
+
+  s32Ret = CVI_VENC_GetStream(VencChn, &stStream, -1);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VENC_GetStream failed with %#x!\n", s32Ret);
+    free(stStream.pstPack);
+    stStream.pstPack = NULL;
+    return s32Ret;
+  }
+
+  VENC_PACK_S *ppack;
+  CVI_RTSP_DATA data = {0};
+  memset(&data, 0, sizeof(CVI_RTSP_DATA));
+
+  data.blockCnt = stStream.u32PackCount;
+  for (unsigned int i = 0; i < stStream.u32PackCount; i++) {
+    ppack = &stStream.pstPack[i];
+    data.dataPtr[i] = ppack->pu8Addr + ppack->u32Offset;
+    data.dataLen[i] = ppack->u32Len - ppack->u32Offset;
+  }
+
+  CVI_RTSP_WriteFrame(context->rtsp_context, session->video, &data);
+
+  s32Ret = CVI_VENC_ReleaseStream(VencChn, &stStream);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("CVI_VENC_ReleaseStream, s32Ret = %d\n", s32Ret);
+    free(stStream.pstPack);
+    stStream.pstPack = NULL;
+    return s32Ret;
+  }
+
+  free(stStream.pstPack);
+  stStream.pstPack = NULL;
+  return s32Ret;
+}
+
+CVI_S32 SendOutputFrame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context) {
+  if (context->type == OUTPUT_TYPE_PANEL) {
+    return panel_send_frame(stVencFrame, context);
+  } else if (context->type == OUTPUT_TYPE_RTSP) {
+    return rtsp_send_frame(stVencFrame, context);
+  } else {
+    printf("Failed to send output frame: Wrong output type(%x)\n", context->type);
+    return CVI_FAILURE;
+  }
+}
+
+CVI_S32 DestoryOutput(OutputContext *context) {
+  if (context->type == OUTPUT_TYPE_RTSP) {
+    CVI_RTSP_Stop(context->rtsp_context);
+    CVI_RTSP_DestroySession(context->rtsp_context, context->session);
+    CVI_RTSP_Destroy(&context->rtsp_context);
+    SAMPLE_COMM_VENC_Stop(0);
+  }
+  return CVI_SUCCESS;
 }

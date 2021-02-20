@@ -49,10 +49,14 @@ SAMPLE_VI_CONFIG_S stViConfig;
 char codec[] = "h264";
 
 int main(int argc, char **argv) {
-  if (argc != 5) {
+  if (argc != 6) {
     printf(
         "Usage: %s <retina_model_path> <mask_classification_model> <eye_classification_model> "
-        "<yawn_classification_model>.\n",
+        "<yawn_classification_model> <video output>.\n"
+        "\tretina_model_path, path to retinaface model\n"
+        "\tmask_classification_model, path to mask classification model\n"
+        "\teye_classification_model, path to eye classification model\n"
+        "\tvideo output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
     return CVI_FAILURE;
   }
@@ -61,6 +65,8 @@ int main(int argc, char **argv) {
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
+
+  CVI_S32 voType = atoi(argv[5]);
 
   CVI_S32 s32Ret = CVI_SUCCESS;
   //****************************************************************
@@ -72,10 +78,9 @@ int main(int argc, char **argv) {
   VPSS_CHN VpssChnVO = VPSS_CHN2;
   CVI_S32 GrpWidth = 1920;
   CVI_S32 GrpHeight = 1080;
-  CVI_U32 VoLayer = 0;
-  CVI_U32 VoChn = 0;
+
   SAMPLE_VI_CONFIG_S stViConfig;
-  SAMPLE_VO_CONFIG_S stVoConfig;
+
   s32Ret = InitVI(&stViConfig, &DevNum);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video input failed with %d\n", s32Ret);
@@ -88,15 +93,19 @@ int main(int argc, char **argv) {
 
   const CVI_U32 voWidth = 1280;
   const CVI_U32 voHeight = 720;
-  s32Ret = InitVO(voWidth, voHeight, &stVoConfig);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("CVI_Init_Video_Output failed with %d\n", s32Ret);
-    return s32Ret;
-  }
-  CVI_VO_HideChn(VoLayer, VoChn);
 
-  s32Ret =
-      InitVPSS(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight, ViPipe, true);
+  OutputContext outputContext = {0};
+  if (voType) {
+    OutputType outputType = voType == 1 ? OUTPUT_TYPE_PANEL : OUTPUT_TYPE_RTSP;
+    s32Ret = InitOutput(outputType, voWidth, voHeight, &outputContext);
+    if (s32Ret != CVI_SUCCESS) {
+      printf("CVI_Init_Video_Output failed with %d\n", s32Ret);
+      return s32Ret;
+    }
+  }
+
+  s32Ret = InitVPSS(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight, ViPipe,
+                    voType != 0);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video process group 0 failed with %d\n", s32Ret);
     return s32Ret;
@@ -294,11 +303,11 @@ int main(int argc, char **argv) {
         CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
       }
 
-      s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);
+      s32Ret = SendOutputFrame(&stVOFrame, &outputContext);
       if (s32Ret != CVI_SUCCESS) {
-        printf("CVI_VO_SendFrame failed with %#x\n", s32Ret);
+        printf("Send Output Frame NG\n");
+        break;
       }
-      CVI_VO_ShowChn(VoLayer, VoChn);
 
       if (CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &stVencFrame) != 0) {
         SAMPLE_PRT("CVI_VPSS_ReleaseChnFrame chn1 NG\n");
@@ -312,6 +321,7 @@ int main(int argc, char **argv) {
     }
   }
 
+  DestoryOutput(&outputContext);
   SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, VpssChn, VpssGrp);
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   abChnEnable[VpssChn] = CVI_TRUE;

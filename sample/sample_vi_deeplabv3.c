@@ -151,11 +151,11 @@ int main(int argc, char *argv[]) {
     printf(
         "Usage: %s <model_path> <open vo 1 or 0>\n"
         "\t deeplabv3 model path\n"
-        "\t video output, 0: disable, 1: enable\n",
+        "\t video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
     return CVI_FAILURE;
   }
-  CVI_BOOL isVoOpened = (strcmp(argv[2], "1") == 0) ? true : false;
+  CVI_S32 voType = atoi(argv[2]);
 
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
@@ -173,10 +173,7 @@ int main(int argc, char *argv[]) {
   VPSS_CHN VpssChnVO = VPSS_CHN0;
   CVI_S32 GrpWidth = 1920;
   CVI_S32 GrpHeight = 1080;
-  CVI_U32 VoLayer = 0;
-  CVI_U32 VoChn = 0;
   SAMPLE_VI_CONFIG_S stViConfig;
-  SAMPLE_VO_CONFIG_S stVoConfig;
   s32Ret = InitVI(&stViConfig, &DevNum);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video input failed with %d\n", s32Ret);
@@ -189,13 +186,14 @@ int main(int argc, char *argv[]) {
 
   const CVI_U32 voWidth = 1280;
   const CVI_U32 voHeight = 720;
-  if (isVoOpened) {
-    s32Ret = InitVO(voWidth, voHeight, &stVoConfig);
+  OutputContext outputContext = {0};
+  if (voType) {
+    OutputType outputType = voType == 1 ? OUTPUT_TYPE_PANEL : OUTPUT_TYPE_RTSP;
+    s32Ret = InitOutput(outputType, voWidth, voHeight, &outputContext);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_Init_Video_Output failed with %d\n", s32Ret);
       return s32Ret;
     }
-    CVI_VO_HideChn(VoLayer, VoChn);
   }
 
   s32Ret =
@@ -206,13 +204,13 @@ int main(int argc, char *argv[]) {
     return s32Ret;
   }
 
-  printf("InitVPSSOutput\n");
-  s32Ret = InitVPSSOutput(VpssVoGrp, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight);
-  if (s32Ret != CVI_SUCCESS) {
-    printf("Init video process group 0 failed with %d\n", s32Ret);
-    return s32Ret;
+  if (voType) {
+    s32Ret = InitVPSSOutput(VpssVoGrp, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight);
+    if (s32Ret != CVI_SUCCESS) {
+      printf("Init video process group 0 failed with %d\n", s32Ret);
+      return s32Ret;
+    }
   }
-  printf("InitVPSSOutput done\n");
 
   // Init end
   //****************************************************************
@@ -278,7 +276,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Send frame to VO if opened.
-    if (isVoOpened) {
+    if (voType) {
       printf("label_frame: %d, %d, format: %d\n", blurFrame.stVFrame.u32Width,
              blurFrame.stVFrame.u32Height, blurFrame.stVFrame.enPixelFormat);
       CVI_VPSS_SendFrame(VpssVoGrp, &blurFrame, -1);
@@ -294,12 +292,11 @@ int main(int argc, char *argv[]) {
         break;
       }
 
-      s32Ret = CVI_VO_SendFrame(VoLayer, VoChn, &stVOFrame, -1);
+      s32Ret = SendOutputFrame(&stVOFrame, &outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("CVI_VO_SendFrame failed with %#x\n", s32Ret);
         break;
       }
-      CVI_VO_ShowChn(VoLayer, VoChn);
       s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChnVO, &stVOFrame);
       if (s32Ret != CVI_SUCCESS) {
         printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
@@ -326,6 +323,7 @@ int main(int argc, char *argv[]) {
 
   CVI_IVE_DestroyHandle(ive_handle);
   CVI_AI_DestroyHandle(facelib_handle);
+  DestoryOutput(&outputContext);
 
   // Exit vpss stuffs
   SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, VpssChn1, VpssGrp);
