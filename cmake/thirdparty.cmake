@@ -37,7 +37,7 @@ message("Content downloaded to ${libeigen_SOURCE_DIR}")
 
 FetchContent_Declare(
   neon2sse
-  GIT_REPOSITORY  https://github.com/intel/ARM_NEON_2_x86_SSE.git
+  GIT_REPOSITORY  http://10.58.65.3:8480/jiaji.huang/arm_neon_2_x86_sse.git
   GIT_TAG origin/master
 )
 FetchContent_GetProperties(neon2sse)
@@ -50,7 +50,7 @@ message("Content downloaded to ${neon2sse_SOURCE_DIR}")
 include(FetchContent)
 FetchContent_Declare(
   nlohmannjson
-  URL      https://github.com/nlohmann/json/releases/download/v3.9.1/json.hpp
+  URL      http://10.58.65.3:8480/jiaji.huang/json/uploads/b3b2d33c7be62b502a21e11e58ff1e9b/json.hpp
   DOWNLOAD_NO_EXTRACT TRUE
 )
 FetchContent_MakeAvailable(nlohmannjson)
