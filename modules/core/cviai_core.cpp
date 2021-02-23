@@ -651,8 +651,7 @@ CVI_S32 CVI_AI_LicensePlateRecognition(const cviai_handle_t handle, VIDEO_FRAME_
 }
 
 CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                     cvai_object_t *vehicle_meta,
-                                     cvai_object_t *license_plate_meta) {
+                                     cvai_object_t *vehicle_meta) {
   TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateDetection");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   LicensePlateDetection *lpd_model =
@@ -662,7 +661,7 @@ CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle, VIDEO_FRAME_IN
     return CVI_FAILURE;
   }
 
-  return lpd_model->inference(frame, vehicle_meta, license_plate_meta);
+  return lpd_model->inference(frame, vehicle_meta);
 }
 
 // Pose Detection

@@ -27,6 +27,10 @@ LicensePlateRecognition::~LicensePlateRecognition() {}
 
 int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
                                        cvai_object_t *license_plate_meta) {
+  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
+    LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
+    return CVI_FAILURE;
+  }
 #if DEBUG_LICENSE_PLATE_DETECTION
   printf("[%s:%d] inference\n", __FILE__, __LINE__);
   std::stringstream s_str;
@@ -60,12 +64,6 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     cv::cvtColor(sub_cvFrame, greyMat, cv::COLOR_RGB2GRAY); /* BGR or RGB ? */
     cv::cvtColor(greyMat, sub_cvFrame, cv::COLOR_GRAY2RGB);
 
-#if DEBUG_LICENSE_PLATE_DETECTION
-    s_str.str("");
-    s_str << "tmp_license_plate_" << n << ".jpg";
-    // cv::imwrite(s_str.str().c_str(), greyMat);
-#endif
-
     prepareInputTensor(sub_cvFrame);
 
     std::vector<VIDEO_FRAME_INFO_S *> dummyFrames = {frame};
@@ -74,10 +72,6 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     float *out_code = getOutputRawPtr<float>(OUTPUT_NAME);
 
     std::string id_number = greedy_decode(out_code);
-
-    // TODO: For backward compatibility, remove old field
-    strncpy(license_plate_meta->info[n].name, id_number.c_str(),
-            sizeof(license_plate_meta->info[n].name));
 
     strncpy(v_meta->license_char, id_number.c_str(), sizeof(v_meta->license_char));
   }

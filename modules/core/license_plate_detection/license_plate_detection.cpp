@@ -6,6 +6,8 @@
 #include "cvi_sys.h"
 #include "face_utils.hpp"
 
+#include "core/utils/vpss_helper.h"
+
 #include <sstream>
 #include "opencv2/opencv.hpp"
 
@@ -16,56 +18,80 @@
 
 namespace cviai {
 
-LicensePlateDetection::LicensePlateDetection() : Core(CVI_MEM_SYSTEM) {}
+LicensePlateDetection::LicensePlateDetection() : Core(CVI_MEM_DEVICE) {}
 
 LicensePlateDetection::~LicensePlateDetection() {}
 
-static std::vector<cv::Mat> crop_vehicle(VIDEO_FRAME_INFO_S *frame, cvai_object_t *vehicle_meta,
-                                         float *rs_scale) {
-  frame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
-  cv::Mat cv_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
-                   frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
-  if (cv_frame.data == nullptr) {
-    LOGE("src image is empty!\n");
-    return std::vector<cv::Mat>{};
+int LicensePlateDetection::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
+#if DEBUG_LICENSE_PLATE_DETECTION
+  std::cout << "LicensePlateDetection::setupInputPreprocess" << std::endl;
+#endif
+  if (data->size() != 1) {
+    LOGE("LicensePlateDetection only has 1 input.\n");
+    return CVI_FAILURE;
   }
-
-  std::stringstream s_str;
-
-  std::vector<cv::Mat> vehicle_image_list;
-  for (uint32_t i = 0; i < vehicle_meta->size; i++) {
-    cv::Rect roi;
-    roi.x = vehicle_meta->info[i].bbox.x1;
-    roi.y = vehicle_meta->info[i].bbox.y1;
-    roi.width = vehicle_meta->info[i].bbox.x2 - roi.x;
-    roi.height = vehicle_meta->info[i].bbox.y2 - roi.y;
-    cv::Mat vehicle_image = cv_frame(roi);
-
-    int cols = vehicle_image.cols;
-    int rows = vehicle_image.rows;
-    assert(roi.width == cols);
-    assert(roi.height == rows);
-    float h_scale = (float)VEHICLE_HEIGHT / rows;
-    float w_scale = (float)VEHICLE_WIDTH / cols;
-    float scale = MIN(h_scale, w_scale);
-    rs_scale[i] = scale;
-    cv::resize(vehicle_image, vehicle_image, cv::Size(floor(cols * scale), floor(rows * scale)));
-    cols = vehicle_image.cols;
-    rows = vehicle_image.rows;
-
-    cv::Mat out_image = cv::Mat::zeros(cv::Size(VEHICLE_WIDTH, VEHICLE_HEIGHT), CV_8UC3);
-    vehicle_image.copyTo(out_image(cv::Rect(0, 0, cols, rows)));
-
-    vehicle_image_list.push_back(out_image);
+  for (int i = 0; i < 3; i++) {
+    /* VPSS clip image to 128, we divide it by 2 first, then multiply by 2 in cvimodel preprocess */
+    (*data)[0].factor[i] = 0.5;
+    // (*data)[0].factor[i] = 1.0;
+    (*data)[0].mean[i] = 0.0;
   }
+  (*data)[0].rescale_type = RESCALE_RB;
+  (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
+  (*data)[0].use_quantize_scale = false;
+  (*data)[0].use_crop = true;
+  (*data)[0].keep_aspect_ratio = true;
 
-  return vehicle_image_list;
+  /* set model config */
+  CVI_SHAPE in_tensor_shape = getInputShape("input_raw");
+  vehicle_h = static_cast<int>(in_tensor_shape.dim[2]);
+  vehicle_w = static_cast<int>(in_tensor_shape.dim[3]);
+  out_tensor_h = vehicle_h / 16;
+  out_tensor_w = vehicle_w / 16;
+
+  return CVI_SUCCESS;
 }
 
-int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *vehicle_meta,
-                                     cvai_object_t *license_plate_meta) {
+int LicensePlateDetection::vpssPreprocess(
+    const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
+    std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {
+  auto *dstFrame = (*dstFrames)[0].get();
+  auto &vpssChnAttr = m_vpss_config[0].chn_attr;
+  auto &vpssCropAttr = m_vpss_config[0].crop_attr;
+  auto &factor = vpssChnAttr.stNormalize.factor;
+  auto &mean = vpssChnAttr.stNormalize.mean;
+  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, vpssCropAttr.stCropRect.u32Width,
+                        vpssCropAttr.stCropRect.u32Height, vpssChnAttr.u32Width,
+                        vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
+  mp_vpss_inst->sendCropChnFrame(srcFrames[0], &m_vpss_config[0].crop_attr,
+                                 &m_vpss_config[0].chn_attr, &m_vpss_config[0].chn_coeff, 1);
+  return mp_vpss_inst->getFrame(dstFrame, 0);
+}
+
+static void get_resize_scale(cvai_object_t *vehicle_meta, float *rs_scale, int vehicle_h,
+                             int vehicle_w) {
+  for (uint32_t i = 0; i < vehicle_meta->size; i++) {
+    float x = vehicle_meta->info[i].bbox.x1;
+    float y = vehicle_meta->info[i].bbox.y1;
+    float width = vehicle_meta->info[i].bbox.x2 - x;
+    float height = vehicle_meta->info[i].bbox.y2 - y;
+
+    int cols = static_cast<int>(width);
+    int rows = static_cast<int>(height);
+    float h_scale = (float)vehicle_h / rows;
+    float w_scale = (float)vehicle_w / cols;
+    float scale = MIN(h_scale, w_scale);
+    rs_scale[i] = scale;
+  }
+}
+
+int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *vehicle_meta) {
+  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
+    LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
+    return CVI_FAILURE;
+  }
 #if DEBUG_LICENSE_PLATE_DETECTION
+  std::stringstream s_str;
   printf("[%s:%d] inference\n", __FILE__, __LINE__);
 #endif
   if (vehicle_meta->size == 0) {
@@ -73,29 +99,24 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
     return CVI_SUCCESS;
   }
   float *rs_scale = new float[vehicle_meta->size];  // resize scale
-  std::vector<cv::Mat> input_mats = crop_vehicle(frame, vehicle_meta, rs_scale);
-  if (input_mats.size() != vehicle_meta->size) {
-    LOGE("input mat size != vehicle meta size\n");
-    std::cout << "input mat size != vehicle meta size" << std::endl;
-    return CVI_FAILURE;
-  }
-  frame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
-  cv::Mat cv_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
-                   frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
-  std::stringstream s_str;
+  get_resize_scale(vehicle_meta, rs_scale, vehicle_h, vehicle_w);
 
-  for (uint32_t n = 0; n < input_mats.size(); n++) {
-    prepareInputTensor(input_mats[n]);
-
-    std::vector<VIDEO_FRAME_INFO_S *> dummyFrames = {frame};
-    run(dummyFrames);
+  for (uint32_t n = 0; n < vehicle_meta->size; n++) {
+    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_ABS_COOR;
+    float x1 = vehicle_meta->info[n].bbox.x1;
+    float y1 = vehicle_meta->info[n].bbox.y1;
+    float x2 = vehicle_meta->info[n].bbox.x2;
+    float y2 = vehicle_meta->info[n].bbox.y2;
+    m_vpss_config[0].crop_attr.stCropRect = {(int32_t)x1, (int32_t)y1, (uint32_t)(x2 - x1),
+                                             (uint32_t)(y2 - y1)};
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+    run(frames);
 
     float *out_p = getOutputRawPtr<float>(OUTPUT_NAME_PROBABILITY);
     float *out_t = getOutputRawPtr<float>(OUTPUT_NAME_TRANSFORM);
 
     // TODO:
-    //   return more corner points, use std::vector<CornerPts>
+    //   return more corner points, use std::vector<CornerPts> ?
     CornerPts corner_pts;
     float score;
     bool detection_result = reconstruct(out_p, out_t, corner_pts, score, 0.9);
@@ -103,19 +124,6 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
     // TODO:
     //   add more points to bpts for false positive
     if (detection_result) {
-      // TODO: For backward compatibility, remove old field
-      if (license_plate_meta) {
-        license_plate_meta->info[n].bpts.size = 4;
-        license_plate_meta->info[n].bpts.x = (float *)malloc(sizeof(float) * 4);
-        license_plate_meta->info[n].bpts.y = (float *)malloc(sizeof(float) * 4);
-        for (int m = 0; m < 4; m++) {
-          license_plate_meta->info[n].bpts.x[m] =
-              corner_pts(0, m) / rs_scale[n] + vehicle_meta->info[n].bbox.x1;
-          license_plate_meta->info[n].bpts.y[m] =
-              corner_pts(1, m) / rs_scale[n] + vehicle_meta->info[n].bbox.y1;
-        }
-      }
-      /////////////////////////////////
       vehicle_meta->info[n].vehicle_properity =
           (cvai_vehicle_meta *)malloc(sizeof(cvai_vehicle_meta));
       for (int m = 0; m < 4; m++) {
@@ -170,12 +178,12 @@ bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts
   //            [  1.0,  1.0,  1.0,  1.0]]
   anchors << -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0;
   Eigen::Matrix<float, 2, 1> tensor_wh;
-  tensor_wh << OUT_TENSOR_W, OUT_TENSOR_H;
-  int tensor_size = OUT_TENSOR_H * OUT_TENSOR_W;
+  tensor_wh << out_tensor_w, out_tensor_h;
+  int tensor_size = out_tensor_h * out_tensor_w;
   std::vector<LicensePlateObjBBox> lp_cands;
-  for (int i = 0; i < OUT_TENSOR_H; i++) {
-    for (int j = 0; j < OUT_TENSOR_W; j++) {
-      int ij = i * OUT_TENSOR_W + j;
+  for (int i = 0; i < out_tensor_h; i++) {
+    for (int j = 0; j < out_tensor_w; j++) {
+      int ij = i * out_tensor_w + j;
       float prob_pos = t_prob[ij];
       float prob_neg = t_prob[tensor_size + ij];
       float exp_pos = std::exp(prob_pos);
@@ -210,7 +218,7 @@ bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts
 
   if (selected_LP.size() > 0) {
     for (auto it = selected_LP.begin(); it != selected_LP.end(); it++) {
-      Eigen::Matrix<float, 2, 4> corner_pts = it->getCornerPts();
+      Eigen::Matrix<float, 2, 4> corner_pts = it->getCornerPts(vehicle_w, vehicle_h);
       c_pts = corner_pts;
       ret_prob = it->prob();
       return true;

@@ -16,8 +16,5 @@ class LicensePlateRecognition final : public Core {
 
  private:
   void prepareInputTensor(cv::Mat &input_mat);
-
-  VB_BLK m_gdc_blk = (VB_BLK)-1;
-  VIDEO_FRAME_INFO_S m_wrap_frame;
 };
 }  // namespace cviai

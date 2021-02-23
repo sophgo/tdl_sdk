@@ -703,13 +703,11 @@ DLL_EXPORT CVI_S32 CVI_AI_LicensePlateRecognition(const cviai_handle_t handle,
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param vehicle_meta Vehicle object info
- * @param license_plate_meta License plate object info
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle,
                                                 VIDEO_FRAME_INFO_S *frame,
-                                                cvai_object_t *vehicle_meta,
-                                                cvai_object_t *license_plate_meta);
+                                                cvai_object_t *vehicle_meta);
 /**@}*/
 
 /**

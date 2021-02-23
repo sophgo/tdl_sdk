@@ -2,10 +2,6 @@
 #include <Eigen/Eigen>
 #include <vector>
 
-#define VEHICLE_HEIGHT 320
-#define VEHICLE_WIDTH 480
-#define OUT_TENSOR_H 20
-#define OUT_TENSOR_W 30
 #define NET_STRIDE 16
 #define SIDE (float)7.75
 
@@ -51,7 +47,7 @@ class LicensePlateObjBBox : public ObjectBBox {
   LicensePlateObjBBox();
   LicensePlateObjBBox(int cl, CornerPts corner_pts, float prob);
   virtual ~LicensePlateObjBBox();
-  CornerPts getCornerPts() const;
+  CornerPts getCornerPts(int vehicle_width, int vehicle_height) const;
 
  protected:
   CornerPts _corner_pts;

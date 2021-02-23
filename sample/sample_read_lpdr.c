@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 
     /* LP Detection */
     printf("CVI_AI_LicensePlateDetection ... start\n");
-    CVI_AI_LicensePlateDetection(ai_handle, &frame, &vehicle_obj, NULL);
+    CVI_AI_LicensePlateDetection(ai_handle, &frame, &vehicle_obj);
 
     /* LP Recognition */
     printf("CVI_AI_LicensePlateRecognition ... start\n");

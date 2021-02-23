@@ -75,9 +75,9 @@ LicensePlateObjBBox::LicensePlateObjBBox(int cl, CornerPts corner_pts, float pro
 
 LicensePlateObjBBox::~LicensePlateObjBBox() {}
 
-CornerPts LicensePlateObjBBox::getCornerPts() const {
+CornerPts LicensePlateObjBBox::getCornerPts(int vehicle_width, int vehicle_height) const {
   Eigen::Matrix<float, 2, 1> vehicle_wh;
-  vehicle_wh << VEHICLE_WIDTH, VEHICLE_HEIGHT;
+  vehicle_wh << vehicle_width, vehicle_height;
   // TODO:
   //   [fix] CornerPts c_pts = _corner_pts.colwise() * vehicle_wh;
   CornerPts c_pts = _corner_pts;
