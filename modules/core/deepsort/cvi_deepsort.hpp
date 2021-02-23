@@ -25,9 +25,11 @@ class Deepsort {
   static cvai_deepsort_config_t get_DefaultConfig();
 
   std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> track(
-      const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features);
+      const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features, int class_id = -1,
+      bool use_reid = true);
 
-  int track(cvai_object_t *obj, cvai_tracker_t *tracker_t);
+  int track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid = true,
+            bool track_by_class = true);
 
   void setConfig(cvai_deepsort_config_t ds_conf);
 
@@ -35,6 +37,7 @@ class Deepsort {
   void show_INFO_KalmanTrackers();
   std::vector<KalmanTracker> get_Trackers_UnmatchedLastTime() const;
   bool get_Tracker_ByID(uint64_t id, KalmanTracker &tracker) const;
+  std::string get_TrackersInfo_UnmatchedLastTime(std::string &str_info) const;
 
  private:
   uint64_t id_counter;

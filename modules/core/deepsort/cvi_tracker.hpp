@@ -6,6 +6,7 @@
 class Tracker {
  public:
   uint64_t id;
+  int class_id;
   BBOX bbox; /* format: top-left(x, y), width, height */
 };
 

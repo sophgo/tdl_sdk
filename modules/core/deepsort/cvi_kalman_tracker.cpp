@@ -5,8 +5,8 @@
 #include <iostream>
 
 KalmanTracker::KalmanTracker() {
-  // assert(0);
   id = -1;
+  class_id = -1;
   bbox = Eigen::MatrixXf::Zero(1, DIM_Z);
   tracker_state_ = TRACKER_STATE::MISS;
 
@@ -15,8 +15,10 @@ KalmanTracker::KalmanTracker() {
   P_ = Eigen::MatrixXf::Identity(DIM_X, DIM_X);
 }
 
-KalmanTracker::KalmanTracker(const uint64_t &id, const BBOX &bbox, const FEATURE &feature) {
+KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox,
+                             const FEATURE &feature) {
   this->id = id;
+  this->class_id = class_id;
   this->bbox = bbox;
   if (USE_COSINE_DISTANCE_FOR_FEATURE) {
     FEATURE tmp_feature = feature;
@@ -47,9 +49,11 @@ KalmanTracker::KalmanTracker(const uint64_t &id, const BBOX &bbox, const FEATURE
   P_(DIM_X - 2, DIM_X - 2) = pow(1e-5, 2);
 }
 
-KalmanTracker::KalmanTracker(const uint64_t &id, const BBOX &bbox, const FEATURE &feature,
+KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox,
+                             const FEATURE &feature,
                              const cvai_kalman_tracker_config_t &ktracker_conf) {
   this->id = id;
+  this->class_id = class_id;
   this->bbox = bbox;
   if (USE_COSINE_DISTANCE_FOR_FEATURE) {
     FEATURE tmp_feature = feature;
@@ -72,10 +76,12 @@ KalmanTracker::KalmanTracker(const uint64_t &id, const BBOX &bbox, const FEATURE
   P_ = Eigen::MatrixXf::Zero(DIM_X, DIM_X);
   for (int i = 0; i < DIM_X; i++) {
     if (ktracker_conf.P_std_x_idx[i] != -1) {
+      /* P(i) = (a[i] * x[idx[i]] + b[i])^2 */
       P_(i, i) = pow(ktracker_conf.P_std_alpha[i] * x_[ktracker_conf.P_std_x_idx[i]] +
                          ktracker_conf.P_std_beta[i],
                      2);
     } else {
+      /* P(i) = (b[i])^2 */
       P_(i, i) = pow(ktracker_conf.P_std_beta[i], 2);
     }
   }
@@ -101,11 +107,11 @@ void KalmanTracker::update_feature(const FEATURE &feature) {
   }
 }
 
-void KalmanTracker::update_state(bool is_matched) {
+void KalmanTracker::update_state(bool is_matched, int max_unmatched_num, int accreditation_thr) {
   if (is_matched) {
     if (tracker_state_ == TRACKER_STATE::PROBATION) {
       matched_counter += 1;
-      if (matched_counter >= ACCREDITATION_THRESHOLD) {
+      if (matched_counter >= accreditation_thr) {
         tracker_state_ = TRACKER_STATE::ACCREDITATION;
       }
     }
@@ -117,7 +123,7 @@ void KalmanTracker::update_state(bool is_matched) {
     }
     unmatched_times += 1;
     kalman_state_ = KALMAN_STAGE::UPDATED;
-    if (unmatched_times > MAX_UNMATCHED_NUM) {
+    if (unmatched_times > max_unmatched_num) {
       tracker_state_ = TRACKER_STATE::MISS;
     }
   }
@@ -184,7 +190,32 @@ COST_MATRIX KalmanTracker::getCostMatrix_BBox(const std::vector<KalmanTracker> &
   return cost_m;
 }
 
-float chi2inv95[10] = {0, 3.8415, 5.9915, 7.8147, 9.4877, 11.070, 12.592, 14.067, 15.507, 16.919};
+COST_MATRIX KalmanTracker::getCostMatrix_Mahalanobis(
+    const KalmanFilter &KF_, const std::vector<KalmanTracker> &K_Trackers,
+    const std::vector<BBOX> &BBoxes, const std::vector<int> &Tracker_IDXes,
+    const std::vector<int> &BBox_IDXes, const cvai_kalman_filter_config_t &kfilter_conf,
+    float gate_value) {
+  float chi2_threshold = chi2inv95[4];
+  COST_MATRIX cost_m(Tracker_IDXes.size(), BBox_IDXes.size());
+
+  BBOXES measurement_bboxes(BBox_IDXes.size(), 4);
+  for (size_t i = 0; i < BBox_IDXes.size(); i++) {
+    int bbox_idx = BBox_IDXes[i];
+    measurement_bboxes.row(i) = bbox_tlwh2xyah(BBoxes[bbox_idx]);
+  }
+  for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
+    int tracker_idx = Tracker_IDXes[i];
+    const KalmanTracker &tracker_ = K_Trackers[tracker_idx];
+    ROW_VECTOR maha2_d = KF_.mahalanobis(tracker_.kalman_state_, tracker_.x_, tracker_.P_,
+                                         measurement_bboxes, kfilter_conf);
+    for (int j = 0; j < maha2_d.cols(); j++) {
+      cost_m(i, j) = (maha2_d(0, j) > chi2_threshold) ? gate_value : maha2_d(0, j);
+    }
+  }
+
+  return cost_m;
+}
+
 void KalmanTracker::gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
                                                const std::vector<KalmanTracker> &K_Trackers,
                                                const std::vector<BBOX> &BBoxes,

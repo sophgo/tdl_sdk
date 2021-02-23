@@ -124,7 +124,7 @@ typedef enum {
  */
 typedef struct {
   cvai_trk_state_type_t state;
-  // cvai_bbox_t bbox;    /* Reserved tracker computed bbox */
+  cvai_bbox_t bbox; /* Reserved tracker computed bbox */
 } cvai_tracker_info_t;
 
 /** @struct cvai_tracker_t

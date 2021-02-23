@@ -658,10 +658,13 @@ DLL_EXPORT CVI_S32 CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle,
  * @param handle An AI SDK handle.
  * @param obj Input detected object with feature.
  * @param tracker_t Output tracker results.
+ * @param use_reid If true, track by DeepSORT algorithm, else SORT.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj,
-                                   cvai_tracker_t *tracker_t);
+                                   cvai_tracker_t *tracker_t, bool use_reid);
+
+DLL_EXPORT CVI_S32 CVI_AI_Deepsort_DebugInfo_1(const cviai_handle_t handle, char *debug_info);
 
 /**@}*/
 

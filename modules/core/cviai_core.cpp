@@ -622,8 +622,8 @@ CVI_S32 CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle, cvai_deepsort_con
   return 0;
 }
 
-CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj,
-                        cvai_tracker_t *tracker_t) {
+CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t,
+                        bool use_reid) {
   TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_Track");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Deepsort *ds_tracker = ctx->ds_tracker;
@@ -631,7 +631,22 @@ CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj,
     LOGE("Please initialize deepsort first.\n");
     return CVI_FAILURE;
   }
-  ctx->ds_tracker->track(obj, tracker_t);
+  ctx->ds_tracker->track(obj, tracker_t, use_reid);
+  return 0;
+}
+
+CVI_S32 CVI_AI_Deepsort_DebugInfo_1(const cviai_handle_t handle, char *debug_info) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Deepsort_DebugInfo_1");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Deepsort *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize deepsort first.\n");
+    return CVI_FAILURE;
+  }
+  std::string str_info;
+  ctx->ds_tracker->get_TrackersInfo_UnmatchedLastTime(str_info);
+  strncpy(debug_info, str_info.c_str(), 8192);
+
   return 0;
 }
 

@@ -26,6 +26,9 @@
 
 enum TRACKER_STATE { MISS = 0, PROBATION, ACCREDITATION };
 
+const float chi2inv95[10] = {0,      3.8415, 5.9915, 7.8147, 9.4877,
+                             11.070, 12.592, 14.067, 15.507, 16.919};
+
 class KalmanTracker : public Tracker {
  public:
   std::vector<FEATURE> features_;
@@ -35,11 +38,12 @@ class KalmanTracker : public Tracker {
   K_COVARIANCE_M P_;
   int unmatched_times;
   KalmanTracker();
-  KalmanTracker(const uint64_t &id, const BBOX &bbox, const FEATURE &feature);
-  KalmanTracker(const uint64_t &id, const BBOX &bbox, const FEATURE &feature,
+  KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox, const FEATURE &feature);
+  KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox, const FEATURE &feature,
                 const cvai_kalman_tracker_config_t &ktracker_conf);
 
-  void update_state(bool is_matched);
+  void update_state(bool is_matched, int max_unmatched_num = MAX_UNMATCHED_NUM,
+                    int accreditation_thr = ACCREDITATION_THRESHOLD);
   void update_bbox(const BBOX &bbox);
   void update_feature(const FEATURE &feature);
 
@@ -48,14 +52,23 @@ class KalmanTracker : public Tracker {
   static COST_MATRIX getCostMatrix_Feature(const std::vector<KalmanTracker> &KTrackers,
                                            const std::vector<BBOX> &BBoxes,
                                            const std::vector<FEATURE> &Features,
-                                           const std::vector<int> &Tracker_IDs,
-                                           const std::vector<int> &BBox_IDs);
+                                           const std::vector<int> &Tracker_IDXes,
+                                           const std::vector<int> &BBox_IDXes);
 
   static COST_MATRIX getCostMatrix_BBox(const std::vector<KalmanTracker> &KTrackers,
                                         const std::vector<BBOX> &BBoxes,
                                         const std::vector<FEATURE> &Features,
-                                        const std::vector<int> &Tracker_IDs,
-                                        const std::vector<int> &BBox_IDs);
+                                        const std::vector<int> &Tracker_IDXes,
+                                        const std::vector<int> &BBox_IDXes);
+
+  static COST_MATRIX getCostMatrix_Mahalanobis(const KalmanFilter &KF_,
+                                               const std::vector<KalmanTracker> &K_Trackers,
+                                               const std::vector<BBOX> &BBoxes,
+                                               const std::vector<int> &Tracker_IDXes,
+                                               const std::vector<int> &BBox_IDXes,
+                                               const cvai_kalman_filter_config_t &kfilter_conf,
+                                               float gate_value = __FLT_MAX__);
+
   static void gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
                                          const std::vector<KalmanTracker> &K_Trackers,
                                          const std::vector<BBOX> &BBoxes,
