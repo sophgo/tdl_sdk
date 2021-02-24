@@ -131,23 +131,23 @@ typedef struct {
  *  @ingroup core_cviaicore
  *  @brief The data structure for storing face meta.
  *
- *  @var cvai_face_info_t::r_eye_score
+ *  @var cvai_dms_t::r_eye_score
  *  The right eye score.
- *  @var cvai_face_info_t::l_eye_score
+ *  @var cvai_dms_t::l_eye_score
  *  The left eye score.
- *  @var cvai_face_info_t::yawn_score
+ *  @var cvai_dms_t::yawn_score
  *  The yawn score.
- *  @var cvai_face_info_t::phone_score
+ *  @var cvai_dms_t::phone_score
  *  The phone score.
- *  @var cvai_face_info_t::smoke_score
+ *  @var cvai_dms_t::smoke_score
  *  The smoke score.
- *  @var cvai_pts_t::landmarks_106
+ *  @var cvai_dms_t::landmarks_106
  *  The face 106 landmarks.
- *  @var cvai_pts_t::landmarks_5
+ *  @var cvai_dms_t::landmarks_5
  *  The face 5 landmarks which is the same as retinaface.
- *  @var cvai_face_info_t::head_pose
+ *  @var cvai_dms_t::head_pose
  *  The head pose.
- *  @var cvai_face_od_t::dms_od
+ *  @var cvai_dms_t::dms_od
  *  The dms od info.
  *
  *  @see cvai_face_info_t
@@ -162,7 +162,7 @@ typedef struct {
   cvai_pts_t landmarks_106;
   cvai_pts_t landmarks_5;
   cvai_head_pose_t head_pose;
-  cvai_dms_od_t* dms_od;
+  cvai_dms_od_t dms_od;
 } cvai_dms_t;
 
 /** @struct cvai_face_info_t
@@ -193,7 +193,7 @@ typedef struct {
  *  The mask score.
  *  @var cvai_face_info_t::face_quality
  *  The face quality.
- *  @var cvai_dms_t::dms
+ *  @var cvai_face_info_t::dms
  *  The dms info.
  *
  *  @see cvai_face_quality_t
@@ -213,7 +213,6 @@ typedef struct {
   float liveness_score;
   float mask_score;
   cvai_face_quality_t face_quality;
-  cvai_dms_t* dms;
 } cvai_face_info_t;
 
 /** @struct cvai_face_t
@@ -228,6 +227,8 @@ typedef struct {
  *  The current height. Affects the coordinate recovery of bbox and pts.
  *  @var cvai_face_t::info
  *  The information of each face.
+ *  @var cvai_face_t::dms
+ *  The dms of face.
  *
  *  @see cvai_face_info_t
  */
@@ -237,6 +238,7 @@ typedef struct {
   uint32_t height;
   meta_rescale_type_e rescale_type;
   cvai_face_info_t* info;
+  cvai_dms_t* dms;
 } cvai_face_t;
 
 #endif

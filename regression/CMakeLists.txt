@@ -97,5 +97,7 @@ buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai_core cviai_evalu
 buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_feature_matching INC ${REG_INCLUDES} DEPS cviai_core DEPS cviai_core cviai_service)
 buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
+buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
+buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core)

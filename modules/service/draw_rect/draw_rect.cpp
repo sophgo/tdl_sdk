@@ -261,7 +261,7 @@ int WriteMeta(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame) {
   rgb_color.r = DEFAULT_RECT_COLOR_R;
   rgb_color.g = DEFAULT_RECT_COLOR_G;
   rgb_color.b = DEFAULT_RECT_COLOR_B;
-  WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_RECT_THINKNESS);
+  WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THINKNESS);
   return CVI_SUCCESS;
 }
 
@@ -287,6 +287,8 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText) 
 template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
                                    const bool drawText);
 template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                                     const bool drawText);
+template int DrawMeta<cvai_dms_od_t>(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
                                      const bool drawText);
 
 int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {

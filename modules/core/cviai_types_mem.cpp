@@ -2,7 +2,6 @@
 #include "core/cviai_types_mem_internal.h"
 
 #include <string.h>
-
 // Free
 
 void CVI_AI_FreeCpp(cvai_feature_t *feature) {
@@ -32,6 +31,22 @@ void CVI_AI_FreeCpp(cvai_tracker_t *tracker) {
     tracker->info = NULL;
   }
   tracker->size = 0;
+}
+
+void CVI_AI_FreeCpp(cvai_dms_od_t *dms_od) {
+  if (dms_od->info != NULL) {
+    free(dms_od->info);
+    dms_od->info = NULL;
+  }
+  dms_od->size = 0;
+  dms_od->width = 0;
+  dms_od->height = 0;
+}
+
+void CVI_AI_FreeCpp(cvai_dms_t *dms) {
+  CVI_AI_FreeCpp(&dms->landmarks_106);
+  CVI_AI_FreeCpp(&dms->landmarks_5);
+  CVI_AI_FreeCpp(&dms->dms_od);
 }
 
 void CVI_AI_FreeCpp(cvai_face_info_t *face_info) {
@@ -94,6 +109,8 @@ void CVI_AI_FreeObjectInfo(cvai_object_info_t *obj_info) { CVI_AI_FreeCpp(obj_in
 
 void CVI_AI_FreeObject(cvai_object_t *obj) { CVI_AI_FreeCpp(obj); }
 
+void CVI_AI_FreeDMS(cvai_dms_t *dms) { CVI_AI_FreeCpp(dms); }
+
 // Copy
 
 void CVI_AI_CopyInfoCpp(const cvai_face_info_t *info, cvai_face_info_t *infoNew) {
@@ -145,6 +162,11 @@ void CVI_AI_CopyInfoCpp(const cvai_object_info_t *info, cvai_object_info_t *info
   infoNew->classes = info->classes;
 }
 
+void CVI_AI_CopyInfoCpp(const cvai_dms_od_info_t *info, cvai_dms_od_info_t *infoNew) {
+  memcpy(infoNew->name, info->name, sizeof(info->name));
+  infoNew->bbox = info->bbox;
+  infoNew->classes = info->classes;
+}
 void CVI_AI_CopyFaceInfo(const cvai_face_info_t *info, cvai_face_info_t *infoNew) {
   CVI_AI_CopyInfoCpp(info, infoNew);
 }

@@ -94,6 +94,16 @@ cvai_face_info_t info_rescale_c(const float width, const float height, const flo
   return face_info_new;
 }
 
+cvai_dms_od_info_t info_rescale_c(const float width, const float height, const float new_width,
+                                  const float new_height, const cvai_dms_od_info_t &dms_info) {
+  cvai_dms_od_info_t dms_info_new;
+  CVI_AI_CopyInfoCpp(&dms_info, &dms_info_new);
+
+  float ratio, pad_width, pad_height;
+  dms_info_new.bbox = box_rescale_c(new_width, new_height, width, height, dms_info.bbox, &ratio,
+                                    &pad_width, &pad_height);
+  return dms_info_new;
+}
 cvai_face_info_t info_rescale_rb(const float width, const float height, const float new_width,
                                  const float new_height, const cvai_face_info_t &face_info) {
   cvai_face_info_t face_info_new;

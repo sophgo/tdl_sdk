@@ -212,6 +212,9 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(const cvai_face_t *meta, VIDEO_FR
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta,
                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText);
+DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(const cvai_dms_od_t *meta,
+                                                       VIDEO_FRAME_INFO_S *frame,
+                                                       const bool drawText);
 
 /**
  * @brief Draw text to YUV frame with given text.

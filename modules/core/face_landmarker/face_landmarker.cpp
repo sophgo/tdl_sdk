@@ -84,8 +84,8 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     landmarks_5.y[3] = landmarks_106.y[65];
     landmarks_5.y[4] = landmarks_106.y[69];
 
-    meta->info[i].dms->landmarks_106 = landmarks_106;
-    meta->info[i].dms->landmarks_5 = landmarks_5;
+    meta->dms->landmarks_106 = landmarks_106;
+    meta->dms->landmarks_5 = landmarks_5;
     CVI_AI_FreeCpp(&face_info);
   }
   return CVI_SUCCESS;

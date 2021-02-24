@@ -15,6 +15,7 @@
 #include "face_landmarker/face_landmarker.hpp"
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_detection.hpp"
+#include "incar_object_detection/incar_object_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "liveness/liveness.hpp"
@@ -784,4 +785,19 @@ CVI_S32 CVI_AI_FaceLandmarker(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *f
     return CVI_FAILURE;
   }
   return face_landmarker->inference(frame, face);
+}
+
+// Incar Object detection
+
+CVI_S32 CVI_AI_IncarObjectDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                    cvai_face_t *face) {
+  TRACE_EVENT("cviai_core", "CVI_AI_IncarObjectDetection");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  IncarObjectDetection *incar_od =
+      getInferenceInstance<IncarObjectDetection>(CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, ctx);
+  if (incar_od == nullptr) {
+    LOGE("No instance found for IncarObjectDetection.\n");
+    return CVI_FAILURE;
+  }
+  return incar_od->inference(frame, face);
 }

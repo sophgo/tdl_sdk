@@ -31,55 +31,55 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   cv::Mat image(img_height, img_width, CV_8UC3, frame->stVFrame.pu8VirAddr[0],
                 frame->stVFrame.u32Stride[0]);
 
-  cv::cvtColor(image, image, cv::COLOR_RGB2GRAY);
   // just one face
   for (uint32_t i = 0; i < 1; i++) {
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
-    int eye_w = abs(face_info.pts.x[0] - face_info.pts.x[1]);
+    int eye_w = abs(meta->dms->landmarks_5.x[0] - meta->dms->landmarks_5.x[1]);
 
     float q_w = eye_w / 3;
 
-    cv::Rect r_roi(int(std::max(face_info.pts.x[0] - q_w, face_info.bbox.x1)),
-                   int(std::max(face_info.pts.y[0] - q_w, face_info.bbox.y1)),
-                   int(std::min(face_info.pts.x[0] + q_w, face_info.bbox.x2)) -
-                       int(std::max(face_info.pts.x[0] - q_w, face_info.bbox.x1)),
-                   int(std::min(face_info.pts.y[0] + q_w, face_info.bbox.y2)) -
-                       int(std::max(face_info.pts.y[0] - q_w, face_info.bbox.y1)));
+    cv::Rect r_roi(int(std::max(meta->dms->landmarks_5.x[0] - q_w, face_info.bbox.x1)),
+                   int(std::max(meta->dms->landmarks_5.y[0] - q_w, face_info.bbox.y1)),
+                   int(std::min(meta->dms->landmarks_5.x[0] + q_w, face_info.bbox.x2)) -
+                       int(std::max(meta->dms->landmarks_5.x[0] - q_w, face_info.bbox.x1)),
+                   int(std::min(meta->dms->landmarks_5.y[0] + q_w, face_info.bbox.y2)) -
+                       int(std::max(meta->dms->landmarks_5.y[0] - q_w, face_info.bbox.y1)));
 
-    cv::Rect l_roi(int(std::max(face_info.pts.x[1] - q_w, face_info.bbox.x1)),
-                   int(std::max(face_info.pts.y[1] - q_w, face_info.bbox.y1)),
-                   int(std::min(face_info.pts.x[1] + q_w, face_info.bbox.x2)) -
-                       int(std::max(face_info.pts.x[1] - q_w, face_info.bbox.x1)),
-                   int(std::min(face_info.pts.y[1] + q_w, face_info.bbox.y2)) -
-                       int(std::max(face_info.pts.y[1] - q_w, face_info.bbox.y1)));
-
+    cv::Rect l_roi(int(std::max(meta->dms->landmarks_5.x[1] - q_w, face_info.bbox.x1)),
+                   int(std::max(meta->dms->landmarks_5.y[1] - q_w, face_info.bbox.y1)),
+                   int(std::min(meta->dms->landmarks_5.x[1] + q_w, face_info.bbox.x2)) -
+                       int(std::max(meta->dms->landmarks_5.x[1] - q_w, face_info.bbox.x1)),
+                   int(std::min(meta->dms->landmarks_5.y[1] + q_w, face_info.bbox.y2)) -
+                       int(std::max(meta->dms->landmarks_5.y[1] - q_w, face_info.bbox.y1)));
     if (r_roi.width < MINIMUM_SIZE || r_roi.height < MINIMUM_SIZE) {  // small images filter
-      meta->info[i].dms->reye_score = 0.0;
+      meta->dms->reye_score = 0.0;
     } else {
       cv::Mat r_Image = image(r_roi);
       cv::resize(r_Image, r_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
+      cv::cvtColor(r_Image, r_Image, cv::COLOR_RGB2GRAY);
       prepareInputTensor(r_Image);
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
       run(frames);
 
       float *score = getOutputRawPtr<float>(NAME_SCORE);
-      meta->info[i].dms->reye_score = score[0];
+      meta->dms->reye_score = score[0];
     }
     // left eye patch
     if (l_roi.width < MINIMUM_SIZE || l_roi.height < MINIMUM_SIZE) {  // mall images filter
-      meta->info[i].dms->leye_score = 0.0;
+      meta->dms->leye_score = 0.0;
     } else {
       cv::Mat l_Image = image(l_roi);
       cv::resize(l_Image, l_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
+      cv::cvtColor(l_Image, l_Image, cv::COLOR_RGB2GRAY);
       prepareInputTensor(l_Image);
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
       run(frames);
 
       float *score = getOutputRawPtr<float>(NAME_SCORE);
-      meta->info[i].dms->leye_score = score[0];
+      meta->dms->leye_score = score[0];
     }
     CVI_AI_FreeCpp(&face_info);
   }

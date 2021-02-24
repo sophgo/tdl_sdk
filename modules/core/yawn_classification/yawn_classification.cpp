@@ -36,16 +36,15 @@ int YawnClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) 
 
     cv::Mat warp_image(cv::Size(112, 112), CV_8UC3);
     face_align(image, warp_image, face_info);
-    cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2GRAY);
-
     cv::resize(warp_image, warp_image, cv::Size(INPUT_SIZE, INPUT_SIZE), 0, 0, cv::INTER_CUBIC);
+    cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2GRAY);
     prepareInputTensor(warp_image);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     run(frames);
 
     float *score = getOutputRawPtr<float>(NAME_SCORE);
-    meta->info[i].dms->yawn_score = score[0];
+    meta->dms->yawn_score = score[0];
     CVI_AI_FreeCpp(&face_info);
   }
 

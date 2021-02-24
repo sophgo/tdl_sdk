@@ -165,6 +165,11 @@ CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta, VIDEO_FRAME_INF
                                       const bool drawText) {
   return cviai::service::DrawMeta(meta, frame, drawText);
 }
+
+CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                            const bool drawText) {
+  return cviai::service::DrawMeta(meta, frame, drawText);
+}
 CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame) {
   return cviai::service::WriteMeta(name, x, y, frame);
 }

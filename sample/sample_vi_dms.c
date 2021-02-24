@@ -49,10 +49,10 @@ SAMPLE_VI_CONFIG_S stViConfig;
 char codec[] = "h264";
 
 int main(int argc, char **argv) {
-  if (argc != 6) {
+  if (argc != 8) {
     printf(
         "Usage: %s <retina_model_path> <mask_classification_model> <eye_classification_model> "
-        "<yawn_classification_model> <video output>.\n"
+        "<yawn_classification_model> <face_landmark_model> <in_car_od_model> <video output>.\n"
         "\tretina_model_path, path to retinaface model\n"
         "\tmask_classification_model, path to mask classification model\n"
         "\teye_classification_model, path to eye classification model\n"
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 voType = atoi(argv[5]);
+  CVI_S32 voType = atoi(argv[7]);
 
   CVI_S32 s32Ret = CVI_SUCCESS;
   //****************************************************************
@@ -117,6 +117,8 @@ int main(int argc, char **argv) {
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]);
   if (ret != CVI_SUCCESS) {
     printf("Set model failed with %#x!\n", ret);
     return ret;
@@ -157,28 +159,31 @@ int main(int argc, char **argv) {
         break;
       }
       CVI_AI_RetinaFace(facelib_handle, &stVencFrame, &face);
-
       // Just calculate the first one
       if (face.size > 0) {
-        face.info[0].dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
+        face.dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
+
+        // calculate od
+        CVI_AI_IncarObjectDetection(facelib_handle, &stVencFrame, &face);
+        CVI_AI_Service_Incar_ObjectDrawRect((&face.dms->dms_od), &stVOFrame, true);
 
         // calculate landmark
         CVI_AI_FaceLandmarker(facelib_handle, &stVencFrame, &face);
-        CVI_AI_Service_FaceDrawLandmarks(&(face.info[0].dms->landmarks_106), &stVOFrame);
+        CVI_AI_Service_FaceDrawLandmarks(&(face.dms->landmarks_106), &stVOFrame);
 
         // face angle
-        CVI_AI_Service_FaceAngle(&(face.info[0].dms->landmarks_5), &face.info[0].dms->head_pose);
+        CVI_AI_Service_FaceAngle(&(face.dms->landmarks_5), &face.dms->head_pose);
         memset(status_n, 0, sizeof(status_n));
-        sprintf(status_n, "Yaw: %f Pitch: %f Roll: %f", face.info[0].dms->head_pose.yaw,
-                face.info[0].dms->head_pose.pitch, face.info[0].dms->head_pose.roll);
+        sprintf(status_n, "Yaw: %f Pitch: %f Roll: %f", face.dms->head_pose.yaw,
+                face.dms->head_pose.pitch, face.dms->head_pose.roll);
         CVI_AI_Service_ObjectWriteText(status_n, 800, 600, &stVOFrame);  // per frame info
         // calculate smooth
         smooth_face_info.dms.head_pose.yaw =
-            smooth_face_info.dms.head_pose.yaw * 0.5 + face.info[0].dms->head_pose.yaw * 0.5;
+            smooth_face_info.dms.head_pose.yaw * 0.5 + face.dms->head_pose.yaw * 0.5;
         smooth_face_info.dms.head_pose.pitch =
-            smooth_face_info.dms.head_pose.pitch * 0.5 + face.info[0].dms->head_pose.pitch * 0.5;
+            smooth_face_info.dms.head_pose.pitch * 0.5 + face.dms->head_pose.pitch * 0.5;
         smooth_face_info.dms.head_pose.roll =
-            smooth_face_info.dms.head_pose.roll * 0.5 + face.info[0].dms->head_pose.roll * 0.5;
+            smooth_face_info.dms.head_pose.roll * 0.5 + face.dms->head_pose.roll * 0.5;
 
         // mask detection
         CVI_AI_MaskClassification(facelib_handle, &stVencFrame, &face);
@@ -202,9 +207,9 @@ int main(int argc, char **argv) {
         // calculate smooth eye score
 
         smooth_face_info.dms.reye_score =
-            smooth_face_info.dms.reye_score * 0.5 + face.info[0].dms->reye_score * 0.5;
+            smooth_face_info.dms.reye_score * 0.5 + face.dms->reye_score * 0.5;
         smooth_face_info.dms.leye_score =
-            smooth_face_info.dms.leye_score * 0.5 + face.info[0].dms->leye_score * 0.5;
+            smooth_face_info.dms.leye_score * 0.5 + face.dms->leye_score * 0.5;
 
         if (smooth_face_info.dms.reye_score + smooth_face_info.dms.leye_score > 1.3) {
           if (eye_score_window < 30) eye_score_window += 1;
@@ -214,7 +219,7 @@ int main(int argc, char **argv) {
 
         // show the eye score per frame
         memset(status_n, 0, sizeof(status_n));
-        if (face.info[0].dms->reye_score < eye_th) {
+        if (face.dms->reye_score < eye_th) {
           strcpy(status_n, "Right Eye: close");
         } else {
           strcpy(status_n, "Right Eye: open");
@@ -222,7 +227,7 @@ int main(int argc, char **argv) {
         CVI_AI_Service_ObjectWriteText(status_n, 800, 650, &stVOFrame);
 
         memset(status_n, 0, sizeof(status_n));
-        if (face.info[0].dms->leye_score < eye_th) {
+        if (face.dms->leye_score < eye_th) {
           strcpy(status_n, "Left Eye: close");
         } else {
           strcpy(status_n, "Left Eye: open");
@@ -251,7 +256,7 @@ int main(int argc, char **argv) {
           CVI_AI_YawnClassification(facelib_handle, &stVencFrame, &face);
           // calculate smooth yawn score
           smooth_face_info.dms.yawn_score =
-              smooth_face_info.dms.yawn_score * 0.5 + face.info[0].dms->yawn_score * 0.5;
+              smooth_face_info.dms.yawn_score * 0.5 + face.dms->yawn_score * 0.5;
 
           if (smooth_face_info.dms.yawn_score < yawn_th) {
             if (yawn_score_window < 30) yawn_score_window += 1;
@@ -259,7 +264,7 @@ int main(int argc, char **argv) {
             if (yawn_score_window > 0) yawn_score_window -= 1;
           }
           memset(status_n, 0, sizeof(status_n));
-          if (face.info[0].dms->yawn_score < yawn_th) {
+          if (face.dms->yawn_score < yawn_th) {
             strcpy(status_n, "Yawn: close");
           } else {
             strcpy(status_n, "Yawn: open");
@@ -296,6 +301,7 @@ int main(int argc, char **argv) {
         } else {
           start_count++;
         }
+        CVI_AI_FreeDMS(face.dms);
 
       } else {
         memset(status_n, 0, sizeof(status_n));
