@@ -18,7 +18,8 @@ echo "Creating tmp working directory."
 if [[ "$1" == "cmodel" ]]; then
     echo "Temporarily not supported."
 elif [[ "$1" == "soc" ]]; then
-    $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
+                                    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                     -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
                                     -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                     -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
@@ -31,7 +32,8 @@ elif [[ "$1" == "soc" ]]; then
 elif [[ "$1" == "soc32" ]]; then
     mkdir -p $TMP_WORKING_DIR/build_sdk
     pushd $TMP_WORKING_DIR/build_sdk
-    $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
+                                    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                     -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
                                     -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                     -DMIDDLEWARE_SDK_ROOT=$MW_PATH \

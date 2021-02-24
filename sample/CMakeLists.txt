@@ -53,6 +53,10 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so)
 
+if("${CVI_PLATFORM}" STREQUAL "CV182X")
+  set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+endif()
+
 set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so

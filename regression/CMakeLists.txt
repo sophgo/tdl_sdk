@@ -74,6 +74,10 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
 )
 
+if("${CVI_PLATFORM}" STREQUAL "CV182X")
+  set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+endif()
+
 buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cviai_core  ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_quality INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})

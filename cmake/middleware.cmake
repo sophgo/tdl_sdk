@@ -11,8 +11,10 @@ else()
   message(FATAL_ERROR "${MIDDLEWARE_SDK_ROOT} is not a valid folder.")
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "cv183x")
+if("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv183x/)
+elseif ("${CVI_PLATFORM}" STREQUAL "CV182X")
+  set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv182x/)
 endif()
 
 set(MIDDLEWARE_INCLUDES
@@ -31,6 +33,12 @@ set(MIDDLEWARE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libnanomsg.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so)
+
+if("${CVI_PLATFORM}" STREQUAL "CV182X")
+  set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+endif()
+
+message("MIDDLEWARE_LIBS=${MIDDLEWARE_LIBS}")
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
   install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/middleware)
