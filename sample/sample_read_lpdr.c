@@ -5,14 +5,17 @@
 
 #define WRITE_RESULT_TO_FILE 0
 
+enum LicenseFormat { taiwan, china };
+
 int main(int argc, char *argv[]) {
   CVI_AI_PerfettoInit();
-  if (argc != 7) {
+  if (argc != 8) {
     printf(
         "Usage: %s <vehicle_detection_model_path>\n"
         "          <use_mobiledet_vehicle (0/1)>\n"
         "          <license_plate_detection_model_path>\n"
         "          <license_plate_recognition_model_path>\n"
+        "          <license_format (tw/cn)>\n"
         "          <sample_imagelist_path>\n"
         "          <inference_count>\n",
         argv[0]);
@@ -39,12 +42,31 @@ int main(int argc, char *argv[]) {
     printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0\n");
     ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
   } else {
-    printf("Unknow det model type.\n");
+    printf("Unknown det model type.\n");
+    return CVI_FAILURE;
+  }
+  enum LicenseFormat license_format;
+  if (strcmp(argv[5], "tw") == 0) {
+    license_format = taiwan;
+  } else if (strcmp(argv[5], "cn") == 0) {
+    license_format = china;
+  } else {
+    printf("Unknown license type %s\n", argv[5]);
     return CVI_FAILURE;
   }
 
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET, argv[4]);
+  switch (license_format) {
+    case taiwan:
+      ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
+      break;
+    case china:
+      ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, argv[4]);
+      break;
+    default:
+      return CVI_FAILURE;
+  }
+
   if (ret != CVI_SUCCESS) {
     printf("open failed with %#x!\n", ret);
     return ret;
@@ -59,7 +81,7 @@ int main(int argc, char *argv[]) {
   }
 #endif
 
-  char *imagelist_path = argv[5];
+  char *imagelist_path = argv[6];
   FILE *inFile;
   char *line = NULL;
   size_t len = 0;
@@ -80,7 +102,7 @@ int main(int argc, char *argv[]) {
   fprintf(outFile, "%u\n", imageNum);
 #endif
 
-  int inference_count = atoi(argv[6]);
+  int inference_count = atoi(argv[7]);
 
   cvai_object_t vehicle_obj, license_plate_obj;
   memset(&vehicle_obj, 0, sizeof(cvai_object_t));
@@ -119,7 +141,16 @@ int main(int argc, char *argv[]) {
 
     /* LP Recognition */
     printf("CVI_AI_LicensePlateRecognition ... start\n");
-    CVI_AI_LicensePlateRecognition(ai_handle, &frame, &vehicle_obj);
+    switch (license_format) {
+      case taiwan:
+        CVI_AI_LicensePlateRecognition_TW(ai_handle, &frame, &vehicle_obj);
+        break;
+      case china:
+        CVI_AI_LicensePlateRecognition_CN(ai_handle, &frame, &vehicle_obj);
+        break;
+      default:
+        return CVI_FAILURE;
+    }
 
 #if WRITE_RESULT_TO_FILE
     int counter = 0;
@@ -138,17 +169,15 @@ int main(int argc, char *argv[]) {
 #if WRITE_RESULT_TO_FILE
     fprintf(outFile, "%s\n", image_path);
     fprintf(outFile, "%u,%d\n", vehicle_obj.size, counter);
-    // fprintf(outFile, "%d\n", counter);
     for (size_t i = 0; i < vehicle_obj.size; i++) {
       if (vehicle_obj.info[i].vehicle_properity) {
-        cvai_pts_t *license_pts = &vehicle_obj.info[i].vehicle_properity->license_pts;
-
+        cvai_4_pts_t *license_pts = &vehicle_obj.info[i].vehicle_properity->license_pts;
+        const char *license_char = vehicle_obj.info[i].vehicle_properity->license_char;
         fprintf(outFile, "%s,%f,%f,%f,%f,%s,%f,%f,%f,%f,%f,%f,%f,%f\n", vehicle_obj.info[i].name,
                 vehicle_obj.info[i].bbox.x1, vehicle_obj.info[i].bbox.y1,
-                vehicle_obj.info[i].bbox.x2, vehicle_obj.info[i].bbox.y2,
-                vehicle_obj.info[i].vehicle_properity->license_char, license_pts->x[0],
-                license_pts->y[0], license_pts->x[1], license_pts->y[1], license_pts->x[2],
-                license_pts->y[2], license_pts->x[3], license_pts->y[3]);
+                vehicle_obj.info[i].bbox.x2, vehicle_obj.info[i].bbox.y2, license_char,
+                license_pts->x[0], license_pts->y[0], license_pts->x[1], license_pts->y[1],
+                license_pts->x[2], license_pts->y[2], license_pts->x[3], license_pts->y[3]);
       } else {
         fprintf(outFile, "%s,%f,%f,%f,%f,NULL,,,,,,,,\n", vehicle_obj.info[i].name,
                 vehicle_obj.info[i].bbox.x1, vehicle_obj.info[i].bbox.y1,

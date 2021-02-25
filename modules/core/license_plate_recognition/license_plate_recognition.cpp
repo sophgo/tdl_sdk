@@ -21,12 +21,21 @@
 
 namespace cviai {
 
-LicensePlateRecognition::LicensePlateRecognition() : Core(CVI_MEM_SYSTEM) {}
+LicensePlateRecognition::LicensePlateRecognition(const char *region) : Core(CVI_MEM_SYSTEM) {
+  if (strcmp(region, "tw") == 0 || strcmp(region, "taiwan") == 0) {
+    this->format = TAIWAN;
+  } else if (strcmp(region, "cn") == 0 || strcmp(region, "china") == 0) {
+    this->format = CHINA;
+  } else {
+    LOGE("unknown region: %s\n", region);
+    exit(CVI_FAILURE);
+  }
+}
 
 LicensePlateRecognition::~LicensePlateRecognition() {}
 
 int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
-                                       cvai_object_t *license_plate_meta) {
+                                       cvai_object_t *vehicle_plate_meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
     return CVI_FAILURE;
@@ -39,8 +48,8 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
       (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat cv_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
                    frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
-  for (size_t n = 0; n < license_plate_meta->size; n++) {
-    cvai_vehicle_meta *v_meta = license_plate_meta->info[n].vehicle_properity;
+  for (size_t n = 0; n < vehicle_plate_meta->size; n++) {
+    cvai_vehicle_meta *v_meta = vehicle_plate_meta->info[n].vehicle_properity;
     if (v_meta == NULL) {
       continue;
     }
@@ -71,7 +80,11 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
 
     float *out_code = getOutputRawPtr<float>(OUTPUT_NAME);
 
-    std::string id_number = greedy_decode(out_code);
+    std::string id_number;
+    if (!LPR::greedy_decode(out_code, id_number, format)) {
+      LOGE("LPR::decode error!!\n");
+      return CVI_FAILURE;
+    }
 
     strncpy(v_meta->license_char, id_number.c_str(), sizeof(v_meta->license_char));
   }

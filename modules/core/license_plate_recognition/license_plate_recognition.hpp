@@ -2,6 +2,7 @@
 #include <cvi_comm_vb.h>
 #include "core.hpp"
 #include "core/object/cvai_object_types.h"
+#include "decode_tool.hpp"
 
 #include "opencv2/opencv.hpp"
 
@@ -10,11 +11,12 @@ namespace cviai {
 /* WPODNet */
 class LicensePlateRecognition final : public Core {
  public:
-  LicensePlateRecognition();
+  LicensePlateRecognition(const char *region);
   virtual ~LicensePlateRecognition();
-  int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *license_plate_meta);
+  int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *vehicle_plate_meta);
 
  private:
   void prepareInputTensor(cv::Mat &input_mat);
+  LP_FORMAT format;
 };
 }  // namespace cviai

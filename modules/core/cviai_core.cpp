@@ -651,12 +651,26 @@ CVI_S32 CVI_AI_Deepsort_DebugInfo_1(const cviai_handle_t handle, char *debug_inf
 }
 
 // License Plate Detection & Recognition
-CVI_S32 CVI_AI_LicensePlateRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                       cvai_object_t *license_plate_meta) {
+CVI_S32 CVI_AI_LicensePlateRecognition_TW(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                          cvai_object_t *license_plate_meta) {
   TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateRecognition");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   LicensePlateRecognition *lpr_model =
-      getInferenceInstance<LicensePlateRecognition>(CVI_AI_SUPPORTED_MODEL_LPRNET, ctx);
+      getInferenceInstance<LicensePlateRecognition>(CVI_AI_SUPPORTED_MODEL_LPRNET_TW, ctx, "tw");
+  if (lpr_model == nullptr) {
+    LOGE("No instance found for LicensePlateRecognition.\n");
+    return CVI_FAILURE;
+  }
+
+  return lpr_model->inference(frame, license_plate_meta);
+}
+
+CVI_S32 CVI_AI_LicensePlateRecognition_CN(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                          cvai_object_t *license_plate_meta) {
+  TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateRecognition");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  LicensePlateRecognition *lpr_model =
+      getInferenceInstance<LicensePlateRecognition>(CVI_AI_SUPPORTED_MODEL_LPRNET_CN, ctx, "cn");
   if (lpr_model == nullptr) {
     LOGE("No instance found for LicensePlateRecognition.\n");
     return CVI_FAILURE;

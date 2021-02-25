@@ -125,7 +125,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_OSNET)                            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION)                 \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_WPODNET)                          \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LPRNET)                           \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LPRNET_TW)                        \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LPRNET_CN)                        \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_DEEPLABV3)                        \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_ALPHAPOSE)                        \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION)                \
@@ -688,16 +689,19 @@ DLL_EXPORT CVI_S32 CVI_AI_DeeplabV3(const cviai_handle_t handle, VIDEO_FRAME_INF
 /**@}*/
 
 /**
- * @brief LicensePlateRecognition.
+ * @brief LicensePlateRecognition(TW/CN).
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
- * @param license_plate_meta License plate object info
+ * @param vehicle License plate object info
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_LicensePlateRecognition(const cviai_handle_t handle,
-                                                  VIDEO_FRAME_INFO_S *frame,
-                                                  cvai_object_t *license_plate_meta);
+DLL_EXPORT CVI_S32 CVI_AI_LicensePlateRecognition_TW(const cviai_handle_t handle,
+                                                     VIDEO_FRAME_INFO_S *frame,
+                                                     cvai_object_t *vehicle);
+DLL_EXPORT CVI_S32 CVI_AI_LicensePlateRecognition_CN(const cviai_handle_t handle,
+                                                     VIDEO_FRAME_INFO_S *frame,
+                                                     cvai_object_t *vehicle);
 /**@}*/
 
 /**

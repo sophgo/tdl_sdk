@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET, argv[4]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
   if (ret != CVI_SUCCESS) {
     printf("open failed with %#x!\n", ret);
     return ret;
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
 
     /* LP Recognition */
     printf("CVI_AI_LicensePlateRecognition ... start\n");
-    CVI_AI_LicensePlateRecognition(ai_handle, &frame, &vehicle_obj);
+    CVI_AI_LicensePlateRecognition_TW(ai_handle, &frame, &vehicle_obj);
 
     int counter = 0;
     for (size_t i = 0; i < vehicle_obj.size; i++) {
