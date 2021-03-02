@@ -4,11 +4,11 @@
 #include "opencv2/opencv.hpp"
 
 #define N_FFT 1024
-#define ESC_OUT_NAME "prob"
+#define ESC_OUT_NAME "prob_dequant"
 #define PI 3.14159265358979323846
 namespace cviai {
 
-ESClassification::ESClassification() : Core() {
+ESClassification::ESClassification() : Core(CVI_MEM_SYSTEM) {
   int insert_cnt = 0;
   // Calculate 3 different stft hannwindow
   for (int i = 0; i < 3; ++i) {
@@ -57,7 +57,6 @@ int ESClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
       }
     }
   }
-
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
   run(frames);
 
