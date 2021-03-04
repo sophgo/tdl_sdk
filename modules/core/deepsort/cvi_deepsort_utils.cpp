@@ -58,28 +58,3 @@ std::string get_INFO_Match_Pair(const std::vector<std::pair<int, int>> &pairs,
   }
   return std::string(ss.str());
 }
-
-/* CVI AI SDK */
-int size_of_feature_type(feature_type_e type) {
-  switch (type) {
-    case feature_type_e::TYPE_BF16:
-      return 2;
-    case feature_type_e::TYPE_FLOAT:
-      return 4;
-    case feature_type_e::TYPE_INT16:
-      return 2;
-    case feature_type_e::TYPE_INT32:
-      return 4;
-    case feature_type_e::TYPE_INT8:
-      return 1;
-    case feature_type_e::TYPE_UINT16:
-      return 2;
-    case feature_type_e::TYPE_UINT32:
-      return 4;
-    case feature_type_e::TYPE_UINT8:
-      return 1;
-    default:
-      assert(0);
-      return -1;
-  }
-}

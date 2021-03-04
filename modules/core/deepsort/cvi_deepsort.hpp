@@ -17,10 +17,10 @@ struct MatchResult {
   std::vector<int> unmatched_tracker_idxes;
 };
 
-class Deepsort {
+class DeepSORT {
  public:
-  Deepsort();
-  Deepsort(cvai_deepsort_config_t ds_conf);
+  DeepSORT();
+  DeepSORT(cvai_deepsort_config_t ds_conf);
 
   static cvai_deepsort_config_t get_DefaultConfig();
 
@@ -30,6 +30,7 @@ class Deepsort {
 
   int track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid = true,
             bool track_by_class = true);
+  int track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid = false);
 
   void setConfig(cvai_deepsort_config_t ds_conf);
 

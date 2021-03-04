@@ -13,6 +13,10 @@ class FaceQuality final : public Core {
   virtual ~FaceQuality();
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta);
 
+  /* TOOL CODE */
+  int getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                     cvai_face_info_t *face_info);
+
  private:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;

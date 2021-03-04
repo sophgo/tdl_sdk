@@ -15,7 +15,4 @@ std::string get_INFO_Vector_Pair_Int_Int(const std::vector<std::pair<int, int>> 
 std::string get_INFO_Match_Pair(const std::vector<std::pair<int, int>> &pairs,
                                 const std::vector<int> &idxes, int w = 5);
 
-/* CVI AI SDK */
-int size_of_feature_type(feature_type_e type);
-
 #endif /* _CVI_DEEPSORT_UTILS_HPP_ */

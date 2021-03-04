@@ -123,27 +123,27 @@ int main(int argc, char *argv[]) {
   // Init end
   //****************************************************************
 
-  cviai_handle_t facelib_handle = NULL;
+  cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t obj_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&facelib_handle, 1);
-  ret |= CVI_AI_Service_CreateHandle(&obj_handle, facelib_handle);
-  ret = CVI_AI_SetModelPath(facelib_handle, model_config.model_id, argv[2]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
+  int ret = CVI_AI_CreateHandle2(&ai_handle, 1);
+  ret |= CVI_AI_Service_CreateHandle(&obj_handle, ai_handle);
+  ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, model_config.model_id, false);
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
 
-  // Init Deepsort
-  CVI_AI_Deepsort_Init(facelib_handle);
+  // Init DeepSORT
+  CVI_AI_DeepSORT_Init(ai_handle);
   cvai_deepsort_config_t ds_conf;
-  CVI_AI_Deepsort_GetDefaultConfig(&ds_conf);
+  CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
   ds_conf.max_distance_iou = 0.8;
   ds_conf.ktracker_conf.feature_budget_size = 10;
-  CVI_AI_Deepsort_SetConfig(facelib_handle, &ds_conf);
+  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf);
 
   // Create intersect area
   printf("Creating line intersect.\n");
@@ -172,11 +172,11 @@ int main(int argc, char *argv[]) {
     // Tracking function calls.
     cvai_area_detect_e *status = NULL;
     // Step 1. Object detect inference.
-    model_config.inference(facelib_handle, &stFrame, &obj_meta, CVI_DET_TYPE_PEOPLE);
+    model_config.inference(ai_handle, &stFrame, &obj_meta, CVI_DET_TYPE_PEOPLE);
     // Step 2. Object feature generator.
-    CVI_AI_OSNet(facelib_handle, &stFrame, &obj_meta);
+    CVI_AI_OSNet(ai_handle, &stFrame, &obj_meta);
     // Step 3. Tracker.
-    CVI_AI_Deepsort(facelib_handle, &obj_meta, &tracker_meta, true);
+    CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, true);
     // Step 4. Detect intersection.
     CVI_AI_Service_ObjectDetectIntersect(obj_handle, &stFrame, &obj_meta, &status);
     // Step 5. printf results.
@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_Free(&pts);
   CVI_AI_Service_DestroyHandle(obj_handle);
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_AI_DestroyHandle(ai_handle);
   DestoryOutput(&outputContext);
 
   // Exit vpss stuffs

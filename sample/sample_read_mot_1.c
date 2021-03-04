@@ -3,10 +3,7 @@
 #include "cviai.h"
 #include "cviai_perfetto.h"
 
-#define WRITE_RESULT_TO_FILE 1
-#define DBG_INFO printf("[%s:%d]\n", __FILE__, __LINE__)
-
-static volatile bool bExit = false;
+#define WRITE_RESULT_TO_FILE 0
 
 typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *,
                              cvai_obj_det_type_e);
@@ -79,13 +76,12 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
-  DBG_INFO;
 
-  // Init Deepsort
-  CVI_AI_Deepsort_Init(ai_handle);
+  // Init DeepSORT
+  CVI_AI_DeepSORT_Init(ai_handle);
 #if 1
   cvai_deepsort_config_t ds_conf;
-  CVI_AI_Deepsort_GetDefaultConfig(&ds_conf);
+  CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
   ds_conf.ktracker_conf.P_std_alpha[0] = 2 * 1 / 20.;
   ds_conf.ktracker_conf.P_std_alpha[1] = 2 * 1 / 20.;
   ds_conf.ktracker_conf.P_std_alpha[3] = 2 * 1 / 20.;
@@ -99,7 +95,7 @@ int main(int argc, char *argv[]) {
   ds_conf.kfilter_conf.Q_std_beta[6] = 1e-5;
 
   ds_conf.kfilter_conf.R_std_beta[2] = 0.1;
-  CVI_AI_Deepsort_SetConfig(ai_handle, &ds_conf);
+  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf);
 #endif
 
 #if WRITE_RESULT_TO_FILE
@@ -166,7 +162,7 @@ int main(int argc, char *argv[]) {
     // Step 2. Object feature generator.
     CVI_AI_OSNet(ai_handle, &frame, &obj_meta);
     // Step 3. Tracker.
-    CVI_AI_Deepsort(ai_handle, &obj_meta, &tracker_meta, true);
+    CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, true);
     // Tracking function calls ends here.
     //*******************************************
 
@@ -188,9 +184,9 @@ int main(int argc, char *argv[]) {
               (int)tracker_meta.info[i].bbox.y2);
     }
 
-    char debug_info[8192];
-    CVI_AI_Deepsort_DebugInfo_1(ai_handle, debug_info);
     // fprintf(outFile, "%u\n", 0);
+    char debug_info[8192];
+    CVI_AI_DeepSORT_DebugInfo_1(ai_handle, debug_info);
     fprintf(outFile, debug_info);
 #endif
 

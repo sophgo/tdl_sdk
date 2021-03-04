@@ -36,7 +36,7 @@ typedef struct {
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   uint32_t vpss_timeout_value = 100;  // default value.
   TamperDetectorMD *td_model = nullptr;
-  Deepsort *ds_tracker = nullptr;
+  DeepSORT *ds_tracker = nullptr;
   FallMD *fall_model = nullptr;
   bool use_gdc_wrap = false;
 } cviai_context_t;

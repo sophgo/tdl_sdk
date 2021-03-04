@@ -3,10 +3,7 @@
 #include "cviai.h"
 #include "cviai_perfetto.h"
 
-#define WRITE_RESULT_TO_FILE 1
-#define DBG_INFO printf("[%s:%d]\n", __FILE__, __LINE__)
-
-static volatile bool bExit = false;
+#define WRITE_RESULT_TO_FILE 0
 
 typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *,
                              cvai_obj_det_type_e);
@@ -78,75 +75,12 @@ int main(int argc, char *argv[]) {
   CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
 
-  // Init Deepsort
-  CVI_AI_Deepsort_Init(ai_handle);
-
-  // conf.ktracker_conf.P_std_alpha[0] = 2 * 1 / 20.0;
-  // conf.ktracker_conf.P_std_alpha[1] = 2 * 1 / 20.0;
-  // conf.ktracker_conf.P_std_alpha[2] = 0.0;
-  // conf.ktracker_conf.P_std_alpha[3] = 2 * 1.0 / 20.0;
-  // conf.ktracker_conf.P_std_alpha[4] = 10 * 1.0 / 160.0;
-  // conf.ktracker_conf.P_std_alpha[5] = 10 * 1.0 / 160.0;
-  // conf.ktracker_conf.P_std_alpha[6] = 0.0;
-  // conf.ktracker_conf.P_std_alpha[7] = 10 * 1.0 / 160.0;
-  // conf.ktracker_conf.P_std_x_idx[0] = 3;
-  // conf.ktracker_conf.P_std_x_idx[1] = 3;
-  // conf.ktracker_conf.P_std_x_idx[2] = -1;
-  // conf.ktracker_conf.P_std_x_idx[3] = 3;
-  // conf.ktracker_conf.P_std_x_idx[4] = 3;
-  // conf.ktracker_conf.P_std_x_idx[5] = 3;
-  // conf.ktracker_conf.P_std_x_idx[6] = -1;
-  // conf.ktracker_conf.P_std_x_idx[7] = 3;
-  // conf.ktracker_conf.P_std_beta[0] = 0.0;
-  // conf.ktracker_conf.P_std_beta[1] = 0.0;
-  // conf.ktracker_conf.P_std_beta[2] = 0.25;
-  // conf.ktracker_conf.P_std_beta[3] = 0.0;
-  // conf.ktracker_conf.P_std_beta[4] = 0.0;
-  // conf.ktracker_conf.P_std_beta[5] = 0.0;
-  // conf.ktracker_conf.P_std_beta[6] = 0.1;
-  // conf.ktracker_conf.P_std_beta[7] = 0.0;
-
-  // conf.kfilter_conf.Q_std_alpha[0] = 1 / 20.0;
-  // conf.kfilter_conf.Q_std_alpha[1] = 1 / 20.0;
-  // conf.kfilter_conf.Q_std_alpha[2] = 0.0;
-  // conf.kfilter_conf.Q_std_alpha[3] = 1 / 20.0;
-  // conf.kfilter_conf.Q_std_alpha[4] = 1 / 160.0;
-  // conf.kfilter_conf.Q_std_alpha[5] = 1 / 160.0;
-  // conf.kfilter_conf.Q_std_alpha[6] = 0.0;
-  // conf.kfilter_conf.Q_std_alpha[7] = 1 / 160.0;
-  // conf.kfilter_conf.Q_std_x_idx[0] = 3;
-  // conf.kfilter_conf.Q_std_x_idx[1] = 3;
-  // conf.kfilter_conf.Q_std_x_idx[2] = -1;
-  // conf.kfilter_conf.Q_std_x_idx[3] = 3;
-  // conf.kfilter_conf.Q_std_x_idx[4] = 3;
-  // conf.kfilter_conf.Q_std_x_idx[5] = 3;
-  // conf.kfilter_conf.Q_std_x_idx[6] = -1;
-  // conf.kfilter_conf.Q_std_x_idx[7] = 3;
-  // conf.kfilter_conf.Q_std_beta[0] = 0.0;
-  // conf.kfilter_conf.Q_std_beta[1] = 0.0;
-  // conf.kfilter_conf.Q_std_beta[2] = 0.25;
-  // conf.kfilter_conf.Q_std_beta[3] = 0.0;
-  // conf.kfilter_conf.Q_std_beta[4] = 0.0;
-  // conf.kfilter_conf.Q_std_beta[5] = 0.0;
-  // conf.kfilter_conf.Q_std_beta[6] = 0.1;
-  // conf.kfilter_conf.Q_std_beta[7] = 0.0;
-
-  // conf.kfilter_conf.R_std_alpha[0] = 1 / 20.0;
-  // conf.kfilter_conf.R_std_alpha[1] = 1 / 20.0;
-  // conf.kfilter_conf.R_std_alpha[2] = 0.0;
-  // conf.kfilter_conf.R_std_alpha[3] = 2 * 1 / 20.0;
-  // conf.kfilter_conf.R_std_x_idx[0] = 3;
-  // conf.kfilter_conf.R_std_x_idx[1] = 3;
-  // conf.kfilter_conf.R_std_x_idx[2] = -1;
-  // conf.kfilter_conf.R_std_x_idx[3] = 3;
-  // conf.kfilter_conf.R_std_beta[0] = 0.0;
-  // conf.kfilter_conf.R_std_beta[1] = 0.0;
-  // conf.kfilter_conf.R_std_beta[2] = 0.25;
-  // conf.kfilter_conf.R_std_beta[3] = 0.0;
+  // Init DeepSORT
+  CVI_AI_DeepSORT_Init(ai_handle);
 
 #if 1
   cvai_deepsort_config_t ds_conf;
-  CVI_AI_Deepsort_GetDefaultConfig(&ds_conf);
+  CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
   ds_conf.ktracker_conf.max_unmatched_num = 20;
   ds_conf.ktracker_conf.P_std_alpha[0] = 2 * 1 / 20.0;
   ds_conf.ktracker_conf.P_std_alpha[1] = 2 * 1 / 20.0;
@@ -164,7 +98,7 @@ int main(int argc, char *argv[]) {
   // ds_conf.kfilter_conf.Q_std_beta[2] = 0.1;
   // ds_conf.kfilter_conf.Q_std_beta[6] = 1e-2;
   // ds_conf.kfilter_conf.R_std_beta[2] = 0.1;
-  CVI_AI_Deepsort_SetConfig(ai_handle, &ds_conf);
+  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf);
 #endif
 
 #if WRITE_RESULT_TO_FILE
@@ -230,7 +164,6 @@ int main(int argc, char *argv[]) {
     // Tracking function calls.
     // Step 1. Object detect inference.
     model_config.inference(ai_handle, &frame, &obj_meta, CVI_DET_TYPE_VEHICLE);
-    // model_config.inference(ai_handle, &frame, &obj_meta, CVI_DET_TYPE_PET);
     uint32_t counter = 0;
     for (uint32_t i = 0; i < obj_meta.size; i++) {
       if (obj_meta.info[i].classes == 2 || obj_meta.info[i].classes == 3) counter += 1;
@@ -251,33 +184,11 @@ int main(int argc, char *argv[]) {
     printf("counter = %u\n", counter);
 
     // Step 2. Tracking by SORT.
-    CVI_AI_Deepsort(ai_handle, &obj_spec_meta, &tracker_meta, false);
-    // CVI_AI_Deepsort(ai_handle, &obj_meta, &tracker_meta, false);
+    CVI_AI_DeepSORT_Obj(ai_handle, &obj_spec_meta, &tracker_meta, false);
     // Tracking function calls ends here.
     //*******************************************
 
 #if WRITE_RESULT_TO_FILE
-    // fprintf(outFile, "%u\n", obj_meta.size);
-    // for (uint32_t i = 0; i < obj_meta.size; i++) {
-    //   printf("[%u] Cls ID: %d\n", i, obj_meta.info[i].classes);
-    //   fprintf(outFile, "%u,%d,%d,%d,%d\n",
-    //             obj_meta.info[i].classes,
-    //             (int)obj_meta.info[i].bbox.x1,
-    //             (int)obj_meta.info[i].bbox.y1,
-    //             (int)obj_meta.info[i].bbox.x2,
-    //             (int)obj_meta.info[i].bbox.y2);
-    // }
-
-    // fprintf(outFile, "%u\n", obj_spec_meta.size);
-    // for (uint32_t i = 0; i < obj_spec_meta.size; i++) {
-    //   fprintf(outFile, "%u,%d,%d,%d,%d\n",
-    //             obj_spec_meta.info[i].classes,
-    //             (int)obj_spec_meta.info[i].bbox.x1,
-    //             (int)obj_spec_meta.info[i].bbox.y1,
-    //             (int)obj_spec_meta.info[i].bbox.x2,
-    //             (int)obj_spec_meta.info[i].bbox.y2);
-    // }
-
     fprintf(outFile, "%u\n", tracker_meta.size);
     for (uint32_t i = 0; i < tracker_meta.size; i++) {
       fprintf(outFile, "%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", obj_spec_meta.info[i].unique_id,
@@ -286,24 +197,11 @@ int main(int argc, char *argv[]) {
               tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
               (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
               (int)tracker_meta.info[i].bbox.y2);
-
-      // fprintf(outFile, "%u\n", tracker_meta.size);
-      // for (uint32_t i = 0; i < tracker_meta.size; i++) {
-      //   fprintf(outFile, "%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
-      //           obj_meta.info[i].unique_id,
-      //           (int)obj_meta.info[i].bbox.x1, (int)obj_meta.info[i].bbox.y1,
-      //           (int)obj_meta.info[i].bbox.x2, (int)obj_meta.info[i].bbox.y2,
-      //           tracker_meta.info[i].state,
-      //           (int)tracker_meta.info[i].bbox.x1,
-      //           (int)tracker_meta.info[i].bbox.y1,
-      //           (int)tracker_meta.info[i].bbox.x2,
-      //           (int)tracker_meta.info[i].bbox.y2);
     }
 
-    char debug_info[8192];
-    CVI_AI_Deepsort_DebugInfo_1(ai_handle, debug_info);
-
     // fprintf(outFile, "%u\n", 0);
+    char debug_info[8192];
+    CVI_AI_DeepSORT_DebugInfo_1(ai_handle, debug_info);
     fprintf(outFile, debug_info);
 #endif
 

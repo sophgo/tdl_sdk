@@ -458,6 +458,9 @@ DLL_EXPORT CVI_S32 CVI_AI_MaskFaceRecognition(const cviai_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                       cvai_face_t *face);
 
+DLL_EXPORT CVI_S32 CVI_AI_GetAlignedFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *srcFrame,
+                                         VIDEO_FRAME_INFO_S *dstFrame, cvai_face_info_t *face_info);
+
 /**
  * @brief Liveness. Gives a score to present how real the face is. The score will be low if the face
  * is not directly taken by a camera.
@@ -633,7 +636,7 @@ DLL_EXPORT CVI_S32 CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FR
  * @param handle An AI SDK handle.
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Deepsort_Init(const cviai_handle_t handle);
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle);
 
 /**
  * @brief Get default deepsort config.
@@ -642,7 +645,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Deepsort_Init(const cviai_handle_t handle);
  * @param ds_conf A deepsort config.
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Deepsort_GetDefaultConfig(cvai_deepsort_config_t *ds_conf);
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_GetDefaultConfig(cvai_deepsort_config_t *ds_conf);
 
 /**
  * @brief Set deepsort with specific config.
@@ -651,11 +654,11 @@ DLL_EXPORT CVI_S32 CVI_AI_Deepsort_GetDefaultConfig(cvai_deepsort_config_t *ds_c
  * @param ds_conf The specific config.
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle,
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle,
                                              cvai_deepsort_config_t *ds_conf);
 
 /**
- * @brief Run deepsort track.
+ * @brief Run DeepSORT/SORT track for object.
  *
  * @param handle An AI SDK handle.
  * @param obj Input detected object with feature.
@@ -663,10 +666,22 @@ DLL_EXPORT CVI_S32 CVI_AI_Deepsort_SetConfig(const cviai_handle_t handle,
  * @param use_reid If true, track by DeepSORT algorithm, else SORT.
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Deepsort(const cviai_handle_t handle, cvai_object_t *obj,
-                                   cvai_tracker_t *tracker_t, bool use_reid);
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
+                                       cvai_tracker_t *tracker_t, bool use_reid);
 
-DLL_EXPORT CVI_S32 CVI_AI_Deepsort_DebugInfo_1(const cviai_handle_t handle, char *debug_info);
+/**
+ * @brief Run SORT track for face.
+ *
+ * @param handle An AI SDK handle.
+ * @param face Input detected face with feature.
+ * @param tracker_t Output tracker results.
+ * @param use_reid Set false for SORT.
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
+                                        cvai_tracker_t *tracker_t, bool use_reid);
+
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info);
 
 /**@}*/
 

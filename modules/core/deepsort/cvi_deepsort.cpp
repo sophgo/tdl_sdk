@@ -15,7 +15,7 @@
 
 static void show_deepsort_config(cvai_deepsort_config_t &ds_conf);
 
-Deepsort::Deepsort() {
+DeepSORT::DeepSORT() {
   id_counter = 0;
   kf_ = KalmanFilter();
 
@@ -23,7 +23,7 @@ Deepsort::Deepsort() {
   // show_deepsort_config(conf);
 }
 
-Deepsort::Deepsort(cvai_deepsort_config_t ds_conf) {
+DeepSORT::DeepSORT(cvai_deepsort_config_t ds_conf) {
   id_counter = 0;
   kf_ = KalmanFilter();
 
@@ -31,7 +31,7 @@ Deepsort::Deepsort(cvai_deepsort_config_t ds_conf) {
   // show_deepsort_config(conf);
 }
 
-int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid,
+int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid,
                     bool track_by_class) {
   if (track_by_class) {
     std::map<int, int> class_id_counter;
@@ -67,7 +67,11 @@ int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
           bbox_(0, 1) = obj->info[i].bbox.y1;
           bbox_(0, 2) = obj->info[i].bbox.x2 - obj->info[i].bbox.x1;
           bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
-          int type_size = size_of_feature_type(obj->info[i].feature.type);
+          if (obj->info[i].feature.type != TYPE_INT8) {
+            printf("Feature Type not support now.\n");
+            return CVI_FAILURE;
+          }
+          int type_size = getFeatureTypeSize(obj->info[i].feature.type);
           for (uint32_t d = 0; d < feature_size; d++) {
             feature_(d) = static_cast<float>(obj->info[i].feature.ptr[d * type_size]);
           }
@@ -124,7 +128,11 @@ int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
       bbox_(0, 1) = obj->info[i].bbox.y1;
       bbox_(0, 2) = obj->info[i].bbox.x2 - obj->info[i].bbox.x1;
       bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
-      int type_size = size_of_feature_type(obj->info[i].feature.type);
+      if (obj->info[i].feature.type != TYPE_INT8) {
+        printf("Feature Type not support now.\n");
+        return CVI_FAILURE;
+      }
+      int type_size = getFeatureTypeSize(obj->info[i].feature.type);
       for (uint32_t d = 0; d < feature_size; d++) {
         feature_(d) = static_cast<float>(obj->info[i].feature.ptr[d * type_size]);
       }
@@ -162,8 +170,51 @@ int Deepsort::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
   return CVI_SUCCESS;
 }
 
+int DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid) {
+  std::vector<BBOX> bboxes;
+  std::vector<FEATURE> features;
+  uint32_t bbox_num = face->size;
+  for (uint32_t i = 0; i < bbox_num; i++) {
+    BBOX bbox_;
+    FEATURE feature_(0);
+    bbox_(0, 0) = face->info[i].bbox.x1;
+    bbox_(0, 1) = face->info[i].bbox.y1;
+    bbox_(0, 2) = face->info[i].bbox.x2 - face->info[i].bbox.x1;
+    bbox_(0, 3) = face->info[i].bbox.y2 - face->info[i].bbox.y1;
+    bboxes.push_back(bbox_);
+    features.push_back(feature_);
+  }
+
+  auto result_ = track(bboxes, features, -1, use_reid);
+  CVI_AI_MemAlloc(bbox_num, tracker_t);
+
+  assert(result_.size() == static_cast<size_t>(bbox_num));
+  for (size_t i = 0; i < result_.size(); i++) {
+    bool &matched = std::get<0>(result_[i]);
+    uint64_t &t_id = std::get<1>(result_[i]);
+    TRACKER_STATE &t_state = std::get<2>(result_[i]);
+    BBOX &t_bbox = std::get<3>(result_[i]);
+    if (!matched) {
+      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+    } else if (t_state == TRACKER_STATE::PROBATION) {
+      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+    } else if (t_state == TRACKER_STATE::ACCREDITATION) {
+      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+    } else {
+      LOGE("Tracker State Unknow.\n");
+      return CVI_FAILURE;
+    }
+    tracker_t->info[i].bbox.x1 = t_bbox(0);
+    tracker_t->info[i].bbox.y1 = t_bbox(1);
+    tracker_t->info[i].bbox.x2 = t_bbox(0) + t_bbox(2);
+    tracker_t->info[i].bbox.y2 = t_bbox(1) + t_bbox(3);
+    face->info[i].unique_id = t_id;
+  }
+  return CVI_SUCCESS;
+}
+
 /* Result Format: [i] <is_matched, tracker_id, tracker_state, tracker_bbox> */
-std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
+std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
     const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features, int class_id,
     bool use_reid) {
   std::stringstream ss_LOG_;
@@ -198,6 +249,12 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
         unmatched_tracker_idxes.push_back(*iter);
       }
     }
+  } else {
+    unmatched_tracker_idxes.insert(unmatched_tracker_idxes.end(),
+                                   accreditation_tracker_idxes.begin(),
+                                   accreditation_tracker_idxes.end());
+    unmatched_tracker_idxes.insert(unmatched_tracker_idxes.end(), probation_tracker_idxes.begin(),
+                                   probation_tracker_idxes.end());
   }
 
 #if DEBUG_DEEPSORT
@@ -366,8 +423,8 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
     id_counter += 1;
     const BBOX &bbox_ = BBoxes[bbox_idx];
     const FEATURE &feature_ = Features[bbox_idx];
-    // KalmanTracker tracker_(id_counter, bbox_, feature_);
     // LOGI("new >> tracker idx: %d", id_counter);
+    // KalmanTracker tracker_(id_counter, bbox_, feature_);
     KalmanTracker tracker_(id_counter, class_id, bbox_, feature_, conf.ktracker_conf);
     k_trackers.push_back(tracker_);
     result_[bbox_idx] =
@@ -391,7 +448,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> Deepsort::track(
   return result_;
 }
 
-MatchResult Deepsort::match(const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features,
+MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features,
                             const std::vector<int> &Tracker_IDXes,
                             const std::vector<int> &BBox_IDXes, std::string cost_method,
                             float max_distance) {
@@ -405,22 +462,26 @@ MatchResult Deepsort::match(const std::vector<BBOX> &BBoxes, const std::vector<F
   COST_MATRIX cost_matrix;
   if (cost_method == "Kalman_MahalanobisDistance") {
     LOGI("Kalman Cost Matrix (Mahalanobis Distance)");
+    // std::cout << "Kalman Cost Matrix (Mahalanobis Distance)" << std::endl;
     cost_matrix = KalmanTracker::getCostMatrix_Mahalanobis(
         kf_, k_trackers, BBoxes, Tracker_IDXes, BBox_IDXes, conf.kfilter_conf, max_distance);
+    // std::cout << cost_matrix << std::endl;
   } else if (cost_method == "Feature_CosineDistance") {
     cost_matrix = KalmanTracker::getCostMatrix_Feature(k_trackers, BBoxes, Features, Tracker_IDXes,
                                                        BBox_IDXes);
     LOGI("Feature Cost Matrix (Consine Distance)");
-    // LOGI("Cost Matrix (before Munkres)");
+    // std::cout << "Cost Matrix (before Munkres)" << std::endl;
     // std::cout << cost_matrix << std::endl;
     KalmanTracker::gateCostMatrix_Mahalanobis(cost_matrix, kf_, k_trackers, BBoxes, Tracker_IDXes,
                                               BBox_IDXes, conf.kfilter_conf, max_distance);
 
     // gate_cost_matrix(cost_matrix, max_distance);
   } else if (cost_method == "BBox_IoUDistance") {
+    // std::cout << "BBox Cost Matrix (IoU Distance)" << std::endl;
     cost_matrix =
         KalmanTracker::getCostMatrix_BBox(k_trackers, BBoxes, Features, Tracker_IDXes, BBox_IDXes);
     gate_cost_matrix(cost_matrix, max_distance);
+    // std::cout << cost_matrix << std::endl;
   } else {
     std::cout << "Cost Method: " << cost_method << " not support." << std::endl;
     assert(0);
@@ -468,12 +529,12 @@ MatchResult Deepsort::match(const std::vector<BBOX> &BBoxes, const std::vector<F
   return result_;
 }
 
-void Deepsort::setConfig(cvai_deepsort_config_t ds_conf) {
+void DeepSORT::setConfig(cvai_deepsort_config_t ds_conf) {
   memcpy(&conf, &ds_conf, sizeof(cvai_deepsort_config_t));
   show_deepsort_config(conf);
 }
 
-cvai_deepsort_config_t Deepsort::get_DefaultConfig() {
+cvai_deepsort_config_t DeepSORT::get_DefaultConfig() {
   cvai_deepsort_config_t conf;
   conf.max_distance_consine = 0.05;
   conf.max_distance_iou = 0.7;
@@ -551,7 +612,7 @@ cvai_deepsort_config_t Deepsort::get_DefaultConfig() {
 }
 
 /* DEBUG CODE*/
-void Deepsort::show_INFO_KalmanTrackers() {
+void DeepSORT::show_INFO_KalmanTrackers() {
   for (size_t i = 0; i < k_trackers.size(); i++) {
     KalmanTracker &tracker_ = k_trackers[i];
     std::cout << "[" << std::setw(3) << i << "] Tracker ID: " << tracker_.id << std::endl;
@@ -571,7 +632,7 @@ void Deepsort::show_INFO_KalmanTrackers() {
   }
 }
 
-std::vector<KalmanTracker> Deepsort::get_Trackers_UnmatchedLastTime() const {
+std::vector<KalmanTracker> DeepSORT::get_Trackers_UnmatchedLastTime() const {
   std::vector<KalmanTracker> unmatched_trackers;
   for (const KalmanTracker &tracker_ : k_trackers) {
     if (tracker_.unmatched_times > 0) {
@@ -581,7 +642,7 @@ std::vector<KalmanTracker> Deepsort::get_Trackers_UnmatchedLastTime() const {
   return unmatched_trackers;
 }
 
-bool Deepsort::get_Tracker_ByID(uint64_t id, KalmanTracker &tracker) const {
+bool DeepSORT::get_Tracker_ByID(uint64_t id, KalmanTracker &tracker) const {
   for (const KalmanTracker &tracker_ : k_trackers) {
     if (tracker_.id == id) {
       tracker = tracker_;
@@ -591,7 +652,7 @@ bool Deepsort::get_Tracker_ByID(uint64_t id, KalmanTracker &tracker) const {
   return false;
 }
 
-std::string Deepsort::get_TrackersInfo_UnmatchedLastTime(std::string &str_info) const {
+std::string DeepSORT::get_TrackersInfo_UnmatchedLastTime(std::string &str_info) const {
   std::stringstream ss_info;
   std::vector<KalmanTracker> unmatched_trackers = get_Trackers_UnmatchedLastTime();
   ss_info << unmatched_trackers.size() << std::endl;
@@ -612,9 +673,9 @@ std::string Deepsort::get_TrackersInfo_UnmatchedLastTime(std::string &str_info) 
 }
 
 static void show_deepsort_config(cvai_deepsort_config_t &ds_conf) {
-  std::cout << "[Deepsort] Max Distance Consine : " << ds_conf.max_distance_consine << std::endl;
-  std::cout << "[Deepsort] Max Distance IoU     : " << ds_conf.max_distance_iou << std::endl;
-  std::cout << "[Deepsort] Max Unmatched Times for BBox Matching : "
+  std::cout << "[DeepSORT] Max Distance Consine : " << ds_conf.max_distance_consine << std::endl;
+  std::cout << "[DeepSORT] Max Distance IoU     : " << ds_conf.max_distance_iou << std::endl;
+  std::cout << "[DeepSORT] Max Unmatched Times for BBox Matching : "
             << ds_conf.max_unmatched_times_for_bbox_matching << std::endl;
   std::cout << "[Kalman Tracker] Max Unmatched Num       : "
             << ds_conf.ktracker_conf.max_unmatched_num << std::endl;

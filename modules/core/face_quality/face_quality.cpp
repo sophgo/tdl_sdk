@@ -176,4 +176,39 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   return CVI_SUCCESS;
 }
 
+int FaceQuality::getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                                cvai_face_info_t *face_info) {
+  cvai_face_info_t face_info_rescale =
+      info_rescale_c(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
+                     srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height, *face_info);
+  srcFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(srcFrame->stVFrame.u64PhyAddr[0],
+                                                                 srcFrame->stVFrame.u32Length[0]);
+  cv::Mat image(srcFrame->stVFrame.u32Height, srcFrame->stVFrame.u32Width, CV_8UC3,
+                srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Stride[0]);
+  cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
+                     image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
+                     m_wrap_frame.stVFrame.u32Stride[0]);
+  face_align(image, warp_image, face_info_rescale);
+  // cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2BGR);
+  // cv::imwrite("visual/aligned_face.jpg", warp_image);
+
+  std::vector<cv::Mat> rgbChannels(3);
+  split(warp_image, rgbChannels);
+
+  CVI_U32 u32Height = m_wrap_frame.stVFrame.u32Height;
+  CVI_U32 u32Width = m_wrap_frame.stVFrame.u32Width;
+
+  for (int chn = 0; chn < 3; chn++) {
+    for (int i = 0; i < (int)u32Height; i++) {
+      for (int j = 0; j < (int)u32Width; j++) {
+        int idx = i * (int)u32Width + j;
+        /* BGR to RGB */
+        dstFrame->stVFrame.pu8VirAddr[2 - chn][idx] = rgbChannels[chn].at<uchar>(i, j);
+      }
+    }
+  }
+
+  return CVI_SUCCESS;
+}
+
 }  // namespace cviai
