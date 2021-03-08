@@ -47,6 +47,9 @@ typedef struct {
   cvai_feature_t feature;
   float quality;
   VIDEO_FRAME_INFO_S face;
+  float pitch;
+  float roll;
+  float yaw;
 } face_quality_tracker_t;
 
 typedef struct {
@@ -100,6 +103,9 @@ bool update_tracker(cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S *frame,
                 (CVI_U8 *)malloc(112 * 112 * sizeof(CVI_U8));
             memset(fq_trackers[j].face.stVFrame.pu8VirAddr[chn], 0, 112 * 112 * sizeof(CVI_U8));
           }
+          fq_trackers[j].pitch = face_meta->info[i].face_quality.pitch;
+          fq_trackers[j].roll = face_meta->info[i].face_quality.roll;
+          fq_trackers[j].yaw = face_meta->info[i].face_quality.yaw;
           if (face_meta->info[i].face_quality.quality >= QUALITY_THRESHOLD) {
             fq_trackers[j].quality = face_meta->info[i].face_quality.quality;
             feature_copy(&fq_trackers[j].feature, &face_meta->info[i].feature);
@@ -108,7 +114,6 @@ bool update_tracker(cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S *frame,
               printf("AI get aligned face failed(1).\n");
               return false;
             }
-            // TODO: add pitch, roll, yaw
           }
           is_created = true;
           break;
@@ -122,6 +127,9 @@ bool update_tracker(cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S *frame,
     } else {
       /* if found, check whether the quality(or feature) need to be update. */
       miss_time[match_idx] = 0;
+      fq_trackers[match_idx].pitch = face_meta->info[i].face_quality.pitch;
+      fq_trackers[match_idx].roll = face_meta->info[i].face_quality.roll;
+      fq_trackers[match_idx].yaw = face_meta->info[i].face_quality.yaw;
       if (face_meta->info[i].face_quality.quality >= QUALITY_THRESHOLD &&
           face_meta->info[i].face_quality.quality > fq_trackers[match_idx].quality) {
         fq_trackers[match_idx].quality = face_meta->info[i].face_quality.quality;
@@ -132,7 +140,6 @@ bool update_tracker(cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S *frame,
           printf("AI get aligned face failed(2).\n");
           return false;
         }
-        // TODO: add pitch, roll, yaw
       }
     }
   }
@@ -216,7 +223,7 @@ int main(int argc, char *argv[]) {
   ret = CVI_AI_CreateHandle2(&ai_handle, 1);
   ret |= CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[3]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[4]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[4]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[5]);
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
@@ -306,6 +313,7 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_RetinaFace(ai_handle, &frame, &face_meta);
     printf("Found %x faces.\n", face_meta.size);
+    CVI_AI_FaceAttribute(ai_handle, &frame, &face_meta);
     CVI_AI_FaceQuality(ai_handle, &frame, &face_meta);
 
     CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
