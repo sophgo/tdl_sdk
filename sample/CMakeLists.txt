@@ -73,6 +73,7 @@ buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo
 buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_mask_fr INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
+buildninstall(NAME sample_vi_md INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_tracking INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_fall INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_lpdr INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
