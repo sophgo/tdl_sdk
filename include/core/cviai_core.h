@@ -489,14 +489,14 @@ DLL_EXPORT CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_
 
 /**@}*/
 
-DLL_EXPORT CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                                            uint32_t num_classes, ...);
-
 /**
  * \addtogroup core_od Object Detection AI Inference
  * \ingroup core_ai
  */
 /**@{*/
+
+DLL_EXPORT CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                            uint32_t num_classes, ...);
 
 /**
  * @brief MobileDetV2 Vehicle object detection, This model cat detect "car", "truck", "motorbike"
@@ -781,6 +781,14 @@ DLL_EXPORT CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objec
 DLL_EXPORT CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                           float *moving_score);
 
+/**@}*/
+
+/**
+ * \addtogroup core_dms Driving Monitor System
+ * \ingroup core_ai
+ */
+/**@{*/
+
 /**
  * @brief Do eye classification.
  *
@@ -813,6 +821,17 @@ DLL_EXPORT CVI_S32 CVI_AI_YawnClassification(const cviai_handle_t handle, VIDEO_
  * @return int Return CVI_SUCCESS on success.
  */
 
+DLL_EXPORT CVI_S32 CVI_AI_IncarObjectDetection(const cviai_handle_t handle,
+                                               VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+
+/**@}*/
+
+/**
+ * \addtogroup core_face_landmark Face Landmark
+ * \ingroup core_ai
+ */
+/**@{*/
+
 DLL_EXPORT CVI_S32 CVI_AI_FaceLandmarker(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                          cvai_face_t *face);
 /**
@@ -823,12 +842,7 @@ DLL_EXPORT CVI_S32 CVI_AI_FaceLandmarker(const cviai_handle_t handle, VIDEO_FRAM
  * @param cvai_face_t structure. Calculate the landmarks in cvai_dms_t.
  * @return int Return CVI_SUCCESS on success.
  */
-
-DLL_EXPORT CVI_S32 CVI_AI_IncarObjectDetection(const cviai_handle_t handle,
-                                               VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
-
 /**@}*/
-
 #ifdef __cplusplus
 }
 #endif
