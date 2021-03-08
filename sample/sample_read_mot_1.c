@@ -166,13 +166,6 @@ int main(int argc, char *argv[]) {
     // Tracking function calls ends here.
     //*******************************************
 
-    for (uint32_t i = 0; i < tracker_meta.size; i++) {
-      printf("[%u][%lu] [%d] (%d,%d,%d,%d)\n", i, obj_meta.info[i].unique_id,
-             tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
-             (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
-             (int)tracker_meta.info[i].bbox.y2);
-    }
-
 #if WRITE_RESULT_TO_FILE
     fprintf(outFile, "%u\n", tracker_meta.size);
     for (uint32_t i = 0; i < tracker_meta.size; i++) {

@@ -318,12 +318,14 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
 
+#if 0
     for (uint32_t i = 0; i < tracker_meta.size; i++) {
       printf("[%u][%lu] [%d] (%d,%d,%d,%d) <%f>\n", i, face_meta.info[i].unique_id,
              tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
              (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
              (int)tracker_meta.info[i].bbox.y2, face_meta.info[i].face_quality.quality);
     }
+#endif
 
     if (!update_tracker(ai_handle, &frame, fq_trackers, &face_meta, &tracker_meta, miss_time)) {
       printf("update tracker failed.\n");
