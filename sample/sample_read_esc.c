@@ -22,9 +22,7 @@
 char ES_Classes[8][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",    "Laughing",
                           "Baby Cry",          "Glass breaking",    "Clock_alarm", "Office"};
 
-CVI_U8 buffer[FRAME_SIZE * 2];  // 6 seconds
-int w_idx = 0;                  // write frame idx
-int r_idx = 0;                  // read frame idx
+CVI_U8 buffer[FRAME_SIZE];  // 3 seconds
 bool mtx = false;
 bool gRun = true;
 
@@ -40,30 +38,19 @@ void *thread_uplink_audio(void *arg) {
   CVI_S32 s32Ret;
   AUDIO_FRAME_S stFrame;
   AEC_FRAME_S stAecFrm;
-  int size = PERIOD_SIZE * 2;  // PCM_FORMAT_S16_LE (2bytes)
-  // cycle buffer
+  int loop = SAMPLE_RATE / PERIOD_SIZE * 3;  // 3 seconds
+  int size = PERIOD_SIZE * 2;                // PCM_FORMAT_S16_LE (2bytes)
   while (gRun) {
-    memset(&stAecFrm, 0, sizeof(AEC_FRAME_S));
-    memset(&stFrame, 0, sizeof(AUDIO_FRAME_S));
-    s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_FALSE);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_AI_GetFrame --> none!!\n");
-      continue;
-    } else {
-      memcpy(buffer + w_idx, (CVI_U8 *)stFrame.u64VirAddr[0], size);
-      if (w_idx == FRAME_SIZE * 2 - size)
-        w_idx = 0;
-      else
-        w_idx = w_idx + size;
+    for (int i = 0; i < loop; ++i) {
+      s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_FALSE);
+      if (s32Ret != CVI_SUCCESS) {
+        printf("CVI_AI_GetFrame --> none!!\n");
+        continue;
+      } else {
+        memcpy(buffer + i * size, (CVI_U8 *)stFrame.u64VirAddr[0], size);
+      }
     }
-    if (w_idx == r_idx) {
-      r_idx = (r_idx + 32000) % 192000;
-    }
-    if (w_idx - r_idx > 96000 && !mtx)  // 16000 * 2 * 3
-      mtx = true;
-    else if (w_idx - r_idx < 0 && !mtx) {
-      if (w_idx + 96000 - r_idx > 0) mtx = true;
-    }
+    if (!mtx) mtx = true;
   }
   pthread_exit(NULL);
 }
@@ -102,7 +89,6 @@ int main(int argc, char **argv) {
     printf("Usage: %s <esc_model_path> \n", argv[0]);
     return CVI_FAILURE;
   }
-
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
@@ -119,9 +105,8 @@ int main(int argc, char **argv) {
   pthread_t pcm_output_thread;
   pthread_create(&pcm_output_thread, NULL, thread_uplink_audio, NULL);
 
-  CVI_U8 fbuffer[FRAME_SIZE];
   VIDEO_FRAME_INFO_S Frame;
-  Frame.stVFrame.pu8VirAddr[0] = fbuffer;
+  Frame.stVFrame.pu8VirAddr[0] = buffer;
   Frame.stVFrame.u32Height = 1;
   Frame.stVFrame.u32Width = FRAME_SIZE;
   // Init cviai handle.
@@ -139,35 +124,20 @@ int main(int argc, char **argv) {
     return ret;
   }
 
-  // use 2 result to classify the sound
+  // classify the sound
   int index = -1;
-  int prev_index = -1;
-  int prev2_index = -1;
   while (gRun) {
     if (!mtx) {
       usleep(300 * 1000);
       continue;
     } else {
-      int diff = MIN(96000, 192000 - r_idx);
-      memcpy(fbuffer, buffer + r_idx, diff);
-      if (diff != 96000) memcpy(fbuffer + diff, buffer, 96000 - diff);
-      if (r_idx != 160000)
-        r_idx += 32000;
-      else
-        r_idx = 0;
       mtx = false;
     }
     CVI_AI_ESClassification(ai_handle, &Frame, &index);
-    if (prev_index > -1 && prev2_index > -1 && index > -1) {
-      if ((prev2_index == 0 || prev2_index == 1) && (prev_index == 0 || prev_index == 1))
-        printf("esc class: %s  \n", ES_Classes[0]);
-      else if (prev_index == prev2_index) {
-        printf("esc class: %s  \n", ES_Classes[prev_index]);
-      } else
-        printf("esc class: detecting  \n");
-    }
-    prev2_index = prev_index;
-    prev_index = index;
+    if (index == 0 || index == 1)
+      printf("esc class: %s  \n", ES_Classes[0]);
+    else
+      printf("esc class: %s  \n", ES_Classes[index]);
   }
   CVI_AI_DestroyHandle(ai_handle);
   pthread_join(pcm_output_thread, NULL);

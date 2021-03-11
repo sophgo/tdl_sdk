@@ -3,7 +3,7 @@
 #include "core/cviai_types_mem_internal.h"
 #include "opencv2/opencv.hpp"
 
-#define N_FFT 1024
+#define N_FFT 256
 #define ESC_OUT_NAME "prob_dequant"
 #define PI 3.14159265358979323846
 namespace cviai {
