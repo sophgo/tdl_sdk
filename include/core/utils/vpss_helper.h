@@ -23,12 +23,6 @@
  */
 #define MMF_INIT_HELPER_BLKCNT_DEFAULT 12
 
-/** @def VIP_WIDTH_ALIGN
- * @ingroup core_vpss
- * @brief HW image width alignment.
- */
-#define VIP_WIDTH_ALIGN 32
-
 /** @def SCALAR_4096_ALIGN_BUG
  * @ingroup core_vpss
  * @brief HW image channel alignment.
@@ -458,7 +452,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
   switch (vFrame->enPixelFormat) {
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * 3, VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * 3, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       // Don't need to align cause only 1 chn.
@@ -467,7 +461,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_RGB_888_PLANAR: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = vFrame->u32Stride[0];
       vFrame->u32Stride[2] = vFrame->u32Stride[0];
       vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
@@ -475,24 +469,24 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = vFrame->u32Length[0];
     } break;
     case PIXEL_FORMAT_YUV_PLANAR_422: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, VIP_WIDTH_ALIGN);
-      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, VIP_WIDTH_ALIGN);
-      vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
+      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
+      vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
       vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
     } break;
     case PIXEL_FORMAT_YUV_PLANAR_420: {
       uint32_t newHeight = ALIGN(vFrame->u32Height, 2);
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, VIP_WIDTH_ALIGN);
-      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, VIP_WIDTH_ALIGN);
-      vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
+      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
+      vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
       vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
     } break;
     case PIXEL_FORMAT_YUV_400: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -500,7 +494,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_FP32_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(float), VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(float), DEFAULT_ALIGN);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -508,7 +502,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_BF16_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(uint16_t), VIP_WIDTH_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(uint16_t), DEFAULT_ALIGN);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
