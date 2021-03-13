@@ -69,8 +69,6 @@ void CVI_AI_FreeCpp(cvai_face_t *face) {
 
 void CVI_AI_FreeCpp(cvai_object_info_t *obj_info) {
   CVI_AI_FreeCpp(&obj_info->feature);
-  // TODO: remove old field
-  CVI_AI_FreeCpp(&obj_info->bpts);
   if (obj_info->vehicle_properity) {
     free(obj_info->vehicle_properity);
     obj_info->vehicle_properity = NULL;
@@ -159,6 +157,27 @@ void CVI_AI_CopyInfoCpp(const cvai_object_info_t *info, cvai_object_info_t *info
   } else {
     infoNew->feature.ptr = NULL;
   }
+
+  if (info->vehicle_properity) {
+    infoNew->vehicle_properity = (cvai_vehicle_meta *)malloc(sizeof(cvai_vehicle_meta));
+    infoNew->vehicle_properity->license_bbox = info->vehicle_properity->license_bbox;
+    memcpy(infoNew->vehicle_properity->license_char, info->vehicle_properity->license_char,
+           sizeof(info->vehicle_properity->license_char));
+    memcpy(infoNew->vehicle_properity->license_pts.x, info->vehicle_properity->license_pts.x,
+           4 * sizeof(float));
+  }
+
+  if (info->pedestrian_properity) {
+    infoNew->pedestrian_properity = (cvai_pedestrian_meta *)malloc(sizeof(cvai_pedestrian_meta));
+    infoNew->pedestrian_properity->fall = info->pedestrian_properity->fall;
+    memcpy(infoNew->pedestrian_properity->pose_17.score, info->pedestrian_properity->pose_17.score,
+           sizeof(float) * 17);
+    memcpy(infoNew->pedestrian_properity->pose_17.x, info->pedestrian_properity->pose_17.x,
+           sizeof(float) * 17);
+    memcpy(infoNew->pedestrian_properity->pose_17.y, info->pedestrian_properity->pose_17.y,
+           sizeof(float) * 17);
+  }
+
   infoNew->classes = info->classes;
 }
 

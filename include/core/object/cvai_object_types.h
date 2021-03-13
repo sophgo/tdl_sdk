@@ -325,7 +325,6 @@ typedef struct {
   char name[128];
   uint64_t unique_id;
   cvai_bbox_t bbox;
-  cvai_pts_t bpts;
   cvai_feature_t feature;
   int classes;
 
