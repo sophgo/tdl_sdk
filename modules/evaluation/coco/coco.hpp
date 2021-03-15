@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream>
+#include <vector>
 #include "core/object/cvai_object_types.h"
 #include "json.hpp"
 
@@ -18,7 +19,7 @@ class CocoEval {
 
  private:
   const char *m_path_prefix;
-  nlohmann::json m_json_read;
+  std::vector<std::pair<std::string, int>> m_dataset;
   std::ofstream m_ofs_results;
   int m_det_count;
 };

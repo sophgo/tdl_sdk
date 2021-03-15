@@ -25,17 +25,21 @@ void CocoEval::start_eval(const char *out_path) {
 
 void CocoEval::getEvalData(const char *path_prefix, const char *json_path) {
   m_path_prefix = path_prefix;
-  m_json_read.clear();
+  m_dataset.clear();
   std::ifstream filestr(json_path);
-  filestr >> m_json_read;
+  std::string fname;
+  int id;
+  while (filestr >> fname >> id) {
+    m_dataset.push_back({fname, id});
+  }
   filestr.close();
 }
 
-uint32_t CocoEval::getTotalImage() { return m_json_read["images"].size(); }
+uint32_t CocoEval::getTotalImage() { return m_dataset.size(); }
 
 void CocoEval::getImageIdPair(const int index, std::string *path, int *id) {
-  *path = m_path_prefix + std::string("/") + std::string(m_json_read["images"][index]["file_name"]);
-  *id = m_json_read["images"][index]["id"];
+  *path = m_path_prefix + std::string("/") + m_dataset[index].first;
+  *id = m_dataset[index].second;
 }
 
 void CocoEval::insertObjectData(const int id, const cvai_object_t *obj) {

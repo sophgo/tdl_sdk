@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
                                                          : CVI_AI_SUPPORTED_MODEL_FACERECOGNITION;
   Inference inference = atoi(argv[5]) == 1 ? CVI_AI_FaceAttribute : CVI_AI_FaceRecognition;
 
-  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,
-                        vpssgrp_height, PIXEL_FORMAT_RGB_888);
+  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
+                         vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
   if (ret != CVI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
   }
   CVI_AI_SetModelThreshold(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, 0.8);
   CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_AI_SetVpssTimeout(facelib_handle, -1);
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
