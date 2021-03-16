@@ -20,19 +20,22 @@
 
 static volatile bool bExit = false;
 
+enum LicenseFormat { taiwan, china };
+
 int main(int argc, char *argv[]) {
   CVI_AI_PerfettoInit();
-  if (argc != 6) {
+  if (argc != 7) {
     printf(
         "Usage: %s <vehicle_detection_model_path>\n"
         "\t<use_mobiledet_vehicle (0/1)>\n"
         "\t<license_plate_detection_model_path>\n"
         "\t<license_plate_recognition_model_path>\n"
+        "\t<license_format (tw/cn)>\n"
         "\tvideo output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
     return CVI_FAILURE;
   }
-  CVI_S32 voType = atoi(argv[5]);
+  CVI_S32 voType = atoi(argv[6]);
 
   CVI_S32 s32Ret = CVI_SUCCESS;
   //****************************************************************
@@ -92,8 +95,27 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
+  enum LicenseFormat license_format;
+  if (strcmp(argv[5], "tw") == 0) {
+    license_format = taiwan;
+  } else if (strcmp(argv[5], "cn") == 0) {
+    license_format = china;
+  } else {
+    printf("Unknown license type %s\n", argv[5]);
+    return CVI_FAILURE;
+  }
+
   s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
-  s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
+  switch (license_format) {
+    case taiwan:
+      s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
+      break;
+    case china:
+      s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, argv[4]);
+      break;
+    default:
+      return CVI_FAILURE;
+  }
   if (s32Ret != CVI_SUCCESS) {
     printf("open failed with %#x!\n", s32Ret);
     return s32Ret;
@@ -101,10 +123,12 @@ int main(int argc, char *argv[]) {
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
 
-  cvai_object_t vehicle_obj, license_plate_obj;
+  cvai_object_t vehicle_obj;
   memset(&vehicle_obj, 0, sizeof(cvai_object_t));
-  memset(&license_plate_obj, 0, sizeof(cvai_object_t));
+  size_t counter = 0;
   while (bExit == false) {
+    counter += 1;
+    printf("\nIter: %lu\n", counter);
     s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stfdFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
@@ -125,7 +149,16 @@ int main(int argc, char *argv[]) {
 
     /* LP Recognition */
     printf("CVI_AI_LicensePlateRecognition ... start\n");
-    CVI_AI_LicensePlateRecognition_TW(ai_handle, &stfdFrame, &vehicle_obj);
+    switch (license_format) {
+      case taiwan:
+        CVI_AI_LicensePlateRecognition_TW(ai_handle, &stfdFrame, &vehicle_obj);
+        break;
+      case china:
+        CVI_AI_LicensePlateRecognition_CN(ai_handle, &stfdFrame, &vehicle_obj);
+        break;
+      default:
+        return CVI_FAILURE;
+    }
 
     for (size_t i = 0; i < vehicle_obj.size; i++) {
       if (vehicle_obj.info[i].vehicle_properity) {
