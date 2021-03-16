@@ -28,7 +28,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum) {
   *devNum = stIniCfg.devNum;
 
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
-  PIXEL_FORMAT_E enPixFormat = PIXEL_FORMAT_YUV_PLANAR_420;
+  PIXEL_FORMAT_E enPixFormat = VI_PIXEL_FORMAT;
   VIDEO_FORMAT_E enVideoFormat = VIDEO_FORMAT_LINEAR;
   COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
   VI_VPSS_MODE_E enMastPipeMode = VI_OFFLINE_VPSS_OFFLINE;
@@ -97,8 +97,8 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum) {
     printf("SAMPLE_COMM_SYS_GetPicSize failed with %#x\n", s32Ret);
     return s32Ret;
   }
-  s32Ret = MMF_INIT_HELPER2(stSize.u32Width, stSize.u32Height, enPixFormat, 18, stSize.u32Width,
-                            stSize.u32Height, enPixFormat, 18);
+  s32Ret = MMF_INIT_HELPER2(stSize.u32Width, stSize.u32Height, enPixFormat, 10, stSize.u32Width,
+                            stSize.u32Height, enPixFormat, 10);
   if (s32Ret != CVI_SUCCESS) {
     printf("sys init failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
@@ -127,7 +127,7 @@ static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFI
   stVoConfig->stVoPubAttr.enIntfSync = VO_OUTPUT_720x1280_60;
   stVoConfig->stDispRect = dispRect;
   stVoConfig->stImageSize = imgSize;
-  stVoConfig->enPixFormat = PIXEL_FORMAT_YUV_PLANAR_420;
+  stVoConfig->enPixFormat = VI_PIXEL_FORMAT;
   stVoConfig->enVoMode = VO_MODE_1MUX;
 
   s32Ret = SAMPLE_COMM_VO_StartVO(stVoConfig);
@@ -158,7 +158,7 @@ CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN 
 
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
 
-  VPSS_GRP_DEFAULT_HELPER(&stVpssGrpAttr, grpWidth, grpHeight, PIXEL_FORMAT_YUV_PLANAR_420);
+  VPSS_GRP_DEFAULT_HELPER(&stVpssGrpAttr, grpWidth, grpHeight, VI_PIXEL_FORMAT);
 
   /*start vpss*/
   s32Ret = SAMPLE_COMM_VPSS_Init(vpssGrp, abChnEnable, &stVpssGrpAttr, stVpssChnAttr);
