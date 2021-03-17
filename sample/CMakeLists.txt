@@ -63,7 +63,7 @@ set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libtinyalsa.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libaec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcvi_RES.so)
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES.so)
 
 buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core)
 buildninstall(NAME sample_read_fr_custom INC ${SAMPLE_INC} DEPS cviai_core)
