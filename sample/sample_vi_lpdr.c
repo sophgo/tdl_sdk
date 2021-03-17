@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
   size_t counter = 0;
   while (bExit == false) {
     counter += 1;
-    printf("\nIter: %lu\n", counter);
+    printf("\nIter: %zu\n", counter);
     s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stfdFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
