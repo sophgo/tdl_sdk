@@ -48,6 +48,23 @@ bool gRun = true;
 SAMPLE_VI_CONFIG_S stViConfig;
 char codec[] = "h264";
 
+void dms_init(cvai_face_t *face) {
+  cvai_dms_t *dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
+  dms->reye_score = 0;
+  dms->leye_score = 0;
+  dms->yawn_score = 0;
+  dms->phone_score = 0;
+  dms->smoke_score = 0;
+  dms->landmarks_106.size = 0;
+  dms->landmarks_5.size = 0;
+  dms->head_pose.yaw = 0;
+  dms->head_pose.pitch = 0;
+  dms->head_pose.roll = 0;
+  dms->dms_od.info = NULL;
+  dms->dms_od.size = 0;
+  face->dms = dms;
+}
+
 int main(int argc, char **argv) {
   if (argc != 8) {
     printf(
@@ -118,7 +135,8 @@ int main(int argc, char **argv) {
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]);
+  //  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION,
+  //  argv[6]);
   if (ret != CVI_SUCCESS) {
     printf("Set model failed with %#x!\n", ret);
     return ret;
@@ -138,8 +156,8 @@ int main(int argc, char **argv) {
     int eye_score_window = 0;   // 30 frames
     int yawn_score_window = 0;  // 30 frames
 
-    float yaw_th = 0.5;
-    float pitch_th = 0.5;
+    float yaw_th = 0.25;
+    float pitch_th = 0.25;
     float yawn_th = 0.75;
     float eye_th = 0.65;
     int eye_win_th = 11;
@@ -161,12 +179,12 @@ int main(int argc, char **argv) {
       CVI_AI_RetinaFace(facelib_handle, &stVencFrame, &face);
       // Just calculate the first one
       if (face.size > 0) {
-        face.dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
-
+        dms_init(&face);
+#if 0
         // calculate od
         CVI_AI_IncarObjectDetection(facelib_handle, &stVencFrame, &face);
         CVI_AI_Service_Incar_ObjectDrawRect((&face.dms->dms_od), &stVOFrame, true);
-
+#endif
         // calculate landmark
         CVI_AI_FaceLandmarker(facelib_handle, &stVencFrame, &face);
         CVI_AI_Service_FaceDrawLandmarks(&(face.dms->landmarks_106), &stVOFrame);
@@ -284,18 +302,17 @@ int main(int argc, char **argv) {
 #endif
         memset(status_n, 0, sizeof(status_n));
         if (start_count > 90) {
-          if (eye_score_window < eye_win_th || yawn_score_window < yawn_win_th) {
+          if ((smooth_face_info.dms.head_pose.yaw > yaw_th ||
+               smooth_face_info.dms.head_pose.yaw < -yaw_th ||
+               smooth_face_info.dms.head_pose.pitch > pitch_th ||
+               smooth_face_info.dms.head_pose.pitch < -pitch_th)) {
+            strcpy(status_n, "Status: Distraction");
+            CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
+          } else if (eye_score_window < eye_win_th || yawn_score_window < yawn_win_th) {
             strcpy(status_n, "Status: Drowsiness");
             CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
-          } else if ((smooth_face_info.dms.head_pose.yaw < yaw_th &&
-                      smooth_face_info.dms.head_pose.yaw > -yaw_th &&
-                      smooth_face_info.dms.head_pose.pitch < pitch_th &&
-                      smooth_face_info.dms.head_pose.pitch > -pitch_th) ||
-                     smooth_face_info.dms.yawn_score > yawn_th) {
-            strcpy(status_n, "Status: Normal");
-            CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
           } else {
-            strcpy(status_n, "Status: Distraction");
+            strcpy(status_n, "Status: Normal");
             CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame);
           }
         } else {
