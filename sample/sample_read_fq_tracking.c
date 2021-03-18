@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
 
   // Init DeepSORT
   CVI_AI_DeepSORT_Init(ai_handle);
@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_RetinaFace(ai_handle, &frame, &face_meta);
     printf("Found %x faces.\n", face_meta.size);
-    CVI_AI_FaceAttribute(ai_handle, &frame, &face_meta);
+    CVI_AI_FaceRecognition(ai_handle, &frame, &face_meta);
     CVI_AI_FaceQuality(ai_handle, &frame, &face_meta);
 
     CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
