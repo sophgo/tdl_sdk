@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "sample_comm.h"
@@ -7,7 +6,6 @@
 #include <cvi_sys.h>
 #include <cvi_vb.h>
 #include <cvi_vi.h>
-#include "cviai_perfetto.h"
 
 #include <inttypes.h>
 #include <signal.h>
@@ -23,7 +21,6 @@ static volatile bool bExit = false;
 enum LicenseFormat { taiwan, china };
 
 int main(int argc, char *argv[]) {
-  CVI_AI_PerfettoInit();
   if (argc != 7) {
     printf(
         "Usage: %s <vehicle_detection_model_path>\n"
