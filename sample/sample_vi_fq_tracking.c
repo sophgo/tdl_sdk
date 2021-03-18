@@ -62,6 +62,9 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   if (strcmp(model_name, "mobiledetv2-d0") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0;
     config->inference = CVI_AI_MobileDetV2_D0;
+  } else if (strcmp(model_name, "mobiledetv2-lite") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE;
+    config->inference = CVI_AI_MobileDetV2_Lite;
   } else if (strcmp(model_name, "mobiledetv2-d1") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1;
     config->inference = CVI_AI_MobileDetV2_D1;
@@ -304,7 +307,7 @@ int main(int argc, char *argv[]) {
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
 
   // Init DeepSORT
   CVI_AI_DeepSORT_Init(ai_handle);
@@ -345,7 +348,7 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_RetinaFace(ai_handle, &stfdFrame, &face_meta);
     printf("Found %x faces.\n", face_meta.size);
-    CVI_AI_FaceAttribute(ai_handle, &stfdFrame, &face_meta);
+    CVI_AI_FaceRecognition(ai_handle, &stfdFrame, &face_meta);
     CVI_AI_FaceQuality(ai_handle, &stfdFrame, &face_meta);
     for (uint32_t j = 0; j < face_meta.size; j++) {
       printf("face[%u] quality: %f\n", j, face_meta.info[j].face_quality.quality);
