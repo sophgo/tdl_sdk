@@ -1,11 +1,24 @@
-#define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "cviai_perfetto.h"
+#include "sample_comm.h"
+#include "vi_vo_utils.h"
 
-#define WRITE_RESULT_TO_FILE 0
+#include <cvi_sys.h>
+#include <cvi_vb.h>
+#include <cvi_vi.h>
 
-#define SAVE_TRACKER_NUM 64
+#include <inttypes.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "ive/ive.h"
+
+static volatile bool bExit = false;
+
+#define SAVE_TRACKER_NUM 32
 #define QUALITY_THRESHOLD 0.95
 #define COVER_RATE_THRESHOLD 0.9
 #define MISS_TIME_LIMIT 100
@@ -17,6 +30,31 @@ typedef struct _ModelConfig {
   int input_size;
   InferenceFunc inference;
 } ModelConfig;
+
+int getNumDigits(uint64_t num) {
+  int digits = 0;
+  do {
+    num /= 10;
+    digits++;
+  } while (num != 0);
+  return digits;
+}
+
+char *uint64ToString(uint64_t number) {
+  int n = getNumDigits(number);
+  int i;
+  char *numArray = calloc(n, sizeof(char));
+  for (i = n - 1; i >= 0; --i, number /= 10) {
+    numArray[i] = (number % 10) + '0';
+  }
+  return numArray;
+}
+
+char *floatToString(float number) {
+  char *numArray = calloc(64, sizeof(char));
+  sprintf(numArray, "%g", number);
+  return numArray;
+}
 
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVI_SUCCESS;
@@ -184,35 +222,69 @@ float cover_rate_face2people(cvai_bbox_t face_bbox, cvai_bbox_t people_bbox) {
 }
 
 int main(int argc, char *argv[]) {
-  CVI_AI_PerfettoInit();
-  if (argc != 8) {
+  if (argc != 7) {
     printf(
         "Usage: %s <obj_detection_model_name>\n"
         "          <obj_detection_model_path>\n"
         "          <face_detection_model_path>\n"
         "          <face_attribute_model_path>\n"
         "          <face_quality_model_path>\n"
-        "          <sample_imagelist_path>\n"
-        "          <inference_count>\n",
+        "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
+
+  CVI_S32 voType = atoi(argv[6]);
+
+  CVI_S32 s32Ret = CVI_SUCCESS;
+  //****************************************************************
+  // Init VI, VO, Vpss
+  CVI_U32 DevNum = 0;
+  VI_PIPE ViPipe = 0;
+  VPSS_GRP VpssGrp = 0;
+  VPSS_CHN VpssChn = VPSS_CHN0;
+  VPSS_CHN VpssChnVO = VPSS_CHN2;
+  CVI_S32 GrpWidth = 1920;
+  CVI_S32 GrpHeight = 1080;
+  SAMPLE_VI_CONFIG_S stViConfig;
+
+  s32Ret = InitVI(&stViConfig, &DevNum);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("Init video input failed with %d\n", s32Ret);
+    return s32Ret;
+  }
+  if (ViPipe >= DevNum) {
+    printf("Not enough devices. Found %u, required index %u.\n", DevNum, ViPipe);
+    return CVI_FAILURE;
+  }
+
+  const CVI_U32 voWidth = 1280;
+  const CVI_U32 voHeight = 720;
+  OutputContext outputContext = {0};
+  if (voType) {
+    OutputType outputType = voType == 1 ? OUTPUT_TYPE_PANEL : OUTPUT_TYPE_RTSP;
+    s32Ret = InitOutput(outputType, voWidth, voHeight, &outputContext);
+    if (s32Ret != CVI_SUCCESS) {
+      printf("CVI_Init_Video_Output failed with %d\n", s32Ret);
+      return s32Ret;
+    }
+  }
+
+  s32Ret = InitVPSS(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight, ViPipe,
+                    voType != 0);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("Init video process group 0 failed with %d\n", s32Ret);
+    return s32Ret;
+  }
+  // Init end
+  //****************************************************************
 
   face_quality_tracker_t fq_trackers[SAVE_TRACKER_NUM];
   memset(fq_trackers, 0, sizeof(face_quality_tracker_t) * SAVE_TRACKER_NUM);
   int miss_time[SAVE_TRACKER_NUM];
   memset(miss_time, -1, sizeof(int) * SAVE_TRACKER_NUM);
 
-  // Init VB pool size.
-  const CVI_S32 vpssgrp_width = 1920;
-  const CVI_S32 vpssgrp_height = 1080;
-  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,
-                        vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR);
-  if (ret != CVI_SUCCESS) {
-    printf("Init sys failed with %#x!\n", ret);
-    return ret;
-  }
   cviai_handle_t ai_handle = NULL;
 
   ModelConfig model_config;
@@ -249,61 +321,20 @@ int main(int argc, char *argv[]) {
   CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf);
 #endif
 
-#if WRITE_RESULT_TO_FILE
-  FILE *outFile;
-  outFile = fopen("sample_fq_tracking_result.txt", "w");
-  if (outFile == NULL) {
-    printf("There is a problem opening the output file.\n");
-    exit(EXIT_FAILURE);
-  }
-#endif
+  VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
+  size_t counter = 0;
+  while (bExit == false) {
+    counter += 1;
+    printf("\nGet Frame %zu\n", counter);
 
-  char *imagelist_path = argv[6];
-  FILE *inFile;
-  char *line = NULL;
-  size_t len = 0;
-  ssize_t read;
-  inFile = fopen(imagelist_path, "r");
-  if (inFile == NULL) {
-    printf("There is a problem opening the rcfile: %s\n", imagelist_path);
-    exit(EXIT_FAILURE);
-  }
-  if ((read = getline(&line, &len, inFile)) == -1) {
-    printf("get line error\n");
-    exit(EXIT_FAILURE);
-  }
-  *strchrnul(line, '\n') = '\0';
-  int imageNum = atoi(line);
-
-#if WRITE_RESULT_TO_FILE
-  fprintf(outFile, "%u\n", imageNum);
-#endif
-
-  int inference_count = atoi(argv[7]);
-
-  for (int counter = 0; counter < imageNum; counter++) {
-    if (counter == inference_count) {
+    s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChn, &stfdFrame, 2000);
+    if (s32Ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
     }
 
-    if ((read = getline(&line, &len, inFile)) == -1) {
-      printf("get line error\n");
-      exit(EXIT_FAILURE);
-    }
-    *strchrnul(line, '\n') = '\0';
-    char *image_path = line;
-    printf("\n[%i] image path = %s\n", counter, image_path);
-
     int trk_num = get_alive_num(fq_trackers);
     printf("FQ Tracker Num = %d\n", trk_num);
-
-    VB_BLK blk_fr;
-    VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path, &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
-      printf("Read image failed with %#x!\n", ret);
-      return ret;
-    }
 
     cvai_face_t face_meta;
     memset(&face_meta, 0, sizeof(cvai_face_t));
@@ -312,33 +343,26 @@ int main(int argc, char *argv[]) {
     cvai_object_t obj_meta;
     memset(&obj_meta, 0, sizeof(cvai_object_t));
 
-    CVI_AI_RetinaFace(ai_handle, &frame, &face_meta);
+    CVI_AI_RetinaFace(ai_handle, &stfdFrame, &face_meta);
     printf("Found %x faces.\n", face_meta.size);
-    CVI_AI_FaceAttribute(ai_handle, &frame, &face_meta);
-    CVI_AI_FaceQuality(ai_handle, &frame, &face_meta);
+    CVI_AI_FaceAttribute(ai_handle, &stfdFrame, &face_meta);
+    CVI_AI_FaceQuality(ai_handle, &stfdFrame, &face_meta);
+    for (uint32_t j = 0; j < face_meta.size; j++) {
+      printf("face[%u] quality: %f\n", j, face_meta.info[j].face_quality.quality);
+    }
 
     CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
 
-#if 0
-    for (uint32_t i = 0; i < tracker_meta.size; i++) {
-      printf("[%u][%lu] [%d] (%d,%d,%d,%d) <%f>\n", i, face_meta.info[i].unique_id,
-             tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
-             (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
-             (int)tracker_meta.info[i].bbox.y2, face_meta.info[i].face_quality.quality);
-    }
-#endif
-
-    if (!update_tracker(ai_handle, &frame, fq_trackers, &face_meta, &tracker_meta, miss_time)) {
+    if (!update_tracker(ai_handle, &stfdFrame, fq_trackers, &face_meta, &tracker_meta, miss_time)) {
       printf("update tracker failed.\n");
       CVI_AI_Free(&face_meta);
       CVI_AI_Free(&tracker_meta);
       CVI_AI_Free(&obj_meta);
-      CVI_VB_ReleaseBlock(blk_fr);
       break;
     }
     clean_tracker(fq_trackers, miss_time);
 
-    model_config.inference(ai_handle, &frame, &obj_meta, CVI_DET_TYPE_PEOPLE);
+    model_config.inference(ai_handle, &stfdFrame, &obj_meta, CVI_DET_TYPE_PEOPLE);
     match_index_t *p2f = (match_index_t *)malloc(obj_meta.size * sizeof(match_index_t));
     memset(p2f, 0, obj_meta.size * sizeof(match_index_t));
     for (uint32_t i = 0; i < obj_meta.size; i++) {
@@ -352,43 +376,57 @@ int main(int argc, char *argv[]) {
       }
     }
 
-#if WRITE_RESULT_TO_FILE
-    fprintf(outFile, "%u\n", tracker_meta.size);
-    for (uint32_t i = 0; i < tracker_meta.size; i++) {
-      fprintf(outFile, "%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f\n", face_meta.info[i].unique_id,
-              (int)face_meta.info[i].bbox.x1, (int)face_meta.info[i].bbox.y1,
-              (int)face_meta.info[i].bbox.x2, (int)face_meta.info[i].bbox.y2,
-              tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
-              (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
-              (int)tracker_meta.info[i].bbox.y2, face_meta.info[i].face_quality.quality,
-              face_meta.info[i].face_quality.pitch, face_meta.info[i].face_quality.roll,
-              face_meta.info[i].face_quality.yaw);
+    s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChn, &stfdFrame);
+    if (s32Ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
+      break;
     }
 
-    // fprintf(outFile, "%u\n", 0);
-    char debug_info[8192];
-    CVI_AI_DeepSORT_DebugInfo_1(ai_handle, debug_info);
-    fprintf(outFile, debug_info);
+    // Send frame to VO if opened.
+    if (voType) {
+      s32Ret = CVI_VPSS_GetChnFrame(VpssGrp, VpssChnVO, &stVOFrame, 1000);
+      if (s32Ret != CVI_SUCCESS) {
+        printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
+        break;
+      }
+      CVI_AI_Service_FaceDrawRect(&face_meta, &stVOFrame, false);
+      for (uint32_t j = 0; j < face_meta.size; j++) {
+        char *id_num = uint64ToString(face_meta.info[j].unique_id);
+        CVI_AI_Service_ObjectWriteText(id_num, face_meta.info[j].bbox.x1, face_meta.info[j].bbox.y1,
+                                       &stVOFrame);
+        free(id_num);
+        char *fq_num = floatToString(face_meta.info[j].face_quality.quality);
+        CVI_AI_Service_ObjectWriteText(fq_num, face_meta.info[j].bbox.x1,
+                                       face_meta.info[j].bbox.y1 + 30, &stVOFrame);
+        free(fq_num);
+      }
+      for (uint32_t i = 0; i < obj_meta.size; i++) {
+        if (p2f[i].match) {
+          char *id_num = uint64ToString(face_meta.info[p2f[i].idx].unique_id);
+          CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
+                                         &stVOFrame);
+          free(id_num);
+        }
+      }
+      CVI_AI_Service_ObjectDrawRect(&obj_meta, &stVOFrame, false);
+      s32Ret = SendOutputFrame(&stVOFrame, &outputContext);
+      if (s32Ret != CVI_SUCCESS) {
+        printf("Send Output Frame NG\n");
+      }
 
-    fprintf(outFile, "%u\n", obj_meta.size);
-    for (uint32_t i = 0; i < obj_meta.size; i++) {
-      fprintf(outFile, "%d,%lu,%d,%d,%d,%d\n", (p2f[i].match) ? 1 : 0,
-              (p2f[i].match) ? face_meta.info[p2f[i].idx].unique_id : -1,
-              (int)obj_meta.info[i].bbox.x1, (int)obj_meta.info[i].bbox.y1,
-              (int)obj_meta.info[i].bbox.x2, (int)obj_meta.info[i].bbox.y2);
+      s32Ret = CVI_VPSS_ReleaseChnFrame(VpssGrp, VpssChnVO, &stVOFrame);
+      if (s32Ret != CVI_SUCCESS) {
+        printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
+        break;
+      }
     }
-#endif
 
     free(p2f);
     CVI_AI_Free(&face_meta);
     CVI_AI_Free(&tracker_meta);
     CVI_AI_Free(&obj_meta);
-    CVI_VB_ReleaseBlock(blk_fr);
   }
 
-#if WRITE_RESULT_TO_FILE
-  fclose(outFile);
-#endif
   for (int i = 0; i < SAVE_TRACKER_NUM; i++) {
     if (fq_trackers[i].state == ALIVE) {
       free(fq_trackers[i].face.stVFrame.pu8VirAddr[0]);
@@ -397,5 +435,15 @@ int main(int argc, char *argv[]) {
     }
   }
   CVI_AI_DestroyHandle(ai_handle);
-  CVI_SYS_Exit();
+  DestoryOutput(&outputContext);
+
+  // Exit vpss stuffs
+  SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, VpssChn, VpssGrp);
+  CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
+  abChnEnable[VpssChn] = CVI_TRUE;
+  abChnEnable[VpssChnVO] = CVI_TRUE;
+  SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
+
+  SAMPLE_COMM_VI_DestroyVi(&stViConfig);
+  SAMPLE_COMM_SYS_Exit();
 }

@@ -188,7 +188,9 @@ int FaceQuality::getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
   cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
                      image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
                      m_wrap_frame.stVFrame.u32Stride[0]);
-  face_align(image, warp_image, face_info_rescale);
+  if (face_align(image, warp_image, face_info_rescale) != 0) {
+    return CVI_FAILURE;
+  }
   // cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2BGR);
   // cv::imwrite("visual/aligned_face.jpg", warp_image);
 
