@@ -325,10 +325,17 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
              m_vpss_config.size(), frames.size());
         return CVI_FAILURE;
       }
-      dstFrames.resize(frames.size(), {new VIDEO_FRAME_INFO_S, [this](VIDEO_FRAME_INFO_S *f) {
-                                         this->mp_vpss_inst->releaseFrame(f, 0);
-                                         delete f;
-                                       }});
+      dstFrames.reserve(frames.size());
+      for (uint32_t i = 0; i < frames.size(); i++) {
+        VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+        memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+        dstFrames.push_back(std::shared_ptr<VIDEO_FRAME_INFO_S>({f, [this](VIDEO_FRAME_INFO_S *f) {
+                                                                   this->mp_vpss_inst->releaseFrame(
+                                                                       f, 0);
+                                                                   delete f;
+                                                                 }}));
+      }
+
       ret |= vpssPreprocess(frames, &dstFrames);
       if (ret != CVI_SUCCESS) {
         return ret;
