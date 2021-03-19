@@ -1,30 +1,23 @@
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "cviai.h"
-#include "ive/ive.h"
-
-#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
 #include "acodec.h"
 #include "cvi_audio.h"
-#include "sample_comm.h"
+#include "cviai.h"
 
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define PERIOD_SIZE 640
 #define SAMPLE_RATE 16000
 #define FRAME_SIZE SAMPLE_RATE * 2 * 3  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
 
+// ESC class name
 char ES_Classes[8][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",    "Laughing",
                           "Baby Cry",          "Glass breaking",    "Clock_alarm", "Office"};
 
+// Global buffer
 CVI_U8 buffer[FRAME_SIZE];  // 3 seconds
-bool mtx = false;
-bool gRun = true;
+bool mtx = false;           // mutex
+bool gRun = true;           // signal
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
@@ -34,6 +27,8 @@ static void SampleHandleSig(CVI_S32 signo) {
     gRun = false;
   }
 }
+
+// Get frame and set it to global buffer
 void *thread_uplink_audio(void *arg) {
   CVI_S32 s32Ret;
   AUDIO_FRAME_S stFrame;
@@ -42,12 +37,13 @@ void *thread_uplink_audio(void *arg) {
   int size = PERIOD_SIZE * 2;                // PCM_FORMAT_S16_LE (2bytes)
   while (gRun) {
     for (int i = 0; i < loop; ++i) {
-      s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_FALSE);
+      s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_FALSE);  // Get audio frame
       if (s32Ret != CVI_SUCCESS) {
         printf("CVI_AI_GetFrame --> none!!\n");
         continue;
       } else {
-        memcpy(buffer + i * size, (CVI_U8 *)stFrame.u64VirAddr[0], size);
+        memcpy(buffer + i * size, (CVI_U8 *)stFrame.u64VirAddr[0],
+               size);  // Set the period size date to global buffer
       }
     }
     if (!mtx) mtx = true;
@@ -55,13 +51,10 @@ void *thread_uplink_audio(void *arg) {
   pthread_exit(NULL);
 }
 
-CVI_S32 SAMPLE_AUDIO_GET_AUDIO_FRAME_BY_FRAME(CVI_VOID) {
-  printf("This section is treated as sample code flow for porting\n");
-
+CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
   // STEP 1: cvitek_audin_set
   //_update_audin_config
   AIO_ATTR_S AudinAttr;
-
   AudinAttr.enSamplerate = (AUDIO_SAMPLE_RATE_E)16000;
   AudinAttr.u32ChnCnt = 1;
   AudinAttr.enSoundmode = AUDIO_SOUND_MODE_MONO;
@@ -77,10 +70,14 @@ CVI_S32 SAMPLE_AUDIO_GET_AUDIO_FRAME_BY_FRAME(CVI_VOID) {
   //_set_audin_config
   s32Ret = CVI_AI_SetPubAttr(0, &AudinAttr);
   if (s32Ret != CVI_SUCCESS) printf("CVI_AI_SetPubAttr failed with %#x!\n", s32Ret);
+
   s32Ret = CVI_AI_Enable(0);
   if (s32Ret != CVI_SUCCESS) printf("CVI_AI_Enable failed with %#x!\n", s32Ret);
+
   s32Ret = CVI_AI_EnableChn(0, 0);
   if (s32Ret != CVI_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
+
+  printf("SET_AUDIO_ATTR success!!\n");
   return CVI_SUCCESS;
 }
 
@@ -101,14 +98,17 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  SAMPLE_AUDIO_GET_AUDIO_FRAME_BY_FRAME();
+  SET_AUDIO_ATTR();
+
   pthread_t pcm_output_thread;
   pthread_create(&pcm_output_thread, NULL, thread_uplink_audio, NULL);
 
+  // Set video frame interface
   VIDEO_FRAME_INFO_S Frame;
-  Frame.stVFrame.pu8VirAddr[0] = buffer;
+  Frame.stVFrame.pu8VirAddr[0] = buffer;  // Global buffer
   Frame.stVFrame.u32Height = 1;
   Frame.stVFrame.u32Width = FRAME_SIZE;
+
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
@@ -133,7 +133,10 @@ int main(int argc, char **argv) {
     } else {
       mtx = false;
     }
-    CVI_AI_ESClassification(ai_handle, &Frame, &index);
+
+    CVI_AI_ESClassification(ai_handle, &Frame, &index);  // Detect the audio
+
+    // Print esc result
     if (index == 0 || index == 1)
       printf("esc class: %s  \n", ES_Classes[0]);
     else
