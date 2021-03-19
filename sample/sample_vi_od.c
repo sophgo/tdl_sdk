@@ -31,6 +31,7 @@ typedef struct _ModelConfig {
 
 #define WRAPPER(realfunc) inference_wrapper_##realfunc
 CREATE_WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0)
+CREATE_WRAPPER(CVI_AI_MobileDetV2_Pedestrian_D0)
 
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVI_SUCCESS;
@@ -50,6 +51,9 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   } else if (strcmp(model_name, "mobiledetv2-vehicle-d0") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0;
     config->inference = WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0);
+  } else if (strcmp(model_name, "mobiledetv2-pedestrian-d0") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0;
+    config->inference = WRAPPER(CVI_AI_MobileDetV2_Pedestrian_D0);
   } else if (strcmp(model_name, "yolov3") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     config->inference = CVI_AI_Yolov3;
@@ -76,6 +80,7 @@ int main(int argc, char *argv[]) {
         "mobiledetv2-d1, "
         "mobiledetv2-d2, "
         "mobiledetv2-vehicle-d0, "
+        "mobiledetv2-pedestrian-d0, "
         "yolov3}\n"
         "\t video output, 0: disable, 1: output to panel, 2: output through rtsp\n"
         "\t threshold (optional): threshold for detection model\n",

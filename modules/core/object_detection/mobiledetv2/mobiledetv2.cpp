@@ -496,6 +496,25 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
         return static_cast<int>(CVI_AI_DET_TYPE_END);
       };
       break;
+    case Model::pedestrian_d0:
+      config.num_classes = 1;
+      config.class_dequant_thresh = {{8, 7.848998546600342},
+                                     {16, 8.222152709960938},
+                                     {32, 8.384308815002441},
+                                     {64, 9.911425590515137},
+                                     {128, 8.275640487670898}};
+
+      config.bbox_dequant_thresh = {{8, 2.3595869541168213},
+                                    {16, 2.3849966526031494},
+                                    {32, 2.362071990966797},
+                                    {64, 2.2918550968170166},
+                                    {128, 2.743276596069336}};
+      config.default_score_threshold = 0.3;
+      config.class_id_map = [](int orig_id) {
+        if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);
+        return static_cast<int>(CVI_AI_DET_TYPE_END);
+      };
+      break;
   }
 
   return config;
