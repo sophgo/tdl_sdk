@@ -74,7 +74,7 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
 )
 
-if("${CVI_PLATFORM}" STREQUAL "CV182X")
+if("${CONFIG_CHIP}" MATCHES "cv182[0-9]")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
 

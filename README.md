@@ -13,7 +13,8 @@ Replace the ``<XXXXXX>`` with the path on your PC.
 ```
 $ mkdir build
 $ cd build
-$ cmake -G Ninja .. -DENABLE_PERFETTO=ON \
+$ cmake -G Ninja .. -DCONFIG_CHIP=cv1835 \
+                    -DENABLE_PERFETTO=ON \
                     -DTOOLCHAIN_ROOT_DIR=<toolchain_root_dir> \
                     -DCMAKE_TOOLCHAIN_FILE=${PWD}/../toolchain/toolchain-aarch64-linux.cmake \
                     -DMLIR_SDK_ROOT=<mlir_root_dir> \
@@ -29,7 +30,8 @@ $ ninja -j8 && ninja install
 ```
 $ mkdir build_soc
 $ cd build
-$ cmake -G Ninja .. -DENABLE_PERFETTO=ON \
+$ cmake -G Ninja .. -DCONFIG_CHIP=cv1835 \
+                    -DENABLE_PERFETTO=ON \
                     -DTOOLCHAIN_ROOT_DIR=<toolchain_root_dir> \
                     -DCMAKE_TOOLCHAIN_FILE=${PWD}/../toolchain/toolchain-gnueabihf-linux.cmake \
                     -DMLIR_SDK_ROOT=<mlir_root_dir> \
