@@ -14,12 +14,13 @@ if("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
   message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is not set. Aborting.")
 endif()
 
-if("${CONFIG_CHIP}" STREQUAL "")
-  message(FATAL_ERROR "Platform not provided.")
+if("${CVI_PLATFORM}" STREQUAL "")
+  set(CVI_PLATFORM "CV183X")
+  message(AUTHOR_WARNING "Platform not provided, set to ${CVI_PLATFORM}.")
 endif()
 
-if(NOT ("${CONFIG_CHIP}" MATCHES "cv18[2-3][0-9]"))
-  message(FATAL_ERROR "Unrecognized platform ${CONFIG_CHIP}.")
+if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X"))
+  message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
@@ -74,7 +75,7 @@ message("C Flags          ${CMAKE_C_FLAGS}")
 message("CXX Flags        ${CMAKE_CXX_FLAGS}")
 message("Install dir      ${CMAKE_INSTALL_PREFIX}")
 message("Enable Perfetto  ${ENABLE_PERFETTO}")
-message("CVI_PLATFORM     ${CONFIG_CHIP}")
+message("CVI_PLATFORM     ${CVI_PLATFORM}")
 message("==================================================")
 
 # Check if OpenCV exists.
