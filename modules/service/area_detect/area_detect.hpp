@@ -18,8 +18,8 @@ class AreaDetect {
 
  private:
   bool onSegment(Eigen::Vector2f p, Eigen::Vector2f q, Eigen::Vector2f r);
-  bool interSegment(Eigen::Hyperplane<float, 2> line, Eigen::Vector2f linepts1,
-                    Eigen::Vector2f linepts2, Eigen::Vector2f p, Eigen::Vector2f r);
+  int orientation(Eigen::Vector2f p, Eigen::Vector2f q, Eigen::Vector2f r);
+  bool doIntersect(Eigen::Vector2f p1, Eigen::Vector2f q1, Eigen::Vector2f p2, Eigen::Vector2f q2);
   std::vector<Eigen::Hyperplane<float, 2>> m_boundaries;
   std::vector<std::pair<Eigen::Vector2f, Eigen::Vector2f>> m_pts;
   Tracker m_tracker;
