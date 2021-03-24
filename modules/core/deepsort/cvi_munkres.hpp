@@ -3,10 +3,6 @@
 
 #include <Eigen/Eigen>
 
-#define MIN(a, b) ((a) <= (b) ? (a) : (b))
-#define MAX(a, b) ((a) >= (b) ? (a) : (b))
-#define PADDING_VALUE 0.0
-
 enum NODE_STATE { NONE = 0, STAR, PRIME };
 
 enum ALGO_STAGE { ZERO = 0, ONE, TWO, THREE, FOUR, FINAL, DONE };

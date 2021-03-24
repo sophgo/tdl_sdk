@@ -9,6 +9,9 @@
 #include <iostream>
 
 #define DEBUG 0
+#define MIN(a, b) ((a) <= (b) ? (a) : (b))
+#define MAX(a, b) ((a) >= (b) ? (a) : (b))
+#define PADDING_VALUE 0.0
 
 CVIMunkres::CVIMunkres(Eigen::MatrixXf *matrix) {
   m_original_matrix = matrix;
