@@ -11,9 +11,9 @@ else()
   message(FATAL_ERROR "${MIDDLEWARE_SDK_ROOT} is not a valid folder.")
 endif()
 
-if("${CONFIG_CHIP}" MATCHES "cv183[0-9]")
+if("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv183x/)
-elseif ("${CONFIG_CHIP}" MATCHES "cv182[0-9]")
+elseif ("${CVI_PLATFORM}" STREQUAL "CV182X")
   set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv182x/)
 endif()
 
@@ -34,7 +34,7 @@ set(MIDDLEWARE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libnanomsg.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so)
 
-if("${CONFIG_CHIP}" MATCHES "cv182[0-9]")
+if("${CVI_PLATFORM}" STREQUAL "CV182X")
   set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
 
