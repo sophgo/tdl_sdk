@@ -90,6 +90,7 @@ buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cviai_core $
 buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_object_intersect INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
+buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} DEPS cviai_core)
 buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
