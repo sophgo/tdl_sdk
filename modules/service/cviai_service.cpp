@@ -1,19 +1,20 @@
 #include "service/cviai_service.h"
 
+#include <cvimath/cvimath.h>
 #include "area_detect/area_detect.hpp"
+#include "area_detect/polygon_intersect.hpp"
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
 #include "draw_rect/draw_rect.hpp"
 #include "face_angle/face_angle.hpp"
 #include "feature_matching/feature_matching.hpp"
 
-#include <cvimath/cvimath.h>
-
 typedef struct {
   cviai_handle_t ai_handle = NULL;
   cviai::service::FeatureMatching *m_fm = nullptr;
   cviai::service::DigitalTracking *m_dt = nullptr;
   cviai::service::AreaDetect *m_ad = nullptr;
+  cviai::service::PolygonIntersect *m_poly = nullptr;
 } cviai_service_context_t;
 
 CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle, cviai_handle_t ai_handle) {
@@ -203,6 +204,43 @@ CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t handle,
   }
   return ret;
 }
+
+CVI_S32 CVI_AI_Service_Polygon_SetTarget(cviai_service_handle_t handle, const cvai_pts_t *pts) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_poly == nullptr) {
+    ctx->m_poly = new cviai::service::PolygonIntersect();
+  }
+
+  std::vector<cv::Point> polygon;
+  for (uint32_t i = 0; i < pts->size; i++) {
+    polygon.push_back({static_cast<int>(pts->x[i]), static_cast<int>(pts->y[i])});
+  }
+  return ctx->m_poly->setArea(polygon);
+}
+
+CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle, const cvai_bbox_t *bbox,
+                                         bool *has_intersect) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_poly == nullptr) {
+    LOGE("Please set intersect area first.\n");
+    return CVI_FAILURE;
+  }
+
+  CVI_S32 ret = CVI_SUCCESS;
+  std::vector<cv::Point> polygon;
+  polygon.push_back({static_cast<int>(bbox->x1), static_cast<int>(bbox->y1)});
+  polygon.push_back({static_cast<int>(bbox->x1), static_cast<int>(bbox->y2)});
+  polygon.push_back({static_cast<int>(bbox->x2), static_cast<int>(bbox->y2)});
+  polygon.push_back({static_cast<int>(bbox->x2), static_cast<int>(bbox->y1)});
+
+  float area = 0;
+  ret = ctx->m_poly->intersectArea(polygon, &area);
+  if (ret == CVI_SUCCESS) {
+    *has_intersect = area > 0.0;
+  }
+  return ret;
+}
+
 CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp) {
   return cviai::service::Predict(pts, hp);
 }

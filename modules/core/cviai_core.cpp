@@ -267,7 +267,7 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
       mdetv2->select_classes(*m_t.selected_classes);
     }
   }
-  return CVI_FAILURE;
+  return CVI_SUCCESS;
 }
 
 template <class C, typename V, typename... Arguments>

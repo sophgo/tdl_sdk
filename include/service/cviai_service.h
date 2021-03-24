@@ -257,6 +257,29 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t h
                                                         cvai_area_detect_e **status);
 
 /**
+ * @brief Set target convex polygon for detection.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param pts polygon points. (pts->size must larger than 2.)
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_SetTarget(cviai_service_handle_t handle,
+                                                    const cvai_pts_t *pts);
+
+/**
+ * @brief Check if a convex polygon intersected with target convex polygon.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param bbox Object meta structure.
+ * @param has_intersect true if two polygons has intersection, otherwise return false.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle,
+                                                    const cvai_bbox_t *bbox, bool *has_intersect);
+
+/**
  * @brief Calculate the head pose angle.
  * @ingroup core_cviaiservice
  *
