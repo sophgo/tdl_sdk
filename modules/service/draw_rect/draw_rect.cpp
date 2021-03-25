@@ -45,7 +45,7 @@ static float GetYuvColor(int chanel, color_rgb *color) {
   return (yuv_color < 0) ? 0 : ((yuv_color > 255.) ? 255 : yuv_color);
 }
 // TODO: Need refactor
-void DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int radius) {
+void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int radius) {
   color.r *= 255;
   color.g *= 255;
   color.b *= 255;
@@ -94,8 +94,8 @@ void DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int ra
 }
 
 // TODO: Need refactor
-void WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_rgb color,
-               int thickness) {
+void _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_rgb color,
+                int thickness) {
   std::string name_str = name;
   int width = frame->stVFrame.u32Width;
   int height = frame->stVFrame.u32Height;
@@ -248,20 +248,30 @@ void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
   CVI_SYS_Munmap(vir_addr, image_size);
 }
 
-int DrawLandmarks(cvai_pts_t *landmarks, VIDEO_FRAME_INFO_S *drawFrame) {
+int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame) {
   color_rgb rgb_color;
   rgb_color.r = DEFAULT_RECT_COLOR_R;
   rgb_color.g = DEFAULT_RECT_COLOR_G;
   rgb_color.b = DEFAULT_RECT_COLOR_B;
-  DrawPts(drawFrame, landmarks, rgb_color, DEFAULT_RADIUS);
+  _DrawPts(drawFrame, pts, rgb_color, DEFAULT_RADIUS);
   return CVI_SUCCESS;
 }
-int WriteMeta(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame) {
+
+int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, float g, float b) {
   color_rgb rgb_color;
-  rgb_color.r = DEFAULT_RECT_COLOR_R;
-  rgb_color.g = DEFAULT_RECT_COLOR_G;
-  rgb_color.b = DEFAULT_RECT_COLOR_B;
-  WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THINKNESS);
+  if (r == -1)
+    rgb_color.r = DEFAULT_RECT_COLOR_R;
+  else
+    rgb_color.r = r;
+  if (g == -1)
+    rgb_color.g = DEFAULT_RECT_COLOR_G;
+  else
+    rgb_color.g = g;
+  if (b == -1)
+    rgb_color.b = DEFAULT_RECT_COLOR_B;
+  else
+    rgb_color.b = b;
+  _WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THINKNESS);
   return CVI_SUCCESS;
 }
 

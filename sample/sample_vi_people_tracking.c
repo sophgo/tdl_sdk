@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         char *id_num = uint64ToString(obj_meta.info[i].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
-                                       &stVOFrame);
+                                       &stVOFrame, -1, -1, -1);
         free(id_num);
       }
       s32Ret = SendOutputFrame(&stVOFrame, &outputContext);

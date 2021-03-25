@@ -1,14 +1,8 @@
 #include "incar_object_detection.hpp"
-
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
-
-#include "cvi_sys.h"
-#include "face_utils.hpp"
-#include "opencv2/opencv.hpp"
 
 namespace cviai {
 

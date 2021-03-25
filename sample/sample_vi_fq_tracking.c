@@ -396,18 +396,18 @@ int main(int argc, char *argv[]) {
       for (uint32_t j = 0; j < face_meta.size; j++) {
         char *id_num = uint64ToString(face_meta.info[j].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, face_meta.info[j].bbox.x1, face_meta.info[j].bbox.y1,
-                                       &stVOFrame);
+                                       &stVOFrame, -1, -1, -1);
         free(id_num);
         char *fq_num = floatToString(face_meta.info[j].face_quality.quality);
         CVI_AI_Service_ObjectWriteText(fq_num, face_meta.info[j].bbox.x1,
-                                       face_meta.info[j].bbox.y1 + 30, &stVOFrame);
+                                       face_meta.info[j].bbox.y1 + 30, &stVOFrame, -1, -1, -1);
         free(fq_num);
       }
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         if (p2f[i].match) {
           char *id_num = uint64ToString(face_meta.info[p2f[i].idx].unique_id);
           CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
-                                         &stVOFrame);
+                                         &stVOFrame, -1, -1, -1);
           free(id_num);
         }
       }

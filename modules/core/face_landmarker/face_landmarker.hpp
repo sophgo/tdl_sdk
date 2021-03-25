@@ -2,7 +2,6 @@
 #include <cvi_comm_vb.h>
 #include "core.hpp"
 #include "core/face/cvai_face_types.h"
-
 #include "opencv2/opencv.hpp"
 
 namespace cviai {

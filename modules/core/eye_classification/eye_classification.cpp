@@ -1,13 +1,7 @@
 #include "eye_classification.hpp"
-
-#include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
-
-#include "cvi_sys.h"
-#include "opencv2/opencv.hpp"
 
 #define EYECLASSIFICATION_SCALE (1.0 / (255.0))
 #define NAME_SCORE "prob_Sigmoid_dequant"

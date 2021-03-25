@@ -1,13 +1,8 @@
 #include "face_landmarker.hpp"
-
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
-
-#include "cvi_sys.h"
-#include "opencv2/opencv.hpp"
 
 #define NAME_SCORE "fc1_Gemm_dequant"
 
@@ -23,7 +18,7 @@ int FaceLandmarker::setupInputPreprocess(std::vector<InputPreprecessSetup> *data
     return CVI_FAILURE;
   }
   for (uint32_t i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = 1.0;
+    (*data)[0].factor[i] = 0.99;
     (*data)[0].mean[i] = 0.0;
   }
   (*data)[0].use_quantize_scale = false;
@@ -46,7 +41,6 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
     int max_side = 0;
     Preprocessing(&face_info, &max_side, img_width, img_height);
-
     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
     m_vpss_config[0].crop_attr.stCropRect = {(int)face_info.bbox.x1, (int)face_info.bbox.y1,
                                              (uint32_t)(face_info.bbox.x2 - face_info.bbox.x1),
