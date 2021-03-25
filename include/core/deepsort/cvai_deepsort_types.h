@@ -1,9 +1,6 @@
 #ifndef _CVI_DEEPSORT_TYPES_H_
 #define _CVI_DEEPSORT_TYPES_H_
 
-// #define STD_XP_0 (float)(1.0 / 20.0)
-// #define STD_XP_1 (float)(1.0 / 160.0)
-
 typedef struct {
   /* for process noise, Q = pow( alpha * x(i) + beta, 2) */
   float Q_std_alpha[8];

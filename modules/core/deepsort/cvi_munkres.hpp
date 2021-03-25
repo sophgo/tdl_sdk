@@ -7,11 +7,6 @@ enum NODE_STATE { NONE = 0, STAR, PRIME };
 
 enum ALGO_STAGE { ZERO = 0, ONE, TWO, THREE, FOUR, FINAL, DONE };
 
-// typedef struct{
-//   int r;
-//   int c;
-// } node_index;
-
 class CVIMunkres {
  public:
   CVIMunkres(Eigen::MatrixXf *matrix);

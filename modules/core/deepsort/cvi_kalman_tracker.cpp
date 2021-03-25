@@ -4,6 +4,8 @@
 #include <math.h>
 #include <iostream>
 
+#define USE_COSINE_DISTANCE_FOR_FEATURE true
+
 KalmanTracker::KalmanTracker() {
   id = -1;
   class_id = -1;
@@ -89,9 +91,10 @@ KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX
 
 void KalmanTracker::update_bbox(const BBOX &bbox) { this->bbox = bbox; }
 
-void KalmanTracker::update_feature(const FEATURE &feature) {
+void KalmanTracker::update_feature(const FEATURE &feature, int feature_budget_size,
+                                   int feature_update_interval) {
   feature_update_counter += 1;
-  if (feature_update_counter >= FEATURE_UPDATE_INTERVAL) {
+  if (feature_update_counter >= feature_update_interval) {
     if (USE_COSINE_DISTANCE_FOR_FEATURE) {
       FEATURE tmp_feature = feature;
       normalize_feature(tmp_feature);
@@ -101,7 +104,7 @@ void KalmanTracker::update_feature(const FEATURE &feature) {
       features_.push_back(feature);
     }
     feature_update_counter = 0;
-    if (features_.size() > FEATURE_BUDGET_SIZE) {
+    if (features_.size() > static_cast<size_t>(feature_budget_size)) {
       features_.erase(features_.begin());
     }
   }
@@ -179,11 +182,8 @@ COST_MATRIX KalmanTracker::getCostMatrix_BBox(const std::vector<KalmanTracker> &
   }
   for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
     int tracker_idx = Tracker_IDXes[i];
-    assert(KTrackers[tracker_idx].unmatched_times <= MAX_UNMATCHED_TIMES_FOR_BBOX_MATCHING);
-
     BBOX tracker_bbox = KTrackers[tracker_idx].getBBox_TLWH();
     COST_VECTOR distance_v = iou_distance(tracker_bbox, bbox_m_);
-
     cost_m.row(i) = distance_v;
   }
 

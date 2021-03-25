@@ -20,7 +20,6 @@ DeepSORT::DeepSORT() {
   kf_ = KalmanFilter();
 
   conf = get_DefaultConfig();
-  // show_deepsort_config(conf);
 }
 
 DeepSORT::DeepSORT(cvai_deepsort_config_t ds_conf) {
@@ -28,7 +27,6 @@ DeepSORT::DeepSORT(cvai_deepsort_config_t ds_conf) {
   kf_ = KalmanFilter();
 
   conf = ds_conf;
-  // show_deepsort_config(conf);
 }
 
 int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid,
@@ -389,7 +387,8 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
     kf_.update(tracker_.kalman_state_, tracker_.x_, tracker_.P_, bbox_tlwh2xyah(bbox_),
                conf.kfilter_conf);
     tracker_.update_bbox(bbox_);
-    tracker_.update_feature(feature_);
+    tracker_.update_feature(feature_, conf.ktracker_conf.feature_budget_size,
+                            conf.ktracker_conf.feature_update_interval);
     tracker_.update_state(true, conf.ktracker_conf.max_unmatched_num,
                           conf.ktracker_conf.accreditation_threshold);
     result_[bbox_idx] =

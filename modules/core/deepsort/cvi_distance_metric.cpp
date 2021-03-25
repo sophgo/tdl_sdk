@@ -1,18 +1,15 @@
 #include "cvi_distance_metric.hpp"
 
-/*
-TODO: Implement functions
+#if 0
+  // TODO: Implement functions (Not nessesary)
   void normalize_feature(FEATURE &a);
   float cosine_distance(const FEATURE &a, const FEATURE &b);
   COST_VECTOR cosine_distance(const FEATURE &a, const FEATURES &B);
   COST_MATRIX cosine_distance(const FEATURES &A, const FEATURES &B);
   Eigen::VectorXf get_min_rowwise(Eigen::MatrixXf &M);
-*/
+#endif
 
 void normalize_feature(FEATURE &a) { a = a / a.norm(); }
-
-// COST_VECTOR cosine_distance(const FEATURE &a, const FEATURES &B){
-// }
 
 COST_MATRIX cosine_distance(const FEATURES &A_norm, const FEATURES &B_norm) {
   COST_MATRIX cost_m = (0.5 * (1 - (A_norm * B_norm.transpose()).array())).matrix();
@@ -20,7 +17,6 @@ COST_MATRIX cosine_distance(const FEATURES &A_norm, const FEATURES &B_norm) {
 }
 
 COST_VECTOR iou_distance(const BBOX &a, const BBOXES &B) {
-  // assert(0);
   COST_VECTOR cost_v;
   POINT_V a_TL = a.leftCols(2);
   POINT_V a_BR = a_TL + a.rightCols(2);

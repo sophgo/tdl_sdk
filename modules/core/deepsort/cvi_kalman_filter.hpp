@@ -11,11 +11,8 @@ class KalmanFilter {
   KalmanFilter();
   int predict(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_) const;
   int update(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_, const K_MEASUREMENT_V &z_) const;
-  // float mahalanobis(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
-  // const K_MEASUREMENT_V &z_) const;
   ROW_VECTOR mahalanobis(const KALMAN_STAGE &s_, const K_STATE_V &x_, const K_COVARIANCE_M &P_,
                          const K_MEASUREMENT_M &Z_) const;
-
   int predict(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
               const cvai_kalman_filter_config_t &kfilter_conf) const;
   int update(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_, const K_MEASUREMENT_V &z_,
@@ -23,15 +20,14 @@ class KalmanFilter {
   ROW_VECTOR mahalanobis(const KALMAN_STAGE &s_, const K_STATE_V &x_, const K_COVARIANCE_M &P_,
                          const K_MEASUREMENT_M &Z_,
                          const cvai_kalman_filter_config_t &kfilter_conf) const;
+#if 0
+  float mahalanobis(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
+                    const K_MEASUREMENT_V &z_) const;
+#endif
 
  private:
   K_EXTRAPOLATION_M F_;
   K_OBSERVATION_M H_;
-  // K_PROCESS_NOISE_M Q_;
-  // K_MEASUREMENT_NOISE_M R_;
-
-  // float std_x_;
-  // float std_v_;
 };
 
 #endif /* _CVI_KALMAN_FILTER_HPP_ */

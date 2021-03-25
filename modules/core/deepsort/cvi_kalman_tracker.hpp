@@ -8,22 +8,6 @@
 #include "cvi_kalman_types.hpp"
 #include "cvi_tracker.hpp"
 
-#define USE_COSINE_DISTANCE_FOR_FEATURE true
-
-#define MAX_UNMATCHED_TIMES_FOR_BBOX_MATCHING 2
-
-#define MAX_UNMATCHED_NUM 40
-#define ACCREDITATION_THRESHOLD 3
-#define FEATURE_BUDGET_SIZE 8
-#define FEATURE_UPDATE_INTERVAL 1
-
-// typedef COST_MATRIX (*CostMarixFunction_KTracker)(const
-// std::vector<KalmanTracker> &KTrackers,
-//                     const std::vector<BBOX> &BBoxes,
-//                     const std::vector<FEATURE> &Features,
-//                     const std::vector<int> &Tracker_IDs,
-//                     const std::vector<int> &BBox_IDs);
-
 enum TRACKER_STATE { MISS = 0, PROBATION, ACCREDITATION };
 
 const float chi2inv95[10] = {0,      3.8415, 5.9915, 7.8147, 9.4877,
@@ -42,10 +26,10 @@ class KalmanTracker : public Tracker {
   KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox, const FEATURE &feature,
                 const cvai_kalman_tracker_config_t &ktracker_conf);
 
-  void update_state(bool is_matched, int max_unmatched_num = MAX_UNMATCHED_NUM,
-                    int accreditation_thr = ACCREDITATION_THRESHOLD);
+  void update_state(bool is_matched, int max_unmatched_num = 40, int accreditation_thr = 3);
   void update_bbox(const BBOX &bbox);
-  void update_feature(const FEATURE &feature);
+  void update_feature(const FEATURE &feature, int feature_budget_size = 8,
+                      int feature_update_interval = 1);
 
   BBOX getBBox_TLWH() const;
 

@@ -9,8 +9,6 @@
 
 #include "core/cviai_core.h"
 
-#define USE_COSINE_DISTANCE_FOR_FEATURE true
-
 struct MatchResult {
   std::vector<std::pair<int, int>> matched_pairs;
   std::vector<int> unmatched_bbox_idxes;
