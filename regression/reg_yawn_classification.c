@@ -37,8 +37,8 @@ static int run(const char *img_dir, int *count, int *total) {
     face.dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
     face.dms->dms_od.info = NULL;
     CVI_AI_FaceLandmarker(facelib_handle, &frame, &face);
-    CVI_AI_EyeClassification(facelib_handle, &frame, &face);
-    if (face.dms->leye_score < 0.65 && face.dms->reye_score < 0.65) {
+    CVI_AI_YawnClassification(facelib_handle, &frame, &face);
+    if (face.dms->yawn_score < 0.75) {
       (*count)++;
     }
     (*total)++;
@@ -54,8 +54,8 @@ static int run(const char *img_dir, int *count, int *total) {
 int main(int argc, char *argv[]) {
   if (argc != 6) {
     printf(
-        "Usage: %s <retinaface model path> <landmark model path> <eye classifier model path> <eye "
-        "open image dir> <eye close image dir>.\n",
+        "Usage: %s <retinaface model path> <landmark model path> <yawn classifier model path> "
+        "<yawn open image dir> <yawn close image dir>.\n",
         argv[0]);
     return CVI_FAILURE;
   }
@@ -72,14 +72,14 @@ int main(int argc, char *argv[]) {
   ret = CVI_AI_CreateHandle2(&facelib_handle, 1);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[2]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[3]);
 
   int open = 0, close = 0;
   int open_total = 0, close_total = 0;
   run(argv[4], &open, &open_total);
   run(argv[5], &close, &close_total);
 
-  printf("Num of eye face -> open: %d/%d, close: %d/%d\n", open_total - open, open_total, close,
+  printf("Num of yawn face -> open: %d/%d, close: %d/%d\n", open_total - open, open_total, close,
          close_total);
 
   CVI_AI_DestroyHandle(facelib_handle);

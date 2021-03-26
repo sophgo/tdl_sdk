@@ -1,9 +1,5 @@
 #define _GNU_SOURCE
 #include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "cviai_perfetto.h"
