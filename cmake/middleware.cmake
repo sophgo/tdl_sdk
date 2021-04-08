@@ -22,21 +22,11 @@ set(MIDDLEWARE_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include/
 )
 
-set(MIDDLEWARE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libnanomsg.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+set(MIDDLEWARE_LIBS 
                     ${MIDDLEWARE_SDK_ROOT}/lib/libcvitracer.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so)
+                    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so)
 
-if("${CVI_PLATFORM}" STREQUAL "CV182X")
-  set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
-endif()
 
 message("MIDDLEWARE_LIBS=${MIDDLEWARE_LIBS}")
 

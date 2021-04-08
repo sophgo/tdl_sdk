@@ -42,6 +42,7 @@ set(SAMPLE_INC
     ${IVE_INCLUDES})
 
 set(SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
@@ -65,10 +66,10 @@ set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libaec.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES.so)
 
-buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_fr_custom INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_fr INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_fr2 INC ${SAMPLE_INC} DEPS cviai_core)
+buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_fr_custom INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_fr INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_fr2 INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_mask_fr INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
@@ -82,14 +83,14 @@ buildninstall(NAME sample_vi_lpdr INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_
 buildninstall(NAME sample_vi_deeplabv3 INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 
 
-buildninstall(NAME sample_read_dt INC ${SAMPLE_INC} DEPS cviai_core cviai_service)
-buildninstall(NAME sample_read_td INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_mot_1 INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_mot_2 INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_mot_3 INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_fq_tracking INC ${SAMPLE_INC} DEPS cviai_core)
+buildninstall(NAME sample_read_dt INC ${SAMPLE_INC} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_td INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_mot_1 INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_mot_2 INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_mot_3 INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_fq_tracking INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_read_esc INC ${SAMPLE_INC} DEPS cviai_core pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-buildninstall(NAME sample_read_lpdr INC ${SAMPLE_INC} DEPS cviai_core)
-buildninstall(NAME sample_read_pose INC ${SAMPLE_INC} DEPS cviai_core cviai_service)
+buildninstall(NAME sample_read_lpdr INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_pose INC ${SAMPLE_INC} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_dms INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core pthread cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 install(FILES vi_vo_utils.c vi_vo_utils.h DESTINATION sample)

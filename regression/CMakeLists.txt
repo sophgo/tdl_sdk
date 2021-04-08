@@ -65,6 +65,7 @@ set(REG_INCLUDES
 )
 
 set(SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
@@ -72,6 +73,8 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
 )
 
 if("${CVI_PLATFORM}" STREQUAL "CV182X")
@@ -89,17 +92,17 @@ buildninstall(NAME reg_thermal INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluat
 buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_object_intersect INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
-buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} DEPS cviai_core)
+buildninstall(NAME reg_object_intersect INC ${REG_INCLUDES} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
+buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_feature_matching INC ${REG_INCLUDES} DEPS cviai_core DEPS cviai_core cviai_service)
-buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
-buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
-buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
-buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service)
+buildninstall(NAME reg_feature_matching INC ${REG_INCLUDES} DEPS cviai_core DEPS cviai_core cviai_service ${SAMPLE_LIBS})
+buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
+buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
+buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 
-buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core)
+buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
