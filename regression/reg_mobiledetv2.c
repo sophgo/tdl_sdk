@@ -30,6 +30,7 @@ typedef struct _ModelConfig {
 
 #define WRAPPER(realfunc) inference_wrapper_##realfunc
 CREATE_WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0)
+CREATE_WRAPPER(CVI_AI_MobileDetV2_Pedestrian_D0)
 
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVI_SUCCESS;
@@ -48,6 +49,9 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   } else if (strcmp(model_name, "mobiledetv2-vehicle-d0") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0;
     config->inference = WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0);
+  } else if (strcmp(model_name, "mobiledetv2-pedestrian-d0") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0;
+    config->inference = WRAPPER(CVI_AI_MobileDetV2_Pedestrian_D0);
   } else {
     ret = CVI_FAILURE;
   }
@@ -94,7 +98,8 @@ int parse_args(int argc, char *argv[], Argument *args) {
         "mobiledetv2-d0, "
         "mobiledetv2-d1, "
         "mobiledetv2-d2, "
-        "mobiledetv2-vehicle-d0}, default: mobiledetv2-d0\n\n",
+        "mobiledetv2-vehicle-d0"
+        "mobiledetv2-pedestrian-d0}, default: mobiledetv2-d0\n\n",
         argv[0]);
     return CVI_FAILURE;
   }

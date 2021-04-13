@@ -76,6 +76,8 @@ int main(int argc, char *argv[]) {
     char *name2 = NULL;
     int label;
     CVI_AI_Eval_LfwGetImageLabelPair(eval_handle, i, &name1, &name2, &label);
+    printf("[%d/%d] label %d: image1 %s image2 %s\n", i + 1, imageNum, label, name1, name2);
+
     VB_BLK blk1;
     VIDEO_FRAME_INFO_S frame1;
     CVI_S32 ret = CVI_AI_ReadImage(name1, &blk1, &frame1, PIXEL_FORMAT_RGB_888);
@@ -84,6 +86,18 @@ int main(int argc, char *argv[]) {
       return ret;
     }
 
+    cvai_face_t face1, face2;
+    memset(&face1, 0, sizeof(cvai_face_t));
+    memset(&face2, 0, sizeof(cvai_face_t));
+
+    CVI_AI_RetinaFace(facelib_handle, &frame1, &face1);
+    if (face1.size > 0) {
+      inference(facelib_handle, &frame1, &face1);
+    } else {
+      printf("cannot find face: %s\n", name1);
+    }
+    CVI_VB_ReleaseBlock(blk1);
+
     VB_BLK blk2;
     VIDEO_FRAME_INFO_S frame2;
     ret = CVI_AI_ReadImage(name2, &blk2, &frame2, PIXEL_FORMAT_RGB_888);
@@ -91,26 +105,23 @@ int main(int argc, char *argv[]) {
       printf("Read image2 failed with %#x!\n", ret);
       return ret;
     }
-    printf("[%d/%d] label %d: image1 %s image2 %s\n", i + 1, imageNum, label, name1, name2);
-    free(name1);
-    free(name2);
 
-    cvai_face_t face1, face2;
-    memset(&face1, 0, sizeof(cvai_face_t));
-    memset(&face2, 0, sizeof(cvai_face_t));
-
-    CVI_AI_RetinaFace(facelib_handle, &frame1, &face1);
     CVI_AI_RetinaFace(facelib_handle, &frame2, &face2);
+    if (face2.size > 0) {
+      inference(facelib_handle, &frame2, &face2);
+    } else {
+      printf("cannot find face: %s\n", name2);
+    }
 
-    inference(facelib_handle, &frame1, &face1);
-    inference(facelib_handle, &frame2, &face2);
-
-    CVI_AI_Eval_LfwInsertFace(eval_handle, i, label, &face1, &face2);
+    if (face1.size > 0 && face2.size > 0) {
+      CVI_AI_Eval_LfwInsertFace(eval_handle, i, label, &face1, &face2);
+    }
 
     CVI_AI_Free(&face1);
     CVI_AI_Free(&face2);
-    CVI_VB_ReleaseBlock(blk1);
     CVI_VB_ReleaseBlock(blk2);
+    free(name1);
+    free(name2);
   }
 
   CVI_AI_Eval_LfwSave2File(eval_handle, argv[4]);
