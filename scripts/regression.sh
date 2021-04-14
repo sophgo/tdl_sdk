@@ -6,7 +6,7 @@ CHIPSET=$(echo ${CHIP} | tr '[:upper:]' '[:lower:]')
 
 print_usage() {
   echo ""
-  echo "Usage: regression.sh [-r] [-m] [-s] [-d] [-t] [-h] test_type"
+  echo "Usage: regression.sh [-r] [-m] [-s] [-d] [-h] test_type"
   echo ""
   echo "Argument:"
   echo -e "\ttest_type, set value to \"daily\" if it's a daily test"
@@ -79,8 +79,7 @@ echo "----------------------"
 run sample_init
 run sample_read_fr ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v3-attribute.cvimodel ${sample_image_dir}/ryan.png
 
-if [[ $CHIPSET = "183x"]];
-then
+if [[ "$CHIPSET" = "183x" ]]; then
   run sample_read_fr_custom ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v3-attribute.cvimodel ${sample_image_dir}/ryan.png
 fi
 
@@ -95,12 +94,11 @@ fi
 echo "start to do regression test:"
 makedir_if_needed ${results_dir}
 
-run reg_wider_face ${model_dir}/retinaface_mnet0.25_608.cvimodel ${dataset_dir}/WIDER_val ${results_dir}/wider_face_result_608
-run reg_wider_face ${model_dir}/retinaface_mnet0.25_342_608.cvimodel ${dataset_dir}/WIDER_val ${results_dir}/wider_face_result_342_608
-run reg_wider_face ${model_dir}/retinaface_mnet0.25_608_342.cvimodel ${dataset_dir}/WIDER_val ${results_dir}/wider_face_result_608_342
+run reg_wider_face ${model_dir}/retinaface_mnet0.25_608.cvimodel ${dataset_dir}/wider_face/WIDER_val ${results_dir}/wider_face_result_608
+run reg_wider_face ${model_dir}/retinaface_mnet0.25_342_608.cvimodel ${dataset_dir}/wider_face/WIDER_val ${results_dir}/wider_face_result_342_608
+run reg_wider_face ${model_dir}/retinaface_mnet0.25_608_342.cvimodel ${dataset_dir}/wider_face/WIDER_val ${results_dir}/wider_face_result_608_342
 
-if [[ $CHIPSET = "183x" ]];
-then
+if [[ "$CHIPSET" = "183x" ]]; then
   run reg_lfw ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v3-attribute.cvimodel ${dataset_dir}/lfw.txt ${results_dir}/lfw_result_cviface-v3.txt 1
   run reg_lfw ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v4.cvimodel ${dataset_dir}/lfw.txt ${results_dir}/lfw_result_cviface-v4.txt 0
   run reg_lfw ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v5-m.cvimodel ${dataset_dir}/lfw.txt ${results_dir}/lfw_result_cviface-v5-m.txt 0
