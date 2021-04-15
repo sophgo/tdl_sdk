@@ -77,10 +77,10 @@ echo "----------------------"
 
 # For normal CI check
 run sample_init
-run sample_read_fr ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v3-attribute.cvimodel ${sample_image_dir}/ryan.png
 
 if [[ "$CHIPSET" = "183x" ]]; then
   run sample_read_fr_custom ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v3-attribute.cvimodel ${sample_image_dir}/ryan.png
+  run sample_read_fr ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v3-attribute.cvimodel ${sample_image_dir}/ryan.png
 fi
 
 run sample_read_dt ${model_dir}/retinaface_mnet0.25_608.cvimodel ${sample_image_dir}/ryan.png

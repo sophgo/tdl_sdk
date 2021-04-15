@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 20;
   const CVI_S32 vpssgrp_height = 20;
-  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,
-                        vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR);
+  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
+                         vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
   if (ret != CVI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;

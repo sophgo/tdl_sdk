@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
 
   uint32_t vpssgrp_width = 1280;
   uint32_t vpssgrp_height = 720;
-  ret = MMF_INIT_HELPER(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, vpssgrp_width,
-                        vpssgrp_height, PIXEL_FORMAT_RGB_888);
+  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
+                         vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
   if (ret != CVI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
