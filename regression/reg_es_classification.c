@@ -39,7 +39,7 @@ static int run(const char *img_dir, float *Acc) {
     frame.stVFrame.u32Width = size;
     int index = -1;
     CVI_AI_ESClassification(ai_handle, &frame, &index);
-
+    free(temp);
     if (index == atoi(pch)) true_total++;
     total++;
   }
