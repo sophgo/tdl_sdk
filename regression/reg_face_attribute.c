@@ -33,6 +33,11 @@ static void removePreviousFile(const char *dir_path) {
   struct dirent *entry;
   dirp = opendir(dir_path);
 
+  if (dirp == NULL) {
+    printf("Open dir %s failed: %s\n", dir_path, strerror(errno));
+    return;
+  }
+
   while ((entry = readdir(dirp)) != NULL) {
     if (entry->d_type != 8 && entry->d_type != 0) continue;
 
@@ -50,9 +55,16 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
   dirp = opendir(img_dir);
 
   if (0 != mkdir(feature_dir, S_IRWXO) && EEXIST != errno) {
-    printf("Create %s failed.\n", feature_dir);
+    printf("Create %s failed: %s\n", feature_dir, strerror(errno));
     return CVI_FAILURE;
   }
+
+  if (0 != chmod(feature_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IROTH | S_IWOTH | S_IXOTH | S_IWGRP |
+                                  S_IRGRP | S_IXGRP)) {
+    printf("chmod %s failed: %s\n", feature_dir, strerror(errno));
+    return CVI_FAILURE;
+  }
+
   removePreviousFile(feature_dir);
 
   while ((entry = readdir(dirp)) != NULL) {
@@ -103,7 +115,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
       FILE *fp_feature;
       if ((fp_feature = fopen(base_name, "w+")) == NULL) {
-        printf("Write file open error!");
+        printf("Write file %s open failed: %s\n", base_name, strerror(errno));
         return CVI_FAILURE;
       }
       for (int i = 0; i < face.info[face_idx].feature.size; i++) {
@@ -125,6 +137,11 @@ static int loadCount(const char *dir_path) {
   struct dirent *entry;
   dirp = opendir(dir_path);
 
+  if (dirp == NULL) {
+    printf("Open dir %s failed: %s\n", dir_path, strerror(errno));
+    return 0;
+  }
+
   int count = 0;
   while ((entry = readdir(dirp)) != NULL) {
     if (entry->d_type != 8 && entry->d_type != 0) continue;
@@ -139,6 +156,11 @@ static char **loadName(const char *dir_path, int count) {
   DIR *dirp;
   struct dirent *entry;
   dirp = opendir(dir_path);
+
+  if (dirp == NULL) {
+    printf("Open dir %s failed: %s\n", dir_path, strerror(errno));
+    return NULL;
+  }
 
   char **name = calloc(count, sizeof(char *));
   for (int i = 0; i < count; i++) {
@@ -162,6 +184,11 @@ static int8_t *loadFeature(const char *dir_path, int count) {
   struct dirent *entry;
   dirp = opendir(dir_path);
 
+  if (dirp == NULL) {
+    printf("Open dir %s failed: %s\n", dir_path, strerror(errno));
+    return NULL;
+  }
+
   int8_t *feature = calloc(count * FEATURE_LENGTH, sizeof(int8_t));
   int i = 0;
   while ((entry = readdir(dirp)) != NULL) {
@@ -173,7 +200,7 @@ static int8_t *loadFeature(const char *dir_path, int count) {
 
     FILE *fp_db;
     if ((fp_db = fopen(base_name, "r")) == NULL) {
-      printf("file open error %s!\n", base_name);
+      printf("open %s error: %s!\n", base_name, strerror(errno));
       continue;
     }
 
