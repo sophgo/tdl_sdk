@@ -15,8 +15,8 @@
 #define LIVENESS_WIDTH 32
 #define LIVENESS_HEIGHT 32
 #define CROP_NUM 9
-#define MIN_FACE_WIDTH 25
-#define MIN_FACE_HEIGHT 25
+#define MIN_FACE_WIDTH 50
+#define MIN_FACE_HEIGHT 50
 #define MATCH_IOU_THRESHOLD 0.2
 #define OUTPUT_NAME "fc2_dequant"
 
