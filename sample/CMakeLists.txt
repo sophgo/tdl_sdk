@@ -33,7 +33,6 @@ endfunction(buildninstall)
 
 set(SAMPLE_INC
     ${MIDDLEWARE_SDK_ROOT}/include
-    #    ${MIDDLEWARE_SDK_ROOT}/sample/audio/3rdparty/include/
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -64,7 +63,8 @@ set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libtinyalsa.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libaec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES.so)
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libnanomsg.so)
 
 buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_read_fr_custom INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
