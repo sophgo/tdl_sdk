@@ -103,11 +103,11 @@ bool update_tracker(cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S *frame,
                 (CVI_U8 *)malloc(112 * 112 * sizeof(CVI_U8));
             memset(fq_trackers[j].face.stVFrame.pu8VirAddr[chn], 0, 112 * 112 * sizeof(CVI_U8));
           }
-          fq_trackers[j].pitch = face_meta->info[i].face_quality.pitch;
-          fq_trackers[j].roll = face_meta->info[i].face_quality.roll;
-          fq_trackers[j].yaw = face_meta->info[i].face_quality.yaw;
-          if (face_meta->info[i].face_quality.quality >= QUALITY_THRESHOLD) {
-            fq_trackers[j].quality = face_meta->info[i].face_quality.quality;
+          fq_trackers[j].pitch = face_meta->info[i].head_pose.pitch;
+          fq_trackers[j].roll = face_meta->info[i].head_pose.roll;
+          fq_trackers[j].yaw = face_meta->info[i].head_pose.yaw;
+          if (face_meta->info[i].face_quality >= QUALITY_THRESHOLD) {
+            fq_trackers[j].quality = face_meta->info[i].face_quality;
             feature_copy(&fq_trackers[j].feature, &face_meta->info[i].feature);
             CVI_S32 ret =
                 CVI_AI_GetAlignedFace(ai_handle, frame, &fq_trackers[j].face, &face_meta->info[i]);
@@ -128,12 +128,12 @@ bool update_tracker(cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S *frame,
     } else {
       /* if found, check whether the quality(or feature) need to be update. */
       miss_time[match_idx] = 0;
-      fq_trackers[match_idx].pitch = face_meta->info[i].face_quality.pitch;
-      fq_trackers[match_idx].roll = face_meta->info[i].face_quality.roll;
-      fq_trackers[match_idx].yaw = face_meta->info[i].face_quality.yaw;
-      if (face_meta->info[i].face_quality.quality >= QUALITY_THRESHOLD &&
-          face_meta->info[i].face_quality.quality > fq_trackers[match_idx].quality) {
-        fq_trackers[match_idx].quality = face_meta->info[i].face_quality.quality;
+      fq_trackers[match_idx].pitch = face_meta->info[i].head_pose.pitch;
+      fq_trackers[match_idx].roll = face_meta->info[i].head_pose.roll;
+      fq_trackers[match_idx].yaw = face_meta->info[i].head_pose.yaw;
+      if (face_meta->info[i].face_quality >= QUALITY_THRESHOLD &&
+          face_meta->info[i].face_quality > fq_trackers[match_idx].quality) {
+        fq_trackers[match_idx].quality = face_meta->info[i].face_quality;
         feature_copy(&fq_trackers[match_idx].feature, &face_meta->info[i].feature);
         CVI_S32 ret = CVI_AI_GetAlignedFace(ai_handle, frame, &fq_trackers[match_idx].face,
                                             &face_meta->info[i]);
@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
       printf("[%u][%lu] [%d] (%d,%d,%d,%d) <%f>\n", i, face_meta.info[i].unique_id,
              tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
              (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
-             (int)tracker_meta.info[i].bbox.y2, face_meta.info[i].face_quality.quality);
+             (int)tracker_meta.info[i].bbox.y2, face_meta.info[i].face_quality);
     }
 #endif
 
@@ -360,9 +360,9 @@ int main(int argc, char *argv[]) {
               (int)face_meta.info[i].bbox.x2, (int)face_meta.info[i].bbox.y2,
               tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
               (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
-              (int)tracker_meta.info[i].bbox.y2, face_meta.info[i].face_quality.quality,
-              face_meta.info[i].face_quality.pitch, face_meta.info[i].face_quality.roll,
-              face_meta.info[i].face_quality.yaw);
+              (int)tracker_meta.info[i].bbox.y2, face_meta.info[i].face_quality,
+              face_meta.info[i].head_pose.pitch, face_meta.info[i].head_pose.roll,
+              face_meta.info[i].head_pose.yaw);
     }
 
     // fprintf(outFile, "%u\n", 0);

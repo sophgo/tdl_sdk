@@ -42,9 +42,8 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
       CVI_AI_FaceQuality(facelib_handle, &frFrame, &face);
     }
 
-    if (face.size == 0 || face.info[0].face_quality.quality < 0.5 ||
-        fabs(face.info[0].face_quality.pitch) > 0.45 ||
-        fabs(face.info[0].face_quality.yaw) > 0.45) {
+    if (face.size == 0 || face.info[0].face_quality < 0.5 ||
+        fabs(face.info[0].head_pose.pitch) > 0.45 || fabs(face.info[0].head_pose.yaw) > 0.45) {
       fail_num++;
     }
 

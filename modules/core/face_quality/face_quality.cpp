@@ -157,13 +157,13 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     run(frames);
 
     float *score = getOutputRawPtr<float>(NAME_SCORE);
-    meta->info[i].face_quality.quality = score[1];
+    meta->info[i].face_quality = score[1];
 
     float roll = 0, pitch = 0, yaw = 0;
     get_face_direction(face_info.pts, roll, pitch, yaw);
-    meta->info[i].face_quality.roll = roll;
-    meta->info[i].face_quality.pitch = pitch;
-    meta->info[i].face_quality.yaw = yaw;
+    meta->info[i].head_pose.roll = roll;
+    meta->info[i].head_pose.pitch = pitch;
+    meta->info[i].head_pose.yaw = yaw;
 
     CVI_AI_FreeCpp(&face_info);
   }

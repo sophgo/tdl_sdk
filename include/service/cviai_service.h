@@ -291,6 +291,15 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handl
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp);
 
 /**
+ * @brief Calculate the head pose angle for all faces.
+ * @ingroup core_cviaiservice
+ *
+ * @param meta Face meta structure.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_FaceAngleForAll(const cvai_face_t *meta);
+
+/**
  * @brief Draw limbs to YUV frame with given object pose.
  * @ingroup core_cviaiservice
  *

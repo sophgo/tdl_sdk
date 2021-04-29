@@ -43,26 +43,6 @@ typedef enum {
  */
 typedef enum { LIVENESS_IR_LEFT = 0, LIVENESS_IR_RIGHT } cvai_liveness_ir_position_e;
 
-/** @struct cvai_face_quality_t
- *  @ingroup core_cviaicore
- *  @brief The data structure for the face quality output.
- *
- *  @var cvai_face_quality_t::quality
- *  The quality value for the face.
- *  @var cvai_face_quality_t::roll
- *  The roll angle of the head facing.
- *  @var cvai_face_quality_t::pitch
- *  The pitch angle of the head facing.
- *  @var cvai_face_quality_t::yaw
- *  The yaw angle of the head facing.
- */
-typedef struct {
-  float quality;
-  float roll;
-  float pitch;
-  float yaw;
-} cvai_face_quality_t;
-
 /** @struct cvai_head_pose_t
  *  @ingroup core_cviaicore
  *  @brief The data structure for the head pose output.
@@ -193,10 +173,9 @@ typedef struct {
  *  The mask score.
  *  @var cvai_face_info_t::face_quality
  *  The face quality.
- *  @var cvai_face_info_t::dms
- *  The dms info.
+ *  @var cvai_face_info_t::head_pose;
+ *  The head pose.
  *
- *  @see cvai_face_quality_t
  *  @see cvai_face_t
  */
 
@@ -212,7 +191,8 @@ typedef struct {
   float age;
   float liveness_score;
   float mask_score;
-  cvai_face_quality_t face_quality;
+  float face_quality;
+  cvai_head_pose_t head_pose;
 } cvai_face_info_t;
 
 /** @struct cvai_face_t

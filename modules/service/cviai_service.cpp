@@ -247,6 +247,15 @@ CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle, const cv
 CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp) {
   return cviai::service::Predict(pts, hp);
 }
+
+CVI_S32 CVI_AI_Service_FaceAngleForAll(const cvai_face_t *meta) {
+  CVI_S32 ret = CVI_SUCCESS;
+  for (uint32_t i = 0; i < meta->size; i++) {
+    ret |= cviai::service::Predict(&meta->info[i].pts, &meta->info[i].head_pose);
+  }
+  return ret;
+}
+
 CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame) {
   return cviai::service::DrawPose17(meta, frame);
 }

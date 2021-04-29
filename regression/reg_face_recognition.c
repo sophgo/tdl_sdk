@@ -122,7 +122,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     file_name++;
 
     if (face.size > 0 &&
-        (do_face_quality == false || face.info[face_idx].face_quality.quality > quality_thresh)) {
+        (do_face_quality == false || face.info[face_idx].face_quality > quality_thresh)) {
       CVI_AI_FaceRecognitionOne(facelib_handle, &rgb_frame, &face, face_idx);
 
       char base_name[500] = "\0";
@@ -139,11 +139,11 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
         fprintf(fp_feature, "%d\n", (int)face.info[face_idx].feature.ptr[i]);
       }
 
-      log_reg_pass(fp_pass, file_name, face.size, face.info[face_idx].face_quality.quality);
+      log_reg_pass(fp_pass, file_name, face.size, face.info[face_idx].face_quality);
       fclose(fp_feature);
     } else {
       log_reg_fail(fp_fail, file_name, face.size,
-                   face.size > 0 ? face.info[face_idx].face_quality.quality : 0, quality_thresh);
+                   face.size > 0 ? face.info[face_idx].face_quality : 0, quality_thresh);
     }
 
     CVI_AI_Free(&face);
