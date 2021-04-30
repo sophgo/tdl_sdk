@@ -14,7 +14,8 @@ static int run(const char *img_dir, float *Acc) {
   struct dirent *entry;
   dirp = opendir(img_dir);
   int total = 0, true_total = 0;
-
+  int _true[6] = {0};
+  int _total[6] = {0};
   while ((entry = readdir(dirp)) != NULL) {
     if (entry->d_type != 8 && entry->d_type != 0) continue;
     char line[500] = "\0";
@@ -25,7 +26,6 @@ static int run(const char *img_dir, float *Acc) {
     char *delim = "_";
     char *pch;
     pch = strtok(entry->d_name, delim);
-
     FILE *fp = fopen(line, "rb");
     fseek(fp, 0, SEEK_END);
     int size = (int)ftell(fp) * sizeof(char);
@@ -40,12 +40,20 @@ static int run(const char *img_dir, float *Acc) {
     int index = -1;
     CVI_AI_ESClassification(ai_handle, &frame, &index);
     free(temp);
-    if (index == atoi(pch)) true_total++;
+
+    if (index == atoi(pch)) {
+      true_total++;
+      _true[index]++;
+    }
+    _total[index]++;
     total++;
   }
   *Acc = (float)true_total / (float)total;
   closedir(dirp);
 
+  for (int i = 0; i < 6; ++i) {
+    printf("index: %d Acc: %f\n", i, (float)_true[i] / (float)_total[i]);
+  }
   return CVI_SUCCESS;
 }
 

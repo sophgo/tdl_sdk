@@ -2,15 +2,16 @@
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 
-#define N_FFT 256
+#define N_FFT 1024
 #define ESC_OUT_NAME "prob_dequant"
 #define PI 3.14159265358979323846
+
 namespace cviai {
 
 ESClassification::ESClassification() : Core(CVI_MEM_SYSTEM) {
   int insert_cnt = 0;
   // Calculate 3 different stft hannwindow
-  for (int i = 0; i < 3; ++i) {
+  for (int i = 0; i < Channel; ++i) {
     hannWindow[i] = cv::Mat_<float>(1, N_FFT, 0.0f);
     if (N_FFT >= win_length[i]) {
       insert_cnt = (N_FFT - win_length[i]) / 2;
@@ -38,16 +39,15 @@ int ESClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
     image.at<float>(0, i) = (float)temp_buffer[i] / 32768.0;  // turn to pcm format
   }
   // 3 channel input with different stft
-  cv::Mat_<float> mag[3];
-  for (int i = 0; i < 3; ++i) {
+  cv::Mat_<float> mag[Channel];
+  for (int i = 0; i < Channel; ++i) {
     mag[i] = STFT(&image, i);
     mag[i] = cv::abs(mag[i]);
     cv::resize(mag[i], mag[i], cv::Size(feat_width, feat_height), 0, 0, cv::INTER_LINEAR);
   }
-
   uint16_t *input_ptr = getInputRawPtr<uint16_t>(0);
   int size = feat_height * feat_width;
-  for (int i = 0; i < 3; ++i) {
+  for (int i = 0; i < Channel; ++i) {
     for (int r = 0; r < feat_height; ++r) {
       for (int c = 0; c < feat_width; ++c) {
         uint16_t bf16_input = 0;
@@ -69,7 +69,7 @@ int ESClassification::get_top_k(float *result, size_t count) {
   int TOP_K = 1;
   float *data = (float *)malloc(count * sizeof(float));
   memcpy(data, result, count * sizeof(float));
-  size_t idx = -1;
+  int idx = -1;
   float pct = 0.0;
   for (int k = 0; k < TOP_K; k++) {
     float max = 0;
@@ -81,7 +81,7 @@ int ESClassification::get_top_k(float *result, size_t count) {
     }
     pct = max;
   }
-  if (pct < 0.6) return 7;  // Office
+  if (pct < 0.6) return count - 1;  // Office
   return idx;
 }
 

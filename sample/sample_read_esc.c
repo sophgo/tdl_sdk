@@ -9,8 +9,8 @@
 #define FRAME_SIZE SAMPLE_RATE * 2 * 3  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
 
 // ESC class name
-char ES_Classes[8][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",    "Laughing",
-                          "Baby Cry",          "Glass breaking",    "Clock_alarm", "Office"};
+char ES_Classes[6][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",
+                          "Baby Cry",          "Glass breaking",    "Office"};
 
 bool gRun = true;     // signal
 bool record = false;  // record to output
@@ -100,6 +100,9 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
 
   s32Ret = CVI_AI_EnableChn(0, 0);
   if (s32Ret != CVI_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
+
+  s32Ret = CVI_AI_SetVolume(0, 6);
+  if (s32Ret != CVI_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
 
   printf("SET_AUDIO_ATTR success!!\n");
   return CVI_SUCCESS;
