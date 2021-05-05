@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_ObjectDrawRect(&obj_meta, &stVOFrame, false);
+      CVI_AI_Service_ObjectDrawRect(NULL, &obj_meta, &stVOFrame, false);
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         char *id_num = uint64ToString(obj_meta.info[i].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,

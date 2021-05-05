@@ -39,6 +39,15 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle,
 DLL_EXPORT CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle);
 
 /**
+ * @brief Enable TPU drawing instead of using CPU.
+ *
+ * @param handle A service handle.
+ * @param use_tpu Use TPU or not.
+ * @return CVI_S32 Return CVI_SUCCESS if set.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_EnableTPUDrawRect(cviai_service_handle_t handle, bool use_tpu);
+
+/**
  * @brief Register a feature array to OBJ Service.
  * @ingroup core_cviaiservice
  *
@@ -193,26 +202,31 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
  * @brief Draw rect to YUV frame with given face meta.
  * @ingroup core_cviaiservice
  *
+ * @param handle A service handle.
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the face.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
+DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
+                                               const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
                                                const bool drawText);
 
 /**
  * @brief Draw rect to YUV frame with given object meta.
  * @ingroup core_cviaiservice
  *
+ * @param handle A service handle.
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the object.
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta,
+DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
+                                                 const cvai_object_t *meta,
                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText);
-DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(const cvai_dms_od_t *meta,
+DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
+                                                       const cvai_dms_od_t *meta,
                                                        VIDEO_FRAME_INFO_S *frame,
                                                        const bool drawText);
 

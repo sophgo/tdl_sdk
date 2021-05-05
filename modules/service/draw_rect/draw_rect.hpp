@@ -3,6 +3,7 @@
 #include "core/object/cvai_object_types.h"
 
 #include <cvi_comm_video.h>
+#include "ive/cvi_draw_ive.h"
 
 #define DEFAULT_RECT_COLOR_R (53. / 255.)
 #define DEFAULT_RECT_COLOR_G (208. / 255.)
@@ -30,6 +31,10 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, 
 
 template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText);
+
+template <typename T>
+int DrawMetaIVE(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
+                IVE_DRAW_RECT_CTRL *pstDrawRectCtrl);
 
 int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame);
 

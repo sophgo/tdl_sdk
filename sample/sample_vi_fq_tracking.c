@@ -392,7 +392,7 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_FaceDrawRect(&face_meta, &stVOFrame, false);
+      CVI_AI_Service_FaceDrawRect(NULL, &face_meta, &stVOFrame, false);
       for (uint32_t j = 0; j < face_meta.size; j++) {
         char *id_num = uint64ToString(face_meta.info[j].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, face_meta.info[j].bbox.x1, face_meta.info[j].bbox.y1,
@@ -411,7 +411,7 @@ int main(int argc, char *argv[]) {
           free(id_num);
         }
       }
-      CVI_AI_Service_ObjectDrawRect(&obj_meta, &stVOFrame, false);
+      CVI_AI_Service_ObjectDrawRect(NULL, &obj_meta, &stVOFrame, false);
       s32Ret = SendOutputFrame(&stVOFrame, &outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");

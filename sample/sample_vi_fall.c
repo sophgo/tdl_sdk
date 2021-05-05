@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
         } else {
           strcpy(obj.info[0].name, "");
         }
-        CVI_AI_Service_ObjectDrawRect(&obj, &stVOFrame, true);
+        CVI_AI_Service_ObjectDrawRect(NULL, &obj, &stVOFrame, true);
       }
 
       s32Ret = SendOutputFrame(&stVOFrame, &outputContext);

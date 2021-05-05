@@ -9,12 +9,15 @@
 #include "face_angle/face_angle.hpp"
 #include "feature_matching/feature_matching.hpp"
 
+#include "ive/ive_draw.h"
+
 typedef struct {
   cviai_handle_t ai_handle = NULL;
   cviai::service::FeatureMatching *m_fm = nullptr;
   cviai::service::DigitalTracking *m_dt = nullptr;
   cviai::service::AreaDetect *m_ad = nullptr;
   cviai::service::PolygonIntersect *m_poly = nullptr;
+  bool draw_use_tpu = false;
 } cviai_service_context_t;
 
 CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle, cviai_handle_t ai_handle) {
@@ -34,6 +37,15 @@ CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle) {
   delete ctx->m_dt;
   delete ctx->m_ad;
   delete ctx;
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Service_EnableTPUDraw(cviai_service_handle_t handle, bool use_tpu) {
+  if (handle == NULL) {
+    return CVI_FAILURE;
+  }
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  ctx->draw_use_tpu = use_tpu;
   return CVI_SUCCESS;
 }
 
@@ -157,19 +169,52 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
                         pad_ratio_bottom, obj_skip_ratio, trans_ratio);
 }
 
-CVI_S32 CVI_AI_Service_FaceDrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                    const bool drawText) {
+template <typename T>
+inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
+                       const bool drawText) {
+  if (handle != NULL) {
+    cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+    if (ctx->draw_use_tpu) {
+      IVE_IMAGE_S img;
+      memset(&img, 0, sizeof(IVE_IMAGE_S));
+      CVI_S32 ret = CVI_IVE_VideoFrameInfo2Image(frame, &img);
+      if (ret != CVI_SUCCESS) {
+        printf("convert failed %d\n", ret);
+        return CVI_FAILURE;
+      }
+      IVE_DRAW_RECT_CTRL pstDrawRectCtrl;
+      memset(&pstDrawRectCtrl, 0, sizeof(pstDrawRectCtrl));
+      ret = cviai::service::DrawMetaIVE(meta, frame, drawText, &pstDrawRectCtrl);
+      if (ret != CVI_SUCCESS) {
+        return ret;
+      }
+      if (pstDrawRectCtrl.numsOfRect == 0) {
+        return ret;
+      }
+      cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+      cviai_context_t *ai_ctx = static_cast<cviai_context_t *>(ctx->ai_handle);
+      ret = CVI_IVE_DrawRect(ai_ctx->ive_handle, &img, &pstDrawRectCtrl, 0);
+      CVI_SYS_FreeI(ai_ctx->ive_handle, &img);
+      return ret;
+    }
+  }
   return cviai::service::DrawMeta(meta, frame, drawText);
 }
 
-CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                      const bool drawText) {
-  return cviai::service::DrawMeta(meta, frame, drawText);
+CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle, const cvai_face_t *meta,
+                                    VIDEO_FRAME_INFO_S *frame, const bool drawText) {
+  return TPUDraw(handle, meta, frame, drawText);
 }
 
-CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame,
+CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle, const cvai_object_t *meta,
+                                      VIDEO_FRAME_INFO_S *frame, const bool drawText) {
+  return TPUDraw(handle, meta, frame, drawText);
+}
+
+CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
+                                            const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame,
                                             const bool drawText) {
-  return cviai::service::DrawMeta(meta, frame, drawText);
+  return TPUDraw(handle, meta, frame, drawText);
 }
 
 CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame, float r,

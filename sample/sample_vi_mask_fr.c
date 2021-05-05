@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_FaceDrawRect(&face, &stVOFrame, true);
+      CVI_AI_Service_FaceDrawRect(NULL, &face, &stVOFrame, true);
       s32Ret = SendOutputFrame(&stVOFrame, &outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
