@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
   CVI_AI_PerfettoInit();
   CVI_S32 ret = CVI_SUCCESS;
 
-  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
-                         vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
+  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
+                         vpssgrp_height, PIXEL_FORMAT_RGB_888, 3);
   if (ret != CVI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
