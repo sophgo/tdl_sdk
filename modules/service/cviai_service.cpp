@@ -175,6 +175,14 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
   if (handle != NULL) {
     cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
     if (ctx->draw_use_tpu) {
+      size_t image_size = frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
+                          frame->stVFrame.u32Length[2];
+      bool do_unmap = false;
+      if (frame->stVFrame.pu8VirAddr[0] == NULL) {
+        frame->stVFrame.pu8VirAddr[0] =
+            (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+        do_unmap = true;
+      }
       IVE_IMAGE_S img;
       memset(&img, 0, sizeof(IVE_IMAGE_S));
       CVI_S32 ret = CVI_IVE_VideoFrameInfo2Image(frame, &img);
@@ -195,6 +203,9 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
       cviai_context_t *ai_ctx = static_cast<cviai_context_t *>(ctx->ai_handle);
       ret = CVI_IVE_DrawRect(ai_ctx->ive_handle, &img, &pstDrawRectCtrl, 0);
       CVI_SYS_FreeI(ai_ctx->ive_handle, &img);
+      if (do_unmap) {
+        CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);
+      }
       return ret;
     }
   }
