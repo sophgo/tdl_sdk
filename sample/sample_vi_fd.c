@@ -85,6 +85,17 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t facelib_handle = NULL;
   int ret = CVI_AI_CreateHandle2(&facelib_handle, 1);
+  if (ret != CVI_SUCCESS) {
+    printf("AI handle created failed with %#x!\n", ret);
+    return ret;
+  }
+  cviai_service_handle_t service_handle = NULL;
+  ret = CVI_AI_Service_CreateHandle(&service_handle, facelib_handle);
+  CVI_AI_Service_EnableTPUDraw(facelib_handle, true);
+  if (ret != CVI_SUCCESS) {
+    printf("AI service handle created failed with %#x!\n", ret);
+    return ret;
+  }
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
@@ -121,7 +132,7 @@ int main(int argc, char *argv[]) {
         break;
       }
 
-      CVI_AI_Service_FaceDrawRect(NULL, &face, &stVOFrame, true);
+      CVI_AI_Service_FaceDrawRect(facelib_handle, &face, &stVOFrame, true);
       s32Ret = SendOutputFrame(&stVOFrame, &outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");

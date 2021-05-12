@@ -45,7 +45,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle);
  * @param use_tpu Use TPU or not.
  * @return CVI_S32 Return CVI_SUCCESS if set.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Service_EnableTPUDrawRect(cviai_service_handle_t handle, bool use_tpu);
+DLL_EXPORT CVI_S32 CVI_AI_Service_EnableTPUDraw(cviai_service_handle_t handle, bool use_tpu);
 
 /**
  * @brief Register a feature array to OBJ Service.
