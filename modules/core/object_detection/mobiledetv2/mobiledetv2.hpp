@@ -27,12 +27,13 @@ class MobileDetV2 final : public Core {
   typedef std::vector<PtrDectRect> Detections;
 
   enum class Model {
-    d0,             // MobileDetV2-D0
-    d1,             // MobileDetV2-D1
-    d2,             // MobileDetV2-D2
-    lite,           // MobileDetV2-Lite
-    vehicle_d0,     // MobileDetV2-Vehicle-D0
-    pedestrian_d0,  // MobileDetV2-Pedestrian-D0
+    d0,                // MobileDetV2-D0
+    d1,                // MobileDetV2-D1
+    d2,                // MobileDetV2-D2
+    lite,              // MobileDetV2-Lite
+    vehicle_d0,        // MobileDetV2-Vehicle-D0
+    pedestrian_d0,     // MobileDetV2-Pedestrian-D0
+    lite_person_pets,  // MobileDetV2-Lite-Person-Pets
   };
 
   struct CvimodelInfo {

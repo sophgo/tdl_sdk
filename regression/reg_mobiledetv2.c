@@ -37,6 +37,9 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   if (strcmp(model_name, "mobiledetv2-lite") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE;
     config->inference = CVI_AI_MobileDetV2_Lite;
+  } else if (strcmp(model_name, "mobiledetv2-lite-person-pets") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS;
+    config->inference = CVI_AI_MobileDetV2_Lite_Person_Pets;
   } else if (strcmp(model_name, "mobiledetv2-d0") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0;
     config->inference = CVI_AI_MobileDetV2_D0;
@@ -95,6 +98,7 @@ int parse_args(int argc, char *argv[], Argument *args) {
         "\t<evaluate-json>:\tpath to coco format json file\n\n"
         "\t<result-json>:\t\toutput path\n\n"
         "\t<model-name> (optional):\tdetection model name should be one of {mobiledetv2-lite, "
+        "mobiledetv2-lite-person-pets, "
         "mobiledetv2-d0, "
         "mobiledetv2-d1, "
         "mobiledetv2-d2, "

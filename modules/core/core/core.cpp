@@ -124,6 +124,7 @@ void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
     tinfo.raw_pointer = CVI_NN_TensorPtr(tinfo.tensor_handle);
     tinfo.tensor_elem = CVI_NN_TensorCount(tinfo.tensor_handle);
     tinfo.tensor_size = CVI_NN_TensorSize(tinfo.tensor_handle);
+    tinfo.qscale = CVI_NN_TensorQuantScale(tinfo.tensor_handle);
     tensor_info->insert(std::pair<std::string, TensorInfo>(tinfo.tensor_name, tinfo));
   }
 }
@@ -174,6 +175,7 @@ const TensorInfo &Core::getOutputTensorInfo(size_t index) {
     if (cur == index) {
       return iter->second;
     }
+    cur++;
   }
   throw std::out_of_range("out of range");
 }
@@ -184,6 +186,7 @@ const TensorInfo &Core::getInputTensorInfo(size_t index) {
     if (cur == index) {
       return iter->second;
     }
+    cur++;
   }
   throw std::out_of_range("out of range");
 }

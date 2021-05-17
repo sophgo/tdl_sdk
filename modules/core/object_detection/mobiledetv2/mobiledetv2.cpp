@@ -166,8 +166,7 @@ static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<in
   std::vector<int8_t> inverse_threshold;
   float inverse_th = std::log(threshld / (1 - threshld));
   for (int stride : strides) {
-    int8_t quant_score_thresh =
-        static_cast<int8_t>(round(inverse_th * 128 / dequant_thresh[stride]));
+    int8_t quant_score_thresh = static_cast<int8_t>(round(inverse_th / dequant_thresh[stride]));
 
     inverse_threshold.push_back(quant_score_thresh);
   }
@@ -247,6 +246,21 @@ int MobileDetV2::onModelOpened() {
       m_model_config.aspect_ratios, m_model_config.anchor_scale, m_model_config.image_width,
       m_model_config.image_height);
   m_anchors = generator.get_anchor_boxes();
+
+  for (auto pair : m_model_config.class_out_names) {
+    int stride = pair.first;
+    string name = pair.second;
+    m_model_config.class_dequant_thresh[stride] = getOutputTensorInfo(name).qscale;
+  }
+
+  for (auto pair : m_model_config.bbox_out_names) {
+    int stride = pair.first;
+    string name = pair.second;
+    m_model_config.bbox_dequant_thresh[stride] = getOutputTensorInfo(name).qscale;
+  }
+
+  m_quant_inverse_score_threshold = constructInverseThresh(
+      m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
   return CVI_SUCCESS;
 }
 
@@ -273,7 +287,7 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
           det->score = 1.0 / (1.0 + std::exp(-dequant_logits));
 
           float dequant_box[4];
-          Dequantize(bboxes + box_index, dequant_box, bbox_dequant_thresh, 4);
+          DequantizeScale(bboxes + box_index, dequant_box, bbox_dequant_thresh, 4);
           decode_box(dequant_box, anchors[box_index / 4], det);
           clip_bbox(m_model_config.image_width, m_model_config.image_height, det);
           det_vec->push_back(det);
@@ -419,75 +433,31 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
 
   switch (model) {
     case Model::d0:
-      config.class_dequant_thresh = {{8, 17.464866638183594},
-                                     {16, 15.640022277832031},
-                                     {32, 14.935582160949707},
-                                     {64, 16.390363693237305},
-                                     {128, 15.530133247375488}};
-
-      config.bbox_dequant_thresh = {{8, 2.0975120067596436},
-                                    {16, 2.7213516235351562},
-                                    {32, 2.6431756019592285},
-                                    {64, 2.9647181034088135},
-                                    {128, 12.42608642578125}};
       config.default_score_threshold = 0.4;
       break;
     case Model::d1:
-      config.class_dequant_thresh = {{8, 14.168907165527344},
-                                     {16, 15.155534744262695},
-                                     {32, 16.111759185791016},
-                                     {64, 15.438838958740234},
-                                     {128, 14.437296867370605}};
-
-      config.bbox_dequant_thresh = {{8, 2.5651912689208984},
-                                    {16, 2.8889713287353516},
-                                    {32, 2.650554656982422},
-                                    {64, 2.727674961090088},
-                                    {128, 2.260598659515381}};
       config.default_score_threshold = 0.3;
       break;
     case Model::d2:
-      config.class_dequant_thresh = {{8, 11.755056381225586},
-                                     {16, 12.826586723327637},
-                                     {32, 13.664835929870605},
-                                     {64, 14.224205017089844},
-                                     {128, 12.782066345214844}};
-
-      config.bbox_dequant_thresh = {{8, 3.082498550415039},
-                                    {16, 2.491678476333618},
-                                    {32, 2.8060667514801025},
-                                    {64, 2.563389301300049},
-                                    {128, 2.2213821411132812}};
       config.default_score_threshold = 0.3;
       break;
     case Model::lite:
       config.num_classes = 9;
-      config.class_dequant_thresh = {{8, 12.48561954498291},
-                                     {16, 11.416889190673828},
-                                     {32, 13.258634567260742},
-                                     {64, 13.312114715576172},
-                                     {128, 9.732277870178223}};
-
-      config.bbox_dequant_thresh = {{8, 2.7503433227539062},
-                                    {16, 2.9586639404296875},
-                                    {32, 2.537200927734375},
-                                    {64, 2.3935775756835938},
-                                    {128, 2.543354034423828}};
       config.default_score_threshold = 0.3;
+      break;
+    case Model::lite_person_pets:
+      config.num_classes = 3;
+      config.default_score_threshold = 0.3;
+
+      config.class_id_map = [](int orig_id) {
+        if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);
+        if (orig_id == 1) return static_cast<int>(CVI_AI_DET_TYPE_CAT);
+        if (orig_id == 2) return static_cast<int>(CVI_AI_DET_TYPE_DOG);
+        return static_cast<int>(CVI_AI_DET_TYPE_END);
+      };
       break;
     case Model::vehicle_d0:
       config.num_classes = 3;
-      config.class_dequant_thresh = {{8, 8.599571228027344},
-                                     {16, 8.887327194213867},
-                                     {32, 9.710219383239746},
-                                     {64, 10.174678802490234},
-                                     {128, 10.896987915039062}};
-
-      config.bbox_dequant_thresh = {{8, 2.2055277824401855},
-                                    {16, 2.6225955486297607},
-                                    {32, 2.434586763381958},
-                                    {64, 4.202951431274414},
-                                    {128, 4.039170742034912}};
       config.default_score_threshold = 0.3;
       config.class_id_map = [](int orig_id) {
         if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_CAR);
@@ -498,17 +468,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
       break;
     case Model::pedestrian_d0:
       config.num_classes = 1;
-      config.class_dequant_thresh = {{8, 7.848998546600342},
-                                     {16, 8.222152709960938},
-                                     {32, 8.384308815002441},
-                                     {64, 9.911425590515137},
-                                     {128, 8.275640487670898}};
-
-      config.bbox_dequant_thresh = {{8, 2.3595869541168213},
-                                    {16, 2.3849966526031494},
-                                    {32, 2.362071990966797},
-                                    {64, 2.2918550968170166},
-                                    {128, 2.743276596069336}};
       config.default_score_threshold = 0.3;
       config.class_id_map = [](int orig_id) {
         if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);

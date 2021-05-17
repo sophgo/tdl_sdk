@@ -320,6 +320,10 @@ CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E 
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE: {
       instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::lite);
     } break;
+    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS: {
+      instance =
+          getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::lite_person_pets);
+    } break;
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0: {
       instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::vehicle_d0);
     } break;
@@ -523,6 +527,13 @@ CVI_S32 CVI_AI_MobileDetV2_Lite(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame
   TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Lite");
   return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE, MobileDetV2::Model::lite, handle,
                          frame, obj, det_type);
+}
+
+CVI_S32 CVI_AI_MobileDetV2_Lite_Person_Pets(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            cvai_object_t *obj, cvai_obj_det_type_e det_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Lite");
+  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS,
+                         MobileDetV2::Model::lite_person_pets, handle, frame, obj, det_type);
 }
 
 CVI_S32 CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,

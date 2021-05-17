@@ -50,6 +50,7 @@ struct TensorInfo {
   DataType *get() const {
     return static_cast<DataType *>(raw_pointer);
   }
+  float qscale;
 };
 
 struct InputPreprecessSetup {
