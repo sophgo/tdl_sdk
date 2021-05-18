@@ -6,6 +6,8 @@
 #include <vector>
 class ESCFFT {
  public:
+  ESCFFT() : _size(0) {}
+
   void init(size_t size) {
     if (_size != size) {
       _ip.resize(2 + static_cast<int>(std::sqrt(static_cast<float>(size))));
