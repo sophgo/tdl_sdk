@@ -377,7 +377,9 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
   Detections final_dets = nms(dets, m_iou_threshold);
 
   if (!m_filter.all()) {  // filter if not all bit are set
-    auto condition = [this](const PtrDectRect &det) { return !m_filter.test(det->label); };
+    auto condition = [this](const PtrDectRect &det) {
+      return !m_filter.test(m_model_config.class_id_map(det->label));
+    };
     final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
   } else if (det_type != CVI_DET_TYPE_ALL) {
     // TODO: remove old filter
