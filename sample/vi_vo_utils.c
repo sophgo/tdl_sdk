@@ -21,8 +21,8 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum) {
       .Sns2MipiDev = 0xFF,
   };
 
-  if (!SAMPLE_COMM_VI_ParseIni(&stIniCfg)) {
-    syslog(LOG_ERR | LOG_LOCAL7, "Init pasre failed.\n");
+  if (SAMPLE_COMM_VI_ParseIni(&stIniCfg) != CVI_SUCCESS) {
+    printf("Init pasre failed.\n");
     return CVI_FAILURE;
   }
   *devNum = stIniCfg.devNum;
