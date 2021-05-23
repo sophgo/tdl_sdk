@@ -93,6 +93,7 @@ class Core {
   virtual void setModelThreshold(float threshold);
   float getModelThreshold();
   bool isInitialized();
+  virtual bool allowExportChannelAttribute() const { return false; }
 
  protected:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data);
@@ -155,7 +156,6 @@ class Core {
   ////////////////////////////////////////////////////
 
   virtual int onModelOpened() { return CVI_SUCCESS; }
-  virtual bool allowExportChannelAttribute() const { return false; }
 
   void setInputMemType(CVI_MEM_TYPE_E type) { mp_mi->conf.input_mem_type = type; }
   std::vector<VPSSConfig> m_vpss_config;

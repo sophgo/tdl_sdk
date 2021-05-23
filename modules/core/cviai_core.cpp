@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -39,6 +40,79 @@
 
 using namespace std;
 using namespace cviai;
+
+struct ModelParams {
+  VpssEngine *vpss_engine;
+  bool skip_vpss_preprocess;
+  float model_threshold;
+  uint32_t vpss_timeout_value;
+  std::vector<uint32_t> *selected_classes;
+};
+
+using CreatorFunc = std::function<Core *(const ModelParams &)>;
+using namespace std::placeholders;
+
+template <typename C, typename... Args>
+Core *create_model(const ModelParams &params, Args... arg) {
+  C *instance = new C(arg...);
+
+  instance->setVpssEngine(params.vpss_engine);
+  instance->skipVpssPreprocess(params.skip_vpss_preprocess);
+  if (params.model_threshold != -1) {
+    instance->setModelThreshold(params.model_threshold);
+  }
+  instance->setVpssTimeout(params.vpss_timeout_value);
+  return instance;
+}
+
+// Convenience macros for creator
+#define CREATOR(type) CreatorFunc(create_model<type>)
+
+// Convenience macros for creator, P{NUM} stands for how many parameters for creator
+#define CREATOR_P1(type, arg_type, arg1) \
+  CreatorFunc(std::bind(create_model<type, arg_type>, _1, arg1))
+
+/**
+ * IMPORTANT!!
+ * Creators for all DNN model. Please remember to register model creator here, or
+ * AISDK cannot instantiate model correctly.
+ */
+unordered_map<int, CreatorFunc> MODEL_CREATORS = {
+    {CVI_AI_SUPPORTED_MODEL_FACEQUALITY, CREATOR(FaceQuality)},
+    {CVI_AI_SUPPORTED_MODEL_THERMALFACE, CREATOR(ThermalFace)},
+    {CVI_AI_SUPPORTED_MODEL_RETINAFACE, CREATOR(RetinaFace)},
+    {CVI_AI_SUPPORTED_MODEL_LIVENESS, CREATOR(Liveness)},
+    {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
+    {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
+    {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
+    {CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, CREATOR(ESClassification)},
+    {CVI_AI_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
+    {CVI_AI_SUPPORTED_MODEL_DEEPLABV3, CREATOR(Deeplabv3)},
+    {CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, CREATOR(AlphaPose)},
+    {CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, CREATOR(EyeClassification)},
+    {CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, CREATOR(YawnClassification)},
+    {CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, CREATOR(FaceLandmarker)},
+    {CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, CREATOR(IncarObjectDetection)},
+    {CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
+    {CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, CREATOR_P1(FaceAttribute, bool, true)},
+    {CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
+    {CVI_AI_SUPPORTED_MODEL_LPRNET_TW, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, TAIWAN)},
+    {CVI_AI_SUPPORTED_MODEL_LPRNET_CN, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, CHINA)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::d0)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::d1)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::d2)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::lite)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::vehicle_d0)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::pedestrian_d0)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::lite_person_pets)},
+};
 
 void CVI_AI_PerfettoInit() { prefettoInit(); }
 
@@ -69,6 +143,53 @@ inline void __attribute__((always_inline)) removeCtx(cviai_context_t *ctx) {
     delete it;
   }
   delete ctx;
+}
+
+inline Core *__attribute__((always_inline))
+getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx) {
+  cviai_model_t &m_t = ctx->model_cont[index];
+  if (m_t.instance == nullptr) {
+    if (m_t.model_path.empty()) {
+      LOGE("Model path for %s is empty.\n", CVI_AI_GetModelName(index));
+      return nullptr;
+    }
+
+    if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
+      LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
+           CVI_AI_GetModelName(index));
+      return nullptr;
+    }
+
+    auto creator = MODEL_CREATORS[index];
+    ModelParams params = {
+        .vpss_engine = ctx->vec_vpss_engine[m_t.vpss_thread],
+        .skip_vpss_preprocess = m_t.skip_vpss_preprocess,
+        .model_threshold = m_t.model_threshold,
+        .vpss_timeout_value = ctx->vpss_timeout_value,
+        .selected_classes = m_t.selected_classes,
+    };
+
+    m_t.instance = creator(params);
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
+      LOGE("Open model failed (%s).\n", m_t.model_path.c_str());
+      return nullptr;
+    }
+
+    // TODO: Don't setup for specific classes here, not all model should consider threshold....
+    if (m_t.model_threshold == -1) {
+      m_t.model_threshold = m_t.instance->getModelThreshold();
+    }
+
+    // TODO: Again, don't setup for specific classes here
+    if (m_t.selected_classes) {
+      // TODO: only support MobileDetV2 for now
+      if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(m_t.instance)) {
+        mdetv2->select_classes(*m_t.selected_classes);
+      }
+    }
+  }
+
+  return m_t.instance;
 }
 
 CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle2(handle, -1); }
@@ -106,11 +227,39 @@ CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E conf
   cviai_model_t &m_t = ctx->model_cont[config];
   if (m_t.instance != nullptr) {
     if (m_t.instance->isInitialized()) {
-      LOGE("Inference already init. Please call CVI_AI_CloseModel to reset.\n");
+      LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
+           CVI_AI_GetModelName(config));
       return CVI_FAILURE;
     }
   }
   m_t.model_path = filepath;
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[config];
+  if (m_t.instance != nullptr) {
+    if (!m_t.instance->isInitialized()) {
+      if (!m_t.model_path.empty()) {
+        m_t.instance->modelOpen(m_t.model_path.c_str());
+      } else {
+        LOGE("Model path for %s is empty.\n", CVI_AI_GetModelName(config));
+        return CVI_FAILURE;
+      }
+    } else {
+      LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
+           CVI_AI_GetModelName(config));
+      return CVI_FAILURE;
+    }
+  } else {
+    Core *instance = getInferenceInstance(config, ctx);
+    if (!instance) {
+      LOGE("Failed to open model %s\n", CVI_AI_GetModelName(config));
+      return CVI_FAILURE;
+    }
+  }
+
   return CVI_SUCCESS;
 }
 
@@ -188,6 +337,12 @@ CVI_S32 CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t 
 CVI_S32 CVI_AI_SetVpssTimeout(cviai_handle_t handle, uint32_t timeout) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   ctx->vpss_timeout_value = timeout;
+
+  for (auto &m_inst : ctx->model_cont) {
+    if (m_inst.second.instance != nullptr) {
+      m_inst.second.instance->setVpssTimeout(timeout);
+    }
+  }
   return CVI_SUCCESS;
 }
 
@@ -270,357 +425,169 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
   return CVI_SUCCESS;
 }
 
-template <class C, typename V, typename... Arguments>
-inline C *__attribute__((always_inline))
-getInferenceInstance(const V index, cviai_context_t *ctx, Arguments &&... arg) {
-  cviai_model_t &m_t = ctx->model_cont[index];
-  if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      LOGE("Model path for %s is empty.\n", CVI_AI_GetModelName(index));
-      return nullptr;
-    }
-    m_t.instance = new C(arg...);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      LOGE("Open model failed (%s).\n", m_t.model_path.c_str());
-      return nullptr;
-    }
-    m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-    m_t.instance->skipVpssPreprocess(m_t.skip_vpss_preprocess);
-    if (m_t.model_threshold == -1) {
-      m_t.model_threshold = m_t.instance->getModelThreshold();
-    } else {
-      m_t.instance->setModelThreshold(m_t.model_threshold);
-    }
-
-    if (m_t.selected_classes) {
-      // TODO: only support MobileDetV2 for now
-      if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(m_t.instance)) {
-        mdetv2->select_classes(*m_t.selected_classes);
-      }
-    }
-  }
-  m_t.instance->setVpssTimeout(ctx->vpss_timeout_value);
-  C *class_inst = dynamic_cast<C *>(m_t.instance);
-  return class_inst;
-}
-
 CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                 const CVI_U32 frameWidth, const CVI_U32 frameHeight,
                                 const CVI_U32 idx, cvai_vpssconfig_t *chnConfig) {
   CVI_S32 ret = CVI_SUCCESS;
-  cviai::Core *instance = nullptr;
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  switch (config) {
-    case CVI_AI_SUPPORTED_MODEL_RETINAFACE: {
-      instance = getInferenceInstance<RetinaFace>(config, ctx);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_THERMALFACE: {
-      instance = getInferenceInstance<ThermalFace>(config, ctx);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE: {
-      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::lite);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS: {
-      instance =
-          getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::lite_person_pets);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0: {
-      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::vehicle_d0);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0: {
-      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::pedestrian_d0);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0: {
-      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d0);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1: {
-      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d1);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2: {
-      instance = getInferenceInstance<MobileDetV2>(config, ctx, MobileDetV2::Model::d2);
-    } break;
-    case CVI_AI_SUPPORTED_MODEL_YOLOV3: {
-      instance = getInferenceInstance<Yolov3>(config, ctx);
-    } break;
-    default: {
-      LOGE("Currently model %u does not support exporting channel attribute.\n", config);
-    } break;
-  }
+  cviai::Core *instance = getInferenceInstance(config, ctx);
   if (instance == nullptr) {
     LOGE("Instance is null.\n");
     return CVI_FAILURE;
   }
-  ret = instance->getChnConfig(frameWidth, frameHeight, idx, chnConfig);
+
+  if (instance->allowExportChannelAttribute()) {
+    ret = instance->getChnConfig(frameWidth, frameHeight, idx, chnConfig);
+  } else {
+    LOGE("Currently model %u does not support exporting channel attribute.\n", config);
+  }
+
   return ret;
 }
 
-// Face detection
-
-CVI_S32 CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                          cvai_face_t *faces) {
-  TRACE_EVENT("cviai_core", "CVI_AI_RetinaFace");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  RetinaFace *retina_face =
-      getInferenceInstance<RetinaFace>(CVI_AI_SUPPORTED_MODEL_RETINAFACE, ctx);
-  if (retina_face == nullptr) {
-    LOGE("No instance found for RetinaFace.\n");
-    return CVI_FAILURE;
-  }
-  return retina_face->inference(frame, faces);
-}
-
-CVI_S32 CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                           cvai_face_t *faces) {
-  TRACE_EVENT("cviai_core", "CVI_AI_ThermalFace");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  ThermalFace *thermal_face =
-      getInferenceInstance<ThermalFace>(CVI_AI_SUPPORTED_MODEL_THERMALFACE, ctx);
-  if (thermal_face == nullptr) {
-    LOGE("No instance found for ThermalFace.\n");
-    return CVI_FAILURE;
-  }
-  return thermal_face->inference(frame, faces);
-}
-
-// Face recognition
-
-inline int __attribute__((always_inline))
-CVI_AI_FaceAttributeBase(const CVI_AI_SUPPORTED_MODEL_E index, const cviai_handle_t handle,
-                         VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces, int face_idx,
-                         bool set_attribute) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  FaceAttribute *face_attr = getInferenceInstance<FaceAttribute>(index, ctx, ctx->use_gdc_wrap);
-  if (face_attr == nullptr) {
-    LOGE("No instance found for FaceAttribute.\n");
-    return CVI_FAILURE;
-  }
-  face_attr->setWithAttribute(set_attribute);
-  return face_attr->inference(frame, faces, face_idx);
-}
-
-CVI_S32 CVI_AI_FaceAttribute(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                             cvai_face_t *faces) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceAttribute");
-  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, handle, frame, faces, -1,
-                                  true);
-}
-
-CVI_S32 CVI_AI_FaceAttributeOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                cvai_face_t *faces, int face_idx) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceAttributeOne");
-  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, handle, frame, faces,
-                                  face_idx, true);
-}
-
-CVI_S32 CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                               cvai_face_t *faces) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognition");
-  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces, -1,
-                                  false);
-}
-
-CVI_S32 CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                  cvai_face_t *faces, int face_idx) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceRecognitionOne");
-  return CVI_AI_FaceAttributeBase(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, handle, frame, faces,
-                                  face_idx, false);
-}
-
-CVI_S32 CVI_AI_MaskFaceRecognition(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                   cvai_face_t *faces) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MaskFaceRecognition");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  MaskFaceRecognition *mask_face_rec =
-      getInferenceInstance<MaskFaceRecognition>(CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, ctx);
-  if (mask_face_rec == nullptr) {
-    LOGE("No instance found for MaskFaceRecognition.\n");
-    return CVI_FAILURE;
+/**
+ *  Convenience macros for defining inference functions. F{NUM} stands for how many input frame
+ *  variables, P{NUM} stands for how many input parameters in inference function. All inference
+ *  function should follow same function signature, that is,
+ *  CVI_S32 inference(Frame1, Frame2, ... FrameN, Param1, Param2, ..., ParamN)
+ */
+#define DEFINE_INF_FUNC_F1_P1(func_name, class_name, model_index, arg_type)                  \
+  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg_type arg1) { \
+    TRACE_EVENT("cviai_core", #func_name);                                                   \
+    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                           \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));    \
+    if (obj == nullptr) {                                                                    \
+      LOGE("No instance found for %s.\n", #class_name);                                      \
+      return CVI_FAILURE;                                                                    \
+    }                                                                                        \
+    return obj->inference(frame, arg1);                                                      \
   }
 
-  return mask_face_rec->inference(frame, faces);
-}
-
-// Face classification
-
-CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                           cvai_face_t *face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceQuality");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  FaceQuality *face_quality =
-      getInferenceInstance<FaceQuality>(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx);
-  if (face_quality == nullptr) {
-    LOGE("No instance found for FaceQuality.\n");
-    return CVI_FAILURE;
+#define DEFINE_INF_FUNC_F1_P2(func_name, class_name, model_index, arg1_type, arg2_type)     \
+  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg1_type arg1, \
+                    arg2_type arg2) {                                                       \
+    TRACE_EVENT("cviai_core", #func_name);                                                  \
+    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                          \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));   \
+    if (obj == nullptr) {                                                                   \
+      LOGE("No instance found for %s.\n", #class_name);                                     \
+      return CVI_FAILURE;                                                                   \
+    }                                                                                       \
+    return obj->inference(frame, arg1, arg2);                                               \
   }
-  return face_quality->inference(frame, face);
-}
+
+#define DEFINE_INF_FUNC_F2_P1(func_name, class_name, model_index, arg_type)               \
+  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame1,              \
+                    VIDEO_FRAME_INFO_S *frame2, arg_type arg1) {                          \
+    TRACE_EVENT("cviai_core", #func_name);                                                \
+    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                        \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx)); \
+    if (obj == nullptr) {                                                                 \
+      LOGE("No instance found for %s.\n", #class_name);                                   \
+      return CVI_FAILURE;                                                                 \
+    }                                                                                     \
+    return obj->inference(frame1, frame2, arg1);                                          \
+  }
+
+#define DEFINE_INF_FUNC_F2_P2(func_name, class_name, model_index, arg1_type, arg2_type)   \
+  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame1,              \
+                    VIDEO_FRAME_INFO_S *frame2, arg1_type arg1, arg2_type arg2) {         \
+    TRACE_EVENT("cviai_core", #func_name);                                                \
+    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                        \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx)); \
+    if (obj == nullptr) {                                                                 \
+      LOGE("No instance found for %s.\n", #class_name);                                   \
+      return CVI_FAILURE;                                                                 \
+    }                                                                                     \
+    return obj->inference(frame1, frame2, arg1, arg2);                                    \
+  }
+
+/**
+ *  Define model inference function here.
+ *
+ *  IMPORTANT!!
+ *  Please remember to register creator function in MODEL_CREATORS first, or AISDK cannot
+ *  find a correct way to create model object.
+ *
+ */
+DEFINE_INF_FUNC_F1_P1(CVI_AI_RetinaFace, RetinaFace, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
+                      cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_ThermalFace, ThermalFace, CVI_AI_SUPPORTED_MODEL_THERMALFACE,
+                      cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceAttribute, FaceAttribute, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
+                      cvai_face_t *)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_FaceAttributeOne, FaceAttribute, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
+                      cvai_face_t *, int)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceRecognition, FaceAttribute, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION,
+                      cvai_face_t *)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_FaceRecognitionOne, FaceAttribute,
+                      CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, cvai_face_t *, int)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskFaceRecognition, MaskFaceRecognition,
+                      CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceQuality, FaceQuality, CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
+                      cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskClassification, MaskClassification,
+                      CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, cvai_face_t *)
+
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle_D0, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Pedestrian_D0, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_Lite, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE,
+                      cvai_object_t *, cvai_obj_det_type_e)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_Lite_Person_Pets, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS, cvai_object_t *,
+                      cvai_obj_det_type_e)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_D0, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
+                      cvai_object_t *, cvai_obj_det_type_e)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_D1, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
+                      cvai_object_t *, cvai_obj_det_type_e)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_D2, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
+                      cvai_object_t *, cvai_obj_det_type_e)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *,
+                      cvai_obj_det_type_e)
+
+DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *, int)
+
+DEFINE_INF_FUNC_F1_P1(CVI_AI_ESClassification, ESClassification,
+                      CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, int *)
+DEFINE_INF_FUNC_F2_P1(CVI_AI_DeeplabV3, Deeplabv3, CVI_AI_SUPPORTED_MODEL_DEEPLABV3,
+                      cvai_class_filter_t *)
+
+DEFINE_INF_FUNC_F1_P1(CVI_AI_LicensePlateRecognition_TW, LicensePlateRecognition,
+                      CVI_AI_SUPPORTED_MODEL_LPRNET_TW, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_LicensePlateRecognition_CN, LicensePlateRecognition,
+                      CVI_AI_SUPPORTED_MODEL_LPRNET_CN, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_LicensePlateDetection, LicensePlateDetection,
+                      CVI_AI_SUPPORTED_MODEL_WPODNET, cvai_object_t *)
+
+DEFINE_INF_FUNC_F1_P1(CVI_AI_AlphaPose, AlphaPose, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE,
+                      cvai_object_t *)
+
+DEFINE_INF_FUNC_F1_P1(CVI_AI_EyeClassification, EyeClassification,
+                      CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_YawnClassification, YawnClassification,
+                      CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceLandmarker, FaceLandmarker, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER,
+                      cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_IncarObjectDetection, IncarObjectDetection,
+                      CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, cvai_face_t *)
+
+DEFINE_INF_FUNC_F2_P2(CVI_AI_Liveness, Liveness, CVI_AI_SUPPORTED_MODEL_LIVENESS, cvai_face_t *,
+                      cvai_face_t *)
 
 CVI_S32 CVI_AI_GetAlignedFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *srcFrame,
                               VIDEO_FRAME_INFO_S *dstFrame, cvai_face_info_t *face_info) {
   TRACE_EVENT("cviai_core", "CVI_AI_GetAlignedFace");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   FaceQuality *face_quality =
-      getInferenceInstance<FaceQuality>(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx);
+      dynamic_cast<FaceQuality *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx));
   if (face_quality == nullptr) {
     LOGE("No instance found for FaceQuality.\n");
     return CVI_FAILURE;
   }
   return face_quality->getAlignedFace(srcFrame, dstFrame, face_info);
-}
-
-CVI_S32 CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
-                        VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *rgb_face, cvai_face_t *ir_face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_Liveness");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Liveness *liveness = getInferenceInstance<Liveness>(CVI_AI_SUPPORTED_MODEL_LIVENESS, ctx);
-  if (liveness == nullptr) {
-    LOGE("No instance found for Liveness.\n");
-    return CVI_FAILURE;
-  }
-  return liveness->inference(rgbFrame, irFrame, rgb_face, ir_face);
-}
-
-CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                  cvai_face_t *face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MaskClassification");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  MaskClassification *mask_classification =
-      getInferenceInstance<MaskClassification>(CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, ctx);
-  if (mask_classification == nullptr) {
-    LOGE("No instance found for MaskClassification.\n");
-    return CVI_FAILURE;
-  }
-  return mask_classification->inference(frame, face);
-}
-
-// Object detection
-
-inline int __attribute__((always_inline))
-MobileDetV2Base(const CVI_AI_SUPPORTED_MODEL_E index, const MobileDetV2::Model model_type,
-                cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                cvai_obj_det_type_e det_type) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  MobileDetV2 *detector = getInferenceInstance<MobileDetV2>(index, ctx, model_type);
-  if (detector == nullptr) {
-    LOGE("No instance found for detector.\n");
-    return CVI_RC_FAILURE;
-  }
-  return detector->inference(frame, obj, det_type);
-}
-
-CVI_S32 CVI_AI_MobileDetV2_Vehicle_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                      cvai_object_t *obj) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Vehicle_D0");
-  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0,
-                         MobileDetV2::Model::vehicle_d0, handle, frame, obj, CVI_DET_TYPE_ALL);
-}
-
-CVI_S32 CVI_AI_MobileDetV2_Pedestrian_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                         cvai_object_t *obj) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Pedestrian_D0");
-  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0,
-                         MobileDetV2::Model::pedestrian_d0, handle, frame, obj, CVI_DET_TYPE_ALL);
-}
-
-CVI_S32 CVI_AI_MobileDetV2_Lite(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                cvai_object_t *obj, cvai_obj_det_type_e det_type) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Lite");
-  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE, MobileDetV2::Model::lite, handle,
-                         frame, obj, det_type);
-}
-
-CVI_S32 CVI_AI_MobileDetV2_Lite_Person_Pets(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                            cvai_object_t *obj, cvai_obj_det_type_e det_type) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_Lite");
-  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS,
-                         MobileDetV2::Model::lite_person_pets, handle, frame, obj, det_type);
-}
-
-CVI_S32 CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                              cvai_obj_det_type_e det_type) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D0");
-  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, MobileDetV2::Model::d0, handle,
-                         frame, obj, det_type);
-}
-
-CVI_S32 CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                              cvai_obj_det_type_e det_type) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D1");
-  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1, MobileDetV2::Model::d1, handle,
-                         frame, obj, det_type);
-}
-
-CVI_S32 CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                              cvai_obj_det_type_e det_type) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MobileDetV2_D2");
-  return MobileDetV2Base(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2, MobileDetV2::Model::d2, handle,
-                         frame, obj, det_type);
-}
-
-CVI_S32 CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                      cvai_obj_det_type_e det_type) {
-  TRACE_EVENT("cviai_core", "CVI_AI_Yolov3");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Yolov3 *yolov3 = getInferenceInstance<Yolov3>(CVI_AI_SUPPORTED_MODEL_YOLOV3, ctx);
-  if (yolov3 == nullptr) {
-    LOGE("No instance found for Yolov3.\n");
-    return CVI_FAILURE;
-  }
-  return yolov3->inference(frame, obj, det_type);
-}
-
-// Object recognition
-
-inline int __attribute__((always_inline))
-CVI_AI_OSNetBase(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                 int obj_idx) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  OSNet *osnet = getInferenceInstance<OSNet>(CVI_AI_SUPPORTED_MODEL_OSNET, ctx);
-  if (osnet == nullptr) {
-    LOGE("No instance found for OSNet.\n");
-    return CVI_FAILURE;
-  }
-  return osnet->inference(frame, obj, obj_idx);
-}
-
-CVI_S32 CVI_AI_OSNet(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
-  TRACE_EVENT("cviai_core", "CVI_AI_OSNet");
-  return CVI_AI_OSNetBase(handle, frame, obj, -1);
-}
-
-CVI_S32 CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj,
-                        int obj_idx) {
-  TRACE_EVENT("cviai_core", "CVI_AI_OSNetOne");
-  return CVI_AI_OSNetBase(handle, frame, obj, obj_idx);
-}
-
-// Audio AI Inference
-
-CVI_S32 CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                int *index) {
-  TRACE_EVENT("cviai_core", "CVI_AI_ESClassification");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  ESClassification *es_classification =
-      getInferenceInstance<ESClassification>(CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, ctx);
-  if (es_classification == nullptr) {
-    LOGE("No instance found for ESClassification.\n");
-    return CVI_FAILURE;
-  }
-  return es_classification->inference(frame, index);
-}
-
-// Segmentation
-
-CVI_S32 CVI_AI_DeeplabV3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                         VIDEO_FRAME_INFO_S *out_frame, cvai_class_filter_t *filter) {
-  TRACE_EVENT("cviai_core", "CVI_AI_DeeplabV3");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Deeplabv3 *deeplab = getInferenceInstance<Deeplabv3>(CVI_AI_SUPPORTED_MODEL_DEEPLABV3, ctx);
-  if (deeplab == nullptr) {
-    LOGE("No instance found for Deeplabv3.\n");
-    return CVI_FAILURE;
-  }
-  return deeplab->inference(frame, out_frame, filter);
 }
 
 // Tracker
@@ -630,7 +597,7 @@ CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
-    printf("Init DeepSORT.\n");
+    LOGI("Init DeepSORT.\n");
     ctx->ds_tracker = new DeepSORT();
   }
   return 0;
@@ -702,64 +669,6 @@ CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_inf
   return 0;
 }
 
-// License Plate Detection & Recognition
-CVI_S32 CVI_AI_LicensePlateRecognition_TW(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                          cvai_object_t *license_plate_meta) {
-  TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateRecognition");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  LicensePlateRecognition *lpr_model =
-      getInferenceInstance<LicensePlateRecognition>(CVI_AI_SUPPORTED_MODEL_LPRNET_TW, ctx, "tw");
-  if (lpr_model == nullptr) {
-    LOGE("No instance found for LicensePlateRecognition.\n");
-    return CVI_FAILURE;
-  }
-
-  return lpr_model->inference(frame, license_plate_meta);
-}
-
-CVI_S32 CVI_AI_LicensePlateRecognition_CN(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                          cvai_object_t *license_plate_meta) {
-  TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateRecognition");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  LicensePlateRecognition *lpr_model =
-      getInferenceInstance<LicensePlateRecognition>(CVI_AI_SUPPORTED_MODEL_LPRNET_CN, ctx, "cn");
-  if (lpr_model == nullptr) {
-    LOGE("No instance found for LicensePlateRecognition.\n");
-    return CVI_FAILURE;
-  }
-
-  return lpr_model->inference(frame, license_plate_meta);
-}
-
-CVI_S32 CVI_AI_LicensePlateDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                     cvai_object_t *vehicle_meta) {
-  TRACE_EVENT("cviai_core", "CVI_AI_LicensePlateDetection");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  LicensePlateDetection *lpd_model =
-      getInferenceInstance<LicensePlateDetection>(CVI_AI_SUPPORTED_MODEL_WPODNET, ctx);
-  if (lpd_model == nullptr) {
-    LOGE("No instance found for LicensePlateRecognition.\n");
-    return CVI_FAILURE;
-  }
-
-  return lpd_model->inference(frame, vehicle_meta);
-}
-
-// Pose Detection
-
-CVI_S32 CVI_AI_AlphaPose(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                         cvai_object_t *objects) {
-  TRACE_EVENT("cviai_core", "CVI_AI_AlphaPose");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  AlphaPose *model = getInferenceInstance<AlphaPose>(CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, ctx);
-  if (model == nullptr) {
-    LOGE("No instance found for AlphaPose.\n");
-    return CVI_FAILURE;
-  }
-
-  return model->inference(frame, objects);
-}
-
 // Fall Detection
 
 CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objects) {
@@ -791,64 +700,4 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
     return 0;
   }
   return ctx->td_model->detect(frame, moving_score);
-}
-
-// Eye Classification
-
-CVI_S32 CVI_AI_EyeClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                 cvai_face_t *face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_EyeClassifcation");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  EyeClassification *eye_classification =
-      getInferenceInstance<EyeClassification>(CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, ctx);
-  if (eye_classification == nullptr) {
-    LOGE("No instance found for EyeClassifcation.\n");
-    return CVI_FAILURE;
-  }
-  return eye_classification->inference(frame, face);
-}
-
-// Yawn Classification
-
-CVI_S32 CVI_AI_YawnClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                  cvai_face_t *face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_YawnClassifcation");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  YawnClassification *yawn_classification =
-      getInferenceInstance<YawnClassification>(CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, ctx);
-  if (yawn_classification == nullptr) {
-    LOGE("No instance found for YawnClassifcation.\n");
-    return CVI_FAILURE;
-  }
-  return yawn_classification->inference(frame, face);
-}
-
-// Face Landmarker
-
-CVI_S32 CVI_AI_FaceLandmarker(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                              cvai_face_t *face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_FaceLandmarker");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  FaceLandmarker *face_landmarker =
-      getInferenceInstance<FaceLandmarker>(CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, ctx);
-  if (face_landmarker == nullptr) {
-    LOGE("No instance found for FaceLandmarker.\n");
-    return CVI_FAILURE;
-  }
-  return face_landmarker->inference(frame, face);
-}
-
-// Incar Object detection
-
-CVI_S32 CVI_AI_IncarObjectDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                    cvai_face_t *face) {
-  TRACE_EVENT("cviai_core", "CVI_AI_IncarObjectDetection");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  IncarObjectDetection *incar_od =
-      getInferenceInstance<IncarObjectDetection>(CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, ctx);
-  if (incar_od == nullptr) {
-    LOGE("No instance found for IncarObjectDetection.\n");
-    return CVI_FAILURE;
-  }
-  return incar_od->inference(frame, face);
 }

@@ -31,6 +31,11 @@ int Core::modelOpen(const char *filepath) {
     return CVI_FAILURE;
   }
 
+  if (mp_mi->handle != nullptr) {
+    LOGE("failed to open model: \"%s\" has already opened.\n", filepath);
+    return CVI_FAILURE;
+  }
+
   CLOSE_MODEL_IF_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
                         "CVI_NN_RegisterModel failed");
 
@@ -134,6 +139,7 @@ int Core::modelClose() {
   if (mp_mi->handle != nullptr) {
     if (int ret = CVI_NN_CleanupModel(mp_mi->handle) != CVI_RC_SUCCESS) {  // NOLINT
       LOGE("CVI_NN_CleanupModel failed, err %d\n", ret);
+      mp_mi->handle = nullptr;
       return CVI_FAILURE;
     }
     mp_mi->handle = nullptr;

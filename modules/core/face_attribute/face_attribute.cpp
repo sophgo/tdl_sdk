@@ -28,8 +28,8 @@
 
 namespace cviai {
 
-FaceAttribute::FaceAttribute(bool use_wrap_hw)
-    : Core(CVI_MEM_DEVICE, true), m_use_wrap_hw(use_wrap_hw) {
+FaceAttribute::FaceAttribute(bool with_attr)
+    : Core(CVI_MEM_DEVICE, true), m_use_wrap_hw(false), m_with_attribute(with_attr) {
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }
 
@@ -72,6 +72,15 @@ FaceAttribute::~FaceAttribute() {
     m_wrap_frame.stVFrame.pu8VirAddr[0] = NULL;
     CVI_VB_ReleaseBlock(m_gdc_blk);
   }
+}
+
+void FaceAttribute::setHardwareGDC(bool use_wrap_hw) {
+  if (isInitialized()) {
+    LOGW("Please invoke CVI_AI_EnableGDC before opening model\n");
+    return;
+  }
+
+  m_use_wrap_hw = use_wrap_hw;
 }
 
 int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, int face_idx) {
@@ -140,8 +149,6 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
   }
   return CVI_SUCCESS;
 }
-
-void FaceAttribute::setWithAttribute(bool with_attr) { m_with_attribute = with_attr; }
 
 template <typename U, typename V>
 struct ExtractFeatures {

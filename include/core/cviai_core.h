@@ -182,6 +182,15 @@ DLL_EXPORT CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle);
 DLL_EXPORT CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId);
 
 /**
+ * @brief Open and initialize a model immediately.
+ *
+ * @param handle An AI SDK handle.
+ * @param model_index index of a model.
+ * @return int Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model_index);
+
+/**
  * @brief Destroy a cviai_handle_t.
  *
  * @param handle An AI SDK handle.

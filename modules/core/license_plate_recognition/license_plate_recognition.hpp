@@ -11,7 +11,7 @@ namespace cviai {
 /* WPODNet */
 class LicensePlateRecognition final : public Core {
  public:
-  LicensePlateRecognition(const char *region);
+  LicensePlateRecognition(LP_FORMAT format);
   virtual ~LicensePlateRecognition();
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *vehicle_plate_meta);
 

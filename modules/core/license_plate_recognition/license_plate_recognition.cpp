@@ -21,13 +21,11 @@
 
 namespace cviai {
 
-LicensePlateRecognition::LicensePlateRecognition(const char *region) : Core(CVI_MEM_SYSTEM) {
-  if (strcmp(region, "tw") == 0 || strcmp(region, "taiwan") == 0) {
-    this->format = TAIWAN;
-  } else if (strcmp(region, "cn") == 0 || strcmp(region, "china") == 0) {
-    this->format = CHINA;
+LicensePlateRecognition::LicensePlateRecognition(LP_FORMAT region) : Core(CVI_MEM_SYSTEM) {
+  if (region == TAIWAN || region == CHINA) {
+    this->format = region;
   } else {
-    LOGE("unknown region: %s\n", region);
+    LOGE("unknown region: %d\n", region);
     exit(CVI_FAILURE);
   }
 }

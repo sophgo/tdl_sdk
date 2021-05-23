@@ -63,7 +63,8 @@ class MobileDetV2 final : public Core {
   explicit MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.5);
   virtual ~MobileDetV2();
   int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
-  int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta, cvai_obj_det_type_e det_type);
+  int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
+                cvai_obj_det_type_e det_type = CVI_DET_TYPE_ALL);
   virtual void setModelThreshold(float threshold) override;
   virtual bool allowExportChannelAttribute() const override { return true; }
   virtual int onModelOpened() override;
