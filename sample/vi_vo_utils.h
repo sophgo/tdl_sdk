@@ -35,9 +35,14 @@ CVI_RTSP_CTX a;
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum);
 
+CVI_S32 InitVPSS_RGB(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
+                     const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
+                     const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened);
+
 CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
                  const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
-                 const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened);
+                 const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened,
+                 PIXEL_FORMAT_E format);
 
 CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeight,
                    OutputContext *context);

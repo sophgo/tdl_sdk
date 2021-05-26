@@ -21,7 +21,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum) {
       .Sns2MipiDev = 0xFF,
   };
 
-  if (SAMPLE_COMM_VI_ParseIni(&stIniCfg) != CVI_SUCCESS) {
+  if (!SAMPLE_COMM_VI_ParseIni(&stIniCfg)) {
     printf("Init pasre failed.\n");
     return CVI_FAILURE;
   }
@@ -139,16 +139,24 @@ static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFI
   return s32Ret;
 }
 
+CVI_S32 InitVPSS_RGB(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
+                     const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
+                     const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened) {
+  return InitVPSS(vpssGrp, vpssChn, vpssChnVO, grpWidth, grpHeight, voWidth, voHeight, viPipe,
+                  isVOOpened, PIXEL_FORMAT_RGB_888);
+}
+
 CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
                  const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
-                 const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened) {
+                 const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened,
+                 PIXEL_FORMAT_E chnFormat) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   VPSS_GRP_ATTR_S stVpssGrpAttr;
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   VPSS_CHN_ATTR_S stVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
 
   abChnEnable[vpssChn] = CVI_TRUE;
-  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChn], voWidth, voHeight, PIXEL_FORMAT_RGB_888, true);
+  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssChn], voWidth, voHeight, chnFormat, true);
 
   if (isVOOpened) {
     abChnEnable[vpssChnVO] = CVI_TRUE;

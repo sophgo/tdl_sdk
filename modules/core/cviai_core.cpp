@@ -21,6 +21,7 @@
 #include "liveness/liveness.hpp"
 #include "mask_classification/mask_classification.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
+#include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "osnet/osnet.hpp"
@@ -137,6 +138,7 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
 
 inline void __attribute__((always_inline)) removeCtx(cviai_context_t *ctx) {
   delete ctx->td_model;
+  delete ctx->md_model;
   delete ctx->ds_tracker;
   CVI_IVE_DestroyHandle(ctx->ive_handle);
   for (auto it : ctx->vec_vpss_engine) {
@@ -700,4 +702,30 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
     return 0;
   }
   return ctx->td_model->detect(frame, moving_score);
+}
+
+CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
+                                              VIDEO_FRAME_INFO_S *frame, uint32_t threshold,
+                                              double min_area) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_Background");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  MotionDetection *md_model = ctx->md_model;
+  if (md_model == nullptr) {
+    LOGI("Init Motion Detection.\n");
+    ctx->md_model = new MotionDetection(ctx->ive_handle, frame, threshold, min_area);
+    return CVI_SUCCESS;
+  }
+  return ctx->md_model->update_background(frame);
+}
+
+CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                               cvai_object_t *objects) {
+  TRACE_EVENT("cviai_core", "CVI_AI_MotionDetection");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  MotionDetection *md_model = ctx->md_model;
+  if (md_model == nullptr) {
+    LOGI("Failed to get motion detection instance\n");
+    return CVI_FAILURE;
+  }
+  return ctx->md_model->detect(frame, objects);
 }

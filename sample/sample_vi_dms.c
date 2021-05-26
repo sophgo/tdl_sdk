@@ -94,8 +94,8 @@ CVI_S32 INIT_VPSS(CVI_S32 voType) {
     }
   }
 
-  s32Ret = InitVPSS(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight, ViPipe,
-                    voType != 0);
+  s32Ret = InitVPSS_RGB(VpssGrp, VpssChn, VpssChnVO, GrpWidth, GrpHeight, voWidth, voHeight, ViPipe,
+                        voType != 0);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video process group 0 failed with %d\n", s32Ret);
     return s32Ret;

@@ -23,6 +23,7 @@ add_subdirectory(eye_classification)
 add_subdirectory(yawn_classification)
 add_subdirectory(face_landmarker)
 add_subdirectory(incar_object_detection)
+add_subdirectory(motion_detection)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils)
@@ -52,6 +53,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:yawn_classification>
               $<TARGET_OBJECTS:face_landmarker>
               $<TARGET_OBJECTS:incar_object_detection>
+              $<TARGET_OBJECTS:motion_detection>
               cviai_types_mem.cpp
               cviai_rescale_bbox.cpp
               cviai_media.cpp

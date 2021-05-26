@@ -1,14 +1,14 @@
 #pragma once
+#include <unordered_map>
+#include <vector>
 #include "core/core.hpp"
 #include "core/cviai_core.h"
 #include "core/vpss_engine.hpp"
 #include "deepsort/cvi_deepsort.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "ive/ive.h"
+#include "motion_detection/md.hpp"
 #include "tamper_detection/tamper_detection.hpp"
-
-#include <unordered_map>
-#include <vector>
 
 typedef struct {
   cviai::Core *instance = nullptr;
@@ -36,6 +36,7 @@ typedef struct {
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   uint32_t vpss_timeout_value = 100;  // default value.
   TamperDetectorMD *td_model = nullptr;
+  MotionDetection *md_model = nullptr;
   DeepSORT *ds_tracker = nullptr;
   FallMD *fall_model = nullptr;
   bool use_gdc_wrap = false;
