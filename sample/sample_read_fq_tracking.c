@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "cviai_perfetto.h"
 
 #define WRITE_RESULT_TO_FILE 0
 
@@ -184,7 +183,6 @@ float cover_rate_face2people(cvai_bbox_t face_bbox, cvai_bbox_t people_bbox) {
 }
 
 int main(int argc, char *argv[]) {
-  CVI_AI_PerfettoInit();
   if (argc != 8) {
     printf(
         "Usage: %s <obj_detection_model_name>\n"

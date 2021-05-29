@@ -1,14 +1,12 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "cviai_perfetto.h"
 
 #define WRITE_RESULT_TO_FILE 0
 
 enum LicenseFormat { taiwan, china };
 
 int main(int argc, char *argv[]) {
-  CVI_AI_PerfettoInit();
   if (argc != 8) {
     printf(
         "Usage: %s <vehicle_detection_model_path>\n"

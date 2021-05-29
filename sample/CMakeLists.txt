@@ -94,3 +94,4 @@ buildninstall(NAME sample_read_lpdr INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_L
 buildninstall(NAME sample_read_pose INC ${SAMPLE_INC} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_dms INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core pthread cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 install(FILES vi_vo_utils.c vi_vo_utils.h DESTINATION sample)
+install(FILES Makefile DESTINATION sample)

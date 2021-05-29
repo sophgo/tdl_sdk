@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "cviai_perfetto.h"
 
 #define WRITE_RESULT_TO_FILE 0
 
@@ -35,7 +34,6 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
 }
 
 int main(int argc, char *argv[]) {
-  CVI_AI_PerfettoInit();
   if (argc != 6) {
     printf(
         "Usage: %s <detection_model_name>\n"
