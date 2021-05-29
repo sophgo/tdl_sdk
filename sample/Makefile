@@ -5,10 +5,6 @@ ifndef MW_PATH
 $(error "Please set middleware sdk root path to MW_PATH")
 endif
 
-ifndef RTSP_PATH
-$(error "Please set rtsp sdk root path to RTSP_PATH)
-endif
-
 ifndef IVE_PATH
 $(error "Please set rtsp sdk root path to IVE_PATH)
 endif
@@ -48,8 +44,8 @@ AISDK_INC_PATH = $(AISDK_ROOT_PATH)/include/cviai
 
 # RTSP stuffs
 #####################################################
-RTSP_LIB_PATH = $(RTSP_PATH)/lib
-RTSP_INC_PATH = $(RTSP_PATH)/include/cvi_rtsp
+RTSP_LIB_PATH = $(AISDK_ROOT_PATH)/lib
+RTSP_INC_PATH = $(AISDK_ROOT_PATH)/include/cvi_rtsp
 #####################################################
 
 # TPU
@@ -102,14 +98,10 @@ $(info Middleware include path: $(MW_INC_PATH))
 $(info Middleware library path: $(MW_LIB_PATH))
 $(info AI SDK library path: $(AISDK_LIB_PATH))
 $(info AI SDK include path: $(AISDK_INC_PATH))
-$(info CVI RTSP library path: $(RTSP_LIB_PATH))
-$(info CVI RTSP include path: $(RTSP_INC_PATH))
 $(info IVE library path: $(IVE_SDK_LIB_PATH))
 $(info IVE include path: $(IVE_SDK_INC_PATH))
 $(info TPU library path: $(TPU_LIB_PATH))
-$(info TPU include path: $(TPU_INC_PATH))
 $(info CFLAGS: $(CFLAGS))
-$(info LDFLAGS: $(LDFLAGS))
 $(info CC: $(CC))
 $(info CXX: $(CXX))
 $(info ---------------------------------------)

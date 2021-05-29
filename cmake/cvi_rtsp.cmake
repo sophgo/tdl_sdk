@@ -29,5 +29,5 @@ ExternalProject_Get_property(cvi_rtsp SOURCE_DIR)
 set(cvi_rtsp_LIBPATH ${SOURCE_DIR}/src/libcvi_rtsp.so)
 set(cvi_rtsp_INCLUDE ${SOURCE_DIR}/include/cvi_rtsp)
 
-install(FILES ${cvi_rtsp_LIBPATH} DESTINATION rtsp/lib)
-install(DIRECTORY ${cvi_rtsp_INCLUDE} DESTINATION rtsp/include)
+install(FILES ${cvi_rtsp_LIBPATH} DESTINATION lib)
+install(DIRECTORY ${cvi_rtsp_INCLUDE} DESTINATION include)
