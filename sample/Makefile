@@ -62,8 +62,7 @@ IVE_SDK_LIB_PATH = $(IVE_PATH)/lib
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
 
 
-CFLAGS += -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -Wno-unused-parameter -Werror
-
+CFLAGS += -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -O3 -DNDEBUG -fsigned-char -Werror=all -fdiagnostics-color=always -std=c11 -s
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
 STRIPSYMBOL =
@@ -117,10 +116,10 @@ SRCS := $(wildcard $(PWD)/*.c)
 OBJS := $(SRCS:%.c=%.o)
 DEPS = $(SRCS:.c=.d)
 
-SAMPLE_LIBS = $(MW_LIBS) $(AISDK_LIBS) $(TPU_LIBS) $(IVE_LIBS) $(OPENCV_LIBS) -L$(MW_LIB_PATH) -L$(AISDK_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(OPENCV_LIB_PATH) -L$(MW_3RD_LIB_PATH) -lpthread
+SAMPLE_LIBS = $(AISDK_LIBS) $(TPU_LIBS) $(IVE_LIBS) $(OPENCV_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(OPENCV_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH)
 
-CFLAGS += -I$(MW_INC_PATH) -I$(AISDK_INC_PATH) -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH)
+CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH)
 
 TARGETS = sample_init \
 			sample_read_dt \

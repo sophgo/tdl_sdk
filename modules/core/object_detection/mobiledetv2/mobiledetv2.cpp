@@ -333,7 +333,9 @@ void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tenso
     }
 
     {
-      const TensorInfo &info = getOutputTensorInfo(m_model_config.obj_max_names[stride]);
+      const string tname = m_model_config.num_classes > 1 ? m_model_config.obj_max_names[stride]
+                                                          : m_model_config.class_out_names[stride];
+      const TensorInfo &info = getOutputTensorInfo(tname);
       objectness_tensor_ptr->push_back({info.get<int8_t>(), info.tensor_elem});
     }
   }

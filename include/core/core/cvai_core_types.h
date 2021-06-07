@@ -149,7 +149,7 @@ typedef struct {
  * @return const int The unit size of a variable type.
  */
 
-inline const int __attribute__((always_inline)) getFeatureTypeSize(feature_type_e type) {
+inline int __attribute__((always_inline)) getFeatureTypeSize(feature_type_e type) {
   uint32_t size = 1;
   switch (type) {
     case TYPE_INT8:

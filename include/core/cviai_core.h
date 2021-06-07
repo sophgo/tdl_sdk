@@ -150,7 +150,7 @@ typedef enum { CVI_AI_MODEL_LIST CVI_AI_SUPPORTED_MODEL_END } CVI_AI_SUPPORTED_M
 
 static inline const char *CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_E index) {
   static const char *model_names[] = {CVI_AI_MODEL_LIST};
-  int length = sizeof(model_names) / sizeof(model_names[0]);
+  uint32_t length = sizeof(model_names) / sizeof(model_names[0]);
   if (index < length) {
     return model_names[index];
   } else {
