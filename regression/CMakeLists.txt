@@ -107,3 +107,4 @@ buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core c
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_fq INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
+buildninstallcpp(NAME reg_daily_thermal_fd INC ${REG_INCLUDES} DEPS cviai_core ${SAMPLE_LIBS})
