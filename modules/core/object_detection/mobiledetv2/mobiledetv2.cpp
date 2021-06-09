@@ -341,25 +341,6 @@ void MobileDetV2::get_raw_outputs(std::vector<pair<int8_t *, size_t>> *cls_tenso
   }
 }
 
-// TODO: remove old filter
-void coco_class_90_filter(Detections &dets, cvai_obj_det_type_e det_type) {
-  auto condition = [det_type](const PtrDectRect &det) {
-    int label = det->label;
-    bool skip_class = (det_type != CVI_DET_TYPE_ALL);
-    if ((det_type & CVI_DET_TYPE_VEHICLE) != 0) {
-      if ((label >= CVI_AI_DET_TYPE_BICYCLE) && label <= CVI_AI_DET_TYPE_BOAT) skip_class = false;
-    }
-    if ((det_type & CVI_DET_TYPE_PEOPLE) != 0) {
-      if (label == 0) skip_class = false;
-    }
-    if ((det_type & CVI_DET_TYPE_PET) != 0) {
-      if ((label == CVI_AI_DET_TYPE_DOG) || (label == CVI_AI_DET_TYPE_CAT)) skip_class = false;
-    }
-    return skip_class;
-  };
-  dets.erase(remove_if(dets.begin(), dets.end(), condition), dets.end());
-}
-
 void MobileDetV2::select_classes(const std::vector<uint32_t> &selected_classes) {
   m_filter.reset();
   for (auto c : selected_classes) {
@@ -367,8 +348,7 @@ void MobileDetV2::select_classes(const std::vector<uint32_t> &selected_classes) 
   }
 }
 
-int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
-                           cvai_obj_det_type_e det_type) {
+int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
   int ret = CVI_SUCCESS;
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
 
@@ -383,9 +363,6 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta,
       return !m_filter.test(m_model_config.class_id_map(det->label));
     };
     final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
-  } else if (det_type != CVI_DET_TYPE_ALL) {
-    // TODO: remove old filter
-    coco_class_90_filter(final_dets, det_type);
   }
 
   CVI_SHAPE shape = getInputShape(0);

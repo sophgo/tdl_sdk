@@ -33,7 +33,11 @@ int main(int argc, char *argv[]) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
+
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, false);
+  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, 1,
+                           CVI_AI_DET_TYPE_PERSON);
+
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, argv[2]);
   if (ret != CVI_SUCCESS) {
     printf("Set model alphapose failed with %#x!\n", ret);
@@ -66,7 +70,7 @@ int main(int argc, char *argv[]) {
   // Run inference and print result.
   cvai_object_t obj;
   memset(&obj, 0, sizeof(cvai_object_t));
-  CVI_AI_MobileDetV2_D0(ai_handle, &fdFrame, &obj, CVI_DET_TYPE_PEOPLE);
+  CVI_AI_MobileDetV2_D0(ai_handle, &fdFrame, &obj);
   printf("People found %d.\n", obj.size);
 
   CVI_AI_AlphaPose(ai_handle, &fdFrame, &obj);

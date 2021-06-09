@@ -2,17 +2,6 @@
 #define _CVI_OBJECT_TYPES_H_
 #include "core/core/cvai_core_types.h"
 
-/** @enum cvai_obj_det_type_e
- *  @ingroup core_cviaicore
- *  @brief Gives the hint to object detection inference which type of object should be detected.
- */
-typedef enum {
-  CVI_DET_TYPE_ALL = 0,
-  CVI_DET_TYPE_VEHICLE = (1 << 0),
-  CVI_DET_TYPE_PEOPLE = (1 << 1),
-  CVI_DET_TYPE_PET = (1 << 2)
-} cvai_obj_det_type_e;
-
 /** @enum cvai_obj_class_id_e
  *  @ingroup core_cviaicore
  *  @brief classes id of object detection output

@@ -45,19 +45,17 @@ int Yolov3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   return CVI_SUCCESS;
 }
 
-int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
-                      cvai_obj_det_type_e det_type) {
+int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj) {
   int ret = CVI_SUCCESS;
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   ret = run(frames);
 
-  outputParser(srcFrame, obj, det_type);
+  outputParser(srcFrame, obj);
 
   return ret;
 }
 
-void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
-                          cvai_obj_det_type_e det_type) {
+void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj) {
   vector<float *> features;
   vector<string> output_name = {YOLOV3_OUTPUT1, YOLOV3_OUTPUT2, YOLOV3_OUTPUT3};
   vector<CVI_SHAPE> output_shape;
@@ -109,8 +107,7 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj,
   }
 
   DoNmsSort(mp_total_dets, total_boxes, m_yolov3_param.m_classes, m_yolov3_param.m_nms_threshold);
-  getYOLOResults(mp_total_dets, total_boxes, m_model_threshold, yolov3_w, yolov3_h, results,
-                 det_type);
+  getYOLOResults(mp_total_dets, total_boxes, m_model_threshold, yolov3_w, yolov3_h, results);
   for (int i = 0; i < total_boxes; ++i) {
     delete[] mp_total_dets[i].prob;
   }
@@ -180,7 +177,7 @@ void Yolov3::doYolo(YOLOLayer &l) {
 }
 
 void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w, int ori_h,
-                            vector<object_detect_rect_t> &results, cvai_obj_det_type_e det_type) {
+                            vector<object_detect_rect_t> &results) {
   for (int i = 0; i < num; ++i) {
     std::string labelstr;
     int obj_class = -1;
@@ -207,18 +204,6 @@ void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w
     if (obj_class < 0) {
       continue;
     }
-
-    bool skip_class = (det_type != CVI_DET_TYPE_ALL);
-    if ((det_type & CVI_DET_TYPE_VEHICLE) != 0) {
-      if ((obj_result.label >= 1) && obj_result.label <= 7) skip_class = false;
-    }
-    if ((det_type & CVI_DET_TYPE_PEOPLE) != 0) {
-      if (obj_result.label == 0) skip_class = false;
-    }
-    if ((det_type & CVI_DET_TYPE_PET) != 0) {
-      if ((obj_result.label == 16) || (obj_result.label == 17)) skip_class = false;
-    }
-    if (skip_class) continue;
 
     box b = dets[i].bbox;
     int left = (b.x - b.w / 2.) * ori_w;

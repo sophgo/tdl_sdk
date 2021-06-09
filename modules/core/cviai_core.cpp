@@ -535,19 +535,17 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle_D0, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Pedestrian_D0, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, cvai_object_t *)
-DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_Lite, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE,
-                      cvai_object_t *, cvai_obj_det_type_e)
-DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_Lite_Person_Pets, MobileDetV2,
-                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS, cvai_object_t *,
-                      cvai_obj_det_type_e)
-DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_D0, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
-                      cvai_object_t *, cvai_obj_det_type_e)
-DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_D1, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
-                      cvai_object_t *, cvai_obj_det_type_e)
-DEFINE_INF_FUNC_F1_P2(CVI_AI_MobileDetV2_D2, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
-                      cvai_object_t *, cvai_obj_det_type_e)
-DEFINE_INF_FUNC_F1_P2(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *,
-                      cvai_obj_det_type_e)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Lite, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE,
+                      cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Lite_Person_Pets, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_D0, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
+                      cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_D1, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
+                      cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_D2, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
+                      cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
 
 DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *, int)

@@ -4,8 +4,7 @@
 
 #define WRITE_RESULT_TO_FILE 0
 
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *,
-                             cvai_obj_det_type_e);
+typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
 typedef struct _ModelConfig {
   CVI_AI_SUPPORTED_MODEL_E model_id;
   int input_size;
@@ -74,6 +73,7 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
+  CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
 
   // Init DeepSORT
   CVI_AI_DeepSORT_Init(ai_handle);
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
     //*******************************************
     // Tracking function calls.
     // Step 1. Object detect inference.
-    model_config.inference(ai_handle, &frame, &obj_meta, CVI_DET_TYPE_PEOPLE);
+    model_config.inference(ai_handle, &frame, &obj_meta);
     // Step 2. Object feature generator.
     CVI_AI_OSNet(ai_handle, &frame, &obj_meta);
     // Step 3. Tracker.

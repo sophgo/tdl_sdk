@@ -87,6 +87,8 @@ int main(int argc, char *argv[]) {
   } else if (use_vehicle == 0) {
     printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0\n");
     s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
+    s32Ret |= CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, 1,
+                                       CVI_AI_DET_GROUP_VEHICLE);
   } else {
     printf("Unknow det model type.\n");
     return CVI_FAILURE;
@@ -136,7 +138,7 @@ int main(int argc, char *argv[]) {
     if (use_vehicle == 1) {
       CVI_AI_MobileDetV2_Vehicle_D0(ai_handle, &stfdFrame, &vehicle_obj);
     } else {
-      CVI_AI_MobileDetV2_D0(ai_handle, &stfdFrame, &vehicle_obj, CVI_DET_TYPE_VEHICLE);
+      CVI_AI_MobileDetV2_D0(ai_handle, &stfdFrame, &vehicle_obj);
     }
     printf("Find %u vehicles.\n", vehicle_obj.size);
 

@@ -4,8 +4,7 @@
 #include "cviai_perfetto.h"
 #include "inttypes.h"
 
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *,
-                             cvai_obj_det_type_e);
+typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
 typedef struct _ModelConfig {
   CVI_AI_SUPPORTED_MODEL_E model_id;
   int input_size;
@@ -135,10 +134,12 @@ int main(int argc, char *argv[]) {
     memset(&obj_meta, 0, sizeof(cvai_object_t));
     memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
 
+    CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
+
     //*******************************************
     // Tracking function calls.
     // Step 1. Object detect inference.
-    model_config.inference(ai_handle, &frame, &obj_meta, CVI_DET_TYPE_PEOPLE);
+    model_config.inference(ai_handle, &frame, &obj_meta);
     // Step 2. Object feature generator.
     CVI_AI_OSNet(ai_handle, &frame, &obj_meta);
     // Step 3. Tracker.

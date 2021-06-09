@@ -539,11 +539,10 @@ DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_Pedestrian_D0(cviai_handle_t handle,
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_Lite(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                           cvai_object_t *obj, cvai_obj_det_type_e det_type);
+                                           cvai_object_t *obj);
 
 /**
  * @brief MobileDetV2 Lite object detection, the most lightweight MobileDetV2 with 3 classes
@@ -552,13 +551,11 @@ DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_Lite(cviai_handle_t handle, VIDEO_FRAME_IN
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_Lite_Person_Pets(cviai_handle_t handle,
                                                        VIDEO_FRAME_INFO_S *frame,
-                                                       cvai_object_t *obj,
-                                                       cvai_obj_det_type_e det_type);
+                                                       cvai_object_t *obj);
 
 /**
  * @brief MobileDetV2 D0 object detection, the most lightweight MobileDetV2.
@@ -566,11 +563,10 @@ DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_Lite_Person_Pets(cviai_handle_t handle,
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                         cvai_object_t *obj, cvai_obj_det_type_e det_type);
+                                         cvai_object_t *obj);
 
 /**
  * @brief MobileDetV2 D1 object detection, the not so lightweight MobileDetV2.
@@ -578,11 +574,10 @@ DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D0(cviai_handle_t handle, VIDEO_FRAME_INFO
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                         cvai_object_t *obj, cvai_obj_det_type_e det_type);
+                                         cvai_object_t *obj);
 
 /**
  * @brief MobileDetV2 D2 object detection, the heaviest MobileDetV2.
@@ -590,11 +585,10 @@ DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D1(cviai_handle_t handle, VIDEO_FRAME_INFO
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                         cvai_object_t *obj, cvai_obj_det_type_e det_type);
+                                         cvai_object_t *obj);
 
 /**
  * @brief Yolov3 object detection.
@@ -602,11 +596,10 @@ DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_D2(cviai_handle_t handle, VIDEO_FRAME_INFO
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param obj Output detect result. The name, bbox, and classes will be given.
- * @param det_type Specify detection type.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                 cvai_object_t *obj, cvai_obj_det_type_e det_type);
+                                 cvai_object_t *obj);
 
 /**@}*/
 

@@ -15,23 +15,12 @@
 
 static volatile bool bExit = false;
 
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *,
-                             cvai_obj_det_type_e);
+typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
 typedef struct _ModelConfig {
   CVI_AI_SUPPORTED_MODEL_E model_id;
   int input_size;
   InferenceFunc inference;
 } ModelConfig;
-
-#define CREATE_WRAPPER(realfunc)                                                     \
-  int inference_wrapper_##realfunc(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, \
-                                   cvai_object_t *objects, cvai_obj_det_type_e e) {  \
-    return realfunc(handle, frame, objects);                                         \
-  }
-
-#define WRAPPER(realfunc) inference_wrapper_##realfunc
-CREATE_WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0)
-CREATE_WRAPPER(CVI_AI_MobileDetV2_Pedestrian_D0)
 
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVI_SUCCESS;
@@ -53,10 +42,10 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
     config->inference = CVI_AI_MobileDetV2_D2;
   } else if (strcmp(model_name, "mobiledetv2-vehicle-d0") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0;
-    config->inference = WRAPPER(CVI_AI_MobileDetV2_Vehicle_D0);
+    config->inference = CVI_AI_MobileDetV2_Vehicle_D0;
   } else if (strcmp(model_name, "mobiledetv2-pedestrian-d0") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0;
-    config->inference = WRAPPER(CVI_AI_MobileDetV2_Pedestrian_D0);
+    config->inference = CVI_AI_MobileDetV2_Pedestrian_D0;
   } else if (strcmp(model_name, "yolov3") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     config->inference = CVI_AI_Yolov3;
@@ -179,7 +168,7 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    model_config.inference(facelib_handle, &stfdFrame, &obj_meta, 0);
+    model_config.inference(facelib_handle, &stfdFrame, &obj_meta);
     printf("nums of object %u\n", obj_meta.size);
 
     int s32Ret = CVI_SUCCESS;

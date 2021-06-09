@@ -9,8 +9,7 @@
 #define COVER_RATE_THRESHOLD 0.9
 #define MISS_TIME_LIMIT 100
 
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *,
-                             cvai_obj_det_type_e);
+typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
 typedef struct _ModelConfig {
   CVI_AI_SUPPORTED_MODEL_E model_id;
   int input_size;
@@ -231,6 +230,7 @@ int main(int argc, char *argv[]) {
   CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
+  CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
 
   // Init DeepSORT
   CVI_AI_DeepSORT_Init(ai_handle);
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]) {
     }
     clean_tracker(fq_trackers, miss_time);
 
-    model_config.inference(ai_handle, &frame, &obj_meta, CVI_DET_TYPE_PEOPLE);
+    model_config.inference(ai_handle, &frame, &obj_meta);
     match_index_t *p2f = (match_index_t *)malloc(obj_meta.size * sizeof(match_index_t));
     memset(p2f, 0, obj_meta.size * sizeof(match_index_t));
     for (uint32_t i = 0; i < obj_meta.size; i++) {

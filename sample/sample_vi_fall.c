@@ -99,6 +99,8 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1, false);
+  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1, 1,
+                           CVI_AI_DET_TYPE_PERSON);
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, argv[2]);
   if (ret != CVI_SUCCESS) {
     printf("Set model alphapose failed with %#x!\n", ret);
@@ -116,7 +118,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Run inference and print result.
-    CVI_AI_MobileDetV2_D1(ai_handle, &fdFrame, &obj, CVI_DET_TYPE_PEOPLE);
+    CVI_AI_MobileDetV2_D1(ai_handle, &fdFrame, &obj);
     printf("\nPeople found %x ", obj.size);
 
     if (obj.size > 0) {
