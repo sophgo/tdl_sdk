@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
         break;
       }
 
-      CVI_AI_Service_FaceDrawRect(facelib_handle, &face, &stVOFrame, true);
+      CVI_AI_Service_FaceDrawRect(NULL, &face, &stVOFrame, false);
       s32Ret = SendOutputFrame(&stVOFrame, &outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
