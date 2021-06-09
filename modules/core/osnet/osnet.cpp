@@ -13,8 +13,6 @@
 #define MODEL_MEAN_G (0.456f * 255.f)
 #define MODEL_MEAN_B (0.406f * 255.f)
 
-#define OSNET_OUT_NAME "feature"
-
 namespace cviai {
 
 OSNet::OSNet() : Core(CVI_MEM_DEVICE, true) {}
@@ -49,8 +47,8 @@ int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int ob
     run(frames);
 
     // feature
-    int8_t *feature_blob = getOutputRawPtr<int8_t>(OSNET_OUT_NAME);
-    size_t feature_size = getOutputTensorElem(OSNET_OUT_NAME);
+    int8_t *feature_blob = getOutputRawPtr<int8_t>(0);
+    size_t feature_size = getOutputTensorElem(0);
     // Create feature
     CVI_AI_MemAlloc(sizeof(int8_t), feature_size, TYPE_INT8, &meta->info[i].feature);
     memcpy(meta->info[i].feature.ptr, feature_blob, feature_size);
