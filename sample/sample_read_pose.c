@@ -45,25 +45,17 @@ int main(int argc, char *argv[]) {
   }
 
   // Read image using IVE.
-  // IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
-  // IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, argv[3], IVE_IMAGE_TYPE_U8C3_PACKAGE);
-  // if (image.u16Width == 0) {
-  //   printf("Read image failed with %x!\n", ret);
-  //   return ret;
-  // }
-  // // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
-  // VIDEO_FRAME_INFO_S fdFrame;
-  // ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame, false);
-  // if (ret != CVI_SUCCESS) {
-  //   printf("Convert to video frame failed with %#x!\n", ret);
-  //   return ret;
-  // }
-
-  VB_BLK blk1;
+  IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
+  IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, argv[3], IVE_IMAGE_TYPE_U8C3_PACKAGE);
+  if (image.u16Width == 0) {
+    printf("Read image failed with %x!\n", ret);
+    return ret;
+  }
+  // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
   VIDEO_FRAME_INFO_S fdFrame;
-  ret = CVI_AI_ReadImage(argv[3], &blk1, &fdFrame, PIXEL_FORMAT_RGB_888);
+  ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame, false);
   if (ret != CVI_SUCCESS) {
-    printf("Read image1 failed with %#x!\n", ret);
+    printf("Convert to video frame failed with %#x!\n", ret);
     return ret;
   }
 
@@ -77,12 +69,24 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_Service_ObjectDrawPose(&obj, &fdFrame);
 
+  /*
+  for (uint32_t i = 0; i < obj.size; i++) {
+    for (int point = 0; point < 17; point++) {
+
+      float point_x = obj.info[i].pedestrian_properity->pose_17.x[point];
+      float point_y = obj.info[i].pedestrian_properity->pose_17.y[point];
+      printf("[%d][%2d]; x, y, result : [%.3f, %.3f]\n",
+              i, point, point_x, point_y);
+    }
+
+  */
+
   CVI_AI_Free(&obj);
 
   // Free image and handles.
-  // CVI_SYS_FreeI(ive_handle, &image);
+  CVI_SYS_FreeI(ive_handle, &image);
   CVI_AI_DestroyHandle(ai_handle);
-  // CVI_IVE_DestroyHandle(ive_handle);
+  CVI_IVE_DestroyHandle(ive_handle);
 
   return ret;
 }
