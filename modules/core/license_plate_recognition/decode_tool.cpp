@@ -83,7 +83,7 @@ std::string decode_tw(int *code) {
 }
 
 std::string decode_cn(int *code) {
-  printf("decode_cn\n");
+  // printf("decode_cn\n");
   std::vector<int> de_code;
   int previous = -1;
   for (int i = 0; i < CODE_LENGTH; i++) {

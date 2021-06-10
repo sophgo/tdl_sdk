@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "ive/ive.h"
 
 #define WRITE_RESULT_TO_FILE 0
 
@@ -219,6 +220,7 @@ int main(int argc, char *argv[]) {
   }
 
   ret = CVI_AI_CreateHandle2(&ai_handle, 1);
+  // ret |= CVI_AI_SetVpssTimeout(ai_handle, 10);
   ret |= CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[3]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[4]);
@@ -279,6 +281,13 @@ int main(int argc, char *argv[]) {
 
   int inference_count = atoi(argv[7]);
 
+  cvai_face_t face_meta;
+  cvai_tracker_t tracker_meta;
+  cvai_object_t obj_meta;
+  memset(&face_meta, 0, sizeof(cvai_face_t));
+  memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
+  memset(&obj_meta, 0, sizeof(cvai_object_t));
+
   for (int counter = 0; counter < imageNum; counter++) {
     if (counter == inference_count) {
       break;
@@ -295,25 +304,32 @@ int main(int argc, char *argv[]) {
     int trk_num = get_alive_num(fq_trackers);
     printf("FQ Tracker Num = %d\n", trk_num);
 
-    VB_BLK blk_fr;
+    IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
+    // Read image using IVE.
+    IVE_IMAGE_S ive_frame = CVI_IVE_ReadImage(ive_handle, image_path, IVE_IMAGE_TYPE_U8C3_PACKAGE);
+    // CVI_IVE_ReadImage(ive_handle, image_path, IVE_IMAGE_TYPE_U8C3_PLANAR);
+    if (ive_frame.u16Width == 0) {
+      printf("Read image failed with %x!\n", ret);
+      return ret;
+    }
+    // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path, &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
+    ret = CVI_IVE_Image2VideoFrameInfo(&ive_frame, &frame, false);
     if (ret != CVI_SUCCESS) {
-      printf("Read image failed with %#x!\n", ret);
+      printf("Convert to video frame failed with %#x!\n", ret);
       return ret;
     }
 
-    cvai_face_t face_meta;
-    memset(&face_meta, 0, sizeof(cvai_face_t));
-    cvai_tracker_t tracker_meta;
-    memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
-    cvai_object_t obj_meta;
-    memset(&obj_meta, 0, sizeof(cvai_object_t));
-
-    CVI_AI_RetinaFace(ai_handle, &frame, &face_meta);
+    if (CVI_AI_RetinaFace(ai_handle, &frame, &face_meta) != CVI_SUCCESS) {
+      printf("CVI_AI_RetinaFace failed.\n");
+      break;
+    }
     printf("Found %x faces.\n", face_meta.size);
     CVI_AI_FaceRecognition(ai_handle, &frame, &face_meta);
     CVI_AI_FaceQuality(ai_handle, &frame, &face_meta);
+    for (uint32_t j = 0; j < face_meta.size; j++) {
+      printf("face[%u] quality: %f\n", j, face_meta.info[j].face_quality);
+    }
 
     CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
 
@@ -328,10 +344,11 @@ int main(int argc, char *argv[]) {
 
     if (!update_tracker(ai_handle, &frame, fq_trackers, &face_meta, &tracker_meta, miss_time)) {
       printf("update tracker failed.\n");
+      CVI_SYS_FreeI(ive_handle, &ive_frame);
+      CVI_IVE_DestroyHandle(ive_handle);
       CVI_AI_Free(&face_meta);
       CVI_AI_Free(&tracker_meta);
       CVI_AI_Free(&obj_meta);
-      CVI_VB_ReleaseBlock(blk_fr);
       break;
     }
     clean_tracker(fq_trackers, miss_time);
@@ -378,10 +395,11 @@ int main(int argc, char *argv[]) {
 #endif
 
     free(p2f);
+    CVI_SYS_FreeI(ive_handle, &ive_frame);
+    CVI_IVE_DestroyHandle(ive_handle);
     CVI_AI_Free(&face_meta);
     CVI_AI_Free(&tracker_meta);
     CVI_AI_Free(&obj_meta);
-    CVI_VB_ReleaseBlock(blk_fr);
   }
 
 #if WRITE_RESULT_TO_FILE
@@ -394,6 +412,7 @@ int main(int argc, char *argv[]) {
       free(fq_trackers[i].face.stVFrame.pu8VirAddr[2]);
     }
   }
+
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
 }

@@ -42,8 +42,12 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
   printf("[%s:%d] inference\n", __FILE__, __LINE__);
   std::stringstream s_str;
 #endif
-  frame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+  bool do_unmap = false;
+  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
+    frame->stVFrame.pu8VirAddr[0] =
+        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+    do_unmap = true;
+  }
   cv::Mat cv_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
                    frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   for (size_t n = 0; n < vehicle_plate_meta->size; n++) {
@@ -85,6 +89,10 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     }
 
     strncpy(v_meta->license_char, id_number.c_str(), sizeof(v_meta->license_char));
+  }
+  if (do_unmap) {
+    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+    frame->stVFrame.pu8VirAddr[0] = NULL;
   }
   return CVI_SUCCESS;
 }

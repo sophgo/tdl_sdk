@@ -137,8 +137,12 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
   int img_width = frame->stVFrame.u32Width;
   int img_height = frame->stVFrame.u32Height;
-  frame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+  bool do_unmap = false;
+  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
+    frame->stVFrame.pu8VirAddr[0] =
+        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+    do_unmap = true;
+  }
   cv::Mat image(img_height, img_width, CV_8UC3, frame->stVFrame.pu8VirAddr[0],
                 frame->stVFrame.u32Stride[0]);
 
@@ -167,11 +171,12 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
     CVI_AI_FreeCpp(&face_info);
   }
-
-  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
-  frame->stVFrame.pu8VirAddr[0] = NULL;
-  frame->stVFrame.pu8VirAddr[1] = NULL;
-  frame->stVFrame.pu8VirAddr[2] = NULL;
+  if (do_unmap) {
+    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+    frame->stVFrame.pu8VirAddr[0] = NULL;
+    frame->stVFrame.pu8VirAddr[1] = NULL;
+    frame->stVFrame.pu8VirAddr[2] = NULL;
+  }
 
   return CVI_SUCCESS;
 }
@@ -181,8 +186,12 @@ int FaceQuality::getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
   cvai_face_info_t face_info_rescale =
       info_rescale_c(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                      srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height, *face_info);
-  srcFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(srcFrame->stVFrame.u64PhyAddr[0],
-                                                                 srcFrame->stVFrame.u32Length[0]);
+  bool do_unmap = false;
+  if (srcFrame->stVFrame.pu8VirAddr[0] == NULL) {
+    srcFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(srcFrame->stVFrame.u64PhyAddr[0],
+                                                                   srcFrame->stVFrame.u32Length[0]);
+    do_unmap = true;
+  }
   cv::Mat image(srcFrame->stVFrame.u32Height, srcFrame->stVFrame.u32Width, CV_8UC3,
                 srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Stride[0]);
   cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
@@ -208,6 +217,12 @@ int FaceQuality::getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
         dstFrame->stVFrame.pu8VirAddr[2 - chn][idx] = rgbChannels[chn].at<uchar>(i, j);
       }
     }
+  }
+  if (do_unmap) {
+    CVI_SYS_Munmap((void *)srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Length[0]);
+    srcFrame->stVFrame.pu8VirAddr[0] = NULL;
+    srcFrame->stVFrame.pu8VirAddr[1] = NULL;
+    srcFrame->stVFrame.pu8VirAddr[2] = NULL;
   }
 
   return CVI_SUCCESS;

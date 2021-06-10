@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "ive/ive.h"
 
 #define WRITE_RESULT_TO_FILE 0
 
@@ -36,11 +37,13 @@ int main(int argc, char *argv[]) {
   if (use_vehicle == 1) {
     printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0\n");
     ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, argv[1]);
+    CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, false);
   } else if (use_vehicle == 0) {
     printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0\n");
     ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
     ret |= CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, 1,
                                     CVI_AI_DET_GROUP_VEHICLE);
+    CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, false);
   } else {
     printf("Unknown det model type.\n");
     return CVI_FAILURE;
@@ -56,12 +59,15 @@ int main(int argc, char *argv[]) {
   }
 
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, false);
   switch (license_format) {
     case taiwan:
       ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
+      CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, false);
       break;
     case china:
       ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, argv[4]);
+      CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, false);
       break;
     default:
       return CVI_FAILURE;
@@ -74,7 +80,12 @@ int main(int argc, char *argv[]) {
 
 #if WRITE_RESULT_TO_FILE
   FILE *outFile;
-  outFile = fopen("sample_LPDR_result.txt", "w");
+  char outFile_name[128];
+  outFile_name[0] = '\0';
+  strcat(outFile_name, "result_sample_lpr_");
+  strcat(outFile_name, argv[2]);
+  strcat(outFile_name, ".txt");
+  outFile = fopen(outFile_name, "w");
   if (outFile == NULL) {
     printf("There is a problem opening the output file.\n");
     exit(EXIT_FAILURE);
@@ -119,11 +130,19 @@ int main(int argc, char *argv[]) {
     char *image_path = line;
     printf("[%i] image path = %s\n", counter, image_path);
 
-    VB_BLK blk_fr;
+    IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
+    // Read image using IVE.
+    IVE_IMAGE_S ive_frame = CVI_IVE_ReadImage(ive_handle, image_path, IVE_IMAGE_TYPE_U8C3_PACKAGE);
+    // CVI_IVE_ReadImage(ive_handle, image_path, IVE_IMAGE_TYPE_U8C3_PLANAR);
+    if (ive_frame.u16Width == 0) {
+      printf("Read image failed with %x!\n", ret);
+      return ret;
+    }
+    // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path, &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
+    ret = CVI_IVE_Image2VideoFrameInfo(&ive_frame, &frame, false);
     if (ret != CVI_SUCCESS) {
-      printf("Read image failed with %#x!\n", ret);
+      printf("Convert to video frame failed with %#x!\n", ret);
       return ret;
     }
 
@@ -186,8 +205,9 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
+    CVI_SYS_FreeI(ive_handle, &ive_frame);
+    CVI_IVE_DestroyHandle(ive_handle);
     CVI_AI_Free(&vehicle_obj);
-    CVI_VB_ReleaseBlock(blk_fr);
   }
 #if WRITE_RESULT_TO_FILE
   fclose(outFile);

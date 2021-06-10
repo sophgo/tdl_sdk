@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "ive/ive.h"
 
 #define WRITE_RESULT_TO_FILE 0
 
@@ -143,11 +144,19 @@ int main(int argc, char *argv[]) {
     char *image_path = line;
     printf("[%i] image path = %s\n", counter, image_path);
 
-    VB_BLK blk_fr;
+    IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
+
+    // Read image using IVE.
+    IVE_IMAGE_S ive_frame = CVI_IVE_ReadImage(ive_handle, image_path, IVE_IMAGE_TYPE_U8C3_PACKAGE);
+    if (ive_frame.u16Width == 0) {
+      printf("Read image failed with %x!\n", ret);
+      return ret;
+    }
+    // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path, &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
+    ret = CVI_IVE_Image2VideoFrameInfo(&ive_frame, &frame, false);
     if (ret != CVI_SUCCESS) {
-      printf("Read image failed with %#x!\n", ret);
+      printf("Convert to video frame failed with %#x!\n", ret);
       return ret;
     }
 
@@ -206,7 +215,8 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&obj_meta);
     CVI_AI_Free(&obj_spec_meta);
     CVI_AI_Free(&tracker_meta);
-    CVI_VB_ReleaseBlock(blk_fr);
+    CVI_SYS_FreeI(ive_handle, &ive_frame);
+    CVI_IVE_DestroyHandle(ive_handle);
   }
 
 #if WRITE_RESULT_TO_FILE
