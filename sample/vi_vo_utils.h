@@ -8,12 +8,26 @@
 
 #include "sample_comm.h"
 
-typedef enum {
-  CODEC_H264,
-  CODEC_H265,
-} VencCodec;
-
 typedef enum { OUTPUT_TYPE_PANEL, OUTPUT_TYPE_RTSP } OutputType;
+
+typedef struct {
+  VPSS_GRP vpssGrp;
+  CVI_U32 grpHeight;
+  CVI_U32 grpWidth;
+  PIXEL_FORMAT_E groupFormat;
+
+  VPSS_CHN vpssChnVideoOutput;
+  CVI_U32 voWidth;
+  CVI_U32 voHeight;
+  PIXEL_FORMAT_E voFormat;
+
+  VPSS_CHN vpssChnAI;
+  CVI_U32 aiWidth;
+  CVI_U32 aiHeight;
+  PIXEL_FORMAT_E aiFormat;
+
+  VI_PIPE viPipe;
+} VPSSConfigs;
 
 typedef struct {
   OutputType type;
@@ -31,22 +45,22 @@ typedef struct {
     };
   };
 } OutputContext;
-CVI_RTSP_CTX a;
 
-CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_U32 *devNum);
+typedef struct {
+  VPSSConfigs vpssConfigs;
+  OutputContext outputContext;
+  SAMPLE_VI_CONFIG_S viConfig;
 
-CVI_S32 InitVPSS_RGB(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
-                     const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
-                     const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened);
+  struct {
+    CVI_U32 DevNum;
+    VI_PIPE ViPipe;
+  } ViPipe;
 
-CVI_S32 InitVPSS(const VPSS_GRP vpssGrp, const VPSS_CHN vpssChn, const VPSS_CHN vpssChnVO,
-                 const CVI_U32 grpWidth, const CVI_U32 grpHeight, const CVI_U32 voWidth,
-                 const CVI_U32 voHeight, const VI_PIPE viPipe, const CVI_BOOL isVOOpened,
-                 PIXEL_FORMAT_E format);
+} VideoSystemContext;
 
-CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeight,
-                   OutputContext *context);
+CVI_S32 InitVideoSystem(VideoSystemContext *vsCtx, SIZE_S *aiInputSize,
+                        PIXEL_FORMAT_E aiInputFormat, int voType);
+void DestroyVideoSystem(VideoSystemContext *vsCtx);
 CVI_S32 SendOutputFrame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context);
-CVI_S32 DestoryOutput(OutputContext *context);
 
 #endif
