@@ -243,11 +243,13 @@ CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config)
   cviai_model_t &m_t = ctx->model_cont[config];
   if (m_t.instance != nullptr) {
     if (!m_t.instance->isInitialized()) {
-      if (!m_t.model_path.empty()) {
-        m_t.instance->modelOpen(m_t.model_path.c_str());
-      } else {
+      if (m_t.model_path.empty()) {
         LOGE("Model path for %s is empty.\n", CVI_AI_GetModelName(config));
         return CVI_FAILURE;
+      }
+
+      if (m_t.instance->modelOpen(m_t.model_path.c_str()) == CVI_SUCCESS) {
+        LOGI("Model opened: %s (%s)", CVI_AI_GetModelName(config), m_t.model_path.c_str());
       }
     } else {
       LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
@@ -353,6 +355,7 @@ CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle) {
   for (auto &m_inst : ctx->model_cont) {
     if (m_inst.second.instance != nullptr) {
       m_inst.second.instance->modelClose();
+      LOGI("Model closed: %s\n", CVI_AI_GetModelName(m_inst.first));
       delete m_inst.second.instance;
       m_inst.second.instance = nullptr;
       if (m_inst.second.selected_classes) {
@@ -385,6 +388,7 @@ CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
   }
 
   m_t.instance->modelClose();
+  LOGI("Model closed: %s\n", CVI_AI_GetModelName(config));
   delete m_t.instance;
   m_t.instance = nullptr;
   return CVI_SUCCESS;
@@ -419,9 +423,11 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
   }
 
   if (m_t.instance != nullptr) {
-    // TODO: only support MobileDetV2 for now
+    // TODO: only supports MobileDetV2 for now
     if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(m_t.instance)) {
       mdetv2->select_classes(*m_t.selected_classes);
+    } else {
+      LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 family model for now.\n");
     }
   }
   return CVI_SUCCESS;
@@ -597,7 +603,7 @@ CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
-    LOGI("Init DeepSORT.\n");
+    LOGD("Init DeepSORT.\n");
     ctx->ds_tracker = new DeepSORT();
   } else {
     delete ds_tracker;
@@ -680,7 +686,7 @@ CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objects) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   FallMD *fall_model = ctx->fall_model;
   if (fall_model == nullptr) {
-    LOGI("Init Fall Detection Model.\n");
+    LOGD("Init Fall Detection Model.\n");
     ctx->fall_model = new FallMD();
     ctx->fall_model->detect(objects);
     return 0;
@@ -696,7 +702,7 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   TamperDetectorMD *td_model = ctx->td_model;
   if (td_model == nullptr) {
-    LOGI("Init Tamper Detection Model.\n");
+    LOGD("Init Tamper Detection Model.\n");
     ctx->td_model = new TamperDetectorMD(ctx->ive_handle, frame, (float)0.05, (int)10);
     ctx->td_model->print_info();
 
@@ -713,7 +719,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
-    LOGI("Init Motion Detection.\n");
+    LOGD("Init Motion Detection.\n");
     ctx->md_model = new MotionDetection(ctx->ive_handle, frame, threshold, min_area);
     return CVI_SUCCESS;
   }
@@ -726,7 +732,7 @@ CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
-    LOGI("Failed to get motion detection instance\n");
+    LOGE("Failed to get motion detection instance\n");
     return CVI_FAILURE;
   }
   return ctx->md_model->detect(frame, objects);

@@ -47,7 +47,7 @@ int AreaDetect::setArea(const cvai_pts_t &pts) {
       m_pts.push_back({prev_pts, first_pts});
     }
   }
-  LOGI("Boundary registered: size %u\n", (uint32_t)m_boundaries.size());
+  LOGD("Boundary registered: size %u\n", (uint32_t)m_boundaries.size());
   return CVI_SUCCESS;
 }
 

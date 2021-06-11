@@ -8,7 +8,7 @@
 #define DEBUG_KALMAN_FILTER_MAHALANOBIS 0
 
 KalmanFilter::KalmanFilter() {
-  LOGI("Create Kalman Filter");
+  LOGD("Create Kalman Filter");
   F_ = Eigen::MatrixXf::Identity(DIM_X, DIM_X);
   F_.topRightCorner(DIM_Z, DIM_Z) = Eigen::MatrixXf::Identity(DIM_Z, DIM_Z);
   H_ = Eigen::MatrixXf::Identity(DIM_Z, DIM_X);

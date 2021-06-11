@@ -221,7 +221,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
     tracker_ids.push_back(k_trackers[i].id);
   }
 
-  LOGI("Kalman Trackers predict\n");
+  LOGD("Kalman Trackers predict\n");
   for (KalmanTracker &tracker_ : k_trackers) {
     kf_.predict(tracker_.kalman_state_, tracker_.x_, tracker_.P_, conf.kfilter_conf);
   }
@@ -263,10 +263,10 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
           << std::endl
           << std::setw(32)
           << "Unmatched BBox IDXes: " << get_INFO_Vector_Int(unmatched_bbox_idxes, 3) << std::endl;
-  LOGI("%s", ss_LOG_.str().c_str());
+  LOGD("%s", ss_LOG_.str().c_str());
 #endif
 
-  LOGI("Cascade Match\n");
+  LOGD("Cascade Match\n");
   /* Match accreditation trackers */
   /* - Cascade Match */
   /* - Feature Consine Distance */
@@ -308,11 +308,11 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
   }
 
 #if DEBUG_DEEPSORT
-  LOGI("Cascade Match Result:\n");
+  LOGD("Cascade Match Result:\n");
   std::cout << "Cascade Match Result:\n";
   ss_LOG_.str("");
   ss_LOG_ << std::endl << get_INFO_Match_Pair(matched_pairs, tracker_ids, 3) << std::endl;
-  LOGI("%s", ss_LOG_.str().c_str());
+  LOGD("%s", ss_LOG_.str().c_str());
   std::cout << ss_LOG_.str();
 #endif
 
@@ -342,7 +342,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
           << std::endl
           << std::setw(32)
           << "Unmatched BBox IDXes: " << get_INFO_Vector_Int(unmatched_bbox_idxes, 3) << std::endl;
-  LOGI("%s", ss_LOG_.str().c_str());
+  LOGD("%s", ss_LOG_.str().c_str());
   std::cout << ss_LOG_.str();
 #endif
 
@@ -353,10 +353,10 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
             conf.max_distance_iou);
 
 #if DEBUG_DEEPSORT
-  LOGI("BBOX (IoU) Match Result:\n");
+  LOGD("BBOX (IoU) Match Result:\n");
   ss_LOG_.str("");
   ss_LOG_ << get_INFO_Match_Pair(match_result_bbox.matched_pairs, tracker_ids, 3) << std::endl;
-  LOGI("%s", ss_LOG_.str().c_str());
+  LOGD("%s", ss_LOG_.str().c_str());
 #endif
 
   /* Match remain trackers */
@@ -372,11 +372,11 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
   /*   format: [i] <is_matched, tracker_id, tracker_state, tracker_bbox> */
   std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> result_(BBoxes.size());
 #if DEBUG_DEEPSORT
-  LOGI("Create Result_ (%zu)", result_.size());
+  LOGD("Create Result_ (%zu)", result_.size());
 #endif
 
   /* Update the kalman trackers (Matched) */
-  LOGI("Update the kalman trackers (Matched)");
+  LOGD("Update the kalman trackers (Matched)");
   for (size_t i = 0; i < matched_pairs.size(); i++) {
     int tracker_idx = matched_pairs[i].first;
     int bbox_idx = matched_pairs[i].second;
@@ -396,7 +396,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
   }
 
   /* Update the kalman trackers (Unmatched) */
-  LOGI("Update the kalman trackers (Unmatched)");
+  LOGD("Update the kalman trackers (Unmatched)");
   for (size_t i = 0; i < unmatched_tracker_idxes.size(); i++) {
     int tracker_idx = unmatched_tracker_idxes[i];
     // LOGI("update >> tracker idx: %d", tracker_idx);
@@ -406,7 +406,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
   }
 
   /* Check kalman trackers state, and remove invalid trackers */
-  LOGI("Check kalman trackers state, and remove invalid trackers");
+  LOGD("Check kalman trackers state, and remove invalid trackers");
   for (auto it_ = k_trackers.begin(); it_ != k_trackers.end();) {
     if (it_->tracker_state_ == TRACKER_STATE::MISS) {
       it_ = k_trackers.erase(it_);
@@ -416,7 +416,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
   }
 
   /* Create new kalman trackers (Unmatched BBoxes) */
-  LOGI("Create new kalman trackers (Unmatched BBoxes)");
+  LOGD("Create new kalman trackers (Unmatched BBoxes)");
   for (size_t i = 0; i < unmatched_bbox_idxes.size(); i++) {
     int bbox_idx = unmatched_bbox_idxes[i];
     id_counter += 1;
@@ -431,7 +431,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
   }
 
   /* Update accreditation & probation tracker idxes */
-  LOGI("Update accreditation & probation tracker idxes");
+  LOGD("Update accreditation & probation tracker idxes");
   accreditation_tracker_idxes.clear();
   probation_tracker_idxes.clear();
   for (size_t i = 0; i < k_trackers.size(); i++) {
@@ -460,7 +460,7 @@ MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<F
 
   COST_MATRIX cost_matrix;
   if (cost_method == "Kalman_MahalanobisDistance") {
-    LOGI("Kalman Cost Matrix (Mahalanobis Distance)");
+    LOGD("Kalman Cost Matrix (Mahalanobis Distance)");
     // std::cout << "Kalman Cost Matrix (Mahalanobis Distance)" << std::endl;
     cost_matrix = KalmanTracker::getCostMatrix_Mahalanobis(
         kf_, k_trackers, BBoxes, Tracker_IDXes, BBox_IDXes, conf.kfilter_conf, max_distance);
@@ -468,7 +468,7 @@ MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<F
   } else if (cost_method == "Feature_CosineDistance") {
     cost_matrix = KalmanTracker::getCostMatrix_Feature(k_trackers, BBoxes, Features, Tracker_IDXes,
                                                        BBox_IDXes);
-    LOGI("Feature Cost Matrix (Consine Distance)");
+    LOGD("Feature Cost Matrix (Consine Distance)");
     // std::cout << "Cost Matrix (before Munkres)" << std::endl;
     // std::cout << cost_matrix << std::endl;
     KalmanTracker::gateCostMatrix_Mahalanobis(cost_matrix, kf_, k_trackers, BBoxes, Tracker_IDXes,

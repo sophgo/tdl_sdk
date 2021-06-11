@@ -18,7 +18,7 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
 #define CLOSE_MODEL_IF_FAILED(x, errmsg) \
   do {                                   \
     if (int ret = (x)) {                 \
-      LOGE(errmsg ", ret=%d\n", ret);    \
+      LOGE(errmsg ", ret=%x\n", ret);    \
       modelClose();                      \
       return CVI_FAILURE;                \
     }                                    \
@@ -138,7 +138,7 @@ int Core::modelClose() {
   TRACE_EVENT("cviai_core", "Core::modelClose");
   if (mp_mi->handle != nullptr) {
     if (int ret = CVI_NN_CleanupModel(mp_mi->handle) != CVI_RC_SUCCESS) {  // NOLINT
-      LOGE("CVI_NN_CleanupModel failed, err %d\n", ret);
+      LOGE("CVI_NN_CleanupModel failed, err %x\n", ret);
       mp_mi->handle = nullptr;
       return CVI_FAILURE;
     }
@@ -354,7 +354,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   }
   if (int rcret = CVI_NN_Forward(mp_mi->handle, mp_mi->in.tensors, mp_mi->in.num,  // NOLINT
                                  mp_mi->out.tensors, mp_mi->out.num) != CVI_RC_SUCCESS) {
-    LOGE("NN forward failed: %d\n", rcret);
+    LOGE("NN forward failed: %x\n", rcret);
     ret |= CVI_FAILURE;
   }
   return ret;
@@ -382,7 +382,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
                                       CVI_FMT_INT8, paddrs.size(), paddrs.data(),
                                       frames[0]->stVFrame.u32Height, frames[0]->stVFrame.u32Width,
                                       frames[0]->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
-    LOGE("NN set tensor with vi failed: %d\n", ret);
+    LOGE("NN set tensor with vi failed: %x\n", ret);
     return CVI_FAILURE;
   }
   return ret;

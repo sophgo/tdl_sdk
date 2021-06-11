@@ -43,7 +43,7 @@ void CocoEval::getImageIdPair(const int index, std::string *path, int *id) {
 }
 
 void CocoEval::insertObjectData(const int id, const cvai_object_t *obj) {
-  LOGI("Image id %d insert object %d\n", id, obj->size);
+  LOGD("Image id %d insert object %d\n", id, obj->size);
   nlohmann::json jobj;
   for (uint32_t j = 0; j < obj->size; j++) {
     cvai_object_info_t &info = obj->info[j];
