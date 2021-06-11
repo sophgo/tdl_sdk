@@ -1,4 +1,5 @@
 #include "neon_utils.hpp"
+#include <iostream>
 
 namespace cviai {
 

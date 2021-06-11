@@ -8,6 +8,7 @@
 
 #include "core/utils/vpss_helper.h"
 
+#include <iostream>
 #include <sstream>
 #include "opencv2/opencv.hpp"
 
