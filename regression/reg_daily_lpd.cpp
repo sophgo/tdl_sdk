@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   for (int img_idx = 0; img_idx < img_num; img_idx++) {
     std::string image_path =
         image_dir + "/" + std::string(m_json_read["reg_config"][0]["test_images"][img_idx]);
-    printf("[%d] %s\n", img_idx, image_path.c_str());
+    // printf("[%d] %s\n", img_idx, image_path.c_str());
 
     VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S frame;
@@ -123,4 +123,6 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
+
+  return pass ? CVI_SUCCESS : CVI_FAILURE;
 }

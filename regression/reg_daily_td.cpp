@@ -17,7 +17,6 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
-  // std::string model_dir = std::string(argv[1]);
   std::string image_dir = std::string(argv[2]);
 
   nlohmann::json m_json_read;
@@ -27,8 +26,6 @@ int main(int argc, char *argv[]) {
   filestr >> m_json_read;
   filestr.close();
 
-  // std::string model_name = std::string(m_json_read["reg_config"][0]["model_name"]);
-  // std::string model_path = model_dir + "/" + model_name;
   int img_num = int(m_json_read["reg_config"][0]["image_num"]);
 
   // Init VB pool size.
@@ -87,4 +84,6 @@ int main(int argc, char *argv[]) {
   CVI_IVE_DestroyHandle(ive_handle);
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
+
+  return pass ? CVI_SUCCESS : CVI_FAILURE;
 }

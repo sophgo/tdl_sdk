@@ -130,4 +130,6 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
+
+  return pass ? CVI_SUCCESS : CVI_FAILURE;
 }

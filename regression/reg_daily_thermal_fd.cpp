@@ -7,7 +7,7 @@
 #include "json.hpp"
 
 #define MATCH_IOU_THRESHOLD 0.95
-#define MATCH_SCORE_DIFF 0.02
+#define MATCH_SCORE_BIAS 0.02
 
 float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
   float area1 = (bbox1.x2 - bbox1.x1) * (bbox1.y2 - bbox1.y1);
@@ -59,20 +59,20 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  cviai_handle_t facelib_handle = NULL;
-  ret = CVI_AI_CreateHandle(&facelib_handle);
+  cviai_handle_t ai_handle = NULL;
+  ret = CVI_AI_CreateHandle(&ai_handle);
   if (ret != CVI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, model_path.c_str());
+  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, model_path.c_str());
   if (ret != CVI_SUCCESS) {
-    printf("Set model thermalface failed with %#x!\n", ret);
+    printf("Set thermal face detection model failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, false);
-  CVI_AI_SetModelThreshold(facelib_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, 0.5);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, false);
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, 0.5);
 
   bool pass = true;
   for (int img_idx = 0; img_idx < img_num; img_idx++) {
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_ThermalFace(facelib_handle, &frame, &face);
+    CVI_AI_ThermalFace(ai_handle, &frame, &face);
 #if 0
     printf("find %u faces.\n", face.size);
     for (uint32_t j = 0; j < face.size; j++) {
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
       for (uint32_t i = 0; i < expected_bbox_num; i++) {
         if (match_result[i]) continue;
         if (iou(face.info[j].bbox, expected_result[i]) < MATCH_IOU_THRESHOLD) continue;
-        if (ABS(face.info[j].bbox.score - expected_result[i].score) < MATCH_SCORE_DIFF) {
+        if (ABS(face.info[j].bbox.score - expected_result[i].score) < MATCH_SCORE_BIAS) {
           match_result[i] = true;
           is_match = true;
         }
@@ -152,6 +152,8 @@ int main(int argc, char *argv[]) {
   }
   printf("Regression Result: %s\n", (pass ? "PASS" : "FAILURE"));
 
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
+
+  return pass ? CVI_SUCCESS : CVI_FAILURE;
 }

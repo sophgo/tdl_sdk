@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
   // ret |= CVI_AI_SetVpssTimeout(ai_handle, 10);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, model_path.c_str());
   if (ret != CVI_SUCCESS) {
-    printf("failed with %#x!\n", ret);
+    printf("Set face quality model failed with %#x!\n", ret);
     return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
@@ -107,4 +107,6 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
+
+  return pass ? CVI_SUCCESS : CVI_FAILURE;
 }

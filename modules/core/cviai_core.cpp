@@ -599,6 +599,10 @@ CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle) {
   if (ds_tracker == nullptr) {
     LOGI("Init DeepSORT.\n");
     ctx->ds_tracker = new DeepSORT();
+  } else {
+    delete ds_tracker;
+    LOGI("Re-init DeepSORT.\n");
+    ctx->ds_tracker = new DeepSORT();
   }
   return 0;
 }

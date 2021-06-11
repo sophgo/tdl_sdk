@@ -145,7 +145,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   }
   cv::Mat image(img_height, img_width, CV_8UC3, frame->stVFrame.pu8VirAddr[0],
                 frame->stVFrame.u32Stride[0]);
-
+  int ret = 0;
   for (uint32_t i = 0; i < meta->size; i++) {
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
@@ -158,7 +158,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
                           m_wrap_frame.stVFrame.u32Length[0]);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
-    run(frames);
+    ret |= run(frames);
 
     float *score = getOutputRawPtr<float>(NAME_SCORE);
     meta->info[i].face_quality = score[1];
@@ -178,7 +178,8 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     frame->stVFrame.pu8VirAddr[2] = NULL;
   }
 
-  return CVI_SUCCESS;
+  // return CVI_SUCCESS;
+  return ret;
 }
 
 int FaceQuality::getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,

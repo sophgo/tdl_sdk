@@ -112,3 +112,4 @@ buildninstallcpp(NAME reg_daily_reid INC ${REG_INCLUDES} DEPS cviai_core cviai_s
 buildninstallcpp(NAME reg_daily_td INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_lpd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_lpr INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME reg_daily_mot INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
