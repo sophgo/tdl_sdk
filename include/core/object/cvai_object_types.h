@@ -1,5 +1,6 @@
 #ifndef _CVI_OBJECT_TYPES_H_
 #define _CVI_OBJECT_TYPES_H_
+#include <stdbool.h>
 #include "core/core/cvai_core_types.h"
 
 /** @enum cvai_obj_class_id_e

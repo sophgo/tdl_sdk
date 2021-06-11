@@ -2,10 +2,11 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "cviai_perfetto.h"
+#include "evaluation/cviai_evaluation.h"
+#include "evaluation/cviai_media.h"
 
 cviai_handle_t facelib_handle = NULL;
 

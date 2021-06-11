@@ -68,7 +68,6 @@ set(AUDIO_SAMPLE_LIBS
 buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_read_fr_custom INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_read_fr INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
-buildninstall(NAME sample_read_fr2 INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_mask_fr INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})

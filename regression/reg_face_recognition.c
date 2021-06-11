@@ -8,11 +8,12 @@
 #include <unistd.h>
 
 #include <cvimath/cvimath.h>
-
 #include "core/core/cvai_core_types.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "cviai_perfetto.h"
+#include "evaluation/cviai_evaluation.h"
+#include "evaluation/cviai_media.h"
 
 #define FEATURE_LENGTH 512
 #define NAME_LENGTH 1024

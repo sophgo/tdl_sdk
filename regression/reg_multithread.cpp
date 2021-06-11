@@ -5,6 +5,8 @@
 #include <vector>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "evaluation/cviai_evaluation.h"
+#include "evaluation/cviai_media.h"
 
 #include "cvi_tracer.h"
 

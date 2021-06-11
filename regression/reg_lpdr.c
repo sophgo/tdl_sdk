@@ -1,6 +1,8 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "cviai_perfetto.h"
+#include "evaluation/cviai_evaluation.h"
+#include "evaluation/cviai_media.h"
 
 #include <dirent.h>
 #include <unistd.h>

@@ -2,6 +2,8 @@
 #include <string>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "evaluation/cviai_evaluation.h"
+#include "evaluation/cviai_media.h"
 #include "json.hpp"
 
 #define WRITE_RESULT_TO_FILE 0

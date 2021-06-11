@@ -6,7 +6,8 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
-
+#include "evaluation/cviai_evaluation.h"
+#include "evaluation/cviai_media.h"
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("Usage: %s <detection_model_path> <alphapose_model_path> <video_frames_folder>.\n",

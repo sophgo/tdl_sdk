@@ -110,7 +110,7 @@ RTSP_LIBS = -lcvi_rtsp
 AISDK_LIBS = -lcviai_core -lcviai_service
 TPU_LIBS = -lcnpy  -lcvikernel  -lcvimath  -lcviruntime  -lz
 IVE_LIBS = -lcvi_ive_tpu
-OPENCV_LIBS = -lopencv_core -lopencv_imgcodecs -lopencv_imgproc
+OPENCV_LIBS = -lopencv_core -lopencv_imgproc
 
 SRCS := $(wildcard $(PWD)/*.c)
 OBJS := $(SRCS:%.c=%.o)
@@ -125,7 +125,6 @@ TARGETS = sample_init \
 			sample_read_dt \
 			sample_read_esc \
 			sample_read_fq_tracking \
-			sample_read_fr2 \
 			sample_read_fr \
 			sample_read_fr_custom \
 			sample_read_lpdr \

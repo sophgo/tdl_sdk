@@ -13,6 +13,7 @@
 #include "cviai.h"
 #include "cviai_perfetto.h"
 #include "evaluation/cviai_evaluation.h"
+#include "evaluation/cviai_media.h"
 
 typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
 typedef struct _ModelConfig {

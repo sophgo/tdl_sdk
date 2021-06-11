@@ -2,6 +2,8 @@
 #include <string>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "evaluation/cviai_evaluation.h"
+#include "evaluation/cviai_media.h"
 #include "json.hpp"
 
 #define DISTANCE_BIAS 2.0

@@ -56,7 +56,6 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:motion_detection>
               cviai_types_mem.cpp
               cviai_rescale_bbox.cpp
-              cviai_media.cpp
               cviai_utils.cpp
               cviai_custom.cpp
               cviai_core.cpp)
