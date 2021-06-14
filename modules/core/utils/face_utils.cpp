@@ -84,15 +84,16 @@ namespace cviai {
 
 inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width, const int height,
                               cv::Mat *tfm) {
-  assert(width == 96 || width == 112);
-  assert(height == 112);
-  if ((width != 96 && width != 112) || height != 112) {
+  assert(width == 96 || width == 112 || (width == 64 && height == 64));
+  assert(height == 112 || (width == 64 && height == 64));
+
+  if (!((width == 96 && width == 112) || (width == 112 && height == 112) ||
+        (width == 64 && height == 64))) {
     return -1;
   }
 
   int ref_width = width;
   int ref_height = height;
-
   vector<cv::Point2f> detect_points;
   for (int j = 0; j < 5; ++j) {
     cv::Point2f e;
@@ -108,12 +109,18 @@ inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width
                         {48.02519989, 71.73660278},
                         {33.54930115, 92.3655014},
                         {62.72990036, 92.20410156}};
-  } else {
+  } else if (112 == width) {
     reference_points = {{38.29459953, 51.69630051},
                         {73.53179932, 51.50139999},
                         {56.02519989, 71.73660278},
                         {41.54930115, 92.3655014},
                         {70.72990036, 92.20410156}};
+  } else {
+    reference_points = {{21.88262830, 29.53926611},
+                        {42.01607013, 29.42789995},
+                        {32.01279921, 40.99029482},
+                        {23.74127067, 45.7776475},
+                        {40.41506506, 45.68542363}};
   }
 
   for (auto &e : reference_points) {

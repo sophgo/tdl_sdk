@@ -30,12 +30,11 @@ int YawnClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) 
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
 
-    cv::Mat warp_image(cv::Size(112, 112), CV_8UC3);
+    cv::Mat warp_image(cv::Size(64, 64), CV_8UC3);
     face_align(image, warp_image, face_info);
-    cv::resize(warp_image, warp_image, cv::Size(INPUT_SIZE, INPUT_SIZE), 0, 0, cv::INTER_CUBIC);
     cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2GRAY);
-    prepareInputTensor(warp_image);
 
+    prepareInputTensor(warp_image);
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     run(frames);
 
