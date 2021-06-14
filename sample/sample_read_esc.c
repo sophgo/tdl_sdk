@@ -79,14 +79,14 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
   // STEP 1: cvitek_audin_set
   //_update_audin_config
   AIO_ATTR_S AudinAttr;
-  AudinAttr.enSamplerate = (AUDIO_SAMPLE_RATE_E)16000;
+  AudinAttr.enSamplerate = (AUDIO_SAMPLE_RATE_E)SAMPLE_RATE;
   AudinAttr.u32ChnCnt = 1;
   AudinAttr.enSoundmode = AUDIO_SOUND_MODE_MONO;
   AudinAttr.enBitwidth = AUDIO_BIT_WIDTH_16;
   AudinAttr.enWorkmode = AIO_MODE_I2S_MASTER;
   AudinAttr.u32EXFlag = 0;
-  AudinAttr.u32FrmNum = 10;        /* only use in bind mode */
-  AudinAttr.u32PtNumPerFrm = 640;  // sample rate / fps
+  AudinAttr.u32FrmNum = 10;                /* only use in bind mode */
+  AudinAttr.u32PtNumPerFrm = PERIOD_SIZE;  // sample rate / fps
   AudinAttr.u32ClkSel = 0;
   AudinAttr.enI2sType = AIO_I2STYPE_INNERCODEC;
   CVI_S32 s32Ret;
@@ -101,7 +101,7 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
   s32Ret = CVI_AI_EnableChn(0, 0);
   if (s32Ret != CVI_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
 
-  s32Ret = CVI_AI_SetVolume(0, 6);
+  s32Ret = CVI_AI_SetVolume(0, 4);
   if (s32Ret != CVI_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
 
   printf("SET_AUDIO_ATTR success!!\n");
