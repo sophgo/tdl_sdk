@@ -1,0 +1,54 @@
+{
+  "reg_num": 1, 
+  "reg_config": [
+    {
+      "threshold": 0.75,
+      "test_images": [
+        "close/0.jpg",
+        "close/1.jpg",
+        "close/2.jpg",
+        "close/3.jpg",
+        "close/4.jpg",
+        "close/5.jpg",
+        "close/6.jpg",
+        "close/7.jpg",
+        "close/8.jpg",
+        "close/9.jpg",
+        "open/0.jpg",
+        "open/1.jpg",
+        "open/2.jpg",
+        "open/3.jpg",
+        "open/4.jpg",
+        "open/5.jpg",
+        "open/6.jpg",
+        "open/7.jpg",
+        "open/8.jpg",
+        "open/9.jpg"
+      ], 
+      "image_num": 20, 
+      "model_name": ["retinaface_mnet0.25_608_342.cvimodel","face_landmark_bf16.cvimodel","yawn_v1_bf16.cvimodel"],
+      "expected_results": [
+        0, 
+        0, 
+        0, 
+        0, 
+        0, 
+        0, 
+        0, 
+        0, 
+        0, 
+        0, 
+        1, 
+        1, 
+        1, 
+        1, 
+        1, 
+        1, 
+        1, 
+        1, 
+        1, 
+        1
+      ]
+    }
+  ]
+}
