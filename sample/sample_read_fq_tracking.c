@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1);
+  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 1);
   // ret |= CVI_AI_SetVpssTimeout(ai_handle, 10);
   ret |= CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[3]);

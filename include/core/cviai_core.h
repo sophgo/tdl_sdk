@@ -177,9 +177,11 @@ DLL_EXPORT CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle);
  *
  * @param handle An AI SDK handle.
  * @param vpssGroupId Assign a group id to cviai_handle_t.
+ * @param vpssDev Assign a device id to cviai_handle_t.
  * @return int Return CVI_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId);
+DLL_EXPORT CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
+                                        const CVI_U8 vpssDev);
 
 /**
  * @brief Open and initialize a model immediately.

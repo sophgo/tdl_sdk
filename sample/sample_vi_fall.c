@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 1);
+  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 1);
   ret = CVI_AI_CreateHandle(&ai_handle);
   if (ret != CVI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);

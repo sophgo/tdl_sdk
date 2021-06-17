@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
 
   cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1);
+  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     return ret;

@@ -53,19 +53,20 @@ int LicensePlateDetection::setupInputPreprocess(std::vector<InputPreprecessSetup
   return CVI_SUCCESS;
 }
 
-int LicensePlateDetection::vpssPreprocess(
-    const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-    std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {
-  auto *dstFrame = (*dstFrames)[0].get();
-  auto &vpssChnAttr = m_vpss_config[0].chn_attr;
-  auto &vpssCropAttr = m_vpss_config[0].crop_attr;
+int LicensePlateDetection::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
+                                          VIDEO_FRAME_INFO_S *dstFrame, VPSSConfig &vpss_config) {
+  auto &vpssChnAttr = vpss_config.chn_attr;
+  auto &vpssCropAttr = vpss_config.crop_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, vpssCropAttr.stCropRect.u32Width,
                         vpssCropAttr.stCropRect.u32Height, vpssChnAttr.u32Width,
                         vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-  mp_vpss_inst->sendCropChnFrame(srcFrames[0], &m_vpss_config[0].crop_attr,
-                                 &m_vpss_config[0].chn_attr, &m_vpss_config[0].chn_coeff, 1);
+  CVI_S32 ret = mp_vpss_inst->sendCropChnFrame(srcFrame, &vpss_config.crop_attr,
+                                               &vpss_config.chn_attr, &vpss_config.chn_coeff, 1);
+  if (ret != CVI_SUCCESS) {
+    return ret;
+  }
   return mp_vpss_inst->getFrame(dstFrame, 0);
 }
 

@@ -220,7 +220,7 @@ int main(int argc, char** argv) {
   }
 
   // Load model
-  int ret = CVI_AI_CreateHandle2(&facelib_handle, 1);
+  int ret = CVI_AI_CreateHandle2(&facelib_handle, 1, 1);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]);

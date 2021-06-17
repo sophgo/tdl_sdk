@@ -142,15 +142,29 @@ MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcF
  * @param enSrcFormat Input image format.
  */
 inline void __attribute__((always_inline))
-VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
-                        PIXEL_FORMAT_E enSrcFormat) {
+VPSS_GRP_DEFAULT_HELPER2(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
+                         PIXEL_FORMAT_E enSrcFormat, CVI_U8 dev) {
   memset(pstVpssGrpAttr, 0, sizeof(VPSS_GRP_ATTR_S));
   pstVpssGrpAttr->stFrameRate.s32SrcFrameRate = -1;
   pstVpssGrpAttr->stFrameRate.s32DstFrameRate = -1;
   pstVpssGrpAttr->enPixelFormat = enSrcFormat;
   pstVpssGrpAttr->u32MaxW = srcWidth;
   pstVpssGrpAttr->u32MaxH = srcHeight;
-  pstVpssGrpAttr->u8VpssDev = 0;
+  pstVpssGrpAttr->u8VpssDev = dev;
+}
+
+/**
+ * @brief A helper function to get default VPSS_GRP_ATTR_S value with given image information.
+ * @ingroup core_vpss
+ *
+ * @param srcWidth Input image width.
+ * @param srcHeight Input image height.
+ * @param enSrcFormat Input image format.
+ */
+inline void __attribute__((always_inline))
+VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
+                        PIXEL_FORMAT_E enSrcFormat) {
+  VPSS_GRP_DEFAULT_HELPER2(pstVpssGrpAttr, srcWidth, srcHeight, enSrcFormat, 0);
 }
 
 /**

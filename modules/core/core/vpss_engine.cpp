@@ -8,7 +8,7 @@ VpssEngine::VpssEngine() {}
 
 VpssEngine::~VpssEngine() { stop(); }
 
-int VpssEngine::init(VPSS_GRP grp_id) {
+int VpssEngine::init(VPSS_GRP grp_id, CVI_U8 device) {
   if (m_is_vpss_init) {
     LOGW("Vpss already init.\n");
     return CVI_FAILURE;
@@ -79,6 +79,7 @@ int VpssEngine::init(VPSS_GRP grp_id) {
     return CVI_FAILURE;
   }
 
+  m_dev = device;
   memset(&m_crop_attr_reset, 0, sizeof(VPSS_CROP_INFO_S));
   m_is_vpss_init = true;
   return CVI_SUCCESS;
@@ -133,17 +134,14 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
   m_enabled_chn = enable_chns;
 
   VPSS_GRP_ATTR_S vpss_grp_attr;
-  VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                          frame->stVFrame.enPixelFormat);
-  // Auto choose 1 if more than one channel.
-  // Will auto changed to 0 if is SINGLE_MODE when set attr.
-  if (m_enabled_chn > 1) {
-    vpss_grp_attr.u8VpssDev = 1;
-    if (m_enabled_chn > m_available_max_chn) {
-      LOGE("Exceed max available channel %u. Current: %u.\n", m_available_max_chn, m_enabled_chn);
-      return CVI_FAILURE;
-    }
+  VPSS_GRP_DEFAULT_HELPER2(&vpss_grp_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                           frame->stVFrame.enPixelFormat, m_dev);
+
+  if (m_enabled_chn > m_available_max_chn) {
+    LOGE("Exceed max available channel %u. Current: %u.\n", m_available_max_chn, m_enabled_chn);
+    return CVI_FAILURE;
   }
+
   int ret = CVI_VPSS_SetGrpAttr(m_grpid, &vpss_grp_attr);
   if (ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_SetGrpAttr failed with %#x\n", ret);

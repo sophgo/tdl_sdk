@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
   }
   cviai_handle_t ai_handle = NULL;
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1);
+  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   // ret |= CVI_AI_SetVpssTimeout(ai_handle, 10);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, model_path.c_str());
   if (ret != CVI_SUCCESS) {

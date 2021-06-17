@@ -97,8 +97,9 @@ class Core {
 
  protected:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data);
-  virtual int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                             std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames);
+
+  virtual int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                             VPSSConfig &config);
   int run(std::vector<VIDEO_FRAME_INFO_S *> &frames);
 
   /*

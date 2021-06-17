@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   }
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
-  CVI_AI_CreateHandle2(&ai_handle, 1);
+  CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
 
   for (size_t test_idx = 0; test_idx < m_json_read.size(); test_idx++) {

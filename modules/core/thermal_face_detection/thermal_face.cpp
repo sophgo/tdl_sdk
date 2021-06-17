@@ -143,11 +143,9 @@ int ThermalFace::onModelOpened() {
   return CVI_SUCCESS;
 }
 
-int ThermalFace::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                                std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {
-  auto *srcFrame = srcFrames[0];
-  auto *dstFrame = (*dstFrames)[0].get();
-  auto &vpssChnAttr = m_vpss_config[0].chn_attr;
+int ThermalFace::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                                VPSSConfig &vpss_config) {
+  auto &vpssChnAttr = vpss_config.chn_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,

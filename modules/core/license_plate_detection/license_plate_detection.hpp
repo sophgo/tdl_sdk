@@ -17,8 +17,8 @@ class LicensePlateDetection final : public Core {
   int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 
  private:
-  int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                     std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) override;
+  int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                     VPSSConfig &vpss_config) override;
   bool reconstruct(float *t_prob, float *t_trans, CornerPts &c_pts, float &ret_prob,
                    float threshold_prob = 0.9);
   void prepareInputTensor(cv::Mat &input_mat);

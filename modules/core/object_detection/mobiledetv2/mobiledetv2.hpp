@@ -70,8 +70,8 @@ class MobileDetV2 final : public Core {
   void select_classes(const std::vector<uint32_t> &selected_classes);
 
  private:
-  int vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                     std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) override;
+  int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                     VPSSConfig &vpss_config) override;
   void get_raw_outputs(std::vector<std::pair<int8_t *, size_t>> *cls_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *objectness_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *bbox_tensor_ptr);

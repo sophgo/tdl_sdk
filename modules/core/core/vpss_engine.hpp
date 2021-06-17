@@ -8,7 +8,7 @@ class __attribute__((visibility("default"))) VpssEngine {
  public:
   VpssEngine();
   ~VpssEngine();
-  int init(VPSS_GRP grp_id = (VPSS_GRP)-1);
+  int init(VPSS_GRP grp_id = (VPSS_GRP)-1, CVI_U8 device = 0);
   int stop();
   VPSS_GRP getGrpId();
   int sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
@@ -37,7 +37,7 @@ class __attribute__((visibility("default"))) VpssEngine {
   VPSS_GRP m_grpid = -1;
   uint32_t m_enabled_chn = -1;
   uint32_t m_available_max_chn = VPSS_MAX_CHN_NUM;
-
+  CVI_U8 m_dev = 0;
   VPSS_CROP_INFO_S m_crop_attr_reset;
 };
 }  // namespace cviai

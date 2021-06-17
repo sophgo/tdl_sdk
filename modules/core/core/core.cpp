@@ -300,24 +300,20 @@ size_t Core::getInputTensorSize(const std::string &name) {
   return getInputTensorInfo(name).tensor_size;
 }
 
-int Core::vpssPreprocess(const std::vector<VIDEO_FRAME_INFO_S *> &srcFrames,
-                         std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> *dstFrames) {
+int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                         VPSSConfig &vpss_config) {
   int ret = CVI_SUCCESS;
-  for (uint32_t i = 0; i < (uint32_t)srcFrames.size(); i++) {
-    if (!m_vpss_config[i].crop_attr.bEnable) {
-      ret |= mp_vpss_inst->sendFrame(srcFrames[i], &m_vpss_config[i].chn_attr,
-                                     &m_vpss_config[i].chn_coeff, 1);
-    } else {
-      ret |= mp_vpss_inst->sendCropChnFrame(srcFrames[i], &m_vpss_config[i].crop_attr,
-                                            &m_vpss_config[i].chn_attr, &m_vpss_config[i].chn_coeff,
-                                            1);
-    }
-    if (ret != CVI_SUCCESS) {
-      LOGE("Send frame failed with %#x at index %u!\n", ret, i);
-      break;
-    }
-    ret |= mp_vpss_inst->getFrame((*dstFrames)[i].get(), 0, m_vpss_timeout);
+  if (!vpss_config.crop_attr.bEnable) {
+    ret |= mp_vpss_inst->sendFrame(srcFrame, &vpss_config.chn_attr, &vpss_config.chn_coeff, 1);
+  } else {
+    ret |= mp_vpss_inst->sendCropChnFrame(srcFrame, &vpss_config.crop_attr, &vpss_config.chn_attr,
+                                          &vpss_config.chn_coeff, 1);
   }
+  if (ret != CVI_SUCCESS) {
+    LOGE("Send frame failed with %#x!\n", ret);
+    return ret;
+  }
+  ret |= mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   return ret;
 }
 
@@ -338,16 +334,20 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       for (uint32_t i = 0; i < frames.size(); i++) {
         VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
         memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-        dstFrames.push_back(std::shared_ptr<VIDEO_FRAME_INFO_S>({f, [this](VIDEO_FRAME_INFO_S *f) {
-                                                                   this->mp_vpss_inst->releaseFrame(
-                                                                       f, 0);
-                                                                   delete f;
-                                                                 }}));
-      }
-
-      ret |= vpssPreprocess(frames, &dstFrames);
-      if (ret != CVI_SUCCESS) {
-        return ret;
+        if (vpssPreprocess(frames[i], f, m_vpss_config[i]) == CVI_SUCCESS) {
+          dstFrames.push_back(
+              std::shared_ptr<VIDEO_FRAME_INFO_S>({f, [this](VIDEO_FRAME_INFO_S *f) {
+                                                     this->mp_vpss_inst->releaseFrame(f, 0);
+                                                     delete f;
+                                                   }}));
+        } else {
+          // if preprocess fail, just delete frame.
+          if (f->stVFrame.u64PhyAddr[0] != 0) {
+            mp_vpss_inst->releaseFrame(f, 0);
+          }
+          delete f;
+          return CVI_FAILURE;
+        }
       }
       ret |= registerFrame2Tensor(dstFrames);
     }

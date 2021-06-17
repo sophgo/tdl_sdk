@@ -194,9 +194,10 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
   return m_t.instance;
 }
 
-CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle2(handle, -1); }
+CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle2(handle, -1, 0); }
 
-CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId) {
+CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
+                             const CVI_U8 vpssDev) {
   cviai_context_t *ctx = new cviai_context_t;
   ctx->ive_handle = CVI_IVE_CreateHandle();
   if (ctx->ive_handle == NULL) {
@@ -204,7 +205,7 @@ CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId)
     return CVI_FAILURE;
   }
   ctx->vec_vpss_engine.push_back(new VpssEngine());
-  if (ctx->vec_vpss_engine[0]->init(vpssGroupId) != CVI_SUCCESS) {
+  if (ctx->vec_vpss_engine[0]->init(vpssGroupId, vpssDev) != CVI_SUCCESS) {
     LOGC("cviai_handle_t create failed.");
     removeCtx(ctx);
     return CVI_FAILURE;

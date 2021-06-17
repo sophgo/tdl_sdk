@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_AI_CreateHandle2(&facelib_handle, 1);
+  ret = CVI_AI_CreateHandle2(&facelib_handle, 1, 0);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION,
                              model_path.c_str());
 
