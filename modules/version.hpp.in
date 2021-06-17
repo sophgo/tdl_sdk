@@ -1,3 +1,2 @@
 #pragma once
 #cmakedefine CVIAI_TAG     "@CVIAI_TAG@"
-#cmakedefine CVIAI_VERSION "@CVIAI_VERSION@"

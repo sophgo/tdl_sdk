@@ -6,7 +6,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
 endif()
 
 set(CVIAI_TAG ${LATEST_TAG})
-set(CVIAI_VERSION ${MAJOR_VERSION})
 configure_file(version.hpp.in version.hpp @ONLY)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}

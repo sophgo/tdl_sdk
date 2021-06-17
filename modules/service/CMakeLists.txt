@@ -22,9 +22,6 @@ set(FRS_SRCS $<TARGET_OBJECTS:digital_tracking>
 project(cviai_service)
 add_library(${PROJECT_NAME} SHARED ${FRS_SRCS})
 target_link_libraries(${PROJECT_NAME} cviai_core)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-                      VERSION ${MAJOR_VERSION}
-                      SOVERSION ${SO_VERSION})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 project(cviai_service-static)
