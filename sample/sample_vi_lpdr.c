@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
   }
 
   cviai_handle_t ai_handle = NULL;
-  s32Ret = CVI_AI_CreateHandle2(&ai_handle, 1, 1);
+  s32Ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   int use_vehicle = atoi(argv[2]);
   if (use_vehicle == 1) {
     printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0\n");

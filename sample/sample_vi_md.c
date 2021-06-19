@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   }
 
   cviai_handle_t ai_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 2, 1);
+  int ret = CVI_AI_CreateHandle2(&ai_handle, 2, 0);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;

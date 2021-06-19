@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t obj_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 1);
+  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   ret |= CVI_AI_Service_CreateHandle(&obj_handle, ai_handle);
   ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);

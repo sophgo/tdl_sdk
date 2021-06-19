@@ -342,10 +342,8 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
                             vpssConfigs->voHeight, PIXEL_FORMAT_YUV_PLANAR_420, true);
   }
 
-  CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
-
-  VPSS_GRP_DEFAULT_HELPER(&stVpssGrpAttr, vpssConfigs->grpWidth, vpssConfigs->grpHeight,
-                          vpssConfigs->groupFormat);
+  VPSS_GRP_DEFAULT_HELPER2(&stVpssGrpAttr, vpssConfigs->grpWidth, vpssConfigs->grpHeight,
+                           vpssConfigs->groupFormat, 0);
 
   /*start vpss*/
   s32Ret = SAMPLE_COMM_VPSS_Init(vpssConfigs->vpssGrp, abChnEnable, &stVpssGrpAttr, stVpssChnAttr);
