@@ -486,7 +486,12 @@ MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<F
     assert(0);
   }
   CVIMunkres cvi_munkres_solver(&cost_matrix);
-  cvi_munkres_solver.solve();
+  if (cvi_munkres_solver.solve() == MUNKRES_FAILURE) {
+    // return empty results if failed to solve
+    result_.unmatched_tracker_idxes.clear();
+    result_.unmatched_bbox_idxes.clear();
+    return result_;
+  }
 
   int bbox_num = BBox_IDXes.size();
   int tracker_num = Tracker_IDXes.size();

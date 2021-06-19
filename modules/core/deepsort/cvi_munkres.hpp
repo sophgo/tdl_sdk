@@ -7,12 +7,17 @@ enum NODE_STATE { NONE = 0, STAR, PRIME };
 
 enum ALGO_STAGE { ZERO = 0, ONE, TWO, THREE, FOUR, FINAL, DONE };
 
+enum MunkresReturn {
+  MUNKRES_SUCCESS,
+  MUNKRES_FAILURE,
+};
+
 class CVIMunkres {
  public:
   CVIMunkres(Eigen::MatrixXf *matrix);
   ~CVIMunkres();
 
-  int solve();
+  MunkresReturn solve();
   void show_result();
   // std::vector<std::pair<int, int>> compute(cv::Mat &cost_matrix);
   int *m_match_result;

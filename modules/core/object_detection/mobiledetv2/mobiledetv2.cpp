@@ -288,7 +288,11 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
           DequantizeScale(bboxes + box_index, dequant_box, bbox_dequant_thresh, 4);
           decode_box(dequant_box, anchors[box_index / 4], det);
           clip_bbox(m_model_config.image_width, m_model_config.image_height, det);
-          det_vec->push_back(det);
+          float width = det->x2 - det->x1;
+          float height = det->y2 - det->y1;
+          if (width > 1 && height > 1) {
+            det_vec->push_back(det);
+          }
         }
       }
     }

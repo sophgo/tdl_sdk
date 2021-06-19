@@ -4,9 +4,11 @@
  */
 
 #include "cvi_munkres.hpp"
+#include "cviai_log.hpp"
 
 #include <iomanip>
 #include <iostream>
+#include <stdexcept>
 
 #define DEBUG 0
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
@@ -69,47 +71,50 @@ CVIMunkres::~CVIMunkres() {
   delete[] m_match_result;
 }
 
-int CVIMunkres::solve() {
-  int stage = ALGO_STAGE::ZERO;
-#if DEBUG
-  int stage_counter = 0;
-#endif /* DEBUG */
-  while (true) {
-#if DEBUG
-    stage_counter += 1;
-    std::cout << "stage_counter = " << stage_counter << std::endl;
-    if (stage_counter > 1000) {
-      assert(0);
+MunkresReturn CVIMunkres::solve() {
+  try {
+    int stage = ALGO_STAGE::ZERO;
+
+    int stage_counter = 0;
+
+    while (true) {
+      stage_counter += 1;
+      if (stage_counter > 10000) {
+        throw std::runtime_error("stage_count exceeds 10000 iterations");
+      }
+
+      switch (stage) {
+        case ALGO_STAGE::ZERO:
+          stage = stage_0();
+          break;
+        case ALGO_STAGE::ONE:
+          stage = stage_1();
+          break;
+        case ALGO_STAGE::TWO:
+          stage = stage_2();
+          break;
+        case ALGO_STAGE::THREE:
+          stage = stage_3();
+          break;
+        case ALGO_STAGE::FOUR:
+          stage = stage_4();
+          break;
+        case ALGO_STAGE::FINAL:
+          stage = stage_final();
+          break;
+        case ALGO_STAGE::DONE:
+          stage = stage_final();
+          return MUNKRES_SUCCESS;
+        default:
+          assert(0);
+      }
     }
-#endif /* DEBUG */
-    switch (stage) {
-      case ALGO_STAGE::ZERO:
-        stage = stage_0();
-        break;
-      case ALGO_STAGE::ONE:
-        stage = stage_1();
-        break;
-      case ALGO_STAGE::TWO:
-        stage = stage_2();
-        break;
-      case ALGO_STAGE::THREE:
-        stage = stage_3();
-        break;
-      case ALGO_STAGE::FOUR:
-        stage = stage_4();
-        break;
-      case ALGO_STAGE::FINAL:
-        stage = stage_final();
-        break;
-      case ALGO_STAGE::DONE:
-        stage = stage_final();
-        return 0;
-      default:
-        assert(0);
-    }
+  } catch (std::runtime_error &e) {
+    LOGE("[Munkres] error occurs: %s\n", e.what());
+    return MUNKRES_FAILURE;
   }
 
-  return 1;
+  return MUNKRES_SUCCESS;
 }
 
 int CVIMunkres::stage_0() {
@@ -199,8 +204,7 @@ int CVIMunkres::stage_2() {
 
     _counter += 1;
     if (_counter > 100) {
-      std::cout << "too many times in while loop...\n";
-      exit(-1);
+      throw std::runtime_error("too many times in stage2");
     }
   }
 }
@@ -227,8 +231,7 @@ int CVIMunkres::stage_3() {
     node_counter += 1;
 
     if (!find_prime_by_row(r, c)) {
-      std::cout << "ERROR: Prime Node not found.\n";
-      exit(-1);
+      throw std::runtime_error("Prime Node not found");
     }
 
     node_sequence[node_counter] = new int[2];
