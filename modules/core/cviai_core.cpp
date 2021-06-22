@@ -173,9 +173,10 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
 
     m_t.instance = creator(params);
     if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
-      LOGE("Open model failed (%s).\n", m_t.model_path.c_str());
+      LOGE("Failed to open model %s (%s).\n", CVI_AI_GetModelName(index), m_t.model_path.c_str());
       return nullptr;
     }
+    LOGI("model open is success: %s (%s)!\n", CVI_AI_GetModelName(index), m_t.model_path.c_str());
 
     // TODO: Don't setup for specific classes here, not all model should consider threshold....
     if (m_t.model_threshold == -1) {
@@ -575,7 +576,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_AlphaPose, AlphaPose, CVI_AI_SUPPORTED_MODEL_ALPHAP
 DEFINE_INF_FUNC_F1_P1(CVI_AI_EyeClassification, EyeClassification,
                       CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YawnClassification, YawnClassification,
-                      CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, cvai_face_t *)
+                      CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceLandmarker, FaceLandmarker, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER,
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_IncarObjectDetection, IncarObjectDetection,

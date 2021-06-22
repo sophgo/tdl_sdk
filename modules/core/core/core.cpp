@@ -39,8 +39,6 @@ int Core::modelOpen(const char *filepath) {
   CLOSE_MODEL_IF_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
                         "CVI_NN_RegisterModel failed");
 
-  LOGI("CVI_NN_RegisterModel successed\n");
-
   if (mp_mi->conf.batch_size != 0) {
     CVI_NN_SetConfig(mp_mi->handle, OPTION_BATCH_SIZE, mp_mi->conf.batch_size);
   }
