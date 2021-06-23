@@ -343,7 +343,7 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
   }
 
   VPSS_GRP_DEFAULT_HELPER2(&stVpssGrpAttr, vpssConfigs->grpWidth, vpssConfigs->grpHeight,
-                           vpssConfigs->groupFormat, 0);
+                           vpssConfigs->groupFormat, 1);
 
   /*start vpss*/
   s32Ret = SAMPLE_COMM_VPSS_Init(vpssConfigs->vpssGrp, abChnEnable, &stVpssGrpAttr, stVpssChnAttr);
