@@ -226,8 +226,7 @@ int main(int argc, char** argv) {
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]);
-  //  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION,
-  //  argv[6]);
+  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]);
   if (ret != CVI_SUCCESS) {
     printf("Set model failed with %#x!\n", ret);
     return ret;
@@ -274,11 +273,10 @@ int main(int argc, char** argv) {
       // Just calculate the first one
       if (face.size > 0) {
         dms_init(&face);
-#if 0
+
         // calculate od
         CVI_AI_IncarObjectDetection(facelib_handle, &stVencFrame, &face);
-        CVI_AI_Service_Incar_ObjectDrawRect((&face.dms->dms_od), &stVOFrame, true);
-#endif
+
         // calculate landmark
         FaceLandmarks(&face, stVencFrame, stVOFrame, display);
 

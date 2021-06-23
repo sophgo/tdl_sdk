@@ -17,9 +17,9 @@ class IncarObjectDetection final : public Core {
   int inference(VIDEO_FRAME_INFO_S* frame, cvai_face_t* meta);
   std::vector<HeadInfo> heads_info{
       // cls_pred|dis_pred|stride
-      {"822_Transpose_back_dim_dequant", "825_Transpose_back_dim_dequant", 8},
-      {"854_Transpose_back_dim_dequant", "857_Transpose_back_dim_dequant", 16},
-      {"886_Transpose_back_dim_dequant", "889_Transpose_back_dim_dequant", 32},
+      {"802_Transpose_back_dim_dequant", "805_Transpose_back_dim_dequant", 8},
+      {"830_Transpose_back_dim_dequant", "833_Transpose_back_dim_dequant", 16},
+      {"858_Transpose_back_dim_dequant", "861_Transpose_back_dim_dequant", 32},
 
   };
 
@@ -38,6 +38,6 @@ class IncarObjectDetection final : public Core {
   int input_size = 320;
   int num_class = 3;
   int reg_max = 7;
-  char class_name[3][128] = {"smoke", "phone", "likephone"};
+  char class_name[3][32] = {"cell phone", "bottle", "cup"};
 };
 }  // namespace cviai

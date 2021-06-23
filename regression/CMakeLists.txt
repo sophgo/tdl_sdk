@@ -104,6 +104,7 @@ buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai_core cviai_
 buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_service cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_service cviai_evaluation ${SAMPLE_LIBS})
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_fq INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
@@ -119,5 +120,6 @@ buildninstallcpp(NAME reg_daily_fl INC ${REG_INCLUDES} DEPS cviai_core cviai_ser
 buildninstallcpp(NAME reg_daily_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_es_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME reg_daily_incarod INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 
 install(DIRECTORY assets DESTINATION regression)

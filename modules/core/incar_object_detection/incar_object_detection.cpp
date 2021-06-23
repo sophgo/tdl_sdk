@@ -13,9 +13,9 @@ int IncarObjectDetection::setupInputPreprocess(std::vector<InputPreprecessSetup>
     return CVI_FAILURE;
   }
 
-  (*data)[0].factor[0] = 1.0;
-  (*data)[0].factor[1] = 1.0;
-  (*data)[0].factor[2] = 1.0;
+  (*data)[0].factor[0] = 0.999;
+  (*data)[0].factor[1] = 0.999;
+  (*data)[0].factor[2] = 0.999;
   (*data)[0].mean[0] = 0.0;
   (*data)[0].mean[1] = 0.0;
   (*data)[0].mean[2] = 0.0;
@@ -37,9 +37,9 @@ int IncarObjectDetection::inference(VIDEO_FRAME_INFO_S* frame, cvai_face_t* meta
   run(frames);
 
   outputParser(input_size, input_size, meta);
-
   return CVI_SUCCESS;
 }
+
 void IncarObjectDetection::outputParser(int image_width, int image_height, cvai_face_t* meta) {
   std::vector<std::vector<cvai_dms_od_info_t>> results;
   std::vector<cvai_dms_od_info_t> vec_bbox_nms;
@@ -48,7 +48,7 @@ void IncarObjectDetection::outputParser(int image_width, int image_height, cvai_
   for (const auto& head_info : heads_info) {
     float* cls_pred = getOutputRawPtr<float>(head_info.cls_layer);
     float* dis_pred = getOutputRawPtr<float>(head_info.dis_layer);
-    decode_infer(cls_pred, dis_pred, head_info.stride, 0.4, results);
+    decode_infer(cls_pred, dis_pred, head_info.stride, 0.6, results);
   }
   for (int i = 0; i < (int)results.size(); i++) {
     NonMaximumSuppression(results[i], vec_bbox_nms, 0.5, 'u');
@@ -67,6 +67,7 @@ void IncarObjectDetection::outputParser(int image_width, int image_height, cvai_
     meta->dms->dms_od.info[i].bbox.y1 = vec_bbox_nms[i].bbox.y1;
     meta->dms->dms_od.info[i].bbox.y2 = vec_bbox_nms[i].bbox.y2;
     meta->dms->dms_od.info[i].bbox.score = vec_bbox_nms[i].bbox.score;
+    meta->dms->dms_od.info[i].classes = vec_bbox_nms[i].classes;
     strcpy(meta->dms->dms_od.info[i].name, vec_bbox_nms[i].name);
   }
 }
