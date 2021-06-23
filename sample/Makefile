@@ -22,7 +22,7 @@ MW_LIB_PATH = $(MW_PATH)/lib
 MW_3RD_LIB_PATH = $(MW_PATH)/lib/3rd
 MW_INC_PATH = $(MW_PATH)/include
 MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
-MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -ltinyalsa -lcvi_VoiceEngine -laec -lcvi_RES -lnanomsg
+MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -ltinyalsa -lcvi_VoiceEngine -lcvi_RES -lnanomsg
 
 ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
 MW_LIBS = -lsample -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
@@ -62,7 +62,7 @@ IVE_SDK_LIB_PATH = $(IVE_PATH)/lib
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
 
 
-CFLAGS += -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -O3 -DNDEBUG -fsigned-char -Werror=all -fdiagnostics-color=always -std=c11 -s
+CFLAGS += -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -O3 -DNDEBUG -fsigned-char -Werror=all -fdiagnostics-color=always -std=c11 -s -MD
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
 STRIPSYMBOL =
@@ -151,7 +151,7 @@ TARGETS = sample_init \
 all: $(TARGETS)
 
 clean:
-	rm -f $(OBJS) $(TARGETS)
+	rm -f $(OBJS) $(TARGETS) $(DEPS)
 
 $(PWD)/%.o: $(PWD)/%.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<
