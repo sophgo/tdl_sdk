@@ -133,7 +133,6 @@ TARGETS = sample_init \
 			sample_read_mot_3 \
 			sample_read_pose \
 			sample_read_td \
-			sample_vi_deeplabv3 \
 			sample_vi_dms \
 			sample_vi_fall \
 			sample_vi_fd \
