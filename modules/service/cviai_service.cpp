@@ -169,11 +169,23 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
                         pad_ratio_bottom, obj_skip_ratio, trans_ratio);
 }
 
+#define FREE_UNMMAP_IMAGE(ai_ctx, img, frame)                            \
+  do {                                                                   \
+    CVI_SYS_FreeI(ai_ctx->ive_handle, &img);                             \
+    if (do_unmap) {                                                      \
+      CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size); \
+    }                                                                    \
+  } while (0)
+
 template <typename T>
 inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
-                       const bool drawText) {
+                       const bool drawText, IVE_COLOR_S color) {
+  if (meta->size <= 0) return CVI_SUCCESS;
+
   if (handle != NULL) {
     cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+    cviai_context_t *ai_ctx = static_cast<cviai_context_t *>(ctx->ai_handle);
+
     if (ctx->draw_use_tpu) {
       size_t image_size = frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
                           frame->stVFrame.u32Length[2];
@@ -183,49 +195,51 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
             (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
         do_unmap = true;
       }
+
       IVE_IMAGE_S img;
       memset(&img, 0, sizeof(IVE_IMAGE_S));
       CVI_S32 ret = CVI_IVE_VideoFrameInfo2Image(frame, &img);
       if (ret != CVI_SUCCESS) {
-        printf("convert failed %d\n", ret);
+        LOGE("CVI_IVE_VideoFrameInfo2Image failed %d\n", ret);
+        FREE_UNMMAP_IMAGE(ai_ctx, img, frame);
         return CVI_FAILURE;
       }
       IVE_DRAW_RECT_CTRL pstDrawRectCtrl;
       memset(&pstDrawRectCtrl, 0, sizeof(pstDrawRectCtrl));
-      ret = cviai::service::DrawMetaIVE(meta, frame, drawText, &pstDrawRectCtrl);
-      if (ret != CVI_SUCCESS) {
-        return ret;
-      }
-      if (pstDrawRectCtrl.numsOfRect == 0) {
-        return ret;
-      }
-      cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-      cviai_context_t *ai_ctx = static_cast<cviai_context_t *>(ctx->ai_handle);
+      cviai::service::getDrawRectCTRL(meta, frame, &pstDrawRectCtrl, color);
+
       ret = CVI_IVE_DrawRect(ai_ctx->ive_handle, &img, &pstDrawRectCtrl, 0);
-      CVI_SYS_FreeI(ai_ctx->ive_handle, &img);
-      if (do_unmap) {
-        CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);
+      FREE_UNMMAP_IMAGE(ai_ctx, img, frame);
+
+      if (pstDrawRectCtrl.rect) {
+        free(pstDrawRectCtrl.rect);
       }
       return ret;
+    } else {
+      return cviai::service::DrawMeta(meta, frame, drawText);
     }
   }
-  return cviai::service::DrawMeta(meta, frame, drawText);
+
+  LOGE("service handle is NULL\n");
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle, const cvai_face_t *meta,
-                                    VIDEO_FRAME_INFO_S *frame, const bool drawText) {
-  return TPUDraw(handle, meta, frame, drawText);
+                                    VIDEO_FRAME_INFO_S *frame, const bool drawText,
+                                    IVE_COLOR_S color) {
+  return TPUDraw(handle, meta, frame, drawText, color);
 }
 
 CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle, const cvai_object_t *meta,
-                                      VIDEO_FRAME_INFO_S *frame, const bool drawText) {
-  return TPUDraw(handle, meta, frame, drawText);
+                                      VIDEO_FRAME_INFO_S *frame, const bool drawText,
+                                      IVE_COLOR_S color) {
+  return TPUDraw(handle, meta, frame, drawText, color);
 }
 
 CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
                                             const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                            const bool drawText) {
-  return TPUDraw(handle, meta, frame, drawText);
+                                            const bool drawText, IVE_COLOR_S color) {
+  return TPUDraw(handle, meta, frame, drawText, color);
 }
 
 CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame, float r,
@@ -317,4 +331,12 @@ CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta, VIDEO_FRAME_INF
 }
 CVI_S32 CVI_AI_Service_FaceDrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *frame) {
   return cviai::service::DrawPts(pts, frame);
+}
+
+DLL_EXPORT IVE_COLOR_S CVI_AI_Service_GetDefaultColor() {
+  IVE_COLOR_S color;
+  color.b = DEFAULT_RECT_COLOR_B * 255;
+  color.g = DEFAULT_RECT_COLOR_G * 255;
+  color.r = DEFAULT_RECT_COLOR_R * 255;
+  return color;
 }

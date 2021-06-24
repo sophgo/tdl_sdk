@@ -47,9 +47,12 @@ int main(int argc, char *argv[]) {
   }
 
   cviai_handle_t ai_handle = NULL;
+  cviai_service_handle_t service_handle = NULL;
   int ret = CVI_AI_CreateHandle2(&ai_handle, 2, 0);
+  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   if (ret != CVI_SUCCESS) {
-    printf("Facelib open failed with %#x!\n", ret);
+    printf("handle create failed with %#x!\n", ret);
     return ret;
   }
 
@@ -103,7 +106,8 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_ObjectDrawRect(NULL, &obj_meta, &stVOFrame, false);
+      CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, false,
+                                    CVI_AI_Service_GetDefaultColor());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
@@ -120,7 +124,9 @@ int main(int argc, char *argv[]) {
     count++;
   }
 
+  CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }

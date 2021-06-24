@@ -75,8 +75,6 @@ int main(int argc, char *argv[]) {
         argv[0]);
     return CVI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
-
   CVI_S32 voType = atoi(argv[4]);
 
   CVI_S32 s32Ret = CVI_SUCCESS;
@@ -88,21 +86,27 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t ai_handle = NULL;
-
   ModelConfig model_config;
   if (createModelConfig(argv[1], &model_config) == CVI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
     return CVI_FAILURE;
   }
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  cviai_handle_t ai_handle = NULL;
+  cviai_service_handle_t service_handle = NULL;
+  s32Ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  s32Ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  s32Ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("handle create failed with %#x!\n", s32Ret);
+    return s32Ret;
+  }
 
-  ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
-  if (ret != CVI_SUCCESS) {
-    printf("model open failed with %#x!\n", ret);
-    return ret;
+  s32Ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
+  s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("model open failed with %#x!\n", s32Ret);
+    return s32Ret;
   }
 
   CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
@@ -175,7 +179,8 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_ObjectDrawRect(NULL, &obj_meta, &stVOFrame, false);
+      CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, false,
+                                    CVI_AI_Service_GetDefaultColor());
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         char *id_num = uint64ToString(obj_meta.info[i].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
@@ -199,7 +204,9 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&tracker_meta);
   }
 
+  CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }

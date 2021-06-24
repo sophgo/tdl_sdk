@@ -50,26 +50,26 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t facelib_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&facelib_handle, 1, 0);
+  cviai_handle_t ai_handle = NULL;
+  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   if (ret != CVI_SUCCESS) {
     printf("AI handle created failed with %#x!\n", ret);
     return ret;
   }
   cviai_service_handle_t service_handle = NULL;
-  ret = CVI_AI_Service_CreateHandle(&service_handle, facelib_handle);
-  CVI_AI_Service_EnableTPUDraw(facelib_handle, true);
+  ret = CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  CVI_AI_Service_EnableTPUDraw(ai_handle, true);
   if (ret != CVI_SUCCESS) {
     printf("AI service handle created failed with %#x!\n", ret);
     return ret;
   }
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   if (ret != CVI_SUCCESS) {
-    printf("Facelib open failed with %#x!\n", ret);
+    printf("set model path failed with %#x!\n", ret);
     return ret;
   }
   // Do vpss frame transform in retina face
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
   cvai_face_t face;
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    CVI_AI_RetinaFace(facelib_handle, &stfdFrame, &face);
+    CVI_AI_RetinaFace(ai_handle, &stfdFrame, &face);
     printf("face_count %d\n", face.size);
 
     int s32Ret = CVI_SUCCESS;
@@ -102,7 +102,8 @@ int main(int argc, char *argv[]) {
         break;
       }
 
-      CVI_AI_Service_FaceDrawRect(NULL, &face, &stVOFrame, false);
+      CVI_AI_Service_FaceDrawRect(service_handle, &face, &stVOFrame, false,
+                                  CVI_AI_Service_GetDefaultColor());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
@@ -120,7 +121,9 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&face);
   }
 
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_AI_Service_DestroyHandle(service_handle);
+  CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }

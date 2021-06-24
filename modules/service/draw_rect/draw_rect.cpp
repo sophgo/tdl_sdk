@@ -303,6 +303,44 @@ template int DrawMeta<cvai_dms_od_t>(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO
                                      const bool drawText);
 
 template <typename T>
+void getDrawRectCTRL(const T *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                     IVE_DRAW_RECT_CTRL *pstDrawRectCtrl, IVE_COLOR_S color) {
+  if (meta->size <= 0) {
+    return;
+  }
+
+  pstDrawRectCtrl->numsOfRect = meta->size;
+  pstDrawRectCtrl->rect = (IVE_RECT_S *)malloc(meta->size * sizeof(IVE_RECT_S));
+  pstDrawRectCtrl->color = color;
+  for (size_t i = 0; i < meta->size; i++) {
+    cvai_bbox_t bbox =
+        box_rescale(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height, meta->width,
+                    meta->height, meta->info[i].bbox, meta->rescale_type);
+    uint32_t &width = drawFrame->stVFrame.u32Width;
+    uint32_t &height = drawFrame->stVFrame.u32Height;
+    int x1 = max(min(bbox.x1, width - 1), 0);
+    int x2 = max(min(bbox.x2, width - 1), 0);
+    int y1 = max(min(bbox.y1, height - 1), 0);
+    int y2 = max(min(bbox.y2, height - 1), 0);
+    pstDrawRectCtrl->rect[i].pts[0].x = x1;
+    pstDrawRectCtrl->rect[i].pts[0].y = y1;
+    pstDrawRectCtrl->rect[i].pts[1].x = x2;
+    pstDrawRectCtrl->rect[i].pts[1].y = y2;
+  }
+}
+
+template void getDrawRectCTRL<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                                           IVE_DRAW_RECT_CTRL *pstDrawRectCtrl, IVE_COLOR_S color);
+template void getDrawRectCTRL<cvai_object_t>(const cvai_object_t *meta,
+                                             VIDEO_FRAME_INFO_S *drawFrame,
+                                             IVE_DRAW_RECT_CTRL *pstDrawRectCtrl,
+                                             IVE_COLOR_S color);
+template void getDrawRectCTRL<cvai_dms_od_t>(const cvai_dms_od_t *meta,
+                                             VIDEO_FRAME_INFO_S *drawFrame,
+                                             IVE_DRAW_RECT_CTRL *pstDrawRectCtrl,
+                                             IVE_COLOR_S color);
+
+template <typename T>
 int DrawMetaIVE(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
                 IVE_DRAW_RECT_CTRL *pstDrawRectCtrl) {
   if (meta->size == 0) {

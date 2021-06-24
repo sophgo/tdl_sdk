@@ -90,13 +90,19 @@ int main(int argc, char *argv[]) {
   }
 
   cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t obj_handle = NULL;
+  cviai_service_handle_t service_handle = NULL;
   int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&obj_handle, ai_handle);
+  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
+  if (ret != CVI_SUCCESS) {
+    printf("create handle failed with %#x!\n", ret);
+    return ret;
+  }
+
   ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
   if (ret != CVI_SUCCESS) {
-    printf("Facelib open failed with %#x!\n", ret);
+    printf("set model path failed with %#x!\n", ret);
     return ret;
   }
 
@@ -122,7 +128,7 @@ int main(int argc, char *argv[]) {
   pts.y[0] = 0;
   pts.x[1] = 640;
   pts.y[1] = 719;
-  CVI_AI_Service_SetIntersect(obj_handle, &pts);
+  CVI_AI_Service_SetIntersect(service_handle, &pts);
 
   VIDEO_FRAME_INFO_S stFrame, stVOFrame;
   cvai_object_t obj_meta;
@@ -146,7 +152,7 @@ int main(int argc, char *argv[]) {
     // Step 3. Tracker.
     CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, true);
     // Step 4. Detect intersection.
-    CVI_AI_Service_ObjectDetectIntersect(obj_handle, &stFrame, &obj_meta, &status);
+    CVI_AI_Service_ObjectDetectIntersect(service_handle, &stFrame, &obj_meta, &status);
     // Step 5. printf results.
     for (uint32_t i = 0; i < obj_meta.size; i++) {
       printf("[%u][%" PRIu64 "] %s object state = %u, intersection = %u.\n", i,
@@ -171,7 +177,8 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_ObjectDrawRect(NULL, &obj_meta, &stVOFrame, true);
+      CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, true,
+                                    CVI_AI_Service_GetDefaultColor());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
@@ -191,8 +198,9 @@ int main(int argc, char *argv[]) {
   }
 
   CVI_AI_Free(&pts);
-  CVI_AI_Service_DestroyHandle(obj_handle);
+  CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }

@@ -51,8 +51,10 @@ int main(int argc, char *argv[]) {
 
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
+  cviai_service_handle_t service_handle = NULL;
   int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   if (ret != CVI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
@@ -119,7 +121,8 @@ int main(int argc, char *argv[]) {
         } else {
           strcpy(obj.info[0].name, "");
         }
-        CVI_AI_Service_ObjectDrawRect(NULL, &obj, &stVOFrame, true);
+        CVI_AI_Service_ObjectDrawRect(service_handle, &obj, &stVOFrame, true,
+                                      CVI_AI_Service_GetDefaultColor());
       }
 
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
@@ -138,7 +141,9 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&obj);
   }
 
+  CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }

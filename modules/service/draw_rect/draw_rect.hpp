@@ -36,6 +36,10 @@ template <typename T>
 int DrawMetaIVE(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
                 IVE_DRAW_RECT_CTRL *pstDrawRectCtrl);
 
+template <typename T>
+void getDrawRectCTRL(const T *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                     IVE_DRAW_RECT_CTRL *pstDrawRectCtrl, IVE_COLOR_S color);
+
 int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame);
 
 int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame);

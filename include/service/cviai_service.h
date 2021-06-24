@@ -5,6 +5,7 @@
 #include "core/cviai_core.h"
 #include "core/face/cvai_face_types.h"
 #include "core/object/cvai_object_types.h"
+#include "ive/cvi_draw_ive.h"
 
 #include <cvi_sys.h>
 
@@ -199,7 +200,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
     VIDEO_FRAME_INFO_S *outFrame);
 
 /**
- * @brief Draw rect to YUV frame with given face meta.
+ * @brief Draw rect to frame with given face meta.
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
@@ -210,10 +211,10 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
                                                const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                               const bool drawText);
+                                               const bool drawText, IVE_COLOR_S color);
 
 /**
- * @brief Draw rect to YUV frame with given object meta.
+ * @brief Draw rect to frame with given object meta.
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
@@ -224,11 +225,23 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
                                                  const cvai_object_t *meta,
-                                                 VIDEO_FRAME_INFO_S *frame, const bool drawText);
+                                                 VIDEO_FRAME_INFO_S *frame, const bool drawText,
+                                                 IVE_COLOR_S color);
+
+/**
+ * @brief Draw rect to frame with given dms meta.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param meta meta structure.
+ * @param frame In/ out YUV frame.
+ * @param drawText Choose to draw name of the object.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
 DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
                                                        const cvai_dms_od_t *meta,
                                                        VIDEO_FRAME_INFO_S *frame,
-                                                       const bool drawText);
+                                                       const bool drawText, IVE_COLOR_S color);
 
 /**
  * @brief Draw text to YUV frame with given text.
@@ -325,6 +338,9 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta,
                                                  VIDEO_FRAME_INFO_S *frame);
 
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *frame);
+
+DLL_EXPORT IVE_COLOR_S CVI_AI_Service_GetDefaultColor();
+
 #ifdef __cplusplus
 }
 #endif

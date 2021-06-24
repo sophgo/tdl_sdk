@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
   memset(miss_time, -1, sizeof(int) * SAVE_TRACKER_NUM);
 
   cviai_handle_t ai_handle = NULL;
-
+  cviai_service_handle_t service_handle = NULL;
   ModelConfig model_config;
   if (createModelConfig(argv[1], &model_config) == CVI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
@@ -261,6 +261,8 @@ int main(int argc, char *argv[]) {
   }
 
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   ret |= CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[3]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[4]);
@@ -358,7 +360,8 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_FaceDrawRect(NULL, &face_meta, &stVOFrame, false);
+      CVI_AI_Service_FaceDrawRect(service_handle, &face_meta, &stVOFrame, false,
+                                  CVI_AI_Service_GetDefaultColor());
       for (uint32_t j = 0; j < face_meta.size; j++) {
         char *id_num = uint64ToString(face_meta.info[j].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, face_meta.info[j].bbox.x1, face_meta.info[j].bbox.y1,
@@ -377,7 +380,8 @@ int main(int argc, char *argv[]) {
           free(id_num);
         }
       }
-      CVI_AI_Service_ObjectDrawRect(NULL, &obj_meta, &stVOFrame, false);
+      CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, false,
+                                    CVI_AI_Service_GetDefaultColor());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
@@ -404,7 +408,10 @@ int main(int argc, char *argv[]) {
       free(fq_trackers[i].face.stVFrame.pu8VirAddr[2]);
     }
   }
+
+  CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }

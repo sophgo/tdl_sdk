@@ -24,7 +24,9 @@ typedef struct {
 THRESHOLD_S _threshold;
 
 // ai handle
-cviai_handle_t facelib_handle = NULL;
+cviai_handle_t ai_handle = NULL;
+cviai_service_handle_t service_handle = NULL;
+
 // siganl exit
 static volatile bool bExit = true;
 // status_name
@@ -60,7 +62,7 @@ void dms_init(cvai_face_t* face) {
 void YawnClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
                       VIDEO_FRAME_INFO_S stVOFrame, int* yawn_score_window,
                       const THRESHOLD_S threshold, const bool mask_flag, const int display) {
-  CVI_AI_YawnClassification(facelib_handle, &stVencFrame, face);
+  CVI_AI_YawnClassification(ai_handle, &stVencFrame, face);
 
   // calculate smooth yawn score
   smooth_face_info.dms.yawn_score =
@@ -86,7 +88,7 @@ void YawnClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
 void EyeClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
                      VIDEO_FRAME_INFO_S stVOFrame, int* eye_score_window,
                      const THRESHOLD_S threshold, const int display) {
-  CVI_AI_EyeClassification(facelib_handle, &stVencFrame, face);
+  CVI_AI_EyeClassification(ai_handle, &stVencFrame, face);
 
   // calculate smooth eye score
   smooth_face_info.dms.reye_score =
@@ -124,7 +126,7 @@ void EyeClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
 void MaskClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
                       VIDEO_FRAME_INFO_S stVOFrame, bool* mask_flag, const THRESHOLD_S threshold,
                       const int display) {
-  CVI_AI_MaskClassification(facelib_handle, &stVencFrame, face);
+  CVI_AI_MaskClassification(ai_handle, &stVencFrame, face);
 
   // calculate smooth mask score
   smooth_face_info.mask_score = smooth_face_info.mask_score * 0.5 + face->info[0].mask_score * 0.5;
@@ -145,7 +147,7 @@ void MaskClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
 
 void FaceLandmarks(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame, VIDEO_FRAME_INFO_S stVOFrame,
                    const int display) {
-  CVI_AI_FaceLandmarker(facelib_handle, &stVencFrame, face);
+  CVI_AI_FaceLandmarker(ai_handle, &stVencFrame, face);
 
   if (display) CVI_AI_Service_FaceDrawPts(&(face->dms->landmarks_106), &stVOFrame);
 }
@@ -220,20 +222,21 @@ int main(int argc, char** argv) {
   }
 
   // Load model
-  int ret = CVI_AI_CreateHandle2(&facelib_handle, 1, 0);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]);
+  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]);
   if (ret != CVI_SUCCESS) {
     printf("Set model failed with %#x!\n", ret);
     return ret;
   }
 
   // Do vpss frame transform in retina face
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
   {
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
@@ -268,14 +271,14 @@ int main(int argc, char** argv) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_RetinaFace(facelib_handle, &stVencFrame, &face);
+      CVI_AI_RetinaFace(ai_handle, &stVencFrame, &face);
 
       // Just calculate the first one
       if (face.size > 0) {
         dms_init(&face);
 
         // calculate od
-        CVI_AI_IncarObjectDetection(facelib_handle, &stVencFrame, &face);
+        CVI_AI_IncarObjectDetection(ai_handle, &stVencFrame, &face);
 
         // calculate landmark
         FaceLandmarks(&face, stVencFrame, stVOFrame, display);
@@ -326,9 +329,11 @@ int main(int argc, char** argv) {
     }
   }
 
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_AI_Service_DestroyHandle(service_handle);
+  CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 
   return 0;
 }

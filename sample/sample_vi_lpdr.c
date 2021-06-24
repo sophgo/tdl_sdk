@@ -43,7 +43,10 @@ int main(int argc, char *argv[]) {
   }
 
   cviai_handle_t ai_handle = NULL;
+  cviai_service_handle_t service_handle = NULL;
   s32Ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  s32Ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  s32Ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   int use_vehicle = atoi(argv[2]);
   if (use_vehicle == 1) {
     printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0\n");
@@ -148,7 +151,8 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_ObjectDrawRect(NULL, &vehicle_obj, &stVOFrame, false);
+      CVI_AI_Service_ObjectDrawRect(service_handle, &vehicle_obj, &stVOFrame, false,
+                                    CVI_AI_Service_GetDefaultColor());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
@@ -165,7 +169,9 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&vehicle_obj);
   }
 
+  CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }

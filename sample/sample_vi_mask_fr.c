@@ -48,18 +48,22 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t facelib_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&facelib_handle, 1, 0);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[3]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, argv[4]);
+  cviai_handle_t ai_handle = NULL;
+  cviai_service_handle_t service_handle = NULL;
+
+  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[3]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, argv[4]);
   if (ret != CVI_SUCCESS) {
     printf("Set model failed with %#x!\n", ret);
     return ret;
   }
   // Do vpss frame transform in retina face
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
   VIDEO_FRAME_INFO_S rgbFrame, stVOFrame;
   cvai_face_t face;
@@ -72,15 +76,15 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    CVI_AI_RetinaFace(facelib_handle, &rgbFrame, &face);
+    CVI_AI_RetinaFace(ai_handle, &rgbFrame, &face);
     printf("face_count %d\n", face.size);
     if (face.size > 0) {
-      CVI_AI_MaskClassification(facelib_handle, &rgbFrame, &face);
+      CVI_AI_MaskClassification(ai_handle, &rgbFrame, &face);
 
       if (face.info[0].mask_score > 0.5) {
-        CVI_AI_MaskFaceRecognition(facelib_handle, &rgbFrame, &face);
+        CVI_AI_MaskFaceRecognition(ai_handle, &rgbFrame, &face);
       } else {
-        CVI_AI_FaceAttribute(facelib_handle, &rgbFrame, &face);
+        CVI_AI_FaceAttribute(ai_handle, &rgbFrame, &face);
       }
     }
 
@@ -100,7 +104,8 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_FaceDrawRect(NULL, &face, &stVOFrame, true);
+      CVI_AI_Service_FaceDrawRect(service_handle, &face, &stVOFrame, true,
+                                  CVI_AI_Service_GetDefaultColor());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
@@ -118,7 +123,9 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&face);
   }
 
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_AI_Service_DestroyHandle(service_handle);
+  CVI_AI_DestroyHandle(ai_handle);
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }

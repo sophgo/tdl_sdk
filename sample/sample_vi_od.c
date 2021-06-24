@@ -102,9 +102,13 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t facelib_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&facelib_handle, 1, 0);
-  ret = CVI_AI_SetModelPath(facelib_handle, model_config.model_id, argv[2]);
+  cviai_handle_t ai_handle = NULL;
+  cviai_service_handle_t service_handle = NULL;
+  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
+
+  ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
@@ -117,11 +121,11 @@ int main(int argc, char *argv[]) {
     } else {
       printf("set threshold to %f\n", threshold);
     }
-    CVI_AI_SetModelThreshold(facelib_handle, model_config.model_id, threshold);
+    CVI_AI_SetModelThreshold(ai_handle, model_config.model_id, threshold);
   }
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, model_config.model_id, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
 
-  ret = CVI_AI_SelectDetectClass(facelib_handle, model_config.model_id, 3, CVI_AI_DET_TYPE_PERSON,
+  ret = CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 3, CVI_AI_DET_TYPE_PERSON,
                                  CVI_AI_DET_TYPE_BANANA, CVI_AI_DET_GROUP_VEHICLE);
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
@@ -135,7 +139,7 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    model_config.inference(facelib_handle, &stfdFrame, &obj_meta);
+    model_config.inference(ai_handle, &stfdFrame, &obj_meta);
     printf("nums of object %u\n", obj_meta.size);
 
     int s32Ret = CVI_SUCCESS;
@@ -154,7 +158,8 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_ObjectDrawRect(NULL, &obj_meta, &stVOFrame, true);
+      CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, true,
+                                    CVI_AI_Service_GetDefaultColor());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
@@ -172,8 +177,10 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&obj_meta);
   }
 
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_AI_Service_DestroyHandle(service_handle);
+  CVI_AI_DestroyHandle(ai_handle);
 
   DestroyVideoSystem(&vs_ctx);
-  SAMPLE_COMM_SYS_Exit();
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
 }
