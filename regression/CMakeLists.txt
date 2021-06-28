@@ -121,5 +121,9 @@ buildninstallcpp(NAME reg_daily_yawn_classification INC ${REG_INCLUDES} DEPS cvi
 buildninstallcpp(NAME reg_daily_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_es_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_incarod INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME reg_daily_alphapose INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME reg_daily_fall INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME reg_daily_liveness INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME reg_daily_retinaface INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 
 install(DIRECTORY assets DESTINATION regression)
