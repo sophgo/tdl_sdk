@@ -26,7 +26,7 @@
         "open/9.jpg"
       ], 
       "image_num": 20, 
-      "model_name": ["retinaface_mnet0.25_608_342.cvimodel","face_landmark_bf16.cvimodel","eye_v1_bf16.cvimodel"],
+      "model_name": ["retinaface_mnet0.25_608.cvimodel","face_landmark_bf16.cvimodel","eye_v1_bf16.cvimodel"],
       "expected_results": [
         0, 
         0, 
