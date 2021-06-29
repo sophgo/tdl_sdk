@@ -18,5 +18,6 @@ class LicensePlateRecognition final : public Core {
  private:
   void prepareInputTensor(cv::Mat &input_mat);
   LP_FORMAT format;
+  int lp_height, lp_width;
 };
 }  // namespace cviai

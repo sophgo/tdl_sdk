@@ -12,8 +12,10 @@
 #include <iostream>
 #include <sstream>
 
-#define LICENSE_PLATE_HEIGHT 24
-#define LICENSE_PLATE_WIDTH 94
+#define LICENSE_PLATE_TW_HEIGHT 24
+#define LICENSE_PLATE_TW_WIDTH 94
+#define LICENSE_PLATE_CN_HEIGHT 30
+#define LICENSE_PLATE_CN_WIDTH 122
 
 #define OUTPUT_NAME "id_code_ReduceMean_dequant"
 
@@ -22,8 +24,14 @@
 namespace cviai {
 
 LicensePlateRecognition::LicensePlateRecognition(LP_FORMAT region) : Core(CVI_MEM_SYSTEM) {
-  if (region == TAIWAN || region == CHINA) {
+  if (region == TAIWAN) {
     this->format = region;
+    this->lp_height = LICENSE_PLATE_TW_HEIGHT;
+    this->lp_width = LICENSE_PLATE_TW_WIDTH;
+  } else if (region == CHINA) {
+    this->format = region;
+    this->lp_height = LICENSE_PLATE_CN_HEIGHT;
+    this->lp_width = LICENSE_PLATE_CN_WIDTH;
   } else {
     LOGE("unknown region: %d\n", region);
     exit(CVI_FAILURE);
@@ -63,14 +71,14 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     };
     cv::Point2f dst_points[4] = {
         cv::Point2f(0, 0),
-        cv::Point2f(LICENSE_PLATE_WIDTH, 0),
-        cv::Point2f(LICENSE_PLATE_WIDTH, LICENSE_PLATE_HEIGHT),
-        cv::Point2f(0, LICENSE_PLATE_HEIGHT),
+        cv::Point2f(this->lp_width, 0),
+        cv::Point2f(this->lp_width, this->lp_height),
+        cv::Point2f(0, this->lp_height),
     };
     cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
     cv::Mat sub_cvFrame;
-    cv::warpPerspective(cv_frame, sub_cvFrame, M,
-                        cv::Size(LICENSE_PLATE_WIDTH, LICENSE_PLATE_HEIGHT), cv::INTER_LINEAR);
+    cv::warpPerspective(cv_frame, sub_cvFrame, M, cv::Size(this->lp_width, this->lp_height),
+                        cv::INTER_LINEAR);
     cv::Mat greyMat;
     cv::cvtColor(sub_cvFrame, greyMat, cv::COLOR_RGB2GRAY); /* BGR or RGB ? */
     cv::cvtColor(greyMat, sub_cvFrame, cv::COLOR_GRAY2RGB);
