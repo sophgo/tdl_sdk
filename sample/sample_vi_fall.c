@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
           strcpy(obj.info[0].name, "");
         }
         CVI_AI_Service_ObjectDrawRect(service_handle, &obj, &stVOFrame, true,
-                                      CVI_AI_Service_GetDefaultColor());
+                                      CVI_AI_Service_GetDefaultBrush());
       }
 
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);

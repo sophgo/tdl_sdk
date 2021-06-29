@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
         break;
       }
       CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, true,
-                                    CVI_AI_Service_GetDefaultColor());
+                                    CVI_AI_Service_GetDefaultBrush());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");

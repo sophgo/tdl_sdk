@@ -361,7 +361,7 @@ int main(int argc, char *argv[]) {
         break;
       }
       CVI_AI_Service_FaceDrawRect(service_handle, &face_meta, &stVOFrame, false,
-                                  CVI_AI_Service_GetDefaultColor());
+                                  CVI_AI_Service_GetDefaultBrush());
       for (uint32_t j = 0; j < face_meta.size; j++) {
         char *id_num = uint64ToString(face_meta.info[j].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, face_meta.info[j].bbox.x1, face_meta.info[j].bbox.y1,
@@ -381,7 +381,7 @@ int main(int argc, char *argv[]) {
         }
       }
       CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, false,
-                                    CVI_AI_Service_GetDefaultColor());
+                                    CVI_AI_Service_GetDefaultBrush());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");

@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
       }
 
       CVI_AI_Service_FaceDrawRect(service_handle, &face, &stVOFrame, false,
-                                  CVI_AI_Service_GetDefaultColor());
+                                  CVI_AI_Service_GetDefaultBrush());
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");

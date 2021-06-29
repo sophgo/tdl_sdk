@@ -179,7 +179,7 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
 
 template <typename T>
 inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
-                       const bool drawText, IVE_COLOR_S color) {
+                       const bool drawText, cvai_service_brush_t brush) {
   if (meta->size <= 0) return CVI_SUCCESS;
 
   if (handle != NULL) {
@@ -206,6 +206,10 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
       }
       IVE_DRAW_RECT_CTRL pstDrawRectCtrl;
       memset(&pstDrawRectCtrl, 0, sizeof(pstDrawRectCtrl));
+      IVE_COLOR_S color;
+      color.b = brush.color.b;
+      color.g = brush.color.g;
+      color.r = brush.color.r;
       cviai::service::getDrawRectCTRL(meta, frame, &pstDrawRectCtrl, color);
 
       ret = CVI_IVE_DrawRect(ai_ctx->ive_handle, &img, &pstDrawRectCtrl, 0);
@@ -226,20 +230,20 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
 
 CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle, const cvai_face_t *meta,
                                     VIDEO_FRAME_INFO_S *frame, const bool drawText,
-                                    IVE_COLOR_S color) {
-  return TPUDraw(handle, meta, frame, drawText, color);
+                                    cvai_service_brush_t brush) {
+  return TPUDraw(handle, meta, frame, drawText, brush);
 }
 
 CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle, const cvai_object_t *meta,
                                       VIDEO_FRAME_INFO_S *frame, const bool drawText,
-                                      IVE_COLOR_S color) {
-  return TPUDraw(handle, meta, frame, drawText, color);
+                                      cvai_service_brush_t brush) {
+  return TPUDraw(handle, meta, frame, drawText, brush);
 }
 
 CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
                                             const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                            const bool drawText, IVE_COLOR_S color) {
-  return TPUDraw(handle, meta, frame, drawText, color);
+                                            const bool drawText, cvai_service_brush_t brush) {
+  return TPUDraw(handle, meta, frame, drawText, brush);
 }
 
 CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame, float r,
@@ -333,10 +337,11 @@ CVI_S32 CVI_AI_Service_FaceDrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *frame) {
   return cviai::service::DrawPts(pts, frame);
 }
 
-DLL_EXPORT IVE_COLOR_S CVI_AI_Service_GetDefaultColor() {
-  IVE_COLOR_S color;
-  color.b = DEFAULT_RECT_COLOR_B * 255;
-  color.g = DEFAULT_RECT_COLOR_G * 255;
-  color.r = DEFAULT_RECT_COLOR_R * 255;
-  return color;
+cvai_service_brush_t CVI_AI_Service_GetDefaultBrush() {
+  cvai_service_brush_t brush;
+  brush.color.b = DEFAULT_RECT_COLOR_B * 255;
+  brush.color.g = DEFAULT_RECT_COLOR_G * 255;
+  brush.color.r = DEFAULT_RECT_COLOR_R * 255;
+  brush.size = 2;
+  return brush;
 }

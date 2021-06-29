@@ -52,4 +52,18 @@ typedef enum {
   OUTSIDE_POLYGON
 } cvai_area_detect_e;
 
+/** @struct cvai_service_brush_t
+ *  @ingroup core_cviaiservice
+ *  @brief Brush structure for bounding box drawing
+ *
+ */
+typedef struct {
+  struct {
+    float r;
+    float g;
+    float b;
+  } color;
+  uint32_t size;
+} cvai_service_brush_t;
+
 #endif  // End of _CVIAI_SERVICE_TYPES_H_

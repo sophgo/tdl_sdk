@@ -5,7 +5,6 @@
 #include "core/cviai_core.h"
 #include "core/face/cvai_face_types.h"
 #include "core/object/cvai_object_types.h"
-#include "ive/cvi_draw_ive.h"
 
 #include <cvi_sys.h>
 
@@ -211,7 +210,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
                                                const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                               const bool drawText, IVE_COLOR_S color);
+                                               const bool drawText, cvai_service_brush_t brush);
 
 /**
  * @brief Draw rect to frame with given object meta.
@@ -226,7 +225,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
                                                  const cvai_object_t *meta,
                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText,
-                                                 IVE_COLOR_S color);
+                                                 cvai_service_brush_t brush);
 
 /**
  * @brief Draw rect to frame with given dms meta.
@@ -241,7 +240,8 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
                                                        const cvai_dms_od_t *meta,
                                                        VIDEO_FRAME_INFO_S *frame,
-                                                       const bool drawText, IVE_COLOR_S color);
+                                                       const bool drawText,
+                                                       cvai_service_brush_t brush);
 
 /**
  * @brief Draw text to YUV frame with given text.
@@ -339,7 +339,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta,
 
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *frame);
 
-DLL_EXPORT IVE_COLOR_S CVI_AI_Service_GetDefaultColor();
+DLL_EXPORT cvai_service_brush_t CVI_AI_Service_GetDefaultBrush();
 
 #ifdef __cplusplus
 }

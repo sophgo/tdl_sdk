@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
         break;
       }
       CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, false,
-                                    CVI_AI_Service_GetDefaultColor());
+                                    CVI_AI_Service_GetDefaultBrush());
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         char *id_num = uint64ToString(obj_meta.info[i].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
