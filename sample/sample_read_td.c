@@ -1,125 +1,114 @@
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "ive/ive.h"
 
-#define UPDATE_INTERVAL 10
-
-char *cstrconcat(const char *s1, const char *s2);
+#define WRITE_RESULT_TO_FILE 0
 
 int main(int argc, char **argv) {
-  CVI_S32 ret = CVI_SUCCESS;
-  char *imagefile_list_name = "/imagefile_list.txt";
-  char *imagefile_path;
-  if (argc == 1) {
-    imagefile_path = "./images";
-  } else if (argc == 2) {
-    imagefile_path = argv[1];
-  } else {
-    printf("Usage: %s <images_path>\n", argv[0]);
-    return -1;
+  if (argc != 3) {
+    printf(
+        "Usage: %s <sample_imagelist_path>\n"
+        "          <inference_count>\n",
+        argv[0]);
+    return CVI_FAILURE;
   }
-  printf("start loading images\n");
-  char *imagefile_list_path = cstrconcat(imagefile_path, imagefile_list_name);
-  printf("imagefile_list_path: %s\n", imagefile_list_path);
+  CVI_S32 ret = CVI_SUCCESS;
 
+  // Init VB pool size.
+  const CVI_S32 vpssgrp_width = 1920;
+  const CVI_S32 vpssgrp_height = 1080;
+  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
+                         vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
+  if (ret != CVI_SUCCESS) {
+    printf("Init sys failed with %#x!\n", ret);
+    return ret;
+  }
+  IVE_HANDLE handle = CVI_IVE_CreateHandle();
+
+  cviai_handle_t ai_handle = NULL;
+  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  if (ret != CVI_SUCCESS) {
+    printf("failed with %#x!\n", ret);
+    return ret;
+  }
+
+#if WRITE_RESULT_TO_FILE
+  FILE *outFile;
+  outFile = fopen("result_sample_td.txt", "w");
+  if (outFile == NULL) {
+    printf("There is a problem opening the output file.\n");
+    exit(EXIT_FAILURE);
+  }
+#endif
+
+  char *imagelist_path = argv[1];
   FILE *inFile;
   char *line = NULL;
   size_t len = 0;
   ssize_t read;
-
-  inFile = fopen(imagefile_list_path, "r");
+  inFile = fopen(imagelist_path, "r");
   if (inFile == NULL) {
-    printf("There is a problem opening the image file list:\n");
-    printf("    %s/imagefile_list.txt\n", imagefile_list_path);
+    printf("There is a problem opening the rcfile: %s\n", imagelist_path);
     exit(EXIT_FAILURE);
   }
   if ((read = getline(&line, &len, inFile)) == -1) {
     printf("get line error\n");
     exit(EXIT_FAILURE);
   }
-  int image_num = atoi(line);
-  //   printf("image_num: %d\n", image_num);
+  *strchrnul(line, '\n') = '\0';
+  int imageNum = atoi(line);
 
-  char *image_name = NULL;
-  char *image_path;
-  float moving_score;
-  printf("start simulation...\n");
+#if WRITE_RESULT_TO_FILE
+  fprintf(outFile, "%u\n", imageNum);
+#endif
 
-  if ((read = getline(&image_name, &len, inFile)) == -1) {
-    printf("get line error\n");
-    exit(EXIT_FAILURE);
-  }
-  *strchrnul(image_name, '\n') = '\0';
-  image_path = cstrconcat(imagefile_path, image_name);
+  int inference_count = atoi(argv[2]);
 
-  IVE_HANDLE handle = CVI_IVE_CreateHandle();
-  // Read image using IVE.
-  IVE_IMAGE_S frame = CVI_IVE_ReadImage(handle, image_path, IVE_IMAGE_TYPE_U8C3_PLANAR);
-  if (frame.u16Width == 0) {
-    printf("Read image failed with %x!\n", ret);
-    return ret;  // ?
-  }
-  // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
-  VIDEO_FRAME_INFO_S cameraFrame;
-  ret = CVI_IVE_Image2VideoFrameInfo(&frame, &cameraFrame, false);
-  if (ret != CVI_SUCCESS) {
-    printf("Convert to video frame failed with %#x!\n", ret);
-    return ret;
-  }
+  for (int counter = 0; counter < imageNum; counter++) {
+    if (counter == inference_count) {
+      break;
+    }
 
-  // Init cviai handle.
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
-    return ret;
-  }
-
-  CVI_AI_TamperDetection(ai_handle, &cameraFrame, &moving_score);
-
-  CVI_SYS_FreeI(handle, &frame);
-
-  for (int img_counter = 1; img_counter < image_num; img_counter++) {
-    image_name = NULL;
-    if ((read = getline(&image_name, &len, inFile)) == -1) {
+    if ((read = getline(&line, &len, inFile)) == -1) {
       printf("get line error\n");
       exit(EXIT_FAILURE);
     }
-    *strchrnul(image_name, '\n') = '\0';
-    image_path = cstrconcat(imagefile_path, image_name);
+    *strchrnul(line, '\n') = '\0';
+    char *image_path = line;
+    // printf("\n[%i] image path = %s\n", counter, image_path);
 
-    frame = CVI_IVE_ReadImage(handle, image_path, IVE_IMAGE_TYPE_U8C3_PLANAR);
-    ret = CVI_IVE_Image2VideoFrameInfo(&frame, &cameraFrame, false);
+    // Read image using IVE.
+    IVE_IMAGE_S ive_frame = CVI_IVE_ReadImage(handle, image_path, IVE_IMAGE_TYPE_U8C3_PLANAR);
+    if (ive_frame.u16Width == 0) {
+      printf("Read image failed with %x!\n", ret);
+      return ret;
+    }
+
+    // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
+    VIDEO_FRAME_INFO_S frame;
+    ret = CVI_IVE_Image2VideoFrameInfo(&ive_frame, &frame, false);
     if (ret != CVI_SUCCESS) {
       printf("Convert to video frame failed with %#x!\n", ret);
       return ret;
     }
 
-    CVI_AI_TamperDetection(ai_handle, &cameraFrame, &moving_score);
+    float moving_score;
+    CVI_AI_TamperDetection(ai_handle, &frame, &moving_score);
+    printf("[%d] %f\n", counter, moving_score);
 
-    printf("[%d] moving: %f\n", img_counter, moving_score);
+#if WRITE_RESULT_TO_FILE
+    fprintf(outFile, "%f\n", moving_score);
+#endif
 
-    CVI_SYS_FreeI(handle, &frame);
+    CVI_SYS_FreeI(handle, &ive_frame);
   }
+
+#if WRITE_RESULT_TO_FILE
+  fclose(outFile);
+#endif
 
   CVI_IVE_DestroyHandle(handle);
   CVI_AI_DestroyHandle(ai_handle);
-
-  fclose(inFile);
-
-  printf("done\n");
-
-  return 0;
-}
-
-char *cstrconcat(const char *s1, const char *s2) {
-  char *result = malloc(strlen(s1) + strlen(s2) + 1);  // +1 for the null-terminator
-  // in real code you would check for errors in malloc here
-  strcpy(result, s1);
-  strcat(result, s2);
-  return result;
+  CVI_SYS_Exit();
 }
