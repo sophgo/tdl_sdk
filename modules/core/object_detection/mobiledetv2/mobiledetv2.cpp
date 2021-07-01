@@ -281,7 +281,7 @@ void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequ
           PtrDectRect det = make_shared<object_detect_rect_t>();
           det->label = class_idx - score_index;
 
-          float dequant_logits = logits[class_idx] * class_dequant_thresh / 128.0;
+          float dequant_logits = logits[class_idx] * class_dequant_thresh;
           det->score = 1.0 / (1.0 + std::exp(-dequant_logits));
 
           float dequant_box[4];
