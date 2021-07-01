@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     printf("[%d] pass: %d; fall, expected : %d, result : %d\n", img_idx, pass, expected_res,
            obj.info[0].pedestrian_properity->fall);
     if (!pass) {
-      exit(0);
+      return CVI_FAILURE;
     }
 
     CVI_AI_Free(&obj);
@@ -117,4 +117,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
   printf("fall regression result: all pass\n");
+  return CVI_SUCCESS;
 }

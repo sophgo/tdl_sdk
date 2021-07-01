@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
     printf("[%d] pass: %d; expected det nums: %d, result: %d\n", img_idx, pass, expected_res_num,
            obj.size);
     if (!pass) {
-      exit(0);
+      return CVI_FAILURE;
     }
 
     CVI_AI_AlphaPose(ai_handle, &frame, &obj);
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
         printf("[%d][%d][%2d] pass: %d; x, y, expected : [%.3f, %.3f], result : [%.3f, %.3f]\n",
                img_idx, i, point, pass, expected_res_x, expected_res_y, point_x, point_y);
         if (!pass) {
-          exit(0);
+          return CVI_FAILURE;
         }
       }
     }
@@ -128,4 +128,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
   printf("alphapose regression result: all pass\n");
+  return CVI_SUCCESS;
 }

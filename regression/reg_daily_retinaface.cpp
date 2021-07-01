@@ -80,10 +80,10 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_RetinaFace(handle, &frame, &face_meta);
     bool pass = (expected_res_num == int(face_meta.size));
-    printf("[%d] pass: %d; expected det nums: %d, result: %d\n", img_idx, pass, expected_res_num,
-           face_meta.size);
+    // printf("[%d] pass: %d; expected det nums: %d, result: %d\n", img_idx, pass, expected_res_num,
+    //        face_meta.size);
     if (!pass) {
-      exit(0);
+      return CVI_FAILURE;
     }
 
     for (uint32_t i = 0; i < face_meta.size; i++) {
@@ -97,14 +97,16 @@ int main(int argc, char *argv[]) {
                   (abs(face_meta.info[i].bbox.x2 - expected_res_x2) < threshold) &
                   (abs(face_meta.info[i].bbox.y2 - expected_res_y2) < threshold);
 
+#if 0
       printf(
           "[%d][%d] pass: %d, x1, y1, x2, y2, expected : [%f, %f, %f, %f], result : [%f, %f, %f, "
           "%f]\n",
           img_idx, i, pass, expected_res_x1, expected_res_y1, expected_res_x2, expected_res_y2,
           face_meta.info[i].bbox.x1, face_meta.info[i].bbox.y1, face_meta.info[i].bbox.x2,
           face_meta.info[i].bbox.y2);
+#endif
       if (!pass) {
-        exit(0);
+        return CVI_FAILURE;
       }
     }
 
@@ -114,4 +116,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(handle);
   CVI_SYS_Exit();
   printf("retinaface regression result: all pass\n");
+  return CVI_SUCCESS;
 }

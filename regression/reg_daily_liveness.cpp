@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
     printf("[%d] expected: %f, score: %f, pass: %d\n", img_idx, expected_res,
            rgb_face.info[0].liveness_score, pass);
     if (!pass) {
-      exit(0);
+      return CVI_FAILURE;
     }
 
     CVI_AI_Free(&rgb_face);
@@ -126,4 +126,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(handle);
   CVI_SYS_Exit();
   printf("liveness regression result: all pass\n");
+  return CVI_SUCCESS;
 }
