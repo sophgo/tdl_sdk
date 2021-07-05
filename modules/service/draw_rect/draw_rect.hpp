@@ -4,6 +4,7 @@
 
 #include <cvi_comm_video.h>
 #include "ive/cvi_draw_ive.h"
+#include "service/cviai_service_types.h"
 
 #define DEFAULT_RECT_COLOR_R (53. / 255.)
 #define DEFAULT_RECT_COLOR_G (208. / 255.)
@@ -30,7 +31,8 @@ void _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color
 int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, float g, float b);
 
 template <typename T>
-int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText);
+int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
+             cvai_service_brush_t brush);
 
 template <typename T>
 int DrawMetaIVE(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,

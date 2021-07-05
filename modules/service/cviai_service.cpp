@@ -183,6 +183,10 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
   if (meta->size <= 0) return CVI_SUCCESS;
 
   if (handle != NULL) {
+    if ((brush.size % 2) != 0) {
+      brush.size += 1;
+    }
+
     cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
     cviai_context_t *ai_ctx = static_cast<cviai_context_t *>(ctx->ai_handle);
 
@@ -220,7 +224,7 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
       }
       return ret;
     } else {
-      return cviai::service::DrawMeta(meta, frame, drawText);
+      return cviai::service::DrawMeta(meta, frame, drawText, brush);
     }
   }
 
@@ -342,6 +346,6 @@ cvai_service_brush_t CVI_AI_Service_GetDefaultBrush() {
   brush.color.b = DEFAULT_RECT_COLOR_B * 255;
   brush.color.g = DEFAULT_RECT_COLOR_G * 255;
   brush.color.r = DEFAULT_RECT_COLOR_R * 255;
-  brush.size = 2;
+  brush.size = 4;
   return brush;
 }

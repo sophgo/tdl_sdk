@@ -5,7 +5,10 @@
 
 #include <cvi_sys.h>
 #include <string.h>
+#include <algorithm>
 #include <unordered_map>
+
+#include "cviai_log.hpp"
 
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
 #define max(x, y) (((x) >= (y)) ? (x) : (y))
@@ -149,9 +152,19 @@ void _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color
   CVI_SYS_Munmap(vir_addr, image_size);
 }
 
-// TODO: Need refactor
+typedef enum {
+  FORMAT_YUV_420P,
+  FORMAT_NV21,
+} PixelFormat;
+
+template <PixelFormat format>
 void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2, const char *name,
-              color_rgb color, int rect_thinkness, const bool draw_text) {
+              color_rgb color, int rect_thinkness, const bool draw_text);
+
+template <>
+void DrawRect<FORMAT_YUV_420P>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
+                               const char *name, color_rgb color, int rect_thinkness,
+                               const bool draw_text) {
   std::string name_str = name;
   int width = frame->stVFrame.u32Width;
   int height = frame->stVFrame.u32Height;
@@ -160,9 +173,6 @@ void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
   y1 = max(min(y1, height - 1), 0);
   y2 = max(min(y2, height - 1), 0);
 
-  color.r *= 255;
-  color.g *= 255;
-  color.b *= 255;
   char color_y = GetYuvColor(PLANE_Y, &color);
   char color_u = GetYuvColor(PLANE_U, &color);
   char color_v = GetYuvColor(PLANE_V, &color);
@@ -178,10 +188,10 @@ void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
     plane_offset += frame->stVFrame.u32Length[i];
     int stride = frame->stVFrame.u32Stride[i];
 
-    int draw_x1 = x1;
-    int draw_x2 = x2;
-    int draw_y1 = y1;
-    int draw_y2 = y2;
+    int draw_x1 = ((int)x1 >> 2) << 2;
+    int draw_x2 = ((int)x2 >> 2) << 2;
+    int draw_y1 = ((int)y1 >> 2) << 2;
+    int draw_y2 = ((int)y2 >> 2) << 2;
     int draw_rect_thinkness = rect_thinkness;
     char draw_color;
     if (i == PLANE_Y) {
@@ -202,7 +212,7 @@ void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
     }
 
     // draw rect vertical line
-    for (int h = draw_y1; h <= draw_y2; ++h) {
+    for (int h = draw_y1; h < draw_y2; ++h) {
       for (int w = draw_x1; w < draw_x1 + draw_rect_thinkness; ++w) {
         memset((void *)(frame->stVFrame.pu8VirAddr[i] + h * stride + w), draw_color,
                sizeof(draw_color));
@@ -214,7 +224,7 @@ void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
     }
 
     // draw rect horizontal line
-    for (int w = draw_x1; w <= draw_x2; ++w) {
+    for (int w = draw_x1; w < draw_x2; ++w) {
       for (int h = draw_y1; h < draw_y1 + draw_rect_thinkness; ++h) {
         memset((void *)(frame->stVFrame.pu8VirAddr[i] + h * stride + w), draw_color,
                sizeof(draw_color));
@@ -249,6 +259,127 @@ void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
   CVI_SYS_Munmap(vir_addr, image_size);
 }
 
+template <>
+void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2,
+                           const char *name, color_rgb color, int rect_thinkness,
+                           const bool draw_text) {
+  std::string name_str = name;
+  int width = frame->stVFrame.u32Width;
+  int height = frame->stVFrame.u32Height;
+  x1 = max(min(x1, width - 1), 0);
+  x2 = max(min(x2, width - 1), 0);
+  y1 = max(min(y1, height - 1), 0);
+  y2 = max(min(y2, height - 1), 0);
+
+  char color_y = GetYuvColor(PLANE_Y, &color);
+  char color_u = GetYuvColor(PLANE_U, &color);
+  char color_v = GetYuvColor(PLANE_V, &color);
+
+  CVI_VOID *vir_addr = CVI_NULL;
+  size_t image_size = frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1];
+  vir_addr = CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+  CVI_U32 plane_offset = 0;
+
+  // 0: Y-plane, 1: VU-plane
+  for (int i = 0; i < 2; i++) {
+    frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
+    plane_offset += frame->stVFrame.u32Length[i];
+    int stride = frame->stVFrame.u32Stride[i];
+
+    int draw_x1 = ((int)x1 >> 2) << 2;
+    int draw_x2 = ((int)x2 >> 2) << 2;
+    int draw_y1 = ((int)y1 >> 2) << 2;
+    int draw_y2 = ((int)y2 >> 2) << 2;
+    int draw_thinkness_width = rect_thinkness;
+    int color = 0;
+    if (i == 0) {
+      color = color_y;
+    } else {
+      color = ((uint16_t)color_u << 8) | color_v;
+    }
+
+    if (i > 0) {
+      // vu plane has half size
+      draw_x1 /= 2;
+      draw_x2 /= 2;
+      draw_y1 /= 2;
+      draw_y2 /= 2;
+      draw_thinkness_width /= 2;
+    }
+
+    // draw rect vertical line
+    for (int h = draw_y1; h < draw_y2; ++h) {
+      if (i > 0) {
+        int offset = h * stride + draw_x1 * 2;
+        std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset), draw_thinkness_width,
+                    (uint16_t)color);
+
+        offset = h * stride + (draw_x2 - draw_thinkness_width) * 2;
+        std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset), draw_thinkness_width,
+                    (uint16_t)color);
+      } else {
+        int offset = h * stride + draw_x1;
+        std::fill_n((uint8_t *)(frame->stVFrame.pu8VirAddr[i] + offset), draw_thinkness_width,
+                    (uint8_t)color);
+
+        offset = h * stride + (draw_x2 - draw_thinkness_width);
+        std::fill_n((uint8_t *)(frame->stVFrame.pu8VirAddr[i] + offset), draw_thinkness_width,
+                    (uint8_t)color);
+      }
+    }
+
+    // draw rect horizontal line
+    for (int h = draw_y1; h < draw_y1 + draw_thinkness_width; ++h) {
+      if (i > 0) {
+        int offset = h * stride + draw_x1 * 2;
+        int box_width = ((draw_x2 - draw_thinkness_width) - draw_x1);
+        std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset), box_width,
+                    (uint16_t)color);
+      } else {
+        int offset = h * stride + draw_x1;
+        int box_width = ((draw_x2 - draw_thinkness_width) - draw_x1);
+        std::fill_n((uint8_t *)(frame->stVFrame.pu8VirAddr[i] + offset), box_width, (uint8_t)color);
+      }
+    }
+
+    for (int h = draw_y2 - draw_thinkness_width; (h < draw_y2) && (h >= 0); ++h) {
+      if (i > 0) {
+        int offset = h * stride + draw_x1 * 2;
+        int box_width = ((draw_x2 - draw_thinkness_width) - draw_x1);
+        std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset), box_width,
+                    (uint16_t)color);
+      } else {
+        int offset = h * stride + draw_x1;
+        int box_width = ((draw_x2 - draw_thinkness_width) - draw_x1);
+        std::fill_n((uint8_t *)(frame->stVFrame.pu8VirAddr[i] + offset), box_width, (uint8_t)color);
+      }
+    }
+
+    // TODO: Support draw text
+    // if (!draw_text) {
+    //   continue;
+    // }
+    // cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
+    // cv::Point cv_point = cv::Point(x1, y1 - 2);
+    // double font_scale = 2;
+    // int thickness = 8;
+    // if (i != 0) {
+    //   cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
+    //   cv_point = cv::Point(x1 / 2, (y1 - 2) / 2);
+    //   font_scale /= 2;
+    //   // FIXME: Should div but don't know why it's not correct.
+    //   // thickness /= 2;
+    // }
+    // // FIXME: Color incorrect.
+    // cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
+    // cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_SIMPLEX, font_scale,
+    //             cv::Scalar(color), thickness, 8);
+    frame->stVFrame.pu8VirAddr[i] = NULL;
+  }
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
+  CVI_SYS_Munmap(vir_addr, image_size);
+}
+
 int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame) {
   color_rgb rgb_color;
   rgb_color.r = DEFAULT_RECT_COLOR_R;
@@ -277,30 +408,43 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, 
 }
 
 template <typename T>
-int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText) {
+int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
+             cvai_service_brush_t brush) {
+  if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
+      drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
+    LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported\n");
+    return CVI_FAILURE;
+  }
+
   if (meta->size == 0) {
     return CVI_SUCCESS;
   }
   color_rgb rgb_color;
-  rgb_color.r = DEFAULT_RECT_COLOR_R;
-  rgb_color.g = DEFAULT_RECT_COLOR_G;
-  rgb_color.b = DEFAULT_RECT_COLOR_B;
+  rgb_color.r = brush.color.r;
+  rgb_color.g = brush.color.g;
+  rgb_color.b = brush.color.g;
+
   for (size_t i = 0; i < meta->size; i++) {
     cvai_bbox_t bbox =
         box_rescale(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height, meta->width,
                     meta->height, meta->info[i].bbox, meta->rescale_type);
-    DrawRect(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, meta->info[i].name, rgb_color,
-             DEFAULT_RECT_THINKNESS, drawText);
+    if (drawFrame->stVFrame.enPixelFormat == PIXEL_FORMAT_NV21) {
+      DrawRect<FORMAT_NV21>(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, meta->info[i].name,
+                            rgb_color, brush.size, drawText);
+    } else {
+      DrawRect<FORMAT_YUV_420P>(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, meta->info[i].name,
+                                rgb_color, brush.size, drawText);
+    }
   }
   return CVI_SUCCESS;
 }
 
 template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                   const bool drawText);
+                                   const bool drawText, cvai_service_brush_t brush);
 template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                     const bool drawText);
+                                     const bool drawText, cvai_service_brush_t brush);
 template int DrawMeta<cvai_dms_od_t>(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                     const bool drawText);
+                                     const bool drawText, cvai_service_brush_t brush);
 
 template <typename T>
 void getDrawRectCTRL(const T *meta, VIDEO_FRAME_INFO_S *drawFrame,
