@@ -6,7 +6,7 @@
 #include "evaluation/cviai_media.h"
 #include "json.hpp"
 
-#define MATCH_IOU_THRESHOLD 0.95
+#define MATCH_IOU_THRESHOLD 0.85
 #define MATCH_SCORE_BIAS 0.02
 
 float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
