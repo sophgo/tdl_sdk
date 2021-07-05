@@ -1,8 +1,13 @@
 {
-  "fd_model" : "retinaface_mnet0.25_608_342.cvimodel", 
   "liveness_model" : "liveness-rgb-ir.cvimodel", 
   "image_num" : 2,
-  "test_images" : [["liveness_rgb_1.jpg","liveness_ir_1.jpg"], ["liveness_rgb_2.jpg", "liveness_ir_2.jpg"]],
-  "expected_results" : [0.998971, 0.000502],
+  "bboxs" : [[[264.432617, 118.377480, 388.198944, 286.183929], 
+              [276.432007, 115.491852, 391.404266, 282.285889]],
+             [[329.743958, 270.808655, 463.296997, 440.302460], 
+              [349.910736, 241.748795, 508.568787, 443.265839]]],
+  "test_images" : [["liveness_rgb_1.jpg","liveness_ir_1.jpg"], 
+                   ["liveness_rgb_2.jpg", "liveness_ir_2.jpg"]],
+  "expected_results" : [0.998971, 
+                        0.000502],
   "threshold" : 0.01
 }

@@ -26,19 +26,20 @@ int main(int argc, char *argv[]) {
   filestr >> m_json_read;
   filestr.close();
 
-  std::string fd_model_name = std::string(m_json_read["fd_model"]);
-  std::string fd_model_path = model_dir + "/" + fd_model_name;
-  printf("fd_model_path: %s\n", fd_model_path.c_str());
+  // "fd_model" : "retinaface_mnet0.25_608_342.cvimodel",
+  // std::string fd_model_name = std::string(m_json_read["fd_model"]);
+  // std::string fd_model_path = model_dir + "/" + fd_model_name;
+  // printf("fd_model_path: %s\n", fd_model_path.c_str());
 
   std::string liveness_model_name = std::string(m_json_read["liveness_model"]);
   std::string liveness_model_path = model_dir + "/" + liveness_model_name;
-  printf("liveness_model_path: %s\n", liveness_model_path.c_str());
+  // printf("liveness_model_path: %s\n", liveness_model_path.c_str());
 
   int img_num = int(m_json_read["image_num"]);
-  printf("img_num: %d\n", img_num);
+  // printf("img_num: %d\n", img_num);
 
   float threshold = float(m_json_read["threshold"]);
-  printf("threshold: %f\n", threshold);
+  // printf("threshold: %f\n", threshold);
 
   static CVI_S32 vpssgrp_width = 1920;
   static CVI_S32 vpssgrp_height = 1080;
@@ -57,11 +58,13 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
+  /*
   ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_model_path.c_str());
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
+  */
   ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_LIVENESS, liveness_model_path.c_str());
   if (ret != CVI_SUCCESS) {
     printf("Set model liveness failed with %#x!\n", ret);
@@ -100,8 +103,54 @@ int main(int argc, char *argv[]) {
     cvai_face_t ir_face;
     memset(&ir_face, 0, sizeof(cvai_face_t));
 
-    CVI_AI_RetinaFace(handle, &frame1, &rgb_face);
-    CVI_AI_RetinaFace(handle, &frame2, &ir_face);
+    // CVI_AI_RetinaFace(handle, &frame1, &rgb_face);
+    // CVI_AI_RetinaFace(handle, &frame2, &ir_face);
+
+    /*
+    if (rgb_face.size) {
+        float x1 = rgb_face.info[0].bbox.x1;
+        float y1 = rgb_face.info[0].bbox.y1;
+        float x2 = rgb_face.info[0].bbox.x2;
+        float y2 = rgb_face.info[0].bbox.y2;
+        printf("=> rgb \n");
+        printf("[%f, %f, %f, %f], \n", x1, y1, x2, y2);
+    } else {
+      printf("[], \n");
+    }
+
+    if (ir_face.size) {
+        float x1 = ir_face.info[0].bbox.x1;
+        float y1 = ir_face.info[0].bbox.y1;
+        float x2 = ir_face.info[0].bbox.x2;
+        float y2 = ir_face.info[0].bbox.y2;
+        printf("=> ir \n");
+        printf("[%f, %f, %f, %f], \n", x1, y1, x2, y2);
+    } else {
+      printf("[], \n");
+    }
+    */
+
+    rgb_face.size = 1;
+    rgb_face.width = frame1.stVFrame.u32Width;
+    rgb_face.height = frame1.stVFrame.u32Height;
+    rgb_face.info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * rgb_face.size);
+    memset(rgb_face.info, 0, sizeof(cvai_face_info_t) * rgb_face.size);
+
+    ir_face.size = 1;
+    ir_face.width = frame2.stVFrame.u32Width;
+    ir_face.height = frame2.stVFrame.u32Height;
+    ir_face.info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * ir_face.size);
+    memset(ir_face.info, 0, sizeof(cvai_face_info_t) * ir_face.size);
+
+    rgb_face.info[0].bbox.x1 = float(m_json_read["bboxs"][img_idx][0][0]);
+    rgb_face.info[0].bbox.y1 = float(m_json_read["bboxs"][img_idx][0][1]);
+    rgb_face.info[0].bbox.x2 = float(m_json_read["bboxs"][img_idx][0][2]);
+    rgb_face.info[0].bbox.y2 = float(m_json_read["bboxs"][img_idx][0][3]);
+
+    ir_face.info[0].bbox.x1 = float(m_json_read["bboxs"][img_idx][1][0]);
+    ir_face.info[0].bbox.y1 = float(m_json_read["bboxs"][img_idx][1][1]);
+    ir_face.info[0].bbox.x2 = float(m_json_read["bboxs"][img_idx][1][2]);
+    ir_face.info[0].bbox.y2 = float(m_json_read["bboxs"][img_idx][1][3]);
 
     if (rgb_face.size > 0) {
       if (ir_face.size > 0) {
@@ -112,8 +161,8 @@ int main(int argc, char *argv[]) {
     }
 
     bool pass = abs(rgb_face.info[0].liveness_score - expected_res) < threshold;
-    printf("[%d] expected: %f, score: %f, pass: %d\n", img_idx, expected_res,
-           rgb_face.info[0].liveness_score, pass);
+    // printf("[%d] expected: %f, score: %f, pass: %d\n", img_idx, expected_res,
+    //       rgb_face.info[0].liveness_score, pass);
     if (!pass) {
       return CVI_FAILURE;
     }
