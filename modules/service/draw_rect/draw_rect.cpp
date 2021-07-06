@@ -177,15 +177,7 @@ void DrawRect<FORMAT_YUV_420P>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, fl
   char color_u = GetYuvColor(PLANE_U, &color);
   char color_v = GetYuvColor(PLANE_V, &color);
 
-  CVI_VOID *vir_addr = CVI_NULL;
-  size_t image_size =
-      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-  vir_addr = CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
-  CVI_U32 plane_offset = 0;
-
   for (int i = PLANE_Y; i < PLANE_NUM; i++) {
-    frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
-    plane_offset += frame->stVFrame.u32Length[i];
     int stride = frame->stVFrame.u32Stride[i];
 
     int draw_x1 = ((int)x1 >> 2) << 2;
@@ -253,10 +245,7 @@ void DrawRect<FORMAT_YUV_420P>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, fl
     cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
     cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_SIMPLEX, font_scale,
                 cv::Scalar(draw_color), thickness, 8);
-    frame->stVFrame.pu8VirAddr[i] = NULL;
   }
-  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
-  CVI_SYS_Munmap(vir_addr, image_size);
 }
 
 template <>
@@ -275,15 +264,8 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float 
   char color_u = GetYuvColor(PLANE_U, &color);
   char color_v = GetYuvColor(PLANE_V, &color);
 
-  CVI_VOID *vir_addr = CVI_NULL;
-  size_t image_size = frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1];
-  vir_addr = CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
-  CVI_U32 plane_offset = 0;
-
   // 0: Y-plane, 1: VU-plane
   for (int i = 0; i < 2; i++) {
-    frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
-    plane_offset += frame->stVFrame.u32Length[i];
     int stride = frame->stVFrame.u32Stride[i];
 
     int draw_x1 = ((int)x1 >> 2) << 2;
@@ -374,10 +356,7 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float 
     // cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
     // cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_SIMPLEX, font_scale,
     //             cv::Scalar(color), thickness, 8);
-    frame->stVFrame.pu8VirAddr[i] = NULL;
   }
-  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
-  CVI_SYS_Munmap(vir_addr, image_size);
 }
 
 int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame) {
@@ -419,6 +398,21 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
   if (meta->size == 0) {
     return CVI_SUCCESS;
   }
+
+  size_t image_size = drawFrame->stVFrame.u32Length[0] + drawFrame->stVFrame.u32Length[1] +
+                      drawFrame->stVFrame.u32Length[2];
+
+  bool do_unmap = false;
+  if (drawFrame->stVFrame.pu8VirAddr[0] == NULL) {
+    drawFrame->stVFrame.pu8VirAddr[0] =
+        (uint8_t *)CVI_SYS_MmapCache(drawFrame->stVFrame.u64PhyAddr[0], image_size);
+    drawFrame->stVFrame.pu8VirAddr[1] =
+        drawFrame->stVFrame.pu8VirAddr[0] + drawFrame->stVFrame.u32Length[0];
+    drawFrame->stVFrame.pu8VirAddr[2] =
+        drawFrame->stVFrame.pu8VirAddr[1] + drawFrame->stVFrame.u32Length[1];
+    do_unmap = true;
+  }
+
   color_rgb rgb_color;
   rgb_color.r = brush.color.r;
   rgb_color.g = brush.color.g;
@@ -435,6 +429,15 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
       DrawRect<FORMAT_YUV_420P>(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2, meta->info[i].name,
                                 rgb_color, brush.size, drawText);
     }
+  }
+
+  CVI_SYS_IonFlushCache(drawFrame->stVFrame.u64PhyAddr[0], drawFrame->stVFrame.pu8VirAddr[0],
+                        image_size);
+  if (do_unmap) {
+    CVI_SYS_Munmap((void *)drawFrame->stVFrame.pu8VirAddr[0], drawFrame->stVFrame.u32Length[0]);
+    drawFrame->stVFrame.pu8VirAddr[0] = NULL;
+    drawFrame->stVFrame.pu8VirAddr[1] = NULL;
+    drawFrame->stVFrame.pu8VirAddr[2] = NULL;
   }
   return CVI_SUCCESS;
 }
