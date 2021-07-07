@@ -434,7 +434,7 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
   CVI_SYS_IonFlushCache(drawFrame->stVFrame.u64PhyAddr[0], drawFrame->stVFrame.pu8VirAddr[0],
                         image_size);
   if (do_unmap) {
-    CVI_SYS_Munmap((void *)drawFrame->stVFrame.pu8VirAddr[0], drawFrame->stVFrame.u32Length[0]);
+    CVI_SYS_Munmap((void *)drawFrame->stVFrame.pu8VirAddr[0], image_size);
     drawFrame->stVFrame.pu8VirAddr[0] = NULL;
     drawFrame->stVFrame.pu8VirAddr[1] = NULL;
     drawFrame->stVFrame.pu8VirAddr[2] = NULL;
