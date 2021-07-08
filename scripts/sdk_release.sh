@@ -53,4 +53,4 @@ else
 fi
 popd
 echo "Cleanup tmp folder."
-rm -r $TMP_WORKING_DIR
+rm -rf $TMP_WORKING_DIR
