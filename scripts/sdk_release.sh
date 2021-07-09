@@ -32,6 +32,11 @@ elif [[ "$1" == "soc" ]]; then
 elif [[ "$1" == "soc32" ]]; then
     mkdir -p $TMP_WORKING_DIR/build_sdk
     pushd $TMP_WORKING_DIR/build_sdk
+    if [[ "$SDK_VER" == "uclibc" ]]; then
+        TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-uclibc-linux.cmake
+    else
+        TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
+    fi
     $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                     -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
@@ -40,7 +45,7 @@ elif [[ "$1" == "soc32" ]]; then
                                     -DIVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
                                     -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
                                     -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
-                                    -DCMAKE_TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
+                                    -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE
     ninja -j8 || exit 1
     ninja install || exit 1
 else

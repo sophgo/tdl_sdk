@@ -86,7 +86,7 @@ buildninstall(NAME sample_read_mot_1 INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_
 buildninstall(NAME sample_read_mot_2 INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_read_mot_3 INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_read_fq_tracking INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
-buildninstall(NAME sample_read_esc INC ${SAMPLE_INC} DEPS cviai_core pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
+# buildninstall(NAME sample_read_esc INC ${SAMPLE_INC} DEPS cviai_core pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
 buildninstall(NAME sample_read_lpdr INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIBS})
 buildninstall(NAME sample_read_pose INC ${SAMPLE_INC} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 
