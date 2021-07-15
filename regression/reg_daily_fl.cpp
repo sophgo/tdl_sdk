@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
     CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
+      pass = false;
       continue;
     }
 

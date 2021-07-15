@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
         CVI_IVE_ReadImage(ive_handle, image_path.c_str(), IVE_IMAGE_TYPE_U8C3_PLANAR);
     if (ive_frame.u16Width == 0) {
       printf("Read image failed with %x!\n", ret);
+      pass = false;
       return ret;
     }
 
