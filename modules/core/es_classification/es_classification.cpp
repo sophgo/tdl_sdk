@@ -45,15 +45,11 @@ int ESClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
     mag[i] = cv::abs(mag[i]);
     cv::resize(mag[i], mag[i], cv::Size(feat_width, feat_height), 0, 0, cv::INTER_LINEAR);
   }
-  uint16_t *input_ptr = getInputRawPtr<uint16_t>(0);
+  float *input_ptr = getInputRawPtr<float>(0);
   int size = feat_height * feat_width;
   for (int i = 0; i < Channel; ++i) {
     for (int r = 0; r < feat_height; ++r) {
-      for (int c = 0; c < feat_width; ++c) {
-        uint16_t bf16_input = 0;
-        floatToBF16((float *)mag[i].ptr(r, c), &bf16_input);
-        memcpy(input_ptr + i * size + mag[i].cols * r + c, &bf16_input, sizeof(uint16_t));
-      }
+      memcpy(input_ptr + i * size + feat_width * r, mag[i].ptr(r, 0), sizeof(float) * feat_width);
     }
   }
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};

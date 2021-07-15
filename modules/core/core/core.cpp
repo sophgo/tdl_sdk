@@ -44,7 +44,6 @@ int Core::modelOpen(const char *filepath) {
   }
   CVI_NN_SetConfig(mp_mi->handle, OPTION_OUTPUT_ALL_TENSORS,
                    static_cast<int>(mp_mi->conf.debug_mode));
-  CVI_NN_SetConfig(mp_mi->handle, OPTION_SKIP_PREPROCESS, static_cast<int>(true));
   CVI_NN_SetConfig(mp_mi->handle, OPTION_SKIP_POSTPROCESS,
                    static_cast<int>(mp_mi->conf.skip_postprocess));
 
