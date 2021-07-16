@@ -24,11 +24,37 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
 
 CVI_S32 DestoryOutput(OutputContext *context);
 
+static int low_mem_profile = 0;
+
+#define ION_TOTALMEM "/sys/firmware/devicetree/base/reserved-memory/ion/size"
+static void load_ion_totalmem(void) {
+  FILE *fp = NULL;
+  char mem_buf[16] = "";
+  int64_t ion_total_mem = 0;
+
+  fp = fopen(ION_TOTALMEM, "r");
+  if (fp == NULL) {
+    SAMPLE_PRT("fopen %s fail\n", ION_TOTALMEM);
+    return;
+  }
+  if (fread(mem_buf, 1, sizeof(mem_buf), fp) > 0) {
+    memcpy(&ion_total_mem, mem_buf, sizeof(int64_t));
+    ion_total_mem = be64toh(ion_total_mem);
+    if (ion_total_mem > 0) {
+      if (ion_total_mem < 65 * 1024 * 1024) {
+        low_mem_profile = 1;
+      }
+    }
+  }
+}
+
 CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
                         PIXEL_FORMAT_E aiInputFormat, int voType) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   //****************************************************************
   // Init VI, VO, Vpss
+
+  load_ion_totalmem();
 
   SIZE_S viSize;
   s32Ret = InitVI(&vs_ctx->viConfig, &viSize, aiInputSize, aiInputFormat, &vs_ctx->ViPipe.DevNum);
@@ -96,7 +122,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
   PIXEL_FORMAT_E enPixFormat = VI_PIXEL_FORMAT;
   VIDEO_FORMAT_E enVideoFormat = VIDEO_FORMAT_LINEAR;
-  COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_TILE;
+  COMPRESS_MODE_E enCompressMode = (low_mem_profile == 1) ? COMPRESS_MODE_TILE : COMPRESS_MODE_NONE;
   VI_VPSS_MODE_E enMastPipeMode = VI_OFFLINE_VPSS_OFFLINE;
 
   memset(&stIniCfg, 0, sizeof(SAMPLE_INI_CFG_S));
@@ -210,20 +236,22 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   u32BlkSize = COMMON_GetPicBufferSize(viSize->u32Width, viSize->u32Height, SAMPLE_PIXEL_FORMAT,
                                        DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[0].u32BlkCnt = 3;
-  SAMPLE_PRT("common pool[0] BlkSize %d\n", u32BlkSize);
+  stVbConf.astCommPool[0].u32BlkCnt = 7;
 
   u32BlkSize = COMMON_GetPicBufferSize(aiSize->u32Width, aiSize->u32Height, aiFormat,
                                        DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[1].u32BlkCnt = 3;
-  SAMPLE_PRT("common pool[1] BlkSize %d\n", u32BlkSize);
 
   u32BlkSize = COMMON_GetPicBufferSize(VO_WIDTH, VO_HEIGHT, PIXEL_FORMAT_VO, DATA_BITWIDTH_8,
                                        COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[2].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[2].u32BlkCnt = 4;
-  SAMPLE_PRT("common pool[2] BlkSize %d\n", u32BlkSize);
+
+  for (uint32_t poolId = 0; poolId < stVbConf.u32MaxPoolCnt; poolId++) {
+    SAMPLE_PRT("common pool[%d] BlkSize %dx%d\n", poolId, stVbConf.astCommPool[poolId].u32BlkSize,
+               stVbConf.astCommPool[poolId].u32BlkCnt);
+  }
 
   s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
   if (s32Ret != CVI_SUCCESS) {
@@ -297,6 +325,99 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   }
 
   return s32Ret;
+}
+
+static CVI_S32 CheckInputCfg(chnInputCfg *pIc) {
+  if (!strcmp(pIc->codec, "264") || !strcmp(pIc->codec, "265")) {
+    CVI_VENC_CFG("framerate = %d\n", pIc->framerate);
+
+    if (pIc->gop < 1) {
+      if (!strcmp(pIc->codec, "264"))
+        pIc->gop = DEF_264_GOP;
+      else
+        pIc->gop = DEF_GOP;
+    }
+    CVI_VENC_CFG("gop = %d\n", pIc->gop);
+
+    if (!strcmp(pIc->codec, "265")) {
+      if (pIc->single_LumaBuf > 0) {
+        SAMPLE_PRT("single_LumaBuf only supports H.264\n");
+        pIc->single_LumaBuf = 0;
+      }
+    } else if (low_mem_profile == 1) {
+      pIc->single_LumaBuf = 1;
+    }
+    pIc->iqp = (pIc->iqp >= 0) ? pIc->iqp : DEF_IQP;
+    pIc->pqp = (pIc->pqp >= 0) ? pIc->pqp : DEF_PQP;
+#ifdef CVI_H26X_MAX_I_PROP_DEFAULT
+    pIc->maxIprop = CVI_H26X_MAX_I_PROP_DEFAULT;
+    pIc->minIprop = CVI_H26X_MIN_I_PROP_DEFAULT;
+#endif
+
+    if (pIc->rcMode == -1) {
+      pIc->rcMode = SAMPLE_RC_FIXQP;
+    }
+
+    if (pIc->rcMode == SAMPLE_RC_CBR || pIc->rcMode == SAMPLE_RC_VBR) {
+      if (pIc->rcMode == SAMPLE_RC_CBR) {
+        if (pIc->bitrate <= 0) {
+          SAMPLE_PRT("CBR bitrate must be not less than 0");
+          return -1;
+        }
+        CVI_VENC_CFG("RC_CBR, bitrate = %d\n", pIc->bitrate);
+      } else if (pIc->rcMode == SAMPLE_RC_VBR) {
+        if (pIc->maxbitrate <= 0) {
+          SAMPLE_PRT("VBR must be not less than 0");
+          return -1;
+        }
+        CVI_VENC_CFG("RC_VBR, maxbitrate = %d\n", pIc->maxbitrate);
+      }
+
+      pIc->firstFrmstartQp =
+          (pIc->firstFrmstartQp < 0 || pIc->firstFrmstartQp > 51) ? 63 : pIc->firstFrmstartQp;
+      CVI_VENC_CFG("firstFrmstartQp = %d\n", pIc->firstFrmstartQp);
+
+      pIc->maxIqp = (pIc->maxIqp >= 0) ? pIc->maxIqp : DEF_264_MAXIQP;
+      pIc->minIqp = (pIc->minIqp >= 0) ? pIc->minIqp : DEF_264_MINIQP;
+      pIc->maxQp = (pIc->maxQp >= 0) ? pIc->maxQp : DEF_264_MAXQP;
+      pIc->minQp = (pIc->minQp >= 0) ? pIc->minQp : DEF_264_MINQP;
+      CVI_VENC_CFG("maxQp = %d, minQp = %d, maxIqp = %d, minIqp = %d\n", pIc->maxQp, pIc->minQp,
+                   pIc->maxIqp, pIc->minIqp);
+
+      if (pIc->statTime == 0) {
+        pIc->statTime = DEF_STAT_TIME;
+      }
+      CVI_VENC_CFG("statTime = %d\n", pIc->statTime);
+    } else if (pIc->rcMode == SAMPLE_RC_FIXQP) {
+      if (pIc->firstFrmstartQp != -1) {
+        CVI_VENC_WARN("firstFrmstartQp is invalid in FixQP mode\n");
+        pIc->firstFrmstartQp = -1;
+      }
+
+      pIc->bitrate = 0;
+      CVI_VENC_CFG("RC_FIXQP, iqp = %d, pqp = %d\n", pIc->iqp, pIc->pqp);
+    } else {
+      SAMPLE_PRT("codec = %s, rcMode = %d, not supported RC mode\n", pIc->codec, pIc->rcMode);
+      return -1;
+    }
+  } else if (!strcmp(pIc->codec, "mjp") || !strcmp(pIc->codec, "jpg")) {
+    if (pIc->rcMode == -1) {
+      pIc->rcMode = SAMPLE_RC_FIXQP;
+      pIc->quality = (pIc->quality != -1) ? pIc->quality : 0;
+    } else if (pIc->rcMode == SAMPLE_RC_FIXQP) {
+      if (pIc->quality < 0)
+        pIc->quality = 0;
+      else if (pIc->quality >= 100)
+        pIc->quality = 99;
+      else if (pIc->quality == 0)
+        pIc->quality = 1;
+    }
+  } else {
+    SAMPLE_PRT("codec = %s\n", pIc->codec);
+    return -1;
+  }
+
+  return 0;
 }
 
 static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig) {
@@ -429,6 +550,8 @@ static CVI_S32 InitRTSP(VencCodec codec, CVI_S32 frameWidth, CVI_S32 frameHeight
   context->input_cfg.minQp = 26;
   context->input_cfg.maxIqp = 42;
   context->input_cfg.minIqp = 26;
+
+  CheckInputCfg(&context->input_cfg);
 
   enRcMode = (SAMPLE_RC_E)context->input_cfg.rcMode;
 

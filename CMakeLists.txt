@@ -24,7 +24,7 @@ if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
-set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=c11")
+set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
 set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE} ${CMAKE_C_INIT}" )
