@@ -18,10 +18,8 @@ class MotionDetection {
   void construct_bbox(std::vector<cv::Rect> bboxes, cvai_object_t *obj_meta);
 
   IVE_HANDLE ive_handle;
-  IVE_SRC_IMAGE_S src[2], tmp, andframe[2];
+  IVE_SRC_IMAGE_S src[2], tmp;
   IVE_IMAGE_S bk_dst;
-  VB_BLK blk[2];
-  VIDEO_FRAME_INFO_S vbsrc[2];
   uint32_t count;
   uint32_t threshold;
   double min_area;

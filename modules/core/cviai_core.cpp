@@ -718,6 +718,12 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, uint32_t threshold,
                                               double min_area) {
   TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_Background");
+  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
+    LOGE("Unsupported pixel format: %d. Motion Detection only support YUV400 format\n",
+         frame->stVFrame.enPixelFormat);
+    return CVI_FAILURE;
+  }
+
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
@@ -731,6 +737,12 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
 CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                cvai_object_t *objects) {
   TRACE_EVENT("cviai_core", "CVI_AI_MotionDetection");
+
+  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
+    LOGE("Unsupported pixel format: %d. Motion Detection only support YUV400 format\n",
+         frame->stVFrame.enPixelFormat);
+    return CVI_FAILURE;
+  }
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {

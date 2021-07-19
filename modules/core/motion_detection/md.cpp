@@ -47,27 +47,19 @@ MotionDetection::MotionDetection(IVE_HANDLE handle, VIDEO_FRAME_INFO_S *init_fra
       im_height(init_frame->stVFrame.u32Height) {
   uint32_t voWidth = init_frame->stVFrame.u32Width;
   uint32_t voHeight = init_frame->stVFrame.u32Height;
-  CREATE_VBFRAME_HELPER(&blk[0], &vbsrc[0], voWidth, voHeight, PIXEL_FORMAT_YUV_400);
-
-  CREATE_VBFRAME_HELPER(&blk[1], &vbsrc[1], voWidth, voHeight, PIXEL_FORMAT_YUV_400);
-
-  CVI_IVE_VideoFrameInfo2Image(&vbsrc[0], &src[0]);
-  CVI_IVE_VideoFrameInfo2Image(&vbsrc[1], &src[1]);
   CVI_IVE_CreateImage(ive_handle, &tmp, IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
-  CVI_IVE_CreateImage(ive_handle, &andframe[0], IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
-  CVI_IVE_CreateImage(ive_handle, &andframe[1], IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
   CVI_IVE_CreateImage(ive_handle, &bk_dst, IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
+  CVI_IVE_CreateImage(ive_handle, &src[0], IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
+  CVI_IVE_CreateImage(ive_handle, &src[1], IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
 
   VideoFrameCopy2Image(handle, init_frame, &src[0]);
 }
 
 MotionDetection::~MotionDetection() {
-  CVI_VB_ReleaseBlock(blk[0]);
-  CVI_VB_ReleaseBlock(blk[1]);
-  CVI_SYS_FreeI(ive_handle, &tmp);
-  CVI_SYS_FreeI(ive_handle, &andframe[0]);
-  CVI_SYS_FreeI(ive_handle, &andframe[1]);
   CVI_SYS_FreeI(ive_handle, &bk_dst);
+  CVI_SYS_FreeI(ive_handle, &tmp);
+  CVI_SYS_FreeI(ive_handle, &src[0]);
+  CVI_SYS_FreeI(ive_handle, &src[1]);
 }
 
 CVI_S32 MotionDetection::update_background(VIDEO_FRAME_INFO_S *frame) {
