@@ -29,7 +29,7 @@
 namespace cviai {
 
 FaceAttribute::FaceAttribute(bool with_attr)
-    : Core(CVI_MEM_DEVICE, true), m_use_wrap_hw(false), m_with_attribute(with_attr) {
+    : Core(CVI_MEM_DEVICE), m_use_wrap_hw(false), m_with_attribute(with_attr) {
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
 }
 

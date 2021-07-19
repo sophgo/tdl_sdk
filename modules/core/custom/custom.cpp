@@ -8,7 +8,7 @@
 
 namespace cviai {
 
-Custom::Custom() : Core(CVI_MEM_DEVICE, true) {}
+Custom::Custom() : Core(CVI_MEM_DEVICE) {}
 
 int Custom::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   for (uint32_t idx = 0; idx < data->size(); idx++) {

@@ -132,7 +132,7 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
   return input_mat;
 }
 
-Liveness::Liveness() : Core(CVI_MEM_SYSTEM, false, 9) {}
+Liveness::Liveness() : Core(CVI_MEM_SYSTEM) {}
 
 int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
                         cvai_face_t *rgb_meta, cvai_face_t *ir_meta) {

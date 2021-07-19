@@ -5,12 +5,9 @@
 
 namespace cviai {
 
-Core::Core(CVI_MEM_TYPE_E input_mem_type, bool skip_postprocess, int32_t batch_size) {
+Core::Core(CVI_MEM_TYPE_E input_mem_type) {
   mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf = {.batch_size = batch_size,
-                 .debug_mode = false,
-                 .skip_postprocess = skip_postprocess,
-                 .input_mem_type = input_mem_type};
+  mp_mi->conf = {.debug_mode = false, .input_mem_type = input_mem_type};
 }
 
 Core::Core() : Core(CVI_MEM_SYSTEM) {}
@@ -39,13 +36,8 @@ int Core::modelOpen(const char *filepath) {
   CLOSE_MODEL_IF_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
                         "CVI_NN_RegisterModel failed");
 
-  if (mp_mi->conf.batch_size != 0) {
-    CVI_NN_SetConfig(mp_mi->handle, OPTION_BATCH_SIZE, mp_mi->conf.batch_size);
-  }
   CVI_NN_SetConfig(mp_mi->handle, OPTION_OUTPUT_ALL_TENSORS,
                    static_cast<int>(mp_mi->conf.debug_mode));
-  CVI_NN_SetConfig(mp_mi->handle, OPTION_SKIP_POSTPROCESS,
-                   static_cast<int>(mp_mi->conf.skip_postprocess));
 
   CLOSE_MODEL_IF_FAILED(
       CVI_NN_GetInputOutputTensors(mp_mi->handle, &mp_mi->in.tensors, &mp_mi->in.num,

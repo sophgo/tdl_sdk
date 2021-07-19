@@ -175,7 +175,7 @@ static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<in
 }
 
 MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
-    : Core(CVI_MEM_DEVICE, true),
+    : Core(CVI_MEM_DEVICE),
       m_model_config(MDetV2Config::create_config(model)),
       m_iou_threshold(iou_thresh) {
   m_model_threshold = m_model_config.default_score_threshold;

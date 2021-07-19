@@ -17,7 +17,7 @@
 
 namespace cviai {
 
-MaskFaceRecognition::MaskFaceRecognition() : Core(CVI_MEM_DEVICE, true) {}
+MaskFaceRecognition::MaskFaceRecognition() : Core(CVI_MEM_DEVICE) {}
 
 MaskFaceRecognition::~MaskFaceRecognition() {
   if (m_gdc_blk != (VB_BLK)-1) {

@@ -15,7 +15,7 @@
 
 namespace cviai {
 
-OSNet::OSNet() : Core(CVI_MEM_DEVICE, true) {}
+OSNet::OSNet() : Core(CVI_MEM_DEVICE) {}
 
 int OSNet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
