@@ -18,6 +18,8 @@ echo "Creating tmp working directory."
 
 if [[ "$SDK_VER" == "uclibc" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-uclibc-linux.cmake
+    SHRINK_OPENCV_SIZE=ON
+    OPENCV_INSTALL_PATH=""
 elif [[ "$SDK_VER" == "64bit" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
 elif [[ "$SDK_VER" == "32bit" ]]; then
@@ -35,7 +37,9 @@ $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                 -DIVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
                                 -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
                                 -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
-                                -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE
+                                -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
+                                -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE
+
 ninja -j8 || exit 1
 ninja install || exit 1
 
