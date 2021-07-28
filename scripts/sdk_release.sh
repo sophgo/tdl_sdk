@@ -23,6 +23,10 @@ if [[ "$SDK_VER" == "uclibc" ]]; then
 elif [[ "$SDK_VER" == "64bit" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
 elif [[ "$SDK_VER" == "32bit" ]]; then
+    if [[ "$CHIP_ARCH" != "CV183X" ]]; then
+        SHRINK_OPENCV_SIZE=ON
+        OPENCV_INSTALL_PATH=""
+    fi
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
 else
     echo "Wrong SDK_VER=$SDK_VER"

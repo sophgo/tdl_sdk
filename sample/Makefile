@@ -22,14 +22,16 @@ MW_LIB_PATH = $(MW_PATH)/lib
 MW_3RD_LIB_PATH = $(MW_PATH)/lib/3rd
 MW_INC_PATH = $(MW_PATH)/include
 MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
-MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -ltinyalsa -lcvi_VoiceEngine -lcvi_RES -lnanomsg
+MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
 
 ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
 MW_LIBS = -lsample -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
+LINK_OPENCV = 1
 else
 MW_LIBS = -lsample -lvpu -lisp -lisp_algo -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
+LINK_OPENCV = 0
 endif
 #####################################################
 
@@ -52,22 +54,31 @@ RTSP_INC_PATH = $(AISDK_ROOT_PATH)/include/cvi_rtsp
 #####################################################
 TPU_LIB_PATH = $(TPU_PATH)/lib
 
-# OpenCV
-#####################################################
-OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
-
 # IVE
 #####################################################
 IVE_SDK_LIB_PATH = $(IVE_PATH)/lib
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
 
 
-CFLAGS += -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -Os -std=gnu11 -march=armv7-a -ffunction-sections -fdata-sections -Wno-pointer-to-int-cast -fsigned-char -mfloat-abi=hard -mfpu=neon-vfpv4 -O3 -DNDEBUG -fsigned-char -Werror=all -fdiagnostics-color=always -std=c11 -s -MD
+# OpenCV
+ifeq ($(LINK_OPENCV), 1)
+OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
+OPENCV_LIBS = -lopencv_core -lopencv_imgproc
+endif
+
+CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -fsigned-char -Werror=all -fdiagnostics-color=always -s 
+
+ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
+CFLAGS += -march=armv8-a
+else
+CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
+endif
+
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
 STRIPSYMBOL =
 else
-CFLAGS += -O3
+CFLAGS += -O3 -DNDEBUG
 STRIPSYMBOL = @$(STRIP) $@
 endif
 
@@ -110,13 +121,17 @@ RTSP_LIBS = -lcvi_rtsp
 AISDK_LIBS = -lcviai_core -lcviai_service
 TPU_LIBS = -lcnpy  -lcvikernel  -lcvimath  -lcviruntime  -lz
 IVE_LIBS = -lcvi_ive_tpu
-OPENCV_LIBS = -lopencv_core -lopencv_imgproc
 
 SRCS := $(wildcard $(PWD)/*.c)
 OBJS := $(SRCS:%.c=%.o)
 DEPS = $(SRCS:.c=.d)
 
-SAMPLE_LIBS = $(AISDK_LIBS) $(TPU_LIBS) $(IVE_LIBS) $(OPENCV_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(OPENCV_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
+SAMPLE_LIBS = $(AISDK_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
+
+ifeq ($(LINK_OPENCV), 1)
+SAMPLE_LIBS += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
+endif
+
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH)
 
 CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH)
