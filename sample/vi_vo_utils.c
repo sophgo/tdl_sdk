@@ -168,6 +168,8 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
       (s32WorkSnsId == 0) ? stIniCfg.MipiDev : stIniCfg.Sns2MipiDev;
   pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.s32BusId =
       (s32WorkSnsId == 0) ? stIniCfg.s32BusId : stIniCfg.s32Sns2BusId;
+  pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.s32SnsI2cAddr =
+      (s32WorkSnsId == 0) ? stIniCfg.s32SnsI2cAddr : stIniCfg.s32Sns2I2cAddr;
   pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.as16LaneId[0] =
       (s32WorkSnsId == 0) ? stIniCfg.as16LaneId[0] : stIniCfg.as16Sns2LaneId[0];
   pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.as16LaneId[1] =
