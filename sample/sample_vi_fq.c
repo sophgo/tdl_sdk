@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   CVI_S32 s32Ret = CVI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1920, .u32Height = 1080};
+  SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
   if (InitVideoSystem(&vs_ctx, &aiInputSize, PIXEL_FORMAT_RGB_888, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;
@@ -53,7 +53,6 @@ int main(int argc, char *argv[]) {
 
   int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);

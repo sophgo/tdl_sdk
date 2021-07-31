@@ -56,6 +56,9 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   } else if (strcmp(model_name, "mobiledetv2-d2") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2;
     config->inference = CVI_AI_MobileDetV2_D2;
+  } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0;
+    config->inference = CVI_AI_MobileDetV2_Pedestrian_D0;
   } else if (strcmp(model_name, "yolov3") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     config->inference = CVI_AI_Yolov3;

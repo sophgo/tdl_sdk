@@ -236,7 +236,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   u32BlkSize = COMMON_GetPicBufferSize(viSize->u32Width, viSize->u32Height, SAMPLE_PIXEL_FORMAT,
                                        DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[0].u32BlkCnt = 7;
+  stVbConf.astCommPool[0].u32BlkCnt = 3;
 
   u32BlkSize = COMMON_GetPicBufferSize(aiSize->u32Width, aiSize->u32Height, aiFormat,
                                        DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
