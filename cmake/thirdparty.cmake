@@ -35,17 +35,6 @@ FetchContent_MakeAvailable(libeigen)
 include_directories(${libeigen_SOURCE_DIR}/include/eigen3)
 message("Content downloaded to ${libeigen_SOURCE_DIR}")
 
-FetchContent_Declare(
-  neon2sse
-  GIT_REPOSITORY  http://10.58.65.3:8480/jiaji.huang/arm_neon_2_x86_sse.git
-  GIT_TAG origin/master
-)
-FetchContent_GetProperties(neon2sse)
-if(NOT neon2sse_POPULATED)
-  FetchContent_Populate(neon2sse)
-endif()
-include_directories(${neon2sse_SOURCE_DIR})
-message("Content downloaded to ${neon2sse_SOURCE_DIR}")
 
 include(FetchContent)
 FetchContent_Declare(
