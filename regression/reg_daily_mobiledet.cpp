@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
       }
 
       cvai_object_t obj_meta;
-      memset(&obj_meta, 0, sizeof(cvai_face_t));
+      memset(&obj_meta, 0, sizeof(cvai_object_t));
 
       if (inference(handle, &frame, &obj_meta) != CVI_SUCCESS) {
         printf("failed to inference\n");
