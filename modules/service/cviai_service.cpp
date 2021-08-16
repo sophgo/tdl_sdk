@@ -177,6 +177,15 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
     }                                                                    \
   } while (0)
 
+static void createIVEHandleIfNeeded(IVE_HANDLE *ive_handle) {
+  if (*ive_handle == NULL) {
+    *ive_handle = CVI_IVE_CreateHandle();
+    if (*ive_handle == NULL) {
+      LOGC("IVE handle init failed.\n");
+    }
+  }
+}
+
 template <typename T>
 inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
                        const bool drawText, cvai_service_brush_t brush) {
@@ -191,6 +200,7 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
     cviai_context_t *ai_ctx = static_cast<cviai_context_t *>(ctx->ai_handle);
 
     if (ctx->draw_use_tpu) {
+      createIVEHandleIfNeeded(&ai_ctx->ive_handle);
       size_t image_size = frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
                           frame->stVFrame.u32Length[2];
       bool do_unmap = false;

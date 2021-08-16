@@ -66,6 +66,15 @@ Core *create_model(const ModelParams &params, Args... arg) {
   return instance;
 }
 
+static void createIVEHandleIfNeeded(IVE_HANDLE *ive_handle) {
+  if (*ive_handle == NULL) {
+    *ive_handle = CVI_IVE_CreateHandle();
+    if (*ive_handle == NULL) {
+      LOGC("IVE handle init failed.\n");
+    }
+  }
+}
+
 // Convenience macros for creator
 #define CREATOR(type) CreatorFunc(create_model<type>)
 
@@ -140,7 +149,10 @@ inline void __attribute__((always_inline)) removeCtx(cviai_context_t *ctx) {
   delete ctx->td_model;
   delete ctx->md_model;
   delete ctx->ds_tracker;
-  CVI_IVE_DestroyHandle(ctx->ive_handle);
+  if (ctx->ive_handle) {
+    CVI_IVE_DestroyHandle(ctx->ive_handle);
+  }
+
   for (auto it : ctx->vec_vpss_engine) {
     delete it;
   }
@@ -200,11 +212,8 @@ CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle
 CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
                              const CVI_U8 vpssDev) {
   cviai_context_t *ctx = new cviai_context_t;
-  ctx->ive_handle = CVI_IVE_CreateHandle();
-  if (ctx->ive_handle == NULL) {
-    LOGC("IVE handle init failed.\n");
-    return CVI_FAILURE;
-  }
+  ctx->ive_handle = NULL;
+
   ctx->vec_vpss_engine.push_back(new VpssEngine());
   if (ctx->vec_vpss_engine[0]->init(vpssGroupId, vpssDev) != CVI_SUCCESS) {
     LOGC("cviai_handle_t create failed.");
@@ -705,6 +714,7 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   TamperDetectorMD *td_model = ctx->td_model;
   if (td_model == nullptr) {
     LOGD("Init Tamper Detection Model.\n");
+    createIVEHandleIfNeeded(&ctx->ive_handle);
     ctx->td_model = new TamperDetectorMD(ctx->ive_handle, frame, (float)0.05, (int)10);
     ctx->td_model->print_info();
 
@@ -728,6 +738,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
     LOGD("Init Motion Detection.\n");
+    createIVEHandleIfNeeded(&ctx->ive_handle);
     ctx->md_model = new MotionDetection(ctx->ive_handle, frame, threshold, min_area);
     return CVI_SUCCESS;
   }
