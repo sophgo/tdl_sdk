@@ -9,7 +9,6 @@
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
 #include "deepsort/cvi_deepsort.hpp"
-#include "es_classification/es_classification.hpp"
 #include "eye_classification/eye_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
 #include "face_landmarker/face_landmarker.hpp"
@@ -27,6 +26,8 @@
 #include "osnet/osnet.hpp"
 #include "retina_face/retina_face.hpp"
 #include "segmentation/deeplabv3.hpp"
+#include "smoke_classification/smoke_classification.hpp"
+#include "sound_classification/sound_classification.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
 #include "yawn_classification/yawn_classification.hpp"
 
@@ -95,12 +96,13 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
-    {CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, CREATOR(ESClassification)},
+    {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
     {CVI_AI_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
     {CVI_AI_SUPPORTED_MODEL_DEEPLABV3, CREATOR(Deeplabv3)},
     {CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, CREATOR(AlphaPose)},
     {CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, CREATOR(EyeClassification)},
     {CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, CREATOR(YawnClassification)},
+    {CVI_AI_SUPPORTED_MODEL_SMOKECLASSIFICATION, CREATOR(SmokeClassification)},
     {CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, CREATOR(FaceLandmarker)},
     {CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, CREATOR(IncarObjectDetection)},
     {CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
@@ -567,8 +569,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai
 DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *, int)
 
-DEFINE_INF_FUNC_F1_P1(CVI_AI_ESClassification, ESClassification,
-                      CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION, int *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification, SoundClassification,
+                      CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
 DEFINE_INF_FUNC_F2_P1(CVI_AI_DeeplabV3, Deeplabv3, CVI_AI_SUPPORTED_MODEL_DEEPLABV3,
                       cvai_class_filter_t *)
 
@@ -586,6 +588,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_EyeClassification, EyeClassification,
                       CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YawnClassification, YawnClassification,
                       CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_SmokeClassification, SmokeClassification,
+                      CVI_AI_SUPPORTED_MODEL_SMOKECLASSIFICATION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceLandmarker, FaceLandmarker, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER,
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_IncarObjectDetection, IncarObjectDetection,

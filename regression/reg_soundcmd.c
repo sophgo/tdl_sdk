@@ -14,8 +14,8 @@ static int run(const char *img_dir, float *Acc) {
   struct dirent *entry;
   dirp = opendir(img_dir);
   int total = 0, true_total = 0;
-  int _true[6] = {0};
-  int _total[6] = {0};
+  int _true[22] = {0};
+  int _total[22] = {0};
   while ((entry = readdir(dirp)) != NULL) {
     if (entry->d_type != 8 && entry->d_type != 0) continue;
     char line[500] = "\0";
@@ -45,13 +45,13 @@ static int run(const char *img_dir, float *Acc) {
       true_total++;
       _true[index]++;
     }
-    _total[index]++;
+    _total[atoi(pch)]++;
     total++;
   }
   *Acc = (float)true_total / (float)total;
   closedir(dirp);
 
-  for (int i = 0; i < 6; ++i) {
+  for (int i = 0; i < 22; ++i) {
     printf("index: %d Acc: %f\n", i, (float)_true[i] / (float)_total[i]);
   }
   return CVI_SUCCESS;
@@ -59,7 +59,7 @@ static int run(const char *img_dir, float *Acc) {
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage: %s <es classifier model path> <data dir>.\n", argv[0]);
+    printf("Usage: %s <soundcmd model path> <data dir>.\n", argv[0]);
     return CVI_FAILURE;
   }
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 
   float Acc = 0.0;
   run(argv[2], &Acc);
-  printf("Num of esc -> Acc: %f\n", Acc);
+  printf("Num of soundcmd -> Acc: %f\n", Acc);
 
   CVI_AI_DestroyHandle(ai_handle);
 }

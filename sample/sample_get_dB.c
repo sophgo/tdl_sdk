@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#include <math.h>
 #include <pthread.h>
 #include <signal.h>
 #include "cvi_audio.h"
@@ -8,16 +9,27 @@
 #define SAMPLE_RATE 16000
 #define FRAME_SIZE SAMPLE_RATE * 2 * 3  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
 
-// ESC class name
-char ES_Classes[6][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",
-                          "Baby Cry",          "Glass breaking",    "Office"};
+bool gRun = true;
 
-bool gRun = true;     // signal
-bool record = false;  // record to output
-char *outpath;        // output file path
-
-// Init cviai handle.
-cviai_handle_t ai_handle = NULL;
+#define VOLUMEMAX 32768.0  // db [-80 0] <---> [0 120]
+float SAMPLE_AUDIO_Calculate_DB(CVI_U8 *buffer, int frames) {
+  int framesShort = frames / 2;
+  float fVal = 0;
+  float fDB = 0;
+  float ret = 0;
+  if (framesShort > 0) {
+    int sum = 0;
+    short *pos = (short *)buffer;  // frm cvi_u8 to short
+    for (int i = 0; i < framesShort; i++) {
+      sum += abs(*pos);
+      pos++;
+    }
+    fVal = (float)sum / (framesShort * VOLUMEMAX);
+    fDB = 20 * log10(fVal);
+    ret = fDB * 1.5 + 120.0;
+  }
+  return ret;
+}
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
@@ -38,13 +50,6 @@ void *thread_uplink_audio(void *arg) {
 
   // Set video frame interface
   CVI_U8 buffer[FRAME_SIZE];  // 3 seconds
-  VIDEO_FRAME_INFO_S Frame;
-  Frame.stVFrame.pu8VirAddr[0] = buffer;  // Global buffer
-  Frame.stVFrame.u32Height = 1;
-  Frame.stVFrame.u32Width = FRAME_SIZE;
-
-  // classify the sound result
-  int index = -1;
 
   while (gRun) {
     for (int i = 0; i < loop; ++i) {
@@ -58,19 +63,8 @@ void *thread_uplink_audio(void *arg) {
       }
       s32Ret = CVI_AI_ReleaseFrame(0, 0, &stFrame, &stAecFrm);
     }
-    if (!record) {
-      CVI_AI_SoundClassification(ai_handle, &Frame, &index);  // Detect the audio
-      // Print esc result
-      if (index == 0 || index == 1)
-        printf("esc class: %s  \n", ES_Classes[0]);
-      else
-        printf("esc class: %s  \n", ES_Classes[index]);
-    } else {
-      FILE *fp = fopen(outpath, "wb");
-      fwrite((char *)buffer, 1, FRAME_SIZE, fp);
-      fclose(fp);
-      gRun = false;
-    }
+    float dB = SAMPLE_AUDIO_Calculate_DB(buffer, FRAME_SIZE);
+    printf("3 seconds Average dB value: %f\n", dB);
   }
   pthread_exit(NULL);
 }
@@ -109,20 +103,10 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
 }
 
 int main(int argc, char **argv) {
-  if (argc != 2 && argc != 4) {
-    printf(
-        "Usage: %s <esc_model_path> <record 0 or 1> <output file path>\n"
-        "\t esc model path\n"
-        "\t record, 0: disable 1. enable\n"
-        "\t output file path: {output file path}.raw\n",
-        argv[0]);
-    return CVI_FAILURE;
-  }
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 ret = CVI_SUCCESS;
   if (CVI_AUDIO_INIT() == CVI_SUCCESS) {
     printf("CVI_AUDIO_INIT success!!\n");
   } else {
@@ -132,33 +116,8 @@ int main(int argc, char **argv) {
 
   SET_AUDIO_ATTR();
 
-  ret = CVI_AI_CreateHandle(&ai_handle);
-
-  if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
-    return ret;
-  }
-
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
-  if (ret != CVI_SUCCESS) {
-    printf("Set model esc failed with %#x!\n", ret);
-    return ret;
-  }
-
-  if (argc == 4) {
-    record = atoi(argv[2]) ? true : false;
-    outpath = (char *)malloc(sizeof(argv[3]));
-    strcpy(outpath, argv[3]);
-  }
-
   pthread_t pcm_output_thread;
   pthread_create(&pcm_output_thread, NULL, thread_uplink_audio, NULL);
-
   pthread_join(pcm_output_thread, NULL);
-  CVI_AI_DestroyHandle(ai_handle);
-  if (argc == 4) {
-    free(outpath);
-  }
-
   return 0;
 }

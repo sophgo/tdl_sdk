@@ -125,7 +125,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2)                   \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV3)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_OSNET)                            \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_ESCLASSIFICATION)                 \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION)              \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_WPODNET)                          \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LPRNET_TW)                        \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LPRNET_CN)                        \
@@ -134,7 +134,9 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION)                \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACELANDMARKER)                   \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION)
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION)             \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SMOKECLASSIFICATION)
+
 // clang-format on
 
 #define CVI_AI_NAME_WRAP(x) x,
@@ -644,15 +646,15 @@ DLL_EXPORT CVI_S32 CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *fr
 /**@{*/
 
 /**
- * @brief Do Environment sound detection.
+ * @brief Do sound classification.
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
- * @param index The index of environment sound classes.
+ * @param index The index of sound classes.
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_ESClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                           int *index);
+DLL_EXPORT CVI_S32 CVI_AI_SoundClassification(const cviai_handle_t handle,
+                                              VIDEO_FRAME_INFO_S *frame, int *index);
 
 /**@}*/
 
@@ -891,6 +893,19 @@ DLL_EXPORT CVI_S32 CVI_AI_IncarObjectDetection(const cviai_handle_t handle,
 
 DLL_EXPORT CVI_S32 CVI_AI_FaceLandmarker(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                          cvai_face_t *face);
+
+/**
+ * @brief Do smoke classification.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param cvai_face_t structure. Calculate the smoke_score in cvai_dms_t.
+ * @return int Return CVI_SUCCESS on success.
+ */
+
+DLL_EXPORT CVI_S32 CVI_AI_SmokeClassification(const cviai_handle_t handle,
+                                              VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
+
 /**
  * @brief Do Incar ObjectDetection.
  *
