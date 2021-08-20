@@ -4,9 +4,9 @@
 
 if (SHRINK_OPENCV_SIZE)
   if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-uclibc-linux.cmake")
-    set(OPENCV_URL ftp://10.34.33.5/prebuilt/easy_build/opencv_aisdk_customized/opencv_arm_uclibc.tar)
+    set(OPENCV_URL ftp://swftp:cvitek@10.58.65.3/sw_rls/cv1835/aisdk_opencv/opencv_arm_uclibc.tar)
   elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-gnueabihf-linux.cmake")
-    set(OPENCV_URL ftp://10.34.33.5/prebuilt/easy_build/opencv_aisdk_customized/opencv_arm_glibc.tar)
+    set(OPENCV_URL ftp://swftp:cvitek@10.58.65.3/sw_rls/cv1835/aisdk_opencv/opencv_arm_glibc.tar)
   else()
     message(FATAL_ERROR "No shrinked opencv library for ${CMAKE_TOOLCHAIN_FILE}")
   endif()
