@@ -10,9 +10,13 @@
 #define NAME_LANDMARK "face_rpn_landmark_pred_"
 #define FACE_POINTS_SIZE 5
 
+#define MEAN_R 123
+#define MEAN_G 117
+#define MEAN_B 104
+
 namespace cviai {
 
-RetinaFace::RetinaFace() : Core(CVI_MEM_DEVICE) {}
+RetinaFace::RetinaFace(PROCESS process) : Core(CVI_MEM_DEVICE) { this->process = process; }
 
 RetinaFace::~RetinaFace() {}
 
@@ -21,8 +25,12 @@ int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
     LOGE("Retina face only has 1 input.\n");
     return CVI_FAILURE;
   }
+  std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
   for (int i = 0; i < 3; i++) {
     (*data)[0].factor[i] = 1;
+    if (this->process == PYTORCH) {
+      (*data)[0].mean[i] = mean[i];
+    }
   }
   (*data)[0].use_quantize_scale = true;
   return CVI_SUCCESS;
@@ -31,28 +39,59 @@ int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
 int RetinaFace::onModelOpened() {
   std::vector<anchor_cfg> cfg;
   anchor_cfg tmp;
-  tmp.SCALES = {32, 16};
-  tmp.BASE_SIZE = 16;
-  tmp.RATIOS = {1.0};
-  tmp.ALLOWED_BORDER = 9999;
-  tmp.STRIDE = 32;
-  cfg.push_back(tmp);
 
-  tmp.SCALES = {8, 4};
-  tmp.BASE_SIZE = 16;
-  tmp.RATIOS = {1.0};
-  tmp.ALLOWED_BORDER = 9999;
-  tmp.STRIDE = 16;
-  cfg.push_back(tmp);
+  if (this->process == CAFFE) {
+    m_feat_stride_fpn = {32, 16, 8};
 
-  tmp.SCALES = {2, 1};
-  tmp.BASE_SIZE = 16;
-  tmp.RATIOS = {1.0};
-  tmp.ALLOWED_BORDER = 9999;
-  tmp.STRIDE = 8;
-  cfg.push_back(tmp);
+    tmp.SCALES = {32, 16};
+    tmp.BASE_SIZE = 16;
+    tmp.RATIOS = {1.0};
+    tmp.ALLOWED_BORDER = 9999;
+    tmp.STRIDE = 32;
+    cfg.push_back(tmp);
 
-  std::vector<std::vector<anchor_box>> anchors_fpn = generate_anchors_fpn(false, cfg);
+    tmp.SCALES = {8, 4};
+    tmp.BASE_SIZE = 16;
+    tmp.RATIOS = {1.0};
+    tmp.ALLOWED_BORDER = 9999;
+    tmp.STRIDE = 16;
+    cfg.push_back(tmp);
+
+    tmp.SCALES = {2, 1};
+    tmp.BASE_SIZE = 16;
+    tmp.RATIOS = {1.0};
+    tmp.ALLOWED_BORDER = 9999;
+    tmp.STRIDE = 8;
+    cfg.push_back(tmp);
+  }
+
+  if (this->process == PYTORCH) {
+    m_feat_stride_fpn = {8, 16, 32};
+
+    tmp.SCALES = {1, 2};
+    tmp.BASE_SIZE = 16;
+    tmp.RATIOS = {1.0};
+    tmp.ALLOWED_BORDER = 9999;
+    tmp.STRIDE = 8;
+    cfg.push_back(tmp);
+
+    tmp.SCALES = {4, 8};
+    tmp.BASE_SIZE = 16;
+    tmp.RATIOS = {1.0};
+    tmp.ALLOWED_BORDER = 9999;
+    tmp.STRIDE = 16;
+    cfg.push_back(tmp);
+
+    tmp.SCALES = {16, 32};
+    tmp.BASE_SIZE = 16;
+    tmp.RATIOS = {1.0};
+    tmp.ALLOWED_BORDER = 9999;
+    tmp.STRIDE = 32;
+    cfg.push_back(tmp);
+  }
+
+  std::vector<std::vector<anchor_box>> anchors_fpn =
+      generate_anchors_fpn(false, cfg, this->process);
   std::map<std::string, std::vector<anchor_box>> anchors_fpn_map;
   for (size_t i = 0; i < anchors_fpn.size(); i++) {
     std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
@@ -137,7 +176,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
           float dw = bbox_blob[j + count * (2 + num * 4)];
           float dh = bbox_blob[j + count * (3 + num * 4)];
           regress = cv::Vec4f(dx, dy, dw, dh);
-          bbox_pred(anchors[j + count * num], regress, box.bbox);
+          bbox_pred(anchors[j + count * num], regress, box.bbox, this->process);
 
           for (size_t k = 0; k < box.pts.size; k++) {
             box.pts.x[k] = landmark_blob[j + count * (num * 10 + k * 2)];

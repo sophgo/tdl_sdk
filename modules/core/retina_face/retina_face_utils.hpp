@@ -11,21 +11,38 @@
 namespace cviai {
 
 inline void __attribute__((always_inline))
-bbox_pred(const anchor_box &anchor, cv::Vec4f regress, cvai_bbox_t &bbox) {
+bbox_pred(const anchor_box &anchor, cv::Vec4f regress, cvai_bbox_t &bbox, PROCESS process) {
   float width = anchor.x2 - anchor.x1 + 1;
   float height = anchor.y2 - anchor.y1 + 1;
-  float ctr_x = anchor.x1 + 0.5 * (width - 1.0);
-  float ctr_y = anchor.y1 + 0.5 * (height - 1.0);
 
-  float pred_ctr_x = regress[0] * width + ctr_x;
-  float pred_ctr_y = regress[1] * height + ctr_y;
-  float pred_w = FastExp(regress[2]) * width;
-  float pred_h = FastExp(regress[3]) * height;
+  if (process == CAFFE) {
+    float ctr_x = anchor.x1 + 0.5 * (width - 1.0);
+    float ctr_y = anchor.y1 + 0.5 * (height - 1.0);
 
-  bbox.x1 = pred_ctr_x - 0.5 * (pred_w - 1.0);
-  bbox.y1 = pred_ctr_y - 0.5 * (pred_h - 1.0);
-  bbox.x2 = pred_ctr_x + 0.5 * (pred_w - 1.0);
-  bbox.y2 = pred_ctr_y + 0.5 * (pred_h - 1.0);
+    float pred_ctr_x = regress[0] * width + ctr_x;
+    float pred_ctr_y = regress[1] * height + ctr_y;
+    float pred_w = FastExp(regress[2]) * width;
+    float pred_h = FastExp(regress[3]) * height;
+
+    bbox.x1 = pred_ctr_x - 0.5 * (pred_w - 1.0);
+    bbox.y1 = pred_ctr_y - 0.5 * (pred_h - 1.0);
+    bbox.x2 = pred_ctr_x + 0.5 * (pred_w - 1.0);
+    bbox.y2 = pred_ctr_y + 0.5 * (pred_h - 1.0);
+
+  } else if (process == PYTORCH) {
+    float ctr_x = anchor.x1 + 0.5 * (width);
+    float ctr_y = anchor.y1 + 0.5 * (height);
+
+    float pred_ctr_x = regress[0] * 0.1 * width + ctr_x;
+    float pred_ctr_y = regress[1] * 0.1 * height + ctr_y;
+    float pred_w = FastExp(regress[2] * 0.2) * width;
+    float pred_h = FastExp(regress[3] * 0.2) * height;
+
+    bbox.x1 = pred_ctr_x - 0.5 * (pred_w);
+    bbox.y1 = pred_ctr_y - 0.5 * (pred_h);
+    bbox.x2 = pred_ctr_x + 0.5 * (pred_w);
+    bbox.y2 = pred_ctr_y + 0.5 * (pred_h);
+  }
 }
 
 inline void __attribute__((always_inline))

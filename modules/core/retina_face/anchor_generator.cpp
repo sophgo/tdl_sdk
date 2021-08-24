@@ -27,6 +27,17 @@ static anchor_box _mkanchors(anchor_win win) {
   return anchor;
 }
 
+static anchor_box _mkanchors_pytorch(anchor_win win) {
+  anchor_box anchor;
+
+  anchor.x1 = 0;
+  anchor.y1 = 0;
+  anchor.x2 = anchor.x1 + win.w - 1;
+  anchor.y2 = anchor.y1 + win.h - 1;
+
+  return anchor;
+}
+
 static vector<anchor_box> _ratio_enum(anchor_box anchor, const vector<float> &ratios) {
   vector<anchor_box> anchors;
   for (size_t i = 0; i < ratios.size(); i++) {
@@ -44,7 +55,8 @@ static vector<anchor_box> _ratio_enum(anchor_box anchor, const vector<float> &ra
   return anchors;
 }
 
-static vector<anchor_box> _scale_enum(anchor_box anchor, const vector<int> &scales) {
+static vector<anchor_box> _scale_enum(anchor_box anchor, const vector<int> &scales,
+                                      PROCESS process) {
   vector<anchor_box> anchors;
   for (size_t i = 0; i < scales.size(); i++) {
     anchor_win win = _whctrs(anchor);
@@ -52,15 +64,21 @@ static vector<anchor_box> _scale_enum(anchor_box anchor, const vector<int> &scal
     win.w = win.w * scales[i];
     win.h = win.h * scales[i];
 
-    anchor_box tmp = _mkanchors(win);
-    anchors.push_back(tmp);
+    if (process == CAFFE) {
+      anchor_box tmp = _mkanchors(win);
+      anchors.push_back(tmp);
+    } else if (process == PYTORCH) {
+      anchor_box tmp = _mkanchors_pytorch(win);
+      anchors.push_back(tmp);
+    }
   }
 
   return anchors;
 }
 
 vector<anchor_box> generate_anchors(int base_size, const vector<float> &ratios,
-                                    const vector<int> &scales, int stride, bool dense_anchor) {
+                                    const vector<int> &scales, int stride, bool dense_anchor,
+                                    PROCESS process) {
   anchor_box base_anchor;
   base_anchor.x1 = 0;
   base_anchor.y1 = 0;
@@ -72,8 +90,22 @@ vector<anchor_box> generate_anchors(int base_size, const vector<float> &ratios,
 
   vector<anchor_box> anchors;
   for (size_t i = 0; i < ratio_anchors.size(); i++) {
-    vector<anchor_box> tmp = _scale_enum(ratio_anchors[i], scales);
+    vector<anchor_box> tmp = _scale_enum(ratio_anchors[i], scales, process);
     anchors.insert(anchors.end(), tmp.begin(), tmp.end());
+  }
+  if (process == PYTORCH) {
+    for (size_t i = 0; i < anchors.size(); i++) {
+      float ori_ct_x = (anchors[i].x1 + anchors[i].x2) / 2;
+      float ori_ct_y = (anchors[i].y1 + anchors[i].y2) / 2;
+      float new_ct_x = stride / 2;
+      float new_ct_y = stride / 2;
+      float x_shift = std::round(ori_ct_x - new_ct_x);
+      float y_shift = std::round(ori_ct_y - new_ct_y);
+      anchors[i].x1 = anchors[i].x1 - x_shift;
+      anchors[i].x2 = anchors[i].x2 - x_shift;
+      anchors[i].y1 = anchors[i].y1 - y_shift;
+      anchors[i].y2 = anchors[i].y2 - y_shift;
+    }
   }
 
   if (dense_anchor) {
@@ -92,7 +124,8 @@ vector<anchor_box> generate_anchors(int base_size, const vector<float> &ratios,
   return anchors;
 }
 
-vector<vector<anchor_box> > generate_anchors_fpn(bool dense_anchor, const vector<anchor_cfg> &cfg) {
+vector<vector<anchor_box> > generate_anchors_fpn(bool dense_anchor, const vector<anchor_cfg> &cfg,
+                                                 PROCESS process) {
   vector<vector<anchor_box> > anchors;
   for (size_t i = 0; i < cfg.size(); i++) {
     anchor_cfg tmp = cfg[i];
@@ -101,7 +134,7 @@ vector<vector<anchor_box> > generate_anchors_fpn(bool dense_anchor, const vector
     vector<int> scales = tmp.SCALES;
     int stride = tmp.STRIDE;
 
-    vector<anchor_box> r = generate_anchors(bs, ratios, scales, stride, dense_anchor);
+    vector<anchor_box> r = generate_anchors(bs, ratios, scales, stride, dense_anchor, process);
     anchors.push_back(r);
   }
 
