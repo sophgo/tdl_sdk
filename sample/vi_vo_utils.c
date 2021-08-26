@@ -238,17 +238,17 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   u32BlkSize = COMMON_GetPicBufferSize(viSize->u32Width, viSize->u32Height, SAMPLE_PIXEL_FORMAT,
                                        DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[0].u32BlkCnt = 3;
+  stVbConf.astCommPool[0].u32BlkCnt = low_mem_profile ? 3 : 7;
 
   u32BlkSize = COMMON_GetPicBufferSize(aiSize->u32Width, aiSize->u32Height, aiFormat,
                                        DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[1].u32BlkCnt = 3;
+  stVbConf.astCommPool[1].u32BlkCnt = 2;
 
   u32BlkSize = COMMON_GetPicBufferSize(VO_WIDTH, VO_HEIGHT, PIXEL_FORMAT_VO, DATA_BITWIDTH_8,
                                        COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[2].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[2].u32BlkCnt = 4;
+  stVbConf.astCommPool[2].u32BlkCnt = 3;
 
   for (uint32_t poolId = 0; poolId < stVbConf.u32MaxPoolCnt; poolId++) {
     SAMPLE_PRT("common pool[%d] BlkSize %dx%d\n", poolId, stVbConf.astCommPool[poolId].u32BlkSize,
@@ -492,18 +492,38 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
 }
 
 static void _initInputCfg(chnInputCfg *ipIc) {
-  ipIc->rcMode = -1;
-  ipIc->iqp = -1;
-  ipIc->pqp = -1;
-  ipIc->gop = -1;
-  ipIc->bitrate = -1;
-  ipIc->firstFrmstartQp = -1;
+  strcpy(ipIc->codec, "h264");
+  ipIc->width = 3840;
+  ipIc->height = 2160;
+  ipIc->vpssGrp = 1;
+  ipIc->vpssChn = 0;
   ipIc->num_frames = -1;
-  ipIc->framerate = 30;
-  ipIc->maxQp = -1;
-  ipIc->minQp = -1;
-  ipIc->maxIqp = -1;
+  ipIc->bsMode = 0;
+  ipIc->rcMode = 0;
+  ipIc->iqp = 30;
+  ipIc->pqp = 30;
+  ipIc->gop = 60;
+  ipIc->bitrate = 8000;
+  ipIc->firstFrmstartQp = 30;
   ipIc->minIqp = -1;
+  ipIc->maxIqp = -1;
+  ipIc->minQp = -1;
+  ipIc->maxQp = -1;
+  ipIc->srcFramerate = 25;
+  ipIc->framerate = 25;
+  ipIc->bVariFpsEn = 0;
+  ipIc->maxbitrate = -1;
+  ipIc->statTime = -1;
+  ipIc->chgNum = -1;
+  ipIc->quality = -1;
+  ipIc->pixel_format = 0;
+  ipIc->bitstreamBufSize = 0;
+  ipIc->single_LumaBuf = 0;
+  ipIc->single_core = 0;
+  ipIc->forceIdr = -1;
+  ipIc->tempLayer = 0;
+  ipIc->testRoi = 0;
+  ipIc->bgInterval = 0;
 }
 
 static void rtsp_connect(const char *ip, void *arg) { printf("connect: %s\n", ip); }
@@ -537,21 +557,6 @@ static CVI_S32 InitRTSP(VencCodec codec, CVI_S32 frameWidth, CVI_S32 frameHeight
   CVI_U32 u32Profile = 0;
 
   _initInputCfg(&context->input_cfg);
-  strcpy(context->input_cfg.codec, codec == CODEC_H264 ? "264" : "265");
-
-  context->input_cfg.rcMode = 0;  // cbr
-  context->input_cfg.iqp = 38;
-  context->input_cfg.pqp = 38;
-  context->input_cfg.gop = 50;
-  context->input_cfg.bitrate = 10240;  // if fps = 20
-  context->input_cfg.firstFrmstartQp = 34;
-  context->input_cfg.num_frames = -1;
-  context->input_cfg.framerate = 25;
-  context->input_cfg.srcFramerate = 25;
-  context->input_cfg.maxQp = 42;
-  context->input_cfg.minQp = 26;
-  context->input_cfg.maxIqp = 42;
-  context->input_cfg.minIqp = 26;
 
   CheckInputCfg(&context->input_cfg);
 
