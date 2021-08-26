@@ -3,6 +3,7 @@
 #include "core/core/cvai_vpss_types.h"
 #include "cviai_log.hpp"
 #include "ive/ive.h"
+#include "model_debugger.hpp"
 #include "vpss_engine.hpp"
 
 #include <cviruntime.h>
@@ -92,6 +93,20 @@ class Core {
   bool isInitialized();
   virtual bool allowExportChannelAttribute() const { return false; }
 
+  void enableDebugger(bool enable) { m_debugger.setEnable(enable); }
+
+  void setDebuggerOutputPath(const std::string &dump_path) {
+    m_debugger.setDirPath(dump_path);
+
+    if (m_debugger.isEnable()) {
+      LOGW("************************AI SDK Debugger***********************\n");
+      LOGW("AI SDK Debugger is enabled!\n");
+      LOGW("execute 'echo 1 > %s/enable' command to turn on debugger\n", dump_path.c_str());
+      LOGW("execute 'echo 0 > %s/enable' command to turn off debugger\n", dump_path.c_str());
+      LOGW("**************************************************************\n");
+    }
+  }
+
  protected:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data);
 
@@ -168,6 +183,8 @@ class Core {
  protected:
   // vpss related control
   int32_t m_vpss_timeout = 100;
+  std::string m_model_file;
+  debug::ModelDebugger m_debugger;
 
  private:
   template <typename T>

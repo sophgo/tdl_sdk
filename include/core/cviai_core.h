@@ -919,14 +919,18 @@ DLL_EXPORT CVI_S32 CVI_AI_SmokeClassification(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, cvai_face_t *face);
 
 /**
- * @brief Do Incar ObjectDetection.
+ * @brief Dump model input frame to npz.
  *
  * @param handle An AI SDK handle.
- * @param frame Input video frame.
- * @param cvai_face_t structure. Calculate the landmarks in cvai_dms_t.
+ * @param config Model id.
+ * @param dump_path Output path.
+ * @param enable Whether enable or not.
  * @return int Return CVI_SUCCESS on success.
  */
 /**@}*/
+DLL_EXPORT CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                          const char *dump_path, bool enable);
+
 #ifdef __cplusplus
 }
 #endif

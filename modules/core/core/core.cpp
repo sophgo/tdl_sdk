@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include "core/utils/vpss_helper.h"
 #include "cviai_trace.hpp"
+#include "demangle.hpp"
 
 namespace cviai {
 
@@ -32,7 +33,7 @@ int Core::modelOpen(const char *filepath) {
     LOGE("failed to open model: \"%s\" has already opened.\n", filepath);
     return CVI_FAILURE;
   }
-
+  m_model_file = filepath;
   CLOSE_MODEL_IF_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
                         "CVI_NN_RegisterModel failed");
 
@@ -96,6 +97,7 @@ int Core::modelOpen(const char *filepath) {
     }
     vcfg.rescale_type = data[i].rescale_type;
     vcfg.crop_attr.bEnable = data[i].use_crop;
+
     VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, format, data[i].factor, data[i].mean,
                        data[i].pad_reverse);
     if (!data[i].keep_aspect_ratio) {
@@ -310,6 +312,12 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   TRACE_EVENT("cviai_core", "Core::run");
   int ret = CVI_SUCCESS;
   std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
+
+  m_debugger.newSession(demangle::type_no_scope(*this));
+  m_debugger.save_field("skip_vpss_preprocess", ((uint8_t)m_skip_vpss_preprocess));
+  m_debugger.save_field("model_file", m_model_file.c_str(), {m_model_file.size()});
+  m_debugger.save_field("input_mem_type", (uint8_t)mp_mi->conf.input_mem_type);
+
   if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
     if (m_skip_vpss_preprocess) {
       ret |= registerFrame2Tensor(frames);
@@ -322,6 +330,8 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       dstFrames.reserve(frames.size());
       for (uint32_t i = 0; i < frames.size(); i++) {
         VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+        m_debugger.save_origin_frame(frames[i], mp_mi->in.tensors + i);
+
         memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
         if (vpssPreprocess(frames[i], f, m_vpss_config[i]) == CVI_SUCCESS) {
           dstFrames.push_back(
@@ -341,11 +351,23 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       ret |= registerFrame2Tensor(dstFrames);
     }
   }
+
   if (int rcret = CVI_NN_Forward(mp_mi->handle, mp_mi->in.tensors, mp_mi->in.num,  // NOLINT
                                  mp_mi->out.tensors, mp_mi->out.num) != CVI_RC_SUCCESS) {
     LOGE("NN forward failed: %x\n", rcret);
     ret |= CVI_FAILURE;
   }
+
+  for (int32_t i = 0; i < mp_mi->in.num; i++) {
+    CVI_TENSOR *tensor = mp_mi->in.tensors + i;
+    m_debugger.save_tensor(tensor, getInputRawPtr<void>(0));
+
+    // save normalizer only if model needs vpss precprcossing
+    if (!m_skip_vpss_preprocess && mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
+      m_debugger.save_normalizer(tensor, m_vpss_config[i].chn_attr.stNormalize);
+    }
+  }
+
   return ret;
 }
 

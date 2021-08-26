@@ -467,6 +467,21 @@ CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E 
   return ret;
 }
 
+CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                               const char *dump_path, bool enable) {
+  CVI_S32 ret = CVI_SUCCESS;
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai::Core *instance = getInferenceInstance(config, ctx);
+  if (instance == nullptr) {
+    LOGE("Instance is null.\n");
+    return CVI_FAILURE;
+  }
+
+  instance->enableDebugger(enable);
+  instance->setDebuggerOutputPath(dump_path);
+  return ret;
+}
+
 /**
  *  Convenience macros for defining inference functions. F{NUM} stands for how many input frame
  *  variables, P{NUM} stands for how many input parameters in inference function. All inference
