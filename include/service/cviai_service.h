@@ -206,6 +206,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the face.
+ * @param brush A brush for drawing
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
@@ -220,6 +221,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the object.
+ * @param brush A brush for drawing
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
@@ -235,6 +237,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the object.
+ * @param brush A brush for drawing
  * @return CVI_S32 Return CVI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
@@ -243,6 +246,16 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t ha
                                                        const bool drawText,
                                                        cvai_service_brush_t brush);
 
+/**
+ * @brief Draw a closed polygon to frame.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param frame In/out YUV frame.
+ * @param pts Points of a closed polygon.
+ * @param brush A brush for drawing
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
 DLL_EXPORT CVI_S32 CVI_AI_Service_DrawPolygon(cviai_service_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts,
                                               cvai_service_brush_t brush);
