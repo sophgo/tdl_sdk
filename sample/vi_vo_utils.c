@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "core/utils/vpss_helper.h"
 
-#define PIXEL_FORMAT_VO PIXEL_FORMAT_YUV_PLANAR_420
+#define PIXEL_FORMAT_VO VI_PIXEL_FORMAT
 #define VO_WIDTH 1280
 #define VO_HEIGHT 720
 
@@ -462,7 +462,7 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
   if (isVOOpened) {
     abChnEnable[vpssConfigs->vpssChnVideoOutput] = CVI_TRUE;
     VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssConfigs->vpssChnVideoOutput], vpssConfigs->voWidth,
-                            vpssConfigs->voHeight, PIXEL_FORMAT_YUV_PLANAR_420, true);
+                            vpssConfigs->voHeight, PIXEL_FORMAT_VO, true);
   }
 
   VPSS_GRP_DEFAULT_HELPER2(&stVpssGrpAttr, vpssConfigs->grpWidth, vpssConfigs->grpHeight,

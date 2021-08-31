@@ -243,6 +243,10 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t ha
                                                        const bool drawText,
                                                        cvai_service_brush_t brush);
 
+DLL_EXPORT CVI_S32 CVI_AI_Service_DrawPolygon(cviai_service_handle_t handle,
+                                              VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts,
+                                              cvai_service_brush_t brush);
+
 /**
  * @brief Draw text to YUV frame with given text.
  * @ingroup core_cviaiservice

@@ -98,7 +98,7 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
   rgb_color.g = DEFAULT_RECT_COLOR_G;
   rgb_color.b = DEFAULT_RECT_COLOR_B;
   cviai::service::DrawRect(dstFrame, rect.l, rect.r, rect.t, rect.b, "", rgb_color,
-                           DEFAULT_RECT_THINKNESS, false);
+                           DEFAULT_RECT_THICKNESS, false);
 #endif
   m_prev_rect = rect;
   return CVI_SUCCESS;

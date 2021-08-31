@@ -9,8 +9,8 @@
 #define DEFAULT_RECT_COLOR_R (53. / 255.)
 #define DEFAULT_RECT_COLOR_G (208. / 255.)
 #define DEFAULT_RECT_COLOR_B (217. / 255.)
-#define DEFAULT_RECT_THINKNESS 4
-#define DEFAULT_TEXT_THINKNESS 1
+#define DEFAULT_RECT_THICKNESS 4
+#define DEFAULT_TEXT_THICKNESS 1
 #define DEFAULT_RADIUS 1
 
 namespace cviai {
@@ -47,6 +47,8 @@ int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame);
 int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame);
 
 void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int raduis);
+
+int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts, cvai_service_brush_t brush);
 
 }  // namespace service
 }  // namespace cviai

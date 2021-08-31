@@ -296,6 +296,11 @@ CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t handle,
   return ret;
 }
 
+CVI_S32 CVI_AI_Service_DrawPolygon(cviai_service_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                   const cvai_pts_t *pts, cvai_service_brush_t brush) {
+  return cviai::service::DrawPolygon(frame, pts, brush);
+}
+
 CVI_S32 CVI_AI_Service_Polygon_SetTarget(cviai_service_handle_t handle, const cvai_pts_t *pts) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
   if (ctx->m_poly == nullptr) {
