@@ -15,15 +15,8 @@ typedef struct {
 } mot_result_t;
 
 void setConfig(cvai_deepsort_config_t &ds_conf, std::string target) {
-  printf("setConfig::%s", target.c_str());
   if (target == "pedestrian") {
     /* Default Setting:
-     *   ds_conf.ktracker_conf.P_std_alpha[0] = 2 * 1 / 20.;
-     *   ds_conf.ktracker_conf.P_std_alpha[1] = 2 * 1 / 20.;
-     *   ds_conf.ktracker_conf.P_std_alpha[3] = 2 * 1 / 20.;
-     *   ds_conf.ktracker_conf.P_std_alpha[4] = 10 * 1 / 160.;
-     *   ds_conf.ktracker_conf.P_std_alpha[5] = 10 * 1 / 160.;
-     *   ds_conf.ktracker_conf.P_std_alpha[7] = 10 * 1 / 160.;
      *   ds_conf.ktracker_conf.P_std_beta[2] = 0.01;
      *   ds_conf.ktracker_conf.P_std_beta[6] = 1e-5;
      *   ds_conf.kfilter_conf.Q_std_beta[2] = 0.01;
@@ -103,11 +96,22 @@ int main(int argc, char *argv[]) {
     int feature_size = int(m_json_read["reg_config"][reg_idx]["feature_size"]);
 
     // Init DeepSORT
-    CVI_AI_DeepSORT_Init(ai_handle);
+    CVI_AI_DeepSORT_Init(ai_handle, false);
     cvai_deepsort_config_t ds_conf;
     CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
     setConfig(ds_conf, target);
-    CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf);
+    CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, true);
+
+    // CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
+    // setConfig(ds_conf, "pedestrian");
+    // CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, CVI_AI_DET_TYPE_PERSON, false);
+    // CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
+    // setConfig(ds_conf, "vehicle");
+    // CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, CVI_AI_DET_TYPE_CAR, false);
+    // CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, CVI_AI_DET_TYPE_MOTORBIKE, false);
+    // CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
+    // setConfig(ds_conf, "face");
+    // CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
 
     for (int img_idx = 0; img_idx < img_num; img_idx++) {
       // printf("\n[%d/%d]\n", img_idx, img_num);

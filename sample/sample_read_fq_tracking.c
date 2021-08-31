@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
   CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
 
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle);
+  CVI_AI_DeepSORT_Init(ai_handle, false);
 #if 1
   cvai_deepsort_config_t ds_conf;
   CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
   ds_conf.kfilter_conf.Q_std_beta[2] = 0.1;
   ds_conf.kfilter_conf.Q_std_beta[6] = 2.5e-2;
   ds_conf.kfilter_conf.R_std_beta[2] = 0.1;
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf);
+  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
 #endif
 
 #if WRITE_RESULT_TO_FILE

@@ -631,17 +631,17 @@ CVI_S32 CVI_AI_GetAlignedFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *s
 
 // Tracker
 
-CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle) {
+CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle, bool use_specific_counter) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_Init");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
     LOGD("Init DeepSORT.\n");
-    ctx->ds_tracker = new DeepSORT();
+    ctx->ds_tracker = new DeepSORT(use_specific_counter);
   } else {
     delete ds_tracker;
     LOGI("Re-init DeepSORT.\n");
-    ctx->ds_tracker = new DeepSORT();
+    ctx->ds_tracker = new DeepSORT(use_specific_counter);
   }
   return 0;
 }
@@ -654,7 +654,8 @@ CVI_S32 CVI_AI_DeepSORT_GetDefaultConfig(cvai_deepsort_config_t *ds_conf) {
   return 0;
 }
 
-CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf) {
+CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf,
+                                  int cviai_obj_type = -1, bool show_config = false) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_SetConf");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
@@ -662,7 +663,20 @@ CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle, cvai_deepsort_con
     LOGE("Please initialize DeepSORT first.\n");
     return CVI_FAILURE;
   }
-  ds_tracker->setConfig(*ds_conf);
+  ds_tracker->setConfig(*ds_conf, cviai_obj_type, show_config);
+
+  return 0;
+}
+
+CVI_S32 CVI_AI_DeepSORT_CleanCounter(const cviai_handle_t handle) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_CleanCounter");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVI_FAILURE;
+  }
+  ds_tracker->cleanCounter();
 
   return 0;
 }

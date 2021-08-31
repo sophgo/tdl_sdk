@@ -114,12 +114,12 @@ int main(int argc, char *argv[]) {
   CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
 
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle);
+  CVI_AI_DeepSORT_Init(ai_handle, false);
   cvai_deepsort_config_t ds_conf;
   CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
   ds_conf.max_distance_iou = 0.8;
   ds_conf.ktracker_conf.feature_budget_size = 10;
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf);
+  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
 
   // Create intersect area
   printf("Creating line intersect.\n");

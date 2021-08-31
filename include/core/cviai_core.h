@@ -677,15 +677,16 @@ DLL_EXPORT CVI_S32 CVI_AI_SoundClassification(const cviai_handle_t handle,
 /**@{*/
 
 /**
- * @brief Initialize deepsort.
+ * @brief Initialize DeepSORT.
  *
  * @param handle An AI SDK handle.
+ * @param use_specific_counter true for using individual id counter for each class
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle);
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle, bool use_specific_counter);
 
 /**
- * @brief Get default deepsort config.
+ * @brief Get default DeepSORT config.
  *
  * @param handle An AI SDK handle.
  * @param ds_conf A deepsort config.
@@ -694,14 +695,25 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle);
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_GetDefaultConfig(cvai_deepsort_config_t *ds_conf);
 
 /**
- * @brief Set deepsort with specific config.
+ * @brief Set DeepSORT with specific config.
  *
  * @param handle An AI SDK handle.
  * @param ds_conf The specific config.
+ * @param cviai_obj_type The specific class type (-1 for setting default config).
+ * @param show_config show detail information or not.
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle,
-                                             cvai_deepsort_config_t *ds_conf);
+                                             cvai_deepsort_config_t *ds_conf, int cviai_obj_type,
+                                             bool show_config);
+
+/**
+ * @brief clean DeepSORT ID counter.
+ *
+ * @param handle An AI SDK handle.
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_CleanCounter(const cviai_handle_t handle);
 
 /**
  * @brief Run DeepSORT/SORT track for object.

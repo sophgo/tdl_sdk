@@ -78,11 +78,11 @@ int main(int argc, char *argv[]) {
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
 
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle);
+  CVI_AI_DeepSORT_Init(ai_handle, false);
 #if 1
   cvai_deepsort_config_t ds_conf;
   CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf);
+  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
 #endif
 
   FILE *outFile;
