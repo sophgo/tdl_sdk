@@ -4,7 +4,7 @@
 #include <vector>
 
 #define CODE_LENGTH_TW 18
-#define CODE_LENGTH_CN 22
+#define CODE_LENGTH_CN 24
 #define CHARS_NUM_TW 36
 #define CHARS_NUM_CN 72
 
