@@ -68,6 +68,7 @@ if [[ "$CHIPSET" = "183x" ]]; then
   run reg_daily_reid ${model_dir} ${dataset_dir}/reg_daily_reid ${asset_dir}/daily_reg_ReID.json
   run reg_daily_td ${model_dir} ${dataset_dir}/reg_daily_td ${asset_dir}/daily_reg_TD.json
   run reg_daily_thermal_fd ${model_dir} ${dataset_dir}/reg_daily_thermal_fd ${asset_dir}/daily_reg_ThermalFD.json
+  run reg_daily_mobiledet ${model_dir} ${dataset_dir}/reg_daily_mobildet ${asset_dir}/daily_reg_mobiledet.json
 
   run reg_daily_fr ${model_dir} ${dataset_dir}/reg_daily_fr ${asset_dir}/daily_reg_FR.json
   run reg_daily_mask_classification ${model_dir} ${dataset_dir}/reg_daily_mask_classification ${asset_dir}/daily_reg_MaskClassification.json
@@ -83,6 +84,7 @@ if [[ "$CHIPSET" = "183x" ]]; then
   run reg_daily_incarod ${model_dir} ${dataset_dir}/reg_daily_incarod ${asset_dir}/reg_daily_incarod.json
 #  run reg_daily_yawn_classification ${model_dir} ${dataset_dir}/reg_daily_yawn_classification ${asset_dir}/reg_daily_yawn_classification.json
 elif [[ "$CHIPSET" = "182x" ]]; then
+  run reg_daily_mobiledet ${model_dir} ${dataset_dir}/reg_daily_mobildet ${asset_dir}/daily_reg_mobiledet.json
   run reg_daily_fq ${model_dir} ${dataset_dir}/reg_daily_fq ${asset_dir}/daily_reg_FQ.json
   run reg_daily_lpd ${model_dir} ${dataset_dir}/reg_daily_lpd ${asset_dir}/daily_reg_LPD.json
   run reg_daily_lpr ${model_dir} ${dataset_dir}/reg_daily_lpr ${asset_dir}/daily_reg_LPR.json

@@ -49,8 +49,19 @@ static const std::unordered_map<std::string, std::pair<CVI_AI_SUPPORTED_MODEL_E,
          {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, CVI_AI_MobileDetV2_Vehicle_D0}},
 };
 
-const float bbox_threhold = 5;
+const float bbox_threhold = 0.90;
 const float score_threshold = 0.1;
+
+float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
+  float area1 = (bbox1.x2 - bbox1.x1) * (bbox1.y2 - bbox1.y1);
+  float area2 = (bbox2.x2 - bbox2.x1) * (bbox2.y2 - bbox2.y1);
+  float inter_x1 = MAX2(bbox1.x1, bbox2.x1);
+  float inter_y1 = MAX2(bbox1.y1, bbox2.y1);
+  float inter_x2 = MIN2(bbox1.x2, bbox2.x2);
+  float inter_y2 = MIN2(bbox1.y2, bbox2.y2);
+  float area_inter = (inter_x2 - inter_x1) * (inter_y2 - inter_y1);
+  return area_inter / (area1 + area2 - area_inter);
+}
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
@@ -144,22 +155,21 @@ int main(int argc, char *argv[]) {
       for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
         auto bbox = expected_dets[det_index]["bbox"];
         int catId = int(expected_dets[det_index]["category_id"]) - 1;
-        float score = float(expected_dets[det_index]["score"]);
 
-        float expected_res_x1 = float(bbox[0]);
-        float expected_res_y1 = float(bbox[1]);
-        float expected_res_x2 = float(bbox[2]) + expected_res_x1;
-        float expected_res_y2 = float(bbox[3]) + expected_res_y1;
+        cvai_bbox_t expected_bbox = {
+            .x1 = float(bbox[0]),
+            .y1 = float(bbox[1]),
+            .x2 = float(bbox[2]) + float(bbox[0]),
+            .y2 = float(bbox[3]) + float(bbox[1]),
+            .score = float(expected_dets[det_index]["score"]),
+        };
 
         pass = false;
         for (uint32_t actual_det_index = 0; actual_det_index < obj_meta.size; actual_det_index++) {
           if (obj_meta.info[actual_det_index].classes == catId) {
-            pass =
-                (abs(obj_meta.info[actual_det_index].bbox.x1 - expected_res_x1) < bbox_threhold &&
-                 abs(obj_meta.info[actual_det_index].bbox.x2 - expected_res_x2) < bbox_threhold &&
-                 abs(obj_meta.info[actual_det_index].bbox.y1 - expected_res_y1) < bbox_threhold &&
-                 abs(obj_meta.info[actual_det_index].bbox.y2 - expected_res_y2) < bbox_threhold &&
-                 abs(obj_meta.info[actual_det_index].bbox.score - score) < score_threshold);
+            pass = iou(obj_meta.info[actual_det_index].bbox, expected_bbox) >= bbox_threhold &&
+                   abs(obj_meta.info[actual_det_index].bbox.score - expected_bbox.score) <
+                       score_threshold;
             if (pass) {
               break;
             }
@@ -167,10 +177,19 @@ int main(int argc, char *argv[]) {
         }
 
         printf("img=%s, cat=%d, score=%f, bbox={%f, %f, %f, %f}\n", iter.key().c_str(), catId,
-               score, expected_res_x1, expected_res_x2, expected_res_y1, expected_res_y2);
+               expected_bbox.score, expected_bbox.x1, expected_bbox.x2, expected_bbox.y1,
+               expected_bbox.y2);
 
         if (!pass) {
           printf("detections aren't matched: %s\n", image_path.c_str());
+          for (uint32_t actual_det_index = 0; actual_det_index < obj_meta.size;
+               actual_det_index++) {
+            printf(
+                "predict img=%s, cat=%d, score=%f, bbox={%f, %f, %f, %f}\n", iter.key().c_str(),
+                obj_meta.info[actual_det_index].classes, obj_meta.info[actual_det_index].bbox.score,
+                obj_meta.info[actual_det_index].bbox.x1, obj_meta.info[actual_det_index].bbox.x2,
+                obj_meta.info[actual_det_index].bbox.y1, obj_meta.info[actual_det_index].bbox.y2);
+          }
           return CVI_FAILURE;
         }
       }
