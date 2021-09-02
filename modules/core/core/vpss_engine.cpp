@@ -29,7 +29,7 @@ int VpssEngine::init(VPSS_GRP grp_id, CVI_U8 device) {
   uint32_t width = 100;
   uint32_t height = 100;
   m_enabled_chn = 1;
-  VPSS_GRP_DEFAULT_HELPER(&vpss_grp_attr, width, height, VI_PIXEL_FORMAT);
+  VPSS_GRP_DEFAULT_HELPER2(&vpss_grp_attr, width, height, VI_PIXEL_FORMAT, device);
   VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr, width, height, PIXEL_FORMAT_RGB_888_PLANAR, true);
 
   /*start vpss*/
