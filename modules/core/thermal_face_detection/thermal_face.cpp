@@ -1,11 +1,11 @@
 #include "thermal_face.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
-
 #include "cvi_sys.h"
+#include "face_utils.hpp"
 
 #define SCALE_R float(1.0 / (255.0 * 0.229))
 #define SCALE_G float(1.0 / (255.0 * 0.224))
@@ -108,7 +108,7 @@ ThermalFace::~ThermalFace() {}
 int ThermalFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Thermal face only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = static_cast<float>(SCALE_R);
   (*data)[0].factor[1] = static_cast<float>(SCALE_G);
@@ -118,7 +118,7 @@ int ThermalFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].mean[2] = static_cast<float>(MEAN_B);
   (*data)[0].rescale_type = RESCALE_RB;
   (*data)[0].use_quantize_scale = true;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int ThermalFace::onModelOpened() {
@@ -140,7 +140,7 @@ int ThermalFace::onModelOpened() {
     std::vector<cvai_bbox_t> shifted_anchors = shift(image_shapes[i], strides[i], anchors);
     m_all_anchors.insert(m_all_anchors.end(), shifted_anchors.begin(), shifted_anchors.end());
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int ThermalFace::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -151,23 +151,30 @@ int ThermalFace::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                         vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
                         factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
-  if (ret != CVI_SUCCESS) {
+
+  if (int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1) != CVI_SUCCESS) {
     LOGE("Send frame failed with %#x!\n", ret);
-    return ret;
+    return CVIAI_ERR_VPSS_SEND_FRAME;
   }
-  return mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
+
+  if (int ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout) != CVI_SUCCESS) {
+    LOGE("Get frame failed with %#x!\n", ret);
+    return CVIAI_ERR_VPSS_GET_FRAME;
+  }
+  return CVIAI_SUCCESS;
 }
 
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
-  int ret = run(frames);
+  if (int ret = run(frames) != CVIAI_SUCCESS) {
+    return ret;
+  }
 
   CVI_SHAPE shape = getInputShape(0);
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, meta);
 
-  return ret;
+  return CVIAI_SUCCESS;
 }
 
 void ThermalFace::outputParser(const int image_width, const int image_height, const int frame_width,

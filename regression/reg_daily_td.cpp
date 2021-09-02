@@ -14,9 +14,9 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   std::string image_dir = std::string(argv[2]);
 
   nlohmann::json m_json_read;
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   const CVI_S32 vpssgrp_height = 1080;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     return ret;
   }
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     // Convert to VIDEO_FRAME_INFO_S. IVE_IMAGE_S must be kept to release when not used.
     VIDEO_FRAME_INFO_S frame;
     ret = CVI_IVE_Image2VideoFrameInfo(&ive_frame, &frame, false);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Convert to video frame failed with %#x!\n", ret);
       return ret;
     }
@@ -86,5 +86,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
 
-  return pass ? CVI_SUCCESS : CVI_FAILURE;
+  return pass ? CVIAI_SUCCESS : CVIAI_FAILURE;
 }

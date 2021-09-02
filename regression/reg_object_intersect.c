@@ -13,16 +13,16 @@ void bbox_setup(const float x1, const float y1, const float x2, const float y2, 
 int main(int argc, char *argv[]) {
   if (argc != 1) {
     printf("Usage: %s.\n", argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 20;
   const CVI_S32 vpssgrp_height = 20;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -30,14 +30,14 @@ int main(int argc, char *argv[]) {
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
   }
   // Init cviai fr service handle.
   cviai_service_handle_t obj_handle = NULL;
   ret = CVI_AI_Service_CreateHandle(&obj_handle, ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create obj service handle failed with %#x!\n", ret);
     return ret;
   }

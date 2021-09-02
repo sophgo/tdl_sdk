@@ -1,7 +1,9 @@
 #include "sound_classification.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "cviai_trace.hpp"
+
 #define N_FFT 1024
 #define ESC_OUT_NAME "prob_dequant"
 
@@ -53,13 +55,15 @@ int SoundClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   prepareInputTensor(input);
 
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
-  run(frames);
+  if (int ret = run(frames) != CVIAI_SUCCESS) {
+    return ret;
+  }
 
   const TensorInfo &info = getOutputTensorInfo(ESC_OUT_NAME);
 
   // get top k
   *index = get_top_k(info.get<float>(), info.tensor_elem);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int SoundClassification::get_top_k(float *result, size_t count) {

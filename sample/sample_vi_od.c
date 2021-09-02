@@ -50,7 +50,7 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     config->inference = CVI_AI_Yolov3;
   } else {
-    ret = CVI_FAILURE;
+    ret = CVIAI_FAILURE;
   }
   return ret;
 }
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
         "\t video output, 0: disable, 1: output to panel, 2: output through rtsp\n"
         "\t threshold (optional): threshold for detection model\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   CVI_S32 voType = atoi(argv[3]);
 
@@ -88,9 +88,9 @@ int main(int argc, char *argv[]) {
   signal(SIGTERM, SampleHandleSig);
 
   ModelConfig model_config;
-  if (createModelConfig(argv[1], &model_config) == CVI_FAILURE) {
+  if (createModelConfig(argv[1], &model_config) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_S32 s32Ret = CVI_SUCCESS;
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 
   if (InitVideoSystem(&vs_ctx, &aiInputSize, VI_PIXEL_FORMAT, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   cviai_handle_t ai_handle = NULL;

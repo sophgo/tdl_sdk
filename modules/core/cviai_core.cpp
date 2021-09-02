@@ -6,6 +6,7 @@
 #include "cviai_trace.hpp"
 
 #include "alphapose/alphapose.hpp"
+#include "core/core/cvai_errno.h"
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
 #include "deepsort/cvi_deepsort.hpp"
@@ -188,7 +189,7 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
     };
 
     m_t.instance = creator(params);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVI_SUCCESS) {
+    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVIAI_SUCCESS) {
       LOGE("Failed to open model %s (%s).\n", CVI_AI_GetModelName(index), m_t.model_path.c_str());
       return nullptr;
     }
@@ -222,12 +223,12 @@ CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
   if (ctx->vec_vpss_engine[0]->init(vpssGroupId, vpssDev) != CVI_SUCCESS) {
     LOGC("cviai_handle_t create failed.");
     removeCtx(ctx);
-    return CVI_FAILURE;
+    return CVIAI_ERR_INIT_VPSS;
   }
   const char timestamp[] = __DATE__ " " __TIME__;
   LOGI("cviai_handle_t created, version %s-%s", CVIAI_TAG, timestamp);
   *handle = ctx;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_DestroyHandle(cviai_handle_t handle) {
@@ -235,7 +236,7 @@ CVI_S32 CVI_AI_DestroyHandle(cviai_handle_t handle) {
   CVI_AI_CloseAllModel(handle);
   removeCtx(ctx);
   LOGI("cviai_handle_t destroyed.");
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
@@ -246,7 +247,7 @@ CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E conf
     if (m_t.instance->isInitialized()) {
       LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
            CVI_AI_GetModelName(config));
-      return CVI_FAILURE;
+      return CVIAI_ERR_INVALID_MODEL_PATH;
     }
   }
 
@@ -254,7 +255,7 @@ CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E conf
   if (stat(filepath, &buffer) == 0) {
     if (S_ISREG(buffer.st_mode)) {
       m_t.model_path = filepath;
-      return CVI_SUCCESS;
+      return CVIAI_SUCCESS;
     } else {
       LOGE("Path of model file isn't a regular file: %s\n", filepath);
     }
@@ -263,7 +264,7 @@ CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E conf
   }
 
   m_t.model_path.clear();
-  return CVI_FAILURE;
+  return CVIAI_ERR_INVALID_MODEL_PATH;
 }
 
 CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
@@ -273,26 +274,27 @@ CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config)
     if (!m_t.instance->isInitialized()) {
       if (m_t.model_path.empty()) {
         LOGE("Model path for %s is empty.\n", CVI_AI_GetModelName(config));
-        return CVI_FAILURE;
+        return CVIAI_ERR_INVALID_MODEL_PATH;
       }
 
-      if (m_t.instance->modelOpen(m_t.model_path.c_str()) == CVI_SUCCESS) {
+      if (m_t.instance->modelOpen(m_t.model_path.c_str()) == CVIAI_SUCCESS) {
         LOGI("Model opened: %s (%s)", CVI_AI_GetModelName(config), m_t.model_path.c_str());
+        return CVIAI_ERR_OPEN_MODEL;
       }
     } else {
       LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
            CVI_AI_GetModelName(config));
-      return CVI_SUCCESS;
+      return CVIAI_SUCCESS;
     }
   } else {
     Core *instance = getInferenceInstance(config, ctx);
     if (!instance) {
       LOGE("Failed to open model %s\n", CVI_AI_GetModelName(config));
-      return CVI_FAILURE;
+      return CVIAI_ERR_OPEN_MODEL;
     }
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
@@ -309,14 +311,14 @@ CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MOD
   if (m_t.instance != nullptr) {
     m_t.instance->skipVpssPreprocess(m_t.skip_vpss_preprocess);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                      bool *skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   *skip = ctx->model_cont[config].skip_vpss_preprocess;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
@@ -327,14 +329,14 @@ CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
   if (m_t.instance != nullptr) {
     m_t.instance->setModelThreshold(m_t.model_threshold);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  float *threshold) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   *threshold = ctx->model_cont[config].model_threshold;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
@@ -352,7 +354,7 @@ CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E con
                              uint32_t *thread) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   *thread = ctx->model_cont[config].vpss_thread;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num) {
@@ -363,7 +365,7 @@ CVI_S32 CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t 
   }
   *groups = ids;
   *num = ctx->vec_vpss_engine.size();
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_SetVpssTimeout(cviai_handle_t handle, uint32_t timeout) {
@@ -375,7 +377,7 @@ CVI_S32 CVI_AI_SetVpssTimeout(cviai_handle_t handle, uint32_t timeout) {
       m_inst.second.instance->setVpssTimeout(timeout);
     }
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle) {
@@ -401,14 +403,14 @@ CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle) {
   }
   ctx->model_cont.clear();
   ctx->custom_cont.clear();
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[config];
   if (m_t.instance == nullptr) {
-    return CVI_FAILURE;
+    return CVIAI_ERR_CLOSE_MODEL;
   }
   if (m_t.selected_classes) {
     delete m_t.selected_classes;
@@ -419,7 +421,7 @@ CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
   LOGI("Model closed: %s\n", CVI_AI_GetModelName(config));
   delete m_t.instance;
   m_t.instance = nullptr;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
@@ -444,7 +446,7 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
     } else {
       if (selected_class >= CVI_AI_DET_TYPE_END) {
         LOGE("Invalid class id: %d\n", selected_class);
-        return CVI_FAILURE;
+        return CVIAI_ERR_INVALID_ARGS;
       }
       m_t.selected_classes->push_back(selected_class);
     }
@@ -458,18 +460,18 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
       LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 family model for now.\n");
     }
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                 const CVI_U32 frameWidth, const CVI_U32 frameHeight,
                                 const CVI_U32 idx, cvai_vpssconfig_t *chnConfig) {
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai::Core *instance = getInferenceInstance(config, ctx);
   if (instance == nullptr) {
     LOGE("Instance is null.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_OPEN_MODEL;
   }
 
   if (instance->allowExportChannelAttribute()) {
@@ -483,12 +485,12 @@ CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E 
 
 CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                const char *dump_path, bool enable) {
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai::Core *instance = getInferenceInstance(config, ctx);
   if (instance == nullptr) {
     LOGE("Instance is null.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_OPEN_MODEL;
   }
 
   instance->enableDebugger(enable);
@@ -509,7 +511,7 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));    \
     if (obj == nullptr) {                                                                    \
       LOGE("No instance found for %s.\n", #class_name);                                      \
-      return CVI_FAILURE;                                                                    \
+      return CVIAI_ERR_OPEN_MODEL;                                                           \
     }                                                                                        \
     return obj->inference(frame, arg1);                                                      \
   }
@@ -522,7 +524,7 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));   \
     if (obj == nullptr) {                                                                   \
       LOGE("No instance found for %s.\n", #class_name);                                     \
-      return CVI_FAILURE;                                                                   \
+      return CVIAI_ERR_OPEN_MODEL;                                                          \
     }                                                                                       \
     return obj->inference(frame, arg1, arg2);                                               \
   }
@@ -535,7 +537,7 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx)); \
     if (obj == nullptr) {                                                                 \
       LOGE("No instance found for %s.\n", #class_name);                                   \
-      return CVI_FAILURE;                                                                 \
+      return CVIAI_ERR_OPEN_MODEL;                                                        \
     }                                                                                     \
     return obj->inference(frame1, frame2, arg1);                                          \
   }
@@ -548,7 +550,7 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx)); \
     if (obj == nullptr) {                                                                 \
       LOGE("No instance found for %s.\n", #class_name);                                   \
-      return CVI_FAILURE;                                                                 \
+      return CVIAI_ERR_OPEN_MODEL;                                                        \
     }                                                                                     \
     return obj->inference(frame1, frame2, arg1, arg2);                                    \
   }
@@ -638,7 +640,7 @@ CVI_S32 CVI_AI_GetAlignedFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *s
       dynamic_cast<FaceQuality *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx));
   if (face_quality == nullptr) {
     LOGE("No instance found for FaceQuality.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_OPEN_MODEL;
   }
   return face_quality->getAlignedFace(srcFrame, dstFrame, face_info);
 }
@@ -657,7 +659,7 @@ CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle, bool use_specific_coun
     LOGI("Re-init DeepSORT.\n");
     ctx->ds_tracker = new DeepSORT(use_specific_counter);
   }
-  return 0;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_DeepSORT_GetDefaultConfig(cvai_deepsort_config_t *ds_conf) {
@@ -665,7 +667,7 @@ CVI_S32 CVI_AI_DeepSORT_GetDefaultConfig(cvai_deepsort_config_t *ds_conf) {
   cvai_deepsort_config_t default_conf = DeepSORT::get_DefaultConfig();
   memcpy(ds_conf, &default_conf, sizeof(cvai_deepsort_config_t));
 
-  return 0;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf,
@@ -675,11 +677,11 @@ CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle, cvai_deepsort_con
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
     LOGE("Please initialize DeepSORT first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   ds_tracker->setConfig(*ds_conf, cviai_obj_type, show_config);
 
-  return 0;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_DeepSORT_CleanCounter(const cviai_handle_t handle) {
@@ -688,11 +690,11 @@ CVI_S32 CVI_AI_DeepSORT_CleanCounter(const cviai_handle_t handle) {
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
     LOGE("Please initialize DeepSORT first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   ds_tracker->cleanCounter();
 
-  return 0;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
@@ -702,10 +704,10 @@ CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
     LOGE("Please initialize DeepSORT first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   ctx->ds_tracker->track(obj, tracker_t, use_reid);
-  return 0;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
@@ -713,16 +715,16 @@ CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_Face");
   if (use_reid) {
     LOGE("Don't use DeepSORT for face tracking.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
     LOGE("Please initialize DeepSORT first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   ctx->ds_tracker->track(face, tracker_t, false);
-  return 0;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info) {
@@ -731,13 +733,13 @@ CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_inf
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
     LOGE("Please initialize DeepSORT first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   std::string str_info;
   ctx->ds_tracker->get_TrackersInfo_UnmatchedLastTime(str_info);
   strncpy(debug_info, str_info.c_str(), 8192);
 
-  return 0;
+  return CVIAI_SUCCESS;
 }
 
 // Fall Detection
@@ -750,7 +752,7 @@ CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objects) {
     LOGD("Init Fall Detection Model.\n");
     ctx->fall_model = new FallMD();
     ctx->fall_model->detect(objects);
-    return 0;
+    return CVIAI_SUCCESS;
   }
   return ctx->fall_model->detect(objects);
 }
@@ -769,7 +771,7 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
     ctx->td_model->print_info();
 
     *moving_score = -1.0;
-    return 0;
+    return CVIAI_SUCCESS;
   }
   return ctx->td_model->detect(frame, moving_score);
 }
@@ -781,7 +783,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
     LOGE("Unsupported pixel format: %d. Motion Detection only support YUV400 format\n",
          frame->stVFrame.enPixelFormat);
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -790,7 +792,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
     LOGD("Init Motion Detection.\n");
     createIVEHandleIfNeeded(&ctx->ive_handle);
     ctx->md_model = new MotionDetection(ctx->ive_handle, frame, threshold, min_area);
-    return CVI_SUCCESS;
+    return CVIAI_SUCCESS;
   }
   return ctx->md_model->update_background(frame);
 }
@@ -802,13 +804,13 @@ CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
     LOGE("Unsupported pixel format: %d. Motion Detection only support YUV400 format\n",
          frame->stVFrame.enPixelFormat);
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
     LOGE("Failed to get motion detection instance\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   return ctx->md_model->detect(frame, objects);
 }

@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
         "\t threshold: threshold for motion detection [0-255] \n"
         "\t min_area: minimal size of object \n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_S32 voType = atoi(argv[1]);
@@ -37,13 +37,13 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
 
   if (InitVideoSystem(&vs_ctx, &aiInputSize, PIXEL_FORMAT_YUV_400, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   cviai_handle_t ai_handle = NULL;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
   int ret = CVI_AI_CreateHandle2(&ai_handle, 2, 0);
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("handle create failed with %#x!\n", ret);
     return ret;
   }
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
       printf("update background, count=%d, update_interval=%d\n", count, update_interval);
       // Update background. For simplicity, we just set new frame directly.
       if (CVI_AI_Set_MotionDetection_Background(ai_handle, &stMDFrame, threshold, min_area) !=
-          CVI_SUCCESS) {
+          CVIAI_SUCCESS) {
         printf("Cannot update background for motion detection\n");
         break;
       }

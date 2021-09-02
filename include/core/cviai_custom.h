@@ -29,7 +29,7 @@ extern "C" {
  *
  * @param handle An AI SDK handle.
  * @param id Returned id of the instance.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_AddInference(cviai_handle_t handle, uint32_t *id);
 
@@ -39,7 +39,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_AddInference(cviai_handle_t handle, uint32_t *i
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
  * @param filepath File path to the cvimodel file.
- * @return int Return CVI_SUCCESS if load model succeed.
+ * @return int Return CVIAI_SUCCESS if load model succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_SetModelPath(cviai_handle_t handle, const uint32_t id,
                                               const char *filepath);
@@ -50,7 +50,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetModelPath(cviai_handle_t handle, const uint3
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
  * @param filepath Output model path.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id,
                                               char **filepath);
@@ -63,7 +63,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint3
  * @param id Id of the instance.
  * @param thread The vpss thread index user desired. Note this param will changed if previous index
  * is not used.
- * @return int Return CVI_SUCCESS if successfully changed.
+ * @return int Return CVIAI_SUCCESS if successfully changed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint32_t id,
                                                const uint32_t thread);
@@ -78,7 +78,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint
  * @param thread The vpss thread index user desired. Note this param will changed if previous index
  * is not used.
  * @param vpssGroupId Assign a vpss group id if a new vpss instance needs to be created.
- * @return int Return CVI_SUCCESS if successfully changed.
+ * @return int Return CVIAI_SUCCESS if successfully changed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssThread2(cviai_handle_t handle, const uint32_t id,
                                                 const uint32_t thread, const VPSS_GRP vpssGroupId);
@@ -89,7 +89,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssThread2(cviai_handle_t handle, const uin
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
  * @param thread Output thread index.
- * @return int Return CVI_SUCCESS.
+ * @return int Return CVIAI_SUCCESS.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id,
                                                uint32_t *thread);
@@ -108,7 +108,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint
  * @param length The length of the fector and mean array. Must be 1 (will duplicate to 3) or 3.
  * @param keepAspectRatio Whether the image should keep aspect ratio when resize to input size of
  * the cvimodel.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  *
  * @see CVI_AI_Custom_SetPreprocessFuncPtr
  */
@@ -130,7 +130,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssPreprocessParam(cviai_handle_t handle, c
  * @param length The length of the fector and mean array. Must be 1 (will duplicate to 3) or 3.
  * @param keepAspectRatio Whether the image should keep aspect ratio when resize to input size of
  * the cvimodel.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  *
  * @see CVI_AI_Custom_SetVpssPreprocessParam
  * @see CVI_AI_Custom_SetPreprocessFuncPtr
@@ -154,7 +154,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetVpssPreprocessParamRaw(cviai_handle_t handle
  * do all of the preprocessing by yourself. If use_tensor_input and use_vpss_sq are both set to
  * false, the VIDEO_FRAME_S will be directly sent into cvimodel. If use_vpss_sq is set to true, this
  * parameter will be ignored. Default is true.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  *
  * @see CVI_AI_Custom_SetVpssPreprocessParam
  */
@@ -168,7 +168,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetPreprocessFuncPtr(cviai_handle_t handle, con
  *
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_t id);
 
@@ -191,7 +191,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_CloseModel(cviai_handle_t handle, const uint32_
  * @param c The channel size of the tensor.
  * @param h The height of the tensor.
  * @param w The width of the tensor.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const uint32_t id,
                                                     const char *tensorName, uint32_t *n,
@@ -205,7 +205,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_GetInputTensorNCHW(cviai_handle_t handle, const
  * @param id Id of the instance.
  * @param frame Input video frame.
  * @param numOfFrames Number of input frames.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  *
  * @see CVI_AI_Custom_CloseModel
  */
@@ -221,7 +221,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_RunInference(cviai_handle_t handle, const uint3
  * @param tensor The output tensor in int8_t*, may need to be casted before use.
  * @param tensorCount The number of the feature in the tensor.
  * @param unitSize The size for each element of the tensor.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  *
  */
 DLL_EXPORT CVI_S32 CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id,

@@ -8,6 +8,7 @@
 #include "face_attribute_types.hpp"
 #include "face_utils.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
@@ -36,7 +37,7 @@ FaceAttribute::FaceAttribute(bool with_attr)
 int FaceAttribute::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   for (uint32_t i = 0; i < 3; i++) {
     (*data)[0].factor[i] = FACE_ATTRIBUTE_FACTOR;
@@ -44,22 +45,22 @@ int FaceAttribute::setupInputPreprocess(std::vector<InputPreprecessSetup> *data)
   }
   (*data)[0].use_quantize_scale = true;
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int FaceAttribute::onModelOpened() {
   CVI_SHAPE shape = getInputShape(0);
   PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, shape.dim[3], shape.dim[2], format) !=
-      CVI_SUCCESS) {
-    return CVI_FAILURE;
+      CVIAI_SUCCESS) {
+    return CVIAI_ERR_OPEN_MODEL;
   }
 
   if (!m_use_wrap_hw) {
     m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
         m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 FaceAttribute::~FaceAttribute() {
@@ -91,8 +92,9 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
           "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, PIXEL_FORMAT_YUV_PLANAR_420. Current: "
           "%x\n",
           stOutFrame->stVFrame.enPixelFormat);
-      return CVI_FAILURE;
+      return CVIAI_ERR_INVALID_ARGS;
     }
+
     for (uint32_t i = 0; i < meta->size; ++i) {
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
 
@@ -100,8 +102,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
           info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       face_align_gdc(stOutFrame, &m_wrap_frame, face_info);
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
-      if (run(frames) != CVI_SUCCESS) {
-        return CVI_FAILURE;
+      if (int ret = run(frames) != CVIAI_SUCCESS) {
+        return ret;
       }
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
@@ -110,7 +112,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
       LOGE("Supported format is PIXEL_FORMAT_RGB_888. Current: %x\n",
            stOutFrame->stVFrame.enPixelFormat);
-      return CVI_FAILURE;
+      return CVIAI_ERR_INVALID_ARGS;
     }
     uint32_t img_width = stOutFrame->stVFrame.u32Width;
     uint32_t img_height = stOutFrame->stVFrame.u32Height;
@@ -136,8 +138,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
                             m_wrap_frame.stVFrame.pu8VirAddr[0],
                             m_wrap_frame.stVFrame.u32Length[0]);
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
-      if (run(frames) != CVI_SUCCESS) {
-        return CVI_FAILURE;
+      if (int ret = run(frames) != CVIAI_SUCCESS) {
+        return ret;
       }
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
@@ -147,7 +149,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       stOutFrame->stVFrame.pu8VirAddr[0] = NULL;
     }
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 template <typename U, typename V>

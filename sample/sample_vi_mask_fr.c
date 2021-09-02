@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         "Usage: %s <retina_model> <mask_model> <attribute_model> <mask_fr_model> <video output>.\n"
         "\t video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   CVI_S32 voType = atoi(argv[5]);
 
@@ -40,12 +40,12 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1920, .u32Height = 1080};
   if (InitVideoSystem(&vs_ctx, &aiInputSize, PIXEL_FORMAT_RGB_888, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   cviai_handle_t ai_handle = NULL;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[3]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, argv[4]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model failed with %#x!\n", ret);
     return ret;
   }

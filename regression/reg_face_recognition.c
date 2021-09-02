@@ -81,7 +81,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
   if (0 != mkdir(feature_dir, S_IRWXO) && EEXIST != errno) {
     printf("Create %s failed.\n", feature_dir);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   removePreviousFile(feature_dir);
 
@@ -95,7 +95,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S rgb_frame;
     CVI_S32 ret = CVI_AI_ReadImage(line, &blk_fr, &rgb_frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
@@ -134,7 +134,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       FILE *fp_feature;
       if ((fp_feature = fopen(base_name, "w+")) == NULL) {
         printf("Write file open error!");
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
       }
       for (int i = 0; i < face.info[face_idx].feature.size; i++) {
         fprintf(fp_feature, "%d\n", (int)face.info[face_idx].feature.ptr[i]);
@@ -152,7 +152,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
   }
   closedir(dirp);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 static int loadCount(const char *dir_path) {
@@ -287,27 +287,27 @@ int main(int argc, char *argv[]) {
     printf("quality_thresh (Optional): Threshold of face quality (Default: 0.05).\n");
     printf(
         "simularity_thresh (Optional): Threshold of face matching simularity (Default: 0.41).\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_Service_CreateHandle(&service_handle, &facelib_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create service handle failed with %#x!\n", ret);
     return ret;
   }
@@ -315,7 +315,7 @@ int main(int argc, char *argv[]) {
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[2]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -344,7 +344,7 @@ int main(int argc, char *argv[]) {
 
   if (0 != mkdir(argv[5], S_IRWXO) && EEXIST != errno) {
     printf("Create %s failed.\n", argv[5]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   float quality_thresh = argc >= 7 ? atof(argv[6]) : 0.05;

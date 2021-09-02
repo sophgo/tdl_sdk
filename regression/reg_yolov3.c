@@ -22,30 +22,30 @@ uint32_t coco_ids[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 13, 14, 15, 1
 int main(int argc, char *argv[]) {
   if (argc != 5) {
     printf("Usage: %s <yolo_model_path> <root folder> <evaluate json> <result_json>.\n", argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   uint32_t vpssgrp_width = 1280;
   uint32_t vpssgrp_height = 720;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   cviai_handle_t ai_handle;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV3, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model yolov3 failed with %#x!\n", ret);
     return ret;
   }
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     printf("Reading image %s\n", filename);
     VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
-    if (CVI_AI_ReadImage(filename, &blk, &frame, PIXEL_FORMAT_RGB_888_PLANAR) != CVI_SUCCESS) {
+    if (CVI_AI_ReadImage(filename, &blk, &frame, PIXEL_FORMAT_RGB_888_PLANAR) != CVIAI_SUCCESS) {
       printf("Read image failed.\n");
       break;
     }

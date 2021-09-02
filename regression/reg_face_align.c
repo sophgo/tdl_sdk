@@ -22,27 +22,27 @@ int main(int argc, char *argv[]) {
     printf("Usage: %s <fd_path> <img_dir>.\n", argv[0]);
     printf("Fd path: Face detection model path.\n");
     printf("Img dir: Directory of WLFW dataset.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, 5, PIXEL_FORMAT_RGB_888, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
     CVI_S32 ret = CVI_AI_ReadImage(full_img, &blk, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }

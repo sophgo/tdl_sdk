@@ -1,6 +1,7 @@
 #include "license_plate_recognition.hpp"
 #include "decode_tool.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core_utils.hpp"
@@ -34,7 +35,6 @@ LicensePlateRecognition::LicensePlateRecognition(LP_FORMAT region) : Core(CVI_ME
     this->lp_width = LICENSE_PLATE_CN_WIDTH;
   } else {
     LOGE("unknown region: %d\n", region);
-    exit(CVI_FAILURE);
   }
 }
 
@@ -44,7 +44,7 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
                                        cvai_object_t *vehicle_plate_meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 #if DEBUG_LICENSE_PLATE_DETECTION
   printf("[%s:%d] inference\n", __FILE__, __LINE__);
@@ -86,14 +86,16 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     prepareInputTensor(sub_cvFrame);
 
     std::vector<VIDEO_FRAME_INFO_S *> dummyFrames = {frame};
-    run(dummyFrames);
+    if (int ret = run(dummyFrames) != CVIAI_SUCCESS) {
+      return ret;
+    }
 
     float *out_code = getOutputRawPtr<float>(OUTPUT_NAME);
 
     std::string id_number;
     if (!LPR::greedy_decode(out_code, id_number, format)) {
       LOGE("LPR::decode error!!\n");
-      return CVI_FAILURE;
+      return CVIAI_ERR_INFERENCE;
     }
 
     strncpy(v_meta->license_char, id_number.c_str(), sizeof(v_meta->license_char));
@@ -102,7 +104,7 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
     frame->stVFrame.pu8VirAddr[0] = NULL;
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void LicensePlateRecognition::prepareInputTensor(cv::Mat &input_mat) {

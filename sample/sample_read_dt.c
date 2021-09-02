@@ -5,9 +5,9 @@
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printf("Usage: %s <retina_model_path> <image>.\n", argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
@@ -37,21 +37,21 @@ int main(int argc, char *argv[]) {
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
   }
   // Init cviai fr service handle.
   cviai_service_handle_t frs_handle = NULL;
   ret = CVI_AI_Service_CreateHandle(&frs_handle, ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create fr service handle failed with %#x!\n", ret);
     return ret;
   }
 
   // Setup model path and model config.
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     ret = CVI_AI_Service_FaceDigitalZoom(frs_handle, &fdFrame, &face, 0.05f, 0.1f, 0.3f, &outFrame);
 
     // Free frame from digital zoom
-    if (ret == CVI_SUCCESS) {
+    if (ret == CVIAI_SUCCESS) {
       IVE_IMAGE_S outImage;
       // Map the image.
       CVI_U32 imageLength = outFrame.stVFrame.u32Length[0] + outFrame.stVFrame.u32Length[1] +

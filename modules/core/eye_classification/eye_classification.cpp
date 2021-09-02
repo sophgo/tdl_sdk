@@ -1,4 +1,5 @@
 #include "eye_classification.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
@@ -15,7 +16,7 @@ EyeClassification::EyeClassification() : Core(CVI_MEM_SYSTEM) {}
 int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   int img_width = frame->stVFrame.u32Width;
@@ -55,7 +56,9 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       prepareInputTensor(r_Image);
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-      run(frames);
+      if (int ret = run(frames) != CVIAI_SUCCESS) {
+        return ret;
+      }
 
       float *score = getOutputRawPtr<float>(NAME_SCORE);
       meta->dms->reye_score = score[0];
@@ -83,7 +86,7 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   frame->stVFrame.pu8VirAddr[1] = NULL;
   frame->stVFrame.pu8VirAddr[2] = NULL;
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void EyeClassification::prepareInputTensor(cv::Mat &input_mat) {

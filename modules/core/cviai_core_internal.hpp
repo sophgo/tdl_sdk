@@ -46,7 +46,7 @@ inline int __attribute__((always_inline)) GetModelName(cviai_model_t &model, cha
   char *path = (char *)malloc(model.model_path.size());
   snprintf(path, model.model_path.size(), "%s", model.model_path.c_str());
   *filepath = path;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 inline uint32_t __attribute__((always_inline)) CVI_AI_GetVpssTimeout(cviai_handle_t handle) {
@@ -72,7 +72,7 @@ CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId, ui
     if (inst->init(vpssGroupId) != CVI_SUCCESS) {
       LOGE("Vpss init failed\n");
       delete inst;
-      return CVI_FAILURE;
+      return CVIAI_ERR_INIT_VPSS;
     }
 
     vec_engine->push_back(inst);
@@ -86,20 +86,20 @@ CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId, ui
   } else {
     LOGW("Thread %u already exists, given group id %u will not be used.\n", thread, vpssGroupId);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 inline int __attribute__((always_inline))
 setVPSSThread(cviai_model_t &model, std::vector<cviai::VpssEngine *> &v_engine,
               const uint32_t thread, const VPSS_GRP vpssGroupId) {
   uint32_t vpss_thread;
-  if (int ret =
-          CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread, &v_engine) != CVI_SUCCESS) {
+  if (int ret = CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread, &v_engine) !=
+                CVIAI_SUCCESS) {
     return ret;
   }
   model.vpss_thread = vpss_thread;
   if (model.instance != nullptr) {
     model.instance->setVpssEngine(v_engine[model.vpss_thread]);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

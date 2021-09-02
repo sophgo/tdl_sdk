@@ -25,7 +25,7 @@ static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
     VB_BLK blk;
     VIDEO_FRAME_INFO_S rgb_frame;
     CVI_S32 ret = CVI_AI_ReadImage(image, &blk, &rgb_frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
@@ -55,7 +55,7 @@ static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
     CVI_VB_ReleaseBlock(blk);
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
@@ -63,27 +63,27 @@ int main(int argc, char *argv[]) {
     printf("Usage: %s <reid model path> <image_root_dir>.\n", argv[0]);
     printf("Reid model path: Path to the reid cvimodel.\n");
     printf("Image root dir: Root directory to the test images.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }

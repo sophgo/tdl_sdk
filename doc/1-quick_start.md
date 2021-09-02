@@ -60,7 +60,7 @@ Make sure to destroy the handle using ``CVI_AI_DestroyHandle`` to prevent memory
 ```c
   cviai_handle_t handle;
   // Create handle
-  if ((ret = CVI_AI_CreateHandle(&handle))!= CVI_SUCCESS) {
+  if ((ret = CVI_AI_CreateHandle(&handle))!= CVIAI_SUCCESS) {
     printf("Handle create failed\n");
     return ret;
   }
@@ -77,13 +77,13 @@ Now we know how to create a handle, let's take a look at ``sample_init.c``. When
 ```c
   const char fake_path[] = "face_quality.cvimodel";
   if ((ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fake_path)) !=
-      CVI_SUCCESS) {
+      CVIAI_SUCCESS) {
     printf("Set model path failed.\n");
     return ret;
   }
   char *path = NULL;
   if ((ret = CVI_AI_GetModelPath(handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, &path)) !=
-      CVI_SUCCESS) {
+      CVIAI_SUCCESS) {
     printf("Get model path failed.\n");
     return ret;
   }
@@ -101,7 +101,7 @@ AI SDK use Vpss hardware to speed up the calculating time on images. Vpss API is
   // Get the used group ids by AI SDK.
   uint32_t *groups = NULL;
   uint32_t nums = 0;
-  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVI_SUCCESS) {
+  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVIAI_SUCCESS) {
     printf("Get used group id failed.\n");
     return ret;
   }
@@ -119,7 +119,7 @@ You can also manually assign a group id to AI SDK when creating a handle.
   VPSS_GRP groupId = 2;
   cviai_handle_t handle;
   // Create handle
-  if ((ret = CVI_AI_CreateHandle(&handle, groupId))!= CVI_SUCCESS) {
+  if ((ret = CVI_AI_CreateHandle(&handle, groupId))!= CVIAI_SUCCESS) {
     printf("Handle create failed\n");
     return ret;
   }

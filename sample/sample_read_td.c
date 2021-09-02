@@ -11,9 +11,9 @@ int main(int argc, char **argv) {
         "Usage: %s <sample_imagelist_path>\n"
         "          <inference_count>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     return ret;
   }

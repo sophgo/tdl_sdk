@@ -13,9 +13,9 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  // CVI_S32 ret = CVI_SUCCESS;
+  // CVI_S32 ret = CVIAI_SUCCESS;
   std::string model_dir = std::string(argv[1]);
   std::string image_dir = std::string(argv[2]);
 
@@ -40,21 +40,21 @@ int main(int argc, char *argv[]) {
   static CVI_S32 vpssgrp_height = 1080;
   cviai_handle_t handle = NULL;
 
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 3);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
   ret = CVI_AI_CreateHandle(&handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE_IR, fd_model_path.c_str());
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     VB_BLK blk1;
     VIDEO_FRAME_INFO_S frame;
     CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk1, &frame, PIXEL_FORMAT_BGR_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     // printf("[%d] pass: %d; expected det nums: %d, result: %d\n", img_idx, pass, expected_res_num,
     //        face_meta.size);
     if (!pass) {
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     }
 
     for (uint32_t i = 0; i < face_meta.size; i++) {
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
           face_meta.info[i].bbox.y2);
 #endif
       if (!pass) {
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
       }
     }
 
@@ -116,5 +116,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(handle);
   CVI_SYS_Exit();
   printf("retinafaceIR regression result: all pass\n");
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

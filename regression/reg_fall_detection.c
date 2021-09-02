@@ -12,16 +12,16 @@ int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("Usage: %s <detection_model_path> <alphapose_model_path> <video_frames_folder>.\n",
            argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -29,14 +29,14 @@ int main(int argc, char *argv[]) {
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   // Setup model path and model config.
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
   CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, 1,
                            CVI_AI_DET_TYPE_PERSON);
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, argv[2]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model alphapose failed with %#x!\n", ret);
     return ret;
   }
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
       strcat(image_path, dp->d_name);
 
       ret = CVI_AI_ReadImage(image_path, &blk1, &fdFrame, PIXEL_FORMAT_RGB_888);
-      if (ret != CVI_SUCCESS) {
+      if (ret != CVIAI_SUCCESS) {
         printf("Read image1 failed with %#x!\n", ret);
         return ret;
       }

@@ -202,7 +202,7 @@ int main(int argc, char** argv) {
         "\tvideo output, 0: disable, 1: output to panel, 2: output through rtsp\n"
         "\tdisplay detial, 0: disable, 1: enable\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   // VIDEO
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
 
   if (InitVideoSystem(&vs_ctx, &aiInputSize, PIXEL_FORMAT_RGB_888, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   // Load model
@@ -230,7 +230,7 @@ int main(int argc, char** argv) {
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model failed with %#x!\n", ret);
     return ret;
   }

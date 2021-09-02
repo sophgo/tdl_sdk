@@ -1,6 +1,7 @@
 #include "liveness.hpp"
 #include "template_matching.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
@@ -138,14 +139,14 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
                         cvai_face_t *rgb_meta, cvai_face_t *ir_meta) {
   if (rgb_meta->size <= 0) {
     LOGE("rgb_meta->size <= 0");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   std::vector<std::vector<cv::Mat>> input_mats =
       image_preprocess(rgbFrame, irFrame, rgb_meta, ir_meta);
   if (input_mats.empty() || input_mats.size() != rgb_meta->size) {
     LOGE("Get input_mats failed");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   for (uint32_t i = 0; i < input_mats.size(); i++) {
@@ -161,7 +162,9 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     prepareInputTensor(input);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {rgbFrame};
-    run(frames);
+    if (int ret = run(frames) != CVIAI_SUCCESS) {
+      return ret;
+    }
 
     float *out_data = getOutputRawPtr<float>(OUTPUT_NAME);
     for (int j = 0; j < CROP_NUM; j++) {
@@ -181,7 +184,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     // cout << "Face[" << i << "] liveness score: " << score << endl;
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void Liveness::prepareInputTensor(std::vector<cv::Mat> &input_mat) {

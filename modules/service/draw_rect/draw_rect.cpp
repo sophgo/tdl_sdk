@@ -1,12 +1,12 @@
 #include "draw_rect.hpp"
 
-#include "core_utils.hpp"
-#include "opencv2/opencv.hpp"
-
 #include <cvi_sys.h>
 #include <string.h>
 #include <algorithm>
 #include <unordered_map>
+#include "core/core/cvai_errno.h"
+#include "core_utils.hpp"
+#include "opencv2/opencv.hpp"
 
 #include "cviai_log.hpp"
 
@@ -367,7 +367,7 @@ int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts, cvai_service_b
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawPolygon\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   std::vector<cv::Point> cv_points;
@@ -433,7 +433,7 @@ int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts, cvai_service_b
     frame->stVFrame.pu8VirAddr[2] = NULL;
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame) {
@@ -442,7 +442,7 @@ int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame) {
   rgb_color.g = DEFAULT_RECT_COLOR_G;
   rgb_color.b = DEFAULT_RECT_COLOR_B;
   _DrawPts(drawFrame, pts, rgb_color, DEFAULT_RADIUS);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, float g, float b) {
@@ -460,7 +460,7 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, 
   else
     rgb_color.b = b;
   _WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THICKNESS);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 template <typename T>
@@ -469,11 +469,11 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
   if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawMeta\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   if (meta->size == 0) {
-    return CVI_SUCCESS;
+    return CVIAI_SUCCESS;
   }
 
   size_t image_size = drawFrame->stVFrame.u32Length[0] + drawFrame->stVFrame.u32Length[1] +
@@ -518,7 +518,7 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
     drawFrame->stVFrame.pu8VirAddr[1] = NULL;
     drawFrame->stVFrame.pu8VirAddr[2] = NULL;
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
@@ -570,7 +570,7 @@ template <typename T>
 int DrawMetaIVE(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
                 IVE_DRAW_RECT_CTRL *pstDrawRectCtrl) {
   if (meta->size == 0) {
-    return CVI_SUCCESS;
+    return CVIAI_SUCCESS;
   }
   pstDrawRectCtrl->numsOfRect = meta->size;
   pstDrawRectCtrl->rect = (IVE_RECT_S *)malloc(meta->size * sizeof(IVE_RECT_S));
@@ -645,7 +645,7 @@ int DrawMetaIVE(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawTex
   if (do_unmap) {
     CVI_SYS_Munmap(vir_addr, image_size);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 template int DrawMetaIVE<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
@@ -661,7 +661,7 @@ int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   cv::Mat img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
               frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   if (img.data == nullptr) {
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   for (uint32_t i = 0; i < obj->size; ++i) {
@@ -742,7 +742,7 @@ int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   // cv::cvtColor(draw_img, draw_img, CV_RGB2BGR);
   // cv::imwrite("/mnt/data/out2.jpg", draw_img);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 }  // namespace service

@@ -1,6 +1,8 @@
 #include "face_angle.hpp"
 #include <cvi_sys.h>
 #include <cmath>
+#include "core/core/cvai_errno.h"
+
 #define PI 3.14159265358979f
 
 namespace cviai {
@@ -48,7 +50,7 @@ int Predict(const cvai_pts_t* pFacial5points, cvai_head_pose_t* hp) {
   hp->roll /= 90;
   hp->roll = Saturate(hp->roll, -1.f, 1.f);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int Predict3DFacialNormal(const cv::Point& noseTip, const cv::Point& noseBase,
@@ -74,7 +76,7 @@ int Predict3DFacialNormal(const cv::Point& noseTip, const cv::Point& noseBase,
   hp->facialUnitNormalVector[1] = sin(slant) * (sin((360 - tilt) * (PI / 180.0)));
   hp->facialUnitNormalVector[2] = -cos(slant);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 float CalDistance(const cv::Point& p1, const cv::Point& p2) {

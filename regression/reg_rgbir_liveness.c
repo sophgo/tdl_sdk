@@ -29,28 +29,28 @@ int main(int argc, char *argv[]) {
     printf("Root dir: Image root directory.\n");
     printf("Pair txt path: Image list txt file path. <format: image1_path image2_path label>.\n");
     printf("Result path: Path to result file.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 3);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_CreateHandle(&handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_LIVENESS, argv[2]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     VIDEO_FRAME_INFO_S frame1;
     // printf("name1_full: %s\n", name1_full);
     CVI_S32 ret = CVI_AI_ReadImage(name1_full, &blk1, &frame1, PIXEL_FORMAT_BGR_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image1 failed with %#x!\n", ret);
       return ret;
     }
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
     VB_BLK blk2;
     VIDEO_FRAME_INFO_S frame2;
     ret = CVI_AI_ReadImage(name2_full, &blk2, &frame2, PIXEL_FORMAT_BGR_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image2 failed with %#x!\n", ret);
       return ret;
     }

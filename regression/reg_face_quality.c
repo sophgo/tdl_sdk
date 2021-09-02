@@ -31,7 +31,7 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
     VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S frFrame;
     CVI_S32 ret = CVI_AI_ReadImage(line, &blk_fr, &frFrame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
@@ -58,7 +58,7 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
   *total = idx;
   closedir(dirp);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
@@ -71,28 +71,28 @@ int main(int argc, char *argv[]) {
     printf("Face attribute model path: Path to face attribute cvimodel.\n");
     printf("Pos image root dir: Path to the positive data directory.\n");
     printf("Neg image root dir: Path to the negative data directory.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[2]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }

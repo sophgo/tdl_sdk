@@ -1,10 +1,11 @@
 #include "core/cviai_rescale_bbox.h"
+#include "core/core/cvai_errno.h"
 #include "utils/core_utils.hpp"
 #include "utils/face_utils.hpp"
 
 CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
   if (frame->stVFrame.u32Width == face->width && frame->stVFrame.u32Height == face->height) {
-    return CVI_SUCCESS;
+    return CVIAI_SUCCESS;
   }
   for (uint32_t i = 0; i < face->size; i++) {
     cviai::info_rescale_nocopy_c(face->width, face->height, frame->stVFrame.u32Width,
@@ -12,12 +13,12 @@ CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t
   }
   face->width = frame->stVFrame.u32Width;
   face->height = frame->stVFrame.u32Height;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
   if (frame->stVFrame.u32Width == obj->width && frame->stVFrame.u32Height == obj->height) {
-    return CVI_SUCCESS;
+    return CVIAI_SUCCESS;
   }
   float ratio, pad_width, pad_height;
   for (uint32_t i = 0; i < obj->size; i++) {
@@ -27,11 +28,11 @@ CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object
   }
   obj->width = frame->stVFrame.u32Width;
   obj->height = frame->stVFrame.u32Height;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
   if (frame->stVFrame.u32Width == face->width && frame->stVFrame.u32Height == face->height) {
-    return CVI_SUCCESS;
+    return CVIAI_SUCCESS;
   }
   for (uint32_t i = 0; i < face->size; i++) {
     cviai::info_rescale_nocopy_rb(face->width, face->height, frame->stVFrame.u32Width,
@@ -39,11 +40,11 @@ CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *fa
   }
   face->width = frame->stVFrame.u32Width;
   face->height = frame->stVFrame.u32Height;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj) {
   if (frame->stVFrame.u32Width == obj->width && frame->stVFrame.u32Height == obj->height) {
-    return CVI_SUCCESS;
+    return CVIAI_SUCCESS;
   }
   float ratio;
   for (uint32_t i = 0; i < obj->size; i++) {
@@ -52,7 +53,7 @@ CVI_S32 CVI_AI_RescaleMetaRBCpp(const VIDEO_FRAME_INFO_S *frame, cvai_object_t *
   }
   obj->width = frame->stVFrame.u32Width;
   obj->height = frame->stVFrame.u32Height;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_RescaleMetaCenterFace(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {

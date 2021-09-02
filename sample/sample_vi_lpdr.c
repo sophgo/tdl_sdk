@@ -30,16 +30,16 @@ int main(int argc, char *argv[]) {
         "\t<license_format (tw/cn)>\n"
         "\tvideo output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   CVI_S32 voType = atoi(argv[6]);
 
-  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1920, .u32Height = 1080};
   if (InitVideoSystem(&vs_ctx, &aiInputSize, PIXEL_FORMAT_RGB_888, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   cviai_handle_t ai_handle = NULL;
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
                                        CVI_AI_DET_GROUP_VEHICLE);
   } else {
     printf("Unknow det model type.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   enum LicenseFormat license_format;
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     license_format = china;
   } else {
     printf("Unknown license type %s\n", argv[5]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
@@ -81,9 +81,9 @@ int main(int argc, char *argv[]) {
       s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, argv[4]);
       break;
     default:
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
   }
-  if (s32Ret != CVI_SUCCESS) {
+  if (s32Ret != CVIAI_SUCCESS) {
     printf("open failed with %#x!\n", s32Ret);
     return s32Ret;
   }
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
         CVI_AI_LicensePlateRecognition_CN(ai_handle, &stfdFrame, &vehicle_obj);
         break;
       default:
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
     }
 
     for (size_t i = 0; i < vehicle_obj.size; i++) {

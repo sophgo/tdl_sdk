@@ -25,12 +25,12 @@ typedef struct {
 CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle, cviai_handle_t ai_handle) {
   if (ai_handle == NULL) {
     LOGC("ai_handle is empty.");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   cviai_service_context_t *ctx = new cviai_service_context_t;
   ctx->ai_handle = ai_handle;
   *handle = ctx;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle) {
@@ -39,26 +39,26 @@ CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle) {
   delete ctx->m_dt;
   delete ctx->m_ad;
   delete ctx;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_Service_EnableTPUDraw(cviai_service_handle_t handle, bool use_tpu) {
   if (handle == NULL) {
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
   ctx->draw_use_tpu = use_tpu;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_Service_RegisterFeatureArray(cviai_service_handle_t handle,
                                             const cvai_service_feature_array_t featureArray,
                                             const cvai_service_feature_matching_e method) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  int ret = CVI_SUCCESS;
+  int ret = CVIAI_SUCCESS;
   if (ctx->m_fm == nullptr) {
     ctx->m_fm = new cviai::service::FeatureMatching();
-    if ((ret = ctx->m_fm->init()) != CVI_SUCCESS) {
+    if ((ret = ctx->m_fm->init()) != CVIAI_SUCCESS) {
       LOGE("Feature matching instance initialization failed with %#x!\n", ret);
       delete ctx->m_fm;
       ctx->m_fm = nullptr;
@@ -73,12 +73,12 @@ CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
                                            const cvai_feature_t *feature_lhs, float *score) {
   if (feature_lhs->type != feature_rhs->type) {
     LOGE("feature type not matched! rhs=%d, lhs=%d\n", feature_rhs->type, feature_lhs->type);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   if (feature_lhs->size != feature_rhs->size) {
     LOGE("feature size not matched!, rhs: %u, lhs: %u\n", feature_rhs->size, feature_lhs->size);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   if (feature_rhs->type == TYPE_INT8) {
@@ -92,9 +92,9 @@ CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
     *score = (float)value3 / (sqrt((double)value1) * sqrt((double)value2));
   } else {
     LOGE("Unsupported feature type: %d\n", feature_rhs->type);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
@@ -191,7 +191,7 @@ static void createIVEHandleIfNeeded(IVE_HANDLE *ive_handle) {
 template <typename T>
 inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
                        const bool drawText, cvai_service_brush_t brush) {
-  if (meta->size <= 0) return CVI_SUCCESS;
+  if (meta->size <= 0) return CVIAI_SUCCESS;
 
   if (handle != NULL) {
     if ((brush.size % 2) != 0) {
@@ -218,7 +218,7 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
       if (ret != CVI_SUCCESS) {
         LOGE("CVI_IVE_VideoFrameInfo2Image failed %d\n", ret);
         FREE_UNMMAP_IMAGE(ai_ctx, img, frame);
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
       }
       IVE_DRAW_RECT_CTRL pstDrawRectCtrl;
       memset(&pstDrawRectCtrl, 0, sizeof(pstDrawRectCtrl));
@@ -241,7 +241,7 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
   }
 
   LOGE("service handle is NULL\n");
-  return CVI_FAILURE;
+  return CVIAI_FAILURE;
 }
 
 CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle, const cvai_face_t *meta,
@@ -282,9 +282,9 @@ CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t handle,
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
   if (ctx->m_ad == nullptr) {
     LOGE("Please set intersect area first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  int ret = CVI_SUCCESS;
+  int ret = CVIAI_SUCCESS;
   if (*status != NULL) {
     free(*status);
   }
@@ -321,10 +321,10 @@ CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle, const cv
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
   if (ctx->m_poly == nullptr) {
     LOGE("Please set intersect area first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   std::vector<cv::Point> polygon;
   polygon.push_back({static_cast<int>(bbox->x1), static_cast<int>(bbox->y1)});
   polygon.push_back({static_cast<int>(bbox->x1), static_cast<int>(bbox->y2)});
@@ -333,7 +333,7 @@ CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle, const cv
 
   float area = 0;
   ret = ctx->m_poly->intersectArea(polygon, &area);
-  if (ret == CVI_SUCCESS) {
+  if (ret == CVIAI_SUCCESS) {
     *has_intersect = area > 0.0;
   }
   return ret;
@@ -342,10 +342,10 @@ CVI_S32 CVI_AI_Service_IntrusionDetect_Init(cviai_service_handle_t handle) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
   if (ctx->m_intrusion_det != nullptr) {
     printf("IntrusionDetect has been initialized.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   ctx->m_intrusion_det = new cviai::service::IntrusionDetect();
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle_t handle,
@@ -353,7 +353,7 @@ CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle_t handle,
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
   if (ctx->m_intrusion_det == nullptr) {
     printf("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   return ctx->m_intrusion_det->setRegion(*pts);
 }
@@ -364,10 +364,10 @@ CVI_S32 CVI_AI_Service_IntrusionDetect_BBox(cviai_service_handle_t handle, const
   if (ctx->m_intrusion_det == nullptr) {
     printf("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
     LOGE("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   *result = ctx->m_intrusion_det->run(*bbox);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp) {
@@ -375,7 +375,7 @@ CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp) {
 }
 
 CVI_S32 CVI_AI_Service_FaceAngleForAll(const cvai_face_t *meta) {
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   for (uint32_t i = 0; i < meta->size; i++) {
     ret |= cviai::service::Predict(&meta->info[i].pts, &meta->info[i].head_pose);
   }

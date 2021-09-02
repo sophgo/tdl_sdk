@@ -57,13 +57,13 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
   if (0 != mkdir(feature_dir, S_IRWXO) && EEXIST != errno) {
     printf("Create %s failed: %s\n", feature_dir, strerror(errno));
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   if (0 != chmod(feature_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IROTH | S_IWOTH | S_IXOTH | S_IWGRP |
                                   S_IRGRP | S_IXGRP)) {
     printf("chmod %s failed: %s\n", feature_dir, strerror(errno));
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   removePreviousFile(feature_dir);
@@ -78,7 +78,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S rgb_frame;
     CVI_S32 ret = CVI_AI_ReadImage(line, &blk_fr, &rgb_frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
@@ -116,7 +116,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       FILE *fp_feature;
       if ((fp_feature = fopen(base_name, "w+")) == NULL) {
         printf("Write file %s open failed: %s\n", base_name, strerror(errno));
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
       }
       for (int i = 0; i < face.info[face_idx].feature.size; i++) {
         fprintf(fp_feature, "%d\n", (int)face.info[face_idx].feature.ptr[i]);
@@ -129,7 +129,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
   }
   closedir(dirp);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 static int loadCount(const char *dir_path) {
@@ -272,21 +272,21 @@ int main(int argc, char *argv[]) {
     printf("Face quality model path: Path to face quaity cvimodel.\n");
     printf("Image root dir: Image root directory.\n");
     printf("Feature root dir: Root directory to temporarily save feature file.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
@@ -294,7 +294,7 @@ int main(int argc, char *argv[]) {
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }

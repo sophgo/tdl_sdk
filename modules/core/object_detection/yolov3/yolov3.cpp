@@ -1,5 +1,6 @@
 #include "yolov3.hpp"
 #include "coco_utils.hpp"
+#include "core/core/cvai_errno.h"
 #include "core_utils.hpp"
 
 #define YOLOV3_CLASSES 80
@@ -36,21 +37,21 @@ Yolov3::~Yolov3() { free(mp_total_dets); }
 int Yolov3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Yolov3 only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   for (int i = 0; i < 3; i++) {
     (*data)[0].factor[i] = YOLOV3_SCALE;
   }
   (*data)[0].use_quantize_scale = true;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj) {
-  int ret = CVI_SUCCESS;
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
-  ret = run(frames);
-
-  outputParser(srcFrame, obj);
+  int ret = run(frames);
+  if (run(frames) == CVIAI_SUCCESS) {
+    outputParser(srcFrame, obj);
+  }
 
   return ret;
 }

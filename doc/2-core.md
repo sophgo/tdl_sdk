@@ -25,7 +25,7 @@ To get the relationship between thread and the ``VPSS_GRP`` thread uses, you can
   // Get the used group ids by AI SDK.
   uint32_t *groups = NULL;
   uint32_t nums = 0;
-  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVI_SUCCESS) {
+  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVIAI_SUCCESS) {
     printf("Get used group id failed.\n");
     return ret;
   }
@@ -53,7 +53,7 @@ There are two ways to read image from file.
   VB_BLK blk;
   VIDEO_FRAME_INFO_S rgb_frame;
   CVI_S32 ret = CVI_AI_ReadImage(path, &blk, &rgb_frame, PIXEL_FORMAT_RGB_888);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Read image failed with %#x!\n", ret);
     return ret;
   }
@@ -158,7 +158,7 @@ CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
 
 ### Acquiring VPSS_CHN_ATTR_S from built-in models
 
-The model will be loaded when the function is called. Make sure you complete your settings before calling this funciton. If you want to use VPSS binding mode instead of built-in VPSS instance inside AI SDK, you can get the VPSS_CHN_ATTR_S from the supported built-in models. If the model does not support exporting, ``CVI_FAILURE`` will return.
+The model will be loaded when the function is called. Make sure you complete your settings before calling this funciton. If you want to use VPSS binding mode instead of built-in VPSS instance inside AI SDK, you can get the VPSS_CHN_ATTR_S from the supported built-in models. If the model does not support exporting, ``CVIAI_FAILURE`` will return.
 
 ```c
 CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,

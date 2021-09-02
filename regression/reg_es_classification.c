@@ -54,25 +54,25 @@ static int run(const char *img_dir, float *Acc) {
   for (int i = 0; i < 6; ++i) {
     printf("index: %d Acc: %f\n", i, (float)_true[i] / (float)_total[i]);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printf("Usage: %s <es classifier model path> <data dir>.\n", argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model esc failed with %#x!\n", ret);
     return ret;
   }

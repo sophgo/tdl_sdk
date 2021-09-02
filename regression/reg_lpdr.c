@@ -19,40 +19,40 @@ int main(int argc, char *argv[]) {
         "          <evaluate_json>\n"
         "          <result_path>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   if (access(argv[1], F_OK) != 0) {
     printf("check model fail: %s\n", argv[1]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   if (access(argv[3], F_OK) != 0) {
     printf("check model fail: %s\n", argv[2]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   if (access(argv[4], F_OK) != 0) {
     printf("check model fail: %s\n", argv[3]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   if (access(argv[6], F_OK) != 0) {
     printf("check json fail: %s\n", argv[5]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   DIR *dir = opendir(argv[5]);
   if (dir) {
     closedir(dir);
   } else {
     printf("check images folder fail: %s\n", argv[4]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -68,18 +68,18 @@ int main(int argc, char *argv[]) {
                              CVI_AI_DET_GROUP_VEHICLE);
   } else {
     printf("Unknow det model type.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("open failed with %#x!\n", ret);
     return ret;
   }
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
     CVI_S32 ret = CVI_AI_ReadImage(filename, &blk, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }

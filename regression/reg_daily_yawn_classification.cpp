@@ -13,9 +13,9 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   std::string model_dir = std::string(argv[1]);
   std::string image_dir = std::string(argv[2]);
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   cviai_handle_t facelib_handle = NULL;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 3);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION,
                              model_path.c_str());
 
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set face quality model failed with %#x!\n", ret);
     return ret;
   }
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S frame;
     CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image \'%s\' failed with %#x!\n", image_path.c_str(), ret);
       return ret;
     }
@@ -95,5 +95,5 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_DestroyHandle(facelib_handle);
   CVI_SYS_Exit();
-  return pass ? CVI_SUCCESS : CVI_FAILURE;
+  return pass ? CVIAI_SUCCESS : CVIAI_FAILURE;
 }

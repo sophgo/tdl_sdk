@@ -1,5 +1,6 @@
 #include "digital_tracking.hpp"
 #include "../draw_rect/draw_rect.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai_log.hpp"
 #include "rescale_utils.hpp"
@@ -13,12 +14,12 @@ namespace service {
 
 int DigitalTracking::setVpssTimeout(uint32_t timeout) {
   m_vpss_timeout = timeout;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int DigitalTracking::setVpssEngine(VpssEngine *engine) {
   mp_vpss_inst = engine;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 template <typename T>
@@ -28,7 +29,7 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
                          const float trans_ratio) {
   if (mp_vpss_inst == nullptr) {
     LOGE("vpss_inst not set.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   uint32_t width = srcFrame->stVFrame.u32Width;
   uint32_t height = srcFrame->stVFrame.u32Height;
@@ -101,7 +102,7 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
                            DEFAULT_RECT_THICKNESS, false);
 #endif
   m_prev_rect = rect;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void DigitalTracking::transformRect(const float trans_ratio, const Rect &prev_rect,

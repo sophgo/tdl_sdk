@@ -1,4 +1,5 @@
 #include "area_detect.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "cviai_log.hpp"
 
@@ -18,21 +19,21 @@ inline bool checkValid(const float x, const float y) {
 int AreaDetect::setArea(const cvai_pts_t &pts) {
   if (pts.size < 2) {
     LOGE("Registered points must larger than 2.");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   m_boundaries.clear();
   m_pts.clear();
 
   if (!checkValid(pts.x[0], pts.y[0])) {
     LOGE("Coordinate cannot be negative ( %3.f, %3.f)", pts.x[0], pts.y[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   Eigen::Vector2f first_pts(pts.x[0], pts.y[0]);
   Eigen::Vector2f prev_pts = first_pts;
   for (uint32_t i = 1; i < pts.size; i++) {
     if (!checkValid(pts.x[i], pts.y[i])) {
       LOGE("Coordinate cannot be negative ( %3.f, %3.f)", pts.x[0], pts.y[0]);
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     }
     Eigen::Vector2f curr_pts(pts.x[i], pts.y[i]);
     m_boundaries.push_back(Eigen::Hyperplane<float, 2>::Through(prev_pts, curr_pts));
@@ -48,7 +49,7 @@ int AreaDetect::setArea(const cvai_pts_t &pts) {
     }
   }
   LOGD("Boundary registered: size %u\n", (uint32_t)m_boundaries.size());
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int AreaDetect::orientation(Eigen::Vector2f p, Eigen::Vector2f q, Eigen::Vector2f r) {
@@ -96,7 +97,7 @@ void AreaDetect::run(const uint64_t &timestamp, const uint64_t &unique_id, const
   if (m_boundaries.size() == 1) {
     float x, y;
     bool has_prev = false;
-    if (m_tracker.getLatestPos(unique_id, &x, &y) == CVI_SUCCESS) {
+    if (m_tracker.getLatestPos(unique_id, &x, &y) == CVIAI_SUCCESS) {
       has_prev = true;
     }
     m_tracker.registerId(timestamp, unique_id, center_pts_x, center_pts_y);

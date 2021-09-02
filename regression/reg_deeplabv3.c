@@ -22,27 +22,27 @@ int main(int argc, char *argv[]) {
     printf("Deeplabv3 model path: Path to deeplabv3 cvimodel.\n");
     printf("Image root dir: Image root directory.\n");
     printf("Result root dir: Root directory to save result file.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_DEEPLABV3, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   ive_handle = CVI_IVE_CreateHandle();
 
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
@@ -67,12 +67,12 @@ int main(int argc, char *argv[]) {
     IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, img_name, IVE_IMAGE_TYPE_U8C3_PACKAGE);
     if (image.u16Width == 0) {
       printf("Read image failed!\n");
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     }
 
     VIDEO_FRAME_INFO_S rgb_frame;
     CVI_S32 ret = CVI_IVE_Image2VideoFrameInfo(&image, &rgb_frame, false);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Convert to video frame failed with %#x!\n", ret);
       return ret;
     }

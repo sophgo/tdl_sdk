@@ -1,4 +1,5 @@
 #include "cvi_deepsort.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem_internal.h"
 #include "cvi_deepsort_utils.hpp"
 #include "cviai_log.hpp"
@@ -65,7 +66,7 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
         bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
         if (obj->info[i].feature.type != TYPE_INT8) {
           printf("Feature Type not support now.\n");
-          return CVI_FAILURE;
+          return CVIAI_ERR_INVALID_ARGS;
         }
         int type_size = getFeatureTypeSize(obj->info[i].feature.type);
         for (uint32_t d = 0; d < feature_size; d++) {
@@ -97,7 +98,7 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
         tracker_t->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
       } else {
         LOGE("Tracker State Unknow.\n");
-        return CVI_FAILURE;
+        return CVIAI_ERR_INVALID_ARGS;
       }
       tracker_t->info[idx].bbox.x1 = t_bbox(0);
       tracker_t->info[idx].bbox.y1 = t_bbox(1);
@@ -118,13 +119,13 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
     }
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid) {
   if (use_reid) {
     LOGE("Face Tracking don't support ReID now.");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   std::vector<BBOX> bboxes;
   std::vector<FEATURE> features;
@@ -157,7 +158,7 @@ int DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid)
       tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
-      return CVI_FAILURE;
+      return CVIAI_ERR_INVALID_ARGS;
     }
     tracker_t->info[i].bbox.x1 = t_bbox(0);
     tracker_t->info[i].bbox.y1 = t_bbox(1);
@@ -165,7 +166,7 @@ int DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid)
     tracker_t->info[i].bbox.y2 = t_bbox(1) + t_bbox(3);
     face->info[i].unique_id = t_id;
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 /* Result Format: [i] <is_matched, tracker_id, tracker_state, tracker_bbox> */

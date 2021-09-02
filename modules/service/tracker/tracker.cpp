@@ -1,8 +1,8 @@
 #include "tracker.hpp"
+#include <string.h>
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
-
-#include <string.h>
 
 namespace cviai {
 namespace service {
@@ -22,7 +22,7 @@ int Tracker::registerId(const CVI_U64 &timestamp, const int64_t &id, const float
       ++it;
     }
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 int Tracker::getLatestPos(const int64_t &id, float *x, float *y) {
   auto it = m_tracker.find(id);
@@ -30,9 +30,9 @@ int Tracker::getLatestPos(const int64_t &id, float *x, float *y) {
     auto &vec = it->second;
     *x = vec[vec.size() - 1].second.x;
     *y = vec[vec.size() - 1].second.y;
-    return CVI_SUCCESS;
+    return CVIAI_SUCCESS;
   }
-  return CVI_FAILURE;
+  return CVIAI_FAILURE;
 }
 }  // namespace service
 }  // namespace cviai

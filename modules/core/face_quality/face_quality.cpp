@@ -1,11 +1,11 @@
 #include "face_quality.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
-
 #include "cvi_sys.h"
+#include "face_utils.hpp"
 #include "opencv2/opencv.hpp"
 
 #define SCALE_R (1.0 / (255.0 * 0.229))
@@ -103,7 +103,7 @@ FaceQuality::~FaceQuality() {
 int FaceQuality::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face quality only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
@@ -114,25 +114,25 @@ int FaceQuality::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   }
   (*data)[0].use_quantize_scale = true;
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int FaceQuality::onModelOpened() {
   CVI_SHAPE shape = getInputShape(0);
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, shape.dim[3], shape.dim[2],
                             PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
-    return CVI_FAILURE;
+    return CVIAI_ERR_OPEN_MODEL;
   }
 
   m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
       m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   int img_width = frame->stVFrame.u32Width;
@@ -145,7 +145,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   }
   cv::Mat image(img_height, img_width, CV_8UC3, frame->stVFrame.pu8VirAddr[0],
                 frame->stVFrame.u32Stride[0]);
-  int ret = 0;
+  int ret = CVIAI_SUCCESS;
   for (uint32_t i = 0; i < meta->size; i++) {
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
@@ -158,7 +158,10 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
                           m_wrap_frame.stVFrame.u32Length[0]);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
-    ret |= run(frames);
+    ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
+      return ret;
+    }
 
     float *score = getOutputRawPtr<float>(NAME_SCORE);
     meta->info[i].face_quality = score[1];
@@ -178,7 +181,6 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     frame->stVFrame.pu8VirAddr[2] = NULL;
   }
 
-  // return CVI_SUCCESS;
   return ret;
 }
 
@@ -199,7 +201,7 @@ int FaceQuality::getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
                      image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
                      m_wrap_frame.stVFrame.u32Stride[0]);
   if (face_align(image, warp_image, face_info_rescale) != 0) {
-    return CVI_FAILURE;
+    return CVIAI_ERR_INFERENCE;
   }
   // cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2BGR);
   // cv::imwrite("visual/aligned_face.jpg", warp_image);
@@ -226,7 +228,7 @@ int FaceQuality::getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
     srcFrame->stVFrame.pu8VirAddr[2] = NULL;
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 }  // namespace cviai

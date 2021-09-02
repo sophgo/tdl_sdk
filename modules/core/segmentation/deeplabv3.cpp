@@ -1,10 +1,11 @@
 #include "deeplabv3.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-
 #include "cvi_sys.h"
+#include "error_msg.hpp"
 #include "opencv2/opencv.hpp"
 
 #define SCALE (1 / 127.5)
@@ -27,7 +28,7 @@ Deeplabv3::~Deeplabv3() {
 int Deeplabv3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face quality only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   for (uint32_t i = 0; i < 3; i++) {
@@ -36,30 +37,32 @@ int Deeplabv3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   }
   (*data)[0].use_quantize_scale = true;
   (*data)[0].keep_aspect_ratio = false;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int Deeplabv3::onModelOpened() {
   CVI_SHAPE shape = getOutputShape(NAME_SCORE);
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_label_frame, shape.dim[3], shape.dim[2],
                             PIXEL_FORMAT_YUV_400) != CVI_SUCCESS) {
-    return CVI_FAILURE;
+    return CVIAI_ERR_OPEN_MODEL;
   }
 
   m_label_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
       m_label_frame.stVFrame.u64PhyAddr[0], m_label_frame.stVFrame.u32Length[0]);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_frame,
                          cvai_class_filter_t *filter) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-  run(frames);
+  if (int ret = run(frames) != CVIAI_SUCCESS) {
+    return ret;
+  }
 
   outputParser(filter);
 
@@ -79,15 +82,17 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
   VPSS_SCALE_COEF_E enCoef = VPSS_SCALE_COEF_NEAREST;
   int ret = mp_vpss_inst->sendFrame(&m_label_frame, &vpssChnAttr, &enCoef, 1);
   if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed with %#x!\n", ret);
-    return ret;
-  }
-  if (CVI_SUCCESS != mp_vpss_inst->getFrame(out_frame, 0, m_vpss_timeout)) {
-    LOGE("Deeplabv3 resized output label failed.");
-    return CVI_FAILURE;
+    LOGE("Deeplabv3 send frame failed: %s\n", get_vpss_error_msg(ret));
+    return CVIAI_ERR_VPSS_SEND_FRAME;
   }
 
-  return CVI_SUCCESS;
+  ret = mp_vpss_inst->getFrame(out_frame, 0, m_vpss_timeout);
+  if (ret != CVI_SUCCESS) {
+    LOGE("Deeplabv3 resized output label failed: %s\n", get_vpss_error_msg(ret));
+    return CVIAI_ERR_VPSS_GET_FRAME;
+  }
+
+  return CVIAI_SUCCESS;
 }
 
 inline bool is_preserved_class(cvai_class_filter_t *filter, int32_t c) {
@@ -142,7 +147,7 @@ int Deeplabv3::outputParser(cvai_class_filter_t *filter) {
   CVI_SYS_IonFlushCache(m_label_frame.stVFrame.u64PhyAddr[0], m_label_frame.stVFrame.pu8VirAddr[0],
                         m_label_frame.stVFrame.u32Length[0]);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 }  // namespace cviai

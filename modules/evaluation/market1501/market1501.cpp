@@ -1,8 +1,5 @@
 #include "market1501.hpp"
 
-#include "core/cviai_core.h"
-#include "core/cviai_types_mem_internal.h"
-
 #include <cvi_type.h>
 #include <dirent.h>
 #include <math.h>
@@ -13,6 +10,9 @@
 #include <algorithm>
 #include <numeric>
 #include <queue>
+#include "core/core/cvai_errno.h"
+#include "core/cviai_core.h"
+#include "core/cviai_types_mem_internal.h"
 
 #define GALLERY_DIR "/bounding_box_test/"
 #define QUERY_DIR "/query/"
@@ -78,7 +78,7 @@ int market1501Eval::getEvalData(const char *img_dir) {
   closedir(dirp);
   closedir(dirp_g);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 uint32_t market1501Eval::getImageNum(bool is_query) {

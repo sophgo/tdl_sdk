@@ -1,11 +1,11 @@
 #include "wflw.hpp"
-#include "cviai_log.hpp"
-
 #include <cvi_type.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "core/core/cvai_errno.h"
+#include "cviai_log.hpp"
 
 #define LEFT_EYE 96 * 2
 #define RIGHT_EYE 97 * 2
@@ -26,7 +26,7 @@ int wflwEval::getEvalData(const char *filepath) {
 
   if ((fp = fopen(fullPath, "r")) == NULL) {
     LOGE("file open error: %s!\n", filepath);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   char line[4096];
@@ -56,7 +56,7 @@ int wflwEval::getEvalData(const char *filepath) {
 
   m_result_points.resize(m_img_points.size());
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 uint32_t wflwEval::getTotalImage() { return m_img_name.size(); }

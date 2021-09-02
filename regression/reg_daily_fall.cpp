@@ -13,9 +13,9 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  // CVI_S32 ret = CVI_SUCCESS;
+  // CVI_S32 ret = CVIAI_SUCCESS;
   std::string model_dir = std::string(argv[1]);
   std::string image_dir = std::string(argv[2]);
 
@@ -42,14 +42,14 @@ int main(int argc, char *argv[]) {
   float threshold = float(m_json_read["threshold"]);
   // printf("threshold: %f\n", threshold);
 
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
@@ -65,14 +65,14 @@ int main(int argc, char *argv[]) {
   /*
   ret =
       CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0,
-  od_model_path.c_str()); if (ret != CVI_SUCCESS) { printf("Set model retinaface failed with
+  od_model_path.c_str()); if (ret != CVIAI_SUCCESS) { printf("Set model retinaface failed with
   %#x!\n", ret); return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, false);
   CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, 1,
                            CVI_AI_DET_TYPE_PERSON);
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, pose_model_path.c_str());
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model alphapose failed with %#x!\n", ret);
     return ret;
   }
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     int expected_res = int(m_json_read["expected_results"][img_idx]);
 
     CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk1, &frame, PIXEL_FORMAT_BGR_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
         // printf("[%d] pass: %d; fall, expected : %d, result : %d\n", img_idx, pass, expected_res,
         //      obj.info[0].pedestrian_properity->fall);
         if (!pass) {
-          return CVI_FAILURE;
+          return CVIAI_FAILURE;
         }
       }
     }
@@ -165,5 +165,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
   printf("fall regression result: all pass\n");
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

@@ -33,11 +33,11 @@ void SWBinding(std::vector<vpssPair> vpss_vec, cvai_vpssconfig_t *vpssConfig);
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("Usage: %s <retina_model_path> <image> <lanes>.\n", argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 3840;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   for (uint32_t i = 0; i < total_lanes; i++) {
     ret = VPSS_INIT_HELPER2(i, 100, 100, PIXEL_FORMAT_RGB_888, 100, 100, PIXEL_FORMAT_RGB_888, 2,
                             true);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Init sys failed with %#x!\n", ret);
       return ret;
     }
@@ -67,14 +67,14 @@ int main(int argc, char *argv[]) {
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   // Setup model path and model config.
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
       VIDEO_FRAME_INFO_S frame, frFrame;
       int ret = CVI_VPSS_GetChnFrame(vpss_vec[i].groupId, 0, &frame, 1000);
       ret |= CVI_VPSS_GetChnFrame(vpss_vec[i].groupId, 1, &frFrame, 1000);
-      if (ret != CVI_SUCCESS) {
+      if (ret != CVIAI_SUCCESS) {
         if (stopped) {
           break;
         }

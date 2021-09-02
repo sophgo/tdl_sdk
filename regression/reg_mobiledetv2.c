@@ -23,7 +23,7 @@ typedef struct _ModelConfig {
 } ModelConfig;
 
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   if (strcmp(model_name, "mobiledetv2-lite") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE;
     config->inference = CVI_AI_MobileDetV2_Lite;
@@ -46,7 +46,7 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0;
     config->inference = CVI_AI_MobileDetV2_Pedestrian_D0;
   } else {
-    ret = CVI_FAILURE;
+    ret = CVIAI_FAILURE;
   }
   return ret;
 }
@@ -95,7 +95,7 @@ int parse_args(int argc, char *argv[], Argument *args) {
         "mobiledetv2-vehicle-d0"
         "mobiledetv2-pedestrian-d0}, default: mobiledetv2-d0\n\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   if (argc == 6) {
@@ -104,41 +104,41 @@ int parse_args(int argc, char *argv[], Argument *args) {
     strcpy(args->model_name, "mobiledetv2-d0");
   }
 
-  if (createModelConfig(args->model_name, &args->model_config) == CVI_FAILURE) {
+  if (createModelConfig(args->model_name, &args->model_config) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", args->model_name);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   int err;
   strcpy(args->model_path, argv[1]);
   if ((err = check_file(args->model_path)) != 0) {
     printf("check model fail: %s, errno: %d\n", args->model_path, err);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   strcpy(args->image_folder_path, argv[2]);
   if ((err = check_dir(args->image_folder_path)) != 0) {
     printf("check image folder fail: %s, errno: %d\n", args->image_folder_path, err);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   strcpy(args->eval_json_path, argv[3]);
   if ((err = check_file(args->eval_json_path)) != 0) {
     printf("check json fail: %s, errno: %d\n", args->eval_json_path, err);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   strcpy(args->regression_output_path, argv[4]);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   Argument args;
   ret = parse_args(argc, argv, &args);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     return ret;
   }
 
@@ -154,20 +154,20 @@ int main(int argc, char *argv[]) {
   uint32_t vpssgrp_height = 720;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 2);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   cviai_handle_t ai_handle;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(ai_handle, args.model_config.model_id, args.model_path);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model yolov3 failed with %#x!\n", ret);
     return ret;
   }
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
     printf("[%d/%d] Reading image %s\n", i + 1, image_num, filename);
     VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
-    if (CVI_AI_ReadImage(filename, &blk, &frame, PIXEL_FORMAT_RGB_888_PLANAR) != CVI_SUCCESS) {
+    if (CVI_AI_ReadImage(filename, &blk, &frame, PIXEL_FORMAT_RGB_888_PLANAR) != CVIAI_SUCCESS) {
       printf("Read image failed.\n");
       break;
     }

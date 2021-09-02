@@ -1,6 +1,7 @@
 #include "retina_face.hpp"
 #include "retina_face_utils.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "face_utils.hpp"
@@ -23,7 +24,7 @@ RetinaFace::~RetinaFace() {}
 int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Retina face only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
   for (int i = 0; i < 3; i++) {
@@ -33,7 +34,7 @@ int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
     }
   }
   (*data)[0].use_quantize_scale = true;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int RetinaFace::onModelOpened() {
@@ -108,7 +109,7 @@ int RetinaFace::onModelOpened() {
     m_anchors[landmark_str] =
         anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
@@ -117,13 +118,15 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   for (uint32_t b = 0; b < (uint32_t)shape.dim[0]; b++) {
     frames.push_back(&srcFrame[b]);
   }
-  int ret = run(frames);
+  if (int ret = run(frames) != CVIAI_SUCCESS) {
+    return ret;
+  }
 
   int image_width = shape.dim[3];
   int image_height = shape.dim[2];
   outputParser(image_width, image_height, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                meta);
-  return ret;
+  return CVIAI_SUCCESS;
 }
 
 void RetinaFace::outputParser(int image_width, int image_height, int frame_width, int frame_height,

@@ -1,6 +1,8 @@
 #pragma once
 #include "core/core/cvai_core_types.h"
+#include "core/core/cvai_errno.h"
 #include "core/core/cvai_vpss_types.h"
+
 #include "cviai_log.hpp"
 #include "ive/ive.h"
 #include "model_debugger.hpp"
@@ -168,7 +170,7 @@ class Core {
   }
   ////////////////////////////////////////////////////
 
-  virtual int onModelOpened() { return CVI_SUCCESS; }
+  virtual int onModelOpened() { return CVIAI_SUCCESS; }
 
   void setInputMemType(CVI_MEM_TYPE_E type) { mp_mi->conf.input_mem_type = type; }
   std::vector<VPSSConfig> m_vpss_config;

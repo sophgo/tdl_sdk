@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   std::string model_dir = std::string(argv[1]);
   std::string image_dir = std::string(argv[2]);
@@ -85,15 +85,15 @@ int main(int argc, char *argv[]) {
   static CVI_S32 vpssgrp_width = 1920;
   static CVI_S32 vpssgrp_height = 1080;
   cviai_handle_t handle = NULL;
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 3);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
   ret = CVI_AI_CreateHandle(&handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
@@ -107,14 +107,14 @@ int main(int argc, char *argv[]) {
     auto iter = MODEL_MAP.find(model_name);
     if (iter == MODEL_MAP.end()) {
       printf("Unknown model from json file: %s\n", model_name.c_str());
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     }
 
     CVI_AI_SUPPORTED_MODEL_E model_index = iter->second.first;
     InferenceFunc inference = iter->second.second;
 
     ret = CVI_AI_SetModelPath(handle, model_index, model_path.c_str());
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Set model path failed with %#x!\n", ret);
       return ret;
     }
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
       VB_BLK blk1;
       VIDEO_FRAME_INFO_S frame;
       CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk1, &frame, PIXEL_FORMAT_BGR_888);
-      if (ret != CVI_SUCCESS) {
+      if (ret != CVIAI_SUCCESS) {
         printf("Read image failed with %#x!\n", ret);
         return ret;
       }
@@ -137,9 +137,9 @@ int main(int argc, char *argv[]) {
       cvai_object_t obj_meta;
       memset(&obj_meta, 0, sizeof(cvai_object_t));
 
-      if (inference(handle, &frame, &obj_meta) != CVI_SUCCESS) {
+      if (inference(handle, &frame, &obj_meta) != CVIAI_SUCCESS) {
         printf("failed to inference\n");
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
       }
 
       bool pass = true;
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
                 obj_meta.info[actual_det_index].bbox.x1, obj_meta.info[actual_det_index].bbox.x2,
                 obj_meta.info[actual_det_index].bbox.y1, obj_meta.info[actual_det_index].bbox.y2);
           }
-          return CVI_FAILURE;
+          return CVIAI_FAILURE;
         }
       }
 
@@ -203,5 +203,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(handle);
   CVI_SYS_Exit();
   printf("retinaface regression result: all pass\n");
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

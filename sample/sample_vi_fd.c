@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         "\t retina_model_path, path to retinaface model\n"
         "\t video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   CVI_S32 voType = atoi(argv[2]);
 
@@ -41,30 +41,30 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1920, .u32Height = 1080};
 
   if (InitVideoSystem(&vs_ctx, &aiInputSize, VI_PIXEL_FORMAT, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   cviai_handle_t ai_handle = NULL;
   int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("AI handle created failed with %#x!\n", ret);
     return ret;
   }
   cviai_service_handle_t service_handle = NULL;
   ret = CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   CVI_AI_Service_EnableTPUDraw(ai_handle, true);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("AI service handle created failed with %#x!\n", ret);
     return ret;
   }
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("set model path failed with %#x!\n", ret);
     return ret;
   }

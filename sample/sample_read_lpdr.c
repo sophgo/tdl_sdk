@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
         "          <sample_imagelist_path>\n"
         "          <inference_count>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, false);
   } else {
     printf("Unknown det model type.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   enum LicenseFormat license_format;
   if (strcmp(argv[5], "tw") == 0) {
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     license_format = china;
   } else {
     printf("Unknown license type %s\n", argv[5]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
@@ -70,10 +70,10 @@ int main(int argc, char *argv[]) {
       CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, false);
       break;
     default:
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
   }
 
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("open failed with %#x!\n", ret);
     return ret;
   }
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
         CVI_AI_LicensePlateRecognition_CN(ai_handle, &frame, &vehicle_obj);
         break;
       default:
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
     }
 
 #if WRITE_RESULT_TO_FILE

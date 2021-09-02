@@ -13,9 +13,9 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  // CVI_S32 ret = CVI_SUCCESS;
+  // CVI_S32 ret = CVIAI_SUCCESS;
   std::string model_dir = std::string(argv[1]);
   std::string image_dir = std::string(argv[2]);
 
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   float threshold = float(m_json_read["threshold"]);
   // printf("threshold: %f\n", threshold);
 
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
   /*
   ret =
       CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0,
-  od_model_path.c_str()); if (ret != CVI_SUCCESS) { printf("Set model retinaface failed with
+  od_model_path.c_str()); if (ret != CVIAI_SUCCESS) { printf("Set model retinaface failed with
   %#x!\n", ret); return ret;
   }
 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     */
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, pose_model_path.c_str());
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model alphapose failed with %#x!\n", ret);
     return ret;
   }
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     VIDEO_FRAME_INFO_S frame;
 
     CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk1, &frame, PIXEL_FORMAT_BGR_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
         // printf("[%d][%d][%2d] pass: %d; x, y, expected : [%.3f, %.3f], result : [%.3f, %.3f]\n",
         //       img_idx, i, point, pass, expected_res_x, expected_res_y, point_x, point_y);
         if (!pass) {
-          return CVI_FAILURE;
+          return CVIAI_FAILURE;
         }
       }
     }
@@ -165,5 +165,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
   printf("alphapose regression result: all pass\n");
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

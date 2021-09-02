@@ -1,5 +1,6 @@
 #include "alphapose.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "cvi_sys.h"
 
 #define ALPHAPOSE_C 3
@@ -177,10 +178,10 @@ AlphaPose::~AlphaPose() {}
 int AlphaPose::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Alpha pose only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int AlphaPose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *objects) {
@@ -190,7 +191,7 @@ int AlphaPose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *objects) {
                   srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Stride[0]);
   if (img_rgb.data == nullptr) {
     LOGE("src image is empty!\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   std::vector<cvai_bbox_t> align_bbox_list;
@@ -210,7 +211,9 @@ int AlphaPose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *objects) {
     prepareInputTensor(predict_bbox, img_rgb, align_bbox);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
-    run(frames);
+    if (int ret = run(frames) != CVIAI_SUCCESS) {
+      return ret;
+    }
 
     size_t output_size = getOutputTensorElem(OUTPUT_NAME);
     float *output_data = getOutputRawPtr<float>(OUTPUT_NAME);
@@ -234,7 +237,7 @@ int AlphaPose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *objects) {
   CVI_SYS_Munmap((void *)srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Length[0]);
   srcFrame->stVFrame.pu8VirAddr[0] = NULL;
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void AlphaPose::prepareInputTensor(const cvai_bbox_t &bbox, cv::Mat img_rgb,

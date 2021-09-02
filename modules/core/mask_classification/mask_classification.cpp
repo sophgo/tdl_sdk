@@ -3,6 +3,7 @@
 #include "core/cviai_types_mem.h"
 #include "rescale_utils.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "cvi_sys.h"
 #include "opencv2/opencv.hpp"
 
@@ -24,7 +25,7 @@ MaskClassification::~MaskClassification() {}
 int MaskClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Mask classification only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = R_SCALE;
   (*data)[0].factor[1] = G_SCALE;
@@ -35,7 +36,7 @@ int MaskClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *
   (*data)[0].use_quantize_scale = true;
   (*data)[0].use_crop = true;
 
-  return 0;
+  return CVIAI_SUCCESS;
 }
 
 int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta) {
@@ -58,7 +59,9 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
                                              (uint32_t)new_edge};
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
-    run(frames);
+    if (int ret = run(frames) != CVIAI_SUCCESS) {
+      return ret;
+    }
 
     float *out_data = getOutputRawPtr<float>(MASK_OUT_NAME);
 
@@ -70,7 +73,7 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
     meta->info[i].mask_score = score;
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 }  // namespace cviai

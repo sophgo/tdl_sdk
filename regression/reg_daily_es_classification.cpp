@@ -13,9 +13,9 @@ int main(int argc, char *argv[]) {
         "          <audio_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   std::string model_dir = std::string(argv[1]);
   std::string audio_dir = std::string(argv[2]);
 
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 
   // Init VB pool size.
   cviai_handle_t facelib_handle = NULL;
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION,
                              model_path.c_str());
 
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set face quality model failed with %#x!\n", ret);
     return ret;
   }
@@ -73,5 +73,5 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_DestroyHandle(facelib_handle);
   CVI_SYS_Exit();
-  return pass ? CVI_SUCCESS : CVI_FAILURE;
+  return pass ? CVIAI_SUCCESS : CVIAI_FAILURE;
 }

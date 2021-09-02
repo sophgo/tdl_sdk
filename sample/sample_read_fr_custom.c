@@ -14,9 +14,9 @@ CVI_S32 CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id,
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("Usage: %s <retina_model_path> <attribute_model_path> <image>.\n", argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
@@ -31,20 +31,20 @@ int main(int argc, char *argv[]) {
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   // Setup model path and model config.
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
   printf("Face found %x.\n", face.size);
 
   printf("Run Face Attribute from custom AI framework.\n");
-  if (CVI_AI_CustomFaceAttribute(ai_handle, custom_id, &fdFrame, &face) == CVI_SUCCESS) {
+  if (CVI_AI_CustomFaceAttribute(ai_handle, custom_id, &fdFrame, &face) == CVIAI_SUCCESS) {
     // Save a copy of custom attribute result (only feature).
     cvai_face_t custom_face;
     custom_face.size = face.size;
@@ -147,7 +147,7 @@ CVI_S32 CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t 
   CVI_AI_Custom_SetVpssPreprocessParam(handle, *id, tensor_idx, &factor, &mean, 1, false);
   // Optional in this case. You can pass function pointer into the framework if you like.
   CVI_AI_Custom_SetPreprocessFuncPtr(handle, *id, PreProcessing, false, true);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id,
@@ -156,13 +156,13 @@ CVI_S32 CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id,
   VIDEO_FRAME_INFO_S outFrame;
   uint32_t n = 0, c = 0, h = 0, w = 0;
   // Get the input tensor size.
-  if (CVI_AI_Custom_GetInputTensorNCHW(handle, id, NULL, &n, &c, &h, &w) != CVI_SUCCESS) {
+  if (CVI_AI_Custom_GetInputTensorNCHW(handle, id, NULL, &n, &c, &h, &w) != CVIAI_SUCCESS) {
     printf("Cannot get NCHW.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   // Create VIDEO_FRAME_INFO_S and preallocate for CVI_AI_FaceAlignment.
-  if (CREATE_VBFRAME_HELPER(&blk, &outFrame, w, h, PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
-    return CVI_FAILURE;
+  if (CREATE_VBFRAME_HELPER(&blk, &outFrame, w, h, PIXEL_FORMAT_RGB_888) != CVIAI_SUCCESS) {
+    return CVIAI_FAILURE;
   }
   for (uint32_t i = 0; i < faces->size; ++i) {
     // This is the preprocessing of the model.
@@ -174,9 +174,9 @@ CVI_S32 CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id,
     uint32_t tensorCount = 0;
     uint16_t unitSize = 0;
     if (CVI_AI_Custom_GetOutputTensor(handle, id, FACE_ATTRIBUTE_TENSORNAME, &tensor, &tensorCount,
-                                      &unitSize) != CVI_SUCCESS) {
+                                      &unitSize) != CVIAI_SUCCESS) {
       printf("Failed to get tensor %s.\n", FACE_ATTRIBUTE_TENSORNAME);
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     }
     cvai_feature_t *feature = &faces->info[i].feature;
     if (feature->size != tensorCount) {
@@ -189,5 +189,5 @@ CVI_S32 CVI_AI_CustomFaceAttribute(cviai_handle_t handle, const uint32_t id,
   }
   // Release created VIDEO_FRAME_INFO_S.
   CVI_VB_ReleaseBlock(blk);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

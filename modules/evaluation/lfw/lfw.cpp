@@ -1,4 +1,5 @@
 #include "lfw.hpp"
+#include "core/core/cvai_errno.h"
 #include "cviai_log.hpp"
 
 #include <cvi_type.h>
@@ -20,7 +21,7 @@ int lfwEval::getEvalData(const char *fiilepath, bool label_pos_first) {
   FILE *fp;
   if ((fp = fopen(fiilepath, "r")) == NULL) {
     LOGE("file open error: %s!\n", fiilepath);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   m_data.clear();
   m_eval_label.clear();
@@ -42,7 +43,7 @@ int lfwEval::getEvalData(const char *fiilepath, bool label_pos_first) {
   m_eval_label.resize(m_data.size());
   m_eval_score.resize(m_data.size());
   fclose(fp);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 uint32_t lfwEval::getTotalImage() { return m_data.size(); }

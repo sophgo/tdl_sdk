@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "stdio.h"
 
@@ -97,7 +98,7 @@ int IntrusionDetect::setRegion(const cvai_pts_t &pts) {
   auto new_region = std::make_shared<ConvexPolygon>(pts);
   regions.push_back(new_region);
   this->show();
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 bool IntrusionDetect::run(const cvai_bbox_t &bbox) {

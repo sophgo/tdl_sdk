@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
         "\t record, 0: disable 1. enable\n"
         "\t output file path: {output file path}.raw\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
@@ -134,13 +134,13 @@ int main(int argc, char **argv) {
 
   ret = CVI_AI_CreateHandle(&ai_handle);
 
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model esc failed with %#x!\n", ret);
     return ret;
   }

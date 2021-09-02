@@ -24,7 +24,7 @@ extern "C" {
  *
  * @param handle A service handle.
  * @param ai_handle A cviai handle.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle,
                                                cviai_handle_t ai_handle);
@@ -34,7 +34,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle,
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
- * @return CVI_S32 Return CVI_SUCCESS if success to destroy handle.
+ * @return CVI_S32 Return CVIAI_SUCCESS if success to destroy handle.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle);
 
@@ -43,7 +43,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle);
  *
  * @param handle A service handle.
  * @param use_tpu Use TPU or not.
- * @return CVI_S32 Return CVI_SUCCESS if set.
+ * @return CVI_S32 Return CVIAI_SUCCESS if set.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_EnableTPUDraw(cviai_service_handle_t handle, bool use_tpu);
 
@@ -54,7 +54,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_EnableTPUDraw(cviai_service_handle_t handle, b
  * @param handle A service handle.
  * @param featureArray Input registered feature array.
  * @param method Set feature matching method.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_RegisterFeatureArray(
     cviai_service_handle_t handle, const cvai_service_feature_array_t featureArray,
@@ -73,7 +73,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_RegisterFeatureArray(
  * @param sims Output simlarities. Array size should be same as number of dataset features if topk
  * is ignored.
  * @param size Output length of indices and sims array
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
                                                    const cvai_face_info_t *face_info,
@@ -93,7 +93,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle
  * @param sims Output similarities. Array size should be same as number of dataset features if topk
  * is ignored.
  * @param size Output length of indices and sims array
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
                                                      const cvai_object_info_t *object_info,
@@ -109,7 +109,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t hand
  * @param feature_rhs Righ hand side feature vector.
  * @param feature_lhs Left hand side feature vector.
  * @param score Output similarities of two features
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
                                                       const cvai_feature_t *feature_rhs,
@@ -130,7 +130,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t han
  * @param sims Output similarities. Array size should be same as number of dataset features if topk
  * is ignored.
  * @param size Output length of indices and sims array
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const void *feature,
                                               const feature_type_e type, const uint32_t topk,
@@ -149,7 +149,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, con
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
  * @param padding_ratio Bounding box padding ratio. Default is 0.3. (0 ~ 1)
  * @param outFrame Output result image, will keep aspect ratio.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDigitalZoom(
     cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_face_t *meta,
@@ -168,7 +168,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDigitalZoom(
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
  * @param padding_ratio Bounding box padding ratio. Default is 0.3. (0 ~ 1)
  * @param outFrame Output result image, will keep aspect ratio.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoom(
     cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta,
@@ -190,7 +190,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoom(
  * @param pad_ratio_top Top bounding box padding ratio. Default is 0.3. (-1 ~ 1)
  * @param pad_ratio_bottom Bottom bounding box padding ratio. Default is 0.3. (-1 ~ 1)
  * @param outFrame Output result image, will keep aspect ratio.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
     cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta,
@@ -207,7 +207,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the face.
  * @param brush A brush for drawing
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
                                                const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
@@ -222,7 +222,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the object.
  * @param brush A brush for drawing
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
                                                  const cvai_object_t *meta,
@@ -238,7 +238,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the object.
  * @param brush A brush for drawing
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
                                                        const cvai_dms_od_t *meta,
@@ -254,7 +254,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t ha
  * @param frame In/out YUV frame.
  * @param pts Points of a closed polygon.
  * @param brush A brush for drawing
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_DrawPolygon(cviai_service_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts,
@@ -269,7 +269,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_DrawPolygon(cviai_service_handle_t handle,
  * @param y the y coordinate of content.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the object.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y,
                                                   VIDEO_FRAME_INFO_S *frame, float r, float g,
@@ -281,7 +281,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y,
  *
  * @param handle A service handle.
  * @param pts Intersect area or line. (pts must larger than 2 or more.)
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_SetIntersect(cviai_service_handle_t handle,
                                                const cvai_pts_t *pts);
@@ -294,7 +294,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_SetIntersect(cviai_service_handle_t handle,
  * @param frame Input frame.
  * @param obj_meta Object meta structure.
  * @param status Output status of each object.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t handle,
                                                         const VIDEO_FRAME_INFO_S *frame,
@@ -307,7 +307,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t h
  *
  * @param handle A service handle.
  * @param pts polygon points. (pts->size must larger than 2.)
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_SetTarget(cviai_service_handle_t handle,
                                                     const cvai_pts_t *pts);
@@ -319,7 +319,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_SetTarget(cviai_service_handle_t handl
  * @param handle A service handle.
  * @param bbox Object meta structure.
  * @param has_intersect true if two polygons has intersection, otherwise return false.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle,
                                                     const cvai_bbox_t *bbox, bool *has_intersect);
@@ -329,7 +329,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handl
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_Init(cviai_service_handle_t handle);
 
@@ -339,7 +339,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_Init(cviai_service_handle_t ha
  *
  * @param handle A service handle.
  * @param pts polygon points. (pts->size must larger than 2.)
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle_t handle,
                                                             const cvai_pts_t *pts);
@@ -350,7 +350,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle
  *
  * @param handle A service handle.
  * @param  bbox bounding box
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_BBox(cviai_service_handle_t handle,
                                                        const cvai_bbox_t *bbox, bool *result);
@@ -361,7 +361,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_BBox(cviai_service_handle_t ha
  *
  * @param pts facial landmark structure.
  * @param hp head pose structure.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp);
 
@@ -370,7 +370,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pos
  * @ingroup core_cviaiservice
  *
  * @param meta Face meta structure.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceAngleForAll(const cvai_face_t *meta);
 
@@ -380,7 +380,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceAngleForAll(const cvai_face_t *meta);
  *
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
- * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta,
                                                  VIDEO_FRAME_INFO_S *frame);

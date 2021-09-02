@@ -1,4 +1,5 @@
 #include "incar_object_detection.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
@@ -10,7 +11,7 @@ IncarObjectDetection::IncarObjectDetection() : Core(CVI_MEM_DEVICE) {}
 int IncarObjectDetection::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   (*data)[0].factor[0] = 0.999;
@@ -25,19 +26,21 @@ int IncarObjectDetection::setupInputPreprocess(std::vector<InputPreprecessSetup>
   (*data)[0].rescale_type = RESCALE_CENTER;
   (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 int IncarObjectDetection::inference(VIDEO_FRAME_INFO_S* frame, cvai_face_t* meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   std::vector<VIDEO_FRAME_INFO_S*> frames = {frame};
-  run(frames);
+  if (int ret = run(frames) != CVIAI_SUCCESS) {
+    return ret;
+  }
 
   outputParser(input_size, input_size, meta);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void IncarObjectDetection::outputParser(int image_width, int image_height, cvai_face_t* meta) {

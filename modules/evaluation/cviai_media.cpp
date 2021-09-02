@@ -1,6 +1,7 @@
 #include "evaluation/cviai_media.h"
 #include "cviai_log.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "core/utils/vpss_helper.h"
 #include "opencv2/opencv.hpp"
 
@@ -75,10 +76,10 @@ CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t he
                               VIDEO_FRAME_INFO_S *frame, const PIXEL_FORMAT_E outFormat) {
   if (CREATE_VBFRAME_HELPER(blk, frame, width, height, outFormat) != CVI_SUCCESS) {
     LOGE("Create VBFrame failed.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
-  int ret = CVI_SUCCESS;
+  int ret = CVIAI_SUCCESS;
   if ((inFormat == PIXEL_FORMAT_RGB_888 && outFormat == PIXEL_FORMAT_BGR_888) ||
       (inFormat == PIXEL_FORMAT_BGR_888 && outFormat == PIXEL_FORMAT_RGB_888)) {
     BufferRGBPackedCopy(buffer, width, height, stride, frame, true);
@@ -95,7 +96,7 @@ CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t he
     BufferC12C1Copy<float>(buffer, width, height, stride, frame);
   } else {
     LOGE("Unsupported convert format: %u -> %u.\n", inFormat, outFormat);
-    ret = CVI_FAILURE;
+    ret = CVIAI_FAILURE;
   }
   CACHED_VBFRAME_FLUSH_UNMAP(frame);
   return ret;
@@ -106,14 +107,14 @@ CVI_S32 CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *
   cv::Mat img = cv::imread(filepath);
   if (img.empty()) {
     LOGE("Cannot read image %s.\n", filepath);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, format) != CVI_SUCCESS) {
+  if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, format) != CVIAI_SUCCESS) {
     LOGE("Create VBFrame failed.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
-  int ret = CVI_SUCCESS;
+  int ret = CVIAI_SUCCESS;
   switch (format) {
     case PIXEL_FORMAT_RGB_888: {
       BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, true);
@@ -126,7 +127,7 @@ CVI_S32 CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *
     } break;
     default:
       LOGE("Unsupported format: %u.\n", format);
-      ret = CVI_FAILURE;
+      ret = CVIAI_FAILURE;
       break;
   }
   CACHED_VBFRAME_FLUSH_UNMAP(frame);

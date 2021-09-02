@@ -8,19 +8,20 @@
 #include <numeric>
 #include <string>
 
+#include <core/core/cvai_errno.h>
+#include <error_msg.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/opencv.hpp>
 #include "coco_utils.hpp"
 #include "core/core/cvai_core_types.h"
 #include "core/object/cvai_object_types.h"
+#include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_comm_vpss.h"
 #include "cvi_sys.h"
 #include "cviruntime.h"
 #include "misc.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
-
-#include "core/utils/vpss_helper.h"
 
 static const float STD_R = (255.0 * 0.229);
 static const float STD_G = (255.0 * 0.224);
@@ -204,7 +205,7 @@ void MobileDetV2::setModelThreshold(float threshold) {
 int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Mobiledetv2 only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = static_cast<float>(FACTOR_R);
   (*data)[0].factor[1] = static_cast<float>(FACTOR_G);
@@ -215,7 +216,7 @@ int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].use_quantize_scale = true;
   (*data)[0].rescale_type = RESCALE_RB;
   (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -228,10 +229,17 @@ int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
                         factor, mean, false);
   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
   if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed with %#x!\n", ret);
-    return ret;
+    LOGE("Send frame failed: %s!\n", get_vpss_error_msg(ret));
+    return CVIAI_ERR_VPSS_SEND_FRAME;
   }
-  return mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
+
+  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
+  if (ret != CVI_SUCCESS) {
+    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
+    return CVIAI_ERR_VPSS_GET_FRAME;
+  }
+
+  return CVIAI_SUCCESS;
 }
 
 int MobileDetV2::onModelOpened() {
@@ -259,7 +267,7 @@ int MobileDetV2::onModelOpened() {
 
   m_quant_inverse_score_threshold = constructInverseThresh(
       m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
@@ -351,13 +359,12 @@ void MobileDetV2::select_classes(const std::vector<uint32_t> &selected_classes) 
 }
 
 int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
-  int ret = CVI_SUCCESS;
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
 
-  ret = run(frames);
-  if (ret != CVI_SUCCESS) {
+  int ret = run(frames);
+  if (ret != CVIAI_SUCCESS) {
     LOGE("MobileDetV2: failed to inference\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INFERENCE;
   }
 
   Detections dets;

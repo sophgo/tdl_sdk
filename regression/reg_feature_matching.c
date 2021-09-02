@@ -74,7 +74,7 @@ void test_CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
     db_feature.type = TYPE_INT8;
     int32_t ret =
         CVI_AI_Service_CalculateSimilarity(handle, input_feature, &db_feature, &sims[i].value);
-    EXPECT_EQUAL_S32(ret, CVI_SUCCESS);
+    EXPECT_EQUAL_S32(ret, CVIAI_SUCCESS);
     sims[i].index = i;
   }
 
@@ -100,7 +100,7 @@ void test_CVI_AI_Service_RawMatching(cviai_service_handle_t handle, cvai_feature
   uint32_t score_size;
   int32_t ret = CVI_AI_Service_RawMatching(handle, (uint8_t *)input_feature->ptr, TYPE_INT8,
                                            golden_size, 0, indices, sims, &score_size);
-  EXPECT_EQUAL_S32(ret, CVI_SUCCESS);
+  EXPECT_EQUAL_S32(ret, CVIAI_SUCCESS);
   EXPECT_EQUAL_U32(score_size, golden_size);
 
   for (uint32_t i = 0; i < golden_size; i++) {
@@ -128,7 +128,7 @@ void test_CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
   // test matching top-k similarity
   int32_t ret = CVI_AI_Service_FaceInfoMatching(handle, &face_info, golden_size, 0, indices, sims,
                                                 &score_size);
-  EXPECT_EQUAL_S32(ret, CVI_SUCCESS);
+  EXPECT_EQUAL_S32(ret, CVIAI_SUCCESS);
   EXPECT_EQUAL_U32(score_size, golden_size);
 
   for (uint32_t i = 0; i < golden_size; i++) {
@@ -140,7 +140,7 @@ void test_CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
   float threshold = golden_sims[golden_size - 1];
   ret =
       CVI_AI_Service_FaceInfoMatching(handle, &face_info, 0, threshold, indices, sims, &score_size);
-  EXPECT_EQUAL_S32(ret, CVI_SUCCESS);
+  EXPECT_EQUAL_S32(ret, CVIAI_SUCCESS);
   EXPECT_EQUAL_U32(score_size, golden_size);
   for (uint32_t i = 0; i < golden_size; i++) {
     EXPECT_EQUAL_U32(golden_indices[i], indices[i]);
@@ -150,7 +150,7 @@ void test_CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
   // test matching with top-k and threshold
   ret = CVI_AI_Service_FaceInfoMatching(handle, &face_info, golden_size, threshold, indices, sims,
                                         &score_size);
-  EXPECT_EQUAL_S32(ret, CVI_SUCCESS);
+  EXPECT_EQUAL_S32(ret, CVIAI_SUCCESS);
   EXPECT_EQUAL_U32(score_size, golden_size);
   for (uint32_t i = 0; i < golden_size; i++) {
     EXPECT_EQUAL_U32(golden_indices[i], indices[i]);
@@ -178,7 +178,7 @@ void test_CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
   // test matching top-k similarity
   int32_t ret = CVI_AI_Service_ObjectInfoMatching(handle, &obj_info, golden_size, 0, indices, sims,
                                                   &score_size);
-  EXPECT_EQUAL_S32(ret, CVI_SUCCESS);
+  EXPECT_EQUAL_S32(ret, CVIAI_SUCCESS);
   EXPECT_EQUAL_U32(score_size, golden_size);
 
   for (uint32_t i = 0; i < golden_size; i++) {
@@ -190,7 +190,7 @@ void test_CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
   float threshold = golden_sims[golden_size - 1];
   ret = CVI_AI_Service_ObjectInfoMatching(handle, &obj_info, 0, threshold, indices, sims,
                                           &score_size);
-  EXPECT_EQUAL_S32(ret, CVI_SUCCESS);
+  EXPECT_EQUAL_S32(ret, CVIAI_SUCCESS);
   EXPECT_EQUAL_U32(score_size, golden_size);
   for (uint32_t i = 0; i < golden_size; i++) {
     EXPECT_EQUAL_U32(golden_indices[i], indices[i]);
@@ -200,7 +200,7 @@ void test_CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
   // test matching with top-k and threshold
   ret = CVI_AI_Service_ObjectInfoMatching(handle, &obj_info, golden_size, threshold, indices, sims,
                                           &score_size);
-  EXPECT_EQUAL_S32(ret, CVI_SUCCESS);
+  EXPECT_EQUAL_S32(ret, CVIAI_SUCCESS);
   EXPECT_EQUAL_U32(score_size, golden_size);
   for (uint32_t i = 0; i < golden_size; i++) {
     EXPECT_EQUAL_U32(golden_indices[i], indices[i]);

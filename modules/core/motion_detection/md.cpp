@@ -1,5 +1,6 @@
 #include "md.hpp"
 #include <opencv2/opencv.hpp>
+#include "core/core/cvai_errno.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai_log.hpp"
 
@@ -16,8 +17,8 @@ CVI_S32 VideoFrameCopy2Image(IVE_HANDLE ive_handle, VIDEO_FRAME_INFO_S *src, IVE
 
   CVI_S32 ret = CVI_IVE_VideoFrameInfo2Image(src, &input_image);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_IVE_VideoFrameInfo2Image fail %x\n", ret);
-    return ret;
+    LOGE("CVI_IVE_VideoFrameInfo2Image fail %x\n", ret);
+    return CVIAI_ERR_MD_OPERATION_FAILED;
   }
   IVE_DMA_CTRL_S ctrl;
   ctrl.enMode = IVE_DMA_MODE_DIRECT_COPY;
@@ -30,11 +31,11 @@ CVI_S32 VideoFrameCopy2Image(IVE_HANDLE ive_handle, VIDEO_FRAME_INFO_S *src, IVE
   CVI_SYS_FreeI(ive_handle, &input_image);
 
   if (ret != CVI_SUCCESS) {
-    printf("CVI_IVE_DMA fail %x\n", ret);
-    return ret;
+    LOGE("CVI_IVE_DMA fail %x\n", ret);
+    return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 MotionDetection::MotionDetection(IVE_HANDLE handle, VIDEO_FRAME_INFO_S *init_frame, uint32_t th,
@@ -100,7 +101,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_me
     ret = CVI_IVE_Sub(ive_handle, &src[1], &src[0], &tmp, &iveSubCtrl, 0);
     if (ret != CVI_SUCCESS) {
       LOGE("CVI_IVE_Sub fail %x\n", ret);
-      return ret;
+      return CVIAI_ERR_MD_OPERATION_FAILED;
     }
 
     IVE_THRESH_CTRL_S iveTshCtrl;
@@ -111,7 +112,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_me
     ret = CVI_IVE_Thresh(ive_handle, &tmp, &tmp, &iveTshCtrl, 0);
     if (ret != CVI_SUCCESS) {
       LOGE("CVI_IVE_Sub fail %x\n", ret);
-      return ret;
+      return CVIAI_ERR_MD_OPERATION_FAILED;
     }
 
     IVE_DILATE_CTRL_S stDilateCtrl;
@@ -187,5 +188,5 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_me
   // }
 
   count++;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

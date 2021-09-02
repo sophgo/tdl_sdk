@@ -3,6 +3,7 @@
 
 #include "core/cviai_core.h"
 #include "core/cviai_types_mem_internal.h"
+#include "core/error_msg.hpp"
 #include "core/utils/vpss_helper.h"
 #include "utils/core_utils.hpp"
 #include "utils/face_utils.hpp"
@@ -16,9 +17,10 @@ CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   uint32_t vpss_thread;
   if (int ret = CVI_AI_AddVpssEngineThread(thread, -1, &vpss_thread, &ctx->vec_vpss_engine) !=
-                CVI_SUCCESS) {
+                CVIAI_SUCCESS) {
     return ret;
   }
+
   const float factor[] = {quantized_factor, quantized_factor, quantized_factor};
   const float mean[] = {quantized_mean, quantized_mean, quantized_mean};
   VPSS_CHN_ATTR_S chn_attr;
@@ -27,10 +29,16 @@ CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *
   auto &vpss_inst = ctx->vec_vpss_engine[vpss_thread];
   int ret = vpss_inst->sendFrame(frame, &chn_attr, 1);
   if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed with %#x!\n", ret);
-    return ret;
+    LOGE("Send frame failed: %s\n", cviai::get_vpss_error_msg(ret));
+    return CVIAI_ERR_VPSS_SEND_FRAME;
   }
-  return vpss_inst->getFrame(output, 0, timeout);
+
+  ret = vpss_inst->getFrame(output, 0, timeout);
+  if (ret != CVI_SUCCESS) {
+    LOGE("Get frame failed: %s\n", cviai::get_vpss_error_msg(ret));
+    return CVIAI_ERR_VPSS_GET_FRAME;
+  }
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_SQPreprocess(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
@@ -46,18 +54,18 @@ CVI_S32 CVI_AI_SQPreprocess(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *fra
 CVI_S32 CVI_AI_Dequantize(const int8_t *quantizedData, float *data, const uint32_t bufferSize,
                           const float dequantizeThreshold) {
   cviai::Dequantize(quantizedData, data, dequantizeThreshold, bufferSize);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 CVI_S32 CVI_AI_SoftMax(const float *inputBuffer, float *outputBuffer, const uint32_t bufferSize) {
   cviai::SoftMaxForBuffer(inputBuffer, outputBuffer, bufferSize);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 template <typename T, typename U>
 inline CVI_S32 CVI_AI_NMS(const T *input, T *nms, const float threshold, const char method) {
   if (method != 'u' && method != 'm') {
     LOGE("Unsupported NMS method. Only supports u or m");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   std::vector<U> bboxes;
   std::vector<U> bboxes_nms;
@@ -73,7 +81,7 @@ inline CVI_S32 CVI_AI_NMS(const T *input, T *nms, const float threshold, const c
   for (unsigned int i = 0; i < nms->size; i++) {
     CVI_AI_CopyInfoCpp(&bboxes_nms[i], &nms->info[i]);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_FaceNMS(const cvai_face_t *face, cvai_face_t *faceNMS, const float threshold,
@@ -96,7 +104,7 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
           "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, PIXEL_FORMAT_YUV_PLANAR_420. Current: "
           "%x\n",
           inFrame->stVFrame.enPixelFormat);
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     }
     cvai_face_info_t face_info = cviai::info_rescale_c(
         metaWidth, metaHeight, inFrame->stVFrame.u32Width, inFrame->stVFrame.u32Height, *info);
@@ -105,7 +113,7 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
     if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
       LOGE("Supported format is PIXEL_FORMAT_RGB_888. Current: %x\n",
            inFrame->stVFrame.enPixelFormat);
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     }
     bool do_unmap_in = false, do_unmap_out = false;
     if (inFrame->stVFrame.pu8VirAddr[0] == NULL) {
@@ -137,5 +145,5 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
       outFrame->stVFrame.pu8VirAddr[0] = NULL;
     }
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

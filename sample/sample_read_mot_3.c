@@ -13,7 +13,7 @@ typedef struct _ModelConfig {
 } ModelConfig;
 
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   if (strcmp(model_name, "mobiledetv2-d0") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0;
@@ -28,7 +28,7 @@ CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     config->inference = CVI_AI_Yolov3;
   } else {
-    ret = CVI_FAILURE;
+    ret = CVIAI_FAILURE;
   }
   return ret;
 }
@@ -41,9 +41,9 @@ int main(int argc, char *argv[]) {
         "          <sample_imagelist_path>\n"
         "          <inference_count>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
@@ -57,15 +57,15 @@ int main(int argc, char *argv[]) {
   cviai_handle_t ai_handle = NULL;
 
   ModelConfig model_config;
-  if (createModelConfig(argv[1], &model_config) == CVI_FAILURE) {
+  if (createModelConfig(argv[1], &model_config) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
 
   ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("model open failed with %#x!\n", ret);
     return ret;
   }

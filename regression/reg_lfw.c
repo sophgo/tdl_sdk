@@ -26,11 +26,11 @@ int main(int argc, char *argv[]) {
         "Usage: reg_lfw <retina path> <model path> <pair_txt_path> <result file path> <is "
         "attribute model>.\n");
     printf("Pair txt format: lable image1_path image2_path.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
 
   CVI_AI_SUPPORTED_MODEL_E model_id = atoi(argv[5]) == 1 ? CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE
                                                          : CVI_AI_SUPPORTED_MODEL_FACERECOGNITION;
@@ -38,20 +38,20 @@ int main(int argc, char *argv[]) {
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 3);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
   ret |= CVI_AI_SetModelPath(facelib_handle, model_id, argv[2]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -61,14 +61,14 @@ int main(int argc, char *argv[]) {
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
 
   uint32_t imageNum;
   ret = CVI_AI_Eval_LfwInit(eval_handle, argv[3], true, &imageNum);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Lfw evaluation init failed with pairs file: %s!\n", argv[3]);
     return ret;
   }
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     VB_BLK blk1;
     VIDEO_FRAME_INFO_S frame1;
     CVI_S32 ret = CVI_AI_ReadImage(name1, &blk1, &frame1, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image1 failed with %#x!\n", ret);
       return ret;
     }
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     VB_BLK blk2;
     VIDEO_FRAME_INFO_S frame2;
     ret = CVI_AI_ReadImage(name2, &blk2, &frame2, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image2 failed with %#x!\n", ret);
       return ret;
     }

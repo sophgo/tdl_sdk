@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   std::string model_dir = std::string(argv[1]);
   std::string image_dir = std::string(argv[2]);
@@ -54,22 +54,22 @@ int main(int argc, char* argv[]) {
   static CVI_S32 vpssgrp_height = 1080;
   cviai_handle_t handle = NULL;
 
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 3);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
   ret = CVI_AI_CreateHandle2(&handle, 1, 0);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION,
                             od_model_path.c_str());
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set model incarod failed with %#x!\n", ret);
     return ret;
   }
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
     VB_BLK blk1;
     VIDEO_FRAME_INFO_S frame;
     CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk1, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
@@ -128,5 +128,5 @@ int main(int argc, char* argv[]) {
 
   CVI_AI_DestroyHandle(handle);
   CVI_SYS_Exit();
-  return pass ? CVI_SUCCESS : CVI_FAILURE;
+  return pass ? CVIAI_SUCCESS : CVIAI_FAILURE;
 }

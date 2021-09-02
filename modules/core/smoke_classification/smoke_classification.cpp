@@ -1,4 +1,5 @@
 #include "smoke_classification.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
@@ -16,7 +17,7 @@ SmokeClassification::SmokeClassification() : Core(CVI_MEM_SYSTEM) {}
 int SmokeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   int img_width = frame->stVFrame.u32Width;
@@ -31,12 +32,17 @@ int SmokeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
 
     cv::Mat warp_image(cv::Size(64, 64), CV_8UC3);
-    face_align(image, warp_image, face_info);
+    if (face_align(image, warp_image, face_info) != CVI_SUCCESS) {
+      LOGE("Failed to align face\n");
+      return CVIAI_ERR_INFERENCE;
+    }
     cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2GRAY);
 
     prepareInputTensor(warp_image);
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-    run(frames);
+    if (int ret = run(frames) != CVIAI_SUCCESS) {
+      return ret;
+    }
 
     float *score = getOutputRawPtr<float>(NAME_SCORE);
     meta->dms->smoke_score = score[0];
@@ -48,7 +54,7 @@ int SmokeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
   frame->stVFrame.pu8VirAddr[1] = NULL;
   frame->stVFrame.pu8VirAddr[2] = NULL;
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void SmokeClassification::prepareInputTensor(cv::Mat &input_mat) {

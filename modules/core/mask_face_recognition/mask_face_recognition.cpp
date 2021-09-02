@@ -1,13 +1,13 @@
 #include "mask_face_recognition.hpp"
 
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/face/cvai_face_helper.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
-
 #include "cvi_sys.h"
+#include "face_utils.hpp"
 #include "opencv2/opencv.hpp"
 
 #define FACE_ATTRIBUTE_MEAN (0.99609375)
@@ -30,27 +30,27 @@ MaskFaceRecognition::~MaskFaceRecognition() {
 int MaskFaceRecognition::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   for (uint32_t i = 0; i < 3; i++) {
     (*data)[0].factor[i] = FACE_ATTRIBUTE_SCALE;
     (*data)[0].mean[i] = FACE_ATTRIBUTE_MEAN;
   }
   (*data)[0].use_quantize_scale = true;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int MaskFaceRecognition::onModelOpened() {
   CVI_SHAPE shape = getInputShape(0);
   if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, shape.dim[3], shape.dim[2],
                             PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
-    return CVI_FAILURE;
+    return CVIAI_ERR_OPEN_MODEL;
   }
 
   m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
       m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
@@ -82,11 +82,13 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
                           m_wrap_frame.stVFrame.u32Length[0]);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
-    run(frames);
+    if (int ret = run(frames) != CVIAI_SUCCESS) {
+      return ret;
+    }
     outputParser(meta, i);
     CVI_AI_FreeCpp(&face_info);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void MaskFaceRecognition::outputParser(cvai_face_t *meta, int meta_i) {

@@ -1,8 +1,8 @@
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
-
 #include "cvi_sys.h"
+#include "face_utils.hpp"
 #include "opencv2/opencv.hpp"
 
 #include <cmath>
@@ -218,5 +218,5 @@ int FallMD::detect(cvai_object_t *obj) {
     this->history_bbox_y1.push(this->history_bbox_y1.back());
     this->history_bbox_y2.push(this->history_bbox_y2.back());
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

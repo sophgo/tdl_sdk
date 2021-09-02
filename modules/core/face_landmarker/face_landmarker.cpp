@@ -1,4 +1,5 @@
 #include "face_landmarker.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
@@ -15,7 +16,7 @@ FaceLandmarker::~FaceLandmarker() {}
 int FaceLandmarker::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   for (uint32_t i = 0; i < 3; i++) {
     (*data)[0].factor[i] = 0.99;
@@ -23,13 +24,13 @@ int FaceLandmarker::setupInputPreprocess(std::vector<InputPreprecessSetup> *data
   }
   (*data)[0].use_quantize_scale = false;
   (*data)[0].use_crop = true;
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   uint32_t img_width = frame->stVFrame.u32Width;
@@ -47,7 +48,9 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
                                              (uint32_t)(face_info.bbox.y2 - face_info.bbox.y1)};
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-    run(frames);
+    if (int ret = run(frames) != CVIAI_SUCCESS) {
+      return ret;
+    }
 
     const TensorInfo &tinfo = getOutputTensorInfo(NAME_SCORE);
     float *pts = tinfo.get<float>();
@@ -82,7 +85,7 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
     meta->dms->landmarks_5 = landmarks_5;
     CVI_AI_FreeCpp(&face_info);
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void FaceLandmarker::Preprocessing(cvai_face_info_t *face_info, int *max_side, int img_width,

@@ -3,10 +3,10 @@
 #include <string.h>
 
 int main(void) {
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   cviai_handle_t handle;
   // Create handle
-  if ((ret = CVI_AI_CreateHandle(&handle)) != CVI_SUCCESS) {
+  if ((ret = CVI_AI_CreateHandle(&handle)) != CVIAI_SUCCESS) {
     printf("Handle create failed\n");
     return ret;
   }
@@ -14,7 +14,7 @@ int main(void) {
   // Get the used group ids by AI SDK.
   VPSS_GRP *groups = NULL;
   uint32_t nums = 0;
-  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVI_SUCCESS) {
+  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVIAI_SUCCESS) {
     printf("Get used group id failed.\n");
     return ret;
   }

@@ -46,7 +46,7 @@ CVI_S32 compare_face(cviai_handle_t ai_handle, cviai_service_handle_t service_ha
   VB_BLK blk_fr;
   VIDEO_FRAME_INFO_S frame;
   CVI_S32 ret = CVI_AI_ReadImage(image_path1.c_str(), &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("failed to read image: %s\n", image_path1.c_str());
   }
   cvai_face_t face_meta1;
@@ -55,7 +55,7 @@ CVI_S32 compare_face(cviai_handle_t ai_handle, cviai_service_handle_t service_ha
   CVI_VB_ReleaseBlock(blk_fr);
 
   ret = CVI_AI_ReadImage(image_path2.c_str(), &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("failed to read image: %s\n", image_path2.c_str());
   }
   cvai_face_t face_meta2;
@@ -68,7 +68,7 @@ CVI_S32 compare_face(cviai_handle_t ai_handle, cviai_service_handle_t service_ha
 
   CVI_AI_Free(&face_meta1);
   CVI_AI_Free(&face_meta2);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
@@ -78,9 +78,9 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   std::string model_dir = std::string(argv[1]);
   std::string image_dir = std::string(argv[2]);
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
   const CVI_S32 vpssgrp_height = 1080;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 3);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -128,11 +128,11 @@ int main(int argc, char *argv[]) {
       } break;
       default:
         printf("unsupported model type: %d\n", model_type);
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
     }
     ret |= CVI_AI_SetModelPath(ai_handle, model_id, model_path.c_str());
     ret |= CVI_AI_OpenModel(ai_handle, model_id);
-    if (ret != CVI_SUCCESS) {
+    if (ret != CVIAI_SUCCESS) {
       printf("Open model failed with %#x!\n", ret);
       return ret;
     }
@@ -145,14 +145,14 @@ int main(int argc, char *argv[]) {
       std::string image_path2 = image_dir + "/" + std::string(same_pair[1]);
       float score = 0.0;
       ret = compare_face(ai_handle, service_handle, inference, image_path1, image_path2, &score);
-      if (ret != CVI_SUCCESS) {
-        return CVI_FAILURE;
+      if (ret != CVIAI_SUCCESS) {
+        return CVIAI_FAILURE;
       }
 
       if (std::abs(score - expected_score) >= 0.1) {
         printf("FAILED! expect: %f, predict: %f, img1: %s, img2: %s\n", expected_score, score,
                image_path1.c_str(), image_path2.c_str());
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
       }
     }
 
@@ -164,14 +164,14 @@ int main(int argc, char *argv[]) {
       std::string image_path2 = image_dir + "/" + std::string(diff_pair[1]);
       float score = 0.0;
       ret = compare_face(ai_handle, service_handle, inference, image_path1, image_path2, &score);
-      if (ret != CVI_SUCCESS) {
-        return CVI_FAILURE;
+      if (ret != CVIAI_SUCCESS) {
+        return CVIAI_FAILURE;
       }
 
       if (std::abs(score - expected_score) >= 0.1) {
         printf("FAILED! expect: %f, predict: %f, img1: %s, img2: %s\n", expected_score, score,
                image_path1.c_str(), image_path2.c_str());
-        return CVI_FAILURE;
+        return CVIAI_FAILURE;
       }
     }
   }
@@ -180,5 +180,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }

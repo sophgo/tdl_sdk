@@ -1,12 +1,12 @@
 #include "wider_face.hpp"
-#include "core_utils.hpp"
-#include "cviai_log.hpp"
-
 #include <cvi_type.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <experimental/filesystem>
+#include "core/core/cvai_errno.h"
+#include "core_utils.hpp"
+#include "cviai_log.hpp"
 
 namespace cviai {
 namespace evaluation {
@@ -38,7 +38,7 @@ int widerFaceEval::getEvalData(const char* dataset_dir, const char* result_dir) 
       m_data.push_back({entry.path(), result_group_path, group_entry.path().filename()});
     }
   }
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 uint32_t widerFaceEval::getTotalImage() { return m_data.size(); }
@@ -63,7 +63,7 @@ int widerFaceEval::saveFaceData(const int index, const VIDEO_FRAME_INFO_S* frame
   FILE* fp;
   if ((fp = fopen(result_path.c_str(), "w+")) == NULL) {
     LOGE("Write file open error. %s!\n", result_path.c_str());
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   fprintf(fp, "%s\n", exfp.stem().c_str());
@@ -76,7 +76,7 @@ int widerFaceEval::saveFaceData(const int index, const VIDEO_FRAME_INFO_S* frame
             bbox.score);
   }
   fclose(fp);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 void widerFaceEval::resetData() { m_data.clear(); }

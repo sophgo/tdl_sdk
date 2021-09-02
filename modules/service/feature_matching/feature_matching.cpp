@@ -1,4 +1,5 @@
 #include "feature_matching.hpp"
+#include "core/core/cvai_errno.h"
 
 #include <cvimath/cvimath_internal.h>
 #include <cviruntime.h>
@@ -68,31 +69,31 @@ int FeatureMatching::init() { return createHandle(&m_rt_handle, &m_cvk_ctx); }
 int FeatureMatching::createHandle(CVI_RT_HANDLE *rt_handle, cvk_context_t **cvk_ctx) {
   if (CVI_RT_Init(rt_handle) != CVI_SUCCESS) {
     LOGE("Runtime init failed.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   struct sysinfo info;
   if (sysinfo(&info) < 0) {
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   // FIXME: Rewrite command buffer to fit feature matching size.
   uint64_t mem = 50000;
   if (info.freeram <= mem) {
     LOGE("Memory insufficient.\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   *cvk_ctx = (cvk_context_t *)CVI_RT_RegisterKernel(*rt_handle, mem);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int FeatureMatching::destroyHandle(CVI_RT_HANDLE rt_handle, cvk_context_t *cvk_ctx) {
   CVI_RT_UnRegisterKernel(cvk_ctx);
   CVI_RT_DeInit(rt_handle);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_array,
                                   const cvai_service_feature_matching_e &matching_method) {
-  int ret = CVI_SUCCESS;
+  int ret = CVIAI_SUCCESS;
   m_matching_method = matching_method;
   switch (m_matching_method) {
     case COS_SIMILARITY: {
@@ -100,7 +101,7 @@ int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_ar
     } break;
     default:
       LOGE("Unsupported mathinc method %u\n", m_matching_method);
-      ret = CVI_FAILURE;
+      ret = CVIAI_FAILURE;
       break;
   }
   return ret;
@@ -108,14 +109,14 @@ int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_ar
 
 int FeatureMatching::run(const uint8_t *feature, const feature_type_e &type, const uint32_t topk,
                          uint32_t *indices, float *scores, uint32_t *size, float threshold) {
-  int ret = CVI_SUCCESS;
+  int ret = CVIAI_SUCCESS;
   switch (m_matching_method) {
     case COS_SIMILARITY: {
       ret = cosSimilarityRun(feature, type, topk, indices, scores, threshold, size);
     } break;
     default:
       LOGE("Unsupported mathinc method %u\n", m_matching_method);
-      ret = CVI_FAILURE;
+      ret = CVIAI_FAILURE;
       break;
   }
   return ret;
@@ -132,7 +133,7 @@ int FeatureMatching::cosSimilarityRegister(const cvai_service_feature_array_t &f
     default: {
       LOGE("Unsupported register data type %x.\n", feature_array.type);
       delete[] unit_length;
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     } break;
   }
   m_data_num = feature_array.data_num;
@@ -177,7 +178,7 @@ int FeatureMatching::cosSimilarityRegister(const cvai_service_feature_array_t &f
     CVI_RT_MemFlush(m_rt_handle, info.rtmem);
   }
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 template <typename T>
@@ -201,10 +202,10 @@ int FeatureMatching::cosSimilarityRun(const uint8_t *feature, const feature_type
   if (topk == 0 && threshold == 0.0f) {
     LOGE("both topk and threshold are invalid value\n");
     *size = 0;
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
-  int ret = CVI_SUCCESS;
+  int ret = CVIAI_SUCCESS;
 
   *size = topk == 0 ? m_data_num : std::min<uint32_t>(m_data_num, topk);
 
@@ -285,7 +286,7 @@ int FeatureMatching::cosSimilarityRun(const uint8_t *feature, const feature_type
     } break;
     default: {
       LOGE("Unsupported register data type %x.\n", type);
-      ret = CVI_FAILURE;
+      ret = CVIAI_FAILURE;
     } break;
   }
 

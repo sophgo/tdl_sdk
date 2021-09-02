@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         "Usage: %s <retina_model_path> <quality_model_path> <video output>.\n"
         "\t video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
   CVI_S32 voType = atoi(argv[3]);
 
@@ -40,12 +40,12 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
   if (InitVideoSystem(&vs_ctx, &aiInputSize, PIXEL_FORMAT_RGB_888, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   cviai_handle_t ai_handle = NULL;
@@ -54,12 +54,12 @@ int main(int argc, char *argv[]) {
   int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
   }
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[2]);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
   }

@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_FAILURE;
+    return CVIAI_FAILURE;
   }
 
   char const *LP_FORMAT[2] = {"TW", "CN"};
@@ -30,19 +30,19 @@ int main(int argc, char *argv[]) {
   filestr >> m_json_read;
   filestr.close();
 
-  CVI_S32 ret = CVI_SUCCESS;
+  CVI_S32 ret = CVIAI_SUCCESS;
   CVI_S32 vpssgrp_width = 1920;
   CVI_S32 vpssgrp_height = 1080;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   model_name = std::string(m_json_read["CN"]["reg_config"][0]["model_name"]);
   model_path = model_dir + "/" + model_name;
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, model_path.c_str());
-  if (ret != CVI_SUCCESS) {
+  if (ret != CVIAI_SUCCESS) {
     printf("Set license plate detection model failed with %#x!\n", ret);
     return ret;
   }
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
       license_format = china;
     } else {
       printf("Unknown license type %s\n", LP_FORMAT[t]);
-      return CVI_FAILURE;
+      return CVIAI_FAILURE;
     }
     for (int img_idx = 0; img_idx < img_num; img_idx++) {
       std::string image_path =
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
       VB_BLK blk_fr;
       VIDEO_FRAME_INFO_S frame;
       CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
-      if (ret != CVI_SUCCESS) {
+      if (ret != CVIAI_SUCCESS) {
         printf("Read image failed with %#x!\n", ret);
         return ret;
       }
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
           CVI_AI_LicensePlateRecognition_CN(ai_handle, &frame, &vehicle_obj);
           break;
         default:
-          return CVI_FAILURE;
+          return CVIAI_FAILURE;
       }
 
       std::string expected_res =
@@ -141,5 +141,5 @@ int main(int argc, char *argv[]) {
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
 
-  return pass ? CVI_SUCCESS : CVI_FAILURE;
+  return pass ? CVIAI_SUCCESS : CVIAI_FAILURE;
 }
