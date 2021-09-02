@@ -33,6 +33,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <functional>
 #include <memory>
@@ -248,8 +249,21 @@ CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E conf
       return CVI_FAILURE;
     }
   }
-  m_t.model_path = filepath;
-  return CVI_SUCCESS;
+
+  struct stat buffer;
+  if (stat(filepath, &buffer) == 0) {
+    if (S_ISREG(buffer.st_mode)) {
+      m_t.model_path = filepath;
+      return CVI_SUCCESS;
+    } else {
+      LOGE("Path of model file isn't a regular file: %s\n", filepath);
+    }
+  } else {
+    LOGE("Model file doesn't exists: %s\n", filepath);
+  }
+
+  m_t.model_path.clear();
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
@@ -268,7 +282,7 @@ CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config)
     } else {
       LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
            CVI_AI_GetModelName(config));
-      return CVI_FAILURE;
+      return CVI_SUCCESS;
     }
   } else {
     Core *instance = getInferenceInstance(config, ctx);
