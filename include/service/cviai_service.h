@@ -325,6 +325,37 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handl
                                                     const cvai_bbox_t *bbox, bool *has_intersect);
 
 /**
+ * @brief Initialize intrusion detection.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_Init(cviai_service_handle_t handle);
+
+/**
+ * @brief Set target convex polygon for intrusion detection.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param pts polygon points. (pts->size must larger than 2.)
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle_t handle,
+                                                            const cvai_pts_t *pts);
+
+/**
+ * @brief Run intrusion detection.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param  bbox bounding box
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_BBox(cviai_service_handle_t handle,
+                                                       const cvai_bbox_t *bbox, bool *result);
+
+/**
  * @brief Calculate the head pose angle.
  * @ingroup core_cviaiservice
  *

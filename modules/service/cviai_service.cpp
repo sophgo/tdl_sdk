@@ -2,6 +2,7 @@
 
 #include <cvimath/cvimath.h>
 #include "area_detect/area_detect.hpp"
+#include "area_detect/intrusion_detect.hpp"
 #include "area_detect/polygon_intersect.hpp"
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
@@ -17,6 +18,7 @@ typedef struct {
   cviai::service::DigitalTracking *m_dt = nullptr;
   cviai::service::AreaDetect *m_ad = nullptr;
   cviai::service::PolygonIntersect *m_poly = nullptr;
+  cviai::service::IntrusionDetect *m_intrusion_det = nullptr;
   bool draw_use_tpu = false;
 } cviai_service_context_t;
 
@@ -335,6 +337,37 @@ CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle, const cv
     *has_intersect = area > 0.0;
   }
   return ret;
+}
+CVI_S32 CVI_AI_Service_IntrusionDetect_Init(cviai_service_handle_t handle) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_intrusion_det != nullptr) {
+    printf("IntrusionDetect has been initialized.\n");
+    return CVI_FAILURE;
+  }
+  ctx->m_intrusion_det = new cviai::service::IntrusionDetect();
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle_t handle,
+                                                 const cvai_pts_t *pts) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_intrusion_det == nullptr) {
+    printf("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
+    return CVI_FAILURE;
+  }
+  return ctx->m_intrusion_det->setRegion(*pts);
+}
+
+CVI_S32 CVI_AI_Service_IntrusionDetect_BBox(cviai_service_handle_t handle, const cvai_bbox_t *bbox,
+                                            bool *result) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_intrusion_det == nullptr) {
+    printf("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
+    LOGE("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
+    return CVI_FAILURE;
+  }
+  *result = ctx->m_intrusion_det->run(*bbox);
+  return CVI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp) {
