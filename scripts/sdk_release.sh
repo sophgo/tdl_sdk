@@ -42,7 +42,8 @@ $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                 -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
                                 -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
                                 -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
-                                -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE
+                                -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE \
+                                -DCVI_MIDDLEWARE_3RD_FLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
 
 ninja -j8 || exit 1
 ninja install || exit 1

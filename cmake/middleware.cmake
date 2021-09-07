@@ -22,8 +22,12 @@ set(MIDDLEWARE_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include/
 )
 
+# add cvitracer path into cflags/cxxflags
+# TODO: add these in more elegant way
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CVI_MIDDLEWARE_3RD_FLAGS} -lcvitracer")
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CVI_MIDDLEWARE_3RD_FLAGS} -lcvitracer")
+
 set(MIDDLEWARE_LIBS 
-                    ${MIDDLEWARE_SDK_ROOT}/lib/libcvitracer.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
                     ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so)
 
