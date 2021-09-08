@@ -17,9 +17,9 @@ class IncarObjectDetection final : public Core {
   int inference(VIDEO_FRAME_INFO_S* frame, cvai_face_t* meta);
   std::vector<HeadInfo> heads_info{
       // cls_pred|dis_pred|stride
-      {"802_Transpose_back_dim_dequant", "805_Transpose_back_dim_dequant", 8},
-      {"830_Transpose_back_dim_dequant", "833_Transpose_back_dim_dequant", 16},
-      {"858_Transpose_back_dim_dequant", "861_Transpose_back_dim_dequant", 32},
+      {"802_Transpose_dequant", "805_Transpose_dequant", 8},
+      {"830_Transpose_dequant", "833_Transpose_dequant", 16},
+      {"858_Transpose_dequant", "861_Transpose_dequant", 32},
 
   };
 
