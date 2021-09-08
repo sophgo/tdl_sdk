@@ -60,7 +60,7 @@ endif()
 set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libtinyalsa.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so)
 
