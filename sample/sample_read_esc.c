@@ -4,9 +4,12 @@
 #include "cvi_audio.h"
 #include "cviai.h"
 
+#define AUDIOFORMATSIZE 2
+#define SECOND 3
+#define CVI_AUDIO_BLOCK_MODE -1
 #define PERIOD_SIZE 640
 #define SAMPLE_RATE 16000
-#define FRAME_SIZE SAMPLE_RATE * 2 * 3  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
+#define FRAME_SIZE SAMPLE_RATE *AUDIOFORMATSIZE *SECOND  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
 
 // ESC class name
 char ES_Classes[6][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",
@@ -33,8 +36,8 @@ void *thread_uplink_audio(void *arg) {
   CVI_S32 s32Ret;
   AUDIO_FRAME_S stFrame;
   AEC_FRAME_S stAecFrm;
-  int loop = SAMPLE_RATE / PERIOD_SIZE * 3;  // 3 seconds
-  int size = PERIOD_SIZE * 2;                // PCM_FORMAT_S16_LE (2bytes)
+  int loop = SAMPLE_RATE / PERIOD_SIZE * SECOND;  // 3 seconds
+  int size = PERIOD_SIZE * AUDIOFORMATSIZE;       // PCM_FORMAT_S16_LE (2bytes)
 
   // Set video frame interface
   CVI_U8 buffer[FRAME_SIZE];  // 3 seconds
@@ -48,15 +51,14 @@ void *thread_uplink_audio(void *arg) {
 
   while (gRun) {
     for (int i = 0; i < loop; ++i) {
-      s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_FALSE);  // Get audio frame
-      if (s32Ret != CVI_SUCCESS) {
+      s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_AUDIO_BLOCK_MODE);  // Get audio frame
+      if (s32Ret != CVIAI_SUCCESS) {
         printf("CVI_AI_GetFrame --> none!!\n");
         continue;
       } else {
         memcpy(buffer + i * size, (CVI_U8 *)stFrame.u64VirAddr[0],
                size);  // Set the period size date to global buffer
       }
-      s32Ret = CVI_AI_ReleaseFrame(0, 0, &stFrame, &stAecFrm);
     }
     if (!record) {
       CVI_AI_SoundClassification(ai_handle, &Frame, &index);  // Detect the audio
@@ -72,6 +74,9 @@ void *thread_uplink_audio(void *arg) {
       gRun = false;
     }
   }
+  s32Ret = CVI_AI_ReleaseFrame(0, 0, &stFrame, &stAecFrm);
+  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_ReleaseFrame Failed!!\n");
+
   pthread_exit(NULL);
 }
 
@@ -93,19 +98,19 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
   // STEP 2:cvitek_audin_uplink_start
   //_set_audin_config
   s32Ret = CVI_AI_SetPubAttr(0, &AudinAttr);
-  if (s32Ret != CVI_SUCCESS) printf("CVI_AI_SetPubAttr failed with %#x!\n", s32Ret);
+  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_SetPubAttr failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_Enable(0);
-  if (s32Ret != CVI_SUCCESS) printf("CVI_AI_Enable failed with %#x!\n", s32Ret);
+  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_Enable failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_EnableChn(0, 0);
-  if (s32Ret != CVI_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
+  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_SetVolume(0, 4);
-  if (s32Ret != CVI_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
+  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
 
   printf("SET_AUDIO_ATTR success!!\n");
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 int main(int argc, char **argv) {
@@ -122,8 +127,8 @@ int main(int argc, char **argv) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 ret = CVI_SUCCESS;
-  if (CVI_AUDIO_INIT() == CVI_SUCCESS) {
+  CVI_S32 ret = CVIAI_SUCCESS;
+  if (CVI_AUDIO_INIT() == CVIAI_SUCCESS) {
     printf("CVI_AUDIO_INIT success!!\n");
   } else {
     printf("CVI_AUDIO_INIT failure!!\n");
