@@ -22,15 +22,9 @@ typedef struct _ModelConfig {
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVIAI_SUCCESS;
 
-  if (strcmp(model_name, "mobiledetv2-d0") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0;
-    config->inference = CVI_AI_MobileDetV2_D0;
-  } else if (strcmp(model_name, "mobiledetv2-d1") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1;
-    config->inference = CVI_AI_MobileDetV2_D1;
-  } else if (strcmp(model_name, "mobiledetv2-d2") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2;
-    config->inference = CVI_AI_MobileDetV2_D2;
+  if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
+    config->inference = CVI_AI_MobileDetV2_COCO80;
   } else if (strcmp(model_name, "yolov3") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     config->inference = CVI_AI_Yolov3;

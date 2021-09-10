@@ -175,7 +175,7 @@ static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<in
   return inverse_threshold;
 }
 
-MobileDetV2::MobileDetV2(MobileDetV2::Model model, float iou_thresh)
+MobileDetV2::MobileDetV2(MobileDetV2::Category model, float iou_thresh)
     : Core(CVI_MEM_DEVICE),
       m_model_config(MDetV2Config::create_config(model)),
       m_iou_threshold(iou_thresh) {
@@ -397,7 +397,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
   return ret;
 }
 
-MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
+MDetV2Config MDetV2Config::create_config(MobileDetV2::Category model) {
   MDetV2Config config;
   config.min_level = 3;
   config.max_level = 7;
@@ -405,7 +405,6 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
   config.aspect_ratios = {{1.0, 1.0}, {1.4, 0.7}, {0.7, 1.4}};
   config.anchor_scale = 4.0;
   config.strides = {8, 16, 32, 64, 128};
-  config.num_classes = 90;
   config.class_out_names = {{8, "class_stride_8"},
                             {16, "class_stride_16"},
                             {32, "class_stride_32"},
@@ -423,27 +422,26 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
                            {32, "box_stride_32"},
                            {64, "box_stride_64"},
                            {128, "box_stride_128"}};
-
-  config.class_id_map = [](int orig_id) { return orig_id; };
-
+  config.default_score_threshold = 0.4;
   switch (model) {
-    case Model::d0:
-      config.default_score_threshold = 0.4;
+    case Category::coco80:
+      config.num_classes = 90;
+      config.class_id_map = [](int orig_id) { return orig_id; };
       break;
-    case Model::d1:
-      config.default_score_threshold = 0.3;
+    case Category::person_vehicle:
+      config.num_classes = 6;
+      config.class_id_map = [](int orig_id) {
+        if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);
+        if (orig_id == 1) return static_cast<int>(CVI_AI_DET_TYPE_BICYCLE);
+        if (orig_id == 2) return static_cast<int>(CVI_AI_DET_TYPE_CAR);
+        if (orig_id == 3) return static_cast<int>(CVI_AI_DET_TYPE_MOTORBIKE);
+        if (orig_id == 4) return static_cast<int>(CVI_AI_DET_TYPE_BUS);
+        if (orig_id == 5) return static_cast<int>(CVI_AI_DET_TYPE_TRUCK);
+        return static_cast<int>(CVI_AI_DET_TYPE_END);
+      };
       break;
-    case Model::d2:
-      config.default_score_threshold = 0.3;
-      break;
-    case Model::lite:
-      config.num_classes = 9;
-      config.default_score_threshold = 0.3;
-      break;
-    case Model::lite_person_pets:
+    case Category::person_pets:
       config.num_classes = 3;
-      config.default_score_threshold = 0.3;
-
       config.class_id_map = [](int orig_id) {
         if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);
         if (orig_id == 1) return static_cast<int>(CVI_AI_DET_TYPE_CAT);
@@ -451,9 +449,8 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
         return static_cast<int>(CVI_AI_DET_TYPE_END);
       };
       break;
-    case Model::vehicle_d0:
+    case Category::vehicle:
       config.num_classes = 3;
-      config.default_score_threshold = 0.3;
       config.class_id_map = [](int orig_id) {
         if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_CAR);
         if (orig_id == 1) return static_cast<int>(CVI_AI_DET_TYPE_TRUCK);
@@ -461,9 +458,8 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Model model) {
         return static_cast<int>(CVI_AI_DET_TYPE_END);
       };
       break;
-    case Model::pedestrian_d0:
+    case Category::pedestrian:
       config.num_classes = 1;
-      config.default_score_threshold = 0.3;
       config.class_id_map = [](int orig_id) {
         if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);
         return static_cast<int>(CVI_AI_DET_TYPE_END);

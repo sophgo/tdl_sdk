@@ -28,18 +28,12 @@ typedef struct _ModelConfig {
 CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
   CVI_S32 ret = CVIAI_SUCCESS;
 
-  if (strcmp(model_name, "mobiledetv2-d0") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0;
-    config->inference = CVI_AI_MobileDetV2_D0;
-  } else if (strcmp(model_name, "mobiledetv2-d1") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1;
-    config->inference = CVI_AI_MobileDetV2_D1;
-  } else if (strcmp(model_name, "mobiledetv2-d2") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2;
-    config->inference = CVI_AI_MobileDetV2_D2;
+  if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
+    config->inference = CVI_AI_MobileDetV2_COCO80;
   } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0;
-    config->inference = CVI_AI_MobileDetV2_Pedestrian_D0;
+    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
+    config->inference = CVI_AI_MobileDetV2_Pedestrian;
   } else if (strcmp(model_name, "yolov3") == 0) {
     config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     config->inference = CVI_AI_Yolov3;
@@ -63,8 +57,8 @@ int main(int argc, char *argv[]) {
     printf(
         "Usage: %s <detection_model_name> <detection_model_path> <reid_model_path> <video "
         "output>.\n"
-        "\tdetection_model_name: detection model name should be one of {mobiledetv2-d0, "
-        "mobiledetv2-d1, mobiledetv2-d2, yolov3}\n"
+        "\tdetection_model_name: detection model name should be one of {mobiledetv2-coco80, "
+        "yolov3}\n"
         "\tdetection_model_path: path to detection model\n"
         "\treid_model_path: path to person reid model\n"
         "\tvideo output, 0: disable, 1: output to panel, 2: output through rtsp\n",

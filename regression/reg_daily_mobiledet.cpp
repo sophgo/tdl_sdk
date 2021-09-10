@@ -13,40 +13,41 @@ typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t
 static const std::unordered_map<std::string, std::pair<CVI_AI_SUPPORTED_MODEL_E, InferenceFunc>>
     MODEL_MAP = {
         {"mobiledetv2-d0-ls.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, CVI_AI_MobileDetV2_D0}},
-        {"mobiledetv2-d0.cvimodel", {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, CVI_AI_MobileDetV2_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_AI_MobileDetV2_COCO80}},
+        {"mobiledetv2-d0.cvimodel",
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_AI_MobileDetV2_COCO80}},
         {"mobiledetv2-d1-ls.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1, CVI_AI_MobileDetV2_D1}},
-        {"mobiledetv2-d1.cvimodel", {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1, CVI_AI_MobileDetV2_D1}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_AI_MobileDetV2_COCO80}},
+        {"mobiledetv2-d1.cvimodel",
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_AI_MobileDetV2_COCO80}},
         {"mobiledetv2-d2-ls.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2, CVI_AI_MobileDetV2_D2}},
-        {"mobiledetv2-d2.cvimodel", {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2, CVI_AI_MobileDetV2_D2}},
-        {"mobiledetv2-lite-ls.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE, CVI_AI_MobileDetV2_Lite}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_AI_MobileDetV2_COCO80}},
+        {"mobiledetv2-d2.cvimodel",
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_AI_MobileDetV2_COCO80}},
+        {"mobiledetv2-person-vehicle.cvimodel",
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_AI_MobileDetV2_Person_Vehicle}},
         {"mobiledetv2-lite-person-pets-ls.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS,
-          CVI_AI_MobileDetV2_Lite_Person_Pets}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, CVI_AI_MobileDetV2_Person_Pets}},
         {"mobiledetv2-lite-person-pets.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS,
-          CVI_AI_MobileDetV2_Lite_Person_Pets}},
-        {"mobiledetv2-lite.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE, CVI_AI_MobileDetV2_Lite}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, CVI_AI_MobileDetV2_Person_Pets}},
+        {"mobiledetv2-person-vehicle-ls.cvimodel",
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_AI_MobileDetV2_Person_Vehicle}},
         {"mobiledetv2-pedestrian-d0-ls-640.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, CVI_AI_MobileDetV2_Pedestrian_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d0-ls-768.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, CVI_AI_MobileDetV2_Pedestrian_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d0-ls.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, CVI_AI_MobileDetV2_Pedestrian_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d0.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, CVI_AI_MobileDetV2_Pedestrian_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d1-ls.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, CVI_AI_MobileDetV2_Pedestrian_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d1.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, CVI_AI_MobileDetV2_Pedestrian_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-vehicle-d0-ls.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, CVI_AI_MobileDetV2_Vehicle_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_AI_MobileDetV2_Vehicle}},
         {"mobiledetv2-vehicle-d0.cvimodel",
-         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, CVI_AI_MobileDetV2_Vehicle_D0}},
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_AI_MobileDetV2_Vehicle}},
 };
 
 const float bbox_threhold = 0.90;
@@ -147,8 +148,8 @@ int main(int argc, char *argv[]) {
       auto expected_dets = iter.value();
 
       if (obj_meta.size != expected_dets.size()) {
-        printf("[%s] num dets not equal!, expected: %u, actual: %zu\n", image_path.c_str(),
-               obj_meta.size, expected_dets.size());
+        printf("[%s] num dets not equal!, expected: %zu, actual: %u\n", image_path.c_str(),
+               expected_dets.size(), obj_meta.size);
         pass = false;
       }
 

@@ -28,14 +28,14 @@ int main(int argc, char *argv[]) {
   }
 
   // Setup model path and model config.
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, argv[1]);
+  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, argv[1]);
   if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, false);
-  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, 1,
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, false);
+  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 1,
                            CVI_AI_DET_TYPE_PERSON);
 
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, argv[2]);
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
   // Run inference and print result.
   cvai_object_t obj;
   memset(&obj, 0, sizeof(cvai_object_t));
-  CVI_AI_MobileDetV2_Pedestrian_D0(ai_handle, &fdFrame, &obj);
+  CVI_AI_MobileDetV2_Pedestrian(ai_handle, &fdFrame, &obj);
   printf("People found %d.\n", obj.size);
 
   CVI_AI_AlphaPose(ai_handle, &fdFrame, &obj);

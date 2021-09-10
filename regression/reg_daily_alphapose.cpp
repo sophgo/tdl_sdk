@@ -63,13 +63,13 @@ int main(int argc, char *argv[]) {
 
   /*
   ret =
-      CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0,
+      CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
   od_model_path.c_str()); if (ret != CVIAI_SUCCESS) { printf("Set model retinaface failed with
   %#x!\n", ret); return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, false);
-  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, 1,
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, false);
+  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 1,
                            CVI_AI_DET_TYPE_PERSON);
     */
 
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
     cvai_object_t obj;
     memset(&obj, 0, sizeof(cvai_object_t));
-    // CVI_AI_MobileDetV2_Pedestrian_D0(ai_handle, &frame, &obj);
+    // CVI_AI_MobileDetV2_Pedestrian(ai_handle, &frame, &obj);
 
     obj.size = expected_res_num;
     obj.height = frame.stVFrame.u32Height;

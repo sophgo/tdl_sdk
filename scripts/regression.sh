@@ -116,19 +116,21 @@ if [[ "$CHIPSET" = "183x" ]]; then
   run reg_thermal ${model_dir}/thermalfd-v1.cvimodel ${dataset_dir}/thermal_val ${dataset_dir}/thermal_val/valid.json ${results_dir}/thermal_result.json
   run reg_mask_fr ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/masked-fr-v1-m.cvimodel ${dataset_dir}/mask_fr_images/images ${dataset_dir}/mask_fr_images/pair_list.txt ${results_dir}/mask_fr_result.txt
 
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_result.json mobiledetv2-d0
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d1.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d1_result.json mobiledetv2-d1
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d2.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d2_result.json mobiledetv2-d2
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_result.json mobiledetv2-lite
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-vehicle-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_vehicle_d0_result.json mobiledetv2-vehicle-d0
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_result.json mobiledetv2-pedestrian-d0
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_result.json mobiledetv2-coco80
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d1.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d1_result.json mobiledetv2-coco80
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d2.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d2_result.json mobiledetv2-coco80
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_result.json mobiledetv2-person-vehicle
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-vehicle-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_vehicle_d0_result.json mobiledetv2-vehicle
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_result.json mobiledetv2-pedestrian
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d1.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_result.json mobiledetv2-pedestrian
 
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_ls_result.json mobiledetv2-d0
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d1-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d1_ls_result.json mobiledetv2-d1
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d2-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d2_ls_result.json mobiledetv2-d2
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_ls_result.json mobiledetv2-lite
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-vehicle-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_vehicle_d0_ls_result.json mobiledetv2-vehicle-d0
-  run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_ls_result.json mobiledetv2-pedestrian-d0
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_ls_result.json mobiledetv2-coco80
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d1-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d1_ls_result.json mobiledetv2-coco80
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-d2-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d2_ls_result.json mobiledetv2-coco80
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_ls_result.json mobiledetv2-person-vehicle
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-vehicle-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_vehicle_d0_ls_result.json mobiledetv2-vehicle
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_ls_result.json mobiledetv2-pedestrian
+  run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d1-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_result.json mobiledetv2-pedestrian
 
 
   run reg_rgbir_liveness ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/liveness-rgb-ir-f35.cvimodel ${dataset_dir}/face_spoof_RGBIR/ ${dataset_dir}/face_spoof_RGBIR/list_wo_backlight.txt ${results_dir}/rgbir_liveness_result.txt
@@ -142,8 +144,8 @@ elif [[ "$CHIPSET" = "182x" ]]; then
   if [[ "$uname_str" == *"128MB"* ]]; then
     run reg_wider_face ${model_dir}/retinaface_mnet0.25_342_608.cvimodel ${dataset_dir}/wider_face/WIDER_val ${results_dir}/wider_face_result_342_608
     run reg_lfw ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/cviface-v5-s.cvimodel ${dataset_dir}/lfw.txt ${results_dir}/lfw_result_cviface-v5-s.txt 0
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_ls_result.json mobiledetv2-d0
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_ls_result.json mobiledetv2-lite
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_ls_result.json mobiledetv2-coco80
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_ls_result.json mobiledetv2-person-vehicle
     run reg_rgbir_liveness ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/liveness-rgb-ir-f35.cvimodel ${dataset_dir}/face_spoof_RGBIR/ ${dataset_dir}/face_spoof_RGBIR/list_wo_backlight.txt ${results_dir}/rgbir_liveness_result.txt
     run reg_es_classification ${model_dir}/es_classification.cvimodel ${dataset_dir}/ESC50/
   else
@@ -164,19 +166,19 @@ elif [[ "$CHIPSET" = "182x" ]]; then
     run reg_thermal ${model_dir}/thermalfd-v1.cvimodel ${dataset_dir}/thermal_val ${dataset_dir}/thermal_val/valid.json ${results_dir}/thermal_result.json
     run reg_mask_fr ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/masked-fr-v1-m.cvimodel ${dataset_dir}/mask_fr_images/images ${dataset_dir}/mask_fr_images/pair_list.txt ${results_dir}/mask_fr_result.txt
 
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_result.json mobiledetv2-d0
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d1.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d1_result.json mobiledetv2-d1
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d2.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d2_result.json mobiledetv2-d2
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_result.json mobiledetv2-lite
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-vehicle-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_vehicle_d0_result.json mobiledetv2-vehicle-d0
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_result.json mobiledetv2-pedestrian-d0
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_result.json mobiledetv2-coco80
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d1.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d1_result.json mobiledetv2-coco80
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d2.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d2_result.json mobiledetv2-coco80
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_result.json mobiledetv2-person-vehicle
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-vehicle-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_vehicle_d0_result.json mobiledetv2-vehicle
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d0.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_result.json mobiledetv2-pedestrian
 
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_ls_result.json mobiledetv2-d0
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d1-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d1_ls_result.json mobiledetv2-d1
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d2-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d2_ls_result.json mobiledetv2-d2
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_ls_result.json mobiledetv2-lite
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-vehicle-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_vehicle_d0_ls_result.json mobiledetv2-vehicle-d0
-    run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_ls_result.json mobiledetv2-pedestrian-d0
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d0_ls_result.json mobiledetv2-coco80
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d1-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d1_ls_result.json mobiledetv2-coco80
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-d2-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_d2_ls_result.json mobiledetv2-coco80
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-lite-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_lite_ls_result.json mobiledetv2-person-vehicle
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-vehicle-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_vehicle_d0_ls_result.json mobiledetv2-vehicle
+    run reg_mobiledetv2 ${model_dir}/mobiledetv2-pedestrian-d0-ls.cvimodel ${dataset_dir}/coco/val2017 ${dataset_dir}/coco/annotations/instances_val2017.txt ${results_dir}/mobiledetv2_pedestrian_d0_ls_result.json mobiledetv2-pedestrian
 
     run reg_rgbir_liveness ${model_dir}/retinaface_mnet0.25_608.cvimodel ${model_dir}/liveness-rgb-ir-f35.cvimodel ${dataset_dir}/face_spoof_RGBIR/ ${dataset_dir}/face_spoof_RGBIR/list_wo_backlight.txt ${results_dir}/rgbir_liveness_result.txt
 

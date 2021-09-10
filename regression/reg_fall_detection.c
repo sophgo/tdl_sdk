@@ -35,13 +35,13 @@ int main(int argc, char *argv[]) {
   }
 
   // Setup model path and model config.
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
+  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]);
   if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, false);
-  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, 1,
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, false);
+  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, 1,
                            CVI_AI_DET_TYPE_PERSON);
   ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, argv[2]);
   if (ret != CVIAI_SUCCESS) {
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
       printf("\nRead image : %s ", image_path);
 
       // Run inference and print result.
-      CVI_AI_MobileDetV2_D0(ai_handle, &fdFrame, &obj);
+      CVI_AI_MobileDetV2_COCO80(ai_handle, &fdFrame, &obj);
       printf("; People found %x ", obj.size);
 
       CVI_AI_AlphaPose(ai_handle, &fdFrame, &obj);

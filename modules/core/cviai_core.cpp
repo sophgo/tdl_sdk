@@ -113,20 +113,16 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
     {CVI_AI_SUPPORTED_MODEL_LPRNET_TW, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, TAIWAN)},
     {CVI_AI_SUPPORTED_MODEL_LPRNET_CN, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, CHINA)},
-    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
-     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::d0)},
-    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
-     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::d1)},
-    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
-     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::d2)},
-    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE,
-     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::lite)},
-    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0,
-     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::vehicle_d0)},
-    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0,
-     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::pedestrian_d0)},
-    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS,
-     CREATOR_P1(MobileDetV2, MobileDetV2::Model, MobileDetV2::Model::lite_person_pets)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::coco80)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_vehicle)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::vehicle)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::pedestrian)},
+    {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
+     CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
 };
 
 void CVI_AI_PerfettoInit() { prefettoInit(); }
@@ -584,20 +580,16 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceQuality, FaceQuality, CVI_AI_SUPPORTED_MODEL_FA
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskClassification, MaskClassification,
                       CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, cvai_face_t *)
 
-DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle_D0, MobileDetV2,
-                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Pedestrian_D0, MobileDetV2,
-                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Lite, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE,
-                      cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Lite_Person_Pets, MobileDetV2,
-                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_LITE_PERSON_PETS, cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_D0, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0,
-                      cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_D1, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D1,
-                      cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_D2, MobileDetV2, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D2,
-                      cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Pedestrian, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Person_Vehicle, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Person_Pets, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
 
 DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)

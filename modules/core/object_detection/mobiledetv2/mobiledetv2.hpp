@@ -26,18 +26,16 @@ class MobileDetV2 final : public Core {
   typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
   typedef std::vector<PtrDectRect> Detections;
 
-  enum class Model {
-    d0,                // MobileDetV2-D0
-    d1,                // MobileDetV2-D1
-    d2,                // MobileDetV2-D2
-    lite,              // MobileDetV2-Lite
-    vehicle_d0,        // MobileDetV2-Vehicle-D0
-    pedestrian_d0,     // MobileDetV2-Pedestrian-D0
-    lite_person_pets,  // MobileDetV2-Lite-Person-Pets
+  enum class Category {
+    coco80,          // COCO 80 classes
+    vehicle,         // CAR, TRUCK, MOTOCYCLE
+    pedestrian,      // Pedestrian
+    person_pets,     // PERSON, DOG, and CAT
+    person_vehicle,  // PERSON, CAR, BICYCLE, MOTOCYCLE, BUS, TRUCK
   };
 
   struct CvimodelInfo {
-    MobileDetV2::Model model;
+    MobileDetV2::Category category;
     size_t min_level;
     size_t max_level;
     size_t num_scales;
@@ -57,10 +55,10 @@ class MobileDetV2 final : public Core {
 
     typedef int (*ClassMapFunc)(int);
     ClassMapFunc class_id_map;
-    static CvimodelInfo create_config(MobileDetV2::Model model);
+    static CvimodelInfo create_config(MobileDetV2::Category model);
   };
 
-  explicit MobileDetV2(MobileDetV2::Model model, float iou_thresh = 0.5);
+  explicit MobileDetV2(MobileDetV2::Category category, float iou_thresh = 0.5);
   virtual ~MobileDetV2();
   int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta);

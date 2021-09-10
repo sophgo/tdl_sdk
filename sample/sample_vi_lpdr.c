@@ -49,13 +49,12 @@ int main(int argc, char *argv[]) {
   s32Ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   int use_vehicle = atoi(argv[2]);
   if (use_vehicle == 1) {
-    printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0\n");
-    s32Ret |=
-        CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE_D0, argv[1]);
+    printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE\n");
+    s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, argv[1]);
   } else if (use_vehicle == 0) {
-    printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0\n");
-    s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, argv[1]);
-    s32Ret |= CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_D0, 1,
+    printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80\n");
+    s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]);
+    s32Ret |= CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, 1,
                                        CVI_AI_DET_GROUP_VEHICLE);
   } else {
     printf("Unknow det model type.\n");
@@ -105,9 +104,9 @@ int main(int argc, char *argv[]) {
 
     printf("Vehicle Detection ... start\n");
     if (use_vehicle == 1) {
-      CVI_AI_MobileDetV2_Vehicle_D0(ai_handle, &stfdFrame, &vehicle_obj);
+      CVI_AI_MobileDetV2_Vehicle(ai_handle, &stfdFrame, &vehicle_obj);
     } else {
-      CVI_AI_MobileDetV2_D0(ai_handle, &stfdFrame, &vehicle_obj);
+      CVI_AI_MobileDetV2_COCO80(ai_handle, &stfdFrame, &vehicle_obj);
     }
     printf("Find %u vehicles.\n", vehicle_obj.size);
 
