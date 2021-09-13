@@ -15,6 +15,8 @@
 
 static volatile bool bExit = false;
 
+#define BBOX_SCALE (float)720. / 1080.
+
 typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
 typedef struct _ModelConfig {
   CVI_AI_SUPPORTED_MODEL_E model_id;
@@ -122,33 +124,41 @@ int main(int argc, char *argv[]) {
   //========================================
   // setting intrusion detection
   CVI_AI_Service_IntrusionDetect_Init(service_handle);
-  /*
-      TEST_REGION = [
-          [[40, 60], [300,150], [250,300], [120,280], [ 100,120]],
-          [[380,200], [480,220], [440,420], [275,380]],
-      ]
-  */
-  printf("[%s:%d]\n", __FILE__, __LINE__);
-  float r1[2][5] = {{180, 360, 300, 120, 60}, {60, 150, 400, 480, 120}};
-  float r2[2][4] = {{380, 480, 440, 275}, {200, 220, 420, 380}};
+
+  float r0[2][8] = {{0, 50, 0, 100, 200, 150, 200, 100}, {0, 100, 200, 150, 200, 100, 0, 50}};
+  float r1[2][5] = {{380, 560, 500, 320, 260}, {160, 250, 500, 580, 220}};
+  float r2[2][4] = {{780, 880, 840, 675}, {400, 420, 620, 580}};
+
+  cvai_pts_t test_region_0;
   cvai_pts_t test_region_1;
   cvai_pts_t test_region_2;
-  test_region_1.size = 5;
+
+  test_region_0.size = (uint32_t)sizeof(r0) / (sizeof(float) * 2);
+  test_region_0.x = malloc(sizeof(float) * test_region_0.size);
+  test_region_0.y = malloc(sizeof(float) * test_region_0.size);
+  memcpy(test_region_0.x, r0[0], sizeof(float) * test_region_0.size);
+  memcpy(test_region_0.y, r0[1], sizeof(float) * test_region_0.size);
+
+  test_region_1.size = (uint32_t)sizeof(r1) / (sizeof(float) * 2);
   test_region_1.x = malloc(sizeof(float) * test_region_1.size);
   test_region_1.y = malloc(sizeof(float) * test_region_1.size);
   memcpy(test_region_1.x, r1[0], sizeof(float) * test_region_1.size);
   memcpy(test_region_1.y, r1[1], sizeof(float) * test_region_1.size);
 
-  test_region_2.size = 4;
+  test_region_2.size = (uint32_t)sizeof(r2) / (sizeof(float) * 2);
   test_region_2.x = malloc(sizeof(float) * test_region_2.size);
   test_region_2.y = malloc(sizeof(float) * test_region_2.size);
   memcpy(test_region_2.x, r2[0], sizeof(float) * test_region_2.size);
   memcpy(test_region_2.y, r2[1], sizeof(float) * test_region_2.size);
 
-  printf("[%s:%d]\n", __FILE__, __LINE__);
+  CVI_AI_Service_IntrusionDetect_SetRegion(service_handle, &test_region_0);
   CVI_AI_Service_IntrusionDetect_SetRegion(service_handle, &test_region_1);
-  printf("[%s:%d]\n", __FILE__, __LINE__);
-  // CVI_AI_Service_IntrusionDetect_SetRegion(service_handle, &test_region_2);
+  CVI_AI_Service_IntrusionDetect_SetRegion(service_handle, &test_region_2);
+
+  /* get the vertices of convex */
+  cvai_pts_t **convex_pts = NULL;
+  uint32_t convex_num;
+  CVI_AI_Service_IntrusionDetect_GetRegion(service_handle, &convex_pts, &convex_num);
 
   //========================================
   cvai_service_brush_t region_brush = CVI_AI_Service_GetDefaultBrush();
@@ -160,6 +170,7 @@ int main(int argc, char *argv[]) {
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
   cvai_object_t obj_meta;
   memset(&obj_meta, 0, sizeof(cvai_object_t));
+  uint32_t frame_counter = 0;
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
                                   &stfdFrame, 2000);
@@ -167,6 +178,7 @@ int main(int argc, char *argv[]) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
     }
+    frame_counter += 1;
 
     model_config.inference(ai_handle, &stfdFrame, &obj_meta);
     printf("nums of object %u\n", obj_meta.size);
@@ -183,18 +195,28 @@ int main(int argc, char *argv[]) {
     if (voType) {
       s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp,
                                     vs_ctx.vpssConfigs.vpssChnVideoOutput, &stVOFrame, 1000);
+      printf("Frame [%u] (%u,%u)\n", frame_counter, stVOFrame.stVFrame.u32Height,
+             stVOFrame.stVFrame.u32Width);
       if (s32Ret != CVI_SUCCESS) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_DrawPolygon(service_handle, &stVOFrame, &test_region_1, region_brush);
+      // CVI_AI_Service_DrawPolygon(service_handle, &stVOFrame, &test_region_1, region_brush);
+      for (uint32_t i = 0; i < convex_num; i++) {
+        CVI_AI_Service_DrawPolygon(service_handle, &stVOFrame, convex_pts[i], region_brush);
+      }
       CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, true,
                                     CVI_AI_Service_GetDefaultBrush());
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         bool is_intrusion;
-        CVI_AI_Service_IntrusionDetect_BBox(service_handle, &obj_meta.info[i].bbox, &is_intrusion);
+        cvai_bbox_t t_bbox = obj_meta.info[i].bbox;
+        t_bbox.x1 *= BBOX_SCALE;
+        t_bbox.y1 *= BBOX_SCALE;
+        t_bbox.x2 *= BBOX_SCALE;
+        t_bbox.y2 *= BBOX_SCALE;
+        CVI_AI_Service_IntrusionDetect_BBox(service_handle, &t_bbox, &is_intrusion);
         if (is_intrusion) {
-          printf("[%u] intrusion! (%.2f,%.2f,%.2f,%.2f)\n", i, obj_meta.info[i].bbox.x1,
+          printf("[%u] intrusion! (%.1f,%.1f,%.1f,%.1f)\n", i, obj_meta.info[i].bbox.x1,
                  obj_meta.info[i].bbox.y1, obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
           CVI_AI_Service_ObjectWriteText("Intrusion", obj_meta.info[i].bbox.x1,
                                          obj_meta.info[i].bbox.y1, &stVOFrame, 255, 0, 0);
@@ -217,6 +239,7 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&obj_meta);
   }
 
+  CVI_AI_Free(&test_region_0);
   CVI_AI_Free(&test_region_1);
   CVI_AI_Free(&test_region_2);
 

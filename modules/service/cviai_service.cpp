@@ -358,6 +358,18 @@ CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle_t handle,
   return ctx->m_intrusion_det->setRegion(*pts);
 }
 
+CVI_S32 CVI_AI_Service_IntrusionDetect_GetRegion(cviai_service_handle_t handle,
+                                                 cvai_pts_t ***regions_pts, uint32_t *size) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_intrusion_det == nullptr) {
+    printf("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
+    LOGE("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
+    return CVIAI_FAILURE;
+  }
+  ctx->m_intrusion_det->getRegion(regions_pts, size);
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_Service_IntrusionDetect_BBox(cviai_service_handle_t handle, const cvai_bbox_t *bbox,
                                             bool *result) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);

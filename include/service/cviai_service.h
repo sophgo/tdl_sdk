@@ -345,6 +345,19 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle
                                                             const cvai_pts_t *pts);
 
 /**
+ * @brief Get convex polygon for intrusion detection.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param region_pts the vertices of regions.
+ * @param size the number of regions.
+ * @return CVI_S32 Return CVI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_IntrusionDetect_GetRegion(cviai_service_handle_t handle,
+                                                            cvai_pts_t ***regions_pts,
+                                                            uint32_t *size);
+
+/**
  * @brief Run intrusion detection.
  * @ingroup core_cviaiservice
  *
