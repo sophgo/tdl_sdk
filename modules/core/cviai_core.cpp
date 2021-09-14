@@ -705,17 +705,13 @@ CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
 CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
                              cvai_tracker_t *tracker_t, bool use_reid) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_Face");
-  if (use_reid) {
-    LOGE("Don't use DeepSORT for face tracking.\n");
-    return CVIAI_FAILURE;
-  }
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
     LOGE("Please initialize DeepSORT first.\n");
     return CVIAI_FAILURE;
   }
-  ctx->ds_tracker->track(face, tracker_t, false);
+  ctx->ds_tracker->track(face, tracker_t, use_reid);
   return CVIAI_SUCCESS;
 }
 

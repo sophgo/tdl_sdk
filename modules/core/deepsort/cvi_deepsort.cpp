@@ -123,10 +123,6 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
 }
 
 int DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid) {
-  if (use_reid) {
-    LOGE("Face Tracking don't support ReID now.");
-    return CVIAI_ERR_INVALID_ARGS;
-  }
   std::vector<BBOX> bboxes;
   std::vector<FEATURE> features;
   uint32_t bbox_num = face->size;

@@ -23,6 +23,9 @@ static volatile bool bExit = false;
 #define COVER_RATE_THRESHOLD 0.9
 #define MISS_TIME_LIMIT 100
 
+/* cv182x can't detect object and face at the same time. */
+#define DETECT_PEOPLE 0
+
 typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
 typedef struct _ModelConfig {
   CVI_AI_SUPPORTED_MODEL_E model_id;
@@ -221,11 +224,12 @@ float cover_rate_face2people(cvai_bbox_t face_bbox, cvai_bbox_t people_bbox) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 6) {
+  if (argc != 7) {
     printf(
         "Usage: %s <obj_detection_model_name>\n"
         "          <obj_detection_model_path>\n"
         "          <face_detection_model_path>\n"
+        "          <face_attribute_model_path>\n"
         "          <face_quality_model_path>\n"
         "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
@@ -233,7 +237,7 @@ int main(int argc, char *argv[]) {
   }
   CVI_S32 ret = CVIAI_SUCCESS;
 
-  CVI_S32 voType = atoi(argv[5]);
+  CVI_S32 voType = atoi(argv[6]);
 
   CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
@@ -262,13 +266,15 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   ret |= CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[3]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[4]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[4]);
+  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[5]);
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
   CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
@@ -307,27 +313,34 @@ int main(int argc, char *argv[]) {
     memset(&face_meta, 0, sizeof(cvai_face_t));
     cvai_tracker_t tracker_meta;
     memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
+#if DETECT_PEOPLE
     cvai_object_t obj_meta;
     memset(&obj_meta, 0, sizeof(cvai_object_t));
+#endif
 
     CVI_AI_RetinaFace(ai_handle, &stfdFrame, &face_meta);
     printf("Found %x faces.\n", face_meta.size);
+    CVI_AI_FaceRecognition(ai_handle, &stfdFrame, &face_meta);
     CVI_AI_FaceQuality(ai_handle, &stfdFrame, &face_meta);
     for (uint32_t j = 0; j < face_meta.size; j++) {
       printf("face[%u] quality: %f\n", j, face_meta.info[j].face_quality);
     }
 
-    CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
+    // CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
+    CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, true);
 
     if (!update_tracker(ai_handle, &stfdFrame, fq_trackers, &face_meta, &tracker_meta, miss_time)) {
       printf("update tracker failed.\n");
       CVI_AI_Free(&face_meta);
       CVI_AI_Free(&tracker_meta);
+#if DETECT_PEOPLE
       CVI_AI_Free(&obj_meta);
+#endif
       break;
     }
     clean_tracker(fq_trackers, miss_time);
 
+#if DETECT_PEOPLE
     model_config.inference(ai_handle, &stfdFrame, &obj_meta);
     match_index_t *p2f = (match_index_t *)malloc(obj_meta.size * sizeof(match_index_t));
     memset(p2f, 0, obj_meta.size * sizeof(match_index_t));
@@ -341,6 +354,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
+#endif
 
     s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
                                       &stfdFrame);
@@ -369,6 +383,8 @@ int main(int argc, char *argv[]) {
                                        face_meta.info[j].bbox.y1 + 30, &stVOFrame, -1, -1, -1);
         free(fq_num);
       }
+
+#if DETECT_PEOPLE
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         if (p2f[i].match) {
           char *id_num = uint64ToString(face_meta.info[p2f[i].idx].unique_id);
@@ -379,6 +395,8 @@ int main(int argc, char *argv[]) {
       }
       CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, false,
                                     CVI_AI_Service_GetDefaultBrush());
+#endif
+
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
       if (s32Ret != CVI_SUCCESS) {
         printf("Send Output Frame NG\n");
@@ -392,10 +410,12 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    free(p2f);
     CVI_AI_Free(&face_meta);
     CVI_AI_Free(&tracker_meta);
+#if DETECT_PEOPLE
+    free(p2f);
     CVI_AI_Free(&obj_meta);
+#endif
   }
 
   for (int i = 0; i < SAVE_TRACKER_NUM; i++) {
