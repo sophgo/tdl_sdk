@@ -3,7 +3,6 @@
 #include <cvimath/cvimath.h>
 #include "area_detect/area_detect.hpp"
 #include "area_detect/intrusion_detect.hpp"
-#include "area_detect/polygon_intersect.hpp"
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
 #include "draw_rect/draw_rect.hpp"
@@ -17,7 +16,6 @@ typedef struct {
   cviai::service::FeatureMatching *m_fm = nullptr;
   cviai::service::DigitalTracking *m_dt = nullptr;
   cviai::service::AreaDetect *m_ad = nullptr;
-  cviai::service::PolygonIntersect *m_poly = nullptr;
   cviai::service::IntrusionDetect *m_intrusion_det = nullptr;
   bool draw_use_tpu = false;
 } cviai_service_context_t;
@@ -305,80 +303,31 @@ CVI_S32 CVI_AI_Service_DrawPolygon(cviai_service_handle_t handle, VIDEO_FRAME_IN
 
 CVI_S32 CVI_AI_Service_Polygon_SetTarget(cviai_service_handle_t handle, const cvai_pts_t *pts) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->m_poly == nullptr) {
-    ctx->m_poly = new cviai::service::PolygonIntersect();
+  if (ctx->m_intrusion_det == nullptr) {
+    ctx->m_intrusion_det = new cviai::service::IntrusionDetect();
   }
+  return ctx->m_intrusion_det->setRegion(*pts);
+}
 
-  std::vector<cv::Point> polygon;
-  for (uint32_t i = 0; i < pts->size; i++) {
-    polygon.push_back({static_cast<int>(pts->x[i]), static_cast<int>(pts->y[i])});
+CVI_S32 CVI_AI_Service_Polygon_GetTarget(cviai_service_handle_t handle, cvai_pts_t ***regions_pts,
+                                         uint32_t *size) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_intrusion_det == nullptr) {
+    LOGE("Please set intersect area first.\n");
+    return CVIAI_FAILURE;
   }
-  return ctx->m_poly->setArea(polygon);
+  ctx->m_intrusion_det->getRegion(regions_pts, size);
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle, const cvai_bbox_t *bbox,
                                          bool *has_intersect) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->m_poly == nullptr) {
+  if (ctx->m_intrusion_det == nullptr) {
     LOGE("Please set intersect area first.\n");
     return CVIAI_FAILURE;
   }
-
-  CVI_S32 ret = CVIAI_SUCCESS;
-  std::vector<cv::Point> polygon;
-  polygon.push_back({static_cast<int>(bbox->x1), static_cast<int>(bbox->y1)});
-  polygon.push_back({static_cast<int>(bbox->x1), static_cast<int>(bbox->y2)});
-  polygon.push_back({static_cast<int>(bbox->x2), static_cast<int>(bbox->y2)});
-  polygon.push_back({static_cast<int>(bbox->x2), static_cast<int>(bbox->y1)});
-
-  float area = 0;
-  ret = ctx->m_poly->intersectArea(polygon, &area);
-  if (ret == CVIAI_SUCCESS) {
-    *has_intersect = area > 0.0;
-  }
-  return ret;
-}
-CVI_S32 CVI_AI_Service_IntrusionDetect_Init(cviai_service_handle_t handle) {
-  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->m_intrusion_det != nullptr) {
-    printf("IntrusionDetect has been initialized.\n");
-    return CVIAI_FAILURE;
-  }
-  ctx->m_intrusion_det = new cviai::service::IntrusionDetect();
-  return CVIAI_SUCCESS;
-}
-
-CVI_S32 CVI_AI_Service_IntrusionDetect_SetRegion(cviai_service_handle_t handle,
-                                                 const cvai_pts_t *pts) {
-  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->m_intrusion_det == nullptr) {
-    printf("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
-    return CVIAI_FAILURE;
-  }
-  return ctx->m_intrusion_det->setRegion(*pts);
-}
-
-CVI_S32 CVI_AI_Service_IntrusionDetect_GetRegion(cviai_service_handle_t handle,
-                                                 cvai_pts_t ***regions_pts, uint32_t *size) {
-  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->m_intrusion_det == nullptr) {
-    printf("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
-    LOGE("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
-    return CVIAI_FAILURE;
-  }
-  ctx->m_intrusion_det->getRegion(regions_pts, size);
-  return CVI_SUCCESS;
-}
-
-CVI_S32 CVI_AI_Service_IntrusionDetect_BBox(cviai_service_handle_t handle, const cvai_bbox_t *bbox,
-                                            bool *result) {
-  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->m_intrusion_det == nullptr) {
-    printf("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
-    LOGE("Please run CVI_AI_Service_IntrusionDetect_Init first.\n");
-    return CVIAI_FAILURE;
-  }
-  *result = ctx->m_intrusion_det->run(*bbox);
+  *has_intersect = ctx->m_intrusion_det->run(*bbox);
   return CVIAI_SUCCESS;
 }
 

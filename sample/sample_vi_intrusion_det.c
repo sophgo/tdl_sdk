@@ -123,7 +123,6 @@ int main(int argc, char *argv[]) {
 
   //========================================
   // setting intrusion detection
-  CVI_AI_Service_IntrusionDetect_Init(service_handle);
 
   float r0[2][8] = {{0, 50, 0, 100, 200, 150, 200, 100}, {0, 100, 200, 150, 200, 100, 0, 50}};
   float r1[2][5] = {{380, 560, 500, 320, 260}, {160, 250, 500, 580, 220}};
@@ -151,14 +150,14 @@ int main(int argc, char *argv[]) {
   memcpy(test_region_2.x, r2[0], sizeof(float) * test_region_2.size);
   memcpy(test_region_2.y, r2[1], sizeof(float) * test_region_2.size);
 
-  CVI_AI_Service_IntrusionDetect_SetRegion(service_handle, &test_region_0);
-  CVI_AI_Service_IntrusionDetect_SetRegion(service_handle, &test_region_1);
-  CVI_AI_Service_IntrusionDetect_SetRegion(service_handle, &test_region_2);
+  CVI_AI_Service_Polygon_SetTarget(service_handle, &test_region_0);
+  CVI_AI_Service_Polygon_SetTarget(service_handle, &test_region_1);
+  CVI_AI_Service_Polygon_SetTarget(service_handle, &test_region_2);
 
   /* get the vertices of convex */
   cvai_pts_t **convex_pts = NULL;
   uint32_t convex_num;
-  CVI_AI_Service_IntrusionDetect_GetRegion(service_handle, &convex_pts, &convex_num);
+  CVI_AI_Service_Polygon_GetTarget(service_handle, &convex_pts, &convex_num);
 
   //========================================
   cvai_service_brush_t region_brush = CVI_AI_Service_GetDefaultBrush();
@@ -214,7 +213,7 @@ int main(int argc, char *argv[]) {
         t_bbox.y1 *= BBOX_SCALE;
         t_bbox.x2 *= BBOX_SCALE;
         t_bbox.y2 *= BBOX_SCALE;
-        CVI_AI_Service_IntrusionDetect_BBox(service_handle, &t_bbox, &is_intrusion);
+        CVI_AI_Service_Polygon_Intersect(service_handle, &t_bbox, &is_intrusion);
         if (is_intrusion) {
           printf("[%u] intrusion! (%.1f,%.1f,%.1f,%.1f)\n", i, obj_meta.info[i].bbox.x1,
                  obj_meta.info[i].bbox.y1, obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
