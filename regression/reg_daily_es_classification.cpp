@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
   for (int audio_idx = 0; audio_idx < audio_num; audio_idx++) {
     std::string audio_path =
         audio_dir + "/" + std::string(m_json_read["reg_config"][0]["test_audios"][audio_idx]);
+    printf("[%d] audio_path: %s\n", audio_idx, audio_path.c_str());
     int expected_res = int(m_json_read["reg_config"][0]["expected_results"][audio_idx]);
 
     FILE *fp = fopen(audio_path.c_str(), "rb");
@@ -66,6 +67,7 @@ int main(int argc, char *argv[]) {
     int index = -1;
     CVI_AI_SoundClassification(facelib_handle, &frame, &index);
 
+    printf("predict index = %d (expected: %d)\n", index, expected_res);
     pass &= (index == expected_res);
     free(temp);
   }

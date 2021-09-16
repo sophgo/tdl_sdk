@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
   for (int img_idx = 0; img_idx < img_num; img_idx++) {
     std::string image_path =
         image_dir + "/" + std::string(m_json_read["reg_config"][0]["test_images"][img_idx]);
+    printf("[%d] image_path: %s\n", img_idx, image_path.c_str());
     int expected_res = int(m_json_read["reg_config"][0]["expected_results"][img_idx]);
 
     VB_BLK blk_fr;
@@ -82,6 +83,8 @@ int main(int argc, char *argv[]) {
     CVI_AI_FaceLandmarker(facelib_handle, &frame, &face);
     CVI_AI_EyeClassification(facelib_handle, &frame, &face);
 
+    printf("leye_score = %f, reye_score = %f (threshold: %f, expected_res: %d)\n",
+           face.dms->leye_score, face.dms->reye_score, threshold, expected_res);
     if (expected_res)
       pass &= ((face.dms->leye_score > threshold) || (face.dms->reye_score > threshold));
     else

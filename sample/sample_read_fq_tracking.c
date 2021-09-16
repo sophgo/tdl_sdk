@@ -3,6 +3,8 @@
 #include "cviai.h"
 #include "ive/ive.h"
 
+#include <inttypes.h>
+
 #define WRITE_RESULT_TO_FILE 0
 
 #define SAVE_TRACKER_NUM 64
@@ -235,12 +237,13 @@ int main(int argc, char *argv[]) {
   CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
   ds_conf.ktracker_conf.max_unmatched_num = 10;
   ds_conf.ktracker_conf.accreditation_threshold = 10;
+  ds_conf.max_distance_iou = 0.8;
   ds_conf.ktracker_conf.P_std_beta[2] = 0.1;
   ds_conf.ktracker_conf.P_std_beta[6] = 2.5e-2;
   ds_conf.kfilter_conf.Q_std_beta[2] = 0.1;
   ds_conf.kfilter_conf.Q_std_beta[6] = 2.5e-2;
   ds_conf.kfilter_conf.R_std_beta[2] = 0.1;
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
+  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, true);
 #endif
 
 #if WRITE_RESULT_TO_FILE
@@ -364,14 +367,14 @@ int main(int argc, char *argv[]) {
 #if WRITE_RESULT_TO_FILE
     fprintf(outFile, "%u\n", tracker_meta.size);
     for (uint32_t i = 0; i < tracker_meta.size; i++) {
-      fprintf(outFile, "%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f\n", face_meta.info[i].unique_id,
-              (int)face_meta.info[i].bbox.x1, (int)face_meta.info[i].bbox.y1,
-              (int)face_meta.info[i].bbox.x2, (int)face_meta.info[i].bbox.y2,
-              tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
-              (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
-              (int)tracker_meta.info[i].bbox.y2, face_meta.info[i].face_quality,
-              face_meta.info[i].head_pose.pitch, face_meta.info[i].head_pose.roll,
-              face_meta.info[i].head_pose.yaw);
+      fprintf(outFile, "%" PRIu64 ",%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f\n",
+              face_meta.info[i].unique_id, (int)face_meta.info[i].bbox.x1,
+              (int)face_meta.info[i].bbox.y1, (int)face_meta.info[i].bbox.x2,
+              (int)face_meta.info[i].bbox.y2, tracker_meta.info[i].state,
+              (int)tracker_meta.info[i].bbox.x1, (int)tracker_meta.info[i].bbox.y1,
+              (int)tracker_meta.info[i].bbox.x2, (int)tracker_meta.info[i].bbox.y2,
+              face_meta.info[i].face_quality, face_meta.info[i].head_pose.pitch,
+              face_meta.info[i].head_pose.roll, face_meta.info[i].head_pose.yaw);
     }
 
     // fprintf(outFile, "%u\n", 0);
@@ -381,7 +384,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(outFile, "%u\n", obj_meta.size);
     for (uint32_t i = 0; i < obj_meta.size; i++) {
-      fprintf(outFile, "%d,%lu,%d,%d,%d,%d\n", (p2f[i].match) ? 1 : 0,
+      fprintf(outFile, "%d,%" PRIu64 ",%d,%d,%d,%d\n", (p2f[i].match) ? 1 : 0,
               (p2f[i].match) ? face_meta.info[p2f[i].idx].unique_id : -1,
               (int)obj_meta.info[i].bbox.x1, (int)obj_meta.info[i].bbox.y1,
               (int)obj_meta.info[i].bbox.x2, (int)obj_meta.info[i].bbox.y2);

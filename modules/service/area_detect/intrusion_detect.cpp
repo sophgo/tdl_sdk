@@ -1,5 +1,4 @@
 #include "intrusion_detect.hpp"
-// #include "cviai_core.h"
 #include <cvi_type.h>
 #include <algorithm>
 #include <cstring>
@@ -9,6 +8,7 @@
 #include "assert.h"
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
+#include "cviai_log.hpp"
 #include "stdio.h"
 
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
@@ -106,21 +106,21 @@ int IntrusionDetect::setRegion(const cvai_pts_t &pts) {
     std::reverse(new_pts.x, new_pts.x + pts.size);
     std::reverse(new_pts.y, new_pts.y + pts.size);
   } else if (area == 0) {
-    printf("[WARNING] Area = 0\n");
-    return CVI_SUCCESS;
+    LOGW("Area = 0\n");
+    return CVIAI_SUCCESS;
   }
 
   auto new_region = std::make_shared<ConvexPolygon>();
   if (new_region->set_vertices(new_pts)) {
     regions.push_back(new_region);
-    this->show();
-    return CVI_SUCCESS;
+    // this->show();
+    return CVIAI_SUCCESS;
   }
 
   std::vector<std::vector<int>> convex_idxes;
   if (!ConvexPartition_HM(new_pts, convex_idxes)) {
-    printf("[ERROR] ConvexPartition_HM failed (1).\n");
-    return CVI_FAILURE;
+    LOGE("ConvexPartition_HM Bug (1).\n");
+    return CVIAI_FAILURE;
   }
 
   for (size_t i = 0; i < convex_idxes.size(); i++) {
@@ -134,11 +134,8 @@ int IntrusionDetect::setRegion(const cvai_pts_t &pts) {
     }
     auto new_region = std::make_shared<ConvexPolygon>();
     if (!new_region->set_vertices(new_sub_pts)) {
-      printf("[ERROR] ConvexPartition_HM failed (2).\n");
-      for (uint32_t t = 0; t < new_sub_pts.size; t++) {
-        printf("[%u] (%.1f, %.1f)\n", t, new_sub_pts.x[t], new_sub_pts.y[t]);
-      }
-      return CVI_FAILURE;
+      LOGE("ConvexPartition_HM Bug (2).\n");
+      return CVIAI_FAILURE;
     }
     regions.push_back(new_region);
     CVI_AI_FreeCpp(&new_sub_pts);
@@ -304,6 +301,7 @@ bool IntrusionDetect::Triangulate_EC(const cvai_pts_t &pts,
       }
     }
     if (ear_idx == -1) {
+      LOGE("EAR index not found.");
       return false;
     }
     triangle_idxes.push_back(std::vector<int>({ear_p, ear_i, ear_q}));
@@ -311,7 +309,7 @@ bool IntrusionDetect::Triangulate_EC(const cvai_pts_t &pts,
   }
 
   if (active_idxes.size() != 3) {
-    printf("[ERROR] Triangulate_EC bug.\n");
+    LOGE("final active index size != 3.");
     return false;
   }
   triangle_idxes.push_back(
@@ -324,7 +322,7 @@ bool IntrusionDetect::ConvexPartition_HM(const cvai_pts_t &pts,
                                          std::vector<std::vector<int>> &convex_idxes) {
   std::vector<std::vector<int>> triangle_idxes;
   if (!Triangulate_EC(pts, triangle_idxes)) {
-    printf("Triangulate_EC bug\n");
+    LOGE("Triangulate_EC Bug");
     return false;
   }
   bool *valid_triangle = new bool[triangle_idxes.size()];

@@ -387,7 +387,6 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
     const BBOX &bbox_ = BBoxes[bbox_idx];
     const FEATURE &feature_ = Features[bbox_idx];
     // LOGI("new >> tracker idx: %d", new_id);
-    // KalmanTracker tracker_(new_id, bbox_, feature_);
     KalmanTracker tracker_(new_id, class_id, bbox_, feature_, conf->ktracker_conf);
     k_trackers.push_back(tracker_);
     result_[bbox_idx] =
@@ -426,32 +425,25 @@ MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<F
   COST_MATRIX cost_matrix;
   if (cost_method == "Kalman_MahalanobisDistance") {
     LOGD("Kalman Cost Matrix (Mahalanobis Distance)");
-    // std::cout << "Kalman Cost Matrix (Mahalanobis Distance)" << std::endl;
     cost_matrix = KalmanTracker::getCostMatrix_Mahalanobis(kf_, k_trackers, BBoxes, Tracker_IDXes,
                                                            BBox_IDXes, kf_conf, max_distance);
-    // std::cout << cost_matrix << std::endl;
   } else if (cost_method == "Feature_CosineDistance") {
     cost_matrix = KalmanTracker::getCostMatrix_Feature(k_trackers, BBoxes, Features, Tracker_IDXes,
                                                        BBox_IDXes);
     LOGD("Feature Cost Matrix (Consine Distance)");
-    // std::cout << "Cost Matrix (before Munkres)" << std::endl;
-    // std::cout << cost_matrix << std::endl;
     KalmanTracker::gateCostMatrix_Mahalanobis(cost_matrix, kf_, k_trackers, BBoxes, Tracker_IDXes,
                                               BBox_IDXes, kf_conf, max_distance);
 
-    // gate_cost_matrix(cost_matrix, max_distance);
   } else if (cost_method == "BBox_IoUDistance") {
-    // std::cout << "BBox Cost Matrix (IoU Distance)" << std::endl;
     cost_matrix =
         KalmanTracker::getCostMatrix_BBox(k_trackers, BBoxes, Features, Tracker_IDXes, BBox_IDXes);
     gate_cost_matrix(cost_matrix, max_distance);
-    // std::cout << cost_matrix << std::endl;
   } else {
-    std::cout << "Cost Method: " << cost_method << " not support." << std::endl;
     assert(0);
   }
   CVIMunkres cvi_munkres_solver(&cost_matrix);
   if (cvi_munkres_solver.solve() == MUNKRES_FAILURE) {
+    LOGW("MUNKRES algorithm failed.");
     // return empty results if failed to solve
     result_.unmatched_tracker_idxes.clear();
     result_.unmatched_bbox_idxes.clear();
@@ -528,6 +520,7 @@ void DeepSORT::cleanCounter() {
 }
 
 void DeepSORT::setConfig(cvai_deepsort_config_t ds_conf, int cviai_obj_type, bool show_config) {
+  printf("set DeepSORT config[%d]:\n", cviai_obj_type);
   if (cviai_obj_type == -1) {
     memcpy(&default_conf, &ds_conf, sizeof(cvai_deepsort_config_t));
   } else {
