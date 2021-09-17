@@ -25,8 +25,8 @@ typedef struct {
 void DrawRect(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float y1, float y2, const char *name,
               color_rgb color, int rect_thinkness, const bool draw_text);
 
-void _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_rgb color,
-                int thinkness);
+int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_rgb color,
+               int thinkness);
 
 int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, float g, float b);
 

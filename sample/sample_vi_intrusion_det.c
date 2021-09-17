@@ -15,8 +15,6 @@
 
 static volatile bool bExit = false;
 
-#define BBOX_SCALE (float)720. / 1080.
-
 typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
 typedef struct _ModelConfig {
   CVI_AI_SUPPORTED_MODEL_E model_id;
@@ -192,10 +190,12 @@ int main(int argc, char *argv[]) {
 
     // Send frame to VO if opened.
     if (voType) {
+      printf("Frame [%u]\n", frame_counter);
       s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp,
                                     vs_ctx.vpssConfigs.vpssChnVideoOutput, &stVOFrame, 1000);
-      printf("Frame [%u] (%u,%u)\n", frame_counter, stVOFrame.stVFrame.u32Height,
-             stVOFrame.stVFrame.u32Width);
+      float x_scale = (float)stVOFrame.stVFrame.u32Width / obj_meta.width;
+      float y_scale = (float)stVOFrame.stVFrame.u32Height / obj_meta.height;
+
       if (s32Ret != CVI_SUCCESS) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
@@ -209,16 +209,15 @@ int main(int argc, char *argv[]) {
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         bool is_intrusion;
         cvai_bbox_t t_bbox = obj_meta.info[i].bbox;
-        t_bbox.x1 *= BBOX_SCALE;
-        t_bbox.y1 *= BBOX_SCALE;
-        t_bbox.x2 *= BBOX_SCALE;
-        t_bbox.y2 *= BBOX_SCALE;
+        t_bbox.x1 *= x_scale;
+        t_bbox.y1 *= y_scale;
+        t_bbox.x2 *= x_scale;
+        t_bbox.y2 *= y_scale;
         CVI_AI_Service_Polygon_Intersect(service_handle, &t_bbox, &is_intrusion);
         if (is_intrusion) {
-          printf("[%u] intrusion! (%.1f,%.1f,%.1f,%.1f)\n", i, obj_meta.info[i].bbox.x1,
-                 obj_meta.info[i].bbox.y1, obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
-          CVI_AI_Service_ObjectWriteText("Intrusion", obj_meta.info[i].bbox.x1,
-                                         obj_meta.info[i].bbox.y1, &stVOFrame, 255, 0, 0);
+          printf("[%u] intrusion! (%.1f,%.1f,%.1f,%.1f)\n", i, t_bbox.x1, t_bbox.y1, t_bbox.x2,
+                 t_bbox.y2);
+          CVI_AI_Service_ObjectWriteText("Intrusion", t_bbox.x1, t_bbox.y1, &stVOFrame, 1, 0, 0);
         }
       }
       s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);

@@ -98,8 +98,13 @@ void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int r
 }
 
 // TODO: Need refactor
-void _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_rgb color,
-                int thickness) {
+int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_rgb color,
+               int thickness) {
+  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
+    LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawPolygon\n");
+    return CVIAI_FAILURE;
+  }
   std::string name_str = name;
   int width = frame->stVFrame.u32Width;
   int height = frame->stVFrame.u32Height;
@@ -119,37 +124,73 @@ void _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color
   vir_addr = CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
   CVI_U32 plane_offset = 0;
 
-  for (int i = PLANE_Y; i < PLANE_NUM; i++) {
-    frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
-    plane_offset += frame->stVFrame.u32Length[i];
+  if (frame->stVFrame.enPixelFormat == PIXEL_FORMAT_YUV_PLANAR_420) {
+    // 0: Y-plane, 1: U-plane, 2: V-plane
+    for (int i = PLANE_Y; i < PLANE_NUM; i++) {
+      frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
+      plane_offset += frame->stVFrame.u32Length[i];
 
-    char draw_color;
-    if (i == PLANE_Y) {
-      draw_color = color_y;
-    } else if (i == PLANE_U) {
-      draw_color = color_u;
-    } else {
-      draw_color = color_v;
-    }
+      char draw_color;
+      if (i == PLANE_Y) {
+        draw_color = color_y;
+      } else if (i == PLANE_U) {
+        draw_color = color_u;
+      } else {
+        draw_color = color_v;
+      }
 
-    cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
-    cv::Point cv_point = cv::Point(x, y - 2);
-    double font_scale = 1;
-    if (i != 0) {
-      cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
-      cv_point = cv::Point(x / 2, (y - 2) / 2);
-      font_scale /= 2;
-      // FIXME: Should div but don't know why it's not correct.
-      // thickness /= 2;
+      cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
+      cv::Point cv_point = cv::Point(x, y - 2);
+      double font_scale = 1;
+      if (i != 0) {
+        cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
+        cv_point = cv::Point(x / 2, (y - 2) / 2);
+        font_scale /= 2;
+        // FIXME: Should div but don't know why it's not correct.
+        // thickness /= 2;
+      }
+      // FIXME: Color incorrect.
+      cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
+      cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_COMPLEX_SMALL, font_scale,
+                  cv::Scalar(draw_color), thickness, cv::LINE_AA);
+      frame->stVFrame.pu8VirAddr[i] = NULL;
     }
-    // FIXME: Color incorrect.
-    cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
-    cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_COMPLEX_SMALL, font_scale,
-                cv::Scalar(draw_color), thickness, cv::LINE_AA);
-    frame->stVFrame.pu8VirAddr[i] = NULL;
+  } else { /* PIXEL_FORMAT_NV21 */
+    // 0: Y-plane, 1: VU-plane
+    for (int i = 0; i < 2; i++) {
+      frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
+      plane_offset += frame->stVFrame.u32Length[i];
+
+      cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
+      cv::Point cv_point = cv::Point(x, y - 2);
+      double font_scale = 2;
+      int text_thickness = max(thickness, 2);
+      if (i != 0) {
+        cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
+        cv_point = cv::Point(x / 2, (y - 2) / 2);
+        font_scale /= 2;
+        text_thickness /= 2;
+      }
+
+      if (i == 0) {
+        cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i],
+                      frame->stVFrame.u32Stride[i]);
+        cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_SIMPLEX, font_scale,
+                    cv::Scalar(static_cast<uint8_t>(color_y)), text_thickness, 8);
+      } else {
+        cv::Mat image(cv_size, CV_8UC2, frame->stVFrame.pu8VirAddr[i],
+                      frame->stVFrame.u32Stride[i]);
+        cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_SIMPLEX, font_scale,
+                    cv::Scalar(static_cast<uint8_t>(color_v), static_cast<uint8_t>(color_u)),
+                    text_thickness, 8);
+      }
+      frame->stVFrame.pu8VirAddr[i] = NULL;
+    }
   }
   CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
   CVI_SYS_Munmap(vir_addr, image_size);
+
+  return CVIAI_SUCCESS;
 }
 
 typedef enum {
@@ -459,8 +500,7 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, 
     rgb_color.b = DEFAULT_RECT_COLOR_B;
   else
     rgb_color.b = b;
-  _WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THICKNESS);
-  return CVIAI_SUCCESS;
+  return _WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THICKNESS);
 }
 
 template <typename T>
