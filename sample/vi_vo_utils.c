@@ -493,6 +493,7 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
 
 static void _initInputCfg(chnInputCfg *ipIc) {
   strcpy(ipIc->codec, "h264");
+  ipIc->initialDelay = CVI_INITIAL_DELAY_DEFAULT;
   ipIc->width = 3840;
   ipIc->height = 2160;
   ipIc->vpssGrp = 1;
