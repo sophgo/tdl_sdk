@@ -35,6 +35,7 @@ class IntrusionDetect {
   ~IntrusionDetect();
   int setRegion(const cvai_pts_t &pts);
   void getRegion(cvai_pts_t ***region_info, uint32_t *size);
+  void clean();
   bool run(const cvai_bbox_t &bbox);
   void show();
 

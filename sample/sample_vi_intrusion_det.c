@@ -149,6 +149,7 @@ int main(int argc, char *argv[]) {
   memcpy(test_region_2.y, r2[1], sizeof(float) * test_region_2.size);
 
   CVI_AI_Service_Polygon_SetTarget(service_handle, &test_region_0);
+  // CVI_AI_Service_Polygon_CleanAll(service_handle);
   CVI_AI_Service_Polygon_SetTarget(service_handle, &test_region_1);
   CVI_AI_Service_Polygon_SetTarget(service_handle, &test_region_2);
 

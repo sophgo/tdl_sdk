@@ -325,6 +325,15 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_GetTarget(cviai_service_handle_t handl
                                                     cvai_pts_t ***regions_pts, uint32_t *size);
 
 /**
+ * @brief Clean all of the convex polygons.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_CleanAll(cviai_service_handle_t handle);
+
+/**
  * @brief Check if a convex polygon intersected with target convex polygon.
  * @ingroup core_cviaiservice
  *

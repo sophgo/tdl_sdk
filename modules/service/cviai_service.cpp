@@ -320,6 +320,16 @@ CVI_S32 CVI_AI_Service_Polygon_GetTarget(cviai_service_handle_t handle, cvai_pts
   return CVIAI_SUCCESS;
 }
 
+CVI_S32 CVI_AI_Service_Polygon_CleanAll(cviai_service_handle_t handle) {
+  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_intrusion_det == nullptr) {
+    LOGE("Please set intersect area first.\n");
+    return CVIAI_FAILURE;
+  }
+  ctx->m_intrusion_det->clean();
+  return CVIAI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle, const cvai_bbox_t *bbox,
                                          bool *has_intersect) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);

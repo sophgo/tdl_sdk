@@ -163,6 +163,8 @@ void IntrusionDetect::getRegion(cvai_pts_t ***region_info, uint32_t *size) {
   }
 }
 
+void IntrusionDetect::clean() { this->regions.clear(); }
+
 bool IntrusionDetect::run(const cvai_bbox_t &bbox) {
   // printf("[RUN] BBox: (%.1f,%.1f,%.1f,%.1f)\n", bbox.x1, bbox.y1, bbox.x2, bbox.y2);
   /* transfer coordinate system from Image to Euclidean */
