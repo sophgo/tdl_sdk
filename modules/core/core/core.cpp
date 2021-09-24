@@ -92,23 +92,20 @@ int Core::modelOpen(const char *filepath) {
     }
     VPSSConfig vcfg;
     int32_t width, height;
-    PIXEL_FORMAT_E format;
     // FIXME: Future support for nhwc input. Currently disabled.
     if (false) {
       width = input->shape.dim[2];
       height = input->shape.dim[1];
-      format = PIXEL_FORMAT_RGB_888;
       vcfg.frame_type = CVI_FRAME_PACKAGE;
     } else {
       width = input->shape.dim[3];
       height = input->shape.dim[2];
-      format = PIXEL_FORMAT_RGB_888_PLANAR;
       vcfg.frame_type = CVI_FRAME_PLANAR;
     }
     vcfg.rescale_type = data[i].rescale_type;
     vcfg.crop_attr.bEnable = data[i].use_crop;
 
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, format, data[i].factor, data[i].mean,
+    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, data[i].format, data[i].factor, data[i].mean,
                        data[i].pad_reverse);
     if (!data[i].keep_aspect_ratio) {
       vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
@@ -400,6 +397,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
     T frame = frames[i];
     switch (frame->stVFrame.enPixelFormat) {
       case PIXEL_FORMAT_RGB_888_PLANAR:
+      case PIXEL_FORMAT_BGR_888_PLANAR:
         paddrs.push_back(frame->stVFrame.u64PhyAddr[0]);
         paddrs.push_back(frame->stVFrame.u64PhyAddr[1]);
         paddrs.push_back(frame->stVFrame.u64PhyAddr[2]);

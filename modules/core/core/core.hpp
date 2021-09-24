@@ -62,6 +62,7 @@ struct InputPreprecessSetup {
   bool use_quantize_scale = false;
   bool use_crop = false;
   VPSS_SCALE_COEF_E resize_method = VPSS_SCALE_COEF_BICUBIC;
+  PIXEL_FORMAT_E format = PIXEL_FORMAT_RGB_888_PLANAR;
 };
 
 struct VPSSConfig {
