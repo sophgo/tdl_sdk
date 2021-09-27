@@ -169,6 +169,8 @@ typedef struct {
  *  The age.
  *  @var cvai_face_info_t::liveness_score
  *  The liveness score.
+ *  @var cvai_face_info_t::hardhat_score
+ *  The hardhat score.
  *  @var cvai_face_info_t::mask_score
  *  The mask score.
  *  @var cvai_face_info_t::face_quality
@@ -190,6 +192,7 @@ typedef struct {
   cvai_face_race_e race;
   float age;
   float liveness_score;
+  float hardhat_score;
   float mask_score;
   float face_quality;
   cvai_head_pose_t head_pose;

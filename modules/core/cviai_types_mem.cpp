@@ -140,6 +140,7 @@ void CVI_AI_CopyInfoCpp(const cvai_face_info_t *info, cvai_face_info_t *infoNew)
   infoNew->race = info->race;
   infoNew->age = info->age;
   infoNew->liveness_score = info->liveness_score;
+  infoNew->hardhat_score = info->hardhat_score;
   infoNew->mask_score = info->mask_score;
   infoNew->face_quality = info->face_quality;
 }

@@ -61,6 +61,7 @@ inline void CVI_AI_MemAllocInit(const uint32_t size, const uint32_t pts_num, cva
     meta->info[i].age = -1;
     meta->info[i].liveness_score = -1;
     meta->info[i].mask_score = -1;
+    meta->info[i].hardhat_score = -1;
     meta->info[i].face_quality = 0;
     meta->info[i].head_pose.yaw = 0;
     meta->info[i].head_pose.pitch = 0;

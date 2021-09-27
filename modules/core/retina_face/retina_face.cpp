@@ -33,6 +33,9 @@ int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
       (*data)[0].mean[i] = mean[i];
     }
   }
+  if (this->process == PYTORCH) {
+    (*data)[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
+  }
   (*data)[0].use_quantize_scale = true;
   return CVIAI_SUCCESS;
 }
@@ -101,13 +104,14 @@ int RetinaFace::onModelOpened() {
   }
 
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
-    std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
-    std::string landmark_str = NAME_LANDMARK + key;
-    CVI_SHAPE landmark_shape = getOutputShape(landmark_str.c_str());
     int stride = m_feat_stride_fpn[i];
 
-    m_anchors[landmark_str] =
-        anchors_plane(landmark_shape.dim[2], landmark_shape.dim[3], stride, anchors_fpn_map[key]);
+    std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
+    std::string bbox_str = NAME_BBOX + key;
+    CVI_SHAPE bbox_shape = getOutputShape(bbox_str.c_str());
+
+    m_anchors[bbox_str] =
+        anchors_plane(bbox_shape.dim[2], bbox_shape.dim[3], stride, anchors_fpn_map[key]);
   }
   return CVIAI_SUCCESS;
 }
@@ -142,27 +146,53 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
       CVI_SHAPE score_shape = getOutputShape(score_str.c_str());
       size_t score_size = score_shape.dim[1] * score_shape.dim[2] * score_shape.dim[3];
       float *score_blob = getOutputRawPtr<float>(score_str.c_str()) + (b * score_size);
-      score_blob += score_size / 2;
+
+      bool add_hardhat_score = (score_shape.dim[1] == 6);
+      float *hardhat_score_blob = 0;
+      float *nohardhat_score_blob = 0;
+
+      if (add_hardhat_score) {
+        // let score as non face, face conf would be 1 - score
+        // score_blob = score_blob;
+        hardhat_score_blob = score_blob + score_size / 3 * 2;
+        nohardhat_score_blob = score_blob + score_size / 3;
+      } else {
+        score_blob += score_size / 2;
+      }
 
       std::string bbox_str = NAME_BBOX + key;
       CVI_SHAPE blob_shape = getOutputShape(bbox_str.c_str());
       size_t blob_size = blob_shape.dim[1] * blob_shape.dim[2] * blob_shape.dim[3];
       float *bbox_blob = getOutputRawPtr<float>(bbox_str.c_str()) + (b * blob_size);
 
-      std::string landmark_str = NAME_LANDMARK + key;
-      CVI_SHAPE landmark_shape = getOutputShape(landmark_str.c_str());
-      size_t landmark_size = landmark_shape.dim[1] * landmark_shape.dim[2] * landmark_shape.dim[3];
-      float *landmark_blob = getOutputRawPtr<float>(landmark_str.c_str()) + (b * landmark_size);
-      ;
-      int width = landmark_shape.dim[3];
-      int height = landmark_shape.dim[2];
+      size_t output_number = getNumOutputTensor();
+      bool add_landmark_process = (output_number == 9);
+
+      float *landmark_blob = 0;
+      if (add_landmark_process) {
+        std::string landmark_str = NAME_LANDMARK + key;
+        CVI_SHAPE landmark_shape = getOutputShape(landmark_str.c_str());
+        size_t landmark_size =
+            landmark_shape.dim[1] * landmark_shape.dim[2] * landmark_shape.dim[3];
+        landmark_blob = getOutputRawPtr<float>(landmark_str.c_str()) + (b * landmark_size);
+      };
+      int width = blob_shape.dim[3];
+      int height = blob_shape.dim[2];
       size_t count = width * height;
       size_t num_anchor = m_num_anchors[key];
 
-      std::vector<anchor_box> anchors = m_anchors[landmark_str];
+      std::vector<anchor_box> anchors = m_anchors[bbox_str];
       for (size_t num = 0; num < num_anchor; num++) {
         for (size_t j = 0; j < count; j++) {
-          float conf = score_blob[j + count * num];
+          float conf = -1;
+          float hardhat_score = -1;
+          if (add_hardhat_score) {
+            hardhat_score = hardhat_score_blob[j + count * num];
+            conf = hardhat_score + nohardhat_score_blob[j + count * num];
+            conf = std::min(float(conf), float(1));
+          } else {
+            conf = score_blob[j + count * num];
+          }
           if (conf <= m_model_threshold) {
             continue;
           }
@@ -172,6 +202,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
           box.pts.x = (float *)malloc(sizeof(float) * box.pts.size);
           box.pts.y = (float *)malloc(sizeof(float) * box.pts.size);
           box.bbox.score = conf;
+          box.hardhat_score = hardhat_score;
 
           cv::Vec4f regress;
           float dx = bbox_blob[j + count * (0 + num * 4)];
@@ -181,11 +212,13 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
           regress = cv::Vec4f(dx, dy, dw, dh);
           bbox_pred(anchors[j + count * num], regress, box.bbox, this->process);
 
-          for (size_t k = 0; k < box.pts.size; k++) {
-            box.pts.x[k] = landmark_blob[j + count * (num * 10 + k * 2)];
-            box.pts.y[k] = landmark_blob[j + count * (num * 10 + k * 2 + 1)];
+          if (add_landmark_process) {
+            for (size_t k = 0; k < box.pts.size; k++) {
+              box.pts.x[k] = landmark_blob[j + count * (num * 10 + k * 2)];
+              box.pts.y[k] = landmark_blob[j + count * (num * 10 + k * 2 + 1)];
+            }
+            landmark_pred(anchors[j + count * num], box.pts);
           }
-          landmark_pred(anchors[j + count * num], box.pts);
           vec_bbox.push_back(box);
         }
       }
@@ -211,6 +244,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
         facemeta->info[i].bbox.y1 = vec_bbox_nms[i].bbox.y1;
         facemeta->info[i].bbox.y2 = vec_bbox_nms[i].bbox.y2;
         facemeta->info[i].bbox.score = vec_bbox_nms[i].bbox.score;
+        facemeta->info[i].hardhat_score = vec_bbox_nms[i].hardhat_score;
 
         for (int j = 0; j < FACE_POINTS_SIZE; ++j) {
           facemeta->info[i].pts.x[j] = vec_bbox_nms[i].pts.x[j];
@@ -231,6 +265,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
         facemeta->info[i].bbox.y1 = info.bbox.y1;
         facemeta->info[i].bbox.y2 = info.bbox.y2;
         facemeta->info[i].bbox.score = info.bbox.score;
+        facemeta->info[i].hardhat_score = info.hardhat_score;
         for (int j = 0; j < FACE_POINTS_SIZE; ++j) {
           facemeta->info[i].pts.x[j] = info.pts.x[j];
           facemeta->info[i].pts.y[j] = info.pts.y[j];

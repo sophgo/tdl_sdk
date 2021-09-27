@@ -111,6 +111,7 @@ typedef void *cviai_handle_t;
 #define CVI_AI_MODEL_LIST \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_RETINAFACE)                       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_RETINAFACE_IR)                    \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_RETINAFACE_HARDHAT)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_THERMALFACE)                      \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE)                    \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION)                  \
@@ -386,6 +387,16 @@ DLL_EXPORT CVI_S32 CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_IN
  */
 DLL_EXPORT CVI_S32 CVI_AI_RetinaFace_IR(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                         cvai_face_t *faces);
+/**
+ * @brief RetinaFace hardhat face detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param faces Output detect result. The name, bbox, and face points will be given.
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_RetinaFace_Hardhat(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                             cvai_face_t *faces);
 
 /**
  * @brief Detect face with thermal images.
