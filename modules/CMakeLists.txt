@@ -15,6 +15,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
 add_subdirectory(cviai_trace) # Perfetto tracer comes first
 add_subdirectory(core)
 add_subdirectory(service)
+add_subdirectory(app)
 add_subdirectory(evaluation)
 
 # Temporarily don't install custom module until complete.
