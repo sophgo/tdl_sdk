@@ -6,6 +6,12 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_utils.hpp"
+
+// include core_c.h if opencv version greater than 4.5
+#if CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR >= 5
+#include "opencv2/core/core_c.h"
+#endif
+
 #include "opencv2/opencv.hpp"
 
 #define SCALE_R (1.0 / (255.0 * 0.229))

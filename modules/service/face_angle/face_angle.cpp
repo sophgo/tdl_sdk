@@ -2,6 +2,10 @@
 #include <cvi_sys.h>
 #include <cmath>
 #include "core/core/cvai_errno.h"
+// include core_c.h if opencv version greater than 4.5
+#if CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR >= 5
+#include "opencv2/core/core_c.h"
+#endif
 
 #define PI 3.14159265358979f
 
