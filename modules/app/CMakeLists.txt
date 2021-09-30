@@ -1,6 +1,6 @@
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC" )
 add_subdirectory(face_capture)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC" )
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils)

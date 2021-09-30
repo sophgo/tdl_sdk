@@ -11,6 +11,7 @@
 
 typedef struct {
   cviai_handle_t ai_handle;
+  IVE_HANDLE ive_handle;
   face_capture_t *face_cpt_info;
   // face_management_t *face_mng_info;  // TODO: this function
 } cviai_app_context_t;
@@ -29,7 +30,8 @@ typedef cviai_app_context_t *cviai_app_handle_t;
  * @param ai_handle A cviai handle.
  * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_handle_t ai_handle);
+DLL_EXPORT CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_handle_t ai_handle,
+                                           IVE_HANDLE ive_handle);
 
 /**
  * @brief Destroy a cviai_app_handle_t.
@@ -41,8 +43,16 @@ DLL_EXPORT CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_han
 DLL_EXPORT CVI_S32 CVI_AI_APP_DestroyHandle(cviai_app_handle_t handle);
 
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Init(const cviai_app_handle_t handle);
+DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_QuickSetUp(const cviai_app_handle_t handle,
+                                                     const char *fd_model_path,
+                                                     const char *fr_model_path,
+                                                     const char *fq_model_path);
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Run(const cviai_app_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame);
+
+DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_SetMode(const cviai_app_handle_t handle,
+                                                  capture_mode_e mode);
+DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_CleanAll(const cviai_app_handle_t handle);
 
 // DLL_EXPORT CVI_S32 CVI_AI_APP_FaceManagement_Init(const cviai_app_handle_t handle);
 // DLL_EXPORT CVI_S32 CVI_AI_APP_FaceManagement_Run(const cviai_app_handle_t handle,
