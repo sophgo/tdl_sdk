@@ -6,7 +6,7 @@
 // #include "face/cvai_face_types.h"
 #include "app/face_capture/face_capture_type.h"
 
-CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info);
+CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle);
 
 CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info);
 

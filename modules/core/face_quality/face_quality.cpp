@@ -192,6 +192,10 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
 int FaceQuality::getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                                 cvai_face_info_t *face_info) {
+  if (srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
+    LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
+    return CVIAI_ERR_INVALID_ARGS;
+  }
   cvai_face_info_t face_info_rescale =
       info_rescale_c(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                      srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height, *face_info);

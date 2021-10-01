@@ -101,6 +101,9 @@ int main(int argc, char *argv[]) {
     printf("ALIVE face num = %d\n", trk_num);
 
     CVI_AI_APP_FaceCapture_Run(app_handle, &stfdFrame);
+
+    write_miss_faces(app_handle->face_cpt_info, ive_handle);
+
     cvai_face_t face_meta_0;
     memset(&face_meta_0, 0, sizeof(cvai_face_t));
     cvai_face_t face_meta_1;
@@ -245,9 +248,10 @@ void write_miss_faces(face_capture_t *face_cpt_info, IVE_HANDLE ive_handle) {
     if (face_cpt_info->data[i].state != MISS) {
       continue;
     }
+    printf("Write MISS Face[%u]\n", i);
     char *filename = calloc(32, sizeof(char));
     face_counter += 1;
-    sprintf(filename, "face_%04u.png", face_counter);
+    sprintf(filename, "face_%" PRIu64 "_out.png", face_cpt_info->data[i].info.unique_id);
     printf("Write Face to: %s\n", filename);
     CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[i].face_image);
   }

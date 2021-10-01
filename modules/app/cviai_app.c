@@ -21,7 +21,7 @@ CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_handle_t ai_ha
 
 CVI_S32 CVI_AI_APP_DestroyHandle(cviai_app_handle_t handle) {
   cviai_app_context_t *ctx = handle;
-  _FaceCapture_Free(ctx->face_cpt_info);
+  _FaceCapture_Free(ctx->face_cpt_info, ctx->ive_handle);
   ctx->face_cpt_info = NULL;
   return CVIAI_SUCCESS;
 }
