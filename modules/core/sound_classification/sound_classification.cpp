@@ -11,7 +11,7 @@ namespace cviai {
 
 SoundClassification::SoundClassification() : Core(CVI_MEM_SYSTEM) {
   int insert_cnt = 0;
-  int pi = 3.14159265358979323846;
+  float pi = 3.14159265358979323846;
   // Calculate 3 different stft hannwindow
   for (int i = 0; i < Channel; ++i) {
     hannWindow[i] = cv::Mat(1, N_FFT, CV_32F, 0.0f);
