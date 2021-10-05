@@ -23,6 +23,14 @@ FetchContent_MakeAvailable(libeigen)
 include_directories(${libeigen_SOURCE_DIR}/include/eigen3)
 message("Content downloaded to ${libeigen_SOURCE_DIR}")
 
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY http://10.58.65.3:8480/jiaji.huang/googletest.git
+  GIT_TAG  e2239ee6043f73722e7aa812a459f54a28552929 # release-1.11.0
+)
+FetchContent_MakeAvailable(googletest)
+include_directories(${googletest_SOURCE_DIR}/googletest/include/gtest)
+message("Content downloaded to ${googletest_SOURCE_DIR}")
 
 include(FetchContent)
 FetchContent_Declare(

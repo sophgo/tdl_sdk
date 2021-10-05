@@ -77,9 +77,29 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
 )
 
+set(UnitTests
+  reg_daily_fq
+  reg_daily_mobiledet
+  reg_daily_fr
+  reg_daily_mask_classification
+  reg_daily_core
+  reg_daily_feature_matching
+)
+
+set(UnitTest_SRCS
+  cviai_test
+  raii
+  regression_utils
+  ${UnitTests}
+)
+
 if("${CVI_PLATFORM}" STREQUAL "CV182X")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/log
+)
 
 buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
@@ -99,7 +119,6 @@ buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai_core cviai_eval
 buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_feature_matching INC ${REG_INCLUDES} DEPS cviai_core DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_service cviai_evaluation ${SAMPLE_LIBS})
@@ -107,15 +126,15 @@ buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core c
 buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_service cviai_evaluation ${SAMPLE_LIBS})
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_fq INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cviai_core cviai_service cviai_evaluation gtest_main ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_thermal_fd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_reid INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_td INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_lpd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_lpr INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_mot INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_mask_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_fr INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+# buildninstallcpp(NAME reg_daily_mask_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
+# buildninstallcpp(NAME reg_daily_fr INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_fl INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
@@ -128,7 +147,7 @@ buildninstallcpp(NAME reg_daily_liveness INC ${REG_INCLUDES} DEPS cviai_core cvi
 buildninstallcpp(NAME reg_daily_retinaface INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_retinafaceIR INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_retinaface_hardhat INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_mobiledet INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 
 install(DIRECTORY assets DESTINATION regression)
+install(FILES "daily_regression.sh" PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ DESTINATION regression)
