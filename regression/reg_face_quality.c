@@ -40,7 +40,8 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
     memset(&face, 0, sizeof(cvai_face_t));
     CVI_AI_RetinaFace(facelib_handle, &frFrame, &face);
     if (face.size > 0) {
-      CVI_AI_FaceQuality(facelib_handle, &frFrame, &face);
+      CVI_AI_Service_FaceAngleForAll(&face);
+      CVI_AI_FaceQuality(facelib_handle, &frFrame, &face, NULL);
     }
 
     if (face.size == 0 || face.info[0].face_quality < 0.5 ||

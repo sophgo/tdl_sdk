@@ -323,7 +323,8 @@ int main(int argc, char *argv[]) {
     }
     printf("Found %x faces.\n", face_meta.size);
     CVI_AI_FaceRecognition(ai_handle, &frame, &face_meta);
-    CVI_AI_FaceQuality(ai_handle, &frame, &face_meta);
+    CVI_AI_Service_FaceAngleForAll(&face_meta);
+    CVI_AI_FaceQuality(ai_handle, &frame, &face_meta, NULL);
     for (uint32_t j = 0; j < face_meta.size; j++) {
       printf("face[%u] quality: %f\n", j, face_meta.info[j].face_quality);
     }

@@ -578,8 +578,8 @@ DEFINE_INF_FUNC_F1_P2(CVI_AI_FaceRecognitionOne, FaceAttribute,
                       CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, cvai_face_t *, int)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskFaceRecognition, MaskFaceRecognition,
                       CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, cvai_face_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceQuality, FaceQuality, CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
-                      cvai_face_t *)
+DEFINE_INF_FUNC_F1_P2(CVI_AI_FaceQuality, FaceQuality, CVI_AI_SUPPORTED_MODEL_FACEQUALITY,
+                      cvai_face_t *, bool *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskClassification, MaskClassification,
                       CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, cvai_face_t *)
 

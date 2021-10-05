@@ -92,8 +92,9 @@ int main(int argc, char *argv[]) {
     face_meta.info[0].feature.size = 0;
     face_meta.info[0].feature.ptr = NULL;
 
-    CVI_AI_FaceQuality(ai_handle, &frame, &face_meta);
-    // printf("face quality: %f\n", face_meta.info[0].face_quality);
+    CVI_AI_Service_FaceAngleForAll(&face_meta);
+    CVI_AI_FaceQuality(ai_handle, &frame, &face_meta, NULL);
+    // printf("face quality: %f (expected: %d)\n", face_meta.info[0].face_quality, expected_res);
     if (expected_res == 0) {
       pass &= face_meta.info[0].face_quality < neg_threshold;
     } else {

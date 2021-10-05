@@ -24,78 +24,6 @@
 
 namespace cviai {
 
-static float saturate(const float &val, const float &minVal, const float &maxVal) {
-  return std::min(std::max(val, minVal), maxVal);
-}
-
-static float cal_distance(const cv::Point &p1, const cv::Point &p2) {
-  float x = p1.x - p2.x;
-  float y = p1.y - p2.y;
-  return sqrtf(x * x + y * y);
-}
-
-static float cal_angle(const cv::Point &pt1, const cv::Point &pt2) {
-  return 360 - cvFastArctan(pt2.y - pt1.y, pt2.x - pt1.x);
-}
-
-static float cal_slant(int ln, int lf, const float Rn, float theta) {
-  float dz = 0;
-  float slant = 0;
-  const float m1 = ((float)ln * ln) / ((float)lf * lf);
-  const float m2 = (std::cos(theta)) * (std::cos(theta));
-  const float Rn_sq = Rn * Rn;
-
-  if (m2 == 1) {
-    dz = std::sqrt(Rn_sq / (m1 + Rn_sq));
-  }
-  if (m2 >= 0 && m2 < 1) {
-    dz = std::sqrt((Rn_sq - m1 - 2 * m2 * Rn_sq +
-                    std::sqrt(((m1 - Rn_sq) * (m1 - Rn_sq)) + 4 * m1 * m2 * Rn_sq)) /
-                   (2 * (1 - m2) * Rn_sq));
-  }
-  slant = std::acos(dz);
-  return slant;
-}
-
-static int get_face_direction(cvai_pts_t pts, float &roll, float &pitch, float &yaw) {
-  cv::Point leye = cv::Point(pts.x[0], pts.y[0]);
-  cv::Point reye = cv::Point(pts.x[1], pts.y[1]);
-  cv::Point noseTip = cv::Point(pts.x[2], pts.y[2]);
-  cv::Point lmouth = cv::Point(pts.x[3], pts.y[3]);
-  cv::Point rmouth = cv::Point(pts.x[4], pts.y[4]);
-  cv::Point midEye = cv::Point((leye.x + reye.x) * 0.5, (leye.y + reye.y) * 0.5);
-  cv::Point midMouth = cv::Point((lmouth.x + rmouth.x) * 0.5, (lmouth.y + rmouth.y) * 0.5);
-  cv::Point noseBase = cv::Point((midMouth.x + midEye.x) * 0.5, (midMouth.y + midEye.y) * 0.5);
-
-  float noseBase_noseTip_distance = cal_distance(noseTip, noseBase);
-  float midEye_midMouth_distance = cal_distance(midEye, midMouth);
-  float symm = cal_angle(noseBase, midEye);
-  float tilt = cal_angle(noseBase, noseTip);
-  float theta = (std::abs(tilt - symm)) * (PI / 180.0);
-  float slant = cal_slant(noseBase_noseTip_distance, midEye_midMouth_distance, 0.5, theta);
-
-  CvPoint3D32f normal;
-  normal.x = std::sin(slant) * (std::cos((360 - tilt) * (PI / 180.0)));
-  normal.y = std::sin(slant) * (std::sin((360 - tilt) * (PI / 180.0)));
-  normal.z = -std::cos(slant);
-
-  yaw = std::acos((std::abs(normal.z)) / (std::sqrt(normal.x * normal.x + normal.z * normal.z)));
-  if (noseTip.x < noseBase.x) yaw = -yaw;
-  yaw = saturate(yaw, -1.f, 1.f);
-
-  pitch = std::acos(std::sqrt((normal.x * normal.x + normal.z * normal.z) /
-                              (normal.x * normal.x + normal.y * normal.y + normal.z * normal.z)));
-  if (noseTip.y > noseBase.y) pitch = -pitch;
-  pitch = saturate(pitch, -1.f, 1.f);
-
-  roll = cal_angle(leye, reye);
-  if (roll > 180) roll = roll - 360;
-  roll /= 90;
-  roll = saturate(roll, -1.f, 1.f);
-
-  return 0;
-}
-
 FaceQuality::FaceQuality() : Core(CVI_MEM_DEVICE) {}
 
 FaceQuality::~FaceQuality() {
@@ -135,7 +63,7 @@ int FaceQuality::onModelOpened() {
   return CVIAI_SUCCESS;
 }
 
-int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
+int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta, bool *skip) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
     return CVIAI_ERR_INVALID_ARGS;
@@ -153,6 +81,9 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
                 frame->stVFrame.u32Stride[0]);
   int ret = CVIAI_SUCCESS;
   for (uint32_t i = 0; i < meta->size; i++) {
+    if (skip != NULL && skip[i]) {
+      continue;
+    }
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
     cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
@@ -171,12 +102,6 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
     float *score = getOutputRawPtr<float>(NAME_SCORE);
     meta->info[i].face_quality = score[1];
-
-    float roll = 0, pitch = 0, yaw = 0;
-    get_face_direction(face_info.pts, roll, pitch, yaw);
-    meta->info[i].head_pose.roll = roll;
-    meta->info[i].head_pose.pitch = pitch;
-    meta->info[i].head_pose.yaw = yaw;
 
     CVI_AI_FreeCpp(&face_info);
   }

@@ -1,6 +1,9 @@
 #include "face_capture.h"
 #include <math.h>
 #include "cviai_log.hpp"
+#include "service/cviai_service.h"
+
+#define ABS(x) ((x) >= 0 ? (x) : (-(x)))
 
 #define DEFAULT_SIZE 10
 #define QUALITY_THRESHOLD 0.9
@@ -17,6 +20,7 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
 CVI_S32 clean_data(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle);
 CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
                      VIDEO_FRAME_INFO_S *frame, cvai_face_t *face_meta);
+void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_info, bool *skip);
 bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
                   float current_quality);
 #if USE_FACE_FEATURE
@@ -107,7 +111,10 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   // CVI_AI_FaceRecognition(ai_handle, frame, &face_cpt_info->last_faces);
 
   // TODO: optimize FaceQuality (do not inference the faces with bad head pose.)
-  CVI_AI_FaceQuality(ai_handle, frame, &face_cpt_info->last_faces);
+  CVI_AI_Service_FaceAngleForAll(&face_cpt_info->last_faces);
+  bool *skip = (bool *)malloc(sizeof(bool) * face_cpt_info->last_faces.size);
+  set_skipFQsignal(face_cpt_info, &face_cpt_info->last_faces, skip);
+  CVI_AI_FaceQuality(ai_handle, frame, &face_cpt_info->last_faces, skip);
 
 #if 0
   for (uint32_t j = 0; j < face_cpt_info->last_faces.size; j++) {
@@ -369,13 +376,21 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
   return CVIAI_SUCCESS;
 }
 
+void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_meta, bool *skip) {
+  memset(skip, 0, sizeof(bool) * face_meta->size);
+  for (uint32_t i = 0; i < face_meta->size; i++) {
+    if (ABS(face_meta->info[i].head_pose.yaw) > face_cpt_info->_thr_yaw ||
+        ABS(face_meta->info[i].head_pose.pitch) > face_cpt_info->_thr_pitch ||
+        ABS(face_meta->info[i].head_pose.roll) > face_cpt_info->_thr_roll) {
+      skip[i] = true;
+    }
+  }
+}
+
 bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
                   float current_quality) {
   if (face_info->face_quality >= face_cpt_info->_thr_quality &&
-      face_info->face_quality > current_quality &&
-      face_info->head_pose.yaw < face_cpt_info->_thr_yaw &&
-      face_info->head_pose.pitch < face_cpt_info->_thr_pitch &&
-      face_info->head_pose.roll < face_cpt_info->_thr_roll) {
+      face_info->face_quality > current_quality) {
     return true;
   }
   return false;

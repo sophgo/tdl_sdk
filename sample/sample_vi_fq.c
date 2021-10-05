@@ -79,7 +79,8 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_RetinaFace(ai_handle, &stfdFrame, &face);
     printf("face_count %d\n", face.size);
-    CVI_AI_FaceQuality(ai_handle, &stfdFrame, &face);
+    CVI_AI_Service_FaceAngleForAll(&face);
+    CVI_AI_FaceQuality(ai_handle, &stfdFrame, &face, NULL);
 
     int s32Ret = CVI_SUCCESS;
     s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,

@@ -11,7 +11,7 @@ class FaceQuality final : public Core {
  public:
   FaceQuality();
   virtual ~FaceQuality();
-  int inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta);
+  int inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta, bool *skip);
 
   /* TOOL CODE */
   int getAlignedFace(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,

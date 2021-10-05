@@ -490,10 +490,12 @@ DLL_EXPORT CVI_S32 CVI_AI_MaskFaceRecognition(const cviai_handle_t handle,
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
  * @param face cvai_face_t structure, the cvai_face_info_t and cvai_bbox_t must be set.
+ * @param skip bool array, whether skip quailty assessment at corresponding index (NULL for running
+ * without skip)
  * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                      cvai_face_t *face);
+                                      cvai_face_t *face, bool *skip);
 
 DLL_EXPORT CVI_S32 CVI_AI_GetAlignedFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *srcFrame,
                                          VIDEO_FRAME_INFO_S *dstFrame, cvai_face_info_t *face_info);

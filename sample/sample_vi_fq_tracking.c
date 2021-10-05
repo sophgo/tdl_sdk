@@ -321,7 +321,8 @@ int main(int argc, char *argv[]) {
     CVI_AI_RetinaFace(ai_handle, &stfdFrame, &face_meta);
     printf("Found %x faces.\n", face_meta.size);
     CVI_AI_FaceRecognition(ai_handle, &stfdFrame, &face_meta);
-    CVI_AI_FaceQuality(ai_handle, &stfdFrame, &face_meta);
+    CVI_AI_Service_FaceAngleForAll(&face_meta);
+    CVI_AI_FaceQuality(ai_handle, &stfdFrame, &face_meta, NULL);
     for (uint32_t j = 0; j < face_meta.size; j++) {
       printf("face[%u] quality: %f\n", j, face_meta.info[j].face_quality);
     }
@@ -380,7 +381,7 @@ int main(int argc, char *argv[]) {
         free(id_num);
         char *fq_num = floatToString(face_meta.info[j].face_quality);
         CVI_AI_Service_ObjectWriteText(fq_num, face_meta.info[j].bbox.x1,
-                                       face_meta.info[j].bbox.y1 + 30, &stVOFrame, -1, -1, -1);
+                                       face_meta.info[j].bbox.y1 + 45, &stVOFrame, -1, -1, -1);
         free(fq_num);
       }
 
