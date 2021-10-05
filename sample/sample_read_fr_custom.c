@@ -135,10 +135,9 @@ CVI_S32 CVI_AI_CustomInit(cviai_handle_t handle, const char *filepath, uint32_t 
   // Set model path.
   CVI_AI_Custom_SetModelPath(handle, *id, filepath);
   // (Optional) Get set model path.
-  char *savedFilePath = NULL;
-  CVI_AI_Custom_GetModelPath(handle, *id, &savedFilePath);
+  const char *savedFilePath = CVI_AI_Custom_GetModelPath(handle, *id);
+
   printf("Init id %u, model %s.\n", *id, savedFilePath);
-  free(savedFilePath);
   // Must set if you want to use VPSS in custom AI framework.
   // Cause face attribute only has 1 input, so we only set idx = 0;
   const uint32_t tensor_idx = 0;

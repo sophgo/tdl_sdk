@@ -211,7 +211,8 @@ int AlphaPose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *objects) {
     prepareInputTensor(predict_bbox, img_rgb, align_bbox);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
-    if (int ret = run(frames) != CVIAI_SUCCESS) {
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
 

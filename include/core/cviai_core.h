@@ -219,11 +219,9 @@ DLL_EXPORT CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_M
  *
  * @param handle An AI SDK handle.
  * @param config Supported model type config.
- * @param filepath Output model path.
- * @return int Return CVIAI_SUCCESS.
+ * @return model path.
  */
-DLL_EXPORT CVI_S32 CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                                       char **filepath);
+DLL_EXPORT const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
 /**
  * @brief Set skip vpss preprocess for supported networks.

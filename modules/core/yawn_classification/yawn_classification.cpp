@@ -40,7 +40,8 @@ int YawnClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) 
 
     prepareInputTensor(warp_image);
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-    if (int ret = run(frames) != CVIAI_SUCCESS) {
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
 

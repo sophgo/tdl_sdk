@@ -44,7 +44,8 @@ int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta, int ob
     m_vpss_config[0].crop_attr.stCropRect = {
         (int32_t)box.x1, (int32_t)box.y1, (uint32_t)(box.x2 - box.x1), (uint32_t)(box.y2 - box.y1)};
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
-    if (int ret = run(frames) != CVIAI_SUCCESS) {
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
 

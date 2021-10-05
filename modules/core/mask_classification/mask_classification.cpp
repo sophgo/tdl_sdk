@@ -59,7 +59,8 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *m
                                              (uint32_t)new_edge};
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
-    if (int ret = run(frames) != CVIAI_SUCCESS) {
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
 

@@ -162,7 +162,8 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     prepareInputTensor(input);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {rgbFrame};
-    if (int ret = run(frames) != CVIAI_SUCCESS) {
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
 

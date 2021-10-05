@@ -48,7 +48,8 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
                                              (uint32_t)(face_info.bbox.y2 - face_info.bbox.y1)};
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-    if (int ret = run(frames) != CVIAI_SUCCESS) {
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
 

@@ -122,7 +122,8 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   for (uint32_t b = 0; b < (uint32_t)shape.dim[0]; b++) {
     frames.push_back(&srcFrame[b]);
   }
-  if (int ret = run(frames) != CVIAI_SUCCESS) {
+  int ret = run(frames);
+  if (ret != CVIAI_SUCCESS) {
     return ret;
   }
 

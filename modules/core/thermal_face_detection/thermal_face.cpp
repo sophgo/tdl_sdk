@@ -166,7 +166,8 @@ int ThermalFace::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
 
 int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
-  if (int ret = run(frames) != CVIAI_SUCCESS) {
+  int ret = run(frames);
+  if (ret != CVIAI_SUCCESS) {
     return ret;
   }
 

@@ -102,7 +102,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
           info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       face_align_gdc(stOutFrame, &m_wrap_frame, face_info);
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
-      if (int ret = run(frames) != CVIAI_SUCCESS) {
+      int ret = run(frames);
+      if (ret != CVIAI_SUCCESS) {
         return ret;
       }
       outputParser(meta, i);
@@ -138,9 +139,11 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
                             m_wrap_frame.stVFrame.pu8VirAddr[0],
                             m_wrap_frame.stVFrame.u32Length[0]);
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
-      if (int ret = run(frames) != CVIAI_SUCCESS) {
+      int ret = run(frames);
+      if (ret != CVIAI_SUCCESS) {
         return ret;
       }
+
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
     }

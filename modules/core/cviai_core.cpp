@@ -294,10 +294,9 @@ CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config)
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                            char **filepath) {
+const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  return GetModelName(ctx->model_cont[config], filepath);
+  return GetModelName(ctx->model_cont[config]);
 }
 
 CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
@@ -463,7 +462,6 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
 CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                 const CVI_U32 frameWidth, const CVI_U32 frameHeight,
                                 const CVI_U32 idx, cvai_vpssconfig_t *chnConfig) {
-  CVI_S32 ret = CVIAI_SUCCESS;
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai::Core *instance = getInferenceInstance(config, ctx);
   if (instance == nullptr) {
@@ -471,13 +469,7 @@ CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E 
     return CVIAI_ERR_OPEN_MODEL;
   }
 
-  if (instance->allowExportChannelAttribute()) {
-    ret = instance->getChnConfig(frameWidth, frameHeight, idx, chnConfig);
-  } else {
-    LOGE("Currently model %u does not support exporting channel attribute.\n", config);
-  }
-
-  return ret;
+  return instance->getChnConfig(frameWidth, frameHeight, idx, chnConfig);
 }
 
 CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,

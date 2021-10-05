@@ -34,13 +34,13 @@ CVI_S32 CVI_AI_Custom_SetModelPath(cviai_handle_t handle, const uint32_t id, con
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id, char **filepath) {
+const char *CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   if (id >= (uint32_t)ctx->custom_cont.size()) {
     LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
-    return CVIAI_FAILURE;
+    return NULL;
   }
-  return GetModelName(ctx->custom_cont[id], filepath);
+  return GetModelName(ctx->custom_cont[id]);
 }
 
 CVI_S32 CVI_AI_Custom_SetVpssThread(cviai_handle_t handle, const uint32_t id,

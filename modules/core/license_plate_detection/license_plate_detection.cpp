@@ -116,7 +116,8 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
     m_vpss_config[0].crop_attr.stCropRect = {(int32_t)x1, (int32_t)y1, (uint32_t)(x2 - x1),
                                              (uint32_t)(y2 - y1)};
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-    if (int ret = run(frames) != CVIAI_SUCCESS) {
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
 

@@ -42,11 +42,8 @@ typedef struct {
   bool use_gdc_wrap = false;
 } cviai_context_t;
 
-inline int __attribute__((always_inline)) GetModelName(cviai_model_t &model, char **filepath) {
-  char *path = (char *)malloc(model.model_path.size());
-  snprintf(path, model.model_path.size(), "%s", model.model_path.c_str());
-  *filepath = path;
-  return CVIAI_SUCCESS;
+inline const char *__attribute__((always_inline)) GetModelName(cviai_model_t &model) {
+  return model.model_path.c_str();
 }
 
 inline uint32_t __attribute__((always_inline)) CVI_AI_GetVpssTimeout(cviai_handle_t handle) {

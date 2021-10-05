@@ -364,7 +364,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
   int ret = run(frames);
   if (ret != CVIAI_SUCCESS) {
     LOGE("MobileDetV2: failed to inference\n");
-    return CVIAI_ERR_INFERENCE;
+    return ret;
   }
 
   Detections dets;

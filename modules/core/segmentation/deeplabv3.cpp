@@ -60,7 +60,8 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
   }
 
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-  if (int ret = run(frames) != CVIAI_SUCCESS) {
+  int ret = run(frames);
+  if (ret != CVIAI_SUCCESS) {
     return ret;
   }
 
@@ -80,7 +81,7 @@ int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_fram
   vpssChnAttr.stNormalize.bEnable = CVI_FALSE;
 
   VPSS_SCALE_COEF_E enCoef = VPSS_SCALE_COEF_NEAREST;
-  int ret = mp_vpss_inst->sendFrame(&m_label_frame, &vpssChnAttr, &enCoef, 1);
+  ret = mp_vpss_inst->sendFrame(&m_label_frame, &vpssChnAttr, &enCoef, 1);
   if (ret != CVI_SUCCESS) {
     LOGE("Deeplabv3 send frame failed: %s\n", get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_SEND_FRAME;

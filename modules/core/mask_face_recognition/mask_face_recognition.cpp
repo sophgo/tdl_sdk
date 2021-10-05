@@ -82,7 +82,8 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
                           m_wrap_frame.stVFrame.u32Length[0]);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
-    if (int ret = run(frames) != CVIAI_SUCCESS) {
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
     outputParser(meta, i);

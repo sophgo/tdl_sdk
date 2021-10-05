@@ -55,7 +55,8 @@ int SoundClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   prepareInputTensor(input);
 
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
-  if (int ret = run(frames) != CVIAI_SUCCESS) {
+  int ret = run(frames);
+  if (ret != CVIAI_SUCCESS) {
     return ret;
   }
 

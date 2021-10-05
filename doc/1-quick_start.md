@@ -72,7 +72,7 @@ Make sure to destroy the handle using ``CVI_AI_DestroyHandle`` to prevent memory
   return ret;
 ```
 
-Now we know how to create a handle, let's take a look at ``sample_init.c``. When setting a path to handle, it does not actually load the model, it only saves the path to the correspoding network list. You can also get the path you set from the handle. Make sure to free the path given by ``CVI_AI_GetModelPath`` to prevent memory leak.
+Now we know how to create a handle, let's take a look at ``sample_init.c``. When setting a path to handle, it does not actually load the model, it only saves the path to the correspoding network list. You can also get the path you set from the handle.
 
 ```c
   const char fake_path[] = "face_quality.cvimodel";
@@ -81,18 +81,12 @@ Now we know how to create a handle, let's take a look at ``sample_init.c``. When
     printf("Set model path failed.\n");
     return ret;
   }
-  char *path = NULL;
-  if ((ret = CVI_AI_GetModelPath(handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, &path)) !=
-      CVIAI_SUCCESS) {
-    printf("Get model path failed.\n");
-    return ret;
-  }
+  const char *path = CVI_AI_GetModelPath(handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY);
+
   // Check if the two path are the same.
   if (strcmp(path, fake_path) != 0) {
     ret = CVI_FAILURE;
   }
-  // Free the pointer created from CVI_AI_GetModelPath.
-  free(path);
 ```
 
 AI SDK use Vpss hardware to speed up the calculating time on images. Vpss API is a part of Middleware SDK. The SDK doesn't use handle system, but use IDs instead. One AI SDK handle can use multiple Vpss IDs, thus the return value of ``CVI_AI_GetVpssGrpIds`` is an array. Remember to free the array to prevent memory leak.

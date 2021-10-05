@@ -323,6 +323,15 @@ int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
 int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   TRACE_EVENT("cviai_core", "Core::run");
   int ret = CVIAI_SUCCESS;
+
+  if (m_skip_vpss_preprocess && !allowExportChannelAttribute()) {
+    LOGE(
+        "cannot skip vpss preprocessing for model: %s, please set false to "
+        "CVI_AI_SetSkipVpssPreprocess\n",
+        demangle::type_no_scope(*this).c_str());
+    return CVIAI_ERR_INVALID_ARGS;
+  }
+
   std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
 
   m_debugger.newSession(demangle::type_no_scope(*this));

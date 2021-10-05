@@ -49,11 +49,9 @@ DLL_EXPORT CVI_S32 CVI_AI_Custom_SetModelPath(cviai_handle_t handle, const uint3
  *
  * @param handle An AI SDK handle.
  * @param id Id of the instance.
- * @param filepath Output model path.
- * @return int Return CVIAI_SUCCESS on success.
+ * @return model path.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id,
-                                              char **filepath);
+DLL_EXPORT const char *CVI_AI_Custom_GetModelPath(cviai_handle_t handle, const uint32_t id);
 
 /**
  * @brief Set different vpss thread for custom models. Vpss group id is not thread safe. We
