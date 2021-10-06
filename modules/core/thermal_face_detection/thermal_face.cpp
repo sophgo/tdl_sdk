@@ -152,12 +152,14 @@ int ThermalFace::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
                         vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
                         factor, mean, false);
 
-  if (int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1) != CVI_SUCCESS) {
+  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
+  if (ret != CVI_SUCCESS) {
     LOGE("Send frame failed with %#x!\n", ret);
     return CVIAI_ERR_VPSS_SEND_FRAME;
   }
 
-  if (int ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout) != CVI_SUCCESS) {
+  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
+  if (ret != CVI_SUCCESS) {
     LOGE("Get frame failed with %#x!\n", ret);
     return CVIAI_ERR_VPSS_GET_FRAME;
   }

@@ -135,7 +135,8 @@ void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
 int Core::modelClose() {
   TRACE_EVENT("cviai_core", "Core::modelClose");
   if (mp_mi->handle != nullptr) {
-    if (int ret = CVI_NN_CleanupModel(mp_mi->handle) != CVI_RC_SUCCESS) {  // NOLINT
+    int ret = CVI_NN_CleanupModel(mp_mi->handle);
+    if (ret != CVI_RC_SUCCESS) {  // NOLINT
       LOGE("CVI_NN_CleanupModel failed: %s\n", get_tpu_error_msg(ret));
       mp_mi->handle = nullptr;
       return CVIAI_ERR_CLOSE_MODEL;
@@ -356,7 +357,8 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
         m_debugger.save_origin_frame(frames[i], mp_mi->in.tensors + i);
 
         memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-        if (int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]) != CVIAI_SUCCESS) {
+        int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
+        if (vpssret != CVIAI_SUCCESS) {
           // if preprocess fail, just delete frame.
           if (f->stVFrame.u64PhyAddr[0] != 0) {
             mp_vpss_inst->releaseFrame(f, 0);

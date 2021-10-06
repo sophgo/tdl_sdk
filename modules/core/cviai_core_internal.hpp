@@ -90,10 +90,11 @@ inline int __attribute__((always_inline))
 setVPSSThread(cviai_model_t &model, std::vector<cviai::VpssEngine *> &v_engine,
               const uint32_t thread, const VPSS_GRP vpssGroupId) {
   uint32_t vpss_thread;
-  if (int ret = CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread, &v_engine) !=
-                CVIAI_SUCCESS) {
+  int ret = CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread, &v_engine);
+  if (ret != CVIAI_SUCCESS) {
     return ret;
   }
+
   model.vpss_thread = vpss_thread;
   if (model.instance != nullptr) {
     model.instance->setVpssEngine(v_engine[model.vpss_thread]);

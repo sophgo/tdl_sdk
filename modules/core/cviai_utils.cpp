@@ -16,8 +16,8 @@ CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *
                                uint32_t timeout) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   uint32_t vpss_thread;
-  if (int ret = CVI_AI_AddVpssEngineThread(thread, -1, &vpss_thread, &ctx->vec_vpss_engine) !=
-                CVIAI_SUCCESS) {
+  int ret = CVI_AI_AddVpssEngineThread(thread, -1, &vpss_thread, &ctx->vec_vpss_engine);
+  if (ret != CVIAI_SUCCESS) {
     return ret;
   }
 
@@ -27,7 +27,7 @@ CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *
   VPSS_CHN_SQ_HELPER(&chn_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
                      frame->stVFrame.enPixelFormat, factor, mean, false);
   auto &vpss_inst = ctx->vec_vpss_engine[vpss_thread];
-  int ret = vpss_inst->sendFrame(frame, &chn_attr, 1);
+  ret = vpss_inst->sendFrame(frame, &chn_attr, 1);
   if (ret != CVI_SUCCESS) {
     LOGE("Send frame failed: %s\n", cviai::get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_SEND_FRAME;

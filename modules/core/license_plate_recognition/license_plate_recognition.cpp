@@ -86,7 +86,8 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     prepareInputTensor(sub_cvFrame);
 
     std::vector<VIDEO_FRAME_INFO_S *> dummyFrames = {frame};
-    if (int ret = run(dummyFrames) != CVIAI_SUCCESS) {
+    int ret = run(dummyFrames);
+    if (ret != CVIAI_SUCCESS) {
       return ret;
     }
 

@@ -244,7 +244,7 @@ CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E conf
     if (m_t.instance->isInitialized()) {
       LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
            CVI_AI_GetModelName(config));
-      return CVIAI_ERR_INVALID_MODEL_PATH;
+      return CVIAI_ERR_MODEL_INITIALIZED;
     }
   }
 
