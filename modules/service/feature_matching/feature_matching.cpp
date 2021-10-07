@@ -13,6 +13,29 @@
 namespace cviai {
 namespace service {
 
+static const char *TypeToStr(feature_type_e type) {
+  switch (type) {
+    case TYPE_INT8:
+      return "TYPE_INT8";
+    case TYPE_UINT8:
+      return "TYPE_UINT8";
+    case TYPE_INT16:
+      return "TYPE_INT16";
+    case TYPE_UINT16:
+      return "TYPE_UINT16";
+    case TYPE_INT32:
+      return "TYPE_INT32";
+    case TYPE_UINT32:
+      return "TYPE_UINT32";
+    case TYPE_BF16:
+      return "TYPE_BF16";
+    case TYPE_FLOAT:
+      return "TYPE_FLOAT";
+    default:
+      return "Unknown";
+  }
+}
+
 inline void __attribute__((always_inline))
 FreeFeatureArrayExt(cvai_service_feature_array_ext_t *feature_array_ext) {
   if (feature_array_ext->feature_unit_length != nullptr) {
@@ -64,7 +87,22 @@ FeatureMatching::~FeatureMatching() {
   destroyHandle(m_rt_handle, m_cvk_ctx);
 }
 
-int FeatureMatching::init() { return createHandle(&m_rt_handle, &m_cvk_ctx); }
+int FeatureMatching::init() {
+  m_tpu_ipfeature.array_buffer_32 = NULL;
+  m_tpu_ipfeature.array_buffer_f = NULL;
+  m_tpu_ipfeature.data_num = 0;
+  m_tpu_ipfeature.feature_length = 0;
+  m_tpu_ipfeature.feature_unit_length = 0;
+  m_tpu_ipfeature.slice_num = NULL;
+
+  m_cpu_ipfeature.feature_array.data_num = 0;
+  m_cpu_ipfeature.feature_array.feature_length = 0;
+  m_cpu_ipfeature.feature_array.ptr = NULL;
+  m_cpu_ipfeature.feature_array_buffer = NULL;
+  m_cpu_ipfeature.feature_unit_length = 0;
+  m_is_cpu = true;
+  return createHandle(&m_rt_handle, &m_cvk_ctx);
+}
 
 int FeatureMatching::createHandle(CVI_RT_HANDLE *rt_handle, cvk_context_t **cvk_ctx) {
   if (CVI_RT_Init(rt_handle) != CVI_SUCCESS) {
@@ -100,8 +138,8 @@ int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_ar
       ret = cosSimilarityRegister(feature_array);
     } break;
     default:
-      LOGE("Unsupported mathinc method %u\n", m_matching_method);
-      ret = CVIAI_FAILURE;
+      LOGE("Unsupported matching method %u\n", m_matching_method);
+      ret = CVIAI_ERR_INVALID_ARGS;
       break;
   }
   return ret;
@@ -115,8 +153,8 @@ int FeatureMatching::run(const uint8_t *feature, const feature_type_e &type, con
       ret = cosSimilarityRun(feature, type, topk, indices, scores, threshold, size);
     } break;
     default:
-      LOGE("Unsupported mathinc method %u\n", m_matching_method);
-      ret = CVIAI_FAILURE;
+      LOGE("Unsupported matching method %u\n", m_matching_method);
+      ret = CVIAI_ERR_INVALID_ARGS;
       break;
   }
   return ret;
@@ -131,9 +169,9 @@ int FeatureMatching::cosSimilarityRegister(const cvai_service_feature_array_t &f
                                        feature_array.feature_length, feature_array.data_num);
     } break;
     default: {
-      LOGE("Unsupported register data type %x.\n", feature_array.type);
+      LOGE("Unsupported register data type %s.\n", TypeToStr(feature_array.type));
       delete[] unit_length;
-      return CVIAI_FAILURE;
+      return CVIAI_ERR_INVALID_ARGS;
     } break;
   }
   m_data_num = feature_array.data_num;
@@ -202,7 +240,14 @@ int FeatureMatching::cosSimilarityRun(const uint8_t *feature, const feature_type
   if (topk == 0 && threshold == 0.0f) {
     LOGE("both topk and threshold are invalid value\n");
     *size = 0;
-    return CVIAI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
+  }
+
+  if (m_cpu_ipfeature.feature_array.data_num == 0 && m_tpu_ipfeature.data_num == 0) {
+    LOGE(
+        "Not yet register features, please invoke CVI_AI_Service_RegisterFeatureArray to "
+        "register.\n");
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
   }
 
   int ret = CVIAI_SUCCESS;
@@ -285,8 +330,8 @@ int FeatureMatching::cosSimilarityRun(const uint8_t *feature, const feature_type
       *size = j;
     } break;
     default: {
-      LOGE("Unsupported register data type %x.\n", type);
-      ret = CVIAI_FAILURE;
+      LOGE("Unsupported register data type %s.\n", TypeToStr(type));
+      ret = CVIAI_ERR_INVALID_ARGS;
     } break;
   }
 

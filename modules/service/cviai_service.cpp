@@ -100,6 +100,12 @@ CVI_S32 CVI_AI_Service_FaceInfoMatching(cviai_service_handle_t handle,
                                         float threshold, uint32_t *indices, float *sims,
                                         uint32_t *size) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_fm == nullptr) {
+    LOGE(
+        "Not yet register features, please invoke CVI_AI_Service_RegisterFeatureArray to "
+        "register.\n");
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
   return ctx->m_fm->run((uint8_t *)face_info->feature.ptr, face_info->feature.type, topk, indices,
                         sims, size, threshold);
 }
@@ -109,6 +115,12 @@ CVI_S32 CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
                                           const uint32_t topk, float threshold, uint32_t *indices,
                                           float *sims, uint32_t *size) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_fm == nullptr) {
+    LOGE(
+        "Not yet register features, please invoke CVI_AI_Service_RegisterFeatureArray to "
+        "register.\n");
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
   return ctx->m_fm->run((uint8_t *)object_info->feature.ptr, object_info->feature.type, topk,
                         indices, sims, size, threshold);
 }
@@ -117,6 +129,12 @@ CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const void *fe
                                    const feature_type_e type, const uint32_t topk, float threshold,
                                    uint32_t *indices, float *scores, uint32_t *size) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+  if (ctx->m_fm == nullptr) {
+    LOGE(
+        "Not yet register features, please invoke CVI_AI_Service_RegisterFeatureArray to "
+        "register.\n");
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
   return ctx->m_fm->run((uint8_t *)feature, type, topk, indices, scores, size, threshold);
 }
 
