@@ -81,6 +81,10 @@ const std::unordered_map<std::string,
          {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, CVI_AI_MobileDetV2_Person_Pets}},
         {"mobiledetv2-person-vehicle-ls.cvimodel",
          {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_AI_MobileDetV2_Person_Vehicle}},
+        {"mobiledetv2-person-vehicle-ls-768.cvimodel",
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_AI_MobileDetV2_Person_Vehicle}},
+        {"mobiledetv2-pedestrian-d0-ls-384.cvimodel",
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d0-ls-640.cvimodel",
          {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d0-ls-768.cvimodel",
@@ -90,6 +94,8 @@ const std::unordered_map<std::string,
         {"mobiledetv2-pedestrian-d0.cvimodel",
          {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d1-ls.cvimodel",
+         {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
+        {"mobiledetv2-pedestrian-d1-ls-1024.cvimodel",
          {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d1.cvimodel",
          {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_AI_MobileDetV2_Pedestrian}},
@@ -195,7 +201,7 @@ TEST_F(MobileDetV2TestSuite, skip_vpsspreprocess) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
     std::string model_name = std::string(m_json_object[test_index]["model_name"]);
     ModelInfo model_info = getModel(model_name);
-    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
+    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END) << "model name: " << model_name;
 
     std::string img_name = m_json_object[test_index]["results"].begin().key();
     std::string image_path = (m_image_dir / img_name).string();

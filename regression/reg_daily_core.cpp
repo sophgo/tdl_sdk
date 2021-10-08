@@ -130,7 +130,7 @@ TEST_F(CoreTestSuite, set_vpss_thread) {
   EXPECT_EQ(CVI_AI_CreateHandle(&ai_handle), CVIAI_SUCCESS);
   ASSERT_TRUE(ai_handle != NULL);
 
-  Image image("/mnt/data/dataset/reg_daily_mobildet/000000008211.jpg", PIXEL_FORMAT_RGB_888);
+  Image image(PIXEL_FORMAT_RGB_888, 1920, 1080);
   ASSERT_NO_FATAL_FAILURE(image.open());
 
   CVIAITestContext &context = CVIAITestContext::getInstance();

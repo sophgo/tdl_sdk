@@ -133,8 +133,6 @@ buildninstallcpp(NAME reg_daily_td INC ${REG_INCLUDES} DEPS cviai_core cviai_ser
 buildninstallcpp(NAME reg_daily_lpd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_lpr INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_mot INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-# buildninstallcpp(NAME reg_daily_mask_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-# buildninstallcpp(NAME reg_daily_fr INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_fl INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
@@ -149,5 +147,18 @@ buildninstallcpp(NAME reg_daily_retinafaceIR INC ${REG_INCLUDES} DEPS cviai_core
 buildninstallcpp(NAME reg_daily_retinaface_hardhat INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 
-install(DIRECTORY assets DESTINATION regression)
+if ("${CVI_PLATFORM}" STREQUAL "CV183X")
+  set(DAILY_REGRESSION_ASSETS "assets_183x")
+else()
+  set(DAILY_REGRESSION_ASSETS "assets_182x")
+endif()
+
+file(GLOB asset_files "${DAILY_REGRESSION_ASSETS}/*.json")
+install(DIRECTORY DESTINATION ${assets})
+
+foreach(file ${asset_files})
+  get_filename_component(asset_realpath "${file}" REALPATH)
+  install(FILES ${asset_realpath} DESTINATION regression/assets)
+endforeach()
+
 install(FILES "daily_regression.sh" PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ DESTINATION regression)

@@ -27,7 +27,6 @@ bool Image::open() {
   if (m_opened) return true;
 
   if (m_filepath.empty()) {
-    printf("create empty\n");
     return createEmpty();
   } else {
     if (CVI_AI_ReadImage(m_filepath.c_str(), &m_blk, &m_frame, m_format) != CVI_SUCCESS) {
@@ -42,14 +41,11 @@ bool Image::open() {
 }
 
 bool Image::createEmpty() {
-  printf("CREATE_VBFRAME_HELPER\n");
   if (CREATE_VBFRAME_HELPER(&m_blk, &m_frame, m_width, m_height, m_format) != CVIAI_SUCCESS) {
     return false;
   }
 
-  printf("CACHED_VBFRAME_FLUSH_UNMAP\n");
   CACHED_VBFRAME_FLUSH_UNMAP(&m_frame);
-  printf("CACHED_VBFRAME_FLUSH_UNMAP done\n");
   return true;
 }
 
