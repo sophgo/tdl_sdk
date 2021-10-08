@@ -71,12 +71,12 @@ CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
                                            const cvai_feature_t *feature_lhs, float *score) {
   if (feature_lhs->type != feature_rhs->type) {
     LOGE("feature type not matched! rhs=%d, lhs=%d\n", feature_rhs->type, feature_lhs->type);
-    return CVIAI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   if (feature_lhs->size != feature_rhs->size) {
     LOGE("feature size not matched!, rhs: %u, lhs: %u\n", feature_rhs->size, feature_lhs->size);
-    return CVIAI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
 
   if (feature_rhs->type == TYPE_INT8) {
@@ -90,7 +90,7 @@ CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
     *score = (float)value3 / (sqrt((double)value1) * sqrt((double)value2));
   } else {
     LOGE("Unsupported feature type: %d\n", feature_rhs->type);
-    return CVIAI_FAILURE;
+    return CVIAI_ERR_INVALID_ARGS;
   }
   return CVIAI_SUCCESS;
 }
@@ -135,7 +135,7 @@ CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const void *fe
         "register.\n");
     return CVIAI_ERR_NOT_YET_INITIALIZED;
   }
-  return ctx->m_fm->run((uint8_t *)feature, type, topk, indices, scores, size, threshold);
+  return ctx->m_fm->run(feature, type, topk, indices, scores, size, threshold);
 }
 
 CVI_S32 CVI_AI_Service_FaceDigitalZoom(cviai_service_handle_t handle,

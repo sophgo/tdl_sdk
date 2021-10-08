@@ -145,7 +145,7 @@ int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_ar
   return ret;
 }
 
-int FeatureMatching::run(const uint8_t *feature, const feature_type_e &type, const uint32_t topk,
+int FeatureMatching::run(const void *feature, const feature_type_e &type, const uint32_t topk,
                          uint32_t *indices, float *scores, uint32_t *size, float threshold) {
   int ret = CVIAI_SUCCESS;
   switch (m_matching_method) {
@@ -234,7 +234,7 @@ static std::vector<size_t> sort_indexes(const std::vector<T> &v) {
   return idx;
 }
 
-int FeatureMatching::cosSimilarityRun(const uint8_t *feature, const feature_type_e &type,
+int FeatureMatching::cosSimilarityRun(const void *feature, const feature_type_e &type,
                                       const uint32_t topk, uint32_t *k_index, float *k_value,
                                       float threshold, uint32_t *size) {
   if (topk == 0 && threshold == 0.0f) {

@@ -46,7 +46,6 @@ struct GoldenResult {
     input_feature.type = FeatureTypeEnum;
     topk_indices = (uint32_t *)malloc(topk * sizeof(uint32_t));
     topk_similarity = (float *)malloc(topk * sizeof(float));
-    ;
   }
 
   ~GoldenResult() {
@@ -121,22 +120,9 @@ class FeatureMatchingTestSuite : public CVIAITestSuite {
     m_service_handle = NULL;
   }
 
-  static int cmp(const void *a, const void *b);
-
   cviai_handle_t m_ai_handle;
   cviai_service_handle_t m_service_handle;
 };
-
-int FeatureMatchingTestSuite::cmp(const void *a, const void *b) {
-  Similarity *a1 = (Similarity *)a;
-  Similarity *a2 = (Similarity *)b;
-  if ((*a1).value >= (*a2).value)
-    return -1;
-  else if ((*a1).value < (*a2).value)
-    return 1;
-  else
-    return 0;
-}
 
 TEST_F(FeatureMatchingTestSuite, object_info_matching) {
   // test without register
@@ -325,28 +311,68 @@ TEST_F(FeatureMatchingTestSuite, raw_matching) {
 }
 
 TEST_F(FeatureMatchingTestSuite, calculate_similarity) {
-  GoldenResult<TYPE_INT8> golden(20000, 512, 5);
-  golden.init();
-
-  std::vector<Similarity> sims(golden.db_feature.data_num);
-
-  for (uint32_t i = 0; i < golden.db_feature.data_num; i++) {
+  // test with wrong arguments
+  {
+    int8_t features[512];
     cvai_feature_t db_feature;
-    db_feature.ptr = &((int8_t *)golden.db_feature.ptr)[i * golden.db_feature.feature_length];
-    db_feature.size = golden.db_feature.feature_length;
+    db_feature.ptr = features;
+    db_feature.size = 512;
     db_feature.type = TYPE_INT8;
-    ASSERT_EQ(CVI_AI_Service_CalculateSimilarity(m_service_handle, &golden.input_feature,
-                                                 &db_feature, &sims[i].value),
-              CVIAI_SUCCESS);
-    sims[i].index = i;
+
+    cvai_feature_t input_feature;
+    input_feature.ptr = features;
+    input_feature.size = 512;
+    input_feature.type = TYPE_FLOAT;
+
+    float sim;
+
+    // test with inconsistent feature type
+    ASSERT_EQ(
+        CVI_AI_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
+        CVIAI_ERR_INVALID_ARGS);
+
+    // test with inconsistent feature size
+    input_feature.type = TYPE_INT8;
+    input_feature.size = 511;
+    ASSERT_EQ(
+        CVI_AI_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
+        CVIAI_ERR_INVALID_ARGS);
+
+    // test with unsupported feature type
+    input_feature.size = 512;
+    input_feature.type = TYPE_FLOAT;
+    db_feature.type = TYPE_FLOAT;
+    ASSERT_EQ(
+        CVI_AI_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
+        CVIAI_ERR_INVALID_ARGS);
   }
 
-  std::stable_sort(sims.begin(), sims.end(),
-                   [](const Similarity &v1, const Similarity &v2) { return v1.value >= v2.value; });
+  // test with large amount of features
+  {
+    GoldenResult<TYPE_INT8> golden(20000, 512, 5);
+    golden.init();
 
-  for (uint32_t i = 0; i < golden.topk; i++) {
-    EXPECT_EQ(sims[i].index, golden.topk_indices[i]);
-    EXPECT_FLOAT_EQ(sims[i].value, golden.topk_similarity[i]);
+    std::vector<Similarity> sims(golden.db_feature.data_num);
+
+    for (uint32_t i = 0; i < golden.db_feature.data_num; i++) {
+      cvai_feature_t db_feature;
+      db_feature.ptr = &((int8_t *)golden.db_feature.ptr)[i * golden.db_feature.feature_length];
+      db_feature.size = golden.db_feature.feature_length;
+      db_feature.type = TYPE_INT8;
+      ASSERT_EQ(CVI_AI_Service_CalculateSimilarity(m_service_handle, &golden.input_feature,
+                                                   &db_feature, &sims[i].value),
+                CVIAI_SUCCESS);
+      sims[i].index = i;
+    }
+
+    std::stable_sort(sims.begin(), sims.end(), [](const Similarity &v1, const Similarity &v2) {
+      return v1.value >= v2.value;
+    });
+
+    for (uint32_t i = 0; i < golden.topk; i++) {
+      EXPECT_EQ(sims[i].index, golden.topk_indices[i]);
+      EXPECT_FLOAT_EQ(sims[i].value, golden.topk_similarity[i]);
+    }
   }
 }
 }  // namespace unitest
