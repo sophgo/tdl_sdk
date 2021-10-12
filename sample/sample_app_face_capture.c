@@ -32,19 +32,22 @@ void gen_face_meta_01(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
                       cvai_face_t *face_meta_1);
 void write_miss_faces(face_capture_t *face_cpt_info, IVE_HANDLE ive_handle);
 
+enum APP_MODE { fast = 0, interval, leave, intelligent };
+
 int main(int argc, char *argv[]) {
-  if (argc != 5) {
+  if (argc != 6) {
     printf(
         "Usage: %s <face_detection_model_path>\n"
         "          <face_attribute_model_path>\n"
         "          <face_quality_model_path>\n"
+        "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
         "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
   CVI_S32 ret = CVIAI_SUCCESS;
 
-  CVI_S32 voType = atoi(argv[4]);
+  CVI_S32 voType = atoi(argv[5]);
 
   CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
@@ -72,7 +75,39 @@ int main(int argc, char *argv[]) {
   }
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
-  CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
+  enum APP_MODE app_mode;
+  if (atoi(argv[4]) == 0) {
+    app_mode = fast;
+  } else if (atoi(argv[4]) == 1) {
+    app_mode = interval;
+  } else if (atoi(argv[4]) == 2) {
+    app_mode = leave;
+  } else if (atoi(argv[4]) == 3) {
+    app_mode = intelligent;
+  } else {
+    printf("Unknown license type %s\n", argv[4]);
+    return CVI_FAILURE;
+  }
+
+  bool output_miss = false;
+  switch (app_mode) {
+    case fast: {
+      CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
+    } break;
+    case interval: {
+      CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
+    } break;
+    case leave: {
+      CVI_AI_APP_FaceCapture_SetMode(app_handle, AUTO);
+      output_miss = true;
+    } break;
+    case intelligent: {
+      CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
+      output_miss = true;
+    } break;
+    default:
+      return CVI_FAILURE;
+  }
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
   cvai_service_brush_t brush_0;
@@ -102,16 +137,15 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_APP_FaceCapture_Run(app_handle, &stfdFrame);
 
-    write_miss_faces(app_handle->face_cpt_info, ive_handle);
-
     cvai_face_t face_meta_0;
     memset(&face_meta_0, 0, sizeof(cvai_face_t));
     cvai_face_t face_meta_1;
     memset(&face_meta_1, 0, sizeof(cvai_face_t));
     gen_face_meta_01(app_handle->face_cpt_info, &face_meta_0, &face_meta_1);
 
-    /* Write MISS face to file */
-    // write_miss_faces(app_handle->face_cpt_info, ive_handle);
+    if (output_miss) {
+      write_miss_faces(app_handle->face_cpt_info, ive_handle);
+    }
 
     s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
                                       &stfdFrame);

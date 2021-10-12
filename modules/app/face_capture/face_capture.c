@@ -13,7 +13,7 @@
 #define CYCLE_MODE_INTERVAL 20
 
 #define USE_FACE_FEATURE 0
-// #define WRITE_FACE_IN
+#define WRITE_FACE_IN
 
 CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
                     cvai_tracker_t *tracker_meta);
@@ -317,13 +317,16 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
     if (!(face_cpt_info->data[j]._capture)) {
       continue;
     }
-    printf("Capture Face[%u]!\n", j);
+    bool first_capture = false;
     if (face_cpt_info->data[j].state == ALIVE) {
       CVI_SYS_FreeI(ive_handle, &face_cpt_info->data[j].face_image);
     } else {
       /* first capture */
       face_cpt_info->data[j].state = ALIVE;
+      first_capture = true;
     }
+    printf("Capture Face[%u] (%s)!\n", j, (first_capture) ? "INIT" : "UPDATE");
+
     /* CVI_IVE_SubImage not support PIXEL_FORMAT_RGB_888 */
     CVI_U16 x1 = (CVI_U16)roundf(face_cpt_info->data[j].info.bbox.x1);
     CVI_U16 y1 = (CVI_U16)roundf(face_cpt_info->data[j].info.bbox.y1);
@@ -360,10 +363,12 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
     }
 
 #ifdef WRITE_FACE_IN
-    char *filename = calloc(32, sizeof(char));
-    sprintf(filename, "face_%" PRIu64 "_in.png", face_cpt_info->data[j].info.unique_id);
-    printf("Write Face to: %s\n", filename);
-    CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[j].face_image);
+    if (first_capture) {
+      char *filename = calloc(32, sizeof(char));
+      sprintf(filename, "face_%" PRIu64 "_in.png", face_cpt_info->data[j].info.unique_id);
+      printf("Write Face to: %s\n", filename);
+      CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[j].face_image);
+    }
 #endif
 
     face_cpt_info->data[j]._timestamp = face_cpt_info->_time;
