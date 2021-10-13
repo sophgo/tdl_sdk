@@ -19,6 +19,8 @@
 
 static volatile bool bExit = false;
 
+#define DEFAULT_BUFFER_SIZE 10
+
 uint32_t face_counter = 0;
 
 int getNumDigits(uint64_t num);
@@ -31,6 +33,7 @@ int get_alive_num(face_capture_t *face_cpt_info);
 void gen_face_meta_01(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
                       cvai_face_t *face_meta_1);
 void write_miss_faces(face_capture_t *face_cpt_info, IVE_HANDLE ive_handle);
+bool read_config(const char *config_path, face_capture_config_t *app_config);
 
 enum APP_MODE { fast = 0, interval, leave, intelligent };
 
@@ -38,8 +41,8 @@ int main(int argc, char *argv[]) {
   if (argc != 6) {
     printf(
         "Usage: %s <face_detection_model_path>\n"
-        "          <face_attribute_model_path>\n"
         "          <face_quality_model_path>\n"
+        "          <config_path>\n"
         "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
         "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
@@ -67,35 +70,25 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle, ive_handle);
-  ret |= CVI_AI_APP_FaceCapture_Init(app_handle);
-  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2], argv[3]);
+  ret |= CVI_AI_APP_FaceCapture_Init(app_handle, DEFAULT_BUFFER_SIZE);
+  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2]);
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     return ret;
   }
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
-  enum APP_MODE app_mode;
-  if (atoi(argv[4]) == 0) {
-    app_mode = fast;
-  } else if (atoi(argv[4]) == 1) {
-    app_mode = interval;
-  } else if (atoi(argv[4]) == 2) {
-    app_mode = leave;
-  } else if (atoi(argv[4]) == 3) {
-    app_mode = intelligent;
-  } else {
-    printf("Unknown license type %s\n", argv[4]);
-    return CVI_FAILURE;
-  }
-
+  enum APP_MODE app_mode = atoi(argv[4]);
   bool output_miss = false;
   switch (app_mode) {
     case fast: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
+      app_handle->face_cpt_info->write_face_stable = true;
     } break;
     case interval: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
+      // app_handle->face_cpt_info->write_face_init = true;
+      app_handle->face_cpt_info->write_face_stable = true;
     } break;
     case leave: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, AUTO);
@@ -103,11 +96,34 @@ int main(int argc, char *argv[]) {
     } break;
     case intelligent: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
+      app_handle->face_cpt_info->write_face_init = true;
       output_miss = true;
     } break;
     default:
+      printf("Unknown license type %d\n", app_mode);
       return CVI_FAILURE;
   }
+
+  face_capture_config_t app_cfg;
+  CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
+  if (!strcmp(argv[3], "NULL")) {
+    printf("Use Default Config...\n");
+  } else {
+    printf("Read Specific Config: %s\n", argv[3]);
+    if (!read_config(argv[3], &app_cfg)) {
+      printf("[ERROR] Read Config Failed.\n");
+      CVI_AI_APP_DestroyHandle(app_handle);
+      CVI_AI_Service_DestroyHandle(service_handle);
+      CVI_AI_DestroyHandle(ai_handle);
+      DestroyVideoSystem(&vs_ctx);
+      CVI_SYS_Exit();
+      CVI_VB_Exit();
+      return CVI_FAILURE;
+    }
+  }
+  CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
+  printf("Write Face Init: %d\n", app_handle->face_cpt_info->write_face_init);
+  printf("Write Face Stable: %d\n", app_handle->face_cpt_info->write_face_stable);
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
   cvai_service_brush_t brush_0;
@@ -200,6 +216,47 @@ int main(int argc, char *argv[]) {
   CVI_VB_Exit();
 }
 
+#define CHAR_SIZE 64
+bool read_config(const char *config_path, face_capture_config_t *app_config) {
+  char name[CHAR_SIZE];
+  char value[CHAR_SIZE];
+  FILE *fp = fopen(config_path, "r");
+  if (fp == NULL) {
+    return false;
+  }
+  while (!feof(fp)) {
+    memset(name, 0, CHAR_SIZE);
+    memset(value, 0, CHAR_SIZE);
+    /*Read Data*/
+    fscanf(fp, "%s %s\n", name, value);
+    if (!strcmp(name, "Miss_Time_Limit")) {
+      app_config->miss_time_limit = (uint32_t)atoi(value);
+    } else if (!strcmp(name, "Threshold_Quality")) {
+      app_config->thr_quality = atof(value);
+    } else if (!strcmp(name, "Threshold_Quality_High")) {
+      app_config->thr_quality_high = atof(value);
+    } else if (!strcmp(name, "Threshold_Yaw")) {
+      app_config->thr_yaw = atof(value);
+    } else if (!strcmp(name, "Threshold_Pitch")) {
+      app_config->thr_pitch = atof(value);
+    } else if (!strcmp(name, "Threshold_Roll")) {
+      app_config->thr_roll = atof(value);
+    } else if (!strcmp(name, "FAST_Mode_Interval")) {
+      app_config->fast_m_interval = (uint32_t)atoi(value);
+    } else if (!strcmp(name, "FAST_Mode_Capture_Num")) {
+      app_config->fast_m_capture_num = (uint32_t)atoi(value);
+    } else if (!strcmp(name, "CYCLE_Mode_Interval")) {
+      app_config->cycle_m_interval = (uint32_t)atoi(value);
+    } else {
+      printf("Unknow Arg: %s\n", name);
+      return false;
+    }
+  }
+  fclose(fp);
+
+  return true;
+}
+
 int getNumDigits(uint64_t num) {
   int digits = 0;
   do {
@@ -285,7 +342,7 @@ void write_miss_faces(face_capture_t *face_cpt_info, IVE_HANDLE ive_handle) {
     printf("Write MISS Face[%u]\n", i);
     char *filename = calloc(32, sizeof(char));
     face_counter += 1;
-    sprintf(filename, "face_%" PRIu64 "_out.png", face_cpt_info->data[i].info.unique_id);
+    sprintf(filename, "images/face_%" PRIu64 "_out.png", face_cpt_info->data[i].info.unique_id);
     printf("Write Face to: %s\n", filename);
     CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[i].face_image);
   }

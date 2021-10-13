@@ -1,0 +1,9 @@
+Miss_Time_Limit 40
+Threshold_Quality 0.9
+Threshold_Quality_High 0.99
+Threshold_Yaw 0.5
+Threshold_Pitch 0.5
+Threshold_Roll 0.5
+FAST_Mode_Interval 40
+FAST_Mode_Capture_Num 3
+CYCLE_Mode_Interval 20

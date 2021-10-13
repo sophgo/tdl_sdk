@@ -42,11 +42,18 @@ DLL_EXPORT CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_han
  */
 DLL_EXPORT CVI_S32 CVI_AI_APP_DestroyHandle(cviai_app_handle_t handle);
 
-DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Init(const cviai_app_handle_t handle);
+DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Init(const cviai_app_handle_t handle,
+                                               uint32_t buffer_size);
+
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_QuickSetUp(const cviai_app_handle_t handle,
                                                      const char *fd_model_path,
-                                                     const char *fr_model_path,
                                                      const char *fq_model_path);
+
+DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_GetDefaultConfig(face_capture_config_t *cfg);
+
+DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_SetConfig(const cviai_app_handle_t handle,
+                                                    face_capture_config_t *cfg);
+
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Run(const cviai_app_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame);
 

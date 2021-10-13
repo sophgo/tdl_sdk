@@ -5,11 +5,11 @@
 
 #define ABS(x) ((x) >= 0 ? (x) : (-(x)))
 
-#define DEFAULT_SIZE 10
 #define QUALITY_THRESHOLD 0.9
 #define QUALITY_HIGH_THRESHOLD 0.99
 #define MISS_TIME_LIMIT 40
-#define FAST_MODE_INTERVAL 100
+#define FAST_MODE_INTERVAL 40
+#define FAST_MODE_CAPTURE_NUM 3
 #define CYCLE_MODE_INTERVAL 20
 
 #define USE_FACE_FEATURE 0
@@ -20,6 +20,7 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
 CVI_S32 clean_data(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle);
 CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
                      VIDEO_FRAME_INFO_S *frame, cvai_face_t *face_meta);
+
 void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_info, bool *skip);
 bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
                   float current_quality);
@@ -27,6 +28,7 @@ bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
 void feature_copy(cvai_feature_t *src_feature, cvai_feature_t *dst_feature);
 #endif
 int get_alive_num(face_capture_t *face_cpt_info);
+void show_config(face_capture_config_t *cfg);
 CVI_S32 get_ive_image_type(PIXEL_FORMAT_E enPixelFormat, IVE_IMAGE_TYPE_E *enType);
 
 // TODO
@@ -42,38 +44,33 @@ CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info, const IVE_HANDLE ive_ha
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info) {
+CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info, uint32_t buffer_size) {
   if (*face_cpt_info != NULL) {
     LOGW("[APP::FaceCapture] already exist.\n");
     return CVIAI_SUCCESS;
   }
   face_capture_t *new_face_cpt_info = (face_capture_t *)malloc(sizeof(face_capture_t));
   memset(new_face_cpt_info, 0, sizeof(face_capture_t));
-  new_face_cpt_info->size = DEFAULT_SIZE;
-  new_face_cpt_info->data = (face_cpt_data_t *)malloc(sizeof(face_cpt_data_t) * DEFAULT_SIZE);
-  memset(new_face_cpt_info->data, 0, sizeof(face_cpt_data_t) * DEFAULT_SIZE);
+  new_face_cpt_info->size = buffer_size;
+  new_face_cpt_info->data = (face_cpt_data_t *)malloc(sizeof(face_cpt_data_t) * buffer_size);
+  memset(new_face_cpt_info->data, 0, sizeof(face_cpt_data_t) * buffer_size);
 
-  new_face_cpt_info->_thr_quality = QUALITY_THRESHOLD;
-  new_face_cpt_info->_thr_yaw = 0.5;
-  new_face_cpt_info->_thr_pitch = 0.5;
-  new_face_cpt_info->_thr_roll = 0.5;
+  _FaceCapture_GetDefaultConfig(&new_face_cpt_info->cfg);
 
   *face_cpt_info = new_face_cpt_info;
   return CVIAI_SUCCESS;
 }
 
 CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, const char *fd_model_path,
-                                const char *fr_model_path, const char *fq_model_path) {
+                                const char *fq_model_path) {
   CVI_S32 ret = CVIAI_SUCCESS;
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_model_path);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
   ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fq_model_path);
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
 
   /* Init DeepSORT */
   CVI_AI_DeepSORT_Init(ai_handle, false);
@@ -91,6 +88,26 @@ CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, const char *fd_model_p
 #endif
 
   return CVIAI_SUCCESS;
+}
+
+CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
+  cfg->miss_time_limit = MISS_TIME_LIMIT;
+  cfg->thr_quality = QUALITY_THRESHOLD;
+  cfg->thr_quality_high = QUALITY_HIGH_THRESHOLD;
+  cfg->thr_yaw = 0.5;
+  cfg->thr_pitch = 0.5;
+  cfg->thr_roll = 0.5;
+  cfg->fast_m_interval = FAST_MODE_INTERVAL;
+  cfg->fast_m_capture_num = FAST_MODE_CAPTURE_NUM;
+  cfg->cycle_m_interval = CYCLE_MODE_INTERVAL;
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 _FaceCapture_SetConfig(face_capture_t *face_cpt_info, face_capture_config_t *cfg) {
+  memcpy(&face_cpt_info->cfg, cfg, sizeof(face_capture_config_t));
+  show_config(&face_cpt_info->cfg);
+  return CVI_SUCCESS;
 }
 
 CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_handle,
@@ -187,7 +204,7 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
       /* search available index for new tracker. */
       for (uint32_t j = 0; j < face_cpt_info->size; j++) {
         if (face_cpt_info->data[j].state == IDLE) {
-          printf("[APP::FaceCapture] Create Face Info[%u]\n", j);
+          LOGI("[APP::FaceCapture] Create Face Info[%u]\n", j);
           face_cpt_info->data[j].miss_counter = 0;
           memcpy(&face_cpt_info->data[j].info, &face_meta->info[i], sizeof(cvai_face_info_t));
           /* set useless heap data structure to 0 */
@@ -213,24 +230,29 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
       bool capture = false;
       switch (face_cpt_info->mode) {
         case AUTO: {
-          if (face_cpt_info->data[match_idx].info.face_quality < QUALITY_HIGH_THRESHOLD) {
+          if (face_cpt_info->data[match_idx].info.face_quality <
+              face_cpt_info->cfg.thr_quality_high) {
             capture = is_qualified(face_cpt_info, &face_meta->info[i],
                                    face_cpt_info->data[match_idx].info.face_quality);
           }
         } break;
         case FAST: {
-          // TODO
-          if (face_cpt_info->_time - face_cpt_info->data[match_idx]._timestamp <
-              FAST_MODE_INTERVAL) {
-            capture = is_qualified(face_cpt_info, &face_meta->info[i],
-                                   face_cpt_info->data[match_idx].info.face_quality);
+          printf("_out_counter: %u\n", face_cpt_info->data[match_idx]._out_counter);
+          if (face_cpt_info->data[match_idx]._out_counter < face_cpt_info->cfg.fast_m_capture_num) {
+            uint64_t _time = face_cpt_info->_time - face_cpt_info->data[match_idx]._timestamp;
+            if (_time < face_cpt_info->cfg.fast_m_interval) {
+              capture = is_qualified(face_cpt_info, &face_meta->info[i],
+                                     face_cpt_info->data[match_idx].info.face_quality);
+            } else {
+              capture = true;
+            }
             // fake capture for visualization
             face_cpt_info->last_capture[i] = true;
           }
         } break;
         case CYCLE: {
-          if (face_cpt_info->_time - face_cpt_info->data[match_idx]._timestamp >
-              CYCLE_MODE_INTERVAL) {
+          uint64_t _time = face_cpt_info->_time - face_cpt_info->data[match_idx]._timestamp;
+          if (_time > face_cpt_info->cfg.cycle_m_interval) {
             capture = true;
             // capture = is_qualified(face_cpt_info, &face_meta->info[i], 0);
           }
@@ -242,7 +264,7 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
       }
       /* if found, check whether the quality(or feature) need to be update. */
       if (capture) {
-        printf("[APP::FaceCapture] Update Face Info[%u]\n", match_idx);
+        LOGI("[APP::FaceCapture] Update Face Info[%u]\n", match_idx);
         memcpy(&face_cpt_info->data[match_idx].info, &face_meta->info[i], sizeof(cvai_face_info_t));
         /* set useless heap data structure to 0 */
         memset(&face_cpt_info->data[match_idx].info.pts, 0, sizeof(cvai_pts_t));
@@ -269,11 +291,12 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
 CVI_S32 clean_data(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle) {
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     if (face_cpt_info->data[j].state == MISS) {
-      printf("[APP::FaceCapture] Clean Face Info[%u]\n", j);
+      LOGI("[APP::FaceCapture] Clean Face Info[%u]\n", j);
       // free(feature);
       CVI_S32 ret = CVI_SYS_FreeI(ive_handle, &face_cpt_info->data[j].face_image);
       if (ret != CVI_SUCCESS) {
-        printf("CVI_SYS_FreeI fail with %d\n", ret);
+        LOGE("CVI_SYS_FreeI fail with %d\n", ret);
+        return ret;
       }
       memset(&face_cpt_info->data[j], 0, sizeof(face_cpt_data_t));
     }
@@ -319,13 +342,27 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
     }
     bool first_capture = false;
     if (face_cpt_info->data[j].state == ALIVE) {
+      uint64_t _time = face_cpt_info->_time - face_cpt_info->data[j]._timestamp;
+      if (face_cpt_info->mode == FAST && _time >= face_cpt_info->cfg.fast_m_interval) {
+        if (face_cpt_info->write_face_stable) {
+          char *filename = calloc(32, sizeof(char));
+          sprintf(filename, "images/face-%" PRIu64 "_%u.png", face_cpt_info->data[j].info.unique_id,
+                  face_cpt_info->data[j]._out_counter);
+          printf("Write Face to: %s\n", filename);
+          CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[j].face_image);
+          free(filename);
+        }
+        face_cpt_info->data[j]._out_counter += 1;
+      } else if (face_cpt_info->mode == CYCLE) {
+        face_cpt_info->data[j]._out_counter += 1;
+      }
       CVI_SYS_FreeI(ive_handle, &face_cpt_info->data[j].face_image);
     } else {
       /* first capture */
       face_cpt_info->data[j].state = ALIVE;
       first_capture = true;
     }
-    printf("Capture Face[%u] (%s)!\n", j, (first_capture) ? "INIT" : "UPDATE");
+    LOGI("Capture Face[%u] (%s)!\n", j, (first_capture) ? "INIT" : "UPDATE");
 
     /* CVI_IVE_SubImage not support PIXEL_FORMAT_RGB_888 */
     CVI_U16 x1 = (CVI_U16)roundf(face_cpt_info->data[j].info.bbox.x1);
@@ -347,7 +384,7 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
     ret =
         CVI_IVE_CreateImage(ive_handle, &face_cpt_info->data[j].face_image, ive_frame.enType, w, h);
     if (ret != CVIAI_SUCCESS) {
-      printf("Create IVE IMAGE Failed!\n");
+      LOGE("Create IVE IMAGE Failed!\n");
       CVI_SYS_FreeI(ive_handle, &ive_frame);
       return ret;
     }
@@ -362,14 +399,22 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
       t += 1;
     }
 
-#ifdef WRITE_FACE_IN
-    if (first_capture) {
+    if (face_cpt_info->write_face_init && first_capture) {
       char *filename = calloc(32, sizeof(char));
-      sprintf(filename, "face_%" PRIu64 "_in.png", face_cpt_info->data[j].info.unique_id);
+      sprintf(filename, "images/face-%" PRIu64 "_in.png", face_cpt_info->data[j].info.unique_id);
       printf("Write Face to: %s\n", filename);
       CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[j].face_image);
+      free(filename);
     }
-#endif
+
+    if (face_cpt_info->mode == CYCLE && face_cpt_info->write_face_stable) {
+      char *filename = calloc(32, sizeof(char));
+      sprintf(filename, "images/face-%" PRIu64 "_%u.png", face_cpt_info->data[j].info.unique_id,
+              face_cpt_info->data[j]._out_counter);
+      printf("Write Face to: %s\n", filename);
+      CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[j].face_image);
+      free(filename);
+    }
 
     face_cpt_info->data[j]._timestamp = face_cpt_info->_time;
     face_cpt_info->data[j]._capture = false;
@@ -384,9 +429,9 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
 void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_meta, bool *skip) {
   memset(skip, 0, sizeof(bool) * face_meta->size);
   for (uint32_t i = 0; i < face_meta->size; i++) {
-    if (ABS(face_meta->info[i].head_pose.yaw) > face_cpt_info->_thr_yaw ||
-        ABS(face_meta->info[i].head_pose.pitch) > face_cpt_info->_thr_pitch ||
-        ABS(face_meta->info[i].head_pose.roll) > face_cpt_info->_thr_roll) {
+    if (ABS(face_meta->info[i].head_pose.yaw) > face_cpt_info->cfg.thr_yaw ||
+        ABS(face_meta->info[i].head_pose.pitch) > face_cpt_info->cfg.thr_pitch ||
+        ABS(face_meta->info[i].head_pose.roll) > face_cpt_info->cfg.thr_roll) {
       skip[i] = true;
     }
   }
@@ -394,7 +439,7 @@ void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_meta, boo
 
 bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
                   float current_quality) {
-  if (face_info->face_quality >= face_cpt_info->_thr_quality &&
+  if (face_info->face_quality >= face_cpt_info->cfg.thr_quality &&
       face_info->face_quality > current_quality) {
     return true;
   }
@@ -422,8 +467,22 @@ int get_alive_num(face_capture_t *face_cpt_info) {
   return counter;
 }
 
+void show_config(face_capture_config_t *cfg) {
+  printf("@@@ Face Capture Config @@@\n");
+  printf(" - Miss Time Limit:   :%u\n", cfg->miss_time_limit);
+  printf(" - Thr Quality        : %.2f\n", cfg->thr_quality);
+  printf(" - Thr Quality (High) : %.2f\n", cfg->thr_quality_high);
+  printf(" - Thr Yaw    : %.2f\n", cfg->thr_yaw);
+  printf(" - Thr Pitch  : %.2f\n", cfg->thr_pitch);
+  printf(" - Thr Roll   : %.2f\n", cfg->thr_roll);
+  printf("[Fast] Interval: %u\n", cfg->fast_m_interval);
+  printf("[Fast] Capture Num: %u\n", cfg->fast_m_capture_num);
+  printf("[Cycle] Interval: %u\n\n", cfg->cycle_m_interval);
+  return;
+}
+
 CVI_S32 get_ive_image_type(PIXEL_FORMAT_E enPixelFormat, IVE_IMAGE_TYPE_E *enType) {
-  printf("enPixelFormat = %d\n", enPixelFormat);
+  // printf("enPixelFormat = %d\n", enPixelFormat);
   switch (enPixelFormat) {
     case PIXEL_FORMAT_YUV_400:
       *enType = IVE_IMAGE_TYPE_U8C1;
