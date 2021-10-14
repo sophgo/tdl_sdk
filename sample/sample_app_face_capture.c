@@ -38,19 +38,20 @@ bool read_config(const char *config_path, face_capture_config_t *app_config);
 enum APP_MODE { fast = 0, interval, leave, intelligent };
 
 int main(int argc, char *argv[]) {
-  if (argc != 6) {
+  if (argc != 7) {
     printf(
         "Usage: %s <face_detection_model_path>\n"
         "          <face_quality_model_path>\n"
         "          <config_path>\n"
         "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
+        "          write image (0/1)\n"
         "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
   CVI_S32 ret = CVIAI_SUCCESS;
 
-  CVI_S32 voType = atoi(argv[5]);
+  CVI_S32 voType = atoi(argv[6]);
 
   CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
@@ -79,25 +80,34 @@ int main(int argc, char *argv[]) {
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
   enum APP_MODE app_mode = atoi(argv[4]);
+  bool write_image = atoi(argv[5]) == 1;
   bool output_miss = false;
   switch (app_mode) {
     case fast: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
-      app_handle->face_cpt_info->write_face_stable = true;
+      if (write_image) {
+        app_handle->face_cpt_info->write_face_stable = true;
+      }
     } break;
     case interval: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
-      // app_handle->face_cpt_info->write_face_init = true;
-      app_handle->face_cpt_info->write_face_stable = true;
+      if (write_image) {
+        app_handle->face_cpt_info->write_face_init = true;
+        app_handle->face_cpt_info->write_face_stable = true;
+      }
     } break;
     case leave: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, AUTO);
-      output_miss = true;
+      if (write_image) {
+        output_miss = true;
+      }
     } break;
     case intelligent: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
-      app_handle->face_cpt_info->write_face_init = true;
-      output_miss = true;
+      if (write_image) {
+        app_handle->face_cpt_info->write_face_init = true;
+        output_miss = true;
+      }
     } break;
     default:
       printf("Unknown license type %d\n", app_mode);

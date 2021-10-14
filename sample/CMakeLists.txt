@@ -97,3 +97,4 @@ buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE}
 
 install(FILES vi_vo_utils.c vi_vo_utils.h DESTINATION sample)
 install(FILES Makefile DESTINATION sample)
+install(DIRECTORY config DESTINATION sample)

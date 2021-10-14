@@ -237,7 +237,6 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
           }
         } break;
         case FAST: {
-          printf("_out_counter: %u\n", face_cpt_info->data[match_idx]._out_counter);
           if (face_cpt_info->data[match_idx]._out_counter < face_cpt_info->cfg.fast_m_capture_num) {
             uint64_t _time = face_cpt_info->_time - face_cpt_info->data[match_idx]._timestamp;
             if (_time < face_cpt_info->cfg.fast_m_interval) {
