@@ -22,6 +22,7 @@ typedef struct {
 } face_cpt_data_t;
 
 typedef struct {
+  int thr_size;
   float thr_quality;
   float thr_quality_high;
   float thr_yaw;
@@ -40,13 +41,11 @@ typedef struct {
   face_cpt_data_t *data;
   cvai_face_t last_faces;
   cvai_tracker_t last_trackers;
-  bool *last_capture;
 
   face_capture_config_t cfg;
 
-  bool write_face_stable;  // for TEST
-  bool write_face_init;    // for TEST
-  uint64_t _time;
+  bool *_output;   // output signal (# = .size)
+  uint64_t _time;  // timer
 } face_capture_t;
 
 #endif  // End of _CVIAI_APP_FACE_CAPTURE_TYPE_H_

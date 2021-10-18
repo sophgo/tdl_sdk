@@ -19,7 +19,7 @@
 
 static volatile bool bExit = false;
 
-#define DEFAULT_BUFFER_SIZE 10
+typedef enum { fast = 0, interval, leave, intelligent } APP_MODE_e;
 
 uint32_t face_counter = 0;
 
@@ -29,29 +29,46 @@ char *floatToString(float number);
 
 int get_alive_num(face_capture_t *face_cpt_info);
 
-// 0: The faces not capturing last time, 1: otherwise (Note: ignore unstable trackers)
+// 0: low quality, 1: otherwise (Note: ignore unstable trackers)
 void gen_face_meta_01(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
                       cvai_face_t *face_meta_1);
-void write_miss_faces(face_capture_t *face_cpt_info, IVE_HANDLE ive_handle);
+void write_faces(face_capture_t *face_cpt_info, IVE_HANDLE ive_handle, APP_MODE_e mode);
 bool read_config(const char *config_path, face_capture_config_t *app_config);
 
-enum APP_MODE { fast = 0, interval, leave, intelligent };
+static void SampleHandleSig(CVI_S32 signo) {
+  signal(SIGINT, SIG_IGN);
+  signal(SIGTERM, SIG_IGN);
+
+  if (SIGINT == signo || SIGTERM == signo) {
+    bExit = true;
+  }
+}
 
 int main(int argc, char *argv[]) {
-  if (argc != 7) {
+  if (argc != 8) {
     printf(
         "Usage: %s <face_detection_model_path>\n"
         "          <face_quality_model_path>\n"
         "          <config_path>\n"
         "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
+        "          buffer size\n"
         "          write image (0/1)\n"
         "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
   CVI_S32 ret = CVIAI_SUCCESS;
+  // Set signal catch
+  signal(SIGINT, SampleHandleSig);
+  signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 voType = atoi(argv[6]);
+  int buffer_size = atoi(argv[5]);
+  if (buffer_size <= 0) {
+    printf("buffer size must be larger than 0.\n");
+    return CVI_FAILURE;
+  }
+
+  CVI_S32 voType = atoi(argv[7]);
 
   CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
@@ -71,47 +88,32 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle, ive_handle);
-  ret |= CVI_AI_APP_FaceCapture_Init(app_handle, DEFAULT_BUFFER_SIZE);
+  ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
   ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2]);
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
-    return ret;
+    goto CLEANUP_SYSTEM;
   }
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
-  enum APP_MODE app_mode = atoi(argv[4]);
-  bool write_image = atoi(argv[5]) == 1;
-  bool output_miss = false;
+  APP_MODE_e app_mode = atoi(argv[4]);
+  bool write_image = atoi(argv[6]) == 1;
   switch (app_mode) {
     case fast: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
-      if (write_image) {
-        app_handle->face_cpt_info->write_face_stable = true;
-      }
     } break;
     case interval: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
-      if (write_image) {
-        app_handle->face_cpt_info->write_face_init = true;
-        app_handle->face_cpt_info->write_face_stable = true;
-      }
     } break;
     case leave: {
       CVI_AI_APP_FaceCapture_SetMode(app_handle, AUTO);
-      if (write_image) {
-        output_miss = true;
-      }
     } break;
     case intelligent: {
-      CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
-      if (write_image) {
-        app_handle->face_cpt_info->write_face_init = true;
-        output_miss = true;
-      }
+      CVI_AI_APP_FaceCapture_SetMode(app_handle, AUTO);
     } break;
     default:
-      printf("Unknown license type %d\n", app_mode);
-      return CVI_FAILURE;
+      printf("Unknown mode %d\n", app_mode);
+      goto CLEANUP_SYSTEM;
   }
 
   face_capture_config_t app_cfg;
@@ -122,18 +124,10 @@ int main(int argc, char *argv[]) {
     printf("Read Specific Config: %s\n", argv[3]);
     if (!read_config(argv[3], &app_cfg)) {
       printf("[ERROR] Read Config Failed.\n");
-      CVI_AI_APP_DestroyHandle(app_handle);
-      CVI_AI_Service_DestroyHandle(service_handle);
-      CVI_AI_DestroyHandle(ai_handle);
-      DestroyVideoSystem(&vs_ctx);
-      CVI_SYS_Exit();
-      CVI_VB_Exit();
-      return CVI_FAILURE;
+      goto CLEANUP_SYSTEM;
     }
   }
   CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
-  printf("Write Face Init: %d\n", app_handle->face_cpt_info->write_face_init);
-  printf("Write Face Stable: %d\n", app_handle->face_cpt_info->write_face_stable);
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
   cvai_service_brush_t brush_0;
@@ -169,8 +163,8 @@ int main(int argc, char *argv[]) {
     memset(&face_meta_1, 0, sizeof(cvai_face_t));
     gen_face_meta_01(app_handle->face_cpt_info, &face_meta_0, &face_meta_1);
 
-    if (output_miss) {
-      write_miss_faces(app_handle->face_cpt_info, ive_handle);
+    if (write_image) {
+      write_faces(app_handle->face_cpt_info, ive_handle, app_mode);
     }
 
     s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
@@ -218,9 +212,12 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&face_meta_0);
     CVI_AI_Free(&face_meta_1);
   }
+
+CLEANUP_SYSTEM:
   CVI_AI_APP_DestroyHandle(app_handle);
   CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);
+  CVI_IVE_DestroyHandle(ive_handle);
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
@@ -241,6 +238,8 @@ bool read_config(const char *config_path, face_capture_config_t *app_config) {
     fscanf(fp, "%s %s\n", name, value);
     if (!strcmp(name, "Miss_Time_Limit")) {
       app_config->miss_time_limit = (uint32_t)atoi(value);
+    } else if (!strcmp(name, "Threshold_Size")) {
+      app_config->thr_size = atoi(value);
     } else if (!strcmp(name, "Threshold_Quality")) {
       app_config->thr_quality = atof(value);
     } else if (!strcmp(name, "Threshold_Quality_High")) {
@@ -311,7 +310,7 @@ void gen_face_meta_01(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
     if (face_cpt_info->last_trackers.info[i].state != CVI_TRACKER_STABLE) {
       continue;
     }
-    if (face_cpt_info->last_capture[i]) {
+    if (face_cpt_info->last_faces.info[i].face_quality >= face_cpt_info->cfg.thr_quality) {
       face_meta_1->size += 1;
     } else {
       face_meta_0->size += 1;
@@ -336,7 +335,9 @@ void gen_face_meta_01(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
     if (face_cpt_info->last_trackers.info[i].state != CVI_TRACKER_STABLE) {
       continue;
     }
-    cvai_face_info_t **tmp_ptr = (face_cpt_info->last_capture[i]) ? &info_ptr_1 : &info_ptr_0;
+    bool qualified =
+        face_cpt_info->last_faces.info[i].face_quality >= face_cpt_info->cfg.thr_quality;
+    cvai_face_info_t **tmp_ptr = (qualified) ? &info_ptr_1 : &info_ptr_0;
     (*tmp_ptr)->unique_id = face_cpt_info->last_faces.info[i].unique_id;
     memcpy(&(*tmp_ptr)->bbox, &face_cpt_info->last_faces.info[i].bbox, sizeof(cvai_bbox_t));
     *tmp_ptr += 1;
@@ -344,17 +345,26 @@ void gen_face_meta_01(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
   return;
 }
 
-void write_miss_faces(face_capture_t *face_cpt_info, IVE_HANDLE ive_handle) {
+void write_faces(face_capture_t *face_cpt_info, IVE_HANDLE ive_handle, APP_MODE_e mode) {
+  printf("[APP] Write Faces\n");
   for (uint32_t i = 0; i < face_cpt_info->size; i++) {
-    if (face_cpt_info->data[i].state != MISS) {
+    if (!face_cpt_info->_output[i]) {
       continue;
     }
-    printf("Write MISS Face[%u]\n", i);
-    char *filename = calloc(32, sizeof(char));
-    face_counter += 1;
-    sprintf(filename, "images/face_%" PRIu64 "_out.png", face_cpt_info->data[i].info.unique_id);
-    printf("Write Face to: %s\n", filename);
+    tracker_state_e state = face_cpt_info->data[i].state;
+    if (mode == leave && state != MISS) {
+      continue;
+    }
+    char *filename = calloc(64, sizeof(char));
+    if (state == MISS) {
+      sprintf(filename, "images/face_%" PRIu64 "_out.png", face_cpt_info->data[i].info.unique_id);
+    } else {
+      sprintf(filename, "images/face_%" PRIu64 "_%u.png", face_cpt_info->data[i].info.unique_id,
+              face_cpt_info->data[i]._out_counter);
+    }
+    printf(" > (I/O) Write Face[%u] to: %s ...\n", i, filename);
     CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[i].face_image);
+    free(filename);
   }
   return;
 }

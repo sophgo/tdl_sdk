@@ -5,12 +5,14 @@
 
 #define ABS(x) ((x) >= 0 ? (x) : (-(x)))
 
+#define SIZE_THRESHOLD 32
 #define QUALITY_THRESHOLD 0.9
 #define QUALITY_HIGH_THRESHOLD 0.99
 #define MISS_TIME_LIMIT 40
 #define FAST_MODE_INTERVAL 40
 #define FAST_MODE_CAPTURE_NUM 3
 #define CYCLE_MODE_INTERVAL 20
+#define AUTO_MODE_INTERVAL 20
 
 #define USE_FACE_FEATURE 0
 #define WRITE_FACE_IN
@@ -31,16 +33,21 @@ int get_alive_num(face_capture_t *face_cpt_info);
 void show_config(face_capture_config_t *cfg);
 CVI_S32 get_ive_image_type(PIXEL_FORMAT_E enPixelFormat, IVE_IMAGE_TYPE_E *enType);
 
-// TODO
 CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle) {
+  // LOGI("[APP::FaceCapture] Free FaceCapture Data\n");
   // clean heap data
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
-    printf("[APP::FaceCapture] Free Face Info[%u]\n", j);
-    // free(feature);
-    CVI_SYS_FreeI(ive_handle, &face_cpt_info->data[j].face_image);
-    free(&face_cpt_info->data[j]);
+    if (face_cpt_info->data[j].face_image.tpu_block != NULL) {
+      CVI_SYS_FreeI(ive_handle, &face_cpt_info->data[j].face_image);
+    }
+    CVI_AI_Free(&face_cpt_info->data[j].info);
   }
+  free(face_cpt_info->data);
   CVI_AI_Free(&face_cpt_info->last_faces);
+  CVI_AI_Free(&face_cpt_info->last_trackers);
+  free(face_cpt_info->_output);
+
+  free(face_cpt_info);
   return CVIAI_SUCCESS;
 }
 
@@ -49,11 +56,15 @@ CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info, uint32_t buffer_size) 
     LOGW("[APP::FaceCapture] already exist.\n");
     return CVIAI_SUCCESS;
   }
+  LOGI("[APP::FaceCapture] Initialize (Buffer Size: %u)\n", buffer_size);
   face_capture_t *new_face_cpt_info = (face_capture_t *)malloc(sizeof(face_capture_t));
   memset(new_face_cpt_info, 0, sizeof(face_capture_t));
   new_face_cpt_info->size = buffer_size;
   new_face_cpt_info->data = (face_cpt_data_t *)malloc(sizeof(face_cpt_data_t) * buffer_size);
   memset(new_face_cpt_info->data, 0, sizeof(face_cpt_data_t) * buffer_size);
+
+  new_face_cpt_info->_output = (bool *)malloc(sizeof(bool) * buffer_size);
+  memset(new_face_cpt_info->_output, 0, sizeof(bool) * buffer_size);
 
   _FaceCapture_GetDefaultConfig(&new_face_cpt_info->cfg);
 
@@ -92,6 +103,7 @@ CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, const char *fd_model_p
 
 CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
   cfg->miss_time_limit = MISS_TIME_LIMIT;
+  cfg->thr_size = 32;
   cfg->thr_quality = QUALITY_THRESHOLD;
   cfg->thr_quality_high = QUALITY_HIGH_THRESHOLD;
   cfg->thr_yaw = 0.5;
@@ -101,13 +113,13 @@ CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
   cfg->fast_m_capture_num = FAST_MODE_CAPTURE_NUM;
   cfg->cycle_m_interval = CYCLE_MODE_INTERVAL;
 
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 _FaceCapture_SetConfig(face_capture_t *face_cpt_info, face_capture_config_t *cfg) {
   memcpy(&face_cpt_info->cfg, cfg, sizeof(face_capture_config_t));
   show_config(&face_cpt_info->cfg);
-  return CVI_SUCCESS;
+  return CVIAI_SUCCESS;
 }
 
 CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_handle,
@@ -116,12 +128,16 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
     LOGE("[APP::FaceCapture] is not initialized.\n");
     return CVIAI_FAILURE;
   }
-  clean_data(face_cpt_info, ive_handle);
+  CVI_S32 ret;
+  ret = clean_data(face_cpt_info, ive_handle);
+  if (ret != CVIAI_SUCCESS) {
+    LOGE("[APP::FaceCapture] clean data failed.\n");
+    return CVI_FAILURE;
+  }
   CVI_AI_Free(&face_cpt_info->last_faces);
   CVI_AI_Free(&face_cpt_info->last_trackers);
-  if (face_cpt_info->last_capture != NULL) {
-    free(face_cpt_info->last_capture);
-  }
+  /* set output signal to 0. */
+  memset(face_cpt_info->_output, 0, sizeof(bool) * face_cpt_info->size);
 
   CVI_AI_RetinaFace(ai_handle, frame, &face_cpt_info->last_faces);
   printf("Found %x faces.\n", face_cpt_info->last_faces.size);
@@ -132,10 +148,11 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   bool *skip = (bool *)malloc(sizeof(bool) * face_cpt_info->last_faces.size);
   set_skipFQsignal(face_cpt_info, &face_cpt_info->last_faces, skip);
   CVI_AI_FaceQuality(ai_handle, frame, &face_cpt_info->last_faces, skip);
+  free(skip);
 
-#if 0
+#if 1
   for (uint32_t j = 0; j < face_cpt_info->last_faces.size; j++) {
-    printf("face[%u] quality: %.2f, face post: ( %.2f, %.2f, %.2f)\n", j,
+    printf("face[%u] quality: %.2f, pose: ( %.2f, %.2f, %.2f)\n", j,
            face_cpt_info->last_faces.info[j].face_quality,
            face_cpt_info->last_faces.info[j].head_pose.yaw,
            face_cpt_info->last_faces.info[j].head_pose.pitch,
@@ -147,10 +164,16 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   CVI_AI_DeepSORT_Face(ai_handle, &face_cpt_info->last_faces, &face_cpt_info->last_trackers,
                        use_DeepSORT);
 
-  face_cpt_info->last_capture = (bool *)malloc(sizeof(bool) * face_cpt_info->last_faces.size);
-  memset(face_cpt_info->last_capture, 0, sizeof(bool) * face_cpt_info->last_faces.size);
-  update_data(face_cpt_info, &face_cpt_info->last_faces, &face_cpt_info->last_trackers);
-  capture_face(face_cpt_info, ive_handle, frame, &face_cpt_info->last_faces);
+  ret = update_data(face_cpt_info, &face_cpt_info->last_faces, &face_cpt_info->last_trackers);
+  if (ret != CVIAI_SUCCESS) {
+    LOGE("[APP::FaceCapture] update face failed.\n");
+    return CVI_FAILURE;
+  }
+  ret = capture_face(face_cpt_info, ive_handle, frame, &face_cpt_info->last_faces);
+  if (ret != CVIAI_SUCCESS) {
+    LOGE("[APP::FaceCapture] capture face failed.\n");
+    return CVI_FAILURE;
+  }
 
   /* update timestamp*/
   face_cpt_info->_time =
@@ -164,20 +187,26 @@ CVI_S32 _FaceCapture_SetMode(face_capture_t *face_cpt_info, capture_mode_e mode)
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 _FaceCapture_CleanAll(face_capture_t *face_cpt_info) {
+CVI_S32 _FaceCapture_CleanAll(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle) {
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
-    if (face_cpt_info->data[j].state == ALIVE) {
-      // free(feature);
-      // free(face);
-      memset(&face_cpt_info->data[j], 0, sizeof(face_cpt_data_t));
+    if (face_cpt_info->data[j].state != IDLE) {
+      LOGI("[APP::FaceCapture] Clean Face Info[%u]\n", j);
+      CVI_S32 ret = CVI_SYS_FreeI(ive_handle, &face_cpt_info->data[j].face_image);
+      if (ret != CVI_SUCCESS) {
+        LOGE("CVI_SYS_FreeI fail with %d\n", ret);
+        return ret;
+      }
+      CVI_AI_Free(&face_cpt_info->data[j].info);
+      // memset(&face_cpt_info->data[j], 0, sizeof(face_cpt_data_t));
+      face_cpt_info->data[j].state = IDLE;
     }
   }
-  CVI_AI_Free(&face_cpt_info->last_faces);
   return CVIAI_SUCCESS;
 }
 
 CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
                     cvai_tracker_t *tracker_meta) {
+  // LOGI("[APP::FaceCapture] Update Data\n");
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     if (face_cpt_info->data[j].state == ALIVE) {
       face_cpt_info->data[j].miss_counter += 1;
@@ -188,6 +217,8 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
     if (tracker_meta->info[i].state != CVI_TRACKER_STABLE) {
       continue;
     }
+    // TODO: Skip the faces whoes size is too small...
+
     uint64_t trk_id = face_meta->info[i].unique_id;
     /* check whether the tracker id exist or not. */
     int match_idx = -1;
@@ -203,7 +234,7 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
       bool is_created = false;
       /* search available index for new tracker. */
       for (uint32_t j = 0; j < face_cpt_info->size; j++) {
-        if (face_cpt_info->data[j].state == IDLE) {
+        if (face_cpt_info->data[j].state == IDLE && face_cpt_info->data[j]._capture == false) {
           LOGI("[APP::FaceCapture] Create Face Info[%u]\n", j);
           face_cpt_info->data[j].miss_counter = 0;
           memcpy(&face_cpt_info->data[j].info, &face_meta->info[i], sizeof(cvai_face_info_t));
@@ -215,19 +246,19 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
 #endif
           /* always capture faces in the first frame. */
           face_cpt_info->data[j]._capture = true;
-          face_cpt_info->last_capture[i] = true;
+          face_cpt_info->data[j]._timestamp = face_cpt_info->_time;
           is_created = true;
           break;
         }
       }
-      /* if fail to create, return CVIAI_FAILURE */
+      /* fail to create */
       if (!is_created) {
-        LOGE("buffer overflow.\n");
-        return CVIAI_FAILURE;
+        LOGW("[APP::FaceCapture] Buffer overflow! (Ignore face[%u])\n", i);
       }
     } else {
       face_cpt_info->data[match_idx].miss_counter = 0;
       bool capture = false;
+      uint64_t _time = face_cpt_info->_time - face_cpt_info->data[match_idx]._timestamp;
       switch (face_cpt_info->mode) {
         case AUTO: {
           if (face_cpt_info->data[match_idx].info.face_quality <
@@ -238,25 +269,27 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
         } break;
         case FAST: {
           if (face_cpt_info->data[match_idx]._out_counter < face_cpt_info->cfg.fast_m_capture_num) {
-            uint64_t _time = face_cpt_info->_time - face_cpt_info->data[match_idx]._timestamp;
             if (_time < face_cpt_info->cfg.fast_m_interval) {
               capture = is_qualified(face_cpt_info, &face_meta->info[i],
                                      face_cpt_info->data[match_idx].info.face_quality);
             } else {
               capture = true;
+              face_cpt_info->data[match_idx]._timestamp = face_cpt_info->_time;
             }
-            // fake capture for visualization
-            face_cpt_info->last_capture[i] = true;
           }
         } break;
         case CYCLE: {
-          uint64_t _time = face_cpt_info->_time - face_cpt_info->data[match_idx]._timestamp;
-          if (_time > face_cpt_info->cfg.cycle_m_interval) {
+          if (_time < face_cpt_info->cfg.cycle_m_interval) {
+            capture = is_qualified(face_cpt_info, &face_meta->info[i],
+                                   face_cpt_info->data[match_idx].info.face_quality);
+            // capture = true;
+          } else {
             capture = true;
-            // capture = is_qualified(face_cpt_info, &face_meta->info[i], 0);
+            face_cpt_info->data[match_idx]._timestamp = face_cpt_info->_time;
           }
         } break;
         default: {
+          // TODO: consider non-free tracker because it won't set MISS
           LOGE("Unsupported type.\n");
           return CVIAI_ERR_INVALID_ARGS;
         } break;
@@ -272,15 +305,44 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
         feature_copy(&face_cpt_info->data[match_idx].info.feature, &face_meta->info[i].feature);
 #endif
         face_cpt_info->data[match_idx]._capture = true;
-        face_cpt_info->last_capture[i] = true;
+      }
+      switch (face_cpt_info->mode) {
+        case AUTO: {
+          if (_time >= AUTO_MODE_INTERVAL && face_cpt_info->data[match_idx]._out_counter < 1 &&
+              is_qualified(face_cpt_info, &face_cpt_info->data[match_idx].info, -1)) {
+            face_cpt_info->_output[match_idx] = true;
+            face_cpt_info->data[match_idx]._out_counter += 1;
+          }
+        } break;
+        case FAST: {
+          if (face_cpt_info->data[match_idx]._out_counter < face_cpt_info->cfg.fast_m_capture_num) {
+            if (_time == face_cpt_info->cfg.fast_m_interval - 1 &&
+                is_qualified(face_cpt_info, &face_cpt_info->data[match_idx].info, -1)) {
+              face_cpt_info->_output[match_idx] = true;
+              face_cpt_info->data[match_idx]._out_counter += 1;
+            }
+          }
+        } break;
+        case CYCLE: {
+          if (_time == face_cpt_info->cfg.cycle_m_interval - 1 &&
+              is_qualified(face_cpt_info, &face_cpt_info->data[match_idx].info, -1)) {
+            face_cpt_info->_output[match_idx] = true;
+            face_cpt_info->data[match_idx]._out_counter += 1;
+          }
+        } break;
+        default:
+          return CVIAI_FAILURE;
       }
     }
   }
 
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     if (face_cpt_info->data[j].state == ALIVE &&
-        face_cpt_info->data[j].miss_counter > MISS_TIME_LIMIT) {
+        face_cpt_info->data[j].miss_counter > face_cpt_info->cfg.miss_time_limit) {
       face_cpt_info->data[j].state = MISS;
+      if (face_cpt_info->mode == AUTO) {
+        face_cpt_info->_output[j] = true;
+      }
     }
   }
 
@@ -291,13 +353,14 @@ CVI_S32 clean_data(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle) {
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     if (face_cpt_info->data[j].state == MISS) {
       LOGI("[APP::FaceCapture] Clean Face Info[%u]\n", j);
-      // free(feature);
       CVI_S32 ret = CVI_SYS_FreeI(ive_handle, &face_cpt_info->data[j].face_image);
       if (ret != CVI_SUCCESS) {
         LOGE("CVI_SYS_FreeI fail with %d\n", ret);
         return ret;
       }
-      memset(&face_cpt_info->data[j], 0, sizeof(face_cpt_data_t));
+      CVI_AI_Free(&face_cpt_info->data[j].info);
+      // memset(&face_cpt_info->data[j], 0, sizeof(face_cpt_data_t));
+      face_cpt_info->data[j].state = IDLE;
     }
   }
   return CVIAI_SUCCESS;
@@ -305,6 +368,7 @@ CVI_S32 clean_data(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle) {
 
 CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
                      VIDEO_FRAME_INFO_S *frame, cvai_face_t *face_meta) {
+  // LOGI("[APP::FaceCapture] Capture Face\n");
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
     return CVIAI_ERR_INVALID_ARGS;
@@ -341,20 +405,6 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
     }
     bool first_capture = false;
     if (face_cpt_info->data[j].state == ALIVE) {
-      uint64_t _time = face_cpt_info->_time - face_cpt_info->data[j]._timestamp;
-      if (face_cpt_info->mode == FAST && _time >= face_cpt_info->cfg.fast_m_interval) {
-        if (face_cpt_info->write_face_stable) {
-          char *filename = calloc(32, sizeof(char));
-          sprintf(filename, "images/face-%" PRIu64 "_%u.png", face_cpt_info->data[j].info.unique_id,
-                  face_cpt_info->data[j]._out_counter);
-          printf("Write Face to: %s\n", filename);
-          CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[j].face_image);
-          free(filename);
-        }
-        face_cpt_info->data[j]._out_counter += 1;
-      } else if (face_cpt_info->mode == CYCLE) {
-        face_cpt_info->data[j]._out_counter += 1;
-      }
       CVI_SYS_FreeI(ive_handle, &face_cpt_info->data[j].face_image);
     } else {
       /* first capture */
@@ -374,14 +424,16 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
 
     IVE_IMAGE_TYPE_E enType;
     ret = get_ive_image_type(frame->stVFrame.enPixelFormat, &enType);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_SUCCESS) {
       printf("Get IVE IMAGE TYPE Failed!\n");
       CVI_SYS_FreeI(ive_handle, &ive_frame);
       return ret;
     }
 
+    // LOGI("[DEBUG] CVI_IVE_CreateImage [ %hu, %hu] (BEGIN)\n", h, w);
     ret =
         CVI_IVE_CreateImage(ive_handle, &face_cpt_info->data[j].face_image, ive_frame.enType, w, h);
+    // LOGI("[DEBUG] CVI_IVE_CreateImage (END)\n");
     if (ret != CVIAI_SUCCESS) {
       LOGE("Create IVE IMAGE Failed!\n");
       CVI_SYS_FreeI(ive_handle, &ive_frame);
@@ -398,24 +450,6 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
       t += 1;
     }
 
-    if (face_cpt_info->write_face_init && first_capture) {
-      char *filename = calloc(32, sizeof(char));
-      sprintf(filename, "images/face-%" PRIu64 "_in.png", face_cpt_info->data[j].info.unique_id);
-      printf("Write Face to: %s\n", filename);
-      CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[j].face_image);
-      free(filename);
-    }
-
-    if (face_cpt_info->mode == CYCLE && face_cpt_info->write_face_stable) {
-      char *filename = calloc(32, sizeof(char));
-      sprintf(filename, "images/face-%" PRIu64 "_%u.png", face_cpt_info->data[j].info.unique_id,
-              face_cpt_info->data[j]._out_counter);
-      printf("Write Face to: %s\n", filename);
-      CVI_IVE_WriteImage(ive_handle, filename, &face_cpt_info->data[j].face_image);
-      free(filename);
-    }
-
-    face_cpt_info->data[j]._timestamp = face_cpt_info->_time;
     face_cpt_info->data[j]._capture = false;
   }
   if (do_unmap) {
@@ -426,8 +460,18 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, const IVE_HANDLE ive_handle,
 }
 
 void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_meta, bool *skip) {
+  // TODO: OPTIMIZE
   memset(skip, 0, sizeof(bool) * face_meta->size);
+  bool care_size = face_cpt_info->cfg.thr_size != -1;
   for (uint32_t i = 0; i < face_meta->size; i++) {
+    if (care_size) {
+      float h = face_meta->info[i].bbox.y2 - face_meta->info[i].bbox.y1;
+      float w = face_meta->info[i].bbox.x2 - face_meta->info[i].bbox.x1;
+      if (h < (float)face_cpt_info->cfg.thr_size || w < (float)face_cpt_info->cfg.thr_size) {
+        skip[i] = true;
+        continue;
+      }
+    }
     if (ABS(face_meta->info[i].head_pose.yaw) > face_cpt_info->cfg.thr_yaw ||
         ABS(face_meta->info[i].head_pose.pitch) > face_cpt_info->cfg.thr_pitch ||
         ABS(face_meta->info[i].head_pose.roll) > face_cpt_info->cfg.thr_roll) {
@@ -468,7 +512,8 @@ int get_alive_num(face_capture_t *face_cpt_info) {
 
 void show_config(face_capture_config_t *cfg) {
   printf("@@@ Face Capture Config @@@\n");
-  printf(" - Miss Time Limit:   :%u\n", cfg->miss_time_limit);
+  printf(" - Miss Time Limit:   : %u\n", cfg->miss_time_limit);
+  printf(" - Thr Size           : %i\n", cfg->thr_size);
   printf(" - Thr Quality        : %.2f\n", cfg->thr_quality);
   printf(" - Thr Quality (High) : %.2f\n", cfg->thr_quality_high);
   printf(" - Thr Yaw    : %.2f\n", cfg->thr_yaw);

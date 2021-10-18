@@ -94,6 +94,7 @@ buildninstall(NAME sample_read_lpdr INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_L
 buildninstall(NAME sample_read_pose INC ${SAMPLE_INC} DEPS cviai_core cviai_service ${SAMPLE_LIBS})
 
 buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service cviai_app ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
+buildninstall(NAME sample_app_face_capture_p INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service cviai_app pthread ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 
 install(FILES vi_vo_utils.c vi_vo_utils.h DESTINATION sample)
 install(FILES Makefile DESTINATION sample)

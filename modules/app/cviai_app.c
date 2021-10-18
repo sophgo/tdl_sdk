@@ -59,7 +59,7 @@ CVI_S32 CVI_AI_APP_FaceCapture_SetMode(const cviai_app_handle_t handle, capture_
 
 CVI_S32 CVI_AI_APP_FaceCapture_CleanAll(const cviai_app_handle_t handle) {
   cviai_app_context_t *ctx = handle;
-  return _FaceCapture_CleanAll(ctx->face_cpt_info);
+  return _FaceCapture_CleanAll(ctx->face_cpt_info, ctx->ive_handle);
 }
 
 #if 0
