@@ -90,6 +90,13 @@ OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
 OPENCV_LIBS = -lopencv_core -lopencv_imgproc
 endif
 
+# 3rd party
+#####################################################
+THIRD_PARTY_PATH = $(PWD)/3rd_party
+STB_URL = http://10.58.65.3:8480/kevin.yang/stb.git
+STB_PATH = $(THIRD_PARTY_PATH)/stb
+THIRD_PARTY_INC_FLAGS = -I$(STB_PATH)
+
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -fsigned-char -Werror=all -fdiagnostics-color=always -s 
 
 ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
@@ -152,6 +159,7 @@ SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH)
 SAMPLE_APP_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app
 
 CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH) -I$(CVI_TRACER_INC_PATH)
+CFLAGS += $(THIRD_PARTY_INC_FLAGS)
 
 TARGETS_VI_SAMPLE := $(shell find . -type f -name 'sample_vi_*.c' -exec basename {} .c ';')
 TARGETS_AUDIO_SAMPLE := $(shell find . -type f -name 'sample_aud_*.c' -exec basename {} .c ';')
@@ -170,9 +178,13 @@ all: $(TARGETS)
 
 clean:
 	rm -f $(OBJS) $(TARGETS) $(DEPS)
+	rm -rf $(THIRD_PARTY_PATH)
 
-$(PWD)/%.o: $(PWD)/%.c
+$(PWD)/%.o: $(PWD)/%.c | $(THIRD_PARTY_PATH)
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<
+
+$(THIRD_PARTY_PATH):
+	git clone	$(STB_URL) $(STB_PATH)
 
 sample_aud_%: $(PWD)/sample_aud_%.o $(PWD)/sample_utils.o
 	$(CC) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS)  -o $@ $^

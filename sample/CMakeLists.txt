@@ -38,7 +38,8 @@ set(SAMPLE_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${TRACER_PATH}
     ${MIDDLEWARE_SDK_ROOT}/sample/common
-    ${IVE_INCLUDES})
+    ${IVE_INCLUDES}
+)
 
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
@@ -58,6 +59,8 @@ if("${CVI_PLATFORM}" STREQUAL "CV182X")
 endif()
 
 set(AUDIO_SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
@@ -85,8 +88,7 @@ buildninstall(NAME sample_read_td INC ${SAMPLE_INC} DEPS cviai_core ${SAMPLE_LIB
 buildninstall(NAME sample_aud_esc INC ${SAMPLE_INC} SRCS sample_utils DEPS cviai_core pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
 buildninstall(NAME sample_aud_soundcmd INC ${SAMPLE_INC} DEPS cviai_core pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
 
-buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service cviai_app ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_app_face_capture_p INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service cviai_app pthread ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
+buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service cviai_app pthread ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 
 install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.h sample_utils.c DESTINATION sample)
 install(FILES Makefile DESTINATION sample)

@@ -41,3 +41,15 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nlohmannjson)
 include_directories(${nlohmannjson_SOURCE_DIR})
 message("Content downloaded to ${nlohmannjson_SOURCE_DIR}")
+
+FetchContent_Declare(
+  stb
+  GIT_REPOSITORY  http://10.58.65.3:8480/kevin.yang/stb.git
+  GIT_TAG origin/master
+)
+FetchContent_GetProperties(stb)
+if(NOT stb_POPULATED)
+  FetchContent_Populate(stb)
+endif()
+include_directories(${stb_SOURCE_DIR})
+message("Content downloaded to ${stb_SOURCE_DIR}")

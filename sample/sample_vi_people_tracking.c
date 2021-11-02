@@ -19,25 +19,6 @@
 
 static volatile bool bExit = false;
 
-int getNumDigits(uint64_t num) {
-  int digits = 0;
-  do {
-    num /= 10;
-    digits++;
-  } while (num != 0);
-  return digits;
-}
-
-char *uint64ToString(uint64_t number) {
-  int n = getNumDigits(number);
-  int i;
-  char *numArray = calloc(n, sizeof(char));
-  for (i = n - 1; i >= 0; --i, number /= 10) {
-    numArray[i] = (number % 10) + '0';
-  }
-  return numArray;
-}
-
 int main(int argc, char *argv[]) {
   if (argc != 5) {
     printf(
@@ -143,7 +124,8 @@ int main(int argc, char *argv[]) {
       CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, false,
                                     CVI_AI_Service_GetDefaultBrush());
       for (uint32_t i = 0; i < obj_meta.size; i++) {
-        char *id_num = uint64ToString(obj_meta.info[i].unique_id);
+        char *id_num = calloc(64, sizeof(char));
+        sprintf(id_num, "%" PRIu64 "", obj_meta.info[i].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
                                        &stVOFrame, -1, -1, -1);
         free(id_num);

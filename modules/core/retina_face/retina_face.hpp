@@ -13,6 +13,7 @@ class RetinaFace final : public Core {
   virtual ~RetinaFace();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta);
   virtual bool allowExportChannelAttribute() const override { return true; }
+  virtual void setModelThreshold(float threshold) override;
 
  private:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;

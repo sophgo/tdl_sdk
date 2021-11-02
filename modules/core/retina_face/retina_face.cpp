@@ -21,6 +21,12 @@ RetinaFace::RetinaFace(PROCESS process) : Core(CVI_MEM_DEVICE) { this->process =
 
 RetinaFace::~RetinaFace() {}
 
+void RetinaFace::setModelThreshold(float threshold) {
+  if (m_model_threshold != threshold) {
+    m_model_threshold = threshold;
+  }
+}
+
 int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Retina face only has 1 input.\n");

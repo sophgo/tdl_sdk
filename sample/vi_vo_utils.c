@@ -588,6 +588,7 @@ static CVI_S32 InitRTSP(VencCodec codec, CVI_S32 frameWidth, CVI_S32 frameHeight
   context->session = NULL;
   CVI_RTSP_SESSION_ATTR attr = {0};
   attr.video.codec = codec == CODEC_H264 ? RTSP_VIDEO_H264 : RTSP_VIDEO_H265;
+  // attr.video.bitrate = 20000;    // add this to fix rtsp mosaic if needed
 
   snprintf(attr.name, sizeof(attr.name), "%s", codec == CODEC_H264 ? "h264" : "h265");
 

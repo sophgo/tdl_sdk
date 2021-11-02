@@ -2,8 +2,6 @@
 #define _CVIAI_APP_FACE_CAPTURE_TYPE_H_
 
 #include "core/cviai_core.h"
-// #include "core/cvai_core_types.h"
-// #include "face/cvai_face_types.h"
 #include "ive/ive.h"
 
 typedef enum { IDLE = 0, ALIVE, MISS } tracker_state_e;
@@ -14,7 +12,10 @@ typedef struct {
   cvai_face_info_t info;
   tracker_state_e state;
   uint32_t miss_counter;
-  IVE_IMAGE_S face_image;
+  uint8_t *face_pix;
+  uint16_t height;
+  uint16_t width;
+  uint16_t stride;
 
   bool _capture;
   uint64_t _timestamp;
@@ -37,15 +38,17 @@ typedef struct {
 
 typedef struct {
   capture_mode_e mode;
+  bool use_fqnet;
+  face_capture_config_t cfg;
+
   uint32_t size;
   face_cpt_data_t *data;
   cvai_face_t last_faces;
   cvai_tracker_t last_trackers;
 
-  face_capture_config_t cfg;
-
   bool *_output;   // output signal (# = .size)
   uint64_t _time;  // timer
+  uint32_t _m_limit;
 } face_capture_t;
 
 #endif  // End of _CVIAI_APP_FACE_CAPTURE_TYPE_H_

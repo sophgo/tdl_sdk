@@ -27,31 +27,6 @@ static volatile bool bExit = false;
 /* cv182x can't detect object and face at the same time. */
 #define DETECT_PEOPLE 0
 
-int getNumDigits(uint64_t num) {
-  int digits = 0;
-  do {
-    num /= 10;
-    digits++;
-  } while (num != 0);
-  return digits;
-}
-
-char *uint64ToString(uint64_t number) {
-  int n = getNumDigits(number);
-  int i;
-  char *numArray = calloc(n, sizeof(char));
-  for (i = n - 1; i >= 0; --i, number /= 10) {
-    numArray[i] = (number % 10) + '0';
-  }
-  return numArray;
-}
-
-char *floatToString(float number) {
-  char *numArray = calloc(64, sizeof(char));
-  sprintf(numArray, "%g", number);
-  return numArray;
-}
-
 typedef enum { MISS = 0, ALIVE } tracker_state_e;
 
 typedef struct {
@@ -346,20 +321,23 @@ int main(int argc, char *argv[]) {
       CVI_AI_Service_FaceDrawRect(service_handle, &face_meta, &stVOFrame, false,
                                   CVI_AI_Service_GetDefaultBrush());
       for (uint32_t j = 0; j < face_meta.size; j++) {
-        char *id_num = uint64ToString(face_meta.info[j].unique_id);
+        char *id_num = calloc(64, sizeof(char));
+        sprintf(id_num, "%" PRIu64 "", face_meta.info[j].unique_id);
         CVI_AI_Service_ObjectWriteText(id_num, face_meta.info[j].bbox.x1, face_meta.info[j].bbox.y1,
                                        &stVOFrame, -1, -1, -1);
         free(id_num);
-        char *fq_num = floatToString(face_meta.info[j].face_quality);
-        CVI_AI_Service_ObjectWriteText(fq_num, face_meta.info[j].bbox.x1,
+        char *fq_score = calloc(64, sizeof(char));
+        sprintf(fq_score, "%.2f", face_meta.info[j].face_quality);
+        CVI_AI_Service_ObjectWriteText(fq_score, face_meta.info[j].bbox.x1,
                                        face_meta.info[j].bbox.y1 + 45, &stVOFrame, -1, -1, -1);
-        free(fq_num);
+        free(fq_score);
       }
 
 #if DETECT_PEOPLE
       for (uint32_t i = 0; i < obj_meta.size; i++) {
         if (p2f[i].match) {
-          char *id_num = uint64ToString(face_meta.info[p2f[i].idx].unique_id);
+          char *id_num = calloc(64, sizeof(char));
+          sprintf(id_num, "%" PRIu64 "", face_meta.info[p2f[i].idx].unique_id);
           CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
                                          &stVOFrame, -1, -1, -1);
           free(id_num);

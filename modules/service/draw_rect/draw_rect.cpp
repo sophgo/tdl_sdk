@@ -163,7 +163,7 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_
 
       cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
       cv::Point cv_point = cv::Point(x, y - 2);
-      double font_scale = 2;
+      double font_scale = 1;
       int text_thickness = max(thickness, 2);
       if (i != 0) {
         cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
