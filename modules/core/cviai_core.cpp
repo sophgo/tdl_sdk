@@ -762,20 +762,14 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, uint32_t threshold,
                                               double min_area) {
-  TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_Background");
-  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
-    LOGE("Unsupported pixel format: %d. Motion Detection only support YUV400 format\n",
-         frame->stVFrame.enPixelFormat);
-    return CVIAI_ERR_INVALID_ARGS;
-  }
-
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
     LOGD("Init Motion Detection.\n");
     createIVEHandleIfNeeded(&ctx->ive_handle);
-    ctx->md_model = new MotionDetection(ctx->ive_handle, frame, threshold, min_area);
-    return CVIAI_SUCCESS;
+    ctx->md_model =
+        new MotionDetection(ctx->ive_handle, threshold, min_area, 2000, ctx->vec_vpss_engine[0]);
+    return ctx->md_model->init(frame);
   }
   return ctx->md_model->update_background(frame);
 }
@@ -784,11 +778,6 @@ CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
                                cvai_object_t *objects) {
   TRACE_EVENT("cviai_core", "CVI_AI_MotionDetection");
 
-  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
-    LOGE("Unsupported pixel format: %d. Motion Detection only support YUV400 format\n",
-         frame->stVFrame.enPixelFormat);
-    return CVIAI_ERR_INVALID_ARGS;
-  }
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {

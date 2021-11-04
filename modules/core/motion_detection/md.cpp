@@ -1,10 +1,14 @@
 #include "md.hpp"
+#include <memory>
 #include <opencv2/opencv.hpp>
 #include "core/core/cvai_errno.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai_log.hpp"
+#include "error_msg.hpp"
+#include "vpss_engine.hpp"
 
-CVI_S32 VideoFrameCopy2Image(IVE_HANDLE ive_handle, VIDEO_FRAME_INFO_S *src, IVE_IMAGE_S *dst) {
+static CVI_S32 VideoFrameCopy2Image(IVE_HANDLE ive_handle, VIDEO_FRAME_INFO_S *src,
+                                    IVE_IMAGE_S *dst) {
   IVE_IMAGE_S input_image;
   bool do_unmap = false;
   size_t image_size =
@@ -38,14 +42,18 @@ CVI_S32 VideoFrameCopy2Image(IVE_HANDLE ive_handle, VIDEO_FRAME_INFO_S *src, IVE
   return CVIAI_SUCCESS;
 }
 
-MotionDetection::MotionDetection(IVE_HANDLE handle, VIDEO_FRAME_INFO_S *init_frame, uint32_t th,
-                                 double _min_area)
+MotionDetection::MotionDetection(IVE_HANDLE handle, uint32_t th, double _min_area, uint32_t timeout,
+                                 cviai::VpssEngine *engine)
     : ive_handle(handle),
       count(0),
       threshold(th),
       min_area(_min_area),
-      im_width(init_frame->stVFrame.u32Width),
-      im_height(init_frame->stVFrame.u32Height) {
+      m_vpss_engine(engine),
+      m_vpss_timeout(timeout) {}
+
+CVI_S32 MotionDetection::init(VIDEO_FRAME_INFO_S *init_frame) {
+  im_width = init_frame->stVFrame.u32Width;
+  im_height = init_frame->stVFrame.u32Height;
   uint32_t voWidth = init_frame->stVFrame.u32Width;
   uint32_t voHeight = init_frame->stVFrame.u32Height;
   CVI_IVE_CreateImage(ive_handle, &tmp, IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
@@ -53,7 +61,7 @@ MotionDetection::MotionDetection(IVE_HANDLE handle, VIDEO_FRAME_INFO_S *init_fra
   CVI_IVE_CreateImage(ive_handle, &src[0], IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
   CVI_IVE_CreateImage(ive_handle, &src[1], IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
 
-  VideoFrameCopy2Image(handle, init_frame, &src[0]);
+  return copy_image(init_frame, &src[0]);
 }
 
 MotionDetection::~MotionDetection() {
@@ -63,8 +71,25 @@ MotionDetection::~MotionDetection() {
   CVI_SYS_FreeI(ive_handle, &src[1]);
 }
 
+CVI_S32 MotionDetection::vpss_process(VIDEO_FRAME_INFO_S *srcframe, VIDEO_FRAME_INFO_S *dstframe) {
+  VPSS_CHN_ATTR_S chnAttr;
+  VPSS_CHN_DEFAULT_HELPER(&chnAttr, srcframe->stVFrame.u32Width, srcframe->stVFrame.u32Height,
+                          PIXEL_FORMAT_YUV_400, true);
+  CVI_S32 ret = m_vpss_engine->sendFrame(srcframe, &chnAttr, 1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("Failed to send vpss frame: %s\n", cviai::get_vpss_error_msg(ret));
+    return CVIAI_ERR_VPSS_SEND_FRAME;
+  }
+  ret = m_vpss_engine->getFrame(dstframe, 0, m_vpss_timeout);
+  if (ret != CVI_SUCCESS) {
+    LOGE("Failed to get vpss frame: %s\n", cviai::get_vpss_error_msg(ret));
+    return CVIAI_ERR_VPSS_SEND_FRAME;
+  }
+  return CVIAI_SUCCESS;
+}
+
 CVI_S32 MotionDetection::update_background(VIDEO_FRAME_INFO_S *frame) {
-  return VideoFrameCopy2Image(ive_handle, frame, &src[0]);
+  return copy_image(frame, &src[0]);
 }
 
 void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *out) {
@@ -86,12 +111,34 @@ void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *
   }
 }
 
-CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_meta) {
+CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, IVE_IMAGE_S *dst) {
+  std::shared_ptr<VIDEO_FRAME_INFO_S> frame;
+  CVI_S32 ret = CVIAI_SUCCESS;
+  if (srcframe->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
+    frame =
+        std::shared_ptr<VIDEO_FRAME_INFO_S>(new VIDEO_FRAME_INFO_S, [this](VIDEO_FRAME_INFO_S *f) {
+          this->m_vpss_engine->releaseFrame(f, 0);
+          delete f;
+        });
+
+    ret = vpss_process(srcframe, frame.get());
+  } else {
+    frame = std::shared_ptr<VIDEO_FRAME_INFO_S>(srcframe, [](VIDEO_FRAME_INFO_S *) {});
+  }
+
+  if (ret == CVIAI_SUCCESS) {
+    return VideoFrameCopy2Image(ive_handle, frame.get(), dst);
+  }
+  return ret;
+}
+
+CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj_meta) {
   static int c = 0;
 
-  CVI_S32 ret = VideoFrameCopy2Image(ive_handle, frame, &src[1]);
+  CVI_S32 ret = copy_image(srcframe, &src[1]);
   if (ret != CVI_SUCCESS) {
-    return ret;
+    LOGE("Failed to copy frame to IVE image\n");
+    return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
   if (count > 2) {
