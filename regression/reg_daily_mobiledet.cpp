@@ -140,6 +140,18 @@ TEST_F(MobileDetV2TestSuite, get_vpss_config) {
   ModelInfo model_info = getModel("mobiledetv2-person-vehicle-ls.cvimodel");
   ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
 
+  cvai_vpssconfig_t vpssconfig;
+  vpssconfig.chn_attr.u32Height = 200;
+  vpssconfig.chn_attr.u32Width = 200;
+  vpssconfig.chn_attr.enPixelFormat = PIXEL_FORMAT_ARGB_1555;
+  vpssconfig.chn_attr.stNormalize.bEnable = false;
+  EXPECT_EQ(CVI_AI_GetVpssChnConfig(m_ai_handle, model_info.index, 1920, 1080, 0, &vpssconfig),
+            CVIAI_ERR_NOT_YET_INITIALIZED);
+  EXPECT_EQ(vpssconfig.chn_attr.u32Height, (uint32_t)200);
+  EXPECT_EQ(vpssconfig.chn_attr.u32Width, (uint32_t)200);
+  EXPECT_EQ(vpssconfig.chn_attr.enPixelFormat, PIXEL_FORMAT_ARGB_1555);
+  EXPECT_EQ(vpssconfig.chn_attr.stNormalize.bEnable, false);
+
   AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path, true);
   ASSERT_NO_FATAL_FAILURE(aimodel.open());
 
@@ -147,12 +159,6 @@ TEST_F(MobileDetV2TestSuite, get_vpss_config) {
   uint32_t dstHeight = 384;
   uint32_t srcWidth = 1920;
   uint32_t srcHeight = 1080;
-
-  cvai_vpssconfig_t vpssconfig;
-  vpssconfig.chn_attr.u32Height = 200;
-  vpssconfig.chn_attr.u32Width = 200;
-  vpssconfig.chn_attr.enPixelFormat = PIXEL_FORMAT_ARGB_1555;
-  vpssconfig.chn_attr.stNormalize.bEnable = false;
 
   EXPECT_EQ(CVI_AI_GetVpssChnConfig(m_ai_handle, model_info.index, 1920, 1080, 0, &vpssconfig),
             CVIAI_SUCCESS);
