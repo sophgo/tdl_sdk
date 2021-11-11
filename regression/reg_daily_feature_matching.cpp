@@ -136,7 +136,7 @@ TEST_F(FeatureMatchingTestSuite, object_info_matching) {
               CVIAI_ERR_NOT_YET_INITIALIZED);
   }
 
-  std::vector<uint32_t> num_features = {100, 500, 10000, 20000};
+  std::vector<uint32_t> num_features = {100, 500, 2000};
   for (uint32_t num_feat : num_features) {
     GoldenResult<TYPE_INT8> golden(num_feat, 512, 5);
     golden.init();
@@ -217,7 +217,7 @@ TEST_F(FeatureMatchingTestSuite, face_info_matching) {
               CVIAI_ERR_NOT_YET_INITIALIZED);
   }
 
-  std::vector<uint32_t> num_features = {100, 500, 10000, 20000};
+  std::vector<uint32_t> num_features = {100, 500, 2000};
   for (uint32_t num_feat : num_features) {
     GoldenResult<TYPE_INT8> golden(num_feat, 512, 5);
     golden.init();
@@ -284,7 +284,7 @@ TEST_F(FeatureMatchingTestSuite, face_info_matching) {
 }
 
 TEST_F(FeatureMatchingTestSuite, raw_matching) {
-  GoldenResult<TYPE_INT8> golden(20000, 512, 5);
+  GoldenResult<TYPE_INT8> golden(2000, 512, 5);
   golden.init();
 
   ASSERT_EQ(
