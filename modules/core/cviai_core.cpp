@@ -47,10 +47,7 @@ using namespace cviai;
 
 struct ModelParams {
   VpssEngine *vpss_engine;
-  bool skip_vpss_preprocess;
-  float model_threshold;
   uint32_t vpss_timeout_value;
-  std::vector<uint32_t> *selected_classes;
 };
 
 using CreatorFunc = std::function<Core *(const ModelParams &)>;
@@ -61,10 +58,6 @@ Core *create_model(const ModelParams &params, Args... arg) {
   C *instance = new C(arg...);
 
   instance->setVpssEngine(params.vpss_engine);
-  instance->skipVpssPreprocess(params.skip_vpss_preprocess);
-  if (params.model_threshold != -1) {
-    instance->setModelThreshold(params.model_threshold);
-  }
   instance->setVpssTimeout(params.vpss_timeout_value);
   return instance;
 }
@@ -165,11 +158,6 @@ inline Core *__attribute__((always_inline))
 getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx) {
   cviai_model_t &m_t = ctx->model_cont[index];
   if (m_t.instance == nullptr) {
-    if (m_t.model_path.empty()) {
-      LOGE("Model path for %s is empty.\n", CVI_AI_GetModelName(index));
-      return nullptr;
-    }
-
     if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
       LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
            CVI_AI_GetModelName(index));
@@ -177,33 +165,10 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
     }
 
     auto creator = MODEL_CREATORS[index];
-    ModelParams params = {
-        .vpss_engine = ctx->vec_vpss_engine[m_t.vpss_thread],
-        .skip_vpss_preprocess = m_t.skip_vpss_preprocess,
-        .model_threshold = m_t.model_threshold,
-        .vpss_timeout_value = ctx->vpss_timeout_value,
-        .selected_classes = m_t.selected_classes,
-    };
+    ModelParams params = {.vpss_engine = ctx->vec_vpss_engine[m_t.vpss_thread],
+                          .vpss_timeout_value = ctx->vpss_timeout_value};
 
     m_t.instance = creator(params);
-    if (m_t.instance->modelOpen(m_t.model_path.c_str()) != CVIAI_SUCCESS) {
-      LOGE("Failed to open model %s (%s).\n", CVI_AI_GetModelName(index), m_t.model_path.c_str());
-      return nullptr;
-    }
-    LOGI("model open is success: %s (%s)!\n", CVI_AI_GetModelName(index), m_t.model_path.c_str());
-
-    // TODO: Don't setup for specific classes here, not all model should consider threshold....
-    if (m_t.model_threshold == -1) {
-      m_t.model_threshold = m_t.instance->getModelThreshold();
-    }
-
-    // TODO: Again, don't setup for specific classes here
-    if (m_t.selected_classes) {
-      // TODO: only support MobileDetV2 for now
-      if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(m_t.instance)) {
-        mdetv2->select_classes(*m_t.selected_classes);
-      }
-    }
   }
 
   return m_t.instance;
@@ -223,7 +188,7 @@ CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
     return CVIAI_ERR_INIT_VPSS;
   }
   const char timestamp[] = __DATE__ " " __TIME__;
-  LOGI("cviai_handle_t created, version %s-%s", CVIAI_TAG, timestamp);
+  LOGI("cviai_handle_t is created, version %s-%s", CVIAI_TAG, timestamp);
   *handle = ctx;
   return CVIAI_SUCCESS;
 }
@@ -232,65 +197,53 @@ CVI_S32 CVI_AI_DestroyHandle(cviai_handle_t handle) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   CVI_AI_CloseAllModel(handle);
   removeCtx(ctx);
-  LOGI("cviai_handle_t destroyed.");
+  LOGI("cviai_handle_t is destroyed.");
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                            const char *filepath) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  cviai_model_t &m_t = ctx->model_cont[config];
-  if (m_t.instance != nullptr) {
-    if (m_t.instance->isInitialized()) {
-      LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
-           CVI_AI_GetModelName(config));
-      return CVIAI_ERR_MODEL_INITIALIZED;
-    }
-  }
-
+static bool checkModelFile(const char *filepath) {
   struct stat buffer;
+  bool ret = false;
   if (stat(filepath, &buffer) == 0) {
     if (S_ISREG(buffer.st_mode)) {
-      m_t.model_path = filepath;
-      return CVIAI_SUCCESS;
+      ret = true;
     } else {
       LOGE("Path of model file isn't a regular file: %s\n", filepath);
     }
   } else {
     LOGE("Model file doesn't exists: %s\n", filepath);
   }
-
-  m_t.model_path.clear();
-  return CVIAI_ERR_INVALID_MODEL_PATH;
+  return ret;
 }
 
-CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
+CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                         const char *filepath) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   cviai_model_t &m_t = ctx->model_cont[config];
-  if (m_t.instance != nullptr) {
-    if (!m_t.instance->isInitialized()) {
-      if (m_t.model_path.empty()) {
-        LOGE("Model path for %s is empty.\n", CVI_AI_GetModelName(config));
-        return CVIAI_ERR_INVALID_MODEL_PATH;
-      }
+  Core *instance = getInferenceInstance(config, ctx);
 
-      if (m_t.instance->modelOpen(m_t.model_path.c_str()) == CVIAI_SUCCESS) {
-        LOGI("Model opened: %s (%s)", CVI_AI_GetModelName(config), m_t.model_path.c_str());
-        return CVIAI_ERR_OPEN_MODEL;
-      }
-    } else {
+  if (instance != nullptr) {
+    if (instance->isInitialized()) {
       LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
            CVI_AI_GetModelName(config));
-      return CVIAI_SUCCESS;
+      return CVIAI_ERR_MODEL_INITIALIZED;
     }
   } else {
-    Core *instance = getInferenceInstance(config, ctx);
-    if (!instance) {
-      LOGE("Failed to open model %s\n", CVI_AI_GetModelName(config));
-      return CVIAI_ERR_OPEN_MODEL;
-    }
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
   }
 
+  if (!checkModelFile(filepath)) {
+    return CVIAI_ERR_INVALID_MODEL_PATH;
+  }
+
+  m_t.model_path = filepath;
+  CVI_S32 ret = m_t.instance->modelOpen(m_t.model_path.c_str());
+  if (ret != CVIAI_SUCCESS) {
+    LOGE("Failed to open model: %s (%s)", CVI_AI_GetModelName(config), m_t.model_path.c_str());
+    return ret;
+  }
+  LOGI("Model is opened successfully: %s \n", CVI_AI_GetModelName(config));
   return CVIAI_SUCCESS;
 }
 
@@ -302,10 +255,12 @@ const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E 
 CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                      bool skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  auto &m_t = ctx->model_cont[config];
-  m_t.skip_vpss_preprocess = skip;
-  if (m_t.instance != nullptr) {
-    m_t.instance->skipVpssPreprocess(m_t.skip_vpss_preprocess);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    instance->skipVpssPreprocess(skip);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
   }
   return CVIAI_SUCCESS;
 }
@@ -313,17 +268,25 @@ CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MOD
 CVI_S32 CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                      bool *skip) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  *skip = ctx->model_cont[config].skip_vpss_preprocess;
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    *skip = instance->hasSkippedVpssPreprocess();
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
   return CVIAI_SUCCESS;
 }
 
 CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  float threshold) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  auto &m_t = ctx->model_cont[config];
-  m_t.model_threshold = threshold;
-  if (m_t.instance != nullptr) {
-    m_t.instance->setModelThreshold(m_t.model_threshold);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    instance->setModelThreshold(threshold);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
   }
   return CVIAI_SUCCESS;
 }
@@ -331,7 +294,13 @@ CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
 CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  float *threshold) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  *threshold = ctx->model_cont[config].model_threshold;
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    *threshold = instance->getModelThreshold();
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
   return CVIAI_SUCCESS;
 }
 
@@ -343,7 +312,13 @@ CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E con
 CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                               const uint32_t thread, const VPSS_GRP vpssGroupId) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  return setVPSSThread(ctx->model_cont[config], ctx->vec_vpss_engine, thread, vpssGroupId);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    return setVPSSThread(ctx->model_cont[config], ctx->vec_vpss_engine, thread, vpssGroupId);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
 }
 
 CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
@@ -381,13 +356,9 @@ CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle) {
   for (auto &m_inst : ctx->model_cont) {
     if (m_inst.second.instance != nullptr) {
       m_inst.second.instance->modelClose();
-      LOGI("Model closed: %s\n", CVI_AI_GetModelName(m_inst.first));
+      LOGI("Model is closed: %s\n", CVI_AI_GetModelName(m_inst.first));
       delete m_inst.second.instance;
       m_inst.second.instance = nullptr;
-      if (m_inst.second.selected_classes) {
-        delete m_inst.second.selected_classes;
-        m_inst.second.selected_classes = nullptr;
-      }
     }
   }
   for (auto &m_inst : ctx->custom_cont) {
@@ -408,13 +379,9 @@ CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
   if (m_t.instance == nullptr) {
     return CVIAI_ERR_CLOSE_MODEL;
   }
-  if (m_t.selected_classes) {
-    delete m_t.selected_classes;
-    m_t.selected_classes = nullptr;
-  }
 
   m_t.instance->modelClose();
-  LOGI("Model closed: %s\n", CVI_AI_GetModelName(config));
+  LOGI("Model is closed: %s\n", CVI_AI_GetModelName(config));
   delete m_t.instance;
   m_t.instance = nullptr;
   return CVIAI_SUCCESS;
@@ -423,13 +390,10 @@ CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config
 CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                  uint32_t num_selection, ...) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  auto &m_t = ctx->model_cont[config];
-
   va_list args;
   va_start(args, num_selection);
 
-  if (m_t.selected_classes) delete m_t.selected_classes;
-  m_t.selected_classes = new std::vector<uint32_t>();
+  std::vector<uint32_t> selected_classes;
   for (uint32_t i = 0; i < num_selection; i++) {
     uint32_t selected_class = va_arg(args, uint32_t);
 
@@ -437,24 +401,28 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
       uint32_t group_start = (selected_class & CVI_AI_DET_GROUP_MASK_START) >> 16;
       uint32_t group_end = (selected_class & CVI_AI_DET_GROUP_MASK_END);
       for (uint32_t i = group_start; i <= group_end; i++) {
-        m_t.selected_classes->push_back(i);
+        selected_classes.push_back(i);
       }
     } else {
       if (selected_class >= CVI_AI_DET_TYPE_END) {
         LOGE("Invalid class id: %d\n", selected_class);
         return CVIAI_ERR_INVALID_ARGS;
       }
-      m_t.selected_classes->push_back(selected_class);
+      selected_classes.push_back(selected_class);
     }
   }
 
-  if (m_t.instance != nullptr) {
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
     // TODO: only supports MobileDetV2 for now
-    if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(m_t.instance)) {
-      mdetv2->select_classes(*m_t.selected_classes);
+    if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(instance)) {
+      mdetv2->select_classes(selected_classes);
     } else {
       LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 family model for now.\n");
     }
+  } else {
+    LOGE("Failed to create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
   }
   return CVIAI_SUCCESS;
 }
@@ -493,55 +461,79 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
  *  function should follow same function signature, that is,
  *  CVI_S32 inference(Frame1, Frame2, ... FrameN, Param1, Param2, ..., ParamN)
  */
-#define DEFINE_INF_FUNC_F1_P1(func_name, class_name, model_index, arg_type)                  \
-  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg_type arg1) { \
-    TRACE_EVENT("cviai_core", #func_name);                                                   \
-    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                           \
-    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));    \
-    if (obj == nullptr) {                                                                    \
-      LOGE("No instance found for %s.\n", #class_name);                                      \
-      return CVIAI_ERR_OPEN_MODEL;                                                           \
-    }                                                                                        \
-    return obj->inference(frame, arg1);                                                      \
+#define DEFINE_INF_FUNC_F1_P1(func_name, class_name, model_index, arg_type)                   \
+  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg_type arg1) {  \
+    TRACE_EVENT("cviai_core", #func_name);                                                    \
+    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                            \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
+    if (obj == nullptr) {                                                                     \
+      LOGE("No instance found for %s.\n", #class_name);                                       \
+      return CVIAI_ERR_OPEN_MODEL;                                                            \
+    }                                                                                         \
+    if (obj->isInitialized()) {                                                               \
+      return obj->inference(frame, arg1);                                                     \
+    } else {                                                                                  \
+      LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n", \
+           CVI_AI_GetModelName(model_index));                                                 \
+      return CVIAI_ERR_NOT_YET_INITIALIZED;                                                   \
+    }                                                                                         \
   }
 
-#define DEFINE_INF_FUNC_F1_P2(func_name, class_name, model_index, arg1_type, arg2_type)     \
-  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg1_type arg1, \
-                    arg2_type arg2) {                                                       \
-    TRACE_EVENT("cviai_core", #func_name);                                                  \
-    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                          \
-    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));   \
-    if (obj == nullptr) {                                                                   \
-      LOGE("No instance found for %s.\n", #class_name);                                     \
-      return CVIAI_ERR_OPEN_MODEL;                                                          \
-    }                                                                                       \
-    return obj->inference(frame, arg1, arg2);                                               \
+#define DEFINE_INF_FUNC_F1_P2(func_name, class_name, model_index, arg1_type, arg2_type)       \
+  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg1_type arg1,   \
+                    arg2_type arg2) {                                                         \
+    TRACE_EVENT("cviai_core", #func_name);                                                    \
+    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                            \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
+    if (obj == nullptr) {                                                                     \
+      LOGE("No instance found for %s.\n", #class_name);                                       \
+      return CVIAI_ERR_OPEN_MODEL;                                                            \
+    }                                                                                         \
+    if (obj->isInitialized()) {                                                               \
+      return obj->inference(frame, arg1, arg2);                                               \
+    } else {                                                                                  \
+      LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n", \
+           CVI_AI_GetModelName(model_index));                                                 \
+      return CVIAI_ERR_NOT_YET_INITIALIZED;                                                   \
+    }                                                                                         \
   }
 
-#define DEFINE_INF_FUNC_F2_P1(func_name, class_name, model_index, arg_type)               \
-  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame1,              \
-                    VIDEO_FRAME_INFO_S *frame2, arg_type arg1) {                          \
-    TRACE_EVENT("cviai_core", #func_name);                                                \
-    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                        \
-    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx)); \
-    if (obj == nullptr) {                                                                 \
-      LOGE("No instance found for %s.\n", #class_name);                                   \
-      return CVIAI_ERR_OPEN_MODEL;                                                        \
-    }                                                                                     \
-    return obj->inference(frame1, frame2, arg1);                                          \
+#define DEFINE_INF_FUNC_F2_P1(func_name, class_name, model_index, arg_type)                   \
+  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame1,                  \
+                    VIDEO_FRAME_INFO_S *frame2, arg_type arg1) {                              \
+    TRACE_EVENT("cviai_core", #func_name);                                                    \
+    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                            \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
+    if (obj == nullptr) {                                                                     \
+      LOGE("No instance found for %s.\n", #class_name);                                       \
+      return CVIAI_ERR_OPEN_MODEL;                                                            \
+    }                                                                                         \
+    if (obj->isInitialized()) {                                                               \
+      return obj->inference(frame1, frame2, arg1);                                            \
+    } else {                                                                                  \
+      LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n", \
+           CVI_AI_GetModelName(model_index));                                                 \
+      return CVIAI_ERR_NOT_YET_INITIALIZED;                                                   \
+    }                                                                                         \
   }
 
-#define DEFINE_INF_FUNC_F2_P2(func_name, class_name, model_index, arg1_type, arg2_type)   \
-  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame1,              \
-                    VIDEO_FRAME_INFO_S *frame2, arg1_type arg1, arg2_type arg2) {         \
-    TRACE_EVENT("cviai_core", #func_name);                                                \
-    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                        \
-    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx)); \
-    if (obj == nullptr) {                                                                 \
-      LOGE("No instance found for %s.\n", #class_name);                                   \
-      return CVIAI_ERR_OPEN_MODEL;                                                        \
-    }                                                                                     \
-    return obj->inference(frame1, frame2, arg1, arg2);                                    \
+#define DEFINE_INF_FUNC_F2_P2(func_name, class_name, model_index, arg1_type, arg2_type)       \
+  CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame1,                  \
+                    VIDEO_FRAME_INFO_S *frame2, arg1_type arg1, arg2_type arg2) {             \
+    TRACE_EVENT("cviai_core", #func_name);                                                    \
+    cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                            \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
+    if (obj == nullptr) {                                                                     \
+      LOGE("No instance found for %s.\n", #class_name);                                       \
+      return CVIAI_ERR_OPEN_MODEL;                                                            \
+    }                                                                                         \
+    if (obj->isInitialized()) {                                                               \
+      return obj->inference(frame1, frame2, arg1, arg2);                                      \
+    } else {                                                                                  \
+      LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n", \
+           CVI_AI_GetModelName(model_index));                                                 \
+      return CVIAI_ERR_NOT_YET_INITIALIZED;                                                   \
+    }                                                                                         \
   }
 
 /**

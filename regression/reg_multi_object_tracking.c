@@ -5,28 +5,7 @@
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
 #include "inttypes.h"
-
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
-typedef struct _ModelConfig {
-  CVI_AI_SUPPORTED_MODEL_E model_id;
-  int input_size;
-  InferenceFunc inference;
-} ModelConfig;
-
-CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
-  CVI_S32 ret = CVIAI_SUCCESS;
-
-  if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    config->inference = CVI_AI_MobileDetV2_COCO80;
-  } else if (strcmp(model_name, "yolov3") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
-    config->inference = CVI_AI_Yolov3;
-  } else {
-    ret = CVIAI_FAILURE;
-  }
-  return ret;
-}
+#include "od_utils.h"
 
 int main(int argc, char *argv[]) {
   CVI_AI_PerfettoInit();
@@ -53,22 +32,23 @@ int main(int argc, char *argv[]) {
   }
   cviai_handle_t ai_handle = NULL;
 
-  ModelConfig model_config;
-  if (createModelConfig(argv[1], &model_config) == CVIAI_FAILURE) {
+  ODInferenceFunc inference;
+  CVI_AI_SUPPORTED_MODEL_E od_model_id;
+  if (get_od_model_info(argv[1], &od_model_id, &inference) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
     return CVIAI_FAILURE;
   }
 
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
 
-  ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
+  ret = CVI_AI_OpenModel(ai_handle, od_model_id, argv[2]);
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
   if (ret != CVIAI_SUCCESS) {
     printf("model open failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, od_model_id, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
 
   // Init DeepSORT
@@ -130,12 +110,12 @@ int main(int argc, char *argv[]) {
     memset(&obj_meta, 0, sizeof(cvai_object_t));
     memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
 
-    CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
+    CVI_AI_SelectDetectClass(ai_handle, od_model_id, 1, CVI_AI_DET_TYPE_PERSON);
 
     //*******************************************
     // Tracking function calls.
     // Step 1. Object detect inference.
-    model_config.inference(ai_handle, &frame, &obj_meta);
+    inference(ai_handle, &frame, &obj_meta);
     // Step 2. Object feature generator.
     CVI_AI_OSNet(ai_handle, &frame, &obj_meta);
     // Step 3. Tracker.

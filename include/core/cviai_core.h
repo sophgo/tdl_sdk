@@ -187,15 +187,6 @@ DLL_EXPORT CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP v
                                         const CVI_U8 vpssDev);
 
 /**
- * @brief Open and initialize a model immediately.
- *
- * @param handle An AI SDK handle.
- * @param model_index index of a model.
- * @return int Return CVIAI_SUCCESS if succeed.
- */
-DLL_EXPORT CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model_index);
-
-/**
  * @brief Destroy a cviai_handle_t.
  *
  * @param handle An AI SDK handle.
@@ -204,15 +195,15 @@ DLL_EXPORT CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODE
 DLL_EXPORT CVI_S32 CVI_AI_DestroyHandle(cviai_handle_t handle);
 
 /**
- * @brief Set the model path for supported networks.
+ * @brief Open model with given file path.
  *
  * @param handle An AI SDK handle.
  * @param config Supported model type config.
  * @param filepath File path to the cvimodel file.
  * @return int Return CVIAI_SUCCESS if load model succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                                       const char *filepath);
+DLL_EXPORT CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                    const char *filepath);
 
 /**
  * @brief Get set model path from supported models.

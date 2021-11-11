@@ -1,6 +1,7 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "sample_comm.h"
+#include "sample_utils.h"
 #include "vi_vo_utils.h"
 
 #include <cvi_sys.h>
@@ -14,40 +15,6 @@
 #include <unistd.h>
 
 static volatile bool bExit = false;
-
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
-typedef struct _ModelConfig {
-  CVI_AI_SUPPORTED_MODEL_E model_id;
-  int input_size;
-  InferenceFunc inference;
-} ModelConfig;
-
-CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
-  CVI_S32 ret = CVI_SUCCESS;
-
-  if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    config->inference = CVI_AI_MobileDetV2_Person_Vehicle;
-  } else if (strcmp(model_name, "mobiledetv2-person-pets") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS;
-    config->inference = CVI_AI_MobileDetV2_Person_Pets;
-  } else if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    config->inference = CVI_AI_MobileDetV2_COCO80;
-  } else if (strcmp(model_name, "mobiledetv2-vehicle") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
-    config->inference = CVI_AI_MobileDetV2_Vehicle;
-  } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-    config->inference = CVI_AI_MobileDetV2_Pedestrian;
-  } else if (strcmp(model_name, "yolov3") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
-    config->inference = CVI_AI_Yolov3;
-  } else {
-    ret = CVIAI_FAILURE;
-  }
-  return ret;
-}
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
@@ -79,8 +46,9 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  ModelConfig model_config;
-  if (createModelConfig(argv[1], &model_config) == CVIAI_FAILURE) {
+  ODInferenceFunc inference;
+  CVI_AI_SUPPORTED_MODEL_E od_model_id;
+  if (get_od_model_info(argv[1], &od_model_id, &inference) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
     return CVIAI_FAILURE;
   }
@@ -96,29 +64,27 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), s32Ret, create_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), s32Ret,
+                 create_service_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, od_model_id, argv[2]), s32Ret, create_ai_setup_fail);
 
-  ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
-  if (ret != CVI_SUCCESS) {
-    printf("Facelib open failed with %#x!\n", ret);
-    return ret;
-  }
   if (argc == 5) {
     float threshold = atof(argv[4]);
     if (threshold < 0.0 || threshold > 1.0) {
       printf("wrong threshold value: %f\n", threshold);
-      return ret;
+      s32Ret = CVI_FAILURE;
+      goto create_ai_setup_fail;
     } else {
       printf("set threshold to %f\n", threshold);
     }
-    CVI_AI_SetModelThreshold(ai_handle, model_config.model_id, threshold);
+    GOTO_IF_FAILED(CVI_AI_SetModelThreshold(ai_handle, od_model_id, threshold), s32Ret,
+                   create_ai_setup_fail);
   }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
 
-  ret = CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 3, CVI_AI_DET_TYPE_PERSON,
-                                 CVI_AI_DET_TYPE_BANANA, CVI_AI_DET_GROUP_VEHICLE);
+  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(ai_handle, od_model_id, 3, CVI_AI_DET_TYPE_PERSON,
+                                          CVI_AI_DET_TYPE_BANANA, CVI_AI_DET_GROUP_VEHICLE),
+                 s32Ret, create_ai_setup_fail);
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
   cvai_object_t obj_meta;
@@ -131,7 +97,12 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    model_config.inference(ai_handle, &stfdFrame, &obj_meta);
+    s32Ret = inference(ai_handle, &stfdFrame, &obj_meta);
+    if (s32Ret != CVIAI_SUCCESS) {
+      printf("inference fail! ret= %#x\n", s32Ret);
+      break;
+    }
+
     printf("nums of object %u\n", obj_meta.size);
 
     int s32Ret = CVI_SUCCESS;
@@ -169,10 +140,13 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&obj_meta);
   }
 
+create_ai_setup_fail:
   CVI_AI_Service_DestroyHandle(service_handle);
+create_service_fail:
   CVI_AI_DestroyHandle(ai_handle);
-
+create_ai_fail:
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
+  return s32Ret;
 }

@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
   if (ret != CVIAI_SUCCESS) {
     printf("Set model esc failed with %#x!\n", ret);
     return ret;

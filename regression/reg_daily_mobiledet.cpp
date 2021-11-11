@@ -124,7 +124,7 @@ TEST_F(MobileDetV2TestSuite, open_close_model) {
   ModelInfo model_info = getModel("mobiledetv2-lite-person-pets.cvimodel");
   ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
 
-  ASSERT_EQ(CVI_AI_SetModelPath(m_ai_handle, model_info.index, model_info.model_path.c_str()),
+  ASSERT_EQ(CVI_AI_OpenModel(m_ai_handle, model_info.index, model_info.model_path.c_str()),
             CVIAI_SUCCESS)
       << "failed to set model path: " << model_info.model_path;
 
@@ -133,7 +133,6 @@ TEST_F(MobileDetV2TestSuite, open_close_model) {
   EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, model_info.model_path,
                std::string(model_path_get));
 
-  ASSERT_EQ(CVI_AI_OpenModel(m_ai_handle, model_info.index), CVIAI_SUCCESS);
   ASSERT_EQ(CVI_AI_CloseModel(m_ai_handle, model_info.index), CVIAI_SUCCESS);
 }
 

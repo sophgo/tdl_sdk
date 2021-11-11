@@ -3,7 +3,7 @@
 #include <signal.h>
 #include "cvi_audio.h"
 #include "cviai.h"
-#include "cviai_perfetto.h"
+#include "sample_utils.h"
 
 #define AUDIOFORMATSIZE 2
 #define SECOND 3
@@ -11,6 +11,10 @@
 #define PERIOD_SIZE 640
 #define SAMPLE_RATE 16000
 #define FRAME_SIZE SAMPLE_RATE *AUDIOFORMATSIZE *SECOND  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
+
+// ESC class name
+char ES_Classes[6][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",
+                          "Baby Cry",          "Glass breaking",    "Office"};
 
 bool gRun = true;     // signal
 bool record = false;  // record to output
@@ -59,14 +63,12 @@ void *thread_uplink_audio(void *arg) {
     }
     if (!record) {
       CVI_AI_SoundClassification(ai_handle, &Frame, &index);  // Detect the audio
-      // Print soundcmd result
-      if (index == 22)
-        printf("Sound cmd preditcion: Normal\n");
+      // Print esc result
+      if (index == 0 || index == 1)
+        printf("esc class: %s  \n", ES_Classes[0]);
       else
-        printf("Sound cmd prediction: %d \n", index + 1);
-
+        printf("esc class: %s  \n", ES_Classes[index]);
     } else {
-      // record audio
       FILE *fp = fopen(outpath, "wb");
       fwrite((char *)buffer, 1, FRAME_SIZE, fp);
       fclose(fp);
@@ -105,7 +107,7 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
   s32Ret = CVI_AI_EnableChn(0, 0);
   if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
 
-  s32Ret = CVI_AI_SetVolume(0, 10);
+  s32Ret = CVI_AI_SetVolume(0, 4);
   if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
 
   printf("SET_AUDIO_ATTR success!!\n");
@@ -113,11 +115,10 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
 }
 
 int main(int argc, char **argv) {
-  CVI_AI_PerfettoInit();
   if (argc != 2 && argc != 4) {
     printf(
-        "Usage: %s <soundcmd model path> <record 0 or 1> <output file path>\n"
-        "\t soundcmd model path\n"
+        "Usage: %s <esc_model_path> <record 0 or 1> <output file path>\n"
+        "\t esc model path\n"
         "\t record, 0: disable 1. enable\n"
         "\t output file path: {output file path}.raw\n",
         argv[0]);
@@ -144,9 +145,9 @@ int main(int argc, char **argv) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
   if (ret != CVIAI_SUCCESS) {
-    printf("Set model esc failed with %#x!\n", ret);
+    CVI_AI_DestroyHandle(ai_handle);
     return ret;
   }
 
@@ -160,10 +161,10 @@ int main(int argc, char **argv) {
   pthread_create(&pcm_output_thread, NULL, thread_uplink_audio, NULL);
 
   pthread_join(pcm_output_thread, NULL);
-  CVI_AI_DestroyHandle(ai_handle);
   if (argc == 4) {
     free(outpath);
   }
 
+  CVI_AI_DestroyHandle(ai_handle);
   return 0;
 }

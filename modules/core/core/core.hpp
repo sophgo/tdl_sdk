@@ -82,6 +82,7 @@ class Core {
 
   virtual ~Core() = default;
   int modelOpen(const char *filepath);
+  const char *getModelFilePath() const { return m_model_file.c_str(); }
   int modelClose();
   int setIveInstance(IVE_HANDLE handle);
   int setVpssTimeout(uint32_t timeout);

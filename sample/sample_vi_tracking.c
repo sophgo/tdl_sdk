@@ -1,6 +1,7 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "sample_comm.h"
+#include "sample_utils.h"
 #include "vi_vo_utils.h"
 
 #include <cvi_sys.h>
@@ -17,31 +18,6 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 static volatile bool bExit = false;
-
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
-typedef struct _ModelConfig {
-  CVI_AI_SUPPORTED_MODEL_E model_id;
-  int input_size;
-  InferenceFunc inference;
-} ModelConfig;
-
-CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
-  CVI_S32 ret = CVIAI_SUCCESS;
-
-  if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    config->inference = CVI_AI_MobileDetV2_COCO80;
-  } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-    config->inference = CVI_AI_MobileDetV2_Pedestrian;
-  } else if (strcmp(model_name, "yolov3") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
-    config->inference = CVI_AI_Yolov3;
-  } else {
-    ret = CVIAI_FAILURE;
-  }
-  return ret;
-}
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
@@ -71,8 +47,9 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  ModelConfig model_config;
-  if (createModelConfig(argv[1], &model_config) == CVIAI_FAILURE) {
+  ODInferenceFunc inference;
+  CVI_AI_SUPPORTED_MODEL_E od_model_id;
+  if (get_pd_model_info(argv[1], &od_model_id, &inference) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
     return CVIAI_FAILURE;
   }
@@ -88,24 +65,15 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
-  if (ret != CVIAI_SUCCESS) {
-    printf("create handle failed with %#x!\n", ret);
-    return ret;
-  }
 
-  ret = CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
-  if (ret != CVIAI_SUCCESS) {
-    printf("set model path failed with %#x!\n", ret);
-    return ret;
-  }
-
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
-  CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), s32Ret, create_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), s32Ret,
+                 create_service_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, od_model_id, argv[2]), s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]), s32Ret,
+                 setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(ai_handle, od_model_id, 1, CVI_AI_DET_TYPE_PERSON),
+                 s32Ret, setup_ai_fail);
 
   // Init DeepSORT
   CVI_AI_DeepSORT_Init(ai_handle, false);
@@ -143,7 +111,7 @@ int main(int argc, char *argv[]) {
     // Tracking function calls.
     cvai_area_detect_e *status = NULL;
     // Step 1. Object detect inference.
-    model_config.inference(ai_handle, &stFrame, &obj_meta);
+    inference(ai_handle, &stFrame, &obj_meta);
     // Step 2. Object feature generator.
     CVI_AI_OSNet(ai_handle, &stFrame, &obj_meta);
     // Step 3. Tracker.
@@ -195,9 +163,14 @@ int main(int argc, char *argv[]) {
   }
 
   CVI_AI_Free(&pts);
+
+setup_ai_fail:
   CVI_AI_Service_DestroyHandle(service_handle);
+create_service_fail:
   CVI_AI_DestroyHandle(ai_handle);
+create_ai_fail:
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
+  return s32Ret;
 }

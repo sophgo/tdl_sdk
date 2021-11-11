@@ -64,14 +64,14 @@ int main(int argc, char *argv[]) {
 
   /*
   ret =
-      CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+      CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
   od_model_path.c_str()); if (ret != CVIAI_SUCCESS) { printf("Set model retinaface failed with
   %#x!\n", ret); return ret;
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, false);
   CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 1,
                            CVI_AI_DET_TYPE_PERSON);
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, pose_model_path.c_str());
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, pose_model_path.c_str());
   if (ret != CVIAI_SUCCESS) {
     printf("Set model alphapose failed with %#x!\n", ret);
     return ret;

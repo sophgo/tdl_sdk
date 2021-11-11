@@ -1,6 +1,7 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "sample_comm.h"
+#include "sample_utils.h"
 #include "vi_vo_utils.h"
 
 #include <cvi_sys.h>
@@ -44,21 +45,26 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
-  s32Ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  s32Ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  s32Ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), s32Ret, create_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), s32Ret,
+                 create_service_fail);
+
   int use_vehicle = atoi(argv[2]);
   if (use_vehicle == 1) {
     printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE\n");
-    s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, argv[1]);
+    GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, argv[1]),
+                   s32Ret, setup_ai_fail);
+
   } else if (use_vehicle == 0) {
     printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80\n");
-    s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]);
-    s32Ret |= CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, 1,
-                                       CVI_AI_DET_GROUP_VEHICLE);
+    GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]),
+                   s32Ret, setup_ai_fail);
+    GOTO_IF_FAILED(CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, 1,
+                                            CVI_AI_DET_GROUP_VEHICLE),
+                   s32Ret, setup_ai_fail);
   } else {
     printf("Unknow det model type.\n");
-    return CVIAI_FAILURE;
+    goto setup_ai_fail;
   }
 
   enum LicenseFormat license_format;
@@ -68,23 +74,23 @@ int main(int argc, char *argv[]) {
     license_format = china;
   } else {
     printf("Unknown license type %s\n", argv[5]);
-    return CVIAI_FAILURE;
+    goto setup_ai_fail;
   }
 
-  s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]), s32Ret,
+                 setup_ai_fail);
+
   switch (license_format) {
     case taiwan:
-      s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
+      GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]), s32Ret,
+                     setup_ai_fail);
       break;
     case china:
-      s32Ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, argv[4]);
+      GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, argv[4]), s32Ret,
+                     setup_ai_fail);
       break;
     default:
-      return CVIAI_FAILURE;
-  }
-  if (s32Ret != CVIAI_SUCCESS) {
-    printf("open failed with %#x!\n", s32Ret);
-    return s32Ret;
+      goto setup_ai_fail;
   }
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
@@ -168,8 +174,11 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&vehicle_obj);
   }
 
+setup_ai_fail:
   CVI_AI_Service_DestroyHandle(service_handle);
+create_service_fail:
   CVI_AI_DestroyHandle(ai_handle);
+create_ai_fail:
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

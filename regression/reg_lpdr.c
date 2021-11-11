@@ -61,17 +61,17 @@ int main(int argc, char *argv[]) {
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   int use_vehicle = atoi(argv[2]);
   if (use_vehicle == 1) {
-    ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, argv[1]);
+    ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, argv[1]);
   } else if (use_vehicle == 0) {
-    ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]);
+    ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]);
     CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, 1,
                              CVI_AI_DET_GROUP_VEHICLE);
   } else {
     printf("Unknow det model type.\n");
     return CVIAI_FAILURE;
   }
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, argv[3]);
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, argv[4]);
   if (ret != CVIAI_SUCCESS) {
     printf("open failed with %#x!\n", ret);
     return ret;

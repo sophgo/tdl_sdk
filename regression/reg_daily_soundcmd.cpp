@@ -38,11 +38,11 @@ int main(int argc, char *argv[]) {
   }
 
   ret = CVI_AI_CreateHandle2(&facelib_handle, 1, 0);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION,
-                             model_path.c_str());
+  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION,
+                          model_path.c_str());
 
   if (ret != CVIAI_SUCCESS) {
-    printf("Set face quality model failed with %#x!\n", ret);
+    printf("Set model failed with %#x!\n", ret);
     return ret;
   }
 

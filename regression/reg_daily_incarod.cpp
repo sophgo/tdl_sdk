@@ -67,8 +67,8 @@ int main(int argc, char* argv[]) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION,
-                            od_model_path.c_str());
+  ret =
+      CVI_AI_OpenModel(handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, od_model_path.c_str());
   if (ret != CVIAI_SUCCESS) {
     printf("Set model incarod failed with %#x!\n", ret);
     return ret;

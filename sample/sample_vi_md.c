@@ -48,12 +48,16 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 2, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
-  if (ret != CVIAI_SUCCESS) {
-    printf("handle create failed with %#x!\n", ret);
-    return ret;
+  s32Ret = CVI_AI_CreateHandle2(&ai_handle, 2, 0);
+  if (s32Ret != CVIAI_SUCCESS) {
+    printf("failed to create ai handle.\n");
+    goto create_ai_fail;
+  }
+
+  s32Ret = CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  if (s32Ret != CVIAI_SUCCESS) {
+    printf("failed to create service handle.\n");
+    goto create_service_fail;
   }
 
   uint32_t threshold = atoi(argv[2]);
@@ -125,8 +129,12 @@ int main(int argc, char *argv[]) {
   }
 
   CVI_AI_Service_DestroyHandle(service_handle);
+create_service_fail:
   CVI_AI_DestroyHandle(ai_handle);
+create_ai_fail:
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
+
+  return s32Ret;
 }

@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <signal.h>
 #include "cviai.h"
+#include "sample_utils.h"
 #include "vi_vo_utils.h"
 
 // smooth value structure
@@ -222,21 +223,23 @@ int main(int argc, char** argv) {
   }
 
   // Load model
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Set model failed with %#x!\n", ret);
-    return ret;
-  }
+  CVI_S32 ret;
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), ret, create_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), ret, create_service_fail);
 
-  // Do vpss frame transform in retina face
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]), ret,
+                 setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]),
+                 ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]),
+                 ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]),
+                 ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]), ret,
+                 setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]),
+                 ret, setup_ai_fail);
+
   {
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
@@ -329,8 +332,11 @@ int main(int argc, char** argv) {
     }
   }
 
+setup_ai_fail:
   CVI_AI_Service_DestroyHandle(service_handle);
+create_service_fail:
   CVI_AI_DestroyHandle(ai_handle);
+create_ai_fail:
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

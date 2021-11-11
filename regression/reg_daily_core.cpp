@@ -104,22 +104,19 @@ TEST_F(CoreTestSuite, set_modelpath) {
   fs::path model_base_path = context.getModelBaseDir();
   fs::path mobiledet_path = model_base_path / "mobiledetv2-person-vehicle-ls.cvimodel";
 
-  EXPECT_EQ(CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
-                                mobiledet_path.c_str()),
+  EXPECT_EQ(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
+                             mobiledet_path.c_str()),
             CVIAI_SUCCESS);
   ASSERT_STREQ(CVI_AI_GetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE),
                mobiledet_path.c_str());
 
-  EXPECT_EQ(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE),
-            CVIAI_SUCCESS);
-
   // should be failed if set path again.
-  EXPECT_EQ(CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
-                                mobiledet_path.c_str()),
+  EXPECT_EQ(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
+                             mobiledet_path.c_str()),
             CVIAI_ERR_MODEL_INITIALIZED);
 
   // set invalid model path
-  EXPECT_EQ(CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, "fake path"),
+  EXPECT_EQ(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, "fake path"),
             CVIAI_ERR_INVALID_MODEL_PATH);
 
   EXPECT_EQ(CVI_AI_DestroyHandle(ai_handle), CVIAI_SUCCESS);
@@ -138,10 +135,8 @@ TEST_F(CoreTestSuite, set_vpss_thread) {
   fs::path model_base_path = context.getModelBaseDir();
   fs::path mobiledet_path = model_base_path / "mobiledetv2-person-vehicle-ls.cvimodel";
 
-  EXPECT_EQ(CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
-                                mobiledet_path.c_str()),
-            CVIAI_SUCCESS);
-  EXPECT_EQ(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE),
+  EXPECT_EQ(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
+                             mobiledet_path.c_str()),
             CVIAI_SUCCESS);
 
   // test default vpss thread id

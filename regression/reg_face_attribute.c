@@ -292,9 +292,9 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
-  ret |= CVI_AI_SetModelPath(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
+  ret = CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
+  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
   if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;

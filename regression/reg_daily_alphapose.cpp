@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
                            CVI_AI_DET_TYPE_PERSON);
     */
 
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, pose_model_path.c_str());
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, pose_model_path.c_str());
   if (ret != CVIAI_SUCCESS) {
     printf("Set model alphapose failed with %#x!\n", ret);
     return ret;

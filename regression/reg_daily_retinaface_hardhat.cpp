@@ -55,10 +55,9 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret =
-      CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE_HARDHAT, fd_model_path.c_str());
+  ret = CVI_AI_OpenModel(handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE_HARDHAT, fd_model_path.c_str());
   if (ret != CVIAI_SUCCESS) {
-    printf("Set model retinaface failed with %#x!\n", ret);
+    printf("Set model failed with %#x!\n", ret);
     return ret;
   }
 

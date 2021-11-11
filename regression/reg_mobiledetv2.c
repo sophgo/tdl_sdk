@@ -14,41 +14,12 @@
 #include "cviai_perfetto.h"
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
-
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
-typedef struct _ModelConfig {
-  CVI_AI_SUPPORTED_MODEL_E model_id;
-  int input_size;
-  InferenceFunc inference;
-} ModelConfig;
-
-CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
-  CVI_S32 ret = CVI_SUCCESS;
-
-  if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    config->inference = CVI_AI_MobileDetV2_Person_Vehicle;
-  } else if (strcmp(model_name, "mobiledetv2-person-pets") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS;
-    config->inference = CVI_AI_MobileDetV2_Person_Pets;
-  } else if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    config->inference = CVI_AI_MobileDetV2_COCO80;
-  } else if (strcmp(model_name, "mobiledetv2-vehicle") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
-    config->inference = CVI_AI_MobileDetV2_Vehicle;
-  } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-    config->inference = CVI_AI_MobileDetV2_Pedestrian;
-  } else {
-    ret = CVIAI_FAILURE;
-  }
-  return ret;
-}
+#include "od_utils.h"
 
 typedef struct _Argument {
   char model_path[1024];
-  ModelConfig model_config;
+  ODInferenceFunc inference;
+  CVI_AI_SUPPORTED_MODEL_E od_model_id;
   char regression_output_path[1024];
   char eval_json_path[1024];
   char image_folder_path[1024];
@@ -98,7 +69,7 @@ int parse_args(int argc, char *argv[], Argument *args) {
     strcpy(args->model_name, "mobiledetv2-d0");
   }
 
-  if (createModelConfig(args->model_name, &args->model_config) == CVIAI_FAILURE) {
+  if (get_od_model_info(args->model_name, &args->od_model_id, &args->inference) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", args->model_name);
     return CVIAI_FAILURE;
   }
@@ -160,14 +131,14 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_AI_SetModelPath(ai_handle, args.model_config.model_id, args.model_path);
+  ret = CVI_AI_OpenModel(ai_handle, args.od_model_id, args.model_path);
   if (ret != CVIAI_SUCCESS) {
     printf("Set model yolov3 failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, args.model_config.model_id, false);
-  CVI_AI_SetModelThreshold(ai_handle, args.model_config.model_id, 0.05);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, args.od_model_id, false);
+  CVI_AI_SetModelThreshold(ai_handle, args.od_model_id, 0.05);
 
   cviai_eval_handle_t eval_handle;
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
@@ -194,7 +165,7 @@ int main(int argc, char *argv[]) {
     }
     free(filename);
     cvai_object_t obj;
-    args.model_config.inference(ai_handle, &frame, &obj);
+    args.inference(ai_handle, &frame, &obj);
 
     for (int j = 0; j < obj.size; j++) {
       obj.info[j].classes = obj.info[j].classes + 1;

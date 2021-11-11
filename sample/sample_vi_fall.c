@@ -1,6 +1,7 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "sample_comm.h"
+#include "sample_utils.h"
 #include "vi_vo_utils.h"
 
 #include <cvi_sys.h>
@@ -52,28 +53,22 @@ int main(int argc, char *argv[]) {
   // Init cviai handle.
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Create handle failed with %#x!\n", ret);
-    return ret;
-  }
+  int ret;
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), ret, create_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), ret, create_service_fail);
 
-  // Setup model path and model config.
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, argv[1]);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Set model retinaface failed with %#x!\n", ret);
-    return ret;
-  }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, false);
-  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 1,
-                           CVI_AI_DET_TYPE_PERSON);
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, argv[2]);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Set model alphapose failed with %#x!\n", ret);
-    return ret;
-  }
+  GOTO_IF_FAILED(
+      CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, argv[1]), ret,
+      setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, argv[2]), ret,
+                 setup_ai_fail);
+
+  GOTO_IF_FAILED(
+      CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, false),
+      ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                                          1, CVI_AI_DET_TYPE_PERSON),
+                 ret, setup_ai_fail);
 
   VIDEO_FRAME_INFO_S fdFrame, stVOFrame;
   cvai_object_t obj;
@@ -141,8 +136,11 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&obj);
   }
 
+setup_ai_fail:
   CVI_AI_Service_DestroyHandle(service_handle);
+create_service_fail:
   CVI_AI_DestroyHandle(ai_handle);
+create_ai_fail:
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

@@ -13,12 +13,7 @@
 typedef struct {
   cviai::Core *instance = nullptr;
   std::string model_path = "";
-  bool skip_vpss_preprocess = false;
-  float model_threshold = -1;
   uint32_t vpss_thread = 0;
-
-  // TODO: Bad design, keep setting here temporary is unnecessary.
-  std::vector<uint32_t> *selected_classes = nullptr;
 } cviai_model_t;
 
 // specialize std::hash for enum CVI_AI_SUPPORTED_MODEL_E

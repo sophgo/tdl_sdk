@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
-  ret = CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, model_path.c_str());
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, model_path.c_str());
   if (ret != CVIAI_SUCCESS) {
     printf("Set license plate detection model failed with %#x!\n", ret);
     return ret;

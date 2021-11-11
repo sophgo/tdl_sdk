@@ -1,6 +1,7 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "sample_comm.h"
+#include "sample_utils.h"
 #include "vi_vo_utils.h"
 
 #include <cvi_sys.h>
@@ -51,19 +52,17 @@ int main(int argc, char *argv[]) {
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
 
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[3]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, argv[4]);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Set model failed with %#x!\n", ret);
-    return ret;
-  }
-  // Do vpss frame transform in retina face
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), s32Ret, create_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), s32Ret,
+                 create_service_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]), s32Ret,
+                 setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]),
+                 s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[3]), s32Ret,
+                 setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, argv[4]),
+                 s32Ret, setup_ai_fail);
 
   VIDEO_FRAME_INFO_S rgbFrame, stVOFrame;
   cvai_face_t face;
@@ -123,8 +122,11 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&face);
   }
 
+setup_ai_fail:
   CVI_AI_Service_DestroyHandle(service_handle);
+create_service_fail:
   CVI_AI_DestroyHandle(ai_handle);
+create_ai_fail:
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

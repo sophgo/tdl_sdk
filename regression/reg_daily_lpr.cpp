@@ -49,11 +49,11 @@ int main(int argc, char *argv[]) {
   std::string model_name, model_path;
   model_name = std::string(m_json_read["TW"]["reg_config"][0]["model_name"]);
   model_path = model_dir + "/" + model_name;
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, model_path.c_str());
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_TW, model_path.c_str());
 
   model_name = std::string(m_json_read["CN"]["reg_config"][0]["model_name"]);
   model_path = model_dir + "/" + model_name;
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, model_path.c_str());
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_LPRNET_CN, model_path.c_str());
   if (ret != CVIAI_SUCCESS) {
     printf("Set license plate detection model failed with %#x!\n", ret);
     return ret;

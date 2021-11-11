@@ -59,13 +59,13 @@ int main(int argc, char *argv[]) {
   }
 
   /*
-  ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_model_path.c_str());
+  ret = CVI_AI_OpenModelEx(handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_model_path.c_str());
   if (ret != CVIAI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
   */
-  ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_LIVENESS, liveness_model_path.c_str());
+  ret = CVI_AI_OpenModel(handle, CVI_AI_SUPPORTED_MODEL_LIVENESS, liveness_model_path.c_str());
   if (ret != CVIAI_SUCCESS) {
     printf("Set model liveness failed with %#x!\n", ret);
     return ret;

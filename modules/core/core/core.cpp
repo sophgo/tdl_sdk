@@ -223,13 +223,23 @@ int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32
     LOGE("This model does not support exporting channel attributes.\n");
     return CVIAI_ERR_GET_VPSS_CHN_CONFIG;
   }
+
+  if (!isInitialized()) {
+    LOGE(
+        "Model is not yet opened. Please call CVI_AI_OpenModel to initialize model before getting "
+        "channel config.\n");
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+
   if (idx >= (uint32_t)mp_mi->in.num) {
     LOGE("Input index exceed input tensor num.\n");
     return CVIAI_ERR_GET_VPSS_CHN_CONFIG;
   }
+
   if (!m_skip_vpss_preprocess) {
     LOGW("VPSS preprocessing is enabled. Remember to skip vpss preprocess.\n");
   }
+
   switch (m_vpss_config[idx].rescale_type) {
     case RESCALE_CENTER: {
       chn_config->chn_attr = m_vpss_config[idx].chn_attr;

@@ -1,6 +1,7 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "sample_comm.h"
+#include "sample_utils.h"
 #include "vi_vo_utils.h"
 
 #include <cvi_sys.h>
@@ -26,13 +27,6 @@ static volatile bool bExit = false;
 /* cv182x can't detect object and face at the same time. */
 #define DETECT_PEOPLE 0
 
-typedef int (*InferenceFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_object_t *);
-typedef struct _ModelConfig {
-  CVI_AI_SUPPORTED_MODEL_E model_id;
-  int input_size;
-  InferenceFunc inference;
-} ModelConfig;
-
 int getNumDigits(uint64_t num) {
   int digits = 0;
   do {
@@ -56,27 +50,6 @@ char *floatToString(float number) {
   char *numArray = calloc(64, sizeof(char));
   sprintf(numArray, "%g", number);
   return numArray;
-}
-
-CVI_S32 createModelConfig(const char *model_name, ModelConfig *config) {
-  CVI_S32 ret = CVIAI_SUCCESS;
-
-  if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    config->inference = CVI_AI_MobileDetV2_COCO80;
-  } else if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    config->inference = CVI_AI_MobileDetV2_Person_Vehicle;
-  } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-    config->inference = CVI_AI_MobileDetV2_Pedestrian;
-  } else if (strcmp(model_name, "yolov3") == 0) {
-    config->model_id = CVI_AI_SUPPORTED_MODEL_YOLOV3;
-    config->inference = CVI_AI_Yolov3;
-  } else {
-    ret = CVIAI_FAILURE;
-  }
-  return ret;
 }
 
 typedef enum { MISS = 0, ALIVE } tracker_state_e;
@@ -235,7 +208,6 @@ int main(int argc, char *argv[]) {
         argv[0]);
     return CVIAI_FAILURE;
   }
-  CVI_S32 ret = CVIAI_SUCCESS;
 
   CVI_S32 voType = atoi(argv[6]);
 
@@ -255,27 +227,26 @@ int main(int argc, char *argv[]) {
 
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
-  ModelConfig model_config;
-  if (createModelConfig(argv[1], &model_config) == CVIAI_FAILURE) {
+  ODInferenceFunc inference;
+  CVI_AI_SUPPORTED_MODEL_E od_model_id;
+  if (get_pd_model_info(argv[1], &od_model_id, &inference) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
     return CVIAI_FAILURE;
   }
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
-  ret |= CVI_AI_SetModelPath(ai_handle, model_config.model_id, argv[2]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[3]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[4]);
-  ret |= CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[5]);
-  if (ret != CVIAI_SUCCESS) {
-    printf("failed with %#x!\n", ret);
-    return ret;
-  }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, model_config.model_id, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
-  CVI_AI_SelectDetectClass(ai_handle, model_config.model_id, 1, CVI_AI_DET_TYPE_PERSON);
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), s32Ret, create_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), s32Ret,
+                 create_service_fail);
+
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, od_model_id, argv[2]), s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[3]), s32Ret,
+                 setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[4]),
+                 s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[5]), s32Ret,
+                 setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(ai_handle, od_model_id, 1, CVI_AI_DET_TYPE_PERSON),
+                 s32Ret, setup_ai_fail);
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
   // Init DeepSORT
@@ -342,7 +313,7 @@ int main(int argc, char *argv[]) {
     clean_tracker(fq_trackers, miss_time);
 
 #if DETECT_PEOPLE
-    model_config.inference(ai_handle, &stfdFrame, &obj_meta);
+    inference(ai_handle, &stfdFrame, &obj_meta);
     match_index_t *p2f = (match_index_t *)malloc(obj_meta.size * sizeof(match_index_t));
     memset(p2f, 0, obj_meta.size * sizeof(match_index_t));
     for (uint32_t i = 0; i < obj_meta.size; i++) {
@@ -427,8 +398,11 @@ int main(int argc, char *argv[]) {
     }
   }
 
+setup_ai_fail:
   CVI_AI_Service_DestroyHandle(service_handle);
+create_service_fail:
   CVI_AI_DestroyHandle(ai_handle);
+create_ai_fail:
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

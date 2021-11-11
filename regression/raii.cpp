@@ -69,11 +69,10 @@ void AIModelHandler::close() {
 
 void AIModelHandler::open() {
   if (!m_is_model_opened) {
-    ASSERT_EQ(CVI_AI_SetModelPath(m_handle, m_model_index, m_model_path.c_str()), CVIAI_SUCCESS)
+    ASSERT_EQ(CVI_AI_OpenModel(m_handle, m_model_index, m_model_path.c_str()), CVIAI_SUCCESS)
         << "failed to set model path: " << m_model_path;
     ASSERT_EQ(CVI_AI_SetSkipVpssPreprocess(m_handle, m_model_index, m_skip_vpsspreprocess),
               CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_OpenModel(m_handle, m_model_index), CVIAI_SUCCESS);
     m_is_model_opened = true;
   }
 }
