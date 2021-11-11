@@ -74,8 +74,8 @@ int LicensePlateDetection::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
   return CVIAI_SUCCESS;
 }
 
-static void get_resize_scale(cvai_object_t *vehicle_meta, float *rs_scale, int vehicle_h,
-                             int vehicle_w) {
+static void get_resize_scale(cvai_object_t *vehicle_meta, std::vector<float> &rs_scale,
+                             int vehicle_h, int vehicle_w) {
   for (uint32_t i = 0; i < vehicle_meta->size; i++) {
     float x = vehicle_meta->info[i].bbox.x1;
     float y = vehicle_meta->info[i].bbox.y1;
@@ -104,7 +104,7 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
     return CVIAI_SUCCESS;
   }
 
-  float *rs_scale = new float[vehicle_meta->size];  // resize scale
+  std::vector<float> rs_scale(vehicle_meta->size);  // resize scale
   get_resize_scale(vehicle_meta, rs_scale, vehicle_h, vehicle_w);
 
   for (uint32_t n = 0; n < vehicle_meta->size; n++) {
@@ -152,9 +152,6 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
       bbox.score = score;
     }
   }
-
-  delete[] rs_scale;
-
   return CVIAI_SUCCESS;
 }
 
