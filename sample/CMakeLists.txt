@@ -88,6 +88,6 @@ buildninstall(NAME sample_aud_soundcmd INC ${SAMPLE_INC} DEPS cviai_core pthread
 buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service cviai_app ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_app_face_capture_p INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai_core cviai_service cviai_app pthread ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 
-install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.c DESTINATION sample)
+install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.h sample_utils.c DESTINATION sample)
 install(FILES Makefile DESTINATION sample)
 install(DIRECTORY config DESTINATION sample)

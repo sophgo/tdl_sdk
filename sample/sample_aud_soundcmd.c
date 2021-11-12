@@ -3,7 +3,6 @@
 #include <signal.h>
 #include "cvi_audio.h"
 #include "cviai.h"
-#include "cviai_perfetto.h"
 
 #define AUDIOFORMATSIZE 2
 #define SECOND 3
@@ -113,7 +112,6 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
 }
 
 int main(int argc, char **argv) {
-  CVI_AI_PerfettoInit();
   if (argc != 2 && argc != 4) {
     printf(
         "Usage: %s <soundcmd model path> <record 0 or 1> <output file path>\n"

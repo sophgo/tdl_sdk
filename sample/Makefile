@@ -6,15 +6,35 @@ $(error "Please set middleware sdk root path to MW_PATH")
 endif
 
 ifndef IVE_PATH
-$(error "Please set rtsp sdk root path to IVE_PATH)
+$(error "Please set ive sdk root path to IVE_PATH)
 endif
 
 ifndef TPU_PATH
-$(error "Please set rtsp sdk root path to TPU_PATH)
+$(error "Please set tpu sdk root path to TPU_PATH)
+endif
+
+ifndef CVI_TRACER_PATH
+$(error "Please set cvi_tracer sdk root path to CVI_TRACER_PATH)
 endif
 
 CHIP ?= cv1835
 SDK_VER ?= 64bit
+
+CROSS_COMPILE_32 ?= arm-linux-gnueabihf-
+CROSS_COMPILE_64 ?= aarch64-linux-gnu-
+CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
+ifeq ($(SDK_VER), 32bit)
+ARCH=arm
+CROSS_COMPILE = $(CROSS_COMPILE_32)
+else ifeq ($(SDK_VER), 64bit)
+ARCH=arm64
+CROSS_COMPILE = $(CROSS_COMPILE_64)
+else ifeq ($(SDK_VER), uclibc)
+ARCH=uclibc
+CROSS_COMPILE = $(CROSS_COMPILE_32_UCLIBC)
+else
+$(error "Unknown SDK_VER: $(SDK_VER")")
+endif
 
 # Middleware stuffs
 #####################################################
@@ -59,6 +79,10 @@ TPU_LIB_PATH = $(TPU_PATH)/lib
 IVE_SDK_LIB_PATH = $(IVE_PATH)/lib
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
 
+# cvi tracer
+#####################################################
+CVI_TRACER_LIB_PATH = $(CVI_TRACER_PATH)/$(ARCH)/lib/3rd
+CVI_TRACER_INC_PATH = $(CVI_TRACER_PATH)/include
 
 # OpenCV
 ifeq ($(LINK_OPENCV), 1)
@@ -82,16 +106,6 @@ CFLAGS += -O3 -DNDEBUG
 STRIPSYMBOL = @$(STRIP) $@
 endif
 
-CROSS_COMPILE_32 ?= arm-linux-gnueabihf-
-CROSS_COMPILE_64 ?= aarch64-linux-gnu-
-
-ifeq ($(SDK_VER), 32bit)
-ARCH=arm
-CROSS_COMPILE = $(CROSS_COMPILE_32)
-else
-ARCH=arm64
-CROSS_COMPILE = $(CROSS_COMPILE_64)
-endif
 
 ## GCC COMPILER ##
 CC = $(CROSS_COMPILE)gcc
@@ -118,7 +132,9 @@ $(info ---------------------------------------)
 
 
 RTSP_LIBS = -lcvi_rtsp
-AISDK_LIBS = -lcviai_core -lcviai_service
+AISDK_BASIC_LIBS = -lcviai_core -lcviai_service
+AISDK_APP_LIBS = -lcviai_app
+
 TPU_LIBS = -lcnpy  -lcvikernel  -lcvimath  -lcviruntime  -lz
 IVE_LIBS = -lcvi_ive_tpu
 
@@ -126,40 +142,27 @@ SRCS := $(wildcard $(PWD)/*.c)
 OBJS := $(SRCS:%.c=%.o)
 DEPS = $(SRCS:.c=.d)
 
-SAMPLE_LIBS = $(AISDK_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
+SAMPLE_LIBS = $(AISDK_BASIC_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(CVI_TRACER_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
 
 ifeq ($(LINK_OPENCV), 1)
 SAMPLE_LIBS += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
 endif
 
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH)
+SAMPLE_APP_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app
 
-CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH)
+CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH) -I$(CVI_TRACER_INC_PATH)
+
+TARGETS_VI_SAMPLE := $(shell find . -type f -name 'sample_vi_*.c' -exec basename {} .c ';')
+TARGETS_AUDIO_SAMPLE := $(shell find . -type f -name 'sample_aud_*.c' -exec basename {} .c ';')
+TARGETS_IMAGE_SAMPLE := $(shell find . -type f -name 'sample_read_*.c' -exec basename {} .c ';')
+TARGETS_APP_SAMPLE := $(shell find . -type f -name 'sample_app_*.c' -exec basename {} .c ';')
 
 TARGETS = sample_init \
-			sample_read_dt \
-			sample_read_esc \
-			sample_read_fq_tracking \
-			sample_read_fr \
-			sample_read_fr_custom \
-			sample_read_lpdr \
-			sample_read_mot_1 \
-			sample_read_mot_2 \
-			sample_read_mot_3 \
-			sample_read_pose \
-			sample_read_td \
-			sample_vi_dms \
-			sample_vi_fall \
-			sample_vi_fd \
-			sample_vi_fq \
-			sample_vi_fq_tracking \
-			sample_vi_lpdr \
-			sample_vi_mask_fr \
-			sample_vi_md \
-			sample_vi_od \
-			sample_vi_people_tracking \
-			sample_vi_tracking
-
+		$(TARGETS_VI_SAMPLE) \
+		$(TARGETS_AUDIO_SAMPLE) \
+		$(TARGETS_IMAGE_SAMPLE) \
+		$(TARGETS_APP_SAMPLE)
 
 .PHONY : clean all
 
@@ -171,13 +174,16 @@ clean:
 $(PWD)/%.o: $(PWD)/%.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<
 
-sample_read_esc: $(PWD)/sample_read_esc.o
-	$(CC) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS) -o $@ $^
+sample_aud_%: $(PWD)/sample_aud_%.o $(PWD)/sample_utils.o
+	$(CC) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS)  -o $@ $^
 
-sample_vi_%: $(PWD)/sample_vi_%.o $(PWD)/vi_vo_utils.o
+sample_app_%: $(PWD)/sample_app_%.o $(PWD)/vi_vo_utils.o
+	$(CC) $(SAMPLE_APP_LIBS)  -o $@ $^
+
+sample_vi_%: $(PWD)/sample_vi_%.o $(PWD)/vi_vo_utils.o $(PWD)/sample_utils.o
 	$(CC) $(SAMPLE_VI_LIBS)  -o $@ $^
 
-sample_read_%: $(PWD)/sample_read_%.o
+sample_read_%: $(PWD)/sample_read_%.o $(PWD)/sample_utils.o
 	$(CC) $(SAMPLE_LIBS)  -o $@ $^
 
 sample_init: $(PWD)/sample_init.o

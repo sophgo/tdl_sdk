@@ -48,7 +48,30 @@ $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
 
 ninja -j8 || exit 1
 ninja install || exit 1
-
 popd
 echo "Cleanup tmp folder."
 rm -rf $TMP_WORKING_DIR
+
+echo "trying to build sample in released folder."
+pushd ${AI_SDK_INSTALL_PATH}/sample
+
+for v in $CVI_TARGET_PACKAGES_LIBDIR; do
+    if [[ "$v" == *"cvitracer"* ]]; then
+        CVI_TRACER_LIB_PATH=${v:2:$((${#v}-2))}
+        searchstring="cvitracer"
+        rest=${CVI_TRACER_LIB_PATH#*$searchstring}
+        index=$((${#CVI_TRACER_LIB_PATH} - ${#rest} - ${#searchstring}))
+        CVI_TRACER_ROOT_PATH=${CVI_TRACER_LIB_PATH:0:$index}cvitracer
+        break
+    fi
+done
+
+if [ -z "${CVI_TRACER_ROOT_PATH}" ]; then
+    echo "cannot find cvitracer path from environment varables: CVI_TARGET_PACKAGES_LIBDIR and CVI_TARGET_PACKAGES_INCLUDE."
+    exit 1
+fi
+
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" -j10 || exit 1
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" clean || exit 1
+echo "done"
+popd
