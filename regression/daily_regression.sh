@@ -45,6 +45,12 @@ if [[ "$CHIPSET" = "183x" ]]; then
 elif [[ "$CHIPSET" = "182x" ]]; then
     test_suite="MobileDetV2TestSuite.*"
     test_suite+=":FaceQualityTestSuite.*"
+    test_suite+=":MultiObjectTrackingTestSuite.*"
+    test_suite+=":LicensePlateDetectionTestSuite.*"
+    test_suite+=":LicensePlateRecognitionTestSuite.*"
+    test_suite+=":ReIdentificationTestSuite.*"
+    test_suite+=":ThermalFaceDetectionTestSuite.*"
+    test_suite+=":TamperDetectionTestSuite.*"
 fi
 
 echo "----------------------"

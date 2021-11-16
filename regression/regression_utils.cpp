@@ -48,5 +48,45 @@ void init_face_meta(cvai_face_t *meta, uint32_t size) {
   }
 }
 
+void init_obj_meta(cvai_object_t *meta, uint32_t size, uint32_t height, uint32_t width,
+                   int class_id) {
+  memset(meta, 0, sizeof(cvai_object_t));
+  meta->size = size;
+  meta->height = height;
+  meta->width = width;
+  meta->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * meta->size);
+
+  for (uint32_t i = 0; i < meta->size; ++i) {
+    meta->info[i].bbox.x1 = 0;
+    meta->info[i].bbox.y1 = 0;
+    meta->info[i].bbox.x2 = width - 1;
+    meta->info[i].bbox.y2 = height - 1;
+    meta->info[i].bbox.score = 1.0;
+    meta->info[i].classes = class_id;
+    meta->info[i].feature.size = 0;
+    meta->info[i].feature.ptr = NULL;
+    meta->info[i].pedestrian_properity = NULL;
+    meta->info[i].vehicle_properity = NULL;
+  }
+}
+
+void init_vehicle_meta(cvai_object_t *meta) {
+  if (meta->info == NULL || meta->height == 0 || meta->width == 0) {
+    printf("[WARNING] Please init obj meta first.\n");
+    return;
+  }
+  for (uint32_t i = 0; i < meta->size; ++i) {
+    meta->info[i].vehicle_properity = (cvai_vehicle_meta *)malloc(sizeof(cvai_vehicle_meta));
+    meta->info[i].vehicle_properity->license_pts.x[0] = 0.0;
+    meta->info[i].vehicle_properity->license_pts.x[1] = (float)meta->width - 1.;
+    meta->info[i].vehicle_properity->license_pts.x[2] = (float)meta->width - 1.;
+    meta->info[i].vehicle_properity->license_pts.x[3] = 0.0;
+    meta->info[i].vehicle_properity->license_pts.y[0] = 0.0;
+    meta->info[i].vehicle_properity->license_pts.y[1] = 0.0;
+    meta->info[i].vehicle_properity->license_pts.y[2] = (float)meta->height - 1.;
+    meta->info[i].vehicle_properity->license_pts.y[3] = (float)meta->height - 1.;
+  }
+}
+
 }  // namespace unitest
 }  // namespace cviai

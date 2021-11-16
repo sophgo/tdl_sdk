@@ -1,15 +1,19 @@
+#include <experimental/filesystem>
 #include <fstream>
 #include <string>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "cviai_test.hpp"
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
+#include "gtest.h"
 #include "json.hpp"
+#include "raii.hpp"
 
 #define MATCH_IOU_THRESHOLD 0.85
 #define MATCH_SCORE_BIAS 0.02
 
-float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
+static float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
   float area1 = (bbox1.x2 - bbox1.x1) * (bbox1.y2 - bbox1.y1);
   float area2 = (bbox2.x2 - bbox2.x1) * (bbox2.y2 - bbox2.y1);
   float inter_x1 = MAX2(bbox1.x1, bbox2.x1);
@@ -25,102 +29,85 @@ float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
   return area_inter / (area1 + area2 - area_inter);
 }
 
-int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf(
-        "Usage: %s <model_dir>\n"
-        "          <image_dir>\n"
-        "          <regression_json>\n",
-        argv[0]);
-    return CVIAI_FAILURE;
-  }
-  std::string model_dir = std::string(argv[1]);
-  std::string image_dir = std::string(argv[2]);
+namespace fs = std::experimental::filesystem;
+namespace cviai {
+namespace unitest {
 
-  nlohmann::json m_json_read;
-  std::ofstream m_ofs_results;
+class ThermalFaceDetectionTestSuite : public CVIAIModelTestSuite {
+ public:
+  ThermalFaceDetectionTestSuite()
+      : CVIAIModelTestSuite("daily_reg_ThermalFD.json", "reg_daily_thermal_fd") {}
 
-  std::ifstream filestr(argv[3]);
-  filestr >> m_json_read;
-  filestr.close();
+  virtual ~ThermalFaceDetectionTestSuite() = default;
 
-  std::string model_name = std::string(m_json_read["reg_config"][0]["model_name"]);
-  std::string model_path = model_dir + "/" + model_name;
-  int img_num = int(m_json_read["reg_config"][0]["image_num"]);
+  std::string m_model_path;
 
-  CVI_S32 ret = CVIAI_SUCCESS;
-  CVI_S32 vpssgrp_width = 1280;
-  CVI_S32 vpssgrp_height = 720;
+ protected:
+  virtual void SetUp() {
+    std::string model_name = std::string(m_json_object["reg_config"][0]["model_name"]);
+    m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
-                         vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Init sys failed with %#x!\n", ret);
-    return ret;
+    m_ai_handle = NULL;
+    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_AI_SetVpssTimeout(m_ai_handle, 1000), CVIAI_SUCCESS);
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Create handle failed with %#x!\n", ret);
-    return ret;
+  virtual void TearDown() {
+    CVI_AI_DestroyHandle(m_ai_handle);
+    m_ai_handle = NULL;
   }
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, model_path.c_str());
-  if (ret != CVIAI_SUCCESS) {
-    printf("Set thermal face detection model failed with %#x!\n", ret);
-    return ret;
-  }
+};
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, false);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, 0.5);
+TEST_F(ThermalFaceDetectionTestSuite, open_close_model) {
+  ASSERT_EQ(CVI_AI_OpenModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, m_model_path.c_str()),
+            CVIAI_SUCCESS)
+      << "failed to set model path: " << m_model_path;
 
-  bool pass = true;
+  const char *model_path_get = CVI_AI_GetModelPath(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE);
+
+  EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
+               std::string(model_path_get));
+
+  ASSERT_EQ(CVI_AI_CloseModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE), CVIAI_SUCCESS);
+}
+
+TEST_F(ThermalFaceDetectionTestSuite, accruacy) {
+  ASSERT_EQ(CVI_AI_OpenModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, m_model_path.c_str()),
+            CVIAI_SUCCESS);
+  ASSERT_EQ(CVI_AI_SetSkipVpssPreprocess(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, false),
+            CVIAI_SUCCESS);
+  ASSERT_EQ(CVI_AI_SetModelThreshold(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, 0.5),
+            CVIAI_SUCCESS);
+
+  int img_num = int(m_json_object["reg_config"][0]["image_num"]);
   for (int img_idx = 0; img_idx < img_num; img_idx++) {
-    std::string image_path =
-        image_dir + "/" + std::string(m_json_read["reg_config"][0]["test_images"][img_idx]);
+    std::string image_path = std::string(m_json_object["reg_config"][0]["test_images"][img_idx]);
+    image_path = (m_image_dir / image_path).string();
     // printf("[%d] %s\n", img_idx, image_path.c_str());
 
-    VB_BLK blk_fr;
-    VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
-      printf("Read image failed with %#x!\n", ret);
-      return ret;
-    }
+    Image image_rgb(image_path, PIXEL_FORMAT_RGB_888);
+    ASSERT_TRUE(image_rgb.open());
+    VIDEO_FRAME_INFO_S *vframe = image_rgb.getFrame();
 
-    cvai_face_t face;
-    memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_ThermalFace(ai_handle, &frame, &face);
-#if 0
-    printf("find %u faces.\n", face.size);
-    for (uint32_t j = 0; j < face.size; j++) {
-      printf("face[%u]: %f (%f,%f,%f,%f)\n", j, face.info[j].bbox.score, 
-      face.info[j].bbox.x1, face.info[j].bbox.y1, face.info[j].bbox.x2, face.info[j].bbox.y2);
-    }
-#endif
+    AIObject<cvai_face_t> face_meta;
+    ASSERT_EQ(CVI_AI_ThermalFace(m_ai_handle, vframe, face_meta), CVIAI_SUCCESS);
 
     uint32_t expected_bbox_num =
-        uint32_t(m_json_read["reg_config"][0]["expected_results"][img_idx]["bbox_num"]);
-
-    if (expected_bbox_num != face.size) {
-      pass = false;
-      CVI_AI_Free(&face);
-      CVI_VB_ReleaseBlock(blk_fr);
-      continue;
-    }
+        uint32_t(m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_num"]);
+    ASSERT_EQ(expected_bbox_num, face_meta->size);
 
     cvai_bbox_t *expected_result = new cvai_bbox_t[expected_bbox_num];
     for (uint32_t i = 0; i < expected_bbox_num; i++) {
       expected_result[i].score = float(
-          m_json_read["reg_config"][0]["expected_results"][img_idx]["bbox_info"][(int)i]["score"]);
+          m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["score"]);
       expected_result[i].x1 =
-          float(m_json_read["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["x1"]);
+          float(m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["x1"]);
       expected_result[i].y1 =
-          float(m_json_read["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["y1"]);
+          float(m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["y1"]);
       expected_result[i].x2 =
-          float(m_json_read["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["x2"]);
+          float(m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["x2"]);
       expected_result[i].y2 =
-          float(m_json_read["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["y2"]);
+          float(m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["y2"]);
 #if 0
       printf("(%u) %f (%f,%f,%f,%f)\n", i, expected_result[i].score, 
         expected_result[i].x1, expected_result[i].y1, 
@@ -128,12 +115,12 @@ int main(int argc, char *argv[]) {
 #endif
     }
     bool *match_result = new bool[expected_bbox_num];
-    for (uint32_t j = 0; j < face.size; j++) {
+    for (uint32_t j = 0; j < face_meta->size; j++) {
       bool is_match = false;
       for (uint32_t i = 0; i < expected_bbox_num; i++) {
         if (match_result[i]) continue;
-        if (iou(face.info[j].bbox, expected_result[i]) < MATCH_IOU_THRESHOLD) continue;
-        if (ABS(face.info[j].bbox.score - expected_result[i].score) < MATCH_SCORE_BIAS) {
+        if (iou(face_meta->info[j].bbox, expected_result[i]) < MATCH_IOU_THRESHOLD) continue;
+        if (ABS(face_meta->info[j].bbox.score - expected_result[i].score) < MATCH_SCORE_BIAS) {
           match_result[i] = true;
           is_match = true;
         }
@@ -142,18 +129,13 @@ int main(int argc, char *argv[]) {
       if (!is_match) break;
     }
     for (uint32_t i = 0; i < expected_bbox_num; i++) {
-      pass &= match_result[i];
+      ASSERT_EQ(match_result[i], true);
     }
 
     delete[] expected_result;
     delete[] match_result;
-    CVI_AI_Free(&face);
-    CVI_VB_ReleaseBlock(blk_fr);
   }
-  printf("Regression Result: %s\n", (pass ? "PASS" : "FAILURE"));
-
-  CVI_AI_DestroyHandle(ai_handle);
-  CVI_SYS_Exit();
-
-  return pass ? CVIAI_SUCCESS : CVIAI_FAILURE;
 }
+
+}  // namespace unitest
+}  // namespace cviai

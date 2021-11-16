@@ -743,7 +743,6 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
     LOGD("Init Tamper Detection Model.\n");
     createIVEHandleIfNeeded(&ctx->ive_handle);
     ctx->td_model = new TamperDetectorMD(ctx->ive_handle, frame, (float)0.05, (int)10);
-    ctx->td_model->print_info();
 
     *moving_score = -1.0;
     return CVIAI_SUCCESS;

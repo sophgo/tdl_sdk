@@ -1,14 +1,19 @@
+#include <experimental/filesystem>
 #include <fstream>
 #include <string>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "cviai_test.hpp"
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
+#include "gtest.h"
 #include "json.hpp"
+#include "raii.hpp"
+#include "regression_utils.hpp"
 
 #define DISTANCE_BIAS 2.0
 
-bool is_close(cvai_4_pts_t *pts_1, cvai_4_pts_t *pts_2) {
+static bool is_closed(cvai_4_pts_t *pts_1, cvai_4_pts_t *pts_2) {
   for (int i = 0; i < 4; i++) {
     if (ABS(pts_1->x[i] - pts_2->x[i]) > DISTANCE_BIAS) return false;
     if (ABS(pts_1->y[i] - pts_2->y[i]) > DISTANCE_BIAS) return false;
@@ -16,95 +21,74 @@ bool is_close(cvai_4_pts_t *pts_1, cvai_4_pts_t *pts_2) {
   return true;
 }
 
-int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf(
-        "Usage: %s <model_dir>\n"
-        "          <image_dir>\n"
-        "          <regression_json>\n",
-        argv[0]);
-    return CVIAI_FAILURE;
-  }
-  std::string model_dir = std::string(argv[1]);
-  std::string image_dir = std::string(argv[2]);
+namespace fs = std::experimental::filesystem;
+namespace cviai {
+namespace unitest {
 
-  nlohmann::json m_json_read;
-  std::ofstream m_ofs_results;
+class LicensePlateDetectionTestSuite : public CVIAIModelTestSuite {
+ public:
+  LicensePlateDetectionTestSuite() : CVIAIModelTestSuite("daily_reg_LPD.json", "reg_daily_lpd") {}
 
-  std::ifstream filestr(argv[3]);
-  filestr >> m_json_read;
-  filestr.close();
+  virtual ~LicensePlateDetectionTestSuite() = default;
 
-  std::string model_name = std::string(m_json_read["reg_config"][0]["model_name"]);
-  std::string model_path = model_dir + "/" + model_name;
-  int img_num = int(m_json_read["reg_config"][0]["image_num"]);
+  std::string m_model_path;
 
-  CVI_S32 ret = CVIAI_SUCCESS;
-  CVI_S32 vpssgrp_width = 1920;
-  CVI_S32 vpssgrp_height = 1080;
+ protected:
+  virtual void SetUp() {
+    std::string model_name = std::string(m_json_object["reg_config"][0]["model_name"]);
+    m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
-                         vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Init sys failed with %#x!\n", ret);
-    return ret;
+    m_ai_handle = NULL;
+    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_AI_SetVpssTimeout(m_ai_handle, 1000), CVIAI_SUCCESS);
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Create handle failed with %#x!\n", ret);
-    return ret;
+  virtual void TearDown() {
+    CVI_AI_DestroyHandle(m_ai_handle);
+    m_ai_handle = NULL;
   }
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, model_path.c_str());
-  if (ret != CVIAI_SUCCESS) {
-    printf("Set license plate detection model failed with %#x!\n", ret);
-    return ret;
-  }
+};
 
-  bool pass = true;
+TEST_F(LicensePlateDetectionTestSuite, open_close_model) {
+  ASSERT_EQ(CVI_AI_OpenModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, m_model_path.c_str()),
+            CVIAI_SUCCESS)
+      << "failed to set model path: " << m_model_path;
+
+  const char *model_path_get = CVI_AI_GetModelPath(m_ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET);
+
+  EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
+               std::string(model_path_get));
+
+  ASSERT_EQ(CVI_AI_CloseModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET), CVIAI_SUCCESS);
+}
+
+TEST_F(LicensePlateDetectionTestSuite, accruacy) {
+  ASSERT_EQ(CVI_AI_OpenModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_WPODNET, m_model_path.c_str()),
+            CVIAI_SUCCESS);
+
+  int img_num = int(m_json_object["reg_config"][0]["image_num"]);
   for (int img_idx = 0; img_idx < img_num; img_idx++) {
-    std::string image_path =
-        image_dir + "/" + std::string(m_json_read["reg_config"][0]["test_images"][img_idx]);
-    // printf("[%d] %s\n", img_idx, image_path.c_str());
+    std::string image_path = std::string(m_json_object["reg_config"][0]["test_images"][img_idx]);
+    image_path = (m_image_dir / image_path).string();
 
-    VB_BLK blk_fr;
-    VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
-      printf("Read image failed with %#x!\n", ret);
-      return ret;
+    Image image_rgb(image_path, PIXEL_FORMAT_RGB_888);
+    ASSERT_TRUE(image_rgb.open());
+    VIDEO_FRAME_INFO_S *vframe = image_rgb.getFrame();
+
+    AIObject<cvai_object_t> vehicle_meta;
+    init_obj_meta(vehicle_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
+
+    ASSERT_EQ(CVI_AI_LicensePlateDetection(m_ai_handle, vframe, vehicle_meta), CVIAI_SUCCESS);
+    ASSERT_NE(vehicle_meta->info[0].vehicle_properity, (void *)0);
+    cvai_4_pts_t *pred = &vehicle_meta->info[0].vehicle_properity->license_pts;
+    cvai_4_pts_t *expected_res = new cvai_4_pts_t;
+    for (int i = 0; i < 4; i++) {
+      expected_res->x[i] =
+          float(m_json_object["reg_config"][0]["expected_results"][img_idx][2 * i]);
+      expected_res->y[i] =
+          float(m_json_object["reg_config"][0]["expected_results"][img_idx][2 * i + 1]);
     }
-
-    cvai_object_t vehicle_obj;
-    memset(&vehicle_obj, 0, sizeof(cvai_object_t));
-    vehicle_obj.size = 1;
-    vehicle_obj.height = frame.stVFrame.u32Height;
-    vehicle_obj.width = frame.stVFrame.u32Width;
-    vehicle_obj.info = (cvai_object_info_t *)malloc(vehicle_obj.size * sizeof(cvai_object_info_t));
-    vehicle_obj.info[0].bbox.x1 = 0;
-    vehicle_obj.info[0].bbox.y1 = 0;
-    vehicle_obj.info[0].bbox.x2 = vehicle_obj.width - 1;
-    vehicle_obj.info[0].bbox.y2 = vehicle_obj.height - 1;
-    vehicle_obj.info[0].feature.size = 0;
-    vehicle_obj.info[0].feature.ptr = NULL;
-    vehicle_obj.info[0].pedestrian_properity = NULL;
-
-    CVI_AI_LicensePlateDetection(ai_handle, &frame, &vehicle_obj);
-
-    if (!vehicle_obj.info[0].vehicle_properity) {
-      pass = false;
-      // printf("WARNING: license plate not found.\n");
-    } else {
-      cvai_4_pts_t *pred = &vehicle_obj.info[0].vehicle_properity->license_pts;
-      cvai_4_pts_t *expected_res = new cvai_4_pts_t;
-      for (int i = 0; i < 4; i++) {
-        expected_res->x[i] =
-            float(m_json_read["reg_config"][0]["expected_results"][img_idx][2 * i]);
-        expected_res->y[i] =
-            float(m_json_read["reg_config"][0]["expected_results"][img_idx][2 * i + 1]);
-      }
-      pass &= is_close(pred, expected_res);
+    ASSERT_EQ(is_closed(pred, expected_res), true);
 #if 0
       printf("license plate: (%f,%f,%f,%f,%f,%f,%f,%f)\n", pred->x[0], pred->y[0], pred->x[1],
              pred->y[1], pred->x[2], pred->y[2], pred->x[3], pred->y[3]);
@@ -112,17 +96,9 @@ int main(int argc, char *argv[]) {
              expected_res->x[1], expected_res->y[1], expected_res->x[2], expected_res->y[2],
              expected_res->x[3], expected_res->y[3]);
 #endif
-      delete expected_res;
-    }
-    // printf(" > %s\n", (pass ? "PASS" : "FAILURE"));
-
-    CVI_AI_Free(&vehicle_obj);
-    CVI_VB_ReleaseBlock(blk_fr);
+    delete expected_res;
   }
-  printf("Regression Result: %s\n", (pass ? "PASS" : "FAILURE"));
-
-  CVI_AI_DestroyHandle(ai_handle);
-  CVI_SYS_Exit();
-
-  return pass ? CVIAI_SUCCESS : CVIAI_FAILURE;
 }
+
+}  // namespace unitest
+}  // namespace cviai

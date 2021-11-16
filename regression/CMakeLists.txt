@@ -82,6 +82,12 @@ set(UnitTests
   reg_daily_mobiledet
   reg_daily_fr
   reg_daily_mask_classification
+  reg_daily_lpd
+  reg_daily_lpr
+  reg_daily_mot
+  reg_daily_reid
+  reg_daily_td
+  reg_daily_thermal_fd
   reg_daily_core
   reg_daily_feature_matching
 )
@@ -127,12 +133,6 @@ buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cviai_core cviai_servic
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cviai_core cviai_service cviai_evaluation gtest_main ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_thermal_fd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_reid INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_td INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_lpd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_lpr INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_mot INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_fl INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_yawn_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_eye_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})

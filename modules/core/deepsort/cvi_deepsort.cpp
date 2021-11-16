@@ -520,7 +520,7 @@ void DeepSORT::cleanCounter() {
 }
 
 void DeepSORT::setConfig(cvai_deepsort_config_t ds_conf, int cviai_obj_type, bool show_config) {
-  printf("set DeepSORT config[%d]:\n", cviai_obj_type);
+  LOGI("set DeepSORT config[%d]:\n", cviai_obj_type);
   if (cviai_obj_type == -1) {
     memcpy(&default_conf, &ds_conf, sizeof(cvai_deepsort_config_t));
   } else {
