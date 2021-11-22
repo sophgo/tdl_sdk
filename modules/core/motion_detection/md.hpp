@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <opencv2/opencv.hpp>
 #include "core/object/cvai_object_types.h"
 #include "cvi_comm_vb.h"
@@ -22,11 +23,13 @@ class MotionDetection {
 
  private:
   void construct_bbox(std::vector<cv::Rect> bboxes, cvai_object_t *obj_meta);
+  CVI_S32 do_vpss_ifneeded(VIDEO_FRAME_INFO_S *srcframe,
+                           std::shared_ptr<VIDEO_FRAME_INFO_S> &frame);
   CVI_S32 vpss_process(VIDEO_FRAME_INFO_S *srcframe, VIDEO_FRAME_INFO_S *dstframe);
   CVI_S32 copy_image(VIDEO_FRAME_INFO_S *srcframe, IVE_IMAGE_S *dst);
   IVE_HANDLE ive_handle;
-  IVE_SRC_IMAGE_S src[2], tmp;
-  IVE_IMAGE_S bk_dst;
+  IVE_SRC_IMAGE_S background_img;
+  IVE_IMAGE_S md_output;
   uint32_t count;
   uint32_t threshold;
   double min_area;

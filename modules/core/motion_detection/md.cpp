@@ -56,19 +56,15 @@ CVI_S32 MotionDetection::init(VIDEO_FRAME_INFO_S *init_frame) {
   im_height = init_frame->stVFrame.u32Height;
   uint32_t voWidth = init_frame->stVFrame.u32Width;
   uint32_t voHeight = init_frame->stVFrame.u32Height;
-  CVI_IVE_CreateImage(ive_handle, &tmp, IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
-  CVI_IVE_CreateImage(ive_handle, &bk_dst, IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
-  CVI_IVE_CreateImage(ive_handle, &src[0], IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
-  CVI_IVE_CreateImage(ive_handle, &src[1], IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
+  CVI_IVE_CreateImage(ive_handle, &md_output, IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
+  CVI_IVE_CreateImage(ive_handle, &background_img, IVE_IMAGE_TYPE_U8C1, voWidth, voHeight);
 
-  return copy_image(init_frame, &src[0]);
+  return copy_image(init_frame, &background_img);
 }
 
 MotionDetection::~MotionDetection() {
-  CVI_SYS_FreeI(ive_handle, &bk_dst);
-  CVI_SYS_FreeI(ive_handle, &tmp);
-  CVI_SYS_FreeI(ive_handle, &src[0]);
-  CVI_SYS_FreeI(ive_handle, &src[1]);
+  CVI_SYS_FreeI(ive_handle, &md_output);
+  CVI_SYS_FreeI(ive_handle, &background_img);
 }
 
 CVI_S32 MotionDetection::vpss_process(VIDEO_FRAME_INFO_S *srcframe, VIDEO_FRAME_INFO_S *dstframe) {
@@ -89,7 +85,7 @@ CVI_S32 MotionDetection::vpss_process(VIDEO_FRAME_INFO_S *srcframe, VIDEO_FRAME_
 }
 
 CVI_S32 MotionDetection::update_background(VIDEO_FRAME_INFO_S *frame) {
-  return copy_image(frame, &src[0]);
+  return copy_image(frame, &background_img);
 }
 
 void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *out) {
@@ -111,8 +107,8 @@ void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *
   }
 }
 
-CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, IVE_IMAGE_S *dst) {
-  std::shared_ptr<VIDEO_FRAME_INFO_S> frame;
+CVI_S32 MotionDetection::do_vpss_ifneeded(VIDEO_FRAME_INFO_S *srcframe,
+                                          std::shared_ptr<VIDEO_FRAME_INFO_S> &frame) {
   CVI_S32 ret = CVIAI_SUCCESS;
   if (srcframe->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
     frame =
@@ -120,11 +116,16 @@ CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, IVE_IMAGE_S *d
           this->m_vpss_engine->releaseFrame(f, 0);
           delete f;
         });
-
     ret = vpss_process(srcframe, frame.get());
   } else {
     frame = std::shared_ptr<VIDEO_FRAME_INFO_S>(srcframe, [](VIDEO_FRAME_INFO_S *) {});
   }
+  return ret;
+}
+
+CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, IVE_IMAGE_S *dst) {
+  std::shared_ptr<VIDEO_FRAME_INFO_S> frame;
+  CVI_S32 ret = do_vpss_ifneeded(srcframe, frame);
 
   if (ret == CVIAI_SUCCESS) {
     return VideoFrameCopy2Image(ive_handle, frame.get(), dst);
@@ -132,31 +133,63 @@ CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, IVE_IMAGE_S *d
   return ret;
 }
 
-CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj_meta) {
-  static int c = 0;
+CVI_S32 convert2Image(VIDEO_FRAME_INFO_S *srcframe, IVE_IMAGE_S *dst) {
+  bool do_unmap_src = false;
 
-  CVI_S32 ret = copy_image(srcframe, &src[1]);
+  size_t image_size = srcframe->stVFrame.u32Length[0] + srcframe->stVFrame.u32Length[1] +
+                      srcframe->stVFrame.u32Length[2];
+  if (srcframe->stVFrame.pu8VirAddr[0] == NULL) {
+    srcframe->stVFrame.pu8VirAddr[0] =
+        (CVI_U8 *)CVI_SYS_MmapCache(srcframe->stVFrame.u64PhyAddr[0], image_size);
+    do_unmap_src = true;
+  }
+
+  CVI_S32 ret = CVI_IVE_VideoFrameInfo2Image(srcframe, dst);
   if (ret != CVI_SUCCESS) {
-    LOGE("Failed to copy frame to IVE image\n");
+    LOGE("Convert frame to IVE_IMAGE_S fail %x\n", ret);
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
+  if (do_unmap_src) {
+    CVI_SYS_Munmap((void *)srcframe->stVFrame.pu8VirAddr[0], image_size);
+  }
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj_meta) {
+  static int c = 0;
+  CVI_S32 ret = CVI_SUCCESS;
+
   if (count > 2) {
+    IVE_IMAGE_S srcImg;
+    std::shared_ptr<VIDEO_FRAME_INFO_S> processed_frame;
+    ret = do_vpss_ifneeded(srcframe, processed_frame);
+    if (ret != CVIAI_SUCCESS) {
+      return ret;
+    }
+
+    ret = convert2Image(processed_frame.get(), &srcImg);
+    if (ret != CVIAI_SUCCESS) {
+      LOGE("failed to convert VIDEO_FRAME_INFO_S to IVE_IMAGE_S, ret=%d\n", ret);
+      return ret;
+    }
+
     // Sub - threshold - dilate
     IVE_SUB_CTRL_S iveSubCtrl;
     iveSubCtrl.enMode = IVE_SUB_MODE_ABS;
-    ret = CVI_IVE_Sub(ive_handle, &src[1], &src[0], &tmp, &iveSubCtrl, 0);
+    ret = CVI_IVE_Sub(ive_handle, &srcImg, &background_img, &md_output, &iveSubCtrl, 0);
     if (ret != CVI_SUCCESS) {
       LOGE("CVI_IVE_Sub fail %x\n", ret);
       return CVIAI_ERR_MD_OPERATION_FAILED;
     }
 
+    CVI_SYS_FreeI(ive_handle, &srcImg);
     IVE_THRESH_CTRL_S iveTshCtrl;
     iveTshCtrl.enMode = IVE_THRESH_MODE_BINARY;
     iveTshCtrl.u8MinVal = 0;
     iveTshCtrl.u8MaxVal = 255;
     iveTshCtrl.u8LowThr = threshold;
-    ret = CVI_IVE_Thresh(ive_handle, &tmp, &tmp, &iveTshCtrl, 0);
+    ret = CVI_IVE_Thresh(ive_handle, &md_output, &md_output, &iveTshCtrl, 0);
     if (ret != CVI_SUCCESS) {
       LOGE("CVI_IVE_Sub fail %x\n", ret);
       return CVIAI_ERR_MD_OPERATION_FAILED;
@@ -165,25 +198,25 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     IVE_DILATE_CTRL_S stDilateCtrl;
     CVI_U8 arr[] = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0};
     memcpy(stDilateCtrl.au8Mask, arr, 25 * sizeof(CVI_U8));
-    CVI_IVE_Dilate(ive_handle, &tmp, &bk_dst, &stDilateCtrl, 0);
+    CVI_IVE_Dilate(ive_handle, &md_output, &md_output, &stDilateCtrl, 0);
 
-    CVI_IVE_BufRequest(ive_handle, &bk_dst);
+    CVI_IVE_BufRequest(ive_handle, &md_output);
 
-    VIDEO_FRAME_INFO_S bk_frame;
-    CVI_IVE_Image2VideoFrameInfo(&bk_dst, &bk_frame, false);
+    VIDEO_FRAME_INFO_S md_output_frame;
+    CVI_IVE_Image2VideoFrameInfo(&md_output, &md_output_frame, false);
 
-    int img_width = bk_frame.stVFrame.u32Width;
-    int img_height = bk_frame.stVFrame.u32Height;
+    int img_width = md_output_frame.stVFrame.u32Width;
+    int img_height = md_output_frame.stVFrame.u32Height;
 
     bool do_unmap = false;
-    if (bk_frame.stVFrame.pu8VirAddr[0] == NULL) {
-      bk_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(bk_frame.stVFrame.u64PhyAddr[0],
-                                                                    bk_frame.stVFrame.u32Length[0]);
+    if (md_output_frame.stVFrame.pu8VirAddr[0] == NULL) {
+      md_output_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
+          md_output_frame.stVFrame.u64PhyAddr[0], md_output_frame.stVFrame.u32Length[0]);
       do_unmap = true;
     }
 
-    cv::Mat image(img_height, img_width, CV_8UC1, bk_frame.stVFrame.pu8VirAddr[0],
-                  bk_frame.stVFrame.u32Stride[0]);
+    cv::Mat image(img_height, img_width, CV_8UC1, md_output_frame.stVFrame.pu8VirAddr[0],
+                  md_output_frame.stVFrame.u32Stride[0]);
 
     c++;
     std::vector<std::vector<cv::Point> > contours;
@@ -199,11 +232,13 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 
     construct_bbox(bboxes, obj_meta);
     if (do_unmap) {
-      CVI_SYS_Munmap((void *)bk_frame.stVFrame.pu8VirAddr[0], bk_frame.stVFrame.u32Length[0]);
-      bk_frame.stVFrame.pu8VirAddr[0] = NULL;
-      bk_frame.stVFrame.pu8VirAddr[1] = NULL;
-      bk_frame.stVFrame.pu8VirAddr[2] = NULL;
+      CVI_SYS_Munmap((void *)md_output_frame.stVFrame.pu8VirAddr[0],
+                     md_output_frame.stVFrame.u32Length[0]);
+      md_output_frame.stVFrame.pu8VirAddr[0] = NULL;
+      md_output_frame.stVFrame.pu8VirAddr[1] = NULL;
+      md_output_frame.stVFrame.pu8VirAddr[2] = NULL;
     }
+
   } else {
     obj_meta->size = 0;
     obj_meta->info = nullptr;
@@ -211,28 +246,6 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     obj_meta->width = im_width;
     obj_meta->rescale_type = RESCALE_RB;
   }
-
-  // update_interval = 10;
-  // if (count == 0) {
-  //   IVE_DMA_CTRL_S ctrl;
-  //   ctrl.enMode = IVE_DMA_MODE_DIRECT_COPY;
-  //   ret = CVI_IVE_DMA(ive_handle, &src[1], &src[0], &ctrl, false);
-  // } else if (update_interval > 0 && ((count % (uint32_t)update_interval) == 0)) {
-  //   float ax = 0.95;
-  //   float by = 0.05;
-  //   CVI_IVE_BufRequest(this->ive_handle, &src[0]);
-  //   CVI_IVE_BufRequest(this->ive_handle, &src[1]);
-  //   CVI_U16 strideWidth = src[1].u16Stride[0];
-  //   for (int c = 0; c < 1; c++) {
-  //     for (uint32_t i = 0; i < im_height; i++) {
-  //       for (uint32_t j = 0; j < im_width; j++) {
-  //         src[0].pu8VirAddr[c][i * strideWidth + j] = (int)(ax * src[0].pu8VirAddr[c][i *
-  //         strideWidth + j] + by * (src[1].pu8VirAddr[c][i * strideWidth + j]));
-  //       }
-  //     }
-  //   }
-  //   CVI_IVE_BufFlush(ive_handle, &src[0]);
-  // }
 
   count++;
   return CVIAI_SUCCESS;
