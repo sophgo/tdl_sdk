@@ -90,6 +90,10 @@ set(UnitTests
   reg_daily_thermal_fd
   reg_daily_core
   reg_daily_feature_matching
+  reg_daily_liveness
+  reg_daily_alphapose
+  reg_daily_fall
+  reg_daily_retinaface
 )
 
 set(UnitTest_SRCS
@@ -139,10 +143,6 @@ buildninstallcpp(NAME reg_daily_eye_classification INC ${REG_INCLUDES} DEPS cvia
 buildninstallcpp(NAME reg_daily_es_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_soundcmd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_incarod INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_alphapose INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_fall INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_liveness INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_retinaface INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_retinafaceIR INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME reg_daily_retinaface_hardhat INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})

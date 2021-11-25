@@ -1,169 +1,195 @@
+#include <experimental/filesystem>
 #include <fstream>
+#include <memory>
 #include <string>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "cviai_test.hpp"
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
+#include "gtest.h"
 #include "json.hpp"
+#include "raii.hpp"
+#include "regression_utils.hpp"
 
-int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf(
-        "Usage: %s <model_dir>\n"
-        "          <image_dir>\n"
-        "          <regression_json>\n",
-        argv[0]);
-    return CVIAI_FAILURE;
-  }
-  // CVI_S32 ret = CVIAI_SUCCESS;
-  std::string model_dir = std::string(argv[1]);
-  std::string image_dir = std::string(argv[2]);
+namespace fs = std::experimental::filesystem;
+namespace cviai {
+namespace unitest {
 
-  nlohmann::json m_json_read;
-  std::ofstream m_ofs_results;
+class AlphaposeTestSuite : public CVIAIModelTestSuite {
+ public:
+  AlphaposeTestSuite() : CVIAIModelTestSuite("reg_daily_alphapose.json", "reg_daily_alphapose") {}
 
-  std::ifstream filestr(argv[3]);
-  filestr >> m_json_read;
-  filestr.close();
+  virtual ~AlphaposeTestSuite() = default;
 
-  //   "od_model" : "mobiledetv2-pedestrian-d1.cvimodel",
-  // std::string od_model_name = std::string(m_json_read["od_model"]);
-  // std::string od_model_path = model_dir + "/" + od_model_name;
-  // printf("od_model_path: %s\n", od_model_path.c_str());
+  std::string m_model_path;
 
-  std::string pose_model_name = std::string(m_json_read["pose_model"]);
-  std::string pose_model_path = model_dir + "/" + pose_model_name;
-  // printf("pose_model_path: %s\n", pose_model_path.c_str());
+ protected:
+  virtual void SetUp() {
+    std::string model_name = std::string(m_json_object["pose_model"]);
+    m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-  int img_num = int(m_json_read["test_images"].size());
-  // printf("img_num: %d\n", img_num);
-
-  float threshold = float(m_json_read["threshold"]);
-  // printf("threshold: %f\n", threshold);
-
-  CVI_S32 ret = CVIAI_SUCCESS;
-
-  // Init VB pool size.
-  const CVI_S32 vpssgrp_width = 1920;
-  const CVI_S32 vpssgrp_height = 1080;
-  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
-                         vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
-  if (ret != CVI_SUCCESS) {
-    printf("Init sys failed with %#x!\n", ret);
-    return ret;
+    m_ai_handle = NULL;
+    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_AI_SetVpssTimeout(m_ai_handle, 1000), CVIAI_SUCCESS);
   }
 
-  // Init cviai handle.
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Create handle failed with %#x!\n", ret);
-    return ret;
+  virtual void TearDown() {
+    CVI_AI_DestroyHandle(m_ai_handle);
+    m_ai_handle = NULL;
   }
+};
 
-  /*
-  ret =
-      CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
-  od_model_path.c_str()); if (ret != CVIAI_SUCCESS) { printf("Set model retinaface failed with
-  %#x!\n", ret); return ret;
-  }
+TEST_F(AlphaposeTestSuite, open_close_model) {
+  AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, m_model_path.c_str(),
+                         false);
+  ASSERT_NO_FATAL_FAILURE(aimodel.open());
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, false);
-  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 1,
-                           CVI_AI_DET_TYPE_PERSON);
-    */
+  const char *model_path_get = CVI_AI_GetModelPath(m_ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE);
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, pose_model_path.c_str());
-  if (ret != CVIAI_SUCCESS) {
-    printf("Set model alphapose failed with %#x!\n", ret);
-    return ret;
-  }
-
-  for (int img_idx = 0; img_idx < img_num; img_idx++) {
-    std::string image_path = image_dir + "/" + std::string(m_json_read["test_images"][img_idx]);
-    // printf("[%d] %s\n", img_idx, image_path.c_str());
-
-    int expected_res_num = int(m_json_read["expected_results"][img_idx][0]);
-    // printf("expected_res_num %d\n", expected_res_num);
-
-    VB_BLK blk1;
-    VIDEO_FRAME_INFO_S frame;
-
-    CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk1, &frame, PIXEL_FORMAT_BGR_888);
-    if (ret != CVIAI_SUCCESS) {
-      printf("Read image failed with %#x!\n", ret);
-      return ret;
-    }
-
-    cvai_object_t obj;
-    memset(&obj, 0, sizeof(cvai_object_t));
-    // CVI_AI_MobileDetV2_Pedestrian(ai_handle, &frame, &obj);
-
-    obj.size = expected_res_num;
-    obj.height = frame.stVFrame.u32Height;
-    obj.width = frame.stVFrame.u32Width;
-    obj.info = (cvai_object_info_t *)malloc(obj.size * sizeof(cvai_object_info_t));
-
-    for (uint32_t i = 0; i < obj.size; i++) {
-      obj.info[i].bbox.x1 = float(m_json_read["expected_results"][img_idx][1][i][0]);
-      obj.info[i].bbox.y1 = float(m_json_read["expected_results"][img_idx][1][i][1]);
-      obj.info[i].bbox.x2 = float(m_json_read["expected_results"][img_idx][1][i][2]);
-      obj.info[i].bbox.y2 = float(m_json_read["expected_results"][img_idx][1][i][3]);
-      obj.info[i].classes = 0;
-    }
-
-    /*
-    for (uint32_t i = 0; i < obj.size; i++) {
-        float x1 = obj.info[i].bbox.x1;
-        printf("x1 %f\n",x1);
-        float y1 = obj.info[i].bbox.y1;
-        printf("y1 %f\n",y1);
-        float x2 = obj.info[i].bbox.x2;
-        printf("x2 %f\n",x2);
-        float y2 = obj.info[i].bbox.y2;
-        printf("y2 %f\n",y2);
-        int check_class = obj.info[i].classes;
-        printf("class %d\n",check_class);
-    }
-    */
-
-    CVI_AI_AlphaPose(ai_handle, &frame, &obj);
-
-    // print the ground truth
-    /*
-    for (uint32_t i = 0; i < obj.size; i++) {
-      for (int point = 0; point < 17; point++) {
-        float point_x = obj.info[i].pedestrian_properity->pose_17.x[point];
-        float point_y = obj.info[i].pedestrian_properity->pose_17.y[point];
-        printf("[%f, %f], ", point_x, point_y);
-      }
-      printf("\n");
-    }
-    */
-
-    for (uint32_t i = 0; i < obj.size; i++) {
-      for (int point = 0; point < 17; point++) {
-        float point_x = obj.info[i].pedestrian_properity->pose_17.x[point];
-        float point_y = obj.info[i].pedestrian_properity->pose_17.y[point];
-
-        float expected_res_x = float(m_json_read["expected_results"][img_idx][2][i][point][0]);
-        float expected_res_y = float(m_json_read["expected_results"][img_idx][2][i][point][1]);
-
-        bool pass = (abs(point_x - expected_res_x) < threshold) &
-                    (abs(point_y - expected_res_y) < threshold);
-        // printf("[%d][%d][%2d] pass: %d; x, y, expected : [%.3f, %.3f], result : [%.3f, %.3f]\n",
-        //       img_idx, i, point, pass, expected_res_x, expected_res_y, point_x, point_y);
-        if (!pass) {
-          return CVIAI_FAILURE;
-        }
-      }
-    }
-
-    // CVI_AI_Free(&obj);
-    CVI_VB_ReleaseBlock(blk1);
-  }
-  CVI_AI_DestroyHandle(ai_handle);
-  CVI_SYS_Exit();
-  printf("alphapose regression result: all pass\n");
-  return CVIAI_SUCCESS;
+  EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
+               std::string(model_path_get));
 }
+
+TEST_F(AlphaposeTestSuite, get_vpss_config) {
+  AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, m_model_path.c_str(),
+                         false);
+  ASSERT_NO_FATAL_FAILURE(aimodel.open());
+  cvai_vpssconfig_t vpssconfig;
+  vpssconfig.chn_attr.u32Height = 200;
+  vpssconfig.chn_attr.u32Width = 200;
+  vpssconfig.chn_attr.enPixelFormat = PIXEL_FORMAT_ARGB_1555;
+  vpssconfig.chn_attr.stNormalize.bEnable = false;
+
+  EXPECT_EQ(CVI_AI_GetVpssChnConfig(m_ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, 100, 100, 0,
+                                    &vpssconfig),
+            CVIAI_ERR_GET_VPSS_CHN_CONFIG);
+
+  EXPECT_EQ(vpssconfig.chn_attr.u32Height, (uint32_t)200);
+  EXPECT_EQ(vpssconfig.chn_attr.u32Width, (uint32_t)200);
+  EXPECT_EQ(vpssconfig.chn_attr.enPixelFormat, PIXEL_FORMAT_ARGB_1555);
+  EXPECT_EQ(vpssconfig.chn_attr.stNormalize.bEnable, false);
+}
+
+TEST_F(AlphaposeTestSuite, skip_vpss_preprocess) {
+  std::string image_path = (m_image_dir / std::string(m_json_object["test_images"][0])).string();
+
+  Image frame(image_path, PIXEL_FORMAT_BGR_888);
+  ASSERT_TRUE(frame.open());
+
+  cvai_object_t obj;
+  memset(&obj, 0, sizeof(cvai_object_t));
+  // CVI_AI_MobileDetV2_Pedestrian(ai_handle, &frame, &obj);
+
+  obj.size = int(m_json_object["expected_results"][0][0]);
+  obj.height = frame.getFrame()->stVFrame.u32Height;
+  obj.width = frame.getFrame()->stVFrame.u32Width;
+  obj.info = (cvai_object_info_t *)malloc(obj.size * sizeof(cvai_object_info_t));
+
+  obj.info[0].bbox.x1 = float(m_json_object["expected_results"][0][1][0][0]);
+  obj.info[0].bbox.y1 = float(m_json_object["expected_results"][0][1][0][1]);
+  obj.info[0].bbox.x2 = float(m_json_object["expected_results"][0][1][0][2]);
+  obj.info[0].bbox.y2 = float(m_json_object["expected_results"][0][1][0][3]);
+  obj.info[0].classes = 0;
+
+  {
+    // test inference with skip vpss = false
+    AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, m_model_path.c_str(),
+                           false);
+    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    ASSERT_EQ(CVI_AI_AlphaPose(m_ai_handle, frame.getFrame(), &obj), CVIAI_SUCCESS);
+  }
+
+  {
+    // test inference with skip vpss = true
+    AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, m_model_path.c_str(),
+                           true);
+    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    ASSERT_EQ(CVI_AI_AlphaPose(m_ai_handle, frame.getFrame(), &obj), CVIAI_ERR_INVALID_ARGS);
+  }
+}
+
+TEST_F(AlphaposeTestSuite, inference) {
+  std::string image_path = (m_image_dir / std::string(m_json_object["test_images"][0])).string();
+
+  Image frame(image_path, PIXEL_FORMAT_BGR_888);
+  ASSERT_TRUE(frame.open());
+
+  cvai_object_t obj;
+  memset(&obj, 0, sizeof(cvai_object_t));
+  // CVI_AI_MobileDetV2_Pedestrian(ai_handle, &frame, &obj);
+
+  obj.size = int(m_json_object["expected_results"][0][0]);
+  obj.height = frame.getFrame()->stVFrame.u32Height;
+  obj.width = frame.getFrame()->stVFrame.u32Width;
+  obj.info = (cvai_object_info_t *)malloc(obj.size * sizeof(cvai_object_info_t));
+
+  obj.info[0].bbox.x1 = float(m_json_object["expected_results"][0][1][0][0]);
+  obj.info[0].bbox.y1 = float(m_json_object["expected_results"][0][1][0][1]);
+  obj.info[0].bbox.x2 = float(m_json_object["expected_results"][0][1][0][2]);
+  obj.info[0].bbox.y2 = float(m_json_object["expected_results"][0][1][0][3]);
+  obj.info[0].classes = 0;
+
+  {
+    // test inference with skip vpss = false
+    AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, m_model_path.c_str(),
+                           false);
+    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    ASSERT_EQ(CVI_AI_AlphaPose(m_ai_handle, frame.getFrame(), &obj), CVIAI_SUCCESS);
+  }
+}
+
+TEST_F(AlphaposeTestSuite, accruacy) {
+  float threshold = float(m_json_object["threshold"]);
+  int img_idx = 0;
+  std::string image_path =
+      (m_image_dir / std::string(m_json_object["test_images"][img_idx])).string();
+
+  Image frame(image_path, PIXEL_FORMAT_BGR_888);
+  ASSERT_TRUE(frame.open());
+
+  cvai_object_t obj;
+  memset(&obj, 0, sizeof(cvai_object_t));
+  // CVI_AI_MobileDetV2_Pedestrian(ai_handle, &frame, &obj);
+
+  obj.size = int(m_json_object["expected_results"][img_idx][0]);
+  obj.height = frame.getFrame()->stVFrame.u32Height;
+  obj.width = frame.getFrame()->stVFrame.u32Width;
+  obj.info = (cvai_object_info_t *)malloc(obj.size * sizeof(cvai_object_info_t));
+
+  for (uint32_t i = 0; i < obj.size; i++) {
+    obj.info[i].bbox.x1 = float(m_json_object["expected_results"][img_idx][1][i][0]);
+    obj.info[i].bbox.y1 = float(m_json_object["expected_results"][img_idx][1][i][1]);
+    obj.info[i].bbox.x2 = float(m_json_object["expected_results"][img_idx][1][i][2]);
+    obj.info[i].bbox.y2 = float(m_json_object["expected_results"][img_idx][1][i][3]);
+    obj.info[i].classes = 0;
+  }
+
+  {
+    // test inference with skip vpss = true
+    AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, m_model_path.c_str(),
+                           false);
+    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    ASSERT_EQ(CVI_AI_AlphaPose(m_ai_handle, frame.getFrame(), &obj), CVIAI_SUCCESS);
+
+    for (uint32_t i = 0; i < obj.size; i++) {
+      for (int point = 0; point < 17; point++) {
+        float point_x = obj.info[i].pedestrian_properity->pose_17.x[point];
+        float point_y = obj.info[i].pedestrian_properity->pose_17.y[point];
+
+        float expected_res_x = float(m_json_object["expected_results"][img_idx][2][i][point][0]);
+        float expected_res_y = float(m_json_object["expected_results"][img_idx][2][i][point][1]);
+        // printf("point %d\n", i);
+        // printf("point_x : %f \n", point_x);
+        // printf("point_y : %f \n", point_y);
+        // printf("expected_res_x : %f \n", expected_res_x);
+        // printf("expected_res_y : %f \n", expected_res_y);
+        EXPECT_LT(abs(point_x - expected_res_x), threshold);
+        EXPECT_LT(abs(point_y - expected_res_y), threshold);
+      }
+    }
+  }
+}
+
+}  // namespace unitest
+}  // namespace cviai
