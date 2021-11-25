@@ -2,100 +2,136 @@
 #include <string>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "cviai_test.hpp"
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
 #include "json.hpp"
+#include "raii.hpp"
+#include "regression_utils.hpp"
 
-int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf(
-        "Usage: %s <model_dir>\n"
-        "          <image_dir>\n"
-        "          <regression_json>\n",
-        argv[0]);
-    return CVIAI_FAILURE;
-  }
-  CVI_S32 ret = CVIAI_SUCCESS;
-  std::string model_dir = std::string(argv[1]);
-  std::string image_dir = std::string(argv[2]);
+namespace cviai {
+namespace unitest {
 
-  nlohmann::json m_json_read;
-  std::ofstream m_ofs_results;
+class YawnCTestSuite : public CVIAIModelTestSuite {
+ public:
+  typedef CVI_S32 (*InferenceFunc)(const cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_face_t *);
+  struct ModelInfo {
+    InferenceFunc inference;
+    CVI_AI_SUPPORTED_MODEL_E index;
+    std::string model_path;
+  };
 
-  std::ifstream filestr(argv[3]);
-  filestr >> m_json_read;
-  filestr.close();
-
-  std::string model_name_fd = std::string(m_json_read["reg_config"][0]["model_name"][0]);
-  std::string model_path_fd = model_dir + "/" + model_name_fd;
-  std::string model_name_fl = std::string(m_json_read["reg_config"][0]["model_name"][1]);
-  std::string model_path_fl = model_dir + "/" + model_name_fl;
-  std::string model_name = std::string(m_json_read["reg_config"][0]["model_name"][2]);
-  std::string model_path = model_dir + "/" + model_name;
-
-  int img_num = int(m_json_read["reg_config"][0]["image_num"]);
-  float threshold = float(m_json_read["reg_config"][0]["threshold"]);
-
-  // Init VB pool size.
-  const CVI_S32 vpssgrp_width = 1920;
-  const CVI_S32 vpssgrp_height = 1080;
-  cviai_handle_t facelib_handle = NULL;
-  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
-                         vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 3);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Init sys failed with %#x!\n", ret);
-    return ret;
+  YawnCTestSuite()
+      : CVIAIModelTestSuite("reg_daily_yawn_classification.json", "reg_daily_yawn_classification") {
   }
 
-  ret = CVI_AI_CreateHandle2(&facelib_handle, 1, 0);
-  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, model_path_fd.c_str());
-  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER,
-                          model_path_fl.c_str());
-  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION,
-                          model_path.c_str());
+  virtual ~YawnCTestSuite() = default;
 
-  if (ret != CVIAI_SUCCESS) {
-    printf("Set face quality model failed with %#x!\n", ret);
-    return ret;
+ protected:
+  virtual void SetUp() {
+    m_ai_handle = NULL;
+    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
   }
 
-  bool pass = true;
-  for (int img_idx = 0; img_idx < img_num; img_idx++) {
-    std::string image_path =
-        image_dir + "/" + std::string(m_json_read["reg_config"][0]["test_images"][img_idx]);
-    printf("[%d] image_path: %s\n", img_idx, image_path.c_str());
-    int expected_res = int(m_json_read["reg_config"][0]["expected_results"][img_idx]);
-
-    VB_BLK blk_fr;
-    VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path.c_str(), &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
-      printf("Read image \'%s\' failed with %#x!\n", image_path.c_str(), ret);
-      return ret;
-    }
-    cvai_face_t face;
-    memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_RetinaFace(facelib_handle, &frame, &face);
-
-    face.dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
-    face.dms->dms_od.info = NULL;
-    CVI_AI_FaceLandmarker(facelib_handle, &frame, &face);
-    CVI_AI_YawnClassification(facelib_handle, &frame, &face);
-
-    printf("yawn_score = %f (threshold: %f, expected_res: %d)\n", face.dms->yawn_score, threshold,
-           expected_res);
-    if (expected_res)
-      pass &= face.dms->yawn_score > threshold;
-    else
-      pass &= face.dms->yawn_score < threshold;
-
-    CVI_AI_FreeDMS(face.dms);
-    CVI_AI_Free(&face);
-    CVI_VB_ReleaseBlock(blk_fr);
+  virtual void TearDown() {
+    CVI_AI_DestroyHandle(m_ai_handle);
+    m_ai_handle = NULL;
   }
-  printf("Regression Result: %s\n", (pass ? "PASS" : "FAILURE"));
 
-  CVI_AI_DestroyHandle(facelib_handle);
-  CVI_SYS_Exit();
-  return pass ? CVIAI_SUCCESS : CVIAI_FAILURE;
+  ModelInfo getModel(const std::string &model_name);
+};
+
+YawnCTestSuite::ModelInfo YawnCTestSuite::getModel(const std::string &model_name) {
+  ModelInfo model_info;
+  std::string model_path = (m_model_dir / model_name).string();
+  model_info.index = CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION;
+  model_info.inference = CVI_AI_YawnClassification;
+  model_info.model_path = model_path;
+  return model_info;
 }
+
+TEST_F(YawnCTestSuite, open_close_model) {
+  for (size_t test_idx = 0; test_idx < m_json_object.size(); test_idx++) {
+    auto test_config = m_json_object[test_idx];
+    std::string model_name =
+        std::string(std::string(test_config["reg_config"][0]["model_name"][0]).c_str());
+    ModelInfo model_info = getModel(model_name);
+    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
+
+    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+
+    const char *model_path_get = CVI_AI_GetModelPath(m_ai_handle, model_info.index);
+
+    EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, model_info.model_path,
+                 std::string(model_path_get));
+  }
+}
+
+TEST_F(YawnCTestSuite, inference_and_accuracy) {
+  for (size_t test_idx = 0; test_idx < m_json_object.size(); test_idx++) {
+    auto test_config = m_json_object[test_idx];
+    std::string model_name =
+        std::string(std::string(test_config["reg_config"][0]["model_name"][0]).c_str());
+
+    ModelInfo model_info = getModel(model_name);
+    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
+
+    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+
+    float threshold = float(test_config["reg_config"][0]["threshold"]);
+    for (size_t img_idx = 0; img_idx < test_config["reg_config"][0]["test_images"].size();
+         img_idx++) {
+      std::string image_path =
+          (m_image_dir / std::string(test_config["reg_config"][0]["test_images"][img_idx]))
+              .string();
+
+      int expected_res = int(test_config["reg_config"][0]["expected_results"][img_idx]);
+      Image image_rgb(image_path, PIXEL_FORMAT_RGB_888);
+      ASSERT_TRUE(image_rgb.open());
+      AIObject<cvai_face_t> face_meta;
+      init_face_meta(face_meta, 1);
+      face_meta->width = 1280;
+      face_meta->height = 720;
+      face_meta->info[0].bbox.x1 = (double)test_config["reg_config"][0]["bbox"][img_idx][0];
+      face_meta->info[0].bbox.x2 = (double)test_config["reg_config"][0]["bbox"][img_idx][1];
+      face_meta->info[0].bbox.y1 = (double)test_config["reg_config"][0]["bbox"][img_idx][2];
+      face_meta->info[0].bbox.y2 = (double)test_config["reg_config"][0]["bbox"][img_idx][3];
+      face_meta->dms->landmarks_5.x[0] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][0];
+      face_meta->dms->landmarks_5.x[1] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][1];
+      face_meta->dms->landmarks_5.x[2] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][2];
+      face_meta->dms->landmarks_5.x[3] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][3];
+      face_meta->dms->landmarks_5.x[4] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][4];
+      face_meta->dms->landmarks_5.y[0] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][5];
+      face_meta->dms->landmarks_5.y[1] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][6];
+      face_meta->dms->landmarks_5.y[2] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][7];
+      face_meta->dms->landmarks_5.y[3] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][8];
+      face_meta->dms->landmarks_5.y[4] =
+          (float)test_config["reg_config"][0]["face_landmarks"][img_idx][9];
+      face_meta->info[0].pts.x[0] = (float)test_config["reg_config"][0]["face_pts"][img_idx][0];
+      face_meta->info[0].pts.x[1] = (float)test_config["reg_config"][0]["face_pts"][img_idx][1];
+      face_meta->info[0].pts.x[2] = (float)test_config["reg_config"][0]["face_pts"][img_idx][2];
+      face_meta->info[0].pts.x[3] = (float)test_config["reg_config"][0]["face_pts"][img_idx][3];
+      face_meta->info[0].pts.x[4] = (float)test_config["reg_config"][0]["face_pts"][img_idx][4];
+      face_meta->info[0].pts.y[0] = (float)test_config["reg_config"][0]["face_pts"][img_idx][5];
+      face_meta->info[0].pts.y[1] = (float)test_config["reg_config"][0]["face_pts"][img_idx][6];
+      face_meta->info[0].pts.y[2] = (float)test_config["reg_config"][0]["face_pts"][img_idx][7];
+      face_meta->info[0].pts.y[3] = (float)test_config["reg_config"][0]["face_pts"][img_idx][8];
+      face_meta->info[0].pts.y[4] = (float)test_config["reg_config"][0]["face_pts"][img_idx][9];
+      ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
+      EXPECT_EQ((face_meta->dms->yawn_score > threshold), expected_res);
+    }
+  }
+}
+}  // namespace unitest
+}  // namespace cviai

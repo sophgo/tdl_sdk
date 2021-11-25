@@ -1,13 +1,7 @@
-{
-  "reg_num": 1, 
-  "reg_config": [
-    {
-      "test_audios": [
-        "0_1.bin",
-        "0_2.bin",
-        "0_3.bin",
-        "0_4.bin",
-        "0_5.bin",
+[
+  {
+    "model_name": "es_classification.cvimodel", 
+    "test_audios": [
         "1_1.bin",
         "1_2.bin",
         "1_3.bin",
@@ -29,19 +23,10 @@
         "4_4.bin",
         "4_5.bin",
         "5_1.bin",
-        "5_2.bin",
-        "5_3.bin",
         "5_4.bin",
         "5_5.bin"
-      ], 
-      "audio_num": 30, 
-      "model_name": "es_classification.cvimodel",
-      "expected_results": [
-        0, 
-        0, 
-        0, 
-        0, 
-        0, 
+    ], 
+    "expected_results": [
         1, 
         1, 
         1, 
@@ -64,10 +49,7 @@
         4, 
         5, 
         5, 
-        5, 
-        5, 
         5
-      ]
-    }
-  ]
-}
+    ]
+  }
+]

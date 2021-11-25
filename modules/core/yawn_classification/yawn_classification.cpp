@@ -60,17 +60,14 @@ int YawnClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) 
 
 void YawnClassification::prepareInputTensor(cv::Mat &input_mat) {
   const TensorInfo &tinfo = getInputTensorInfo(0);
-  uint16_t *input_ptr = tinfo.get<uint16_t>();
+  float *input_ptr = tinfo.get<float>();
   cv::Mat temp_mat;
   input_mat.convertTo(temp_mat, CV_32FC1, OPENEYERECOGNIZE_SCALE * 1.0, 0);
   cv::add(-0.5, temp_mat, temp_mat);
   cv::multiply(temp_mat, cv::Scalar(2), temp_mat);
   for (int r = 0; r < temp_mat.rows; ++r) {
-    for (int c = 0; c < temp_mat.cols; ++c) {
-      uint16_t bf16_input = 0;
-      floatToBF16((float *)temp_mat.ptr(r, c), &bf16_input);
-      memcpy(input_ptr + temp_mat.cols * r + c, &bf16_input, sizeof(uint16_t));
-    }
+    memcpy(input_ptr + temp_mat.cols * r, (float *)temp_mat.ptr(r, 0),
+           sizeof(float) * temp_mat.cols);
   }
 }
 
