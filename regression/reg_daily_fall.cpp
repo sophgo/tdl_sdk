@@ -39,7 +39,6 @@ class FallTestSuite : public CVIAIModelTestSuite {
 
 TEST_F(FallTestSuite, accruacy) {
   int img_num = int(m_json_object["test_images"].size());
-  float threshold = float(m_json_object["threshold"]);
 
   for (int img_idx = 0; img_idx < img_num; img_idx++) {
     int expected_res = int(m_json_object["expected_results"][img_idx]);
@@ -71,10 +70,12 @@ TEST_F(FallTestSuite, accruacy) {
 
       CVI_AI_Fall(m_ai_handle, &obj);
       if (obj.info[0].pedestrian_properity != NULL) {
-        bool pass = (abs(expected_res - obj.info[0].pedestrian_properity->fall) <= threshold);
-        printf("[%d] pass: %d; fall, expected : %d, result : %d\n", img_idx, pass, expected_res,
-               obj.info[0].pedestrian_properity->fall);
-        EXPECT_LT(abs(expected_res - obj.info[0].pedestrian_properity->fall), threshold);
+        bool pass = expected_res == (int)obj.info[0].pedestrian_properity->fall;
+        if (!pass) {
+          printf("[%d] pass: %d; fall, expected : %d, result : %d\n", img_idx, pass, expected_res,
+                 obj.info[0].pedestrian_properity->fall);
+        }
+        EXPECT_EQ(expected_res, (int)obj.info[0].pedestrian_properity->fall);
       }
     }
   }

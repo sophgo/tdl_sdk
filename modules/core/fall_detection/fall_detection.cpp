@@ -6,6 +6,7 @@
 #include "opencv2/opencv.hpp"
 
 #include <cmath>
+#include "cviai_log.hpp"
 #include "fall_detection.hpp"
 
 #define HISTORYPART_UPDATE 3  // 10//5
@@ -198,7 +199,7 @@ int FallMD::detect(cvai_object_t *obj) {
           obj->info[i].pedestrian_properity->fall = this->isFall;
         }
       } else {
-        std::cout << "History initialization, don't make fall prediction\n" << std::endl;
+        LOGI("History initialization, don't make fall prediction\n");
         // keep original fall status
       }
       // update history
