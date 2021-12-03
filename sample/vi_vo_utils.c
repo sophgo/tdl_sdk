@@ -107,8 +107,7 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
 
 void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
   DestoryOutput(&vs_ctx->outputContext);
-  SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->ViPipe.ViPipe, vs_ctx->vpssConfigs.vpssChnAI,
-                             vs_ctx->vpssConfigs.vpssGrp);
+  SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   abChnEnable[vs_ctx->vpssConfigs.vpssChnAI] = CVI_TRUE;
   abChnEnable[vs_ctx->vpssConfigs.vpssChnVideoOutput] = CVI_TRUE;
@@ -481,8 +480,7 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
     return s32Ret;
   }
 
-  s32Ret =
-      SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->viPipe, vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
+  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
   if (s32Ret != CVI_SUCCESS) {
     printf("vi bind vpss failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
