@@ -46,28 +46,32 @@ void init_face_meta(cvai_face_t *meta, uint32_t size) {
       }
     }
   }
-  cvai_dms_t *dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
-  dms->reye_score = 0;
-  dms->leye_score = 0;
-  dms->yawn_score = 0;
-  dms->phone_score = 0;
-  dms->smoke_score = 0;
-  dms->landmarks_106.size = 106;
-  dms->landmarks_5.size = 5;
-  cvai_pts_t landmarks_5;
-  landmarks_5.x = (float *)malloc(sizeof(float) * landmarks_5.size);
-  landmarks_5.y = (float *)malloc(sizeof(float) * landmarks_5.size);
-  dms->landmarks_5 = landmarks_5;
-  cvai_pts_t landmarks_106;
-  landmarks_106.x = (float *)malloc(sizeof(float) * landmarks_106.size);
-  landmarks_106.y = (float *)malloc(sizeof(float) * landmarks_106.size);
-  dms->landmarks_106 = landmarks_106;
-  dms->head_pose.yaw = 0;
-  dms->head_pose.pitch = 0;
-  dms->head_pose.roll = 0;
-  dms->dms_od.info = NULL;
-  dms->dms_od.size = 0;
-  meta->dms = dms;
+  meta->dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
+  meta->dms->reye_score = 0;
+  meta->dms->leye_score = 0;
+  meta->dms->yawn_score = 0;
+  meta->dms->phone_score = 0;
+  meta->dms->smoke_score = 0;
+  meta->dms->landmarks_106.size = 106;
+  meta->dms->landmarks_5.size = 5;
+  meta->dms->landmarks_5.x = (float *)malloc(sizeof(float) * meta->dms->landmarks_5.size);
+  meta->dms->landmarks_5.y = (float *)malloc(sizeof(float) * meta->dms->landmarks_5.size);
+  for (uint32_t j = 0; j < meta->dms->landmarks_5.size; ++j) {
+    meta->dms->landmarks_5.x[0] = 0.0;
+    meta->dms->landmarks_5.y[0] = 0.0;
+  }
+  meta->dms->landmarks_106.x = (float *)malloc(sizeof(float) * meta->dms->landmarks_106.size);
+  meta->dms->landmarks_106.y = (float *)malloc(sizeof(float) * meta->dms->landmarks_106.size);
+  for (uint32_t j = 0; j < meta->dms->landmarks_106.size; ++j) {
+    meta->dms->landmarks_106.x[0] = 0.0;
+    meta->dms->landmarks_106.y[0] = 0.0;
+  }
+
+  meta->dms->head_pose.yaw = 0;
+  meta->dms->head_pose.pitch = 0;
+  meta->dms->head_pose.roll = 0;
+  meta->dms->dms_od.info = NULL;
+  meta->dms->dms_od.size = 0;
 }
 
 void init_obj_meta(cvai_object_t *meta, uint32_t size, uint32_t height, uint32_t width,

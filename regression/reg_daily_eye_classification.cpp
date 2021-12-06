@@ -92,6 +92,7 @@ TEST_F(EyeCTestSuite, inference_and_accuracy) {
 
       AIObject<cvai_face_t> face_meta;
       init_face_meta(face_meta, 1);
+
       face_meta->width = 1280;
       face_meta->height = 720;
       face_meta->info[0].bbox.x1 = (double)test_config["reg_config"][0]["bbox"][img_idx][0];
@@ -118,10 +119,12 @@ TEST_F(EyeCTestSuite, inference_and_accuracy) {
           (float)test_config["reg_config"][0]["face_landmarks"][img_idx][8];
       face_meta->dms->landmarks_5.y[4] =
           (float)test_config["reg_config"][0]["face_landmarks"][img_idx][9];
+
       ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
       EXPECT_EQ(
           ((face_meta->dms->leye_score > threshold) || (face_meta->dms->reye_score > threshold)),
           expected_res);
+      CVI_AI_FreeDMS(face_meta->dms);
     }
   }
 }
