@@ -85,6 +85,10 @@ int VpssEngine::init(VPSS_GRP grp_id, CVI_U8 device) {
   return CVI_SUCCESS;
 }
 
+void VpssEngine::attachVBPool(VB_POOL pool_id) { m_vbpool_id = pool_id; }
+
+VB_POOL VpssEngine::getVBPool() const { return m_vbpool_id; }
+
 int VpssEngine::stop() {
   if (!m_is_vpss_init) {
     LOGE("Vpss is not init yet.\n");
@@ -164,6 +168,16 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
       LOGE("CVI_VPSS_SetChnAttr failed with %#x\n", ret);
       return ret;
     }
+
+    if (m_vbpool_id != VB_INVALID_POOLID) {
+      // Attach vb pool before vpss processing.
+      ret = CVI_VPSS_AttachVbPool(m_grpid, i, m_vbpool_id);
+      printf("attach vbpool(%d) to vpss(grp: %d, chn: %d)\n", m_vbpool_id, m_grpid, i);
+      if (ret != CVI_SUCCESS) {
+        LOGE("Cannot attach vb pool to vpss(grp: %d, chn: %d), ret=%#x\n", m_grpid, 0, ret);
+        return CVI_FAILURE;
+      }
+    }
   }
 
   if (chn_crop_attr != NULL) {
@@ -174,7 +188,7 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
         return ret;
       }
     }
-  } else {
+  } else {  // if not enable crop, cleanup crop attributes for all channels.
     for (uint32_t i = 0; i < m_enabled_chn; i++) {
       CVI_VPSS_SetChnCrop(m_grpid, i, &m_crop_attr_reset);
     }
@@ -196,6 +210,14 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
   }
 
   ret = CVI_VPSS_SendFrame(m_grpid, frame, -1);
+
+  // Detach vb pool when process is finished.
+  for (uint32_t i = 0; i < m_enabled_chn; i++) {
+    if (m_vbpool_id != VB_INVALID_POOLID) {
+      CVI_VPSS_DetachVbPool(m_grpid, i);
+    }
+  }
+
   return ret;
 }
 

@@ -321,6 +321,28 @@ CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E co
   }
 }
 
+CVI_S32 CVI_AI_SetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL pool_id) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  if (thread >= ctx->vec_vpss_engine.size()) {
+    LOGE("Invalid vpss thread: %d, should be 0 to %d\n", thread,
+         static_cast<uint32_t>(ctx->vec_vpss_engine.size() - 1));
+    return CVIAI_FAILURE;
+  }
+  ctx->vec_vpss_engine[thread]->attachVBPool(pool_id);
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_GetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL *pool_id) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  if (thread >= ctx->vec_vpss_engine.size()) {
+    LOGE("Invalid vpss thread: %d, should be 0 to %d\n", thread,
+         static_cast<uint32_t>(ctx->vec_vpss_engine.size() - 1));
+    return CVIAI_FAILURE;
+  }
+  *pool_id = ctx->vec_vpss_engine[thread]->getVBPool();
+  return CVIAI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                              uint32_t *thread) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);

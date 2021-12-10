@@ -1,4 +1,5 @@
 #pragma once
+#include <cvi_comm_vb.h>
 #include <cvi_comm_video.h>
 #include <cvi_comm_vpss.h>
 
@@ -28,6 +29,9 @@ class __attribute__((visibility("default"))) VpssEngine {
   int getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout = 100);
   int releaseFrame(VIDEO_FRAME_INFO_S *frame, int chn_idx);
 
+  void attachVBPool(VB_POOL pool_id);
+  VB_POOL getVBPool() const;
+
  private:
   inline int sendFrameBase(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *grp_crop_attr,
                            const VPSS_CROP_INFO_S *chn_crop_attr, const VPSS_CHN_ATTR_S *chn_attr,
@@ -36,6 +40,7 @@ class __attribute__((visibility("default"))) VpssEngine {
   bool m_is_vpss_init = false;
   VPSS_GRP m_grpid = -1;
   uint32_t m_enabled_chn = -1;
+  VB_POOL m_vbpool_id = VB_INVALID_POOLID;
   uint32_t m_available_max_chn = VPSS_MAX_CHN_NUM;
   CVI_U8 m_dev = 0;
   VPSS_CROP_INFO_S m_crop_attr_reset;

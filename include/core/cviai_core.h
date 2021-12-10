@@ -297,6 +297,32 @@ DLL_EXPORT CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_
                                         uint32_t *thread);
 
 /**
+ * @brief Set VB pool id to VPSS in AISDK. By default, VPSS in AISDK acquires VB from all
+ * system-wide VB_POOLs which are created via CVI_VB_Init. In this situation, system decides which
+ * VB_POOL is used according to VB allocation mechanism. The size of aquired VB maybe not optimal
+ * and it could cause resource competition. To prevents this problem, you can assign a specific
+ * VB_POOL to AISDK via this function. The VB_POOL created by CVI_VB_Init or CVI_VB_CreatePool are
+ * both accepted.
+ *
+ * @param handle An AI SDK handle.
+ * @param thread VPSS thread index.
+ * @param pool_id vb pool id. if pool id is VB_INVALID_POOLID than VPSS will get VB from all
+ * system-wide VB_POOLs like default.
+ * @return int Return CVIAI_SUCCESS.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_SetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL pool_id);
+
+/**
+ * @brief Get VB pool id used by internal VPSS.
+ *
+ * @param handle An AI SDK handle.
+ * @param thread VPSS thread index.
+ * @param pool_id Output vb pool id.
+ * @return int Return CVIAI_SUCCESS.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_GetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL *pool_id);
+
+/**
  * @brief Get the vpss group ids used by the handle.
  *
  * @param handle An AI SDK handle.
