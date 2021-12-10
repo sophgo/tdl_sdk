@@ -94,6 +94,8 @@ set(UnitTests
   reg_daily_alphapose
   reg_daily_fall
   reg_daily_retinaface
+  reg_daily_retinafaceIR
+  reg_daily_retinaface_hardhat
   reg_daily_es_classification
   reg_daily_eye_classification
   reg_daily_yawn_classification
@@ -143,8 +145,6 @@ buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cviai_core cviai_servic
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cviai_core cviai_service cviai_evaluation gtest_main ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_retinafaceIR INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_daily_retinaface_hardhat INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 
 if ("${CVI_PLATFORM}" STREQUAL "CV183X")
