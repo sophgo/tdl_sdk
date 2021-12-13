@@ -52,7 +52,10 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_jpeg.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so)
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+    )
 
 if("${CVI_PLATFORM}" STREQUAL "CV182X")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)

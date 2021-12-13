@@ -45,11 +45,11 @@ MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
 MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
 
 ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
-MW_LIBS = -lsample -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
+MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
 LINK_OPENCV = 1
 else
-MW_LIBS = -lsample -lvpu -lisp -lisp_algo -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
+MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
 LINK_OPENCV = 0
 endif
