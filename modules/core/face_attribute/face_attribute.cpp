@@ -48,30 +48,39 @@ int FaceAttribute::setupInputPreprocess(std::vector<InputPreprecessSetup> *data)
   return CVIAI_SUCCESS;
 }
 
-int FaceAttribute::onModelOpened() {
+int FaceAttribute::onModelOpened() { return allocateION(); }
+
+int FaceAttribute::onModelClosed() {
+  releaseION();
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 FaceAttribute::allocateION() {
   CVI_SHAPE shape = getInputShape(0);
   PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, shape.dim[3], shape.dim[2], format) !=
-      CVIAI_SUCCESS) {
-    return CVIAI_ERR_OPEN_MODEL;
-  }
-
-  if (!m_use_wrap_hw) {
-    m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
-        m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
+  if (CREATE_ION_HELPER(&m_wrap_frame, shape.dim[3], shape.dim[2], format, "tpu") != CVI_SUCCESS) {
+    LOGE("Cannot allocate ion for preprocess\n");
+    return CVIAI_ERR_ALLOC_ION_FAIL;
   }
   return CVIAI_SUCCESS;
+}
+
+void FaceAttribute::releaseION() {
+  if (m_wrap_frame.stVFrame.u64PhyAddr[0] != 0) {
+    CVI_SYS_IonFree(m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.pu8VirAddr[0]);
+    m_wrap_frame.stVFrame.u64PhyAddr[0] = (CVI_U64)0;
+    m_wrap_frame.stVFrame.u64PhyAddr[1] = (CVI_U64)0;
+    m_wrap_frame.stVFrame.u64PhyAddr[2] = (CVI_U64)0;
+    m_wrap_frame.stVFrame.pu8VirAddr[0] = NULL;
+    m_wrap_frame.stVFrame.pu8VirAddr[1] = NULL;
+    m_wrap_frame.stVFrame.pu8VirAddr[2] = NULL;
+  }
 }
 
 FaceAttribute::~FaceAttribute() {
   if (attribute_buffer != nullptr) {
     delete[] attribute_buffer;
     attribute_buffer = nullptr;
-  }
-  if (m_gdc_blk != (VB_BLK)-1) {
-    CVI_SYS_Munmap((void *)m_wrap_frame.stVFrame.pu8VirAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
-    m_wrap_frame.stVFrame.pu8VirAddr[0] = NULL;
-    CVI_VB_ReleaseBlock(m_gdc_blk);
   }
 }
 
@@ -135,9 +144,6 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
                          image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
                          m_wrap_frame.stVFrame.u32Stride[0]);
       face_align(image, warp_image, face_info);
-      CVI_SYS_IonFlushCache(m_wrap_frame.stVFrame.u64PhyAddr[0],
-                            m_wrap_frame.stVFrame.pu8VirAddr[0],
-                            m_wrap_frame.stVFrame.u32Length[0]);
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
       int ret = run(frames);
       if (ret != CVIAI_SUCCESS) {

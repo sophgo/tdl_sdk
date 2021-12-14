@@ -19,13 +19,7 @@ namespace cviai {
 
 MaskFaceRecognition::MaskFaceRecognition() : Core(CVI_MEM_DEVICE) {}
 
-MaskFaceRecognition::~MaskFaceRecognition() {
-  if (m_gdc_blk != (VB_BLK)-1) {
-    CVI_SYS_Munmap((void *)m_wrap_frame.stVFrame.pu8VirAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
-    m_wrap_frame.stVFrame.pu8VirAddr[0] = NULL;
-    CVI_VB_ReleaseBlock(m_gdc_blk);
-  }
-}
+MaskFaceRecognition::~MaskFaceRecognition() {}
 
 int MaskFaceRecognition::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
@@ -40,17 +34,33 @@ int MaskFaceRecognition::setupInputPreprocess(std::vector<InputPreprecessSetup> 
   return CVIAI_SUCCESS;
 }
 
-int MaskFaceRecognition::onModelOpened() {
-  CVI_SHAPE shape = getInputShape(0);
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_wrap_frame, shape.dim[3], shape.dim[2],
-                            PIXEL_FORMAT_RGB_888) != CVI_SUCCESS) {
-    return CVIAI_ERR_OPEN_MODEL;
-  }
+int MaskFaceRecognition::onModelOpened() { return allocateION(); }
 
-  m_wrap_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
-      m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.u32Length[0]);
-
+int MaskFaceRecognition::onModelClosed() {
+  releaseION();
   return CVIAI_SUCCESS;
+}
+
+CVI_S32 MaskFaceRecognition::allocateION() {
+  CVI_SHAPE shape = getInputShape(0);
+  if (CREATE_ION_HELPER(&m_wrap_frame, shape.dim[3], shape.dim[2], PIXEL_FORMAT_RGB_888, "tpu") !=
+      CVI_SUCCESS) {
+    LOGE("Cannot allocate ion for preprocess\n");
+    return CVIAI_ERR_ALLOC_ION_FAIL;
+  }
+  return CVIAI_SUCCESS;
+}
+
+void MaskFaceRecognition::releaseION() {
+  if (m_wrap_frame.stVFrame.u64PhyAddr[0] != 0) {
+    CVI_SYS_IonFree(m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.pu8VirAddr[0]);
+    m_wrap_frame.stVFrame.u64PhyAddr[0] = (CVI_U64)0;
+    m_wrap_frame.stVFrame.u64PhyAddr[1] = (CVI_U64)0;
+    m_wrap_frame.stVFrame.u64PhyAddr[2] = (CVI_U64)0;
+    m_wrap_frame.stVFrame.pu8VirAddr[0] = NULL;
+    m_wrap_frame.stVFrame.pu8VirAddr[1] = NULL;
+    m_wrap_frame.stVFrame.pu8VirAddr[2] = NULL;
+  }
 }
 
 int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {

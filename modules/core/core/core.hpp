@@ -173,6 +173,7 @@ class Core {
   ////////////////////////////////////////////////////
 
   virtual int onModelOpened() { return CVIAI_SUCCESS; }
+  virtual int onModelClosed() { return CVIAI_SUCCESS; }
 
   void setInputMemType(CVI_MEM_TYPE_E type) { mp_mi->conf.input_mem_type = type; }
   std::vector<VPSSConfig> m_vpss_config;

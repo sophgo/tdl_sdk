@@ -16,10 +16,10 @@ class Deeplabv3 final : public Core {
  private:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;
+  virtual int onModelClosed() override;
+  CVI_S32 allocateION();
+  void releaseION();
   int outputParser(cvai_class_filter_t *filter);
-  VB_BLK m_gdc_blk = (VB_BLK)-1;
-  VB_BLK m_gdc_blk_resize = (VB_BLK)-1;
   VIDEO_FRAME_INFO_S m_label_frame;
-  VIDEO_FRAME_INFO_S m_label_frame_resize;
 };
 }  // namespace cviai

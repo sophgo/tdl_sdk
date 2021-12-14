@@ -20,8 +20,10 @@ class FaceQuality final : public Core {
  private:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;
+  virtual int onModelClosed() override;
+  CVI_S32 allocateION();
+  void releaseION();
 
-  VB_BLK m_gdc_blk = (VB_BLK)-1;
   VIDEO_FRAME_INFO_S m_wrap_frame;
 };
 }  // namespace cviai

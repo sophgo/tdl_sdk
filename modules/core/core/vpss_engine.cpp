@@ -172,7 +172,6 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
     if (m_vbpool_id != VB_INVALID_POOLID) {
       // Attach vb pool before vpss processing.
       ret = CVI_VPSS_AttachVbPool(m_grpid, i, m_vbpool_id);
-      printf("attach vbpool(%d) to vpss(grp: %d, chn: %d)\n", m_vbpool_id, m_grpid, i);
       if (ret != CVI_SUCCESS) {
         LOGE("Cannot attach vb pool to vpss(grp: %d, chn: %d), ret=%#x\n", m_grpid, 0, ret);
         return CVI_FAILURE;

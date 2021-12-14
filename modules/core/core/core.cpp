@@ -134,16 +134,20 @@ void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
 
 int Core::modelClose() {
   TRACE_EVENT("cviai_core", "Core::modelClose");
+  int ret = CVIAI_SUCCESS;
+
   if (mp_mi->handle != nullptr) {
-    int ret = CVI_NN_CleanupModel(mp_mi->handle);
+    ret = CVI_NN_CleanupModel(mp_mi->handle);
     if (ret != CVI_RC_SUCCESS) {  // NOLINT
       LOGE("CVI_NN_CleanupModel failed: %s\n", get_tpu_error_msg(ret));
       mp_mi->handle = nullptr;
+      onModelClosed();
       return CVIAI_ERR_CLOSE_MODEL;
     }
     mp_mi->handle = nullptr;
   }
-  return CVIAI_SUCCESS;
+  onModelClosed();
+  return ret;
 }
 
 CVI_TENSOR *Core::getInputTensor(int idx) {

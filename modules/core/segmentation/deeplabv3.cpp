@@ -16,14 +16,7 @@ namespace cviai {
 
 Deeplabv3::Deeplabv3() : Core(CVI_MEM_DEVICE) {}
 
-Deeplabv3::~Deeplabv3() {
-  if (m_gdc_blk != (VB_BLK)-1) {
-    CVI_SYS_Munmap((void *)m_label_frame.stVFrame.pu8VirAddr[0],
-                   m_label_frame.stVFrame.u32Length[0]);
-    m_label_frame.stVFrame.pu8VirAddr[0] = NULL;
-    CVI_VB_ReleaseBlock(m_gdc_blk);
-  }
-}
+Deeplabv3::~Deeplabv3() {}
 
 int Deeplabv3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
@@ -40,16 +33,33 @@ int Deeplabv3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   return CVIAI_SUCCESS;
 }
 
-int Deeplabv3::onModelOpened() {
-  CVI_SHAPE shape = getOutputShape(NAME_SCORE);
-  if (CREATE_VBFRAME_HELPER(&m_gdc_blk, &m_label_frame, shape.dim[3], shape.dim[2],
-                            PIXEL_FORMAT_YUV_400) != CVI_SUCCESS) {
-    return CVIAI_ERR_OPEN_MODEL;
-  }
+int Deeplabv3::onModelOpened() { return allocateION(); }
 
-  m_label_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
-      m_label_frame.stVFrame.u64PhyAddr[0], m_label_frame.stVFrame.u32Length[0]);
+int Deeplabv3::onModelClosed() {
+  releaseION();
   return CVIAI_SUCCESS;
+}
+
+CVI_S32 Deeplabv3::allocateION() {
+  CVI_SHAPE shape = getOutputShape(NAME_SCORE);
+  if (CREATE_ION_HELPER(&m_label_frame, shape.dim[3], shape.dim[2], PIXEL_FORMAT_YUV_400, "tpu") !=
+      CVI_SUCCESS) {
+    LOGE("Cannot allocate ion for preprocess\n");
+    return CVIAI_ERR_ALLOC_ION_FAIL;
+  }
+  return CVIAI_SUCCESS;
+}
+
+void Deeplabv3::releaseION() {
+  if (m_label_frame.stVFrame.u64PhyAddr[0] != 0) {
+    CVI_SYS_IonFree(m_label_frame.stVFrame.u64PhyAddr[0], m_label_frame.stVFrame.pu8VirAddr[0]);
+    m_label_frame.stVFrame.u64PhyAddr[0] = (CVI_U64)0;
+    m_label_frame.stVFrame.u64PhyAddr[1] = (CVI_U64)0;
+    m_label_frame.stVFrame.u64PhyAddr[2] = (CVI_U64)0;
+    m_label_frame.stVFrame.pu8VirAddr[0] = NULL;
+    m_label_frame.stVFrame.pu8VirAddr[1] = NULL;
+    m_label_frame.stVFrame.pu8VirAddr[2] = NULL;
+  }
 }
 
 int Deeplabv3::inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_frame,
