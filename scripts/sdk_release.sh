@@ -54,8 +54,6 @@ echo "Cleanup tmp folder."
 rm -rf $TMP_WORKING_DIR
 
 echo "trying to build sample in released folder."
-pushd ${AI_SDK_INSTALL_PATH}/sample
-
 for v in $CVI_TARGET_PACKAGES_LIBDIR; do
     if [[ "$v" == *"cvitracer"* ]]; then
         CVI_TRACER_LIB_PATH=${v:2:$((${#v}-2))}
@@ -72,7 +70,17 @@ if [ -z "${CVI_TRACER_ROOT_PATH}" ]; then
     exit 1
 fi
 
+pushd ${AI_SDK_INSTALL_PATH}/module/app
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" -j10 || exit 1
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" install || exit 1
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" clean || exit 1
+popd
+
+pushd ${AI_SDK_INSTALL_PATH}/sample
 make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" -j10 || exit 1
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" install || exit 1
 make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" clean || exit 1
 echo "done"
 popd
+
+# rm -rf ${AI_SDK_INSTALL_PATH}/tmp_install

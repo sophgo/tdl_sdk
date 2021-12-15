@@ -53,7 +53,7 @@ MW_LIB_PATH = $(MW_PATH)/lib
 MW_3RD_LIB_PATH = $(MW_PATH)/lib/3rd
 MW_INC_PATH = $(MW_PATH)/include
 MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
-MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
+MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
 
 ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
@@ -106,7 +106,7 @@ STB_URL = http://10.58.65.3:8480/kevin.yang/stb.git
 STB_PATH = $(THIRD_PARTY_PATH)/stb
 THIRD_PARTY_INC_FLAGS = -I$(STB_PATH)
 
-CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -fsigned-char -Werror=all -fdiagnostics-color=always -s 
+CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -fdiagnostics-color=always -s 
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
@@ -159,7 +159,7 @@ SAMPLE_LIBS += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
 endif
 
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH)
-SAMPLE_APP_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app
+SAMPLE_APP_LIBS = -L../tmp_install/lib $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app
 
 CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH) -I$(CVI_TRACER_INC_PATH)
 CFLAGS += $(THIRD_PARTY_INC_FLAGS)
@@ -182,6 +182,10 @@ all: $(TARGETS)
 clean:
 	rm -f $(OBJS) $(TARGETS) $(DEPS)
 	rm -rf $(THIRD_PARTY_PATH)
+
+install:
+	mkdir -p ../tmp_install/bin
+	cp $(TARGETS) ../tmp_install/bin
 
 $(PWD)/%.o: $(PWD)/%.c | $(THIRD_PARTY_PATH)
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<

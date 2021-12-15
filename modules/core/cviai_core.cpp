@@ -31,6 +31,7 @@
 #include "sound_classification/sound_classification.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
 #include "thermal_person_detection/thermal_person.hpp"
+#include "utils/image_utils.hpp"
 #include "yawn_classification/yawn_classification.hpp"
 
 #include <stdarg.h>
@@ -637,17 +638,16 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_IncarObjectDetection, IncarObjectDetection,
 DEFINE_INF_FUNC_F2_P2(CVI_AI_Liveness, Liveness, CVI_AI_SUPPORTED_MODEL_LIVENESS, cvai_face_t *,
                       cvai_face_t *)
 
-CVI_S32 CVI_AI_GetAlignedFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *srcFrame,
-                              VIDEO_FRAME_INFO_S *dstFrame, cvai_face_info_t *face_info) {
-  TRACE_EVENT("cviai_core", "CVI_AI_GetAlignedFace");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  FaceQuality *face_quality =
-      dynamic_cast<FaceQuality *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_FACEQUALITY, ctx));
-  if (face_quality == nullptr) {
-    LOGE("No instance found for FaceQuality.\n");
-    return CVIAI_ERR_OPEN_MODEL;
-  }
-  return face_quality->getAlignedFace(srcFrame, dstFrame, face_info);
+/* TODO: Refactor CropImage functions, see CVI_AI_FaceAlignment */
+CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox) {
+  TRACE_EVENT("cviai_core", "CVI_AI_CropImage");
+  return crop_image(srcFrame, dst, bbox);
+}
+
+CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
+                              cvai_face_info_t *face_info, bool align) {
+  TRACE_EVENT("cviai_core", "CVI_AI_CropImage_Face");
+  return crop_image_face(srcFrame, dst, face_info, align);
 }
 
 // Tracker

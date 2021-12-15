@@ -21,6 +21,8 @@
 
 #define OUTPUT_BUFFER_SIZE 10
 
+// #define USE_OUTPUT_DATA_API
+
 typedef enum { fast = 0, interval, leave, intelligent } APP_MODE_e;
 
 #define SMT_MUTEXAUTOLOCK_INIT(mutex) pthread_mutex_t AUTOLOCK_##mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -36,10 +38,7 @@ __attribute__((always_inline)) inline void AutoUnLock(void *mutex) {
 typedef struct {
   uint64_t u_id;
   float quality;
-  CVI_U16 height;
-  CVI_U16 width;
-  CVI_U16 stride;
-  uint8_t *arr;
+  cvai_image_t image;
   tracker_state_e state;
   uint32_t counter;
 } IOData;
@@ -67,10 +66,19 @@ static cvai_face_t g_face_meta_1;
 static APP_MODE_e app_mode;
 
 int get_alive_num(face_capture_t *face_cpt_info);
+
 bool read_config(const char *config_path, face_capture_config_t *app_config);
+
 /* 0: low quality, 1: otherwise (Note: ignore unstable trackers) */
 void gen_face_meta_01(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
                       cvai_face_t *face_meta_1);
+
+bool CHECK_OUTPUT_CONDITION(face_capture_t *face_cpt_info, uint32_t idx, APP_MODE_e mode);
+
+#ifdef USE_OUTPUT_DATA_API
+uint32_t GENERATE_OUTPUT_DATA(IOData **output_data, face_capture_t *face_cpt_info);
+void FREE_OUTPUT_DATA(IOData *output_data, uint32_t size);
+#endif
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
@@ -110,18 +118,20 @@ static void *pImageWrite(void *args) {
               data_buffer[target_idx].counter);
     }
     printf(" > (I/O) Write Face (Q: %.2f): %s ...\n", data_buffer[target_idx].quality, filename);
-    stbi_write_png(filename, data_buffer[target_idx].width, data_buffer[target_idx].height,
-                   STBI_rgb, data_buffer[target_idx].arr, data_buffer[target_idx].stride);
+    stbi_write_png(filename, data_buffer[target_idx].image.width,
+                   data_buffer[target_idx].image.height, STBI_rgb,
+                   data_buffer[target_idx].image.pix, data_buffer[target_idx].image.stride);
 
     /* if there is no first capture face in INTELLIGENT mode, we need to create one (unnecessary) */
     if (app_mode == intelligent && data_buffer[target_idx].counter == 0) {
       sprintf(filename, "images/face_%" PRIu64 "_1.png", data_buffer[target_idx].u_id);
-      stbi_write_png(filename, data_buffer[target_idx].width, data_buffer[target_idx].height,
-                     STBI_rgb, data_buffer[target_idx].arr, data_buffer[target_idx].stride);
+      stbi_write_png(filename, data_buffer[target_idx].image.width,
+                     data_buffer[target_idx].image.height, STBI_rgb,
+                     data_buffer[target_idx].image.pix, data_buffer[target_idx].image.stride);
     }
 
     free(filename);
-    free(data_buffer[target_idx].arr);
+    CVI_AI_Free(&data_buffer[target_idx].image);
     {
       SMT_MutexAutoLock(IOMutex, lock);
       front_idx = target_idx;
@@ -130,7 +140,7 @@ static void *pImageWrite(void *args) {
 
   printf("[APP] free buffer data...\n");
   while (front_idx != rear_idx) {
-    free(data_buffer[(front_idx + 1) % OUTPUT_BUFFER_SIZE].arr);
+    CVI_AI_Free(&data_buffer[(front_idx + 1) % OUTPUT_BUFFER_SIZE].image);
     {
       SMT_MutexAutoLock(IOMutex, lock);
       front_idx = (front_idx + 1) % OUTPUT_BUFFER_SIZE;
@@ -270,7 +280,7 @@ int main(int argc, char *argv[]) {
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
-  ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle, ive_handle);
+  ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle, ive_handle); /* TODO: remove it */
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
   ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2]);
   if (ret != CVIAI_SUCCESS) {
@@ -357,22 +367,19 @@ int main(int argc, char *argv[]) {
     /* Producer */
     if (write_image) {
       for (uint32_t i = 0; i < app_handle->face_cpt_info->size; i++) {
-        if (!app_handle->face_cpt_info->_output[i]) {
+        if (!CHECK_OUTPUT_CONDITION(app_handle->face_cpt_info, i, app_mode)) {
           continue;
         }
         tracker_state_e state = app_handle->face_cpt_info->data[i].state;
-        if (app_mode == leave && state != MISS) {
-          continue;
-        }
+        uint32_t counter = app_handle->face_cpt_info->data[i]._out_counter;
         uint64_t u_id = app_handle->face_cpt_info->data[i].info.unique_id;
         float face_quality = app_handle->face_cpt_info->data[i].info.face_quality;
-        uint32_t counter = app_handle->face_cpt_info->data[i]._out_counter;
         if (state == MISS) {
           printf("Produce Face-%" PRIu64 "_out\n", u_id);
         } else {
           printf("Produce Face-%" PRIu64 "_%u\n", u_id, counter);
         }
-        /* copy image data to buffer */
+        /* Check output buffer space */
         bool full;
         int target_idx;
         {
@@ -384,26 +391,32 @@ int main(int argc, char *argv[]) {
           printf("[WARNING] Buffer is full! Drop out!");
           continue;
         }
-        /* assert image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
-        CVI_U16 height = app_handle->face_cpt_info->data[i].height;
-        CVI_U16 width = app_handle->face_cpt_info->data[i].width;
-        CVI_U16 stride = app_handle->face_cpt_info->data[i].stride;
-        data_buffer[target_idx].height = height;
-        data_buffer[target_idx].width = width;
-        data_buffer[target_idx].stride = stride;
-        data_buffer[target_idx].arr = (uint8_t *)malloc(stride * height);
-        memcpy(data_buffer[target_idx].arr, app_handle->face_cpt_info->data[i].face_pix,
-               stride * height * sizeof(CVI_U8));
+        /* Copy image data to buffer */
         data_buffer[target_idx].u_id = u_id;
         data_buffer[target_idx].quality = face_quality;
         data_buffer[target_idx].state = state;
         data_buffer[target_idx].counter = counter;
+        /* NOTE: Make sure the image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
+        CVI_AI_CopyImage(&app_handle->face_cpt_info->data[i].image, &data_buffer[target_idx].image);
         {
           SMT_MutexAutoLock(IOMutex, lock);
           rear_idx = target_idx;
         }
       }
     }
+
+    /* Generate output image data */
+#ifdef USE_OUTPUT_DATA_API
+    IOData *sample_output_data = NULL;
+    uint32_t output_num = GENERATE_OUTPUT_DATA(&sample_output_data, app_handle->face_cpt_info);
+    printf("Output Data (Size = %u)\n", output_num);
+    for (uint32_t i = 0; i < output_num; i++) {
+      printf("face[%u] ID: %" PRIu64 ", Quality: %.4f, Size: (%hu,%hu)\n", i,
+             sample_output_data[i].u_id, sample_output_data[i].quality,
+             sample_output_data[i].image.height, sample_output_data[i].image.width);
+    }
+    FREE_OUTPUT_DATA(sample_output_data, output_num);
+#endif
 
     s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
                                       &stfdFrame);
@@ -442,8 +455,12 @@ bool read_config(const char *config_path, face_capture_config_t *app_config) {
     fscanf(fp, "%s %s\n", name, value);
     if (!strcmp(name, "Miss_Time_Limit")) {
       app_config->miss_time_limit = (uint32_t)atoi(value);
-    } else if (!strcmp(name, "Threshold_Size")) {
-      app_config->thr_size = atoi(value);
+    } else if (!strcmp(name, "Threshold_Size_Min")) {
+      app_config->thr_size_min = atoi(value);
+    } else if (!strcmp(name, "Threshold_Size_Max")) {
+      app_config->thr_size_max = atoi(value);
+    } else if (!strcmp(name, "Quality_Assessment_Method")) {
+      app_config->qa_method = atoi(value);
     } else if (!strcmp(name, "Threshold_Quality")) {
       app_config->thr_quality = atof(value);
     } else if (!strcmp(name, "Threshold_Quality_High")) {
@@ -460,6 +477,12 @@ bool read_config(const char *config_path, face_capture_config_t *app_config) {
       app_config->fast_m_capture_num = (uint32_t)atoi(value);
     } else if (!strcmp(name, "CYCLE_Mode_Interval")) {
       app_config->cycle_m_interval = (uint32_t)atoi(value);
+    } else if (!strcmp(name, "AUTO_Mode_Time_Limit")) {
+      app_config->auto_m_time_limit = (uint32_t)atoi(value);
+    } else if (!strcmp(name, "AUTO_Mode_Fast_Cap")) {
+      app_config->auto_m_fast_cap = atoi(value) == 1;
+    } else if (!strcmp(name, "Capture_Aligned_Face")) {
+      app_config->capture_aligned_face = atoi(value) == 1;
     } else {
       printf("Unknow Arg: %s\n", name);
       return false;
@@ -523,3 +546,54 @@ void gen_face_meta_01(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
   }
   return;
 }
+
+bool CHECK_OUTPUT_CONDITION(face_capture_t *face_cpt_info, uint32_t idx, APP_MODE_e mode) {
+  if (!face_cpt_info->_output[idx]) return false;
+  if (mode == leave && face_cpt_info->data[idx].state != MISS) return false;
+  return true;
+}
+
+#ifdef USE_OUTPUT_DATA_API
+uint32_t GENERATE_OUTPUT_DATA(IOData **output_data, face_capture_t *face_cpt_info) {
+  uint32_t output_num = 0;
+  for (uint32_t i = 0; i < face_cpt_info->size; i++) {
+    if (CHECK_OUTPUT_CONDITION(face_cpt_info, i, app_mode)) {
+      output_num += 1;
+    }
+  }
+  if (output_num == 0) {
+    *output_data = NULL;
+    return 0;
+  }
+  *output_data = (IOData *)malloc(sizeof(IOData) * output_num);
+  memset(*output_data, 0, sizeof(IOData) * output_num);
+
+  uint32_t tmp_idx = 0;
+  for (uint32_t i = 0; i < face_cpt_info->size; i++) {
+    if (!CHECK_OUTPUT_CONDITION(face_cpt_info, i, app_mode)) {
+      continue;
+    }
+    tracker_state_e state = face_cpt_info->data[i].state;
+    uint32_t counter = face_cpt_info->data[i]._out_counter;
+    uint64_t u_id = face_cpt_info->data[i].info.unique_id;
+    float face_quality = face_cpt_info->data[i].info.face_quality;
+    /* Copy image data to buffer */
+    (*output_data)[tmp_idx].u_id = u_id;
+    (*output_data)[tmp_idx].quality = face_quality;
+    (*output_data)[tmp_idx].state = state;
+    (*output_data)[tmp_idx].counter = counter;
+    /* NOTE: Make sure the image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
+    CVI_AI_CopyImage(&face_cpt_info->data[i].image, &(*output_data)[tmp_idx].image);
+    tmp_idx += 1;
+  }
+  return output_num;
+}
+
+void FREE_OUTPUT_DATA(IOData *output_data, uint32_t size) {
+  if (size == 0) return;
+  for (uint32_t i = 0; i < size; i++) {
+    CVI_AI_Free(&output_data[i].image);
+  }
+  free(output_data);
+}
+#endif

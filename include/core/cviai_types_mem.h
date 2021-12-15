@@ -12,6 +12,7 @@ DLL_EXPORT void CVI_AI_FreeCpp(cvai_face_info_t *face_info);
 DLL_EXPORT void CVI_AI_FreeCpp(cvai_face_t *face);
 DLL_EXPORT void CVI_AI_FreeCpp(cvai_object_info_t *obj_info);
 DLL_EXPORT void CVI_AI_FreeCpp(cvai_object_t *obj);
+DLL_EXPORT void CVI_AI_FreeCpp(cvai_image_t *image);
 DLL_EXPORT void CVI_AI_FreeCpp(cvai_dms_od_t *dms_od);
 DLL_EXPORT void CVI_AI_FreeCpp(cvai_dms_t *dms);
 
@@ -31,10 +32,13 @@ DLL_EXPORT void CVI_AI_FreeFaceInfo(cvai_face_info_t *face_info);
 DLL_EXPORT void CVI_AI_FreeFace(cvai_face_t *face);
 DLL_EXPORT void CVI_AI_FreeObjectInfo(cvai_object_info_t *obj_info);
 DLL_EXPORT void CVI_AI_FreeObject(cvai_object_t *obj);
+DLL_EXPORT void CVI_AI_FreeImage(cvai_image_t *image);
 DLL_EXPORT void CVI_AI_FreeDMS(cvai_dms_t *dms);
 
 DLL_EXPORT void CVI_AI_CopyFaceInfo(const cvai_face_info_t *info, cvai_face_info_t *infoNew);
 DLL_EXPORT void CVI_AI_CopyObjectInfo(const cvai_object_info_t *info, cvai_object_info_t *infoNew);
+
+DLL_EXPORT void CVI_AI_CopyImage(const cvai_image_t *src_image, cvai_image_t *dst_image);
 #ifdef __cplusplus
 }
 #endif

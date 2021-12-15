@@ -141,6 +141,26 @@ typedef struct {
   cvai_tracker_info_t* info;
 } cvai_tracker_t;
 
+/** @struct cvai_image_t
+ * @ingroup core_cviaicore
+ * @brief image stucture.
+ *
+ * @var cvai_image_t::height
+ * The height of the image.
+ * @var cvai_image_t::width
+ * The width of the image.
+ * @var cvai_image_t::stride
+ * The stride of the image.
+ * @var cvai_image_t::pix
+ * The pixel data of the image.
+ */
+typedef struct {
+  uint32_t height;
+  uint32_t width;
+  uint32_t stride;
+  uint8_t* pix;
+} cvai_image_t;
+
 /**
  * @brief A helper function to get the unit size of feature_type_e.
  * @ingroup core_cviaicore

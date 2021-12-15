@@ -32,7 +32,8 @@
            cvai_face_info_t*: CVI_AI_FreeFaceInfo,     \
            cvai_face_t*: CVI_AI_FreeFace,              \
            cvai_object_info_t*: CVI_AI_FreeObjectInfo, \
-           cvai_object_t*: CVI_AI_FreeObject)(X)
+           cvai_object_t*: CVI_AI_FreeObject,          \
+           cvai_image_t*: CVI_AI_FreeImage)(X)
 // clang-format on
 #endif
 
@@ -49,10 +50,12 @@
 // clang-format off
 #define CVI_AI_CopyInfoG(OUT) _Generic((OUT),                       \
            cvai_face_info_t*: CVI_AI_CopyFaceInfo,                  \
-           cvai_object_info_t*: CVI_AI_CopyObjectInfo)
+           cvai_object_info_t*: CVI_AI_CopyObjectInfo,              \
+           cvai_image_t*: CVI_AI_CopyImage)
 #define CVI_AI_CopyInfo(IN, OUT) _Generic((IN),                     \
            cvai_face_info_t*: CVI_AI_CopyInfoG(OUT),                \
-           cvai_object_info_t*: CVI_AI_CopyInfoG(OUT))((IN), (OUT))
+           cvai_object_info_t*: CVI_AI_CopyInfoG(OUT),              \
+           cvai_image_t*: CVI_AI_CopyInfoG(OUT))((IN), (OUT))
 // clang-format on
 #endif
 
@@ -512,7 +515,7 @@ DLL_EXPORT CVI_S32 CVI_AI_MaskFaceRecognition(const cviai_handle_t handle,
 /**@{*/
 
 /**
- * @brief FaceQuality. Gives a score to present how good the image quality of a face is.
+ * @brief FaceQuality. Assess the quality of the faces.
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame.
@@ -524,8 +527,28 @@ DLL_EXPORT CVI_S32 CVI_AI_MaskFaceRecognition(const cviai_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                       cvai_face_t *face, bool *skip);
 
-DLL_EXPORT CVI_S32 CVI_AI_GetAlignedFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *srcFrame,
-                                         VIDEO_FRAME_INFO_S *dstFrame, cvai_face_info_t *face_info);
+/**
+ * @brief Crop image in given frame.
+ *
+ * @param srcFrame Input frame. (only support RGB Packed format)
+ * @param dst Output image.
+ * @param bbox The bounding box.
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
+                                    cvai_bbox_t *bbox);
+
+/**
+ * @brief Crop face image in given frame.
+ *
+ * @param srcFrame Input frame. (only support RGB Packed format)
+ * @param dst Output image.
+ * @param face_info Face information, contain bbox and 5 landmark.
+ * @param align Align face to standard size if true.
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
+                                         cvai_face_info_t *face_info, bool align);
 
 /**
  * @brief Liveness. Gives a score to present how real the face is. The score will be low if the face

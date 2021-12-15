@@ -34,7 +34,7 @@ typedef struct {
   tracker_state_e state;
   cvai_feature_t feature;
   float quality;
-  VIDEO_FRAME_INFO_S face;
+  VIDEO_FRAME_INFO_S face; /* TODO: remove this */
   float pitch;
   float roll;
   float yaw;
@@ -97,12 +97,14 @@ bool update_tracker(cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S *frame,
           if (face_meta->info[i].face_quality >= QUALITY_THRESHOLD) {
             fq_trackers[j].quality = face_meta->info[i].face_quality;
             feature_copy(&fq_trackers[j].feature, &face_meta->info[i].feature);
+#if 0
             CVI_S32 ret =
                 CVI_AI_GetAlignedFace(ai_handle, frame, &fq_trackers[j].face, &face_meta->info[i]);
             if (ret != CVIAI_SUCCESS) {
               printf("AI get aligned face failed(1).\n");
               return false;
             }
+#endif
           }
           is_created = true;
           break;
@@ -123,12 +125,14 @@ bool update_tracker(cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S *frame,
           face_meta->info[i].face_quality > fq_trackers[match_idx].quality) {
         fq_trackers[match_idx].quality = face_meta->info[i].face_quality;
         feature_copy(&fq_trackers[match_idx].feature, &face_meta->info[i].feature);
+#if 0
         CVI_S32 ret = CVI_AI_GetAlignedFace(ai_handle, frame, &fq_trackers[match_idx].face,
                                             &face_meta->info[i]);
         if (ret != CVIAI_SUCCESS) {
           printf("AI get aligned face failed(2).\n");
           return false;
         }
+#endif
       }
     }
   }
