@@ -8,6 +8,7 @@
 #include <cvi_vb.h>
 #include <cvi_vpss.h>
 
+#include <inttypes.h>
 #include <math.h>
 #include <string.h>
 #include <syslog.h>
@@ -466,7 +467,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
   switch (vFrame->enPixelFormat) {
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * 3, DEFAULT_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * 3;
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       // Don't need to align cause only 1 chn.
@@ -508,7 +509,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_FP32_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(float), DEFAULT_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -516,7 +517,7 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_BF16_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(uint16_t), DEFAULT_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -577,7 +578,7 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
   switch (vFrame->enPixelFormat) {
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * 3, DEFAULT_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * 3;
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       // Don't need to align cause only 1 chn.
@@ -619,7 +620,7 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_FP32_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(float), DEFAULT_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -627,7 +628,7 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_BF16_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * sizeof(uint16_t), DEFAULT_ALIGN);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
