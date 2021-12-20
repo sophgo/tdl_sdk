@@ -31,6 +31,11 @@ if (SHRINK_OPENCV_SIZE)
                     ${OPENCV_ROOT}/lib/libopencv_imgproc.a
                     ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a)
   set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
+
+  if ("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
+    install(DIRECTORY ${OPENCV_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/opencv)
+    install(FILES ${OPENCV_LIBS_MIN} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
+  endif()
 else()
   if("${OPENCV_ROOT}" STREQUAL "")
     message(FATAL_ERROR "You must set OPENCV_ROOT before building library.")
@@ -49,9 +54,4 @@ else()
                       ${OPENCV_ROOT}/lib/libopencv_imgproc.so)
 
   set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
-endif()
-
-if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
-  install(DIRECTORY ${OPENCV_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/opencv)
-  install(FILES ${OPENCV_LIBS_MIN} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
 endif()
