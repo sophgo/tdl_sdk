@@ -26,12 +26,18 @@ CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 ifeq ($(SDK_VER), 32bit)
 ARCH=arm
 CROSS_COMPILE = $(CROSS_COMPILE_32)
+LINK_OPENCV = 0
+CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
 else ifeq ($(SDK_VER), 64bit)
 ARCH=arm64
 CROSS_COMPILE = $(CROSS_COMPILE_64)
+LINK_OPENCV = 1
+CFLAGS += -march=armv8-a
 else ifeq ($(SDK_VER), uclibc)
 ARCH=uclibc
 CROSS_COMPILE = $(CROSS_COMPILE_32_UCLIBC)
+LINK_OPENCV = 0
+CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif
@@ -47,11 +53,9 @@ MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
 ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
-LINK_OPENCV = 1
 else
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
-LINK_OPENCV = 0
 endif
 #####################################################
 
@@ -98,12 +102,6 @@ STB_PATH = $(THIRD_PARTY_PATH)/stb
 THIRD_PARTY_INC_FLAGS = -I$(STB_PATH)
 
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -fsigned-char -Werror=all -fdiagnostics-color=always -s 
-
-ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
-CFLAGS += -march=armv8-a
-else
-CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
-endif
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
