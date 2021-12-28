@@ -26,7 +26,12 @@ CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 ifeq ($(SDK_VER), 32bit)
 ARCH=arm
 CROSS_COMPILE = $(CROSS_COMPILE_32)
+# link OpenCV so even if 32bit on cv183X
+ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
+LINK_OPENCV = 1
+else
 LINK_OPENCV = 0
+endif
 CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
 else ifeq ($(SDK_VER), 64bit)
 ARCH=arm64
