@@ -1,70 +1,115 @@
 #include "sound_classification.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
-#include "cviai_trace.hpp"
-
+#include <cstring>
 #define N_FFT 1024
 #define ESC_OUT_NAME "prob_dequant"
 
 namespace cviai {
 
+int borderInterpolate(int p, int len) {
+  int delta = 1;
+  if (len == 1) return 0;
+  do {
+    if (p < 0)
+      p = -p - 1 + delta;
+    else
+      p = len - 1 - (p - len) - delta;
+  } while ((unsigned)p >= (unsigned)len);
+  return p;
+}
+
+void copyMakeBorder(const float *src, float *dst, int srcLen, int top, int left) {
+  int i, j;
+  int *tab = new int[left * 2];
+  int right = left;
+  for (i = 0; i < left; i++) {
+    j = borderInterpolate(i - left, srcLen);
+    tab[i] = j;
+  }
+  for (i = 0; i < right; i++) {
+    j = borderInterpolate(srcLen + i, srcLen);
+    tab[(i + left)] = j;
+  }
+  float *dstInner = (dst + left);
+  memcpy(dstInner, src, srcLen * sizeof(float));
+  for (i = 0; i < left; ++i) {
+    dstInner[i - left] = src[tab[i]];
+  }
+  for (i = 0; i < right; ++i) {
+    dstInner[i + srcLen] = src[tab[i + left]];
+  }
+}
+
 SoundClassification::SoundClassification() : Core(CVI_MEM_SYSTEM) {
   int insert_cnt = 0;
   float pi = 3.14159265358979323846;
+
   // Calculate 3 different stft hannwindow
   for (int i = 0; i < Channel; ++i) {
-    hannWindow[i] = cv::Mat(1, N_FFT, CV_32F, 0.0f);
+    Mat *hannWindow = new Mat(N_FFT);
+    hannWindow->reset();
     if (N_FFT >= win_length[i]) {
       insert_cnt = (N_FFT - win_length[i]) / 2;
     }
     for (int k = 1; k <= win_length[i]; ++k) {
-      hannWindow[i].at<float>(0, k - 1 + insert_cnt) =
+      hannWindow->at(k - 1 + insert_cnt) =
           static_cast<float>(0.5 * (1 - cos(2 * pi * k / (win_length[i] + 1))));
     }
+    hannWindows.push_back(hannWindow);
   }
   pad_length = N_FFT / 2;
-  number_coefficients = N_FFT / 2 + 1;
   // init fft
   fft.init(size_t(N_FFT));
+  framef = new Mat(N_FFT);
+  Xrf = new Mat(feat_width);
+  Xif = new Mat(feat_width);
+  data_padbuffer = nullptr;
+  for (int i = 0; i < Channel; ++i) {
+    Mat *feature_vector = new Mat(feat_height, feat_width);
+    feature_vectors.push_back(feature_vector);
+  }
 }
 
-SoundClassification::~SoundClassification() {}
+SoundClassification::~SoundClassification() {
+  delete framef;
+  delete Xrf;
+  delete Xif;
+  delete data_padbuffer;
+  for (int i = 0; i < Channel; ++i) delete feature_vectors[i];
+}
 
 int SoundClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   int img_width = stOutFrame->stVFrame.u32Width / 2;  // unit: 16 bits
   int img_height = stOutFrame->stVFrame.u32Height;
-  cv::Mat image(img_height, img_width, CV_32F, 0.0f);
+  Mat *image = new Mat(img_height, img_width);
 
   // save audio to image array
   short *temp_buffer = reinterpret_cast<short *>(stOutFrame->stVFrame.pu8VirAddr[0]);
-  for (int i = 0; i < img_width; ++i) {
-    image.at<float>(0, i) = static_cast<float>(temp_buffer[i] / 32768.0);  // turn to pcm format
+
+  for (int i = 0; i < img_height; ++i) {
+    for (int j = 0; j < img_width; ++j) {
+      image->at(i, j) = static_cast<float>(temp_buffer[i * img_width + j] / 32768.0);
+    }
   }
 
   // 1 channel input with different stft
-  std::vector<cv::Mat> input;
+  pad_size = img_height * (img_width + pad_length + pad_length);
+  if (data_padbuffer == nullptr) data_padbuffer = new Mat(pad_size);
+
   for (int i = 0; i < Channel; ++i) {
-    cv::Mat mag;
-    mag = STFT(&image, i);
-    mag = cv::abs(mag);
-    cv::resize(mag, mag, cv::Size(feat_width, feat_height), 0, 0, cv::INTER_LINEAR);
-    input.push_back(mag);
+    feature_vectors[i]->reset();
+    STFT(image, i, feature_vectors[i]);
   }
 
-  prepareInputTensor(input);
-
+  prepareInputTensor(feature_vectors);
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
-  int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
-    return ret;
-  }
+  run(frames);
 
   const TensorInfo &info = getOutputTensorInfo(ESC_OUT_NAME);
 
   // get top k
   *index = get_top_k(info.get<float>(), info.tensor_elem);
-  return CVIAI_SUCCESS;
+  delete image;
+  return CVI_SUCCESS;
 }
 
 int SoundClassification::get_top_k(float *result, size_t count) {
@@ -87,44 +132,39 @@ int SoundClassification::get_top_k(float *result, size_t count) {
   return idx;
 }
 
-cv::Mat SoundClassification::STFT(cv::Mat *data, int channel) {
-  cv::Mat data_padbuffer;
-  cv::copyMakeBorder(*data, data_padbuffer, 0, 0, pad_length, pad_length, cv::BORDER_REFLECT_101);
-  int pad_size = data_padbuffer.rows * data_padbuffer.cols;  // padbuffer.size()
-  int number_feature_vectors = (pad_size - N_FFT) / hop_length[channel] + 1;
-  cv::Mat feature_vector(number_feature_vectors, number_coefficients, CV_32F, 0.0f);
+void SoundClassification::STFT(Mat *data, int channel, Mat *feature_vector) {
+  int len = data->cols * data->rows;
+  data_padbuffer->reset();
+
+  copyMakeBorder(data->data, data_padbuffer->data, len, 0, pad_length);
+  int count = 0;
   for (int i = 0; i <= pad_size - N_FFT; i += hop_length[channel]) {
-    cv::Mat framef(1, N_FFT, CV_32F, 0.0f);
-    memcpy(framef.data, data_padbuffer.ptr<float>(0, i), sizeof(float) * N_FFT);
-    framef = framef.mul(hannWindow[channel]);
+    framef->reset();
 
-    cv::Mat Xrf(1, number_coefficients, CV_32F, 0.0f);
-    cv::Mat Xif(1, number_coefficients, CV_32F, 0.0f);
-    fft.fft(reinterpret_cast<float *>(framef.data), reinterpret_cast<float *>(Xrf.data),
-            reinterpret_cast<float *>(Xif.data));
+    memcpy(framef->data, data_padbuffer->ptr(0, i), sizeof(float) * N_FFT);
+    framef->multipy(hannWindows[channel]);
 
-    cv::pow(Xrf, 2, Xrf);
-    cv::pow(Xif, 2, Xif);
+    Xrf->reset();
+    Xif->reset();
 
-    cv::Mat cv_feature(1, number_coefficients, CV_32F, 0.0f);
-    cv_feature.data =
-        reinterpret_cast<unsigned char *>(feature_vector.ptr<float>(i / hop_length[channel], 0));
+    fft.fft(reinterpret_cast<float *>(framef->data), reinterpret_cast<float *>(Xrf->data),
+            reinterpret_cast<float *>(Xif->data));
 
-    cv::sqrt(Xrf + Xif, cv_feature);
+    Xrf->pow();
+    Xif->pow();
+    Xrf->add(Xif);
+    Xrf->sqrt();
+    memcpy(feature_vector->ptr(count++, 0), Xrf->data, sizeof(float) * feat_width);
   }
-  return feature_vector;
 }
 
-void SoundClassification::prepareInputTensor(std::vector<cv::Mat> &input_mat) {
+void SoundClassification::prepareInputTensor(std::vector<Mat *> &input_mat) {
   const TensorInfo &tinfo = getInputTensorInfo(0);
   float *input_ptr = tinfo.get<float>();
 
   for (int c = 0; c < Channel; ++c) {
-    int size = input_mat[c].rows * input_mat[c].cols;
-    for (int r = 0; r < input_mat[c].rows; ++r) {
-      memcpy(input_ptr + size * c + input_mat[c].cols * r, input_mat[c].ptr(r, 0),
-             input_mat[c].cols * sizeof(float));
-    }
+    int size = input_mat[c]->rows * input_mat[c]->cols;
+    memcpy(input_ptr + c * size, input_mat[c]->data, size * sizeof(float));
   }
 }
 }  // namespace cviai
