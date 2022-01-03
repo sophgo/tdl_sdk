@@ -1,5 +1,4 @@
 #include "sound_classification.hpp"
-#include <cstring>
 #define N_FFT 1024
 #define ESC_OUT_NAME "prob_dequant"
 

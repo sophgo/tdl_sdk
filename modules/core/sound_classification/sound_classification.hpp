@@ -1,11 +1,9 @@
 #include <arm_neon.h>
-#include <cvi_comm_vb.h>
 #pragma once
 #include "ESCFFT.hpp"
 #include "core.hpp"
-//#include "sound_utils.hpp"
 
-#define FLT_MIN 1.175494351e-38F
+#define FLT_MIN_SOUND 1.175494351e-38F
 
 namespace cviai {
 
@@ -38,7 +36,7 @@ inline v_float32x4 v_abs(v_float32x4 x) { return v_float32x4(vabsq_f32(x.val)); 
 
 // neon sqrt
 inline v_float32x4 v_sqrt(const v_float32x4 &x) {
-  float32x4_t x1 = vmaxq_f32(x.val, vdupq_n_f32(FLT_MIN));
+  float32x4_t x1 = vmaxq_f32(x.val, vdupq_n_f32(FLT_MIN_SOUND));
   float32x4_t e = vrsqrteq_f32(x1);
   e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(x1, e), e), e);
   e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(x1, e), e), e);
