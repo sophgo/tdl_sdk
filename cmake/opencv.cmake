@@ -27,8 +27,8 @@ if (SHRINK_OPENCV_SIZE)
     ${OPENCV_ROOT}/include/opencv/
   )
 
-  set(OPENCV_LIBS_MIN ${OPENCV_ROOT}/lib/libopencv_core.a
-                    ${OPENCV_ROOT}/lib/libopencv_imgproc.a
+  set(OPENCV_LIBS_MIN ${OPENCV_ROOT}/lib/libopencv_imgproc.a
+                    ${OPENCV_ROOT}/lib/libopencv_core.a
                     ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a)
   set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
 
