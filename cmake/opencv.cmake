@@ -3,10 +3,13 @@
 # Author Yangwen Huang <yangwen.huang@bitmain.com>
 
 if (SHRINK_OPENCV_SIZE)
+
   if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-uclibc-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@10.58.65.3/sw_rls/cv1835/aisdk_opencv/opencv_arm_uclibc.tar)
+    set(OPENCV_URL ftp://swftp:cvitek@10.58.65.3/sw_rls/cv1835/third_party/latest/opencv_aisdk/opencv_uclibc.tar.gz)
   elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-gnueabihf-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@10.58.65.3/sw_rls/cv1835/aisdk_opencv/opencv_arm_glibc.tar)
+    set(OPENCV_URL ftp://swftp:cvitek@10.58.65.3/sw_rls/cv1835/third_party/latest/opencv_aisdk/opencv_32bit.tar.gz)
+  elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-aarch64-linux.cmake")
+    set(OPENCV_URL ftp://swftp:cvitek@10.58.65.3/sw_rls/cv1835/third_party/latest/opencv_aisdk/opencv_64bit.tar.gz)
   else()
     message(FATAL_ERROR "No shrinked opencv library for ${CMAKE_TOOLCHAIN_FILE}")
   endif()

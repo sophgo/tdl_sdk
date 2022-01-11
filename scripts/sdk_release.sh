@@ -18,19 +18,19 @@ echo "Creating tmp working directory."
 
 if [[ "$SDK_VER" == "uclibc" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-uclibc-linux.cmake
-    SHRINK_OPENCV_SIZE=ON
-    OPENCV_INSTALL_PATH=""
 elif [[ "$SDK_VER" == "64bit" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
 elif [[ "$SDK_VER" == "32bit" ]]; then
-    if [[ "$CHIP_ARCH" != "CV183X" ]]; then
-        SHRINK_OPENCV_SIZE=ON
-        OPENCV_INSTALL_PATH=""
-    fi
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
 else
     echo "Wrong SDK_VER=$SDK_VER"
     exit 1
+fi
+
+# don't shrink opencv size if platform is 183x series
+if [[ "$CHIP_ARCH" != "CV183X" ]]; then
+    SHRINK_OPENCV_SIZE=ON
+    OPENCV_INSTALL_PATH=""
 fi
 
 $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
