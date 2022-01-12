@@ -23,25 +23,25 @@ SDK_VER ?= 64bit
 CROSS_COMPILE_32 ?= arm-linux-gnueabihf-
 CROSS_COMPILE_64 ?= aarch64-linux-gnu-
 CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
-ifeq ($(SDK_VER), 32bit)
-ARCH=arm
-CROSS_COMPILE = $(CROSS_COMPILE_32)
-# link OpenCV so even if 32bit on cv183X
+
+# link OpenCV shared object only if platform is cv183X series
 ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
 LINK_OPENCV = 1
 else
 LINK_OPENCV = 0
 endif
+
+ifeq ($(SDK_VER), 32bit)
+ARCH=arm
+CROSS_COMPILE = $(CROSS_COMPILE_32)
 CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
 else ifeq ($(SDK_VER), 64bit)
 ARCH=arm64
 CROSS_COMPILE = $(CROSS_COMPILE_64)
-LINK_OPENCV = 1
 CFLAGS += -march=armv8-a
 else ifeq ($(SDK_VER), uclibc)
 ARCH=uclibc
 CROSS_COMPILE = $(CROSS_COMPILE_32_UCLIBC)
-LINK_OPENCV = 0
 CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
