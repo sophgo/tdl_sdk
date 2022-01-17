@@ -91,6 +91,7 @@ set(UnitTests
   reg_daily_reid
   reg_daily_td
   reg_daily_thermal_fd
+  reg_daily_thermal_person_detection
   reg_daily_core
   reg_daily_feature_matching
   reg_daily_liveness
@@ -130,6 +131,7 @@ buildninstall(NAME reg_wider_face INC ${REG_INCLUDES} DEPS cviai_core cviai_eval
 buildninstall(NAME reg_mobiledetv2 INC ${REG_INCLUDES} SRCS od_utils DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_yolov3 INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_thermal INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_thermal_person INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cviai_core cviai_service cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cviai_core cviai_evaluation ${SAMPLE_LIBS})

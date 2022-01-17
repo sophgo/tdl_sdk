@@ -12,6 +12,7 @@ add_subdirectory(osnet)
 add_subdirectory(retina_face)
 add_subdirectory(object_detection/yolov3)
 add_subdirectory(thermal_face_detection)
+add_subdirectory(thermal_person_detection)
 add_subdirectory(object_detection/mobiledetv2)
 add_subdirectory(mask_face_recognition)
 add_subdirectory(tamper_detection)
@@ -45,6 +46,7 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               $<TARGET_OBJECTS:retina_face>
               $<TARGET_OBJECTS:yolov3>
               $<TARGET_OBJECTS:thermal_face_detection>
+              $<TARGET_OBJECTS:thermal_person_detection>
               $<TARGET_OBJECTS:tamper_detection>
               $<TARGET_OBJECTS:deepsort>
               $<TARGET_OBJECTS:sound_classification>

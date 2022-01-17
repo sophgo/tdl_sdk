@@ -113,6 +113,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_RETINAFACE_IR)                    \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_RETINAFACE_HARDHAT)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_THERMALFACE)                      \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_THERMALPERSON)                    \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE)                    \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION)                  \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION)              \
@@ -423,6 +424,17 @@ DLL_EXPORT CVI_S32 CVI_AI_RetinaFace_Hardhat(const cviai_handle_t handle, VIDEO_
  */
 DLL_EXPORT CVI_S32 CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                       cvai_face_t *faces);
+
+/**
+ * @brief Detect person with thermal images.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input thermal video frame.
+ * @param obj Output detect result. The bbox will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_ThermalPerson(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                        cvai_object_t *obj);
 
 /**@}*/
 

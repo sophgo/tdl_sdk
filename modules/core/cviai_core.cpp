@@ -30,6 +30,7 @@
 #include "smoke_classification/smoke_classification.hpp"
 #include "sound_classification/sound_classification.hpp"
 #include "thermal_face_detection/thermal_face.hpp"
+#include "thermal_person_detection/thermal_person.hpp"
 #include "yawn_classification/yawn_classification.hpp"
 
 #include <stdarg.h>
@@ -86,6 +87,7 @@ static void createIVEHandleIfNeeded(IVE_HANDLE *ive_handle) {
 unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_FACEQUALITY, CREATOR(FaceQuality)},
     {CVI_AI_SUPPORTED_MODEL_THERMALFACE, CREATOR(ThermalFace)},
+    {CVI_AI_SUPPORTED_MODEL_THERMALPERSON, CREATOR(ThermalPerson)},
     {CVI_AI_SUPPORTED_MODEL_LIVENESS, CREATOR(Liveness)},
     {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
@@ -574,6 +576,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_RetinaFace_Hardhat, RetinaFace,
                       CVI_AI_SUPPORTED_MODEL_RETINAFACE_HARDHAT, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_ThermalFace, ThermalFace, CVI_AI_SUPPORTED_MODEL_THERMALFACE,
                       cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_ThermalPerson, ThermalPerson, CVI_AI_SUPPORTED_MODEL_THERMALPERSON,
+                      cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceAttribute, FaceAttribute, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_FaceAttributeOne, FaceAttribute, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE,
