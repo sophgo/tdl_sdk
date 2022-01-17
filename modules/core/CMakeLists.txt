@@ -1,3 +1,6 @@
+if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
+  add_compile_definitions(ENABLE_CVIAI_CV_UTILS)
+endif()
 add_subdirectory(core)
 add_subdirectory(custom)
 add_subdirectory(utils)
@@ -61,7 +64,14 @@ set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
               cviai_utils.cpp
               cviai_custom.cpp
               cviai_core.cpp)
-set(CORE_DEPS ${PERFETTO_LIBS} ${OPENCV_LIBS_MIN} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
+set(CORE_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
+if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
+    set(CORE_SRCS ${CORE_SRCS} $<TARGET_OBJECTS:utils-cv>)
+else()
+    set(CORE_DEPS ${CORE_DEPS} ${OPENCV_LIBS_IMGPROC})
+endif()
+set(CORE_DEPS ${CORE_DEPS} ${OPENCV_LIBS_MIN})
+
 
 project(cviai_core)
 add_library(${PROJECT_NAME} SHARED ${CORE_SRCS})

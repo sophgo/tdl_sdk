@@ -19,9 +19,12 @@ set(FRS_SRCS $<TARGET_OBJECTS:digital_tracking>
 	     $<TARGET_OBJECTS:face_angle>
              cviai_service.cpp)
 
+set(FRS_DEPS cviai_core)
+set(FRS_DEPS ${FRS_DEPS} ${OPENCV_LIBS_IMGPROC} ${OPENCV_LIBS_MIN})
+
 project(cviai_service)
 add_library(${PROJECT_NAME} SHARED ${FRS_SRCS})
-target_link_libraries(${PROJECT_NAME} cviai_core)
+target_link_libraries(${PROJECT_NAME} ${FRS_DEPS})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 project(cviai_service-static)

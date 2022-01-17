@@ -3,6 +3,12 @@
 #include "core/core/cvai_errno.h"
 #include "cvi_sys.h"
 
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
+
 #define ALPHAPOSE_C 3
 #define ALPHAPOSE_PTS_NUM 17
 #define OUTPUT_NAME "output_Conv_dequant"
@@ -50,10 +56,17 @@ static cv::Mat getAffineTransform(const std::vector<float> &center, const std::v
   dst[1] = cv::Point2f(dst_w * 0.5 + dst_dir[0], dst_h * 0.5 + dst_dir[1]);
   dst[2] = get3rdPoint(dst[0], dst[1]);
 
+#ifdef ENABLE_CVIAI_CV_UTILS
+  if (inv)
+    return cviai::getAffineTransform(dst, src);
+  else
+    return cviai::getAffineTransform(src, dst);
+#else
   if (inv)
     return cv::getAffineTransform(dst, src);
   else
     return cv::getAffineTransform(src, dst);
+#endif
 }
 
 static cvai_bbox_t centerScaleToBox(const std::vector<float> &center,
@@ -107,8 +120,13 @@ static void preprocess(const cvai_bbox_t &input_bbox, const cv::Mat &input_image
   boxToCenterScale(x, y, w, h, _aspect_ratio, scale, center);
 
   cv::Mat trans = getAffineTransform(center, scale, {(float)pose_h, (float)pose_w});
+#ifdef ENABLE_CVIAI_CV_UTILS
+  cviai::warpAffine(input_image, align_image, trans, cv::Size(int(pose_w), int(pose_h)),
+                    INTER_LINEAR);
+#else
   cv::warpAffine(input_image, align_image, trans, cv::Size(int(pose_w), int(pose_h)),
                  cv::INTER_LINEAR);
+#endif
   align_bbox = centerScaleToBox(center, scale);
 
   align_image.convertTo(align_image, CV_32FC3, 1.0 / 255);

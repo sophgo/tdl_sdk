@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/imgcodecs.hpp"
 
 #define IMAGE_DIR1 "/frankfurt/"
 #define IMAGE_DIR2 "/lindau/"

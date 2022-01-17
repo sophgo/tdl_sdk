@@ -4,7 +4,7 @@
 #include "core/core/cvai_core_types.h"
 #include "core_utils.hpp"
 
-#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
 
 #include <vector>
 

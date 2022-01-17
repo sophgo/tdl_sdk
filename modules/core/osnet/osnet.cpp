@@ -4,7 +4,6 @@
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core_utils.hpp"
-#include "opencv2/opencv.hpp"
 
 #define STD_R (255.f * 0.229f)
 #define STD_G (255.f * 0.224f)

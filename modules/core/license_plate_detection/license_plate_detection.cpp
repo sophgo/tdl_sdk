@@ -11,7 +11,11 @@
 
 #include <iostream>
 #include <sstream>
-#include "opencv2/opencv.hpp"
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
 
 #define DEBUG_LICENSE_PLATE_DETECTION 0
 
@@ -155,24 +159,6 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
   return CVIAI_SUCCESS;
 }
 
-void LicensePlateDetection::prepareInputTensor(cv::Mat &input_mat) {
-  const TensorInfo &tinfo = getInputTensorInfo(0);
-  int8_t *input_ptr = tinfo.get<int8_t>();
-
-  cv::Mat tmpchannels[3];
-  cv::split(input_mat, tmpchannels);
-
-  for (int c = 0; c < 3; ++c) {
-    tmpchannels[c].convertTo(tmpchannels[c], CV_8UC1);
-
-    int size = tmpchannels[c].rows * tmpchannels[c].cols;
-    for (int r = 0; r < tmpchannels[c].rows; ++r) {
-      memcpy(input_ptr + size * c + tmpchannels[c].cols * r, tmpchannels[c].ptr(r, 0),
-             tmpchannels[c].cols);
-    }
-  }
-}
-
 bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts &c_pts,
                                         float &ret_prob, float threshold_prob) {
 #if DEBUG_LICENSE_PLATE_DETECTION
@@ -241,7 +227,11 @@ bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts
           cv::Point2f(LICENSE_PLATE_WIDTH, LICENSE_PLATE_HEIGHT),
           cv::Point2f(0, LICENSE_PLATE_HEIGHT),
       };
+#ifdef ENABLE_CVIAI_CV_UTILS
+      cv::Mat M = cviai::getPerspectiveTransform(src_points, dst_points);
+#else
       cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
+#endif
       std::cout << "M: " << std::endl << M << std::endl;
 #endif
     }

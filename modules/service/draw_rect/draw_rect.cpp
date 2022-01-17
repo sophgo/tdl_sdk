@@ -6,7 +6,8 @@
 #include <unordered_map>
 #include "core/core/cvai_errno.h"
 #include "core_utils.hpp"
-#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
 
 #include "cviai_log.hpp"
 

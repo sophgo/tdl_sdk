@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 #include "core/object/cvai_object_types.h"
 #include "cvi_comm_vb.h"
 #include "cvi_common.h"

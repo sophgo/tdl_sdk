@@ -1,9 +1,14 @@
 #include "template_matching.hpp"
-#include <opencv2/opencv.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
 
 #define RESIZE_SIZE 112
 #define IMAGE_SIZE 32
@@ -11,6 +16,59 @@
 
 using namespace std;
 
+vector<cv::Mat> TTA_9_cropps(cv::Mat image) {
+#ifdef ENABLE_CVIAI_CV_UTILS
+  cviai::resize(image, image, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+#else
+  cv::resize(image, image, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+#endif
+
+  int width = image.cols;
+  int height = image.rows;
+  int target_w = IMAGE_SIZE;
+  int target_h = IMAGE_SIZE;
+
+  int start_x = (width - target_w) / 2;
+  int start_y = (height - target_h) / 2;
+
+  vector<vector<int> > starts;
+  starts.push_back(vector<int>{start_x, start_y});
+  starts.push_back(vector<int>{start_x - target_w, start_y});
+  starts.push_back(vector<int>{start_x, start_y - target_w});
+  starts.push_back(vector<int>{start_x + target_w, start_y});
+  starts.push_back(vector<int>{start_x, start_y + target_w});
+  starts.push_back(vector<int>{start_x + target_w, start_y + target_w});
+  starts.push_back(vector<int>{start_x - target_w, start_y - target_w});
+  starts.push_back(vector<int>{start_x - target_w, start_y + target_w});
+  starts.push_back(vector<int>{start_x + target_w, start_y - target_w});
+
+  vector<cv::Mat> images;
+  for (size_t start_index = 0; start_index < starts.size(); start_index++) {
+    cv::Mat image_;
+    image.copyTo(image_);
+
+    int x = starts[start_index][0];
+    int y = starts[start_index][1];
+
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+
+    if (x + target_w >= RESIZE_SIZE) {
+      x = RESIZE_SIZE - target_w - 1;
+    }
+    if (y + target_h >= RESIZE_SIZE) y = RESIZE_SIZE - target_h - 1;
+
+    cv::Rect crop_rect(x, y, target_w, target_h);
+    cv::Mat zeros = image_(crop_rect);
+
+    zeros.copyTo(image_);
+    images.push_back(image_);
+  }
+
+  return images;
+}
+
+#ifdef ENABLE_TEMPLATE_MATCHING
 cv::Mat template_matching(const cv::Mat &crop_rgb_frame, const cv::Mat &ir_frame, cv::Rect box,
                           cvai_liveness_ir_position_e ir_pos) {
   int adj_width_start = 0;
@@ -82,51 +140,4 @@ cv::Mat template_matching(const cv::Mat &crop_rgb_frame, const cv::Mat &ir_frame
 
   return crop_ir_frame;
 }
-
-vector<cv::Mat> TTA_9_cropps(cv::Mat image) {
-  cv::resize(image, image, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
-
-  int width = image.cols;
-  int height = image.rows;
-  int target_w = IMAGE_SIZE;
-  int target_h = IMAGE_SIZE;
-
-  int start_x = (width - target_w) / 2;
-  int start_y = (height - target_h) / 2;
-
-  vector<vector<int> > starts;
-  starts.push_back(vector<int>{start_x, start_y});
-  starts.push_back(vector<int>{start_x - target_w, start_y});
-  starts.push_back(vector<int>{start_x, start_y - target_w});
-  starts.push_back(vector<int>{start_x + target_w, start_y});
-  starts.push_back(vector<int>{start_x, start_y + target_w});
-  starts.push_back(vector<int>{start_x + target_w, start_y + target_w});
-  starts.push_back(vector<int>{start_x - target_w, start_y - target_w});
-  starts.push_back(vector<int>{start_x - target_w, start_y + target_w});
-  starts.push_back(vector<int>{start_x + target_w, start_y - target_w});
-
-  vector<cv::Mat> images;
-  for (size_t start_index = 0; start_index < starts.size(); start_index++) {
-    cv::Mat image_;
-    image.copyTo(image_);
-
-    int x = starts[start_index][0];
-    int y = starts[start_index][1];
-
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-
-    if (x + target_w >= RESIZE_SIZE) {
-      x = RESIZE_SIZE - target_w - 1;
-    }
-    if (y + target_h >= RESIZE_SIZE) y = RESIZE_SIZE - target_h - 1;
-
-    cv::Rect crop_rect(x, y, target_w, target_h);
-    cv::Mat zeros = image_(crop_rect);
-
-    zeros.copyTo(image_);
-    images.push_back(image_);
-  }
-
-  return images;
-}
+#endif

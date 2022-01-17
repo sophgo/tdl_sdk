@@ -4,6 +4,12 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
+
 #define EYECLASSIFICATION_SCALE (1.0 / (255.0))
 #define NAME_SCORE "prob_Sigmoid_dequant"
 #define MINIMUM_SIZE 10
@@ -51,8 +57,13 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       meta->dms->reye_score = 0.0;
     } else {
       cv::Mat r_Image = image(r_roi);
+#ifdef ENABLE_CVIAI_CV_UTILS
+      cviai::resize(r_Image, r_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
+      cviai::cvtColor(r_Image, r_Image, COLOR_RGB2GRAY);
+#else
       cv::resize(r_Image, r_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
       cv::cvtColor(r_Image, r_Image, cv::COLOR_RGB2GRAY);
+#endif
       prepareInputTensor(r_Image);
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
@@ -69,8 +80,13 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       meta->dms->leye_score = 0.0;
     } else {
       cv::Mat l_Image = image(l_roi);
+#ifdef ENABLE_CVIAI_CV_UTILS
+      cviai::resize(l_Image, l_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
+      cviai::cvtColor(l_Image, l_Image, COLOR_RGB2GRAY);
+#else
       cv::resize(l_Image, l_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
       cv::cvtColor(l_Image, l_Image, cv::COLOR_RGB2GRAY);
+#endif
       prepareInputTensor(l_Image);
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};

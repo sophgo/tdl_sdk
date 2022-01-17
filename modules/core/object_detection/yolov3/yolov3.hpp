@@ -1,7 +1,6 @@
 #pragma once
 #include "core.hpp"
 #include "core/object/cvai_object_types.h"
-#include "opencv2/opencv.hpp"
 #include "yolov3_utils.h"
 
 namespace cviai {

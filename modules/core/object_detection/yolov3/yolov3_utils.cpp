@@ -1,9 +1,8 @@
+#include "yolov3_utils.h"
+#include <cmath>
 #include <iomanip>
 #include <iostream>
-#include <opencv2/opencv.hpp>
-
 #include "core_utils.hpp"
-#include "yolov3_utils.h"
 
 using std::cout;
 using std::endl;

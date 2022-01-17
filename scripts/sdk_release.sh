@@ -36,6 +36,7 @@ fi
 $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                 -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                 -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
+                                -DENABLE_CVIAI_CV_UTILS=ON \
                                 -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                 -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
                                 -DIVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \

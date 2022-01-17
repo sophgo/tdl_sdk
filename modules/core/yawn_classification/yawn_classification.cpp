@@ -6,6 +6,12 @@
 #include "core_utils.hpp"
 #include "face_utils.hpp"
 
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
+
 #define OPENEYERECOGNIZE_SCALE (1.0 / (255.0))
 #define NAME_SCORE "prob_Sigmoid_dequant"
 #define INPUT_SIZE 64
@@ -36,7 +42,11 @@ int YawnClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) 
       return CVIAI_ERR_INFERENCE;
     }
 
+#ifdef ENABLE_CVIAI_CV_UTILS
+    cviai::cvtColor(warp_image, warp_image, COLOR_RGB2GRAY);
+#else
     cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2GRAY);
+#endif
 
     prepareInputTensor(warp_image);
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};

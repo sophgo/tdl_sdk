@@ -3,7 +3,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_utils.hpp"
-#include "opencv2/opencv.hpp"
 
 #include <cmath>
 #include "cviai_log.hpp"

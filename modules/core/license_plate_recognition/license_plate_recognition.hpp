@@ -4,7 +4,7 @@
 #include "core/object/cvai_object_types.h"
 #include "decode_tool.hpp"
 
-#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
 
 namespace cviai {
 

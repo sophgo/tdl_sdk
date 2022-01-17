@@ -8,7 +8,12 @@
 #include "face_utils.hpp"
 
 #include "cvi_sys.h"
-#include "opencv2/opencv.hpp"
+
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
 
 #include <iostream>
 #include <sstream>
@@ -75,13 +80,22 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
         cv::Point2f(this->lp_width, this->lp_height),
         cv::Point2f(0, this->lp_height),
     };
-    cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
     cv::Mat sub_cvFrame;
+    cv::Mat greyMat;
+
+#ifdef ENABLE_CVIAI_CV_UTILS
+    cv::Mat M = cviai::getPerspectiveTransform(src_points, dst_points);
+    cviai::warpPerspective(cv_frame, sub_cvFrame, M, cv::Size(this->lp_width, this->lp_height),
+                           INTER_LINEAR);
+    cviai::cvtColor(sub_cvFrame, greyMat, COLOR_RGB2GRAY); /* BGR or RGB ? */
+    cviai::cvtColor(greyMat, sub_cvFrame, COLOR_GRAY2RGB);
+#else
+    cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
     cv::warpPerspective(cv_frame, sub_cvFrame, M, cv::Size(this->lp_width, this->lp_height),
                         cv::INTER_LINEAR);
-    cv::Mat greyMat;
     cv::cvtColor(sub_cvFrame, greyMat, cv::COLOR_RGB2GRAY); /* BGR or RGB ? */
     cv::cvtColor(greyMat, sub_cvFrame, cv::COLOR_GRAY2RGB);
+#endif
 
     prepareInputTensor(sub_cvFrame);
 
@@ -116,7 +130,7 @@ void LicensePlateRecognition::prepareInputTensor(cv::Mat &input_mat) {
   cv::split(input_mat, tmpchannels);
 
   for (int c = 0; c < 3; ++c) {
-    tmpchannels[c].convertTo(tmpchannels[c], CV_8UC1);
+    // tmpchannels[c].convertTo(tmpchannels[c], CV_8UC1);  /* redundant? */
 
     int size = tmpchannels[c].rows * tmpchannels[c].cols;
     for (int r = 0; r < tmpchannels[c].rows; ++r) {

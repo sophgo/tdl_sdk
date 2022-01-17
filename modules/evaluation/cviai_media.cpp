@@ -3,7 +3,8 @@
 
 #include "core/core/cvai_errno.h"
 #include "core/utils/vpss_helper.h"
-#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/imgcodecs.hpp"
 
 // TODO: use memcpy
 inline void BufferRGBPackedCopy(const uint8_t *buffer, uint32_t width, uint32_t height,

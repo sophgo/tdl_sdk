@@ -7,7 +7,11 @@
 #include "face_utils.hpp"
 
 #include "cvi_sys.h"
-#include "opencv2/opencv.hpp"
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
 
 #define RESIZE_SIZE 112
 #define LIVENESS_SCALE (1 / 255.0)
@@ -110,8 +114,13 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
     cv::Mat crop_ir_frame = ir_frame(ir_box);
 
     cv::Mat color, ir;
+#ifdef ENABLE_CVIAI_CV_UTILS
+    cviai::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+    cviai::resize(crop_ir_frame, ir, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+#else
     cv::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
     cv::resize(crop_ir_frame, ir, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+#endif
 
     std::vector<cv::Mat> colors = TTA_9_cropps(color);
     std::vector<cv::Mat> irs = TTA_9_cropps(ir);

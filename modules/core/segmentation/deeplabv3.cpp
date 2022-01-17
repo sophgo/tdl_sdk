@@ -6,7 +6,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "error_msg.hpp"
-#include "opencv2/opencv.hpp"
 
 #define SCALE (1 / 127.5)
 #define MEAN 1.f

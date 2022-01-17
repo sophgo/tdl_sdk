@@ -1,11 +1,16 @@
 #include "md.hpp"
 #include <memory>
-#include <opencv2/opencv.hpp>
 #include "core/core/cvai_errno.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai_log.hpp"
 #include "error_msg.hpp"
 #include "vpss_engine.hpp"
+
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
 
 static CVI_S32 VideoFrameCopy2Image(IVE_HANDLE ive_handle, VIDEO_FRAME_INFO_S *src,
                                     IVE_IMAGE_S *dst) {
@@ -220,15 +225,29 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 
     c++;
     std::vector<std::vector<cv::Point> > contours;
-    cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
     std::vector<cv::Rect> bboxes;
+
+#ifdef ENABLE_CVIAI_CV_UTILS
+    cviai::findContours(image, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+#else
+    cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+#endif
+
+#ifdef ENABLE_CVIAI_CV_UTILS
+    for (auto c : contours) {
+      double area = cviai::contourArea(c);
+      if (area > min_area) {
+        bboxes.push_back(cviai::boundingRect(c));
+      }
+    }
+#else
     for (auto c : contours) {
       double area = cv::contourArea(c);
       if (area > min_area) {
         bboxes.push_back(cv::boundingRect(c));
       }
     }
+#endif
 
     construct_bbox(bboxes, obj_meta);
     if (do_unmap) {

@@ -1,7 +1,11 @@
 #include "face_utils.hpp"
 #include "cviai_log.hpp"
 
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
 #include "opencv2/imgproc.hpp"
+#endif
 
 #include <cvi_comm_gdc.h>
 #include <cvi_gdc.h>
@@ -136,7 +140,11 @@ int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &f
   if (getTfmFromFaceInfo(face_info, aligned.cols, aligned.rows, &tfm) != 0) {
     return -1;
   }
+#ifdef ENABLE_CVIAI_CV_UTILS
+  cviai::warpAffine(image, aligned, tfm, aligned.size(), INTER_NEAREST);
+#else
   cv::warpAffine(image, aligned, tfm, aligned.size(), cv::INTER_NEAREST);
+#endif
   return 0;
 }
 

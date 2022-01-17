@@ -8,7 +8,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_utils.hpp"
-#include "opencv2/opencv.hpp"
 
 #define FACE_ATTRIBUTE_MEAN (0.99609375)
 #define FACE_ATTRIBUTE_SCALE (1 / 128.f)

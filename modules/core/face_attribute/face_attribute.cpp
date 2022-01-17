@@ -10,7 +10,6 @@
 
 #include "core/core/cvai_errno.h"
 #include "cvi_sys.h"
-#include "opencv2/opencv.hpp"
 
 #define FACE_ATTRIBUTE_FACTOR (1 / 128.f)
 #define FACE_ATTRIBUTE_MEAN (0.99609375)

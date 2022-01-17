@@ -12,7 +12,11 @@
 #include "opencv2/core/core_c.h"
 #endif
 
-#include "opencv2/opencv.hpp"
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
 
 #define SCALE_R (1.0 / (255.0 * 0.229))
 #define SCALE_G (1.0 / (255.0 * 0.224))

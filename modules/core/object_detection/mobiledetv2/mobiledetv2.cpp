@@ -10,8 +10,6 @@
 
 #include <core/core/cvai_errno.h>
 #include <error_msg.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/opencv.hpp>
 #include "coco_utils.hpp"
 #include "core/core/cvai_core_types.h"
 #include "core/object/cvai_object_types.h"

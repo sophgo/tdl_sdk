@@ -21,7 +21,7 @@ set(EVA_SRCS $<TARGET_OBJECTS:coco>
 
 project(cviai_evaluation)
 add_library(${PROJECT_NAME} SHARED ${EVA_SRCS})
-target_link_libraries(${PROJECT_NAME} -lstdc++fs ${OPENCV_LIBS_MIN} ${OPENCV_LIBS_IMCODEC})
+target_link_libraries(${PROJECT_NAME} -lstdc++fs  ${OPENCV_LIBS_IMCODEC} ${OPENCV_LIBS_IMGPROC} ${OPENCV_LIBS_MIN} )
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 project(cviai_evaluation-static)

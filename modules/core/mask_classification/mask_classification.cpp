@@ -3,9 +3,9 @@
 #include "core/cviai_types_mem.h"
 #include "rescale_utils.hpp"
 
+#include <cmath>
 #include "core/core/cvai_errno.h"
 #include "cvi_sys.h"
-#include "opencv2/opencv.hpp"
 
 #define R_SCALE (1 / (256.0 * 0.229))
 #define G_SCALE (1 / (256.0 * 0.224))

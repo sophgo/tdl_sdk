@@ -2,7 +2,7 @@
 #include "core.hpp"
 #include "core/object/cvai_object_types.h"
 
-#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
 
 namespace cviai {
 

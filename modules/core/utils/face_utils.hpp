@@ -2,7 +2,7 @@
 #define _CVI_FACE_UTILS_H_
 
 #include "core/face/cvai_face_types.h"
-#include "opencv2/opencv.hpp"
+#include "opencv2/core.hpp"
 
 #include <cvi_comm_video.h>
 
