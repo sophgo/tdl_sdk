@@ -83,4 +83,4 @@ make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INST
 echo "done"
 popd
 
-# rm -rf ${AI_SDK_INSTALL_PATH}/tmp_install
+rm -rf ${AI_SDK_INSTALL_PATH}/tmp_install
