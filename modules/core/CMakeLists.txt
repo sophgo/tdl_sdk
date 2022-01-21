@@ -32,55 +32,12 @@ add_subdirectory(smoke_classification)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils)
-set(CORE_SRCS $<TARGET_OBJECTS:cviai_trace>
-              $<TARGET_OBJECTS:core>
-              $<TARGET_OBJECTS:custom>
-              $<TARGET_OBJECTS:utils>
-              $<TARGET_OBJECTS:face_attribute>
-              $<TARGET_OBJECTS:face_quality>
-              $<TARGET_OBJECTS:liveness>
-              $<TARGET_OBJECTS:mobiledetv2>
-              $<TARGET_OBJECTS:mask_face_recognition>
-              $<TARGET_OBJECTS:mask_classification>
-              $<TARGET_OBJECTS:osnet>
-              $<TARGET_OBJECTS:retina_face>
-              $<TARGET_OBJECTS:yolov3>
-              $<TARGET_OBJECTS:thermal_face_detection>
-              $<TARGET_OBJECTS:thermal_person_detection>
-              $<TARGET_OBJECTS:tamper_detection>
-              $<TARGET_OBJECTS:deepsort>
-              $<TARGET_OBJECTS:sound_classification>
-	          $<TARGET_OBJECTS:segmentation>
-	          $<TARGET_OBJECTS:license_plate_recognition>
-	          $<TARGET_OBJECTS:license_plate_detection>
-	          $<TARGET_OBJECTS:alphapose>
-              $<TARGET_OBJECTS:fall_detection>
-              $<TARGET_OBJECTS:eye_classification>
-              $<TARGET_OBJECTS:yawn_classification>
-              $<TARGET_OBJECTS:face_landmarker>
-              $<TARGET_OBJECTS:incar_object_detection>
-              $<TARGET_OBJECTS:motion_detection>
-              $<TARGET_OBJECTS:smoke_classification>
-              cviai_types_mem.cpp
+
+set(CORE_SRCS cviai_types_mem.cpp
               cviai_rescale_bbox.cpp
               cviai_utils.cpp
               cviai_custom.cpp
               cviai_core.cpp)
-set(CORE_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
-if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
-    set(CORE_SRCS ${CORE_SRCS} $<TARGET_OBJECTS:utils-cv>)
-else()
-    set(CORE_DEPS ${CORE_DEPS} ${OPENCV_LIBS_IMGPROC})
-endif()
-set(CORE_DEPS ${CORE_DEPS} ${OPENCV_LIBS_MIN})
-
 
 project(cviai_core)
-add_library(${PROJECT_NAME} SHARED ${CORE_SRCS})
-target_link_libraries(${PROJECT_NAME} ${CORE_DEPS})
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
-
-project(cviai_core-static)
-add_library(${PROJECT_NAME} STATIC ${CORE_SRCS})
-target_link_libraries(${PROJECT_NAME} ${CORE_DEPS})
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+add_library(${PROJECT_NAME} OBJECT ${CORE_SRCS})
