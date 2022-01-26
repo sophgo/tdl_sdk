@@ -129,6 +129,7 @@ TEST_F(ThermalPersonDetectionTestSuite, inference) {
 
     AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, m_model_path.c_str(),
                            false);
+    CVI_AI_SetModelThreshold(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, 0.01);
     ASSERT_NO_FATAL_FAILURE(aimodel.open());
 
     for (int img_idx = 0; img_idx < 1; img_idx++) {
@@ -166,6 +167,7 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
 
     AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, m_model_path.c_str(),
                            false);
+    CVI_AI_SetModelThreshold(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, 0.01);
     ASSERT_NO_FATAL_FAILURE(aimodel.open());
 
     int img_num = int(m_json_object[test_index]["test_images"].size());

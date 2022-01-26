@@ -8,7 +8,6 @@
 
 #define NUM_CLASSES 1
 #define NMS_THRESH 0.55
-#define BBOX_CONF_THRESH 0.01
 #define NAME_OUTPUT "output_Transpose_dequant"
 
 namespace cviai {
@@ -115,7 +114,7 @@ void ThermalPerson::outputParser(const int image_width, const int image_height,
   generate_grids_and_stride(image_width, image_height, strides, grid_strides);
 
   std::vector<cvai_object_info_t> vec_bbox;
-  generate_yolox_proposals(grid_strides, output_blob, BBOX_CONF_THRESH, vec_bbox);
+  generate_yolox_proposals(grid_strides, output_blob, m_model_threshold, vec_bbox);
 
   // DO nms on output result
   std::vector<cvai_object_info_t> vec_bbox_nms;
