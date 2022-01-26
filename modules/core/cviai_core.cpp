@@ -776,29 +776,31 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 }
 
 CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
-                                              VIDEO_FRAME_INFO_S *frame, uint32_t threshold,
-                                              double min_area) {
+                                              VIDEO_FRAME_INFO_S *frame) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_Background");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
     LOGD("Init Motion Detection.\n");
     createIVEHandleIfNeeded(ctx);
     ctx->md_model =
-        new MotionDetection(ctx->ive_handle, threshold, min_area, 2000, ctx->vec_vpss_engine[0]);
+        new MotionDetection(ctx->ive_handle, ctx->vpss_timeout_value, ctx->vec_vpss_engine[0]);
     return ctx->md_model->init(frame);
   }
   return ctx->md_model->update_background(frame);
 }
 
 CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                               cvai_object_t *objects) {
+                               cvai_object_t *objects, uint8_t threshold, double min_area) {
   TRACE_EVENT("cviai_core", "CVI_AI_MotionDetection");
 
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
-    LOGE("Failed to get motion detection instance\n");
+    LOGE(
+        "Failed to do motion detection! Please invoke CVI_AI_Set_MotionDetection_Background to set "
+        "background image first.\n");
     return CVIAI_FAILURE;
   }
-  return ctx->md_model->detect(frame, objects);
+  return ctx->md_model->detect(frame, objects, threshold, min_area);
 }

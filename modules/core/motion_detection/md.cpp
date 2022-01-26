@@ -47,14 +47,8 @@ static CVI_S32 VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src, 
   return CVIAI_SUCCESS;
 }
 
-MotionDetection::MotionDetection(IVE *_ive_instance, uint32_t th, double _min_area,
-                                 uint32_t timeout, cviai::VpssEngine *engine)
-    : ive_instance(_ive_instance),
-      count(0),
-      threshold(th),
-      min_area(_min_area),
-      m_vpss_engine(engine),
-      m_vpss_timeout(timeout) {}
+MotionDetection::MotionDetection(IVE *_ive_instance, uint32_t timeout, cviai::VpssEngine *engine)
+    : ive_instance(_ive_instance), count(0), m_vpss_engine(engine), m_vpss_timeout(timeout) {}
 
 CVI_S32 MotionDetection::init(VIDEO_FRAME_INFO_S *init_frame) {
   im_width = init_frame->stVFrame.u32Width;
@@ -231,7 +225,8 @@ CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, ive::IVEImage 
   return ret;
 }
 
-CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj_meta) {
+CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj_meta,
+                                uint8_t threshold, double min_area) {
   static int c = 0;
   CVI_S32 ret = CVI_SUCCESS;
   if (count > 2) {

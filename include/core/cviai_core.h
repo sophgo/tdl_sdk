@@ -883,14 +883,11 @@ DLL_EXPORT CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRA
  *
  * @param handle An AI SDK handle.
  * @param frame Input video frame, should be YUV420 format.
- * @param threshold Threshold of motion detection, the range between 0 and 255.
- * @param min_area Minimal pixel area. The bounding box whose area is larger than this value would
  * be returned.
  * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
-                                                         VIDEO_FRAME_INFO_S *frame,
-                                                         uint32_t threshold, double min_area);
+                                                         VIDEO_FRAME_INFO_S *frame);
 
 /**
  * @brief Do Motion Detection with background subtraction method.
@@ -898,10 +895,13 @@ DLL_EXPORT CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t ha
  * @param handle An AI SDK handle.
  * @param frame Input video frame, should be YUV420 format.
  * @param objects Detected object info
+ * @param threshold Threshold of motion detection, the range between 0 and 255.
+ * @param min_area Minimal pixel area. The bounding box whose area is larger than this value would
  * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                          cvai_object_t *objects);
+                                          cvai_object_t *objects, uint8_t threshold,
+                                          double min_area);
 
 /**@}*/
 

@@ -47,16 +47,15 @@ bool match_detections(cvai_object_t *obj_meta, cvai_bbox_t &expected_bbox, float
 
 TEST_F(MotionDetectionTestSuite, accuracy) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
-    uint32_t thresh = (uint32_t)m_json_object[test_index]["thresh"];
+    uint8_t thresh = (uint8_t)m_json_object[test_index]["thresh"];
     float minarea = (float)m_json_object[test_index]["minarea"];
 
     std::string bgimg_path = (m_image_dir / m_json_object[test_index]["background"]).string();
     Image bg_image(bgimg_path, PIXEL_FORMAT_YUV_400);
     ASSERT_TRUE(bg_image.open());
 
-    ASSERT_EQ(
-        CVI_AI_Set_MotionDetection_Background(m_ai_handle, bg_image.getFrame(), thresh, minarea),
-        CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_AI_Set_MotionDetection_Background(m_ai_handle, bg_image.getFrame()),
+              CVIAI_SUCCESS);
 
     auto results = m_json_object[test_index]["results"];
 
@@ -67,7 +66,8 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
 
       AIObject<cvai_object_t> obj_meta;
 
-      ASSERT_EQ(CVI_AI_MotionDetection(m_ai_handle, image.getFrame(), obj_meta), CVIAI_SUCCESS);
+      ASSERT_EQ(CVI_AI_MotionDetection(m_ai_handle, image.getFrame(), obj_meta, thresh, minarea),
+                CVIAI_SUCCESS);
 
       auto expected_dets = iter.value();
 

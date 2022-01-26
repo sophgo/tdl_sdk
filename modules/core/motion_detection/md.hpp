@@ -13,12 +13,12 @@ class VpssEngine;
 class MotionDetection {
  public:
   MotionDetection() = delete;
-  MotionDetection(ive::IVE *ive_instance, uint32_t th, double _min_area, uint32_t timeout,
-                  cviai::VpssEngine *engine);
+  MotionDetection(ive::IVE *ive_instance, uint32_t timeout, cviai::VpssEngine *engine);
   ~MotionDetection();
 
   CVI_S32 init(VIDEO_FRAME_INFO_S *init_frame);
-  CVI_S32 detect(VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_meta);
+  CVI_S32 detect(VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_meta, uint8_t threshold,
+                 double min_area);
   CVI_S32 update_background(VIDEO_FRAME_INFO_S *frame);
 
  private:
@@ -35,8 +35,6 @@ class MotionDetection {
   ive::IVEImage background_img;
   ive::IVEImage md_output;
   uint32_t count;
-  uint32_t threshold;
-  double min_area;
   uint32_t im_width;
   uint32_t im_height;
   cviai::VpssEngine *m_vpss_engine;

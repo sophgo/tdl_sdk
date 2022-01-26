@@ -82,15 +82,14 @@ int main(int argc, char *argv[]) {
     if ((count % update_interval) == 0) {
       printf("update background, count=%d, update_interval=%d\n", count, update_interval);
       // Update background. For simplicity, we just set new frame directly.
-      if (CVI_AI_Set_MotionDetection_Background(ai_handle, &stMDFrame, threshold, min_area) !=
-          CVIAI_SUCCESS) {
+      if (CVI_AI_Set_MotionDetection_Background(ai_handle, &stMDFrame) != CVI_SUCCESS) {
         printf("Cannot update background for motion detection\n");
         break;
       }
     }
 
     // Detect moving objects. All moving objects are store in obj_meta.
-    CVI_AI_MotionDetection(ai_handle, &stMDFrame, &obj_meta);
+    CVI_AI_MotionDetection(ai_handle, &stMDFrame, &obj_meta, threshold, min_area);
     printf("detect obj: %d\n", obj_meta.size);
 
     int s32Ret = CVI_SUCCESS;
