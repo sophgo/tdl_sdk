@@ -1,6 +1,15 @@
 SHELL = /bin/bash
 # include ./Makefile.param
 
+CHECK_SDK = 1
+ifeq ($(MAKECMDGOALS), $(filter $(MAKECMDGOALS), install clean))
+CHECK_SDK = 0
+endif
+ifndef MAKECMDGOALS
+CHECK_SDK = 1
+endif
+
+ifeq ($(CHECK_SDK), 1)
 ifndef MW_PATH
 $(error "Please set middleware sdk root path to MW_PATH")
 endif
@@ -11,6 +20,7 @@ endif
 
 ifndef TPU_PATH
 $(error "Please set rtsp sdk root path to TPU_PATH)
+endif
 endif
 
 CHIP ?= cv1835
@@ -87,6 +97,7 @@ AI_APP_LIBS = $(AISDK_LIBS) -L$(AISDK_LIB_PATH) -lpthread
 CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH) -I$(IVE_SDK_INC_PATH)
 CFLAGS += -Wl,-gc-sections
 
+ifeq ($(CHECK_SDK), 1)
 $(info ---------------------------------------)
 $(info CHIP: $(CHIP))
 $(info SDK_VER: $(SDK_VER))
@@ -101,9 +112,10 @@ $(info CFLAGS: $(CFLAGS))
 $(info CC: $(CC))
 $(info CXX: $(CXX))
 $(info ---------------------------------------)
+endif
 
 
-.PHONY : clean all
+.PHONY : all clean install
 
 all: libcviai_app.so
 

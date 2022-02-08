@@ -1,6 +1,15 @@
 SHELL = /bin/bash
 # include ./Makefile.param
 
+CHECK_SDK = 1
+ifeq ($(MAKECMDGOALS), $(filter $(MAKECMDGOALS), install clean))
+CHECK_SDK = 0
+endif
+ifndef MAKECMDGOALS
+CHECK_SDK = 1
+endif
+
+ifeq ($(CHECK_SDK), 1)
 ifndef MW_PATH
 $(error "Please set middleware sdk root path to MW_PATH")
 endif
@@ -15,6 +24,7 @@ endif
 
 ifndef CVI_TRACER_PATH
 $(error "Please set cvi_tracer sdk root path to CVI_TRACER_PATH)
+endif
 endif
 
 CHIP ?= cv1835
@@ -125,6 +135,7 @@ LD = $(CROSS_COMPILE)ld
 STRIP = $(CROSS_COMPILE)strip
 
 
+ifeq ($(CHECK_SDK), 1)
 $(info ---------------------------------------)
 $(info CHIP: $(CHIP))
 $(info SDK_VER: $(SDK_VER))
@@ -139,6 +150,7 @@ $(info CFLAGS: $(CFLAGS))
 $(info CC: $(CC))
 $(info CXX: $(CXX))
 $(info ---------------------------------------)
+endif
 
 
 RTSP_LIBS = -lcvi_rtsp
@@ -175,7 +187,7 @@ TARGETS = sample_init \
 		$(TARGETS_IMAGE_SAMPLE) \
 		$(TARGETS_APP_SAMPLE)
 
-.PHONY : clean all
+.PHONY : all clean install
 
 all: $(TARGETS)
 
