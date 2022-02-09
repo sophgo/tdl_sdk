@@ -19,21 +19,34 @@
 
 static volatile bool bExit = false;
 
+static void SampleHandleSig(CVI_S32 signo) {
+  signal(SIGINT, SIG_IGN);
+  signal(SIGTERM, SIG_IGN);
+
+  if (SIGINT == signo || SIGTERM == signo) {
+    bExit = true;
+  }
+}
+
 enum LicenseFormat { taiwan, china };
 
 int main(int argc, char *argv[]) {
   if (argc != 7) {
     printf(
-        "Usage: %s <vehicle_detection_model_path>\n"
-        "\t<use_mobiledet_vehicle (0/1)>\n"
-        "\t<license_plate_detection_model_path>\n"
-        "\t<license_plate_recognition_model_path>\n"
-        "\t<license_format (tw/cn)>\n"
-        "\tvideo output, 0: disable, 1: output to panel, 2: output through rtsp\n",
+        "Usage: %s <vehicle_detection_model_namne>\n"
+        "          <vehicle_detection_model_path>\n"
+        "          <license_plate_detection_model_path>\n"
+        "          <license_plate_recognition_model_path>\n"
+        "          <license_format (tw/cn)>\n"
+        "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
   CVI_S32 voType = atoi(argv[6]);
+
+  // Set signal catch
+  signal(SIGINT, SampleHandleSig);
+  signal(SIGTERM, SampleHandleSig);
 
   CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
@@ -49,23 +62,16 @@ int main(int argc, char *argv[]) {
   GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), s32Ret,
                  create_service_fail);
 
-  int use_vehicle = atoi(argv[2]);
-  if (use_vehicle == 1) {
-    printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE\n");
-    GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, argv[1]),
-                   s32Ret, setup_ai_fail);
-
-  } else if (use_vehicle == 0) {
-    printf("set:CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80\n");
-    GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]),
-                   s32Ret, setup_ai_fail);
-    GOTO_IF_FAILED(CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, 1,
-                                            CVI_AI_DET_GROUP_VEHICLE),
-                   s32Ret, setup_ai_fail);
-  } else {
-    printf("Unknow det model type.\n");
-    goto setup_ai_fail;
+  ODInferenceFunc inference;
+  CVI_AI_SUPPORTED_MODEL_E od_model_id;
+  if (get_od_model_info(argv[1], &od_model_id, &inference) == CVIAI_FAILURE) {
+    printf("unsupported model: %s\n", argv[1]);
+    return CVIAI_FAILURE;
   }
+
+  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, od_model_id, argv[2]), s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(ai_handle, od_model_id, 1, CVI_AI_DET_GROUP_VEHICLE),
+                 s32Ret, setup_ai_fail);
 
   enum LicenseFormat license_format;
   if (strcmp(argv[5], "tw") == 0) {
@@ -100,7 +106,7 @@ int main(int argc, char *argv[]) {
   size_t counter = 0;
   while (bExit == false) {
     counter += 1;
-    printf("\nIter: %zu\n", counter);
+    printf("\nFrame: %zu\n", counter);
     s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
                                   &stfdFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
@@ -109,11 +115,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Vehicle Detection ... start\n");
-    if (use_vehicle == 1) {
-      CVI_AI_MobileDetV2_Vehicle(ai_handle, &stfdFrame, &vehicle_obj);
-    } else {
-      CVI_AI_MobileDetV2_COCO80(ai_handle, &stfdFrame, &vehicle_obj);
-    }
+    s32Ret = inference(ai_handle, &stfdFrame, &vehicle_obj);
     printf("Find %u vehicles.\n", vehicle_obj.size);
 
     /* LP Detection */
