@@ -90,7 +90,7 @@ AR = $(CROSS_COMPILE)ar
 LD = $(CROSS_COMPILE)ld
 STRIP = $(CROSS_COMPILE)strip
 
-AISDK_LIBS = -lcviai_cores
+AISDK_LIBS = -lcviai
 
 AI_APP_LIBS = $(AISDK_LIBS) -L$(AISDK_LIB_PATH) -lpthread
 

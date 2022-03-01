@@ -10,10 +10,10 @@ set(FRS_SRCS $<TARGET_OBJECTS:face_capture>
 
 project(cviai_app)
 add_library(${PROJECT_NAME} SHARED ${FRS_SRCS})
-target_link_libraries(${PROJECT_NAME} cviai_cores)
+target_link_libraries(${PROJECT_NAME} cviai)
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 project(cviai_app-static)
 add_library(${PROJECT_NAME} STATIC ${FRS_SRCS})
-target_link_libraries(${PROJECT_NAME} cviai_cores)
+target_link_libraries(${PROJECT_NAME} cviai)
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)

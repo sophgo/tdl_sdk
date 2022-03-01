@@ -154,7 +154,7 @@ endif
 
 
 RTSP_LIBS = -lcvi_rtsp
-AISDK_BASIC_LIBS = -lcviai_cores
+AISDK_BASIC_LIBS = -lcviai
 AISDK_APP_LIBS = -lcviai_app
 
 TPU_LIBS = -lcnpy  -lcvikernel  -lcvimath  -lcviruntime  -lz
