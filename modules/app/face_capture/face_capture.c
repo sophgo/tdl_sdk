@@ -156,7 +156,6 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   memset(face_cpt_info->_output, 0, sizeof(bool) * face_cpt_info->size);
 
   CVI_AI_RetinaFace(ai_handle, frame, &face_cpt_info->last_faces);
-  printf("Found %x faces.\n", face_cpt_info->last_faces.size);
   // CVI_AI_FaceRecognition(ai_handle, frame, &face_cpt_info->last_faces);
 
   CVI_AI_Service_FaceAngleForAll(&face_cpt_info->last_faces);
