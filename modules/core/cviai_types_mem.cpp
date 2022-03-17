@@ -94,13 +94,16 @@ void CVI_AI_FreeCpp(cvai_object_t *obj) {
 }
 
 void CVI_AI_FreeCpp(cvai_image_t *image) {
-  if (image->pix != NULL) {
-    free(image->pix);
+  if (image->pix[0] != NULL) {
+    free(image->pix[0]);
   }
-  image->pix = NULL;
+  for (int i = 0; i < 3; i++) {
+    image->pix[i] = NULL;
+    image->stride[i] = 0;
+    image->length[i] = 0;
+  }
   image->height = 0;
   image->width = 0;
-  image->stride = 0;
 }
 
 void CVI_AI_FreeFeature(cvai_feature_t *feature) { CVI_AI_FreeCpp(feature); }
@@ -208,13 +211,22 @@ void CVI_AI_CopyObjectInfo(const cvai_object_info_t *info, cvai_object_info_t *i
 }
 
 void CVI_AI_CopyImage(const cvai_image_t *src_image, cvai_image_t *dst_image) {
-  if (dst_image->pix != NULL) {
-    LOGW("There are already data in Dst Image. (release them ...)");
+  if (dst_image->pix[0] != NULL) {
+    LOGW("There are already data in destination image. (release them ...)");
     CVI_AI_FreeCpp(dst_image);
   }
+  dst_image->pix_format = src_image->pix_format;
   dst_image->height = src_image->height;
   dst_image->width = src_image->width;
-  dst_image->stride = src_image->stride;
-  dst_image->pix = (uint8_t *)malloc(dst_image->stride * dst_image->height * sizeof(uint8_t));
-  memcpy(dst_image->pix, src_image->pix, dst_image->stride * dst_image->height * sizeof(uint8_t));
+
+  uint32_t image_size = src_image->length[0] + src_image->length[1] + src_image->length[2];
+  dst_image->pix[0] = (uint8_t *)malloc(image_size);
+  memcpy(dst_image->pix[0], src_image->pix[0], image_size);
+  for (int i = 0; i < 3; i++) {
+    dst_image->stride[i] = src_image->stride[i];
+    dst_image->length[i] = src_image->length[i];
+    if (i != 0 && dst_image->length[i] != 0) {
+      dst_image->pix[i] = dst_image->pix[i - 1] + dst_image->length[i - 1];
+    }
+  }
 }

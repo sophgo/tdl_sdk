@@ -14,6 +14,9 @@
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
 #define max(x, y) (((x) >= (y)) ? (x) : (y))
 
+#define COLOR_WRAPPER(R, G, B) \
+  { .r = (R / 255.), .g = (G / 255.), .b = (B / 255.) }
+
 static std::vector<std::pair<int, int>> l_pair = {{0, 1},   {0, 2},   {1, 3},   {2, 4},   {5, 6},
                                                   {5, 7},   {7, 9},   {6, 8},   {8, 10},  {17, 11},
                                                   {17, 12}, {11, 13}, {12, 14}, {13, 15}, {14, 16}};
@@ -30,6 +33,15 @@ static std::vector<cv::Scalar> line_color = {
 
 namespace cviai {
 namespace service {
+
+static const color_rgb COLOR_BLACK = COLOR_WRAPPER(0, 0, 0);
+static const color_rgb COLOR_WHITE = COLOR_WRAPPER(255, 255, 255);
+static const color_rgb COLOR_RED = COLOR_WRAPPER(255, 0, 0);
+static const color_rgb COLOR_GREEN = COLOR_WRAPPER(0, 255, 0);
+static const color_rgb COLOR_BLUE = COLOR_WRAPPER(0, 0, 255);
+static const color_rgb COLOR_YELLOW = COLOR_WRAPPER(255, 255, 0);
+static const color_rgb COLOR_CYAN = COLOR_WRAPPER(0, 255, 255);
+static const color_rgb COLOR_MAGENTA = COLOR_WRAPPER(255, 0, 255);
 
 enum { PLANE_Y = 0, PLANE_U, PLANE_V, PLANE_NUM };
 
@@ -51,6 +63,9 @@ static float GetYuvColor(int chanel, color_rgb *color) {
 }
 // TODO: Need refactor
 void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int radius) {
+  int width = frame->stVFrame.u32Width;
+  int height = frame->stVFrame.u32Height;
+
   color.r *= 255;
   color.g *= 255;
   color.b *= 255;
@@ -58,44 +73,83 @@ void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int r
   char color_u = GetYuvColor(PLANE_U, &color);
   char color_v = GetYuvColor(PLANE_V, &color);
 
-  CVI_VOID *vir_addr = CVI_NULL;
   size_t image_size =
       frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-  vir_addr = CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
-  CVI_U32 plane_offset = 0;
+  bool do_unmap = false;
+  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
+    frame->stVFrame.pu8VirAddr[0] =
+        (uint8_t *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+    frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
+    frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
+    do_unmap = true;
+  }
 
-  for (int i = PLANE_Y; i < PLANE_NUM; i++) {
-    frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
-    plane_offset += frame->stVFrame.u32Length[i];
-
-    char draw_color;
-    if (i == PLANE_Y) {
-      draw_color = color_y;
-    } else if (i == PLANE_U) {
-      draw_color = color_u;
-    } else {
-      draw_color = color_v;
-    }
-
-    cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
-    if (i != 0) {
-      cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
-    }
-    // FIXME: Color incorrect.
-    cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
-    for (int t = 0; t < (int)pts->size; ++t) {
-      if (i == 0) {
-        cv::circle(image, cv::Point(pts->x[t], pts->y[t] - 2), radius / 2, cv::Scalar(draw_color),
-                   -1);
+  if (frame->stVFrame.enPixelFormat == PIXEL_FORMAT_YUV_PLANAR_420) {
+    // 0: Y-plane, 1: U-plane, 2: V-plane
+    for (int i = PLANE_Y; i < PLANE_NUM; i++) {
+      char draw_color;
+      if (i == PLANE_Y) {
+        draw_color = color_y;
+      } else if (i == PLANE_U) {
+        draw_color = color_u;
       } else {
-        cv::circle(image, cv::Point(pts->x[t] / 2, (pts->y[t] - 2) / 2), radius,
-                   cv::Scalar(draw_color), -1);
+        draw_color = color_v;
+      }
+
+      cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
+      if (i != 0) {
+        cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
+      }
+      // FIXME: Color incorrect.
+      cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
+      for (int t = 0; t < (int)pts->size; ++t) {
+        if (i == 0) {
+          cv::circle(image, cv::Point(pts->x[t], pts->y[t] - 2), radius / 2, cv::Scalar(draw_color),
+                     -1);
+        } else {
+          cv::circle(image, cv::Point(pts->x[t] / 2, (pts->y[t] - 2) / 2), radius,
+                     cv::Scalar(draw_color), -1);
+        }
       }
     }
-    frame->stVFrame.pu8VirAddr[i] = NULL;
+  } else { /* PIXEL_FORMAT_NV21 */
+    // 0: Y-plane, 1: VU-plane
+    for (int i = 0; i < 2; i++) {
+      for (int t = 0; t < (int)pts->size; ++t) {
+        float x = max(min(pts->x[t], width - 1), 0);
+        float y = max(min(pts->y[t], height - 1), 0);
+        cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
+        cv::Point cv_point = cv::Point(x, y - 2);
+        double font_scale = 1;
+        int draw_radius = max(radius, 2);
+        if (i != 0) {
+          cv_size = cv::Size(frame->stVFrame.u32Width / 2, frame->stVFrame.u32Height / 2);
+          cv_point = cv::Point(x / 2, (y - 2) / 2);
+          font_scale /= 2;
+          draw_radius /= 2;
+        }
+
+        if (i == 0) {
+          cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i],
+                        frame->stVFrame.u32Stride[i]);
+          cv::circle(image, cv_point, draw_radius, cv::Scalar(static_cast<uint8_t>(color_y)), -1);
+        } else {
+          cv::Mat image(cv_size, CV_8UC2, frame->stVFrame.pu8VirAddr[i],
+                        frame->stVFrame.u32Stride[i]);
+          cv::circle(image, cv_point, draw_radius,
+                     cv::Scalar(static_cast<uint8_t>(color_v), static_cast<uint8_t>(color_u)), -1);
+        }
+      }
+    }
   }
-  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
-  CVI_SYS_Munmap(vir_addr, image_size);
+
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0], image_size);
+  if (do_unmap) {
+    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);
+    frame->stVFrame.pu8VirAddr[0] = NULL;
+    frame->stVFrame.pu8VirAddr[1] = NULL;
+    frame->stVFrame.pu8VirAddr[2] = NULL;
+  }
 }
 
 // TODO: Need refactor
@@ -119,18 +173,20 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_
   char color_u = GetYuvColor(PLANE_U, &color);
   char color_v = GetYuvColor(PLANE_V, &color);
 
-  CVI_VOID *vir_addr = CVI_NULL;
   size_t image_size =
       frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-  vir_addr = CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
-  CVI_U32 plane_offset = 0;
+  bool do_unmap = false;
+  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
+    frame->stVFrame.pu8VirAddr[0] =
+        (uint8_t *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+    frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
+    frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
+    do_unmap = true;
+  }
 
   if (frame->stVFrame.enPixelFormat == PIXEL_FORMAT_YUV_PLANAR_420) {
     // 0: Y-plane, 1: U-plane, 2: V-plane
     for (int i = PLANE_Y; i < PLANE_NUM; i++) {
-      frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
-      plane_offset += frame->stVFrame.u32Length[i];
-
       char draw_color;
       if (i == PLANE_Y) {
         draw_color = color_y;
@@ -154,14 +210,10 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_
       cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i], frame->stVFrame.u32Stride[i]);
       cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_COMPLEX_SMALL, font_scale,
                   cv::Scalar(draw_color), thickness, cv::LINE_AA);
-      frame->stVFrame.pu8VirAddr[i] = NULL;
     }
   } else { /* PIXEL_FORMAT_NV21 */
     // 0: Y-plane, 1: VU-plane
     for (int i = 0; i < 2; i++) {
-      frame->stVFrame.pu8VirAddr[i] = ((CVI_U8 *)vir_addr) + plane_offset;
-      plane_offset += frame->stVFrame.u32Length[i];
-
       cv::Size cv_size = cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
       cv::Point cv_point = cv::Point(x, y - 2);
       double font_scale = 1;
@@ -185,11 +237,15 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_
                     cv::Scalar(static_cast<uint8_t>(color_v), static_cast<uint8_t>(color_u)),
                     text_thickness, 8);
       }
-      frame->stVFrame.pu8VirAddr[i] = NULL;
     }
   }
-  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], vir_addr, image_size);
-  CVI_SYS_Munmap(vir_addr, image_size);
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0], image_size);
+  if (do_unmap) {
+    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);
+    frame->stVFrame.pu8VirAddr[0] = NULL;
+    frame->stVFrame.pu8VirAddr[1] = NULL;
+    frame->stVFrame.pu8VirAddr[2] = NULL;
+  }
 
   return CVIAI_SUCCESS;
 }
@@ -784,6 +840,21 @@ int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   // cv::imwrite("/mnt/data/out2.jpg", draw_img);
 
   return CVIAI_SUCCESS;
+}
+
+int Draw5Landmark(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame) {
+  static const color_rgb LANDMARK5_COLORS[5] = {COLOR_RED, COLOR_GREEN, COLOR_MAGENTA, COLOR_YELLOW,
+                                                COLOR_CYAN};
+  for (uint32_t i = 0; i < meta->size; i++) {
+    for (int j = 0; j < 5; j++) {
+      cvai_pts_t tmp_pts = {0};
+      tmp_pts.size = 1;
+      tmp_pts.x = &meta->info[i].pts.x[j];
+      tmp_pts.y = &meta->info[i].pts.y[j];
+      _DrawPts(frame, &tmp_pts, LANDMARK5_COLORS[j], 3);
+    }
+  }
+  return CVI_SUCCESS;
 }
 
 }  // namespace service

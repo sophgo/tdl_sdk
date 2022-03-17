@@ -48,6 +48,8 @@ int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame);
 
 void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int raduis);
 
+int Draw5Landmark(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame);
+
 int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts, cvai_service_brush_t brush);
 
 }  // namespace service

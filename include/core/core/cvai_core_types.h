@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "cvi_comm_video.h"
 
 /**
  * \defgroup core_cviaicore CVIAI Core Module
@@ -155,10 +156,12 @@ typedef struct {
  * The pixel data of the image.
  */
 typedef struct {
+  PIXEL_FORMAT_E pix_format;
+  uint8_t* pix[3];
+  uint32_t stride[3];
+  uint32_t length[3];
   uint32_t height;
   uint32_t width;
-  uint32_t stride;
-  uint8_t* pix;
 } cvai_image_t;
 
 /**

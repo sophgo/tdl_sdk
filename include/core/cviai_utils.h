@@ -115,6 +115,29 @@ DLL_EXPORT CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint3
                                         const uint32_t metaHeight, const cvai_face_info_t *info,
                                         VIDEO_FRAME_INFO_S *outFrame, const bool enableGDC);
 
+/**
+ * @brief
+ *
+ * @param image Output image.
+ * @param height The height of output image.
+ * @param width The width of output image.
+ * @param fmt The pixel format of output image.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
+                                      PIXEL_FORMAT_E fmt);
+
+/**
+ * @brief
+ *
+ * @param height The height of the image.
+ * @param width The width of the image.
+ * @param fmt The pixel format of the image.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_EstimateImageSize(uint64_t *size, uint32_t height, uint32_t width,
+                                            PIXEL_FORMAT_E fmt);
+
 /**@}*/
 
 #ifdef __cplusplus

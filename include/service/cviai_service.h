@@ -213,6 +213,9 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
                                                const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
                                                const bool drawText, cvai_service_brush_t brush);
 
+DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDraw5Landmark(const cvai_face_t *meta,
+                                                    VIDEO_FRAME_INFO_S *frame);
+
 /**
  * @brief Draw rect to frame with given object meta.
  * @ingroup core_cviaiservice

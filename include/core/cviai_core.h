@@ -533,7 +533,7 @@ DLL_EXPORT CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_I
  * @param srcFrame Input frame. (only support RGB Packed format)
  * @param dst Output image.
  * @param bbox The bounding box.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
                                     cvai_bbox_t *bbox);
@@ -545,7 +545,7 @@ DLL_EXPORT CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *
  * @param dst Output image.
  * @param face_info Face information, contain bbox and 5 landmark.
  * @param align Align face to standard size if true.
- * @return int Return CVI_SUCCESS on success.
+ * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
                                          cvai_face_info_t *face_info, bool align);

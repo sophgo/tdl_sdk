@@ -147,3 +147,86 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
   }
   return CVIAI_SUCCESS;
 }
+
+CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
+                           PIXEL_FORMAT_E fmt) {
+  if (fmt != PIXEL_FORMAT_RGB_888 && fmt != PIXEL_FORMAT_NV21) {
+    LOGE("Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d].\n", fmt,
+         PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21);
+    return CVIAI_ERR_INVALID_ARGS;
+  }
+  if (image->pix[0] != NULL) {
+    LOGE("destination image is not empty.");
+    return CVIAI_ERR_INVALID_ARGS;
+  }
+  image->pix_format = fmt;
+  image->height = height;
+  image->width = width;
+
+  /* NOTE: Refer to vpss_helper.h*/
+  switch (fmt) {
+    case PIXEL_FORMAT_RGB_888: {
+      image->stride[0] = ALIGN(image->width * 3, DEFAULT_ALIGN);
+      image->stride[1] = 0;
+      image->stride[2] = 0;
+      image->length[0] = image->stride[0] * image->height;
+      image->length[1] = 0;
+      image->length[2] = 0;
+    } break;
+    case PIXEL_FORMAT_NV21: {
+      // TODO: Verify this
+      image->stride[0] = ALIGN(image->width, DEFAULT_ALIGN);
+      image->stride[1] = ALIGN(image->width, DEFAULT_ALIGN);
+      image->stride[2] = 0;
+      image->length[0] = image->stride[0] * image->height;
+      image->length[1] = image->stride[0] * (image->height >> 1);
+      image->length[2] = 0;
+    } break;
+    default:
+      LOGE("Currently unsupported format %u\n", fmt);
+      return CVIAI_ERR_INVALID_ARGS;
+  }
+
+  uint32_t image_size = image->length[0] + image->length[1] + image->length[2];
+  image->pix[0] = (uint8_t *)malloc(image_size);
+  memset(image->pix[0], 0, image_size);
+  switch (fmt) {
+    case PIXEL_FORMAT_RGB_888: {
+      image->pix[1] = NULL;
+      image->pix[2] = NULL;
+    } break;
+    case PIXEL_FORMAT_NV21: {
+      image->pix[1] = image->pix[0] + image->length[0];
+      image->pix[2] = NULL;
+    } break;
+    default:
+      LOGE("Currently unsupported format %u\n", fmt);
+      return CVIAI_ERR_INVALID_ARGS;
+  }
+
+#if 0
+  LOGI("[create image] format[%d], height[%u], width[%u], stride[%u][%u][%u], length[%u][%u][%u]\n",
+       image->pix_format, image->height, image->width, image->stride[0], image->stride[1],
+       image->stride[2], image->length[0], image->length[1], image->length[2]);
+#endif
+
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_EstimateImageSize(uint64_t *size, uint32_t height, uint32_t width,
+                                 PIXEL_FORMAT_E fmt) {
+  *size = 0;
+  switch (fmt) {
+    case PIXEL_FORMAT_RGB_888: {
+      *size += ALIGN(width * 3, DEFAULT_ALIGN) * height;
+    } break;
+    case PIXEL_FORMAT_NV21: {
+      *size += ALIGN(width, DEFAULT_ALIGN) * height;
+      *size += ALIGN(width, DEFAULT_ALIGN) * (height >> 1);
+    } break;
+    default:
+      LOGE("Currently unsupported format %u\n", fmt);
+      return CVIAI_ERR_INVALID_ARGS;
+  }
+  return CVIAI_SUCCESS;
+}

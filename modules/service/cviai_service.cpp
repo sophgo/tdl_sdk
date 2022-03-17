@@ -192,6 +192,9 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
     CVI_SYS_FreeI(ai_ctx->ive_handle, &img);                             \
     if (do_unmap) {                                                      \
       CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size); \
+      frame->stVFrame.pu8VirAddr[0] = NULL;                              \
+      frame->stVFrame.pu8VirAddr[1] = NULL;                              \
+      frame->stVFrame.pu8VirAddr[2] = NULL;                              \
     }                                                                    \
   } while (0)
 
@@ -376,6 +379,10 @@ CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta, VIDEO_FRAME_INF
 }
 CVI_S32 CVI_AI_Service_FaceDrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *frame) {
   return cviai::service::DrawPts(pts, frame);
+}
+
+CVI_S32 CVI_AI_Service_FaceDraw5Landmark(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame) {
+  return cviai::service::Draw5Landmark(meta, frame);
 }
 
 cvai_service_brush_t CVI_AI_Service_GetDefaultBrush() {
