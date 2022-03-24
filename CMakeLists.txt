@@ -138,6 +138,7 @@ include_directories(${IVE_INCLUDES}
 add_subdirectory(modules)
 add_subdirectory(regression)
 add_subdirectory(sample)
+add_subdirectory(tool)
 
 # Install doc
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc DESTINATION doc)

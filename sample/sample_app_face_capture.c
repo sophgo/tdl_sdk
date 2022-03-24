@@ -21,7 +21,7 @@
 #define OUTPUT_BUFFER_SIZE 10
 #define MODE_DEFINITION 0
 
-// #define DRAW_FACE_LANDMARK   /* FIXME: Segmentation fault */
+// #define VISUAL_FACE_LANDMARK
 // #define USE_OUTPUT_DATA_API
 
 typedef enum { fast = 0, interval, leave, intelligent } APP_MODE_e;
@@ -81,7 +81,7 @@ void RESTRUCTURING_FACE_META(face_capture_t *face_cpt_info, cvai_face_t *face_me
 
 int COUNT_ALIVE(face_capture_t *face_cpt_info);
 
-#ifdef DRAW_FACE_LANDMARK
+#ifdef VISUAL_FACE_LANDMARK
 void FREE_FACE_PTS(cvai_face_t *face_meta);
 #endif
 
@@ -205,7 +205,7 @@ static void *pVideoOutput(void *args) {
         face_meta_0.info[i].unique_id = g_face_meta_0.info[i].unique_id;
         face_meta_0.info[i].face_quality = g_face_meta_0.info[i].face_quality;
         memcpy(&face_meta_0.info[i].bbox, &g_face_meta_0.info[i].bbox, sizeof(cvai_bbox_t));
-#ifdef DRAW_FACE_LANDMARK
+#ifdef VISUAL_FACE_LANDMARK
         face_meta_0.info[i].pts.size = g_face_meta_0.info[i].pts.size;
         face_meta_0.info[i].pts.x = (float *)malloc(sizeof(float) * face_meta_0.info[i].pts.size);
         face_meta_0.info[i].pts.y = (float *)malloc(sizeof(float) * face_meta_0.info[i].pts.size);
@@ -219,7 +219,7 @@ static void *pVideoOutput(void *args) {
         face_meta_1.info[i].unique_id = g_face_meta_1.info[i].unique_id;
         face_meta_1.info[i].face_quality = g_face_meta_1.info[i].face_quality;
         memcpy(&face_meta_1.info[i].bbox, &g_face_meta_1.info[i].bbox, sizeof(cvai_bbox_t));
-#ifdef DRAW_FACE_LANDMARK
+#ifdef VISUAL_FACE_LANDMARK
         face_meta_1.info[i].pts.size = g_face_meta_1.info[i].pts.size;
         face_meta_1.info[i].pts.x = (float *)malloc(sizeof(float) * face_meta_1.info[i].pts.size);
         face_meta_1.info[i].pts.y = (float *)malloc(sizeof(float) * face_meta_1.info[i].pts.size);
@@ -242,7 +242,7 @@ static void *pVideoOutput(void *args) {
 
     CVI_AI_Service_FaceDrawRect(service_handle, &face_meta_0, &stVOFrame, false, brush_0);
     CVI_AI_Service_FaceDrawRect(service_handle, &face_meta_1, &stVOFrame, false, brush_1);
-#ifdef DRAW_FACE_LANDMARK
+#ifdef VISUAL_FACE_LANDMARK
     CVI_AI_Service_FaceDraw5Landmark(&face_meta_0, &stVOFrame);
     CVI_AI_Service_FaceDraw5Landmark(&face_meta_1, &stVOFrame);
 #endif
@@ -285,7 +285,7 @@ static void *pVideoOutput(void *args) {
       break;
     }
 
-#ifdef DRAW_FACE_LANDMARK
+#ifdef VISUAL_FACE_LANDMARK
     FREE_FACE_PTS(&face_meta_0);
     FREE_FACE_PTS(&face_meta_1);
 #endif
@@ -296,9 +296,10 @@ static void *pVideoOutput(void *args) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 10) {
+  if (argc != 11) {
     printf(
         "Usage: %s <face_detection_model_path>\n"
+        "          <face_attribute_model_path>\n"
         "          <face_quality_model_path>\n"
         "          <config_path>\n"
         "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
@@ -315,13 +316,13 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  int buffer_size = atoi(argv[6]);
+  int buffer_size = atoi(argv[7]);
   if (buffer_size <= 0) {
     printf("buffer size must be larger than 0.\n");
     return CVI_FAILURE;
   }
 
-  CVI_S32 voType = atoi(argv[9]);
+  CVI_S32 voType = atoi(argv[10]);
 
   CVI_S32 s32Ret = CVI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
@@ -342,17 +343,17 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2]);
+  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2], argv[3]);
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
-  float fd_threshold = atof(argv[7]);
+  float fd_threshold = atof(argv[8]);
   CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_threshold);
 
-  app_mode = atoi(argv[4]);
+  app_mode = atoi(argv[5]);
   switch (app_mode) {
 #if MODE_DEFINITION == 0
     case fast: {
@@ -384,19 +385,19 @@ int main(int argc, char *argv[]) {
 
   face_capture_config_t app_cfg;
   CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
-  if (!strcmp(argv[3], "NULL")) {
+  if (!strcmp(argv[4], "NULL")) {
     printf("Use Default Config...\n");
   } else {
-    printf("Read Specific Config: %s\n", argv[3]);
-    if (!READ_CONFIG(argv[3], &app_cfg)) {
+    printf("Read Specific Config: %s\n", argv[4]);
+    if (!READ_CONFIG(argv[4], &app_cfg)) {
       printf("[ERROR] Read Config Failed.\n");
       goto CLEANUP_SYSTEM;
     }
   }
   CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
 
-  app_handle->face_cpt_info->use_fqnet = atoi(argv[5]) == 1;
-  bool write_image = atoi(argv[8]) == 1;
+  app_handle->face_cpt_info->use_fqnet = atoi(argv[6]) == 1;
+  bool write_image = atoi(argv[9]) == 1;
 
   VIDEO_FRAME_INFO_S stfdFrame;
 
@@ -430,7 +431,7 @@ int main(int argc, char *argv[]) {
 
     {
       SMT_MutexAutoLock(VOMutex, lock);
-#ifdef DRAW_FACE_LANDMARK
+#ifdef VISUAL_FACE_LANDMARK
       FREE_FACE_PTS(&g_face_meta_0);
       FREE_FACE_PTS(&g_face_meta_1);
 #endif
@@ -555,8 +556,12 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config) {
       app_config->auto_m_time_limit = (uint32_t)atoi(value);
     } else if (!strcmp(name, "AUTO_Mode_Fast_Cap")) {
       app_config->auto_m_fast_cap = atoi(value) == 1;
+    } else if (!strcmp(name, "Do_Face_Recognition")) {
+      app_config->do_FR = atoi(value) == 1;
     } else if (!strcmp(name, "Capture_Aligned_Face")) {
       app_config->capture_aligned_face = atoi(value) == 1;
+    } else if (!strcmp(name, "Store_RGB888")) {
+      app_config->store_RGB888 = atoi(value) == 1;
     } else {
       printf("Unknow Arg: %s\n", name);
       return false;
@@ -617,7 +622,7 @@ void RESTRUCTURING_FACE_META(face_capture_t *face_cpt_info, cvai_face_t *face_me
     (*tmp_ptr)->face_quality = face_cpt_info->last_faces.info[i].face_quality;
     memcpy(&(*tmp_ptr)->bbox, &face_cpt_info->last_faces.info[i].bbox, sizeof(cvai_bbox_t));
     *tmp_ptr += 1;
-#ifdef DRAW_FACE_LANDMARK
+#ifdef VISUAL_FACE_LANDMARK
     (*tmp_ptr)->pts.size = face_cpt_info->last_faces.info[i].pts.size;
     (*tmp_ptr)->pts.x = (float *)malloc(sizeof(float) * (*tmp_ptr)->pts.size);
     (*tmp_ptr)->pts.y = (float *)malloc(sizeof(float) * (*tmp_ptr)->pts.size);
@@ -636,7 +641,7 @@ bool CHECK_OUTPUT_CONDITION(face_capture_t *face_cpt_info, uint32_t idx, APP_MOD
   return true;
 }
 
-#ifdef DRAW_FACE_LANDMARK
+#ifdef VISUAL_FACE_LANDMARK
 void FREE_FACE_PTS(cvai_face_t *face_meta) {
   if (face_meta->size == 0) {
     return;

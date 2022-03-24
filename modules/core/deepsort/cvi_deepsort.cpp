@@ -24,6 +24,8 @@ DeepSORT::DeepSORT(bool use_specific_counter) {
   default_conf = get_DefaultConfig();
 }
 
+DeepSORT::~DeepSORT() {}
+
 int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid) {
   /** statistic what classes ID in bbox and tracker,
    *  and counting bbox number for each class */
@@ -105,6 +107,7 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
       tracker_t->info[idx].bbox.x2 = t_bbox(0) + t_bbox(2);
       tracker_t->info[idx].bbox.y2 = t_bbox(1) + t_bbox(3);
       obj->info[idx].unique_id = t_id;
+      tracker_t->info[idx].id = t_id;
     }
   }
 
@@ -161,6 +164,7 @@ int DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid)
     tracker_t->info[i].bbox.x2 = t_bbox(0) + t_bbox(2);
     tracker_t->info[i].bbox.y2 = t_bbox(1) + t_bbox(3);
     face->info[i].unique_id = t_id;
+    tracker_t->info[i].id = t_id;
   }
   return CVIAI_SUCCESS;
 }
@@ -519,16 +523,37 @@ void DeepSORT::cleanCounter() {
   }
 }
 
-void DeepSORT::setConfig(cvai_deepsort_config_t ds_conf, int cviai_obj_type, bool show_config) {
-  LOGI("set DeepSORT config[%d]:\n", cviai_obj_type);
+CVI_S32 DeepSORT::getConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type) {
+  if (ds_conf == NULL) {
+    LOGE("input config is NULL.");
+    return CVIAI_FAILURE;
+  }
   if (cviai_obj_type == -1) {
-    memcpy(&default_conf, &ds_conf, sizeof(cvai_deepsort_config_t));
+    memcpy(ds_conf, &default_conf, sizeof(cvai_deepsort_config_t));
+    return CVIAI_SUCCESS;
+  }
+  if (specific_conf.find(cviai_obj_type) == specific_conf.end()) {
+    LOGE("specific config[%d] not found.", cviai_obj_type);
+    return CVIAI_FAILURE;
+  }
+  memcpy(ds_conf, &specific_conf[cviai_obj_type], sizeof(cvai_deepsort_config_t));
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 DeepSORT::setConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type, bool show_config) {
+  if (ds_conf == NULL) {
+    LOGE("Input config is NULL.");
+    return CVIAI_FAILURE;
+  }
+  if (cviai_obj_type == -1) {
+    memcpy(&default_conf, ds_conf, sizeof(cvai_deepsort_config_t));
   } else {
-    specific_conf[cviai_obj_type] = ds_conf;
+    specific_conf[cviai_obj_type] = *ds_conf;
   }
   if (show_config) {
-    show_deepsort_config(ds_conf);
+    show_deepsort_config(*ds_conf);
   }
+  return CVIAI_SUCCESS;
 }
 
 cvai_deepsort_config_t DeepSORT::get_DefaultConfig() {
@@ -667,6 +692,28 @@ std::string DeepSORT::get_TrackersInfo_UnmatchedLastTime(std::string &str_info) 
 
   str_info = ss_info.str();
   return str_info;
+}
+
+CVI_S32 DeepSORT::get_trackers_inactive(cvai_tracker_t *tracker) const {
+  std::vector<KalmanTracker> unmatched_trackers = get_Trackers_UnmatchedLastTime();
+  if (unmatched_trackers.size() == 0) return CVIAI_SUCCESS;
+  CVI_AI_MemAlloc(static_cast<uint32_t>(unmatched_trackers.size()), tracker);
+  for (uint32_t i = 0; i < static_cast<uint32_t>(unmatched_trackers.size()); i++) {
+    KalmanTracker &u_tkr = unmatched_trackers[i];
+    if (u_tkr.tracker_state_ != TRACKER_STATE::ACCREDITATION) {
+      LOGE("[BUG] This is an illegal condition.\n");
+      return CVIAI_FAILURE;
+    }
+    BBOX tracker_bbox = u_tkr.getBBox_TLWH();
+    tracker->info[i].id = u_tkr.id;
+    tracker->info[i].state = CVI_TRACKER_STABLE;
+    tracker->info[i].bbox.x1 = tracker_bbox(0, 0);
+    tracker->info[i].bbox.y1 = tracker_bbox(0, 1);
+    tracker->info[i].bbox.x2 = tracker_bbox(0, 0) + tracker_bbox(0, 2);
+    tracker->info[i].bbox.y2 = tracker_bbox(0, 1) + tracker_bbox(0, 3);
+  }
+
+  return CVIAI_SUCCESS;
 }
 
 static void show_deepsort_config(cvai_deepsort_config_t &ds_conf) {

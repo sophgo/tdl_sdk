@@ -190,6 +190,108 @@ struct RGB2Gray<uchar> {
   int tab[256 * 3];
 };
 
+// L7373
+///////////////////////////////////// YUV420 -> RGB /////////////////////////////////////
+
+const int ITUR_BT_601_CY = 1220542;
+const int ITUR_BT_601_CUB = 2116026;
+const int ITUR_BT_601_CUG = -409993;
+const int ITUR_BT_601_CVG = -852492;
+const int ITUR_BT_601_CVR = 1673527;
+const int ITUR_BT_601_SHIFT = 20;
+
+// Coefficients for RGB to YUV420p conversion
+const int ITUR_BT_601_CRY = 269484;
+const int ITUR_BT_601_CGY = 528482;
+const int ITUR_BT_601_CBY = 102760;
+const int ITUR_BT_601_CRU = -155188;
+const int ITUR_BT_601_CGU = -305135;
+const int ITUR_BT_601_CBU = 460324;
+const int ITUR_BT_601_CGV = -385875;
+const int ITUR_BT_601_CBV = -74448;
+
+// L7392
+template <int bIdx, int uIdx>
+struct YUV420sp2RGB888Invoker : cv::ParallelLoopBody {
+  uchar* dst_data;
+  size_t dst_step;
+  int width;
+  const uchar *my1, *muv;
+  size_t stride;
+
+  YUV420sp2RGB888Invoker(uchar* _dst_data, size_t _dst_step, int _dst_width, size_t _stride,
+                         const uchar* _y1, const uchar* _uv)
+      : dst_data(_dst_data),
+        dst_step(_dst_step),
+        width(_dst_width),
+        my1(_y1),
+        muv(_uv),
+        stride(_stride) {}
+
+  void operator()(const cv::Range& range) const {
+    int rangeBegin = range.start * 2;
+    int rangeEnd = range.end * 2;
+
+    // R = 1.164(Y - 16) + 1.596(V - 128)
+    // G = 1.164(Y - 16) - 0.813(V - 128) - 0.391(U - 128)
+    // B = 1.164(Y - 16)                  + 2.018(U - 128)
+
+    // R = (1220542(Y - 16) + 1673527(V - 128)                  + (1 << 19)) >> 20
+    // G = (1220542(Y - 16) - 852492(V - 128) - 409993(U - 128) + (1 << 19)) >> 20
+    // B = (1220542(Y - 16)                  + 2116026(U - 128) + (1 << 19)) >> 20
+
+    const uchar *y1 = my1 + rangeBegin * stride, *uv = muv + rangeBegin * stride / 2;
+
+    for (int j = rangeBegin; j < rangeEnd; j += 2, y1 += stride * 2, uv += stride) {
+      uchar* row1 = dst_data + dst_step * j;
+      uchar* row2 = dst_data + dst_step * (j + 1);
+      const uchar* y2 = y1 + stride;
+
+      for (int i = 0; i < width; i += 2, row1 += 6, row2 += 6) {
+        int u = int(uv[i + 0 + uIdx]) - 128;
+        int v = int(uv[i + 1 - uIdx]) - 128;
+
+        int ruv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CVR * v;
+        int guv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CVG * v + ITUR_BT_601_CUG * u;
+        int buv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CUB * u;
+
+        int y00 = std::max(0, int(y1[i]) - 16) * ITUR_BT_601_CY;
+        row1[2 - bIdx] = cv::saturate_cast<uchar>((y00 + ruv) >> ITUR_BT_601_SHIFT);
+        row1[1] = cv::saturate_cast<uchar>((y00 + guv) >> ITUR_BT_601_SHIFT);
+        row1[bIdx] = cv::saturate_cast<uchar>((y00 + buv) >> ITUR_BT_601_SHIFT);
+
+        int y01 = std::max(0, int(y1[i + 1]) - 16) * ITUR_BT_601_CY;
+        row1[5 - bIdx] = cv::saturate_cast<uchar>((y01 + ruv) >> ITUR_BT_601_SHIFT);
+        row1[4] = cv::saturate_cast<uchar>((y01 + guv) >> ITUR_BT_601_SHIFT);
+        row1[3 + bIdx] = cv::saturate_cast<uchar>((y01 + buv) >> ITUR_BT_601_SHIFT);
+
+        int y10 = std::max(0, int(y2[i]) - 16) * ITUR_BT_601_CY;
+        row2[2 - bIdx] = cv::saturate_cast<uchar>((y10 + ruv) >> ITUR_BT_601_SHIFT);
+        row2[1] = cv::saturate_cast<uchar>((y10 + guv) >> ITUR_BT_601_SHIFT);
+        row2[bIdx] = cv::saturate_cast<uchar>((y10 + buv) >> ITUR_BT_601_SHIFT);
+
+        int y11 = std::max(0, int(y2[i + 1]) - 16) * ITUR_BT_601_CY;
+        row2[5 - bIdx] = cv::saturate_cast<uchar>((y11 + ruv) >> ITUR_BT_601_SHIFT);
+        row2[4] = cv::saturate_cast<uchar>((y11 + guv) >> ITUR_BT_601_SHIFT);
+        row2[3 + bIdx] = cv::saturate_cast<uchar>((y11 + buv) >> ITUR_BT_601_SHIFT);
+      }
+    }
+  }
+};
+
+// L7672
+#define MIN_SIZE_FOR_PARALLEL_YUV420_CONVERSION (320 * 240)
+
+template <int bIdx, int uIdx>
+inline void cvtYUV420sp2RGB(uchar* dst_data, size_t dst_step, int dst_width, int dst_height,
+                            size_t _stride, const uchar* _y1, const uchar* _uv) {
+  YUV420sp2RGB888Invoker<bIdx, uIdx> converter(dst_data, dst_step, dst_width, _stride, _y1, _uv);
+  if (dst_width * dst_height >= MIN_SIZE_FOR_PARALLEL_YUV420_CONVERSION)
+    parallel_for_(cv::Range(0, dst_height / 2), converter);
+  else
+    converter(cv::Range(0, dst_height / 2));
+}
+
 // TODO: RGB2Gray CV_NEON version
 
 // 8u, 16u, 32f
@@ -235,6 +337,41 @@ void cvtGraytoBGR(const uchar* src_data, size_t src_step, uchar* dst_data, size_
   }
 }
 
+// L9483
+void cvtTwoPlaneYUVtoBGR(const uchar* src_data, size_t src_step, uchar* dst_data, size_t dst_step,
+                         int dst_width, int dst_height, int dcn, bool swapBlue, int uIdx) {
+#if 0
+    CV_INSTRUMENT_REGION()
+
+    CALL_HAL(cvtTwoPlaneYUVtoBGR, cv_hal_cvtTwoPlaneYUVtoBGR, src_data, src_step, dst_data, dst_step, dst_width, dst_height, dcn, swapBlue, uIdx);
+#endif
+  int blueIdx = swapBlue ? 2 : 0;
+  const uchar* uv = src_data + src_step * static_cast<size_t>(dst_height);
+  switch (dcn * 100 + blueIdx * 10 + uIdx) {
+    case 300:
+      cvtYUV420sp2RGB<0, 0>(dst_data, dst_step, dst_width, dst_height, src_step, src_data, uv);
+      break;
+    case 301:
+      cvtYUV420sp2RGB<0, 1>(dst_data, dst_step, dst_width, dst_height, src_step, src_data, uv);
+      break;
+    case 320:
+      cvtYUV420sp2RGB<2, 0>(dst_data, dst_step, dst_width, dst_height, src_step, src_data, uv);
+      break;
+    case 321:
+      cvtYUV420sp2RGB<2, 1>(dst_data, dst_step, dst_width, dst_height, src_step, src_data, uv);
+      break;
+#if 0
+    case 400: cvtYUV420sp2RGBA<0, 0>(dst_data, dst_step, dst_width, dst_height, src_step, src_data, uv); break;
+    case 401: cvtYUV420sp2RGBA<0, 1>(dst_data, dst_step, dst_width, dst_height, src_step, src_data, uv); break;
+    case 420: cvtYUV420sp2RGBA<2, 0>(dst_data, dst_step, dst_width, dst_height, src_step, src_data, uv); break;
+    case 421: cvtYUV420sp2RGBA<2, 1>(dst_data, dst_step, dst_width, dst_height, src_step, src_data, uv); break;
+#endif
+    default:
+      CV_Error(CV_StsBadFlag, "Unknown/unsupported color conversion code");
+      break;
+  };
+}
+
 //
 // Helper functions
 //
@@ -276,6 +413,7 @@ inline bool swapBlue(int code) {
 void cviai::cvtColor(cv::InputArray _src, cv::OutputArray _dst, int code, int dcn) {
   int stype = _src.type();
   int scn = CV_MAT_CN(stype), depth = CV_MAT_DEPTH(stype);
+  int uidx;
   // int uidx, gbits, ycn; /* not used variable */
 
   cv::Mat src, dst;
@@ -312,6 +450,21 @@ void cviai::cvtColor(cv::InputArray _src, cv::OutputArray _dst, int code, int dc
       dst = _dst.getMat();
       cvtGraytoBGR(src.data, src.step, dst.data, dst.step, src.cols, src.rows, depth, dcn);
       break;
+    ;
+
+    case CV_YUV2BGR_NV21:  case CV_YUV2RGB_NV21:  case CV_YUV2BGR_NV12:  case CV_YUV2RGB_NV12:
+    // case CV_YUV2BGRA_NV21: case CV_YUV2RGBA_NV21: case CV_YUV2BGRA_NV12: case CV_YUV2RGBA_NV12:
+        // http://www.fourcc.org/yuv.php#NV21 == yuv420sp -> a plane of 8 bit Y samples followed by an interleaved V/U plane containing 8 bit 2x2 subsampled chroma samples
+        // http://www.fourcc.org/yuv.php#NV12 -> a plane of 8 bit Y samples followed by an interleaved U/V plane containing 8 bit 2x2 subsampled colour difference samples
+        if (dcn <= 0) dcn = (code==CV_YUV420sp2BGRA || code==CV_YUV420sp2RGBA || code==CV_YUV2BGRA_NV12 || code==CV_YUV2RGBA_NV12) ? 4 : 3;
+        uidx = (code==CV_YUV2BGR_NV21 || code==CV_YUV2BGRA_NV21 || code==CV_YUV2RGB_NV21 || code==CV_YUV2RGBA_NV21) ? 1 : 0;
+        CV_Assert( dcn == 3 || dcn == 4 );
+        CV_Assert( sz.width % 2 == 0 && sz.height % 3 == 0 && depth == CV_8U );
+        _dst.create(cv::Size(sz.width, sz.height * 2 / 3), CV_MAKETYPE(depth, dcn));
+        dst = _dst.getMat();
+        cvtTwoPlaneYUVtoBGR(src.data, src.step, dst.data, dst.step, dst.cols, dst.rows,
+                            dcn, swapBlue(code), uidx);
+        break;
 
     default:
       CV_Error(CV_StsBadFlag, "Unknown/unsupported color conversion code");

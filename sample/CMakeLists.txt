@@ -95,10 +95,9 @@ buildninstall(NAME sample_vi_tracking INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS
 buildninstall(NAME sample_vi_obj_counting INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils sample_utils DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_fall INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils sample_utils DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_dms INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils sample_utils DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-
+buildninstall(NAME sample_vi_mot INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils sample_utils sample_mot_utils DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_aud_esc INC ${SAMPLE_INC} SRCS sample_utils DEPS cviai pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
 buildninstall(NAME sample_aud_soundcmd INC ${SAMPLE_INC} DEPS cviai pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-
 buildninstall(NAME sample_vi_lpdr INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils sample_utils DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_md INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils sample_utils DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 buildninstall(NAME sample_vi_people_tracking INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils sample_utils DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
@@ -106,6 +105,6 @@ buildninstall(NAME sample_vi_fq_tracking INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} S
 buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai cviai_app pthread ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 
 
-install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.h sample_utils.c DESTINATION sample)
+install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.h sample_utils.c sample_mot_utils.h sample_mot_utils.c DESTINATION sample)
 install(FILES Makefile DESTINATION sample)
 install(DIRECTORY config DESTINATION sample)

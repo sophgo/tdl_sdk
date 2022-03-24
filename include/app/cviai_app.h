@@ -13,6 +13,10 @@ typedef struct {
   face_capture_t *face_cpt_info;
 } cviai_app_context_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @typedef cviai_app_handle_t
  *  @ingroup core_cviaiapp
  *  @brief A cviai application handle.
@@ -43,6 +47,7 @@ DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Init(const cviai_app_handle_t handle,
 
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_QuickSetUp(const cviai_app_handle_t handle,
                                                      const char *fd_model_path,
+                                                     const char *fr_model_path,
                                                      const char *fq_model_path);
 
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_GetDefaultConfig(face_capture_config_t *cfg);
@@ -56,5 +61,9 @@ DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Run(const cviai_app_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_SetMode(const cviai_app_handle_t handle,
                                                   capture_mode_e mode);
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_CleanAll(const cviai_app_handle_t handle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // End of _CVIAI_APP_H_

@@ -58,9 +58,17 @@ typedef struct {
 
 } VideoSystemContext;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 CVI_S32 InitVideoSystem(VideoSystemContext *vsCtx, SIZE_S *aiInputSize,
                         PIXEL_FORMAT_E aiInputFormat, int voType);
 void DestroyVideoSystem(VideoSystemContext *vsCtx);
 CVI_S32 SendOutputFrame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

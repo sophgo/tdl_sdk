@@ -37,7 +37,9 @@ typedef struct {
   uint32_t auto_m_time_limit;
   bool auto_m_fast_cap;
 
+  bool do_FR;
   bool capture_aligned_face;
+  bool store_RGB888;
 } face_capture_config_t;
 
 typedef struct {

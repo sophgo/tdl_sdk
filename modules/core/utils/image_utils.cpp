@@ -7,6 +7,13 @@
 #include "cviai_log.hpp"
 #include "rescale_utils.hpp"
 
+#include "opencv2/core.hpp"
+#ifdef ENABLE_CVIAI_CV_UTILS
+#include "cv/imgproc.hpp"
+#else
+#include "opencv2/imgproc.hpp"
+#endif
+
 #define FACE_IMAGE_H 112
 #define FACE_IMAGE_W 112
 
@@ -58,7 +65,8 @@ static void BBOX_PIXEL_COPY(uint8_t *src, uint8_t *dst, uint32_t stride_src, uin
 
 namespace cviai {
 
-CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_bbox_t *bbox) {
+CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_bbox_t *bbox,
+                   bool cvtRGB888) {
   if (srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
       srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21) {
     LOGE("Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d].\n",
@@ -100,6 +108,22 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
       BBOX_PIXEL_COPY(srcFrame->stVFrame.pu8VirAddr[1], dst_image->pix[1],
                       srcFrame->stVFrame.u32Stride[1], dst_image->stride[1], (x1 >> 1), (y1 >> 1),
                       (width >> 1), (height >> 1), 2);
+      /* TODO: optimize this branch. (reduce memcpy times) */
+      if (cvtRGB888) {
+        cv::Mat cvImage_NV21, cvImage_RGB888;
+        cvImage_NV21.create(height * 3 / 2, dst_image->stride[0], CV_8UC1);
+        memcpy(cvImage_NV21.data, dst_image->pix[0],
+               dst_image->length[0] + dst_image->length[1] + dst_image->length[2]);
+#ifdef ENABLE_CVIAI_CV_UTILS
+        cviai::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
+#else
+        cv::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
+#endif
+        CVI_AI_Free(dst_image);
+        CVI_AI_CreateImage(dst_image, height, width, PIXEL_FORMAT_RGB_888);
+        memcpy(dst_image->pix[0], cvImage_RGB888.data,
+               dst_image->length[0] + dst_image->length[1] + dst_image->length[2]);
+      }
     } break;
     default:
       break;
@@ -118,7 +142,7 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
 static VIDEO_FRAME_INFO_S g_wrap_frame;
 
 CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image,
-                        cvai_face_info_t *face_info, bool align) {
+                        cvai_face_info_t *face_info, bool align, bool cvtRGB888) {
   if (srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
       srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21) {
     LOGE("Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d].\n",
@@ -126,7 +150,7 @@ CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image,
     return CVIAI_ERR_INVALID_ARGS;
   }
   if (!align) {
-    return crop_image(srcFrame, dst_image, &face_info->bbox);
+    return crop_image(srcFrame, dst_image, &face_info->bbox, cvtRGB888);
   }
   // TODO: Check crop aligned face for NV21
   if (srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {

@@ -119,12 +119,17 @@ typedef enum {
  * @ingroup core_cviaicore
  * @brief Tracking info of a object.
  *
+ * @var cvai_tracker_info_t:id:
+ * The tracker ID number.
  * @var cvai_tracker_info_t::state
- * The tracking state of the object.
+ * The tracking state of the object (or face).
+ * @var cvai_tracker_info_t::bbox
+ * The MOT algorithm computed bbox.
  */
 typedef struct {
+  uint64_t id;
   cvai_trk_state_type_t state;
-  cvai_bbox_t bbox; /* Reserved tracker computed bbox */
+  cvai_bbox_t bbox;
 } cvai_tracker_info_t;
 
 /** @struct cvai_tracker_t

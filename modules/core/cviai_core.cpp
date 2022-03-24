@@ -638,16 +638,16 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_IncarObjectDetection, IncarObjectDetection,
 DEFINE_INF_FUNC_F2_P2(CVI_AI_Liveness, Liveness, CVI_AI_SUPPORTED_MODEL_LIVENESS, cvai_face_t *,
                       cvai_face_t *)
 
-/* TODO: Refactor CropImage functions, see CVI_AI_FaceAlignment */
-CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox) {
+CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
+                         bool cvtRGB888) {
   TRACE_EVENT("cviai_core", "CVI_AI_CropImage");
-  return crop_image(srcFrame, dst, bbox);
+  return crop_image(srcFrame, dst, bbox, cvtRGB888);
 }
 
 CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
-                              cvai_face_info_t *face_info, bool align) {
+                              cvai_face_info_t *face_info, bool align, bool cvtRGB888) {
   TRACE_EVENT("cviai_core", "CVI_AI_CropImage_Face");
-  return crop_image_face(srcFrame, dst, face_info, align);
+  return crop_image_face(srcFrame, dst, face_info, align, cvtRGB888);
 }
 
 // Tracker
@@ -657,7 +657,7 @@ CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle, bool use_specific_coun
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
-    LOGD("Init DeepSORT.\n");
+    LOGI("Init DeepSORT.\n");
     ctx->ds_tracker = new DeepSORT(use_specific_counter);
   } else {
     delete ds_tracker;
@@ -675,18 +675,28 @@ CVI_S32 CVI_AI_DeepSORT_GetDefaultConfig(cvai_deepsort_config_t *ds_conf) {
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf,
-                                  int cviai_obj_type = -1, bool show_config = false) {
-  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_SetConf");
+CVI_S32 CVI_AI_DeepSORT_GetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf,
+                                  int cviai_obj_type) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_GetConfig");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
     LOGE("Please initialize DeepSORT first.\n");
     return CVIAI_FAILURE;
   }
-  ds_tracker->setConfig(*ds_conf, cviai_obj_type, show_config);
+  return ds_tracker->getConfig(ds_conf, cviai_obj_type);
+}
 
-  return CVIAI_SUCCESS;
+CVI_S32 CVI_AI_DeepSORT_SetConfig(const cviai_handle_t handle, cvai_deepsort_config_t *ds_conf,
+                                  int cviai_obj_type, bool show_config) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_SetConfig");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVIAI_FAILURE;
+  }
+  return ds_tracker->setConfig(ds_conf, cviai_obj_type, show_config);
 }
 
 CVI_S32 CVI_AI_DeepSORT_CleanCounter(const cviai_handle_t handle) {
@@ -703,7 +713,7 @@ CVI_S32 CVI_AI_DeepSORT_CleanCounter(const cviai_handle_t handle) {
 }
 
 CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
-                            cvai_tracker_t *tracker_t, bool use_reid) {
+                            cvai_tracker_t *tracker, bool use_reid) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_Obj");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
@@ -711,8 +721,7 @@ CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
     LOGE("Please initialize DeepSORT first.\n");
     return CVIAI_FAILURE;
   }
-  ctx->ds_tracker->track(obj, tracker_t, use_reid);
-  return CVIAI_SUCCESS;
+  return ctx->ds_tracker->track(obj, tracker, use_reid);
 }
 
 CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
@@ -724,8 +733,7 @@ CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
     LOGE("Please initialize DeepSORT first.\n");
     return CVIAI_FAILURE;
   }
-  ctx->ds_tracker->track(face, tracker_t, use_reid);
-  return CVIAI_SUCCESS;
+  return ctx->ds_tracker->track(face, tracker_t, use_reid);
 }
 
 CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info) {
@@ -741,6 +749,17 @@ CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_inf
   strncpy(debug_info, str_info.c_str(), 8192);
 
   return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_DeepSORT_GetTracker_Inactive(const cviai_handle_t handle, cvai_tracker_t *tracker) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_GetTracker_Inactive");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVI_FAILURE;
+  }
+  return ctx->ds_tracker->get_trackers_inactive(tracker);
 }
 
 // Fall Detection

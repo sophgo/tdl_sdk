@@ -10,6 +10,15 @@
 
 #include <string.h>
 
+/** NOTE: If turn on DO_ALIGN_STRIDE, we can not copy the data from cv::Mat directly. */
+/** TODO: If ALIGN is not necessary in AI SDK, remove it in the future. */
+// #define DO_ALIGN_STRIDE
+#ifdef DO_ALIGN_STRIDE
+#define GET_AI_IMAGE_STRIDE(x) (ALIGN((x), DEFAULT_ALIGN))
+#else
+#define GET_AI_IMAGE_STRIDE(x) (x)
+#endif
+
 CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
                                VIDEO_FRAME_INFO_S *output, const float quantized_factor,
                                const float quantized_mean, const uint32_t thread,
@@ -166,7 +175,7 @@ CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
   /* NOTE: Refer to vpss_helper.h*/
   switch (fmt) {
     case PIXEL_FORMAT_RGB_888: {
-      image->stride[0] = ALIGN(image->width * 3, DEFAULT_ALIGN);
+      image->stride[0] = GET_AI_IMAGE_STRIDE(image->width * 3);
       image->stride[1] = 0;
       image->stride[2] = 0;
       image->length[0] = image->stride[0] * image->height;
@@ -174,9 +183,8 @@ CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
       image->length[2] = 0;
     } break;
     case PIXEL_FORMAT_NV21: {
-      // TODO: Verify this
-      image->stride[0] = ALIGN(image->width, DEFAULT_ALIGN);
-      image->stride[1] = ALIGN(image->width, DEFAULT_ALIGN);
+      image->stride[0] = GET_AI_IMAGE_STRIDE(image->width);
+      image->stride[1] = GET_AI_IMAGE_STRIDE(image->width);
       image->stride[2] = 0;
       image->length[0] = image->stride[0] * image->height;
       image->length[1] = image->stride[0] * (image->height >> 1);

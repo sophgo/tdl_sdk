@@ -17,7 +17,9 @@ struct MatchResult {
 
 class DeepSORT {
  public:
+  DeepSORT() = delete;
   DeepSORT(bool use_specific_counter);
+  ~DeepSORT();
 
   static cvai_deepsort_config_t get_DefaultConfig();
 
@@ -25,13 +27,18 @@ class DeepSORT {
       const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features, int class_id = -1,
       bool use_reid = true);
 
-  int track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid = true);
-  int track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid = false);
+  CVI_S32 track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid = true);
+  CVI_S32 track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid = false);
 
-  void setConfig(cvai_deepsort_config_t ds_conf, int cviai_obj_type = -1, bool show_config = false);
+  CVI_S32 getConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type = -1);
+  CVI_S32 setConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type = -1,
+                    bool show_config = false);
   void cleanCounter();
 
+  CVI_S32 get_trackers_inactive(cvai_tracker_t *tracker) const;
+
   /* DEBUG CODE */
+  // TODO: refactor these functions.
   void show_INFO_KalmanTrackers();
   std::vector<KalmanTracker> get_Trackers_UnmatchedLastTime() const;
   bool get_Tracker_ByID(uint64_t id, KalmanTracker &tracker) const;

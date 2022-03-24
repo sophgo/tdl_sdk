@@ -17,6 +17,7 @@
 #define UPDATE_VALUE_MIN 0.1
 // TODO: Use cooldown to avoid too much updating
 #define UPDATE_COOLDOWN 3
+#define CAPTURE_FACE_LIVE_TIME_EXTEND 5
 
 #define USE_FACE_FEATURE 0
 
@@ -77,9 +78,10 @@ CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info, uint32_t buffer_size) 
 }
 
 CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, const char *fd_model_path,
-                                const char *fq_model_path) {
+                                const char *fr_model_path, const char *fq_model_path) {
   CVI_S32 ret = CVIAI_SUCCESS;
   ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_model_path);
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
   ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fq_model_path);
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
@@ -119,13 +121,20 @@ CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
   cfg->cycle_m_interval = CYCLE_MODE_INTERVAL;
   cfg->auto_m_time_limit = AUTO_MODE_TIME_LIMIT;
   cfg->auto_m_fast_cap = true;
+  cfg->do_FR = false;
   cfg->capture_aligned_face = false;
+  cfg->store_RGB888 = false;
 
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 _FaceCapture_SetConfig(face_capture_t *face_cpt_info, face_capture_config_t *cfg) {
+CVI_S32 _FaceCapture_SetConfig(face_capture_t *face_cpt_info, face_capture_config_t *cfg,
+                               cviai_handle_t ai_handle) {
   memcpy(&face_cpt_info->cfg, cfg, sizeof(face_capture_config_t));
+  cvai_deepsort_config_t deepsort_conf;
+  CVI_AI_DeepSORT_GetConfig(ai_handle, &deepsort_conf, -1);
+  deepsort_conf.ktracker_conf.max_unmatched_num = cfg->miss_time_limit;
+  CVI_AI_DeepSORT_SetConfig(ai_handle, &deepsort_conf, -1, false);
   SHOW_CONFIG(&face_cpt_info->cfg);
   return CVIAI_SUCCESS;
 }
@@ -150,7 +159,9 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   memset(face_cpt_info->_output, 0, sizeof(bool) * face_cpt_info->size);
 
   CVI_AI_RetinaFace(ai_handle, frame, &face_cpt_info->last_faces);
-  // CVI_AI_FaceRecognition(ai_handle, frame, &face_cpt_info->last_faces);
+  if (face_cpt_info->cfg.do_FR) {
+    CVI_AI_FaceRecognition(ai_handle, frame, &face_cpt_info->last_faces);
+  }
 
   CVI_AI_Service_FaceAngleForAll(&face_cpt_info->last_faces);
   bool *skip = (bool *)malloc(sizeof(bool) * face_cpt_info->last_faces.size);
@@ -172,7 +183,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   }
 #endif
 
-  bool use_DeepSORT = false;
+  bool use_DeepSORT = face_cpt_info->cfg.do_FR;
   CVI_AI_DeepSORT_Face(ai_handle, &face_cpt_info->last_faces, &face_cpt_info->last_trackers,
                        use_DeepSORT);
 
@@ -428,8 +439,11 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
   }
 
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
+    /* NOTE: For more flexible application, we do not remove the tracker immediately when time out
+     */
     if (face_cpt_info->data[j].state == ALIVE &&
-        face_cpt_info->data[j].miss_counter > face_cpt_info->cfg.miss_time_limit) {
+        face_cpt_info->data[j].miss_counter >
+            face_cpt_info->cfg.miss_time_limit + CAPTURE_FACE_LIVE_TIME_EXTEND) {
       face_cpt_info->data[j].state = MISS;
       switch (face_cpt_info->mode) {
         case AUTO: {
@@ -531,7 +545,7 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
     CVI_AI_Free(&face_cpt_info->data[j].image);
 
     CVI_AI_CropImage_Face(frame, &face_cpt_info->data[j].image, &face_cpt_info->data[j].info,
-                          face_cpt_info->cfg.capture_aligned_face);
+                          face_cpt_info->cfg.capture_aligned_face, face_cpt_info->cfg.store_RGB888);
 
     face_cpt_info->data[j]._capture = false;
   }
@@ -653,6 +667,8 @@ void SHOW_CONFIG(face_capture_config_t *cfg) {
   printf("[Cycle] Interval    : %u\n", cfg->cycle_m_interval);
   printf("[Auto] Time Limit   : %u\n\n", cfg->auto_m_time_limit);
   printf("[Auto] Fast Capture : %s\n\n", cfg->auto_m_fast_cap ? "True" : "False");
-  printf(" - Capture Aligned Face: %s\n\n", cfg->capture_aligned_face ? "True" : "False");
+  printf(" - Do Face Recognition  : %s\n\n", cfg->do_FR ? "True" : "False");
+  printf(" - Capture Aligned Face : %s\n\n", cfg->capture_aligned_face ? "True" : "False");
+  printf(" - Store RGB888         : %s\n\n", cfg->store_RGB888 ? "True" : "False");
   return;
 }

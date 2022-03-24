@@ -265,10 +265,10 @@ sample_aud_%: $(PWD)/sample_aud_%.o $(PWD)/sample_utils.o
 sample_app_%: $(PWD)/sample_app_%.o $(PWD)/vi_vo_utils.o
 	$(CC) $(SAMPLE_APP_LIBS)  -o $@ $^
 
-sample_vi_%: $(PWD)/sample_vi_%.o $(PWD)/vi_vo_utils.o $(PWD)/sample_utils.o
+sample_vi_%: $(PWD)/sample_vi_%.o $(PWD)/vi_vo_utils.o $(PWD)/sample_utils.o $(PWD)/sample_mot_utils.o
 	$(CC) $(SAMPLE_VI_LIBS)  -o $@ $^
 
-sample_read_%: $(PWD)/sample_read_%.o $(PWD)/sample_utils.o
+sample_read_%: $(PWD)/sample_read_%.o $(PWD)/sample_utils.o $(PWD)/sample_mot_utils.o
 	$(CC) $(SAMPLE_LIBS)  -o $@ $^
 
 sample_init: $(PWD)/sample_init.o
