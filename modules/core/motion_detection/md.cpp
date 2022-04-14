@@ -112,6 +112,93 @@ void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *
   }
 }
 
+bool MotionDetection::overlap(const cv::Rect &bbox1, const cv::Rect &bbox2) {
+  if (bbox1.x >= (bbox2.x + bbox2.width) || bbox2.x >= (bbox1.x + bbox1.width)) {
+    return false;
+  }
+
+  if ((bbox1.y) >= (bbox2.y + bbox2.height) || (bbox2.y >= bbox1.y + bbox1.height)) {
+    return false;
+  }
+  return true;
+}
+
+std::vector<uint32_t> MotionDetection::getAllOverlaps(const std::vector<cv::Rect> bboxes,
+                                                      const cv::Rect &bounds, uint32_t index) {
+  std::vector<uint32_t> overlaps;
+  for (size_t i = 0; i < bboxes.size(); i++) {
+    if (i != index) {
+      if (overlap(bounds, bboxes[i])) {
+        overlaps.push_back(i);
+      }
+    }
+  }
+
+  return overlaps;
+}
+
+void MotionDetection::mergebbox(std::vector<cv::Rect> &bboxes) {
+  // go through the boxes and start merging
+  uint32_t merge_margin = 20;
+
+  // this is gonna take a long time
+  bool finished = false;
+  while (!finished) {
+    // set end condition
+    finished = true;
+
+    // loop through boxes
+    uint32_t index = 0;
+    while (index < bboxes.size()) {
+      cv::Rect curr_enlarged = bboxes[index];
+
+      // enlarge bbox with margin
+      curr_enlarged.x -= merge_margin;
+      curr_enlarged.y -= merge_margin;
+      curr_enlarged.width += (merge_margin * 2);
+      curr_enlarged.height += (merge_margin * 2);
+
+      // get matching boxes
+      std::vector<uint32_t> overlaps = getAllOverlaps(bboxes, curr_enlarged, index);
+
+      // check if empty
+      if (overlaps.size() > 0) {
+        overlaps.push_back(index);
+
+        // convert to a contour
+        std::vector<cv::Point> contour;
+        for (auto ind : overlaps) {
+          cv::Rect &rect = bboxes[ind];
+          contour.push_back(rect.tl());
+          contour.push_back(rect.br());
+        }
+
+// get bounding rect
+#ifdef ENABLE_CVIAI_CV_UTILS
+        cv::Rect merged = cviai::boundingRect(contour);
+#else
+        cv::Rect merged = cv::boundingRect(contour);
+#endif
+
+        // remove boxes from list
+        std::sort(overlaps.begin(), overlaps.end(), std::greater<uint32_t>());
+        for (auto remove_ind : overlaps) {
+          bboxes.erase(bboxes.begin() + remove_ind);
+        }
+
+        bboxes.push_back(merged);
+
+        // set flag
+        finished = false;
+        break;
+      }
+
+      // increment
+      index += 1;
+    }
+  }
+}
+
 CVI_S32 MotionDetection::do_vpss_ifneeded(VIDEO_FRAME_INFO_S *srcframe,
                                           std::shared_ptr<VIDEO_FRAME_INFO_S> &frame) {
   CVI_S32 ret = CVIAI_SUCCESS;
@@ -248,6 +335,8 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
       }
     }
 #endif
+
+    mergebbox(bboxes);
 
     construct_bbox(bboxes, obj_meta);
     if (do_unmap) {

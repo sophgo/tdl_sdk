@@ -22,6 +22,10 @@ class MotionDetection {
   CVI_S32 update_background(VIDEO_FRAME_INFO_S *frame);
 
  private:
+  bool overlap(const cv::Rect &bbox1, const cv::Rect &bbox2);
+  std::vector<uint32_t> getAllOverlaps(const std::vector<cv::Rect> bboxes, const cv::Rect &bounds,
+                                       uint32_t index);
+  void mergebbox(std::vector<cv::Rect> &bboxes);
   void construct_bbox(std::vector<cv::Rect> bboxes, cvai_object_t *obj_meta);
   CVI_S32 do_vpss_ifneeded(VIDEO_FRAME_INFO_S *srcframe,
                            std::shared_ptr<VIDEO_FRAME_INFO_S> &frame);
