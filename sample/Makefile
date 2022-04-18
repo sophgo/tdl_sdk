@@ -112,7 +112,7 @@ endif
 # 3rd party
 #####################################################
 THIRD_PARTY_PATH = $(PWD)/3rd_party
-STB_URL = http://10.58.65.3:8480/kevin.yang/stb.git
+STB_URL = ssh://10.240.0.84:29418/stb
 STB_PATH = $(THIRD_PARTY_PATH)/stb
 THIRD_PARTY_INC_FLAGS = -I$(STB_PATH)
 
