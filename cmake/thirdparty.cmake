@@ -4,7 +4,7 @@ if (ENABLE_PERFETTO)
   if (NOT SYSTRACE_FALLBACK)
     FetchContent_Declare(
       cvi_perfetto
-      GIT_REPOSITORY http://10.58.65.3:8480/yangwen.huang/cvi_perfetto.git
+      GIT_REPOSITORY ssh://10.240.0.84:29418/cvi_perfetto
       GIT_TAG        origin/master
     )
     FetchContent_MakeAvailable(cvi_perfetto)
