@@ -6,22 +6,26 @@
 
 typedef Eigen::Matrix<float, 1, -1> ROW_VECTOR;
 
+typedef enum { KF_SUCCESS = 0, KF_PREDICT_OVER_BOUNDING } kalman_filter_ret_e;
+
 class KalmanFilter {
  public:
   KalmanFilter();
-  int predict(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_) const;
-  int update(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_, const K_MEASUREMENT_V &z_) const;
-  ROW_VECTOR mahalanobis(const KALMAN_STAGE &s_, const K_STATE_V &x_, const K_COVARIANCE_M &P_,
+#if 0 /* deprecated */
+  int predict(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_) const;
+  int update(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_, const K_MEASUREMENT_V &z_) const;
+  ROW_VECTOR mahalanobis(const kalman_state_e &s_, const K_STATE_V &x_, const K_COVARIANCE_M &P_,
                          const K_MEASUREMENT_M &Z_) const;
-  int predict(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
+#endif
+  int predict(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
               const cvai_kalman_filter_config_t &kfilter_conf) const;
-  int update(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_, const K_MEASUREMENT_V &z_,
+  int update(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_, const K_MEASUREMENT_V &z_,
              const cvai_kalman_filter_config_t &kfilter_conf) const;
-  ROW_VECTOR mahalanobis(const KALMAN_STAGE &s_, const K_STATE_V &x_, const K_COVARIANCE_M &P_,
+  ROW_VECTOR mahalanobis(const kalman_state_e &s_, const K_STATE_V &x_, const K_COVARIANCE_M &P_,
                          const K_MEASUREMENT_M &Z_,
                          const cvai_kalman_filter_config_t &kfilter_conf) const;
 #if 0
-  float mahalanobis(KALMAN_STAGE &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
+  float mahalanobis(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
                     const K_MEASUREMENT_V &z_) const;
 #endif
 

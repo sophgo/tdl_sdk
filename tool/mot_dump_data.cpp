@@ -9,18 +9,19 @@
 #include <set>
 #include <utility>
 
+#include "sys/stat.h"
+#include "sys/types.h"
 #include "unistd.h"
 extern char *optarg;
 extern int optind;
 extern int opterr;
 extern int optopt;
 
-// #define ENABLE_DEEPSORT_EVALUATION
+#define ENABLE_FACE_DEEPSORT_EVALUATION
 
-// #define OUTPUT_MOT_RESULT
-#define OUTPUT_MOT_DATA
+#define OUTPUT_MOT_RESULT
 
-#define DEFAULT_RESULT_FILE_PATH "cviai_MOT_result.txt"
+#define DEFAULT_RESULT_FILE_NAME "cviai_MOT_result.txt"
 #define DEFAULT_DUMP_DATA_DIR "cviai_MOT_data"
 #define DEFAULT_DUMP_DATA_INFO_NAME "MOT_data_info.txt"
 
@@ -33,6 +34,8 @@ typedef struct {
   char *fr_m_path;
   float det_threshold;
   bool enable_DeepSORT;
+  bool use_predefined;
+  char init_config[128];
   char *imagelist_file_path;
   char output_dir[128];
   char output_info_name[128];
@@ -63,6 +66,7 @@ void usage(char *bin_path) {
       "options:\n"
       "    -t <threshold>     detection threshold (default: 0.5)\n"
       "    -n <number>        inference number (default: -1, inference all)\n"
+      "    -i <config>        initial DeepSORT config (default: use predefined config)\n"
       "    -d <dir>           dump data directory (default: %s)\n"
       "    -z                 enable DeepSORT (default: disable)\n"
       "    -h                 help\n",
@@ -70,7 +74,7 @@ void usage(char *bin_path) {
 }
 
 CVI_S32 parse_args(int argc, char **argv, ARGS_t *args) {
-  const char *OPT_STRING = "ht:n:d:z";
+  const char *OPT_STRING = "ht:n:i:d:z";
   const int ARGS_N = 7;
   /* set default argument value*/
   args->det_threshold = 0.5;
@@ -78,6 +82,7 @@ CVI_S32 parse_args(int argc, char **argv, ARGS_t *args) {
   args->inference_num = -1;
   sprintf(args->output_dir, "%s", DEFAULT_DUMP_DATA_DIR);
   sprintf(args->output_info_name, "%s", DEFAULT_DUMP_DATA_INFO_NAME);
+  args->use_predefined = true;
 
   char ch;
   while ((ch = getopt(argc, argv, OPT_STRING)) != -1) {
@@ -91,6 +96,10 @@ CVI_S32 parse_args(int argc, char **argv, ARGS_t *args) {
       } break;
       case 'n': {
         args->inference_num = atoi(optarg);
+      } break;
+      case 'i': {
+        args->use_predefined = false;
+        sprintf(args->init_config, "%s", optarg);
       } break;
       case 'd': {
         sprintf(args->output_dir, "%s", optarg);
@@ -149,7 +158,20 @@ int main(int argc, char *argv[]) {
   }
   SHOW_ARGS(&args);
 
-#if 1
+  struct stat fst;
+  if (stat(args.output_dir, &fst) != 0) {
+    printf("create output data directory: %s\n", args.output_dir);
+    mkdir(args.output_dir, 0755);
+    if (args.enable_DeepSORT) {
+      char features_root_dir[256];
+      sprintf(features_root_dir, "%s/features", args.output_dir);
+      mkdir(features_root_dir, 0755);
+    }
+  } else {
+    printf("output data directory exist.\n");
+    return CVI_FAILURE;
+  }
+
   CVI_S32 ret = CVI_SUCCESS;
 
   // Init VB pool size.
@@ -203,18 +225,34 @@ int main(int argc, char *argv[]) {
 
 #ifdef OUTPUT_MOT_RESULT
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle, false);
   cvai_deepsort_config_t ds_conf;
-  if (CVI_SUCCESS != GET_PREDEFINED_CONFIG(&ds_conf, args.target_type)) {
-    printf("GET_PREDEFINED_CONFIG error!\n");
-    return CVI_FAILURE;
+  CVI_AI_DeepSORT_Init(ai_handle, false);
+  if (args.use_predefined) {
+    printf("use predefined config.\n");
+    if (CVI_SUCCESS != GET_PREDEFINED_CONFIG(&ds_conf, args.target_type)) {
+      printf("GET_PREDEFINED_CONFIG error!\n");
+      return CVI_FAILURE;
+    }
+  } else {
+    printf("read specific config.\n");
+    FILE *inFile_mot_config;
+    inFile_mot_config = fopen(args.init_config, "r");
+    if (inFile_mot_config == NULL) {
+      printf("failed to read DeepSORT config file: %s\n", args.init_config);
+      return CVI_FAILURE;
+    } else {
+      fread(&ds_conf, sizeof(cvai_deepsort_config_t), 1, inFile_mot_config);
+      fclose(inFile_mot_config);
+    }
   }
   CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, true);
 
+  char outFile_result_path[128];
+  sprintf(outFile_result_path, "%s/%s", args.output_dir, DEFAULT_RESULT_FILE_NAME);
   FILE *outFile_result;
-  outFile_result = fopen(DEFAULT_RESULT_FILE_PATH, "w");
+  outFile_result = fopen(outFile_result_path, "w");
   if (outFile_result == NULL) {
-    printf("There is a problem opening the output file: %s.\n", DEFAULT_RESULT_FILE_PATH);
+    printf("There is a problem opening the output file: %s.\n", outFile_result_path);
     return CVI_FAILURE;
   }
 #endif
@@ -280,8 +318,8 @@ int main(int argc, char *argv[]) {
                  face_meta.info[i].bbox.y2);
         }
 #ifdef OUTPUT_MOT_RESULT
-#ifdef ENABLE_DEEPSORT_EVALUATION
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, enable_DeepSORT);
+#ifdef ENABLE_FACE_DEEPSORT_EVALUATION
+        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, args.enable_DeepSORT);
 #else
         CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
 #endif
@@ -319,19 +357,41 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&inact_trackers);
 #endif
 
+    if (args.enable_DeepSORT) {
+      char features_dir[256];
+      sprintf(features_dir, "%s/features/%04d", args.output_dir, counter);
+      mkdir(features_dir, 0755);
+    }
+
     uint32_t bbox_size = (args.target_type == FACE) ? face_meta.size : obj_meta.size;
     fprintf(outFile_data, "%u\n", bbox_size);
     for (uint32_t i = 0; i < bbox_size; i++) {
       cvai_bbox_t *target_bbox =
           (args.target_type == FACE) ? &face_meta.info[i].bbox : &obj_meta.info[i].bbox;
-      fprintf(outFile_data, "%f %f %f %f\n", target_bbox->x1, target_bbox->y1, target_bbox->x2,
-              target_bbox->y2);
-    }
-    for (uint32_t i = 0; i < bbox_size; i++) {
-      cvai_feature_t *target_feature =
-          (args.target_type == FACE) ? &face_meta.info[i].feature : &obj_meta.info[i].feature;
-      fprintf(outFile_data, "%u %d %s/feature/%d_%u.bin\n", target_feature->size,
-              target_feature->type, args.output_dir, counter, i);
+      int class_id = (args.target_type == FACE) ? -1 : obj_meta.info[i].classes;
+      fprintf(outFile_data, "%d %f %f %f %f\n", class_id, target_bbox->x1, target_bbox->y1,
+              target_bbox->x2, target_bbox->y2);
+      if (args.enable_DeepSORT) {
+        cvai_feature_t *target_feature =
+            (args.target_type == FACE) ? &face_meta.info[i].feature : &obj_meta.info[i].feature;
+        if (target_feature->type != TYPE_INT8) {
+          printf("[WARNING] feature type is not TYPE_INT8.\n");
+          continue;
+        }
+        // int8_t *feature_data = (int8_t *)malloc(target_feature->size * sizeof(int8_t));
+        char feature_data_name[256];
+        char feature_data_path[256];
+        sprintf(feature_data_name, "features/%04d/%02u.bin", counter, i);
+        sprintf(feature_data_path, "%s/%s", args.output_dir, feature_data_name);
+        fprintf(outFile_data, "%u %s\n", target_feature->size, feature_data_name);
+        FILE *outFile_feature;
+        outFile_feature = fopen(feature_data_path, "w");
+        fwrite(target_feature->ptr, sizeof(int8_t), target_feature->size, outFile_feature);
+        // free(feature_data);
+        fclose(outFile_feature);
+      } else {
+        fprintf(outFile_data, "0 NULL\n");
+      }
     }
 
     switch (args.target_type) {
@@ -353,6 +413,11 @@ int main(int argc, char *argv[]) {
 #ifdef OUTPUT_MOT_RESULT
   MOT_Performance_t mot_performance;
   mot_eval_data.summary(mot_performance);
+  printf("@@@ Optimize Performance @@@\n");
+  printf("Stable IDs: %u\n", mot_performance.stable_id_num);
+  printf("Coverate Rate: %.6lf\n", mot_performance.coverage_rate);
+  printf("Total Entorpy: %.6lf\n", mot_performance.total_entropy);
+  printf("Score: %lf\n", mot_performance.score);
 
   fclose(outFile_result);
 #endif
@@ -361,5 +426,4 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
-#endif
 }

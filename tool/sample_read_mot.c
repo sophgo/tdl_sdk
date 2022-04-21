@@ -4,48 +4,129 @@
 #include "sample_mot_utils.h"
 #include "utils/od.h"
 
+#include "sys/stat.h"
+#include "sys/types.h"
+#include "unistd.h"
+extern char *optarg;
+extern int optind;
+extern int opterr;
+extern int optopt;
 #include <inttypes.h>
 
 #define OUTPUT_MOT_RESULT
-#define OUTPUT_MOT_DATA
 
-const char RESULT_FILE_PATH[] = "sample_MOT_result.txt";
-const char DATA_FILE_PATH[] = "sample_MOT_data.txt";
-const char DATA_FEATURE_DIR[] = "MOT_data_feature";
+#define DEFAULT_RESULT_FILE_NAME "sample_MOT_result.txt"
+
+typedef struct {
+  TARGET_TYPE_e target_type;
+  char *od_m_name;
+  char *od_m_path;
+  char *fd_m_path;
+  char *reid_m_path;
+  char *fr_m_path;
+  float det_threshold;
+  bool enable_DeepSORT;
+  bool use_predefined;
+  char init_config[128];
+  char *imagelist_file_path;
+  char output_result[128];
+  int inference_num;
+} ARGS_t;
+
+char *getFileName(char *path) {
+  char *retVal = path, *p;
+  for (p = path; *p; p++) {
+    if (*p == '/' || *p == '\\' || *p == ':') {
+      retVal = p + 1;
+    }
+  }
+  return retVal;
+}
+
+void usage(char *bin_path) {
+  printf(
+      "Usage: %s [options]\n"
+      "    <target type(=face|person|vehicle|pet)>\n"
+      "    <object detection model name>\n"
+      "    <object detection model path>\n"
+      "    <face detection model path>\n"
+      "    <reid model path>\n"
+      "    <face recognition model path>\n"
+      "    <imagelist path>\n"
+      "\n"
+      "options:\n"
+      "    -t <threshold>     detection threshold (default: 0.5)\n"
+      "    -n <number>        inference number (default: -1, inference all)\n"
+      "    -o <result>        output MOT result (default: %s)\n"
+      "    -i <config>        initial DeepSORT config (default: use predefined config)\n"
+      "    -z                 enable DeepSORT (default: disable)\n"
+      "    -h                 help\n",
+      getFileName(bin_path), DEFAULT_RESULT_FILE_NAME);
+}
+
+CVI_S32 parse_args(int argc, char **argv, ARGS_t *args) {
+  const char *OPT_STRING = "ht:n:i:o:z";
+  const int ARGS_N = 7;
+  /* set default argument value*/
+  args->det_threshold = 0.5;
+  args->enable_DeepSORT = false;
+  args->inference_num = -1;
+  args->use_predefined = true;
+  sprintf(args->output_result, "%s", DEFAULT_RESULT_FILE_NAME);
+
+  char ch;
+  while ((ch = getopt(argc, argv, OPT_STRING)) != -1) {
+    switch (ch) {
+      case 'h': {
+        usage(argv[0]);
+        return CVI_FAILURE;
+      } break;
+      case 't': {
+        args->det_threshold = atof(optarg);
+      } break;
+      case 'n': {
+        args->inference_num = atoi(optarg);
+      } break;
+      case 'i': {
+        args->use_predefined = false;
+        sprintf(args->init_config, "%s", optarg);
+      } break;
+      case 'o': {
+        sprintf(args->output_result, "%s", optarg);
+      } break;
+      case 'z': {
+        args->enable_DeepSORT = true;
+      } break;
+      case '?': {
+        printf("error optopt: %c\n", optopt);
+        printf("error opterr: %d\n", opterr);
+        return CVI_FAILURE;
+      }
+    }
+  }
+  if (ARGS_N != (argc - optind)) {
+    printf("Args number error (given %d, except %d)\n", (argc - optind), ARGS_N);
+    return CVI_FAILURE;
+  }
+  int i = optind;
+  if (CVI_SUCCESS != GET_TARGET_TYPE(&args->target_type, argv[i++])) {
+    return CVI_FAILURE;
+  }
+  args->od_m_name = argv[i++];
+  args->od_m_path = argv[i++];
+  args->fd_m_path = argv[i++];
+  args->reid_m_path = argv[i++];
+  args->fr_m_path = argv[i++];
+  args->imagelist_file_path = argv[i++];
+  return CVI_SUCCESS;
+}
 
 int main(int argc, char *argv[]) {
-  if (argc != 11) {
-    printf(
-        "Usage: %s <face/ person/ vehicle/ pet>\n"
-        "          <obj detection model name>\n"
-        "          <obj detection model path>\n"
-        "          <face detection model path>\n"
-        "          <reid model path>\n"
-        "          <face recognition model path>\n"
-        "          <det threshold>\n"
-        "          <enable DeepSORT>\n"
-        "          <sample imagelist path>\n"
-        "          <inference count>\n",
-        argv[0]);
+  ARGS_t args;
+  if (CVI_SUCCESS != parse_args(argc, argv, &args)) {
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
-
-  TARGET_TYPE_e target_type;
-  char *target_type_name = argv[1];
-  if (CVI_SUCCESS != GET_TARGET_TYPE(&target_type, target_type_name)) {
-    printf("GET_TARGET_TYPE error!\n");
-    return CVI_FAILURE;
-  }
-  char *od_model_name = argv[2];
-  char *od_model_path = argv[3];
-  char *fd_model_path = argv[4];
-  char *reid_model_path = argv[5];
-  char *fr_model_path = argv[6];
-  float det_threshold = atof(argv[7]);
-  bool enable_DeepSORT = atoi(argv[8]) == 1;
-  char *imagelist_file_path = argv[9];
-  int inference_count = atoi(argv[10]);
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
@@ -60,17 +141,17 @@ int main(int argc, char *argv[]) {
 
   ODInferenceFunc inference;
   CVI_AI_SUPPORTED_MODEL_E od_model_id;
-  if (get_od_model_info(od_model_name, &od_model_id, &inference) == CVIAI_FAILURE) {
+  if (get_od_model_info(args.od_m_name, &od_model_id, &inference) == CVIAI_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
     return CVIAI_FAILURE;
   }
 
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
 
-  ret |= CVI_AI_OpenModel(ai_handle, od_model_id, od_model_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_model_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, reid_model_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
+  ret |= CVI_AI_OpenModel(ai_handle, od_model_id, args.od_m_path);
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, args.fd_m_path);
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, args.reid_m_path);
+  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, args.fr_m_path);
   if (ret != CVI_SUCCESS) {
     printf("model open failed with %#x!\n", ret);
     return ret;
@@ -81,7 +162,7 @@ int main(int argc, char *argv[]) {
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
 
-  switch (target_type) {
+  switch (args.target_type) {
     case FACE:
       break;
     case PERSON:
@@ -90,51 +171,72 @@ int main(int argc, char *argv[]) {
     case VEHICLE:
     case PET:
     default:
-      printf("not support target type[%d] now\n", target_type);
+      printf("not support target type[%d] now\n", args.target_type);
       return CVI_FAILURE;
   }
-  CVI_AI_SetModelThreshold(ai_handle, od_model_id, det_threshold);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, det_threshold);
+  CVI_AI_SetModelThreshold(ai_handle, od_model_id, args.det_threshold);
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, args.det_threshold);
 
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle, false);
   cvai_deepsort_config_t ds_conf;
-  if (CVI_SUCCESS != GET_PREDEFINED_CONFIG(&ds_conf, target_type)) {
-    printf("GET_PREDEFINED_CONFIG error!\n");
-    return CVI_FAILURE;
+  CVI_AI_DeepSORT_Init(ai_handle, false);
+  if (args.use_predefined) {
+    printf("use predefined config.\n");
+    if (CVI_SUCCESS != GET_PREDEFINED_CONFIG(&ds_conf, args.target_type)) {
+      printf("GET_PREDEFINED_CONFIG error!\n");
+      return CVI_FAILURE;
+    }
+  } else {
+    printf("read specific config.\n");
+    FILE *inFile_mot_config;
+    inFile_mot_config = fopen(args.init_config, "r");
+    if (inFile_mot_config == NULL) {
+      printf("failed to read DeepSORT config file: %s\n", args.init_config);
+      return CVI_FAILURE;
+    } else {
+      fread(&ds_conf, sizeof(cvai_deepsort_config_t), 1, inFile_mot_config);
+      fclose(inFile_mot_config);
+    }
+  }
+  if (args.target_type == FACE && args.enable_DeepSORT) {
+    ds_conf.max_distance_consine = 0.2;
+    ds_conf.ktracker_conf.feature_budget_size = 5;
+    ds_conf.ktracker_conf.feature_update_interval = 2;
+    ds_conf.ktracker_conf.max_unmatched_num = 100;
+    ds_conf.ktracker_conf.accreditation_threshold = 10;
+    ds_conf.kfilter_conf.confidence_level = L025;
+    ds_conf.kfilter_conf.enable_bounding_stay = true;
+    ds_conf.kfilter_conf.enable_X_constraint_0 = true;
+    ds_conf.ktracker_conf.enable_QA_feature_update = true;
+    ds_conf.ktracker_conf.enable_QA_feature_init = true;
+    ds_conf.kfilter_conf.X_constraint_max[0] = 640; /* necessary if enable_bounding_stay */
+    ds_conf.kfilter_conf.X_constraint_max[1] = 480; /* necessary if enable_bounding_stay */
+    ds_conf.kfilter_conf.X_constraint_min[2] = 0.75;
+    ds_conf.kfilter_conf.X_constraint_max[2] = 1.25;
+    ds_conf.enable_internal_FQ = true;
+    ds_conf.ktracker_conf.feature_update_quality_threshold = 0.75;
+    ds_conf.ktracker_conf.feature_init_quality_threshold = 0.75;
   }
   CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, true);
 
 #ifdef OUTPUT_MOT_RESULT
   FILE *outFile_result;
-  outFile_result = fopen(RESULT_FILE_PATH, "w");
+  outFile_result = fopen(args.output_result, "w");
   if (outFile_result == NULL) {
-    printf("There is a problem opening the output file: %s.\n", RESULT_FILE_PATH);
-    return CVI_FAILURE;
-  }
-#endif
-
-#ifdef OUTPUT_MOT_DATA
-  FILE *outFile_data;
-  outFile_data = fopen(DATA_FILE_PATH, "w");
-  if (outFile_data == NULL) {
-    printf("There is a problem opening the output file: %s.\n", DATA_FILE_PATH);
+    printf("There is a problem opening the output file: %s.\n", args.output_result);
     return CVI_FAILURE;
   }
 #endif
 
   char text_buf[256];
-  FILE *inFile = fopen(imagelist_file_path, "r");
+  FILE *inFile = fopen(args.imagelist_file_path, "r");
   fscanf(inFile, "%s", text_buf);
   int img_num = atoi(text_buf);
   printf("Images Num: %d\n", img_num);
 
 #ifdef OUTPUT_MOT_RESULT
-  fprintf(outFile_result, "%u\n", img_num);
-#endif
-
-#ifdef OUTPUT_MOT_DATA
-  fprintf(outFile_data, "%u %d\n", img_num, (int)enable_DeepSORT);
+  fprintf(outFile_result, "%u\n",
+          (args.inference_num == -1) ? img_num : MIN2(args.inference_num, img_num));
 #endif
 
   cvai_object_t obj_meta;
@@ -145,7 +247,7 @@ int main(int argc, char *argv[]) {
   memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
 
   for (int counter = 0; counter < img_num; counter++) {
-    if (counter == inference_count) {
+    if (counter == args.inference_num) {
       break;
     }
     fscanf(inFile, "%s", text_buf);
@@ -154,20 +256,20 @@ int main(int argc, char *argv[]) {
     VIDEO_FRAME_INFO_S frame;
     CVI_AI_ReadImage(text_buf, &frame, PIXEL_FORMAT_RGB_888);
 
-    switch (target_type) {
+    switch (args.target_type) {
       case PERSON: {
         inference(ai_handle, &frame, &obj_meta);
-        if (enable_DeepSORT) {
+        if (args.enable_DeepSORT) {
           CVI_AI_OSNet(ai_handle, &frame, &obj_meta);
         }
-        CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, enable_DeepSORT);
+        CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, args.enable_DeepSORT);
       } break;
       case FACE: {
         CVI_AI_RetinaFace(ai_handle, &frame, &face_meta);
-        if (enable_DeepSORT) {
+        if (args.enable_DeepSORT) {
           CVI_AI_FaceRecognition(ai_handle, &frame, &face_meta);
         }
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, enable_DeepSORT);
+        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, args.enable_DeepSORT);
       } break;
       default:
         break;
@@ -177,9 +279,9 @@ int main(int argc, char *argv[]) {
     fprintf(outFile_result, "%u\n", tracker_meta.size);
     for (uint32_t i = 0; i < tracker_meta.size; i++) {
       cvai_bbox_t *target_bbox =
-          (target_type == FACE) ? &face_meta.info[i].bbox : &obj_meta.info[i].bbox;
+          (args.target_type == FACE) ? &face_meta.info[i].bbox : &obj_meta.info[i].bbox;
       uint64_t u_id =
-          (target_type == FACE) ? face_meta.info[i].unique_id : obj_meta.info[i].unique_id;
+          (args.target_type == FACE) ? face_meta.info[i].unique_id : obj_meta.info[i].unique_id;
       fprintf(outFile_result, "%" PRIu64 ",%d,%d,%d,%d,%d,%d,%d,%d,%d\n", u_id,
               (int)target_bbox->x1, (int)target_bbox->y1, (int)target_bbox->x2,
               (int)target_bbox->y2, tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
@@ -199,23 +301,7 @@ int main(int argc, char *argv[]) {
     CVI_AI_Free(&inact_trackers);
 #endif
 
-#ifdef OUTPUT_MOT_DATA
-    fprintf(outFile_data, "%u\n", tracker_meta.size);
-    for (uint32_t i = 0; i < tracker_meta.size; i++) {
-      cvai_bbox_t *target_bbox =
-          (target_type == FACE) ? &face_meta.info[i].bbox : &obj_meta.info[i].bbox;
-      fprintf(outFile_data, "%f,%f,%f,%f\n", target_bbox->x1, target_bbox->y1, target_bbox->x2,
-              target_bbox->y2);
-    }
-    for (uint32_t i = 0; i < tracker_meta.size; i++) {
-      cvai_feature_t *target_feature =
-          (target_type == FACE) ? &face_meta.info[i].feature : &obj_meta.info[i].feature;
-      fprintf(outFile_data, "%u %d %s/feature_%d_%u.bin\n", target_feature->size,
-              target_feature->type, DATA_FEATURE_DIR, counter, i);
-    }
-#endif
-
-    switch (target_type) {
+    switch (args.target_type) {
       case FACE:
         CVI_AI_Free(&face_meta);
         break;
@@ -234,9 +320,7 @@ int main(int argc, char *argv[]) {
 #ifdef OUTPUT_MOT_RESULT
   fclose(outFile_result);
 #endif
-#ifdef OUTPUT_MOT_DATA
-  fclose(outFile_data);
-#endif
+
   CVI_AI_DestroyHandle(ai_handle);
   CVI_SYS_Exit();
 }

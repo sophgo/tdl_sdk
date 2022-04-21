@@ -1,5 +1,8 @@
 #include "mot_evaluation.hpp"
+#include <inttypes.h>
 #include <cmath>
+#include "sys/stat.h"
+#include "sys/types.h"
 
 #define DEFAULT_DATA_INFO_NAME "MOT_data_info.txt"
 
@@ -7,7 +10,8 @@ MOT_Evaluation::MOT_Evaluation() {}
 
 MOT_Evaluation::~MOT_Evaluation() {}
 
-CVI_S32 MOT_Evaluation::update(cvai_tracker_t &trackers, cvai_tracker_t &inact_trackers) {
+CVI_S32 MOT_Evaluation::update(const cvai_tracker_t &trackers,
+                               const cvai_tracker_t &inact_trackers) {
   time_counter += 1;
   bbox_counter += trackers.size;
   std::set<uint64_t> check_list = alive_stable_id;
@@ -99,8 +103,17 @@ CVI_S32 GridIndexGenerator::next(std::vector<uint32_t> &next_idx) {
   return CVI_FAILURE;
 }
 
+/********************
+ * helper functions *
+ ********************/
+#define B_SIZE_BBOX 32
+#define B_SIZE_FEATURE 64
+static void FILL_BBOX(cvai_bbox_t *bbox, char text_buffer[][B_SIZE_BBOX]);
+static void FILL_FEATURE(cvai_feature_t *feature, char text_buffer[][B_SIZE_FEATURE],
+                         char *data_path);
+
 CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t &args,
-                           MOT_Performance_t &performance) {
+                           MOT_Performance_t &performance, bool output_result, char *result_path) {
   char text_buffer[256];
   char text_buffer_tmp[256];
   char inFile_data_path[256];
@@ -110,13 +123,32 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
     printf("fail to open file: %s\n", inFile_data_path);
     return CVI_FAILURE;
   }
+
+  FILE *outFile_result = NULL;
+  if (output_result) {
+    struct stat fst;
+    if (result_path == NULL || stat(result_path, &fst) != 0) {
+      outFile_result = fopen(result_path, "w");
+      if (outFile_result == NULL) {
+        printf("There is a problem opening the output file: %s.\n", result_path);
+        return CVI_FAILURE;
+      }
+    } else {
+      printf("output result file exist. %s\n", result_path);
+      return CVI_FAILURE;
+    }
+  }
+
   fscanf(inFile_data, "%s %s", text_buffer, text_buffer_tmp);
   int frame_num = atoi(text_buffer);
-#if 0
+#if 1
   bool output_features = atoi(text_buffer_tmp) == 1;
-  printf("Frame Num: %d ( Output Features: %s )\n", frame_num, output_features ? "true" :
-         "false");
+  printf("Frame Num: %d ( Output Features: %s )\n", frame_num, output_features ? "true" : "false");
 #endif
+
+  if (output_result) {
+    fprintf(outFile_result, "%d\n", frame_num);
+  }
 
   cvai_object_t obj_meta;
   cvai_face_t face_meta;
@@ -127,7 +159,8 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
 
   MOT_Evaluation mot_eval_data;
 
-  for (int counter = 0; counter < frame_num; counter++) {
+  for (int counter = 1; counter <= frame_num; counter++) {
+    // printf("[%d/%d]\n", counter, frame_num);
     fscanf(inFile_data, "%s", text_buffer);
     uint32_t bbox_num = (uint32_t)atoi(text_buffer);
 
@@ -135,16 +168,32 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
       case PERSON: {
         obj_meta.size = bbox_num;
         obj_meta.info = (cvai_object_info_t *)malloc(obj_meta.size * sizeof(cvai_object_info_t));
+        memset(obj_meta.info, 0, obj_meta.size * sizeof(cvai_object_info_t));
         for (uint32_t i = 0; i < bbox_num; i++) {
-          char text_buffer_bbox[4][32];
+          // printf("[%u/%u]\n", i, bbox_num);
+          char text_buffer_bbox[5][B_SIZE_BBOX];
           /* read bbox info */
-          fscanf(inFile_data, "%s %s %s %s", text_buffer_bbox[0], text_buffer_bbox[1],
-                 text_buffer_bbox[2], text_buffer_bbox[3]);
-          obj_meta.info[i].bbox.x1 = atof(text_buffer_bbox[0]);
-          obj_meta.info[i].bbox.y1 = atof(text_buffer_bbox[1]);
-          obj_meta.info[i].bbox.x2 = atof(text_buffer_bbox[2]);
-          obj_meta.info[i].bbox.y2 = atof(text_buffer_bbox[3]);
-          /* read feature info (ignore now) */
+          fscanf(inFile_data, "%s %s %s %s %s", text_buffer_bbox[0], text_buffer_bbox[1],
+                 text_buffer_bbox[2], text_buffer_bbox[3], text_buffer_bbox[4]);
+          obj_meta.info[i].classes = atoi(text_buffer_bbox[0]);
+          FILL_BBOX(&obj_meta.info[i].bbox, text_buffer_bbox);
+          /* read feature info */
+          char text_buffer_feature[2][B_SIZE_FEATURE];  // size, bin data path
+          fscanf(inFile_data, "%s %s", text_buffer_feature[0], text_buffer_feature[1]);
+          FILL_FEATURE(&obj_meta.info[i].feature, text_buffer_feature, args.mot_data_path);
+#if 0
+          obj_meta.info[i].feature.size = (uint32_t) atoi(text_buffer_feature[0]);
+          if (obj_meta.info[i].feature.size > 0) {
+            obj_meta.info[i].feature.type = TYPE_INT8;
+            obj_meta.info[i].feature.ptr = (int8_t*) malloc(obj_meta.info[i].feature.size * sizeof(int8_t));
+            char inFile_feature_path[256];
+            sprintf(inFile_feature_path, "%s/%s", args.mot_data_path, text_buffer_feature[1]);
+            FILE *inFile_feature;
+            inFile_feature = fopen(inFile_feature_path, "r");
+            fread(obj_meta.info[i].feature.ptr, sizeof(int8_t), obj_meta.info[i].feature.size, inFile_feature);
+            fclose(inFile_feature);
+          }
+#endif
         }
         CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, args.enable_DeepSORT);
       } break;
@@ -154,23 +203,20 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
         face_meta.info = (cvai_face_info_t *)malloc(face_meta.size * sizeof(cvai_face_info_t));
         memset(face_meta.info, 0, face_meta.size * sizeof(cvai_face_info_t));
         for (uint32_t i = 0; i < bbox_num; i++) {
-          char text_buffer_bbox[4][32];
+          char text_buffer_bbox[5][B_SIZE_BBOX];
           /* read bbox info */
-          fscanf(inFile_data, "%s %s %s %s", text_buffer_bbox[0], text_buffer_bbox[1],
-                 text_buffer_bbox[2], text_buffer_bbox[3]);
-          face_meta.info[i].bbox.x1 = atof(text_buffer_bbox[0]);
-          face_meta.info[i].bbox.y1 = atof(text_buffer_bbox[1]);
-          face_meta.info[i].bbox.x2 = atof(text_buffer_bbox[2]);
-          face_meta.info[i].bbox.y2 = atof(text_buffer_bbox[3]);
+          fscanf(inFile_data, "%s %s %s %s %s", text_buffer_bbox[0], text_buffer_bbox[1],
+                 text_buffer_bbox[2], text_buffer_bbox[3], text_buffer_bbox[4]);
+          FILL_BBOX(&face_meta.info[i].bbox, text_buffer_bbox);
 #if 0
           printf("face[%u] bbox: x1[%.2f], y1[%.2f], x2[%.2f], y2[%.2f]\n", i,
                  face_meta.info[i].bbox.x1, face_meta.info[i].bbox.y1, face_meta.info[i].bbox.x2,
                  face_meta.info[i].bbox.y2);
 #endif
           /* read feature info (ignore now) */
-          char text_buffer_feature[3][64];  // size, type, bin data path
-          fscanf(inFile_data, "%s %s %s", text_buffer_feature[0], text_buffer_feature[1],
-                 text_buffer_feature[2]);
+          char text_buffer_feature[2][B_SIZE_FEATURE];  // size, bin data path
+          fscanf(inFile_data, "%s %s", text_buffer_feature[0], text_buffer_feature[1]);
+          FILL_FEATURE(&face_meta.info[i].feature, text_buffer_feature, args.mot_data_path);
         }
         CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, args.enable_DeepSORT);
       } break;
@@ -182,6 +228,28 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
     memset(&inact_trackers, 0, sizeof(cvai_tracker_t));
     CVI_AI_DeepSORT_GetTracker_Inactive(ai_handle, &inact_trackers);
     mot_eval_data.update(tracker_meta, inact_trackers);
+
+    if (output_result) {
+      fprintf(outFile_result, "%u\n", tracker_meta.size);
+      for (uint32_t i = 0; i < tracker_meta.size; i++) {
+        cvai_bbox_t *target_bbox =
+            (args.target_type == FACE) ? &face_meta.info[i].bbox : &obj_meta.info[i].bbox;
+        uint64_t u_id =
+            (args.target_type == FACE) ? face_meta.info[i].unique_id : obj_meta.info[i].unique_id;
+        fprintf(outFile_result, "%" PRIu64 ",%d,%d,%d,%d,%d,%d,%d,%d,%d\n", u_id,
+                (int)target_bbox->x1, (int)target_bbox->y1, (int)target_bbox->x2,
+                (int)target_bbox->y2, tracker_meta.info[i].state, (int)tracker_meta.info[i].bbox.x1,
+                (int)tracker_meta.info[i].bbox.y1, (int)tracker_meta.info[i].bbox.x2,
+                (int)tracker_meta.info[i].bbox.y2);
+      }
+      fprintf(outFile_result, "%u\n", inact_trackers.size);
+      for (uint32_t i = 0; i < inact_trackers.size; i++) {
+        fprintf(outFile_result, "%" PRIu64 ",-1,-1,-1,-1,%d,%d,%d,%d,%d\n",
+                inact_trackers.info[i].id, inact_trackers.info[i].state,
+                (int)inact_trackers.info[i].bbox.x1, (int)inact_trackers.info[i].bbox.y1,
+                (int)inact_trackers.info[i].bbox.x2, (int)inact_trackers.info[i].bbox.y2);
+      }
+    }
 
     CVI_AI_Free(&inact_trackers);
 
@@ -205,4 +273,26 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
   fclose(inFile_data);
 
   return CVI_SUCCESS;
+}
+
+static void FILL_BBOX(cvai_bbox_t *bbox, char text_buffer[][B_SIZE_BBOX]) {
+  bbox->x1 = atof(text_buffer[1]);
+  bbox->y1 = atof(text_buffer[2]);
+  bbox->x2 = atof(text_buffer[3]);
+  bbox->y2 = atof(text_buffer[4]);
+}
+
+static void FILL_FEATURE(cvai_feature_t *feature, char text_buffer[][B_SIZE_FEATURE],
+                         char *data_path) {
+  feature->size = (uint32_t)atoi(text_buffer[0]);
+  if (feature->size > 0) {
+    feature->type = TYPE_INT8;
+    feature->ptr = (int8_t *)malloc(feature->size * sizeof(int8_t));
+    char inFile_feature_path[256];
+    sprintf(inFile_feature_path, "%s/%s", data_path, text_buffer[1]);
+    FILE *inFile_feature;
+    inFile_feature = fopen(inFile_feature_path, "r");
+    fread(feature->ptr, sizeof(int8_t), feature->size, inFile_feature);
+    fclose(inFile_feature);
+  }
 }

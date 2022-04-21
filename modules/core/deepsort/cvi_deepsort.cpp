@@ -12,8 +12,13 @@
 #include <map>
 #include <set>
 
-#define DEBUG_DEEPSORT 0
+#define DEFAULT_X_CONSTRAINT_A_MIN 0.25
+#define DEFAULT_X_CONSTRAINT_A_MAX 4.0
+#define DEFAULT_X_CONSTRAINT_H_MIN 32
+#define DEFAULT_X_CONSTRAINT_H_MAX 512
 
+/* helper functions */
+static void FACE_QUALITY_ASSESSMENT(cvai_face_t *face);
 static void show_deepsort_config(cvai_deepsort_config_t &ds_conf);
 
 DeepSORT::DeepSORT(bool use_specific_counter) {
@@ -26,9 +31,10 @@ DeepSORT::DeepSORT(bool use_specific_counter) {
 
 DeepSORT::~DeepSORT() {}
 
-int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid) {
+CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid) {
   /** statistic what classes ID in bbox and tracker,
    *  and counting bbox number for each class */
+  CVI_S32 ret = CVIAI_SUCCESS;
   std::map<int, int> class_bbox_counter;
   std::set<int> class_ids_bbox;
   std::set<int> class_ids_trackers;
@@ -46,7 +52,7 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
     class_ids_trackers.insert(k_trackers[j].class_id);
   }
 
-  CVI_AI_MemAlloc(obj->size, tracker_t);
+  CVI_AI_MemAlloc(obj->size, tracker);
 
   /** run tracking function for each class ID in bbox
    */
@@ -67,7 +73,7 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
         bbox_(0, 2) = obj->info[i].bbox.x2 - obj->info[i].bbox.x1;
         bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
         if (obj->info[i].feature.type != TYPE_INT8) {
-          printf("Feature Type not support now.\n");
+          LOGE("Feature Type not support now.\n");
           return CVIAI_ERR_INVALID_ARGS;
         }
         int type_size = getFeatureTypeSize(obj->info[i].feature.type);
@@ -83,31 +89,35 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
     /** run tracking function
      *    - ReID flag is only avaliable for PERSON now.
      */
-    auto result_ =
-        track(bboxes, features, e.first, use_reid && (e.first == CVI_AI_DET_TYPE_PERSON));
+    Tracking_Result result_(bboxes.size());
+    ret =
+        track(result_, bboxes, features, e.first, use_reid && (e.first == CVI_AI_DET_TYPE_PERSON));
+    if (CVIAI_SUCCESS != ret) {
+      return ret;
+    }
 
     for (size_t i = 0; i < result_.size(); i++) {
       int idx = idx_table[i];
       bool &matched = std::get<0>(result_[i]);
       uint64_t &t_id = std::get<1>(result_[i]);
-      TRACKER_STATE &t_state = std::get<2>(result_[i]);
+      k_tracker_state_e &t_state = std::get<2>(result_[i]);
       BBOX &t_bbox = std::get<3>(result_[i]);
       if (!matched) {
-        tracker_t->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
-      } else if (t_state == TRACKER_STATE::PROBATION) {
-        tracker_t->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
-      } else if (t_state == TRACKER_STATE::ACCREDITATION) {
-        tracker_t->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      } else if (t_state == k_tracker_state_e::PROBATION) {
+        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      } else if (t_state == k_tracker_state_e::ACCREDITATION) {
+        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
       } else {
         LOGE("Tracker State Unknow.\n");
         return CVIAI_ERR_INVALID_ARGS;
       }
-      tracker_t->info[idx].bbox.x1 = t_bbox(0);
-      tracker_t->info[idx].bbox.y1 = t_bbox(1);
-      tracker_t->info[idx].bbox.x2 = t_bbox(0) + t_bbox(2);
-      tracker_t->info[idx].bbox.y2 = t_bbox(1) + t_bbox(3);
+      tracker->info[idx].bbox.x1 = t_bbox(0);
+      tracker->info[idx].bbox.y1 = t_bbox(1);
+      tracker->info[idx].bbox.x2 = t_bbox(0) + t_bbox(2);
+      tracker->info[idx].bbox.y2 = t_bbox(1) + t_bbox(3);
       obj->info[idx].unique_id = t_id;
-      tracker_t->info[idx].id = t_id;
+      tracker->info[idx].id = t_id;
     }
   }
 
@@ -118,80 +128,116 @@ int DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid
     if (class_ids_bbox.find(*it) == class_ids_bbox.end()) {
       std::vector<BBOX> bboxes;
       std::vector<FEATURE> features;
-      auto result_ = track(bboxes, features, *it, use_reid);
+      Tracking_Result result_;
+      if (CVIAI_SUCCESS != track(result_, bboxes, features, *it, use_reid)) {
+        return CVIAI_FAILURE;
+      }
     }
   }
 
   return CVIAI_SUCCESS;
 }
 
-int DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid) {
+CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker, bool use_reid) {
+  CVI_S32 ret = CVIAI_SUCCESS;
   std::vector<BBOX> bboxes;
   std::vector<FEATURE> features;
   uint32_t bbox_num = face->size;
   for (uint32_t i = 0; i < bbox_num; i++) {
     BBOX bbox_;
-    FEATURE feature_(0);
     bbox_(0, 0) = face->info[i].bbox.x1;
     bbox_(0, 1) = face->info[i].bbox.y1;
     bbox_(0, 2) = face->info[i].bbox.x2 - face->info[i].bbox.x1;
     bbox_(0, 3) = face->info[i].bbox.y2 - face->info[i].bbox.y1;
     bboxes.push_back(bbox_);
+    uint32_t feature_size = (use_reid) ? face->info[i].feature.size : 0;
+    FEATURE feature_(feature_size);
+    if (use_reid) {
+      if (face->info[i].feature.type != TYPE_INT8) {
+        LOGE("Feature Type not support now.\n");
+        return CVIAI_FAILURE;
+      }
+      int type_size = getFeatureTypeSize(face->info[i].feature.type);
+      for (uint32_t d = 0; d < feature_size; d++) {
+        feature_(d) = static_cast<float>(face->info[i].feature.ptr[d * type_size]);
+      }
+    }
     features.push_back(feature_);
   }
 
-  auto result_ = track(bboxes, features, -1, use_reid);
-  CVI_AI_MemAlloc(bbox_num, tracker_t);
+  float *bbox_quality = NULL;
+  if (default_conf.enable_internal_FQ) {
+    FACE_QUALITY_ASSESSMENT(face);
+    bbox_quality = (float *)malloc(sizeof(float) * bbox_num);
+    for (uint32_t i = 0; i < bbox_num; i++) {
+      bbox_quality[i] = face->info[i].face_quality;
+    }
+  }
 
+  Tracking_Result result_(bboxes.size());
+  ret = track(result_, bboxes, features, -1, use_reid, bbox_quality);
+  if (CVIAI_SUCCESS != ret) {
+    printf("ERROR\n");
+    return ret;
+  }
+
+  if (default_conf.enable_internal_FQ) {
+    free(bbox_quality);
+  }
+
+  CVI_AI_MemAlloc(bbox_num, tracker);
   assert(result_.size() == static_cast<size_t>(bbox_num));
   for (size_t i = 0; i < result_.size(); i++) {
     bool &matched = std::get<0>(result_[i]);
     uint64_t &t_id = std::get<1>(result_[i]);
-    TRACKER_STATE &t_state = std::get<2>(result_[i]);
+    k_tracker_state_e &t_state = std::get<2>(result_[i]);
     BBOX &t_bbox = std::get<3>(result_[i]);
     if (!matched) {
-      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
-    } else if (t_state == TRACKER_STATE::PROBATION) {
-      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
-    } else if (t_state == TRACKER_STATE::ACCREDITATION) {
-      tracker_t->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+    } else if (t_state == k_tracker_state_e::PROBATION) {
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+    } else if (t_state == k_tracker_state_e::ACCREDITATION) {
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       return CVIAI_ERR_INVALID_ARGS;
     }
-    tracker_t->info[i].bbox.x1 = t_bbox(0);
-    tracker_t->info[i].bbox.y1 = t_bbox(1);
-    tracker_t->info[i].bbox.x2 = t_bbox(0) + t_bbox(2);
-    tracker_t->info[i].bbox.y2 = t_bbox(1) + t_bbox(3);
+    tracker->info[i].bbox.x1 = t_bbox(0);
+    tracker->info[i].bbox.y1 = t_bbox(1);
+    tracker->info[i].bbox.x2 = t_bbox(0) + t_bbox(2);
+    tracker->info[i].bbox.y2 = t_bbox(1) + t_bbox(3);
     face->info[i].unique_id = t_id;
-    tracker_t->info[i].id = t_id;
+    tracker->info[i].id = t_id;
   }
   return CVIAI_SUCCESS;
 }
 
-/* Result Format: [i] <is_matched, tracker_id, tracker_state, tracker_bbox> */
-std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
-    const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features, int class_id,
-    bool use_reid) {
-  std::stringstream ss_LOG_;
+CVI_S32 DeepSORT::track(Tracking_Result &result, const std::vector<BBOX> &BBoxes,
+                        const std::vector<FEATURE> &Features, int class_id, bool use_reid,
+                        float *Quality) {
+  cvai_deepsort_config_t *conf;
+  auto it_conf = specific_conf.find(class_id);
+  if (it_conf != specific_conf.end()) {
+    conf = &it_conf->second;
+  } else {
+    conf = &default_conf;
+  }
+  if (conf->ktracker_conf.enable_QA_feature_update && Quality == NULL) {
+    LOGE("Enable QA feature upate, but Quality is not initialized.");
+    return CVIAI_FAILURE;
+  }
+
   std::vector<int> tracker_ids;
   for (size_t i = 0; i < k_trackers.size(); i++) {
     tracker_ids.push_back(k_trackers[i].id);
   }
 
-  cvai_deepsort_config_t *conf;
-  auto it_conf = specific_conf.find(class_id);
-  if (it_conf != specific_conf.end()) {
-    // std::cout << "ClassID: " << class_id << " use SPECIFIC config." << std::endl;
-    conf = &it_conf->second;
-  } else {
-    // std::cout << "ClassID: " << class_id << " use default config." << std::endl;
-    conf = &default_conf;
-  }
-
   LOGD("Kalman Trackers predict\n");
   for (KalmanTracker &tracker_ : k_trackers) {
-    kf_.predict(tracker_.kalman_state_, tracker_.x_, tracker_.P_, conf->kfilter_conf);
+    int kf_ret = kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P, conf->kfilter_conf);
+    if (conf->kfilter_conf.enable_bounding_stay && KF_PREDICT_OVER_BOUNDING == kf_ret) {
+      tracker_.bounding = true;
+    }
   }
 
   std::vector<std::pair<int, int>> matched_pairs;
@@ -223,17 +269,6 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
                                    probation_tracker_idxes.end());
   }
 
-#if DEBUG_DEEPSORT
-  ss_LOG_.str("");
-  ss_LOG_ << "\n"
-          << std::setw(32)
-          << "Unmatched Tracker IDXes: " << get_INFO_Vector_Int(unmatched_tracker_idxes, 3)
-          << std::endl
-          << std::setw(32)
-          << "Unmatched BBox IDXes: " << get_INFO_Vector_Int(unmatched_bbox_idxes, 3) << std::endl;
-  LOGD("%s", ss_LOG_.str().c_str());
-#endif
-
   LOGD("Cascade Match\n");
   /* Match accreditation trackers */
   /* - Cascade Match */
@@ -243,19 +278,24 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
     if (unmatched_bbox_idxes.empty()) {
       break;
     }
+    cost_matrix_algo_e cost_method =
+        (use_reid) ? Feature_CosineDistance : Kalman_MahalanobisDistance;
     std::vector<int> t_tracker_idxes;
     for (size_t tmp_i = 0; tmp_i < unmatched_tracker_idxes.size(); tmp_i++) {
       if (k_trackers[unmatched_tracker_idxes[tmp_i]].unmatched_times == t) {
+        if (cost_method == Feature_CosineDistance &&
+            !k_trackers[unmatched_tracker_idxes[tmp_i]].init_feature) {
+          continue;
+        }
         t_tracker_idxes.push_back(unmatched_tracker_idxes[tmp_i]);
       }
     }
     if (t_tracker_idxes.empty()) {
       continue;
     }
-    MatchResult match_result =
-        match(BBoxes, Features, t_tracker_idxes, unmatched_bbox_idxes, conf->kfilter_conf,
-              (use_reid) ? "Feature_CosineDistance" : "Kalman_MahalanobisDistance",
-              (use_reid) ? conf->max_distance_consine : chi2inv95[4]);
+    MatchResult match_result = match(
+        BBoxes, Features, t_tracker_idxes, unmatched_bbox_idxes, conf->kfilter_conf, cost_method,
+        (use_reid) ? conf->max_distance_consine : conf->kfilter_conf.chi2_threshold);
     if (match_result.matched_pairs.empty()) {
       continue;
     }
@@ -275,20 +315,12 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
     }
   }
 
-#if DEBUG_DEEPSORT
-  LOGD("Cascade Match Result:\n");
-  std::cout << "Cascade Match Result:\n";
-  ss_LOG_.str("");
-  ss_LOG_ << std::endl << get_INFO_Match_Pair(matched_pairs, tracker_ids, 3) << std::endl;
-  LOGD("%s", ss_LOG_.str().c_str());
-  std::cout << ss_LOG_.str();
-#endif
-
   std::vector<int> tmp_tracker_idxes; /* unmatch trackers' index in cascade match */
   /* Remove trackers' idx, which unmatched_times > T, from
    * unmatched_tracker_idxes */
   for (auto it = unmatched_tracker_idxes.begin(); it != unmatched_tracker_idxes.end();) {
-    if (k_trackers[*it].unmatched_times > conf->max_unmatched_times_for_bbox_matching) {
+    if (k_trackers[*it].unmatched_times > conf->max_unmatched_times_for_bbox_matching ||
+        k_trackers[*it].bounding) {
       tmp_tracker_idxes.push_back(*it);
       it = unmatched_tracker_idxes.erase(it);
     } else {
@@ -302,30 +334,11 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
     probation_tracker_idxes.begin(), probation_tracker_idxes.end());
 #endif
 
-#if DEBUG_DEEPSORT
-  ss_LOG_.str("");
-  ss_LOG_ << std::endl
-          << std::setw(32)
-          << "Unmatched Tracker IDXes: " << get_INFO_Vector_Int(unmatched_tracker_idxes, 3)
-          << std::endl
-          << std::setw(32)
-          << "Unmatched BBox IDXes: " << get_INFO_Vector_Int(unmatched_bbox_idxes, 3) << std::endl;
-  LOGD("%s", ss_LOG_.str().c_str());
-  std::cout << ss_LOG_.str();
-#endif
-
   /* Match remain trackers */
   /* - BBox IoU Distance */
   MatchResult match_result_bbox =
       match(BBoxes, Features, unmatched_tracker_idxes, unmatched_bbox_idxes, conf->kfilter_conf,
-            "BBox_IoUDistance", conf->max_distance_iou);
-
-#if DEBUG_DEEPSORT
-  LOGD("BBOX (IoU) Match Result:\n");
-  ss_LOG_.str("");
-  ss_LOG_ << get_INFO_Match_Pair(match_result_bbox.matched_pairs, tracker_ids, 3) << std::endl;
-  LOGD("%s", ss_LOG_.str().c_str());
-#endif
+            BBox_IoUDistance, conf->max_distance_iou);
 
   /* Match remain trackers */
   matched_pairs.insert(matched_pairs.end(), match_result_bbox.matched_pairs.begin(),
@@ -336,38 +349,34 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
                                  match_result_bbox.unmatched_tracker_idxes.begin(),
                                  match_result_bbox.unmatched_tracker_idxes.end());
 
-  /* Generate tracker result */
-  /*   format: [i] <is_matched, tracker_id, tracker_state, tracker_bbox> */
-  std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> result_(BBoxes.size());
-#if DEBUG_DEEPSORT
-  LOGD("Create Result_ (%zu)", result_.size());
-#endif
-
   /* Update the kalman trackers (Matched) */
   LOGD("Update the kalman trackers (Matched)");
   for (size_t i = 0; i < matched_pairs.size(); i++) {
     int tracker_idx = matched_pairs[i].first;
     int bbox_idx = matched_pairs[i].second;
-    // LOGI("update >> tracker idx: %d, bbox idx: %d", tracker_idx, bbox_idx);
     KalmanTracker &tracker_ = k_trackers[tracker_idx];
-    const BBOX &bbox_ = BBoxes[bbox_idx];
-    const FEATURE &feature_ = Features[bbox_idx];
-    kf_.update(tracker_.kalman_state_, tracker_.x_, tracker_.P_, bbox_tlwh2xyah(bbox_),
-               conf->kfilter_conf);
-    tracker_.update_bbox(bbox_);
-    tracker_.update_feature(feature_, conf->ktracker_conf.feature_budget_size,
-                            conf->ktracker_conf.feature_update_interval);
     tracker_.update_state(true, conf->ktracker_conf.max_unmatched_num,
                           conf->ktracker_conf.accreditation_threshold);
-    result_[bbox_idx] =
-        std::make_tuple(true, tracker_.id, tracker_.tracker_state_, tracker_.getBBox_TLWH());
+    const BBOX &bbox_ = BBoxes[bbox_idx];
+    kf_.update(tracker_.kalman_state, tracker_.x, tracker_.P, bbox_tlwh2xyah(bbox_),
+               conf->kfilter_conf);
+    tracker_.update_bbox(bbox_);
+    tracker_.bounding = false;
+    if (!conf->ktracker_conf.enable_QA_feature_update ||
+        (conf->ktracker_conf.enable_QA_feature_update &&
+         Quality[bbox_idx] > conf->ktracker_conf.feature_update_quality_threshold)) {
+      const FEATURE &feature_ = Features[bbox_idx];
+      tracker_.update_feature(feature_, conf->ktracker_conf.feature_budget_size,
+                              conf->ktracker_conf.feature_update_interval);
+    }
+    result[bbox_idx] =
+        std::make_tuple(true, tracker_.id, tracker_.tracker_state, tracker_.getBBox_TLWH());
   }
 
   /* Update the kalman trackers (Unmatched) */
   LOGD("Update the kalman trackers (Unmatched)");
   for (size_t i = 0; i < unmatched_tracker_idxes.size(); i++) {
     int tracker_idx = unmatched_tracker_idxes[i];
-    // LOGI("update >> tracker idx: %d", tracker_idx);
     KalmanTracker &tracker_ = k_trackers[tracker_idx];
     tracker_.update_state(false, conf->ktracker_conf.max_unmatched_num,
                           conf->ktracker_conf.accreditation_threshold);
@@ -376,7 +385,7 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
   /* Check kalman trackers state, and remove invalid trackers */
   LOGD("Check kalman trackers state, and remove invalid trackers");
   for (auto it_ = k_trackers.begin(); it_ != k_trackers.end();) {
-    if (it_->tracker_state_ == TRACKER_STATE::MISS) {
+    if (it_->tracker_state == k_tracker_state_e::MISS) {
       it_ = k_trackers.erase(it_);
     } else {
       it_++;
@@ -389,12 +398,21 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
     int bbox_idx = unmatched_bbox_idxes[i];
     uint64_t new_id = get_nextID(class_id);
     const BBOX &bbox_ = BBoxes[bbox_idx];
-    const FEATURE &feature_ = Features[bbox_idx];
-    // LOGI("new >> tracker idx: %d", new_id);
-    KalmanTracker tracker_(new_id, class_id, bbox_, feature_, conf->ktracker_conf);
-    k_trackers.push_back(tracker_);
-    result_[bbox_idx] =
-        std::make_tuple(false, tracker_.id, tracker_.tracker_state_, tracker_.getBBox_TLWH());
+    // KalmanTracker tracker_(new_id, bbox_, feature_);
+    if (conf->ktracker_conf.enable_QA_feature_init &&
+        Quality[bbox_idx] < conf->ktracker_conf.feature_init_quality_threshold) {
+      const FEATURE empty_feature(0);
+      KalmanTracker tracker_(new_id, class_id, bbox_, empty_feature, conf->ktracker_conf);
+      k_trackers.push_back(tracker_);
+      result[bbox_idx] =
+          std::make_tuple(false, tracker_.id, tracker_.tracker_state, tracker_.getBBox_TLWH());
+    } else {
+      const FEATURE &feature_ = Features[bbox_idx];
+      KalmanTracker tracker_(new_id, class_id, bbox_, feature_, conf->ktracker_conf);
+      k_trackers.push_back(tracker_);
+      result[bbox_idx] =
+          std::make_tuple(false, tracker_.id, tracker_.tracker_state, tracker_.getBBox_TLWH());
+    }
   }
 
   /* Update accreditation & probation tracker idxes */
@@ -402,22 +420,22 @@ std::vector<std::tuple<bool, uint64_t, TRACKER_STATE, BBOX>> DeepSORT::track(
   accreditation_tracker_idxes.clear();
   probation_tracker_idxes.clear();
   for (size_t i = 0; i < k_trackers.size(); i++) {
-    if (k_trackers[i].tracker_state_ == TRACKER_STATE::ACCREDITATION) {
+    if (k_trackers[i].tracker_state == k_tracker_state_e::ACCREDITATION) {
       accreditation_tracker_idxes.push_back(i);
-    } else if (k_trackers[i].tracker_state_ == TRACKER_STATE::PROBATION) {
+    } else if (k_trackers[i].tracker_state == k_tracker_state_e::PROBATION) {
       probation_tracker_idxes.push_back(i);
     } else {
       assert(0);
     }
   }
 
-  return result_;
+  return CVIAI_SUCCESS;
 }
 
 MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features,
                             const std::vector<int> &Tracker_IDXes,
                             const std::vector<int> &BBox_IDXes,
-                            cvai_kalman_filter_config_t &kf_conf, std::string cost_method,
+                            cvai_kalman_filter_config_t &kf_conf, cost_matrix_algo_e cost_method,
                             float max_distance) {
   MatchResult result_;
   if (Tracker_IDXes.empty() || BBox_IDXes.empty()) {
@@ -427,24 +445,30 @@ MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<F
   }
 
   COST_MATRIX cost_matrix;
-  if (cost_method == "Kalman_MahalanobisDistance") {
-    LOGD("Kalman Cost Matrix (Mahalanobis Distance)");
-    cost_matrix = KalmanTracker::getCostMatrix_Mahalanobis(kf_, k_trackers, BBoxes, Tracker_IDXes,
-                                                           BBox_IDXes, kf_conf, max_distance);
-  } else if (cost_method == "Feature_CosineDistance") {
-    cost_matrix = KalmanTracker::getCostMatrix_Feature(k_trackers, BBoxes, Features, Tracker_IDXes,
-                                                       BBox_IDXes);
-    LOGD("Feature Cost Matrix (Consine Distance)");
-    KalmanTracker::gateCostMatrix_Mahalanobis(cost_matrix, kf_, k_trackers, BBoxes, Tracker_IDXes,
-                                              BBox_IDXes, kf_conf, max_distance);
-
-  } else if (cost_method == "BBox_IoUDistance") {
-    cost_matrix =
-        KalmanTracker::getCostMatrix_BBox(k_trackers, BBoxes, Features, Tracker_IDXes, BBox_IDXes);
-    gate_cost_matrix(cost_matrix, max_distance);
-  } else {
-    assert(0);
+  switch (cost_method) {
+    case Feature_CosineDistance: {
+      LOGD("Feature Cost Matrix (Consine Distance)");
+      cost_matrix = KalmanTracker::getCostMatrix_Feature(k_trackers, BBoxes, Features,
+                                                         Tracker_IDXes, BBox_IDXes);
+      KalmanTracker::restrictCostMatrix_Mahalanobis(
+          cost_matrix, kf_, k_trackers, BBoxes, Tracker_IDXes, BBox_IDXes, kf_conf, max_distance);
+    } break;
+    case Kalman_MahalanobisDistance: {
+      LOGD("Kalman Cost Matrix (Mahalanobis Distance)");
+      cost_matrix = KalmanTracker::getCostMatrix_Mahalanobis(kf_, k_trackers, BBoxes, Tracker_IDXes,
+                                                             BBox_IDXes, kf_conf, max_distance);
+    } break;
+    case BBox_IoUDistance: {
+      LOGD("BBox Cost Matrix (IoU Distance)");
+      cost_matrix = KalmanTracker::getCostMatrix_BBox(k_trackers, BBoxes, Features, Tracker_IDXes,
+                                                      BBox_IDXes);
+      restrict_cost_matrix(cost_matrix, max_distance);
+    } break;
+    default:
+      LOGE("Unknown cost method %d", cost_method);
+      return result_;
   }
+
   CVIMunkres cvi_munkres_solver(&cost_matrix);
   if (cvi_munkres_solver.solve() == MUNKRES_FAILURE) {
     LOGW("MUNKRES algorithm failed.");
@@ -545,6 +569,29 @@ CVI_S32 DeepSORT::setConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type,
     LOGE("Input config is NULL.");
     return CVIAI_FAILURE;
   }
+  if (ds_conf->kfilter_conf.enable_X_constraint_1) {
+    LOGW("Enable X constraint 1 is not verified now.");
+  }
+  switch (ds_conf->kfilter_conf.confidence_level) {
+    case L005: {
+      ds_conf->kfilter_conf.chi2_threshold = chi2_005[4];
+    } break;
+    case L010: {
+      ds_conf->kfilter_conf.chi2_threshold = chi2_010[4];
+    } break;
+    case L025: {
+      ds_conf->kfilter_conf.chi2_threshold = chi2_025[4];
+    } break;
+    case L050: {
+      ds_conf->kfilter_conf.chi2_threshold = chi2_050[4];
+    } break;
+    case L100: {
+      ds_conf->kfilter_conf.chi2_threshold = chi2_100[4];
+    } break;
+    default:
+      LOGE("unknown mahalanobis confidence[%d]", ds_conf->kfilter_conf.confidence_level);
+      return CVIAI_FAILURE;
+  }
   if (cviai_obj_type == -1) {
     memcpy(&default_conf, ds_conf, sizeof(cvai_deepsort_config_t));
   } else {
@@ -561,74 +608,103 @@ cvai_deepsort_config_t DeepSORT::get_DefaultConfig() {
   conf.max_distance_consine = 0.05;
   conf.max_distance_iou = 0.7;
   conf.max_unmatched_times_for_bbox_matching = 2;
+  conf.enable_internal_FQ = false;
 
   conf.ktracker_conf.accreditation_threshold = 3;
   conf.ktracker_conf.feature_budget_size = 8;
   conf.ktracker_conf.feature_update_interval = 1;
   conf.ktracker_conf.max_unmatched_num = 40;
+  conf.ktracker_conf.enable_QA_feature_update = false;
+  conf.ktracker_conf.enable_QA_feature_init = false;
+  conf.ktracker_conf.feature_update_quality_threshold = 0.75;
+  conf.ktracker_conf.feature_init_quality_threshold = 0.75;
 
-  conf.ktracker_conf.P_std_alpha[0] = 2 * 1 / 20.0;
-  conf.ktracker_conf.P_std_alpha[1] = 2 * 1 / 20.0;
-  conf.ktracker_conf.P_std_alpha[2] = 0.0;
-  conf.ktracker_conf.P_std_alpha[3] = 2 * 1 / 20.0;
-  conf.ktracker_conf.P_std_alpha[4] = 10 * 1 / 160.0;
-  conf.ktracker_conf.P_std_alpha[5] = 10 * 1 / 160.0;
-  conf.ktracker_conf.P_std_alpha[6] = 0.0;
-  conf.ktracker_conf.P_std_alpha[7] = 10 * 1 / 160.0;
-  conf.ktracker_conf.P_std_x_idx[0] = 3;
-  conf.ktracker_conf.P_std_x_idx[1] = 3;
-  conf.ktracker_conf.P_std_x_idx[2] = -1;
-  conf.ktracker_conf.P_std_x_idx[3] = 3;
-  conf.ktracker_conf.P_std_x_idx[4] = 3;
-  conf.ktracker_conf.P_std_x_idx[5] = 3;
-  conf.ktracker_conf.P_std_x_idx[6] = -1;
-  conf.ktracker_conf.P_std_x_idx[7] = 3;
-  conf.ktracker_conf.P_std_beta[0] = 0.0;
-  conf.ktracker_conf.P_std_beta[1] = 0.0;
-  conf.ktracker_conf.P_std_beta[2] = 0.01;
-  conf.ktracker_conf.P_std_beta[3] = 0.0;
-  conf.ktracker_conf.P_std_beta[4] = 0.0;
-  conf.ktracker_conf.P_std_beta[5] = 0.0;
-  conf.ktracker_conf.P_std_beta[6] = 1e-5;
-  conf.ktracker_conf.P_std_beta[7] = 0.0;
+  conf.ktracker_conf.P_alpha[0] = 2 * 1 / 20.0;
+  conf.ktracker_conf.P_alpha[1] = 2 * 1 / 20.0;
+  conf.ktracker_conf.P_alpha[2] = 0.0;
+  conf.ktracker_conf.P_alpha[3] = 2 * 1 / 20.0;
+  conf.ktracker_conf.P_alpha[4] = 10 * 1 / 160.0;
+  conf.ktracker_conf.P_alpha[5] = 10 * 1 / 160.0;
+  conf.ktracker_conf.P_alpha[6] = 0.0;
+  conf.ktracker_conf.P_alpha[7] = 10 * 1 / 160.0;
+  conf.ktracker_conf.P_x_idx[0] = 3;
+  conf.ktracker_conf.P_x_idx[1] = 3;
+  conf.ktracker_conf.P_x_idx[2] = -1;
+  conf.ktracker_conf.P_x_idx[3] = 3;
+  conf.ktracker_conf.P_x_idx[4] = 3;
+  conf.ktracker_conf.P_x_idx[5] = 3;
+  conf.ktracker_conf.P_x_idx[6] = -1;
+  conf.ktracker_conf.P_x_idx[7] = 3;
+  conf.ktracker_conf.P_beta[0] = 0.0;
+  conf.ktracker_conf.P_beta[1] = 0.0;
+  conf.ktracker_conf.P_beta[2] = 0.01;
+  conf.ktracker_conf.P_beta[3] = 0.0;
+  conf.ktracker_conf.P_beta[4] = 0.0;
+  conf.ktracker_conf.P_beta[5] = 0.0;
+  conf.ktracker_conf.P_beta[6] = 1e-5;
+  conf.ktracker_conf.P_beta[7] = 0.0;
 
-  conf.kfilter_conf.Q_std_alpha[0] = 1 / 20.0;
-  conf.kfilter_conf.Q_std_alpha[1] = 1 / 20.0;
-  conf.kfilter_conf.Q_std_alpha[2] = 0.0;
-  conf.kfilter_conf.Q_std_alpha[3] = 1 / 20.0;
-  conf.kfilter_conf.Q_std_alpha[4] = 1 / 160.0;
-  conf.kfilter_conf.Q_std_alpha[5] = 1 / 160.0;
-  conf.kfilter_conf.Q_std_alpha[6] = 0.0;
-  conf.kfilter_conf.Q_std_alpha[7] = 1 / 160.0;
-  conf.kfilter_conf.Q_std_x_idx[0] = 3;
-  conf.kfilter_conf.Q_std_x_idx[1] = 3;
-  conf.kfilter_conf.Q_std_x_idx[2] = -1;
-  conf.kfilter_conf.Q_std_x_idx[3] = 3;
-  conf.kfilter_conf.Q_std_x_idx[4] = 3;
-  conf.kfilter_conf.Q_std_x_idx[5] = 3;
-  conf.kfilter_conf.Q_std_x_idx[6] = -1;
-  conf.kfilter_conf.Q_std_x_idx[7] = 3;
-  conf.kfilter_conf.Q_std_beta[0] = 0.0;
-  conf.kfilter_conf.Q_std_beta[1] = 0.0;
-  conf.kfilter_conf.Q_std_beta[2] = 0.1;
-  conf.kfilter_conf.Q_std_beta[3] = 0.0;
-  conf.kfilter_conf.Q_std_beta[4] = 0.0;
-  conf.kfilter_conf.Q_std_beta[5] = 0.0;
-  conf.kfilter_conf.Q_std_beta[6] = 1e-5;
-  conf.kfilter_conf.Q_std_beta[7] = 0.0;
+  conf.kfilter_conf.confidence_level = L050;
+  conf.kfilter_conf.chi2_threshold = 0.0;
+  conf.kfilter_conf.enable_X_constraint_0 = false;
+  conf.kfilter_conf.enable_X_constraint_1 = false;
+  conf.kfilter_conf.enable_bounding_stay = false;
 
-  conf.kfilter_conf.R_std_alpha[0] = 1 / 20.0;
-  conf.kfilter_conf.R_std_alpha[1] = 1 / 20.0;
-  conf.kfilter_conf.R_std_alpha[2] = 0.0;
-  conf.kfilter_conf.R_std_alpha[3] = 1 / 20.0;
-  conf.kfilter_conf.R_std_x_idx[0] = 3;
-  conf.kfilter_conf.R_std_x_idx[1] = 3;
-  conf.kfilter_conf.R_std_x_idx[2] = -1;
-  conf.kfilter_conf.R_std_x_idx[3] = 3;
-  conf.kfilter_conf.R_std_beta[0] = 0.0;
-  conf.kfilter_conf.R_std_beta[1] = 0.0;
-  conf.kfilter_conf.R_std_beta[2] = 0.1;
-  conf.kfilter_conf.R_std_beta[3] = 0.0;
+  conf.kfilter_conf.X_constraint_min[0] = 0.0;
+  conf.kfilter_conf.X_constraint_min[1] = 0.0;
+  conf.kfilter_conf.X_constraint_min[2] = DEFAULT_X_CONSTRAINT_A_MIN;
+  conf.kfilter_conf.X_constraint_min[3] = DEFAULT_X_CONSTRAINT_H_MIN;
+  conf.kfilter_conf.X_constraint_min[4] = -0.1 * DEFAULT_X_CONSTRAINT_A_MAX;
+  conf.kfilter_conf.X_constraint_min[5] = -0.1 * DEFAULT_X_CONSTRAINT_A_MAX;
+  conf.kfilter_conf.X_constraint_min[6] = -0.25;
+  conf.kfilter_conf.X_constraint_min[7] = -0.25;
+
+  conf.kfilter_conf.X_constraint_max[0] = 0.0;
+  conf.kfilter_conf.X_constraint_max[1] = 0.0;
+  conf.kfilter_conf.X_constraint_max[2] = DEFAULT_X_CONSTRAINT_A_MAX;
+  conf.kfilter_conf.X_constraint_max[3] = DEFAULT_X_CONSTRAINT_H_MAX;
+  conf.kfilter_conf.X_constraint_max[4] = -1. * conf.kfilter_conf.X_constraint_min[4];
+  conf.kfilter_conf.X_constraint_max[5] = -1. * conf.kfilter_conf.X_constraint_min[5];
+  conf.kfilter_conf.X_constraint_max[6] = -1. * conf.kfilter_conf.X_constraint_min[6];
+  conf.kfilter_conf.X_constraint_max[7] = -1. * conf.kfilter_conf.X_constraint_min[7];
+
+  conf.kfilter_conf.Q_alpha[0] = 1 / 20.0;
+  conf.kfilter_conf.Q_alpha[1] = 1 / 20.0;
+  conf.kfilter_conf.Q_alpha[2] = 0.0;
+  conf.kfilter_conf.Q_alpha[3] = 1 / 20.0;
+  conf.kfilter_conf.Q_alpha[4] = 1 / 160.0;
+  conf.kfilter_conf.Q_alpha[5] = 1 / 160.0;
+  conf.kfilter_conf.Q_alpha[6] = 0.0;
+  conf.kfilter_conf.Q_alpha[7] = 1 / 160.0;
+  conf.kfilter_conf.Q_x_idx[0] = 3;
+  conf.kfilter_conf.Q_x_idx[1] = 3;
+  conf.kfilter_conf.Q_x_idx[2] = -1;
+  conf.kfilter_conf.Q_x_idx[3] = 3;
+  conf.kfilter_conf.Q_x_idx[4] = 3;
+  conf.kfilter_conf.Q_x_idx[5] = 3;
+  conf.kfilter_conf.Q_x_idx[6] = -1;
+  conf.kfilter_conf.Q_x_idx[7] = 3;
+  conf.kfilter_conf.Q_beta[0] = 0.0;
+  conf.kfilter_conf.Q_beta[1] = 0.0;
+  conf.kfilter_conf.Q_beta[2] = 0.1;
+  conf.kfilter_conf.Q_beta[3] = 0.0;
+  conf.kfilter_conf.Q_beta[4] = 0.0;
+  conf.kfilter_conf.Q_beta[5] = 0.0;
+  conf.kfilter_conf.Q_beta[6] = 1e-5;
+  conf.kfilter_conf.Q_beta[7] = 0.0;
+
+  conf.kfilter_conf.R_alpha[0] = 1 / 20.0;
+  conf.kfilter_conf.R_alpha[1] = 1 / 20.0;
+  conf.kfilter_conf.R_alpha[2] = 0.0;
+  conf.kfilter_conf.R_alpha[3] = 1 / 20.0;
+  conf.kfilter_conf.R_x_idx[0] = 3;
+  conf.kfilter_conf.R_x_idx[1] = 3;
+  conf.kfilter_conf.R_x_idx[2] = -1;
+  conf.kfilter_conf.R_x_idx[3] = 3;
+  conf.kfilter_conf.R_beta[0] = 0.0;
+  conf.kfilter_conf.R_beta[1] = 0.0;
+  conf.kfilter_conf.R_beta[2] = 0.1;
+  conf.kfilter_conf.R_beta[3] = 0.0;
 
   return conf;
 }
@@ -649,8 +725,8 @@ void DeepSORT::show_INFO_KalmanTrackers() {
               << std::endl;
     std::cout << "\t" << std::setw(30)
               << "feauture update counter = " << tracker_.get_FeatureUpdateCounter() << std::endl;
-    std::cout << "\t" << std::setw(30) << "Kalman x_ = " << tracker_.x_.transpose() << std::endl;
-    std::cout << "\t" << std::setw(30) << "Kalman P_ = " << tracker_.P_ << std::endl;
+    std::cout << "\t" << std::setw(30) << "Kalman x_ = " << tracker_.x.transpose() << std::endl;
+    std::cout << "\t" << std::setw(30) << "Kalman P_ = " << tracker_.P << std::endl;
   }
 }
 
@@ -680,11 +756,11 @@ std::string DeepSORT::get_TrackersInfo_UnmatchedLastTime(std::string &str_info) 
   ss_info << unmatched_trackers.size() << std::endl;
   for (size_t i = 0; i < unmatched_trackers.size(); i++) {
     KalmanTracker &tracker_ = unmatched_trackers[i];
-    if (tracker_.tracker_state_ != TRACKER_STATE::ACCREDITATION) {
+    if (tracker_.tracker_state != k_tracker_state_e::ACCREDITATION) {
       assert(0);
     }
     BBOX tracker_bbox = tracker_.getBBox_TLWH();
-    ss_info << tracker_.id << ",-1,-1,-1,-1," << tracker_.tracker_state_ << ",";
+    ss_info << tracker_.id << ",-1,-1,-1,-1," << tracker_.tracker_state << ",";
     ss_info << static_cast<int>(tracker_bbox(0, 0)) << "," << static_cast<int>(tracker_bbox(0, 1))
             << "," << static_cast<int>(tracker_bbox(0, 0) + tracker_bbox(0, 2)) << ","
             << static_cast<int>(tracker_bbox(0, 1) + tracker_bbox(0, 3)) << "\n";
@@ -700,7 +776,7 @@ CVI_S32 DeepSORT::get_trackers_inactive(cvai_tracker_t *tracker) const {
   CVI_AI_MemAlloc(static_cast<uint32_t>(unmatched_trackers.size()), tracker);
   for (uint32_t i = 0; i < static_cast<uint32_t>(unmatched_trackers.size()); i++) {
     KalmanTracker &u_tkr = unmatched_trackers[i];
-    if (u_tkr.tracker_state_ != TRACKER_STATE::ACCREDITATION) {
+    if (u_tkr.tracker_state != k_tracker_state_e::ACCREDITATION) {
       LOGE("[BUG] This is an illegal condition.\n");
       return CVIAI_FAILURE;
     }
@@ -714,6 +790,14 @@ CVI_S32 DeepSORT::get_trackers_inactive(cvai_tracker_t *tracker) const {
   }
 
   return CVIAI_SUCCESS;
+}
+
+static void FACE_QUALITY_ASSESSMENT(cvai_face_t *face) {
+  for (uint32_t i = 0; i < face->size; i++) {
+    cvai_bbox_t &bbox = face->info[i].bbox;
+    float a = (bbox.x2 - bbox.x1) / (bbox.y2 - bbox.y1);
+    face->info[i].face_quality = 1.0 - fabs(a - 1.0);
+  }
 }
 
 static void show_deepsort_config(cvai_deepsort_config_t &ds_conf) {
@@ -730,57 +814,57 @@ static void show_deepsort_config(cvai_deepsort_config_t &ds_conf) {
             << "[Kalman Tracker] Feature Update Interval : "
             << ds_conf.ktracker_conf.feature_update_interval << std::endl
             << "[Kalman Tracker] P-alpha : " << std::endl
-            << std::setw(6) << ds_conf.ktracker_conf.P_std_alpha[0];
+            << std::setw(6) << ds_conf.ktracker_conf.P_alpha[0];
   for (int i = 1; i < 8; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_std_alpha[i];
+    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_alpha[i];
   }
   std::cout << std::endl
             << "[Kalman Tracker] P-beta : " << std::endl
-            << std::setw(6) << ds_conf.ktracker_conf.P_std_beta[0];
+            << std::setw(6) << ds_conf.ktracker_conf.P_beta[0];
   for (int i = 1; i < 8; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_std_beta[i];
+    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_beta[i];
   }
   std::cout << std::endl
             << "[Kalman Tracker] P-x_idx : " << std::endl
-            << std::setw(6) << ds_conf.ktracker_conf.P_std_x_idx[0];
+            << std::setw(6) << ds_conf.ktracker_conf.P_x_idx[0];
   for (int i = 1; i < 8; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_std_x_idx[i];
+    std::cout << "," << std::setw(6) << ds_conf.ktracker_conf.P_x_idx[i];
   }
   std::cout << std::endl
             << "[Kalman Filter] Q-alpha : " << std::endl
-            << std::setw(6) << ds_conf.kfilter_conf.Q_std_alpha[0];
+            << std::setw(6) << ds_conf.kfilter_conf.Q_alpha[0];
   for (int i = 1; i < 8; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_std_alpha[i];
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_alpha[i];
   }
   std::cout << std::endl
             << "[Kalman Filter] Q-beta : " << std::endl
-            << std::setw(6) << ds_conf.kfilter_conf.Q_std_beta[0];
+            << std::setw(6) << ds_conf.kfilter_conf.Q_beta[0];
   for (int i = 1; i < 8; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_std_beta[i];
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_beta[i];
   }
   std::cout << std::endl
             << "[Kalman Filter] Q-x_idx : " << std::endl
-            << std::setw(6) << ds_conf.kfilter_conf.Q_std_x_idx[0];
+            << std::setw(6) << ds_conf.kfilter_conf.Q_x_idx[0];
   for (int i = 1; i < 8; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_std_x_idx[i];
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.Q_x_idx[i];
   }
   std::cout << std::endl
             << "[Kalman Filter] R-alpha : " << std::endl
-            << std::setw(6) << ds_conf.kfilter_conf.R_std_alpha[0];
+            << std::setw(6) << ds_conf.kfilter_conf.R_alpha[0];
   for (int i = 1; i < 4; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_std_alpha[i];
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_alpha[i];
   }
   std::cout << std::endl
             << "[Kalman Filter] R-beta : " << std::endl
-            << std::setw(6) << ds_conf.kfilter_conf.R_std_beta[0];
+            << std::setw(6) << ds_conf.kfilter_conf.R_beta[0];
   for (int i = 1; i < 4; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_std_beta[i];
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_beta[i];
   }
   std::cout << std::endl
             << "[Kalman Filter] R-x_idx : " << std::endl
-            << std::setw(6) << ds_conf.kfilter_conf.R_std_x_idx[0];
+            << std::setw(6) << ds_conf.kfilter_conf.R_x_idx[0];
   for (int i = 1; i < 4; i++) {
-    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_std_x_idx[i];
+    std::cout << "," << std::setw(6) << ds_conf.kfilter_conf.R_x_idx[i];
   }
   std::cout << std::endl;
 }

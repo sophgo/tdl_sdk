@@ -63,14 +63,14 @@ int main(int argc, char *argv[]) {
 #if 1
   cvai_deepsort_config_t ds_conf;
   CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
-  ds_conf.ktracker_conf.P_std_beta[2] = 0.01;
-  ds_conf.ktracker_conf.P_std_beta[6] = 1e-5;
+  ds_conf.ktracker_conf.P_beta[2] = 0.01;
+  ds_conf.ktracker_conf.P_beta[6] = 1e-5;
 
-  // ds_conf.kfilter_conf.Q_std_beta[2] = 0.1;
-  ds_conf.kfilter_conf.Q_std_beta[2] = 0.01;
-  ds_conf.kfilter_conf.Q_std_beta[6] = 1e-5;
+  // ds_conf.kfilter_conf.Q_beta[2] = 0.1;
+  ds_conf.kfilter_conf.Q_beta[2] = 0.01;
+  ds_conf.kfilter_conf.Q_beta[6] = 1e-5;
 
-  ds_conf.kfilter_conf.R_std_beta[2] = 0.1;
+  ds_conf.kfilter_conf.R_beta[2] = 0.1;
   CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
 #endif
 

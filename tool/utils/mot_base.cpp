@@ -21,26 +21,26 @@ CVI_S32 GET_PREDEFINED_CONFIG(cvai_deepsort_config_t *ds_conf, TARGET_TYPE_e tar
   switch (target_type) {
     case PERSON:
       /** default config
-       *  P_std_alpha[0] = 2 * 1 / 20.;
-       *  P_std_alpha[1] = 2 * 1 / 20.;
-       *  P_std_alpha[3] = 2 * 1 / 20.;
-       *  P_std_alpha[4] = 10 * 1 / 160.;
-       *  P_std_alpha[5] = 10 * 1 / 160.;
-       *  P_std_alpha[7] = 10 * 1 / 160.;
-       *  P_std_beta[2] = 0.01;
-       *  P_std_beta[6] = 1e-5;
-       *  Q_std_beta[2] = 0.01;
-       *  Q_std_beta[6] = 1e-5;
-       *  R_std_beta[2] = 0.1;
+       *  P_alpha[0] = 2 * 1 / 20.;
+       *  P_alpha[1] = 2 * 1 / 20.;
+       *  P_alpha[3] = 2 * 1 / 20.;
+       *  P_alpha[4] = 10 * 1 / 160.;
+       *  P_alpha[5] = 10 * 1 / 160.;
+       *  P_alpha[7] = 10 * 1 / 160.;
+       *  P_beta[2] = 0.01;
+       *  P_beta[6] = 1e-5;
+       *  Q_beta[2] = 0.01;
+       *  Q_beta[6] = 1e-5;
+       *  R_beta[2] = 0.1;
        */
       break;
     case FACE: {
       ds_conf->ktracker_conf.max_unmatched_num = 10;
       ds_conf->ktracker_conf.accreditation_threshold = 10;
-      ds_conf->ktracker_conf.P_std_beta[2] = 0.1;
-      ds_conf->ktracker_conf.P_std_beta[6] = 2.5e-2;
-      ds_conf->kfilter_conf.Q_std_beta[2] = 0.1;
-      ds_conf->kfilter_conf.Q_std_beta[6] = 2.5e-2;
+      ds_conf->ktracker_conf.P_beta[2] = 0.1;
+      ds_conf->ktracker_conf.P_beta[6] = 2.5e-2;
+      ds_conf->kfilter_conf.Q_beta[2] = 0.1;
+      ds_conf->kfilter_conf.Q_beta[6] = 2.5e-2;
     } break;
     case VEHICLE: {
       ds_conf->ktracker_conf.max_unmatched_num = 20;
@@ -48,10 +48,10 @@ CVI_S32 GET_PREDEFINED_CONFIG(cvai_deepsort_config_t *ds_conf, TARGET_TYPE_e tar
     case PET: {
       ds_conf->ktracker_conf.max_unmatched_num = 30;
       ds_conf->ktracker_conf.accreditation_threshold = 5;
-      ds_conf->ktracker_conf.P_std_beta[2] = 0.1;
-      ds_conf->ktracker_conf.P_std_beta[6] = 2.5 * 1e-2;
-      ds_conf->kfilter_conf.Q_std_beta[2] = 0.1;
-      ds_conf->kfilter_conf.Q_std_beta[6] = 2.5 * 1e-2;
+      ds_conf->ktracker_conf.P_beta[2] = 0.1;
+      ds_conf->ktracker_conf.P_beta[6] = 2.5 * 1e-2;
+      ds_conf->kfilter_conf.Q_beta[2] = 0.1;
+      ds_conf->kfilter_conf.Q_beta[6] = 2.5 * 1e-2;
     } break;
     default:
       return CVI_FAILURE;

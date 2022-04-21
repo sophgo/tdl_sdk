@@ -19,7 +19,7 @@ COST_MATRIX cosine_distance(const FEATURES &A, const FEATURES &B);
 
 COST_VECTOR iou_distance(const BBOX &a, const BBOXES &B);
 
-void gate_cost_matrix(COST_MATRIX &M, float value, float eps = 1e-5);
+void restrict_cost_matrix(COST_MATRIX &M, float upper_bound);
 
 ROW_VECTOR get_min_colwise(COST_MATRIX &M);
 COL_VECTOR get_min_rowwise(COST_MATRIX &M);

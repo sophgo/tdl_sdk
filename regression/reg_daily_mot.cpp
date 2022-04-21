@@ -59,18 +59,18 @@ bool MultiObjectTrackingTestSuite::SetTestConfig(cvai_deepsort_config_t &conf, s
   } else if (target == "pet") {
     conf.ktracker_conf.max_unmatched_num = 30;
     conf.ktracker_conf.accreditation_threshold = 5;
-    conf.ktracker_conf.P_std_beta[2] = 0.1;
-    conf.ktracker_conf.P_std_beta[6] = 2.5 * 1e-2;
-    conf.kfilter_conf.Q_std_beta[2] = 0.1;
-    conf.kfilter_conf.Q_std_beta[6] = 2.5 * 1e-2;
+    conf.ktracker_conf.P_beta[2] = 0.1;
+    conf.ktracker_conf.P_beta[6] = 2.5 * 1e-2;
+    conf.kfilter_conf.Q_beta[2] = 0.1;
+    conf.kfilter_conf.Q_beta[6] = 2.5 * 1e-2;
     return true;
   } else if (target == "face") {
     conf.ktracker_conf.max_unmatched_num = 10;
     conf.ktracker_conf.accreditation_threshold = 10;
-    conf.ktracker_conf.P_std_beta[2] = 0.1;
-    conf.ktracker_conf.P_std_beta[6] = 2.5e-2;
-    conf.kfilter_conf.Q_std_beta[2] = 0.1;
-    conf.kfilter_conf.Q_std_beta[6] = 2.5e-2;
+    conf.ktracker_conf.P_beta[2] = 0.1;
+    conf.ktracker_conf.P_beta[6] = 2.5e-2;
+    conf.kfilter_conf.Q_beta[2] = 0.1;
+    conf.kfilter_conf.Q_beta[6] = 2.5e-2;
     return true;
   } else {
     return false;

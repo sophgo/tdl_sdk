@@ -8,23 +8,32 @@
 #include "cvi_kalman_types.hpp"
 #include "cvi_tracker.hpp"
 
-enum TRACKER_STATE { MISS = 0, PROBATION, ACCREDITATION };
+typedef enum { MISS = 0, PROBATION, ACCREDITATION } k_tracker_state_e;
 
-const float chi2inv95[10] = {0,      3.8415, 5.9915, 7.8147, 9.4877,
-                             11.070, 12.592, 14.067, 15.507, 16.919};
+// clang-format off
+/** NOTE: reference https://people.richland.edu/james/lecture/m170/tbl-chi.html */
+const float chi2_005[5] = {0,   7.879,  10.597,  12.838,  14.860};
+const float chi2_010[5] = {0,   6.635,   9.210,  11.345,  13.277};
+const float chi2_025[5] = {0,   5.024,   7.378,   9.348,  11.143};
+const float chi2_050[5] = {0,   3.841,   5.991,   7.815,   9.488};
+const float chi2_100[5] = {0,   2.706,   4.605,   6.251,   7.779};
+// clang-format on
 
 class KalmanTracker : public Tracker {
  public:
-  std::vector<FEATURE> features_;
-  KALMAN_STAGE kalman_state_;
-  TRACKER_STATE tracker_state_;
-  K_STATE_V x_;
-  K_COVARIANCE_M P_;
+  std::vector<FEATURE> features;
+  kalman_state_e kalman_state;
+  k_tracker_state_e tracker_state;
+  bool bounding;
+  bool init_feature;
+  K_STATE_V x;
+  K_COVARIANCE_M P;
   int unmatched_times;
-  KalmanTracker();
-  KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox, const FEATURE &feature);
+
+  KalmanTracker() = delete;
   KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox, const FEATURE &feature,
                 const cvai_kalman_tracker_config_t &ktracker_conf);
+  ~KalmanTracker();
 
   void update_state(bool is_matched, int max_unmatched_num = 40, int accreditation_thr = 3);
   void update_bbox(const BBOX &bbox);
@@ -51,22 +60,15 @@ class KalmanTracker : public Tracker {
                                                const std::vector<int> &Tracker_IDXes,
                                                const std::vector<int> &BBox_IDXes,
                                                const cvai_kalman_filter_config_t &kfilter_conf,
-                                               float gate_value = __FLT_MAX__);
+                                               float upper_bound);
 
-  static void gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
-                                         const std::vector<KalmanTracker> &K_Trackers,
-                                         const std::vector<BBOX> &BBoxes,
-                                         const std::vector<int> &Tracker_IDXes,
-                                         const std::vector<int> &BBox_IDXes,
-                                         float gate_value = __FLT_MAX__);
-
-  static void gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
-                                         const std::vector<KalmanTracker> &K_Trackers,
-                                         const std::vector<BBOX> &BBoxes,
-                                         const std::vector<int> &Tracker_IDXes,
-                                         const std::vector<int> &BBox_IDXes,
-                                         const cvai_kalman_filter_config_t &kfilter_conf,
-                                         float gate_value = __FLT_MAX__);
+  static void restrictCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
+                                             const std::vector<KalmanTracker> &K_Trackers,
+                                             const std::vector<BBOX> &BBoxes,
+                                             const std::vector<int> &Tracker_IDXes,
+                                             const std::vector<int> &BBox_IDXes,
+                                             const cvai_kalman_filter_config_t &kfilter_conf,
+                                             float upper_bound);
 
   /* DEBUG CODE */
   int get_FeatureUpdateCounter() const;

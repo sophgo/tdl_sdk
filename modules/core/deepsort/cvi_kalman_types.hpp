@@ -10,7 +10,7 @@
 #define STD_XP_0 (float)(1.0 / 20.0)
 #define STD_XP_1 (float)(1.0 / 160.0)
 
-enum KALMAN_STAGE { PREDICTED = 0, UPDATED };
+typedef enum { PREDICTED = 0, UPDATED } kalman_state_e;
 
 typedef Eigen::Matrix<float, DIM_X, 1> K_VECTOR;
 typedef Eigen::Matrix<float, DIM_Z, 1> K_VECTOR_Z;

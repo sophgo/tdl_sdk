@@ -14,10 +14,11 @@ extern int optind;
 extern int opterr;
 extern int optopt;
 
-// #define ENABLE_DEEPSORT_EVALUATION
+#define ENABLE_DEEPSORT_EVALUATION
 
 // #define OUTPUT_MOT_DATA
 
+#define DEFAULT_RESULT_FILE_NAME "cviai_MOT_result.txt"
 #define DEFAULT_DATA_DIR "cviai_MOT_data"
 #define DEFAULT_DATA_INFO_NAME "MOT_data_info.txt"
 #define DEFAULT_OUTPUT_CONFIG_NAME "opt_deepsort_config.bin"
@@ -30,6 +31,8 @@ typedef struct {
   bool use_predefined;
   char init_config[128];
   char output_config[128];
+  bool output_result;
+  char result_path[128];
   int inference_num;
   bool evaluation;
 } ARGS_t;
@@ -54,14 +57,16 @@ void usage(char *bin_path) {
       "    -n <number>        inference number (default: -1, inference all)\n"
       "    -i <config>        initial DeepSORT config (default: use predefined config)\n"
       "    -o <config>        output DeepSORT config (default: %s)\n"
-      "    -e                 only evaluate performance\n"
+      "    -r <result>        enable output MOT result and set path (default: false, %s)\n"
+      "    -e                 only evaluate performance (default: false)\n"
       "    -z                 enable DeepSORT (default: disable)\n"
       "    -h                 help\n",
-      getFileName(bin_path), DEFAULT_DATA_DIR, DEFAULT_OUTPUT_CONFIG_NAME);
+      getFileName(bin_path), DEFAULT_DATA_DIR, DEFAULT_OUTPUT_CONFIG_NAME,
+      DEFAULT_RESULT_FILE_NAME);
 }
 
 CVI_S32 parse_args(int argc, char **argv, ARGS_t *args) {
-  const char *OPT_STRING = "hn:d:i:o:ez";
+  const char *OPT_STRING = "hn:d:i:o:r:ez";
   const int ARGS_N = 1;
   /* set default argument value*/
   args->enable_DeepSORT = false;
@@ -70,6 +75,8 @@ CVI_S32 parse_args(int argc, char **argv, ARGS_t *args) {
   sprintf(args->input_info_name, "%s", DEFAULT_DATA_INFO_NAME);
   args->use_predefined = true;
   args->evaluation = false;
+  args->output_result = false;
+  sprintf(args->result_path, "%s", DEFAULT_RESULT_FILE_NAME);
 
   char ch;
   while ((ch = getopt(argc, argv, OPT_STRING)) != -1) {
@@ -90,6 +97,10 @@ CVI_S32 parse_args(int argc, char **argv, ARGS_t *args) {
       } break;
       case 'o': {
         sprintf(args->output_config, "%s", optarg);
+      } break;
+      case 'r': {
+        args->output_result = true;
+        sprintf(args->result_path, "%s", optarg);
       } break;
       case 'e': {
         args->evaluation = true;
@@ -176,7 +187,12 @@ int main(int argc, char *argv[]) {
 
   printf("--- Init MOT Evaluation\n");
   gettimeofday(&t0, NULL);
-  RUN_MOT_EVALUATION(ai_handle, mot_eval_args, performance);
+  ret = RUN_MOT_EVALUATION(ai_handle, mot_eval_args, performance, args.output_result,
+                           args.result_path);
+  if (CVI_SUCCESS != ret) {
+    CVI_AI_DestroyHandle(ai_handle);
+    return CVI_FAILURE;
+  }
   gettimeofday(&t1, NULL);
   elapsed_tpu = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
   printf("execution time: %.2f(ms)\n", (float)elapsed_tpu / 1000.);

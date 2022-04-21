@@ -36,11 +36,11 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 void setSampleMOTConfig(cvai_deepsort_config_t *ds_conf) {
   ds_conf->ktracker_conf.accreditation_threshold = 10;
-  ds_conf->ktracker_conf.P_std_beta[2] = 0.01;
-  ds_conf->ktracker_conf.P_std_beta[6] = 1e-5;
-  ds_conf->kfilter_conf.Q_std_beta[2] = 0.01;
-  ds_conf->kfilter_conf.Q_std_beta[6] = 1e-5;
-  ds_conf->kfilter_conf.R_std_beta[2] = 0.1;
+  ds_conf->ktracker_conf.P_beta[2] = 0.01;
+  ds_conf->ktracker_conf.P_beta[6] = 1e-5;
+  ds_conf->kfilter_conf.Q_beta[2] = 0.01;
+  ds_conf->kfilter_conf.Q_beta[6] = 1e-5;
+  ds_conf->kfilter_conf.R_beta[2] = 0.1;
 }
 
 typedef struct {

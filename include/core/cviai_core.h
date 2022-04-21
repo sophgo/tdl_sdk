@@ -786,7 +786,7 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_
  * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
-                                        cvai_tracker_t *tracker_t, bool use_reid);
+                                        cvai_tracker_t *tracker, bool use_reid);
 
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info);
 

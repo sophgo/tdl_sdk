@@ -6,50 +6,7 @@
 
 #define USE_COSINE_DISTANCE_FOR_FEATURE true
 
-KalmanTracker::KalmanTracker() {
-  id = -1;
-  class_id = -1;
-  bbox = Eigen::MatrixXf::Zero(1, DIM_Z);
-  tracker_state_ = TRACKER_STATE::MISS;
-
-  kalman_state_ = KALMAN_STAGE::UPDATED;
-  x_ = Eigen::MatrixXf::Zero(DIM_X, 1);
-  P_ = Eigen::MatrixXf::Identity(DIM_X, DIM_X);
-}
-
-KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox,
-                             const FEATURE &feature) {
-  this->id = id;
-  this->class_id = class_id;
-  this->bbox = bbox;
-  if (USE_COSINE_DISTANCE_FOR_FEATURE) {
-    FEATURE tmp_feature = feature;
-    normalize_feature(tmp_feature);
-    features_.push_back(tmp_feature);
-  } else {
-    assert(0);
-    features_.push_back(feature);
-  }
-  feature_update_counter = 0;
-
-  tracker_state_ = TRACKER_STATE::PROBATION;
-  matched_counter = 1;
-  unmatched_times = 0;
-
-  kalman_state_ = KALMAN_STAGE::UPDATED;
-  BBOX bbox_xyah = bbox_tlwh2xyah(bbox);
-  x_.block(0, 0, DIM_Z, 1) = bbox_xyah.transpose();
-  x_.block(DIM_Z, 0, DIM_Z, 1) = Eigen::MatrixXf::Zero(DIM_Z, 1);
-  P_ = Eigen::MatrixXf::Zero(DIM_X, DIM_X);
-  for (int i = 0; i < DIM_Z; i++) {
-    P_(i, i) = pow(2 * STD_XP_0 * bbox_xyah(3), 2);
-  }
-  for (int i = DIM_Z; i < DIM_X; i++) {
-    P_(i, i) = pow(10 * STD_XP_1 * bbox_xyah(3), 2);
-  }
-  P_(DIM_Z - 2, DIM_Z - 2) = pow(1e-2, 2);
-  P_(DIM_X - 2, DIM_X - 2) = pow(1e-5, 2);
-}
+KalmanTracker::~KalmanTracker() {}
 
 KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox,
                              const FEATURE &feature,
@@ -57,35 +14,35 @@ KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX
   this->id = id;
   this->class_id = class_id;
   this->bbox = bbox;
-  if (USE_COSINE_DISTANCE_FOR_FEATURE) {
-    FEATURE tmp_feature = feature;
-    normalize_feature(tmp_feature);
-    features_.push_back(tmp_feature);
-  } else {
-    assert(0);
-    features_.push_back(feature);
-  }
-  feature_update_counter = 0;
-
-  tracker_state_ = TRACKER_STATE::PROBATION;
-  matched_counter = 1;
-  unmatched_times = 0;
-
-  kalman_state_ = KALMAN_STAGE::UPDATED;
-  BBOX bbox_xyah = bbox_tlwh2xyah(bbox);
-  x_.block(0, 0, DIM_Z, 1) = bbox_xyah.transpose();
-  x_.block(DIM_Z, 0, DIM_Z, 1) = Eigen::MatrixXf::Zero(DIM_Z, 1);
-  P_ = Eigen::MatrixXf::Zero(DIM_X, DIM_X);
-  for (int i = 0; i < DIM_X; i++) {
-    if (ktracker_conf.P_std_x_idx[i] != -1) {
-      /* P(i) = (a[i] * x[idx[i]] + b[i])^2 */
-      P_(i, i) = pow(ktracker_conf.P_std_alpha[i] * x_[ktracker_conf.P_std_x_idx[i]] +
-                         ktracker_conf.P_std_beta[i],
-                     2);
+  int feature_size = feature.size();
+  if (feature_size > 0) {
+    if (USE_COSINE_DISTANCE_FOR_FEATURE) {
+      FEATURE tmp_feature = feature;
+      normalize_feature(tmp_feature);
+      this->features.push_back(tmp_feature);
     } else {
-      /* P(i) = (b[i])^2 */
-      P_(i, i) = pow(ktracker_conf.P_std_beta[i], 2);
+      assert(0);
+      this->features.push_back(feature);
     }
+    this->init_feature = true;
+  } else {
+    this->init_feature = false;
+  }
+  this->feature_update_counter = 0;
+
+  this->tracker_state = k_tracker_state_e::PROBATION;
+  this->matched_counter = 1;
+  this->unmatched_times = 0;
+  this->bounding = false;
+
+  this->kalman_state = kalman_state_e::UPDATED;
+  BBOX bbox_xyah = bbox_tlwh2xyah(bbox);
+  this->x.block(0, 0, DIM_Z, 1) = bbox_xyah.transpose();
+  this->x.block(DIM_Z, 0, DIM_Z, 1) = Eigen::MatrixXf::Zero(DIM_Z, 1);
+  this->P = Eigen::MatrixXf::Zero(DIM_X, DIM_X);
+  for (int i = 0; i < DIM_X; i++) {
+    float X_base = (ktracker_conf.P_x_idx[i] == -1) ? 0.0 : x[ktracker_conf.P_x_idx[i]];
+    this->P(i, i) = pow(ktracker_conf.P_alpha[i] * X_base + ktracker_conf.P_beta[i], 2);
   }
 }
 
@@ -93,41 +50,49 @@ void KalmanTracker::update_bbox(const BBOX &bbox) { this->bbox = bbox; }
 
 void KalmanTracker::update_feature(const FEATURE &feature, int feature_budget_size,
                                    int feature_update_interval) {
+  if (!init_feature) {
+    FEATURE tmp_feature = feature;
+    normalize_feature(tmp_feature);
+    features.push_back(tmp_feature);
+    init_feature = true;
+    feature_update_counter = 0;
+    return;
+  }
   feature_update_counter += 1;
   if (feature_update_counter >= feature_update_interval) {
     if (USE_COSINE_DISTANCE_FOR_FEATURE) {
       FEATURE tmp_feature = feature;
       normalize_feature(tmp_feature);
-      features_.push_back(tmp_feature);
+      features.push_back(tmp_feature);
     } else {
       assert(0);
-      features_.push_back(feature);
+      features.push_back(feature);
     }
     feature_update_counter = 0;
-    if (features_.size() > static_cast<size_t>(feature_budget_size)) {
-      features_.erase(features_.begin());
+    if (features.size() > static_cast<size_t>(feature_budget_size)) {
+      features.erase(features.begin());
     }
   }
 }
 
 void KalmanTracker::update_state(bool is_matched, int max_unmatched_num, int accreditation_thr) {
   if (is_matched) {
-    if (tracker_state_ == TRACKER_STATE::PROBATION) {
+    if (tracker_state == k_tracker_state_e::PROBATION) {
       matched_counter += 1;
       if (matched_counter >= accreditation_thr) {
-        tracker_state_ = TRACKER_STATE::ACCREDITATION;
+        tracker_state = k_tracker_state_e::ACCREDITATION;
       }
     }
     unmatched_times = 0;
   } else {
-    if (tracker_state_ == TRACKER_STATE::PROBATION) {
-      tracker_state_ = TRACKER_STATE::MISS;
+    if (tracker_state == k_tracker_state_e::PROBATION) {
+      tracker_state = k_tracker_state_e::MISS;
       return;
     }
     unmatched_times += 1;
-    kalman_state_ = KALMAN_STAGE::UPDATED;
+    kalman_state = kalman_state_e::UPDATED;
     if (unmatched_times > max_unmatched_num) {
-      tracker_state_ = TRACKER_STATE::MISS;
+      tracker_state = k_tracker_state_e::MISS;
     }
   }
 }
@@ -151,7 +116,7 @@ COST_MATRIX KalmanTracker::getCostMatrix_Feature(const std::vector<KalmanTracker
   }
   for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
     int tracker_idx = Tracker_IDXes[i];
-    const std::vector<FEATURE> &t_features = KTrackers[tracker_idx].features_;
+    const std::vector<FEATURE> &t_features = KTrackers[tracker_idx].features;
     assert(t_features.size() > 0);
 
     FEATURES tracker_features(t_features.size(), feature_size);
@@ -194,8 +159,10 @@ COST_MATRIX KalmanTracker::getCostMatrix_Mahalanobis(
     const KalmanFilter &KF_, const std::vector<KalmanTracker> &K_Trackers,
     const std::vector<BBOX> &BBoxes, const std::vector<int> &Tracker_IDXes,
     const std::vector<int> &BBox_IDXes, const cvai_kalman_filter_config_t &kfilter_conf,
-    float gate_value) {
-  float chi2_threshold = chi2inv95[4];
+    float upper_bound) {
+#if 0
+  float chi2_threshold = kfilter_conf.chi2_threshold;
+#endif
   COST_MATRIX cost_m(Tracker_IDXes.size(), BBox_IDXes.size());
 
   BBOXES measurement_bboxes(BBox_IDXes.size(), 4);
@@ -206,23 +173,22 @@ COST_MATRIX KalmanTracker::getCostMatrix_Mahalanobis(
   for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
     int tracker_idx = Tracker_IDXes[i];
     const KalmanTracker &tracker_ = K_Trackers[tracker_idx];
-    ROW_VECTOR maha2_d = KF_.mahalanobis(tracker_.kalman_state_, tracker_.x_, tracker_.P_,
+    ROW_VECTOR maha2_d = KF_.mahalanobis(tracker_.kalman_state, tracker_.x, tracker_.P,
                                          measurement_bboxes, kfilter_conf);
     for (int j = 0; j < maha2_d.cols(); j++) {
-      cost_m(i, j) = (maha2_d(0, j) > chi2_threshold) ? gate_value : maha2_d(0, j);
+      cost_m(i, j) = (maha2_d(0, j) > upper_bound) ? upper_bound : maha2_d(0, j);
     }
   }
 
   return cost_m;
 }
 
-void KalmanTracker::gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
-                                               const std::vector<KalmanTracker> &K_Trackers,
-                                               const std::vector<BBOX> &BBoxes,
-                                               const std::vector<int> &Tracker_IDXes,
-                                               const std::vector<int> &BBox_IDXes,
-                                               float gate_value) {
-  float chi2_threshold = chi2inv95[4];
+void KalmanTracker::restrictCostMatrix_Mahalanobis(
+    COST_MATRIX &cost_matrix, const KalmanFilter &KF_, const std::vector<KalmanTracker> &K_Trackers,
+    const std::vector<BBOX> &BBoxes, const std::vector<int> &Tracker_IDXes,
+    const std::vector<int> &BBox_IDXes, const cvai_kalman_filter_config_t &kfilter_conf,
+    float upper_bound) {
+  // float chi2_threshold = chi2inv95[4];
   BBOXES measurement_bboxes(BBox_IDXes.size(), 4);
   for (size_t i = 0; i < BBox_IDXes.size(); i++) {
     int bbox_idx = BBox_IDXes[i];
@@ -231,37 +197,12 @@ void KalmanTracker::gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const K
   for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
     int tracker_idx = Tracker_IDXes[i];
     const KalmanTracker &tracker_ = K_Trackers[tracker_idx];
-    ROW_VECTOR maha2_d =
-        KF_.mahalanobis(tracker_.kalman_state_, tracker_.x_, tracker_.P_, measurement_bboxes);
-    for (int j = 0; j < maha2_d.cols(); j++) {
-      if (maha2_d(0, j) > chi2_threshold) {
-        cost_matrix(i, j) = gate_value;
-      }
-    }
-  }
-}
-
-void KalmanTracker::gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
-                                               const std::vector<KalmanTracker> &K_Trackers,
-                                               const std::vector<BBOX> &BBoxes,
-                                               const std::vector<int> &Tracker_IDXes,
-                                               const std::vector<int> &BBox_IDXes,
-                                               const cvai_kalman_filter_config_t &kfilter_conf,
-                                               float gate_value) {
-  float chi2_threshold = chi2inv95[4];
-  BBOXES measurement_bboxes(BBox_IDXes.size(), 4);
-  for (size_t i = 0; i < BBox_IDXes.size(); i++) {
-    int bbox_idx = BBox_IDXes[i];
-    measurement_bboxes.row(i) = bbox_tlwh2xyah(BBoxes[bbox_idx]);
-  }
-  for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
-    int tracker_idx = Tracker_IDXes[i];
-    const KalmanTracker &tracker_ = K_Trackers[tracker_idx];
-    ROW_VECTOR maha2_d = KF_.mahalanobis(tracker_.kalman_state_, tracker_.x_, tracker_.P_,
+    ROW_VECTOR maha2_d = KF_.mahalanobis(tracker_.kalman_state, tracker_.x, tracker_.P,
                                          measurement_bboxes, kfilter_conf);
+    // std::cout << "[" << i << "] mahalanobis:" << std::endl << maha2_d << std::endl;
     for (int j = 0; j < maha2_d.cols(); j++) {
-      if (maha2_d(0, j) > chi2_threshold) {
-        cost_matrix(i, j) = gate_value;
+      if (maha2_d(0, j) > kfilter_conf.chi2_threshold) {
+        cost_matrix(i, j) = upper_bound;
       }
     }
   }
@@ -269,10 +210,10 @@ void KalmanTracker::gateCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const K
 
 BBOX KalmanTracker::getBBox_TLWH() const {
   BBOX bbox_tlwh;
-  bbox_tlwh(2) = x_(2) * x_(3);  // H
-  bbox_tlwh(3) = x_(3);          // W
-  bbox_tlwh(0) = x_(0) - 0.5 * bbox_tlwh(2);
-  bbox_tlwh(1) = x_(1) - 0.5 * bbox_tlwh(3);
+  bbox_tlwh(2) = x(2) * x(3);  // H
+  bbox_tlwh(3) = x(3);         // W
+  bbox_tlwh(0) = x(0) - 0.5 * bbox_tlwh(2);
+  bbox_tlwh(1) = x(1) - 0.5 * bbox_tlwh(3);
   return bbox_tlwh;
 }
 
@@ -282,10 +223,10 @@ int KalmanTracker::get_FeatureUpdateCounter() const { return feature_update_coun
 int KalmanTracker::get_MatchedCounter() const { return matched_counter; }
 
 std::string KalmanTracker::get_INFO_KalmanState() const {
-  switch (kalman_state_) {
-    case KALMAN_STAGE::UPDATED:
+  switch (kalman_state) {
+    case kalman_state_e::UPDATED:
       return std::string("UPDATED");
-    case KALMAN_STAGE::PREDICTED:
+    case kalman_state_e::PREDICTED:
       return std::string("PREDICTED");
     default:
       assert(0);
@@ -294,12 +235,12 @@ std::string KalmanTracker::get_INFO_KalmanState() const {
 }
 
 std::string KalmanTracker::get_INFO_TrackerState() const {
-  switch (tracker_state_) {
-    case TRACKER_STATE::PROBATION:
+  switch (tracker_state) {
+    case k_tracker_state_e::PROBATION:
       return std::string("PROBATION");
-    case TRACKER_STATE::ACCREDITATION:
+    case k_tracker_state_e::ACCREDITATION:
       return std::string("ACCREDITATION");
-    case TRACKER_STATE::MISS:
+    case k_tracker_state_e::MISS:
       return std::string("MISS");
     default:
       assert(0);

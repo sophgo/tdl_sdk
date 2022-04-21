@@ -233,11 +233,11 @@ int main(int argc, char *argv[]) {
   CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
   ds_conf.ktracker_conf.max_unmatched_num = 10;
   ds_conf.ktracker_conf.accreditation_threshold = 10;
-  ds_conf.ktracker_conf.P_std_beta[2] = 0.1;
-  ds_conf.ktracker_conf.P_std_beta[6] = 2.5e-2;
-  ds_conf.kfilter_conf.Q_std_beta[2] = 0.1;
-  ds_conf.kfilter_conf.Q_std_beta[6] = 2.5e-2;
-  ds_conf.kfilter_conf.R_std_beta[2] = 0.1;
+  ds_conf.ktracker_conf.P_beta[2] = 0.1;
+  ds_conf.ktracker_conf.P_beta[6] = 2.5e-2;
+  ds_conf.kfilter_conf.Q_beta[2] = 0.1;
+  ds_conf.kfilter_conf.Q_beta[6] = 2.5e-2;
+  ds_conf.kfilter_conf.R_beta[2] = 0.1;
   CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
 #endif
 

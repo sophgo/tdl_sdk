@@ -40,12 +40,11 @@ COST_VECTOR iou_distance(const BBOX &a, const BBOXES &B) {
   return cost_v;
 }
 
-void gate_cost_matrix(COST_MATRIX &M, float gate, float eps) {
-  float value = gate + eps;
+void restrict_cost_matrix(COST_MATRIX &M, float upper_bound) {
   for (int i = 0; i < M.rows(); i++) {
     for (int j = 0; j < M.cols(); j++) {
-      if (M(i, j) > gate) {
-        M(i, j) = value;
+      if (M(i, j) > upper_bound) {
+        M(i, j) = upper_bound;
       }
     }
   }

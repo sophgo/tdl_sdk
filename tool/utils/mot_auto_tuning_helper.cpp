@@ -133,7 +133,7 @@ CVI_S32 OPTIMIZE_CONFIG_1(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t 
     GET_CONFIG_BY_PARAMS_1(tmp_config, params, idx);
     CVI_AI_DeepSORT_Init(ai_handle, false);
     CVI_AI_DeepSORT_SetConfig(ai_handle, &tmp_config, -1, false);
-    RUN_MOT_EVALUATION(ai_handle, args, tmp_performance);
+    RUN_MOT_EVALUATION(ai_handle, args, tmp_performance, false, NULL);
     printf("iter[%u]: score[%.4lf] (coverage rate[%.4lf], stable ids[%u], total entropy[%.4lf])\n",
            idx_generator.counter, tmp_performance.score, tmp_performance.coverage_rate,
            tmp_performance.stable_id_num, tmp_performance.total_entropy);
@@ -153,48 +153,48 @@ CVI_S32 GET_CONFIG_BY_PARAMS_1(cvai_deepsort_config_t &config,
                                const MOT_GRID_SEARCH_PARAMS_t &params,
                                const std::vector<uint32_t> &idxes) {
   CVI_AI_DeepSORT_GetDefaultConfig(&config);
-  config.ktracker_conf.P_std_alpha[0] = params.P_a_013[idxes[0]];
-  config.ktracker_conf.P_std_alpha[1] = params.P_a_013[idxes[0]];
-  config.ktracker_conf.P_std_alpha[2] = params.P_a_2[idxes[1]];
-  config.ktracker_conf.P_std_alpha[3] = params.P_a_013[idxes[0]];
-  config.ktracker_conf.P_std_alpha[4] = params.P_a_013[idxes[2]];
-  config.ktracker_conf.P_std_alpha[5] = params.P_a_013[idxes[2]];
-  config.ktracker_conf.P_std_alpha[6] = params.P_a_2[idxes[3]];
-  config.ktracker_conf.P_std_alpha[7] = params.P_a_013[idxes[2]];
-  config.ktracker_conf.P_std_beta[0] = params.P_b_013[idxes[4]];
-  config.ktracker_conf.P_std_beta[1] = params.P_b_013[idxes[4]];
-  config.ktracker_conf.P_std_beta[2] = params.P_b_2[idxes[5]];
-  config.ktracker_conf.P_std_beta[3] = params.P_b_013[idxes[4]];
-  config.ktracker_conf.P_std_beta[4] = params.P_b_013[idxes[6]];
-  config.ktracker_conf.P_std_beta[5] = params.P_b_013[idxes[6]];
-  config.ktracker_conf.P_std_beta[6] = params.P_b_2[idxes[7]];
-  config.ktracker_conf.P_std_beta[7] = params.P_b_013[idxes[6]];
+  config.ktracker_conf.P_alpha[0] = params.P_a_013[idxes[0]];
+  config.ktracker_conf.P_alpha[1] = params.P_a_013[idxes[0]];
+  config.ktracker_conf.P_alpha[2] = params.P_a_2[idxes[1]];
+  config.ktracker_conf.P_alpha[3] = params.P_a_013[idxes[0]];
+  config.ktracker_conf.P_alpha[4] = params.P_a_013[idxes[2]];
+  config.ktracker_conf.P_alpha[5] = params.P_a_013[idxes[2]];
+  config.ktracker_conf.P_alpha[6] = params.P_a_2[idxes[3]];
+  config.ktracker_conf.P_alpha[7] = params.P_a_013[idxes[2]];
+  config.ktracker_conf.P_beta[0] = params.P_b_013[idxes[4]];
+  config.ktracker_conf.P_beta[1] = params.P_b_013[idxes[4]];
+  config.ktracker_conf.P_beta[2] = params.P_b_2[idxes[5]];
+  config.ktracker_conf.P_beta[3] = params.P_b_013[idxes[4]];
+  config.ktracker_conf.P_beta[4] = params.P_b_013[idxes[6]];
+  config.ktracker_conf.P_beta[5] = params.P_b_013[idxes[6]];
+  config.ktracker_conf.P_beta[6] = params.P_b_2[idxes[7]];
+  config.ktracker_conf.P_beta[7] = params.P_b_013[idxes[6]];
 
-  config.kfilter_conf.Q_std_alpha[0] = params.Q_a_013[idxes[8]];
-  config.kfilter_conf.Q_std_alpha[1] = params.Q_a_013[idxes[8]];
-  config.kfilter_conf.Q_std_alpha[2] = params.Q_a_2[idxes[9]];
-  config.kfilter_conf.Q_std_alpha[3] = params.Q_a_013[idxes[8]];
-  config.kfilter_conf.Q_std_alpha[4] = params.Q_a_013[idxes[10]];
-  config.kfilter_conf.Q_std_alpha[5] = params.Q_a_013[idxes[10]];
-  config.kfilter_conf.Q_std_alpha[6] = params.Q_a_2[idxes[11]];
-  config.kfilter_conf.Q_std_alpha[7] = params.Q_a_013[idxes[10]];
-  config.kfilter_conf.Q_std_beta[0] = params.Q_b_013[idxes[12]];
-  config.kfilter_conf.Q_std_beta[1] = params.Q_b_013[idxes[12]];
-  config.kfilter_conf.Q_std_beta[2] = params.Q_b_2[idxes[13]];
-  config.kfilter_conf.Q_std_beta[3] = params.Q_b_013[idxes[12]];
-  config.kfilter_conf.Q_std_beta[4] = params.Q_b_013[idxes[14]];
-  config.kfilter_conf.Q_std_beta[5] = params.Q_b_013[idxes[14]];
-  config.kfilter_conf.Q_std_beta[6] = params.Q_b_2[idxes[15]];
-  config.kfilter_conf.Q_std_beta[7] = params.Q_b_013[idxes[14]];
+  config.kfilter_conf.Q_alpha[0] = params.Q_a_013[idxes[8]];
+  config.kfilter_conf.Q_alpha[1] = params.Q_a_013[idxes[8]];
+  config.kfilter_conf.Q_alpha[2] = params.Q_a_2[idxes[9]];
+  config.kfilter_conf.Q_alpha[3] = params.Q_a_013[idxes[8]];
+  config.kfilter_conf.Q_alpha[4] = params.Q_a_013[idxes[10]];
+  config.kfilter_conf.Q_alpha[5] = params.Q_a_013[idxes[10]];
+  config.kfilter_conf.Q_alpha[6] = params.Q_a_2[idxes[11]];
+  config.kfilter_conf.Q_alpha[7] = params.Q_a_013[idxes[10]];
+  config.kfilter_conf.Q_beta[0] = params.Q_b_013[idxes[12]];
+  config.kfilter_conf.Q_beta[1] = params.Q_b_013[idxes[12]];
+  config.kfilter_conf.Q_beta[2] = params.Q_b_2[idxes[13]];
+  config.kfilter_conf.Q_beta[3] = params.Q_b_013[idxes[12]];
+  config.kfilter_conf.Q_beta[4] = params.Q_b_013[idxes[14]];
+  config.kfilter_conf.Q_beta[5] = params.Q_b_013[idxes[14]];
+  config.kfilter_conf.Q_beta[6] = params.Q_b_2[idxes[15]];
+  config.kfilter_conf.Q_beta[7] = params.Q_b_013[idxes[14]];
 
-  config.kfilter_conf.R_std_alpha[0] = params.R_a_013[idxes[16]];
-  config.kfilter_conf.R_std_alpha[1] = params.R_a_013[idxes[16]];
-  config.kfilter_conf.R_std_alpha[2] = params.R_a_2[idxes[17]];
-  config.kfilter_conf.R_std_alpha[3] = params.R_a_013[idxes[16]];
-  config.kfilter_conf.R_std_beta[0] = params.R_b_013[idxes[18]];
-  config.kfilter_conf.R_std_beta[1] = params.R_b_013[idxes[18]];
-  config.kfilter_conf.R_std_beta[2] = params.R_b_2[idxes[19]];
-  config.kfilter_conf.R_std_beta[3] = params.R_b_013[idxes[18]];
+  config.kfilter_conf.R_alpha[0] = params.R_a_013[idxes[16]];
+  config.kfilter_conf.R_alpha[1] = params.R_a_013[idxes[16]];
+  config.kfilter_conf.R_alpha[2] = params.R_a_2[idxes[17]];
+  config.kfilter_conf.R_alpha[3] = params.R_a_013[idxes[16]];
+  config.kfilter_conf.R_beta[0] = params.R_b_013[idxes[18]];
+  config.kfilter_conf.R_beta[1] = params.R_b_013[idxes[18]];
+  config.kfilter_conf.R_beta[2] = params.R_b_2[idxes[19]];
+  config.kfilter_conf.R_beta[3] = params.R_b_013[idxes[18]];
 
   config.max_distance_iou = params.max_IOU_distance[idxes[20]];
   config.ktracker_conf.max_unmatched_num = params.max_unmatched[idxes[21]];
