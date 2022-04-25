@@ -22,8 +22,10 @@ ifndef TPU_PATH
 $(error "Please set tpu sdk root path to TPU_PATH)
 endif
 
+ifneq ($(CHIP), MARS)
 ifndef CVI_TRACER_PATH
 $(error "Please set cvi_tracer sdk root path to CVI_TRACER_PATH)
+endif
 endif
 endif
 
@@ -33,9 +35,11 @@ SDK_VER ?= 64bit
 CROSS_COMPILE_32 ?= arm-linux-gnueabihf-
 CROSS_COMPILE_64 ?= aarch64-linux-gnu-
 CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
+CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
+CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
 
 # link OpenCV shared object only if platform is cv183X series
-ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
+ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520 CV183X MARS))
 LINK_OPENCV = 1
 else
 LINK_OPENCV = 0
@@ -53,6 +57,14 @@ else ifeq ($(SDK_VER), uclibc)
 ARCH=uclibc
 CROSS_COMPILE = $(CROSS_COMPILE_32_UCLIBC)
 CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
+else ifeq ($(SDK_VER), glibc_riscv64)
+ARCH=riscv64
+CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_GLIBC)
+CFLAGS += -march=rv64imafdcvxthead -mabi=lp64dv
+else ifeq ($(SDK_VER), musl_riscv64)
+ARCH=riscv64
+CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_MUSL)
+CFLAGS += -march=rv64imafd
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif
@@ -65,12 +77,15 @@ MW_INC_PATH = $(MW_PATH)/include
 MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
 MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
 
-ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
-MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
-MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
-else
+ifeq ($(CHIP), CV182X)
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
+else ifeq ($(CHIP), MARS)
+MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lvenc -lae -laf -lawb -lsys -lsns_full -lini -lmisc
+MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/mars/
+else
+MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
+MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
 endif
 #####################################################
 
@@ -149,22 +164,38 @@ $(info TPU library path: $(TPU_LIB_PATH))
 $(info CFLAGS: $(CFLAGS))
 $(info CC: $(CC))
 $(info CXX: $(CXX))
+$(info USE_IVE: $(USE_IVE))
 $(info ---------------------------------------)
 endif
 
+ifeq ($(CHIP), MARS)
+CFLAGS += -DMARS
+ifeq ($(SYSTEM_PROCESSOR), RISCV)
+MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
+else ifeq ($(SYSTEM_PROCESSOR), ARM)
+MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
+endif
+endif
 
 RTSP_LIBS = -lcvi_rtsp
 AISDK_BASIC_LIBS = -lcviai
 AISDK_APP_LIBS = -lcviai_app
 
 TPU_LIBS = -lcnpy  -lcvikernel  -lcvimath  -lcviruntime  -lz
+
+ifeq ($(USE_IVE), ON)
 IVE_LIBS = -lcvi_ive_tpu
+endif
 
 SRCS := $(wildcard $(PWD)/*.c)
 OBJS := $(SRCS:%.c=%.o)
 DEPS = $(SRCS:.c=.d)
 
-SAMPLE_LIBS = $(AISDK_BASIC_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(CVI_TRACER_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
+SAMPLE_LIBS = $(AISDK_BASIC_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
+
+ifneq ($(CHIP), MARS)
+SAMPLE_LIBS += -L$(CVI_TRACER_LIB_PATH)
+endif
 
 ifeq ($(LINK_OPENCV), 1)
 SAMPLE_LIBS += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
@@ -173,8 +204,25 @@ endif
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH)
 SAMPLE_APP_LIBS = -L../tmp_install/lib $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app
 
-CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH) -I$(CVI_TRACER_INC_PATH)
+CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH)
+
+ifneq ($(CHIP), MARS)
+CFLAGS += -I$(CVI_TRACER_INC_PATH)
+endif
+
+ifeq ($(USE_IVE), ON)
+CFLAGS += -I$(IVE_SDK_INC_PATH)
+endif
+
+ifeq ($(CHIP), MARS)
+CFLAGS += -I$(MARS_INC_PATH)
+endif
+
 CFLAGS += $(THIRD_PARTY_INC_FLAGS)
+
+ifeq ($(USE_IVE), ON)
+CFLAGS += -DUSE_IVE
+endif
 
 TARGETS_VI_SAMPLE := $(shell find . -type f -name 'sample_vi_*.c' -exec basename {} .c ';')
 TARGETS_AUDIO_SAMPLE := $(shell find . -type f -name 'sample_aud_*.c' -exec basename {} .c ';')

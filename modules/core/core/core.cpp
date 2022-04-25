@@ -204,10 +204,12 @@ size_t Core::getNumInputTensor() const { return static_cast<size_t>(mp_mi->in.nu
 
 size_t Core::getNumOutputTensor() const { return static_cast<size_t>(mp_mi->out.num); }
 
+#ifdef USE_IVE
 int Core::setIveInstance(IVE_HANDLE handle) {
   ive_handle = handle;
   return CVIAI_SUCCESS;
 }
+#endif
 
 int Core::setVpssTimeout(uint32_t timeout) {
   m_vpss_timeout = timeout;

@@ -29,9 +29,11 @@ SDK_VER ?= 64bit
 CROSS_COMPILE_32 ?= arm-linux-gnueabihf-
 CROSS_COMPILE_64 ?= aarch64-linux-gnu-
 CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
+CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
+CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
 
 # link OpenCV shared object only if platform is cv183X series
-ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520))
+ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520 CV183X MARS))
 LINK_OPENCV = 1
 else
 LINK_OPENCV = 0
@@ -49,6 +51,14 @@ else ifeq ($(SDK_VER), uclibc)
 ARCH=uclibc
 CROSS_COMPILE = $(CROSS_COMPILE_32_UCLIBC)
 CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
+else ifeq ($(SDK_VER), glibc_riscv64)
+ARCH=riscv64
+CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_GLIBC)
+CFLAGS += -march=rv64imafdcvxthead -mabi=lp64dv
+else ifeq ($(SDK_VER), musl_riscv64)
+ARCH=riscv64
+CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_MUSL)
+CFLAGS += -march=rv64imafd
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif
@@ -71,6 +81,14 @@ AISDK_INC_PATH = $(AISDK_ROOT_PATH)/include/cviai
 #####################################################
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
 
+ifeq ($(CHIP), MARS)
+CFLAGS += -DMARS
+ifeq ($(SYSTEM_PROCESSOR), RISCV)
+MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
+else ifeq ($(SYSTEM_PROCESSOR), ARM)
+MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
+endif
+endif
 
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -fdiagnostics-color=always -s 
 
@@ -94,7 +112,16 @@ AISDK_LIBS = -lcviai
 
 AI_APP_LIBS = $(AISDK_LIBS) -L$(AISDK_LIB_PATH) -lpthread
 
-CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH) -I$(IVE_SDK_INC_PATH)
+CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)
+
+ifeq ($(USE_IVE), ON)
+CFLAGS += -I$(IVE_SDK_INC_PATH)
+endif
+
+ifeq ($(CHIP), MARS)
+CFLAGS += -I$(MARS_INC_PATH)
+endif
+
 CFLAGS += -Wl,-gc-sections
 
 ifeq ($(CHECK_SDK), 1)
@@ -111,6 +138,7 @@ $(info TPU library path: $(TPU_LIB_PATH))
 $(info CFLAGS: $(CFLAGS))
 $(info CC: $(CC))
 $(info CXX: $(CXX))
+$(info USE_IVE: $(USE_IVE))
 $(info ---------------------------------------)
 endif
 

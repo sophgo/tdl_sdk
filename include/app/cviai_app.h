@@ -5,7 +5,11 @@
 #include "face_capture/face_capture_type.h"
 
 #include <cvi_comm_vb.h>
+#ifdef MARS
+#include <linux/cvi_comm_vpss.h>
+#else
 #include <cvi_comm_vpss.h>
+#endif
 #include <cvi_sys.h>
 
 typedef struct {

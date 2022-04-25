@@ -7,9 +7,9 @@
 #include "cviai.h"
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
-
+#ifndef MARS
 #include "cvi_tracer.h"
-
+#endif
 static bool stopped = false;
 
 static void SampleHandleSig(CVI_S32 signo) {

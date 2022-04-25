@@ -18,35 +18,108 @@ echo "Creating tmp working directory."
 
 if [[ "$SDK_VER" == "uclibc" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-uclibc-linux.cmake
-elif [[ "$SDK_VER" == "64bit" ]]; then
-    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
+    SYSTEM_PROCESSOR=ARM
 elif [[ "$SDK_VER" == "32bit" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
+    SYSTEM_PROCESSOR=ARM
+elif [[ "$SDK_VER" == "64bit" ]]; then
+    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
+    SYSTEM_PROCESSOR=ARM64
+elif [[ "$SDK_VER" == "glibc_riscv64" ]]; then
+    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-riscv64-linux.cmake
+    SYSTEM_PROCESSOR=RISCV
+elif [[ "$SDK_VER" == "musl_riscv64" ]]; then
+    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-riscv64-musl.cmake
+    SYSTEM_PROCESSOR=RISCV
 else
     echo "Wrong SDK_VER=$SDK_VER"
     exit 1
 fi
 
 # don't shrink opencv size if platform is 183x series
-if [[ "$CHIP_ARCH" != "CV183X" ]]; then
+if [[ "$CHIP_ARCH" == "CV182X" ]]; then
     SHRINK_OPENCV_SIZE=ON
     OPENCV_INSTALL_PATH=""
 fi
 
-$CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
-                                -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-                                -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
-                                -DENABLE_CVIAI_CV_UTILS=ON \
-                                -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
-                                -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
-                                -DIVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
-                                -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
-                                -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
-                                -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
-                                -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE \
-                                -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
-                                -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE"
+if [[ "$CHIP_ARCH" == "MARS" ]]; then
+    USE_IVE=OFF
+else
+    USE_IVE=ON
+fi
 
+if [[ "$CHIP_ARCH" == "MARS" ]]; then
+    if [[ "$SYSTEM_PROCESSOR" == "RISCV" ]]; then
+        KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/riscv/usr/
+        $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
+      	                                -DCVI_SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR \
+                                        -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+                                        -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
+                                        -DENABLE_CVIAI_CV_UTILS=ON \
+                                        -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
+                                        -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
+                                        -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
+                                        -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
+                                        -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
+                                        -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE \
+                                        -DKERNEL_ROOT=$KERNEL_ROOT \
+                                        -DUSE_IVE=$USE_IVE \
+                                        -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
+                                        -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE"
+    elif [[ "$SYSTEM_PROCESSOR" == "ARM" ]]; then
+        KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr/
+        $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
+      	                                -DCVI_SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR \
+                                        -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+                                        -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
+                                        -DENABLE_CVIAI_CV_UTILS=ON \
+                                        -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
+                                        -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
+                                        -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
+                                        -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
+                                        -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
+                                        -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE \
+                                        -DKERNEL_ROOT=$KERNEL_ROOT \
+                                        -DUSE_IVE=$USE_IVE \
+                                        -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
+                                        -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE"
+
+    fi
+else
+    if [[ "$USE_IVE" == "ON" ]]; then
+        $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
+                                        -DCVI_SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR \
+                                        -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+                                        -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
+                                        -DENABLE_CVIAI_CV_UTILS=ON \
+                                        -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
+                                        -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
+                                        -DIVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
+                                        -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
+                                        -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
+                                        -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
+                                        -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE \
+                                        -DUSE_IVE=$USE_IVE \
+                                        -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
+                                        -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE"
+    else
+        $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
+                                        -DCVI_SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR \
+                                        -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+                                        -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
+                                        -DENABLE_CVIAI_CV_UTILS=ON \
+                                        -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
+                                        -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
+                                        -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
+                                        -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
+                                        -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
+                                        -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE \
+                                        -DUSE_IVE=$USE_IVE \
+                                        -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
+                                        -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE"
+    fi
+
+fi   
 ninja -j8 || exit 1
 ninja install || exit 1
 popd
@@ -65,20 +138,15 @@ for v in $CVI_TARGET_PACKAGES_LIBDIR; do
     fi
 done
 
-if [ -z "${CVI_TRACER_ROOT_PATH}" ]; then
-    echo "cannot find cvitracer path from environment varables: CVI_TARGET_PACKAGES_LIBDIR and CVI_TARGET_PACKAGES_INCLUDE."
-    exit 1
-fi
-
 pushd ${AI_SDK_INSTALL_PATH}/module/app
-make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" -j10 || exit 1
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_IVE=$USE_IVE SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR CHIP=$CHIP_ARCH -j10 || exit 1
 make install || exit 1
 make clean || exit 1
 echo "done"
 popd
 
 pushd ${AI_SDK_INSTALL_PATH}/sample
-make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" -j10 || exit 1
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_IVE=$USE_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR USE_IVE=$USE_IVE -j10 || exit 1
 make install || exit 1
 make clean || exit 1
 echo "done"

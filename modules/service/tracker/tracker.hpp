@@ -1,5 +1,9 @@
 #pragma once
+#ifdef MARS
+#include <linux/cvi_type.h>
+#else
 #include <cvi_type.h>
+#endif
 #include <map>
 #include <string>
 #include <utility>

@@ -2,8 +2,14 @@
 #include "core/face/cvai_face_types.h"
 #include "core/object/cvai_object_types.h"
 
+#ifdef MARS
+#include <linux/cvi_comm_video.h>
+#else
 #include <cvi_comm_video.h>
+#endif
+#ifdef USE_IVE
 #include "ive/cvi_draw_ive.h"
+#endif
 #include "service/cviai_service_types.h"
 
 #define DEFAULT_RECT_COLOR_R (53. / 255.)
@@ -34,6 +40,7 @@ template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
              cvai_service_brush_t brush);
 
+#ifdef USE_IVE
 template <typename T>
 int DrawMetaIVE(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
                 IVE_DRAW_RECT_CTRL *pstDrawRectCtrl);
@@ -41,6 +48,7 @@ int DrawMetaIVE(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawTex
 template <typename T>
 void getDrawRectCTRL(const T *meta, VIDEO_FRAME_INFO_S *drawFrame,
                      IVE_DRAW_RECT_CTRL *pstDrawRectCtrl, IVE_COLOR_S color);
+#endif
 
 int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame);
 

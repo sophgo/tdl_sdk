@@ -2,7 +2,11 @@
 #include "core/core/cvai_core_types.h"
 #include "rescale_utils.hpp"
 
+#ifdef MARS
+#include <linux/cvi_comm_video.h>
+#else
 #include <cvi_comm_video.h>
+#endif
 #include <cviruntime.h>
 #include <algorithm>
 #include <vector>

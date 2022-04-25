@@ -3,8 +3,11 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#ifdef MARS
+#include "linux/cvi_comm_video.h"
+#else
 #include "cvi_comm_video.h"
-
+#endif
 /**
  * \defgroup core_cviaicore CVIAI Core Module
  */

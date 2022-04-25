@@ -1,6 +1,11 @@
 #pragma once
 
+#ifdef MARS
+#include <linux/cvi_comm_vpss.h>
+#include <linux/cvi_errno.h>
+#else
 #include <cvi_comm_vpss.h>
+#endif
 #include <cviruntime.h>
 
 namespace cviai {

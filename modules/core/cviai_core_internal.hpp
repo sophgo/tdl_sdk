@@ -6,9 +6,11 @@
 #include "core/vpss_engine.hpp"
 #include "deepsort/cvi_deepsort.hpp"
 #include "fall_detection/fall_detection.hpp"
+#ifdef USE_IVE
 #include "ive/ive.h"
 #include "motion_detection/md.hpp"
 #include "tamper_detection/tamper_detection.hpp"
+#endif
 
 typedef struct {
   cviai::Core *instance = nullptr;
@@ -27,11 +29,15 @@ struct hash<CVI_AI_SUPPORTED_MODEL_E> {
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
   std::vector<cviai_model_t> custom_cont;
+#ifdef USE_IVE
   IVE_HANDLE ive_handle = NULL;
+#endif
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   uint32_t vpss_timeout_value = 100;  // default value.
+#ifdef USE_IVE
   TamperDetectorMD *td_model = nullptr;
   MotionDetection *md_model = nullptr;
+#endif
   DeepSORT *ds_tracker = nullptr;
   FallMD *fall_model = nullptr;
   bool use_gdc_wrap = false;

@@ -15,7 +15,11 @@
 #include "core/object/cvai_object_types.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
+#ifdef MARS
+#include "linux/cvi_comm_vpss.h"
+#else
 #include "cvi_comm_vpss.h"
+#endif
 #include "cvi_sys.h"
 #include "cviruntime.h"
 #include "misc.hpp"

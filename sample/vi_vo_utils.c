@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include "core/utils/vpss_helper.h"
 
+#include <endian.h>
+#include <fcntl.h>
+
 #define PIXEL_FORMAT_VO VI_PIXEL_FORMAT
 #define VO_WIDTH 1280
 #define VO_HEIGHT 720
@@ -25,6 +28,7 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
 CVI_S32 DestoryOutput(OutputContext *context);
 
 static int low_mem_profile = 1;
+static VI_PIPE ViPipe = 0;
 
 #define ION_TOTALMEM "/sys/firmware/devicetree/base/reserved-memory/ion/size"
 static void load_ion_totalmem(void) {
@@ -107,7 +111,11 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
 
 void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
   DestoryOutput(&vs_ctx->outputContext);
+#ifdef MARS
+  SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
+#else
   SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
+#endif
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   abChnEnable[vs_ctx->vpssConfigs.vpssChnAI] = CVI_TRUE;
   abChnEnable[vs_ctx->vpssConfigs.vpssChnVideoOutput] = CVI_TRUE;
@@ -117,6 +125,72 @@ void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
                PIXEL_FORMAT_E aiFormat, CVI_U32 *devNum) {
+#ifdef MARS
+  SAMPLE_INI_CFG_S stIniCfg = {};
+  DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
+  PIXEL_FORMAT_E enPixFormat = VI_PIXEL_FORMAT;
+  VIDEO_FORMAT_E enVideoFormat = VIDEO_FORMAT_LINEAR;
+  COMPRESS_MODE_E enCompressMode = (low_mem_profile == 1) ? COMPRESS_MODE_TILE : COMPRESS_MODE_NONE;
+  VI_VPSS_MODE_E enMastPipeMode = VI_OFFLINE_VPSS_OFFLINE;
+
+  memset(&stIniCfg, 0, sizeof(SAMPLE_INI_CFG_S));
+  stIniCfg.enSource = VI_PIPE_FRAME_SOURCE_DEV;
+  stIniCfg.devNum = 2;
+  stIniCfg.enSnsType[0] = SONY_IMX327_MIPI_2M_30FPS_12BIT;
+  stIniCfg.enWDRMode[0] = WDR_MODE_NONE;
+  stIniCfg.s32BusId[0] = 3;
+  stIniCfg.MipiDev[0] = 0xFF;
+  stIniCfg.enSnsType[1] = SONY_IMX327_SLAVE_MIPI_2M_30FPS_12BIT;
+  stIniCfg.s32BusId[1] = 0;
+  stIniCfg.MipiDev[1] = 0xFF;
+
+  VPSS_MODE_E enVPSSMode = VPSS_MODE_DUAL;
+  VB_CONFIG_S stVbConf;
+  PIC_SIZE_E enPicSize;
+  CVI_U32 u32BlkSize;
+  CVI_S32 s32Ret = CVI_SUCCESS;
+
+  VI_DEV ViDev = 0;
+  VI_CHN ViChn = 0;
+  CVI_S32 s32WorkSnsId = 0;
+  VI_PIPE_ATTR_S stPipeAttr;
+
+  // Get config from ini if found.
+  if (SAMPLE_COMM_VI_ParseIni(&stIniCfg)) {
+    SAMPLE_PRT("Parse complete\n");
+  }
+
+  *devNum = stIniCfg.devNum;
+  /************************************************
+   * step1:  Config VI
+   ************************************************/
+  SAMPLE_COMM_VI_GetSensorInfo(pstViConfig);
+
+  pstViConfig->s32WorkingViNum = 1 + s32WorkSnsId;
+  pstViConfig->as32WorkingViId[s32WorkSnsId] = s32WorkSnsId;
+  pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.enSnsType =
+      (s32WorkSnsId == 0) ? stIniCfg.enSnsType[0] : stIniCfg.enSnsType[1];
+  pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.MipiDev =
+      (s32WorkSnsId == 0) ? stIniCfg.MipiDev[0] : stIniCfg.MipiDev[1];
+  pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.s32BusId =
+      (s32WorkSnsId == 0) ? stIniCfg.s32BusId[0] : stIniCfg.s32BusId[1];
+
+  pstViConfig->astViInfo[s32WorkSnsId].stDevInfo.ViDev = 0;
+  pstViConfig->astViInfo[s32WorkSnsId].stDevInfo.enWDRMode =
+      (s32WorkSnsId == 0) ? stIniCfg.enWDRMode[0] : stIniCfg.enWDRMode[1];
+
+  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.enMastPipeMode = enMastPipeMode;
+  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.aPipe[0] = s32WorkSnsId;
+  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.aPipe[1] = -1;
+  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.aPipe[2] = -1;
+  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.aPipe[3] = -1;
+
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.ViChn = ViChn;
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enPixFormat = enPixFormat;
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enDynamicRange = enDynamicRange;
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enVideoFormat = enVideoFormat;
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode = enCompressMode;
+#else
   SAMPLE_INI_CFG_S stIniCfg = {};
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
   PIXEL_FORMAT_E enPixFormat = VI_PIXEL_FORMAT;
@@ -143,7 +217,6 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   CVI_S32 s32Ret = CVI_SUCCESS;
 
   VI_DEV ViDev = 0;
-  VI_PIPE ViPipe = 0;
   VI_CHN ViChn = 0;
   CVI_S32 s32WorkSnsId = 0;
   VI_PIPE_ATTR_S stPipeAttr;
@@ -210,7 +283,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enDynamicRange = enDynamicRange;
   pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enVideoFormat = enVideoFormat;
   pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode = enCompressMode;
-
+#endif
   /************************************************
    * step2:  Get input size
    ************************************************/
@@ -479,8 +552,11 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
   }
-
+#ifdef MARS
+  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
+#else
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
+#endif
   if (s32Ret != CVI_SUCCESS) {
     printf("vi bind vpss failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;

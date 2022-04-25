@@ -624,7 +624,7 @@ template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO
                                      const bool drawText, cvai_service_brush_t brush);
 template int DrawMeta<cvai_dms_od_t>(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
                                      const bool drawText, cvai_service_brush_t brush);
-
+#ifdef USE_IVE
 template <typename T>
 void getDrawRectCTRL(const T *meta, VIDEO_FRAME_INFO_S *drawFrame,
                      IVE_DRAW_RECT_CTRL *pstDrawRectCtrl, IVE_COLOR_S color) {
@@ -751,7 +751,7 @@ template int DrawMetaIVE<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_I
                                         const bool drawText, IVE_DRAW_RECT_CTRL *pstDrawRectCtrl);
 template int DrawMetaIVE<cvai_dms_od_t>(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
                                         const bool drawText, IVE_DRAW_RECT_CTRL *pstDrawRectCtrl);
-
+#endif
 int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);

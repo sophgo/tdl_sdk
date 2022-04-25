@@ -19,13 +19,25 @@ if("${CVI_PLATFORM}" STREQUAL "")
   message(AUTHOR_WARNING "Platform not provided, set to ${CVI_PLATFORM}.")
 endif()
 
-if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X"))
+
+if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS"))
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
 
+#if("${CVI_SYSTEM_PROCESSOR}" STREQUAL "RISCV")
+if("${CVI_PLATFORM}" STREQUAL "MARS")
+  add_definitions(-DMARS)
+  set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
+  set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
+endif()
+
+if("${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM" OR "${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM64")
+  add_definitions(-DUSE_NEON)
+  set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
+  set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
+endif()
+
 set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
-set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
-set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE} ${CMAKE_C_INIT}" )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_INIT}" )
@@ -105,24 +117,36 @@ include(cmake/mlir.cmake)
 # Check if middleware exists.
 include (cmake/middleware.cmake)
 
-# Check if ive exists.
-include (${IVE_SDK_ROOT}/cmake/ive.cmake)
-
-
-include (cmake/cvi_rtsp.cmake)
-
 # 3rdparty libraries
 include(cmake/thirdparty.cmake)
 
-# 3rdpart includes
-include_directories(${IVE_INCLUDES}
-                    ${OPENCV_INCLUDES}
-                    ${MLIR_INCLUDES}
-                    ${MIDDLEWARE_INCLUDES}
-                    ${cvi_rtsp_INCLUDE})
+if(USE_IVE)
+  add_definitions(-DUSE_IVE)
+  # Check if ive exists.
+  include (${IVE_SDK_ROOT}/cmake/ive.cmake)
+
+  include (cmake/cvi_rtsp.cmake)
+
+  # 3rdpart includes
+  include_directories(${IVE_INCLUDES}
+                      ${OPENCV_INCLUDES}
+                      ${MLIR_INCLUDES}
+                      ${MIDDLEWARE_INCLUDES}
+                      ${cvi_rtsp_INCLUDE})
+else()
+  include (cmake/cvi_rtsp.cmake)
+  include_directories(${OPENCV_INCLUDES}
+                      ${MLIR_INCLUDES}
+                      ${MIDDLEWARE_INCLUDES}
+                      ${cvi_rtsp_INCLUDE})
+endif()
+
 add_subdirectory(modules)
-add_subdirectory(sample)
 add_subdirectory(regression)
 
+
+if(NOT ("${CVI_PLATFORM}" STREQUAL "MARS" AND "${CVI_SYSTEM_PROCESSOR}" STREQUAL "RISCV"))
+add_subdirectory(sample)
+endif()
 # Install doc
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc DESTINATION doc)

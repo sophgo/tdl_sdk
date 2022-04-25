@@ -1,5 +1,9 @@
 #include "wider_face.hpp"
+#ifdef MARS
+#include <linux/cvi_type.h>
+#else
 #include <cvi_type.h>
+#endif
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>

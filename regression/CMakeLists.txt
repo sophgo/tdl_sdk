@@ -71,7 +71,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
@@ -89,7 +88,6 @@ set(UnitTests
   reg_daily_lpr
   reg_daily_mot
   reg_daily_reid
-  reg_daily_td
   reg_daily_thermal_fd
   reg_daily_thermal_person_detection
   reg_daily_core
@@ -108,6 +106,12 @@ set(UnitTests
   reg_daily_incarod
 )
 
+if(USE_IVE)
+set(UnitTests ${UnitTests}
+  reg_daily_td
+)
+endif()
+
 set(UnitTest_SRCS
   cviai_test
   raii
@@ -115,8 +119,18 @@ set(UnitTest_SRCS
   ${UnitTests}
 )
 
-if("${CVI_PLATFORM}" STREQUAL "CV182X")
+if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+endif()
+
+if("${CVI_PLATFORM}" STREQUAL "MARS")
+set(SAMPLE_LIBS ${SAMPLE_LIBS}
+    ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
+)
+else()
+set(SAMPLE_LIBS ${SAMPLE_LIBS}
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
+)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
@@ -134,14 +148,11 @@ buildninstall(NAME reg_thermal INC ${REG_INCLUDES} DEPS cviai cviai_evaluation $
 buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_object_intersect INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} SRCS od_utils DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
@@ -151,8 +162,16 @@ buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai  cviai_eval
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cviai  cviai_evaluation gtest_main ${SAMPLE_LIBS})
 buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 
+if(USE_IVE)
+buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_object_intersect INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
+endif()
+
 if ("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")
+elseif("${CVI_PLATFORM}" STREQUAL "MARS")
+  set(DAILY_REGRESSION_ASSETS "assets_mars")
 else()
   set(DAILY_REGRESSION_ASSETS "assets_182x")
 endif()

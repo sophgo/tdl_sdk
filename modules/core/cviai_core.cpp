@@ -21,7 +21,6 @@
 #include "liveness/liveness.hpp"
 #include "mask_classification/mask_classification.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
-#include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "osnet/osnet.hpp"
@@ -33,6 +32,10 @@
 #include "thermal_person_detection/thermal_person.hpp"
 #include "utils/image_utils.hpp"
 #include "yawn_classification/yawn_classification.hpp"
+
+#ifdef USE_IVE
+#include "motion_detection/md.hpp"
+#endif
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -63,7 +66,7 @@ Core *create_model(const ModelParams &params, Args... arg) {
   instance->setVpssTimeout(params.vpss_timeout_value);
   return instance;
 }
-
+#ifdef USE_IVE
 static void createIVEHandleIfNeeded(IVE_HANDLE *ive_handle) {
   if (*ive_handle == NULL) {
     *ive_handle = CVI_IVE_CreateHandle();
@@ -72,7 +75,7 @@ static void createIVEHandleIfNeeded(IVE_HANDLE *ive_handle) {
     }
   }
 }
-
+#endif
 // Convenience macros for creator
 #define CREATOR(type) CreatorFunc(create_model<type>)
 
@@ -144,13 +147,15 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
 //*************************************************
 
 inline void __attribute__((always_inline)) removeCtx(cviai_context_t *ctx) {
+  delete ctx->ds_tracker;
+#ifdef USE_IVE
   delete ctx->td_model;
   delete ctx->md_model;
-  delete ctx->ds_tracker;
+
   if (ctx->ive_handle) {
     CVI_IVE_DestroyHandle(ctx->ive_handle);
   }
-
+#endif
   for (auto it : ctx->vec_vpss_engine) {
     delete it;
   }
@@ -182,8 +187,9 @@ CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle
 CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
                              const CVI_U8 vpssDev) {
   cviai_context_t *ctx = new cviai_context_t;
+#ifdef USE_IVE
   ctx->ive_handle = NULL;
-
+#endif
   ctx->vec_vpss_engine.push_back(new VpssEngine());
   if (ctx->vec_vpss_engine[0]->init(vpssGroupId, vpssDev) != CVI_SUCCESS) {
     LOGC("cviai_handle_t create failed.");
@@ -759,7 +765,7 @@ CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objects) {
 }
 
 // Others
-
+#ifdef USE_IVE
 CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                float *moving_score) {
   TRACE_EVENT("cviai_core", "CVI_AI_TamperDetection");
@@ -803,3 +809,4 @@ CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   }
   return ctx->md_model->detect(frame, objects);
 }
+#endif

@@ -32,7 +32,6 @@ set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
                $<TARGET_OBJECTS:yolov3>
                $<TARGET_OBJECTS:thermal_face_detection>
                $<TARGET_OBJECTS:thermal_person_detection>
-               $<TARGET_OBJECTS:tamper_detection>
                $<TARGET_OBJECTS:deepsort>
                $<TARGET_OBJECTS:sound_classification>
 	             $<TARGET_OBJECTS:segmentation>
@@ -44,7 +43,6 @@ set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
                $<TARGET_OBJECTS:yawn_classification>
                $<TARGET_OBJECTS:face_landmarker>
                $<TARGET_OBJECTS:incar_object_detection>
-               $<TARGET_OBJECTS:motion_detection>
                $<TARGET_OBJECTS:smoke_classification>
                $<TARGET_OBJECTS:digital_tracking>
                $<TARGET_OBJECTS:draw_rect>
@@ -52,6 +50,11 @@ set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
                $<TARGET_OBJECTS:area_detect>
                $<TARGET_OBJECTS:feature_matching>
 	             $<TARGET_OBJECTS:face_angle>)
+
+if ("${USE_IVE}" STREQUAL "ON")
+    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:motion_detection>
+	                         $<TARGET_OBJECTS:tamper_detection>)
+endif()
 if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)
 endif()

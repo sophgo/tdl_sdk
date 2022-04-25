@@ -1,4 +1,6 @@
+#ifdef USE_NEON
 #include <arm_neon.h>
+#endif
 #pragma once
 #include "ESCFFT.hpp"
 #include "core.hpp"
@@ -10,6 +12,7 @@ namespace cviai {
 int borderInterpolate(int p, int len);
 
 void copyMakeBorder(const float *src, float *dst, int srcLen, int top, int left);
+#ifdef USE_NEON
 // neon structure
 struct v_float32x4 {
   typedef float lane_type;
@@ -42,6 +45,7 @@ inline v_float32x4 v_sqrt(const v_float32x4 &x) {
   e = vmulq_f32(vrsqrtsq_f32(vmulq_f32(x1, e), e), e);
   return v_float32x4(vmulq_f32(x.val, e));
 }
+#endif
 
 // Mat structure
 class Mat {
@@ -79,12 +83,14 @@ class Mat {
 
   void pow() {
     int i = 0;
+#ifdef USE_NEON
     for (; i <= this->len - 8; i += 8) {
       float32x4_t v_dst1 = vmulq_f32(vld1q_f32(this->data + i), vld1q_f32(this->data + i));
       float32x4_t v_dst2 = vmulq_f32(vld1q_f32(this->data + i + 4), vld1q_f32(this->data + i + 4));
       vst1q_f32(this->data + i, v_dst1);
       vst1q_f32(this->data + i + 4, v_dst2);
     }
+#endif
     for (; i < this->len; ++i) {
       this->at(i) = this->at(i) * this->at(i);
     }
@@ -92,28 +98,32 @@ class Mat {
 
   void multipy(Mat *src) {
     int i = 0;
+#ifdef USE_NEON
     for (; i <= this->len - 8; i += 8) {
       float32x4_t v_dst1 = vmulq_f32(vld1q_f32(this->data + i), vld1q_f32(src->data + i));
       float32x4_t v_dst2 = vmulq_f32(vld1q_f32(this->data + i + 4), vld1q_f32(src->data + i + 4));
       vst1q_f32(this->data + i, v_dst1);
       vst1q_f32(this->data + i + 4, v_dst2);
     }
+#endif
     for (; i < this->len; ++i) {
       this->at(i) = this->at(i) * src->at(i);
     }
   };
 
   void sqrt() {
+    int i = 0;
+#ifdef USE_NEON
     const int VECSZ = v_float32x4::nlanes;
     int step = VECSZ * 2;
-    int i;
-    for (i = 0; i <= this->len - step; i += step) {
+    for (; i <= this->len - step; i += step) {
       v_float32x4 t0 = v_load(this->data + i), t1 = v_load(this->data + i + VECSZ);
       t0 = v_abs(v_sqrt(t0));
       t1 = v_abs(v_sqrt(t1));
       v_store(this->data + i, t0);
       v_store(this->data + i + VECSZ, t1);
     }
+#endif
     for (; i < len; ++i) {
       this->at(i) = fabs(std::sqrt(this->at(i)));
     }

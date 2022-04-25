@@ -9,7 +9,9 @@
 #include "face_angle/face_angle.hpp"
 #include "feature_matching/feature_matching.hpp"
 
+#ifdef USE_IVE
 #include "ive/ive_draw.h"
+#endif
 
 typedef struct {
   cviai_handle_t ai_handle = NULL;
@@ -187,6 +189,7 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
                         pad_ratio_bottom, obj_skip_ratio, trans_ratio);
 }
 
+#ifdef USE_IVE
 #define FREE_UNMMAP_IMAGE(ai_ctx, img, frame)                            \
   do {                                                                   \
     CVI_SYS_FreeI(ai_ctx->ive_handle, &img);                             \
@@ -206,6 +209,7 @@ static void createIVEHandleIfNeeded(IVE_HANDLE *ive_handle) {
     }
   }
 }
+#endif
 
 template <typename T>
 inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
@@ -218,9 +222,12 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
     }
 
     cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
+#ifdef USE_IVE
     cviai_context_t *ai_ctx = static_cast<cviai_context_t *>(ctx->ai_handle);
+#endif
 
     if (ctx->draw_use_tpu) {
+#ifdef USE_IVE
       createIVEHandleIfNeeded(&ai_ctx->ive_handle);
       size_t image_size = frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
                           frame->stVFrame.u32Length[2];
@@ -254,6 +261,9 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
         free(pstDrawRectCtrl.rect);
       }
       return ret;
+#else
+      return cviai::service::DrawMeta(meta, frame, drawText, brush);
+#endif
     } else {
       return cviai::service::DrawMeta(meta, frame, drawText, brush);
     }
