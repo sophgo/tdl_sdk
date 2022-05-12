@@ -160,6 +160,20 @@ TEST_F(ThermalPersonDetectionTestSuite, inference) {
   }
 }
 
+bool thermal_person_match_detections(cvai_object_t &obj_meta, cvai_bbox_t &expected_bbox,
+                                     float iou_threshold, float score_threshold) {
+  bool found = false;
+  for (uint32_t actual_det_index = 0; actual_det_index < obj_meta.size; actual_det_index++) {
+    found = iou(obj_meta.info[actual_det_index].bbox, expected_bbox) >= iou_threshold &&
+            abs(obj_meta.info[actual_det_index].bbox.score - expected_bbox.score) < score_threshold;
+    if (found) {
+      // printf("found actual_det_index %d\n", actual_det_index);
+      return found;
+    }
+  }
+  return false;
+}
+
 TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
     std::string model_name = std::string(m_json_object[test_index]["model"]);
@@ -171,7 +185,8 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
     ASSERT_NO_FATAL_FAILURE(aimodel.open());
 
     int img_num = int(m_json_object[test_index]["test_images"].size());
-    float threshold = float(m_json_object[test_index]["threshold"]);
+    float score_threshold = float(m_json_object[test_index]["score_threshold"]);
+    float iou_threshold = float(m_json_object[test_index]["iou_threshold"]);
 
     for (int img_idx = 0; img_idx < img_num; img_idx++) {
       std::string image_path =
@@ -187,27 +202,28 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
       for (uint32_t i = 0; i < obj.size; i++) {
 #if 0
         printf(
-            "[%d][%d], x1, y1, x2, y2, result : [%f, %f, %f, %f], class : %d, %s\n",
+            "[%d][%d], x1, y1, x2, y2, score, result : [%f, %f, %f, %f], %f, class : %d, %s\n",
             img_idx, i,
             obj.info[i].bbox.x1, obj.info[i].bbox.y1, 
             obj.info[i].bbox.x2, obj.info[i].bbox.y2,
+            obj.info[i].bbox.score,
             obj.info[i].classes,
             obj.info[i].name);
 #endif
-        float expected_res_x1 =
-            float(m_json_object[test_index]["expected_results"][img_idx][1][i][0]);
-        float expected_res_y1 =
-            float(m_json_object[test_index]["expected_results"][img_idx][1][i][1]);
-        float expected_res_x2 =
-            float(m_json_object[test_index]["expected_results"][img_idx][1][i][2]);
-        float expected_res_y2 =
-            float(m_json_object[test_index]["expected_results"][img_idx][1][i][3]);
-        {
-          EXPECT_LT(abs(obj.info[i].bbox.x1 - expected_res_x1), threshold);
-          EXPECT_LT(abs(obj.info[i].bbox.y1 - expected_res_y1), threshold);
-          EXPECT_LT(abs(obj.info[i].bbox.x2 - expected_res_x2), threshold);
-          EXPECT_LT(abs(obj.info[i].bbox.y2 - expected_res_y2), threshold);
-        }
+
+        cvai_bbox_t expected_bbox = {
+            .x1 = float(m_json_object[test_index]["expected_results"][img_idx][1][i][0]),
+            .y1 = float(m_json_object[test_index]["expected_results"][img_idx][1][i][1]),
+            .x2 = float(m_json_object[test_index]["expected_results"][img_idx][1][i][2]),
+            .y2 = float(m_json_object[test_index]["expected_results"][img_idx][1][i][3]),
+            .score = float(m_json_object[test_index]["expected_results"][img_idx][1][i][4]),
+        };
+
+        EXPECT_TRUE(
+            thermal_person_match_detections(obj, expected_bbox, iou_threshold, score_threshold))
+            << "image path: " << image_path << "\n"
+            << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
+            << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
       }
     }
   }

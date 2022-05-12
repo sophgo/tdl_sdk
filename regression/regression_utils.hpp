@@ -10,5 +10,7 @@ void init_obj_meta(cvai_object_t *meta, uint32_t size, uint32_t height, uint32_t
 
 void init_vehicle_meta(cvai_object_t *meta);
 
+float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2);
+
 }  // namespace unitest
 }  // namespace cviai

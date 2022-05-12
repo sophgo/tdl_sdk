@@ -1,4 +1,5 @@
 #include "regression_utils.hpp"
+#include "core/utils/vpss_helper.h"
 namespace cviai {
 namespace unitest {
 
@@ -112,6 +113,17 @@ void init_vehicle_meta(cvai_object_t *meta) {
     meta->info[i].vehicle_properity->license_pts.y[2] = (float)meta->height - 1.;
     meta->info[i].vehicle_properity->license_pts.y[3] = (float)meta->height - 1.;
   }
+}
+
+float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
+  float area1 = (bbox1.x2 - bbox1.x1) * (bbox1.y2 - bbox1.y1);
+  float area2 = (bbox2.x2 - bbox2.x1) * (bbox2.y2 - bbox2.y1);
+  float inter_x1 = MAX2(bbox1.x1, bbox2.x1);
+  float inter_y1 = MAX2(bbox1.y1, bbox2.y1);
+  float inter_x2 = MIN2(bbox1.x2, bbox2.x2);
+  float inter_y2 = MIN2(bbox1.y2, bbox2.y2);
+  float area_inter = (inter_x2 - inter_x1) * (inter_y2 - inter_y1);
+  return area_inter / (area1 + area2 - area_inter);
 }
 
 }  // namespace unitest
