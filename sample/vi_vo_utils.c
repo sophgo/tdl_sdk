@@ -24,7 +24,7 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
 
 CVI_S32 DestoryOutput(OutputContext *context);
 
-static int low_mem_profile = 0;
+static int low_mem_profile = 1;
 
 #define ION_TOTALMEM "/sys/firmware/devicetree/base/reserved-memory/ion/size"
 static void load_ion_totalmem(void) {

@@ -31,18 +31,22 @@ static void SampleHandleSig(CVI_S32 signo) {
 enum LicenseFormat { taiwan, china };
 
 int main(int argc, char *argv[]) {
-  if (argc != 7) {
+  if (argc != 8) {
     printf(
         "Usage: %s <vehicle_detection_model_namne>\n"
         "          <vehicle_detection_model_path>\n"
         "          <license_plate_detection_model_path>\n"
         "          <license_plate_recognition_model_path>\n"
         "          <license_format (tw/cn)>\n"
-        "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
+        "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n"
+        "          print time, 0: disable, 1: enable\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
   CVI_S32 voType = atoi(argv[6]);
+  CVI_S32 printTime = atoi(argv[7]);
+  struct timespec startTime = {0}, endTime = {0};
+  int msec = 0;
 
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
@@ -118,6 +122,9 @@ int main(int argc, char *argv[]) {
     s32Ret = inference(ai_handle, &stfdFrame, &vehicle_obj);
     printf("Find %u vehicles.\n", vehicle_obj.size);
 
+    if (printTime) {
+      clock_gettime(CLOCK_MONOTONIC, &startTime);
+    }
     /* LP Detection */
     printf("CVI_AI_LicensePlateDetection ... start\n");
     CVI_AI_LicensePlateDetection(ai_handle, &stfdFrame, &vehicle_obj);
@@ -135,9 +142,18 @@ int main(int argc, char *argv[]) {
         return CVIAI_FAILURE;
     }
 
+    if (printTime) {
+      clock_gettime(CLOCK_MONOTONIC, &endTime);
+      msec = (int)((endTime.tv_sec - startTime.tv_sec) * 1000000000 + endTime.tv_nsec -
+                   startTime.tv_nsec) /
+             1000000;
+      if (vehicle_obj.size != 0) msec /= vehicle_obj.size;  // Take the average of the total time
+    }
+
     for (size_t i = 0; i < vehicle_obj.size; i++) {
       if (vehicle_obj.info[i].vehicle_properity) {
-        printf("Vec[%zu] ID number: %s\n", i, vehicle_obj.info[i].vehicle_properity->license_char);
+        printf("\033[40;31m Vec[%zu] ID number: %s , use time %d ms \033[0m\n", i,
+               vehicle_obj.info[i].vehicle_properity->license_char, msec);
       } else {
         printf("Vec[%zu] license plate not found.\n", i);
       }
