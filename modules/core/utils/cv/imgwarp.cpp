@@ -1072,7 +1072,33 @@ static void remapBilinear(const cv::Mat& _src, cv::Mat& _dst, const cv::Mat& _xy
                 (sx >= ssize.width || sx + 1 < 0 || sy >= ssize.height || sy + 1 < 0)) {
               for (k = 0; k < cn; k++) D[k] = cval[k];
             } else {
-              CV_Assert(0);
+              int sx0, sx1, sy0, sy1;
+              const T *v0, *v1, *v2, *v3;
+              const AT* w = wtab + FXY[dx] * 4;
+#if 0
+              if (borderType == cv::BORDER_REPLICATE) {
+                CV_Assert(0);
+              } else if (borderType == cv::BORDER_TRANSPARENT &&
+                         ((unsigned)sx >= (unsigned)(ssize.width - 1) ||
+                          (unsigned)sy >= (unsigned)(ssize.height - 1))) {
+                CV_Assert(0);
+              } else {
+                /* this case*/
+              }
+#endif
+
+#if 1 /* this case */
+              sx0 = cv::borderInterpolate(sx, ssize.width, borderType);
+              sx1 = cv::borderInterpolate(sx + 1, ssize.width, borderType);
+              sy0 = cv::borderInterpolate(sy, ssize.height, borderType);
+              sy1 = cv::borderInterpolate(sy + 1, ssize.height, borderType);
+              v0 = sx0 >= 0 && sy0 >= 0 ? S0 + sy0 * sstep + sx0 * cn : &cval[0];
+              v1 = sx1 >= 0 && sy0 >= 0 ? S0 + sy0 * sstep + sx1 * cn : &cval[0];
+              v2 = sx0 >= 0 && sy1 >= 0 ? S0 + sy1 * sstep + sx0 * cn : &cval[0];
+              v3 = sx1 >= 0 && sy1 >= 0 ? S0 + sy1 * sstep + sx1 * cn : &cval[0];
+#endif
+              for (k = 0; k < cn; k++)
+                D[k] = castOp(WT(v0[k] * w[0] + v1[k] * w[1] + v2[k] * w[2] + v3[k] * w[3]));
             }
           }
       }
