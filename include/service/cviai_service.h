@@ -39,15 +39,6 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle,
 DLL_EXPORT CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle);
 
 /**
- * @brief Enable TPU drawing instead of using CPU.
- *
- * @param handle A service handle.
- * @param use_tpu Use TPU or not.
- * @return CVI_S32 Return CVIAI_SUCCESS if set.
- */
-DLL_EXPORT CVI_S32 CVI_AI_Service_EnableTPUDraw(cviai_service_handle_t handle, bool use_tpu);
-
-/**
  * @brief Register a feature array to OBJ Service.
  * @ingroup core_cviaiservice
  *

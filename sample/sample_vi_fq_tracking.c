@@ -15,8 +15,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "ive/ive.h"
-
 static volatile bool bExit = false;
 
 #define SAVE_TRACKER_NUM 32

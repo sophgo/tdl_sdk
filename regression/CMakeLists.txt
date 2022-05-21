@@ -82,6 +82,7 @@ set(SAMPLE_LIBS
 set(UnitTests
   reg_daily_fq
   reg_daily_mobiledet
+  reg_daily_md
   reg_daily_fr
   reg_daily_mask_classification
   reg_daily_lpd
@@ -104,13 +105,8 @@ set(UnitTests
   reg_daily_fl
   reg_daily_soundcmd
   reg_daily_incarod
-)
-
-if(USE_IVE)
-set(UnitTests ${UnitTests}
   reg_daily_td
 )
-endif()
 
 set(UnitTest_SRCS
   cviai_test
@@ -162,11 +158,9 @@ buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai  cviai_eval
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cviai  cviai_evaluation gtest_main ${SAMPLE_LIBS})
 buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 
-if(USE_IVE)
 buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_object_intersect INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
-endif()
 
 if ("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")

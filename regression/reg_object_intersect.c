@@ -1,6 +1,5 @@
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "ive/ive.h"
 
 void bbox_setup(const float x1, const float y1, const float x2, const float y2, cvai_bbox_t *bbox) {
   bbox->x1 = x1;

@@ -1,11 +1,7 @@
 #ifndef _CVI_CORE_ERROR_H_
 #define _CVI_CORE_ERROR_H_
 
-#ifdef MARS
-#include <linux/cvi_type.h>
-#else
-#include <cvi_type.h>
-#endif
+#include "cvi_comm.h"
 
 #ifdef __cplusplus
 extern "C" {

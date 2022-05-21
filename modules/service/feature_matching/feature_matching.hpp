@@ -3,14 +3,10 @@
 #include "cviai_log.hpp"
 #include "service/cviai_service_types.h"
 
-#ifdef MARS
-#include <linux/cvi_type.h>
-#else
-#include <cvi_type.h>
-#endif
 #include <cvikernel/cvikernel.h>
 #include <cvimath/cvimath.h>
 #include <cviruntime_context.h>
+#include "cvi_comm.h"
 
 namespace cviai {
 namespace service {

@@ -4,9 +4,6 @@
 #include "core/core/cvai_vpss_types.h"
 
 #include "cviai_log.hpp"
-#ifdef USE_IVE
-#include "ive/ive.h"
-#endif
 #include "model_debugger.hpp"
 #include "vpss_engine.hpp"
 
@@ -86,9 +83,6 @@ class Core {
   int modelOpen(const char *filepath);
   const char *getModelFilePath() const { return m_model_file.c_str(); }
   int modelClose();
-#ifdef USE_IVE
-  int setIveInstance(IVE_HANDLE handle);
-#endif
   int setVpssTimeout(uint32_t timeout);
   const uint32_t getVpssTimeout() const { return m_vpss_timeout; }
   int setVpssEngine(VpssEngine *engine);
@@ -186,9 +180,6 @@ class Core {
   float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
 
   // External handle
-#ifdef USE_IVE
-  IVE_HANDLE ive_handle = NULL;
-#endif
   VpssEngine *mp_vpss_inst = nullptr;
 
  protected:

@@ -1,16 +1,10 @@
 #pragma once
 #include <cvi_buffer.h>
 #include <cvi_comm_vb.h>
-#ifdef MARS
-#include <linux/cvi_comm_vpss.h>
-#include <linux/cvi_math.h>
-#else
-#include <cvi_comm_vpss.h>
-#include <cvi_math.h>
-#endif
 #include <cvi_sys.h>
 #include <cvi_vb.h>
 #include <cvi_vpss.h>
+#include "cvi_comm.h"
 
 #include <inttypes.h>
 #include <math.h>

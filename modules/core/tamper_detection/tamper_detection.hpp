@@ -1,28 +1,28 @@
 #pragma once
-#include "ive/ive.h"
+#include "ive.hpp"
 
 class TamperDetectorMD {
  public:
   TamperDetectorMD() = delete;
   // TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum=0.05, int update_interval=10);
-  TamperDetectorMD(IVE_HANDLE handle, VIDEO_FRAME_INFO_S *init_frame, float momentum,
+  TamperDetectorMD(ive::IVE *ive_instance, VIDEO_FRAME_INFO_S *init_frame, float momentum,
                    int update_interval);
   int update(VIDEO_FRAME_INFO_S *frame);
   int detect(VIDEO_FRAME_INFO_S *frame);
   int detect(VIDEO_FRAME_INFO_S *frame, float *moving_score);
-  IVE_IMAGE_S &getMean();
-  IVE_IMAGE_S &getDiff();
+  ive::IVEImage &getMean();
+  ive::IVEImage &getDiff();
   void printMean();
   void printDiff();
   void free();
   void print_info();
 
  private:
-  IVE_HANDLE ive_handle = NULL;
+  ive::IVE *ive_instance = nullptr;
   int nChannels;
-  CVI_U16 strideWidth, height, width, area;
-  IVE_IMAGE_S mean;
-  IVE_IMAGE_S diff;
+  CVI_U32 strideWidth, height, width, area;
+  ive::IVEImage mean;
+  ive::IVEImage diff;
   float momentum;
   int update_interval;
   int counter;

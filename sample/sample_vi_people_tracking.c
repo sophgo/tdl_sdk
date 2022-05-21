@@ -15,8 +15,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "ive/ive.h"
-
 static volatile bool bExit = false;
 
 int main(int argc, char *argv[]) {

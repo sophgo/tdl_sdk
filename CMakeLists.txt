@@ -106,6 +106,8 @@ message("Install dir        ${CMAKE_INSTALL_PREFIX}")
 message("Enable Perfetto    ${ENABLE_PERFETTO}")
 message("CVI_PLATFORM       ${CVI_PLATFORM}")
 message("SHRINK_OPENCV_SIZE ${SHRINK_OPENCV_SIZE}")
+message("USE_TPU_IVE        ${USE_TPU_IVE}")
+message("KERNEL_ROOT        ${KERNEL_ROOT}")
 message("==================================================")
 
 # Check if OpenCV exists.
@@ -120,33 +122,20 @@ include (cmake/middleware.cmake)
 # 3rdparty libraries
 include(cmake/thirdparty.cmake)
 
-if(USE_IVE)
-  add_definitions(-DUSE_IVE)
-  # Check if ive exists.
-  include (${IVE_SDK_ROOT}/cmake/ive.cmake)
+include (cmake/ive.cmake)
 
-  include (cmake/cvi_rtsp.cmake)
+include (cmake/cvi_rtsp.cmake)
 
-  # 3rdpart includes
-  include_directories(${IVE_INCLUDES}
-                      ${OPENCV_INCLUDES}
-                      ${MLIR_INCLUDES}
-                      ${MIDDLEWARE_INCLUDES}
-                      ${cvi_rtsp_INCLUDE})
-else()
-  include (cmake/cvi_rtsp.cmake)
-  include_directories(${OPENCV_INCLUDES}
-                      ${MLIR_INCLUDES}
-                      ${MIDDLEWARE_INCLUDES}
-                      ${cvi_rtsp_INCLUDE})
-endif()
+# 3rdpart includes
+include_directories(${IVE_INCLUDES}
+                    ${OPENCV_INCLUDES}
+                    ${MLIR_INCLUDES}
+                    ${MIDDLEWARE_INCLUDES}
+                    ${cvi_rtsp_INCLUDE})
 
 add_subdirectory(modules)
 add_subdirectory(regression)
-
-
-if(NOT ("${CVI_PLATFORM}" STREQUAL "MARS" AND "${CVI_SYSTEM_PROCESSOR}" STREQUAL "RISCV"))
 add_subdirectory(sample)
-endif()
+
 # Install doc
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc DESTINATION doc)

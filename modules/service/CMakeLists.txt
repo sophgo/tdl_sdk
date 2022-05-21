@@ -9,7 +9,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils
                     ${CMAKE_CURRENT_SOURCE_DIR}/../service
-                    ${IVE_INCLUDES})
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../core/ive)
 
 set(FRS_SRCS cviai_service.cpp)
 

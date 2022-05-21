@@ -14,8 +14,10 @@ ifndef MW_PATH
 $(error "Please set middleware sdk root path to MW_PATH")
 endif
 
+ifeq ($(USE_TPU_IVE), ON)
 ifndef IVE_PATH
 $(error "Please set ive sdk root path to IVE_PATH)
+endif
 endif
 
 ifndef TPU_PATH
@@ -110,9 +112,13 @@ TPU_LIB_PATH = $(TPU_PATH)/lib
 
 # IVE
 #####################################################
+ifeq ($(USE_TPU_IVE), ON)
 IVE_SDK_LIB_PATH = $(IVE_PATH)/lib
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
-
+else
+IVE_SDK_LIB_PATH = $(MW_PATH)/lib
+IVE_SDK_INC_PATH = $(MW_PATH)/include
+endif
 # cvi tracer
 #####################################################
 CVI_TRACER_LIB_PATH = $(CVI_TRACER_PATH)/$(ARCH)/lib/3rd
@@ -164,7 +170,7 @@ $(info TPU library path: $(TPU_LIB_PATH))
 $(info CFLAGS: $(CFLAGS))
 $(info CC: $(CC))
 $(info CXX: $(CXX))
-$(info USE_IVE: $(USE_IVE))
+$(info USE_TPU_IVE: $(USE_TPU_IVE))
 $(info ---------------------------------------)
 endif
 
@@ -183,8 +189,10 @@ AISDK_APP_LIBS = -lcviai_app
 
 TPU_LIBS = -lcnpy  -lcvikernel  -lcvimath  -lcviruntime  -lz
 
-ifeq ($(USE_IVE), ON)
+ifeq ($(USE_TPU_IVE), ON)
 IVE_LIBS = -lcvi_ive_tpu
+else
+IVE_LIBS = -lcvi_ive
 endif
 
 SRCS := $(wildcard $(PWD)/*.c)
@@ -204,24 +212,22 @@ endif
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH)
 SAMPLE_APP_LIBS = -L../tmp_install/lib $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app
 
-CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH)
+CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH)
 
-ifneq ($(CHIP), MARS)
-CFLAGS += -I$(CVI_TRACER_INC_PATH)
-endif
-
-ifeq ($(USE_IVE), ON)
-CFLAGS += -I$(IVE_SDK_INC_PATH)
+ifeq ($(USE_TPU_IVE), ON)
+CFLAGS += -DUSE_TPU_IVE
 endif
 
 ifeq ($(CHIP), MARS)
 CFLAGS += -I$(MARS_INC_PATH)
+else
+CFLAGS += -I$(CVI_TRACER_INC_PATH)
 endif
 
 CFLAGS += $(THIRD_PARTY_INC_FLAGS)
 
-ifeq ($(USE_IVE), ON)
-CFLAGS += -DUSE_IVE
+ifneq (,$(findstring middleware/v2,$(MW_PATH)))
+    CFLAGS += -D_MIDDLEWARE_V2_
 endif
 
 TARGETS_VI_SAMPLE := $(shell find . -type f -name 'sample_vi_*.c' -exec basename {} .c ';')

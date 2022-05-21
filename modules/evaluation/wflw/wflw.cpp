@@ -1,14 +1,10 @@
 #include "wflw.hpp"
-#ifdef MARS
-#include <linux/cvi_type.h>
-#else
-#include <cvi_type.h>
-#endif
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include "core/core/cvai_errno.h"
+#include "cvi_comm.h"
 #include "cviai_log.hpp"
 
 #define LEFT_EYE 96 * 2

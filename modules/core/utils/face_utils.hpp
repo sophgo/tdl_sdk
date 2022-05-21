@@ -4,11 +4,7 @@
 #include "core/face/cvai_face_types.h"
 #include "opencv2/core.hpp"
 
-#ifdef MARS
-#include <linux/cvi_comm_video.h>
-#else
-#include <cvi_comm_video.h>
-#endif
+#include "cvi_comm.h"
 
 namespace cviai {
 int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info);

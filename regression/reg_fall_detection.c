@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "ive/ive.h"
 
 #include <dirent.h>
 #include <stdio.h>

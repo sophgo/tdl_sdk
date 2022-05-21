@@ -5,6 +5,7 @@
 #include "core/utils/vpss_helper.h"
 #include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"
+#include "opencv2/imgproc.hpp"
 
 // TODO: use memcpy
 inline void BufferRGBPackedCopy(const uint8_t *buffer, uint32_t width, uint32_t height,
@@ -57,6 +58,18 @@ inline void BufferRGBPacked2PlanarCopy(const uint8_t *buffer, uint32_t width, ui
         vFrame->pu8VirAddr[1][i + j * vFrame->u32Stride[1]] = ptr_pxl[1];
         vFrame->pu8VirAddr[2][i + j * vFrame->u32Stride[2]] = ptr_pxl[2];
       }
+    }
+  }
+}
+
+inline void BufferGreyCopy(const uint8_t *buffer, uint32_t width, uint32_t height, uint32_t stride,
+                           VIDEO_FRAME_INFO_S *frame) {
+  VIDEO_FRAME_S *vFrame = &frame->stVFrame;
+  for (uint32_t j = 0; j < height; j++) {
+    const uint8_t *ptr = buffer + j * stride;
+    for (uint32_t i = 0; i < width; i++) {
+      const uint8_t *ptr_pxl = ptr + i;
+      vFrame->pu8VirAddr[0][i + j * vFrame->u32Stride[0]] = ptr_pxl[0];
     }
   }
 }
@@ -125,6 +138,11 @@ CVI_S32 CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *
     } break;
     case PIXEL_FORMAT_RGB_888_PLANAR: {
       BufferRGBPacked2PlanarCopy(img.data, img.cols, img.rows, img.step, frame, true);
+    } break;
+    case PIXEL_FORMAT_YUV_400: {
+      cv::Mat img2;
+      cv::cvtColor(img, img2, cv::COLOR_BGR2GRAY);
+      BufferGreyCopy(img2.data, img2.cols, img2.rows, img2.step, frame);
     } break;
     default:
       LOGE("Unsupported format: %u.\n", format);

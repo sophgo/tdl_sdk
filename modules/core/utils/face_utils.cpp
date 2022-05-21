@@ -7,13 +7,9 @@
 #include "opencv2/imgproc.hpp"
 #endif
 
-#ifdef MARS
-#include <linux/cvi_comm_gdc.h>
-#else
-#include <cvi_comm_gdc.h>
-#endif
 #include <cvi_gdc.h>
 #include <algorithm>
+#include "cvi_comm.h"
 
 using namespace std;
 

@@ -2,15 +2,11 @@
 #include "core/core/cvai_errno.h"
 #include "cviai_log.hpp"
 
-#ifdef MARS
-#include <linux/cvi_type.h>
-#else
-#include <cvi_type.h>
-#endif
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "cvi_comm.h"
 
 static int compare(const void *arg1, const void *arg2) {
   return static_cast<int>(*(float *)arg1 < *(float *)arg2);

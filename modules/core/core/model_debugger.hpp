@@ -1,17 +1,11 @@
 #pragma once
 #include <cnpy.h>
-#ifdef MARS
-#include <linux/cvi_comm_video.h>
-#include <linux/cvi_comm_vpss.h>
-#else
-#include <cvi_comm_video.h>
-#include <cvi_comm_vpss.h>
-#endif
 #include <cvi_sys.h>
 #include <cviruntime.h>
 #include <memory>
 #include <string>
 #include <vector>
+#include "cvi_comm.h"
 #include "cviai_log.hpp"
 
 namespace cviai {

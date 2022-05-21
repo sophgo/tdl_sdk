@@ -1,12 +1,8 @@
 #include "raii.hpp"
-#ifdef MARS
-#include <linux/cvi_comm_vpss.h>
-#else
-#include <cvi_comm_vpss.h>
-#endif
 #include <cvi_vb.h>
 #include <cvi_vpss.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_comm.h"
 #include "evaluation/cviai_media.h"
 #include "gtest.h"
 

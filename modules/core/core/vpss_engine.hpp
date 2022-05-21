@@ -1,12 +1,6 @@
 #pragma once
-#ifdef MARS
-#include <linux/cvi_comm_video.h>
-#include <linux/cvi_comm_vpss.h>
-#else
-#include <cvi_comm_video.h>
-#include <cvi_comm_vpss.h>
-#endif
 #include <cvi_comm_vb.h>
+#include "cvi_comm.h"
 
 namespace cviai {
 

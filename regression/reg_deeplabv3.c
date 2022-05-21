@@ -7,10 +7,8 @@
 #include "cviai_perfetto.h"
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
-#include "ive/ive.h"
 
 cviai_handle_t ai_handle = NULL;
-IVE_HANDLE ive_handle = NULL;
 cviai_eval_handle_t eval_handle = NULL;
 
 static CVI_S32 vpssgrp_width = 1920;
@@ -47,8 +45,6 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ive_handle = CVI_IVE_CreateHandle();
-
   ret = CVI_AI_Eval_CreateHandle(&eval_handle);
   if (ret != CVIAI_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
@@ -64,16 +60,11 @@ int main(int argc, char *argv[]) {
     CVI_AI_Eval_CityscapesGetImage(eval_handle, i, &img_name);
     printf("Read: %s\n", img_name);
 
-    IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, img_name, IVE_IMAGE_TYPE_U8C3_PACKAGE);
-    if (image.u16Width == 0) {
-      printf("Read image failed!\n");
-      return CVIAI_FAILURE;
-    }
-
+    VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_IVE_Image2VideoFrameInfo(&image, &rgb_frame, false);
+    CVI_S32 ret = CVI_AI_ReadImage(img_name, &blk_fr, &rgb_frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
-      printf("Convert to video frame failed with %#x!\n", ret);
+      printf("Failed to read image: %s\n", img_name);
       return ret;
     }
 
@@ -82,13 +73,12 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_Eval_CityscapesWriteResult(eval_handle, &label_frame, i);
 
-    CVI_SYS_FreeI(ive_handle, &image);
     CVI_VPSS_ReleaseChnFrame(0, 0, &label_frame);
     free(img_name);
+    CVI_VB_ReleaseBlock(blk_fr);
   }
 
   CVI_AI_DestroyHandle(ai_handle);
-  CVI_IVE_DestroyHandle(ive_handle);
   CVI_AI_Eval_DestroyHandle(eval_handle);
   CVI_SYS_Exit();
 }

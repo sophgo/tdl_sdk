@@ -14,8 +14,10 @@ ifndef MW_PATH
 $(error "Please set middleware sdk root path to MW_PATH")
 endif
 
+ifeq ($(USE_TPU_IVE), ON)
 ifndef IVE_PATH
 $(error "Please set rtsp sdk root path to IVE_PATH)
+endif
 endif
 
 ifndef TPU_PATH
@@ -114,7 +116,7 @@ AI_APP_LIBS = $(AISDK_LIBS) -L$(AISDK_LIB_PATH) -lpthread
 
 CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)
 
-ifeq ($(USE_IVE), ON)
+ifeq ($(USE_TPU_IVE), ON)
 CFLAGS += -I$(IVE_SDK_INC_PATH)
 endif
 
@@ -123,6 +125,10 @@ CFLAGS += -I$(MARS_INC_PATH)
 endif
 
 CFLAGS += -Wl,-gc-sections
+
+ifneq (,$(findstring middleware/v2,$(MW_PATH)))
+    CFLAGS += -D_MIDDLEWARE_V2_
+endif
 
 ifeq ($(CHECK_SDK), 1)
 $(info ---------------------------------------)
@@ -138,7 +144,7 @@ $(info TPU library path: $(TPU_LIB_PATH))
 $(info CFLAGS: $(CFLAGS))
 $(info CC: $(CC))
 $(info CXX: $(CXX))
-$(info USE_IVE: $(USE_IVE))
+$(info USE_TPU_IVE: $(USE_TPU_IVE))
 $(info ---------------------------------------)
 endif
 

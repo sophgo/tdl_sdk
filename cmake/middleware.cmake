@@ -11,6 +11,10 @@ else()
   message(FATAL_ERROR "${MIDDLEWARE_SDK_ROOT} is not a valid folder.")
 endif()
 
+if(MIDDLEWARE_SDK_ROOT MATCHES ".*middleware/v2")
+  add_definitions(-D_MIDDLEWARE_V2_)
+endif()
+
 if("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv183x/)
 elseif ("${CVI_PLATFORM}" STREQUAL "CV182X")

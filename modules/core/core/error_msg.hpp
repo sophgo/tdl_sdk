@@ -1,12 +1,7 @@
 #pragma once
 
-#ifdef MARS
-#include <linux/cvi_comm_vpss.h>
-#include <linux/cvi_errno.h>
-#else
-#include <cvi_comm_vpss.h>
-#endif
 #include <cviruntime.h>
+#include "cvi_comm.h"
 
 namespace cviai {
 inline const char *get_tpu_error_msg(CVI_RC code) {

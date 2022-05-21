@@ -1,14 +1,9 @@
 #pragma once
 #include <cvi_comm_vb.h>
-#ifdef MARS
-#include <cvi_vb.h>
-#include <linux/cvi_comm_video.h>
-#else
-#include <cvi_comm_video.h>
-#endif
 #include <cviai.h>
 #include <memory>
 #include <string>
+#include "cvi_comm.h"
 
 namespace cviai {
 namespace unitest {

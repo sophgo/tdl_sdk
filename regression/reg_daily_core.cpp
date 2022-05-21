@@ -2,7 +2,6 @@
 #include <vector>
 #include "cvi_vpss.h"
 #include "cviai.h"
-#include "cviai_core_internal.hpp"
 #include "cviai_test.hpp"
 #include "raii.hpp"
 

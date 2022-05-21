@@ -7,8 +7,6 @@
 #include "opencv2/core/core_c.h"
 #endif
 
-#define PI 3.14159265358979f
-
 namespace cviai {
 namespace service {
 

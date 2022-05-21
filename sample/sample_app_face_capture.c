@@ -15,7 +15,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "ive/ive.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 
@@ -133,17 +132,18 @@ static void *pImageWrite(void *args) {
              data_buffer[target_idx].image.pix_format);
     } else {
       printf(" > (I/O) Write Face (Q: %.2f): %s ...\n", data_buffer[target_idx].quality, filename);
-      stbi_write_png(filename, data_buffer[target_idx].image.width,
-                     data_buffer[target_idx].image.height, STBI_rgb,
-                     data_buffer[target_idx].image.pix[0], data_buffer[target_idx].image.stride[0]);
+      // stbi_write_png(filename, data_buffer[target_idx].image.width,
+      //                data_buffer[target_idx].image.height, STBI_rgb,
+      //                data_buffer[target_idx].image.pix[0],
+      //                data_buffer[target_idx].image.stride[0]);
 
       /* if there is no first capture face in INTELLIGENT mode, we need to create one */
       if (app_mode == intelligent && data_buffer[target_idx].counter == 0) {
         sprintf(filename, "images/face_%" PRIu64 "_1.png", data_buffer[target_idx].u_id);
-        stbi_write_png(filename, data_buffer[target_idx].image.width,
-                       data_buffer[target_idx].image.height, STBI_rgb,
-                       data_buffer[target_idx].image.pix[0],
-                       data_buffer[target_idx].image.stride[0]);
+        // stbi_write_png(filename, data_buffer[target_idx].image.width,
+        //                data_buffer[target_idx].image.height, STBI_rgb,
+        //                data_buffer[target_idx].image.pix[0],
+        //                data_buffer[target_idx].image.stride[0]);
       }
     }
 
@@ -340,7 +340,6 @@ int main(int argc, char *argv[]) {
 
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
   ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2]);

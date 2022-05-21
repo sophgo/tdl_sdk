@@ -9,17 +9,12 @@
 #include "face_angle/face_angle.hpp"
 #include "feature_matching/feature_matching.hpp"
 
-#ifdef USE_IVE
-#include "ive/ive_draw.h"
-#endif
-
 typedef struct {
   cviai_handle_t ai_handle = NULL;
   cviai::service::FeatureMatching *m_fm = nullptr;
   cviai::service::DigitalTracking *m_dt = nullptr;
   cviai::service::AreaDetect *m_ad = nullptr;
   cviai::service::IntrusionDetect *m_intrusion_det = nullptr;
-  bool draw_use_tpu = false;
 } cviai_service_context_t;
 
 CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle, cviai_handle_t ai_handle) {
@@ -39,15 +34,6 @@ CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle) {
   delete ctx->m_dt;
   delete ctx->m_ad;
   delete ctx;
-  return CVIAI_SUCCESS;
-}
-
-CVI_S32 CVI_AI_Service_EnableTPUDraw(cviai_service_handle_t handle, bool use_tpu) {
-  if (handle == NULL) {
-    return CVIAI_FAILURE;
-  }
-  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  ctx->draw_use_tpu = use_tpu;
   return CVIAI_SUCCESS;
 }
 
@@ -189,31 +175,9 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle,
                         pad_ratio_bottom, obj_skip_ratio, trans_ratio);
 }
 
-#ifdef USE_IVE
-#define FREE_UNMMAP_IMAGE(ai_ctx, img, frame)                            \
-  do {                                                                   \
-    CVI_SYS_FreeI(ai_ctx->ive_handle, &img);                             \
-    if (do_unmap) {                                                      \
-      CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size); \
-      frame->stVFrame.pu8VirAddr[0] = NULL;                              \
-      frame->stVFrame.pu8VirAddr[1] = NULL;                              \
-      frame->stVFrame.pu8VirAddr[2] = NULL;                              \
-    }                                                                    \
-  } while (0)
-
-static void createIVEHandleIfNeeded(IVE_HANDLE *ive_handle) {
-  if (*ive_handle == NULL) {
-    *ive_handle = CVI_IVE_CreateHandle();
-    if (*ive_handle == NULL) {
-      LOGC("IVE handle init failed.\n");
-    }
-  }
-}
-#endif
-
 template <typename T>
-inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
-                       const bool drawText, cvai_service_brush_t brush) {
+inline CVI_S32 DrawRect(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
+                        const bool drawText, cvai_service_brush_t brush) {
   if (meta->size <= 0) return CVIAI_SUCCESS;
 
   if (handle != NULL) {
@@ -221,52 +185,7 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
       brush.size += 1;
     }
 
-    cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-#ifdef USE_IVE
-    cviai_context_t *ai_ctx = static_cast<cviai_context_t *>(ctx->ai_handle);
-#endif
-
-    if (ctx->draw_use_tpu) {
-#ifdef USE_IVE
-      createIVEHandleIfNeeded(&ai_ctx->ive_handle);
-      size_t image_size = frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
-                          frame->stVFrame.u32Length[2];
-      bool do_unmap = false;
-      if (frame->stVFrame.pu8VirAddr[0] == NULL) {
-        frame->stVFrame.pu8VirAddr[0] =
-            (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
-        do_unmap = true;
-      }
-
-      IVE_IMAGE_S img;
-      memset(&img, 0, sizeof(IVE_IMAGE_S));
-      CVI_S32 ret = CVI_IVE_VideoFrameInfo2Image(frame, &img);
-      if (ret != CVI_SUCCESS) {
-        LOGE("CVI_IVE_VideoFrameInfo2Image failed %d\n", ret);
-        FREE_UNMMAP_IMAGE(ai_ctx, img, frame);
-        return CVIAI_FAILURE;
-      }
-      IVE_DRAW_RECT_CTRL pstDrawRectCtrl;
-      memset(&pstDrawRectCtrl, 0, sizeof(pstDrawRectCtrl));
-      IVE_COLOR_S color;
-      color.b = brush.color.b;
-      color.g = brush.color.g;
-      color.r = brush.color.r;
-      cviai::service::getDrawRectCTRL(meta, frame, &pstDrawRectCtrl, color);
-
-      ret = CVI_IVE_DrawRect(ai_ctx->ive_handle, &img, &pstDrawRectCtrl, 0);
-      FREE_UNMMAP_IMAGE(ai_ctx, img, frame);
-
-      if (pstDrawRectCtrl.rect) {
-        free(pstDrawRectCtrl.rect);
-      }
-      return ret;
-#else
-      return cviai::service::DrawMeta(meta, frame, drawText, brush);
-#endif
-    } else {
-      return cviai::service::DrawMeta(meta, frame, drawText, brush);
-    }
+    return cviai::service::DrawMeta(meta, frame, drawText, brush);
   }
 
   LOGE("service handle is NULL\n");
@@ -276,19 +195,19 @@ inline CVI_S32 TPUDraw(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME
 CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle, const cvai_face_t *meta,
                                     VIDEO_FRAME_INFO_S *frame, const bool drawText,
                                     cvai_service_brush_t brush) {
-  return TPUDraw(handle, meta, frame, drawText, brush);
+  return DrawRect(handle, meta, frame, drawText, brush);
 }
 
 CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle, const cvai_object_t *meta,
                                       VIDEO_FRAME_INFO_S *frame, const bool drawText,
                                       cvai_service_brush_t brush) {
-  return TPUDraw(handle, meta, frame, drawText, brush);
+  return DrawRect(handle, meta, frame, drawText, brush);
 }
 
 CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
                                             const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame,
                                             const bool drawText, cvai_service_brush_t brush) {
-  return TPUDraw(handle, meta, frame, drawText, brush);
+  return DrawRect(handle, meta, frame, drawText, brush);
 }
 
 CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame, float r,

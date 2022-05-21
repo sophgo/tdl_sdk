@@ -2,9 +2,9 @@
 #include <memory>
 #include <opencv2/core.hpp>
 #include "core/object/cvai_object_types.h"
+#include "cvi_comm.h"
 #include "cvi_comm_vb.h"
-#include "cvi_common.h"
-#include "ive/ive.h"
+#include "ive.hpp"
 
 namespace cviai {
 class VpssEngine;
@@ -13,7 +13,7 @@ class VpssEngine;
 class MotionDetection {
  public:
   MotionDetection() = delete;
-  MotionDetection(IVE_HANDLE handle, uint32_t th, double _min_area, uint32_t timeout,
+  MotionDetection(ive::IVE *ive_instance, uint32_t th, double _min_area, uint32_t timeout,
                   cviai::VpssEngine *engine);
   ~MotionDetection();
 
@@ -30,10 +30,10 @@ class MotionDetection {
   CVI_S32 do_vpss_ifneeded(VIDEO_FRAME_INFO_S *srcframe,
                            std::shared_ptr<VIDEO_FRAME_INFO_S> &frame);
   CVI_S32 vpss_process(VIDEO_FRAME_INFO_S *srcframe, VIDEO_FRAME_INFO_S *dstframe);
-  CVI_S32 copy_image(VIDEO_FRAME_INFO_S *srcframe, IVE_IMAGE_S *dst);
-  IVE_HANDLE ive_handle;
-  IVE_SRC_IMAGE_S background_img;
-  IVE_IMAGE_S md_output;
+  CVI_S32 copy_image(VIDEO_FRAME_INFO_S *srcframe, ive::IVEImage *dst);
+  ive::IVE *ive_instance;
+  ive::IVEImage background_img;
+  ive::IVEImage md_output;
   uint32_t count;
   uint32_t threshold;
   double min_area;

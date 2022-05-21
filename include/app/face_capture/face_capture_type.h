@@ -2,9 +2,6 @@
 #define _CVIAI_APP_FACE_CAPTURE_TYPE_H_
 
 #include "core/cviai_core.h"
-#ifdef USE_IVE
-#include "ive/ive.h"
-#endif
 
 typedef enum { IDLE = 0, ALIVE, MISS } tracker_state_e;
 

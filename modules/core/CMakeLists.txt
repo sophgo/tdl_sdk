@@ -27,14 +27,13 @@ add_subdirectory(yawn_classification)
 add_subdirectory(face_landmarker)
 add_subdirectory(incar_object_detection)
 add_subdirectory(smoke_classification)
-
-if ("${USE_IVE}" STREQUAL "ON")
-  add_subdirectory(tamper_detection)
-  add_subdirectory(motion_detection)
-endif()
+add_subdirectory(ive)
+add_subdirectory(tamper_detection)
+add_subdirectory(motion_detection)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
-                    ${CMAKE_CURRENT_SOURCE_DIR}/utils)
+                    ${CMAKE_CURRENT_SOURCE_DIR}/utils
+                    ${CMAKE_CURRENT_SOURCE_DIR}/ive)
 
 set(CORE_SRCS cviai_types_mem.cpp
               cviai_rescale_bbox.cpp

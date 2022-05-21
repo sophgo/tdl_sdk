@@ -49,12 +49,11 @@ set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
                $<TARGET_OBJECTS:tracker>
                $<TARGET_OBJECTS:area_detect>
                $<TARGET_OBJECTS:feature_matching>
-	             $<TARGET_OBJECTS:face_angle>)
+	             $<TARGET_OBJECTS:face_angle>
+               $<TARGET_OBJECTS:ivewrapper>
+               $<TARGET_OBJECTS:motion_detection>
+	             $<TARGET_OBJECTS:tamper_detection>)
 
-if ("${USE_IVE}" STREQUAL "ON")
-    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:motion_detection>
-	                         $<TARGET_OBJECTS:tamper_detection>)
-endif()
 if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)
 endif()

@@ -1,11 +1,7 @@
 #ifndef _CVI_VPSS_TYPES_H_
 #define _CVI_VPSS_TYPES_H_
 
-#ifdef MARS
-#include <linux/cvi_comm_vpss.h>
-#else
-#include <cvi_comm_vpss.h>
-#endif
+#include "cvi_comm.h"
 
 #include <stdint.h>
 #include <stdlib.h>

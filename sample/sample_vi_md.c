@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
-#include "ive/ive.h"
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 static volatile bool bExit = false;

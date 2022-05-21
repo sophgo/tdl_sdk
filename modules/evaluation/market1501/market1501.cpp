@@ -1,10 +1,5 @@
 #include "market1501.hpp"
 
-#ifdef MARS
-#include <linux/cvi_type.h>
-#else
-#include <cvi_type.h>
-#endif
 #include <dirent.h>
 #include <math.h>
 #include <stdint.h>
@@ -17,6 +12,7 @@
 #include "core/core/cvai_errno.h"
 #include "core/cviai_core.h"
 #include "core/cviai_types_mem_internal.h"
+#include "cvi_comm.h"
 
 #define GALLERY_DIR "/bounding_box_test/"
 #define QUERY_DIR "/query/"

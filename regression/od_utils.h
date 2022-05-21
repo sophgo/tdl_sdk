@@ -1,12 +1,6 @@
 #ifndef SAMPLE_UTILS_H_
 #define SAMPLE_UTILS_H_
-#ifdef MARS
-#include <linux/cvi_comm_video.h>
-#include <linux/cvi_type.h>
-#else
-#include <cvi_comm_video.h>
-#include <cvi_type.h>
-#endif
+#include "cvi_comm.h"
 #include "cviai.h"
 
 #define RETURN_IF_FAILED(func)   \
