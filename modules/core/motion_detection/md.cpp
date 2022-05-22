@@ -231,29 +231,6 @@ CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, ive::IVEImage 
   return ret;
 }
 
-CVI_S32 convert2Image(VIDEO_FRAME_INFO_S *srcframe, IVEImage *dst) {
-  bool do_unmap_src = false;
-
-  size_t image_size = srcframe->stVFrame.u32Length[0] + srcframe->stVFrame.u32Length[1] +
-                      srcframe->stVFrame.u32Length[2];
-  if (srcframe->stVFrame.pu8VirAddr[0] == NULL) {
-    srcframe->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(srcframe->stVFrame.u64PhyAddr[0], image_size);
-    do_unmap_src = true;
-  }
-
-  CVI_S32 ret = dst->fromFrame(srcframe);
-  if (ret != CVI_SUCCESS) {
-    LOGE("Convert frame to IVE_IMAGE_S fail %x\n", ret);
-    return CVIAI_ERR_MD_OPERATION_FAILED;
-  }
-
-  if (do_unmap_src) {
-    CVI_SYS_Munmap((void *)srcframe->stVFrame.pu8VirAddr[0], image_size);
-  }
-  return CVIAI_SUCCESS;
-}
-
 CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj_meta) {
   static int c = 0;
   CVI_S32 ret = CVI_SUCCESS;
@@ -265,7 +242,22 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
       return ret;
     }
 
-    ret = convert2Image(processed_frame.get(), &srcImg);
+    bool do_unmap_src = false;
+    size_t image_size = processed_frame->stVFrame.u32Length[0] +
+                        processed_frame->stVFrame.u32Length[1] +
+                        processed_frame->stVFrame.u32Length[2];
+    if (processed_frame->stVFrame.pu8VirAddr[0] == NULL) {
+      processed_frame->stVFrame.pu8VirAddr[0] =
+          (CVI_U8 *)CVI_SYS_MmapCache(processed_frame->stVFrame.u64PhyAddr[0], image_size);
+      do_unmap_src = true;
+    }
+
+    ret = srcImg.fromFrame(processed_frame.get());
+    if (ret != CVI_SUCCESS) {
+      LOGE("Convert frame to IVE_IMAGE_S fail %x\n", ret);
+      return CVIAI_ERR_MD_OPERATION_FAILED;
+    }
+
     if (ret != CVIAI_SUCCESS) {
       LOGE("failed to convert VIDEO_FRAME_INFO_S to IVE_IMAGE_S, ret=%d\n", ret);
       return ret;
@@ -283,6 +275,10 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     if (ret != CVI_SUCCESS) {
       LOGE("CVI_IVE_Sub fail %x\n", ret);
       return CVIAI_ERR_MD_OPERATION_FAILED;
+    }
+
+    if (do_unmap_src) {
+      CVI_SYS_Munmap((void *)processed_frame->stVFrame.pu8VirAddr[0], image_size);
     }
 
     ret = ive_instance->thresh(&md_output, &md_output, ThreshMode::BINARY, threshold, 0, 0, 0, 255);

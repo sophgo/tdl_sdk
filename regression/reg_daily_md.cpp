@@ -77,6 +77,7 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
         continue;
       }
 
+      bool missed = false;
       for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
         auto bbox = expected_dets[det_index]["bbox"];
 
@@ -87,10 +88,22 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
             .y2 = float(bbox[3]),
         };
 
-        EXPECT_TRUE(match_detections(obj_meta, expected_bbox, 0.95))
-            << "image path: " << image_path << "\n"
-            << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
-            << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
+        bool matched = match_detections(obj_meta, expected_bbox, 0.95);
+
+        EXPECT_TRUE(matched) << "image path: " << image_path << "\n"
+                             << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
+                             << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
+        if (!matched) {
+          missed = true;
+        }
+      }
+
+      if (missed) {
+        for (uint32_t pred_idx = 0; pred_idx < obj_meta->size; pred_idx++) {
+          printf("actual det[%d] = {%f, %f, %f, %f}\n", pred_idx, obj_meta->info[pred_idx].bbox.x1,
+                 obj_meta->info[pred_idx].bbox.y1, obj_meta->info[pred_idx].bbox.x2,
+                 obj_meta->info[pred_idx].bbox.y2);
+        }
       }
     }
   }
