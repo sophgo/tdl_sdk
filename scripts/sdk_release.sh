@@ -51,12 +51,13 @@ elif [[ "$CHIP_ARCH" == "CV182X" ]]; then
     echo "CHIP_ARCH=CV182X"
     echo "USE_TPU_IVE=${USE_TPU_IVE}"
 elif [[ "$CHIP_ARCH" == "MARS" ]]; then
-    SHRINK_OPENCV_SIZE=OFF # TODO: shrink opencv
     USE_TPU_IVE=OFF
     IVE_SDK_INSTALL_PATH=""
     if [[ "$SYSTEM_PROCESSOR" == "RISCV" ]]; then
+        SHRINK_OPENCV_SIZE=OFF # TODO: shrink opencv
         KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/riscv/usr/
     else
+        SHRINK_OPENCV_SIZE=ON
         KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr/
     fi
 else

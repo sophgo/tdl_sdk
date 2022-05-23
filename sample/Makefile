@@ -41,7 +41,7 @@ CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
 CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
 
 # link OpenCV shared object only if platform is cv183X series
-ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520 CV183X MARS))
+ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520 CV183X))
 LINK_OPENCV = 1
 else
 LINK_OPENCV = 0

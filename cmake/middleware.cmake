@@ -42,9 +42,6 @@ set(MIDDLEWARE_LIBS
 	            ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
 	            ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so)
 
-
-message("MIDDLEWARE_LIBS=${MIDDLEWARE_LIBS}")
-
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
   install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/middleware)
   install(FILES ${MIDDLEWARE_LIBS} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
