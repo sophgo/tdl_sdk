@@ -73,28 +73,30 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
 
       EXPECT_EQ(obj_meta->size, expected_dets.size()) << "image path: " << image_path;
 
+      bool missed = false;
       if (obj_meta->size != expected_dets.size()) {
-        continue;
+        missed = true;
       }
 
-      bool missed = false;
-      for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
-        auto bbox = expected_dets[det_index]["bbox"];
+      if (!missed) {
+        for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
+          auto bbox = expected_dets[det_index]["bbox"];
 
-        cvai_bbox_t expected_bbox = {
-            .x1 = float(bbox[0]),
-            .y1 = float(bbox[1]),
-            .x2 = float(bbox[2]),
-            .y2 = float(bbox[3]),
-        };
+          cvai_bbox_t expected_bbox = {
+              .x1 = float(bbox[0]),
+              .y1 = float(bbox[1]),
+              .x2 = float(bbox[2]),
+              .y2 = float(bbox[3]),
+          };
 
-        bool matched = match_detections(obj_meta, expected_bbox, 0.95);
+          bool matched = match_detections(obj_meta, expected_bbox, 0.95);
 
-        EXPECT_TRUE(matched) << "image path: " << image_path << "\n"
-                             << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
-                             << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
-        if (!matched) {
-          missed = true;
+          EXPECT_TRUE(matched) << "image path: " << image_path << "\n"
+                               << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
+                               << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
+          if (!matched) {
+            missed = true;
+          }
         }
       }
 
