@@ -11,7 +11,7 @@ else()
   message(FATAL_ERROR "${MIDDLEWARE_SDK_ROOT} is not a valid folder.")
 endif()
 
-if(MIDDLEWARE_SDK_ROOT MATCHES ".*middleware/v2")
+if("${MW_VER}" STREQUAL "v2")
   add_definitions(-D_MIDDLEWARE_V2_)
 endif()
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CVIAI_ROOT=$(readlink -f $SCRIPT_DIR/../)
@@ -21,16 +21,21 @@ echo "Creating tmp working directory."
 if [[ "$SDK_VER" == "uclibc" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-uclibc-linux.cmake
     SYSTEM_PROCESSOR=ARM
+    KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr
 elif [[ "$SDK_VER" == "32bit" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
     SYSTEM_PROCESSOR=ARM
+    KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr
 elif [[ "$SDK_VER" == "64bit" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
     SYSTEM_PROCESSOR=ARM64
+    KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm64/usr
 elif [[ "$SDK_VER" == "glibc_riscv64" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-riscv64-linux.cmake
     SYSTEM_PROCESSOR=RISCV
+    KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/riscv/usr/
 elif [[ "$SDK_VER" == "musl_riscv64" ]]; then
+    KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/riscv/usr/
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-riscv64-musl.cmake
     SYSTEM_PROCESSOR=RISCV
 else
@@ -38,30 +43,24 @@ else
     exit 1
 fi
 
-
 if [[ "$CHIP_ARCH" == "CV183X" ]]; then
     SHRINK_OPENCV_SIZE=OFF
     USE_TPU_IVE=ON
-    KERNEL_ROOT=""
 elif [[ "$CHIP_ARCH" == "CV182X" ]]; then
     SHRINK_OPENCV_SIZE=ON
     OPENCV_INSTALL_PATH=""
     USE_TPU_IVE=ON
-    KERNEL_ROOT=""
-    echo "CHIP_ARCH=CV182X"
-    echo "USE_TPU_IVE=${USE_TPU_IVE}"
 elif [[ "$CHIP_ARCH" == "MARS" ]]; then
     USE_TPU_IVE=OFF
     IVE_SDK_INSTALL_PATH=""
     if [[ "$SYSTEM_PROCESSOR" == "RISCV" ]]; then
         SHRINK_OPENCV_SIZE=OFF # TODO: shrink opencv
-        KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/riscv/usr/
     else
         SHRINK_OPENCV_SIZE=ON
-        KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr/
     fi
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
+    exit 1
 fi
 
 $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
@@ -78,6 +77,7 @@ $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE \
                                         -DKERNEL_ROOT=$KERNEL_ROOT \
                                         -DUSE_TPU_IVE=$USE_TPU_IVE \
+                                        -DMW_VER=$MW_VER \
                                         -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
                                         -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE"
 
