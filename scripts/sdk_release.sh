@@ -53,11 +53,7 @@ elif [[ "$CHIP_ARCH" == "CV182X" ]]; then
 elif [[ "$CHIP_ARCH" == "MARS" ]]; then
     USE_TPU_IVE=OFF
     IVE_SDK_INSTALL_PATH=""
-    if [[ "$SYSTEM_PROCESSOR" == "RISCV" ]]; then
-        SHRINK_OPENCV_SIZE=OFF # TODO: shrink opencv
-    else
-        SHRINK_OPENCV_SIZE=ON
-    fi
+    SHRINK_OPENCV_SIZE=ON
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
     exit 1
