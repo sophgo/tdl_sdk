@@ -116,15 +116,15 @@ CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t he
   return ret;
 }
 
-CVI_S32 CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                         PIXEL_FORMAT_E format) {
+CVI_S32 CVI_AI_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format) {
   cv::Mat img = cv::imread(filepath);
   if (img.empty()) {
     LOGE("Cannot read image %s.\n", filepath);
     return CVIAI_FAILURE;
   }
-  if (CREATE_VBFRAME_HELPER(blk, frame, img.cols, img.rows, format) != CVIAI_SUCCESS) {
-    LOGE("Create VBFrame failed.\n");
+
+  if (CREATE_ION_HELPER(frame, img.cols, img.rows, format, "cviai/image") != CVIAI_SUCCESS) {
+    LOGE("alloc ion failed.\n");
     return CVIAI_FAILURE;
   }
 
@@ -149,6 +149,19 @@ CVI_S32 CVI_AI_ReadImage(const char *filepath, VB_BLK *blk, VIDEO_FRAME_INFO_S *
       ret = CVIAI_FAILURE;
       break;
   }
-  CACHED_VBFRAME_FLUSH_UNMAP(frame);
+  return ret;
+}
+
+CVI_S32 CVI_AI_ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
+  CVI_S32 ret = CVI_SUCCESS;
+  if (frame->stVFrame.u64PhyAddr[0] != 0) {
+    ret = CVI_SYS_IonFree(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0]);
+    frame->stVFrame.u64PhyAddr[0] = (CVI_U64)0;
+    frame->stVFrame.u64PhyAddr[1] = (CVI_U64)0;
+    frame->stVFrame.u64PhyAddr[2] = (CVI_U64)0;
+    frame->stVFrame.pu8VirAddr[0] = NULL;
+    frame->stVFrame.pu8VirAddr[1] = NULL;
+    frame->stVFrame.pu8VirAddr[2] = NULL;
+  }
   return ret;
 }

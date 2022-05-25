@@ -27,7 +27,6 @@ class Image {
  private:
   bool createEmpty();
 
-  VB_BLK m_blk;
   VIDEO_FRAME_INFO_S m_frame;
   PIXEL_FORMAT_E m_format;
   std::string m_filepath;

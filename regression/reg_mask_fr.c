@@ -83,17 +83,15 @@ int main(int argc, char *argv[]) {
 
     printf("label %d: image1 %s image2 %s\n", label, name1_full, name2_full);
 
-    VB_BLK blk1;
     VIDEO_FRAME_INFO_S frame1;
-    CVI_S32 ret = CVI_AI_ReadImage(name1_full, &blk1, &frame1, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(name1_full, &frame1, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image1 failed with %#x!\n", ret);
       return ret;
     }
 
-    VB_BLK blk2;
     VIDEO_FRAME_INFO_S frame2;
-    ret = CVI_AI_ReadImage(name2_full, &blk2, &frame2, PIXEL_FORMAT_RGB_888);
+    ret = CVI_AI_ReadImage(name2_full, &frame2, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image2 failed with %#x!\n", ret);
       return ret;
@@ -115,8 +113,8 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_Free(&face1);
     CVI_AI_Free(&face2);
-    CVI_VB_ReleaseBlock(blk1);
-    CVI_VB_ReleaseBlock(blk2);
+    CVI_AI_ReleaseImage(&frame1);
+    CVI_AI_ReleaseImage(&frame2);
   }
 
   CVI_AI_Eval_LfwSave2File(eval_handle, argv[5]);

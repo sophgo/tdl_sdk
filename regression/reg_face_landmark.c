@@ -65,9 +65,8 @@ static int run(const char *img_dir, float *nme, int *total) {
     strcpy(img_name, ptr);
     img_name[strlen(img_name) - 1] = '\0';
     printf("%s\n", img_name);
-    VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(img_name, &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(img_name, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       continue;
@@ -99,7 +98,7 @@ static int run(const char *img_dir, float *nme, int *total) {
     (*total)++;
     CVI_AI_FreeDMS(face.dms);
     CVI_AI_Free(&face);
-    CVI_VB_ReleaseBlock(blk_fr);
+    CVI_AI_ReleaseImage(&frame);
   }
   return CVIAI_SUCCESS;
 }

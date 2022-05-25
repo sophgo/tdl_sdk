@@ -22,9 +22,8 @@ static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
 
     CVI_AI_Eval_Market1501GetPathIdPair(eval_handle, i, is_query, &image, &cam_id, &pid);
 
-    VB_BLK blk;
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image, &blk, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(image, &rgb_frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -52,7 +51,7 @@ static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
     free(image);
 
     CVI_AI_Free(&obj);
-    CVI_VB_ReleaseBlock(blk);
+    CVI_AI_ReleaseImage(&rgb_frame);
   }
 
   return CVIAI_SUCCESS;

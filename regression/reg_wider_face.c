@@ -67,12 +67,11 @@ int main(int argc, char *argv[]) {
   for (uint32_t i = 0; i < imageNum; i++) {
     char *filepath = NULL;
     CVI_AI_Eval_WiderFaceGetImagePath(eval_handle, i, &filepath);
-    VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
     cvai_face_t face;
     memset(&face, 0, sizeof(cvai_face_t));
 
-    CVI_S32 ret = CVI_AI_ReadImage(filepath, &blk, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(filepath, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image failed. %s!\n", filepath);
       continue;
@@ -80,7 +79,7 @@ int main(int argc, char *argv[]) {
     printf("Run image %s\n", filepath);
     CVI_AI_RetinaFace(facelib_handle, &frame, &face);
     CVI_AI_Eval_WiderFaceResultSave2File(eval_handle, i, &frame, &face);
-    CVI_VB_ReleaseBlock(blk);
+    CVI_AI_ReleaseImage(&frame);
     CVI_AI_Free(&face);
   }
   CVI_AI_Eval_WiderFaceClearInput(eval_handle);

@@ -57,14 +57,17 @@ void CVIAITestSuite::SetUpTestCase() {
   int64_t used_size = vpssgrp_width * vpssgrp_height * num_buffer * 2;
   ASSERT_LT(used_size, ion_size) << "insufficient ion size";
 
-  // Init VB pool size.
+  // Init VB pool size for VPSS usages.
   ASSERT_EQ(
       MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, num_buffer,
                        vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, num_buffer),
       CVIAI_SUCCESS);
 }
 
-void CVIAITestSuite::TearDownTestCase() { CVI_SYS_Exit(); }
+void CVIAITestSuite::TearDownTestCase() {
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
+}
 
 CVIAIModelTestSuite::CVIAIModelTestSuite(const std::string &json_file_name,
                                          const std::string &image_dir_name) {

@@ -67,9 +67,8 @@ int main(int argc, char *argv[]) {
     int id = 0;
     CVI_AI_Eval_CocoGetImageIdPair(eval_handle, i, &filename, &id);
     printf("Reading image %s\n", filename);
-    VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
-    if (CVI_AI_ReadImage(filename, &blk, &frame, PIXEL_FORMAT_RGB_888_PLANAR) != CVIAI_SUCCESS) {
+    if (CVI_AI_ReadImage(filename, &frame, PIXEL_FORMAT_RGB_888_PLANAR) != CVIAI_SUCCESS) {
       printf("Read image failed.\n");
       break;
     }
@@ -81,7 +80,7 @@ int main(int argc, char *argv[]) {
     }
     CVI_AI_Eval_CocoInsertObject(eval_handle, id, &obj);
     CVI_AI_Free(&obj);
-    CVI_VB_ReleaseBlock(blk);
+    CVI_AI_ReleaseImage(&frame);
   }
   CVI_AI_Eval_CocoEndEval(eval_handle);
 

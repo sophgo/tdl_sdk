@@ -92,9 +92,8 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     strcat(line, entry->d_name);
 
     printf("%s\n", line);
-    VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_AI_ReadImage(line, &blk_fr, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(line, &rgb_frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -149,7 +148,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     }
 
     CVI_AI_Free(&face);
-    CVI_VB_ReleaseBlock(blk_fr);
+    CVI_AI_ReleaseImage(&rgb_frame);
   }
   closedir(dirp);
 

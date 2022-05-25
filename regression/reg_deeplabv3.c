@@ -60,9 +60,8 @@ int main(int argc, char *argv[]) {
     CVI_AI_Eval_CityscapesGetImage(eval_handle, i, &img_name);
     printf("Read: %s\n", img_name);
 
-    VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_AI_ReadImage(img_name, &blk_fr, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(img_name, &rgb_frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Failed to read image: %s\n", img_name);
       return ret;
@@ -75,7 +74,7 @@ int main(int argc, char *argv[]) {
 
     CVI_VPSS_ReleaseChnFrame(0, 0, &label_frame);
     free(img_name);
-    CVI_VB_ReleaseBlock(blk_fr);
+    CVI_AI_ReleaseImage(&rgb_frame);
   }
 
   CVI_AI_DestroyHandle(ai_handle);

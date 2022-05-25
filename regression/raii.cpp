@@ -16,7 +16,7 @@ Image::Image(const std::string &file, PIXEL_FORMAT_E format)
 
 Image::~Image() {
   if (m_opened) {
-    CVI_VB_ReleaseBlock(m_blk);
+    CVI_AI_ReleaseImage(&m_frame);
   }
 }
 
@@ -29,7 +29,7 @@ bool Image::open() {
   if (m_filepath.empty()) {
     return createEmpty();
   } else {
-    if (CVI_AI_ReadImage(m_filepath.c_str(), &m_blk, &m_frame, m_format) != CVI_SUCCESS) {
+    if (CVI_AI_ReadImage(m_filepath.c_str(), &m_frame, m_format) != CVI_SUCCESS) {
       m_width = m_frame.stVFrame.u32Width;
       m_height = m_frame.stVFrame.u32Height;
       return false;
@@ -41,12 +41,7 @@ bool Image::open() {
 }
 
 bool Image::createEmpty() {
-  if (CREATE_VBFRAME_HELPER(&m_blk, &m_frame, m_width, m_height, m_format) != CVIAI_SUCCESS) {
-    return false;
-  }
-
-  CACHED_VBFRAME_FLUSH_UNMAP(&m_frame);
-  return true;
+  return CREATE_ION_HELPER(&m_frame, m_width, m_height, m_format, "cviai/image") == CVIAI_SUCCESS;
 }
 
 // AIModelHandler

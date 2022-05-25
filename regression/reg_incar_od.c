@@ -40,10 +40,9 @@ static int run(const char *img_dir) {
     strcat(line, entry->d_name);
 
     printf("%s\n", line);
-    VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
     CVI_S32 ret = CVIAI_SUCCESS;
-    ret = CVI_AI_ReadImage(line, &blk, &frame, PIXEL_FORMAT_RGB_888);
+    ret = CVI_AI_ReadImage(line, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -56,7 +55,7 @@ static int run(const char *img_dir) {
     CVI_AI_IncarObjectDetection(facelib_handle, &frame, &face);
 
     CVI_AI_Free(&face);
-    CVI_VB_ReleaseBlock(blk);
+    CVI_AI_ReleaseImage(&frame);
   }
   closedir(dirp);
 

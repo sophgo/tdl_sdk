@@ -67,9 +67,8 @@ int main(int argc, char *argv[]) {
     strcat(full_img, "/imgs/");
     strcat(full_img, name);
 
-    VB_BLK blk;
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(full_img, &blk, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(full_img, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -88,7 +87,7 @@ int main(int argc, char *argv[]) {
 
     free(name);
     CVI_AI_Free(&face);
-    CVI_VB_ReleaseBlock(blk);
+    CVI_AI_ReleaseImage(&frame);
   }
 
   CVI_AI_Eval_WflwDistance(eval_handle);

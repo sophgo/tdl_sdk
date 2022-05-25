@@ -58,7 +58,6 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  VB_BLK blk1;
   VIDEO_FRAME_INFO_S fdFrame;
   cvai_object_t obj;
   memset(&obj, 0, sizeof(cvai_object_t));
@@ -79,7 +78,7 @@ int main(int argc, char *argv[]) {
       strcat(image_path, "/");
       strcat(image_path, dp->d_name);
 
-      ret = CVI_AI_ReadImage(image_path, &blk1, &fdFrame, PIXEL_FORMAT_RGB_888);
+      ret = CVI_AI_ReadImage(image_path, &fdFrame, PIXEL_FORMAT_RGB_888);
       if (ret != CVIAI_SUCCESS) {
         printf("Read image1 failed with %#x!\n", ret);
         return ret;
@@ -97,7 +96,7 @@ int main(int argc, char *argv[]) {
         printf("; fall score %d ", obj.info[0].pedestrian_properity->fall);
       }
 
-      CVI_VB_ReleaseBlock(blk1);
+      CVI_AI_ReleaseImage(&fdFrame);
       CVI_AI_Free(&obj);
 
       free(dp);

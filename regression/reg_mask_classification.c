@@ -27,9 +27,8 @@ static int run(const char *img_dir, int *mask_count, int *total) {
     strcat(line, entry->d_name);
 
     printf("%s\n", line);
-    VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(line, &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(line, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -59,7 +58,7 @@ static int run(const char *img_dir, int *mask_count, int *total) {
     (*total)++;
 
     CVI_AI_Free(&face);
-    CVI_VB_ReleaseBlock(blk_fr);
+    CVI_AI_ReleaseImage(&frame);
   }
   closedir(dirp);
 

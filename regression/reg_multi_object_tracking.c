@@ -97,9 +97,8 @@ int main(int argc, char *argv[]) {
     char *image_path = line;
     printf("[%d/%d]\n", counter, imageNum);
 
-    VB_BLK blk_fr;
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path, &blk_fr, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_AI_ReadImage(image_path, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVIAI_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -131,7 +130,7 @@ int main(int argc, char *argv[]) {
 
     CVI_AI_Free(&obj_meta);
     CVI_AI_Free(&tracker_meta);
-    CVI_VB_ReleaseBlock(blk_fr);
+    CVI_AI_ReleaseImage(&frame);
   }
   printf("\nDone\n");
 
