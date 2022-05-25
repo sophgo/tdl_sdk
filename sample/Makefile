@@ -77,7 +77,7 @@ MW_LIB_PATH = $(MW_PATH)/lib
 MW_3RD_LIB_PATH = $(MW_PATH)/lib/3rd
 MW_INC_PATH = $(MW_PATH)/include
 MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
-MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
+MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1 -lcli
 
 ifeq ($(CHIP), CV182X)
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini

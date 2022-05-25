@@ -61,6 +61,7 @@ set(SAMPLE_LIBS
 )
 
 set(AUDIO_SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcli.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
