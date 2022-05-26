@@ -8,7 +8,6 @@
         "unmasked/test_00004522_1.jpg",
         "unmasked/test_00004525_1.jpg",
         "unmasked/test_00004525_2.jpg",
-        "unmasked/test_00004525_3.jpg",
         "unmasked/test_00004531_0.jpg",
         "unmasked/test_00004531_1.jpg",
         "unmasked/test_00004536_3.jpg",
@@ -105,10 +104,9 @@
         "masked/test_00004934_0.jpg",
         "masked/test_00004935_0.jpg"
       ], 
-      "image_num": 100, 
+      "image_num": 99, 
       "model_name": "mask_classifier.cvimodel", 
       "expected_results": [
-        0, 
         0, 
         0, 
         0, 

@@ -150,8 +150,8 @@ TEST_F(RetinafaceHardhatTestSuite, accruacy) {
   ASSERT_NO_FATAL_FAILURE(aimodel.open());
 
   int img_num = int(m_json_object["test_images"].size());
-  float threshold_bbox = float(m_json_object["threshold_bbox"]);
-  float threshold_score = float(m_json_object["threshold_score"]);
+  float iou_threshold = float(m_json_object["threshold_bbox"]);
+  float score_threshold = float(m_json_object["threshold_score"]);
 
   for (int img_idx = 0; img_idx < img_num; img_idx++) {
     // select image_0 for test
@@ -161,15 +161,13 @@ TEST_F(RetinafaceHardhatTestSuite, accruacy) {
     Image frame(image_path, PIXEL_FORMAT_BGR_888);
     ASSERT_TRUE(frame.open());
 
-    cvai_face_t face_meta;
-    memset(&face_meta, 0, sizeof(cvai_face_t));
+    AIObject<cvai_face_t> face_meta;
 
     {
-      EXPECT_EQ(CVI_AI_RetinaFace_Hardhat(m_ai_handle, frame.getFrame(), &face_meta),
-                CVIAI_SUCCESS);
+      EXPECT_EQ(CVI_AI_RetinaFace_Hardhat(m_ai_handle, frame.getFrame(), face_meta), CVIAI_SUCCESS);
     }
 
-    for (uint32_t i = 0; i < face_meta.size; i++) {
+    for (uint32_t i = 0; i < face_meta->size; i++) {
       float expected_res_x1 = float(m_json_object["expected_results"][img_idx][1][i][0]);
       float expected_res_y1 = float(m_json_object["expected_results"][img_idx][1][i][1]);
       float expected_res_x2 = float(m_json_object["expected_results"][img_idx][1][i][2]);
@@ -178,13 +176,29 @@ TEST_F(RetinafaceHardhatTestSuite, accruacy) {
       float expected_res_hardhat_score = float(m_json_object["expected_results"][img_idx][1][i][5]);
 
       {
-        EXPECT_LT(abs(face_meta.info[i].bbox.x1 - expected_res_x1), threshold_bbox);
-        EXPECT_LT(abs(face_meta.info[i].bbox.y1 - expected_res_y1), threshold_bbox);
-        EXPECT_LT(abs(face_meta.info[i].bbox.x2 - expected_res_x2), threshold_bbox);
-        EXPECT_LT(abs(face_meta.info[i].bbox.y2 - expected_res_y2), threshold_bbox);
-        EXPECT_LT(abs(face_meta.info[i].bbox.score - expected_res_bbox_conf), threshold_score);
-        EXPECT_LT(abs(face_meta.info[i].hardhat_score - expected_res_hardhat_score),
-                  threshold_score);
+        cvai_face_info_t expected_faceinfo = {0};
+        expected_faceinfo.bbox.score = expected_res_bbox_conf;
+        expected_faceinfo.bbox.x1 = expected_res_x1;
+        expected_faceinfo.bbox.y1 = expected_res_y1;
+        expected_faceinfo.bbox.x2 = expected_res_x2;
+        expected_faceinfo.bbox.y2 = expected_res_y2;
+        expected_faceinfo.hardhat_score = expected_res_hardhat_score;
+
+        auto comp = [=](cvai_face_info_t &pred, cvai_face_info_t &expected) {
+          if (iou(pred.bbox, expected.bbox) >= iou_threshold &&
+              abs(pred.bbox.score - expected.bbox.score) < score_threshold &&
+              abs(pred.hardhat_score - expected.hardhat_score) < score_threshold) {
+            return true;
+          }
+          return false;
+        };
+
+        bool matched = match_dets(*face_meta, expected_faceinfo, comp);
+        EXPECT_TRUE(matched) << "image path: " << image_path << "\n"
+                             << "model path: " << m_model_path << "\n"
+                             << "expected bbox: (" << expected_faceinfo.bbox.x1 << ", "
+                             << expected_faceinfo.bbox.y1 << ", " << expected_faceinfo.bbox.x2
+                             << ", " << expected_faceinfo.bbox.y2 << ")\n";
       }
     }
   }

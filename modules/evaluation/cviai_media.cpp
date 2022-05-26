@@ -1,6 +1,7 @@
 #include "evaluation/cviai_media.h"
 #include "cviai_log.hpp"
 
+#include <iostream>
 #include "core/core/cvai_errno.h"
 #include "core/utils/vpss_helper.h"
 #include "opencv2/core.hpp"
@@ -117,37 +118,43 @@ CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t he
 }
 
 CVI_S32 CVI_AI_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format) {
-  cv::Mat img = cv::imread(filepath);
-  if (img.empty()) {
-    LOGE("Cannot read image %s.\n", filepath);
-    return CVIAI_FAILURE;
-  }
-
-  if (CREATE_ION_HELPER(frame, img.cols, img.rows, format, "cviai/image") != CVIAI_SUCCESS) {
-    LOGE("alloc ion failed.\n");
-    return CVIAI_FAILURE;
-  }
-
   int ret = CVIAI_SUCCESS;
-  switch (format) {
-    case PIXEL_FORMAT_RGB_888: {
-      BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, true);
-    } break;
-    case PIXEL_FORMAT_BGR_888: {
-      BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, false);
-    } break;
-    case PIXEL_FORMAT_RGB_888_PLANAR: {
-      BufferRGBPacked2PlanarCopy(img.data, img.cols, img.rows, img.step, frame, true);
-    } break;
-    case PIXEL_FORMAT_YUV_400: {
-      cv::Mat img2;
-      cv::cvtColor(img, img2, cv::COLOR_BGR2GRAY);
-      BufferGreyCopy(img2.data, img2.cols, img2.rows, img2.step, frame);
-    } break;
-    default:
-      LOGE("Unsupported format: %u.\n", format);
-      ret = CVIAI_FAILURE;
-      break;
+  try {
+    cv::Mat img = cv::imread(filepath);
+    if (img.empty()) {
+      LOGE("Cannot read image %s.\n", filepath);
+      return CVIAI_FAILURE;
+    }
+
+    if (CREATE_ION_HELPER(frame, img.cols, img.rows, format, "cviai/image") != CVIAI_SUCCESS) {
+      LOGE("alloc ion failed.\n");
+      return CVIAI_FAILURE;
+    }
+    switch (format) {
+      case PIXEL_FORMAT_RGB_888: {
+        BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, true);
+      } break;
+      case PIXEL_FORMAT_BGR_888: {
+        BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, false);
+      } break;
+      case PIXEL_FORMAT_RGB_888_PLANAR: {
+        BufferRGBPacked2PlanarCopy(img.data, img.cols, img.rows, img.step, frame, true);
+      } break;
+      case PIXEL_FORMAT_YUV_400: {
+        cv::Mat img2;
+        cv::cvtColor(img, img2, cv::COLOR_BGR2GRAY);
+        BufferGreyCopy(img2.data, img2.cols, img2.rows, img2.step, frame);
+      } break;
+      default:
+        LOGE("Unsupported format: %u.\n", format);
+        ret = CVIAI_FAILURE;
+        break;
+    }
+  } catch (cv::Exception &e) {
+    const char *err_msg = e.what();
+    std::cout << "exception caught: " << err_msg << std::endl;
+    std::cout << "when read image: " << std::string(filepath) << std::endl;
+    ret = CVIAI_FAILURE;
   }
   return ret;
 }

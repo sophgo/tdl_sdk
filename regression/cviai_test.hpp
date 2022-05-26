@@ -45,8 +45,8 @@ class CVIAITestSuite : public testing::Test {
   static int64_t get_ion_memory_size();
 
  protected:
-  static const uint32_t DEFAULT_IMG_WIDTH = 1920;
-  static const uint32_t DEFAULT_IMG_HEIGHT = 1080;
+  static const uint32_t DEFAULT_IMG_WIDTH = 1280;
+  static const uint32_t DEFAULT_IMG_HEIGHT = 720;
 };
 
 class CVIAIModelTestSuite : public CVIAITestSuite {

@@ -31,19 +31,9 @@ class MotionDetectionTestSuite : public CVIAIModelTestSuite {
     CVI_AI_DestroyHandle(m_ai_handle);
     m_ai_handle = NULL;
   }
+
+  float bbox_threshold = 0.95;
 };
-
-bool match_detections(cvai_object_t *obj_meta, cvai_bbox_t &expected_bbox, float bbox_threhold) {
-  bool found = false;
-  for (uint32_t actual_det_index = 0; actual_det_index < obj_meta->size; actual_det_index++) {
-    found = iou(obj_meta->info[actual_det_index].bbox, expected_bbox) >= bbox_threhold;
-    if (found) {
-      return found;
-    }
-  }
-
-  return false;
-}
 
 TEST_F(MotionDetectionTestSuite, accuracy) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
@@ -71,7 +61,7 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
 
       auto expected_dets = iter.value();
 
-      EXPECT_EQ(obj_meta->size, expected_dets.size()) << "image path: " << image_path;
+      ASSERT_EQ(obj_meta->size, expected_dets.size()) << "image path: " << image_path;
 
       bool missed = false;
       if (obj_meta->size != expected_dets.size()) {
@@ -89,9 +79,16 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
               .y2 = float(bbox[3]),
           };
 
-          bool matched = match_detections(obj_meta, expected_bbox, 0.95);
+          auto comp = [=](cvai_object_info_t &info, cvai_bbox_t &bbox) {
+            if (iou(info.bbox, bbox) >= bbox_threshold) {
+              return true;
+            }
+            return false;
+          };
 
-          EXPECT_TRUE(matched) << "image path: " << image_path << "\n"
+          bool matched = match_dets(*obj_meta, expected_bbox, comp);
+
+          ASSERT_TRUE(matched) << "image path: " << image_path << "\n"
                                << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
                                << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
           if (!matched) {

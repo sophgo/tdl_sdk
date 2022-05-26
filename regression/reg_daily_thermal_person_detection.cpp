@@ -160,20 +160,6 @@ TEST_F(ThermalPersonDetectionTestSuite, inference) {
   }
 }
 
-bool thermal_person_match_detections(cvai_object_t &obj_meta, cvai_bbox_t &expected_bbox,
-                                     float iou_threshold, float score_threshold) {
-  bool found = false;
-  for (uint32_t actual_det_index = 0; actual_det_index < obj_meta.size; actual_det_index++) {
-    found = iou(obj_meta.info[actual_det_index].bbox, expected_bbox) >= iou_threshold &&
-            abs(obj_meta.info[actual_det_index].bbox.score - expected_bbox.score) < score_threshold;
-    if (found) {
-      // printf("found actual_det_index %d\n", actual_det_index);
-      return found;
-    }
-  }
-  return false;
-}
-
 TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
     std::string model_name = std::string(m_json_object[test_index]["model"]);
@@ -195,11 +181,10 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
       Image frame(image_path, PIXEL_FORMAT_BGR_888);
       ASSERT_TRUE(frame.open());
 
-      cvai_object_t obj;
-      memset(&obj, 0, sizeof(cvai_object_t));
-      { EXPECT_EQ(CVI_AI_ThermalPerson(m_ai_handle, frame.getFrame(), &obj), CVIAI_SUCCESS); }
+      AIObject<cvai_object_t> obj;
+      { EXPECT_EQ(CVI_AI_ThermalPerson(m_ai_handle, frame.getFrame(), obj), CVIAI_SUCCESS); }
 
-      for (uint32_t i = 0; i < obj.size; i++) {
+      for (uint32_t i = 0; i < obj->size; i++) {
 #if 0
         printf(
             "[%d][%d], x1, y1, x2, y2, score, result : [%f, %f, %f, %f], %f, class : %d, %s\n",
@@ -219,11 +204,19 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
             .score = float(m_json_object[test_index]["expected_results"][img_idx][1][i][4]),
         };
 
-        EXPECT_TRUE(
-            thermal_person_match_detections(obj, expected_bbox, iou_threshold, score_threshold))
-            << "image path: " << image_path << "\n"
-            << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
-            << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
+        auto comp = [=](cvai_object_info_t &pred, cvai_bbox_t &expected) {
+          if (iou(pred.bbox, expected) >= iou_threshold &&
+              abs(pred.bbox.score - expected.score) < score_threshold) {
+            return true;
+          }
+          return false;
+        };
+
+        bool matched = match_dets(*obj, expected_bbox, comp);
+
+        EXPECT_TRUE(matched) << "image path: " << image_path << "\n"
+                             << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
+                             << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
       }
     }
   }

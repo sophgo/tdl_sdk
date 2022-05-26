@@ -44,7 +44,7 @@ class MobileDetV2TestSuite : public CVIAIModelTestSuite {
   static const std::unordered_map<std::string, std::pair<CVI_AI_SUPPORTED_MODEL_E, InferenceFunc>>
       MODEL_MAP;
 
-  const float bbox_threhold = 0.90;
+  const float bbox_threshold = 0.90;
   const float score_threshold = 0.1;
 };
 
@@ -359,23 +359,6 @@ TEST_F(MobileDetV2TestSuite, select_classes) {
   }
 }
 
-bool match_detections(cvai_object_t *obj_meta, cvai_bbox_t &expected_bbox, int catId,
-                      float bbox_threhold, float score_threshold) {
-  bool found = false;
-  for (uint32_t actual_det_index = 0; actual_det_index < obj_meta->size; actual_det_index++) {
-    if (obj_meta->info[actual_det_index].classes == catId) {
-      found =
-          iou(obj_meta->info[actual_det_index].bbox, expected_bbox) >= bbox_threhold &&
-          abs(obj_meta->info[actual_det_index].bbox.score - expected_bbox.score) < score_threshold;
-      if (found) {
-        return found;
-      }
-    }
-  }
-
-  return false;
-}
-
 TEST_F(MobileDetV2TestSuite, accuracy) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
     ModelInfo model_info = getModel(std::string(m_json_object[test_index]["model_name"]));
@@ -402,29 +385,39 @@ TEST_F(MobileDetV2TestSuite, accuracy) {
       EXPECT_EQ(obj_meta->size, expected_dets.size()) << "model: " << model_info.model_path << "\n"
                                                       << "image path: " << image_path;
 
+      bool missed = false;
       if (obj_meta->size != expected_dets.size()) {
-        continue;
+        missed = true;
       }
 
-      for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
-        auto bbox = expected_dets[det_index]["bbox"];
-        int catId = int(expected_dets[det_index]["category_id"]) - 1;
+      if (!missed) {
+        for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
+          auto bbox = expected_dets[det_index]["bbox"];
+          int catId = int(expected_dets[det_index]["category_id"]) - 1;
 
-        cvai_bbox_t expected_bbox = {
-            .x1 = float(bbox[0]),
-            .y1 = float(bbox[1]),
-            .x2 = float(bbox[2]) + float(bbox[0]),
-            .y2 = float(bbox[3]) + float(bbox[1]),
-            .score = float(expected_dets[det_index]["score"]),
-        };
+          cvai_bbox_t expected_bbox = {
+              .x1 = float(bbox[0]),
+              .y1 = float(bbox[1]),
+              .x2 = float(bbox[2]) + float(bbox[0]),
+              .y2 = float(bbox[3]) + float(bbox[1]),
+              .score = float(expected_dets[det_index]["score"]),
+          };
 
-        EXPECT_TRUE(
-            match_detections(obj_meta, expected_bbox, catId, bbox_threhold, score_threshold))
-            << "image path: " << image_path << "\n"
-            << "model path: " << model_info.model_path << "\n"
-            << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
-            << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
-            << "score: " << expected_bbox.score << "\n";
+          auto comp = [=](cvai_object_info_t &info, cvai_bbox_t &bbox) {
+            if (info.classes == catId && iou(info.bbox, bbox) >= bbox_threshold &&
+                abs(info.bbox.score - bbox.score) <= score_threshold) {
+              return true;
+            }
+            return false;
+          };
+
+          EXPECT_TRUE(match_dets(*obj_meta, expected_bbox, comp))
+              << "image path: " << image_path << "\n"
+              << "model path: " << model_info.model_path << "\n"
+              << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
+              << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
+              << "score: " << expected_bbox.score << "\n";
+        }
       }
     }
   }

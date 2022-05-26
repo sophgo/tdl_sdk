@@ -181,12 +181,11 @@ TEST_F(RetinafaceTestSuite, accruacy) {
       Image frame(image_path, PIXEL_FORMAT_BGR_888);
       ASSERT_TRUE(frame.open());
 
-      cvai_face_t face_meta;
-      memset(&face_meta, 0, sizeof(cvai_face_t));
+      AIObject<cvai_face_t> face_meta;
 
-      { EXPECT_EQ(CVI_AI_RetinaFace(m_ai_handle, frame.getFrame(), &face_meta), CVIAI_SUCCESS); }
+      { EXPECT_EQ(CVI_AI_RetinaFace(m_ai_handle, frame.getFrame(), face_meta), CVIAI_SUCCESS); }
 
-      for (uint32_t i = 0; i < face_meta.size; i++) {
+      for (uint32_t i = 0; i < face_meta->size; i++) {
         float expected_res_x1 =
             float(m_json_object[test_index]["expected_results"][img_idx][1][i][0]);
         float expected_res_y1 =
@@ -195,12 +194,26 @@ TEST_F(RetinafaceTestSuite, accruacy) {
             float(m_json_object[test_index]["expected_results"][img_idx][1][i][2]);
         float expected_res_y2 =
             float(m_json_object[test_index]["expected_results"][img_idx][1][i][3]);
-        {
-          EXPECT_LT(abs(face_meta.info[i].bbox.x1 - expected_res_x1), threshold);
-          EXPECT_LT(abs(face_meta.info[i].bbox.y1 - expected_res_y1), threshold);
-          EXPECT_LT(abs(face_meta.info[i].bbox.x2 - expected_res_x2), threshold);
-          EXPECT_LT(abs(face_meta.info[i].bbox.y2 - expected_res_y2), threshold);
-        }
+
+        cvai_bbox_t expected_bbox = {
+            .x1 = expected_res_x1,
+            .y1 = expected_res_y1,
+            .x2 = expected_res_x2,
+            .y2 = expected_res_y2,
+        };
+
+        auto comp = [=](cvai_face_info_t &pred, cvai_bbox_t &expected) {
+          if (iou(pred.bbox, expected) >= threshold) {
+            return true;
+          }
+          return false;
+        };
+
+        bool matched = match_dets(*face_meta, expected_bbox, comp);
+        EXPECT_TRUE(matched) << "image path: " << image_path << "\n"
+                             << "model path: " << m_model_path << "\n"
+                             << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
+                             << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
       }
     }
   }

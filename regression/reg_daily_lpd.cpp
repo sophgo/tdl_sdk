@@ -11,7 +11,7 @@
 #include "raii.hpp"
 #include "regression_utils.hpp"
 
-#define DISTANCE_BIAS 2.0
+#define DISTANCE_BIAS 12
 
 static bool is_closed(cvai_4_pts_t *pts_1, cvai_4_pts_t *pts_2) {
   for (int i = 0; i < 4; i++) {
@@ -88,14 +88,16 @@ TEST_F(LicensePlateDetectionTestSuite, accruacy) {
       expected_res->y[i] =
           float(m_json_object["reg_config"][0]["expected_results"][img_idx][2 * i + 1]);
     }
-    ASSERT_EQ(is_closed(pred, expected_res), true);
-#if 0
+    bool matched = is_closed(pred, expected_res);
+    EXPECT_TRUE(matched);
+    if (!matched) {
       printf("license plate: (%f,%f,%f,%f,%f,%f,%f,%f)\n", pred->x[0], pred->y[0], pred->x[1],
              pred->y[1], pred->x[2], pred->y[2], pred->x[3], pred->y[3]);
       printf("expected: (%f,%f,%f,%f,%f,%f,%f,%f)\n", expected_res->x[0], expected_res->y[0],
              expected_res->x[1], expected_res->y[1], expected_res->x[2], expected_res->y[2],
              expected_res->x[3], expected_res->y[3]);
-#endif
+    }
+
     delete expected_res;
   }
 }

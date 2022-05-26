@@ -18,8 +18,8 @@
 
 cviai_handle_t facelib_handle = NULL;
 
-static CVI_S32 vpssgrp_width = 2048;
-static CVI_S32 vpssgrp_height = 1536;
+static CVI_S32 vpssgrp_width = 1280;
+static CVI_S32 vpssgrp_height = 720;
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {

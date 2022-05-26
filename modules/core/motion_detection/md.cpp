@@ -58,8 +58,8 @@ CVI_S32 MotionDetection::init(VIDEO_FRAME_INFO_S *init_frame) {
   }
 
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: background.png\n");
-  background_img.write("background.png");
+  LOGI("MD DEBUG: write: background.yuv\n");
+  background_img.write("background.yuv");
 #endif
   return ret;
 }
@@ -116,7 +116,15 @@ CVI_S32 MotionDetection::update_background(VIDEO_FRAME_INFO_S *frame) {
       return CVIAI_ERR_MD_OPERATION_FAILED;
     }
   }
-  return copy_image(frame, &background_img);
+
+  CVI_S32 ret = copy_image(frame, &background_img);
+
+#ifdef DEBUG_MD
+  LOGI("MD DEBUG: write: background.yuv\n");
+  background_img.write("background.yuv");
+#endif
+
+  return ret;
 }
 
 void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *out) {
@@ -287,14 +295,14 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     return ret;
   }
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: src.png\n");
-  srcImg.write("src.png");
+  LOGI("MD DEBUG: write: src.yuv\n");
+  srcImg.write("src.yuv");
 #endif
   // Sub - threshold - dilate
   ret = ive_instance->sub(&srcImg, &background_img, &md_output);
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: sub.png\n");
-  md_output.write("sub.png");
+  LOGI("MD DEBUG: write: sub.yuv\n");
+  md_output.write("sub.yuv");
 #endif
   if (ret != CVI_SUCCESS) {
     LOGE("CVI_IVE_Sub fail %x\n", ret);
@@ -307,8 +315,8 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 
   ret = ive_instance->thresh(&md_output, &md_output, ThreshMode::BINARY, threshold, 0, 0, 0, 255);
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: thresh.png\n");
-  md_output.write("thresh.png");
+  LOGI("MD DEBUG: write: thresh.yuv\n");
+  md_output.write("thresh.yuv");
 #endif
   if (ret != CVI_SUCCESS) {
     LOGE("CVI_IVE_Sub fail %x\n", ret);
@@ -322,8 +330,8 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: dialte.png\n");
-  md_output.write("dilate.png");
+  LOGI("MD DEBUG: write: dialte.yuv\n");
+  md_output.write("dilate.yuv");
 #endif
   VIDEO_FRAME_INFO_S md_output_frame;
   md_output.bufRequest();
