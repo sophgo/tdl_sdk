@@ -6,6 +6,7 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_utils.hpp"
+#include "image_utils.hpp"
 
 // include core_c.h if opencv version greater than 4.5
 #if CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR >= 5
@@ -25,6 +26,17 @@
 #define MEAN_G (0.456 / 0.224)
 #define MEAN_B (0.406 / 0.225)
 #define NAME_SCORE "score_Softmax_dequant"
+
+static bool IS_SUPPORTED_FORMAT(VIDEO_FRAME_INFO_S *frame) {
+  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420 &&
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21) {
+    LOGE("Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d].\n",
+         frame->stVFrame.enPixelFormat, PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21);
+    return false;
+  }
+  return true;
+}
 
 namespace cviai {
 
@@ -79,21 +91,21 @@ void FaceQuality::releaseION() {
 }
 
 int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta, bool *skip) {
-  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
-    LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
+  if (false == IS_SUPPORTED_FORMAT(frame)) {
     return CVIAI_ERR_INVALID_ARGS;
   }
 
-  int img_width = frame->stVFrame.u32Width;
-  int img_height = frame->stVFrame.u32Height;
+  CVI_U32 frame_size =
+      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
   bool do_unmap = false;
   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
     frame->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame_size);
+    frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
+    frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
     do_unmap = true;
   }
-  cv::Mat image(img_height, img_width, CV_8UC3, frame->stVFrame.pu8VirAddr[0],
-                frame->stVFrame.u32Stride[0]);
+
   int ret = CVIAI_SUCCESS;
   for (uint32_t i = 0; i < meta->size; i++) {
     if (skip != NULL && skip[i]) {
@@ -101,11 +113,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta, bool *s
     }
     cvai_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
-    cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
-                       image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
-                       m_wrap_frame.stVFrame.u32Stride[0]);
-
-    face_align(image, warp_image, face_info);
+    ALIGN_FACE_TO_FRAME(frame, &m_wrap_frame, face_info);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
     ret = run(frames);
@@ -119,7 +127,7 @@ int FaceQuality::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta, bool *s
     CVI_AI_FreeCpp(&face_info);
   }
   if (do_unmap) {
-    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
+    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame_size);
     frame->stVFrame.pu8VirAddr[0] = NULL;
     frame->stVFrame.pu8VirAddr[1] = NULL;
     frame->stVFrame.pu8VirAddr[2] = NULL;

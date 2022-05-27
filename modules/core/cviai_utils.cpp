@@ -159,9 +159,12 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
 
 CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
                            PIXEL_FORMAT_E fmt) {
-  if (fmt != PIXEL_FORMAT_RGB_888 && fmt != PIXEL_FORMAT_NV21) {
-    LOGE("Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d].\n", fmt,
-         PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21);
+  if (fmt != PIXEL_FORMAT_RGB_888 && fmt != PIXEL_FORMAT_NV21 &&
+      fmt != PIXEL_FORMAT_YUV_PLANAR_420) {
+    LOGE(
+        "Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d], "
+        "PIXEL_FORMAT_YUV_PLANAR_420 [%d].\n",
+        fmt, PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21, PIXEL_FORMAT_YUV_PLANAR_420);
     return CVIAI_ERR_INVALID_ARGS;
   }
   if (image->pix[0] != NULL) {
@@ -190,6 +193,14 @@ CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
       image->length[1] = image->stride[0] * (image->height >> 1);
       image->length[2] = 0;
     } break;
+    case PIXEL_FORMAT_YUV_PLANAR_420: {
+      image->stride[0] = GET_AI_IMAGE_STRIDE(image->width);
+      image->stride[1] = GET_AI_IMAGE_STRIDE(image->width >> 1);
+      image->stride[2] = GET_AI_IMAGE_STRIDE(image->width >> 1);
+      image->length[0] = image->stride[0] * image->height;
+      image->length[1] = image->stride[1] * (image->height >> 1);
+      image->length[2] = image->stride[2] * (image->height >> 1);
+    } break;
     default:
       LOGE("Currently unsupported format %u\n", fmt);
       return CVIAI_ERR_INVALID_ARGS;
@@ -206,6 +217,10 @@ CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
     case PIXEL_FORMAT_NV21: {
       image->pix[1] = image->pix[0] + image->length[0];
       image->pix[2] = NULL;
+    } break;
+    case PIXEL_FORMAT_YUV_PLANAR_420: {
+      image->pix[1] = image->pix[0] + image->length[0];
+      image->pix[2] = image->pix[1] + image->length[1];
     } break;
     default:
       LOGE("Currently unsupported format %u\n", fmt);
@@ -226,11 +241,12 @@ CVI_S32 CVI_AI_EstimateImageSize(uint64_t *size, uint32_t height, uint32_t width
   *size = 0;
   switch (fmt) {
     case PIXEL_FORMAT_RGB_888: {
-      *size += ALIGN(width * 3, DEFAULT_ALIGN) * height;
+      *size += GET_AI_IMAGE_STRIDE(width * 3) * height;
     } break;
+    case PIXEL_FORMAT_YUV_PLANAR_420:
     case PIXEL_FORMAT_NV21: {
-      *size += ALIGN(width, DEFAULT_ALIGN) * height;
-      *size += ALIGN(width, DEFAULT_ALIGN) * (height >> 1);
+      *size += GET_AI_IMAGE_STRIDE(width) * height;
+      *size += GET_AI_IMAGE_STRIDE(width) * (height >> 1);
     } break;
     default:
       LOGE("Currently unsupported format %u\n", fmt);

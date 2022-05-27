@@ -131,19 +131,24 @@ static void *pImageWrite(void *args) {
       printf("[WARNING] Image I/O unsupported format: %d\n",
              data_buffer[target_idx].image.pix_format);
     } else {
-      printf(" > (I/O) Write Face (Q: %.2f): %s ...\n", data_buffer[target_idx].quality, filename);
-      // stbi_write_png(filename, data_buffer[target_idx].image.width,
-      //                data_buffer[target_idx].image.height, STBI_rgb,
-      //                data_buffer[target_idx].image.pix[0],
-      //                data_buffer[target_idx].image.stride[0]);
+      if (data_buffer[target_idx].image.width == 0) {
+        printf("[WARNING] Target image is empty.\n");
+      } else {
+        printf(" > (I/O) Write Face (Q: %.2f): %s ...\n", data_buffer[target_idx].quality,
+               filename);
+        stbi_write_png(filename, data_buffer[target_idx].image.width,
+                       data_buffer[target_idx].image.height, STBI_rgb,
+                       data_buffer[target_idx].image.pix[0],
+                       data_buffer[target_idx].image.stride[0]);
 
-      /* if there is no first capture face in INTELLIGENT mode, we need to create one */
-      if (app_mode == intelligent && data_buffer[target_idx].counter == 0) {
-        sprintf(filename, "images/face_%" PRIu64 "_1.png", data_buffer[target_idx].u_id);
-        // stbi_write_png(filename, data_buffer[target_idx].image.width,
-        //                data_buffer[target_idx].image.height, STBI_rgb,
-        //                data_buffer[target_idx].image.pix[0],
-        //                data_buffer[target_idx].image.stride[0]);
+        /* if there is no first capture face in INTELLIGENT mode, we need to create one */
+        if (app_mode == intelligent && data_buffer[target_idx].counter == 0) {
+          sprintf(filename, "images/face_%" PRIu64 "_1.png", data_buffer[target_idx].u_id);
+          stbi_write_png(filename, data_buffer[target_idx].image.width,
+                         data_buffer[target_idx].image.height, STBI_rgb,
+                         data_buffer[target_idx].image.pix[0],
+                         data_buffer[target_idx].image.stride[0]);
+        }
       }
     }
 
@@ -296,7 +301,7 @@ static void *pVideoOutput(void *args) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 11) {
+  if (argc != 12) {
     printf(
         "Usage: %s <face_detection_model_path>\n"
         "          <face_attribute_model_path>\n"
@@ -307,7 +312,8 @@ int main(int argc, char *argv[]) {
         "          tracking buffer size\n"
         "          FD threshold\n"
         "          write image (0/1)\n"
-        "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
+        "          video output, 0: disable, 1: output to panel, 2: output through rtsp"
+        "          video input format, 0: rgb, 1: nv21, 2: yuv420\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
@@ -328,8 +334,18 @@ int main(int argc, char *argv[]) {
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
 
-  PIXEL_FORMAT_E aiInputFormat = PIXEL_FORMAT_RGB_888;
-  // PIXEL_FORMAT_E aiInputFormat = PIXEL_FORMAT_NV21;  /* FIXME: GetFrame error */
+  PIXEL_FORMAT_E aiInputFormat;
+  int vi_format = atoi(argv[11]);
+  if (vi_format == 0) {
+    aiInputFormat = PIXEL_FORMAT_RGB_888;
+  } else if (vi_format == 1) {
+    aiInputFormat = PIXEL_FORMAT_NV21;
+  } else if (vi_format == 2) {
+    aiInputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
+  } else {
+    printf("vi format[%d] unknown.\n", vi_format);
+    return CVI_FAILURE;
+  }
   if (InitVideoSystem(&vs_ctx, &aiInputSize, aiInputFormat, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;

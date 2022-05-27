@@ -12,8 +12,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <unistd.h>
 
+// #define EXECUTION_TIME
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 static volatile bool bExit = false;
@@ -28,10 +30,11 @@ static void SampleHandleSig(CVI_S32 signo) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
+  if (argc != 5) {
     printf(
-        "Usage: %s <retina_model_path> <quality_model_path> <video output>.\n"
-        "\t video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
+        "Usage: %s <retina_model_path> <quality_model_path> <video output> <video input format>.\n"
+        "\t video output, 0: disable, 1: output to panel, 2: output through rtsp\n"
+        "\t video input format, 0: RGB888, 1: NV21, 2: YUV420\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
@@ -44,7 +47,19 @@ int main(int argc, char *argv[]) {
   CVI_S32 s32Ret = CVIAI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, PIXEL_FORMAT_RGB_888, voType) != CVI_SUCCESS) {
+  PIXEL_FORMAT_E aiInputFormat;
+  int vi_format = atoi(argv[4]);
+  if (vi_format == 0) {
+    aiInputFormat = PIXEL_FORMAT_RGB_888;
+  } else if (vi_format == 1) {
+    aiInputFormat = PIXEL_FORMAT_NV21;
+  } else if (vi_format == 2) {
+    aiInputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
+  } else {
+    printf("vi format[%d] unknown.\n", vi_format);
+    return CVI_FAILURE;
+  }
+  if (InitVideoSystem(&vs_ctx, &aiInputSize, aiInputFormat, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVIAI_FAILURE;
   }
@@ -72,9 +87,22 @@ int main(int argc, char *argv[]) {
     }
 
     CVI_AI_RetinaFace(ai_handle, &stfdFrame, &face);
-    printf("face_count %d\n", face.size);
     CVI_AI_Service_FaceAngleForAll(&face);
+#ifdef EXECUTION_TIME
+    struct timeval t0, t1;
+    gettimeofday(&t0, NULL);
+#endif
     CVI_AI_FaceQuality(ai_handle, &stfdFrame, &face, NULL);
+#ifdef EXECUTION_TIME
+    gettimeofday(&t1, NULL);
+    unsigned long execution_time = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
+    printf("CVI_AI_FaceQuality execution time: %.2f(ms)\n", (float)execution_time / 1000.);
+#endif
+
+    printf("faces number: %u\n", face.size);
+    for (uint32_t i = 0; i < face.size; i++) {
+      printf("face[%u]: quality[%.4f]\n", i, face.info[i].face_quality);
+    }
 
     int s32Ret = CVI_SUCCESS;
     s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,

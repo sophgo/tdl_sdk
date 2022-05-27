@@ -490,9 +490,13 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
                      cvai_face_t *face_meta) {
   LOGI("[APP::FaceCapture] Capture Face\n");
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
-      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21) {
-    LOGE("Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d].\n",
-         frame->stVFrame.enPixelFormat, PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21);
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
+    LOGE(
+        "Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d], "
+        "PIXEL_FORMAT_YUV_PLANAR_420 [%d].\n",
+        frame->stVFrame.enPixelFormat, PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21,
+        PIXEL_FORMAT_YUV_PLANAR_420);
     return CVIAI_ERR_INVALID_ARGS;
   }
 
