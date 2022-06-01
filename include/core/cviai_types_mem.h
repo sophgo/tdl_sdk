@@ -35,8 +35,10 @@ DLL_EXPORT void CVI_AI_FreeObject(cvai_object_t *obj);
 DLL_EXPORT void CVI_AI_FreeImage(cvai_image_t *image);
 DLL_EXPORT void CVI_AI_FreeDMS(cvai_dms_t *dms);
 
-DLL_EXPORT void CVI_AI_CopyFaceInfo(const cvai_face_info_t *info, cvai_face_info_t *infoNew);
-DLL_EXPORT void CVI_AI_CopyObjectInfo(const cvai_object_info_t *info, cvai_object_info_t *infoNew);
+DLL_EXPORT void CVI_AI_CopyFaceInfo(const cvai_face_info_t *src, cvai_face_info_t *dst);
+DLL_EXPORT void CVI_AI_CopyObjectInfo(const cvai_object_info_t *src, cvai_object_info_t *dst);
+DLL_EXPORT void CVI_AI_CopyFaceMeta(const cvai_face_t *src, cvai_face_t *dst);
+DLL_EXPORT void CVI_AI_CopyObjectMeta(const cvai_object_t *src, cvai_object_t *dst);
 
 DLL_EXPORT void CVI_AI_CopyImage(const cvai_image_t *src_image, cvai_image_t *dst_image);
 #ifdef __cplusplus

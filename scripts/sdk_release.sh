@@ -11,6 +11,11 @@ else
     BUILD_TYPE=SDKRelease
 fi
 
+if [ -d "${TMP_WORKING_DIR}" ]; then
+    echo "Cleanup tmp folder."
+    rm -rf $TMP_WORKING_DIR
+fi
+
 mkdir -p $TMP_WORKING_DIR/build_sdk
 pushd $TMP_WORKING_DIR/build_sdk
 wget -c ftp://swftp:cvitek@10.18.65.11/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
@@ -81,8 +86,6 @@ $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
 ninja -j8 || exit 1
 ninja install || exit 1
 popd
-echo "Cleanup tmp folder."
-rm -rf $TMP_WORKING_DIR
 
 echo "trying to build sample in released folder."
 for v in $CVI_TARGET_PACKAGES_LIBDIR; do

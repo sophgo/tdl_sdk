@@ -1,345 +1,596 @@
-#define _GNU_SOURCE
-#include <signal.h>
-#include "cviai.h"
+#define LOG_TAG "SampleOD"
+#define LOG_LEVEL LOG_LEVEL_INFO
+
+#include "middleware_utils.h"
+#include "sample_log.h"
 #include "sample_utils.h"
 #include "vi_vo_utils.h"
+
+#include <core/utils/vpss_helper.h>
+#include <cvi_comm.h>
+#include <cvi_sys.h>
+#include <cvi_vb.h>
+#include <cvi_vi.h>
+#include <cviai.h>
+#include <rtsp.h>
+#include <sample_comm.h>
+
+#include <pthread.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+static volatile bool bExit = false;
 
 // smooth value structure
 typedef struct {
   float mask_score;
   cvai_dms_t dms;
-} SMOOTH_FACE_INFO;
-SMOOTH_FACE_INFO smooth_face_info;
+} SAMPLE_AI_SMOOTH_FACE_INFO_S;
 
 // threshold structure
 typedef struct {
-  int eye_win_th;
-  int yawn_win_th;
-  float yaw_th;
-  float pitch_th;
-  float eye_th;
-  float smooth_eye_th;
-  float yawn_th;
-  float mask_th;
-} THRESHOLD_S;
-THRESHOLD_S _threshold;
+  int fEyeWinTh;
+  int fYawnWinTh;
+  float fYawTh;
+  float fPitchTh;
+  float fEyeTh;
+  float fSmoothEyeTh;
+  float fYawnTh;
+  float fMaskTh;
+} SAMPLE_AI_THRESHOLD_S;
 
-// ai handle
-cviai_handle_t ai_handle = NULL;
-cviai_service_handle_t service_handle = NULL;
+typedef enum {
+  DROWSINESS,
+  DISTRACTION,
+  NORMAL,
+} SAMPLE_AI_DMS_STATUS_E;
 
-// siganl exit
-static volatile bool bExit = true;
-// status_name
-char status_n[256];
+typedef struct {
+  SAMPLE_AI_DMS_STATUS_E enOverallStaus;
+  bool bHasMask;
+  bool bYawning;
+  bool bREyeClosing;
+  char bLEyeClosing;
+  cvai_pts_t stLandmarks;
+  struct {
+    float fYaw;
+    float fPitch;
+    float fRoll;
+  } face_angle;
+} SAMPLE_AI_DMS_RESULT_S;
 
-static void HandleSig(CVI_S32 signo) {
+SAMPLE_AI_DMS_RESULT_S g_stDMSResult;
+
+MUTEXAUTOLOCK_INIT(ResultMutex);
+
+void update_moving_avg(SAMPLE_AI_SMOOTH_FACE_INFO_S *pstSmoothInfo, cvai_face_t *pstFaceMeta) {
+  // Yawn score
+  pstSmoothInfo->dms.yawn_score =
+      pstSmoothInfo->dms.yawn_score * 0.5 + pstFaceMeta->dms->yawn_score * 0.5;
+
+  // Eye closing
+  pstSmoothInfo->dms.reye_score =
+      pstSmoothInfo->dms.reye_score * 0.5 + pstFaceMeta->dms->reye_score * 0.5;
+  pstSmoothInfo->dms.leye_score =
+      pstSmoothInfo->dms.leye_score * 0.5 + pstFaceMeta->dms->leye_score * 0.5;
+
+  // Mask score
+  pstSmoothInfo->mask_score =
+      pstSmoothInfo->mask_score * 0.5 + pstFaceMeta->info[0].mask_score * 0.5;
+
+  // Face angle
+  pstSmoothInfo->dms.head_pose.yaw =
+      pstSmoothInfo->dms.head_pose.yaw * 0.5 + pstFaceMeta->dms->head_pose.yaw * 0.5;
+  pstSmoothInfo->dms.head_pose.pitch =
+      pstSmoothInfo->dms.head_pose.pitch * 0.5 + pstFaceMeta->dms->head_pose.pitch * 0.5;
+  pstSmoothInfo->dms.head_pose.roll =
+      pstSmoothInfo->dms.head_pose.roll * 0.5 + pstFaceMeta->dms->head_pose.roll * 0.5;
+}
+
+void update_score_window(SAMPLE_AI_SMOOTH_FACE_INFO_S *pstSmoothInfo,
+                         SAMPLE_AI_THRESHOLD_S *pstThresh, int *pEyeScoreWindow,
+                         int *pYawnScoreWindow) {
+  // Update Yawn window score
+  if (pstSmoothInfo->mask_score < pstThresh->fMaskTh) {
+    if (pstSmoothInfo->dms.yawn_score < pstThresh->fYawnTh) {
+      if (*pYawnScoreWindow < 30) {
+        *pYawnScoreWindow += 1;
+      }
+    } else {
+      if (*pYawnScoreWindow > 0) {
+        *pYawnScoreWindow -= 1;
+      }
+    }
+  } else {
+    if (*pYawnScoreWindow < 0) {
+      *pYawnScoreWindow += 1;
+    }
+  }
+
+  // Update Eye closing window score
+  if (pstSmoothInfo->dms.reye_score + pstSmoothInfo->dms.leye_score > pstThresh->fEyeTh) {
+    if (*pEyeScoreWindow < 30) {
+      *pEyeScoreWindow += 1;
+    }
+  } else {
+    if (*pEyeScoreWindow > 0) {
+      *pEyeScoreWindow -= 1;
+    }
+  }
+}
+
+void update_status(SAMPLE_AI_SMOOTH_FACE_INFO_S *pstSmoothFaceInfo, cvai_face_t *pstFaceMeta,
+                   SAMPLE_AI_THRESHOLD_S *pstThreshold, int eyeScoreWindow, int yawnScoreWindow,
+                   SAMPLE_AI_DMS_RESULT_S *pstDMSResult) {
+  pstDMSResult->bYawning = pstFaceMeta->dms->yawn_score >= pstThreshold->fYawnTh;
+  pstDMSResult->bREyeClosing = pstFaceMeta->dms->reye_score < pstThreshold->fEyeTh;
+  pstDMSResult->bLEyeClosing = pstFaceMeta->dms->leye_score < pstThreshold->fEyeTh;
+  pstDMSResult->bHasMask = pstSmoothFaceInfo->mask_score >= pstThreshold->fMaskTh;
+  pstDMSResult->face_angle.fYaw = pstFaceMeta->dms->head_pose.yaw;
+  pstDMSResult->face_angle.fPitch = pstFaceMeta->dms->head_pose.pitch;
+  pstDMSResult->face_angle.fRoll = pstFaceMeta->dms->head_pose.roll;
+  free(pstDMSResult->stLandmarks.x);
+  free(pstDMSResult->stLandmarks.y);
+
+  pstDMSResult->stLandmarks.size = pstFaceMeta->dms->landmarks_106.size;
+  pstDMSResult->stLandmarks.x = (float *)malloc(sizeof(float) * pstDMSResult->stLandmarks.size);
+  memcpy(pstDMSResult->stLandmarks.x, pstFaceMeta->dms->landmarks_106.x,
+         sizeof(float) * pstDMSResult->stLandmarks.size);
+
+  pstDMSResult->stLandmarks.y = (float *)malloc(sizeof(float) * pstDMSResult->stLandmarks.size);
+  memcpy(pstDMSResult->stLandmarks.y, pstFaceMeta->dms->landmarks_106.y,
+         sizeof(float) * pstDMSResult->stLandmarks.size);
+
+  if (fabs(pstSmoothFaceInfo->dms.head_pose.yaw) > pstThreshold->fYawTh ||
+      fabs(pstSmoothFaceInfo->dms.head_pose.pitch) > pstThreshold->fPitchTh) {
+    pstDMSResult->enOverallStaus = DISTRACTION;
+  } else if (eyeScoreWindow < pstThreshold->fEyeWinTh ||
+             yawnScoreWindow < pstThreshold->fYawnWinTh) {
+    pstDMSResult->enOverallStaus = DROWSINESS;
+  } else {
+    pstDMSResult->enOverallStaus = NORMAL;
+  }
+}
+
+/**
+ * @brief Arguments for video encoder thread
+ *
+ */
+typedef struct {
+  SAMPLE_AI_MW_CONTEXT *pstMWContext;
+  cviai_service_handle_t stServiceHandle;
+} SAMPLE_AI_VENC_THREAD_ARG_S;
+
+/**
+ * @brief Arguments for ai thread
+ *
+ */
+typedef struct {
+  ODInferenceFunc inference_func;
+  CVI_AI_SUPPORTED_MODEL_E enOdModelId;
+  cviai_handle_t stAIHandle;
+} SAMPLE_AI_AI_THREAD_ARG_S;
+
+void *run_venc(void *args) {
+  AI_LOGI("Enter encoder thread\n");
+  SAMPLE_AI_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_AI_VENC_THREAD_ARG_S *)args;
+  VIDEO_FRAME_INFO_S stFrame;
+  CVI_S32 s32Ret;
+  SAMPLE_AI_DMS_RESULT_S stDMSResult = {0};
+
+  while (bExit == false) {
+    s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN0, &stFrame, 2000);
+    if (s32Ret != CVI_SUCCESS) {
+      AI_LOGE("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
+      break;
+    }
+
+    {
+      // Get detection result from global
+      MutexAutoLock(ResultMutex, lock);
+      memcpy(&stDMSResult, &g_stDMSResult, sizeof(SAMPLE_AI_DMS_RESULT_S));
+
+      stDMSResult.stLandmarks.x = (float *)malloc(sizeof(float) * g_stDMSResult.stLandmarks.size);
+      memcpy(stDMSResult.stLandmarks.x, g_stDMSResult.stLandmarks.x,
+             sizeof(float) * stDMSResult.stLandmarks.size);
+
+      stDMSResult.stLandmarks.y = (float *)malloc(sizeof(float) * g_stDMSResult.stLandmarks.size);
+      memcpy(stDMSResult.stLandmarks.y, g_stDMSResult.stLandmarks.y,
+             sizeof(float) * stDMSResult.stLandmarks.size);
+    }
+
+    if (stDMSResult.bYawning) {
+      CVI_AI_Service_ObjectWriteText("Yawn: open", 1000, 190, &stFrame, -1, -1, -1);
+    } else {
+      CVI_AI_Service_ObjectWriteText("Yawn: close", 1000, 190, &stFrame, 255, 0, 255);
+    }
+
+    if (stDMSResult.bREyeClosing) {
+      CVI_AI_Service_ObjectWriteText("Right Eye: close", 700, 100, &stFrame, -1, -1, -1);
+    } else {
+      CVI_AI_Service_ObjectWriteText("Right Eye: close", 700, 100, &stFrame, 255, 0, 255);
+    }
+
+    if (stDMSResult.bLEyeClosing) {
+      CVI_AI_Service_ObjectWriteText("Right Eye: close", 1000, 100, &stFrame, -1, -1, -1);
+    } else {
+      CVI_AI_Service_ObjectWriteText("Right Eye: open", 1000, 100, &stFrame, 255, 0, 255);
+    }
+
+    if (stDMSResult.bHasMask) {
+      CVI_AI_Service_ObjectWriteText("Mask: Yes", 1000, 150, &stFrame, -1, 0, -1);
+    } else {
+      CVI_AI_Service_ObjectWriteText("Mask: No", 1000, 150, &stFrame, 255, 0, 255);
+    }
+
+    CVI_AI_Service_FaceDrawPts(&(stDMSResult.stLandmarks), &stFrame);
+
+    {
+      char acAngleString[255];
+
+      snprintf(acAngleString, sizeof(acAngleString), "Yaw: %.2f Pitch: %.2f Roll: %.2f",
+               stDMSResult.face_angle.fYaw, stDMSResult.face_angle.fPitch,
+               stDMSResult.face_angle.fRoll);
+
+      CVI_AI_Service_ObjectWriteText(acAngleString, 700, 50, &stFrame, -1, -1,
+                                     -1);  // per frame info
+    }
+
+    {
+      char acOverallStatus[255];
+      if (stDMSResult.enOverallStaus == DROWSINESS) {
+        snprintf(acOverallStatus, sizeof(acOverallStatus), "Status: Drowsiness");
+      } else if (stDMSResult.enOverallStaus == DISTRACTION) {
+        snprintf(acOverallStatus, sizeof(acOverallStatus), "Status: Distraction");
+      } else {
+        snprintf(acOverallStatus, sizeof(acOverallStatus), "Status: Normal");
+      }
+      CVI_AI_Service_ObjectWriteText(acOverallStatus, 30, 70, &stFrame, -1, -1, -1);
+    }
+
+    if (s32Ret != CVIAI_SUCCESS) {
+      CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
+      AI_LOGE("Draw fame fail!, ret=%x\n", s32Ret);
+      goto error;
+    }
+
+    s32Ret = SAMPLE_AI_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
+  error:
+    free(stDMSResult.stLandmarks.x);
+    free(stDMSResult.stLandmarks.y);
+    CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
+    if (s32Ret != CVI_SUCCESS) {
+      bExit = true;
+    }
+  }
+  AI_LOGI("Exit encoder thread\n");
+  pthread_exit(NULL);
+}
+
+void *run_ai_thread(void *args) {
+  AI_LOGI("Enter AI thread\n");
+  SAMPLE_AI_AI_THREAD_ARG_S *pstAIArgs = (SAMPLE_AI_AI_THREAD_ARG_S *)args;
+  VIDEO_FRAME_INFO_S stFrame;
+  cvai_face_t stFaceMeta = {0};
+  SAMPLE_AI_DMS_RESULT_S stDMSResult = {0};
+  SAMPLE_AI_SMOOTH_FACE_INFO_S stSmoothFaceInfo = {0};
+  int eye_score_window = 0;   // 30 frames
+  int yawn_score_window = 0;  // 30 frames
+
+  SAMPLE_AI_THRESHOLD_S stThreshold = {.fEyeWinTh = 11,
+                                       .fYawnWinTh = 11,
+                                       .fYawTh = 0.25,
+                                       .fPitchTh = 0.25,
+                                       .fEyeTh = 0.45,
+                                       .fSmoothEyeTh = 0.65 * 2,  // 0.65 is one eye
+                                       .fYawnTh = 0.75,
+                                       .fMaskTh = 0.5};
+
+  CVI_S32 s32Ret;
+  while (bExit == false) {
+    s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
+
+    if (s32Ret != CVI_SUCCESS) {
+      AI_LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", s32Ret);
+      goto get_frame_failed;
+    }
+
+    CVI_AI_RetinaFace(pstAIArgs->stAIHandle, &stFrame, &stFaceMeta);
+    // Just calculate the first one
+    if (stFaceMeta.size > 0) {
+      // Detect phones, foods
+      GOTO_IF_FAILED(CVI_AI_IncarObjectDetection(pstAIArgs->stAIHandle, &stFrame, &stFaceMeta),
+                     s32Ret, inf_error);
+
+      // Predict facial landmark
+      GOTO_IF_FAILED(CVI_AI_FaceLandmarker(pstAIArgs->stAIHandle, &stFrame, &stFaceMeta), s32Ret,
+                     inf_error);
+
+      // Calculate face angle according to facial landmarks.
+      GOTO_IF_FAILED(
+          CVI_AI_Service_FaceAngle(&(stFaceMeta.dms->landmarks_5), &stFaceMeta.dms->head_pose),
+          s32Ret, inf_error);
+
+      // Predict mask detection
+      GOTO_IF_FAILED(CVI_AI_MaskClassification(pstAIArgs->stAIHandle, &stFrame, &stFaceMeta),
+                     s32Ret, inf_error);
+
+      // Predict eye closing
+      GOTO_IF_FAILED(CVI_AI_EyeClassification(pstAIArgs->stAIHandle, &stFrame, &stFaceMeta), s32Ret,
+                     inf_error);
+
+      if (stFaceMeta.info[0].mask_score < stThreshold.fMaskTh) {
+        // Yawn classification
+        GOTO_IF_FAILED(CVI_AI_YawnClassification(pstAIArgs->stAIHandle, &stFrame, &stFaceMeta),
+                       s32Ret, inf_error);
+      }
+
+      update_moving_avg(&stSmoothFaceInfo, &stFaceMeta);
+      update_score_window(&stSmoothFaceInfo, &stThreshold, &eye_score_window, &yawn_score_window);
+      update_status(&stSmoothFaceInfo, &stFaceMeta, &stThreshold, eye_score_window,
+                    yawn_score_window, &stDMSResult);
+    }
+
+    {
+      // Copy dms results to global.
+      MutexAutoLock(ResultMutex, lock);
+      free(g_stDMSResult.stLandmarks.x);
+      free(g_stDMSResult.stLandmarks.y);
+
+      memcpy(&g_stDMSResult, &stDMSResult, sizeof(SAMPLE_AI_DMS_RESULT_S));
+
+      g_stDMSResult.stLandmarks.x = (float *)malloc(sizeof(float) * g_stDMSResult.stLandmarks.size);
+      memcpy(g_stDMSResult.stLandmarks.x, stDMSResult.stLandmarks.x,
+             sizeof(float) * stDMSResult.stLandmarks.size);
+
+      g_stDMSResult.stLandmarks.y = (float *)malloc(sizeof(float) * g_stDMSResult.stLandmarks.size);
+      memcpy(g_stDMSResult.stLandmarks.y, stDMSResult.stLandmarks.y,
+             sizeof(float) * stDMSResult.stLandmarks.size);
+    }
+
+  inf_error:
+    CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
+  get_frame_failed:
+    CVI_AI_Free(&stFaceMeta);
+    free(stDMSResult.stLandmarks.x);
+    free(stDMSResult.stLandmarks.y);
+    if (s32Ret != CVI_SUCCESS) {
+      bExit = true;
+    }
+  }
+
+  AI_LOGI("Exit AI thread\n");
+  pthread_exit(NULL);
+}
+
+CVI_S32 get_middleware_config(SAMPLE_AI_MW_CONFIG_S *pstMWConfig) {
+  // Video Pipeline of this sample:
+  //                                                       +------+
+  //                                    CHN0 (VBPool 0)    | VENC |--------> RTSP
+  //  +----+      +----------------+---------------------> +------+
+  //  | VI |----->| VPSS 0 (DEV 1) |            +-----------------------+
+  //  +----+      +----------------+----------> | VPSS 1 (DEV 0) AI SDK |------------> AI model
+  //                            CHN1 (VBPool 1) +-----------------------+  CHN0 (VBPool 2)
+
+  // VI configuration
+  //////////////////////////////////////////////////
+  // Get VI configurations from ini file.
+  CVI_S32 s32Ret = SAMPLE_AI_Get_VI_Config(&pstMWConfig->stViConfig);
+  if (s32Ret != CVI_SUCCESS || pstMWConfig->stViConfig.s32WorkingViNum <= 0) {
+    AI_LOGE("Failed to get senor infomation from ini file (/mnt/data/sensor_cfg.ini).\n");
+    return -1;
+  }
+
+  // Get VI size
+  PIC_SIZE_E enPicSize;
+  s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(pstMWConfig->stViConfig.astViInfo[0].stSnsInfo.enSnsType,
+                                          &enPicSize);
+  if (s32Ret != CVI_SUCCESS) {
+    AI_LOGE("Cannot get senor size\n");
+    return s32Ret;
+  }
+
+  SIZE_S stSensorSize;
+  s32Ret = SAMPLE_COMM_SYS_GetPicSize(enPicSize, &stSensorSize);
+  if (s32Ret != CVI_SUCCESS) {
+    AI_LOGE("Cannot get senor size\n");
+    return s32Ret;
+  }
+
+  // Setup frame size of video encoder to 1080p
+  SIZE_S stVencSize = {
+      .u32Width = 1920,
+      .u32Height = 1080,
+  };
+
+  // VBPool configurations
+  //////////////////////////////////////////////////
+  pstMWConfig->stVBPoolConfig.u32VBPoolCount = 3;
+
+  // VBPool 0 for VI
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[0].enFormat = VI_PIXEL_FORMAT;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[0].u32BlkCount = 3;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[0].u32Height = stSensorSize.u32Height;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[0].u32Width = stSensorSize.u32Width;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[0].bBind = true;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[0].u32VpssChnBinding = VPSS_CHN0;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[0].u32VpssGrpBinding = (VPSS_GRP)0;
+
+  // VBPool 1 for AI frame
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].enFormat = PIXEL_FORMAT_RGB_888;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].u32BlkCount = 3;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].u32Height = stVencSize.u32Height;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].u32Width = stVencSize.u32Width;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].bBind = true;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].u32VpssChnBinding = VPSS_CHN1;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].u32VpssGrpBinding = (VPSS_GRP)0;
+
+  // VBPool 2 for AI preprocessing.
+  // The input pixel format of AI SDK models is eighter RGB 888 or RGB 888 Planar.
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].enFormat = PIXEL_FORMAT_RGB_888_PLANAR;
+  // AI SDK use only 1 buffer at the same time.
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].u32BlkCount = 1;
+  // Considering the maximum input size of object detection model is 1024x768, we set same size
+  // here.
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].u32Height = 768;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].u32Width = 1024;
+  // Don't bind with VPSS here, AI SDK would bind this pool automatically when user assign this pool
+  // through CVI_AI_SetVBPool.
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].bBind = false;
+
+  // VPSS configurations
+  //////////////////////////////////////////////////
+
+  // Create a VPSS Grp0 for main stream, video encoder, and AI frame.
+  pstMWConfig->stVPSSPoolConfig.u32VpssGrpCount = 1;
+  pstMWConfig->stVPSSPoolConfig.stVpssMode.aenInput[0] = VPSS_INPUT_MEM;
+  pstMWConfig->stVPSSPoolConfig.stVpssMode.enMode = VPSS_MODE_DUAL;
+  pstMWConfig->stVPSSPoolConfig.stVpssMode.ViPipe[0] = 0;
+  pstMWConfig->stVPSSPoolConfig.stVpssMode.aenInput[1] = VPSS_INPUT_ISP;
+  pstMWConfig->stVPSSPoolConfig.stVpssMode.ViPipe[1] = 0;
+
+  SAMPLE_AI_VPSS_CONFIG_S *pstVpssConfig = &pstMWConfig->stVPSSPoolConfig.astVpssConfig[0];
+  pstVpssConfig->bBindVI = true;
+
+  // Assign device 1 to VPSS Grp0, because device1 has 3 outputs in dual mode.
+  VPSS_GRP_DEFAULT_HELPER2(&pstVpssConfig->stVpssGrpAttr, stSensorSize.u32Width,
+                           stSensorSize.u32Height, VI_PIXEL_FORMAT, 1);
+
+  // Enable two channels for VENC and AI frame
+  pstVpssConfig->u32ChnCount = 2;
+
+  // Bind VPSS Grp0 Ch0 with VI
+  pstVpssConfig->u32ChnBindVI = VPSS_CHN0;
+  VPSS_CHN_DEFAULT_HELPER(&pstVpssConfig->astVpssChnAttr[0], stVencSize.u32Width,
+                          stVencSize.u32Height, VI_PIXEL_FORMAT, true);
+  VPSS_CHN_DEFAULT_HELPER(&pstVpssConfig->astVpssChnAttr[1], stVencSize.u32Width,
+                          stVencSize.u32Height, PIXEL_FORMAT_RGB_888, true);
+
+  // VENC
+  //////////////////////////////////////////////////
+  // Get default VENC configurations
+  SAMPLE_AI_Get_Input_Config(&pstMWConfig->stVencConfig.stChnInputCfg);
+  pstMWConfig->stVencConfig.u32FrameWidth = stVencSize.u32Width;
+  pstMWConfig->stVencConfig.u32FrameHeight = stVencSize.u32Height;
+
+  // RTSP
+  //////////////////////////////////////////////////
+  // Get default RTSP configurations
+  SAMPLE_AI_Get_RTSP_Config(&pstMWConfig->stRTSPConfig.stRTSPConfig);
+
+  return s32Ret;
+}
+
+static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
   signal(SIGTERM, SIG_IGN);
-
+  AI_LOGI("handle signal, signo: %d\n", signo);
   if (SIGINT == signo || SIGTERM == signo) {
-    bExit = false;
+    bExit = true;
   }
 }
 
-// dms initial
-void dms_init(cvai_face_t* face) {
-  cvai_dms_t* dms = (cvai_dms_t*)malloc(sizeof(cvai_dms_t));
-  dms->reye_score = 0;
-  dms->leye_score = 0;
-  dms->yawn_score = 0;
-  dms->phone_score = 0;
-  dms->smoke_score = 0;
-  dms->landmarks_106.size = 0;
-  dms->landmarks_5.size = 0;
-  dms->head_pose.yaw = 0;
-  dms->head_pose.pitch = 0;
-  dms->head_pose.roll = 0;
-  dms->dms_od.info = NULL;
-  dms->dms_od.size = 0;
-  face->dms = dms;
-}
-
-void YawnClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
-                      VIDEO_FRAME_INFO_S stVOFrame, int* yawn_score_window,
-                      const THRESHOLD_S threshold, const bool mask_flag, const int display) {
-  CVI_AI_YawnClassification(ai_handle, &stVencFrame, face);
-
-  // calculate smooth yawn score
-  smooth_face_info.dms.yawn_score =
-      smooth_face_info.dms.yawn_score * 0.5 + face->dms->yawn_score * 0.5;
-  if (smooth_face_info.dms.yawn_score < threshold.yawn_th) {
-    if (*yawn_score_window < 30) *yawn_score_window += 1;
-  } else {
-    if (*yawn_score_window > 0) *yawn_score_window -= 1;
-  }
-
-  if (display) {
-    memset(status_n, 0, sizeof(status_n));
-    if (face->dms->yawn_score < threshold.yawn_th) {
-      strcpy(status_n, "Yawn: close");
-      CVI_AI_Service_ObjectWriteText(status_n, 1000, 190, &stVOFrame, 255, 0, 255);
-    } else {
-      strcpy(status_n, "Yawn: open");
-      CVI_AI_Service_ObjectWriteText(status_n, 1000, 190, &stVOFrame, -1, -1, -1);
-    }
-  }
-}
-
-void EyeClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
-                     VIDEO_FRAME_INFO_S stVOFrame, int* eye_score_window,
-                     const THRESHOLD_S threshold, const int display) {
-  CVI_AI_EyeClassification(ai_handle, &stVencFrame, face);
-
-  // calculate smooth eye score
-  smooth_face_info.dms.reye_score =
-      smooth_face_info.dms.reye_score * 0.5 + face->dms->reye_score * 0.5;
-  smooth_face_info.dms.leye_score =
-      smooth_face_info.dms.leye_score * 0.5 + face->dms->leye_score * 0.5;
-
-  if (smooth_face_info.dms.reye_score + smooth_face_info.dms.leye_score > threshold.smooth_eye_th) {
-    if (*eye_score_window < 30) *eye_score_window += 1;
-  } else {
-    if (*eye_score_window > 0) *eye_score_window -= 1;
-  }
-
-  if (display) {
-    // show the eye score per frame
-    memset(status_n, 0, sizeof(status_n));
-    if (face->dms->reye_score < threshold.eye_th) {
-      strcpy(status_n, "Right Eye: close");
-      CVI_AI_Service_ObjectWriteText(status_n, 700, 100, &stVOFrame, -1, -1, -1);
-    } else {
-      strcpy(status_n, "Right Eye: open");
-      CVI_AI_Service_ObjectWriteText(status_n, 700, 100, &stVOFrame, 255, 0, 255);
-    }
-    memset(status_n, 0, sizeof(status_n));
-    if (face->dms->leye_score < threshold.eye_th) {
-      strcpy(status_n, "Left Eye: close");
-      CVI_AI_Service_ObjectWriteText(status_n, 1000, 100, &stVOFrame, -1, -1, -1);
-    } else {
-      strcpy(status_n, "Left Eye: open");
-      CVI_AI_Service_ObjectWriteText(status_n, 1000, 100, &stVOFrame, 255, 0, 255);
-    }
-  }
-}
-
-void MaskClassifition(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame,
-                      VIDEO_FRAME_INFO_S stVOFrame, bool* mask_flag, const THRESHOLD_S threshold,
-                      const int display) {
-  CVI_AI_MaskClassification(ai_handle, &stVencFrame, face);
-
-  // calculate smooth mask score
-  smooth_face_info.mask_score = smooth_face_info.mask_score * 0.5 + face->info[0].mask_score * 0.5;
-
-  if (display) {
-    memset(status_n, 0, sizeof(status_n));
-    if (smooth_face_info.mask_score < threshold.mask_th) {
-      strcpy(status_n, "Status: no mask");
-      *mask_flag = true;
-      if (display) CVI_AI_Service_ObjectWriteText(status_n, 1000, 150, &stVOFrame, 255, 0, 255);
-    } else {
-      strcpy(status_n, "Status: mask");
-      *mask_flag = false;
-      if (display) CVI_AI_Service_ObjectWriteText(status_n, 1000, 150, &stVOFrame, -1, -1, -1);
-    }
-  }
-}
-
-void FaceLandmarks(cvai_face_t* face, VIDEO_FRAME_INFO_S stVencFrame, VIDEO_FRAME_INFO_S stVOFrame,
-                   const int display) {
-  CVI_AI_FaceLandmarker(ai_handle, &stVencFrame, face);
-
-  if (display) CVI_AI_Service_FaceDrawPts(&(face->dms->landmarks_106), &stVOFrame);
-}
-
-void FaceAngle(cvai_face_t* face, VIDEO_FRAME_INFO_S stVOFrame, const int display) {
-  CVI_AI_Service_FaceAngle(&(face->dms->landmarks_5), &face->dms->head_pose);
-
-  // calculate smooth face angle
-  smooth_face_info.dms.head_pose.yaw =
-      smooth_face_info.dms.head_pose.yaw * 0.5 + face->dms->head_pose.yaw * 0.5;
-  smooth_face_info.dms.head_pose.pitch =
-      smooth_face_info.dms.head_pose.pitch * 0.5 + face->dms->head_pose.pitch * 0.5;
-  smooth_face_info.dms.head_pose.roll =
-      smooth_face_info.dms.head_pose.roll * 0.5 + face->dms->head_pose.roll * 0.5;
-
-  if (display) {
-    memset(status_n, 0, sizeof(status_n));
-    sprintf(status_n, "Yaw: %f Pitch: %f Roll: %f", face->dms->head_pose.yaw,
-            face->dms->head_pose.pitch, face->dms->head_pose.roll);
-    CVI_AI_Service_ObjectWriteText(status_n, 700, 50, &stVOFrame, -1, -1,
-                                   -1);  // per frame info
-  }
-}
-
-void StatusUpdate(VIDEO_FRAME_INFO_S stVOFrame, const int eye_score_window,
-                  const int yawn_score_window, const THRESHOLD_S threshold) {
-  memset(status_n, 0, sizeof(status_n));
-  if ((smooth_face_info.dms.head_pose.yaw > threshold.yaw_th ||
-       smooth_face_info.dms.head_pose.yaw < -threshold.yaw_th ||
-       smooth_face_info.dms.head_pose.pitch > threshold.pitch_th ||
-       smooth_face_info.dms.head_pose.pitch < -threshold.pitch_th)) {
-    strcpy(status_n, "Status: Distraction");
-    CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame, -1, -1, -1);
-  } else if (eye_score_window < threshold.eye_win_th || yawn_score_window < threshold.yawn_win_th) {
-    strcpy(status_n, "Status: Drowsiness");
-    CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame, -1, -1, -1);
-  } else {
-    strcpy(status_n, "Status: Normal");
-    CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame, -1, -1, -1);
-  }
-}
-
-int main(int argc, char** argv) {
-  if (argc != 9) {
-    printf(
-        "Usage: %s <retina_model_path> <mask_classification_model> <eye_classification_model> "
-        "<yawn_classification_model> <face_landmark_model> <in_car_od_model> <video output> "
-        "<display detial>.\n"
-        "\tretina_model_path, path to retinaface model\n"
-        "\tmask_classification_model, path to mask classification model\n"
-        "\teye_classification_model, path to eye classification model\n"
-        "\tvideo output, 0: disable, 1: output to panel, 2: output through rtsp\n"
-        "\tdisplay detial, 0: disable, 1: enable\n",
+int main(int argc, char *argv[]) {
+  if (argc != 4) {
+    AI_LOGI(
+        "Usage: %s DET_MODEL_NAME DET_MODEL_PATH POSE_MODEL_PATH\n"
+        "\t DET_MODEL_NAME, person detection model name should be one of "
+        "{mobiledetv2-person-vehicle, "
+        "mobiledetv2-person-pets, "
+        "mobiledetv2-coco80, "
+        "mobiledetv2-pedestrian, "
+        "yolov3}\n"
+        "\t DET_MODEL_PATH, detection cvimodel path\n"
+        "\t POSE_MODEL_PATH, alpha pose cvimodel path\n",
         argv[0]);
-    return CVIAI_FAILURE;
+    return -1;
   }
 
-  // VIDEO
-  // Set signal catch
-  signal(SIGINT, HandleSig);
-  signal(SIGTERM, HandleSig);
+  signal(SIGINT, SampleHandleSig);
+  signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 display = atoi(argv[8]);
-  CVI_S32 voType = atoi(argv[7]);
-  CVI_S32 s32Ret;
-  VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
+  //  Step 1: Initialize middleware stuff.
+  ////////////////////////////////////////////////////
 
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, PIXEL_FORMAT_RGB_888, voType) != CVI_SUCCESS) {
-    printf("failed to init video system\n");
-    return CVIAI_FAILURE;
+  // Get middleware configurations including VI, VB, VPSS
+  SAMPLE_AI_MW_CONFIG_S stMWConfig = {0};
+  CVI_S32 s32Ret = get_middleware_config(&stMWConfig);
+  if (s32Ret != CVI_SUCCESS) {
+    AI_LOGE("get middleware configuration failed! ret=%x\n", s32Ret);
+    return -1;
   }
 
-  // Load model
-  CVI_S32 ret;
-  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), ret, create_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), ret, create_service_fail);
+  // Initialize middleware.
+  SAMPLE_AI_MW_CONTEXT stMWContext = {0};
+  s32Ret = SAMPLE_AI_Init_WM(&stMWConfig, &stMWContext);
+  if (s32Ret != CVI_SUCCESS) {
+    AI_LOGE("init middleware failed! ret=%x\n", s32Ret);
+    return -1;
+  }
 
-  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]), ret,
+  // Step 2: Create and setup AI SDK
+  ///////////////////////////////////////////////////
+
+  // Create AI handle and assign VPSS Grp1 Device 0 to AI SDK. VPSS Grp1 is created
+  // during initialization of AI SDK.
+  cviai_handle_t stAIHandle = NULL;
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&stAIHandle, 1, 0), s32Ret, create_ai_fail);
+
+  // Assign VBPool ID 2 to the first VPSS in AI SDK.
+  GOTO_IF_FAILED(CVI_AI_SetVBPool(stAIHandle, 0, 2), s32Ret, create_service_fail);
+
+  CVI_AI_SetVpssTimeout(stAIHandle, 1000);
+
+  cviai_service_handle_t stServiceHandle = NULL;
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&stServiceHandle, stAIHandle), s32Ret,
+                 create_service_fail);
+
+  // Step 3: Open and setup AI models
+  ///////////////////////////////////////////////////
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]), s32Ret,
                  setup_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]),
-                 ret, setup_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]),
-                 ret, setup_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]),
-                 ret, setup_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]), ret,
-                 setup_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]),
-                 ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, argv[2]),
+                 s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, argv[3]),
+                 s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION, argv[4]),
+                 s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[5]),
+                 s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, argv[6]),
+                 s32Ret, setup_ai_fail);
 
-  {
-    cvai_face_t face;
-    memset(&face, 0, sizeof(cvai_face_t));
-    memset(&smooth_face_info, 0, sizeof(smooth_face_info));
-    memset(&_threshold, 0, sizeof(_threshold));
-    bool mask_flag = false;
-    int start_count = 0;
-    int eye_score_window = 0;   // 30 frames
-    int yawn_score_window = 0;  // 30 frames
+  // Step 4: Run models in thread.
+  ///////////////////////////////////////////////////
 
-    // set the threshold
-    _threshold.eye_win_th = 11;
-    _threshold.yawn_win_th = 11;
-    _threshold.yaw_th = 0.25;
-    _threshold.pitch_th = 0.25;
-    _threshold.eye_th = 0.45;
-    _threshold.smooth_eye_th = 0.65 * 2;  // 0.65 is one eye
-    _threshold.yawn_th = 0.75;
-    _threshold.mask_th = 0.5;
+  pthread_t stVencThread, stAIThread;
+  SAMPLE_AI_VENC_THREAD_ARG_S venc_args = {
+      .pstMWContext = &stMWContext,
+      .stServiceHandle = stServiceHandle,
+  };
 
-    while (bExit) {
-      VIDEO_FRAME_INFO_S stVencFrame, stVOFrame;
-      s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
-                                    &stVencFrame, 1000);
-      if (s32Ret != CVI_SUCCESS) {
-        SAMPLE_PRT("CVI_VPSS_GetChnFrame grp0 chn0 failed with %#x\n", s32Ret);
-        continue;
-      }
-      s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp,
-                                    vs_ctx.vpssConfigs.vpssChnVideoOutput, &stVOFrame, 1000);
-      if (s32Ret != CVI_SUCCESS) {
-        printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
-        break;
-      }
-      CVI_AI_RetinaFace(ai_handle, &stVencFrame, &face);
+  SAMPLE_AI_AI_THREAD_ARG_S ai_args = {
+      .stAIHandle = stAIHandle,
+  };
 
-      // Just calculate the first one
-      if (face.size > 0) {
-        dms_init(&face);
+  pthread_create(&stVencThread, NULL, run_venc, &venc_args);
+  pthread_create(&stAIThread, NULL, run_ai_thread, &ai_args);
 
-        // calculate od
-        CVI_AI_IncarObjectDetection(ai_handle, &stVencFrame, &face);
+  // Thread for video encoder
+  pthread_join(stVencThread, NULL);
 
-        // calculate landmark
-        FaceLandmarks(&face, stVencFrame, stVOFrame, display);
-
-        // face angle
-        FaceAngle(&face, stVOFrame, display);
-
-        // mask detection
-        MaskClassifition(&face, stVencFrame, stVOFrame, &mask_flag, _threshold, display);
-
-        // eye classification
-        EyeClassifition(&face, stVencFrame, stVOFrame, &eye_score_window, _threshold, display);
-        if (mask_flag) {
-          // Yawn classification
-          YawnClassifition(&face, stVencFrame, stVOFrame, &yawn_score_window, _threshold, mask_flag,
-                           display);
-        } else {
-          if (yawn_score_window < 0) yawn_score_window += 1;
-        }
-        if (start_count > 90)
-          StatusUpdate(stVOFrame, eye_score_window, yawn_score_window, _threshold);
-        else
-          start_count++;
-        CVI_AI_FreeDMS(face.dms);
-      } else {
-        memset(status_n, 0, sizeof(status_n));
-        sprintf(status_n, "No face");
-        CVI_AI_Service_ObjectWriteText(status_n, 30, 70, &stVOFrame, -1, -1, -1);
-      }
-
-      s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
-      if (s32Ret != CVI_SUCCESS) {
-        printf("Send Output Frame NG\n");
-        break;
-      }
-
-      if (CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
-                                   &stVencFrame) != 0) {
-        SAMPLE_PRT("CVI_VPSS_ReleaseChnFrame chn1 NG\n");
-      }
-      s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp,
-                                        vs_ctx.vpssConfigs.vpssChnVideoOutput, &stVOFrame);
-      if (s32Ret != CVI_SUCCESS) {
-        printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
-        break;
-      }
-      CVI_AI_Free(&face);
-    }
-  }
+  // Thread for AI inference
+  pthread_join(stAIThread, NULL);
 
 setup_ai_fail:
-  CVI_AI_Service_DestroyHandle(service_handle);
+  CVI_AI_Service_DestroyHandle(stServiceHandle);
 create_service_fail:
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_AI_DestroyHandle(stAIHandle);
 create_ai_fail:
-  DestroyVideoSystem(&vs_ctx);
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
+  SAMPLE_AI_Destroy_MW(&stMWContext);
 
   return 0;
 }

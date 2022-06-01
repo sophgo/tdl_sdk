@@ -1,6 +1,7 @@
 #include "md.hpp"
 #include <memory>
 #include "core/core/cvai_errno.h"
+#include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai_log.hpp"
 #include "error_msg.hpp"
@@ -128,8 +129,7 @@ CVI_S32 MotionDetection::update_background(VIDEO_FRAME_INFO_S *frame) {
 }
 
 void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *out) {
-  out->size = dets.size();
-  out->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * out->size);
+  CVI_AI_MemAllocInit(dets.size(), out);
   out->height = im_height;
   out->width = im_width;
   out->rescale_type = RESCALE_RB;

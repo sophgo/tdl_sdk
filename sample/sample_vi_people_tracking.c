@@ -1,157 +1,358 @@
-#include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "sample_comm.h"
+/**
+ * This is a sample code for person tracking.
+ */
+#define LOG_TAG "SampleObjectCounting"
+#define LOG_LEVEL LOG_LEVEL_INFO
+
+#include "middleware_utils.h"
+#include "sample_log.h"
 #include "sample_utils.h"
 #include "vi_vo_utils.h"
 
+#include <core/utils/vpss_helper.h>
+#include <cvi_comm.h>
 #include <cvi_sys.h>
 #include <cvi_vb.h>
 #include <cvi_vi.h>
+#include <cviai.h>
+#include <rtsp.h>
+#include <sample_comm.h>
 
-#include <inttypes.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#define WRITE_RESULT_TO_FILE 1
+#define TARGET_NUM 2
+
 static volatile bool bExit = false;
 
+MUTEXAUTOLOCK_INIT(ResultMutex);
+
+typedef struct {
+  SAMPLE_AI_MW_CONTEXT *pstMWContext;
+  cviai_service_handle_t stServiceHandle;
+} SAMPLE_AI_VENC_THREAD_ARG_S;
+
+typedef struct {
+  ODInferenceFunc object_detect;
+  CVI_AI_SUPPORTED_MODEL_E enOdModelId;
+  cviai_handle_t stAIHandle;
+} SAMPLE_AI_AI_THREAD_ARG_S;
+
+typedef struct {
+  int classes_id[TARGET_NUM];  // {CVI_AI_DET_TYPE_PERSON, CVI_AI_DET_TYPE_CAR, ...}
+  uint64_t classes_count[TARGET_NUM];
+  uint64_t classes_maxID[TARGET_NUM];
+} obj_counter_t;
+
+static cvai_object_t g_stObjMeta = {0};
+
+void set_sample_mot_config(cvai_deepsort_config_t *ds_conf) {
+  ds_conf->ktracker_conf.P_beta[2] = 0.01;
+  ds_conf->ktracker_conf.P_beta[6] = 1e-5;
+
+  // ds_conf.kfilter_conf.Q_beta[2] = 0.1;
+  ds_conf->kfilter_conf.Q_beta[2] = 0.01;
+  ds_conf->kfilter_conf.Q_beta[6] = 1e-5;
+  ds_conf->kfilter_conf.R_beta[2] = 0.1;
+}
+
+void *run_venc(void *args) {
+  AI_LOGI("Enter encoder thread\n");
+  SAMPLE_AI_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_AI_VENC_THREAD_ARG_S *)args;
+  VIDEO_FRAME_INFO_S stFrame;
+  CVI_S32 s32Ret;
+  cvai_object_t stObjMeta = {0};
+
+  while (bExit == false) {
+    s32Ret = CVI_VPSS_GetChnFrame(0, 0, &stFrame, 2000);
+    if (s32Ret != CVI_SUCCESS) {
+      AI_LOGE("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
+      break;
+    }
+
+    {
+      MutexAutoLock(ResultMutex, lock);
+      CVI_AI_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
+    }
+
+    s32Ret = CVI_AI_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjMeta, &stFrame, false,
+                                           CVI_AI_Service_GetDefaultBrush());
+    if (s32Ret != CVIAI_SUCCESS) {
+      CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
+      AI_LOGE("Draw fame fail!, ret=%x\n", s32Ret);
+      goto error;
+    }
+
+    // draw unique id
+    for (uint32_t i = 0; i < stObjMeta.size; i++) {
+      char *obj_ID = calloc(64, sizeof(char));
+      sprintf(obj_ID, "%" PRIu64 "", stObjMeta.info[i].unique_id);
+      CVI_AI_Service_ObjectWriteText(obj_ID, stObjMeta.info[i].bbox.x1, stObjMeta.info[i].bbox.y1,
+                                     &stFrame, -1, -1, -1);
+      free(obj_ID);
+    }
+
+    s32Ret = SAMPLE_AI_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
+    if (s32Ret != CVI_SUCCESS) {
+      CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
+      AI_LOGE("Send Output Frame NG, ret=%x\n", s32Ret);
+      goto error;
+    }
+
+  error:
+    CVI_AI_Free(&stObjMeta);
+    CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
+    if (s32Ret != CVI_SUCCESS) {
+      bExit = true;
+    }
+  }
+  AI_LOGI("Exit encoder thread\n");
+  pthread_exit(NULL);
+}
+
+void *run_ai_thread(void *args) {
+  AI_LOGI("Enter AI thread\n");
+  SAMPLE_AI_AI_THREAD_ARG_S *pstAIArgs = (SAMPLE_AI_AI_THREAD_ARG_S *)args;
+
+  VIDEO_FRAME_INFO_S stFrame;
+  cvai_object_t stObjMeta = {0};
+  cvai_tracker_t stTrackerMeta = {0};
+
+  CVI_S32 s32Ret;
+  while (bExit == false) {
+    s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
+
+    if (s32Ret != CVI_SUCCESS) {
+      AI_LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", s32Ret);
+      goto get_frame_failed;
+    }
+
+    //*******************************************
+    // Step 1: Object detect inference.
+    s32Ret = pstAIArgs->object_detect(pstAIArgs->stAIHandle, &stFrame, &stObjMeta);
+    if (s32Ret != CVIAI_SUCCESS) {
+      AI_LOGE("inference failed!, ret=%x\n", s32Ret);
+      goto inf_error;
+    }
+
+    // Step 2: Extract ReID feature for all person bbox.
+    for (uint32_t i = 0; i < stObjMeta.size; i++) {
+      if (stObjMeta.info[i].classes == CVI_AI_DET_TYPE_PERSON) {
+        s32Ret = CVI_AI_OSNetOne(pstAIArgs->stAIHandle, &stFrame, &stObjMeta, (int)i);
+        if (s32Ret != CVIAI_SUCCESS) {
+          AI_LOGE("inference failed!, ret=%x\n", s32Ret);
+          goto inf_error;
+        }
+      }
+    }
+
+    // Step 3: Multi-Object Tracking inference.
+    s32Ret = CVI_AI_DeepSORT_Obj(pstAIArgs->stAIHandle, &stObjMeta, &stTrackerMeta, false);
+    if (s32Ret != CVIAI_SUCCESS) {
+      AI_LOGE("inference failed!, ret=%x\n", s32Ret);
+      goto inf_error;
+    }
+
+    AI_LOGI("person detect: %d\n", stObjMeta.size);
+    //*******************************************
+
+    {
+      MutexAutoLock(ResultMutex, lock);
+      CVI_AI_CopyObjectMeta(&stObjMeta, &g_stObjMeta);
+    }
+
+  inf_error:
+    CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
+  get_frame_failed:
+    CVI_AI_Free(&stObjMeta);
+    CVI_AI_Free(&stTrackerMeta);
+    if (s32Ret != CVI_SUCCESS) {
+      bExit = true;
+    }
+  }
+
+  AI_LOGI("Exit AI thread\n");
+  pthread_exit(NULL);
+}
+
+static void SampleHandleSig(CVI_S32 signo) {
+  signal(SIGINT, SIG_IGN);
+  signal(SIGTERM, SIG_IGN);
+  AI_LOGI("handle signal, signo: %d\n", signo);
+  if (SIGINT == signo || SIGTERM == signo) {
+    bExit = true;
+  }
+}
+
 int main(int argc, char *argv[]) {
-  if (argc != 5) {
-    printf(
+  if (argc != 4) {
+    AI_LOGI(
         "Usage: %s <detection_model_name>\n"
         "          <detection_model_path>\n"
-        "          <reid_model_path>\n"
-        "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
+        "          <reid_model_path>\n",
         argv[0]);
-    return CVIAI_FAILURE;
-  }
-  CVI_S32 voType = atoi(argv[4]);
-
-  CVI_S32 s32Ret = CVIAI_SUCCESS;
-  VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1920, .u32Height = 1080};
-
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, VI_PIXEL_FORMAT, voType) != CVI_SUCCESS) {
-    printf("failed to init video system\n");
-    return CVIAI_FAILURE;
+    return -1;
   }
 
-  ODInferenceFunc inference;
-  CVI_AI_SUPPORTED_MODEL_E od_model_id;
-  if (get_pd_model_info(argv[1], &od_model_id, &inference) == CVIAI_FAILURE) {
-    printf("unsupported model: %s\n", argv[1]);
-    return CVIAI_FAILURE;
+  ODInferenceFunc inference_func;
+  CVI_AI_SUPPORTED_MODEL_E enOdModelId;
+  if (get_pd_model_info(argv[1], &enOdModelId, &inference_func) == CVIAI_FAILURE) {
+    AI_LOGE("unsupported model: %s\n", argv[1]);
+    return -1;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&ai_handle, 1, 0), s32Ret, create_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&service_handle, ai_handle), s32Ret,
+  signal(SIGINT, SampleHandleSig);
+  signal(SIGTERM, SampleHandleSig);
+
+  SAMPLE_AI_MW_CONFIG_S stMWConfig = {0};
+
+  CVI_S32 s32Ret = SAMPLE_AI_Get_VI_Config(&stMWConfig.stViConfig);
+  if (s32Ret != CVI_SUCCESS || stMWConfig.stViConfig.s32WorkingViNum <= 0) {
+    AI_LOGE("Failed to get senor infomation from ini file (/mnt/data/sensor_cfg.ini).\n");
+    return -1;
+  }
+
+  // Get VI size
+  PIC_SIZE_E enPicSize;
+  s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(stMWConfig.stViConfig.astViInfo[0].stSnsInfo.enSnsType,
+                                          &enPicSize);
+  if (s32Ret != CVI_SUCCESS) {
+    AI_LOGE("Cannot get senor size\n");
+    return -1;
+  }
+
+  SIZE_S stSensorSize;
+  s32Ret = SAMPLE_COMM_SYS_GetPicSize(enPicSize, &stSensorSize);
+  if (s32Ret != CVI_SUCCESS) {
+    AI_LOGE("Cannot get senor size\n");
+    return -1;
+  }
+
+  // Setup frame size of video encoder to 1080p
+  SIZE_S stVencSize = {
+      .u32Width = 1920,
+      .u32Height = 1080,
+  };
+
+  stMWConfig.stVBPoolConfig.u32VBPoolCount = 3;
+
+  // VBPool 0 for VPSS Grp0 Chn0
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].enFormat = VI_PIXEL_FORMAT;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32BlkCount = 3;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32Height = stSensorSize.u32Height;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32Width = stSensorSize.u32Width;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].bBind = true;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32VpssChnBinding = VPSS_CHN0;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32VpssGrpBinding = (VPSS_GRP)0;
+
+  // VBPool 1 for VPSS Grp0 Chn1
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].enFormat = VI_PIXEL_FORMAT;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32BlkCount = 3;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32Height = stVencSize.u32Height;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32Width = stVencSize.u32Width;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].bBind = true;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32VpssChnBinding = VPSS_CHN1;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32VpssGrpBinding = (VPSS_GRP)0;
+
+  // VBPool 2 for AI preprocessing
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].enFormat = PIXEL_FORMAT_BGR_888_PLANAR;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32BlkCount = 1;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32Height = 768;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32Width = 1024;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].bBind = false;
+
+  // Setup VPSS Grp0
+  stMWConfig.stVPSSPoolConfig.u32VpssGrpCount = 1;
+  stMWConfig.stVPSSPoolConfig.stVpssMode.aenInput[0] = VPSS_INPUT_MEM;
+  stMWConfig.stVPSSPoolConfig.stVpssMode.enMode = VPSS_MODE_DUAL;
+  stMWConfig.stVPSSPoolConfig.stVpssMode.ViPipe[0] = 0;
+  stMWConfig.stVPSSPoolConfig.stVpssMode.aenInput[1] = VPSS_INPUT_ISP;
+  stMWConfig.stVPSSPoolConfig.stVpssMode.ViPipe[1] = 0;
+
+  SAMPLE_AI_VPSS_CONFIG_S *pstVpssConfig = &stMWConfig.stVPSSPoolConfig.astVpssConfig[0];
+  pstVpssConfig->bBindVI = true;
+
+  // Assign device 1 to VPSS Grp0, because device1 has 3 outputs in dual mode.
+  VPSS_GRP_DEFAULT_HELPER2(&pstVpssConfig->stVpssGrpAttr, stSensorSize.u32Width,
+                           stSensorSize.u32Height, VI_PIXEL_FORMAT, 1);
+  pstVpssConfig->u32ChnCount = 2;
+  pstVpssConfig->u32ChnBindVI = 0;
+  VPSS_CHN_DEFAULT_HELPER(&pstVpssConfig->astVpssChnAttr[0], stVencSize.u32Width,
+                          stVencSize.u32Height, VI_PIXEL_FORMAT, true);
+  VPSS_CHN_DEFAULT_HELPER(&pstVpssConfig->astVpssChnAttr[1], stVencSize.u32Width,
+                          stVencSize.u32Height, VI_PIXEL_FORMAT, true);
+
+  // Get default VENC configurations
+  SAMPLE_AI_Get_Input_Config(&stMWConfig.stVencConfig.stChnInputCfg);
+  stMWConfig.stVencConfig.u32FrameWidth = stVencSize.u32Width;
+  stMWConfig.stVencConfig.u32FrameHeight = stVencSize.u32Height;
+
+  // Get default RTSP configurations
+  SAMPLE_AI_Get_RTSP_Config(&stMWConfig.stRTSPConfig.stRTSPConfig);
+
+  SAMPLE_AI_MW_CONTEXT stMWContext = {0};
+  s32Ret = SAMPLE_AI_Init_WM(&stMWConfig, &stMWContext);
+  if (s32Ret != CVI_SUCCESS) {
+    AI_LOGE("init middleware failed! ret=%x\n", s32Ret);
+    return -1;
+  }
+
+  cviai_handle_t stAIHandle = NULL;
+
+  // Create AI handle and assign VPSS Grp1 Device 0 to AI SDK
+  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&stAIHandle, 1, 0), s32Ret, create_ai_fail);
+
+  GOTO_IF_FAILED(CVI_AI_SetVBPool(stAIHandle, 0, 2), s32Ret, create_service_fail);
+
+  CVI_AI_SetVpssTimeout(stAIHandle, 1000);
+
+  cviai_service_handle_t stServiceHandle = NULL;
+  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&stServiceHandle, stAIHandle), s32Ret,
                  create_service_fail);
 
-  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, od_model_id, argv[2]), s32Ret, setup_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]), s32Ret,
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, enOdModelId, argv[2]), s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]), s32Ret,
                  setup_ai_fail);
 
-  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(ai_handle, od_model_id, 1, CVI_AI_DET_TYPE_PERSON),
+  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(stAIHandle, enOdModelId, 1, CVI_AI_DET_TYPE_PERSON),
                  s32Ret, setup_ai_fail);
 
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle, false);
-#if 1
+  CVI_AI_DeepSORT_Init(stAIHandle, true);
   cvai_deepsort_config_t ds_conf;
   CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
-  ds_conf.ktracker_conf.P_beta[2] = 0.01;
-  ds_conf.ktracker_conf.P_beta[6] = 1e-5;
+  set_sample_mot_config(&ds_conf);
+  CVI_AI_DeepSORT_SetConfig(stAIHandle, &ds_conf, -1, false);
 
-  // ds_conf.kfilter_conf.Q_beta[2] = 0.1;
-  ds_conf.kfilter_conf.Q_beta[2] = 0.01;
-  ds_conf.kfilter_conf.Q_beta[6] = 1e-5;
+  pthread_t stVencThread, stAIThread;
+  SAMPLE_AI_VENC_THREAD_ARG_S venc_args = {
+      .pstMWContext = &stMWContext,
+      .stServiceHandle = stServiceHandle,
+  };
 
-  ds_conf.kfilter_conf.R_beta[2] = 0.1;
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
-#endif
+  SAMPLE_AI_AI_THREAD_ARG_S ai_args = {
+      .enOdModelId = enOdModelId,
+      .object_detect = inference_func,
+      .stAIHandle = stAIHandle,
+  };
 
-  VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
-  size_t counter = 0;
-  while (bExit == false) {
-    counter += 1;
+  pthread_create(&stVencThread, NULL, run_venc, &venc_args);
+  pthread_create(&stAIThread, NULL, run_ai_thread, &ai_args);
 
-    printf("\nGet Frame %zu...   ", counter);
-    s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
-                                  &stfdFrame, 2000);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
-      break;
-    }
-    printf("DONE\n");
-
-    cvai_object_t obj_meta;
-    cvai_tracker_t tracker_meta;
-    memset(&obj_meta, 0, sizeof(cvai_object_t));
-    memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
-
-    //*******************************************
-    // Tracking function calls.
-    // Step 1. Object detect inference.
-    inference(ai_handle, &stfdFrame, &obj_meta);
-    // Step 2. Object feature generator.
-    CVI_AI_OSNet(ai_handle, &stfdFrame, &obj_meta);
-    // Step 3. Tracker.
-    CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, true);
-    // Tracking function calls ends here.
-    //*******************************************
-
-    s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
-                                      &stfdFrame);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
-      break;
-    }
-
-    // Send frame to VO if opened.
-    if (voType) {
-      s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp,
-                                    vs_ctx.vpssConfigs.vpssChnVideoOutput, &stVOFrame, 1000);
-      if (s32Ret != CVI_SUCCESS) {
-        printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
-        break;
-      }
-      CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta, &stVOFrame, false,
-                                    CVI_AI_Service_GetDefaultBrush());
-      for (uint32_t i = 0; i < obj_meta.size; i++) {
-        char *id_num = calloc(64, sizeof(char));
-        sprintf(id_num, "%" PRIu64 "", obj_meta.info[i].unique_id);
-        CVI_AI_Service_ObjectWriteText(id_num, obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
-                                       &stVOFrame, -1, -1, -1);
-        free(id_num);
-      }
-      s32Ret = SendOutputFrame(&stVOFrame, &vs_ctx.outputContext);
-      if (s32Ret != CVI_SUCCESS) {
-        printf("Send Output Frame NG\n");
-      }
-
-      s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp,
-                                        vs_ctx.vpssConfigs.vpssChnVideoOutput, &stVOFrame);
-      if (s32Ret != CVI_SUCCESS) {
-        printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
-        break;
-      }
-    }
-
-    CVI_AI_Free(&obj_meta);
-    CVI_AI_Free(&tracker_meta);
-  }
+  pthread_join(stVencThread, NULL);
+  pthread_join(stAIThread, NULL);
 
 setup_ai_fail:
-  CVI_AI_Service_DestroyHandle(service_handle);
+  CVI_AI_Service_DestroyHandle(stServiceHandle);
 create_service_fail:
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_AI_DestroyHandle(stAIHandle);
 create_ai_fail:
-  DestroyVideoSystem(&vs_ctx);
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
-  return s32Ret;
+  SAMPLE_AI_Destroy_MW(&stMWContext);
+
+  return 0;
 }

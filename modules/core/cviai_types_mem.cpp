@@ -55,7 +55,7 @@ void CVI_AI_FreeCpp(cvai_face_info_t *face_info) {
 }
 
 void CVI_AI_FreeCpp(cvai_face_t *face) {
-  if (face->info != NULL) {
+  if (face->info) {
     for (uint32_t i = 0; i < face->size; i++) {
       CVI_AI_FreeCpp(&face->info[i]);
     }
@@ -65,6 +65,11 @@ void CVI_AI_FreeCpp(cvai_face_t *face) {
   face->size = 0;
   face->width = 0;
   face->height = 0;
+
+  if (face->dms) {
+    CVI_AI_FreeCpp(face->dms);
+    face->dms = NULL;
+  }
 }
 
 void CVI_AI_FreeCpp(cvai_object_info_t *obj_info) {
@@ -158,6 +163,7 @@ void CVI_AI_CopyInfoCpp(const cvai_face_info_t *info, cvai_face_info_t *infoNew)
   infoNew->hardhat_score = info->hardhat_score;
   infoNew->mask_score = info->mask_score;
   infoNew->face_quality = info->face_quality;
+  infoNew->head_pose = info->head_pose;
 }
 
 void CVI_AI_CopyInfoCpp(const cvai_object_info_t *info, cvai_object_info_t *infoNew) {
@@ -208,6 +214,52 @@ void CVI_AI_CopyFaceInfo(const cvai_face_info_t *info, cvai_face_info_t *infoNew
 
 void CVI_AI_CopyObjectInfo(const cvai_object_info_t *info, cvai_object_info_t *infoNew) {
   CVI_AI_CopyInfoCpp(info, infoNew);
+}
+
+void CVI_AI_CopyFaceMeta(const cvai_face_t *src, cvai_face_t *dest) {
+  CVI_AI_FreeCpp(dest);
+  memset(dest, 0, sizeof(cvai_face_t));
+  if (src->size > 0) {
+    dest->size = src->size;
+    dest->width = src->width;
+    dest->height = src->height;
+    dest->rescale_type = src->rescale_type;
+    if (src->info) {
+      dest->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * src->size);
+      memset(dest->info, 0, sizeof(cvai_face_info_t) * src->size);
+      for (uint32_t fid = 0; fid < src->size; fid++) {
+        CVI_AI_CopyFaceInfo(&src->info[fid], &dest->info[fid]);
+      }
+    }
+
+    if (src->dms) {
+      dest->dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
+      memcpy(dest->dms, src->dms, sizeof(cvai_dms_t));
+      cvai_dms_od_info_t *src_dms_od_info = src->dms->dms_od.info;
+      if (src_dms_od_info) {
+        dest->dms->dms_od.info = (cvai_dms_od_info_t *)malloc(sizeof(cvai_dms_od_info_t));
+        memcpy(dest->dms->dms_od.info, src_dms_od_info, sizeof(cvai_dms_od_info_t));
+      }
+    }
+  }
+}
+
+void CVI_AI_CopyObjectMeta(const cvai_object_t *src, cvai_object_t *dest) {
+  CVI_AI_FreeCpp(dest);
+  memset(dest, 0, sizeof(cvai_object_t));
+  if (src->size > 0) {
+    dest->size = src->size;
+    dest->width = src->width;
+    dest->height = src->height;
+    dest->rescale_type = src->rescale_type;
+    if (src->info) {
+      dest->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * src->size);
+      memset(dest->info, 0, sizeof(cvai_object_info_t) * src->size);
+      for (uint32_t fid = 0; fid < src->size; fid++) {
+        CVI_AI_CopyObjectInfo(&src->info[fid], &dest->info[fid]);
+      }
+    }
+  }
 }
 
 void CVI_AI_CopyImage(const cvai_image_t *src_image, cvai_image_t *dst_image) {

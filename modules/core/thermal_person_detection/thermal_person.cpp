@@ -122,8 +122,7 @@ void ThermalPerson::outputParser(const int image_width, const int image_height,
   NonMaximumSuppression(vec_bbox, vec_bbox_nms, NMS_THRESH, 'u');
 
   // fill obj
-  obj->size = vec_bbox_nms.size();
-  obj->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj->size);
+  CVI_AI_MemAllocInit(vec_bbox_nms.size(), obj);
   obj->width = image_width;
   obj->height = image_height;
   obj->rescale_type = m_vpss_config[0].rescale_type;

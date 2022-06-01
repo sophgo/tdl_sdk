@@ -270,32 +270,6 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y,
                                                   float b);
 
 /**
- * @brief Set intersect area for detection.
- * @ingroup core_cviaiservice
- *
- * @param handle A service handle.
- * @param pts Intersect area or line. (pts must larger than 2 or more.)
- * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
- */
-DLL_EXPORT CVI_S32 CVI_AI_Service_SetIntersect(cviai_service_handle_t handle,
-                                               const cvai_pts_t *pts);
-
-/**
- * @brief Check if the object intersected with the set area or line.
- * @ingroup core_cviaiservice
- *
- * @param handle A service handle.
- * @param frame Input frame.
- * @param obj_meta Object meta structure.
- * @param status Output status of each object.
- * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
- */
-DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t handle,
-                                                        const VIDEO_FRAME_INFO_S *frame,
-                                                        const cvai_object_t *obj_meta,
-                                                        cvai_area_detect_e **status);
-
-/**
  * @brief Set target convex polygon for detection.
  * @ingroup core_cviaiservice
  *

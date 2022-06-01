@@ -1,7 +1,6 @@
 #include "service/cviai_service.h"
 
 #include <cvimath/cvimath.h>
-#include "area_detect/area_detect.hpp"
 #include "area_detect/intrusion_detect.hpp"
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
@@ -13,7 +12,6 @@ typedef struct {
   cviai_handle_t ai_handle = NULL;
   cviai::service::FeatureMatching *m_fm = nullptr;
   cviai::service::DigitalTracking *m_dt = nullptr;
-  cviai::service::AreaDetect *m_ad = nullptr;
   cviai::service::IntrusionDetect *m_intrusion_det = nullptr;
 } cviai_service_context_t;
 
@@ -32,7 +30,6 @@ CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle) {
   cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
   delete ctx->m_fm;
   delete ctx->m_dt;
-  delete ctx->m_ad;
   delete ctx;
   return CVIAI_SUCCESS;
 }
@@ -213,37 +210,6 @@ CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
 CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame, float r,
                                        float g, float b) {
   return cviai::service::WriteText(name, x, y, frame, r, g, b);
-}
-
-CVI_S32 CVI_AI_Service_SetIntersect(cviai_service_handle_t handle, const cvai_pts_t *pts) {
-  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->m_ad == nullptr) {
-    ctx->m_ad = new cviai::service::AreaDetect();
-  }
-  return ctx->m_ad->setArea(*pts);
-}
-
-CVI_S32 CVI_AI_Service_ObjectDetectIntersect(cviai_service_handle_t handle,
-                                             const VIDEO_FRAME_INFO_S *frame,
-                                             const cvai_object_t *obj_meta,
-                                             cvai_area_detect_e **status) {
-  cviai_service_context_t *ctx = static_cast<cviai_service_context_t *>(handle);
-  if (ctx->m_ad == nullptr) {
-    LOGE("Please set intersect area first.\n");
-    return CVIAI_FAILURE;
-  }
-  int ret = CVIAI_SUCCESS;
-  if (*status != NULL) {
-    free(*status);
-  }
-  *status = (cvai_area_detect_e *)malloc(obj_meta->size * sizeof(cvai_area_detect_e));
-  for (uint32_t i = 0; i < obj_meta->size; ++i) {
-    float &&center_pts_x = (obj_meta->info[i].bbox.x1 + obj_meta->info[i].bbox.x2) / 2;
-    float &&center_pts_y = (obj_meta->info[i].bbox.y1 + obj_meta->info[i].bbox.y2) / 2;
-    ctx->m_ad->run(frame->stVFrame.u64PTS, obj_meta->info[i].unique_id, center_pts_x, center_pts_y,
-                   &(*status)[i]);
-  }
-  return ret;
 }
 
 CVI_S32 CVI_AI_Service_DrawPolygon(cviai_service_handle_t handle, VIDEO_FRAME_INFO_S *frame,

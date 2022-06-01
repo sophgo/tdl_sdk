@@ -43,6 +43,32 @@ inline void CVI_AI_MemAlloc(const uint32_t size, cvai_face_t *meta) {
     }
     meta->size = size;
     meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * meta->size);
+    meta->dms = NULL;
+  }
+}
+
+inline void CVI_AI_MemAlloc(const uint32_t size, cvai_object_t *meta) {
+  if (meta->size != size) {
+    for (uint32_t i = 0; i < meta->size; i++) {
+      CVI_AI_FreeCpp(&meta->info[i]);
+      free(meta->info);
+    }
+    meta->size = size;
+    meta->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * meta->size);
+  }
+}
+
+inline void CVI_AI_MemAllocInit(const uint32_t size, cvai_object_t *meta) {
+  CVI_AI_MemAlloc(size, meta);
+  for (uint32_t i = 0; i < meta->size; ++i) {
+    memset(&meta->info[i], 0, sizeof(cvai_object_info_t));
+    meta->info[i].bbox.x1 = -1;
+    meta->info[i].bbox.x2 = -1;
+    meta->info[i].bbox.y1 = -1;
+    meta->info[i].bbox.y2 = -1;
+
+    meta->info[i].name[0] = '\0';
+    meta->info[i].classes = -1;
   }
 }
 

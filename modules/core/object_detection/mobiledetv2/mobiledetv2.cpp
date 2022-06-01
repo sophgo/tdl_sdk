@@ -12,6 +12,7 @@
 #include <error_msg.hpp>
 #include "coco_utils.hpp"
 #include "core/core/cvai_core_types.h"
+#include "core/cviai_types_mem_internal.h"
 #include "core/object/cvai_object_types.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
@@ -110,8 +111,7 @@ static Detections nms(const Detections &dets, float iou_threshold) {
 static void convert_det_struct(const Detections &dets, cvai_object_t *out, int im_height,
                                int im_width, meta_rescale_type_e type,
                                const MobileDetV2::CvimodelInfo &config) {
-  out->size = dets.size();
-  out->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * out->size);
+  CVI_AI_MemAllocInit(dets.size(), out);
   out->height = im_height;
   out->width = im_width;
   out->rescale_type = type;

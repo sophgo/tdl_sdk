@@ -203,76 +203,76 @@ DLL_EXPORT CVI_S32 CVI_AI_DestroyHandle(cviai_handle_t handle);
  * @brief Open model with given file path.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param filepath File path to the cvimodel file.
  * @return int Return CVIAI_SUCCESS if load model succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+DLL_EXPORT CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                     const char *filepath);
 
 /**
  * @brief Get set model path from supported models.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @return model path.
  */
-DLL_EXPORT const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
+DLL_EXPORT const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model);
 
 /**
  * @brief Set skip vpss preprocess for supported networks.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param skip To skip preprocess or not.
  * @return int Return CVIAI_SUCCESS if load model succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle,
-                                                CVI_AI_SUPPORTED_MODEL_E config, bool skip);
+                                                CVI_AI_SUPPORTED_MODEL_E model, bool skip);
 
 /**
  * @brief Get skip preprocess value for given supported model.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param skip Output setting value.
  * @return int Return CVIAI_SUCCESS.
  */
 DLL_EXPORT CVI_S32 CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle,
-                                                CVI_AI_SUPPORTED_MODEL_E config, bool *skip);
+                                                CVI_AI_SUPPORTED_MODEL_E model, bool *skip);
 
 /**
  * @brief Set the threshold of an AI inference.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param threshold Threshold in float, usually a number between 0 and 1.
  * @return int Return CVIAI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+DLL_EXPORT CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                             float threshold);
 
 /**
  * @brief Get the threshold of an AI Inference
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param threshold Threshold in float.
  * @return int Return CVIAI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+DLL_EXPORT CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                             float *threshold);
 /**
  * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
  * to change a thread if the process is not sequential.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param thread The vpss thread index user desired. Note this param will changed if previous index
  * is not used.
  * @return int Return CVIAI_SUCCESS if successfully changed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+DLL_EXPORT CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                         const uint32_t thread);
 
 /**
@@ -281,24 +281,24 @@ DLL_EXPORT CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_
  * vpss group id.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param thread The vpss thread index user desired. Note this param will changed if previous index
  * is not used.
  * @param vpssGroupId Assign a vpss group id if a new vpss instance needs to be created.
  * @return int Return CVIAI_SUCCESS if successfully changed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+DLL_EXPORT CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                          const uint32_t thread, const VPSS_GRP vpssGroupId);
 
 /**
  * @brief Get the set thread index for given supported model.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param thread Output thread index.
  * @return int Return CVIAI_SUCCESS.
  */
-DLL_EXPORT CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+DLL_EXPORT CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                         uint32_t *thread);
 
 /**
@@ -358,23 +358,23 @@ DLL_EXPORT CVI_S32 CVI_AI_CloseAllModel(cviai_handle_t handle);
  * @brief Close the chosen model and delete its model instance.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @return int Return CVIAI_SUCCESS if close succeed.
  */
-DLL_EXPORT CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
+DLL_EXPORT CVI_S32 CVI_AI_CloseModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model);
 
 /**
  * @brief Export vpss channel attribute.
  *
  * @param handle An AI SDK handle.
- * @param config Supported model type config.
+ * @param model Supported model id.
  * @param frameWidth The input frame width.
  * @param frameHeight The input frame height.
  * @param idx The index of the input tensors.
  * @param chnAttr Exported VPSS channel config settings.
  * @return int Return CVIAI_SUCCESS on success, CVIAI_FAILURE if exporting not supported.
  */
-DLL_EXPORT CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+DLL_EXPORT CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                            const CVI_U32 frameWidth, const CVI_U32 frameHeight,
                                            const CVI_U32 idx, cvai_vpssconfig_t *chnConfig);
 
@@ -595,7 +595,17 @@ DLL_EXPORT CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_
  */
 /**@{*/
 
-DLL_EXPORT CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+/**
+ * @brief Select classes for detection model. Model will output objects belong to these classes.
+ * Currently only support MobileDetV2 family.
+ *
+ * @param handle An AI SDK handle.
+ * @param model model id.
+ * @param num_classes number of classes you want to select.
+ * @param ... class indexs
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                             uint32_t num_classes, ...);
 
 /**
@@ -997,13 +1007,13 @@ DLL_EXPORT CVI_S32 CVI_AI_SmokeClassification(const cviai_handle_t handle,
  * @brief Dump model input frame to npz.
  *
  * @param handle An AI SDK handle.
- * @param config Model id.
+ * @param model Model id.
  * @param dump_path Output path.
  * @param enable Whether enable or not.
  * @return int Return CVIAI_SUCCESS on success.
  */
 /**@}*/
-DLL_EXPORT CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+DLL_EXPORT CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                           const char *dump_path, bool enable);
 
 #ifdef __cplusplus

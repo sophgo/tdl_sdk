@@ -318,13 +318,13 @@ int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
                                          &vpss_config.chn_coeff, 1);
   }
   if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed with %s!\n", get_vpss_error_msg(ret));
+    LOGE("Send frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_SEND_FRAME;
   }
 
   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed with %s!\n", get_vpss_error_msg(ret));
+    LOGE("Get frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_GET_FRAME;
   }
   return CVIAI_SUCCESS;
