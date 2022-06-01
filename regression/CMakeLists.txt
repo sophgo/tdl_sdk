@@ -178,4 +178,4 @@ foreach(file ${asset_files})
   install(FILES ${asset_realpath} DESTINATION regression/assets)
 endforeach()
 
-install(FILES "daily_regression.sh" PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ DESTINATION regression)
+install(FILES daily_regression.sh PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_WRITE WORLD_EXECUTE DESTINATION regression)

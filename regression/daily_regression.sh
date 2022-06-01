@@ -43,6 +43,7 @@ asset_dir=${asset_dir:-/mnt/data/asset}
 # FIXME: There is a bug when you run --gtest_filter=*
 # test_suite="*"
 
+# basic test cases
 test_suite="CoreTestSuite.*"
 test_suite="${test_suite} MobileDetV2TestSuite.*"
 test_suite="${test_suite} FaceRecognitionTestSuite.*"
@@ -52,12 +53,10 @@ test_suite="${test_suite} LicensePlateDetectionTestSuite.*"
 test_suite="${test_suite} LicensePlateRecognitionTestSuite.*"
 test_suite="${test_suite} MultiObjectTrackingTestSuite.*"
 test_suite="${test_suite} ReIdentificationTestSuite.*"
-test_suite="${test_suite} TamperDetectionTestSuite.*"
+test_suite="${test_suite} MotionDetection*"
 test_suite="${test_suite} ThermalFaceDetectionTestSuite.*"
 test_suite="${test_suite} ThermalPersonDetectionTestSuite.*"
 test_suite="${test_suite} LivenessTestSuite.*"
-test_suite="${test_suite} AlphaposeTestSuite.*"
-test_suite="${test_suite} FallTestSuite.*"
 test_suite="${test_suite} RetinafaceTestSuite.*"
 test_suite="${test_suite} RetinafaceIRTestSuite.*"
 test_suite="${test_suite} RetinafaceHardhatTestSuite.*"
@@ -68,6 +67,14 @@ test_suite="${test_suite} YawnCTestSuite.*"
 test_suite="${test_suite} SoundCTestSuite.*"
 test_suite="${test_suite} FLTestSuite.*"
 test_suite="${test_suite} FeatureMatchingTestSuite.*"
+
+if [[ "$CHIPSET" == "182x" ]]; then
+  test_suite="${test_suite} TamperDetectionTestSuite.*"
+elif [[ "$CHIPSET" == "183x" ]]; then
+  test_suite="${test_suite} TamperDetectionTestSuite.*"
+  test_suite="${test_suite} AlphaposeTestSuite.*"
+  test_suite="${test_suite} FallTestSuite.*"
+fi
 
 echo "----------------------"
 echo -e "regression setting:"
@@ -85,5 +92,5 @@ echo "----------------------"
 
 for suite_name in ${test_suite}
 do
-    regression/test_main ${model_dir} ${dataset_dir} ${asset_dir} --gtest_filter=$suite_name
+    ./test_main ${model_dir} ${dataset_dir} ${asset_dir} --gtest_filter=$suite_name
 done
