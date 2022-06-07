@@ -10,6 +10,9 @@ CVI_S32 ALIGN_FACE_TO_FRAME(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *ds
 CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
                    bool cvtRGB888 = false);
 
+CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
+                         bool cvtRGB888, float exten_ratio, float *offset_x, float *offset_y);
+
 CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
                         cvai_face_info_t *face_info, bool align = false, bool cvtRGB888 = false);
 

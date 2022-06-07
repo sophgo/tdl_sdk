@@ -129,6 +129,7 @@ CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
   cfg->auto_m_time_limit = AUTO_MODE_TIME_LIMIT;
   cfg->auto_m_fast_cap = true;
   cfg->capture_aligned_face = false;
+  cfg->capture_extended_face = false;
   cfg->store_RGB888 = false;
 
   return CVIAI_SUCCESS;
@@ -137,6 +138,10 @@ CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
 CVI_S32 _FaceCapture_SetConfig(face_capture_t *face_cpt_info, face_capture_config_t *cfg,
                                cviai_handle_t ai_handle) {
   memcpy(&face_cpt_info->cfg, cfg, sizeof(face_capture_config_t));
+  if (face_cpt_info->cfg.capture_aligned_face && face_cpt_info->cfg.capture_extended_face) {
+    LOGW("set capture_extended_face = false because capture_aligned_face is true.");
+    face_cpt_info->cfg.capture_extended_face = false;
+  }
   cvai_deepsort_config_t deepsort_conf;
   CVI_AI_DeepSORT_GetConfig(ai_handle, &deepsort_conf, -1);
   deepsort_conf.ktracker_conf.max_unmatched_num = cfg->miss_time_limit;
@@ -557,8 +562,16 @@ static CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *f
     }
     CVI_AI_Free(&face_cpt_info->data[j].image);
 
-    CVI_AI_CropImage_Face(frame, &face_cpt_info->data[j].image, &face_cpt_info->data[j].info,
-                          face_cpt_info->cfg.capture_aligned_face, face_cpt_info->cfg.store_RGB888);
+    if (!face_cpt_info->cfg.capture_extended_face) {
+      CVI_AI_CropImage_Face(frame, &face_cpt_info->data[j].image, &face_cpt_info->data[j].info,
+                            face_cpt_info->cfg.capture_aligned_face,
+                            face_cpt_info->cfg.store_RGB888);
+    } else {
+      float dummy_x, dummy_y;
+      CVI_AI_CropImage_Exten(frame, &face_cpt_info->data[j].image,
+                             &face_cpt_info->data[j].info.bbox, face_cpt_info->cfg.store_RGB888,
+                             0.5, &dummy_x, &dummy_y);
+    }
 
     face_cpt_info->data[j]._capture = false;
   }

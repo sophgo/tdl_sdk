@@ -686,6 +686,13 @@ CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_b
   return crop_image(srcFrame, dst, bbox, cvtRGB888);
 }
 
+CVI_S32 CVI_AI_CropImage_Exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
+                               bool cvtRGB888, float exten_ratio, float *offset_x,
+                               float *offset_y) {
+  TRACE_EVENT("cviai_core", "CVI_AI_CropImage_Exten");
+  return crop_image_exten(srcFrame, dst, bbox, cvtRGB888, exten_ratio, offset_x, offset_y);
+}
+
 CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
                               cvai_face_info_t *face_info, bool align, bool cvtRGB888) {
   TRACE_EVENT("cviai_core", "CVI_AI_CropImage_Face");

@@ -546,10 +546,27 @@ DLL_EXPORT CVI_S32 CVI_AI_FaceQuality(const cviai_handle_t handle, VIDEO_FRAME_I
  * @param srcFrame Input frame. (only support RGB Packed format)
  * @param dst Output image.
  * @param bbox The bounding box.
+ * @param cvtRGB888 convert to RGB888 format.
  * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
                                     cvai_bbox_t *bbox, bool cvtRGB888);
+
+/**
+ * @brief Crop image (extended) in given frame.
+ *
+ * @param srcFrame Input frame. (only support RGB Packed format)
+ * @param dst Output image.
+ * @param bbox The bounding box.
+ * @param cvtRGB888 convert to RGB888 format.
+ * @param exten_ratio extension ration.
+ * @param offset_x original bounding box x offset.
+ * @param offset_y original bounding box y offset.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_CropImage_Exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst,
+                                          cvai_bbox_t *bbox, bool cvtRGB888, float exten_ratio,
+                                          float *offset_x, float *offset_y);
 
 /**
  * @brief Crop face image in given frame.

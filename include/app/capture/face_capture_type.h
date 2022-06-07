@@ -33,6 +33,7 @@ typedef struct {
   bool auto_m_fast_cap;
 
   bool capture_aligned_face;
+  bool capture_extended_face;
   bool store_RGB888;
 } face_capture_config_t;
 
