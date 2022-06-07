@@ -13,6 +13,7 @@
 #include "eye_classification/eye_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
 #include "face_landmarker/face_landmarker.hpp"
+#include "face_mask_detection/retinaface_yolox.hpp"
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
@@ -92,6 +93,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_LIVENESS, CREATOR(Liveness)},
     {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
+    {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
     {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
     {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
     {CVI_AI_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
@@ -593,6 +595,8 @@ DEFINE_INF_FUNC_F1_P2(CVI_AI_FaceQuality, FaceQuality, CVI_AI_SUPPORTED_MODEL_FA
                       cvai_face_t *, bool *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskClassification, MaskClassification,
                       CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceMaskDetection, RetinafaceYolox,
+                      CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, cvai_face_t *)
 
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, cvai_object_t *)

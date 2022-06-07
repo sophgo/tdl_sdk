@@ -140,7 +140,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACELANDMARKER)                   \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION)             \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SMOKECLASSIFICATION)
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SMOKECLASSIFICATION)              \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION)
 
 // clang-format on
 
@@ -439,6 +440,16 @@ DLL_EXPORT CVI_S32 CVI_AI_ThermalFace(const cviai_handle_t handle, VIDEO_FRAME_I
 DLL_EXPORT CVI_S32 CVI_AI_ThermalPerson(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                         cvai_object_t *obj);
 
+/**
+ * @brief Detect face with mask score.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param face_meta Output detect result. The bbox will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_FaceMaskDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            cvai_face_t *face_meta);
 /**@}*/
 
 /**

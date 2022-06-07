@@ -30,6 +30,7 @@ add_subdirectory(smoke_classification)
 add_subdirectory(ive)
 add_subdirectory(tamper_detection)
 add_subdirectory(motion_detection)
+add_subdirectory(face_mask_detection)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils

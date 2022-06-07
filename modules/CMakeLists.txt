@@ -52,7 +52,8 @@ set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
 	             $<TARGET_OBJECTS:face_angle>
                $<TARGET_OBJECTS:ivewrapper>
                $<TARGET_OBJECTS:motion_detection>
-	             $<TARGET_OBJECTS:tamper_detection>)
+               $<TARGET_OBJECTS:tamper_detection>
+               $<TARGET_OBJECTS:face_mask_detection>)
 
 if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)
