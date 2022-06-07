@@ -77,11 +77,11 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+    ${MLIR_SDK_ROOT}/lib/libz.so
 )
 
 if("${CVI_PLATFORM}" STREQUAL "MARS")
 set(SAMPLE_LIBS ${SAMPLE_LIBS}
-    ${MLIR_SDK_ROOT}/lib/libz.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
 )
 else()
