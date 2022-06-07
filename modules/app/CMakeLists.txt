@@ -1,11 +1,13 @@
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC" )
 add_subdirectory(face_capture)
+add_subdirectory(person_capture)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils)
 
 set(FRS_SRCS $<TARGET_OBJECTS:face_capture>
+             $<TARGET_OBJECTS:person_capture>
              cviai_app.c)
 
 project(cviai_app)

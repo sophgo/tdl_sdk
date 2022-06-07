@@ -1,7 +1,7 @@
 #ifndef _CVIAI_APP_FACE_CAPTURE_H_
 #define _CVIAI_APP_FACE_CAPTURE_H_
 
-#include "app/face_capture/face_capture_type.h"
+#include "app/capture/face_capture_type.h"
 #include "core/cviai_core.h"
 
 CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info);

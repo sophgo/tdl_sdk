@@ -22,35 +22,35 @@
 #define USE_FACE_FEATURE 0
 
 /* face capture functions (core) */
-CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
-                    cvai_tracker_t *tracker_meta);
-CVI_S32 clean_data(face_capture_t *face_cpt_info);
-CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
-                     cvai_face_t *face_meta);
-void face_quality_assessment(cvai_face_t *face, bool *skip, quality_assessment_e qa_method);
+static CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
+                           cvai_tracker_t *tracker_meta);
+static CVI_S32 clean_data(face_capture_t *face_cpt_info);
+static CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
+                            cvai_face_t *face_meta);
+static void face_quality_assessment(cvai_face_t *face, bool *skip, quality_assessment_e qa_method);
 
 /* face capture functions (helper) */
-void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_info, bool *skip);
-bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
-                  float current_quality);
+static void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_info, bool *skip);
+static bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
+                         float current_quality);
 
 /* other helper functions */
-bool IS_MEMORY_ENOUGH(uint32_t mem_limit, uint64_t mem_used, cvai_image_t *current_image,
-                      cvai_bbox_t *new_bbox, PIXEL_FORMAT_E fmt);
-int COUNT_ALIVE(face_capture_t *face_cpt_info);
-void SUMMARY(face_capture_t *face_cpt_info, uint64_t *size, bool show_detail);
-void SHOW_CONFIG(face_capture_config_t *cfg);
+static bool IS_MEMORY_ENOUGH(uint32_t mem_limit, uint64_t mem_used, cvai_image_t *current_image,
+                             cvai_bbox_t *new_bbox, PIXEL_FORMAT_E fmt);
+static void SUMMARY(face_capture_t *face_cpt_info, uint64_t *size, bool show_detail);
+static void SHOW_CONFIG(face_capture_config_t *cfg);
 
 CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info) {
   LOGI("[APP::FaceCapture] Free FaceCapture Data\n");
-  _FaceCapture_CleanAll(face_cpt_info);
+  if (face_cpt_info != NULL) {
+    _FaceCapture_CleanAll(face_cpt_info);
 
-  free(face_cpt_info->data);
-  CVI_AI_Free(&face_cpt_info->last_faces);
-  CVI_AI_Free(&face_cpt_info->last_trackers);
-  free(face_cpt_info->_output);
-
-  free(face_cpt_info);
+    free(face_cpt_info->data);
+    CVI_AI_Free(&face_cpt_info->last_faces);
+    CVI_AI_Free(&face_cpt_info->last_trackers);
+    free(face_cpt_info->_output);
+    free(face_cpt_info);
+  }
   return CVIAI_SUCCESS;
 }
 
@@ -233,7 +233,7 @@ CVI_S32 _FaceCapture_CleanAll(face_capture_t *face_cpt_info) {
   return CVIAI_SUCCESS;
 }
 
-void face_quality_assessment(cvai_face_t *face, bool *skip, quality_assessment_e qa_method) {
+static void face_quality_assessment(cvai_face_t *face, bool *skip, quality_assessment_e qa_method) {
   /* NOTE: Make sure the coordinate is recovered by RetinaFace */
   for (uint32_t i = 0; i < face->size; i++) {
     if (skip != NULL && skip[i]) {
@@ -263,8 +263,8 @@ void face_quality_assessment(cvai_face_t *face, bool *skip, quality_assessment_e
   return;
 }
 
-CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
-                    cvai_tracker_t *tracker_meta) {
+static CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
+                           cvai_tracker_t *tracker_meta) {
   LOGI("[APP::FaceCapture] Update Data\n");
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     if (face_cpt_info->data[j].state == ALIVE) {
@@ -469,7 +469,7 @@ CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 clean_data(face_capture_t *face_cpt_info) {
+static CVI_S32 clean_data(face_capture_t *face_cpt_info) {
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     if (face_cpt_info->data[j].state == MISS) {
       LOGI("[APP::FaceCapture] Clean Face Info[%u]\n", j);
@@ -486,8 +486,8 @@ CVI_S32 clean_data(face_capture_t *face_cpt_info) {
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
-                     cvai_face_t *face_meta) {
+static CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
+                            cvai_face_t *face_meta) {
   LOGI("[APP::FaceCapture] Capture Face\n");
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
@@ -562,7 +562,7 @@ CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
   return CVIAI_SUCCESS;
 }
 
-void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_meta, bool *skip) {
+static void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_meta, bool *skip) {
   memset(skip, 0, sizeof(bool) * face_meta->size);
   bool care_size_min = face_cpt_info->cfg.thr_size_min != -1;
   bool care_size_max = face_cpt_info->cfg.thr_size_max != -1;
@@ -593,8 +593,8 @@ void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_meta, boo
   }
 }
 
-bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
-                  float current_quality) {
+static bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
+                         float current_quality) {
   if (face_info->face_quality >= face_cpt_info->cfg.thr_quality &&
       face_info->face_quality > current_quality) {
     return true;
@@ -602,8 +602,8 @@ bool is_qualified(face_capture_t *face_cpt_info, cvai_face_info_t *face_info,
   return false;
 }
 
-bool IS_MEMORY_ENOUGH(uint32_t mem_limit, uint64_t mem_used, cvai_image_t *current_image,
-                      cvai_bbox_t *new_bbox, PIXEL_FORMAT_E fmt) {
+static bool IS_MEMORY_ENOUGH(uint32_t mem_limit, uint64_t mem_used, cvai_image_t *current_image,
+                             cvai_bbox_t *new_bbox, PIXEL_FORMAT_E fmt) {
   mem_used -= (current_image->length[0] + current_image->length[1] + current_image->length[2]);
   uint32_t new_h = (uint32_t)roundf(new_bbox->y2) - (uint32_t)roundf(new_bbox->y1) + 1;
   uint32_t new_w = (uint32_t)roundf(new_bbox->x2) - (uint32_t)roundf(new_bbox->x1) + 1;
@@ -617,7 +617,7 @@ bool IS_MEMORY_ENOUGH(uint32_t mem_limit, uint64_t mem_used, cvai_image_t *curre
   }
 }
 
-void SUMMARY(face_capture_t *face_cpt_info, uint64_t *size, bool show_detail) {
+static void SUMMARY(face_capture_t *face_cpt_info, uint64_t *size, bool show_detail) {
   *size = 0;
   if (show_detail) {
     printf("@@@@ SUMMARY @@@@\n");
@@ -645,17 +645,7 @@ void SUMMARY(face_capture_t *face_cpt_info, uint64_t *size, bool show_detail) {
   }
 }
 
-int COUNT_ALIVE(face_capture_t *face_cpt_info) {
-  int counter = 0;
-  for (uint32_t j = 0; j < face_cpt_info->size; j++) {
-    if (face_cpt_info->data[j].state == ALIVE) {
-      counter += 1;
-    }
-  }
-  return counter;
-}
-
-void SHOW_CONFIG(face_capture_config_t *cfg) {
+static void SHOW_CONFIG(face_capture_config_t *cfg) {
   printf("@@@ Face Capture Config @@@\n");
   printf(" - Miss Time Limit:   : %u\n", cfg->miss_time_limit);
   printf(" - Thr Size (Min)     : %i\n", cfg->thr_size_min);

@@ -1,13 +1,8 @@
 #ifndef _CVIAI_APP_FACE_CAPTURE_TYPE_H_
 #define _CVIAI_APP_FACE_CAPTURE_TYPE_H_
 
+#include "capture_type.h"
 #include "core/cviai_core.h"
-
-typedef enum { IDLE = 0, ALIVE, MISS } tracker_state_e;
-
-typedef enum { AUTO = 0, FAST, CYCLE } capture_mode_e;
-
-typedef enum { AREA_RATIO = 0, EYES_DISTANCE } quality_assessment_e;
 
 typedef struct {
   cvai_face_info_t info;
