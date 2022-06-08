@@ -262,6 +262,8 @@ TEST_F(FaceRecognitionTestSuite, accuracy) {
                                            &face_meta2->info[0].feature, &score);
 
         EXPECT_LT(std::abs(score - expected_score), 0.1);
+        CVI_AI_FreeCpp(face_meta1);
+        CVI_AI_FreeCpp(face_meta2);
       }
     }
   }

@@ -189,6 +189,7 @@ TEST_F(MaskClassification, accruacy) {
       EXPECT_GT(face_meta->info[0].mask_score, threshold) << "image path: " << image_path << "\n"
                                                           << "model path: " << m_model_path;
     }
+    CVI_AI_FreeCpp(face_meta);
   }
 }
 

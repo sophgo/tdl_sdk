@@ -201,6 +201,7 @@ TEST_F(RetinafaceHardhatTestSuite, accruacy) {
                              << ", " << expected_faceinfo.bbox.y2 << ")\n";
       }
     }
+    CVI_AI_FreeCpp(face_meta);
   }
 }
 

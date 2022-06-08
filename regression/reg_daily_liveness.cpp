@@ -244,6 +244,8 @@ TEST_F(LivenessTestSuite, accruacy) {
       //       rgb_face.info[0].liveness_score);
       EXPECT_LT(abs(rgb_face.info[0].liveness_score - expected_res), threshold);
     }
+    CVI_AI_FreeCpp(&rgb_face);
+    CVI_AI_FreeCpp(&ir_face);
   }
 }
 

@@ -107,6 +107,7 @@ TEST_F(LicensePlateRecognitionTestSuite, accruacy) {
 #endif
       ASSERT_EQ(strcmp(vehicle_meta->info[0].vehicle_properity->license_char, expected_res.c_str()),
                 0);
+      CVI_AI_FreeCpp(vehicle_meta);
     }
 
     ASSERT_EQ(CVI_AI_CloseModel(m_ai_handle, m_info.idx), CVIAI_SUCCESS);

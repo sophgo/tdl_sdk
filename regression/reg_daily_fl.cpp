@@ -138,6 +138,7 @@ TEST_F(FLTestSuite, inference_and_accuracy) {
       ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
 
       nme += compute_nme(&(face_meta->info[0].pts), &(face_meta->dms->landmarks_5));
+      CVI_AI_FreeCpp(face_meta);
     }
     EXPECT_EQ(nme < nme_threshold, true);
   }

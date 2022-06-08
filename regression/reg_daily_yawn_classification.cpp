@@ -130,6 +130,7 @@ TEST_F(YawnCTestSuite, inference_and_accuracy) {
       face_meta->info[0].pts.y[4] = (float)test_config["reg_config"][0]["face_pts"][img_idx][9];
       ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
       EXPECT_EQ((face_meta->dms->yawn_score > threshold), expected_res);
+      CVI_AI_FreeCpp(face_meta);
     }
   }
 }

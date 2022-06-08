@@ -97,7 +97,7 @@ TEST_F(LicensePlateDetectionTestSuite, accruacy) {
              expected_res->x[1], expected_res->y[1], expected_res->x[2], expected_res->y[2],
              expected_res->x[3], expected_res->y[3]);
     }
-
+    CVI_AI_FreeCpp(vehicle_meta);
     delete expected_res;
   }
 }

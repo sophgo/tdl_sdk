@@ -125,6 +125,7 @@ TEST_F(EyeCTestSuite, inference_and_accuracy) {
           ((face_meta->dms->leye_score > threshold) || (face_meta->dms->reye_score > threshold)),
           expected_res);
       CVI_AI_FreeDMS(face_meta->dms);
+      CVI_AI_FreeCpp(face_meta);
     }
   }
 }

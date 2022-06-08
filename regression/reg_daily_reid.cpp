@@ -92,6 +92,8 @@ TEST_F(ReIdentificationTestSuite, accruacy) {
     // printf("cos distance: %f (expected: %f)\n", distance, expected_distance);
 
     ASSERT_LT(ABS(distance - expected_distance), DISTANCE_BIAS);
+    CVI_AI_FreeCpp(pedestrian_meta[0]);
+    CVI_AI_FreeCpp(pedestrian_meta[1]);
   }
 }
 

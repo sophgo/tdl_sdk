@@ -215,6 +215,7 @@ TEST_F(RetinafaceTestSuite, accruacy) {
                              << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
                              << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
       }
+      CVI_AI_FreeCpp(face_meta);
     }
   }
 }

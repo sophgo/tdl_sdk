@@ -80,6 +80,7 @@ set(SAMPLE_LIBS
 )
 
 set(UnitTests
+  reg_daily_feature_matching
   reg_daily_fq
   reg_daily_mobiledet
   reg_daily_md
@@ -92,7 +93,6 @@ set(UnitTests
   reg_daily_thermal_fd
   reg_daily_thermal_person_detection
   reg_daily_core
-  reg_daily_feature_matching
   reg_daily_liveness
   reg_daily_alphapose
   reg_daily_fall

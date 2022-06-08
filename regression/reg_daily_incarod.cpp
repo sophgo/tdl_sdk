@@ -115,6 +115,8 @@ TEST_F(IncarTestSuite, inference_and_accuracy) {
                    (abs(face_meta->dms->dms_od.info[i].bbox.y2 - expected_res_y2) < threshold)),
                   true);
       }
+      CVI_AI_FreeDMS(face_meta->dms);
+      CVI_AI_FreeCpp(face_meta);
     }
   }
 }

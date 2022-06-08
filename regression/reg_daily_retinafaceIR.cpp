@@ -229,6 +229,7 @@ TEST_F(RetinafaceIRTestSuite, accruacy) {
                  face_meta->info[i].bbox.y2);
         };
       }
+      CVI_AI_FreeCpp(face_meta);
     }
   }
 }

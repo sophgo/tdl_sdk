@@ -209,6 +209,7 @@ TEST_F(FaceQualityTestSuite, accruacy) {
           << "image path: " << image_path << "\n"
           << "model path: " << m_model_path;
     }
+    CVI_AI_FreeCpp(face_meta);
   }
 }
 

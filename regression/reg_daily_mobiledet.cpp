@@ -419,6 +419,7 @@ TEST_F(MobileDetV2TestSuite, accuracy) {
               << "score: " << expected_bbox.score << "\n";
         }
       }
+      CVI_AI_FreeCpp(obj_meta);
     }
   }
 }

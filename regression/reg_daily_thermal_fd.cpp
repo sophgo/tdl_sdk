@@ -132,6 +132,7 @@ TEST_F(ThermalFaceDetectionTestSuite, accruacy) {
       ASSERT_EQ(match_result[i], true);
     }
 
+    CVI_AI_FreeCpp(face_meta);
     delete[] expected_result;
     delete[] match_result;
   }
