@@ -97,4 +97,9 @@ CVI_S32 IVE::thresh(IVEImage *pSrc, IVEImage *pDst, ThreshMode mode, CVI_U8 u8Lo
   return mpImpl->thresh(pSrc->getImpl(), pDst->getImpl(), mode, u8LowThr, u8HighThr, u8MinVal,
                         u8MidVal, u8MaxVal);
 }
+
+CVI_S32 IVE::frame_diff(IVEImage *pSrc1, IVEImage *pSrc2, IVEImage *pDst, CVI_U8 threshold) {
+  return mpImpl->frame_diff(pSrc1->getImpl(), pSrc2->getImpl(), pDst->getImpl(), threshold);
+}
+
 }  // namespace ive

@@ -290,49 +290,16 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
-  if (ret != CVIAI_SUCCESS) {
-    LOGE("failed to convert VIDEO_FRAME_INFO_S to IVE_IMAGE_S, ret=%d\n", ret);
-    return ret;
-  }
-#ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: src.yuv\n");
-  srcImg.write("src.yuv");
-#endif
-  // Sub - threshold - dilate
-  ret = ive_instance->sub(&srcImg, &background_img, &md_output);
-#ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: sub.yuv\n");
-  md_output.write("sub.yuv");
-#endif
-  if (ret != CVI_SUCCESS) {
-    LOGE("CVI_IVE_Sub fail %x\n", ret);
-    return CVIAI_ERR_MD_OPERATION_FAILED;
-  }
-
+  ret = ive_instance->frame_diff(&srcImg, &background_img, &md_output, threshold);
   if (do_unmap_src) {
     CVI_SYS_Munmap((void *)processed_frame->stVFrame.pu8VirAddr[0], image_size);
   }
 
-  ret = ive_instance->thresh(&md_output, &md_output, ThreshMode::BINARY, threshold, 0, 0, 0, 255);
-#ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: thresh.yuv\n");
-  md_output.write("thresh.yuv");
-#endif
-  if (ret != CVI_SUCCESS) {
-    LOGE("CVI_IVE_Sub fail %x\n", ret);
+  if (ret != CVIAI_SUCCESS) {
+    LOGE("failed to do frame difference ret=%d\n", ret);
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
-  ret = ive_instance->dilate(&md_output, &md_output, {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1,
-                                                      1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0});
-  if (ret != CVI_SUCCESS) {
-    LOGE("dilate fail %x\n", ret);
-    return CVIAI_ERR_MD_OPERATION_FAILED;
-  }
-#ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: dialte.yuv\n");
-  md_output.write("dilate.yuv");
-#endif
   VIDEO_FRAME_INFO_S md_output_frame;
   md_output.bufRequest();
   md_output.toFrame(&md_output_frame);

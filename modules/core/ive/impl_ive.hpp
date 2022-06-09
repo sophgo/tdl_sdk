@@ -67,6 +67,8 @@ class IVEImpl {
                       unsigned short beta = std::numeric_limits<unsigned short>::max()) = 0;
   virtual CVI_S32 thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, CVI_U8 u8LowThr,
                          CVI_U8 u8HighThr, CVI_U8 u8MinVal, CVI_U8 u8MidVal, CVI_U8 u8MaxVal) = 0;
+  virtual CVI_S32 frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
+                             CVI_U8 threshold) = 0;
 
   // TODO: Maybe there are more elegant ways to get handle
   virtual void *getHandle() = 0;

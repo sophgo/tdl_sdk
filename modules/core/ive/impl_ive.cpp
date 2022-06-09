@@ -69,6 +69,8 @@ class HWIVE : public IVEImpl {
   virtual CVI_S32 thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, CVI_U8 u8LowThr,
                          CVI_U8 u8HighThr, CVI_U8 u8MinVal, CVI_U8 u8MidVal,
                          CVI_U8 u8MaxVal) override;
+  virtual CVI_S32 frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
+                             CVI_U8 threshold) override;
 
   virtual void *getHandle() override;
 
@@ -438,4 +440,22 @@ CVI_S32 HWIVE::thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, C
 
   return CVI_IVE_Thresh(m_handle, UNWRAP(pSrc), UNWRAP(pDst), &ctrl, true);
 }
+
+CVI_S32 HWIVE::frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
+                          CVI_U8 threshold) {
+  IVE_FRAME_DIFF_MOTION_CTRL_S ctrl = {
+      .enSubMode = IVE_SUB_MODE_ABS,
+      .enThrMode = IVE_THRESH_MODE_BINARY,
+      .u8ThrLow = threshold,
+      .u8ThrHigh = 0,
+      .u8ThrMinVal = 0,
+      .u8ThrMidVal = 0,
+      .u8ThrMaxVal = 255,
+      .au8ErodeMask = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0},
+      .au8DilateMask = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0},
+  };
+
+  return CVI_IVE_FrameDiffMotion(m_handle, UNWRAP(pSrc1), UNWRAP(pSrc2), UNWRAP(pDst), &ctrl, true);
+}
+
 }  // namespace ive

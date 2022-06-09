@@ -68,7 +68,8 @@ class TPUIVE : public IVEImpl {
   virtual CVI_S32 thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, CVI_U8 u8LowThr,
                          CVI_U8 u8HighThr, CVI_U8 u8MinVal, CVI_U8 u8MidVal,
                          CVI_U8 u8MaxVal) override;
-
+  virtual CVI_S32 frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
+                             CVI_U8 threshold) override;
   virtual void *getHandle() override;
 
   // helper function for conversion of IVE types.
@@ -370,4 +371,47 @@ CVI_S32 TPUIVE::thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, 
 
   return CVI_IVE_Thresh(m_handle, UNWRAP(pSrc), UNWRAP(pDst), &ctrl, false);
 }
+
+CVI_S32 TPUIVE::frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
+                           CVI_U8 threshold) {
+  CVI_S32 ret;
+
+#ifdef DEBUG_MD
+  LOGI("MD DEBUG: write: src.yuv\n");
+  srcImg.write("src.yuv");
+#endif
+  // Sub - threshold - dilate
+  ret = sub(pSrc1, pSrc2, pDst);
+#ifdef DEBUG_MD
+  LOGI("MD DEBUG: write: sub.yuv\n");
+  pDst->write("sub.yuv");
+#endif
+  if (ret != CVI_SUCCESS) {
+    LOGE("CVI_IVE_Sub fail %x\n", ret);
+    return ret;
+  }
+
+  ret = thresh(pDst, pDst, ThreshMode::BINARY, threshold, 0, 0, 0, 255);
+#ifdef DEBUG_MD
+  LOGI("MD DEBUG: write: thresh.yuv\n");
+  pDst->write("thresh.yuv");
+#endif
+  if (ret != CVI_SUCCESS) {
+    return ret;
+  }
+
+  ret = dilate(pDst, pDst,
+               {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0});
+  if (ret != CVI_SUCCESS) {
+    LOGE("dilate fail %x\n", ret);
+    return ret;
+  }
+
+#ifdef DEBUG_MD
+  LOGI("MD DEBUG: write: dialte.yuv\n");
+  pDst->write("dilate.yuv");
+#endif
+  return ret;
+}
+
 }  // namespace ive

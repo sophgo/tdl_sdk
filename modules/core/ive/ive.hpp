@@ -66,6 +66,7 @@ class IVE {
   CVI_S32 fillConst(IVEImage *pSrc, float value);
   CVI_S32 thresh(IVEImage *pSrc, IVEImage *pDst, ThreshMode mode, CVI_U8 u8LowThr, CVI_U8 u8HighThr,
                  CVI_U8 u8MinVal, CVI_U8 u8MidVal, CVI_U8 u8MaxVal);
+  CVI_S32 frame_diff(IVEImage *pSrc1, IVEImage *pSrc2, IVEImage *pDst, CVI_U8 threshold);
   IVEImpl *getImpl();
 
  private:
