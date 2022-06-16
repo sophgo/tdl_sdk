@@ -141,9 +141,15 @@ class SoundClassification final : public Core {
   virtual ~SoundClassification();
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index);
   void prepareInputTensor(std::vector<Mat *> &input_mat);
+  int setThreshold(const float th) {
+    threshold = th;
+    return CVI_SUCCESS;
+  };
+  int getClassesNum();
 
  private:
   float *STFT(float *data, int channel, int img_height, int img_width);
+  float threshold;
   void STFT(Mat *data, int channel, Mat *feature_vector);
   int get_top_k(float *result, size_t count);
   int hop_length[1] = {256};

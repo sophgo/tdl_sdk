@@ -13,8 +13,9 @@
 #define FRAME_SIZE SAMPLE_RATE *AUDIOFORMATSIZE *SECOND  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
 
 // ESC class name
-char ES_Classes[6][32] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",
-                          "Baby Cry",          "Glass breaking",    "Office"};
+enum Classes { SNEEZING, COUGHING, CLAPPING, BABYCRY, GLASSBREAKING, OFFICE };
+static const char *enumStr[] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",
+                                "Baby Cry",          "Glass breaking",    "Office"};
 
 bool gRun = true;     // signal
 bool record = false;  // record to output
@@ -64,10 +65,7 @@ void *thread_uplink_audio(void *arg) {
     if (!record) {
       CVI_AI_SoundClassification(ai_handle, &Frame, &index);  // Detect the audio
       // Print esc result
-      if (index == 0 || index == 1)
-        printf("esc class: %s  \n", ES_Classes[0]);
-      else
-        printf("esc class: %s  \n", ES_Classes[index]);
+      printf("esc class: %s\n", enumStr[index]);
     } else {
       FILE *fp = fopen(outpath, "wb");
       fwrite((char *)buffer, 1, FRAME_SIZE, fp);

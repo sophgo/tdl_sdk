@@ -44,6 +44,7 @@ void *thread_uplink_audio(void *arg) {
 
   // classify the sound result
   int index = -1;
+  int ClassesNum = CVI_AI_Get_SoundClassification_ClassesNum(ai_handle);
 
   while (gRun) {
     for (int i = 0; i < loop; ++i) {
@@ -59,7 +60,7 @@ void *thread_uplink_audio(void *arg) {
     if (!record) {
       CVI_AI_SoundClassification(ai_handle, &Frame, &index);  // Detect the audio
       // Print soundcmd result
-      if (index == 22)
+      if (index == ClassesNum)
         printf("Sound cmd preditcion: Normal\n");
       else
         printf("Sound cmd prediction: %d \n", index + 1);

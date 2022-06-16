@@ -877,3 +877,39 @@ CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   }
   return ctx->md_model->detect(frame, objects, threshold, min_area);
 }
+
+CVI_S32 CVI_AI_Get_SoundClassification_ClassesNum(const cviai_handle_t handle) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Get_SoundClassification_ClassesNum");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  SoundClassification *sc_model = dynamic_cast<SoundClassification *>(
+      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, ctx));
+  if (sc_model == nullptr) {
+    LOGE("No instance found for SoundClassification.\n");
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+  if (sc_model->isInitialized()) {
+    return sc_model->getClassesNum();
+  } else {
+    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
+         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION));
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+}
+
+CVI_S32 CVI_AI_Set_SoundClassification_Threshold(const cviai_handle_t handle, const float th) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Set_SoundClassification_Threshold");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  SoundClassification *sc_model = dynamic_cast<SoundClassification *>(
+      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, ctx));
+  if (sc_model == nullptr) {
+    LOGE("No instance found for SoundClassification.\n");
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+  if (sc_model->isInitialized()) {
+    return sc_model->setThreshold(th);
+  } else {
+    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
+         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION));
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+}

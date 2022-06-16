@@ -55,6 +55,7 @@ SoundClassification::SoundClassification() : Core(CVI_MEM_SYSTEM) {
     }
     hannWindows.push_back(hannWindow);
   }
+  threshold = 0.6;
   pad_length = N_FFT / 2;
   // init fft
   fft.init(size_t(N_FFT));
@@ -127,7 +128,7 @@ int SoundClassification::get_top_k(float *result, size_t count) {
     }
     pct = max;
   }
-  if (pct < 0.6) return count;  // Office
+  if (pct < threshold) return count;  // pct lower than threshold, so return classes + 1
   return idx;
 }
 
@@ -165,5 +166,10 @@ void SoundClassification::prepareInputTensor(std::vector<Mat *> &input_mat) {
     int size = input_mat[c]->rows * input_mat[c]->cols;
     memcpy(input_ptr + c * size, input_mat[c]->data, size * sizeof(float));
   }
+}
+
+int SoundClassification::getClassesNum() {
+  const TensorInfo &info = getOutputTensorInfo(ESC_OUT_NAME);
+  return info.tensor_elem;
 }
 }  // namespace cviai

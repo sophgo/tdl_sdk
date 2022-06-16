@@ -759,6 +759,26 @@ DLL_EXPORT CVI_S32 CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *fr
 DLL_EXPORT CVI_S32 CVI_AI_SoundClassification(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, int *index);
 
+/**
+ * @brief Get sound classification classes num.
+ *
+ * @param handle An AI SDK handle.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+
+DLL_EXPORT CVI_S32 CVI_AI_Get_SoundClassification_ClassesNum(const cviai_handle_t handle);
+
+/**
+ * @brief Set sound classification threshold.
+ *
+ * @param handle An AI SDK handle.
+ * @param th Sound classifiction threshold
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+
+DLL_EXPORT CVI_S32 CVI_AI_Set_SoundClassification_Threshold(const cviai_handle_t handle,
+                                                            const float th);
+
 /**@}*/
 
 /**
