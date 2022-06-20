@@ -313,7 +313,7 @@ int main(int argc, char *argv[]) {
         "          FD threshold\n"
         "          write image (0/1)\n"
         "          video output, 0: disable, 1: output to panel, 2: output through rtsp"
-        "          video input format, 0: rgb, 1: nv21, 2: yuv420\n",
+        "          video input format, 0: rgb, 1: nv21, 2: yuv420, 3: rgb(planar)\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
@@ -347,6 +347,8 @@ int main(int argc, char *argv[]) {
     aiInputFormat = PIXEL_FORMAT_NV21;
   } else if (vi_format == 2) {
     aiInputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
+  } else if (vi_format == 3) {
+    aiInputFormat = PIXEL_FORMAT_RGB_888_PLANAR;
   } else {
     printf("vi format[%d] unknown.\n", vi_format);
     return CVI_FAILURE;

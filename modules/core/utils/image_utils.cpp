@@ -22,13 +22,10 @@
 
 static bool IS_SUPPORTED_FORMAT(VIDEO_FRAME_INFO_S *frame) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
-    LOGE(
-        "Pixel format [%d] not match: , PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d]"
-        ", PIXEL_FORMAT_YUV_PLANAR_420 [%d].\n",
-        frame->stVFrame.enPixelFormat, PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21,
-        PIXEL_FORMAT_YUV_PLANAR_420);
+    LOGE("Pixel format [%d] is not supported.\n", frame->stVFrame.enPixelFormat);
     return false;
   }
   return true;
@@ -71,6 +68,7 @@ static void GET_BBOX_COORD(cvai_bbox_t *bbox, uint32_t &x1, uint32_t &y1, uint32
   /* NOTE: tune the bbox coordinates to even value (necessary?) */
   switch (fmt) {
     case PIXEL_FORMAT_RGB_888:
+    case PIXEL_FORMAT_RGB_888_PLANAR:
     case PIXEL_FORMAT_YUV_PLANAR_420:
     case PIXEL_FORMAT_NV21: {
       if (height % 2 != 0) {
@@ -164,6 +162,26 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
       BBOX_PIXEL_COPY(srcFrame->stVFrame.pu8VirAddr[0], dst_image->pix[0],
                       srcFrame->stVFrame.u32Stride[0], dst_image->stride[0], x1, y1, width, height,
                       3);
+    } break;
+    case PIXEL_FORMAT_RGB_888_PLANAR: {
+      cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
+      BBOX_PIXEL_COPY(srcFrame->stVFrame.pu8VirAddr[0], p_image->pix[0],
+                      srcFrame->stVFrame.u32Stride[0], p_image->stride[0], x1, y1, width, height,
+                      1);
+      BBOX_PIXEL_COPY(srcFrame->stVFrame.pu8VirAddr[1], p_image->pix[1],
+                      srcFrame->stVFrame.u32Stride[1], p_image->stride[1], x1, y1, width, height,
+                      1);
+      BBOX_PIXEL_COPY(srcFrame->stVFrame.pu8VirAddr[2], p_image->pix[2],
+                      srcFrame->stVFrame.u32Stride[2], p_image->stride[2], x1, y1, width, height,
+                      1);
+      if (cvtRGB888) {
+        for (uint32_t i = 0; i < dst_image->height; i++) {
+          for (uint32_t j = 0; j < dst_image->width * 3; j++) {
+            dst_image->pix[0][i * dst_image->stride[0] + j] =
+                tmp_image.pix[j % 3][i * tmp_image.stride[0] + j / 3];
+          }
+        }
+      }
     } break;
     case PIXEL_FORMAT_NV21: {
       cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
@@ -268,6 +286,29 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, 
                         (int)srcFrame->stVFrame.u32Width, (int)srcFrame->stVFrame.u32Height,
                         srcFrame->stVFrame.u32Stride[0], dst_image->stride[0], ext_x1, ext_y1,
                         dst_image->width, dst_image->height, 3);
+    } break;
+    case PIXEL_FORMAT_RGB_888_PLANAR: {
+      cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
+      BBOX_PIXEL_COPY_2(srcFrame->stVFrame.pu8VirAddr[0], p_image->pix[0],
+                        (int)srcFrame->stVFrame.u32Width, (int)srcFrame->stVFrame.u32Height,
+                        srcFrame->stVFrame.u32Stride[0], p_image->stride[0], ext_x1, ext_y1,
+                        p_image->width, p_image->height, 1);
+      BBOX_PIXEL_COPY_2(srcFrame->stVFrame.pu8VirAddr[1], p_image->pix[1],
+                        (int)srcFrame->stVFrame.u32Width, (int)srcFrame->stVFrame.u32Height,
+                        srcFrame->stVFrame.u32Stride[1], p_image->stride[1], ext_x1, ext_y1,
+                        p_image->width, p_image->height, 1);
+      BBOX_PIXEL_COPY_2(srcFrame->stVFrame.pu8VirAddr[2], p_image->pix[2],
+                        (int)srcFrame->stVFrame.u32Width, (int)srcFrame->stVFrame.u32Height,
+                        srcFrame->stVFrame.u32Stride[2], p_image->stride[2], ext_x1, ext_y1,
+                        p_image->width, p_image->height, 1);
+      if (cvtRGB888) {
+        for (uint32_t i = 0; i < dst_image->height; i++) {
+          for (uint32_t j = 0; j < dst_image->width * 3; j++) {
+            dst_image->pix[0][i * dst_image->stride[0] + j] =
+                tmp_image.pix[j % 3][i * tmp_image.stride[0] + j / 3];
+          }
+        }
+      }
     } break;
     case PIXEL_FORMAT_NV21: {
       cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
