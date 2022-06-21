@@ -1,4 +1,4 @@
-#define LOG_TAG "SampleOD"
+#define LOG_TAG "SampleMD"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 #include "middleware_utils.h"
@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 static volatile bool bExit = false;
@@ -94,21 +95,35 @@ void *run_ai_thread(void *args) {
 
   CVI_S32 s32Ret;
   uint32_t frame_count = 0;
+  uint32_t update_interval = 100;
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
+
+    struct timeval t0, t1;
+    unsigned long elapsed;
 
     if (s32Ret != CVI_SUCCESS) {
       AI_LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", s32Ret);
       goto get_frame_failed;
     }
 
-    if (frame_count != 0) {
-      GOTO_IF_FAILED(CVI_AI_MotionDetection(pstAIArgs->stAIHandle, &stFrame, &stObjMeta,
-                                            pstAIArgs->u8Threshold, pstAIArgs->fMinArea),
-                     s32Ret, inf_error);
+    if (frame_count % update_interval == 0) {
+      AI_LOGI("Update background\n");
+      gettimeofday(&t0, NULL);
+      GOTO_IF_FAILED(CVI_AI_Set_MotionDetection_Background(pstAIArgs->stAIHandle, &stFrame), s32Ret,
+                     inf_error);
+      gettimeofday(&t1, NULL);
+      elapsed = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
+      AI_LOGI("Update background, time=%.2f ms\n", (float)elapsed / 1000.);
     }
-    GOTO_IF_FAILED(CVI_AI_Set_MotionDetection_Background(pstAIArgs->stAIHandle, &stFrame), s32Ret,
-                   inf_error);
+
+    gettimeofday(&t0, NULL);
+    GOTO_IF_FAILED(CVI_AI_MotionDetection(pstAIArgs->stAIHandle, &stFrame, &stObjMeta,
+                                          pstAIArgs->u8Threshold, pstAIArgs->fMinArea),
+                   s32Ret, inf_error);
+    gettimeofday(&t1, NULL);
+    elapsed = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
+
     frame_count++;
 
     if (s32Ret != CVIAI_SUCCESS) {
@@ -116,7 +131,7 @@ void *run_ai_thread(void *args) {
       goto inf_error;
     }
 
-    AI_LOGI("detected objects: %d\n", stObjMeta.size);
+    AI_LOGI("detected objects: %d, time= %.2f ms\n", stObjMeta.size, (float)elapsed / 1000.);
 
     {
       MutexAutoLock(ResultMutex, lock);

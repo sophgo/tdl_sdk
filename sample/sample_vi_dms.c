@@ -1,4 +1,4 @@
-#define LOG_TAG "SampleOD"
+#define LOG_TAG "SampleDMS"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 #include "middleware_utils.h"
