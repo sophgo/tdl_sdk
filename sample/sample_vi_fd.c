@@ -130,9 +130,9 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
-    AI_LOGI(
-        "Usage: %s <retina_model_path> <display>.\n"
-        "\t retina_model_path, path to retinaface model\n",
+    printf(
+        "\nUsage: %s RETINA_MODEL_PATH.\n\n"
+        "\tRETINA_MODEL_PATH, path to retinaface model.\n",
         argv[0]);
     return CVIAI_FAILURE;
   }

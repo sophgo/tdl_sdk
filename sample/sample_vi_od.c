@@ -257,16 +257,16 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 int main(int argc, char *argv[]) {
   if (argc != 4 && argc != 3) {
-    AI_LOGI(
-        "Usage: %s MODEL_NAME MODEL_PATH [THRESHOLD].\n"
-        "\t MODEL_NAME, detection model name should be one of {mobiledetv2-person-vehicle, "
+    printf(
+        "\nUsage: %s MODEL_NAME MODEL_PATH [THRESHOLD]\n\n"
+        "\tMODEL_NAME, detection model name should be one of {mobiledetv2-person-vehicle, "
         "mobiledetv2-person-pets, "
         "mobiledetv2-coco80, "
         "mobiledetv2-vehicle, "
         "mobiledetv2-pedestrian, "
         "yolov3}\n"
-        "\t MODEL_PATH, cvimodel path"
-        "\t THRESHOLD (optional), threshold for detection model (default: 0.5)\n",
+        "\tMODEL_PATH, cvimodel path\n"
+        "\tTHRESHOLD (optional), threshold for detection model (default: 0.5)\n",
         argv[0]);
     return -1;
   }

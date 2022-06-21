@@ -270,12 +270,17 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 int main(int argc, char *argv[]) {
   if (argc != 6) {
-    AI_LOGI(
-        "Usage: %s <vehicle_detection_model_namne>\n"
-        "          <vehicle_detection_model_path>\n"
-        "          <license_plate_detection_model_path>\n"
-        "          <license_plate_recognition_model_path>\n"
-        "          <license_format (tw/cn)>\n",
+    printf(
+        "\nUsage: %s DET_MODEL_NAME DET_MODEL_PATH LPD_MODEL_PATH LPR_MODEL_PATH FORMAT\n\n"
+        "\t\tDET_MODEL_NAME, vehicle detection model name, should be one of {"
+        "mobiledetv2-person-vehicle, "
+        "mobiledetv2-coco80, "
+        "mobiledetv2-vehicle, "
+        "yolov3}.\n\n"
+        "\tDET_MODEL_PATH, path to vehicle detection model.\n"
+        "\tLPD_MODEL_PATH, path to license plate detection model.\n"
+        "\tLPR_MODEL_PATH, path to license plate recognition model.\n"
+        "\tFORMAT, license format, should be one of {\"tw\", \"cn\"}.\n",
         argv[0]);
     return -1;
   }

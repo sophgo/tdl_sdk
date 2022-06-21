@@ -191,10 +191,16 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
-    AI_LOGI(
-        "Usage: %s <detection_model_name>\n"
-        "          <detection_model_path>\n"
-        "          <reid_model_path>\n",
+    printf(
+        "\nUsage: %s DET_MODEL_NAME DET_MODEL_PATH REID_MODEL_PATH\n\n"
+        "\tDET_MODEL_NAME, person detection model name, should be one of "
+        "{mobiledetv2-person-vehicle, "
+        "mobiledetv2-person-pets, "
+        "mobiledetv2-coco80, "
+        "mobiledetv2-pedestrian, "
+        "yolov3}\n"
+        "\tDET_MODEL_PATH, path to person detection model\n"
+        "\tREID_MODEL_PATH, path to ReID model\n",
         argv[0]);
     return -1;
   }

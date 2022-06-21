@@ -114,10 +114,10 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
 int main(int argc, char **argv) {
   if (argc != 2 && argc != 4) {
     printf(
-        "Usage: %s <soundcmd model path> <record 0 or 1> <output file path>\n"
-        "\t soundcmd model path\n"
-        "\t record, 0: disable 1. enable\n"
-        "\t output file path: {output file path}.raw\n",
+        "Usage: %s MODEL_PATH RECORD OUTPUT\n"
+        "\t\tMODEL_PATH, soundcmd model path\n"
+        "\t\tRECORD, record input to file, 0: disable 1. enable.\n"
+        "\t\tOUTPUT, output file path: {output file path}.raw\n",
         argv[0]);
     return CVIAI_FAILURE;
   }

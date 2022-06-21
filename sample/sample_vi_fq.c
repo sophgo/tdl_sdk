@@ -143,11 +143,11 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
-    AI_LOGI(
-        "Usage: %s <retina_model_path> <quality_model_path> <input_format>.\n"
-        "\t retina_model_path, path to retinaface model\n"
-        "\t quality_model_path, path to face quality model\n"
-        "\t video input format, 0: RGB888, 1: NV21, 2: YUV420\n",
+    printf(
+        "\nUsage: %s RETINA_MODEL_PATH QUALITY_MODEL_PATH INPUT_FORMAT\n\n"
+        "\tRETINA_MODEL_PATH, path to retinaface model.\n"
+        "\tQUALITY_MODEL_PATH, path to face quality model.\n"
+        "\tINPUT_FORMAT, input format of face quality model. 0: RGB888, 1: NV21, 2: YUV420.\n",
         argv[0]);
     return CVIAI_FAILURE;
   }

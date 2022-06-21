@@ -136,9 +136,9 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
-    AI_LOGI(
-        "Usage: %s <face_mask_model_path>.\n"
-        "\t face_mask_model_path, path to face mask detection model\n",
+    printf(
+        "\nUsage: %s MODEL_PATH\n\n"
+        "\tMODEL_PATH, path to face mask detection model.\n",
         argv[0]);
     return CVIAI_FAILURE;
   }

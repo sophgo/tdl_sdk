@@ -162,10 +162,10 @@ static void SampleHandleSig(CVI_S32 signo) {
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    AI_LOGI(
-        "Usage: %s <threshold> <min_area>.\n"
-        "\t threshold: threshold for motion detection [0-255] \n"
-        "\t min_area: minimal size of object \n",
+    printf(
+        "\nUsage: %s THRESHOLD MIN_AREA\n\n"
+        "\tTHRESHOLD, threshold for motion detection [0-255].\n"
+        "\tMIN_AREA, minimal pixel size of object.\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
