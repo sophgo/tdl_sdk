@@ -178,11 +178,22 @@ inline CVI_S32 DrawRect(cviai_service_handle_t handle, const T *meta, VIDEO_FRAM
   if (meta->size <= 0) return CVIAI_SUCCESS;
 
   if (handle != NULL) {
-    if ((brush.size % 2) != 0) {
-      brush.size += 1;
-    }
+    std::vector<cvai_service_brush_t> brushes(meta->size, brush);
+    return cviai::service::DrawMeta(meta, frame, drawText, brushes);
+  }
 
-    return cviai::service::DrawMeta(meta, frame, drawText, brush);
+  LOGE("service handle is NULL\n");
+  return CVIAI_FAILURE;
+}
+
+template <typename T>
+inline CVI_S32 DrawRect(cviai_service_handle_t handle, const T *meta, VIDEO_FRAME_INFO_S *frame,
+                        const bool drawText, cvai_service_brush_t *brushes) {
+  if (meta->size <= 0) return CVIAI_SUCCESS;
+
+  if (handle != NULL) {
+    std::vector<cvai_service_brush_t> vec_brushes(brushes, brushes + meta->size);
+    return cviai::service::DrawMeta(meta, frame, drawText, vec_brushes);
   }
 
   LOGE("service handle is NULL\n");
@@ -195,16 +206,34 @@ CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle, const cvai_fa
   return DrawRect(handle, meta, frame, drawText, brush);
 }
 
+CVI_S32 CVI_AI_Service_FaceDrawRect2(cviai_service_handle_t handle, const cvai_face_t *meta,
+                                     VIDEO_FRAME_INFO_S *frame, const bool drawText,
+                                     cvai_service_brush_t *brushes) {
+  return DrawRect(handle, meta, frame, drawText, brushes);
+}
+
 CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle, const cvai_object_t *meta,
                                       VIDEO_FRAME_INFO_S *frame, const bool drawText,
                                       cvai_service_brush_t brush) {
   return DrawRect(handle, meta, frame, drawText, brush);
 }
 
+CVI_S32 CVI_AI_Service_ObjectDrawRect2(cviai_service_handle_t handle, const cvai_object_t *meta,
+                                       VIDEO_FRAME_INFO_S *frame, const bool drawText,
+                                       cvai_service_brush_t *brushes) {
+  return DrawRect(handle, meta, frame, drawText, brushes);
+}
+
 CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
                                             const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame,
                                             const bool drawText, cvai_service_brush_t brush) {
   return DrawRect(handle, meta, frame, drawText, brush);
+}
+
+CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect2(cviai_service_handle_t handle,
+                                             const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                             const bool drawText, cvai_service_brush_t *brushes) {
+  return DrawRect(handle, meta, frame, drawText, brushes);
 }
 
 CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *frame, float r,

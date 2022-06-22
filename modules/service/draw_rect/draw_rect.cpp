@@ -562,7 +562,7 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, 
 
 template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
-             cvai_service_brush_t brush) {
+             const std::vector<cvai_service_brush_t> &brushes) {
   if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawMeta\n");
@@ -587,14 +587,18 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
     do_unmap = true;
   }
 
-  color_rgb rgb_color;
-  rgb_color.r = brush.color.r;
-  rgb_color.g = brush.color.g;
-  rgb_color.b = brush.color.b;
-
-  int thickness = max(brush.size, 2);
-
   for (size_t i = 0; i < meta->size; i++) {
+    cvai_service_brush_t brush = brushes[i];
+    color_rgb rgb_color;
+    rgb_color.r = brush.color.r;
+    rgb_color.g = brush.color.g;
+    rgb_color.b = brush.color.b;
+
+    int thickness = max(brush.size, 2);
+    if ((brush.size % 2) != 0) {
+      brush.size += 1;
+    }
+
     cvai_bbox_t bbox =
         box_rescale(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height, meta->width,
                     meta->height, meta->info[i].bbox, meta->rescale_type);
@@ -619,11 +623,14 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
 }
 
 template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                   const bool drawText, cvai_service_brush_t brush);
+                                   const bool drawText,
+                                   const std::vector<cvai_service_brush_t> &brushes);
 template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                     const bool drawText, cvai_service_brush_t brush);
+                                     const bool drawText,
+                                     const std::vector<cvai_service_brush_t> &brushes);
 template int DrawMeta<cvai_dms_od_t>(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                     const bool drawText, cvai_service_brush_t brush);
+                                     const bool drawText,
+                                     const std::vector<cvai_service_brush_t> &brushes);
 
 int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   frame->stVFrame.pu8VirAddr[0] =

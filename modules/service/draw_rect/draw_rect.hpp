@@ -2,6 +2,7 @@
 #include "core/face/cvai_face_types.h"
 #include "core/object/cvai_object_types.h"
 
+#include <vector>
 #include "cvi_comm.h"
 #include "service/cviai_service_types.h"
 
@@ -32,6 +33,10 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, 
 template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
              cvai_service_brush_t brush);
+
+template <typename T>
+int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
+             const std::vector<cvai_service_brush_t> &brushes);
 
 int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame);
 

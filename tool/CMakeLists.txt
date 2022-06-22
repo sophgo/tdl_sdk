@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.2.2)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-project(ai_sdk_sample)
+project(ai_sdk_tools)
 
 function(buildninstall)
   # From https://stackoverflow.com/questions/23327687/how-to-write-a-cmake-function-with-more-than-one-parameter-groups

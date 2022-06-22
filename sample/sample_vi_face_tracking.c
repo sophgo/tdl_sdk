@@ -1,7 +1,7 @@
 /**
- * This is a sample code for person tracking.
+ * This is a sample code for face tracking.
  */
-#define LOG_TAG "SampleObjectCounting"
+#define LOG_TAG "SampleFaceTracking"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 #include "middleware_utils.h"
@@ -25,9 +25,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define WRITE_RESULT_TO_FILE 1
-#define TARGET_NUM 2
-
 static volatile bool bExit = false;
 
 MUTEXAUTOLOCK_INIT(ResultMutex);
@@ -38,27 +35,33 @@ typedef struct {
 } SAMPLE_AI_VENC_THREAD_ARG_S;
 
 typedef struct {
-  ODInferenceFunc object_detect;
-  CVI_AI_SUPPORTED_MODEL_E enOdModelId;
   cviai_handle_t stAIHandle;
+  bool bTrackingWithFeature;
 } SAMPLE_AI_AI_THREAD_ARG_S;
 
-typedef struct {
-  int classes_id[TARGET_NUM];  // {CVI_AI_DET_TYPE_PERSON, CVI_AI_DET_TYPE_CAR, ...}
-  uint64_t classes_count[TARGET_NUM];
-  uint64_t classes_maxID[TARGET_NUM];
-} obj_counter_t;
-
-static cvai_object_t g_stObjMeta = {0};
+static cvai_face_t g_stFaceMeta = {0};
+static cvai_tracker_t g_stTrackerMeta = {0};
 
 void set_sample_mot_config(cvai_deepsort_config_t *ds_conf) {
-  ds_conf->ktracker_conf.P_beta[2] = 0.01;
-  ds_conf->ktracker_conf.P_beta[6] = 1e-5;
+  ds_conf->ktracker_conf.max_unmatched_num = 10;
+  ds_conf->ktracker_conf.accreditation_threshold = 10;
+  ds_conf->ktracker_conf.P_beta[2] = 0.1;
+  ds_conf->ktracker_conf.P_beta[6] = 2.5e-2;
+  ds_conf->kfilter_conf.Q_beta[2] = 0.1;
+  ds_conf->kfilter_conf.Q_beta[6] = 2.5e-2;
+}
 
-  // ds_conf.kfilter_conf.Q_beta[2] = 0.1;
-  ds_conf->kfilter_conf.Q_beta[2] = 0.01;
-  ds_conf->kfilter_conf.Q_beta[6] = 1e-5;
-  ds_conf->kfilter_conf.R_beta[2] = 0.1;
+cvai_service_brush_t get_random_brush(uint64_t seed, int min) {
+  float scale = (256. - (float)min) / 256.;
+  srand((uint32_t)seed);
+  cvai_service_brush_t brush = {
+      .color.r = (int)((floor(((float)rand() / (RAND_MAX)) * 256.)) * scale) + min,
+      .color.g = (int)((floor(((float)rand() / (RAND_MAX)) * 256.)) * scale) + min,
+      .color.b = (int)((floor(((float)rand() / (RAND_MAX)) * 256.)) * scale) + min,
+      .size = 2,
+  };
+
+  return brush;
 }
 
 void *run_venc(void *args) {
@@ -66,7 +69,18 @@ void *run_venc(void *args) {
   SAMPLE_AI_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_AI_VENC_THREAD_ARG_S *)args;
   VIDEO_FRAME_INFO_S stFrame;
   CVI_S32 s32Ret;
-  cvai_object_t stObjMeta = {0};
+  cvai_face_t stFaceMeta = {0};
+  cvai_tracker_t stTrackerMeta = {0};
+
+  cvai_service_brush_t stGreyBrush = CVI_AI_Service_GetDefaultBrush();
+  stGreyBrush.color.r = 105;
+  stGreyBrush.color.g = 105;
+  stGreyBrush.color.b = 105;
+
+  cvai_service_brush_t stGreenBrush = CVI_AI_Service_GetDefaultBrush();
+  stGreenBrush.color.r = 0;
+  stGreenBrush.color.g = 255;
+  stGreenBrush.color.b = 0;
 
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, 0, &stFrame, 2000);
@@ -77,35 +91,41 @@ void *run_venc(void *args) {
 
     {
       MutexAutoLock(ResultMutex, lock);
-      CVI_AI_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
+      CVI_AI_CopyFaceMeta(&g_stFaceMeta, &stFaceMeta);
+      CVI_AI_CopyTrackerMeta(&g_stTrackerMeta, &stTrackerMeta);
     }
 
-    s32Ret = CVI_AI_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjMeta, &stFrame, false,
-                                           CVI_AI_Service_GetDefaultBrush());
+    // Draw different color for bbox accourding to tracker state.
+    cvai_service_brush_t *brushes = malloc(stFaceMeta.size * sizeof(cvai_service_brush_t));
+    for (uint32_t fid = 0; fid < stFaceMeta.size; fid++) {
+      if (stTrackerMeta.info[fid].state == CVI_TRACKER_NEW) {
+        brushes[fid] = stGreenBrush;
+      } else if (stTrackerMeta.info[fid].state == CVI_TRACKER_UNSTABLE) {
+        brushes[fid] = stGreyBrush;
+      } else {  // CVI_TRACKER_STABLE
+        brushes[fid] = get_random_brush(stFaceMeta.info[fid].unique_id, 64);
+      }
+    }
+
+    // Fill name with unique id.
+    for (uint32_t fid = 0; fid < stFaceMeta.size; fid++) {
+      snprintf(stFaceMeta.info[fid].name, sizeof(stFaceMeta.info[fid].name), "UID: %" PRIu64 "",
+               stFaceMeta.info[fid].unique_id);
+    }
+
+    s32Ret = CVI_AI_Service_FaceDrawRect2(pstArgs->stServiceHandle, &stFaceMeta, &stFrame, true,
+                                          brushes);
     if (s32Ret != CVIAI_SUCCESS) {
       CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
       AI_LOGE("Draw fame fail!, ret=%x\n", s32Ret);
       goto error;
     }
 
-    // draw unique id
-    for (uint32_t i = 0; i < stObjMeta.size; i++) {
-      char *obj_ID = calloc(64, sizeof(char));
-      sprintf(obj_ID, "%" PRIu64 "", stObjMeta.info[i].unique_id);
-      CVI_AI_Service_ObjectWriteText(obj_ID, stObjMeta.info[i].bbox.x1, stObjMeta.info[i].bbox.y1,
-                                     &stFrame, -1, -1, -1);
-      free(obj_ID);
-    }
-
     s32Ret = SAMPLE_AI_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
-    if (s32Ret != CVI_SUCCESS) {
-      CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
-      AI_LOGE("Send Output Frame NG, ret=%x\n", s32Ret);
-      goto error;
-    }
-
   error:
-    CVI_AI_Free(&stObjMeta);
+    free(brushes);
+    CVI_AI_Free(&stFaceMeta);
+    CVI_AI_Free(&stTrackerMeta);
     CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
@@ -120,7 +140,7 @@ void *run_ai_thread(void *args) {
   SAMPLE_AI_AI_THREAD_ARG_S *pstAIArgs = (SAMPLE_AI_AI_THREAD_ARG_S *)args;
 
   VIDEO_FRAME_INFO_S stFrame;
-  cvai_object_t stObjMeta = {0};
+  cvai_face_t stFaceMeta = {0};
   cvai_tracker_t stTrackerMeta = {0};
 
   CVI_S32 s32Ret;
@@ -133,43 +153,34 @@ void *run_ai_thread(void *args) {
     }
 
     //*******************************************
-    // Step 1: Object detect inference.
-    s32Ret = pstAIArgs->object_detect(pstAIArgs->stAIHandle, &stFrame, &stObjMeta);
-    if (s32Ret != CVIAI_SUCCESS) {
-      AI_LOGE("inference failed!, ret=%x\n", s32Ret);
-      goto inf_error;
-    }
+    // Step 1: Face detection.
+    GOTO_IF_FAILED(CVI_AI_RetinaFace(pstAIArgs->stAIHandle, &stFrame, &stFaceMeta), s32Ret,
+                   inf_error);
 
-    // Step 2: Extract ReID feature for all person bbox.
-    for (uint32_t i = 0; i < stObjMeta.size; i++) {
-      if (stObjMeta.info[i].classes == CVI_AI_DET_TYPE_PERSON) {
-        s32Ret = CVI_AI_OSNetOne(pstAIArgs->stAIHandle, &stFrame, &stObjMeta, (int)i);
-        if (s32Ret != CVIAI_SUCCESS) {
-          AI_LOGE("inference failed!, ret=%x\n", s32Ret);
-          goto inf_error;
-        }
-      }
+    if (pstAIArgs->bTrackingWithFeature) {
+      // Step 2: Extract feature for all face in stFaceMeta.
+      GOTO_IF_FAILED(CVI_AI_FaceRecognition(pstAIArgs->stAIHandle, &stFrame, &stFaceMeta), s32Ret,
+                     inf_error);
     }
 
     // Step 3: Multi-Object Tracking inference.
-    s32Ret = CVI_AI_DeepSORT_Obj(pstAIArgs->stAIHandle, &stObjMeta, &stTrackerMeta, false);
-    if (s32Ret != CVIAI_SUCCESS) {
-      AI_LOGE("inference failed!, ret=%x\n", s32Ret);
-      goto inf_error;
-    }
+    GOTO_IF_FAILED(CVI_AI_DeepSORT_Face(pstAIArgs->stAIHandle, &stFaceMeta, &stTrackerMeta,
+                                        pstAIArgs->bTrackingWithFeature),
+                   s32Ret, inf_error);
 
-    AI_LOGI("person detect: %d\n", stObjMeta.size);
+    AI_LOGI("face detected: %d\n", stFaceMeta.size);
     //*******************************************
 
     {
       MutexAutoLock(ResultMutex, lock);
-      CVI_AI_CopyObjectMeta(&stObjMeta, &g_stObjMeta);
+      CVI_AI_CopyFaceMeta(&stFaceMeta, &g_stFaceMeta);
+      CVI_AI_CopyTrackerMeta(&stTrackerMeta, &g_stTrackerMeta);
     }
 
   inf_error:
     CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
   get_frame_failed:
-    CVI_AI_Free(&stObjMeta);
+    CVI_AI_Free(&stFaceMeta);
     CVI_AI_Free(&stTrackerMeta);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
@@ -190,25 +201,12 @@ static void SampleHandleSig(CVI_S32 signo) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
+  if (argc != 3 && argc != 2) {
     printf(
-        "\nUsage: %s DET_MODEL_NAME DET_MODEL_PATH REID_MODEL_PATH\n\n"
-        "\tDET_MODEL_NAME, person detection model name, should be one of "
-        "{mobiledetv2-person-vehicle, "
-        "mobiledetv2-person-pets, "
-        "mobiledetv2-coco80, "
-        "mobiledetv2-pedestrian, "
-        "yolov3}\n"
-        "\tDET_MODEL_PATH, path to person detection model\n"
-        "\tREID_MODEL_PATH, path to ReID model\n",
+        "\nUsage: %s DET_MODEL_PATH [FR_MODEL_PATH]\n\n"
+        "\tDET_MODEL_PATH, path to retinaface model\n"
+        "\tFR_MODEL_PATH (optinal), path to face recognition model.\n",
         argv[0]);
-    return -1;
-  }
-
-  ODInferenceFunc inference_func;
-  CVI_AI_SUPPORTED_MODEL_E enOdModelId;
-  if (get_pd_model_info(argv[1], &enOdModelId, &inference_func) == CVIAI_FAILURE) {
-    AI_LOGE("unsupported model: %s\n", argv[1]);
     return -1;
   }
 
@@ -321,12 +319,16 @@ int main(int argc, char *argv[]) {
   GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&stServiceHandle, stAIHandle), s32Ret,
                  create_service_fail);
 
-  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, enOdModelId, argv[2]), s32Ret, setup_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]), s32Ret,
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]), s32Ret,
                  setup_ai_fail);
 
-  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(stAIHandle, enOdModelId, 1, CVI_AI_DET_TYPE_PERSON),
-                 s32Ret, setup_ai_fail);
+  bool bTrackingWithFeature = false;
+  if (argc == 3) {
+    // Tracking with face recognition features
+    GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[2]),
+                   s32Ret, setup_ai_fail);
+    bTrackingWithFeature = true;
+  }
 
   // Init DeepSORT
   CVI_AI_DeepSORT_Init(stAIHandle, true);
@@ -341,11 +343,8 @@ int main(int argc, char *argv[]) {
       .stServiceHandle = stServiceHandle,
   };
 
-  SAMPLE_AI_AI_THREAD_ARG_S ai_args = {
-      .enOdModelId = enOdModelId,
-      .object_detect = inference_func,
-      .stAIHandle = stAIHandle,
-  };
+  SAMPLE_AI_AI_THREAD_ARG_S ai_args = {.stAIHandle = stAIHandle,
+                                       .bTrackingWithFeature = bTrackingWithFeature};
 
   pthread_create(&stVencThread, NULL, run_venc, &venc_args);
   pthread_create(&stAIThread, NULL, run_ai_thread, &ai_args);

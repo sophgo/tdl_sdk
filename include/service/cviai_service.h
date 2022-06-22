@@ -190,7 +190,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(
     VIDEO_FRAME_INFO_S *outFrame);
 
 /**
- * @brief Draw rect to frame with given face meta.
+ * @brief Draw rect to frame with given face meta with a global brush.
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
@@ -204,11 +204,26 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle,
                                                const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
                                                const bool drawText, cvai_service_brush_t brush);
 
+/**
+ * @brief Draw rect to frame with given face meta with individual brushes.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param meta meta structure.
+ * @param frame In/ out YUV frame.
+ * @param drawText Choose to draw name of the face.
+ * @param brushes brushes for drawing. The count of brushes must be same as meta->size.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDrawRect2(cviai_service_handle_t handle,
+                                                const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                                const bool drawText, cvai_service_brush_t *brushes);
+
 DLL_EXPORT CVI_S32 CVI_AI_Service_FaceDraw5Landmark(const cvai_face_t *meta,
                                                     VIDEO_FRAME_INFO_S *frame);
 
 /**
- * @brief Draw rect to frame with given object meta.
+ * @brief Draw rect to frame with given object meta with a global brush.
  * @ingroup core_cviaiservice
  *
  * @param handle A service handle.
@@ -222,6 +237,22 @@ DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle,
                                                  const cvai_object_t *meta,
                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText,
                                                  cvai_service_brush_t brush);
+
+/**
+ * @brief Draw rect to frame with given object meta with individual brushes.
+ * @ingroup core_cviaiservice
+ *
+ * @param handle A service handle.
+ * @param meta meta structure.
+ * @param frame In/ out YUV frame.
+ * @param drawText Choose to draw name of the object.
+ * @param brushes brushes for drawing. The count of brushes must be same as meta->size.
+ * @return CVI_S32 Return CVIAI_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Service_ObjectDrawRect2(cviai_service_handle_t handle,
+                                                  const cvai_object_t *meta,
+                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText,
+                                                  cvai_service_brush_t *brushes);
 
 /**
  * @brief Draw rect to frame with given dms meta.

@@ -24,8 +24,8 @@
 
 static volatile bool bExit = false;
 
-static cvai_object_t g_stObjNoIntrusion = {0};
-static cvai_object_t g_stObjIntrusion = {0};
+static cvai_object_t g_stObjMeta = {0};
+static bool *g_abIntrusion = NULL;
 
 MUTEXAUTOLOCK_INIT(ResultMutex);
 
@@ -54,8 +54,8 @@ void *run_venc(void *args) {
   SAMPLE_AI_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_AI_VENC_THREAD_ARG_S *)args;
   VIDEO_FRAME_INFO_S stFrame;
   CVI_S32 s32Ret;
-  cvai_object_t stObjIntrusion = {0};
-  cvai_object_t stObjNoIntrusion = {0};
+  cvai_object_t stObjMeta = {0};
+  bool *abIntrusion = NULL;
 
   cvai_service_brush_t stRedBrush = CVI_AI_Service_GetDefaultBrush();
   stRedBrush.color.r = 255;
@@ -87,8 +87,9 @@ void *run_venc(void *args) {
     {
       // Get detection result from global
       MutexAutoLock(ResultMutex, lock);
-      CVI_AI_CopyObjectMeta(&g_stObjIntrusion, &stObjIntrusion);
-      CVI_AI_CopyObjectMeta(&g_stObjNoIntrusion, &stObjNoIntrusion);
+      CVI_AI_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
+      abIntrusion = (bool *)malloc(stObjMeta.size * sizeof(bool));
+      memcpy(abIntrusion, g_abIntrusion, stObjMeta.size * sizeof(bool));
     }
 
     // Draw pre-defined regions
@@ -97,20 +98,23 @@ void *run_venc(void *args) {
                                  stRegionBrush);
     }
 
-    // Draw intrusion and non-intrusion result
-    GOTO_IF_FAILED(CVI_AI_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjNoIntrusion,
-                                                 &stFrame, false, CVI_AI_Service_GetDefaultBrush()),
-                   s32Ret, error);
+    cvai_service_brush_t *brushes = malloc(stObjMeta.size * sizeof(cvai_service_brush_t));
+    for (uint32_t oid = 0; oid < stObjMeta.size; oid++) {
+      // Draw red bbox if intrusion with predefined polygons. Otherwise, draw with default color.
+      brushes[oid] = abIntrusion[oid] ? stRedBrush : CVI_AI_Service_GetDefaultBrush();
+    }
 
-    GOTO_IF_FAILED(CVI_AI_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjIntrusion,
-                                                 &stFrame, false, stRedBrush),
+    // Draw intrusion and non-intrusion result
+    GOTO_IF_FAILED(CVI_AI_Service_ObjectDrawRect2(pstArgs->stServiceHandle, &stObjMeta, &stFrame,
+                                                  false, brushes),
                    s32Ret, error);
 
     // Encode frame and send to RTSP
     SAMPLE_AI_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
   error:
-    CVI_AI_Free(&stObjIntrusion);
-    CVI_AI_Free(&stObjNoIntrusion);
+    free(brushes);
+    free(abIntrusion);
+    CVI_AI_Free(&stObjMeta);
     CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
@@ -120,47 +124,6 @@ void *run_venc(void *args) {
   free(pastConvexPts);
   AI_LOGI("Exit encoder thread\n");
   pthread_exit(NULL);
-}
-
-void seperate_bbox(cvai_object_t *pstObjMeta, cvai_object_t *pstObjNoIntrusion,
-                   cvai_object_t *pstObjIntrusion, bool *aIntrusion, uint32_t u32IntrusionCount) {
-  pstObjIntrusion->height = pstObjMeta->height;
-  pstObjIntrusion->rescale_type = pstObjMeta->rescale_type;
-  pstObjIntrusion->width = pstObjMeta->width;
-  pstObjIntrusion->size = u32IntrusionCount;
-  if (u32IntrusionCount > 0) {
-    pstObjIntrusion->info =
-        (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * u32IntrusionCount);
-    memset(pstObjIntrusion->info, 0, sizeof(cvai_object_info_t) * u32IntrusionCount);
-  } else {
-    pstObjIntrusion->info = NULL;
-  }
-
-  pstObjNoIntrusion->height = pstObjMeta->height;
-  pstObjNoIntrusion->rescale_type = pstObjMeta->rescale_type;
-  pstObjNoIntrusion->width = pstObjMeta->width;
-  pstObjNoIntrusion->size = pstObjMeta->size - u32IntrusionCount;
-  if (pstObjNoIntrusion->size > 0) {
-    pstObjNoIntrusion->info =
-        (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * pstObjNoIntrusion->size);
-    memset(pstObjNoIntrusion->info, 0, sizeof(cvai_object_info_t) * pstObjNoIntrusion->size);
-  } else {
-    pstObjNoIntrusion->info = NULL;
-  }
-
-  uint32_t u32IndexIntrusion = 0;
-  uint32_t u32IndexNoIntrusion = 0;
-  for (uint32_t i = 0; i < pstObjMeta->size; i++) {
-    cvai_object_info_t *pstInfo;
-    if (aIntrusion[i]) {
-      pstInfo = &pstObjIntrusion->info[u32IndexIntrusion];
-      u32IndexIntrusion++;
-    } else {
-      pstInfo = &pstObjNoIntrusion->info[u32IndexNoIntrusion];
-      u32IndexNoIntrusion++;
-    }
-    CVI_AI_CopyInfo(&pstObjMeta->info[i], pstInfo);
-  }
 }
 
 void setup_regions(cviai_service_handle_t *stServiceHandle) {
@@ -209,8 +172,6 @@ void *run_ai_thread(void *args) {
   AI_LOGI("Enter AI thread\n");
   SAMPLE_AI_AI_THREAD_ARG_S *pstAIArgs = (SAMPLE_AI_AI_THREAD_ARG_S *)args;
   VIDEO_FRAME_INFO_S stFrame;
-  cvai_object_t stObjNoIntrusion = {0};
-  cvai_object_t stObjIntrusion = {0};
   cvai_object_t stObjMeta = {0};
 
   CVI_S32 s32Ret;
@@ -243,17 +204,16 @@ void *run_ai_thread(void *args) {
           u32IntrusionCount++;
         }
       }
-
-      // Seperate detections into intrusion and non-intrusion set.
-      seperate_bbox(&stObjMeta, &stObjNoIntrusion, &stObjIntrusion, aIntrusion, u32IntrusionCount);
     }
 
     AI_LOGI("object count: %d\n", stObjMeta.size);
     {
       // Copy object detection results to global.
       MutexAutoLock(ResultMutex, lock);
-      CVI_AI_CopyObjectMeta(&stObjNoIntrusion, &g_stObjNoIntrusion);
-      CVI_AI_CopyObjectMeta(&stObjIntrusion, &g_stObjIntrusion);
+      CVI_AI_CopyObjectMeta(&stObjMeta, &g_stObjMeta);
+      free(g_abIntrusion);
+      g_abIntrusion = (bool *)malloc(stObjMeta.size * sizeof(bool));
+      memcpy(g_abIntrusion, aIntrusion, stObjMeta.size * sizeof(bool));
     }
 
   inter_error:
@@ -262,8 +222,6 @@ void *run_ai_thread(void *args) {
     CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
   get_frame_failed:
     CVI_AI_Free(&stObjMeta);
-    CVI_AI_Free(&stObjIntrusion);
-    CVI_AI_Free(&stObjNoIntrusion);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
     }

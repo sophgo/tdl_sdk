@@ -262,6 +262,19 @@ void CVI_AI_CopyObjectMeta(const cvai_object_t *src, cvai_object_t *dest) {
   }
 }
 
+void CVI_AI_CopyTrackerMeta(const cvai_tracker_t *src, cvai_tracker_t *dst) {
+  if (src->size != dst->size) {
+    CVI_AI_FreeCpp(dst);
+  }
+  dst->size = src->size;
+  if (dst->size != 0) {
+    dst->info = (cvai_tracker_info_t *)malloc(sizeof(cvai_tracker_info_t) * src->size);
+    memcpy(dst->info, src->info, sizeof(cvai_tracker_info_t) * src->size);
+  } else {
+    dst->info = NULL;
+  }
+}
+
 void CVI_AI_CopyImage(const cvai_image_t *src_image, cvai_image_t *dst_image) {
   if (dst_image->pix[0] != NULL) {
     LOGW("There are already data in destination image. (release them ...)");
