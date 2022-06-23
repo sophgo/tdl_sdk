@@ -25,7 +25,7 @@ CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *
                                uint32_t timeout) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   uint32_t vpss_thread;
-  int ret = CVI_AI_AddVpssEngineThread(thread, -1, &vpss_thread, &ctx->vec_vpss_engine);
+  int ret = CVI_AI_AddVpssEngineThread(thread, -1, 0, &vpss_thread, &ctx->vec_vpss_engine);
   if (ret != CVIAI_SUCCESS) {
     return ret;
   }

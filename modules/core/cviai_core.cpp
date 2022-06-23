@@ -74,6 +74,28 @@ static void createIVEHandleIfNeeded(cviai_context_t *ctx) {
   }
 }
 
+static CVI_S32 initVPSSIfNeeded(cviai_context_t *ctx, CVI_AI_SUPPORTED_MODEL_E model_id) {
+  bool skipped;
+  CVI_S32 ret = CVI_AI_GetSkipVpssPreprocess(ctx, model_id, &skipped);
+  if (ret != CVIAI_SUCCESS) {
+    return ret;
+  }
+
+  // Don't create vpss if preprocessing is skipped.
+  if (skipped) {
+    return CVIAI_SUCCESS;
+  }
+
+  uint32_t thread;
+  ret = CVI_AI_GetVpssThread(ctx, model_id, &thread);
+  if (ret == CVIAI_SUCCESS) {
+    if (!ctx->vec_vpss_engine[thread]->isInitialized()) {
+      ret = ctx->vec_vpss_engine[thread]->init();
+    }
+  }
+  return ret;
+}
+
 // Convenience macros for creator
 #define CREATOR(type) CreatorFunc(create_model<type>)
 
@@ -184,14 +206,14 @@ CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle) { return CVI_AI_CreateHandle
 
 CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
                              const CVI_U8 vpssDev) {
-  cviai_context_t *ctx = new cviai_context_t;
-  ctx->ive_handle = NULL;
-  ctx->vec_vpss_engine.push_back(new VpssEngine());
-  if (ctx->vec_vpss_engine[0]->init(vpssGroupId, vpssDev) != CVI_SUCCESS) {
-    LOGC("cviai_handle_t create failed.");
-    removeCtx(ctx);
+  if (vpssGroupId < -1 || vpssGroupId >= VPSS_MAX_GRP_NUM) {
+    LOGE("Invalid Vpss Grp: %d.\n", vpssGroupId);
     return CVIAI_ERR_INIT_VPSS;
   }
+
+  cviai_context_t *ctx = new cviai_context_t;
+  ctx->ive_handle = NULL;
+  ctx->vec_vpss_engine.push_back(new VpssEngine(vpssGroupId, vpssDev));
   const char timestamp[] = __DATE__ " " __TIME__;
   LOGI("cviai_handle_t is created, version %s-%s", CVIAI_TAG, timestamp);
   *handle = ctx;
@@ -311,15 +333,15 @@ CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
 
 CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                              const uint32_t thread) {
-  return CVI_AI_SetVpssThread2(handle, config, thread, -1);
+  return CVI_AI_SetVpssThread2(handle, config, thread, -1, 0);
 }
 
 CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                              const uint32_t thread, const VPSS_GRP vpssGroupId) {
+                              const uint32_t thread, const VPSS_GRP vpssGroupId, const CVI_U8 dev) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Core *instance = getInferenceInstance(config, ctx);
   if (instance != nullptr) {
-    return setVPSSThread(ctx->model_cont[config], ctx->vec_vpss_engine, thread, vpssGroupId);
+    return setVPSSThread(ctx->model_cont[config], ctx->vec_vpss_engine, thread, vpssGroupId, dev);
   } else {
     LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
     return CVIAI_ERR_OPEN_MODEL;
@@ -498,7 +520,11 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
       return CVIAI_ERR_OPEN_MODEL;                                                            \
     }                                                                                         \
     if (obj->isInitialized()) {                                                               \
-      return obj->inference(frame, arg1);                                                     \
+      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                \
+        return CVIAI_ERR_INIT_VPSS;                                                           \
+      } else {                                                                                \
+        return obj->inference(frame, arg1);                                                   \
+      }                                                                                       \
     } else {                                                                                  \
       LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n", \
            CVI_AI_GetModelName(model_index));                                                 \
@@ -517,7 +543,11 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
       return CVIAI_ERR_OPEN_MODEL;                                                            \
     }                                                                                         \
     if (obj->isInitialized()) {                                                               \
-      return obj->inference(frame, arg1, arg2);                                               \
+      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                \
+        return CVIAI_ERR_INIT_VPSS;                                                           \
+      } else {                                                                                \
+        return obj->inference(frame, arg1, arg2);                                             \
+      }                                                                                       \
     } else {                                                                                  \
       LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n", \
            CVI_AI_GetModelName(model_index));                                                 \
@@ -536,7 +566,11 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
       return CVIAI_ERR_OPEN_MODEL;                                                            \
     }                                                                                         \
     if (obj->isInitialized()) {                                                               \
-      return obj->inference(frame1, frame2, arg1);                                            \
+      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                \
+        return CVIAI_ERR_INIT_VPSS;                                                           \
+      } else {                                                                                \
+        return obj->inference(frame1, frame2, arg1);                                          \
+      }                                                                                       \
     } else {                                                                                  \
       LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n", \
            CVI_AI_GetModelName(model_index));                                                 \
@@ -555,7 +589,11 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
       return CVIAI_ERR_OPEN_MODEL;                                                            \
     }                                                                                         \
     if (obj->isInitialized()) {                                                               \
-      return obj->inference(frame1, frame2, arg1, arg2);                                      \
+      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                \
+        return CVIAI_ERR_INIT_VPSS;                                                           \
+      } else {                                                                                \
+        return obj->inference(frame1, frame2, arg1, arg2);                                    \
+      }                                                                                       \
     } else {                                                                                  \
       LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n", \
            CVI_AI_GetModelName(model_index));                                                 \

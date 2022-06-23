@@ -4,11 +4,12 @@
 
 namespace cviai {
 
-VpssEngine::VpssEngine() {}
+VpssEngine::VpssEngine(VPSS_GRP desired_grp_id, CVI_U8 device)
+    : m_desired_grp_id(desired_grp_id), m_dev(device) {}
 
 VpssEngine::~VpssEngine() { stop(); }
 
-int VpssEngine::init(VPSS_GRP grp_id, CVI_U8 device) {
+int VpssEngine::init() {
   if (m_is_vpss_init) {
     LOGW("Vpss already init.\n");
     return CVI_FAILURE;
@@ -29,21 +30,21 @@ int VpssEngine::init(VPSS_GRP grp_id, CVI_U8 device) {
   uint32_t width = 100;
   uint32_t height = 100;
   m_enabled_chn = 1;
-  VPSS_GRP_DEFAULT_HELPER2(&vpss_grp_attr, width, height, VI_PIXEL_FORMAT, device);
+  VPSS_GRP_DEFAULT_HELPER2(&vpss_grp_attr, width, height, VI_PIXEL_FORMAT, m_dev);
   VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr, width, height, PIXEL_FORMAT_RGB_888_PLANAR, true);
 
   /*start vpss*/
   m_grpid = -1;
-  if (grp_id != (VPSS_GRP)-1) {
-    if (CVI_VPSS_CreateGrp(grp_id, &vpss_grp_attr) != CVI_SUCCESS) {
-      LOGE("User assign group id %u failed to create vpss instance.\n", grp_id);
+  if (m_desired_grp_id != (VPSS_GRP)-1) {
+    if (CVI_VPSS_CreateGrp(m_desired_grp_id, &vpss_grp_attr) != CVI_SUCCESS) {
+      LOGE("User assign group id %u failed to create vpss instance.\n", m_desired_grp_id);
       return CVI_FAILURE;
     }
-    m_grpid = grp_id;
+    m_grpid = m_desired_grp_id;
   } else {
     int id = CVI_VPSS_GetAvailableGrp();
     if (CVI_VPSS_CreateGrp(id, &vpss_grp_attr) != CVI_SUCCESS) {
-      LOGE("User assign group id %u failed to create vpss instance.\n", grp_id);
+      LOGE("User assign group id %u failed to create vpss instance.\n", id);
       return CVI_FAILURE;
     }
     m_grpid = id;
@@ -52,6 +53,9 @@ int VpssEngine::init(VPSS_GRP grp_id, CVI_U8 device) {
     LOGE("All vpss grp init failed!\n");
     return CVI_FAILURE;
   }
+
+  LOGI("Create Vpss Group(%d) Dev(%d)\n", m_grpid, m_dev);
+
   s32Ret = CVI_VPSS_ResetGrp(m_grpid);
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", m_grpid, s32Ret);
@@ -79,11 +83,12 @@ int VpssEngine::init(VPSS_GRP grp_id, CVI_U8 device) {
     return CVI_FAILURE;
   }
 
-  m_dev = device;
   memset(&m_crop_attr_reset, 0, sizeof(VPSS_CROP_INFO_S));
   m_is_vpss_init = true;
   return CVI_SUCCESS;
 }
+
+bool VpssEngine::isInitialized() const { return m_is_vpss_init; }
 
 void VpssEngine::attachVBPool(VB_POOL pool_id) { m_vbpool_id = pool_id; }
 
@@ -91,8 +96,8 @@ VB_POOL VpssEngine::getVBPool() const { return m_vbpool_id; }
 
 int VpssEngine::stop() {
   if (!m_is_vpss_init) {
-    LOGE("Vpss is not init yet.\n");
-    return CVI_FAILURE;
+    LOGI("Cannot stop Vpss because it's not initalized yet.\n");
+    return CVI_SUCCESS;
   }
 
   for (uint32_t j = 0; j < m_enabled_chn; j++) {
@@ -119,7 +124,13 @@ int VpssEngine::stop() {
   return CVI_SUCCESS;
 }
 
-VPSS_GRP VpssEngine::getGrpId() { return m_grpid; }
+VPSS_GRP VpssEngine::getGrpId() {
+  if (isInitialized()) {
+    return m_grpid;
+  } else {
+    return m_desired_grp_id;
+  }
+}
 
 int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
                               const VPSS_CROP_INFO_S *grp_crop_attr,

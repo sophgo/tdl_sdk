@@ -55,7 +55,7 @@ CVI_S32 CVI_AI_Custom_SetVpssThread2(cviai_handle_t handle, const uint32_t id,
     LOGE("Exceed id, given %d, total %zu.\n", id, ctx->custom_cont.size());
     return CVIAI_FAILURE;
   }
-  return setVPSSThread(ctx->custom_cont[id], ctx->vec_vpss_engine, thread, vpssGroupId);
+  return setVPSSThread(ctx->custom_cont[id], ctx->vec_vpss_engine, thread, vpssGroupId, 0);
 }
 
 CVI_S32 CVI_AI_Custom_GetVpssThread(cviai_handle_t handle, const uint32_t id, uint32_t *thread) {

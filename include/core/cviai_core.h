@@ -278,17 +278,19 @@ DLL_EXPORT CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_
 /**
  * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
  * to change a thread if the process is not sequential. This function requires manually assigning a
- * vpss group id.
+ * vpss group id and device id.
  *
  * @param handle An AI SDK handle.
  * @param model Supported model id.
  * @param thread The vpss thread index user desired. Note this param will changed if previous index
  * is not used.
  * @param vpssGroupId Assign a vpss group id if a new vpss instance needs to be created.
+ * @param dev Assign Vpss device id to Vpss group
  * @return int Return CVIAI_SUCCESS if successfully changed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
-                                         const uint32_t thread, const VPSS_GRP vpssGroupId);
+                                         const uint32_t thread, const VPSS_GRP vpssGroupId,
+                                         const CVI_U8 dev);
 
 /**
  * @brief Get the set thread index for given supported model.

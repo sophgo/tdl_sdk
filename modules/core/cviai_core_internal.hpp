@@ -56,17 +56,11 @@ CVI_AI_GetVpssEngine(cviai_handle_t handle, uint32_t index) {
 }
 
 inline int __attribute__((always_inline))
-CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId, uint32_t *vpss_thread,
-                           std::vector<cviai::VpssEngine *> *vec_engine) {
+CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId, const CVI_U8 dev,
+                           uint32_t *vpss_thread, std::vector<cviai::VpssEngine *> *vec_engine) {
   *vpss_thread = thread;
   if (thread >= vec_engine->size()) {
-    auto inst = new cviai::VpssEngine();
-    if (inst->init(vpssGroupId) != CVI_SUCCESS) {
-      LOGE("Vpss init failed\n");
-      delete inst;
-      return CVIAI_ERR_INIT_VPSS;
-    }
-
+    auto inst = new cviai::VpssEngine(vpssGroupId, dev);
     vec_engine->push_back(inst);
     if (thread != vec_engine->size() - 1) {
       LOGW(
@@ -83,9 +77,9 @@ CVI_AI_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId, ui
 
 inline int __attribute__((always_inline))
 setVPSSThread(cviai_model_t &model, std::vector<cviai::VpssEngine *> &v_engine,
-              const uint32_t thread, const VPSS_GRP vpssGroupId) {
+              const uint32_t thread, const VPSS_GRP vpssGroupId, const CVI_U8 dev) {
   uint32_t vpss_thread;
-  int ret = CVI_AI_AddVpssEngineThread(thread, vpssGroupId, &vpss_thread, &v_engine);
+  int ret = CVI_AI_AddVpssEngineThread(thread, vpssGroupId, dev, &vpss_thread, &v_engine);
   if (ret != CVIAI_SUCCESS) {
     return ret;
   }

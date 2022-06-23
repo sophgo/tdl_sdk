@@ -6,9 +6,9 @@ namespace cviai {
 
 class __attribute__((visibility("default"))) VpssEngine {
  public:
-  VpssEngine();
+  VpssEngine(VPSS_GRP desired_grp_id = -1, CVI_U8 device = 0);
   ~VpssEngine();
-  int init(VPSS_GRP grp_id = (VPSS_GRP)-1, CVI_U8 device = 0);
+  int init();
   int stop();
   VPSS_GRP getGrpId();
   int sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
@@ -30,6 +30,7 @@ class __attribute__((visibility("default"))) VpssEngine {
 
   void attachVBPool(VB_POOL pool_id);
   VB_POOL getVBPool() const;
+  bool isInitialized() const;
 
  private:
   inline int sendFrameBase(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *grp_crop_attr,
@@ -38,6 +39,7 @@ class __attribute__((visibility("default"))) VpssEngine {
 
   bool m_is_vpss_init = false;
   VPSS_GRP m_grpid = -1;
+  VPSS_GRP m_desired_grp_id;
   uint32_t m_enabled_chn = -1;
   VB_POOL m_vbpool_id = VB_INVALID_POOLID;
   uint32_t m_available_max_chn = VPSS_MAX_CHN_NUM;
