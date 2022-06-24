@@ -96,8 +96,8 @@ if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
 
-buildninstall(NAME sample_read_mot INC ${SAMPLE_INC} SRCS utils/od.c sample_mot_utils DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME visual_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai cviai_app ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
+buildninstall(NAME sample_read_mot INC ${SAMPLE_INC} SRCS utils/od.c sample_mot_utils.c DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME visual_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils.c DEPS cviai cviai_app ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 
 buildninstallcpp(NAME mot_dump_data INC ${SAMPLE_INC}
                  SRCS utils/od.c utils/mot_base.cpp utils/mot_evaluation.cpp 

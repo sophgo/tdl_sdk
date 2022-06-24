@@ -80,38 +80,38 @@ set(SAMPLE_LIBS
 )
 
 set(UnitTests
-  reg_daily_feature_matching
-  reg_daily_fq
-  reg_daily_mobiledet
-  reg_daily_md
-  reg_daily_fr
-  reg_daily_mask_classification
-  reg_daily_lpd
-  reg_daily_lpr
-  reg_daily_mot
-  reg_daily_reid
-  reg_daily_thermal_fd
-  reg_daily_thermal_person_detection
-  reg_daily_core
-  reg_daily_liveness
-  reg_daily_alphapose
-  reg_daily_fall
-  reg_daily_retinaface
-  reg_daily_retinafaceIR
-  reg_daily_retinaface_hardhat
-  reg_daily_es_classification
-  reg_daily_eye_classification
-  reg_daily_yawn_classification
-  reg_daily_fl
-  reg_daily_soundcmd
-  reg_daily_incarod
-  reg_daily_td
+  reg_daily_feature_matching.cpp
+  reg_daily_fq.cpp
+  reg_daily_mobiledet.cpp
+  reg_daily_md.cpp
+  reg_daily_fr.cpp
+  reg_daily_mask_classification.cpp
+  reg_daily_lpd.cpp
+  reg_daily_lpr.cpp
+  reg_daily_mot.cpp
+  reg_daily_reid.cpp
+  reg_daily_thermal_fd.cpp
+  reg_daily_thermal_person_detection.cpp
+  reg_daily_core.cpp
+  reg_daily_liveness.cpp
+  reg_daily_alphapose.cpp
+  reg_daily_fall.cpp
+  reg_daily_retinaface.cpp
+  reg_daily_retinafaceIR.cpp
+  reg_daily_retinaface_hardhat.cpp
+  reg_daily_es_classification.cpp
+  reg_daily_eye_classification.cpp
+  reg_daily_yawn_classification.cpp
+  reg_daily_fl.cpp
+  reg_daily_soundcmd.cpp
+  reg_daily_incarod.cpp
+  reg_daily_td.cpp
 )
 
 set(UnitTest_SRCS
-  cviai_test
-  raii
-  regression_utils
+  cviai_test.cpp
+  raii.cpp
+  regression_utils.cpp
   ${UnitTests}
 )
 
@@ -138,13 +138,13 @@ buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cviai  cviai_ev
 buildninstall(NAME reg_face_quality INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_lfw INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_wider_face INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_mobiledetv2 INC ${REG_INCLUDES} SRCS od_utils DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_mobiledetv2 INC ${REG_INCLUDES} SRCS od_utils.c DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_yolov3 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_thermal INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} SRCS od_utils DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} SRCS od_utils.c DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})

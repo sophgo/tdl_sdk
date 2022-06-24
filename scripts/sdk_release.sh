@@ -16,12 +16,23 @@ if [ -d "${TMP_WORKING_DIR}" ]; then
     rm -rf $TMP_WORKING_DIR
 fi
 
+echo "Creating tmp working directory."
 mkdir -p $TMP_WORKING_DIR/build_sdk
 pushd $TMP_WORKING_DIR/build_sdk
-wget -c ftp://swftp:cvitek@10.18.65.11/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
-tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
-CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
-echo "Creating tmp working directory."
+
+# Check cmake version
+CMAKE_VERSION="$(cmake --version | grep 'cmake version')"
+CMAKE_REQUIRED_VERSION="3.18.4"
+echo "Checking cmake..."
+if [ "$(printf '%s\n' "$CMAKE_REQUIRED_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRED_VERSION" ]; then
+    echo "Current cmake version is ${CMAKE_VERSION}, satisfy the required version ${CMAKE_REQUIRED_VERSION}"
+    CMAKE_BIN=$(which cmake)
+else
+    echo "Cmake minimum required version is ${CMAKE_REQUIRED_VERSION}, trying to download from ftp."
+    wget -c ftp://swftp:cvitek@10.18.65.11/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
+    tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
+    CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
+fi
 
 if [[ "$SDK_VER" == "uclibc" ]]; then
     TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-uclibc-linux.cmake
