@@ -21,7 +21,7 @@ mkdir -p $TMP_WORKING_DIR/build_sdk
 pushd $TMP_WORKING_DIR/build_sdk
 
 # Check cmake version
-CMAKE_VERSION="$(cmake --version | grep 'cmake version' | sed 's/cmake version /g')"
+CMAKE_VERSION="$(cmake --version | grep 'cmake version' | sed 's/cmake version //g')"
 CMAKE_REQUIRED_VERSION="3.18.4"
 echo "Checking cmake..."
 if [ "$(printf '%s\n' "$CMAKE_REQUIRED_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRED_VERSION" ]; then
