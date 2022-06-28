@@ -29,10 +29,10 @@
 
 static bool IS_SUPPORTED_FORMAT(VIDEO_FRAME_INFO_S *frame) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21) {
-    LOGE("Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d].\n",
-         frame->stVFrame.enPixelFormat, PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21);
+    LOGE("Pixel format [%d] is not supported.\n", frame->stVFrame.enPixelFormat);
     return false;
   }
   return true;

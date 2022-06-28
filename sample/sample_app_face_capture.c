@@ -448,7 +448,11 @@ int main(int argc, char *argv[]) {
     int alive_face_num = COUNT_ALIVE(app_handle->face_cpt_info);
     printf("ALIVE Faces: %d\n", alive_face_num);
 
-    CVI_AI_APP_FaceCapture_Run(app_handle, &stfdFrame);
+    ret = CVI_AI_APP_FaceCapture_Run(app_handle, &stfdFrame);
+    if (ret != CVIAI_SUCCESS) {
+      printf("CVI_AI_APP_FaceCapture_Run failed with %#x\n", ret);
+      break;
+    }
 
     {
       SMT_MutexAutoLock(VOMutex, lock);

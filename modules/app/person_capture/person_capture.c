@@ -488,13 +488,10 @@ static CVI_S32 capture_target(person_capture_t *person_cpt_info, VIDEO_FRAME_INF
                               cvai_object_t *obj_meta) {
   LOGI("[APP::PersonCapture] Capture Target\n");
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
-    LOGE(
-        "Pixel format [%d] not match PIXEL_FORMAT_RGB_888 [%d], PIXEL_FORMAT_NV21 [%d], "
-        "PIXEL_FORMAT_YUV_PLANAR_420 [%d].\n",
-        frame->stVFrame.enPixelFormat, PIXEL_FORMAT_RGB_888, PIXEL_FORMAT_NV21,
-        PIXEL_FORMAT_YUV_PLANAR_420);
+    LOGE("Pixel format [%d] is not supported.\n", frame->stVFrame.enPixelFormat);
     return CVIAI_ERR_INVALID_ARGS;
   }
 
