@@ -15,6 +15,7 @@
 #define NUM_CLASSES 2
 #define NMS_THRESH 0.55
 #define NAME_OUTPUT "output_Transpose_dequant"
+#define FACE_POINTS_SIZE 5
 
 namespace cviai {
 
@@ -47,7 +48,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
     const int grid1 = grid_strides[anchor_idx].grid1;
     const int stride = grid_strides[anchor_idx].stride;
 
-    const int basic_pos = anchor_idx * (NUM_CLASSES + 5);
+    const int basic_pos = anchor_idx * (NUM_CLASSES + 15);
 
     // yolox/models/yolo_head.py decode logic
     //  outputs[..., :2] = (outputs[..., :2] + grids) * strides
@@ -67,12 +68,22 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
     float box_prob = std::max(no_mask_score, mask_score);
     if (box_prob > prob_threshold) {
       cvai_face_info_t face;
+
+      memset(&face, 0, sizeof(face));
+      face.pts.size = FACE_POINTS_SIZE;
+      face.pts.x = (float *)malloc(sizeof(float) * face.pts.size);
+      face.pts.y = (float *)malloc(sizeof(float) * face.pts.size);
+
       face.bbox.x1 = x0;
       face.bbox.y1 = y0;
       face.bbox.x2 = x0 + w;
       face.bbox.y2 = y0 + h;
       face.bbox.score = box_prob;
       face.mask_score = mask_score;
+      for (size_t k = 0; k < face.pts.size; k++) {
+        face.pts.x[k] = (feat_ptr[basic_pos + 2 * k + 7] + grid0) * stride;
+        face.pts.y[k] = (feat_ptr[basic_pos + 2 * k + 8] + grid1) * stride;
+      }
       faces.push_back(face);
     }  // class loop
   }    // point anchor loop
@@ -141,6 +152,7 @@ void RetinafaceYolox::outputParser(const int image_width, const int image_height
   face_meta->rescale_type = m_vpss_config[0].rescale_type;
 
   memset(face_meta->info, 0, sizeof(cvai_face_info_t) * face_meta->size);
+  CVI_AI_MemAllocInit(vec_face_nms.size(), FACE_POINTS_SIZE, face_meta);
   for (uint32_t i = 0; i < face_meta->size; ++i) {
     face_meta->info[i].bbox.x1 = vec_face_nms[i].bbox.x1;
     face_meta->info[i].bbox.y1 = vec_face_nms[i].bbox.y1;
@@ -148,15 +160,32 @@ void RetinafaceYolox::outputParser(const int image_width, const int image_height
     face_meta->info[i].bbox.y2 = vec_face_nms[i].bbox.y2;
     face_meta->info[i].bbox.score = vec_face_nms[i].bbox.score;
     face_meta->info[i].mask_score = vec_face_nms[i].mask_score;
+    for (int j = 0; j < FACE_POINTS_SIZE; ++j) {
+      face_meta->info[i].pts.x[j] = vec_face_nms[i].pts.x[j];
+      face_meta->info[i].pts.y[j] = vec_face_nms[i].pts.y[j];
+    }
   }
   if (!hasSkippedVpssPreprocess()) {
-    for (uint32_t i = 0; i < face_meta->size; ++i) {
-      face_meta->info[i].bbox =
-          box_rescale(frame_width, frame_height, face_meta->width, face_meta->height,
-                      face_meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
-    }
+    // Recover coordinate if internal vpss engine is used.
     face_meta->width = frame_width;
     face_meta->height = frame_height;
+    face_meta->rescale_type = m_vpss_config[0].rescale_type;
+    for (uint32_t i = 0; i < face_meta->size; ++i) {
+      clip_boxes(image_width, image_height, vec_face_nms[i].bbox);
+      cvai_face_info_t info =
+          info_rescale_c(image_width, image_height, frame_width, frame_height, vec_face_nms[i]);
+      face_meta->info[i].bbox.x1 = info.bbox.x1;
+      face_meta->info[i].bbox.x2 = info.bbox.x2;
+      face_meta->info[i].bbox.y1 = info.bbox.y1;
+      face_meta->info[i].bbox.y2 = info.bbox.y2;
+      face_meta->info[i].bbox.score = info.bbox.score;
+      face_meta->info[i].hardhat_score = info.hardhat_score;
+      for (int j = 0; j < FACE_POINTS_SIZE; ++j) {
+        face_meta->info[i].pts.x[j] = info.pts.x[j];
+        face_meta->info[i].pts.y[j] = info.pts.y[j];
+      }
+      CVI_AI_FreeCpp(&info);
+    }
   }
 }
 

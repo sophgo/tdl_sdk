@@ -66,6 +66,13 @@ void *run_venc(void *args) {
       goto error;
     }
 
+    s32Ret = CVI_AI_Service_FaceDraw5Landmark(&stFaceMeta, &stFrame);
+    if (s32Ret != CVIAI_SUCCESS) {
+      CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
+      AI_LOGE("Draw 5 landmark fail!, ret=%x\n", s32Ret);
+      goto error;
+    }
+
     s32Ret = SAMPLE_AI_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
     if (s32Ret != CVI_SUCCESS) {
       CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
