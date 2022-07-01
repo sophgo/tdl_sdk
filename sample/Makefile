@@ -94,7 +94,7 @@ endif
 
 # AISDK stuffs
 #####################################################
-AISDK_ROOT_PATH ?= ..
+AISDK_ROOT_PATH ?= $(abspath ..)
 AISDK_LIB_PATH = $(AISDK_ROOT_PATH)/lib
 AISDK_INC_PATH = $(AISDK_ROOT_PATH)/include/cviai
 #####################################################
@@ -130,14 +130,7 @@ OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
 OPENCV_LIBS = -lopencv_core -lopencv_imgproc
 endif
 
-# 3rd party
-#####################################################
-THIRD_PARTY_PATH = $(PWD)/3rd_party
-STB_URL = ssh://10.240.0.84:29418/stb
-STB_PATH = $(THIRD_PARTY_PATH)/stb
-THIRD_PARTY_INC_FLAGS = -I$(STB_PATH)
-
-CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -fdiagnostics-color=always -s 
+CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s 
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
@@ -224,7 +217,8 @@ else
 CFLAGS += -I$(CVI_TRACER_INC_PATH)
 endif
 
-CFLAGS += $(THIRD_PARTY_INC_FLAGS)
+# stb
+CFLAGS += -I$(AISDK_ROOT_PATH)/include/stb
 
 ifneq (,$(findstring middleware/v2,$(MW_PATH)))
     CFLAGS += -D_MIDDLEWARE_V2_
@@ -253,11 +247,8 @@ install:
 	mkdir -p ../tmp_install/bin
 	cp $(TARGETS) ../tmp_install/bin
 
-$(PWD)/%.o: $(PWD)/%.c | $(THIRD_PARTY_PATH)
+$(PWD)/%.o: $(PWD)/%.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<
-
-$(THIRD_PARTY_PATH):
-	git clone	$(STB_URL) $(STB_PATH)
 
 sample_aud_%: $(PWD)/sample_aud_%.o $(PWD)/sample_utils.o
 	$(CC) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS)  -o $@ $^

@@ -117,14 +117,13 @@ make clean || exit 1
 echo "done"
 popd
 
-# skip building samples with Makefile temporarily, because cannot find correct linker here.
-if [[ "$SYSTEM_PROCESSOR" != "RISCV" ]]; then
-    pushd ${AI_SDK_INSTALL_PATH}/sample
-    make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
-    make install || exit 1
-    make clean || exit 1
-    echo "done"
-    popd
-fi
+
+pushd ${AI_SDK_INSTALL_PATH}/sample
+make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+make install || exit 1
+make clean || exit 1
+echo "done"
+popd
+
 
 rm -rf ${AI_SDK_INSTALL_PATH}/tmp_install

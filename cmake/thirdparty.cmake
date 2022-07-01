@@ -53,4 +53,15 @@ if(NOT stb_POPULATED)
   FetchContent_Populate(stb)
 endif()
 include_directories(${stb_SOURCE_DIR})
+
+install(DIRECTORY  ${stb_SOURCE_DIR}/ DESTINATION include/stb
+    FILES_MATCHING PATTERN "*.h"
+    PATTERN ".git" EXCLUDE
+    PATTERN ".github" EXCLUDE
+    PATTERN "data" EXCLUDE
+    PATTERN "deprecated" EXCLUDE
+    PATTERN "docs" EXCLUDE
+    PATTERN "tests" EXCLUDE
+    PATTERN "tools" EXCLUDE)
+
 message("Content downloaded to ${stb_SOURCE_DIR}")
