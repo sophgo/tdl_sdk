@@ -19,7 +19,6 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 
-// #define ENABLE_STB_IMAGE_WRITE
 #define OUTPUT_BUFFER_SIZE 10
 #define MODE_DEFINITION 0
 

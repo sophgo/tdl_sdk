@@ -77,10 +77,15 @@ CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info, uint32_t buffer_size) 
 }
 
 CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_cpt_info,
-                                const char *fd_model_path, const char *fr_model_path,
-                                const char *fq_model_path) {
+                                int fd_model_id, const char *fd_model_path,
+                                const char *fr_model_path, const char *fq_model_path) {
+  if (fd_model_id != CVI_AI_SUPPORTED_MODEL_RETINAFACE &&
+      fd_model_id != CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION) {
+    LOGE("invalid face detection model id %d", fd_model_id);
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = CVIAI_SUCCESS;
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_model_path);
+  ret |= CVI_AI_OpenModel(ai_handle, fd_model_id, fd_model_path);
   if (fr_model_path != NULL) {
     ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
   }
@@ -88,6 +93,10 @@ CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_c
     ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fq_model_path);
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+
+  face_cpt_info->fd_inference = (fd_model_id == CVI_AI_SUPPORTED_MODEL_RETINAFACE)
+                                    ? CVI_AI_RetinaFace
+                                    : CVI_AI_FaceMaskDetection;
 
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
@@ -169,7 +178,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   /* set output signal to 0. */
   memset(face_cpt_info->_output, 0, sizeof(bool) * face_cpt_info->size);
 
-  if (CVIAI_SUCCESS != CVI_AI_RetinaFace(ai_handle, frame, &face_cpt_info->last_faces)) {
+  if (CVIAI_SUCCESS != face_cpt_info->fd_inference(ai_handle, frame, &face_cpt_info->last_faces)) {
     return CVIAI_FAILURE;
   }
   if (face_cpt_info->do_FR) {

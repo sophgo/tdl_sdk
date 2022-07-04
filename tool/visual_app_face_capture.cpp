@@ -60,9 +60,10 @@ static void SampleHandleSig(CVI_S32 signo) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 9) {
+  if (argc != 10) {
     printf(
-        "Usage: %s <face_detection_model_path>\n"
+        "Usage: %s fd model type, 0: normal, 1: mask face\n"
+        "          <face_detection_model_path>\n"
         "          <face_recognition_model_path>\n"
         "          <face_quality_model_path>\n"
         "          <config_path>\n"
@@ -78,15 +79,25 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  int buffer_size = atoi(argv[6]);
+  int fd_model_type = atoi(argv[1]);
+  const char *fd_model_path = argv[2];
+  const char *fr_model_path = argv[3];
+  const char *fq_model_path = argv[4];
+  const char *config_path = argv[5];
+  const char *mode_id = argv[6];
+  int buffer_size = atoi(argv[7]);
+  float det_threshold = atof(argv[8]);
+  int voType = atoi(argv[9]);
+
+  CVI_AI_SUPPORTED_MODEL_E fd_model_id = (fd_model_type == 0)
+                                             ? CVI_AI_SUPPORTED_MODEL_RETINAFACE
+                                             : CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION;
+  APP_MODE_e app_mode = static_cast<APP_MODE_e>(atoi(mode_id));
+
   if (buffer_size <= 0) {
     printf("buffer size must be larger than 0.\n");
     return CVI_FAILURE;
   }
-
-  APP_MODE_e app_mode = static_cast<APP_MODE_e>(atoi(argv[5]));
-  float fd_threshold = atof(argv[7]);
-  CVI_S32 voType = atoi(argv[8]);
 
   CVI_S32 s32Ret = CVI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
@@ -107,16 +118,16 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1],
-                                           (!strcmp(argv[2], "NULL")) ? NULL : argv[2],
-                                           (!strcmp(argv[3], "NULL")) ? NULL : argv[3]);
+  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fd_model_path,
+                                           (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
+                                           (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path);
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_threshold);
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, det_threshold);
 
   {
     switch (app_mode) {
@@ -151,11 +162,11 @@ int main(int argc, char *argv[]) {
 
   face_capture_config_t app_cfg;
   CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
-  if (!strcmp(argv[4], "NULL")) {
+  if (!strcmp(config_path, "NULL")) {
     printf("Use Default Config...\n");
   } else {
-    printf("Read Specific Config: %s\n", argv[4]);
-    if (!READ_CONFIG(argv[4], &app_cfg)) {
+    printf("Read Specific Config: %s\n", config_path);
+    if (!READ_CONFIG(config_path, &app_cfg)) {
       printf("[ERROR] Read Config Failed.\n");
       goto CLEANUP_SYSTEM;
     }
@@ -333,6 +344,8 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config) {
       app_config->auto_m_fast_cap = atoi(value) == 1;
     } else if (!strcmp(name, "Capture_Aligned_Face")) {
       app_config->capture_aligned_face = atoi(value) == 1;
+    } else if (!strcmp(name, "Capture_Extended_Face")) {
+      app_config->capture_extended_face = atoi(value) == 1;
     } else if (!strcmp(name, "Store_RGB888")) {
       app_config->store_RGB888 = atoi(value) == 1;
     } else {
