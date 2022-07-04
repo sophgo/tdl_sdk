@@ -32,20 +32,21 @@ typedef struct {
   uint32_t auto_m_time_limit;
   bool auto_m_fast_cap;
 
-  bool do_FR;
   bool capture_aligned_face;
   bool store_RGB888;
 } face_capture_config_t;
 
 typedef struct {
   capture_mode_e mode;
-  bool use_fqnet;
   face_capture_config_t cfg;
 
   uint32_t size;
   face_cpt_data_t *data;
   cvai_face_t last_faces;
   cvai_tracker_t last_trackers;
+
+  bool do_FR;     /* don't set manually */
+  bool use_FQNet; /* don't set manually */
 
   bool *_output;   // output signal (# = .size)
   uint64_t _time;  // timer

@@ -12,6 +12,7 @@ CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_handle_t ai_ha
   cviai_app_context_t *ctx = (cviai_app_context_t *)malloc(sizeof(cviai_app_context_t));
   ctx->ai_handle = ai_handle;
   ctx->face_cpt_info = NULL;
+  ctx->person_cpt_info = NULL;
   *handle = ctx;
   return CVIAI_SUCCESS;
 }
@@ -35,7 +36,8 @@ CVI_S32 CVI_AI_APP_FaceCapture_QuickSetUp(const cviai_app_handle_t handle,
                                           const char *fd_model_path, const char *fr_model_path,
                                           const char *fq_model_path) {
   cviai_app_context_t *ctx = handle;
-  return _FaceCapture_QuickSetUp(ctx->ai_handle, fd_model_path, fr_model_path, fq_model_path);
+  return _FaceCapture_QuickSetUp(ctx->ai_handle, ctx->face_cpt_info, fd_model_path, fr_model_path,
+                                 fq_model_path);
 }
 
 CVI_S32 CVI_AI_APP_FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {

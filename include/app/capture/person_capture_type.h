@@ -32,7 +32,6 @@ typedef struct {
   uint32_t auto_m_time_limit;
   bool auto_m_fast_cap;
 
-  bool enable_DeepSORT;
   bool store_RGB888;
 } person_capture_config_t;
 
@@ -47,6 +46,8 @@ typedef struct {
   cvai_tracker_t last_trackers;
 
   CVI_AI_SUPPORTED_MODEL_E od_model_index;
+  bool enable_DeepSORT; /* don't set manually */
+
   bool *_output;   // output signal (# = .size)
   uint64_t _time;  // timer
   uint32_t _m_limit;

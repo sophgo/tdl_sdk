@@ -93,13 +93,16 @@ CVI_S32 _PersonCapture_QuickSetUp(cviai_handle_t ai_handle, person_capture_t *pe
   }
 
   ret |= CVI_AI_OpenModel(ai_handle, person_cpt_info->od_model_index, od_model_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, reid_model_path);
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, person_cpt_info->od_model_index, false);
+  if (reid_model_path != NULL) {
+    ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, reid_model_path);
+    CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
+  }
   if (ret != CVIAI_SUCCESS) {
-    printf("failed with %#x!\n", ret);
+    LOGE("PersonCapture QuickSetUp failed\n");
     return ret;
   }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, person_cpt_info->od_model_index, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
+  person_cpt_info->enable_DeepSORT = reid_model_path != NULL;
 
   /* Init DeepSORT */
   CVI_AI_DeepSORT_Init(ai_handle, false);
@@ -126,7 +129,6 @@ CVI_S32 _PersonCapture_GetDefaultConfig(person_capture_config_t *cfg) {
   cfg->auto_m_time_limit = AUTO_MODE_TIME_LIMIT;
   cfg->auto_m_fast_cap = true;
 
-  cfg->enable_DeepSORT = false;
   cfg->store_RGB888 = false;
 
   return CVIAI_SUCCESS;
@@ -149,7 +151,8 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle
     LOGE("[APP::PersonCapture] is not initialized.\n");
     return CVIAI_FAILURE;
   }
-  LOGI("[APP::PersonCapture] RUN (MODE: %d)\n", person_cpt_info->mode);
+  LOGI("[APP::PersonCapture] RUN (MODE: %d, ReID: %d)\n", person_cpt_info->mode,
+       person_cpt_info->enable_DeepSORT);
   CVI_S32 ret;
   ret = clean_data(person_cpt_info);
   if (ret != CVIAI_SUCCESS) {
@@ -163,7 +166,10 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle
 
   switch (person_cpt_info->od_model_index) {
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE:
-      CVI_AI_MobileDetV2_Person_Vehicle(ai_handle, frame, &person_cpt_info->last_objects);
+      if (CVIAI_SUCCESS !=
+          CVI_AI_MobileDetV2_Person_Vehicle(ai_handle, frame, &person_cpt_info->last_objects)) {
+        return CVIAI_FAILURE;
+      }
       break;
     case CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS:
       CVI_AI_MobileDetV2_Person_Pets(ai_handle, frame, &person_cpt_info->last_objects);
@@ -175,18 +181,25 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle
       CVI_AI_MobileDetV2_Pedestrian(ai_handle, frame, &person_cpt_info->last_objects);
       break;
     case CVI_AI_SUPPORTED_MODEL_YOLOV3:
-      CVI_AI_Yolov3(ai_handle, frame, &person_cpt_info->last_objects);
+      if (CVIAI_SUCCESS != CVI_AI_Yolov3(ai_handle, frame, &person_cpt_info->last_objects)) {
+        return CVIAI_FAILURE;
+      }
       break;
     default:
       LOGE("unknown object detection model index.");
       return CVIAI_FAILURE;
   }
 
-  if (person_cpt_info->cfg.enable_DeepSORT) {
-    CVI_AI_OSNet(ai_handle, frame, &person_cpt_info->last_objects);
+  if (person_cpt_info->enable_DeepSORT) {
+    if (CVIAI_SUCCESS != CVI_AI_OSNet(ai_handle, frame, &person_cpt_info->last_objects)) {
+      return CVIAI_FAILURE;
+    }
   }
-  CVI_AI_DeepSORT_Obj(ai_handle, &person_cpt_info->last_objects, &person_cpt_info->last_trackers,
-                      person_cpt_info->cfg.enable_DeepSORT);
+  if (CVIAI_SUCCESS != CVI_AI_DeepSORT_Obj(ai_handle, &person_cpt_info->last_objects,
+                                           &person_cpt_info->last_trackers,
+                                           person_cpt_info->enable_DeepSORT)) {
+    return CVIAI_FAILURE;
+  }
 
   if (person_cpt_info->last_quality != NULL) {
     free(person_cpt_info->last_quality);
@@ -611,7 +624,6 @@ static void SHOW_CONFIG(person_capture_config_t *cfg) {
   printf("[Cycle] Interval    : %u\n", cfg->cycle_m_interval);
   printf("[Auto] Time Limit   : %u\n\n", cfg->auto_m_time_limit);
   printf("[Auto] Fast Capture : %s\n\n", cfg->auto_m_fast_cap ? "True" : "False");
-  printf(" - Enable DeepSORT  : %s\n\n", cfg->enable_DeepSORT ? "True" : "False");
   printf(" - Store RGB888         : %s\n\n", cfg->store_RGB888 ? "True" : "False");
   return;
 }

@@ -269,7 +269,7 @@ int main(int argc, char *argv[]) {
     printf(
         "Usage: %s <object detection model name>\n"
         "          <object detection model path>\n"
-        "          <person ReID model path>\n"
+        "          <person ReID model path> (NULL: disable DeepSORT)\n"
         "          <config_path>\n"
         "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
         "          tracking buffer size\n"
@@ -300,7 +300,6 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  CVI_S32 s32Ret = CVI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
 
@@ -328,8 +327,9 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
   ret |= CVI_AI_APP_PersonCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_AI_APP_PersonCapture_QuickSetUp(app_handle, od_model_name, od_model_path,
-                                             reid_model_path);
+  ret |= CVI_AI_APP_PersonCapture_QuickSetUp(
+      app_handle, od_model_name, od_model_path,
+      (!strcmp(reid_model_path, "NULL")) ? NULL : reid_model_path);
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
@@ -401,17 +401,21 @@ int main(int argc, char *argv[]) {
     counter += 1;
     printf("\nGet Frame %zu\n", counter);
 
-    s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
-                                  &stVIFrame, 2000);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
+    ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI, &stVIFrame,
+                               2000);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", ret);
       break;
     }
 
     int alive_person_num = COUNT_ALIVE(app_handle->person_cpt_info);
     printf("ALIVE persons: %d\n", alive_person_num);
 
-    CVI_AI_APP_PersonCapture_Run(app_handle, &stVIFrame);
+    ret = CVI_AI_APP_PersonCapture_Run(app_handle, &stVIFrame);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_AI_APP_PersonCapture_Run failed with %#x\n", ret);
+      break;
+    }
 
     {
       SMT_MutexAutoLock(VOMutex, lock);
@@ -475,9 +479,9 @@ int main(int argc, char *argv[]) {
     FREE_OUTPUT_DATA(sample_output_data, output_num);
 #endif
 
-    s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
-                                      &stVIFrame);
-    if (s32Ret != CVI_SUCCESS) {
+    ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
+                                   &stVIFrame);
+    if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
       break;
     }
@@ -533,8 +537,6 @@ bool READ_CONFIG(const char *config_path, person_capture_config_t *app_config) {
       app_config->auto_m_time_limit = (uint32_t)atoi(value);
     } else if (!strcmp(name, "AUTO_Mode_Fast_Cap")) {
       app_config->auto_m_fast_cap = atoi(value) == 1;
-    } else if (!strcmp(name, "Enable_DeepSORT")) {
-      app_config->enable_DeepSORT = atoi(value) == 1;
     } else if (!strcmp(name, "Store_RGB888")) {
       app_config->store_RGB888 = atoi(value) == 1;
     } else {

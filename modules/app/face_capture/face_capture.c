@@ -71,23 +71,30 @@ CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info, uint32_t buffer_size) 
 
   _FaceCapture_GetDefaultConfig(&new_face_cpt_info->cfg);
   new_face_cpt_info->_m_limit = MEMORY_LIMIT;
-  new_face_cpt_info->use_fqnet = false;
 
   *face_cpt_info = new_face_cpt_info;
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, const char *fd_model_path,
-                                const char *fr_model_path, const char *fq_model_path) {
+CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_cpt_info,
+                                const char *fd_model_path, const char *fr_model_path,
+                                const char *fq_model_path) {
   CVI_S32 ret = CVIAI_SUCCESS;
   ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_model_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fq_model_path);
+  if (fr_model_path != NULL) {
+    ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
+  }
+  if (fq_model_path != NULL) {
+    ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fq_model_path);
+  }
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     return ret;
   }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  face_cpt_info->do_FR = fr_model_path != NULL;
+  face_cpt_info->use_FQNet = fq_model_path != NULL;
 
   /* Init DeepSORT */
   CVI_AI_DeepSORT_Init(ai_handle, false);
@@ -121,7 +128,6 @@ CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
   cfg->cycle_m_interval = CYCLE_MODE_INTERVAL;
   cfg->auto_m_time_limit = AUTO_MODE_TIME_LIMIT;
   cfg->auto_m_fast_cap = true;
-  cfg->do_FR = false;
   cfg->capture_aligned_face = false;
   cfg->store_RGB888 = false;
 
@@ -145,8 +151,8 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
     LOGE("[APP::FaceCapture] is not initialized.\n");
     return CVIAI_FAILURE;
   }
-  LOGI("[APP::FaceCapture] RUN (MODE: %d, USE FQNET: %d)\n", face_cpt_info->mode,
-       face_cpt_info->use_fqnet);
+  LOGI("[APP::FaceCapture] RUN (MODE: %d, FR: %d, FQ: %d)\n", face_cpt_info->mode,
+       face_cpt_info->do_FR, face_cpt_info->use_FQNet);
   CVI_S32 ret;
   ret = clean_data(face_cpt_info);
   if (ret != CVIAI_SUCCESS) {
@@ -158,16 +164,22 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   /* set output signal to 0. */
   memset(face_cpt_info->_output, 0, sizeof(bool) * face_cpt_info->size);
 
-  CVI_AI_RetinaFace(ai_handle, frame, &face_cpt_info->last_faces);
-  if (face_cpt_info->cfg.do_FR) {
-    CVI_AI_FaceRecognition(ai_handle, frame, &face_cpt_info->last_faces);
+  if (CVIAI_SUCCESS != CVI_AI_RetinaFace(ai_handle, frame, &face_cpt_info->last_faces)) {
+    return CVIAI_FAILURE;
+  }
+  if (face_cpt_info->do_FR) {
+    if (CVIAI_SUCCESS != CVI_AI_FaceRecognition(ai_handle, frame, &face_cpt_info->last_faces)) {
+      return CVIAI_FAILURE;
+    }
   }
 
   CVI_AI_Service_FaceAngleForAll(&face_cpt_info->last_faces);
   bool *skip = (bool *)malloc(sizeof(bool) * face_cpt_info->last_faces.size);
   set_skipFQsignal(face_cpt_info, &face_cpt_info->last_faces, skip);
-  if (face_cpt_info->use_fqnet) {
-    CVI_AI_FaceQuality(ai_handle, frame, &face_cpt_info->last_faces, skip);
+  if (face_cpt_info->use_FQNet) {
+    if (CVIAI_SUCCESS != CVI_AI_FaceQuality(ai_handle, frame, &face_cpt_info->last_faces, skip)) {
+      return CVIAI_FAILURE;
+    }
   } else {
     face_quality_assessment(&face_cpt_info->last_faces, skip, face_cpt_info->cfg.qa_method);
   }
@@ -183,7 +195,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   }
 #endif
 
-  bool use_DeepSORT = face_cpt_info->cfg.do_FR;
+  bool use_DeepSORT = face_cpt_info->do_FR;
   CVI_AI_DeepSORT_Face(ai_handle, &face_cpt_info->last_faces, &face_cpt_info->last_trackers,
                        use_DeepSORT);
 
@@ -661,7 +673,6 @@ static void SHOW_CONFIG(face_capture_config_t *cfg) {
   printf("[Cycle] Interval    : %u\n", cfg->cycle_m_interval);
   printf("[Auto] Time Limit   : %u\n\n", cfg->auto_m_time_limit);
   printf("[Auto] Fast Capture : %s\n\n", cfg->auto_m_fast_cap ? "True" : "False");
-  printf(" - Do Face Recognition  : %s\n\n", cfg->do_FR ? "True" : "False");
   printf(" - Capture Aligned Face : %s\n\n", cfg->capture_aligned_face ? "True" : "False");
   printf(" - Store RGB888         : %s\n\n", cfg->store_RGB888 ? "True" : "False");
   return;

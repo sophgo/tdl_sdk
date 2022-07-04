@@ -60,14 +60,13 @@ static void SampleHandleSig(CVI_S32 signo) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 10) {
+  if (argc != 9) {
     printf(
         "Usage: %s <face_detection_model_path>\n"
         "          <face_recognition_model_path>\n"
         "          <face_quality_model_path>\n"
         "          <config_path>\n"
         "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
-        "          use FQNet (0/1)\n"
         "          tracking buffer size\n"
         "          FD threshold\n"
         "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
@@ -79,15 +78,15 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  int buffer_size = atoi(argv[7]);
+  int buffer_size = atoi(argv[6]);
   if (buffer_size <= 0) {
     printf("buffer size must be larger than 0.\n");
     return CVI_FAILURE;
   }
 
   APP_MODE_e app_mode = static_cast<APP_MODE_e>(atoi(argv[5]));
-  float fd_threshold = atof(argv[8]);
-  CVI_S32 voType = atoi(argv[9]);
+  float fd_threshold = atof(argv[7]);
+  CVI_S32 voType = atoi(argv[8]);
 
   CVI_S32 s32Ret = CVI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
@@ -108,7 +107,9 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2], argv[3]);
+  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1],
+                                           (!strcmp(argv[2], "NULL")) ? NULL : argv[2],
+                                           (!strcmp(argv[3], "NULL")) ? NULL : argv[3]);
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
@@ -160,8 +161,6 @@ int main(int argc, char *argv[]) {
     }
   }
   CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
-
-  app_handle->face_cpt_info->use_fqnet = atoi(argv[6]) == 1;
 
   VIDEO_FRAME_INFO_S stVIFrame;
   VIDEO_FRAME_INFO_S stVOFrame;
@@ -332,8 +331,6 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config) {
       app_config->auto_m_time_limit = (uint32_t)atoi(value);
     } else if (!strcmp(name, "AUTO_Mode_Fast_Cap")) {
       app_config->auto_m_fast_cap = atoi(value) == 1;
-    } else if (!strcmp(name, "Do_Face_Recognition")) {
-      app_config->do_FR = atoi(value) == 1;
     } else if (!strcmp(name, "Capture_Aligned_Face")) {
       app_config->capture_aligned_face = atoi(value) == 1;
     } else if (!strcmp(name, "Store_RGB888")) {

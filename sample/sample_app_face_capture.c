@@ -302,14 +302,13 @@ static void *pVideoOutput(void *args) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 12) {
+  if (argc != 11) {
     printf(
         "Usage: %s <face_detection_model_path>\n"
-        "          <face_attribute_model_path>\n"
-        "          <face_quality_model_path>\n"
+        "          <face_attribute_model_path> (NULL: disable FR)\n"
+        "          <face_quality_model_path> (NULL: disable FQ)\n"
         "          <config_path>\n"
         "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
-        "          use FQNet (0/1)\n"
         "          tracking buffer size\n"
         "          FD threshold\n"
         "          write image (0/1)\n"
@@ -322,21 +321,26 @@ int main(int argc, char *argv[]) {
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
+  const char *fd_model_path = argv[1];
+  const char *fr_model_path = argv[2];
+  const char *fq_model_path = argv[3];
+  const char *config_path = argv[4];
+  const char *mode_id = argv[5];
+  int buffer_size = atoi(argv[6]);
+  float det_threshold = atof(argv[7]);
+  bool write_image = atoi(argv[8]) == 1;
+  int voType = atoi(argv[9]);
+  int vi_format = atoi(argv[10]);
 
-  int buffer_size = atoi(argv[7]);
   if (buffer_size <= 0) {
     printf("buffer size must be larger than 0.\n");
     return CVI_FAILURE;
   }
 
-  CVI_S32 voType = atoi(argv[10]);
-
-  CVI_S32 s32Ret = CVI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
 
   PIXEL_FORMAT_E aiInputFormat;
-  int vi_format = atoi(argv[11]);
   if (vi_format == 0) {
     aiInputFormat = PIXEL_FORMAT_RGB_888;
   } else if (vi_format == 1) {
@@ -360,17 +364,18 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, argv[1], argv[2], argv[3]);
+  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_path,
+                                           (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
+                                           (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path);
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
   CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
-  float fd_threshold = atof(argv[8]);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, fd_threshold);
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, det_threshold);
 
-  app_mode = atoi(argv[5]);
+  app_mode = atoi(mode_id);
   switch (app_mode) {
 #if MODE_DEFINITION == 0
     case fast: {
@@ -402,19 +407,16 @@ int main(int argc, char *argv[]) {
 
   face_capture_config_t app_cfg;
   CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
-  if (!strcmp(argv[4], "NULL")) {
+  if (!strcmp(config_path, "NULL")) {
     printf("Use Default Config...\n");
   } else {
-    printf("Read Specific Config: %s\n", argv[4]);
-    if (!READ_CONFIG(argv[4], &app_cfg)) {
+    printf("Read Specific Config: %s\n", config_path);
+    if (!READ_CONFIG(config_path, &app_cfg)) {
       printf("[ERROR] Read Config Failed.\n");
       goto CLEANUP_SYSTEM;
     }
   }
   CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
-
-  app_handle->face_cpt_info->use_fqnet = atoi(argv[6]) == 1;
-  bool write_image = atoi(argv[9]) == 1;
 
   VIDEO_FRAME_INFO_S stfdFrame;
 
@@ -434,10 +436,10 @@ int main(int argc, char *argv[]) {
     counter += 1;
     printf("\nGet Frame %zu\n", counter);
 
-    s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
-                                  &stfdFrame, 2000);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
+    ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI, &stfdFrame,
+                               2000);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", ret);
       break;
     }
 
@@ -511,9 +513,9 @@ int main(int argc, char *argv[]) {
     FREE_OUTPUT_DATA(sample_output_data, output_num);
 #endif
 
-    s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
-                                      &stfdFrame);
-    if (s32Ret != CVI_SUCCESS) {
+    ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
+                                   &stfdFrame);
+    if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
       break;
     }
@@ -573,8 +575,6 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config) {
       app_config->auto_m_time_limit = (uint32_t)atoi(value);
     } else if (!strcmp(name, "AUTO_Mode_Fast_Cap")) {
       app_config->auto_m_fast_cap = atoi(value) == 1;
-    } else if (!strcmp(name, "Do_Face_Recognition")) {
-      app_config->do_FR = atoi(value) == 1;
     } else if (!strcmp(name, "Capture_Aligned_Face")) {
       app_config->capture_aligned_face = atoi(value) == 1;
     } else if (!strcmp(name, "Store_RGB888")) {
