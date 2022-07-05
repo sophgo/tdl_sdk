@@ -77,17 +77,22 @@ CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info, uint32_t buffer_size) 
 }
 
 CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_cpt_info,
-                                int fd_model_id, const char *fd_model_path,
+                                int fd_model_id, int fr_model_id, const char *fd_model_path,
                                 const char *fr_model_path, const char *fq_model_path) {
   if (fd_model_id != CVI_AI_SUPPORTED_MODEL_RETINAFACE &&
       fd_model_id != CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION) {
     LOGE("invalid face detection model id %d", fd_model_id);
     return CVI_FAILURE;
   }
-  CVI_S32 ret = CVIAI_SUCCESS;
+  if (fr_model_id != CVI_AI_SUPPORTED_MODEL_FACERECOGNITION &&
+      fr_model_id != CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE) {
+    LOGE("invalid face recognition model id %d", fr_model_id);
+    return CVI_FAILURE;
+  }
+  CVI_S32 ret = CVI_SUCCESS;
   ret |= CVI_AI_OpenModel(ai_handle, fd_model_id, fd_model_path);
   if (fr_model_path != NULL) {
-    ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
+    ret |= CVI_AI_OpenModel(ai_handle, fr_model_id, fr_model_path);
   }
   if (fq_model_path != NULL) {
     ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fq_model_path);
@@ -97,6 +102,9 @@ CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_c
   face_cpt_info->fd_inference = (fd_model_id == CVI_AI_SUPPORTED_MODEL_RETINAFACE)
                                     ? CVI_AI_RetinaFace
                                     : CVI_AI_FaceMaskDetection;
+  face_cpt_info->fr_inference = (fr_model_id == CVI_AI_SUPPORTED_MODEL_FACERECOGNITION)
+                                    ? CVI_AI_FaceRecognition
+                                    : CVI_AI_FaceAttribute;
 
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
@@ -182,7 +190,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
     return CVIAI_FAILURE;
   }
   if (face_cpt_info->do_FR) {
-    if (CVIAI_SUCCESS != CVI_AI_FaceRecognition(ai_handle, frame, &face_cpt_info->last_faces)) {
+    if (CVI_SUCCESS != face_cpt_info->fr_inference(ai_handle, frame, &face_cpt_info->last_faces)) {
       return CVIAI_FAILURE;
     }
   }

@@ -49,7 +49,8 @@ DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Init(const cviai_app_handle_t handle,
                                                uint32_t buffer_size);
 
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_QuickSetUp(const cviai_app_handle_t handle,
-                                                     int fd_model_id, const char *fd_model_path,
+                                                     int fd_model_id, int fr_model_id,
+                                                     const char *fd_model_path,
                                                      const char *fr_model_path,
                                                      const char *fq_model_path);
 

@@ -50,6 +50,7 @@ typedef struct {
   bool use_FQNet; /* don't set manually */
 
   int (*fd_inference)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_face_t *);
+  int (*fr_inference)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_face_t *);
   bool *_output;   // output signal (# = .size)
   uint64_t _time;  // timer
   uint32_t _m_limit;
