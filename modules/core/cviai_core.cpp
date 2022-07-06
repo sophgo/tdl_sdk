@@ -25,6 +25,7 @@
 #include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
+#include "object_detection/yolox/yolox.hpp"
 #include "osnet/osnet.hpp"
 #include "retina_face/retina_face.hpp"
 #include "segmentation/deeplabv3.hpp"
@@ -115,6 +116,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_LIVENESS, CREATOR(Liveness)},
     {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
+    {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
     {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
     {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
@@ -463,11 +465,13 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
 
   Core *instance = getInferenceInstance(config, ctx);
   if (instance != nullptr) {
-    // TODO: only supports MobileDetV2 for now
+    // TODO: only supports MobileDetV2 and YOLOX for now
     if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(instance)) {
       mdetv2->select_classes(selected_classes);
+    } else if (YoloX *yolox = dynamic_cast<YoloX *>(instance)) {
+      yolox->select_classes(selected_classes);
     } else {
-      LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 family model for now.\n");
+      LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 and YOLOX model for now.\n");
     }
   } else {
     LOGE("Failed to create model: %s\n", CVI_AI_GetModelName(config));
@@ -647,6 +651,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Person_Pets, MobileDetV2,
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
 
 DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *, int)

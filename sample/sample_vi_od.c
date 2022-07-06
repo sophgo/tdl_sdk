@@ -67,6 +67,13 @@ void *run_venc(void *args) {
       CVI_AI_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
     }
 
+    for (uint32_t oid = 0; oid < stObjMeta.size; oid++) {
+      char name[127];
+      snprintf(name, sizeof(name), "%s: %.2f", stObjMeta.info[oid].name,
+               stObjMeta.info[oid].bbox.score);
+      snprintf(stObjMeta.info[oid].name, sizeof(stObjMeta.info[oid].name), "%s", name);
+    }
+
     s32Ret = CVI_AI_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjMeta, &stFrame, true,
                                            CVI_AI_Service_GetDefaultBrush());
     if (s32Ret != CVIAI_SUCCESS) {
@@ -102,13 +109,19 @@ void *run_ai_thread(void *args) {
       goto get_frame_failed;
     }
 
+    struct timeval t0, t1;
+    gettimeofday(&t0, NULL);
     s32Ret = pstAIArgs->inference_func(pstAIArgs->stAIHandle, &stFrame, &stObjMeta);
+    gettimeofday(&t1, NULL);
+
     if (s32Ret != CVIAI_SUCCESS) {
       AI_LOGE("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
 
-    AI_LOGI("obj count: %d\n", stObjMeta.size);
+    unsigned long execution_time = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
+    AI_LOGI("obj count: %d, take %.2f ms\n", stObjMeta.size, (float)execution_time / 1000);
+
     {
       // Copy object detection results to global.
       MutexAutoLock(ResultMutex, lock);
@@ -264,7 +277,7 @@ int main(int argc, char *argv[]) {
         "mobiledetv2-coco80, "
         "mobiledetv2-vehicle, "
         "mobiledetv2-pedestrian, "
-        "yolov3}\n"
+        "yolov3, yolox}\n"
         "\tMODEL_PATH, cvimodel path\n"
         "\tTHRESHOLD (optional), threshold for detection model (default: 0.5)\n",
         argv[0]);
@@ -337,8 +350,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Select which classes we want to focus.
-  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(stAIHandle, enOdModelId, 2, CVI_AI_DET_TYPE_PERSON,
-                                          CVI_AI_DET_GROUP_VEHICLE),
+  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(stAIHandle, enOdModelId, 1, CVI_AI_DET_TYPE_PERSON),
                  s32Ret, setup_ai_fail);
 
   // Step 4: Run models in thread.

@@ -22,6 +22,9 @@ CVI_S32 get_od_model_info(const char *model_name, CVI_AI_SUPPORTED_MODEL_E *mode
   } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     *inference_func = CVI_AI_Yolov3;
+  } else if (strcmp(model_name, "yolox") == 0) {
+    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOX;
+    *inference_func = CVI_AI_YoloX;
   } else {
     ret = CVIAI_FAILURE;
   }
@@ -47,6 +50,9 @@ CVI_S32 get_pd_model_info(const char *model_name, CVI_AI_SUPPORTED_MODEL_E *mode
   } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     *inference_func = CVI_AI_Yolov3;
+  } else if (strcmp(model_name, "yolox") == 0) {
+    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOX;
+    *inference_func = CVI_AI_YoloX;
   } else {
     ret = CVIAI_FAILURE;
   }
@@ -69,6 +75,9 @@ CVI_S32 get_vehicle_model_info(const char *model_name, CVI_AI_SUPPORTED_MODEL_E 
   } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_AI_SUPPORTED_MODEL_YOLOV3;
     *inference_func = CVI_AI_Yolov3;
+  } else if (strcmp(model_name, "yolox") == 0) {
+    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOX;
+    *inference_func = CVI_AI_YoloX;
   } else {
     ret = CVIAI_FAILURE;
   }

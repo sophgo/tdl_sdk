@@ -7,25 +7,12 @@
 #include "anchors.hpp"
 #include "core.hpp"
 #include "core/object/cvai_object_types.h"
+#include "object_utils.hpp"
 
 namespace cviai {
 
 class MobileDetV2 final : public Core {
  public:
-  // TODO: remove duplicate struct
-  struct object_detect_rect_t {
-    float x1;
-    float y1;
-    float x2;
-    float y2;
-    float score;
-    int label;
-  };
-
-  // TODO: define in common header
-  typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
-  typedef std::vector<PtrDectRect> Detections;
-
   enum class Category {
     coco80,          // COCO 80 classes
     vehicle,         // CAR, TRUCK, MOTOCYCLE
@@ -78,7 +65,6 @@ class MobileDetV2 final : public Core {
                                 float bbox_dequant_thresh, int8_t quant_thresh,
                                 const int8_t *logits, const int8_t *objectness, int8_t *bboxes,
                                 size_t class_tensor_size, const std::vector<AnchorBox> &anchors);
-  void filter_dets(Detections &dets);
 
   std::vector<std::vector<AnchorBox>> m_anchors;
   CvimodelInfo m_model_config;

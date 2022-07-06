@@ -1,6 +1,7 @@
 #pragma once
 #include "core.hpp"
 #include "core/object/cvai_object_types.h"
+#include "object_utils.hpp"
 #include "yolov3_utils.h"
 
 namespace cviai {

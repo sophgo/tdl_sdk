@@ -21,6 +21,7 @@
 #include "cviruntime.h"
 #include "misc.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
+#include "object_utils.hpp"
 
 static const float STD_R = (255.0 * 0.229);
 static const float STD_G = (255.0 * 0.224);
@@ -39,74 +40,7 @@ static const float MODEL_MEAN_B = 0.406 * 255.0;
 using namespace std;
 
 namespace cviai {
-using Detections = MobileDetV2::Detections;
-using PtrDectRect = MobileDetV2::PtrDectRect;
 using MDetV2Config = MobileDetV2::CvimodelInfo;
-
-static vector<size_t> sort_indexes(const Detections &v) {
-  // initialize original index locations
-  vector<size_t> idx(v.size());
-  iota(idx.begin(), idx.end(), 0);
-
-  // sort indexes based on comparing values in v
-  // using std::stable_sort instead of std::sort
-  // to avoid unnecessary index re-orderings
-  // when v contains elements of equal values
-  stable_sort(idx.begin(), idx.end(),
-              [&v](size_t i1, size_t i2) { return v[i1]->score > v[i2]->score; });
-  return idx;
-}
-
-static vector<size_t> calculate_area(const Detections &dets) {
-  vector<size_t> areas(dets.size());
-  for (size_t i = 0; i < dets.size(); i++) {
-    areas[i] = (dets[i]->x2 - dets[i]->x1) * (dets[i]->y2 - dets[i]->y1);
-  }
-  return areas;
-}
-
-static Detections nms(const Detections &dets, float iou_threshold) {
-  vector<int> keep(dets.size(), 0);
-  vector<int> suppressed(dets.size(), 0);
-
-  size_t ndets = dets.size();
-  size_t num_to_keep = 0;
-
-  vector<size_t> order = sort_indexes(dets);
-  vector<size_t> areas = calculate_area(dets);
-
-  for (size_t _i = 0; _i < ndets; _i++) {
-    auto i = order[_i];
-    if (suppressed[i] == 1) continue;
-    keep[num_to_keep++] = i;
-    auto ix1 = dets[i]->x1;
-    auto iy1 = dets[i]->y1;
-    auto ix2 = dets[i]->x2;
-    auto iy2 = dets[i]->y2;
-    auto iarea = areas[i];
-
-    for (size_t _j = _i + 1; _j < ndets; _j++) {
-      auto j = order[_j];
-      if (suppressed[j] == 1) continue;
-      auto xx1 = std::max(ix1, dets[j]->x1);
-      auto yy1 = std::max(iy1, dets[j]->y1);
-      auto xx2 = std::min(ix2, dets[j]->x2);
-      auto yy2 = std::min(iy2, dets[j]->y2);
-
-      auto w = std::max(0.0f, xx2 - xx1);
-      auto h = std::max(0.0f, yy2 - yy1);
-      auto inter = w * h;
-      float ovr = static_cast<float>(inter) / (iarea + areas[j] - inter);
-      if (ovr > iou_threshold && dets[j]->label == dets[i]->label) suppressed[j] = 1;
-    }
-  }
-
-  Detections final_dets(num_to_keep);
-  for (size_t k = 0; k < num_to_keep; k++) {
-    final_dets[k] = dets[keep[k]];
-  }
-  return final_dets;
-}
 
 static void convert_det_struct(const Detections &dets, cvai_object_t *out, int im_height,
                                int im_width, meta_rescale_type_e type,
@@ -368,7 +302,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
   Detections dets;
   generate_dets_for_each_stride(&dets);
 
-  Detections final_dets = nms(dets, m_iou_threshold);
+  Detections final_dets = nms_multi_class(dets, m_iou_threshold);
 
   if (!m_filter.all()) {  // filter if not all bit are set
     auto condition = [this](const PtrDectRect &det) {

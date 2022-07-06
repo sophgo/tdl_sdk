@@ -31,6 +31,7 @@ add_subdirectory(ive)
 add_subdirectory(tamper_detection)
 add_subdirectory(motion_detection)
 add_subdirectory(face_mask_detection)
+add_subdirectory(object_detection/yolox)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils

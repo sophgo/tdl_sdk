@@ -129,6 +129,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS)          \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV3)                           \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOX)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_OSNET)                            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION)              \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_WPODNET)                          \
@@ -695,6 +696,17 @@ DLL_EXPORT CVI_S32 CVI_AI_MobileDetV2_COCO80(cviai_handle_t handle, VIDEO_FRAME_
  */
 DLL_EXPORT CVI_S32 CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                  cvai_object_t *obj);
+
+/**
+ * @brief YoloX object detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param obj Output detect result. The name, bbox, and classes will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_YoloX(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                cvai_object_t *obj);
 
 /**@}*/
 

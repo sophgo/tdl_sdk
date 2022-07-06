@@ -4,15 +4,6 @@
 typedef enum { v2, v3 } YoloType;
 
 typedef struct {
-  float x1;
-  float y1;
-  float x2;
-  float y2;
-  float score;
-  int label;
-} object_detect_rect_t;
-
-typedef struct {
   float x, y, w, h;
 } box;
 
