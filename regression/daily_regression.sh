@@ -40,40 +40,56 @@ model_dir=${model_dir:-/mnt/data/cvimodel}
 dataset_dir=${dataset_dir:-/mnt/data/dataset}
 asset_dir=${asset_dir:-/mnt/data/asset}
 
-# FIXME: There is a bug when you run --gtest_filter=*
-# test_suite="*"
 
-# basic test cases
-test_suite="CoreTestSuite.*"
-test_suite="${test_suite} MobileDetV2TestSuite.*"
-test_suite="${test_suite} FaceRecognitionTestSuite.*"
-test_suite="${test_suite} MaskClassification.*"
-test_suite="${test_suite} FaceQualityTestSuite.*"
-test_suite="${test_suite} LicensePlateDetectionTestSuite.*"
-test_suite="${test_suite} LicensePlateRecognitionTestSuite.*"
-test_suite="${test_suite} MultiObjectTrackingTestSuite.*"
-test_suite="${test_suite} ReIdentificationTestSuite.*"
-test_suite="${test_suite} MotionDetection*"
-test_suite="${test_suite} ThermalFaceDetectionTestSuite.*"
-test_suite="${test_suite} ThermalPersonDetectionTestSuite.*"
-test_suite="${test_suite} LivenessTestSuite.*"
-test_suite="${test_suite} RetinafaceTestSuite.*"
-test_suite="${test_suite} RetinafaceIRTestSuite.*"
-test_suite="${test_suite} RetinafaceHardhatTestSuite.*"
-test_suite="${test_suite} IncarTestSuite.*"
-test_suite="${test_suite} ESCTestSuite.*"
-test_suite="${test_suite} EyeCTestSuite.*"
-test_suite="${test_suite} YawnCTestSuite.*"
-test_suite="${test_suite} SoundCTestSuite.*"
-test_suite="${test_suite} FLTestSuite.*"
-test_suite="${test_suite} FeatureMatchingTestSuite.*"
+if [ -f "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem" ]; then
+  total_ion_size=$(cat /sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem)
+else
+  # if ion size is unknown then execute basic tests.
+  total_ion_size=20000000
+fi
 
-if [[ "$CHIPSET" == "182x" ]]; then
-  test_suite="${test_suite} TamperDetectionTestSuite.*"
-elif [[ "$CHIPSET" == "183x" ]]; then
-  test_suite="${test_suite} TamperDetectionTestSuite.*"
-  test_suite="${test_suite} AlphaposeTestSuite.*"
-  test_suite="${test_suite} FallTestSuite.*"
+test_suites=""
+
+# ION requirement >= 20 MB
+if [ "$total_ion_size" -gt "20000000" ]; then
+  test_suites="CoreTestSuite.*"
+  test_suites="${test_suites}:FaceRecognitionTestSuite.*"
+  test_suites="${test_suites}:MaskClassification.*"
+  test_suites="${test_suites}:FaceQualityTestSuite.*"
+  test_suites="${test_suites}:MultiObjectTrackingTestSuite.*"
+  test_suites="${test_suites}:ReIdentificationTestSuite.*"
+  test_suites="${test_suites}:MotionDetection*"
+  test_suites="${test_suites}:LivenessTestSuite.*"
+  test_suites="${test_suites}:RetinafaceTestSuite.*"
+  test_suites="${test_suites}:RetinafaceIRTestSuite.*"
+  test_suites="${test_suites}:RetinafaceHardhatTestSuite.*"
+  test_suites="${test_suites}:IncarTestSuite.*"
+  test_suites="${test_suites}:ESCTestSuite.*"
+  test_suites="${test_suites}:EyeCTestSuite.*"
+  test_suites="${test_suites}:YawnCTestSuite.*"
+  test_suites="${test_suites}:SoundCTestSuite.*"
+  test_suites="${test_suites}:FLTestSuite.*"
+  test_suites="${test_suites}:FeatureMatchingTestSuite.*"
+  #test_suites="${test_suites}:TamperDetectionTestSuite.*"
+fi
+
+# ION requirement >= 35 MB
+if [ "$total_ion_size" -gt "35000000" ]; then
+test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
+test_suites="${test_suites}:LicensePlateRecognitionTestSuite.*"
+test_suites="${test_suites}:ThermalFaceDetectionTestSuite.*"
+test_suites="${test_suites}:ThermalPersonDetectionTestSuite.*"
+fi
+
+# ION requirement >= 60 MB
+if [ "$total_ion_size" -gt "60000000" ]; then
+test_suites="${test_suites}:AlphaposeTestSuite.*"
+test_suites="${test_suites}:MobileDetV2TestSuite.*"
+fi
+
+# ION requirement >= 70 MB
+if [ "$total_ion_size" -gt "70000000" ]; then
+test_suites="${test_suites}:FallTestSuite.*"
 fi
 
 echo "----------------------"
@@ -81,16 +97,15 @@ echo -e "regression setting:"
 echo -e "model dir: \t\t${model_dir}"
 echo -e "dataset dir: \t\t${dataset_dir}"
 echo -e "asset dir: \t\t${asset_dir}"
-echo -e "CHIPSET=${CHIPSET}"
+echo -e "CHIPSET: \t\t${CHIPSET}"
+echo -e "ION size: \t\t${total_ion_size} bytes"
 
-echo "Test Suites:"
-for suite_name in ${test_suite}
+echo "Test Suites to be executed:"
+test_suites_separated=${test_suites//":"/ }
+for suite_name in ${test_suites_separated}
 do
     echo -e "\t${suite_name}"
 done
 echo "----------------------"
 
-for suite_name in ${test_suite}
-do
-    ./test_main ${model_dir} ${dataset_dir} ${asset_dir} --gtest_filter=$suite_name
-done
+./test_main ${model_dir} ${dataset_dir} ${asset_dir} --gtest_filter=$test_suites

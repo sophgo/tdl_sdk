@@ -204,15 +204,14 @@ TEST_F(FaceRecognitionTestSuite, inference) {
     }
   }
 
-  // inference for PIXEL_FORMAT_RGB_888_PLANAR format should be failed.
+  // inference for PIXEL_FORMAT_RGB_888_PLANAR format.
   {
     Image image_rgb(image_path, PIXEL_FORMAT_RGB_888_PLANAR);
     ASSERT_TRUE(image_rgb.open());
     AIObject<cvai_face_t> face_meta;
     init_face_meta(face_meta, 1);
 
-    ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta),
-              CVIAI_ERR_INVALID_ARGS);
+    ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
   }
 }
 

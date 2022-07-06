@@ -7,6 +7,8 @@ class TamperDetectorMD {
   // TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum=0.05, int update_interval=10);
   TamperDetectorMD(ive::IVE *ive_instance, VIDEO_FRAME_INFO_S *init_frame, float momentum,
                    int update_interval);
+  ~TamperDetectorMD();
+
   int update(VIDEO_FRAME_INFO_S *frame);
   int detect(VIDEO_FRAME_INFO_S *frame);
   int detect(VIDEO_FRAME_INFO_S *frame, float *moving_score);

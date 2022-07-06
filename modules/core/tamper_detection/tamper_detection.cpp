@@ -87,6 +87,8 @@ TamperDetectorMD::TamperDetectorMD(IVE *_ive_instance, VIDEO_FRAME_INFO_S *init_
 #endif
 }
 
+TamperDetectorMD::~TamperDetectorMD() { free(); }
+
 int TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   IVEImage new_frame;
   RETURN_IF_FAILED(new_frame.fromFrame(frame), "Convert to video frame failed");

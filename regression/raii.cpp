@@ -27,7 +27,9 @@ bool Image::open() {
   if (m_opened) return true;
 
   if (m_filepath.empty()) {
-    return createEmpty();
+    if (!createEmpty()) {
+      return false;
+    }
   } else {
     if (CVI_AI_ReadImage(m_filepath.c_str(), &m_frame, m_format) != CVI_SUCCESS) {
       m_width = m_frame.stVFrame.u32Width;

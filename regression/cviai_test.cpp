@@ -51,17 +51,32 @@ void CVIAITestSuite::SetUpTestCase() {
 
   const CVI_S32 vpssgrp_width = DEFAULT_IMG_WIDTH;
   const CVI_S32 vpssgrp_height = DEFAULT_IMG_HEIGHT;
-  const uint32_t num_buffer = 3;
+  const uint32_t num_buffer = 1;
 
   // check if ION is enough to use.
   int64_t used_size = vpssgrp_width * vpssgrp_height * num_buffer * 2;
   ASSERT_LT(used_size, ion_size) << "insufficient ion size";
 
-  // Init VB pool size for VPSS usages.
-  ASSERT_EQ(
-      MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, num_buffer,
-                       vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, num_buffer),
-      CVIAI_SUCCESS);
+  COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
+
+  // Init SYS and Common VB,
+  VB_CONFIG_S stVbConf;
+  memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
+  stVbConf.u32MaxPoolCnt = 1;
+  CVI_U32 u32BlkSize;
+  u32BlkSize = COMMON_GetPicBufferSize(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR,
+                                       DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
+  stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
+  stVbConf.astCommPool[0].u32BlkCnt = num_buffer;
+
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
+
+  ASSERT_EQ(CVI_VB_SetConfig(&stVbConf), CVI_SUCCESS);
+
+  ASSERT_EQ(CVI_VB_Init(), CVI_SUCCESS);
+
+  ASSERT_EQ(CVI_SYS_Init(), CVI_SUCCESS);
 }
 
 void CVIAITestSuite::TearDownTestCase() {
