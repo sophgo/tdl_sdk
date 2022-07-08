@@ -596,6 +596,8 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config) {
       app_config->capture_aligned_face = atoi(value) == 1;
     } else if (!strcmp(name, "Capture_Extended_Face")) {
       app_config->capture_extended_face = atoi(value) == 1;
+    } else if (!strcmp(name, "Store_Face_Feature")) {
+      app_config->store_feature = atoi(value) == 1;
     } else if (!strcmp(name, "Store_RGB888")) {
       app_config->store_RGB888 = atoi(value) == 1;
     } else {

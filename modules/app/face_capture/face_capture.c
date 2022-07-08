@@ -255,11 +255,6 @@ CVI_S32 _FaceCapture_CleanAll(face_capture_t *face_cpt_info) {
     if (face_cpt_info->data[j].state != IDLE) {
       LOGI("[APP::FaceCapture] Clean Face Info[%u]\n", j);
       CVI_AI_Free(&face_cpt_info->data[j].image);
-      /* release face pts */
-      free(face_cpt_info->data[j].info.pts.x);
-      free(face_cpt_info->data[j].info.pts.y);
-      memset(&face_cpt_info->data[j].info.pts, 0, sizeof(cvai_pts_t));
-
       CVI_AI_Free(&face_cpt_info->data[j].info);
       face_cpt_info->data[j].state = IDLE;
     }
@@ -330,9 +325,17 @@ static CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta
           // LOGI("[APP::FaceCapture] Create Face Info[%u]\n", j);
           face_cpt_info->data[j].miss_counter = 0;
           memcpy(&face_cpt_info->data[j].info, &face_meta->info[i], sizeof(cvai_face_info_t));
-          /* set useless heap data structure to 0 */
-          memset(&face_cpt_info->data[j].info.pts, 0, sizeof(cvai_pts_t));
-          memset(&face_cpt_info->data[j].info.feature, 0, sizeof(cvai_feature_t));
+
+          /* copy face feature */
+          if (face_cpt_info->do_FR == false || face_cpt_info->cfg.store_feature == false) {
+            memset(&face_cpt_info->data[j].info.feature, 0, sizeof(cvai_feature_t));
+          } else {
+            uint32_t feature_size = getFeatureTypeSize(face_meta->info[i].feature.type) *
+                                    face_meta->info[i].feature.size;
+            face_cpt_info->data[j].info.feature.ptr = (int8_t *)malloc(feature_size);
+            memcpy(face_cpt_info->data[j].info.feature.ptr, face_meta->info[i].feature.ptr,
+                   feature_size);
+          }
 
           /* copy face 5 landmarks */
           face_cpt_info->data[j].info.pts.size = 5;
@@ -413,16 +416,25 @@ static CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta
       /* if found, check whether the quality(or feature) need to be update. */
       if (capture) {
         LOGI("[APP::FaceCapture] Update Face Info[%u]\n", match_idx);
+        int8_t *p_feature = face_cpt_info->data[match_idx].info.feature.ptr;
+        float *p_pts_x = face_cpt_info->data[match_idx].info.pts.x;
+        float *p_pts_y = face_cpt_info->data[match_idx].info.pts.y;
         memcpy(&face_cpt_info->data[match_idx].info, &face_meta->info[i], sizeof(cvai_face_info_t));
+        face_cpt_info->data[match_idx].info.feature.ptr = p_feature;
+        face_cpt_info->data[match_idx].info.pts.x = p_pts_x;
+        face_cpt_info->data[match_idx].info.pts.y = p_pts_y;
 
-        /* set useless heap data structure to 0 */
-        memset(&face_cpt_info->data[match_idx].info.pts, 0, sizeof(cvai_pts_t));
-        memset(&face_cpt_info->data[match_idx].info.feature, 0, sizeof(cvai_feature_t));
+        /* copy face feature */
+        if (face_cpt_info->do_FR == false || face_cpt_info->cfg.store_feature == false) {
+          memset(&face_cpt_info->data[match_idx].info.feature, 0, sizeof(cvai_feature_t));
+        } else {
+          uint32_t feature_size =
+              getFeatureTypeSize(face_meta->info[i].feature.type) * face_meta->info[i].feature.size;
+          memcpy(face_cpt_info->data[match_idx].info.feature.ptr, face_meta->info[i].feature.ptr,
+                 feature_size);
+        }
 
         /* copy face 5 landmarks */
-        face_cpt_info->data[match_idx].info.pts.size = 5;
-        face_cpt_info->data[match_idx].info.pts.x = (float *)malloc(sizeof(float) * 5);
-        face_cpt_info->data[match_idx].info.pts.y = (float *)malloc(sizeof(float) * 5);
         memcpy(face_cpt_info->data[match_idx].info.pts.x, face_meta->info[i].pts.x,
                sizeof(float) * 5);
         memcpy(face_cpt_info->data[match_idx].info.pts.y, face_meta->info[i].pts.y,
@@ -508,11 +520,6 @@ static CVI_S32 clean_data(face_capture_t *face_cpt_info) {
     if (face_cpt_info->data[j].state == MISS) {
       LOGI("[APP::FaceCapture] Clean Face Info[%u]\n", j);
       CVI_AI_Free(&face_cpt_info->data[j].image);
-      /* release face pts */
-      free(face_cpt_info->data[j].info.pts.x);
-      free(face_cpt_info->data[j].info.pts.y);
-      memset(&face_cpt_info->data[j].info.pts, 0, sizeof(cvai_pts_t));
-
       CVI_AI_Free(&face_cpt_info->data[j].info);
       face_cpt_info->data[j].state = IDLE;
     }
@@ -701,6 +708,7 @@ static void SHOW_CONFIG(face_capture_config_t *cfg) {
   printf("[Auto] Time Limit   : %u\n\n", cfg->auto_m_time_limit);
   printf("[Auto] Fast Capture : %s\n\n", cfg->auto_m_fast_cap ? "True" : "False");
   printf(" - Capture Aligned Face : %s\n\n", cfg->capture_aligned_face ? "True" : "False");
+  printf(" - Store Face Feature   : %s\n\n", cfg->store_feature ? "True" : "False");
   printf(" - Store RGB888         : %s\n\n", cfg->store_RGB888 ? "True" : "False");
   return;
 }

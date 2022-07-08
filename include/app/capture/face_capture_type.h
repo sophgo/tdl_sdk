@@ -34,6 +34,7 @@ typedef struct {
 
   bool capture_aligned_face;
   bool capture_extended_face;
+  bool store_feature;
   bool store_RGB888;
 } face_capture_config_t;
 
