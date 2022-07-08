@@ -21,11 +21,12 @@ class IVEImage {
 
   IVEImageImpl *getImpl();
 
-  CVI_S32 bufFlush();
-  CVI_S32 bufRequest();
-  CVI_S32 create(IVE *ive_instance, ImageType enType, CVI_U16 u16Width, CVI_U16 u16Height);
+  CVI_S32 bufFlush(IVE *ive_instance);
+  CVI_S32 bufRequest(IVE *ive_instance);
   CVI_S32 create(IVE *ive_instance, ImageType enType, CVI_U16 u16Width, CVI_U16 u16Height,
-                 IVEImage *buf);
+                 bool cached = false);
+  CVI_S32 create(IVE *ive_instance, ImageType enType, CVI_U16 u16Width, CVI_U16 u16Height,
+                 IVEImage *buf, bool cached = false);
   CVI_S32 free();
   CVI_S32 toFrame(VIDEO_FRAME_INFO_S *frame, bool invertPackage = false);
   CVI_S32 fromFrame(VIDEO_FRAME_INFO_S *frame);
@@ -50,10 +51,11 @@ class IVE {
 
   CVI_S32 init();
   CVI_S32 destroy();
-
+  CVI_U32 getAlignedWidth(uint32_t width);
   CVI_S32 dma(IVEImage *pSrc, IVEImage *pDst, DMAMode mode = DIRECT_COPY, CVI_U64 u64Val = 0,
               CVI_U8 u8HorSegSize = 0, CVI_U8 u8ElemSize = 0, CVI_U8 u8VerSegRows = 0);
   CVI_S32 sub(IVEImage *pSrc1, IVEImage *pSrc2, IVEImage *pDst, SubMode mode = ABS);
+  CVI_S32 roi(IVEImage *pSrc, IVEImage *pDst, uint32_t x1, uint32_t x2, uint32_t y1, uint32_t y2);
   CVI_S32 andImage(IVEImage *pSrc1, IVEImage *pSrc2, IVEImage *pDst);
   CVI_S32 orImage(IVEImage *pSrc1, IVEImage *pSrc2, IVEImage *pDst);
   CVI_S32 erode(IVEImage *pSrc1, IVEImage *pDst, const std::vector<CVI_S32> &mask);

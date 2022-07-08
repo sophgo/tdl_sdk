@@ -1,4 +1,5 @@
 #include "md.hpp"
+#include <sys/time.h>
 #include <memory>
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem_internal.h"
@@ -78,7 +79,17 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
   uint32_t voWidth = init_frame->stVFrame.u32Width;
   uint32_t voHeight = init_frame->stVFrame.u32Height;
   CVI_S32 ret = CVIAI_SUCCESS;
-  ret = md_output.create(ive_instance, ImageType::U8C1, voWidth, voHeight);
+
+  m_padding.left = ive_instance->getAlignedWidth(1);
+  m_padding.right = 1;
+  m_padding.top = 1;
+  m_padding.bottom = 1;
+
+  // create image with padding (1, 1, 1, 1).
+  uint32_t extend_aligned_width = voWidth + m_padding.left + m_padding.right;
+  uint32_t extend_aligned_height = voHeight + m_padding.top + m_padding.bottom;
+  ret = md_output.create(ive_instance, ImageType::U8C1, extend_aligned_width, extend_aligned_height,
+                         true);
   if (ret != CVIAI_SUCCESS) {
     LOGE("Cannot create buffer image in MotionDetection, ret=0x%x\n", ret);
     return CVIAI_ERR_MD_OPERATION_FAILED;
@@ -290,7 +301,11 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
-  ret = ive_instance->frame_diff(&srcImg, &background_img, &md_output, threshold);
+  ive::IVEImage sub_image;
+  ive_instance->roi(&md_output, &sub_image, m_padding.left, m_padding.left + im_width,
+                    m_padding.top, m_padding.top + im_height);
+
+  ret = ive_instance->frame_diff(&srcImg, &background_img, &sub_image, threshold);
   if (do_unmap_src) {
     CVI_SYS_Munmap((void *)processed_frame->stVFrame.pu8VirAddr[0], image_size);
   }
@@ -300,19 +315,10 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
-  VIDEO_FRAME_INFO_S md_output_frame;
-  md_output.bufRequest();
-  md_output.toFrame(&md_output_frame);
+  md_output.bufRequest(ive_instance);
 
-  bool do_unmap = false;
-  if (md_output_frame.stVFrame.pu8VirAddr[0] == NULL) {
-    md_output_frame.stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
-        md_output_frame.stVFrame.u64PhyAddr[0], md_output_frame.stVFrame.u32Length[0]);
-    do_unmap = true;
-  }
-  cv::Mat image(im_height, im_width, CV_8UC1, md_output_frame.stVFrame.pu8VirAddr[0],
-                md_output_frame.stVFrame.u32Stride[0]);
-
+  cv::Mat image(im_height + 2, im_width + 2, CV_8UC1, md_output.getVAddr()[0] + m_padding.left - 1,
+                md_output.getStride()[0]);
   std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Rect> bboxes;
 
@@ -339,14 +345,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 #endif
 
   mergebbox(bboxes);
-
   construct_bbox(bboxes, obj_meta);
-  if (do_unmap) {
-    CVI_SYS_Munmap((void *)md_output_frame.stVFrame.pu8VirAddr[0],
-                   md_output_frame.stVFrame.u32Length[0]);
-    md_output_frame.stVFrame.pu8VirAddr[0] = NULL;
-    md_output_frame.stVFrame.pu8VirAddr[1] = NULL;
-    md_output_frame.stVFrame.pu8VirAddr[2] = NULL;
-  }
+
   return CVIAI_SUCCESS;
 }

@@ -12,17 +12,21 @@ CVI_S32 IVEImage::toFrame(VIDEO_FRAME_INFO_S *frame, bool invertPackage) {
 
 CVI_S32 IVEImage::fromFrame(VIDEO_FRAME_INFO_S *frame) { return mpImpl->fromFrame(frame); }
 
-CVI_S32 IVEImage::bufFlush() { return mpImpl->bufFlush(); }
+CVI_S32 IVEImage::bufFlush(IVE *ive_instance) { return mpImpl->bufFlush(ive_instance->getImpl()); }
 
-CVI_S32 IVEImage::bufRequest() { return mpImpl->bufRequest(); }
-
-CVI_S32 IVEImage::create(IVE *ive_instance, ImageType enType, CVI_U16 u16Width, CVI_U16 u16Height) {
-  return mpImpl->create(ive_instance->getImpl(), enType, u16Width, u16Height);
+CVI_S32 IVEImage::bufRequest(IVE *ive_instance) {
+  return mpImpl->bufRequest(ive_instance->getImpl());
 }
 
 CVI_S32 IVEImage::create(IVE *ive_instance, ImageType enType, CVI_U16 u16Width, CVI_U16 u16Height,
-                         IVEImage *buf) {
-  return mpImpl->create(ive_instance->getImpl(), enType, u16Width, u16Height, buf->getImpl());
+                         bool cached) {
+  return mpImpl->create(ive_instance->getImpl(), enType, u16Width, u16Height, cached);
+}
+
+CVI_S32 IVEImage::create(IVE *ive_instance, ImageType enType, CVI_U16 u16Width, CVI_U16 u16Height,
+                         IVEImage *buf, bool cached) {
+  return mpImpl->create(ive_instance->getImpl(), enType, u16Width, u16Height, buf->getImpl(),
+                        cached);
 }
 
 IVEImageImpl *IVEImage::getImpl() { return mpImpl.get(); }
@@ -53,6 +57,8 @@ CVI_S32 IVE::destroy() { return mpImpl->destroy(); }
 
 IVEImpl *IVE::getImpl() { return mpImpl.get(); }
 
+CVI_U32 IVE::getAlignedWidth(uint32_t width) { return mpImpl->getAlignedWidth(width); }
+
 CVI_S32 IVE::fillConst(IVEImage *pSrc, float value) {
   return mpImpl->fillConst(pSrc->getImpl(), value);
 }
@@ -65,6 +71,11 @@ CVI_S32 IVE::dma(IVEImage *pSrc, IVEImage *pDst, DMAMode mode, CVI_U64 u64Val, C
 
 CVI_S32 IVE::sub(IVEImage *pSrc1, IVEImage *pSrc2, IVEImage *pDst, SubMode mode) {
   return mpImpl->sub(pSrc1->getImpl(), pSrc2->getImpl(), pDst->getImpl(), mode);
+}
+
+CVI_S32 IVE::roi(IVEImage *pSrc, IVEImage *pDst, uint32_t x1, uint32_t x2, uint32_t y1,
+                 uint32_t y2) {
+  return mpImpl->roi(pSrc->getImpl(), pDst->getImpl(), x1, x2, y1, y2);
 }
 
 CVI_S32 IVE::andImage(IVEImage *pSrc1, IVEImage *pSrc2, IVEImage *pDst) {

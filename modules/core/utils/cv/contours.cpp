@@ -547,9 +547,10 @@ void _findContours(cv::InputOutputArray _image, cv::OutputArrayOfArrays _contour
 
   CV_Assert(_contours.empty() || (_contours.channels() == 2 && _contours.depth() == CV_32S));
 
-  cv::Mat image;
-  copyMakeBorder(_image, image, 1, 1, 1, 1, cv::BORDER_CONSTANT | cv::BORDER_ISOLATED,
-                 cv::Scalar(0));
+  cv::Mat image = _image.getMatRef();
+  // copyMakeBorder(_image, image, 1, 1, 1, 1, cv::BORDER_CONSTANT | cv::BORDER_ISOLATED,
+  //                cv::Scalar(0));
+
   cv::MemStorage storage(cvCreateMemStorage());
   CvMat _cimage = image;
   CvSeq *_ccontours = 0;

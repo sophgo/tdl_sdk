@@ -17,12 +17,12 @@ class HWIVEImage : public IVEImageImpl {
   virtual void *getHandle() override;
   virtual CVI_S32 toFrame(VIDEO_FRAME_INFO_S *frame, bool invertPackage = false) override;
   virtual CVI_S32 fromFrame(VIDEO_FRAME_INFO_S *frame) override;
-  virtual CVI_S32 bufFlush() override;
-  virtual CVI_S32 bufRequest() override;
+  virtual CVI_S32 bufFlush(IVEImpl *ive_instance) override;
+  virtual CVI_S32 bufRequest(IVEImpl *ive_instance) override;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                         CVI_U16 u16Height) override;
+                         CVI_U16 u16Height, bool cached) override;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                         CVI_U16 u16Height, IVEImageImpl *buf) override;
+                         CVI_U16 u16Height, IVEImageImpl *buf, bool cached) override;
   virtual CVI_S32 free() override;
   static IVE_IMAGE_TYPE_E convert(ImageType type);
   static ImageType convert(IVE_IMAGE_TYPE_E type);
@@ -55,6 +55,9 @@ class HWIVE : public IVEImpl {
                       CVI_U8 u8VerSegRows = 0) override;
   virtual CVI_S32 sub(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
                       SubMode mode = ABS) override;
+  virtual CVI_U32 getWidthAlign() override;
+  virtual CVI_S32 roi(IVEImageImpl *pSrc, IVEImageImpl *pDst, uint32_t x1, uint32_t x2, uint32_t y1,
+                      uint32_t y2) override;
   virtual CVI_S32 andImage(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst) override;
   virtual CVI_S32 orImage(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst) override;
   virtual CVI_S32 erode(IVEImageImpl *pSrc1, IVEImageImpl *pDst,
@@ -91,24 +94,28 @@ HWIVEImage::HWIVEImage() : m_handle(NULL) { memset(&ive_image, 0, sizeof(IVE_IMA
 
 void *HWIVEImage::getHandle() { return &ive_image; }
 
-CVI_S32 HWIVEImage::bufFlush() {
-  // no-op in standalone IVE because ION isn't cached.
-  return CVI_SUCCESS;
-}
-
-CVI_S32 HWIVEImage::bufRequest() {
-  // no-op in standalone IVE because ION isn't cached.
-  return CVI_SUCCESS;
-}
-
-CVI_S32 HWIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                           CVI_U16 u16Height) {
+CVI_S32 HWIVEImage::bufFlush(IVEImpl *ive_instance) {
   m_handle = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
-  return CVI_IVE_CreateImage(m_handle, &ive_image, convert(enType), u16Width, u16Height);
+  return CVI_IVE_BufFlush(m_handle, &ive_image);
+}
+
+CVI_S32 HWIVEImage::bufRequest(IVEImpl *ive_instance) {
+  m_handle = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
+  return CVI_IVE_BufRequest(m_handle, &ive_image);
 }
 
 CVI_S32 HWIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                           CVI_U16 u16Height, IVEImageImpl *buf) {
+                           CVI_U16 u16Height, bool cached) {
+  m_handle = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
+  if (cached) {
+    return CVI_IVE_CreateImage_Cached(m_handle, &ive_image, convert(enType), u16Width, u16Height);
+  } else {
+    return CVI_IVE_CreateImage(m_handle, &ive_image, convert(enType), u16Width, u16Height);
+  }
+}
+
+CVI_S32 HWIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
+                           CVI_U16 u16Height, IVEImageImpl *buf, bool cached) {
   LOGE("cannot create IVE image with another buffer: unsupported\n");
   return CVI_FAILURE;
 }
@@ -327,6 +334,8 @@ CVI_S32 HWIVE::init() {
 
 CVI_S32 HWIVE::destroy() { return CVI_IVE_DestroyHandle(m_handle); }
 
+CVI_U32 HWIVE::getWidthAlign() { return LUMA_PHY_ALIGN; }
+
 CVI_S32 HWIVE::fillConst(IVEImageImpl *pSrc, float value) {
   IVE_IMAGE_S *pIVEImage = UNWRAP(pSrc);
 
@@ -421,6 +430,31 @@ CVI_S32 HWIVE::add(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
   ctrl.u0q16X = alpha;
   ctrl.u0q16Y = beta;
   return CVI_IVE_Add(m_handle, UNWRAP(pSrc1), UNWRAP(pSrc2), UNWRAP(pDst), &ctrl, false);
+}
+
+CVI_S32 HWIVE::roi(IVEImageImpl *pSrc, IVEImageImpl *pDst, uint32_t x1, uint32_t x2, uint32_t y1,
+                   uint32_t y2) {
+  IVE_IMAGE_S *pIVESrc = UNWRAP(pSrc);
+  IVE_IMAGE_S *pIVEDst = UNWRAP(pDst);
+  uint32_t roi_height = y2 - y1;
+  uint32_t roi_width = x2 - x1;
+  pIVEDst->u32Height = roi_height;
+  pIVEDst->u32Width = roi_width;
+  pIVEDst->u32Stride[0] = pIVESrc->u32Stride[0];
+  pIVEDst->u32Stride[1] = pIVESrc->u32Stride[1];
+  pIVEDst->u32Stride[2] = pIVESrc->u32Stride[2];
+
+  pIVEDst->u64VirAddr[0] = pIVESrc->u64VirAddr[0] + x1 + (y1 * pIVESrc->u32Stride[0]);
+  pIVEDst->u64VirAddr[1] = pIVESrc->u64VirAddr[1] + x1 + (y1 * pIVESrc->u32Stride[1]);
+  pIVEDst->u64VirAddr[2] = pIVESrc->u64VirAddr[2] + x1 + (y1 * pIVESrc->u32Stride[2]);
+
+  pIVEDst->u64PhyAddr[0] = pIVESrc->u64PhyAddr[0] + x1 + (y1 * pIVESrc->u32Stride[0]);
+  pIVEDst->u64PhyAddr[1] = pIVESrc->u64PhyAddr[1] + x1 + (y1 * pIVESrc->u32Stride[0]);
+  pIVEDst->u64PhyAddr[2] = pIVESrc->u64PhyAddr[2] + x1 + (y1 * pIVESrc->u32Stride[0]);
+  pIVEDst->u32Reserved = pIVESrc->u32Reserved;
+  pIVEDst->enType = pIVESrc->enType;
+  return CVI_SUCCESS;
+  LUMA_PHY_ALIGN;
 }
 
 CVI_S32 HWIVE::thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, CVI_U8 u8LowThr,

@@ -16,12 +16,12 @@ class TPUIVEImage : public IVEImageImpl {
   virtual void *getHandle() override;
   virtual CVI_S32 toFrame(VIDEO_FRAME_INFO_S *frame, bool invertPackage = false) override;
   virtual CVI_S32 fromFrame(VIDEO_FRAME_INFO_S *frame) override;
-  virtual CVI_S32 bufFlush() override;
-  virtual CVI_S32 bufRequest() override;
+  virtual CVI_S32 bufFlush(IVEImpl *ive_instance) override;
+  virtual CVI_S32 bufRequest(IVEImpl *ive_instance) override;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                         CVI_U16 u16Height) override;
+                         CVI_U16 u16Height, bool cached) override;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                         CVI_U16 u16Height, IVEImageImpl *buf) override;
+                         CVI_U16 u16Height, IVEImageImpl *buf, bool cached) override;
   virtual CVI_S32 free() override;
   static IVE_IMAGE_TYPE_E convert(ImageType type);
   static ImageType convert(IVE_IMAGE_TYPE_E type);
@@ -47,7 +47,7 @@ class TPUIVE : public IVEImpl {
 
   virtual CVI_S32 init() override;
   virtual CVI_S32 destroy() override;
-
+  virtual CVI_U32 getWidthAlign() override;
   virtual CVI_S32 fillConst(IVEImageImpl *pSrc, float value) override;
   virtual CVI_S32 dma(IVEImageImpl *pSrc, IVEImageImpl *pDst, DMAMode mode = DIRECT_COPY,
                       CVI_U64 u64Val = 0, CVI_U8 u8HorSegSize = 0, CVI_U8 u8ElemSize = 0,
@@ -60,6 +60,8 @@ class TPUIVE : public IVEImpl {
                         const std::vector<CVI_S32> &mask) override;
   virtual CVI_S32 dilate(IVEImageImpl *pSrc1, IVEImageImpl *pDst,
                          const std::vector<CVI_S32> &mask) override;
+  virtual CVI_S32 roi(IVEImageImpl *pSrc, IVEImageImpl *pDst, uint32_t x1, uint32_t x2, uint32_t y1,
+                      uint32_t y2) override;
   virtual CVI_S32 add(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
                       float alpha = 1.0, float beta = 1.0) override;
   virtual CVI_S32 add(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
@@ -89,24 +91,24 @@ TPUIVEImage::TPUIVEImage() : m_handle(NULL) { memset(&ive_image, 0, sizeof(IVE_I
 
 void *TPUIVEImage::getHandle() { return &ive_image; }
 
-CVI_S32 TPUIVEImage::bufFlush() {
+CVI_S32 TPUIVEImage::bufFlush(IVEImpl *ive_instance) {
   if (m_handle == NULL) return CVI_FAILURE;
   return CVI_IVE_BufFlush(m_handle, &ive_image);
 }
 
-CVI_S32 TPUIVEImage::bufRequest() {
+CVI_S32 TPUIVEImage::bufRequest(IVEImpl *ive_instance) {
   if (m_handle == NULL) return CVI_FAILURE;
   return CVI_IVE_BufRequest(m_handle, &ive_image);
 }
 
 CVI_S32 TPUIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                            CVI_U16 u16Height) {
+                            CVI_U16 u16Height, bool cached) {
   m_handle = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
   return CVI_IVE_CreateImage(m_handle, &ive_image, convert(enType), u16Width, u16Height);
 }
 
 CVI_S32 TPUIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                            CVI_U16 u16Height, IVEImageImpl *buf) {
+                            CVI_U16 u16Height, IVEImageImpl *buf, bool cached) {
   m_handle = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
   return CVI_IVE_CreateImage2(m_handle, &ive_image, convert(enType), u16Width, u16Height,
                               UNWRAP(buf));
@@ -288,6 +290,8 @@ CVI_S32 TPUIVE::init() {
 
 CVI_S32 TPUIVE::destroy() { return CVI_IVE_DestroyHandle(m_handle); }
 
+CVI_U32 TPUIVE::getWidthAlign() { return DEFAULT_ALIGN; }
+
 CVI_S32 TPUIVE::fillConst(IVEImageImpl *pSrc, float value) {
   return CVI_IVE_ConstFill(m_handle, value, UNWRAP(pSrc), false);
 }
@@ -307,6 +311,13 @@ CVI_S32 TPUIVE::dma(IVEImageImpl *pSrc, IVEImageImpl *pDst, DMAMode mode, CVI_U6
   }
 
   return CVI_IVE_DMA(m_handle, UNWRAP(pSrc), UNWRAP(pDst), &ctrl, false);
+}
+
+CVI_S32 TPUIVE::roi(IVEImageImpl *pSrc, IVEImageImpl *pDst, uint32_t x1, uint32_t x2, uint32_t y1,
+                    uint32_t y2) {
+  return CVI_IVE_SubImage(m_handle, UNWRAP(pSrc), UNWRAP(pDst), static_cast<uint16_t>(x1),
+                          static_cast<uint16_t>(y1), static_cast<uint16_t>(x2),
+                          static_cast<uint16_t>(y2));
 }
 
 CVI_S32 TPUIVE::sub(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst, SubMode mode) {

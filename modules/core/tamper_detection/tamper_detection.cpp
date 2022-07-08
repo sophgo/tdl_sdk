@@ -281,7 +281,7 @@ int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
 #endif
 
   // Refresh CPU cache before CPU use.
-  frame_diff.bufRequest();
+  frame_diff.bufRequest(ive_instance);
 
   std::vector<CVI_U8 *> vaddr = frame_diff.getVAddr();
   int diff_sum = 0;

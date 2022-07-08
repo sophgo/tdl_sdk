@@ -18,12 +18,12 @@ class IVEImageImpl {
 
   virtual CVI_S32 toFrame(VIDEO_FRAME_INFO_S *frame, bool invertPackage = false) = 0;
   virtual CVI_S32 fromFrame(VIDEO_FRAME_INFO_S *frame) = 0;
-  virtual CVI_S32 bufFlush() = 0;
-  virtual CVI_S32 bufRequest() = 0;
+  virtual CVI_S32 bufFlush(IVEImpl *ive_instance) = 0;
+  virtual CVI_S32 bufRequest(IVEImpl *ive_instance) = 0;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                         CVI_U16 u16Height) = 0;
+                         CVI_U16 u16Height, bool cached) = 0;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
-                         CVI_U16 u16Height, IVEImageImpl *buf) = 0;
+                         CVI_U16 u16Height, IVEImageImpl *buf, bool cached) = 0;
   virtual CVI_S32 free() = 0;
 
   virtual CVI_U32 getHeight() = 0;
@@ -45,15 +45,26 @@ class IVEImpl {
   virtual ~IVEImpl() = default;
   static IVEImpl *create();
 
+  uint32_t getAlignedWidth(uint32_t width) {
+    uint32_t align = getWidthAlign();
+    uint32_t stride = (uint32_t)(width / align) * align;
+    if (stride < width) {
+      stride += align;
+    }
+    return stride;
+  }
+
   virtual CVI_S32 init() = 0;
   virtual CVI_S32 destroy() = 0;
-
+  virtual CVI_U32 getWidthAlign() = 0;
   virtual CVI_S32 fillConst(IVEImageImpl *pSrc, float value) = 0;
   virtual CVI_S32 dma(IVEImageImpl *pSrc, IVEImageImpl *pDst, DMAMode mode = DIRECT_COPY,
                       CVI_U64 u64Val = 0, CVI_U8 u8HorSegSize = 0, CVI_U8 u8ElemSize = 0,
                       CVI_U8 u8VerSegRows = 0) = 0;
   virtual CVI_S32 sub(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
                       SubMode mode = ABS) = 0;
+  virtual CVI_S32 roi(IVEImageImpl *pSrc, IVEImageImpl *pDst, uint32_t x1, uint32_t x2, uint32_t y1,
+                      uint32_t y2) = 0;
   virtual CVI_S32 andImage(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst) = 0;
   virtual CVI_S32 orImage(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst) = 0;
   virtual CVI_S32 erode(IVEImageImpl *pSrc1, IVEImageImpl *pDst,

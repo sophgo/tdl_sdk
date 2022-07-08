@@ -38,6 +38,15 @@ class MotionDetection {
   ive::IVEImage md_output;
   uint32_t im_width;
   uint32_t im_height;
+
+  struct Padding {
+    uint32_t left;
+    uint32_t top;
+    uint32_t right;
+    uint32_t bottom;
+  };
+
+  Padding m_padding;
   cviai::VpssEngine *m_vpss_engine;
   uint32_t m_vpss_timeout;
 };
