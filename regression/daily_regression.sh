@@ -58,7 +58,6 @@ if [ "$total_ion_size" -gt "20000000" ]; then
   test_suites="${test_suites}:FaceQualityTestSuite.*"
   test_suites="${test_suites}:MultiObjectTrackingTestSuite.*"
   test_suites="${test_suites}:ReIdentificationTestSuite.*"
-  test_suites="${test_suites}:MotionDetection*"
   test_suites="${test_suites}:LivenessTestSuite.*"
   test_suites="${test_suites}:RetinafaceTestSuite.*"
   test_suites="${test_suites}:RetinafaceIRTestSuite.*"
@@ -69,7 +68,6 @@ if [ "$total_ion_size" -gt "20000000" ]; then
   test_suites="${test_suites}:YawnCTestSuite.*"
   test_suites="${test_suites}:SoundCTestSuite.*"
   test_suites="${test_suites}:FLTestSuite.*"
-  test_suites="${test_suites}:FeatureMatchingTestSuite.*"
   #test_suites="${test_suites}:TamperDetectionTestSuite.*"
 fi
 
@@ -79,6 +77,8 @@ test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
 test_suites="${test_suites}:LicensePlateRecognitionTestSuite.*"
 test_suites="${test_suites}:ThermalFaceDetectionTestSuite.*"
 test_suites="${test_suites}:ThermalPersonDetectionTestSuite.*"
+test_suites="${test_suites}:FeatureMatchingTestSuite.*"
+test_suites="${test_suites}:MotionDetection*"
 fi
 
 # ION requirement >= 60 MB
