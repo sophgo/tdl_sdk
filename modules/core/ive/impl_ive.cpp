@@ -454,7 +454,6 @@ CVI_S32 HWIVE::roi(IVEImageImpl *pSrc, IVEImageImpl *pDst, uint32_t x1, uint32_t
   pIVEDst->u32Reserved = pIVESrc->u32Reserved;
   pIVEDst->enType = pIVESrc->enType;
   return CVI_SUCCESS;
-  LUMA_PHY_ALIGN;
 }
 
 CVI_S32 HWIVE::thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, CVI_U8 u8LowThr,
