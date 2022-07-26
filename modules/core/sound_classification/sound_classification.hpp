@@ -146,6 +146,7 @@ class SoundClassification final : public Core {
     return CVI_SUCCESS;
   };
   int getClassesNum();
+  virtual bool allowExportChannelAttribute() const override { return true; }
 
  private:
   float *STFT(float *data, int channel, int img_height, int img_width);

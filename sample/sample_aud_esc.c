@@ -149,6 +149,8 @@ int main(int argc, char **argv) {
     return ret;
   }
 
+  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, true);
+
   if (argc == 4) {
     record = atoi(argv[2]) ? true : false;
     outpath = (char *)malloc(sizeof(argv[3]));
