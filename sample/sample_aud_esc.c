@@ -14,8 +14,16 @@
 
 // ESC class name
 enum Classes { SNEEZING, COUGHING, CLAPPING, BABYCRY, GLASSBREAKING, OFFICE };
-static const char *enumStr[] = {"Sneezing/Coughing", "Sneezong/Coughing", "Clapping",
-                                "Baby Cry",          "Glass breaking",    "Office"};
+// This model has 6 classes, including Sneezing, Coughing, Clapping, Baby Cry, Glass breaking,
+// Office. There will be a Normal option in the end, becuase the score is lower than threshold, we
+// will set it to Normal.
+static const char *enumStr[] = {"Sneezing/Coughing",
+                                "Sneezing/Coughing",
+                                "Clapping",
+                                "Baby Cry",
+                                "Glass breaking",
+                                "Office",
+                                "Normal"};
 
 bool gRun = true;     // signal
 bool record = false;  // record to output
