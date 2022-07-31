@@ -2,18 +2,23 @@
 # License
 # Author Yangwen Huang <yangwen.huang@bitmain.com>
 
+set(FTP_SERVER_IP $ENV{FTP_SERVER_IP})
+if (NOT FTP_SERVER_IP)
+  set(FTP_SERVER_IP "10.18.65.11")
+endif()
+
 if (SHRINK_OPENCV_SIZE)
 
   if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-uclibc-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@10.18.65.11/third_party/latest/uclibc/opencv_aisdk.tar.gz)
+    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/uclibc/opencv_aisdk.tar.gz)
   elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-gnueabihf-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@10.18.65.11/third_party/latest/32bit/opencv_aisdk.tar.gz)
+    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/32bit/opencv_aisdk.tar.gz)
   elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-aarch64-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@10.18.65.11/third_party/latest/64bit/opencv_aisdk.tar.gz)
+    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/64bit/opencv_aisdk.tar.gz)
   elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-riscv64-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@10.18.65.11/third_party/latest/glibc_riscv64/opencv_aisdk.tar.gz)
+    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/glibc_riscv64/opencv_aisdk.tar.gz)
   elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-riscv64-musl.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@10.18.65.11/third_party/latest/musl_riscv64/opencv_aisdk.tar.gz)
+    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/musl_riscv64/opencv_aisdk.tar.gz)
   else()
     message(FATAL_ERROR "No shrinked opencv library for ${CMAKE_TOOLCHAIN_FILE}")
   endif()
