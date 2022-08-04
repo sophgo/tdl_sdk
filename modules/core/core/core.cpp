@@ -214,6 +214,35 @@ int Core::setVpssEngine(VpssEngine *engine) {
   return CVIAI_SUCCESS;
 }
 
+int Core::setVpssDepth(uint32_t in_index, uint32_t depth) {
+  if (m_vpss_config.size() <= 0) {
+    LOGE("Model is not opened yet! Please set vpss depth when model is ready.\n");
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+
+  if (in_index >= m_vpss_config.size()) {
+    LOGE("Wrong input index: %d\n", in_index);
+    return CVIAI_ERR_INVALID_ARGS;
+  }
+
+  m_vpss_config[in_index].chn_attr.u32Depth = depth;
+  return CVIAI_SUCCESS;
+}
+
+int Core::getVpssDepth(uint32_t in_index, uint32_t *depth) {
+  if (m_vpss_config.size() <= 0) {
+    LOGE("Model is not opened yet! Please set vpss depth when model is ready.\n");
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+
+  if (in_index >= m_vpss_config.size()) {
+    LOGE("Wrong input index: %d\n", in_index);
+    return CVIAI_ERR_INVALID_ARGS;
+  }
+  *depth = m_vpss_config[in_index].chn_attr.u32Depth;
+  return CVIAI_SUCCESS;
+}
+
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
 
 int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,

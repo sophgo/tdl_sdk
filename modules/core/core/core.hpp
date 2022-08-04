@@ -88,6 +88,8 @@ class Core {
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
   bool hasSkippedVpssPreprocess() const { return m_skip_vpss_preprocess; }
+  int setVpssDepth(uint32_t in_index, uint32_t depth);
+  int getVpssDepth(uint32_t in_index, uint32_t *depth);
   virtual int getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
                            cvai_vpssconfig_t *chn_config);
   virtual void setModelThreshold(float threshold);

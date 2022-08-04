@@ -232,6 +232,30 @@ DLL_EXPORT CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle,
                                                 CVI_AI_SUPPORTED_MODEL_E model, bool skip);
 
 /**
+ * @brief Set list depth for VPSS.
+ *
+ * @param handle An AI SDK handle.
+ * @param model Supported model id.
+ * @param input_id input index of model.
+ * @param depth list depth of VPSS.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_SetVpssDepth(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
+                                       uint32_t input_id, uint32_t depth);
+
+/**
+ * @brief Get list depth for VPSS.
+ *
+ * @param handle An AI SDK handle.
+ * @param model Supported model id.
+ * @param input_id input index of model.
+ * @param depth list depth of VPSS.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_GetVpssDepth(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
+                                       uint32_t input_id, uint32_t *depth);
+
+/**
  * @brief Get skip preprocess value for given supported model.
  *
  * @param handle An AI SDK handle.

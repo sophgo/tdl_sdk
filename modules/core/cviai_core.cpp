@@ -379,6 +379,30 @@ CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E con
   return CVIAI_SUCCESS;
 }
 
+CVI_S32 CVI_AI_SetVpssDepth(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
+                            uint32_t input_id, uint32_t depth) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Core *instance = getInferenceInstance(model, ctx);
+  if (instance != nullptr) {
+    return instance->setVpssDepth(input_id, depth);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(model));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+}
+
+CVI_S32 CVI_AI_GetVpssDepth(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
+                            uint32_t input_id, uint32_t *depth) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Core *instance = getInferenceInstance(model, ctx);
+  if (instance != nullptr) {
+    return instance->getVpssDepth(input_id, depth);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(model));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+}
+
 CVI_S32 CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t *num) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   VPSS_GRP *ids = (VPSS_GRP *)malloc(ctx->vec_vpss_engine.size() * sizeof(VPSS_GRP));
