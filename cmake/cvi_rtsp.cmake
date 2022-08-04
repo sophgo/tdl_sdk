@@ -15,15 +15,28 @@ else()
   message(FATAL_ERROR "Unrecognized toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-ExternalProject_Add(cvi_rtsp
-  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_deps/cvi_rtsp-Download
-  GIT_REPOSITORY ssh://10.240.0.84:29418/cvi_rtsp
-  BUILD_COMMAND CROSS_COMPILE=${TC_PATH}${CROSS_COMPILE} SDK_VER=${RTSP_SDK_VER} ./build.sh
-  CONFIGURE_COMMAND ""
-  INSTALL_COMMAND ""
-  BUILD_IN_SOURCE true
-  BUILD_BYPRODUCTS <SOURCE_DIR>/src/libcvi_rtsp.so
-)
+if(EXISTS $ENV{TOP_DIR}/cvi_rtsp)
+  ExternalProject_Add(cvi_rtsp
+    URL "file://$ENV{TOP_DIR}/cvi_rtsp"
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_deps/cvi_rtsp-Download
+    BUILD_COMMAND CROSS_COMPILE=${TC_PATH}${CROSS_COMPILE} SDK_VER=${RTSP_SDK_VER} ./build.sh
+    CONFIGURE_COMMAND ""
+    INSTALL_COMMAND ""
+    BUILD_IN_SOURCE true
+    BUILD_BYPRODUCTS <SOURCE_DIR>/src/libcvi_rtsp.so
+  )
+else()
+  ExternalProject_Add(cvi_rtsp
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_deps/cvi_rtsp-Download
+    GIT_REPOSITORY ssh://10.240.0.84:29418/cvi_rtsp
+    BUILD_COMMAND CROSS_COMPILE=${TC_PATH}${CROSS_COMPILE} SDK_VER=${RTSP_SDK_VER} ./build.sh
+    CONFIGURE_COMMAND ""
+    INSTALL_COMMAND ""
+    BUILD_IN_SOURCE true
+    BUILD_BYPRODUCTS <SOURCE_DIR>/src/libcvi_rtsp.so
+  )
+endif()
+
 
 ExternalProject_Get_property(cvi_rtsp SOURCE_DIR)
 
