@@ -187,6 +187,9 @@ void RetinafaceYolox::outputParser(const int image_width, const int image_height
       CVI_AI_FreeCpp(&info);
     }
   }
+  for (size_t i = 0; i < vec_face.size(); ++i) {
+    CVI_AI_FreeCpp(&vec_face[i].pts);
+  }
 }
 
 }  // namespace cviai
