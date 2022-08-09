@@ -36,6 +36,7 @@ void copyMakeBorder(const float *src, float *dst, int srcLen, int top, int left)
   for (i = 0; i < right; ++i) {
     dstInner[i + srcLen] = src[tab[i + left]];
   }
+  delete[] tab;
 }
 
 SoundClassification::SoundClassification() : Core(CVI_MEM_SYSTEM) {
