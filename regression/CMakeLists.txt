@@ -99,6 +99,7 @@ set(UnitTests
   reg_daily_retinaface.cpp
   reg_daily_retinafaceIR.cpp
   reg_daily_retinaface_hardhat.cpp
+  reg_daily_fdmask.cpp
   reg_daily_es_classification.cpp
   reg_daily_eye_classification.cpp
   reg_daily_yawn_classification.cpp

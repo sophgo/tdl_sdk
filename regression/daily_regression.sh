@@ -60,6 +60,7 @@ if [ "$total_ion_size" -gt "20000000" ]; then
   test_suites="${test_suites}:ReIdentificationTestSuite.*"
   test_suites="${test_suites}:LivenessTestSuite.*"
   test_suites="${test_suites}:RetinafaceTestSuite.*"
+  test_suites="${test_suites}:FaceMaskDetectionTestSuite.*"
   test_suites="${test_suites}:RetinafaceIRTestSuite.*"
   test_suites="${test_suites}:RetinafaceHardhatTestSuite.*"
   test_suites="${test_suites}:IncarTestSuite.*"
