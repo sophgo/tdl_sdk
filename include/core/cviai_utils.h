@@ -115,6 +115,9 @@ DLL_EXPORT CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint3
                                         const uint32_t metaHeight, const cvai_face_info_t *info,
                                         VIDEO_FRAME_INFO_S *outFrame, const bool enableGDC);
 
+DLL_EXPORT CVI_S32 CVI_AI_Face_Quality_Laplacian(VIDEO_FRAME_INFO_S *srcFrame,
+                                                 cvai_face_info_t *face_info, float *score);
+
 /**
  * @brief
  *

@@ -7,6 +7,7 @@
 #include "core/utils/vpss_helper.h"
 #include "utils/core_utils.hpp"
 #include "utils/face_utils.hpp"
+#include "utils/image_utils.hpp"
 
 #include <string.h>
 
@@ -155,6 +156,11 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
     }
   }
   return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Face_Quality_Laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *face_info,
+                                      float *score) {
+  return cviai::face_quality_laplacian(srcFrame, face_info, score);
 }
 
 CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,

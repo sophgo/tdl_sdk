@@ -495,4 +495,75 @@ CVI_S32 ALIGN_FACE_TO_FRAME(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *ds
   return CVI_SUCCESS;
 }
 
+// #define VISUAL_LAPLACIAN_RESULT
+
+CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *face_info,
+                               float *score) {
+#ifdef VISUAL_LAPLACIAN_RESULT
+  static uint32_t counter = 0;
+  counter += 1;
+#endif
+  if (false == IS_SUPPORTED_FORMAT(srcFrame)) {
+    return CVI_FAILURE;
+  }
+  bool do_unmap = false;
+  DO_MAP_IF_NEEDED(srcFrame, &do_unmap);
+
+  cvai_image_t tmp_image;
+  memset(&tmp_image, 0, sizeof(cvai_image_t));
+  cvai_face_info_t tmp_face_info;
+  memset(&tmp_face_info, 0, sizeof(cvai_face_info_t));
+  uint32_t h, w, s;
+  uint8_t *p;
+  if (CVI_SUCCESS != PREPARE_FACE_ALIGNMENT_DATA(srcFrame, &tmp_image, face_info, &tmp_face_info,
+                                                 &h, &w, &s, &p)) {
+    return CVI_FAILURE;
+  }
+
+  cv::Mat image(h, w, CV_8UC3, p, s);
+  cv::Mat warp_image(cv::Size(112, 112), image.type());
+  if (face_align(image, warp_image, tmp_face_info) != 0) {
+    LOGE("face_align failed.\n");
+    return CVI_FAILURE;
+  }
+  cv::Mat image_gray;
+  cv::Mat ed;
+#ifdef ENABLE_CVIAI_CV_UTILS
+  cviai::cvtColor(warp_image, image_gray, COLOR_RGB2GRAY);
+#else
+  cv::cvtColor(warp_image, image_gray, cv::COLOR_RGB2GRAY);
+#endif
+  double laplacian_score = 0;
+  for (int i = 1; i < FACE_IMAGE_H - 1; i++) {
+    for (int j = 1; j < FACE_IMAGE_W - 1; j++) {
+      laplacian_score +=
+          std::abs(4 * (double)image_gray.at<uchar>(i, j) - (double)image_gray.at<uchar>(i - 1, j) -
+                   (double)image_gray.at<uchar>(i + 1, j) - (double)image_gray.at<uchar>(i, j - 1) -
+                   (double)image_gray.at<uchar>(i, j + 1));
+    }
+  }
+  *score = (float)laplacian_score;
+  // cv::Laplacian(image_gray, ed, CV_8U, 3, 1, 0, cv::BORDER_DEFAULT);
+  // *score = cv::sum(ed)[0];
+
+#ifdef VISUAL_LAPLACIAN_RESULT
+  printf("score = %.2f\n", *score);
+  if (counter % 10 == 0) {
+    char filename[128];
+    sprintf(filename, "test/face_warp-%u.png", counter);
+    cv::imwrite(filename, warp_image);
+    sprintf(filename, "test/face_laplacian-%u.png", counter);
+    cv::imwrite(filename, ed);
+  }
+#endif
+
+  free(tmp_face_info.pts.x);
+  free(tmp_face_info.pts.y);
+
+  CVI_AI_Free(&tmp_image);
+  DO_UNMAP_IF_NEEDED(srcFrame, do_unmap);
+
+  return CVI_SUCCESS;
+}
+
 }  // namespace cviai

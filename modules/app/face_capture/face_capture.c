@@ -27,7 +27,8 @@ static CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta
 static CVI_S32 clean_data(face_capture_t *face_cpt_info);
 static CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
                             cvai_face_t *face_meta);
-static void face_quality_assessment(cvai_face_t *face, bool *skip, quality_assessment_e qa_method);
+static void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face, bool *skip,
+                                    quality_assessment_e qa_method);
 
 /* face capture functions (helper) */
 static void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_info, bool *skip);
@@ -203,7 +204,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
       return CVIAI_FAILURE;
     }
   } else {
-    face_quality_assessment(&face_cpt_info->last_faces, skip, face_cpt_info->cfg.qa_method);
+    face_quality_assessment(frame, &face_cpt_info->last_faces, NULL, face_cpt_info->cfg.qa_method);
   }
   free(skip);
 
@@ -262,7 +263,8 @@ CVI_S32 _FaceCapture_CleanAll(face_capture_t *face_cpt_info) {
   return CVIAI_SUCCESS;
 }
 
-static void face_quality_assessment(cvai_face_t *face, bool *skip, quality_assessment_e qa_method) {
+static void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face, bool *skip,
+                                    quality_assessment_e qa_method) {
   /* NOTE: Make sure the coordinate is recovered by RetinaFace */
   for (uint32_t i = 0; i < face->size; i++) {
     if (skip != NULL && skip[i]) {
@@ -283,6 +285,16 @@ static void face_quality_assessment(cvai_face_t *face, bool *skip, quality_asses
         float dy = face->info[i].pts.y[0] - face->info[i].pts.y[1];
         float dist_score = sqrt(dx * dx + dy * dy) / EYE_DISTANCE_STANDARD;
         face->info[i].face_quality = (dist_score >= 1.) ? 1. : dist_score;
+      } break;
+      case LAPLACIAN: {
+        static const float face_area = 112 * 112;
+        static const float laplacian_threshold = 8.0; /* tune this value for different condition */
+        float score;
+        CVI_AI_Face_Quality_Laplacian(frame, &face->info[i], &score);
+        score /= face_area;
+        score /= laplacian_threshold;
+        if (score > 1.0) score = 1.0;
+        face->info[i].face_quality = score;
       } break;
       default: {
         LOGE("Unknown QA method.\n");
