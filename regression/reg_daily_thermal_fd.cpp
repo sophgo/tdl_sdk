@@ -115,6 +115,7 @@ TEST_F(ThermalFaceDetectionTestSuite, accruacy) {
 #endif
     }
     bool *match_result = new bool[expected_bbox_num];
+    std::fill_n(match_result, expected_bbox_num, false);
     for (uint32_t j = 0; j < face_meta->size; j++) {
       bool is_match = false;
       for (uint32_t i = 0; i < expected_bbox_num; i++) {
