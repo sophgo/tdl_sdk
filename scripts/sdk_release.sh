@@ -74,6 +74,10 @@ elif [[ "$CHIP_ARCH" == "MARS" ]]; then
     USE_TPU_IVE=OFF
     IVE_SDK_INSTALL_PATH=""
     SHRINK_OPENCV_SIZE=ON
+elif [[ "$CHIP_ARCH" == "PHOBOS" ]]; then
+    SHRINK_OPENCV_SIZE=ON
+    OPENCV_INSTALL_PATH=""
+    USE_TPU_IVE=ON
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
     exit 1
@@ -121,13 +125,13 @@ make clean || exit 1
 echo "done"
 popd
 
-
-pushd ${AI_SDK_INSTALL_PATH}/sample
-make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
-make install || exit 1
-make clean || exit 1
-echo "done"
-popd
-
+if [[ "$CHIP_ARCH" != "PHOBOS" ]]; then
+  pushd ${AI_SDK_INSTALL_PATH}/sample
+  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make install || exit 1
+  make clean || exit 1
+  echo "done"
+  popd
+fi
 
 rm -rf ${AI_SDK_INSTALL_PATH}/tmp_install

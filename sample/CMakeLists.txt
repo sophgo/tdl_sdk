@@ -69,7 +69,7 @@ set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so)
 
-if("${CVI_PLATFORM}" STREQUAL "MARS")
+if("${CVI_PLATFORM}" STREQUAL "MARS" OR "${CVI_PLATFORM}" STREQUAL "PHOBOS")
 set(SAMPLE_LIBS ${SAMPLE_LIBS}
     ${MLIR_SDK_ROOT}/lib/libz.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so

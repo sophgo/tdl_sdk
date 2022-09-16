@@ -94,6 +94,13 @@ endif
 
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -fdiagnostics-color=always -s 
 
+
+ifeq ($(CHIP), PHOBOS)
+POBOS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
+CFLAGS += -I$(POBOS_INC_PATH)
+endif
+
+
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
 STRIPSYMBOL =

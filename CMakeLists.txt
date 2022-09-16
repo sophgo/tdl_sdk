@@ -20,7 +20,7 @@ if("${CVI_PLATFORM}" STREQUAL "")
 endif()
 
 
-if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS"))
+if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS" OR "${CVI_PLATFORM}" STREQUAL "PHOBOS"))
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
 
@@ -29,6 +29,8 @@ if("${CVI_PLATFORM}" STREQUAL "MARS")
   add_definitions(-DMARS)
   set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
   set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
+elseif("${CVI_PLATFORM}" STREQUAL "PHOBOS")
+  add_definitions(-DPHOBOS)
 endif()
 
 if("${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM" OR "${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM64")
@@ -136,9 +138,11 @@ include_directories(${IVE_INCLUDES}
                     ${cvi_rtsp_INCLUDE})
 
 add_subdirectory(modules)
+
+if(NOT ("${CVI_PLATFORM}" STREQUAL "PHOBOS"))
 add_subdirectory(regression)
 add_subdirectory(sample)
 add_subdirectory(tool)
-
+endif()
 # Install doc
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc DESTINATION doc)
