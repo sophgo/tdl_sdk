@@ -1,7 +1,8 @@
 #include "core_utils.hpp"
 #include "cviai_log.hpp"
+#ifndef PHOBOS
 #include "neon_utils.hpp"
-
+#endif
 #include <cvi_sys.h>
 #include <math.h>
 #include <string.h>
@@ -52,6 +53,9 @@ void clip_boxes(int width, int height, cvai_bbox_t &box) {
 
 void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const float *qMean,
                        VIDEO_FRAME_INFO_S *outFrame) {
+#ifdef PHOBOS
+  LOGE("not supported");
+#else
   if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 ||
       outFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR) {
     LOGE("Input must be PIXEL_FORMAT_RGB_888. Output must be PIXEL_FORMAT_RGB_888_PLANAR.\n");
@@ -89,6 +93,7 @@ void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const 
     CVI_SYS_Munmap((void *)outFrame->stVFrame.pu8VirAddr[0], outFrame->stVFrame.u32Length[0]);
     outFrame->stVFrame.pu8VirAddr[0] = NULL;
   }
+#endif
 }
 
 }  // namespace cviai

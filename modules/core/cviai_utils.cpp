@@ -6,10 +6,12 @@
 #include "core/error_msg.hpp"
 #include "core/utils/vpss_helper.h"
 #include "utils/core_utils.hpp"
+
+#ifndef NO_OPENCV
 #include "utils/face_utils.hpp"
 #include "utils/image_utils.hpp"
-
-#include <string.h>
+#endif
+#include <string>
 
 /** NOTE: If turn on DO_ALIGN_STRIDE, we can not copy the data from cv::Mat directly. */
 /** TODO: If ALIGN is not necessary in AI SDK, remove it in the future. */
@@ -107,6 +109,9 @@ CVI_S32 CVI_AI_ObjectNMS(const cvai_object_t *obj, cvai_object_t *objNMS, const 
 CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWidth,
                              const uint32_t metaHeight, const cvai_face_info_t *info,
                              VIDEO_FRAME_INFO_S *outFrame, const bool enableGDC) {
+#ifdef NO_OPENCV
+  return CVIAI_FAILURE;
+#else
   if (enableGDC) {
     if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
@@ -156,11 +161,16 @@ CVI_S32 CVI_AI_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWid
     }
   }
   return CVIAI_SUCCESS;
+#endif
 }
 
 CVI_S32 CVI_AI_Face_Quality_Laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *face_info,
                                       float *score) {
+#ifdef NO_OPENCV
+  return CVIAI_FAILURE;
+#else
   return cviai::face_quality_laplacian(srcFrame, face_info, score);
+#endif
 }
 
 CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
@@ -269,4 +279,61 @@ CVI_S32 CVI_AI_EstimateImageSize(uint64_t *size, uint32_t height, uint32_t width
       return CVIAI_ERR_INVALID_ARGS;
   }
   return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_LoadBinImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
+                            PIXEL_FORMAT_E format) {
+  // if(frame->stVFrame.enPixelFormat != PIXE)
+  if (format != PIXEL_FORMAT_RGB_888_PLANAR) {
+    LOGE("Pixel format [%d] is not supported.\n", format);
+    return CVI_FAILURE;
+  }
+
+  FILE *fp = fopen(filepath, "rb");
+  if (fp == nullptr) {
+    LOGE("failed to open: %s.\n", filepath);
+    return CVI_FAILURE;
+  }
+  int width = 0;
+  int height = 0;
+
+  fseek(fp, 0, SEEK_END);
+  long len = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  fread(&width, sizeof(uint32_t), 1, fp);
+  fread(&height, sizeof(uint32_t), 1, fp);
+
+  long left_len = len - 8;
+  uint8_t *p_data = new uint8_t[left_len];
+  fread(p_data, left_len, 1, fp);
+  fclose(fp);
+  LOGI("load bin image,width:%d,height:%d,imagesize:%ld\n", width, height, left_len);
+
+  if (CREATE_ION_HELPER(frame, width, height, format, "cviai/image") != CVIAI_SUCCESS) {
+    LOGE("alloc ion failed.\n");
+    delete[] p_data;
+    return CVIAI_FAILURE;
+  }
+
+  int ret = CVI_SUCCESS;
+  int len_per_plane = left_len / 3;
+  for (int i = 0; i < 3; i++) {
+    const uint8_t *p_plane_src = p_data + i * len_per_plane;
+    memcpy(frame->stVFrame.pu8VirAddr[i], p_plane_src, len_per_plane);
+  }
+  delete[] p_data;
+  return ret;
+}
+CVI_S32 CVI_AI_DestroyImage(VIDEO_FRAME_INFO_S *frame) {
+  CVI_S32 ret = CVI_SUCCESS;
+  if (frame->stVFrame.u64PhyAddr[0] != 0) {
+    ret = CVI_SYS_IonFree(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0]);
+    frame->stVFrame.u64PhyAddr[0] = (CVI_U64)0;
+    frame->stVFrame.u64PhyAddr[1] = (CVI_U64)0;
+    frame->stVFrame.u64PhyAddr[2] = (CVI_U64)0;
+    frame->stVFrame.pu8VirAddr[0] = NULL;
+    frame->stVFrame.pu8VirAddr[1] = NULL;
+    frame->stVFrame.pu8VirAddr[2] = NULL;
+  }
+  return ret;
 }

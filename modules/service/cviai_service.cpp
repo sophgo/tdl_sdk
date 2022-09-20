@@ -5,7 +5,9 @@
 #include "cviai_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
 #include "draw_rect/draw_rect.hpp"
+#ifndef NO_OPENCV
 #include "face_angle/face_angle.hpp"
+#endif
 #include "feature_matching/feature_matching.hpp"
 
 typedef struct {
@@ -287,15 +289,23 @@ CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle, const cv
 }
 
 CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp) {
+#ifdef NO_OPENCV
+  return CVIAI_FAILURE;
+#else
   return cviai::service::Predict(pts, hp);
+#endif
 }
 
 CVI_S32 CVI_AI_Service_FaceAngleForAll(const cvai_face_t *meta) {
+#ifdef NO_OPENCV
+  return CVIAI_FAILURE;
+#else
   CVI_S32 ret = CVIAI_SUCCESS;
   for (uint32_t i = 0; i < meta->size; i++) {
     ret |= cviai::service::Predict(&meta->info[i].pts, &meta->info[i].head_pose);
   }
   return ret;
+#endif
 }
 
 CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame) {

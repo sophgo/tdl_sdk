@@ -20,17 +20,30 @@ if("${CVI_PLATFORM}" STREQUAL "")
 endif()
 
 
-if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS" OR "${CVI_PLATFORM}" STREQUAL "PHOBOS"))
+if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS" 
+        OR "${CVI_PLATFORM}" STREQUAL "PHOBOS" OR "${CVI_PLATFORM}" STREQUAL "MARS_PHOBOS"))
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
 
-#if("${CVI_SYSTEM_PROCESSOR}" STREQUAL "RISCV")
 if("${CVI_PLATFORM}" STREQUAL "MARS")
   add_definitions(-DMARS)
   set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
   set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
-elseif("${CVI_PLATFORM}" STREQUAL "PHOBOS")
+
+elseif("${CVI_PLATFORM}" STREQUAL "MARS_PHOBOS")
+  add_definitions(-DMARS)
+  set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
+  set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
+  set(NO_OPENCV ON)
   add_definitions(-DPHOBOS)
+  add_definitions(-DNO_OPENCV)
+  message("use mars to simulate phobos")
+elseif("${CVI_PLATFORM}" STREQUAL "PHOBOS")
+  set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
+  set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
+  add_definitions(-DPHOBOS)
+  set(NO_OPENCV ON)
+  add_definitions(-DNO_OPENCV)
 endif()
 
 if("${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM" OR "${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM64")
@@ -38,6 +51,7 @@ if("${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM" OR "${CVI_SYSTEM_PROCESSOR}" STREQUA
   set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
   set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
 endif()
+
 
 set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -115,7 +129,9 @@ message("KERNEL_ROOT            ${KERNEL_ROOT}")
 message("==================================================")
 
 # Check if OpenCV exists.
+if (NOT DEFINED NO_OPENCV)
 include(cmake/opencv.cmake)
+endif()
 
 # Check if MLIR SDK exists.
 include(cmake/mlir.cmake)
@@ -136,10 +152,11 @@ include_directories(${IVE_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
 add_subdirectory(modules)
-
-if(NOT ("${CVI_PLATFORM}" STREQUAL "PHOBOS"))
-add_subdirectory(regression)
 add_subdirectory(sample)
+
+
+if((NOT "${CVI_PLATFORM}" STREQUAL "PHOBOS") AND NOT DEFINED NO_OPENCV)
+add_subdirectory(regression)
 add_subdirectory(tool)
 endif()
 # Install doc

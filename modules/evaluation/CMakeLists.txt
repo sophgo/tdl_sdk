@@ -28,3 +28,4 @@ project(cviai_evaluation-static)
 add_library(${PROJECT_NAME} STATIC ${EVA_SRCS})
 target_link_libraries(${PROJECT_NAME} -lstdc++fs)
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+

@@ -1,7 +1,7 @@
 #include "core/cviai_rescale_bbox.h"
 #include "core/core/cvai_errno.h"
 #include "utils/core_utils.hpp"
-#include "utils/face_utils.hpp"
+// #include "utils/face_utils.hpp"
 
 CVI_S32 CVI_AI_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame, cvai_face_t *face) {
   if (frame->stVFrame.u32Width == face->width && frame->stVFrame.u32Height == face->height) {

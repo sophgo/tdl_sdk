@@ -68,10 +68,9 @@ void *run_venc(void *args) {
     }
 
     for (uint32_t oid = 0; oid < stObjMeta.size; oid++) {
-      char name[127];
-      snprintf(name, sizeof(name), "%s: %.2f", stObjMeta.info[oid].name,
-               stObjMeta.info[oid].bbox.score);
-      snprintf(stObjMeta.info[oid].name, sizeof(stObjMeta.info[oid].name), "%s", name);
+      char name[256];
+      sprintf(name, "%s: %.2f", stObjMeta.info[oid].name, stObjMeta.info[oid].bbox.score);
+      memcpy(stObjMeta.info[oid].name, name, sizeof(stObjMeta.info[oid].name));
     }
 
     s32Ret = CVI_AI_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjMeta, &stFrame, true,

@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
 
   // Get default RTSP configurations
   SAMPLE_AI_Get_RTSP_Config(&stMWConfig.stRTSPConfig.stRTSPConfig);
-
+  AI_LOGI("rtspport %d\n", stMWConfig.stRTSPConfig.stRTSPConfig.port);
   SAMPLE_AI_MW_CONTEXT stMWContext = {0};
   s32Ret = SAMPLE_AI_Init_WM(&stMWConfig, &stMWContext);
   if (s32Ret != CVI_SUCCESS) {

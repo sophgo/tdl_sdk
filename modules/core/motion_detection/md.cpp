@@ -1,6 +1,8 @@
 #include "md.hpp"
 #include <sys/time.h>
+#include <iostream>
 #include <memory>
+#include "ccl.hpp"
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
@@ -8,10 +10,13 @@
 #include "error_msg.hpp"
 #include "vpss_engine.hpp"
 
+#ifndef NO_OPENCV
+#include <opencv2/core.hpp>
 #ifdef ENABLE_CVIAI_CV_UTILS
 #include "cv/imgproc.hpp"
 #else
 #include "opencv2/imgproc.hpp"
+#endif
 #endif
 
 // #define DEBUG_MD
@@ -58,7 +63,7 @@ CVI_S32 MotionDetection::init(VIDEO_FRAME_INFO_S *init_frame) {
   if (ret == CVI_SUCCESS) {
     ret = copy_image(init_frame, &background_img);
   }
-
+  p_ccl_instance = create_connect_instance();
 #ifdef DEBUG_MD
   LOGI("MD DEBUG: write: background.yuv\n");
   background_img.write("background.yuv");
@@ -66,7 +71,10 @@ CVI_S32 MotionDetection::init(VIDEO_FRAME_INFO_S *init_frame) {
   return ret;
 }
 
-MotionDetection::~MotionDetection() { free_all(); }
+MotionDetection::~MotionDetection() {
+  free_all();
+  destroy_connected_component(p_ccl_instance);
+}
 
 void MotionDetection::free_all() {
   md_output.free();
@@ -84,6 +92,8 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
   m_padding.right = 1;
   m_padding.top = 1;
   m_padding.bottom = 1;
+
+  memset((void *)&m_padding, 0, sizeof(m_padding));
 
   // create image with padding (1, 1, 1, 1).
   uint32_t extend_aligned_width = voWidth + m_padding.left + m_padding.right;
@@ -105,6 +115,7 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
 
 CVI_S32 MotionDetection::vpss_process(VIDEO_FRAME_INFO_S *srcframe, VIDEO_FRAME_INFO_S *dstframe) {
   VPSS_CHN_ATTR_S chnAttr;
+  std::cout << "to do preprocess ,w:" << srcframe->stVFrame.u32Width << std::endl;
   VPSS_CHN_DEFAULT_HELPER(&chnAttr, srcframe->stVFrame.u32Width, srcframe->stVFrame.u32Height,
                           PIXEL_FORMAT_YUV_400, true);
   CVI_S32 ret = m_vpss_engine->sendFrame(srcframe, &chnAttr, 1);
@@ -138,8 +149,8 @@ CVI_S32 MotionDetection::update_background(VIDEO_FRAME_INFO_S *frame) {
 
   return ret;
 }
-
-void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *out) {
+#ifndef NO_OPENCV
+void construct_bbox(std::vector<cv::Rect> dets, int im_width, int im_height, cvai_object_t *out) {
   CVI_AI_MemAllocInit(dets.size(), out);
   out->height = im_height;
   out->width = im_width;
@@ -157,7 +168,7 @@ void MotionDetection::construct_bbox(std::vector<cv::Rect> dets, cvai_object_t *
   }
 }
 
-bool MotionDetection::overlap(const cv::Rect &bbox1, const cv::Rect &bbox2) {
+bool overlap(const cv::Rect &bbox1, const cv::Rect &bbox2) {
   if (bbox1.x >= (bbox2.x + bbox2.width) || bbox2.x >= (bbox1.x + bbox1.width)) {
     return false;
   }
@@ -168,8 +179,8 @@ bool MotionDetection::overlap(const cv::Rect &bbox1, const cv::Rect &bbox2) {
   return true;
 }
 
-std::vector<uint32_t> MotionDetection::getAllOverlaps(const std::vector<cv::Rect> bboxes,
-                                                      const cv::Rect &bounds, uint32_t index) {
+std::vector<uint32_t> getAllOverlaps(const std::vector<cv::Rect> bboxes, const cv::Rect &bounds,
+                                     uint32_t index) {
   std::vector<uint32_t> overlaps;
   for (size_t i = 0; i < bboxes.size(); i++) {
     if (i != index) {
@@ -182,7 +193,7 @@ std::vector<uint32_t> MotionDetection::getAllOverlaps(const std::vector<cv::Rect
   return overlaps;
 }
 
-void MotionDetection::mergebbox(std::vector<cv::Rect> &bboxes) {
+void mergebbox(std::vector<cv::Rect> &bboxes) {
   // go through the boxes and start merging
   uint32_t merge_margin = 20;
 
@@ -243,6 +254,7 @@ void MotionDetection::mergebbox(std::vector<cv::Rect> &bboxes) {
     }
   }
 }
+#endif
 
 CVI_S32 MotionDetection::do_vpss_ifneeded(VIDEO_FRAME_INFO_S *srcframe,
                                           std::shared_ptr<VIDEO_FRAME_INFO_S> &frame) {
@@ -268,6 +280,16 @@ CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, ive::IVEImage 
     return VideoFrameCopy2Image(ive_instance, frame.get(), dst);
   }
   return ret;
+}
+
+void dump_frame_img(const char *szimg, uint8_t *p_img, int width, int height) {
+  std::cout << "to write subimg,w:" << width << ",height:" << height << ",addr:" << (void *)p_img
+            << std::endl;
+  FILE *fp = fopen(szimg, "wb");
+  fwrite(&width, 4, 1, fp);
+  fwrite(&height, 4, 1, fp);
+  fwrite(p_img, width * height, 1, fp);
+  fclose(fp);
 }
 
 CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj_meta,
@@ -301,11 +323,11 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
-  ive::IVEImage sub_image;
-  ive_instance->roi(&md_output, &sub_image, m_padding.left, m_padding.left + im_width,
-                    m_padding.top, m_padding.top + im_height);
+  // ive::IVEImage sub_image;
+  // ive_instance->roi(&md_output, &sub_image, m_padding.left, m_padding.left + im_width,
+  //                   m_padding.top, m_padding.top + im_height);
 
-  ret = ive_instance->frame_diff(&srcImg, &background_img, &sub_image, threshold);
+  ret = ive_instance->frame_diff(&srcImg, &background_img, &md_output, threshold);
   if (do_unmap_src) {
     CVI_SYS_Munmap((void *)processed_frame->stVFrame.pu8VirAddr[0], image_size);
   }
@@ -317,6 +339,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 
   md_output.bufRequest(ive_instance);
 
+#ifndef NO_OPENCV
   cv::Mat image(im_height + 2, im_width + 2, CV_8UC1, md_output.getVAddr()[0] + m_padding.left - 1,
                 md_output.getStride()[0]);
   std::vector<std::vector<cv::Point> > contours;
@@ -345,7 +368,31 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 #endif
 
   mergebbox(bboxes);
-  construct_bbox(bboxes, obj_meta);
+  construct_bbox(bboxes, im_width, im_height, obj_meta);
+#else
+
+  memset(obj_meta, 0, sizeof(cvai_object_t));
+
+  int num_boxes = 0;
+  int wstride = md_output.getStride()[0];
+
+  int *p_boxes = extract_connected_component(md_output.getVAddr()[0], im_width, im_height, wstride,
+                                             min_area, p_ccl_instance, &num_boxes);
+  CVI_AI_MemAllocInit(num_boxes, obj_meta);
+  obj_meta->height = im_height;
+  obj_meta->width = im_width;
+  obj_meta->rescale_type = RESCALE_RB;
+  memset(obj_meta->info, 0, sizeof(cvai_object_info_t) * num_boxes);
+  for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
+    obj_meta->info[i].bbox.x1 = p_boxes[i * 5 + 2];
+    obj_meta->info[i].bbox.y1 = p_boxes[i * 5 + 1];
+    obj_meta->info[i].bbox.x2 = p_boxes[i * 5 + 4];
+    obj_meta->info[i].bbox.y2 = p_boxes[i * 5 + 3];
+    obj_meta->info[i].bbox.score = 0;
+    obj_meta->info[i].classes = -1;
+    memset(obj_meta->info[i].name, 0, sizeof(obj_meta->info[i].name));
+  }
+#endif
 
   return CVIAI_SUCCESS;
 }

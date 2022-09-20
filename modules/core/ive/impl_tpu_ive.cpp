@@ -1,9 +1,9 @@
+#include <iostream>
 #include <string>
 #include "cviai_log.hpp"
 #include "impl_ive.hpp"
 #include "ive/cvi_comm_ive.h"
 #include "ive/ive.h"
-
 namespace ive {
 
 class TPUIVEImage : public IVEImageImpl {
@@ -114,8 +114,38 @@ CVI_S32 TPUIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16
                               UNWRAP(buf));
 }
 
+CVI_S32 dump_ive_image_framex(const std::string &filepath, uint8_t *ptr_img, int w, int h,
+                              int wstride) {
+  FILE *fp = fopen(filepath.c_str(), "wb");
+  if (fp == nullptr) {
+    LOGE("failed to open: %s.\n", filepath.c_str());
+    return CVI_FAILURE;
+  }
+
+  fwrite(&w, sizeof(uint32_t), 1, fp);
+  fwrite(&h, sizeof(uint32_t), 1, fp);
+
+  std::cout << "width:" << w << ",height:" << h << ",stride:" << wstride << std::endl;
+  fwrite(ptr_img, w * h, 1, fp);
+
+  // for(int j = 0 ; j < h; j++){
+  //     uint8_t *ptrj = ptr + j*wstride;
+  //     std::cout<<"write r:"<<j<<std::endl;
+  //     fwrite(ptrj,w,1,fp);
+  // }
+  std::cout << "toclose:" << filepath << std::endl;
+  fclose(fp);
+
+  std::cout << "closed:" << filepath << std::endl;
+  return CVI_SUCCESS;
+}
+
 CVI_S32 TPUIVEImage::write(const std::string &fname) {
-  return CVI_IVE_WriteImage(m_handle, fname.c_str(), &ive_image);
+  CVI_IVE_BufRequest(m_handle, &ive_image);
+  std::cout << "towrite:" << fname << std::endl;
+  // return CVI_IVE_WriteImage(m_handle, fname.c_str(), &ive_image);
+  return dump_ive_image_framex(fname, ive_image.pu8VirAddr[0], ive_image.u16Width,
+                               ive_image.u16Height, ive_image.u16Stride[0]);
 }
 
 CVI_S32 TPUIVEImage::free() {
@@ -386,16 +416,16 @@ CVI_S32 TPUIVE::thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, 
 CVI_S32 TPUIVE::frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
                            CVI_U8 threshold) {
   CVI_S32 ret;
-
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: src.yuv\n");
-  srcImg.write("src.yuv");
+  LOGI("MD DEBUG: write: src.bin\n");
+  pSrc1->write("/mnt/data/admin1_data/alios_test/md/src1.bin");
+  pSrc2->write("/mnt/data/admin1_data/alios_test/md/src2.bin");
 #endif
   // Sub - threshold - dilate
   ret = sub(pSrc1, pSrc2, pDst);
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: sub.yuv\n");
-  pDst->write("sub.yuv");
+  LOGI("MD DEBUG: write: sub.bin\n");
+  pDst->write("/mnt/data/admin1_data/alios_test/md/sub.bin");
 #endif
   if (ret != CVI_SUCCESS) {
     LOGE("CVI_IVE_Sub fail %x\n", ret);
@@ -404,8 +434,9 @@ CVI_S32 TPUIVE::frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImp
 
   ret = thresh(pDst, pDst, ThreshMode::BINARY, threshold, 0, 0, 0, 255);
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: thresh.yuv\n");
-  pDst->write("thresh.yuv");
+  LOGI("MD DEBUG: write: thresh.bin\n");
+  // pDst->write("thresh.bin");
+  pDst->write("/mnt/data/admin1_data/alios_test/md/thresh.bin");
 #endif
   if (ret != CVI_SUCCESS) {
     return ret;
@@ -419,8 +450,9 @@ CVI_S32 TPUIVE::frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImp
   }
 
 #ifdef DEBUG_MD
-  LOGI("MD DEBUG: write: dialte.yuv\n");
-  pDst->write("dilate.yuv");
+  LOGI("MD DEBUG: write: dialte.bin\n");
+  // pDst->write("dilate.bin");
+  pDst->write("/mnt/data/admin1_data/alios_test/md/dialte.bin");
 #endif
   return ret;
 }

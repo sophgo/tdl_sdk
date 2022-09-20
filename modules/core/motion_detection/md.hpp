@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-#include <opencv2/core.hpp>
 #include "core/object/cvai_object_types.h"
 #include "cvi_comm.h"
 #include "cvi_comm_vb.h"
@@ -24,16 +23,13 @@ class MotionDetection {
  private:
   CVI_S32 construct_images(VIDEO_FRAME_INFO_S *init_frame);
   void free_all();
-  bool overlap(const cv::Rect &bbox1, const cv::Rect &bbox2);
-  std::vector<uint32_t> getAllOverlaps(const std::vector<cv::Rect> bboxes, const cv::Rect &bounds,
-                                       uint32_t index);
-  void mergebbox(std::vector<cv::Rect> &bboxes);
-  void construct_bbox(std::vector<cv::Rect> bboxes, cvai_object_t *obj_meta);
+
   CVI_S32 do_vpss_ifneeded(VIDEO_FRAME_INFO_S *srcframe,
                            std::shared_ptr<VIDEO_FRAME_INFO_S> &frame);
   CVI_S32 vpss_process(VIDEO_FRAME_INFO_S *srcframe, VIDEO_FRAME_INFO_S *dstframe);
   CVI_S32 copy_image(VIDEO_FRAME_INFO_S *srcframe, ive::IVEImage *dst);
   ive::IVE *ive_instance;
+  void *p_ccl_instance = NULL;
   ive::IVEImage background_img;
   ive::IVEImage md_output;
   uint32_t im_width;
