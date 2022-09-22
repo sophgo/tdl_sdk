@@ -4,7 +4,7 @@
 
 set(FTP_SERVER_IP $ENV{FTP_SERVER_IP})
 if (NOT FTP_SERVER_IP)
-  set(FTP_SERVER_IP "10.18.65.11")
+  set(FTP_SERVER_IP "10.80.0.5/sw_rls")
 endif()
 
 if (SHRINK_OPENCV_SIZE)

@@ -17,7 +17,7 @@ if [ -d "${TMP_WORKING_DIR}" ]; then
 fi
 
 if [ "${FTP_SERVER_IP}" = "" ]; then
-    FTP_SERVER_IP=10.18.65.11
+    FTP_SERVER_IP=10.80.0.5/sw_rls
 fi
 
 echo "Creating tmp working directory."
