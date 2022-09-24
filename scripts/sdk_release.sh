@@ -4,6 +4,8 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CVIAI_ROOT=$(readlink -f $SCRIPT_DIR/../)
 TMP_WORKING_DIR=$CVIAI_ROOT/tmp
+BUILD_WORKING_DIR=$TMP_WORKING_DIR/build_sdk
+BUILD_DOWNLOAD_DIR=$TMP_WORKING_DIR/_deps
 
 if [[ "$1" == "Asan" ]]; then
     BUILD_TYPE=Asan
@@ -11,18 +13,14 @@ else
     BUILD_TYPE=SDKRelease
 fi
 
-if [ -d "${TMP_WORKING_DIR}" ]; then
+if [ -d "${BUILD_WORKING_DIR}" ]; then
     echo "Cleanup tmp folder."
-    rm -rf $TMP_WORKING_DIR
-fi
-
-if [ "${FTP_SERVER_IP}" = "" ]; then
-    FTP_SERVER_IP=10.80.0.5/sw_rls
+    rm -rf $BUILD_WORKING_DIR
 fi
 
 echo "Creating tmp working directory."
-mkdir -p $TMP_WORKING_DIR/build_sdk
-pushd $TMP_WORKING_DIR/build_sdk
+mkdir -p $BUILD_WORKING_DIR
+pushd $BUILD_WORKING_DIR
 
 # Check cmake version
 CMAKE_VERSION="$(cmake --version | grep 'cmake version' | sed 's/cmake version //g')"
@@ -99,7 +97,8 @@ $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DUSE_TPU_IVE=$USE_TPU_IVE \
                                         -DMW_VER=$MW_VER \
                                         -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
-                                        -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE"
+                                        -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE" \
+                                        -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR
 
 
 ninja -j8 || exit 1

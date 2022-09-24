@@ -25,7 +25,6 @@ function(buildninstall)
   # endforeach(src)
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.c ${PARSED_ARGS_SRCS})
-  add_dependencies(${PROJECT_NAME} cvi_rtsp)
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
   install(TARGETS ${PROJECT_NAME} DESTINATION bin)
   install(FILES ${PROJECT_NAME}.c DESTINATION sample)
@@ -37,6 +36,7 @@ set(SAMPLE_INC
     ${MLIR_SDK_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${MIDDLEWARE_SDK_ROOT}/sample/common
+    ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/include/cvi_rtsp
     ${IVE_INCLUDES}
 )
 
@@ -59,6 +59,8 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
 )
+
+set(SAMPLE_LIBS ${SAMPLE_LIBS} ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/src/libcvi_rtsp.so)
 
 set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcli.so
@@ -88,20 +90,20 @@ endif()
 buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cviai ${SAMPLE_LIBS})
 buildninstall(NAME sample_aud_esc INC ${SAMPLE_INC} SRCS sample_utils.c DEPS cviai pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
 buildninstall(NAME sample_aud_soundcmd INC ${SAMPLE_INC} DEPS cviai pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_intrusion_det INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_obj_counting INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_fall INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_dms INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_fdmask INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_lpdr INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_md INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_object_tracking INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_vi_face_tracking INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils.c DEPS cviai cviai_app pthread ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
-buildninstall(NAME sample_app_person_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils DEPS cviai cviai_app pthread ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
+buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_od INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_intrusion_det INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_obj_counting INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_fall INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_dms INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_fdmask INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_lpdr INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_md INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_object_tracking INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_face_tracking INC ${SAMPLE_INC}  SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS})
+buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC}  SRCS vi_vo_utils.c DEPS cviai cviai_app pthread ${SAMPLE_LIBS})
+buildninstall(NAME sample_app_person_capture INC ${SAMPLE_INC}  SRCS vi_vo_utils DEPS cviai cviai_app pthread ${SAMPLE_LIBS})
 
 install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.h sample_utils.c middleware_utils.h sample_log.h middleware_utils.c DESTINATION sample)
 install(FILES Makefile DESTINATION sample)

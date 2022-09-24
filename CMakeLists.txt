@@ -134,9 +134,7 @@ include (cmake/cvi_rtsp.cmake)
 include_directories(${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
-                    ${MIDDLEWARE_INCLUDES}
-                    ${cvi_rtsp_INCLUDE})
-
+                    ${MIDDLEWARE_INCLUDES})
 add_subdirectory(modules)
 
 if(NOT ("${CVI_PLATFORM}" STREQUAL "PHOBOS"))

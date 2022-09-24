@@ -62,6 +62,7 @@ set(REG_INCLUDES
     ${TRACER_PATH}
     ${MIDDLEWARE_SDK_ROOT}/sample/common
     ${CMAKE_SOURCE_DIR}/3rdparty
+    ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/include/cvi_rtsp
 )
 
 set(SAMPLE_LIBS
@@ -77,6 +78,7 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MLIR_SDK_ROOT}/lib/libz.so
+    ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/src/libcvi_rtsp.so
 )
 
 set(UnitTests

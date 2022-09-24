@@ -25,7 +25,6 @@ function(buildninstall)
   # endforeach(src)
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.c ${PARSED_ARGS_SRCS})
-  add_dependencies(${PROJECT_NAME} cvi_rtsp)
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
   install(TARGETS ${PROJECT_NAME} DESTINATION bin/tool)
   # install(FILES ${PROJECT_NAME}.c DESTINATION tool)
@@ -46,7 +45,6 @@ function(buildninstallcpp)
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PARSED_ARGS_SRCS})
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
-  add_dependencies(${PROJECT_NAME} cvi_rtsp)
   install(TARGETS ${PROJECT_NAME} DESTINATION bin/tool)
   # install(FILES ${PROJECT_NAME}.cpp DESTINATION tool)
 endfunction(buildninstallcpp)
@@ -58,6 +56,7 @@ set(SAMPLE_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${MIDDLEWARE_SDK_ROOT}/sample/common
     ${IVE_INCLUDES}
+    ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/include/cvi_rtsp
 )
 
 if(NOT "${CVI_PLATFORM}" STREQUAL "MARS")
@@ -79,6 +78,7 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MLIR_SDK_ROOT}/lib/libz.so
+    ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/src/libcvi_rtsp.so
 )
 
 if("${CVI_PLATFORM}" STREQUAL "MARS" OR "${CVI_PLATFORM}" STREQUAL "PHOBOS")
@@ -97,7 +97,7 @@ if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS")
 endif()
 
 buildninstall(NAME sample_read_mot INC ${SAMPLE_INC} SRCS utils/od.c sample_mot_utils.c DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME visual_app_face_capture INC ${SAMPLE_INC} ${cvi_rtsp_INCLUDE} SRCS vi_vo_utils.c DEPS cviai cviai_app ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
+buildninstallcpp(NAME visual_app_face_capture INC ${SAMPLE_INC}  SRCS vi_vo_utils.c DEPS cviai cviai_app ${SAMPLE_LIBS})
 
 buildninstallcpp(NAME mot_dump_data INC ${SAMPLE_INC}
                  SRCS utils/od.c utils/mot_base.cpp utils/mot_evaluation.cpp 

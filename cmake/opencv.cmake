@@ -24,15 +24,20 @@ if (SHRINK_OPENCV_SIZE)
   endif()
 
   include(FetchContent)
+  set(FETCHCONTENT_QUIET ON)
 
-  FetchContent_Declare(
-    opencv
-    URL ${OPENCV_URL}
-  )
-  FetchContent_MakeAvailable(opencv)
-  message("Content downloaded from ${OPENCV_URL} to ${opencv_SOURCE_DIR}")
+  get_filename_component(_deps "../_deps" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
+  set(FETCHCONTENT_BASE_DIR ${_deps})
 
-  set(OPENCV_ROOT ${opencv_SOURCE_DIR})
+  if(NOT IS_DIRECTORY "${FETCHCONTENT_BASE_DIR}/opencv-src/lib")
+    FetchContent_Declare(
+      opencv
+      URL ${OPENCV_URL}
+    )
+    FetchContent_MakeAvailable(opencv)
+    message("Content downloaded from ${OPENCV_URL} to ${opencv_SOURCE_DIR}")
+  endif()
+  set(OPENCV_ROOT ${FETCHCONTENT_BASE_DIR}/opencv-src)
 
   set(OPENCV_INCLUDES
     ${OPENCV_ROOT}/include/
