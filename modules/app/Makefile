@@ -84,7 +84,7 @@ AISDK_INC_PATH = $(AISDK_ROOT_PATH)/include/cviai
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
 
 ifeq ($(CHIP), MARS)
-CFLAGS += -DMARS
+CFLAGS += -DCV180
 ifeq ($(SYSTEM_PROCESSOR), RISCV)
 MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
 else ifeq ($(SYSTEM_PROCESSOR), ARM)

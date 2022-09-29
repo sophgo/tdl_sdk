@@ -168,7 +168,7 @@ $(info ---------------------------------------)
 endif
 
 ifeq ($(CHIP), MARS)
-CFLAGS += -DMARS
+CFLAGS += -DCV181X
 ifeq ($(SYSTEM_PROCESSOR), RISCV)
 MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
 else ifeq ($(SYSTEM_PROCESSOR), ARM)

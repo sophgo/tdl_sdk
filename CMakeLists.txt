@@ -20,30 +20,21 @@ if("${CVI_PLATFORM}" STREQUAL "")
 endif()
 
 
-if(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "MARS" 
-        OR "${CVI_PLATFORM}" STREQUAL "PHOBOS" OR "${CVI_PLATFORM}" STREQUAL "MARS_PHOBOS"))
-  message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
-endif()
 
-if("${CVI_PLATFORM}" STREQUAL "MARS")
-  add_definitions(-DMARS)
+if("${CVI_PLATFORM}" STREQUAL "MARS" OR "${CVI_PLATFORM}" STREQUAL "CV181X")
+  add_definitions(-DCV181X)
   set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
   set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
 
-elseif("${CVI_PLATFORM}" STREQUAL "MARS_PHOBOS")
-  add_definitions(-DMARS)
+elseif("${CVI_PLATFORM}" STREQUAL "PHOBOS" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
   set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
   set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
-  set(NO_OPENCV ON)
-  add_definitions(-DPHOBOS)
-  add_definitions(-DNO_OPENCV)
-  message("use mars to simulate phobos")
-elseif("${CVI_PLATFORM}" STREQUAL "PHOBOS")
-  set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
-  set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
-  add_definitions(-DPHOBOS)
+  add_definitions(-DCV180X)
   set(NO_OPENCV ON)
   add_definitions(-DNO_OPENCV)
+  add_definitions(-DPHOBOS)#TODO:fix ive PHOBOS instead of CV180X
+elseif(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X"))
+  message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
 
 if("${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM" OR "${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM64")

@@ -7,7 +7,7 @@
 #include "cviai.h"
 #include "evaluation/cviai_evaluation.h"
 #include "evaluation/cviai_media.h"
-#ifndef MARS
+#ifndef CV181X
 #include "cvi_tracer.h"
 #endif
 static bool stopped = false;

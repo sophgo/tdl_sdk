@@ -67,9 +67,6 @@ else
     exit 1
 fi
 
-if [ "${PHOBOS_SIMULATE}" != "" ]; then
-    CHIP_ARCH=MARS_PHOBOS
-fi
 
 if [[ "$CHIP_ARCH" == "CV183X" ]]; then
     SHRINK_OPENCV_SIZE=OFF
@@ -78,17 +75,14 @@ elif [[ "$CHIP_ARCH" == "CV182X" ]]; then
     SHRINK_OPENCV_SIZE=ON
     OPENCV_INSTALL_PATH=""
     USE_TPU_IVE=ON
-elif [[ "$CHIP_ARCH" == "MARS" ]]; then
+elif [ "$CHIP_ARCH" == "MARS" ] || [ "$CHIP_ARCH" == "CV181X" ]; then
     USE_TPU_IVE=OFF
     IVE_SDK_INSTALL_PATH=""
     SHRINK_OPENCV_SIZE=ON
-elif [[ "$CHIP_ARCH" == "PHOBOS" ]]; then
+elif [ "$CHIP_ARCH" == "PHOBOS" ] || [ "$CHIP_ARCH" == "CV180X" ]; then
     SHRINK_OPENCV_SIZE=ON
     OPENCV_INSTALL_PATH=""
     USE_TPU_IVE=ON
-elif [[ "$CHIP_ARCH" == "MARS_PHOBOS" ]]; then
-    USE_TPU_IVE=ON
-    SHRINK_OPENCV_SIZE=ON
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
     exit 1
@@ -130,7 +124,7 @@ for v in $CVI_TARGET_PACKAGES_LIBDIR; do
     fi
 done
 
-if [ "$CHIP_ARCH" != "PHOBOS" ] && [ "$CHIP_ARCH" != "MARS_PHOBOS" ]; then
+if [ "$CHIP_ARCH" != "PHOBOS" ] && [ "$CHIP_ARCH" != "CV180X" ]; then
 
   pushd ${AI_SDK_INSTALL_PATH}/module/app
   make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE="$USE_TPU_IVE" SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR CHIP=$CHIP_ARCH -j10 || exit 1
