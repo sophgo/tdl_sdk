@@ -128,6 +128,11 @@ message("USE_TPU_IVE            ${USE_TPU_IVE}")
 message("KERNEL_ROOT            ${KERNEL_ROOT}")
 message("==================================================")
 
+include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
+include(FetchContent)
+get_filename_component(_deps "${BUILD_DOWNLOAD_DIR}" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
+set(FETCHCONTENT_BASE_DIR ${_deps})
+
 # Check if OpenCV exists.
 if (NOT DEFINED NO_OPENCV)
 include(cmake/opencv.cmake)

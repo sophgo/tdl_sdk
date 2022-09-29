@@ -2,13 +2,11 @@
 # License
 # Author Yangwen Huang <yangwen.huang@bitmain.com>
 
-set(FTP_SERVER_IP $ENV{FTP_SERVER_IP})
 if (NOT FTP_SERVER_IP)
   set(FTP_SERVER_IP "10.80.0.5/sw_rls")
 endif()
 
 if (SHRINK_OPENCV_SIZE)
-
   if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-uclibc-linux.cmake")
     set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/uclibc/opencv_aisdk.tar.gz)
   elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-gnueabihf-linux.cmake")
@@ -23,13 +21,7 @@ if (SHRINK_OPENCV_SIZE)
     message(FATAL_ERROR "No shrinked opencv library for ${CMAKE_TOOLCHAIN_FILE}")
   endif()
 
-  include(FetchContent)
-  set(FETCHCONTENT_QUIET ON)
-
-  get_filename_component(_deps "../_deps" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
-  set(FETCHCONTENT_BASE_DIR ${_deps})
-
-  if(NOT IS_DIRECTORY "${FETCHCONTENT_BASE_DIR}/opencv-src/lib")
+  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src/lib")
     FetchContent_Declare(
       opencv
       URL ${OPENCV_URL}
@@ -37,7 +29,7 @@ if (SHRINK_OPENCV_SIZE)
     FetchContent_MakeAvailable(opencv)
     message("Content downloaded from ${OPENCV_URL} to ${opencv_SOURCE_DIR}")
   endif()
-  set(OPENCV_ROOT ${FETCHCONTENT_BASE_DIR}/opencv-src)
+  set(OPENCV_ROOT ${BUILD_DOWNLOAD_DIR}/opencv-src)
 
   set(OPENCV_INCLUDES
     ${OPENCV_ROOT}/include/

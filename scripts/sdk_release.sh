@@ -13,6 +13,10 @@ else
     BUILD_TYPE=SDKRelease
 fi
 
+if [ "${FTP_SERVER_IP}" = "" ]; then
+    FTP_SERVER_IP=10.80.0.5/sw_rls
+fi
+
 if [ -d "${BUILD_WORKING_DIR}" ]; then
     echo "Cleanup tmp folder."
     rm -rf $BUILD_WORKING_DIR
@@ -31,7 +35,9 @@ if [ "$(printf '%s\n' "$CMAKE_REQUIRED_VERSION" "$CMAKE_VERSION" | sort -V | hea
     CMAKE_BIN=$(which cmake)
 else
     echo "Cmake minimum required version is ${CMAKE_REQUIRED_VERSION}, trying to download from ftp."
-    wget -c ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
+    if [ ! -f cmake-3.18.4-Linux-x86_64.tar.gz ]; then
+        wget ftp://swftp:cvitek@10.18.65.11/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
+    fi
     tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
     CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
 fi

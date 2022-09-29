@@ -1,5 +1,5 @@
+#include <cstring>
 #include <iostream>
-#include <string>
 #include "cviai_log.hpp"
 #include "impl_ive.hpp"
 #include "ive/cvi_comm_ive.h"

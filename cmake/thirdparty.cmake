@@ -1,13 +1,8 @@
 project(thirdparty_fetchcontent)
-include(FetchContent)
-set(FETCHCONTENT_QUIET ON)
-
-get_filename_component(_deps "../_deps" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
-set(FETCHCONTENT_BASE_DIR ${_deps})
 
 if (ENABLE_PERFETTO)
   if (NOT SYSTRACE_FALLBACK)
-    if (NOT EXISTS "${FETCHCONTENT_BASE_DIR}/cvi_perfetto-src")
+    if (NOT EXISTS "${BUILD_DOWNLOAD_DIR}/cvi_perfetto-src")
     FetchContent_Declare(
       cvi_perfetto
       GIT_REPOSITORY ssh://10.240.0.84:29418/cvi_perfetto
@@ -22,7 +17,7 @@ if (ENABLE_PERFETTO)
   endif()
 endif()
 
-if (NOT IS_DIRECTORY  "${FETCHCONTENT_BASE_DIR}/libeigen-src")
+if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/libeigen-src")
 FetchContent_Declare(
   libeigen
   GIT_REPOSITORY ssh://10.240.0.84:29418/eigen
@@ -31,9 +26,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(libeigen)
 message("Content downloaded to ${libeigen_SOURCE_DIR}")
 endif()
-include_directories(${FETCHCONTENT_BASE_DIR}/libeigen-src/include/eigen3)
+include_directories(${BUILD_DOWNLOAD_DIR}/libeigen-src/include/eigen3)
 
-if (NOT IS_DIRECTORY "${FETCHCONTENT_BASE_DIR}/googletest-src")
+if (NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/googletest-src")
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY ssh://10.240.0.84:29418/googletest
@@ -43,11 +38,11 @@ FetchContent_MakeAvailable(googletest)
 message("Content downloaded to ${googletest_SOURCE_DIR}")
 else()
   project(googletest)
-    add_subdirectory(${FETCHCONTENT_BASE_DIR}/googletest-src/)
+    add_subdirectory(${BUILD_DOWNLOAD_DIR}/googletest-src/)
 endif()
-include_directories(${FETCHCONTENT_BASE_DIR}/googletest-src/googletest/include/gtest)
+include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtest)
 
-if(NOT IS_DIRECTORY "${FETCHCONTENT_BASE_DIR}/nlohmannjson-src")
+if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/nlohmannjson-src")
 FetchContent_Declare(
   nlohmannjson
   GIT_REPOSITORY ssh://10.240.0.84:29418/nlohmannjson
@@ -56,10 +51,10 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nlohmannjson)
 message("Content downloaded to ${nlohmannjson_SOURCE_DIR}")
 endif()
-include_directories(${FETCHCONTENT_BASE_DIR}/nlohmannjson-src)
+include_directories(${BUILD_DOWNLOAD_DIR}/nlohmannjson-src)
 
 
-if(NOT IS_DIRECTORY "${FETCHCONTENT_BASE_DIR}/stb-src")
+if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/stb-src")
 FetchContent_Declare(
   stb
   GIT_REPOSITORY ssh://10.240.0.84:29418/stb
@@ -68,7 +63,7 @@ FetchContent_Declare(
   FetchContent_MakeAvailable(stb)
   message("Content downloaded to ${stb_SOURCE_DIR}")
 endif()
-set(stb_SOURCE_DIR ${FETCHCONTENT_BASE_DIR}/stb-src)
+set(stb_SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/stb-src)
 include_directories(${stb_SOURCE_DIR})
 
 install(DIRECTORY  ${stb_SOURCE_DIR}/ DESTINATION include/stb
