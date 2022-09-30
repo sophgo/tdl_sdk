@@ -75,11 +75,13 @@ elif [[ "$CHIP_ARCH" == "CV182X" ]]; then
     SHRINK_OPENCV_SIZE=ON
     OPENCV_INSTALL_PATH=""
     USE_TPU_IVE=ON
-elif [ "$CHIP_ARCH" == "MARS" ] || [ "$CHIP_ARCH" == "CV181X" ]; then
+elif [[ "$CHIP_ARCH" == "MARS" ]] || [[ "$CHIP_ARCH" == "CV181X" ]]; then
+    CHIP_ARCH="CV181X"
     USE_TPU_IVE=OFF
     IVE_SDK_INSTALL_PATH=""
     SHRINK_OPENCV_SIZE=ON
-elif [ "$CHIP_ARCH" == "PHOBOS" ] || [ "$CHIP_ARCH" == "CV180X" ]; then
+elif [[ "$CHIP_ARCH" == "PHOBOS" ]] || [[ "$CHIP_ARCH" == "CV180X" ]]; then
+    CHIP_ARCH="CV180X"
     SHRINK_OPENCV_SIZE=ON
     OPENCV_INSTALL_PATH=""
     USE_TPU_IVE=ON

@@ -21,18 +21,16 @@ endif()
 
 
 
-if("${CVI_PLATFORM}" STREQUAL "MARS" OR "${CVI_PLATFORM}" STREQUAL "CV181X")
+if("${CVI_PLATFORM}" STREQUAL "CV181X")
   add_definitions(-DCV181X)
   set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
   set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
-
-elseif("${CVI_PLATFORM}" STREQUAL "PHOBOS" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
+elseif("${CVI_PLATFORM}" STREQUAL "CV180X")
   set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
   set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
   add_definitions(-DCV180X)
   set(NO_OPENCV ON)
   add_definitions(-DNO_OPENCV)
-  add_definitions(-DPHOBOS)#TODO:fix ive PHOBOS instead of CV180X
 elseif(NOT ("${CVI_PLATFORM}" STREQUAL "CV183X" OR "${CVI_PLATFORM}" STREQUAL "CV182X"))
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
@@ -151,7 +149,7 @@ add_subdirectory(modules)
 add_subdirectory(sample)
 
 
-if((NOT "${CVI_PLATFORM}" STREQUAL "PHOBOS") AND NOT DEFINED NO_OPENCV)
+if((NOT "${CVI_PLATFORM}" STREQUAL "CV180X") AND NOT DEFINED NO_OPENCV)
 add_subdirectory(regression)
 add_subdirectory(tool)
 endif()

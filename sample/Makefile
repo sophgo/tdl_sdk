@@ -24,7 +24,7 @@ ifndef TPU_PATH
 $(error "Please set tpu sdk root path to TPU_PATH)
 endif
 
-ifneq ($(CHIP), MARS)
+ifneq ($(CHIP), CV181X)
 ifndef CVI_TRACER_PATH
 $(error "Please set cvi_tracer sdk root path to CVI_TRACER_PATH)
 endif
@@ -82,7 +82,7 @@ MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lc
 ifeq ($(CHIP), CV182X)
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
-else ifeq ($(CHIP), MARS)
+else ifeq ($(CHIP), CV181X)
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lvenc -lae -laf -lawb -lsys -lsns_full -lini -lmisc
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/mars/
 else
@@ -167,12 +167,12 @@ $(info USE_TPU_IVE: $(USE_TPU_IVE))
 $(info ---------------------------------------)
 endif
 
-ifeq ($(CHIP), MARS)
+ifeq ($(CHIP), CV181X)
 CFLAGS += -DCV181X
 ifeq ($(SYSTEM_PROCESSOR), RISCV)
-MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
+CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
 else ifeq ($(SYSTEM_PROCESSOR), ARM)
-MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
+CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
 endif
 endif
 
@@ -194,7 +194,7 @@ DEPS = $(SRCS:.c=.d)
 
 SAMPLE_LIBS = $(AISDK_BASIC_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
 
-ifneq ($(CHIP), MARS)
+ifneq ($(CHIP), CV181X)
 SAMPLE_LIBS += -L$(CVI_TRACER_LIB_PATH)
 endif
 
@@ -211,8 +211,8 @@ ifeq ($(USE_TPU_IVE), ON)
 CFLAGS += -DUSE_TPU_IVE
 endif
 
-ifeq ($(CHIP), MARS)
-CFLAGS += -I$(MARS_INC_PATH)
+ifeq ($(CHIP), CV181X)
+CFLAGS += -I$(CV181X_INC_PATH)
 else
 CFLAGS += -I$(CVI_TRACER_INC_PATH)
 endif

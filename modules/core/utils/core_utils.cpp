@@ -1,6 +1,6 @@
 #include "core_utils.hpp"
 #include "cviai_log.hpp"
-#ifndef PHOBOS
+#ifndef CV180X
 #include "neon_utils.hpp"
 #endif
 #include <cvi_sys.h>
@@ -53,7 +53,7 @@ void clip_boxes(int width, int height, cvai_bbox_t &box) {
 
 void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const float *qMean,
                        VIDEO_FRAME_INFO_S *outFrame) {
-#ifdef PHOBOS
+#ifdef CV180X
   LOGE("not supported");
 #else
   if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 ||

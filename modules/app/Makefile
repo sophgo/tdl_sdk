@@ -83,20 +83,20 @@ AISDK_INC_PATH = $(AISDK_ROOT_PATH)/include/cviai
 #####################################################
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
 
-ifeq ($(CHIP), MARS)
-CFLAGS += -DCV180
+ifeq ($(CHIP), CV181X)
+CFLAGS += -DCV181X
 ifeq ($(SYSTEM_PROCESSOR), RISCV)
-MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
+CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
 else ifeq ($(SYSTEM_PROCESSOR), ARM)
-MARS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
+CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
 endif
 endif
 
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -fdiagnostics-color=always -s 
 
 
-ifeq ($(CHIP), PHOBOS)
-POBOS_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
+ifeq ($(CHIP), CV180X)
+CV180X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
 CFLAGS += -I$(POBOS_INC_PATH)
 endif
 
@@ -127,8 +127,8 @@ ifeq ($(USE_TPU_IVE), ON)
 CFLAGS += -I$(IVE_SDK_INC_PATH)
 endif
 
-ifeq ($(CHIP), MARS)
-CFLAGS += -I$(MARS_INC_PATH)
+ifeq ($(CHIP), CV181X)
+CFLAGS += -I$(CV181X_INC_PATH)
 endif
 
 CFLAGS += -Wl,-gc-sections
