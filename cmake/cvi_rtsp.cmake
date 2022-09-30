@@ -25,7 +25,7 @@ if(NOT EXISTS "${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/src/libcvi_rtsp.so")
     )
   else()
     ExternalProject_Add(cvi_rtsp
-      GIT_REPOSITORY ssh://10.240.0.84:29418/cvi_rtsp
+      GIT_REPOSITORY ssh://${REPO_USER}10.240.0.84:29418/cvi_rtsp
       PREFIX ${BUILD_DOWNLOAD_DIR}/cvi_rtsp
       BUILD_COMMAND CROSS_COMPILE=${TC_PATH}${CROSS_COMPILE} SDK_VER=${RTSP_SDK_VER} ./build.sh
       CONFIGURE_COMMAND ""

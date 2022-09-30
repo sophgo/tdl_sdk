@@ -17,6 +17,14 @@ if [ "${FTP_SERVER_IP}" = "" ]; then
     FTP_SERVER_IP=10.80.0.5/sw_rls
 fi
 
+REPO_USER=""
+echo "envis:${LOCAL_USER}"
+if [[ "$LOCAL_USER" != "" ]]; then
+  tmp="@"
+  REPO_USER="${LOCAL_USER}${tmp}"
+fi
+echo "repo user :$REPO_USER"
+
 if [ -d "${BUILD_WORKING_DIR}" ]; then
     echo "Cleanup tmp folder."
     rm -rf $BUILD_WORKING_DIR
@@ -107,7 +115,8 @@ $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DMW_VER=$MW_VER \
                                         -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
                                         -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE" \
-                                        -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR
+                                        -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR \
+                                        -DREPO_USER=$REPO_USER
 
 
 ninja -j8 || exit 1
