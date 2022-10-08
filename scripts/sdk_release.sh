@@ -22,8 +22,13 @@ echo "envis:${LOCAL_USER}"
 if [[ "$LOCAL_USER" != "" ]]; then
   tmp="@"
   REPO_USER="${LOCAL_USER}${tmp}"
+else
+  CURRENT_USER="$(git config user.email | sed 's/cvitek.com//g')"
+  if [[ "${CURRENT_USER}" != "jenkins@" ]]; then
+    REPO_USER="$(git config user.email | sed 's/cvitek.com//g')"
+  fi
 fi
-echo "repo user :$REPO_USER"
+echo "repo user : $REPO_USER"
 
 if [ -d "${BUILD_WORKING_DIR}" ]; then
     echo "Cleanup tmp folder."
@@ -136,7 +141,6 @@ for v in $CVI_TARGET_PACKAGES_LIBDIR; do
 done
 
 if [ "$CHIP_ARCH" != "PHOBOS" ] && [ "$CHIP_ARCH" != "CV180X" ]; then
-
   pushd ${AI_SDK_INSTALL_PATH}/module/app
   make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE="$USE_TPU_IVE" SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR CHIP=$CHIP_ARCH -j10 || exit 1
   make install || exit 1
