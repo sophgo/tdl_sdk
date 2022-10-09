@@ -370,7 +370,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
         demangle::type_no_scope(*this).c_str());
     return CVIAI_ERR_INVALID_ARGS;
   }
-
+  model_timer_.TicToc(0, "start");
   std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
 
   m_debugger.newSession(demangle::type_no_scope(*this));
@@ -414,7 +414,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       ret = registerFrame2Tensor(dstFrames);
     }
   }
-
+  model_timer_.TicToc(1, "vpss");
   if (ret == CVIAI_SUCCESS) {
     int rcret = CVI_NN_Forward(mp_mi->handle, mp_mi->in.tensors, mp_mi->in.num, mp_mi->out.tensors,
                                mp_mi->out.num);
@@ -435,7 +435,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       ret = CVIAI_ERR_INFERENCE;
     }
   }
-
+  model_timer_.TicToc(2, "tpu");
   return ret;
 }
 

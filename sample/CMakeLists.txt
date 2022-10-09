@@ -113,6 +113,7 @@ buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} SRCS vi_vo_utils.c 
 buildninstall(NAME sample_app_person_capture INC ${SAMPLE_INC} SRCS vi_vo_utils DEPS cviai cviai_app pthread ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
   #buildninstall(NAME sample_read_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 endif()
+# buildninstall(NAME sample_read_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} ${cvi_rtsp_LIBPATH})
 install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.h sample_utils.c middleware_utils.h sample_log.h middleware_utils.c DESTINATION sample)
 install(FILES Makefile DESTINATION sample)
 install(DIRECTORY config DESTINATION sample)

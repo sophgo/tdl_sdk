@@ -62,7 +62,35 @@ inline void BufferRGBPacked2PlanarCopy(const uint8_t *buffer, uint32_t width, ui
     }
   }
 }
+// input is bgr format
+inline void BufferRGBPacked2YUVPlanarCopy(const uint8_t *buffer, uint32_t width, uint32_t height,
+                                          uint32_t stride, VIDEO_FRAME_INFO_S *frame, bool invert) {
+  VIDEO_FRAME_S *vFrame = &frame->stVFrame;
+  CVI_U8 *pY = vFrame->pu8VirAddr[0];
+  CVI_U8 *pU = vFrame->pu8VirAddr[1];
+  CVI_U8 *pV = vFrame->pu8VirAddr[2];
 
+  for (uint32_t j = 0; j < height; j++) {
+    const uint8_t *ptr = buffer + j * stride;
+    for (uint32_t i = 0; i < width; i++) {
+      const uint8_t *ptr_pxl = i * 3 + ptr;
+      int b = ptr_pxl[0];
+      int g = ptr_pxl[1];
+      int r = ptr_pxl[2];
+      if (invert) {
+        std::swap(b, r);
+      }
+      pY[i + j * vFrame->u32Stride[0]] = ((66 * r + 129 * g + 25 * b) >> 8) + 16;
+
+      if (j % 2 == 0 && i % 2 == 0) {
+        pU[width / 2 + height / 2 * vFrame->u32Stride[1]] =
+            ((-38 * r - 74 * g + 112 * b) >> 8) + 128;
+        pV[width / 2 + height / 2 * vFrame->u32Stride[2]] =
+            ((112 * r - 94 * g - 18 * b) >> 8) + 128;
+      }
+    }
+  }
+}
 inline void BufferGreyCopy(const uint8_t *buffer, uint32_t width, uint32_t height, uint32_t stride,
                            VIDEO_FRAME_INFO_S *frame) {
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
@@ -145,6 +173,9 @@ CVI_S32 CVI_AI_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_
         cv::cvtColor(img, img2, cv::COLOR_BGR2GRAY);
         BufferGreyCopy(img2.data, img2.cols, img2.rows, img2.step, frame);
       } break;
+      case PIXEL_FORMAT_YUV_PLANAR_420:
+        BufferRGBPacked2YUVPlanarCopy(img.data, img.cols, img.rows, img.step, frame, false);
+        break;
       default:
         LOGE("Unsupported format: %u.\n", format);
         ret = CVIAI_FAILURE;

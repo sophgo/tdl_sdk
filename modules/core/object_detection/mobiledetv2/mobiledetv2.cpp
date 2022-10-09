@@ -291,12 +291,14 @@ void MobileDetV2::select_classes(const std::vector<uint32_t> &selected_classes) 
 }
 
 int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
+  int ret = CVI_SUCCESS;
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
 
-  int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  ret = run(frames);
+
+  if (ret != CVI_SUCCESS) {
     LOGE("MobileDetV2: failed to inference\n");
-    return ret;
+    return CVI_FAILURE;
   }
 
   Detections dets;
@@ -325,7 +327,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
     meta->width = frame->stVFrame.u32Width;
     meta->height = frame->stVFrame.u32Height;
   }
-
+  model_timer_.TicToc(3, "post");
   return ret;
 }
 

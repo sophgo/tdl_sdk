@@ -4,7 +4,7 @@
 #include "cvi_comm.h"
 #include "cvi_comm_vb.h"
 #include "ive.hpp"
-
+#include "profiler.hpp"
 namespace cviai {
 class VpssEngine;
 }
@@ -45,4 +45,6 @@ class MotionDetection {
   Padding m_padding;
   cviai::VpssEngine *m_vpss_engine;
   uint32_t m_vpss_timeout;
+
+  Timer md_timer_;
 };

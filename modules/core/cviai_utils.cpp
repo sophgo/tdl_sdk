@@ -337,3 +337,36 @@ CVI_S32 CVI_AI_DestroyImage(VIDEO_FRAME_INFO_S *frame) {
   }
   return ret;
 }
+
+CVI_S32 CVI_AI_DumpImage(const char *filepath, VIDEO_FRAME_INFO_S *frame) {
+  VIDEO_FRAME_S *pstVFSrc = &frame->stVFrame;
+  int channels = 1;
+  switch (pstVFSrc->enPixelFormat) {
+    case PIXEL_FORMAT_YUV_400: {
+      channels = 1;
+    } break;
+    case PIXEL_FORMAT_RGB_888_PLANAR: {
+      channels = 3;
+    } break;
+    default: {
+      LOGE("Unsupported conversion type: %u.\n", pstVFSrc->enPixelFormat);
+      return CVI_FAILURE;
+    } break;
+  }
+
+  FILE *fp = fopen(filepath, "wb");
+  if (fp == nullptr) {
+    LOGE("failed to open: %s.\n", filepath);
+    return CVI_FAILURE;
+  }
+  uint32_t width = pstVFSrc->u32Width;
+  uint32_t height = pstVFSrc->u32Height;
+  fwrite(&width, sizeof(uint32_t), 1, fp);
+  fwrite(&height, sizeof(uint32_t), 1, fp);
+
+  for (int c = 0; c < channels; c++) {
+    fwrite(pstVFSrc->pu8VirAddr[c], width * height, 1, fp);
+  }
+  fclose(fp);
+  return CVI_SUCCESS;
+}

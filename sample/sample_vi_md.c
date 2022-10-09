@@ -96,6 +96,7 @@ void *run_ai_thread(void *args) {
   CVI_S32 s32Ret;
   uint32_t frame_count = 0;
   uint32_t update_interval = 100;
+  int fail_counter = 0;
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
 
@@ -103,6 +104,11 @@ void *run_ai_thread(void *args) {
     unsigned long elapsed;
 
     if (s32Ret != CVI_SUCCESS) {
+      fail_counter++;
+      if (fail_counter < 10) {
+        usleep(10);
+        continue;
+      }
       AI_LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", s32Ret);
       goto get_frame_failed;
     }
@@ -115,6 +121,8 @@ void *run_ai_thread(void *args) {
       gettimeofday(&t1, NULL);
       elapsed = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
       AI_LOGI("Update background, time=%.2f ms\n", (float)elapsed / 1000.);
+      char sz_imgname[128];
+      sprintf(sz_imgname, "/mnt/data/admin1_data/alios_test/md/");
     }
 
     gettimeofday(&t0, NULL);

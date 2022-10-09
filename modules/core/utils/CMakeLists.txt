@@ -4,7 +4,8 @@ set(UTILS_SRC core_utils.cpp
               rescale_utils.cpp
               demangle.cpp
               object_utils.cpp
-              ccl.cpp)
+              ccl.cpp
+              profiler.cpp)
 if(NOT DEFINED NO_OPENCV)
   set(UTILS_SRC ${UTILS_SRC} face_utils.cpp image_utils.cpp neon_utils.cpp)
 endif()

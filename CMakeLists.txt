@@ -70,6 +70,10 @@ endif()
 set(SYSTRACE_FALLBACK ON)
 add_definitions(-DSYSTRACE_FALLBACK)
 
+IF(DEFINED ENV{PERF_EVAL})
+  add_definitions(-DPERF_EVAL)
+  message("set PERF_EVAL")
+ENDIF()
 # Get current commit
 execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE CURRENT_COMMIT)
 execute_process(COMMAND git rev-parse --abbrev-ref HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE LATEST_BRANCH)

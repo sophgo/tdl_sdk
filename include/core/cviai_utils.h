@@ -144,6 +144,7 @@ DLL_EXPORT CVI_S32 CVI_AI_EstimateImageSize(uint64_t *size, uint32_t height, uin
 DLL_EXPORT CVI_S32 CVI_AI_LoadBinImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
                                        PIXEL_FORMAT_E format);
 DLL_EXPORT CVI_S32 CVI_AI_DestroyImage(VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_AI_DumpImage(const char *filepath, VIDEO_FRAME_INFO_S *frame);
 /**@}*/
 
 #ifdef __cplusplus

@@ -100,6 +100,7 @@ void *run_ai_thread(void *args) {
   cvai_object_t stObjMeta = {0};
 
   CVI_S32 s32Ret;
+  uint32_t counter = 0;
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
 
@@ -119,7 +120,9 @@ void *run_ai_thread(void *args) {
     }
 
     unsigned long execution_time = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
-    AI_LOGI("obj count: %d, take %.2f ms\n", stObjMeta.size, (float)execution_time / 1000);
+    if (counter++ % 5 == 0)
+      AI_LOGI("obj count: %d, take %.2f,width:%u ms\n", stObjMeta.size,
+              (float)execution_time / 1000, stFrame.stVFrame.u32Width);
 
     {
       // Copy object detection results to global.

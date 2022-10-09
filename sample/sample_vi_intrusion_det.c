@@ -175,6 +175,7 @@ void *run_ai_thread(void *args) {
   cvai_object_t stObjMeta = {0};
 
   CVI_S32 s32Ret;
+  uint32_t counter = 0;
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
 
@@ -186,7 +187,8 @@ void *run_ai_thread(void *args) {
     // Detect objects first.
     GOTO_IF_FAILED(pstAIArgs->inference_func(pstAIArgs->stAIHandle, &stFrame, &stObjMeta), s32Ret,
                    inf_error);
-
+    struct timeval t0, t1;
+    gettimeofday(&t0, NULL);
     bool *aIntrusion = NULL;
     if (stObjMeta.size > 0) {
       aIntrusion = (bool *)malloc(stObjMeta.size * sizeof(bool));
@@ -205,8 +207,12 @@ void *run_ai_thread(void *args) {
         }
       }
     }
-
-    AI_LOGI("object count: %d\n", stObjMeta.size);
+    gettimeofday(&t1, NULL);
+    unsigned long execution_time = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
+    if (counter++ % 5 == 0) {
+      AI_LOGI("object count: %d,intrusion_detect take %.2f ms,%u\n", stObjMeta.size,
+              (float)execution_time / 1000, stFrame.stVFrame.u32Width);
+    }
     {
       // Copy object detection results to global.
       MutexAutoLock(ResultMutex, lock);

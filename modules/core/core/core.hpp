@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include "profiler.hpp"
 #define DEFAULT_MODEL_THRESHOLD 0.5
 
 namespace cviai {
@@ -183,6 +183,7 @@ class Core {
 
   // External handle
   VpssEngine *mp_vpss_inst = nullptr;
+  Timer model_timer_;
 
  protected:
   // vpss related control
