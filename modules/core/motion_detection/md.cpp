@@ -23,8 +23,8 @@
 
 using namespace ive;
 
-static CVI_S32 VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src, IVEImage *dst) {
-  IVEImage input_image;
+static CVI_S32 VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src,
+                                    IVEImage *tmp_ive_image, IVEImage *dst) {
   bool do_unmap = false;
   size_t image_size =
       src->stVFrame.u32Length[0] + src->stVFrame.u32Length[1] + src->stVFrame.u32Length[2];
@@ -33,14 +33,14 @@ static CVI_S32 VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src, 
         (CVI_U8 *)CVI_SYS_MmapCache(src->stVFrame.u64PhyAddr[0], image_size);
     do_unmap = true;
   }
-
-  CVI_S32 ret = input_image.fromFrame(src);
+  CVI_S32 ret = CVI_SUCCESS;
+  ret = tmp_ive_image->fromFrame(src);
   if (ret != CVI_SUCCESS) {
     LOGE("CVI_IVE_VideoFrameInfo2Image fail %x\n", ret);
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
-  ret = ive_instance->dma(&input_image, dst);
+  ret = ive_instance->dma(tmp_ive_image, dst);
 
   if (do_unmap) {
     CVI_SYS_Munmap((void *)src->stVFrame.pu8VirAddr[0], image_size);
@@ -92,9 +92,9 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
   m_padding.right = 1;
   m_padding.top = 1;
   m_padding.bottom = 1;
-
+#ifdef NO_OPENCV  // only phobos do not need padding because use custom ccl
   memset((void *)&m_padding, 0, sizeof(m_padding));
-
+#endif
   // create image with padding (1, 1, 1, 1).
   uint32_t extend_aligned_width = voWidth + m_padding.left + m_padding.right;
   uint32_t extend_aligned_height = voHeight + m_padding.top + m_padding.bottom;
@@ -277,7 +277,7 @@ CVI_S32 MotionDetection::copy_image(VIDEO_FRAME_INFO_S *srcframe, ive::IVEImage 
   CVI_S32 ret = do_vpss_ifneeded(srcframe, frame);
 
   if (ret == CVIAI_SUCCESS) {
-    return VideoFrameCopy2Image(ive_instance, frame.get(), dst);
+    return VideoFrameCopy2Image(ive_instance, frame.get(), &tmp_cpy_img_, dst);
   }
   return ret;
 }
@@ -300,7 +300,6 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   }
   md_timer_.TicToc(0, "start");
   CVI_S32 ret = CVI_SUCCESS;
-  IVEImage srcImg;
   std::shared_ptr<VIDEO_FRAME_INFO_S> processed_frame;
   ret = do_vpss_ifneeded(srcframe, processed_frame);
   if (ret != CVIAI_SUCCESS) {
@@ -317,7 +316,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     do_unmap_src = true;
   }
 
-  ret = srcImg.fromFrame(processed_frame.get());
+  ret = tmp_src_img_.fromFrame(processed_frame.get());
   if (ret != CVI_SUCCESS) {
     LOGE("Convert frame to IVE_IMAGE_S fail %x\n", ret);
     return CVIAI_ERR_MD_OPERATION_FAILED;
@@ -328,9 +327,9 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   ive::IVEImage sub_image;
   ive_instance->roi(&md_output, &sub_image, m_padding.left, m_padding.left + im_width,
                     m_padding.top, m_padding.top + im_height);
-  ret = ive_instance->frame_diff(&srcImg, &background_img, &sub_image, threshold);
+  ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &sub_image, threshold);
 #else
-  ret = ive_instance->frame_diff(&srcImg, &background_img, &md_output, threshold);
+  ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &md_output, threshold);
 #endif
   md_timer_.TicToc(2, "tpu_ive");
   if (do_unmap_src) {

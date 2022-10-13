@@ -32,6 +32,8 @@ class MotionDetection {
   void *p_ccl_instance = NULL;
   ive::IVEImage background_img;
   ive::IVEImage md_output;
+  ive::IVEImage tmp_cpy_img_;
+  ive::IVEImage tmp_src_img_;
   uint32_t im_width;
   uint32_t im_height;
 

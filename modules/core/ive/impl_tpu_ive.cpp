@@ -9,7 +9,7 @@ namespace ive {
 class TPUIVEImage : public IVEImageImpl {
  public:
   TPUIVEImage();
-  virtual ~TPUIVEImage() = default;
+  virtual ~TPUIVEImage();
   TPUIVEImage(const TPUIVEImage &other) = delete;
   TPUIVEImage &operator=(const TPUIVEImage &other) = delete;
 
@@ -88,7 +88,10 @@ class TPUIVE : public IVEImpl {
 IVEImageImpl *IVEImageImpl::create() { return new TPUIVEImage; }
 
 TPUIVEImage::TPUIVEImage() : m_handle(NULL) { memset(&ive_image, 0, sizeof(IVE_IMAGE_S)); }
-
+TPUIVEImage::~TPUIVEImage() {
+  // ive_image has heap memory should be released manually
+  CVI_SYS_FreeI(m_handle, &ive_image);
+}
 void *TPUIVEImage::getHandle() { return &ive_image; }
 
 CVI_S32 TPUIVEImage::bufFlush(IVEImpl *ive_instance) {
@@ -149,7 +152,7 @@ CVI_S32 TPUIVEImage::write(const std::string &fname) {
 }
 
 CVI_S32 TPUIVEImage::free() {
-  if (m_handle == NULL) return CVI_FAILURE;
+  // if (m_handle == NULL) return CVI_FAILURE;
   return CVI_SYS_FreeI(m_handle, &ive_image);
 }
 
