@@ -86,6 +86,7 @@ else()
   set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
   set(CORES_DEPS ${CORES_DEPS} ${OPENCV_LIBS_IMGPROC})
   set(CORES_DEPS ${CORES_DEPS} ${OPENCV_LIBS_MIN})
+  message("opencv_libs_min:" ${OPENCV_LIBS_MIN})
 endif()
 
 project(cviai)
