@@ -18,6 +18,7 @@
 #include <chrono>
 #include <sstream>
 #include <string>
+#include "evaluation/cviai_media.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "sys_utils.hpp"
@@ -58,7 +59,7 @@ SMT_MUTEXAUTOLOCK_INIT(VOMutex);
 /* global variables */
 static volatile bool bExit = false;
 static volatile bool bRunImageWriter = true;
-static volatile bool bRunVideoOutput = true;
+// static volatile bool bRunVideoOutput = true;
 
 int rear_idx = 0;
 int front_idx = 0;
@@ -109,7 +110,7 @@ static void *pImageWrite(void *args) {
       empty = front_idx == rear_idx;
     }
     if (empty) {
-      printf("I/O Buffer is empty.\n");
+      // printf("I/O Buffer is empty.\n");
       usleep(100 * 1000);
       continue;
     }
@@ -179,6 +180,7 @@ std::string capobj_to_str(person_cpt_data_t *p_obj, float w, float h, int lb) {
      << p_obj->info.unique_id << "," << p_obj->info.bbox.score << "\n";
   return ss.str();
 }
+
 void export_tracking_info(person_capture_t *p_cap_info, const std::string &str_dst_dir,
                           int frame_id, float imgw, float imgh, int lb) {
   cvai_object_t *p_objinfo = &(p_cap_info->last_objects);
@@ -212,31 +214,37 @@ void release_system(cviai_handle_t ai_handle, cviai_service_handle_t service_han
   CVI_SYS_Exit();
   CVI_VB_Exit();
 }
+
 int main(int argc, char *argv[]) {
   CVI_S32 ret = CVI_SUCCESS;
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
-  const char *od_model_name = "mobiledetv2-pedestrian-d0";  // argv[1];//mobiledetv2-pedestrian-d0
+
   std::string str_model_root(argv[1]);
-  std::string str_model_file =
-      join_path(str_model_root, std::string("mobiledetv2-pedestrian-d1.cvimodel"));
-  const char *od_model_path = str_model_file.c_str();
-  const char *reid_model_path = "NULL";  // argv[3];//NULL
-  const char *config_path = "NULL";      // argv[4];//NULL
-  // const char *mode_id = intelligent;//argv[5];//leave=2,intelligent=3
-  int buffer_size = 10;       // atoi(argv[6]);//10
-  float det_threshold = 0.5;  // atof(argv[7]);//0.5
-  bool write_image = true;    // 1
   std::string str_image_root(argv[2]);
   std::string str_dst_root(argv[3]);
 
+  // model path
+  const char *od_model_name = "mobiledetv2-pedestrian";
+  std::string str_model_file =
+      join_path(str_model_root, std::string("mobiledetv2-pedestrian-d1.cvimodel"));
+  const char *od_model_path = str_model_file.c_str();
+  const char *reid_model_path = "NULL";
+  const char *config_path = "NULL";
+  // const char *mode_id = intelligent;//argv[5];//leave=2,intelligent=3
+
+  int buffer_size = 10;       // atoi(argv[6]);//10
+  float det_threshold = 0.5;  // atof(argv[7]);//0.5
+  bool write_image = true;    // 1
+
+  // saving dir path
   std::string str_dst_video = join_path(str_dst_root, get_directory_name(str_image_root));
   if (!create_directory(str_dst_video)) {
     std::cout << "create directory:" << str_dst_video << " failed\n";
-    // return CVI_FAILURE;
   }
   g_out_dir = str_dst_video;
+
   if (buffer_size <= 0) {
     printf("buffer size must be larger than 0.\n");
     return CVI_FAILURE;
@@ -258,17 +266,18 @@ int main(int argc, char *argv[]) {
     release_system(ai_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
-  // CVI_AI_SetVpssTimeout(ai_handle, 1000);
 
   CVI_AI_SetModelThreshold(ai_handle, app_handle->person_cpt_info->od_model_index, det_threshold);
-  // CVI_AI_SelectDetectClass(ai_handle, app_handle->person_cpt_info->od_model_index, 1,
-  //                          CVI_AI_DET_TYPE_PERSON);
-  // Init VB pool size.
+
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 3);
+  if (ret != CVI_SUCCESS) {
+    printf("Init sys failed with %#x!\n", ret);
+    return ret;
+  }
   app_mode = intelligent;  // APP_MODE_e(atoi(mode_id));
   switch (app_mode) {
 #if MODE_DEFINITION == 0
@@ -312,9 +321,9 @@ int main(int argc, char *argv[]) {
   app_cfg.thr_aspect_ratio_min = 0.3;
   app_cfg.thr_aspect_ratio_max = 3.3;
   app_cfg.thr_area_min = 40 * 50;
-
   app_cfg.miss_time_limit = 10;
   app_cfg.store_RGB888 = true;
+
   CVI_AI_APP_PersonCapture_SetConfig(app_handle, &app_cfg);
 
   memset(&g_obj_meta_0, 0, sizeof(cvai_object_t));
@@ -325,51 +334,37 @@ int main(int argc, char *argv[]) {
 
   std::string cap_result = str_dst_video + std::string("/cap_result.log");
   FILE *fp = fopen(cap_result.c_str(), "w");
-  // std::stringstream ss;
-  IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
-  if (ive_handle == NULL) {
-    printf("CreateHandle failed with %#x!\n", ret);
-    release_system(ai_handle, service_handle, app_handle);
-    return CVI_FAILURE;
-  }
+
   int num_append = 0;
   uint32_t imgw = 0, imgh = 0;
   double time_elapsed = 0;
   int num_images = 0;
-  for (int img_idx = 0; img_idx < 1000; img_idx++) {
-    std::cout << "processing:" << img_idx << "/530\n";
-    char szimg[256];
-    sprintf(szimg, "%s/%08d.jpg", str_image_root.c_str(), img_idx);
-    bool empty_img = false;
-    IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, szimg, IVE_IMAGE_TYPE_U8C3_PLANAR);
-    if (image.u16Width == 0) {
-      std::cout << "read image failed:" << std::string(szimg) << std::endl;
-      if (img_idx > 350) {
-        empty_img = true;
-        num_append += 1;
-        CVI_IVE_CreateImage(ive_handle, &image, IVE_IMAGE_TYPE_U8C3_PLANAR, imgw, imgh);
-        if (image.u16Width == 0) {
-          std::cout << "read black emptry failed:" << std::string(szimg) << std::endl;
-          continue;
-        }
-      } else
-        continue;
-    } else {
-      if (imgw == 0) {
-        imgw = image.u16Width;
-        imgh = image.u16Height;
-      }
-    }
+
+  std::vector<std::string> image_files = getImgList(str_image_root);
+  for (uint32_t img_idx = 0; img_idx < image_files.size(); img_idx++) {
+    std::string img_path = str_image_root + "/" + image_files[img_idx];
+    std::cout << "processing:" << img_idx << "/" << image_files.size() << ":" << img_path << "\n";
     if (num_append > 30) break;
 
+    char szimg[256];
+    bool empty_img = false;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame, false);
+    ret = CVI_AI_ReadImage(img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     if (ret != CVI_SUCCESS) {
-      std::cout << "Convert to video frame failed with:" << ret << ",file:" << std::string(szimg)
+      std::cout << "Convert to video frame failed with:" << ret << ",file:" << str_image_root
                 << std::endl;
-
+      num_append += 1;
       continue;
     }
+
+    if (fdFrame.stVFrame.u32Width == 0 || fdFrame.stVFrame.u32Height == 0) {
+      std::cout << "read image failed:" << std::string(szimg) << std::endl;
+      num_append += 1;
+      continue;
+    }
+
+    imgw = fdFrame.stVFrame.u32Width;
+    imgh = fdFrame.stVFrame.u32Height;
 
     int alive_person_num = COUNT_ALIVE(app_handle->person_cpt_info);
     printf("ALIVE persons: %d\n", alive_person_num);
@@ -441,17 +436,15 @@ int main(int argc, char *argv[]) {
           rear_idx = target_idx;
         }
       }
-      // dst_file
     }
-    CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
-    CVI_SYS_FreeI(ive_handle, &image);
+
+    CVI_AI_ReleaseImage(&fdFrame);
   }
   fclose(fp);
-  CVI_IVE_DestroyHandle(ive_handle);
+
   bRunImageWriter = false;
-  bRunVideoOutput = false;
+  // bRunVideoOutput = false;
   pthread_join(io_thread, NULL);
-  // pthread_join(vo_thread, NULL);
 
   // CLEANUP_SYSTEM:
   CVI_AI_APP_DestroyHandle(app_handle);
@@ -461,8 +454,8 @@ int main(int argc, char *argv[]) {
   CVI_SYS_Exit();
   CVI_VB_Exit();
 
-  std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed / num_images
-            << std::endl;
+  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed / num_images
+  //           << std::endl;
 }
 
 int COUNT_ALIVE(person_capture_t *person_cpt_info) {
