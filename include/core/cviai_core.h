@@ -113,6 +113,7 @@ typedef void *cviai_handle_t;
 // clang-format off
 #define CVI_AI_MODEL_LIST \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_RETINAFACE)                       \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SCRFDFACE)                       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_RETINAFACE_IR)                    \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_RETINAFACE_HARDHAT)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_THERMALFACE)                      \
@@ -424,6 +425,16 @@ DLL_EXPORT CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORT
 DLL_EXPORT CVI_S32 CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                      cvai_face_t *faces);
 
+/**
+ * @brief ScrFD face detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param faces Output detect result. The name, bbox, and face points will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_ScrFDFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                    cvai_face_t *faces);
 /**
  * @brief RetinaFaceIR face detection.
  *

@@ -8,3 +8,4 @@ install*
 .vscode/
 prebuilt
 doxygen/latex
+tmp

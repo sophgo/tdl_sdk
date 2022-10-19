@@ -17,4 +17,11 @@ typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
 typedef std::vector<PtrDectRect> Detections;
 
 Detections nms_multi_class(const Detections &dets, float iou_threshold);
+
+std::vector<std::vector<float>> generate_mmdet_base_anchors(float base_size, float center_offset,
+                                                            const std::vector<float> &ratios,
+                                                            const std::vector<int> &scales);
+std::vector<std::vector<float>> generate_mmdet_grid_anchors(
+    int feat_w, int feat_h, int stride, std::vector<std::vector<float>> &base_anchors);
+
 }  // namespace cviai

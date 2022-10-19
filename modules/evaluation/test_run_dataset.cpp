@@ -86,10 +86,10 @@ std::string run_image_face_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t
   static int model_init = 0;
   CVI_S32 ret;
   if (model_init == 0) {
-    std::cout << "to init face detection model" << std::endl;
     std::string str_face_model =
         g_model_root + std::string("/retinaface_mnet0.25_342_608.cvimodel");
     // std::string("scrfd_DW_conv_432_768_int8.cvimodel");
+    std::cout << "to init face detection model:" << str_face_model << std::endl;
     ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, str_face_model.c_str());
     if (ret != CVI_SUCCESS) {
       std::cout << "open model failed:" << str_face_model << std::endl;
@@ -100,6 +100,7 @@ std::string run_image_face_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t
   }
   cvai_face_t face;
   memset(&face, 0, sizeof(cvai_face_t));
+  std::cout << "to do process\n";
   ret = CVI_AI_RetinaFace(ai_handle, p_frame, &face);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect face failed:" << ret << std::endl;
@@ -320,11 +321,12 @@ int main(int argc, char *argv[]) {
   //          argv[0]);
   //   // return CVI_FAILURE;
   // }
-  g_model_root = std::string(argv[1]);
-  std::string image_root(argv[2]);
-  std::string image_list(argv[3]);
-  std::string dst_root(argv[4]);
-  std::string process_flag(argv[5]);
+  g_model_root =
+      "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv182x/";  // std::string(argv[1]);
+  std::string image_root("/mnt/data/admin1_data/alios_test");         // argv[2]);
+  std::string image_list("/mnt/data/admin1_data/alios_test/image_list.txt");  // argv[3]);
+  std::string dst_root("/mnt/data/admin1_data/alios_test_predict");           // argv[4]);
+  std::string process_flag("fd");                                             // argv[5]);
 
   if (image_root.at(image_root.size() - 1) != '/') {
     image_root = image_root + std::string("/");
@@ -332,6 +334,7 @@ int main(int argc, char *argv[]) {
   if (dst_root.at(dst_root.size() - 1) != '/') {
     dst_root = dst_root + std::string("/");
   }
+  create_directory(dst_root);
   int starti = 0;
   if (argc > 6) starti = atoi(argv[6]);
   // Init VB pool size.
@@ -379,13 +382,14 @@ int main(int argc, char *argv[]) {
     std::cout << "processing :" << i << "/" << image_files.size() << std::endl;
     std::string strf = image_root + image_files[i];
     std::string dstf = dst_root + replace_file_ext(image_files[i], "txt");
-
+    std::cout << "to read:" << strf << std::endl;
     VIDEO_FRAME_INFO_S fdFrame;
     ret = CVI_AI_ReadImage(strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     if (ret != CVI_SUCCESS) {
       std::cout << "Convert to video frame failed with:" << ret << ",file:" << strf << std::endl;
-
       continue;
+    } else {
+      std::cout << "load image,width:" << fdFrame.stVFrame.u32Width << std::endl;
     }
 
     std::string str_res = process_funcs[process_flag](&fdFrame, ai_handle);

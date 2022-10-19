@@ -19,7 +19,6 @@ def convert_image_to_bin(src_file,dst_file,plannar):
     dstf.write(img.tobytes())
 
     dstf.close()
-    
 
 if __name__ == "__main__":
     convert_image_to_bin(sys.argv[1],sys.argv[2],True)

@@ -28,6 +28,7 @@
 #include "object_detection/yolox/yolox.hpp"
 #include "osnet/osnet.hpp"
 #include "retina_face/retina_face.hpp"
+#include "retina_face/scrfd_face.hpp"
 #include "segmentation/deeplabv3.hpp"
 #include "smoke_classification/smoke_classification.hpp"
 #include "sound_classification/sound_classification.hpp"
@@ -129,6 +130,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, CREATOR(FaceLandmarker)},
     {CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, CREATOR(IncarObjectDetection)},
     {CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
+    {CVI_AI_SUPPORTED_MODEL_SCRFDFACE, CREATOR(ScrFDFace)},
     {CVI_AI_SUPPORTED_MODEL_RETINAFACE, CREATOR_P1(RetinaFace, PROCESS, CAFFE)},
     {CVI_AI_SUPPORTED_MODEL_RETINAFACE_IR, CREATOR_P1(RetinaFace, PROCESS, PYTORCH)},
     {CVI_AI_SUPPORTED_MODEL_RETINAFACE_HARDHAT, CREATOR_P1(RetinaFace, PROCESS, PYTORCH)},
@@ -639,6 +641,7 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
  */
 DEFINE_INF_FUNC_F1_P1(CVI_AI_RetinaFace, RetinaFace, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
                       cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_ScrFDFace, ScrFDFace, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_RetinaFace_IR, RetinaFace, CVI_AI_SUPPORTED_MODEL_RETINAFACE_IR,
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_RetinaFace_Hardhat, RetinaFace,

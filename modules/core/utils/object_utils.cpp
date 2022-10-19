@@ -2,7 +2,9 @@
 #include "object_utils.hpp"
 #include "core/object/cvai_object_types.h"
 
+#include <math.h>
 #include <algorithm>
+#include <iostream>
 #include <numeric>
 #include <string>
 using namespace std;
@@ -72,5 +74,51 @@ Detections nms_multi_class(const Detections &dets, float iou_threshold) {
     final_dets[k] = dets[keep[k]];
   }
   return final_dets;
+}
+
+// x1,y1,x2,y2
+std::vector<std::vector<float>> generate_mmdet_base_anchors(float base_size, float center_offset,
+                                                            const std::vector<float> &ratios,
+                                                            const std::vector<int> &scales) {
+  std::vector<std::vector<float>> base_anchors;
+  float x_center = base_size * center_offset;
+  float y_center = base_size * center_offset;
+
+  for (size_t i = 0; i < ratios.size(); i++) {
+    float h_ratio = sqrt(ratios[i]);
+    float w_ratio = 1 / h_ratio;
+    for (size_t j = 0; j < scales.size(); j++) {
+      float halfw = base_size * w_ratio * scales[j] / 2;
+      float halfh = base_size * h_ratio * scales[j] / 2;
+      // x1,y1,x2,y2
+      std::vector<float> base_anchor = {x_center - halfw, y_center - halfh, x_center + halfw,
+                                        y_center + halfh};
+      std::cout << "anchor:" << base_anchor[0] << "," << base_anchor[1] << "," << base_anchor[2]
+                << "," << base_anchor[3] << std::endl;
+      base_anchors.emplace_back(base_anchor);
+    }
+  }
+  return base_anchors;
+}
+// x1,y1,x2,y2
+std::vector<std::vector<float>> generate_mmdet_grid_anchors(
+    int feat_w, int feat_h, int stride, std::vector<std::vector<float>> &base_anchors) {
+  std::vector<std::vector<float>> grid_anchors;
+  for (size_t k = 0; k < base_anchors.size(); k++) {
+    auto &base_anchor = base_anchors[k];
+    for (int ih = 0; ih < feat_h; ih++) {
+      int sh = ih * stride;
+      for (int iw = 0; iw < feat_w; iw++) {
+        int sw = iw * stride;
+        std::vector<float> grid_anchor = {base_anchor[0] + sw, base_anchor[1] + sh,
+                                          base_anchor[2] + sw, base_anchor[3] + sh};
+        if (grid_anchors.size() < 10)
+          std::cout << "gridanchor:" << grid_anchor[0] << "," << grid_anchor[1] << ","
+                    << grid_anchor[2] << "," << grid_anchor[3] << std::endl;
+        grid_anchors.emplace_back(grid_anchor);
+      }
+    }
+  }
+  return grid_anchors;
 }
 }  // namespace cviai
