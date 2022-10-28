@@ -84,7 +84,7 @@ MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec 
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
 else ifeq ($(CHIP), CV181X)
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lvenc -lae -laf -lawb -lsys -lsns_full -lini -lmisc
-MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/mars/
+MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
 else
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x

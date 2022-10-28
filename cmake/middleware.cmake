@@ -20,9 +20,9 @@ if("${CVI_PLATFORM}" STREQUAL "CV183X")
 elseif ("${CVI_PLATFORM}" STREQUAL "CV182X")
   set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv182x/)
 elseif ("${CVI_PLATFORM}" STREQUAL "CV181X" )
-  set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/mars/)
+  set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv181x/)
 elseif ("${CVI_PLATFORM}" STREQUAL "CV180X")
-  set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/phobos/)
+  set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv180x/)
 endif()
 
 set(MIDDLEWARE_INCLUDES
