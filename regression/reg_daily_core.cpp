@@ -100,12 +100,6 @@ TEST_F(CoreTestSuite, create_handle) {
     AIObject<cvai_object_t> obj_meta;
     EXPECT_EQ(CVI_AI_MobileDetV2_Person_Vehicle(ai_handle, image.getFrame(), obj_meta),
               CVIAI_SUCCESS);
-
-    // Check vpss attribute after inference because Vpss would be created in AI SDK before using.
-    VPSS_GRP_ATTR_S grp_attr;
-    CVI_VPSS_GetGrpAttr(0, &grp_attr);
-    EXPECT_EQ(grp_attr.u8VpssDev, (CVI_U8)0);
-
     EXPECT_EQ(CVI_AI_DestroyHandle(ai_handle), CVIAI_SUCCESS);
   }
 
@@ -133,9 +127,6 @@ TEST_F(CoreTestSuite, create_handle) {
               CVIAI_SUCCESS);
 
     ASSERT_TRUE(ai_handle != NULL);
-    VPSS_GRP_ATTR_S grp_attr;
-    CVI_VPSS_GetGrpAttr(0, &grp_attr);
-    EXPECT_EQ(grp_attr.u8VpssDev, (CVI_U8)1);
     EXPECT_EQ(CVI_AI_DestroyHandle(ai_handle), CVIAI_SUCCESS);
   }
 
