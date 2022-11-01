@@ -190,6 +190,141 @@ CVI_S32 CVI_AI_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_
   return ret;
 }
 
+static int CREATE_SYSTEM_MEM_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth,
+                                    CVI_U32 srcHeight, PIXEL_FORMAT_E pixelFormat) {
+  // Create Src Video Frame
+  VIDEO_FRAME_S *vFrame = &vbFrame->stVFrame;
+  memset(vFrame, 0, sizeof(VIDEO_FRAME_S));
+  vFrame->enCompressMode = COMPRESS_MODE_NONE;
+  vFrame->enPixelFormat = pixelFormat;
+  vFrame->enVideoFormat = VIDEO_FORMAT_LINEAR;
+  vFrame->enColorGamut = COLOR_GAMUT_BT709;
+  vFrame->u32TimeRef = 0;
+  vFrame->u64PTS = 0;
+  vFrame->enDynamicRange = DYNAMIC_RANGE_SDR8;
+
+  vFrame->u32Width = srcWidth;
+  vFrame->u32Height = srcHeight;
+  switch (vFrame->enPixelFormat) {
+    case PIXEL_FORMAT_RGB_888:
+    case PIXEL_FORMAT_BGR_888: {
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * 3;
+      vFrame->u32Stride[1] = 0;
+      vFrame->u32Stride[2] = 0;
+      // Don't need to align cause only 1 chn.
+      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
+      vFrame->u32Length[1] = 0;
+      vFrame->u32Length[2] = 0;
+    } break;
+    case PIXEL_FORMAT_RGB_888_PLANAR: {
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
+      vFrame->u32Stride[1] = vFrame->u32Stride[0];
+      vFrame->u32Stride[2] = vFrame->u32Stride[0];
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = vFrame->u32Length[0];
+      vFrame->u32Length[2] = vFrame->u32Length[0];
+    } break;
+    case PIXEL_FORMAT_YUV_PLANAR_422: {
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
+      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
+      vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+    } break;
+    case PIXEL_FORMAT_YUV_PLANAR_420: {
+      uint32_t newHeight = ALIGN(vFrame->u32Height, 2);
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
+      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
+      vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
+    } break;
+    case PIXEL_FORMAT_YUV_400: {
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
+      vFrame->u32Stride[1] = 0;
+      vFrame->u32Stride[2] = 0;
+      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
+      vFrame->u32Length[1] = 0;
+      vFrame->u32Length[2] = 0;
+    } break;
+    case PIXEL_FORMAT_FP32_C1: {
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
+      vFrame->u32Stride[1] = 0;
+      vFrame->u32Stride[2] = 0;
+      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
+      vFrame->u32Length[1] = 0;
+      vFrame->u32Length[2] = 0;
+    } break;
+    case PIXEL_FORMAT_BF16_C1: {
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
+      vFrame->u32Stride[1] = 0;
+      vFrame->u32Stride[2] = 0;
+      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
+      vFrame->u32Length[1] = 0;
+      vFrame->u32Length[2] = 0;
+    } break;
+    default:
+      syslog(LOG_ERR, "Currently unsupported format %u\n", vFrame->enPixelFormat);
+      return CVI_FAILURE;
+      break;
+  }
+  CVI_U32 u32MapSize = vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
+  CVI_U8 *p_frame = (CVI_U8 *)malloc(sizeof(CVI_U8) * u32MapSize);
+  vFrame->pu8VirAddr[0] = p_frame;
+  vFrame->pu8VirAddr[1] = vFrame->pu8VirAddr[0] + vFrame->u32Length[0];
+  vFrame->pu8VirAddr[2] = vFrame->pu8VirAddr[1] + vFrame->u32Length[1];
+
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_ReadImage_Docker(const char *filepath, VIDEO_FRAME_INFO_S *frame,
+                                PIXEL_FORMAT_E format) {
+  int ret = CVIAI_SUCCESS;
+  try {
+    cv::Mat img = cv::imread(filepath);
+    if (img.empty()) {
+      LOGE("Cannot read image \n");
+      return CVIAI_FAILURE;
+    }
+
+    if (CREATE_SYSTEM_MEM_HELPER(frame, img.cols, img.rows, format) != CVIAI_SUCCESS) {
+      LOGE("alloc mem failed.\n");
+      return CVIAI_FAILURE;
+    }
+    switch (format) {
+      case PIXEL_FORMAT_RGB_888: {
+        BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, true);
+      } break;
+      case PIXEL_FORMAT_BGR_888: {
+        BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, false);
+      } break;
+      case PIXEL_FORMAT_RGB_888_PLANAR: {
+        BufferRGBPacked2PlanarCopy(img.data, img.cols, img.rows, img.step, frame, true);
+      } break;
+      case PIXEL_FORMAT_YUV_400: {
+        cv::Mat img2;
+        cv::cvtColor(img, img2, cv::COLOR_BGR2GRAY);
+        BufferGreyCopy(img2.data, img2.cols, img2.rows, img2.step, frame);
+      } break;
+      case PIXEL_FORMAT_YUV_PLANAR_420:
+        BufferRGBPacked2YUVPlanarCopy(img.data, img.cols, img.rows, img.step, frame, false);
+        break;
+      default:
+        LOGE("Unsupported format: %u.\n", format);
+        ret = CVIAI_FAILURE;
+        break;
+    }
+  } catch (cv::Exception &e) {
+    const char *err_msg = e.what();
+    std::cout << "exception caught: " << err_msg << std::endl;
+    // std::cout << "when read image: " << std::string(filepath) << std::endl;
+    ret = CVIAI_FAILURE;
+  }
+  return ret;
+}
+
 CVI_S32 CVI_AI_ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
   CVI_S32 ret = CVI_SUCCESS;
   if (frame->stVFrame.u64PhyAddr[0] != 0) {
@@ -197,6 +332,17 @@ CVI_S32 CVI_AI_ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
     frame->stVFrame.u64PhyAddr[0] = (CVI_U64)0;
     frame->stVFrame.u64PhyAddr[1] = (CVI_U64)0;
     frame->stVFrame.u64PhyAddr[2] = (CVI_U64)0;
+    frame->stVFrame.pu8VirAddr[0] = NULL;
+    frame->stVFrame.pu8VirAddr[1] = NULL;
+    frame->stVFrame.pu8VirAddr[2] = NULL;
+  }
+  return ret;
+}
+
+CVI_S32 CVI_AI_ReleaseImage_Docker(VIDEO_FRAME_INFO_S *frame) {
+  CVI_S32 ret = CVI_SUCCESS;
+  if (frame->stVFrame.pu8VirAddr[0] != 0) {
+    free(frame->stVFrame.pu8VirAddr[0]);
     frame->stVFrame.pu8VirAddr[0] = NULL;
     frame->stVFrame.pu8VirAddr[1] = NULL;
     frame->stVFrame.pu8VirAddr[2] = NULL;

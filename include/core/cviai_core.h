@@ -213,6 +213,17 @@ DLL_EXPORT CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODE
                                     const char *filepath);
 
 /**
+ * @brief Open model with given file path.
+ *
+ * @param handle An AI SDK handle.
+ * @param model Supported model id.
+ * @param filepath File path to the cvimodel file.
+ * @return int Return CVIAI_SUCCESS if load model succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_OpenModel_InDocker(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                             const char *filepath);
+
+/**
  * @brief Get set model path from supported models.
  *
  * @param handle An AI SDK handle.
@@ -231,6 +242,15 @@ DLL_EXPORT const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORT
  */
 DLL_EXPORT CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle,
                                                 CVI_AI_SUPPORTED_MODEL_E model, bool skip);
+
+/**
+ * @brief Set skip vpss preprocess for supported networks.
+ *
+ * @param handle An AI SDK handle.
+ * @param model Supported model id.
+ * @return int Return CVIAI_SUCCESS if load model succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_UseInpuSysMem(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);
 
 /**
  * @brief Set list depth for VPSS.

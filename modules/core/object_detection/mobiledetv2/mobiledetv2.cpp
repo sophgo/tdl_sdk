@@ -314,10 +314,8 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
   }
 
   CVI_SHAPE shape = getInputShape(0);
-
-  convert_det_struct(final_dets, meta, shape.dim[2], shape.dim[3], m_vpss_config[0].rescale_type,
+  convert_det_struct(final_dets, meta, shape.dim[2], shape.dim[3], meta_rescale_type_e::RESCALE_RB,
                      m_model_config);
-
   if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < meta->size; ++i) {
       meta->info[i].bbox =

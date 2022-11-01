@@ -81,10 +81,12 @@ class Core {
 
   virtual ~Core() = default;
   int modelOpen(const char *filepath);
+  int modelOpenInDocker(const char *filepath);
   const char *getModelFilePath() const { return m_model_file.c_str(); }
   int modelClose();
   int setVpssTimeout(uint32_t timeout);
   const uint32_t getVpssTimeout() const { return m_vpss_timeout; }
+  void UseInputSysMem() { mp_mi->conf.input_mem_type = CVI_MEM_SYSTEM; }
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
   bool hasSkippedVpssPreprocess() const { return m_skip_vpss_preprocess; }

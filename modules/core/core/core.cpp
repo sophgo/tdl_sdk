@@ -117,6 +117,37 @@ int Core::modelOpen(const char *filepath) {
   return CVIAI_SUCCESS;
 }
 
+int Core::modelOpenInDocker(const char *filepath) {
+  TRACE_EVENT("cviai_core", "Core::modelOpenInDocker");
+  if (!mp_mi) {
+    LOGE("config not set\n");
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+
+  if (mp_mi->handle != nullptr) {
+    LOGE("failed to open model: \"%s\" has already opened.\n", filepath);
+    return CVIAI_FAILURE;
+  }
+  m_model_file = filepath;
+  CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
+                            "CVI_NN_RegisterModel failed");
+
+  CVI_NN_SetConfig(mp_mi->handle, OPTION_OUTPUT_ALL_TENSORS,
+                   static_cast<int>(mp_mi->conf.debug_mode));
+
+  CLOSE_MODEL_IF_TPU_FAILED(
+      CVI_NN_GetInputOutputTensors(mp_mi->handle, &mp_mi->in.tensors, &mp_mi->in.num,
+                                   &mp_mi->out.tensors, &mp_mi->out.num),
+      "CVI_NN_GetINputsOutputs failed");
+
+  setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
+  setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
+
+  CLOSE_MODEL_IF_FAILED(onModelOpened(), "return failed in onModelOpened");
+  TRACE_EVENT_END("cviai_core");
+  return CVIAI_SUCCESS;
+}
+
 void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
                            std::map<std::string, TensorInfo> *tensor_info) {
   for (int32_t i = 0; i < num_tensors; i++) {
@@ -413,6 +444,11 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       }
       ret = registerFrame2Tensor(dstFrames);
     }
+  } else {
+    uint8_t *ptr = (uint8_t *)CVI_NN_TensorPtr(mp_mi->in.tensors);
+    memcpy(ptr, frames[0]->stVFrame.pu8VirAddr[0],
+           frames[0]->stVFrame.u32Length[0] + frames[0]->stVFrame.u32Length[1] +
+               frames[0]->stVFrame.u32Length[2]);
   }
   model_timer_.TicToc(1, "vpss");
   if (ret == CVIAI_SUCCESS) {

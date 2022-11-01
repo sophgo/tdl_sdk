@@ -278,6 +278,50 @@ CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
   return CVIAI_SUCCESS;
 }
 
+CVI_S32 CVI_AI_OpenModel_InDocker(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                  const char *filepath) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t &m_t = ctx->model_cont[config];
+  Core *instance = getInferenceInstance(config, ctx);
+
+  if (instance != nullptr) {
+    if (instance->isInitialized()) {
+      LOGW("%s: Inference has already initialized. Please call CVI_AI_CloseModel to reset.\n",
+           CVI_AI_GetModelName(config));
+      return CVIAI_ERR_MODEL_INITIALIZED;
+    }
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+
+  if (!checkModelFile(filepath)) {
+    return CVIAI_ERR_INVALID_MODEL_PATH;
+  }
+
+  m_t.model_path = filepath;
+  CVI_S32 ret = m_t.instance->modelOpenInDocker(m_t.model_path.c_str());
+
+  if (ret != CVIAI_SUCCESS) {
+    LOGE("Failed to open model: %s (%s)", CVI_AI_GetModelName(config), m_t.model_path.c_str());
+    return ret;
+  }
+  LOGI("Model is opened successfully: %s \n", CVI_AI_GetModelName(config));
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_UseInpuSysMem(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    instance->UseInputSysMem();
+  } else {
+    LOGE("Cannot set input system mem: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+  return CVIAI_SUCCESS;
+}
+
 const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   return GetModelName(ctx->model_cont[config]);
@@ -670,6 +714,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceMaskDetection, RetinafaceYolox,
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Pedestrian, MobileDetV2,
+                      CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Pedestrian_InDocker, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Person_Vehicle, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, cvai_object_t *)
