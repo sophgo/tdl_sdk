@@ -120,6 +120,7 @@ int RetinafaceYolox::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *face_m
   CVI_SHAPE shape = getInputShape(0);
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, face_meta);
+  model_timer_.TicToc(3, "post");
   return CVIAI_SUCCESS;
 }
 

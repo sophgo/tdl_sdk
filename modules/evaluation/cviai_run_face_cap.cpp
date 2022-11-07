@@ -17,6 +17,7 @@
 
 #include <sstream>
 #include <string>
+#include "ive/ive.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "sys_utils.hpp"
@@ -223,14 +224,29 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  std::string str_model_root(argv[1]);
+  std::string process_flag(argv[1]);
   // std::string str_model_file = join_path(str_model_root ,
   // std::string("yolox_RetinafaceMask_lm_432_768_int8_0705.cvimodel")); CVI_AI_SUPPORTED_MODEL_E
   // fd_model_id = CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION;
 
-  std::string str_model_file =
-      join_path(str_model_root, std::string("retinaface_mnet0.25_342_608.cvimodel"));
-  CVI_AI_SUPPORTED_MODEL_E fd_model_id = CVI_AI_SUPPORTED_MODEL_RETINAFACE;
+  CVI_AI_SUPPORTED_MODEL_E model;
+  std::string modelf;
+  if (process_flag == "retina") {
+    model = CVI_AI_SUPPORTED_MODEL_RETINAFACE;
+    modelf = std::string(
+        "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv182x/"
+        "retinaface_mnet0.25_342_608.cvimodel");
+  } else if (process_flag == "yolox") {
+    model = CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION;
+    modelf = std::string(
+        "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/retinaface_mask_classifier.cvimodel");
+  } else {
+    model = CVI_AI_SUPPORTED_MODEL_SCRFDFACE;
+    modelf = std::string(
+        "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/scrfd_DW_conv_432_768_int8_2.cvimodel");
+  }
+  std::string str_model_file = modelf;
+  CVI_AI_SUPPORTED_MODEL_E fd_model_id = model;
 
   const char *fd_model_path = str_model_file.c_str();
   // const char *reid_model_path = "NULL";//argv[3];//NULL
@@ -243,11 +259,12 @@ int main(int argc, char *argv[]) {
   float det_threshold = 0.5;  // atof(argv[7]);//0.5
   bool write_image = true;    // 1
   std::string str_image_root(argv[2]);
-  std::string str_dst_root(argv[3]);
-  if (!create_directory(str_dst_root)) {
+  std::string str_dst_root = std::string(argv[3]);
+  if (!create_directory(std::string(argv[3]))) {
     std::cout << "create directory:" << str_dst_root << " failed\n";
   }
-  std::string str_dst_video = join_path(str_dst_root, get_directory_name(str_image_root));
+  std::string str_dst_video =
+      join_path(str_dst_root, get_directory_name(str_image_root) + std::string("_") + process_flag);
   if (!create_directory(str_dst_video)) {
     std::cout << "create directory:" << str_dst_video << " failed\n";
     // return CVI_FAILURE;

@@ -50,12 +50,11 @@ void Timer::TicToc(int step, const std::string &str_step) {
       ss << "[Timer] " << name_ << " ";
       for (int i = 1; i <= max_step; i++) {
         if (step_time_elpased_.count(i)) {
-          ss << "step:" << i << "," << step_names_[i]
-             << ",ms:" << step_time_elpased_[i] * 1000 / times_;
+          ss << step_names_[i] << ":" << step_time_elpased_[i] * 1000 / times_ << ",";
           total_ts += step_time_elpased_[i] * 1000 / times_;
         }
       }
-      ss << ",totalts:" << total_ts;
+      ss << ",total:" << total_ts;
       std::cout << ss.str() << std::endl;
       times_ = 0;
       step_time_elpased_.clear();

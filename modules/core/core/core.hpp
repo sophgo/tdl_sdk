@@ -192,6 +192,7 @@ class Core {
   int32_t m_vpss_timeout = 100;
   std::string m_model_file;
   debug::ModelDebugger m_debugger;
+  bool m_skip_preprocess_ = false;
 
  private:
   template <typename T>

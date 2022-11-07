@@ -8,7 +8,7 @@
 
 #define ABS(x) ((x) >= 0 ? (x) : (-(x)))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define FACE_AREA_STANDARD (112 * 112)
 #define EYE_DISTANCE_STANDARD 80.
 
@@ -81,7 +81,8 @@ CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_c
                                 int fd_model_id, int fr_model_id, const char *fd_model_path,
                                 const char *fr_model_path, const char *fq_model_path) {
   if (fd_model_id != CVI_AI_SUPPORTED_MODEL_RETINAFACE &&
-      fd_model_id != CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION) {
+      fd_model_id != CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION &&
+      fd_model_id != CVI_AI_SUPPORTED_MODEL_SCRFDFACE) {
     LOGE("invalid face detection model id %d", fd_model_id);
     return CVI_FAILURE;
   }
@@ -100,9 +101,18 @@ CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_c
   }
   CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
 
-  face_cpt_info->fd_inference = (fd_model_id == CVI_AI_SUPPORTED_MODEL_RETINAFACE)
-                                    ? CVI_AI_RetinaFace
-                                    : CVI_AI_FaceMaskDetection;
+  // face_cpt_info->fd_inference = (fd_model_id == CVI_AI_SUPPORTED_MODEL_RETINAFACE)
+  //                                   ? CVI_AI_RetinaFace
+  //                                   : CVI_AI_FaceMaskDetection;
+  // add SCRFD
+  if (fd_model_id == CVI_AI_SUPPORTED_MODEL_RETINAFACE) {
+    face_cpt_info->fd_inference = CVI_AI_RetinaFace;
+  } else if (fd_model_id == CVI_AI_SUPPORTED_MODEL_SCRFDFACE) {
+    face_cpt_info->fd_inference = CVI_AI_ScrFDFace;
+  } else {
+    face_cpt_info->fd_inference = CVI_AI_FaceMaskDetection;
+  }
+
   face_cpt_info->fr_inference = (fr_model_id == CVI_AI_SUPPORTED_MODEL_FACERECOGNITION)
                                     ? CVI_AI_FaceRecognition
                                     : CVI_AI_FaceAttribute;
@@ -263,6 +273,48 @@ CVI_S32 _FaceCapture_CleanAll(face_capture_t *face_cpt_info) {
   return CVIAI_SUCCESS;
 }
 
+static float get_score(cvai_bbox_t *bbox, cvai_pts_t *pts_info, cvai_head_pose_t *pose) {
+  float nose_x = pts_info->x[2];
+  // float nose_y = pts_info->y[2];
+  float left_max = MIN(pts_info->x[0], pts_info->x[3]);
+  float right_max = MAX(pts_info->x[1], pts_info->x[4]);
+  float width = bbox->x2 - bbox->x1;
+  float l_ = nose_x - left_max;
+  float r_ = right_max - nose_x;
+
+  float eye_diff_x = pts_info->x[1] - pts_info->x[0];
+  float eye_diff_y = pts_info->y[1] - pts_info->y[0];
+  float eye_size = sqrt(eye_diff_x * eye_diff_x + eye_diff_y * eye_diff_y);
+
+  float mouth_diff_x = pts_info->x[4] - pts_info->x[3];
+  float mouth_diff_y = pts_info->y[4] - pts_info->y[3];
+  float mouth_size = sqrt(mouth_diff_x * mouth_diff_x + mouth_diff_y * mouth_diff_y);
+
+  //        float nose_mouth_l_diff = sqrt((nose_x - pts_info->x[3]) * (nose_x - pts_info->x[3]) +
+  //        (nose_y - pts_info->y[3]) * (nose_y - pts_info->y[3])) ; float nose_mouth_r_diff =
+  //        sqrt((nose_x - pts_info->x[4]) * (nose_x - pts_info->x[4]) + (nose_y - pts_info->y[4]) *
+  //        (nose_y - pts_info->y[4])) ;
+
+  if (pts_info->x[1] > bbox->x2 || pts_info->x[2] > bbox->x2 || pts_info->x[4] > bbox->x2 ||
+      pts_info->x[0] < bbox->x1 || pts_info->x[2] < bbox->x1 || pts_info->x[3] < bbox->x1) {
+    return 0.0;
+  }
+
+  else if ((l_ + 0.01 * width) < 0 || (r_ + 0.01 * width) < 0 || (eye_size / width) < 0.25 ||
+           (mouth_size / width) < 0.15) {
+    return 0.0;
+  } else {
+    float face_area = (bbox->y2 - bbox->y1) * (bbox->x2 - bbox->x1);
+    float area_score = MIN(1.0, face_area / FACE_AREA_STANDARD);
+    float pose_score = 1. - (ABS(pose->yaw) + ABS(pose->pitch) + ABS(pose->roll)) / 3.;
+    float size_score = eye_size / (bbox->x2 - bbox->x1);
+    size_score += mouth_size / (bbox->x2 - bbox->x1);
+
+    pose_score = pose_score * 0.9 + 0.3 * size_score;
+    return area_score * pose_score;
+  }
+}
+
 static void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face, bool *skip,
                                     quality_assessment_e qa_method) {
   /* NOTE: Make sure the coordinate is recovered by RetinaFace */
@@ -273,12 +325,10 @@ static void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face
     switch (qa_method) {
       case AREA_RATIO: {
         cvai_bbox_t *bbox = &face->info[i].bbox;
-        float face_area = (bbox->y2 - bbox->y1) * (bbox->x2 - bbox->x1);
-        float area_score = MIN(1.0, face_area / FACE_AREA_STANDARD);
+        cvai_pts_t *pts_info = &face->info[i].pts;
         cvai_head_pose_t *pose = &face->info[i].head_pose;
-        float pose_score = 1. - (ABS(pose->yaw) + ABS(pose->pitch) + ABS(pose->roll)) / 3.;
-        // face->info[i].face_quality = (area_score + pose_score) / 2.;
-        face->info[i].face_quality = area_score * pose_score;
+        face->info[i].face_quality = get_score(bbox, pts_info, pose);
+
       } break;
       case EYES_DISTANCE: {
         float dx = face->info[i].pts.x[0] - face->info[i].pts.x[1];
@@ -295,6 +345,22 @@ static void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face
         score /= laplacian_threshold;
         if (score > 1.0) score = 1.0;
         face->info[i].face_quality = score;
+      } break;
+      case MIX: {
+        static const float face_area = 112 * 112;
+        static const float laplacian_threshold = 8.0; /* tune this value for different condition */
+        float score1;
+        CVI_AI_Face_Quality_Laplacian(frame, &face->info[i], &score1);
+        score1 /= face_area;
+        score1 /= laplacian_threshold;
+        if (score1 > 1.0) score1 = 1.0;
+
+        cvai_bbox_t *bbox = &face->info[i].bbox;
+        cvai_pts_t *pts_info = &face->info[i].pts;
+        cvai_head_pose_t *pose = &face->info[i].head_pose;
+        float score2 = get_score(bbox, pts_info, pose);
+
+        face->info[i].face_quality = MIN(score2, score1);
       } break;
       default: {
         LOGE("Unknown QA method.\n");
@@ -453,6 +519,7 @@ static CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta
                sizeof(float) * 5);
 
         face_cpt_info->data[match_idx]._capture = true;
+        face_cpt_info->data[match_idx]._timestamp = face_cpt_info->_time;
       }
       switch (face_cpt_info->mode) {
         case AUTO: {

@@ -48,6 +48,9 @@ std::vector<std::string> read_file_lines(std::string strfile) {
   std::string line;
   while (getline(file, line)) {
     if (line.length() > 0 && line[0] == '#') continue;
+    if (line.at(line.length() - 1) == '\n') {
+      line = line.substr(0, line.length() - 1);
+    }
     lines.push_back(line);
   }
   return lines;
@@ -129,4 +132,22 @@ std::vector<std::string> getImgList(std::string dir_path) {
   closedir(dir);
   sort(files.begin(), files.end());
   return files;
+}
+
+bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len) {
+  FILE *fp = fopen(strf.c_str(), "rb");
+  if (fp == nullptr) {
+    std::cout << "read file failed," << strf << std::endl;
+    return false;
+  }
+  fseek(fp, 0, SEEK_END);
+  int len = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  if (len != buffer_len) {
+    std::cout << "size not equal,expect:" << buffer_len << ",has " << len << std::endl;
+    return false;
+  }
+  fread(p_buffer, len, 1, fp);
+  fclose(fp);
+  return true;
 }

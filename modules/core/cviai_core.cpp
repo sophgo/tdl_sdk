@@ -32,6 +32,8 @@
 #include "segmentation/deeplabv3.hpp"
 #include "smoke_classification/smoke_classification.hpp"
 #include "sound_classification/sound_classification.hpp"
+#include "sound_classification/sound_classification_v2.hpp"
+
 #include "thermal_face_detection/thermal_face.hpp"
 #include "thermal_person_detection/thermal_person.hpp"
 #include "utils/image_utils.hpp"
@@ -121,6 +123,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
     {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
     {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
+    {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, CREATOR(SoundClassificationV2)},
     {CVI_AI_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
     {CVI_AI_SUPPORTED_MODEL_DEEPLABV3, CREATOR(Deeplabv3)},
     {CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, CREATOR(AlphaPose)},
@@ -731,6 +734,8 @@ DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai
 
 DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification, SoundClassification,
                       CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification_V2, SoundClassificationV2,
+                      CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, int *)
 DEFINE_INF_FUNC_F2_P1(CVI_AI_DeeplabV3, Deeplabv3, CVI_AI_SUPPORTED_MODEL_DEEPLABV3,
                       cvai_class_filter_t *)
 

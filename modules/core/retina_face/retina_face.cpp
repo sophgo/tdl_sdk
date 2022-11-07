@@ -137,6 +137,7 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   int image_height = shape.dim[2];
   outputParser(image_width, image_height, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                meta);
+  model_timer_.TicToc(3, "post");
   return CVIAI_SUCCESS;
 }
 

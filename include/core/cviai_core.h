@@ -133,6 +133,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOX)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_OSNET)                            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION)              \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2)            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_WPODNET)                          \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LPRNET_TW)                        \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LPRNET_CN)                        \
@@ -813,7 +814,16 @@ DLL_EXPORT CVI_S32 CVI_AI_OSNetOne(cviai_handle_t handle, VIDEO_FRAME_INFO_S *fr
  */
 DLL_EXPORT CVI_S32 CVI_AI_SoundClassification(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, int *index);
-
+/**
+ * @brief Do sound classification.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param index The index of sound classes.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_SoundClassification_V2(const cviai_handle_t handle,
+                                                 VIDEO_FRAME_INFO_S *frame, int *index);
 /**
  * @brief Get sound classification classes num.
  *
