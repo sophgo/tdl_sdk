@@ -143,7 +143,7 @@ int YoloX::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   CVI_SHAPE shape = getInputShape(0);
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, obj_meta);
-  model_timer_.TicToc(3, "post");
+  model_timer_.TicToc("post");
   return CVIAI_SUCCESS;
 }
 

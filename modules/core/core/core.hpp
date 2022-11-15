@@ -89,6 +89,7 @@ class Core {
   void UseInputSysMem() { mp_mi->conf.input_mem_type = CVI_MEM_SYSTEM; }
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
+
   bool hasSkippedVpssPreprocess() const { return m_skip_vpss_preprocess; }
   int setVpssDepth(uint32_t in_index, uint32_t depth);
   int getVpssDepth(uint32_t in_index, uint32_t *depth);
@@ -112,6 +113,7 @@ class Core {
       LOGW("**************************************************************\n");
     }
   }
+  void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
 
  protected:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data);

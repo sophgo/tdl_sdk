@@ -327,7 +327,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
     meta->width = frame->stVFrame.u32Width;
     meta->height = frame->stVFrame.u32Height;
   }
-  model_timer_.TicToc(3, "post");
+  model_timer_.TicToc("post");
   return ret;
 }
 

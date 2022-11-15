@@ -166,7 +166,8 @@ int main(int argc, char **argv) {
   }
 
   // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, true);
-
+  CVI_AI_SetPerfEvalInterval(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
+                             10);  // only used to performance evaluation
   if (argc == 4) {
     record = atoi(argv[2]) ? true : false;
     outpath = (char *)malloc(strlen(argv[3]));

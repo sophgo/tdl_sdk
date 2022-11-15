@@ -22,10 +22,26 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
   // save audio to image array
   short *temp_buffer = reinterpret_cast<short *>(stOutFrame->stVFrame.pu8VirAddr[0]);
   mp_extractor_->update_data(temp_buffer, img_width * img_height);
+
+  model_timer_.TicToc("start");
+  // mp_extractor_->update_data(temp_buffer,img_width*img_height);
+
   // std::cout<<"update data done\n";
   const TensorInfo &tinfo = getInputTensorInfo(0);
   int8_t *input_ptr = tinfo.get<int8_t>();
-  mp_extractor_->melspectrogram_impl(input_ptr, int(tinfo.tensor_elem), tinfo.qscale);
+  // mp_extractor_->melspectrogram_impl(input_ptr, int(tinfo.tensor_elem), tinfo.qscale);
+  // int8_t *optimize_ptr = new int8_t[int(tinfo.tensor_elem)];
+  mp_extractor_->melspectrogram_optimze(temp_buffer, img_width * img_height, input_ptr,
+                                        int(tinfo.tensor_elem), tinfo.qscale);
+  // int iseq = 1;
+  // for(int i = 0; i < int(tinfo.tensor_elem);i++){
+  //   int diff = input_ptr[i] - optimize_ptr[i];
+  //   if(diff != 0){
+  //     std::cout<<"not
+  //     equal:"<<i<<",src:"<<int(input_ptr[i])<<",new:"<<int(optimize_ptr[i])<<std::endl; break;
+  //   }
+  // }
+
   // FILE *fp = fopen("/mnt/data/admin1_data/alios_test/feat.bin","wb");
   // fwrite(input_ptr,tinfo.tensor_elem,1,fp);
   // fclose(fp);
@@ -38,6 +54,7 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
 
   // get top k
   *index = get_top_k(info.get<float>(), info.tensor_elem);
+  model_timer_.TicToc("post");
   // std::cout<<"output index:"<<*index<<std::endl;
   return CVI_SUCCESS;
 }

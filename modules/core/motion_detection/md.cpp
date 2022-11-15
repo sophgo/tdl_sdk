@@ -298,7 +298,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     LOGE("Height and width of frame isn't equal to background image in MotionDetection\n");
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
-  md_timer_.TicToc(0, "start");
+  md_timer_.TicToc("start");
   CVI_S32 ret = CVI_SUCCESS;
   std::shared_ptr<VIDEO_FRAME_INFO_S> processed_frame;
   ret = do_vpss_ifneeded(srcframe, processed_frame);
@@ -321,7 +321,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     LOGE("Convert frame to IVE_IMAGE_S fail %x\n", ret);
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
-  md_timer_.TicToc(1, "preprocess");
+  md_timer_.TicToc("preprocess");
 
 #ifndef NO_OPENCV
   ive::IVEImage sub_image;
@@ -331,7 +331,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 #else
   ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &md_output, threshold);
 #endif
-  md_timer_.TicToc(2, "tpu_ive");
+  md_timer_.TicToc("tpu_ive");
   if (do_unmap_src) {
     CVI_SYS_Munmap((void *)processed_frame->stVFrame.pu8VirAddr[0], image_size);
   }
@@ -397,6 +397,6 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     memset(obj_meta->info[i].name, 0, sizeof(obj_meta->info[i].name));
   }
 #endif
-  md_timer_.TicToc(3, "post");
+  md_timer_.TicToc("post");
   return CVIAI_SUCCESS;
 }

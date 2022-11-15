@@ -249,6 +249,16 @@ DLL_EXPORT CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle,
  *
  * @param handle An AI SDK handle.
  * @param model Supported model id.
+ * @param interval number of frames used to performance evaluation
+ * @return int Return CVIAI_SUCCESS if load model succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_SetPerfEvalInterval(cviai_handle_t handle,
+                                              CVI_AI_SUPPORTED_MODEL_E config, int interval);
+/**
+ * @brief Set skip vpss preprocess for supported networks.
+ *
+ * @param handle An AI SDK handle.
+ * @param model Supported model id.
  * @return int Return CVIAI_SUCCESS if load model succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_UseInpuSysMem(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config);

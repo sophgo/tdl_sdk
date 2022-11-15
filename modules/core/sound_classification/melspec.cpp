@@ -71,7 +71,7 @@ MelFeatureExtract::MelFeatureExtract(int num_frames, int sr, int n_fft, int n_ho
   mode_ = mode;
   int pad_len = center ? n_fft / 2 : 0;
   pad_len_ = pad_len;
-  x_pad_ = Vectorf::Constant(pad_len * 2 + num_frames, 0);
+
   window_ =
       0.5 *
       (1.f - (Vectorf::LinSpaced(n_fft, 0.f, static_cast<float>(n_fft - 1)) * 2.f * M_PI / n_fft)
@@ -83,6 +83,9 @@ MelFeatureExtract::MelFeatureExtract(int num_frames, int sr, int n_fft, int n_ho
 
 void MelFeatureExtract::pad(Vectorf &x, int left, int right, const std::string &mode, float value) {
   // Vectorf x_pad_ = Vectorf::Constant(left+x.size()+right, value);
+  if (x_pad_.size() == 0) {
+    x_pad_ = Vectorf::Constant(left + right + x.size(), 0);
+  }
   x_pad_.segment(left, x.size()) = x;
 
   if (mode.compare("reflect") == 0) {
@@ -128,6 +131,7 @@ static Matrixcf stft(Vectorf &x_paded, Vectorf &window, int n_fft, int n_hop,
   Eigen::FFT<float> fft;
 
   for (int i = 0; i < n_frames; ++i) {
+    Vectorf segment = x_paded.segment(i * n_hop, n_fft);
     Vectorf x_frame = window.array() * x_paded.segment(i * n_hop, n_fft).array();
     X.row(i) = fft.fwd(x_frame);
   }
@@ -156,6 +160,9 @@ static Matrixf spectrogram(Matrixcf &X, float power = 1.f) {
 //   return log_sp.cwiseMax(log_sp.maxCoeff() - 80.0f);
 // }
 void MelFeatureExtract::update_data(short *p_data, int data_len) {
+  if (x_pad_.cols() == 0) {
+    x_pad_ = Vectorf::Constant(pad_len_ * 2 + data_len, 0);
+  }
   int num_len = int(x_pad_.size()) - 2 * pad_len_;
   if (num_len != data_len) {
     LOGE("size error\n");
@@ -193,6 +200,9 @@ void MelFeatureExtract::update_data(short *p_data, int data_len) {
   }
 }
 void MelFeatureExtract::update_float_data(float *p_data, int data_len) {
+  if (x_pad_.cols() == 0) {
+    x_pad_ = Vectorf::Constant(pad_len_ * 2 + data_len, 0);
+  }
   int num_len = int(x_pad_.size()) - 2 * pad_len_;
   if (num_len != data_len) {
     LOGE("size error\n");
@@ -305,4 +315,54 @@ void MelFeatureExtract::melspectrogram_impl(int8_t *p_dst, int dst_len, float q_
   //   }
   //   std::cout<<"logdone\n";
   // }
+}
+
+void MelFeatureExtract::melspectrogram_optimze(short *p_data, int data_len, int8_t *p_dst,
+                                               int dst_len, float q_scale) {
+  int pad_len = center_ ? num_fft_ / 2 : 0;
+
+  int n_f = num_fft_ / 2 + 1;
+  int padded_len = data_len + 2 * pad_len;
+  int n_frames = 1 + (padded_len - num_fft_) / num_hop_;
+
+  Eigen::FFT<float> fft;
+  melspec::Vectorf segment(num_fft_);
+  melspec::Vectorf specmag(n_f);
+  const float scale = 1.0 / 32768.0;
+  for (int i = 0; i < n_frames; ++i) {
+    int start_idx = i * num_hop_;
+    for (int j = 0; j < num_fft_; j++) {
+      int srcidx = start_idx + j - pad_len;
+      if (srcidx < 0) {
+        srcidx = -srcidx;
+      } else if (srcidx >= data_len) {
+        int over = srcidx - data_len;
+        srcidx = data_len - over - 2;
+      }
+      segment[j] = p_data[srcidx] * scale;  // TODO:fuquan.ke this could be optimized
+    }
+    melspec::Vectorf x_frame = window_.array() * segment.array();
+    melspec::Vectorcf spec_ri = fft.fwd(x_frame);
+    // compute mag
+    melspec::Vectorf specmag = spec_ri.leftCols(n_f).cwiseAbs().array().pow(2);
+
+    int8_t *pdst_r = p_dst + i * num_mel_;
+    melspec::Vectorf rowv = specmag * mel_basis_;
+    for (int n = 0; n < num_mel_; n++) {
+      float v = rowv[n];
+      if (v < min_val_) v = min_val_;
+      if (is_log_) {
+        v = 10 * log10f(v);
+      }
+      int16_t qval = v * q_scale;
+      if (qval < -128) {
+        // std::cout<<"overflow qval:"<<qval<<std::endl;
+        qval = -128;
+      } else if (qval > 127) {
+        // std::cout<<"overflow qval:"<<qval<<std::endl;
+        qval = 127;
+      }
+      pdst_r[n] = qval;
+    }
+  }
 }

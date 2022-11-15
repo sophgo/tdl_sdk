@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <map>
 #include <string>
+#include <vector>
 double get_cur_time_usecs();
 double get_cur_time_millisecs();
 class Timer {
@@ -14,7 +15,7 @@ class Timer {
   void Tic();
   void Toc(int times = 1);
   void Config(const std::string &name, int summary_cond_times = 100);
-  void TicToc(int step, const std::string &str_step);
+  void TicToc(const std::string &str_step);
 
  private:
   void Summary();
@@ -26,8 +27,9 @@ class Timer {
   float total_time_;
   int times_;
   int summary_cond_times_;
-  std::map<int, std::string> step_names_;
+
   std::map<int, struct timeval> step_time_;
+  std::vector<std::string> step_name_vec_;
   std::map<int, double> step_time_elpased_;
 };
 

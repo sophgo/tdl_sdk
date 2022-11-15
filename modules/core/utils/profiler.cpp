@@ -20,37 +20,29 @@ void Timer::Toc(int times) {
     Summary();
   }
 }
-void Timer::TicToc(int step, const std::string &str_step) {
+void Timer::TicToc(const std::string &str_step) {
 #ifdef PERF_EVAL
-  if (step == 0) {
-    // start a new round to record timestamp
-    int max_step = 0;
-    if (step_time_.size() != 0) {
-      for (auto &kv : step_time_) {
-        int step = kv.first;
-        if (step > max_step) {
-          max_step = step;
-        }
-        int prev_step = step - 1;
-        if (step_time_.count(prev_step)) {
-          double ts = cal_time_elapsed(step_time_[prev_step], step_time_[step]);
-          if (step_time_elpased_.count(step) == 0) {
-            step_time_elpased_[step] = ts;
-          } else {
-            step_time_elpased_[step] += ts;
-          }
+  if (step_name_vec_.size() > 0 && step_name_vec_[0] == str_step) {
+    for (auto &kv : step_time_) {
+      int step = kv.first;
+      int prev_step = step - 1;
+      if (step_time_.count(prev_step)) {
+        double ts = cal_time_elapsed(step_time_[prev_step], step_time_[step]);
+        if (step_time_elpased_.count(step) == 0) {
+          step_time_elpased_[step] = ts;
+        } else {
+          step_time_elpased_[step] += ts;
         }
       }
-      times_ += 1;
-      step_time_.clear();
     }
+    times_ += 1;
     if (times_ == summary_cond_times_) {
       double total_ts = 0;
       std::stringstream ss;
       ss << "[Timer] " << name_ << " ";
-      for (int i = 1; i <= max_step; i++) {
+      for (size_t i = 1; i < step_name_vec_.size(); i++) {
         if (step_time_elpased_.count(i)) {
-          ss << step_names_[i] << ":" << step_time_elpased_[i] * 1000 / times_ << ",";
+          ss << step_name_vec_[i] << ":" << step_time_elpased_[i] * 1000 / times_ << ",";
           total_ts += step_time_elpased_[i] * 1000 / times_;
         }
       }
@@ -59,14 +51,22 @@ void Timer::TicToc(int step, const std::string &str_step) {
       times_ = 0;
       step_time_elpased_.clear();
     }
+    step_time_.clear();
+    step_name_vec_.clear();
   }
+  for (size_t i = 1; i < step_name_vec_.size(); i++) {
+    if (step_name_vec_[i] == str_step) {
+      std::cout << "find duplicate name:" << str_step << std::endl;
+      return;
+    }
+  }
+
   struct timeval t;
   gettimeofday(&t, NULL);
-  if (step_time_.count(step)) {
-    std::cout << "error,has existed step:" << step << std::endl;
-  }
-  step_time_[step] = t;
-  step_names_[step] = str_step;
+  step_name_vec_.push_back(str_step);
+  int idx = int(step_name_vec_.size()) - 1;
+  step_time_[idx] = t;
+
 #endif
 }
 void Timer::Config(const std::string &name, int summary_cond_times) {
@@ -112,7 +112,9 @@ void FpsProfiler::Add(int cnts) {
 }
 
 void FpsProfiler::Config(const std::string &name, int summary_cond_cnts) {
-  name_ = name;
+  if (name.length() > 0) {
+    name_ = name;
+  }
   summary_cond_cnts_ = summary_cond_cnts;
 }
 
