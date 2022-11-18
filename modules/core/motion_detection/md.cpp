@@ -34,13 +34,13 @@ static CVI_S32 VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src,
     do_unmap = true;
   }
   CVI_S32 ret = CVI_SUCCESS;
-  ret = tmp_ive_image->fromFrame(src);
+  ret = tmp_ive_image->fromFrame(src);  // would not allocat image buffer,only warp address
   if (ret != CVI_SUCCESS) {
     LOGE("CVI_IVE_VideoFrameInfo2Image fail %x\n", ret);
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
 
-  ret = ive_instance->dma(tmp_ive_image, dst);
+  ret = ive_instance->dma(tmp_ive_image, dst);  // dma copy
 
   if (do_unmap) {
     CVI_SYS_Munmap((void *)src->stVFrame.pu8VirAddr[0], image_size);
@@ -92,9 +92,9 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
   m_padding.right = 1;
   m_padding.top = 1;
   m_padding.bottom = 1;
-#ifdef NO_OPENCV  // only phobos do not need padding because use custom ccl
+  // #ifdef NO_OPENCV  // only phobos do not need padding because use custom ccl
   memset((void *)&m_padding, 0, sizeof(m_padding));
-#endif
+  // #endif
   // create image with padding (1, 1, 1, 1).
   uint32_t extend_aligned_width = voWidth + m_padding.left + m_padding.right;
   uint32_t extend_aligned_height = voHeight + m_padding.top + m_padding.bottom;
@@ -158,10 +158,10 @@ void construct_bbox(std::vector<cv::Rect> dets, int im_width, int im_height, cva
 
   memset(out->info, 0, sizeof(cvai_object_info_t) * out->size);
   for (uint32_t i = 0; i < out->size; ++i) {
-    out->info[i].bbox.x1 = dets[i].x;
-    out->info[i].bbox.y1 = dets[i].y;
-    out->info[i].bbox.x2 = dets[i].x + dets[i].width;
-    out->info[i].bbox.y2 = dets[i].y + dets[i].height;
+    out->info[i].bbox.x1 = std::max(dets[i].x, 0);
+    out->info[i].bbox.y1 = std::max(0, dets[i].y);
+    out->info[i].bbox.x2 = std::min(dets[i].x + dets[i].width, im_width - 1);
+    out->info[i].bbox.y2 = std::min(dets[i].y + dets[i].height, im_height - 1);
     out->info[i].bbox.score = 0;
     out->info[i].classes = -1;
     memset(out->info[i].name, 0, sizeof(out->info[i].name));
@@ -298,6 +298,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     LOGE("Height and width of frame isn't equal to background image in MotionDetection\n");
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
+  memset(obj_meta, 0, sizeof(cvai_object_t));
   md_timer_.TicToc("start");
   CVI_S32 ret = CVI_SUCCESS;
   std::shared_ptr<VIDEO_FRAME_INFO_S> processed_frame;
@@ -323,14 +324,8 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   }
   md_timer_.TicToc("preprocess");
 
-#ifndef NO_OPENCV
-  ive::IVEImage sub_image;
-  ive_instance->roi(&md_output, &sub_image, m_padding.left, m_padding.left + im_width,
-                    m_padding.top, m_padding.top + im_height);
-  ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &sub_image, threshold);
-#else
   ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &md_output, threshold);
-#endif
+
   md_timer_.TicToc("tpu_ive");
   if (do_unmap_src) {
     CVI_SYS_Munmap((void *)processed_frame->stVFrame.pu8VirAddr[0], image_size);
@@ -344,8 +339,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   md_output.bufRequest(ive_instance);
 
 #ifndef NO_OPENCV
-  cv::Mat image(im_height + 2, im_width + 2, CV_8UC1, md_output.getVAddr()[0] + m_padding.left - 1,
-                md_output.getStride()[0]);
+  cv::Mat image(im_height, im_width, CV_8UC1, md_output.getVAddr()[0], md_output.getStride()[0]);
   std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Rect> bboxes;
 
@@ -374,8 +368,6 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   mergebbox(bboxes);
   construct_bbox(bboxes, im_width, im_height, obj_meta);
 #else
-
-  memset(obj_meta, 0, sizeof(cvai_object_t));
 
   int num_boxes = 0;
   int wstride = md_output.getStride()[0];
