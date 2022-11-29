@@ -446,11 +446,6 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
         }
         ret = registerFrame2Tensor(dstFrames);
       }
-    } else {
-      uint8_t *ptr = (uint8_t *)CVI_NN_TensorPtr(mp_mi->in.tensors);
-      memcpy(ptr, frames[0]->stVFrame.pu8VirAddr[0],
-             frames[0]->stVFrame.u32Length[0] + frames[0]->stVFrame.u32Length[1] +
-                 frames[0]->stVFrame.u32Length[2]);
     }
   }
   model_timer_.TicToc("vpss");

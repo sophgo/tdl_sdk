@@ -49,7 +49,7 @@ if [ "$(printf '%s\n' "$CMAKE_REQUIRED_VERSION" "$CMAKE_VERSION" | sort -V | hea
 else
     echo "Cmake minimum required version is ${CMAKE_REQUIRED_VERSION}, trying to download from ftp."
     if [ ! -f cmake-3.18.4-Linux-x86_64.tar.gz ]; then
-        wget ftp://swftp:cvitek@10.18.65.11/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
+        wget ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
     fi
     tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
     CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
