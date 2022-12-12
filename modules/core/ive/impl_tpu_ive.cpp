@@ -445,13 +445,6 @@ CVI_S32 TPUIVE::frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImp
     return ret;
   }
 
-  ret = dilate(pDst, pDst,
-               {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0});
-  if (ret != CVI_SUCCESS) {
-    LOGE("dilate fail %x\n", ret);
-    return ret;
-  }
-
 #ifdef DEBUG_MD
   LOGI("MD DEBUG: write: dialte.bin\n");
   // pDst->write("dilate.bin");

@@ -13,8 +13,6 @@
 #include "cviai.h"
 #include "evaluation/cviai_media.h"
 
-// #include "ive/ive.h"
-// #include "sys_utils.hpp"
 #include <iostream>
 #include <sstream>
 int main(int argc, char *argv[]) {
@@ -32,11 +30,10 @@ int main(int argc, char *argv[]) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
   }
-  std::string strf1 = "/mnt/data/admin1_data/alios_test/set/a.jpg";  //(argv[1]);
-  std::string strf2 = "/mnt/data/admin1_data/alios_test/set/b.jpg";  //(argv[2]);
+  std::string strf1(argv[1]);
+  std::string strf2(argv[2]);
 
   VIDEO_FRAME_INFO_S bg;
-  // printf("toread image:%s\n",argv[1]);
   CVI_AI_ReadImage(strf1.c_str(), &bg, PIXEL_FORMAT_YUV_400);
   std::cout << "read image1 done\n";
   VIDEO_FRAME_INFO_S frame;

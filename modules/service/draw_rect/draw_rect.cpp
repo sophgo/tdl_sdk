@@ -404,9 +404,16 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float 
     for (int h = draw_y1; h < draw_y2; ++h) {
       if (i > 0) {
         int offset = h * stride + draw_x1 * 2;
+        if (uint32_t(offset + draw_thickness_width * 2) >= frame->stVFrame.u32Length[i]) {
+          printf("draw_rect overflow\n");
+        }
+        if (draw_x1 * 2 + draw_thickness_width * 2 >= stride) {
+          int overflow = stride - (draw_x1 * 2 + draw_thickness_width * 2) + 2;
+          offset -= overflow;
+        }
         std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset), draw_thickness_width,
                     (uint16_t)color);
-
+        // this would not be overflowed
         offset = h * stride + (draw_x2 - draw_thickness_width) * 2;
         std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset), draw_thickness_width,
                     (uint16_t)color);
@@ -422,15 +429,25 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float 
     }
 
     // draw rect horizontal line
-    for (int h = draw_y1; h < draw_y1 + draw_thickness_width; ++h) {
+    int hstart = draw_y1;
+    if (hstart + draw_thickness_width >= height) {
+      hstart = height - draw_thickness_width;
+    }
+    for (int h = hstart; h < hstart + draw_thickness_width; ++h) {
       if (i > 0) {
         int offset = h * stride + draw_x1 * 2;
         int box_width = ((draw_x2 - draw_thickness_width) - draw_x1);
+        if (box_width < 0) {
+          box_width = 0;
+        }
         std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset), box_width,
                     (uint16_t)color);
       } else {
         int offset = h * stride + draw_x1;
         int box_width = ((draw_x2 - draw_thickness_width) - draw_x1);
+        if (box_width < 0) {
+          box_width = 0;
+        }
         std::fill_n((uint8_t *)(frame->stVFrame.pu8VirAddr[i] + offset), box_width, (uint8_t)color);
       }
     }
@@ -439,11 +456,17 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float 
       if (i > 0) {
         int offset = h * stride + draw_x1 * 2;
         int box_width = ((draw_x2 - draw_thickness_width) - draw_x1);
+        if (box_width < 0) {
+          box_width = 0;
+        }
         std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset), box_width,
                     (uint16_t)color);
       } else {
         int offset = h * stride + draw_x1;
         int box_width = ((draw_x2 - draw_thickness_width) - draw_x1);
+        if (box_width < 0) {
+          box_width = 0;
+        }
         std::fill_n((uint8_t *)(frame->stVFrame.pu8VirAddr[i] + offset), box_width, (uint8_t)color);
       }
     }

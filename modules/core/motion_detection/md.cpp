@@ -92,9 +92,9 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
   m_padding.right = 1;
   m_padding.top = 1;
   m_padding.bottom = 1;
-  // #ifdef NO_OPENCV  // only phobos do not need padding because use custom ccl
+#ifdef NO_OPENCV  // only phobos do not need padding because use custom ccl
   memset((void *)&m_padding, 0, sizeof(m_padding));
-  // #endif
+#endif
   // create image with padding (1, 1, 1, 1).
   uint32_t extend_aligned_width = voWidth + m_padding.left + m_padding.right;
   uint32_t extend_aligned_height = voHeight + m_padding.top + m_padding.bottom;
@@ -298,7 +298,6 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     LOGE("Height and width of frame isn't equal to background image in MotionDetection\n");
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
-  memset(obj_meta, 0, sizeof(cvai_object_t));
   md_timer_.TicToc("start");
   CVI_S32 ret = CVI_SUCCESS;
   std::shared_ptr<VIDEO_FRAME_INFO_S> processed_frame;
@@ -323,8 +322,14 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
   md_timer_.TicToc("preprocess");
-
+#ifndef NO_OPENCV
+  ive::IVEImage sub_image;
+  ive_instance->roi(&md_output, &sub_image, m_padding.left, m_padding.left + im_width,
+                    m_padding.top, m_padding.top + im_height);
+  ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &sub_image, threshold);
+#else
   ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &md_output, threshold);
+#endif
 
   md_timer_.TicToc("tpu_ive");
   if (do_unmap_src) {
@@ -339,7 +344,8 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   md_output.bufRequest(ive_instance);
 
 #ifndef NO_OPENCV
-  cv::Mat image(im_height, im_width, CV_8UC1, md_output.getVAddr()[0], md_output.getStride()[0]);
+  cv::Mat image(im_height + 2, im_width + 2, CV_8UC1, md_output.getVAddr()[0] + m_padding.left - 1,
+                md_output.getStride()[0]);
   std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Rect> bboxes;
 
@@ -368,7 +374,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   mergebbox(bboxes);
   construct_bbox(bboxes, im_width, im_height, obj_meta);
 #else
-
+  memset(obj_meta, 0, sizeof(cvai_object_t));
   int num_boxes = 0;
   int wstride = md_output.getStride()[0];
 

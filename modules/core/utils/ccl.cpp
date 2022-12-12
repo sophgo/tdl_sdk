@@ -342,7 +342,8 @@ int *extract_connected_component(unsigned char *p_fg_mask, int width, int height
         } else {
           /* new label.*/
           lbVal = currLabel;
-          if (currLabel < (CC_MAX_NUM_LABELS - 1)) {
+          if (currLabel <
+              (CC_MAX_NUM_LABELS - 1)) {  // the maximum label would be CC_MAX_NUM_LABELS-1
             currLabel += 1;
           }
         }
@@ -383,7 +384,12 @@ int *extract_connected_component(unsigned char *p_fg_mask, int width, int height
     } /* col */
   }   /* row */
 
-  // save the maximal label value.
+  // this would not happen
+  if (tmpMaxLabel > CC_MAX_NUM_LABELS) {
+    printf("ccl error maxlable:%d\n", tmpMaxLabel);
+    *p_num_boxes = 0;
+    return ccGst->boundingBoxes;
+  }
   ccGst->maxID = tmpMaxLabel;
 
   if (tmpMaxLabel > 0) {
