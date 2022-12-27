@@ -69,7 +69,11 @@ class KalmanTracker : public Tracker {
                                              const std::vector<int> &BBox_IDXes,
                                              const cvai_kalman_filter_config_t &kfilter_conf,
                                              float upper_bound);
-
+  static void restrictCostMatrix_BBox(COST_MATRIX &cost_matrix,
+                                      const std::vector<KalmanTracker> &KTrackers,
+                                      const std::vector<BBOX> &BBoxes,
+                                      const std::vector<int> &Tracker_IDXes,
+                                      const std::vector<int> &BBox_IDXes, float upper_bound);
   /* DEBUG CODE */
   int get_FeatureUpdateCounter() const;
   int get_MatchedCounter() const;

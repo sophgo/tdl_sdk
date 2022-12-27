@@ -62,6 +62,9 @@ DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_SetConfig(const cviai_app_handle_t han
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_Run(const cviai_app_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame);
 
+DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_FDFR(const cviai_app_handle_t handle,
+                                               VIDEO_FRAME_INFO_S *frame, cvai_face_t *p_face);
+
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_SetMode(const cviai_app_handle_t handle,
                                                   capture_mode_e mode);
 DLL_EXPORT CVI_S32 CVI_AI_APP_FaceCapture_CleanAll(const cviai_app_handle_t handle);

@@ -23,7 +23,7 @@
 #include "sys_utils.hpp"
 #define OUTPUT_BUFFER_SIZE 10
 #define MODE_DEFINITION 0
-
+#define FACE_FEAT_SIZE 256
 // #define USE_OUTPUT_DATA_API
 
 typedef enum { fast = 0, interval, leave, intelligent } APP_MODE_e;
@@ -44,6 +44,9 @@ typedef struct {
   cvai_image_t image;
   tracker_state_e state;
   uint32_t counter;
+  char name[128];
+  float match_score;
+  uint64_t frame_id;
 } IOData;
 
 // typedef struct {
@@ -121,12 +124,17 @@ static void *pImageWrite(void *args) {
     }
     int target_idx = (front_idx + 1) % OUTPUT_BUFFER_SIZE;
     char filename[128];
-    if ((app_mode == leave || app_mode == intelligent) && data_buffer[target_idx].state == MISS) {
-      sprintf(filename, "%s/face_%" PRIu64 "_out.png", g_out_dir.c_str(),
-              data_buffer[target_idx].u_id);
+    if (data_buffer[target_idx].state != MISS) {
+      sprintf(filename, "%s/frm_%d_face_%d_%u_score_%.3f_qua_%.3f_name_%s.png", g_out_dir.c_str(),
+              int(data_buffer[target_idx].frame_id), int(data_buffer[target_idx].u_id),
+              data_buffer[target_idx].counter, data_buffer[target_idx].match_score,
+              data_buffer[target_idx].quality, data_buffer[target_idx].name);
     } else {
-      sprintf(filename, "%s/face_%" PRIu64 "_%u.png", g_out_dir.c_str(),
-              data_buffer[target_idx].u_id, data_buffer[target_idx].counter);
+      sprintf(filename, "%s/frm_%d_face_%d_%u_score_%.3f_qua_%.3f_name_%s_out.png",
+              g_out_dir.c_str(), int(data_buffer[target_idx].frame_id),
+              int(data_buffer[target_idx].u_id), data_buffer[target_idx].counter,
+              data_buffer[target_idx].match_score, data_buffer[target_idx].quality,
+              data_buffer[target_idx].name);
     }
     if (data_buffer[target_idx].image.pix_format != PIXEL_FORMAT_RGB_888) {
       printf("[WARNING] Image I/O unsupported format: %d\n",
@@ -141,16 +149,6 @@ static void *pImageWrite(void *args) {
                        data_buffer[target_idx].image.height, STBI_rgb,
                        data_buffer[target_idx].image.pix[0],
                        data_buffer[target_idx].image.stride[0]);
-
-        /* if there is no first capture face in INTELLIGENT mode, we need to create one */
-        if (app_mode == intelligent && data_buffer[target_idx].counter == 0) {
-          sprintf(filename, "%s/face_%" PRIu64 "_1.png", g_out_dir.c_str(),
-                  data_buffer[target_idx].u_id);
-          stbi_write_png(filename, data_buffer[target_idx].image.width,
-                         data_buffer[target_idx].image.height, STBI_rgb,
-                         data_buffer[target_idx].image.pix[0],
-                         data_buffer[target_idx].image.stride[0]);
-        }
       }
     }
 
@@ -192,7 +190,7 @@ void export_tracking_info(face_capture_t *p_cap_info, const std::string &str_dst
   char sz_dstf[128];
   sprintf(sz_dstf, "%s/%08d.txt", str_dst_dir.c_str(), frame_id);
   FILE *fp = fopen(sz_dstf, "w");
-
+  std::cout << "to parse,numobjs:" << p_objinfo->size << std::endl;
   for (uint32_t i = 0; i < p_objinfo->size; i++) {
     // if(p_objinfo->info[i].unique_id != 0){
     // sprintf( buf, "\nOD DB File Size = %" PRIu64 " bytes \t"
@@ -201,12 +199,13 @@ void export_tracking_info(face_capture_t *p_cap_info, const std::string &str_dst
     float cty = (p_objinfo->info[i].bbox.y1 + p_objinfo->info[i].bbox.y2) / 2 / imgh;
     float ww = (p_objinfo->info[i].bbox.x2 - p_objinfo->info[i].bbox.x1) / imgw;
     float hh = (p_objinfo->info[i].bbox.y2 - p_objinfo->info[i].bbox.y1) / imgh;
-    float score = p_objinfo->info[i].bbox.score;
-    sprintf(szinfo, "%d %f %f %f %f %" PRIu64 " %f\n", lb, ctx, cty, ww, hh,
-            p_objinfo->info[i].unique_id, score);
+    // float score = p_objinfo->info[i].bbox.score;
+    sprintf(szinfo, "%d %f %f %f %f %" PRIu64 " %.3f\n", lb, ctx, cty, ww, hh,
+            p_objinfo->info[i].unique_id, p_objinfo->info[i].face_quality);
     fwrite(szinfo, 1, strlen(szinfo), fp);
     // }
   }
+  std::cout << "write done\n";
   fclose(fp);
 }
 void release_system(cviai_handle_t ai_handle, cviai_service_handle_t service_handle,
@@ -218,6 +217,121 @@ void release_system(cviai_handle_t ai_handle, cviai_service_handle_t service_han
   CVI_SYS_Exit();
   CVI_VB_Exit();
 }
+int load_image_file(IVE_HANDLE ive_handle, const std::string &strf, IVE_IMAGE_S &image,
+                    VIDEO_FRAME_INFO_S &fdFrame) {
+  image = CVI_IVE_ReadImage(ive_handle, strf.c_str(), IVE_IMAGE_TYPE_U8C3_PLANAR);
+  if (image.u16Width == 0) {
+    std::cout << "read image failed:" << strf << std::endl;
+    return CVI_FAILURE;
+  } else {
+    std::cout << "readimg with:" << image.u16Width << std::endl;
+  }
+
+  int ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame, false);
+  if (ret != CVI_SUCCESS) {
+    std::cout << "Convert to video frame failed with:" << ret << ",file:" << strf << std::endl;
+    CVI_SYS_FreeI(ive_handle, &image);
+    return CVI_FAILURE;
+  }
+  return CVI_SUCCESS;
+}
+std::string get_img_name(const std::string &strf) {
+  size_t pos0 = strf.find_last_of('/');
+  size_t pos1 = strf.find_last_of('.');
+  std::string name = strf.substr(pos0 + 1, pos1 - pos0);
+  return name;
+}
+int register_gallery_face(cviai_app_handle_t app_handle, IVE_HANDLE ive_handle,
+                          const std::string &strf, cvai_service_feature_array_t *p_feat_gallery,
+                          std::vector<std::string> &gallery_names) {
+  IVE_IMAGE_S image;
+  VIDEO_FRAME_INFO_S fdFrame;
+
+  int ret = load_image_file(ive_handle, strf, image, fdFrame);
+  if (ret != CVI_SUCCESS) {
+    return NULL;
+  }
+  cvai_face_t faceinfo;
+  memset(&faceinfo, 0, sizeof(faceinfo));
+  ret = CVI_AI_APP_FaceCapture_FDFR(app_handle, &fdFrame, &faceinfo);
+  if (ret != CVI_SUCCESS) {
+    std::cout << "face extract failed\n";
+  }
+  std::cout << "extract face num:" << faceinfo.size << std::endl;
+  if (faceinfo.size == 0 || faceinfo.info[0].feature.ptr == NULL) {
+    printf("face num error,got:%d\n", (int)faceinfo.size);
+    ret = CVI_FAILURE;
+  } else {
+    std::cout << "extract featsize:" << faceinfo.info[0].feature.size
+              << ",addr:" << (void *)faceinfo.info[0].feature.ptr << std::endl;
+  }
+  if (ret == CVI_FAILURE) {
+    CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
+    CVI_SYS_FreeI(ive_handle, &image);
+    CVI_AI_Free(&faceinfo);
+    return ret;
+  }
+
+  int8_t *p_new_feat = NULL;
+  size_t src_size = 0;
+  if (p_feat_gallery->ptr == 0) {
+    p_new_feat = (int8_t *)malloc(faceinfo.info[0].feature.size);
+    p_feat_gallery->type = faceinfo.info[0].feature.type;
+    p_feat_gallery->feature_length = faceinfo.info[0].feature.size;
+    std::cout << "allocate memory,size:" << p_feat_gallery->feature_length << std::endl;
+  } else {
+    if (p_feat_gallery->feature_length != faceinfo.info[0].feature.size) {
+      printf("error,featsize not equal,curface:%u,gallery:%u\n", faceinfo.info[0].feature.size,
+             p_feat_gallery->feature_length);
+      ret = CVI_FAILURE;
+    } else {
+      src_size = p_feat_gallery->feature_length * p_feat_gallery->data_num;
+      p_new_feat = (int8_t *)malloc(src_size + FACE_FEAT_SIZE);
+      memcpy(p_new_feat, p_feat_gallery->ptr, src_size);
+    }
+  }
+  std::cout << "to copy mem\n";
+  if (ret == CVI_SUCCESS) {
+    if (p_feat_gallery->ptr != NULL) {
+      memcpy(p_new_feat, p_feat_gallery->ptr + src_size, p_feat_gallery->feature_length);
+      free(p_feat_gallery->ptr);
+    }
+    memcpy(p_new_feat + src_size, faceinfo.info[0].feature.ptr, faceinfo.info[0].feature.size);
+    p_feat_gallery->data_num += 1;
+    p_feat_gallery->ptr = p_new_feat;
+    gallery_names.push_back(get_img_name(strf));
+    std::cout << "register gallery:" << gallery_names[gallery_names.size() - 1] << std::endl;
+  }
+  std::cout << "copy done\n";
+  CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
+  CVI_SYS_FreeI(ive_handle, &image);
+  CVI_AI_Free(&faceinfo);
+  std::cout << "register done\n";
+  return ret;
+}
+int do_face_match(cviai_service_handle_t service_handle,
+                  const std::vector<std::string> &gallery_names, cvai_face_info_t *p_face) {
+  if (gallery_names.size() == 0) {
+    return CVI_FAILURE;
+  }
+  std::cout << "to matchtrack:" << p_face->unique_id << ",featsize:" << p_face->feature.size
+            << std::endl;
+  uint32_t ind = 0;
+  float score = 0;
+  uint32_t size;
+
+  int ret = CVI_AI_Service_FaceInfoMatching(service_handle, p_face, 1, 0.1, &ind, &score, &size);
+  // printf("ind:%u,ret:%d,score:%f\n",ind,ret,score);
+  // getchar();
+  printf("matchname,trackid:%u,name:%s,score:%f\n", uint32_t(p_face->unique_id),
+         gallery_names[ind].c_str(), score);
+  p_face->recog_score = score;
+  if (score > 0.5) {
+    sprintf(p_face->name, gallery_names[ind].c_str(), gallery_names[ind].size());
+  }
+  return ret;
+}
+
 int main(int argc, char *argv[]) {
   CVI_S32 ret = CVI_SUCCESS;
   // Set signal catch
@@ -253,8 +367,6 @@ int main(int argc, char *argv[]) {
   const char *config_path = "NULL";  // argv[4];//NULL
   // const char *mode_id = intelligent;//argv[5];//leave=2,intelligent=3
 
-  CVI_AI_SUPPORTED_MODEL_E fr_model_id = CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE;
-
   int buffer_size = 10;       // atoi(argv[6]);//10
   float det_threshold = 0.5;  // atof(argv[7]);//0.5
   bool write_image = true;    // 1
@@ -278,13 +390,22 @@ int main(int argc, char *argv[]) {
   cviai_handle_t ai_handle = NULL;
   cviai_service_handle_t service_handle = NULL;
   cviai_app_handle_t app_handle = NULL;
+
   ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
   ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
+  // ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
+  printf("to facecap init\n");
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
+  printf("to quick setup\n");
+  const char *str_fr_model =
+      "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv182x/cviface-v5-s.cvimodel";
+  cvai_service_feature_array_t feat_gallery;
+  memset(&feat_gallery, 0, sizeof(feat_gallery));
+  CVI_AI_SUPPORTED_MODEL_E fr_model_id = CVI_AI_SUPPORTED_MODEL_FACERECOGNITION;
   ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
                                            NULL, NULL);
+  IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
 
   if (ret != CVI_SUCCESS) {
     release_system(ai_handle, service_handle, app_handle);
@@ -298,6 +419,23 @@ int main(int argc, char *argv[]) {
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 3);
   app_mode = intelligent;  // APP_MODE_e(atoi(mode_id));
+  printf("finish init \n");
+
+  std::vector<std::string> gallery_names;
+  if (ive_handle == NULL) {
+    printf("CreateHandle failed with %#x!\n", ret);
+    ret = CVI_FAILURE;
+  } else {
+    const char *gimg = "/mnt/data/admin1_data/datasets/ivs_eval_set/image/yitong/register.jpg";
+    ret = register_gallery_face(app_handle, ive_handle, gimg, &feat_gallery, gallery_names);
+    std::cout << "register ret:" << ret << std::endl;
+    if (ret == CVI_SUCCESS) {
+      std::cout << "to register gallery\n";
+      ret = CVI_AI_Service_RegisterFeatureArray(service_handle, feat_gallery, COS_SIMILARITY);
+      std::cout << "finish register gallery\n";
+    }
+  }
+  std::cout << "to start:\n";
   switch (app_mode) {
 #if MODE_DEFINITION == 0
     case fast: {
@@ -332,16 +470,18 @@ int main(int argc, char *argv[]) {
   CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
   if (!strcmp(config_path, "NULL")) {
     printf("Use Default Config...\n");
-  } else {
+  }
+  if (ret == CVI_FAILURE) {
     release_system(ai_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
   app_cfg.thr_quality = 0.1;
   app_cfg.thr_quality_high = 0.95;
   app_cfg.thr_size_min = 20;
-  app_cfg.miss_time_limit = 10;
+  app_cfg.miss_time_limit = 20;
   app_cfg.store_RGB888 = true;
-
+  app_cfg.store_feature = true;
+  app_cfg.qa_method = 0;
   CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
 
   memset(&g_obj_meta_0, 0, sizeof(cvai_object_t));
@@ -365,6 +505,7 @@ int main(int argc, char *argv[]) {
     std::cout << "processing:" << img_idx << "/530\n";
     char szimg[256];
     sprintf(szimg, "%s/%08d.jpg", str_image_root.c_str(), img_idx);
+    std::cout << "processing:" << img_idx << "/1000,path:" << szimg << std::endl;
     bool empty_img = false;
     IVE_IMAGE_S image = CVI_IVE_ReadImage(ive_handle, szimg, IVE_IMAGE_TYPE_U8C3_PLANAR);
     if (image.u16Width == 0) {
@@ -372,14 +513,14 @@ int main(int argc, char *argv[]) {
       if (img_idx > 350) {
         empty_img = true;
         num_append++;
-        image = CVI_IVE_ReadImage(ive_handle, "/mnt/data/admin1_data/black_1080p.jpg",
+        image = CVI_IVE_ReadImage(ive_handle, "/mnt/data/admin1_data/alios_test/black_1080p.jpg",
                                   IVE_IMAGE_TYPE_U8C3_PLANAR);
         if (image.u16Width == 0) {
           std::cout << "read black emptry failed:" << std::string(szimg) << std::endl;
           continue;
         }
       } else
-        continue;
+        std::cout << "readimg with:" << image.u16Width << std::endl;
     }
     if (num_append > 30) {
       break;
@@ -397,7 +538,7 @@ int main(int argc, char *argv[]) {
     printf("ALIVE persons: %d\n", alive_person_num);
     ret = CVI_AI_APP_FaceCapture_Run(app_handle, &fdFrame);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_APP_PersonCapture_Run failed with %#x\n", ret);
+      printf("CVI_AI_APP_FaceCapture_Run failed with %#x\n", ret);
       break;
     }
 
@@ -418,6 +559,8 @@ int main(int argc, char *argv[]) {
         if (!CHECK_OUTPUT_CONDITION(app_handle->face_cpt_info, i, app_mode)) {
           continue;
         }
+        cvai_face_info_t *pface_info = &app_handle->face_cpt_info->data[i].info;
+        do_face_match(service_handle, gallery_names, pface_info);
         tracker_state_e state = app_handle->face_cpt_info->data[i].state;
         uint32_t counter = app_handle->face_cpt_info->data[i]._out_counter;
         uint64_t u_id = app_handle->face_cpt_info->data[i].info.unique_id;
@@ -446,11 +589,16 @@ int main(int argc, char *argv[]) {
           continue;
         }
         /* Copy image data to buffer */
+        memset(&data_buffer[target_idx], 0, sizeof(data_buffer[target_idx]));
         data_buffer[target_idx].u_id = u_id;
         data_buffer[target_idx].quality = face_quality;
         data_buffer[target_idx].state = state;
         data_buffer[target_idx].counter = counter;
+        data_buffer[target_idx].match_score = pface_info->recog_score;
+        data_buffer[target_idx].frame_id = app_handle->face_cpt_info->data[i].cap_timestamp;
+        memcpy(data_buffer[target_idx].name, pface_info->name, 128);
         /* NOTE: Make sure the image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
+
         CVI_AI_CopyImage(&app_handle->face_cpt_info->data[i].image, &data_buffer[target_idx].image);
         {
           SMT_MutexAutoLock(IOMutex, lock);
@@ -543,6 +691,5 @@ void RESTRUCTURING_FACE_META(face_capture_t *face_cpt_info, cvai_face_t *face_me
 
 bool CHECK_OUTPUT_CONDITION(face_capture_t *face_cpt_info, uint32_t idx, APP_MODE_e mode) {
   if (!face_cpt_info->_output[idx]) return false;
-  if (mode == leave && face_cpt_info->data[idx].state != MISS) return false;
   return true;
 }

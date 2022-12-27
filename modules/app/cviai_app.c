@@ -55,6 +55,22 @@ CVI_S32 CVI_AI_APP_FaceCapture_Run(const cviai_app_handle_t handle, VIDEO_FRAME_
   return _FaceCapture_Run(ctx->face_cpt_info, ctx->ai_handle, frame);
 }
 
+CVI_S32 CVI_AI_APP_FaceCapture_FDFR(const cviai_app_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                    cvai_face_t *p_face) {
+  cviai_app_context_t *ctx = handle;
+  face_capture_t *face_cpt_info = ctx->face_cpt_info;
+  cviai_handle_t ai_handle = ctx->ai_handle;
+  if (CVI_SUCCESS != face_cpt_info->fd_inference(ai_handle, frame, p_face)) {
+    printf("fd_inference failed\n");
+    return CVI_FAILURE;
+  }
+  if (CVI_SUCCESS != face_cpt_info->fr_inference(ai_handle, frame, p_face)) {
+    printf("fr inference failed\n");
+    return CVI_FAILURE;
+  }
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_APP_FaceCapture_SetMode(const cviai_app_handle_t handle, capture_mode_e mode) {
   cviai_app_context_t *ctx = handle;
   return _FaceCapture_SetMode(ctx->face_cpt_info, mode);

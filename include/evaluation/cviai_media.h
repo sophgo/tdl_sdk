@@ -52,6 +52,21 @@ DLL_EXPORT CVI_S32 CVI_AI_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *fr
  * @param format Set output format, only supports RGB, BGR, planar.
  * @return int Return CVIAI_SUCCESS if read succeed.
  */
+
+DLL_EXPORT CVI_S32 CVI_AI_ReadImage_Ion(const char *filepath, VIDEO_FRAME_INFO_S *frame,
+                                        const PIXEL_FORMAT_E format);
+
+/**
+ * @brief Release image which is read from CVI_AI_ReadImage.
+ *
+ * @param filepath GIven image path.
+ * @param blk VB block id.
+ * @param frame Output read image.
+ * @param format Set output format, only supports RGB, BGR, planar.
+ * @return int Return CVIAI_SUCCESS if read succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_ReleaseImage_Ion(VIDEO_FRAME_INFO_S *frame);
+
 DLL_EXPORT CVI_S32 CVI_AI_ReadImage_Docker(const char *filepath, VIDEO_FRAME_INFO_S *frame,
                                            PIXEL_FORMAT_E format);
 

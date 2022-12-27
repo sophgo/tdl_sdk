@@ -16,4 +16,10 @@ typedef enum {
   BBox_IoUDistance
 } cost_matrix_algo_e;
 
+typedef struct _stRect {
+  float x;
+  float y;
+  float width;
+  float height;
+} stRect;
 #endif /* _CVI_DEEPSORT_TYPES_INTERNAL_HPP_ */

@@ -194,7 +194,10 @@ typedef struct {
   float liveness_score;
   float hardhat_score;
   float mask_score;
+  float recog_score;
   float face_quality;
+  float pose_score;
+  float sharpness_score;
   cvai_head_pose_t head_pose;
 } cvai_face_info_t;
 

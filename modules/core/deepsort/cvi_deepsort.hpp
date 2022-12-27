@@ -26,9 +26,9 @@ class DeepSORT {
 
   static cvai_deepsort_config_t get_DefaultConfig();
 
-  CVI_S32 track(Tracking_Result &result, const std::vector<BBOX> &BBoxes,
-                const std::vector<FEATURE> &Features, int class_id = -1, bool use_reid = true,
-                float *Quality = NULL);
+  CVI_S32 track_impl(Tracking_Result &result, const std::vector<BBOX> &BBoxes,
+                     const std::vector<FEATURE> &Features, int class_id = -1, bool use_reid = true,
+                     float *Quality = NULL);
 
   CVI_S32 track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid = true);
   CVI_S32 track(cvai_face_t *face, cvai_tracker_t *tracker, bool use_reid = false);
@@ -53,8 +53,9 @@ class DeepSORT {
   std::map<int, uint64_t> specific_id_counter;
   std::vector<KalmanTracker> k_trackers;
   KalmanFilter kf_;
-  std::vector<int> accreditation_tracker_idxes;
-  std::vector<int> probation_tracker_idxes;
+  // byte_kalman::KalmanFilter byte_kf_;
+  std::vector<int> accreditation_tracker_idxes;  // confirmed trackids
+  std::vector<int> probation_tracker_idxes;      // temp trackids
 
   /* DeepSORT config */
   cvai_deepsort_config_t default_conf;
@@ -67,6 +68,9 @@ class DeepSORT {
                     cvai_kalman_filter_config_t &kf_conf,
                     cost_matrix_algo_e cost_method = Feature_CosineDistance,
                     float max_distance = __FLT_MAX__);
+  MatchResult refine_uncrowd(const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features,
+                             const std::vector<int> &Tracker_IDXes,
+                             const std::vector<int> &BBox_IDXes);
   void compute_distance();
   void solve_assignment();
 };

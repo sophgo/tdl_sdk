@@ -572,6 +572,19 @@ DLL_EXPORT CVI_S32 CVI_AI_FaceRecognition(const cviai_handle_t handle, VIDEO_FRA
  * @param face_idx The index of cvai_face_info_t inside cvai_face_t.
  * @return int Return CVIAI_SUCCESS on success.
  */
+
+/**
+ * @brief Do face recognition with bbox info stored in faces.
+ *
+ * @param handle An AI SDK handle.
+ * @param p_rgb_pack Input video frame.
+ * @param p_face_info, if no data in p_face_info,p_rgb_pack means aligned packed rgb data
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_FaceFeatureExtract(const cviai_handle_t handle, const uint8_t *p_rgb_pack,
+                                             int width, int height, int stride,
+                                             cvai_face_info_t *p_face_info);
+
 DLL_EXPORT CVI_S32 CVI_AI_FaceRecognitionOne(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                              cvai_face_t *faces, int face_idx);
 

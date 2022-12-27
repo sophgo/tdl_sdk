@@ -208,6 +208,36 @@ void KalmanTracker::restrictCostMatrix_Mahalanobis(
   }
 }
 
+void KalmanTracker::restrictCostMatrix_BBox(COST_MATRIX &cost_matrix,
+                                            const std::vector<KalmanTracker> &KTrackers,
+                                            const std::vector<BBOX> &BBoxes,
+                                            const std::vector<int> &Tracker_IDXes,
+                                            const std::vector<int> &BBox_IDXes, float upper_bound) {
+  assert(!Tracker_IDXes.empty() && !BBox_IDXes.empty());
+  COST_MATRIX cost_m(Tracker_IDXes.size(), BBox_IDXes.size());
+
+  BBOXES bbox_m_(BBox_IDXes.size(), 4);
+  for (size_t i = 0; i < BBox_IDXes.size(); i++) {
+    int bbox_idx = BBox_IDXes[i];
+    bbox_m_.row(i) = BBoxes[bbox_idx];
+  }
+  for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
+    int tracker_idx = Tracker_IDXes[i];
+    BBOX tracker_bbox = KTrackers[tracker_idx].getBBox_TLWH();
+    COST_VECTOR distance_v = iou_distance(tracker_bbox, bbox_m_);
+    cost_m.row(i) = distance_v;
+  }
+  for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
+    for (size_t j = 0; j < BBox_IDXes.size(); j++) {
+      if (cost_m(i, j) > 0.9) {
+        // std::cout << "restrict iou,trackbox:" << KTrackers[Tracker_IDXes[i]].getBBox_TLWH()
+        //           << ",detbox:" << bbox_m_.row(j) << ",ioudist:" << cost_m(i, j) << std::endl;
+        cost_matrix(i, j) = upper_bound;
+      }
+    }
+  }
+}
+
 BBOX KalmanTracker::getBBox_TLWH() const {
   BBOX bbox_tlwh;
   bbox_tlwh(2) = x(2) * x(3);  // H

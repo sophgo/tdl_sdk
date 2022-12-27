@@ -173,6 +173,46 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
   return CVIAI_SUCCESS;
 }
 
+int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t width, uint32_t height,
+                                        uint32_t stride, cvai_face_info_t *p_face_info) {
+  if (p_face_info->pts.size == 5) {
+    cv::Mat image(cv::Size(width, height), CV_8UC3, const_cast<uint8_t *>(p_rgb_pack), stride);
+    cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
+                       CV_8UC3, m_wrap_frame.stVFrame.pu8VirAddr[0],
+                       m_wrap_frame.stVFrame.u32Stride[0]);
+
+    if (face_align(image, warp_image, *p_face_info) != 0) {
+      LOGE("face_align failed.\n");
+      return CVI_FAILURE;
+    }
+  } else {
+    if (width != m_wrap_frame.stVFrame.u32Width || height != m_wrap_frame.stVFrame.u32Height) {
+      LOGE("input image size should be equal to %u\n", m_wrap_frame.stVFrame.u32Width);
+    }
+    if (stride != m_wrap_frame.stVFrame.u32Stride[0]) {
+      LOGE("input image stride not ok,got:%u,expect:%u", stride,
+           m_wrap_frame.stVFrame.u32Stride[0]);
+    }
+    memcpy(m_wrap_frame.stVFrame.pu8VirAddr[0], p_rgb_pack, width * height * 3);
+    CVI_SYS_IonFlushCache(m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.pu8VirAddr[0],
+                          m_wrap_frame.stVFrame.u32Length[0]);
+  }
+
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
+  if (run(frames) != CVI_SUCCESS) {
+    return CVI_FAILURE;
+  }
+  std::string feature_out_name = (m_with_attribute) ? ATTRIBUTE_OUT_NAME : RECOGNITION_OUT_NAME;
+  const TensorInfo &tinfo = getOutputTensorInfo(feature_out_name);
+  int8_t *face_blob = tinfo.get<int8_t>();
+  size_t face_feature_size = tinfo.tensor_elem;
+  // Create feature
+  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &p_face_info->feature);
+  memcpy(p_face_info->feature.ptr, face_blob, face_feature_size);
+
+  return CVI_SUCCESS;
+}
+
 template <typename U, typename V>
 struct ExtractFeatures {
   std::pair<U, V> operator()(float *out, const int size) {

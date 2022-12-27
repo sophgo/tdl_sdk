@@ -13,6 +13,7 @@ typedef struct {
   bool _capture;
   uint64_t _timestamp;
   uint32_t _out_counter;
+  uint64_t cap_timestamp;
 } face_cpt_data_t;
 
 typedef struct {
@@ -24,7 +25,7 @@ typedef struct {
   float thr_yaw;
   float thr_pitch;
   float thr_roll;
-
+  float thr_laplacian;
   uint32_t miss_time_limit;
   uint32_t fast_m_interval;
   uint32_t fast_m_capture_num;

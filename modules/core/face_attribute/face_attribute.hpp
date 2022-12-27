@@ -11,6 +11,8 @@ class FaceAttribute final : public Core {
   virtual ~FaceAttribute();
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, int face_idx = -1);
   void setHardwareGDC(bool use_wrap_hw);
+  int extract_face_feature(const uint8_t *p_rgb_pack, uint32_t width, uint32_t height,
+                           uint32_t stride, cvai_face_info_t *p_face_info);
 
  private:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;

@@ -511,37 +511,49 @@ CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *f
 
   cvai_image_t tmp_image;
   memset(&tmp_image, 0, sizeof(cvai_image_t));
-  cvai_face_info_t tmp_face_info;
-  memset(&tmp_face_info, 0, sizeof(cvai_face_info_t));
-  uint32_t h, w, s;
-  uint8_t *p;
-  if (CVI_SUCCESS != PREPARE_FACE_ALIGNMENT_DATA(srcFrame, &tmp_image, face_info, &tmp_face_info,
-                                                 &h, &w, &s, &p)) {
-    return CVI_FAILURE;
-  }
+  bool cvtRGB888 = true;
+  crop_image(srcFrame, &tmp_image, &face_info->bbox, cvtRGB888);
 
+  uint32_t h = tmp_image.height, w = tmp_image.width, s = tmp_image.stride[0];
+  uint8_t *p = tmp_image.pix[0];
   cv::Mat image(h, w, CV_8UC3, p, s);
-  cv::Mat warp_image(cv::Size(112, 112), image.type());
-  if (face_align(image, warp_image, tmp_face_info) != 0) {
-    LOGE("face_align failed.\n");
-    return CVI_FAILURE;
-  }
   cv::Mat image_gray;
   cv::Mat ed;
 #ifdef ENABLE_CVIAI_CV_UTILS
-  cviai::cvtColor(warp_image, image_gray, COLOR_RGB2GRAY);
+  cviai::cvtColor(image, image_gray, COLOR_RGB2GRAY);
 #else
-  cv::cvtColor(warp_image, image_gray, cv::COLOR_RGB2GRAY);
+  cv::cvtColor(image, image_gray, cv::COLOR_RGB2GRAY);
 #endif
-  double laplacian_score = 0;
-  for (int i = 1; i < FACE_IMAGE_H - 1; i++) {
-    for (int j = 1; j < FACE_IMAGE_W - 1; j++) {
-      laplacian_score +=
-          std::abs(4 * (double)image_gray.at<uchar>(i, j) - (double)image_gray.at<uchar>(i - 1, j) -
-                   (double)image_gray.at<uchar>(i + 1, j) - (double)image_gray.at<uchar>(i, j - 1) -
-                   (double)image_gray.at<uchar>(i, j + 1));
+  double laplacian_score = 0.0;
+  double mean = 0.0;
+  cvai_pts_t *pts_info = &face_info->pts;
+  int x_l = (int)(std::min(pts_info->x[0], pts_info->x[3]) - face_info->bbox.x1);
+  int x_r = (int)(std::max(pts_info->x[1], pts_info->x[4]) - face_info->bbox.x1);
+
+  int y_l = (int)(std::min(pts_info->y[0], pts_info->y[1]) - face_info->bbox.y1);
+  int y_r = (int)(std::max(pts_info->y[3], pts_info->y[4]) - face_info->bbox.y1);
+
+  cv::Mat crop_img = image_gray.rowRange(y_l, y_r + 1).colRange(x_l, x_r + 1);
+  for (int i = 1; i < crop_img.rows - 1; i++) {
+    for (int j = 1; j < crop_img.cols - 1; j++) {
+      mean += (4 * (double)crop_img.at<uchar>(i, j) - (double)crop_img.at<uchar>(i - 1, j) -
+               (double)crop_img.at<uchar>(i + 1, j) - (double)crop_img.at<uchar>(i, j - 1) -
+               (double)crop_img.at<uchar>(i, j + 1));
     }
   }
+  mean /= (y_r - y_l - 1) * (x_r - x_l - 1);
+  for (int i = 1; i < crop_img.rows - 1; i++) {
+    for (int j = 1; j < crop_img.cols - 1; j++) {
+      laplacian_score +=
+          (4 * (double)crop_img.at<uchar>(i, j) - (double)crop_img.at<uchar>(i - 1, j) -
+           (double)crop_img.at<uchar>(i + 1, j) - (double)crop_img.at<uchar>(i, j - 1) -
+           (double)crop_img.at<uchar>(i, j + 1) - mean) *
+          (4 * (double)crop_img.at<uchar>(i, j) - (double)crop_img.at<uchar>(i - 1, j) -
+           (double)crop_img.at<uchar>(i + 1, j) - (double)crop_img.at<uchar>(i, j - 1) -
+           (double)crop_img.at<uchar>(i, j + 1) - mean);
+    }
+  }
+  laplacian_score /= (y_r - y_l - 1) * (x_r - x_l - 1);
   *score = (float)laplacian_score;
   // cv::Laplacian(image_gray, ed, CV_8U, 3, 1, 0, cv::BORDER_DEFAULT);
   // *score = cv::sum(ed)[0];
@@ -557,8 +569,8 @@ CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *f
   }
 #endif
 
-  free(tmp_face_info.pts.x);
-  free(tmp_face_info.pts.y);
+  // free(tmp_face_info.pts.x);
+  // free(tmp_face_info.pts.y);
 
   CVI_AI_Free(&tmp_image);
   DO_UNMAP_IF_NEEDED(srcFrame, do_unmap);
