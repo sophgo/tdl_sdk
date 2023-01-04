@@ -34,6 +34,7 @@ DeepSORT::~DeepSORT() {}
 CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid) {
   /** statistic what classes ID in bbox and tracker,
    *  and counting bbox number for each class */
+  track_face_ = false;
   CVI_S32 ret = CVIAI_SUCCESS;
   std::map<int, int> class_bbox_counter;
   std::set<int> class_ids_bbox;
@@ -143,6 +144,7 @@ CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker, bool use_rei
   std::vector<BBOX> bboxes;
   std::vector<FEATURE> features;
   uint32_t bbox_num = face->size;
+  track_face_ = true;
   for (uint32_t i = 0; i < bbox_num; i++) {
     BBOX bbox_;
     bbox_(0, 0) = face->info[i].bbox.x1;
@@ -366,7 +368,9 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
                conf->kfilter_conf);
     tracker_.update_bbox(bbox_);
     tracker_.bounding = false;
-    if ((!conf->ktracker_conf.enable_QA_feature_update && Quality[bbox_idx] > 0) ||
+    float quality_ok = true;
+    if (Quality != nullptr && Quality[bbox_idx] == 0) quality_ok = false;
+    if ((!conf->ktracker_conf.enable_QA_feature_update && quality_ok) ||
         (conf->ktracker_conf.enable_QA_feature_update &&
          Quality[bbox_idx] > conf->ktracker_conf.feature_update_quality_threshold)) {
       const FEATURE &feature_ = Features[bbox_idx];
@@ -454,8 +458,14 @@ MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<F
       LOGD("Feature Cost Matrix (Consine Distance)");
       cost_matrix = KalmanTracker::getCostMatrix_Feature(k_trackers, BBoxes, Features,
                                                          Tracker_IDXes, BBox_IDXes);
-      KalmanTracker::restrictCostMatrix_BBox(cost_matrix, k_trackers, BBoxes, Tracker_IDXes,
-                                             BBox_IDXes, max_distance);
+      if (track_face_) {
+        KalmanTracker::restrictCostMatrix_BBox(cost_matrix, k_trackers, BBoxes, Tracker_IDXes,
+                                               BBox_IDXes, max_distance);
+      } else {
+        KalmanTracker::restrictCostMatrix_Mahalanobis(
+            cost_matrix, kf_, k_trackers, BBoxes, Tracker_IDXes, BBox_IDXes, kf_conf, max_distance);
+      }
+
     } break;
     case Kalman_MahalanobisDistance: {
       LOGD("Kalman Cost Matrix (Mahalanobis Distance)");

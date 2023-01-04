@@ -73,6 +73,7 @@ class DeepSORT {
                              const std::vector<int> &BBox_IDXes);
   void compute_distance();
   void solve_assignment();
+  bool track_face_ = false;
 };
 
 #endif /* _CVI_DEEPSORT_HPP_*/
