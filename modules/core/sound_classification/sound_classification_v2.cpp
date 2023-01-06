@@ -9,7 +9,6 @@ SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {
   bool htk = false;
   mp_extractor_ = new MelFeatureExtract(num_frames, sample_rate_, num_fft_, hop_len_, num_mel_,
                                         fmin_, fmax_, "reflect", htk);
-  m_skip_preprocess_ = true;
 }
 
 SoundClassificationV2::~SoundClassificationV2() { delete mp_extractor_; }

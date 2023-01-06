@@ -277,6 +277,7 @@ int Core::getVpssDepth(uint32_t in_index, uint32_t *depth) {
 }
 
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
+void Core::TpuFusePreprocess(bool fuse) { m_tpu_fuse_preprocess = fuse; }
 
 int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
                        cvai_vpssconfig_t *chn_config) {
@@ -404,55 +405,59 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     return CVIAI_ERR_INVALID_ARGS;
   }
   model_timer_.TicToc("runstart");
-  std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
 
   m_debugger.newSession(demangle::type_no_scope(*this));
   m_debugger.save_field("skip_vpss_preprocess", ((uint8_t)m_skip_vpss_preprocess));
   m_debugger.save_field("model_file", m_model_file.c_str(), {m_model_file.size()});
   m_debugger.save_field("input_mem_type", (uint8_t)mp_mi->conf.input_mem_type);
-  if (!m_skip_preprocess_) {
-    if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
-      if (m_skip_vpss_preprocess) {
+
+  if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
+    if (m_skip_vpss_preprocess) {
+      if (m_tpu_fuse_preprocess) {
+        CVI_TENSOR *input =
+            CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
+        CVI_NN_SetTensorPhysicalAddr(input, (uint64_t)frames[0]->stVFrame.u64PhyAddr[0]);
+      } else {
         // skip vpss preprocess is true, just register frame directly.
         ret = registerFrame2Tensor(frames);
-      } else {
-        if (m_vpss_config.size() != frames.size()) {
-          LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
-               m_vpss_config.size(), frames.size());
-          return CVIAI_ERR_INFERENCE;
-        }
-
-        dstFrames.reserve(frames.size());
-        for (uint32_t i = 0; i < frames.size(); i++) {
-          VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
-          m_debugger.save_origin_frame(frames[i], mp_mi->in.tensors + i);
-
-          memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-          int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
-          if (vpssret != CVIAI_SUCCESS) {
-            // if preprocess fail, just delete frame.
-            if (f->stVFrame.u64PhyAddr[0] != 0) {
-              mp_vpss_inst->releaseFrame(f, 0);
-            }
-            delete f;
-            return vpssret;
-          } else {
-            dstFrames.push_back(
-                std::shared_ptr<VIDEO_FRAME_INFO_S>({f, [this](VIDEO_FRAME_INFO_S *f) {
-                                                       this->mp_vpss_inst->releaseFrame(f, 0);
-                                                       delete f;
-                                                     }}));
-          }
-        }
-        ret = registerFrame2Tensor(dstFrames);
       }
+    } else {
+      if (m_vpss_config.size() != frames.size()) {
+        LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
+             m_vpss_config.size(), frames.size());
+        return CVIAI_ERR_INFERENCE;
+      }
+      std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
+      dstFrames.reserve(frames.size());
+      for (uint32_t i = 0; i < frames.size(); i++) {
+        VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+        m_debugger.save_origin_frame(frames[i], mp_mi->in.tensors + i);
+
+        memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+        int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
+        if (vpssret != CVIAI_SUCCESS) {
+          // if preprocess fail, just delete frame.
+          if (f->stVFrame.u64PhyAddr[0] != 0) {
+            mp_vpss_inst->releaseFrame(f, 0);
+          }
+          delete f;
+          return vpssret;
+        } else {
+          dstFrames.push_back(
+              std::shared_ptr<VIDEO_FRAME_INFO_S>({f, [this](VIDEO_FRAME_INFO_S *f) {
+                                                     this->mp_vpss_inst->releaseFrame(f, 0);
+                                                     delete f;
+                                                   }}));
+        }
+      }
+      ret = registerFrame2Tensor(dstFrames);
     }
   }
+
   model_timer_.TicToc("vpss");
   if (ret == CVIAI_SUCCESS) {
     int rcret = CVI_NN_Forward(mp_mi->handle, mp_mi->in.tensors, mp_mi->in.num, mp_mi->out.tensors,
                                mp_mi->out.num);
-
     if (rcret == CVI_RC_SUCCESS) {
       // save debuginfo
       for (int32_t i = 0; i < mp_mi->in.num; i++) {

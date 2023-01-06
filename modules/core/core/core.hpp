@@ -89,6 +89,7 @@ class Core {
   void UseInputSysMem() { mp_mi->conf.input_mem_type = CVI_MEM_SYSTEM; }
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
+  void TpuFusePreprocess(bool fuse);
 
   bool hasSkippedVpssPreprocess() const { return m_skip_vpss_preprocess; }
   int setVpssDepth(uint32_t in_index, uint32_t depth);
@@ -194,7 +195,6 @@ class Core {
   int32_t m_vpss_timeout = 100;
   std::string m_model_file;
   debug::ModelDebugger m_debugger;
-  bool m_skip_preprocess_ = false;
 
  private:
   template <typename T>
@@ -208,6 +208,8 @@ class Core {
 
   // Preprocessing related control
   bool m_skip_vpss_preprocess = false;
+  // tpu fuse preprcess
+  bool m_tpu_fuse_preprocess = false;
 
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;

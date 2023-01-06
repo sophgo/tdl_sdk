@@ -9,6 +9,7 @@
 #include "face_utils.hpp"
 #include "image_utils.hpp"
 
+#include "core.hpp"
 #include "core/core/cvai_errno.h"
 #include "cvi_sys.h"
 
@@ -102,6 +103,22 @@ void FaceAttribute::setHardwareGDC(bool use_wrap_hw) {
   }
 
   m_use_wrap_hw = use_wrap_hw;
+}
+
+/* vpssCropImage api need new  dstFrame and remember delete/release frame*/
+int FaceAttribute::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                                 cvai_bbox_t bbox, uint32_t rw, uint32_t rh,
+                                 PIXEL_FORMAT_E enDstFormat) {
+  VPSS_CROP_INFO_S cropAttr;
+  cropAttr.bEnable = true;
+  uint32_t u32Width = bbox.x2 - bbox.x1;
+  uint32_t u32Height = bbox.y2 - bbox.y1;
+  cropAttr.stCropRect = {(int)bbox.x1, (int)bbox.y1, u32Width, u32Height};
+  VPSS_CHN_ATTR_S chnAttr;
+  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, true);
+  mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, 1);
+  mp_vpss_inst->getFrame(dstFrame, 0, 2000);
+  return CVIAI_SUCCESS;
 }
 
 int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, int face_idx) {

@@ -100,7 +100,7 @@ buildninstallcpp(NAME test_img_od INC ${REG_INCLUDES} DEPS cviai  cviai_evaluati
 buildninstallcpp(NAME test_img_fd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_md INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_run_dataset INC ${SAMPLE_INC} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
-buildninstallcpp(NAME test_run_dataset_docker INC ${SAMPLE_INC} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME test_vpss_pd INC ${SAMPLE_INC} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME cviai_run_capture INC ${SAMPLE_INC} DEPS cviai cviai_evaluation cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_audio_cls INC ${SAMPLE_INC} DEPS cviai cviai_evaluation cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 # buildninstallcpp(NAME cviai_run_face_cap INC ${SAMPLE_INC} DEPS cviai_core cviai_service cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)

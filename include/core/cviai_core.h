@@ -249,6 +249,17 @@ DLL_EXPORT CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle,
  *
  * @param handle An AI SDK handle.
  * @param model Supported model id.
+ * @param tpu_fuse To skip preprocess or not.
+ * @return int Return CVIAI_SUCCESS if load model succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_SetTpuFusePreprocess(cviai_handle_t handle,
+                                               CVI_AI_SUPPORTED_MODEL_E model, bool tpu_fuse);
+
+/**
+ * @brief Set skip vpss preprocess for supported networks.
+ *
+ * @param handle An AI SDK handle.
+ * @param model Supported model id.
  * @param interval number of frames used to performance evaluation
  * @return int Return CVIAI_SUCCESS if load model succeed.
  */

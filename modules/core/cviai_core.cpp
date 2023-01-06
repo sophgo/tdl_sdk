@@ -342,6 +342,20 @@ CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MOD
   }
   return CVIAI_SUCCESS;
 }
+
+CVI_S32 CVI_AI_SetTpuFusePreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                    bool tpu_fuse) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    instance->TpuFusePreprocess(tpu_fuse);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+  return CVIAI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_SetPerfEvalInterval(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                    int interval) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
