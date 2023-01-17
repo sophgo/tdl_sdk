@@ -4,14 +4,14 @@
 #include "core/core/cvai_core_types.h"
 #include "core_utils.hpp"
 
-#include "opencv2/core.hpp"
+// #include "opencv2/core.hpp"
 
 #include <vector>
 
 namespace cviai {
 
 inline void __attribute__((always_inline))
-bbox_pred(const anchor_box &anchor, cv::Vec4f regress, cvai_bbox_t &bbox, PROCESS process) {
+bbox_pred(const anchor_box &anchor, float *regress, cvai_bbox_t &bbox, PROCESS process) {
   float width = anchor.x2 - anchor.x1 + 1;
   float height = anchor.y2 - anchor.y1 + 1;
 

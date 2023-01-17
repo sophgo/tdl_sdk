@@ -4,7 +4,7 @@
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
-#include "face_utils.hpp"
+// #include "face_utils.hpp"
 
 #define NAME_BBOX "face_rpn_bbox_pred_"
 #define NAME_SCORE "face_rpn_cls_prob_reshape_"
@@ -212,12 +212,11 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
           box.bbox.score = conf;
           box.hardhat_score = hardhat_score;
 
-          cv::Vec4f regress;
           float dx = bbox_blob[j + count * (0 + num * 4)];
           float dy = bbox_blob[j + count * (1 + num * 4)];
           float dw = bbox_blob[j + count * (2 + num * 4)];
           float dh = bbox_blob[j + count * (3 + num * 4)];
-          regress = cv::Vec4f(dx, dy, dw, dh);
+          float regress[4] = {dx, dy, dw, dh};
           bbox_pred(anchors[j + count * num], regress, box.bbox, this->process);
 
           if (add_landmark_process) {

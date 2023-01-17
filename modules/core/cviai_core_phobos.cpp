@@ -9,11 +9,6 @@
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
 
-#include "motion_detection/md.hpp"
-#include "object_detection/mobiledetv2/mobiledetv2.hpp"
-#include "object_detection/yolov3/yolov3.hpp"
-#include "object_detection/yolox/yolox.hpp"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -23,6 +18,14 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "motion_detection/md.hpp"
+#include "object_detection/mobiledetv2/mobiledetv2.hpp"
+#include "object_detection/yolov3/yolov3.hpp"
+#include "object_detection/yolox/yolox.hpp"
+#include "retina_face/retina_face.hpp"
+#include "retina_face/scrfd_face.hpp"
+#include "sound_classification/sound_classification.hpp"
+#include "sound_classification/sound_classification_v2.hpp"
 
 using namespace std;
 using namespace cviai;
@@ -90,6 +93,10 @@ static CVI_S32 initVPSSIfNeeded(cviai_context_t *ctx, CVI_AI_SUPPORTED_MODEL_E m
 unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
+    {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
+    {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, CREATOR(SoundClassificationV2)},
+    {CVI_AI_SUPPORTED_MODEL_SCRFDFACE, CREATOR(ScrFDFace)},
+    {CVI_AI_SUPPORTED_MODEL_RETINAFACE, CREATOR_P1(RetinaFace, PROCESS, CAFFE)},
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::coco80)},
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
@@ -239,6 +246,18 @@ CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MOD
   Core *instance = getInferenceInstance(config, ctx);
   if (instance != nullptr) {
     instance->skipVpssPreprocess(skip);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+  return CVIAI_SUCCESS;
+}
+CVI_S32 CVI_AI_SetPerfEvalInterval(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                   int interval) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    instance->set_perf_eval_interval(interval);
   } else {
     LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
     return CVIAI_ERR_OPEN_MODEL;
@@ -589,6 +608,9 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
  *  find a correct way to create model object.
  *
  */
+DEFINE_INF_FUNC_F1_P1(CVI_AI_RetinaFace, RetinaFace, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
+                      cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_ScrFDFace, ScrFDFace, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, cvai_face_t *)
 
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, cvai_object_t *)
@@ -602,7 +624,10 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
-
+DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification, SoundClassification,
+                      CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification_V2, SoundClassificationV2,
+                      CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, int *)
 CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
                          bool cvtRGB888) {
   return CVIAI_ERR_NOT_YET_INITIALIZED;

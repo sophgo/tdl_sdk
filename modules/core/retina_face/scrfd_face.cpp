@@ -5,7 +5,6 @@
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
-#include "face_utils.hpp"
 #include "object_utils.hpp"
 #define FACE_POINTS_SIZE 5
 
@@ -189,7 +188,7 @@ void ScrFDFace::outputParser(int image_width, int image_height, int frame_width,
           box.bbox.score = conf;
           box.hardhat_score = 0;
 
-          cv::Vec4f regress;
+          // cv::Vec4f regress;
           // bbox_blob:b x (num_anchors*num_elem) x h x w
           box.bbox.x1 = grid_cx - bbox_blob[j + count * (0 + num * 4)] * stride;
           box.bbox.y1 = grid_cy - bbox_blob[j + count * (1 + num * 4)] * stride;

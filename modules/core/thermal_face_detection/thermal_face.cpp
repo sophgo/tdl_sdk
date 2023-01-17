@@ -78,7 +78,7 @@ static std::vector<cvai_bbox_t> shift(const std::vector<int> &shape, int stride,
   return all_anchors;
 }
 
-static void bbox_pred(const cvai_bbox_t &anchor, cv::Vec4f regress, std::vector<float> std,
+static void bbox_pred(const cvai_bbox_t &anchor, float *regress, std::vector<float> std,
                       cvai_bbox_t &bbox) {
   float width = anchor.x2 - anchor.x1 + 1;
   float height = anchor.y2 - anchor.y1 + 1;
@@ -198,13 +198,11 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
       continue;
     }
     box.bbox.score = conf;
-
-    cv::Vec4f regress;
     float dx = bbox_blob[0 + i * 4];
     float dy = bbox_blob[1 + i * 4];
     float dw = bbox_blob[2 + i * 4];
     float dh = bbox_blob[3 + i * 4];
-    regress = cv::Vec4f(dx, dy, dw, dh);
+    float regress[4] = {dx, dy, dw, dh};
     bbox_pred(m_all_anchors[i], regress, {0.1, 0.1, 0.2, 0.2}, box.bbox);
 
     vec_bbox.push_back(box);

@@ -27,6 +27,7 @@ if(DEFINED NO_OPENCV)
                   $<TARGET_OBJECTS:utils>
                   $<TARGET_OBJECTS:yolov3>
                   $<TARGET_OBJECTS:yolox>
+                  $<TARGET_OBJECTS:retina_face>
                   $<TARGET_OBJECTS:digital_tracking>
                   $<TARGET_OBJECTS:draw_rect>
                   $<TARGET_OBJECTS:tracker>
@@ -35,7 +36,10 @@ if(DEFINED NO_OPENCV)
                   $<TARGET_OBJECTS:ivewrapper>
                   $<TARGET_OBJECTS:motion_detection>
                   $<TARGET_OBJECTS:motion_detection>
-                  $<TARGET_OBJECTS:mobiledetv2>)
+
+                  $<TARGET_OBJECTS:mobiledetv2>
+                  $<TARGET_OBJECTS:sound_classification>)
+                  
   message("module no opencv ,core_srcs:" ${CORES_SRCS} )
   set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 else()
