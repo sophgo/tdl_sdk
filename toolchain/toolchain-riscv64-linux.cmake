@@ -40,15 +40,17 @@ set( CMAKE_OBJCOPY      ${TC_PATH}${CROSS_COMPILE}objcopy
 
 # Set the CMAKE C flags (which should also be used by the assembler!
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=rv64imafdcvxthead" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mabi=lp64dv" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mcpu=c906fdv" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=rv64imafdcv0p7xthead" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mabi=lp64d" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdata-sections" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pointer-to-int-cast" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsigned-char -Wl,-gc-sections -lstdc++ -lm -lpthread" )
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=rv64imafdcvxthead" )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mabi=lp64dv" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=c906fdv" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=rv64imafdcv0p7xthead" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mabi=lp64d" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsigned-char" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections" )
