@@ -111,12 +111,27 @@ def visualize_result(imgf,resultf):
     cv2.imshow('img',img)
     cv2.waitKey(0)
 
+## convert yuv 2 rgb
+## yuv format support： yuv420sp YUV420p nv21 nv12
+# cv2.COLOR_YUV2RGB_NV12
+# cv2.COLOR_YUV2BGR_NV12
+# cv2.COLOR_YUV2RGB_NV21
+# cv2.COLOR_YUV2BGR_NV21
+# cv2.COLOR_YUV420sp2RGB
+# cv2.COLOR_YUV420sp2BGR
+# cv2.COLOR_YUV420p2RGB
+# cv2.COLOR_YUV420p2BGR
 
+## The script will convert yuv2rgb
+## sys.argv[1]: source yuv file, sys.argv[2]: width, sys.argv[3]: height
+## eg: python cvi_draw_pd.py ./image ./res ./output
 if __name__ == "__main__":
-    # visualize_result(sys.argv[1],sys.argv[2])
-    img = decode_nv12(sys.argv[1],[384,256])
-    cv2.imshow("img",img)
-    cv2.waitKey(0)
-
-        
+    yuv = np.fromfile(sys.argv[1], dtype=np.uint8)
+    width = sys.argv[2]
+    height = sys.argv[3]
+    print('datalen:', yuv.shape)
+    shape = (int(height*1.5), width)
+    yuv = yuv.reshape(shape)
+    bgr = cv2.cvtColor(yuv, cv2.COLOR_YUV2RGB_NV12)
+    cv2.imwrite("frame.png", bgr)
         

@@ -58,6 +58,18 @@ int Core::modelOpen(const char *filepath) {
   setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
   setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
 
+  for (int32_t i = 0; i < mp_mi->in.num; i++) {
+    if ((mp_mi->in.tensors[i].shape.dim[2] % 64) != 0) {
+      aligned_input = false;
+    }
+  }
+
+  if (true == aligned_input) {
+    for (int32_t i = 0; i < mp_mi->in.num; i++)
+      CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_SetTensorPhysicalAddr(&mp_mi->in.tensors[i], (uint64_t)0),
+                                "CVI_NN_SetTensorPhysicalAddr failed");
+  }
+
   TRACE_EVENT_BEGIN("cviai_core", "setupInputPreprocess");
   CVI_TENSOR *input =
       CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
@@ -113,37 +125,6 @@ int Core::modelOpen(const char *filepath) {
     vcfg.chn_coeff = data[i].resize_method;
     m_vpss_config.push_back(vcfg);
   }
-  TRACE_EVENT_END("cviai_core");
-  return CVIAI_SUCCESS;
-}
-
-int Core::modelOpenInDocker(const char *filepath) {
-  TRACE_EVENT("cviai_core", "Core::modelOpenInDocker");
-  if (!mp_mi) {
-    LOGE("config not set\n");
-    return CVIAI_ERR_OPEN_MODEL;
-  }
-
-  if (mp_mi->handle != nullptr) {
-    LOGE("failed to open model: \"%s\" has already opened.\n", filepath);
-    return CVIAI_FAILURE;
-  }
-  m_model_file = filepath;
-  CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
-                            "CVI_NN_RegisterModel failed");
-
-  CVI_NN_SetConfig(mp_mi->handle, OPTION_OUTPUT_ALL_TENSORS,
-                   static_cast<int>(mp_mi->conf.debug_mode));
-
-  CLOSE_MODEL_IF_TPU_FAILED(
-      CVI_NN_GetInputOutputTensors(mp_mi->handle, &mp_mi->in.tensors, &mp_mi->in.num,
-                                   &mp_mi->out.tensors, &mp_mi->out.num),
-      "CVI_NN_GetINputsOutputs failed");
-
-  setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
-  setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
-
-  CLOSE_MODEL_IF_FAILED(onModelOpened(), "return failed in onModelOpened");
   TRACE_EVENT_END("cviai_core");
   return CVIAI_SUCCESS;
 }
@@ -277,7 +258,6 @@ int Core::getVpssDepth(uint32_t in_index, uint32_t *depth) {
 }
 
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
-void Core::TpuFusePreprocess(bool fuse) { m_tpu_fuse_preprocess = fuse; }
 
 int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
                        cvai_vpssconfig_t *chn_config) {
@@ -413,14 +393,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
 
   if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
     if (m_skip_vpss_preprocess) {
-      if (m_tpu_fuse_preprocess) {
-        CVI_TENSOR *input =
-            CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
-        CVI_NN_SetTensorPhysicalAddr(input, (uint64_t)frames[0]->stVFrame.u64PhyAddr[0]);
-      } else {
-        // skip vpss preprocess is true, just register frame directly.
-        ret = registerFrame2Tensor(frames);
-      }
+      ret = registerFrame2Tensor(frames);
     } else {
       if (m_vpss_config.size() != frames.size()) {
         LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
@@ -480,6 +453,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
 
 template <typename T>
 int Core::registerFrame2Tensor(std::vector<T> &frames) {
+  int ret = 0;
   std::vector<uint64_t> paddrs;
   for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
     T frame = frames[i];
@@ -495,11 +469,22 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
         return CVIAI_ERR_INFERENCE;
     }
   }
-  if (int ret =
-          CVI_NN_FeedTensorWithFrames(mp_mi->handle, mp_mi->in.tensors, m_vpss_config[0].frame_type,
+
+  if (aligned_input == true) {
+    for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
+      if ((frames[i]->stVFrame.u32Width % 64) != 0) {
+        return CVIAI_FAILURE;
+      }
+      ret = CVI_NN_SetTensorPhysicalAddr(&mp_mi->in.tensors[i],
+                                         (uint64_t)frames[i]->stVFrame.u64PhyAddr[0]);
+    }
+  } else {
+    ret = CVI_NN_FeedTensorWithFrames(mp_mi->handle, mp_mi->in.tensors, m_vpss_config[0].frame_type,
                                       CVI_FMT_INT8, paddrs.size(), paddrs.data(),
                                       frames[0]->stVFrame.u32Height, frames[0]->stVFrame.u32Width,
-                                      frames[0]->stVFrame.u32Stride[0]) != CVI_RC_SUCCESS) {
+                                      frames[0]->stVFrame.u32Stride[0]);
+  }
+  if (ret != CVI_RC_SUCCESS) {
     LOGE("NN set tensor with vi failed: %s\n", get_tpu_error_msg(ret));
     return CVIAI_ERR_INFERENCE;
   }

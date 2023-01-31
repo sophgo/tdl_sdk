@@ -20,13 +20,37 @@
 std::string g_model_root;
 cvai_bbox_t box;
 
+int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
+  FILE *fp = fopen(filepath.c_str(), "wb");
+  if (fp == nullptr) {
+    LOGE("failed to open: %s.\n", filepath.c_str());
+    return CVI_FAILURE;
+  }
+
+  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
+    size_t image_size =
+        frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
+    frame->stVFrame.pu8VirAddr[0] =
+        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+    frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
+    frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
+  }
+  for (int c = 0; c < 3; c++) {
+    uint8_t *paddr = (uint8_t *)frame->stVFrame.pu8VirAddr[c];
+    std::cout << "towrite channel:" << c << ",towritelen:" << frame->stVFrame.u32Length[c]
+              << ",addr:" << (void *)paddr << std::endl;
+    fwrite(paddr, frame->stVFrame.u32Length[c], 1, fp);
+  }
+  fclose(fp);
+  return CVI_SUCCESS;
+}
+
 std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle) {
   static int model_init = 0;
   CVI_S32 ret;
   if (model_init == 0) {
     std::cout << "to init Person model" << std::endl;
     std::string str_person_model = g_model_root;
-
     ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
                            str_person_model.c_str());
     if (ret != CVI_SUCCESS) {
@@ -35,7 +59,6 @@ std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle
     }
     CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.01);
     CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, true);
-    CVI_AI_SetTpuFusePreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, true);
     model_init = 1;
   }
   cvai_object_t person_obj;
@@ -72,15 +95,15 @@ static void get_frame_from_mat(VIDEO_FRAME_INFO_S &in_frame, const cv::Mat &mat)
 }
 
 int main(int argc, char *argv[]) {
+  if (argc != 4) {
+    printf("need 3 arg, eg ./test_vpss_pd xxxx.cvimodel xxx.jpg person\n");
+    return CVIAI_FAILURE;
+  }
+
   CVI_S32 ret = 0;
   g_model_root = std::string(argv[1]);
   std::string image_root(argv[2]);
   std::string process_flag(argv[3]);
-
-  if (argc != 4) {
-    printf("need 3 arg, eg ./test_run_dataset_docker xxxx.cvimodel xxx.jpg person\n");
-    return CVIAI_FAILURE;
-  }
 
   // imread
   cv::Mat image;
@@ -112,31 +135,35 @@ int main(int argc, char *argv[]) {
   PreprocessArg arg;
   arg.width = width;
   arg.height = height;
-  // attention:transform model need set pixel format YUV420_PLANAR
-  arg.yuv_type = YUV420_PLANAR;
+  // model need set pixel format PIXEL_FORMAT_BGR_888_PLANAR
   init_vpss(image.cols, image.rows, &arg);
   VIDEO_FRAME_INFO_S frame_in;
   VIDEO_FRAME_INFO_S frame_preprocessed;
   memset(&frame_in, 0x00, sizeof(frame_in));
 
   get_frame_from_mat(frame_in, image);
-
+  /* dump_frame_result, support rgb, nv21, nv12*/
+  // dump_frame_result("test1.yuv", &frame_in);
   if (CVI_SUCCESS != CVI_VPSS_SendFrame(0, &frame_in, -1)) {
     printf("send frame failed\n");
     return -1;
   }
+
   if (CVI_SUCCESS != CVI_VPSS_GetChnFrame(0, 0, &frame_preprocessed, 1000)) {
     printf("get frame failed\n");
     return -1;
   }
-  CVI_MAPI_ReleaseFrame(&frame_in);
 
+  CVI_MAPI_ReleaseFrame(&frame_in);
+  /* dump_frame_result, support rgb, nv21, nv12*/
+  // dump_frame_result("test2.yuv", &frame_preprocessed);
   std::string str_res = process_funcs[process_flag](&frame_preprocessed, ai_handle);
   if (str_res.size() > 0) {
     FILE *fp = fopen("test.txt", "w");
     fwrite(str_res.c_str(), str_res.size(), 1, fp);
     fclose(fp);
   }
+
   if (CVI_SUCCESS != CVI_VPSS_ReleaseChnFrame(0, 0, &frame_preprocessed)) {
     printf("release frame failed!\n");
     return -1;

@@ -81,15 +81,12 @@ class Core {
 
   virtual ~Core() = default;
   int modelOpen(const char *filepath);
-  int modelOpenInDocker(const char *filepath);
   const char *getModelFilePath() const { return m_model_file.c_str(); }
   int modelClose();
   int setVpssTimeout(uint32_t timeout);
   const uint32_t getVpssTimeout() const { return m_vpss_timeout; }
-  void UseInputSysMem() { mp_mi->conf.input_mem_type = CVI_MEM_SYSTEM; }
   int setVpssEngine(VpssEngine *engine);
   void skipVpssPreprocess(bool skip);
-  void TpuFusePreprocess(bool fuse);
 
   bool hasSkippedVpssPreprocess() const { return m_skip_vpss_preprocess; }
   int setVpssDepth(uint32_t in_index, uint32_t depth);
@@ -208,8 +205,7 @@ class Core {
 
   // Preprocessing related control
   bool m_skip_vpss_preprocess = false;
-  // tpu fuse preprcess
-  bool m_tpu_fuse_preprocess = false;
+  bool aligned_input = true;
 
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;

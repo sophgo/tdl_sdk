@@ -10,12 +10,9 @@
 #define CVI_MAPI_ERR_TIMEOUT ((int)(-1003))
 #define CVI_MAPI_ERR_INVALID ((int)(-1004))
 
-enum YuvType { YUV_UNKNOWN = 0, YUV420_PLANAR = 1, YUV_NV12 = 2, YUV_NV21 = 3 };
-
 struct PreprocessArg {
   int width;
   int height;
-  YuvType yuv_type;
 };
 
 static void _SYS_HandleSig(int nSignal, siginfo_t *si, void *arg) {
@@ -257,7 +254,7 @@ int CVI_MAPI_SaveFramePixelData(VIDEO_FRAME_INFO_S *frm, const char *name) {
              frm->stVFrame.enPixelFormat == PIXEL_FORMAT_BGR_888_PLANAR) {
     for (int i = 0; i < 3; i++) {
       unsigned char *ptr = frm->stVFrame.pu8VirAddr[i];
-      for (uint8_t j = 0; j < frm->stVFrame.u32Height; ++j) {
+      for (uint32_t j = 0; j < frm->stVFrame.u32Height; ++j) {
         fwrite(ptr, frm->stVFrame.u32Width, 1, output);
         ptr += frm->stVFrame.u32Stride[i];
       }
@@ -265,7 +262,7 @@ int CVI_MAPI_SaveFramePixelData(VIDEO_FRAME_INFO_S *frm, const char *name) {
   } else if (frm->stVFrame.enPixelFormat == PIXEL_FORMAT_RGB_888 ||
              frm->stVFrame.enPixelFormat == PIXEL_FORMAT_BGR_888) {
     uint8_t *ptr = frm->stVFrame.pu8VirAddr[0];
-    for (uint8_t j = 0; j < frm->stVFrame.u32Height; ++j) {
+    for (uint32_t j = 0; j < frm->stVFrame.u32Height; ++j) {
       fwrite(ptr, frm->stVFrame.u32Width * 3, 1, output);
       ptr += frm->stVFrame.u32Stride[0];
     }
@@ -342,19 +339,28 @@ static CVI_S32 set_vpss_config(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *stVpssGrpAttr,
   VPSS_CHN_ATTR_S astVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
   CVI_S32 s32Ret = CVI_SUCCESS;
 
+  // only pd model process arg
+  static const float STD_R = (255.0 * 0.229);
+  static const float STD_G = (255.0 * 0.224);
+  static const float STD_B = (255.0 * 0.225);
+  static const float MODEL_MEAN_R = 0.485 * 255.0;
+  static const float MODEL_MEAN_G = 0.456 * 255.0;
+  static const float MODEL_MEAN_B = 0.406 * 255.0;
+
+#define FACTOR_R ((1.0 / STD_R) * 48.461174)
+#define FACTOR_G ((1.0 / STD_G) * 48.461174)
+#define FACTOR_B ((1.0 / STD_B) * 48.461174)
+#define MEAN_R ((MODEL_MEAN_R / STD_R) * 48.461174)
+#define MEAN_G ((MODEL_MEAN_G / STD_G) * 48.461174)
+#define MEAN_B ((MODEL_MEAN_B / STD_B) * 48.461174)
+
   if (VpssGrp == 0) {
     // channel0
     abChnEnable[VpssChn] = CVI_TRUE;
     astVpssChnAttr[VpssChn].u32Width = arg->width;
     astVpssChnAttr[VpssChn].u32Height = arg->height;
     astVpssChnAttr[VpssChn].enVideoFormat = VIDEO_FORMAT_LINEAR;
-    if (arg->yuv_type == YUV420_PLANAR) {
-      astVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_YUV_PLANAR_420;
-    } else if (arg->yuv_type == YUV_NV12) {
-      astVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_NV12;
-    } else {
-      astVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_NV21;
-    }
+    astVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_BGR_888_PLANAR;
     astVpssChnAttr[VpssChn].stFrameRate.s32SrcFrameRate = 30;
     astVpssChnAttr[VpssChn].stFrameRate.s32DstFrameRate = 30;
     astVpssChnAttr[VpssChn].u32Depth = 1;
@@ -364,7 +370,13 @@ static CVI_S32 set_vpss_config(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *stVpssGrpAttr,
     astVpssChnAttr[VpssChn].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
     astVpssChnAttr[VpssChn].stAspectRatio.bEnableBgColor = CVI_TRUE;
     astVpssChnAttr[VpssChn].stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
-    astVpssChnAttr[VpssChn].stNormalize.bEnable = CVI_FALSE;
+    astVpssChnAttr[VpssChn].stNormalize.bEnable = CVI_TRUE;
+    astVpssChnAttr[VpssChn].stNormalize.factor[0] = static_cast<float>(FACTOR_R);
+    astVpssChnAttr[VpssChn].stNormalize.factor[1] = static_cast<float>(FACTOR_G);
+    astVpssChnAttr[VpssChn].stNormalize.factor[2] = static_cast<float>(FACTOR_B);
+    astVpssChnAttr[VpssChn].stNormalize.mean[0] = static_cast<float>(MEAN_R);
+    astVpssChnAttr[VpssChn].stNormalize.mean[1] = static_cast<float>(MEAN_G);
+    astVpssChnAttr[VpssChn].stNormalize.mean[2] = static_cast<float>(MEAN_B);
   } else {
     return -1;
   }

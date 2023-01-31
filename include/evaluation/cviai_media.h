@@ -67,9 +67,6 @@ DLL_EXPORT CVI_S32 CVI_AI_ReadImage_Ion(const char *filepath, VIDEO_FRAME_INFO_S
  */
 DLL_EXPORT CVI_S32 CVI_AI_ReleaseImage_Ion(VIDEO_FRAME_INFO_S *frame);
 
-DLL_EXPORT CVI_S32 CVI_AI_ReadImage_Docker(const char *filepath, VIDEO_FRAME_INFO_S *frame,
-                                           PIXEL_FORMAT_E format);
-
 /**
  * @brief Release image which is read from CVI_AI_ReadImage.
  *
@@ -78,15 +75,6 @@ DLL_EXPORT CVI_S32 CVI_AI_ReadImage_Docker(const char *filepath, VIDEO_FRAME_INF
  * @return int Return CVIAI_SUCCESS if read succeed.
  */
 DLL_EXPORT CVI_S32 CVI_AI_ReleaseImage(VIDEO_FRAME_INFO_S *frame);
-
-/**
- * @brief Release image which is read from CVI_AI_ReadImage.
- *
- * @param frame Output read image.
- * @return int Return CVIAI_SUCCESS if read succeed.
- */
-DLL_EXPORT CVI_S32 CVI_AI_ReleaseImage_Docker(VIDEO_FRAME_INFO_S *frame);
-/**@}*/
 
 #ifdef __cplusplus
 }

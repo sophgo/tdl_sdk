@@ -31,6 +31,7 @@ def draw_res(img_root, res_dir, draw_dir):
 
 ## the script will draw person dectect model output rectangle
 ## argv[1]: dectect image dir, argv[2] :output resource txt, argv[2] :output dir
+## eg: python cvi_draw_pd.py ./image ./res ./output
 if __name__ == "__main__":
     draw_res(sys.argv[1], sys.argv[2], sys.argv[3])
 
