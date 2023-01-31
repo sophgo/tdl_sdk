@@ -19,6 +19,7 @@
 
 std::string g_model_root;
 cvai_bbox_t box;
+cvai_vpssconfig_t vpssConfig;
 
 int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
   FILE *fp = fopen(filepath.c_str(), "wb");
@@ -46,21 +47,7 @@ int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
 }
 
 std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle) {
-  static int model_init = 0;
   CVI_S32 ret;
-  if (model_init == 0) {
-    std::cout << "to init Person model" << std::endl;
-    std::string str_person_model = g_model_root;
-    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
-                           str_person_model.c_str());
-    if (ret != CVI_SUCCESS) {
-      std::cout << "open model failed:" << str_person_model << std::endl;
-      return "";
-    }
-    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.01);
-    CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, true);
-    model_init = 1;
-  }
   cvai_object_t person_obj;
   memset(&person_obj, 0, sizeof(cvai_object_t));
   ret = CVI_AI_MobileDetV2_Pedestrian(ai_handle, p_frame, &person_obj);
@@ -131,11 +118,35 @@ int main(int argc, char *argv[]) {
   int32_t height = 256;
   int32_t width = 384;
 
+  // model need set pixel format PIXEL_FORMAT_BGR_888_PLANAR
+  static int model_init = 0;
+  if (model_init == 0) {
+    std::cout << "to init Person model" << std::endl;
+    std::string str_person_model = g_model_root;
+    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                           str_person_model.c_str());
+    if (ret != CVI_SUCCESS) {
+      std::cout << "open model failed:" << str_person_model << std::endl;
+      return -1;
+    }
+    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.01);
+    CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, true);
+    model_init = 1;
+  }
+
+  memset(&vpssConfig, 0, sizeof(vpssConfig));
+  ret = CVI_AI_GetVpssChnConfig(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, width,
+                                height, 0, &vpssConfig);
+  if (ret != CVI_SUCCESS) {
+    printf("CVI_AI_GetVpssChnConfig failed!\n");
+    return -1;
+  }
+
   // init vpss
   PreprocessArg arg;
   arg.width = width;
   arg.height = height;
-  // model need set pixel format PIXEL_FORMAT_BGR_888_PLANAR
+  arg.vpssConfig = vpssConfig;
   init_vpss(image.cols, image.rows, &arg);
   VIDEO_FRAME_INFO_S frame_in;
   VIDEO_FRAME_INFO_S frame_preprocessed;

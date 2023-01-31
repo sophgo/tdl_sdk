@@ -13,6 +13,7 @@
 struct PreprocessArg {
   int width;
   int height;
+  cvai_vpssconfig_t vpssConfig;
 };
 
 static void _SYS_HandleSig(int nSignal, siginfo_t *si, void *arg) {
@@ -339,21 +340,6 @@ static CVI_S32 set_vpss_config(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *stVpssGrpAttr,
   VPSS_CHN_ATTR_S astVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
   CVI_S32 s32Ret = CVI_SUCCESS;
 
-  // only pd model process arg
-  static const float STD_R = (255.0 * 0.229);
-  static const float STD_G = (255.0 * 0.224);
-  static const float STD_B = (255.0 * 0.225);
-  static const float MODEL_MEAN_R = 0.485 * 255.0;
-  static const float MODEL_MEAN_G = 0.456 * 255.0;
-  static const float MODEL_MEAN_B = 0.406 * 255.0;
-
-#define FACTOR_R ((1.0 / STD_R) * 48.461174)
-#define FACTOR_G ((1.0 / STD_G) * 48.461174)
-#define FACTOR_B ((1.0 / STD_B) * 48.461174)
-#define MEAN_R ((MODEL_MEAN_R / STD_R) * 48.461174)
-#define MEAN_G ((MODEL_MEAN_G / STD_G) * 48.461174)
-#define MEAN_B ((MODEL_MEAN_B / STD_B) * 48.461174)
-
   if (VpssGrp == 0) {
     // channel0
     abChnEnable[VpssChn] = CVI_TRUE;
@@ -370,13 +356,7 @@ static CVI_S32 set_vpss_config(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *stVpssGrpAttr,
     astVpssChnAttr[VpssChn].stAspectRatio.enMode = ASPECT_RATIO_AUTO;
     astVpssChnAttr[VpssChn].stAspectRatio.bEnableBgColor = CVI_TRUE;
     astVpssChnAttr[VpssChn].stAspectRatio.u32BgColor = COLOR_RGB_BLACK;
-    astVpssChnAttr[VpssChn].stNormalize.bEnable = CVI_TRUE;
-    astVpssChnAttr[VpssChn].stNormalize.factor[0] = static_cast<float>(FACTOR_R);
-    astVpssChnAttr[VpssChn].stNormalize.factor[1] = static_cast<float>(FACTOR_G);
-    astVpssChnAttr[VpssChn].stNormalize.factor[2] = static_cast<float>(FACTOR_B);
-    astVpssChnAttr[VpssChn].stNormalize.mean[0] = static_cast<float>(MEAN_R);
-    astVpssChnAttr[VpssChn].stNormalize.mean[1] = static_cast<float>(MEAN_G);
-    astVpssChnAttr[VpssChn].stNormalize.mean[2] = static_cast<float>(MEAN_B);
+    astVpssChnAttr[VpssChn].stNormalize = arg->vpssConfig.chn_attr.stNormalize;
   } else {
     return -1;
   }
