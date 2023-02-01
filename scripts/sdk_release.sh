@@ -23,9 +23,9 @@ if [[ "$LOCAL_USER" != "" ]]; then
   tmp="@"
   REPO_USER="${LOCAL_USER}${tmp}"
 else
-  CURRENT_USER="$(git config user.email | sed 's/cvitek.com//g')"
-  if [[ "${CURRENT_USER}" != "jenkins@" ]]; then
-    REPO_USER="$(git config user.email | sed 's/cvitek.com//g')"
+  CURRENT_USER="$(git config user.name)"
+  if [[ "${CURRENT_USER}" != "sw_jenkins" ]]; then
+    REPO_USER="$(git config user.name)@"
   fi
 fi
 echo "repo user : $REPO_USER"
