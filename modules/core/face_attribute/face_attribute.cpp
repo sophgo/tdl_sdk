@@ -1,23 +1,17 @@
 #include "face_attribute.hpp"
-#include "core.hpp"
-#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/face/cvai_face_helper.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
-#include "cvi_sys.h"
 #include "cviai_log.hpp"
 #include "face_attribute_types.hpp"
-
-#ifdef NO_OPENCV
-#include "imgwarp.hpp"
-#define DST_IMG_HW 256
-#else
 #include "face_utils.hpp"
 #include "image_utils.hpp"
-#include "opencv2/opencv.hpp"
-#endif
+
+#include "core.hpp"
+#include "core/core/cvai_errno.h"
+#include "cvi_sys.h"
 
 #define FACE_ATTRIBUTE_FACTOR (1 / 128.f)
 #define FACE_ATTRIBUTE_MEAN (0.99609375)
@@ -111,7 +105,7 @@ void FaceAttribute::setHardwareGDC(bool use_wrap_hw) {
   m_use_wrap_hw = use_wrap_hw;
 }
 
-/* vpssCropImage api need new  dstFrame and remember delete and release frame*/
+/* vpssCropImage api need new  dstFrame and remember delete/release frame*/
 int FaceAttribute::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                                  cvai_bbox_t bbox, uint32_t rw, uint32_t rh,
                                  PIXEL_FORMAT_E enDstFormat) {
@@ -121,7 +115,7 @@ int FaceAttribute::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_
   uint32_t u32Height = bbox.y2 - bbox.y1;
   cropAttr.stCropRect = {(int)bbox.x1, (int)bbox.y1, u32Width, u32Height};
   VPSS_CHN_ATTR_S chnAttr;
-  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, false);
+  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, true);
   mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, 1);
   mp_vpss_inst->getFrame(dstFrame, 0, 2000);
   return CVIAI_SUCCESS;
@@ -140,49 +134,10 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 
     for (uint32_t i = 0; i < meta->size; ++i) {
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
-#ifdef NO_OPENCV
-      cvai_face_info_t face_info = info_extern_crop_resize_img(
-          stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, &(meta->info[i]));
-      /*There will crop the image and resize to 256*256, export PIXEL_FORMAT_BGR_888_PACKED format*/
-      VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
-      memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-      vpssCropImage(stOutFrame, f, face_info.bbox, DST_IMG_HW, DST_IMG_HW, PIXEL_FORMAT_BGR_888);
 
-      CVI_U32 f_frame_size =
-          f->stVFrame.u32Length[0] + f->stVFrame.u32Length[1] + f->stVFrame.u32Length[2];
-      if (f->stVFrame.pu8VirAddr[0] == NULL) {
-        f->stVFrame.pu8VirAddr[0] =
-            (CVI_U8 *)CVI_SYS_MmapCache(f->stVFrame.u64PhyAddr[0], f_frame_size);
-        f->stVFrame.pu8VirAddr[1] = f->stVFrame.pu8VirAddr[0] + f->stVFrame.u32Length[0];
-        f->stVFrame.pu8VirAddr[2] = f->stVFrame.pu8VirAddr[1] + f->stVFrame.u32Length[1];
-      }
-
-      float pts[10];
-      float transm[6];
-      for (u_int8_t i = 0; i < 5; i++) {
-        pts[2 * i] = face_info.pts.x[i];
-        pts[2 * i + 1] = face_info.pts.y[i];
-      }
-
-      cviai::get_face_transform(pts, 112, transm);
-      cviai::warpAffine(f->stVFrame.pu8VirAddr[0], f->stVFrame.u32Stride[0], f->stVFrame.u32Width,
-                        f->stVFrame.u32Height, m_wrap_frame.stVFrame.pu8VirAddr[0],
-                        m_wrap_frame.stVFrame.u32Stride[0], m_wrap_frame.stVFrame.u32Width,
-                        m_wrap_frame.stVFrame.u32Height, transm);
-
-      CVI_SYS_Munmap((void *)f->stVFrame.pu8VirAddr[0], f_frame_size);
-      f->stVFrame.pu8VirAddr[0] = NULL;
-      f->stVFrame.pu8VirAddr[1] = NULL;
-      f->stVFrame.pu8VirAddr[2] = NULL;
-      if (f->stVFrame.u64PhyAddr[0] != 0) {
-        mp_vpss_inst->releaseFrame(f, 0);
-      }
-      delete f;
-#else
       cvai_face_info_t face_info =
           info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       face_align_gdc(stOutFrame, &m_wrap_frame, face_info);
-#endif
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
       int ret = run(frames);
       if (ret != CVIAI_SUCCESS) {
@@ -211,55 +166,17 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
 
     for (uint32_t i = 0; i < meta->size; ++i) {
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
-#ifdef NO_OPENCV
-      cvai_face_info_t face_info = info_extern_crop_resize_img(
-          stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, &(meta->info[i]));
-      /*There will crop the image and resize to 256*256, export PIXEL_FORMAT_BGR_888_PACKED format*/
-      VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
-      memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-      vpssCropImage(stOutFrame, f, face_info.bbox, DST_IMG_HW, DST_IMG_HW, PIXEL_FORMAT_BGR_888);
 
-      CVI_U32 f_frame_size =
-          f->stVFrame.u32Length[0] + f->stVFrame.u32Length[1] + f->stVFrame.u32Length[2];
-      if (f->stVFrame.pu8VirAddr[0] == NULL) {
-        f->stVFrame.pu8VirAddr[0] =
-            (CVI_U8 *)CVI_SYS_MmapCache(f->stVFrame.u64PhyAddr[0], f_frame_size);
-        f->stVFrame.pu8VirAddr[1] = f->stVFrame.pu8VirAddr[0] + f->stVFrame.u32Length[0];
-        f->stVFrame.pu8VirAddr[2] = f->stVFrame.pu8VirAddr[1] + f->stVFrame.u32Length[1];
-      }
-
-      float pts[10];
-      float transm[6];
-      for (u_int8_t i = 0; i < 5; i++) {
-        pts[2 * i] = face_info.pts.x[i];
-        pts[2 * i + 1] = face_info.pts.y[i];
-      }
-
-      cviai::get_face_transform(pts, 112, transm);
-      cviai::warpAffine(f->stVFrame.pu8VirAddr[0], f->stVFrame.u32Stride[0], f->stVFrame.u32Width,
-                        f->stVFrame.u32Height, m_wrap_frame.stVFrame.pu8VirAddr[0],
-                        m_wrap_frame.stVFrame.u32Stride[0], m_wrap_frame.stVFrame.u32Width,
-                        m_wrap_frame.stVFrame.u32Height, transm);
-
-      CVI_SYS_Munmap((void *)f->stVFrame.pu8VirAddr[0], f_frame_size);
-      f->stVFrame.pu8VirAddr[0] = NULL;
-      f->stVFrame.pu8VirAddr[1] = NULL;
-      f->stVFrame.pu8VirAddr[2] = NULL;
-      if (f->stVFrame.u64PhyAddr[0] != 0) {
-        mp_vpss_inst->releaseFrame(f, 0);
-      }
-      delete f;
-#else
       cvai_face_info_t face_info =
           info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       ALIGN_FACE_TO_FRAME(stOutFrame, &m_wrap_frame, face_info);
-#endif
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
       int ret = run(frames);
       if (ret != CVIAI_SUCCESS) {
         return ret;
       }
+
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
     }
@@ -273,7 +190,6 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
   return CVIAI_SUCCESS;
 }
 
-#ifndef NO_OPENCV
 int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t width, uint32_t height,
                                         uint32_t stride, cvai_face_info_t *p_face_info) {
   if (p_face_info->pts.size == 5) {
@@ -313,7 +229,6 @@ int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t widt
 
   return CVI_SUCCESS;
 }
-#endif
 
 template <typename U, typename V>
 struct ExtractFeatures {

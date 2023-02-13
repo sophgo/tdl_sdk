@@ -78,50 +78,6 @@ cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const
   return bbox;
 }
 
-#define DST_IMG_HW 256
-cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
-                                             const cvai_face_info_t *face_info) {
-  cvai_face_info_t face_info_new;
-  CVI_AI_CopyInfoCpp(face_info, &face_info_new);
-
-  cvai_bbox_t bbox = face_info_new.bbox;
-  float w_pad = (bbox.x2 - bbox.x1) * 0.2 / 2;
-  float h_pad = (bbox.y2 - bbox.y1) * 0.2 / 2;
-
-  // bbox new coordinate after extern
-  float x1 = bbox.x1 - w_pad;
-  float x2 = bbox.x2 + w_pad;
-  float y1 = bbox.y1 - h_pad;
-  float y2 = bbox.y2 + h_pad;
-
-  cvai_bbox_t new_bbox;
-  new_bbox.score = bbox.score;
-  new_bbox.x1 = std::max(std::min(x1, (float)(frame_width - 1)), (float)0);
-  new_bbox.x2 = std::max(std::min(x2, (float)(frame_width - 1)), (float)0);
-  new_bbox.y1 = std::max(std::min(y1, (float)(frame_height - 1)), (float)0);
-  new_bbox.y2 = std::max(std::min(y2, (float)(frame_height - 1)), (float)0);
-  face_info_new.bbox = new_bbox;
-
-  // bbox new coordinate after crop and reszie
-  CVI_AI_MemAlloc(face_info->pts.size, &face_info_new.pts);
-
-  // float ratio, pad_width, pad_height;
-  float box_height = new_bbox.y2 - new_bbox.y1;
-  float box_width = new_bbox.x2 - new_bbox.x1;
-
-  float ratio_height = box_height / DST_IMG_HW;
-  float ratio_width = box_width / DST_IMG_HW;
-  float ratio_h = 1.0 / ratio_height;
-  float ratio_w = 1.0 / ratio_width;
-  for (uint32_t j = 0; j < face_info_new.pts.size; ++j) {
-    face_info_new.pts.x[j] = face_info->pts.x[j] - x1;
-    face_info_new.pts.y[j] = face_info->pts.y[j] - y1;
-    face_info_new.pts.x[j] = face_info_new.pts.x[j] * ratio_w;
-    face_info_new.pts.y[j] = face_info_new.pts.y[j] * ratio_h;
-  }
-  return face_info_new;
-}
-
 cvai_face_info_t info_rescale_c(const float width, const float height, const float new_width,
                                 const float new_height, const cvai_face_info_t &face_info) {
   cvai_face_info_t face_info_new;

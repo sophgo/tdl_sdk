@@ -5,10 +5,10 @@
 #include "core/cviai_core.h"
 #include "core/vpss_engine.hpp"
 
-#include "deepsort/cvi_deepsort.hpp"
 #include "ive/ive.hpp"
 #include "motion_detection/md.hpp"
 #ifndef CV180X
+#include "deepsort/cvi_deepsort.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "tamper_detection/tamper_detection.hpp"
 #endif
@@ -33,9 +33,9 @@ typedef struct {
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   uint32_t vpss_timeout_value = 100;  // default value.
   MotionDetection *md_model = nullptr;
-  DeepSORT *ds_tracker = nullptr;
 #ifndef CV180X
   TamperDetectorMD *td_model = nullptr;
+  DeepSORT *ds_tracker = nullptr;
   FallMD *fall_model = nullptr;
 #endif
   bool use_gdc_wrap = false;
