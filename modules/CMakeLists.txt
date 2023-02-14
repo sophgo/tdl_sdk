@@ -18,7 +18,6 @@ add_subdirectory(service)
 
 
 if(DEFINED NO_OPENCV)
-  
   set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
                   $<TARGET_OBJECTS:cviai_service>
                   $<TARGET_OBJECTS:cviai_trace>
@@ -36,10 +35,11 @@ if(DEFINED NO_OPENCV)
                   $<TARGET_OBJECTS:ivewrapper>
                   $<TARGET_OBJECTS:motion_detection>
                   $<TARGET_OBJECTS:motion_detection>
-
                   $<TARGET_OBJECTS:mobiledetv2>
+                  $<TARGET_OBJECTS:deepsort>
+                  $<TARGET_OBJECTS:face_attribute>
                   $<TARGET_OBJECTS:sound_classification>)
-                  
+
   message("module no opencv ,core_srcs:" ${CORES_SRCS} )
   set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 else()
@@ -102,7 +102,6 @@ project(cviai-static)
 add_library(${PROJECT_NAME} STATIC ${CORES_SRCS})
 target_link_libraries(${PROJECT_NAME} ${CORES_DEPS})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
-
 
 if(NOT DEFINED NO_OPENCV)
   add_subdirectory(app)

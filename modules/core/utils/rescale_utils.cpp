@@ -78,6 +78,51 @@ cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const
   return bbox;
 }
 
+cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
+                                             const cvai_face_info_t *face_info, int *p_dst_size) {
+  cvai_face_info_t face_info_new;
+  CVI_AI_CopyInfoCpp(face_info, &face_info_new);
+
+  cvai_bbox_t bbox = face_info_new.bbox;
+  int w_pad = (bbox.x2 - bbox.x1) * 0.2;
+  int h_pad = (bbox.y2 - bbox.y1) * 0.2;
+
+  // bbox new coordinate after extern
+  float x1 = bbox.x1 - w_pad;
+  float y1 = bbox.y1 - h_pad;
+  float x2 = bbox.x2 + w_pad;
+  float y2 = bbox.y2 + h_pad;
+
+  cvai_bbox_t new_bbox;
+  new_bbox.score = bbox.score;
+  new_bbox.x1 = std::max(x1, (float)0);
+  new_bbox.y1 = std::max(y1, (float)0);
+  new_bbox.x2 = std::min(x2, (float)(frame_width - 1));
+  new_bbox.y2 = std::min(y2, (float)(frame_height - 1));
+  face_info_new.bbox = new_bbox;
+
+  // bbox new coordinate after crop and reszie
+  CVI_AI_MemAlloc(face_info->pts.size, &face_info_new.pts);
+
+  // float ratio, pad_width, pad_height;
+  float box_height = new_bbox.y2 - new_bbox.y1;
+  float box_width = new_bbox.x2 - new_bbox.x1;
+
+  int mean_hw = (box_width + box_height) / 2;
+  int dst_hw = 128;
+  if (mean_hw > dst_hw) {
+    dst_hw = 256;
+  }
+  *p_dst_size = dst_hw;
+  float ratio_h = dst_hw / box_height;
+  float ratio_w = dst_hw / box_width;
+  for (uint32_t j = 0; j < face_info_new.pts.size; ++j) {
+    face_info_new.pts.x[j] = (face_info->pts.x[j] - new_bbox.x1) * ratio_w;
+    face_info_new.pts.y[j] = (face_info->pts.y[j] - new_bbox.y1) * ratio_h;
+  }
+  return face_info_new;
+}
+
 cvai_face_info_t info_rescale_c(const float width, const float height, const float new_width,
                                 const float new_height, const cvai_face_info_t &face_info) {
   cvai_face_info_t face_info_new;

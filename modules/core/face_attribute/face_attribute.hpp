@@ -18,9 +18,8 @@ class FaceAttribute final : public Core {
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;
   virtual int onModelClosed() override;
-  int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvai_bbox_t bbox,
-                    uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat);
   void outputParser(cvai_face_t *meta, int meta_i);
+  int dump_bgr_pack(const char *p_img_file, VIDEO_FRAME_INFO_S *p_img_frm);
   CVI_S32 allocateION();
   void releaseION();
 

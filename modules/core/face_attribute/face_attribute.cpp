@@ -1,17 +1,22 @@
 #include "face_attribute.hpp"
+#include "core.hpp"
+#include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/face/cvai_face_helper.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
+#include "cvi_sys.h"
 #include "cviai_log.hpp"
 #include "face_attribute_types.hpp"
+
+#ifdef NO_OPENCV
+#include "img_warp.hpp"
+#else
 #include "face_utils.hpp"
 #include "image_utils.hpp"
-
-#include "core.hpp"
-#include "core/core/cvai_errno.h"
-#include "cvi_sys.h"
+#include "opencv2/opencv.hpp"
+#endif
 
 #define FACE_ATTRIBUTE_FACTOR (1 / 128.f)
 #define FACE_ATTRIBUTE_MEAN (0.99609375)
@@ -104,25 +109,25 @@ void FaceAttribute::setHardwareGDC(bool use_wrap_hw) {
 
   m_use_wrap_hw = use_wrap_hw;
 }
-
-/* vpssCropImage api need new  dstFrame and remember delete/release frame*/
-int FaceAttribute::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                                 cvai_bbox_t bbox, uint32_t rw, uint32_t rh,
-                                 PIXEL_FORMAT_E enDstFormat) {
-  VPSS_CROP_INFO_S cropAttr;
-  cropAttr.bEnable = true;
-  uint32_t u32Width = bbox.x2 - bbox.x1;
-  uint32_t u32Height = bbox.y2 - bbox.y1;
-  cropAttr.stCropRect = {(int)bbox.x1, (int)bbox.y1, u32Width, u32Height};
-  VPSS_CHN_ATTR_S chnAttr;
-  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, true);
-  mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, 1);
-  mp_vpss_inst->getFrame(dstFrame, 0, 2000);
+int FaceAttribute::dump_bgr_pack(const char *p_img_file, VIDEO_FRAME_INFO_S *p_img_frm) {
+  FILE *fp = fopen(p_img_file, "wb");
+  if (fp == nullptr) {
+    LOGE("failed to open: %s.\n", p_img_file);
+    return CVI_FAILURE;
+  }
+  VIDEO_FRAME_S *pstVFSrc = &p_img_frm->stVFrame;
+  uint32_t width = pstVFSrc->u32Width;
+  uint32_t height = pstVFSrc->u32Height;
+  fwrite(&width, sizeof(uint32_t), 1, fp);
+  fwrite(&height, sizeof(uint32_t), 1, fp);
+  fwrite(pstVFSrc->pu8VirAddr[0], height * p_img_frm->stVFrame.u32Stride[0], 1, fp);
+  printf("width:%u,stride:%u\n", width, p_img_frm->stVFrame.u32Stride[0]);
+  fclose(fp);
   return CVIAI_SUCCESS;
 }
-
 int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, int face_idx) {
   if (m_use_wrap_hw) {
+#ifdef CV181X
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
       LOGE(
@@ -146,50 +151,71 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
     }
+#endif
   } else {
     if (false == IS_SUPPORTED_FORMAT(stOutFrame)) {
       return CVIAI_ERR_INVALID_ARGS;
     }
 
-    CVI_U32 frame_size = stOutFrame->stVFrame.u32Length[0] + stOutFrame->stVFrame.u32Length[1] +
-                         stOutFrame->stVFrame.u32Length[2];
     bool do_unmap = false;
     if (stOutFrame->stVFrame.pu8VirAddr[0] == NULL) {
-      stOutFrame->stVFrame.pu8VirAddr[0] =
-          (CVI_U8 *)CVI_SYS_MmapCache(stOutFrame->stVFrame.u64PhyAddr[0], frame_size);
-      stOutFrame->stVFrame.pu8VirAddr[1] =
-          stOutFrame->stVFrame.pu8VirAddr[0] + stOutFrame->stVFrame.u32Length[0];
-      stOutFrame->stVFrame.pu8VirAddr[2] =
-          stOutFrame->stVFrame.pu8VirAddr[1] + stOutFrame->stVFrame.u32Length[1];
+      mmap_video_frame(stOutFrame);
       do_unmap = true;
     }
 
     for (uint32_t i = 0; i < meta->size; ++i) {
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
+#ifdef NO_OPENCV
+      int dst_size = 0;
+      cvai_face_info_t face_info =
+          info_extern_crop_resize_img(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height,
+                                      &(meta->info[i]), &dst_size);
+      /*There will crop the image and resize to 256*256, export PIXEL_FORMAT_BGR_888_PACKED format*/
+      VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+      memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+      vpssCropImage(stOutFrame, f, face_info.bbox, dst_size, dst_size, PIXEL_FORMAT_RGB_888);
+      mmap_video_frame(f);
 
+      float pts[10];
+      float transm[6];
+      for (u_int8_t i = 0; i < 5; i++) {
+        pts[2 * i] = face_info.pts.x[i];
+        pts[2 * i + 1] = face_info.pts.y[i];
+      }
+
+      cviai::get_face_transform(pts, 112, transm);
+      cviai::warp_affine(f->stVFrame.pu8VirAddr[0], f->stVFrame.u32Stride[0], f->stVFrame.u32Width,
+                         f->stVFrame.u32Height, m_wrap_frame.stVFrame.pu8VirAddr[0],
+                         m_wrap_frame.stVFrame.u32Stride[0], m_wrap_frame.stVFrame.u32Width,
+                         m_wrap_frame.stVFrame.u32Height, transm);
+
+      unmap_video_frame(f);
+      if (f->stVFrame.u64PhyAddr[0] != 0) {
+        mp_vpss_inst->releaseFrame(f, 0);
+      }
+      delete f;
+#else
       cvai_face_info_t face_info =
           info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       ALIGN_FACE_TO_FRAME(stOutFrame, &m_wrap_frame, face_info);
+#endif
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
       int ret = run(frames);
       if (ret != CVIAI_SUCCESS) {
         return ret;
       }
-
       outputParser(meta, i);
       CVI_AI_FreeCpp(&face_info);
     }
     if (do_unmap) {
-      CVI_SYS_Munmap((void *)stOutFrame->stVFrame.pu8VirAddr[0], frame_size);
-      stOutFrame->stVFrame.pu8VirAddr[0] = NULL;
-      stOutFrame->stVFrame.pu8VirAddr[1] = NULL;
-      stOutFrame->stVFrame.pu8VirAddr[2] = NULL;
+      unmap_video_frame(stOutFrame);
     }
   }
   return CVIAI_SUCCESS;
 }
 
+#ifndef NO_OPENCV
 int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t width, uint32_t height,
                                         uint32_t stride, cvai_face_info_t *p_face_info) {
   if (p_face_info->pts.size == 5) {
@@ -229,6 +255,7 @@ int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t widt
 
   return CVI_SUCCESS;
 }
+#endif
 
 template <typename U, typename V>
 struct ExtractFeatures {

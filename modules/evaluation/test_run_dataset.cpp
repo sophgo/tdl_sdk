@@ -213,35 +213,6 @@ std::string run_image_person_pets_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_h
   return ss.str();
 }
 
-std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle) {
-  static int model_init = 0;
-  if (model_init == 0) {
-    std::cout << "to init Person model" << std::endl;
-    std::string str_person_model =
-        g_model_root + std::string("/mobiledetv2-pedestrian-d0-ls-640.cvimodel");
-    CVI_AI_SetModelPath(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0,
-                        str_person_model.c_str());
-    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN_D0, 0.01);
-    model_init = 1;
-  }
-  cvai_object_t person_obj;
-  memset(&person_obj, 0, sizeof(cvai_object_t));
-  CVI_S32 ret = CVI_AI_MobileDetV2_Pedestrian_D0(ai_handle, p_frame, &person_obj);
-  if (ret != CVI_SUCCESS) {
-    std::cout << "detect person failed:" << ret << std::endl;
-  }
-
-  // generate detection result
-  std::stringstream ss;
-  for (uint32_t i = 0; i < person_obj.size; i++) {
-    cvai_bbox_t box = person_obj.info[i].bbox;
-    ss << (person_obj.info[i].classes + 1) << " " << box.score << " " << box.x1 << " " << box.y1
-       << " " << box.x2 << " " << box.y2 << "\n";
-  }
-  CVI_AI_Free(&person_obj);
-  return ss.str();
-}
-
 std::string run_image_face_recognition_directly(VIDEO_FRAME_INFO_S *p_frame,
                                                 cviai_handle_t ai_handle) {
   static int model_init = 0;
@@ -315,6 +286,35 @@ std::string run_image_face_recognition(VIDEO_FRAME_INFO_S *p_frame, cviai_handle
   return ss.str();
 }*/
 
+std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle) {
+  static int model_init = 0;
+  if (model_init == 0) {
+    std::cout << "to init Person model" << std::endl;
+    std::string str_person_model =
+        g_model_root + std::string("/mobiledetv2-pedestrian-d0-ls-640.cvimodel");
+    CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                     str_person_model.c_str());
+    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.01);
+    model_init = 1;
+  }
+  cvai_object_t person_obj;
+  memset(&person_obj, 0, sizeof(cvai_object_t));
+  CVI_S32 ret = CVI_AI_MobileDetV2_Pedestrian(ai_handle, p_frame, &person_obj);
+  if (ret != CVI_SUCCESS) {
+    std::cout << "detect person failed:" << ret << std::endl;
+  }
+
+  // generate detection result
+  std::stringstream ss;
+  for (uint32_t i = 0; i < person_obj.size; i++) {
+    cvai_bbox_t box = person_obj.info[i].bbox;
+    ss << (person_obj.info[i].classes + 1) << " " << box.score << " " << box.x1 << " " << box.y1
+       << " " << box.x2 << " " << box.y2 << "\n";
+  }
+  CVI_AI_Free(&person_obj);
+  return ss.str();
+}
+
 int main(int argc, char *argv[]) {
   // if (argc != 6) {
   //   printf("Usage: %s <model_root>  <image_root> <image_list> <dst_root> <process_flag>\n",
@@ -372,6 +372,7 @@ int main(int argc, char *argv[]) {
   std::map<std::string, std::function<std::string(VIDEO_FRAME_INFO_S *, cviai_handle_t)>>
       process_funcs = {
           {"fd", run_image_face_detection},
+          {"person", run_image_person_detection},
       };
   if (process_funcs.count(process_flag) == 0) {
     std::cout << "error flag:" << process_flag << std::endl;

@@ -16,6 +16,8 @@ void clip_boxes(int width, int height, cvai_bbox_t &box);
 void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const float *qMean,
                        VIDEO_FRAME_INFO_S *outFrame);
 
+void mmap_video_frame(VIDEO_FRAME_INFO_S *frame);
+void unmap_video_frame(VIDEO_FRAME_INFO_S *frame);
 inline float FastExp(float x) {
   union {
     unsigned int i;

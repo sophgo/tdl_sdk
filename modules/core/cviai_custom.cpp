@@ -181,3 +181,16 @@ CVI_S32 CVI_AI_Custom_GetOutputTensor(cviai_handle_t handle, const uint32_t id,
   }
   return inst_ptr->getOutputTensor(tensorName, tensor, tensorCount, unitSize);
 }
+
+// CVI_S32 CVI_AI_FaceFeatureExtract(const cviai_handle_t handle, const uint8_t *p_rgb_pack, int
+// width,
+//                                   int height, int stride, cvai_face_info_t *p_face_info) {
+//   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+//   FaceAttribute *inst = dynamic_cast<FaceAttribute *>(
+//       getInferenceInstance(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, ctx));
+//   if (inst == nullptr) {
+//     LOGE("No instance found for FaceAttribute\n");
+//     return CVI_FAILURE;
+//   }
+//   return inst->extract_face_feature(p_rgb_pack, width, height, stride, p_face_info);
+// }
