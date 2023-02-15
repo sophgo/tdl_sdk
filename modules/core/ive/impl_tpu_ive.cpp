@@ -444,6 +444,14 @@ CVI_S32 TPUIVE::frame_diff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImp
   if (ret != CVI_SUCCESS) {
     return ret;
   }
+#ifndef NO_OPENCV  // on opencv case,dilate would be done inside ccl
+  ret = dilate(pDst, pDst,
+               {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0});
+#endif
+  if (ret != CVI_SUCCESS) {
+    LOGE("dilate fail %x\n", ret);
+    return ret;
+  }
 
 #ifdef DEBUG_MD
   LOGI("MD DEBUG: write: dialte.bin\n");

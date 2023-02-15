@@ -9,6 +9,7 @@ SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {
   bool htk = false;
   mp_extractor_ = new MelFeatureExtract(num_frames, sample_rate_, num_fft_, hop_len_, num_mel_,
                                         fmin_, fmax_, "reflect", htk);
+  m_skip_preprocess_ = true;
 }
 
 SoundClassificationV2::~SoundClassificationV2() { delete mp_extractor_; }
@@ -59,8 +60,13 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
 }
 int SoundClassificationV2::get_top_k(float *result, size_t count) {
   // int TOP_K = 1;
-  float *data = result;  // reinterpret_cast<float *>(malloc(count * sizeof(float)));
-  // memcpy(data, result, count * sizeof(float));
+  float *data = result;
+  float conf_fg = 1.0 / (1 + std::exp(-result[1]));
+  if (conf_fg > m_model_threshold) {
+    return 1;
+  } else {
+    return 0;
+  }
   int idx = -1;
   float max = -10000;
   for (size_t i = 0; i < count; i++) {

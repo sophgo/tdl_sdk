@@ -368,7 +368,7 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
                conf->kfilter_conf);
     tracker_.update_bbox(bbox_);
     tracker_.bounding = false;
-    float quality_ok = true;
+    bool quality_ok = true;
     if (Quality != nullptr && Quality[bbox_idx] == 0) quality_ok = false;
     if ((!conf->ktracker_conf.enable_QA_feature_update && quality_ok) ||
         (conf->ktracker_conf.enable_QA_feature_update &&
