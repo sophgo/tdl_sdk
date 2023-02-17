@@ -27,6 +27,7 @@ class IVEImage {
                  bool cached = false);
   CVI_S32 create(IVE *ive_instance, ImageType enType, CVI_U16 u16Width, CVI_U16 u16Height,
                  IVEImage *buf, bool cached = false);
+  CVI_S32 create(IVE *ive_instance);
   CVI_S32 free();
   CVI_S32 toFrame(VIDEO_FRAME_INFO_S *frame, bool invertPackage = false);
   CVI_S32 fromFrame(VIDEO_FRAME_INFO_S *frame);

@@ -32,6 +32,8 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
     }                                                \
   } while (0)
 
+int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
+
 int Core::modelOpen(const char *filepath) {
   TRACE_EVENT("cviai_core", "Core::modelOpen");
   if (!mp_mi) {
@@ -58,19 +60,6 @@ int Core::modelOpen(const char *filepath) {
   setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
   setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
 
-  for (int32_t i = 0; i < mp_mi->in.num; i++) {
-    if ((mp_mi->in.tensors[i].shape.dim[3] % 64) != 0) {
-      aligned_input = false;
-    }
-  }
-
-  if (true == aligned_input) {
-    for (int32_t i = 0; i < mp_mi->in.num; i++)
-      CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_SetTensorPhysicalAddr(&mp_mi->in.tensors[i], (uint64_t)0),
-                                "CVI_NN_SetTensorPhysicalAddr failed");
-    printf("parse model with aligned input tensor\n");
-  }
-
   TRACE_EVENT_BEGIN("cviai_core", "setupInputPreprocess");
   CVI_TENSOR *input =
       CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
@@ -80,6 +69,21 @@ int Core::modelOpen(const char *filepath) {
     CVI_TENSOR *tensor = mp_mi->in.tensors + i;
     float quant_scale = CVI_NN_TensorQuantScale(tensor);
     data[i].use_quantize_scale = quant_scale == 0 ? false : true;
+
+    if (((mp_mi->in.tensors[i].shape.dim[3] % 64) != 0)) {
+      aligned_input = false;
+    }
+  }
+
+  if (CVI_MEM_SYSTEM == getInputMemType()) {
+    aligned_input = false;
+  }
+
+  if (true == aligned_input) {
+    for (int32_t i = 0; i < mp_mi->in.num; i++)
+      CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_SetTensorPhysicalAddr(&mp_mi->in.tensors[i], (uint64_t)0),
+                                "CVI_NN_SetTensorPhysicalAddr failed");
+    LOGI("parse model with aligned input tensor\n");
   }
 
   CLOSE_MODEL_IF_FAILED(setupInputPreprocess(&data), "Failed to setup preprocess setting.");
@@ -392,9 +396,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   m_debugger.save_field("skip_vpss_preprocess", ((uint8_t)m_skip_vpss_preprocess));
   m_debugger.save_field("model_file", m_model_file.c_str(), {m_model_file.size()});
   m_debugger.save_field("input_mem_type", (uint8_t)mp_mi->conf.input_mem_type);
-  if (aligned_input && frames.size() != 1) {
-    LOGE("can only process one frame for aligninput,got frame_num:%d\n", int(frames.size()));
-  }
+
   if (!m_skip_preprocess_) {
     if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
       if (m_skip_vpss_preprocess) {
@@ -438,6 +440,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
            frames[0]->stVFrame.u32Length[0] + frames[0]->stVFrame.u32Length[1] +
                frames[0]->stVFrame.u32Length[2]);
   }
+
   model_timer_.TicToc("vpss");
   if (ret == CVIAI_SUCCESS) {
     int rcret = CVI_NN_Forward(mp_mi->handle, mp_mi->in.tensors, mp_mi->in.num, mp_mi->out.tensors,
@@ -467,16 +470,23 @@ template <typename T>
 int Core::registerFrame2Tensor(std::vector<T> &frames) {
   int ret = 0;
   std::vector<uint64_t> paddrs;
+
   CVI_SHAPE input_shape = getInputShape(0);
   uint32_t input_w = input_shape.dim[3];
   uint32_t input_h = input_shape.dim[2];
+
+  if (frames.size() != (uint32_t)mp_mi->in.num) {
+    assert(0);
+  }
+
   for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
     T frame = frames[i];
-    if (input_w != frames[i]->stVFrame.u32Width || input_h != frames[i]->stVFrame.u32Height) {
-      LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]",
-           frames[i]->stVFrame.u32Width, frames[i]->stVFrame.u32Height, input_w, input_h);
-      return CVIAI_FAILURE;
+    if (input_w != frame->stVFrame.u32Width || input_h != frame->stVFrame.u32Height) {
+      LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]", frame->stVFrame.u32Width,
+           frame->stVFrame.u32Height, input_w, input_h);
+      return CVIAI_ERR_INFERENCE;
     }
+
     switch (frame->stVFrame.enPixelFormat) {
       case PIXEL_FORMAT_RGB_888_PLANAR:
       case PIXEL_FORMAT_BGR_888_PLANAR:
@@ -488,20 +498,19 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
         LOGE("Unsupported image type: %x.\n", frame->stVFrame.enPixelFormat);
         return CVIAI_ERR_INFERENCE;
     }
-  }
 
-  if (aligned_input == true) {
-    ret = CVI_NN_SetTensorPhysicalAddr(mp_mi->in.tensors,
-                                       (uint64_t)frames[0]->stVFrame.u64PhyAddr[0]);
-  } else {
-    ret = CVI_NN_FeedTensorWithFrames(mp_mi->handle, mp_mi->in.tensors, m_vpss_config[0].frame_type,
-                                      CVI_FMT_INT8, paddrs.size(), paddrs.data(),
-                                      frames[0]->stVFrame.u32Height, frames[0]->stVFrame.u32Width,
-                                      frames[0]->stVFrame.u32Stride[0]);
-  }
-  if (ret != CVI_RC_SUCCESS) {
-    LOGE("NN set tensor with vi failed: %s\n", get_tpu_error_msg(ret));
-    return CVIAI_ERR_INFERENCE;
+    if (aligned_input == true) {
+      ret = CVI_NN_SetTensorPhysicalAddr(mp_mi->in.tensors, frame->stVFrame.u64PhyAddr[0]);
+    } else {
+      ret = CVI_NN_FeedTensorWithFrames(mp_mi->handle, mp_mi->in.tensors,
+                                        m_vpss_config[0].frame_type, CVI_FMT_INT8, paddrs.size(),
+                                        paddrs.data(), frame->stVFrame.u32Height,
+                                        frame->stVFrame.u32Width, frame->stVFrame.u32Stride[0]);
+    }
+    if (ret != CVI_RC_SUCCESS) {
+      LOGE("NN set tensor with vi failed: %s\n", get_tpu_error_msg(ret));
+      return CVIAI_ERR_INFERENCE;
+    }
   }
   return CVIAI_SUCCESS;
 }

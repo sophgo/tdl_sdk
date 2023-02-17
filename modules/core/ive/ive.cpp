@@ -29,6 +29,8 @@ CVI_S32 IVEImage::create(IVE *ive_instance, ImageType enType, CVI_U16 u16Width, 
                         cached);
 }
 
+CVI_S32 IVEImage::create(IVE *ive_instance) { return mpImpl->create(ive_instance->getImpl()); }
+
 IVEImageImpl *IVEImage::getImpl() { return mpImpl.get(); }
 
 CVI_U32 IVEImage::getHeight() { return mpImpl->getHeight(); }

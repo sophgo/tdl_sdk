@@ -22,6 +22,7 @@ class TPUIVEImage : public IVEImageImpl {
                          CVI_U16 u16Height, bool cached) override;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
                          CVI_U16 u16Height, IVEImageImpl *buf, bool cached) override;
+  virtual CVI_S32 create(IVEImpl *ive_instance) override;
   virtual CVI_S32 free() override;
   static IVE_IMAGE_TYPE_E convert(ImageType type);
   static ImageType convert(IVE_IMAGE_TYPE_E type);
@@ -115,6 +116,11 @@ CVI_S32 TPUIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16
   m_handle = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
   return CVI_IVE_CreateImage2(m_handle, &ive_image, convert(enType), u16Width, u16Height,
                               UNWRAP(buf));
+}
+
+CVI_S32 TPUIVEImage::create(IVEImpl *ive_instance) {
+  m_handle = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
+  return CVI_SUCCESS;
 }
 
 CVI_S32 dump_ive_image_framex(const std::string &filepath, uint8_t *ptr_img, int w, int h,

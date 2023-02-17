@@ -23,6 +23,7 @@ class HWIVEImage : public IVEImageImpl {
                          CVI_U16 u16Height, bool cached) override;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
                          CVI_U16 u16Height, IVEImageImpl *buf, bool cached) override;
+  virtual CVI_S32 create(IVEImpl *ive_instance) override;
   virtual CVI_S32 free() override;
   static IVE_IMAGE_TYPE_E convert(ImageType type);
   static ImageType convert(IVE_IMAGE_TYPE_E type);
@@ -116,6 +117,11 @@ CVI_S32 HWIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16W
 
 CVI_S32 HWIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
                            CVI_U16 u16Height, IVEImageImpl *buf, bool cached) {
+  LOGE("cannot create IVE image with another buffer: unsupported\n");
+  return CVI_FAILURE;
+}
+
+CVI_S32 HWIVEImage::create(IVEImpl *ive_instance) {
   LOGE("cannot create IVE image with another buffer: unsupported\n");
   return CVI_FAILURE;
 }

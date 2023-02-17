@@ -298,6 +298,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     LOGE("Height and width of frame isn't equal to background image in MotionDetection\n");
     return CVIAI_ERR_MD_OPERATION_FAILED;
   }
+  memset(obj_meta, 0, sizeof(cvai_object_t));
   md_timer_.TicToc("start");
   CVI_S32 ret = CVI_SUCCESS;
   std::shared_ptr<VIDEO_FRAME_INFO_S> processed_frame;
@@ -324,6 +325,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   md_timer_.TicToc("preprocess");
 #ifndef NO_OPENCV
   ive::IVEImage sub_image;
+  sub_image.create(ive_instance);
   ive_instance->roi(&md_output, &sub_image, m_padding.left, m_padding.left + im_width,
                     m_padding.top, m_padding.top + im_height);
   ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &sub_image, threshold);
@@ -374,7 +376,6 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   mergebbox(bboxes);
   construct_bbox(bboxes, im_width, im_height, obj_meta);
 #else
-  memset(obj_meta, 0, sizeof(cvai_object_t));
   int num_boxes = 0;
   int wstride = md_output.getStride()[0];
 

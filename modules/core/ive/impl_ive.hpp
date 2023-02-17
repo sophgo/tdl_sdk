@@ -24,6 +24,7 @@ class IVEImageImpl {
                          CVI_U16 u16Height, bool cached) = 0;
   virtual CVI_S32 create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
                          CVI_U16 u16Height, IVEImageImpl *buf, bool cached) = 0;
+  virtual CVI_S32 create(IVEImpl *ive_instance) = 0;
   virtual CVI_S32 free() = 0;
 
   virtual CVI_U32 getHeight() = 0;
