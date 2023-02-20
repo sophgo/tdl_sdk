@@ -186,45 +186,57 @@ int MobileDetV2::onModelOpened() {
   m_model_config.image_height = input_shape.dim[2];
   m_model_config.image_width = input_shape.dim[3];
 
-  int input_w = input_shape.dim[3];
-  int input_h = input_shape.dim[2];
-  int num_per_grid = m_model_config.num_scales * m_model_config.aspect_ratios.size();
-  int num_cls = m_model_config.num_classes;
-  m_model_config.bbox_out_names.clear();
-  m_model_config.class_out_names.clear();
-  m_model_config.strides.clear();
+  int not_named_tensor = 0;
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
-    CVI_SHAPE oj = getOutputShape(j);
     TensorInfo oinfo = getOutputTensorInfo(j);
-    int feat_w = oj.dim[2];
-    int feat_h = oj.dim[1];
-    int channel = oj.dim[3];
-    int stridew = input_w / feat_w;
-    int strideh = input_h / feat_h;
-    if (stridew != strideh) {
-      LOGE("stride not equal,stridew:%d,strideh:%d,featw:%d,feath:%d\n", stridew, strideh, feat_w,
-           feat_h);
-    }
-    if (channel == num_cls * num_per_grid) {
-      // class branch
-      m_model_config.class_out_names[stridew] = oinfo.tensor_name;
-      printf("parse class tensor name:%s,stride:%d\n", oinfo.tensor_name.c_str(), stridew);
-      m_model_config.strides.push_back(stridew);
-    } else if (channel == 4 * num_per_grid) {
-      // box branch
-      m_model_config.bbox_out_names[stridew] = oinfo.tensor_name;
-      printf("parse bbox tensor name:%s,stride:%d\n", oinfo.tensor_name.c_str(), stridew);
-    } else {
-      printf("error parse bbox tensor name:%s,stride:%d\n", oinfo.tensor_name.c_str(), stridew);
-      LOGE("unexpected branch,channel:%d,name:%s", channel, oinfo.tensor_name.c_str());
+    if (oinfo.tensor_name.find("class_stride") == std::string::npos &&
+        oinfo.tensor_name.find("box_stride") == std::string::npos) {
+      printf("found not named tensor:%s\n", oinfo.tensor_name.c_str());
+      not_named_tensor += 1;
     }
   }
+  if (not_named_tensor > 0) {
+    int input_w = input_shape.dim[3];
+    int input_h = input_shape.dim[2];
+    int num_per_grid = m_model_config.num_scales * m_model_config.aspect_ratios.size();
+    int num_cls = m_model_config.num_classes;
+    m_model_config.bbox_out_names.clear();
+    m_model_config.class_out_names.clear();
+    m_model_config.strides.clear();
+    for (size_t j = 0; j < getNumOutputTensor(); j++) {
+      CVI_SHAPE oj = getOutputShape(j);
+      TensorInfo oinfo = getOutputTensorInfo(j);
+      int feat_w = oj.dim[2];
+      int feat_h = oj.dim[1];
+      int channel = oj.dim[3];
+      int stridew = input_w / feat_w;
+      int strideh = input_h / feat_h;
+      if (stridew != strideh) {
+        LOGE("stride not equal,stridew:%d,strideh:%d,featw:%d,feath:%d\n", stridew, strideh, feat_w,
+             feat_h);
+      }
+      if (channel == num_cls * num_per_grid) {
+        // class branch
+        m_model_config.class_out_names[stridew] = oinfo.tensor_name;
+        printf("parse class tensor name:%s,stride:%d\n", oinfo.tensor_name.c_str(), stridew);
+        m_model_config.strides.push_back(stridew);
+      } else if (channel == 4 * num_per_grid) {
+        // box branch
+        m_model_config.bbox_out_names[stridew] = oinfo.tensor_name;
+        printf("parse bbox tensor name:%s,stride:%d\n", oinfo.tensor_name.c_str(), stridew);
+      } else {
+        printf("error parse bbox tensor name:%s,stride:%d\n", oinfo.tensor_name.c_str(), stridew);
+        LOGE("unexpected branch,channel:%d,name:%s", channel, oinfo.tensor_name.c_str());
+      }
+    }
 
-  std::sort(m_model_config.strides.begin(), m_model_config.strides.end(),
-            [](const int a, const int b) { return a < b; });
-  m_model_config.min_level = get_level(m_model_config.strides[0]);
-  m_model_config.max_level = get_level(m_model_config.strides[m_model_config.strides.size() - 1]);
-  printf("minlevel:%d,maxlevel:%d\n", int(m_model_config.min_level), int(m_model_config.max_level));
+    std::sort(m_model_config.strides.begin(), m_model_config.strides.end(),
+              [](const int a, const int b) { return a < b; });
+    m_model_config.min_level = get_level(m_model_config.strides[0]);
+    m_model_config.max_level = get_level(m_model_config.strides[m_model_config.strides.size() - 1]);
+    printf("minlevel:%d,maxlevel:%d\n", int(m_model_config.min_level),
+           int(m_model_config.max_level));
+  }
 
   RetinaNetAnchorGenerator generator = RetinaNetAnchorGenerator(
       m_model_config.min_level, m_model_config.max_level, m_model_config.num_scales,
