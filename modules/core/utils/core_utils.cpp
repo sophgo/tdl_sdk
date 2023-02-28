@@ -101,8 +101,16 @@ void mmap_video_frame(VIDEO_FRAME_INFO_S *frame) {
   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
     frame->stVFrame.pu8VirAddr[0] =
         (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], f_frame_size);
-    frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
-    frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
+    if (frame->stVFrame.u32Length[1] != 0) {
+      frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
+    } else {
+      frame->stVFrame.pu8VirAddr[1] = NULL;
+    }
+    if (frame->stVFrame.u32Length[2] != 0) {
+      frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
+    } else {
+      frame->stVFrame.pu8VirAddr[1] = NULL;
+    }
   }
 }
 void unmap_video_frame(VIDEO_FRAME_INFO_S *frame) {

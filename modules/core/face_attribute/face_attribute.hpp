@@ -18,7 +18,7 @@ class FaceAttribute final : public Core {
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;
   virtual int onModelClosed() override;
-  void outputParser(cvai_face_t *meta, int meta_i);
+  void outputParser(cvai_face_info_t *face_info);
   int dump_bgr_pack(const char *p_img_file, VIDEO_FRAME_INFO_S *p_img_frm);
   CVI_S32 allocateION();
   void releaseION();

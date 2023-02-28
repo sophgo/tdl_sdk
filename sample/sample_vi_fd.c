@@ -94,7 +94,7 @@ void *run_ai_thread(void *pHandle) {
       goto get_frame_failed;
     }
 
-    s32Ret = CVI_AI_RetinaFace(pstAIHandle, &stFrame, &stFaceMeta);
+    s32Ret = CVI_AI_ScrFDFace(pstAIHandle, &stFrame, &stFaceMeta);
     if (s32Ret != CVIAI_SUCCESS) {
       AI_LOGE("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
   GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&stServiceHandle, stAIHandle), s32Ret,
                  create_service_fail);
 
-  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]), s32Ret,
+  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, argv[1]), s32Ret,
                  setup_ai_fail);
 
   pthread_t stVencThread, stAIThread;

@@ -81,6 +81,34 @@ void MotionDetection::free_all() {
   background_img.free();
 }
 
+CVI_S32 MotionDetection::set_roi(int x1, int y1, int x2, int y2) {
+  if (x1 == 0 && y1 == 0 && x2 == 0 && y2 == 0) {
+    use_roi_ = false;
+    memset(m_roi_, 0, sizeof(md_output));
+    return CVI_SUCCESS;
+  }
+  if (x1 == m_roi_[0] && y1 == m_roi_[1] && x2 == m_roi_[0] && y2 == m_roi_[1]) {
+    use_roi_ = true;
+    return CVI_SUCCESS;
+  }
+  int imw = md_output.getWidth();
+  int imh = md_output.getHeight();
+  if (x2 < x1 || x1 < 0 || x2 >= imw) {
+    LOGE("roi x overflow,x1:%d,x2:%d,imgw:%d\n", x1, x2, md_output.getWidth());
+    return CVI_FAILURE;
+  }
+  if (y2 < y1 || y1 < 0 || y2 >= imh) {
+    LOGE("roi y overflow,y1:%d,y2:%d,imgw:%d\n", y1, y2, md_output.getHeight());
+    return CVI_FAILURE;
+  }
+  m_roi_[0] = x1;
+  m_roi_[1] = y1;
+  m_roi_[2] = x2;
+  m_roi_[3] = y2;
+  use_roi_ = true;
+  return md_output.setZero(ive_instance);
+}
+
 CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
   im_width = init_frame->stVFrame.u32Width;
   im_height = init_frame->stVFrame.u32Height;
@@ -88,7 +116,7 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
   uint32_t voHeight = init_frame->stVFrame.u32Height;
   CVI_S32 ret = CVIAI_SUCCESS;
 
-  m_padding.left = ive_instance->getAlignedWidth(1);
+  m_padding.left = ive_instance->getAlignedWidth(1);  // 16
   m_padding.right = 1;
   m_padding.top = 1;
   m_padding.bottom = 1;
@@ -344,20 +372,25 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   }
 
   md_output.bufRequest(ive_instance);
-
+  int wstride = md_output.getStride()[0];
+  int offsetx = 0, offsety = 0, offset = 0;
+  int imw = im_width;
+  int imh = im_height;
+  if (use_roi_) {
+    offsetx = m_roi_[0];
+    offsety = m_roi_[1];
+    offset = m_roi_[1] * wstride + m_roi_[0];
+    imw = m_roi_[2] - m_roi_[0];
+    imh = m_roi_[3] - m_roi_[1];
+  }
 #ifndef NO_OPENCV
-  cv::Mat image(im_height + 2, im_width + 2, CV_8UC1, md_output.getVAddr()[0] + m_padding.left - 1,
+  cv::Mat image(imh + 2, imw + 2, CV_8UC1, md_output.getVAddr()[0] + offset + m_padding.left - 1,
                 md_output.getStride()[0]);
   std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Rect> bboxes;
 
 #ifdef ENABLE_CVIAI_CV_UTILS
   cviai::findContours(image, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-#else
-  cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-#endif
-
-#ifdef ENABLE_CVIAI_CV_UTILS
   for (auto c : contours) {
     double area = cviai::contourArea(c);
     if (area > min_area) {
@@ -365,6 +398,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
     }
   }
 #else
+  cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   for (auto c : contours) {
     double area = cv::contourArea(c);
     if (area > min_area) {
@@ -375,11 +409,13 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 
   mergebbox(bboxes);
   construct_bbox(bboxes, im_width, im_height, obj_meta);
+  for (auto &b : bboxes) {
+    b.x += offsetx;
+    b.y += offsety;
+  }
 #else
   int num_boxes = 0;
-  int wstride = md_output.getStride()[0];
-
-  int *p_boxes = extract_connected_component(md_output.getVAddr()[0], im_width, im_height, wstride,
+  int *p_boxes = extract_connected_component(md_output.getVAddr()[0] + offset, imw, imh, wstride,
                                              min_area, p_ccl_instance, &num_boxes);
   CVI_AI_MemAllocInit(num_boxes, obj_meta);
   obj_meta->height = im_height;
@@ -387,10 +423,10 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
   obj_meta->rescale_type = RESCALE_RB;
   memset(obj_meta->info, 0, sizeof(cvai_object_info_t) * num_boxes);
   for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
-    obj_meta->info[i].bbox.x1 = p_boxes[i * 5 + 2];
-    obj_meta->info[i].bbox.y1 = p_boxes[i * 5 + 1];
-    obj_meta->info[i].bbox.x2 = p_boxes[i * 5 + 4];
-    obj_meta->info[i].bbox.y2 = p_boxes[i * 5 + 3];
+    obj_meta->info[i].bbox.x1 = p_boxes[i * 5 + 2] + offsetx;
+    obj_meta->info[i].bbox.y1 = p_boxes[i * 5 + 1] + offsety;
+    obj_meta->info[i].bbox.x2 = p_boxes[i * 5 + 4] + offsetx;
+    obj_meta->info[i].bbox.y2 = p_boxes[i * 5 + 3] + offsety;
     obj_meta->info[i].bbox.score = 0;
     obj_meta->info[i].classes = -1;
     memset(obj_meta->info[i].name, 0, sizeof(obj_meta->info[i].name));
@@ -398,4 +434,9 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, cvai_object_t *obj
 #endif
   md_timer_.TicToc("post");
   return CVIAI_SUCCESS;
+}
+CVI_S32 MotionDetection::get_motion_map(VIDEO_FRAME_INFO_S *frame) {
+  // CVI_S32 ret = CVI_IVE_Image2VideoFrameInfo(&bk_dst, frame, false);
+  // return ret;
+  return CVIAI_FAILURE;
 }

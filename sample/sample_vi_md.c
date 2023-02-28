@@ -41,6 +41,37 @@ typedef struct {
   cviai_handle_t stAIHandle;
 } SAMPLE_AI_AI_THREAD_ARG_S;
 
+CVI_S32 SAMPLE_COMM_VPSS_Stop(VPSS_GRP VpssGrp, CVI_BOOL *pabChnEnable) {
+  CVI_S32 j;
+  CVI_S32 s32Ret = CVI_SUCCESS;
+  VPSS_CHN VpssChn;
+
+  for (j = 0; j < VPSS_MAX_PHY_CHN_NUM; j++) {
+    if (pabChnEnable[j]) {
+      VpssChn = j;
+      s32Ret = CVI_VPSS_DisableChn(VpssGrp, VpssChn);
+      if (s32Ret != CVI_SUCCESS) {
+        printf("failed with %#x!\n", s32Ret);
+        return CVI_FAILURE;
+      }
+    }
+  }
+
+  s32Ret = CVI_VPSS_StopGrp(VpssGrp);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("failed with %#x!\n", s32Ret);
+    return CVI_FAILURE;
+  }
+
+  s32Ret = CVI_VPSS_DestroyGrp(VpssGrp);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("failed with %#x!\n", s32Ret);
+    return CVI_FAILURE;
+  }
+
+  return CVI_SUCCESS;
+}
+
 void *run_venc(void *args) {
   AI_LOGI("Enter encoder thread\n");
   SAMPLE_AI_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_AI_VENC_THREAD_ARG_S *)args;
@@ -123,6 +154,8 @@ void *run_ai_thread(void *args) {
       AI_LOGI("Update background, time=%.2f ms\n", (float)elapsed / 1000.);
       char sz_imgname[128];
       sprintf(sz_imgname, "/mnt/data/admin1_data/alios_test/md/");
+      int ret = CVI_AI_Set_MotionDetection_ROI(pstAIArgs->stAIHandle, 0, 0, 512, 512);
+      printf("setroi ret:%d\n", ret);
     }
 
     gettimeofday(&t0, NULL);
@@ -182,6 +215,12 @@ int main(int argc, char *argv[]) {
   signal(SIGTERM, SampleHandleSig);
 
   SAMPLE_AI_MW_CONFIG_S stMWConfig = {0};
+
+  CVI_BOOL abChnEnable[VPSS_MAX_CHN_NUM] = {
+      CVI_TRUE,
+  };
+  for (VPSS_GRP VpssGrp = 0; VpssGrp < VPSS_MAX_GRP_NUM; ++VpssGrp)
+    SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
 
   CVI_S32 s32Ret = SAMPLE_AI_Get_VI_Config(&stMWConfig.stViConfig);
   if (s32Ret != CVI_SUCCESS || stMWConfig.stViConfig.s32WorkingViNum <= 0) {

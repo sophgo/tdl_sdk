@@ -319,9 +319,9 @@ int main(int argc, char *argv[]) {
         }
 #ifdef OUTPUT_MOT_RESULT
 #ifdef ENABLE_FACE_DEEPSORT_EVALUATION
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, args.enable_DeepSORT);
+        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta);
 #else
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, false);
+        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta);
 #endif
 #endif
       } break;

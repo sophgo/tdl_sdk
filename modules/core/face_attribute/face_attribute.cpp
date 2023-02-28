@@ -9,10 +9,8 @@
 #include "cvi_sys.h"
 #include "cviai_log.hpp"
 #include "face_attribute_types.hpp"
-
-#ifdef NO_OPENCV
 #include "img_warp.hpp"
-#else
+#ifndef NO_OPENCV
 #include "face_utils.hpp"
 #include "image_utils.hpp"
 #include "opencv2/opencv.hpp"
@@ -77,8 +75,11 @@ CVI_S32 FaceAttribute::allocateION() {
   PIXEL_FORMAT_E format = m_use_wrap_hw ? PIXEL_FORMAT_RGB_888_PLANAR : PIXEL_FORMAT_RGB_888;
   if (CREATE_ION_HELPER(&m_wrap_frame, shape.dim[3], shape.dim[2], format, "tpu") != CVI_SUCCESS) {
     LOGE("Cannot allocate ion for preprocess\n");
+    LOGE("error Cannot allocate ion for preprocess\n");
     return CVIAI_ERR_ALLOC_ION_FAIL;
   }
+  LOGI("m_wrap_frame step:%u,width:%u,height:%u\n", m_wrap_frame.stVFrame.u32Stride[0],
+       m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height);
   return CVIAI_SUCCESS;
 }
 
@@ -91,6 +92,7 @@ void FaceAttribute::releaseION() {
     m_wrap_frame.stVFrame.pu8VirAddr[0] = NULL;
     m_wrap_frame.stVFrame.pu8VirAddr[1] = NULL;
     m_wrap_frame.stVFrame.pu8VirAddr[2] = NULL;
+    LOGI("release m_wrap_frame\n");
   }
 }
 
@@ -148,7 +150,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       if (ret != CVIAI_SUCCESS) {
         return ret;
       }
-      outputParser(meta, i);
+      outputParser(&meta->info[i]);
       CVI_AI_FreeCpp(&face_info);
     }
 #endif
@@ -205,7 +207,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       if (ret != CVIAI_SUCCESS) {
         return ret;
       }
-      outputParser(meta, i);
+      outputParser(&meta->info[i]);
       CVI_AI_FreeCpp(&face_info);
     }
     if (do_unmap) {
@@ -215,19 +217,21 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
   return CVIAI_SUCCESS;
 }
 
-#ifndef NO_OPENCV
 int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t width, uint32_t height,
                                         uint32_t stride, cvai_face_info_t *p_face_info) {
-  if (p_face_info->pts.size == 5) {
-    cv::Mat image(cv::Size(width, height), CV_8UC3, const_cast<uint8_t *>(p_rgb_pack), stride);
-    cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
-                       CV_8UC3, m_wrap_frame.stVFrame.pu8VirAddr[0],
-                       m_wrap_frame.stVFrame.u32Stride[0]);
-
-    if (face_align(image, warp_image, *p_face_info) != 0) {
-      LOGE("face_align failed.\n");
-      return CVI_FAILURE;
+  float pts[10];
+  float transm[6];
+  mmap_video_frame(&m_wrap_frame);
+  if (p_face_info->pts.size == 5) {  // do face alignment
+    for (u_int8_t i = 0; i < 5; i++) {
+      pts[2 * i] = p_face_info->pts.x[i];
+      pts[2 * i + 1] = p_face_info->pts.y[i];
     }
+    cviai::get_face_transform(pts, 112, transm);
+    cviai::warp_affine(p_rgb_pack, stride, width, height, m_wrap_frame.stVFrame.pu8VirAddr[0],
+                       m_wrap_frame.stVFrame.u32Stride[0], m_wrap_frame.stVFrame.u32Width,
+                       m_wrap_frame.stVFrame.u32Height, transm);
+
   } else {
     if (width != m_wrap_frame.stVFrame.u32Width || height != m_wrap_frame.stVFrame.u32Height) {
       LOGE("input image size should be equal to %u\n", m_wrap_frame.stVFrame.u32Width);
@@ -237,10 +241,10 @@ int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t widt
            m_wrap_frame.stVFrame.u32Stride[0]);
     }
     memcpy(m_wrap_frame.stVFrame.pu8VirAddr[0], p_rgb_pack, width * height * 3);
-    CVI_SYS_IonFlushCache(m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.pu8VirAddr[0],
-                          m_wrap_frame.stVFrame.u32Length[0]);
   }
-
+  CVI_SYS_IonFlushCache(m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.pu8VirAddr[0],
+                        m_wrap_frame.stVFrame.u32Length[0]);
+  unmap_video_frame(&m_wrap_frame);
   std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
   if (run(frames) != CVI_SUCCESS) {
     return CVI_FAILURE;
@@ -255,7 +259,6 @@ int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t widt
 
   return CVI_SUCCESS;
 }
-#endif
 
 template <typename U, typename V>
 struct ExtractFeatures {
@@ -307,7 +310,7 @@ std::pair<U, V> getDequantTensor(const TensorInfo &tinfo, float threshold, float
   return functor(buffer, prob_size);
 }
 
-void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
+void FaceAttribute::outputParser(cvai_face_info_t *face_info) {
   FaceAttributeInfo result;
 
   // feature
@@ -316,8 +319,8 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   int8_t *face_blob = tinfo.get<int8_t>();
   size_t face_feature_size = tinfo.tensor_elem;
   // Create feature
-  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &meta->info[meta_i].feature);
-  memcpy(meta->info[meta_i].feature.ptr, face_blob, face_feature_size);
+  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &face_info->feature);
+  memcpy(face_info->feature.ptr, face_blob, face_feature_size);
 
   if (!m_with_attribute) {
     return;
@@ -349,10 +352,10 @@ void FaceAttribute::outputParser(cvai_face_t *meta, int meta_i) {
   result.emotion = emotion.first;
   result.emotion_prob = std::move(emotion.second);
 
-  meta->info[meta_i].race = result.race;
-  meta->info[meta_i].gender = result.gender;
-  meta->info[meta_i].emotion = result.emotion;
-  meta->info[meta_i].age = result.age;
+  face_info->race = result.race;
+  face_info->gender = result.gender;
+  face_info->emotion = result.emotion;
+  face_info->age = result.age;
 
 #ifdef ENABLE_FACE_ATTRIBUTE_DEBUG
   std::cout << "Emotion   |" << getEmotionString(result.emotion) << std::endl;

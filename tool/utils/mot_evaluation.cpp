@@ -218,7 +218,7 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
           fscanf(inFile_data, "%s %s", text_buffer_feature[0], text_buffer_feature[1]);
           FILL_FEATURE(&face_meta.info[i].feature, text_buffer_feature, args.mot_data_path);
         }
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, args.enable_DeepSORT);
+        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta);
       } break;
       default:
         break;

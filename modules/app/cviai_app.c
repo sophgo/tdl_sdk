@@ -64,6 +64,8 @@ CVI_S32 CVI_AI_APP_FaceCapture_FDFR(const cviai_app_handle_t handle, VIDEO_FRAME
     printf("fd_inference failed\n");
     return CVI_FAILURE;
   }
+  LOGI("detect face num:%u\n", p_face->size);
+
   if (CVI_SUCCESS != face_cpt_info->fr_inference(ai_handle, frame, p_face)) {
     printf("fr inference failed\n");
     return CVI_FAILURE;

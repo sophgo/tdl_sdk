@@ -34,11 +34,6 @@
 #include "sound_classification/sound_classification.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
 
-#include "thermal_face_detection/thermal_face.hpp"
-#include "thermal_person_detection/thermal_person.hpp"
-#include "utils/image_utils.hpp"
-#include "yawn_classification/yawn_classification.hpp"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -48,6 +43,11 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "thermal_face_detection/thermal_face.hpp"
+#include "thermal_person_detection/thermal_person.hpp"
+#include "utils/core_utils.hpp"
+#include "utils/image_utils.hpp"
+#include "yawn_classification/yawn_classification.hpp"
 
 using namespace std;
 using namespace cviai;
@@ -824,7 +824,7 @@ CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
 }
 
 CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
-                             cvai_tracker_t *tracker, bool use_reid) {
+                             cvai_tracker_t *tracker) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_Face");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
@@ -832,7 +832,7 @@ CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
     LOGE("Please initialize DeepSORT first.\n");
     return CVIAI_FAILURE;
   }
-  return ctx->ds_tracker->track(face, tracker, use_reid);
+  return ctx->ds_tracker->track(face, tracker);
 }
 
 CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info) {
@@ -908,6 +908,18 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
   return ctx->md_model->update_background(frame);
 }
 
+CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, int x1, int y1, int x2,
+                                       int y2) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_ROI");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  MotionDetection *md_model = ctx->md_model;
+  if (md_model == nullptr) {
+    LOGE("MD has not been inited\n");
+    return CVIAI_FAILURE;
+  }
+  return ctx->md_model->set_roi(x1, y1, x2, y2);
+}
+
 CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                cvai_object_t *objects, uint8_t threshold, double min_area) {
   TRACE_EVENT("cviai_core", "CVI_AI_MotionDetection");
@@ -927,7 +939,7 @@ CVI_S32 CVI_AI_FaceFeatureExtract(const cviai_handle_t handle, const uint8_t *p_
                                   int height, int stride, cvai_face_info_t *p_face_info) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   FaceAttribute *inst = dynamic_cast<FaceAttribute *>(
-      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, ctx));
+      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, ctx));
   if (inst == nullptr) {
     LOGE("No instance found for FaceAttribute\n");
     return CVI_FAILURE;
@@ -970,3 +982,75 @@ CVI_S32 CVI_AI_Set_SoundClassification_Threshold(const cviai_handle_t handle, co
     return CVIAI_ERR_NOT_YET_INITIALIZED;
   }
 }
+
+CVI_S32 CVI_AI_CropImage_With_VPSS(const cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model_type,
+                                   VIDEO_FRAME_INFO_S *frame, const cvai_bbox_t *p_crop_box,
+                                   cvai_image_t *p_dst) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t modelt = ctx->model_cont[model_type];
+  if (modelt.instance == nullptr) {
+    LOGE("model not initialized:%d\n", (int)model_type);
+    return CVI_FAILURE;
+  }
+  VpssEngine *p_vpss_inst = modelt.instance->get_vpss_instance();
+
+  if (p_vpss_inst == nullptr) {
+    LOGE("vpssmodel not initialized:%d\n", (int)model_type);
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+  if (p_dst->pix_format != PIXEL_FORMAT_RGB_888) {
+    LOGE("only PIXEL_FORMAT_RGB_888 format supported,got:%d\n", (int)p_dst->pix_format);
+    return CVI_FAILURE;
+  }
+
+  VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+  memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+  modelt.instance->vpssCropImage(frame, f, *p_crop_box, p_dst->width, p_dst->height,
+                                 p_dst->pix_format);
+  mmap_video_frame(f);
+
+  int ret = CVI_SUCCESS;
+  for (int i = 0; i < 3; i++) {
+    if ((p_dst->pix[i] == 0 && f->stVFrame.pu8VirAddr[i] != 0) ||
+        (p_dst->pix[i] != 0 && f->stVFrame.pu8VirAddr[i] == 0)) {
+      LOGE("error,plane:%d,dst_addr:%p,video_frame_addr:%p", i, p_dst->pix[i],
+           f->stVFrame.pu8VirAddr[i]);
+      ret = CVI_FAILURE;
+      break;
+    }
+    if (f->stVFrame.u32Length[i] > p_dst->length[i]) {
+      LOGE("size overflow,plane:%d,dst_len:%u,video_frame_len:%u", i, p_dst->length[i],
+           f->stVFrame.u32Length[i]);
+      ret = CVI_FAILURE;
+      break;
+    }
+    memcpy(p_dst->pix[i], f->stVFrame.pu8VirAddr[i], f->stVFrame.u32Length[i]);
+  }
+  unmap_video_frame(f);
+  if (f->stVFrame.u64PhyAddr[0] != 0) {
+    p_vpss_inst->releaseFrame(f, 0);
+  }
+  delete f;
+  return ret;
+}
+CVI_S32 CVI_AI_GetMotionMap(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  MotionDetection *md_model = ctx->md_model;
+  if (md_model == nullptr) {
+    LOGE("Failed to get motion detection instance\n");
+    return CVI_FAILURE;
+  }
+  return ctx->md_model->get_motion_map(frame);
+}
+// CVI_S32 CVI_AI_GetModel_VPSS_Instance(const cviai_handle_t handle,CVI_AI_SUPPORTED_MODEL_E
+// model_type,VpssEngine **pp_vpss_inst){
+
+//   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+//   cviai_model_t modelt = ctx->model_cont[model_type];
+//   *pp_vpss_inst = nullptr;
+//   if(modelt.instance == nullptr){
+//     return CVI_FAILURE;
+//   }
+//   *pp_vpss_inst = modelt.instance->get_vpss_instance();
+//   return CVI_SUCCESS;
+// }

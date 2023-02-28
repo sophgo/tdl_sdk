@@ -15,8 +15,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
 add_subdirectory(cviai_trace) # Perfetto tracer comes first
 add_subdirectory(core)
 add_subdirectory(service)
-
-
+add_subdirectory(app)
+add_subdirectory(test)
 if(DEFINED NO_OPENCV)
   set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
                   $<TARGET_OBJECTS:cviai_service>
@@ -103,11 +103,10 @@ add_library(${PROJECT_NAME} STATIC ${CORES_SRCS})
 target_link_libraries(${PROJECT_NAME} ${CORES_DEPS})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
-if(NOT DEFINED NO_OPENCV)
-  add_subdirectory(app)
-  add_subdirectory(evaluation)
-  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/app/ DESTINATION module/app
-  PATTERN "CMakeLists.txt" EXCLUDE)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/app/ DESTINATION module/app PATTERN "CMakeLists.txt" EXCLUDE)
+if(NOT DEFINED NO_OPENCV) 
+  add_subdirectory(evaluation)  
+  
 endif()
 # Temporarily don't install custom module until complete.
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cviai

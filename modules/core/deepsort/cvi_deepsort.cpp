@@ -139,12 +139,24 @@ CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_re
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker, bool use_reid) {
+CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker) {
+#ifdef DEBUG_CAPTURE
+  std::cout << "start to track,face num:" << face->size << std::endl;
+  show_INFO_KalmanTrackers();
+#endif
   CVI_S32 ret = CVIAI_SUCCESS;
   std::vector<BBOX> bboxes;
   std::vector<FEATURE> features;
   uint32_t bbox_num = face->size;
   track_face_ = true;
+  bool use_reid = true;
+  for (uint32_t i = 0; i < bbox_num; i++) {
+    if (face->info[i].feature.size == 0 ||
+        face->info[0].feature.size != face->info[i].feature.size) {
+      use_reid = false;
+      break;
+    }
+  }
   for (uint32_t i = 0; i < bbox_num; i++) {
     BBOX bbox_;
     bbox_(0, 0) = face->info[i].bbox.x1;
@@ -208,6 +220,10 @@ CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker, bool use_rei
     face->info[i].unique_id = t_id;
     tracker->info[i].id = t_id;
   }
+#ifdef DEBUG_CAPTURE
+  std::cout << "finish track,face num:" << face->size << std::endl;
+  show_INFO_KalmanTrackers();
+#endif
   return CVIAI_SUCCESS;
 }
 
@@ -458,6 +474,7 @@ MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<F
       LOGD("Feature Cost Matrix (Consine Distance)");
       cost_matrix = KalmanTracker::getCostMatrix_Feature(k_trackers, BBoxes, Features,
                                                          Tracker_IDXes, BBox_IDXes);
+      // gating cost matrix with different methods
       if (track_face_) {
         KalmanTracker::restrictCostMatrix_BBox(cost_matrix, k_trackers, BBoxes, Tracker_IDXes,
                                                BBox_IDXes, max_distance);
@@ -558,7 +575,7 @@ MatchResult DeepSORT::refine_uncrowd(const std::vector<BBOX> &BBoxes,
     // match with unmatched tracks
     int didx = BBox_IDXes[i];
     bool is_det_crowded = is_bbox_crowded(BBoxes, didx, 1.5);
-
+    if (matched_tracker_i[i]) continue;
     if (is_det_crowded) {
       // std::cout<<"crowd bbox:"<<BBoxes[didx]<<std::endl;
       continue;

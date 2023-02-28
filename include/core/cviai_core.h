@@ -927,7 +927,7 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_
  * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
-                                        cvai_tracker_t *tracker, bool use_reid);
+                                        cvai_tracker_t *tracker);
 
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info);
 
@@ -1044,6 +1044,20 @@ DLL_EXPORT CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t ha
                                                          VIDEO_FRAME_INFO_S *frame);
 
 /**
+ * @brief Set ROI frame for motion detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param x1 left x coordinate of roi
+ * @param y1 top y coordinate of roi
+ * @param x2 right x coordinate of roi
+ * @param y2 bottom y coordinate of roi
+ *
+ * be returned.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, int x1, int y1,
+                                                  int x2, int y2);
+/**
  * @brief Do Motion Detection with background subtraction method.
  *
  * @param handle An AI SDK handle.
@@ -1057,6 +1071,16 @@ DLL_EXPORT CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRA
                                           cvai_object_t *objects, uint8_t threshold,
                                           double min_area);
 
+/**
+ * @brief Get Motion Map after run moition detection,the motion map address would not change after
+ * multiple times running
+ *
+ * @param handle An AI SDK handle.
+ * @param frame output motion map frame, should be YUV400 format.CAUTION:this frame should not be
+ * released outside
+ * @return int Return CVI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_GetMotionMap(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame);
 /**@}*/
 
 /**
@@ -1135,6 +1159,11 @@ DLL_EXPORT CVI_S32 CVI_AI_SmokeClassification(const cviai_handle_t handle,
 /**@}*/
 DLL_EXPORT CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                           const char *dump_path, bool enable);
+
+DLL_EXPORT CVI_S32 CVI_AI_CropImage_With_VPSS(const cviai_handle_t handle,
+                                              CVI_AI_SUPPORTED_MODEL_E model,
+                                              VIDEO_FRAME_INFO_S *frame,
+                                              const cvai_bbox_t *p_crop_box, cvai_image_t *p_dst);
 
 #ifdef __cplusplus
 }

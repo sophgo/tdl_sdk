@@ -80,14 +80,22 @@ int main(int argc, char *argv[]) {
     ret = CVI_AI_FaceRecognition(ai_handle, &bg, &obj_meta);
     if (ret != CVI_SUCCESS) {
       printf("CVI_AI_FaceAttribute failed with %#x!\n", ret);
-      return ret;
     }
   } else {
     printf("cannot find faces\n");
   }
+  if (obj_meta.info[0].feature.size > 0) {
+    char szdst_featf[128];
+    sprintf(szdst_featf, "%s_feat.bin", argv[3]);
+    FILE *fp = fopen(szdst_featf, "wb");
+    fwrite(obj_meta.info[0].feature.ptr, obj_meta.info[0].feature.size, 1, fp);
+    fclose(fp);
+  }
+
   CVI_AI_Free(&obj_meta);
   ReleaseImage(&bg);
   CVI_AI_DestroyHandle(ai_handle);
-
+  CVI_SYS_Exit();
+  CVI_VB_Exit();
   return ret;
 }

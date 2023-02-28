@@ -36,6 +36,7 @@ int VpssEngine::init() {
   /*start vpss*/
   m_grpid = -1;
   if (m_desired_grp_id != (VPSS_GRP)-1) {
+    LOGI("use specific  groupid:%d", (int)m_desired_grp_id);
     if (CVI_VPSS_CreateGrp(m_desired_grp_id, &vpss_grp_attr) != CVI_SUCCESS) {
       LOGE("User assign group id %u failed to create vpss instance.\n", m_desired_grp_id);
       return CVI_FAILURE;
@@ -43,6 +44,7 @@ int VpssEngine::init() {
     m_grpid = m_desired_grp_id;
   } else {
     int id = CVI_VPSS_GetAvailableGrp();
+    LOGI("got available groupid:%d", id);
     if (CVI_VPSS_CreateGrp(id, &vpss_grp_attr) != CVI_SUCCESS) {
       LOGE("User assign group id %u failed to create vpss instance.\n", id);
       return CVI_FAILURE;

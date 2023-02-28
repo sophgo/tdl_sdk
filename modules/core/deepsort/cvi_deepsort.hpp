@@ -31,7 +31,7 @@ class DeepSORT {
                      float *Quality = NULL);
 
   CVI_S32 track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid = true);
-  CVI_S32 track(cvai_face_t *face, cvai_tracker_t *tracker, bool use_reid = false);
+  CVI_S32 track(cvai_face_t *face, cvai_tracker_t *tracker);
 
   CVI_S32 getConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type = -1);
   CVI_S32 setConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type = -1,

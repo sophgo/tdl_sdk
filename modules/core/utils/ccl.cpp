@@ -174,7 +174,7 @@ int dump_ive_image_frame(const std::string &filepath, uint8_t *ptr_img, int w, i
 int *extract_connected_component(unsigned char *p_fg_mask, int width, int height, int wstride,
                                  int area_thresh, void *p_cc_inst, int *p_num_boxes) {
   int r, c, i, j, rBlk, cBlk;
-  int imgW, xA, xB, xC, xD;
+  int xA, xB, xC, xD;
   int cumulatedBlkSum, superPixMapW, superPixMapH;
   int ctFGPixels, imgDataWStep;
   int lbVal, currLabel, R0, C0, R1, C1, objectSize;
@@ -205,7 +205,7 @@ int *extract_connected_component(unsigned char *p_fg_mask, int width, int height
     // ccl,w:"<<width<<",height:"<<height<<",maskw:"<<ccGst->maskWidth<<std::endl;
   }
 
-  imgW = ccGst->maskWidth;
+  // imgW = ccGst->maskWidth;
   superPixMapW = ccGst->superPixMapW;
   superPixMapH = ccGst->superPixMapH;
 
@@ -232,7 +232,7 @@ int *extract_connected_component(unsigned char *p_fg_mask, int width, int height
 
   /***********************************************/
   /*	Sum up foreground count within suer pixels.*/
-  imgDataWStep = (CC_SUPER_PIXEL_H * imgW);
+  imgDataWStep = (CC_SUPER_PIXEL_H * wstride);
 
   for (rBlk = 0; rBlk < superPixMapH; rBlk += 1) {
     for (cBlk = 0; cBlk < superPixMapW; cBlk += 1) {
@@ -247,7 +247,7 @@ int *extract_connected_component(unsigned char *p_fg_mask, int width, int height
           ptrImgData += 1;
         } /* c */
 
-        ptrImgData += (imgW - CC_SUPER_PIXEL_W);
+        ptrImgData += (wstride - CC_SUPER_PIXEL_W);
       } /* r */
 
       *(ptrSuperPixFG0 + (rBlk * superPixMapW) + cBlk) = cumulatedBlkSum;
@@ -418,6 +418,7 @@ int *extract_connected_component(unsigned char *p_fg_mask, int width, int height
 
         lbVal = lbVal - 1;
         boundingBoxes[5 * lbVal] = boundingBoxes[5 * lbVal] + 1;
+
         if (r < boundingBoxes[5 * lbVal + 1]) boundingBoxes[5 * lbVal + 1] = r;
         if (c < boundingBoxes[5 * lbVal + 2]) boundingBoxes[5 * lbVal + 2] = c;
         if (r > boundingBoxes[5 * lbVal + 3]) boundingBoxes[5 * lbVal + 3] = r;
@@ -432,10 +433,10 @@ int *extract_connected_component(unsigned char *p_fg_mask, int width, int height
   ctFinal = 0;
 
   // remove overlapped boxes
-
+  int area_super_thresh = area_thresh / BLOCK_SIZE / BLOCK_SIZE;
   for (i = 0; i < tmpMaxLabel; i++) {
     objectSize = boundingBoxes[5 * i + 0];
-    if (objectSize > 0) {
+    if (objectSize > area_super_thresh) {
       R0 = boundingBoxes[5 * i + 1] * BLOCK_SIZE;
       C0 = boundingBoxes[5 * i + 2] * BLOCK_SIZE;
       R1 = boundingBoxes[5 * i + 3] * BLOCK_SIZE;
@@ -451,6 +452,7 @@ int *extract_connected_component(unsigned char *p_fg_mask, int width, int height
     }
   }
 
+  ctFinal = filter_inside_boxes(boundingBoxesFinal, ctFinal);
   ctFinal = filter_inside_boxes(boundingBoxesFinal, ctFinal);
   ccGst->maxID = ctFinal;
   ccGst->numObjects = ctFinal;

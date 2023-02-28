@@ -113,6 +113,9 @@ class Core {
     }
   }
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
+  int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvai_bbox_t bbox,
+                    uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat);
+  VpssEngine *get_vpss_instance() { return mp_vpss_inst; }
 
  protected:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data);
@@ -120,8 +123,7 @@ class Core {
   virtual int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                              VPSSConfig &config);
   int run(std::vector<VIDEO_FRAME_INFO_S *> &frames);
-  int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvai_bbox_t bbox,
-                    uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat);
+
   /*
    * Input/Output getter functions
    */

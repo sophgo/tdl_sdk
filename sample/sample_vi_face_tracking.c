@@ -164,9 +164,8 @@ void *run_ai_thread(void *args) {
     }
 
     // Step 3: Multi-Object Tracking inference.
-    GOTO_IF_FAILED(CVI_AI_DeepSORT_Face(pstAIArgs->stAIHandle, &stFaceMeta, &stTrackerMeta,
-                                        pstAIArgs->bTrackingWithFeature),
-                   s32Ret, inf_error);
+    GOTO_IF_FAILED(CVI_AI_DeepSORT_Face(pstAIArgs->stAIHandle, &stFaceMeta, &stTrackerMeta), s32Ret,
+                   inf_error);
 
     AI_LOGI("face detected: %d\n", stFaceMeta.size);
     //*******************************************

@@ -1,7 +1,7 @@
 #include "image_utils.hpp"
 
 #include "core/cviai_utils.h"
-#include "core/utils/vpss_helper.h"
+
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "cviai_log.hpp"

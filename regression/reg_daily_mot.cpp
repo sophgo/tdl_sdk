@@ -173,8 +173,7 @@ TEST_F(MultiObjectTrackingTestSuite, accruacy) {
           face_meta.info[out_i].bbox.y2 =
               float(m_json_object["reg_config"][reg_idx]["bbox_info"][img_idx][out_i]["y2"]);
         }
-        ASSERT_EQ(CVI_AI_DeepSORT_Face(m_ai_handle, &face_meta, &tracker_meta, false),
-                  CVIAI_SUCCESS);
+        ASSERT_EQ(CVI_AI_DeepSORT_Face(m_ai_handle, &face_meta, &tracker_meta), CVIAI_SUCCESS);
         // *******************************************
       }
 

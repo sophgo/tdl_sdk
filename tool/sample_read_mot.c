@@ -269,7 +269,7 @@ int main(int argc, char *argv[]) {
         if (args.enable_DeepSORT) {
           CVI_AI_FaceRecognition(ai_handle, &frame, &face_meta);
         }
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta, args.enable_DeepSORT);
+        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta);
       } break;
       default:
         break;

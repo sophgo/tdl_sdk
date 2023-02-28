@@ -34,6 +34,7 @@ class IVEImage {
   CVI_S32 write(const std::string &fname);
   CVI_U32 getHeight();
   CVI_U32 getWidth();
+  CVI_S32 setZero(IVE *ive_instance);
   std::vector<CVI_U32> getStride();
   std::vector<CVI_U8 *> getVAddr();
   std::vector<CVI_U64> getPAddr();

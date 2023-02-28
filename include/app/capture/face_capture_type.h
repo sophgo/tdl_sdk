@@ -11,9 +11,10 @@ typedef struct {
   cvai_image_t image;
 
   bool _capture;
-  uint64_t _timestamp;
+  uint64_t _timestamp;  // output timestamp
   uint32_t _out_counter;
   uint64_t cap_timestamp;
+  int matched_gallery_idx;  // used for face recognition
 } face_cpt_data_t;
 
 typedef struct {
@@ -36,7 +37,7 @@ typedef struct {
   bool capture_aligned_face;
   bool capture_extended_face;
   bool store_feature;
-  bool store_RGB888;
+  bool store_RGB888;  // whether to crop image as RGB_PACKED
 } face_capture_config_t;
 
 typedef struct {
@@ -47,8 +48,9 @@ typedef struct {
   face_cpt_data_t *data;
   cvai_face_t last_faces;
   cvai_tracker_t last_trackers;
-
-  bool do_FR;     /* don't set manually */
+  CVI_AI_SUPPORTED_MODEL_E fd_model;
+  int fr_flag;  // 0:no fr,1:reid,2:no reid but fr for captured face image
+  // bool do_FR;     /* don't set manually */
   bool use_FQNet; /* don't set manually */
 
   int (*fd_inference)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_face_t *);

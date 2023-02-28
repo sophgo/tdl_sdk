@@ -3,7 +3,6 @@
 #include <pthread.h>
 #include "cvi_comm.h"
 #include "cviai.h"
-
 #define RETURN_IF_FAILED(func)   \
   do {                           \
     CVI_S32 ai_ret = (func);     \
@@ -21,6 +20,7 @@
     }                                                                    \
   } while (0)
 
+typedef int (*FaceInferFunc)(cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_face_t *);
 /**
  * @typedef ODInferenceFunc
  * @brief Inference function pointer of object deteciton
@@ -66,6 +66,15 @@ CVI_S32 get_pd_model_info(const char *model_name, CVI_AI_SUPPORTED_MODEL_E *mode
 CVI_S32 get_vehicle_model_info(const char *model_name, CVI_AI_SUPPORTED_MODEL_E *model_index,
                                ODInferenceFunc *inference_func);
 
+int release_image(VIDEO_FRAME_INFO_S *frame);
+CVI_S32 register_gallery_face(cviai_handle_t ai_handle, const char *sz_img_file,
+                              FaceInferFunc fd_func, FaceInferFunc fr_func,
+                              cvai_service_feature_array_t *p_feat_gallery);
+CVI_S32 register_gallery_feature(cviai_handle_t ai_handle, const char *sz_feat_file,
+                                 cvai_service_feature_array_t *p_feat_gallery);
+
+CVI_S32 do_face_match(cviai_service_handle_t service_handle, cvai_face_info_t *p_face,
+                      float thresh);
 #define MUTEXAUTOLOCK_INIT(mutex) pthread_mutex_t AUTOLOCK_##mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define MutexAutoLock(mutex, lock)                                                \

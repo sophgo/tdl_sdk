@@ -189,12 +189,13 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle
       LOGE("unknown object detection model index.");
       return CVIAI_FAILURE;
   }
-
+#ifndef NO_OPENCV
   if (person_cpt_info->enable_DeepSORT) {
     if (CVIAI_SUCCESS != CVI_AI_OSNet(ai_handle, frame, &person_cpt_info->last_objects)) {
       return CVIAI_FAILURE;
     }
   }
+#endif
   if (CVIAI_SUCCESS != CVI_AI_DeepSORT_Obj(ai_handle, &person_cpt_info->last_objects,
                                            &person_cpt_info->last_trackers,
                                            person_cpt_info->enable_DeepSORT)) {

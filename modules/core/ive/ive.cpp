@@ -45,6 +45,21 @@ std::vector<CVI_U8 *> IVEImage::getVAddr() { return mpImpl->getVAddr(); }
 
 std::vector<CVI_U64> IVEImage::getPAddr() { return mpImpl->getPAddr(); }
 
+CVI_S32 IVEImage::setZero(IVE *ive_instance) {
+  std::vector<CVI_U8 *> v_addrs = getVAddr();
+  std::vector<CVI_U32> strides = getStride();
+
+  if (v_addrs.size() != strides.size()) {
+    // LOGE("vaddrs num:%d,strides num:%d\n",(int)v_addrs.size(),(int)strides.size());
+    return CVI_FAILURE;
+  }
+  CVI_U32 imh = getHeight();
+  for (uint32_t i = 0; i < v_addrs.size(); i++) {
+    memset(v_addrs[i], 0, imh * strides[i]);
+  }
+  return bufFlush(ive_instance);
+}
+
 CVI_S32 IVEImage::free() { return mpImpl->free(); }
 
 CVI_S32 IVEImage::write(const std::string &fname) { return mpImpl->write(fname); }

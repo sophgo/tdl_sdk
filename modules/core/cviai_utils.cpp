@@ -370,3 +370,71 @@ CVI_S32 CVI_AI_DumpImage(const char *filepath, VIDEO_FRAME_INFO_S *frame) {
   fclose(fp);
   return CVI_SUCCESS;
 }
+
+CVI_S32 CVI_AI_StbReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
+                            PIXEL_FORMAT_E format) {
+  // int desiredNChannels = -1;
+  // switch (enType) {
+  //   case IVE_IMAGE_TYPE_S8C1:
+  //   case IVE_IMAGE_TYPE_U8C1:
+  //     desiredNChannels = 1;
+  //     break;
+  //   case IVE_IMAGE_TYPE_S8C3_PLANAR:
+  //   case IVE_IMAGE_TYPE_U8C3_PLANAR:
+  //     desiredNChannels = 3;
+  //     break;
+  //   case IVE_IMAGE_TYPE_S8C3_PACKAGE:
+  //   case IVE_IMAGE_TYPE_U8C3_PACKAGE:
+  //     desiredNChannels = STBI_rgb;
+  //     break;
+  //   default:
+  //     LOGE("Not support channel %s.\n", cviIveImgEnTypeStr[enType]);
+  //     break;
+  // }
+  // LOGI("to read image:%s,type:%d,channels:%d", filename, enType, desiredNChannels);
+  // int width, height, nChannels;
+  // stbi_uc *stbi_data = stbi_load(filename, &width, &height, &nChannels, desiredNChannels);
+  // if (stbi_data == nullptr) {
+  //   LOGE("Image %s read failed.\n", filename);
+  //   return img;
+  // }
+  // LOGI("to create cviimage,channels, width, height: %d %d %d\n", desiredNChannels, width,
+  // height); CVI_IVE_CreateImage(pIveHandle, &img, enType, width, height); LOGI("desiredNChannels,
+  // width, height: %d %d %d\n", desiredNChannels, width, height); if (enType ==
+  // IVE_IMAGE_TYPE_U8C3_PLANAR || enType == IVE_IMAGE_TYPE_S8C3_PLANAR) {
+  //   for (size_t i = 0; i < (size_t)height; i++) {
+  //     for (size_t j = 0; j < (size_t)width; j++) {
+  //       size_t stb_idx = (i * width + j) * 3;
+  //       size_t img_idx = (i * img.u16Stride[0] + j);
+  //       img.pu8VirAddr[0][img_idx] = stbi_data[stb_idx];
+  //       img.pu8VirAddr[1][img_idx] = stbi_data[stb_idx + 1];
+  //       img.pu8VirAddr[2][img_idx] = stbi_data[stb_idx + 2];
+  //     }
+  //   }
+  // } else {
+  //   if (invertPackage &&
+  //       (enType == IVE_IMAGE_TYPE_U8C3_PACKAGE || enType == IVE_IMAGE_TYPE_S8C3_PACKAGE)) {
+  //     for (size_t i = 0; i < (size_t)height; i++) {
+  //       uint32_t stb_stride = i * width * 3;
+  //       uint32_t image_stride = (i * img.u16Stride[0]);
+  //       for (size_t j = 0; j < (size_t)width; j++) {
+  //         uint32_t stb_idx = stb_stride + (j * 3);
+  //         uint32_t img_idx = image_stride + (j * 3);
+  //         img.pu8VirAddr[0][img_idx] = stbi_data[stb_idx + 2];
+  //         img.pu8VirAddr[0][img_idx + 1] = stbi_data[stb_idx + 1];
+  //         img.pu8VirAddr[0][img_idx + 2] = stbi_data[stb_idx];
+  //       }
+  //     }
+  //   } else {
+  //     stbi_uc *ptr = stbi_data;
+  //     for (size_t j = 0; j < (size_t)height; j++) {
+  //       memcpy(img.pu8VirAddr[0] + (j * img.u16Stride[0]), ptr, width * desiredNChannels);
+  //       ptr += width * desiredNChannels;
+  //     }
+  //   }
+  // }
+  // CVI_IVE_BufFlush(pIveHandle, &img);
+  // stbi_image_free(stbi_data);
+  // return img;
+  return 0;
+}

@@ -19,6 +19,8 @@ class MotionDetection {
   CVI_S32 detect(VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_meta, uint8_t threshold,
                  double min_area);
   CVI_S32 update_background(VIDEO_FRAME_INFO_S *frame);
+  CVI_S32 get_motion_map(VIDEO_FRAME_INFO_S *frame);
+  CVI_S32 set_roi(int x1, int y1, int x2, int y2);
 
  private:
   CVI_S32 construct_images(VIDEO_FRAME_INFO_S *init_frame);
@@ -36,7 +38,7 @@ class MotionDetection {
   ive::IVEImage tmp_src_img_;
   uint32_t im_width;
   uint32_t im_height;
-
+  int m_roi_[4] = {0};
   struct Padding {
     uint32_t left;
     uint32_t top;
@@ -47,6 +49,6 @@ class MotionDetection {
   Padding m_padding;
   cviai::VpssEngine *m_vpss_engine;
   uint32_t m_vpss_timeout;
-
+  bool use_roi_ = false;
   Timer md_timer_;
 };

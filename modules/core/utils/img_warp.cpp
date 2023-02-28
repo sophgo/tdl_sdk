@@ -226,7 +226,6 @@ static void remapBilinear_impl(const uchar *S0, int src_width, int src_height, i
   typedef typename CastOp::rtype T;   // uchar
   typedef typename CastOp::type1 WT;  // int
   int k, cn = 3;                      //_src.channels();
-  // printf("[remapBilinear] cn = %d\n", cn);
   const AT *wtab = (const AT *)_wtab;
   // const T* S0 = _src.ptr<T>();
   // size_t sstep = _src.step / sizeof(S0[0]);
@@ -348,7 +347,7 @@ void remap_bilinear(const uchar *p_src_img, int src_width, int src_height, int s
                     int m1_channel, uint16_t *p_m2, int m2_width, int m2_height, int m2_stride,
                     int m2_channel, int borderType, const uchar *borderValue, int range_start,
                     int range_end) {
-  std::cout << "range start:" << range_start << ",end:" << range_end << std::endl;
+  // std::cout << "range start:" << range_start << ",end:" << range_end << std::endl;
   int x, y, x1, y1;
   const int buf_size = 1 << 14;
   int brows0 = std::min(128, dst_width);  //, map_depth = m1->depth();
@@ -421,8 +420,6 @@ void WarpAffineInvoker_impl(const uchar *p_src_img, int src_width, int src_heigh
   int range_start = 0;
   int range_end = dst_height;
 
-  std::cout << "WarpAffineInvokerImpl srcsize:" << src_width << ",dstsize:" << dst_width
-            << ",dststride:" << dst_stride << std::endl;
   // uchar border_val[4];
   // for (int k = 0; k < 3; k++) border_val[k] = saturate_cast_uchar(borderValue[k & 3]);
   for (y = range_start; y < range_end; y += bh0) {
@@ -508,7 +505,7 @@ void WarpAffineInvoker_impl(const uchar *p_src_img, int src_width, int src_heigh
       else {
         // cv::Mat _matA(bh, bw, CV_16U, A);
         // uint16_t *pmata = new uint16_t[bh*bw];
-        std::cout << "intertype:" << interpolation << std::endl;
+        // std::cout << "intertype:" << interpolation << std::endl;
         // remap(src, dpart, _XY, _matA, interpolation, borderType, borderValue);
         // remap_bilinear(&src,&dpart,&_XY,&_matA,borderType,borderValue,cv::Range(0, dpart.rows));
         remap_bilinear(p_src_img, src_width, src_height, src_stride, src_channel, p_dpart, bw, bh,
@@ -544,7 +541,7 @@ void _warpAffine(const uchar *src_data, size_t src_step, int src_width, int src_
 }
 
 // L5959
-void cviai::warp_affine(unsigned char *src_data, unsigned int src_step, int src_width,
+void cviai::warp_affine(const unsigned char *src_data, unsigned int src_step, int src_width,
                         int src_height, unsigned char *dst_data, unsigned int dst_step,
                         int dst_width, int dst_height, float *fM) {
   double M[6];
@@ -572,11 +569,10 @@ void cviai::warp_affine(unsigned char *src_data, unsigned int src_step, int src_
     double b2 = -M[3] * M[2] - M[4] * M[5];
     M[2] = b1;
     M[5] = b2;
-    std::cout << "inverse warp\n";
   }
 
   // printf("[warpAffine] flags = %d, borderType = %d\n", flags, borderType);
-  std::cout << "dststep:" << dst_step << ",srcstep:" << src_step << std::endl;
+  // std::cout << "dststep:" << dst_step << ",srcstep:" << src_step << std::endl;
   _warpAffine(src_data, src_step, src_width, src_height, dst_data, dst_step, dst_width, dst_height,
               M, interpolation, borderType, borderValue);
 }
@@ -613,7 +609,7 @@ Eigen::Matrix<float, 4, 1> solve_stm_no_reflection(const float *src_pts, const f
   // } break;
   // }
   x = (A.transpose() * A).ldlt().solve(A.transpose() * b);
-  std::cout << "eigenA:\n" << A << "\nb:" << b << ",\nx:" << x << std::endl;
+  // std::cout << "eigenA:\n" << A << "\nb:" << b << ",\nx:" << x << std::endl;
   if (distance != NULL) {
     *distance = (A * x - b).squaredNorm();
   }

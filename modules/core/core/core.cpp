@@ -396,7 +396,9 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   m_debugger.save_field("skip_vpss_preprocess", ((uint8_t)m_skip_vpss_preprocess));
   m_debugger.save_field("model_file", m_model_file.c_str(), {m_model_file.size()});
   m_debugger.save_field("input_mem_type", (uint8_t)mp_mi->conf.input_mem_type);
-
+  if (aligned_input && frames.size() != 1) {
+    LOGE("can only process one frame for aligninput,got frame_num:%d\n", int(frames.size()));
+  }
   if (!m_skip_preprocess_) {
     if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
       if (m_skip_vpss_preprocess) {
