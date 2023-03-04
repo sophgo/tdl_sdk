@@ -40,8 +40,8 @@ else()
   set(SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp)
 endif()
 
-set(cvi_rtsp_LIBPATH ${SOURCE_DIR}/src/libcvi_rtsp.so)
-set(cvi_rtsp_INCLUDE ${SOURCE_DIR}/include/cvi_rtsp)
+set(CVI_RTSP_LIBPATH ${SOURCE_DIR}/src/libcvi_rtsp.so)
+set(CVI_RTSP_INCLUDE ${SOURCE_DIR}/include/cvi_rtsp)
 
-install(FILES ${cvi_rtsp_LIBPATH} DESTINATION lib)
-install(DIRECTORY ${cvi_rtsp_INCLUDE} DESTINATION include)
+install(FILES ${CVI_RTSP_LIBPATH} DESTINATION lib)
+install(DIRECTORY ${CVI_RTSP_INCLUDE} DESTINATION include)

@@ -106,6 +106,13 @@ RTSP_LIB_PATH = $(AISDK_ROOT_PATH)/lib
 RTSP_INC_PATH = $(AISDK_ROOT_PATH)/include/cvi_rtsp
 #####################################################
 
+# Opencv
+#####################################################
+OPENCV_INC_PATH = $(TPU_PATH)/opencv/include
+OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
+OPENCV_LIB = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
+#####################################################
+
 # TPU
 #####################################################
 TPU_LIB_PATH = $(TPU_PATH)/lib
@@ -192,20 +199,24 @@ SRCS := $(wildcard $(PWD)/*.c)
 OBJS := $(SRCS:%.c=%.o)
 DEPS = $(SRCS:.c=.d)
 
-SAMPLE_LIBS = $(AISDK_BASIC_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(AISDK_LIB_PATH) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
+TMP_SAMPLE_LIBS = $(AISDK_BASIC_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
+SAMPLE_LIBS = -L$(AISDK_LIB_PATH) $(TMP_SAMPLE_LIBS)
 
 ifneq ($(CHIP), CV181X)
 SAMPLE_LIBS += -L$(CVI_TRACER_LIB_PATH)
+TMP_SAMPLE_LIBS += -L$(CVI_TRACER_LIB_PATH)
 endif
 
 ifeq ($(LINK_OPENCV), 1)
-SAMPLE_LIBS += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
+SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
 endif
 
-SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH)
-SAMPLE_APP_LIBS = -L../tmp_install/lib $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app
+SAMPLE_LIBS += $(SAMPLE_LIBS_OPENCV)
+SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) $(SAMPLE_LIBS_OPENCV)
+SAMPLE_READ_LIBS = -lcviai_evaluation $(TMP_SAMPLE_LIBS) $(OPENCV_LIB) -L$(OPENCV_LIB_PATH) -L$(AISDK_LIB_PATH)
+SAMPLE_APP_LIBS = -L../tmp_install/lib $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app $(SAMPLE_LIBS_OPENCV)
 
-CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH)
+CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH) -I$(OPENCV_INC_PATH)
 
 ifeq ($(USE_TPU_IVE), ON)
 CFLAGS += -DUSE_TPU_IVE
@@ -228,11 +239,13 @@ TARGETS_VI_SAMPLE := $(shell find . -type f -name 'sample_vi_*.c' -exec basename
 TARGETS_AUDIO_SAMPLE := $(shell find . -type f -name 'sample_aud_*.c' -exec basename {} .c ';')
 TARGETS_IMAGE_SAMPLE := $(shell find . -type f -name 'sample_read_*.c' -exec basename {} .c ';')
 TARGETS_APP_SAMPLE := $(shell find . -type f -name 'sample_app_*.c' -exec basename {} .c ';')
+TARGETS_READ_SAMPLE := $(shell find . -type f -name 'sample_read*.cpp' -exec basename {} .cpp ';')
 
 TARGETS = sample_init \
 		$(TARGETS_VI_SAMPLE) \
 		$(TARGETS_AUDIO_SAMPLE) \
 		$(TARGETS_IMAGE_SAMPLE) \
+		$(TARGETS_READ_SAMPLE) \
 		$(TARGETS_APP_SAMPLE)
 
 .PHONY : all clean install
@@ -249,6 +262,12 @@ install:
 
 $(PWD)/%.o: $(PWD)/%.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<
+
+$(PWD)/%.o: $(PWD)/%.cpp
+	$(CXX) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<
+
+sample_read_od: $(PWD)/sample_read_od.o $(PWD)/sample_utils.o
+	$(CXX) $(DEPFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^
 
 sample_aud_%: $(PWD)/sample_aud_%.o $(PWD)/sample_utils.o
 	$(CC) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS)  -o $@ $^

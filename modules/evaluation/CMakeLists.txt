@@ -64,8 +64,7 @@ set(REG_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/core/core
     ${TRACER_PATH}
     ${MIDDLEWARE_SDK_ROOT}/sample/common
-    ${CMAKE_SOURCE_DIR}/3rdparty
-    ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/include/cvi_rtsp
+    ${CVI_RTSP_INCLUDE}
 )
 
 set(SAMPLE_LIBS
@@ -81,7 +80,7 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MLIR_SDK_ROOT}/lib/libz.so
-    ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/src/libcvi_rtsp.so
+    ${CVI_RTSP_LIBPATH}
 )
 if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)

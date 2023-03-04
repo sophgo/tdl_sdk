@@ -1,4 +1,5 @@
 #include "ive.hpp"
+#include <cstring>
 #include "impl_ive.hpp"
 
 namespace ive {

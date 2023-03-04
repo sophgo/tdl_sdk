@@ -2,33 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-#include "core/utils/vpss_helper.h"
 #include "cviai.h"
+#include "evaluation/cviai_media.h"
 
-int ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
-  CVI_S32 ret = CVI_SUCCESS;
-  if (frame->stVFrame.u64PhyAddr[0] != 0) {
-    ret = CVI_SYS_IonFree(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0]);
-    frame->stVFrame.u64PhyAddr[0] = (CVI_U64)0;
-    frame->stVFrame.u64PhyAddr[1] = (CVI_U64)0;
-    frame->stVFrame.u64PhyAddr[2] = (CVI_U64)0;
-    frame->stVFrame.pu8VirAddr[0] = NULL;
-    frame->stVFrame.pu8VirAddr[1] = NULL;
-    frame->stVFrame.pu8VirAddr[2] = NULL;
-  }
-  return ret;
-}
 int main(int argc, char *argv[]) {
-  int vpssgrp_width = 1920;
-  int vpssgrp_height = 1080;
-  CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
-                                 vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Init sys failed with %#x!\n", ret);
-    return ret;
-  }
-
+  CVI_S32 ret = 0;
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
   if (ret != CVI_SUCCESS) {
@@ -42,13 +20,10 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   VIDEO_FRAME_INFO_S bg;
-  // printf("toread image:%s\n",argv[1]);
-  // VB_BLK blk_fr;
 
   printf("to read image\n");
-  if (CVI_SUCCESS != CVI_AI_LoadBinImage(argv[2], &bg, PIXEL_FORMAT_RGB_888_PLANAR)) {
+  if (CVI_SUCCESS != CVI_AI_ReadImage(argv[2], &bg, PIXEL_FORMAT_RGB_888_PLANAR)) {
     printf("cviai read image failed.");
-    // CVI_VB_ReleaseBlock(blk_fr);
     CVI_AI_DestroyHandle(ai_handle);
     return -1;
   }
@@ -79,9 +54,7 @@ int main(int argc, char *argv[]) {
     // printf("objsize:%u\n", obj_meta.size);
     CVI_AI_Free(&obj_meta);
   }
-  // std::cout<<str_res<<std::endl;
-  // CVI_VB_ReleaseBlock(blk_fr);
-  ReleaseImage(&bg);
+  CVI_AI_ReleaseImage(&bg);
   CVI_AI_DestroyHandle(ai_handle);
 
   return ret;
