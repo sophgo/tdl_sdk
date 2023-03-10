@@ -944,6 +944,15 @@ CVI_S32 CVI_AI_FaceFeatureExtract(const cviai_handle_t handle, const uint8_t *p_
     LOGE("No instance found for FaceAttribute\n");
     return CVI_FAILURE;
   }
+  if (inst->isInitialized()) {
+    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION) != CVI_SUCCESS) {
+      return CVIAI_ERR_INIT_VPSS;
+    }
+  } else {
+    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
+         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION));
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
   return inst->extract_face_feature(p_rgb_pack, width, height, stride, p_face_info);
 }
 
