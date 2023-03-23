@@ -1,6 +1,7 @@
 #include "scrfd_face.hpp"
 #include "retina_face_utils.hpp"
 
+#include <math.h>
 #include <iostream>
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
@@ -72,8 +73,8 @@ int ScrFDFace::onModelOpened() {
     int stride = cfg[i].STRIDE;
     int input_w = input_shape.dim[3];
     int input_h = input_shape.dim[2];
-    int feat_w = int(input_w / float(stride) + 0.5);
-    int feat_h = int(input_h / float(stride) + 0.5);
+    int feat_w = ceil(input_w / float(stride));
+    int feat_h = ceil(input_h / float(stride));
     fpn_anchors_[stride] = generate_mmdet_grid_anchors(feat_w, feat_h, stride, base_anchors);
 
     int num_feat_branch = 0;
