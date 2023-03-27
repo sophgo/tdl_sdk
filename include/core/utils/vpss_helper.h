@@ -332,6 +332,7 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
   pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = (srcWidth * ratio) + 0.5;
   pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = (srcHeight * ratio) + 0.5;
   pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
+
   if (padReverse) {
     pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(
         (int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]), (int)(mean[2] / factor[2]));

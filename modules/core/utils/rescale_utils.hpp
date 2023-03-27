@@ -18,6 +18,8 @@ cvai_dms_od_info_t info_rescale_c(const float width, const float height, const f
                                   const float new_height, const cvai_dms_od_info_t &dms_info);
 cvai_face_info_t info_rescale_c(const float width, const float height, const float new_width,
                                 const float new_height, const cvai_face_info_t &face_info);
+cvai_object_info_t info_rescale_c(const float width, const float height, const float new_width,
+                                  const float new_height, const cvai_object_info_t &object_info);
 cvai_face_info_t info_rescale_rb(const float width, const float height, const float new_width,
                                  const float new_height, const cvai_face_info_t &face_info);
 cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
@@ -28,6 +30,8 @@ void info_rescale_nocopy_rb(const float width, const float height, const float n
                             const float new_height, cvai_face_info_t *face_info);
 cvai_face_info_t info_rescale_c(const float new_width, const float new_height,
                                 const cvai_face_t &face_meta, const int face_idx);
+cvai_object_info_t info_rescale_c(const float new_width, const float new_height,
+                                  const cvai_object_t &object_meta, const int object_idx);
 cvai_face_info_t info_rescale_rb(const float new_width, const float new_height,
                                  const cvai_face_t &face_meta, const int face_idx);
 

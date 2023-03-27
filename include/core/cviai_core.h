@@ -122,8 +122,10 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACERECOGNITION)                  \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION)              \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEQUALITY)                      \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LIVENESS)                         \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION)               \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION)               \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LIVENESS)                         \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HAND_DETECTION)                    \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE)       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE)              \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN)           \
@@ -666,6 +668,20 @@ DLL_EXPORT CVI_S32 CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO
  */
 DLL_EXPORT CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                              cvai_face_t *face);
+
+DLL_EXPORT CVI_S32 CVI_AI_HandClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                             cvai_object_t *meta);
+
+/**
+ * @brief Hand Detection. Tells if a object is wearing a mask.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param object cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Hand_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                         cvai_object_t *obj_meta);
 
 /**@}*/
 

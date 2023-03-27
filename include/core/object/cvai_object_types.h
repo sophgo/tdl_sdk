@@ -317,7 +317,6 @@ typedef struct {
   cvai_bbox_t bbox;
   cvai_feature_t feature;
   int classes;
-
   cvai_vehicle_meta *vehicle_properity;
   cvai_pedestrian_meta *pedestrian_properity;
 } cvai_object_info_t;

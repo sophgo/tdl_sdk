@@ -16,6 +16,8 @@
 #include "face_mask_detection/retinaface_yolox.hpp"
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_detection.hpp"
+#include "hand_classification/hand_classification.hpp"
+#include "hand_detection/hand_detection.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
@@ -118,6 +120,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_THERMALPERSON, CREATOR(ThermalPerson)},
     {CVI_AI_SUPPORTED_MODEL_LIVENESS, CREATOR(Liveness)},
     {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
+    {CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, CREATOR(HandClassification)},
+    {CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, CREATOR(HandDetection)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
@@ -680,9 +684,12 @@ DEFINE_INF_FUNC_F1_P2(CVI_AI_FaceQuality, FaceQuality, CVI_AI_SUPPORTED_MODEL_FA
                       cvai_face_t *, bool *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskClassification, MaskClassification,
                       CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_HandClassification, HandClassification,
+                      CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Hand_Detection, HandDetection, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION,
+                      cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceMaskDetection, RetinafaceYolox,
                       CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, cvai_face_t *)
-
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Pedestrian, MobileDetV2,
@@ -695,27 +702,22 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
-
 DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *, int)
-
 DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification, SoundClassification,
                       CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification_V2, SoundClassificationV2,
                       CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, int *)
 DEFINE_INF_FUNC_F2_P1(CVI_AI_DeeplabV3, Deeplabv3, CVI_AI_SUPPORTED_MODEL_DEEPLABV3,
                       cvai_class_filter_t *)
-
 DEFINE_INF_FUNC_F1_P1(CVI_AI_LicensePlateRecognition_TW, LicensePlateRecognition,
                       CVI_AI_SUPPORTED_MODEL_LPRNET_TW, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_LicensePlateRecognition_CN, LicensePlateRecognition,
                       CVI_AI_SUPPORTED_MODEL_LPRNET_CN, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_LicensePlateDetection, LicensePlateDetection,
                       CVI_AI_SUPPORTED_MODEL_WPODNET, cvai_object_t *)
-
 DEFINE_INF_FUNC_F1_P1(CVI_AI_AlphaPose, AlphaPose, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE,
                       cvai_object_t *)
-
 DEFINE_INF_FUNC_F1_P1(CVI_AI_EyeClassification, EyeClassification,
                       CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YawnClassification, YawnClassification,
@@ -726,7 +728,6 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceLandmarker, FaceLandmarker, CVI_AI_SUPPORTED_MO
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_IncarObjectDetection, IncarObjectDetection,
                       CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, cvai_face_t *)
-
 DEFINE_INF_FUNC_F2_P2(CVI_AI_Liveness, Liveness, CVI_AI_SUPPORTED_MODEL_LIVENESS, cvai_face_t *,
                       cvai_face_t *)
 

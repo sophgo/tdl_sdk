@@ -38,7 +38,7 @@ endif()
 if("${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM" OR "${CVI_SYSTEM_PROCESSOR}" STREQUAL "ARM64")
   add_definitions(-DUSE_NEON)
   set(CMAKE_C_INIT "-fsigned-char -Werror=all -fdiagnostics-color=always -std=gnu11")
-  set(CMAKE_CXX_INIT "-fsigned-char -fPIC -Werror=all -fdiagnostics-color=always -std=gnu++17 -pthread")
+  set(CMAKE_CXX_INIT "-fsigned-char -Werror=all -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
 endif()
 
 

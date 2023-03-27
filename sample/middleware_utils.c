@@ -63,7 +63,7 @@ void SAMPLE_AI_Get_Input_Config(SAMPLE_COMM_CHN_INPUT_CONFIG_S *pstInCfg) {
   pstInCfg->gop = DEF_264_GOP;
   pstInCfg->maxIprop = CVI_H26X_MAX_I_PROP_DEFAULT;
   pstInCfg->minIprop = CVI_H26X_MIN_I_PROP_DEFAULT;
-  pstInCfg->bitrate = 8000;
+  pstInCfg->bitrate = 500;
   pstInCfg->firstFrmstartQp = 30;
   pstInCfg->minIqp = DEF_264_MINIQP;
   pstInCfg->maxIqp = DEF_264_MAXIQP;

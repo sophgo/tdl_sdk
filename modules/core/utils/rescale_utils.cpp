@@ -132,11 +132,25 @@ cvai_face_info_t info_rescale_c(const float width, const float height, const flo
   face_info_new.bbox = box_rescale_c(new_width, new_height, width, height, face_info.bbox, &ratio,
                                      &pad_width, &pad_height);
   CVI_AI_MemAlloc(face_info.pts.size, &face_info_new.pts);
+
   for (uint32_t j = 0; j < face_info_new.pts.size; ++j) {
     face_info_new.pts.x[j] = (face_info.pts.x[j] - pad_width) * ratio;
     face_info_new.pts.y[j] = (face_info.pts.y[j] - pad_height) * ratio;
   }
   return face_info_new;
+}
+
+cvai_object_info_t info_rescale_c(const float width, const float height, const float new_width,
+                                  const float new_height, const cvai_object_info_t &object_info) {
+  cvai_object_info_t object_info_new;
+  memset(&object_info_new, 0, sizeof(object_info_new));
+  CVI_AI_CopyInfoCpp(&object_info, &object_info_new);
+
+  float ratio, pad_width, pad_height;
+  object_info_new.bbox = box_rescale_c(new_width, new_height, width, height, object_info.bbox,
+                                       &ratio, &pad_width, &pad_height);
+
+  return object_info_new;
 }
 
 cvai_dms_od_info_t info_rescale_c(const float width, const float height, const float new_width,
@@ -149,6 +163,7 @@ cvai_dms_od_info_t info_rescale_c(const float width, const float height, const f
                                     &pad_width, &pad_height);
   return dms_info_new;
 }
+
 cvai_face_info_t info_rescale_rb(const float width, const float height, const float new_width,
                                  const float new_height, const cvai_face_info_t &face_info) {
   cvai_face_info_t face_info_new;
@@ -188,6 +203,12 @@ cvai_face_info_t info_rescale_c(const float new_width, const float new_height,
                                 const cvai_face_t &face_meta, const int face_idx) {
   return info_rescale_c(face_meta.width, face_meta.height, new_width, new_height,
                         face_meta.info[face_idx]);
+}
+
+cvai_object_info_t info_rescale_c(const float new_width, const float new_height,
+                                  const cvai_object_t &object_meta, const int object_idx) {
+  return info_rescale_c(object_meta.width, object_meta.height, new_width, new_height,
+                        object_meta.info[object_idx]);
 }
 
 cvai_face_info_t info_rescale_rb(const float new_width, const float new_height,

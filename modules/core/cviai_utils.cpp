@@ -363,7 +363,6 @@ CVI_S32 CVI_AI_DumpImage(const char *filepath, VIDEO_FRAME_INFO_S *frame) {
   uint32_t height = pstVFSrc->u32Height;
   fwrite(&width, sizeof(uint32_t), 1, fp);
   fwrite(&height, sizeof(uint32_t), 1, fp);
-
   for (int c = 0; c < channels; c++) {
     fwrite(pstVFSrc->pu8VirAddr[c], width * height, 1, fp);
   }
