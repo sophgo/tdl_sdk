@@ -89,18 +89,6 @@ static void decode_box(const float *const box, const AnchorBox &anchor, const Pt
   det->y2 = ycenter + h / 2;
 }
 
-static void clip_bbox(const size_t image_width, const size_t image_height, const PtrDectRect &box) {
-  if (box->x1 < 0) box->x1 = 0;
-  if (box->y1 < 0) box->y1 = 0;
-  if (box->x2 < 0) box->x2 = 0;
-  if (box->y2 < 0) box->y2 = 0;
-
-  if (box->x1 >= image_width) box->x1 = image_width - 1;
-  if (box->y1 >= image_height) box->y1 = image_height - 1;
-  if (box->x2 >= image_width) box->x2 = image_width - 1;
-  if (box->y2 >= image_height) box->y2 = image_height - 1;
-}
-
 static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<int> strides,
                                                   std::map<int, float> dequant_thresh) {
   std::vector<int8_t> inverse_threshold;

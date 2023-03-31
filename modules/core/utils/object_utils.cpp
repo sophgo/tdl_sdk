@@ -121,4 +121,16 @@ std::vector<std::vector<float>> generate_mmdet_grid_anchors(
   }
   return grid_anchors;
 }
+
+void clip_bbox(const size_t image_width, const size_t image_height, const PtrDectRect &box) {
+  if (box->x1 < 0) box->x1 = 0;
+  if (box->y1 < 0) box->y1 = 0;
+  if (box->x2 < 0) box->x2 = 0;
+  if (box->y2 < 0) box->y2 = 0;
+
+  if (box->x1 >= image_width) box->x1 = image_width - 1;
+  if (box->y1 >= image_height) box->y1 = image_height - 1;
+  if (box->x2 >= image_width) box->x2 = image_width - 1;
+  if (box->y2 >= image_height) box->y2 = image_height - 1;
+}
 }  // namespace cviai

@@ -148,6 +148,12 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
+  CVI_BOOL abChnEnable[VPSS_MAX_CHN_NUM] = {
+      CVI_TRUE,
+  };
+  for (VPSS_GRP VpssGrp = 0; VpssGrp < VPSS_MAX_GRP_NUM; ++VpssGrp)
+    SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
+
   SAMPLE_AI_MW_CONFIG_S stMWConfig = {0};
 
   CVI_S32 s32Ret = SAMPLE_AI_Get_VI_Config(&stMWConfig.stViConfig);
@@ -257,6 +263,7 @@ int main(int argc, char *argv[]) {
                  s32Ret, setup_ai_fail);
   GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[2]),
                  s32Ret, setup_ai_fail);
+  CVI_AI_SetModelThreshold(stAIHandle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.55);
   pthread_t stVencThread, stAIThread;
   SAMPLE_AI_VENC_THREAD_ARG_S args = {
       .pstMWContext = &stMWContext,

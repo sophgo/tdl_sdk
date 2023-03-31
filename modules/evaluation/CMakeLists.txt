@@ -97,6 +97,7 @@ set(SAMPLE_LIBS ${SAMPLE_LIBS}
 endif()
 buildninstallcpp(NAME test_img_od INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_hand_detection INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_hand_cls INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 # buildninstallcpp(NAME test_img_fd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_md INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 # buildninstallcpp(NAME test_img_fdfr INC ${SAMPLE_INC} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)

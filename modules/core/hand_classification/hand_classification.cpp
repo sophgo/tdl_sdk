@@ -36,6 +36,8 @@ int HandClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *
   (*data)[0].mean[2] = B_MEAN;
   (*data)[0].use_quantize_scale = true;
   (*data)[0].use_crop = true;
+  (*data)[0].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
+
   return CVIAI_SUCCESS;
 }
 
@@ -43,6 +45,7 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
   uint32_t img_width = stOutFrame->stVFrame.u32Width;
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
   for (uint32_t i = 0; i < meta->size; i++) {
+    // rescale hand detect bbox to original frame coordinate
     cvai_object_info_t hand_info = info_rescale_c(img_width, img_height, *meta, i);
 
     int box_x1 = hand_info.bbox.x1;
@@ -50,23 +53,34 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     uint32_t box_w = hand_info.bbox.x2 - hand_info.bbox.x1;
     uint32_t box_h = hand_info.bbox.y2 - hand_info.bbox.y1;
 
+    // expand box with 1.2 scale
+    // box_x1 = box_x1 - box_w * 0.1;
+    // box_y1 = box_y1 - box_h * 0.1;
+    // box_w = box_w * 1.2;
+    // box_h = box_h * 1.2;
+
+    if (box_x1 < 0) box_x1 = 0;
+    if (box_y1 < 0) box_y1 = 0;
+    if (box_x1 + box_w > img_width) {
+      box_x1 = img_width - box_w;
+    }
+    if (box_y1 + box_h > img_height) {
+      box_y1 = img_height - box_h;
+    }
+    if (box_x1 < 0) box_x1 = 0;
+    if (box_y1 < 0) box_y1 = 0;
+
     CVI_AI_FreeCpp(&hand_info);
 
-    uint32_t min_edge = std::min(box_w, box_h);
-
-    float new_edge = min_edge * CROP_PCT;
-
-    int box_new_x1 = (box_w - new_edge) / 2.f + box_x1;
-    int box_new_y1 = (box_h - new_edge) / 2.f + box_y1;
-
     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-    m_vpss_config[0].crop_attr.stCropRect = {box_new_x1, box_new_y1, (uint32_t)new_edge,
-                                             (uint32_t)new_edge};
+    m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
+
     int ret = run(frames);
 
     if (ret != CVIAI_SUCCESS) {
+      LOGW("hand classification inference failed\n");
       return ret;
     }
 
@@ -74,7 +88,26 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     TensorInfo oinfo = getOutputTensorInfo(0);
     float *out_data = getOutputRawPtr<float>(oinfo.tensor_name);
     float score = *(std::max_element(out_data, out_data + 6));
-    int score_index = std::max_element(out_data, out_data + 6) - out_data;
+    int score_index = -1;
+    float maxscore = -1;
+    float cls_score[6] = {0};
+    float sum_score = 0;
+    for (int k = 0; k < 6; k++) {
+      cls_score[k] = 1.0 / (1 + exp(-out_data[k]));
+      sum_score += cls_score[k];
+      if (cls_score[k] > maxscore) {
+        maxscore = cls_score[k];
+        score_index = k;
+      }
+    }
+    for (int k = 0; k < 6; k++) {
+      cls_score[k] = cls_score[k] / sum_score;
+    }
+    maxscore = cls_score[score_index];
+    // std::cout<<"index:"<<score_index<<",score:"<<maxscore<<",detscore:"<<hand_info.bbox.score<<std::endl;
+    if (maxscore < 0.33) {
+      score_index = 4;
+    }
     meta->info[i].bbox.score = score;
     meta->info[i].classes = score_index;
 

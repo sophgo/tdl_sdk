@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
 
   std::string strf1(argv[2]);
   VIDEO_FRAME_INFO_S bg;
+  printf("---------------------read_image-----------------------\n");
   ret = CVI_AI_ReadImage(strf1.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     printf("open img failed with %#x!\n", ret);
@@ -42,32 +43,30 @@ int main(int argc, char *argv[]) {
   }
 
   printf("---------------------openmodel-----------------------");
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, argv[1]);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.1);
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[1]);
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, 0.1);
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
     return ret;
   }
-  printf("---------------------read_image-----------------------\n");
 
   std::string str_res;
   cvai_object_t obj_meta = {0};
-  CVI_AI_Hand_Detection(ai_handle, &bg, &obj_meta);
+  CVI_AI_MemAllocInit(1, &obj_meta);
+  obj_meta.height = bg.stVFrame.u32Height;
+  obj_meta.width = bg.stVFrame.u32Width;
 
-  // CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[2]);
-  // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, false);
-  // CVI_AI_HandClassification(ai_handle, &bg, &obj_meta);
-
-  std::cout << "objnum:" << obj_meta.size << std::endl;
-  std::stringstream ss;
-  ss << "boxes=[";
   for (uint32_t i = 0; i < obj_meta.size; i++) {
-    ss << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
-       << obj_meta.info[i].bbox.x2 << "," << obj_meta.info[i].bbox.y2 << ","
-       << obj_meta.info[i].classes << "," << obj_meta.info[i].bbox.score << "],";
+    obj_meta.info[i].bbox.x1 = 0;
+    obj_meta.info[i].bbox.x2 = bg.stVFrame.u32Width - 1;
+    obj_meta.info[i].bbox.y1 = 0;
+    obj_meta.info[i].bbox.y2 = bg.stVFrame.u32Height - 1;
+    printf("init objbox:%f,%f,%f,%f\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
+           obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
   }
-  ss << "]\n";
-  std::cout << ss.str();
+  CVI_AI_HandClassification(ai_handle, &bg, &obj_meta);
+
+  std::cout << "cls result:" << obj_meta.info[0].name << std::endl;
 
   CVI_AI_Free(&obj_meta);
   CVI_AI_ReleaseImage(&bg);

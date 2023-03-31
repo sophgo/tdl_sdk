@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <sstream>
 #include <string>
@@ -24,11 +25,13 @@ std::string run_image_hand_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t
 
     ret =
         CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, str_hand_model.c_str());
+    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.01);
     if (ret != CVI_SUCCESS) {
       std::cout << "open model failed:" << str_hand_model << std::endl;
       return "";
     }
     std::cout << "init model done\t";
+    model_init = 1;
   }
 
   cvai_object_t hand_obj = {0};
@@ -51,6 +54,53 @@ std::string run_image_hand_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t
   return ss.str();
 }
 
+std::string run_image_hand_classification(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle,
+                                          std::string model_name) {
+  static int model_init = 0;
+  CVI_S32 ret;
+  if (model_init == 0) {
+    std::cout << "to init hand model\t";
+    std::string str_hand_model = g_model_root + std::string("/") + model_name;
+
+    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION,
+                           str_hand_model.c_str());
+    if (ret != CVI_SUCCESS) {
+      std::cout << "open model failed:" << str_hand_model << std::endl;
+      return "";
+    }
+    std::cout << "init model done\t";
+    model_init = 1;
+  }
+
+  cvai_object_t hand_obj = {0};
+  memset(&hand_obj, 0, sizeof(cvai_object_t));
+  CVI_AI_MemAllocInit(1, &hand_obj);
+  hand_obj.height = p_frame->stVFrame.u32Height;
+  hand_obj.width = p_frame->stVFrame.u32Width;
+  for (uint32_t i = 0; i < hand_obj.size; i++) {
+    hand_obj.info[i].bbox.x1 = 0;
+    hand_obj.info[i].bbox.x2 = p_frame->stVFrame.u32Width - 1;
+    hand_obj.info[i].bbox.y1 = 0;
+    hand_obj.info[i].bbox.y2 = p_frame->stVFrame.u32Height - 1;
+    // printf("init
+    // objbox:%f,%f,%f,%f\n",obj_meta.info[i].bbox.x1,obj_meta.info[i].bbox.y1,obj_meta.info[i].bbox.x2,obj_meta.info[i].bbox.y2);
+  }
+  ret = CVI_AI_HandClassification(ai_handle, p_frame, &hand_obj);
+  if (ret != CVI_SUCCESS) {
+    std::cout << "classify hand failed:" << ret << std::endl;
+  }
+  std::cout << "classify hand success" << std::endl;
+  // generate detection result
+  std::stringstream ss;
+  // hand_obj.size
+  for (uint32_t i = 0; i < hand_obj.size; i++) {
+    // cvai_bbox_t box = hand_obj.info[i].bbox;(hand_obj.info[i].classes + 1)
+    ss << hand_obj.info[i].name << " " << hand_obj.info[i].bbox.score << "\n";
+  }
+  CVI_AI_Free(&hand_obj);
+  return ss.str();
+}
+
 int main(int argc, char *argv[]) {
   g_model_root = std::string(argv[1]);
   std::string image_root(argv[2]);
@@ -58,8 +108,7 @@ int main(int argc, char *argv[]) {
   std::string dst_root(argv[4]);
   std::string process_flag(argv[5]);
   std::string model_name(argv[6]);
-  int starti = 0;
-  if (argc > 7) starti = atoi(argv[7]);
+
   if (image_root.at(image_root.size() - 1) != '/') {
     image_root = image_root + std::string("/");
   }
@@ -91,23 +140,16 @@ int main(int argc, char *argv[]) {
   }
   std::map<std::string,
            std::function<std::string(VIDEO_FRAME_INFO_S *, cviai_handle_t, std::string)>>
-      process_funcs = {
-          {"detect", run_image_hand_detection},
-      };
+      process_funcs = {{"detect", run_image_hand_detection},
+                       {"classify", run_image_hand_classification}};
   if (process_funcs.count(process_flag) == 0) {
     std::cout << "error flag:" << process_flag << std::endl;
     return -1;
   }
 
-  std::cout << "start i:" << starti << "\t";
-  std::cout << image_files.size() << "\t";
-  decltype(image_files.size()) i = starti;
-  std::cout << "processing :" << i << "/" << image_files.size() << "\t" << image_files[i] << "\t";
-  std::cout << (i < image_files.size()) << "\t";
-  std::cout << "init i done" << std::endl;
-
-  for (i = starti; i < image_files.size(); i++) {
-    std::cout << "processing :" << i << "/" << image_files.size() << "\t" << image_files[i];
+  for (size_t i = 0; i < image_files.size(); i++) {
+    std::cout << "processing :" << i << "/" << image_files.size() << "\t" << image_files[i]
+              << std::endl;
     std::string strf = image_root + image_files[i];
     std::string dstf = dst_root + replace_file_ext(image_files[i], "txt");
     VIDEO_FRAME_INFO_S fdFrame;
@@ -125,7 +167,7 @@ int main(int argc, char *argv[]) {
     std::cout << "str_res.size():" << str_res.size() << std::endl;
 
     if (str_res.size() > 0) {
-      std::cout << "writing file" << std::endl;
+      std::cout << "writing file:" << dstf << std::endl;
       FILE *fp = fopen(dstf.c_str(), "w");
       fwrite(str_res.c_str(), str_res.size(), 1, fp);
       fclose(fp);

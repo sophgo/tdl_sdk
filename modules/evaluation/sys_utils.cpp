@@ -57,11 +57,11 @@ std::vector<std::string> read_file_lines(std::string strfile) {
 }
 std::string replace_file_ext(const std::string &src_file_name, const std::string &new_file_ext) {
   size_t ext_pos = src_file_name.find_last_of('.');
-  size_t seg_pos = src_file_name.find_first_of('/');
+  // size_t seg_pos = src_file_name.find_first_of('/');
   std::string src_name = src_file_name;
-  if (seg_pos != src_file_name.npos) {
-    src_name.at(seg_pos) = '#';
-  }
+  // if (seg_pos != src_file_name.npos) {
+  //   src_name.at(seg_pos) = '#';
+  // }
   std::string str_res;
   if (ext_pos == src_file_name.npos) {
     str_res = src_name + std::string(".") + new_file_ext;

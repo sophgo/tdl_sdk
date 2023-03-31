@@ -578,14 +578,14 @@ static void _initInputCfg(chnInputCfg *ipIc) {
   ipIc->iqp = 30;
   ipIc->pqp = 30;
   ipIc->gop = 60;
-  ipIc->bitrate = 500;
+  ipIc->bitrate = 8000;
   ipIc->firstFrmstartQp = 30;
   ipIc->minIqp = -1;
   ipIc->maxIqp = -1;
   ipIc->minQp = -1;
   ipIc->maxQp = -1;
   ipIc->srcFramerate = 25;
-  ipIc->framerate = 30;
+  ipIc->framerate = 25;
   ipIc->bVariFpsEn = 0;
   ipIc->maxbitrate = -1;
   ipIc->statTime = -1;
