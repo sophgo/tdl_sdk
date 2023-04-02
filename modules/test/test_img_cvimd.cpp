@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "cviai.h"
+#include "cvi_md.h"
 #ifdef CV181X
 #include <cvi_ive.h>
 #else
@@ -10,19 +10,18 @@
 #endif
 
 int main(int argc, char *argv[]) {
-  cviai_handle_t ai_handle = NULL;
+  cvi_md_handle_t handle = NULL;
   printf("start to run img md\n");
-  CVI_S32 ret = CVI_AI_CreateHandle(&ai_handle);
+  CVI_S32 ret = CVI_MD_Create_Handle(&handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create MD handle failed with %#x!\n", ret);
     return ret;
   }
   IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
-  const char *strf1 = "/mnt/data/admin1_data/alios_test/set/a.jpg";
-  const char *strf2 = "/mnt/data/admin1_data/alios_test/set/b.jpg";
+  const char *strf1 = argv[1];
+  const char *strf2 = argv[2];
 
   VIDEO_FRAME_INFO_S bg, frame;
-  // printf("toread image:%s\n",argv[1]);
   IVE_IMAGE_S image1 = CVI_IVE_ReadImage(ive_handle, strf1, IVE_IMAGE_TYPE_U8C1);
   ret = CVI_SUCCESS;
 
@@ -35,6 +34,8 @@ int main(int argc, char *argv[]) {
   if (imgw == 0) {
     printf("Read image failed with %x!\n", ret);
     return CVI_FAILURE;
+  } else {
+    printf("Read image ok with %d!\n", imgw);
   }
 #ifdef CV181X
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &bg);
@@ -56,6 +57,8 @@ int main(int argc, char *argv[]) {
   if (imgw2 == 0) {
     printf("Read image failed with %x!\n", ret);
     return CVI_FAILURE;
+  } else {
+    printf("Read image1 ok with %d!\n", imgw2);
   }
 
 #ifdef CV181X
@@ -68,30 +71,27 @@ int main(int argc, char *argv[]) {
     printf("Convert to video frame failed with %#x!\n", ret);
     return ret;
   }
-  cvai_object_t obj_meta;
-  CVI_AI_Set_MotionDetection_Background(ai_handle, &bg);
-  // CVI_AI_Set_MotionDetection_ROI(ai_handle, 0, 0, 512, 512);
+  printf("to set background\n");
 
-  CVI_AI_MotionDetection(ai_handle, &frame, &obj_meta, 20, 50);
-  // CVI_AI_MotionDetection(ai_handle, &frame, &obj_meta, 20, 50);
-  // CVI_AI_MotionDetection(ai_handle, &frame, &obj_meta, 20, 50);
-  // VIDEO_FRAME_INFO_S motionmap;
-  // ret = CVI_AI_GetMotionMap(ai_handle, &motionmap);
+  ret = CVI_MD_Set_Background(handle, &bg);
+  printf("set background ret:%x\n", ret);
 
-  CVI_AI_DumpImage("img1.bin", &bg);
-  CVI_AI_DumpImage("img2.bin", &frame);
-  // CVI_AI_DumpImage("md.bin", &motionmap);
+  int *p_boxes;
+  uint32_t num_boxes;
+  printf("to do md detect \n");
 
-  for (int i = 0; i < obj_meta.size; i++) {
-    printf("[%f,%f,%f,%f]\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
-           obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
+  ret = CVI_MD_Detect(handle, &frame, &p_boxes, &num_boxes, 20, 50);
+  printf("CVI_MD_Detect ret:%x\n", ret);
+
+  for (uint32_t i = 0; i < num_boxes; i++) {
+    printf("[%d,%d,%d,%d]\n", p_boxes[4 * i], p_boxes[4 * i + 1], p_boxes[4 * i + 2],
+           p_boxes[4 * i + 3]);
   }
-
-  CVI_AI_Free(&obj_meta);
+  free(p_boxes);
   CVI_SYS_FreeI(ive_handle, &image1);
   CVI_SYS_FreeI(ive_handle, &image2);
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_MD_Destroy_Handle(handle);
   CVI_IVE_DestroyHandle(ive_handle);
   return ret;
 }

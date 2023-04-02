@@ -83,3 +83,21 @@ endif()
 buildninstallcpp(NAME test_face_cap INC ${SAMPLE_INC} DEPS cviai  cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_img_fd INC ${SAMPLE_INC} DEPS cviai  cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 # buildninstallcpp(NAME cviai_run_face_cap INC ${SAMPLE_INC} DEPS cviai_core cviai_service cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+set(SAMPLE_LIBS_SIMPLE
+${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+${MLIR_SDK_ROOT}/lib/libz.so
+)
+if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
+  set(SAMPLE_LIBS_SIMPLE ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+endif()
+buildninstallcpp(NAME test_img_cvimd INC ${MIDDLEWARE_SDK_ROOT}/include ${CMAKE_CURRENT_SOURCE_DIR}/../../lib ${IVE_INCLUDES} DEPS cvi_md ${SAMPLE_LIBS_SIMPLE} ${IVE_LIBS} ${MIDDLEWARE_LIBS})

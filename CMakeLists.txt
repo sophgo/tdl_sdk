@@ -151,7 +151,7 @@ include_directories(${IVE_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
 add_subdirectory(modules)
 add_subdirectory(sample)
-
+add_subdirectory(lib)
 
 if((NOT "${CVI_PLATFORM}" STREQUAL "CV180X") AND NOT DEFINED NO_OPENCV)
 add_subdirectory(regression)
@@ -159,3 +159,4 @@ add_subdirectory(tool)
 endif()
 # Install doc
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc DESTINATION doc)
+

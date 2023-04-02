@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <vector>
 #include "core/core/cvai_errno.h"
+#include "core/cviai_types_mem_internal.h"
 #include "cviai_experimental.h"
 #include "cviai_perfetto.h"
 #include "face_attribute/face_attribute.hpp"
@@ -27,7 +28,6 @@
 #include "sound_classification/sound_classification.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
 #include "utils/core_utils.hpp"
-
 using namespace std;
 using namespace cviai;
 #define LOGE printf
@@ -797,8 +797,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
   if (md_model == nullptr) {
     LOGD("Init Motion Detection.\n");
     createIVEHandleIfNeeded(ctx);
-    ctx->md_model =
-        new MotionDetection(ctx->ive_handle, ctx->vpss_timeout_value, ctx->vec_vpss_engine[0]);
+    ctx->md_model = new MotionDetection(ctx->ive_handle);
     return ctx->md_model->init(frame);
   }
   return ctx->md_model->update_background(frame);
@@ -817,7 +816,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, int x1, int 
 }
 
 CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                               cvai_object_t *objects, uint8_t threshold, double min_area) {
+                               cvai_object_t *obj_meta, uint8_t threshold, double min_area) {
   TRACE_EVENT("cviai_core", "CVI_AI_MotionDetection");
 
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -825,10 +824,31 @@ CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   if (md_model == nullptr) {
     LOGE(
         "Failed to do motion detection! Please invoke CVI_AI_Set_MotionDetection_Background to set "
-        "background image first.\n");
+        "background image first\n");
     return CVIAI_FAILURE;
   }
-  return ctx->md_model->detect(frame, objects, threshold, min_area);
+
+  std::vector<std::vector<float>> boxes;
+  CVI_S32 ret = ctx->md_model->detect(frame, boxes, threshold, min_area);
+  memset(obj_meta, 0, sizeof(cvai_object_t));
+  size_t num_boxes = boxes.size();
+  if (num_boxes > 0) {
+    CVI_AI_MemAllocInit(num_boxes, obj_meta);
+    obj_meta->height = frame->stVFrame.u32Height;
+    obj_meta->width = frame->stVFrame.u32Width;
+    obj_meta->rescale_type = RESCALE_RB;
+    memset(obj_meta->info, 0, sizeof(cvai_object_info_t) * num_boxes);
+    for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
+      obj_meta->info[i].bbox.x1 = boxes[i][0];
+      obj_meta->info[i].bbox.y1 = boxes[i][1];
+      obj_meta->info[i].bbox.x2 = boxes[i][2];
+      obj_meta->info[i].bbox.y2 = boxes[i][3];
+      obj_meta->info[i].bbox.score = 0;
+      obj_meta->info[i].classes = -1;
+      memset(obj_meta->info[i].name, 0, sizeof(obj_meta->info[i].name));
+    }
+  }
+  return ret;
 }
 
 CVI_S32 CVI_AI_Get_SoundClassification_ClassesNum(const cviai_handle_t handle) {

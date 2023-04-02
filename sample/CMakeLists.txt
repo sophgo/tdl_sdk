@@ -147,7 +147,7 @@ else()
   buildninstall(NAME sample_stream_hardhat INC ${SAMPLE_INC} SRCS vi_vo_utils.c DEPS cviai cviai_app pthread ${SAMPLE_LIBS})
   buildninstallcpp(NAME sample_read_od INC ${SAMPLE_INC} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 endif()
-buildninstall(NAME sample_img_md INC INC ${SAMPLE_INC} DEPS cviai pthread ${SAMPLE_LIBS})
+buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cviai pthread ${SAMPLE_LIBS})
 
 install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.h sample_utils.c middleware_utils.h sample_log.h middleware_utils.c DESTINATION sample)
 install(FILES Makefile DESTINATION sample)
