@@ -1,6 +1,17 @@
 
 
-project(test)
+project(sample)
+
+
+
+# include_directories(
+                    # ${MIDDLEWARE_INCLUDES}
+                    # ${CMAKE_CURRENT_SOURCE_DIR}
+                    # ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+                    # ${CMAKE_CURRENT_SOURCE_DIR}/../../include/core/utils
+                    # ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/core
+                    # )
+
 
 function(buildninstallcpp)
   # From https://stackoverflow.com/questions/23327687/how-to-write-a-cmake-function-with-more-than-one-parameter-groups
@@ -27,17 +38,14 @@ function(buildninstallcpp)
   install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 endfunction(buildninstallcpp)
 
-set(REG_INCLUDES
-    ${MIDDLEWARE_SDK_ROOT}/include
-    ${MLIR_SDK_PATH}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/core
-    ${TRACER_PATH}
-    ${MIDDLEWARE_SDK_ROOT}/sample/common
-    ${CMAKE_SOURCE_DIR}/3rdparty
-    ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/include/cvi_rtsp
-)
 
+set(SAMPLE_INC
+${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${MIDDLEWARE_SDK_ROOT}/include
+    ${IVE_INCLUDES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../preprocess
+    ${CMAKE_CURRENT_SOURCE_DIR}/../md
+)
 
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
@@ -53,17 +61,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
 )
 
-set(SAMPLE_LIBS ${SAMPLE_LIBS} ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp/src/libcvi_rtsp.so)
-
-set(AUDIO_SAMPLE_LIBS
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcli.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so)
-
 if("${CVI_PLATFORM}" STREQUAL "CV181X"  OR "${CVI_PLATFORM}" STREQUAL "CV180X")
 set(SAMPLE_LIBS ${SAMPLE_LIBS}
     ${MLIR_SDK_ROOT}/lib/libz.so
@@ -75,10 +72,9 @@ set(SAMPLE_LIBS ${SAMPLE_LIBS}
 )
 endif()
 
-
 if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
 
-buildninstallcpp(NAME test_face_cap INC ${SAMPLE_INC} DEPS cviai  cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
-buildninstallcpp(NAME test_img_fd INC ${SAMPLE_INC} DEPS cviai  cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME test_img_cvimd INC  ${SAMPLE_INC} DEPS cvi_md ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
+buildninstallcpp(NAME test_preprocess INC ${SAMPLE_INC} DEPS cvi_preprocess ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})

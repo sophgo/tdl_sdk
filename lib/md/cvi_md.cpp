@@ -8,7 +8,7 @@ CVI_S32 CVI_MD_Create_Handle(cvi_md_handle_t *handle){
   if (ive_handle->init() != CVI_SUCCESS) {
     LOGE("IVE handle init failed.\n");
     return CVI_FAILURE;
-  }else{
+  } else {
     LOGI("IVE handle inited\n");
   }
   MotionDetection *p_md_inst = new MotionDetection(ive_handle);
@@ -92,7 +92,6 @@ CVI_S32 CVI_MD_Detect(const cvi_md_handle_t handle, VIDEO_FRAME_INFO_S *frame,
     int *p_box = (int*)malloc(bboxes.size()*4*sizeof(int));
     
     for(size_t i = 0; i < bboxes.size();i++){
-
       p_box[4*i+0] = bboxes[i][0];
       p_box[4*i+1] = bboxes[i][1];
       p_box[4*i+2] = bboxes[i][2];

@@ -108,7 +108,6 @@ install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/app/ DESTINATION module/app PATTERN "CMakeLists.txt" EXCLUDE)
 if(NOT DEFINED NO_OPENCV) 
   add_subdirectory(evaluation)  
-  
 endif()
 # Temporarily don't install custom module until complete.
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cviai

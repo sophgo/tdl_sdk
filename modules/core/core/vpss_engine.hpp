@@ -31,12 +31,13 @@ class __attribute__((visibility("default"))) VpssEngine {
   void attachVBPool(VB_POOL pool_id);
   VB_POOL getVBPool() const;
   bool isInitialized() const;
+  int get_device_id() { return (int)m_dev; }
+
+  int sendFrameBase(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *grp_crop_attr,
+                    const VPSS_CROP_INFO_S *chn_crop_attr, const VPSS_CHN_ATTR_S *chn_attr,
+                    const VPSS_SCALE_COEF_E *coeffs, const uint32_t enable_chns);
 
  private:
-  inline int sendFrameBase(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *grp_crop_attr,
-                           const VPSS_CROP_INFO_S *chn_crop_attr, const VPSS_CHN_ATTR_S *chn_attr,
-                           const VPSS_SCALE_COEF_E *coeffs, const uint32_t enable_chns);
-
   bool m_is_vpss_init = false;
   VPSS_GRP m_grpid = -1;
   VPSS_GRP m_desired_grp_id;

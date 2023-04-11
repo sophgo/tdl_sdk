@@ -349,6 +349,67 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
   pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
+/***
+ * pad_val,rgb order
+ * pad_type ,0:pad none, 1:pad center,2:pad right bottom
+ */
+inline void __attribute__((always_inline))
+VPSS_CHN_SQ_HELPER_X(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
+                     const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
+                     const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
+                     const CVI_FLOAT *mean, int *pad_val, int pad_type) {
+  pastVpssChnAttr->u32Width = dstWidth;
+  pastVpssChnAttr->u32Height = dstHeight;
+  pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
+  pastVpssChnAttr->enPixelFormat = enDstFormat;
+  pastVpssChnAttr->stFrameRate.s32SrcFrameRate = -1;
+  pastVpssChnAttr->stFrameRate.s32DstFrameRate = -1;
+  pastVpssChnAttr->u32Depth = 1;
+  pastVpssChnAttr->bMirror = CVI_FALSE;
+  pastVpssChnAttr->bFlip = CVI_FALSE;
+  if (pad_type == 0) {
+    pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_NONE;
+  } else if (pad_type == 1) {
+    pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_AUTO;
+    pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
+  } else if (pad_type == 2) {
+    float ratio_w = (float)dstWidth / srcWidth;
+    float ratio_h = (float)dstHeight / srcHeight;
+    float ratio = min(ratio_w, ratio_h);
+    pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.s32X = 0;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.s32Y = 0;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = (srcWidth * ratio) + 0.5;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = (srcHeight * ratio) + 0.5;
+    pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
+  }
+  if (pad_val != NULL) {
+    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(pad_val[0], pad_val[1], pad_val[2]);
+  } else {
+    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
+  }
+
+  if (factor != NULL) {
+    pastVpssChnAttr->stNormalize.bEnable = CVI_TRUE;
+    for (uint32_t i = 0; i < 3; i++) {
+      pastVpssChnAttr->stNormalize.factor[i] = factor[i];
+    }
+    for (uint32_t i = 0; i < 3; i++) {
+      pastVpssChnAttr->stNormalize.mean[i] = mean[i];
+    }
+    pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  } else {
+    pastVpssChnAttr->stNormalize.bEnable = CVI_FALSE;
+    pastVpssChnAttr->stNormalize.factor[0] = 0;
+    pastVpssChnAttr->stNormalize.factor[1] = 0;
+    pastVpssChnAttr->stNormalize.factor[2] = 0;
+    pastVpssChnAttr->stNormalize.mean[0] = 0;
+    pastVpssChnAttr->stNormalize.mean[1] = 0;
+    pastVpssChnAttr->stNormalize.mean[2] = 0;
+    pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  }
+}
+
 #undef max
 #undef min
 
