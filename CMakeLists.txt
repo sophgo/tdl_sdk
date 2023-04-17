@@ -19,7 +19,8 @@ if("${CVI_PLATFORM}" STREQUAL "")
   message(AUTHOR_WARNING "Platform not provided, set to ${CVI_PLATFORM}.")
 endif()
 
-
+set(FTP_SERVER_IP "10.80.0.5/sw_rls")
+set(DL_SERVER_IP 10.132.3.76)
 
 if("${CVI_PLATFORM}" STREQUAL "CV181X")
   add_definitions(-DCV181X)

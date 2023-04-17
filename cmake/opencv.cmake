@@ -2,10 +2,6 @@
 # License
 # Author Yangwen Huang <yangwen.huang@bitmain.com>
 
-if (NOT FTP_SERVER_IP)
-  set(FTP_SERVER_IP "10.80.0.5/sw_rls")
-endif()
-
 if (SHRINK_OPENCV_SIZE)
   if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-uclibc-linux.cmake")
     set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/uclibc/opencv_aisdk.tar.gz)

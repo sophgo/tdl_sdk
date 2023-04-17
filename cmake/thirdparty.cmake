@@ -5,7 +5,7 @@ if (ENABLE_PERFETTO)
     if (NOT EXISTS "${BUILD_DOWNLOAD_DIR}/cvi_perfetto-src")
     FetchContent_Declare(
       cvi_perfetto
-      GIT_REPOSITORY ssh://${REPO_USER}10.240.0.84:29418/cvi_perfetto
+      GIT_REPOSITORY ssh://${REPO_USER}${DL_SERVER_IP}:29418/cvi_perfetto
       GIT_TAG        origin/master
     )
     FetchContent_MakeAvailable(cvi_perfetto)
@@ -20,7 +20,7 @@ endif()
 if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/libeigen-src")
 FetchContent_Declare(
   libeigen
-  GIT_REPOSITORY ssh://${REPO_USER}10.240.0.84:29418/eigen
+  GIT_REPOSITORY ssh://${REPO_USER}${DL_SERVER_IP}:29418/eigen
   GIT_TAG origin/master
 )
 FetchContent_MakeAvailable(libeigen)
@@ -31,7 +31,7 @@ include_directories(${BUILD_DOWNLOAD_DIR}/libeigen-src/include/eigen3)
 if (NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/googletest-src")
 FetchContent_Declare(
   googletest
-  GIT_REPOSITORY ssh://${REPO_USER}10.240.0.84:29418/googletest
+  GIT_REPOSITORY ssh://${REPO_USER}${DL_SERVER_IP}:29418/googletest
   GIT_TAG  e2239ee6043f73722e7aa812a459f54a28552929 # release-1.11.0
 )
 FetchContent_MakeAvailable(googletest)
@@ -45,7 +45,7 @@ include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtes
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/nlohmannjson-src")
 FetchContent_Declare(
   nlohmannjson
-  GIT_REPOSITORY ssh://${REPO_USER}10.240.0.84:29418/nlohmannjson
+  GIT_REPOSITORY ssh://${REPO_USER}${DL_SERVER_IP}:29418/nlohmannjson
   GIT_TAG origin/master
 )
 FetchContent_MakeAvailable(nlohmannjson)
@@ -57,7 +57,7 @@ include_directories(${BUILD_DOWNLOAD_DIR}/nlohmannjson-src)
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/stb-src")
 FetchContent_Declare(
   stb
-  GIT_REPOSITORY ssh://${REPO_USER}10.240.0.84:29418/stb
+  GIT_REPOSITORY ssh://${REPO_USER}${DL_SERVER_IP}:29418/stb
   GIT_TAG origin/master
 )
   FetchContent_MakeAvailable(stb)
