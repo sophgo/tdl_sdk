@@ -240,7 +240,8 @@ int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t widt
       LOGE("input image stride not ok,got:%u,expect:%u", stride,
            m_wrap_frame.stVFrame.u32Stride[0]);
     }
-    memcpy(m_wrap_frame.stVFrame.pu8VirAddr[0], p_rgb_pack, width * height * 3);
+    memcpy(m_wrap_frame.stVFrame.pu8VirAddr[0], p_rgb_pack,
+           m_wrap_frame.stVFrame.u32Stride[0] * height);
   }
   CVI_SYS_IonFlushCache(m_wrap_frame.stVFrame.u64PhyAddr[0], m_wrap_frame.stVFrame.pu8VirAddr[0],
                         m_wrap_frame.stVFrame.u32Length[0]);
@@ -250,9 +251,18 @@ int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t widt
     return CVI_FAILURE;
   }
   std::string feature_out_name = (m_with_attribute) ? ATTRIBUTE_OUT_NAME : RECOGNITION_OUT_NAME;
-  const TensorInfo &tinfo = getOutputTensorInfo(feature_out_name);
-  int8_t *face_blob = tinfo.get<int8_t>();
-  size_t face_feature_size = tinfo.tensor_elem;
+  int8_t *face_blob;
+  size_t face_feature_size;
+
+  if (m_with_attribute) {
+    const TensorInfo &tinfo = getOutputTensorInfo(feature_out_name);
+    face_blob = tinfo.get<int8_t>();
+    face_feature_size = tinfo.tensor_elem;
+  } else {
+    const TensorInfo &tinfo = getOutputTensorInfo(0);
+    face_blob = tinfo.get<int8_t>();
+    face_feature_size = tinfo.tensor_elem;
+  }
   // Create feature
   CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &p_face_info->feature);
   memcpy(p_face_info->feature.ptr, face_blob, face_feature_size);
@@ -315,9 +325,19 @@ void FaceAttribute::outputParser(cvai_face_info_t *face_info) {
 
   // feature
   std::string feature_out_name = (m_with_attribute) ? ATTRIBUTE_OUT_NAME : RECOGNITION_OUT_NAME;
-  const TensorInfo &tinfo = getOutputTensorInfo(feature_out_name);
-  int8_t *face_blob = tinfo.get<int8_t>();
-  size_t face_feature_size = tinfo.tensor_elem;
+
+  int8_t *face_blob;
+  size_t face_feature_size;
+
+  if (m_with_attribute) {
+    const TensorInfo &tinfo = getOutputTensorInfo(feature_out_name);
+    face_blob = tinfo.get<int8_t>();
+    face_feature_size = tinfo.tensor_elem;
+  } else {
+    const TensorInfo &tinfo = getOutputTensorInfo(0);
+    face_blob = tinfo.get<int8_t>();
+    face_feature_size = tinfo.tensor_elem;
+  }
   // Create feature
   CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &face_info->feature);
   memcpy(face_info->feature.ptr, face_blob, face_feature_size);

@@ -331,11 +331,20 @@ IVE_DMA_MODE_E HWIVE::convert(DMAMode mode) {
   }
 }
 
+struct IVE_HANDLE_CTX {
+  int devfd;
+  int used_time;
+};
+
 HWIVE::HWIVE() : m_handle(NULL) {}
 
 CVI_S32 HWIVE::init() {
   m_handle = CVI_IVE_CreateHandle();
-  return m_handle == NULL ? CVI_FAILURE : CVI_SUCCESS;
+  IVE_HANDLE_CTX *ctx = static_cast<IVE_HANDLE_CTX *>(m_handle);
+  if (ctx->devfd == ERR_IVE_OPEN_FILE) {
+    return CVI_FAILURE;
+  }
+  return CVI_SUCCESS;
 }
 
 CVI_S32 HWIVE::destroy() { return CVI_IVE_DestroyHandle(m_handle); }

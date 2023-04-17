@@ -21,6 +21,7 @@
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
+#include "liveness/ir_liveness.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_classification/mask_classification.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
@@ -71,13 +72,15 @@ Core *create_model(const ModelParams &params, Args... arg) {
   return instance;
 }
 
-static void createIVEHandleIfNeeded(cviai_context_t *ctx) {
+static int createIVEHandleIfNeeded(cviai_context_t *ctx) {
   if (ctx->ive_handle == nullptr) {
     ctx->ive_handle = new ive::IVE;
     if (ctx->ive_handle->init() != CVI_SUCCESS) {
-      LOGC("IVE handle init failed.\n");
+      LOGC("IVE handle init failed, please insmod cv18?x_ive.ko.\n");
+      return CVI_FAILURE;
     }
   }
+  return CVI_SUCCESS;
 }
 
 static CVI_S32 initVPSSIfNeeded(cviai_context_t *ctx, CVI_AI_SUPPORTED_MODEL_E model_id) {
@@ -119,6 +122,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_THERMALFACE, CREATOR(ThermalFace)},
     {CVI_AI_SUPPORTED_MODEL_THERMALPERSON, CREATOR(ThermalPerson)},
     {CVI_AI_SUPPORTED_MODEL_LIVENESS, CREATOR(Liveness)},
+    {CVI_AI_SUPPORTED_MODEL_IRLIVENESS, CREATOR(IrLiveness)},
     {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
     {CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, CREATOR(HandClassification)},
     {CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, CREATOR(HandDetection)},
@@ -730,6 +734,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_IncarObjectDetection, IncarObjectDetection,
                       CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION, cvai_face_t *)
 DEFINE_INF_FUNC_F2_P2(CVI_AI_Liveness, Liveness, CVI_AI_SUPPORTED_MODEL_LIVENESS, cvai_face_t *,
                       cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_IrLiveness, IrLiveness, CVI_AI_SUPPORTED_MODEL_IRLIVENESS,
+                      cvai_face_t *)
 
 CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
                          bool cvtRGB888) {
@@ -901,7 +907,9 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
     LOGD("Init Motion Detection.\n");
-    createIVEHandleIfNeeded(ctx);
+    if (createIVEHandleIfNeeded(ctx) == CVIAI_FAILURE) {
+      return CVIAI_FAILURE;
+    }
     ctx->md_model = new MotionDetection(ctx->ive_handle);
     return ctx->md_model->init(frame);
   }

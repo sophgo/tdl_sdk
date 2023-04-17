@@ -158,7 +158,6 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
     LOGE("Exceed max available channel %u. Current: %u.\n", m_available_max_chn, m_enabled_chn);
     return CVI_FAILURE;
   }
-
   int ret = CVI_VPSS_SetGrpAttr(m_grpid, &vpss_grp_attr);
   if (ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_SetGrpAttr failed with %#x\n", ret);
@@ -181,7 +180,6 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
       LOGE("CVI_VPSS_SetChnAttr failed with %#x\n", ret);
       return ret;
     }
-
     if (m_vbpool_id != VB_INVALID_POOLID) {
       // Attach vb pool before vpss processing.
       ret = CVI_VPSS_AttachVbPool(m_grpid, i, m_vbpool_id);
@@ -222,14 +220,12 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
   }
 
   ret = CVI_VPSS_SendFrame(m_grpid, frame, -1);
-
   // Detach vb pool when process is finished.
-  for (uint32_t i = 0; i < m_enabled_chn; i++) {
-    if (m_vbpool_id != VB_INVALID_POOLID) {
+  if (ret != CVI_SUCCESS && m_vbpool_id != VB_INVALID_POOLID) {
+    for (uint32_t i = 0; i < m_enabled_chn; i++) {
       CVI_VPSS_DetachVbPool(m_grpid, i);
     }
   }
-
   return ret;
 }
 
@@ -268,6 +264,9 @@ int VpssEngine::sendCropGrpChnFrame(const VIDEO_FRAME_INFO_S *frame,
 
 int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t timeout) {
   int ret = CVI_VPSS_GetChnFrame(m_grpid, chn_idx, outframe, timeout);
+  if (m_vbpool_id != VB_INVALID_POOLID) {
+    CVI_VPSS_DetachVbPool(m_grpid, chn_idx);
+  }
   return ret;
 }
 

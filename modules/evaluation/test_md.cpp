@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
   std::cout << "read image1 done\n";
   VIDEO_FRAME_INFO_S frame;
   cvai_object_t obj_meta;
+  memset(&obj_meta, 0, sizeof(cvai_object_t));
   CVI_AI_ReadImage(strf2.c_str(), &frame, PIXEL_FORMAT_YUV_400);
   std::cout << "read image2 done\n";
   CVI_AI_Set_MotionDetection_Background(ai_handle, &bg);

@@ -146,7 +146,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACELANDMARKER)                   \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION)             \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SMOKECLASSIFICATION)              \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION)
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION)                \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_IRLIVENESS)
 
 // clang-format on
 
@@ -657,6 +658,9 @@ DLL_EXPORT CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_imag
 DLL_EXPORT CVI_S32 CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
                                    VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *rgb_face,
                                    cvai_face_t *ir_face);
+
+DLL_EXPORT CVI_S32 CVI_AI_IrLiveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *irFrame,
+                                     cvai_face_t *ir_face);
 
 /**
  * @brief Mask classification. Tells if a face is wearing a mask.
