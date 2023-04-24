@@ -147,7 +147,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION)             \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SMOKECLASSIFICATION)              \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION)                \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_IRLIVENESS)
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_IRLIVENESS)                       \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION)
 
 // clang-format on
 
@@ -1184,6 +1185,17 @@ DLL_EXPORT CVI_S32 CVI_AI_CropImage_With_VPSS(const cviai_handle_t handle,
                                               CVI_AI_SUPPORTED_MODEL_E model,
                                               VIDEO_FRAME_INFO_S *frame,
                                               const cvai_bbox_t *p_crop_box, cvai_image_t *p_dst);
+
+/**
+ * @brief person and pet(cat,dog) Detection
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param object cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_PersonPet_Detection(const cviai_handle_t handle,
+                                              VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_meta);
 
 #ifdef __cplusplus
 }

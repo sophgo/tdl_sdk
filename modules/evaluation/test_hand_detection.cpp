@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     printf("open model failed with %#x!\n", ret);
     return ret;
   }
-  printf("---------------------read_image-----------------------\n");
+  printf("---------------------to do detection-----------------------\n");
 
   std::string str_res;
   cvai_object_t obj_meta = {0};

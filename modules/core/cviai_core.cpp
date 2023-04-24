@@ -17,7 +17,6 @@
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "hand_classification/hand_classification.hpp"
-#include "hand_detection/hand_detection.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
@@ -28,6 +27,7 @@
 #include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
+#include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
 #include "osnet/osnet.hpp"
 #include "retina_face/retina_face.hpp"
@@ -125,7 +125,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_IRLIVENESS, CREATOR(IrLiveness)},
     {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
     {CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, CREATOR(HandClassification)},
-    {CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, CREATOR(HandDetection)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
@@ -201,19 +200,31 @@ inline Core *__attribute__((always_inline))
 getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx) {
   cviai_model_t &m_t = ctx->model_cont[index];
   if (m_t.instance == nullptr) {
-    if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
-      LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
-           CVI_AI_GetModelName(index));
-      return nullptr;
+    // create custom instance here
+    if (index == CVI_AI_SUPPORTED_MODEL_HAND_DETECTION) {
+      YoloV8Detection *p_yolov8 = new YoloV8Detection();
+      p_yolov8->setBranchChannel(64, 1);
+      m_t.instance = p_yolov8;
+    } else if (index == CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION) {
+      YoloV8Detection *p_yolov8 = new YoloV8Detection();
+      p_yolov8->setBranchChannel(64, 3);  // three types
+      m_t.instance = p_yolov8;
+    } else {
+      if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
+        LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
+             CVI_AI_GetModelName(index));
+        return nullptr;
+      }
+
+      auto creator = MODEL_CREATORS[index];
+      ModelParams params = {.vpss_engine = ctx->vec_vpss_engine[m_t.vpss_thread],
+                            .vpss_timeout_value = ctx->vpss_timeout_value};
+
+      m_t.instance = creator(params);
     }
-
-    auto creator = MODEL_CREATORS[index];
-    ModelParams params = {.vpss_engine = ctx->vec_vpss_engine[m_t.vpss_thread],
-                          .vpss_timeout_value = ctx->vpss_timeout_value};
-
-    m_t.instance = creator(params);
   }
-
+  m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+  m_t.instance->setVpssTimeout(ctx->vpss_timeout_value);
   return m_t.instance;
 }
 
@@ -690,8 +701,6 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskClassification, MaskClassification,
                       CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_HandClassification, HandClassification,
                       CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_Hand_Detection, HandDetection, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION,
-                      cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceMaskDetection, RetinafaceYolox,
                       CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,
@@ -1079,15 +1088,47 @@ CVI_S32 CVI_AI_GetMotionMap(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *fra
   }
   return ctx->md_model->get_motion_map(frame);
 }
-// CVI_S32 CVI_AI_GetModel_VPSS_Instance(const cviai_handle_t handle,CVI_AI_SUPPORTED_MODEL_E
-// model_type,VpssEngine **pp_vpss_inst){
-
-//   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-//   cviai_model_t modelt = ctx->model_cont[model_type];
-//   *pp_vpss_inst = nullptr;
-//   if(modelt.instance == nullptr){
-//     return CVI_FAILURE;
-//   }
-//   *pp_vpss_inst = modelt.instance->get_vpss_instance();
-//   return CVI_SUCCESS;
-// }
+CVI_S32 CVI_AI_Hand_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                              cvai_object_t *obj_meta) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  YoloV8Detection *yolo_model = dynamic_cast<YoloV8Detection *>(
+      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, ctx));
+  if (yolo_model == nullptr) {
+    LOGE("No instance found for CVI_AI_Hand_Detection.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got yolov8 instance\n");
+  if (yolo_model->isInitialized()) {
+    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION) != CVI_SUCCESS) {
+      return CVIAI_ERR_INIT_VPSS;
+    } else {
+      return yolo_model->inference(frame, obj_meta);
+    }
+  } else {
+    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
+         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_HAND_DETECTION));
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+}
+CVI_S32 CVI_AI_PersonPet_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                   cvai_object_t *obj_meta) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  YoloV8Detection *yolo_model = dynamic_cast<YoloV8Detection *>(
+      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION, ctx));
+  if (yolo_model == nullptr) {
+    LOGE("No instance found for CVI_AI_Hand_Detection.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got yolov8 instance\n");
+  if (yolo_model->isInitialized()) {
+    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION) != CVI_SUCCESS) {
+      return CVIAI_ERR_INIT_VPSS;
+    } else {
+      return yolo_model->inference(frame, obj_meta);
+    }
+  } else {
+    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
+         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION));
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+}

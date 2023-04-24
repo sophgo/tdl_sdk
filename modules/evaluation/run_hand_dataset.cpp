@@ -47,8 +47,8 @@ std::string run_image_hand_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t
 
   for (uint32_t i = 0; i < hand_obj.size; i++) {
     cvai_bbox_t box = hand_obj.info[i].bbox;
-    ss << (hand_obj.info[i].classes + 1) << " " << box.score << " " << box.x1 << " " << box.y1
-       << " " << box.x2 << " " << box.y2 << "\n";
+    ss << (hand_obj.info[i].classes) << " " << box.x1 << " " << box.y1 << " " << box.x2 << " "
+       << box.y2 << " " << box.score << "\n";
   }
   CVI_AI_Free(&hand_obj);
   return ss.str();

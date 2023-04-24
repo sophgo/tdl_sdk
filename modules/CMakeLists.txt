@@ -56,7 +56,7 @@ else()
                 $<TARGET_OBJECTS:mask_face_recognition>
                 $<TARGET_OBJECTS:mask_classification>
                 $<TARGET_OBJECTS:hand_classification>
-                $<TARGET_OBJECTS:hand_detection>
+                $<TARGET_OBJECTS:yolov8>
                 $<TARGET_OBJECTS:osnet>
                 $<TARGET_OBJECTS:retina_face>
                 $<TARGET_OBJECTS:yolov3>

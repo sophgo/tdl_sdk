@@ -84,15 +84,18 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
       return ret;
     }
 
-    std::string classesnames[6] = {"fist", "five", "gun", "ok", "other", "thumbUp"};
+    // std::string classesnames[6] = {"fist", "five", "gun", "ok", "other", "thumbUp"};
+    std::string classesnames[4] = {"fist", "five", "none", "two"};
+
     TensorInfo oinfo = getOutputTensorInfo(0);
+    int num_cls = oinfo.shape.dim[1];
     float *out_data = getOutputRawPtr<float>(oinfo.tensor_name);
     float score = *(std::max_element(out_data, out_data + 6));
     int score_index = -1;
     float maxscore = -1;
-    float cls_score[6] = {0};
+    float cls_score[num_cls] = {0};
     float sum_score = 0;
-    for (int k = 0; k < 6; k++) {
+    for (int k = 0; k < num_cls; k++) {
       cls_score[k] = 1.0 / (1 + exp(-out_data[k]));
       sum_score += cls_score[k];
       if (cls_score[k] > maxscore) {
@@ -100,19 +103,20 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
         score_index = k;
       }
     }
-    for (int k = 0; k < 6; k++) {
+    for (int k = 0; k < num_cls; k++) {
       cls_score[k] = cls_score[k] / sum_score;
     }
     maxscore = cls_score[score_index];
-    // std::cout<<"index:"<<score_index<<",score:"<<maxscore<<",detscore:"<<hand_info.bbox.score<<std::endl;
+    std::cout << "index:" << score_index << ",score:" << maxscore
+              << ",detscore:" << hand_info.bbox.score << ",clsnum:" << num_cls << std::endl;
     if (maxscore < 0.33) {
-      score_index = 4;
+      score_index = 2;
     }
     meta->info[i].bbox.score = score;
     meta->info[i].classes = score_index;
 
     const std::string &classname = classesnames[score_index];
-    strncpy(meta->info[i].name, classname.c_str(), sizeof(meta->info[i].name));
+    strncpy(meta->info[i].name, classname.c_str(), classname.size());
   }
 
   return CVIAI_SUCCESS;
