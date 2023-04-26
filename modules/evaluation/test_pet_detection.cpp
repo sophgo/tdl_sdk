@@ -46,8 +46,8 @@ int main(int argc, char *argv[]) {
   }
 
   printf("---------------------openmodel-----------------------");
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, argv[1]);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.5);
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION, argv[1]);
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION, 0.1);
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
     return ret;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
   std::string str_res;
   cvai_object_t obj_meta = {0};
-  CVI_AI_Hand_Detection(ai_handle, &bg, &obj_meta);
+  CVI_AI_PersonPet_Detection(ai_handle, &bg, &obj_meta);
 
   // CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[2]);
   // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, false);
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
   if (eval_perf) {
     for (int i = 0; i < 101; i++) {
       cvai_object_t obj_meta = {0};
-      CVI_AI_Hand_Detection(ai_handle, &bg, &obj_meta);
+      CVI_AI_PersonPet_Detection(ai_handle, &bg, &obj_meta);
       CVI_AI_Free(&obj_meta);
     }
   }

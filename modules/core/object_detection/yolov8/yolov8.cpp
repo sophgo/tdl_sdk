@@ -28,19 +28,20 @@
 #define NMS_THRESH 0.5
 
 namespace cviai {
-static void convert_det_struct(const Detections &dets, cvai_object_t *hand, int im_height,
+static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int im_height,
                                int im_width) {
-  CVI_AI_MemAllocInit(dets.size(), hand);
-  hand->height = im_height;
-  hand->width = im_width;
-  memset(hand->info, 0, sizeof(cvai_object_info_t) * hand->size);
+  CVI_AI_MemAllocInit(dets.size(), obj);
+  obj->height = im_height;
+  obj->width = im_width;
+  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
 
-  for (uint32_t i = 0; i < hand->size; ++i) {
-    hand->info[i].bbox.x1 = dets[i]->x1;
-    hand->info[i].bbox.y1 = dets[i]->y1;
-    hand->info[i].bbox.x2 = dets[i]->x2;
-    hand->info[i].bbox.y2 = dets[i]->y2;
-    hand->info[i].bbox.score = dets[i]->score;
+  for (uint32_t i = 0; i < obj->size; ++i) {
+    obj->info[i].bbox.x1 = dets[i]->x1;
+    obj->info[i].bbox.y1 = dets[i]->y1;
+    obj->info[i].bbox.x2 = dets[i]->x2;
+    obj->info[i].bbox.y2 = dets[i]->y2;
+    obj->info[i].bbox.score = dets[i]->score;
+    obj->info[i].classes = dets[i]->label;
   }
 }
 template <typename T>
@@ -142,14 +143,13 @@ int YoloV8Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *dat
 
 int YoloV8Detection::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
-  LOGI("start to run\n");
   int ret = run(frames);
   if (ret != CVIAI_SUCCESS) {
     LOGW("YoloV8Detection run inference failed\n");
     return ret;
   }
   CVI_SHAPE shape = getInputShape(0);
-  LOGI("start to outputParser\n");
+  // LOGI("start to outputParser\n");
   if (strides.size() == 3) {
     outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                  srcFrame->stVFrame.u32Height, obj_meta);
@@ -190,8 +190,8 @@ void YoloV8Detection::decode_bbox_feature_map(int stride, int anchor_idx,
   int anchor_y = anchor_idx / feat_w;
   int anchor_x = anchor_idx % feat_w;
 
-  LOGI("box numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
-       num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x, num_anchor);
+  // LOGI("box numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
+  //      num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x, num_anchor);
 
   float grid_y = anchor_y + 0.5;
   float grid_x = anchor_x + 0.5;
@@ -253,8 +253,9 @@ void YoloV8Detection::outputParser(const int image_width, const int image_height
 
     int num_cls = m_cls_channel_;
     int num_anchor = classinfo.shape.dim[2] * classinfo.shape.dim[3];
-    LOGI("stride:%d,featw:%d,feath:%d,numperpixel:%d,numcls:%d\n", stride, classinfo.shape.dim[3],
-         classinfo.shape.dim[2], num_per_pixel, num_cls);
+    // LOGI("stride:%d,featw:%d,feath:%d,numperpixel:%d,numcls:%d\n", stride,
+    // classinfo.shape.dim[3],
+    //     classinfo.shape.dim[2], num_per_pixel, num_cls);
     float cls_qscale = num_per_pixel == 1 ? classinfo.qscale : 1;
     for (int j = 0; j < num_anchor; j++) {
       int max_logit_c = -1;

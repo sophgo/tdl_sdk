@@ -39,6 +39,7 @@ void Timer::TicToc(const std::string &str_step) {
     if (times_ == summary_cond_times_) {
       double total_ts = 0;
       std::stringstream ss;
+      ss.precision(3);
       ss << "[Timer] " << name_ << " ";
       for (size_t i = 1; i < step_name_vec_.size(); i++) {
         if (step_time_elpased_.count(i)) {
@@ -46,7 +47,7 @@ void Timer::TicToc(const std::string &str_step) {
           total_ts += step_time_elpased_[i] * 1000 / times_;
         }
       }
-      ss << ",total:" << total_ts;
+      ss << "total:" << total_ts;
       std::cout << ss.str() << std::endl;
       times_ = 0;
       step_time_elpased_.clear();
