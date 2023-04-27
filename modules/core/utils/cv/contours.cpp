@@ -110,7 +110,7 @@ static CvContourScanner _cvStartFindContours_Impl(void *_img, CvMemStorage *stor
     CV_Error(CV_StsBadSize, "");
 
   CvContourScanner scanner = (CvContourScanner)cvAlloc(sizeof(*scanner));
-  memset(scanner, 0, sizeof(*scanner));
+  memset((void *)scanner, 0, sizeof(*scanner));
 
   scanner->storage1 = scanner->storage2 = storage;
   scanner->img0 = (schar *)img;

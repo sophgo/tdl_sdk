@@ -131,6 +131,45 @@ std::string run_image_vehicle_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handl
   CVI_AI_Free(&hand_obj);
   return ss.str();
 }
+std::string run_image_face_hand_person_detection(VIDEO_FRAME_INFO_S *p_frame,
+                                                 cviai_handle_t ai_handle, std::string model_name) {
+  static int model_init = 0;
+  CVI_S32 ret;
+  if (model_init == 0) {
+    std::cout << "to init vehicle model\t";
+    std::string str_hand_model = g_model_root + std::string("/") + model_name;
+
+    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION,
+                           str_hand_model.c_str());
+    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, 0.01);
+    if (ret != CVI_SUCCESS) {
+      std::cout << "open vehicle model failed:" << str_hand_model << std::endl;
+      return "";
+    }
+    std::cout << "init vehicle model done\t";
+    model_init = 1;
+  }
+
+  cvai_object_t hand_obj = {0};
+  memset(&hand_obj, 0, sizeof(cvai_object_t));
+
+  ret = CVI_AI_HandFacePerson_Detection(ai_handle, p_frame, &hand_obj);
+  if (ret != CVI_SUCCESS) {
+    std::cout << "detect vehicle failed:" << ret << std::endl;
+  }
+
+  // generate detection result
+  std::stringstream ss;
+
+  for (uint32_t i = 0; i < hand_obj.size; i++) {
+    cvai_bbox_t box = hand_obj.info[i].bbox;
+    ss << (hand_obj.info[i].classes) << " " << box.x1 << " " << box.y1 << " " << box.x2 << " "
+       << box.y2 << " " << box.score << "\n";
+  }
+  CVI_AI_Free(&hand_obj);
+  return ss.str();
+}
+
 std::string run_image_hand_classification(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle,
                                           std::string model_name) {
   static int model_init = 0;
@@ -220,7 +259,8 @@ int main(int argc, char *argv[]) {
       process_funcs = {{"detect", run_image_hand_detection},
                        {"classify", run_image_hand_classification},
                        {"pet", run_image_pet_detection},
-                       {"vehicle", run_image_vehicle_detection}};
+                       {"vehicle", run_image_vehicle_detection},
+                       {"meeting", run_image_face_hand_person_detection}};
   if (process_funcs.count(process_flag) == 0) {
     std::cout << "error flag:" << process_flag << std::endl;
     return -1;

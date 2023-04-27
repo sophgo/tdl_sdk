@@ -184,7 +184,6 @@ void YoloV8Detection::decode_bbox_feature_map(int stride, int anchor_idx,
     LOGE("box channel size not ok,got:%d\n", num_channel);
   }
 
-  int32_t feat_h = boxinfo.shape.dim[2];
   int32_t feat_w = boxinfo.shape.dim[3];
 
   int anchor_y = anchor_idx / feat_w;
@@ -374,8 +373,6 @@ void YoloV8Detection::postProcess(Detections &dets, int frame_width, int frame_h
                                   cvai_object_t *obj_meta) {
   Detections final_dets = nms_multi_class(dets, NMS_THRESH);
   CVI_SHAPE shape = getInputShape(0);
-  int nn_width = shape.dim[3];
-  int nn_height = shape.dim[2];
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3]);
 
   if (!hasSkippedVpssPreprocess()) {

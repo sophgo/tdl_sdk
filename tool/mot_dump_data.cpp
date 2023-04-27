@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
   }
   CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, true);
 
-  char outFile_result_path[128];
+  char outFile_result_path[256];
   sprintf(outFile_result_path, "%s/%s", args.output_dir, DEFAULT_RESULT_FILE_NAME);
   FILE *outFile_result;
   outFile_result = fopen(outFile_result_path, "w");
@@ -380,7 +380,7 @@ int main(int argc, char *argv[]) {
         }
         // int8_t *feature_data = (int8_t *)malloc(target_feature->size * sizeof(int8_t));
         char feature_data_name[256];
-        char feature_data_path[256];
+        char feature_data_path[512];
         sprintf(feature_data_name, "features/%04d/%02u.bin", counter, i);
         sprintf(feature_data_path, "%s/%s", args.output_dir, feature_data_name);
         fprintf(outFile_data, "%u %s\n", target_feature->size, feature_data_name);
