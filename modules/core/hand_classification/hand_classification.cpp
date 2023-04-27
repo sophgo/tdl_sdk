@@ -46,6 +46,9 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
   for (uint32_t i = 0; i < meta->size; i++) {
     // rescale hand detect bbox to original frame coordinate
+    if (meta->info[i].classes != 0) {  // not hand object
+      continue;
+    }
     cvai_object_info_t hand_info = info_rescale_c(img_width, img_height, *meta, i);
 
     int box_x1 = hand_info.bbox.x1;
@@ -109,11 +112,11 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     maxscore = cls_score[score_index];
     std::cout << "index:" << score_index << ",score:" << maxscore
               << ",detscore:" << hand_info.bbox.score << ",clsnum:" << num_cls << std::endl;
-    if (maxscore < 0.33) {
+    if (maxscore < 0.2) {
       score_index = 2;
     }
     meta->info[i].bbox.score = score;
-    meta->info[i].classes = score_index;
+    // meta->info[i].classes = score_index;
 
     const std::string &classname = classesnames[score_index];
     strncpy(meta->info[i].name, classname.c_str(), classname.size());

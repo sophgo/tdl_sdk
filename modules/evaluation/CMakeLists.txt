@@ -100,6 +100,7 @@ buildninstallcpp(NAME test_hand_detection INC ${REG_INCLUDES} DEPS cviai  cviai_
 buildninstallcpp(NAME test_hand_cls INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_pet_detection INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_vehicle_detection INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_handfaceperson_det INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 # buildninstallcpp(NAME test_img_fd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_md INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 # buildninstallcpp(NAME test_img_fdfr INC ${SAMPLE_INC} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)

@@ -146,6 +146,7 @@ else()
   buildninstall(NAME sample_stream_face_recognition INC ${SAMPLE_INC} SRCS vi_vo_utils.c DEPS cviai cviai_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_hardhat INC ${SAMPLE_INC} SRCS vi_vo_utils.c DEPS cviai cviai_app pthread ${SAMPLE_LIBS})
   buildninstallcpp(NAME sample_read_od INC ${SAMPLE_INC} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
+  buildninstall(NAME sample_meeting INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} )
 endif()
 buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cviai pthread ${SAMPLE_LIBS})
 
