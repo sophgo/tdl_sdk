@@ -103,9 +103,32 @@ set(SAMPLE_LIBS ${SAMPLE_LIBS}
 )
 endif()
 
-
 if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+endif()
+
+if((DEFINED BUILD_WEB_VIEW) AND ("${CVI_PLATFORM}" STREQUAL "CV182X"))
+  set(SAMPLE_LIBS_WEB ${SAMPLE_LIBS}
+    ${sophapp_SOURCE_DIR}/prebuilt/thttpd/lib32bit/libthttpd.so
+    ${sophapp_SOURCE_DIR}/prebuilt/openssl/lib32bit/libssl.so
+    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/lib32bit/libwebsockets.so)
+
+  set(SAMPLE_INC_WEB ${SAMPLE_INC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket
+    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/include
+    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/include/libwebsockets
+    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/include/libwebsockets/abstract/protocols
+    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/include/libwebsockets/abstract/transports
+    ${sophapp_SOURCE_DIR}/prebuilt/thttpd/include
+    ${sophapp_SOURCE_DIR}/prebuilt/openssl/include
+  )
+
+  set(SAMPLE_SRC_WEB
+    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/cJSON.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/middleware_init.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/app_ipcam_net.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/app_ipcam_netctrl.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/app_ipcam_websocket.c)
 endif()
 
 if(DEFINED NO_OPENCV)
@@ -149,6 +172,10 @@ else()
   buildninstall(NAME sample_meeting INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cviai ${SAMPLE_LIBS} )
 endif()
 buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cviai pthread ${SAMPLE_LIBS})
+
+if((DEFINED BUILD_WEB_VIEW) AND ("${CVI_PLATFORM}" STREQUAL "CV182X"))
+buildninstall(NAME sample_web_multi_model INC ${SAMPLE_INC_WEB} SRCS middleware_utils.c ${SAMPLE_SRC_WEB} DEPS cviai ${SAMPLE_LIBS_WEB} )
+endif()
 
 install(FILES vi_vo_utils.c vi_vo_utils.h sample_utils.h sample_utils.c middleware_utils.h sample_log.h middleware_utils.c DESTINATION sample)
 install(FILES Makefile DESTINATION sample)

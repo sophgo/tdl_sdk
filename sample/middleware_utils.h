@@ -24,6 +24,7 @@
  * @var bBind
  * Binding to a specific VPSS Grp
  */
+
 typedef struct {
   CVI_U32 u32Width;
   CVI_U32 u32Height;
@@ -196,6 +197,16 @@ PIC_SIZE_E SAMPLE_AI_Get_PIC_Size(CVI_S32 width, CVI_S32 height);
 CVI_S32 SAMPLE_AI_Init_WM(SAMPLE_AI_MW_CONFIG_S *pstMWConfig, SAMPLE_AI_MW_CONTEXT *pstMWContext);
 
 /**
+ * @brief initialize cvitek middleware.
+ * @param pstMWConfig input middleware configurations.
+ * @param pstMWContext output context of middleware stuff.
+ * @return CV_S32 return CVI_SUCCESS if initialize middleware successfully, otherwise return error
+ * code instead.
+ */
+CVI_S32 SAMPLE_AI_Init_WM_NO_RTSP(SAMPLE_AI_MW_CONFIG_S *pstMWConfig,
+                                  SAMPLE_AI_MW_CONTEXT *pstMWContext);
+
+/**
  * @brief Send video frame to RTSP and Venc.
  *
  * @param stVencFrame frame to send
@@ -206,9 +217,26 @@ CVI_S32 SAMPLE_AI_Send_Frame_RTSP(VIDEO_FRAME_INFO_S *stVencFrame,
                                   SAMPLE_AI_MW_CONTEXT *pstMWContext);
 
 /**
+ * @brief Send video frame to RTSP and Venc.
+ *
+ * @param stVencFrame frame to send
+ * @param pstMWContext middleware context
+ * @return CVI_S32 CVI_SUCCESS if operation is success, otherwise return CVI_FAILURE
+ */
+CVI_S32 SAMPLE_AI_Send_Frame_WEB(VIDEO_FRAME_INFO_S *stVencFrame,
+                                 SAMPLE_AI_MW_CONTEXT *pstMWContext);
+
+/**
  * @brief Destroy middleware
  *
  * @param pstMWContext middleware context
  */
 void SAMPLE_AI_Destroy_MW(SAMPLE_AI_MW_CONTEXT *pstMWContext);
+
+/**
+ * @brief Destroy middleware
+ *
+ * @param pstMWContext middleware context
+ */
+void SAMPLE_AI_Destroy_MW_NO_RTSP(SAMPLE_AI_MW_CONTEXT *pstMWContext);
 #endif

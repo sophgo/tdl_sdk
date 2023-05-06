@@ -53,6 +53,18 @@ message("Content downloaded to ${nlohmannjson_SOURCE_DIR}")
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/nlohmannjson-src)
 
+if (BUILD_WEB_VIEW)
+  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/sophapp-src")
+    FetchContent_Declare(
+      sophapp
+      GIT_REPOSITORY ssh://${REPO_USER}${DL_SERVER_IP}:29418/cvitek/sophapp
+      GIT_TAG origin/ipcamera
+    )
+    FetchContent_MakeAvailable(sophapp)
+    message("Content downloaded to ${sophapp_SOURCE_DIR}")
+  endif()
+  set(sophapp_SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/sophapp-src)
+endif()
 
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/stb-src")
 FetchContent_Declare(

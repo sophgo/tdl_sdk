@@ -107,7 +107,12 @@ CVI_S32 HWIVEImage::bufRequest(IVEImpl *ive_instance) {
 
 CVI_S32 HWIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
                            CVI_U16 u16Height, bool cached) {
-  m_handle = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
+  auto m_handle_ = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
+  if (m_handle_ == NULL) {
+    LOGE("create cached  handle should not be null\n");
+    return CVI_FAILURE;
+  }
+  m_handle = m_handle_;
   if (cached) {
     return CVI_IVE_CreateImage_Cached(m_handle, &ive_image, convert(enType), u16Width, u16Height);
   } else {
@@ -117,17 +122,32 @@ CVI_S32 HWIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16W
 
 CVI_S32 HWIVEImage::create(IVEImpl *ive_instance, ImageType enType, CVI_U16 u16Width,
                            CVI_U16 u16Height, IVEImageImpl *buf, bool cached) {
+  auto m_handle_ = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
+  if (m_handle_ == NULL) {
+    LOGE("create buf handle should not be null\n");
+    return CVI_FAILURE;
+  }
+  m_handle = m_handle_;
   LOGE("cannot create IVE image with another buffer: unsupported\n");
   return CVI_FAILURE;
 }
 
 CVI_S32 HWIVEImage::create(IVEImpl *ive_instance) {
+  auto m_handle_ = reinterpret_cast<IVE_HANDLE>(ive_instance->getHandle());
+  if (m_handle_ == NULL) {
+    LOGE("create handle should not be null\n");
+    return CVI_FAILURE;
+  }
+  m_handle = m_handle_;
   LOGE("cannot create IVE image with another buffer: unsupported\n");
   return CVI_FAILURE;
 }
 
 CVI_S32 HWIVEImage::free() {
-  if (m_handle == NULL) return CVI_FAILURE;
+  if (m_handle == NULL) {
+    LOGE("free handle is null\n");
+    return CVI_FAILURE;
+  }
   return CVI_SYS_FreeI(m_handle, &ive_image);
 }
 

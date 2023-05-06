@@ -71,6 +71,11 @@ endif()
 set(SYSTRACE_FALLBACK ON)
 add_definitions(-DSYSTRACE_FALLBACK)
 
+IF(DEFINED ENV{WEB_VIEW})
+  set(BUILD_WEB_VIEW ON)
+  message("set BUILD_WEB_VIEW ON")
+ENDIF()
+
 IF(DEFINED ENV{PERF_EVAL})
   add_definitions(-DPERF_EVAL)
   message("set PERF_EVAL")

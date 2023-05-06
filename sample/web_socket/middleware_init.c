@@ -1,111 +1,9 @@
-#define LOG_TAG "MiddlewareUtils"
-#define LOG_LEVEL LOG_LEVEL_INFO
+#include "app_ipcam_websocket.h"
 #include "middleware_utils.h"
 #include "sample_log.h"
 
-static void SAMPLE_AI_RTSP_ON_CONNECT(const char *ip, void *arg) {
-  AI_LOGI("RTSP client connected from: %s\n", ip);
-}
-
-static void SAMPLE_AI_RTSP_ON_DISCONNECT(const char *ip, void *arg) {
-  AI_LOGI("RTSP client disconnected from: %s\n", ip);
-}
-
-CVI_S32 SAMPLE_AI_Get_VI_Config(SAMPLE_VI_CONFIG_S *pstViConfig) {
-  // Default sensor config parameters
-
-  SAMPLE_INI_CFG_S stIniCfg = {
-      .enSource = VI_PIPE_FRAME_SOURCE_DEV,
-      .devNum = 1,
-#ifdef _MIDDLEWARE_V2_
-      .enSnsType[0] = SONY_IMX327_MIPI_2M_30FPS_12BIT,
-      .enWDRMode[0] = WDR_MODE_NONE,
-      .s32BusId[0] = 3,
-      .s32SnsI2cAddr[0] = -1,
-      .MipiDev[0] = 0xFF,
-      .u8UseMultiSns = 0,
-#else
-      .enSnsType = SONY_IMX327_MIPI_2M_30FPS_12BIT,
-      .enWDRMode = WDR_MODE_NONE,
-      .s32BusId = 3,
-      .MipiDev = 0xFF,
-      .u8UseDualSns = 0,
-      .enSns2Type = SONY_IMX327_SLAVE_MIPI_2M_30FPS_12BIT,
-      .s32Sns2BusId = 0,
-      .Sns2MipiDev = 0xFF,
-#endif
-  };
-
-  // Get config from ini if found.
-  if (SAMPLE_COMM_VI_ParseIni(&stIniCfg)) {
-    AI_LOGI("sensor info is loaded from ini file.\n");
-  }
-
-  // convert ini config to vi config.
-  if (SAMPLE_COMM_VI_IniToViCfg(&stIniCfg, pstViConfig) != CVI_SUCCESS) {
-    AI_LOGE("cannot conver ini to vi config.\n");
-  }
-  return CVI_SUCCESS;
-}
-
-void SAMPLE_AI_Get_Input_Config(SAMPLE_COMM_CHN_INPUT_CONFIG_S *pstInCfg) {
-  strcpy(pstInCfg->codec, "h264");
-  pstInCfg->initialDelay = CVI_INITIAL_DELAY_DEFAULT;
-  pstInCfg->width = 3840;
-  pstInCfg->height = 2160;
-  pstInCfg->vpssGrp = 1;
-  pstInCfg->vpssChn = 0;
-  pstInCfg->num_frames = -1;
-  pstInCfg->bsMode = 0;
-  pstInCfg->rcMode = SAMPLE_RC_CBR;
-  pstInCfg->iqp = DEF_IQP;
-  pstInCfg->pqp = DEF_PQP;
-  pstInCfg->gop = DEF_264_GOP;
-  pstInCfg->maxIprop = CVI_H26X_MAX_I_PROP_DEFAULT;
-  pstInCfg->minIprop = CVI_H26X_MIN_I_PROP_DEFAULT;
-  pstInCfg->bitrate = 8000;
-  pstInCfg->firstFrmstartQp = 30;
-  pstInCfg->minIqp = DEF_264_MINIQP;
-  pstInCfg->maxIqp = DEF_264_MAXIQP;
-  pstInCfg->minQp = DEF_264_MINQP;
-  pstInCfg->maxQp = DEF_264_MAXQP;
-  pstInCfg->srcFramerate = 25;
-  pstInCfg->framerate = 25;
-  pstInCfg->bVariFpsEn = 0;
-  pstInCfg->maxbitrate = -1;
-  pstInCfg->statTime = -1;
-  pstInCfg->chgNum = -1;
-  pstInCfg->quality = -1;
-  pstInCfg->pixel_format = 0;
-  pstInCfg->bitstreamBufSize = 0;
-  pstInCfg->single_LumaBuf = 0;
-  pstInCfg->single_core = 0;
-  pstInCfg->forceIdr = -1;
-  pstInCfg->tempLayer = 0;
-  pstInCfg->testRoi = 0;
-  pstInCfg->bgInterval = 0;
-}
-
-void SAMPLE_AI_Get_RTSP_Config(CVI_RTSP_CONFIG *pstRTSPConfig) {
-  memset(pstRTSPConfig, 0, sizeof(CVI_RTSP_CONFIG));
-  pstRTSPConfig->port = 554;
-}
-
-PIC_SIZE_E SAMPLE_AI_Get_PIC_Size(CVI_S32 width, CVI_S32 height) {
-  if (width == 1280 && height == 720) {
-    return PIC_720P;
-  } else if (width == 1920 && height == 1080) {
-    return PIC_1080P;
-  } else if (width == 3840 && height == 2160) {
-    return PIC_3840x2160;
-  } else if (width == 2560 && height == 1440) {
-    return PIC_1440P;
-  } else {
-    return PIC_BUTT;
-  }
-}
-
-CVI_S32 SAMPLE_AI_Init_WM(SAMPLE_AI_MW_CONFIG_S *pstMWConfig, SAMPLE_AI_MW_CONTEXT *pstMWContext) {
+CVI_S32 SAMPLE_AI_Init_WM_NO_RTSP(SAMPLE_AI_MW_CONFIG_S *pstMWConfig,
+                                  SAMPLE_AI_MW_CONTEXT *pstMWContext) {
   MMF_VERSION_S stVersion;
   CVI_SYS_GetVersion(&stVersion);
   AI_LOGI("MMF Version:%s\n", stVersion.version);
@@ -304,54 +202,7 @@ CVI_S32 SAMPLE_AI_Init_WM(SAMPLE_AI_MW_CONFIG_S *pstMWConfig, SAMPLE_AI_MW_CONTE
     goto venc_start_error;
   }
 
-  // RTSP
-  AI_LOGI("Initialize RTSP\n");
-  if (0 > CVI_RTSP_Create(&pstMWContext->pstRtspContext, &pstMWConfig->stRTSPConfig.stRTSPConfig)) {
-    AI_LOGE("fail to create rtsp context\n");
-    s32Ret = CVI_FAILURE;
-    goto rtsp_create_error;
-  }
-
-  CVI_RTSP_SESSION_ATTR attr = {0};
-  if (enPayLoad == PT_H264) {
-    attr.video.codec = RTSP_VIDEO_H264;
-    snprintf(attr.name, sizeof(attr.name), "h264");
-  } else if (enPayLoad == PT_H265) {
-    attr.video.codec = RTSP_VIDEO_H265;
-    snprintf(attr.name, sizeof(attr.name), "h265");
-  } else {
-    AI_LOGE("Unsupported RTSP codec in sample: %d\n", attr.video.codec);
-    s32Ret = CVI_FAILURE;
-    goto rtsp_create_error;
-  }
-
-  CVI_RTSP_CreateSession(pstMWContext->pstRtspContext, &attr, &pstMWContext->pstSession);
-
-  // Set listener to RTSP
-  CVI_RTSP_STATE_LISTENER listener;
-  listener.onConnect = pstMWConfig->stRTSPConfig.Lisener.onConnect != NULL
-                           ? pstMWConfig->stRTSPConfig.Lisener.onConnect
-                           : SAMPLE_AI_RTSP_ON_CONNECT;
-  listener.argConn = pstMWContext->pstRtspContext;
-  listener.onDisconnect = pstMWConfig->stRTSPConfig.Lisener.onDisconnect != NULL
-                              ? pstMWConfig->stRTSPConfig.Lisener.onDisconnect
-                              : SAMPLE_AI_RTSP_ON_DISCONNECT;
-  CVI_RTSP_SetListener(pstMWContext->pstRtspContext, &listener);
-
-  if (0 > CVI_RTSP_Start(pstMWContext->pstRtspContext)) {
-    AI_LOGE("Cannot start RTSP\n");
-    s32Ret = CVI_FAILURE;
-    goto rts_start_error;
-  }
-
   return CVI_SUCCESS;
-
-rts_start_error:
-  CVI_RTSP_DestroySession(pstMWContext->pstRtspContext, pstMWContext->pstSession);
-  CVI_RTSP_Destroy(&pstMWContext->pstRtspContext);
-
-rtsp_create_error:
-  SAMPLE_COMM_VENC_Stop(0);
 
 venc_start_error:
 vpss_start_error:
@@ -363,8 +214,8 @@ vi_start_error:
   return s32Ret;
 }
 
-CVI_S32 SAMPLE_AI_Send_Frame_RTSP(VIDEO_FRAME_INFO_S *stVencFrame,
-                                  SAMPLE_AI_MW_CONTEXT *pstMWContext) {
+CVI_S32 SAMPLE_AI_Send_Frame_WEB(VIDEO_FRAME_INFO_S *stVencFrame,
+                                 SAMPLE_AI_MW_CONTEXT *pstMWContext) {
   CVI_S32 s32Ret = CVI_SUCCESS;
 
   CVI_S32 s32SetFrameMilliSec = 20000;
@@ -408,67 +259,14 @@ CVI_S32 SAMPLE_AI_Send_Frame_RTSP(VIDEO_FRAME_INFO_S *stVencFrame,
     goto send_failed;
   }
 
-  VENC_PACK_S *ppack;
-  CVI_RTSP_DATA data = {0};
-  memset(&data, 0, sizeof(CVI_RTSP_DATA));
-
-  data.blockCnt = stStream.u32PackCount;
-  for (unsigned int i = 0; i < stStream.u32PackCount; i++) {
-    ppack = &stStream.pstPack[i];
-    data.dataPtr[i] = ppack->pu8Addr + ppack->u32Offset;
-    data.dataLen[i] = ppack->u32Len - ppack->u32Offset;
-  }
-
-  s32Ret =
-      CVI_RTSP_WriteFrame(pstMWContext->pstRtspContext, pstMWContext->pstSession->video, &data);
+  s32Ret = app_ipcam_WebSocket_Stream_Send(&stStream, NULL);
   if (s32Ret != CVI_SUCCESS) {
     AI_LOGE("CVI_VENC_ReleaseStream, s32Ret = %d\n", s32Ret);
     goto send_failed;
   }
 
 send_failed:
-  CVI_VENC_ReleaseStream(VencChn, &stStream);
   free(stStream.pstPack);
-  stStream.pstPack = NULL;
+  CVI_VENC_ReleaseStream(VencChn, &stStream);
   return s32Ret;
-}
-
-void SAMPLE_AI_Stop_VPSS(SAMPLE_AI_VPSS_POOL_CONFIG_S *pstVPSSPoolConfig) {
-  for (uint32_t u32VpssIndex = 0; u32VpssIndex < pstVPSSPoolConfig->u32VpssGrpCount;
-       u32VpssIndex++) {
-    AI_LOGI("stop VPSS (%u)\n", u32VpssIndex);
-    CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM + 1] = {0};
-    for (uint32_t u32VpssChnIndex = 0;
-         u32VpssChnIndex < pstVPSSPoolConfig->astVpssConfig[u32VpssIndex].u32ChnCount;
-         u32VpssChnIndex++) {
-      abChnEnable[u32VpssChnIndex] = true;
-    }
-    SAMPLE_COMM_VPSS_Stop(u32VpssIndex, abChnEnable);
-  }
-}
-
-void SAMPLE_AI_Destroy_MW(SAMPLE_AI_MW_CONTEXT *pstMWContext) {
-  AI_LOGI("destroy middleware\n");
-  CVI_RTSP_Stop(pstMWContext->pstRtspContext);
-  CVI_RTSP_DestroySession(pstMWContext->pstRtspContext, pstMWContext->pstSession);
-  CVI_RTSP_Destroy(&pstMWContext->pstRtspContext);
-  SAMPLE_COMM_VENC_Stop(pstMWContext->u32VencChn);
-
-  SAMPLE_COMM_VI_DestroyIsp(&pstMWContext->stViConfig);
-  SAMPLE_COMM_VI_DestroyVi(&pstMWContext->stViConfig);
-  SAMPLE_AI_Stop_VPSS(&pstMWContext->stVPSSPoolConfig);
-
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
-}
-
-void SAMPLE_AI_Destroy_MW_NO_RTSP(SAMPLE_AI_MW_CONTEXT *pstMWContext) {
-  AI_LOGI("destroy middleware\n");
-
-  SAMPLE_COMM_VI_DestroyIsp(&pstMWContext->stViConfig);
-  SAMPLE_COMM_VI_DestroyVi(&pstMWContext->stViConfig);
-  SAMPLE_AI_Stop_VPSS(&pstMWContext->stVPSSPoolConfig);
-
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
 }

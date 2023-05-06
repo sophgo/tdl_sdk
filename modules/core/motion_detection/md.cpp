@@ -46,7 +46,6 @@ MotionDetection::MotionDetection(IVE *_ive_instance) : ive_instance(_ive_instanc
 
 CVI_S32 MotionDetection::init(VIDEO_FRAME_INFO_S *init_frame) {
   CVI_S32 ret = construct_images(init_frame);
-
   if (ret == CVI_SUCCESS) {
     ret = copy_image(init_frame, &background_img);
   }
@@ -118,7 +117,6 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
     LOGE("Cannot create buffer image in MotionDetection, ret=0x%x\n", ret);
     return CVI_FAILURE;
   }
-
   ret = background_img.create(ive_instance, ImageType::U8C1, voWidth, voHeight);
   if (ret != CVI_SUCCESS) {
     LOGE("Cannot create buffer image in MotionDetection, ret=0x%x\n", ret);
@@ -128,6 +126,10 @@ CVI_S32 MotionDetection::construct_images(VIDEO_FRAME_INFO_S *init_frame) {
 }
 
 CVI_S32 MotionDetection::update_background(VIDEO_FRAME_INFO_S *frame) {
+  if (p_ccl_instance == nullptr) {
+    init(frame);
+  }
+
   if (frame->stVFrame.u32Width != background_img.getWidth() ||
       frame->stVFrame.u32Height != background_img.getHeight()) {
     free_all();
@@ -135,9 +137,7 @@ CVI_S32 MotionDetection::update_background(VIDEO_FRAME_INFO_S *frame) {
       return CVI_FAILURE;
     }
   }
-  if (p_ccl_instance == nullptr) {
-    init(frame);
-  }
+
   CVI_S32 ret = copy_image(frame, &background_img);
 
 #ifdef DEBUG_MD
