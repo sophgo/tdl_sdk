@@ -261,7 +261,7 @@ CVI_S32 SAMPLE_AI_Send_Frame_WEB(VIDEO_FRAME_INFO_S *stVencFrame,
 
   s32Ret = app_ipcam_WebSocket_Stream_Send(&stStream, NULL);
   if (s32Ret != CVI_SUCCESS) {
-    AI_LOGE("CVI_VENC_ReleaseStream, s32Ret = %d\n", s32Ret);
+    AI_LOGE("app_ipcam_WebSocket_Stream_Send, s32Ret = %d\n", s32Ret);
     goto send_failed;
   }
 

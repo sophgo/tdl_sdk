@@ -422,7 +422,7 @@ CVI_S32 SAMPLE_AI_Send_Frame_RTSP(VIDEO_FRAME_INFO_S *stVencFrame,
   s32Ret =
       CVI_RTSP_WriteFrame(pstMWContext->pstRtspContext, pstMWContext->pstSession->video, &data);
   if (s32Ret != CVI_SUCCESS) {
-    AI_LOGE("CVI_VENC_ReleaseStream, s32Ret = %d\n", s32Ret);
+    AI_LOGE("CVI_RTSP_WriteFrame, s32Ret = %d\n", s32Ret);
     goto send_failed;
   }
 

@@ -28,6 +28,7 @@
 
 static volatile bool bExit = false;
 static cvai_object_t g_stObjMeta;
+static cvai_face_t g_stFaceMeta;
 MUTEXAUTOLOCK_INIT(ResultMutex);
 
 static SAMPLE_AI_TYPE g_ai_type = 0;
@@ -47,6 +48,7 @@ cvai_service_brush_t *get_obj_brush(cvai_object_t *p_obj_meta) {
   }
   return p_brush;
 }
+
 SAMPLE_AI_TYPE *ai_param_get(void) { return &g_ai_type; }
 
 void ai_param_set(SAMPLE_AI_TYPE ai_type) { g_ai_type = ai_type; }
@@ -56,19 +58,10 @@ int init_func(cviai_handle_t ai_handle, SAMPLE_AI_TYPE algo_type) {
   if (algo_type == CVI_AI_HAND) {
     const char *det_path = "/mnt/data/models/hand.cvimodel";
     ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, det_path);
-    if (ret != CVI_SUCCESS) {
-      printf("failed to open face reg model %s\n", det_path);
-      return ret;
-    }
     CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.4);
 
     const char *cls_model_path = "/mnt/data/models/hand_cls_int8_cv182x.cvimodel";
-
     ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, cls_model_path);
-    if (ret != CVI_SUCCESS) {
-      printf("failed to open face reg model %s\n", cls_model_path);
-      return ret;
-    }
   } else if (algo_type == CVI_AI_OBJECT) {
     const char *det_path = "/mnt/data/models//mobiledetv2-pedestrian-d0-ls-384.cvimodel";
     ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, det_path);
@@ -78,6 +71,11 @@ int init_func(cviai_handle_t ai_handle, SAMPLE_AI_TYPE algo_type) {
   } else if (algo_type == CVI_AI_PERSON_VEHICLE) {
     const char *det_path = "/mnt/data/models/person_vehicle.cvimodel";
     ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, det_path);
+  } else if (algo_type == CVI_AI_FACE) {
+    const char *det_path = "/mnt/data/models/scrfd_768_432_int8_1x.cvimodel";
+    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, det_path);
+    const char *recogntion_path = "/mnt/data/models/cviface-v5-s.cvimodel";
+    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, recogntion_path);
   } else if (algo_type == CVI_AI_MEET) {
     const char *det_path = "/mnt/data/models/meet.cvimodel";
     ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, det_path);
@@ -91,6 +89,7 @@ int init_func(cviai_handle_t ai_handle, SAMPLE_AI_TYPE algo_type) {
 
   return ret;
 }
+
 int release_func(cviai_handle_t ai_handle, SAMPLE_AI_TYPE algo_type) {
   int ret = 0;
   if (algo_type == CVI_AI_HAND) {
@@ -102,15 +101,18 @@ int release_func(cviai_handle_t ai_handle, SAMPLE_AI_TYPE algo_type) {
     CVI_AI_CloseModel(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION);
   } else if (algo_type == CVI_AI_PERSON_VEHICLE) {
     CVI_AI_CloseModel(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION);
+  } else if (algo_type == CVI_AI_FACE) {
+    CVI_AI_CloseModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE);
+    CVI_AI_CloseModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION);
   } else if (algo_type == CVI_AI_MEET) {
     CVI_AI_CloseModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION);
     CVI_AI_CloseModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION);
   }
-
   return ret;
 }
+
 int infer_func(cviai_handle_t ai_handle, SAMPLE_AI_TYPE algo_type, VIDEO_FRAME_INFO_S *ptr_frame,
-               cvai_object_t *p_stObjMeta) {
+               cvai_object_t *p_stObjMeta, cvai_face_t *p_face) {
   int ret = 0;
   if (algo_type == CVI_AI_HAND) {
     ret = CVI_AI_Hand_Detection(ai_handle, ptr_frame, p_stObjMeta);
@@ -128,6 +130,11 @@ int infer_func(cviai_handle_t ai_handle, SAMPLE_AI_TYPE algo_type, VIDEO_FRAME_I
     ret = CVI_AI_PersonPet_Detection(ai_handle, ptr_frame, p_stObjMeta);
   } else if (algo_type == CVI_AI_PERSON_VEHICLE) {
     ret = CVI_AI_PersonVehicle_Detection(ai_handle, ptr_frame, p_stObjMeta);
+  } else if (algo_type == CVI_AI_FACE) {
+    ret = CVI_AI_ScrFDFace(ai_handle, ptr_frame, p_face);
+    if (p_face->size > 0) {
+      ret = CVI_AI_FaceRecognition(ai_handle, ptr_frame, p_face);
+    }
   } else if (algo_type == CVI_AI_MEET) {
     ret = CVI_AI_HandFacePerson_Detection(ai_handle, ptr_frame, p_stObjMeta);
     ret = CVI_AI_HandClassification(ai_handle, ptr_frame, p_stObjMeta);
@@ -154,6 +161,12 @@ void *run_venc_thread(void *args) {
   VIDEO_FRAME_INFO_S stFrame;
   CVI_S32 s32Ret;
   cvai_object_t stObjMeta = {0};
+  cvai_face_t stFaceMeta = {0};
+  SAMPLE_AI_TYPE ai_type = CVI_AI_FACE;
+  cvai_service_brush_t *p_brushes = NULL;
+  cvai_service_brush_t brush_0 = {.size = 4, .color.r = 0, .color.g = 64, .color.b = 255};
+  ;
+  char name[256];
 
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN0, &stFrame, 2000);
@@ -162,18 +175,32 @@ void *run_venc_thread(void *args) {
       break;
     }
 
-    char name[256];
     MutexAutoLock(ResultMutex, lock);
-    CVI_AI_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
-    for (uint32_t oid = 0; oid < stObjMeta.size; oid++) {
-      sprintf(name, "%s: %.2f", stObjMeta.info[oid].name, stObjMeta.info[oid].bbox.score);
-      memcpy(stObjMeta.info[oid].name, name, sizeof(stObjMeta.info[oid].name));
-    }
-    if (stObjMeta.size > 0) {
-      cvai_service_brush_t *p_brushes = get_obj_brush(&stObjMeta);
-      s32Ret = CVI_AI_Service_ObjectDrawRect2(pstArgs->stServiceHandle, &stObjMeta, &stFrame, true,
-                                              p_brushes);
-      free(p_brushes);
+    ai_type = g_ai_type;
+    if (ai_type == CVI_AI_FACE) {
+      memset(&stFaceMeta, 0, sizeof(cvai_face_t));
+      if (g_stFaceMeta.size > 0) {
+        CVI_AI_CopyFaceMeta(&g_stFaceMeta, &stFaceMeta);
+        for (uint32_t oid = 0; oid < stFaceMeta.size; oid++) {
+          sprintf(name, "%s: %.2f", stFaceMeta.info[oid].name, stFaceMeta.info[oid].bbox.score);
+          memcpy(stFaceMeta.info[oid].name, name, sizeof(stFaceMeta.info[oid].name));
+        }
+        s32Ret = CVI_AI_Service_FaceDrawRect(pstArgs->stServiceHandle, &stFaceMeta, &stFrame, false,
+                                             brush_0);
+      }
+    } else {
+      memset(&stObjMeta, 0, sizeof(cvai_object_t));
+      if (g_stObjMeta.size > 0) {
+        CVI_AI_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
+        for (uint32_t oid = 0; oid < stObjMeta.size; oid++) {
+          sprintf(name, "%s: %.2f", stObjMeta.info[oid].name, stObjMeta.info[oid].bbox.score);
+          memcpy(stObjMeta.info[oid].name, name, sizeof(stObjMeta.info[oid].name));
+        }
+        p_brushes = get_obj_brush(&stObjMeta);
+        s32Ret = CVI_AI_Service_ObjectDrawRect2(pstArgs->stServiceHandle, &stObjMeta, &stFrame,
+                                                true, p_brushes);
+        free(p_brushes);
+      }
     }
 
     if (s32Ret != CVIAI_SUCCESS) {
@@ -182,9 +209,14 @@ void *run_venc_thread(void *args) {
       goto error;
     }
 
-    s32Ret = SAMPLE_AI_Send_Frame_WEB(&stFrame, pstArgs->pstMWContext);
+    SAMPLE_AI_Send_Frame_WEB(&stFrame, pstArgs->pstMWContext);
   error:
-    CVI_AI_Free(&stObjMeta);
+    if (ai_type == CVI_AI_FACE) {
+      CVI_AI_Free(&stFaceMeta);
+    } else {
+      CVI_AI_Free(&stObjMeta);
+    }
+
     CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
@@ -200,18 +232,21 @@ void *run_ai_thread(void *args) {
   VIDEO_FRAME_INFO_S stFrame;
 
   CVI_S32 s32Ret;
-  SAMPLE_AI_TYPE ai_type = CVI_AI_HAND;
-  int ret = init_func(pstAIArgs->stAiHandle, CVI_AI_HAND);
+  SAMPLE_AI_TYPE ai_type = CVI_AI_FACE;
+  int ret = init_func(pstAIArgs->stAiHandle, CVI_AI_FACE);
   if (ret != 0) {
     goto inf_error;
   }
 
+  cvai_object_t stObjMeta = {0};
+  cvai_face_t stFaceMeta = {0};
   while (bExit == false) {
     if (ai_type != g_ai_type && g_ai_type < CVI_AI_MAX) {
       release_func(pstAIArgs->stAiHandle, ai_type);
       init_func(pstAIArgs->stAiHandle, g_ai_type);
       ai_type = g_ai_type;
     }
+
     s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
 
     if (s32Ret != CVI_SUCCESS) {
@@ -219,21 +254,25 @@ void *run_ai_thread(void *args) {
       goto get_frame_failed;
     }
 
-    struct timeval t0, t1;
-    gettimeofday(&t0, NULL);
-
-    cvai_object_t stObjMeta = {0};
-    ret = infer_func(pstAIArgs->stAiHandle, ai_type, &stFrame, &stObjMeta);
+    memset(&stFaceMeta, 0, sizeof(cvai_face_t));
+    memset(&stObjMeta, 0, sizeof(cvai_object_t));
+    ret = infer_func(pstAIArgs->stAiHandle, ai_type, &stFrame, &stObjMeta, &stFaceMeta);
     if (ret != 0) {
       goto inf_error;
     }
-    CVI_AI_CopyObjectMeta(&stObjMeta, &g_stObjMeta);
-    CVI_AI_Free(&stObjMeta);
+
+    if (ai_type == CVI_AI_FACE) {
+      CVI_AI_CopyFaceMeta(&stFaceMeta, &g_stFaceMeta);
+      CVI_AI_Free(&stFaceMeta);
+    } else {
+      CVI_AI_CopyObjectMeta(&stObjMeta, &g_stObjMeta);
+      CVI_AI_Free(&stObjMeta);
+    }
+
     if (s32Ret != CVIAI_SUCCESS) {
       AI_LOGE("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
-    gettimeofday(&t1, NULL);
 
   inf_error:
     CVI_VPSS_ReleaseChnFrame(0, VPSS_CHN1, &stFrame);
@@ -301,7 +340,7 @@ CVI_S32 get_middleware_config(SAMPLE_AI_MW_CONFIG_S *pstMWConfig) {
   pstMWConfig->stVBPoolConfig.astVBPoolSetup[0].u32VpssGrpBinding = (VPSS_GRP)0;
 
   // VBPool 1 for AI frame
-  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].enFormat = VI_PIXEL_FORMAT;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].enFormat = PIXEL_FORMAT_RGB_888_PLANAR;
   pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].u32BlkCount = 3;
   pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].u32Height = stVencSize.u32Height;
   pstMWConfig->stVBPoolConfig.astVBPoolSetup[1].u32Width = stVencSize.u32Width;
@@ -348,7 +387,7 @@ CVI_S32 get_middleware_config(SAMPLE_AI_MW_CONFIG_S *pstMWConfig) {
   VPSS_CHN_DEFAULT_HELPER(&pstVpssConfig->astVpssChnAttr[0], stVencSize.u32Width,
                           stVencSize.u32Height, VI_PIXEL_FORMAT, true);
   VPSS_CHN_DEFAULT_HELPER(&pstVpssConfig->astVpssChnAttr[1], stVencSize.u32Width,
-                          stVencSize.u32Height, VI_PIXEL_FORMAT, true);
+                          stVencSize.u32Height, PIXEL_FORMAT_RGB_888_PLANAR, true);
 
   // VENC
   //////////////////////////////////////////////////
@@ -356,11 +395,6 @@ CVI_S32 get_middleware_config(SAMPLE_AI_MW_CONFIG_S *pstMWConfig) {
   SAMPLE_AI_Get_Input_Config(&pstMWConfig->stVencConfig.stChnInputCfg);
   pstMWConfig->stVencConfig.u32FrameWidth = stVencSize.u32Width;
   pstMWConfig->stVencConfig.u32FrameHeight = stVencSize.u32Height;
-
-  // RTSP
-  //////////////////////////////////////////////////
-  // Get default RTSP configurations
-  // SAMPLE_AI_Get_RTSP_Config(&pstMWConfig->stRTSPConfig.stRTSPConfig);
 
   return s32Ret;
 }

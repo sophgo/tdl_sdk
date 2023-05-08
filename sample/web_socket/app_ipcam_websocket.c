@@ -10,7 +10,7 @@
 #include "app_ipcam_ai.h"
 #endif
 #define MAX_PAYLOAD_SIZE (1024 * 1024)
-#define MAX_BUFFER_SIZE (256 * 1024)
+#define MAX_BUFFER_SIZE (512 * 1024)
 
 struct lws *g_wsi = NULL;
 static unsigned char *s_imgData = NULL;
@@ -49,9 +49,9 @@ static int ProtocolMyCallback(struct lws *wsi, enum lws_callback_reasons reason,
       // lws_callback_on_writable(wsi);
       break;
     case LWS_CALLBACK_SERVER_WRITEABLE:
-      if (s_fileSize > 100000) {
-        printf("client writeable s_fileSize:%d\n", s_fileSize);
-      }
+      // if (s_fileSize > 100000) {
+      //   printf("client writeable s_fileSize:%d\n", s_fileSize);
+      // }
       pthread_mutex_lock(&g_mutexLock);
       if (s_fileSize != 0) {
         lws_write(wsi, s_imgData + LWS_PRE, s_fileSize,
