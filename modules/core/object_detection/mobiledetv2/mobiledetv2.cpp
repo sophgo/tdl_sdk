@@ -156,7 +156,7 @@ int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
                         factor, mean, false);
   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
   if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed: %s!\n", get_vpss_error_msg(ret));
+    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_SEND_FRAME;
   }
 

@@ -12,7 +12,6 @@ FAST_Mode_Capture_Num 3
 CYCLE_Mode_Interval 20
 AUTO_Mode_Time_Limit 0
 AUTO_Mode_Fast_Cap 1
-Capture_Aligned_Face 0
-Capture_Extended_Face 0
+img_capture_flag 0
 Store_Face_Feature 1
 Store_RGB888 0

@@ -23,8 +23,7 @@
 static CVI_S32 update_data(face_capture_t *face_cpt_info, cvai_face_t *face_meta,
                            cvai_tracker_t *tracker_meta);
 static CVI_S32 clean_data(face_capture_t *face_cpt_info);
-static CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
-                            cvai_face_t *face_meta);
+
 static CVI_S32 update_output_state(face_capture_t *face_cpt_info);
 static CVI_S32 extract_cropped_face(const cviai_handle_t ai_handle, face_capture_t *face_cpt_info);
 static CVI_S32 capture_face_with_vpss(const cviai_handle_t ai_handle, face_capture_t *face_cpt_info,
@@ -99,7 +98,7 @@ CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_c
   if (ret == CVI_SUCCESS) {
     printf("fd model %s open sucessfull\n", fd_model_path);
   }
-  if (fr_model_path != NULL) {
+  if (fr_model_path != NULL && strlen(fr_model_path) > 1) {
     ret |= CVI_AI_OpenModel(ai_handle, fr_model_id, fr_model_path);
     if (ret == CVI_SUCCESS) {
       printf("fr model %s open sucessfull\n", fr_model_path);
@@ -111,7 +110,7 @@ CVI_S32 _FaceCapture_QuickSetUp(cviai_handle_t ai_handle, face_capture_t *face_c
   }
 
 #ifndef NO_OPENCV
-  printf("enter noopencv\n");
+  printf("enter opencv\n");
   if (fd_model_id == CVI_AI_SUPPORTED_MODEL_RETINAFACE) {
     face_cpt_info->fd_inference = CVI_AI_RetinaFace;
     CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
@@ -179,8 +178,7 @@ CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
   cfg->cycle_m_interval = CYCLE_MODE_INTERVAL;
   cfg->auto_m_time_limit = AUTO_MODE_TIME_LIMIT;
   cfg->auto_m_fast_cap = true;
-  cfg->capture_aligned_face = false;
-  cfg->capture_extended_face = false;
+  cfg->img_capture_flag = 0;
   cfg->store_RGB888 = false;
 
   return CVIAI_SUCCESS;
@@ -189,10 +187,7 @@ CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
 CVI_S32 _FaceCapture_SetConfig(face_capture_t *face_cpt_info, face_capture_config_t *cfg,
                                cviai_handle_t ai_handle) {
   memcpy(&face_cpt_info->cfg, cfg, sizeof(face_capture_config_t));
-  if (face_cpt_info->cfg.capture_aligned_face && face_cpt_info->cfg.capture_extended_face) {
-    LOGW("set capture_extended_face = false because capture_aligned_face is true.");
-    face_cpt_info->cfg.capture_extended_face = false;
-  }
+
   cvai_deepsort_config_t deepsort_conf;
   CVI_AI_DeepSORT_GetConfig(ai_handle, &deepsort_conf, -1);
   deepsort_conf.ktracker_conf.max_unmatched_num = cfg->miss_time_limit;
@@ -271,12 +266,9 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
     LOGE("[APP::FaceCapture] update face failed.\n");
     return CVIAI_FAILURE;
   }
-  bool use_vpss = true;
-  if (use_vpss) {
-    ret = capture_face_with_vpss(ai_handle, face_cpt_info, frame, &face_cpt_info->last_faces);
-  } else {
-    ret = capture_face(face_cpt_info, frame, &face_cpt_info->last_faces);
-  }
+
+  ret = capture_face_with_vpss(ai_handle, face_cpt_info, frame, &face_cpt_info->last_faces);
+
   update_output_state(face_cpt_info);
 
   if (face_cpt_info->fr_flag == 2) {
@@ -704,16 +696,32 @@ static CVI_S32 capture_face_with_vpss(const cviai_handle_t ai_handle, face_captu
       }
       continue;
     }
-    cvai_bbox_t newbox;
-    int dst_size = update_extend_resize_info(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                                             &face_cpt_info->data[j].info, &newbox);
-    if (face_cpt_info->data[j].image.width != dst_size ||
-        face_cpt_info->data[j].image.height != dst_size) {
-      CVI_AI_Free(&face_cpt_info->data[j].image);
-      CVI_AI_CreateImage(&face_cpt_info->data[j].image, dst_size, dst_size, PIXEL_FORMAT_RGB_888);
+    if (face_cpt_info->cfg.img_capture_flag == 1) {
+      printf("update whole image,imgformat:%d,buffer format:%d\n",
+             (int)frame->stVFrame.enPixelFormat, (int)face_cpt_info->data[j].image.pix_format);
+      // capture while frame
+      if (face_cpt_info->data[j].image.width != frame->stVFrame.u32Width ||
+          face_cpt_info->data[j].image.height != frame->stVFrame.u32Height ||
+          face_cpt_info->data[j].image.pix_format != frame->stVFrame.enPixelFormat) {
+        CVI_AI_Free(&face_cpt_info->data[j].image);
+        printf("to free buffered image\n");
+        CVI_AI_CreateImageFromVideoFrame(frame, &face_cpt_info->data[j].image);
+      }
+      CVI_AI_CopyVpssImage(frame, &face_cpt_info->data[j].image);
+    } else {
+      printf("update crop image\n");
+      cvai_bbox_t newbox;
+      int dst_size = update_extend_resize_info(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                                               &face_cpt_info->data[j].info, &newbox);
+      if (face_cpt_info->data[j].image.width != dst_size ||
+          face_cpt_info->data[j].image.height != dst_size) {
+        CVI_AI_Free(&face_cpt_info->data[j].image);
+        CVI_AI_CreateImage(&face_cpt_info->data[j].image, dst_size, dst_size, PIXEL_FORMAT_RGB_888);
+      }
+      ret = CVI_AI_CropImage_With_VPSS(ai_handle, face_cpt_info->fd_model, frame, &newbox,
+                                       &face_cpt_info->data[j].image);
     }
-    ret = CVI_AI_CropImage_With_VPSS(ai_handle, face_cpt_info->fd_model, frame, &newbox,
-                                     &face_cpt_info->data[j].image);
+
     if (ret != CVIAI_SUCCESS) {
       LOGW("error crop image,modelid:%d\n", (int)face_cpt_info->fd_model);
     } else {
@@ -724,88 +732,6 @@ static CVI_S32 capture_face_with_vpss(const cviai_handle_t ai_handle, face_captu
     face_cpt_info->data[j]._capture = false;
   }
 
-  return CVIAI_SUCCESS;
-}
-
-static CVI_S32 capture_face(face_capture_t *face_cpt_info, VIDEO_FRAME_INFO_S *frame,
-                            cvai_face_t *face_meta) {
-  LOGI("[APP::FaceCapture] Capture Face\n");
-  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
-      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
-      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
-      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
-    LOGE("Pixel format [%d] is not supported.\n", frame->stVFrame.enPixelFormat);
-    printf("Pixel format [%d] is not supported.\n", frame->stVFrame.enPixelFormat);
-    return CVIAI_ERR_INVALID_ARGS;
-  }
-
-  bool capture = false;
-  for (uint32_t j = 0; j < face_cpt_info->size; j++) {
-    if (face_cpt_info->data[j]._capture) {
-      capture = true;
-      break;
-    }
-  }
-  if (!capture) {
-    return CVIAI_SUCCESS;
-  }
-  /* Estimate memory used */
-  uint64_t mem_used;
-  SUMMARY(face_cpt_info, &mem_used, false);
-
-  bool do_unmap = false;
-  size_t image_size =
-      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
-    frame->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
-    frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
-    frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
-    do_unmap = true;
-  }
-
-  for (uint32_t j = 0; j < face_cpt_info->size; j++) {
-    if (!(face_cpt_info->data[j]._capture)) {
-      continue;
-    }
-    bool first_capture = false;
-    if (face_cpt_info->data[j].state != ALIVE) {
-      /* first capture */
-      face_cpt_info->data[j].state = ALIVE;
-      first_capture = true;
-    }
-    LOGI("Capture Face[%u] (%s)!\n", j, (first_capture) ? "INIT" : "UPDATE");
-
-    /* Check remaining memory space */
-    if (!IS_MEMORY_ENOUGH(face_cpt_info->_m_limit, mem_used, &face_cpt_info->data[j].image,
-                          &face_cpt_info->data[j].info.bbox, frame->stVFrame.enPixelFormat)) {
-      LOGW("Memory is not enough. (drop)\n");
-      if (first_capture) {
-        face_cpt_info->data[j].state = IDLE;
-      }
-      continue;
-    }
-    CVI_AI_Free(&face_cpt_info->data[j].image);
-
-    if (!face_cpt_info->cfg.capture_extended_face) {
-      CVI_AI_CropImage_Face(frame, &face_cpt_info->data[j].image, &face_cpt_info->data[j].info,
-                            face_cpt_info->cfg.capture_aligned_face,
-                            face_cpt_info->cfg.store_RGB888);
-    } else {
-      float dummy_x, dummy_y;
-      CVI_AI_CropImage_Exten(frame, &face_cpt_info->data[j].image,
-                             &face_cpt_info->data[j].info.bbox, face_cpt_info->cfg.store_RGB888,
-                             0.5, &dummy_x, &dummy_y);
-    }
-
-    face_cpt_info->data[j]._capture = false;
-  }
-  if (do_unmap) {
-    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);
-    frame->stVFrame.pu8VirAddr[0] = NULL;
-    frame->stVFrame.pu8VirAddr[1] = NULL;
-    frame->stVFrame.pu8VirAddr[2] = NULL;
-  }
   return CVIAI_SUCCESS;
 }
 
@@ -907,7 +833,7 @@ static void SHOW_CONFIG(face_capture_config_t *cfg) {
   printf("[Cycle] Interval    : %u\n", cfg->cycle_m_interval);
   printf("[Auto] Time Limit   : %u\n\n", cfg->auto_m_time_limit);
   printf("[Auto] Fast Capture : %s\n\n", cfg->auto_m_fast_cap ? "True" : "False");
-  printf(" - Capture Aligned Face : %s\n\n", cfg->capture_aligned_face ? "True" : "False");
+  printf(" - Image Capture Flag : %d\n\n", cfg->img_capture_flag);
   printf(" - Store Face Feature   : %s\n\n", cfg->store_feature ? "True" : "False");
   printf(" - Store RGB888         : %s\n\n", cfg->store_RGB888 ? "True" : "False");
   return;

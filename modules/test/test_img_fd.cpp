@@ -66,9 +66,8 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  std::string strf1(argv[1]);  //"/mnt/data/admin1_data/alios_test/a.jpg");
-  std::string modelf(
-      "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/phobos_fr/scrfd_500m_bnkps_432_768.cvimodel");
+  std::string modelf(argv[1]);
+  std::string strf1(argv[2]);
 
   ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, modelf.c_str());
   if (ret != CVI_SUCCESS) {

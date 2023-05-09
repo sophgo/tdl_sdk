@@ -347,10 +347,8 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config) {
       app_config->auto_m_time_limit = (uint32_t)atoi(value);
     } else if (!strcmp(name, "AUTO_Mode_Fast_Cap")) {
       app_config->auto_m_fast_cap = atoi(value) == 1;
-    } else if (!strcmp(name, "Capture_Aligned_Face")) {
-      app_config->capture_aligned_face = atoi(value) == 1;
-    } else if (!strcmp(name, "Capture_Extended_Face")) {
-      app_config->capture_extended_face = atoi(value) == 1;
+    } else if (!strcmp(name, "img_capture_flag")) {
+      app_config->img_capture_flag = atoi(value);
     } else if (!strcmp(name, "Store_Face_Feature")) {
       app_config->store_feature = atoi(value) == 1;
     } else if (!strcmp(name, "Store_RGB888")) {

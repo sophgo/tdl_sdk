@@ -41,7 +41,7 @@ CVI_S32 CVI_AI_SQPreprocessRaw(cviai_handle_t handle, const VIDEO_FRAME_INFO_S *
   auto &vpss_inst = ctx->vec_vpss_engine[vpss_thread];
   ret = vpss_inst->sendFrame(frame, &chn_attr, 1);
   if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed: %s\n", cviai::get_vpss_error_msg(ret));
+    LOGE("CVI_AI_SQPreprocessRaw Send frame failed: %s\n", cviai::get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_SEND_FRAME;
   }
 
@@ -261,6 +261,55 @@ CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
   return CVIAI_SUCCESS;
 }
 
+CVI_S32 CVI_AI_CreateImageFromVideoFrame(const VIDEO_FRAME_INFO_S *p_src_frame,
+                                         cvai_image_t *image) {
+  PIXEL_FORMAT_E fmt = p_src_frame->stVFrame.enPixelFormat;
+
+  if (fmt != PIXEL_FORMAT_RGB_888 && fmt != PIXEL_FORMAT_RGB_888_PLANAR &&
+      fmt != PIXEL_FORMAT_NV21 && fmt != PIXEL_FORMAT_YUV_PLANAR_420) {
+    LOGE("Pixel format [%d] is not supported.\n", fmt);
+    return CVIAI_ERR_INVALID_ARGS;
+  }
+  if (image->pix[0] != NULL) {
+    LOGE("destination image is not empty.");
+    return CVIAI_ERR_INVALID_ARGS;
+  }
+  memset(image, 0, sizeof(cvai_image_t));
+  image->pix_format = fmt;
+  image->height = p_src_frame->stVFrame.u32Height;
+  image->width = p_src_frame->stVFrame.u32Width;
+
+  /* NOTE: Refer to vpss_helper.h*/
+  int num_plane = 0;
+  if (fmt == PIXEL_FORMAT_RGB_888) {
+    num_plane = 1;
+  } else if (fmt == PIXEL_FORMAT_RGB_888_PLANAR) {
+    num_plane = 3;
+  } else if (fmt == PIXEL_FORMAT_NV21) {
+    num_plane = 2;
+  } else if (fmt == PIXEL_FORMAT_YUV_PLANAR_420) {
+    num_plane = 3;
+  }
+  for (int i = 0; i < num_plane; i++) {
+    image->stride[i] = p_src_frame->stVFrame.u32Stride[i];
+    image->length[i] = p_src_frame->stVFrame.u32Length[i];
+  }
+  uint32_t image_size = image->length[0] + image->length[1] + image->length[2];
+  image->pix[0] = (uint8_t *)malloc(image_size);
+  for (int i = 1; i < num_plane; i++) {
+    image->pix[i] = image->pix[i - 1] + image->length[i - 1];
+  }
+
+#if 1
+  printf(
+      "[create image] format[%d], height[%u], width[%u], stride[%u][%u][%u], length[%u][%u][%u]\n",
+      image->pix_format, image->height, image->width, image->stride[0], image->stride[1],
+      image->stride[2], image->length[0], image->length[1], image->length[2]);
+#endif
+
+  return CVIAI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_EstimateImageSize(uint64_t *size, uint32_t height, uint32_t width,
                                  PIXEL_FORMAT_E fmt) {
   *size = 0;
@@ -338,15 +387,23 @@ CVI_S32 CVI_AI_DestroyImage(VIDEO_FRAME_INFO_S *frame) {
   return ret;
 }
 
-CVI_S32 CVI_AI_DumpImage(const char *filepath, VIDEO_FRAME_INFO_S *frame) {
+CVI_S32 CVI_AI_DumpVpssFrame(const char *filepath, VIDEO_FRAME_INFO_S *frame) {
   VIDEO_FRAME_S *pstVFSrc = &frame->stVFrame;
   int channels = 1;
+  int num_pixels = 1;
   switch (pstVFSrc->enPixelFormat) {
     case PIXEL_FORMAT_YUV_400: {
       channels = 1;
     } break;
     case PIXEL_FORMAT_RGB_888_PLANAR: {
       channels = 3;
+    } break;
+    case PIXEL_FORMAT_RGB_888: {
+      channels = 1;
+      num_pixels = 3;
+    } break;
+    case PIXEL_FORMAT_NV21: {
+      channels = 2;
     } break;
     default: {
       LOGE("Unsupported conversion type: %u.\n", pstVFSrc->enPixelFormat);
@@ -363,13 +420,70 @@ CVI_S32 CVI_AI_DumpImage(const char *filepath, VIDEO_FRAME_INFO_S *frame) {
   uint32_t height = pstVFSrc->u32Height;
   fwrite(&width, sizeof(uint32_t), 1, fp);
   fwrite(&height, sizeof(uint32_t), 1, fp);
+  uint32_t pix_format = (uint32_t)pstVFSrc->enPixelFormat;
+  fwrite(&pix_format, sizeof(pix_format), 1, fp);
   for (int c = 0; c < channels; c++) {
-    fwrite(pstVFSrc->pu8VirAddr[c], width * height, 1, fp);
+    uint8_t *ptr_plane = pstVFSrc->pu8VirAddr[c];
+    if (width * num_pixels == pstVFSrc->u32Stride[c]) {
+      fwrite(pstVFSrc->pu8VirAddr[c], pstVFSrc->u32Stride[c] * height, 1, fp);
+    } else {
+      for (uint32_t r = 0; r < height; r++) {
+        fwrite(ptr_plane, width * num_pixels, 1, fp);
+        ptr_plane += pstVFSrc->u32Stride[c];
+      }
+    }
   }
   fclose(fp);
   return CVI_SUCCESS;
 }
+CVI_S32 CVI_AI_DumpImage(const char *filepath, cvai_image_t *image) {
+  int channels = 1;
+  int num_pixels = 1;
+  switch (image->pix_format) {
+    case PIXEL_FORMAT_YUV_400: {
+      channels = 1;
+    } break;
+    case PIXEL_FORMAT_RGB_888_PLANAR: {
+      channels = 3;
+    } break;
+    case PIXEL_FORMAT_RGB_888: {
+      channels = 1;
+      num_pixels = 3;
+    } break;
+    case PIXEL_FORMAT_NV21: {
+      channels = 2;
+    } break;
+    default: {
+      LOGE("Unsupported conversion type: %u.\n", image->pix_format);
+      return CVI_FAILURE;
+    } break;
+  }
 
+  FILE *fp = fopen(filepath, "wb");
+  if (fp == nullptr) {
+    LOGE("failed to open: %s.\n", filepath);
+    return CVI_FAILURE;
+  }
+  uint32_t width = image->width;
+  uint32_t height = image->height;
+  fwrite(&width, sizeof(uint32_t), 1, fp);
+  fwrite(&height, sizeof(uint32_t), 1, fp);
+  uint32_t pix_format = (uint32_t)image->pix_format;
+  fwrite(&pix_format, sizeof(pix_format), 1, fp);
+  for (int c = 0; c < channels; c++) {
+    uint8_t *ptr_plane = image->pix[c];
+    if (width * num_pixels == image->stride[c]) {
+      fwrite(ptr_plane, image->stride[c] * height, 1, fp);
+    } else {
+      for (uint32_t r = 0; r < height; r++) {
+        fwrite(ptr_plane, width * num_pixels, 1, fp);
+        ptr_plane += image->stride[c];
+      }
+    }
+  }
+  fclose(fp);
+  return CVI_SUCCESS;
+}
 CVI_S32 CVI_AI_StbReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
                             PIXEL_FORMAT_E format) {
   // int desiredNChannels = -1;

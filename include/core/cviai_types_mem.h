@@ -42,6 +42,10 @@ DLL_EXPORT void CVI_AI_CopyObjectMeta(const cvai_object_t *src, cvai_object_t *d
 DLL_EXPORT void CVI_AI_CopyTrackerMeta(const cvai_tracker_t *src, cvai_tracker_t *dst);
 
 DLL_EXPORT void CVI_AI_CopyImage(const cvai_image_t *src_image, cvai_image_t *dst_image);
+DLL_EXPORT void CVI_AI_MapImage(VIDEO_FRAME_INFO_S *src_image, bool *p_is_mapped);
+DLL_EXPORT void CVI_AI_UnMapImage(VIDEO_FRAME_INFO_S *src_image);
+
+DLL_EXPORT CVI_S32 CVI_AI_CopyVpssImage(VIDEO_FRAME_INFO_S *src_image, cvai_image_t *dst_image);
 #ifdef __cplusplus
 }
 #endif

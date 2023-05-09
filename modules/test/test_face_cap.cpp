@@ -365,10 +365,8 @@ int main(int argc, char *argv[]) {
   for (VPSS_GRP VpssGrp = 0; VpssGrp < VPSS_MAX_GRP_NUM; ++VpssGrp)
     SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
 
-  std::string str_fd_model = std::string(
-      "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/phobos_fr/scrfd_500m_bnkps_432_768.cvimodel");
-  std::string str_fr_model =
-      std::string("/mnt/data/admin1_data/AI_CV/cv182x/ai_models/phobos_fr/cviface-v5-s.cvimodel");
+  std::string str_fd_model(argv[1]);
+  std::string str_fr_model(argv[2]);
 
   // const char *fd_model_path = str_fd_model.c_str();
 
@@ -377,18 +375,14 @@ int main(int argc, char *argv[]) {
   int buffer_size = 10;
   float det_threshold = 0.5;
   bool write_image = true;  // 1
-  std::string str_image_root =
-      "/mnt/data/admin1_data/datasets/ivs_eval_set/image/yitong_img";  //(argv[1]);
-  std::string str_dst_root =
-      "/mnt/data/admin1_data/datasets/ivs_eval_set/yitong_res1";  // std::string(argv[2]);
-  // if (!create_directory(str_dst_root)) {
-  //   std::cout << "create directory:" << str_dst_root << " failed\n";
-  // }
+  std::string str_image_root(argv[3]);
+  std::string str_dst_root(argv[4]);
+
   std::string str_dst_video = join_path(str_dst_root, get_directory_name(str_image_root));
-  // if (!create_directory(str_dst_video)) {
-  //   std::cout << "create directory:" << str_dst_video << " failed\n";
-  //   // return CVI_FAILURE;
-  // }
+  if (!create_directory(str_dst_video)) {
+    std::cout << "create directory:" << str_dst_video << " failed\n";
+    // return CVI_FAILURE;
+  }
   g_out_dir = str_dst_video;
   if (buffer_size <= 0) {
     printf("buffer size must be larger than 0.\n");
@@ -411,7 +405,7 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
   printf("to quick setup\n");
 
-  app_handle->face_cpt_info->fr_flag = 2;
+  app_handle->face_cpt_info->fr_flag = 0;
 
   cvai_service_feature_array_t feat_gallery;
   memset(&feat_gallery, 0, sizeof(feat_gallery));
@@ -439,7 +433,8 @@ int main(int argc, char *argv[]) {
   if (ive_handle == NULL) {
     printf("CreateHandle failed with %#x!\n", ret);
     ret = CVI_FAILURE;
-  } else {
+  }
+  if (str_fr_model.size() > 1) {
     const char *gimg = "/mnt/data/admin1_data/datasets/ivs_eval_set/image/yitong/register.jpg";
     ret = register_gallery_face(app_handle, ive_handle, gimg, &feat_gallery, gallery_names);
     std::cout << "register ret:" << ret << std::endl;
@@ -592,9 +587,7 @@ int main(int argc, char *argv[]) {
   bRunImageWriter = false;
   bRunVideoOutput = false;
   pthread_join(io_thread, NULL);
-  // pthread_join(vo_thread, NULL);
 
-  // CLEANUP_SYSTEM:
   CVI_AI_APP_DestroyHandle(app_handle);
   CVI_AI_Service_DestroyHandle(service_handle);
   CVI_AI_DestroyHandle(ai_handle);

@@ -2,8 +2,8 @@
 
 #include "core/cviai_utils.h"
 
+#include <cvi_sys.h>
 #include "core_utils.hpp"
-#include "cvi_sys.h"
 #include "cviai_log.hpp"
 #include "rescale_utils.hpp"
 

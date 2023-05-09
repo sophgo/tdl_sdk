@@ -147,7 +147,10 @@ DLL_EXPORT CVI_S32 CVI_AI_StbReadImage(const char *filepath, VIDEO_FRAME_INFO_S 
                                        PIXEL_FORMAT_E format);
 
 DLL_EXPORT CVI_S32 CVI_AI_DestroyImage(VIDEO_FRAME_INFO_S *frame);
-DLL_EXPORT CVI_S32 CVI_AI_DumpImage(const char *filepath, VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_AI_DumpVpssFrame(const char *filepath, VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_AI_DumpImage(const char *filepath, cvai_image_t *image);
+DLL_EXPORT CVI_S32 CVI_AI_CreateImageFromVideoFrame(const VIDEO_FRAME_INFO_S *p_src_frame,
+                                                    cvai_image_t *image);
 /**@}*/
 
 #ifdef __cplusplus
