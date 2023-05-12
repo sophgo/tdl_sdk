@@ -937,8 +937,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
   return ctx->md_model->update_background(frame);
 }
 
-CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, int x1, int y1, int x2,
-                                       int y2) {
+CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, MDROI_t *roi_s) {
   TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_ROI");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
@@ -946,7 +945,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, int x1, int 
     LOGE("MD has not been inited\n");
     return CVIAI_FAILURE;
   }
-  return ctx->md_model->set_roi(x1, y1, x2, y2);
+  return ctx->md_model->set_roi(roi_s);
 }
 
 CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -1091,15 +1090,7 @@ CVI_S32 CVI_AI_CropImage_With_VPSS(const cviai_handle_t handle, CVI_AI_SUPPORTED
   delete f;
   return ret;
 }
-CVI_S32 CVI_AI_GetMotionMap(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  MotionDetection *md_model = ctx->md_model;
-  if (md_model == nullptr) {
-    LOGE("Failed to get motion detection instance\n");
-    return CVI_FAILURE;
-  }
-  return ctx->md_model->get_motion_map(frame);
-}
+
 CVI_S32 CVI_AI_Hand_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                               cvai_object_t *obj_meta) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);

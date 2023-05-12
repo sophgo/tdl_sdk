@@ -57,14 +57,14 @@ CVI_S32 CVI_MD_Set_Background(const cvi_md_handle_t handle,
  * be returned.
  * @return int Return CVI_SUCCESS on success.
  */
-CVI_S32 CVI_MD_Set_ROI(const cvi_md_handle_t handle, int x1, int y1,
-                                                  int x2, int y2){
+
+CVI_S32 CVI_MD_Set_ROI(const cvi_md_handle_t handle, MDROI *roi_s){
     if(handle == nullptr){
       LOGE("handle is nullptr");
       return CVI_FAILURE;
     }
     MotionDetection *p_md_inst = (MotionDetection*)handle;
-    return p_md_inst->set_roi(x1,y1,x2,y2);                                               
+    return p_md_inst->set_roi(reinterpret_cast<MDROI_t*>(roi_s));
 }
 /**
  * @brief Do Motion Detection with background subtraction method.

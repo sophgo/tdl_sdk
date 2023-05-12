@@ -1,9 +1,17 @@
 #pragma once
 #include <memory>
+#include "core/core/cvai_core_types.h"
 #include "cvi_comm.h"
 #include "cvi_comm_vb.h"
 #include "ive.hpp"
 #include "profiler.hpp"
+
+struct Padding {
+  uint32_t left;
+  uint32_t top;
+  uint32_t right;
+  uint32_t bottom;
+};
 
 class MotionDetection {
  public:
@@ -15,8 +23,7 @@ class MotionDetection {
   CVI_S32 detect(VIDEO_FRAME_INFO_S *frame, std::vector<std::vector<float>> &objs,
                  uint8_t threshold, double min_area);
   CVI_S32 update_background(VIDEO_FRAME_INFO_S *frame);
-  CVI_S32 get_motion_map(VIDEO_FRAME_INFO_S *frame);
-  CVI_S32 set_roi(int x1, int y1, int x2, int y2);
+  CVI_S32 set_roi(MDROI_t *_roi_s);
   ive::IVE *get_ive_instance() { return ive_instance; }
 
  private:
@@ -32,13 +39,7 @@ class MotionDetection {
   ive::IVEImage tmp_src_img_;
   uint32_t im_width;
   uint32_t im_height;
-  int m_roi_[4] = {0};
-  struct Padding {
-    uint32_t left;
-    uint32_t top;
-    uint32_t right;
-    uint32_t bottom;
-  };
+  MDROI_t roi_s;
 
   Padding m_padding;
   bool use_roi_ = false;

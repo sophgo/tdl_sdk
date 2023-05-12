@@ -105,6 +105,18 @@ typedef struct {
   float y[4];
 } cvai_4_pts_t;
 
+typedef struct _MDPoint_t {
+  int x1;
+  int y1;
+  int x2;
+  int y2;
+} MDPoint_t;
+
+typedef struct _MDROI_t {
+  uint8_t num;
+  MDPoint_t pnt[4];
+} MDROI_t;
+
 /** @enum cvai_trk_state_type_t
  * @ingroup core_cviaicore
  * @brief Enum describing the tracking state.

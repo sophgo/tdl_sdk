@@ -1077,8 +1077,7 @@ DLL_EXPORT CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t ha
  * be returned.
  * @return int Return CVIAI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, int x1, int y1,
-                                                  int x2, int y2);
+DLL_EXPORT CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, MDROI_t *roi_s);
 /**
  * @brief Do Motion Detection with background subtraction method.
  *
@@ -1093,16 +1092,6 @@ DLL_EXPORT CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRA
                                           cvai_object_t *objects, uint8_t threshold,
                                           double min_area);
 
-/**
- * @brief Get Motion Map after run moition detection,the motion map address would not change after
- * multiple times running
- *
- * @param handle An AI SDK handle.
- * @param frame output motion map frame, should be YUV400 format.CAUTION:this frame should not be
- * released outside
- * @return int Return CVI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_GetMotionMap(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame);
 /**@}*/
 
 /**

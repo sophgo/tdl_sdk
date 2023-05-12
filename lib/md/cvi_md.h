@@ -15,6 +15,18 @@ typedef void *cvi_md_handle_t;
 extern "C" {
 #endif
 
+typedef struct _MDPoint {
+  int x1;
+  int y1;
+  int x2;
+  int y2;
+} MDPoint;
+
+typedef struct _MDROI {
+  uint8_t num;
+  MDPoint pnt[4];
+} MDROI;
+
 DLL_EXPORT CVI_S32 CVI_MD_Create_Handle(cvi_md_handle_t *handle);
 DLL_EXPORT CVI_S32 CVI_MD_Destroy_Handle(cvi_md_handle_t handle);
 /**
@@ -40,8 +52,7 @@ DLL_EXPORT CVI_S32 CVI_MD_Set_Background(const cvi_md_handle_t handle,
  * be returned.
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_MD_Set_ROI(const cvi_md_handle_t handle, int x1, int y1,
-                                                  int x2, int y2);
+DLL_EXPORT CVI_S32 CVI_MD_Set_ROI(const cvi_md_handle_t handle, MDROI *_roi_s);
 /**
  * @brief Do Motion Detection with background subtraction method.
  *

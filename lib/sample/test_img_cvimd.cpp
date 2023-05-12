@@ -76,6 +76,18 @@ int main(int argc, char *argv[]) {
   ret = CVI_MD_Set_Background(handle, &bg);
   printf("set background ret:%x\n", ret);
 
+  MDROI roi_s;
+  roi_s.num = 2;
+  roi_s.pnt[0].x1 = 0;
+  roi_s.pnt[0].y1 = 0;
+  roi_s.pnt[0].x2 = 512;
+  roi_s.pnt[0].y2 = 512;
+  roi_s.pnt[1].x1 = 1000;
+  roi_s.pnt[1].y1 = 150;
+  roi_s.pnt[1].x2 = 1150;
+  roi_s.pnt[1].y2 = 250;
+  ret = CVI_MD_Set_ROI(handle, &roi_s);
+
   int *p_boxes;
   uint32_t num_boxes;
   printf("to do md detect \n");

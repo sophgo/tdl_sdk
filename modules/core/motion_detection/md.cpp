@@ -67,30 +67,29 @@ void MotionDetection::free_all() {
   background_img.free();
 }
 
-CVI_S32 MotionDetection::set_roi(int x1, int y1, int x2, int y2) {
-  if (x1 == 0 && y1 == 0 && x2 == 0 && y2 == 0) {
+CVI_S32 MotionDetection::set_roi(MDROI_t *_roi_s) {
+  if (_roi_s->num == 0) {
     use_roi_ = false;
-    memset(m_roi_, 0, sizeof(md_output));
-    return CVI_SUCCESS;
-  }
-  if (x1 == m_roi_[0] && y1 == m_roi_[1] && x2 == m_roi_[0] && y2 == m_roi_[1]) {
-    use_roi_ = true;
-    return CVI_SUCCESS;
+    return CVI_FAILURE;
   }
   int imw = md_output.getWidth();
   int imh = md_output.getHeight();
-  if (x2 < x1 || x1 < 0 || x2 >= imw) {
-    LOGE("roi x overflow,x1:%d,x2:%d,imgw:%d\n", x1, x2, md_output.getWidth());
-    return CVI_FAILURE;
+
+  for (auto i = 0; i < _roi_s->num; i++) {
+    auto p = _roi_s->pnt[i];
+    if (p.x2 < p.x1 || p.x1 < 0 || p.x2 >= imw) {
+      use_roi_ = false;
+      LOGE("roi[%d] x overflow,x1:%d,x2:%d,imgw:%d\n", i, p.x1, p.x2, md_output.getWidth());
+      return CVI_FAILURE;
+    }
+    if (p.y2 < p.y1 || p.y1 < 0 || p.y2 >= imh) {
+      use_roi_ = false;
+      LOGE("roi[%d] y overflow,y1:%d,y2:%d,imgw:%d\n", i, p.y1, p.y2, md_output.getHeight());
+      return CVI_FAILURE;
+    }
   }
-  if (y2 < y1 || y1 < 0 || y2 >= imh) {
-    LOGE("roi y overflow,y1:%d,y2:%d,imgw:%d\n", y1, y2, md_output.getHeight());
-    return CVI_FAILURE;
-  }
-  m_roi_[0] = x1;
-  m_roi_[1] = y1;
-  m_roi_[2] = x2;
-  m_roi_[3] = y2;
+
+  roi_s = *_roi_s;
   use_roi_ = true;
   return md_output.setZero(ive_instance);
 }
@@ -208,35 +207,46 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, std::vector<std::v
 
   md_output.bufRequest(ive_instance);
   int wstride = md_output.getStride()[0];
-  int offsetx = 0, offsety = 0, offset = 0;
-  int imw = im_width;
-  int imh = im_height;
-  if (use_roi_) {
-    offsetx = m_roi_[0];
-    offsety = m_roi_[1];
-    offset = m_roi_[1] * wstride + m_roi_[0];
-    imw = m_roi_[2] - m_roi_[0];
-    imh = m_roi_[3] - m_roi_[1];
-  }
   int num_boxes = 0;
+  int *p_boxes = nullptr;
 
-  int *p_boxes = extract_connected_component(md_output.getVAddr()[0] + offset, imw, imh, wstride,
-                                             min_area, p_ccl_instance, &num_boxes);
-
-  objs.clear();
-  for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
-    std::vector<float> box;
-    box.push_back(p_boxes[i * 5 + 2] + offsetx);
-    box.push_back(p_boxes[i * 5 + 1] + offsety);
-    box.push_back(p_boxes[i * 5 + 4] + offsetx);
-    box.push_back(p_boxes[i * 5 + 3] + offsety);
-    objs.push_back(box);
+  if (use_roi_) {
+    int offsetx = 0, offsety = 0, offset = 0;
+    int imw = im_width;
+    int imh = im_height;
+    objs.clear();
+    for (uint8_t i = 0; i < roi_s.num; i++) {
+      auto pnt = roi_s.pnt[i];
+      offsetx = pnt.x1;
+      offsety = pnt.y1;
+      offset = pnt.y1 * wstride + pnt.x1;
+      imw = pnt.x2 - pnt.x1;
+      imh = pnt.y2 - pnt.y1;
+      p_boxes = extract_connected_component(md_output.getVAddr()[0] + offset, imw, imh, wstride,
+                                            min_area, p_ccl_instance, &num_boxes);
+      for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
+        std::vector<float> box;
+        box.push_back(p_boxes[i * 5 + 2] + offsetx);
+        box.push_back(p_boxes[i * 5 + 1] + offsety);
+        box.push_back(p_boxes[i * 5 + 4] + offsetx);
+        box.push_back(p_boxes[i * 5 + 3] + offsety);
+        objs.push_back(box);
+      }
+    }
+  } else {
+    p_boxes = extract_connected_component(md_output.getVAddr()[0], im_width, im_height, wstride,
+                                          min_area, p_ccl_instance, &num_boxes);
+    objs.clear();
+    for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
+      std::vector<float> box;
+      box.push_back(p_boxes[i * 5 + 2]);
+      box.push_back(p_boxes[i * 5 + 1]);
+      box.push_back(p_boxes[i * 5 + 4]);
+      box.push_back(p_boxes[i * 5 + 3]);
+      objs.push_back(box);
+    }
   }
+
   md_timer_.TicToc("post");
   return CVI_SUCCESS;
-}
-CVI_S32 MotionDetection::get_motion_map(VIDEO_FRAME_INFO_S *frame) {
-  // CVI_S32 ret = CVI_IVE_Image2VideoFrameInfo(&bk_dst, frame, false);
-  // return ret;
-  return CVI_FAILURE;
 }

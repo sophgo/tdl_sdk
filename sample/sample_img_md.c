@@ -70,7 +70,6 @@ int main(int argc, char *argv[]) {
   }
   cvai_object_t obj_meta;
   CVI_AI_Set_MotionDetection_Background(ai_handle, &bg);
-  // CVI_AI_Set_MotionDetection_ROI(ai_handle, 0, 0, 512, 512);
 
   CVI_AI_MotionDetection(ai_handle, &frame, &obj_meta, 20, 50);
   // CVI_AI_MotionDetection(ai_handle, &frame, &obj_meta, 20, 50);

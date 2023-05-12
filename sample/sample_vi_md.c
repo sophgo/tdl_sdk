@@ -154,7 +154,13 @@ void *run_ai_thread(void *args) {
       AI_LOGI("Update background, time=%.2f ms\n", (float)elapsed / 1000.);
       char sz_imgname[128];
       sprintf(sz_imgname, "/mnt/data/admin1_data/alios_test/md/");
-      int ret = CVI_AI_Set_MotionDetection_ROI(pstAIArgs->stAIHandle, 0, 0, 512, 512);
+      MDROI_t roi_s;
+      roi_s.num = 1;
+      roi_s.pnt[0].x1 = 0;
+      roi_s.pnt[0].y1 = 0;
+      roi_s.pnt[0].x2 = 512;
+      roi_s.pnt[0].y2 = 512;
+      int ret = CVI_AI_Set_MotionDetection_ROI(pstAIArgs->stAIHandle, &roi_s);
       printf("setroi ret:%d\n", ret);
     }
 
