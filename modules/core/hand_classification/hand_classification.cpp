@@ -56,19 +56,19 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     uint32_t box_w = hand_info.bbox.x2 - hand_info.bbox.x1;
     uint32_t box_h = hand_info.bbox.y2 - hand_info.bbox.y1;
 
-    // expand box with 1.2 scale
-    // box_x1 = box_x1 - box_w * 0.1;
-    // box_y1 = box_y1 - box_h * 0.1;
-    // box_w = box_w * 1.2;
-    // box_h = box_h * 1.2;
+    // expand box with 1.25 scale
+    box_x1 = box_x1 - box_w * 0.125;
+    box_y1 = box_y1 - box_h * 0.125;
+    box_w = box_w * 1.25;
+    box_h = box_h * 1.25;
 
     if (box_x1 < 0) box_x1 = 0;
     if (box_y1 < 0) box_y1 = 0;
     if (box_x1 + box_w > img_width) {
-      box_x1 = img_width - box_w;
+      box_w = img_width - box_x1;
     }
     if (box_y1 + box_h > img_height) {
-      box_y1 = img_height - box_h;
+      box_h = img_height - box_y1;
     }
     if (box_x1 < 0) box_x1 = 0;
     if (box_y1 < 0) box_y1 = 0;
@@ -99,7 +99,11 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     float cls_score[num_cls] = {0};
     float sum_score = 0;
     for (int k = 0; k < num_cls; k++) {
-      cls_score[k] = 1.0 / (1 + exp(-out_data[k]));
+      // cls_score[k] = 1.0 / (1 + exp(-out_data[k]));
+      if (out_data[k] >= 0)
+        cls_score[k] = out_data[k];
+      else
+        cls_score[k] = 0;
       sum_score += cls_score[k];
       if (cls_score[k] > maxscore) {
         maxscore = cls_score[k];
@@ -112,7 +116,7 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     maxscore = cls_score[score_index];
     std::cout << "index:" << score_index << ",score:" << maxscore
               << ",detscore:" << hand_info.bbox.score << ",clsnum:" << num_cls << std::endl;
-    if (maxscore < 0.2) {
+    if (maxscore < 0.98) {
       score_index = 2;
     }
     meta->info[i].bbox.score = score;
