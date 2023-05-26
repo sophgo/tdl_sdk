@@ -33,6 +33,7 @@
            cvai_face_t*: CVI_AI_FreeFace,              \
            cvai_object_info_t*: CVI_AI_FreeObjectInfo, \
            cvai_object_t*: CVI_AI_FreeObject,          \
+           cvai_handpose21_meta_ts*: CVI_AI_FreeHandPoses, \
            cvai_image_t*: CVI_AI_FreeImage)(X)
 // clang-format on
 #endif
@@ -124,6 +125,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEQUALITY)                      \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION)               \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT)                    \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION)     \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LIVENESS)                         \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HAND_DETECTION)                    \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE)       \
@@ -677,8 +680,39 @@ DLL_EXPORT CVI_S32 CVI_AI_IrLiveness(const cviai_handle_t handle, VIDEO_FRAME_IN
 DLL_EXPORT CVI_S32 CVI_AI_MaskClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                              cvai_face_t *face);
 
+/**
+ * @brief Hand classification.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param meta cvai_object_t structure.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
 DLL_EXPORT CVI_S32 CVI_AI_HandClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                              cvai_object_t *meta);
+
+/**
+ * @brief 2D hand keypoints.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param meta cvai_handpose21_meta_ts structure.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_HandKeypoint(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                       cvai_handpose21_meta_ts *meta);
+
+/**
+ * @brief Hand classification by hand keypoints.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param meta cvai_handpose21_meta_t structure.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_HandKeypointClassification(const cviai_handle_t handle,
+                                                     VIDEO_FRAME_INFO_S *frame,
+                                                     cvai_handpose21_meta_t *meta);
 
 /**
  * @brief Hand Detection. Tells if a object is wearing a mask.

@@ -109,5 +109,7 @@ buildninstallcpp(NAME test_vpss_pd INC ${SAMPLE_INC} DEPS cviai  cviai_evaluatio
 buildninstallcpp(NAME cviai_run_capture INC ${SAMPLE_INC} DEPS cviai cviai_evaluation cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_audio_cls INC ${SAMPLE_INC} DEPS cviai cviai_evaluation cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME run_hand_dataset INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME run_hand_keypoint INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME run_hand_keypoint_classification INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation cviai_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME cviai_run_face_cap INC ${SAMPLE_INC} DEPS cviai cviai_app cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_img_simcc_pose INC ${SAMPLE_INC} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)

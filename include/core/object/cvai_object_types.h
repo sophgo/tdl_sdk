@@ -358,4 +358,61 @@ typedef struct {
   uint32_t num_preserved_classes;
 } cvai_class_filter_t;
 
+/** @struct cvai_handpose21_meta_t
+ * @ingroup core_cviaicore
+ * @brief A structure to describe hand keypoint.
+ *
+ * @var cvai_handpose21_meta_t::x
+ * Normalized x point.
+ * @var cvai_handpose21_meta_t::x
+ * Position x point.
+ * @var cvai_handpose21_meta_t::y
+ * Normalized y point.
+ * @var cvai_handpose21_meta_t::y
+ * Position y point.
+ * @var cvai_handpose21_meta_t::bbox_x
+ * BBox left
+ * @var cvai_handpose21_meta_t::bbox_y
+ * BBox top
+ * @var cvai_handpose21_meta_t::bbox_w
+ * BBox width
+ * @var cvai_handpose21_meta_t::bbox_h
+ * BBox height
+ *
+ * @see cvai_object_t
+ */
+typedef struct {
+  float xn[21];
+  float x[21];
+  float yn[21];
+  float y[21];
+  float bbox_x;
+  float bbox_y;
+  float bbox_w;
+  float bbox_h;
+  int label;
+  float score;
+} cvai_handpose21_meta_t;
+
+/** @struct cvai_handpose21_meta_t
+ * @ingroup core_cviaicore
+ * @brief A structure to describe hand keypoint.
+ *
+ * @var cvai_handpose21_meta_ts::info
+ * The information of handpose.
+ * @var cvai_handpose21_meta_ts::size
+ * The length of info.
+ * @var cvai_handpose21_meta_ts::width
+ * The image width.
+ * @var cvai_handpose21_meta_ts::height
+ * The image height.
+ *
+ * @see cvai_object_t
+ */
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+  cvai_handpose21_meta_t *info;
+} cvai_handpose21_meta_ts;
 #endif

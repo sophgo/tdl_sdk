@@ -17,6 +17,8 @@
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "hand_classification/hand_classification.hpp"
+#include "hand_keypoint/hand_keypoint.hpp"
+#include "hand_keypoint_classification/hand_keypoint_classification.hpp"
 #include "human_keypoints_detection/simcc/simcc.hpp"
 #include "human_keypoints_detection/yolov8_pose/yolov8_pose.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
@@ -127,6 +129,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_IRLIVENESS, CREATOR(IrLiveness)},
     {CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
     {CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, CREATOR(HandClassification)},
+    {CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT, CREATOR(HandKeypoint)},
+    {CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION, CREATOR(HandKeypointClassification)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
@@ -717,6 +721,10 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MaskClassification, MaskClassification,
                       CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_HandClassification, HandClassification,
                       CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_HandKeypoint, HandKeypoint, CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT,
+                      cvai_handpose21_meta_ts *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_HandKeypointClassification, HandKeypointClassification,
+                      CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION, cvai_handpose21_meta_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceMaskDetection, RetinafaceYolox,
                       CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,

@@ -112,6 +112,38 @@ void CVI_AI_FreeCpp(cvai_image_t *image) {
   image->width = 0;
 }
 
+void CVI_AI_FreeCpp(cvai_handpose21_meta_t *handpose) {
+  handpose->bbox_x = 0;
+  handpose->bbox_y = 0;
+  handpose->bbox_w = 0;
+  handpose->bbox_h = 0;
+  handpose->score = 0;
+  handpose->label = -1;
+  for (int i = 0; i < 21; i++) {
+    handpose->x[i] = 0;
+    handpose->xn[i] = 0;
+    handpose->y[i] = 0;
+    handpose->yn[i] = 0;
+  }
+  // free(handpose->x);
+  // free(handpose->xn);
+  // free(handpose->y);
+  // free(handpose->yn);
+}
+
+void CVI_AI_FreeCpp(cvai_handpose21_meta_ts *handposes) {
+  if (handposes->info != NULL) {
+    for (uint32_t i = 0; i < handposes->size; i++) {
+      CVI_AI_FreeCpp(&handposes->info[i]);
+    }
+    free(handposes->info);
+    handposes->info = NULL;
+  }
+  handposes->size = 0;
+  handposes->width = 0;
+  handposes->height = 0;
+}
+
 void CVI_AI_FreeFeature(cvai_feature_t *feature) { CVI_AI_FreeCpp(feature); }
 
 void CVI_AI_FreePts(cvai_pts_t *pts) { CVI_AI_FreeCpp(pts); }
@@ -130,6 +162,7 @@ void CVI_AI_FreeImage(cvai_image_t *image) { CVI_AI_FreeCpp(image); }
 
 void CVI_AI_FreeDMS(cvai_dms_t *dms) { CVI_AI_FreeCpp(dms); }
 
+void CVI_AI_FreeHandPoses(cvai_handpose21_meta_ts *handposes) { CVI_AI_FreeCpp(handposes); }
 // Copy
 
 void CVI_AI_CopyInfoCpp(const cvai_face_info_t *info, cvai_face_info_t *infoNew) {
@@ -259,6 +292,34 @@ void CVI_AI_CopyObjectMeta(const cvai_object_t *src, cvai_object_t *dest) {
       for (uint32_t fid = 0; fid < src->size; fid++) {
         CVI_AI_CopyObjectInfo(&src->info[fid], &dest->info[fid]);
       }
+    }
+  }
+}
+
+void CVI_AI_CopyHandPose(const cvai_handpose21_meta_t *src, cvai_handpose21_meta_t *dest) {
+  dest->bbox_x = src->bbox_x;
+  dest->bbox_y = src->bbox_y;
+  dest->bbox_w = src->bbox_w;
+  dest->bbox_h = src->bbox_h;
+  dest->score = src->score;
+  dest->label = src->label;
+  memcpy(dest->x, src->x, sizeof(float) * 21);
+  memcpy(dest->y, src->y, sizeof(float) * 21);
+  memcpy(dest->xn, src->xn, sizeof(float) * 21);
+  memcpy(dest->yn, src->yn, sizeof(float) * 21);
+}
+
+void CVI_AI_CopyHandPoses(const cvai_handpose21_meta_ts *src, cvai_handpose21_meta_ts *dest) {
+  CVI_AI_FreeCpp(dest);
+  memset(dest, 0, sizeof(cvai_handpose21_meta_ts));
+  dest->width = src->width;
+  dest->height = src->height;
+  dest->size = src->size;
+  if (src->size > 0) {
+    dest->info = (cvai_handpose21_meta_t *)malloc(sizeof(cvai_handpose21_meta_t) * src->size);
+    memset(dest->info, 0, sizeof(cvai_handpose21_meta_t) * src->size);
+    for (uint32_t i = 0; i < src->size; i++) {
+      CVI_AI_CopyHandPose(&src->info[i], &dest->info[i]);
     }
   }
 }

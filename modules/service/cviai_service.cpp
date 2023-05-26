@@ -327,3 +327,16 @@ cvai_service_brush_t CVI_AI_Service_GetDefaultBrush() {
   brush.size = 4;
   return brush;
 }
+
+CVI_S32 CVI_AI_Service_DrawHandKeypoint(cviai_service_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                        const cvai_handpose21_meta_ts *meta,
+                                        cvai_service_brush_t brush) {
+  if (meta->size <= 0) return CVIAI_SUCCESS;
+
+  if (handle != NULL) {
+    std::vector<cvai_service_brush_t> brushes(meta->size, brush);
+    return cviai::service::DrawHandPose21(meta, frame, brushes);
+  }
+  LOGE("service handle is NULL\n");
+  return CVIAI_FAILURE;
+}

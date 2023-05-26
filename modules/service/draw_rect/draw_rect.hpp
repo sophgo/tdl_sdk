@@ -48,5 +48,7 @@ int Draw5Landmark(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame);
 
 int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts, cvai_service_brush_t brush);
 
+int DrawHandPose21(const cvai_handpose21_meta_ts *obj, VIDEO_FRAME_INFO_S *frame,
+                   const std::vector<cvai_service_brush_t> &brushes);
 }  // namespace service
 }  // namespace cviai
