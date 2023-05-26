@@ -17,6 +17,8 @@ typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
 typedef std::vector<PtrDectRect> Detections;
 
 Detections nms_multi_class(const Detections &dets, float iou_threshold);
+Detections nms_multi_class_with_ids(const Detections &dets, float iou_threshold,
+                                    std::vector<int> &keep);
 
 std::vector<std::vector<float>> generate_mmdet_base_anchors(float base_size, float center_offset,
                                                             const std::vector<float> &ratios,

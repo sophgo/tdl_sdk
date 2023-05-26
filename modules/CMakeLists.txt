@@ -84,7 +84,9 @@ else()
                 $<TARGET_OBJECTS:motion_detection>
                 $<TARGET_OBJECTS:tamper_detection>
                 $<TARGET_OBJECTS:face_mask_detection>
-                $<TARGET_OBJECTS:yolox>)
+                $<TARGET_OBJECTS:yolox>
+                $<TARGET_OBJECTS:yolov8_pose>
+                $<TARGET_OBJECTS:simcc>)
 
   if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
       set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)

@@ -17,6 +17,8 @@
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "hand_classification/hand_classification.hpp"
+#include "human_keypoints_detection/simcc/simcc.hpp"
+#include "human_keypoints_detection/yolov8_pose/yolov8_pose.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
@@ -158,6 +160,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::pedestrian)},
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
+    {CVI_AI_SUPPORTED_MODEL_YOLOV8POSE, CREATOR(YoloV8Pose)},
+    {CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, CREATOR(Simcc)},
 };
 
 void CVI_AI_PerfettoInit() { prefettoInit(); }
@@ -757,6 +761,9 @@ DEFINE_INF_FUNC_F2_P2(CVI_AI_Liveness, Liveness, CVI_AI_SUPPORTED_MODEL_LIVENESS
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_IrLiveness, IrLiveness, CVI_AI_SUPPORTED_MODEL_IRLIVENESS,
                       cvai_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov8_Pose, YoloV8Pose, CVI_AI_SUPPORTED_MODEL_YOLOV8POSE,
+                      cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Simcc_Pose, Simcc, CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, cvai_object_t *)
 
 CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
                          bool cvtRGB888) {

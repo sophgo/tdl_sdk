@@ -50,6 +50,8 @@ else()
   add_subdirectory(motion_detection)
   add_subdirectory(face_mask_detection)
   add_subdirectory(object_detection/yolox)
+  add_subdirectory(human_keypoints_detection/yolov8_pose)
+  add_subdirectory(human_keypoints_detection/simcc)
   set(CORE_INTERFACE cviai_core.cpp)
 
 endif()
