@@ -51,8 +51,6 @@ endfunction(buildninstallcpp)
 
 set(SAMPLE_INC
     ${MIDDLEWARE_SDK_ROOT}/include
-    ${MLIR_SDK_PATH}/opencv/include
-    ${MLIR_SDK_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${MIDDLEWARE_SDK_ROOT}/sample/common
     ${IVE_INCLUDES}

@@ -42,12 +42,11 @@ int main(int argc, char *argv[]) {
     return ret;
   } else {
     printf("image read,width:%d\n", bg.stVFrame.u32Width);
-    printf("image read,hidth:%d\n", bg.stVFrame.u32Height);
   }
 
   printf("---------------------openmodel-----------------------");
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, argv[1]);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, 0.1);
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, argv[1]);
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, 0.1);
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
     return ret;
@@ -56,11 +55,7 @@ int main(int argc, char *argv[]) {
 
   std::string str_res;
   cvai_object_t obj_meta = {0};
-  CVI_AI_PersonVehicle_Detection(ai_handle, &bg, &obj_meta);
-
-  // CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[2]);
-  // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, false);
-  // CVI_AI_HandClassification(ai_handle, &bg, &obj_meta);
+  CVI_AI_HandFacePerson_Detection(ai_handle, &bg, &obj_meta);
 
   std::cout << "objnum:" << obj_meta.size << std::endl;
   std::stringstream ss;
@@ -76,11 +71,10 @@ int main(int argc, char *argv[]) {
   if (eval_perf) {
     for (int i = 0; i < 101; i++) {
       cvai_object_t obj_meta = {0};
-      CVI_AI_PersonVehicle_Detection(ai_handle, &bg, &obj_meta);
+      CVI_AI_HandFacePerson_Detection(ai_handle, &bg, &obj_meta);
       CVI_AI_Free(&obj_meta);
     }
   }
-
   CVI_AI_ReleaseImage(&bg);
   CVI_AI_DestroyHandle(ai_handle);
 

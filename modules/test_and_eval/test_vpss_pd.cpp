@@ -14,8 +14,6 @@
 #include "cviai.h"
 #include "evaluation/cviai_media.h"
 #include "mapi.hpp"
-#include "opencv2/opencv.hpp"
-#include "sys_utils.hpp"
 
 std::string g_model_root;
 cvai_bbox_t box;

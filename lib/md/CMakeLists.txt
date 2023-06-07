@@ -25,6 +25,7 @@ project(cvi_md-static)
 add_library(${PROJECT_NAME} STATIC ${PROJ_SRCS})
 target_link_libraries(${PROJECT_NAME} ${MD_CORES_DEPS})
 
+SET_TARGET_PROPERTIES(cvi_md-static PROPERTIES OUTPUT_NAME "cvi_md")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cvi_md.h DESTINATION include/md)

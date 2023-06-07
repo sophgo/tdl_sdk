@@ -58,10 +58,6 @@ int main(int argc, char *argv[]) {
   cvai_object_t obj_meta = {0};
   CVI_AI_Hand_Detection(ai_handle, &bg, &obj_meta);
 
-  // CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[2]);
-  // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_HANDCLASSIFICATION, false);
-  // CVI_AI_HandClassification(ai_handle, &bg, &obj_meta);
-
   std::cout << "objnum:" << obj_meta.size << std::endl;
   std::stringstream ss;
   ss << "boxes=[";

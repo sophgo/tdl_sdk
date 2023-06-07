@@ -380,8 +380,7 @@ DLL_EXPORT cvai_service_brush_t CVI_AI_Service_GetDefaultBrush();
 
 DLL_EXPORT CVI_S32 CVI_AI_Service_DrawHandKeypoint(cviai_service_handle_t handle,
                                                    VIDEO_FRAME_INFO_S *frame,
-                                                   const cvai_handpose21_meta_ts *meta,
-                                                   cvai_service_brush_t brush);
+                                                   const cvai_handpose21_meta_ts *meta);
 #ifdef __cplusplus
 }
 #endif

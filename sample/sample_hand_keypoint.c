@@ -25,6 +25,7 @@
 static volatile bool bExit = false;
 
 static cvai_handpose21_meta_ts g_stHandKptMeta = {0};
+static cvai_object_t g_stObjMeta = {0};
 
 MUTEXAUTOLOCK_INIT(ResultMutex);
 
@@ -33,12 +34,16 @@ typedef struct {
   cviai_service_handle_t stServiceHandle;
 } SAMPLE_AI_VENC_THREAD_ARG_S;
 
+static const char *cls_name[] = {"fist", "five",  "four",   "none", "ok",
+                                 "one",  "three", "three2", "two"};
+
 void *run_venc(void *args) {
   AI_LOGI("Enter encoder thread\n");
   SAMPLE_AI_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_AI_VENC_THREAD_ARG_S *)args;
   VIDEO_FRAME_INFO_S stFrame;
   CVI_S32 s32Ret;
   cvai_handpose21_meta_ts stHandKptMeta = {0};
+  cvai_object_t stHandMeta = {0};
 
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, 0, &stFrame, 2000);
@@ -46,35 +51,32 @@ void *run_venc(void *args) {
       AI_LOGE("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
     }
-
-    {
-      MutexAutoLock(ResultMutex, lock);
-      CVI_AI_CopyHandPoses(&g_stHandKptMeta, &stHandKptMeta);
+    MutexAutoLock(ResultMutex, lock);
+    memset(&stHandKptMeta, 0, sizeof(cvai_handpose21_meta_ts));
+    memset(&stHandMeta, 0, sizeof(cvai_object_t));
+    CVI_AI_CopyHandPoses(&g_stHandKptMeta, &stHandKptMeta);
+    CVI_AI_CopyObjectMeta(&g_stObjMeta, &stHandMeta);
+    if (stHandKptMeta.size > 0 && stHandMeta.size > 0) {
+      CVI_AI_Service_DrawHandKeypoint(pstArgs->stServiceHandle, &stFrame, &stHandKptMeta);
+      cvai_service_brush_t brush_0 = {.size = 4, .color.r = 0, .color.g = 64, .color.b = 255};
+      CVI_AI_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stHandMeta, &stFrame, false,
+                                    brush_0);
+      char *id_num = calloc(64, sizeof(char));
+      for (uint32_t i = 0; i < stHandKptMeta.size; i++) {
+        sprintf(id_num, "cls:%s, score:%f", cls_name[stHandKptMeta.info[i].label],
+                stHandKptMeta.info[i].score);
+        CVI_AI_Service_ObjectWriteText(id_num, stHandKptMeta.info[i].bbox_x,
+                                       stHandKptMeta.info[i].bbox_y, &stFrame, 1, 1, 1);
+      }
+      free(id_num);
     }
-    AI_LOGI("### num of hand %d, w h = %d %d\n", stHandKptMeta.size, stHandKptMeta.width,
-            stHandKptMeta.height);
-    if (stHandKptMeta.size > 0) {
-      AI_LOGI("### %f %f %f %f\n", stHandKptMeta.info[0].bbox_x, stHandKptMeta.info[0].bbox_y,
-              stHandKptMeta.info[0].bbox_w, stHandKptMeta.info[0].bbox_h);
-    }
-    s32Ret = CVI_AI_Service_DrawHandKeypoint(pstArgs->stServiceHandle, &stFrame, &stHandKptMeta,
-                                             CVI_AI_Service_GetDefaultBrush());
-    // s32Ret = CVIAI_SUCCESS;
-    if (s32Ret != CVIAI_SUCCESS) {
-      CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
-      AI_LOGE("Draw frame fail!, ret=%x\n", s32Ret);
-      goto error;
-    }
+    CVI_AI_Free(&stHandKptMeta);
 
     s32Ret = SAMPLE_AI_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
     if (s32Ret != CVI_SUCCESS) {
-      CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
-      AI_LOGE("Send Output Frame NG, ret=%x\n", s32Ret);
       goto error;
     }
-
   error:
-    CVI_AI_Free(&stHandKptMeta);
     CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
@@ -91,61 +93,79 @@ void *run_ai_thread(void *pHandle) {
   VIDEO_FRAME_INFO_S stFrame;
   cvai_object_t stHandMeta = {0};
   cvai_handpose21_meta_ts stHandKptMeta = {0};
-  stHandKptMeta.info = NULL;
-  int frame_count = 0;
-  CVI_S32 s32Ret;
-  while (bExit == false) {
-    s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
 
+  float buffer[42];
+  CVI_S32 s32Ret;
+  static uint32_t count = 0;
+
+  while (bExit == false) {
+    struct timeval t0, t1;
+    gettimeofday(&t0, NULL);
+    count++;
+
+    s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
       AI_LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", s32Ret);
       goto get_frame_failed;
     }
+
+    memset(&stHandMeta, 0, sizeof(cvai_object_t));
+    memset(&stHandKptMeta, 0, sizeof(cvai_handpose21_meta_ts));
 
     s32Ret = CVI_AI_Hand_Detection(pstAIHandle, &stFrame, &stHandMeta);
     if (s32Ret != CVIAI_SUCCESS) {
       AI_LOGE("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
+    CVI_AI_CopyObjectMeta(&stHandMeta, &g_stObjMeta);
 
-    if (stHandKptMeta.info) free(stHandKptMeta.info);
     stHandKptMeta.size = stHandMeta.size;
     stHandKptMeta.width = stHandMeta.width;
     stHandKptMeta.height = stHandMeta.height;
     stHandKptMeta.info =
         (cvai_handpose21_meta_t *)malloc(sizeof(cvai_handpose21_meta_t) * (stHandMeta.size));
-    AI_LOGI("=================\n");
-    AI_LOGI("frame count: %d\n", frame_count);
-    frame_count += 1;
-    AI_LOGI("meta size: %d %d\n", stHandKptMeta.size, stHandMeta.size);
+
     for (int i = 0; i < stHandMeta.size; i++) {
       stHandKptMeta.info[i].bbox_x = stHandMeta.info[i].bbox.x1;
       stHandKptMeta.info[i].bbox_y = stHandMeta.info[i].bbox.y1;
       stHandKptMeta.info[i].bbox_w = stHandMeta.info[i].bbox.x2 - stHandMeta.info[i].bbox.x1;
       stHandKptMeta.info[i].bbox_h = stHandMeta.info[i].bbox.y2 - stHandMeta.info[i].bbox.y1;
-      AI_LOGI("%f %f %f %f\n", stHandKptMeta.info[i].bbox_x, stHandKptMeta.info[i].bbox_y,
-              stHandKptMeta.info[i].bbox_w, stHandKptMeta.info[i].bbox_h);
     }
-
     s32Ret = CVI_AI_HandKeypoint(pstAIHandle, &stFrame, &stHandKptMeta);
-
     if (s32Ret != CVIAI_SUCCESS) {
       AI_LOGE("keypoint inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
 
-    AI_LOGI("hand count: %d\n", stHandMeta.size);
-    {
-      MutexAutoLock(ResultMutex, lock);
-      CVI_AI_CopyHandPoses(&stHandKptMeta, &g_stHandKptMeta);
+    for (uint32_t i = 0; i < stHandKptMeta.size; i++) {
+      for (uint32_t j = 0; j < 42; j++) {
+        if (j % 2 == 0) {
+          buffer[j] = stHandKptMeta.info[i].xn[j / 2];
+        } else {
+          buffer[j] = stHandKptMeta.info[i].yn[j / 2];
+        }
+      }
+      VIDEO_FRAME_INFO_S Frame;
+      Frame.stVFrame.pu8VirAddr[0] = buffer;  // Global buffer
+      Frame.stVFrame.u32Height = 1;
+      Frame.stVFrame.u32Width = 42 * sizeof(float);
+      CVI_AI_HandKeypointClassification(pstAIHandle, &Frame, &stHandKptMeta.info[i]);
     }
+    MutexAutoLock(ResultMutex, lock);
+    CVI_AI_CopyHandPoses(&stHandKptMeta, &g_stHandKptMeta);
+
   inf_error:
-    CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
-  get_frame_failed:
     CVI_AI_Free(&stHandMeta);
     CVI_AI_Free(&stHandKptMeta);
+    CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
+  get_frame_failed:
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
+    }
+    gettimeofday(&t1, NULL);
+    uint64_t execution_time = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
+    if (count % 100 == 0) {
+      printf("ai thread execution time: %.2f(ms)\n", (float)execution_time / 1000.);
     }
   }
 
@@ -165,10 +185,10 @@ static void SampleHandleSig(CVI_S32 signo) {
 int main(int argc, char *argv[]) {
   CVI_SYS_Exit();
   CVI_VB_Exit();
-  if (argc != 3) {
+  if (argc != 4) {
     printf(
-        "\nUsage: %s RETINA_MODEL_PATH.\n\n"
-        "\tRETINA_MODEL_PATH, path to retinahand model.\n",
+        "\nUsage: %s HAND_DETECTION_MODEL_PATH.\n\n"
+        "\tHAND_KEY_POINT_MODEL_PATH, HAND_KEY_POINT_CLS_MODEL_PATH.\n",
         argv[0]);
     return CVIAI_FAILURE;
   }
@@ -208,15 +228,15 @@ int main(int argc, char *argv[]) {
 
   // Setup frame size of video encoder to 1080p
   SIZE_S stVencSize = {
-      .u32Width = 1920,
-      .u32Height = 1080,
+      .u32Width = 1280,
+      .u32Height = 720,
   };
 
   stMWConfig.stVBPoolConfig.u32VBPoolCount = 3;
 
   // VBPool 0 for VPSS Grp0 Chn0
   stMWConfig.stVBPoolConfig.astVBPoolSetup[0].enFormat = VI_PIXEL_FORMAT;
-  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32BlkCount = 3;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32BlkCount = 2;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32Height = stSensorSize.u32Height;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[0].u32Width = stSensorSize.u32Width;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[0].bBind = true;
@@ -225,7 +245,7 @@ int main(int argc, char *argv[]) {
 
   // VBPool 1 for VPSS Grp0 Chn1
   stMWConfig.stVBPoolConfig.astVBPoolSetup[1].enFormat = VI_PIXEL_FORMAT;
-  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32BlkCount = 3;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32BlkCount = 2;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32Height = stVencSize.u32Height;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32Width = stVencSize.u32Width;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[1].bBind = true;
@@ -235,8 +255,8 @@ int main(int argc, char *argv[]) {
   // VBPool 2 for AI preprocessing
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].enFormat = PIXEL_FORMAT_BGR_888_PLANAR;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32BlkCount = 1;
-  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32Height = 1080;
-  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32Width = 1920;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32Height = stVencSize.u32Height;
+  stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32Width = stVencSize.u32Width;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].bBind = false;
 
   // Setup VPSS Grp0
@@ -291,6 +311,9 @@ int main(int argc, char *argv[]) {
                  s32Ret, setup_ai_fail);
   GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT, argv[2]),
                  s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(
+      CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION, argv[3]),
+      s32Ret, setup_ai_fail);
   CVI_AI_SetModelThreshold(stAIHandle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.55);
   pthread_t stVencThread, stAIThread;
   SAMPLE_AI_VENC_THREAD_ARG_S args = {

@@ -149,7 +149,6 @@ static void *pImageWrite(void *args) {
       }
     }
 
-    free(filename);
     CVI_AI_Free(&data_buffer[target_idx].image);
     {
       SMT_MutexAutoLock(IOMutex, lock);

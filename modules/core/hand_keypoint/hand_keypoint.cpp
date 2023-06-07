@@ -14,8 +14,6 @@
 #define R_MEAN (0.485 / 0.229)
 #define G_MEAN (0.456 / 0.224)
 #define B_MEAN (0.406 / 0.225)
-#define CROP_PCT 0.875
-#define HAND_OUTNAME "output0_Gemm_dequant"
 
 namespace cviai {
 
@@ -44,7 +42,6 @@ int HandKeypoint::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) 
 int HandKeypoint::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_handpose21_meta_ts *meta) {
   uint32_t img_width = stOutFrame->stVFrame.u32Width;
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
-  std::cout << "meta size " << meta->size << std::endl;
   for (uint32_t i = 0; i < meta->size; i++) {
     int box_x1 = meta->info[i].bbox_x;
     int box_y1 = meta->info[i].bbox_y;
@@ -65,16 +62,14 @@ int HandKeypoint::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_handpose21_meta
     if (box_y1 + box_h > img_height) {
       box_h = img_height - box_y1;
     }
-    std::cout << "crop bbox " << box_x1 << " " << box_y1 << " " << box_w << " " << box_h
-              << std::endl;
-    // if(box_w < 4 and box_h < 4) continue;
+
     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
     m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
+    m_vpss_config[0].crop_attr.bEnable = true;
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
 
     int ret = run(frames);
-
     if (ret != CVIAI_SUCCESS) {
       LOGW("hand keypoint inference failed\n");
       return ret;

@@ -13,31 +13,6 @@
 #include <algorithm>
 
 using namespace std;
-// const char * get_framelist_path(const char *file_path){
-//     string path;
-//     path = file_path;
-//     string list_path = path+"/framelist.txt";
-//     return list_path.c_str();
-// }
-// const char * get_frame_path(const char *file_path, const char *image_path){
-//     string path;
-//     string image;
-//     image = image_path;
-//     path = file_path;
-//     image.erase(image.begin());
-//     string frame_path = path + image;
-//     return frame_path.c_str();
-// }
-// const char * get_out_path(const char *out_path, const char *image_path){
-//     string path;
-//     string image;
-//     image = image_path;
-//     path = out_path;
-//     image.erase(image.begin());
-//     image.erase(image.end()-4,image.end());
-//     string out_path = path + image + "txt";
-//     return out_path.c_str();
-// }
 
 std::vector<std::string> read_file_lines(std::string strfile) {
   std::fstream file(strfile);
@@ -57,11 +32,11 @@ std::vector<std::string> read_file_lines(std::string strfile) {
 }
 std::string replace_file_ext(const std::string &src_file_name, const std::string &new_file_ext) {
   size_t ext_pos = src_file_name.find_last_of('.');
-  // size_t seg_pos = src_file_name.find_first_of('/');
+  size_t seg_pos = src_file_name.find_first_of('/');
   std::string src_name = src_file_name;
-  // if (seg_pos != src_file_name.npos) {
-  //   src_name.at(seg_pos) = '#';
-  // }
+  if (seg_pos != src_file_name.npos) {
+    src_name.at(seg_pos) = '#';
+  }
   std::string str_res;
   if (ext_pos == src_file_name.npos) {
     str_res = src_name + std::string(".") + new_file_ext;

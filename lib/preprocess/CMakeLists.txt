@@ -23,6 +23,7 @@ install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 project(cvi_preprocess-static)
 add_library(${PROJECT_NAME} STATIC ${PROJ_SRCS})
 target_link_libraries(${PROJECT_NAME} ${MD_CORES_DEPS})
+SET_TARGET_PROPERTIES(cvi_preprocess-static PROPERTIES OUTPUT_NAME "cvi_preprocess")
 
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)

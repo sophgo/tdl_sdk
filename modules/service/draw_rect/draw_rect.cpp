@@ -21,10 +21,6 @@ static std::vector<std::pair<int, int>> l_pair = {{0, 1},   {0, 2},   {1, 3},   
                                                   {5, 7},   {7, 9},   {6, 8},   {8, 10},  {17, 11},
                                                   {17, 12}, {11, 13}, {12, 14}, {13, 15}, {14, 16}};
 
-static std::vector<std::pair<int, int>> handpose21_skeleton = {
-    {0, 1},   {1, 2},   {2, 3},  {3, 4},   {0, 5},   {5, 6},  {6, 7},
-    {7, 8},   {0, 9},   {9, 10}, {10, 11}, {11, 12}, {0, 13}, {13, 14},
-    {14, 15}, {15, 16}, {0, 17}, {17, 18}, {18, 19}, {19, 20}};
 #ifndef NO_OPENCV
 static std::vector<cv::Scalar> p_color = {
     {0, 255, 255},  {0, 191, 255},  {0, 255, 102},  {0, 77, 255},   {0, 255, 0},    {77, 255, 255},
@@ -36,18 +32,6 @@ static std::vector<cv::Scalar> line_color = {
     {77, 196, 255},  {77, 135, 255}, {191, 255, 77}, {77, 255, 77}, {77, 222, 255},
     {255, 156, 127}, {0, 127, 255},  {255, 127, 77}, {0, 77, 255},  {255, 77, 36}};
 
-static std::vector<cv::Scalar> handpose21_point_color = {
-    {255, 255, 255}, {255, 128, 0},   {255, 128, 0},   {255, 128, 0},   {255, 128, 0},
-    {255, 153, 255}, {255, 153, 255}, {255, 153, 255}, {255, 153, 255}, {102, 178, 255},
-    {102, 178, 255}, {102, 178, 255}, {102, 178, 255}, {255, 51, 51},   {255, 51, 51},
-    {255, 51, 51},   {255, 51, 51},   {0, 255, 0},     {0, 255, 0},     {0, 255, 0},
-    {0, 255, 0}};
-
-static std::vector<cv::Scalar> handpose21_line_color = {
-    {255, 128, 0},   {255, 128, 0},   {255, 128, 0},   {255, 128, 0},   {255, 153, 255},
-    {255, 153, 255}, {255, 153, 255}, {255, 153, 255}, {102, 178, 255}, {102, 178, 255},
-    {102, 178, 255}, {102, 178, 255}, {255, 51, 51},   {255, 51, 51},   {255, 51, 51},
-    {255, 51, 51},   {0, 255, 0},     {0, 255, 0},     {0, 255, 0},     {0, 255, 0}};
 #endif
 namespace cviai {
 namespace service {
@@ -798,103 +782,28 @@ int Draw5Landmark(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame) {
   return CVI_SUCCESS;
 }
 
-int DrawHandPose21(const cvai_handpose21_meta_ts *obj, VIDEO_FRAME_INFO_S *frame,
-                   const std::vector<cvai_service_brush_t> &brushes) {
+int DrawHandPose21(const cvai_handpose21_meta_ts *obj_meta, VIDEO_FRAME_INFO_S *bg) {
 #ifdef NO_OPENCV
   LOGW("no opencv could not draw pose");
   return CVIAI_FAILURE;
 #else
-  // frame->stVFrame.pu8VirAddr[0] =
-  //     (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
-  // cv::Mat img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
-  //             frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
-  // if (img.data == nullptr) {
-  //   return CVIAI_FAILURE;
-  // }
-
-  for (uint32_t i = 0; i < obj->size; ++i) {
-    cvai_service_brush_t brush = brushes[i];
-    color_rgb rgb_color;
-    rgb_color.r = brush.color.r;
-    rgb_color.g = brush.color.g;
-    rgb_color.b = brush.color.b;
-
-    // int thickness = max(brush.size, 2);
-    if ((brush.size % 2) != 0) {
-      brush.size += 1;
+  static const color_rgb LANDMARK21_COLORS[21] = {
+      COLOR_RED, COLOR_GREEN, COLOR_MAGENTA, COLOR_YELLOW, COLOR_CYAN, COLOR_RED,
+      COLOR_RED, COLOR_GREEN, COLOR_MAGENTA, COLOR_YELLOW, COLOR_CYAN, COLOR_RED,
+      COLOR_RED, COLOR_GREEN, COLOR_MAGENTA, COLOR_YELLOW, COLOR_CYAN, COLOR_RED,
+      COLOR_RED, COLOR_GREEN, COLOR_MAGENTA};
+  for (uint32_t i = 0; i < obj_meta->size; i++) {
+    for (int j = 0; j < 21; j++) {
+      cvai_pts_t tmp_pts = {0};
+      tmp_pts.size = 1;
+      tmp_pts.x = &obj_meta->info[i].x[j];
+      tmp_pts.y = &obj_meta->info[i].y[j];
+      _DrawPts(bg, &tmp_pts, LANDMARK21_COLORS[j], 3);
     }
-
-    // cvai_bbox_t bbox =
-    //     box_rescale(frame->stVFrame.u32Width, frame->stVFrame.u32Height, meta->width,
-    //                 meta->height, meta->info[i].bbox, meta->rescale_type);
-
-    if (frame->stVFrame.enPixelFormat == PIXEL_FORMAT_NV21) {
-      // std::cout << "### FORMAT_NV21\n" << std::endl;
-      DrawRect<FORMAT_NV21>(frame, obj->info[i].bbox_x, obj->info[i].bbox_x + obj->info[i].bbox_w,
-                            obj->info[i].bbox_y, obj->info[i].bbox_y + obj->info[i].bbox_h, "hand",
-                            rgb_color, 2, false);
-    } else {
-      // std::cout << "### FORMAT_YUV_420P\n" << std::endl;
-      DrawRect<FORMAT_YUV_420P>(frame, obj->info[i].bbox_x,
-                                obj->info[i].bbox_x + obj->info[i].bbox_w, obj->info[i].bbox_y,
-                                obj->info[i].bbox_y + obj->info[i].bbox_h, "hand", rgb_color, 2,
-                                true);
-    }
-    // std::vector<cv::Point2f> kp_preds(21);
-
-    // for (int j = 0; j < 21; ++j) {
-    //   kp_preds[i].x = obj->info[i].x[j];
-    //   kp_preds[i].y = obj->info[i].y[j];
-    // }
-
-    // // Draw keypoints
-    // std::unordered_map<int, std::pair<int, int>> part_line;
-    // for (uint32_t n = 0; n < 21; n++) {
-    //   int cor_x = kp_preds[n].x;
-    //   int cor_y = kp_preds[n].y;
-    //   part_line[n] = std::make_pair(cor_x, cor_y);
-
-    //   cv::circle(img, cv::Size(cor_x, cor_y), 2, handpose21_point_color[n], -1);
-    // }
-
-    // // Draw limbs
-    // for (uint32_t i = 0; i < handpose21_skeleton.size(); i++) {
-    //   int start_p = handpose21_skeleton[i].first;
-    //   int end_p = handpose21_skeleton[i].second;
-    //   if (part_line.count(start_p) > 0 && part_line.count(end_p) > 0) {
-    //     std::pair<int, int> start_xy = part_line[start_p];
-    //     std::pair<int, int> end_xy = part_line[end_p];
-
-    //     float mX = (start_xy.first + end_xy.first) / 2;
-    //     float mY = (start_xy.second + end_xy.second) / 2;
-    //     float length = sqrt(pow((start_xy.second - end_xy.second), 2) +
-    //                         pow((start_xy.first - end_xy.first), 2));
-    //     float angle =
-    //         atan2(start_xy.second - end_xy.second, start_xy.first - end_xy.first) * 180.0 / M_PI;
-    //     float stickwidth = 2;
-    //     std::vector<cv::Point> polygon;
-    //     cv::ellipse2Poly(cv::Point(int(mX), int(mY)), cv::Size(int(length / 2), stickwidth),
-    //                      int(angle), 0, 360, 1, polygon);
-
-    //     cv::fillConvexPoly(img, polygon, handpose21_line_color[i]);
-    //   }
-    // }
   }
-
-  // CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0],
-  //                       frame->stVFrame.u32Length[0]);
-  // CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
-  // frame->stVFrame.pu8VirAddr[0] = NULL;
-
-  // frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0],
-  //                                                             frame->stVFrame.u32Length[0]);
-  // cv::Mat draw_img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
-  //             frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
-  // cv::cvtColor(draw_img, draw_img, CV_RGB2BGR);
-  // cv::imwrite("/mnt/data/out2.jpg", draw_img);
-
   return CVIAI_SUCCESS;
 #endif
 }
+
 }  // namespace service
 }  // namespace cviai
