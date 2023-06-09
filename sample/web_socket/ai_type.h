@@ -11,6 +11,6 @@ typedef enum {
   CVI_AI_MAX,
 } SAMPLE_AI_TYPE;
 
-SAMPLE_AI_TYPE *ai_param_get(void);
+SAMPLE_AI_TYPE ai_param_get(void);
 void ai_param_set(SAMPLE_AI_TYPE ai_type);
 #endif

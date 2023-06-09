@@ -40,7 +40,7 @@ cvai_service_brush_t *get_obj_brush(cvai_object_t *p_obj_meta) {
   const int max_clr = 7;
   for (size_t i = 0; i < p_obj_meta->size; i++) {
     int clr_idx = p_obj_meta->info[i].classes % max_clr;
-    printf("obj cls:%d\n", p_obj_meta->info[i].classes);
+    AI_LOGD("obj cls:%d\n", p_obj_meta->info[i].classes);
     p_brush[i].color.b = clrs[clr_idx][0];
     p_brush[i].color.g = clrs[clr_idx][1];
     p_brush[i].color.r = clrs[clr_idx][2];
@@ -49,7 +49,7 @@ cvai_service_brush_t *get_obj_brush(cvai_object_t *p_obj_meta) {
   return p_brush;
 }
 
-SAMPLE_AI_TYPE *ai_param_get(void) { return &g_ai_type; }
+SAMPLE_AI_TYPE ai_param_get(void) { return g_ai_type; }
 
 void ai_param_set(SAMPLE_AI_TYPE ai_type) { g_ai_type = ai_type; }
 
@@ -179,7 +179,7 @@ void *run_venc_thread(void *args) {
     ai_type = g_ai_type;
     if (ai_type == CVI_AI_FACE) {
       memset(&stFaceMeta, 0, sizeof(cvai_face_t));
-      if (g_stFaceMeta.size > 0) {
+      if (g_stFaceMeta.size > 0 && g_stFaceMeta.info != NULL) {
         CVI_AI_CopyFaceMeta(&g_stFaceMeta, &stFaceMeta);
         for (uint32_t oid = 0; oid < stFaceMeta.size; oid++) {
           sprintf(name, "%s: %.2f", stFaceMeta.info[oid].name, stFaceMeta.info[oid].bbox.score);
@@ -190,7 +190,7 @@ void *run_venc_thread(void *args) {
       }
     } else {
       memset(&stObjMeta, 0, sizeof(cvai_object_t));
-      if (g_stObjMeta.size > 0) {
+      if (g_stObjMeta.size > 0 && g_stObjMeta.info != NULL) {
         CVI_AI_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
         for (uint32_t oid = 0; oid < stObjMeta.size; oid++) {
           sprintf(name, "%s: %.2f", stObjMeta.info[oid].name, stObjMeta.info[oid].bbox.score);
@@ -240,15 +240,16 @@ void *run_ai_thread(void *args) {
 
   cvai_object_t stObjMeta = {0};
   cvai_face_t stFaceMeta = {0};
+  static uint32_t counter = 0;
   while (bExit == false) {
     if (ai_type != g_ai_type && g_ai_type < CVI_AI_MAX) {
       release_func(pstAIArgs->stAiHandle, ai_type);
       init_func(pstAIArgs->stAiHandle, g_ai_type);
       ai_type = g_ai_type;
     }
-
+    struct timeval t0, t1;
+    gettimeofday(&t0, NULL);
     s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
-
     if (s32Ret != CVI_SUCCESS) {
       AI_LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", s32Ret);
       goto get_frame_failed;
@@ -274,6 +275,13 @@ void *run_ai_thread(void *args) {
       goto inf_error;
     }
 
+    gettimeofday(&t1, NULL);
+    unsigned long execution_time = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
+    if (counter % 30 == 0) {
+      AI_LOGI("ai thread run take %ld ms\n", execution_time / 1000);
+      counter = 0;
+    }
+    counter++;
   inf_error:
     CVI_VPSS_ReleaseChnFrame(0, VPSS_CHN1, &stFrame);
   get_frame_failed:

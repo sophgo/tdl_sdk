@@ -6,9 +6,6 @@
 #include <unistd.h>
 #include "app_ipcam_comm.h"
 #include "libwebsockets.h"
-#ifdef AI_SUPPORT
-#include "app_ipcam_ai.h"
-#endif
 #define MAX_PAYLOAD_SIZE (1024 * 1024)
 #define MAX_BUFFER_SIZE (512 * 1024)
 
@@ -46,12 +43,8 @@ static int ProtocolMyCallback(struct lws *wsi, enum lws_callback_reasons reason,
       memcpy(tmp_data, in, len);
       data->len = len;
       free(tmp_data);
-      // lws_callback_on_writable(wsi);
       break;
     case LWS_CALLBACK_SERVER_WRITEABLE:
-      // if (s_fileSize > 100000) {
-      //   printf("client writeable s_fileSize:%d\n", s_fileSize);
-      // }
       pthread_mutex_lock(&g_mutexLock);
       if (s_fileSize != 0) {
         lws_write(wsi, s_imgData + LWS_PRE, s_fileSize,
@@ -113,7 +106,7 @@ struct lws_protocols protocols[] = {
 };
 
 static void *ThreadWebsocket(void *arg) {
-  struct lws_context_creation_info ctx_info = {0};
+  static struct lws_context_creation_info ctx_info = {0};
   ctx_info.port = 8000;
   ctx_info.iface = NULL;  // 在所有网络接口上监听
   ctx_info.protocols = protocols;

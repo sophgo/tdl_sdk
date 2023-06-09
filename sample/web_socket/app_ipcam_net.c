@@ -39,8 +39,6 @@ static int cvi_cgi_cmd_proc(httpd_conn *hc, char *cgi, char *cmd) {
     if (strstr(g_cgi_list[i].cgi, cgi) != NULL) {
       flag_cmd = 1;
       pFunCgiCmdProc = g_cgi_list[i].callback;
-      // strncpy(aszRequest, astCgiCmd[i].cmd, strlen(astCgiCmd[i].cmd));
-      // strncpy(method, astCgiCmd[i].method, strlen(astCgiCmd[i].method));
       break;
     }
   }
@@ -72,10 +70,7 @@ static int cvi_cgi_handle(httpd_conn *hc) {
   printf("enter: %s\n", __func__);  // int s32Ret = 0;
   char *pCommand = NULL;
   char szCommand[MAX_CGI_INTER] = {0};
-  // char aszMethod[MAX_HTTP_METHOD_LEN] = {0};
-  // char aszAccessLog[MAX_ACCESSLOG_LEN] = {0};
-  // char pszRequest[MAX_CNT_CMD] = {0};
-  // char query[MAX_CNT_CGI] = {0};
+
   if (hc == NULL) {
     printf("pstRequest & pstReponse can not be null\n\n\n");
     return -1;

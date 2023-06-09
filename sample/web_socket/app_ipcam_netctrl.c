@@ -173,12 +173,12 @@ static int GetWsAddrCallBack(void *param, const char *cmd, const char *val) {
 static int GetAudioInfoCallBack(void *param, const char *cmd, const char *val) {
   cJSON *cjsonAudioAttr = NULL;
   char *str = NULL;
-  SAMPLE_AI_TYPE *ai_type = ai_param_get();
+  SAMPLE_AI_TYPE ai_type = ai_param_get();
   cjsonAudioAttr = cJSON_CreateObject();
 
   printf("enter: %s\n", __func__);
 
-  cJSON_AddNumberToObject(cjsonAudioAttr, "main_enabled", *ai_type);
+  cJSON_AddNumberToObject(cjsonAudioAttr, "main_enabled", ai_type);
   str = cJSON_Print(cjsonAudioAttr);
   if (str) {
     CVI_NET_AddCgiResponse(param, "%s", str);
