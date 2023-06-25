@@ -154,6 +154,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION)            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION)         \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION)       \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION)       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV8POSE)                       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SIMCC_POSE)
 // clang-format on
@@ -724,6 +725,17 @@ DLL_EXPORT CVI_S32 CVI_AI_HandKeypointClassification(const cviai_handle_t handle
  */
 DLL_EXPORT CVI_S32 CVI_AI_Hand_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                          cvai_object_t *obj_meta);
+
+/**
+ * @brief Hand Detection. Tells if a object is wearing a mask.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param object cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_HeadPerson_Detection(const cviai_handle_t handle,
+                                               VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_meta);
 
 /**@}*/
 
