@@ -108,8 +108,13 @@ set(UnitTests
   reg_daily_fl.cpp
   reg_daily_soundcmd.cpp
   reg_daily_incarod.cpp
-  reg_daily_td.cpp
 )
+
+if (NOT "${CVI_PLATFORM}" STREQUAL "CV181X")
+  list(APPEND UnitTests
+    reg_daily_td.cpp
+  )
+endif()
 
 set(UnitTest_SRCS
   cviai_test.cpp
