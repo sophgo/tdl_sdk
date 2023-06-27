@@ -68,8 +68,18 @@ else()
 endif()
 
 # FIXME: Temporarily workaround
-set(SYSTRACE_FALLBACK ON)
-add_definitions(-DSYSTRACE_FALLBACK)
+#set(SYSTRACE_FALLBACK ON)
+#add_definitions(-DSYSTRACE_FALLBACK)
+
+if ("${ENABLE_PERFETTO}" STREQUAL "ON")
+  add_definitions(-DENABLE_PERFETTO)
+  set(ENABLE_TRACE ON)
+endif()
+
+if ("${ENABLE_TRACE}" STREQUAL "ON")
+  include (cmake/tracer.cmake)
+  add_definitions(-DENABLE_TRACE)
+endif()
 
 IF(DEFINED ENV{WEB_VIEW})
   set(BUILD_WEB_VIEW ON)

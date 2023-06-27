@@ -9,7 +9,22 @@ if (ENABLE_PERFETTO)
       GIT_TAG        origin/master
     )
     FetchContent_MakeAvailable(cvi_perfetto)
+    else()
+    set(cvi_perfetto_SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/cvi_perfetto-src)
     endif()
+    
+    set(CVI_PERFETTO_BIN_PERFETTO ${cvi_perfetto_SOURCE_DIR}/bin/${ARCH}/perfetto)
+    set(CVI_PERFETTO_BIN_TRACED ${cvi_perfetto_SOURCE_DIR}/bin/${ARCH}/traced)
+    set(CVI_PERFETTO_BIN_TRACED_PROBES ${cvi_perfetto_SOURCE_DIR}/bin/${ARCH}/traced_probes)
+    set(CVI_PERFETTO_CONFIG ${cvi_perfetto_SOURCE_DIR}/config)
+    set(CVI_PERFETTO_SCRIPT ${cvi_perfetto_SOURCE_DIR}/start_daemon.sh)
+    
+    install(FILES ${CVI_PERFETTO_BIN_PERFETTO} PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION bin/perfetto)
+    install(FILES ${CVI_PERFETTO_BIN_TRACED} PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION bin/perfetto)
+    install(FILES ${CVI_PERFETTO_BIN_TRACED_PROBES} PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION bin/perfetto)
+    install(DIRECTORY ${CVI_PERFETTO_CONFIG} DESTINATION bin/perfetto)
+    install(FILES ${CVI_PERFETTO_SCRIPT} PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_WRITE WORLD_EXECUTE DESTINATION bin/perfetto)
+    
     add_subdirectory(${cvi_perfetto_SOURCE_DIR}/sdk)
     include_directories(${cvi_perfetto_SOURCE_DIR}/sdk)
     add_definitions(-DENABLE_TRACE)

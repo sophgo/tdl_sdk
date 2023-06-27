@@ -266,7 +266,7 @@ typedef struct {
 typedef struct {
   cvai_4_pts_t license_pts;
   cvai_bbox_t license_bbox;
-  char license_char[255];
+  char license_char[125];
 } cvai_vehicle_meta;
 
 /** @struct cvai_pedestrian_meta
