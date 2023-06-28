@@ -3,7 +3,7 @@
 
 #include <math.h>
 #include <iostream>
-
+#include "cviai_log.hpp"
 #define USE_COSINE_DISTANCE_FOR_FEATURE true
 
 KalmanTracker::~KalmanTracker() {}
@@ -13,7 +13,6 @@ KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX
                              const cvai_kalman_tracker_config_t &ktracker_conf) {
   this->id = id;
   this->class_id = class_id;
-  this->bbox = bbox;
   int feature_size = feature.size();
   if (feature_size > 0) {
     if (USE_COSINE_DISTANCE_FOR_FEATURE) {
@@ -44,9 +43,9 @@ KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX
     float X_base = (ktracker_conf.P_x_idx[i] == -1) ? 0.0 : x[ktracker_conf.P_x_idx[i]];
     this->P(i, i) = pow(ktracker_conf.P_alpha[i] * X_base + ktracker_conf.P_beta[i], 2);
   }
+  false_update_times_ = 0;
+  ages_ = 1;
 }
-
-void KalmanTracker::update_bbox(const BBOX &bbox) { this->bbox = bbox; }
 
 void KalmanTracker::update_feature(const FEATURE &feature, int feature_budget_size,
                                    int feature_update_interval) {
@@ -76,6 +75,7 @@ void KalmanTracker::update_feature(const FEATURE &feature, int feature_budget_si
 }
 
 void KalmanTracker::update_state(bool is_matched, int max_unmatched_num, int accreditation_thr) {
+  ages_ += 1;
   if (is_matched) {
     if (tracker_state == k_tracker_state_e::PROBATION) {
       matched_counter += 1;
@@ -84,6 +84,7 @@ void KalmanTracker::update_state(bool is_matched, int max_unmatched_num, int acc
       }
     }
     unmatched_times = 0;
+    false_update_times_ = 0;
   } else {
     if (tracker_state == k_tracker_state_e::PROBATION) {
       tracker_state = k_tracker_state_e::MISS;
@@ -276,4 +277,99 @@ std::string KalmanTracker::get_INFO_TrackerState() const {
       assert(0);
   }
   return "ERROR";
+}
+
+uint64_t KalmanTracker::get_pair_trackid() {
+  if (pair_track_infos_.size() == 0) {
+    return 0;
+  }
+  return pair_track_infos_.begin()->first;
+}
+void KalmanTracker::predict(KalmanFilter &kf, cvai_deepsort_config_t *conf) {
+  kf.predict(kalman_state, x, P, conf->kfilter_conf);
+  unmatched_times += 1;
+  ages_ += 1;
+}
+//
+void KalmanTracker::update(KalmanFilter &kf, const stRect *p_tlwh_bbox,
+                           cvai_deepsort_config_t *conf) {
+  if (p_tlwh_bbox != nullptr) {
+    unmatched_times = 0;
+    matched_counter += 1;
+    false_update_times_ = 0;
+    BBOX twh_box;
+    twh_box(0) = p_tlwh_bbox->x;
+    twh_box(1) = p_tlwh_bbox->y;
+    twh_box(2) = p_tlwh_bbox->width;
+    twh_box(3) = p_tlwh_bbox->height;
+    BBOX xyah = bbox_tlwh2xyah(twh_box);
+    kf.update(kalman_state, x, P, xyah, conf->kfilter_conf);
+    if (tracker_state == k_tracker_state_e::PROBATION &&
+        matched_counter >= conf->ktracker_conf.accreditation_threshold) {
+      tracker_state = k_tracker_state_e::ACCREDITATION;
+    }
+
+  } else {
+    kalman_state = kalman_state_e::UPDATED;
+    if (tracker_state == k_tracker_state_e::PROBATION) {
+      tracker_state = k_tracker_state_e::MISS;
+    } else if (unmatched_times >= conf->ktracker_conf.max_unmatched_num) {
+      tracker_state = k_tracker_state_e::MISS;
+    }
+  }
+}
+void KalmanTracker::false_update_from_pair(KalmanFilter &kf, KalmanTracker *p_other,
+                                           cvai_deepsort_config_t *conf) {
+#ifdef DEBUG_TRACK
+  std::cout << "false update pairtrack:" << id << ",with:" << p_other->id << std::endl;
+#endif
+
+  if (p_other->pair_track_infos_.count(id) == 0) {
+    LOGE("false update current trackid:%d not found in pair track:%d\n", (int)id, (int)p_other->id);
+    return;
+  }
+  BBOX false_box;
+  stCorrelateInfo corre = p_other->pair_track_infos_[id];
+  // LOG(INFO)<<"falseframe:"<<cur_frame_<<",curtrack:"<<track_id_<<",pairedtrack:"<<p_pair_track->track_id_<<",offscalex:"<<
+  // corre.offset_scale_x<<
+  // ",offscaley:"<<
+  // corre.offset_scale_y<<",sizescalex:"<<corre.pair_size_scale_x<<",sizescaley:"<<corre.pair_size_scale_y;
+
+  BBOX pairbox = p_other->getBBox_TLWH();
+  false_box(0) = p_other->x(0) + pairbox(2) * corre.offset_scale_x;
+  false_box(1) = p_other->x(1) + pairbox(3) * corre.offset_scale_y;
+  false_box(2) = x(2);
+  false_box(3) = pairbox(3) * corre.pair_size_scale_y;
+
+  // to keep this track alive
+  if (unmatched_times >= conf->ktracker_conf.max_unmatched_num - 10) {
+    unmatched_times = conf->ktracker_conf.max_unmatched_num - 10;
+  }
+  false_update_times_ += 1;
+  kalman_state = kalman_state_e::UPDATED;
+  // only linear update xyah
+  this->x.block(0, 0, DIM_Z, 1) = this->x.block(0, 0, DIM_Z, 1) * 0.6 + false_box.transpose() * 0.4;
+  // kf.update(kalman_state, x, P, false_box, conf->kfilter_conf);
+}
+void KalmanTracker::update_pair_info(KalmanTracker *p_other) {
+#ifdef DEBUG_TRACK
+  std::cout << "update pairtrack:" << id << ",with:" << p_other->id << std::endl;
+#endif
+
+  BBOX cur_box = getBBox_TLWH();
+  BBOX pair_box = p_other->getBBox_TLWH();
+
+  if (p_other->pair_track_infos_.count(id) == 0) {
+    stCorrelateInfo corre;
+    memset((void *)&corre, 0, sizeof(corre));
+    p_other->pair_track_infos_[id] = corre;
+  }
+  update_corre(pair_box, cur_box, p_other->pair_track_infos_[id], 0.5);
+
+  if (pair_track_infos_.count(p_other->id) == 0) {
+    stCorrelateInfo corre;
+    memset((void *)&corre, 0, sizeof(corre));
+    pair_track_infos_[p_other->id] = corre;
+  }
+  update_corre(cur_box, pair_box, pair_track_infos_[p_other->id], 0.5);
 }

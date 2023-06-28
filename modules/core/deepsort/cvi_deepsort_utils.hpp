@@ -1,7 +1,6 @@
 #ifndef _CVI_DEEPSORT_UTILS_HPP_
 #define _CVI_DEEPSORT_UTILS_HPP_
 
-#include "core/cviai_core.h"
 #include "cvi_deepsort_types_internal.hpp"
 
 BBOX bbox_tlwh2tlbr(const BBOX &bbox_tlwh);
@@ -22,4 +21,7 @@ float compute_box_sim(stRect box1, stRect box2);
 float cal_iou_bbox(const BBOX &box1, const BBOX &box2);
 float compute_box_sim_bbox(BBOX box1, BBOX box2);
 bool is_bbox_crowded(const std::vector<BBOX> &bboxes, int check_idx, float expand_ratio);
-#endif /* _CVI_DEEPSORT_UTILS_HPP_ */
+void update_corre(const BBOX &cur_box, const BBOX &pair_box, stCorrelateInfo &prev, float w_cur);
+float cal_object_pair_score(stRect boxa, stRect boxb, ObjectType typea, ObjectType typeb,
+                            bool strict_order = true);
+#endif

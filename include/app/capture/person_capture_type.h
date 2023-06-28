@@ -23,7 +23,6 @@ typedef struct {
   float thr_aspect_ratio_min;
   float thr_aspect_ratio_max;
   float thr_quality;
-  // float thr_quality_high;
 
   uint32_t miss_time_limit;
   uint32_t fast_m_interval;

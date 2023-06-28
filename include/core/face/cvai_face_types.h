@@ -190,6 +190,7 @@ typedef struct {
   cvai_face_emotion_e emotion;
   cvai_face_gender_e gender;
   cvai_face_race_e race;
+  float score;
   float age;
   float liveness_score;
   float hardhat_score;
@@ -197,8 +198,10 @@ typedef struct {
   float recog_score;
   float face_quality;
   float pose_score;
+  float pose_score1;
   float sharpness_score;
   cvai_head_pose_t head_pose;
+  int track_state;
 } cvai_face_info_t;
 
 /** @struct cvai_face_t

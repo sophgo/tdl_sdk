@@ -252,6 +252,7 @@ void ScrFDFace::outputParser(int image_width, int image_height, int frame_width,
           facemeta->info[i].pts.x[j] = info.pts.x[j];
           facemeta->info[i].pts.y[j] = info.pts.y[j];
         }
+        facemeta->info[i].pts.score = info.bbox.score;
         CVI_AI_FreeCpp(&info);
       }
     }

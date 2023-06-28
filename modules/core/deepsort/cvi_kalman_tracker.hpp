@@ -29,6 +29,12 @@ class KalmanTracker : public Tracker {
   K_STATE_V x;
   K_COVARIANCE_M P;
   int unmatched_times;
+  int false_update_times_;
+  uint64_t ages_ = 0;
+  int matched_counter;
+  uint32_t out_nums = 0;
+
+  std::map<uint64_t, stCorrelateInfo> pair_track_infos_;
 
   KalmanTracker() = delete;
   KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox, const FEATURE &feature,
@@ -36,10 +42,15 @@ class KalmanTracker : public Tracker {
   ~KalmanTracker();
 
   void update_state(bool is_matched, int max_unmatched_num = 40, int accreditation_thr = 3);
-  void update_bbox(const BBOX &bbox);
   void update_feature(const FEATURE &feature, int feature_budget_size = 8,
                       int feature_update_interval = 1);
 
+  uint64_t get_pair_trackid();
+  void false_update_from_pair(KalmanFilter &kf, KalmanTracker *p_other,
+                              cvai_deepsort_config_t *conf);
+  void update_pair_info(KalmanTracker *p_other);
+  void predict(KalmanFilter &kf, cvai_deepsort_config_t *conf);
+  void update(KalmanFilter &kf, const stRect *p_bbox, cvai_deepsort_config_t *conf);
   BBOX getBBox_TLWH() const;
 
   static COST_MATRIX getCostMatrix_Feature(const std::vector<KalmanTracker> &KTrackers,
@@ -69,6 +80,7 @@ class KalmanTracker : public Tracker {
                                              const std::vector<int> &BBox_IDXes,
                                              const cvai_kalman_filter_config_t &kfilter_conf,
                                              float upper_bound);
+
   static void restrictCostMatrix_BBox(COST_MATRIX &cost_matrix,
                                       const std::vector<KalmanTracker> &KTrackers,
                                       const std::vector<BBOX> &BBoxes,
@@ -82,7 +94,6 @@ class KalmanTracker : public Tracker {
 
  private:
   int feature_update_counter;
-  int matched_counter;
 };
 
 #endif /* _CVI_KALMAN_TRACKER_HPP_ */

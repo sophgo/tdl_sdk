@@ -9,4 +9,5 @@ add_library(${PROJECT_NAME} OBJECT cvi_deepsort.cpp
                                    cvi_kalman_filter.cpp
                                    cvi_kalman_tracker.cpp
                                    cvi_munkres.cpp
-                                   cvi_distance_metric.cpp)
+                                   cvi_distance_metric.cpp
+                                   pair_track.cpp)

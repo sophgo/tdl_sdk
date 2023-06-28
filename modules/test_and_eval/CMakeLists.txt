@@ -84,3 +84,4 @@ buildninstallcpp(NAME test_img_capture INC ${REG_INCLUDES} DEPS cviai cviai_eval
 buildninstallcpp(NAME eval_hand_dataset INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_hand_keypoint INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_head_person INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME eval_face_landmarker_det2 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)

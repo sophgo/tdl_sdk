@@ -750,6 +750,31 @@ CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
   }
   return ctx->ds_tracker->track(face, tracker);
 }
+CVI_S32 CVI_AI_DeepSORT_FaceFusePed(const cviai_handle_t handle, cvai_face_t *face,
+                                    cvai_object_t *obj, cvai_tracker_t *tracker_t) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_FaceFusePed");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+  ds_tracker->set_image_size(face->width, face->height);
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVI_FAILURE;
+  }
+  ctx->ds_tracker->track_fuse(obj, face, tracker_t);
+  return CVI_SUCCESS;
+}
+CVI_S32 CVI_AI_DeepSORT_UpdateOutNum(const cviai_handle_t handle, cvai_tracker_t *tracker_t) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_FaceFusePed");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVI_FAILURE;
+  }
+  ctx->ds_tracker->update_out_num(tracker_t);
+  return CVI_SUCCESS;
+}
 
 CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_DebugInfo_1");
@@ -867,6 +892,50 @@ CVI_S32 CVI_AI_FaceFeatureExtract(const cviai_handle_t handle, const uint8_t *p_
   }
   return inst->extract_face_feature(p_rgb_pack, width, height, stride, p_face_info);
 }
+
+CVI_S32 CVI_AI_Change_Img(const cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model_type,
+                          VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S **dst_frame,
+                          PIXEL_FORMAT_E enDstFormat) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t modelt = ctx->model_cont[model_type];
+  if (modelt.instance == nullptr) {
+    LOGE("model not initialized:%d\n", (int)model_type);
+    return CVI_FAILURE;
+  }
+
+  VpssEngine *p_vpss_inst = modelt.instance->get_vpss_instance();
+  if (p_vpss_inst == nullptr) {
+    LOGE("vpssmodel not initialized:%d\n", (int)model_type);
+    return CVI_FAILURE;
+  }
+
+  VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+  memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+  modelt.instance->vpssChangeImage(frame, f, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                                   enDstFormat);
+  *dst_frame = f;
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Delete_Img(const cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model_type,
+                          VIDEO_FRAME_INFO_S *p_f) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t modelt = ctx->model_cont[model_type];
+  if (modelt.instance == nullptr) {
+    LOGE("model not initialized:%d\n", (int)model_type);
+    return CVI_FAILURE;
+  }
+  VpssEngine *p_vpss_inst = modelt.instance->get_vpss_instance();
+
+  if (p_vpss_inst == nullptr) {
+    LOGE("vpssmodel not initialized:%d\n", (int)model_type);
+    return CVI_FAILURE;
+  }
+  p_vpss_inst->releaseFrame(p_f, 0);
+  delete p_f;
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_CropImage_With_VPSS(const cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model_type,
                                    VIDEO_FRAME_INFO_S *frame, const cvai_bbox_t *p_crop_box,
                                    cvai_image_t *p_dst) {
@@ -916,4 +985,102 @@ CVI_S32 CVI_AI_CropImage_With_VPSS(const cviai_handle_t handle, CVI_AI_SUPPORTED
   }
   delete f;
   return ret;
+}
+CVI_S32 CVI_AI_CropResizeImage(const cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model_type,
+                               VIDEO_FRAME_INFO_S *frame, const cvai_bbox_t *p_crop_box,
+                               int dst_width, int dst_height, PIXEL_FORMAT_E enDstFormat,
+                               VIDEO_FRAME_INFO_S **p_dst_img) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t modelt = ctx->model_cont[model_type];
+  if (modelt.instance == nullptr) {
+    LOGE("model not initialized:%d\n", (int)model_type);
+    return CVI_FAILURE;
+  }
+  VpssEngine *p_vpss_inst = modelt.instance->get_vpss_instance();
+
+  if (p_vpss_inst == nullptr) {
+    LOGE("vpssmodel not initialized:%d\n", (int)model_type);
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+
+  VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+  memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+  int ret =
+      modelt.instance->vpssCropImage(frame, f, *p_crop_box, dst_width, dst_width, enDstFormat);
+  *p_dst_img = f;
+  return ret;
+}
+CVI_S32 CVI_AI_Copy_VideoFrameToImage(VIDEO_FRAME_INFO_S *f, cvai_image_t *p_dst) {
+  mmap_video_frame(f);
+  int ret = CVI_SUCCESS;
+  for (int i = 0; i < 3; i++) {
+    if ((p_dst->pix[i] == 0 && f->stVFrame.pu8VirAddr[i] != 0) ||
+        (p_dst->pix[i] != 0 && f->stVFrame.pu8VirAddr[i] == 0)) {
+      LOGE("error,plane:%d,dst_addr:%p,video_frame_addr:%p", i, p_dst->pix[i],
+           f->stVFrame.pu8VirAddr[i]);
+      ret = CVI_FAILURE;
+      break;
+    }
+    if (f->stVFrame.u32Length[i] > p_dst->length[i]) {
+      LOGE("size overflow,plane:%d,dst_len:%u,video_frame_len:%u", i, p_dst->length[i],
+           f->stVFrame.u32Length[i]);
+      ret = CVI_FAILURE;
+      break;
+    }
+    memcpy(p_dst->pix[i], f->stVFrame.pu8VirAddr[i], f->stVFrame.u32Length[i]);
+  }
+  unmap_video_frame(f);
+  return ret;
+}
+CVI_S32 CVI_AI_Resize_VideoFrame(const cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model_type,
+                                 VIDEO_FRAME_INFO_S *frame, const int dst_w, const int dst_h,
+                                 PIXEL_FORMAT_E dst_format, VIDEO_FRAME_INFO_S **dst_frame) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t modelt = ctx->model_cont[model_type];
+  if (modelt.instance == nullptr) {
+    LOGE("model not initialized:%d\n", (int)model_type);
+    return CVI_FAILURE;
+  }
+  VpssEngine *p_vpss_inst = modelt.instance->get_vpss_instance();
+
+  if (p_vpss_inst == nullptr) {
+    LOGE("vpssmodel not initialized:%d\n", (int)model_type);
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+
+  VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+  memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+  cvai_bbox_t bbox;
+  bbox.x1 = 0;
+  bbox.y1 = 0;
+  bbox.x2 = frame->stVFrame.u32Width;
+  bbox.y2 = frame->stVFrame.u32Height;
+  VPSS_SCALE_COEF_E scale = VPSS_SCALE_COEF_BILINEAR;
+  modelt.instance->vpssCropImage(frame, f, bbox, dst_w, dst_h, dst_format, scale);
+  *dst_frame = f;
+  return CVI_SUCCESS;
+}
+DLL_EXPORT CVI_S32 CVI_AI_Release_VideoFrame(const cviai_handle_t handle,
+                                             CVI_AI_SUPPORTED_MODEL_E model_type,
+                                             VIDEO_FRAME_INFO_S *frame, bool del_frame) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  cviai_model_t modelt = ctx->model_cont[model_type];
+  if (modelt.instance == nullptr) {
+    LOGE("model not initialized:%d\n", (int)model_type);
+    return CVI_FAILURE;
+  }
+  VpssEngine *p_vpss_inst = modelt.instance->get_vpss_instance();
+
+  if (p_vpss_inst == nullptr) {
+    LOGE("vpssmodel not initialized:%d\n", (int)model_type);
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+
+  if (frame->stVFrame.u64PhyAddr[0] != 0) {
+    p_vpss_inst->releaseFrame(frame, 0);
+  }
+  if (del_frame) {
+    delete frame;
+  }
+  return CVI_SUCCESS;
 }

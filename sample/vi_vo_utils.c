@@ -90,6 +90,11 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
   vs_ctx->vpssConfigs.aiHeight = aiInputSize->u32Height;
   vs_ctx->vpssConfigs.vpssChnAI = VPSS_CHN0;
 
+  ISP_PUB_ATTR_S pubAttr = {0};
+  CVI_ISP_GetPubAttr(0, &pubAttr);
+  pubAttr.f32FrameRate = 15;
+  CVI_ISP_SetPubAttr(0, &pubAttr);
+
   s32Ret = InitVPSS(&vs_ctx->vpssConfigs, voType != 0);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video process group 0 failed with %d\n", s32Ret);
@@ -127,6 +132,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
                PIXEL_FORMAT_E aiFormat, CVI_U32 *devNum) {
 #if defined(CV181X) || defined(CV180X)
   SAMPLE_INI_CFG_S stIniCfg = {};
+
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
   PIXEL_FORMAT_E enPixFormat = VI_PIXEL_FORMAT;
   VIDEO_FORMAT_E enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -151,7 +157,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   CVI_S32 s32Ret = CVI_SUCCESS;
 
   VI_DEV ViDev = 0;
-  VI_CHN ViChn = 0;
+  //  VI_CHN ViChn = 0;
   CVI_S32 s32WorkSnsId = 0;
   VI_PIPE_ATTR_S stPipeAttr;
 
@@ -166,6 +172,9 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
    ************************************************/
   SAMPLE_COMM_VI_GetSensorInfo(pstViConfig);
 
+  s32Ret = SAMPLE_COMM_VI_IniToViCfg(&stIniCfg, pstViConfig);
+  if (s32Ret != CVI_SUCCESS) return s32Ret;
+  /*
   pstViConfig->s32WorkingViNum = 1 + s32WorkSnsId;
   pstViConfig->as32WorkingViId[s32WorkSnsId] = s32WorkSnsId;
   pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.enSnsType =
@@ -190,6 +199,13 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enDynamicRange = enDynamicRange;
   pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enVideoFormat = enVideoFormat;
   pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode = enCompressMode;
+*/
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enPixFormat = enPixFormat;
+  pstViConfig->astViInfo[s32WorkSnsId].stPipeInfo.enMastPipeMode = enMastPipeMode;
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enDynamicRange = enDynamicRange;
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enVideoFormat = enVideoFormat;
+  pstViConfig->astViInfo[s32WorkSnsId].stChnInfo.enCompressMode = enCompressMode;
+
 #else
   SAMPLE_INI_CFG_S stIniCfg = {};
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
@@ -315,7 +331,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   u32BlkSize = COMMON_GetPicBufferSize(aiSize->u32Width, aiSize->u32Height, aiFormat,
                                        DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[1].u32BlkCnt = 2;
+  stVbConf.astCommPool[1].u32BlkCnt = 3;
 
   u32BlkSize = COMMON_GetPicBufferSize(VO_WIDTH, VO_HEIGHT, PIXEL_FORMAT_VO, DATA_BITWIDTH_8,
                                        COMPRESS_MODE_NONE, DEFAULT_ALIGN);
@@ -530,12 +546,14 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
   abChnEnable[vpssConfigs->vpssChnAI] = CVI_TRUE;
   VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssConfigs->vpssChnAI], vpssConfigs->aiWidth,
                           vpssConfigs->aiHeight, vpssConfigs->aiFormat, true);
+  stVpssChnAttr[vpssConfigs->vpssChnAI].u32Depth = 1;
 
   if (isVOOpened) {
     abChnEnable[vpssConfigs->vpssChnVideoOutput] = CVI_TRUE;
     VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssConfigs->vpssChnVideoOutput], vpssConfigs->voWidth,
                             vpssConfigs->voHeight, PIXEL_FORMAT_VO, true);
   }
+  stVpssChnAttr[vpssConfigs->vpssChnVideoOutput].u32Depth = 1;
 
   VPSS_GRP_DEFAULT_HELPER2(&stVpssGrpAttr, vpssConfigs->grpWidth, vpssConfigs->grpHeight,
                            vpssConfigs->groupFormat, 1);

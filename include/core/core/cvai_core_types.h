@@ -89,6 +89,7 @@ typedef struct {
   float* x;
   float* y;
   uint32_t size;
+  float score;
 } cvai_pts_t;
 
 /** @struct cvai_4_pts_t
@@ -142,6 +143,7 @@ typedef struct {
   uint64_t id;
   cvai_trk_state_type_t state;
   cvai_bbox_t bbox;
+  int out_num;
 } cvai_tracker_info_t;
 
 /** @struct cvai_tracker_t
@@ -154,8 +156,8 @@ typedef struct {
  * The object tracking array.
  */
 typedef struct {
-  uint32_t size;
-  cvai_tracker_info_t* info;
+  uint32_t size;              // number of detections of current frame
+  cvai_tracker_info_t* info;  // track info for current frame detection
 } cvai_tracker_t;
 
 /** @struct cvai_image_t

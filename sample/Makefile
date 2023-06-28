@@ -276,7 +276,7 @@ sample_app_%: $(PWD)/sample_app_%.o $(PWD)/vi_vo_utils.o
 	$(CC) $(SAMPLE_APP_LIBS)  -o $@ $^
 
 sample_vi_%: $(PWD)/sample_vi_%.o $(PWD)/vi_vo_utils.o $(PWD)/sample_utils.o $(PWD)/middleware_utils.o
-	$(CC) $(SAMPLE_VI_LIBS)  -o $@ $^
+	$(CC) $(SAMPLE_APP_LIBS)  -o $@ $^
 
 sample_init: $(PWD)/sample_init.o
 	$(CC) $(SAMPLE_LIBS)  -o $@ $^

@@ -32,34 +32,34 @@ int KalmanFilter::predict(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
   /* predict */
   K_STATE_V next_x_ = F_ * x_;
   P_ = F_ * P_ * F_.transpose() + Q_;
-  if (kfilter_conf.enable_bounding_stay) {
-#if BOUNDING_STAY_ALGO == 0
-    if (next_x_(0) < kfilter_conf.X_constraint_min[0] ||
-        next_x_(1) < kfilter_conf.X_constraint_min[1] ||
-        next_x_(0) > kfilter_conf.X_constraint_max[0] ||
-        next_x_(1) > kfilter_conf.X_constraint_max[1]) {
-      return kalman_filter_ret_e::KF_PREDICT_OVER_BOUNDING;
-    }
-#elif BOUNDING_STAY_ALGO == 1
-    float w = next_x_(2) * next_x_(3);
-    float h = next_x_(3);
-    float area = w * h;
-    float x1 = MAX(kfilter_conf.X_constraint_min[0], next_x_(0) - 0.5 * w);
-    float y1 = MAX(kfilter_conf.X_constraint_min[1], next_x_(1) - 0.5 * h);
-    float x2 = MIN(kfilter_conf.X_constraint_max[0], next_x_(0) + 0.5 * w);
-    float y2 = MIN(kfilter_conf.X_constraint_max[1], next_x_(1) + 0.5 * h);
-    float area_clipped = (x2 - x1) * (y2 - y1);
-    float r = area_clipped / area;
-    // printf("r[%.4f], area[%.4f], area_clipped[%.4f]\n", r, area, area_clipped);
-    if (r < BOUNDING_STAY_ALGO_1_THRESHOLD) {
-      // printf("x  = (%.4f,%.4f,%.4f,%.4f)\n", x_(0), x_(1), x_(2), x_(3));
-      // printf("x' = (%.4f,%.4f,%.4f,%.4f)\n", x_(4), x_(5), x_(6), x_(7));
-      return kalman_filter_ret_e::KF_PREDICT_OVER_BOUNDING;
-    }
-#else
-#error "unknown bounding stay algorithm"
-#endif
-  }
+  //   if (kfilter_conf.enable_bounding_stay) {
+  // #if BOUNDING_STAY_ALGO == 0
+  //     if (next_x_(0) < kfilter_conf.X_constraint_min[0] ||
+  //         next_x_(1) < kfilter_conf.X_constraint_min[1] ||
+  //         next_x_(0) > kfilter_conf.X_constraint_max[0] ||
+  //         next_x_(1) > kfilter_conf.X_constraint_max[1]) {
+  //       return kalman_filter_ret_e::KF_PREDICT_OVER_BOUNDING;
+  //     }
+  // #elif BOUNDING_STAY_ALGO == 1
+  //     float w = next_x_(2) * next_x_(3);
+  //     float h = next_x_(3);
+  //     float area = w * h;
+  //     float x1 = MAX(kfilter_conf.X_constraint_min[0], next_x_(0) - 0.5 * w);
+  //     float y1 = MAX(kfilter_conf.X_constraint_min[1], next_x_(1) - 0.5 * h);
+  //     float x2 = MIN(kfilter_conf.X_constraint_max[0], next_x_(0) + 0.5 * w);
+  //     float y2 = MIN(kfilter_conf.X_constraint_max[1], next_x_(1) + 0.5 * h);
+  //     float area_clipped = (x2 - x1) * (y2 - y1);
+  //     float r = area_clipped / area;
+  //     // printf("r[%.4f], area[%.4f], area_clipped[%.4f]\n", r, area, area_clipped);
+  //     if (r < BOUNDING_STAY_ALGO_1_THRESHOLD) {
+  //       // printf("x  = (%.4f,%.4f,%.4f,%.4f)\n", x_(0), x_(1), x_(2), x_(3));
+  //       // printf("x' = (%.4f,%.4f,%.4f,%.4f)\n", x_(4), x_(5), x_(6), x_(7));
+  //       return kalman_filter_ret_e::KF_PREDICT_OVER_BOUNDING;
+  //     }
+  // #else
+  // #error "unknown bounding stay algorithm"
+  // #endif
+  //   }
   x_ = next_x_;
   if (kfilter_conf.enable_X_constraint_0) {
     for (int i = 0; i < DIM_Z; i++) {

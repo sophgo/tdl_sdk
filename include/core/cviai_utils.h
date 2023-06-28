@@ -151,8 +151,8 @@ DLL_EXPORT CVI_S32 CVI_AI_DumpVpssFrame(const char *filepath, VIDEO_FRAME_INFO_S
 DLL_EXPORT CVI_S32 CVI_AI_DumpImage(const char *filepath, cvai_image_t *image);
 DLL_EXPORT CVI_S32 CVI_AI_CreateImageFromVideoFrame(const VIDEO_FRAME_INFO_S *p_src_frame,
                                                     cvai_image_t *image);
-/**@}*/
-
+DLL_EXPORT CVI_S32 CVI_AI_CreateImageFromVideoFrameSize(const VIDEO_FRAME_INFO_S *p_src_frame,
+                                                        cvai_image_t *image, uint32_t img_size);
 #ifdef __cplusplus
 }
 #endif

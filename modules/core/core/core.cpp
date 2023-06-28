@@ -359,6 +359,7 @@ size_t Core::getInputTensorSize(const std::string &name) {
 int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                          VPSSConfig &vpss_config) {
   int ret;
+  LOGI("to vpss preprocess,crop_enable:%d\n", (int)vpss_config.crop_attr.bEnable);
   if (!vpss_config.crop_attr.bEnable) {
     ret = mp_vpss_inst->sendFrame(srcFrame, &vpss_config.chn_attr, &vpss_config.chn_coeff, 1);
   } else {
@@ -519,7 +520,8 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
 
 /* vpssCropImage api need new  dstFrame and remember delete and release frame*/
 int Core::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                        cvai_bbox_t bbox, uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat) {
+                        cvai_bbox_t bbox, uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
+                        VPSS_SCALE_COEF_E reize_mode /* = VPSS_SCALE_COEF_NEAREST*/) {
   VPSS_CROP_INFO_S cropAttr;
   cropAttr.bEnable = true;
   uint32_t u32Width = bbox.x2 - bbox.x1;
@@ -527,7 +529,18 @@ int Core::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFra
   cropAttr.stCropRect = {(int)bbox.x1, (int)bbox.y1, u32Width, u32Height};
   VPSS_CHN_ATTR_S chnAttr;
   VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, false);
-  mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, 1);
+  int ret = mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, &reize_mode, 1);
+  if (ret != CVI_SUCCESS) return ret;
+  ret = mp_vpss_inst->getFrame(dstFrame, 0, 2000);
+  return ret;
+}
+
+/* vpssCropImage api need new  dstFrame and remember delete and release frame*/
+int Core::vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
+                          uint32_t rh, PIXEL_FORMAT_E enDstFormat) {
+  VPSS_CHN_ATTR_S chnAttr;
+  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, false);
+  mp_vpss_inst->sendFrame(srcFrame, &chnAttr, 1);
   mp_vpss_inst->getFrame(dstFrame, 0, 2000);
   return CVIAI_SUCCESS;
 }

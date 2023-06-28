@@ -78,7 +78,7 @@ float get_inter_area(const stRect &box1, const stRect &box2) {
 
   float xx2 = box1_x2 < box2_x2 ? box1_x2 : box2_x2;
   float yy2 = box1_y2 < box2_y2 ? box1_y2 : box2_y2;
-  ;
+
   float w = xx2 - xx1 + 1;
   float h = yy2 - yy1 + 1;
   if (w <= 0 || h <= 0) return 0;
@@ -141,4 +141,78 @@ bool is_bbox_crowded(const std::vector<BBOX> &bboxes, int check_idx, float expan
     if (iou > 0) return true;
   }
   return false;
+}
+stRect box_and(const stRect &boxa, const stRect &boxb) {
+  float xx1 = std::max(boxa.x, boxb.x);
+  float yy1 = std::max(boxa.y, boxb.y);
+  float xx2 = std::min(boxa.x + boxa.width, boxb.x + boxb.width);
+  float yy2 = std::min(boxa.y + boxa.height, boxb.y + boxb.height);
+  float w = xx2 - xx1 + 1;
+  float h = yy2 - yy1 + 1;
+  if (w < 0) w = 0;
+  if (h < 0) h = 0;
+  stRect rct(xx1, yy1, w, h);
+  return rct;
+}
+float cal_object_pair_score(stRect boxa, stRect boxb, ObjectType typea, ObjectType typeb,
+                            bool strict_order /*=true*/) {
+  if (typea == OBJ_FACE && typeb == OBJ_PERSON) {
+    stRect face_box = boxa;
+    stRect ped_box = boxb;
+
+    int face_size = std::max(face_box.width, face_box.height);
+    if (face_box.y < ped_box.y) return 0;
+    float yoffset = 0.2;
+    float ydiff = face_box.y - ped_box.y - face_size * yoffset;
+    float ydiff_score = 1.0 - ydiff / (face_box.height);
+
+    if (ped_box.height > face_size * 15) return 0;
+    int ped_ct_x = ped_box.x + ped_box.width / 2;
+    int face_ct_x = face_box.x + face_box.width / 2;
+    float xdiff = abs(ped_ct_x - face_ct_x);
+    float xdiff_score = 1.0 - xdiff / face_size;
+    stRect ped_top_box(ped_box.x + ped_box.width * 0.2, ped_box.y + face_size * yoffset,
+                       ped_box.width * 0.8, face_size * (1 + yoffset));
+    float iou = cal_iou(face_box, ped_top_box);
+
+    float pair_score = ydiff_score * 0.2 + iou * 0.7 + xdiff_score * 0.1;
+#ifdef DEBUG_TRACK
+    std::cout << "pairscore:" << pair_score << ",iou:" << iou << std::endl;
+#endif
+    return pair_score;
+  } else {
+    return 0;
+  }
+}
+// compute relative info from pair_tlwh to cur_tlwh
+void update_corre(const BBOX &cur_tlwh, const BBOX &pair_tlwh, stCorrelateInfo &cur_corre,
+                  float w_cur) {
+  float w_prev = 1 - w_cur;
+  float cur_ctx = cur_tlwh(0) + cur_tlwh(2) / 2;
+  float cur_cty = cur_tlwh(1) + cur_tlwh(3) / 2;
+  float pair_ctx = pair_tlwh(0) + pair_tlwh(2) / 2;
+  float pair_cty = pair_tlwh(1) + pair_tlwh(3) / 2;
+  float cur_w = cur_tlwh(2);
+  float cur_h = cur_tlwh(3);
+
+  stCorrelateInfo cur;
+  cur.offset_scale_x = (pair_ctx - cur_ctx) / cur_w;
+  cur.offset_scale_y = (pair_cty - cur_cty) / cur_h;
+  cur.pair_size_scale_x = float(pair_tlwh(2)) / cur_w;
+  cur.pair_size_scale_y = float(pair_tlwh(3)) / cur_h;
+  if (cur_corre.votes == 0) {
+    cur_corre = cur;
+    cur_corre.votes = 1;
+    cur_corre.time_since_correlated = 0;
+
+    return;
+  }
+  cur_corre.offset_scale_x = cur_corre.offset_scale_x * w_prev + cur.offset_scale_x * w_cur;
+  cur_corre.offset_scale_y = cur_corre.offset_scale_y * w_prev + cur.offset_scale_y * w_cur;
+  cur_corre.pair_size_scale_x =
+      cur_corre.pair_size_scale_x * w_prev + cur.pair_size_scale_x * w_cur;
+  cur_corre.pair_size_scale_y =
+      cur_corre.pair_size_scale_y * w_prev + cur.pair_size_scale_y * w_cur;
+  cur_corre.time_since_correlated = 0;
+  cur_corre.votes += 1;
 }

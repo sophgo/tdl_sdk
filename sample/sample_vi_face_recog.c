@@ -351,7 +351,7 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
   ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                           fr_model_path, NULL);
+                                           fr_model_path, NULL, NULL);
   app_handle->face_cpt_info->fr_flag = 2;
   if (ret != CVIAI_SUCCESS) {
     printf("failed with %#x!\n", ret);
@@ -363,7 +363,6 @@ int main(int argc, char *argv[]) {
 
   face_capture_config_t app_cfg;
   CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
-  app_cfg.cycle_m_interval = 5;
   CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
 
   cvai_service_feature_array_t feat_gallery;

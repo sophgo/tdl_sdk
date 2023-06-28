@@ -147,6 +147,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION)                \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YAWNCLASSIFICATION)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACELANDMARKER)                   \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACELANDMARKERDET2)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_INCAROBJECTDETECTION)             \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SMOKECLASSIFICATION)              \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION)                \
@@ -156,7 +157,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION)       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION)       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV8POSE)                       \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SIMCC_POSE)
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SIMCC_POSE)\
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3)
 // clang-format on
 
 #define CVI_AI_NAME_WRAP(x) x,
@@ -458,6 +460,9 @@ DLL_EXPORT CVI_S32 CVI_AI_RetinaFace(const cviai_handle_t handle, VIDEO_FRAME_IN
  */
 DLL_EXPORT CVI_S32 CVI_AI_ScrFDFace(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                     cvai_face_t *faces);
+
+DLL_EXPORT CVI_S32 CVI_AI_FLDet3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                 cvai_face_t *faces);
 /**
  * @brief RetinaFaceIR face detection.
  *
@@ -999,6 +1004,10 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,
                                         cvai_tracker_t *tracker);
 
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_FaceFusePed(const cviai_handle_t handle, cvai_face_t *face,
+                                               cvai_object_t *obj, cvai_tracker_t *tracker_t);
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_UpdateOutNum(const cviai_handle_t handle,
+                                                cvai_tracker_t *tracker_t);
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info);
 
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_GetTracker_Inactive(const cviai_handle_t handle,
@@ -1194,6 +1203,16 @@ DLL_EXPORT CVI_S32 CVI_AI_IncarObjectDetection(const cviai_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_AI_FaceLandmarker(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                          cvai_face_t *face);
 
+/**@}*/
+
+/**
+ * \addtogroup core_face_landmarkdet3 Face Landmark
+ * \ingroup core_ai
+ */
+/**@{*/
+
+DLL_EXPORT CVI_S32 CVI_AI_FaceLandmarkerDet2(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                             cvai_face_t *face);
 /**
  * @brief Do smoke classification.
  *
@@ -1224,6 +1243,27 @@ DLL_EXPORT CVI_S32 CVI_AI_CropImage_With_VPSS(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame,
                                               const cvai_bbox_t *p_crop_box, cvai_image_t *p_dst);
 
+DLL_EXPORT CVI_S32 CVI_AI_CropResizeImage(const cviai_handle_t handle,
+                                          CVI_AI_SUPPORTED_MODEL_E model_type,
+                                          VIDEO_FRAME_INFO_S *frame, const cvai_bbox_t *p_crop_box,
+                                          int dst_width, int dst_height, PIXEL_FORMAT_E enDstFormat,
+                                          VIDEO_FRAME_INFO_S **p_dst_img);
+
+DLL_EXPORT CVI_S32 CVI_AI_Copy_VideoFrameToImage(VIDEO_FRAME_INFO_S *frame, cvai_image_t *p_dst);
+DLL_EXPORT CVI_S32 CVI_AI_Resize_VideoFrame(const cviai_handle_t handle,
+                                            CVI_AI_SUPPORTED_MODEL_E model,
+                                            VIDEO_FRAME_INFO_S *frame, const int dst_w,
+                                            const int dst_h, PIXEL_FORMAT_E dst_format,
+                                            VIDEO_FRAME_INFO_S **dst_frame);
+DLL_EXPORT CVI_S32 CVI_AI_Release_VideoFrame(const cviai_handle_t handle,
+                                             CVI_AI_SUPPORTED_MODEL_E model,
+                                             VIDEO_FRAME_INFO_S *frame, bool del_frame);
+DLL_EXPORT CVI_S32 CVI_AI_Change_Img(const cviai_handle_t handle,
+                                     CVI_AI_SUPPORTED_MODEL_E model_type, VIDEO_FRAME_INFO_S *frame,
+                                     VIDEO_FRAME_INFO_S **dst_frame, PIXEL_FORMAT_E enDstFormat);
+
+DLL_EXPORT CVI_S32 CVI_AI_Delete_Img(const cviai_handle_t handle,
+                                     CVI_AI_SUPPORTED_MODEL_E model_type, VIDEO_FRAME_INFO_S *p_f);
 /**
  * @brief person and pet(cat,dog) Detection
  *

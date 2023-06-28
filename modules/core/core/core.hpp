@@ -114,7 +114,10 @@ class Core {
   }
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
   int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvai_bbox_t bbox,
-                    uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat);
+                    uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
+                    VPSS_SCALE_COEF_E reize_mode = VPSS_SCALE_COEF_BICUBIC);
+  int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
+                      uint32_t rh, PIXEL_FORMAT_E enDstFormat);
   VpssEngine *get_vpss_instance() { return mp_vpss_inst; }
 
  protected:

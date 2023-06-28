@@ -80,6 +80,7 @@ if ("${ENABLE_TRACE}" STREQUAL "ON")
   include (cmake/tracer.cmake)
   add_definitions(-DENABLE_TRACE)
 endif()
+# add_definitions(-DDEBUG_TRACK)
 
 IF(DEFINED ENV{WEB_VIEW})
   set(BUILD_WEB_VIEW ON)

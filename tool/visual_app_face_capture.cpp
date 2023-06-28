@@ -125,7 +125,8 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
   ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
                                            (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
-                                           (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path);
+                                           (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path,
+                                           NULL);
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
@@ -329,8 +330,6 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config) {
       app_config->qa_method = atoi(value);
     } else if (!strcmp(name, "Threshold_Quality")) {
       app_config->thr_quality = atof(value);
-    } else if (!strcmp(name, "Threshold_Quality_High")) {
-      app_config->thr_quality_high = atof(value);
     } else if (!strcmp(name, "Threshold_Yaw")) {
       app_config->thr_yaw = atof(value);
     } else if (!strcmp(name, "Threshold_Pitch")) {
@@ -338,21 +337,15 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config) {
     } else if (!strcmp(name, "Threshold_Roll")) {
       app_config->thr_roll = atof(value);
     } else if (!strcmp(name, "FAST_Mode_Interval")) {
-      app_config->fast_m_interval = (uint32_t)atoi(value);
+      app_config->m_interval = (uint32_t)atoi(value);
     } else if (!strcmp(name, "FAST_Mode_Capture_Num")) {
-      app_config->fast_m_capture_num = (uint32_t)atoi(value);
-    } else if (!strcmp(name, "CYCLE_Mode_Interval")) {
-      app_config->cycle_m_interval = (uint32_t)atoi(value);
-    } else if (!strcmp(name, "AUTO_Mode_Time_Limit")) {
-      app_config->auto_m_time_limit = (uint32_t)atoi(value);
+      app_config->m_capture_num = (uint32_t)atoi(value);
     } else if (!strcmp(name, "AUTO_Mode_Fast_Cap")) {
       app_config->auto_m_fast_cap = atoi(value) == 1;
     } else if (!strcmp(name, "img_capture_flag")) {
       app_config->img_capture_flag = atoi(value);
     } else if (!strcmp(name, "Store_Face_Feature")) {
       app_config->store_feature = atoi(value) == 1;
-    } else if (!strcmp(name, "Store_RGB888")) {
-      app_config->store_RGB888 = atoi(value) == 1;
     } else {
       printf("Unknow Arg: %s\n", name);
       return false;

@@ -3,7 +3,7 @@
 #include "core/cviai_types_mem_internal.h"
 
 #include <algorithm>
-
+#include <iostream>
 namespace cviai {
 cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, const float nn_width,
                           const float nn_height, const cvai_bbox_t bbox, float *ratio,

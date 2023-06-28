@@ -5,7 +5,9 @@
 namespace cviai {
 
 VpssEngine::VpssEngine(VPSS_GRP desired_grp_id, CVI_U8 device)
-    : m_desired_grp_id(desired_grp_id), m_dev(device) {}
+    : m_desired_grp_id(desired_grp_id), m_dev(device) {
+  init();
+}
 
 VpssEngine::~VpssEngine() { stop(); }
 
@@ -151,6 +153,8 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
   m_enabled_chn = enable_chns;
 
   VPSS_GRP_ATTR_S vpss_grp_attr;
+  LOGI("framew:%u,frameh:%u,pixelformat:%d\n", frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+       frame->stVFrame.enPixelFormat);
   VPSS_GRP_DEFAULT_HELPER2(&vpss_grp_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
                            frame->stVFrame.enPixelFormat, m_dev);
 
@@ -231,6 +235,7 @@ int VpssEngine::sendFrameBase(const VIDEO_FRAME_INFO_S *frame,
 
 int VpssEngine::sendFrame(const VIDEO_FRAME_INFO_S *frame, const VPSS_CHN_ATTR_S *chn_attr,
                           const uint32_t enable_chns) {
+  // grp_crop_attr=null,chn_crop_attr=null,coeffs=null
   return sendFrameBase(frame, NULL, NULL, chn_attr, NULL, enable_chns);
 }
 

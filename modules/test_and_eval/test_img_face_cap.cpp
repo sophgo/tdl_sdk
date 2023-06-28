@@ -68,7 +68,6 @@ static IOData data_buffer[OUTPUT_BUFFER_SIZE];
 static cvai_object_t g_obj_meta_0;
 static cvai_object_t g_obj_meta_1;
 
-static APP_MODE_e app_mode;
 std::string g_out_dir;
 
 int COUNT_ALIVE(face_capture_t *face_cpt_info);
@@ -126,9 +125,12 @@ static void *pImageWrite(void *args) {
       empty = front_idx == rear_idx;
     }
     if (empty) {
-      printf("I/O Buffer is empty.\n");
+      // printf("I/O Buffer is empty.\n");
       usleep(100 * 1000);
       continue;
+    }
+    if (bExit) {
+      break;
     }
     int target_idx = (front_idx + 1) % OUTPUT_BUFFER_SIZE;
     char filename[256];
@@ -163,12 +165,8 @@ static void *pImageWrite(void *args) {
   }
 
   printf("[APP] free buffer data...\n");
-  while (front_idx != rear_idx) {
-    CVI_AI_Free(&data_buffer[(front_idx + 1) % OUTPUT_BUFFER_SIZE].image);
-    {
-      SMT_MutexAutoLock(IOMutex, lock);
-      front_idx = (front_idx + 1) % OUTPUT_BUFFER_SIZE;
-    }
+  for (int i = 0; i < OUTPUT_BUFFER_SIZE; i++) {
+    CVI_AI_Free(&data_buffer[i].image);
   }
 
   return NULL;
@@ -182,7 +180,11 @@ std::string capobj_to_str(face_cpt_data_t *p_obj, float w, float h, int lb) {
   float ww = (p_obj->info.bbox.x2 - p_obj->info.bbox.x1) / w;
   float hh = (p_obj->info.bbox.y2 - p_obj->info.bbox.y1) / h;
   ss << p_obj->cap_timestamp << "," << lb << "," << ctx << "," << cty << "," << ww << "," << hh
-     << "," << p_obj->info.unique_id << "," << p_obj->info.bbox.score << "\n";
+     << "," << p_obj->info.unique_id << "," << p_obj->info.bbox.score << ";";
+  for (int i = 0; i < 5; i++) {
+    ss << p_obj->info.pts.x[i] << "," << p_obj->info.pts.y[i] << ",";
+  }
+  ss << p_obj->info.pts.score << "\n";
   return ss.str();
 }
 void export_tracking_info(face_capture_t *p_cap_info, const std::string &str_dst_dir, int frame_id,
@@ -374,6 +376,10 @@ int main(int argc, char *argv[]) {
       "/mnt/data/admin1_data/AI_CV/cv182x/ai_models_output/cv181x/"
       "scrfd_500m_bnkps_432_768.cvimodel");
 
+  std::string fl_modelf = "/mnt/data/admin1_data/alios_test/fl/onet_int8.cvimodel";
+  std::string ped_modelf =
+      "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/"
+      "mobiledetv2-pedestrian-d0-ls-448.cvimodel";
   std::string str_model_file = modelf;
   CVI_AI_SUPPORTED_MODEL_E fd_model_id = model;
 
@@ -381,7 +387,7 @@ int main(int argc, char *argv[]) {
 
   const char *config_path = "NULL";  // argv[4];//NULL
 
-  int buffer_size = 5;
+  int buffer_size = 15;
   float det_threshold = 0.5;
   bool write_image = true;
   std::string str_image_root(argv[1]);
@@ -415,13 +421,19 @@ int main(int argc, char *argv[]) {
   ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
   printf("to facecap init\n");
   ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
+  if (ret != CVI_SUCCESS) {
+    release_system(ai_handle, service_handle, app_handle);
+    return CVI_FAILURE;
+  }
   printf("to quick setup\n");
 
   cvai_service_feature_array_t feat_gallery;
   memset(&feat_gallery, 0, sizeof(feat_gallery));
   CVI_AI_SUPPORTED_MODEL_E fr_model_id = CVI_AI_SUPPORTED_MODEL_FACERECOGNITION;
   ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                           NULL, NULL);
+                                           NULL, NULL, fl_modelf.c_str());
+  CVI_AI_SUPPORTED_MODEL_E ped_model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
+  ret |= CVI_AI_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_modelf.c_str());
   IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
 
   if (ret != CVI_SUCCESS) {
@@ -431,7 +443,6 @@ int main(int argc, char *argv[]) {
 
   CVI_AI_SetModelThreshold(ai_handle, fd_model_id, det_threshold);
 
-  app_mode = intelligent;  // APP_MODE_e(atoi(mode_id));
   printf("finish init \n");
 
   std::vector<std::string> gallery_names;
@@ -451,7 +462,6 @@ int main(int argc, char *argv[]) {
     }
   }
   std::cout << "to start:\n";
-  CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
 
   face_capture_config_t app_cfg;
   CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
@@ -463,14 +473,14 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
   app_cfg.thr_quality = 0.1;
-  app_cfg.thr_quality_high = 0.95;
   app_cfg.thr_size_min = 20;
   app_cfg.miss_time_limit = 20;
-  app_cfg.store_RGB888 = true;
   app_cfg.store_feature = true;
   app_cfg.qa_method = 0;
-  app_cfg.img_capture_flag = 1;  // capture whole frame
+  app_cfg.img_capture_flag = 0;  // capture whole frame
+  app_cfg.m_interval = 1000;     // only export one when leaving
   CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
+  CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
 
   memset(&g_obj_meta_0, 0, sizeof(cvai_object_t));
   memset(&g_obj_meta_1, 0, sizeof(cvai_object_t));
@@ -485,7 +495,8 @@ int main(int argc, char *argv[]) {
   int num_append = 0;
   IVE_IMAGE_TYPE_E img_format = IVE_IMAGE_TYPE_U8C3_PACKAGE;  // IVE_IMAGE_TYPE_U8C3_PACKAGE;
   for (int img_idx = 0; img_idx < 1000; img_idx++) {
-    std::cout << "processing:" << img_idx << "/530\n";
+    if (bExit) break;
+    std::cout << "processing:" << img_idx << "/1000\n";
     char szimg[256];
     sprintf(szimg, "%s/%08d.jpg", str_image_root.c_str(), img_idx);
     std::cout << "processing:" << img_idx << "/1000,path:" << szimg << std::endl;
