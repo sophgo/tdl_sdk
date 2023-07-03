@@ -6,6 +6,7 @@ namespace cviai {
 
 VpssEngine::VpssEngine(VPSS_GRP desired_grp_id, CVI_U8 device)
     : m_desired_grp_id(desired_grp_id), m_dev(device) {
+  if (m_desired_grp_id == -1) return;
   init();
 }
 

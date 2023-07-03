@@ -190,7 +190,7 @@ TEST_F(CoreTestSuite, skip_vpsspreprocess) {
             CVIAI_SUCCESS);
 
   // AI SDK won't create VPSS if we skip vpss preporcessing.
-  EXPECT_EQ(CVI_VPSS_GetAvailableGrp(), (VPSS_GRP)1);
+  EXPECT_EQ(CVI_VPSS_GetAvailableGrp(), (VPSS_GRP)2);
 
   EXPECT_EQ(CVI_AI_DestroyHandle(ai_handle), CVIAI_SUCCESS);
 }
