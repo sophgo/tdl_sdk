@@ -68,8 +68,8 @@ else()
 endif()
 
 # FIXME: Temporarily workaround
-set(SYSTRACE_FALLBACK ON)
-add_definitions(-DSYSTRACE_FALLBACK)
+#set(SYSTRACE_FALLBACK ON)
+#add_definitions(-DSYSTRACE_FALLBACK)
 
 if ("${ENABLE_PERFETTO}" STREQUAL "ON")
   add_definitions(-DENABLE_PERFETTO)

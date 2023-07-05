@@ -309,9 +309,14 @@ void CVI_AI_CopyImage(const cvai_image_t *src_image, cvai_image_t *dst_image) {
   dst_image->height = src_image->height;
   dst_image->width = src_image->width;
 
+  // copy crop image to dst image
   uint32_t image_size = src_image->length[0] + src_image->length[1] + src_image->length[2];
   dst_image->pix[0] = (uint8_t *)malloc(image_size);
   memcpy(dst_image->pix[0], src_image->pix[0], image_size);
+  // copy full image to dst image
+  dst_image->full_length = src_image->full_length;
+  dst_image->full_img = (uint8_t *)malloc(src_image->full_length);
+  memcpy(dst_image->full_img, src_image->full_img, src_image->full_length);
   for (int i = 0; i < 3; i++) {
     dst_image->stride[i] = src_image->stride[i];
     dst_image->length[i] = src_image->length[i];

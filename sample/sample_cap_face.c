@@ -89,13 +89,13 @@ static void SampleHandleSig(CVI_S32 signo) {
   }
 }
 
-void write_png_file(const char *filename, int target_idx) {
+void write_jpg_file(const char *filename, int target_idx) {
   FILE *f;
   f = fopen(filename, "wb");
   if (!f) {
     printf("open file fail\n");
   }
-  fwrite(data_buffer[target_idx].image.pix[0], 1, data_buffer[target_idx].image.stride[0], f);
+  fwrite(data_buffer[target_idx].image.full_img, 1, data_buffer[target_idx].image.full_length, f);
   fclose(f);
 }
 
@@ -125,13 +125,20 @@ static void *pImageWrite(void *args) {
       // TODO test and verify
       if (CAPTRUE) {
         // save encode jpg file
-        printf("to output:%s %d\n", filename, data_buffer[target_idx].image.pix_format);
-        sprintf(filename, "%s/face_%d_%u_frm_%d_qua_%.3f_x1_%d_y1_%d_x2_%d_y2_%d_eyedist_%.1f.jpg",
-                g_out_dir, track_id, data_buffer[target_idx].counter, frame_id,
-                data_buffer[target_idx].quality, (int32_t)data_buffer[target_idx].bbox.x1,
-                (int32_t)data_buffer[target_idx].bbox.y1, (int32_t)data_buffer[target_idx].bbox.x2,
-                (int32_t)data_buffer[target_idx].bbox.y2, data_buffer[target_idx].eye_dist);
-        write_png_file(filename, target_idx);
+        sprintf(filename, "%s/face_%d_%u_frm_%d_qua_%.3f_eyedist_%.1f_full.jpg", g_out_dir,
+                track_id, data_buffer[target_idx].counter, frame_id,
+                data_buffer[target_idx].quality, data_buffer[target_idx].eye_dist);
+        printf("to output :%s %d\n", filename, data_buffer[target_idx].image.pix_format);
+        write_jpg_file(filename, target_idx);
+
+        sprintf(filename, "%s/face_%d_%u_frm_%d_qua_%.3f_eyedist_%.1f_crop.png", g_out_dir,
+                track_id, data_buffer[target_idx].counter, frame_id,
+                data_buffer[target_idx].quality, data_buffer[target_idx].eye_dist);
+        printf("to output :%s %d\n", filename, data_buffer[target_idx].image.pix_format);
+        stbi_write_png(filename, data_buffer[target_idx].image.width,
+                       data_buffer[target_idx].image.height, STBI_rgb,
+                       data_buffer[target_idx].image.pix[0],
+                       data_buffer[target_idx].image.stride[0]);
       } else {
         if (data_buffer[target_idx].image.pix_format == PIXEL_FORMAT_RGB_888) {
           sprintf(filename, "%s/face_%d_%u_frm_%d_qua_%.3f_boxw_%.1f_eyedist_%.1f.png", g_out_dir,

@@ -180,6 +180,8 @@ typedef struct {
   uint32_t length[3];
   uint32_t height;
   uint32_t width;
+  uint8_t* full_img;
+  uint32_t full_length;
 } cvai_image_t;
 
 /**

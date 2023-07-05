@@ -261,11 +261,10 @@ CVI_S32 CVI_AI_CreateImage(cvai_image_t *image, uint32_t height, uint32_t width,
   return CVIAI_SUCCESS;
 }
 
-CVI_S32 CVI_AI_CreateImageFromVideoFrameSize(const VIDEO_FRAME_INFO_S *p_src_frame,
-                                             cvai_image_t *image, uint32_t img_size) {
-  PIXEL_FORMAT_E fmt = p_src_frame->stVFrame.enPixelFormat;
-  if (fmt != PIXEL_FORMAT_RGB_888 && fmt != PIXEL_FORMAT_RGB_888_PLANAR &&
-      fmt != PIXEL_FORMAT_NV21 && fmt != PIXEL_FORMAT_YUV_PLANAR_420) {
+CVI_S32 CVI_AI_CreateImageFromVideoFrameSize(const VIDEO_FRAME_INFO_S *p_crop_frame,
+                                             cvai_image_t *image) {
+  PIXEL_FORMAT_E fmt = p_crop_frame->stVFrame.enPixelFormat;
+  if (fmt != PIXEL_FORMAT_RGB_888) {
     LOGE("Pixel format [%d] is not supported.\n", fmt);
     return CVIAI_ERR_INVALID_ARGS;
   }
@@ -273,14 +272,15 @@ CVI_S32 CVI_AI_CreateImageFromVideoFrameSize(const VIDEO_FRAME_INFO_S *p_src_fra
     LOGE("destination image is not empty.");
     return CVIAI_ERR_INVALID_ARGS;
   }
+
   memset(image, 0, sizeof(cvai_image_t));
-  image->pix_format = p_src_frame->stVFrame.enPixelFormat;
-  image->height = p_src_frame->stVFrame.u32Height;
-  image->width = p_src_frame->stVFrame.u32Width;
-  uint32_t size = img_size;
-  image->stride[0] = size;
-  image->length[0] = size;
-  image->pix[0] = (uint8_t *)malloc(size);
+  image->pix_format = fmt;
+  image->height = p_crop_frame->stVFrame.u32Width;
+  image->width = p_crop_frame->stVFrame.u32Height;
+  image->stride[0] = p_crop_frame->stVFrame.u32Stride[0];
+  image->length[0] = p_crop_frame->stVFrame.u32Length[0];
+  image->pix[0] = (uint8_t *)malloc(image->length[0]);
+
   return CVIAI_SUCCESS;
 }
 

@@ -23,22 +23,18 @@ namespace cviai {
 FaceLandmarkerDet2::FaceLandmarkerDet2() : Core(CVI_MEM_DEVICE) {}
 
 int FaceLandmarkerDet2::onModelOpened() {
+  bool flag = false;
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
     TensorInfo oinfo = getOutputTensorInfo(j);
-    // printf("output:%s,dim:%d,%d,%d,%d\n",oinfo.tensor_name.c_str(),oj.dim[0],oj.dim[1],oj.dim[2],oj.dim[3]);
     std::string channel_name = oinfo.tensor_name.c_str();
-    if (channel_name.compare("score_Gemm_f32") == 0) {
+    CVI_SHAPE output_shape = oinfo.shape;
+    if (output_shape.dim[1] == 1) {
       out_names_["score"] = oinfo.tensor_name;
-      printf("add to out_names: %s\n", oinfo.tensor_name.c_str());
-      // printf("parse score branch output:%s\n", oinfo.tensor_name.c_str());
-    } else if (channel_name.compare("x_pred_Add_f32") == 0) {
+    } else if (!flag) {
       out_names_["point_x"] = oinfo.tensor_name;
-      printf("add to out_names: %s\n", oinfo.tensor_name.c_str());
-      // printf("parse point output:%s\n", oinfo.tensor_name.c_str());
+      flag = true;
     } else {
       out_names_["point_y"] = oinfo.tensor_name;
-      printf("add to out_names: %s\n", oinfo.tensor_name.c_str());
-      // printf("parse point output:%s\n", oinfo.tensor_name.c_str());
     }
   }
   if (out_names_.count("score") == 0 || out_names_.count("point_x") == 0 ||
@@ -62,18 +58,10 @@ int FaceLandmarkerDet2::setupInputPreprocess(std::vector<InputPreprecessSetup> *
   (*data)[0].mean[0] = 1.0;
   (*data)[0].mean[1] = 1.0;
   (*data)[0].mean[2] = 1.0;
-
-  // (*data)[0].factor[0] = 1;
-  // (*data)[0].factor[1] = 1;
-  // (*data)[0].factor[2] = 1;
-  // (*data)[0].mean[0] = 0;
-  // (*data)[0].mean[1] = 0;
-  // (*data)[0].mean[2] = 0;
   (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   (*data)[0].use_quantize_scale = true;
   (*data)[0].rescale_type = RESCALE_NOASPECT;
   (*data)[0].keep_aspect_ratio = false;
-  // printf("setup input preprocess finished! \n");
   return CVIAI_SUCCESS;
 }
 
@@ -92,12 +80,10 @@ int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
     frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
     frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
   }
-  // std::cout << "u32Width: " << frame->stVFrame.u32Width << " u32 Height: " <<
-  // frame->stVFrame.u32Height << std::endl;
   for (int c = 0; c < 3; c++) {
     uint8_t *paddr = (uint8_t *)frame->stVFrame.pu8VirAddr[c];
-    std::cout << "towrite channel:" << c << ",towritelen:" << frame->stVFrame.u32Length[c]
-              << ",addr:" << (void *)paddr << std::endl;
+    // std::cout << "towrite channel:" << c << ",towritelen:" << frame->stVFrame.u32Length[c]
+    //           << ",addr:" << (void *)paddr << std::endl;
     fwrite(paddr, frame->stVFrame.u32Length[c], 1, fp);
   }
   fclose(fp);
@@ -112,6 +98,7 @@ int FaceLandmarkerDet2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME
   // set dump config
   // dump_frame_result("origin", srcFrame);
   vpssChnAttr.stNormalize.bEnable = false;
+  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
 
   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                         vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
@@ -127,26 +114,17 @@ int FaceLandmarkerDet2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME
     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_GET_FRAME;
   }
-  // std::cout << ""
-  // std::cout << "vpass preprocessed u32Width: " << dstFrame->stVFrame.u32Width << " u32 Height: "
-  // << dstFrame->stVFrame.u32Height << std::endl; dump_frame_result("vpss_processed", dstFrame);
+  // dump_frame_result("vpss_processed", dstFrame);
   return CVIAI_SUCCESS;
 }
 
 int FaceLandmarkerDet2::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *facemeta) {
-  // printf("processing inference..\n");
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  // printf("run result %d \n", ret);
   if (ret != CVIAI_SUCCESS) {
-    printf("FaceLandmarkerDet2 run inference failed\n");
-    // printf("inference: frame_width %d \t frame_height %d \n", frames[0]->stVFrame.u32Width,
-    // frames[0]->stVFrame.u32Height);
+    LOGE("FaceLandmarkerDet2 run inference failed\n");
     return ret;
   }
-
-  // printf("inference: frame_width %d \t frame_height %d \n", srcFrame->stVFrame.u32Width,
-  // srcFrame->stVFrame.u32Height);
 
   CVI_SHAPE shape = getInputShape(0);
 
@@ -165,8 +143,8 @@ void FaceLandmarkerDet2::outputParser(const int image_width, const int image_hei
   TensorInfo oinfo_y = getOutputTensorInfo(out_names_["point_y"]);
   float *output_point_y = getOutputRawPtr<float>(oinfo_y.tensor_name);
 
-  // TensorInfo oinfo_cls = getOutputTensorInfo(out_names_["score"]);
-  float *output_score = getOutputRawPtr<float>("score_Gemm_f32");
+  TensorInfo oinfo_cls = getOutputTensorInfo(out_names_["score"]);
+  float *output_score = getOutputRawPtr<float>(oinfo_cls.tensor_name);
 
   float score = 1.0 / (1.0 + exp(-output_score[0]));
 
