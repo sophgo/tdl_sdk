@@ -23,16 +23,13 @@ namespace cviai {
 FaceLandmarkerDet2::FaceLandmarkerDet2() : Core(CVI_MEM_DEVICE) {}
 
 int FaceLandmarkerDet2::onModelOpened() {
-  bool flag = false;
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
     TensorInfo oinfo = getOutputTensorInfo(j);
-    std::string channel_name = oinfo.tensor_name.c_str();
     CVI_SHAPE output_shape = oinfo.shape;
-    if (output_shape.dim[1] == 1) {
+    if (output_shape.dim[1] <= 2) {
       out_names_["score"] = oinfo.tensor_name;
-    } else if (!flag) {
+    } else if (out_names_.count("point_x") == 0) {
       out_names_["point_x"] = oinfo.tensor_name;
-      flag = true;
     } else {
       out_names_["point_y"] = oinfo.tensor_name;
     }
@@ -65,38 +62,11 @@ int FaceLandmarkerDet2::setupInputPreprocess(std::vector<InputPreprecessSetup> *
   return CVIAI_SUCCESS;
 }
 
-int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
-  FILE *fp = fopen(filepath.c_str(), "wb");
-  if (fp == nullptr) {
-    LOGE("failed to open: %s.\n", filepath.c_str());
-    return CVI_FAILURE;
-  }
-
-  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
-    size_t image_size =
-        frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-    frame->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
-    frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
-    frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
-  }
-  for (int c = 0; c < 3; c++) {
-    uint8_t *paddr = (uint8_t *)frame->stVFrame.pu8VirAddr[c];
-    // std::cout << "towrite channel:" << c << ",towritelen:" << frame->stVFrame.u32Length[c]
-    //           << ",addr:" << (void *)paddr << std::endl;
-    fwrite(paddr, frame->stVFrame.u32Length[c], 1, fp);
-  }
-  fclose(fp);
-  return CVI_SUCCESS;
-}
-
 int FaceLandmarkerDet2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                                        VPSSConfig &vpss_config) {
   auto &vpssChnAttr = vpss_config.chn_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;
-  // set dump config
-  // dump_frame_result("origin", srcFrame);
   vpssChnAttr.stNormalize.bEnable = false;
   vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
 
@@ -114,7 +84,6 @@ int FaceLandmarkerDet2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME
     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_GET_FRAME;
   }
-  // dump_frame_result("vpss_processed", dstFrame);
   return CVIAI_SUCCESS;
 }
 
@@ -146,12 +115,15 @@ void FaceLandmarkerDet2::outputParser(const int image_width, const int image_hei
   TensorInfo oinfo_cls = getOutputTensorInfo(out_names_["score"]);
   float *output_score = getOutputRawPtr<float>(oinfo_cls.tensor_name);
 
-  float score = 1.0 / (1.0 + exp(-output_score[0]));
-
   CVI_AI_MemAllocInit(1, 5, facemeta);
   facemeta->width = frame_width;
   facemeta->height = frame_height;
-  facemeta->info[0].pts.score = score;
+
+  facemeta->info[0].score = 1.0 / (1.0 + exp(-output_score[0]));
+  // blur model
+  if (oinfo_cls.shape.dim[1] == 2) {
+    facemeta->info[0].blurness = 1.0 / (1.0 + exp(-output_score[1]));
+  }
 
   for (int i = 0; i < 5; i++) {
     float x = output_point_x[i] * frame_width;

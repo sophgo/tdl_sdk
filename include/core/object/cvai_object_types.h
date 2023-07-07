@@ -415,4 +415,33 @@ typedef struct {
   uint32_t height;
   cvai_handpose21_meta_t *info;
 } cvai_handpose21_meta_ts;
+
+typedef struct {
+  float factor[3];
+  float mean[3];
+  meta_rescale_type_e rescale_type;
+  bool pad_reverse;
+  bool keep_aspect_ratio;
+  bool use_quantize_scale;
+  bool use_crop;
+  VPSS_SCALE_COEF_E resize_method;
+  PIXEL_FORMAT_E format;
+} Yolov5PreParam;
+
+/** @struct YOLOV5AlgParam
+ *  @ingroup core_cviaicore
+ *  @brief Config the yolov5 detection algorithm parameters.
+ *  @var YOLOV5AlgParam::anchors
+ *  Configure yolov5 model anchors
+ *  @var YOLOV5AlgParam::conf_thresh
+ *  Configure yolov5 model conf threshold val
+ *  @var YOLOV5AlgParam::nms_thresh
+ *  Configure yolov5 model nms threshold val
+ */
+typedef struct {
+  uint32_t anchors[3][3][2];
+  float conf_thresh;
+  float nms_thresh;
+} YOLOV5AlgParam;
+
 #endif

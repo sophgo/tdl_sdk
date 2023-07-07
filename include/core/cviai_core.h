@@ -135,6 +135,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS)          \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV3)                           \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV5)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOX)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_OSNET)                            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION)              \
@@ -833,6 +834,17 @@ DLL_EXPORT CVI_S32 CVI_AI_Yolov3(const cviai_handle_t handle, VIDEO_FRAME_INFO_S
                                  cvai_object_t *obj);
 
 /**
+ * @brief Yolov5 object detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param obj Output detect result. The name, bbox, and classes will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Yolov5(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                 cvai_object_t *obj);
+
+/**
  * @brief YoloX object detection.
  *
  * @param handle An AI SDK handle.
@@ -1319,6 +1331,19 @@ DLL_EXPORT CVI_S32 CVI_AI_Yolov8_Pose(const cviai_handle_t handle, VIDEO_FRAME_I
  */
 DLL_EXPORT CVI_S32 CVI_AI_Simcc_Pose(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                      cvai_object_t *obj_meta);
+
+/**
+ * @brief yolov5 setup function
+ *
+ * @param handle An AI SDK handle.
+ * @param p_preprocess_cfg Input preprocess setup config.
+ * @param p_yolov5_param Yolov5 algorithm parameter config.
+ * @int Reture CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle,
+                                           Yolov5PreParam *p_preprocess_cfg,
+                                           YOLOV5AlgParam *p_yolov5_param);
+
 #ifdef __cplusplus
 }
 #endif

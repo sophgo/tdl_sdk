@@ -200,6 +200,7 @@ typedef struct {
   float pose_score;
   float pose_score1;
   float sharpness_score;
+  float blurness;
   cvai_head_pose_t head_pose;
   int track_state;
 } cvai_face_info_t;

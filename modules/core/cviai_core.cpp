@@ -33,6 +33,7 @@
 #include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
+#include "object_detection/yolov5/yolov5.hpp"
 #include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
 #include "osnet/osnet.hpp"
@@ -134,6 +135,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT, CREATOR(HandKeypoint)},
     {CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION, CREATOR(HandKeypointClassification)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
+    {CVI_AI_SUPPORTED_MODEL_YOLOV5, CREATOR(Yolov5)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
     {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
@@ -749,6 +751,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Person_Pets, MobileDetV2,
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov5, Yolov5, CVI_AI_SUPPORTED_MODEL_YOLOV5, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *, int)
@@ -1396,4 +1399,24 @@ CVI_S32 CVI_AI_HeadPerson_Detection(const cviai_handle_t handle, VIDEO_FRAME_INF
          CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION));
     return CVIAI_ERR_NOT_YET_INITIALIZED;
   }
+}
+
+CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle, Yolov5PreParam *p_preprocess_cfg,
+                                YOLOV5AlgParam *p_yolov5_param) {
+  printf("enter CVI_AI_Set_YOLOV5_Param...\n");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Yolov5 *yolov5_model =
+      dynamic_cast<Yolov5 *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOV5, ctx));
+  if (yolov5_model == nullptr) {
+    LOGE("No instance found for yolov5 detection.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got yolov5 instance\n");
+  if (p_preprocess_cfg == nullptr || p_yolov5_param == nullptr) {
+    LOGE("p_preprocess_cfg or p_yolov5_param can not be nullptr.\n");
+    return CVI_FAILURE;
+  }
+
+  yolov5_model->set_param(p_preprocess_cfg, p_yolov5_param);
+  return CVI_SUCCESS;
 }

@@ -67,6 +67,7 @@ else()
                 $<TARGET_OBJECTS:osnet>
                 $<TARGET_OBJECTS:retina_face>
                 $<TARGET_OBJECTS:yolov3>
+                $<TARGET_OBJECTS:yolov5>
                 $<TARGET_OBJECTS:thermal_face_detection>
                 $<TARGET_OBJECTS:thermal_person_detection>
                 $<TARGET_OBJECTS:deepsort>

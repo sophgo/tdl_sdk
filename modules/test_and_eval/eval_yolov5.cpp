@@ -9,17 +9,17 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"`
+#include "core.hpp"
+#include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "evaluation/cviai_media.h"
 #include "sys_utils.hpp"
 
-CVI_S32 get_facelandmarker(std::string img_path, cviai_handle_t ai_handle,
-                           VIDEO_FRAME_INFO_S* fdFrame, cvai_face_t* meta) {
+CVI_S32 get_yolov5_det(std::string img_path, cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S* fdFrame,
+                       cvai_object_t* obj_meta) {
   printf("reading image file: %s \n", img_path.c_str());
   CVI_S32 ret = CVI_AI_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-  // std::cout << "CVI_AI_ReadImage done!\n";
   printf("frame_width %d \t frame_height %d \n", fdFrame->stVFrame.u32Width,
          fdFrame->stVFrame.u32Height);
   if (ret != CVI_SUCCESS) {
@@ -29,7 +29,7 @@ CVI_S32 get_facelandmarker(std::string img_path, cviai_handle_t ai_handle,
     return ret;
   }
 
-  CVI_AI_FaceLandmarkerDet2(ai_handle, fdFrame, meta);
+  CVI_AI_Yolov5(ai_handle, fdFrame, obj_meta);
 
   return ret;
 }
@@ -42,43 +42,41 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
   }
 
   std::string line;
-  std::stringstream res_ss;
+
   while (getline(file, line)) {
     if (!line.empty()) {
       stringstream ss(line);
       std::string image_name;
       while (ss >> image_name) {
-        cvai_face_t meta = {0};
+        cvai_object_t obj_meta = {0};
         VIDEO_FRAME_INFO_S fdFrame;
-        // cout << "get image name: " << image_root + image_name << endl;
-        CVI_S32 ret = get_facelandmarker(image_root + image_name, ai_handle, &fdFrame, &meta);
+        CVI_S32 ret = get_yolov5_det(image_root + image_name, ai_handle, &fdFrame, &obj_meta);
         if (ret != CVI_SUCCESS) {
-          CVI_AI_Free(&meta);
-          // CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
+          CVI_AI_Free(&obj_meta);
           CVI_AI_ReleaseImage(&fdFrame);
           break;
         }
+        std::stringstream res_ss;
 
-        float score = meta.info[0].score;
-        // float blur_score = meta.info[0].blurness;
-        res_ss << image_name << " " << score;
-        for (int i = 0; i < 5; i++) {
-          res_ss << " " << meta.info[0].pts.x[i] << " " << meta.info[0].pts.y[i];
+        for (uint32_t i = 0; i < obj_meta.size; i++) {
+          res_ss << obj_meta.info[i].bbox.x1 << " " << obj_meta.info[i].bbox.y1 << " "
+                 << obj_meta.info[i].bbox.x2 << " " << obj_meta.info[i].bbox.y2 << " "
+                 << obj_meta.info[i].bbox.score << " " << obj_meta.info[i].classes << "\n";
         }
-        res_ss << "\n";
+        std::cout << "write results to file: " << res_path << std::endl;
+        std::string save_path = res_path + image_name.substr(0, image_name.length() - 4) + ".txt";
+        printf("save res in path: %s \n", save_path.c_str());
+        FILE* fp = fopen(save_path.c_str(), "w");
+        fwrite(res_ss.str().c_str(), res_ss.str().size(), 1, fp);
+        fclose(fp);
 
-        CVI_AI_Free(&meta);
-        // CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
+        CVI_AI_Free(&obj_meta);
         CVI_AI_ReleaseImage(&fdFrame);
         break;
       }
     }
   }
 
-  std::cout << "write results to file: " << res_path << std::endl;
-  FILE* fp = fopen(res_path.c_str(), "w");
-  fwrite(res_ss.str().c_str(), res_ss.str().size(), 1, fp);
-  fclose(fp);
   std::cout << "write done!" << std::endl;
 }
 
@@ -100,12 +98,42 @@ int main(int argc, char* argv[]) {
     return ret;
   }
 
+  printf("start yolov preprocess config \n");
+  // setup preprocess
+  Yolov5PreParam p_preprocess_cfg;
+
+  for (int i = 0; i < 3; i++) {
+    printf("asign val %d \n", i);
+    p_preprocess_cfg.factor[i] = 0.003922;
+    p_preprocess_cfg.mean[i] = 0.0;
+  }
+  p_preprocess_cfg.use_quantize_scale = true;
+  p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
+
+  printf("start yolov algorithm config \n");
+  // setup yolov5 param
+  YOLOV5AlgParam p_yolov5_param;
+  uint32_t p_anchors[3][3][2] = {{{10, 13}, {16, 30}, {33, 23}},
+                                 {{30, 61}, {62, 45}, {59, 119}},
+                                 {{116, 90}, {156, 198}, {373, 326}}};
+  memcpy(p_yolov5_param.anchors, p_anchors, sizeof(*p_anchors) * 12);
+  p_yolov5_param.conf_thresh = 0.001;
+  p_yolov5_param.nms_thresh = 0.65;
+
+  printf("setup yolov5 param \n");
+  ret = CVI_AI_Set_YOLOV5_Param(ai_handle, &p_preprocess_cfg, &p_yolov5_param);
+  printf("yolov5 set param success!\n");
+  if (ret != CVI_SUCCESS) {
+    printf("Can not set Yolov5 parameters %#x\n", ret);
+    return ret;
+  }
+
   std::string model_path = argv[1];
   std::string bench_path = argv[2];
   std::string image_root = argv[3];
   std::string res_path = argv[4];
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKERDET2, model_path.c_str());
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, model_path.c_str());
   if (ret != CVI_SUCCESS) {
     printf("open model failed %#x %s!\n", ret, model_path.c_str());
     return ret;
