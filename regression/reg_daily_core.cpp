@@ -31,7 +31,7 @@ TEST_F(CoreTestSuite, create_handle) {
   uint32_t num_vpss_used;
   CVI_AI_GetVpssGrpIds(ai_handle, &groups, &num_vpss_used);
   EXPECT_EQ(num_vpss_used, (uint32_t)1);
-  EXPECT_EQ(groups[0], (VPSS_GRP)-1);
+  EXPECT_EQ(groups[0], (VPSS_GRP)0);
   free(groups);
   EXPECT_EQ(CVI_AI_DestroyHandle(ai_handle), CVIAI_SUCCESS);
 
