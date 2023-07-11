@@ -19,7 +19,8 @@
 #include "object_utils.hpp"
 #include "yolov5.hpp"
 
-int yolov5_argmax(float *ptr, int start_idx, int arr_len) {
+template <typename T>
+int yolov5_argmax(T *ptr, int start_idx, int arr_len) {
   int max_idx = start_idx;
   for (int i = start_idx + 1; i < start_idx + arr_len; i++) {
     if (ptr[i] > ptr[max_idx]) {
@@ -58,7 +59,6 @@ Yolov5::Yolov5() : Core(CVI_MEM_DEVICE) {}
 int Yolov5::onModelOpened() {
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
     TensorInfo oinfo = getOutputTensorInfo(j);
-    std::string channel_name = oinfo.tensor_name.c_str();
     CVI_SHAPE output_shape = oinfo.shape;
     if (output_shape.dim[1] == 1200) {
       out_names_["output_1200"] = oinfo.tensor_name;
@@ -146,7 +146,7 @@ int Yolov5::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dst
     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVIAI_ERR_VPSS_GET_FRAME;
   }
-  // dump_frame_result_yolov5("vpss_processed", dstFrame);
+  dump_frame_result_yolov5("vpss_processed", dstFrame);
   return CVIAI_SUCCESS;
 }
 
@@ -159,7 +159,7 @@ int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
   if (ret != CVIAI_SUCCESS) {
-    LOGE("Yolov5 run inference failed\n");
+    LOGE("Yolov5 run inference failed!\n");
     return ret;
   }
 
@@ -178,7 +178,8 @@ void xywh2xxyy(float x, float y, float w, float h, PtrDectRect &det) {
   det->y2 = y + h / 2;
 }
 
-void Yolov5::getYolov5Detections(float *ptr, int stride, int grid_len, uint32_t *anchor,
+void Yolov5::getYolov5Detections(int8_t *ptr_int8, float *ptr_float, int num_per_pixel,
+                                 float qscale, int stride, int grid_len, uint32_t *anchor,
                                  Detections &vec_obj) {
   for (int anchor_idx = 0; anchor_idx < 3; anchor_idx++) {
     float pw = anchor[anchor_idx * 2];
@@ -186,13 +187,28 @@ void Yolov5::getYolov5Detections(float *ptr, int stride, int grid_len, uint32_t 
     for (int grid_y = 0; grid_y < grid_len; grid_y++) {
       for (int grid_x = 0; grid_x < grid_len; grid_x++) {
         int start_idx = (anchor_idx * grid_len * grid_len + grid_y * grid_len + grid_x) * out_len_;
-        float sigmoid_x = ptr[start_idx];
-        float sigmoid_y = ptr[start_idx + 1];
-        float sigmoid_w = ptr[start_idx + 2];
-        float sigmoid_h = ptr[start_idx + 3];
-        float obj_conf = ptr[start_idx + 4];
-        int cls = yolov5_argmax(ptr, start_idx + 5, out_len_ - 5);
-        float cls_conf = ptr[start_idx + 5 + cls];
+        float sigmoid_x, sigmoid_y, sigmoid_w, sigmoid_h, obj_conf, cls_conf;
+        int cls;
+        if (num_per_pixel == 1) {
+          // int8 decode
+          sigmoid_x = ptr_int8[start_idx] * qscale;
+          sigmoid_y = ptr_int8[start_idx + 1] * qscale;
+          sigmoid_w = ptr_int8[start_idx + 2] * qscale;
+          sigmoid_h = ptr_int8[start_idx + 3] * qscale;
+          obj_conf = ptr_int8[start_idx + 4] * qscale;
+          cls = yolov5_argmax<int8_t>(ptr_int8, start_idx + 5, out_len_ - 5);
+          cls_conf = ptr_int8[start_idx + 5 + cls] * qscale;
+        } else {
+          // float decode
+          sigmoid_x = ptr_float[start_idx];
+          sigmoid_y = ptr_float[start_idx + 1];
+          sigmoid_w = ptr_float[start_idx + 2];
+          sigmoid_h = ptr_float[start_idx + 3];
+          obj_conf = ptr_float[start_idx + 4];
+          cls = yolov5_argmax<float>(ptr_float, start_idx + 5, out_len_ - 5);
+          cls_conf = ptr_float[start_idx + 5 + cls];
+        }
+
         float object_score = cls_conf * obj_conf;
 
         // filter detections lowwer than conf_thresh
@@ -273,14 +289,21 @@ void Yolov5::Yolov5PostProcess(Detections &dets, int frame_width, int frame_heig
 void Yolov5::outputParser(const int image_width, const int image_height, const int frame_width,
                           const int frame_height, cvai_object_t *obj_meta) {
   Detections vec_obj;
-  float *ptr0 = getOutputRawPtr<float>(out_names_["output_19200"]);
-  getYolov5Detections(ptr0, 8, 80, *p_yolov5_param_->anchors[0], vec_obj);
+  std::string keys[3] = {"output_19200", "output_4800", "output_1200"};
+  int strides[3] = {8, 16, 32};
+  int grid_lens[3] = {80, 40, 20};
 
-  float *ptr1 = getOutputRawPtr<float>(out_names_["output_4800"]);
-  getYolov5Detections(ptr1, 16, 40, *p_yolov5_param_->anchors[1], vec_obj);
+  for (int branch = 0; branch < 3; branch++) {
+    TensorInfo oinfo = getOutputTensorInfo(out_names_[keys[branch]]);
+    int num_per_pixel = oinfo.tensor_size / oinfo.tensor_elem;
+    float qscale = num_per_pixel == 1 ? oinfo.qscale : 1;
 
-  float *ptr2 = getOutputRawPtr<float>(out_names_["output_1200"]);
-  getYolov5Detections(ptr2, 32, 20, *p_yolov5_param_->anchors[2], vec_obj);
+    int8_t *ptr_int8 = static_cast<int8_t *>(oinfo.raw_pointer);
+    float *ptr_float = static_cast<float *>(oinfo.raw_pointer);
+
+    getYolov5Detections(ptr_int8, ptr_float, num_per_pixel, qscale, strides[branch],
+                        grid_lens[branch], *p_yolov5_param_->anchors[branch], vec_obj);
+  }
 
   Yolov5PostProcess(vec_obj, frame_width, frame_height, obj_meta);
 }

@@ -87,17 +87,18 @@ int main(int argc, char* argv[]) {
 
   cvai_object_t obj_meta = {0};
 
-  auto start_time = std::chrono::steady_clock::now();
+  // auto start_time = std::chrono::steady_clock::now();
   printf("start inference \n");
-  for (int i = 0; i < 100; i++) {
-    CVI_AI_Yolov5(ai_handle, &fdFrame, &obj_meta);
-  }
+  // for (int i = 0; i < 100; i++) {
+  CVI_AI_Yolov5(ai_handle, &fdFrame, &obj_meta);
+  // }
 
-  auto end_time = std::chrono::steady_clock::now();
-  double duration_millsecond =
-      std::chrono::duration<double, std::milli>(end_time - start_time).count();
-  std::cout << "100 inference time cost in total: " << duration_millsecond << " ms "
-            << "inference time per image: " << duration_millsecond / 100.0 << " ms " << std::endl;
+  // auto end_time = std::chrono::steady_clock::now();
+  // double duration_millsecond =
+  //     std::chrono::duration<double, std::milli>(end_time - start_time).count();
+  // std::cout << "100 inference time cost in total: " << duration_millsecond << " ms "
+  //           << "inference time per image: " << duration_millsecond / 100.0 << " ms " <<
+  //           std::endl;
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("detect res: %f %f %f %f %f %d\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2, obj_meta.info[i].bbox.score,

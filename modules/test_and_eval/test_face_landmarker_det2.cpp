@@ -10,7 +10,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"`
+#include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "evaluation/cviai_media.h"

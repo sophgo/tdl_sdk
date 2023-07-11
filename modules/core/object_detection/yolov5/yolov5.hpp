@@ -20,8 +20,8 @@ class Yolov5 final : public Core {
   void clip_bbox(int frame_width, int frame_height, cvai_bbox_t *bbox);
   cvai_bbox_t yolov5_box_rescale(int frame_width, int frame_height, int width, int height,
                                  cvai_bbox_t bbox);
-  void getYolov5Detections(float *ptr, int stride, int grid_len, uint32_t *anchor,
-                           Detections &vec_obj);
+  void getYolov5Detections(int8_t *ptr_int8, float *ptr_float, int num_per_pixel, float qscale,
+                           int stride, int grid_len, uint32_t *anchor, Detections &vec_obj);
   void outputParser(const int image_width, const int image_height, const int frame_width,
                     const int frame_height, cvai_object_t *obj_meta);
   void Yolov5PostProcess(Detections &dets, int frame_width, int frame_height,

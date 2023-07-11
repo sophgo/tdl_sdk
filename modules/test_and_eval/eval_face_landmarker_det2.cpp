@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"`
+#include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cviai.h"
 #include "evaluation/cviai_media.h"
@@ -59,7 +59,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
           break;
         }
 
-        float score = meta.info[0].score;
+        float score = meta.info[0].pts.score;
         // float blur_score = meta.info[0].blurness;
         res_ss << image_name << " " << score;
         for (int i = 0; i < 5; i++) {
