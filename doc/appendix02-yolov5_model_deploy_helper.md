@@ -69,14 +69,14 @@ python export.py --weights ./weights/yolov5s.pt --include onnx
 
 ## onnx模型转换cvimodel
 
+### 旧工具链
+
 导出onnx模型之后，需要将onnx模型转换为cvimodel，才能实现cv181x开发板的c++推理。cvimodel的转换需要借助量化工具。
 
 * 首先获取`cvitek_mlir_ubuntu-18.04_tpu_rel_v1.5.0-xxxxxx.tar.gz`
 
 * 然后创建一个文件夹名为`mlir_cvi`，并在该文件夹下创建`cvitek_mlir`，将`tpu-mlir_vxxxxxx.tar.gz`解压在`cvitek_mlir`文件夹下
 * 另外，在`mlir_cvi`文件夹下创建一个路径`yolov5s/onnx`，将上一步得到的`yolov5s.onnx`移动至此
-
-### docker环境配置
 
 创建docker环境
 
@@ -184,6 +184,88 @@ model_deploy.py \
 ```
 
 运行完成之后，可以在`mlir_cvi/yolov5s/int8/`目录获取到转换的cvimodel
+
+### 新工具链
+
+需要获取tpu-mlir的发布包：**tpu-mlir_xxxx.tar.gz (tpu-mlir 的发布包)**
+
+首先需要启动docker，在ai10服务器有docker环境
+
+创建docker
+
+```shell
+docker run --privileged --name tpuc_dev -v &PWD:/workspace -it sophgo/tpuc_dev:v2.2
+```
+
+如果有创建好的docker可以直接复用
+
+```shell
+docker attach tpuc_dev
+```
+
+新建一个文件夹`tpu_mlir`，将新工具链解压到`tpu_mlir/`目录下，并设置环境变量：
+
+```shell
+mkdir tpu_mlir
+mv tp
+tar zxf tpu-mlir_xxx.tar.gz 
+mv tpu-mlir_xxx.tar.gz/ tpu_mlir_v1_2
+source tpu_mlir_v1_2/envsetup.sh
+```
+
+创建一个文件夹，以`yolov5s`举例，创建一个文件夹`yolov5s`，并将onnx模型放在`yolov5s/onnx/`路径下
+
+```shell
+mkdir yolov5s && cd yolov5s
+mkdir onnx
+cp path/to/onnx ./yolov5s/onnx/
+```
+
+**onnx转MLIR**
+
+```shell
+model_transform.py \
+--model_name yolov5s \
+--model_def yolov5s/onnx/yolov5s.onnx \
+--input_shapes [[1,3,640,640]] \
+--mean 0.0,0.0,0.0 \
+--scale 0.0039216,0.0039216,0.0039216 \
+--keep_aspect_ratio \
+--pixel_format rgb \
+--test_input ../model_yolov5n_onnx/image/dog.jpg \
+--test_result yolov5s_top_outputs.npz \
+--mlir yolov5s/mlir/yolov5s.mlir
+```
+
+**MLIR转INT8模型**
+
+首先生成校对表
+
+```shell
+run_calibration.py yolov5s/mlir/yolov5s.mlir \
+--dataset ../model_yolov5n_onnx/COCO2017 \
+--input_num 100 \
+-o yolov5s/calibration_tabel/yolov5s_cali_table
+```
+
+然后生成int8量化模型
+
+```shell
+model_deploy.py \
+--mlir yolov5s/mlir/yolov5s.mlir \
+--quant_input \
+--quantize INT8 \
+--calibration_table yolov5s/calibration_table/yolov5s_cali_table \
+--chip cv181x \
+--test_input yolov5s_in_f32.npz \
+--test_reference yolov5s_top_outputs.npz \
+--tolerance 0.85,0.45 \
+--model yolov5s/int8/yolov5_cv181x_int8_sym.cvimodel
+```
+
+> 测试发现，需要添加`--quant_input`参数，否则后续推理会失败
+>
+> 另外如果需要输出层也使用int8，可以添加`--quant_output`选项
 
 ## AISDK接口说明
 
@@ -323,33 +405,50 @@ ret = CVI_AI_Set_YOLOV5_Param(ai_handle, &p_preprocess_cfg, &p_yolov5_param);
 
 ## 测试结果
 
+### 旧工具链
+
 * conf_thresh: 0.001 
 * nms_thresh: 0.65
 
-| model   | map50-official | map50-cvimodel | map-official | map-cvimodel |
-| ------- | -------------- | -------------- | ------------ | ------------ |
-| yolov5s | 56.8           | 53.7           | 37.4         | 33.6         |
-| yolov5m | 64.1           | 61.3           | 45.4         | 39.6         |
+yolov5s:
 
-ion:
+* flash: 8.15 MB
+* time: 101.18 ms
+* map50: 53.7
+* map: 33.6
 
-* yolov5s: 8.15 MB
-* yolov5m: 23.79MB
+yolov5m:
 
-运行时间：
+* flash: 23.79MB
+* time: 259.70 ms
+* map50: 61.3
+* map: 39.6
 
-* yolov5s: 107.897 ms
-* yolov5m: 265.91 ms
+### 新工具链
 
+yolov5s:
 
+* flash: 7.93 MB
+* time: 87.92 ms
+* map50: 54.1
+* map: 34.3
 
+yolov5m:
 
+* flash: 23.18 MB
+* time: 240.60 ms
+* map50: 61.7
+* map: 42.0
 
+汇总表格
 
+|       model       | ion(MB) | time(ms) | map50 | map  |
+| :---------------: | :-----: | :------: | :---: | :--: |
+| yolov5s(float32)  |  17.58  |  101.18  | 53.7  | 33.6 |
+| yolov5m(float32)  |  42.48  |  259.30  | 61.3  | 39.6 |
+|  *yolov5s(int 8)  |  15.8   |  87.92   | 54.1  | 34.3 |
+|  *yolov5m(int 8)  |  35.73  |  240.60  | 61.7  | 42.0 |
+| *yolov5s(float32) |  21.95  |  90.85   | 54.1  | 34.2 |
+| *yolov5m(float32) |  46.57  |  243.59  | 61.7  | 41.9 |
 
-
-
-
-
-
-
+> 其中`*`前缀的是tpu_mlir工具链转换的cvimodel
