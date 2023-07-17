@@ -33,6 +33,7 @@ class KalmanTracker : public Tracker {
   uint64_t ages_ = 0;
   int matched_counter;
   uint32_t out_nums = 0;
+  int label;
 
   std::map<uint64_t, stCorrelateInfo> pair_track_infos_;
 

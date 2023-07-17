@@ -20,6 +20,10 @@ CVI_S32 _PersonCapture_SetConfig(person_capture_t *person_cpt_info, person_captu
 CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle_t ai_handle,
                            VIDEO_FRAME_INFO_S *frame);
 
+// consumer counting
+CVI_S32 _ConsumerCounting_Run(person_capture_t *person_cpt_info, const cviai_handle_t ai_handle,
+                              VIDEO_FRAME_INFO_S *frame);
+
 CVI_S32 _PersonCapture_SetMode(person_capture_t *person_cpt_info, capture_mode_e mode);
 
 CVI_S32 _PersonCapture_CleanAll(person_capture_t *person_cpt_info);

@@ -88,6 +88,8 @@ CVI_S32 _PersonCapture_QuickSetUp(cviai_handle_t ai_handle, person_capture_t *pe
     person_cpt_info->od_model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
   } else if (strcmp(od_model_name, "yolov3") == 0) {
     person_cpt_info->od_model_index = CVI_AI_SUPPORTED_MODEL_YOLOV3;
+  } else if (strcmp(od_model_name, "yolov8") == 0) {
+    person_cpt_info->od_model_index = CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION;
   } else {
     return CVIAI_FAILURE;
   }
@@ -246,6 +248,68 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle
 
 CVI_S32 _PersonCapture_SetMode(person_capture_t *person_cpt_info, capture_mode_e mode) {
   person_cpt_info->mode = mode;
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 _ConsumerCounting_Run(person_capture_t *person_cpt_info, const cviai_handle_t ai_handle,
+                              VIDEO_FRAME_INFO_S *frame) {
+  if (person_cpt_info == NULL) {
+    LOGE("[APP::ConsumerCounting] is not initialized.\n");
+    return CVIAI_FAILURE;
+  }
+  LOGI("[APP::ConsumerCounting] RUN (MODE: %d, ReID: %d)\n", person_cpt_info->mode,
+       person_cpt_info->enable_DeepSORT);
+  CVI_S32 ret;
+  ret = clean_data(person_cpt_info);
+  if (ret != CVIAI_SUCCESS) {
+    LOGE("[APP::ConsumerCounting] clean data failed.\n");
+    return CVIAI_FAILURE;
+  }
+  CVI_AI_Free(&person_cpt_info->last_objects);
+  CVI_AI_Free(&person_cpt_info->last_trackers);
+  CVI_AI_Free(&person_cpt_info->last_head);
+  CVI_AI_Free(&person_cpt_info->last_ped);
+
+  /* set output signal to 0. */
+  memset(person_cpt_info->_output, 0, sizeof(bool) * person_cpt_info->size);
+
+  switch (person_cpt_info->od_model_index) {
+    case CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION:
+      if (CVIAI_SUCCESS !=
+          CVI_AI_HeadPerson_Detection(ai_handle, frame, &person_cpt_info->last_objects)) {
+        return CVIAI_FAILURE;
+      }
+      break;
+    default:
+      LOGE("unknown object detection model index.");
+      return CVIAI_FAILURE;
+  }
+#ifndef NO_OPENCV
+  if (person_cpt_info->enable_DeepSORT) {
+    if (CVIAI_SUCCESS != CVI_AI_OSNet(ai_handle, frame, &person_cpt_info->last_objects)) {
+      return CVIAI_FAILURE;
+    }
+  }
+#endif
+  if (person_cpt_info->od_model_index == CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION) {
+    if (CVIAI_SUCCESS != CVI_AI_DeepSORT_Head_FusePed(
+                             ai_handle, &person_cpt_info->last_objects,
+                             &person_cpt_info->last_trackers, person_cpt_info->enable_DeepSORT,
+                             &person_cpt_info->last_head, &person_cpt_info->last_ped)) {
+      return CVIAI_FAILURE;
+    }
+  } else {
+    if (CVIAI_SUCCESS != CVI_AI_DeepSORT_Obj(ai_handle, &person_cpt_info->last_objects,
+                                             &person_cpt_info->last_trackers,
+                                             person_cpt_info->enable_DeepSORT)) {
+      return CVIAI_FAILURE;
+    }
+  }
+
+  /* update timestamp*/
+  person_cpt_info->_time =
+      (person_cpt_info->_time == 0xffffffffffffffff) ? 0 : person_cpt_info->_time + 1;
+
   return CVIAI_SUCCESS;
 }
 

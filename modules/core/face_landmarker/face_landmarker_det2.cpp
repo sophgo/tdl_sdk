@@ -119,7 +119,7 @@ void FaceLandmarkerDet2::outputParser(const int image_width, const int image_hei
   facemeta->width = frame_width;
   facemeta->height = frame_height;
 
-  facemeta->info[0].pts.score = 1.0 / (1.0 + exp(-output_score[0]));
+  facemeta->info[0].score = 1.0 / (1.0 + exp(-output_score[0]));
   // blur model
   if (oinfo_cls.shape.dim[1] == 2) {
     facemeta->info[0].blurness = 1.0 / (1.0 + exp(-output_score[1]));

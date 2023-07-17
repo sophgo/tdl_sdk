@@ -69,8 +69,8 @@ void SAMPLE_AI_Get_Input_Config(SAMPLE_COMM_CHN_INPUT_CONFIG_S *pstInCfg) {
   pstInCfg->maxIqp = DEF_264_MAXIQP;
   pstInCfg->minQp = DEF_264_MINQP;
   pstInCfg->maxQp = DEF_264_MAXQP;
-  pstInCfg->srcFramerate = 25;
-  pstInCfg->framerate = 25;
+  pstInCfg->srcFramerate = 15;
+  pstInCfg->framerate = 15;
   pstInCfg->bVariFpsEn = 0;
   pstInCfg->maxbitrate = -1;
   pstInCfg->statTime = -1;

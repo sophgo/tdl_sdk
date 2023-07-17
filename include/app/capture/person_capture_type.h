@@ -44,6 +44,10 @@ typedef struct {
   float *last_quality;
   cvai_tracker_t last_trackers;
 
+  // if use yolov8 det head and ped to complete coumser counting
+  cvai_object_t last_head;
+  cvai_object_t last_ped;
+
   CVI_AI_SUPPORTED_MODEL_E od_model_index;
   bool enable_DeepSORT; /* don't set manually */
 

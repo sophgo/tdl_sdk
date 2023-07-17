@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     ss << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
        << obj_meta.info[i].bbox.x2 << "," << obj_meta.info[i].bbox.y2 << ","
-       << obj_meta.info[i].classes << "," << obj_meta.info[i].bbox.score << "],";
+       << obj_meta.info[i].classes << "," << obj_meta.info[i].bbox.score << "],\n";
   }
   ss << "]\n";
   std::cout << ss.str();

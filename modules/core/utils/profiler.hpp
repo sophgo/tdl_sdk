@@ -25,7 +25,7 @@ class Timer {
   struct timeval start_;
   struct timeval end_;
   float total_time_;
-  int times_;
+  int times_ = 0;
   int summary_cond_times_;
 
   std::map<int, struct timeval> step_time_;

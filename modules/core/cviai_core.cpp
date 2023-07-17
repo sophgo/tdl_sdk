@@ -227,7 +227,7 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
       LOGI("create personpet model");
     } else if (index == CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION) {
       YoloV8Detection *p_yolov8 = new YoloV8Detection();
-      p_yolov8->setBranchChannel(64, 6);  // six types
+      p_yolov8->setBranchChannel(64, 7);  // seven types
       m_t.instance = p_yolov8;
       LOGI("create vehicle model");
     } else if (index == CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION) {
@@ -870,6 +870,20 @@ CVI_S32 CVI_AI_DeepSORT_CleanCounter(const cviai_handle_t handle) {
   return CVIAI_SUCCESS;
 }
 
+CVI_S32 CVI_AI_DeepSORT_Head_FusePed(const cviai_handle_t handle, cvai_object_t *obj,
+                                     cvai_tracker_t *tracker_t, bool use_reid, cvai_object_t *head,
+                                     cvai_object_t *ped) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_HeadFusePed");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+  ds_tracker->set_image_size(obj->width, obj->height);
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVI_FAILURE;
+  }
+  ctx->ds_tracker->track_headfuse(obj, tracker_t, use_reid, head, ped);
+  return CVI_SUCCESS;
+}
 CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
                             cvai_tracker_t *tracker, bool use_reid) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_Obj");
@@ -1346,7 +1360,20 @@ CVI_S32 CVI_AI_PersonVehicle_Detection(const cviai_handle_t handle, VIDEO_FRAME_
     if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION) != CVI_SUCCESS) {
       return CVIAI_ERR_INIT_VPSS;
     } else {
-      return yolo_model->inference(frame, obj_meta);
+      int ret = yolo_model->inference(frame, obj_meta);
+      if (ret == CVIAI_SUCCESS) {
+        for (uint32_t i = 0; i < obj_meta->size; i++) {
+          if (obj_meta->info[i].classes == 4) {
+            obj_meta->info[i].classes = 0;  // person
+          } else if (obj_meta->info[i].classes == 0 || obj_meta->info[i].classes == 1 ||
+                     obj_meta->info[i].classes == 2) {
+            obj_meta->info[i].classes = 1;  // motor vehicle
+          } else {
+            obj_meta->info[i].classes = 2;  // non-motor vehicle
+          }
+        }
+      }
+      return ret;
     }
   } else {
     LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",

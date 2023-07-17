@@ -1005,6 +1005,19 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_
                                        cvai_tracker_t *tracker, bool use_reid);
 
 /**
+ * @brief Run DeepSORT/SORT track for object to Consumer counting.
+ *
+ * @param handle An AI SDK handle.
+ * @param obj Input detected object with feature.
+ * @param tracker_t Output tracker results.
+ * @param use_reid If true, track by DeepSORT algorithm, else SORT.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Head_FusePed(const cviai_handle_t handle, cvai_object_t *obj,
+                                                cvai_tracker_t *tracker_t, bool use_reid,
+                                                cvai_object_t *head, cvai_object_t *ped);
+
+/**
  * @brief Run SORT track for face.
  *
  * @param handle An AI SDK handle.

@@ -328,12 +328,15 @@ void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
       const FEATURE empty_feature(0);
       uint64_t new_id = get_nextID(label);
       KalmanTracker tracker_(new_id, label, box, empty_feature, conf->ktracker_conf);
+      tracker_.label = label;
       k_trackers.push_back(tracker_);
       track_indices_[new_id] = k_trackers.size() - 1;
       KalmanTracker *p_track = &k_trackers[k_trackers.size() - 1];
 
       obj.track_id = new_id;
       processed_tracks[new_id] = 1;
+      if (label == OBJ_PERSON) entry_num++;
+
 #ifdef DEBUG_TRACK
       std::cout << "create new track:" << new_id << ",label:" << label
                 << ",pairobj:" << obj.pair_obj_id << ",srcidx:" << obj.src_idx << std::endl;
@@ -417,6 +420,7 @@ void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
 #endif
       erased_tids.push_back(it_->id);
       it_ = k_trackers.erase(it_);
+      if (it_->label == OBJ_PERSON) miss_num++;
     } else {
       it_++;
     }
@@ -653,4 +657,235 @@ void DeepSORT::update_out_num(cvai_tracker_t *tracker) {
     auto *p_track = &k_trackers[index];
     p_track->out_nums = tracker->info[i].out_num;
   }
+}
+
+CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *tracker, bool use_reid,
+                                 cvai_object_t *last_head, cvai_object_t *last_ped) {
+  /** statistic what classes ID in bbox and tracker,
+   *  and counting bbox number for each class
+   *  use ped improve head det to complete cosumer counting*/
+
+  cvai_deepsort_config_t *conf;
+  auto it_conf = specific_conf.find(0);
+  if (it_conf != specific_conf.end()) {
+    conf = &it_conf->second;
+  } else {
+    conf = &default_conf;
+  }
+
+  // predict all tracks
+  const int head_label = OBJ_HEAD;
+  const int ped_label = OBJ_PERSON;
+
+  int tidx = 0;
+  track_indices_.clear();
+  for (KalmanTracker &tracker_ : k_trackers) {
+    track_indices_[tracker_.id] = tidx++;
+    tracker_.predict(kf_, conf);
+  }
+
+  check_bound_state(conf);
+
+  std::map<int, std::vector<stObjInfo>> cls_objs;
+
+  for (uint32_t i = 0; i < origin_obj->size; i++) {
+    stObjInfo tmpobj;
+    tmpobj.box = origin_obj->info[i].bbox;
+    tmpobj.src_idx = (int)i;
+    tmpobj.classes = origin_obj->info[i].classes;
+    tmpobj.pair_obj_id = -1;
+    tmpobj.track_id = 0;
+    if (tmpobj.classes == 0) {
+      cls_objs[head_label].push_back(tmpobj);
+    } else {
+      cls_objs[ped_label].push_back(tmpobj);
+    }
+  }
+
+  update_pair_info(cls_objs[head_label], cls_objs[ped_label], OBJ_HEAD, OBJ_PERSON, 0.1);
+
+  std::vector<BBOX> head_boxes = cvt_boxes(cls_objs[head_label]);
+  std::vector<FEATURE> head_feats(head_boxes.size());
+
+  MatchResult head_res =
+      get_init_match_result(cls_objs[head_label], k_trackers, track_indices_, head_label);
+
+  head_res = get_match_result(head_res, head_boxes, head_feats, false, 0.1, conf);
+
+  for (auto &m : head_res.matched_pairs) {
+    int t_idx = m.first;
+    int det_idx = m.second;
+
+    int pair_ped_idx = cls_objs[head_label][det_idx].pair_obj_id;
+    cls_objs[head_label][det_idx].track_id = k_trackers[t_idx].id;
+#ifdef DEBUG_TRACK
+    std::cout << "matched head:" << det_idx << ",track:" << k_trackers[t_idx].id
+              << ",pairped:" << pair_ped_idx << std::endl;
+#endif
+    if (pair_ped_idx != -1) {
+      uint64_t pair_ped_trackid = k_trackers[t_idx].get_pair_trackid();
+      if (pair_ped_trackid != 0) {
+        cls_objs[ped_label][pair_ped_idx].track_id = pair_ped_trackid;
+#ifdef DEBUG_TRACK
+        std::cout << "recall peddet:" << pair_ped_idx << " with pedtrack:" << pair_ped_trackid
+                  << std::endl;
+#endif
+      }
+    }
+  }
+
+  std::vector<BBOX> ped_boxes = cvt_boxes(cls_objs[ped_label]);
+  std::vector<FEATURE> ped_feats(ped_boxes.size());
+
+  MatchResult ped_res =
+      get_init_match_result(cls_objs[ped_label], k_trackers, track_indices_, ped_label);
+
+  cvai_deepsort_config_t ped_cfg = *conf;
+  ped_cfg.max_distance_iou = 0.6;
+  ped_cfg.kfilter_conf.chi2_threshold *= 0.85;
+  ped_cfg.ktracker_conf.max_unmatched_num = 15;
+  ped_res = get_match_result(ped_res, ped_boxes, ped_feats, false, 0.7, &ped_cfg);
+#ifdef DEBUG_TRACK
+  std::cout << "ped matched pairs:" << ped_res.matched_pairs.size() << std::endl;
+#endif
+  // getchar();
+  // use ped track res to recall head
+  for (auto &m : ped_res.matched_pairs) {
+    int t_idx = m.first;
+    int det_idx = m.second;
+    int pair_head_idx = cls_objs[ped_label][det_idx].pair_obj_id;
+    cls_objs[ped_label][det_idx].track_id = k_trackers[t_idx].id;
+#ifdef DEBUG_TRACK
+    std::cout << "matched ped:" << det_idx << ",track:" << k_trackers[t_idx].id
+              << ",pairhead:" << pair_head_idx << std::endl;
+#endif
+    if (pair_head_idx != -1) {
+      uint64_t pair_head_trackid = k_trackers[t_idx].get_pair_trackid();
+#ifdef DEBUG_TRACK
+      std::cout << "pedtrack:" << k_trackers[t_idx].id << ",pairheadtrack:" << pair_head_trackid
+                << std::endl;
+#endif
+      if (pair_head_trackid == 0) continue;
+      uint64_t head_trackid = cls_objs[head_label][pair_head_idx].track_id;
+      if (head_trackid != 0 && head_trackid != pair_head_trackid) {
+        LOGE("error matched ped pairhead trackid:%d,paired_trackid:%d\n", (int)head_trackid,
+             (int)pair_head_trackid);
+      } else {
+#ifdef DEBUG_TRACK
+        std::cout << "recall head with ped,headidx:" << pair_head_idx
+                  << ",trackid:" << pair_head_trackid << std::endl;
+#endif
+        cls_objs[head_label][pair_head_idx].track_id = pair_head_trackid;
+      }
+    }
+  }
+
+  update_tracks(conf, cls_objs);
+  last_head->entry_num = entry_num;
+  last_head->miss_num = miss_num;
+  track_indices_.clear();
+  std::vector<int> head_tracks_inds;
+  for (size_t i = 0; i < k_trackers.size(); i++) {
+    track_indices_[k_trackers[i].id] = (int)i;
+    if (k_trackers[i].class_id == head_label) {
+      head_tracks_inds.push_back(i);
+    }
+  }
+
+  // for (auto &kv : cls_objs) {
+  //   // int label = kv.first;
+
+  //   for (auto &obj : kv.second) {
+  //       origin_obj->info[obj.src_idx].unique_id = obj.track_id;
+  //   }
+  // }
+
+  // copy head data
+  CVI_AI_MemAllocInit(cls_objs[head_label].size(), last_head);
+  last_head->height = origin_obj->height;
+  last_head->width = origin_obj->width;
+  memset(last_head->info, 0, sizeof(cvai_object_info_t) * cls_objs[head_label].size());
+  for (uint32_t i = 0; i < cls_objs[head_label].size(); ++i) {
+    last_head->info[i].bbox.x1 = cls_objs[head_label][i].box.x1;
+    last_head->info[i].bbox.y1 = cls_objs[head_label][i].box.y1;
+    last_head->info[i].bbox.x2 = cls_objs[head_label][i].box.x2;
+    last_head->info[i].bbox.y2 = cls_objs[head_label][i].box.y2;
+    last_head->info[i].bbox.score = cls_objs[head_label][i].box.score;
+    last_head->info[i].classes = cls_objs[head_label][i].classes;
+    last_head->info[i].unique_id = cls_objs[head_label][i].track_id;
+  }
+
+  // copy ped data
+  CVI_AI_MemAllocInit(cls_objs[ped_label].size(), last_ped);
+  last_ped->height = origin_obj->height;
+  last_ped->width = origin_obj->width;
+  memset(last_ped->info, 0, sizeof(cvai_object_info_t) * cls_objs[ped_label].size());
+  for (uint32_t i = 0; i < cls_objs[ped_label].size(); ++i) {
+    last_ped->info[i].bbox.x1 = cls_objs[ped_label][i].box.x1;
+    last_ped->info[i].bbox.y1 = cls_objs[ped_label][i].box.y1;
+    last_ped->info[i].bbox.x2 = cls_objs[ped_label][i].box.x2;
+    last_ped->info[i].bbox.y2 = cls_objs[ped_label][i].box.y2;
+    last_ped->info[i].bbox.score = cls_objs[ped_label][i].box.score;
+    last_ped->info[i].classes = cls_objs[ped_label][i].classes;
+    last_ped->info[i].unique_id = cls_objs[ped_label][i].track_id;
+  }
+
+  // clean origin obj
+  CVI_AI_Free(origin_obj);
+
+  for (uint32_t i = 0; i < last_head->size; i++) {
+    uint64_t trackid = last_head->info[i].unique_id;
+
+    if (track_indices_.count(trackid) == 0) {
+      LOGE("track not found in trackindst,:%d\n", (int)trackid);
+      continue;
+    }
+    int index = track_indices_[trackid];
+    if (index >= (int)k_trackers.size()) {
+      std::cout << "error,index overflow,index:" << index << ",size:" << k_trackers.size()
+                << ",trackid:" << trackid << std::endl;
+      continue;
+    }
+    auto *p_track = &k_trackers[index];
+    if (p_track->ages_ == 1) {
+      last_head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+    } else if (p_track->tracker_state == k_tracker_state_e::PROBATION) {
+      last_head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+    } else if (p_track->tracker_state == k_tracker_state_e::ACCREDITATION) {
+      last_head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+    } else {
+      LOGE("Tracker State Unknow.\n");
+      printf("track unknown type error\n");
+      continue;
+    }
+  }
+  CVI_AI_MemAlloc(head_tracks_inds.size(), tracker);
+  for (uint32_t i = 0; i < tracker->size; i++) {
+    memset(&tracker->info[i], 0, sizeof(tracker->info[i]));
+    auto *p_track = &k_trackers[head_tracks_inds[i]];
+    if (p_track->ages_ == 1) {
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+    } else if (p_track->tracker_state == k_tracker_state_e::PROBATION) {
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+    } else if (p_track->tracker_state == k_tracker_state_e::ACCREDITATION) {
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+    } else {
+      LOGE("Tracker State Unknow.\n");
+      printf("track unknown type error\n");
+      continue;
+    }
+    BBOX t_bbox = p_track->getBBox_TLWH();
+    tracker->info[i].bbox.x1 = t_bbox(0);
+    tracker->info[i].bbox.y1 = t_bbox(1);
+    tracker->info[i].bbox.x2 = t_bbox(0) + t_bbox(2);
+    tracker->info[i].bbox.y2 = t_bbox(1) + t_bbox(3);
+    tracker->info[i].id = p_track->id;
+    tracker->info[i].out_num = p_track->out_nums;
+  }
+  frame_id_ += 1;
+#ifdef DEBUG_TRACK
+  std::cout << "finish track,face num:" << head_tracks_inds.size() << std::endl;
+  show_INFO_KalmanTrackers();
+#endif
+  return CVIAI_SUCCESS;
 }

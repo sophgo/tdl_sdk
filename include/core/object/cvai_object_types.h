@@ -319,6 +319,7 @@ typedef struct {
   int classes;
   cvai_vehicle_meta *vehicle_properity;
   cvai_pedestrian_meta *pedestrian_properity;
+  int track_state;
 } cvai_object_info_t;
 
 /** @struct cvai_object_t
@@ -340,6 +341,11 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
+
+  // consumer counting
+  uint32_t entry_num;
+  uint32_t miss_num;
+
   meta_rescale_type_e rescale_type;
   cvai_object_info_t *info;
 } cvai_object_t;

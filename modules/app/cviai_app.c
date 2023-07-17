@@ -120,6 +120,13 @@ CVI_S32 CVI_AI_APP_PersonCapture_Run(const cviai_app_handle_t handle, VIDEO_FRAM
   return _PersonCapture_Run(ctx->person_cpt_info, ctx->ai_handle, frame);
 }
 
+// cousumer counting
+CVI_S32 CVI_AI_APP_ConsumerCounting_Run(const cviai_app_handle_t handle,
+                                        VIDEO_FRAME_INFO_S *frame) {
+  cviai_app_context_t *ctx = handle;
+  return _ConsumerCounting_Run(ctx->person_cpt_info, ctx->ai_handle, frame);
+}
+
 CVI_S32 CVI_AI_APP_PersonCapture_SetMode(const cviai_app_handle_t handle, capture_mode_e mode) {
   cviai_app_context_t *ctx = handle;
   return _PersonCapture_SetMode(ctx->person_cpt_info, mode);

@@ -41,6 +41,8 @@ class DeepSORT {
   void update_pair_info(std::vector<stObjInfo> &dets_a, std::vector<stObjInfo> &dets_b,
                         ObjectType typea, ObjectType typeb, float corre_thresh);
   CVI_S32 track_fuse(cvai_object_t *obj, cvai_face_t *face, cvai_tracker_t *tracker);
+  CVI_S32 track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *tracker, bool use_reid,
+                         cvai_object_t *last_head, cvai_object_t *last_ped);
   void update_out_num(cvai_tracker_t *tracker);
 
   CVI_S32 getConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type = -1);
@@ -66,6 +68,9 @@ class DeepSORT {
   KalmanFilter kf_;
   uint32_t image_width_;
   uint32_t image_height_;
+  // consumer counting
+  uint32_t entry_num = 0;
+  uint32_t miss_num = 0;
   float bounding_iou_thresh_ = 0.5;
   // byte_kalman::KalmanFilter byte_kf_;
   std::vector<int> accreditation_tracker_idxes;  // confirmed trackids

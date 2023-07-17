@@ -59,7 +59,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
           break;
         }
 
-        float score = meta.info[0].pts.score;
+        float score = meta.info[0].score;
         // float blur_score = meta.info[0].blurness;
         res_ss << image_name << " " << score;
         for (int i = 0; i < 5; i++) {
