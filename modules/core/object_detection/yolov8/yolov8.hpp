@@ -12,6 +12,7 @@ class YoloV8Detection final : public Core {
   void setBranchChannel(int box_channel, int cls_channel);
   virtual ~YoloV8Detection();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
+  virtual bool allowExportChannelAttribute() const override { return true; }
 
  private:
   virtual int onModelOpened() override;
