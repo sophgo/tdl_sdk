@@ -422,6 +422,26 @@ typedef struct {
   cvai_handpose21_meta_t *info;
 } cvai_handpose21_meta_ts;
 
+/** @struct YoloPreParam
+ *  @ingroup core_cviaicore
+ *  @brief Config the yolov5 detection preprocess.
+ *  @var YoloPreParam::factor
+ *  Preprocess factor, one dimension matrix, r g b channel
+ *  @var YoloPreParam::mean
+ *  Preprocess mean, one dimension matrix, r g b channel
+ *  @var YoloPreParam::rescale_type
+ *  Preprocess config, vpss rescale type config
+ *  @var YoloPreParam::pad_reverse
+ *  Preprocess padding config
+ *  @var YoloPreParam::keep_aspect_ratio
+ *  Preprocess config quantize scale
+ *  @var YoloPreParam::use_crop
+ *  Preprocess config, config crop
+ *  @var YoloPreParam:: resize_method
+ *  Preprocess resize method config
+ *  @var YoloPreParam::format
+ *  Preprocess pixcel format config
+ */
 typedef struct {
   float factor[3];
   float mean[3];
@@ -432,22 +452,28 @@ typedef struct {
   bool use_crop;
   VPSS_SCALE_COEF_E resize_method;
   PIXEL_FORMAT_E format;
-} Yolov5PreParam;
+} YoloPreParam;
 
-/** @struct YOLOV5AlgParam
+/** @struct YoloAlgParam
  *  @ingroup core_cviaicore
  *  @brief Config the yolov5 detection algorithm parameters.
- *  @var YOLOV5AlgParam::anchors
+ *  @var YoloAlgParam::anchors
  *  Configure yolov5 model anchors
- *  @var YOLOV5AlgParam::conf_thresh
- *  Configure yolov5 model conf threshold val
- *  @var YOLOV5AlgParam::nms_thresh
- *  Configure yolov5 model nms threshold val
+ *  @var YoloAlgParam::anchor_len
+ *  Configure number of yolov5 model anchors
+ *  @var YoloAlgParam::strides
+ *  Configure yolov5 model strides
+ *  @var YoloAlgParam::stride_len
+ *  Configure number of yolov5 model stride
+ *  @var YoloAlgParam::cls
+ *  Configure the number of yolov5 model predict classes
  */
 typedef struct {
-  uint32_t anchors[3][3][2];
-  float conf_thresh;
-  float nms_thresh;
-} YOLOV5AlgParam;
+  uint32_t *anchors;
+  uint32_t anchor_len;
+  uint32_t *strides;
+  uint32_t stride_len;
+  uint32_t cls;
+} YoloAlgParam;
 
 #endif

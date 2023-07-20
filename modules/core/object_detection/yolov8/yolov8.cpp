@@ -371,7 +371,7 @@ void YoloV8Detection::parseDecodeBranch(const int image_width, const int image_h
 }
 void YoloV8Detection::postProcess(Detections &dets, int frame_width, int frame_height,
                                   cvai_object_t *obj_meta) {
-  Detections final_dets = nms_multi_class(dets, NMS_THRESH);
+  Detections final_dets = nms_multi_class(dets, m_model_nms_threshold);
   CVI_SHAPE shape = getInputShape(0);
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3]);
 

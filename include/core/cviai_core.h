@@ -136,6 +136,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80)               \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV3)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV5)                           \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV6)                           \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLO)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOX)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_OSNET)                            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION)              \
@@ -154,11 +156,12 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION)                \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_IRLIVENESS)                       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION)            \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION)                      \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION)         \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION)       \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION)       \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION)            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV8POSE)                       \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SIMCC_POSE)\
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SIMCC_POSE)                       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3)
 // clang-format on
 
@@ -305,6 +308,17 @@ DLL_EXPORT CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPOR
                                             float threshold);
 
 /**
+ * @brief Set the nms threshold of yolo inference.
+ *
+ * @param handle An AI SDK handle.
+ * @param model Supported model id.
+ * @param threshold Threshold in float, usually a number between 0 and 1.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_SetModelNmsThreshold(cviai_handle_t handle,
+                                               CVI_AI_SUPPORTED_MODEL_E model, float threshold);
+
+/**
  * @brief Get the threshold of an AI Inference
  *
  * @param handle An AI SDK handle.
@@ -314,6 +328,17 @@ DLL_EXPORT CVI_S32 CVI_AI_SetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPOR
  */
 DLL_EXPORT CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model,
                                             float *threshold);
+
+/**
+ * @brief Get the nms threshold of yolo Inference
+ *
+ * @param handle An AI SDK handle.
+ * @param model Supported model id.
+ * @param threshold Threshold in float.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_GetModelNmsThreshold(cviai_handle_t handle,
+                                               CVI_AI_SUPPORTED_MODEL_E model, float *threshold);
 /**
  * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
  * to change a thread if the process is not sequential.
@@ -845,6 +870,28 @@ DLL_EXPORT CVI_S32 CVI_AI_Yolov5(const cviai_handle_t handle, VIDEO_FRAME_INFO_S
                                  cvai_object_t *obj);
 
 /**
+ * @brief Yolov6 object detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param obj Output detect result. The name, bbox, and classes will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Yolov6(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                 cvai_object_t *obj);
+
+/**
+ * @brief Yolo object detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param obj Output detect result. The name, bbox, and classes will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Yolo(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                               cvai_object_t *obj);
+
+/**
  * @brief YoloX object detection.
  *
  * @param handle An AI SDK handle.
@@ -1301,6 +1348,17 @@ DLL_EXPORT CVI_S32 CVI_AI_PersonPet_Detection(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj_meta);
 
 /**
+ * @brief Yolov8 Detection
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param object cvai_object_t structure, the cvai_object_info_t and cvai_bbox_t must be set.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_YOLOV8_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                           cvai_object_t *obj_meta);
+
+/**
  * @brief car,bus,truck,person,bike,motor Detection
  *
  * @param handle An AI SDK handle.
@@ -1350,12 +1408,36 @@ DLL_EXPORT CVI_S32 CVI_AI_Simcc_Pose(const cviai_handle_t handle, VIDEO_FRAME_IN
  *
  * @param handle An AI SDK handle.
  * @param p_preprocess_cfg Input preprocess setup config.
- * @param p_yolov5_param Yolov5 algorithm parameter config.
+ * @param p_yolo_param Yolov5 algorithm parameter config.
  * @int Reture CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle,
-                                           Yolov5PreParam *p_preprocess_cfg,
-                                           YOLOV5AlgParam *p_yolov5_param);
+                                           YoloPreParam *p_preprocess_cfg,
+                                           YoloAlgParam *p_yolov_param);
+
+/**
+ * @brief yolov6 setup function
+ *
+ * @param handle An AI SDK handle.
+ * @param p_preprocess_cfg Input preprocess setup config.
+ * @param p_yolo_param Yolov6 algorithm parameter config.
+ * @int Reture CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle,
+                                           YoloPreParam *p_preprocess_cfg,
+                                           YoloAlgParam *p_yolo_param);
+
+/**
+ * @brief yolo setup function
+ *
+ * @param handle An AI SDK handle.
+ * @param p_preprocess_cfg Input preprocess setup config.
+ * @param p_yolo_param Yolo algorithm parameter config.
+ * @int Reture CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle,
+                                         YoloPreParam *p_preprocess_cfg,
+                                         YoloAlgParam *p_yolo_param);
 
 #ifdef __cplusplus
 }

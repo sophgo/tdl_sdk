@@ -14,6 +14,7 @@
 #include <vector>
 #include "profiler.hpp"
 #define DEFAULT_MODEL_THRESHOLD 0.5
+#define DEFAULT_MODEL_NMS_THRESHOLD 0.5
 
 namespace cviai {
 
@@ -95,7 +96,9 @@ class Core {
   virtual int getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
                            cvai_vpssconfig_t *chn_config);
   virtual void setModelThreshold(float threshold);
+  virtual void setModelNmsThreshold(float threshold);
   float getModelThreshold();
+  float getModelNmsThreshold();
   bool isInitialized();
   virtual bool allowExportChannelAttribute() const { return false; }
 
@@ -189,6 +192,7 @@ class Core {
 
   // Post processing related control
   float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
+  float m_model_nms_threshold = DEFAULT_MODEL_NMS_THRESHOLD;
 
   // External handle
   VpssEngine *mp_vpss_inst = nullptr;

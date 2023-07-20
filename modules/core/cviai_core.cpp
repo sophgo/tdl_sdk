@@ -32,8 +32,10 @@
 #include "mask_face_recognition/mask_face_recognition.hpp"
 #include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
+#include "object_detection/yolo/yolo.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "object_detection/yolov5/yolov5.hpp"
+#include "object_detection/yolov6/yolov6.hpp"
 #include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
 #include "osnet/osnet.hpp"
@@ -136,6 +138,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION, CREATOR(HandKeypointClassification)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV5, CREATOR(Yolov5)},
+    {CVI_AI_SUPPORTED_MODEL_YOLOV6, CREATOR(Yolov6)},
+    {CVI_AI_SUPPORTED_MODEL_YOLO, CREATOR(Yolo)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
     {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
@@ -225,6 +229,11 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
       p_yolov8->setBranchChannel(64, 3);  // three types
       m_t.instance = p_yolov8;
       LOGI("create personpet model");
+    } else if (index == CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+      YoloV8Detection *p_yolov8 = new YoloV8Detection();
+      p_yolov8->setBranchChannel(64, 80);  // three types
+      m_t.instance = p_yolov8;
+      LOGI("create yolov8 model");
     } else if (index == CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION) {
       YoloV8Detection *p_yolov8 = new YoloV8Detection();
       p_yolov8->setBranchChannel(64, 7);  // seven types
@@ -394,6 +403,32 @@ CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
   Core *instance = getInferenceInstance(config, ctx);
   if (instance != nullptr) {
     *threshold = instance->getModelThreshold();
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_SetModelNmsThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                    float threshold) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    instance->setModelNmsThreshold(threshold);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
+    return CVIAI_ERR_OPEN_MODEL;
+  }
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_GetModelNMmsThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                                     float *threshold) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    *threshold = instance->getModelNmsThreshold();
   } else {
     LOGE("Cannot create model: %s\n", CVI_AI_GetModelName(config));
     return CVIAI_ERR_OPEN_MODEL;
@@ -752,6 +787,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov5, Yolov5, CVI_AI_SUPPORTED_MODEL_YOLOV5, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov6, Yolov6, CVI_AI_SUPPORTED_MODEL_YOLOV6, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolo, Yolo, CVI_AI_SUPPORTED_MODEL_YOLO, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *, int)
@@ -1346,6 +1383,29 @@ CVI_S32 CVI_AI_PersonPet_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO
   }
 }
 
+CVI_S32 CVI_AI_YOLOV8_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                cvai_object_t *obj_meta) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  YoloV8Detection *yolo_model = dynamic_cast<YoloV8Detection *>(
+      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION, ctx));
+  if (yolo_model == nullptr) {
+    LOGE("No instance found for CVI_AI_YOLOV8.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got yolov8 instance\n");
+  if (yolo_model->isInitialized()) {
+    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION) != CVI_SUCCESS) {
+      return CVIAI_ERR_INIT_VPSS;
+    } else {
+      return yolo_model->inference(frame, obj_meta);
+    }
+  } else {
+    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
+         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION));
+    return CVIAI_ERR_NOT_YET_INITIALIZED;
+  }
+}
+
 CVI_S32 CVI_AI_PersonVehicle_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                        cvai_object_t *obj_meta) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -1428,8 +1488,8 @@ CVI_S32 CVI_AI_HeadPerson_Detection(const cviai_handle_t handle, VIDEO_FRAME_INF
   }
 }
 
-CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle, Yolov5PreParam *p_preprocess_cfg,
-                                YOLOV5AlgParam *p_yolov5_param) {
+CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
+                                YoloAlgParam *p_yolo_param) {
   printf("enter CVI_AI_Set_YOLOV5_Param...\n");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Yolov5 *yolov5_model =
@@ -1439,11 +1499,50 @@ CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle, Yolov5PreParam *p_p
     return CVI_FAILURE;
   }
   LOGI("got yolov5 instance\n");
-  if (p_preprocess_cfg == nullptr || p_yolov5_param == nullptr) {
+  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
     LOGE("p_preprocess_cfg or p_yolov5_param can not be nullptr.\n");
     return CVI_FAILURE;
   }
 
-  yolov5_model->set_param(p_preprocess_cfg, p_yolov5_param);
+  yolov5_model->set_param(p_preprocess_cfg, p_yolo_param);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
+                                YoloAlgParam *p_yolo_param) {
+  printf("enter CVI_AI_Set_YOLOV6_Param...\n");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Yolov6 *yolov6_model =
+      dynamic_cast<Yolov6 *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOV6, ctx));
+  if (yolov6_model == nullptr) {
+    LOGE("No instance found for yolov6 detection.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got yolov6 instance\n");
+  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
+    LOGE("p_preprocess_cfg or p_yolov6_param can not be nullptr.\n");
+    return CVI_FAILURE;
+  }
+
+  yolov6_model->set_param(p_preprocess_cfg, p_yolo_param);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
+                              YoloAlgParam *p_yolo_param) {
+  printf("enter CVI_AI_Set_YOLOV6_Param...\n");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Yolo *yolo_model = dynamic_cast<Yolo *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLO, ctx));
+  if (yolo_model == nullptr) {
+    LOGE("No instance found for yolo detection.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got yolo instance\n");
+  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
+    LOGE("p_preprocess_cfg or p_yolo_param can not be nullptr.\n");
+    return CVI_FAILURE;
+  }
+
+  yolo_model->set_param(p_preprocess_cfg, p_yolo_param);
   return CVI_SUCCESS;
 }

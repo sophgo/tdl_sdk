@@ -68,6 +68,8 @@ else()
                 $<TARGET_OBJECTS:retina_face>
                 $<TARGET_OBJECTS:yolov3>
                 $<TARGET_OBJECTS:yolov5>
+                $<TARGET_OBJECTS:yolov6>
+                $<TARGET_OBJECTS:yolo>
                 $<TARGET_OBJECTS:thermal_face_detection>
                 $<TARGET_OBJECTS:thermal_person_detection>
                 $<TARGET_OBJECTS:deepsort>
