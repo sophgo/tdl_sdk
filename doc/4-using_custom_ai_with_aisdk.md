@@ -11,7 +11,9 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
+  meta_rescale_type_e rescale_type;
   cvai_face_info_t* info;
+  cvai_dms_t* dms;
 } cvai_face_t;
 ```
 
@@ -36,10 +38,19 @@ typedef struct {
   cvai_face_emotion_e emotion;
   cvai_face_gender_e gender;
   cvai_face_race_e race;
+  float score;
   float age;
   float liveness_score;
+  float hardhat_score;
   float mask_score;
-  cvai_face_quality_t face_quality;
+  float recog_score;
+  float face_quality;
+  float pose_score;
+  float pose_score1;
+  float sharpness_score;
+  float blurness;
+  cvai_head_pose_t head_pose;
+  int track_state;
 } cvai_face_info_t;
 ```
 
@@ -62,10 +73,19 @@ typedef struct {
   cvai_face_emotion_e emotion;
   cvai_face_gender_e gender;
   cvai_face_race_e race;
+  float score;
   float age;
   float liveness_score;
+  float hardhat_score;
   float mask_score;
-  cvai_face_quality_t face_quality;
+  float recog_score;
+  float face_quality;
+  float pose_score;
+  float pose_score1;
+  float sharpness_score;
+  float blurness;
+  cvai_head_pose_t head_pose;
+  int track_state;
 } cvai_face_info_t;
 ```
 
@@ -92,6 +112,7 @@ typedef struct {
   float* x;
   float* y;
   uint32_t size;
+  float score;
 } cvai_pts_t;
 ```
 

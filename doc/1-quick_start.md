@@ -6,16 +6,17 @@ These are the files you may need to use the AI SDK.
 # Include header
 cviai_experimental.h
 cviai.h
+cviai_app.h
 
 # Static library
-libcviai_core-static.a
+libcviai-static.a
 libcviai_evaluation-static.a
-libcviai_service-static.a
+libcviai_app-static.a
 
 # Dynamic library
-libcviai_core.so
+libcviai.so
 libcviai_evaluation.so
-libcviai_service.so
+libcviai_app.so
 ```
 
 Include the headers in your ``*.cpp`` file.
@@ -33,9 +34,10 @@ Link the libraries to your binary.
 
 | Function            | Linked libraries                      |
 |---------------------|---------------------------------------|
-| CVI_AI_*            | libcviai_core.so                      |
-| CVI_AI_Service_*    | libcviai_core.so, libcviai_service.so |
+| CVI_AI_*            | libcviai.so                           |
+| CVI_AI_Service_*    | libcviai.so                           |
 | CVI_AI_Eval_*       | libcviai_evaluation.so                |
+| CVI_AI_APP_*        | libcviai_app.so                       |
 
 THe following snippet is a cmake example.
 
@@ -76,7 +78,7 @@ Now we know how to create a handle, let's take a look at ``sample_init.c``. When
 
 ```c
   const char fake_path[] = "face_quality.cvimodel";
-  if ((ret = CVI_AI_SetModelPath(handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fake_path)) !=
+  if ((ret = CVI_AI_OpenModel(handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, fake_path)) !=
       CVIAI_SUCCESS) {
     printf("Set model path failed.\n");
     return ret;
@@ -93,7 +95,7 @@ AI SDK use Vpss hardware to speed up the calculating time on images. Vpss API is
 
 ```c
   // Get the used group ids by AI SDK.
-  uint32_t *groups = NULL;
+  VPSS_GRP *groups = NULL;
   uint32_t nums = 0;
   if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVIAI_SUCCESS) {
     printf("Get used group id failed.\n");
@@ -111,9 +113,10 @@ You can also manually assign a group id to AI SDK when creating a handle.
 
 ```c
   VPSS_GRP groupId = 2;
+  CVI_U8 vpssDev = 0;
   cviai_handle_t handle;
   // Create handle
-  if ((ret = CVI_AI_CreateHandle(&handle, groupId))!= CVIAI_SUCCESS) {
+  if ((ret = CVI_AI_CreateHandle2(&handle, groupId, vpssDev))!= CVIAI_SUCCESS) {
     printf("Handle create failed\n");
     return ret;
   }

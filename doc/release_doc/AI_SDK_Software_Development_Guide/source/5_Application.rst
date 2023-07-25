@@ -6,9 +6,9 @@
 目的
 ~~~~~~~~~~~~~~
 
-CviTek AI application，APP，是基于AI SDK，并针对不同客户端应用，所设计的solution。
+CviTek AI application，APP 是基于AI SDK，并针对不同客户端应用，所设计的solution。
 
-APP整合AI SDK，提供客户更方便的操作API。
+APP 整合AI SDK，提供客户更方便的操作API。
 
 APP code为open source，可以作为客户端开发的参考。
 
@@ -63,11 +63,11 @@ CVI_AI_APP_CreateHandle
 
 .. code-block:: c
   
-  CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_handle_t ai_handle, IVE_HANDLE ive_handle);
+  CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_handle_t ai_handle);
 
 【描述】
 
-创建使用APP所需的指标。需输入ai handle与ive handle。
+创建使用APP所需的指标。需输入ai handle。
 
 【参数】
 
@@ -91,11 +91,6 @@ CVI_AI_APP_CreateHandle
      - a i_handle
      - AI句柄 
 
-   * - 输入
-     - IVE_HANDLE   
-     - ive_handle
-     - IVE句柄
-
 
 CVI_AI_APP_DestroyHandle
 ------------------------
@@ -110,7 +105,7 @@ CVI_AI_APP_DestroyHandle
 
 销毁创造的句柄cviai_app_handle_t。
 
-只会销毁个别应用程序所使用之数据，不影响ai handle与ive handle。
+只会销毁个别应用程序所使用之数据，不影响ai handle。
 
 【参数】
 
@@ -152,15 +147,14 @@ CVI_AI_APP_DestroyHandle
 
    * - Miss_Time_Limit
      - 40
-     - 人脸遗失时间限制。当APP连续无法追踪到某个face，会判定此  face已离开。
+     - 人脸遗失时间限制。当APP连续无法追踪到某个face，会判定此 face已离开。
      
               
-
        [单位：frame]      
 
    * - Threshold_Size_Min
      - 32
-     - 最小/最大可接受人脸大小，如果face  bbox的任一边小于/大于此阀值，quality会强制设为0。 
+     - 最小/最大可接受人脸大小，如果face bbox的任一边小于/大于此阀值，quality会强制设为0。 
 
    * - Threshold_Size_Max
      - 512
@@ -176,17 +170,17 @@ CVI_AI_APP_DestroyHandle
 
    * - Threshold_Quality
      - 0.1
-     - 人脸质量阀值，若新的face的quality大于此阀值  ，且比当前截取之face的quality还高  ，则会截取并更新暂存区face数据。
+     - 人脸质量阀值，若新的face的quality大于此阀值，且比当前截取之face的quality还高，则会截取并更新暂存区face数据。
 
    * - Threshold_Quality_High
      - 0.95
-     - 人脸质量阀值（高），若暂存区某 face的quality高于此阀值，则判定此  face 为高质量，后  续不会再进行更新。
+     - 人脸质量阀值（高），若暂存区某 face的quality高于此阀值，则判定此 face 为高质量，后续不会再进行更新。
      
-       （仅适用于level  2,3）  
+       （仅适用于level 2,3）  
 
    * - Threshold_Yaw
      - 0.25
-     - 人脸角度阀值，若角度大于此阀值，qua  lity会强制设为0。
+     - 人脸角度阀值，若角度大于此阀值，quality会强制设为0。
      
        （一单位为90度） 
 
@@ -253,9 +247,9 @@ CVI_AI_APP_DestroyHandle
 
        2. Face Pose Score
 
-         4. 分别计算人脸角度 yaw, pitch, roll并取其绝对值 
+         1. 分别计算人脸角度 yaw, pitch, roll并取其绝对值 
 
-         5. 计算1 - (yaw + pitch + roll) / 3作为分数    
+         2. 计算1 - (yaw + pitch + roll) / 3作为分数    
 
        3. Face Quality = Face Area Score * Face Pose Score
 
@@ -272,9 +266,9 @@ CVI_AI_APP_FaceCapture_Init
 
 【语法】
 
-.. code-block:: none
+.. code-block:: c
   
-  CVI_AI_APP_FaceCapture_Init(const cviai_app_handle_t handle, uint32_t buffer_size);
+  CVI_S32 CVI_AI_APP_FaceCapture_Init(const cviai_app_handle_t handle, uint32_t buffer_size);
 
 【描述】
 
@@ -310,7 +304,7 @@ CVI_AI_APP_FaceCapture_QuickSetUp
 
 .. code-block:: c
     
-  CVI_S32 CVI_AI_APP_FaceCapture_QuickSetUp(const cviai_app_handle_t handle, const char *fd_model_path, const char *fq_model_path);
+  CVI_S32 CVI_AI_APP_FaceCapture_QuickSetUp(const cviai_app_handle_t handle, int fd_model_id, int fr_model_id, const char *fd_model_path, const char *fr_model_path, const char *fq_model_path, const char *fl_model_path);
 
 【描述】
 
@@ -334,14 +328,75 @@ CVI_AI_APP_FaceCapture_QuickSetUp
      - 输入句柄指标     
 
    * - 输入
-     - char\*      
-     - fd_model_path
-     - 人脸侦测模型路径 
+     - int   
+     - fd_model_id
+     - 人脸侦测模型ID 
 
    * - 输入
-     - char\*      
+     - int  
+     - fr_model_id
+     - 人脸识别检测模型ID 
+
+   * - 输入
+     - const char\*
+     - fd_model_path
+     - 人脸侦测模型路径
+
+   * - 输入
+     - const char\* 
+     - fr_model_path
+     - 人脸识别检测模型路径
+
+   * - 输入
+     - const char\*
      - fq_model_path
-     - 人脸质量检测模型路径 
+     - 人脸质量检测模型路径
+
+   * - 输入
+     - const char\* 
+     - fl_model_path
+     - 人脸座标检测模型路径
+
+
+CVI_AI_APP_FaceCapture_FusePedSetup
+-----------------------------------
+
+【语法】
+
+.. code-block:: c
+    
+  CVI_S32 CVI_AI_APP_FaceCapture_FusePedSetup(const cviai_app_handle_t handle, int ped_model_id, const char *ped_model_path);
+
+【描述】
+
+快速设定人脸抓拍。
+
+【参数】
+
+.. list-table::
+   :widths: 1 2 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_app_handle_t
+     - handle   
+     - 输入句柄指标     
+
+   * - 输入
+     - int   
+     - fd_model_id
+     - 行人侦测模型ID 
+
+   * - 输入
+     - const char\* 
+     - fl_model_path
+     - 行人侦测模型路径
 
 
 CVI_AI_APP_FaceCapture_GetDefaultConfig
@@ -409,6 +464,48 @@ CVI_AI_APP_FaceCapture_SetConfig
      - face_capture_config_t\*
      - cfg    
      - 人脸抓拍参数  
+
+
+CVI_AI_APP_FaceCapture_FDFR
+--------------------------------
+
+【语法】
+
+.. code-block:: c
+  
+  CVI_S32 CVI_AI_APP_FaceCapture_FDFR(const cviai_app_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *p_face);
+
+【描述】
+
+设定人脸抓拍参数。
+
+【参数】
+
+.. list-table::
+   :widths: 1 2 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_app_handle_t 
+     - handle 
+     - 输入句柄指标  
+
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame   
+     - 图像     
+
+   * - 输入
+     - cvai_face_t\*
+     - p_face    
+     - 人脸抓拍输出结果
 
 
 CVI_AI_APP_FaceCapture_SetMode
@@ -642,9 +739,11 @@ CVI_AI_APP_FaceCapture_CleanAll
 
    * - 1
      - 基于眼睛距离  
-     -      
-       1. 定义标准瞳距 D = 80 
+     - 
+       1. 定义标准瞳距 D = 80
+
        2. 计算双眼距离 d
+       
        3. 计算MIN(1.0, d/D) 当作分数  
 
 
@@ -875,6 +974,42 @@ CVI_AI_APP_PersonCapture_Run
      - VIDEO_FRAME_INFO_S\*
      - frame 
      - 输入影像      
+
+
+CVI_AI_APP_ConsumerCounting_Run
+-------------------------------
+
+【语法】
+
+.. code-block:: c
+  
+  CVI_S32 CVI_AI_APP_ConsumerCounting_Run(const cviai_app_handle_t handle, VIDEO_FRAME_INFO_S *frame);
+
+【描述】
+
+执行人型抓拍。
+
+【参数】
+
+.. list-table::
+   :widths: 1 2 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_app_handle_t
+     - handle 
+     - 输入句柄指标  
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame 
+     - 输入影像
 
 
 CVI_AI_APP_PersonCapture_CleanAll

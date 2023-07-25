@@ -17,10 +17,10 @@ API参考
 
 AI SDK的句柄，不同模块之间有各自的句柄，但是创建 ``cviai_service_handle_t`` 模块时会需要使用到 ``cviai_handle_t`` 作为输入。
 
-CVI_AI_Core
+CVIAI_Core
 ~~~~~~~~~~~~~~~
 
-Common
+通用
 ^^^^^^^^^
 
 CVI_AI_CreateHandle
@@ -70,7 +70,7 @@ CVI_AI_CreateHandle2
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 2
    :header-rows: 1
 
 
@@ -131,7 +131,7 @@ CVI_AI_GetModelPath
 
 .. code-block:: c
   
-  const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model, char **filepath);
+  const char *CVI_AI_GetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model);
 
 【描述】
 
@@ -366,7 +366,7 @@ CVI_AI_SetVpssThread2
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model, const uint32_t thread, const VPSS_GRP vpssGroupId);
+  CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E model, const uint32_t thread, const VPSS_GRP vpssGroupId, const CVI_U8 dev);
 
 【描述】
 
@@ -395,14 +395,19 @@ CVI_AI_SetVpssThread2
      - 模型ID     
 
    * - 输入
-     - uint32_t 
+     - const uint32_t 
      - thread
      - 线程id     
 
    * - 输入
-     - VPSS_GRP 
+     - const VPSS_GRP 
      - vpssGroupId
      - VPSS Group id  
+
+   * - 输入
+     - const CVI_U8 
+     - dev
+     - VPSS Device id
 
 
 CVI_AI_GetVpssThread
@@ -447,12 +452,8 @@ CVI_AI_GetVpssThread
      - VPSS线程id   
 
 
-【语法】
-
-.. code-block:: c
-
 CVI_S32 CVI_AI_GetVpssGrpIds
-----------------------------------
+----------------------------
 
 【语法】
 
@@ -548,7 +549,7 @@ CVI_AI_SetVBPool
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -580,7 +581,7 @@ CVI_AI_GetVBPool
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_SetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL *pool_id);
+  CVI_S32 CVI_AI_GetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL *pool_id);
 
 【描述】
 
@@ -697,7 +698,7 @@ Dequantize int8数值到Float。
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -743,7 +744,7 @@ CVI_AI_ObjectNMS
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -791,7 +792,7 @@ CVI_AI_FaceNMS
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -932,7 +933,7 @@ CVI_AI_CropImage_Face
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_face_info_t *face_info, bool align);
+  CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_face_info_t *face_info, bool align, bool cvtRGB888);
 
 【描述】
 
@@ -941,7 +942,7 @@ CVI_AI_CropImage_Face
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -1054,7 +1055,7 @@ CVI_AI_GetVpssChnConfig
 
    * - 输入
      - CVI_U32        
-     - fr   ameWidth
+     - frameWidth
      - 输入图像宽       
 
    * - 输入
@@ -1078,7 +1079,7 @@ CVI_AI_Free
 
 .. code-block:: none
   
-  CVI_A_Free(X)
+  CVI_AI_Free(X)
 
 【描述】
 
@@ -1107,7 +1108,7 @@ CVI_AI_CopyInfo
 
 .. code-block:: none
   
-  CVI_A_CopyInfo(IN, OUT)
+  CVI_AI_CopyInfo(IN, OUT)
 
 【描述】
 
@@ -1181,9 +1182,9 @@ CVI_AI_RescaleMetaRB
 getFeatureTypeSize
 ------------------
 
-.. code-block:: none
+.. code-block:: c
   
-  getFeatureTypeSize(feature_type_e type);
+  int getFeatureTypeSize(feature_type_e type);
 
 【描述】
 
@@ -1206,7 +1207,19 @@ getFeatureTypeSize
      - type  
      - 单位        
 
-   * - 回传 
+【输出】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输出
      - int   
      - X 
      - 单位为byte之单位大小
@@ -1345,7 +1358,7 @@ CVI_AI_MobileDetV2_Pedestrian
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_MobileDetV2_Vehicle(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+  CVI_S32 CVI_AI_MobileDetV2_Pedestrian(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
 
 【描述】
 
@@ -1543,6 +1556,47 @@ CVI_AI_Yolov3
      - 侦测到的对象   
 
 
+CVI_AI_Yolov5
+-------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_Yolov5 (cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+
+【描述】
+
+使用YoloV5模型进行推理，此模型可侦测COCO 80个类别。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t   
+     - handle
+     - 句柄 
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame   
+     - 输入图像       
+
+   * - 输出
+     - cvai_object_t\*
+     - obj 
+     - 侦测到的对象   
+
+
 CVI_AI_YoloX
 ------------
 
@@ -1627,11 +1681,11 @@ CVI_AI_SelectDetectClass
 
    * - 输入
      - uint32_t         
-     - n  um_classes
+     - num_classes
      - 保留的类别个数   
 
    * - 输入
-     - cvai_obj_class_id_e或  cvai_obj_det_group_type_e
+     - cvai_obj_class_id_e或cvai_obj_det_group_type_e
      - 说明
      - 留的Class ID或Group ID
 
@@ -1803,6 +1857,47 @@ CVI_AI_RetinaFace_Hardhat
      - 侦测到的人脸  
 
 
+CVI_AI_ScrFDFace
+-------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_ScrFDFace(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
+
+【描述】
+
+使用ScrFD Face模型侦测人脸。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t       
+     - handle
+     - 句柄      
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame
+     - 输入图像
+
+   * - 输出
+     - cvai_face_t\*
+     - faces
+     - 侦测到的人脸  
+
+
 CVI_AI_ThermalFace
 ------------------
 
@@ -1844,18 +1939,18 @@ CVI_AI_ThermalFace
      - 侦测到的人脸  
 
 
-CVI_AI_FaceQuality
+CVI_AI_FLDet3
 ------------------
 
 【语法】
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_FaceQuality(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces, bool *skip);
+  CVI_S32 CVI_AI_FLDet3(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
 
 【描述】
 
-判断传入的faces结构中的人脸质量评估并同时侦测人脸角度。质量受人脸清晰程度与是否遮挡影响。人脸质量分数为 faces->info[i].face_quality，人脸角度放在 faces->info[i].head_pose中。
+判断传入的faces结构中的人脸座标点。
 
 【参数】
 
@@ -1877,19 +1972,60 @@ CVI_AI_FaceQuality
    * - 输入
      - VIDEO_FRAME_INFO_S\*
      - frame
+     - 侦测到的人脸  
+
+   * - 输出
+     - cvai_face_t\*
+     - faces
+     - 人脸座标点
+
+
+CVI_AI_FaceQuality
+------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_FaceQuality(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces, bool *skip);
+
+【描述】
+
+判断传入的faces结构中的人脸质量评估并同时侦测人脸角度。质量受人脸清晰程度与是否遮挡影响。
+
+人脸质量分数为 faces->info[i].face_quality，人脸角度放在 faces->info[i].head_pose中。
+
+【参数】
+
+.. list-table::
+   :widths: 1 2 1 3
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t       
+     - handle
+     - 句柄      
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame
      - 输入图像  
 
    * - 输入
      - cvai_face_t\*
-     - face         
+     - face
      - 侦测到的人脸  
-
-     
 
    * - 输入
      - bool\*  
      - skip 
-     - Bool array,    
+     - Bool array：    
      
        指定哪个人脸需要做face quality。NULL  表示全部人脸都做。
 
@@ -1975,8 +2111,6 @@ CVI_AI_MaskClassification
      - faces        
      - 侦测到的人脸  
 
-     
-
 
 人脸识别
 ^^^^^^^^^^^^^^^^^^
@@ -2022,8 +2156,6 @@ CVI_AI_FaceRecognition
      - 侦测到的人脸   
 
 
-
-
 CVI_AI_FaceRecognitionOne
 -------------------------
 
@@ -2040,7 +2172,7 @@ CVI_AI_FaceRecognitionOne
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -2064,12 +2196,66 @@ CVI_AI_FaceRecognitionOne
      - faces          
      - 侦测到的人脸   
 
-
-
    * - 输入
      - int  
      - face_idx
      - 想进行特征抽取的face index。-1表示全部抽取。
+
+
+CVI_AI_FaceFeatureExtract
+-------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_FaceFeatureExtract(cviai_handle_t handle, const uint8_t *rgb_pack, int width, int height, int stride, cvai_face_info_t *face_info);
+
+【描述】
+
+抽取人脸特征。此接口仅会针对指定的rgb_pack 位置进行特征抽取。并放在face_info->feature.ptr 中。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t   
+     - handle
+     - 句柄 
+
+   * - 输入
+     - const uint8_t\*
+     - rgb_pack   
+     - 输入图像pixel 起始位置       
+
+   * - 输入
+     - int
+     - width   
+     - 输入图像寬
+
+   * - 输入
+     - int
+     - height  
+     - 输入图像高
+
+   * - 输入
+     - int
+     - stride 
+     - 输入图像Stride       
+
+   * - 输入/输出
+     - cvai_face_info_t\*
+     - face_info          
+     - 侦测到的人脸特征
 
 
 CVI_AI_FaceAttribute
@@ -2117,8 +2303,6 @@ faces->info[i].gender, faces->info[i].race。
      - 侦测到的人脸   
 
 
-
-
 CVI_AI_FaceAttributeOne
 -----------------------
 
@@ -2139,7 +2323,7 @@ faces->info[i].gender, faces->info[i].race。
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -2206,16 +2390,12 @@ CVI_AI_MaskFaceRecognition
 
    * - 输入/输出
      - cvai_face_t\*
-     - faces   
-
-       
+     - faces
      - 侦测到的人脸   
 
 
-
-
 行人识别
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 CVI_AI_OSNet
 ------------
@@ -2274,7 +2454,7 @@ CVI_AI_OSNetOne
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -2293,15 +2473,186 @@ CVI_AI_OSNetOne
      - frame   
      - 输入图像       
 
-   * - 输入
+   * - 输入/输出
      - cvai_object_t\*
      - obj 
-     - 侦测到的对象   
+     - 侦测到的对象/
+       输出行人特征   
 
    * - 输入
      - int
      - obj_idx 
-     - 想进行特征抽取的对象    index。-1表示全部抽取。
+     - 想进行特征抽取的对象 index。-1表示全部抽取。
+
+
+手势识别
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+CVI_AI_Hand_Detection
+---------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_Hand_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta);
+
+【描述】
+
+手部框侦测。并将结果放在meta->info[i]中。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t   
+     - handle
+     - 句柄        
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame   
+     - 输入图像   
+
+   * - 输出
+     - cvai_object_t\*      
+     - meta
+     - 侦测到的手框
+
+
+
+CVI_AI_HandClassification
+-------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_HandClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta);
+
+【描述】
+
+手势分类算法，此接口仅会针对指定的frame进行手势识别。并将结果放在meta->info[i].name与meta->info[i].bbox.score中。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t   
+     - handle
+     - 句柄        
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame   
+     - 输入图像   
+
+   * - 输入/输出
+     - cvai_object_t\*      
+     - meta
+     - 侦测到的手框/
+       手势分类
+
+
+CVI_AI_HandKeypoint
+-------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_HandKeypoint(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_handpose21_meta_ts *meta);
+
+【描述】
+
+手的关键点输出。并放在meta->info[i]中。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t   
+     - handle
+     - 句柄        
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame   
+     - 输入图像   
+
+   * - 输入/输出
+     - cvai_handpose21_meta_ts\*      
+     - meta
+     - 侦测到的手框/21 个手部关节点
+
+
+CVI_AI_HandKeypointClassification
+---------------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_HandKeypointClassification(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_handpose21_meta_t *meta);
+
+【描述】
+
+手的关键点输出。并放在meta->info[i]中。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t   
+     - handle
+     - 句柄        
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - frame   
+     - 输入21 对手部特征点，x, y 依序放入frame->stVFrame.pu8VirAddr[0]、
+       frame->stVFrame.u32Height=1、frame->stVFrame.u32Width=42*sizeof(float)
+
+   * - 输出
+     - cvai_handpose21_meta_t\*     
+     - meta
+     - 手势meta->label、手势分数meta->score
 
 
 对象追踪
@@ -2323,7 +2674,7 @@ CVI_AI_DeepSORT_Init
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -2413,7 +2764,6 @@ CVI_AI_DeepSORT_SetConfig
      - int 
      - cvi ai_obj_type
      - -1表示此为默认设置。   
-     
        非-1值表示针对cviai_ob j_type的类别设置参数。
 
    * - 输入
@@ -2438,7 +2788,7 @@ CVI_AI_DeepSORT_GetConfig
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -2461,7 +2811,6 @@ CVI_AI_DeepSORT_GetConfig
      - int 
      - cvi ai_obj_type
      - -1表示取得默认参数。   
-     
        非-1值表示针对cviai_ob j_type的类别设置的参数
 
 
@@ -2503,7 +2852,7 @@ CVI_AI_DeepSORT_Obj
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker_t, bool use_reid);
+  CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid);
 
 【描述】
 
@@ -2541,7 +2890,7 @@ CVI_AI_DeepSORT_Obj
 
    * - 输出
      - cvai_tracker_t\*
-     - t    racker_t
+     - tracker
      - 对象的追踪状态 
 
    * - 输入
@@ -2557,7 +2906,7 @@ CVI_AI_DeepSORT_Face
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face, cvai_tracker_t *tracker_t, bool use_reid);
+  CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face, cvai_tracker_t *tracker, bool use_reid);
 
 【描述】
 
@@ -2574,7 +2923,7 @@ tracker_t会纪录DeepSORT对每个人脸的追踪状态及目前的预测Boundi
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -2595,7 +2944,7 @@ tracker_t会纪录DeepSORT对每个人脸的追踪状态及目前的预测Boundi
 
    * - 输出
      - cvai_tracker_t\*
-     - tracker_t
+     - tracker
      - 人脸的追踪状态 
 
    * - 输入
@@ -2654,7 +3003,7 @@ CVI_AI_MotionDetection
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_MotionDetection (const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *objects, uint32_t threshold, double min_area);
+  CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *objects, uint8_t threshold, double min_area);
 
 【描述】
 
@@ -2663,7 +3012,7 @@ CVI_AI_MotionDetection
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -2688,7 +3037,7 @@ CVI_AI_MotionDetection
      - 运动侦测结果   
 
    * - 输入
-     - uint32_t         
+     - uint8_t         
      - threshold
      - 帧差法阀值，须为0-255  
 
@@ -2698,8 +3047,44 @@ CVI_AI_MotionDetection
      - 最小对象面积(Pixels)，过滤掉  小于此数值面积的物件。 
 
 
+CVI_AI_Set_MotionDetection_ROI
+------------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, MDROI_t *roi_s);
+
+【描述】
+
+使用帧差法侦测对象。侦测结果会存放在objects内。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t   
+     - handle
+     - 句柄 
+
+   * - 输入
+     - MDROI_t\*
+     - roi_s   
+     - 设定移动侦测区域
+
+
 车牌识别
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 CVI_AI_LicensePlateDetection
 ----------------------------
@@ -2751,7 +3136,7 @@ CVI_AI_LicensePlateRecognition_TW
 
 .. code-block:: none
   
-  CVI_AI_LicensePlateRecognition_TW(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+  CVI_S32 CVI_AI_LicensePlateRecognition_TW(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
 
 【描述】
 
@@ -2794,7 +3179,7 @@ CVI_AI_LicensePlateRecognition_CN
 
 .. code-block:: none
   
-  CVI_AI_LicensePlateRecognition_CN(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+  CVI_S32 CVI_AI_LicensePlateRecognition_CN(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
 
 【描述】
 
@@ -2851,7 +3236,7 @@ CVI_AI_TamperDetection
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 2
    :header-rows: 1
 
 
@@ -2886,7 +3271,7 @@ CVI_AI_Liveness
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_Liveness (const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame, , cvai_face_t *rgb_faces, cvai_face_t *ir_faces);
+  CVI_S32 CVI_AI_Liveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame, , cvai_face_t *rgb_faces, cvai_face_t *ir_faces);
 
 【描述】
 
@@ -2894,7 +3279,7 @@ RGB, IR双目活体识别。
 
 判断rgb_faces和ir_faces中的人脸是否为活体。
 
-活体分数置于 rgb_face ->info[i].liveness_score 中。
+活体分数置于 rgb_face->info[i].liveness_score 中。
 
 【参数】
 
@@ -2926,10 +3311,7 @@ RGB, IR双目活体识别。
    * - 输入/输出
      - cvai_face_t\*
      - rgb_meta   
-
-
      - 侦测到的RGB人脸/
-
        活体分数    
 
    * - 输入
@@ -2938,8 +3320,55 @@ RGB, IR双目活体识别。
      - 侦测到的IR人脸  
 
 
+
+CVI_AI_IrLiveness
+-----------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_IrLiveness(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *irFrame, cvai_face_t *ir_faces);
+
+【描述】
+
+IR單目活体识别。
+
+判断ir_faces中的人脸是否为活体。
+
+活体分数置于 ir_faces->info[i].liveness_score 中。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t  
+     - handle
+     - 句柄        
+
+   * - 输入
+     - VIDEO_FRAME_INFO_S\*
+     - irFrame
+     - IR图像      
+
+   * - 输入/输出
+     - cvai_face_t\*
+     - ir_faces   
+     - 侦测到的IR人脸/
+       活体分数
+
+
 姿态检测
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 CVI_AI_AlphaPose
 ----------------
@@ -2948,7 +3377,7 @@ CVI_AI_AlphaPose
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_AlphaPose (cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
+  CVI_S32 CVI_AI_AlphaPose(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_object_t *obj);
 
 【描述】
 
@@ -2959,7 +3388,7 @@ CVI_AI_AlphaPose
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 2
    :header-rows: 1
 
 
@@ -2982,12 +3411,11 @@ CVI_AI_AlphaPose
      - cvai_object_t\*
      - obj          
      - 侦测到的人 / 
-
        17个骨骼关键点坐标
 
 
 语义分割
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 CVI_AI_DeeplabV3
 ----------------
@@ -3036,7 +3464,7 @@ CVI_AI_DeeplabV3
 
 
 跌倒检测
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 CVI_AI_Fall
 -----------
@@ -3045,7 +3473,7 @@ CVI_AI_Fall
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_Fall (cviai_handle_t handle, cvai_object_t *obj);
+  CVI_S32 CVI_AI_Fall(cviai_handle_t handle, cvai_object_t *obj);
 
 【描述】
 
@@ -3073,11 +3501,6 @@ CVI_AI_Fall
      - 句柄      
 
    * - 输入
-     - VIDEO_FRAME_INFO_S\*
-     - frame
-     - 输入图像  
-
-   * - 输入
      - cvai_object_t\*
      - obj          
      - 跌倒状态结果  
@@ -3086,7 +3509,7 @@ CVI_AI_Fall
 
 
 驾驶疲劳检测
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 CVI_AI_FaceLandmarker
 ---------------------
@@ -3095,7 +3518,7 @@ CVI_AI_FaceLandmarker
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_FaceLandmarker (cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
+  CVI_S32 CVI_AI_FaceLandmarker(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvai_face_t *faces);
 
 【描述】
 
@@ -3125,10 +3548,8 @@ CVI_AI_FaceLandmarker
 
    * - 输入
      - cvai_face_t\*
-     - face         
+     - face
      - 人脸      
-
-     
 
 
 CVI_AI_EyeClassification
@@ -3168,10 +3589,8 @@ CVI_AI_EyeClassification
 
    * - 输入
      - cvai_face_t\*
-     - face         
+     - face
      - 人脸      
-
-     
 
 
 CVI_AI_YawnClassification
@@ -3211,10 +3630,8 @@ CVI_AI_YawnClassification
 
    * - 输入
      - cvai_face_t\*
-     - face         
+     - face
      - 人脸      
-
-     
 
 
 CVI_AI_IncarObjectDetection
@@ -3254,7 +3671,7 @@ CVI_AI_IncarObjectDetection
 
    * - 输入
      - cvai_face_t\*
-     - face         
+     - face
      - 人脸      
 
      
@@ -3270,7 +3687,7 @@ CVI_AI_SoundClassification
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_SoundClassification (cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, int *index);
+  CVI_S32 CVI_AI_SoundClassification(cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, int *index);
 
 【描述】
 
@@ -3303,20 +3720,105 @@ CVI_AI_SoundClassification
      - index        
      - 每个类别的分数
 
-     
 
-
-CVIAI_Service
-~~~~~~~~~~~~~~~
-
-CVI_AI_Service_CreateHandle
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CVI_AI_Get_SoundClassification_ClassesNum
+-----------------------------------------
 
 【语法】
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_Service_CreateHandle (cviai_service_handle_t *handle, cvai_handle ai_handle);
+  CVI_S32 CVI_AI_Get_SoundClassification_ClassesNum(cviai_handle_t handle);
+
+【描述】
+
+取得音讯类别数量。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+
+   * - 输入
+     - cviai_handle_t       
+     - handle
+     - 句柄      
+
+
+【输出】
+
+.. list-table::
+   :widths: 33 33 33
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 说明
+
+   * - 输出
+     - int  
+     - 类别数量  
+
+
+CVI_AI_Set_SoundClassification_Threshold
+----------------------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_Set_SoundClassification_Threshold(cviai_handle_t handle, const float th);
+
+【描述】
+
+设定音讯类别阀值。
+
+【参数】
+
+.. list-table::
+   :widths: 1 2 1 3
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_handle_t       
+     - handle
+     - 句柄      
+
+   * - 输入
+     - const float       
+     - th
+     - 相似度阀值，高于此阀值之相似度才会取出 
+
+
+CVIAI_Service
+~~~~~~~~~~~~~~~
+
+通用
+^^^^^^^
+
+CVI_AI_Service_CreateHandle
+---------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle, cvai_handle ai_handle);
 
 【描述】
 
@@ -3346,13 +3848,13 @@ CVI_AI_Service_CreateHandle
 
 
 CVI_AI_Service_DestroyHandle
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 【语法】
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_Service_DestroyHandle (cviai_service_handle_t *handle);
+  CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t *handle);
 
 【描述】
 
@@ -3377,7 +3879,7 @@ CVI_AI_Service_DestroyHandle
 
 
 CVI_AI_Service_Polygon_SetTarget
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 【语法】
 
@@ -3404,7 +3906,7 @@ CVI_AI_Service_Polygon_SetTarget
      - 说明
 
    * - 输入
-     - cviai_service_handle_t\*
+     - cviai_service_handle_t
      - handle
      - 句柄      
 
@@ -3415,7 +3917,7 @@ CVI_AI_Service_Polygon_SetTarget
 
 
 CVI_AI_Service_Polygon_Intersect
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 【语法】
 
@@ -3440,7 +3942,7 @@ CVI_AI_Service_Polygon_Intersect
      - 说明
 
    * - 输入
-     - cviai_service_handle_t\*
+     - cviai_service_handle_t
      - handle
      - 句柄      
 
@@ -3450,13 +3952,13 @@ CVI_AI_Service_Polygon_Intersect
      - Bounding box  
 
    * - 输出
-     - bool   
+     - bool\*
      - ha  s_intersect
      - 是否入侵  
 
 
 CVI_AI_Service_RegisterFeatureArray
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 【语法】
 
@@ -3481,23 +3983,23 @@ CVI_AI_Service_RegisterFeatureArray
      - 说明
 
    * - 输入
-     - cviai_service_handle_t\*
+     - cviai_service_handle_t
      - handle
      - 句柄     
 
    * - 输入
-     - const     cvai_service_feature_array_t
-     - fe atureArray
+     - const cvai_service_feature_array_t
+     - featureArray
      - 特征数组结构 
 
    * - 输入
-     - const     cvai_service_feature_matching_e
+     - const cvai_service_feature_matching_e
      - method
-     - 比        对方法，目前仅支  持COS_SIMILARITY 
+     - 比对方法，目前仅支持COS_SIMILARITY 
 
 
-CVI_AI_Service_CalcualteSimilarity
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CVI_AI_Service_CalculateSimilarity
+----------------------------------
 
 【语法】
 
@@ -3526,7 +4028,7 @@ CVI_AI_Service_CalcualteSimilarity
      - 说明
 
    * - 输入
-     - cviai_service_handle_t\*
+     - cviai_service_handle_t
      - handle
      - 句柄     
 
@@ -3547,7 +4049,7 @@ CVI_AI_Service_CalcualteSimilarity
 
 
 CVI_AI_Service_ObjectInfoMatching
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 【语法】
 
@@ -3566,7 +4068,7 @@ CVI_AI_Service_ObjectInfoMatching
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -3576,7 +4078,7 @@ CVI_AI_Service_ObjectInfoMatching
      - 说明
 
    * - 输入
-     - cviai_service_handle_t\*
+     - cviai_service_handle_t
      - handle
      - 句柄     
 
@@ -3593,12 +4095,12 @@ CVI_AI_Service_ObjectInfoMatching
    * - 输出
      - float  
      - threshold  
-     - 相似度    阀值，高于此阀值  之相似度才会取出 
+     - 相似度阀值，高于此阀值之相似度才会取出 
 
    * - 输出
      - uint32_t\*
      - indices
-     - 符合条件之相  似度在库内的Index
+     - 符合条件之相似度在库内的Index
 
    * - 输出
      - float\*
@@ -3608,11 +4110,11 @@ CVI_AI_Service_ObjectInfoMatching
    * - 输出
      - uint32_t\*
      - size   
-     - 最终      取出的相似度个数 
+     - 最终取出的相似度个数 
 
 
 CVI_AI_Service_FaceInfoMatching
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
 
 【语法】
 
@@ -3631,7 +4133,7 @@ CVI_AI_Service_FaceInfoMatching
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -3641,7 +4143,7 @@ CVI_AI_Service_FaceInfoMatching
      - 说明
 
    * - 输入
-     - cviai_service_handle_t\*
+     - cviai_service_handle_t
      - handle
      - 句柄     
 
@@ -3658,12 +4160,12 @@ CVI_AI_Service_FaceInfoMatching
    * - 输出
      - float  
      - threshold  
-     - 相似度    阀值，高于此阀值  之相似度才会取出 
+     - 相似度阀值，高于此阀值之相似度才会取出 
 
    * - 输出
      - uint32_t\*
      - indices
-     - 符合条件之相  似度在库内的Index
+     - 符合条件之相似度在库内的Index
 
    * - 输出
      - float\*
@@ -3673,11 +4175,11 @@ CVI_AI_Service_FaceInfoMatching
    * - 输出
      - uint32_t\*
      - size   
-     - 最终      取出的相似度个数 
+     - 最终取出的相似度个数 
 
 
 CVI_AI_Service_RawMatching
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
 【语法】
 
@@ -3697,7 +4199,7 @@ atching不同的是，此API直接使用特征数组进行比对，不需传入c
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 3
    :header-rows: 1
 
 
@@ -3707,19 +4209,19 @@ atching不同的是，此API直接使用特征数组进行比对，不需传入c
      - 说明
 
    * - 输入
-     - cviai_service_handle_t\*
+     - cviai_service_handle_t
      - handle
      - 句柄     
 
    * - 输入
-     - const void *      
+     - const void\*      
      - feature
      - 特征数组 
 
    * - 输入
      - const feature_type_e   
      - type   
-     - 特征类型，目  前仅支持TYPE_INT8
+     - 特征类型，目前仅支持TYPE_INT8
 
    * - 输入
      - const uint32_t     
@@ -3729,12 +4231,12 @@ atching不同的是，此API直接使用特征数组进行比对，不需传入c
    * - 输出
      - float  
      - threshold  
-     - 相似度    阀值，高于此阀值  之相似度才会取出 
+     - 相似度阀值，高于此阀值之相似度才会取出 
 
    * - 输出
      - uint32_t\*
      - indices
-     - 符合条件之相  似度在库内的Index
+     - 符合条件之相似度在库内的Index
 
    * - 输出
      - float\*
@@ -3748,7 +4250,7 @@ atching不同的是，此API直接使用特征数组进行比对，不需传入c
 
 
 CVI_AI_Service_FaceAngle
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 【语法】
 
@@ -3778,13 +4280,13 @@ CVI_AI_Service_FaceAngle
      - 人脸 landmark 
 
    * - 输出
-     - cvai_head_pose_t     
+     - cvai_head_pose_t\*   
      - hp   
      - 人脸姿态  
 
 
 CVI_AI_Service_FaceAngleForAll
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 【语法】
 
@@ -3814,10 +4316,11 @@ CVI_AI_Service_FaceAngleForAll
      - 人脸资料  
 
      
-
+图像缩放     
+^^^^^^^^^^^^^
 
 CVI_AI_Service_FaceDigitalZoom
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 【语法】
 
@@ -3846,7 +4349,7 @@ CVI_AI_Service_FaceDigitalZoom
 【参数】
 
 .. list-table::
-   :widths: 1 3 1 2
+   :widths: 1 2 1 2
    :header-rows: 1
 
    * -
@@ -3882,6 +4385,71 @@ CVI_AI_Service_FaceDigitalZoom
    * - 输入
      - float 
      - padding_ratio  
+     - 扩展bounding box比例   
+
+   * - 输出
+     - VIDEO_FRAME_INFO_S\*
+     - outFrame   
+     - 输出图像  
+
+
+CVI_AI_Service_ObjectDigitalZoom
+--------------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_Service_ObjectDigitalZoom(cviai_service_handle_t handle, 
+  
+  const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta, const float obj_skip_ratio, const float trans_ratio, const float padding_ratio,
+  
+  VIDEO_FRAME_INFO_S *outFrame);
+  
+【描述】
+
+将对象侦测结果之对象进行放大(zoom in)
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_service_handle_t  
+     - handle
+     - 句柄      
+
+   * - 输入
+     - const VIDEO_FRAME_INFO_S\*
+     - inFrame
+     - 输入图像  
+
+   * - 输入
+     - const cvai_object_t\*
+     - meta   
+     - 对象数据  
+
+   * - 输入
+     - const float 
+     - obj_skip_ratio 
+     - 忽略比率  
+
+   * - 输入
+     - const float 
+     - trans_ratio
+     - 放大比率  
+
+   * - 输入
+     - const float 
+     - padding_ratio  
      - 扩展bounding   box比例   
 
    * - 输出
@@ -3890,8 +4458,91 @@ CVI_AI_Service_FaceDigitalZoom
      - 输出图像  
 
 
+CVI_AI_Service_ObjectDitgitalZoomExt
+------------------------------------
+
+【语法】
+
+.. code-block:: c
+
+  CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta, 
+  
+  const float obj_skip_ratio, const float trans_ratio, const float pad_ratio_left, const float pad_ratio_right, const float pad_ratio_top, 
+  
+  const float pad_ratio_bottom, VIDEO_FRAME_INFO_S *outFrame);
+
+【描述】
+
+将对象侦测结果之对象进行放大(zoom in)
+
+【参数】
+
+.. list-table::
+   :widths: 1 2 1 2
+   :header-rows: 1
+
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - cviai_service_handle_t
+     - handle
+     - 句柄      
+
+   * - 输入
+     - const VIDEO_FRAME_INFO_S\*
+     - inFrame 
+     - 输入图像  
+
+   * - 输入
+     - const cvai_object_t\*
+     - meta    
+     - 对象数据  
+
+   * - 输入
+     - const float         
+     - obj_skip_ratio  
+     - 忽略比率  
+
+   * - 输入
+     - const float         
+     - trans_ratio 
+     - 放大比率  
+
+   * - 输入
+     - const float         
+     - pad_ratio_left  
+     - 扩张率(左)
+
+   * - 输入
+     - const float         
+     - pad_ratio_right 
+     - 扩张率(右)
+
+   * - 输入
+     - const float         
+     - pad_ratio_top   
+     - 扩张率(上)
+
+   * - 输入
+     - const float         
+     - pad_ratio_bottom
+     - 扩张率(下)
+
+   * - 输出
+     - VIDEO_FRAME_INFO_S\*
+     - outFrame
+     - 输出图像  
+
+
+图像绘制
+^^^^^^^^^^^^^
+
 CVI_AI_Service_FaceDrawPts
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
 【语法】
 
@@ -3921,13 +4572,13 @@ CVI_AI_Service_FaceDrawPts
      - 人脸 landmark 
 
    * - 输入
-     - VIDEO_FRAME_INFO_S 
+     - VIDEO_FRAME_INFO_S\* 
      - hp   
      - 输入/输出图像 
 
 
 CVI_AI_Service_FaceDrawRect
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 【语法】
 
@@ -3974,152 +4625,11 @@ CVI_AI_Service_FaceDrawRect
    * - 输入
      - cvai_service_brush_t   
      - brush
-     - 颜色      
-
-
-CVI_AI_Service_ObjectDigitalZoom
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-【语法】
-
-.. code-block:: c
-
-  CVI_S32 CVI_AI_Service_ObjectDigitalZoom(cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta, const float obj_skip_ratio, const float trans_ratio, const float padding_ratio, VIDEO_FRAME_INFO_S *outFrame);
-
-【描述】
-
-将对象侦测结果之对象进行放大(zoom in)
-
-【参数】
-
-.. list-table::
-   :widths: 1 3 1 2
-   :header-rows: 1
-
-
-   * -
-     - 数据型态
-     - 参数名称
-     - 说明
-
-   * - 输入
-     - cviai_service_handle_t  
-     - handle
-     - 句柄      
-
-   * - 输入
-     - VIDEO_FRAME_INFO_S\*
-     - inFrame
-     - 输入图像  
-
-   * - 输入
-     - cvai_object_t\*
-     - meta   
-     - 对象数据  
-
-   * - 输入
-     - float 
-     - obj_skip_ratio 
-     - 忽略比率  
-
-   * - 输入
-     - float 
-     - trans_ratio
-     - 放大比率  
-
-   * - 输入
-     - float 
-     - padding_ratio  
-     - 扩展bounding   box比例   
-
-   * - 输出
-     - VIDEO_FRAME_INFO_S\*
-     - outFrame   
-     - 输出图像  
-
-
-CVI_AI_Service_ObjectDitgitalZoomExt
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-【语法】
-
-.. code-block:: c
-
-  CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle, const VIDEO_FRAME_INFO_S *inFrame, const cvai_object_t *meta, 
-  
-  const float obj_skip_ratio, const float trans_ratio, const float pad_ratio_left, const float pad_ratio_right, const float pad_ratio_top, 
-  
-  const float pad_ratio_bottom, VIDEO_FRAME_INFO_S *outFrame);
-
-【描述】
-
-将对象侦测结果之对象进行放大(zoom in)
-
-【参数】
-
-.. list-table::
-   :widths: 1 3 1 2
-   :header-rows: 1
-
-
-   * -
-     - 数据型态
-     - 参数名称
-     - 说明
-
-   * - 输入
-     - cviai_service_handle_t
-     - handle
-     - 句柄      
-
-   * - 输入
-     - VIDEO_FRAME_INFO_S\*
-     - inFrame 
-     - 输入图像  
-
-   * - 输入
-     - cvai_object_t\*
-     - meta    
-     - 对象数据  
-
-   * - 输入
-     - float         
-     - obj_skip_ratio  
-     - 忽略比率  
-
-   * - 输入
-     - float         
-     - trans_ratio 
-     - 放大比率  
-
-   * - 输入
-     - float         
-     - pad_ratio_left  
-     - 扩张率(左)
-
-   * - 输入
-     - float         
-     - pad_ratio_right 
-     - 扩张率(右)
-
-   * - 输入
-     - float         
-     - pad_ratio_top   
-     - 扩张率(上)
-
-   * - 输入
-     - float         
-     - pad_ratio_bottom
-     - 扩张率(下)
-
-   * - 输出
-     - VIDEO_FRAME_INFO_S\*
-     - outFrame
-     - 输出图像  
-
+     - 颜色
+     
 
 CVI_AI_Service_ObjectDrawPose
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 【语法】
 
@@ -4144,7 +4654,7 @@ CVI_AI_Service_ObjectDrawPose
      - 说明
 
    * - 输入
-     - cvai_object_t\*
+     - const cvai_object_t\*
      - meta   
      - 骨骼点侦测结果
 
@@ -4155,7 +4665,7 @@ CVI_AI_Service_ObjectDrawPose
 
 
 CVI_AI_Service_ObjectDrawRect
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 【语法】
 
@@ -4185,7 +4695,7 @@ CVI_AI_Service_ObjectDrawRect
      - 句柄      
 
    * - 输入
-     - cvai_object_t\*
+     - const cvai_object_t\*
      - meta  
      - 对象侦测结果  
 
@@ -4195,13 +4705,13 @@ CVI_AI_Service_ObjectDrawRect
      - 输入/输出 图像
 
    * - 输入
-     - bool  
+     - const bool  
      - drawText  
      - 是否绘制类别文字  
 
 
 CVI_AI_Service_ObjectWriteText
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 【语法】
 
@@ -4248,31 +4758,30 @@ CVI_AI_Service_ObjectWriteText
    * - 输入
      - float
      - r  
-     - 绘制颜色 r    channel值
+     - 绘制颜色 r channel值
 
    * - 输入
      - float
      - g  
-     - 绘制颜色 g    channel值
+     - 绘制颜色 g channel值
 
    * - 输入
      - float
      - b  
-     - 绘制颜色 b    channel值
-
+     - 绘制颜色 b channel值
 
 CVI_AI_Service_Incar_ObjectDrawRect
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 【语法】
 
 .. code-block:: c
 
-  CVI_S32 CVI_AI_Service_ObjectWriteText(cviai_service_handle_t handle, const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame, const bool drawText, IVE_COLOR_S color);
+  CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle, const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *frame, const bool drawText, cvai_service_brush_t brush);
 
 【描述】
 
-绘制指定文字
+Draw specified text
 
 【参数】
 
@@ -4287,26 +4796,28 @@ CVI_AI_Service_Incar_ObjectDrawRect
      - 说明
 
    * - 输入
+
      - cviai_service_handle_t   
      - handle
-     - 句柄     
+     - handle
 
    * - 输入
-     - cvai_dms_od_t\*  
+     - const cvai_dms_od_t\*  
      - meta   
-     - 物件侦测结果 
+     - 侦测结果输入
 
    * - 输入/输出
      - IDEO_FRAME_INFO_S\*
      - rame  
-     - 输入/输出 图像   
+     - 绘制的图片
 
    * - 输入
      - const bool       
      - drawText   
-     - 是否绘制类别文字 
+     - 是否绘制类文字
 
    * - 输入
-     - IVE_COLOR_S      
-     - color  
-     - 绘制颜色 
+     - cvai_service_brush_t      
+     - brush  
+     - 颜色   
+

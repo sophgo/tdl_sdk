@@ -24,7 +24,7 @@ Application封装应用逻辑，目前包含人脸抓拍的应用逻辑。
    
    Figure 1.
 
-这三个模块分别放在三个Library中:
+这三个模块分别放在兩个Library中:
 
 .. list-table::
    :widths: 1 1 1
@@ -35,13 +35,9 @@ Application封装应用逻辑，目前包含人脸抓拍的应用逻辑。
      - 静态库
      - 动态库
 
-   * - Core
-     - libcvai_core.so
-     - libcvai_core-static.a
-
-   * - Service
-     - libcvai_service.so
-     - lib cvai_service-static.a
+   * - Core、Service
+     - libcvai.so
+     - libcvai-static.a
 
    * - Application
      - libcvai_app.so

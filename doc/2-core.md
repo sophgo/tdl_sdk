@@ -10,7 +10,7 @@ CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E con
                              const uint32_t thread);
 // Manually assign group id
 CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                              const uint32_t thread, const VPSS_GRP vpssGroupId);
+                              const uint32_t thread, const VPSS_GRP vpssGroupId, const CVI_U8 dev);
 ```
 
 You can get the current thread id for any model.
@@ -23,7 +23,7 @@ To get the relationship between thread and the ``VPSS_GRP`` thread uses, you can
 
 ```c
   // Get the used group ids by AI SDK.
-  uint32_t *groups = NULL;
+  VPSS_GRP *groups = NULL;
   uint32_t nums = 0;
   if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVIAI_SUCCESS) {
     printf("Get used group id failed.\n");
@@ -46,13 +46,12 @@ There are two ways to read image from file.
 
 ### ``CVI_AI_ReadImage``
 
-``CVI_AI_ReadImage`` uses ``VB_BLK`` from Middleware SDK. You must release ``VB_BLK`` with ``CVI_VB_ReleaseBlock`` to prevent memory leaks.
+``CVI_AI_ReadImage`` uses ``ION`` from Middleware SDK. You must release ``ION`` with ``CVI_AI_ReleaseImage`` to prevent memory leaks.
 
 ```c
   const char *path = "hi.jpg";
-  VB_BLK blk;
   VIDEO_FRAME_INFO_S rgb_frame;
-  CVI_S32 ret = CVI_AI_ReadImage(path, &blk, &rgb_frame, PIXEL_FORMAT_RGB_888);
+  CVI_S32 ret = CVI_AI_ReadImage(path, &rgb_frame, PIXEL_FORMAT_RGB_888);
   if (ret != CVIAI_SUCCESS) {
     printf("Read image failed with %#x!\n", ret);
     return ret;
@@ -60,10 +59,10 @@ There are two ways to read image from file.
 
   // ...Do something...
 
-  CVI_VB_ReleaseBlock(blk);
+  CVI_AI_ReleaseImage(&rgb_frame);
 ```
 
-VI, VPSS, and ``VB_BLK`` shares the same memory pool. It is neccesarily to calculate the required space when initializing Middleware, or you can use the helper function provided by AI SDK.
+VI, VPSS, and ``ION`` shares the same memory pool. It is neccesarily to calculate the required space when initializing Middleware, or you can use the helper function provided by AI SDK.
 
 ```c
   const CVI_S32 vpssgrp_width = 1920;
@@ -107,25 +106,14 @@ IVE library does not occupied spaces in Middleware's memory pool. IVE uses a dif
   CVI_IVE_DestroyHandle(ive_handle);
 ```
 
-## Buffer to ``VIDEO_FRAME_INFO_S``
-
-We provide a function ``CVI_AI_Buffer2VBFrame`` in AI SDK to help users to convert pure buffer to ``VIDEO_FRAME_INFO_S``. This works similar to ``CVI_AI_ReadImage``, so ``CVI_VB_ReleaseBlock`` is also required to free the ``VB_BLK``.
-
-```c
-CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height,
-                              uint32_t stride, const PIXEL_FORMAT_E inFormat,
-                              VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                              const PIXEL_FORMAT_E outFormat);
-```
-
 ## Model related settings
 
-### Set model path
+### Open model path
 
 The model path must be set before the corresponding inference function is called.
 
 ```c
-CVI_S32 CVI_AI_SetModelPath(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+CVI_S32 CVI_AI_OpenModel(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                             const char *filepath);
 ```
 
@@ -221,7 +209,9 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
+  meta_rescale_type_e rescale_type;
   cvai_face_info_t* info;
+  cvai_dms_t* dms;
 } cvai_face_t;
 
 typedef struct {
@@ -239,16 +229,26 @@ The structure ``cvai_bbox_t`` stores in ``cvai_face_info_t`` and ``cvai_object_i
 ```c
 typedef struct {
   char name[128];
+  uint64_t unique_id;
   cvai_bbox_t bbox;
   cvai_pts_t pts;
   cvai_feature_t feature;
   cvai_face_emotion_e emotion;
   cvai_face_gender_e gender;
   cvai_face_race_e race;
+  float score;
   float age;
   float liveness_score;
+  float hardhat_score;
   float mask_score;
-  cvai_face_quality_t face_quality;
+  float recog_score;
+  float face_quality;
+  float pose_score;
+  float pose_score1;
+  float sharpness_score;
+  float blurness;
+  cvai_head_pose_t head_pose;
+  int track_state;
 } cvai_face_info_t;
 
 typedef struct {

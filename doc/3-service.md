@@ -1,5 +1,16 @@
 # Service Module
 
+## Create service handle
+
+In programming, provide create handle api assigns a unique identifier to a resource, and provide destroy api to releases it when no longer needed.
+
+```c
+CVI_S32 CVI_AI_Service_CreateHandle(cviai_service_handle_t *handle,
+                                    cviai_handle_t ai_handle);
+
+CVI_S32 CVI_AI_Service_DestroyHandle(cviai_service_handle_t handle);
+```
+
 ## Feature Matching
 
 Service provide feature matching tool to analyze the result from model that generates feature such as Face Attribute, OSNet. First, use ``RegisterFeatureArray`` to register a feature array for output comparison. Currently only supports method ``INNER_PRODUCT``.
@@ -21,11 +32,24 @@ CVI_S32 CVI_AI_Service_ObjectInfoMatching(cviai_service_handle_t handle,
                                           uint32_t **index);
 ```
 
+## Calculate Similarity
+
+Service provide a similarity comparison tool.
+
+```c
+CVI_S32 CVI_AI_Service_CalculateSimilarity(cviai_service_handle_t handle,
+                                           const cvai_feature_t *feature_rhs,
+                                           const cvai_feature_t *feature_lhs,
+                                           float *score); 
+```
+
 The tool also provides raw feature comparison with the registered feature array. Currently only supports ``TYPE_INT8`` and ``TYPE_UINT8`` comparison.
 
 ```c
-CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const uint8_t *feature,
-                                   const feature_type_e type, const uint32_t k, uint32_t **index);
+CVI_S32 CVI_AI_Service_RawMatching(cviai_service_handle_t handle, const void *feature,
+                                   const feature_type_e type, const uint32_t topk,
+                                   float threshold, uint32_t *indices, float *sims,
+                                   uint32_t *size);
 ```
 
 ## Digital Zoom
@@ -50,6 +74,13 @@ CVI_S32 CVI_AI_Service_ObjectDigitalZoom(cviai_service_handle_t handle,
                                          const float trans_ratio,
                                          const float padding_ratio,
                                          VIDEO_FRAME_INFO_S *outFrame);
+
+CVI_S32 CVI_AI_Service_ObjectDigitalZoomExt(cviai_service_handle_t handle, const 
+                                            VIDEO_FRAME_INFO_S *inFrame, 
+                                            const cvai_object_t *meta, const float obj_skip_ratio, 
+                                            const float trans_ratio, const float pad_ratio_left,
+                                            const float pad_ratio_right, const float pad_ratio_top, 
+                                            const float pad_ratio_bottom, VIDEO_FRAME_INFO_S *outFrame);
 ```
 
 Related sample codes: ``sample_read_dt.c``
@@ -59,15 +90,86 @@ Related sample codes: ``sample_read_dt.c``
 ``DrawRect`` is a function that draws all the bounding boxes and their tag names on the frame.
 
 ```c
-CVI_S32 CVI_AI_Service_FaceDrawRect(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                    bool drawText);
+CVI_S32 CVI_AI_Service_FaceDrawRect(cviai_service_handle_t handle, const cvai_face_t *meta, 
+                                    VIDEO_FRAME_INFO_S *frame, bool drawText, cvai_service_brush_t brush);
 
-CVI_S32 CVI_AI_Service_ObjectDrawRect(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                      bool drawText);
+CVI_S32 CVI_AI_Service_FaceDrawRect2(cviai_service_handle_t handle,
+                                    const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                    const bool drawText, cvai_service_brush_t *brushes);
+
+CVI_S32 CVI_AI_Service_ObjectDrawRect(cviai_service_handle_t handle, 
+                                      const cvai_object_t *meta, 
+                                      VIDEO_FRAME_INFO_S *frame,
+                                      bool drawText,
+                                      cvai_service_brush_t brush);
+
+CVI_S32 CVI_AI_Service_ObjectDrawRect2(cviai_service_handle_t handle,
+                                      const cvai_object_t *meta,
+                                      VIDEO_FRAME_INFO_S *frame, 
+                                      const bool drawText,
+                                      cvai_service_brush_t *brushes);
+```
+
+## Others Draw
+
+Also, there are some tools available for drawing points and rectangles.
+
+```c
+cvai_service_brush_t CVI_AI_Service_GetDefaultBrush();
+
+CVI_S32 CVI_AI_Service_FaceDraw5Landmark(const cvai_face_t *meta,
+                                         VIDEO_FRAME_INFO_S *frame);
+
+CVI_S32 CVI_AI_Service_Incar_ObjectDrawRect(cviai_service_handle_t handle,
+                                            const cvai_dms_od_t *meta,
+                                            VIDEO_FRAME_INFO_S *frame,
+                                            const bool drawText,
+                                            cvai_service_brush_t brush);
+
+CVI_S32 CVI_AI_Service_ObjectWriteText(char *name, int x, int y,
+                                       VIDEO_FRAME_INFO_S *frame, float r, float g,
+                                       float b);
+
+CVI_S32 CVI_AI_Service_ObjectDrawPose(const cvai_object_t *meta,
+                                      VIDEO_FRAME_INFO_S *frame);
+
+CVI_S32 CVI_AI_Service_FaceDrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *frame);
+
+CVI_S32 CVI_AI_Service_DrawHandKeypoint(cviai_service_handle_t handle,
+                                        VIDEO_FRAME_INFO_S *frame,
+                                        const cvai_handpose21_meta_ts *meta);
+```
+
+## Face Angle
+
+Calculate the head pose angle.
+
+```c
+CVI_S32 CVI_AI_Service_FaceAngle(const cvai_pts_t *pts, cvai_head_pose_t *hp);
+
+CVI_S32 CVI_AI_Service_FaceAngleForAll(const cvai_face_t *meta);
 ```
 
 Related sample codes: ``sample_vi_fd.c``, ``sample_vi_fq.c``, ``sample_vi_mask_fr.c``
 
+## Polygon tools
+
+```c
+CVI_S32 CVI_AI_Service_DrawPolygon(cviai_service_handle_t handle,
+                                   VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts,
+                                   cvai_service_brush_t brush);
+                                   
+DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_SetTarget(cviai_service_handle_t handle,
+                                                    const cvai_pts_t *pts);
+
+DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_GetTarget(cviai_service_handle_t handle,
+                                                    cvai_pts_t ***regions_pts, uint32_t *size);
+
+DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_CleanAll(cviai_service_handle_t handle);
+
+DLL_EXPORT CVI_S32 CVI_AI_Service_Polygon_Intersect(cviai_service_handle_t handle,
+                                                    const cvai_bbox_t *bbox, bool *has_intersect);
+```
 
 ## Object Intersect
 
