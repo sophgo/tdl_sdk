@@ -108,6 +108,7 @@ set(UnitTests
   reg_daily_fl.cpp
   reg_daily_soundcmd.cpp
   reg_daily_incarod.cpp
+  reg_daily_face_cap.cpp
 )
 
 if (NOT "${CVI_PLATFORM}" STREQUAL "CV181X")
@@ -163,7 +164,7 @@ buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cviai   cvia
 buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
 
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cviai  cviai_evaluation gtest_main ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cviai  cviai_evaluation cviai_app gtest_main ${SAMPLE_LIBS})
 buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 
 buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})

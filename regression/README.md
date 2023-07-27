@@ -71,3 +71,4 @@
     |reg_daily_thermal_fd.cpp|daily_reg_ThermalFD.json|thermalfd-v1.cvimodel|reg_daily_thermal_fd|
     |reg_daily_thermal_person_detection.cpp|reg_daily_thermal_person_detection.json|thermal_person_detection.cvimodel|reg_daily_thermal_person_detection|
     |reg_daily_yawn_classification.cpp|reg_daily_yawn_classification.json|yawn_v1_bf16.cvimodel|reg_daily_yawn_classification|
+    |reg_daily_face_cap.cpp|daily_reg_face_cap.json|scrfd_500m_bnkps_432_768.cvimodel cviface-v5-s.cvimodel mobiledetv2-pedestrian-d0-ls-448.cvimodel pipnet_blurness_v5_64_retinaface_50ep.cvimodel|reg_daily_face_cap|
