@@ -227,10 +227,10 @@ CVI_S32 _FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
 }
 
 void face_capture_init_venc(VENC_CHN VeChn) {
-  VENC_RC_PARAM_S stRcParam = {0};
   VENC_RECV_PIC_PARAM_S stRecvParam;
   VENC_CHN_ATTR_S stAttr;
   venc_extern_init = 0;
+  VENC_JPEG_PARAM_S stJpegParam;
 
   if (CVI_SUCCESS == CVI_VENC_GetChnAttr(VeChn, &stAttr)) {
     venc_extern_init = 1;
@@ -242,7 +242,7 @@ void face_capture_init_venc(VENC_CHN VeChn) {
   stAttr.stVencAttr.enType = PT_JPEG;
   stAttr.stVencAttr.u32MaxPicWidth = 1920;
   stAttr.stVencAttr.u32MaxPicHeight = 1080;
-  stAttr.stVencAttr.u32BufSize = 1024 * 1024 * 4;
+  stAttr.stVencAttr.u32BufSize = 1024 * 512;
   stAttr.stVencAttr.u32Profile = H264E_PROFILE_BASELINE;
   stAttr.stVencAttr.bByFrame = CVI_TRUE;
 
@@ -258,12 +258,10 @@ void face_capture_init_venc(VENC_CHN VeChn) {
 
   // set channel
   CVI_VENC_CreateChn(VeChn, &stAttr);
-  // set rc
-  CVI_VENC_GetRcParam(VeChn, &stRcParam);
-  stRcParam.stParamMjpegCbr.u32MaxQfactor = 99;
-  stRcParam.stParamMjpegCbr.u32MinQfactor = 1;
-  CVI_VENC_SetRcParam(VeChn, &stRcParam);
-  // start recv and send
+
+  CVI_VENC_GetJpegParam(VeChn, &stJpegParam);
+  stJpegParam.u32Qfactor = 20;
+  CVI_VENC_SetJpegParam(VeChn, &stJpegParam);
   stRecvParam.s32RecvPicNum = -1;
   CVI_VENC_StartRecvFrame(VeChn, &stRecvParam);
 }
