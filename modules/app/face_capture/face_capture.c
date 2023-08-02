@@ -304,11 +304,11 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   /* set output signal to 0. */
   for (int i = 0; i < face_cpt_info->size; i++) {
     // do not reset quality,send overall high quality
-    // if (face_cpt_info->_output[i]) {
-    //   face_cpt_info->data[i].info.face_quality =
-    //       0;  // set fq to zero ,force to update data at next time
-    //   face_cpt_info->data[i].info.pose_score1 = 0;
-    // }
+    if (face_cpt_info->_output[i]) {
+      face_cpt_info->data[i].info.face_quality =
+          0;  // set fq to zero ,force to update data at next time
+      face_cpt_info->data[i].info.pose_score1 = 0;
+    }
     face_cpt_info->_output[i] = false;
   }
 
@@ -624,6 +624,8 @@ static CVI_S32 update_output_state(cviai_handle_t ai_handle, face_capture_t *fac
              face_cpt_info->data[j]._out_counter, face_cpt_info->data[j].info.face_quality,
              face_cpt_info->cfg.thr_quality);
       // #endif
+      face_cpt_info->data[j].cap_timestamp = face_cpt_info->_time;
+
       face_cpt_info->data[j]._timestamp = face_cpt_info->_time;  // update output timestamp
       face_cpt_info->data[j]._out_counter += 1;
       face_cpt_info->data[j].last_cap_timestamp = face_cpt_info->data[j].cap_timestamp;
@@ -864,7 +866,7 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
       }
       ret = CVI_AI_Copy_VideoFrameToImage(crop_frame, &face_cpt_info->data[update_idx].image);
     }
-    face_cpt_info->data[update_idx].cap_timestamp = face_cpt_info->_time;
+    // face_cpt_info->data[update_idx].cap_timestamp = face_cpt_info->_time;
     face_cpt_info->data[update_idx].info.face_quality = face_meta->info[i].face_quality;
     memcpy(face_meta->info[i].name, face_cpt_info->data[update_idx].info.name,
            sizeof(face_cpt_info->data[update_idx].info.name));
