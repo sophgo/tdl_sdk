@@ -57,6 +57,7 @@ else()
   add_subdirectory(object_detection/yolox)
   add_subdirectory(human_keypoints_detection/yolov8_pose)
   add_subdirectory(human_keypoints_detection/simcc)
+  add_subdirectory(image_classification)
   set(CORE_INTERFACE cviai_core.cpp)
 
 endif()

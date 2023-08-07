@@ -85,6 +85,8 @@ buildninstallcpp(NAME test_face_landmarker_det2 INC ${REG_INCLUDES} DEPS cviai c
 buildninstallcpp(NAME test_yolov8_detection INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_yolov6 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_yolo INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME test_image_classification INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+
 
 
 #eval_model
@@ -95,3 +97,4 @@ buildninstallcpp(NAME eval_face_landmarker_det2 INC ${REG_INCLUDES} DEPS cviai c
 buildninstallcpp(NAME eval_yolov5 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_yolov6 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_yolov8_detection INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME eval_image_classification INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)

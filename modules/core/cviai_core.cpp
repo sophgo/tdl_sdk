@@ -23,6 +23,7 @@
 #include "hand_keypoint_classification/hand_keypoint_classification.hpp"
 #include "human_keypoints_detection/simcc/simcc.hpp"
 #include "human_keypoints_detection/yolov8_pose/yolov8_pose.hpp"
+#include "image_classification/image_classification.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
@@ -176,6 +177,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_YOLOV8POSE, CREATOR(YoloV8Pose)},
     {CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, CREATOR(Simcc)},
     {CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3, CREATOR(FaceLandmarkDet3)},
+    {CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
 };
 
 void CVI_AI_PerfettoInit() { prefettoInit(); }
@@ -825,6 +827,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_IrLiveness, IrLiveness, CVI_AI_SUPPORTED_MODEL_IRLI
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov8_Pose, YoloV8Pose, CVI_AI_SUPPORTED_MODEL_YOLOV8POSE,
                       cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Simcc_Pose, Simcc, CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Image_Classification, ImageClassification,
+                      CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, cvai_class_meta_t *)
 
 CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
                          bool cvtRGB888) {
@@ -1530,7 +1534,7 @@ CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle, YoloPreParam *p_pre
 
 CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
                               YoloAlgParam *p_yolo_param) {
-  printf("enter CVI_AI_Set_YOLOV6_Param...\n");
+  printf("enter CVI_AI_Set_YOLO_Param...\n");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   Yolo *yolo_model = dynamic_cast<Yolo *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLO, ctx));
   if (yolo_model == nullptr) {
@@ -1544,5 +1548,24 @@ CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle, YoloPreParam *p_prepr
   }
 
   yolo_model->set_param(p_preprocess_cfg, p_yolo_param);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Set_Image_Cls_Param(const cviai_handle_t handle, VpssPreParam *p_preprocess_cfg) {
+  printf("enter CVI_AI_Set_Image_Classification_Param...\n");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  ImageClassification *image_cls_model = dynamic_cast<ImageClassification *>(
+      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, ctx));
+  if (image_cls_model == nullptr) {
+    LOGE("No instance found for image classification.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got image_cls_model instance\n");
+  if (p_preprocess_cfg == nullptr) {
+    LOGE("p_preprocess_cfg can not be nullptr.\n");
+    return CVI_FAILURE;
+  }
+
+  image_cls_model->set_param(p_preprocess_cfg);
   return CVI_SUCCESS;
 }

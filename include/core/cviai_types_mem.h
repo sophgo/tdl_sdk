@@ -16,6 +16,7 @@ DLL_EXPORT void CVI_AI_FreeCpp(cvai_image_t *image);
 DLL_EXPORT void CVI_AI_FreeCpp(cvai_dms_od_t *dms_od);
 DLL_EXPORT void CVI_AI_FreeCpp(cvai_dms_t *dms);
 DLL_EXPORT void CVI_AI_FreeCpp(cvai_handpose21_meta_ts *handposes);
+DLL_EXPORT void CVI_AI_FreeCpp(cvai_class_meta_t *cls_meta);
 
 DLL_EXPORT void CVI_AI_CopyInfoCpp(const cvai_face_info_t *info, cvai_face_info_t *infoNew);
 DLL_EXPORT void CVI_AI_CopyInfoCpp(const cvai_dms_od_info_t *info, cvai_dms_od_info_t *infoNew);
@@ -36,6 +37,7 @@ DLL_EXPORT void CVI_AI_FreeObject(cvai_object_t *obj);
 DLL_EXPORT void CVI_AI_FreeImage(cvai_image_t *image);
 DLL_EXPORT void CVI_AI_FreeDMS(cvai_dms_t *dms);
 DLL_EXPORT void CVI_AI_FreeHandPoses(cvai_handpose21_meta_ts *handposes);
+DLL_EXPORT void CVI_AI_FreeClassMeta(cvai_class_meta_t *cls_meta);
 
 DLL_EXPORT void CVI_AI_CopyFaceInfo(const cvai_face_info_t *src, cvai_face_info_t *dst);
 DLL_EXPORT void CVI_AI_CopyObjectInfo(const cvai_object_info_t *src, cvai_object_info_t *dst);

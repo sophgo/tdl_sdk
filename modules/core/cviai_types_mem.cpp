@@ -122,6 +122,13 @@ void CVI_AI_FreeCpp(cvai_handpose21_meta_ts *handposes) {
   handposes->height = 0;
 }
 
+void CVI_AI_FreeCpp(cvai_class_meta_t *cls_meta) {
+  for (int i = 0; i < 5; i++) {
+    cls_meta->cls[i] = 0;
+    cls_meta->score[i] = 0;
+  }
+}
+
 void CVI_AI_FreeFeature(cvai_feature_t *feature) { CVI_AI_FreeCpp(feature); }
 
 void CVI_AI_FreePts(cvai_pts_t *pts) { CVI_AI_FreeCpp(pts); }
@@ -141,6 +148,9 @@ void CVI_AI_FreeImage(cvai_image_t *image) { CVI_AI_FreeCpp(image); }
 void CVI_AI_FreeDMS(cvai_dms_t *dms) { CVI_AI_FreeCpp(dms); }
 
 void CVI_AI_FreeHandPoses(cvai_handpose21_meta_ts *handposes) { CVI_AI_FreeCpp(handposes); }
+
+void CVI_AI_FreeClassMeta(cvai_class_meta_t *cls_meta) { CVI_AI_FreeCpp(cls_meta); }
+
 // Copy
 
 void CVI_AI_CopyInfoCpp(const cvai_face_info_t *info, cvai_face_info_t *infoNew) {

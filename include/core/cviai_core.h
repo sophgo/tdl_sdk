@@ -34,6 +34,7 @@
            cvai_object_info_t*: CVI_AI_FreeObjectInfo, \
            cvai_object_t*: CVI_AI_FreeObject,          \
            cvai_handpose21_meta_ts*: CVI_AI_FreeHandPoses, \
+           cvai_class_meta_t*: CVI_AI_FreeClassMeta, \
            cvai_image_t*: CVI_AI_FreeImage)(X)
 // clang-format on
 #endif
@@ -162,7 +163,8 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION)            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV8POSE)                       \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SIMCC_POSE)                       \
-  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3)
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3)                    \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION)
 // clang-format on
 
 #define CVI_AI_NAME_WRAP(x) x,
@@ -1402,6 +1404,17 @@ DLL_EXPORT CVI_S32 CVI_AI_Yolov8_Pose(const cviai_handle_t handle, VIDEO_FRAME_I
  */
 DLL_EXPORT CVI_S32 CVI_AI_Simcc_Pose(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                      cvai_object_t *obj_meta);
+/**
+ * @brief image classification
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param object cvai_class_meta_t structure, top 5 class info and score
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Image_Classification(const cviai_handle_t handle,
+                                               VIDEO_FRAME_INFO_S *frame,
+                                               cvai_class_meta_t *obj_meta);
 
 /**
  * @brief yolov5 setup function
@@ -1438,6 +1451,16 @@ DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle,
                                          YoloPreParam *p_preprocess_cfg,
                                          YoloAlgParam *p_yolo_param);
+
+/**
+ * @brief image_classification setup function
+ *
+ * @param handle An AI SDK handle.
+ * @param p_preprocess_cfg Input preprocess setup config.
+ * @int Reture CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_Image_Cls_Param(const cviai_handle_t handle,
+                                              VpssPreParam *p_preprocess_cfg);
 
 #ifdef __cplusplus
 }

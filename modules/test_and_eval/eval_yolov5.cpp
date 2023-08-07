@@ -18,10 +18,10 @@
 
 CVI_S32 get_yolov5_det(std::string img_path, cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S* fdFrame,
                        cvai_object_t* obj_meta) {
-  printf("reading image file: %s \n", img_path.c_str());
+  // printf("reading image file: %s \n", img_path.c_str());
   CVI_S32 ret = CVI_AI_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-  printf("frame_width %d \t frame_height %d \n", fdFrame->stVFrame.u32Width,
-         fdFrame->stVFrame.u32Height);
+  // printf("frame_width %d \t frame_height %d \n", fdFrame->stVFrame.u32Width,
+  //        fdFrame->stVFrame.u32Height);
   if (ret != CVI_SUCCESS) {
     std::cout << "Convert out video frame failed with :" << ret << ".file:" << img_path
               << std::endl;
@@ -42,7 +42,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
   }
 
   std::string line;
-
+  int cnt = 0;
   while (getline(file, line)) {
     if (!line.empty()) {
       stringstream ss(line);
@@ -50,6 +50,9 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
       while (ss >> image_name) {
         cvai_object_t obj_meta = {0};
         VIDEO_FRAME_INFO_S fdFrame;
+        if (++cnt % 100 == 0) {
+          printf("processing idx: %d\n", cnt);
+        }
         CVI_S32 ret = get_yolov5_det(image_root + image_name, ai_handle, &fdFrame, &obj_meta);
         if (ret != CVI_SUCCESS) {
           CVI_AI_Free(&obj_meta);
@@ -63,9 +66,9 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
                  << obj_meta.info[i].bbox.x2 << " " << obj_meta.info[i].bbox.y2 << " "
                  << obj_meta.info[i].bbox.score << " " << obj_meta.info[i].classes << "\n";
         }
-        std::cout << "write results to file: " << res_path << std::endl;
+        // std::cout << "write results to file: " << res_path << std::endl;
         std::string save_path = res_path + image_name.substr(0, image_name.length() - 4) + ".txt";
-        printf("save res in path: %s \n", save_path.c_str());
+        // printf("save res in path: %s \n", save_path.c_str());
         FILE* fp = fopen(save_path.c_str(), "w");
         fwrite(res_ss.str().c_str(), res_ss.str().size(), 1, fp);
         fclose(fp);
@@ -114,12 +117,12 @@ int main(int argc, char* argv[]) {
   printf("start yolov algorithm config \n");
   // setup yolov5 param
   YoloAlgParam p_yolov5_param;
-  // uint32_t p_anchors[3][3][2] = {{{10, 13}, {16, 30}, {33, 23}},
-  //                                {{30, 61}, {62, 45}, {59, 119}},
-  //                                {{116, 90}, {156, 198}, {373, 326}}};
-  uint32_t p_anchors[3][3][2] = {{{12, 16}, {19, 36}, {40, 28}},
-                                 {{36, 75}, {76, 55}, {72, 146}},
-                                 {{142, 110}, {192, 243}, {459, 401}}};
+  uint32_t p_anchors[3][3][2] = {{{10, 13}, {16, 30}, {33, 23}},
+                                 {{30, 61}, {62, 45}, {59, 119}},
+                                 {{116, 90}, {156, 198}, {373, 326}}};
+  // uint32_t p_anchors[3][3][2] = {{{12, 16}, {19, 36}, {40, 28}},
+  //                                {{36, 75}, {76, 55}, {72, 146}},
+  //                                {{142, 110}, {192, 243}, {459, 401}}};
 
   p_yolov5_param.anchors = &p_anchors[0][0][0];
   uint32_t strides[3] = {8, 16, 32};

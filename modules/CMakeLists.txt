@@ -96,7 +96,8 @@ else()
                 $<TARGET_OBJECTS:face_mask_detection>
                 $<TARGET_OBJECTS:yolox>
                 $<TARGET_OBJECTS:yolov8_pose>
-                $<TARGET_OBJECTS:simcc>)
+                $<TARGET_OBJECTS:simcc>
+                $<TARGET_OBJECTS:image_classification>)
 
   if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
       set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)

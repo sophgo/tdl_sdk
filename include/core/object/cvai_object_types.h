@@ -476,4 +476,49 @@ typedef struct {
   uint32_t cls;
 } YoloAlgParam;
 
+/** @struct VpssPreParam
+ *  @ingroup core_cviaicore
+ *  @brief Config the yolov5 detection preprocess.
+ *  @var VpssPreParam::factor
+ *  Preprocess factor, one dimension matrix, r g b channel
+ *  @var VpssPreParam::mean
+ *  Preprocess mean, one dimension matrix, r g b channel
+ *  @var VpssPreParam::rescale_type
+ *  Preprocess config, vpss rescale type config
+ *  @var VpssPreParam::pad_reverse
+ *  Preprocess padding config
+ *  @var VpssPreParam::keep_aspect_ratio
+ *  Preprocess config quantize scale
+ *  @var VpssPreParam::use_crop
+ *  Preprocess config, config crop
+ *  @var VpssPreParam:: resize_method
+ *  Preprocess resize method config
+ *  @var VpssPreParam::format
+ *  Preprocess pixcel format config
+ */
+typedef struct {
+  float factor[3];
+  float mean[3];
+  meta_rescale_type_e rescale_type;
+  bool pad_reverse;
+  bool keep_aspect_ratio;
+  bool use_quantize_scale;
+  bool use_crop;
+  VPSS_SCALE_COEF_E resize_method;
+  PIXEL_FORMAT_E format;
+} VpssPreParam;
+
+/** @struct cvai_class_meta_t
+ * @ingroup core_cviaicore
+ * @brief A structure to class info.
+ * @var cvai_class_meta_t::score
+ * The information of top5 class score.
+ * @var cvai_class_meta_t::cls
+ * The classes of the top5 result
+ */
+typedef struct {
+  float score[5];
+  int cls[5];
+} cvai_class_meta_t;
+
 #endif
