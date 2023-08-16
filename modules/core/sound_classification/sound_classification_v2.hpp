@@ -9,6 +9,7 @@ class SoundClassificationV2 final : public Core {
  public:
   SoundClassificationV2();
   virtual ~SoundClassificationV2();
+  int onModelOpened();
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index);
   int setThreshold(const float th) {
     threshold_ = th;

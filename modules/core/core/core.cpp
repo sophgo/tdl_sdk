@@ -404,48 +404,42 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   if (aligned_input && frames.size() != 1) {
     LOGE("can only process one frame for aligninput,got frame_num:%d\n", int(frames.size()));
   }
-  if (!m_skip_preprocess_) {
-    if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
-      if (m_skip_vpss_preprocess) {
-        // skip vpss preprocess is true, just register frame directly.
-        ret = registerFrame2Tensor(frames);
-      } else {
-        if (m_vpss_config.size() != frames.size()) {
-          LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
-               m_vpss_config.size(), frames.size());
-          return CVIAI_ERR_INFERENCE;
-        }
 
-        dstFrames.reserve(frames.size());
-        for (uint32_t i = 0; i < frames.size(); i++) {
-          VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
-          m_debugger.save_origin_frame(frames[i], mp_mi->in.tensors + i);
-
-          memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-          int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
-          if (vpssret != CVIAI_SUCCESS) {
-            // if preprocess fail, just delete frame.
-            if (f->stVFrame.u64PhyAddr[0] != 0) {
-              mp_vpss_inst->releaseFrame(f, 0);
-            }
-            delete f;
-            return vpssret;
-          } else {
-            dstFrames.push_back(
-                std::shared_ptr<VIDEO_FRAME_INFO_S>({f, [this](VIDEO_FRAME_INFO_S *f) {
-                                                       this->mp_vpss_inst->releaseFrame(f, 0);
-                                                       delete f;
-                                                     }}));
-          }
-        }
-        ret = registerFrame2Tensor(dstFrames);
+  if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
+    if (m_skip_vpss_preprocess) {
+      // skip vpss preprocess is true, just register frame directly.
+      ret = registerFrame2Tensor(frames);
+    } else {
+      if (m_vpss_config.size() != frames.size()) {
+        LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
+             m_vpss_config.size(), frames.size());
+        return CVIAI_ERR_INFERENCE;
       }
+
+      dstFrames.reserve(frames.size());
+      for (uint32_t i = 0; i < frames.size(); i++) {
+        VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+        m_debugger.save_origin_frame(frames[i], mp_mi->in.tensors + i);
+
+        memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+        int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
+        if (vpssret != CVIAI_SUCCESS) {
+          // if preprocess fail, just delete frame.
+          if (f->stVFrame.u64PhyAddr[0] != 0) {
+            mp_vpss_inst->releaseFrame(f, 0);
+          }
+          delete f;
+          return vpssret;
+        } else {
+          dstFrames.push_back(
+              std::shared_ptr<VIDEO_FRAME_INFO_S>({f, [this](VIDEO_FRAME_INFO_S *f) {
+                                                     this->mp_vpss_inst->releaseFrame(f, 0);
+                                                     delete f;
+                                                   }}));
+        }
+      }
+      ret = registerFrame2Tensor(dstFrames);
     }
-  } else {
-    uint8_t *ptr = (uint8_t *)CVI_NN_TensorPtr(mp_mi->in.tensors);
-    memcpy(ptr, frames[0]->stVFrame.pu8VirAddr[0],
-           frames[0]->stVFrame.u32Length[0] + frames[0]->stVFrame.u32Length[1] +
-               frames[0]->stVFrame.u32Length[2]);
   }
 
   model_timer_.TicToc("vpss");

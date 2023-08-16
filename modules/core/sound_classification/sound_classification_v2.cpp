@@ -1,18 +1,34 @@
 #include "sound_classification_v2.hpp"
 #include <iostream>
 #include "cviai_log.hpp"
+#include "cviruntime.h"
 using namespace melspec;
 using namespace cviai;
+using namespace std;
 
 SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {
   int num_frames = time_len_ * sample_rate_;
   bool htk = false;
   mp_extractor_ = new MelFeatureExtract(num_frames, sample_rate_, num_fft_, hop_len_, num_mel_,
                                         fmin_, fmax_, "reflect", htk);
-  m_skip_preprocess_ = true;
 }
 
 SoundClassificationV2::~SoundClassificationV2() { delete mp_extractor_; }
+
+int SoundClassificationV2::onModelOpened() {
+  CVI_SHAPE input_shape = getInputShape(0);
+  std::cout << "input_shape = " << input_shape.dim[2] << std::endl;
+  int32_t image_width = input_shape.dim[3];
+
+  if (image_width == 188) {
+    sample_rate_ = 16000;
+  } else if (image_width == 94) {
+    sample_rate_ = 8000;
+  } else {
+    return false;
+  }
+  return true;
+}
 
 int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   int img_width = stOutFrame->stVFrame.u32Width / 2;  // unit: 16 bits
