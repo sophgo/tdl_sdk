@@ -31,6 +31,102 @@ static bool IS_MEMORY_ENOUGH(uint32_t mem_limit, uint64_t mem_used, cvai_image_t
 static void SUMMARY(person_capture_t *person_cpt_info, uint64_t *size, bool show_detail);
 static void SHOW_CONFIG(person_capture_config_t *cfg);
 
+void getBufferRect(const cvai_counting_line_t *counting_line_t, randomRect *rect,
+                   int expand_width) {
+  statistics_mode s_mode = counting_line_t->s_mode;
+  if (counting_line_t->A_y == counting_line_t->B_y) {  // AY == BY
+    rect->lt_x = counting_line_t->A_x;
+    rect->lt_y = counting_line_t->A_y + expand_width;
+
+    rect->rt_x = counting_line_t->B_x;
+    rect->rt_y = counting_line_t->B_y + expand_width;
+
+    rect->lb_x = counting_line_t->A_x;
+    rect->lb_y = counting_line_t->A_y - expand_width;
+
+    rect->rb_x = counting_line_t->B_x;
+    rect->rb_y = counting_line_t->B_y - expand_width;
+    if (s_mode == 0) {
+      rect->f_x = 0;
+      rect->f_y = -1;
+    } else {
+      rect->f_x = 0;
+      rect->f_y = 1;
+    }
+  } else if (counting_line_t->A_x == counting_line_t->B_x) {  // AX = BX
+    rect->lt_x = counting_line_t->A_x + expand_width;
+    rect->lt_y = counting_line_t->A_y;
+
+    rect->rt_x = counting_line_t->B_x + expand_width;
+    rect->rt_y = counting_line_t->B_y;
+
+    rect->lb_x = counting_line_t->A_x - expand_width;
+    rect->lb_y = counting_line_t->A_y;
+
+    rect->rb_x = counting_line_t->B_x - expand_width;
+    rect->rb_y = counting_line_t->B_y;
+    if (s_mode == 0) {
+      rect->f_x = 1;
+      rect->f_y = 0;
+    } else {
+      rect->f_x = -1;
+      rect->f_y = 0;
+    }
+  } else if (counting_line_t->A_y < counting_line_t->B_y) {
+    float k = 1.0 * (counting_line_t->A_y - counting_line_t->B_y) /
+              (counting_line_t->A_x - counting_line_t->B_x);
+    float inv_k = atan(-1 / k);
+    float x_e = abs(cos(inv_k) * expand_width);
+    float y_e = abs(sin(inv_k) * expand_width);
+
+    rect->lt_x = counting_line_t->A_x + x_e;
+    rect->lt_y = counting_line_t->A_y - y_e;
+
+    rect->rt_x = counting_line_t->B_x + x_e;
+    rect->rt_y = counting_line_t->B_y - y_e;
+
+    rect->lb_x = counting_line_t->A_x - x_e;
+    rect->lb_y = counting_line_t->A_y + y_e;
+
+    rect->rb_x = counting_line_t->B_x - x_e;
+    rect->rb_y = counting_line_t->B_y + y_e;
+    if (s_mode == 0) {
+      rect->f_x = 1.0;
+      rect->f_y = -1.0 / k;
+    } else {
+      rect->f_x = -1.0;
+      rect->f_y = 1.0 / k;
+    }
+  } else if (counting_line_t->A_y > counting_line_t->B_y) {
+    float k = 1.0 * (counting_line_t->A_y - counting_line_t->B_y) /
+              (counting_line_t->A_x - counting_line_t->B_x);
+    float inv_k = atan(-1 / k);
+    float x_e = abs(cos(inv_k) * expand_width);
+    float y_e = abs(sin(inv_k) * expand_width);
+
+    rect->lt_x = counting_line_t->A_x - x_e;
+    rect->lt_y = counting_line_t->A_y - y_e;
+
+    rect->rt_x = counting_line_t->B_x - x_e;
+    rect->rt_y = counting_line_t->B_y - y_e;
+
+    rect->lb_x = counting_line_t->A_x + x_e;
+    rect->lb_y = counting_line_t->A_y + y_e;
+
+    rect->rb_x = counting_line_t->B_x + x_e;
+    rect->rb_y = counting_line_t->B_y + y_e;
+    if (s_mode == 0) {
+      rect->f_x = -1.0;
+      rect->f_y = 1.0 / k;
+    } else {
+      rect->f_x = 1;
+      rect->f_y = -1.0 / k;
+    }
+  }
+  printf("buffer rectangle: %f %f %f %f %f %f %f %f\n", rect->lt_x, rect->lt_y, rect->rt_x,
+         rect->rt_y, rect->rb_x, rect->rb_y, rect->lb_x, rect->lb_y);
+}
+
 CVI_S32 _PersonCapture_Free(person_capture_t *person_cpt_info) {
   LOGI("[APP::PersonCapture] Free PersonCapture Data\n");
   if (person_cpt_info != NULL) {
@@ -187,6 +283,12 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle
         return CVIAI_FAILURE;
       }
       break;
+    case CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION:
+      if (CVIAI_SUCCESS !=
+          CVI_AI_HeadPerson_Detection(ai_handle, frame, &person_cpt_info->last_objects)) {
+        return CVIAI_FAILURE;
+      }
+      break;
     default:
       LOGE("unknown object detection model index.");
       return CVIAI_FAILURE;
@@ -245,6 +347,16 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle
 
   return CVIAI_SUCCESS;
 }
+CVI_S32 _ConsumerCounting_Line(person_capture_t *person_cpt_info, int A_x, int A_y, int B_x,
+                               int B_y, statistics_mode s_mode) {
+  person_cpt_info->counting_line_t.A_x = A_x;
+  person_cpt_info->counting_line_t.A_y = A_y;
+  person_cpt_info->counting_line_t.B_x = B_x;
+  person_cpt_info->counting_line_t.B_y = B_y;
+  person_cpt_info->counting_line_t.s_mode = s_mode;
+  getBufferRect(&person_cpt_info->counting_line_t, &person_cpt_info->rect, 15);
+  return CVIAI_SUCCESS;
+}
 
 CVI_S32 _PersonCapture_SetMode(person_capture_t *person_cpt_info, capture_mode_e mode) {
   person_cpt_info->mode = mode;
@@ -295,9 +407,9 @@ CVI_S32 _ConsumerCounting_Run(person_capture_t *person_cpt_info, const cviai_han
     if (CVIAI_SUCCESS != CVI_AI_DeepSORT_Head_FusePed(
                              ai_handle, &person_cpt_info->last_objects,
                              &person_cpt_info->last_trackers, person_cpt_info->enable_DeepSORT,
-                             &person_cpt_info->last_head, &person_cpt_info->last_ped)) {
+                             &person_cpt_info->last_head, &person_cpt_info->last_ped,
+                             &person_cpt_info->counting_line_t, &person_cpt_info->rect))
       return CVIAI_FAILURE;
-    }
   } else {
     if (CVIAI_SUCCESS != CVI_AI_DeepSORT_Obj(ai_handle, &person_cpt_info->last_objects,
                                              &person_cpt_info->last_trackers,

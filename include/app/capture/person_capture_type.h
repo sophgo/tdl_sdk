@@ -54,6 +54,11 @@ typedef struct {
   bool *_output;   // output signal (# = .size)
   uint64_t _time;  // timer
   uint32_t _m_limit;
+
+  // consumer counting
+  cvai_counting_line_t counting_line_t;
+  randomRect rect;
+
 } person_capture_t;
 
 #endif  // End of _CVIAI_APP_PERSON_CAPTURE_TYPE_H_

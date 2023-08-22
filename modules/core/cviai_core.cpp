@@ -913,7 +913,9 @@ CVI_S32 CVI_AI_DeepSORT_CleanCounter(const cviai_handle_t handle) {
 
 CVI_S32 CVI_AI_DeepSORT_Head_FusePed(const cviai_handle_t handle, cvai_object_t *obj,
                                      cvai_tracker_t *tracker_t, bool use_reid, cvai_object_t *head,
-                                     cvai_object_t *ped) {
+                                     cvai_object_t *ped,
+                                     const cvai_counting_line_t *counting_line_t,
+                                     const randomRect *rect) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_HeadFusePed");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
@@ -922,7 +924,7 @@ CVI_S32 CVI_AI_DeepSORT_Head_FusePed(const cviai_handle_t handle, cvai_object_t 
     LOGE("Please initialize DeepSORT first.\n");
     return CVI_FAILURE;
   }
-  ctx->ds_tracker->track_headfuse(obj, tracker_t, use_reid, head, ped);
+  ctx->ds_tracker->track_headfuse(obj, tracker_t, use_reid, head, ped, counting_line_t, rect);
   return CVI_SUCCESS;
 }
 CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
@@ -935,6 +937,18 @@ CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_t *obj,
     return CVIAI_FAILURE;
   }
   return ctx->ds_tracker->track(obj, tracker, use_reid);
+}
+
+CVI_S32 CVI_AI_DeepSORT_Byte(const cviai_handle_t handle, cvai_object_t *obj,
+                             cvai_tracker_t *tracker, bool use_reid) {
+  TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_Obj");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVIAI_FAILURE;
+  }
+  return ctx->ds_tracker->byte_track(obj, tracker, use_reid);
 }
 
 CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t *face,

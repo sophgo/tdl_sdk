@@ -34,15 +34,29 @@ class DeepSORT {
 
   CVI_S32 track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid = true);
   CVI_S32 track(cvai_face_t *face, cvai_tracker_t *tracker);
+  // byte track
+
+  CVI_S32 byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid,
+                     float low_score = 0.3, float high_score = 0.5);
+  CVI_S32 track_impl(Tracking_Result &high_result, Tracking_Result &low_result,
+                     const std::vector<BBOX> &HighBBoxes, const std::vector<BBOX> &LowBBoxes,
+                     const std::vector<FEATURE> &HighFeatures,
+                     const std::vector<FEATURE> &LowFeatures, float crowd_iou_thresh,
+                     int class_id = -1, bool use_reid = true, float *Quality = NULL);
 
   void update_tracks(cvai_deepsort_config_t *conf, std::map<int, std::vector<stObjInfo>> &cls_objs);
+  void consumer_counting_update_tracks(cvai_deepsort_config_t *conf,
+                                       std::map<int, std::vector<stObjInfo>> &cls_objs,
+                                       const cvai_counting_line_t *counting_line_t,
+                                       const randomRect *rect);
   void get_pair_trackids(std::map<int, std::vector<stObjInfo>> &cls_objs,
                          std::map<uint64_t, uint64_t> &pair_trackids);
   void update_pair_info(std::vector<stObjInfo> &dets_a, std::vector<stObjInfo> &dets_b,
                         ObjectType typea, ObjectType typeb, float corre_thresh);
   CVI_S32 track_fuse(cvai_object_t *obj, cvai_face_t *face, cvai_tracker_t *tracker);
   CVI_S32 track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *tracker, bool use_reid,
-                         cvai_object_t *last_head, cvai_object_t *last_ped);
+                         cvai_object_t *last_head, cvai_object_t *last_ped,
+                         const cvai_counting_line_t *counting_line_t, const randomRect *rect);
   void update_out_num(cvai_tracker_t *tracker);
 
   CVI_S32 getConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type = -1);
@@ -80,6 +94,7 @@ class DeepSORT {
   cvai_deepsort_config_t default_conf;
   std::map<int, cvai_deepsort_config_t> specific_conf;
   std::map<uint64_t, int> track_indices_;
+  std::map<uint64_t, std::vector<float>> old_coordinate;
 
   uint64_t get_nextID(int class_id);
   MatchResult get_match_result(MatchResult &prev_match, const std::vector<BBOX> &BBoxes,

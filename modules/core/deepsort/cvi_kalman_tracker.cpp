@@ -348,8 +348,9 @@ void KalmanTracker::false_update_from_pair(KalmanFilter &kf, KalmanTracker *p_ot
   false_update_times_ += 1;
   kalman_state = kalman_state_e::UPDATED;
   // only linear update xyah
-  this->x.block(0, 0, DIM_Z, 1) = this->x.block(0, 0, DIM_Z, 1) * 0.6 + false_box.transpose() * 0.4;
-  // kf.update(kalman_state, x, P, false_box, conf->kfilter_conf);
+  // this->x.block(0, 0, DIM_Z, 1) = this->x.block(0, 0, DIM_Z, 1) * 0.6 + false_box.transpose() *
+  // 0.4;
+  kf.update(kalman_state, x, P, false_box, conf->kfilter_conf);
 }
 void KalmanTracker::update_pair_info(KalmanTracker *p_other) {
 #ifdef DEBUG_TRACK

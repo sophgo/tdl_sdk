@@ -30,6 +30,7 @@ typedef enum {
  */
 typedef enum { RESCALE_UNKNOWN, RESCALE_NOASPECT, RESCALE_CENTER, RESCALE_RB } meta_rescale_type_e;
 
+typedef enum { DOWN_UP = 0, UP_DOWN } statistics_mode;
 /** @struct cvai_bbox_t
  * @ingroup core_cviaicore
  * @brief A structure to describe an area in a given image with confidence score.

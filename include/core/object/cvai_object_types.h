@@ -350,6 +350,27 @@ typedef struct {
   cvai_object_info_t *info;
 } cvai_object_t;
 
+// consumer line
+typedef struct {
+  float A_x;
+  float A_y;
+  float B_x;
+  float B_y;
+  statistics_mode s_mode;
+} cvai_counting_line_t;
+// consumer counting buffer rectangle
+typedef struct {
+  float lt_x, lt_y;
+
+  float rt_x, rt_y;
+
+  float lb_x, lb_y;
+
+  float rb_x, rb_y;
+
+  float f_x, f_y;
+} randomRect;
+
 /** @struct cvai_class_filter_t
  *  @ingroup core_cviaicore
  *  @brief Preserve class id of model output and filter out the others. This struct can be used in

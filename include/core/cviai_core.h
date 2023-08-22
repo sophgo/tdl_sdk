@@ -1060,11 +1060,17 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_
  * @param obj Input detected object with feature.
  * @param tracker_t Output tracker results.
  * @param use_reid If true, track by DeepSORT algorithm, else SORT.
+ * @param head save head data
+ * @param ped save ped data
+ * @param counting_line_t the line of consumer counting
+ * @param counting_line_t the buffer rectangle
  * @return int Return CVIAI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Head_FusePed(const cviai_handle_t handle, cvai_object_t *obj,
                                                 cvai_tracker_t *tracker_t, bool use_reid,
-                                                cvai_object_t *head, cvai_object_t *ped);
+                                                cvai_object_t *head, cvai_object_t *ped,
+                                                const cvai_counting_line_t *counting_line_t,
+                                                const randomRect *rect);
 
 /**
  * @brief Run SORT track for face.
@@ -1440,28 +1446,14 @@ DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle,
                                            YoloPreParam *p_preprocess_cfg,
                                            YoloAlgParam *p_yolo_param);
 
-/**
- * @brief yolo setup function
- *
- * @param handle An AI SDK handle.
- * @param p_preprocess_cfg Input preprocess setup config.
- * @param p_yolo_param Yolo algorithm parameter config.
- * @int Reture CVIAI_SUCCESS on success.
- */
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Byte(const cviai_handle_t handle, cvai_object_t *obj,
+                                        cvai_tracker_t *tracker, bool use_reid);
+
+DLL_EXPORT CVI_S32 CVI_AI_Set_Image_Cls_Param(const cviai_handle_t handle,
+                                              VpssPreParam *p_preprocess_cfg);
 DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle,
                                          YoloPreParam *p_preprocess_cfg,
                                          YoloAlgParam *p_yolo_param);
-
-/**
- * @brief image_classification setup function
- *
- * @param handle An AI SDK handle.
- * @param p_preprocess_cfg Input preprocess setup config.
- * @int Reture CVIAI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_Set_Image_Cls_Param(const cviai_handle_t handle,
-                                              VpssPreParam *p_preprocess_cfg);
-
 #ifdef __cplusplus
 }
 #endif

@@ -126,6 +126,12 @@ CVI_S32 CVI_AI_APP_ConsumerCounting_Run(const cviai_app_handle_t handle,
   cviai_app_context_t *ctx = handle;
   return _ConsumerCounting_Run(ctx->person_cpt_info, ctx->ai_handle, frame);
 }
+DLL_EXPORT CVI_S32 CVI_AI_APP_ConsumerCounting_Line(const cviai_app_handle_t handle, int A_x,
+                                                    int A_y, int B_x, int B_y,
+                                                    statistics_mode s_mode) {
+  cviai_app_context_t *ctx = handle;
+  return _ConsumerCounting_Line(ctx->person_cpt_info, A_x, A_y, B_x, B_y, s_mode);
+}
 
 CVI_S32 CVI_AI_APP_PersonCapture_SetMode(const cviai_app_handle_t handle, capture_mode_e mode) {
   cviai_app_context_t *ctx = handle;

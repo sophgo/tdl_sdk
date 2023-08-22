@@ -180,7 +180,33 @@ float cal_object_pair_score(stRect boxa, stRect boxb, ObjectType typea, ObjectTy
     std::cout << "pairscore:" << pair_score << ",iou:" << iou << std::endl;
 #endif
     return pair_score;
-  } else {
+  } else if (typea == OBJ_HEAD && typeb == OBJ_PERSON) {
+    stRect head_box = boxa;
+    stRect ped_box = boxb;
+
+    int face_size = std::max(head_box.width, head_box.height);
+    if (head_box.y < ped_box.y) return 0;
+    float yoffset = 0.2;
+    float ydiff = head_box.y - ped_box.y - face_size * yoffset;
+    float ydiff_score = 1.0 - ydiff / (head_box.height);
+
+    if (ped_box.height > face_size * 15) return 0;
+    int ped_ct_x = ped_box.x + ped_box.width / 2;
+    int face_ct_x = head_box.x + head_box.width / 2;
+    float xdiff = abs(ped_ct_x - face_ct_x);
+    float xdiff_score = 1.0 - xdiff / face_size;
+    stRect ped_top_box(ped_box.x + ped_box.width * 0.2, ped_box.y + face_size * yoffset,
+                       ped_box.width * 0.8, face_size * (1 + yoffset));
+    float iou = cal_iou(head_box, ped_top_box);
+
+    float pair_score = ydiff_score * 0.2 + iou * 0.7 + xdiff_score * 0.1;
+#ifdef DEBUG_TRACK
+    std::cout << "pairscore:" << pair_score << ",iou:" << iou << std::endl;
+#endif
+    return pair_score;
+  }
+
+  else {
     return 0;
   }
 }

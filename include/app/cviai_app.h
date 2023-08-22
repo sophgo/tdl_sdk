@@ -90,6 +90,9 @@ DLL_EXPORT CVI_S32 CVI_AI_APP_PersonCapture_Run(const cviai_app_handle_t handle,
 // cousumer counting
 DLL_EXPORT CVI_S32 CVI_AI_APP_ConsumerCounting_Run(const cviai_app_handle_t handle,
                                                    VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_AI_APP_ConsumerCounting_Line(const cviai_app_handle_t handle, int A_x,
+                                                    int A_y, int B_x, int B_y,
+                                                    statistics_mode s_mode);
 
 DLL_EXPORT CVI_S32 CVI_AI_APP_PersonCapture_SetMode(const cviai_app_handle_t handle,
                                                     capture_mode_e mode);

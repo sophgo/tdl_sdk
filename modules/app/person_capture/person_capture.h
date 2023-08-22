@@ -23,6 +23,9 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cviai_handle
 // consumer counting
 CVI_S32 _ConsumerCounting_Run(person_capture_t *person_cpt_info, const cviai_handle_t ai_handle,
                               VIDEO_FRAME_INFO_S *frame);
+// Draw line
+CVI_S32 _ConsumerCounting_Line(person_capture_t *person_cpt_info, int A_x, int A_y, int B_x,
+                               int B_y, statistics_mode s_mode);
 
 CVI_S32 _PersonCapture_SetMode(person_capture_t *person_cpt_info, capture_mode_e mode);
 
