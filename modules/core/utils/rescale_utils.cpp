@@ -147,7 +147,7 @@ cvai_object_info_t info_rescale_c(const float width, const float height, const f
   CVI_AI_CopyInfoCpp(&object_info, &object_info_new);
 
   float ratio, pad_width, pad_height;
-  object_info_new.bbox = box_rescale_c(new_width, new_height, width, height, object_info.bbox,
+  object_info_new.bbox = box_rescale_c(width, height, new_width, new_height, object_info.bbox,
                                        &ratio, &pad_width, &pad_height);
 
   if (object_info_new.pedestrian_properity) {
@@ -169,7 +169,7 @@ cvai_object_info_t info_rescale_rb(const float width, const float height, const 
 
   float ratio;
   object_info_new.bbox =
-      box_rescale_rb(new_width, new_height, width, height, object_info.bbox, &ratio);
+      box_rescale_rb(width, height, new_width, new_height, object_info.bbox, &ratio);
 
   if (object_info_new.pedestrian_properity) {
     for (int i = 0; i < 17; i++) {

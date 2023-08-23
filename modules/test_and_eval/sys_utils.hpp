@@ -14,4 +14,5 @@ std::string join_path(const std::string &str_path_parent, const std::string &str
 bool create_directory(const std::string &str_dir);
 std::vector<std::string> getImgList(std::string dir_path);
 bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len);
+std::string split_file_line(std::string &line, std::vector<std::vector<int>> &boxes);
 #endif

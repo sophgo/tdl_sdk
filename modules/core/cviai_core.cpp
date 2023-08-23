@@ -176,7 +176,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::pedestrian)},
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
-    {CVI_AI_SUPPORTED_MODEL_YOLOV8POSE, CREATOR(YoloV8Pose)},
     {CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, CREATOR(Simcc)},
     {CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3, CREATOR(FaceLandmarkDet3)},
     {CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
@@ -253,6 +252,11 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
       p_yolov8->setBranchChannel(64, 2);  // 2 types:head,person
       m_t.instance = p_yolov8;
       LOGI("create headperson model");
+    } else if (index == CVI_AI_SUPPORTED_MODEL_YOLOV8POSE) {
+      YoloV8Pose *p_yolov8pose = new YoloV8Pose();
+      p_yolov8pose->setBranchChannel(64, 17);  // 17 keypoints
+      m_t.instance = p_yolov8pose;
+      LOGI("create yolov8 pose model");
     } else {
       if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
         LOGE("Cannot find creator for %s, Please register a creator for this model!\n",

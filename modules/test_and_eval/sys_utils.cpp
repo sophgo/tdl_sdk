@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 
@@ -125,4 +126,29 @@ bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len) {
   fread(p_buffer, len, 1, fp);
   fclose(fp);
   return true;
+}
+
+std::string split_file_line(std::string &line, std::vector<std::vector<int>> &boxes) {
+  uint32_t pos = line.find(",");
+  if (pos == line.npos) {
+    return line;
+  }
+  std::string file_name = line.substr(0, pos);
+  std::string res = line.substr(pos + 1);
+
+  istringstream iss(res);
+  std::string box;
+
+  std::string val;
+  while (getline(iss, box, ',')) {
+    istringstream sub_iss(box);
+    std::vector<int> vec_box;
+
+    while (getline(sub_iss, val, ' ')) {
+      vec_box.push_back(atoi(val.c_str()));
+    }
+    boxes.push_back(vec_box);
+  }
+
+  return file_name;
 }
