@@ -140,6 +140,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV6)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLO)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOX)                           \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_PPYOLOE)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_OSNET)                            \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION)              \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2)            \
@@ -904,8 +905,18 @@ DLL_EXPORT CVI_S32 CVI_AI_Yolo(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
 DLL_EXPORT CVI_S32 CVI_AI_YoloX(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                 cvai_object_t *obj);
 
-/**@}*/
+/**
+ * @brief PP-Yoloe object detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param obj Output detect result. The name, bbox, and classes will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_PPYoloE(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                  cvai_object_t *obj);
 
+/**@}*/
 /**
  * \addtogroup core_pr Person Re-Id AI Inference
  * \ingroup core_ai
@@ -1446,6 +1457,49 @@ DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle,
                                            YoloPreParam *p_preprocess_cfg,
                                            YoloAlgParam *p_yolo_param);
 
+/**
+ * @brief yolox setup function
+ *
+ * @param handle An AI SDK handle.
+ * @param p_preprocess_cfg Input preprocess setup config.
+ * @param p_yolo_param Yolov6 algorithm parameter config.
+ * @int Reture CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOX_Param(const cviai_handle_t handle,
+                                          YoloPreParam *p_preprocess_cfg,
+                                          YoloAlgParam *p_yolo_param);
+
+/**
+ * @brief yolo setup function
+ *
+ * @param handle An AI SDK handle.
+ * @param p_preprocess_cfg Input preprocess setup config.
+ * @param p_yolo_param Yolo algorithm parameter config.
+ * @int Reture CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle,
+                                         YoloPreParam *p_preprocess_cfg,
+                                         YoloAlgParam *p_yolo_param);
+
+/**
+ * @brief pp-yoloe setup function
+ *
+ * @param handle An AI SDK handle.
+ * @param p_preprocess_cfg Input preprocess setup config.
+ * @param p_yolo_param Yolo algorithm parameter config.
+ * @int Reture CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_PPYOLOE_Param(const cviai_handle_t handle,
+                                            YoloPreParam *p_preprocess_cfg,
+                                            YoloAlgParam *p_yolo_param);
+
+/**
+ * @brief image_classification setup function
+ *
+ * @param handle An AI SDK handle.
+ * @param p_preprocess_cfg Input preprocess setup config.
+ * @int Reture CVIAI_SUCCESS on success.
+ */
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Byte(const cviai_handle_t handle, cvai_object_t *obj,
                                         cvai_tracker_t *tracker, bool use_reid);
 

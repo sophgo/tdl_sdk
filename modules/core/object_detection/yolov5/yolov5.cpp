@@ -15,6 +15,7 @@
 #include "core/cviai_types_mem.h"
 #include "core/cviai_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
+#include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
 #include "yolov5.hpp"
@@ -59,33 +60,36 @@ static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int i
 Yolov5::Yolov5() : Core(CVI_MEM_DEVICE) {}
 
 int Yolov5::onModelOpened() {
-  if (getNumOutputTensor() != p_yolov5_param_->stride_len) {
-    LOGE("Unmatched branch number, open model failed!\n");
-    return CVIAI_FAILURE;
-  }
-
   CVI_SHAPE input_shape = getInputShape(0);
   int input_h = input_shape.dim[2];
 
-  for (uint32_t i = 0; i < p_yolov5_param_->stride_len; i++) {
-    stride_keys_[p_yolov5_param_->strides[i]] = i;
-  }
-
+  strides_.clear();
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
     TensorInfo oinfo = getOutputTensorInfo(j);
     CVI_SHAPE output_shape = oinfo.shape;
-    int feat_h = output_shape.dim[2];
+    // printf("%s: %d %d %d %d\n", oinfo.tensor_name.c_str(), output_shape.dim[0],
+    // output_shape.dim[1], output_shape.dim[2], output_shape.dim[3]);
+    int feat_h = output_shape.dim[1];
+    uint32_t channel = output_shape.dim[3];
     int stride_h = input_h / feat_h;
 
-    if (stride_keys_.count(stride_h) == 0) {
-      LOGE("model stride not match!\n");
+    if (channel == 1) {
+      conf_out_names_[stride_h] = oinfo.tensor_name;
+      strides_.push_back(stride_h);
+    } else if (channel == 4) {
+      box_out_names_[stride_h] = oinfo.tensor_name;
+    } else if (channel == p_yolov5_param_->cls) {
+      class_out_names_[stride_h] = oinfo.tensor_name;
+    } else {
+      // printf("unmatched channel: %d\n", channel);
+      LOGE("unmatched channel!\n");
       return CVIAI_FAILURE;
     }
-    out_names_[stride_h] = oinfo.tensor_name;
   }
 
-  for (uint32_t i = 0; i < p_yolov5_param_->stride_len; i++) {
-    if (out_names_.count(p_yolov5_param_->strides[i]) == 0) {
+  for (size_t i = 0; i < strides_.size(); i++) {
+    if (conf_out_names_.count(strides_[i]) == 0 || box_out_names_.count(strides_[i]) == 0 ||
+        class_out_names_.count(strides_[i]) == 0) {
       return CVIAI_FAILURE;
     }
   }
@@ -111,32 +115,32 @@ int Yolov5::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   return CVIAI_SUCCESS;
 }
 
-int Yolov5::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                           VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
+// int Yolov5::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+//                            VPSSConfig &vpss_config) {
+//   auto &vpssChnAttr = vpss_config.chn_attr;
+//   auto &factor = vpssChnAttr.stNormalize.factor;
+//   auto &mean = vpssChnAttr.stNormalize.mean;
 
-  // set dump config
-  vpssChnAttr.stNormalize.bEnable = false;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
+//   // set dump config
+//   vpssChnAttr.stNormalize.bEnable = false;
+//   vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
 
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_SEND_FRAME;
-  }
+//   VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
+//                         vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
+//                         factor, mean, false);
+//   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
+//   if (ret != CVI_SUCCESS) {
+//     LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
+//     return CVIAI_ERR_VPSS_SEND_FRAME;
+//   }
 
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_GET_FRAME;
-  }
-  return CVIAI_SUCCESS;
-}
+//   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
+//   if (ret != CVI_SUCCESS) {
+//     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
+//     return CVIAI_ERR_VPSS_GET_FRAME;
+//   }
+//   return CVIAI_SUCCESS;
+// }
 
 void Yolov5::set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_yolov5_param) {
   p_preprocess_cfg_ = p_preprocess_cfg;
@@ -167,15 +171,14 @@ void xywh2xxyy(float x, float y, float w, float h, PtrDectRect &det) {
 }
 
 template <typename T>
-void parseDet(T *ptr, int start_idx, float qscale, int cls, int grid_x, int grid_y, int stride_x,
-              int stride_y, float pw, float ph, Detections &vec_obj) {
+void parseDet(T *ptr, int start_idx, float qscale, int cls, float box_prob, int grid_x, int grid_y,
+              int stride_x, int stride_y, float pw, float ph, int im_height, int im_width,
+              Detections &vec_obj) {
   float sigmoid_x = sigmoid(ptr[start_idx] * qscale);
   float sigmoid_y = sigmoid(ptr[start_idx + 1] * qscale);
   float sigmoid_w = sigmoid(ptr[start_idx + 2] * qscale);
   float sigmoid_h = sigmoid(ptr[start_idx + 3] * qscale);
-  float obj_conf = sigmoid(ptr[start_idx + 4] * qscale);
-  float cls_conf = sigmoid(ptr[start_idx + 5 + cls] * qscale);
-  float object_score = cls_conf * obj_conf;
+  float object_score = box_prob;
 
   PtrDectRect det = std::make_shared<object_detect_rect_t>();
   det->score = object_score;
@@ -187,85 +190,154 @@ void parseDet(T *ptr, int start_idx, float qscale, int cls, int grid_x, int grid
   float h = pow((sigmoid_h * 2), 2) * ph;
   xywh2xxyy(x, y, w, h, det);
 
-  vec_obj.push_back(det);
+  clip_bbox(im_height, im_width, det);
+  float box_width = det->x2 - det->x1;
+  float box_height = det->y2 - det->y1;
+  if (box_width > 1 && box_height > 1) {
+    vec_obj.push_back(det);
+  }
 }
 
-void Yolov5::getYolov5Detections(int8_t *ptr_int8, float *ptr_float, int num_per_pixel,
-                                 float qscale, int stride_x, int stride_y, int grid_x_len,
-                                 int grid_y_len, uint32_t *anchor, Detections &vec_obj) {
-  int start_idx = 0;
-  for (uint32_t anchor_idx = 0; anchor_idx < p_yolov5_param_->anchor_len; anchor_idx++) {
-    float pw = anchor[anchor_idx * 2];
-    float ph = anchor[anchor_idx * 2 + 1];
-    for (int grid_y = 0; grid_y < grid_x_len; grid_y++) {
-      for (int grid_x = 0; grid_x < grid_y_len; grid_x++) {
-        float obj_conf;
-        if (num_per_pixel == 1) {
-          obj_conf = ptr_int8[start_idx + 4] * qscale;
-        } else {
-          obj_conf = ptr_float[start_idx + 4];
-        }
-        obj_conf = sigmoid(obj_conf);
-        // filter detections lowwer than conf_thresh
-        if (obj_conf < m_model_threshold) {
-          start_idx += (p_yolov5_param_->cls + 5);
-          continue;
-        }
+// void Yolov5::getYolov5Detections(int8_t *ptr_int8, float *ptr_float, int num_per_pixel,
+//                                  float qscale, int stride_x, int stride_y, int grid_x_len,
+//                                  int grid_y_len, uint32_t *anchor, int nn_height, int nn_width,
+//                                  Detections &vec_obj) {
+//   int start_idx = 0;
+//   for (uint32_t anchor_idx = 0; anchor_idx < p_yolov5_param_->anchor_len; anchor_idx++) {
+// float pw = anchor[anchor_idx * 2];
+// float ph = anchor[anchor_idx * 2 + 1];
+//     for (int grid_y = 0; grid_y < grid_x_len; grid_y++) {
+//       for (int grid_x = 0; grid_x < grid_y_len; grid_x++) {
+//         float obj_conf;
+//         if (num_per_pixel == 1) {
+//           obj_conf = ptr_int8[start_idx + 4] * qscale;
+//         } else {
+//           obj_conf = ptr_float[start_idx + 4];
+//         }
+//         obj_conf = sigmoid(obj_conf);
+//         // filter detections lowwer than conf_thresh
+//         if (obj_conf < m_model_threshold) {
+//           start_idx += (p_yolov5_param_->cls + 5);
+//           continue;
+//         }
 
-        if (num_per_pixel == 1) {
-          int cls = yolov5_argmax<int8_t>(ptr_int8, start_idx + 5, p_yolov5_param_->cls);
-          parseDet<int8_t>(ptr_int8, start_idx, qscale, cls, grid_x, grid_y, stride_x, stride_y, pw,
-                           ph, vec_obj);
-        } else {
-          int cls = yolov5_argmax<float>(ptr_float, start_idx + 5, p_yolov5_param_->cls);
-          parseDet<float>(ptr_float, start_idx, qscale, cls, grid_x, grid_y, stride_x, stride_y, pw,
-                          ph, vec_obj);
-        }
+//         if (num_per_pixel == 1) {
+//           int cls = yolov5_argmax<int8_t>(ptr_int8, start_idx + 5, p_yolov5_param_->cls);
+//           parseDet<int8_t>(ptr_int8, start_idx, qscale, cls, grid_x, grid_y, stride_x, stride_y,
+//           pw,
+//                            ph, nn_height, nn_width, vec_obj);
+//         } else {
+//           int cls = yolov5_argmax<float>(ptr_float, start_idx + 5, p_yolov5_param_->cls);
+//           parseDet<float>(ptr_float, start_idx, qscale, cls, grid_x, grid_y, stride_x, stride_y,
+//           pw,
+//                           ph, nn_height, nn_width, vec_obj);
+//         }
 
-        start_idx += (p_yolov5_param_->cls + 5);
+//         start_idx += (p_yolov5_param_->cls + 5);
+//       }
+//     }
+//   }
+// }
+
+void Yolov5::generate_yolov5_proposals(Detections &vec_obj) {
+  CVI_SHAPE shape = getInputShape(0);
+  int target_w = shape.dim[3];
+  int target_h = shape.dim[2];
+  int anchor_pos = 0;
+  for (uint32_t i = 0; i < p_yolov5_param_->stride_len; i++) {
+    int stride = p_yolov5_param_->strides[i];
+    int num_grid_w = target_w / stride;
+    int num_grid_h = target_h / stride;
+
+    int basic_pos_class = 0;
+    int basic_pos_object = 0;
+    int basic_pos_box = 0;
+
+    TensorInfo oinfo_class = getOutputTensorInfo(class_out_names_[stride]);
+    int num_per_pixel_class = oinfo_class.tensor_size / oinfo_class.tensor_elem;
+    float qscale_class = num_per_pixel_class == 1 ? oinfo_class.qscale : 1;
+    int8_t *ptr_int8_class = static_cast<int8_t *>(oinfo_class.raw_pointer);
+    float *ptr_float_class = static_cast<float *>(oinfo_class.raw_pointer);
+    // printf("%s, %d %d %d\n", oinfo_class.tensor_name.c_str(), oinfo_class.shape.dim[1],
+    //                                                              oinfo_class.shape.dim[2],
+    //                                                              oinfo_class.shape.dim[3]);
+
+    TensorInfo oinfo_object = getOutputTensorInfo(conf_out_names_[stride]);
+    int num_per_pixel_object = oinfo_object.tensor_size / oinfo_object.tensor_elem;
+    float qscale_object = num_per_pixel_object == 1 ? oinfo_object.qscale : 1;
+    int8_t *ptr_int8_object = static_cast<int8_t *>(oinfo_object.raw_pointer);
+    float *ptr_float_object = static_cast<float *>(oinfo_object.raw_pointer);
+    // printf("%s, %d %d %d\n", oinfo_object.tensor_name.c_str(), oinfo_object.shape.dim[1],
+    //                                                               oinfo_object.shape.dim[2],
+    //                                                               oinfo_object.shape.dim[3]);
+
+    TensorInfo oinfo_box = getOutputTensorInfo(box_out_names_[stride]);
+    int num_per_pixel_box = oinfo_box.tensor_size / oinfo_box.tensor_elem;
+    float qscale_box = num_per_pixel_box == 1 ? oinfo_box.qscale : 1;
+    int8_t *ptr_int8_box = static_cast<int8_t *>(oinfo_box.raw_pointer);
+    float *ptr_float_box = static_cast<float *>(oinfo_box.raw_pointer);
+    // printf("%s, %d %d %d\n", oinfo_box.tensor_name.c_str(), oinfo_box.shape.dim[1],
+    //                                                            oinfo_box.shape.dim[2],
+    //                                                            oinfo_box.shape.dim[3]);
+
+    for (uint32_t anchor_idx = 0; anchor_idx < p_yolov5_param_->anchor_len; anchor_idx++) {
+      uint32_t *anchors = p_yolov5_param_->anchors + anchor_pos;
+
+      float pw = anchors[0];
+      float ph = anchors[1];
+
+      for (int grid_y = 0; grid_y < num_grid_h; grid_y++) {
+        for (int grid_x = 0; grid_x < num_grid_w; grid_x++) {
+          float class_score = 0.0f;
+          float box_objectness = 0.0f;
+          int label = 0;
+
+          // parse object conf
+          if (num_per_pixel_class == 1) {
+            box_objectness = ptr_int8_object[basic_pos_object] * qscale_object;
+          } else {
+            box_objectness = ptr_float_object[basic_pos_object];
+          }
+
+          // parse class score
+          if (num_per_pixel_object == 1) {
+            label = yolov5_argmax<int8_t>(ptr_int8_class, basic_pos_class, p_yolov5_param_->cls);
+            class_score = ptr_int8_class[basic_pos_class + label] * qscale_class;
+          } else {
+            label = yolov5_argmax<float>(ptr_float_class, basic_pos_class, p_yolov5_param_->cls);
+            class_score = ptr_float_class[basic_pos_class + label];
+          }
+
+          box_objectness = sigmoid(box_objectness);
+          class_score = sigmoid(class_score);
+          float box_prob = box_objectness * class_score;
+
+          // printf("%d %d %d %d %d \n", stride, anchor_pos, basic_pos_object, basic_pos_box,
+          // basic_pos_class);
+          if (box_prob < m_model_threshold) {
+            basic_pos_class += p_yolov5_param_->cls;
+            basic_pos_box += 4;
+            basic_pos_object += 1;
+            continue;
+          }
+          // printf("%f %f %f\n", box_objectness, class_score, box_prob);
+          // parse box
+          if (num_per_pixel_box == 1) {
+            parseDet<int8_t>(ptr_int8_box, basic_pos_box, qscale_box, label, box_prob, grid_x,
+                             grid_y, stride, stride, pw, ph, target_w, target_h, vec_obj);
+          } else {
+            parseDet<float>(ptr_float_box, basic_pos_box, qscale_box, label, box_prob, grid_x,
+                            grid_y, stride, stride, pw, ph, target_w, target_h, vec_obj);
+          }
+
+          basic_pos_class += p_yolov5_param_->cls;
+          basic_pos_box += 4;
+          basic_pos_object += 1;
+        }
       }
+      anchor_pos += 2;
     }
   }
-}
-
-void Yolov5::clip_bbox(int frame_width, int frame_height, cvai_bbox_t *bbox) {
-  if (bbox->x1 < 0) {
-    bbox->x1 = 0;
-  } else if (bbox->x1 > frame_width) {
-    bbox->x1 = frame_width;
-  }
-
-  if (bbox->x2 < 0) {
-    bbox->x2 = 0;
-  } else if (bbox->x2 > frame_width) {
-    bbox->x2 = frame_width;
-  }
-
-  if (bbox->y1 < 0) {
-    bbox->y1 = 0;
-  } else if (bbox->y1 > frame_height) {
-    bbox->y1 = frame_height;
-  }
-
-  if (bbox->y2 < 0) {
-    bbox->y2 = 0;
-  } else if (bbox->y2 > frame_height) {
-    bbox->y2 = frame_height;
-  }
-}
-
-cvai_bbox_t Yolov5::yolov5_box_rescale(int frame_width, int frame_height, int width, int height,
-                                       cvai_bbox_t bbox) {
-  cvai_bbox_t rescale_bbox;
-  int max_board = max_val(frame_width, frame_height);
-  float ratio = float(max_board) / float(width);
-  rescale_bbox.x1 = int(bbox.x1 * ratio);
-  rescale_bbox.x2 = int(bbox.x2 * ratio);
-  rescale_bbox.y1 = int(bbox.y1 * ratio);
-  rescale_bbox.y2 = int(bbox.y2 * ratio);
-  rescale_bbox.score = bbox.score;
-  clip_bbox(frame_width, frame_height, &rescale_bbox);
-  return rescale_bbox;
 }
 
 void Yolov5::Yolov5PostProcess(Detections &dets, int frame_width, int frame_height,
@@ -276,8 +348,9 @@ void Yolov5::Yolov5PostProcess(Detections &dets, int frame_width, int frame_heig
   // rescale bounding box to original image
   if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < obj_meta->size; ++i) {
-      obj_meta->info[i].bbox = yolov5_box_rescale(frame_width, frame_height, obj_meta->width,
-                                                  obj_meta->height, obj_meta->info[i].bbox);
+      obj_meta->info[i].bbox =
+          box_rescale(frame_width, frame_height, obj_meta->width, obj_meta->height,
+                      obj_meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
     }
     obj_meta->width = frame_width;
     obj_meta->height = frame_height;
@@ -288,27 +361,27 @@ void Yolov5::outputParser(const int image_width, const int image_height, const i
                           const int frame_height, cvai_object_t *obj_meta) {
   Detections vec_obj;
 
-  for (uint32_t branch = 0; branch < getNumOutputTensor(); branch++) {
-    int anchor_idx = stride_keys_[p_yolov5_param_->strides[branch]];
-    TensorInfo oinfo = getOutputTensorInfo(out_names_[p_yolov5_param_->strides[branch]]);
-    CVI_SHAPE output_shape = oinfo.shape;
-    CVI_SHAPE input_shape = getInputShape(0);
-    int grid_x_len = output_shape.dim[2];
-    int grid_y_len = output_shape.dim[3] / (p_yolov5_param_->cls + 5);
+  // for (int branch = 0; branch < p_yolov5_param_->anchor_len; branch++) {
+  // TensorInfo oinfo = getOutputTensorInfo(out_names_[p_yolov5_param_->strides[branch]]);
+  // CVI_SHAPE output_shape = oinfo.shape;
+  // CVI_SHAPE input_shape = getInputShape(0);
+  // int grid_x_len = output_shape.dim[2];
+  // int grid_y_len = output_shape.dim[3];
 
-    int stride_x = input_shape.dim[2] / grid_x_len;
-    int stride_y = input_shape.dim[3] / grid_y_len;
+  // int stride_x = input_shape.dim[2] / grid_x_len;
+  // int stride_y = input_shape.dim[3] / grid_y_len;
 
-    int num_per_pixel = oinfo.tensor_size / oinfo.tensor_elem;
-    float qscale = num_per_pixel == 1 ? oinfo.qscale : 1;
+  // int num_per_pixel = oinfo.tensor_size / oinfo.tensor_elem;
+  // float qscale = num_per_pixel == 1 ? oinfo.qscale : 1;
 
-    int8_t *ptr_int8 = static_cast<int8_t *>(oinfo.raw_pointer);
-    float *ptr_float = static_cast<float *>(oinfo.raw_pointer);
+  // int8_t *ptr_int8 = static_cast<int8_t *>(oinfo.raw_pointer);
+  // float *ptr_float = static_cast<float *>(oinfo.raw_pointer);
 
-    getYolov5Detections(
-        ptr_int8, ptr_float, num_per_pixel, qscale, stride_x, stride_y, grid_x_len, grid_y_len,
-        p_yolov5_param_->anchors + anchor_idx * (p_yolov5_param_->anchor_len * 2), vec_obj);
-  }
+  // getYolov5Detections(
+  //     ptr_int8, ptr_float, num_per_pixel, qscale, stride_x, stride_y, grid_x_len, grid_y_len,
+  //     p_yolov5_param_->anchors + anchor_idx * (p_yolov5_param_->anchor_len * 2),
+  //     input_shape.dim[3], input_shape.dim[2], vec_obj);
+  generate_yolov5_proposals(vec_obj);
 
   Yolov5PostProcess(vec_obj, frame_width, frame_height, obj_meta);
 }

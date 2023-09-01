@@ -11,23 +11,7 @@
 #include "object_utils.hpp"
 #include "yolox.hpp"
 
-#define R_SCALE 1
-#define G_SCALE 1
-#define B_SCALE 1
-#define R_MEAN 0
-#define G_MEAN 0
-#define B_MEAN 0
-#define NUM_CLASSES 80
-#define NMS_THRESH 0.55
-#define NAME_OUTPUT "output_Transpose_dequant"
-
 namespace cviai {
-
-struct GridAndStride {
-  int grid0;
-  int grid1;
-  int stride;
-};
 
 static void convert_det_struct(const Detections &dets, cvai_object_t *out, int im_height,
                                int im_width, meta_rescale_type_e type) {
@@ -49,65 +33,177 @@ static void convert_det_struct(const Detections &dets, cvai_object_t *out, int i
   }
 }
 
-static void generate_grids_and_stride(const int target_w, const int target_h,
-                                      std::vector<int> &strides,
-                                      std::vector<GridAndStride> &grid_strides) {
-  for (auto stride : strides) {
+float yolox_sigmoid(float x) { return 1.0 / (1.0 + exp(-x)); }
+
+template <typename T>
+void decode_yolox_bbox(T *ptr, float qscale, int basic_pos, int grid0, int grid1, int stride,
+                       int label, float box_prob, PtrDectRect &det) {
+  float x_center = (ptr[basic_pos + 0] * qscale + grid0) * stride;
+  float y_center = (ptr[basic_pos + 1] * qscale + grid1) * stride;
+  float w = std::exp(ptr[basic_pos + 2] * qscale) * stride;
+  float h = std::exp(ptr[basic_pos + 3] * qscale) * stride;
+  float x0 = x_center - w * 0.5f;
+  float y0 = y_center - h * 0.5f;
+  det->label = label;
+  det->score = box_prob;
+  det->x1 = x0;
+  det->y1 = y0;
+  det->x2 = x0 + w;
+  det->y2 = y0 + h;
+}
+
+template <typename T>
+int yolox_argmax(T *ptr, int basic_pos, int cls_len) {
+  int max_idx = 0;
+  for (int i = 0; i < cls_len; i++) {
+    if (ptr[i + basic_pos] > ptr[max_idx + basic_pos]) {
+      max_idx = i;
+    }
+  }
+  return max_idx;
+}
+
+void YoloX::generate_yolox_proposals(Detections &detections) {
+  CVI_SHAPE shape = getInputShape(0);
+  int target_w = shape.dim[3];
+  int target_h = shape.dim[2];
+
+  for (auto stride : strides_) {
+    TensorInfo oinfo_class = getOutputTensorInfo(class_out_names_[stride]);
+    int num_per_pixel_class = oinfo_class.tensor_size / oinfo_class.tensor_elem;
+    float qscale_class = num_per_pixel_class == 1 ? oinfo_class.qscale : 1;
+    int8_t *ptr_int8_class = static_cast<int8_t *>(oinfo_class.raw_pointer);
+    float *ptr_float_class = static_cast<float *>(oinfo_class.raw_pointer);
+
+    TensorInfo oinfo_object = getOutputTensorInfo(object_out_names_[stride]);
+    int num_per_pixel_object = oinfo_object.tensor_size / oinfo_object.tensor_elem;
+    float qscale_object = num_per_pixel_object == 1 ? oinfo_object.qscale : 1;
+    int8_t *ptr_int8_object = static_cast<int8_t *>(oinfo_object.raw_pointer);
+    float *ptr_float_object = static_cast<float *>(oinfo_object.raw_pointer);
+
+    TensorInfo oinfo_box = getOutputTensorInfo(box_out_names_[stride]);
+    int num_per_pixel_box = oinfo_box.tensor_size / oinfo_box.tensor_elem;
+    float qscale_box = num_per_pixel_box == 1 ? oinfo_box.qscale : 1;
+    int8_t *ptr_int8_box = static_cast<int8_t *>(oinfo_box.raw_pointer);
+    float *ptr_float_box = static_cast<float *>(oinfo_box.raw_pointer);
+
     int num_grid_w = target_w / stride;
     int num_grid_h = target_h / stride;
+
+    int basic_pos_class = 0;
+    int basic_pos_object = 0;
+    int basic_pos_box = 0;
+
     for (int g1 = 0; g1 < num_grid_h; g1++) {
       for (int g0 = 0; g0 < num_grid_w; g0++) {
-        grid_strides.push_back((GridAndStride){g0, g1, stride});
+        float class_score = 0.0f;
+        float box_objectness = 0.0f;
+        int label = 0;
+
+        // parse object conf
+        if (num_per_pixel_class == 1) {
+          box_objectness = ptr_int8_object[basic_pos_object] * qscale_object;
+        } else {
+          box_objectness = ptr_float_object[basic_pos_object];
+        }
+
+        // parse class score
+        if (num_per_pixel_object == 1) {
+          label = yolox_argmax<int8_t>(ptr_int8_class, basic_pos_class, p_alg_param_->cls);
+          class_score = ptr_int8_class[basic_pos_class + label] * qscale_class;
+        } else {
+          label = yolox_argmax<float>(ptr_float_class, basic_pos_class, p_alg_param_->cls);
+          class_score = ptr_float_class[basic_pos_class + label];
+        }
+
+        // printf("%d %d %d\n", basic_pos_object, basic_pos_box, basic_pos_class);
+        box_objectness = yolox_sigmoid(box_objectness);
+        class_score = yolox_sigmoid(class_score);
+        float box_prob = box_objectness * class_score;
+
+        if (box_prob < m_model_threshold) {
+          basic_pos_class += p_alg_param_->cls;
+          basic_pos_box += 4;
+          basic_pos_object += 1;
+          continue;
+        }
+
+        // parse box point
+        PtrDectRect det = std::make_shared<object_detect_rect_t>();
+        if (num_per_pixel_box == 1) {
+          decode_yolox_bbox<int8_t>(ptr_int8_box, qscale_box, basic_pos_box, g0, g1, stride, label,
+                                    box_prob, det);
+        } else {
+          decode_yolox_bbox<float>(ptr_float_box, qscale_box, basic_pos_box, g0, g1, stride, label,
+                                   box_prob, det);
+        }
+
+        clip_bbox(target_w, target_h, det);
+        float box_width = det->x2 - det->x1;
+        float box_height = det->y2 - det->y1;
+        if (box_width > 1 && box_height > 1) {
+          detections.push_back(det);
+        }
+        basic_pos_class += p_alg_param_->cls;
+        basic_pos_box += 4;
+        basic_pos_object += 1;
       }
     }
   }
 }
 
-static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, const float *feat_ptr,
-                                     float prob_threshold, Detections &detections) {
-  const int num_anchors = grid_strides.size();
+YoloX::YoloX() : Core(CVI_MEM_DEVICE) {}
 
-  for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++) {
-    const int grid0 = grid_strides[anchor_idx].grid0;
-    const int grid1 = grid_strides[anchor_idx].grid1;
-    const int stride = grid_strides[anchor_idx].stride;
+int YoloX::onModelOpened() {
+  CVI_SHAPE input_shape = getInputShape(0);
 
-    const int basic_pos = anchor_idx * (NUM_CLASSES + 5);
+  int input_h = input_shape.dim[2];
 
-    // yolox/models/yolo_head.py decode logic
-    //  outputs[..., :2] = (outputs[..., :2] + grids) * strides
-    //  outputs[..., 2:4] = torch.exp(outputs[..., 2:4]) * strides
-    float x_center = (feat_ptr[basic_pos + 0] + grid0) * stride;
-    float y_center = (feat_ptr[basic_pos + 1] + grid1) * stride;
-    float w = std::exp(feat_ptr[basic_pos + 2]) * stride;
-    float h = std::exp(feat_ptr[basic_pos + 3]) * stride;
-    float x0 = x_center - w * 0.5f;
-    float y0 = y_center - h * 0.5f;
+  strides_.clear();
+  for (size_t j = 0; j < getNumOutputTensor(); j++) {
+    TensorInfo oinfo = getOutputTensorInfo(j);
+    CVI_SHAPE output_shape = oinfo.shape;
+    int feat_h = output_shape.dim[1];
+    uint32_t channel = output_shape.dim[3];
+    int stride_h = input_h / feat_h;
 
-    float box_objectness = feat_ptr[basic_pos + 4];
-    const float *score_start = feat_ptr + basic_pos + 5;
-    const float *score_end = score_start + NUM_CLASSES;
-    auto iter = std::max_element(score_start, score_end);
-    float box_prob = box_objectness * *iter;
+    // printf("%s: (%d %d %d %d)\n", oinfo.tensor_name.c_str(), output_shape.dim[0],
+    //       output_shape.dim[1], output_shape.dim[2], output_shape.dim[3]);
 
-    if (box_prob > prob_threshold) {
-      PtrDectRect det = std::make_shared<object_detect_rect_t>();
-      det->label = coco_utils::class_id_map_80_to_91[std::distance(score_start, iter)];
-      det->score = box_prob;
-      det->x1 = x0;
-      det->y1 = y0;
-      det->x2 = x0 + w;
-      det->y2 = y0 + h;
-      detections.push_back(det);
-    }  // class loop
-  }    // point anchor loop
+    if (channel == p_alg_param_->cls) {
+      class_out_names_[stride_h] = oinfo.tensor_name;
+      strides_.push_back(stride_h);
+      LOGE("parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(), channel,
+           stride_h);
+    } else if (channel == 4) {
+      box_out_names_[stride_h] = oinfo.tensor_name;
+      LOGE("parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(), channel,
+           stride_h);
+    } else if (channel == 1) {
+      object_out_names_[stride_h] = oinfo.tensor_name;
+      LOGE("parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(), channel,
+           stride_h);
+    } else {
+      LOGE("model channel num not match!\n");
+      return CVIAI_FAILURE;
+    }
+  }
+
+  for (size_t i = 0; i < strides_.size(); i++) {
+    if (!class_out_names_.count(strides_[i]) || !box_out_names_.count(strides_[i]) ||
+        !object_out_names_.count(strides_[i])) {
+      return CVIAI_FAILURE;
+    }
+  }
+
+  return CVIAI_SUCCESS;
 }
 
-YoloX::YoloX() : Core(CVI_MEM_DEVICE) {
-  m_filter.set();  // select all classes
+YoloX::~YoloX() {
+  for (uint32_t i = 0; i < m_filter.size(); i++) {
+    m_filter.set(i, true);
+  }
 }
-
-YoloX::~YoloX() {}
 
 void YoloX::select_classes(const std::vector<uint32_t> &selected_classes) {
   m_filter.reset();
@@ -122,15 +218,19 @@ int YoloX::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
     return CVIAI_ERR_INVALID_ARGS;
   }
 
-  (*data)[0].factor[0] = R_SCALE;
-  (*data)[0].factor[1] = G_SCALE;
-  (*data)[0].factor[2] = B_SCALE;
-  (*data)[0].mean[0] = R_MEAN;
-  (*data)[0].mean[1] = G_MEAN;
-  (*data)[0].mean[2] = B_MEAN;
-  (*data)[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
+  for (int i = 0; i < 3; i++) {
+    (*data)[0].factor[i] = p_preprocess_cfg_->factor[i];
+    (*data)[0].mean[i] = p_preprocess_cfg_->mean[i];
+  }
+
+  (*data)[0].format = p_preprocess_cfg_->format;
+  (*data)[0].use_quantize_scale = p_preprocess_cfg_->use_quantize_scale;
   return CVIAI_SUCCESS;
+}
+
+void YoloX::set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_alg_param) {
+  p_preprocess_cfg_ = p_preprocess_cfg;
+  p_alg_param_ = p_alg_param;
 }
 
 int YoloX::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
@@ -149,17 +249,11 @@ int YoloX::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
 
 void YoloX::outputParser(const int image_width, const int image_height, const int frame_width,
                          const int frame_height, cvai_object_t *obj_meta) {
-  float *output_blob = getOutputRawPtr<float>(NAME_OUTPUT);
-
-  std::vector<int> strides = {8, 16, 32};
-  std::vector<GridAndStride> grid_strides;
-  generate_grids_and_stride(image_width, image_height, strides, grid_strides);
-
   Detections vec_obj;
-  generate_yolox_proposals(grid_strides, output_blob, m_model_threshold, vec_obj);
+  generate_yolox_proposals(vec_obj);
 
   // Do nms on output result
-  Detections final_dets = nms_multi_class(vec_obj, NMS_THRESH);
+  Detections final_dets = nms_multi_class(vec_obj, m_model_nms_threshold);
 
   if (!m_filter.all()) {  // filter if not all bit are set
     auto condition = [this](const PtrDectRect &det) { return !m_filter.test(det->label); };

@@ -31,6 +31,7 @@ if(DEFINED NO_OPENCV)
                   $<TARGET_OBJECTS:utils>
                   $<TARGET_OBJECTS:yolov3>
                   $<TARGET_OBJECTS:yolox>
+                  $<TARGET_OBJECTS:ppyoloe>
                   $<TARGET_OBJECTS:retina_face>
                   $<TARGET_OBJECTS:digital_tracking>
                   $<TARGET_OBJECTS:draw_rect>
@@ -94,7 +95,8 @@ else()
                 $<TARGET_OBJECTS:motion_detection>
                 $<TARGET_OBJECTS:tamper_detection>
                 $<TARGET_OBJECTS:face_mask_detection>
-                $<TARGET_OBJECTS:yolox>
+                $<TARGET_OBJECTS:yolox>  
+                $<TARGET_OBJECTS:ppyoloe>  
                 $<TARGET_OBJECTS:yolov8_pose>
                 $<TARGET_OBJECTS:simcc>
                 $<TARGET_OBJECTS:image_classification>)

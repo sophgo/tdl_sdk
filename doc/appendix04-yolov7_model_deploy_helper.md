@@ -26,7 +26,7 @@ from models.common import Conv
 from utils.activations import Hardswish, SiLU
 import types
 
-pt_path = "./weights/yolov7-tiny.pt"
+pt_path = "path/to/yolov7-tiny.pt"
 save_path = pt_path.replace(".pt", ".onnx")
 
 ckpt = torch.load(pt_path, map_location="cpu")
@@ -53,13 +53,20 @@ for m in model.modules():
 def forward(self, x):
         # x = x.copy()  # for profiling
         z = []  # inference output
-        self.training |= self.export
+
         for i in range(self.nl):
             x[i] = self.m[i](x[i])  # conv
+
             bs, _, ny, nx = x[i].shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
             x[i] = x[i].view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
-
-        return x
+            
+            xywh, conf, score = x[i].split((4, 1, self.nc), 4)
+            
+            z.append(xywh[0])
+            z.append(conf[0])
+            z.append(score[0])
+            
+        return z
 
 
 model.model[-1].forward = types.MethodType(forward, model.model[-1])
@@ -87,9 +94,20 @@ yolov7模型与yolov5模型检测与解码过程基本类似，因此可以直�
 
 ## 测试结果
 
-测试了yolov7-tiny模型导出cvimodel的效果，测试平台为**cv1811h_wevb_0007a_spinor**，测试数据为COCO2017，其中阈值设置为：
+测试了yolov7-tiny模型各个版本的指标，测试数据为COCO2017，其中阈值设置为：
 
 * conf_threshold: 0.001
 * nms_threshold: 0.65
 
-![image-20230802143730343](./assets/image-20230802143730343.png)
+分辨率均为640 x 640
+
+|    模型     |  部署版本  | 测试平台 | 推理耗时 (ms) | 带宽 (MB) | ION(MB) | MAP 0.5  | MAP 0.5-0.95 |                   备注                   |
+| :---------: | :--------: | :------: | :-----------: | :-------: | :-----: | :------: | :----------: | :--------------------------------------: |
+| yolov7-tiny |  官方导出  | pytorch  |      N/A      |    N/A    |   N/A   |   56.7   |     38.7     |           pytorch官方fp32指标            |
+|             |  官方导出  |  cv181x  |     75.4      |   85.31   |  17.54  | 量化失败 |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
+|             |  官方导出  |  cv182x  |     56.6      |   85.31   |  17.54  | 量化失败 |   量化失败   | 官方脚本导出cvimodel，cv182x平台评测指标 |
+|             |  官方导出  |  cv183x  |     21.85     |   71.46   |  16.15  | 量化失败 |   量化失败   | 官方脚本导出cvimodel，cv183x平台评测指标 |
+|             | AI_SDK导出 |   onnx   |      N/A      |    N/A    |   N/A   | 53.7094  |    36.438    |            AI_SDK导出onnx指标            |
+|             | AI_SDK导出 |  cv181x  |     70.41     |   70.66   |  15.43  | 53.3681  |   32.6277    |  AI_SDI导出cvimodel, cv181x平台评测指标  |
+|             | AI_SDK导出 |  cv182x  |     52.01     |   70.66   |  15.43  | 53.3681  |   32.6277    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
+|             | AI_SDK导出 |  cv183x  |     18.95     |   55.86   |  14.05  | 53.3681  |   32.6277    |  AI_SDI导出cvimodel, cv183x平台评测指标  |

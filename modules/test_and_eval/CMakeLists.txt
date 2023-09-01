@@ -86,7 +86,8 @@ buildninstallcpp(NAME test_yolov8_detection INC ${REG_INCLUDES} DEPS cviai cviai
 buildninstallcpp(NAME test_yolov6 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_yolo INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_image_classification INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
-
+buildninstallcpp(NAME test_yolox INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME test_ppyoloe INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 
 
 #eval_model
@@ -95,6 +96,9 @@ buildninstallcpp(NAME eval_hand_keypoint INC ${REG_INCLUDES} DEPS cviai  cviai_e
 buildninstallcpp(NAME eval_head_person INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_face_landmarker_det2 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_yolov5 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME eval_yolov7 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_yolov6 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_yolov8_detection INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME eval_yolox INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_image_classification INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME eval_ppyoloe INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)

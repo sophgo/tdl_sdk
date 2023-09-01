@@ -65,16 +65,11 @@ Yolov6::Yolov6() : Core(CVI_MEM_DEVICE) {}
 
 int Yolov6::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
-  printf("into Yolov6:onModelOpened function!\n");
-  printf("input shape: %d %d %d %d\n", input_shape.dim[0], input_shape.dim[1], input_shape.dim[2],
-         input_shape.dim[3]);
   int input_h = input_shape.dim[2];
   strides.clear();
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
     TensorInfo oinfo = getOutputTensorInfo(j);
     CVI_SHAPE output_shape = oinfo.shape;
-    printf("%s : %d %d %d %d\n", oinfo.tensor_name.c_str(), output_shape.dim[0],
-           output_shape.dim[1], output_shape.dim[2], output_shape.dim[3]);
 
     int feat_h = output_shape.dim[1];
     uint32_t channel = output_shape.dim[3];

@@ -33,6 +33,7 @@
 #include "mask_face_recognition/mask_face_recognition.hpp"
 #include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
+#include "object_detection/ppyoloe/ppyoloe.hpp"
 #include "object_detection/yolo/yolo.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "object_detection/yolov5/yolov5.hpp"
@@ -142,6 +143,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_YOLOV6, CREATOR(Yolov6)},
     {CVI_AI_SUPPORTED_MODEL_YOLO, CREATOR(Yolo)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
+    {CVI_AI_SUPPORTED_MODEL_PPYOLOE, CREATOR(PPYoloE)},
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
     {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
     {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
@@ -597,10 +599,8 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
     // TODO: only supports MobileDetV2 and YOLOX for now
     if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(instance)) {
       mdetv2->select_classes(selected_classes);
-    } else if (YoloX *yolox = dynamic_cast<YoloX *>(instance)) {
-      yolox->select_classes(selected_classes);
     } else {
-      LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 and YOLOX model for now.\n");
+      LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2for now.\n");
     }
   } else {
     LOGE("Failed to create model: %s\n", CVI_AI_GetModelName(config));
@@ -792,6 +792,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov5, Yolov5, CVI_AI_SUPPORTED_MODEL_YOLOV5, cvai
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov6, Yolov6, CVI_AI_SUPPORTED_MODEL_YOLOV6, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolo, Yolo, CVI_AI_SUPPORTED_MODEL_YOLO, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_PPYoloE, PPYoloE, CVI_AI_SUPPORTED_MODEL_PPYOLOE, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_OSNet, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_OSNetOne, OSNet, CVI_AI_SUPPORTED_MODEL_OSNET, cvai_object_t *, int)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification, SoundClassification,
@@ -1546,6 +1547,26 @@ CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle, YoloPreParam *p_pre
   return CVI_SUCCESS;
 }
 
+CVI_S32 CVI_AI_Set_YOLOX_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
+                               YoloAlgParam *p_yolo_param) {
+  printf("enter CVI_AI_Set_YOLO_Param...\n");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  YoloX *yolox_model =
+      dynamic_cast<YoloX *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOX, ctx));
+  if (yolox_model == nullptr) {
+    LOGE("No instance found for yolox detection.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got yolo instance\n");
+  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
+    LOGE("p_preprocess_cfg or p_yolo_param can not be nullptr.\n");
+    return CVI_FAILURE;
+  }
+
+  yolox_model->set_param(p_preprocess_cfg, p_yolo_param);
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
                               YoloAlgParam *p_yolo_param) {
   printf("enter CVI_AI_Set_YOLO_Param...\n");
@@ -1562,6 +1583,26 @@ CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle, YoloPreParam *p_prepr
   }
 
   yolo_model->set_param(p_preprocess_cfg, p_yolo_param);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_Set_PPYOLOE_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
+                                 YoloAlgParam *p_yolo_param) {
+  printf("enter CVI_AI_Set_YOLO_Param...\n");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  PPYoloE *ppyoloe_model =
+      dynamic_cast<PPYoloE *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_PPYOLOE, ctx));
+  if (ppyoloe_model == nullptr) {
+    LOGE("No instance found for ppyoloe detection.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got ppyoloe instance\n");
+  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
+    LOGE("p_preprocess_cfg or p_yolo_param can not be nullptr.\n");
+    return CVI_FAILURE;
+  }
+
+  ppyoloe_model->set_param(p_preprocess_cfg, p_yolo_param);
   return CVI_SUCCESS;
 }
 

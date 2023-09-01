@@ -29,46 +29,42 @@ git clone https://github.com/ultralytics/yolov5.git
 * 然后修改`forward`函数的返回结果，不用`cat`操作，而是返回三个不同的下采样结果，直接`return z`
 
 ```python
- def forward(self, x):
+def forward(self, x):
         z = []  # inference output
         for i in range(self.nl):
             x[i] = self.m[i](x[i])  # conv
+
             bs, _, ny, nx = x[i].shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
             x[i] = x[i].view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
-
-            if not self.training:  # inference
-                if self.dynamic or self.grid[i].shape[2:4] != x[i].shape[2:4]:
-                    self.grid[i], self.anchor_grid[i] = self._make_grid(nx, ny, i)
-
-                if isinstance(self, Segment):  # (boxes + masks)
-                    xy, wh, conf, mask = x[i].split((2, 2, self.nc + 1, self.no - self.nc - 5), 4)
-                    xy = (xy.sigmoid() * 2 + self.grid[i]) * self.stride[i]  # xy
-                    wh = (wh.sigmoid() * 2) ** 2 * self.anchor_grid[i]  # wh
-                    y = torch.cat((xy, wh, conf.sigmoid(), mask), 4)
-                else:  # Detect (boxes only)
-                    # xy, wh, conf = x[i].sigmoid().split((2, 2, self.nc + 1), 4)
-                    xy, wh, conf = x[i].split((2, 2, self.nc + 1), 4)
-                    # xy = (xy * 2 + self.grid[i]) * self.stride[i]  # xy
-                    # wh = (wh * 2) ** 2 * self.anchor_grid[i]  # wh
-                    y = torch.cat((xy, wh, conf), 4)
-                # z.append(y.view(bs, self.na * nx * ny, self.no))
-                z.append(y)
-
+            
+            xywh, conf, score = x[i].split((4, 1, self.nc), 4)
+            
+            z.append(xywh[0])
+            z.append(conf[0])
+            z.append(score[0])
+            
         return z
-        # return x if self.training else (torch.cat(z, 1),) if self.export else (torch.cat(z, 1), x)
 ```
 
-> 这样修改后模型的输出分别三个不同的branch:
+> 这样修改后模型的输出分别9个不同的branch:
 >
-> * (batch_size, 3, 20, 20, 85)
-> * (batch_size, 3, 40 40, 85)
-> * (batch_size, 3, 80, 80, 85)
+> * (3, 20, 20, 80) - class
+> * (3, 20, 20, 4) - box
+> * (3, 20, 20, 1) - conf
+> * (3, 40, 40, 80)
+> * (3, 40, 40, 4)
+> * (3, 40, 40, 1)
+> * (3, 40, 40, 80)
+> * (3, 40, 40, 4)
+> * (3, 40, 40, 1)
 
 然后使用官方的`export.py`导出onnx模型
 
 ```shell
-python export.py --weights ./weights/yolov5s.pt --include onnx
+python export.py --weights ./weights/yolov5m.pt --include onnx
 ```
+
+其中`--weights`表示权重文件的相对路径，`--include`表示转换格式为`onnx`
 
 ## onnx模型转换cvimodel
 
@@ -504,7 +500,29 @@ for (uint32_t i = 0; i < obj_meta.size; i++) {
 * conf_thresh: 0.001 
 * nms_thresh: 0.65
 
-![image-20230802143529895](./assets/image-20230802143529895.png)
+输入分辨率均为 640 x 640
+
+
+|  模型   |  部署版本  | 测试平台 | 推理耗时 (ms) |  带宽 (MB)  | ION(MB) |   MAP 0.5   | MAP 0.5-0.95 |                   备注                   |
+| :-----: | :--------: | :------: | :-----------: | :---------: | :-----: | :---------: | :----------: | :--------------------------------------: |
+| yolov5s |  官方导出  | pytorch  |      N/A      |     N/A     |   N/A   |    56.8     |     37.4     |           pytorch官方fp32指标            |
+|         |  官方导出  |  cv181x  |     92.8      |   100.42    |  16.01  |  量化失败   |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
+|         |  官方导出  |  cv182x  |     69.89     |   102.74    |   16    |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv181x平台评测指标 |
+|         |  官方导出  |  cv183x  |     25.66     |    73.4     |   N/A   |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv181x平台评测指标 |
+|         | AI_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A   |   55.4241   |   36.6361    |            AI_SDK导出onnx指标            |
+|         | AI_SDK导出 |  cv181x  |     87.76     |    85.74    |  15.8   |   54.204    |   34.3985    |  AI_SDI导出cvimodel, cv181x平台评测指标  |
+|         | AI_SDK导出 |  cv182x  |     65.33     |    87.99    |  15.77  |   54.204    |   34.3985    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
+|         | AI_SDK导出 |  cv183x  |     22.86     |    58.38    |  14.22  |   54.204    |   34.3985    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+| yolov5m |  官方导出  | pytorch  |      N/A      |     N/A     |   N/A   |    64.1     |     45.4     |           pytorch官方fp32指标            |
+|         |  官方导出  |  cv181x  |  ion分配失败  | ion分配失败 |  35.96  |  量化失败   |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
+|         |  官方导出  |  cv182x  |    180.85     |   258.41    |  35.97  |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv181x平台评测指标 |
+|         |  官方导出  |  cv183x  |     59.36     |   137.86    |  30.49  |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv181x平台评测指标 |
+|         | AI_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A   |   62.7707   |   44.4973    |            AI_SDK导出onnx指标            |
+|         | AI_SDK导出 |  cv181x  |  ion分配失败  | ion分配失败 |  35.73  | ion分配失败 | ion分配失败  |  AI_SDI导出cvimodel, cv181x平台评测指标  |
+|         | AI_SDK导出 |  cv182x  |    176.04     |   243.62    |  35.74  |   61.5907   |   42.0852    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
+|         | AI_SDK导出 |  cv183x  |     56.53     |    122.9    |  30.27  |   61.5907   |   42.0852    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+
+
 
 
 

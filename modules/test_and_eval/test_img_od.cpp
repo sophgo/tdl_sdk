@@ -45,20 +45,21 @@ int main(int argc, char *argv[]) {
   } else {
     printf("image read,width:%d\n", bg.stVFrame.u32Width);
   }
-  std::string str_res;
-  for (int i = 0; i < 300; i++) {
+  // std::string str_res;
+  for (int i = 0; i < 1000; i++) {
     cvai_object_t obj_meta = {0};
     CVI_AI_MobileDetV2_Pedestrian(ai_handle, &bg, &obj_meta);
-    std::stringstream ss;
-    ss << "boxes=[";
-    for (uint32_t i = 0; i < obj_meta.size; i++) {
-      ss << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
-         << obj_meta.info[i].bbox.x2 << "," << obj_meta.info[i].bbox.y2 << "],";
-    }
-    str_res = ss.str();
+    printf("obj_size: %d\n", obj_meta.size);
+    // std::stringstream ss;
+    // ss << "boxes=[";
+    // for (uint32_t i = 0; i < obj_meta.size; i++) {
+    //   ss << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
+    //      << obj_meta.info[i].bbox.x2 << "," << obj_meta.info[i].bbox.y2 << "],";
+    // }
+    // str_res = ss.str();
     CVI_AI_Free(&obj_meta);
   }
-  std::cout << str_res << std::endl;
+  // std::cout << str_res << std::endl;
   CVI_AI_ReleaseImage(&bg);
   CVI_AI_DestroyHandle(ai_handle);
 
