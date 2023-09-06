@@ -20,6 +20,8 @@ add_subdirectory(app)
 if(NOT DEFINED NO_OPENCV)
   add_subdirectory(evaluation)
   add_subdirectory(test_and_eval)
+else()
+  add_subdirectory(test_noopencv)
 endif()
 
 if(DEFINED NO_OPENCV)
