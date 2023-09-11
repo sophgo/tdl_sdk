@@ -2,6 +2,9 @@
 
 #include "license_plate_recognitionv2.hpp"
 #include "core/core/cvai_errno.h"
+#include "core/cviai_types_mem.h"
+#include "core/face/cvai_face_types.h"
+#include "rescale_utils.hpp"
 
 #define SCALE (1 / 128.)
 #define MEAN (127.5 / 128.)
@@ -94,14 +97,28 @@ int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_
     return CVIAI_ERR_INVALID_ARGS;
   }
 
-  std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
-  int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
-    return ret;
-  }
+  for (uint32_t i = 0; i < vehicle_meta->size; ++i) {
+    cvai_object_info_t obj_info = info_extern_crop_resize_img(
+        frame->stVFrame.u32Width, frame->stVFrame.u32Height, &(vehicle_meta->info[i]));
+    VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+    memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
+    CVI_SHAPE shape = getInputShape(0);
+    int height = shape.dim[2];
+    int width = shape.dim[3];
+    vpssCropImage(frame, f, obj_info.bbox, width, height, PIXEL_FORMAT_RGB_888_PLANAR);
 
-  float *out = getOutputRawPtr<float>(OUTPUT_NAME_PROBABILITY);
-  greedy_decode(out);
+    std::vector<VIDEO_FRAME_INFO_S *> frames = {f};
+    int ret = run(frames);
+    if (ret != CVIAI_SUCCESS) {
+      return ret;
+    }
+
+    float *out = getOutputRawPtr<float>(OUTPUT_NAME_PROBABILITY);
+    greedy_decode(out);
+    delete f;
+
+    CVI_AI_FreeCpp(&obj_info);
+  }
 
   return CVIAI_SUCCESS;
 }

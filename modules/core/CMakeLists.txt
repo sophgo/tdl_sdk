@@ -60,6 +60,7 @@ else()
   add_subdirectory(human_keypoints_detection/yolov8_pose)
   add_subdirectory(human_keypoints_detection/simcc)
   add_subdirectory(image_classification)
+  add_subdirectory(license_plate_recognitionv2)
   set(CORE_INTERFACE cviai_core.cpp)
 
 endif()

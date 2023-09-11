@@ -65,6 +65,7 @@ set(SAMPLE_LIBS ${SAMPLE_LIBS}
 )
 endif()
 #test_model
+buildninstallcpp(NAME test_img_lpd_lpr INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_od INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_fd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_hand_detection INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
@@ -88,7 +89,6 @@ buildninstallcpp(NAME test_yolo INC ${REG_INCLUDES} DEPS cviai cviai_evaluation 
 buildninstallcpp(NAME test_image_classification INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_yolox INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_ppyoloe INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
-
 
 #eval_model
 buildninstallcpp(NAME eval_hand_dataset INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)

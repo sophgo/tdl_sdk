@@ -123,6 +123,32 @@ cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const floa
   return face_info_new;
 }
 
+cvai_object_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
+                                               const cvai_object_info_t *obj_info) {
+  cvai_object_info_t obj_info_new = {0};
+  CVI_AI_CopyInfoCpp(obj_info, &obj_info_new);
+
+  cvai_bbox_t bbox = obj_info_new.bbox;
+  int w_pad = (bbox.x2 - bbox.x1) * 0.2;
+  int h_pad = (bbox.y2 - bbox.y1) * 0.2;
+
+  // bbox new coordinate after extern
+  float x1 = bbox.x1 - w_pad;
+  float y1 = bbox.y1 - h_pad;
+  float x2 = bbox.x2 + w_pad;
+  float y2 = bbox.y2 + h_pad;
+
+  cvai_bbox_t new_bbox;
+  new_bbox.score = bbox.score;
+  new_bbox.x1 = std::max(x1, (float)0);
+  new_bbox.y1 = std::max(y1, (float)0);
+  new_bbox.x2 = std::min(x2, (float)(frame_width - 1));
+  new_bbox.y2 = std::min(y2, (float)(frame_height - 1));
+  obj_info_new.bbox = new_bbox;
+
+  return obj_info_new;
+}
+
 cvai_face_info_t info_rescale_c(const float width, const float height, const float new_width,
                                 const float new_height, const cvai_face_info_t &face_info) {
   cvai_face_info_t face_info_new;

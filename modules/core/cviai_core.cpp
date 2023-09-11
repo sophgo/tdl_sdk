@@ -27,6 +27,7 @@
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
+#include "license_plate_recognitionv2/license_plate_recognitionv2.hpp"
 #include "liveness/ir_liveness.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_classification/mask_classification.hpp"
@@ -149,6 +150,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
     {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, CREATOR(SoundClassificationV2)},
     {CVI_AI_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
+    {CVI_AI_SUPPORTED_MODEL_LP_RECONGNITION, CREATOR(LicensePlateRecognitionV2)},
     {CVI_AI_SUPPORTED_MODEL_DEEPLABV3, CREATOR(Deeplabv3)},
     {CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, CREATOR(AlphaPose)},
     {CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION, CREATOR(EyeClassification)},
@@ -254,9 +256,14 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
       LOGI("create headperson model");
     } else if (index == CVI_AI_SUPPORTED_MODEL_YOLOV8POSE) {
       YoloV8Pose *p_yolov8pose = new YoloV8Pose();
-      p_yolov8pose->setBranchChannel(64, 17);  // 17 keypoints
+      p_yolov8pose->setBranchChannel(64, 17, 1);  // 17 keypoints
       m_t.instance = p_yolov8pose;
       LOGI("create yolov8 pose model");
+    } else if (index == CVI_AI_SUPPORTED_MODEL_LP_DETECTION) {
+      YoloV8Pose *p_yolov8pose = new YoloV8Pose();
+      p_yolov8pose->setBranchChannel(64, 4, 2);  // 4 keypoints
+      m_t.instance = p_yolov8pose;
+      LOGI("create yolov8 pl model");
     } else {
       if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
         LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
@@ -831,9 +838,23 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_IrLiveness, IrLiveness, CVI_AI_SUPPORTED_MODEL_IRLI
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov8_Pose, YoloV8Pose, CVI_AI_SUPPORTED_MODEL_YOLOV8POSE,
                       cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_License_Plate_Detectionv2, YoloV8Pose,
+                      CVI_AI_SUPPORTED_MODEL_LP_DETECTION, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_License_Plate_Recognitionv2, LicensePlateRecognitionV2,
+                      CVI_AI_SUPPORTED_MODEL_LP_RECONGNITION, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Simcc_Pose, Simcc, CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Image_Classification, ImageClassification,
                       CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, cvai_class_meta_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Hand_Detection, YoloV8Detection, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION,
+                      cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_PersonPet_Detection, YoloV8Detection,
+                      CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_YOLOV8_Detection, YoloV8Detection,
+                      CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_HandFacePerson_Detection, YoloV8Detection,
+                      CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_HeadPerson_Detection, YoloV8Detection,
+                      CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION, cvai_object_t *)
 
 CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst, cvai_bbox_t *bbox,
                          bool cvtRGB888) {
@@ -1361,73 +1382,6 @@ DLL_EXPORT CVI_S32 CVI_AI_Release_VideoFrame(const cviai_handle_t handle,
   }
   return CVI_SUCCESS;
 }
-CVI_S32 CVI_AI_Hand_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                              cvai_object_t *obj_meta) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  YoloV8Detection *yolo_model = dynamic_cast<YoloV8Detection *>(
-      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, ctx));
-  if (yolo_model == nullptr) {
-    LOGE("No instance found for CVI_AI_Hand_Detection.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got yolov8 instance\n");
-  if (yolo_model->isInitialized()) {
-    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION) != CVI_SUCCESS) {
-      return CVIAI_ERR_INIT_VPSS;
-    } else {
-      return yolo_model->inference(frame, obj_meta);
-    }
-  } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
-         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_HAND_DETECTION));
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
-  }
-}
-CVI_S32 CVI_AI_PersonPet_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                   cvai_object_t *obj_meta) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  YoloV8Detection *yolo_model = dynamic_cast<YoloV8Detection *>(
-      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION, ctx));
-  if (yolo_model == nullptr) {
-    LOGE("No instance found for CVI_AI_Hand_Detection.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got yolov8 instance\n");
-  if (yolo_model->isInitialized()) {
-    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION) != CVI_SUCCESS) {
-      return CVIAI_ERR_INIT_VPSS;
-    } else {
-      return yolo_model->inference(frame, obj_meta);
-    }
-  } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
-         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION));
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
-  }
-}
-
-CVI_S32 CVI_AI_YOLOV8_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                cvai_object_t *obj_meta) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  YoloV8Detection *yolo_model = dynamic_cast<YoloV8Detection *>(
-      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION, ctx));
-  if (yolo_model == nullptr) {
-    LOGE("No instance found for CVI_AI_YOLOV8.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got yolov8 instance\n");
-  if (yolo_model->isInitialized()) {
-    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION) != CVI_SUCCESS) {
-      return CVIAI_ERR_INIT_VPSS;
-    } else {
-      return yolo_model->inference(frame, obj_meta);
-    }
-  } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
-         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION));
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
-  }
-}
 
 CVI_S32 CVI_AI_PersonVehicle_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                        cvai_object_t *obj_meta) {
@@ -1461,52 +1415,6 @@ CVI_S32 CVI_AI_PersonVehicle_Detection(const cviai_handle_t handle, VIDEO_FRAME_
   } else {
     LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
          CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION));
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
-  }
-}
-
-CVI_S32 CVI_AI_HandFacePerson_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                        cvai_object_t *obj_meta) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  YoloV8Detection *yolo_model = dynamic_cast<YoloV8Detection *>(
-      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, ctx));
-  if (yolo_model == nullptr) {
-    LOGE("No instance found for CVI_AI_Hand_Detection.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got yolov8 instance\n");
-  if (yolo_model->isInitialized()) {
-    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION) != CVI_SUCCESS) {
-      return CVIAI_ERR_INIT_VPSS;
-    } else {
-      return yolo_model->inference(frame, obj_meta);
-    }
-  } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
-         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION));
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
-  }
-}
-
-CVI_S32 CVI_AI_HeadPerson_Detection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                    cvai_object_t *obj_meta) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  YoloV8Detection *yolo_model = dynamic_cast<YoloV8Detection *>(
-      getInferenceInstance(CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION, ctx));
-  if (yolo_model == nullptr) {
-    LOGE("No instance found for CVI_AI_HeadPerson_Detection.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got yolov8 instance\n");
-  if (yolo_model->isInitialized()) {
-    if (initVPSSIfNeeded(ctx, CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION) != CVI_SUCCESS) {
-      return CVIAI_ERR_INIT_VPSS;
-    } else {
-      return yolo_model->inference(frame, obj_meta);
-    }
-  } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_AI_OpenModel to initialize model\n",
-         CVI_AI_GetModelName(CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION));
     return CVIAI_ERR_NOT_YET_INITIALIZED;
   }
 }

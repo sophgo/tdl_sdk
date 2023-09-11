@@ -22,6 +22,8 @@ cvai_object_info_t info_rescale_c(const float width, const float height, const f
                                   const float new_height, const cvai_object_info_t &object_info);
 cvai_face_info_t info_rescale_rb(const float width, const float height, const float new_width,
                                  const float new_height, const cvai_face_info_t &face_info);
+cvai_object_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
+                                               const cvai_object_info_t *obj_info);
 cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
                                              const cvai_face_info_t *face_info, int *p_dst_size);
 void info_rescale_nocopy_c(const float width, const float height, const float new_width,

@@ -40,10 +40,10 @@ YoloV8Pose::YoloV8Pose() : Core(CVI_MEM_DEVICE) {}
 
 YoloV8Pose::~YoloV8Pose() {}
 
-void YoloV8Pose::setBranchChannel(int box_channel, int kpts_channel) {
+void YoloV8Pose::setBranchChannel(int box_channel, int kpts_channel, int m_cls_channel) {
   m_box_channel_ = box_channel;
   m_kpts_channel_ = kpts_channel * 3;  // kpts_channel : num keypoints
-  m_cls_channel_ = 1;
+  m_cls_channel_ = m_cls_channel;
 }
 
 int YoloV8Pose::onModelOpened() {

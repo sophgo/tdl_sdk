@@ -155,7 +155,7 @@ CVI_S32 CVI_AI_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_
     }
 
     if (CREATE_ION_HELPER(frame, img.cols, img.rows, format, "cviai/image") != CVIAI_SUCCESS) {
-      LOGE("alloc ion failed，imgwidth:%d,imgheight:%d\n", img.cols, img.rows);
+      LOGE("alloc ion failed, imgwidth:%d,imgheight:%d\n", img.cols, img.rows);
       return CVIAI_FAILURE;
     }
     switch (format) {

@@ -11,7 +11,7 @@ class YoloV8Pose final : public Core {
   YoloV8Pose();
 
   virtual ~YoloV8Pose();
-  void setBranchChannel(int box_channel, int kpts_channel);
+  void setBranchChannel(int box_channel, int kpts_channel, int m_cls_channel);
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
   virtual bool allowExportChannelAttribute() const override { return true; }
 

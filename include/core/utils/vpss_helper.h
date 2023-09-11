@@ -638,7 +638,7 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
   switch (vFrame->enPixelFormat) {
     case PIXEL_FORMAT_RGB_888:
     case PIXEL_FORMAT_BGR_888: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * 3;
+      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * 3, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       // Don't need to align cause only 1 chn.

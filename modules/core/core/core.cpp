@@ -46,26 +46,17 @@ int Core::modelOpen(const char *filepath) {
     return CVIAI_FAILURE;
   }
   m_model_file = filepath;
-  //最初
-  // system("cat /sys/kernel/debug/ion/cvi_carveout_heap_dump/summary");
-  //  printf("111111111111\n");
   CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
                             "CVI_NN_RegisterModel failed");
-  //分配部分ion
-  // system("cat /sys/kernel/debug/ion/cvi_carveout_heap_dump/summary");
-  //  printf("2222\n");
+
   CVI_NN_SetConfig(mp_mi->handle, OPTION_OUTPUT_ALL_TENSORS,
                    static_cast<int>(mp_mi->conf.debug_mode));
-  //分配较多的ion
-  // system("cat /sys/kernel/debug/ion/cvi_carveout_heap_dump/summary");
-  //  printf("3333\n");
+
   CLOSE_MODEL_IF_TPU_FAILED(
       CVI_NN_GetInputOutputTensors(mp_mi->handle, &mp_mi->in.tensors, &mp_mi->in.num,
                                    &mp_mi->out.tensors, &mp_mi->out.num),
       "CVI_NN_GetINputsOutputs failed");
-  //不在分配ion
-  // system("cat /sys/kernel/debug/ion/cvi_carveout_heap_dump/summary");
-  // printf("444\n");
+
   setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
   setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
 
