@@ -395,6 +395,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
     LOGE("input frame turn into empty\n");
     return CVIAI_FAILURE;
   }
+
   ret = update_data(ai_handle, face_cpt_info, frame, &face_cpt_info->last_faces,
                     &face_cpt_info->last_trackers);
   if (ret != CVIAI_SUCCESS) {
@@ -402,11 +403,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
     return CVIAI_FAILURE;
   }
 
-  // ret = capture_face_with_vpss(ai_handle, face_cpt_info, frame, &face_cpt_info->last_faces);
-
   update_output_state(ai_handle, face_cpt_info);
-  // update_output_num(ai_handle,face_cpt_info,&face_cpt_info->last_trackers);
-
   if (face_cpt_info->fr_flag == 2) {
     // extract face feature from cropped image
     extract_cropped_face(ai_handle, face_cpt_info);
@@ -694,11 +691,6 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
                            VIDEO_FRAME_INFO_S *frame, cvai_face_t *face_meta,
                            cvai_tracker_t *tracker_meta) {
   LOGI("[APP::FaceCapture] Update Data\n");
-  // for (uint32_t j = 0; j < face_cpt_info->size; j++) {
-  //   if (face_cpt_info->data[j].state == ALIVE) {
-  //     face_cpt_info->data[j].miss_counter += 1;
-  //   }
-  // }
   for (uint32_t i = 0; i < face_meta->size; i++) {
     /* we only consider the stable tracker in this sample code. */
     if (face_meta->info[i].track_state != CVI_TRACKER_STABLE) {
@@ -712,12 +704,12 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     bool skip_dist = eye_dist < face_cpt_info->cfg.eye_dist_thresh * 0.8;
 
     uint64_t trk_id = face_meta->info[i].unique_id;
-    // printf("to update_data,trackid:%d,quality:%.3f,pscore:%.3f\n", (int)trk_id,
-    //      face_meta->info[i].face_quality, face_meta->info[i].pose_score);
+    LOGD("to update_data,trackid:%d,quality:%.3f,pscore:%.3f\n", (int)trk_id,
+         face_meta->info[i].face_quality, face_meta->info[i].pose_score);
 
     if (toskip || skip_dist) {
-      // printf("update_data,skip to generate capture data,trackid:%d,pscore:%f,eyedist:%.3f\n",
-      //        (int)face_meta->info[i].unique_id, face_meta->info[i].pose_score, eye_dist);
+      LOGD("update_data,skip to generate capture data,trackid:%d,pscore:%f,eyedist:%.3f\n",
+           (int)face_meta->info[i].unique_id, face_meta->info[i].pose_score, eye_dist);
       continue;
     }
 
@@ -738,7 +730,8 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
       if (face_meta->info[i].face_quality > current_quality) {
         update_idx = match_idx;
       } else {
-        // printf("curqu:%.3f,facequa:%.3f,posescore1:%.3f\n",current_quality,face_meta->info[i].face_quality,face_cpt_info->data[match_idx].info.pose_score1);
+        LOGD("curqu:%.3f,facequa:%.3f,posescore1:%.3f\n", current_quality,
+             face_meta->info[i].face_quality, face_cpt_info->data[match_idx].info.pose_score1);
       }
     } else {
       for (uint32_t j = 0; j < face_cpt_info->size; j++) {
@@ -749,18 +742,17 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
         }
       }
     }
+
     if (match_idx == -1 && idle_idx == -1) {
-      printf("no valid buffer\n");
+      LOGD("no valid buffer\n");
       continue;
     }
     if (update_idx == -1) {
-      // printf("matchidx:%d,idleidx:%d\n",match_idx,idle_idx);
       continue;
     }
     bool send_ok = face_cpt_info->cfg.m_capture_num != 0 &&
                    face_cpt_info->data[update_idx]._out_counter >= face_cpt_info->cfg.m_capture_num;
     if (send_ok) {
-      // printf("send ok,track:%d\n",(int)trk_id);
       continue;
     }
 
@@ -770,13 +762,13 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     VIDEO_FRAME_INFO_S *crop_frame = NULL;
     int ret = CVI_AI_CropResizeImage(ai_handle, face_cpt_info->fl_model, frame, &crop_box, dst_wh,
                                      dst_wh, PIXEL_FORMAT_RGB_888, &crop_frame);
-    // printf("to process,index:%d,face:%d\n",update_idx,(int)i);
     if (ret != CVI_SUCCESS) {
       LOGE("skip crop failed\n");
       if (crop_frame != NULL)
         CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
       continue;
     }
+
     cvai_face_t obj_meta = {0};
     if (face_cpt_info->fl_model == CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3) {
       ret = CVI_AI_FLDet3(ai_handle, crop_frame, &obj_meta);
@@ -784,12 +776,11 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
       ret = CVI_AI_FaceLandmarkerDet2(ai_handle, crop_frame, &obj_meta);
     }
     if (ret != 0) {
-      printf("det3 failed\n");
+      LOGE("det3 failed\n");
       CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
       continue;
     }
-    // restore cropped image landmark to original image space
-    // printf("process done,psocore:%.3f\n",obj_meta.info[0].pts.score);
+
     float boxw = crop_box.x2 - crop_box.x1;
     float boxh = crop_box.y2 - crop_box.y1;
     float scalew = boxw / dst_wh;
@@ -804,12 +795,11 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     eye_dist_y = obj_meta.info[0].pts.y[0] - obj_meta.info[0].pts.y[1];
     eye_dist = sqrt(eye_dist_x * eye_dist_x + eye_dist_y * eye_dist_y);
     if (eye_dist < face_cpt_info->cfg.eye_dist_thresh ||
-        obj_meta.info[0].pts.score < face_cpt_info->cfg.landmark_score_thresh) {
-      // printf("skip track:%d,eyedist:%.3f,ptscore:%.3f\n", (int)trk_id, eye_dist,
-      //        obj_meta.info[0].pts.score);
+        obj_meta.info[0].score < face_cpt_info->cfg.landmark_score_thresh) {
+      LOGD("skip track:%d,eyedist:%.3f,ptscore:%.3f\n", (int)trk_id, eye_dist,
+           obj_meta.info[0].pts.score);
       CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
       CVI_AI_Free(&obj_meta);
-
       continue;
     }
 
@@ -819,7 +809,7 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
         get_score(&face_meta->info[i].bbox, &obj_meta.info[0].pts, &pose);
 
     if (face_meta->info[i].pose_score1 <= face_cpt_info->data[update_idx].info.pose_score1) {
-      printf("skip track:%d,pose_score1:%.3f\n", (int)trk_id, face_meta->info[i].pose_score1);
+      LOGD("skip track:%d,pose_score1:%.3f\n", (int)trk_id, face_meta->info[i].pose_score1);
       CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
       CVI_AI_Free(&obj_meta);
       continue;
@@ -882,7 +872,6 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
     CVI_AI_Free(&obj_meta);
   }
-
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     bool found = false;
     for (uint32_t k = 0; k < tracker_meta->size; k++) {
@@ -893,7 +882,7 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     }
 
     if (!found && face_cpt_info->data[j].info.unique_id != 0) {
-      printf("to delete track:%u\n", (uint32_t)face_cpt_info->data[j].info.unique_id);
+      LOGD("to delete track:%u\n", (uint32_t)face_cpt_info->data[j].info.unique_id);
       face_cpt_info->data[j].miss_counter = face_cpt_info->cfg.miss_time_limit;
     }
   }
