@@ -2,8 +2,6 @@
 
 project(sample)
 
-
-
 # include_directories(
                     # ${MIDDLEWARE_INCLUDES}
                     # ${CMAKE_CURRENT_SOURCE_DIR}
@@ -45,6 +43,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/../../include
     ${IVE_INCLUDES}
     ${CMAKE_CURRENT_SOURCE_DIR}/../preprocess
     ${CMAKE_CURRENT_SOURCE_DIR}/../md
+    ${CMAKE_CURRENT_SOURCE_DIR}/../draw_rect
 )
 
 set(SAMPLE_LIBS
@@ -59,6 +58,12 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+    ${MLIR_SDK_ROOT}/lib/libz.so
+)
+set(OPENCV_LIB
+    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_core.so
+    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgproc.so
+    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgcodecs.so
 )
 
 if("${CVI_PLATFORM}" STREQUAL "CV181X"  OR "${CVI_PLATFORM}" STREQUAL "CV180X")
@@ -76,5 +81,8 @@ if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" OR
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
 
-buildninstallcpp(NAME test_img_cvimd INC  ${SAMPLE_INC} DEPS cvi_md ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
-buildninstallcpp(NAME test_preprocess INC ${SAMPLE_INC} DEPS cvi_preprocess ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
+if(NOT "${CVI_PLATFORM}" STREQUAL "CV180X")
+buildninstallcpp(NAME sample_lib_draw_rect INC ${SAMPLE_INC} DEPS cviai cviai_evaluation cvi_draw_rect  ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS} ${OPENCV_LIB})
+endif()
+buildninstallcpp(NAME sample_lib_cvimd INC  ${SAMPLE_INC} DEPS cvi_md ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
+buildninstallcpp(NAME sample_lib_preprocess INC ${SAMPLE_INC} DEPS cvi_preprocess ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})

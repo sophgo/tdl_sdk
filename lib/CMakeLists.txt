@@ -1,3 +1,6 @@
+if(NOT "${CVI_PLATFORM}" STREQUAL "CV180X")
+add_subdirectory(draw_rect)
+endif()
 add_subdirectory(md)
 add_subdirectory(preprocess)
 add_subdirectory(sample)

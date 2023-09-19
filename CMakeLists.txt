@@ -181,8 +181,8 @@ endif()
 
 if(NOT DEFINED SIMPLY_MODEL)
 if((NOT "${CVI_PLATFORM}" STREQUAL "CV180X") AND NOT DEFINED NO_OPENCV)
-add_subdirectory(regression)
-add_subdirectory(tool)
+# add_subdirectory(regression)
+# add_subdirectory(tool)
 endif()
 endif()
 

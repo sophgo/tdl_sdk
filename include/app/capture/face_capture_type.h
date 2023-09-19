@@ -34,7 +34,8 @@ typedef struct {
   uint32_t m_capture_num;  // max capture times
   bool auto_m_fast_cap;    // if true,would send first image out in auto mode
   uint8_t venc_channel_id;
-  int img_capture_flag;         // 0:capture extended face,1:capture whole frame
+  int img_capture_flag;         // 0:capture extended face,1:capture whole frame and extended
+                                // face,2:capture half body,3:capture whole frame and half body
   bool store_feature;           // if true,would export face feature ,should set FR
   float eye_dist_thresh;        // default 20
   float landmark_score_thresh;  // default 0.5

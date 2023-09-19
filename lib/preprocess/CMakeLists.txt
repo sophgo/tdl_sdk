@@ -14,15 +14,15 @@ set(PROJ_SRCS
               )
 project(cvi_preprocess)
 
-set(MD_CORES_DEPS ${MIDDLEWARE_LIBS})
+set(PP_CORES_DEPS ${MIDDLEWARE_LIBS})
 add_library(${PROJECT_NAME} SHARED ${PROJ_SRCS})
-target_link_libraries(${PROJECT_NAME} ${MD_CORES_DEPS})
+target_link_libraries(${PROJECT_NAME} ${PP_CORES_DEPS})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 project(cvi_preprocess-static)
 add_library(${PROJECT_NAME} STATIC ${PROJ_SRCS})
-target_link_libraries(${PROJECT_NAME} ${MD_CORES_DEPS})
+target_link_libraries(${PROJECT_NAME} ${PP_CORES_DEPS})
 SET_TARGET_PROPERTIES(cvi_preprocess-static PROPERTIES OUTPUT_NAME "cvi_preprocess")
 
 
