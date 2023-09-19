@@ -12,14 +12,21 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/cviai_trace
                     ${CMAKE_CURRENT_SOURCE_DIR}/log
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+
+if(NOT DEFINED SIMPLY_MODEL)
 add_subdirectory(cviai_trace) # Perfetto tracer comes first
+add_subdirectory(app)
+endif()
+
 add_subdirectory(core)
 add_subdirectory(service)
-add_subdirectory(app)
+
 
 if(NOT DEFINED NO_OPENCV)
-  add_subdirectory(evaluation)
-  add_subdirectory(test_and_eval)
+  if(NOT DEFINED SIMPLY_MODEL)
+    add_subdirectory(evaluation)
+    add_subdirectory(test_and_eval)
+  endif()
 else()
   add_subdirectory(test_noopencv)
 endif()
@@ -51,66 +58,76 @@ if(DEFINED NO_OPENCV)
   message("module no opencv ,core_srcs:" ${CORES_SRCS} )
   set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 else()
-  set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
-                $<TARGET_OBJECTS:cviai_service>
-                $<TARGET_OBJECTS:cviai_trace>
-                $<TARGET_OBJECTS:core>
-                $<TARGET_OBJECTS:custom>
-                $<TARGET_OBJECTS:utils>
-                $<TARGET_OBJECTS:face_attribute>
-                $<TARGET_OBJECTS:face_quality>
-                $<TARGET_OBJECTS:liveness>
-                $<TARGET_OBJECTS:mobiledetv2>
-                $<TARGET_OBJECTS:mask_face_recognition>
-                $<TARGET_OBJECTS:mask_classification>
-                $<TARGET_OBJECTS:hand_classification>
-                $<TARGET_OBJECTS:hand_keypoint>
-                $<TARGET_OBJECTS:hand_keypoint_classification>
-                $<TARGET_OBJECTS:yolov8>
-                $<TARGET_OBJECTS:osnet>
-                $<TARGET_OBJECTS:retina_face>
-                $<TARGET_OBJECTS:yolov3>
-                $<TARGET_OBJECTS:yolov5>
-                $<TARGET_OBJECTS:yolov6>
-                $<TARGET_OBJECTS:yolo>
-                $<TARGET_OBJECTS:thermal_face_detection>
-                $<TARGET_OBJECTS:thermal_person_detection>
-                $<TARGET_OBJECTS:deepsort>
-                $<TARGET_OBJECTS:sound_classification>
-                $<TARGET_OBJECTS:segmentation>
-                $<TARGET_OBJECTS:license_plate_recognition>
-                $<TARGET_OBJECTS:license_plate_recognitionv2>
-                $<TARGET_OBJECTS:license_plate_detection>
-                $<TARGET_OBJECTS:alphapose>
-                $<TARGET_OBJECTS:fall_detection>
-                $<TARGET_OBJECTS:eye_classification>
-                $<TARGET_OBJECTS:yawn_classification>
-                $<TARGET_OBJECTS:face_landmarker>
-                $<TARGET_OBJECTS:incar_object_detection>
-                $<TARGET_OBJECTS:smoke_classification>
-                $<TARGET_OBJECTS:digital_tracking>
-                $<TARGET_OBJECTS:draw_rect>
-                $<TARGET_OBJECTS:tracker>
-                $<TARGET_OBJECTS:area_detect>
-                $<TARGET_OBJECTS:feature_matching>
-                $<TARGET_OBJECTS:face_angle>
-                $<TARGET_OBJECTS:ivewrapper>
-                $<TARGET_OBJECTS:motion_detection>
-                $<TARGET_OBJECTS:tamper_detection>
-                $<TARGET_OBJECTS:face_mask_detection>
-                $<TARGET_OBJECTS:yolox>  
-                $<TARGET_OBJECTS:ppyoloe>  
-                $<TARGET_OBJECTS:yolov8_pose>
-                $<TARGET_OBJECTS:simcc>
-                $<TARGET_OBJECTS:image_classification>)
+  if(DEFINED SIMPLY_MODEL)
+    set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
+                   $<TARGET_OBJECTS:core>
+                   $<TARGET_OBJECTS:utils>
+                   $<TARGET_OBJECTS:ivewrapper>
+                   $<TARGET_OBJECTS:mobiledetv2>
+                   $<TARGET_OBJECTS:motion_detection>)
+    set(CORES_DEPS ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
+  else()
+    set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
+      $<TARGET_OBJECTS:cviai_service>
+      $<TARGET_OBJECTS:cviai_trace>
+      $<TARGET_OBJECTS:core>
+      $<TARGET_OBJECTS:custom>
+      $<TARGET_OBJECTS:utils>
+      $<TARGET_OBJECTS:face_attribute>
+      $<TARGET_OBJECTS:face_quality>
+      $<TARGET_OBJECTS:liveness>
+      $<TARGET_OBJECTS:mobiledetv2>
+      $<TARGET_OBJECTS:mask_face_recognition>
+      $<TARGET_OBJECTS:mask_classification>
+      $<TARGET_OBJECTS:hand_classification>
+      $<TARGET_OBJECTS:hand_keypoint>
+      $<TARGET_OBJECTS:hand_keypoint_classification>
+      $<TARGET_OBJECTS:yolov8>
+      $<TARGET_OBJECTS:osnet>
+      $<TARGET_OBJECTS:retina_face>
+      $<TARGET_OBJECTS:yolov3>
+      $<TARGET_OBJECTS:yolov5>
+      $<TARGET_OBJECTS:yolov6>
+      $<TARGET_OBJECTS:yolo>
+      $<TARGET_OBJECTS:thermal_face_detection>
+      $<TARGET_OBJECTS:thermal_person_detection>
+      $<TARGET_OBJECTS:deepsort>
+      $<TARGET_OBJECTS:sound_classification>
+      $<TARGET_OBJECTS:segmentation>
+      $<TARGET_OBJECTS:license_plate_recognition>
+      $<TARGET_OBJECTS:license_plate_recognitionv2>
+      $<TARGET_OBJECTS:license_plate_detection>
+      $<TARGET_OBJECTS:alphapose>
+      $<TARGET_OBJECTS:fall_detection>
+      $<TARGET_OBJECTS:eye_classification>
+      $<TARGET_OBJECTS:yawn_classification>
+      $<TARGET_OBJECTS:face_landmarker>
+      $<TARGET_OBJECTS:incar_object_detection>
+      $<TARGET_OBJECTS:smoke_classification>
+      $<TARGET_OBJECTS:digital_tracking>
+      $<TARGET_OBJECTS:draw_rect>
+      $<TARGET_OBJECTS:tracker>
+      $<TARGET_OBJECTS:area_detect>
+      $<TARGET_OBJECTS:feature_matching>
+      $<TARGET_OBJECTS:face_angle>
+      $<TARGET_OBJECTS:ivewrapper>
+      $<TARGET_OBJECTS:motion_detection>
+      $<TARGET_OBJECTS:tamper_detection>
+      $<TARGET_OBJECTS:face_mask_detection>
+      $<TARGET_OBJECTS:yolox>
+      $<TARGET_OBJECTS:ppyoloe>
+      $<TARGET_OBJECTS:yolov8_pose>
+      $<TARGET_OBJECTS:simcc>
+      $<TARGET_OBJECTS:image_classification>)
 
-  if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
-      set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)
+    if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
+    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)
+    endif()
+    set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
+    set(CORES_DEPS ${CORES_DEPS} ${OPENCV_LIBS_IMGPROC})
+    set(CORES_DEPS ${CORES_DEPS} ${OPENCV_LIBS_MIN})
+    message("opencv_libs_min:" ${OPENCV_LIBS_MIN})
   endif()
-  set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
-  set(CORES_DEPS ${CORES_DEPS} ${OPENCV_LIBS_IMGPROC})
-  set(CORES_DEPS ${CORES_DEPS} ${OPENCV_LIBS_MIN})
-  message("opencv_libs_min:" ${OPENCV_LIBS_MIN})
 endif()
 
 project(cviai)

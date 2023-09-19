@@ -17,16 +17,18 @@
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem_internal.h"
 #include "cviai_experimental.h"
-#include "cviai_perfetto.h"
-#include "face_attribute/face_attribute.hpp"
 #include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
+#ifndef SIMPLY_MODEL
+#include "cviai_perfetto.h"
+#include "face_attribute/face_attribute.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "object_detection/yolox/yolox.hpp"
 #include "retina_face/retina_face.hpp"
 #include "retina_face/scrfd_face.hpp"
 #include "sound_classification/sound_classification.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
+#endif
 #include "utils/core_utils.hpp"
 using namespace std;
 using namespace cviai;
@@ -92,6 +94,7 @@ static CVI_S32 initVPSSIfNeeded(cviai_context_t *ctx, CVI_AI_SUPPORTED_MODEL_E m
  * AISDK cannot instantiate model correctly.
  */
 unordered_map<int, CreatorFunc> MODEL_CREATORS = {
+#ifndef SIMPLY_MODEL
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
@@ -100,6 +103,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_RETINAFACE, CREATOR_P1(RetinaFace, PROCESS, CAFFE)},
     {CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, CREATOR_P1(FaceAttribute, bool, true)},
     {CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
+#endif
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::coco80)},
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
@@ -112,6 +116,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
 };
 
+#ifndef SIMPLY_MODEL
 void CVI_AI_PerfettoInit() { prefettoInit(); }
 
 void CVI_AI_TraceBegin(const char *name) {
@@ -131,13 +136,16 @@ void CVI_AI_EnableGDC(cviai_handle_t handle, bool use_gdc) {
   ctx->use_gdc_wrap = use_gdc;
   LOGI("Experimental feature GDC hardware %s.\n", use_gdc ? "enabled" : "disabled");
 }
+#endif
 //*************************************************
 
 inline void __attribute__((always_inline)) removeCtx(cviai_context_t *ctx) {
+#ifndef SIMPLY_MODEL
   if (ctx->ds_tracker) {
     delete ctx->ds_tracker;
     ctx->ds_tracker = nullptr;
   }
+#endif
 
   // delete ctx->td_model;
   if (ctx->md_model) {
@@ -476,9 +484,13 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
     // TODO: only supports MobileDetV2 and YOLOX for now
     if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(instance)) {
       mdetv2->select_classes(selected_classes);
-    } else if (YoloX *yolox = dynamic_cast<YoloX *>(instance)) {
+    }
+#ifndef SIMPLY_MODEL
+    else if (YoloX *yolox = dynamic_cast<YoloX *>(instance)) {
       yolox->select_classes(selected_classes);
-    } else {
+    }
+#endif
+    else {
       LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 and YOLOX model for now.\n");
     }
   } else {
@@ -621,6 +633,7 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
  *  find a correct way to create model object.
  *
  */
+#ifndef SIMPLY_MODEL
 DEFINE_INF_FUNC_F1_P1(CVI_AI_RetinaFace, RetinaFace, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_ScrFDFace, ScrFDFace, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, cvai_face_t *)
@@ -632,6 +645,13 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_FaceRecognition, FaceAttribute, CVI_AI_SUPPORTED_MO
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_AI_FaceRecognitionOne, FaceAttribute,
                       CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, cvai_face_t *, int)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification, SoundClassification,
+                      CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification_V2, SoundClassificationV2,
+                      CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, int *)
+#endif
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Pedestrian, MobileDetV2,
@@ -642,12 +662,6 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Person_Pets, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification, SoundClassification,
-                      CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
-DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification_V2, SoundClassificationV2,
-                      CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, int *)
 
 CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *p_dst, cvai_bbox_t *bbox,
                          bool cvtRGB888) {
@@ -665,6 +679,7 @@ CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *p_dst,
   return CVIAI_ERR_NOT_YET_INITIALIZED;
 }
 
+#ifndef SIMPLY_MODEL
 // Tracker
 
 CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle, bool use_specific_counter) {
@@ -813,7 +828,7 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
                                float *moving_score) {
   return CVIAI_ERR_NOT_YET_INITIALIZED;
 }
-
+#endif
 CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame) {
   TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_Background");
@@ -874,6 +889,7 @@ CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   return ret;
 }
 
+#ifndef SIMPLY_MODEL
 CVI_S32 CVI_AI_Get_SoundClassification_ClassesNum(const cviai_handle_t handle) {
   return CVIAI_ERR_NOT_YET_INITIALIZED;
 }
@@ -1084,3 +1100,4 @@ DLL_EXPORT CVI_S32 CVI_AI_Release_VideoFrame(const cviai_handle_t handle,
   }
   return CVI_SUCCESS;
 }
+#endif

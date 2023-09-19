@@ -77,8 +77,10 @@ int main(int argc, char *argv[]) {
   // VIDEO_FRAME_INFO_S motionmap;
   // ret = CVI_AI_GetMotionMap(ai_handle, &motionmap);
 
+#ifndef SIMPLY_MODEL
   CVI_AI_DumpImage("img1.bin", &bg);
   CVI_AI_DumpImage("img2.bin", &frame);
+#endif
   // CVI_AI_DumpImage("md.bin", &motionmap);
 
   for (int i = 0; i < obj_meta.size; i++) {

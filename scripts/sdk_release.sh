@@ -17,6 +17,10 @@ if [ "${FTP_SERVER_IP}" = "" ]; then
     FTP_SERVER_IP=10.80.0.5/sw_rls
 fi
 
+if [[ "$SIMPLY_MODEL" == "1" ]]; then
+    ENV_SIMPLY_MODEL="ON"
+fi
+
 REPO_USER=""
 echo "envis:${LOCAL_USER}"
 if [[ "$LOCAL_USER" != "" ]]; then
@@ -121,13 +125,14 @@ $CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DCVI_MIDDLEWARE_3RD_LDFLAGS="$CVI_TARGET_PACKAGES_LIBDIR" \
                                         -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE" \
                                         -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR \
-                                        -DREPO_USER=$REPO_USER
-
+                                        -DREPO_USER=$REPO_USER \
+                                        -DENV_SIMPLY_MODEL=$ENV_SIMPLY_MODEL
 
 ninja -j8 || exit 1
 ninja install || exit 1
 popd
 
+if [[ "$ENV_SIMPLY_MODEL" != "ON" && -z "$ENV_SIMPLY_MODEL" ]]; then
 echo "trying to build sample in released folder."
 for v in $CVI_TARGET_PACKAGES_LIBDIR; do
     if [[ "$v" == *"cvitracer"* ]]; then
@@ -154,6 +159,7 @@ if [[ "$CHIP_ARCH" != "CV180X" ]]; then
   make clean || exit 1
   echo "done"
   popd
+fi
 fi
 
 rm -rf ${AI_SDK_INSTALL_PATH}/tmp_install

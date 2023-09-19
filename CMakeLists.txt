@@ -87,6 +87,12 @@ IF(DEFINED ENV{WEB_VIEW})
   message("set BUILD_WEB_VIEW ON")
 ENDIF()
 
+IF("${ENV_SIMPLY_MODEL}" STREQUAL "ON")
+  set(SIMPLY_MODEL ON)
+  add_definitions(-DSIMPLY_MODEL)
+  message("set SIMPLY_MODEL ON")
+ENDIF()
+
 IF(DEFINED ENV{PERF_EVAL})
   add_definitions(-DPERF_EVAL)
   message("set PERF_EVAL")
@@ -168,12 +174,18 @@ include_directories(${IVE_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
 add_subdirectory(modules)
 add_subdirectory(sample)
-add_subdirectory(lib)
 
+if(NOT DEFINED SIMPLY_MODEL)
+add_subdirectory(lib)
+endif()
+
+if(NOT DEFINED SIMPLY_MODEL)
 if((NOT "${CVI_PLATFORM}" STREQUAL "CV180X") AND NOT DEFINED NO_OPENCV)
 add_subdirectory(regression)
 add_subdirectory(tool)
 endif()
+endif()
+
 # Install doc
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc DESTINATION doc)
 

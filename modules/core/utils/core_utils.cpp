@@ -1,7 +1,9 @@
 #include "core_utils.hpp"
 #include "cviai_log.hpp"
+#ifndef SIMPLY_MODEL
 #ifndef CV180X
 #include "neon_utils.hpp"
+#endif
 #endif
 #include <cvi_sys.h>
 #include <math.h>
@@ -53,6 +55,7 @@ void clip_boxes(int width, int height, cvai_bbox_t &box) {
 
 void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const float *qMean,
                        VIDEO_FRAME_INFO_S *outFrame) {
+#ifndef SIMPLY_MODEL
 #ifdef CV180X
   LOGE("not supported");
 #else
@@ -93,6 +96,7 @@ void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const 
     CVI_SYS_Munmap((void *)outFrame->stVFrame.pu8VirAddr[0], outFrame->stVFrame.u32Length[0]);
     outFrame->stVFrame.pu8VirAddr[0] = NULL;
   }
+#endif
 #endif
 }
 void mmap_video_frame(VIDEO_FRAME_INFO_S *frame) {
