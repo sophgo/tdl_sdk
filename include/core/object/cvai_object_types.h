@@ -315,6 +315,7 @@ typedef struct {
   char name[128];
   uint64_t unique_id;
   cvai_bbox_t bbox;
+  int is_cross;
   cvai_feature_t feature;
   int classes;
   cvai_vehicle_meta *vehicle_properity;
@@ -345,7 +346,6 @@ typedef struct {
   // consumer counting
   uint32_t entry_num;
   uint32_t miss_num;
-
   meta_rescale_type_e rescale_type;
   cvai_object_info_t *info;
 } cvai_object_t;
@@ -369,6 +369,10 @@ typedef struct {
   float rb_x, rb_y;
 
   float f_x, f_y;
+
+  float a_x, a_y;
+  float b_x, b_y;
+  float k, b;
 } randomRect;
 
 /** @struct cvai_class_filter_t

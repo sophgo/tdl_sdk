@@ -61,23 +61,33 @@ bool isPointInRect(const randomRect *rect, float p_x, float p_y) {
   return (a > 0 && b > 0 && c > 0 && d > 0) || (a < 0 && b < 0 && c < 0 && d < 0);
 }
 
-bool isLineCross(const randomRect *rect, float old_x, float old_y, float cur_x, float cur_y) {
-  float u_x = rect->lt_x - rect->rt_x;
-  float u_y = rect->lt_y - rect->rt_y;
+bool isCloser(const randomRect *rect, float p_x, float p_y) {
+  float k = rect->k;
+  float b = rect->b;
+  float dis;
+  if (k == 0) {
+    dis = std::abs(p_y - b);
+  } else if (b == -1000) {
+    dis = std::abs(p_x - k);
+  } else {
+    dis = std::abs(k * p_x - p_y + b) / sqrt(1 + k * k);
+  }
+  // printf("k:%f,b:%f,dis:%f");
+  return dis < 30;
+}
 
-  float d_x = rect->lb_x - rect->rb_x;
-  float d_y = rect->lb_y - rect->rb_y;
+float crossProduct(float A_x, float A_y, float B_x, float B_y, float C_x, float C_y) {
+  return (B_x - A_x) * (C_y - A_y) - (B_y - A_y) * (C_x - A_x);
+}
+bool isLineIntersect(const randomRect *rect, float old_x, float old_y, float cur_x, float cur_y) {
+  double cp1 = crossProduct(rect->a_x, rect->a_y, rect->b_x, rect->b_y, old_x, old_y);
+  double cp2 = crossProduct(rect->a_x, rect->a_y, rect->b_x, rect->b_y, cur_x, cur_y);
 
-  float old_res_u = (old_x - rect->lt_x) * u_y - (old_y - rect->lt_y) * u_x;
-  float cur_res_u = (cur_x - rect->lt_x) * u_y - (cur_y - rect->lt_y) * u_x;
-
-  float old_res_d = (old_x - rect->lb_x) * d_y - (old_y - rect->lb_y) * d_x;
-  float cur_res_d = (cur_x - rect->lb_x) * d_y - (cur_y - rect->lb_y) * d_x;
-
-  if (old_res_d * cur_res_d <= 0 && old_res_u * cur_res_u <= 0)
-    return true;
-  else
-    return false;
+  double cp3 = crossProduct(old_x, old_y, cur_x, cur_y, rect->a_x, rect->a_y);
+  double cp4 = crossProduct(old_x, old_y, cur_x, cur_y, rect->b_x, rect->b_y);
+  // positive and negative symbols
+  if ((cp1 * cp2 <= 0) && (cp3 * cp4 <= 0)) return true;
+  return false;
 }
 MatchResult get_init_match_result(const std::vector<stObjInfo> &dets,
                                   const std::vector<KalmanTracker> &trackers,
@@ -122,6 +132,31 @@ MatchResult get_init_match_result(const std::vector<stObjInfo> &dets,
             << ",unmatchedtracknum:" << res.unmatched_tracker_idxes.size() << std::endl;
 #endif
   return res;
+}
+
+void DeepSORT::consumer_counting_fun(stObjInfo obj, int index,
+                                     const cvai_counting_line_t *counting_line_t,
+                                     const randomRect *rect) {
+  float pre_x = k_trackers[index].old_x;
+  float pre_y = k_trackers[index].old_y;
+  float cur_x = (obj.box.x1 + obj.box.x2) / 2.0;
+  float cur_y = (obj.box.y1 + obj.box.y2) / 2.0;
+  if (k_trackers[index].label == OBJ_PERSON) {
+    cur_y = obj.box.y1 * 1.2;
+  }
+  if (isLineIntersect(rect, pre_x, pre_y, cur_x, cur_y)) {
+    float tmp_x = cur_x - k_trackers[index].old_x;
+    float tmp_y = cur_y - k_trackers[index].old_y;
+    if ((tmp_x * rect->f_x + tmp_y * rect->f_y > 0) && k_trackers[index].counting_gap == 0) {
+      entry_num++;
+      k_trackers[index].counting_gap = 50;
+      // k_trackers[index].miss_gap = 20;
+    } else if ((tmp_x * rect->f_x + tmp_y * rect->f_y < 0) && k_trackers[index].counting_gap == 0) {
+      miss_num++;
+      k_trackers[index].counting_gap = 50;
+      // k_trackers[index].entry_gap = 20;
+    }
+  }
 }
 
 void DeepSORT::update_pair_info(std::vector<stObjInfo> &dets_a, std::vector<stObjInfo> &dets_b,
@@ -274,6 +309,127 @@ MatchResult DeepSORT::get_match_result(MatchResult &prev_match, const std::vecto
 
   return match_recall;
 }
+
+MatchResult DeepSORT::get_match_result_consumer_counting(MatchResult &prev_match,
+                                                         const std::vector<BBOX> &BBoxes,
+                                                         const std::vector<FEATURE> &Features,
+                                                         bool use_reid, float crowd_iou_thresh,
+                                                         cvai_deepsort_config_t *conf, bool is_ped,
+                                                         std::vector<stObjInfo> &objs) {
+  std::vector<std::pair<int, int>> matched_pairs;
+  std::vector<int> unmatched_bbox_idxes = prev_match.unmatched_bbox_idxes;
+
+  std::vector<int> unmatched_tracker_idxes = prev_match.unmatched_tracker_idxes;
+
+  /* Match accreditation trackers */
+  /* - Cascade Match */
+  /* - Feature Consine Distance */
+  /* - Kalman Mahalanobis Distance */
+  for (int t = 0; t < conf->ktracker_conf.max_unmatched_num; t++) {
+    if (unmatched_bbox_idxes.empty()) {
+      break;
+    }
+    // std::cout<<"cascade matching:"<<t<<std::endl;
+    cost_matrix_algo_e cost_method =
+        (use_reid) ? Feature_CosineDistance : Kalman_MahalanobisDistance;
+    if (is_ped) cost_method = BBox_IoUDistance;
+    std::vector<int> t_tracker_idxes;
+    for (size_t tmp_i = 0; tmp_i < unmatched_tracker_idxes.size(); tmp_i++) {
+      if (k_trackers[unmatched_tracker_idxes[tmp_i]].unmatched_times == t) {
+        if (cost_method == Feature_CosineDistance &&
+            !k_trackers[unmatched_tracker_idxes[tmp_i]].init_feature) {
+          continue;
+        }
+        t_tracker_idxes.push_back(unmatched_tracker_idxes[tmp_i]);
+      }
+    }
+    if (t_tracker_idxes.empty()) {
+      continue;
+    }
+    float chithresh = conf->kfilter_conf.chi2_threshold - t * 0.1;
+    MatchResult match_result =
+        match(BBoxes, Features, t_tracker_idxes, unmatched_bbox_idxes, conf->kfilter_conf,
+              cost_method, (use_reid) ? conf->max_distance_consine : chithresh);
+    if (match_result.matched_pairs.empty()) {
+      continue;
+    }
+#ifdef DEBUG_TRACK
+    std::cout << "matched with maha,num:" << match_result.matched_pairs.size() << std::endl;
+#endif
+    /* Remove matched idx from bbox_idxes and unmatched_tracker_idxes */
+    matched_pairs.insert(matched_pairs.end(), match_result.matched_pairs.begin(),
+                         match_result.matched_pairs.end());
+
+    for (size_t m_i = 0; m_i < match_result.matched_pairs.size(); m_i++) {
+      int m_tracker_idx = match_result.matched_pairs[m_i].first;
+      int m_bbox_idx = match_result.matched_pairs[m_i].second;
+      if (is_ped) {
+        uint64_t pair_head_id = k_trackers[m_tracker_idx].get_pair_trackid();
+        uint64_t id = objs[objs[m_bbox_idx].pair_obj_id].track_id;
+        if (pair_head_id != 0 && pair_head_id != id) {
+          continue;
+        }
+      }
+
+      unmatched_tracker_idxes.erase(std::remove(unmatched_tracker_idxes.begin(),
+                                                unmatched_tracker_idxes.end(), m_tracker_idx),
+                                    unmatched_tracker_idxes.end());
+      unmatched_bbox_idxes.erase(
+          std::remove(unmatched_bbox_idxes.begin(), unmatched_bbox_idxes.end(), m_bbox_idx),
+          unmatched_bbox_idxes.end());
+    }
+  }
+
+  // std::cout<<"prepare for ioumatch,"<<unmatched_tracker_idxes.size()<<std::endl;
+  std::vector<int> tmp_tracker_idxes; /* unmatch trackers' index in cascade match */
+  /* Remove trackers' idx, which unmatched_times > T, from
+   * unmatched_tracker_idxes */
+  for (auto it = unmatched_tracker_idxes.begin(); it != unmatched_tracker_idxes.end();) {
+    if (k_trackers[*it].unmatched_times > conf->max_unmatched_times_for_bbox_matching ||
+        k_trackers[*it].bounding) {
+      tmp_tracker_idxes.push_back(*it);
+      it = unmatched_tracker_idxes.erase(it);
+    } else {
+      it++;
+    }
+  }
+#ifdef DEBUG_TRACK
+  std::cout << "to ioumatch ,boxsize:" << BBoxes.size() << ",featsize:" << Features.size()
+            << ",unmatchedt:" << unmatched_tracker_idxes.size()
+            << ",unmatchedbox:" << unmatched_bbox_idxes.size() << std::endl;
+#endif
+  /* Match remain trackers */
+  /* - BBOX IoU Distance */
+  MatchResult match_result_bbox =
+      match(BBoxes, Features, unmatched_tracker_idxes, unmatched_bbox_idxes, conf->kfilter_conf,
+            BBox_IoUDistance, conf->max_distance_iou);
+
+  /* Match remain trackers */
+  matched_pairs.insert(matched_pairs.end(), match_result_bbox.matched_pairs.begin(),
+                       match_result_bbox.matched_pairs.end());
+  unmatched_bbox_idxes = match_result_bbox.unmatched_bbox_idxes;
+  unmatched_tracker_idxes = tmp_tracker_idxes;
+  unmatched_tracker_idxes.insert(unmatched_tracker_idxes.end(),
+                                 match_result_bbox.unmatched_tracker_idxes.begin(),
+                                 match_result_bbox.unmatched_tracker_idxes.end());
+#ifdef DEBUG_TRACK
+  for (auto ti : unmatched_tracker_idxes) {
+    std::cout << "unmatched ti:" << ti << ",trackid:" << k_trackers[ti].id << std::endl;
+  }
+#endif
+
+  MatchResult match_recall = refine_uncrowd(BBoxes, Features, unmatched_tracker_idxes,
+                                            unmatched_bbox_idxes, crowd_iou_thresh);
+
+  match_recall.matched_pairs.insert(match_recall.matched_pairs.end(), matched_pairs.begin(),
+                                    matched_pairs.end());
+  match_recall.matched_pairs.insert(match_recall.matched_pairs.end(),
+                                    prev_match.matched_pairs.begin(),
+                                    prev_match.matched_pairs.end());
+
+  return match_recall;
+}
+
 void DeepSORT::get_pair_trackids(std::map<int, std::vector<stObjInfo>> &cls_objs,
                                  std::map<uint64_t, uint64_t> &pair_tracks) {
   auto swapf = [](uint64_t &a, uint64_t &b) {
@@ -322,225 +478,6 @@ void DeepSORT::get_pair_trackids(std::map<int, std::vector<stObjInfo>> &cls_objs
   }
 }
 
-void DeepSORT::consumer_counting_update_tracks(cvai_deepsort_config_t *conf,
-                                               std::map<int, std::vector<stObjInfo>> &cls_objs,
-                                               const cvai_counting_line_t *counting_line_t,
-                                               const randomRect *rect) {
-  std::set<uint64_t> used_id;
-
-  // update matched tracks
-  std::map<uint64_t, int> processed_tracks;
-
-  for (auto &kv : cls_objs) {
-    // check
-    std::vector<stObjInfo> &objs = kv.second;
-
-    // track_result[label].resize(objs.size());
-    for (auto &obj : objs) {
-      uint64_t trackid = obj.track_id;
-
-      if (trackid == 0) continue;
-      if (track_indices_.count(trackid) == 0) {
-        std::cout << "error trackid not found:" << trackid << std::endl;
-        continue;
-      }
-      processed_tracks[trackid] = 1;
-      int index = track_indices_[trackid];
-
-      //  counting entry num
-      if (obj.classes == OBJ_HEAD && obj.pair_obj_id != -1)
-        continue;
-      else if (obj.classes == OBJ_PERSON) {
-        float cur_x = (obj.box.x1 + obj.box.x2) / 2;
-        float cur_y = (obj.box.y1 + obj.box.y2) / 2;
-
-        float pre_x = k_trackers[index].old_x;
-        float pre_y = k_trackers[index].old_y;
-        bool cur = isPointInRect(rect, cur_x, cur_y);
-        bool pre = isPointInRect(rect, pre_x, pre_y);
-
-        if (!pre && cur) {  // Enter buffer
-          float tmp_x = cur_x - pre_x;
-          float tmp_y = cur_y - pre_y;
-          if (tmp_x * rect->f_x + tmp_y * rect->f_y > 0) {
-            k_trackers[index].first_x = rect->f_x;
-            k_trackers[index].first_y = rect->f_y;
-          } else {
-            k_trackers[index].first_x = -rect->f_x;
-            k_trackers[index].first_y = -rect->f_y;
-          }
-        } else if (pre && !cur) {  // Leave buffer
-          float cur_flag_x = cur_x - pre_x;
-          float cur_flag_y = cur_y - pre_y;
-          if ((cur_flag_x * rect->f_x + cur_flag_y * rect->f_y) > 0 &&
-              (cur_flag_x * k_trackers[index].first_x + cur_flag_y * k_trackers[index].first_y) >
-                  0 &&
-              k_trackers[index].entry_gap == 0) {
-            entry_num++;
-            k_trackers[index].entry_gap = 15;
-            k_trackers[index].first_x = 0;
-            k_trackers[index].first_y = 0;
-          } else if ((cur_flag_x * rect->f_x + cur_flag_y * rect->f_y) < 0 &&
-                     (cur_flag_x * k_trackers[index].first_x +
-                      cur_flag_y * k_trackers[index].first_y) > 0 &&
-                     k_trackers[index].miss_gap == 0) {
-            miss_num++;
-            k_trackers[index].miss_gap = 15;
-            k_trackers[index].first_x = 0;
-            k_trackers[index].first_y = 0;
-          }
-        } else if (!pre && !cur) {
-          // Avoid being obstructed when crossing lines
-          if (isLineCross(rect, k_trackers[index].old_x, k_trackers[index].old_y, cur_x, cur_y)) {
-            float tmp_x = cur_x - k_trackers[index].old_x;
-            float tmp_y = cur_y - k_trackers[index].old_y;
-
-            if (tmp_x * rect->f_x + tmp_y * rect->f_y > 0) {
-              entry_num++;
-              k_trackers[index].entry_gap = 5;
-            } else if (tmp_x * rect->f_x + tmp_y * rect->f_y < 0) {
-              miss_num++;
-              k_trackers[index].miss_gap = 5;
-            }
-          }
-        }
-      }
-
-      stRect rct(obj.box.x1, obj.box.y1, obj.box.x2 - obj.box.x1, obj.box.y2 - obj.box.y1);
-
-      k_trackers[index].update(kf_, &rct, conf);
-      k_trackers[index].entry_gap = std::max(0, k_trackers[index].entry_gap - 1);
-      k_trackers[index].miss_gap = std::max(0, k_trackers[index].miss_gap - 1);
-
-      k_trackers[index].old_x = (obj.box.x1 + obj.box.x2) / 2;
-      k_trackers[index].old_y = (obj.box.y1 + obj.box.y2) / 2;
-    }
-  }
-
-  // create new tracks
-  for (auto &kv : cls_objs) {
-    int label = kv.first;
-    std::vector<stObjInfo> &objs = kv.second;
-    // std::cout<<"process type:"<<kv.first<<",num:"<<objs.size()<<std::endl;
-    for (auto &obj : objs) {
-      uint64_t trackid = obj.track_id;
-      if (trackid != 0) continue;
-
-      BBOX box = cvt_tlwh_box(obj);
-      const FEATURE empty_feature(0);
-      uint64_t new_id = get_nextID(label);
-      KalmanTracker tracker_(new_id, label, box, empty_feature, conf->ktracker_conf);
-      tracker_.label = label;
-      tracker_.old_x = (obj.box.x1 + obj.box.x2) / 2;
-      tracker_.old_x = (obj.box.y1 + obj.box.y2) / 2;
-
-      k_trackers.push_back(tracker_);
-      track_indices_[new_id] = k_trackers.size() - 1;
-      KalmanTracker *p_track = &k_trackers[k_trackers.size() - 1];
-
-      obj.track_id = new_id;
-      processed_tracks[new_id] = 1;
-
-#ifdef DEBUG_TRACK
-      std::cout << "create new track:" << new_id << ",label:" << label
-                << ",pairobj:" << obj.pair_obj_id << ",srcidx:" << obj.src_idx << std::endl;
-      std::cout << "p_track addr:" << (void *)p_track << std::endl;
-#endif
-      // if new track has pair track,should add pair releations
-      if (obj.pair_obj_id == -1) continue;
-
-      if (obj.pair_obj_id >= (int)cls_objs[obj.pair_type].size()) {
-        std::cout << "error pairobjid:" << obj.pair_obj_id << ",type:" << obj.pair_type
-                  << ",objsize:" << cls_objs[obj.pair_type].size() << std::endl;
-        continue;
-      }
-
-      uint64_t pair_obj_trackid = cls_objs[obj.pair_type][obj.pair_obj_id].track_id;
-      if (pair_obj_trackid == 0) continue;
-      if (track_indices_.count(pair_obj_trackid) == 0) {
-        std::cout << "error pair_obj_trackid not found:" << pair_obj_trackid << std::endl;
-        continue;
-      }
-
-      int tid = track_indices_[pair_obj_trackid];
-      KalmanTracker *p_pair_track = &k_trackers[tid];
-      if (p_pair_track->unmatched_times == 0 &&
-          p_pair_track->tracker_state == k_tracker_state_e::ACCREDITATION && obj.box.score > 0.5) {
-        // turn the track state as confirmed
-        p_track->tracker_state = k_tracker_state_e::ACCREDITATION;
-        // std::cout << "confirm track directy ,track:" << p_track->id << ",pair:" <<
-        // p_pair_track->id
-        //           << std::endl;
-      }
-    }
-  }
-
-  std::map<uint64_t, uint64_t> pair_tracks;
-  get_pair_trackids(cls_objs, pair_tracks);
-  // update pair track relationship
-  std::map<uint64_t, int> matched_tracks = processed_tracks;
-  for (auto &p : pair_tracks) {
-#ifdef DEBUG_TRACK
-    std::cout << "to process paired track:" << p.first << " and " << p.second << std::endl;
-#endif
-
-    KalmanTracker *p_tracka = &k_trackers[track_indices_[p.first]];
-    KalmanTracker *p_trackb = &k_trackers[track_indices_[p.second]];
-
-    if (p_trackb->unmatched_times == 0 && p_tracka->unmatched_times != 0) {
-      // tracka was not matched,trackb was matched
-      // use bbox guessed from trackb to update tracka
-      p_tracka->false_update_from_pair(kf_, p_trackb, conf);
-      // std::cout<<"fa"
-      matched_tracks[p.first] = 1;
-      matched_tracks[p.second] = 1;
-    } else if (p_trackb->unmatched_times != 0 && p_tracka->unmatched_times == 0) {
-      p_trackb->false_update_from_pair(kf_, p_tracka, conf);
-      matched_tracks[p.first] = 1;
-      matched_tracks[p.second] = 1;
-    } else if (p_trackb->unmatched_times == 0 && p_tracka->unmatched_times == 0) {
-      p_tracka->update_pair_info(p_trackb);
-      matched_tracks[p.first] = 1;
-      matched_tracks[p.second] = 1;
-    }
-  }
-
-  // update tracks not matched
-  for (auto &tracker : k_trackers) {
-    if (matched_tracks.count(tracker.id)) continue;
-#ifdef DEBUG_TRACK
-    std::cout << "to updat missed track:" << tracker.id << ",frameid:" << frame_id_
-              << ",age:" << tracker.ages_ << ",pairtrack:" << tracker.get_pair_trackid()
-              << std::endl;
-#endif
-    tracker.update(kf_, nullptr, conf);
-  }
-  std::vector<uint64_t> erased_tids;
-  for (auto it_ = k_trackers.begin(); it_ != k_trackers.end();) {
-    if (it_->tracker_state == k_tracker_state_e::MISS) {
-#ifdef DEBUG_TRACK
-      std::cout << "erase track:" << it_->id << ",frameid:" << frame_id_ << ",age:" << it_->ages_
-                << ",pairtrack:" << it_->get_pair_trackid() << std::endl;
-#endif
-      erased_tids.push_back(it_->id);
-      it_ = k_trackers.erase(it_);
-    } else {
-      it_++;
-    }
-  }
-  for (auto &track : k_trackers) {
-    uint64_t pair_tid = track.get_pair_trackid();
-    if (pair_tid == 0) continue;
-    if (std::find(erased_tids.begin(), erased_tids.end(), pair_tid) != erased_tids.end()) {
-      track.pair_track_infos_.clear();
-#ifdef DEBUG_TRACK
-      std::cout << "to delete pairinfo for track:" << track.id << ",pairtid:" << pair_tid
-                << ",frameid:" << frame_id_ << std::endl;
-#endif
-    }
-  }
-}
-
 void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
                              std::map<int, std::vector<stObjInfo>> &cls_objs) {
   // update matched tracks
@@ -582,6 +519,13 @@ void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
       uint64_t new_id = get_nextID(label);
       KalmanTracker tracker_(new_id, label, box, empty_feature, conf->ktracker_conf);
       tracker_.label = label;
+      if (label == OBJ_HEAD) {
+        tracker_.old_x = (obj.box.x1 + obj.box.x2) / 2.0;
+        tracker_.old_y = (obj.box.y1 + obj.box.y2) / 2.0;
+      } else if (label == OBJ_PERSON) {
+        tracker_.old_x = (obj.box.x1 + obj.box.x2) / 2.0;
+        tracker_.old_y = obj.box.y1 * 1.2;
+      }
       k_trackers.push_back(tracker_);
       track_indices_[new_id] = k_trackers.size() - 1;
       KalmanTracker *p_track = &k_trackers[k_trackers.size() - 1];
@@ -674,6 +618,7 @@ void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
 #endif
       erased_tids.push_back(it_->id);
       it_ = k_trackers.erase(it_);
+
     } else {
       it_++;
     }
@@ -683,6 +628,7 @@ void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
     if (pair_tid == 0) continue;
     if (std::find(erased_tids.begin(), erased_tids.end(), pair_tid) != erased_tids.end()) {
       track.pair_track_infos_.clear();
+
 #ifdef DEBUG_TRACK
       std::cout << "to delete pairinfo for track:" << track.id << ",pairtid:" << pair_tid
                 << ",frameid:" << frame_id_ << std::endl;
@@ -913,12 +859,44 @@ void DeepSORT::update_out_num(cvai_tracker_t *tracker) {
 }
 
 CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *tracker, bool use_reid,
-                                 cvai_object_t *last_head, cvai_object_t *last_ped,
+                                 cvai_object_t *head, cvai_object_t *ped,
                                  const cvai_counting_line_t *counting_line_t,
                                  const randomRect *rect) {
-  /** statistic what classes ID in bbox and tracker,
-   *  and counting bbox number for each class
-   *  use ped improve head det to complete cosumer counting*/
+  {
+    std::map<int, std::vector<cvai_object_info_t>> tmp_objs;
+    for (uint32_t i = 0; i < origin_obj->size; i++) {
+      if (origin_obj->info[i].classes == 0)
+        tmp_objs[0].push_back(origin_obj->info[i]);
+      else
+        tmp_objs[1].push_back(origin_obj->info[i]);
+    }
+    CVI_AI_MemAllocInit(tmp_objs[0].size(), head);
+    CVI_AI_MemAllocInit(tmp_objs[1].size(), ped);
+    memset(head->info, 0, sizeof(cvai_object_info_t) * head->size);
+    head->rescale_type = origin_obj->rescale_type;
+    head->height = origin_obj->height;
+    head->width = origin_obj->width;
+    for (uint32_t i = 0; i < tmp_objs[0].size(); i++) {
+      memcpy(&head->info[i].bbox, &tmp_objs[0][i].bbox, sizeof(cvai_bbox_t));
+      head->info[i].classes = 0;
+    }
+
+    memset(ped->info, 0, sizeof(cvai_object_info_t) * ped->size);
+    ped->rescale_type = origin_obj->rescale_type;
+    ped->height = origin_obj->height;
+    ped->width = origin_obj->width;
+    for (uint32_t i = 0; i < tmp_objs[1].size(); i++) {
+      memcpy(&ped->info[i].bbox, &tmp_objs[1][i].bbox, sizeof(cvai_bbox_t));
+      ped->info[i].classes = 1;
+    }
+  }
+  CVI_AI_Free(origin_obj);
+
+#ifdef DEBUG_CAPTURE
+  std::cout << "start to track_fuse,head num:" << head->size << ",pedsize:" << ped->size
+            << ",frameid:" << frame_id_ << std::endl;
+  show_INFO_KalmanTrackers();
+#endif
 
   cvai_deepsort_config_t *conf;
   auto it_conf = specific_conf.find(0);
@@ -927,7 +905,6 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
   } else {
     conf = &default_conf;
   }
-
   // predict all tracks
   const int head_label = OBJ_HEAD;
   const int ped_label = OBJ_PERSON;
@@ -942,21 +919,27 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
   check_bound_state(conf);
 
   std::map<int, std::vector<stObjInfo>> cls_objs;
+  // assemble data
+  for (uint32_t i = 0; i < head->size; i++) {
+    stObjInfo obj;
+    obj.box = head->info[i].bbox;
+    obj.src_idx = (int)i;
+    obj.classes = head_label;
+    obj.pair_obj_id = -1;
+    obj.track_id = 0;
 
-  for (uint32_t i = 0; i < origin_obj->size; i++) {
-    stObjInfo tmpobj;
-    tmpobj.box = origin_obj->info[i].bbox;
-    tmpobj.src_idx = (int)i;
-    tmpobj.classes = origin_obj->info[i].classes;
-    tmpobj.pair_obj_id = -1;
-    tmpobj.track_id = 0;
-    if (tmpobj.classes == 0) {
-      tmpobj.classes = OBJ_HEAD;
-      cls_objs[head_label].push_back(tmpobj);
-    } else {
-      tmpobj.classes = OBJ_PERSON;
-      cls_objs[ped_label].push_back(tmpobj);
-    }
+    cls_objs[head_label].push_back(obj);
+  }
+
+  for (uint32_t i = 0; i < ped->size; i++) {
+    stObjInfo obj;
+    int lb = ped_label;  // ped->info[i].classes;
+    obj.box = ped->info[i].bbox;
+    obj.src_idx = (int)i;
+    obj.classes = lb;
+    obj.pair_obj_id = -1;
+    obj.track_id = 0;
+    cls_objs[lb].push_back(obj);
   }
 
   update_pair_info(cls_objs[head_label], cls_objs[ped_label], OBJ_HEAD, OBJ_PERSON, 0.1);
@@ -967,26 +950,28 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
   MatchResult head_res =
       get_init_match_result(cls_objs[head_label], k_trackers, track_indices_, head_label);
 
-  head_res = get_match_result(head_res, head_boxes, head_feats, false, 0.1, conf);
-
+  head_res = get_match_result_consumer_counting(head_res, head_boxes, head_feats, false, 0.1, conf,
+                                                false, cls_objs[head_label]);
   for (auto &m : head_res.matched_pairs) {
     int t_idx = m.first;
     int det_idx = m.second;
-
     int pair_ped_idx = cls_objs[head_label][det_idx].pair_obj_id;
     cls_objs[head_label][det_idx].track_id = k_trackers[t_idx].id;
+
 #ifdef DEBUG_TRACK
-    std::cout << "matched head:" << det_idx << ",track:" << k_trackers[t_idx].id
+    std::cout << "matched face:" << det_idx << ",track:" << k_trackers[t_idx].id
               << ",pairped:" << pair_ped_idx << std::endl;
 #endif
     if (pair_ped_idx != -1) {
       uint64_t pair_ped_trackid = k_trackers[t_idx].get_pair_trackid();
+      // printf("trackid:%d  pair_id:%d\n",k_trackers[t_idx].id, pair_ped_trackid);
       if (pair_ped_trackid != 0) {
         cls_objs[ped_label][pair_ped_idx].track_id = pair_ped_trackid;
-#ifdef DEBUG_TRACK
-        std::cout << "recall peddet:" << pair_ped_idx << " with pedtrack:" << pair_ped_trackid
-                  << std::endl;
-#endif
+        // #ifdef DEBUG_TRACK
+        //         std::cout << "recall peddet:" << pair_ped_idx << " with pedtrack:" <<
+        //         pair_ped_trackid
+        //                   << std::endl;
+        // #endif
       }
     }
   }
@@ -999,18 +984,22 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
 
   cvai_deepsort_config_t ped_cfg = *conf;
   ped_cfg.max_distance_iou = 0.6;
-  ped_cfg.kfilter_conf.chi2_threshold *= 0.85;
+  ped_cfg.kfilter_conf.chi2_threshold = 0.6;
   ped_cfg.ktracker_conf.max_unmatched_num = 15;
-  ped_res = get_match_result(ped_res, ped_boxes, ped_feats, false, 0.7, &ped_cfg);
+  ped_res = get_match_result_consumer_counting(ped_res, ped_boxes, ped_feats, false, 0.7, &ped_cfg,
+                                               true, cls_objs[ped_label]);
+
 #ifdef DEBUG_TRACK
   std::cout << "ped matched pairs:" << ped_res.matched_pairs.size() << std::endl;
 #endif
   // getchar();
   // use ped track res to recall head
+  std::map<uint64_t, int> pair_heads;
   for (auto &m : ped_res.matched_pairs) {
     int t_idx = m.first;
     int det_idx = m.second;
     int pair_head_idx = cls_objs[ped_label][det_idx].pair_obj_id;
+
     cls_objs[ped_label][det_idx].track_id = k_trackers[t_idx].id;
 #ifdef DEBUG_TRACK
     std::cout << "matched ped:" << det_idx << ",track:" << k_trackers[t_idx].id
@@ -1024,9 +1013,12 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
 #endif
       if (pair_head_trackid == 0) continue;
       uint64_t head_trackid = cls_objs[head_label][pair_head_idx].track_id;
+      // printf("********** trackid:%d  pair_id:%d\n",pair_head_trackid, k_trackers[t_idx].id);
       if (head_trackid != 0 && head_trackid != pair_head_trackid) {
         LOGE("error matched ped pairhead trackid:%d,paired_trackid:%d\n", (int)head_trackid,
              (int)pair_head_trackid);
+        k_trackers[t_idx].pair_track_infos_.clear();
+        k_trackers[track_indices_[pair_head_trackid]].pair_track_infos_.clear();
       } else {
 #ifdef DEBUG_TRACK
         std::cout << "recall head with ped,headidx:" << pair_head_idx
@@ -1037,9 +1029,76 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
     }
   }
 
-  consumer_counting_update_tracks(conf, cls_objs, counting_line_t, rect);
-  last_head->entry_num = entry_num;
-  last_head->miss_num = miss_num;
+  // consumer counting  head
+  for (auto &obj : cls_objs[head_label]) {
+    uint64_t trackid = obj.track_id;
+    if (trackid == 0) continue;
+    if (track_indices_.count(trackid) == 0) {
+      std::cout << "error trackid not found:" << trackid << std::endl;
+      continue;
+    }
+    int index = track_indices_[trackid];
+    float cur_x = (obj.box.x1 + obj.box.x2) / 2.0;
+    float cur_y = (obj.box.y1 + obj.box.y2) / 2.0;
+    //  counting num
+    uint64_t pair_track_id = k_trackers[index].get_pair_trackid();
+    int pair_tracker_idx =
+        track_indices_.count(pair_track_id) == 0 ? -1 : track_indices_[pair_track_id];
+    if (pair_tracker_idx != -1 && k_trackers[pair_tracker_idx].counting_gap > 0) {
+      stRect rct(obj.box.x1, obj.box.y1, obj.box.x2 - obj.box.x1, obj.box.y2 - obj.box.y1);
+      // printf("trackid:%d  pair_id:%d\n",trackid, pair_track_id);
+      k_trackers[index].update(kf_, &rct, conf);
+      k_trackers[index].counting_gap = std::max(0, k_trackers[index].counting_gap - 1);
+
+      k_trackers[index].old_x = cur_x;
+      k_trackers[index].old_y = cur_y;
+    } else {
+      consumer_counting_fun(obj, index, counting_line_t, rect);
+      stRect rct(obj.box.x1, obj.box.y1, obj.box.x2 - obj.box.x1, obj.box.y2 - obj.box.y1);
+      // printf("trackid:%d  pair_id:%d\n",trackid, pair_track_id);
+      k_trackers[index].update(kf_, &rct, conf);
+      k_trackers[index].counting_gap = std::max(0, k_trackers[index].counting_gap - 1);
+
+      k_trackers[index].old_x = cur_x;
+      k_trackers[index].old_y = cur_y;
+    }
+  }
+  // consumer counting  ped
+  for (auto &obj : cls_objs[ped_label]) {
+    uint64_t trackid = obj.track_id;
+    if (trackid == 0) continue;
+    if (track_indices_.count(trackid) == 0) {
+      std::cout << "error trackid not found:" << trackid << std::endl;
+      continue;
+    }
+    int index = track_indices_[trackid];
+    float cur_x = (obj.box.x1 + obj.box.x2) / 2.0;
+    float cur_y = obj.box.y1 * 1.2;
+    //  counting num
+    int pair_obj_id = obj.pair_obj_id;
+    uint64_t pair_track_id = k_trackers[index].get_pair_trackid();
+    int pair_tracker_idx =
+        track_indices_.count(pair_track_id) == 0 ? -1 : track_indices_[pair_track_id];
+    if (pair_tracker_idx != -1) {
+      k_trackers[index].counting_gap =
+          std::max(k_trackers[pair_tracker_idx].counting_gap, k_trackers[index].counting_gap);
+    }
+    if (pair_obj_id == -1) {
+      consumer_counting_fun(obj, index, counting_line_t, rect);
+    }
+
+    stRect rct(obj.box.x1, obj.box.y1, obj.box.x2 - obj.box.x1, obj.box.y2 - obj.box.y1);
+
+    k_trackers[index].update(kf_, &rct, conf);
+    k_trackers[index].counting_gap = std::max(0, k_trackers[index].counting_gap - 1);
+    k_trackers[index].old_x = cur_x;
+    k_trackers[index].old_y = cur_y;
+  }
+
+  update_tracks(conf, cls_objs);
+  // consumer_counting_update_tracks(conf, cls_objs, counting_line_t, rect);
+  head->entry_num = entry_num;
+  head->miss_num = miss_num;
   track_indices_.clear();
   std::vector<int> head_tracks_inds;
   for (size_t i = 0; i < k_trackers.size(); i++) {
@@ -1048,50 +1107,20 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
       head_tracks_inds.push_back(i);
     }
   }
+  for (auto &kv : cls_objs) {
+    int label = kv.first;
 
-  // for (auto &kv : cls_objs) {
-  //   // int label = kv.first;
-
-  //   for (auto &obj : kv.second) {
-  //       origin_obj->info[obj.src_idx].unique_id = obj.track_id;
-  //   }
-  // }
-
-  // copy head data
-  CVI_AI_MemAllocInit(cls_objs[head_label].size(), last_head);
-  last_head->height = origin_obj->height;
-  last_head->width = origin_obj->width;
-  memset(last_head->info, 0, sizeof(cvai_object_info_t) * cls_objs[head_label].size());
-  for (uint32_t i = 0; i < cls_objs[head_label].size(); ++i) {
-    last_head->info[i].bbox.x1 = cls_objs[head_label][i].box.x1;
-    last_head->info[i].bbox.y1 = cls_objs[head_label][i].box.y1;
-    last_head->info[i].bbox.x2 = cls_objs[head_label][i].box.x2;
-    last_head->info[i].bbox.y2 = cls_objs[head_label][i].box.y2;
-    last_head->info[i].bbox.score = cls_objs[head_label][i].box.score;
-    last_head->info[i].classes = cls_objs[head_label][i].classes;
-    last_head->info[i].unique_id = cls_objs[head_label][i].track_id;
+    for (auto &obj : kv.second) {
+      if (label == OBJ_HEAD) {
+        head->info[obj.src_idx].unique_id = obj.track_id;
+      } else {
+        ped->info[obj.src_idx].unique_id = obj.track_id;
+      }
+    }
   }
 
-  // copy ped data
-  CVI_AI_MemAllocInit(cls_objs[ped_label].size(), last_ped);
-  last_ped->height = origin_obj->height;
-  last_ped->width = origin_obj->width;
-  memset(last_ped->info, 0, sizeof(cvai_object_info_t) * cls_objs[ped_label].size());
-  for (uint32_t i = 0; i < cls_objs[ped_label].size(); ++i) {
-    last_ped->info[i].bbox.x1 = cls_objs[ped_label][i].box.x1;
-    last_ped->info[i].bbox.y1 = cls_objs[ped_label][i].box.y1;
-    last_ped->info[i].bbox.x2 = cls_objs[ped_label][i].box.x2;
-    last_ped->info[i].bbox.y2 = cls_objs[ped_label][i].box.y2;
-    last_ped->info[i].bbox.score = cls_objs[ped_label][i].box.score;
-    last_ped->info[i].classes = cls_objs[ped_label][i].classes;
-    last_ped->info[i].unique_id = cls_objs[ped_label][i].track_id;
-  }
-
-  // clean origin obj
-  CVI_AI_Free(origin_obj);
-
-  for (uint32_t i = 0; i < last_head->size; i++) {
-    uint64_t trackid = last_head->info[i].unique_id;
+  for (uint32_t i = 0; i < head->size; i++) {
+    uint64_t trackid = head->info[i].unique_id;
 
     if (track_indices_.count(trackid) == 0) {
       LOGE("track not found in trackindst,:%d\n", (int)trackid);
@@ -1105,11 +1134,11 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
     }
     auto *p_track = &k_trackers[index];
     if (p_track->ages_ == 1) {
-      last_head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (p_track->tracker_state == k_tracker_state_e::PROBATION) {
-      last_head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (p_track->tracker_state == k_tracker_state_e::ACCREDITATION) {
-      last_head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       printf("track unknown type error\n");
@@ -1141,7 +1170,7 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
   }
   frame_id_ += 1;
 #ifdef DEBUG_TRACK
-  std::cout << "finish track,face num:" << head_tracks_inds.size() << std::endl;
+  std::cout << "finish track,head num:" << head->size << std::endl;
   show_INFO_KalmanTrackers();
 #endif
   return CVIAI_SUCCESS;

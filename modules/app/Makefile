@@ -166,10 +166,13 @@ face_capture.o: face_capture/face_capture.c
 person_capture.o: person_capture/person_capture.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -fPIC -o $@ -c $^
 
+personvehicle_capture.o: personvehicle_capture/personvehicle_capture.c
+	$(CC) $(DEPFLAGS) $(CFLAGS) -fPIC -o $@ -c $^
+
 cviai_app.o: cviai_app.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -fPIC -o $@ -c $^
 
-libcviai_app.so: cviai_app.o face_capture.o person_capture.o
+libcviai_app.so: cviai_app.o face_capture.o person_capture.o personvehicle_capture.o
 	$(CC) $(CFLAGS) $(AI_APP_LIBS) $^ -o $@ -shared
 
 clean:

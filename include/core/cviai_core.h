@@ -1067,6 +1067,20 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Obj(const cviai_handle_t handle, cvai_object_
                                        cvai_tracker_t *tracker, bool use_reid);
 
 /**
+ * @brief Run DeepSORT/SORT track for object, add function to judge cross the border.
+ *
+ * @param handle An AI SDK handle.
+ * @param obj Input detected object with feature.
+ * @param tracker_t Output tracker results.
+ * @param use_reid If true, track by DeepSORT algorithm, else SORT.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Obj_Cross(const cviai_handle_t handle, cvai_object_t *obj,
+                                             cvai_tracker_t *tracker, bool use_reid,
+                                             const cvai_counting_line_t *cross_line_t,
+                                             const randomRect *rect);
+
+/**
  * @brief Run DeepSORT/SORT track for object to Consumer counting.
  *
  * @param handle An AI SDK handle.

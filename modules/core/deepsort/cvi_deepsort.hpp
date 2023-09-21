@@ -17,6 +17,7 @@ struct MatchResult {
 
 /* Result Format: [i] <is_matched, tracker_id, tracker_state, tracker_bbox> */
 typedef std::vector<std::tuple<bool, uint64_t, k_tracker_state_e, BBOX>> Tracking_Result;
+typedef std::vector<std::tuple<bool, uint64_t, k_tracker_state_e, BBOX, bool>> Tracking_Result2;
 
 class DeepSORT {
  public:
@@ -31,8 +32,13 @@ class DeepSORT {
   CVI_S32 track_impl(Tracking_Result &result, const std::vector<BBOX> &BBoxes,
                      const std::vector<FEATURE> &Features, float crowd_iou_thresh,
                      int class_id = -1, bool use_reid = true, float *Quality = NULL);
-
+  CVI_S32 track_impl_cross(Tracking_Result2 &result, const std::vector<BBOX> &BBoxes,
+                           const std::vector<FEATURE> &Features, float crowd_iou_thresh,
+                           int class_id, bool use_reid, float *Quality,
+                           const cvai_counting_line_t *cross_line_t, const randomRect *rect);
   CVI_S32 track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid = true);
+  CVI_S32 track_cross(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid,
+                      const cvai_counting_line_t *cross_line_t, const randomRect *rect);
   CVI_S32 track(cvai_face_t *face, cvai_tracker_t *tracker);
   // byte track
 
@@ -45,17 +51,15 @@ class DeepSORT {
                      int class_id = -1, bool use_reid = true, float *Quality = NULL);
 
   void update_tracks(cvai_deepsort_config_t *conf, std::map<int, std::vector<stObjInfo>> &cls_objs);
-  void consumer_counting_update_tracks(cvai_deepsort_config_t *conf,
-                                       std::map<int, std::vector<stObjInfo>> &cls_objs,
-                                       const cvai_counting_line_t *counting_line_t,
-                                       const randomRect *rect);
+  void consumer_counting_fun(stObjInfo obj, int index, const cvai_counting_line_t *counting_line_t,
+                             const randomRect *rect);
   void get_pair_trackids(std::map<int, std::vector<stObjInfo>> &cls_objs,
                          std::map<uint64_t, uint64_t> &pair_trackids);
   void update_pair_info(std::vector<stObjInfo> &dets_a, std::vector<stObjInfo> &dets_b,
                         ObjectType typea, ObjectType typeb, float corre_thresh);
   CVI_S32 track_fuse(cvai_object_t *obj, cvai_face_t *face, cvai_tracker_t *tracker);
   CVI_S32 track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *tracker, bool use_reid,
-                         cvai_object_t *last_head, cvai_object_t *last_ped,
+                         cvai_object_t *head, cvai_object_t *ped,
                          const cvai_counting_line_t *counting_line_t, const randomRect *rect);
   void update_out_num(cvai_tracker_t *tracker);
 
@@ -100,6 +104,12 @@ class DeepSORT {
   MatchResult get_match_result(MatchResult &prev_match, const std::vector<BBOX> &BBoxes,
                                const std::vector<FEATURE> &Features, bool use_reid,
                                float crowd_iou_thresh, cvai_deepsort_config_t *conf);
+  MatchResult get_match_result_consumer_counting(MatchResult &prev_match,
+                                                 const std::vector<BBOX> &BBoxes,
+                                                 const std::vector<FEATURE> &Features,
+                                                 bool use_reid, float crowd_iou_thresh,
+                                                 cvai_deepsort_config_t *conf, bool is_ped,
+                                                 std::vector<stObjInfo> &objs);
   MatchResult match(const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features,
                     const std::vector<int> &Tracker_IDXes, const std::vector<int> &BBox_IDXes,
                     cvai_kalman_filter_config_t &kf_conf,

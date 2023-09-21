@@ -35,11 +35,13 @@ class KalmanTracker : public Tracker {
   uint32_t out_nums = 0;
   int label;
   // consumer counting flag
-  float first_x, first_y;  // The first direction vector
-  float old_x, old_y;      // The pre coordinate
-  int entry_gap = 0;
-  int miss_gap = 0;
-
+  float first_x = 0, first_y = 0;  // The first direction vector
+  float old_x = 0, old_y = 0;      // The pre coordinate
+  bool is_cross = false;
+  int cross_gap = 0;
+  int counting_gap = 0;
+  // int miss_gap = 0;
+  // bool is_used = false;
   std::map<uint64_t, stCorrelateInfo> pair_track_infos_;
 
   KalmanTracker() = delete;

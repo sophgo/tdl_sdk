@@ -2,6 +2,7 @@
 #define _CVIAI_APP_H_
 #include "capture/face_capture_type.h"
 #include "capture/person_capture_type.h"
+#include "capture/personvehicle_capture_type.h"
 #include "core/core/cvai_core_types.h"
 #include "core/cviai_core.h"
 
@@ -13,6 +14,7 @@ typedef struct {
   cviai_handle_t ai_handle;
   face_capture_t *face_cpt_info;
   person_capture_t *person_cpt_info;
+  personvehicle_capture_t *personvehicle_cpt_info;
 } cviai_app_context_t;
 
 #ifdef __cplusplus
@@ -97,6 +99,29 @@ DLL_EXPORT CVI_S32 CVI_AI_APP_ConsumerCounting_Line(const cviai_app_handle_t han
 DLL_EXPORT CVI_S32 CVI_AI_APP_PersonCapture_SetMode(const cviai_app_handle_t handle,
                                                     capture_mode_e mode);
 DLL_EXPORT CVI_S32 CVI_AI_APP_PersonCapture_CleanAll(const cviai_app_handle_t handle);
+
+// personvehicle cross the border
+DLL_EXPORT CVI_S32 CVI_AI_APP_PersonVehicleCapture_Init(const cviai_app_handle_t handle,
+                                                        uint32_t buffer_size);
+
+DLL_EXPORT CVI_S32 CVI_AI_APP_PersonVehicleCapture_QuickSetUp(const cviai_app_handle_t handle,
+                                                              const char *od_model_name,
+                                                              const char *od_model_path,
+                                                              const char *reid_model_path);
+
+DLL_EXPORT CVI_S32
+CVI_AI_APP_PersonVehicleCapture_GetDefaultConfig(personvehicle_capture_config_t *cfg);
+
+DLL_EXPORT CVI_S32 CVI_AI_APP_PersonVehicleCapture_SetConfig(const cviai_app_handle_t handle,
+                                                             personvehicle_capture_config_t *cfg);
+DLL_EXPORT CVI_S32 CVI_AI_APP_PersonVehicleCapture_Run(const cviai_app_handle_t handle,
+                                                       VIDEO_FRAME_INFO_S *frame);
+
+DLL_EXPORT CVI_S32 CVI_AI_APP_PersonVehicleCapture_Line(const cviai_app_handle_t handle, int A_x,
+                                                        int A_y, int B_x, int B_y,
+                                                        statistics_mode s_mode);
+
+DLL_EXPORT CVI_S32 CVI_AI_APP_PersonVehicleCapture_CleanAll(const cviai_app_handle_t handle);
 
 #ifdef __cplusplus
 }
