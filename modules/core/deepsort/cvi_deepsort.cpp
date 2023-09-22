@@ -22,7 +22,7 @@
 // static void FACE_QUALITY_ASSESSMENT(cvai_face_t *face);
 static void show_deepsort_config(cvai_deepsort_config_t &ds_conf);
 bool isCrossPointInRect(const randomRect *rect, float p_x, float p_y) {
-  // a��b=(x1y2-x2y1)
+  // a×b=(x1y2-x2y1)
   float a = (rect->lt_x - rect->lb_x) * (p_y - rect->lb_y) -
             (rect->lt_y - rect->lb_y) * (p_x - rect->lb_x);  // LTLB X PLB
   float b = (rect->rt_x - rect->lt_x) * (p_y - rect->lt_y) -

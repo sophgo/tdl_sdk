@@ -28,6 +28,8 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
 static CVI_S32 clean_data(face_capture_t *face_cpt_info);
 int cal_crop_box(const float frame_width, const float frame_height, cvai_bbox_t crop_box,
                  cvai_bbox_t *p_dst_box);
+float cal_crop_big_box(const float frame_width, const float frame_height, cvai_bbox_t crop_box,
+                       cvai_bbox_t *p_dst_box, int *dts_w, int *dst_h);
 static CVI_S32 update_output_state(const cviai_handle_t ai_handle, face_capture_t *face_cpt_info);
 static CVI_S32 extract_cropped_face(const cviai_handle_t ai_handle, face_capture_t *face_cpt_info);
 // static CVI_S32 capture_face_with_vpss(const cviai_handle_t ai_handle, face_capture_t
@@ -674,11 +676,12 @@ static void encode_img2jpg(VENC_CHN VeChn, VIDEO_FRAME_INFO_S *src_frame,
     memcpy(dst_image->full_img, pstPack->pu8Addr + pstPack->u32Offset, total_len);
   }
 
-  uint32_t dst_wh = crop_frame->stVFrame.u32Height;
+  uint32_t dst_h = crop_frame->stVFrame.u32Height;
+  uint32_t dst_w = crop_frame->stVFrame.u32Width;
   if (dst_image->height != crop_frame->stVFrame.u32Height ||
       dst_image->width != crop_frame->stVFrame.u32Width) {
     CVI_AI_Free(dst_image);
-    CVI_AI_CreateImage(dst_image, dst_wh, dst_wh, PIXEL_FORMAT_RGB_888);
+    CVI_AI_CreateImage(dst_image, dst_h, dst_w, PIXEL_FORMAT_RGB_888);
   }
   CVI_AI_Copy_VideoFrameToImage(crop_frame, dst_image);
 
@@ -758,19 +761,40 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
       continue;
     }
 
+    cvai_bbox_t crop_big_box;
+    int dst_w = 0;
+    int dst_h = 0;
+    float scale = cal_crop_big_box(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                                   face_meta->info[i].bbox, &crop_big_box, &dst_w, &dst_h);
+    VIDEO_FRAME_INFO_S *crop_big_frame = NULL;
+    int ret = CVI_AI_CropResizeImage(ai_handle, face_cpt_info->fl_model, frame, &crop_big_box,
+                                     dst_w, dst_h, PIXEL_FORMAT_RGB_888, &crop_big_frame);
+    if (ret != CVI_SUCCESS) {
+      LOGE("skip crop failed\n");
+      if (crop_big_frame != NULL)
+        CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_big_frame, true);
+      continue;
+    }
+
+    cvai_bbox_t scale_box;
+    scale_box.x1 = (face_meta->info[i].bbox.x1 - crop_big_box.x1) / scale;
+    scale_box.y1 = (face_meta->info[i].bbox.y1 - crop_big_box.y1) / scale;
+    scale_box.x2 = (face_meta->info[i].bbox.x2 - crop_big_box.x1) / scale;
+    scale_box.y2 = (face_meta->info[i].bbox.y2 - crop_big_box.y1) / scale;
+    scale_box.score = face_meta->info[i].bbox.score;
     cvai_bbox_t crop_box;
-    int dst_wh = cal_crop_box(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                              face_meta->info[i].bbox, &crop_box);
+    int dst_wh = cal_crop_box(crop_big_frame->stVFrame.u32Width, crop_big_frame->stVFrame.u32Height,
+                              scale_box, &crop_box);
     VIDEO_FRAME_INFO_S *crop_frame = NULL;
-    int ret = CVI_AI_CropResizeImage(ai_handle, face_cpt_info->fl_model, frame, &crop_box, dst_wh,
-                                     dst_wh, PIXEL_FORMAT_RGB_888, &crop_frame);
+    ret = CVI_AI_CropResizeImage(ai_handle, face_cpt_info->fl_model, crop_big_frame, &crop_box,
+                                 dst_wh, dst_wh, PIXEL_FORMAT_RGB_888, &crop_frame);
+    // printf("to process,index:%d,face:%d\n",update_idx,(int)i);
     if (ret != CVI_SUCCESS) {
       LOGE("skip crop failed\n");
       if (crop_frame != NULL)
         CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
       continue;
     }
-
     cvai_face_t obj_meta = {0};
     if (face_cpt_info->fl_model == CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3) {
       ret = CVI_AI_FLDet3(ai_handle, crop_frame, &obj_meta);
@@ -780,6 +804,7 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     if (ret != 0) {
       LOGE("det3 failed\n");
       CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
+      CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_big_frame, true);
       continue;
     }
 
@@ -789,19 +814,23 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     float scaleh = boxh / dst_wh;
     obj_meta.info[0].bbox = crop_box;
     for (int i = 0; i < 5; i++) {
-      obj_meta.info[0].pts.x[i] = obj_meta.info[0].pts.x[i] * scalew + crop_box.x1;
-      obj_meta.info[0].pts.y[i] = obj_meta.info[0].pts.y[i] * scaleh + crop_box.y1;
+      obj_meta.info[0].pts.x[i] =
+          (obj_meta.info[0].pts.x[i] * scalew + crop_box.x1) * scale + crop_big_box.x1;
+      obj_meta.info[0].pts.y[i] =
+          (obj_meta.info[0].pts.y[i] * scaleh + crop_box.y1) * scale + crop_big_box.y1;
     }
 
     eye_dist_x = obj_meta.info[0].pts.x[1] - obj_meta.info[0].pts.x[0];
     eye_dist_y = obj_meta.info[0].pts.y[0] - obj_meta.info[0].pts.y[1];
     eye_dist = sqrt(eye_dist_x * eye_dist_x + eye_dist_y * eye_dist_y);
     if (eye_dist < face_cpt_info->cfg.eye_dist_thresh ||
-        obj_meta.info[0].score < face_cpt_info->cfg.landmark_score_thresh) {
-      LOGD("skip track:%d,eyedist:%.3f,ptscore:%.3f\n", (int)trk_id, eye_dist,
-           obj_meta.info[0].pts.score);
+        obj_meta.info[0].pts.score < face_cpt_info->cfg.landmark_score_thresh) {
+      // printf("skip track:%d,eyedist:%.3f,ptscore:%.3f\n", (int)trk_id, eye_dist,
+      //        obj_meta.info[0].pts.score);
       CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
+      CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_big_frame, true);
       CVI_AI_Free(&obj_meta);
+
       continue;
     }
 
@@ -813,6 +842,7 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     if (face_meta->info[i].pose_score1 <= face_cpt_info->data[update_idx].info.pose_score1) {
       LOGD("skip track:%d,pose_score1:%.3f\n", (int)trk_id, face_meta->info[i].pose_score1);
       CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
+      CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_big_frame, true);
       CVI_AI_Free(&obj_meta);
       continue;
     }
@@ -842,7 +872,7 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
     memcpy(face_cpt_info->data[update_idx].info.pts.y, obj_meta.info[0].pts.y, sizeof(float) * 5);
 
     face_cpt_info->data[update_idx]._capture = true;
-    if (face_cpt_info->cfg.img_capture_flag != 0) {
+    if (face_cpt_info->cfg.img_capture_flag == 1 || face_cpt_info->cfg.img_capture_flag == 3) {
       VIDEO_FRAME_INFO_S *p_frame = frame;
       VENC_CHN VeChn = face_cpt_info->cfg.venc_channel_id;
       uint8_t yuv_fmt = false;
@@ -853,18 +883,30 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
       }
       // TODO: crop image is RGB_PACKED, use venc hardware must be nv21 format.
       // therefore save the source croped image.
-      encode_img2jpg(VeChn, p_frame, crop_frame, &face_cpt_info->data[update_idx].image);
+      if (face_cpt_info->cfg.img_capture_flag == 1) {
+        encode_img2jpg(VeChn, p_frame, crop_frame, &face_cpt_info->data[update_idx].image);
+      } else {
+        encode_img2jpg(VeChn, p_frame, crop_big_frame, &face_cpt_info->data[update_idx].image);
+      }
       if (yuv_fmt) {
         CVI_AI_Delete_Img(ai_handle, face_cpt_info->fd_model, p_frame);
       }
     } else {
-      if (face_cpt_info->data[update_idx].image.width != dst_wh ||
-          face_cpt_info->data[update_idx].image.height != dst_wh) {
+      if (face_cpt_info->cfg.img_capture_flag == 0) {
+        dst_h = dst_wh;
+        dst_w = dst_wh;
+      }
+      if (face_cpt_info->data[update_idx].image.width != dst_w ||
+          face_cpt_info->data[update_idx].image.height != dst_h) {
         CVI_AI_Free(&face_cpt_info->data[update_idx].image);
-        CVI_AI_CreateImage(&face_cpt_info->data[update_idx].image, dst_wh, dst_wh,
+        CVI_AI_CreateImage(&face_cpt_info->data[update_idx].image, dst_h, dst_w,
                            PIXEL_FORMAT_RGB_888);
       }
-      ret = CVI_AI_Copy_VideoFrameToImage(crop_frame, &face_cpt_info->data[update_idx].image);
+      if (face_cpt_info->cfg.img_capture_flag == 2) {
+        ret = CVI_AI_Copy_VideoFrameToImage(crop_big_frame, &face_cpt_info->data[update_idx].image);
+      } else {
+        ret = CVI_AI_Copy_VideoFrameToImage(crop_frame, &face_cpt_info->data[update_idx].image);
+      }
     }
     // face_cpt_info->data[update_idx].cap_timestamp = face_cpt_info->_time;
     face_cpt_info->data[update_idx].info.face_quality = face_meta->info[i].face_quality;
@@ -872,8 +914,10 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
            sizeof(face_cpt_info->data[update_idx].info.name));
 
     CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_frame, true);
+    CVI_AI_Release_VideoFrame(ai_handle, face_cpt_info->fl_model, crop_big_frame, true);
     CVI_AI_Free(&obj_meta);
   }
+
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     bool found = false;
     for (uint32_t k = 0; k < tracker_meta->size; k++) {
@@ -947,6 +991,45 @@ int cal_crop_box(const float frame_width, const float frame_height, cvai_bbox_t 
   *p_dst_box = new_bbox;
   return dst_hw;
 }
+
+float cal_crop_big_box(const float frame_width, const float frame_height, cvai_bbox_t crop_box,
+                       cvai_bbox_t *p_dst_box, int *dts_w, int *dst_h) {
+  cvai_bbox_t bbox = crop_box;
+  int boxw = (bbox.x2 - bbox.x1);
+  int boxh = (bbox.y2 - bbox.y1);
+
+  // bbox new coordinate after extern
+  int x1 = bbox.x1 - 0.8 * boxw;
+  int y1 = bbox.y1 - 0.5 * boxh;
+  int x2 = bbox.x2 + 0.8 * boxw;
+  int y2 = bbox.y1 + 2.5 * boxh;
+
+  cvai_bbox_t new_bbox;
+  new_bbox.score = bbox.score;
+  new_bbox.x1 = x1 > 0 ? x1 : 0;
+  new_bbox.y1 = y1 > 0 ? y1 : 0;
+  new_bbox.x2 = x2 < frame_width ? x2 : frame_width - 1;
+  new_bbox.y2 = y2 < frame_height ? y2 : frame_height - 1;
+
+  *p_dst_box = new_bbox;
+
+  float box_height = new_bbox.y2 - new_bbox.y1;
+  float box_width = new_bbox.x2 - new_bbox.x1;
+
+  int new_width = ((int)box_width / 64 + 1) * 64;
+  if (new_width > 256) {
+    new_width = 256;
+  }
+
+  float scale = box_width / (float)new_width;
+  int new_height = box_height / scale;
+
+  *dts_w = new_width;
+  *dst_h = new_height;
+
+  return scale;
+}
+
 int update_extend_resize_info(const float frame_width, const float frame_height,
                               cvai_face_info_t *face_info, cvai_bbox_t *p_dst_box,
                               bool update_info) {

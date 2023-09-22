@@ -15,7 +15,7 @@
 
 /** NOTE: If turn on DO_ALIGN_STRIDE, we can not copy the data from cv::Mat directly. */
 /** TODO: If ALIGN is not necessary in AI SDK, remove it in the future. */
-// #define DO_ALIGN_STRIDE
+#define DO_ALIGN_STRIDE
 #ifdef DO_ALIGN_STRIDE
 #define GET_AI_IMAGE_STRIDE(x) (ALIGN((x), DEFAULT_ALIGN))
 #else

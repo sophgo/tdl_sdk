@@ -415,9 +415,8 @@ CVI_S32 get_middleware_config(SAMPLE_AI_MW_CONFIG_S *pstMWConfig) {
   return s32Ret;
 }
 int main(int argc, char *argv[]) {
-  if (argc != 3 && argc != 4 && argc != 5) {
-    printf("Usage: %s fdmodel_path capture_path\n", argv[0]);
-    printf("Usage: %s fdmodel_path pedmodel_path capture_path\n", argv[0]);
+  if (argc != 4 && argc != 5) {
+    printf("Usage: %s fdmodel_path ldmodel_path capture_path\n", argv[0]);
     printf("Usage: %s fdmodel_path pedmodel_path ldmodel_path capture_path\n", argv[0]);
     return CVI_FAILURE;
   }
@@ -429,10 +428,8 @@ int main(int argc, char *argv[]) {
   const char *fd_model_path = argv[1];
   const char *ped_model_path = "NULL";
   const char *ld_model_path = "NULL";
-  if (argc == 3) {
-    sprintf(g_out_dir, "%s", argv[2]);
-  } else if (argc == 4) {
-    ped_model_path = argv[2];
+  if (argc == 4) {
+    ld_model_path = argv[2];
     sprintf(g_out_dir, "%s", argv[3]);
   } else if (argc == 5) {
     ped_model_path = argv[2];
