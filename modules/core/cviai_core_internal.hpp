@@ -10,6 +10,7 @@
 #include "motion_detection/md.hpp"
 #ifndef SIMPLY_MODEL
 #ifndef CV180X
+#include "fall_detection/fall_det_monitor.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "tamper_detection/tamper_detection.hpp"
 #endif
@@ -40,6 +41,7 @@ typedef struct {
 #ifndef CV180X
   TamperDetectorMD *td_model = nullptr;
   FallMD *fall_model = nullptr;
+  FallDetMonitor *fall_monitor_model = nullptr;
 #endif
 #endif
   bool use_gdc_wrap = false;

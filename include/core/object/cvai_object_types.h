@@ -321,6 +321,11 @@ typedef struct {
   cvai_vehicle_meta *vehicle_properity;
   cvai_pedestrian_meta *pedestrian_properity;
   int track_state;
+  // float human_angle;
+  // float aspect_ratio;
+  // float speed;
+  // int is_moving;
+  // int status;
 } cvai_object_info_t;
 
 /** @struct cvai_object_t

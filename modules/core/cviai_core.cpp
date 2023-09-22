@@ -17,6 +17,7 @@
 #include "face_landmarker/face_landmarker_det2.hpp"
 #include "face_mask_detection/retinaface_yolox.hpp"
 #include "face_quality/face_quality.hpp"
+#include "fall_detection/fall_det_monitor.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "hand_classification/hand_classification.hpp"
 #include "hand_keypoint/hand_keypoint.hpp"
@@ -1065,6 +1066,34 @@ CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objects) {
     return CVIAI_SUCCESS;
   }
   return ctx->fall_model->detect(objects);
+}
+
+// New Fall Detection
+
+CVI_S32 CVI_AI_Fall_Monitor(const cviai_handle_t handle, cvai_object_t *objects) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Fall_Monitor");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
+  if (fall_monitor_model == nullptr) {
+    LOGD("Init Fall Detection Model.\n");
+    ctx->fall_monitor_model = new FallDetMonitor();
+    ctx->fall_monitor_model->monitor(objects);
+    return CVIAI_SUCCESS;
+  }
+  return ctx->fall_monitor_model->monitor(objects);
+}
+
+CVI_S32 CVI_AI_Set_Fall_FPS(const cviai_handle_t handle, float fps) {
+  TRACE_EVENT("cviai_core", "CVI_AI_Fall_Monitor");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
+  if (fall_monitor_model == nullptr) {
+    LOGD("Init Fall Detection Model.\n");
+    ctx->fall_monitor_model = new FallDetMonitor();
+    ctx->fall_monitor_model->set_fps(fps);
+    return CVIAI_SUCCESS;
+  }
+  return ctx->fall_monitor_model->set_fps(fps);
 }
 
 // Others

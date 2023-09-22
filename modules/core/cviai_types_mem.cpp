@@ -194,6 +194,13 @@ void CVI_AI_CopyInfoCpp(const cvai_object_info_t *info, cvai_object_info_t *info
   infoNew->bbox = info->bbox;
   infoNew->feature.type = info->feature.type;
   infoNew->feature.size = info->feature.size;
+
+  // infoNew->human_angle = info->human_angle;
+  // infoNew->aspect_ratio = info->aspect_ratio;
+  // infoNew->speed = info->speed;
+  // infoNew->is_moving = info->is_moving;
+  // infoNew->status = info->status;
+
   if (infoNew->feature.size != 0) {
     uint32_t feature_size = infoNew->feature.size * getFeatureTypeSize(infoNew->feature.type);
     infoNew->feature.ptr = (int8_t *)malloc(feature_size);

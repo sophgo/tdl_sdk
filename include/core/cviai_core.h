@@ -1209,6 +1209,30 @@ DLL_EXPORT CVI_S32 CVI_AI_Fall(const cviai_handle_t handle, cvai_object_t *objec
 /**@{*/
 
 /**
+ * \addtogroup core_fall Fall Detection new API
+ * \ingroup core_ai
+ */
+/**@{*/
+
+/**
+ * @brief Fall Detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param objects Detected object info.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Fall_Monitor(const cviai_handle_t handle, cvai_object_t *objects);
+
+/**
+ * @brief Set fall detection FPS.
+ *
+ * @param handle An AI SDK handle.
+ * @param fps Current frame fps.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_Fall_FPS(const cviai_handle_t handle, float fps);
+
+/**
  * \addtogroup core_others Others
  * \ingroup core_ai
  */

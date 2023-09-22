@@ -76,6 +76,7 @@ buildninstallcpp(NAME test_img_handfaceperson_det INC ${REG_INCLUDES} DEPS cviai
 buildninstallcpp(NAME test_img_md INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_fdfr INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_pose INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_img_fall_monitor INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_hand_keypoint INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_vpss_pd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_audio_cls INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
