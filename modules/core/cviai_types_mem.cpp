@@ -290,7 +290,7 @@ void CVI_AI_CopyObjectMeta(const cvai_object_t *src, cvai_object_t *dest) {
     }
   }
 }
-
+#ifndef SIMPLY_MODEL
 void CVI_AI_CopyHandPoses(const cvai_handpose21_meta_ts *src, cvai_handpose21_meta_ts *dest) {
   CVI_AI_FreeCpp(dest);
   memset(dest, 0, sizeof(cvai_handpose21_meta_ts));
@@ -379,3 +379,4 @@ CVI_S32 CVI_AI_CopyVpssImage(VIDEO_FRAME_INFO_S *src_frame, cvai_image_t *dst_im
   CVI_AI_UnMapImage(src_frame, unmap);
   return CVI_SUCCESS;
 }
+#endif

@@ -4,7 +4,9 @@
 #include "core/core/cvai_vpss_types.h"
 
 #include "cviai_log.hpp"
+#ifndef SIMPLY_MODEL
 #include "model_debugger.hpp"
+#endif
 #include "vpss_engine.hpp"
 
 #include <cviruntime.h>
@@ -12,7 +14,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#ifndef SIMPLY_MODEL
 #include "profiler.hpp"
+#endif
 #define DEFAULT_MODEL_THRESHOLD 0.5
 #define DEFAULT_MODEL_NMS_THRESHOLD 0.5
 
@@ -101,9 +105,8 @@ class Core {
   float getModelNmsThreshold();
   bool isInitialized();
   virtual bool allowExportChannelAttribute() const { return false; }
-
+#ifndef SIMPLY_MODEL
   void enableDebugger(bool enable) { m_debugger.setEnable(enable); }
-
   void setDebuggerOutputPath(const std::string &dump_path) {
     m_debugger.setDirPath(dump_path);
 
@@ -115,7 +118,9 @@ class Core {
       LOGW("**************************************************************\n");
     }
   }
+
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
+#endif
   int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvai_bbox_t bbox,
                     uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
                     VPSS_SCALE_COEF_E reize_mode = VPSS_SCALE_COEF_BICUBIC);
@@ -196,14 +201,17 @@ class Core {
 
   // External handle
   VpssEngine *mp_vpss_inst = nullptr;
+#ifndef SIMPLY_MODEL
   Timer model_timer_;
+#endif
 
  protected:
   // vpss related control
   int32_t m_vpss_timeout = 100;
   std::string m_model_file;
+#ifndef SIMPLY_MODEL
   debug::ModelDebugger m_debugger;
-
+#endif
  private:
   template <typename T>
   inline int __attribute__((always_inline)) registerFrame2Tensor(std::vector<T> &frames);

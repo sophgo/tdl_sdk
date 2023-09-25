@@ -388,19 +388,25 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   int ret = CVIAI_SUCCESS;
 
   if (m_skip_vpss_preprocess && !allowExportChannelAttribute()) {
+#ifndef SIMPLY_MODEL
     LOGE(
         "cannot skip vpss preprocessing for model: %s, please set false to "
         "CVI_AI_SetSkipVpssPreprocess\n",
         demangle::type_no_scope(*this).c_str());
+#endif
     return CVIAI_ERR_INVALID_ARGS;
   }
+#ifndef SIMPLY_MODEL
   model_timer_.TicToc("runstart");
+#endif
   std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
 
+#ifndef SIMPLY_MODEL
   m_debugger.newSession(demangle::type_no_scope(*this));
   m_debugger.save_field("skip_vpss_preprocess", ((uint8_t)m_skip_vpss_preprocess));
   m_debugger.save_field("model_file", m_model_file.c_str(), {m_model_file.size()});
   m_debugger.save_field("input_mem_type", (uint8_t)mp_mi->conf.input_mem_type);
+#endif
   if (aligned_input && frames.size() != 1) {
     LOGE("can only process one frame for aligninput,got frame_num:%d\n", int(frames.size()));
   }
@@ -419,8 +425,9 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       dstFrames.reserve(frames.size());
       for (uint32_t i = 0; i < frames.size(); i++) {
         VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+#ifndef SIMPLY_MODEL
         m_debugger.save_origin_frame(frames[i], mp_mi->in.tensors + i);
-
+#endif
         memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
         int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
         if (vpssret != CVIAI_SUCCESS) {
@@ -441,8 +448,9 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       ret = registerFrame2Tensor(dstFrames);
     }
   }
-
+#ifndef SIMPLY_MODEL
   model_timer_.TicToc("vpss");
+#endif
   if (ret == CVIAI_SUCCESS) {
     int rcret = CVI_NN_Forward(mp_mi->handle, mp_mi->in.tensors, mp_mi->in.num, mp_mi->out.tensors,
                                mp_mi->out.num);
@@ -450,12 +458,15 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     if (rcret == CVI_RC_SUCCESS) {
       // save debuginfo
       for (int32_t i = 0; i < mp_mi->in.num; i++) {
+#ifndef SIMPLY_MODEL
         CVI_TENSOR *tensor = mp_mi->in.tensors + i;
         m_debugger.save_tensor(tensor, getInputRawPtr<void>(0));
-
+#endif
         // save normalizer only if model needs vpss precprcossing
         if (!m_skip_vpss_preprocess && mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
+#ifndef SIMPLY_MODEL
           m_debugger.save_normalizer(tensor, m_vpss_config[i].chn_attr.stNormalize);
+#endif
         }
       }
     } else {
@@ -463,7 +474,9 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       ret = CVIAI_ERR_INFERENCE;
     }
   }
+#ifndef SIMPLY_MODEL
   model_timer_.TicToc("tpu");
+#endif
   return ret;
 }
 
@@ -515,7 +528,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
   }
   return CVIAI_SUCCESS;
 }
-
+#ifndef SIMPLY_MODEL
 /* vpssCropImage api need new  dstFrame and remember delete and release frame*/
 int Core::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                         cvai_bbox_t bbox, uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
@@ -542,4 +555,5 @@ int Core::vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstF
   mp_vpss_inst->getFrame(dstFrame, 0, 2000);
   return CVIAI_SUCCESS;
 }
+#endif
 }  // namespace cviai

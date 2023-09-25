@@ -32,9 +32,9 @@ struct hash<CVI_AI_SUPPORTED_MODEL_E> {
 typedef struct {
   std::unordered_map<CVI_AI_SUPPORTED_MODEL_E, cviai_model_t> model_cont;
   std::vector<cviai_model_t> custom_cont;
-  ive::IVE *ive_handle = NULL;
   std::vector<cviai::VpssEngine *> vec_vpss_engine;
   uint32_t vpss_timeout_value = 100;  // default value.
+  ive::IVE *ive_handle = NULL;
   MotionDetection *md_model = nullptr;
 #ifndef SIMPLY_MODEL
   DeepSORT *ds_tracker = nullptr;

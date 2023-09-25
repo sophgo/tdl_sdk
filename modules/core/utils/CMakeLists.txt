@@ -1,6 +1,11 @@
 project(utils)
 
-
+if(DEFINED SIMPLY_MODEL)
+set(UTILS_SRC core_utils.cpp
+              rescale_utils.cpp
+              ccl.cpp
+              object_utils.cpp)
+else()
 set(UTILS_SRC core_utils.cpp
               rescale_utils.cpp
               demangle.cpp
@@ -8,6 +13,7 @@ set(UTILS_SRC core_utils.cpp
               ccl.cpp
               profiler.cpp
               img_warp.cpp)
+endif()
 
 if(NOT DEFINED SIMPLY_MODEL)
 if(NOT DEFINED NO_OPENCV)

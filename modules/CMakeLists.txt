@@ -21,7 +21,6 @@ endif()
 add_subdirectory(core)
 add_subdirectory(service)
 
-
 if(NOT DEFINED NO_OPENCV)
   if(NOT DEFINED SIMPLY_MODEL)
     add_subdirectory(evaluation)

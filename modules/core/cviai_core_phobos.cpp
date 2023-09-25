@@ -3,7 +3,9 @@
 #include "core/cviai_core.h"
 #include "cviai_core_internal.hpp"
 #include "cviai_log.hpp"
+#ifndef SIMPLY_MODEL
 #include "cviai_trace.hpp"
+#endif
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -17,11 +19,11 @@
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem_internal.h"
 #include "cviai_experimental.h"
-#include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #ifndef SIMPLY_MODEL
 #include "cviai_perfetto.h"
 #include "face_attribute/face_attribute.hpp"
+#include "motion_detection/md.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "object_detection/yolox/yolox.hpp"
 #include "retina_face/retina_face.hpp"
@@ -194,7 +196,9 @@ CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
   }
 
   cviai_context_t *ctx = new cviai_context_t;
+#ifndef SIMPLY_MODEL
   ctx->ive_handle = NULL;
+#endif
   ctx->vec_vpss_engine.push_back(new VpssEngine(vpssGroupId, vpssDev));
   const char timestamp[] = __DATE__ " " __TIME__;
   LOGI("cviai_handle_t is created, version %s-%s", CVIAI_TAG, timestamp);
@@ -273,6 +277,8 @@ CVI_S32 CVI_AI_SetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MOD
   }
   return CVIAI_SUCCESS;
 }
+
+#ifndef SIMPLY_MODEL
 CVI_S32 CVI_AI_SetPerfEvalInterval(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                    int interval) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -285,6 +291,7 @@ CVI_S32 CVI_AI_SetPerfEvalInterval(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL
   }
   return CVIAI_SUCCESS;
 }
+#endif
 
 CVI_S32 CVI_AI_GetSkipVpssPreprocess(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                      bool *skip) {
@@ -325,6 +332,7 @@ CVI_S32 CVI_AI_GetModelThreshold(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
   return CVIAI_SUCCESS;
 }
 
+#ifndef SIMPLY_MODEL
 CVI_S32 CVI_AI_SetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                              const uint32_t thread) {
   return CVI_AI_SetVpssThread2(handle, config, thread, -1, 0);
@@ -341,6 +349,7 @@ CVI_S32 CVI_AI_SetVpssThread2(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E co
     return CVIAI_ERR_OPEN_MODEL;
   }
 }
+#endif
 
 CVI_S32 CVI_AI_SetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL pool_id) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -353,6 +362,14 @@ CVI_S32 CVI_AI_SetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL pool_id
   return CVIAI_SUCCESS;
 }
 
+CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
+                             uint32_t *thread) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  *thread = ctx->model_cont[config].vpss_thread;
+  return CVIAI_SUCCESS;
+}
+
+#ifndef SIMPLY_MODEL
 CVI_S32 CVI_AI_GetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL *pool_id) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   if (thread >= ctx->vec_vpss_engine.size()) {
@@ -361,13 +378,6 @@ CVI_S32 CVI_AI_GetVBPool(cviai_handle_t handle, uint32_t thread, VB_POOL *pool_i
     return CVIAI_FAILURE;
   }
   *pool_id = ctx->vec_vpss_engine[thread]->getVBPool();
-  return CVIAI_SUCCESS;
-}
-
-CVI_S32 CVI_AI_GetVpssThread(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
-                             uint32_t *thread) {
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  *thread = ctx->model_cont[config].vpss_thread;
   return CVIAI_SUCCESS;
 }
 
@@ -405,6 +415,7 @@ CVI_S32 CVI_AI_GetVpssGrpIds(cviai_handle_t handle, VPSS_GRP **groups, uint32_t 
   *num = ctx->vec_vpss_engine.size();
   return CVIAI_SUCCESS;
 }
+#endif
 
 CVI_S32 CVI_AI_SetVpssTimeout(cviai_handle_t handle, uint32_t timeout) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -513,6 +524,7 @@ CVI_S32 CVI_AI_GetVpssChnConfig(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E 
   return instance->getChnConfig(frameWidth, frameHeight, idx, chnConfig);
 }
 
+#ifndef SIMPLY_MODEL
 CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E config,
                                const char *dump_path, bool enable) {
   CVI_S32 ret = CVIAI_SUCCESS;
@@ -527,6 +539,7 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
   instance->setDebuggerOutputPath(dump_path);
   return ret;
 }
+#endif
 
 /**
  *  Convenience macros for defining inference functions. F{NUM} stands for how many input frame
@@ -536,7 +549,6 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
  */
 #define DEFINE_INF_FUNC_F1_P1(func_name, class_name, model_index, arg_type)                   \
   CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg_type arg1) {  \
-    TRACE_EVENT("cviai_core", #func_name);                                                    \
     cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                            \
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
     if (obj == nullptr) {                                                                     \
@@ -559,7 +571,6 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
 #define DEFINE_INF_FUNC_F1_P2(func_name, class_name, model_index, arg1_type, arg2_type)       \
   CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg1_type arg1,   \
                     arg2_type arg2) {                                                         \
-    TRACE_EVENT("cviai_core", #func_name);                                                    \
     cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                            \
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
     if (obj == nullptr) {                                                                     \
@@ -582,7 +593,6 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
 #define DEFINE_INF_FUNC_F2_P1(func_name, class_name, model_index, arg_type)                   \
   CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame1,                  \
                     VIDEO_FRAME_INFO_S *frame2, arg_type arg1) {                              \
-    TRACE_EVENT("cviai_core", #func_name);                                                    \
     cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                            \
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
     if (obj == nullptr) {                                                                     \
@@ -605,7 +615,6 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
 #define DEFINE_INF_FUNC_F2_P2(func_name, class_name, model_index, arg1_type, arg2_type)       \
   CVI_S32 func_name(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame1,                  \
                     VIDEO_FRAME_INFO_S *frame2, arg1_type arg1, arg2_type arg2) {             \
-    TRACE_EVENT("cviai_core", #func_name);                                                    \
     cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);                            \
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
     if (obj == nullptr) {                                                                     \
@@ -663,6 +672,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Person_Pets, MobileDetV2,
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvai_object_t *)
 
+#ifndef SIMPLY_MODEL
 CVI_S32 CVI_AI_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *p_dst, cvai_bbox_t *bbox,
                          bool cvtRGB888) {
   return CVIAI_ERR_NOT_YET_INITIALIZED;
@@ -679,7 +689,6 @@ CVI_S32 CVI_AI_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *p_dst,
   return CVIAI_ERR_NOT_YET_INITIALIZED;
 }
 
-#ifndef SIMPLY_MODEL
 // Tracker
 
 CVI_S32 CVI_AI_DeepSORT_Init(const cviai_handle_t handle, bool use_specific_counter) {
@@ -829,9 +838,10 @@ CVI_S32 CVI_AI_TamperDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *
   return CVIAI_ERR_NOT_YET_INITIALIZED;
 }
 #endif
+
 CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame) {
-  TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_Background");
+  // TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_Background");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
@@ -843,7 +853,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_Background(const cviai_handle_t handle,
   return ctx->md_model->update_background(frame);
 }
 CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, MDROI_t *roi_s) {
-  TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_ROI");
+  // TRACE_EVENT("cviai_core", "CVI_AI_Set_MotionDetection_ROI");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
@@ -855,7 +865,7 @@ CVI_S32 CVI_AI_Set_MotionDetection_ROI(const cviai_handle_t handle, MDROI_t *roi
 
 CVI_S32 CVI_AI_MotionDetection(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                cvai_object_t *obj_meta, uint8_t threshold, double min_area) {
-  TRACE_EVENT("cviai_core", "CVI_AI_MotionDetection");
+  // TRACE_EVENT("cviai_core", "CVI_AI_MotionDetection");
 
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;

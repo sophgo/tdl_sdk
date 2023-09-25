@@ -332,9 +332,12 @@ CVI_S32 TPUIVE::destroy() { return CVI_IVE_DestroyHandle(m_handle); }
 CVI_U32 TPUIVE::getWidthAlign() { return DEFAULT_ALIGN; }
 
 CVI_S32 TPUIVE::fillConst(IVEImageImpl *pSrc, float value) {
+#ifdef SIMPLY_MODEL
+  return 0;
+#else
   return CVI_IVE_ConstFill(m_handle, value, UNWRAP(pSrc), false);
+#endif
 }
-
 CVI_S32 TPUIVE::dma(IVEImageImpl *pSrc, IVEImageImpl *pDst, DMAMode mode, CVI_U64 u64Val,
                     CVI_U8 u8HorSegSize, CVI_U8 u8ElemSize, CVI_U8 u8VerSegRows) {
   IVE_DMA_CTRL_S ctrl;
@@ -371,17 +374,29 @@ CVI_S32 TPUIVE::sub(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst
 }
 
 CVI_S32 TPUIVE::andImage(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst) {
+#ifdef SIMPLY_MODEL
+  return 0;
+#else
   return CVI_IVE_And(m_handle, UNWRAP(pSrc1), UNWRAP(pSrc2), UNWRAP(pDst), false);
+#endif
 }
 
 CVI_S32 TPUIVE::orImage(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst) {
+#ifdef SIMPLY_MODEL
+  return 0;
+#else
   return CVI_IVE_Or(m_handle, UNWRAP(pSrc1), UNWRAP(pSrc2), UNWRAP(pDst), false);
+#endif
 }
 
 CVI_S32 TPUIVE::erode(IVEImageImpl *pSrc1, IVEImageImpl *pDst, const std::vector<CVI_S32> &mask) {
+#ifdef SIMPLY_MODEL
+  return 0;
+#else
   IVE_ERODE_CTRL_S ctrl;
   std::copy(mask.begin(), mask.end(), ctrl.au8Mask);
   return CVI_IVE_Erode(m_handle, UNWRAP(pSrc1), UNWRAP(pDst), &ctrl, false);
+#endif
 }
 
 CVI_S32 TPUIVE::dilate(IVEImageImpl *pSrc1, IVEImageImpl *pDst, const std::vector<CVI_S32> &mask) {
@@ -392,18 +407,26 @@ CVI_S32 TPUIVE::dilate(IVEImageImpl *pSrc1, IVEImageImpl *pDst, const std::vecto
 
 CVI_S32 TPUIVE::add(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst, float alpha,
                     float beta) {
+#ifdef SIMPLY_MODEL
+  return 0;
+#else
   IVE_ADD_CTRL_S ctrl;
   ctrl.aX = alpha;
   ctrl.bY = beta;
   return CVI_IVE_Add(m_handle, UNWRAP(pSrc1), UNWRAP(pSrc2), UNWRAP(pDst), &ctrl, false);
+#endif
 }
 
 CVI_S32 TPUIVE::add(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
                     unsigned short alpha, unsigned short beta) {
+#ifdef SIMPLY_MODEL
+  return 0;
+#else
   IVE_ADD_CTRL_S ctrl;
   ctrl.aX = static_cast<float>(alpha) / std::numeric_limits<unsigned short>::max();
   ctrl.bY = static_cast<float>(beta) / std::numeric_limits<unsigned short>::max();
   return CVI_IVE_Add(m_handle, UNWRAP(pSrc1), UNWRAP(pSrc2), UNWRAP(pDst), &ctrl, false);
+#endif
 }
 
 CVI_S32 TPUIVE::thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode, CVI_U8 u8LowThr,
