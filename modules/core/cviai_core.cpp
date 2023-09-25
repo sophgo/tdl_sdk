@@ -12,6 +12,7 @@
 #include "deepsort/cvi_deepsort.hpp"
 #include "eye_classification/eye_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
+#include "face_landmarker/dms_landmark.hpp"
 #include "face_landmarker/face_landmark_det3.hpp"
 #include "face_landmarker/face_landmarker.hpp"
 #include "face_landmarker/face_landmarker_det2.hpp"
@@ -181,6 +182,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
     {CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, CREATOR(Simcc)},
     {CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3, CREATOR(FaceLandmarkDet3)},
+    {CVI_AI_SUPPORTED_MODEL_DMSLANDMARKERDET, CREATOR(DMSLandmarkerDet)},
     {CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
 };
 
@@ -754,6 +756,8 @@ CVI_S32 CVI_AI_EnalbeDumpInput(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E c
  *  find a correct way to create model object.
  *
  */
+DEFINE_INF_FUNC_F1_P1(CVI_AI_DMSLDet, DMSLandmarkerDet, CVI_AI_SUPPORTED_MODEL_DMSLANDMARKERDET,
+                      cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_RetinaFace, RetinaFace, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
                       cvai_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_ScrFDFace, ScrFDFace, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, cvai_face_t *)

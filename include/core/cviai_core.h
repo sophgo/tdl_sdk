@@ -167,6 +167,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3)                    \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LP_RECONGNITION)                  \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_LP_DETECTION)                     \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION)
 // clang-format on
 
@@ -1351,6 +1352,17 @@ DLL_EXPORT CVI_S32 CVI_AI_FaceLandmarker(const cviai_handle_t handle, VIDEO_FRAM
 
 DLL_EXPORT CVI_S32 CVI_AI_FaceLandmarkerDet2(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                              cvai_face_t *face);
+
+/**@}*/
+
+/**
+ * \addtogroup core_ Dms face Landmark
+ * \ingroup core_ai
+ */
+/**@{*/
+DLL_EXPORT CVI_S32 CVI_AI_DMSLDet(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                  cvai_face_t *face);
+
 /**
  * @brief Do smoke classification.
  *

@@ -92,6 +92,8 @@ buildninstallcpp(NAME test_yolox INC ${REG_INCLUDES} DEPS cviai cviai_evaluation
 buildninstallcpp(NAME test_ppyoloe INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_img_consumer_counting INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME test_img_people_vehicle INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME test_dms_landmarks INC ${REG_INCLUDES} DEPS cviai cviai_evaluation cviai_app pthread ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+
 
 #eval_model
 buildninstallcpp(NAME eval_hand_dataset INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
@@ -106,3 +108,4 @@ buildninstallcpp(NAME eval_yolox INC ${REG_INCLUDES} DEPS cviai cviai_evaluation
 buildninstallcpp(NAME eval_image_classification INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_ppyoloe INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_pose_dataset INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
+buildninstallcpp(NAME eval_dms_landmarks_imgs INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
