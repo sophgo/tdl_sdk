@@ -9,7 +9,8 @@ include_directories(${MIDDLEWARE_INCLUDES}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
                     ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(PROJ_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/service/draw_rect/draw_rect.cpp
+set(PROJ_SRCS   $<TARGET_OBJECTS:utils>
+                ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/service/draw_rect/draw_rect.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/cvi_draw_rect.cpp )
 
 project(cvi_draw_rect)
