@@ -76,22 +76,26 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
 }
 int SoundClassificationV2::get_top_k(float *result, size_t count) {
   // int TOP_K = 1;
-  float *data = result;
-  float conf_fg = 1.0 / (1 + std::exp(-result[1]));
-  if (conf_fg > m_model_threshold) {
-    return 1;
-  } else {
-    return 0;
-  }
+  // float *data = result;
+  // float conf_fg = 1.0 / (1 + std::exp(-result[1]));
+  // if (conf_fg > m_model_threshold) {
+  //   return 1;
+  // } else {
+  //   return 0;
+  // }
   int idx = -1;
   float max = -10000;
   for (size_t i = 0; i < count; i++) {
-    // std::cout<<"i:"<<i<<",val:"<<result[i]<<std::endl;
-    if (result[i] > max) {
-      max = data[i];
+    float conf_fg = 1.0 / (1 + std::exp(-result[i]));
+    // std::cout<<"i:"<<i<<", score:"<<conf_fg<<std::endl;
+    if (conf_fg > max) {
+      max = conf_fg;
       idx = i;
     }
   }
-  // if (max < threshold_) return count;  // pct lower than threshold, so return classes + 1
+
+  if (idx != 0 && max < m_model_threshold) {
+    idx = 0;
+  }
   return idx;
 }
