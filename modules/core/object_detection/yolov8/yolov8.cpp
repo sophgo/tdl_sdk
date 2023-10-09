@@ -7,8 +7,6 @@
 #include <core/core/cvai_errno.h>
 #include <error_msg.hpp>
 #include <iostream>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/opencv.hpp>
 #include "coco_utils.hpp"
 #include "core/core/cvai_errno.h"
 #include "core/cviai_types_mem.h"
@@ -137,7 +135,6 @@ int YoloV8Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *dat
   (*data)[0].mean[2] = B_MEAN;
   (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   (*data)[0].use_quantize_scale = true;
-  // (*data)[0].rescale_type = RESCALE_RB;
   return CVIAI_SUCCESS;
 }
 
@@ -149,7 +146,6 @@ int YoloV8Detection::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_
     return ret;
   }
   CVI_SHAPE shape = getInputShape(0);
-  // LOGI("start to outputParser\n");
   if (strides.size() == 3) {
     outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                  srcFrame->stVFrame.u32Height, obj_meta);

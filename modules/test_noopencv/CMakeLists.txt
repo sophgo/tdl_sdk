@@ -1,6 +1,6 @@
 
 
-project(test)
+project(test_noopencv)
 
 function(buildninstallcpp)
   # From https://stackoverflow.com/questions/23327687/how-to-write-a-cmake-function-with-more-than-one-parameter-groups
@@ -55,3 +55,4 @@ set(SAMPLE_LIBS
 
 #test_model
 buildninstallcpp(NAME test_img_fd INC ${REG_INCLUDES} DEPS cviai ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_img_pet INC ${REG_INCLUDES} DEPS cviai ${SAMPLE_LIBS})

@@ -25,6 +25,7 @@
 #include "face_attribute/face_attribute.hpp"
 #include "motion_detection/md.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
+#include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
 #include "retina_face/retina_face.hpp"
 #include "retina_face/scrfd_face.hpp"
@@ -170,19 +171,26 @@ inline Core *__attribute__((always_inline))
 getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx) {
   cviai_model_t &m_t = ctx->model_cont[index];
   if (m_t.instance == nullptr) {
-    if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
-      LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
-           CVI_AI_GetModelName(index));
-      return nullptr;
+    if (index == CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION) {
+      YoloV8Detection *p_yolov8 = new YoloV8Detection();
+      p_yolov8->setBranchChannel(64, 3);  // three types
+      m_t.instance = p_yolov8;
+      LOGI("create personpet model");
+    } else {
+      if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
+        LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
+             CVI_AI_GetModelName(index));
+        return nullptr;
+      }
+      auto creator = MODEL_CREATORS[index];
+      ModelParams params = {.vpss_engine = ctx->vec_vpss_engine[m_t.vpss_thread],
+                            .vpss_timeout_value = ctx->vpss_timeout_value};
+
+      m_t.instance = creator(params);
     }
-
-    auto creator = MODEL_CREATORS[index];
-    ModelParams params = {.vpss_engine = ctx->vec_vpss_engine[m_t.vpss_thread],
-                          .vpss_timeout_value = ctx->vpss_timeout_value};
-
-    m_t.instance = creator(params);
   }
-
+  m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+  m_t.instance->setVpssTimeout(ctx->vpss_timeout_value);
   return m_t.instance;
 }
 
@@ -660,6 +668,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification, SoundClassification,
                       CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_SoundClassification_V2, SoundClassificationV2,
                       CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, int *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_PersonPet_Detection, YoloV8Detection,
+                      CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION, cvai_object_t *)
 #endif
 DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_Vehicle, MobileDetV2,
                       CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, cvai_object_t *)

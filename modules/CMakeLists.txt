@@ -52,7 +52,8 @@ if(DEFINED NO_OPENCV)
                   $<TARGET_OBJECTS:mobiledetv2>
                   $<TARGET_OBJECTS:deepsort>
                   $<TARGET_OBJECTS:face_attribute>
-                  $<TARGET_OBJECTS:sound_classification>)
+                  $<TARGET_OBJECTS:sound_classification>
+                  $<TARGET_OBJECTS:yolov8>)
 
   message("module no opencv ,core_srcs:" ${CORES_SRCS} )
   set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
