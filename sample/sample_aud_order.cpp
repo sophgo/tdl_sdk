@@ -191,7 +191,7 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
 int main(int argc, char **argv) {
   if (argc != 5 && argc != 7) {
     printf(
-        "Usage: %s ESC_MODEL_PATH SAMPLE_RATE ORDER_TYPE SECOND RECORD OUTPUT\n"
+        "Usage: %s ESC_MODEL_PATH SAMPLE_RATE SECOND ORDER_TYPE  RECORD OUTPUT\n"
         "\t\tESC_MODEL_PATH, esc model path.\n"
         "\t\tSAMPLE_RATE, sample rate.\n"
         "\t\tSECOND, input time (s).\n"
@@ -202,8 +202,8 @@ int main(int argc, char **argv) {
     return CVIAI_FAILURE;
   }
 
-  SAMPLE_RATE = atoi(argv[2]);
-  SECOND = atoi(argv[3]);
+  SAMPLE_RATE = atoi(argv[2]);  // 8000 | 16000
+  SECOND = atoi(argv[3]);       // 2 | 3
   int ORDER_TYPE = atoi(argv[4]);
   start_index = ORDER_TYPE == 0 ? 0 : 4;
 
@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
                              10);  // only used to performance evaluation
   if (argc == 7) {
     record = atoi(argv[5]) ? true : false;
-    outpath = (char *)malloc(strlen(argv[3]));
+    outpath = (char *)malloc(strlen(argv[6]));
     strcpy(outpath, argv[6]);
   }
 
