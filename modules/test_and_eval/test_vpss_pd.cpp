@@ -100,6 +100,19 @@ int main(int argc, char *argv[]) {
 
   // init vb
   CVI_MAPI_Media_Init(image.cols, image.rows, 2);
+
+  // init vpss
+  PreprocessArg arg;
+  arg.width = 448;
+  arg.height = 256;
+  arg.vpssConfig = vpssConfig;
+  init_vpss(image.cols, image.rows, &arg);
+
+  VIDEO_FRAME_INFO_S frame_in;
+  VIDEO_FRAME_INFO_S frame_preprocessed;
+  memset(&frame_in, 0x00, sizeof(frame_in));
+  memset(&frame_preprocessed, 0x00, sizeof(frame_preprocessed));
+
   cviai_handle_t ai_handle = NULL;
   ret = CVI_AI_CreateHandle(&ai_handle);
   if (ret != CVI_SUCCESS) {
@@ -113,9 +126,6 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  int32_t height = 256;
-  int32_t width = 384;
-
   // model need set pixel format PIXEL_FORMAT_BGR_888_PLANAR
   static int model_init = 0;
   if (model_init == 0) {
@@ -127,30 +137,23 @@ int main(int argc, char *argv[]) {
       std::cout << "open model failed:" << str_person_model << std::endl;
       return -1;
     }
-    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.01);
+    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.6);
     CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, true);
     model_init = 1;
   }
 
+  get_frame_from_mat(frame_in, image);
+
   memset(&vpssConfig, 0, sizeof(vpssConfig));
-  ret = CVI_AI_GetVpssChnConfig(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, width,
-                                height, 0, &vpssConfig);
+  ret = CVI_AI_GetVpssChnConfig(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                                frame_in.stVFrame.u32Width, frame_in.stVFrame.u32Height, 0,
+                                &vpssConfig);
   if (ret != CVI_SUCCESS) {
     printf("CVI_AI_GetVpssChnConfig failed!\n");
     return -1;
   }
+  CVI_VPSS_SetChnAttr(0, 0, &vpssConfig.chn_attr);
 
-  // init vpss
-  PreprocessArg arg;
-  arg.width = width;
-  arg.height = height;
-  arg.vpssConfig = vpssConfig;
-  init_vpss(image.cols, image.rows, &arg);
-  VIDEO_FRAME_INFO_S frame_in;
-  VIDEO_FRAME_INFO_S frame_preprocessed;
-  memset(&frame_in, 0x00, sizeof(frame_in));
-
-  get_frame_from_mat(frame_in, image);
   /* dump_frame_result, support rgb, nv21, nv12*/
   // dump_frame_result("test1.yuv", &frame_in);
   if (CVI_SUCCESS != CVI_VPSS_SendFrame(0, &frame_in, -1)) {
