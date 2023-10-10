@@ -192,21 +192,103 @@ std::string process_yolov8_pose(cviai_handle_t ai_handle, std::string &pose_mode
   return ss.str();
 }
 
+std::string process_hrnet_pose(cviai_handle_t ai_handle, std::string &pd_model_path,
+                               std::string &pose_model_path, cvai_object_t *p_obj,
+                               VIDEO_FRAME_INFO_S *bg, std::vector<std::vector<int>> &boxes,
+                               std::string &file_name) {
+  static int model_init = 0;
+  std::string no_model("None");
+  CVI_S32 ret;
+  if (model_init == 0) {
+    if (pd_model_path != no_model) {
+      ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                             pd_model_path.c_str());
+
+      if (ret != CVI_SUCCESS) {
+        printf("open CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed with %#x!\n", ret);
+        return "";
+      }
+    }
+
+    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, pose_model_path.c_str());
+    // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, true);
+
+    if (ret != CVI_SUCCESS) {
+      printf("open CVI_AI_SUPPORTED_MODEL_HRNET_POSE model failed with %#x!\n", ret);
+      return "";
+    }
+    model_init = 1;
+  }
+
+  if (pd_model_path != no_model) {
+    ret = CVI_AI_MobileDetV2_Pedestrian(ai_handle, bg, p_obj);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_AI_ScrFDFace failed with %#x!\n", ret);
+      return "";
+    }
+  } else {
+    CVI_AI_MemAllocInit(boxes.size(), p_obj);
+    p_obj->height = bg->stVFrame.u32Height;
+    p_obj->width = bg->stVFrame.u32Width;
+    p_obj->rescale_type = RESCALE_RB;
+
+    std::cout << "p_obj->height = " << p_obj->height << ", p_obj->width = " << p_obj->width
+              << std::endl;
+
+    memset(p_obj->info, 0, sizeof(cvai_object_info_t) * p_obj->size);
+    for (uint32_t i = 0; i < p_obj->size; ++i) {
+      p_obj->info[i].bbox.x1 = boxes[i][0];
+      p_obj->info[i].bbox.y1 = boxes[i][1];
+      p_obj->info[i].bbox.x2 = boxes[i][2];
+      p_obj->info[i].bbox.y2 = boxes[i][3];
+      p_obj->info[i].bbox.score = 1.0;
+      p_obj->info[i].classes = 0;
+      const string &classname = "person";
+      strncpy(p_obj->info[i].name, classname.c_str(), sizeof(p_obj->info[i].name));
+    }
+  }
+
+  if (p_obj->size > 0) {
+    ret = CVI_AI_Hrnet_Pose(ai_handle, bg, p_obj);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_AI_Hrnet_Pose failed with %#x!\n", ret);
+      return "";
+    }
+    std::stringstream ss;
+    for (uint32_t i = 0; i < p_obj->size; i++) {
+      ss << file_name << ";";
+      for (uint32_t j = 0; j < 17; j++) {
+        ss << std::fixed << std::setprecision(4)
+           << p_obj->info[i].pedestrian_properity->pose_17.x[j] << " " << std::fixed
+           << std::setprecision(4) << p_obj->info[i].pedestrian_properity->pose_17.y[j] << " "
+           << std::fixed << std::setprecision(4)
+           << p_obj->info[i].pedestrian_properity->pose_17.score[j] << ";";
+      }
+      ss << "\n";
+    }
+    return ss.str();
+
+  } else {
+    printf("cannot find person\n");
+    return "";
+  }
+}
+
 int main(int argc, char *argv[]) {
   std::string pose_model(argv[1]);    // pose detection model path
-  std::string process_flag(argv[2]);  // simcc | yolov8pose
+  std::string process_flag(argv[2]);  // simcc | yolov8pose |hrnet
   std::string image_root(argv[3]);    // img dir
-  std::string image_list(argv[4]);  // txt file , yolov8pose: image name,  simcc: image name, x1 y1
-                                    // x2 y2, x1 y1 x2 y2,...
-  std::string dst_root(argv[5]);    // predict result path, end with .txt
-  int show = atoi(argv[6]);         // 1 for show keypoints, 0 for not show;
+  std::string image_list(argv[4]);    // txt file , yolov8pose: image name,  simcc and hrnet: image
+                                      // name, x1 y1 x2 y2, x1 y1 x2 y2,...
+  std::string dst_root(argv[5]);      // predict result path, end with .txt
+  int show = atoi(argv[6]);           // 1 for show keypoints, 0 for not show;
 
   std::string pd_model;
   std::string show_root;
 
   std::cout << "image_root: " << image_root << std::endl;
 
-  if (process_flag == "simcc") {
+  if (process_flag == "simcc" || process_flag == "hrnet") {
     pd_model = argv[7];  // person detection model path, set to "None" if do not use pd_model
   }
   if (show) {
@@ -287,8 +369,12 @@ int main(int argc, char *argv[]) {
       str_res = process_yolov8_pose(ai_handle, pose_model, &obj_meta, &bg, file_name);
       CVI_AI_GetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV8POSE, &score);
 
+    } else if (process_flag == "hrnet") {
+      str_res =
+          process_hrnet_pose(ai_handle, pd_model, pose_model, &obj_meta, &bg, boxes, file_name);
+      CVI_AI_GetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, &score);
     } else {
-      printf("Error: process_flag should be simcc or yolov8pose, but got %s !\n",
+      printf("Error: process_flag should be simcc, hrnet or yolov8pose, but got %s !\n",
              process_flag.c_str());
       fclose(fp);
       CVI_AI_ReleaseImage(&bg);
@@ -303,22 +389,33 @@ int main(int argc, char *argv[]) {
       std::string fname = file_name + std::string(";\n");
       fwrite(fname.c_str(), fname.size(), 1, fp);
     }
-    // for (uint32_t i = 0; i < obj_meta.size; i++) {
-    //   std::cout << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
-    //     << obj_meta.info[i].bbox.x2 << "," << obj_meta.info[i].bbox.y2 << "]," << std::endl;
-    //   for (uint32_t j = 0; j < 17; j++){
-    //     std::cout << j << ": " << obj_meta.info[i].pedestrian_properity->pose_17.x[j] << " " <<
-    //     obj_meta.info[i].pedestrian_properity->pose_17.y[j] << " " <<
-    //     obj_meta.info[i].pedestrian_properity->pose_17.score[j]<<std::endl;
-    //   }
-    // }
-
-    if (show) {  // img format should be PIXEL_FORMAT_BGR_888
-      std::string save_path = join_path(show_root, file_name);
-      show_keypoints(&bg, &obj_meta, save_path, score);
+    for (uint32_t i = 0; i < obj_meta.size; i++) {
+      std::cout << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
+                << obj_meta.info[i].bbox.x2 << "," << obj_meta.info[i].bbox.y2 << "]," << std::endl;
+      for (uint32_t j = 0; j < 17; j++) {
+        std::cout << j << ": " << obj_meta.info[i].pedestrian_properity->pose_17.x[j] << " "
+                  << obj_meta.info[i].pedestrian_properity->pose_17.y[j] << " "
+                  << obj_meta.info[i].pedestrian_properity->pose_17.score[j] << std::endl;
+      }
     }
 
+    // CVI_AI_ReleaseImage(&bg);
+
+    PIXEL_FORMAT_E img_format2 = PIXEL_FORMAT_BGR_888;
+    VIDEO_FRAME_INFO_S bg2;
+    CVI_AI_ReadImage(strf.c_str(), &bg2, img_format2);
+    std::cout << "done 1 " << std::endl;
+    std::string show_root2 = argv[8];
+    std::string save_path = join_path(show_root2, file_name);
+    std::cout << "save_path is  " << save_path << std::endl;
+    // show_keypoints(&bg2, &obj_meta, save_path, score);
+
+    // if (show) {  // img format should be PIXEL_FORMAT_BGR_888
+    //   std::string save_path = join_path(show_root, file_name);
+    //   show_keypoints(&bg, &obj_meta, save_path, score);
+    // }
     CVI_AI_ReleaseImage(&bg);
+    CVI_AI_ReleaseImage(&bg2);
     CVI_AI_Free(&obj_meta);
   }
   fclose(fp);

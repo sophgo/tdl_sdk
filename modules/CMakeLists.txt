@@ -118,6 +118,7 @@ else()
       $<TARGET_OBJECTS:ppyoloe>
       $<TARGET_OBJECTS:yolov8_pose>
       $<TARGET_OBJECTS:simcc>
+      $<TARGET_OBJECTS:hrnet>
       $<TARGET_OBJECTS:image_classification>)
 
     if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")

@@ -23,6 +23,7 @@
 #include "hand_classification/hand_classification.hpp"
 #include "hand_keypoint/hand_keypoint.hpp"
 #include "hand_keypoint_classification/hand_keypoint_classification.hpp"
+#include "human_keypoints_detection/hrnet/hrnet.hpp"
 #include "human_keypoints_detection/simcc/simcc.hpp"
 #include "human_keypoints_detection/yolov8_pose/yolov8_pose.hpp"
 #include "image_classification/image_classification.hpp"
@@ -181,6 +182,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
     {CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, CREATOR(Simcc)},
+    {CVI_AI_SUPPORTED_MODEL_HRNET_POSE, CREATOR(Hrnet)},
     {CVI_AI_SUPPORTED_MODEL_LANDMARK_DET3, CREATOR(FaceLandmarkDet3)},
     {CVI_AI_SUPPORTED_MODEL_DMSLANDMARKERDET, CREATOR(DMSLandmarkerDet)},
     {CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
@@ -848,6 +850,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_License_Plate_Detectionv2, YoloV8Pose,
 DEFINE_INF_FUNC_F1_P1(CVI_AI_License_Plate_Recognitionv2, LicensePlateRecognitionV2,
                       CVI_AI_SUPPORTED_MODEL_LP_RECONGNITION, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Simcc_Pose, Simcc, CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Hrnet_Pose, Hrnet, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Image_Classification, ImageClassification,
                       CVI_AI_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, cvai_class_meta_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Hand_Detection, YoloV8Detection, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION,
