@@ -43,7 +43,8 @@ DLL_EXPORT CVI_S32 CVI_AI_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, 
  */
 DLL_EXPORT CVI_S32 CVI_AI_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
                                     const PIXEL_FORMAT_E format);
-
+DLL_EXPORT CVI_S32 CVI_AI_ReadImage_Resize(const char *filepath, VIDEO_FRAME_INFO_S *frame,
+                                           PIXEL_FORMAT_E format, uint32_t width, uint32_t height);
 /**
  * @brief Release image which is read from CVI_AI_ReadImage.
  *

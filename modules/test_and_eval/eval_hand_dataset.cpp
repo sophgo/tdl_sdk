@@ -108,6 +108,7 @@ std::string run_image_vehicle_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handl
       std::cout << "open vehicle model failed:" << str_hand_model << std::endl;
       return "";
     }
+    CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, true);
     std::cout << "init vehicle model done\t";
     model_init = 1;
   }
@@ -230,7 +231,7 @@ int main(int argc, char *argv[]) {
   }
   if (dst_root.at(dst_root.size() - 1) != '/') {
     dst_root = dst_root + std::string("/");
-  };
+  }
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
@@ -272,7 +273,12 @@ int main(int argc, char *argv[]) {
     std::string strf = image_root + image_files[i];
     std::string dstf = dst_root + replace_file_ext(image_files[i], "txt");
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_AI_ReadImage(strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+    std::string s_vehicle = "vehicle";
+    if (process_flag == s_vehicle) {
+      ret = CVI_AI_ReadImage_Resize(strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR, 640, 384);
+    } else {
+      ret = CVI_AI_ReadImage(strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+    }
     std::cout << "CVI_AI_ReadImage done\t";
 
     if (ret != CVI_SUCCESS) {

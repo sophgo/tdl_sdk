@@ -190,6 +190,55 @@ CVI_S32 CVI_AI_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_
   return ret;
 }
 
+CVI_S32 CVI_AI_ReadImage_Resize(const char *filepath, VIDEO_FRAME_INFO_S *frame,
+                                PIXEL_FORMAT_E format, uint32_t width, uint32_t height) {
+  int ret = CVIAI_SUCCESS;
+  try {
+    cv::Mat src_img = cv::imread(filepath);
+    if (src_img.empty()) {
+      LOGE("Cannot read image %s.\n", filepath);
+      return CVIAI_FAILURE;
+    }
+
+    cv::Mat img;
+    cv::resize(src_img, img, cv::Size(width, height));
+
+    if (CREATE_ION_HELPER(frame, img.cols, img.rows, format, "cviai/image") != CVIAI_SUCCESS) {
+      LOGE("alloc ion failed, imgwidth:%d,imgheight:%d\n", img.cols, img.rows);
+      return CVIAI_FAILURE;
+    }
+    switch (format) {
+      case PIXEL_FORMAT_RGB_888: {
+        BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, true);
+      } break;
+      case PIXEL_FORMAT_BGR_888: {
+        BufferRGBPackedCopy(img.data, img.cols, img.rows, img.step, frame, false);
+      } break;
+      case PIXEL_FORMAT_RGB_888_PLANAR: {
+        BufferRGBPacked2PlanarCopy(img.data, img.cols, img.rows, img.step, frame, true);
+      } break;
+      case PIXEL_FORMAT_YUV_400: {
+        cv::Mat img2;
+        cv::cvtColor(img, img2, cv::COLOR_BGR2GRAY);
+        BufferGreyCopy(img2.data, img2.cols, img2.rows, img2.step, frame);
+      } break;
+      case PIXEL_FORMAT_YUV_PLANAR_420:
+        BufferRGBPacked2YUVPlanarCopy(img.data, img.cols, img.rows, img.step, frame, false);
+        break;
+      default:
+        LOGE("Unsupported format: %u.\n", format);
+        ret = CVIAI_FAILURE;
+        break;
+    }
+  } catch (cv::Exception &e) {
+    const char *err_msg = e.what();
+    std::cout << "exception caught: " << err_msg << std::endl;
+    std::cout << "when read image: " << std::string(filepath) << std::endl;
+    ret = CVIAI_FAILURE;
+  }
+  return ret;
+}
+
 CVI_S32 CVI_AI_ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
   CVI_S32 ret = CVI_SUCCESS;
   if (frame->stVFrame.u64PhyAddr[0] != 0) {

@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
 #include <functional>
 #include <iostream>
@@ -13,6 +14,9 @@
 #include "cviai.h"
 #include "evaluation/cviai_media.h"
 #include "sys_utils.hpp"
+
+double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }
+
 std::string g_model_root;
 
 std::string run_image_headperson_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle,
@@ -36,11 +40,15 @@ std::string run_image_headperson_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_ha
 
   cvai_object_t hand_obj = {0};
   memset(&hand_obj, 0, sizeof(cvai_object_t));
-
+  struct timeval start_time, stop_time;
+  gettimeofday(&start_time, NULL);
   ret = CVI_AI_HeadPerson_Detection(ai_handle, p_frame, &hand_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect headperson failed:" << ret << std::endl;
   }
+  gettimeofday(&stop_time, NULL);
+  printf("CVI_AI_HeadPerson_Detection Time use %f ms\n",
+         (__get_us(stop_time) - __get_us(start_time)) / 1000);
 
   // generate detection result
   std::stringstream ss;

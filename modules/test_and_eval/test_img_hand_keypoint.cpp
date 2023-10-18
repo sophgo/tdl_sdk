@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
 #include <functional>
 #include <iostream>
@@ -14,12 +15,20 @@
 #include "evaluation/cviai_media.h"
 #include "sys_utils.hpp"
 
+double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }
+
 void run_hand_detction(cviai_handle_t ai_handle, std::string model_path,
                        VIDEO_FRAME_INFO_S *p_frame, cvai_object_t &obj_meta) {
   printf("---------------------to do detection-----------------------\n");
   CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, model_path.c_str());
   CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.5);
+
+  struct timeval start_time, stop_time;
+  gettimeofday(&start_time, NULL);
   CVI_AI_Hand_Detection(ai_handle, p_frame, &obj_meta);
+  gettimeofday(&stop_time, NULL);
+  printf("CVI_AI_Hand_Detection Time use %f ms\n",
+         (__get_us(stop_time) - __get_us(start_time)) / 1000);
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     std::cout << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
               << obj_meta.info[i].bbox.x2 << "," << obj_meta.info[i].bbox.y2 << ","
@@ -42,7 +51,13 @@ void run_hand_keypoint(cviai_handle_t ai_handle, std::string model_path,
     hand_obj.info[i].bbox_w = obj_meta.info->bbox.x2 - obj_meta.info->bbox.x1;
     hand_obj.info[i].bbox_h = obj_meta.info->bbox.y2 - obj_meta.info->bbox.y1;
   }
+  struct timeval start_time, stop_time;
+  gettimeofday(&start_time, NULL);
   CVI_AI_HandKeypoint(ai_handle, p_frame, &hand_obj);
+  gettimeofday(&stop_time, NULL);
+  printf("CVI_AI_HandKeypoint Time use %f ms\n",
+         (__get_us(stop_time) - __get_us(start_time)) / 1000);
+
   // generate detection result
   for (uint32_t i = 0; i < 21; i++) {
     std::cout << hand_obj.info[0].x[i] << " t  " << hand_obj.info[0].y[i] << "\n";
@@ -73,7 +88,13 @@ void run_hand_keypoint_cls(cviai_handle_t ai_handle, std::string model_path,
     Frame.stVFrame.pu8VirAddr[0] = buffer;  // Global buffer
     Frame.stVFrame.u32Height = 1;
     Frame.stVFrame.u32Width = keypoints.size();
+
+    struct timeval start_time, stop_time;
+    gettimeofday(&start_time, NULL);
     CVI_AI_HandKeypointClassification(ai_handle, &Frame, &meta);
+    gettimeofday(&stop_time, NULL);
+    printf("CVI_AI_HandKeypointClassification Time use %f ms\n",
+           (__get_us(stop_time) - __get_us(start_time)) / 1000);
   }
   printf("meta.label = %d, meta.score = %f\n", meta.label, meta.score);
 }
@@ -117,7 +138,7 @@ int main(int argc, char *argv[]) {
   run_hand_keypoint_cls(ai_handle, kc_model_path, hand_obj, meta);
 
   CVI_AI_Free(&obj_meta);
-  CVI_AI_Free(&hand_obj);
+  // CVI_AI_Free(&hand_obj);
   CVI_AI_ReleaseImage(&fdFrame);
   CVI_AI_DestroyHandle(ai_handle);
   return ret;
