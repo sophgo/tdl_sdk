@@ -17,8 +17,8 @@
 int main(int argc, char* argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
-  CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
-                                 vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
+  CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2,
+                                 vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2);
   if (ret != CVIAI_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
@@ -90,6 +90,14 @@ int main(int argc, char* argv[]) {
 
   cvai_object_t obj_meta = {0};
 
+  Point_t roi_s;
+  roi_s.x1 = 400;
+  roi_s.y1 = 30;
+  roi_s.x2 = 750;
+  roi_s.y2 = 200;
+
+  std::cout << "set image bg done\n";
+  CVI_AI_Set_Yolov5_ROI(ai_handle, roi_s);
   CVI_AI_Yolov5(ai_handle, &fdFrame, &obj_meta);
 
   for (uint32_t i = 0; i < obj_meta.size; i++) {

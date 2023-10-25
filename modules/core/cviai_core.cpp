@@ -1468,6 +1468,18 @@ CVI_S32 CVI_AI_PersonVehicle_Detection(const cviai_handle_t handle, VIDEO_FRAME_
   }
 }
 
+CVI_S32 CVI_AI_Set_Yolov5_ROI(const cviai_handle_t handle, Point_t roi_s) {
+  printf("enter CVI_AI_Set_Yolov5_ROI...\n");
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  Yolov5 *yolov5_model =
+      dynamic_cast<Yolov5 *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOV5, ctx));
+  if (yolov5_model == nullptr) {
+    LOGE("yolov5_model has not been inited\n");
+    return CVIAI_FAILURE;
+  }
+  return yolov5_model->set_roi(roi_s);
+}
+
 CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
                                 YoloAlgParam *p_yolo_param) {
   printf("enter CVI_AI_Set_YOLOV5_Param...\n");

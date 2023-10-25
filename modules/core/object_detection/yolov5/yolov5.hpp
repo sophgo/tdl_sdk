@@ -1,6 +1,7 @@
 #pragma once
 #include <bitset>
 #include "core.hpp"
+#include "core/core/cvai_core_types.h"
 #include "core/object/cvai_object_types.h"
 
 namespace cviai {
@@ -11,6 +12,7 @@ class Yolov5 final : public Core {
   virtual ~Yolov5();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
   void set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_yolov5_param);
+  uint32_t set_roi(Point_t &roi);
 
  private:
   virtual int onModelOpened() override;
@@ -35,5 +37,7 @@ class Yolov5 final : public Core {
   std::vector<int> strides_;
   YoloPreParam *p_preprocess_cfg_;
   YoloAlgParam *p_yolov5_param_;
+  cvai_bbox_t yolo_box;
+  bool roi_flag = false;
 };
 }  // namespace cviai

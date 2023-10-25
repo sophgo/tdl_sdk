@@ -1516,6 +1516,8 @@ DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle,
                                            YoloPreParam *p_preprocess_cfg,
                                            YoloAlgParam *p_yolov_param);
 
+DLL_EXPORT CVI_S32 CVI_AI_Set_Yolov5_ROI(const cviai_handle_t handle, Point_t roi_s);
+
 /**
  * @brief yolov6 setup function
  *
