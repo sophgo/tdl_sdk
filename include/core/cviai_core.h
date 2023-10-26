@@ -218,6 +218,8 @@ DLL_EXPORT CVI_S32 CVI_AI_CreateHandle(cviai_handle_t *handle);
 DLL_EXPORT CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
                                         const CVI_U8 vpssDev);
 
+DLL_EXPORT CVI_S32 CVI_AI_CreateHandle3(cviai_handle_t *handle);
+
 /**
  * @brief Destroy a cviai_handle_t.
  *

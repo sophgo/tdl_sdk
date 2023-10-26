@@ -112,7 +112,6 @@ void *thread_infer(void *arg) {
         que.push(buffer_temp);
       }
     }
-
     int16_t *psound = (int16_t *)buffer;
     float meanval = 0;
     for (int i = 0; i < SAMPLE_RATE * SECOND; i++) {
@@ -128,7 +127,6 @@ void *thread_infer(void *arg) {
         printf("esc class: %s\n", enumStr[pre_label + start_index]);
         if (pre_label != 0) {
           usleep(2500 * 1000);
-
         } else {
           usleep(250 * 1000);
         }
@@ -229,8 +227,7 @@ int main(int argc, char **argv) {
 
   SET_AUDIO_ATTR();
 
-  ret = CVI_AI_CreateHandle(&ai_handle);
-
+  ret = CVI_AI_CreateHandle3(&ai_handle);
   if (ret != CVIAI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
@@ -242,7 +239,6 @@ int main(int argc, char **argv) {
     return ret;
   }
 
-  // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, true);
   CVI_AI_SetPerfEvalInterval(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
                              10);  // only used to performance evaluation
   if (argc == 7) {

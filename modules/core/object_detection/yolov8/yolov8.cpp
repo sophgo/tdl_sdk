@@ -60,9 +60,9 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
 
 YoloV8Detection::YoloV8Detection() : Core(CVI_MEM_DEVICE) {}
 
-void YoloV8Detection::setBranchChannel(int box_channel, int cls_channel) {
-  m_box_channel_ = box_channel;
-  m_cls_channel_ = cls_channel;
+YoloV8Detection::YoloV8Detection(PAIR_INT yolov8_pair) : Core(CVI_MEM_DEVICE) {
+  m_box_channel_ = yolov8_pair.first;
+  m_cls_channel_ = yolov8_pair.second;
 }
 
 // would parse 3 cases,1:box,cls seperate feature map,2 box+cls seperate featuremap,3 output decoded

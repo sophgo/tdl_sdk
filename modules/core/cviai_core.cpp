@@ -76,6 +76,7 @@ struct ModelParams {
 };
 
 using CreatorFunc = std::function<Core *(const ModelParams &)>;
+using CreatorFuncAud = std::function<Core *()>;
 using namespace std::placeholders;
 
 template <typename C, typename... Args>
@@ -84,6 +85,12 @@ Core *create_model(const ModelParams &params, Args... arg) {
 
   instance->setVpssEngine(params.vpss_engine);
   instance->setVpssTimeout(params.vpss_timeout_value);
+  return instance;
+}
+
+template <typename C>
+Core *create_model_aud() {
+  C *instance = new C();
   return instance;
 }
 
@@ -110,6 +117,10 @@ static CVI_S32 initVPSSIfNeeded(cviai_context_t *ctx, CVI_AI_SUPPORTED_MODEL_E m
     return CVIAI_SUCCESS;
   }
 
+  if (ctx->vec_vpss_engine.size() == 0) {
+    return CVIAI_SUCCESS;
+  }
+
   uint32_t thread;
   ret = CVI_AI_GetVpssThread(ctx, model_id, &thread);
   if (ret == CVIAI_SUCCESS) {
@@ -123,6 +134,9 @@ static CVI_S32 initVPSSIfNeeded(cviai_context_t *ctx, CVI_AI_SUPPORTED_MODEL_E m
 // Convenience macros for creator
 #define CREATOR(type) CreatorFunc(create_model<type>)
 
+// Convenience macros for creator
+#define CREATOR_AUD(type) CreatorFuncAud(create_model_aud<type>)
+
 // Convenience macros for creator, P{NUM} stands for how many parameters for creator
 #define CREATOR_P1(type, arg_type, arg1) \
   CreatorFunc(std::bind(create_model<type, arg_type>, _1, arg1))
@@ -132,6 +146,10 @@ static CVI_S32 initVPSSIfNeeded(cviai_context_t *ctx, CVI_AI_SUPPORTED_MODEL_E m
  * Creators for all DNN model. Please remember to register model creator here, or
  * AISDK cannot instantiate model correctly.
  */
+unordered_map<int, CreatorFuncAud> MODEL_CREATORS_AUD = {
+    {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, CREATOR_AUD(SoundClassificationV2)},
+};
+
 unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_FACEQUALITY, CREATOR(FaceQuality)},
     {CVI_AI_SUPPORTED_MODEL_THERMALFACE, CREATOR(ThermalFace)},
@@ -151,7 +169,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
     {CVI_AI_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
     {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
-    {CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, CREATOR(SoundClassificationV2)},
     {CVI_AI_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
     {CVI_AI_SUPPORTED_MODEL_LP_RECONGNITION, CREATOR(LicensePlateRecognitionV2)},
     {CVI_AI_SUPPORTED_MODEL_DEEPLABV3, CREATOR(Deeplabv3)},
@@ -171,6 +188,22 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
     {CVI_AI_SUPPORTED_MODEL_LPRNET_TW, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, TAIWAN)},
     {CVI_AI_SUPPORTED_MODEL_LPRNET_CN, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, CHINA)},
+    {CVI_AI_SUPPORTED_MODEL_HAND_DETECTION,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 1))},
+    {CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 3))},
+    {CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 80))},
+    {CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 7))},
+    {CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 3))},
+    {CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
+    {CVI_AI_SUPPORTED_MODEL_YOLOV8POSE,
+     CREATOR_P1(YoloV8Pose, TUPLE_INT, std::make_tuple(64, 17, 1))},
+    {CVI_AI_SUPPORTED_MODEL_LP_DETECTION,
+     CREATOR_P1(YoloV8Pose, TUPLE_INT, std::make_tuple(64, 4, 2))},
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::coco80)},
     {CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
@@ -229,46 +262,14 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
   cviai_model_t &m_t = ctx->model_cont[index];
   if (m_t.instance == nullptr) {
     // create custom instance here
-    if (index == CVI_AI_SUPPORTED_MODEL_HAND_DETECTION) {
-      YoloV8Detection *p_yolov8 = new YoloV8Detection();
-      p_yolov8->setBranchChannel(64, 1);
-      m_t.instance = p_yolov8;
-      LOGI("create hand model");
-    } else if (index == CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION) {
-      YoloV8Detection *p_yolov8 = new YoloV8Detection();
-      p_yolov8->setBranchChannel(64, 3);  // three types
-      m_t.instance = p_yolov8;
-      LOGI("create personpet model");
-    } else if (index == CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION) {
-      YoloV8Detection *p_yolov8 = new YoloV8Detection();
-      p_yolov8->setBranchChannel(64, 80);  // three types
-      m_t.instance = p_yolov8;
-      LOGI("create yolov8 model");
-    } else if (index == CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION) {
-      YoloV8Detection *p_yolov8 = new YoloV8Detection();
-      p_yolov8->setBranchChannel(64, 7);  // seven types
-      m_t.instance = p_yolov8;
-      LOGI("create vehicle model");
-    } else if (index == CVI_AI_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION) {
-      YoloV8Detection *p_yolov8 = new YoloV8Detection();
-      p_yolov8->setBranchChannel(64, 3);  // 3 types:hand,face,person
-      m_t.instance = p_yolov8;
-      LOGI("create vehicle model");
-    } else if (index == CVI_AI_SUPPORTED_MODEL_HEAD_PERSON_DETECTION) {
-      YoloV8Detection *p_yolov8 = new YoloV8Detection();
-      p_yolov8->setBranchChannel(64, 2);  // 2 types:head,person
-      m_t.instance = p_yolov8;
-      LOGI("create headperson model");
-    } else if (index == CVI_AI_SUPPORTED_MODEL_YOLOV8POSE) {
-      YoloV8Pose *p_yolov8pose = new YoloV8Pose();
-      p_yolov8pose->setBranchChannel(64, 17, 1);  // 17 keypoints
-      m_t.instance = p_yolov8pose;
-      LOGI("create yolov8 pose model");
-    } else if (index == CVI_AI_SUPPORTED_MODEL_LP_DETECTION) {
-      YoloV8Pose *p_yolov8pose = new YoloV8Pose();
-      p_yolov8pose->setBranchChannel(64, 4, 2);  // 4 keypoints
-      m_t.instance = p_yolov8pose;
-      LOGI("create yolov8 pl model");
+    if (index == CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2) {
+      if (MODEL_CREATORS_AUD.find(index) == MODEL_CREATORS_AUD.end()) {
+        LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
+             CVI_AI_GetModelName(index));
+        return nullptr;
+      }
+      auto creator = MODEL_CREATORS_AUD[index];
+      m_t.instance = creator();
     } else {
       if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
         LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
@@ -281,10 +282,10 @@ getInferenceInstance(const CVI_AI_SUPPORTED_MODEL_E index, cviai_context_t *ctx)
                             .vpss_timeout_value = ctx->vpss_timeout_value};
 
       m_t.instance = creator(params);
+      m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
+      m_t.instance->setVpssTimeout(ctx->vpss_timeout_value);
     }
   }
-  m_t.instance->setVpssEngine(ctx->vec_vpss_engine[m_t.vpss_thread]);
-  m_t.instance->setVpssTimeout(ctx->vpss_timeout_value);
   return m_t.instance;
 }
 
@@ -300,6 +301,15 @@ CVI_S32 CVI_AI_CreateHandle2(cviai_handle_t *handle, const VPSS_GRP vpssGroupId,
   cviai_context_t *ctx = new cviai_context_t;
   ctx->ive_handle = NULL;
   ctx->vec_vpss_engine.push_back(new VpssEngine(vpssGroupId, vpssDev));
+  const char timestamp[] = __DATE__ " " __TIME__;
+  LOGI("cviai_handle_t is created, version %s-%s", CVIAI_TAG, timestamp);
+  *handle = ctx;
+  return CVIAI_SUCCESS;
+}
+
+CVI_S32 CVI_AI_CreateHandle3(cviai_handle_t *handle) {
+  cviai_context_t *ctx = new cviai_context_t;
+  ctx->ive_handle = NULL;
   const char timestamp[] = __DATE__ " " __TIME__;
   LOGI("cviai_handle_t is created, version %s-%s", CVIAI_TAG, timestamp);
   *handle = ctx;

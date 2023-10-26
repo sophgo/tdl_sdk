@@ -5,11 +5,13 @@
 
 namespace cviai {
 
+typedef std::pair<int, int> PAIR_INT;
+
 class YoloV8Detection final : public Core {
  public:
   YoloV8Detection();
+  YoloV8Detection(PAIR_INT yolov8_pair);
 
-  void setBranchChannel(int box_channel, int cls_channel);
   virtual ~YoloV8Detection();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
   virtual bool allowExportChannelAttribute() const override { return true; }

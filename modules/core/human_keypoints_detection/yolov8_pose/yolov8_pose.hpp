@@ -6,12 +6,14 @@
 
 namespace cviai {
 
+typedef std::tuple<int, int, int> TUPLE_INT;
+
 class YoloV8Pose final : public Core {
  public:
   YoloV8Pose();
+  YoloV8Pose(TUPLE_INT pose_pair);
 
   virtual ~YoloV8Pose();
-  void setBranchChannel(int box_channel, int kpts_channel, int m_cls_channel);
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
   virtual bool allowExportChannelAttribute() const override { return true; }
 

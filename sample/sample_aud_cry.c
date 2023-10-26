@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
 
   SET_AUDIO_ATTR();
 
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  ret = CVI_AI_CreateHandle3(&ai_handle);
 
   if (ret != CVIAI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);

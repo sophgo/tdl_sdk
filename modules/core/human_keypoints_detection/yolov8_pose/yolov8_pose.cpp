@@ -38,13 +38,13 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
 
 YoloV8Pose::YoloV8Pose() : Core(CVI_MEM_DEVICE) {}
 
-YoloV8Pose::~YoloV8Pose() {}
-
-void YoloV8Pose::setBranchChannel(int box_channel, int kpts_channel, int m_cls_channel) {
-  m_box_channel_ = box_channel;
-  m_kpts_channel_ = kpts_channel * 3;  // kpts_channel : num keypoints
-  m_cls_channel_ = m_cls_channel;
+YoloV8Pose::YoloV8Pose(TUPLE_INT pose_pair) : Core(CVI_MEM_DEVICE) {
+  m_box_channel_ = std::get<0>(pose_pair);
+  m_kpts_channel_ = std::get<1>(pose_pair) * 3;
+  m_cls_channel_ = std::get<2>(pose_pair);
 }
+
+YoloV8Pose::~YoloV8Pose() {}
 
 int YoloV8Pose::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);

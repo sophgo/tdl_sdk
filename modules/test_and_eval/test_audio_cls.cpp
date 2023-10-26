@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
   CVI_U8 buffer[frame_size];  // 3 seconds
 
   cviai_handle_t ai_handle = NULL;
-  CVI_S32 ret = CVI_AI_CreateHandle(&ai_handle);
+  CVI_S32 ret = CVI_AI_CreateHandle3(&ai_handle);
   if (ret != CVI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
