@@ -147,14 +147,16 @@ void DeepSORT::consumer_counting_fun(stObjInfo obj, int index,
   if (isLineIntersect(rect, pre_x, pre_y, cur_x, cur_y)) {
     float tmp_x = cur_x - k_trackers[index].old_x;
     float tmp_y = cur_y - k_trackers[index].old_y;
-    if ((tmp_x * rect->f_x + tmp_y * rect->f_y > 0) && k_trackers[index].counting_gap == 0) {
+    if ((tmp_x * rect->f_x + tmp_y * rect->f_y > 0) && k_trackers[index].counting_gap == 0 &&
+        !k_trackers[index].is_entry) {
       entry_num++;
       k_trackers[index].counting_gap = 50;
-      // k_trackers[index].miss_gap = 20;
-    } else if ((tmp_x * rect->f_x + tmp_y * rect->f_y < 0) && k_trackers[index].counting_gap == 0) {
+      k_trackers[index].is_entry = true;
+    } else if ((tmp_x * rect->f_x + tmp_y * rect->f_y < 0) && k_trackers[index].counting_gap == 0 &&
+               !k_trackers[index].is_leave) {
       miss_num++;
       k_trackers[index].counting_gap = 50;
-      // k_trackers[index].entry_gap = 20;
+      k_trackers[index].is_leave = true;
     }
   }
 }
@@ -560,7 +562,7 @@ void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
           p_pair_track->tracker_state == k_tracker_state_e::ACCREDITATION && obj.box.score > 0.5) {
         // turn the track state as confirmed
         p_track->tracker_state = k_tracker_state_e::ACCREDITATION;
-        std::cout << "confirm track directy ,track:" << p_track->id << ",pair:" << p_pair_track->id
+        std::cout << "confirm track directly ,track:" << p_track->id << ",pair:" << p_pair_track->id
                   << std::endl;
       }
     }
@@ -1044,24 +1046,21 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
     uint64_t pair_track_id = k_trackers[index].get_pair_trackid();
     int pair_tracker_idx =
         track_indices_.count(pair_track_id) == 0 ? -1 : track_indices_[pair_track_id];
-    if (pair_tracker_idx != -1 && k_trackers[pair_tracker_idx].counting_gap > 0) {
-      stRect rct(obj.box.x1, obj.box.y1, obj.box.x2 - obj.box.x1, obj.box.y2 - obj.box.y1);
-      // printf("trackid:%d  pair_id:%d\n",trackid, pair_track_id);
-      k_trackers[index].update(kf_, &rct, conf);
-      k_trackers[index].counting_gap = std::max(0, k_trackers[index].counting_gap - 1);
 
-      k_trackers[index].old_x = cur_x;
-      k_trackers[index].old_y = cur_y;
+    if (pair_tracker_idx != -1 && k_trackers[pair_tracker_idx].counting_gap > 0) {
+      k_trackers[index].is_entry = k_trackers[pair_tracker_idx].is_entry;
+      k_trackers[index].is_leave = k_trackers[pair_tracker_idx].is_leave;
+    } else if (k_trackers[index].is_entry && k_trackers[index].is_leave) {
+      ;
     } else {
       consumer_counting_fun(obj, index, counting_line_t, rect);
-      stRect rct(obj.box.x1, obj.box.y1, obj.box.x2 - obj.box.x1, obj.box.y2 - obj.box.y1);
-      // printf("trackid:%d  pair_id:%d\n",trackid, pair_track_id);
-      k_trackers[index].update(kf_, &rct, conf);
-      k_trackers[index].counting_gap = std::max(0, k_trackers[index].counting_gap - 1);
-
-      k_trackers[index].old_x = cur_x;
-      k_trackers[index].old_y = cur_y;
     }
+    k_trackers[index].old_x = cur_x;
+    k_trackers[index].old_y = cur_y;
+    k_trackers[index].counting_gap = std::max(0, k_trackers[index].counting_gap - 1);
+    stRect rct(obj.box.x1, obj.box.y1, obj.box.x2 - obj.box.x1, obj.box.y2 - obj.box.y1);
+    // printf("trackid:%d  pair_id:%d\n",trackid, pair_track_id);
+    k_trackers[index].update(kf_, &rct, conf);
   }
   // consumer counting  ped
   for (auto &obj : cls_objs[ped_label]) {
@@ -1082,13 +1081,17 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
     if (pair_tracker_idx != -1) {
       k_trackers[index].counting_gap =
           std::max(k_trackers[pair_tracker_idx].counting_gap, k_trackers[index].counting_gap);
+      k_trackers[index].is_leave = k_trackers[pair_tracker_idx].is_leave;
+      k_trackers[index].is_entry = k_trackers[pair_tracker_idx].is_entry;
     }
     if (pair_obj_id == -1) {
-      consumer_counting_fun(obj, index, counting_line_t, rect);
+      if (k_trackers[index].is_entry && k_trackers[index].is_leave) {
+        ;
+      } else {
+        consumer_counting_fun(obj, index, counting_line_t, rect);
+      }
     }
-
     stRect rct(obj.box.x1, obj.box.y1, obj.box.x2 - obj.box.x1, obj.box.y2 - obj.box.y1);
-
     k_trackers[index].update(kf_, &rct, conf);
     k_trackers[index].counting_gap = std::max(0, k_trackers[index].counting_gap - 1);
     k_trackers[index].old_x = cur_x;

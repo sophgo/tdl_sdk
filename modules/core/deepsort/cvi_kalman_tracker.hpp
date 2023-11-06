@@ -41,7 +41,8 @@ class KalmanTracker : public Tracker {
   int cross_gap = 0;
   int counting_gap = 0;
   // int miss_gap = 0;
-  // bool is_used = false;
+  bool is_entry = false;
+  bool is_leave = false;
   std::map<uint64_t, stCorrelateInfo> pair_track_infos_;
 
   KalmanTracker() = delete;
