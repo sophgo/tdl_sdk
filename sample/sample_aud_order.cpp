@@ -11,6 +11,14 @@
 #include "cvi_audio.h"
 #include "cviai.h"
 #include "sample_utils.h"
+
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include "acodec.h"
+#define ACODEC_ADC "/dev/cvitekaadc"
+
 #define AUDIOFORMATSIZE 2
 // #define SECOND 3
 #define CVI_AUDIO_BLOCK_MODE -1
@@ -25,8 +33,13 @@ enum Classes { NO_BABY_CRY, BABY_CRY };
 // This model has 6 classes, including Sneezing, Coughing, Clapping, Baby Cry, Glass breaking,
 // Office. There will be a Normal option in the end, becuase the score is lower than threshold, we
 // will set it to Normal.
-static const char *enumStr[] = {"无指令", "小晶小晶", "拨打电话", "关闭屏幕",
-                                "无指令", "我要拍照", "我要录像"};
+// static const char *enumStr[] = {"无指令", "小晶小晶", "拨打电话", "关闭屏幕", "无指令",
+// "我要拍照", "我要录像"};
+static const char *enumStr[] = {"无指令", "小爱小爱", "拨打电话", "关闭屏幕", "打开屏幕",
+                                "无指令", "小宝小宝", "拨打电话", "关闭屏幕", "打开屏幕",
+                                "无指令", "小蓝小蓝", "拨打电话", "关闭屏幕", "打开屏幕",
+                                "无指令", "小胖小胖", "拨打电话", "关闭屏幕", "打开屏幕",
+                                "无指令", "你好视云", "拨打电话", "关闭屏幕", "打开屏幕"};
 
 static std::queue<std::array<int, SIZE>> que;
 bool gRun = true;     // signal
@@ -112,6 +125,7 @@ void *thread_infer(void *arg) {
         que.push(buffer_temp);
       }
     }
+
     int16_t *psound = (int16_t *)buffer;
     float meanval = 0;
     for (int i = 0; i < SAMPLE_RATE * SECOND; i++) {
@@ -126,7 +140,15 @@ void *thread_infer(void *arg) {
       if (ret == CVIAI_SUCCESS) {
         printf("esc class: %s\n", enumStr[pre_label + start_index]);
         if (pre_label != 0) {
+          // char output_cur[128] ;
+          // sprintf(output_cur, "%s%d%s", outpath, index, ".raw");
+          // // sprintf(output_cur, "%s%s", output_cur, ".raw");
+          // FILE *fp = fopen(output_cur, "wb");
+          // printf("to write:%s\n", output_cur);
+          // fwrite((char *)buffer, 1, FRAME_SIZE, fp);
+          // fclose(fp);
           usleep(2500 * 1000);
+
         } else {
           usleep(250 * 1000);
         }
@@ -189,7 +211,7 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
 int main(int argc, char **argv) {
   if (argc != 5 && argc != 7) {
     printf(
-        "Usage: %s ESC_MODEL_PATH SAMPLE_RATE SECOND ORDER_TYPE  RECORD OUTPUT\n"
+        "Usage: %s ESC_MODEL_PATH SAMPLE_RATE ORDER_TYPE SECOND RECORD OUTPUT\n"
         "\t\tESC_MODEL_PATH, esc model path.\n"
         "\t\tSAMPLE_RATE, sample rate.\n"
         "\t\tSECOND, input time (s).\n"
@@ -200,10 +222,11 @@ int main(int argc, char **argv) {
     return CVIAI_FAILURE;
   }
 
-  SAMPLE_RATE = atoi(argv[2]);  // 8000 | 16000
-  SECOND = atoi(argv[3]);       // 2 | 3
+  SAMPLE_RATE = atoi(argv[2]);
+  SECOND = atoi(argv[3]);
   int ORDER_TYPE = atoi(argv[4]);
-  start_index = ORDER_TYPE == 0 ? 0 : 4;
+  // start_index = ORDER_TYPE == 0 ? 0 : 4;
+  start_index = ORDER_TYPE * 5;
 
   FRAME_SIZE = SAMPLE_RATE * AUDIOFORMATSIZE * SECOND;
 
@@ -227,7 +250,14 @@ int main(int argc, char **argv) {
 
   SET_AUDIO_ATTR();
 
-  ret = CVI_AI_CreateHandle3(&ai_handle);
+  ret = CVI_AI_SetVolume(0, 12);
+  if (ret != CVIAI_SUCCESS) {
+    printf("SetVolume failed !!!!!!!!!!!!!!!!!! with %#x!\n", ret);
+    return ret;
+  }
+
+  ret = CVI_AI_CreateHandle(&ai_handle);
+
   if (ret != CVIAI_SUCCESS) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
@@ -239,6 +269,7 @@ int main(int argc, char **argv) {
     return ret;
   }
 
+  // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, true);
   CVI_AI_SetPerfEvalInterval(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
                              10);  // only used to performance evaluation
   if (argc == 7) {

@@ -2,6 +2,7 @@
 #define FILE_SOUND_CLASSIFICATION_V2_HPP
 #include "core.hpp"
 #include "melspec.hpp"
+#define SCALE_FACTOR_FOR_INT16 32768.0
 
 namespace cviai {
 
@@ -17,6 +18,7 @@ class SoundClassificationV2 final : public Core {
   };
   int getClassesNum();
   int get_top_k(float *result, size_t count);
+  void normal_sound(short *temp_buffer, int n);
 
  private:
   float threshold_;
@@ -29,6 +31,8 @@ class SoundClassificationV2 final : public Core {
   int fmin_ = 0;
   int fmax_ = sample_rate_ / 2;
   melspec::MelFeatureExtract *mp_extractor_ = nullptr;
+  int top_num = 500;
+  float max_rate = 0.2;
 };
 }  // namespace cviai
 #endif

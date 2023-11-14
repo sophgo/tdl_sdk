@@ -6,28 +6,33 @@ using namespace melspec;
 using namespace cviai;
 using namespace std;
 
-SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {
-  int num_frames = time_len_ * sample_rate_;
-  bool htk = false;
-  mp_extractor_ = new MelFeatureExtract(num_frames, sample_rate_, num_fft_, hop_len_, num_mel_,
-                                        fmin_, fmax_, "reflect", htk);
-}
+SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {}
 
 SoundClassificationV2::~SoundClassificationV2() { delete mp_extractor_; }
 
 int SoundClassificationV2::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
-  std::cout << "input_shape = " << input_shape.dim[2] << std::endl;
-  int32_t image_width = input_shape.dim[3];
+  int32_t image_width = input_shape.dim[2];
+  bool htk = false;
 
   if (image_width == 188) {
     sample_rate_ = 16000;
+    time_len_ = 3;
   } else if (image_width == 94) {
     sample_rate_ = 8000;
-  } else {
-    return false;
+    time_len_ = 3;
+  } else if (image_width == 63) {
+    sample_rate_ = 8000;
+    time_len_ = 2;
   }
-  return true;
+  fmax_ = sample_rate_ / 2;
+  int num_frames = time_len_ * sample_rate_;
+
+  // std::cout << "input_shape = " << input_shape.dim[2] << ", sample_rate = " << sample_rate_
+  //           << ", time_len_ = " << time_len_ << std::endl;
+  mp_extractor_ = new MelFeatureExtract(num_frames, sample_rate_, num_fft_, hop_len_, num_mel_,
+                                        fmin_, fmax_, "reflect", htk);
+  return CVI_SUCCESS;
 }
 
 int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
@@ -37,6 +42,7 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
 
   // save audio to image array
   short *temp_buffer = reinterpret_cast<short *>(stOutFrame->stVFrame.pu8VirAddr[0]);
+  normal_sound(temp_buffer, img_width * img_height);
   mp_extractor_->update_data(temp_buffer, img_width * img_height);
 
   model_timer_.TicToc("start");
@@ -98,4 +104,36 @@ int SoundClassificationV2::get_top_k(float *result, size_t count) {
     idx = 0;
   }
   return idx;
+}
+
+void SoundClassificationV2::normal_sound(short *audio_data, int n) {
+  // std::cout << "before:" << audio_data[0];
+  std::vector<double> audio_abs(n);
+  for (int i = 0; i < n; i++) {
+    audio_abs[i] = std::abs(static_cast<double>(audio_data[i]));
+  }
+  std::vector<double> top_data;
+  std::make_heap(audio_abs.begin(), audio_abs.end());
+  if (top_num <= 0) {
+    std::cerr << "When top_num<=0, the volume adaptive algorithm will fail. Current top_num="
+              << top_num << std::endl;
+    return;
+  }
+  for (int i = 0; i < top_num; i++) {
+    top_data.push_back(audio_abs.front());
+    std::pop_heap(audio_abs.begin(), audio_abs.end());
+    audio_abs.pop_back();
+  }
+  double top_mean = std::accumulate(top_data.begin(), top_data.end(), 0.0) / top_num;
+  if (top_mean == 0) {
+    std::cout << "The average of the top data is zero, cannot scale the audio data." << std::endl;
+  } else {
+    double r = max_rate * SCALE_FACTOR_FOR_INT16 / double(top_mean);
+    double tmp = 0;
+    for (int i = 0; i < n; i++) {
+      tmp = audio_data[i] * r;
+      audio_data[i] = short(tmp);
+    }
+  }
+  // std::cout << ", after:" << audio_data[0];
 }
