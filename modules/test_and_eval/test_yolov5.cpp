@@ -14,44 +14,58 @@
 #include "cviai.h"
 #include "evaluation/cviai_media.h"
 
-// CVI_S32 init_param(cviai_handle_t ai_handle) {
-// setup preprocess
-// YoloPreParam p_preprocess_cfg;
+// set preprocess and algorithm param for yolov5 detection
+// if use official model, no need to change param
+CVI_S32 init_param(const cviai_handle_t ai_handle) {
+  // setup preprocess
+  YoloPreParam preprocess_cfg = CVI_AI_Get_YOLO_Preparam(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5);
 
-// for (int i = 0; i < 3; i++) {
-//   printf("asign val %d \n", i);
-//   p_preprocess_cfg.factor[i] = 0.003922;
-//   p_preprocess_cfg.mean[i] = 0.0;
-// }
-// p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  for (int i = 0; i < 3; i++) {
+    printf("asign val %d \n", i);
+    preprocess_cfg.factor[i] = 0.003922;
+    preprocess_cfg.mean[i] = 0.0;
+  }
+  preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
-// // setup yolo algorithm preprocess
-// YoloAlgParam p_yolov5_param;
-// uint32_t *anchors = new uint32_t[18];
-// uint32_t p_anchors[18] = {10, 13, 16, 30, 33, 23,
-//                           30, 61, 62, 45, 59, 119,
-//                           116, 90, 156, 198, 373, 326};
-// printf("size of p_anchors: %ld \n", sizeof(p_anchors));
-// memcpy(anchors, p_anchors, sizeof(p_anchors));
-// p_yolov5_param.anchors = anchors;
+  printf("setup yolov5 param \n");
+  CVI_S32 ret = CVI_AI_Set_YOLO_Preparam(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, preprocess_cfg);
+  if (ret != CVI_SUCCESS) {
+    printf("Can not set Yolov5 preprocess parameters %#x\n", ret);
+    return ret;
+  }
 
-// uint32_t *strides = new uint32_t[3];
-// uint32_t p_strides[3] = {8, 16, 32};
-// memcpy(strides, p_strides, sizeof(p_strides));
-// p_yolov5_param.strides = strides;
-// p_yolov5_param.cls = 80;
+  // setup yolo algorithm preprocess
+  YoloAlgParam yolov5_param = CVI_AI_Get_YOLO_Algparam(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5);
+  uint32_t *anchors = new uint32_t[18];
+  uint32_t p_anchors[18] = {10, 13, 16,  30,  33, 23,  30,  61,  62,
+                            45, 59, 119, 116, 90, 156, 198, 373, 326};
+  memcpy(anchors, p_anchors, sizeof(p_anchors));
+  yolov5_param.anchors = anchors;
+  yolov5_param.anchor_len = 18;
 
-// printf("setup yolov5 param \n");
-// CVI_S32 ret = CVI_AI_Set_YOLOV5_Param(ai_handle, &p_preprocess_cfg, &p_yolov5_param);
-// if (ret != CVI_SUCCESS) {
-//   printf("Can not set Yolov5 parameters %#x\n", ret);
-//   return ret;
-// }
-// printf("yolov5 parameters setup success!\n");
-// return ret;
-// }
+  uint32_t *strides = new uint32_t[3];
+  uint32_t p_strides[3] = {8, 16, 32};
+  memcpy(strides, p_strides, sizeof(p_strides));
+  yolov5_param.strides = strides;
+  yolov5_param.stride_len = 3;
+  yolov5_param.cls = 80;
 
-int main(int argc, char* argv[]) {
+  printf("setup yolov5 algorithm param \n");
+  ret = CVI_AI_Set_YOLO_Algparam(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, yolov5_param);
+  if (ret != CVI_SUCCESS) {
+    printf("Can not set Yolov5 algorithm parameters %#x\n", ret);
+    return ret;
+  }
+
+  // set thershold
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, 0.5);
+  CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, 0.5);
+
+  printf("yolov5 algorithm parameters setup success!\n");
+  return ret;
+}
+
+int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
@@ -68,7 +82,7 @@ int main(int argc, char* argv[]) {
     return ret;
   }
 
-  // printf("start yolov5 config \n");
+  // change param of yolov5
   // ret = init_param(ai_handle);
 
   std::string model_path = argv[1];

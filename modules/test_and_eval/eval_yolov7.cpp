@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < 18; i++) {
     p_yolov7_cfg.anchors[i] = p_anchors[i];
   }
-  ret = CVI_AI_Set_YOLO_Algparam(ai_handle, p_yolov7_cfg, CVI_AI_SUPPORTED_MODEL_YOLOV7);
+  ret = CVI_AI_Set_YOLO_Algparam(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV7, p_yolov7_cfg);
   std::string model_path = argv[1];
   std::string bench_path = argv[2];
   std::string image_root = argv[3];

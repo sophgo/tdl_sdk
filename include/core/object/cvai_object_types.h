@@ -454,7 +454,7 @@ typedef struct {
 
 /** @struct YoloPreParam
  *  @ingroup core_cviaicore
- *  @brief Config the yolov5 detection preprocess.
+ *  @brief Config the yolo detection preprocess.
  *  @var YoloPreParam::factor
  *  Preprocess factor, one dimension matrix, r g b channel
  *  @var YoloPreParam::mean
@@ -462,7 +462,7 @@ typedef struct {
  *  @var YoloPreParam::rescale_type
  *  Preprocess config, vpss rescale type config
  *  @var YoloPreParam::keep_aspect_ratio
- *  Preprocess config quantize scale
+ *  Preprocess config  scale
  *  @var YoloPreParam:: resize_method
  *  Preprocess resize method config
  *  @var YoloPreParam::format
@@ -479,17 +479,17 @@ typedef struct {
 
 /** @struct YoloAlgParam
  *  @ingroup core_cviaicore
- *  @brief Config the yolov5 detection algorithm parameters.
+ *  @brief Config the yolo detection algorithm parameters.
  *  @var YoloAlgParam::anchors
- *  Configure yolov5 model anchors
+ *  Configure yolo model anchors
  *  @var YoloAlgParam::anchor_len
- *  Configure number of yolov5 model anchors
+ *  Configure number of yolo model anchors
  *  @var YoloAlgParam::strides
- *  Configure yolov5 model strides
+ *  Configure yolo model strides
  *  @var YoloAlgParam::stride_len
- *  Configure number of yolov5 model stride
+ *  Configure number of yolo model stride
  *  @var YoloAlgParam::cls
- *  Configure the number of yolov5 model predict classes
+ *  Configure the number of yolo model predict classes
  */
 typedef struct {
   uint32_t *anchors;
@@ -501,7 +501,7 @@ typedef struct {
 
 /** @struct VpssPreParam
  *  @ingroup core_cviaicore
- *  @brief Config the yolov5 detection preprocess.
+ *  @brief Config the yolo detection preprocess.
  *  @var VpssPreParam::factor
  *  Preprocess factor, one dimension matrix, r g b channel
  *  @var VpssPreParam::mean

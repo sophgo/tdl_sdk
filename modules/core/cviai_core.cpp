@@ -1519,8 +1519,9 @@ YoloPreParam CVI_AI_Get_YOLO_Preparam(const cviai_handle_t handle,
   return YoloPreParam();
 }
 
-CVI_S32 CVI_AI_Set_YOLO_Preparam(const cviai_handle_t handle, YoloPreParam pre_param,
-                                 const CVI_AI_SUPPORTED_MODEL_E model_index) {
+CVI_S32 CVI_AI_Set_YOLO_Preparam(const cviai_handle_t handle,
+                                 const CVI_AI_SUPPORTED_MODEL_E model_index,
+                                 YoloPreParam pre_param) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
 
   if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV5 ||
@@ -1576,8 +1577,9 @@ YoloAlgParam CVI_AI_Get_YOLO_Algparam(const cviai_handle_t handle,
   return YoloAlgParam();
 }
 
-CVI_S32 CVI_AI_Set_YOLO_Algparam(const cviai_handle_t handle, YoloAlgParam alg_param,
-                                 const CVI_AI_SUPPORTED_MODEL_E model_index) {
+CVI_S32 CVI_AI_Set_YOLO_Algparam(const cviai_handle_t handle,
+                                 const CVI_AI_SUPPORTED_MODEL_E model_index,
+                                 YoloAlgParam alg_param) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
 
   if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV5 ||

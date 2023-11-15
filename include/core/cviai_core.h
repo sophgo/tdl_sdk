@@ -1531,11 +1531,11 @@ DLL_EXPORT YoloPreParam CVI_AI_Get_YOLO_Preparam(const cviai_handle_t handle, co
  * @brief set yolo preprocess param struct
  *
  * @param handle An AI SDK handle.
- * @param pre_param Yolo preprocess struct
  * @param model_index Supported model list.
+ * @param pre_param Yolo preprocess struct
  * @return int Return CVIAI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Preparam(const cviai_handle_t handle, YoloPreParam pre_param, const CVI_AI_SUPPORTED_MODEL_E model_index);
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Preparam(const cviai_handle_t handle, const CVI_AI_SUPPORTED_MODEL_E model_index, YoloPreParam pre_param);
 
 /**
  * @brief get yolo algorithm param struct
@@ -1550,11 +1550,11 @@ DLL_EXPORT YoloAlgParam CVI_AI_Get_YOLO_Algparam(const cviai_handle_t handle, co
  * @brief set yolo algorithm param struct
  *
  * @param handle An AI SDK handle.
- * @param alg_param Yolo algorithm struct
  * @param model_index Supported model list.
+ * @param alg_param Yolo algorithm struct
  * @return int Return CVIAI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Algparam(const cviai_handle_t handle, YoloAlgParam alg_param, const CVI_AI_SUPPORTED_MODEL_E model_index);
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Algparam(const cviai_handle_t handle, const CVI_AI_SUPPORTED_MODEL_E model_index, YoloAlgParam alg_param);
 
 DLL_EXPORT CVI_S32 CVI_AI_Set_Yolov5_ROI(const cviai_handle_t handle, Point_t roi_s);
 /**
