@@ -17,14 +17,6 @@
 #include "object_utils.hpp"
 #include "yolov8.hpp"
 
-#define R_SCALE 0.003922
-#define G_SCALE 0.003922
-#define B_SCALE 0.003922
-#define R_MEAN 0
-#define G_MEAN 0
-#define B_MEAN 0
-#define NMS_THRESH 0.5
-
 namespace cviai {
 static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int im_height,
                                int im_width) {
@@ -58,16 +50,49 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 
-YoloV8Detection::YoloV8Detection() : Core(CVI_MEM_DEVICE) {}
+YoloV8Detection::YoloV8Detection() : Core(CVI_MEM_DEVICE) {
+  // Default value
+  // for (int i = 0; i < 3; i++) {
+  //   p_preprocess_cfg_.factor[i] = 0.003922;
+  //   p_preprocess_cfg_.mean[i] = 0.0;
+  // }
+  // p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  // p_alg_param_.cls = 80;
+}
+
+YoloPreParam YoloV8Detection::get_preparam() { return p_preprocess_cfg_; }
+void YoloV8Detection::set_preparam(YoloPreParam pre_param) {
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
+    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
+  }
+
+  p_preprocess_cfg_.format = pre_param.format;
+}
+
+YoloAlgParam YoloV8Detection::get_algparam() { return p_alg_param_; }
+
+void YoloV8Detection::set_algparam(YoloAlgParam alg_param) {
+  p_alg_param_.cls = alg_param.cls;
+  m_cls_channel_ = alg_param.cls;
+}
 
 YoloV8Detection::YoloV8Detection(PAIR_INT yolov8_pair) : Core(CVI_MEM_DEVICE) {
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.factor[i] = 0.003922;
+    p_preprocess_cfg_.mean[i] = 0.0;
+  }
+  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+
   m_box_channel_ = yolov8_pair.first;
   m_cls_channel_ = yolov8_pair.second;
+  p_alg_param_.cls = m_cls_channel_;
 }
 
 // would parse 3 cases,1:box,cls seperate feature map,2 box+cls seperate featuremap,3 output decoded
 // results
 int YoloV8Detection::onModelOpened() {
+  m_cls_channel_ = p_alg_param_.cls;
   CVI_SHAPE input_shape = getInputShape(0);
   int input_h = input_shape.dim[2];
   int input_w = input_shape.dim[3];
@@ -127,13 +152,12 @@ int YoloV8Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *dat
     return CVIAI_ERR_INVALID_ARGS;
   }
 
-  (*data)[0].factor[0] = R_SCALE;
-  (*data)[0].factor[1] = G_SCALE;
-  (*data)[0].factor[2] = B_SCALE;
-  (*data)[0].mean[0] = R_MEAN;
-  (*data)[0].mean[1] = G_MEAN;
-  (*data)[0].mean[2] = B_MEAN;
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  for (int i = 0; i < 3; i++) {
+    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
+    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
+  }
+
+  (*data)[0].format = p_preprocess_cfg_.format;
   (*data)[0].use_quantize_scale = true;
   return CVIAI_SUCCESS;
 }

@@ -11,7 +11,10 @@ class Yolov5 final : public Core {
   Yolov5();
   virtual ~Yolov5();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
-  void set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_yolov5_param);
+  YoloPreParam get_preparam();
+  void set_preparam(YoloPreParam pre_param);
+  YoloAlgParam get_algparam();
+  void set_algparam(YoloAlgParam alg_param);
   uint32_t set_roi(Point_t &roi);
 
  private:
@@ -35,8 +38,8 @@ class Yolov5 final : public Core {
   std::map<int, std::string> conf_out_names_;
   std::map<int, std::string> box_out_names_;
   std::vector<int> strides_;
-  YoloPreParam *p_preprocess_cfg_;
-  YoloAlgParam *p_yolov5_param_;
+  YoloPreParam p_preprocess_cfg_;
+  YoloAlgParam p_yolov5_param_;
   cvai_bbox_t yolo_box;
   bool roi_flag = false;
 };

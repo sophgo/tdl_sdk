@@ -33,29 +33,6 @@ int main(int argc, char* argv[]) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
   }
-  printf("start yolox preprocess config \n");
-  // // setup preprocess
-  YoloPreParam p_preprocess_cfg;
-
-  for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg.factor[i] = 1.0;
-    p_preprocess_cfg.mean[i] = 0.0;
-  }
-  p_preprocess_cfg.use_quantize_scale = true;
-  p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
-
-  printf("start yolo algorithm config \n");
-  // setup yolo param
-  YoloAlgParam p_yolo_param;
-  p_yolo_param.cls = 80;
-
-  printf("setup yolox param \n");
-  ret = CVI_AI_Set_YOLOX_Param(ai_handle, &p_preprocess_cfg, &p_yolo_param);
-  printf("yolox set param success!\n");
-  if (ret != CVI_SUCCESS) {
-    printf("Can not set YoloX parameters %#x\n", ret);
-    return ret;
-  }
 
   std::string model_path = argv[1];
   std::string str_src_dir = argv[2];

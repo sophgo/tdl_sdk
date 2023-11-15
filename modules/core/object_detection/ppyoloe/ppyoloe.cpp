@@ -91,16 +91,16 @@ void PPYoloE::generate_ppyoloe_proposals(Detections &detections, int frame_width
         float class_score = 0.0f;
         int label = 0;
         if (num_per_pixel_cls == 1) {
-          label = yoloe_argmax<int8_t>(ptr_int8_cls, basic_pos_cls, p_alg_param_->cls);
+          label = yoloe_argmax<int8_t>(ptr_int8_cls, basic_pos_cls, p_alg_param_.cls);
           class_score = ptr_int8_cls[label + basic_pos_cls] * qscale_cls;
         } else {
-          label = yoloe_argmax<float>(ptr_float_cls, basic_pos_cls, p_alg_param_->cls);
+          label = yoloe_argmax<float>(ptr_float_cls, basic_pos_cls, p_alg_param_.cls);
           class_score = ptr_float_cls[label + basic_pos_cls];
         }
 
         class_score = yoloe_sigmoid(class_score);
         if (class_score < m_model_threshold) {
-          basic_pos_cls += p_alg_param_->cls;
+          basic_pos_cls += p_alg_param_.cls;
           basic_pos_box += 4;
           continue;
         }
@@ -113,7 +113,7 @@ void PPYoloE::generate_ppyoloe_proposals(Detections &detections, int frame_width
           decode_yoloe_bbox<float>(ptr_float_box, qscale_box, basic_pos_box, g0, g1, stride, label,
                                    class_score, det);
         }
-        basic_pos_cls += p_alg_param_->cls;
+        basic_pos_cls += p_alg_param_.cls;
         basic_pos_box += 4;
         clip_bbox(frame_width, frame_height, det);
         detections.push_back(det);
@@ -122,7 +122,34 @@ void PPYoloE::generate_ppyoloe_proposals(Detections &detections, int frame_width
   }
 }
 
-PPYoloE::PPYoloE() : Core(CVI_MEM_DEVICE) {}
+PPYoloE::PPYoloE() : Core(CVI_MEM_DEVICE) {
+  // default param
+  float mean[3] = {123.675, 116.28, 103.52};
+  float std[3] = {58.395, 57.12, 57.375};
+
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.mean[i] = mean[i] / std[i];
+    p_preprocess_cfg_.factor[i] = 1.0 / std[i];
+  }
+
+  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  p_alg_param_.cls = 80;
+}
+
+YoloPreParam PPYoloE::get_preparam() { return p_preprocess_cfg_; }
+
+void PPYoloE::set_preparam(YoloPreParam pre_param) {
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
+    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
+  }
+
+  p_preprocess_cfg_.format = pre_param.format;
+}
+
+YoloAlgParam PPYoloE::get_algparam() { return p_alg_param_; }
+
+void PPYoloE::set_algparam(YoloAlgParam alg_param) { p_alg_param_.cls = alg_param.cls; }
 
 int PPYoloE::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
@@ -133,22 +160,21 @@ int PPYoloE::onModelOpened() {
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
     TensorInfo oinfo = getOutputTensorInfo(j);
     CVI_SHAPE output_shape = oinfo.shape;
-    // printf("output layer: %s output shape: %d %d %d %d\n", oinfo.tensor_name.c_str(),
-    //                          output_shape.dim[0], output_shape.dim[1], output_shape.dim[2],
-    //                          output_shape.dim[3]);
+    LOGI("output layer: %s output shape: %d %d %d %d\n", oinfo.tensor_name.c_str(),
+         output_shape.dim[0], output_shape.dim[1], output_shape.dim[2], output_shape.dim[3]);
     int feat_h = output_shape.dim[1];
     uint32_t channel = output_shape.dim[3];
     int stride_h = input_h / feat_h;
 
-    if (channel == p_alg_param_->cls) {
+    if (channel == p_alg_param_.cls) {
       cls_out_names_[stride_h] = oinfo.tensor_name;
       strides_.push_back(stride_h);
-      // printf("cls parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(),
-      // channel, stride_h);
+      LOGI("cls parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(),
+           channel, stride_h);
     } else if (channel == 4) {
       box_out_names_[stride_h] = oinfo.tensor_name;
-      // printf("box parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(),
-      // channel, stride_h);
+      LOGI("box parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(),
+           channel, stride_h);
     }
   }
 
@@ -170,18 +196,13 @@ int PPYoloE::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   }
 
   for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_->factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_->mean[i];
+    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
+    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
   }
 
-  (*data)[0].format = p_preprocess_cfg_->format;
-  (*data)[0].use_quantize_scale = p_preprocess_cfg_->use_quantize_scale;
+  (*data)[0].format = p_preprocess_cfg_.format;
+  (*data)[0].use_quantize_scale = true;
   return CVIAI_SUCCESS;
-}
-
-void PPYoloE::set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_alg_param) {
-  p_preprocess_cfg_ = p_preprocess_cfg;
-  p_alg_param_ = p_alg_param;
 }
 
 int PPYoloE::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {

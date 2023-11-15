@@ -61,7 +61,31 @@ static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int i
   }
 }
 
-Yolov6::Yolov6() : Core(CVI_MEM_DEVICE) {}
+Yolov6::Yolov6() : Core(CVI_MEM_DEVICE) {
+  // defalut param
+
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.factor[i] = 0.003922;
+    p_preprocess_cfg_.mean[i] = 0.0;
+  }
+  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  p_alg_param_.cls = 80;
+}
+
+YoloPreParam Yolov6::get_preparam() { return p_preprocess_cfg_; }
+
+void Yolov6::set_preparam(YoloPreParam pre_param) {
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
+    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
+  }
+
+  p_preprocess_cfg_.format = pre_param.format;
+}
+
+YoloAlgParam Yolov6::get_algparam() { return p_alg_param_; }
+
+void Yolov6::set_algparam(YoloAlgParam alg_param) { p_alg_param_.cls = alg_param.cls; }
 
 int Yolov6::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
@@ -75,7 +99,7 @@ int Yolov6::onModelOpened() {
     uint32_t channel = output_shape.dim[3];
     int stride_h = input_h / feat_h;
 
-    if (channel == p_alg_param_->cls) {
+    if (channel == p_alg_param_.cls) {
       class_out_names[stride_h] = oinfo.tensor_name;
       strides.push_back(stride_h);
       LOGI("parase class decode branch: %s, channel: %d\n", oinfo.tensor_name.c_str(), channel);
@@ -102,12 +126,12 @@ int Yolov6::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   }
 
   for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_->factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_->mean[i];
+    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
+    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
   }
 
-  (*data)[0].format = p_preprocess_cfg_->format;
-  (*data)[0].use_quantize_scale = p_preprocess_cfg_->use_quantize_scale;
+  (*data)[0].format = p_preprocess_cfg_.format;
+  (*data)[0].use_quantize_scale = true;
   return CVIAI_SUCCESS;
 }
 
@@ -138,16 +162,11 @@ int Yolov6::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dst
   return CVIAI_SUCCESS;
 }
 
-void Yolov6::set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_alg_param) {
-  p_preprocess_cfg_ = p_preprocess_cfg;
-  p_alg_param_ = p_alg_param;
-}
-
 int Yolov6::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
   if (ret != CVIAI_SUCCESS) {
-    LOGE("Yolov5 run inference failed!\n");
+    LOGE("Yolov6 run inference failed!\n");
     return ret;
   }
 
@@ -253,7 +272,6 @@ void Yolov6::postProcess(Detections &dets, int frame_width, int frame_height,
 
 void Yolov6::outputParser(const int iamge_width, const int image_height, const int frame_width,
                           const int frame_height, cvai_object_t *obj_meta) {
-  printf("entering outputParser... \n");
   Detections vec_obj;
 
   float inverse_th = std::log(m_model_threshold / (1 - m_model_threshold));
@@ -267,7 +285,7 @@ void Yolov6::outputParser(const int iamge_width, const int image_height, const i
     int8_t *p_cls_int8 = static_cast<int8_t *>(classinfo.raw_pointer);
     float *p_cls_float = static_cast<float *>(classinfo.raw_pointer);
 
-    int num_cls = p_alg_param_->cls;
+    int num_cls = p_alg_param_.cls;
     int num_anchor = classinfo.shape.dim[1] * classinfo.shape.dim[2];
     float cls_qscale = num_per_pixel == 1 ? classinfo.qscale : 1;
 

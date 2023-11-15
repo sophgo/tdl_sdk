@@ -138,6 +138,7 @@ typedef void *cviai_handle_t;
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV3)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV5)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV6)                           \
+  CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOV7)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLO)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_YOLOX)                           \
   CVI_AI_NAME_WRAP(CVI_AI_SUPPORTED_MODEL_PPYOLOE)                           \
@@ -890,6 +891,17 @@ DLL_EXPORT CVI_S32 CVI_AI_Yolov6(const cviai_handle_t handle, VIDEO_FRAME_INFO_S
                                  cvai_object_t *obj);
 
 /**
+ * @brief Yolov7 object detection.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param obj Output detect result. The name, bbox, and classes will be given.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Yolov7(const cviai_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                 cvai_object_t *obj);
+
+/**
  * @brief Yolo object detection.
  *
  * @param handle An AI SDK handle.
@@ -1507,67 +1519,44 @@ DLL_EXPORT CVI_S32 CVI_AI_Image_Classification(const cviai_handle_t handle,
                                                cvai_class_meta_t *obj_meta);
 
 /**
- * @brief yolov5 setup function
+ * @brief get yolo preprocess param struct
  *
  * @param handle An AI SDK handle.
- * @param p_preprocess_cfg Input preprocess setup config.
- * @param p_yolo_param Yolov5 algorithm parameter config.
- * @int Reture CVIAI_SUCCESS on success.
+ * @param model_index Supported model list.
+ * @return  YoloPreparam yolo preprocess param struct.
  */
-DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle,
-                                           YoloPreParam *p_preprocess_cfg,
-                                           YoloAlgParam *p_yolov_param);
+DLL_EXPORT YoloPreParam CVI_AI_Get_YOLO_Preparam(const cviai_handle_t handle, const CVI_AI_SUPPORTED_MODEL_E model_index);
+
+/**
+ * @brief set yolo preprocess param struct
+ *
+ * @param handle An AI SDK handle.
+ * @param pre_param Yolo preprocess struct
+ * @param model_index Supported model list.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Preparam(const cviai_handle_t handle, YoloPreParam pre_param, const CVI_AI_SUPPORTED_MODEL_E model_index);
+
+/**
+ * @brief get yolo algorithm param struct
+ *
+ * @param handle An AI SDK handle.
+ * @param model_index Supported model list.
+ * @return  YoloAlgparam yolo algorthm param struct.
+ */
+DLL_EXPORT YoloAlgParam CVI_AI_Get_YOLO_Algparam(const cviai_handle_t handle, const CVI_AI_SUPPORTED_MODEL_E model_index);
+
+/**
+ * @brief set yolo algorithm param struct
+ *
+ * @param handle An AI SDK handle.
+ * @param alg_param Yolo algorithm struct
+ * @param model_index Supported model list.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Algparam(const cviai_handle_t handle, YoloAlgParam alg_param, const CVI_AI_SUPPORTED_MODEL_E model_index);
 
 DLL_EXPORT CVI_S32 CVI_AI_Set_Yolov5_ROI(const cviai_handle_t handle, Point_t roi_s);
-
-/**
- * @brief yolov6 setup function
- *
- * @param handle An AI SDK handle.
- * @param p_preprocess_cfg Input preprocess setup config.
- * @param p_yolo_param Yolov6 algorithm parameter config.
- * @int Reture CVIAI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle,
-                                           YoloPreParam *p_preprocess_cfg,
-                                           YoloAlgParam *p_yolo_param);
-
-/**
- * @brief yolox setup function
- *
- * @param handle An AI SDK handle.
- * @param p_preprocess_cfg Input preprocess setup config.
- * @param p_yolo_param Yolov6 algorithm parameter config.
- * @int Reture CVIAI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_Set_YOLOX_Param(const cviai_handle_t handle,
-                                          YoloPreParam *p_preprocess_cfg,
-                                          YoloAlgParam *p_yolo_param);
-
-/**
- * @brief yolo setup function
- *
- * @param handle An AI SDK handle.
- * @param p_preprocess_cfg Input preprocess setup config.
- * @param p_yolo_param Yolo algorithm parameter config.
- * @int Reture CVIAI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle,
-                                         YoloPreParam *p_preprocess_cfg,
-                                         YoloAlgParam *p_yolo_param);
-
-/**
- * @brief pp-yoloe setup function
- *
- * @param handle An AI SDK handle.
- * @param p_preprocess_cfg Input preprocess setup config.
- * @param p_yolo_param Yolo algorithm parameter config.
- * @int Reture CVIAI_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_AI_Set_PPYOLOE_Param(const cviai_handle_t handle,
-                                            YoloPreParam *p_preprocess_cfg,
-                                            YoloAlgParam *p_yolo_param);
-
 /**
  * @brief image_classification setup function
  *

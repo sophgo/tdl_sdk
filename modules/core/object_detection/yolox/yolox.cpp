@@ -109,20 +109,19 @@ void YoloX::generate_yolox_proposals(Detections &detections) {
 
         // parse class score
         if (num_per_pixel_object == 1) {
-          label = yolox_argmax<int8_t>(ptr_int8_class, basic_pos_class, p_alg_param_->cls);
+          label = yolox_argmax<int8_t>(ptr_int8_class, basic_pos_class, p_alg_param_.cls);
           class_score = ptr_int8_class[basic_pos_class + label] * qscale_class;
         } else {
-          label = yolox_argmax<float>(ptr_float_class, basic_pos_class, p_alg_param_->cls);
+          label = yolox_argmax<float>(ptr_float_class, basic_pos_class, p_alg_param_.cls);
           class_score = ptr_float_class[basic_pos_class + label];
         }
 
-        // printf("%d %d %d\n", basic_pos_object, basic_pos_box, basic_pos_class);
         box_objectness = yolox_sigmoid(box_objectness);
         class_score = yolox_sigmoid(class_score);
         float box_prob = box_objectness * class_score;
 
         if (box_prob < m_model_threshold) {
-          basic_pos_class += p_alg_param_->cls;
+          basic_pos_class += p_alg_param_.cls;
           basic_pos_box += 4;
           basic_pos_object += 1;
           continue;
@@ -144,7 +143,7 @@ void YoloX::generate_yolox_proposals(Detections &detections) {
         if (box_width > 1 && box_height > 1) {
           detections.push_back(det);
         }
-        basic_pos_class += p_alg_param_->cls;
+        basic_pos_class += p_alg_param_.cls;
         basic_pos_box += 4;
         basic_pos_object += 1;
       }
@@ -152,7 +151,30 @@ void YoloX::generate_yolox_proposals(Detections &detections) {
   }
 }
 
-YoloX::YoloX() : Core(CVI_MEM_DEVICE) {}
+YoloX::YoloX() : Core(CVI_MEM_DEVICE) {
+  // default param
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.factor[i] = 1.0;
+    p_preprocess_cfg_.mean[i] = 0.0;
+  }
+  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  p_alg_param_.cls = 80;
+}
+
+YoloPreParam YoloX::get_preparam() { return p_preprocess_cfg_; }
+
+void YoloX::set_preparam(YoloPreParam pre_param) {
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
+    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
+  }
+
+  p_preprocess_cfg_.format = pre_param.format;
+}
+
+YoloAlgParam YoloX::get_algparam() { return p_alg_param_; }
+
+void YoloX::set_algparam(YoloAlgParam alg_param) { p_alg_param_.cls = alg_param.cls; }
 
 int YoloX::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
@@ -167,10 +189,10 @@ int YoloX::onModelOpened() {
     uint32_t channel = output_shape.dim[3];
     int stride_h = input_h / feat_h;
 
-    // printf("%s: (%d %d %d %d)\n", oinfo.tensor_name.c_str(), output_shape.dim[0],
-    //       output_shape.dim[1], output_shape.dim[2], output_shape.dim[3]);
+    LOGI("%s: (%d %d %d %d)\n", oinfo.tensor_name.c_str(), output_shape.dim[0], output_shape.dim[1],
+         output_shape.dim[2], output_shape.dim[3]);
 
-    if (channel == p_alg_param_->cls) {
+    if (channel == p_alg_param_.cls) {
       class_out_names_[stride_h] = oinfo.tensor_name;
       strides_.push_back(stride_h);
       LOGE("parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(), channel,
@@ -199,18 +221,7 @@ int YoloX::onModelOpened() {
   return CVIAI_SUCCESS;
 }
 
-YoloX::~YoloX() {
-  for (uint32_t i = 0; i < m_filter.size(); i++) {
-    m_filter.set(i, true);
-  }
-}
-
-void YoloX::select_classes(const std::vector<uint32_t> &selected_classes) {
-  m_filter.reset();
-  for (auto c : selected_classes) {
-    m_filter.set(c, true);
-  }
-}
+YoloX::~YoloX() {}
 
 int YoloX::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
@@ -219,24 +230,20 @@ int YoloX::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   }
 
   for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_->factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_->mean[i];
+    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
+    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
   }
 
-  (*data)[0].format = p_preprocess_cfg_->format;
-  (*data)[0].use_quantize_scale = p_preprocess_cfg_->use_quantize_scale;
+  (*data)[0].format = p_preprocess_cfg_.format;
+  (*data)[0].use_quantize_scale = true;
   return CVIAI_SUCCESS;
-}
-
-void YoloX::set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_alg_param) {
-  p_preprocess_cfg_ = p_preprocess_cfg;
-  p_alg_param_ = p_alg_param;
 }
 
 int YoloX::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
   if (ret != CVIAI_SUCCESS) {
+    LOGE("YoloX run inference failed!\n");
     return ret;
   }
 
@@ -254,11 +261,6 @@ void YoloX::outputParser(const int image_width, const int image_height, const in
 
   // Do nms on output result
   Detections final_dets = nms_multi_class(vec_obj, m_model_nms_threshold);
-
-  if (!m_filter.all()) {  // filter if not all bit are set
-    auto condition = [this](const PtrDectRect &det) { return !m_filter.test(det->label); };
-    final_dets.erase(remove_if(final_dets.begin(), final_dets.end(), condition), final_dets.end());
-  }
 
   CVI_SHAPE shape = getInputShape(0);
 

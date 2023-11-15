@@ -534,14 +534,8 @@ CVI_S32 CVI_AI_SelectDetectClass(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E
     // TODO: only supports MobileDetV2 and YOLOX for now
     if (MobileDetV2 *mdetv2 = dynamic_cast<MobileDetV2 *>(instance)) {
       mdetv2->select_classes(selected_classes);
-    }
-#ifndef SIMPLY_MODEL
-    else if (YoloX *yolox = dynamic_cast<YoloX *>(instance)) {
-      yolox->select_classes(selected_classes);
-    }
-#endif
-    else {
-      LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 and YOLOX model for now.\n");
+    } else {
+      LOGW("CVI_AI_SelectDetectClass only supports MobileDetV2 model for now.\n");
     }
   } else {
     LOGE("Failed to create model: %s\n", CVI_AI_GetModelName(config));

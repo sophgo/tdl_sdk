@@ -9,9 +9,14 @@ class PPYoloE final : public Core {
  public:
   PPYoloE();
   virtual ~PPYoloE();
+
+  YoloPreParam get_preparam();
+  void set_preparam(YoloPreParam pre_param);
+  YoloAlgParam get_algparam();
+  void set_algparam(YoloAlgParam alg_param);
+
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
   virtual bool allowExportChannelAttribute() const override { return true; }
-  void set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_alg_param);
 
  private:
   virtual int onModelOpened() override;
@@ -20,8 +25,8 @@ class PPYoloE final : public Core {
                     const int frame_height, cvai_object_t *obj_meta);
   void generate_ppyoloe_proposals(Detections &detections, int frame_width, int frame_height);
 
-  YoloPreParam *p_preprocess_cfg_;
-  YoloAlgParam *p_alg_param_;
+  YoloPreParam p_preprocess_cfg_;
+  YoloAlgParam p_alg_param_;
 
   std::vector<int> strides_;
   std::map<int, std::string> box_out_names_;

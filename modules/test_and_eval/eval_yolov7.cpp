@@ -16,7 +16,7 @@
 #include "evaluation/cviai_media.h"
 #include "sys_utils.hpp"
 
-CVI_S32 get_yolov5_det(std::string img_path, cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S* fdFrame,
+CVI_S32 get_yolov7_det(std::string img_path, cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S* fdFrame,
                        cvai_object_t* obj_meta) {
   // printf("reading image file: %s \n", img_path.c_str());
   CVI_S32 ret = CVI_AI_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
@@ -29,7 +29,7 @@ CVI_S32 get_yolov5_det(std::string img_path, cviai_handle_t ai_handle, VIDEO_FRA
     return ret;
   }
 
-  CVI_AI_Yolov5(ai_handle, fdFrame, obj_meta);
+  CVI_AI_Yolov7(ai_handle, fdFrame, obj_meta);
 
   return ret;
 }
@@ -53,7 +53,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         if (++cnt % 10 == 0) {
           printf("processing idx: %d\n", cnt);
         }
-        CVI_S32 ret = get_yolov5_det(image_root + image_name, ai_handle, &fdFrame, &obj_meta);
+        CVI_S32 ret = get_yolov7_det(image_root + image_name, ai_handle, &fdFrame, &obj_meta);
         if (ret != CVI_SUCCESS) {
           CVI_AI_Free(&obj_meta);
           CVI_AI_ReleaseImage(&fdFrame);
@@ -101,44 +101,13 @@ int main(int argc, char* argv[]) {
     return ret;
   }
 
-  printf("start yolov preprocess config \n");
-  // setup preprocess
-  YoloPreParam p_preprocess_cfg;
-
-  for (int i = 0; i < 3; i++) {
-    printf("asign val %d \n", i);
-    p_preprocess_cfg.factor[i] = 0.003922;
-    p_preprocess_cfg.mean[i] = 0.0;
+  YoloAlgParam p_yolov7_cfg = CVI_AI_Get_YOLO_Algparam(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV7);
+  uint32_t p_anchors[18] = {12, 16, 19,  36,  40,  28,  36,  75,  76,
+                            55, 72, 146, 142, 110, 192, 243, 459, 401};
+  for (int i = 0; i < 18; i++) {
+    p_yolov7_cfg.anchors[i] = p_anchors[i];
   }
-  p_preprocess_cfg.use_quantize_scale = true;
-  p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
-
-  printf("start yolov algorithm config \n");
-  printf("start yolov algorithm config \n");
-  // setup yolov5 param
-  YoloAlgParam p_yolov5_param;
-  uint32_t p_anchors[3][3][2] = {{{12, 16}, {19, 36}, {40, 28}},
-                                 {{36, 75}, {76, 55}, {72, 146}},
-                                 {{142, 110}, {192, 243}, {459, 401}}};
-  // uint32_t p_anchors[3][3][2] = {{{12, 16}, {19, 36}, {40, 28}},
-  //                                {{36, 75}, {76, 55}, {72, 146}},
-  //                                {{142, 110}, {192, 243}, {459, 401}}};
-
-  p_yolov5_param.anchors = &p_anchors[0][0][0];
-  uint32_t strides[3] = {8, 16, 32};
-  p_yolov5_param.strides = &strides[0];
-  p_yolov5_param.anchor_len = 3;
-  p_yolov5_param.stride_len = 3;
-  p_yolov5_param.cls = 80;
-
-  printf("setup yolov5 param \n");
-  ret = CVI_AI_Set_YOLOV5_Param(ai_handle, &p_preprocess_cfg, &p_yolov5_param);
-  printf("yolov5 set param success!\n");
-  if (ret != CVI_SUCCESS) {
-    printf("Can not set Yolov5 parameters %#x\n", ret);
-    return ret;
-  }
-
+  ret = CVI_AI_Set_YOLO_Algparam(ai_handle, p_yolov7_cfg, CVI_AI_SUPPORTED_MODEL_YOLOV7);
   std::string model_path = argv[1];
   std::string bench_path = argv[2];
   std::string image_root = argv[3];
@@ -154,7 +123,7 @@ int main(int argc, char* argv[]) {
     nms_threshold = std::stof(argv[6]);
   }
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, model_path.c_str());
+  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV7, model_path.c_str());
   if (ret != CVI_SUCCESS) {
     printf("open model failed %#x %s!\n", ret, model_path.c_str());
     return ret;
@@ -162,8 +131,8 @@ int main(int argc, char* argv[]) {
   std::cout << "model opened:" << model_path << std::endl;
 
   // set thershold
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, conf_threshold);
-  CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, nms_threshold);
+  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV7, conf_threshold);
+  CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV7, nms_threshold);
 
   printf("set model parameter: conf threshold %f nms_threshold %f \n", conf_threshold,
          nms_threshold);

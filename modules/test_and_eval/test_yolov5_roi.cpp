@@ -30,38 +30,6 @@ int main(int argc, char* argv[]) {
     printf("Create ai handle failed with %#x!\n", ret);
     return ret;
   }
-  printf("start yolov5 preprocess config \n");
-  // setup preprocess
-  YoloPreParam p_preprocess_cfg;
-
-  for (int i = 0; i < 3; i++) {
-    printf("asign val %d \n", i);
-    p_preprocess_cfg.factor[i] = 0.003922;
-    p_preprocess_cfg.mean[i] = 0.0;
-  }
-  p_preprocess_cfg.use_quantize_scale = true;
-  p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
-
-  printf("start yolov algorithm config \n");
-  // setup yolov5 param
-  YoloAlgParam p_yolov5_param;
-  uint32_t p_anchors[3][3][2] = {{{10, 13}, {16, 30}, {33, 23}},
-                                 {{30, 61}, {62, 45}, {59, 119}},
-                                 {{116, 90}, {156, 198}, {373, 326}}};
-  p_yolov5_param.anchors = &p_anchors[0][0][0];
-  uint32_t strides[3] = {8, 16, 32};
-  p_yolov5_param.strides = &strides[0];
-  p_yolov5_param.anchor_len = 3;
-  p_yolov5_param.stride_len = 3;
-  p_yolov5_param.cls = 80;
-
-  printf("setup yolov5 param \n");
-  ret = CVI_AI_Set_YOLOV5_Param(ai_handle, &p_preprocess_cfg, &p_yolov5_param);
-  printf("yolov5 set param success!\n");
-  if (ret != CVI_SUCCESS) {
-    printf("Can not set Yolov5 parameters %#x\n", ret);
-    return ret;
-  }
 
   std::string model_path = argv[1];
   std::string str_src_dir = argv[2];

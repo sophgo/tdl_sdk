@@ -461,12 +461,8 @@ typedef struct {
  *  Preprocess mean, one dimension matrix, r g b channel
  *  @var YoloPreParam::rescale_type
  *  Preprocess config, vpss rescale type config
- *  @var YoloPreParam::pad_reverse
- *  Preprocess padding config
  *  @var YoloPreParam::keep_aspect_ratio
  *  Preprocess config quantize scale
- *  @var YoloPreParam::use_crop
- *  Preprocess config, config crop
  *  @var YoloPreParam:: resize_method
  *  Preprocess resize method config
  *  @var YoloPreParam::format
@@ -476,10 +472,7 @@ typedef struct {
   float factor[3];
   float mean[3];
   meta_rescale_type_e rescale_type;
-  bool pad_reverse;
   bool keep_aspect_ratio;
-  bool use_quantize_scale;
-  bool use_crop;
   VPSS_SCALE_COEF_E resize_method;
   PIXEL_FORMAT_E format;
 } YoloPreParam;
@@ -500,9 +493,9 @@ typedef struct {
  */
 typedef struct {
   uint32_t *anchors;
-  uint32_t anchor_len;
+  int anchor_len;
   uint32_t *strides;
-  uint32_t stride_len;
+  int stride_len;
   uint32_t cls;
 } YoloAlgParam;
 

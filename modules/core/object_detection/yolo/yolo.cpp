@@ -54,7 +54,19 @@ static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int i
   }
 }
 
-Yolo::Yolo() : Core(CVI_MEM_DEVICE) {}
+Yolo::Yolo() : Core(CVI_MEM_DEVICE) {
+  // default param
+  float mean[3] = {123.675, 116.28, 103.52};
+  float std[3] = {58.395, 57.12, 57.375};
+
+  for (int i = 0; i < 3; i++) {
+    p_preprocess_cfg_.mean[i] = mean[i] / std[i];
+    p_preprocess_cfg_.factor[i] = 1.0 / std[i];
+  }
+
+  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  p_Yolo_param_.cls = 80;
+}
 
 int Yolo::onModelOpened() {
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
@@ -76,12 +88,12 @@ int Yolo::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   }
 
   for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_->factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_->mean[i];
+    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
+    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
   }
 
-  (*data)[0].format = p_preprocess_cfg_->format;
-  (*data)[0].use_quantize_scale = p_preprocess_cfg_->use_quantize_scale;
+  (*data)[0].format = p_preprocess_cfg_.format;
+  (*data)[0].use_quantize_scale = true;
   return CVIAI_SUCCESS;
 }
 
@@ -110,11 +122,6 @@ int Yolo::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
     return CVIAI_ERR_VPSS_GET_FRAME;
   }
   return CVIAI_SUCCESS;
-}
-
-void Yolo::set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_Yolo_param) {
-  p_preprocess_cfg_ = p_preprocess_cfg;
-  p_Yolo_param_ = p_Yolo_param;
 }
 
 int Yolo::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {

@@ -10,7 +10,6 @@ class Yolo final : public Core {
   Yolo();
   virtual ~Yolo();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
-  void set_param(YoloPreParam *p_preprocess_cfg, YoloAlgParam *p_Yolo_param);
 
  private:
   virtual int onModelOpened() override;
@@ -27,7 +26,7 @@ class Yolo final : public Core {
   void YoloPostProcess(Detections &dets, int frame_width, int frame_height,
                        cvai_object_t *obj_meta);
 
-  YoloPreParam *p_preprocess_cfg_;
-  YoloAlgParam *p_Yolo_param_;
+  YoloPreParam p_preprocess_cfg_;
+  YoloAlgParam p_Yolo_param_;
 };
 }  // namespace cviai

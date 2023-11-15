@@ -12,6 +12,11 @@ class YoloV8Detection final : public Core {
   YoloV8Detection();
   YoloV8Detection(PAIR_INT yolov8_pair);
 
+  YoloPreParam get_preparam();
+  void set_preparam(YoloPreParam pre_param);
+  YoloAlgParam get_algparam();
+  void set_algparam(YoloAlgParam alg_param);
+
   virtual ~YoloV8Detection();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta);
   virtual bool allowExportChannelAttribute() const override { return true; }
@@ -37,5 +42,8 @@ class YoloV8Detection final : public Core {
   std::map<int, std::string> bbox_class_out_names;
   int m_box_channel_ = 0;
   int m_cls_channel_ = 0;
+
+  YoloPreParam p_preprocess_cfg_;
+  YoloAlgParam p_alg_param_;
 };
 }  // namespace cviai

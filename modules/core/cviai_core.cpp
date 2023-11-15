@@ -163,6 +163,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_AI_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV5, CREATOR(Yolov5)},
     {CVI_AI_SUPPORTED_MODEL_YOLOV6, CREATOR(Yolov6)},
+    {CVI_AI_SUPPORTED_MODEL_YOLOV7, CREATOR(Yolov5)},
     {CVI_AI_SUPPORTED_MODEL_YOLO, CREATOR(Yolo)},
     {CVI_AI_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_AI_SUPPORTED_MODEL_PPYOLOE, CREATOR(PPYoloE)},
@@ -818,6 +819,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_AI_MobileDetV2_COCO80, MobileDetV2,
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov3, Yolov3, CVI_AI_SUPPORTED_MODEL_YOLOV3, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov5, Yolov5, CVI_AI_SUPPORTED_MODEL_YOLOV5, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov6, Yolov6, CVI_AI_SUPPORTED_MODEL_YOLOV6, cvai_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolov7, Yolov5, CVI_AI_SUPPORTED_MODEL_YOLOV7, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_Yolo, Yolo, CVI_AI_SUPPORTED_MODEL_YOLO, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_YoloX, YoloX, CVI_AI_SUPPORTED_MODEL_YOLOX, cvai_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_AI_PPYoloE, PPYoloE, CVI_AI_SUPPORTED_MODEL_PPYOLOE, cvai_object_t *)
@@ -1490,103 +1492,119 @@ CVI_S32 CVI_AI_Set_Yolov5_ROI(const cviai_handle_t handle, Point_t roi_s) {
   return yolov5_model->set_roi(roi_s);
 }
 
-CVI_S32 CVI_AI_Set_YOLOV5_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
-                                YoloAlgParam *p_yolo_param) {
-  printf("enter CVI_AI_Set_YOLOV5_Param...\n");
+YoloPreParam CVI_AI_Get_YOLO_Preparam(const cviai_handle_t handle,
+                                      const CVI_AI_SUPPORTED_MODEL_E model_index) {
+  printf("enter CVI_AI_Get_YOLO_Preparam...\n");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Yolov5 *yolov5_model =
-      dynamic_cast<Yolov5 *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOV5, ctx));
-  if (yolov5_model == nullptr) {
-    LOGE("No instance found for yolov5 detection.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got yolov5 instance\n");
-  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
-    LOGE("p_preprocess_cfg or p_yolov5_param can not be nullptr.\n");
-    return CVI_FAILURE;
+
+  if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV5 ||
+      model_index == CVI_AI_SUPPORTED_MODEL_YOLOV7) {
+    Yolov5 *yolov5_model = dynamic_cast<Yolov5 *>(getInferenceInstance(model_index, ctx));
+    return yolov5_model->get_preparam();
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV6) {
+    Yolov6 *yolov6_model = dynamic_cast<Yolov6 *>(getInferenceInstance(model_index, ctx));
+    return yolov6_model->get_preparam();
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+    YoloV8Detection *yolov8_model =
+        dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
+    return yolov8_model->get_preparam();
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOX) {
+    YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
+    return yolox_model->get_preparam();
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_PPYOLOE) {
+    PPYoloE *ppyoloe_model = dynamic_cast<PPYoloE *>(getInferenceInstance(model_index, ctx));
+    return ppyoloe_model->get_preparam();
   }
 
-  yolov5_model->set_param(p_preprocess_cfg, p_yolo_param);
-  return CVI_SUCCESS;
+  return YoloPreParam();
 }
 
-CVI_S32 CVI_AI_Set_YOLOV6_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
-                                YoloAlgParam *p_yolo_param) {
-  printf("enter CVI_AI_Set_YOLOV6_Param...\n");
+CVI_S32 CVI_AI_Set_YOLO_Preparam(const cviai_handle_t handle, YoloPreParam pre_param,
+                                 const CVI_AI_SUPPORTED_MODEL_E model_index) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Yolov6 *yolov6_model =
-      dynamic_cast<Yolov6 *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOV6, ctx));
-  if (yolov6_model == nullptr) {
-    LOGE("No instance found for yolov6 detection.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got yolov6 instance\n");
-  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
-    LOGE("p_preprocess_cfg or p_yolov6_param can not be nullptr.\n");
-    return CVI_FAILURE;
-  }
 
-  yolov6_model->set_param(p_preprocess_cfg, p_yolo_param);
-  return CVI_SUCCESS;
+  if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV5 ||
+      model_index == CVI_AI_SUPPORTED_MODEL_YOLOV7) {
+    Yolov5 *yolov5_model = dynamic_cast<Yolov5 *>(getInferenceInstance(model_index, ctx));
+    yolov5_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV6) {
+    Yolov6 *yolov6_model = dynamic_cast<Yolov6 *>(getInferenceInstance(model_index, ctx));
+    yolov6_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+    YoloV8Detection *yolov8_model =
+        dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
+    yolov8_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOX) {
+    YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
+    yolox_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_PPYOLOE) {
+    PPYoloE *ppyoloe_model = dynamic_cast<PPYoloE *>(getInferenceInstance(model_index, ctx));
+    ppyoloe_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  }
+  LOGE("not supported model index\n");
+  return CVI_FAILURE;
 }
 
-CVI_S32 CVI_AI_Set_YOLOX_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
-                               YoloAlgParam *p_yolo_param) {
-  printf("enter CVI_AI_Set_YOLO_Param...\n");
+// TODO remove model_index
+YoloAlgParam CVI_AI_Get_YOLO_Algparam(const cviai_handle_t handle,
+                                      const CVI_AI_SUPPORTED_MODEL_E model_index) {
+  printf("enter CVI_AI_Get_YOLO_Preparam...\n");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  YoloX *yolox_model =
-      dynamic_cast<YoloX *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLOX, ctx));
-  if (yolox_model == nullptr) {
-    LOGE("No instance found for yolox detection.\n");
-    return CVI_FAILURE;
+  if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV5 ||
+      model_index == CVI_AI_SUPPORTED_MODEL_YOLOV7) {
+    Yolov5 *yolov5_model = dynamic_cast<Yolov5 *>(getInferenceInstance(model_index, ctx));
+    return yolov5_model->get_algparam();
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV6) {
+    Yolov6 *yolov6_model = dynamic_cast<Yolov6 *>(getInferenceInstance(model_index, ctx));
+    return yolov6_model->get_algparam();
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+    YoloV8Detection *yolov8_model =
+        dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
+    return yolov8_model->get_algparam();
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOX) {
+    YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
+    return yolox_model->get_algparam();
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_PPYOLOE) {
+    PPYoloE *ppyoloe_model = dynamic_cast<PPYoloE *>(getInferenceInstance(model_index, ctx));
+    return ppyoloe_model->get_algparam();
   }
-  LOGI("got yolo instance\n");
-  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
-    LOGE("p_preprocess_cfg or p_yolo_param can not be nullptr.\n");
-    return CVI_FAILURE;
-  }
-
-  yolox_model->set_param(p_preprocess_cfg, p_yolo_param);
-  return CVI_SUCCESS;
+  return YoloAlgParam();
 }
 
-CVI_S32 CVI_AI_Set_YOLO_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
-                              YoloAlgParam *p_yolo_param) {
-  printf("enter CVI_AI_Set_YOLO_Param...\n");
+CVI_S32 CVI_AI_Set_YOLO_Algparam(const cviai_handle_t handle, YoloAlgParam alg_param,
+                                 const CVI_AI_SUPPORTED_MODEL_E model_index) {
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  Yolo *yolo_model = dynamic_cast<Yolo *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_YOLO, ctx));
-  if (yolo_model == nullptr) {
-    LOGE("No instance found for yolo detection.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got yolo instance\n");
-  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
-    LOGE("p_preprocess_cfg or p_yolo_param can not be nullptr.\n");
-    return CVI_FAILURE;
-  }
 
-  yolo_model->set_param(p_preprocess_cfg, p_yolo_param);
-  return CVI_SUCCESS;
-}
-
-CVI_S32 CVI_AI_Set_PPYOLOE_Param(const cviai_handle_t handle, YoloPreParam *p_preprocess_cfg,
-                                 YoloAlgParam *p_yolo_param) {
-  printf("enter CVI_AI_Set_YOLO_Param...\n");
-  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
-  PPYoloE *ppyoloe_model =
-      dynamic_cast<PPYoloE *>(getInferenceInstance(CVI_AI_SUPPORTED_MODEL_PPYOLOE, ctx));
-  if (ppyoloe_model == nullptr) {
-    LOGE("No instance found for ppyoloe detection.\n");
-    return CVI_FAILURE;
+  if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV5 ||
+      model_index == CVI_AI_SUPPORTED_MODEL_YOLOV7) {
+    Yolov5 *yolov5_model = dynamic_cast<Yolov5 *>(getInferenceInstance(model_index, ctx));
+    yolov5_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV6) {
+    Yolov6 *yolov6_model = dynamic_cast<Yolov6 *>(getInferenceInstance(model_index, ctx));
+    yolov6_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+    YoloV8Detection *yolov8_model =
+        dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
+    yolov8_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_YOLOX) {
+    YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
+    yolox_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_AI_SUPPORTED_MODEL_PPYOLOE) {
+    PPYoloE *ppyoloe_model = dynamic_cast<PPYoloE *>(getInferenceInstance(model_index, ctx));
+    ppyoloe_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
   }
-  LOGI("got ppyoloe instance\n");
-  if (p_preprocess_cfg == nullptr || p_yolo_param == nullptr) {
-    LOGE("p_preprocess_cfg or p_yolo_param can not be nullptr.\n");
-    return CVI_FAILURE;
-  }
-
-  ppyoloe_model->set_param(p_preprocess_cfg, p_yolo_param);
-  return CVI_SUCCESS;
+  LOGE("not supported model index\n");
+  return CVI_FAILURE;
 }
 
 CVI_S32 CVI_AI_Set_Image_Cls_Param(const cviai_handle_t handle, VpssPreParam *p_preprocess_cfg) {
