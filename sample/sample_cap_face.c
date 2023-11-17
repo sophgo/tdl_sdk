@@ -364,7 +364,7 @@ CVI_S32 get_middleware_config(SAMPLE_AI_MW_CONFIG_S *pstMWConfig) {
   // The input pixel format of AI SDK models is eighter RGB 888 or RGB 888 Planar.
   pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].enFormat = PIXEL_FORMAT_BGR_888_PLANAR;
   // AI SDK use only 1 buffer at the same time.
-  pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].u32BlkCount = 2;
+  pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].u32BlkCount = 3;
   // Considering the maximum input size of object detection model is 1024x768, we set same size
   // here.
   pstMWConfig->stVBPoolConfig.astVBPoolSetup[2].u32Height = 432;

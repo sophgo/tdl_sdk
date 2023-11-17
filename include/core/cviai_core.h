@@ -1129,6 +1129,9 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Face(const cviai_handle_t handle, cvai_face_t
 
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_FaceFusePed(const cviai_handle_t handle, cvai_face_t *face,
                                                cvai_object_t *obj, cvai_tracker_t *tracker_t);
+
+DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_Set_Timestamp(const cviai_handle_t handle, uint32_t ts);
+
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_UpdateOutNum(const cviai_handle_t handle,
                                                 cvai_tracker_t *tracker_t);
 DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_DebugInfo_1(const cviai_handle_t handle, char *debug_info);

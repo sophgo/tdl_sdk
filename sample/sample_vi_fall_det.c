@@ -227,7 +227,7 @@ void *run_ai_thread(void *args) {
     s32Ret = CVI_AI_Fall_Monitor(pstAIArgs->stAIHandle, &stObjMeta);
     if (s32Ret != CVI_SUCCESS) {
       printf("monitor failed with %#x!\n", s32Ret);
-      return -1;
+      goto inf_error;
     }
 
     for (uint32_t i = 0; i < stObjMeta.size; i++) {

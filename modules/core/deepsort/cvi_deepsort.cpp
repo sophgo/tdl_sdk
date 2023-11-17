@@ -851,17 +851,26 @@ CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker) {
     bool &matched = std::get<0>(result_[i]);
     uint64_t &t_id = std::get<1>(result_[i]);
     k_tracker_state_e &t_state = std::get<2>(result_[i]);
+    BBOX &t_bbox = std::get<3>(result_[i]);
     if (!matched) {
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
       face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (t_state == k_tracker_state_e::PROBATION) {
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
       face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (t_state == k_tracker_state_e::ACCREDITATION) {
+      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
       face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       return CVIAI_ERR_INVALID_ARGS;
     }
+    tracker->info[i].bbox.x1 = t_bbox(0);
+    tracker->info[i].bbox.y1 = t_bbox(1);
+    tracker->info[i].bbox.x2 = t_bbox(0) + t_bbox(2);
+    tracker->info[i].bbox.y2 = t_bbox(1) + t_bbox(3);
     face->info[i].unique_id = t_id;
+    tracker->info[i].id = t_id;
   }
 #ifdef DEBUG_TRACK
   std::cout << "finish track,face num:" << face->size << std::endl;

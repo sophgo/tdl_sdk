@@ -2,6 +2,7 @@
 #include "default_config.h"
 
 #include <math.h>
+#include <sys/time.h>
 #include "core/cviai_utils.h"
 #include "cvi_venc.h"
 #include "cviai_log.hpp"
@@ -49,6 +50,14 @@ static void set_skipFQsignal(face_capture_t *face_cpt_info, cvai_face_t *face_in
 //                              cvai_bbox_t *new_bbox, PIXEL_FORMAT_E fmt);
 // static void SUMMARY(face_capture_t *face_cpt_info, uint64_t *size, bool show_detail);
 static void SHOW_CONFIG(face_capture_config_t *cfg);
+
+static uint32_t get_time_in_ms() {
+  struct timeval tv;
+  if (gettimeofday(&tv, NULL) < 0) {
+    return 0;
+  }
+  return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
 
 CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info) {
   LOGI("[APP::FaceCapture] Free FaceCapture Data\n");
@@ -303,6 +312,8 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   CVI_AI_Free(&face_cpt_info->last_faces);
   CVI_AI_Free(&face_cpt_info->last_trackers);
   CVI_AI_Free(&face_cpt_info->last_objects);
+
+  uint32_t ts = get_time_in_ms();
   /* set output signal to 0. */
   for (int i = 0; i < face_cpt_info->size; i++) {
     // do not reset quality,send overall high quality
@@ -387,6 +398,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cviai_handle_t ai_
   }
 #endif
 
+  CVI_AI_DeepSORT_Set_Timestamp(ai_handle, ts);
   if (face_cpt_info->od_model != 0) {
     CVI_AI_DeepSORT_FaceFusePed(ai_handle, &face_cpt_info->last_faces, &face_cpt_info->last_objects,
                                 &face_cpt_info->last_trackers);
@@ -452,7 +464,13 @@ CVI_S32 _FaceCapture_CleanAll(face_capture_t *face_cpt_info) {
   return CVIAI_SUCCESS;
 }
 
-static float get_score(cvai_bbox_t *bbox, cvai_pts_t *pts_info, cvai_head_pose_t *pose) {
+static float get_score(cvai_face_info_t *face_info, uint32_t img_w, uint32_t img_h, bool fl_model) {
+  cvai_bbox_t *bbox = &face_info->bbox;
+  cvai_pts_t *pts_info = &face_info->pts;
+  cvai_head_pose_t *pose = &face_info->head_pose;
+  float velx = face_info->velx;
+  float vely = face_info->vely;
+  float blurness = face_info->blurness;
   float nose_x = pts_info->x[2];
   // float nose_y = pts_info->y[2];
   float left_max = MIN(pts_info->x[0], pts_info->x[3]);
@@ -474,6 +492,7 @@ static float get_score(cvai_bbox_t *bbox, cvai_pts_t *pts_info, cvai_head_pose_t
   float mouth_diff_x = pts_info->x[4] - pts_info->x[3];
   float mouth_diff_y = pts_info->y[4] - pts_info->y[3];
   float mouth_size = sqrt(mouth_diff_x * mouth_diff_x + mouth_diff_y * mouth_diff_y);
+  float vel = sqrt(velx * velx + vely * vely);
 
   if (pts_info->x[1] > bbox->x2 || pts_info->x[2] > bbox->x2 || pts_info->x[4] > bbox->x2 ||
       pts_info->x[0] < bbox->x1 || pts_info->x[2] < bbox->x1 || pts_info->x[3] < bbox->x1) {
@@ -488,20 +507,54 @@ static float get_score(cvai_bbox_t *bbox, cvai_pts_t *pts_info, cvai_head_pose_t
     return 0.0;
   } else if (pose != NULL) {
     float face_size = ((bbox->y2 - bbox->y1) + (bbox->x2 - bbox->x1)) / 2;
-    float area_score = (face_size - 64) / 128.0;
-    if (area_score > 1.5) area_score = 1.5;
     float size_score = 0;
     float pose_score = 1. - (ABS(pose->yaw) + ABS(pose->pitch) + ABS(pose->roll) * 0.5) / 3.;
-    float wpose = 0.6;
-    float warea = 0.4;
-    if (face_size > 64) {
-      wpose = 0.8;
-      warea = 0.2;
+    // printf("pose_score_angle: %f, pose->yaw: %f, pose->pitch: %f, pose->roll: %f\n", pose_score,
+    // pose->yaw, pose->pitch, pose->roll);
+
+    float area_score;
+    float wpose = 0.8;
+    float wsize = 0.2;
+
+    float h_ratio = face_size / (float)img_h;
+
+    if (h_ratio < 0.06) {  // 64/1080
+      wpose = 0.4;
+      area_score = 0;
+    } else if (h_ratio < 0.0685)  // 74/1080
+    {
+      wpose = 0.6;
+      // area_score = log(face_size/(float)img_h)/log(4.0);
+      area_score = log(h_ratio * 20.0) / log(4.0);
+      if (pose_score > 0.8) {
+        pose_score = 0.8;
+      }
+      size_score = 0.75;
+
+    } else {
+      area_score =
+          0.23 + (2.0 - 1.0 / (h_ratio * 4.38 + 0.2)) / 5.0;  // 0.23 ~= log(0.0685*20.0)/log(4.0)
       size_score = eye_size / (bbox->x2 - bbox->x1);
       size_score += mouth_size / (bbox->x2 - bbox->x1);
     }
+    if (fl_model && h_ratio > 0.06) {
+      wpose = 0.8;
+    }
 
-    pose_score = pose_score * wpose + 0.2 * size_score + area_score * warea;
+    float velscore = vel * 0.04;
+    if (velscore > 0.2) {
+      velscore = 0.2;
+    }
+
+    // printf("img_h: %d, face_size:%f, size_score:%f, area_score: %f, vel:%f, velscore: %f,
+    // blurness:%f\n", img_h, face_size,size_score , area_score, vel, velscore, blurness);
+
+    pose_score = pose_score * wpose + wsize * size_score + area_score - blurness * 0.2;
+
+    if (bbox->x1 < 0.5 * width || img_w - bbox->x2 < 0.5 * width || bbox->y1 < 0.5 * height ||
+        img_h - bbox->y2 < 0.5 * height) {
+      pose_score -= 0.2;
+    }
     return pose_score;
   } else {
     return 0.5;
@@ -517,11 +570,11 @@ static void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face
       LOGD("skip face:%u\n", i);
       continue;
     }
+    face->info[i].blurness = 0;
+    face->info[i].velx = 0;
+    face->info[i].vely = 0;
     if (qa_method == AREA_RATIO) {
-      cvai_bbox_t *bbox = &face->info[i].bbox;
-      cvai_pts_t *pts_info = &face->info[i].pts;
-      cvai_head_pose_t *pose = &face->info[i].head_pose;
-      face->info[i].pose_score = get_score(bbox, pts_info, pose);
+      face->info[i].pose_score = get_score(&face->info[i], face->width, face->height, false);
     } else if (qa_method == EYES_DISTANCE) {
       float dx = face->info[i].pts.x[0] - face->info[i].pts.x[1];
       float dy = face->info[i].pts.y[0] - face->info[i].pts.y[1];
@@ -537,11 +590,9 @@ static void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvai_face_t *face
       if (score > 1.0) score = 1.0;
       face->info[i].pose_score = score;
     } else if (qa_method == MIX) {
-      cvai_bbox_t *bbox = &face->info[i].bbox;
-      cvai_pts_t *pts_info = &face->info[i].pts;
-      cvai_head_pose_t *pose = &face->info[i].head_pose;
       float score1, score2;
-      score1 = get_score(bbox, pts_info, pose);
+      cvai_bbox_t *bbox = &face->info[i].bbox;
+      score1 = get_score(&face->info[i], face->width, face->height, false);
       face->info[i].pose_score = score1;
       if (score1 >= 0.1) {
         float face_area = (bbox->y2 - bbox->y1) * (bbox->x2 - bbox->x1);
@@ -588,8 +639,7 @@ static CVI_S32 update_output_state(cviai_handle_t ai_handle, face_capture_t *fac
         face_cpt_info->_output[j] = true;
       }
     } else if (face_cpt_info->data[j].info.face_quality >= face_cpt_info->cfg.thr_quality) {
-      int _time = face_cpt_info->_time - face_cpt_info->data[j].cap_timestamp;
-
+      int _time = face_cpt_info->_time - face_cpt_info->data[j]._timestamp;
       if (face_cpt_info->mode == AUTO) {
         if (face_cpt_info->cfg.auto_m_fast_cap && _time >= face_cpt_info->cfg.m_interval &&
             face_cpt_info->data[j]._out_counter < 1) {
@@ -620,14 +670,12 @@ static CVI_S32 update_output_state(cviai_handle_t ai_handle, face_capture_t *fac
       //   continue;
       // }
 
-      // #ifdef DEBUG_TRACK
+#ifdef DEBUG_TRACK
       printf("to output track:%d,miss:%d,out:%d,quality:%f,thresh:%f\n",
              (int)face_cpt_info->data[j].info.unique_id, (int)face_cpt_info->data[j].miss_counter,
              face_cpt_info->data[j]._out_counter, face_cpt_info->data[j].info.face_quality,
              face_cpt_info->cfg.thr_quality);
-      // #endif
-      face_cpt_info->data[j].cap_timestamp = face_cpt_info->_time;
-
+#endif
       face_cpt_info->data[j]._timestamp = face_cpt_info->_time;  // update output timestamp
       face_cpt_info->data[j]._out_counter += 1;
       face_cpt_info->data[j].last_cap_timestamp = face_cpt_info->data[j].cap_timestamp;
@@ -699,6 +747,11 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
   for (uint32_t i = 0; i < face_meta->size; i++) {
     /* we only consider the stable tracker in this sample code. */
     if (face_meta->info[i].track_state != CVI_TRACKER_STABLE) {
+      for (uint32_t j = 0; j < face_cpt_info->size; j++) {
+        if (face_cpt_info->data[j].info.unique_id == face_meta->info[i].unique_id) {
+          face_cpt_info->data[j].cap_timestamp = face_cpt_info->_time;
+        }
+      }
       continue;
     }
     // if is low quality face,do not generate capture data
@@ -836,8 +889,19 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
 
     cvai_head_pose_t pose;
     CVI_AI_Service_FaceAngle(&obj_meta.info[0].pts, &pose);
+    face_meta->info[i].head_pose.pitch = pose.pitch;
+    face_meta->info[i].head_pose.yaw = pose.yaw;
+    face_meta->info[i].head_pose.roll = pose.roll;
+
+    face_meta->info[i].blurness = obj_meta.info[0].blurness;
+
+    for (int k = 0; k < 5; k++) {
+      face_meta->info[i].pts.x[k] = obj_meta.info[0].pts.x[k];
+      face_meta->info[i].pts.y[k] = obj_meta.info[0].pts.y[k];
+    }
+
     face_meta->info[i].pose_score1 =
-        get_score(&face_meta->info[i].bbox, &obj_meta.info[0].pts, &pose);
+        get_score(&face_meta->info[i], face_meta->width, face_meta->height, true);
 
     if (face_meta->info[i].pose_score1 <= face_cpt_info->data[update_idx].info.pose_score1) {
       LOGD("skip track:%d,pose_score1:%.3f\n", (int)trk_id, face_meta->info[i].pose_score1);
@@ -853,6 +917,10 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
       face_cpt_info->data[update_idx].info.pts.size = 5;
       face_cpt_info->data[update_idx].info.pts.x = (float *)malloc(5 * sizeof(float));
       face_cpt_info->data[update_idx].info.pts.y = (float *)malloc(5 * sizeof(float));
+      face_cpt_info->data[update_idx]._timestamp =
+          face_cpt_info->_time;  // new unique_id, now maybe face_cpt_info->_time subtract
+                                 // _timestamp (since _timestamp defult 0) is a large number, update
+                                 // _timestamp to avoid  output directly
     } else {
       int8_t *p_feature = face_cpt_info->data[update_idx].info.feature.ptr;
       float *p_pts_x = face_cpt_info->data[update_idx].info.pts.x;
@@ -908,7 +976,9 @@ static CVI_S32 update_data(cviai_handle_t ai_handle, face_capture_t *face_cpt_in
         ret = CVI_AI_Copy_VideoFrameToImage(crop_frame, &face_cpt_info->data[update_idx].image);
       }
     }
-    // face_cpt_info->data[update_idx].cap_timestamp = face_cpt_info->_time;
+
+    face_cpt_info->data[update_idx].cap_timestamp =
+        face_cpt_info->_time;  // to update cap_timestamp
     face_cpt_info->data[update_idx].info.face_quality = face_meta->info[i].face_quality;
     memcpy(face_meta->info[i].name, face_cpt_info->data[update_idx].info.name,
            sizeof(face_cpt_info->data[update_idx].info.name));
@@ -1002,7 +1072,7 @@ float cal_crop_big_box(const float frame_width, const float frame_height, cvai_b
   int x1 = bbox.x1 - 0.8 * boxw;
   int y1 = bbox.y1 - 0.5 * boxh;
   int x2 = bbox.x2 + 0.8 * boxw;
-  int y2 = bbox.y1 + 2.5 * boxh;
+  int y2 = bbox.y1 + 2.0 * boxh;
 
   cvai_bbox_t new_bbox;
   new_bbox.score = bbox.score;
@@ -1177,61 +1247,62 @@ int image_to_video_frame(face_capture_t *face_cpt_info, cvai_image_t *image,
   return CVI_SUCCESS;
 }
 
-bool _FaceCapture_FilterWithLandmark(const cviai_handle_t ai_handle, face_capture_t *face_cpt_info,
-                                     int data_idx) {
-  if (face_cpt_info->fl_model == 0) {
-    return false;
-  }
-  // return false;
-  cvai_image_t *p_img = &face_cpt_info->data[data_idx].image;
-  VIDEO_FRAME_INFO_S frame;
-  int ret = image_to_video_frame(face_cpt_info, p_img, &frame);
-  if (ret != CVI_SUCCESS) {
-    return false;
-  }
-  //
-  cvai_face_t obj_meta = {0};
-  ret = CVI_AI_FLDet3(ai_handle, &frame, &obj_meta);
-  // restore cropped image landmark to original image space
-  cvai_bbox_t crop_box = face_cpt_info->data[data_idx].crop_box;
-  float boxw = crop_box.x2 - crop_box.x1;
-  float boxh = crop_box.y2 - crop_box.y1;
-  float scalew = boxw / p_img->width;
-  float scaleh = boxh / p_img->height;
+// bool _FaceCapture_FilterWithLandmark(const cviai_handle_t ai_handle, face_capture_t
+// *face_cpt_info,
+//                                      int data_idx) {
+//   if (face_cpt_info->fl_model == 0) {
+//     return false;
+//   }
+//   // return false;
+//   cvai_image_t *p_img = &face_cpt_info->data[data_idx].image;
+//   VIDEO_FRAME_INFO_S frame;
+//   int ret = image_to_video_frame(face_cpt_info, p_img, &frame);
+//   if (ret != CVI_SUCCESS) {
+//     return false;
+//   }
+//   //
+//   cvai_face_t obj_meta = {0};
+//   ret = CVI_AI_FLDet3(ai_handle, &frame, &obj_meta);
+//   // restore cropped image landmark to original image space
+//   cvai_bbox_t crop_box = face_cpt_info->data[data_idx].crop_box;
+//   float boxw = crop_box.x2 - crop_box.x1;
+//   float boxh = crop_box.y2 - crop_box.y1;
+//   float scalew = boxw / p_img->width;
+//   float scaleh = boxh / p_img->height;
 
-  face_cpt_data_t *p_datai = &face_cpt_info->data[data_idx];
-  p_datai->info.pts.score = obj_meta.info[0].pts.score;
-  float srcdist = p_datai->info.pts.x[1] - p_datai->info.pts.x[0];
-  ;
-  for (int i = 0; i < 5; i++) {
-    p_datai->info.pts.x[i] = obj_meta.info[0].pts.x[i] * scalew + crop_box.x1;
-    p_datai->info.pts.y[i] = obj_meta.info[0].pts.y[i] * scaleh + crop_box.y1;
-  }
+//   face_cpt_data_t *p_datai = &face_cpt_info->data[data_idx];
+//   p_datai->info.pts.score = obj_meta.info[0].pts.score;
+//   float srcdist = p_datai->info.pts.x[1] - p_datai->info.pts.x[0];
+//   ;
+//   for (int i = 0; i < 5; i++) {
+//     p_datai->info.pts.x[i] = obj_meta.info[0].pts.x[i] * scalew + crop_box.x1;
+//     p_datai->info.pts.y[i] = obj_meta.info[0].pts.y[i] * scaleh + crop_box.y1;
+//   }
 
-  float eye_dist_x = p_datai->info.pts.x[1] - p_datai->info.pts.x[0];
-  float eye_dist_y = p_datai->info.pts.y[0] - p_datai->info.pts.y[1];
-  float eye_dist = sqrt(eye_dist_x * eye_dist_x + eye_dist_y * eye_dist_y);
+//   float eye_dist_x = p_datai->info.pts.x[1] - p_datai->info.pts.x[0];
+//   float eye_dist_y = p_datai->info.pts.y[0] - p_datai->info.pts.y[1];
+//   float eye_dist = sqrt(eye_dist_x * eye_dist_x + eye_dist_y * eye_dist_y);
 
-  printf(
-      "to filter with "
-      "landmark,track:%d,pts_score:%.3f,eye_dist:%.3f,cropw:%.3f,scalew:%.3f,imgw:%u,srceyedist:%."
-      "2f\n",
-      (int)face_cpt_info->data[data_idx].info.unique_id, p_datai->info.pts.score, eye_dist, boxw,
-      scalew, p_img->width, srcdist);
-  printf("pts:%.1f,%.1f,%.1f,%.1f\n", obj_meta.info[0].pts.x[0], obj_meta.info[0].pts.y[0],
-         obj_meta.info[0].pts.x[1], obj_meta.info[0].pts.y[1]);
-  float pose_score = get_score(&face_cpt_info->data[data_idx].info.bbox,
-                               &face_cpt_info->data[data_idx].info.pts, NULL);
-  CVI_AI_Free(&obj_meta);
-  if (pose_score == 0 ||
-      face_cpt_info->data[data_idx].info.pts.score < face_cpt_info->cfg.landmark_score_thresh ||
-      eye_dist < face_cpt_info->cfg.eye_dist_thresh) {
-    printf("filter not valid face,pose:%.3f,score:%.3f\n", pose_score,
-           face_cpt_info->data[data_idx].info.pts.score);
-    return true;
-  }
-  return false;
-}
+//   printf(
+//       "to filter with "
+//       "landmark,track:%d,pts_score:%.3f,eye_dist:%.3f,cropw:%.3f,scalew:%.3f,imgw:%u,srceyedist:%."
+//       "2f\n",
+//       (int)face_cpt_info->data[data_idx].info.unique_id, p_datai->info.pts.score, eye_dist, boxw,
+//       scalew, p_img->width, srcdist);
+//   printf("pts:%.1f,%.1f,%.1f,%.1f\n", obj_meta.info[0].pts.x[0], obj_meta.info[0].pts.y[0],
+//          obj_meta.info[0].pts.x[1], obj_meta.info[0].pts.y[1]);
+//   float pose_score = get_score(&face_cpt_info->data[data_idx].info.bbox,
+//                                &face_cpt_info->data[data_idx].info.pts, NULL);
+//   CVI_AI_Free(&obj_meta);
+//   if (pose_score == 0 ||
+//       face_cpt_info->data[data_idx].info.pts.score < face_cpt_info->cfg.landmark_score_thresh ||
+//       eye_dist < face_cpt_info->cfg.eye_dist_thresh) {
+//     printf("filter not valid face,pose:%.3f,score:%.3f\n", pose_score,
+//            face_cpt_info->data[data_idx].info.pts.score);
+//     return true;
+//   }
+//   return false;
+// }
 
 // CVI_S32 update_output_num(const cviai_handle_t ai_handle,face_capture_t *face_cpt_info,
 // cvai_tracker_t *tracker_meta){

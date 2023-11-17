@@ -733,6 +733,12 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
   ped_cfg.kfilter_conf.chi2_threshold *= 0.85;
   ped_cfg.ktracker_conf.max_unmatched_num = 15;
   ped_res = get_match_result(ped_res, ped_boxes, ped_feats, false, 0.7, &ped_cfg);
+  std::map<uint64_t, BBOX> src_track_box;
+  for (auto &kf : k_trackers) {
+    if (kf.class_id == face_label) {
+      src_track_box[kf.id] = kf.getBBox_TLWH();
+    }
+  }
 #ifdef DEBUG_TRACK
   std::cout << "ped matched pairs:" << ped_res.matched_pairs.size() << std::endl;
 #endif
@@ -789,9 +795,11 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
     }
   }
 
+  std::map<uint64_t, uint32_t> face_trackid_idx_map;
   for (uint32_t i = 0; i < face->size; i++) {
     uint64_t trackid = face->info[i].unique_id;
 
+    face_trackid_idx_map[trackid] = i;
     if (track_indices_.count(trackid) == 0) {
       LOGE("track not found in trackindst,:%d\n", (int)trackid);
       continue;
@@ -815,6 +823,8 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
       continue;
     }
   }
+  int tsdiff = current_timestamp_ - last_timestamp_;
+  float sec = tsdiff / 1000.0;
   CVI_AI_MemAlloc(face_tracks_inds.size(), tracker);
   for (uint32_t i = 0; i < tracker->size; i++) {
     memset(&tracker->info[i], 0, sizeof(tracker->info[i]));
@@ -831,6 +841,24 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
       continue;
     }
     BBOX t_bbox = p_track->getBBox_TLWH();
+    float velx = 0;
+    float vely = 0;
+    // printf("src velx, velx = 0\n");
+    if (src_track_box.count(p_track->id)) {
+      BBOX pre_box = src_track_box[p_track->id];
+      float meansize = (pre_box(2) + pre_box(3) + t_bbox(2) + t_bbox(3)) / 4;
+      velx = (t_bbox(0) - pre_box(0)) / meansize / sec;
+      vely = (t_bbox(1) - pre_box(1)) / meansize / sec;
+      // printf("meansize: %f, sec:%f\n", meansize, sec);
+      // printf("velx: %f, t_bbox(0):%f, pre_box(0):%f\n", velx, t_bbox(0), pre_box(0));
+      // printf("vely: %f, t_bbox(1):%f, pre_box(1):%f\n", vely, t_bbox(1), pre_box(1));
+    }
+    if (face_trackid_idx_map.count(p_track->id)) {
+      uint32_t faceid = face_trackid_idx_map[p_track->id];
+      // printf("to update velx vely\n");
+      face->info[faceid].velx = velx;
+      face->info[faceid].vely = vely;
+    }
     tracker->info[i].bbox.x1 = t_bbox(0);
     tracker->info[i].bbox.y1 = t_bbox(1);
     tracker->info[i].bbox.x2 = t_bbox(0) + t_bbox(2);
@@ -839,6 +867,7 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
     tracker->info[i].out_num = p_track->out_nums;
   }
   frame_id_ += 1;
+  last_timestamp_ = current_timestamp_;
 #ifdef DEBUG_TRACK
   std::cout << "finish track,face num:" << face->size << std::endl;
   show_INFO_KalmanTrackers();

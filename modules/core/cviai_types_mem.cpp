@@ -186,6 +186,9 @@ void CVI_AI_CopyInfoCpp(const cvai_face_info_t *info, cvai_face_info_t *infoNew)
   infoNew->mask_score = info->mask_score;
   infoNew->face_quality = info->face_quality;
   infoNew->head_pose = info->head_pose;
+  infoNew->velx = info->velx;
+  infoNew->vely = info->vely;
+  infoNew->blurness = info->blurness;
 }
 
 void CVI_AI_CopyInfoCpp(const cvai_object_info_t *info, cvai_object_info_t *infoNew) {

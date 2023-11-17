@@ -203,6 +203,8 @@ typedef struct {
   float blurness;
   cvai_head_pose_t head_pose;
   int track_state;
+  float velx;
+  float vely;
 } cvai_face_info_t;
 
 /** @struct cvai_face_t

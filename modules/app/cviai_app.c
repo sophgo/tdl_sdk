@@ -14,6 +14,7 @@ CVI_S32 CVI_AI_APP_CreateHandle(cviai_app_handle_t *handle, cviai_handle_t ai_ha
   ctx->ai_handle = ai_handle;
   ctx->face_cpt_info = NULL;
   ctx->person_cpt_info = NULL;
+  ctx->personvehicle_cpt_info = NULL;
   *handle = ctx;
   return CVIAI_SUCCESS;
 }

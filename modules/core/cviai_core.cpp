@@ -1034,6 +1034,18 @@ DLL_EXPORT CVI_S32 CVI_AI_DeepSORT_FaceFusePed(const cviai_handle_t handle, cvai
   ctx->ds_tracker->track_fuse(obj, face, tracker_t);
   return CVI_SUCCESS;
 }
+
+CVI_S32 CVI_AI_DeepSORT_Set_Timestamp(const cviai_handle_t handle, uint32_t ts) {
+  cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVI_FAILURE;
+  }
+  ctx->ds_tracker->set_timestamp(ts);
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_AI_DeepSORT_UpdateOutNum(const cviai_handle_t handle, cvai_tracker_t *tracker_t) {
   TRACE_EVENT("cviai_core", "CVI_AI_DeepSORT_FaceFusePed");
   cviai_context_t *ctx = static_cast<cviai_context_t *>(handle);
@@ -1364,7 +1376,7 @@ CVI_S32 CVI_AI_CropResizeImage(const cviai_handle_t handle, CVI_AI_SUPPORTED_MOD
   VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
   memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
   int ret =
-      modelt.instance->vpssCropImage(frame, f, *p_crop_box, dst_width, dst_width, enDstFormat);
+      modelt.instance->vpssCropImage(frame, f, *p_crop_box, dst_width, dst_height, enDstFormat);
   *p_dst_img = f;
   return ret;
 }

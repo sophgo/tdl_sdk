@@ -69,6 +69,7 @@ class DeepSORT {
   void cleanCounter();
 
   CVI_S32 get_trackers_inactive(cvai_tracker_t *tracker) const;
+  void set_timestamp(uint32_t ts) { current_timestamp_ = ts; }
 
   /* DEBUG CODE */
   // TODO: refactor these functions.
@@ -90,6 +91,8 @@ class DeepSORT {
   uint32_t entry_num = 0;
   uint32_t miss_num = 0;
   float bounding_iou_thresh_ = 0.5;
+  uint32_t current_timestamp_ = 0;
+  uint32_t last_timestamp_ = 0;
   // byte_kalman::KalmanFilter byte_kf_;
   std::vector<int> accreditation_tracker_idxes;  // confirmed trackids
   std::vector<int> probation_tracker_idxes;      // temp trackids
