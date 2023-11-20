@@ -14,16 +14,16 @@
 #include "evaluation/cviai_media.h"
 #include "sys_utils.hpp"
 #define AUDIOFORMATSIZE 2
-#define SECOND 3
+// #define SECOND 2
 #define CVI_AUDIO_BLOCK_MODE -1
 #define PERIOD_SIZE 640
 // #define SAMPLE_RATE 16000
 // #define FRAME_SIZE SAMPLE_RATE *AUDIOFORMATSIZE *SECOND  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
 
 int test_binary_short_audio_data(const std::string &strf, CVI_U8 *p_buffer,
-                                 cviai_handle_t ai_handle, int sample_rate) {
+                                 cviai_handle_t ai_handle, int sample_rate, int seconds) {
   VIDEO_FRAME_INFO_S Frame;
-  int frame_size = sample_rate * AUDIOFORMATSIZE * SECOND;
+  int frame_size = sample_rate * AUDIOFORMATSIZE * seconds;
   Frame.stVFrame.pu8VirAddr[0] = p_buffer;  // Global buffer
   Frame.stVFrame.u32Height = 1;
   Frame.stVFrame.u32Width = frame_size;
@@ -42,7 +42,9 @@ int test_binary_short_audio_data(const std::string &strf, CVI_U8 *p_buffer,
 
 int main(int argc, char *argv[]) {
   int sample_rate = atoi(argv[5]);
-  int frame_size = sample_rate * AUDIOFORMATSIZE * SECOND;
+  int seconds = atoi(argv[6]);
+  float threshold = atof(argv[7]);
+  int frame_size = sample_rate * AUDIOFORMATSIZE * seconds;
   CVI_U8 buffer[frame_size];  // 3 seconds
 
   cviai_handle_t ai_handle = NULL;
@@ -58,34 +60,60 @@ int main(int argc, char *argv[]) {
     printf("open modelfile failed %#x!\n", ret);
     return ret;
   }
-  std::cout << "model opened:" << modelf << std::endl;
-  if (argc == 6) {
+  ret =
+      CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, threshold);
+  if (ret != CVI_SUCCESS) {
+    printf("set threshold failed %#x!\n", ret);
+    return ret;
+  }
+  printf("set threshold %#x!\n", ret);
+  std::cout << "model opened:" << modelf << ", set threshold:" << threshold << std::endl;
+  if (argc == 8) {
     std::string str_root_dir = argv[2];
     std::string str_list_file = argv[3];
     std::string str_res_file = argv[4];
     std::vector<std::string> strfiles = read_file_lines(str_list_file);
     FILE *fp = fopen(str_res_file.c_str(), "w");
     int num_correct = 0;
+    int gt_num = 0;
+    int pr_num = 0;
+    int TP = 0;
+    float p, r;
     size_t num_total = strfiles.size();
     for (size_t i = 0; i < num_total; i++) {
       std::cout << "process:" << i << "/" << num_total << ",file:" << strfiles[i] << "\t";
       std::string strf = str_root_dir + std::string("/") + strfiles[i];
-      int cls = test_binary_short_audio_data(strf, buffer, ai_handle, sample_rate);
+      int cls = test_binary_short_audio_data(strf, buffer, ai_handle, sample_rate, seconds);
       std::string str_res =
           strfiles[i] + std::string(",") + std::to_string(cls) + std::string("\t");
       fwrite(str_res.c_str(), str_res.length(), 1, fp);
       if (cls == -1) continue;
+
       std::string strlabel = std::string("/") + std::to_string(cls) + std::string("/");
       if (strf.find(strlabel) != strf.npos) {
         num_correct++;
       }
-      std::cout << str_res << "correct num:" << num_correct << std::endl;
+      if (strf.find("/1/") != strf.npos) {
+        gt_num++;
+        if (cls == 1) {
+          TP++;
+        }
+      }
+      if (cls == 1) {
+        pr_num++;
+      }
+      p = float(TP) / float(pr_num);
+      r = float(TP) / float(gt_num);
+      std::cout << str_res << "correct num:" << num_correct;
+      std::cout << "\tP:" << p << ", R:" << r << std::endl;
+      std::cout << "TP:" << TP << ", pr_num:" << pr_num << ", cls:" << cls << std::endl;
     }
+
     fclose(fp);
     std::cout << "total:" << strfiles.size() << ", correct:" << num_correct
               << ", false:" << strfiles.size() - num_correct << std::endl;
   } else {
-    int cls = test_binary_short_audio_data(argv[2], buffer, ai_handle, sample_rate);
+    int cls = test_binary_short_audio_data(argv[2], buffer, ai_handle, sample_rate, seconds);
     std::cout << "result:" << cls << std::endl;
   }
 
