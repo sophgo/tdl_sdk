@@ -4,32 +4,32 @@
 
 #include <gtest.h>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_test.hpp"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_test.hpp"
 #include "json.hpp"
 #include "raii.hpp"
 #include "regression_utils.hpp"
 
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
-class MotionDetectionTestSuite : public CVIAIModelTestSuite {
+class MotionDetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
-  MotionDetectionTestSuite() : CVIAIModelTestSuite("daily_reg_md.json", "reg_daily_md") {}
+  MotionDetectionTestSuite() : CVI_TDLModelTestSuite("daily_reg_md.json", "reg_daily_md") {}
 
   virtual ~MotionDetectionTestSuite() = default;
 
  protected:
   virtual void SetUp() {
-    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_SetVpssTimeout(m_ai_handle, 1000), CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_SetVpssTimeout(m_tdl_handle, 1000), CVI_TDL_SUCCESS);
   }
 
   virtual void TearDown() {
-    CVI_AI_DestroyHandle(m_ai_handle);
-    m_ai_handle = NULL;
+    CVI_TDL_DestroyHandle(m_tdl_handle);
+    m_tdl_handle = NULL;
   }
 
   float bbox_threshold = 0.95;
@@ -44,8 +44,8 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
     Image bg_image(bgimg_path, PIXEL_FORMAT_YUV_400);
     ASSERT_TRUE(bg_image.open());
 
-    ASSERT_EQ(CVI_AI_Set_MotionDetection_Background(m_ai_handle, bg_image.getFrame()),
-              CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Set_MotionDetection_Background(m_tdl_handle, bg_image.getFrame()),
+              CVI_TDL_SUCCESS);
 
     auto results = m_json_object[test_index]["results"];
 
@@ -54,10 +54,10 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
       Image image(image_path, PIXEL_FORMAT_YUV_400);
       ASSERT_TRUE(image.open());
 
-      AIObject<cvai_object_t> obj_meta;
+      TDLObject<cvtdl_object_t> obj_meta;
 
-      ASSERT_EQ(CVI_AI_MotionDetection(m_ai_handle, image.getFrame(), obj_meta, thresh, minarea),
-                CVIAI_SUCCESS);
+      ASSERT_EQ(CVI_TDL_MotionDetection(m_tdl_handle, image.getFrame(), obj_meta, thresh, minarea),
+                CVI_TDL_SUCCESS);
 
       auto expected_dets = iter.value();
 
@@ -72,14 +72,14 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
         for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
           auto bbox = expected_dets[det_index]["bbox"];
 
-          cvai_bbox_t expected_bbox = {
+          cvtdl_bbox_t expected_bbox = {
               .x1 = float(bbox[0]),
               .y1 = float(bbox[1]),
               .x2 = float(bbox[2]),
               .y2 = float(bbox[3]),
           };
 
-          auto comp = [=](cvai_object_info_t &info, cvai_bbox_t &bbox) {
+          auto comp = [=](cvtdl_object_info_t &info, cvtdl_bbox_t &bbox) {
             if (iou(info.bbox, bbox) >= bbox_threshold) {
               return true;
             }
@@ -109,4 +109,4 @@ TEST_F(MotionDetectionTestSuite, accuracy) {
 }
 
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

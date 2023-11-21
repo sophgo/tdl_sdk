@@ -2,10 +2,10 @@
 #include <fstream>
 #include <string>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_test.hpp"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_test.hpp"
 #include "gtest.h"
 #include "json.hpp"
 #include "raii.hpp"
@@ -13,7 +13,7 @@
 #define MATCH_IOU_THRESHOLD 0.85
 #define MATCH_SCORE_BIAS 0.02
 
-static float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
+static float iou(cvtdl_bbox_t &bbox1, cvtdl_bbox_t &bbox2) {
   float area1 = (bbox1.x2 - bbox1.x1) * (bbox1.y2 - bbox1.y1);
   float area2 = (bbox2.x2 - bbox2.x1) * (bbox2.y2 - bbox2.y1);
   float inter_x1 = MAX2(bbox1.x1, bbox2.x1);
@@ -30,13 +30,13 @@ static float iou(cvai_bbox_t &bbox1, cvai_bbox_t &bbox2) {
 }
 
 namespace fs = std::experimental::filesystem;
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
-class ThermalFaceDetectionTestSuite : public CVIAIModelTestSuite {
+class ThermalFaceDetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
   ThermalFaceDetectionTestSuite()
-      : CVIAIModelTestSuite("daily_reg_ThermalFD.json", "reg_daily_thermal_fd") {}
+      : CVI_TDLModelTestSuite("daily_reg_ThermalFD.json", "reg_daily_thermal_fd") {}
 
   virtual ~ThermalFaceDetectionTestSuite() = default;
 
@@ -47,37 +47,40 @@ class ThermalFaceDetectionTestSuite : public CVIAIModelTestSuite {
     std::string model_name = std::string(m_json_object["reg_config"][0]["model_name"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-    m_ai_handle = NULL;
-    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_SetVpssTimeout(m_ai_handle, 1000), CVIAI_SUCCESS);
+    m_tdl_handle = NULL;
+    ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_SetVpssTimeout(m_tdl_handle, 1000), CVI_TDL_SUCCESS);
   }
 
   virtual void TearDown() {
-    CVI_AI_DestroyHandle(m_ai_handle);
-    m_ai_handle = NULL;
+    CVI_TDL_DestroyHandle(m_tdl_handle);
+    m_tdl_handle = NULL;
   }
 };
 
 TEST_F(ThermalFaceDetectionTestSuite, open_close_model) {
-  ASSERT_EQ(CVI_AI_OpenModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, m_model_path.c_str()),
-            CVIAI_SUCCESS)
+  ASSERT_EQ(
+      CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALFACE, m_model_path.c_str()),
+      CVI_TDL_SUCCESS)
       << "failed to set model path: " << m_model_path;
 
-  const char *model_path_get = CVI_AI_GetModelPath(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE);
+  const char *model_path_get =
+      CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALFACE);
 
   EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
                std::string(model_path_get));
 
-  ASSERT_EQ(CVI_AI_CloseModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE), CVIAI_SUCCESS);
+  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALFACE), CVI_TDL_SUCCESS);
 }
 
 TEST_F(ThermalFaceDetectionTestSuite, accruacy) {
-  ASSERT_EQ(CVI_AI_OpenModel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, m_model_path.c_str()),
-            CVIAI_SUCCESS);
-  ASSERT_EQ(CVI_AI_SetSkipVpssPreprocess(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, false),
-            CVIAI_SUCCESS);
-  ASSERT_EQ(CVI_AI_SetModelThreshold(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALFACE, 0.5),
-            CVIAI_SUCCESS);
+  ASSERT_EQ(
+      CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALFACE, m_model_path.c_str()),
+      CVI_TDL_SUCCESS);
+  ASSERT_EQ(CVI_TDL_SetSkipVpssPreprocess(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALFACE, false),
+            CVI_TDL_SUCCESS);
+  ASSERT_EQ(CVI_TDL_SetModelThreshold(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALFACE, 0.5),
+            CVI_TDL_SUCCESS);
 
   int img_num = int(m_json_object["reg_config"][0]["image_num"]);
   for (int img_idx = 0; img_idx < img_num; img_idx++) {
@@ -89,14 +92,14 @@ TEST_F(ThermalFaceDetectionTestSuite, accruacy) {
     ASSERT_TRUE(image_rgb.open());
     VIDEO_FRAME_INFO_S *vframe = image_rgb.getFrame();
 
-    AIObject<cvai_face_t> face_meta;
-    ASSERT_EQ(CVI_AI_ThermalFace(m_ai_handle, vframe, face_meta), CVIAI_SUCCESS);
+    TDLObject<cvtdl_face_t> face_meta;
+    ASSERT_EQ(CVI_TDL_ThermalFace(m_tdl_handle, vframe, face_meta), CVI_TDL_SUCCESS);
 
     uint32_t expected_bbox_num =
         uint32_t(m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_num"]);
     ASSERT_EQ(expected_bbox_num, face_meta->size);
 
-    cvai_bbox_t *expected_result = new cvai_bbox_t[expected_bbox_num];
+    cvtdl_bbox_t *expected_result = new cvtdl_bbox_t[expected_bbox_num];
     for (uint32_t i = 0; i < expected_bbox_num; i++) {
       expected_result[i].score = float(
           m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_info"][i]["score"]);
@@ -133,11 +136,11 @@ TEST_F(ThermalFaceDetectionTestSuite, accruacy) {
       ASSERT_EQ(match_result[i], true);
     }
 
-    CVI_AI_FreeCpp(face_meta);
+    CVI_TDL_FreeCpp(face_meta);
     delete[] expected_result;
     delete[] match_result;
   }
 }
 
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

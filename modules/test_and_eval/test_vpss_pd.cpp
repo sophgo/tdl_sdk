@@ -9,15 +9,15 @@
 #include <string>
 #include <vector>
 #include "core.hpp"
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "mapi.hpp"
 
 std::string g_model_root;
-cvai_bbox_t box;
-cvai_vpssconfig_t vpssConfig;
+cvtdl_bbox_t box;
+cvtdl_vpssconfig_t vpssConfig;
 
 int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
   FILE *fp = fopen(filepath.c_str(), "wb");
@@ -44,11 +44,11 @@ int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
   return CVI_SUCCESS;
 }
 
-std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle) {
+std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle_t tdl_handle) {
   CVI_S32 ret;
-  cvai_object_t person_obj;
-  memset(&person_obj, 0, sizeof(cvai_object_t));
-  ret = CVI_AI_MobileDetV2_Pedestrian(ai_handle, p_frame, &person_obj);
+  cvtdl_object_t person_obj;
+  memset(&person_obj, 0, sizeof(cvtdl_object_t));
+  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, p_frame, &person_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect face failed:" << ret << std::endl;
   }
@@ -61,7 +61,7 @@ std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle
        << " " << box.x2 << " " << box.y2 << "\n";
   }
 
-  CVI_AI_Free(&person_obj);
+  CVI_TDL_Free(&person_obj);
   return ss.str();
 }
 
@@ -82,7 +82,7 @@ static void get_frame_from_mat(VIDEO_FRAME_INFO_S &in_frame, const cv::Mat &mat)
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("need 3 arg, eg ./test_vpss_pd xxxx.cvimodel xxx.jpg person\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   CVI_S32 ret = 0;
@@ -113,13 +113,13 @@ int main(int argc, char *argv[]) {
   memset(&frame_in, 0x00, sizeof(frame_in));
   memset(&frame_preprocessed, 0x00, sizeof(frame_preprocessed));
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
-  std::map<std::string, std::function<std::string(VIDEO_FRAME_INFO_S *, cviai_handle_t)>>
+  std::map<std::string, std::function<std::string(VIDEO_FRAME_INFO_S *, cvitdl_handle_t)>>
       process_funcs = {{"person", run_image_person_detection}};
   if (process_funcs.count(process_flag) == 0) {
     std::cout << "error flag:" << process_flag << std::endl;
@@ -131,25 +131,25 @@ int main(int argc, char *argv[]) {
   if (model_init == 0) {
     std::cout << "to init Person model" << std::endl;
     std::string str_person_model = g_model_root;
-    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
-                           str_person_model.c_str());
+    ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                            str_person_model.c_str());
     if (ret != CVI_SUCCESS) {
       std::cout << "open model failed:" << str_person_model << std::endl;
       return -1;
     }
-    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.6);
-    CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, true);
+    CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.6);
+    CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, true);
     model_init = 1;
   }
 
   get_frame_from_mat(frame_in, image);
 
   memset(&vpssConfig, 0, sizeof(vpssConfig));
-  ret = CVI_AI_GetVpssChnConfig(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
-                                frame_in.stVFrame.u32Width, frame_in.stVFrame.u32Height, 0,
-                                &vpssConfig);
+  ret = CVI_TDL_GetVpssChnConfig(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                                 frame_in.stVFrame.u32Width, frame_in.stVFrame.u32Height, 0,
+                                 &vpssConfig);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_AI_GetVpssChnConfig failed!\n");
+    printf("CVI_TDL_GetVpssChnConfig failed!\n");
     return -1;
   }
   CVI_VPSS_SetChnAttr(0, 0, &vpssConfig.chn_attr);
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
   CVI_MAPI_ReleaseFrame(&frame_in);
   /* dump_frame_result, support rgb, nv21, nv12*/
   // dump_frame_result("test2.yuv", &frame_preprocessed);
-  std::string str_res = process_funcs[process_flag](&frame_preprocessed, ai_handle);
+  std::string str_res = process_funcs[process_flag](&frame_preprocessed, tdl_handle);
   if (str_res.size() > 0) {
     FILE *fp = fopen("test.txt", "w");
     fwrite(str_res.c_str(), str_res.size(), 1, fp);
@@ -181,6 +181,6 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

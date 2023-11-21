@@ -6,10 +6,10 @@
 
 #include "anchors.hpp"
 #include "core.hpp"
-#include "core/object/cvai_object_types.h"
+#include "core/object/cvtdl_object_types.h"
 #include "object_utils.hpp"
 
-namespace cviai {
+namespace cvitdl {
 
 class MobileDetV2 final : public Core {
  public:
@@ -48,7 +48,7 @@ class MobileDetV2 final : public Core {
   explicit MobileDetV2(MobileDetV2::Category category, float iou_thresh = 0.5);
   virtual ~MobileDetV2();
   int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
-  int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta);
+  int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *meta);
   virtual void setModelThreshold(float threshold) override;
   virtual bool allowExportChannelAttribute() const override { return true; }
   virtual int onModelOpened() override;
@@ -72,7 +72,7 @@ class MobileDetV2 final : public Core {
 
   // score threshold for quantized inverse threshold
   std::vector<int8_t> m_quant_inverse_score_threshold;
-  std::bitset<CVI_AI_DET_TYPE_END> m_filter;
+  std::bitset<CVI_TDL_DET_TYPE_END> m_filter;
 };
 
-}  // namespace cviai
+}  // namespace cvitdl

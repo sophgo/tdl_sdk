@@ -1,20 +1,20 @@
-#include "cviai.h"
+#include "cvi_tdl.h"
 
 #include <string.h>
 
 int main(void) {
-  CVI_S32 ret = CVIAI_SUCCESS;
-  cviai_handle_t handle;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
+  cvitdl_handle_t handle;
   // Create handle
-  if ((ret = CVI_AI_CreateHandle(&handle)) != CVIAI_SUCCESS) {
+  if ((ret = CVI_TDL_CreateHandle(&handle)) != CVI_TDL_SUCCESS) {
     printf("Handle create failed\n");
     return ret;
   }
 
-  // Get the used group ids by AI SDK.
+  // Get the used group ids by TDL SDK.
   VPSS_GRP *groups = NULL;
   uint32_t nums = 0;
-  if ((ret = CVI_AI_GetVpssGrpIds(handle, &groups, &nums)) != CVIAI_SUCCESS) {
+  if ((ret = CVI_TDL_GetVpssGrpIds(handle, &groups, &nums)) != CVI_TDL_SUCCESS) {
     printf("Get used group id failed.\n");
     return ret;
   }
@@ -26,6 +26,6 @@ int main(void) {
   free(groups);
 
   // Destroy handle.
-  ret = CVI_AI_DestroyHandle(handle);
+  ret = CVI_TDL_DestroyHandle(handle);
   return ret;
 }

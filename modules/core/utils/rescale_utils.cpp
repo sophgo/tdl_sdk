@@ -1,13 +1,13 @@
 #include "rescale_utils.hpp"
 
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 
 #include <algorithm>
 #include <iostream>
-namespace cviai {
-cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, const float nn_width,
-                          const float nn_height, const cvai_bbox_t bbox, float *ratio,
-                          float *pad_width, float *pad_height) {
+namespace cvitdl {
+cvtdl_bbox_t box_rescale_c(const float frame_width, const float frame_height, const float nn_width,
+                           const float nn_height, const cvtdl_bbox_t bbox, float *ratio,
+                           float *pad_width, float *pad_height) {
   float ratio_height = (nn_height / frame_height);
   float ratio_width = (nn_width / frame_width);
   if (ratio_height > ratio_width) {
@@ -24,7 +24,7 @@ cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, con
   float x2 = (bbox.x2 - (*pad_width)) * (*ratio);
   float y1 = (bbox.y1 - (*pad_height)) * (*ratio);
   float y2 = (bbox.y2 - (*pad_height)) * (*ratio);
-  cvai_bbox_t new_bbox;
+  cvtdl_bbox_t new_bbox;
   new_bbox.score = bbox.score;
   new_bbox.x1 = std::max(std::min(x1, (float)(frame_width - 1)), (float)0);
   new_bbox.x2 = std::max(std::min(x2, (float)(frame_width - 1)), (float)0);
@@ -33,8 +33,8 @@ cvai_bbox_t box_rescale_c(const float frame_width, const float frame_height, con
   return new_bbox;
 }
 
-cvai_bbox_t box_rescale_rb(const float frame_width, const float frame_height, const float nn_width,
-                           const float nn_height, const cvai_bbox_t bbox, float *ratio) {
+cvtdl_bbox_t box_rescale_rb(const float frame_width, const float frame_height, const float nn_width,
+                            const float nn_height, const cvtdl_bbox_t bbox, float *ratio) {
   float ratio_height = (nn_height / frame_height);
   float ratio_width = (nn_width / frame_width);
   *ratio = 1.0 / std::min(ratio_height, ratio_width);
@@ -44,7 +44,7 @@ cvai_bbox_t box_rescale_rb(const float frame_width, const float frame_height, co
   float y1 = bbox.y1 * (*ratio);
   float y2 = bbox.y2 * (*ratio);
 
-  cvai_bbox_t new_bbox;
+  cvtdl_bbox_t new_bbox;
   new_bbox.score = bbox.score;
   new_bbox.x1 = std::max(std::min(x1, (float)(frame_width - 1)), (float)0);
   new_bbox.x2 = std::max(std::min(x2, (float)(frame_width - 1)), (float)0);
@@ -53,9 +53,9 @@ cvai_bbox_t box_rescale_rb(const float frame_width, const float frame_height, co
   return new_bbox;
 }
 
-cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const float nn_width,
-                        const float nn_height, const cvai_bbox_t bbox,
-                        const meta_rescale_type_e type) {
+cvtdl_bbox_t box_rescale(const float frame_width, const float frame_height, const float nn_width,
+                         const float nn_height, const cvtdl_bbox_t bbox,
+                         const meta_rescale_type_e type) {
   if (frame_width == nn_width && frame_height == nn_height) {
     return bbox;
   }
@@ -72,18 +72,18 @@ cvai_bbox_t box_rescale(const float frame_width, const float frame_height, const
     default: {
       // TODO: Add no aspect ratio.
       // For others we'll return the original box.
-      LOGW("Unsupported rescaling method %u. Exporting original box.\n", type);
+      printf("Unsupported rescaling method %u. Exporting original box.\n", type);
     } break;
   }
   return bbox;
 }
 
-cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
-                                             const cvai_face_info_t *face_info, int *p_dst_size) {
-  cvai_face_info_t face_info_new;
-  CVI_AI_CopyInfoCpp(face_info, &face_info_new);
+cvtdl_face_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
+                                              const cvtdl_face_info_t *face_info, int *p_dst_size) {
+  cvtdl_face_info_t face_info_new;
+  CVI_TDL_CopyInfoCpp(face_info, &face_info_new);
 
-  cvai_bbox_t bbox = face_info_new.bbox;
+  cvtdl_bbox_t bbox = face_info_new.bbox;
   int w_pad = (bbox.x2 - bbox.x1) * 0.2;
   int h_pad = (bbox.y2 - bbox.y1) * 0.2;
 
@@ -93,7 +93,7 @@ cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const floa
   float x2 = bbox.x2 + w_pad;
   float y2 = bbox.y2 + h_pad;
 
-  cvai_bbox_t new_bbox;
+  cvtdl_bbox_t new_bbox;
   new_bbox.score = bbox.score;
   new_bbox.x1 = std::max(x1, (float)0);
   new_bbox.y1 = std::max(y1, (float)0);
@@ -102,7 +102,7 @@ cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const floa
   face_info_new.bbox = new_bbox;
 
   // bbox new coordinate after crop and reszie
-  CVI_AI_MemAlloc(face_info->pts.size, &face_info_new.pts);
+  CVI_TDL_MemAlloc(face_info->pts.size, &face_info_new.pts);
 
   // float ratio, pad_width, pad_height;
   float box_height = new_bbox.y2 - new_bbox.y1;
@@ -123,12 +123,12 @@ cvai_face_info_t info_extern_crop_resize_img(const float frame_width, const floa
   return face_info_new;
 }
 
-cvai_object_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
-                                               const cvai_object_info_t *obj_info) {
-  cvai_object_info_t obj_info_new = {0};
-  CVI_AI_CopyInfoCpp(obj_info, &obj_info_new);
+cvtdl_object_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
+                                                const cvtdl_object_info_t *obj_info) {
+  cvtdl_object_info_t obj_info_new = {0};
+  CVI_TDL_CopyInfoCpp(obj_info, &obj_info_new);
 
-  cvai_bbox_t bbox = obj_info_new.bbox;
+  cvtdl_bbox_t bbox = obj_info_new.bbox;
   int w_pad = (bbox.x2 - bbox.x1) * 0.2;
   int h_pad = (bbox.y2 - bbox.y1) * 0.2;
 
@@ -138,7 +138,7 @@ cvai_object_info_t info_extern_crop_resize_img(const float frame_width, const fl
   float x2 = bbox.x2 + w_pad;
   float y2 = bbox.y2 + h_pad;
 
-  cvai_bbox_t new_bbox;
+  cvtdl_bbox_t new_bbox;
   new_bbox.score = bbox.score;
   new_bbox.x1 = std::max(x1, (float)0);
   new_bbox.y1 = std::max(y1, (float)0);
@@ -149,15 +149,15 @@ cvai_object_info_t info_extern_crop_resize_img(const float frame_width, const fl
   return obj_info_new;
 }
 
-cvai_face_info_t info_rescale_c(const float width, const float height, const float new_width,
-                                const float new_height, const cvai_face_info_t &face_info) {
-  cvai_face_info_t face_info_new;
-  CVI_AI_CopyInfoCpp(&face_info, &face_info_new);
+cvtdl_face_info_t info_rescale_c(const float width, const float height, const float new_width,
+                                 const float new_height, const cvtdl_face_info_t &face_info) {
+  cvtdl_face_info_t face_info_new;
+  CVI_TDL_CopyInfoCpp(&face_info, &face_info_new);
 
   float ratio, pad_width, pad_height;
   face_info_new.bbox = box_rescale_c(new_width, new_height, width, height, face_info.bbox, &ratio,
                                      &pad_width, &pad_height);
-  CVI_AI_MemAlloc(face_info.pts.size, &face_info_new.pts);
+  CVI_TDL_MemAlloc(face_info.pts.size, &face_info_new.pts);
 
   for (uint32_t j = 0; j < face_info_new.pts.size; ++j) {
     face_info_new.pts.x[j] = (face_info.pts.x[j] - pad_width) * ratio;
@@ -166,11 +166,11 @@ cvai_face_info_t info_rescale_c(const float width, const float height, const flo
   return face_info_new;
 }
 
-cvai_object_info_t info_rescale_c(const float width, const float height, const float new_width,
-                                  const float new_height, const cvai_object_info_t &object_info) {
-  cvai_object_info_t object_info_new;
+cvtdl_object_info_t info_rescale_c(const float width, const float height, const float new_width,
+                                   const float new_height, const cvtdl_object_info_t &object_info) {
+  cvtdl_object_info_t object_info_new;
   memset(&object_info_new, 0, sizeof(object_info_new));
-  CVI_AI_CopyInfoCpp(&object_info, &object_info_new);
+  CVI_TDL_CopyInfoCpp(&object_info, &object_info_new);
 
   float ratio, pad_width, pad_height;
   object_info_new.bbox = box_rescale_c(width, height, new_width, new_height, object_info.bbox,
@@ -187,11 +187,12 @@ cvai_object_info_t info_rescale_c(const float width, const float height, const f
   return object_info_new;
 }
 
-cvai_object_info_t info_rescale_rb(const float width, const float height, const float new_width,
-                                   const float new_height, const cvai_object_info_t &object_info) {
-  cvai_object_info_t object_info_new;
+cvtdl_object_info_t info_rescale_rb(const float width, const float height, const float new_width,
+                                    const float new_height,
+                                    const cvtdl_object_info_t &object_info) {
+  cvtdl_object_info_t object_info_new;
   memset(&object_info_new, 0, sizeof(object_info_new));
-  CVI_AI_CopyInfoCpp(&object_info, &object_info_new);
+  CVI_TDL_CopyInfoCpp(&object_info, &object_info_new);
 
   float ratio;
   object_info_new.bbox =
@@ -206,10 +207,10 @@ cvai_object_info_t info_rescale_rb(const float width, const float height, const 
   return object_info_new;
 }
 
-cvai_dms_od_info_t info_rescale_c(const float width, const float height, const float new_width,
-                                  const float new_height, const cvai_dms_od_info_t &dms_info) {
-  cvai_dms_od_info_t dms_info_new;
-  CVI_AI_CopyInfoCpp(&dms_info, &dms_info_new);
+cvtdl_dms_od_info_t info_rescale_c(const float width, const float height, const float new_width,
+                                   const float new_height, const cvtdl_dms_od_info_t &dms_info) {
+  cvtdl_dms_od_info_t dms_info_new;
+  CVI_TDL_CopyInfoCpp(&dms_info, &dms_info_new);
 
   float ratio, pad_width, pad_height;
   dms_info_new.bbox = box_rescale_c(new_width, new_height, width, height, dms_info.bbox, &ratio,
@@ -217,10 +218,10 @@ cvai_dms_od_info_t info_rescale_c(const float width, const float height, const f
   return dms_info_new;
 }
 
-cvai_face_info_t info_rescale_rb(const float width, const float height, const float new_width,
-                                 const float new_height, const cvai_face_info_t &face_info) {
-  cvai_face_info_t face_info_new;
-  CVI_AI_CopyInfoCpp(&face_info, &face_info_new);
+cvtdl_face_info_t info_rescale_rb(const float width, const float height, const float new_width,
+                                  const float new_height, const cvtdl_face_info_t &face_info) {
+  cvtdl_face_info_t face_info_new;
+  CVI_TDL_CopyInfoCpp(&face_info, &face_info_new);
 
   float ratio;
   face_info_new.bbox = box_rescale_rb(new_width, new_height, width, height, face_info.bbox, &ratio);
@@ -232,7 +233,7 @@ cvai_face_info_t info_rescale_rb(const float width, const float height, const fl
 }
 
 void info_rescale_nocopy_c(const float width, const float height, const float new_width,
-                           const float new_height, cvai_face_info_t *face_info) {
+                           const float new_height, cvtdl_face_info_t *face_info) {
   float ratio, pad_width, pad_height;
   face_info->bbox = box_rescale_c(new_width, new_height, width, height, face_info->bbox, &ratio,
                                   &pad_width, &pad_height);
@@ -243,7 +244,7 @@ void info_rescale_nocopy_c(const float width, const float height, const float ne
 }
 
 void info_rescale_nocopy_rb(const float width, const float height, const float new_width,
-                            const float new_height, cvai_face_info_t *face_info) {
+                            const float new_height, cvtdl_face_info_t *face_info) {
   float ratio;
   face_info->bbox = box_rescale_rb(new_width, new_height, width, height, face_info->bbox, &ratio);
   for (uint32_t j = 0; j < face_info->pts.size; ++j) {
@@ -252,22 +253,22 @@ void info_rescale_nocopy_rb(const float width, const float height, const float n
   }
 }
 
-cvai_face_info_t info_rescale_c(const float new_width, const float new_height,
-                                const cvai_face_t &face_meta, const int face_idx) {
+cvtdl_face_info_t info_rescale_c(const float new_width, const float new_height,
+                                 const cvtdl_face_t &face_meta, const int face_idx) {
   return info_rescale_c(face_meta.width, face_meta.height, new_width, new_height,
                         face_meta.info[face_idx]);
 }
 
-cvai_object_info_t info_rescale_c(const float new_width, const float new_height,
-                                  const cvai_object_t &object_meta, const int object_idx) {
+cvtdl_object_info_t info_rescale_c(const float new_width, const float new_height,
+                                   const cvtdl_object_t &object_meta, const int object_idx) {
   return info_rescale_c(object_meta.width, object_meta.height, new_width, new_height,
                         object_meta.info[object_idx]);
 }
 
-cvai_face_info_t info_rescale_rb(const float new_width, const float new_height,
-                                 const cvai_face_t &face_meta, const int face_idx) {
+cvtdl_face_info_t info_rescale_rb(const float new_width, const float new_height,
+                                  const cvtdl_face_t &face_meta, const int face_idx) {
   return info_rescale_rb(face_meta.width, face_meta.height, new_width, new_height,
                          face_meta.info[face_idx]);
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

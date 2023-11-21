@@ -2,8 +2,8 @@
 
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-CVIAI_ROOT=$(readlink -f $SCRIPT_DIR/../)
-TMP_WORKING_DIR=$CVIAI_ROOT/tmp
+CVI_TDL_ROOT=$(readlink -f $SCRIPT_DIR/../)
+TMP_WORKING_DIR=$CVI_TDL_ROOT/tmp
 BUILD_WORKING_DIR=$TMP_WORKING_DIR/build_sdk
 BUILD_DOWNLOAD_DIR=$TMP_WORKING_DIR/_deps
 
@@ -60,24 +60,24 @@ else
 fi
 
 if [[ "$SDK_VER" == "uclibc" ]]; then
-    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-uclibc-linux.cmake
+    TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain-uclibc-linux.cmake
     SYSTEM_PROCESSOR=ARM
     KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr
 elif [[ "$SDK_VER" == "32bit" ]]; then
-    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
+    TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain-gnueabihf-linux.cmake
     SYSTEM_PROCESSOR=ARM
     KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr
 elif [[ "$SDK_VER" == "64bit" ]]; then
-    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-aarch64-linux.cmake
+    TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain-aarch64-linux.cmake
     SYSTEM_PROCESSOR=ARM64
     KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm64/usr
 elif [[ "$SDK_VER" == "glibc_riscv64" ]]; then
-    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-riscv64-linux.cmake
+    TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain-riscv64-linux.cmake
     SYSTEM_PROCESSOR=RISCV
     KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/riscv/usr/
 elif [[ "$SDK_VER" == "musl_riscv64" ]]; then
     KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/riscv/usr/
-    TOOLCHAIN_FILE=$CVIAI_ROOT/toolchain/toolchain-riscv64-musl.cmake
+    TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain-riscv64-musl.cmake
     SYSTEM_PROCESSOR=RISCV
 else
     echo "Wrong SDK_VER=$SDK_VER"
@@ -107,11 +107,11 @@ else
     exit 1
 fi
 
-$CMAKE_BIN -G Ninja $CVIAI_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
+$CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DCVI_SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR \
                                         -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
                                         -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
-                                        -DENABLE_CVIAI_CV_UTILS=ON \
+                                        -DENABLE_CVI_TDL_CV_UTILS=ON \
                                         -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                         -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
                                         -DTPU_IVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
@@ -146,20 +146,51 @@ for v in $CVI_TARGET_PACKAGES_LIBDIR; do
 done
 
 if [[ "$CHIP_ARCH" != "CV180X" ]]; then
-  pushd ${AI_SDK_INSTALL_PATH}/module/app
-  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE="$USE_TPU_IVE" SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR CHIP=$CHIP_ARCH -j10 || exit 1
-  make install || exit 1
-  make clean || exit 1
-  echo "done"
-  popd
 
-  pushd ${AI_SDK_INSTALL_PATH}/sample
+  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl
   make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
   make install || exit 1
   make clean || exit 1
   echo "done"
   popd
+
+  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl_app
+  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make install || exit 1
+  make clean || exit 1
+  echo "done"
+  popd
+
+  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_md
+  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make install || exit 1
+  make clean || exit 1
+  echo "done"
+  popd
+
+  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_preprocess
+  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make install || exit 1
+  make clean || exit 1
+  echo "done"
+  popd
+
+  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_draw_rect
+  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make install || exit 1
+  make clean || exit 1
+  echo "done"
+  popd
+
 fi
 fi
 
-rm -rf ${AI_SDK_INSTALL_PATH}/tmp_install
+rm -rf ${AI_SDK_INSTALL_PATH}/sample/tmp_install
+
+#wget -nc -P ${AI_SDK_INSTALL_PATH}/doc https://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/zh/01.software/TPU/AI_SDK_Software_Development_Guide/build/AISDKSoftwareDevelopmentGuide_zh.pdf
+
+#wget -nc -P ${AI_SDK_INSTALL_PATH}/doc http://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/en/01.software/TPU/AI_SDK_Software_Development_Guide/build/AISDKSoftwareDevelopmentGuide_en.pdf
+
+#wget -nc -P ${AI_SDK_INSTALL_PATH}/doc http://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/en/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_en.pdf
+
+#wget -nc -P ${AI_SDK_INSTALL_PATH}/doc http://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/zh/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_zh.pdf

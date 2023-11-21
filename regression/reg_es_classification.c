@@ -4,10 +4,10 @@
 #include <string.h>
 
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_perfetto.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_perfetto.h"
 
-cviai_handle_t ai_handle = NULL;
+cvitdl_handle_t tdl_handle = NULL;
 
 static int run(const char *img_dir, float *Acc) {
   DIR *dirp;
@@ -38,7 +38,7 @@ static int run(const char *img_dir, float *Acc) {
     frame.stVFrame.u32Height = 1;
     frame.stVFrame.u32Width = size;
     int index = -1;
-    CVI_AI_SoundClassification(ai_handle, &frame, &index);
+    CVI_TDL_SoundClassification(tdl_handle, &frame, &index);
     free(temp);
 
     if (index == atoi(pch)) {
@@ -54,25 +54,25 @@ static int run(const char *img_dir, float *Acc) {
   for (int i = 0; i < 6; ++i) {
     printf("index: %d Acc: %f\n", i, (float)_true[i] / (float)_total[i]);
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printf("Usage: %s <es classifier model path> <data dir>.\n", argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
 
-  ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model esc failed with %#x!\n", ret);
     return ret;
   }
@@ -81,5 +81,5 @@ int main(int argc, char *argv[]) {
   run(argv[2], &Acc);
   printf("Num of esc -> Acc: %f\n", Acc);
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
 }

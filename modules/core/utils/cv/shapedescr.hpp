@@ -10,12 +10,12 @@
 */
 CvRect cvBoundingRect(CvArr* points, int update = 0);
 
-namespace cviai {
+namespace cvitdl {
 
 double contourArea(cv::InputArray contour, bool oriented = false);
 
 cv::Rect boundingRect(cv::InputArray points);
 
-}  // namespace cviai
+}  // namespace cvitdl
 
 #endif  // _UTILS_CV_IMGPROC_SHAPEDESCR_HPP_

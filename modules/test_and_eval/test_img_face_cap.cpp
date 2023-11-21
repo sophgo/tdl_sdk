@@ -1,6 +1,6 @@
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app/cvi_tdl_app.h"
 #include "sample_comm.h"
 
 #include <cvi_sys.h>
@@ -21,7 +21,7 @@
 #else
 #include "ive/ive.h"
 #endif
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl_media.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "sys_utils.hpp"
@@ -45,7 +45,7 @@ __attribute__((always_inline)) inline void AutoUnLock(void *mutex) {
 typedef struct {
   uint64_t u_id;
   float quality;
-  cvai_image_t image;
+  cvtdl_image_t image;
   tracker_state_e state;
   uint32_t counter;
   char name[128];
@@ -65,15 +65,15 @@ int rear_idx = 0;
 int front_idx = 0;
 static IOData data_buffer[OUTPUT_BUFFER_SIZE];
 
-static cvai_object_t g_obj_meta_0;
-static cvai_object_t g_obj_meta_1;
+static cvtdl_object_t g_obj_meta_0;
+static cvtdl_object_t g_obj_meta_1;
 
 std::string g_out_dir;
 
 int COUNT_ALIVE(face_capture_t *face_cpt_info);
 
 #ifdef VISUAL_FACE_LANDMARK
-void FREE_FACE_PTS(cvai_face_t *face_meta);
+void FREE_FACE_PTS(cvtdl_face_t *face_meta);
 #endif
 
 static void SampleHandleSig(CVI_S32 signo) {
@@ -153,11 +153,11 @@ static void *pImageWrite(void *args) {
                 int(data_buffer[target_idx].frame_id), int(data_buffer[target_idx].u_id),
                 data_buffer[target_idx].counter, data_buffer[target_idx].match_score,
                 data_buffer[target_idx].quality, data_buffer[target_idx].name);
-        CVI_AI_DumpImage(filename, &data_buffer[target_idx].image);
+        CVI_TDL_DumpImage(filename, &data_buffer[target_idx].image);
       }
     }
 
-    CVI_AI_Free(&data_buffer[target_idx].image);
+    CVI_TDL_Free(&data_buffer[target_idx].image);
     {
       SMT_MutexAutoLock(IOMutex, lock);
       front_idx = target_idx;
@@ -166,7 +166,7 @@ static void *pImageWrite(void *args) {
 
   printf("[APP] free buffer data...\n");
   for (int i = 0; i < OUTPUT_BUFFER_SIZE; i++) {
-    CVI_AI_Free(&data_buffer[i].image);
+    CVI_TDL_Free(&data_buffer[i].image);
   }
 
   return NULL;
@@ -189,7 +189,7 @@ std::string capobj_to_str(face_cpt_data_t *p_obj, float w, float h, int lb) {
 }
 void export_tracking_info(face_capture_t *p_cap_info, const std::string &str_dst_dir, int frame_id,
                           float imgw, float imgh, int lb) {
-  cvai_face_t *p_objinfo = &(p_cap_info->last_faces);
+  cvtdl_face_t *p_objinfo = &(p_cap_info->last_faces);
   if (p_objinfo->size == 0) return;
   char sz_dstf[128];
   sprintf(sz_dstf, "%s/%08d.txt", str_dst_dir.c_str(), frame_id);
@@ -213,11 +213,11 @@ void export_tracking_info(face_capture_t *p_cap_info, const std::string &str_dst
   std::cout << "write done\n";
   fclose(fp);
 }
-void release_system(cviai_handle_t ai_handle, cviai_service_handle_t service_handle,
-                    cviai_app_handle_t app_handle) {
-  CVI_AI_APP_DestroyHandle(app_handle);
-  if (service_handle != NULL) CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+void release_system(cvitdl_handle_t tdl_handle, cvitdl_service_handle_t service_handle,
+                    cvitdl_app_handle_t app_handle) {
+  CVI_TDL_APP_DestroyHandle(app_handle);
+  if (service_handle != NULL) CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   // DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
@@ -230,7 +230,7 @@ int load_image_file(IVE_HANDLE ive_handle, const std::string &strf, IVE_IMAGE_S 
   if (img_format == IVE_IMAGE_TYPE_U8C3_PACKAGE) {
     pix_format = PIXEL_FORMAT_RGB_888;
   }
-  ret = CVI_AI_ReadImage(strf.c_str(), &fdFrame, pix_format);
+  ret = CVI_TDL_ReadImage(strf.c_str(), &fdFrame, pix_format);
   return ret;
 #endif
 
@@ -265,8 +265,8 @@ std::string get_img_name(const std::string &strf) {
   std::string name = strf.substr(pos0 + 1, pos1 - pos0);
   return name;
 }
-int register_gallery_face(cviai_app_handle_t app_handle, IVE_HANDLE ive_handle,
-                          const std::string &strf, cvai_service_feature_array_t *p_feat_gallery,
+int register_gallery_face(cvitdl_app_handle_t app_handle, IVE_HANDLE ive_handle,
+                          const std::string &strf, cvtdl_service_feature_array_t *p_feat_gallery,
                           std::vector<std::string> &gallery_names) {
   IVE_IMAGE_S image;
   VIDEO_FRAME_INFO_S fdFrame;
@@ -275,9 +275,9 @@ int register_gallery_face(cviai_app_handle_t app_handle, IVE_HANDLE ive_handle,
   if (ret != CVI_SUCCESS) {
     return NULL;
   }
-  cvai_face_t faceinfo;
+  cvtdl_face_t faceinfo;
   memset(&faceinfo, 0, sizeof(faceinfo));
-  ret = CVI_AI_APP_FaceCapture_FDFR(app_handle, &fdFrame, &faceinfo);
+  ret = CVI_TDL_APP_FaceCapture_FDFR(app_handle, &fdFrame, &faceinfo);
   if (ret != CVI_SUCCESS) {
     std::cout << "face extract failed\n";
   }
@@ -292,7 +292,7 @@ int register_gallery_face(cviai_app_handle_t app_handle, IVE_HANDLE ive_handle,
   if (ret == CVI_FAILURE) {
     CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
     CVI_SYS_FreeI(ive_handle, &image);
-    CVI_AI_Free(&faceinfo);
+    CVI_TDL_Free(&faceinfo);
     return ret;
   }
 
@@ -329,12 +329,12 @@ int register_gallery_face(cviai_app_handle_t app_handle, IVE_HANDLE ive_handle,
   std::cout << "copy done\n";
   CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
   CVI_SYS_FreeI(ive_handle, &image);
-  CVI_AI_Free(&faceinfo);
+  CVI_TDL_Free(&faceinfo);
   std::cout << "register done\n";
   return ret;
 }
-int do_face_match(cviai_service_handle_t service_handle,
-                  const std::vector<std::string> &gallery_names, cvai_face_info_t *p_face) {
+int do_face_match(cvitdl_service_handle_t service_handle,
+                  const std::vector<std::string> &gallery_names, cvtdl_face_info_t *p_face) {
   if (gallery_names.size() == 0) {
     return CVI_FAILURE;
   }
@@ -347,7 +347,7 @@ int do_face_match(cviai_service_handle_t service_handle,
   float score = 0;
   uint32_t size;
 
-  int ret = CVI_AI_Service_FaceInfoMatching(service_handle, p_face, 1, 0.1, &ind, &score, &size);
+  int ret = CVI_TDL_Service_FaceInfoMatching(service_handle, p_face, 1, 0.1, &ind, &score, &size);
   // printf("ind:%u,ret:%d,score:%f\n",ind,ret,score);
   // getchar();
   printf("matchname,trackid:%u,name:%s,score:%f\n", uint32_t(p_face->unique_id),
@@ -371,7 +371,7 @@ int main(int argc, char *argv[]) {
   for (VPSS_GRP VpssGrp = 0; VpssGrp < VPSS_MAX_GRP_NUM; ++VpssGrp)
     SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
 
-  CVI_AI_SUPPORTED_MODEL_E model = CVI_AI_SUPPORTED_MODEL_SCRFDFACE;
+  CVI_TDL_SUPPORTED_MODEL_E model = CVI_TDL_SUPPORTED_MODEL_SCRFDFACE;
   std::string modelf = std::string(
       "/mnt/data/admin1_data/AI_CV/cv182x/ai_models_output/cv181x/"
       "scrfd_500m_bnkps_432_768.cvimodel");
@@ -380,8 +380,9 @@ int main(int argc, char *argv[]) {
   std::string ped_modelf =
       "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/"
       "mobiledetv2-pedestrian-d0-ls-448.cvimodel";
+
   std::string str_model_file = modelf;
-  CVI_AI_SUPPORTED_MODEL_E fd_model_id = model;
+  CVI_TDL_SUPPORTED_MODEL_E fd_model_id = model;
 
   const char *fd_model_path = str_model_file.c_str();
 
@@ -410,38 +411,38 @@ int main(int argc, char *argv[]) {
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 1);
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  cviai_app_handle_t app_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
+  cvitdl_app_handle_t app_handle = NULL;
 
   int vpss_grp = 1;
-  ret = CVI_AI_CreateHandle2(&ai_handle, vpss_grp, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  // ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
-  ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, vpss_grp, 0);
+  ret |= CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
+  // ret |= CVI_TDL_Service_EnableTPUDraw(service_handle, true);
+  ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
   printf("to facecap init\n");
-  ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
+  ret |= CVI_TDL_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
   if (ret != CVI_SUCCESS) {
-    release_system(ai_handle, service_handle, app_handle);
+    release_system(tdl_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
   printf("to quick setup\n");
 
-  cvai_service_feature_array_t feat_gallery;
+  cvtdl_service_feature_array_t feat_gallery;
   memset(&feat_gallery, 0, sizeof(feat_gallery));
-  CVI_AI_SUPPORTED_MODEL_E fr_model_id = CVI_AI_SUPPORTED_MODEL_FACERECOGNITION;
-  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                           NULL, NULL, fl_modelf.c_str());
-  CVI_AI_SUPPORTED_MODEL_E ped_model_id = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-  ret |= CVI_AI_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_modelf.c_str());
+  CVI_TDL_SUPPORTED_MODEL_E fr_model_id = CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION;
+  ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
+                                            NULL, NULL, fl_modelf.c_str());
+  CVI_TDL_SUPPORTED_MODEL_E ped_model_id = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
+  ret |= CVI_TDL_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_modelf.c_str());
   IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
 
   if (ret != CVI_SUCCESS) {
-    release_system(ai_handle, service_handle, app_handle);
+    release_system(tdl_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
 
-  CVI_AI_SetModelThreshold(ai_handle, fd_model_id, det_threshold);
+  CVI_TDL_SetModelThreshold(tdl_handle, fd_model_id, det_threshold);
 
   printf("finish init \n");
 
@@ -457,19 +458,19 @@ int main(int argc, char *argv[]) {
     std::cout << "register ret:" << ret << std::endl;
     if (ret == CVI_SUCCESS) {
       std::cout << "to register gallery\n";
-      ret = CVI_AI_Service_RegisterFeatureArray(service_handle, feat_gallery, COS_SIMILARITY);
+      ret = CVI_TDL_Service_RegisterFeatureArray(service_handle, feat_gallery, COS_SIMILARITY);
       std::cout << "finish register gallery\n";
     }
   }
   std::cout << "to start:\n";
 
   face_capture_config_t app_cfg;
-  CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
+  CVI_TDL_APP_FaceCapture_GetDefaultConfig(&app_cfg);
   if (!strcmp(config_path, "NULL")) {
     printf("Use Default Config...\n");
   }
   if (ret == CVI_FAILURE) {
-    release_system(ai_handle, service_handle, app_handle);
+    release_system(tdl_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
   app_cfg.thr_quality = 0.1;
@@ -479,11 +480,11 @@ int main(int argc, char *argv[]) {
   app_cfg.qa_method = 0;
   app_cfg.img_capture_flag = 0;  // capture whole frame
   app_cfg.m_interval = 1000;     // only export one when leaving
-  CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
-  CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
+  CVI_TDL_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
+  CVI_TDL_APP_FaceCapture_SetMode(app_handle, AUTO);
 
-  memset(&g_obj_meta_0, 0, sizeof(cvai_object_t));
-  memset(&g_obj_meta_1, 0, sizeof(cvai_object_t));
+  memset(&g_obj_meta_0, 0, sizeof(cvtdl_object_t));
+  memset(&g_obj_meta_1, 0, sizeof(cvtdl_object_t));
 
   pthread_t io_thread;
   pthread_create(&io_thread, NULL, pImageWrite, NULL);
@@ -507,7 +508,7 @@ int main(int argc, char *argv[]) {
     printf("read image ret:%d width:%d\n", ret, (int)fdFrame.stVFrame.u32Width);
     if (ret != CVI_SUCCESS) {
       if (img_idx < 100) {
-        release_system(ai_handle, service_handle, app_handle);
+        release_system(tdl_handle, service_handle, app_handle);
         break;
       }
       printf("load image failed\n");
@@ -529,9 +530,9 @@ int main(int argc, char *argv[]) {
 
     int alive_person_num = COUNT_ALIVE(app_handle->face_cpt_info);
     printf("ALIVE persons: %d\n", alive_person_num);
-    ret = CVI_AI_APP_FaceCapture_Run(app_handle, &fdFrame);
+    ret = CVI_TDL_APP_FaceCapture_Run(app_handle, &fdFrame);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_APP_FaceCapture_Run failed with %#x\n", ret);
+      printf("CVI_TDL_APP_FaceCapture_Run failed with %#x\n", ret);
       break;
     }
 
@@ -544,7 +545,7 @@ int main(int argc, char *argv[]) {
       for (uint32_t i = 0; i < app_handle->face_cpt_info->size; i++) {
         if (!app_handle->face_cpt_info->_output[i]) continue;
 
-        cvai_face_info_t *pface_info = &app_handle->face_cpt_info->data[i].info;
+        cvtdl_face_info_t *pface_info = &app_handle->face_cpt_info->data[i].info;
         do_face_match(service_handle, gallery_names, pface_info);
         tracker_state_e state = app_handle->face_cpt_info->data[i].state;
         uint32_t counter = app_handle->face_cpt_info->data[i]._out_counter;
@@ -581,7 +582,8 @@ int main(int argc, char *argv[]) {
         memcpy(data_buffer[target_idx].name, pface_info->name, 128);
         /* NOTE: Make sure the image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
 
-        CVI_AI_CopyImage(&app_handle->face_cpt_info->data[i].image, &data_buffer[target_idx].image);
+        CVI_TDL_CopyImage(&app_handle->face_cpt_info->data[i].image,
+                          &data_buffer[target_idx].image);
         {
           SMT_MutexAutoLock(IOMutex, lock);
           rear_idx = target_idx;
@@ -589,7 +591,7 @@ int main(int argc, char *argv[]) {
       }
     }
     printf("to release frame\n");
-    CVI_AI_ReleaseImage(&fdFrame);
+    CVI_TDL_ReleaseImage(&fdFrame);
 #ifndef CV181X
     CVI_SYS_FreeI(ive_handle, &image);
 #endif
@@ -601,9 +603,9 @@ int main(int argc, char *argv[]) {
   bRunVideoOutput = false;
   pthread_join(io_thread, NULL);
 
-  CVI_AI_APP_DestroyHandle(app_handle);
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_APP_DestroyHandle(app_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   // DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

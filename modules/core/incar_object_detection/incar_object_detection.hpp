@@ -1,10 +1,10 @@
 #pragma once
 #include <cvi_comm_vb.h>
 #include "core.hpp"
-#include "core/face/cvai_face_types.h"
+#include "core/face/cvtdl_face_types.h"
 #include "opencv2/core.hpp"
 
-namespace cviai {
+namespace cvitdl {
 typedef struct HeadInfo {
   std::string cls_layer;
   std::string dis_layer;
@@ -14,7 +14,7 @@ typedef struct HeadInfo {
 class IncarObjectDetection final : public Core {
  public:
   IncarObjectDetection();
-  int inference(VIDEO_FRAME_INFO_S* frame, cvai_face_t* meta);
+  int inference(VIDEO_FRAME_INFO_S* frame, cvtdl_face_t* meta);
   std::vector<HeadInfo> heads_info{
       // cls_pred|dis_pred|stride
       {"802_Transpose_dequant", "805_Transpose_dequant", 8},
@@ -26,10 +26,10 @@ class IncarObjectDetection final : public Core {
  private:
   int setupInputPreprocess(std::vector<InputPreprecessSetup>* data);
   void prepareInputTensor(cv::Mat& input_mat);
-  void outputParser(int image_width, int image_height, cvai_face_t* meta);
+  void outputParser(int image_width, int image_height, cvtdl_face_t* meta);
   void decode_infer(float* cls_pred, float* dis_pred, int stride, float threshold,
-                    std::vector<std::vector<cvai_dms_od_info_t>>& results);
-  void disPred2Bbox(std::vector<std::vector<cvai_dms_od_info_t>>& results, const float*& dfl_det,
+                    std::vector<std::vector<cvtdl_dms_od_info_t>>& results);
+  void disPred2Bbox(std::vector<std::vector<cvtdl_dms_od_info_t>>& results, const float*& dfl_det,
                     int label, float score, int x, int y, int stride);
   template <typename _Tp>
   int activation_function_softmax(const _Tp* src, _Tp* dst, int length);
@@ -40,4 +40,4 @@ class IncarObjectDetection final : public Core {
   int reg_max = 7;
   char class_name[3][32] = {"cell phone", "bottle", "cup"};
 };
-}  // namespace cviai
+}  // namespace cvitdl

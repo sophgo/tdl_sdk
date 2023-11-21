@@ -1,5 +1,5 @@
 #include "core_utils.hpp"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #ifndef SIMPLY_MODEL
 #ifndef CV180X
 #include "neon_utils.hpp"
@@ -10,7 +10,7 @@
 #include <string.h>
 #include <algorithm>
 
-namespace cviai {
+namespace cvitdl {
 void SoftMaxForBuffer(const float *src, float *dst, size_t size) {
   float sum = 0;
 
@@ -38,7 +38,7 @@ void DequantizeScale(const int8_t *q_data, float *data, float dequant_scale, siz
   }
 }
 
-void clip_boxes(int width, int height, cvai_bbox_t &box) {
+void clip_boxes(int width, int height, cvtdl_bbox_t &box) {
   if (box.x1 < 0) {
     box.x1 = 0;
   }
@@ -125,4 +125,4 @@ void unmap_video_frame(VIDEO_FRAME_INFO_S *frame) {
   frame->stVFrame.pu8VirAddr[1] = NULL;
   frame->stVFrame.pu8VirAddr[2] = NULL;
 }
-}  // namespace cviai
+}  // namespace cvitdl

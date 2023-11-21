@@ -24,7 +24,7 @@ void ActivateArray(float *x, const int n, bool fast_exp = true) {
   int i;
   for (i = 0; i < n; ++i) {
     if (fast_exp) {
-      x[i] = 1. / (1. + cviai::FastExp(-x[i]));
+      x[i] = 1. / (1. + cvitdl::FastExp(-x[i]));
     } else {
       x[i] = 1. / (1. + std::exp(-x[i]));
     }
@@ -79,8 +79,8 @@ box GetRegionBox(const float *data, const float *biases, int n, int index, int i
   b.x = (i + data[index + 0 * stride]) / w;
   b.y = (j + data[index + 1 * stride]) / h;
   if (fast_exp) {
-    b.w = cviai::FastExp(data[index + 2 * stride]) * biases[2 * n] / w;
-    b.h = cviai::FastExp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
+    b.w = cvitdl::FastExp(data[index + 2 * stride]) * biases[2 * n] / w;
+    b.h = cvitdl::FastExp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
   } else {
     b.w = std::exp(data[index + 2 * stride]) * biases[2 * n] / w;
     b.h = std::exp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
@@ -94,8 +94,8 @@ box GetYoloBox(const float *data, const float *biases, int n, int index, int i, 
   b.x = (i + data[index + 0 * stride]) / lw;
   b.y = (j + data[index + 1 * stride]) / lh;
   if (fast_exp) {
-    b.w = cviai::FastExp(data[index + 2 * stride]) * biases[2 * n] / w;
-    b.h = cviai::FastExp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
+    b.w = cvitdl::FastExp(data[index + 2 * stride]) * biases[2 * n] / w;
+    b.h = cvitdl::FastExp(data[index + 3 * stride]) * biases[2 * n + 1] / h;
   } else {
     b.w = std::exp(data[index + 2 * stride]) * biases[2 * n] / w;
     b.h = std::exp(data[index + 3 * stride]) * biases[2 * n + 1] / h;

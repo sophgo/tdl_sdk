@@ -1,8 +1,8 @@
 #include "vpss_engine.hpp"
 #include "core/utils/vpss_helper.h"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 
-namespace cviai {
+namespace cvitdl {
 
 VpssEngine::VpssEngine(VPSS_GRP desired_grp_id, CVI_U8 device)
     : m_desired_grp_id(desired_grp_id), m_dev(device) {
@@ -278,4 +278,4 @@ int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t tim
 int VpssEngine::releaseFrame(VIDEO_FRAME_INFO_S *frame, int chn_idx) {
   return CVI_VPSS_ReleaseChnFrame(m_grpid, chn_idx, frame);
 }
-}  // namespace cviai
+}  // namespace cvitdl

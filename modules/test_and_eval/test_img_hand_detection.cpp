@@ -8,25 +8,25 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     eval_perf = atoi(argv[3]);
   }
   VIDEO_FRAME_INFO_S bg;
-  ret = CVI_AI_ReadImage(strf1.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
+  ret = CVI_TDL_ReadImage(strf1.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     printf("open img failed with %#x!\n", ret);
     return ret;
@@ -46,8 +46,8 @@ int main(int argc, char *argv[]) {
   }
 
   printf("---------------------openmodel-----------------------");
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, argv[1]);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.5);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, argv[1]);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, 0.5);
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
     return ret;
@@ -55,8 +55,8 @@ int main(int argc, char *argv[]) {
   printf("---------------------to do detection-----------------------\n");
 
   std::string str_res;
-  cvai_object_t obj_meta = {0};
-  CVI_AI_Hand_Detection(ai_handle, &bg, &obj_meta);
+  cvtdl_object_t obj_meta = {0};
+  CVI_TDL_Hand_Detection(tdl_handle, &bg, &obj_meta);
 
   std::cout << "objnum:" << obj_meta.size << std::endl;
   std::stringstream ss;
@@ -68,16 +68,16 @@ int main(int argc, char *argv[]) {
   }
   ss << "]\n";
   std::cout << ss.str();
-  CVI_AI_Free(&obj_meta);
+  CVI_TDL_Free(&obj_meta);
   if (eval_perf) {
     for (int i = 0; i < 101; i++) {
-      cvai_object_t obj_meta = {0};
-      CVI_AI_Hand_Detection(ai_handle, &bg, &obj_meta);
-      CVI_AI_Free(&obj_meta);
+      cvtdl_object_t obj_meta = {0};
+      CVI_TDL_Hand_Detection(tdl_handle, &bg, &obj_meta);
+      CVI_TDL_Free(&obj_meta);
     }
   }
-  CVI_AI_ReleaseImage(&bg);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_ReleaseImage(&bg);
+  CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;
 }

@@ -7,10 +7,10 @@ output:
     face feature vector
 */
 
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app.h"
+#include "cvi_tdl_media.h"
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 
@@ -42,24 +42,24 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
-  cvai_face_t p_obj = {0};
+  cvtdl_face_t p_obj = {0};
   const char *fr_model_path =
       argv[1];  // /mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/cviface-v5-s.cvimodel
   const char *fd_model_path = argv
       [2];  // /mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/scrfd_432_768_1x.cvimodel
   const char *img_path = argv[3];  // /mnt/data/admin1_data/alios_test/a.jpg
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, fd_model_path);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, fd_model_path);
 
   VIDEO_FRAME_INFO_S bg;
-  ret = CVI_AI_LoadBinImage(img_path, &bg, PIXEL_FORMAT_RGB_888_PLANAR);
+  ret = CVI_TDL_LoadBinImage(img_path, &bg, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     printf("failed to open file\n");
     return ret;
@@ -68,13 +68,13 @@ int main(int argc, char *argv[]) {
   }
 
   // get bbox
-  ret = CVI_AI_ScrFDFace(ai_handle, &bg, &p_obj);
+  ret = CVI_TDL_ScrFDFace(tdl_handle, &bg, &p_obj);
   if (ret != CVI_SUCCESS) {
     printf("failed to run face detection\n");
     return ret;
   }
   // get face feature
-  ret |= CVI_AI_FaceRecognition(ai_handle, &bg, &p_obj);
+  ret |= CVI_TDL_FaceRecognition(tdl_handle, &bg, &p_obj);
   if (ret != CVI_SUCCESS) {
     printf("failed to run face re\n");
     return ret;
@@ -91,6 +91,6 @@ int main(int argc, char *argv[]) {
     printf("]");
     printf("\n");
   }
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return true;
 }

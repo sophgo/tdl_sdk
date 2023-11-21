@@ -5,21 +5,21 @@
 #include <iostream>
 #include <limits>
 #include "assert.h"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
 #include "cvi_comm.h"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #include "stdio.h"
 
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))
 
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 ConvexPolygon::~ConvexPolygon() {
-  CVI_AI_FreeCpp(&vertices);
-  CVI_AI_FreeCpp(&orthogonals);
+  CVI_TDL_FreeCpp(&vertices);
+  CVI_TDL_FreeCpp(&orthogonals);
 }
 
 bool ConvexPolygon::is_convex(float *edges_x, float *edges_y, uint32_t size) {
@@ -33,7 +33,7 @@ bool ConvexPolygon::is_convex(float *edges_x, float *edges_y, uint32_t size) {
   return true;
 }
 
-bool ConvexPolygon::set_vertices(const cvai_pts_t &pts) {
+bool ConvexPolygon::set_vertices(const cvtdl_pts_t &pts) {
   /* calculate edges */
   float *edge_x = new float[pts.size];
   for (uint32_t i = 0; i < pts.size; i++) {
@@ -86,11 +86,11 @@ IntrusionDetect::IntrusionDetect() {
   base.y[1] = 1.;
 }
 
-IntrusionDetect::~IntrusionDetect() { CVI_AI_FreeCpp(&base); }
+IntrusionDetect::~IntrusionDetect() { CVI_TDL_FreeCpp(&base); }
 
-int IntrusionDetect::setRegion(const cvai_pts_t &pts) {
-  cvai_pts_t new_pts;
-  memset(&new_pts, 0, sizeof(cvai_pts_t));
+int IntrusionDetect::setRegion(const cvtdl_pts_t &pts) {
+  cvtdl_pts_t new_pts;
+  memset(&new_pts, 0, sizeof(cvtdl_pts_t));
   new_pts.size = pts.size;
   new_pts.x = (float *)malloc(sizeof(float) * pts.size);
   new_pts.y = (float *)malloc(sizeof(float) * pts.size);
@@ -107,24 +107,24 @@ int IntrusionDetect::setRegion(const cvai_pts_t &pts) {
     std::reverse(new_pts.y, new_pts.y + pts.size);
   } else if (area == 0) {
     LOGW("Area = 0\n");
-    return CVIAI_SUCCESS;
+    return CVI_TDL_SUCCESS;
   }
 
   auto new_region = std::make_shared<ConvexPolygon>();
   if (new_region->set_vertices(new_pts)) {
     regions.push_back(new_region);
     // this->show();
-    return CVIAI_SUCCESS;
+    return CVI_TDL_SUCCESS;
   }
 
   std::vector<std::vector<int>> convex_idxes;
   if (!ConvexPartition_HM(new_pts, convex_idxes)) {
     LOGE("ConvexPartition_HM Bug (1).\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   for (size_t i = 0; i < convex_idxes.size(); i++) {
-    cvai_pts_t new_sub_pts;
+    cvtdl_pts_t new_sub_pts;
     new_sub_pts.size = convex_idxes[i].size();
     new_sub_pts.x = (float *)malloc(sizeof(float) * new_sub_pts.size);
     new_sub_pts.y = (float *)malloc(sizeof(float) * new_sub_pts.size);
@@ -135,23 +135,23 @@ int IntrusionDetect::setRegion(const cvai_pts_t &pts) {
     auto new_region = std::make_shared<ConvexPolygon>();
     if (!new_region->set_vertices(new_sub_pts)) {
       LOGE("ConvexPartition_HM Bug (2).\n");
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
     }
     regions.push_back(new_region);
-    CVI_AI_FreeCpp(&new_sub_pts);
+    CVI_TDL_FreeCpp(&new_sub_pts);
   }
-  CVI_AI_FreeCpp(&new_pts);
+  CVI_TDL_FreeCpp(&new_pts);
 
   this->show();
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-void IntrusionDetect::getRegion(cvai_pts_t ***region_info, uint32_t *size) {
+void IntrusionDetect::getRegion(cvtdl_pts_t ***region_info, uint32_t *size) {
   *size = regions.size();
-  *region_info = (cvai_pts_t **)malloc(sizeof(cvai_pts_t *) * regions.size());
+  *region_info = (cvtdl_pts_t **)malloc(sizeof(cvtdl_pts_t *) * regions.size());
   for (size_t i = 0; i < regions.size(); i++) {
-    (*region_info)[i] = (cvai_pts_t *)malloc(sizeof(cvai_pts_t));
-    cvai_pts_t &convex_pts = regions[i]->vertices;
+    (*region_info)[i] = (cvtdl_pts_t *)malloc(sizeof(cvtdl_pts_t));
+    cvtdl_pts_t &convex_pts = regions[i]->vertices;
     (*region_info)[i]->size = convex_pts.size;
     (*region_info)[i]->x = (float *)malloc(sizeof(float) * convex_pts.size);
     (*region_info)[i]->y = (float *)malloc(sizeof(float) * convex_pts.size);
@@ -165,10 +165,10 @@ void IntrusionDetect::getRegion(cvai_pts_t ***region_info, uint32_t *size) {
 
 void IntrusionDetect::clean() { this->regions.clear(); }
 
-bool IntrusionDetect::run(const cvai_bbox_t &bbox) {
+bool IntrusionDetect::run(const cvtdl_bbox_t &bbox) {
   // printf("[RUN] BBox: (%.1f,%.1f,%.1f,%.1f)\n", bbox.x1, bbox.y1, bbox.x2, bbox.y2);
   /* transfer coordinate system from Image to Euclidean */
-  cvai_bbox_t t_bbox = bbox;
+  cvtdl_bbox_t t_bbox = bbox;
   t_bbox.y1 *= -1;
   t_bbox.y2 *= -1;
   for (size_t i = 0; i < regions.size(); i++) {
@@ -203,8 +203,8 @@ bool IntrusionDetect::run(const cvai_bbox_t &bbox) {
   return false;
 }
 
-bool IntrusionDetect::is_separating_axis(const vertex_t &axis, const cvai_pts_t &region_pts,
-                                         const cvai_bbox_t &bbox) {
+bool IntrusionDetect::is_separating_axis(const vertex_t &axis, const cvtdl_pts_t &region_pts,
+                                         const cvtdl_bbox_t &bbox) {
   float min_1 = std::numeric_limits<float>::max();
   float max_1 = -std::numeric_limits<float>::max();
   float min_2 = std::numeric_limits<float>::max();
@@ -249,7 +249,7 @@ bool IntrusionDetect::is_point_in_triangle(const vertex_t &o, const vertex_t &v1
   return !(has_pos && has_neg);
 }
 
-float IntrusionDetect::get_SignedGaussArea(const cvai_pts_t &pts) {
+float IntrusionDetect::get_SignedGaussArea(const cvtdl_pts_t &pts) {
   float area = 0;
   for (uint32_t i = 0; i < pts.size; i++) {
     uint32_t j = (i != pts.size - 1) ? (i + 1) : 0;
@@ -258,7 +258,7 @@ float IntrusionDetect::get_SignedGaussArea(const cvai_pts_t &pts) {
   return area / 2;
 }
 
-bool IntrusionDetect::Triangulate_EC(const cvai_pts_t &pts,
+bool IntrusionDetect::Triangulate_EC(const cvtdl_pts_t &pts,
                                      std::vector<std::vector<int>> &triangle_idxes) {
   std::vector<uint32_t> active_idxes;
   for (uint32_t i = 0; i < pts.size; i++) {
@@ -320,7 +320,7 @@ bool IntrusionDetect::Triangulate_EC(const cvai_pts_t &pts,
   return true;
 }
 
-bool IntrusionDetect::ConvexPartition_HM(const cvai_pts_t &pts,
+bool IntrusionDetect::ConvexPartition_HM(const cvtdl_pts_t &pts,
                                          std::vector<std::vector<int>> &convex_idxes) {
   std::vector<std::vector<int>> triangle_idxes;
   if (!Triangulate_EC(pts, triangle_idxes)) {
@@ -430,4 +430,4 @@ void ConvexPolygon::show() {
 }
 
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

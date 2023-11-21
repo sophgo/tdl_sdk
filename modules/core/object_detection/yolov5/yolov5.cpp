@@ -4,16 +4,16 @@
 #include <cmath>
 #include <iterator>
 
-#include <core/core/cvai_errno.h>
+#include <core/core/cvtdl_errno.h>
 #include <error_msg.hpp>
 #include <iostream>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
@@ -38,14 +38,14 @@ int max_val(int x, int y) {
 
 float sigmoid(float x) { return 1.0 / (1 + exp(-x)); }
 
-namespace cviai {
+namespace cvitdl {
 
-static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int im_height,
+static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int im_height,
                                int im_width) {
-  CVI_AI_MemAllocInit(dets.size(), obj);
+  CVI_TDL_MemAllocInit(dets.size(), obj);
   obj->height = im_height;
   obj->width = im_width;
-  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
+  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
 
   for (uint32_t i = 0; i < obj->size; ++i) {
     obj->info[i].bbox.x1 = dets[i]->x1;
@@ -102,18 +102,18 @@ int Yolov5::onModelOpened() {
       class_out_names_[stride_h] = oinfo.tensor_name;
     } else {
       LOGE("unmatched channel!\n");
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
     }
   }
 
   for (size_t i = 0; i < strides_.size(); i++) {
     if (conf_out_names_.count(strides_[i]) == 0 || box_out_names_.count(strides_[i]) == 0 ||
         class_out_names_.count(strides_[i]) == 0) {
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 Yolov5::~Yolov5() {}
@@ -121,7 +121,7 @@ Yolov5::~Yolov5() {}
 int Yolov5::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Yolov5 only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   for (int i = 0; i < 3; i++) {
@@ -131,7 +131,7 @@ int Yolov5::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
 
   (*data)[0].format = p_preprocess_cfg_.format;
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 YoloPreParam Yolov5::get_preparam() { return p_preprocess_cfg_; }
@@ -174,7 +174,7 @@ uint32_t Yolov5::set_roi(Point_t &roi) {
   return 0;
 }
 
-int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
+int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   if (roi_flag == true) {
     VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
     memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
@@ -184,7 +184,7 @@ int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
     vpssCropImage(srcFrame, f, yolo_box, bbox_w, bbox_h, PIXEL_FORMAT_RGB_888);
     std::vector<VIDEO_FRAME_INFO_S *> frames = {f};
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       LOGE("Yolov5 run inference failed!\n");
       return ret;
     }
@@ -201,7 +201,7 @@ int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
     std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
 
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       LOGE("Yolov5 run inference failed!\n");
       return ret;
     }
@@ -213,7 +213,7 @@ int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   }
 
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void xywh2xxyy(float x, float y, float w, float h, PtrDectRect &det) {
@@ -343,7 +343,7 @@ void Yolov5::generate_yolov5_proposals(Detections &vec_obj) {
 }
 
 void Yolov5::Yolov5PostProcess(Detections &dets, int frame_width, int frame_height,
-                               cvai_object_t *obj_meta) {
+                               cvtdl_object_t *obj_meta) {
   Detections final_dets = nms_multi_class(dets, m_model_nms_threshold);
   CVI_SHAPE shape = getInputShape(0);
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3]);
@@ -360,11 +360,11 @@ void Yolov5::Yolov5PostProcess(Detections &dets, int frame_width, int frame_heig
 }
 
 void Yolov5::outputParser(const int image_width, const int image_height, const int frame_width,
-                          const int frame_height, cvai_object_t *obj_meta) {
+                          const int frame_height, cvtdl_object_t *obj_meta) {
   Detections vec_obj;
   generate_yolov5_proposals(vec_obj);
 
   Yolov5PostProcess(vec_obj, frame_width, frame_height, obj_meta);
 }
-// namespace cviai
-}  // namespace cviai
+// namespace cvitdl
+}  // namespace cvitdl

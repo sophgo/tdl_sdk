@@ -10,16 +10,16 @@
 #include <string>
 #include <vector>
 #include "core.hpp"
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
-CVI_S32 get_yolov6_det(std::string img_path, cviai_handle_t ai_handle, VIDEO_FRAME_INFO_S* fdFrame,
-                       cvai_object_t* obj_meta) {
+CVI_S32 get_yolov6_det(std::string img_path, cvitdl_handle_t tdl_handle,
+                       VIDEO_FRAME_INFO_S* fdFrame, cvtdl_object_t* obj_meta) {
   printf("reading image file: %s \n", img_path.c_str());
-  CVI_S32 ret = CVI_AI_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+  CVI_S32 ret = CVI_TDL_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
   printf("frame_width %d \t frame_height %d \n", fdFrame->stVFrame.u32Width,
          fdFrame->stVFrame.u32Height);
   if (ret != CVI_SUCCESS) {
@@ -29,13 +29,13 @@ CVI_S32 get_yolov6_det(std::string img_path, cviai_handle_t ai_handle, VIDEO_FRA
     return ret;
   }
 
-  CVI_AI_Yolov6(ai_handle, fdFrame, obj_meta);
+  CVI_TDL_Yolov6(tdl_handle, fdFrame, obj_meta);
 
   return ret;
 }
 
 void bench_mark_all(std::string bench_path, std::string image_root, std::string res_path,
-                    cviai_handle_t ai_handle) {
+                    cvitdl_handle_t tdl_handle) {
   std::fstream file(bench_path);
   if (!file.is_open()) {
     return;
@@ -48,12 +48,12 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
       stringstream ss(line);
       std::string image_name;
       while (ss >> image_name) {
-        cvai_object_t obj_meta = {0};
+        cvtdl_object_t obj_meta = {0};
         VIDEO_FRAME_INFO_S fdFrame;
-        CVI_S32 ret = get_yolov6_det(image_root + image_name, ai_handle, &fdFrame, &obj_meta);
+        CVI_S32 ret = get_yolov6_det(image_root + image_name, tdl_handle, &fdFrame, &obj_meta);
         if (ret != CVI_SUCCESS) {
-          CVI_AI_Free(&obj_meta);
-          CVI_AI_ReleaseImage(&fdFrame);
+          CVI_TDL_Free(&obj_meta);
+          CVI_TDL_ReleaseImage(&fdFrame);
           break;
         }
         std::stringstream res_ss;
@@ -70,8 +70,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         fwrite(res_ss.str().c_str(), res_ss.str().size(), 1, fp);
         fclose(fp);
 
-        CVI_AI_Free(&obj_meta);
-        CVI_AI_ReleaseImage(&fdFrame);
+        CVI_TDL_Free(&obj_meta);
+        CVI_TDL_ReleaseImage(&fdFrame);
         break;
       }
     }
@@ -85,16 +85,16 @@ int main(int argc, char* argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
 
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
   std::string image_root = argv[3];
   std::string res_path = argv[4];
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV6, model_path.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, model_path.c_str());
   if (ret != CVI_SUCCESS) {
     printf("open model failed %#x %s!\n", ret, model_path.c_str());
     return ret;
@@ -111,12 +111,12 @@ int main(int argc, char* argv[]) {
   std::cout << "model opened:" << model_path << std::endl;
 
   // set thershold official 0.03 0.65
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV6, 0.03);
-  CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV6, 0.65);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, 0.03);
+  CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, 0.65);
 
-  bench_mark_all(bench_path, image_root, res_path, ai_handle);
+  bench_mark_all(bench_path, image_root, res_path, tdl_handle);
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;
 }

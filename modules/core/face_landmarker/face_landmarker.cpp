@@ -1,13 +1,13 @@
 #include "face_landmarker.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 
 #define NAME_SCORE "fc1_Gemm_dequant"
 
-namespace cviai {
+namespace cvitdl {
 
 FaceLandmarker::FaceLandmarker() : Core(CVI_MEM_DEVICE) {}
 
@@ -16,7 +16,7 @@ FaceLandmarker::~FaceLandmarker() {}
 int FaceLandmarker::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   for (uint32_t i = 0; i < 3; i++) {
     (*data)[0].factor[i] = 0.99;
@@ -24,13 +24,13 @@ int FaceLandmarker::setupInputPreprocess(std::vector<InputPreprecessSetup> *data
   }
   (*data)[0].use_quantize_scale = false;
   (*data)[0].use_crop = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
+int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   uint32_t img_width = frame->stVFrame.u32Width;
@@ -38,7 +38,7 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
   // just one face
   for (uint32_t i = 0; i < 1; i++) {
-    cvai_face_info_t face_info = info_rescale_c(img_width, img_height, *meta, i);
+    cvtdl_face_info_t face_info = info_rescale_c(img_width, img_height, *meta, i);
 
     int max_side = 0;
     Preprocessing(&face_info, &max_side, img_width, img_height);
@@ -49,14 +49,14 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       return ret;
     }
 
     const TensorInfo &tinfo = getOutputTensorInfo(NAME_SCORE);
     float *pts = tinfo.get<float>();
     size_t pts_size = tinfo.tensor_elem;
-    cvai_pts_t landmarks_106;
+    cvtdl_pts_t landmarks_106;
     landmarks_106.size = landmark_num;
     landmarks_106.x = (float *)malloc(sizeof(float) * landmark_num);
     landmarks_106.y = (float *)malloc(sizeof(float) * landmark_num);
@@ -67,7 +67,7 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       landmarks_106.x[i] = (pts[2 * i] + 1.0f) * half_max_side + face_info.bbox.x1;
       landmarks_106.y[i] = (pts[2 * i + 1] + 1.0f) * half_max_side + face_info.bbox.y1;
     }
-    cvai_pts_t landmarks_5;
+    cvtdl_pts_t landmarks_5;
     landmarks_5.size = 5;
     landmarks_5.x = (float *)malloc(sizeof(float) * landmarks_5.size);
     landmarks_5.y = (float *)malloc(sizeof(float) * landmarks_5.size);
@@ -84,12 +84,12 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
     meta->dms->landmarks_106 = landmarks_106;
     meta->dms->landmarks_5 = landmarks_5;
-    CVI_AI_FreeCpp(&face_info);
+    CVI_TDL_FreeCpp(&face_info);
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-void FaceLandmarker::Preprocessing(cvai_face_info_t *face_info, int *max_side, int img_width,
+void FaceLandmarker::Preprocessing(cvtdl_face_info_t *face_info, int *max_side, int img_width,
                                    int img_height) {
   // scale to 1.5 times
   float half_width = (face_info->bbox.x2 - face_info->bbox.x1) / 4;
@@ -109,4 +109,4 @@ void FaceLandmarker::Preprocessing(cvai_face_info_t *face_info, int *max_side, i
   face_info->bbox.y1 = std::max(((int)face_info->bbox.y1 - offset_y), 0);
   face_info->bbox.y2 = std::min(((int)face_info->bbox.y1 + *max_side), img_height);
 }
-}  // namespace cviai
+}  // namespace cvitdl

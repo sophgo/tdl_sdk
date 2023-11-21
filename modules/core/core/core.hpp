@@ -1,9 +1,9 @@
 #pragma once
-#include "core/core/cvai_core_types.h"
-#include "core/core/cvai_errno.h"
-#include "core/core/cvai_vpss_types.h"
+#include "core/core/cvtdl_core_types.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/core/cvtdl_vpss_types.h"
 
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #ifndef SIMPLY_MODEL
 #include "model_debugger.hpp"
 #endif
@@ -20,7 +20,7 @@
 #define DEFAULT_MODEL_THRESHOLD 0.5
 #define DEFAULT_MODEL_NMS_THRESHOLD 0.5
 
-namespace cviai {
+namespace cvitdl {
 
 struct CvimodelConfig {
   bool debug_mode = false;
@@ -98,7 +98,7 @@ class Core {
   int setVpssDepth(uint32_t in_index, uint32_t depth);
   int getVpssDepth(uint32_t in_index, uint32_t *depth);
   virtual int getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
-                           cvai_vpssconfig_t *chn_config);
+                           cvtdl_vpssconfig_t *chn_config);
   virtual void setModelThreshold(float threshold);
   virtual void setModelNmsThreshold(float threshold);
   float getModelThreshold();
@@ -111,8 +111,8 @@ class Core {
     m_debugger.setDirPath(dump_path);
 
     if (m_debugger.isEnable()) {
-      LOGW("************************AI SDK Debugger***********************\n");
-      LOGW("AI SDK Debugger is enabled!\n");
+      LOGW("************************TDL SDK Debugger***********************\n");
+      LOGW("TDL SDK Debugger is enabled!\n");
       LOGW("execute 'echo 1 > %s/enable' command to turn on debugger\n", dump_path.c_str());
       LOGW("execute 'echo 0 > %s/enable' command to turn off debugger\n", dump_path.c_str());
       LOGW("**************************************************************\n");
@@ -121,7 +121,7 @@ class Core {
 
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
 #endif
-  int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvai_bbox_t bbox,
+  int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,
                     uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
                     VPSS_SCALE_COEF_E reize_mode = VPSS_SCALE_COEF_BICUBIC);
   int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
@@ -189,8 +189,8 @@ class Core {
   }
   ////////////////////////////////////////////////////
 
-  virtual int onModelOpened() { return CVIAI_SUCCESS; }
-  virtual int onModelClosed() { return CVIAI_SUCCESS; }
+  virtual int onModelOpened() { return CVI_TDL_SUCCESS; }
+  virtual int onModelClosed() { return CVI_TDL_SUCCESS; }
 
   void setInputMemType(CVI_MEM_TYPE_E type) { mp_mi->conf.input_mem_type = type; }
   std::vector<VPSSConfig> m_vpss_config;
@@ -229,4 +229,4 @@ class Core {
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;
 };
-}  // namespace cviai
+}  // namespace cvitdl

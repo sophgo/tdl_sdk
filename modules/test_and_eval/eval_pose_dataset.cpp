@@ -11,11 +11,11 @@
 #include <string>
 #include <vector>
 
-#include "core/core/cvai_core_types.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_core_types.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
 std::vector<cv::Scalar> color = {cv::Scalar(51, 153, 255), cv::Scalar(0, 153, 76),
@@ -28,7 +28,7 @@ int skeleton[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12}, {5, 11}
                        {5, 6},   {5, 7},   {6, 8},   {7, 9},   {8, 10},  {1, 2},  {0, 1},
                        {0, 2},   {1, 3},   {2, 4},   {3, 5},   {4, 6}};
 
-void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvai_object_t *obj_meta, string save_path,
+void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta, string save_path,
                     float score) {
   bg->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
@@ -67,8 +67,8 @@ void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvai_object_t *obj_meta, string save
   CVI_SYS_Munmap((void *)bg->stVFrame.pu8VirAddr[0], bg->stVFrame.u32Length[0]);
 }
 
-std::string process_simcc_pose(cviai_handle_t ai_handle, std::string &pd_model_path,
-                               std::string &pose_model_path, cvai_object_t *p_obj,
+std::string process_simcc_pose(cvitdl_handle_t tdl_handle, std::string &pd_model_path,
+                               std::string &pose_model_path, cvtdl_object_t *p_obj,
                                VIDEO_FRAME_INFO_S *bg, std::vector<std::vector<int>> &boxes,
                                std::string &file_name) {
   static int model_init = 0;
@@ -76,39 +76,40 @@ std::string process_simcc_pose(cviai_handle_t ai_handle, std::string &pd_model_p
   CVI_S32 ret;
   if (model_init == 0) {
     if (pd_model_path != no_model) {
-      ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
-                             pd_model_path.c_str());
+      ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                              pd_model_path.c_str());
 
       if (ret != CVI_SUCCESS) {
-        printf("open CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed with %#x!\n", ret);
+        printf("open CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed with %#x!\n", ret);
         return "";
       }
     }
 
-    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, pose_model_path.c_str());
+    ret =
+        CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, pose_model_path.c_str());
 
     if (ret != CVI_SUCCESS) {
-      printf("open CVI_AI_SUPPORTED_MODEL_SIMCC_POSE model failed with %#x!\n", ret);
+      printf("open CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE model failed with %#x!\n", ret);
       return "";
     }
 
-    // CVI_AI_SetMaxDetNum(ai_handle, CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, 100);
+    // CVI_TDL_SetMaxDetNum(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, 100);
     model_init = 1;
   }
 
   if (pd_model_path != no_model) {
-    ret = CVI_AI_MobileDetV2_Pedestrian(ai_handle, bg, p_obj);
+    ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, bg, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_ScrFDFace failed with %#x!\n", ret);
+      printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
       return "";
     }
   } else {
-    CVI_AI_MemAllocInit(boxes.size(), p_obj);
+    CVI_TDL_MemAllocInit(boxes.size(), p_obj);
     p_obj->height = bg->stVFrame.u32Height;
     p_obj->width = bg->stVFrame.u32Width;
     p_obj->rescale_type = RESCALE_RB;
 
-    memset(p_obj->info, 0, sizeof(cvai_object_info_t) * p_obj->size);
+    memset(p_obj->info, 0, sizeof(cvtdl_object_info_t) * p_obj->size);
     for (uint32_t i = 0; i < p_obj->size; ++i) {
       p_obj->info[i].bbox.x1 = boxes[i][0];
       p_obj->info[i].bbox.y1 = boxes[i][1];
@@ -122,9 +123,9 @@ std::string process_simcc_pose(cviai_handle_t ai_handle, std::string &pd_model_p
   }
 
   if (p_obj->size > 0) {
-    ret = CVI_AI_Simcc_Pose(ai_handle, bg, p_obj);
+    ret = CVI_TDL_Simcc_Pose(tdl_handle, bg, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_Simcc_Pose failed with %#x!\n", ret);
+      printf("CVI_TDL_Simcc_Pose failed with %#x!\n", ret);
       return "";
     }
     std::stringstream ss;
@@ -147,26 +148,27 @@ std::string process_simcc_pose(cviai_handle_t ai_handle, std::string &pd_model_p
   }
 }
 
-std::string process_yolov8_pose(cviai_handle_t ai_handle, std::string &pose_model_path,
-                                cvai_object_t *p_obj, VIDEO_FRAME_INFO_S *bg,
+std::string process_yolov8_pose(cvitdl_handle_t tdl_handle, std::string &pose_model_path,
+                                cvtdl_object_t *p_obj, VIDEO_FRAME_INFO_S *bg,
                                 std::string &file_name) {
   static int model_init = 0;
   CVI_S32 ret;
   if (model_init == 0) {
-    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV8POSE, pose_model_path.c_str());
+    ret =
+        CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE, pose_model_path.c_str());
     printf("set interval\n");
     if (ret != CVI_SUCCESS) {
-      printf("open CVI_AI_SUPPORTED_MODEL_YOLOV8POSE model failed with %#x!\n", ret);
+      printf("open CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE model failed with %#x!\n", ret);
       return "";
     }
 
-    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV8POSE, 0.01);
+    CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE, 0.01);
     model_init = 1;
   }
 
-  ret = CVI_AI_Yolov8_Pose(ai_handle, bg, p_obj);
+  ret = CVI_TDL_Yolov8_Pose(tdl_handle, bg, p_obj);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_AI_Yolov8_Pose failed with %#x!\n", ret);
+    printf("CVI_TDL_Yolov8_Pose failed with %#x!\n", ret);
     return "";
   }
   std::stringstream ss;
@@ -192,8 +194,8 @@ std::string process_yolov8_pose(cviai_handle_t ai_handle, std::string &pose_mode
   return ss.str();
 }
 
-std::string process_hrnet_pose(cviai_handle_t ai_handle, std::string &pd_model_path,
-                               std::string &pose_model_path, cvai_object_t *p_obj,
+std::string process_hrnet_pose(cvitdl_handle_t tdl_handle, std::string &pd_model_path,
+                               std::string &pose_model_path, cvtdl_object_t *p_obj,
                                VIDEO_FRAME_INFO_S *bg, std::vector<std::vector<int>> &boxes,
                                std::string &file_name) {
   static int model_init = 0;
@@ -201,33 +203,34 @@ std::string process_hrnet_pose(cviai_handle_t ai_handle, std::string &pd_model_p
   CVI_S32 ret;
   if (model_init == 0) {
     if (pd_model_path != no_model) {
-      ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
-                             pd_model_path.c_str());
+      ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                              pd_model_path.c_str());
 
       if (ret != CVI_SUCCESS) {
-        printf("open CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed with %#x!\n", ret);
+        printf("open CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed with %#x!\n", ret);
         return "";
       }
     }
 
-    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, pose_model_path.c_str());
-    // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, true);
+    ret =
+        CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, pose_model_path.c_str());
+    // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, true);
 
     if (ret != CVI_SUCCESS) {
-      printf("open CVI_AI_SUPPORTED_MODEL_HRNET_POSE model failed with %#x!\n", ret);
+      printf("open CVI_TDL_SUPPORTED_MODEL_HRNET_POSE model failed with %#x!\n", ret);
       return "";
     }
     model_init = 1;
   }
 
   if (pd_model_path != no_model) {
-    ret = CVI_AI_MobileDetV2_Pedestrian(ai_handle, bg, p_obj);
+    ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, bg, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_ScrFDFace failed with %#x!\n", ret);
+      printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
       return "";
     }
   } else {
-    CVI_AI_MemAllocInit(boxes.size(), p_obj);
+    CVI_TDL_MemAllocInit(boxes.size(), p_obj);
     p_obj->height = bg->stVFrame.u32Height;
     p_obj->width = bg->stVFrame.u32Width;
     p_obj->rescale_type = RESCALE_RB;
@@ -235,7 +238,7 @@ std::string process_hrnet_pose(cviai_handle_t ai_handle, std::string &pd_model_p
     std::cout << "p_obj->height = " << p_obj->height << ", p_obj->width = " << p_obj->width
               << std::endl;
 
-    memset(p_obj->info, 0, sizeof(cvai_object_info_t) * p_obj->size);
+    memset(p_obj->info, 0, sizeof(cvtdl_object_info_t) * p_obj->size);
     for (uint32_t i = 0; i < p_obj->size; ++i) {
       p_obj->info[i].bbox.x1 = boxes[i][0];
       p_obj->info[i].bbox.y1 = boxes[i][1];
@@ -249,9 +252,9 @@ std::string process_hrnet_pose(cviai_handle_t ai_handle, std::string &pd_model_p
   }
 
   if (p_obj->size > 0) {
-    ret = CVI_AI_Hrnet_Pose(ai_handle, bg, p_obj);
+    ret = CVI_TDL_Hrnet_Pose(tdl_handle, bg, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_Hrnet_Pose failed with %#x!\n", ret);
+      printf("CVI_TDL_Hrnet_Pose failed with %#x!\n", ret);
       return "";
     }
     std::stringstream ss;
@@ -301,15 +304,15 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
@@ -348,37 +351,37 @@ int main(int argc, char *argv[]) {
     VIDEO_FRAME_INFO_S bg;
     // std::cout << strf<< std::endl;
 
-    ret = CVI_AI_ReadImage(strf.c_str(), &bg, img_format);
+    ret = CVI_TDL_ReadImage(strf.c_str(), &bg, img_format);
     std::cout << "ret: " << ret << std::endl;
 
-    std::cout << "CVI_AI_ReadImage done\t";
+    std::cout << "CVI_TDL_ReadImage done\t";
     if (ret != CVI_SUCCESS) {
       std::cout << "Convert to video frame failed with:" << ret << ",file:" << strf << std::endl;
       continue;
     }
 
     float score;  // for show
-    cvai_object_t obj_meta = {0};
+    cvtdl_object_t obj_meta = {0};
     std::string str_res;
     if (process_flag == "simcc") {
       str_res =
-          process_simcc_pose(ai_handle, pd_model, pose_model, &obj_meta, &bg, boxes, file_name);
-      CVI_AI_GetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_SIMCC_POSE, &score);
+          process_simcc_pose(tdl_handle, pd_model, pose_model, &obj_meta, &bg, boxes, file_name);
+      CVI_TDL_GetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, &score);
 
     } else if (process_flag == "yolov8pose") {
-      str_res = process_yolov8_pose(ai_handle, pose_model, &obj_meta, &bg, file_name);
-      CVI_AI_GetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV8POSE, &score);
+      str_res = process_yolov8_pose(tdl_handle, pose_model, &obj_meta, &bg, file_name);
+      CVI_TDL_GetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE, &score);
 
     } else if (process_flag == "hrnet") {
       str_res =
-          process_hrnet_pose(ai_handle, pd_model, pose_model, &obj_meta, &bg, boxes, file_name);
-      CVI_AI_GetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, &score);
+          process_hrnet_pose(tdl_handle, pd_model, pose_model, &obj_meta, &bg, boxes, file_name);
+      CVI_TDL_GetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, &score);
     } else {
       printf("Error: process_flag should be simcc, hrnet or yolov8pose, but got %s !\n",
              process_flag.c_str());
       fclose(fp);
-      CVI_AI_ReleaseImage(&bg);
-      CVI_AI_DestroyHandle(ai_handle);
+      CVI_TDL_ReleaseImage(&bg);
+      CVI_TDL_DestroyHandle(tdl_handle);
       return -1;
     }
 
@@ -399,11 +402,11 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // CVI_AI_ReleaseImage(&bg);
+    // CVI_TDL_ReleaseImage(&bg);
 
     PIXEL_FORMAT_E img_format2 = PIXEL_FORMAT_BGR_888;
     VIDEO_FRAME_INFO_S bg2;
-    CVI_AI_ReadImage(strf.c_str(), &bg2, img_format2);
+    CVI_TDL_ReadImage(strf.c_str(), &bg2, img_format2);
     std::cout << "done 1 " << std::endl;
     std::string show_root2 = argv[8];
     std::string save_path = join_path(show_root2, file_name);
@@ -414,12 +417,12 @@ int main(int argc, char *argv[]) {
     //   std::string save_path = join_path(show_root, file_name);
     //   show_keypoints(&bg, &obj_meta, save_path, score);
     // }
-    CVI_AI_ReleaseImage(&bg);
-    CVI_AI_ReleaseImage(&bg2);
-    CVI_AI_Free(&obj_meta);
+    CVI_TDL_ReleaseImage(&bg);
+    CVI_TDL_ReleaseImage(&bg2);
+    CVI_TDL_Free(&obj_meta);
   }
   fclose(fp);
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

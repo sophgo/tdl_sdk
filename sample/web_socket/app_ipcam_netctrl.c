@@ -14,7 +14,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "ai_type.h"
 #include "app_ipcam_comm.h"
 #include "app_ipcam_net.h"
 #include "app_ipcam_netctrl.h"
@@ -25,6 +24,7 @@
 #include "cvi_comm_isp.h"
 #include "cvi_isp.h"
 #include "cvi_vpss.h"
+#include "tdl_type.h"
 /**************************************************************************
  *                              M A C R O S                               *
  **************************************************************************/
@@ -173,7 +173,7 @@ static int GetWsAddrCallBack(void *param, const char *cmd, const char *val) {
 static int GetAudioInfoCallBack(void *param, const char *cmd, const char *val) {
   cJSON *cjsonAudioAttr = NULL;
   char *str = NULL;
-  SAMPLE_AI_TYPE ai_type = ai_param_get();
+  SAMPLE_TDL_TYPE ai_type = ai_param_get();
   cjsonAudioAttr = cJSON_CreateObject();
 
   printf("enter: %s\n", __func__);
@@ -206,7 +206,7 @@ static int SetAudioInfoCallBack(void *param, const char *cmd, const char *val) {
   }
   cjsonObj = cJSON_GetObjectItem(cjsonParser, "main_enabled");
   _NULL_POINTER_CHECK_(cjsonObj->valuestring, -1);
-  SAMPLE_AI_TYPE ai_type = (SAMPLE_AI_TYPE)atoi(cjsonObj->valuestring);
+  SAMPLE_TDL_TYPE ai_type = (SAMPLE_TDL_TYPE)atoi(cjsonObj->valuestring);
   ai_param_set(ai_type);
   CVI_NET_AddCgiResponse(param, "ret: %d\n", ret);
   return 0;

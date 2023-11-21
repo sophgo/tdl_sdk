@@ -7,10 +7,10 @@ output:
     mask face info
 */
 
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app.h"
+#include "cvi_tdl_media.h"
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 
@@ -42,23 +42,23 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
-  cvai_face_t p_obj = {0};
+  cvtdl_face_t p_obj = {0};
 
   const char *fd_model_path = argv
       [1];  // /mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/scrfd_432_768_1x.cvimodel
   const char *fm_model_path = argv
       [2];  // /mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/mask_classifier.cvimodel
   const char *img_path = argv[3];  // /mnt/data/admin1_data/alios_test/a.bin
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, fd_model_path);
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, fm_model_path);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, fd_model_path);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MASKCLASSIFICATION, fm_model_path);
   VIDEO_FRAME_INFO_S bg;
-  ret = CVI_AI_LoadBinImage(img_path, &bg, PIXEL_FORMAT_RGB_888_PLANAR);
+  ret = CVI_TDL_LoadBinImage(img_path, &bg, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     printf("failed to open file\n");
     return ret;
@@ -67,12 +67,12 @@ int main(int argc, char *argv[]) {
   }
 
   // get bbox
-  ret = CVI_AI_ScrFDFace(ai_handle, &bg, &p_obj);
+  ret = CVI_TDL_ScrFDFace(tdl_handle, &bg, &p_obj);
   if (ret != CVI_SUCCESS) {
     printf("failed to run face detection\n");
     return ret;
   }
-  ret = CVI_AI_MaskClassification(ai_handle, &bg, &p_obj);
+  ret = CVI_TDL_MaskClassification(tdl_handle, &bg, &p_obj);
   CVI_VPSS_ReleaseChnFrame(0, 0, &bg);  //(&bg);
   printf("boxes=[");
   for (uint32_t i = 0; i < p_obj.size; i++) {
@@ -80,6 +80,6 @@ int main(int argc, char *argv[]) {
            p_obj.info[i].bbox.x2, p_obj.info[i].bbox.y2, p_obj.info[i].mask_score);
   }
   printf("]");
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return true;
 }

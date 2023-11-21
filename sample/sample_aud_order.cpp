@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include "cvi_audio.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
 #include "sample_utils.h"
 
 #include <fcntl.h>
@@ -50,8 +50,8 @@ static int SAMPLE_RATE;
 static int SECOND;
 static int FRAME_SIZE;
 
-// Init cviai handle.
-cviai_handle_t ai_handle = NULL;
+// Init cvi_tdl handle.
+cvitdl_handle_t tdl_handle = NULL;
 MUTEXAUTOLOCK_INIT(ResultMutex);
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
@@ -70,7 +70,7 @@ void *thread_audio(void *arg) {
   std::array<int, SIZE> buffer_temp;
   while (gRun) {
     s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_AUDIO_BLOCK_MODE);  // Get audio frame
-    if (s32Ret != CVIAI_SUCCESS) {
+    if (s32Ret != CVI_TDL_SUCCESS) {
       printf("CVI_AI_GetFrame --> none!!\n");
       continue;
     } else {
@@ -86,7 +86,7 @@ void *thread_audio(void *arg) {
   }
 
   s32Ret = CVI_AI_ReleaseFrame(0, 0, &stFrame, &stAecFrm);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_ReleaseFrame Failed!!\n");
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_ReleaseFrame Failed!!\n");
 
   pthread_exit(NULL);
 }
@@ -136,8 +136,8 @@ void *thread_infer(void *arg) {
     }
     // printf("maxvalsound:%d,meanv:%f\n", maxval_sound, meanval / (SAMPLE_RATE * SECOND));
     if (!record) {
-      int ret = CVI_AI_SoundClassification_V2(ai_handle, &Frame, &pre_label);  // Detect the audio
-      if (ret == CVIAI_SUCCESS) {
+      int ret = CVI_TDL_SoundClassification_V2(tdl_handle, &Frame, &pre_label);  // Detect the audio
+      if (ret == CVI_TDL_SUCCESS) {
         printf("esc class: %s\n", enumStr[pre_label + start_index]);
         if (pre_label != 0) {
           // char output_cur[128] ;
@@ -193,19 +193,19 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
   // STEP 2:cvitek_audin_uplink_start
   //_set_audin_config
   s32Ret = CVI_AI_SetPubAttr(0, &AudinAttr);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_SetPubAttr failed with %#x!\n", s32Ret);
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_SetPubAttr failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_Enable(0);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_Enable failed with %#x!\n", s32Ret);
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_Enable failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_EnableChn(0, 0);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_SetVolume(0, 4);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
 
   printf("SET_AUDIO_ATTR success!!\n");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int main(int argc, char **argv) {
@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
         "\t\tRECORD, record input to file, 0: disable 1. enable.\n"
         "\t\tOUTPUT, output file path: {output file path}.raw\n",
         argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   SAMPLE_RATE = atoi(argv[2]);
@@ -240,8 +240,8 @@ int main(int argc, char **argv) {
     que.push(tmp_arr);
   }
 
-  CVI_S32 ret = CVIAI_SUCCESS;
-  if (CVI_AUDIO_INIT() == CVIAI_SUCCESS) {
+  CVI_S32 ret = CVI_TDL_SUCCESS;
+  if (CVI_AUDIO_INIT() == CVI_TDL_SUCCESS) {
     printf("CVI_AUDIO_INIT success!!\n");
   } else {
     printf("CVI_AUDIO_INIT failure!!\n");
@@ -251,27 +251,28 @@ int main(int argc, char **argv) {
   SET_AUDIO_ATTR();
 
   ret = CVI_AI_SetVolume(0, 12);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("SetVolume failed !!!!!!!!!!!!!!!!!! with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
 
-  if (ret != CVIAI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+  if (ret != CVI_TDL_SUCCESS) {
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, argv[1]);
-  if (ret != CVIAI_SUCCESS) {
-    CVI_AI_DestroyHandle(ai_handle);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, argv[1]);
+  if (ret != CVI_TDL_SUCCESS) {
+    CVI_TDL_DestroyHandle(tdl_handle);
     return ret;
   }
 
-  // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, true);
-  CVI_AI_SetPerfEvalInterval(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
-                             10);  // only used to performance evaluation
+  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
+  // true);
+  CVI_TDL_SetPerfEvalInterval(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
+                              10);  // only used to performance evaluation
   if (argc == 7) {
     record = atoi(argv[5]) ? true : false;
     outpath = (char *)malloc(strlen(argv[6]));
@@ -288,6 +289,6 @@ int main(int argc, char **argv) {
     free(outpath);
   }
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return 0;
 }

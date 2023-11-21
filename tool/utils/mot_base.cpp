@@ -16,8 +16,8 @@ CVI_S32 GET_TARGET_TYPE(TARGET_TYPE_e *target_type, char *text) {
   return CVI_SUCCESS;
 }
 
-CVI_S32 GET_PREDEFINED_CONFIG(cvai_deepsort_config_t *ds_conf, TARGET_TYPE_e target_type) {
-  CVI_AI_DeepSORT_GetDefaultConfig(ds_conf);
+CVI_S32 GET_PREDEFINED_CONFIG(cvtdl_deepsort_config_t *ds_conf, TARGET_TYPE_e target_type) {
+  CVI_TDL_DeepSORT_GetDefaultConfig(ds_conf);
   switch (target_type) {
     case PERSON:
       /** default config

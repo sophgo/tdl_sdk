@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <memory>
 
-namespace cviai {
+namespace cvitdl {
 namespace demangle {
 std::string demangle(const char* name) {
   int status = -4;  // some arbitrary value to eliminate the compiler warning
@@ -14,14 +14,14 @@ std::string demangle(const char* name) {
   return (status == 0) ? res.get() : name;
 }
 }  // namespace demangle
-}  // namespace cviai
+}  // namespace cvitdl
 
 #else
 
-namespace cviai {
+namespace cvitdl {
 namespace demangle {
 // does nothing if not g++
 std::string demangle(const char* name) { return name; }
 }  // namespace demangle
-}  // namespace cviai
+}  // namespace cvitdl
 #endif

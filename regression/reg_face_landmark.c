@@ -1,12 +1,12 @@
 #define _GNU_SOURCE
 #include <dirent.h>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_perfetto.h"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_perfetto.h"
 
-cviai_handle_t facelib_handle = NULL;
+cvitdl_handle_t facelib_handle = NULL;
 
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
@@ -22,7 +22,7 @@ float sqrt3(const float x) {
   return u.x;
 }
 
-float compute_nme(cvai_pts_t *labels, cvai_pts_t *pts) {
+float compute_nme(cvtdl_pts_t *labels, cvtdl_pts_t *pts) {
   float sum = 0.0;
   for (int i = 0; i < 5; ++i) {
     float _dist = 0.0;
@@ -66,19 +66,19 @@ static int run(const char *img_dir, float *nme, int *total) {
     img_name[strlen(img_name) - 1] = '\0';
     printf("%s\n", img_name);
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(img_name, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
+    CVI_S32 ret = CVI_TDL_ReadImage(img_name, &frame, PIXEL_FORMAT_RGB_888);
+    if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       continue;
     }
 
-    cvai_face_t face;
-    memset(&face, 0, sizeof(cvai_face_t));
+    cvtdl_face_t face;
+    memset(&face, 0, sizeof(cvtdl_face_t));
     face.size = 1;
     face.width = frame.stVFrame.u32Width;
     face.height = frame.stVFrame.u32Height;
-    face.info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * face.size);
-    memset(face.info, 0, sizeof(cvai_face_info_t) * face.size);
+    face.info = (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * face.size);
+    memset(face.info, 0, sizeof(cvtdl_face_info_t) * face.size);
     face.info[0].bbox.x1 = bbox[0];
     face.info[0].bbox.y1 = bbox[2];
     face.info[0].bbox.x2 = bbox[1];
@@ -90,42 +90,42 @@ static int run(const char *img_dir, float *nme, int *total) {
       face.info[0].pts.x[i] = landmark[i];
       face.info[0].pts.y[i] = landmark[i + 1];
     }
-    face.dms = (cvai_dms_t *)malloc(sizeof(cvai_dms_t));
+    face.dms = (cvtdl_dms_t *)malloc(sizeof(cvtdl_dms_t));
     face.dms->dms_od.info = NULL;
-    CVI_AI_FaceLandmarker(facelib_handle, &frame, &face);
+    CVI_TDL_FaceLandmarker(facelib_handle, &frame, &face);
     *nme += compute_nme(&(face.info[0].pts), &(face.dms->landmarks_5));
 
     (*total)++;
-    CVI_AI_FreeDMS(face.dms);
-    CVI_AI_Free(&face);
-    CVI_AI_ReleaseImage(&frame);
+    CVI_TDL_FreeDMS(face.dms);
+    CVI_TDL_Free(&face);
+    CVI_TDL_ReleaseImage(&frame);
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printf("Usage: %s <face landmark model path> <face image dir>.\n", argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
-  CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_TDL_PerfettoInit();
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_CreateHandle(&facelib_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACELANDMARKER, argv[1]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_FACELANDMARKER, argv[1]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
@@ -135,5 +135,5 @@ int main(int argc, char *argv[]) {
   run(argv[2], &nme, &total);
   printf("nme:%lf total: %d avg: %.3lf\n", nme, total, nme / total);
 
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_TDL_DestroyHandle(facelib_handle);
 }

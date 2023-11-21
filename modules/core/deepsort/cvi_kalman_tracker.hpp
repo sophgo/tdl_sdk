@@ -47,7 +47,7 @@ class KalmanTracker : public Tracker {
 
   KalmanTracker() = delete;
   KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox, const FEATURE &feature,
-                const cvai_kalman_tracker_config_t &ktracker_conf);
+                const cvtdl_kalman_tracker_config_t &ktracker_conf);
   ~KalmanTracker();
 
   void update_state(bool is_matched, int max_unmatched_num = 40, int accreditation_thr = 3);
@@ -56,10 +56,10 @@ class KalmanTracker : public Tracker {
 
   uint64_t get_pair_trackid();
   void false_update_from_pair(KalmanFilter &kf, KalmanTracker *p_other,
-                              cvai_deepsort_config_t *conf);
+                              cvtdl_deepsort_config_t *conf);
   void update_pair_info(KalmanTracker *p_other);
-  void predict(KalmanFilter &kf, cvai_deepsort_config_t *conf);
-  void update(KalmanFilter &kf, const stRect *p_bbox, cvai_deepsort_config_t *conf);
+  void predict(KalmanFilter &kf, cvtdl_deepsort_config_t *conf);
+  void update(KalmanFilter &kf, const stRect *p_bbox, cvtdl_deepsort_config_t *conf);
   BBOX getBBox_TLWH() const;
 
   static COST_MATRIX getCostMatrix_Feature(const std::vector<KalmanTracker> &KTrackers,
@@ -79,7 +79,7 @@ class KalmanTracker : public Tracker {
                                                const std::vector<BBOX> &BBoxes,
                                                const std::vector<int> &Tracker_IDXes,
                                                const std::vector<int> &BBox_IDXes,
-                                               const cvai_kalman_filter_config_t &kfilter_conf,
+                                               const cvtdl_kalman_filter_config_t &kfilter_conf,
                                                float upper_bound);
 
   static void restrictCostMatrix_Mahalanobis(COST_MATRIX &cost_matrix, const KalmanFilter &KF_,
@@ -87,7 +87,7 @@ class KalmanTracker : public Tracker {
                                              const std::vector<BBOX> &BBoxes,
                                              const std::vector<int> &Tracker_IDXes,
                                              const std::vector<int> &BBox_IDXes,
-                                             const cvai_kalman_filter_config_t &kfilter_conf,
+                                             const cvtdl_kalman_filter_config_t &kfilter_conf,
                                              float upper_bound);
 
   static void restrictCostMatrix_BBox(COST_MATRIX &cost_matrix,

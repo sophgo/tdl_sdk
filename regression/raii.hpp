@@ -1,11 +1,11 @@
 #pragma once
 #include <cvi_comm_vb.h>
-#include <cviai.h>
 #include <memory>
 #include <string>
 #include "cvi_comm.h"
+#include "cvi_tdl.h"
 
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
 // Convenience class for loading image from file.
@@ -35,7 +35,7 @@ class Image {
   bool m_opened;
 };
 
-// A class which setup and destroy AI model
+// A class which setup and destroy TDL model
 class VpssPreprocessor {
  public:
   VpssPreprocessor(VPSS_GRP grp, VPSS_CHN chn, uint32_t width, uint32_t height,
@@ -49,13 +49,13 @@ class VpssPreprocessor {
 
   void open();
   void close();
-  void setChnConfig(const cvai_vpssconfig_t &chn_config);
+  void setChnConfig(const cvtdl_vpssconfig_t &chn_config);
   void setChnConfig(const VPSS_CHN_ATTR_S &chn_config);
   void setGrpConfig(uint32_t width, uint32_t height, PIXEL_FORMAT_E format);
   void preprocess(const VIDEO_FRAME_INFO_S *input_frame, VIDEO_FRAME_INFO_S *output_frame);
   void resetVpss(uint32_t width, uint32_t height, PIXEL_FORMAT_E format,
                  const VPSS_CHN_ATTR_S &chn_config);
-  void resetVpss(const Image &image, const cvai_vpssconfig_t &chn_config);
+  void resetVpss(const Image &image, const cvtdl_vpssconfig_t &chn_config);
 
  private:
   VPSS_GRP m_grp_id;
@@ -63,47 +63,47 @@ class VpssPreprocessor {
   uint32_t m_grp_width;
   uint32_t m_grp_height;
   PIXEL_FORMAT_E m_format;
-  cvai_vpssconfig_t m_vpss_chn_config;
+  cvtdl_vpssconfig_t m_vpss_chn_config;
 };
 
-// A class which setup and destroy AI model
-class AIModelHandler {
+// A class which setup and destroy TDL model
+class TDLModelHandler {
  public:
-  AIModelHandler(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E index,
-                 const std::string &model_path, bool skip_vpsspreprocess = false);
+  TDLModelHandler(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E index,
+                  const std::string &model_path, bool skip_vpsspreprocess = false);
 
-  ~AIModelHandler();
-  AIModelHandler(const AIModelHandler &) = delete;
-  AIModelHandler &operator=(const AIModelHandler &) = delete;
+  ~TDLModelHandler();
+  TDLModelHandler(const TDLModelHandler &) = delete;
+  TDLModelHandler &operator=(const TDLModelHandler &) = delete;
 
   void open();
   void close();
 
  protected:
   bool m_is_model_opened;
-  cviai_handle_t m_handle;
-  const CVI_AI_SUPPORTED_MODEL_E m_model_index;
+  cvitdl_handle_t m_handle;
+  const CVI_TDL_SUPPORTED_MODEL_E m_model_index;
   const std::string m_model_path;
   const bool m_skip_vpsspreprocess;
 };
 
-// A class which manage AI Object life cycle
+// A class which manage TDL Object life cycle
 template <typename T>
-class AIObject {
+class TDLObject {
  public:
-  AIObject() {
+  TDLObject() {
     ptr_obj = (T *)malloc(sizeof(T));
     memset(ptr_obj, 0, sizeof(T));
   }
 
-  ~AIObject() { this->release(); }
+  ~TDLObject() { this->release(); }
 
-  AIObject(const AIObject &) = delete;
-  AIObject &operator=(const AIObject &) = delete;
+  TDLObject(const TDLObject &) = delete;
+  TDLObject &operator=(const TDLObject &) = delete;
 
   void release() {
     if (ptr_obj) {
-      CVI_AI_Free(ptr_obj);
+      CVI_TDL_Free(ptr_obj);
       free(ptr_obj);
       ptr_obj = NULL;
     }
@@ -118,4 +118,4 @@ class AIObject {
 };
 
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

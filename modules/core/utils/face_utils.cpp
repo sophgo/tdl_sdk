@@ -1,7 +1,7 @@
 #include "face_utils.hpp"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 
-#ifdef ENABLE_CVIAI_CV_UTILS
+#ifdef ENABLE_CVI_TDL_CV_UTILS
 #include "cv/imgproc.hpp"
 #else
 #include "opencv2/imgproc.hpp"
@@ -84,9 +84,9 @@ static cv::Mat get_similarity_transform(const vector<cv::Point2f> &src_pts,
   return trans(cv::Rect(0, 0, 2, trans.rows)).t();
 }
 
-namespace cviai {
+namespace cvitdl {
 
-inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width, const int height,
+inline int getTfmFromFaceInfo(const cvtdl_face_info_t &face_info, const int width, const int height,
                               cv::Mat *tfm) {
   assert(width == 96 || width == 112 || (width == 64 && height == 64));
   assert(height == 112 || (width == 64 && height == 64));
@@ -135,13 +135,13 @@ inline int getTfmFromFaceInfo(const cvai_face_info_t &face_info, const int width
   return 0;
 }
 
-int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &face_info) {
+int face_align(const cv::Mat &image, cv::Mat &aligned, const cvtdl_face_info_t &face_info) {
   cv::Mat tfm;
   if (getTfmFromFaceInfo(face_info, aligned.cols, aligned.rows, &tfm) != 0) {
     return -1;
   }
-#ifdef ENABLE_CVIAI_CV_UTILS
-  cviai::warpAffine(image, aligned, tfm, aligned.size(), INTER_NEAREST);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+  cvitdl::warpAffine(image, aligned, tfm, aligned.size(), INTER_NEAREST);
 #else
   cv::warpAffine(image, aligned, tfm, aligned.size(), cv::INTER_NEAREST);
 #endif
@@ -149,7 +149,7 @@ int face_align(const cv::Mat &image, cv::Mat &aligned, const cvai_face_info_t &f
 }
 
 int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFrame,
-                   const cvai_face_info_t &face_info) {
+                   const cvtdl_face_info_t &face_info) {
   if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
       inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     return -1;
@@ -195,4 +195,4 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
   return 0;
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

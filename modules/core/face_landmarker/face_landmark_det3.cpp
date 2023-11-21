@@ -4,21 +4,21 @@
 #include <cmath>
 #include <iterator>
 
-#include <core/core/cvai_errno.h>
+#include <core/core/cvtdl_errno.h>
 #include <error_msg.hpp>
 #include <iostream>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_landmark_det3.hpp"
 
-namespace cviai {
+namespace cvitdl {
 
 FaceLandmarkDet3::FaceLandmarkDet3() : Core(CVI_MEM_DEVICE) {}
 
@@ -41,9 +41,9 @@ int FaceLandmarkDet3::onModelOpened() {
     }
   }
   if (out_names_.count("score") == 0 || out_names_.count("point") == 0) {
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 FaceLandmarkDet3::~FaceLandmarkDet3() {}
@@ -51,7 +51,7 @@ FaceLandmarkDet3::~FaceLandmarkDet3() {}
 int FaceLandmarkDet3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("FaceLandmarkDet3 only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   (*data)[0].factor[0] = 0.0078125;
@@ -62,10 +62,10 @@ int FaceLandmarkDet3::setupInputPreprocess(std::vector<InputPreprecessSetup> *da
   (*data)[0].mean[2] = 0.99609375;
   (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int FaceLandmarkDet3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *facemeta) {
+int FaceLandmarkDet3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *facemeta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
 
   // if(facemeta->size == 1){
@@ -75,7 +75,7 @@ int FaceLandmarkDet3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *facem
   // }
 
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     LOGW("FaceLandmarkDet3 run inference failed\n");
     return ret;
   }
@@ -84,12 +84,12 @@ int FaceLandmarkDet3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *facem
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, facemeta);
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void FaceLandmarkDet3::outputParser(const int image_width, const int image_height,
                                     const int frame_width, const int frame_height,
-                                    cvai_face_t *facemeta) {
+                                    cvtdl_face_t *facemeta) {
   TensorInfo oinfo = getOutputTensorInfo(out_names_["point"]);
   float *output_point = getOutputRawPtr<float>(oinfo.tensor_name);
 
@@ -112,7 +112,7 @@ void FaceLandmarkDet3::outputParser(const int image_width, const int image_heigh
     pad_height = 0;
   }
 
-  CVI_AI_MemAllocInit(1, 5, facemeta);
+  CVI_TDL_MemAllocInit(1, 5, facemeta);
   facemeta->width = frame_width;
   facemeta->height = frame_height;
   facemeta->info[0].pts.score = score;
@@ -126,5 +126,5 @@ void FaceLandmarkDet3::outputParser(const int image_width, const int image_heigh
     facemeta->info[0].pts.y[i] = y;
   }
 }
-// namespace cviai
-}  // namespace cviai
+// namespace cvitdl
+}  // namespace cvitdl

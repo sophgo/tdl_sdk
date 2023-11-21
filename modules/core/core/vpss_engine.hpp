@@ -2,7 +2,7 @@
 #include <cvi_comm_vb.h>
 #include "cvi_comm.h"
 
-namespace cviai {
+namespace cvitdl {
 
 class __attribute__((visibility("default"))) VpssEngine {
  public:
@@ -47,4 +47,4 @@ class __attribute__((visibility("default"))) VpssEngine {
   CVI_U8 m_dev = 0;
   VPSS_CROP_INFO_S m_crop_attr_reset;
 };
-}  // namespace cviai
+}  // namespace cvitdl

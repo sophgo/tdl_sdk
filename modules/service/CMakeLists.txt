@@ -13,10 +13,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../service
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/ive)
 
-set(FRS_SRCS cviai_service.cpp)
+set(FRS_SRCS cvi_tdl_service.cpp)
 
-project(cviai_service)
-message("add cviai service")
+project(cvi_tdl_service)
+message("add cvi tdl service")
 get_directory_property(MYDEFS COMPILE_DEFINITIONS)
 MESSAGE( STATUS "Compile defs contain: " ${MYDEFS} )
 add_library(${PROJECT_NAME} OBJECT ${FRS_SRCS})

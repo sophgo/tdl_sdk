@@ -1,11 +1,11 @@
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_utils.hpp"
 
 #include <cmath>
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #include "fall_detection.hpp"
 
 #define HISTORYPART_UPDATE 3  // 10//5
@@ -24,7 +24,7 @@ FallMD::FallMD() {
   this->isFall = false;
 };
 
-int FallMD::detect(cvai_object_t *obj) {
+int FallMD::detect(cvtdl_object_t *obj) {
   float history_extra_pred_x = 0.0;
   float history_extra_pred_y = 0.0;
   float history_bbox_x1 = 0.0;
@@ -104,7 +104,7 @@ int FallMD::detect(cvai_object_t *obj) {
 
       obj->info[i].pedestrian_properity->fall = this->isFall;
       std::vector<cv::Point2f> kp_preds(17);
-      cvai_pose17_meta_t pose = obj->info[i].pedestrian_properity->pose_17;
+      cvtdl_pose17_meta_t pose = obj->info[i].pedestrian_properity->pose_17;
       for (int kpi = 0; kpi < 17; ++kpi) {
         kp_preds[kpi].x = pose.x[kpi];
         kp_preds[kpi].y = pose.y[kpi];
@@ -140,7 +140,7 @@ int FallMD::detect(cvai_object_t *obj) {
       std::cout << "kp_preds[6].y : " << kp_preds[6].y << std::endl;
       */
 
-      cvai_bbox_t bbox = obj->info[i].bbox;
+      cvtdl_bbox_t bbox = obj->info[i].bbox;
 
       /*
       std::cout << "\n extra_pred.x : " << extra_pred.x << std::endl;
@@ -218,5 +218,5 @@ int FallMD::detect(cvai_object_t *obj) {
     this->history_bbox_y1.push(this->history_bbox_y1.back());
     this->history_bbox_y2.push(this->history_bbox_y2.back());
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }

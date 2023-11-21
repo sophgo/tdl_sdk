@@ -1,98 +1,98 @@
 #include "sample_utils.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
 #define FACE_FEAT_SIZE 256
-CVI_S32 get_od_model_info(const char *model_name, CVI_AI_SUPPORTED_MODEL_E *model_index,
+CVI_S32 get_od_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_index,
                           ODInferenceFunc *inference_func) {
   CVI_S32 ret = CVI_SUCCESS;
 
   if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    *inference_func = CVI_AI_MobileDetV2_Person_Vehicle;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
+    *inference_func = CVI_TDL_MobileDetV2_Person_Vehicle;
   } else if (strcmp(model_name, "mobiledetv2-person-pets") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS;
-    *inference_func = CVI_AI_MobileDetV2_Person_Pets;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS;
+    *inference_func = CVI_TDL_MobileDetV2_Person_Pets;
   } else if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    *inference_func = CVI_AI_MobileDetV2_COCO80;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
+    *inference_func = CVI_TDL_MobileDetV2_COCO80;
   } else if (strcmp(model_name, "mobiledetv2-vehicle") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
-    *inference_func = CVI_AI_MobileDetV2_Vehicle;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
+    *inference_func = CVI_TDL_MobileDetV2_Vehicle;
   } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-    *inference_func = CVI_AI_MobileDetV2_Pedestrian;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
+    *inference_func = CVI_TDL_MobileDetV2_Pedestrian;
   }
 #ifndef SIMPLY_MODEL
   else if (strcmp(model_name, "yolov3") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOV3;
-    *inference_func = CVI_AI_Yolov3;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
+    *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOX;
-    *inference_func = CVI_AI_YoloX;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
+    *inference_func = CVI_TDL_YoloX;
   }
 #endif
   else {
-    ret = CVIAI_FAILURE;
+    ret = CVI_TDL_FAILURE;
   }
   return ret;
 }
 
-CVI_S32 get_pd_model_info(const char *model_name, CVI_AI_SUPPORTED_MODEL_E *model_index,
+CVI_S32 get_pd_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_index,
                           ODInferenceFunc *inference_func) {
   CVI_S32 ret = CVI_SUCCESS;
 
   if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    *inference_func = CVI_AI_MobileDetV2_Person_Vehicle;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
+    *inference_func = CVI_TDL_MobileDetV2_Person_Vehicle;
   } else if (strcmp(model_name, "mobiledetv2-person-pets") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS;
-    *inference_func = CVI_AI_MobileDetV2_Person_Pets;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS;
+    *inference_func = CVI_TDL_MobileDetV2_Person_Pets;
   } else if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    *inference_func = CVI_AI_MobileDetV2_COCO80;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
+    *inference_func = CVI_TDL_MobileDetV2_COCO80;
   } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-    *inference_func = CVI_AI_MobileDetV2_Pedestrian;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
+    *inference_func = CVI_TDL_MobileDetV2_Pedestrian;
   }
 #ifndef SIMPLY_MODEL
   else if (strcmp(model_name, "yolov3") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOV3;
-    *inference_func = CVI_AI_Yolov3;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
+    *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOX;
-    *inference_func = CVI_AI_YoloX;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
+    *inference_func = CVI_TDL_YoloX;
   }
 #endif
   else {
-    ret = CVIAI_FAILURE;
+    ret = CVI_TDL_FAILURE;
   }
   return ret;
 }
 
-CVI_S32 get_vehicle_model_info(const char *model_name, CVI_AI_SUPPORTED_MODEL_E *model_index,
+CVI_S32 get_vehicle_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_index,
                                ODInferenceFunc *inference_func) {
   CVI_S32 ret = CVI_SUCCESS;
 
   if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    *inference_func = CVI_AI_MobileDetV2_Person_Vehicle;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
+    *inference_func = CVI_TDL_MobileDetV2_Person_Vehicle;
   } else if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    *inference_func = CVI_AI_MobileDetV2_COCO80;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
+    *inference_func = CVI_TDL_MobileDetV2_COCO80;
   } else if (strcmp(model_name, "mobiledetv2-vehicle") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
-    *inference_func = CVI_AI_MobileDetV2_Vehicle;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
+    *inference_func = CVI_TDL_MobileDetV2_Vehicle;
   }
 #ifndef SIMPLY_MODEL
   else if (strcmp(model_name, "yolov3") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOV3;
-    *inference_func = CVI_AI_Yolov3;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
+    *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
-    *model_index = CVI_AI_SUPPORTED_MODEL_YOLOX;
-    *inference_func = CVI_AI_YoloX;
+    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
+    *inference_func = CVI_TDL_YoloX;
   }
 #endif
   else {
-    ret = CVIAI_FAILURE;
+    ret = CVI_TDL_FAILURE;
   }
   return ret;
 }
@@ -110,12 +110,12 @@ int release_image(VIDEO_FRAME_INFO_S *frame) {
   return ret;
 }
 
-CVI_S32 register_gallery_feature(cviai_handle_t ai_handle, const char *sz_feat_file,
-                                 cvai_service_feature_array_t *p_feat_gallery) {
+CVI_S32 register_gallery_feature(cvitdl_handle_t tdl_handle, const char *sz_feat_file,
+                                 cvtdl_service_feature_array_t *p_feat_gallery) {
   FILE *fp = fopen(sz_feat_file, "rb");
   if (fp == NULL) {
     printf("read %s failed\n", sz_feat_file);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   fseek(fp, 0, SEEK_END);
   int len = ftell(fp);
@@ -126,7 +126,7 @@ CVI_S32 register_gallery_feature(cviai_handle_t ai_handle, const char *sz_feat_f
   printf("read %s done,len:%d\n", sz_feat_file, len);
   if (len != FACE_FEAT_SIZE) {
     free(ptr_feat);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   size_t src_size = 0;
   int8_t *p_new_feat = NULL;
@@ -150,26 +150,26 @@ CVI_S32 register_gallery_feature(cviai_handle_t ai_handle, const char *sz_feat_f
 }
 
 #ifndef SIMPLY_MODEL
-CVI_S32 register_gallery_face(cviai_handle_t ai_handle, const char *sz_img_file,
+CVI_S32 register_gallery_face(cvitdl_handle_t tdl_handle, const char *sz_img_file,
                               FaceInferFunc fd_func, FaceInferFunc fr_func,
-                              cvai_service_feature_array_t *p_feat_gallery) {
+                              cvtdl_service_feature_array_t *p_feat_gallery) {
   VIDEO_FRAME_INFO_S img_frm;
   CVI_S32 ret = CVI_SUCCESS;
   printf("to load:%s\n", sz_img_file);
-  if (CVI_SUCCESS != CVI_AI_LoadBinImage(sz_img_file, &img_frm, PIXEL_FORMAT_RGB_888_PLANAR)) {
-    printf("cviai read image :%s failed.\n", sz_img_file);
-    return CVIAI_FAILURE;
+  if (CVI_SUCCESS != CVI_TDL_LoadBinImage(sz_img_file, &img_frm, PIXEL_FORMAT_RGB_888_PLANAR)) {
+    printf("cvi_tdl read image :%s failed.\n", sz_img_file);
+    return CVI_TDL_FAILURE;
   }
 
-  cvai_face_t faceinfo;
+  cvtdl_face_t faceinfo;
   memset(&faceinfo, 0, sizeof(faceinfo));
-  if (CVI_SUCCESS != fd_func(ai_handle, &img_frm, &faceinfo)) {
+  if (CVI_SUCCESS != fd_func(tdl_handle, &img_frm, &faceinfo)) {
     printf("fd_inference failed\n");
     return CVI_FAILURE;
   }
   printf("detect face num:%u\n", faceinfo.size);
 
-  if (CVI_SUCCESS != fr_func(ai_handle, &img_frm, &faceinfo)) {
+  if (CVI_SUCCESS != fr_func(tdl_handle, &img_frm, &faceinfo)) {
     printf("fr inference failed\n");
     return CVI_FAILURE;
   }
@@ -184,7 +184,7 @@ CVI_S32 register_gallery_face(cviai_handle_t ai_handle, const char *sz_img_file,
 
   if (ret == CVI_FAILURE) {
     release_image(&img_frm);
-    CVI_AI_Free(&faceinfo);
+    CVI_TDL_Free(&faceinfo);
     return ret;
   }
 
@@ -219,10 +219,10 @@ CVI_S32 register_gallery_face(cviai_handle_t ai_handle, const char *sz_img_file,
   }
 
   release_image(&img_frm);
-  CVI_AI_Free(&faceinfo);
+  CVI_TDL_Free(&faceinfo);
   return ret;
 }
-CVI_S32 do_face_match(cviai_service_handle_t service_handle, cvai_face_info_t *p_face,
+CVI_S32 do_face_match(cvitdl_service_handle_t service_handle, cvtdl_face_info_t *p_face,
                       float thresh) {
   if (p_face->feature.size == 0) {
     return CVI_FAILURE;
@@ -231,7 +231,7 @@ CVI_S32 do_face_match(cviai_service_handle_t service_handle, cvai_face_info_t *p
   float score = 0;
   uint32_t size;
 
-  int ret = CVI_AI_Service_FaceInfoMatching(service_handle, p_face, 1, 0.1, &ind, &score, &size);
+  int ret = CVI_TDL_Service_FaceInfoMatching(service_handle, p_face, 1, 0.1, &ind, &score, &size);
   // printf("ind:%u,ret:%d,score:%f\n",ind,ret,score);
   // getchar();
 

@@ -2,17 +2,17 @@
 #include "fall_det_monitor.hpp"
 #include <map>
 #include <vector>
-#include "core/core/cvai_core_types.h"
-#include "core/core/cvai_errno.h"
+#include "core/core/cvtdl_core_types.h"
+#include "core/core/cvtdl_errno.h"
 
 FallDetMonitor::FallDetMonitor() {}
 
 int FallDetMonitor::set_fps(float fps) {
   FPS = fps;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int FallDetMonitor::monitor(cvai_object_t* obj_meta) {
+int FallDetMonitor::monitor(cvtdl_object_t* obj_meta) {
   std::map<int, int> track_index;
   std::vector<int> new_index;
   for (uint32_t i = 0; i < obj_meta->size; i++) {
@@ -21,7 +21,7 @@ int FallDetMonitor::monitor(cvai_object_t* obj_meta) {
     printf("unique_id: %d, track_state: %d\n", obj_meta->info[i].unique_id,
            obj_meta->info[i].track_state);
 #endif
-    if (obj_meta->info[i].track_state == cvai_trk_state_type_t::CVI_TRACKER_NEW) {
+    if (obj_meta->info[i].track_state == cvtdl_trk_state_type_t::CVI_TRACKER_NEW) {
       new_index.push_back(i);
     }
   }
@@ -64,5 +64,5 @@ int FallDetMonitor::monitor(cvai_object_t* obj_meta) {
 #ifdef DEBUG_FALL
   printf("1 muti_person size: %d\n", muti_person.size());
 #endif
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }

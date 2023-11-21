@@ -1,9 +1,9 @@
 
 
 #include "license_plate_recognitionv2.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/face/cvai_face_types.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/face/cvtdl_face_types.h"
 #include "rescale_utils.hpp"
 
 #define SCALE (1 / 128.)
@@ -11,7 +11,7 @@
 
 #define OUTPUT_NAME_PROBABILITY "output_ReduceMean_f32"
 
-namespace cviai {
+namespace cvitdl {
 
 std::vector<std::string> CHARS = {
     "jing", "hu",    "jin",    "yu",   "ji",  "jin",  "meng", "liao", "ji",    "hei",
@@ -30,7 +30,7 @@ LicensePlateRecognitionV2::~LicensePlateRecognitionV2() {}
 int LicensePlateRecognitionV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("LicensePlateRecognitionV2 only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   for (int i = 0; i < 3; i++) {
     (*data)[0].factor[i] = SCALE;
@@ -41,7 +41,7 @@ int LicensePlateRecognitionV2::setupInputPreprocess(std::vector<InputPreprecessS
   (*data)[0].use_quantize_scale = true;
   (*data)[0].keep_aspect_ratio = false;
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void LicensePlateRecognitionV2::greedy_decode(float *prebs) {
@@ -89,16 +89,16 @@ void LicensePlateRecognitionV2::greedy_decode(float *prebs) {
   std::cout << "Prediction: " << lb << std::endl;
 }
 
-int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *vehicle_meta) {
+int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *vehicle_meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_BGR_888_PLANAR) {
     LOGE(
         "Error: pixel format not match PIXEL_FORMAT_RGB_888_PLANAR or PIXEL_FORMAT_BGR_888_PLANAR");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   for (uint32_t i = 0; i < vehicle_meta->size; ++i) {
-    cvai_object_info_t obj_info = info_extern_crop_resize_img(
+    cvtdl_object_info_t obj_info = info_extern_crop_resize_img(
         frame->stVFrame.u32Width, frame->stVFrame.u32Height, &(vehicle_meta->info[i]));
     VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
     memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
@@ -109,7 +109,7 @@ int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {f};
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       return ret;
     }
 
@@ -117,10 +117,10 @@ int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_
     greedy_decode(out);
     delete f;
 
-    CVI_AI_FreeCpp(&obj_info);
+    CVI_TDL_FreeCpp(&obj_info);
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

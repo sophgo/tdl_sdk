@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_perfetto.h"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_perfetto.h"
 
-cviai_handle_t facelib_handle = NULL;
+cvitdl_handle_t facelib_handle = NULL;
 
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
@@ -29,18 +29,18 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
 
     printf("%s\n", line);
     VIDEO_FRAME_INFO_S frFrame;
-    CVI_S32 ret = CVI_AI_ReadImage(line, &frFrame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
+    CVI_S32 ret = CVI_TDL_ReadImage(line, &frFrame, PIXEL_FORMAT_RGB_888);
+    if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
 
-    cvai_face_t face;
-    memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_RetinaFace(facelib_handle, &frFrame, &face);
+    cvtdl_face_t face;
+    memset(&face, 0, sizeof(cvtdl_face_t));
+    CVI_TDL_RetinaFace(facelib_handle, &frFrame, &face);
     if (face.size > 0) {
-      CVI_AI_Service_FaceAngleForAll(&face);
-      CVI_AI_FaceQuality(facelib_handle, &frFrame, &face, NULL);
+      CVI_TDL_Service_FaceAngleForAll(&face);
+      CVI_TDL_FaceQuality(facelib_handle, &frFrame, &face, NULL);
     }
 
     if (face.size == 0 || face.info[0].face_quality < 0.5 ||
@@ -48,8 +48,8 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
       fail_num++;
     }
 
-    CVI_AI_Free(&face);
-    CVI_AI_ReleaseImage(&frFrame);
+    CVI_TDL_Free(&face);
+    CVI_TDL_ReleaseImage(&frFrame);
     printf("num: %d\n", idx);
     idx++;
   }
@@ -58,7 +58,7 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
   *total = idx;
   closedir(dirp);
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
@@ -71,33 +71,33 @@ int main(int argc, char *argv[]) {
     printf("Face attribute model path: Path to face attribute cvimodel.\n");
     printf("Pos image root dir: Path to the positive data directory.\n");
     printf("Neg image root dir: Path to the negative data directory.\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
-  CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_TDL_PerfettoInit();
+  CVI_S32 ret = CVI_TDL_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_CreateHandle(&facelib_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[2]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_FACEQUALITY, argv[2]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_TDL_SetSkipVpssPreprocess(facelib_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, false);
 
   int pos_num = 0, pos_total = 0;
   int neg_num = 0, neg_total = 0;
@@ -107,5 +107,5 @@ int main(int argc, char *argv[]) {
   printf("pos num: %d / pos total %d\n", pos_num, pos_total);
   printf("neg num: %d / neg total %d\n", neg_num, neg_total);
 
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_TDL_DestroyHandle(facelib_handle);
 }

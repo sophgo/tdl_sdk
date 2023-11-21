@@ -1,7 +1,7 @@
 #include "thermal_person.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
@@ -10,7 +10,7 @@
 #define NMS_THRESH 0.55
 #define NAME_OUTPUT "output_Transpose_dequant"
 
-namespace cviai {
+namespace cvitdl {
 
 struct GridAndStride {
   int grid0;
@@ -34,7 +34,7 @@ static void generate_grids_and_stride(const int target_w, const int target_h,
 
 static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, const float *feat_ptr,
                                      float prob_threshold,
-                                     std::vector<cvai_object_info_t> &objects) {
+                                     std::vector<cvtdl_object_info_t> &objects) {
   const int num_anchors = grid_strides.size();
 
   for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++) {
@@ -59,7 +59,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
       float box_cls_score = feat_ptr[basic_pos + 5 + class_idx];
       float box_prob = box_objectness * box_cls_score;
       if (box_prob > prob_threshold) {
-        cvai_object_info_t obj;
+        cvtdl_object_info_t obj;
         obj.bbox.x1 = x0;
         obj.bbox.y1 = y0;
         obj.bbox.x2 = x0 + w;
@@ -79,7 +79,7 @@ ThermalPerson::~ThermalPerson() {}
 int ThermalPerson::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Thermal person only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   for (int i = 0; i < 3; i++) {
@@ -88,46 +88,46 @@ int ThermalPerson::setupInputPreprocess(std::vector<InputPreprecessSetup> *data)
   }
   (*data)[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int ThermalPerson::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj) {
+int ThermalPerson::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     return ret;
   }
 
   CVI_SHAPE shape = getInputShape(0);
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, obj);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void ThermalPerson::outputParser(const int image_width, const int image_height,
                                  const int frame_width, const int frame_height,
-                                 cvai_object_t *obj) {
+                                 cvtdl_object_t *obj) {
   float *output_blob = getOutputRawPtr<float>(NAME_OUTPUT);
 
   std::vector<int> strides = {8, 16, 32};
   std::vector<GridAndStride> grid_strides;
   generate_grids_and_stride(image_width, image_height, strides, grid_strides);
 
-  std::vector<cvai_object_info_t> vec_bbox;
+  std::vector<cvtdl_object_info_t> vec_bbox;
   generate_yolox_proposals(grid_strides, output_blob, m_model_threshold, vec_bbox);
 
   // DO nms on output result
-  std::vector<cvai_object_info_t> vec_bbox_nms;
+  std::vector<cvtdl_object_info_t> vec_bbox_nms;
   vec_bbox_nms.clear();
   NonMaximumSuppression(vec_bbox, vec_bbox_nms, NMS_THRESH, 'u');
 
   // fill obj
-  CVI_AI_MemAllocInit(vec_bbox_nms.size(), obj);
+  CVI_TDL_MemAllocInit(vec_bbox_nms.size(), obj);
   obj->width = image_width;
   obj->height = image_height;
   obj->rescale_type = m_vpss_config[0].rescale_type;
 
-  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
+  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
   for (uint32_t i = 0; i < obj->size; ++i) {
     obj->info[i].bbox.x1 = vec_bbox_nms[i].bbox.x1;
     obj->info[i].bbox.y1 = vec_bbox_nms[i].bbox.y1;
@@ -157,4 +157,4 @@ void ThermalPerson::outputParser(const int image_width, const int image_height,
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

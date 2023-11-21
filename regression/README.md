@@ -1,4 +1,4 @@
-# AISDK Regression
+# TDLSDK Regression
 ### _前置作業 交叉編譯 (執行檔 & 庫文件 生成)_
 1. 開發版環境編譯 (以 cv1835_wevb_0002a 為範例)
     ```sh
@@ -13,10 +13,10 @@
     clean_all
     build_all
 
-    # build_all 之後如需要對cviai 做單獨編譯
+    # build_all 之後如需要對cvitdl 做單獨編譯
     build_ai_sdk
     ```
-2. 確認AISDK 生成路徑如下：
+2. 確認TDLSDK 生成路徑如下：
     sdk_package/install/soc_cv1835_wevb_0002a/tpu_64bit/cvitek_ai_sdk/
 
 ### _Regression 環境/運行_

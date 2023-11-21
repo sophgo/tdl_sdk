@@ -634,7 +634,7 @@ class resizeGeneric_Invoker : public cv::ParallelLoopBody {
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
   virtual void operator()(const cv::Range& range) const {
-    // printf("cviai::resizeGeneric_Invoker op()\n");
+    // printf("cvitdl::resizeGeneric_Invoker op()\n");
     int dy, cn = src.channels();
     HResize hresize;
     VResize vresize;
@@ -694,7 +694,7 @@ class resizeGeneric_Invoker : public cv::ParallelLoopBody {
 template <class HResize, class VResize>
 static void resizeGeneric_(const cv::Mat& src, cv::Mat& dst, const int* xofs, const void* _alpha,
                            const int* yofs, const void* _beta, int xmin, int xmax, int ksize) {
-  // printf("cviai::resizeGeneric_\n");
+  // printf("cvitdl::resizeGeneric_\n");
   typedef typename HResize::alpha_type AT;
 
   const AT* beta = (const AT*)_beta;
@@ -722,7 +722,7 @@ typedef void (*ResizeFunc)(const cv::Mat& src, cv::Mat& dst, const int* xofs, co
 void _resize(int src_type, const uchar* src_data, size_t src_step, int src_width, int src_height,
              uchar* dst_data, size_t dst_step, int dst_width, int dst_height, double inv_scale_x,
              double inv_scale_y, int interpolation) {
-  // printf("cviai::resize(2)\n");
+  // printf("cvitdl::resize(2)\n");
   /* NOTE: interpolation = 1 */
 
   CV_Assert((dst_width * dst_height > 0) || (inv_scale_x > 0 && inv_scale_y > 0));
@@ -893,9 +893,9 @@ void _resize(int src_type, const uchar* src_data, size_t src_step, int src_width
 //==================================================================================================
 
 // 3485
-void cviai::resize(cv::InputArray _src, cv::OutputArray _dst, cv::Size dsize, double inv_scale_x,
-                   double inv_scale_y, int interpolation) {
-  // printf("cviai::resize(1)\n");
+void cvitdl::resize(cv::InputArray _src, cv::OutputArray _dst, cv::Size dsize, double inv_scale_x,
+                    double inv_scale_y, int interpolation) {
+  // printf("cvitdl::resize(1)\n");
   cv::Size ssize = _src.size();
 
   CV_Assert(ssize.width > 0 && ssize.height > 0);
@@ -1377,9 +1377,9 @@ void _warpPerspectve(int src_type, const uchar* src_data, size_t src_step, int s
 }
 
 // L6489
-void cviai::warpPerspective(cv::InputArray _src, cv::OutputArray _dst, cv::InputArray _M0,
-                            cv::Size dsize, int flags, int borderType,
-                            const cv::Scalar& borderValue) {
+void cvitdl::warpPerspective(cv::InputArray _src, cv::OutputArray _dst, cv::InputArray _M0,
+                             cv::Size dsize, int flags, int borderType,
+                             const cv::Scalar& borderValue) {
   CV_Assert(_src.total() > 0);
 
   cv::Mat src = _src.getMat(), M0 = _M0.getMat();
@@ -1558,8 +1558,8 @@ void _warpAffine(int src_type, const uchar* src_data, size_t src_step, int src_w
 }
 
 // L5959
-void cviai::warpAffine(cv::InputArray _src, cv::OutputArray _dst, cv::InputArray _M0,
-                       cv::Size dsize, int flags, int borderType, const cv::Scalar& borderValue) {
+void cvitdl::warpAffine(cv::InputArray _src, cv::OutputArray _dst, cv::InputArray _M0,
+                        cv::Size dsize, int flags, int borderType, const cv::Scalar& borderValue) {
   cv::Mat src = _src.getMat(), M0 = _M0.getMat();
   _dst.create(dsize.area() == 0 ? src.size() : dsize, src.type());
   cv::Mat dst = _dst.getMat();
@@ -1596,7 +1596,7 @@ void cviai::warpAffine(cv::InputArray _src, cv::OutputArray _dst, cv::InputArray
 /* Calculates coefficients of perspective transformation
  */
 // L6633
-cv::Mat cviai::getPerspectiveTransform(const cv::Point2f src[], const cv::Point2f dst[]) {
+cv::Mat cvitdl::getPerspectiveTransform(const cv::Point2f src[], const cv::Point2f dst[]) {
   cv::Mat M(3, 3, CV_64F), X(8, 1, CV_64F, M.ptr());
   double a[8][8], b[8];
   cv::Mat A(8, 8, CV_64F, a), B(8, 1, CV_64F, b);
@@ -1623,7 +1623,7 @@ cv::Mat cviai::getPerspectiveTransform(const cv::Point2f src[], const cv::Point2
 /* Calculates coefficients of affine transformation
  */
 // L6681
-cv::Mat cviai::getAffineTransform(const cv::Point2f src[], const cv::Point2f dst[]) {
+cv::Mat cvitdl::getAffineTransform(const cv::Point2f src[], const cv::Point2f dst[]) {
   cv::Mat M(2, 3, CV_64F), X(6, 1, CV_64F, M.ptr());
   double a[6 * 6], b[6];
   cv::Mat A(6, 6, CV_64F, a), B(6, 1, CV_64F, b);
@@ -1645,14 +1645,14 @@ cv::Mat cviai::getAffineTransform(const cv::Point2f src[], const cv::Point2f dst
 }
 
 // L6745
-cv::Mat cviai::getPerspectiveTransform(cv::InputArray _src, cv::InputArray _dst) {
+cv::Mat cvitdl::getPerspectiveTransform(cv::InputArray _src, cv::InputArray _dst) {
   cv::Mat src = _src.getMat(), dst = _dst.getMat();
   CV_Assert(src.checkVector(2, CV_32F) == 4 && dst.checkVector(2, CV_32F) == 4);
   return getPerspectiveTransform((const cv::Point2f*)src.data, (const cv::Point2f*)dst.data);
 }
 
 // L6752
-cv::Mat cviai::getAffineTransform(cv::InputArray _src, cv::InputArray _dst) {
+cv::Mat cvitdl::getAffineTransform(cv::InputArray _src, cv::InputArray _dst) {
   cv::Mat src = _src.getMat(), dst = _dst.getMat();
   CV_Assert(src.checkVector(2, CV_32F) == 3 && dst.checkVector(2, CV_32F) == 3);
   return getAffineTransform((const cv::Point2f*)src.data, (const cv::Point2f*)dst.data);

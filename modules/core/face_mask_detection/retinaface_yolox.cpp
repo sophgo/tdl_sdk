@@ -1,7 +1,7 @@
 #include "retinaface_yolox.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_utils.hpp"
@@ -17,7 +17,7 @@
 #define NAME_OUTPUT "output_Transpose_dequant"
 #define FACE_POINTS_SIZE 5
 
-namespace cviai {
+namespace cvitdl {
 
 struct GridAndStride {
   int grid0;
@@ -40,7 +40,7 @@ static void generate_grids_and_stride(const int target_w, const int target_h,
 }
 
 static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, const float *feat_ptr,
-                                     float prob_threshold, std::vector<cvai_face_info_t> &faces) {
+                                     float prob_threshold, std::vector<cvtdl_face_info_t> &faces) {
   const int num_anchors = grid_strides.size();
 
   for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++) {
@@ -67,7 +67,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
     float mask_score = sqrt(box_objectness * feat_ptr[basic_pos + 6]);
     float box_prob = std::max(no_mask_score, mask_score);
     if (box_prob > prob_threshold) {
-      cvai_face_info_t face;
+      cvtdl_face_info_t face;
 
       memset(&face, 0, sizeof(face));
       face.pts.size = FACE_POINTS_SIZE;
@@ -96,7 +96,7 @@ RetinafaceYolox::~RetinafaceYolox() {}
 int RetinafaceYolox::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Thermal person only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   (*data)[0].factor[0] = R_SCALE;
@@ -107,13 +107,13 @@ int RetinafaceYolox::setupInputPreprocess(std::vector<InputPreprecessSetup> *dat
   (*data)[0].mean[2] = B_MEAN;
 
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int RetinafaceYolox::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *face_meta) {
+int RetinafaceYolox::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *face_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     return ret;
   }
 
@@ -121,23 +121,23 @@ int RetinafaceYolox::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *face_m
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, face_meta);
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void RetinafaceYolox::outputParser(const int image_width, const int image_height,
                                    const int frame_width, const int frame_height,
-                                   cvai_face_t *face_meta) {
+                                   cvtdl_face_t *face_meta) {
   float *output_blob = getOutputRawPtr<float>(NAME_OUTPUT);
 
   std::vector<int> strides = {8, 16, 32};
   std::vector<GridAndStride> grid_strides;
   generate_grids_and_stride(image_width, image_height, strides, grid_strides);
 
-  std::vector<cvai_face_info_t> vec_face;
+  std::vector<cvtdl_face_info_t> vec_face;
   generate_yolox_proposals(grid_strides, output_blob, m_model_threshold, vec_face);
 
   // DO nms on output result
-  std::vector<cvai_face_info_t> vec_face_nms;
+  std::vector<cvtdl_face_info_t> vec_face_nms;
   vec_face_nms.clear();
   NonMaximumSuppression(vec_face, vec_face_nms, NMS_THRESH, 'u');
 
@@ -149,11 +149,11 @@ void RetinafaceYolox::outputParser(const int image_width, const int image_height
     face_meta->info = NULL;
     return;
   }
-  face_meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * face_meta->size);
+  face_meta->info = (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * face_meta->size);
   face_meta->rescale_type = m_vpss_config[0].rescale_type;
 
-  memset(face_meta->info, 0, sizeof(cvai_face_info_t) * face_meta->size);
-  CVI_AI_MemAllocInit(vec_face_nms.size(), FACE_POINTS_SIZE, face_meta);
+  memset(face_meta->info, 0, sizeof(cvtdl_face_info_t) * face_meta->size);
+  CVI_TDL_MemAllocInit(vec_face_nms.size(), FACE_POINTS_SIZE, face_meta);
   for (uint32_t i = 0; i < face_meta->size; ++i) {
     face_meta->info[i].bbox.x1 = vec_face_nms[i].bbox.x1;
     face_meta->info[i].bbox.y1 = vec_face_nms[i].bbox.y1;
@@ -173,7 +173,7 @@ void RetinafaceYolox::outputParser(const int image_width, const int image_height
     face_meta->rescale_type = m_vpss_config[0].rescale_type;
     for (uint32_t i = 0; i < face_meta->size; ++i) {
       clip_boxes(image_width, image_height, vec_face_nms[i].bbox);
-      cvai_face_info_t info =
+      cvtdl_face_info_t info =
           info_rescale_c(image_width, image_height, frame_width, frame_height, vec_face_nms[i]);
       face_meta->info[i].bbox.x1 = info.bbox.x1;
       face_meta->info[i].bbox.x2 = info.bbox.x2;
@@ -185,12 +185,12 @@ void RetinafaceYolox::outputParser(const int image_width, const int image_height
         face_meta->info[i].pts.x[j] = info.pts.x[j];
         face_meta->info[i].pts.y[j] = info.pts.y[j];
       }
-      CVI_AI_FreeCpp(&info);
+      CVI_TDL_FreeCpp(&info);
     }
   }
   for (size_t i = 0; i < vec_face.size(); ++i) {
-    CVI_AI_FreeCpp(&vec_face[i].pts);
+    CVI_TDL_FreeCpp(&vec_face[i].pts);
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

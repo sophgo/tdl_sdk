@@ -50,13 +50,13 @@ export_onnx.py \
 * `-c` 表示预训练的`.pth`模型文件路径
 * `--decode_in_inference` 表示是否在onnx中解码
 
-### AI_SDK版本导出onnx
+### TDL_SDK版本导出onnx
 
 为了保证量化的精度，需要将YOLOX解码的head分为三个不同的branch输出，而不是官方版本的合并输出
 
 通过以下的脚本和命令导出三个不同branch的head：
 
-在`YOLOX/tools/`目录下新建一个文件`export_onnx_ai_sdk.py`，并贴上以下代码
+在`YOLOX/tools/`目录下新建一个文件`export_onnx_tdl_sdk.py`，并贴上以下代码
 
 ```python
 #!/usr/bin/env python3
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
 ```shell
 python \
-export_onnx_ai_sdk.py \
+export_onnx_tdl_sdk.py \
 --output-name ../weights/yolox_s_9_branch.onnx \
 -n yolox-s \
 --no-onnxsim \
@@ -274,8 +274,8 @@ p_yolo_param.cls = 80;
 另外的模型置信度参数设置以及NMS阈值设置如下所示：
 
 ```c++
-CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOX, conf_threshold);
-CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOX, nms_threshold);
+CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOX, conf_threshold);
+CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOX, nms_threshold);
 ```
 
 其中`conf_threshold`为置信度阈值；`nms_threshold`为 nms 阈值
@@ -296,10 +296,10 @@ CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOX, nms_thresho
 #include <string>
 #include <vector>
 #include "core.hpp"
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
 int main(int argc, char* argv[]) {
@@ -307,15 +307,15 @@ int main(int argc, char* argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
   printf("start yolox preprocess config \n");
@@ -335,7 +335,7 @@ int main(int argc, char* argv[]) {
   p_yolo_param.cls = 80;
 
   printf("setup yolox param \n");
-  ret = CVI_AI_Set_YOLOX_Param(ai_handle, &p_preprocess_cfg, &p_yolo_param);
+  ret = CVI_TDL_Set_YOLOX_Param(tdl_handle, &p_preprocess_cfg, &p_yolo_param);
   printf("yolox set param success!\n");
   if (ret != CVI_SUCCESS) {
     printf("Can not set YoloX parameters %#x\n", ret);
@@ -356,30 +356,30 @@ int main(int argc, char* argv[]) {
   }
 
   printf("start open cvimodel...\n");
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOX, model_path.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOX, model_path.c_str());
   if (ret != CVI_SUCCESS) {
     printf("open model failed %#x!\n", ret);
     return ret;
   }
   printf("cvimodel open success!\n");
   // set thershold
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOX, conf_threshold);
-  CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOX, nms_threshold);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOX, conf_threshold);
+  CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOX, nms_threshold);
 
   std::cout << "model opened:" << model_path << std::endl;
 
   VIDEO_FRAME_INFO_S fdFrame;
-  ret = CVI_AI_ReadImage(str_src_dir.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
-  std::cout << "CVI_AI_ReadImage done!\n";
+  ret = CVI_TDL_ReadImage(str_src_dir.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
+  std::cout << "CVI_TDL_ReadImage done!\n";
 
   if (ret != CVI_SUCCESS) {
     std::cout << "Convert out video frame failed with :" << ret << ".file:" << str_src_dir
               << std::endl;
   }
 
-  cvai_object_t obj_meta = {0};
+  cvtdl_object_t obj_meta = {0};
 
-  CVI_AI_YoloX(ai_handle, &fdFrame, &obj_meta);
+  CVI_TDL_YoloX(tdl_handle, &fdFrame, &obj_meta);
 
   printf("detect number: %d\n", obj_meta.size);
   for (uint32_t i = 0; i < obj_meta.size; i++) {
@@ -389,8 +389,8 @@ int main(int argc, char* argv[]) {
   }
 
   CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
-  CVI_AI_Free(&obj_meta);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_Free(&obj_meta);
+  CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;
 }
@@ -410,18 +410,18 @@ int main(int argc, char* argv[]) {
 |         |  官方导出  |  cv181x  |    131.95     |   104.46    |  16.43   | 量化失败 |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
 |         |  官方导出  |  cv182x  |     95.75     |   104.85    |  16.41   | 量化失败 |   量化失败   | 官方脚本导出cvimodel，cv182x平台评测指标 |
 |         |  官方导出  |  cv183x  |   量化失败    |  量化失败   | 量化失败 | 量化失败 |   量化失败   | 官方脚本导出cvimodel，cv183x平台评测指标 |
-|         | AI_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A    | 53.1767  |   36.4747    |            AI_SDK导出onnx指标            |
-|         | AI_SDK导出 |  cv181x  |    127.91     |    95.44    |  16.24   | 52.4016  |   35.4241    |  AI_SDI导出cvimodel, cv181x平台评测指标  |
-|         | AI_SDK导出 |  cv182x  |     91.67     |    95.83    |  16.22   | 52.4016  |   35.4241    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
-|         | AI_SDK导出 |  cv183x  |     30.6      |    65.25    |  14.93   | 52.4016  |   35.4241    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+|         | TDL_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A    | 53.1767  |   36.4747    |            TDL_SDK导出onnx指标            |
+|         | TDL_SDK导出 |  cv181x  |    127.91     |    95.44    |  16.24   | 52.4016  |   35.4241    |  TDL_SDI导出cvimodel, cv181x平台评测指标  |
+|         | TDL_SDK导出 |  cv182x  |     91.67     |    95.83    |  16.22   | 52.4016  |   35.4241    |  TDL_SDI导出cvimodel, cv182x平台评测指标  |
+|         | TDL_SDK导出 |  cv183x  |     30.6      |    65.25    |  14.93   | 52.4016  |   35.4241    |  TDL_SDI导出cvimodel, cv183x平台评测指标  |
 | yolox-m |  官方导出  | pytorch  |      N/A      |     N/A     |   N/A    |   65.6   |     46.9     |           pytorch官方fp32指标            |
 |         |  官方导出  |  cv181x  |  ion分配失败  | ion分配失败 |  39.18   | 量化失败 |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
 |         |  官方导出  |  cv182x  |     246.1     |   306.31    |  39.16   | 量化失败 |   量化失败   | 官方脚本导出cvimodel，cv182x平台评测指标 |
 |         |  官方导出  |  cv183x  |   量化失败    |  量化失败   | 量化失败 | 量化失败 |   量化失败   | 官方脚本导出cvimodel，cv183x平台评测指标 |
-|         | AI_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A    | 59.9411  |   43.0057    |            AI_SDK导出onnx指标            |
-|         | AI_SDK导出 |  cv181x  |  ion分配失败  | ion分配失败 |  38.95   | 59.3559  |   42.1688    |  AI_SDI导出cvimodel, cv181x平台评测指标  |
-|         | AI_SDK导出 |  cv182x  |     297.5     |   242.65    |  38.93   | 59.3559  |   42.1688    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
-|         | AI_SDK导出 |  cv183x  |     75.8      |   144.97    |   33.5   | 59.3559  |   42.1688    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+|         | TDL_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A    | 59.9411  |   43.0057    |            TDL_SDK导出onnx指标            |
+|         | TDL_SDK导出 |  cv181x  |  ion分配失败  | ion分配失败 |  38.95   | 59.3559  |   42.1688    |  TDL_SDI导出cvimodel, cv181x平台评测指标  |
+|         | TDL_SDK导出 |  cv182x  |     297.5     |   242.65    |  38.93   | 59.3559  |   42.1688    |  TDL_SDI导出cvimodel, cv182x平台评测指标  |
+|         | TDL_SDK导出 |  cv183x  |     75.8      |   144.97    |   33.5   | 59.3559  |   42.1688    |  TDL_SDI导出cvimodel, cv183x平台评测指标  |
 
 
 

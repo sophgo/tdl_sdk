@@ -5,17 +5,19 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
   add_compile_options(-fvisibility=hidden)
 endif()
 
-set(CVIAI_TAG ${LATEST_TAG})
+set(CVI_TDL_TAG ${LATEST_TAG})
 configure_file(version.hpp.in version.hpp @ONLY)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/cviai_trace
+                    ${CMAKE_CURRENT_SOURCE_DIR}/trace
                     ${CMAKE_CURRENT_SOURCE_DIR}/log
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation)
 
 if(NOT DEFINED SIMPLY_MODEL)
-add_subdirectory(cviai_trace) # Perfetto tracer comes first
-add_subdirectory(app)
+add_subdirectory(trace) # Perfetto tracer comes first
+add_subdirectory(cvi_tdl_app)
 endif()
 
 add_subdirectory(core)
@@ -23,7 +25,7 @@ add_subdirectory(service)
 
 if(NOT DEFINED NO_OPENCV)
   if(NOT DEFINED SIMPLY_MODEL)
-    add_subdirectory(evaluation)
+    add_subdirectory(cvi_tdl_evaluation)
     add_subdirectory(test_and_eval)
   endif()
 else()
@@ -31,9 +33,9 @@ else()
 endif()
 
 if(DEFINED NO_OPENCV)
-  set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
-                  $<TARGET_OBJECTS:cviai_service>
-                  $<TARGET_OBJECTS:cviai_trace>
+  set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
+                  $<TARGET_OBJECTS:cvi_tdl_service>
+                  $<TARGET_OBJECTS:cvi_tdl_trace>
                   $<TARGET_OBJECTS:core>
                   $<TARGET_OBJECTS:custom>
                   $<TARGET_OBJECTS:utils>
@@ -59,7 +61,7 @@ if(DEFINED NO_OPENCV)
   set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 else()
   if(DEFINED SIMPLY_MODEL)
-    set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
+    set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                    $<TARGET_OBJECTS:core>
                    $<TARGET_OBJECTS:utils>
                    $<TARGET_OBJECTS:ivewrapper>
@@ -67,9 +69,9 @@ else()
                    $<TARGET_OBJECTS:motion_detection>)
     set(CORES_DEPS ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
   else()
-    set(CORES_SRCS $<TARGET_OBJECTS:cviai_core>
-      $<TARGET_OBJECTS:cviai_service>
-      $<TARGET_OBJECTS:cviai_trace>
+    set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
+      $<TARGET_OBJECTS:cvi_tdl_service>
+      $<TARGET_OBJECTS:cvi_tdl_trace>
       $<TARGET_OBJECTS:core>
       $<TARGET_OBJECTS:custom>
       $<TARGET_OBJECTS:utils>
@@ -121,7 +123,7 @@ else()
       $<TARGET_OBJECTS:hrnet>
       $<TARGET_OBJECTS:image_classification>)
 
-    if ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON")
+    if ("${ENABLE_CVI_TDL_CV_UTILS}" STREQUAL "ON")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)
     endif()
     set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
@@ -131,18 +133,25 @@ else()
   endif()
 endif()
 
-project(cviai)
+project(cvi_tdl)
 add_library(${PROJECT_NAME} SHARED ${CORES_SRCS})
 target_link_libraries(${PROJECT_NAME} ${CORES_DEPS})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
-project(cviai-static)
+project(cvi_tdl-static)
 add_library(${PROJECT_NAME} STATIC ${CORES_SRCS})
 target_link_libraries(${PROJECT_NAME} ${CORES_DEPS})
+SET_TARGET_PROPERTIES(cvi_tdl-static PROPERTIES OUTPUT_NAME "cvi_tdl")
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/app/ DESTINATION module/app PATTERN "CMakeLists.txt" EXCLUDE)
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cvi_tdl_app/ DESTINATION sample/cvi_tdl_app PATTERN "CMakeLists.txt" EXCLUDE)
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test_and_eval/ DESTINATION sample PATTERN "CMakeLists.txt" EXCLUDE)
 # Temporarily don't install custom module until complete.
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cviai
-        PATTERN "cviai_perfetto.h" EXCLUDE
-        PATTERN "core/cviai_types_mem_internal.h" EXCLUDE)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation DESTINATION sample/3rd/include/)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app DESTINATION include/)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cvi_tdl
+        PATTERN "cvi_tdl_app" EXCLUDE
+        PATTERN "cvi_tdl_evaluation" EXCLUDE
+        PATTERN "cvi_tdl_perfetto.h" EXCLUDE
+        PATTERN "cvi_tdl_experimental.h" EXCLUDE
+        PATTERN "cvi_tdl_log.hpp" EXCLUDE)

@@ -108,10 +108,10 @@ CVI_S32 GET_PREDEFINED_OPT_1_PARAMS(MOT_GRID_SEARCH_PARAMS_t &params) {
   return CVI_SUCCESS;
 }
 
-CVI_S32 OPTIMIZE_CONFIG_1(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t &args,
+CVI_S32 OPTIMIZE_CONFIG_1(cvitdl_handle_t tdl_handle, const MOT_EVALUATION_ARGS_t &args,
                           const MOT_GRID_SEARCH_PARAMS_t &params,
                           const MOT_PERFORMANCE_CONSTRAINT_t &constraint,
-                          cvai_deepsort_config_t &config, MOT_Performance_t &performance) {
+                          cvtdl_deepsort_config_t &config, MOT_Performance_t &performance) {
   std::vector<uint32_t> p_ranges(
       {(uint32_t)params.P_a_013.size(),          (uint32_t)params.P_a_2.size(),
        (uint32_t)params.P_a_457.size(),          (uint32_t)params.P_a_6.size(),
@@ -127,13 +127,13 @@ CVI_S32 OPTIMIZE_CONFIG_1(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t 
        (uint32_t)params.thr_accreditation.size()});
   GridIndexGenerator idx_generator(p_ranges);
   std::vector<uint32_t> idx;
-  cvai_deepsort_config_t tmp_config;
+  cvtdl_deepsort_config_t tmp_config;
   MOT_Performance_t tmp_performance;
   while (CVI_SUCCESS == idx_generator.next(idx) /* condition */) {
     GET_CONFIG_BY_PARAMS_1(tmp_config, params, idx);
-    CVI_AI_DeepSORT_Init(ai_handle, false);
-    CVI_AI_DeepSORT_SetConfig(ai_handle, &tmp_config, -1, false);
-    RUN_MOT_EVALUATION(ai_handle, args, tmp_performance, false, NULL);
+    CVI_TDL_DeepSORT_Init(tdl_handle, false);
+    CVI_TDL_DeepSORT_SetConfig(tdl_handle, &tmp_config, -1, false);
+    RUN_MOT_EVALUATION(tdl_handle, args, tmp_performance, false, NULL);
     printf("iter[%u]: score[%.4lf] (coverage rate[%.4lf], stable ids[%u], total entropy[%.4lf])\n",
            idx_generator.counter, tmp_performance.score, tmp_performance.coverage_rate,
            tmp_performance.stable_id_num, tmp_performance.total_entropy);
@@ -149,10 +149,10 @@ CVI_S32 OPTIMIZE_CONFIG_1(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t 
   return CVI_SUCCESS;
 }
 
-CVI_S32 GET_CONFIG_BY_PARAMS_1(cvai_deepsort_config_t &config,
+CVI_S32 GET_CONFIG_BY_PARAMS_1(cvtdl_deepsort_config_t &config,
                                const MOT_GRID_SEARCH_PARAMS_t &params,
                                const std::vector<uint32_t> &idxes) {
-  CVI_AI_DeepSORT_GetDefaultConfig(&config);
+  CVI_TDL_DeepSORT_GetDefaultConfig(&config);
   config.ktracker_conf.P_alpha[0] = params.P_a_013[idxes[0]];
   config.ktracker_conf.P_alpha[1] = params.P_a_013[idxes[0]];
   config.ktracker_conf.P_alpha[2] = params.P_a_2[idxes[1]];

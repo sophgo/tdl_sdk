@@ -1,9 +1,9 @@
 #include "retina_face.hpp"
 #include "retina_face_utils.hpp"
 
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 // #include "face_utils.hpp"
 
 #define NAME_BBOX "face_rpn_bbox_pred_"
@@ -15,7 +15,7 @@
 #define MEAN_G 117
 #define MEAN_B 104
 
-namespace cviai {
+namespace cvitdl {
 
 RetinaFace::RetinaFace(PROCESS process) : Core(CVI_MEM_DEVICE) { this->process = process; }
 
@@ -30,7 +30,7 @@ void RetinaFace::setModelThreshold(float threshold) {
 int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Retina face only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
   for (int i = 0; i < 3; i++) {
@@ -43,7 +43,7 @@ int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
     (*data)[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
   }
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int RetinaFace::onModelOpened() {
@@ -119,17 +119,17 @@ int RetinaFace::onModelOpened() {
     m_anchors[bbox_str] =
         anchors_plane(bbox_shape.dim[2], bbox_shape.dim[3], stride, anchors_fpn_map[key]);
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
+int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames;
   CVI_SHAPE shape = getInputShape(0);
   for (uint32_t b = 0; b < (uint32_t)shape.dim[0]; b++) {
     frames.push_back(&srcFrame[b]);
   }
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     return ret;
   }
 
@@ -138,15 +138,15 @@ int RetinaFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   outputParser(image_width, image_height, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
                meta);
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void RetinaFace::outputParser(int image_width, int image_height, int frame_width, int frame_height,
-                              cvai_face_t *meta) {
+                              cvtdl_face_t *meta) {
   CVI_SHAPE input_shape = getInputShape(0);
   for (uint32_t b = 0; b < (uint32_t)input_shape.dim[0]; b++) {
-    std::vector<cvai_face_info_t> vec_bbox;
-    std::vector<cvai_face_info_t> vec_bbox_nms;
+    std::vector<cvtdl_face_info_t> vec_bbox;
+    std::vector<cvtdl_face_info_t> vec_bbox_nms;
     for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
       std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
 
@@ -204,7 +204,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
           if (conf <= m_model_threshold) {
             continue;
           }
-          cvai_face_info_t box;
+          cvtdl_face_info_t box;
           memset(&box, 0, sizeof(box));
           box.pts.size = 5;
           box.pts.x = (float *)malloc(sizeof(float) * box.pts.size);
@@ -234,7 +234,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
     vec_bbox_nms.clear();
     NonMaximumSuppression(vec_bbox, vec_bbox_nms, 0.4, 'u');
     // Init face meta
-    cvai_face_t *facemeta = &meta[b];
+    cvtdl_face_t *facemeta = &meta[b];
     facemeta->width = image_width;
     facemeta->height = image_height;
     if (vec_bbox_nms.size() == 0) {
@@ -242,7 +242,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
       facemeta->info = NULL;
       return;
     }
-    CVI_AI_MemAllocInit(vec_bbox_nms.size(), FACE_POINTS_SIZE, facemeta);
+    CVI_TDL_MemAllocInit(vec_bbox_nms.size(), FACE_POINTS_SIZE, facemeta);
     if (hasSkippedVpssPreprocess()) {
       for (uint32_t i = 0; i < facemeta->size; ++i) {
         clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
@@ -265,7 +265,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
       facemeta->rescale_type = m_vpss_config[0].rescale_type;
       for (uint32_t i = 0; i < facemeta->size; ++i) {
         clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
-        cvai_face_info_t info =
+        cvtdl_face_info_t info =
             info_rescale_c(image_width, image_height, frame_width, frame_height, vec_bbox_nms[i]);
         facemeta->info[i].bbox.x1 = info.bbox.x1;
         facemeta->info[i].bbox.x2 = info.bbox.x2;
@@ -277,14 +277,14 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
           facemeta->info[i].pts.x[j] = info.pts.x[j];
           facemeta->info[i].pts.y[j] = info.pts.y[j];
         }
-        CVI_AI_FreeCpp(&info);
+        CVI_TDL_FreeCpp(&info);
       }
     }
     // Clear original bbox. bbox_nms does not need to free since it points to bbox.
     for (size_t i = 0; i < vec_bbox.size(); ++i) {
-      CVI_AI_FreeCpp(&vec_bbox[i].pts);
+      CVI_TDL_FreeCpp(&vec_bbox[i].pts);
     }
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

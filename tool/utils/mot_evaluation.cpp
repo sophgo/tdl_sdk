@@ -10,8 +10,8 @@ MOT_Evaluation::MOT_Evaluation() {}
 
 MOT_Evaluation::~MOT_Evaluation() {}
 
-CVI_S32 MOT_Evaluation::update(const cvai_tracker_t &trackers,
-                               const cvai_tracker_t &inact_trackers) {
+CVI_S32 MOT_Evaluation::update(const cvtdl_tracker_t &trackers,
+                               const cvtdl_tracker_t &inact_trackers) {
   time_counter += 1;
   bbox_counter += trackers.size;
   std::set<uint64_t> check_list = alive_stable_id;
@@ -108,11 +108,11 @@ CVI_S32 GridIndexGenerator::next(std::vector<uint32_t> &next_idx) {
  ********************/
 #define B_SIZE_BBOX 32
 #define B_SIZE_FEATURE 64
-static void FILL_BBOX(cvai_bbox_t *bbox, char text_buffer[][B_SIZE_BBOX]);
-static void FILL_FEATURE(cvai_feature_t *feature, char text_buffer[][B_SIZE_FEATURE],
+static void FILL_BBOX(cvtdl_bbox_t *bbox, char text_buffer[][B_SIZE_BBOX]);
+static void FILL_FEATURE(cvtdl_feature_t *feature, char text_buffer[][B_SIZE_FEATURE],
                          char *data_path);
 
-CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t &args,
+CVI_S32 RUN_MOT_EVALUATION(cvitdl_handle_t tdl_handle, const MOT_EVALUATION_ARGS_t &args,
                            MOT_Performance_t &performance, bool output_result, char *result_path) {
   char text_buffer[256];
   char text_buffer_tmp[256];
@@ -150,12 +150,12 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
     fprintf(outFile_result, "%d\n", frame_num);
   }
 
-  cvai_object_t obj_meta;
-  cvai_face_t face_meta;
-  cvai_tracker_t tracker_meta;
-  memset(&obj_meta, 0, sizeof(cvai_object_t));
-  memset(&face_meta, 0, sizeof(cvai_face_t));
-  memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
+  cvtdl_object_t obj_meta;
+  cvtdl_face_t face_meta;
+  cvtdl_tracker_t tracker_meta;
+  memset(&obj_meta, 0, sizeof(cvtdl_object_t));
+  memset(&face_meta, 0, sizeof(cvtdl_face_t));
+  memset(&tracker_meta, 0, sizeof(cvtdl_tracker_t));
 
   MOT_Evaluation mot_eval_data;
 
@@ -167,8 +167,8 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
     switch (args.target_type) {
       case PERSON: {
         obj_meta.size = bbox_num;
-        obj_meta.info = (cvai_object_info_t *)malloc(obj_meta.size * sizeof(cvai_object_info_t));
-        memset(obj_meta.info, 0, obj_meta.size * sizeof(cvai_object_info_t));
+        obj_meta.info = (cvtdl_object_info_t *)malloc(obj_meta.size * sizeof(cvtdl_object_info_t));
+        memset(obj_meta.info, 0, obj_meta.size * sizeof(cvtdl_object_info_t));
         for (uint32_t i = 0; i < bbox_num; i++) {
           // printf("[%u/%u]\n", i, bbox_num);
           char text_buffer_bbox[5][B_SIZE_BBOX];
@@ -195,13 +195,13 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
           }
 #endif
         }
-        CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, args.enable_DeepSORT);
+        CVI_TDL_DeepSORT_Obj(tdl_handle, &obj_meta, &tracker_meta, args.enable_DeepSORT);
       } break;
       case FACE: {
         face_meta.rescale_type = RESCALE_CENTER;
         face_meta.size = bbox_num;
-        face_meta.info = (cvai_face_info_t *)malloc(face_meta.size * sizeof(cvai_face_info_t));
-        memset(face_meta.info, 0, face_meta.size * sizeof(cvai_face_info_t));
+        face_meta.info = (cvtdl_face_info_t *)malloc(face_meta.size * sizeof(cvtdl_face_info_t));
+        memset(face_meta.info, 0, face_meta.size * sizeof(cvtdl_face_info_t));
         for (uint32_t i = 0; i < bbox_num; i++) {
           char text_buffer_bbox[5][B_SIZE_BBOX];
           /* read bbox info */
@@ -218,21 +218,21 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
           fscanf(inFile_data, "%s %s", text_buffer_feature[0], text_buffer_feature[1]);
           FILL_FEATURE(&face_meta.info[i].feature, text_buffer_feature, args.mot_data_path);
         }
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta);
+        CVI_TDL_DeepSORT_Face(tdl_handle, &face_meta, &tracker_meta);
       } break;
       default:
         break;
     }
 
-    cvai_tracker_t inact_trackers;
-    memset(&inact_trackers, 0, sizeof(cvai_tracker_t));
-    CVI_AI_DeepSORT_GetTracker_Inactive(ai_handle, &inact_trackers);
+    cvtdl_tracker_t inact_trackers;
+    memset(&inact_trackers, 0, sizeof(cvtdl_tracker_t));
+    CVI_TDL_DeepSORT_GetTracker_Inactive(tdl_handle, &inact_trackers);
     mot_eval_data.update(tracker_meta, inact_trackers);
 
     if (output_result) {
       fprintf(outFile_result, "%u\n", tracker_meta.size);
       for (uint32_t i = 0; i < tracker_meta.size; i++) {
-        cvai_bbox_t *target_bbox =
+        cvtdl_bbox_t *target_bbox =
             (args.target_type == FACE) ? &face_meta.info[i].bbox : &obj_meta.info[i].bbox;
         uint64_t u_id =
             (args.target_type == FACE) ? face_meta.info[i].unique_id : obj_meta.info[i].unique_id;
@@ -251,21 +251,21 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
       }
     }
 
-    CVI_AI_Free(&inact_trackers);
+    CVI_TDL_Free(&inact_trackers);
 
     switch (args.target_type) {
       case FACE:
-        CVI_AI_Free(&face_meta);
+        CVI_TDL_Free(&face_meta);
         break;
       case PERSON:
       case VEHICLE:
       case PET:
-        CVI_AI_Free(&obj_meta);
+        CVI_TDL_Free(&obj_meta);
         break;
       default:
         break;
     }
-    CVI_AI_Free(&tracker_meta);
+    CVI_TDL_Free(&tracker_meta);
   }
 
   mot_eval_data.summary(performance);
@@ -275,14 +275,14 @@ CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t
   return CVI_SUCCESS;
 }
 
-static void FILL_BBOX(cvai_bbox_t *bbox, char text_buffer[][B_SIZE_BBOX]) {
+static void FILL_BBOX(cvtdl_bbox_t *bbox, char text_buffer[][B_SIZE_BBOX]) {
   bbox->x1 = atof(text_buffer[1]);
   bbox->y1 = atof(text_buffer[2]);
   bbox->x2 = atof(text_buffer[3]);
   bbox->y2 = atof(text_buffer[4]);
 }
 
-static void FILL_FEATURE(cvai_feature_t *feature, char text_buffer[][B_SIZE_FEATURE],
+static void FILL_FEATURE(cvtdl_feature_t *feature, char text_buffer[][B_SIZE_FEATURE],
                          char *data_path) {
   feature->size = (uint32_t)atoi(text_buffer[0]);
   if (feature->size > 0) {

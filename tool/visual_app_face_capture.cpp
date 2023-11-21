@@ -1,6 +1,6 @@
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app/cvi_tdl_app.h"
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 
@@ -36,8 +36,8 @@ bool READ_CONFIG(const char *config_path, face_capture_config_t *app_config);
  * Restructure the face meta of the face capture to 2 output face struct.
  * 0: Low quality, 1: Otherwise (Ignore unstable trackers)
  */
-void RESTRUCTURING_FACE_META(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
-                             cvai_face_t *face_meta_1);
+void RESTRUCTURING_FACE_META(face_capture_t *face_cpt_info, cvtdl_face_t *face_meta_0,
+                             cvtdl_face_t *face_meta_1);
 
 int COUNT_ALIVE(face_capture_t *face_cpt_info);
 
@@ -48,7 +48,7 @@ typedef struct {
 } COLOR_RGB_t;
 
 COLOR_RGB_t GET_RANDOM_COLOR(uint64_t seed, int min = 64);
-void GENERATE_VISUAL_COLOR(cvai_face_t *faces, cvai_tracker_t *trackers, COLOR_RGB_t *colors);
+void GENERATE_VISUAL_COLOR(cvtdl_face_t *faces, cvtdl_tracker_t *trackers, COLOR_RGB_t *colors);
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
@@ -91,12 +91,12 @@ int main(int argc, char *argv[]) {
   float det_threshold = atof(argv[9]);
   int voType = atoi(argv[10]);
 
-  CVI_AI_SUPPORTED_MODEL_E fd_model_id = (fd_model_type == 0)
-                                             ? CVI_AI_SUPPORTED_MODEL_RETINAFACE
-                                             : CVI_AI_SUPPORTED_MODEL_FACEMASKDETECTION;
-  CVI_AI_SUPPORTED_MODEL_E fr_model_id = (fr_model_type == 0)
-                                             ? CVI_AI_SUPPORTED_MODEL_FACERECOGNITION
-                                             : CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE;
+  CVI_TDL_SUPPORTED_MODEL_E fd_model_id = (fd_model_type == 0)
+                                              ? CVI_TDL_SUPPORTED_MODEL_RETINAFACE
+                                              : CVI_TDL_SUPPORTED_MODEL_FACEMASKDETECTION;
+  CVI_TDL_SUPPORTED_MODEL_E fr_model_id = (fr_model_type == 0)
+                                              ? CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION
+                                              : CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE;
   APP_MODE_e app_mode = static_cast<APP_MODE_e>(atoi(mode_id));
 
   if (buffer_size <= 0) {
@@ -115,47 +115,47 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  cviai_app_handle_t app_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
+  cvitdl_app_handle_t app_handle = NULL;
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
-  ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                           (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
-                                           (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path,
-                                           NULL);
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
+  ret |= CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
+  ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
+  ret |= CVI_TDL_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
+  ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
+                                            (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
+                                            (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path,
+                                            NULL);
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
-  CVI_AI_SetVpssTimeout(ai_handle, 1000);
+  CVI_TDL_SetVpssTimeout(tdl_handle, 1000);
 
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, det_threshold);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, det_threshold);
 
   {
     switch (app_mode) {
 #if MODE_DEFINITION == 0
       case fast: {
-        CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
+        CVI_TDL_APP_FaceCapture_SetMode(app_handle, FAST);
       } break;
       case interval: {
-        CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
+        CVI_TDL_APP_FaceCapture_SetMode(app_handle, CYCLE);
       } break;
       case leave: {
-        CVI_AI_APP_FaceCapture_SetMode(app_handle, AUTO);
+        CVI_TDL_APP_FaceCapture_SetMode(app_handle, AUTO);
       } break;
       case intelligent: {
-        CVI_AI_APP_FaceCapture_SetMode(app_handle, AUTO);
+        CVI_TDL_APP_FaceCapture_SetMode(app_handle, AUTO);
       } break;
 #elif MODE_DEFINITION == 1
       case high_quality: {
-        CVI_AI_APP_FaceCapture_SetMode(app_handle, AUTO);
+        CVI_TDL_APP_FaceCapture_SetMode(app_handle, AUTO);
       } break;
       case quick: {
-        CVI_AI_APP_FaceCapture_SetMode(app_handle, FAST);
+        CVI_TDL_APP_FaceCapture_SetMode(app_handle, FAST);
       } break;
 #else
 #error "Unexpected value of MODE_DEFINITION."
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
   }
 
   face_capture_config_t app_cfg;
-  CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
+  CVI_TDL_APP_FaceCapture_GetDefaultConfig(&app_cfg);
   if (!strcmp(config_path, "NULL")) {
     printf("Use Default Config...\n");
   } else {
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
       goto CLEANUP_SYSTEM;
     }
   }
-  CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
+  CVI_TDL_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
 
   VIDEO_FRAME_INFO_S stVIFrame;
   VIDEO_FRAME_INFO_S stVOFrame;
@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
     int alive_face_num = COUNT_ALIVE(app_handle->face_cpt_info);
     printf("ALIVE Faces: %d\n", alive_face_num);
 
-    CVI_AI_APP_FaceCapture_Run(app_handle, &stVIFrame);
+    CVI_TDL_APP_FaceCapture_Run(app_handle, &stVIFrame);
     s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
                                       &stVIFrame);
     if (s32Ret != CVI_SUCCESS) {
@@ -225,38 +225,38 @@ int main(int argc, char *argv[]) {
 #ifdef VISUAL_FRAME_NUMBER
     char frame_number[8];
     sprintf(frame_number, "[%u]", frame_counter);
-    CVI_AI_Service_ObjectWriteText(frame_number, 32, 32, &stVOFrame, 1, 1, 1);
+    CVI_TDL_Service_ObjectWriteText(frame_number, 32, 32, &stVOFrame, 1, 1, 1);
 #endif
 
-    cvai_face_t face;
+    cvtdl_face_t face;
     face.size = 1;
     face.height = app_handle->face_cpt_info->last_faces.height;
     face.width = app_handle->face_cpt_info->last_faces.width;
     face.rescale_type = app_handle->face_cpt_info->last_faces.rescale_type;
 
 #ifdef VISUAL_INACTIVATE_TRACKER
-    cvai_face_info_t tmp_face_info;
+    cvtdl_face_info_t tmp_face_info;
     face.info = &tmp_face_info;
     COLOR_RGB_t INACTIVATE_TRACKER_COLOR;
     INACTIVATE_TRACKER_COLOR = {128, 128, 128};
-    cvai_tracker_t inact_trackers;
-    memset(&inact_trackers, 0, sizeof(cvai_tracker_t));
-    CVI_AI_DeepSORT_GetTracker_Inactive(ai_handle, &inact_trackers);
+    cvtdl_tracker_t inact_trackers;
+    memset(&inact_trackers, 0, sizeof(cvtdl_tracker_t));
+    CVI_TDL_DeepSORT_GetTracker_Inactive(tdl_handle, &inact_trackers);
     for (uint32_t i = 0; i < inact_trackers.size; i++) {
-      cvai_service_brush_t brush;
+      cvtdl_service_brush_t brush;
       brush.color = {(float)INACTIVATE_TRACKER_COLOR.R, (float)INACTIVATE_TRACKER_COLOR.G,
                      (float)INACTIVATE_TRACKER_COLOR.B};
       brush.size = 2;
       tmp_face_info.bbox = inact_trackers.info[i].bbox;
-      CVI_AI_Service_FaceDrawRect(service_handle, &face, &stVOFrame, false, brush);
+      CVI_TDL_Service_FaceDrawRect(service_handle, &face, &stVOFrame, false, brush);
       char id_num[64];
       sprintf(id_num, "%" PRIu64 "", inact_trackers.info[i].id);
-      CVI_AI_Service_ObjectWriteText(id_num, face.info[0].bbox.x1, face.info[0].bbox.y1, &stVOFrame,
-                                     (float)INACTIVATE_TRACKER_COLOR.R / 255.,
-                                     (float)INACTIVATE_TRACKER_COLOR.G / 255.,
-                                     (float)INACTIVATE_TRACKER_COLOR.B / 255.);
+      CVI_TDL_Service_ObjectWriteText(id_num, face.info[0].bbox.x1, face.info[0].bbox.y1,
+                                      &stVOFrame, (float)INACTIVATE_TRACKER_COLOR.R / 255.,
+                                      (float)INACTIVATE_TRACKER_COLOR.G / 255.,
+                                      (float)INACTIVATE_TRACKER_COLOR.B / 255.);
     }
-    CVI_AI_Free(&inact_trackers);
+    CVI_TDL_Free(&inact_trackers);
 #endif
 
     uint32_t face_size = app_handle->face_cpt_info->last_faces.size;
@@ -269,15 +269,15 @@ int main(int argc, char *argv[]) {
       if (app_handle->face_cpt_info->last_trackers.info[i].state != CVI_TRACKER_STABLE) continue;
 #endif
       face.info = &app_handle->face_cpt_info->last_faces.info[i];
-      cvai_service_brush_t brush;
+      cvtdl_service_brush_t brush;
       brush.color = {(float)colors[i].R, (float)colors[i].G, (float)colors[i].B};
       brush.size = 2;
-      CVI_AI_Service_FaceDrawRect(service_handle, &face, &stVOFrame, false, brush);
+      CVI_TDL_Service_FaceDrawRect(service_handle, &face, &stVOFrame, false, brush);
       char id_num[64];
       sprintf(id_num, "%" PRIu64 "", face.info[0].unique_id);
-      CVI_AI_Service_ObjectWriteText(id_num, face.info[0].bbox.x1, face.info[0].bbox.y1, &stVOFrame,
-                                     (float)colors[i].R / 255., (float)colors[i].G / 255.,
-                                     (float)colors[i].B / 255.);
+      CVI_TDL_Service_ObjectWriteText(id_num, face.info[0].bbox.x1, face.info[0].bbox.y1,
+                                      &stVOFrame, (float)colors[i].R / 255.,
+                                      (float)colors[i].G / 255., (float)colors[i].B / 255.);
     }
 
     CVI_SYS_Munmap((void *)stVOFrame.stVFrame.pu8VirAddr[0], image_size);
@@ -299,9 +299,9 @@ int main(int argc, char *argv[]) {
   }
 
 CLEANUP_SYSTEM:
-  CVI_AI_APP_DestroyHandle(app_handle);
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_APP_DestroyHandle(app_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
@@ -366,8 +366,8 @@ int COUNT_ALIVE(face_capture_t *face_cpt_info) {
   return counter;
 }
 
-void RESTRUCTURING_FACE_META(face_capture_t *face_cpt_info, cvai_face_t *face_meta_0,
-                             cvai_face_t *face_meta_1) {
+void RESTRUCTURING_FACE_META(face_capture_t *face_cpt_info, cvtdl_face_t *face_meta_0,
+                             cvtdl_face_t *face_meta_1) {
   face_meta_0->size = 0;
   face_meta_1->size = 0;
   for (uint32_t i = 0; i < face_cpt_info->last_faces.size; i++) {
@@ -381,30 +381,30 @@ void RESTRUCTURING_FACE_META(face_capture_t *face_cpt_info, cvai_face_t *face_me
     }
   }
 
-  face_meta_0->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * face_meta_0->size);
-  memset(face_meta_0->info, 0, sizeof(cvai_face_info_t) * face_meta_0->size);
+  face_meta_0->info = (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * face_meta_0->size);
+  memset(face_meta_0->info, 0, sizeof(cvtdl_face_info_t) * face_meta_0->size);
   face_meta_0->rescale_type = face_cpt_info->last_faces.rescale_type;
   face_meta_0->height = face_cpt_info->last_faces.height;
   face_meta_0->width = face_cpt_info->last_faces.width;
 
-  face_meta_1->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * face_meta_1->size);
-  memset(face_meta_1->info, 0, sizeof(cvai_face_info_t) * face_meta_1->size);
+  face_meta_1->info = (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * face_meta_1->size);
+  memset(face_meta_1->info, 0, sizeof(cvtdl_face_info_t) * face_meta_1->size);
   face_meta_1->rescale_type = face_cpt_info->last_faces.rescale_type;
   face_meta_1->height = face_cpt_info->last_faces.height;
   face_meta_1->width = face_cpt_info->last_faces.width;
 
-  cvai_face_info_t *info_ptr_0 = face_meta_0->info;
-  cvai_face_info_t *info_ptr_1 = face_meta_1->info;
+  cvtdl_face_info_t *info_ptr_0 = face_meta_0->info;
+  cvtdl_face_info_t *info_ptr_1 = face_meta_1->info;
   for (uint32_t i = 0; i < face_cpt_info->last_faces.size; i++) {
     if (face_cpt_info->last_trackers.info[i].state != CVI_TRACKER_STABLE) {
       continue;
     }
     bool qualified =
         face_cpt_info->last_faces.info[i].face_quality >= face_cpt_info->cfg.thr_quality;
-    cvai_face_info_t **tmp_ptr = (qualified) ? &info_ptr_1 : &info_ptr_0;
+    cvtdl_face_info_t **tmp_ptr = (qualified) ? &info_ptr_1 : &info_ptr_0;
     (*tmp_ptr)->unique_id = face_cpt_info->last_faces.info[i].unique_id;
     (*tmp_ptr)->face_quality = face_cpt_info->last_faces.info[i].face_quality;
-    memcpy(&(*tmp_ptr)->bbox, &face_cpt_info->last_faces.info[i].bbox, sizeof(cvai_bbox_t));
+    memcpy(&(*tmp_ptr)->bbox, &face_cpt_info->last_faces.info[i].bbox, sizeof(cvtdl_bbox_t));
     *tmp_ptr += 1;
   }
   return;
@@ -420,7 +420,7 @@ COLOR_RGB_t GET_RANDOM_COLOR(uint64_t seed, int min) {
   return color;
 }
 
-void GENERATE_VISUAL_COLOR(cvai_face_t *faces, cvai_tracker_t *trackers, COLOR_RGB_t *colors) {
+void GENERATE_VISUAL_COLOR(cvtdl_face_t *faces, cvtdl_tracker_t *trackers, COLOR_RGB_t *colors) {
   uint32_t face_size = faces->size;
   for (uint32_t i = 0; i < face_size; i++) {
     if (trackers->info[i].state == CVI_TRACKER_NEW) {

@@ -4,9 +4,9 @@
 #include <thread>
 #include <vector>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
 #ifndef CV181X
 #include "cvi_tracer.h"
 #endif
@@ -27,16 +27,16 @@ struct vpssPair {
 };
 
 void timer();
-void SWBinding(std::vector<vpssPair> vpss_vec, cvai_vpssconfig_t *vpssConfig);
+void SWBinding(std::vector<vpssPair> vpss_vec, cvtdl_vpssconfig_t *vpssConfig);
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("Usage: %s <retina_model_path> <image> <lanes>.\n", argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 3840;
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   for (uint32_t i = 0; i < total_lanes; i++) {
     ret = VPSS_INIT_HELPER2(i, 100, 100, PIXEL_FORMAT_RGB_888, 100, 100, PIXEL_FORMAT_RGB_888, 2,
                             true);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       printf("Init sys failed with %#x!\n", ret);
       return ret;
     }
@@ -63,30 +63,30 @@ int main(int argc, char *argv[]) {
     vpss_vec.push_back(vp);
   }
 
-  // Init cviai handle.
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVIAI_SUCCESS) {
+  // Init cvitdl handle.
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   // Setup model path and model config.
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, true);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, true);
 
   for (uint32_t i = 0; i < vpss_vec.size(); i++) {
-    CVI_AI_ReadImage(argv[2], &vpss_vec[i].frame, PIXEL_FORMAT_RGB_888);
+    CVI_TDL_ReadImage(argv[2], &vpss_vec[i].frame, PIXEL_FORMAT_RGB_888);
   }
 
-  cvai_vpssconfig_t vpssConfig;
-  CVI_AI_GetVpssChnConfig(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE,
-                          vpss_vec[0].frame.stVFrame.u32Width, vpss_vec[0].frame.stVFrame.u32Height,
-                          0, &vpssConfig);
+  cvtdl_vpssconfig_t vpssConfig;
+  CVI_TDL_GetVpssChnConfig(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE,
+                           vpss_vec[0].frame.stVFrame.u32Width,
+                           vpss_vec[0].frame.stVFrame.u32Height, 0, &vpssConfig);
   std::thread t1(SWBinding, vpss_vec, &vpssConfig);
   std::thread t2(timer);
   // Run inference and print result.
@@ -95,20 +95,20 @@ int main(int argc, char *argv[]) {
       VIDEO_FRAME_INFO_S frame, frFrame;
       int ret = CVI_VPSS_GetChnFrame(vpss_vec[i].groupId, 0, &frame, 1000);
       ret |= CVI_VPSS_GetChnFrame(vpss_vec[i].groupId, 1, &frFrame, 1000);
-      if (ret != CVIAI_SUCCESS) {
+      if (ret != CVI_TDL_SUCCESS) {
         if (stopped) {
           break;
         }
         continue;
       }
       CVI_SYS_TraceBegin("Lane");
-      cvai_face_t face;
-      memset(&face, 0, sizeof(cvai_face_t));
+      cvtdl_face_t face;
+      memset(&face, 0, sizeof(cvtdl_face_t));
       CVI_SYS_TraceBegin("Retina face");
-      CVI_AI_RetinaFace(ai_handle, &frame, &face);
+      CVI_TDL_RetinaFace(tdl_handle, &frame, &face);
       CVI_SYS_TraceEnd();
       printf("Face found %x.\n", face.size);
-      CVI_AI_Free(&face);
+      CVI_TDL_Free(&face);
       CVI_VPSS_ReleaseChnFrame(0, 0, &frame);
       CVI_VPSS_ReleaseChnFrame(0, 0, &frFrame);
       CVI_SYS_TraceEnd();
@@ -120,9 +120,9 @@ int main(int argc, char *argv[]) {
 
   // Free image and handles.
   for (uint32_t i = 0; i < vpss_vec.size(); i++) {
-    CVI_AI_ReleaseImage(&vpss_vec[i].frame);
+    CVI_TDL_ReleaseImage(&vpss_vec[i].frame);
   }
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }
 
@@ -144,7 +144,7 @@ void timer() {
   cv.notify_all();
 }
 
-void SWBinding(std::vector<vpssPair> vpss_vec, cvai_vpssconfig_t *vpssConfig) {
+void SWBinding(std::vector<vpssPair> vpss_vec, cvtdl_vpssconfig_t *vpssConfig) {
   while (!stopped) {
     for (uint32_t i = 0; i < vpss_vec.size(); i++) {
       CVI_SYS_TraceBegin("Send frame");

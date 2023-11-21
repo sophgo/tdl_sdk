@@ -5,7 +5,6 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 #include "middleware_utils.h"
-#include "sample_log.h"
 #include "sample_utils.h"
 #include "vi_vo_utils.h"
 
@@ -14,9 +13,9 @@
 #include <cvi_sys.h>
 #include <cvi_vb.h>
 #include <cvi_vi.h>
-#include <cviai.h>
 #include <rtsp.h>
 #include <sample_comm.h>
+#include "cvi_tdl.h"
 
 #include <pthread.h>
 #include <signal.h>
@@ -33,27 +32,27 @@ static volatile bool bExit = false;
 MUTEXAUTOLOCK_INIT(ResultMutex);
 
 typedef struct {
-  SAMPLE_AI_MW_CONTEXT *pstMWContext;
-  cviai_service_handle_t stServiceHandle;
-} SAMPLE_AI_VENC_THREAD_ARG_S;
+  SAMPLE_TDL_MW_CONTEXT *pstMWContext;
+  cvitdl_service_handle_t stServiceHandle;
+} SAMPLE_TDL_VENC_THREAD_ARG_S;
 
 typedef struct {
   ODInferenceFunc object_detect;
-  CVI_AI_SUPPORTED_MODEL_E enOdModelId;
-  cviai_handle_t stAIHandle;
+  CVI_TDL_SUPPORTED_MODEL_E enOdModelId;
+  cvitdl_handle_t stTDLHandle;
   bool bUseStableCounter;
-} SAMPLE_AI_AI_THREAD_ARG_S;
+} SAMPLE_TDL_TDL_THREAD_ARG_S;
 
 typedef struct {
-  int classes_id[TARGET_NUM];  // {CVI_AI_DET_TYPE_PERSON, CVI_AI_DET_TYPE_CAR, ...}
+  int classes_id[TARGET_NUM];  // {CVI_TDL_DET_TYPE_PERSON, CVI_TDL_DET_TYPE_CAR, ...}
   uint64_t classes_count[TARGET_NUM];
   uint64_t classes_maxID[TARGET_NUM];
 } obj_counter_t;
 
-static cvai_object_t g_stObjMeta = {0};
+static cvtdl_object_t g_stObjMeta = {0};
 static obj_counter_t g_stObjCounter = {0};
 
-void setSampleMOTConfig(cvai_deepsort_config_t *ds_conf) {
+void setSampleMOTConfig(cvtdl_deepsort_config_t *ds_conf) {
   ds_conf->ktracker_conf.accreditation_threshold = 10;
   ds_conf->ktracker_conf.P_beta[2] = 0.01;
   ds_conf->ktracker_conf.P_beta[6] = 1e-5;
@@ -64,8 +63,8 @@ void setSampleMOTConfig(cvai_deepsort_config_t *ds_conf) {
 
 // Not completed
 /* stable tracking counter */
-void update_obj_counter_stable(obj_counter_t *obj_counter, cvai_object_t *obj_meta,
-                               cvai_tracker_t *tracker_meta) {
+void update_obj_counter_stable(obj_counter_t *obj_counter, cvtdl_object_t *obj_meta,
+                               cvtdl_tracker_t *tracker_meta) {
   uint64_t new_maxID[TARGET_NUM];
   uint64_t newID_num[TARGET_NUM];
   memset(newID_num, 0, sizeof(uint64_t) * TARGET_NUM);
@@ -103,7 +102,7 @@ void update_obj_counter_stable(obj_counter_t *obj_counter, cvai_object_t *obj_me
 }
 
 /* simple tracking counter */
-void update_obj_counter_simple(obj_counter_t *obj_counter, cvai_object_t *obj_meta) {
+void update_obj_counter_simple(obj_counter_t *obj_counter, cvtdl_object_t *obj_meta) {
   for (uint32_t i = 0; i < obj_meta->size; i++) {
     // Find the index of object counter for this class
     int class_index = -1;
@@ -120,31 +119,31 @@ void update_obj_counter_simple(obj_counter_t *obj_counter, cvai_object_t *obj_me
 }
 
 void *run_venc(void *args) {
-  AI_LOGI("Enter encoder thread\n");
-  SAMPLE_AI_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_AI_VENC_THREAD_ARG_S *)args;
+  printf("Enter encoder thread\n");
+  SAMPLE_TDL_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_TDL_VENC_THREAD_ARG_S *)args;
   VIDEO_FRAME_INFO_S stFrame;
   CVI_S32 s32Ret;
-  cvai_object_t stObjMeta = {0};
+  cvtdl_object_t stObjMeta = {0};
   obj_counter_t stObjCounter = {0};
 
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, 0, &stFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
-      AI_LOGE("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
+      printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
     }
 
     {
       MutexAutoLock(ResultMutex, lock);
-      CVI_AI_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
+      CVI_TDL_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
       memcpy(&stObjCounter, &g_stObjCounter, sizeof(obj_counter_t));
     }
 
-    s32Ret = CVI_AI_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjMeta, &stFrame, false,
-                                           CVI_AI_Service_GetDefaultBrush());
-    if (s32Ret != CVIAI_SUCCESS) {
+    s32Ret = CVI_TDL_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjMeta, &stFrame, false,
+                                            CVI_TDL_Service_GetDefaultBrush());
+    if (s32Ret != CVI_TDL_SUCCESS) {
       CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
-      AI_LOGE("Draw fame fail!, ret=%x\n", s32Ret);
+      printf("Draw fame fail!, ret=%x\n", s32Ret);
       goto error;
     }
 
@@ -152,8 +151,8 @@ void *run_venc(void *args) {
     for (uint32_t i = 0; i < stObjMeta.size; i++) {
       char *obj_ID = calloc(64, sizeof(char));
       sprintf(obj_ID, "%" PRIu64 "", stObjMeta.info[i].unique_id);
-      CVI_AI_Service_ObjectWriteText(obj_ID, stObjMeta.info[i].bbox.x1, stObjMeta.info[i].bbox.y1,
-                                     &stFrame, -1, -1, -1);
+      CVI_TDL_Service_ObjectWriteText(obj_ID, stObjMeta.info[i].bbox.x1, stObjMeta.info[i].bbox.y1,
+                                      &stFrame, -1, -1, -1);
       free(obj_ID);
     }
 
@@ -162,109 +161,109 @@ void *run_venc(void *args) {
       char *counter_info = calloc(64, sizeof(char));
       sprintf(counter_info, "class: %d, count: %" PRIu64 "", stObjCounter.classes_id[i],
               stObjCounter.classes_count[i]);
-      CVI_AI_Service_ObjectWriteText(counter_info, 0, (i + 1) * 40, &stFrame, -1, -1, -1);
+      CVI_TDL_Service_ObjectWriteText(counter_info, 0, (i + 1) * 40, &stFrame, -1, -1, -1);
       free(counter_info);
     }
 
-    s32Ret = SAMPLE_AI_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
+    s32Ret = SAMPLE_TDL_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
     if (s32Ret != CVI_SUCCESS) {
       CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
-      AI_LOGE("Send Output Frame NG, ret=%x\n", s32Ret);
+      printf("Send Output Frame NG, ret=%x\n", s32Ret);
       goto error;
     }
 
   error:
-    CVI_AI_Free(&stObjMeta);
+    CVI_TDL_Free(&stObjMeta);
     CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
     }
   }
-  AI_LOGI("Exit encoder thread\n");
+  printf("Exit encoder thread\n");
   pthread_exit(NULL);
 }
 
-void *run_ai_thread(void *args) {
-  AI_LOGI("Enter AI thread\n");
-  SAMPLE_AI_AI_THREAD_ARG_S *pstAIArgs = (SAMPLE_AI_AI_THREAD_ARG_S *)args;
+void *run_tdl_thread(void *args) {
+  printf("Enter TDL thread\n");
+  SAMPLE_TDL_TDL_THREAD_ARG_S *pstTDLArgs = (SAMPLE_TDL_TDL_THREAD_ARG_S *)args;
 
   VIDEO_FRAME_INFO_S stFrame;
-  cvai_object_t stObjMeta = {0};
-  cvai_tracker_t stTrackerMeta = {0};
+  cvtdl_object_t stObjMeta = {0};
+  cvtdl_tracker_t stTrackerMeta = {0};
   obj_counter_t stObjCounter = {0};
-  stObjCounter.classes_id[0] = CVI_AI_DET_TYPE_PERSON;
-  stObjCounter.classes_id[1] = CVI_AI_DET_TYPE_CAR;
+  stObjCounter.classes_id[0] = CVI_TDL_DET_TYPE_PERSON;
+  stObjCounter.classes_id[1] = CVI_TDL_DET_TYPE_CAR;
 
   CVI_S32 s32Ret;
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000);
 
     if (s32Ret != CVI_SUCCESS) {
-      AI_LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", s32Ret);
+      printf("CVI_VPSS_GetChnFrame failed with %#x\n", s32Ret);
       goto get_frame_failed;
     }
 
     //*******************************************
     // Step 1: Object detect inference.
-    s32Ret = pstAIArgs->object_detect(pstAIArgs->stAIHandle, &stFrame, &stObjMeta);
-    if (s32Ret != CVIAI_SUCCESS) {
-      AI_LOGE("inference failed!, ret=%x\n", s32Ret);
+    s32Ret = pstTDLArgs->object_detect(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta);
+    if (s32Ret != CVI_TDL_SUCCESS) {
+      printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
 
     // Step 2: Extract ReID feature for all person bbox.
     for (uint32_t i = 0; i < stObjMeta.size; i++) {
-      if (stObjMeta.info[i].classes == CVI_AI_DET_TYPE_PERSON) {
-        s32Ret = CVI_AI_OSNetOne(pstAIArgs->stAIHandle, &stFrame, &stObjMeta, (int)i);
-        if (s32Ret != CVIAI_SUCCESS) {
-          AI_LOGE("inference failed!, ret=%x\n", s32Ret);
+      if (stObjMeta.info[i].classes == CVI_TDL_DET_TYPE_PERSON) {
+        s32Ret = CVI_TDL_OSNetOne(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta, (int)i);
+        if (s32Ret != CVI_TDL_SUCCESS) {
+          printf("inference failed!, ret=%x\n", s32Ret);
           goto inf_error;
         }
       }
     }
 
     // Step 3: Multi-Object Tracking inference.
-    s32Ret = CVI_AI_DeepSORT_Obj(pstAIArgs->stAIHandle, &stObjMeta, &stTrackerMeta, false);
-    if (s32Ret != CVIAI_SUCCESS) {
-      AI_LOGE("inference failed!, ret=%x\n", s32Ret);
+    s32Ret = CVI_TDL_DeepSORT_Obj(pstTDLArgs->stTDLHandle, &stObjMeta, &stTrackerMeta, false);
+    if (s32Ret != CVI_TDL_SUCCESS) {
+      printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
     //*******************************************
 
-    if (pstAIArgs->bUseStableCounter) {
+    if (pstTDLArgs->bUseStableCounter) {
       update_obj_counter_stable(&stObjCounter, &stObjMeta, &stTrackerMeta);
     } else {
       update_obj_counter_simple(&stObjCounter, &stObjMeta);
     }
 
     for (int i = 0; i < TARGET_NUM; i++) {
-      AI_LOGI("[%d] %" PRIu64 "\n", stObjCounter.classes_id[i], stObjCounter.classes_count[i]);
+      printf("[%d] %" PRIu64 "\n", stObjCounter.classes_id[i], stObjCounter.classes_count[i]);
     }
 
     {
       MutexAutoLock(ResultMutex, lock);
-      CVI_AI_CopyObjectMeta(&stObjMeta, &g_stObjMeta);
+      CVI_TDL_CopyObjectMeta(&stObjMeta, &g_stObjMeta);
       memcpy(&g_stObjCounter, &stObjCounter, sizeof(obj_counter_t));
     }
 
   inf_error:
     CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
   get_frame_failed:
-    CVI_AI_Free(&stObjMeta);
-    CVI_AI_Free(&stTrackerMeta);
+    CVI_TDL_Free(&stObjMeta);
+    CVI_TDL_Free(&stTrackerMeta);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
     }
   }
 
-  AI_LOGI("Exit AI thread\n");
+  printf("Exit TDL thread\n");
   pthread_exit(NULL);
 }
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
   signal(SIGTERM, SIG_IGN);
-  AI_LOGI("handle signal, signo: %d\n", signo);
+  printf("handle signal, signo: %d\n", signo);
   if (SIGINT == signo || SIGTERM == signo) {
     bExit = true;
   }
@@ -288,20 +287,20 @@ int main(int argc, char *argv[]) {
   }
 
   ODInferenceFunc inference_func;
-  CVI_AI_SUPPORTED_MODEL_E enOdModelId;
-  if (get_od_model_info(argv[1], &enOdModelId, &inference_func) == CVIAI_FAILURE) {
-    AI_LOGE("unsupported model: %s\n", argv[1]);
+  CVI_TDL_SUPPORTED_MODEL_E enOdModelId;
+  if (get_od_model_info(argv[1], &enOdModelId, &inference_func) == CVI_TDL_FAILURE) {
+    printf("unsupported model: %s\n", argv[1]);
     return -1;
   }
 
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  SAMPLE_AI_MW_CONFIG_S stMWConfig = {0};
+  SAMPLE_TDL_MW_CONFIG_S stMWConfig = {0};
 
-  CVI_S32 s32Ret = SAMPLE_AI_Get_VI_Config(&stMWConfig.stViConfig);
+  CVI_S32 s32Ret = SAMPLE_TDL_Get_VI_Config(&stMWConfig.stViConfig);
   if (s32Ret != CVI_SUCCESS || stMWConfig.stViConfig.s32WorkingViNum <= 0) {
-    AI_LOGE("Failed to get senor infomation from ini file (/mnt/data/sensor_cfg.ini).\n");
+    printf("Failed to get senor infomation from ini file (/mnt/data/sensor_cfg.ini).\n");
     return -1;
   }
 
@@ -310,14 +309,14 @@ int main(int argc, char *argv[]) {
   s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(stMWConfig.stViConfig.astViInfo[0].stSnsInfo.enSnsType,
                                           &enPicSize);
   if (s32Ret != CVI_SUCCESS) {
-    AI_LOGE("Cannot get senor size\n");
+    printf("Cannot get senor size\n");
     return -1;
   }
 
   SIZE_S stSensorSize;
   s32Ret = SAMPLE_COMM_SYS_GetPicSize(enPicSize, &stSensorSize);
   if (s32Ret != CVI_SUCCESS) {
-    AI_LOGE("Cannot get senor size\n");
+    printf("Cannot get senor size\n");
     return -1;
   }
 
@@ -347,7 +346,7 @@ int main(int argc, char *argv[]) {
   stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32VpssChnBinding = VPSS_CHN1;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32VpssGrpBinding = (VPSS_GRP)0;
 
-  // VBPool 2 for AI preprocessing
+  // VBPool 2 for TDL preprocessing
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].enFormat = PIXEL_FORMAT_BGR_888_PLANAR;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32BlkCount = 1;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32Height = 768;
@@ -362,7 +361,7 @@ int main(int argc, char *argv[]) {
   stMWConfig.stVPSSPoolConfig.stVpssMode.aenInput[1] = VPSS_INPUT_ISP;
   stMWConfig.stVPSSPoolConfig.stVpssMode.ViPipe[1] = 0;
 
-  SAMPLE_AI_VPSS_CONFIG_S *pstVpssConfig = &stMWConfig.stVPSSPoolConfig.astVpssConfig[0];
+  SAMPLE_TDL_VPSS_CONFIG_S *pstVpssConfig = &stMWConfig.stVPSSPoolConfig.astVpssConfig[0];
   pstVpssConfig->bBindVI = true;
 
   // Assign device 1 to VPSS Grp0, because device1 has 3 outputs in dual mode.
@@ -376,78 +375,78 @@ int main(int argc, char *argv[]) {
                           stVencSize.u32Height, VI_PIXEL_FORMAT, true);
 
   // Get default VENC configurations
-  SAMPLE_AI_Get_Input_Config(&stMWConfig.stVencConfig.stChnInputCfg);
+  SAMPLE_TDL_Get_Input_Config(&stMWConfig.stVencConfig.stChnInputCfg);
   stMWConfig.stVencConfig.u32FrameWidth = stVencSize.u32Width;
   stMWConfig.stVencConfig.u32FrameHeight = stVencSize.u32Height;
 
   // Get default RTSP configurations
-  SAMPLE_AI_Get_RTSP_Config(&stMWConfig.stRTSPConfig.stRTSPConfig);
+  SAMPLE_TDL_Get_RTSP_Config(&stMWConfig.stRTSPConfig.stRTSPConfig);
 
-  SAMPLE_AI_MW_CONTEXT stMWContext = {0};
-  s32Ret = SAMPLE_AI_Init_WM(&stMWConfig, &stMWContext);
+  SAMPLE_TDL_MW_CONTEXT stMWContext = {0};
+  s32Ret = SAMPLE_TDL_Init_WM(&stMWConfig, &stMWContext);
   if (s32Ret != CVI_SUCCESS) {
-    AI_LOGE("init middleware failed! ret=%x\n", s32Ret);
+    printf("init middleware failed! ret=%x\n", s32Ret);
     return -1;
   }
 
-  cviai_handle_t stAIHandle = NULL;
+  cvitdl_handle_t stTDLHandle = NULL;
 
-  // Create AI handle and assign VPSS Grp1 Device 0 to AI SDK
-  GOTO_IF_FAILED(CVI_AI_CreateHandle2(&stAIHandle, 1, 0), s32Ret, create_ai_fail);
+  // Create TDL handle and assign VPSS Grp1 Device 0 to TDL SDK
+  GOTO_IF_FAILED(CVI_TDL_CreateHandle2(&stTDLHandle, 1, 0), s32Ret, create_ai_fail);
 
-  GOTO_IF_FAILED(CVI_AI_SetVBPool(stAIHandle, 0, 2), s32Ret, create_service_fail);
+  GOTO_IF_FAILED(CVI_TDL_SetVBPool(stTDLHandle, 0, 2), s32Ret, create_service_fail);
 
-  CVI_AI_SetVpssTimeout(stAIHandle, 1000);
+  CVI_TDL_SetVpssTimeout(stTDLHandle, 1000);
 
-  cviai_service_handle_t stServiceHandle = NULL;
-  GOTO_IF_FAILED(CVI_AI_Service_CreateHandle(&stServiceHandle, stAIHandle), s32Ret,
+  cvitdl_service_handle_t stServiceHandle = NULL;
+  GOTO_IF_FAILED(CVI_TDL_Service_CreateHandle(&stServiceHandle, stTDLHandle), s32Ret,
                  create_service_fail);
 
-  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, enOdModelId, argv[2]), s32Ret, setup_ai_fail);
-  GOTO_IF_FAILED(CVI_AI_OpenModel(stAIHandle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]), s32Ret,
-                 setup_ai_fail);
+  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, enOdModelId, argv[2]), s32Ret, setup_tdl_fail);
+  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_OSNET, argv[3]), s32Ret,
+                 setup_tdl_fail);
 
-  GOTO_IF_FAILED(CVI_AI_SelectDetectClass(stAIHandle, enOdModelId, 2, CVI_AI_DET_TYPE_PERSON,
-                                          CVI_AI_DET_TYPE_CAR),
-                 s32Ret, setup_ai_fail);
+  GOTO_IF_FAILED(CVI_TDL_SelectDetectClass(stTDLHandle, enOdModelId, 2, CVI_TDL_DET_TYPE_PERSON,
+                                           CVI_TDL_DET_TYPE_CAR),
+                 s32Ret, setup_tdl_fail);
 
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(stAIHandle, true);
-  cvai_deepsort_config_t ds_conf;
-  CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
+  CVI_TDL_DeepSORT_Init(stTDLHandle, true);
+  cvtdl_deepsort_config_t ds_conf;
+  CVI_TDL_DeepSORT_GetDefaultConfig(&ds_conf);
   setSampleMOTConfig(&ds_conf);
-  CVI_AI_DeepSORT_SetConfig(stAIHandle, &ds_conf, -1, false);
+  CVI_TDL_DeepSORT_SetConfig(stTDLHandle, &ds_conf, -1, false);
 
   int use_stable_counter = atoi(argv[4]);
   if (use_stable_counter) {
     printf("Use Stable Counter.\n");
   }
 
-  pthread_t stVencThread, stAIThread;
-  SAMPLE_AI_VENC_THREAD_ARG_S venc_args = {
+  pthread_t stVencThread, stTDLThread;
+  SAMPLE_TDL_VENC_THREAD_ARG_S venc_args = {
       .pstMWContext = &stMWContext,
       .stServiceHandle = stServiceHandle,
   };
 
-  SAMPLE_AI_AI_THREAD_ARG_S ai_args = {
+  SAMPLE_TDL_TDL_THREAD_ARG_S ai_args = {
       .enOdModelId = enOdModelId,
       .object_detect = inference_func,
-      .stAIHandle = stAIHandle,
+      .stTDLHandle = stTDLHandle,
       .bUseStableCounter = use_stable_counter,
   };
 
   pthread_create(&stVencThread, NULL, run_venc, &venc_args);
-  pthread_create(&stAIThread, NULL, run_ai_thread, &ai_args);
+  pthread_create(&stTDLThread, NULL, run_tdl_thread, &ai_args);
 
   pthread_join(stVencThread, NULL);
-  pthread_join(stAIThread, NULL);
+  pthread_join(stTDLThread, NULL);
 
-setup_ai_fail:
-  CVI_AI_Service_DestroyHandle(stServiceHandle);
+setup_tdl_fail:
+  CVI_TDL_Service_DestroyHandle(stServiceHandle);
 create_service_fail:
-  CVI_AI_DestroyHandle(stAIHandle);
+  CVI_TDL_DestroyHandle(stTDLHandle);
 create_ai_fail:
-  SAMPLE_AI_Destroy_MW(&stMWContext);
+  SAMPLE_TDL_Destroy_MW(&stMWContext);
 
   return 0;
 }

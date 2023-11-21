@@ -1,6 +1,6 @@
 
 #include "object_utils.hpp"
-#include "core/object/cvai_object_types.h"
+#include "core/object/cvtdl_object_types.h"
 
 #include <math.h>
 #include <algorithm>
@@ -9,7 +9,7 @@
 #include <string>
 using namespace std;
 
-namespace cviai {
+namespace cvitdl {
 
 static vector<size_t> sort_indexes(const Detections &v) {
   // initialize original index locations
@@ -176,4 +176,4 @@ void clip_bbox(const size_t image_width, const size_t image_height, const PtrDec
   if (box->x2 >= image_width) box->x2 = image_width - 1;
   if (box->y2 >= image_height) box->y2 = image_height - 1;
 }
-}  // namespace cviai
+}  // namespace cvitdl

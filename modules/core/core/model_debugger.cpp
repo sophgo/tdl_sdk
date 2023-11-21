@@ -11,7 +11,7 @@
 
 namespace fs = std::experimental::filesystem;
 
-namespace cviai {
+namespace cvitdl {
 namespace debug {
 
 static bool isPathExist(const std::string &s) {
@@ -171,4 +171,4 @@ void ModelDebugger::save_normalizer(CVI_TENSOR *tensor, const VPSS_NORMALIZE_S &
 }
 
 }  // namespace debug
-}  // namespace cviai
+}  // namespace cvitdl

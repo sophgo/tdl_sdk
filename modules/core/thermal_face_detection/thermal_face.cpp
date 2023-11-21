@@ -1,7 +1,7 @@
 #include "thermal_face.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
@@ -16,12 +16,12 @@
 #define NAME_BBOX "regression_dequant"
 #define NAME_SCORE "classification_dequant"
 
-namespace cviai {
+namespace cvitdl {
 
-static std::vector<cvai_bbox_t> generate_anchors(int base_size, const std::vector<float> &ratios,
-                                                 const std::vector<float> &scales) {
+static std::vector<cvtdl_bbox_t> generate_anchors(int base_size, const std::vector<float> &ratios,
+                                                  const std::vector<float> &scales) {
   int num_anchors = ratios.size() * scales.size();
-  std::vector<cvai_bbox_t> anchors(num_anchors, cvai_bbox_t());
+  std::vector<cvtdl_bbox_t> anchors(num_anchors, cvtdl_bbox_t());
   std::vector<float> areas(num_anchors, 0);
 
   for (size_t i = 0; i < anchors.size(); i++) {
@@ -41,8 +41,8 @@ static std::vector<cvai_bbox_t> generate_anchors(int base_size, const std::vecto
   return anchors;
 }
 
-static std::vector<cvai_bbox_t> shift(const std::vector<int> &shape, int stride,
-                                      const std::vector<cvai_bbox_t> &anchors) {
+static std::vector<cvtdl_bbox_t> shift(const std::vector<int> &shape, int stride,
+                                       const std::vector<cvtdl_bbox_t> &anchors) {
   std::vector<int> shift_x(shape[0] * shape[1], 0);
   std::vector<int> shift_y(shape[0] * shape[1], 0);
 
@@ -57,7 +57,7 @@ static std::vector<cvai_bbox_t> shift(const std::vector<int> &shape, int stride,
     }
   }
 
-  std::vector<cvai_bbox_t> shifts(shape[0] * shape[1], cvai_bbox_t());
+  std::vector<cvtdl_bbox_t> shifts(shape[0] * shape[1], cvtdl_bbox_t());
   for (size_t i = 0; i < shifts.size(); i++) {
     shifts[i].x1 = shift_x[i];
     shifts[i].y1 = shift_y[i];
@@ -65,7 +65,7 @@ static std::vector<cvai_bbox_t> shift(const std::vector<int> &shape, int stride,
     shifts[i].y2 = shift_y[i];
   }
 
-  std::vector<cvai_bbox_t> all_anchors(anchors.size() * shifts.size(), cvai_bbox_t());
+  std::vector<cvtdl_bbox_t> all_anchors(anchors.size() * shifts.size(), cvtdl_bbox_t());
   for (size_t i = 0; i < shifts.size(); i++) {
     for (size_t j = 0; j < anchors.size(); j++) {
       all_anchors[i * anchors.size() + j].x1 = anchors[j].x1 + shifts[i].x1;
@@ -78,8 +78,8 @@ static std::vector<cvai_bbox_t> shift(const std::vector<int> &shape, int stride,
   return all_anchors;
 }
 
-static void bbox_pred(const cvai_bbox_t &anchor, float *regress, std::vector<float> std,
-                      cvai_bbox_t &bbox) {
+static void bbox_pred(const cvtdl_bbox_t &anchor, float *regress, std::vector<float> std,
+                      cvtdl_bbox_t &bbox) {
   float width = anchor.x2 - anchor.x1 + 1;
   float height = anchor.y2 - anchor.y1 + 1;
   float ctr_x = anchor.x1 + 0.5 * (width - 1.0);
@@ -108,7 +108,7 @@ ThermalFace::~ThermalFace() {}
 int ThermalFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Thermal face only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = static_cast<float>(SCALE_R);
   (*data)[0].factor[1] = static_cast<float>(SCALE_G);
@@ -118,7 +118,7 @@ int ThermalFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].mean[2] = static_cast<float>(MEAN_B);
   (*data)[0].rescale_type = RESCALE_RB;
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int ThermalFace::onModelOpened() {
@@ -136,11 +136,11 @@ int ThermalFace::onModelOpened() {
   }
 
   for (size_t i = 0; i < sizes.size(); i++) {
-    std::vector<cvai_bbox_t> anchors = generate_anchors(sizes[i], ratios, scales);
-    std::vector<cvai_bbox_t> shifted_anchors = shift(image_shapes[i], strides[i], anchors);
+    std::vector<cvtdl_bbox_t> anchors = generate_anchors(sizes[i], ratios, scales);
+    std::vector<cvtdl_bbox_t> shifted_anchors = shift(image_shapes[i], strides[i], anchors);
     m_all_anchors.insert(m_all_anchors.end(), shifted_anchors.begin(), shifted_anchors.end());
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int ThermalFace::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -155,21 +155,21 @@ int ThermalFace::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
   if (ret != CVI_SUCCESS) {
     LOGE("Send frame failed with %#x!\n", ret);
-    return CVIAI_ERR_VPSS_SEND_FRAME;
+    return CVI_TDL_ERR_VPSS_SEND_FRAME;
   }
 
   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   if (ret != CVI_SUCCESS) {
     LOGE("Get frame failed with %#x!\n", ret);
-    return CVIAI_ERR_VPSS_GET_FRAME;
+    return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
+int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     return ret;
   }
 
@@ -177,13 +177,13 @@ int ThermalFace::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_t *meta) {
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, meta);
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void ThermalFace::outputParser(const int image_width, const int image_height, const int frame_width,
-                               const int frame_height, cvai_face_t *meta) {
-  std::vector<cvai_face_info_t> vec_bbox;
-  std::vector<cvai_face_info_t> vec_bbox_nms;
+                               const int frame_height, cvtdl_face_t *meta) {
+  std::vector<cvtdl_face_info_t> vec_bbox;
+  std::vector<cvtdl_face_info_t> vec_bbox_nms;
 
   float *score_blob = getOutputRawPtr<float>(NAME_SCORE);
 
@@ -191,7 +191,7 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
   float *bbox_blob = getOutputRawPtr<float>(NAME_BBOX);
 
   for (size_t i = 0; i < m_all_anchors.size(); i++) {
-    cvai_face_info_t box;
+    cvtdl_face_info_t box;
 
     float conf = score_blob[i];
     if (conf <= m_model_threshold) {
@@ -220,7 +220,7 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
     meta->info = NULL;
     return;
   }
-  CVI_AI_MemAllocInit(vec_bbox_nms.size(), 0, meta);
+  CVI_TDL_MemAllocInit(vec_bbox_nms.size(), 0, meta);
   if (hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < meta->size; ++i) {
       clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
@@ -237,8 +237,8 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
     for (uint32_t i = 0; i < meta->size; ++i) {
       float ratio = 0;
       clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
-      cvai_bbox_t bbox = box_rescale_rb(frame_width, frame_height, image_width, image_height,
-                                        vec_bbox_nms[i].bbox, &ratio);
+      cvtdl_bbox_t bbox = box_rescale_rb(frame_width, frame_height, image_width, image_height,
+                                         vec_bbox_nms[i].bbox, &ratio);
       meta->info[i].bbox.x1 = bbox.x1;
       meta->info[i].bbox.x2 = bbox.x2;
       meta->info[i].bbox.y1 = bbox.y1;
@@ -248,4 +248,4 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

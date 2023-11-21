@@ -1,4 +1,4 @@
-#include "cviai_test.hpp"
+#include "cvi_tdl_test.hpp"
 #include "gtest.h"
 
 int main(int argc, char *argv[]) {
@@ -10,10 +10,10 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   testing::AddGlobalTestEnvironment(
-      new cviai::unitest::CVIAITestEnvironment(argv[1], argv[2], argv[3]));
+      new cvitdl::unitest::CVI_TDLTestEnvironment(argv[1], argv[2], argv[3]));
   return RUN_ALL_TESTS();
 }

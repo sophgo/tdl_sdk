@@ -43,5 +43,5 @@ endif()
 set(CVI_RTSP_LIBPATH ${SOURCE_DIR}/src/libcvi_rtsp.so)
 set(CVI_RTSP_INCLUDE ${SOURCE_DIR}/include/cvi_rtsp)
 
-install(FILES ${CVI_RTSP_LIBPATH} DESTINATION lib)
-install(DIRECTORY ${CVI_RTSP_INCLUDE} DESTINATION include)
+install(FILES ${CVI_RTSP_LIBPATH} DESTINATION sample/3rd/lib)
+install(DIRECTORY ${CVI_RTSP_INCLUDE} DESTINATION sample/3rd/include)

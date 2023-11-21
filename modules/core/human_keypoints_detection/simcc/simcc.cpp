@@ -5,9 +5,9 @@
 
 #include <iostream>
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
@@ -38,7 +38,7 @@ static const float MODEL_MEAN_B = 0.406 * 255.0;
 #define EXPAND_RATIO 2.0f
 #define MAX_NUM 5
 
-namespace cviai {
+namespace cvitdl {
 
 Simcc::Simcc() : Core(CVI_MEM_DEVICE) { m_model_threshold = 3.0f; }
 
@@ -47,7 +47,7 @@ Simcc::~Simcc() {}
 int Simcc::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("simcc pose only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = FACTOR_R;
   (*data)[0].factor[1] = FACTOR_G;
@@ -59,10 +59,10 @@ int Simcc::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].rescale_type = RESCALE_NOASPECT;
   (*data)[0].use_crop = true;
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int Simcc::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *obj_meta) {
+int Simcc::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *obj_meta) {
   model_timer_.TicToc("before_run");
 
   int infer_num = std::min((int)obj_meta->size, MAX_NUM);
@@ -70,7 +70,7 @@ int Simcc::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *obj_meta) {
     uint32_t img_width = stOutFrame->stVFrame.u32Width;
     uint32_t img_height = stOutFrame->stVFrame.u32Height;
 
-    cvai_object_info_t obj_info = info_rescale_c(img_width, img_height, *obj_meta, i);
+    cvtdl_object_info_t obj_info = info_rescale_c(img_width, img_height, *obj_meta, i);
 
     int box_x1 = obj_info.bbox.x1;
     int box_y1 = obj_info.bbox.y1;
@@ -92,14 +92,14 @@ int Simcc::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *obj_meta) {
       box_h = img_height - box_y1;
     }
 
-    CVI_AI_FreeCpp(&obj_info);
+    CVI_TDL_FreeCpp(&obj_info);
 
     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
     m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       LOGW("simcc pose inference failed\n");
       return ret;
     }
@@ -111,11 +111,11 @@ int Simcc::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *obj_meta) {
   }
   model_timer_.TicToc("after_run");
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void Simcc::outputParser(const float nn_width, const float nn_height, const int frame_width,
-                         const int frame_height, cvai_object_t *obj, std::vector<float> &box,
+                         const int frame_height, cvtdl_object_t *obj, std::vector<float> &box,
                          int index) {
   float *data_x = getOutputRawPtr<float>(0);
   float *data_y = getOutputRawPtr<float>(1);
@@ -124,7 +124,7 @@ void Simcc::outputParser(const float nn_width, const float nn_height, const int 
   CVI_SHAPE output1_shape = getOutputShape(1);
 
   obj->info[index].pedestrian_properity =
-      (cvai_pedestrian_meta *)malloc(sizeof(cvai_pedestrian_meta));
+      (cvtdl_pedestrian_meta *)malloc(sizeof(cvtdl_pedestrian_meta));
 
   for (int i = 0; i < NUM_KEYPOINTS; i++) {
     float *score_start_x = data_x + i * output0_shape.dim[2];
@@ -164,4 +164,4 @@ void Simcc::outputParser(const float nn_width, const float nn_height, const int 
     obj->info[index].pedestrian_properity->pose_17.y[i] = (y - pad_h) * scale_ratio + box[1];
   }
 }
-}  // namespace cviai
+}  // namespace cvitdl

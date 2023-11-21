@@ -1,11 +1,11 @@
 #pragma once
 
-#include "core/face/cvai_face_helper.h"
-#include "core/face/cvai_face_types.h"
+#include "core/face/cvtdl_face_helper.h"
+#include "core/face/cvtdl_face_types.h"
 
 #include <vector>
 
-namespace cviai {
+namespace cvitdl {
 template <int DIM>
 class FeatureVector final {
  public:
@@ -141,9 +141,9 @@ class FaceAttributeInfo final {
   GenderFeature gender_prob;
   RaceFeature race_prob;
   AgeFeature age_prob;
-  cvai_face_emotion_e emotion = EMOTION_UNKNOWN;
-  cvai_face_gender_e gender = GENDER_UNKNOWN;
-  cvai_face_race_e race = RACE_UNKNOWN;
+  cvtdl_face_emotion_e emotion = EMOTION_UNKNOWN;
+  cvtdl_face_gender_e gender = GENDER_UNKNOWN;
+  cvtdl_face_race_e race = RACE_UNKNOWN;
   float age = -1.0;
 };
-}  // namespace cviai
+}  // namespace cvitdl

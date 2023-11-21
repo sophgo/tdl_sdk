@@ -3,14 +3,14 @@
 
 #include <math.h>
 #include <iostream>
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #define USE_COSINE_DISTANCE_FOR_FEATURE true
 
 KalmanTracker::~KalmanTracker() {}
 
 KalmanTracker::KalmanTracker(const uint64_t &id, const int &class_id, const BBOX &bbox,
                              const FEATURE &feature,
-                             const cvai_kalman_tracker_config_t &ktracker_conf) {
+                             const cvtdl_kalman_tracker_config_t &ktracker_conf) {
   this->id = id;
   this->class_id = class_id;
   int feature_size = feature.size();
@@ -159,7 +159,7 @@ COST_MATRIX KalmanTracker::getCostMatrix_BBox(const std::vector<KalmanTracker> &
 COST_MATRIX KalmanTracker::getCostMatrix_Mahalanobis(
     const KalmanFilter &KF_, const std::vector<KalmanTracker> &K_Trackers,
     const std::vector<BBOX> &BBoxes, const std::vector<int> &Tracker_IDXes,
-    const std::vector<int> &BBox_IDXes, const cvai_kalman_filter_config_t &kfilter_conf,
+    const std::vector<int> &BBox_IDXes, const cvtdl_kalman_filter_config_t &kfilter_conf,
     float upper_bound) {
 #if 0
   float chi2_threshold = kfilter_conf.chi2_threshold;
@@ -187,7 +187,7 @@ COST_MATRIX KalmanTracker::getCostMatrix_Mahalanobis(
 void KalmanTracker::restrictCostMatrix_Mahalanobis(
     COST_MATRIX &cost_matrix, const KalmanFilter &KF_, const std::vector<KalmanTracker> &K_Trackers,
     const std::vector<BBOX> &BBoxes, const std::vector<int> &Tracker_IDXes,
-    const std::vector<int> &BBox_IDXes, const cvai_kalman_filter_config_t &kfilter_conf,
+    const std::vector<int> &BBox_IDXes, const cvtdl_kalman_filter_config_t &kfilter_conf,
     float upper_bound) {
   // float chi2_threshold = chi2inv95[4];
   BBOXES measurement_bboxes(BBox_IDXes.size(), 4);
@@ -285,14 +285,14 @@ uint64_t KalmanTracker::get_pair_trackid() {
   }
   return pair_track_infos_.begin()->first;
 }
-void KalmanTracker::predict(KalmanFilter &kf, cvai_deepsort_config_t *conf) {
+void KalmanTracker::predict(KalmanFilter &kf, cvtdl_deepsort_config_t *conf) {
   kf.predict(kalman_state, x, P, conf->kfilter_conf);
   unmatched_times += 1;
   ages_ += 1;
 }
 //
 void KalmanTracker::update(KalmanFilter &kf, const stRect *p_tlwh_bbox,
-                           cvai_deepsort_config_t *conf) {
+                           cvtdl_deepsort_config_t *conf) {
   if (p_tlwh_bbox != nullptr) {
     unmatched_times = 0;
     matched_counter += 1;
@@ -319,7 +319,7 @@ void KalmanTracker::update(KalmanFilter &kf, const stRect *p_tlwh_bbox,
   }
 }
 void KalmanTracker::false_update_from_pair(KalmanFilter &kf, KalmanTracker *p_other,
-                                           cvai_deepsort_config_t *conf) {
+                                           cvtdl_deepsort_config_t *conf) {
 #ifdef DEBUG_TRACK
   std::cout << "false update pairtrack:" << id << ",with:" << p_other->id << std::endl;
 #endif

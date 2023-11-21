@@ -7,34 +7,34 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 std::string g_model_root;
 
-std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle,
+std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle_t tdl_handle,
                                        std::string model_name) {
   static int model_init = 0;
   CVI_S32 ret;
   if (model_init == 0) {
     std::cout << "to init Person model\t";
     std::string str_person_model = g_model_root + std::string("/") + model_name;
-    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
-                           str_person_model.c_str());
+    ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                            str_person_model.c_str());
     if (ret != CVI_SUCCESS) {
       std::cout << "open model failed:" << str_person_model << std::endl;
       return "";
     }
     std::cout << "init model done\t";
-    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.01);
+    CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.01);
     std::cout << "set threshold done\t";
     model_init = 1;
   }
-  cvai_object_t person_obj;
-  memset(&person_obj, 0, sizeof(cvai_object_t));
-  ret = CVI_AI_MobileDetV2_Pedestrian(ai_handle, p_frame, &person_obj);
+  cvtdl_object_t person_obj;
+  memset(&person_obj, 0, sizeof(cvtdl_object_t));
+  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, p_frame, &person_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect person failed:" << ret << std::endl;
   }
@@ -42,29 +42,29 @@ std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle
   // generate detection result
   std::stringstream ss;
   for (uint32_t i = 0; i < person_obj.size; i++) {
-    cvai_bbox_t box = person_obj.info[i].bbox;
+    cvtdl_bbox_t box = person_obj.info[i].bbox;
     ss << (person_obj.info[i].classes + 1) << " " << box.score << " " << box.x1 << " " << box.y1
        << " " << box.x2 << " " << box.y2 << "\n";
   }
-  CVI_AI_Free(&person_obj);
+  CVI_TDL_Free(&person_obj);
   return ss.str();
 }
 
-std::string run_image_person_pets_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle,
+std::string run_image_person_pets_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle_t tdl_handle,
                                             std::string model_name) {
   static int model_init = 0;
   CVI_S32 ret;
   if (model_init == 0) {
     std::cout << "to init Person pets model\t";
     std::string str_model = g_model_root + std::string("/") + model_name;
-    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
-                           str_model.c_str());
-    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, 0.01);
+    ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
+                            str_model.c_str());
+    CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, 0.01);
     model_init = 1;
   }
-  cvai_object_t person_pets_obj;
-  memset(&person_pets_obj, 0, sizeof(cvai_object_t));
-  ret = CVI_AI_MobileDetV2_Person_Pets(ai_handle, p_frame, &person_pets_obj);
+  cvtdl_object_t person_pets_obj;
+  memset(&person_pets_obj, 0, sizeof(cvtdl_object_t));
+  ret = CVI_TDL_MobileDetV2_Person_Pets(tdl_handle, p_frame, &person_pets_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect person pets failed:" << ret << std::endl;
   }
@@ -74,12 +74,12 @@ std::string run_image_person_pets_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_h
   // cat: (17 or 2); dog: (18 or 3)
   std::map<int, int> label_map = {{1, 1}, {17, 2}, {18, 3}};
   for (uint32_t i = 0; i < person_pets_obj.size; i++) {
-    cvai_bbox_t box = person_pets_obj.info[i].bbox;
+    cvtdl_bbox_t box = person_pets_obj.info[i].bbox;
     int label = label_map[person_pets_obj.info[i].classes + 1];
     ss << label << " " << box.score << " " << box.x1 << " " << box.y1 << " " << box.x2 << " "
        << box.y2 << "\n";
   }
-  CVI_AI_Free(&person_pets_obj);
+  CVI_TDL_Free(&person_pets_obj);
   return ss.str();
 }
 
@@ -111,10 +111,10 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
   std::cout << "to read imagelist:" << image_list << std::endl;
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   std::map<std::string,
-           std::function<std::string(VIDEO_FRAME_INFO_S *, cviai_handle_t, std::string)>>
+           std::function<std::string(VIDEO_FRAME_INFO_S *, cvitdl_handle_t, std::string)>>
       process_funcs = {
           // {"person_vehicle", run_image_person_vehicle_detection},
           {"pets", run_image_person_pets_detection},
@@ -147,14 +147,14 @@ int main(int argc, char *argv[]) {
     std::string strf = image_root + image_files[i];
     std::string dstf = dst_root + replace_file_ext(image_files[i], "txt");
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_AI_ReadImage(strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-    std::cout << "CVI_AI_ReadImage done\t";
+    ret = CVI_TDL_ReadImage(strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+    std::cout << "CVI_TDL_ReadImage done\t";
     if (ret != CVI_SUCCESS) {
       std::cout << "Convert to video frame failed with:" << ret << ",file:" << strf << std::endl;
 
       continue;
     }
-    std::string str_res = process_funcs[process_flag](&fdFrame, ai_handle, model_name);
+    std::string str_res = process_funcs[process_flag](&fdFrame, tdl_handle, model_name);
     std::cout << "process_funcs done\t";
     std::cout << "str_res.size():" << str_res.size() << std::endl;
     if (str_res.size() > 0) {
@@ -164,10 +164,10 @@ int main(int argc, char *argv[]) {
       fclose(fp);
     }
     std::cout << "write results done\t";
-    CVI_AI_ReleaseImage(&fdFrame);
-    std::cout << "CVI_AI_ReleaseImage done\t" << std::endl;
+    CVI_TDL_ReleaseImage(&fdFrame);
+    std::cout << "CVI_TDL_ReleaseImage done\t" << std::endl;
   }
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

@@ -1,12 +1,12 @@
 #include <algorithm>
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_utils.hpp"
 
 #include <cmath>
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #include "fall_det.hpp"
 
 #define SCORE_THRESHOLD 0.4
@@ -52,7 +52,7 @@ int FallDet::elem_count(std::queue<int> &q) {
   return num;
 }
 
-bool FallDet::keypoints_useful(cvai_pose17_meta_t *kps_meta) {
+bool FallDet::keypoints_useful(cvtdl_pose17_meta_t *kps_meta) {
   if (history_neck.size() == FRAME_GAP + 3) {
     history_neck.erase(history_neck.begin());
     history_hip.erase(history_hip.begin());
@@ -110,7 +110,7 @@ float FallDet::human_orientation() {
   return human_angle;
 }
 
-float FallDet::body_box_calculation(cvai_bbox_t *bbox) {
+float FallDet::body_box_calculation(cvtdl_bbox_t *bbox) {
   return (bbox->x2 - bbox->x1) / (bbox->y2 - bbox->y1);
 }
 
@@ -119,7 +119,7 @@ void FallDet::update_queue(std::queue<int> &q, int val) {
   q.push(val);
 }
 
-float FallDet::speed_detection(cvai_bbox_t *bbox, cvai_pose17_meta_t *kps_meta, float fps) {
+float FallDet::speed_detection(cvtdl_bbox_t *bbox, cvtdl_pose17_meta_t *kps_meta, float fps) {
   // printf("speed_detection fps: %.2f\n", fps);
   float neck_x_before, neck_y_before, neck_x_cur, neck_y_cur;
 
@@ -303,7 +303,7 @@ bool FallDet::alert_decision(int status) {
   }
 }
 
-void FallDet::detect(cvai_object_info_t *meta, float fps) {
+void FallDet::detect(cvtdl_object_info_t *meta, float fps) {
   meta->pedestrian_properity->fall = false;
   if (keypoints_useful(&meta->pedestrian_properity->pose_17)) {
 #ifdef DEBUG_FALL

@@ -2,7 +2,7 @@
 #include <memory>
 #include <vector>
 
-namespace cviai {
+namespace cvitdl {
 
 struct object_detect_rect_t {
   float x1;
@@ -28,4 +28,4 @@ std::vector<std::vector<float>> generate_mmdet_grid_anchors(
 
 void clip_bbox(const size_t image_width, const size_t image_height, const PtrDectRect &box);
 
-}  // namespace cviai
+}  // namespace cvitdl

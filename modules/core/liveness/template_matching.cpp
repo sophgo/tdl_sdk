@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef ENABLE_CVIAI_CV_UTILS
+#ifdef ENABLE_CVI_TDL_CV_UTILS
 #include "cv/imgproc.hpp"
 #else
 #include "opencv2/imgproc.hpp"
@@ -17,8 +17,8 @@
 using namespace std;
 
 vector<cv::Mat> TTA_9_cropps(cv::Mat image) {
-#ifdef ENABLE_CVIAI_CV_UTILS
-  cviai::resize(image, image, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+  cvitdl::resize(image, image, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
 #else
   cv::resize(image, image, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
 #endif
@@ -70,7 +70,7 @@ vector<cv::Mat> TTA_9_cropps(cv::Mat image) {
 
 #ifdef ENABLE_TEMPLATE_MATCHING
 cv::Mat template_matching(const cv::Mat &crop_rgb_frame, const cv::Mat &ir_frame, cv::Rect box,
-                          cvai_liveness_ir_position_e ir_pos) {
+                          cvtdl_liveness_ir_position_e ir_pos) {
   int adj_width_start = 0;
   int adj_width_end = 0;
   int adj_height_start = max(0, box.y);

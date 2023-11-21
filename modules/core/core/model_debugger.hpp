@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 #include "cvi_comm.h"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 
-namespace cviai {
+namespace cvitdl {
 namespace debug {
 
 class ModelDebugger {
@@ -64,4 +64,4 @@ void ModelDebugger::save_field(std::string field_name, const T data) {
   }
 }
 }  // namespace debug
-}  // namespace cviai
+}  // namespace cvitdl

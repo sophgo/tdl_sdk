@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-// #include "core/cviai_types_mem_internal.h"
+// #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 // #include "ive/ive.h"
 // #include "sys_utils.hpp"
 int ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
@@ -26,34 +26,34 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, argv[1]);
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_AI_SUPPORTED_MODEL_SCRFDFACE model failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_SCRFDFACE model failed with %#x!\n", ret);
     return ret;
   }
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[2]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, argv[2]);
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_AI_SUPPORTED_MODEL_FACERECOGNITION model failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION model failed with %#x!\n", ret);
     return ret;
   }
   VIDEO_FRAME_INFO_S bg;
 
   printf("to read image\n");
-  if (CVI_SUCCESS != CVI_AI_LoadBinImage(argv[3], &bg, PIXEL_FORMAT_RGB_888_PLANAR)) {
-    printf("cviai read image failed.");
-    CVI_AI_DestroyHandle(ai_handle);
+  if (CVI_SUCCESS != CVI_TDL_LoadBinImage(argv[3], &bg, PIXEL_FORMAT_RGB_888_PLANAR)) {
+    printf("cvi_tdl read image failed.");
+    CVI_TDL_DestroyHandle(tdl_handle);
     return -1;
   }
 
@@ -63,10 +63,10 @@ int main(int argc, char *argv[]) {
   } else {
     printf("image read,width:%d\n", bg.stVFrame.u32Width);
   }
-  cvai_face_t obj_meta = {0};
-  ret = CVI_AI_ScrFDFace(ai_handle, &bg, &obj_meta);
+  cvtdl_face_t obj_meta = {0};
+  ret = CVI_TDL_ScrFDFace(tdl_handle, &bg, &obj_meta);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_AI_ScrFDFace failed with %#x!\n", ret);
+    printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
     return ret;
   }
   for (int i = 0; i < obj_meta.size; i++) {
@@ -77,9 +77,9 @@ int main(int argc, char *argv[]) {
     }
   }
   if (obj_meta.size > 0) {
-    ret = CVI_AI_FaceRecognition(ai_handle, &bg, &obj_meta);
+    ret = CVI_TDL_FaceRecognition(tdl_handle, &bg, &obj_meta);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_FaceAttribute failed with %#x!\n", ret);
+      printf("CVI_TDL_FaceAttribute failed with %#x!\n", ret);
     }
   } else {
     printf("cannot find faces\n");
@@ -92,9 +92,9 @@ int main(int argc, char *argv[]) {
     fclose(fp);
   }
 
-  CVI_AI_Free(&obj_meta);
+  CVI_TDL_Free(&obj_meta);
   ReleaseImage(&bg);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   CVI_SYS_Exit();
   CVI_VB_Exit();
   return ret;

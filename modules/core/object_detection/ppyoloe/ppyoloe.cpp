@@ -3,24 +3,24 @@
 #include <iterator>
 
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
 #include "ppyoloe.hpp"
 
-namespace cviai {
+namespace cvitdl {
 
-static void convert_det_struct(const Detections &dets, cvai_object_t *out, int im_height,
+static void convert_det_struct(const Detections &dets, cvtdl_object_t *out, int im_height,
                                int im_width, meta_rescale_type_e type) {
-  CVI_AI_MemAllocInit(dets.size(), out);
+  CVI_TDL_MemAllocInit(dets.size(), out);
   out->height = im_height;
   out->width = im_width;
   out->rescale_type = type;
 
-  memset(out->info, 0, sizeof(cvai_object_info_t) * out->size);
+  memset(out->info, 0, sizeof(cvtdl_object_info_t) * out->size);
   for (uint32_t i = 0; i < out->size; ++i) {
     clip_bbox(im_height, im_width, dets[i]);
     out->info[i].bbox.x1 = dets[i]->x1;
@@ -180,11 +180,11 @@ int PPYoloE::onModelOpened() {
 
   for (auto stride : strides_) {
     if (cls_out_names_.count(stride) == 0 || box_out_names_.count(stride) == 0) {
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 PPYoloE::~PPYoloE() {}
@@ -192,7 +192,7 @@ PPYoloE::~PPYoloE() {}
 int PPYoloE::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("PPYoloE only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   for (int i = 0; i < 3; i++) {
@@ -202,13 +202,13 @@ int PPYoloE::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
 
   (*data)[0].format = p_preprocess_cfg_.format;
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int PPYoloE::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
+int PPYoloE::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     return ret;
   }
 
@@ -216,11 +216,11 @@ int PPYoloE::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, obj_meta);
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void PPYoloE::outputParser(const int image_width, const int image_height, const int frame_width,
-                           const int frame_height, cvai_object_t *obj_meta) {
+                           const int frame_height, cvtdl_object_t *obj_meta) {
   Detections vec_obj;
   generate_ppyoloe_proposals(vec_obj, image_width, image_height);
 
@@ -243,4 +243,4 @@ void PPYoloE::outputParser(const int image_width, const int image_height, const 
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

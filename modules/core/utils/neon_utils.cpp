@@ -1,7 +1,7 @@
 #include "neon_utils.hpp"
 #include <iostream>
 
-namespace cviai {
+namespace cvitdl {
 
 using cv::Mat;
 using std::string;
@@ -436,4 +436,4 @@ void NormalizeAndSplitToF32(cv::Mat &prepared, vector<cv::Mat> &channels, float 
 #endif
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

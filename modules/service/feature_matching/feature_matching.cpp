@@ -1,5 +1,5 @@
 #include "feature_matching.hpp"
-#include "core/core/cvai_errno.h"
+#include "core/core/cvtdl_errno.h"
 
 #include <cvimath/cvimath_internal.h>
 #include <cviruntime.h>
@@ -10,7 +10,7 @@
 #include <numeric>
 #include <vector>
 
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 static const char *TypeToStr(feature_type_e type) {
@@ -37,7 +37,7 @@ static const char *TypeToStr(feature_type_e type) {
 }
 
 inline void __attribute__((always_inline))
-FreeFeatureArrayExt(cvai_service_feature_array_ext_t *feature_array_ext) {
+FreeFeatureArrayExt(cvtdl_service_feature_array_ext_t *feature_array_ext) {
   if (feature_array_ext->feature_unit_length != nullptr) {
     delete feature_array_ext->feature_unit_length;
     feature_array_ext->feature_unit_length = nullptr;
@@ -50,7 +50,7 @@ FreeFeatureArrayExt(cvai_service_feature_array_ext_t *feature_array_ext) {
 
 inline void __attribute__((always_inline))
 FreeFeatureArrayTpuExt(CVI_RT_HANDLE rt_handle,
-                       cvai_service_feature_array_tpu_ext_t *feature_array_ext) {
+                       cvtdl_service_feature_array_tpu_ext_t *feature_array_ext) {
   if (feature_array_ext->feature_input.rtmem != NULL) {
     CVI_RT_MemFree(rt_handle, feature_array_ext->feature_input.rtmem);
     feature_array_ext->feature_input.rtmem = NULL;
@@ -107,31 +107,31 @@ int FeatureMatching::init() {
 int FeatureMatching::createHandle(CVI_RT_HANDLE *rt_handle, cvk_context_t **cvk_ctx) {
   if (CVI_RT_Init(rt_handle) != CVI_SUCCESS) {
     LOGE("Runtime init failed.\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   struct sysinfo info;
   if (sysinfo(&info) < 0) {
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   // FIXME: Rewrite command buffer to fit feature matching size.
   uint64_t mem = 50000;
   if (info.freeram <= mem) {
     LOGE("Memory insufficient.\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   *cvk_ctx = (cvk_context_t *)CVI_RT_RegisterKernel(*rt_handle, mem);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int FeatureMatching::destroyHandle(CVI_RT_HANDLE rt_handle, cvk_context_t *cvk_ctx) {
   CVI_RT_UnRegisterKernel(cvk_ctx);
   CVI_RT_DeInit(rt_handle);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_array,
-                                  const cvai_service_feature_matching_e &matching_method) {
-  int ret = CVIAI_SUCCESS;
+int FeatureMatching::registerData(const cvtdl_service_feature_array_t &feature_array,
+                                  const cvtdl_service_feature_matching_e &matching_method) {
+  int ret = CVI_TDL_SUCCESS;
   m_matching_method = matching_method;
   switch (m_matching_method) {
     case COS_SIMILARITY: {
@@ -139,7 +139,7 @@ int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_ar
     } break;
     default:
       LOGE("Unsupported matching method %u\n", m_matching_method);
-      ret = CVIAI_ERR_INVALID_ARGS;
+      ret = CVI_TDL_ERR_INVALID_ARGS;
       break;
   }
   return ret;
@@ -147,20 +147,20 @@ int FeatureMatching::registerData(const cvai_service_feature_array_t &feature_ar
 
 int FeatureMatching::run(const void *feature, const feature_type_e &type, const uint32_t topk,
                          uint32_t *indices, float *scores, uint32_t *size, float threshold) {
-  int ret = CVIAI_SUCCESS;
+  int ret = CVI_TDL_SUCCESS;
   switch (m_matching_method) {
     case COS_SIMILARITY: {
       ret = cosSimilarityRun(feature, type, topk, indices, scores, threshold, size);
     } break;
     default:
       LOGE("Unsupported matching method %u\n", m_matching_method);
-      ret = CVIAI_ERR_INVALID_ARGS;
+      ret = CVI_TDL_ERR_INVALID_ARGS;
       break;
   }
   return ret;
 }
 
-int FeatureMatching::cosSimilarityRegister(const cvai_service_feature_array_t &feature_array) {
+int FeatureMatching::cosSimilarityRegister(const cvtdl_service_feature_array_t &feature_array) {
   const uint32_t total_length = feature_array.feature_length * feature_array.data_num;
   float *unit_length = new float[total_length];
   switch (feature_array.type) {
@@ -171,7 +171,7 @@ int FeatureMatching::cosSimilarityRegister(const cvai_service_feature_array_t &f
     default: {
       LOGE("Unsupported register data type %s.\n", TypeToStr(feature_array.type));
       delete[] unit_length;
-      return CVIAI_ERR_INVALID_ARGS;
+      return CVI_TDL_ERR_INVALID_ARGS;
     } break;
   }
   m_data_num = feature_array.data_num;
@@ -216,7 +216,7 @@ int FeatureMatching::cosSimilarityRegister(const cvai_service_feature_array_t &f
     CVI_RT_MemFlush(m_rt_handle, info.rtmem);
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 template <typename T>
@@ -240,17 +240,17 @@ int FeatureMatching::cosSimilarityRun(const void *feature, const feature_type_e 
   if (topk == 0 && threshold == 0.0f) {
     LOGE("both topk and threshold are invalid value\n");
     *size = 0;
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   if (m_cpu_ipfeature.feature_array.data_num == 0 && m_tpu_ipfeature.data_num == 0) {
     LOGE(
-        "Not yet register features, please invoke CVI_AI_Service_RegisterFeatureArray to "
+        "Not yet register features, please invoke CVI_TDL_Service_RegisterFeatureArray to "
         "register.\n");
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
+    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 
-  int ret = CVIAI_SUCCESS;
+  int ret = CVI_TDL_SUCCESS;
 
   *size = topk == 0 ? m_data_num : std::min<uint32_t>(m_data_num, topk);
 
@@ -331,7 +331,7 @@ int FeatureMatching::cosSimilarityRun(const void *feature, const feature_type_e 
     } break;
     default: {
       LOGE("Unsupported register data type %s.\n", TypeToStr(type));
-      ret = CVIAI_ERR_INVALID_ARGS;
+      ret = CVI_TDL_ERR_INVALID_ARGS;
     } break;
   }
 
@@ -341,4 +341,4 @@ int FeatureMatching::cosSimilarityRun(const void *feature, const feature_type_e 
   return ret;
 }
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

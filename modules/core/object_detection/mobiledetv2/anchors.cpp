@@ -2,7 +2,7 @@
 #include <cmath>
 using namespace std;
 
-namespace cviai {
+namespace cvitdl {
 
 AnchorConfig::AnchorConfig(int _stride, float _octave_scale, std::pair<float, float> _aspect)
     : stride(_stride), octave_scale(_octave_scale), aspect(_aspect) {}
@@ -63,4 +63,4 @@ void RetinaNetAnchorGenerator::_generate_boxes() {
 const vector<vector<AnchorBox>> &RetinaNetAnchorGenerator::get_anchor_boxes() const {
   return anchor_bboxes;
 }
-}  // namespace cviai
+}  // namespace cvitdl

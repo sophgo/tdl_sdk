@@ -9,10 +9,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 
 std::vector<cv::Scalar> color = {cv::Scalar(51, 153, 255), cv::Scalar(0, 153, 76),
                                  cv::Scalar(255, 215, 0), cv::Scalar(255, 128, 0),
@@ -24,7 +24,7 @@ int skeleton[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12}, {5, 11}
                        {5, 6},   {5, 7},   {6, 8},   {7, 9},   {8, 10},  {1, 2},  {0, 1},
                        {0, 2},   {1, 3},   {2, 4},   {3, 5},   {4, 6}};
 
-void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvai_object_t *obj_meta, float score) {
+void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta, float score) {
   bg->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
 
@@ -60,10 +60,10 @@ void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvai_object_t *obj_meta, float score
   CVI_SYS_Munmap((void *)bg->stVFrame.pu8VirAddr[0], bg->stVFrame.u32Length[0]);
 }
 
-int process_image_file(cviai_handle_t ai_handle, const std::string &imgf, cvai_object_t *p_obj,
+int process_image_file(cvitdl_handle_t tdl_handle, const std::string &imgf, cvtdl_object_t *p_obj,
                        VIDEO_FRAME_INFO_S *bg) {
-  // int ret = CVI_AI_ReadImage(imgf.c_str(), bg, PIXEL_FORMAT_RGB_888_PLANAR);
-  int ret = CVI_AI_ReadImage(imgf.c_str(), bg, PIXEL_FORMAT_BGR_888);
+  // int ret = CVI_TDL_ReadImage(imgf.c_str(), bg, PIXEL_FORMAT_RGB_888_PLANAR);
+  int ret = CVI_TDL_ReadImage(imgf.c_str(), bg, PIXEL_FORMAT_BGR_888);
   if (ret != CVI_SUCCESS) {
     std::cout << "failed to open file:" << imgf << std::endl;
     return ret;
@@ -71,18 +71,18 @@ int process_image_file(cviai_handle_t ai_handle, const std::string &imgf, cvai_o
     printf("image read,width:%d\n", bg->stVFrame.u32Width);
   }
   // std::cout << "pixel format is " << bg->stVFrame.enPixelFormat << std::endl;
-  ret = CVI_AI_MobileDetV2_Pedestrian(ai_handle, bg, p_obj);
+  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, bg, p_obj);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_AI_ScrFDFace failed with %#x!\n", ret);
+    printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
     return ret;
   }
 
-  // ret=CVI_AI_ReadImage(imgf.c_str(),bg,PIXEL_FORMAT_RGB_888_PLANAR);
+  // ret=CVI_TDL_ReadImage(imgf.c_str(),bg,PIXEL_FORMAT_RGB_888_PLANAR);
 
   if (p_obj->size > 0) {
-    ret = CVI_AI_Hrnet_Pose(ai_handle, bg, p_obj);
+    ret = CVI_TDL_Hrnet_Pose(tdl_handle, bg, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_Hrnet_Pose failed with %#x!\n", ret);
+      printf("CVI_TDL_Hrnet_Pose failed with %#x!\n", ret);
       return ret;
     }
   } else {
@@ -97,15 +97,15 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
@@ -114,23 +114,23 @@ int main(int argc, char *argv[]) {
   std::string img(argv[3]);         // img path;
   int show = atoi(argv[4]);         // 1 for show keypoints, 0 for not show;
 
-  ret =
-      CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, pd_model.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                          pd_model.c_str());
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_AI_SUPPORTED_MODEL_SCRFDFACE model failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_SCRFDFACE model failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, pose_model.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, pose_model.c_str());
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_AI_SUPPORTED_MODEL_HRNET model failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_HRNET model failed with %#x!\n", ret);
     return ret;
   }
-  // CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_HRNET_POSE, true);
-  cvai_object_t obj_meta = {0};
+  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, true);
+  cvtdl_object_t obj_meta = {0};
 
   VIDEO_FRAME_INFO_S bg;
-  process_image_file(ai_handle, img, &obj_meta, &bg);
+  process_image_file(tdl_handle, img, &obj_meta, &bg);
 
   int det_num = std::min((int)obj_meta.size, 5);  // max det_num set to 5
   for (int i = 0; i < det_num; i++) {
@@ -146,12 +146,12 @@ int main(int argc, char *argv[]) {
 
   if (show) {  // img format should be PIXEL_FORMAT_BGR_888
     float score;
-    CVI_AI_GetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &score);
+    CVI_TDL_GetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &score);
     show_keypoints(&bg, &obj_meta, score);
   }
 
-  CVI_AI_ReleaseImage(&bg);
-  CVI_AI_Free(&obj_meta);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_ReleaseImage(&bg);
+  CVI_TDL_Free(&obj_meta);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

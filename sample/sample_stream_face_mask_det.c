@@ -1,6 +1,6 @@
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app.h"
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 
@@ -21,7 +21,7 @@
 
 #define OUTPUT_BUFFER_SIZE 10
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-static cvai_face_t g_face_meta_0;
+static cvtdl_face_t g_face_meta_0;
 
 // #define VISUAL_FACE_LANDMARK
 // #define USE_OUTPUT_DATA_API
@@ -39,7 +39,7 @@ __attribute__((always_inline)) inline void AutoUnLock(void *mutex) {
 typedef struct {
   uint64_t u_id;
   float quality;
-  cvai_image_t image;
+  cvtdl_image_t image;
   tracker_state_e state;
   uint32_t counter;
 } IOData;
@@ -47,7 +47,7 @@ typedef struct {
 typedef struct {
   CVI_S32 voType;
   VideoSystemContext vs_ctx;
-  cviai_service_handle_t service_handle;
+  cvitdl_service_handle_t service_handle;
 } pVOArgs;
 
 SMT_MUTEXAUTOLOCK_INIT(VOMutex);
@@ -69,26 +69,26 @@ static void SampleHandleSig(CVI_S32 signo) {
   }
 }
 
-void RESTRUCTURING_FACE_META(cvai_face_t *face_cpt_info, cvai_face_t *face_meta) {
+void RESTRUCTURING_FACE_META(cvtdl_face_t *face_cpt_info, cvtdl_face_t *face_meta) {
   face_meta->size = 0;
   for (uint32_t i = 0; i < face_cpt_info->size; i++) {
     face_meta->size += 1;
   }
 
-  face_meta->info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * face_meta->size);
-  memset(face_meta->info, 0, sizeof(cvai_face_info_t) * face_meta->size);
+  face_meta->info = (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * face_meta->size);
+  memset(face_meta->info, 0, sizeof(cvtdl_face_info_t) * face_meta->size);
   face_meta->rescale_type = face_cpt_info->rescale_type;
   face_meta->height = face_cpt_info->height;
   face_meta->width = face_cpt_info->width;
 
-  cvai_face_info_t *info_ptr_0 = face_meta->info;
+  cvtdl_face_info_t *info_ptr_0 = face_meta->info;
   for (uint32_t i = 0; i < face_cpt_info->size; i++) {
-    cvai_face_info_t **tmp_ptr = &info_ptr_0;
+    cvtdl_face_info_t **tmp_ptr = &info_ptr_0;
     (*tmp_ptr)->unique_id = face_cpt_info->info[i].unique_id;
     (*tmp_ptr)->face_quality = face_cpt_info->info[i].face_quality;
     (*tmp_ptr)->mask_score = face_cpt_info->info[i].mask_score;
     (*tmp_ptr)->hardhat_score = face_cpt_info->info[i].hardhat_score;
-    memcpy(&(*tmp_ptr)->bbox, &face_cpt_info->info[i].bbox, sizeof(cvai_bbox_t));
+    memcpy(&(*tmp_ptr)->bbox, &face_cpt_info->info[i].bbox, sizeof(cvtdl_bbox_t));
     *tmp_ptr += 1;
   }
 
@@ -101,12 +101,12 @@ static void *pVideoOutput(void *args) {
   if (!vo_args->voType) {
     return NULL;
   }
-  cviai_service_handle_t service_handle = vo_args->service_handle;
+  cvitdl_service_handle_t service_handle = vo_args->service_handle;
   CVI_S32 s32Ret = CVI_SUCCESS;
 
-  cvai_service_brush_t brush_0 = {.size = 4, .color.r = 0, .color.g = 64, .color.b = 255};
-  cvai_face_t face_meta_0;
-  memset(&face_meta_0, 0, sizeof(cvai_face_t));
+  cvtdl_service_brush_t brush_0 = {.size = 4, .color.r = 0, .color.g = 64, .color.b = 255};
+  cvtdl_face_t face_meta_0;
+  memset(&face_meta_0, 0, sizeof(cvtdl_face_t));
 
   VIDEO_FRAME_INFO_S stVOFrame;
   while (bRunVideoOutput) {
@@ -119,12 +119,13 @@ static void *pVideoOutput(void *args) {
     {
       SMT_MutexAutoLock(VOMutex, lock);
 
-      memcpy(&face_meta_0, &g_face_meta_0, sizeof(cvai_face_t));
-      face_meta_0.info = (cvai_face_info_t *)malloc(sizeof(cvai_face_info_t) * g_face_meta_0.size);
-      memset(face_meta_0.info, 0, sizeof(cvai_face_info_t) * face_meta_0.size);
+      memcpy(&face_meta_0, &g_face_meta_0, sizeof(cvtdl_face_t));
+      face_meta_0.info =
+          (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * g_face_meta_0.size);
+      memset(face_meta_0.info, 0, sizeof(cvtdl_face_info_t) * face_meta_0.size);
       for (uint32_t i = 0; i < g_face_meta_0.size; i++) {
         face_meta_0.info[i].mask_score = MAX(0, g_face_meta_0.info[i].mask_score);
-        memcpy(&face_meta_0.info[i].bbox, &g_face_meta_0.info[i].bbox, sizeof(cvai_bbox_t));
+        memcpy(&face_meta_0.info[i].bbox, &g_face_meta_0.info[i].bbox, sizeof(cvtdl_bbox_t));
       }
     }
     size_t image_size = stVOFrame.stVFrame.u32Length[0] + stVOFrame.stVFrame.u32Length[1] +
@@ -135,14 +136,14 @@ static void *pVideoOutput(void *args) {
         stVOFrame.stVFrame.pu8VirAddr[0] + stVOFrame.stVFrame.u32Length[0];
     stVOFrame.stVFrame.pu8VirAddr[2] =
         stVOFrame.stVFrame.pu8VirAddr[1] + stVOFrame.stVFrame.u32Length[1];
-    CVI_AI_Service_FaceDrawRect(service_handle, &face_meta_0, &stVOFrame, false, brush_0);
+    CVI_TDL_Service_FaceDrawRect(service_handle, &face_meta_0, &stVOFrame, false, brush_0);
 
     for (uint32_t j = 0; j < face_meta_0.size; j++) {
       char *id_num = calloc(64, sizeof(char));
       // sprintf(id_num, "%" PRIu64 "", face_meta_0.info[j].unique_id);
       sprintf(id_num, "%.4f", face_meta_0.info[j].mask_score);
-      CVI_AI_Service_ObjectWriteText(id_num, face_meta_0.info[j].bbox.x1,
-                                     face_meta_0.info[j].bbox.y1, &stVOFrame, 1, 1, 1);
+      CVI_TDL_Service_ObjectWriteText(id_num, face_meta_0.info[j].bbox.x1,
+                                      face_meta_0.info[j].bbox.y1, &stVOFrame, 1, 1, 1);
       free(id_num);
     }
 
@@ -163,7 +164,7 @@ static void *pVideoOutput(void *args) {
       break;
     }
 
-    CVI_AI_Free(&face_meta_0);
+    CVI_TDL_Free(&face_meta_0);
   }
   return NULL;
 }
@@ -176,9 +177,9 @@ int main(int argc, char *argv[]) {
   //       "          <face_mask_cls_model_path>\n"
   //       "          FD threshold\n",
   //       argv[0]);
-  //   return CVIAI_FAILURE;
+  //   return CVI_TDL_FAILURE;
   // }
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
@@ -209,30 +210,30 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret = CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  if (ret != CVIAI_SUCCESS) {
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
+  ret = CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MASKCLASSIFICATION, fm_model_path);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MASKCLASSIFICATION, fm_model_path);
   if (ret != CVI_SUCCESS) {
     printf("failed to open mask model\n");
     return ret;
   }
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, fd_model_path);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, fd_model_path);
   if (ret != CVI_SUCCESS) {
     printf("failed to open detection model\n");
     return ret;
   }
 
-  CVI_AI_SetVpssTimeout(ai_handle, 1000);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, det_threshold);
-  memset(&g_face_meta_0, 0, sizeof(cvai_face_t));
+  CVI_TDL_SetVpssTimeout(tdl_handle, 1000);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, det_threshold);
+  memset(&g_face_meta_0, 0, sizeof(cvtdl_face_t));
 
-  cvai_face_t p_obj = {0};
+  cvtdl_face_t p_obj = {0};
   pthread_t vo_thread;
   pVOArgs vo_args = {0};
   vo_args.voType = voType;
@@ -246,7 +247,7 @@ int main(int argc, char *argv[]) {
   }
   VIDEO_FRAME_INFO_S stfdFrame;
 
-  // cvai_bbox_t bbox;
+  // cvtdl_bbox_t bbox;
   size_t counter = 0;
   while (bExit == false) {
     counter += 1;
@@ -259,13 +260,13 @@ int main(int argc, char *argv[]) {
     }
 
     // get bbox
-    ret = CVI_AI_ScrFDFace(ai_handle, &stfdFrame, &p_obj);
+    ret = CVI_TDL_ScrFDFace(tdl_handle, &stfdFrame, &p_obj);
     if (ret != CVI_SUCCESS) {
       printf("failed to run face detection\n");
       return ret;
     }
     // get face mask score
-    ret |= CVI_AI_MaskClassification(ai_handle, &stfdFrame, &p_obj);
+    ret |= CVI_TDL_MaskClassification(tdl_handle, &stfdFrame, &p_obj);
     if (ret != CVI_SUCCESS) {
       printf("failed to run face mask cls\n");
       return ret;
@@ -278,7 +279,7 @@ int main(int argc, char *argv[]) {
     }
     {
       SMT_MutexAutoLock(VOMutex, lock);
-      CVI_AI_Free(&g_face_meta_0);
+      CVI_TDL_Free(&g_face_meta_0);
       RESTRUCTURING_FACE_META(&p_obj, &g_face_meta_0);
     }
     fflush(fptr);
@@ -289,14 +290,14 @@ int main(int argc, char *argv[]) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
       break;
     }
-    CVI_AI_Free(&p_obj);
+    CVI_TDL_Free(&p_obj);
   }
   bRunVideoOutput = false;
   pthread_join(vo_thread, NULL);
   fclose(fptr);
 CLEANUP_SYSTEM:
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

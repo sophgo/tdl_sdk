@@ -1,11 +1,11 @@
 #include "core.hpp"
 #include <stdexcept>
 #include "core/utils/vpss_helper.h"
-#include "cviai_trace.hpp"
+#include "cvi_tdl_trace.hpp"
 #include "demangle.hpp"
 #include "error_msg.hpp"
 
-namespace cviai {
+namespace cvitdl {
 
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
   mp_mi = std::make_unique<CvimodelInfo>();
@@ -16,10 +16,10 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
 
 #define CLOSE_MODEL_IF_FAILED(x, errmsg) \
   do {                                   \
-    if ((x) != CVIAI_SUCCESS) {          \
+    if ((x) != CVI_TDL_SUCCESS) {        \
       LOGE(errmsg "\n");                 \
       modelClose();                      \
-      return CVIAI_ERR_OPEN_MODEL;       \
+      return CVI_TDL_ERR_OPEN_MODEL;     \
     }                                    \
   } while (0)
 
@@ -28,22 +28,22 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
     if (int ret = (x)) {                             \
       LOGE(errmsg ": %s\n", get_tpu_error_msg(ret)); \
       modelClose();                                  \
-      return CVIAI_ERR_OPEN_MODEL;                   \
+      return CVI_TDL_ERR_OPEN_MODEL;                 \
     }                                                \
   } while (0)
 
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
 
 int Core::modelOpen(const char *filepath) {
-  TRACE_EVENT("cviai_core", "Core::modelOpen");
+  TRACE_EVENT("cvi_tdl_core", "Core::modelOpen");
   if (!mp_mi) {
     LOGE("config not set\n");
-    return CVIAI_ERR_OPEN_MODEL;
+    return CVI_TDL_ERR_OPEN_MODEL;
   }
 
   if (mp_mi->handle != nullptr) {
     LOGE("failed to open model: \"%s\" has already opened.\n", filepath);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   m_model_file = filepath;
   CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_RegisterModel(filepath, &mp_mi->handle),
@@ -60,7 +60,7 @@ int Core::modelOpen(const char *filepath) {
   setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
   setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
 
-  TRACE_EVENT_BEGIN("cviai_core", "setupInputPreprocess");
+  TRACE_EVENT_BEGIN("cvi_tdl_core", "setupInputPreprocess");
   CVI_TENSOR *input =
       CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   // Assigning default values.
@@ -130,8 +130,8 @@ int Core::modelOpen(const char *filepath) {
     vcfg.chn_coeff = data[i].resize_method;
     m_vpss_config.push_back(vcfg);
   }
-  TRACE_EVENT_END("cviai_core");
-  return CVIAI_SUCCESS;
+  TRACE_EVENT_END("cvi_tdl_core");
+  return CVI_TDL_SUCCESS;
 }
 
 void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
@@ -152,8 +152,8 @@ void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
 }
 
 int Core::modelClose() {
-  TRACE_EVENT("cviai_core", "Core::modelClose");
-  int ret = CVIAI_SUCCESS;
+  TRACE_EVENT("cvi_tdl_core", "Core::modelClose");
+  int ret = CVI_TDL_SUCCESS;
 
   if (mp_mi->handle != nullptr) {
     ret = CVI_NN_CleanupModel(mp_mi->handle);
@@ -161,7 +161,7 @@ int Core::modelClose() {
       LOGE("CVI_NN_CleanupModel failed: %s\n", get_tpu_error_msg(ret));
       mp_mi->handle = nullptr;
       onModelClosed();
-      return CVIAI_ERR_CLOSE_MODEL;
+      return CVI_TDL_ERR_CLOSE_MODEL;
     }
     mp_mi->handle = nullptr;
   }
@@ -225,62 +225,62 @@ size_t Core::getNumOutputTensor() const { return static_cast<size_t>(mp_mi->out.
 
 int Core::setVpssTimeout(uint32_t timeout) {
   m_vpss_timeout = timeout;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Core::setVpssEngine(VpssEngine *engine) {
   mp_vpss_inst = engine;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Core::setVpssDepth(uint32_t in_index, uint32_t depth) {
   if (m_vpss_config.size() <= 0) {
     LOGE("Model is not opened yet! Please set vpss depth when model is ready.\n");
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
+    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 
   if (in_index >= m_vpss_config.size()) {
     LOGE("Wrong input index: %d\n", in_index);
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   m_vpss_config[in_index].chn_attr.u32Depth = depth;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Core::getVpssDepth(uint32_t in_index, uint32_t *depth) {
   if (m_vpss_config.size() <= 0) {
     LOGE("Model is not opened yet! Please set vpss depth when model is ready.\n");
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
+    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 
   if (in_index >= m_vpss_config.size()) {
     LOGE("Wrong input index: %d\n", in_index);
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   *depth = m_vpss_config[in_index].chn_attr.u32Depth;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
 
 int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
-                       cvai_vpssconfig_t *chn_config) {
+                       cvtdl_vpssconfig_t *chn_config) {
   if (!allowExportChannelAttribute()) {
     LOGE("This model does not support exporting channel attributes.\n");
-    return CVIAI_ERR_GET_VPSS_CHN_CONFIG;
+    return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
   }
 
   if (!isInitialized()) {
     LOGE(
-        "Model is not yet opened. Please call CVI_AI_OpenModel to initialize model before getting "
+        "Model is not yet opened. Please call CVI_TDL_OpenModel to initialize model before getting "
         "channel config.\n");
-    return CVIAI_ERR_NOT_YET_INITIALIZED;
+    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 
   if (idx >= (uint32_t)mp_mi->in.num) {
     LOGE("Input index exceed input tensor num.\n");
-    return CVIAI_ERR_GET_VPSS_CHN_CONFIG;
+    return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
   }
 
   if (!m_skip_vpss_preprocess) {
@@ -303,11 +303,11 @@ int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32
     } break;
     default: {
       LOGE("Unsupported rescale type.\n");
-      return CVIAI_ERR_GET_VPSS_CHN_CONFIG;
+      return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
     } break;
   }
   chn_config->chn_coeff = m_vpss_config[idx].chn_coeff;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
@@ -318,7 +318,7 @@ float Core::getModelNmsThreshold() { return m_model_nms_threshold; };
 
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
 
-int Core::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) { return CVIAI_SUCCESS; }
+int Core::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) { return CVI_TDL_SUCCESS; }
 
 CVI_SHAPE Core::getInputShape(size_t index) { return getInputTensorInfo(index).shape; }
 
@@ -372,29 +372,29 @@ int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
   }
   if (ret != CVI_SUCCESS) {
     LOGE("Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_SEND_FRAME;
+    return CVI_TDL_ERR_VPSS_SEND_FRAME;
   }
 
   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   if (ret != CVI_SUCCESS) {
     LOGE("Get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_GET_FRAME;
+    return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
-  TRACE_EVENT("cviai_core", "Core::run");
-  int ret = CVIAI_SUCCESS;
+  TRACE_EVENT("cvi_tdl_core", "Core::run");
+  int ret = CVI_TDL_SUCCESS;
 
   if (m_skip_vpss_preprocess && !allowExportChannelAttribute()) {
 #ifndef SIMPLY_MODEL
     LOGE(
         "cannot skip vpss preprocessing for model: %s, please set false to "
-        "CVI_AI_SetSkipVpssPreprocess\n",
+        "CVI_TDL_SetSkipVpssPreprocess\n",
         demangle::type_no_scope(*this).c_str());
 #endif
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 #ifndef SIMPLY_MODEL
   model_timer_.TicToc("runstart");
@@ -419,7 +419,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       if (m_vpss_config.size() != frames.size()) {
         LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
              m_vpss_config.size(), frames.size());
-        return CVIAI_ERR_INFERENCE;
+        return CVI_TDL_ERR_INFERENCE;
       }
 
       dstFrames.reserve(frames.size());
@@ -430,7 +430,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
 #endif
         memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
         int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
-        if (vpssret != CVIAI_SUCCESS) {
+        if (vpssret != CVI_TDL_SUCCESS) {
           // if preprocess fail, just delete frame.
           if (f->stVFrame.u64PhyAddr[0] != 0) {
             mp_vpss_inst->releaseFrame(f, 0);
@@ -451,7 +451,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
 #ifndef SIMPLY_MODEL
   model_timer_.TicToc("vpss");
 #endif
-  if (ret == CVIAI_SUCCESS) {
+  if (ret == CVI_TDL_SUCCESS) {
     int rcret = CVI_NN_Forward(mp_mi->handle, mp_mi->in.tensors, mp_mi->in.num, mp_mi->out.tensors,
                                mp_mi->out.num);
 
@@ -471,7 +471,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       }
     } else {
       LOGE("NN forward failed: %s\n", get_tpu_error_msg(rcret));
-      ret = CVIAI_ERR_INFERENCE;
+      ret = CVI_TDL_ERR_INFERENCE;
     }
   }
 #ifndef SIMPLY_MODEL
@@ -498,7 +498,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
     if (input_w != frame->stVFrame.u32Width || input_h != frame->stVFrame.u32Height) {
       LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]", frame->stVFrame.u32Width,
            frame->stVFrame.u32Height, input_w, input_h);
-      return CVIAI_ERR_INFERENCE;
+      return CVI_TDL_ERR_INFERENCE;
     }
 
     switch (frame->stVFrame.enPixelFormat) {
@@ -510,7 +510,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
         break;
       default:
         LOGE("Unsupported image type: %x.\n", frame->stVFrame.enPixelFormat);
-        return CVIAI_ERR_INFERENCE;
+        return CVI_TDL_ERR_INFERENCE;
     }
 
     if (aligned_input == true) {
@@ -523,15 +523,15 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
     }
     if (ret != CVI_RC_SUCCESS) {
       LOGE("NN set tensor with vi failed: %s\n", get_tpu_error_msg(ret));
-      return CVIAI_ERR_INFERENCE;
+      return CVI_TDL_ERR_INFERENCE;
     }
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 #ifndef SIMPLY_MODEL
 /* vpssCropImage api need new  dstFrame and remember delete and release frame*/
 int Core::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                        cvai_bbox_t bbox, uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
+                        cvtdl_bbox_t bbox, uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
                         VPSS_SCALE_COEF_E reize_mode /* = VPSS_SCALE_COEF_NEAREST*/) {
   VPSS_CROP_INFO_S cropAttr;
   cropAttr.bEnable = true;
@@ -553,7 +553,7 @@ int Core::vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstF
   VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, false);
   mp_vpss_inst->sendFrame(srcFrame, &chnAttr, 1);
   mp_vpss_inst->getFrame(dstFrame, 0, 2000);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 #endif
-}  // namespace cviai
+}  // namespace cvitdl

@@ -3,8 +3,8 @@
 #include <cmath>
 #include <iostream>
 #include <string>
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
 #include "cvi_sys.h"
 #include "rescale_utils.hpp"
 
@@ -15,7 +15,7 @@
 #define G_MEAN (0.456 / 0.224)
 #define B_MEAN (0.406 / 0.225)
 
-namespace cviai {
+namespace cvitdl {
 
 HandKeypoint::HandKeypoint() : Core(CVI_MEM_DEVICE) {}
 
@@ -24,7 +24,7 @@ HandKeypoint::~HandKeypoint() {}
 int HandKeypoint::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Hand keypoint only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = R_SCALE;
   (*data)[0].factor[1] = G_SCALE;
@@ -36,10 +36,10 @@ int HandKeypoint::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) 
   (*data)[0].use_crop = true;
   (*data)[0].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int HandKeypoint::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_handpose21_meta_ts *meta) {
+int HandKeypoint::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_handpose21_meta_ts *meta) {
   uint32_t img_width = stOutFrame->stVFrame.u32Width;
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
   for (uint32_t i = 0; i < meta->size; i++) {
@@ -70,7 +70,7 @@ int HandKeypoint::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_handpose21_meta
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
 
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       LOGW("hand keypoint inference failed\n");
       return ret;
     }
@@ -87,7 +87,7 @@ int HandKeypoint::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_handpose21_meta
       }
     }
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

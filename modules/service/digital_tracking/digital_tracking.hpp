@@ -1,11 +1,11 @@
 #pragma once
-#include "core/face/cvai_face_types.h"
-#include "core/object/cvai_object_types.h"
+#include "core/face/cvtdl_face_types.h"
+#include "core/object/cvtdl_object_types.h"
 #include "vpss_engine.hpp"
 
 #include <cmath>
 
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 struct Rect {
@@ -57,4 +57,4 @@ class DigitalTracking {
   VpssEngine *mp_vpss_inst = nullptr;
 };
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

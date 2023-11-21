@@ -2,7 +2,7 @@
 #include <math.h>
 
 #include <iostream>
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -20,7 +20,7 @@ KalmanFilter::KalmanFilter() {
 }
 
 int KalmanFilter::predict(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
-                          const cvai_kalman_filter_config_t &kfilter_conf) const {
+                          const cvtdl_kalman_filter_config_t &kfilter_conf) const {
   assert(s_ == kalman_state_e::UPDATED);
   s_ = kalman_state_e::PREDICTED;
   /* generate process noise, Q */
@@ -78,7 +78,7 @@ int KalmanFilter::predict(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
 
 int KalmanFilter::update(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
                          const K_MEASUREMENT_V &z_,
-                         const cvai_kalman_filter_config_t &kfilter_conf) const {
+                         const cvtdl_kalman_filter_config_t &kfilter_conf) const {
   assert(s_ == kalman_state_e::PREDICTED);
   /* Compute the Kalman Gain : K = P * H^t * (H * P * H^t + R)^(-1) */
   /* generate measurement noise, R */
@@ -111,7 +111,7 @@ int KalmanFilter::update(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
 
 ROW_VECTOR KalmanFilter::mahalanobis(const kalman_state_e &s_, const K_STATE_V &x_,
                                      const K_COVARIANCE_M &P_, const K_MEASUREMENT_M &Z_,
-                                     const cvai_kalman_filter_config_t &kfilter_conf) const {
+                                     const cvtdl_kalman_filter_config_t &kfilter_conf) const {
   K_MATRIX_Z_Z Cov_ = P_.block(0, 0, DIM_Z, DIM_Z);
   K_MATRIX_Z_Z R_ = Eigen::MatrixXf::Zero(DIM_Z, DIM_Z);
   for (int i = 0; i < DIM_Z; i++) {

@@ -268,10 +268,10 @@ enum ColorConversionCodes {
 };
 // clang-format on
 
-namespace cviai {
+namespace cvitdl {
 
 void cvtColor(cv::InputArray src, cv::OutputArray dst, int code, int dstCn = 0);
 
-}  // namespace cviai
+}  // namespace cvitdl
 
 #endif  // _UTILS_CV_IMGPROC_COLOR_HPP_

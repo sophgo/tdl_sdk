@@ -8,9 +8,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
 #ifdef CV181X
 #include <cvi_ive.h>
 #else
@@ -21,23 +21,23 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
   std::string strf1(argv[2]);
 
   printf("---------------------openmodel-----------------------------\n");
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION, argv[1]);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_PETS_DETECTION, 0.1);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, argv[1]);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, 0.1);
   if (ret != CVI_SUCCESS) {
     printf("Open model failed with %#x!\n", ret);
     return ret;
@@ -73,12 +73,12 @@ int main(int argc, char *argv[]) {
   printf("---------------------to do detection-----------------------\n");
 
   std::string str_res;
-  cvai_object_t obj_meta = {0};
-  std::cout << &ai_handle << std::endl;
+  cvtdl_object_t obj_meta = {0};
+  std::cout << &tdl_handle << std::endl;
   std::cout << &bg << std::endl;
   std::cout << &obj_meta << std::endl;
 
-  ret = CVI_AI_PersonPet_Detection(ai_handle, &bg, &obj_meta);
+  ret = CVI_TDL_PersonPet_Detection(tdl_handle, &bg, &obj_meta);
   std::cout << ret << std::endl;
   std::cout << "objnum:" << obj_meta.size << std::endl;
   std::stringstream ss;
@@ -90,11 +90,11 @@ int main(int argc, char *argv[]) {
   }
   ss << "]\n";
   std::cout << ss.str();
-  CVI_AI_Free(&obj_meta);
+  CVI_TDL_Free(&obj_meta);
 
   CVI_SYS_FreeI(ive_handle, &image1);
   CVI_IVE_DestroyHandle(ive_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;
 }

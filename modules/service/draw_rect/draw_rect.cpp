@@ -4,13 +4,13 @@
 #include <algorithm>
 #include <string>
 #include <unordered_map>
-#include "core/core/cvai_errno.h"
+#include "core/core/cvtdl_errno.h"
 #include "core_utils.hpp"
 #ifndef NO_OPENCV
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 #endif
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
 #define max(x, y) (((x) >= (y)) ? (x) : (y))
 
@@ -33,7 +33,7 @@ static std::vector<cv::Scalar> line_color = {
     {255, 156, 127}, {0, 127, 255},  {255, 127, 77}, {0, 77, 255},  {255, 77, 36}};
 
 #endif
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 static const color_rgb COLOR_BLACK = COLOR_WRAPPER(0, 0, 0);
@@ -64,7 +64,7 @@ static float GetYuvColor(int chanel, color_rgb *color) {
   return (yuv_color < 0) ? 0 : ((yuv_color > 255.) ? 255 : yuv_color);
 }
 // TODO: Need refactor
-void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int radius) {
+void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvtdl_pts_t *pts, color_rgb color, int radius) {
 #ifdef NO_OPENCV
   LOGW("no opencv could not draw points");
 #else
@@ -162,12 +162,12 @@ void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int r
 int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_rgb color,
                int thickness) {
 #ifdef NO_OPENCV
-  return CVIAI_FAILURE;
+  return CVI_TDL_FAILURE;
 #else
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawPolygon\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   std::string name_str = name;
   int width = frame->stVFrame.u32Width;
@@ -256,7 +256,7 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_
     frame->stVFrame.pu8VirAddr[2] = NULL;
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 #endif
 }
 
@@ -497,15 +497,15 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float 
   }
 }
 
-int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts, cvai_service_brush_t brush) {
+int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvtdl_pts_t *pts, cvtdl_service_brush_t brush) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawPolygon\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 #ifdef NO_OPENCV  // TODO:use draw_rect to support
   LOGW("no opencv do not support draw polygon");
-  return CVIAI_FAILURE;
+  return CVI_TDL_FAILURE;
 #else
   std::vector<cv::Point> cv_points;
   for (uint32_t point_index = 0; point_index < pts->size; point_index++) {
@@ -570,17 +570,17 @@ int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts, cvai_service_b
     frame->stVFrame.pu8VirAddr[2] = NULL;
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 #endif
 }
 
-int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame) {
+int DrawPts(cvtdl_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame) {
   color_rgb rgb_color;
   rgb_color.r = DEFAULT_RECT_COLOR_R;
   rgb_color.g = DEFAULT_RECT_COLOR_G;
   rgb_color.b = DEFAULT_RECT_COLOR_B;
   _DrawPts(drawFrame, pts, rgb_color, DEFAULT_RADIUS);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, float g, float b) {
@@ -602,15 +602,15 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, 
 
 template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
-             const std::vector<cvai_service_brush_t> &brushes) {
+             const std::vector<cvtdl_service_brush_t> &brushes) {
   if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawMeta\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   if (meta->size == 0) {
-    return CVIAI_SUCCESS;
+    return CVI_TDL_SUCCESS;
   }
 
   size_t image_size = drawFrame->stVFrame.u32Length[0] + drawFrame->stVFrame.u32Length[1] +
@@ -628,7 +628,7 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
   }
 
   for (size_t i = 0; i < meta->size; i++) {
-    cvai_service_brush_t brush = brushes[i];
+    cvtdl_service_brush_t brush = brushes[i];
     color_rgb rgb_color;
     rgb_color.r = brush.color.r;
     rgb_color.g = brush.color.g;
@@ -639,7 +639,7 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
       brush.size += 1;
     }
 
-    cvai_bbox_t bbox =
+    cvtdl_bbox_t bbox =
         box_rescale(drawFrame->stVFrame.u32Width, drawFrame->stVFrame.u32Height, meta->width,
                     meta->height, meta->info[i].bbox, meta->rescale_type);
     if (drawFrame->stVFrame.enPixelFormat == PIXEL_FORMAT_NV21) {
@@ -659,30 +659,30 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
     drawFrame->stVFrame.pu8VirAddr[1] = NULL;
     drawFrame->stVFrame.pu8VirAddr[2] = NULL;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-template int DrawMeta<cvai_face_t>(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                   const bool drawText,
-                                   const std::vector<cvai_service_brush_t> &brushes);
-template int DrawMeta<cvai_object_t>(const cvai_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                     const bool drawText,
-                                     const std::vector<cvai_service_brush_t> &brushes);
-template int DrawMeta<cvai_dms_od_t>(const cvai_dms_od_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
-                                     const bool drawText,
-                                     const std::vector<cvai_service_brush_t> &brushes);
+template int DrawMeta<cvtdl_face_t>(const cvtdl_face_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                                    const bool drawText,
+                                    const std::vector<cvtdl_service_brush_t> &brushes);
+template int DrawMeta<cvtdl_object_t>(const cvtdl_object_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                                      const bool drawText,
+                                      const std::vector<cvtdl_service_brush_t> &brushes);
+template int DrawMeta<cvtdl_dms_od_t>(const cvtdl_dms_od_t *meta, VIDEO_FRAME_INFO_S *drawFrame,
+                                      const bool drawText,
+                                      const std::vector<cvtdl_service_brush_t> &brushes);
 
-int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
+int DrawPose17(const cvtdl_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
 #ifdef NO_OPENCV
   LOGW("no opencv could not draw pose");
-  return CVIAI_FAILURE;
+  return CVI_TDL_FAILURE;
 #else
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
               frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   if (img.data == nullptr) {
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   for (uint32_t i = 0; i < obj->size; ++i) {
@@ -691,7 +691,7 @@ int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
 
     if (!obj->info[i].pedestrian_properity) continue;
 
-    cvai_pose17_meta_t pose = obj->info[i].pedestrian_properity->pose_17;
+    cvtdl_pose17_meta_t pose = obj->info[i].pedestrian_properity->pose_17;
     for (int i = 0; i < 17; ++i) {
       kp_preds[i].x = pose.x[i];
       kp_preds[i].y = pose.y[i];
@@ -763,16 +763,16 @@ int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   // cv::cvtColor(draw_img, draw_img, CV_RGB2BGR);
   // cv::imwrite("/mnt/data/out2.jpg", draw_img);
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 #endif
 }
 
-int Draw5Landmark(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame) {
+int Draw5Landmark(const cvtdl_face_t *meta, VIDEO_FRAME_INFO_S *frame) {
   static const color_rgb LANDMARK5_COLORS[5] = {COLOR_RED, COLOR_GREEN, COLOR_MAGENTA, COLOR_YELLOW,
                                                 COLOR_CYAN};
   for (uint32_t i = 0; i < meta->size; i++) {
     for (int j = 0; j < 5; j++) {
-      cvai_pts_t tmp_pts = {0};
+      cvtdl_pts_t tmp_pts = {0};
       tmp_pts.size = 1;
       tmp_pts.x = &meta->info[i].pts.x[j];
       tmp_pts.y = &meta->info[i].pts.y[j];
@@ -782,10 +782,10 @@ int Draw5Landmark(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame) {
   return CVI_SUCCESS;
 }
 
-int DrawHandPose21(const cvai_handpose21_meta_ts *obj_meta, VIDEO_FRAME_INFO_S *bg) {
+int DrawHandPose21(const cvtdl_handpose21_meta_ts *obj_meta, VIDEO_FRAME_INFO_S *bg) {
 #ifdef NO_OPENCV
   LOGW("no opencv could not draw pose");
-  return CVIAI_FAILURE;
+  return CVI_TDL_FAILURE;
 #else
   static const color_rgb LANDMARK21_COLORS[21] = {
       COLOR_RED, COLOR_GREEN, COLOR_MAGENTA, COLOR_YELLOW, COLOR_CYAN, COLOR_RED,
@@ -794,16 +794,16 @@ int DrawHandPose21(const cvai_handpose21_meta_ts *obj_meta, VIDEO_FRAME_INFO_S *
       COLOR_RED, COLOR_GREEN, COLOR_MAGENTA};
   for (uint32_t i = 0; i < obj_meta->size; i++) {
     for (int j = 0; j < 21; j++) {
-      cvai_pts_t tmp_pts = {0};
+      cvtdl_pts_t tmp_pts = {0};
       tmp_pts.size = 1;
       tmp_pts.x = &obj_meta->info[i].x[j];
       tmp_pts.y = &obj_meta->info[i].y[j];
       _DrawPts(bg, &tmp_pts, LANDMARK21_COLORS[j], 3);
     }
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 #endif
 }
 
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

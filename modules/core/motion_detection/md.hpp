@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "core/core/cvai_core_types.h"
+#include "core/core/cvtdl_core_types.h"
 #include "cvi_comm.h"
 #include "cvi_comm_vb.h"
 #include "ive.hpp"

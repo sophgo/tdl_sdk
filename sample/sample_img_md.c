@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "cviai.h"
+#include "cvi_tdl.h"
 #ifdef CV181X
 #include <cvi_ive.h>
 #else
@@ -10,11 +10,11 @@
 #endif
 
 int main(int argc, char *argv[]) {
-  cviai_handle_t ai_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
   printf("start to run img md\n");
-  CVI_S32 ret = CVI_AI_CreateHandle(&ai_handle);
+  CVI_S32 ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
   IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
@@ -76,31 +76,31 @@ int main(int argc, char *argv[]) {
     printf("Convert to video frame failed with %#x!\n", ret);
     return ret;
   }
-  cvai_object_t obj_meta;
-  CVI_AI_Set_MotionDetection_Background(ai_handle, &bg);
+  cvtdl_object_t obj_meta;
+  CVI_TDL_Set_MotionDetection_Background(tdl_handle, &bg);
 
-  CVI_AI_MotionDetection(ai_handle, &frame, &obj_meta, 20, 50);
-  // CVI_AI_MotionDetection(ai_handle, &frame, &obj_meta, 20, 50);
-  // CVI_AI_MotionDetection(ai_handle, &frame, &obj_meta, 20, 50);
+  CVI_TDL_MotionDetection(tdl_handle, &frame, &obj_meta, 20, 50);
+  // CVI_TDL_MotionDetection(tdl_handle, &frame, &obj_meta, 20, 50);
+  // CVI_TDL_MotionDetection(tdl_handle, &frame, &obj_meta, 20, 50);
   // VIDEO_FRAME_INFO_S motionmap;
-  // ret = CVI_AI_GetMotionMap(ai_handle, &motionmap);
+  // ret = CVI_TDL_GetMotionMap(tdl_handle, &motionmap);
 
 #ifndef SIMPLY_MODEL
-  CVI_AI_DumpImage("img1.bin", &bg);
-  CVI_AI_DumpImage("img2.bin", &frame);
+  CVI_TDL_DumpImage("img1.bin", &bg);
+  CVI_TDL_DumpImage("img2.bin", &frame);
 #endif
-  // CVI_AI_DumpImage("md.bin", &motionmap);
+  // CVI_TDL_DumpImage("md.bin", &motionmap);
 
   for (int i = 0; i < obj_meta.size; i++) {
     printf("[%f,%f,%f,%f]\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
   }
 
-  CVI_AI_Free(&obj_meta);
+  CVI_TDL_Free(&obj_meta);
   CVI_SYS_FreeI(ive_handle, &image1);
   CVI_SYS_FreeI(ive_handle, &image2);
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   CVI_IVE_DestroyHandle(ive_handle);
   return ret;
 }

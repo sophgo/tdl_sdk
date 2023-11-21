@@ -591,8 +591,8 @@ void _findContours(cv::InputOutputArray _image, cv::OutputArrayOfArrays _contour
 }
 
 // L1951
-void cviai::findContours(cv::InputOutputArray _image, cv::OutputArrayOfArrays _contours, int mode,
-                         int method, cv::Point offset) {
+void cvitdl::findContours(cv::InputOutputArray _image, cv::OutputArrayOfArrays _contours, int mode,
+                          int method, cv::Point offset) {
   /* NOTE: mode = RETR_EXTERNAL, method = CHAIN_APPROX_SIMPLE */
   _findContours(_image, _contours, cv::noArray(), mode, method, offset);
 }

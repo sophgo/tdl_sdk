@@ -1,6 +1,6 @@
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app.h"
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 
@@ -21,9 +21,9 @@
 
 #define OUTPUT_BUFFER_SIZE 10
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-static cvai_object_t g_obj_meta_0;
-static cvai_object_t g_obj_meta_1;
-static cvai_pts_t pts;
+static cvtdl_object_t g_obj_meta_0;
+static cvtdl_object_t g_obj_meta_1;
+static cvtdl_pts_t pts;
 
 // #define VISUAL_FACE_LANDMARK
 // #define USE_OUTPUT_DATA_API
@@ -41,7 +41,7 @@ __attribute__((always_inline)) inline void AutoUnLock(void *mutex) {
 typedef struct {
   uint64_t u_id;
   float quality;
-  cvai_image_t image;
+  cvtdl_image_t image;
   tracker_state_e state;
   uint32_t counter;
 } IOData;
@@ -49,7 +49,7 @@ typedef struct {
 typedef struct {
   CVI_S32 voType;
   VideoSystemContext vs_ctx;
-  cviai_service_handle_t service_handle;
+  cvitdl_service_handle_t service_handle;
 } pVOArgs;
 
 SMT_MUTEXAUTOLOCK_INIT(VOMutex);
@@ -71,25 +71,25 @@ static void SampleHandleSig(CVI_S32 signo) {
   }
 }
 
-void RESTRUCTURING_OBJ_META(cvai_object_t *origin_obj, cvai_object_t *obj_meta) {
+void RESTRUCTURING_OBJ_META(cvtdl_object_t *origin_obj, cvtdl_object_t *obj_meta) {
   obj_meta->size = 0;
   for (uint32_t i = 0; i < origin_obj->size; i++) {
     obj_meta->size += 1;
   }
 
-  obj_meta->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj_meta->size);
-  memset(obj_meta->info, 0, sizeof(cvai_object_info_t) * obj_meta->size);
+  obj_meta->info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj_meta->size);
+  memset(obj_meta->info, 0, sizeof(cvtdl_object_info_t) * obj_meta->size);
   obj_meta->rescale_type = origin_obj->rescale_type;
   obj_meta->height = origin_obj->height;
   obj_meta->width = origin_obj->width;
   obj_meta->entry_num = origin_obj->entry_num;
   obj_meta->miss_num = origin_obj->miss_num;
 
-  cvai_object_info_t *info_ptr_0 = obj_meta->info;
+  cvtdl_object_info_t *info_ptr_0 = obj_meta->info;
   for (uint32_t i = 0; i < origin_obj->size; i++) {
-    cvai_object_info_t **tmp_ptr = &info_ptr_0;
+    cvtdl_object_info_t **tmp_ptr = &info_ptr_0;
     (*tmp_ptr)->unique_id = origin_obj->info[i].unique_id;
-    memcpy(&(*tmp_ptr)->bbox, &origin_obj->info[i].bbox, sizeof(cvai_bbox_t));
+    memcpy(&(*tmp_ptr)->bbox, &origin_obj->info[i].bbox, sizeof(cvtdl_bbox_t));
     *tmp_ptr += 1;
   }
 
@@ -102,16 +102,16 @@ static void *pVideoOutput(void *args) {
   if (!vo_args->voType) {
     return NULL;
   }
-  cviai_service_handle_t service_handle = vo_args->service_handle;
+  cvitdl_service_handle_t service_handle = vo_args->service_handle;
   CVI_S32 s32Ret = CVI_SUCCESS;
 
-  cvai_service_brush_t brush_0 = {.size = 4, .color.r = 0, .color.g = 64, .color.b = 255};
-  cvai_service_brush_t brush_1 = {.size = 4, .color.r = 64, .color.g = 0, .color.b = 255};
-  cvai_service_brush_t brush_2 = {.size = 4, .color.r = 255, .color.g = 0, .color.b = 0};
+  cvtdl_service_brush_t brush_0 = {.size = 4, .color.r = 0, .color.g = 64, .color.b = 255};
+  cvtdl_service_brush_t brush_1 = {.size = 4, .color.r = 64, .color.g = 0, .color.b = 255};
+  cvtdl_service_brush_t brush_2 = {.size = 4, .color.r = 255, .color.g = 0, .color.b = 0};
 
-  cvai_object_t obj_meta_0, obj_meta_1;
-  memset(&obj_meta_0, 0, sizeof(cvai_object_t));
-  memset(&obj_meta_1, 0, sizeof(cvai_object_t));
+  cvtdl_object_t obj_meta_0, obj_meta_1;
+  memset(&obj_meta_0, 0, sizeof(cvtdl_object_t));
+  memset(&obj_meta_1, 0, sizeof(cvtdl_object_t));
 
   VIDEO_FRAME_INFO_S stVOFrame;
   while (bRunVideoOutput) {
@@ -124,24 +124,24 @@ static void *pVideoOutput(void *args) {
     {
       SMT_MutexAutoLock(VOMutex, lock);
 
-      memcpy(&obj_meta_0, &g_obj_meta_0, sizeof(cvai_object_t));
-      memcpy(&obj_meta_1, &g_obj_meta_1, sizeof(cvai_object_t));
+      memcpy(&obj_meta_0, &g_obj_meta_0, sizeof(cvtdl_object_t));
+      memcpy(&obj_meta_1, &g_obj_meta_1, sizeof(cvtdl_object_t));
 
       obj_meta_0.info =
-          (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * g_obj_meta_0.size);
-      memset(obj_meta_0.info, 0, sizeof(cvai_object_info_t) * obj_meta_0.size);
+          (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * g_obj_meta_0.size);
+      memset(obj_meta_0.info, 0, sizeof(cvtdl_object_info_t) * obj_meta_0.size);
 
       for (uint32_t i = 0; i < g_obj_meta_0.size; i++) {
         obj_meta_0.info[i].unique_id = MAX(0, g_obj_meta_0.info[i].unique_id);
-        memcpy(&obj_meta_0.info[i].bbox, &g_obj_meta_0.info[i].bbox, sizeof(cvai_bbox_t));
+        memcpy(&obj_meta_0.info[i].bbox, &g_obj_meta_0.info[i].bbox, sizeof(cvtdl_bbox_t));
       }
 
       obj_meta_1.info =
-          (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * g_obj_meta_1.size);
-      memset(obj_meta_1.info, 0, sizeof(cvai_object_info_t) * obj_meta_1.size);
+          (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * g_obj_meta_1.size);
+      memset(obj_meta_1.info, 0, sizeof(cvtdl_object_info_t) * obj_meta_1.size);
       for (uint32_t i = 0; i < g_obj_meta_1.size; i++) {
         obj_meta_1.info[i].unique_id = MAX(0, g_obj_meta_1.info[i].unique_id);
-        memcpy(&obj_meta_1.info[i].bbox, &g_obj_meta_1.info[i].bbox, sizeof(cvai_bbox_t));
+        memcpy(&obj_meta_1.info[i].bbox, &g_obj_meta_1.info[i].bbox, sizeof(cvtdl_bbox_t));
       }
     }
     size_t image_size = stVOFrame.stVFrame.u32Length[0] + stVOFrame.stVFrame.u32Length[1] +
@@ -152,35 +152,35 @@ static void *pVideoOutput(void *args) {
         stVOFrame.stVFrame.pu8VirAddr[0] + stVOFrame.stVFrame.u32Length[0];
     stVOFrame.stVFrame.pu8VirAddr[2] =
         stVOFrame.stVFrame.pu8VirAddr[1] + stVOFrame.stVFrame.u32Length[1];
-    CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta_0, &stVOFrame, false, brush_0);
-    CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta_1, &stVOFrame, false, brush_1);
-    CVI_AI_Service_DrawPolygon(service_handle, &stVOFrame, &pts, brush_2);
+    CVI_TDL_Service_ObjectDrawRect(service_handle, &obj_meta_0, &stVOFrame, false, brush_0);
+    CVI_TDL_Service_ObjectDrawRect(service_handle, &obj_meta_1, &stVOFrame, false, brush_1);
+    CVI_TDL_Service_DrawPolygon(service_handle, &stVOFrame, &pts, brush_2);
 
     for (uint32_t j = 0; j < obj_meta_0.size; j++) {
       char *id_num = calloc(64, sizeof(char));
       sprintf(id_num, "%" PRIu64, obj_meta_0.info[j].unique_id);
-      CVI_AI_Service_ObjectWriteText(id_num, obj_meta_0.info[j].bbox.x1, obj_meta_0.info[j].bbox.y1,
-                                     &stVOFrame, 1, 1, 1);
+      CVI_TDL_Service_ObjectWriteText(id_num, obj_meta_0.info[j].bbox.x1,
+                                      obj_meta_0.info[j].bbox.y1, &stVOFrame, 1, 1, 1);
       free(id_num);
     }
 
     for (uint32_t j = 0; j < obj_meta_1.size; j++) {
       char *id_num = calloc(64, sizeof(char));
       sprintf(id_num, "%" PRIu64, obj_meta_1.info[j].unique_id);
-      CVI_AI_Service_ObjectWriteText(id_num, obj_meta_1.info[j].bbox.x1, obj_meta_1.info[j].bbox.y1,
-                                     &stVOFrame, 1, 1, 1);
+      CVI_TDL_Service_ObjectWriteText(id_num, obj_meta_1.info[j].bbox.x1,
+                                      obj_meta_1.info[j].bbox.y1, &stVOFrame, 1, 1, 1);
       free(id_num);
     }
 
     char *num_person = calloc(32, sizeof(char));
     sprintf(num_person, "Number of people: %d", obj_meta_0.size);
-    CVI_AI_Service_ObjectWriteText(num_person, 200, 100, &stVOFrame, 2, 2, 2);
+    CVI_TDL_Service_ObjectWriteText(num_person, 200, 100, &stVOFrame, 2, 2, 2);
 
     sprintf(num_person, "Number of entering: %d", obj_meta_0.entry_num);
-    CVI_AI_Service_ObjectWriteText(num_person, 200, 200, &stVOFrame, 2, 2, 2);
+    CVI_TDL_Service_ObjectWriteText(num_person, 200, 200, &stVOFrame, 2, 2, 2);
 
     sprintf(num_person, "Number of leaving: %d", obj_meta_0.miss_num);
-    CVI_AI_Service_ObjectWriteText(num_person, 200, 300, &stVOFrame, 2, 2, 2);
+    CVI_TDL_Service_ObjectWriteText(num_person, 200, 300, &stVOFrame, 2, 2, 2);
 
     free(num_person);
     CVI_SYS_Munmap((void *)stVOFrame.stVFrame.pu8VirAddr[0], image_size);
@@ -200,13 +200,13 @@ static void *pVideoOutput(void *args) {
       break;
     }
 
-    CVI_AI_Free(&obj_meta_0);
+    CVI_TDL_Free(&obj_meta_0);
   }
   return NULL;
 }
 
 int main(int argc, char *argv[]) {
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
@@ -246,22 +246,22 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  cviai_app_handle_t app_handle = NULL;
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
+  cvitdl_app_handle_t app_handle = NULL;
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
 
-  ret = CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
+  ret = CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
 
-  ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
+  ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
 
-  ret |= CVI_AI_APP_PersonCapture_Init(app_handle, (uint32_t)buffer_size);
+  ret |= CVI_TDL_APP_PersonCapture_Init(app_handle, (uint32_t)buffer_size);
 
-  ret |= CVI_AI_APP_PersonCapture_QuickSetUp(
+  ret |= CVI_TDL_APP_PersonCapture_QuickSetUp(
       app_handle, od_model_name, od_model_path,
       (!strcmp(reid_model_path, "NULL")) ? NULL : reid_model_path);
-  ret |= CVI_AI_APP_ConsumerCounting_Line(app_handle, A_x, A_y, B_x, B_y, s_mode);  // draw line
-  if (ret != CVIAI_SUCCESS) {
+  ret |= CVI_TDL_APP_ConsumerCounting_Line(app_handle, A_x, A_y, B_x, B_y, s_mode);  // draw line
+  if (ret != CVI_TDL_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
@@ -277,12 +277,12 @@ int main(int argc, char *argv[]) {
       (app_handle->person_cpt_info->rect.rt_x + app_handle->person_cpt_info->rect.rb_x) / 2.0;
   pts.y[1] =
       (app_handle->person_cpt_info->rect.rt_y + app_handle->person_cpt_info->rect.rb_y) / 2.0;
-  CVI_AI_SetVpssTimeout(ai_handle, 1000);
-  CVI_AI_SetModelThreshold(ai_handle, app_handle->person_cpt_info->od_model_index, det_threshold);
+  CVI_TDL_SetVpssTimeout(tdl_handle, 1000);
+  CVI_TDL_SetModelThreshold(tdl_handle, app_handle->person_cpt_info->od_model_index, det_threshold);
 
   person_capture_config_t app_cfg;
-  CVI_AI_APP_PersonCapture_GetDefaultConfig(&app_cfg);
-  CVI_AI_APP_PersonCapture_SetConfig(app_handle, &app_cfg);
+  CVI_TDL_APP_PersonCapture_GetDefaultConfig(&app_cfg);
+  CVI_TDL_APP_PersonCapture_SetConfig(app_handle, &app_cfg);
 
   pthread_t vo_thread;
   pVOArgs vo_args = {0};
@@ -291,7 +291,7 @@ int main(int argc, char *argv[]) {
   vo_args.vs_ctx = vs_ctx;
 
   pthread_create(&vo_thread, NULL, pVideoOutput, (void *)&vo_args);
-  memset(&g_obj_meta_0, 0, sizeof(cvai_object_t));
+  memset(&g_obj_meta_0, 0, sizeof(cvtdl_object_t));
   VIDEO_FRAME_INFO_S stfdFrame;
 
   size_t counter = 0;
@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", ret);
       break;
     }
-    ret = CVI_AI_APP_ConsumerCounting_Run(app_handle, &stfdFrame);
+    ret = CVI_TDL_APP_ConsumerCounting_Run(app_handle, &stfdFrame);
     if (ret != CVI_SUCCESS) {
       printf("failed to run consumer counting\n");
       return ret;
@@ -311,8 +311,8 @@ int main(int argc, char *argv[]) {
     // printf("num person:%d\n", app_handle->person_cpt_info->last_head.size);
     {
       SMT_MutexAutoLock(VOMutex, lock);
-      CVI_AI_Free(&g_obj_meta_0);
-      CVI_AI_Free(&g_obj_meta_1);
+      CVI_TDL_Free(&g_obj_meta_0);
+      CVI_TDL_Free(&g_obj_meta_1);
       RESTRUCTURING_OBJ_META(&app_handle->person_cpt_info->last_head, &g_obj_meta_0);
       RESTRUCTURING_OBJ_META(&app_handle->person_cpt_info->last_ped, &g_obj_meta_1);
     }
@@ -322,15 +322,15 @@ int main(int argc, char *argv[]) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
       break;
     }
-    // CVI_AI_Free(&app_handle->person_cpt_info->last_ped);
-    // CVI_AI_Free(&app_handle->person_cpt_info->last_head);
-    // CVI_AI_Free(&app_handle->person_cpt_info->last_objects);
+    // CVI_TDL_Free(&app_handle->person_cpt_info->last_ped);
+    // CVI_TDL_Free(&app_handle->person_cpt_info->last_head);
+    // CVI_TDL_Free(&app_handle->person_cpt_info->last_objects);
   }
   bRunVideoOutput = false;
   pthread_join(vo_thread, NULL);
 CLEANUP_SYSTEM:
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

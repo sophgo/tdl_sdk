@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "cvi_audio.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
 
 #define AUDIOFORMATSIZE 2
 #define SECOND 3
@@ -15,8 +15,8 @@ bool gRun = true;     // signal
 bool record = false;  // record to output
 char *outpath;        // output file path
 
-// Init cviai handle.
-cviai_handle_t ai_handle = NULL;
+// Init cvi_tdl handle.
+cvitdl_handle_t tdl_handle = NULL;
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
@@ -44,12 +44,12 @@ void *thread_uplink_audio(void *arg) {
 
   // classify the sound result
   int index = -1;
-  int ClassesNum = CVI_AI_Get_SoundClassification_ClassesNum(ai_handle);
+  int ClassesNum = CVI_TDL_Get_SoundClassification_ClassesNum(tdl_handle);
 
   while (gRun) {
     for (int i = 0; i < loop; ++i) {
       s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_AUDIO_BLOCK_MODE);  // Get audio frame
-      if (s32Ret != CVIAI_SUCCESS) {
+      if (s32Ret != CVI_TDL_SUCCESS) {
         printf("CVI_AI_GetFrame --> none!!\n");
         continue;
       } else {
@@ -58,7 +58,7 @@ void *thread_uplink_audio(void *arg) {
       }
     }
     if (!record) {
-      CVI_AI_SoundClassification(ai_handle, &Frame, &index);  // Detect the audio
+      CVI_TDL_SoundClassification(tdl_handle, &Frame, &index);  // Detect the audio
       // Print soundcmd result
       if (index == ClassesNum)
         printf("Sound cmd preditcion: Normal\n");
@@ -74,7 +74,7 @@ void *thread_uplink_audio(void *arg) {
     }
   }
   s32Ret = CVI_AI_ReleaseFrame(0, 0, &stFrame, &stAecFrm);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_ReleaseFrame Failed!!\n");
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_ReleaseFrame Failed!!\n");
 
   pthread_exit(NULL);
 }
@@ -97,19 +97,19 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
   // STEP 2:cvitek_audin_uplink_start
   //_set_audin_config
   s32Ret = CVI_AI_SetPubAttr(0, &AudinAttr);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_SetPubAttr failed with %#x!\n", s32Ret);
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_SetPubAttr failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_Enable(0);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_Enable failed with %#x!\n", s32Ret);
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_Enable failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_EnableChn(0, 0);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_EnableChn failed with %#x!\n", s32Ret);
 
   s32Ret = CVI_AI_SetVolume(0, 10);
-  if (s32Ret != CVIAI_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
+  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_SetVolume failed with %#x!\n", s32Ret);
 
   printf("SET_AUDIO_ATTR success!!\n");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int main(int argc, char **argv) {
@@ -120,14 +120,14 @@ int main(int argc, char **argv) {
         "\t\tRECORD, record input to file, 0: disable 1. enable.\n"
         "\t\tOUTPUT, output file path: {output file path}.raw\n",
         argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
-  CVI_S32 ret = CVIAI_SUCCESS;
-  if (CVI_AUDIO_INIT() == CVIAI_SUCCESS) {
+  CVI_S32 ret = CVI_TDL_SUCCESS;
+  if (CVI_AUDIO_INIT() == CVI_TDL_SUCCESS) {
     printf("CVI_AUDIO_INIT success!!\n");
   } else {
     printf("CVI_AUDIO_INIT failure!!\n");
@@ -136,20 +136,20 @@ int main(int argc, char **argv) {
 
   SET_AUDIO_ATTR();
 
-  ret = CVI_AI_CreateHandle3(&ai_handle);
+  ret = CVI_TDL_CreateHandle3(&tdl_handle);
 
-  if (ret != CVIAI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+  if (ret != CVI_TDL_SUCCESS) {
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model esc failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_SOUNDCLASSIFICATION, true);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, true);
 
   if (argc == 4) {
     record = atoi(argv[2]) ? true : false;
@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
   pthread_create(&pcm_output_thread, NULL, thread_uplink_audio, NULL);
 
   pthread_join(pcm_output_thread, NULL);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   if (argc == 4) {
     free(outpath);
   }

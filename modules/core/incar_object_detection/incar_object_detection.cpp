@@ -1,17 +1,17 @@
 #include "incar_object_detection.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 
-namespace cviai {
+namespace cvitdl {
 
 IncarObjectDetection::IncarObjectDetection() : Core(CVI_MEM_DEVICE) {}
 int IncarObjectDetection::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   (*data)[0].factor[0] = 0.999;
@@ -26,27 +26,27 @@ int IncarObjectDetection::setupInputPreprocess(std::vector<InputPreprecessSetup>
   (*data)[0].rescale_type = RESCALE_CENTER;
   (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
-int IncarObjectDetection::inference(VIDEO_FRAME_INFO_S* frame, cvai_face_t* meta) {
+int IncarObjectDetection::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_face_t* meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   std::vector<VIDEO_FRAME_INFO_S*> frames = {frame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     return ret;
   }
 
   outputParser(input_size, input_size, meta);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-void IncarObjectDetection::outputParser(int image_width, int image_height, cvai_face_t* meta) {
-  std::vector<std::vector<cvai_dms_od_info_t>> results;
-  std::vector<cvai_dms_od_info_t> vec_bbox_nms;
+void IncarObjectDetection::outputParser(int image_width, int image_height, cvtdl_face_t* meta) {
+  std::vector<std::vector<cvtdl_dms_od_info_t>> results;
+  std::vector<cvtdl_dms_od_info_t> vec_bbox_nms;
   results.resize(num_class);
 
   for (const auto& head_info : heads_info) {
@@ -62,7 +62,7 @@ void IncarObjectDetection::outputParser(int image_width, int image_height, cvai_
   meta->dms->dms_od.height = image_height;
   meta->dms->dms_od.rescale_type = m_vpss_config[0].rescale_type;
   meta->dms->dms_od.info =
-      (cvai_dms_od_info_t*)malloc(sizeof(cvai_dms_od_info_t) * meta->dms->dms_od.size);
+      (cvtdl_dms_od_info_t*)malloc(sizeof(cvtdl_dms_od_info_t) * meta->dms->dms_od.size);
 
   for (uint32_t i = 0; i < meta->dms->dms_od.size; ++i) {
     clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
@@ -78,7 +78,7 @@ void IncarObjectDetection::outputParser(int image_width, int image_height, cvai_
 
 void IncarObjectDetection::decode_infer(float* cls_pred, float* dis_pred, int stride,
                                         float threshold,
-                                        std::vector<std::vector<cvai_dms_od_info_t>>& results) {
+                                        std::vector<std::vector<cvtdl_dms_od_info_t>>& results) {
   int feature_h = 320 / stride;
   int feature_w = 320 / stride;
   for (int idx = 0; idx < feature_h * feature_w; idx++) {
@@ -100,10 +100,10 @@ void IncarObjectDetection::decode_infer(float* cls_pred, float* dis_pred, int st
   }
 }
 
-void IncarObjectDetection::disPred2Bbox(std::vector<std::vector<cvai_dms_od_info_t>>& results,
+void IncarObjectDetection::disPred2Bbox(std::vector<std::vector<cvtdl_dms_od_info_t>>& results,
                                         const float*& dfl_det, int classes, float score, int x,
                                         int y, int stride) {
-  cvai_dms_od_info_t temp;
+  cvtdl_dms_od_info_t temp;
   strcpy(temp.name, class_name[classes]);
   temp.bbox.score = score;
   temp.classes = classes;
@@ -155,4 +155,4 @@ int IncarObjectDetection::activation_function_softmax(const _Tp* src, _Tp* dst, 
   return 0;
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

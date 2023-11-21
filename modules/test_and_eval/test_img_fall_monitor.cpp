@@ -1,6 +1,6 @@
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app/cvi_tdl_app.h"
 #include "sample_comm.h"
 
 #include <cvi_sys.h>
@@ -15,7 +15,7 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 
 #include <sstream>
 #include <string>
@@ -24,7 +24,7 @@
 #else
 #include "ive/ive.h"
 #endif
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl_media.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "sys_utils.hpp"
@@ -39,7 +39,7 @@ int skeleton[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12}, {5, 11}
                        {5, 6},   {5, 7},   {6, 8},   {7, 9},   {8, 10},  {1, 2},  {0, 1},
                        {0, 2},   {1, 3},   {2, 4},   {3, 5},   {4, 6}};
 
-void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvai_object_t *obj_meta, std::string save_path,
+void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta, std::string save_path,
                     std::string text, float score) {
   bg->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
@@ -99,7 +99,7 @@ __attribute__((always_inline)) inline void AutoUnLock(void *mutex) {
 typedef struct {
   uint64_t u_id;
   float quality;
-  cvai_image_t image;
+  cvtdl_image_t image;
   tracker_state_e state;
   uint32_t counter;
   char name[128];
@@ -116,10 +116,10 @@ static volatile bool bRunImageWriter = true;
 static volatile bool bRunVideoOutput = true;
 
 #ifdef VISUAL_FACE_LANDMARK
-void FREE_FACE_PTS(cvai_face_t *face_meta);
+void FREE_FACE_PTS(cvtdl_face_t *face_meta);
 #endif
 
-void set_sample_mot_config(cvai_deepsort_config_t *ds_conf) {
+void set_sample_mot_config(cvtdl_deepsort_config_t *ds_conf) {
   ds_conf->ktracker_conf.max_unmatched_num = 10;
   ds_conf->ktracker_conf.accreditation_threshold = 10;
   ds_conf->ktracker_conf.P_beta[2] = 0.1;
@@ -167,11 +167,11 @@ CVI_S32 SAMPLE_COMM_VPSS_Stop(VPSS_GRP VpssGrp, CVI_BOOL *pabChnEnable) {
   return CVI_SUCCESS;
 }
 
-void release_system(cviai_handle_t ai_handle, cviai_service_handle_t service_handle,
-                    cviai_app_handle_t app_handle) {
-  // CVI_AI_APP_DestroyHandle(app_handle);
-  if (service_handle != NULL) CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+void release_system(cvitdl_handle_t tdl_handle, cvitdl_service_handle_t service_handle,
+                    cvitdl_app_handle_t app_handle) {
+  // CVI_TDL_APP_DestroyHandle(app_handle);
+  if (service_handle != NULL) CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   // DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
@@ -195,12 +195,12 @@ int main(int argc, char *argv[]) {
       CVI_TRUE,
   };
 
-  CVI_AI_SUPPORTED_MODEL_E enOdModelId = CVI_AI_SUPPORTED_MODEL_YOLOV8POSE;
+  CVI_TDL_SUPPORTED_MODEL_E enOdModelId = CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE;
 
   for (VPSS_GRP VpssGrp = 0; VpssGrp < VPSS_MAX_GRP_NUM; ++VpssGrp)
     SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
 
-  // CVI_AI_SUPPORTED_MODEL_E model = CVI_AI_SUPPORTED_MODEL_YOLOV8POSE;
+  // CVI_TDL_SUPPORTED_MODEL_E model = CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE;
   std::string modelf = std::string(
       "/mnt/data/admin1_data/AI_CV/cv182x/ai_models_output/cv181x/"
       "scrfd_500m_bnkps_432_768.cvimodel");
@@ -216,32 +216,32 @@ int main(int argc, char *argv[]) {
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 1);
 
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  cviai_app_handle_t app_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
+  cvitdl_app_handle_t app_handle = NULL;
 
   // int vpss_grp = 1;
-  // ret = CVI_AI_CreateHandle2(&ai_handle, vpss_grp, 0);
-  ret = CVI_AI_CreateHandle(&ai_handle);
-  // ret |= CVI_AI_SetVBPool(ai_handle, 0, 2);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  // ret |= CVI_AI_Service_EnableTPUDraw(service_handle, true);
+  // ret = CVI_TDL_CreateHandle2(&tdl_handle, vpss_grp, 0);
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
+  // ret |= CVI_TDL_SetVBPool(tdl_handle, 0, 2);
+  ret |= CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
+  // ret |= CVI_TDL_Service_EnableTPUDraw(service_handle, true);
 
-  CVI_AI_OpenModel(ai_handle, enOdModelId, argv[3]);
+  CVI_TDL_OpenModel(tdl_handle, enOdModelId, argv[3]);
 
-  CVI_AI_Set_Fall_FPS(ai_handle, atof(argv[8]));
+  CVI_TDL_Set_Fall_FPS(tdl_handle, atof(argv[8]));
 
   printf("to quick setup\n");
 
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle, true);
-  cvai_deepsort_config_t ds_conf;
-  CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
+  CVI_TDL_DeepSORT_Init(tdl_handle, true);
+  cvtdl_deepsort_config_t ds_conf;
+  CVI_TDL_DeepSORT_GetDefaultConfig(&ds_conf);
   set_sample_mot_config(&ds_conf);
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
+  CVI_TDL_DeepSORT_SetConfig(tdl_handle, &ds_conf, -1, false);
 
   if (ret != CVI_SUCCESS) {
-    release_system(ai_handle, service_handle, app_handle);
+    release_system(tdl_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
 
@@ -258,8 +258,8 @@ int main(int argc, char *argv[]) {
   FILE *fp = fopen(dst_root.c_str(), "w");
   bool fall = false;
   for (int img_idx = 0; img_idx < num_end; img_idx++) {
-    cvai_object_t stObjMeta = {0};
-    cvai_tracker_t stTrackerMeta = {0};
+    cvtdl_object_t stObjMeta = {0};
+    cvtdl_tracker_t stTrackerMeta = {0};
     char save_img_[256];
     std::string save_img;
     char text_[256];
@@ -294,7 +294,7 @@ int main(int argc, char *argv[]) {
     // bool empty_img = false;
     // IVE_IMAGE_S image;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_AI_ReadImage(szimg, &fdFrame, PIXEL_FORMAT_BGR_888);
+    ret = CVI_TDL_ReadImage(szimg, &fdFrame, PIXEL_FORMAT_BGR_888);
     // printf("read image ret:%d width:%d\n", ret, (int)fdFrame.stVFrame.u32Width);
     // if (ret != CVI_SUCCESS) {
     //   printf("load_image_file failed\n");
@@ -323,8 +323,8 @@ int main(int argc, char *argv[]) {
 
     // getchar();
 
-    CVI_AI_MemAllocInit(dets.size(), &stObjMeta);
-    memset(stObjMeta.info, 0, sizeof(cvai_object_info_t) * stObjMeta.size);
+    CVI_TDL_MemAllocInit(dets.size(), &stObjMeta);
+    memset(stObjMeta.info, 0, sizeof(cvtdl_object_info_t) * stObjMeta.size);
 
     for (uint32_t i = 0; i < dets.size(); i++) {
       stObjMeta.info[i].bbox.x1 = dets[i][0];
@@ -335,7 +335,7 @@ int main(int argc, char *argv[]) {
       stObjMeta.info[i].classes = 0;
 
       stObjMeta.info[i].pedestrian_properity =
-          (cvai_pedestrian_meta *)malloc(sizeof(cvai_pedestrian_meta));
+          (cvtdl_pedestrian_meta *)malloc(sizeof(cvtdl_pedestrian_meta));
 
       for (int j = 0; j < 17; j++) {
         stObjMeta.info[i].pedestrian_properity->pose_17.x[j] = dets[i][5 + j * 3];
@@ -344,15 +344,15 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // ret = CVI_AI_Yolov8_Pose(ai_handle, &fdFrame, &stObjMeta);
+    // ret = CVI_TDL_Yolov8_Pose(tdl_handle, &fdFrame, &stObjMeta);
     // if (ret != CVI_SUCCESS) {
-    //   printf("CVI_AI_Yolov8_Pose failed with %#x!\n", ret);
+    //   printf("CVI_TDL_Yolov8_Pose failed with %#x!\n", ret);
     //   goto inf_error;
     // }
 
-    ret = CVI_AI_DeepSORT_Obj(ai_handle, &stObjMeta, &stTrackerMeta, false);
+    ret = CVI_TDL_DeepSORT_Obj(tdl_handle, &stObjMeta, &stTrackerMeta, false);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_DeepSORT_Obj failed with %#x!\n", ret);
+      printf("CVI_TDL_DeepSORT_Obj failed with %#x!\n", ret);
       goto inf_error;
     }
 #ifdef DEBUG_FALL
@@ -369,7 +369,7 @@ int main(int argc, char *argv[]) {
       // }
     }
 #endif
-    ret = CVI_AI_Fall_Monitor(ai_handle, &stObjMeta);
+    ret = CVI_TDL_Fall_Monitor(tdl_handle, &stObjMeta);
     if (ret != CVI_SUCCESS) {
       printf("monitor failed with %#x!\n", ret);
       return -1;
@@ -400,19 +400,19 @@ int main(int argc, char *argv[]) {
 
     // printf("to release frame\n");
 
-    CVI_AI_ReleaseImage(&fdFrame);
-    CVI_AI_Free(&stObjMeta);
-    CVI_AI_Free(&stTrackerMeta);
+    CVI_TDL_ReleaseImage(&fdFrame);
+    CVI_TDL_Free(&stObjMeta);
+    CVI_TDL_Free(&stTrackerMeta);
 
 #ifndef CV181X
-    // CVI_AI_ReleaseImage(&fdFrame);
+    // CVI_TDL_ReleaseImage(&fdFrame);
 #endif
 
   inf_error:
-    CVI_AI_ReleaseImage(&fdFrame);
+    CVI_TDL_ReleaseImage(&fdFrame);
     // get_frame_failed:
-    // CVI_AI_Free(&stObjMeta);
-    // CVI_AI_Free(&stTrackerMeta);
+    // CVI_TDL_Free(&stObjMeta);
+    // CVI_TDL_Free(&stTrackerMeta);
   }
 
   int prediction = fall == true ? 1 : 0;
@@ -428,9 +428,9 @@ int main(int argc, char *argv[]) {
   bRunVideoOutput = false;
   // pthread_join(io_thread, NULL);
 
-  // CVI_AI_APP_DestroyHandle(app_handle);
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+  // CVI_TDL_APP_DestroyHandle(app_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   // DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

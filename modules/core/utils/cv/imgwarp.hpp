@@ -44,7 +44,7 @@ enum InterpolationMasks {
 
 // clang-format on
 
-namespace cviai {
+namespace cvitdl {
 
 void resize(cv::InputArray src, cv::OutputArray dst, cv::Size dsize, double fx = 0, double fy = 0,
             int interpolation = INTER_LINEAR);
@@ -61,6 +61,6 @@ cv::Mat getPerspectiveTransform(const cv::Point2f src[], const cv::Point2f dst[]
 cv::Mat getPerspectiveTransform(cv::InputArray _src, cv::InputArray _dst);
 cv::Mat getAffineTransform(cv::InputArray _src, cv::InputArray _dst);
 
-}  // namespace cviai
+}  // namespace cvitdl
 
 #endif  // _UTILS_CV_IMGPROC_IMGWARP_HPP_

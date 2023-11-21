@@ -1,6 +1,6 @@
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app.h"
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 
@@ -39,7 +39,7 @@ __attribute__((always_inline)) inline void AutoUnLock(void *mutex) {
 typedef struct {
   uint64_t u_id;
   float quality;
-  cvai_image_t image;
+  cvtdl_image_t image;
   tracker_state_e state;
   uint32_t counter;
 } IOData;
@@ -47,7 +47,7 @@ typedef struct {
 typedef struct {
   CVI_S32 voType;
   VideoSystemContext vs_ctx;
-  cviai_service_handle_t service_handle;
+  cvitdl_service_handle_t service_handle;
 } pVOArgs;
 
 SMT_MUTEXAUTOLOCK_INIT(IOMutex);
@@ -62,8 +62,8 @@ int rear_idx = 0;
 int front_idx = 0;
 static IOData data_buffer[OUTPUT_BUFFER_SIZE];
 
-static cvai_object_t g_obj_meta_0;
-static cvai_object_t g_obj_meta_1;
+static cvtdl_object_t g_obj_meta_0;
+static cvtdl_object_t g_obj_meta_1;
 
 static APP_MODE_e app_mode;
 
@@ -76,8 +76,8 @@ bool CHECK_OUTPUT_CONDITION(person_capture_t *person_cpt_info, uint32_t idx, APP
  * Restructure the object meta of the person capture to 2 output object struct.
  * 0: Low quality, 1: Otherwise (Ignore unstable trackers)
  */
-void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvai_object_t *obj_meta_0,
-                            cvai_object_t *obj_meta_1);
+void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvtdl_object_t *obj_meta_0,
+                            cvtdl_object_t *obj_meta_1);
 
 int COUNT_ALIVE(person_capture_t *person_cpt_info);
 
@@ -144,7 +144,7 @@ static void *pImageWrite(void *args) {
     }
 
     free(filename);
-    CVI_AI_Free(&data_buffer[target_idx].image);
+    CVI_TDL_Free(&data_buffer[target_idx].image);
     {
       SMT_MutexAutoLock(IOMutex, lock);
       front_idx = target_idx;
@@ -153,7 +153,7 @@ static void *pImageWrite(void *args) {
 
   printf("[APP] free buffer data...\n");
   while (front_idx != rear_idx) {
-    CVI_AI_Free(&data_buffer[(front_idx + 1) % OUTPUT_BUFFER_SIZE].image);
+    CVI_TDL_Free(&data_buffer[(front_idx + 1) % OUTPUT_BUFFER_SIZE].image);
     {
       SMT_MutexAutoLock(IOMutex, lock);
       front_idx = (front_idx + 1) % OUTPUT_BUFFER_SIZE;
@@ -169,16 +169,16 @@ static void *pVideoOutput(void *args) {
   if (!vo_args->voType) {
     return NULL;
   }
-  cviai_service_handle_t service_handle = vo_args->service_handle;
+  cvitdl_service_handle_t service_handle = vo_args->service_handle;
   CVI_S32 s32Ret = CVI_SUCCESS;
 
-  cvai_service_brush_t brush_0 = {.size = 4, .color.r = 0, .color.g = 64, .color.b = 255};
-  cvai_service_brush_t brush_1 = {.size = 8, .color.r = 0, .color.g = 255, .color.b = 0};
+  cvtdl_service_brush_t brush_0 = {.size = 4, .color.r = 0, .color.g = 64, .color.b = 255};
+  cvtdl_service_brush_t brush_1 = {.size = 8, .color.r = 0, .color.g = 255, .color.b = 0};
 
-  cvai_object_t obj_meta_0;
-  cvai_object_t obj_meta_1;
-  memset(&obj_meta_0, 0, sizeof(cvai_object_t));
-  memset(&obj_meta_1, 0, sizeof(cvai_object_t));
+  cvtdl_object_t obj_meta_0;
+  cvtdl_object_t obj_meta_1;
+  memset(&obj_meta_0, 0, sizeof(cvtdl_object_t));
+  memset(&obj_meta_1, 0, sizeof(cvtdl_object_t));
 
   VIDEO_FRAME_INFO_S stVOFrame;
   while (bRunVideoOutput) {
@@ -191,23 +191,23 @@ static void *pVideoOutput(void *args) {
 
     {
       SMT_MutexAutoLock(VOMutex, lock);
-      memcpy(&obj_meta_0, &g_obj_meta_0, sizeof(cvai_object_t));
-      memcpy(&obj_meta_1, &g_obj_meta_1, sizeof(cvai_object_t));
+      memcpy(&obj_meta_0, &g_obj_meta_0, sizeof(cvtdl_object_t));
+      memcpy(&obj_meta_1, &g_obj_meta_1, sizeof(cvtdl_object_t));
       obj_meta_0.info =
-          (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * g_obj_meta_0.size);
+          (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * g_obj_meta_0.size);
       obj_meta_1.info =
-          (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * g_obj_meta_1.size);
-      memset(obj_meta_0.info, 0, sizeof(cvai_object_info_t) * obj_meta_0.size);
-      memset(obj_meta_1.info, 0, sizeof(cvai_object_info_t) * obj_meta_1.size);
+          (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * g_obj_meta_1.size);
+      memset(obj_meta_0.info, 0, sizeof(cvtdl_object_info_t) * obj_meta_0.size);
+      memset(obj_meta_1.info, 0, sizeof(cvtdl_object_info_t) * obj_meta_1.size);
       for (uint32_t i = 0; i < g_obj_meta_0.size; i++) {
         obj_meta_0.info[i].unique_id = g_obj_meta_0.info[i].unique_id;
         // face_meta_0.info[i].face_quality = g_face_meta_0.info[i].face_quality;
-        memcpy(&obj_meta_0.info[i].bbox, &g_obj_meta_0.info[i].bbox, sizeof(cvai_bbox_t));
+        memcpy(&obj_meta_0.info[i].bbox, &g_obj_meta_0.info[i].bbox, sizeof(cvtdl_bbox_t));
       }
       for (uint32_t i = 0; i < g_obj_meta_1.size; i++) {
         obj_meta_1.info[i].unique_id = g_obj_meta_1.info[i].unique_id;
         // face_meta_1.info[i].face_quality = g_face_meta_1.info[i].face_quality;
-        memcpy(&obj_meta_1.info[i].bbox, &g_obj_meta_1.info[i].bbox, sizeof(cvai_bbox_t));
+        memcpy(&obj_meta_1.info[i].bbox, &g_obj_meta_1.info[i].bbox, sizeof(cvtdl_bbox_t));
       }
     }
 
@@ -220,22 +220,22 @@ static void *pVideoOutput(void *args) {
     stVOFrame.stVFrame.pu8VirAddr[2] =
         stVOFrame.stVFrame.pu8VirAddr[1] + stVOFrame.stVFrame.u32Length[1];
 
-    CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta_0, &stVOFrame, false, brush_0);
-    CVI_AI_Service_ObjectDrawRect(service_handle, &obj_meta_1, &stVOFrame, false, brush_1);
+    CVI_TDL_Service_ObjectDrawRect(service_handle, &obj_meta_0, &stVOFrame, false, brush_0);
+    CVI_TDL_Service_ObjectDrawRect(service_handle, &obj_meta_1, &stVOFrame, false, brush_1);
 
 #if 1
     for (uint32_t j = 0; j < obj_meta_0.size; j++) {
       char *id_num = calloc(64, sizeof(char));
       sprintf(id_num, "[%" PRIu64 "]", obj_meta_0.info[j].unique_id);
-      CVI_AI_Service_ObjectWriteText(id_num, obj_meta_0.info[j].bbox.x1, obj_meta_0.info[j].bbox.y1,
-                                     &stVOFrame, 1, 1, 1);
+      CVI_TDL_Service_ObjectWriteText(id_num, obj_meta_0.info[j].bbox.x1,
+                                      obj_meta_0.info[j].bbox.y1, &stVOFrame, 1, 1, 1);
       free(id_num);
     }
     for (uint32_t j = 0; j < obj_meta_1.size; j++) {
       char *id_num = calloc(64, sizeof(char));
       sprintf(id_num, "[%" PRIu64 "]", obj_meta_1.info[j].unique_id);
-      CVI_AI_Service_ObjectWriteText(id_num, obj_meta_1.info[j].bbox.x1, obj_meta_1.info[j].bbox.y1,
-                                     &stVOFrame, 1, 1, 1);
+      CVI_TDL_Service_ObjectWriteText(id_num, obj_meta_1.info[j].bbox.x1,
+                                      obj_meta_1.info[j].bbox.y1, &stVOFrame, 1, 1, 1);
       free(id_num);
     }
 #endif
@@ -257,8 +257,8 @@ static void *pVideoOutput(void *args) {
       break;
     }
 
-    CVI_AI_Free(&obj_meta_0);
-    CVI_AI_Free(&obj_meta_1);
+    CVI_TDL_Free(&obj_meta_0);
+    CVI_TDL_Free(&obj_meta_1);
   }
   return NULL;
 }
@@ -277,9 +277,9 @@ int main(int argc, char *argv[]) {
         "          video output, 0: disable, 1: output to panel, 2: output through rtsp"
         "          video input format, 0: rgb, 1: nv21, 2: yuv420, 3: rgb(planar)\n",
         argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
@@ -320,48 +320,48 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  cviai_app_handle_t app_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
+  cvitdl_app_handle_t app_handle = NULL;
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
-  ret |= CVI_AI_APP_PersonCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_AI_APP_PersonCapture_QuickSetUp(
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
+  ret |= CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
+  ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
+  ret |= CVI_TDL_APP_PersonCapture_Init(app_handle, (uint32_t)buffer_size);
+  ret |= CVI_TDL_APP_PersonCapture_QuickSetUp(
       app_handle, od_model_name, od_model_path,
       (!strcmp(reid_model_path, "NULL")) ? NULL : reid_model_path);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
-  CVI_AI_SetVpssTimeout(ai_handle, 1000);
+  CVI_TDL_SetVpssTimeout(tdl_handle, 1000);
 
-  CVI_AI_SetModelThreshold(ai_handle, app_handle->person_cpt_info->od_model_index, det_threshold);
-  CVI_AI_SelectDetectClass(ai_handle, app_handle->person_cpt_info->od_model_index, 1,
-                           CVI_AI_DET_TYPE_PERSON);
+  CVI_TDL_SetModelThreshold(tdl_handle, app_handle->person_cpt_info->od_model_index, det_threshold);
+  CVI_TDL_SelectDetectClass(tdl_handle, app_handle->person_cpt_info->od_model_index, 1,
+                            CVI_TDL_DET_TYPE_PERSON);
 
   app_mode = atoi(mode_id);
   switch (app_mode) {
 #if MODE_DEFINITION == 0
     case fast: {
-      CVI_AI_APP_PersonCapture_SetMode(app_handle, FAST);
+      CVI_TDL_APP_PersonCapture_SetMode(app_handle, FAST);
     } break;
     case interval: {
-      CVI_AI_APP_PersonCapture_SetMode(app_handle, CYCLE);
+      CVI_TDL_APP_PersonCapture_SetMode(app_handle, CYCLE);
     } break;
     case leave: {
-      CVI_AI_APP_PersonCapture_SetMode(app_handle, AUTO);
+      CVI_TDL_APP_PersonCapture_SetMode(app_handle, AUTO);
     } break;
     case intelligent: {
-      CVI_AI_APP_PersonCapture_SetMode(app_handle, AUTO);
+      CVI_TDL_APP_PersonCapture_SetMode(app_handle, AUTO);
     } break;
 #elif MODE_DEFINITION == 1
     case high_quality: {
-      CVI_AI_APP_PersonCapture_SetMode(app_handle, AUTO);
+      CVI_TDL_APP_PersonCapture_SetMode(app_handle, AUTO);
     } break;
     case quick: {
-      CVI_AI_APP_PersonCapture_SetMode(app_handle, FAST);
+      CVI_TDL_APP_PersonCapture_SetMode(app_handle, FAST);
     } break;
 #else
 #error "Unexpected value of MODE_DEFINITION."
@@ -372,7 +372,7 @@ int main(int argc, char *argv[]) {
   }
 
   person_capture_config_t app_cfg;
-  CVI_AI_APP_PersonCapture_GetDefaultConfig(&app_cfg);
+  CVI_TDL_APP_PersonCapture_GetDefaultConfig(&app_cfg);
   if (!strcmp(config_path, "NULL")) {
     printf("Use Default Config...\n");
   } else {
@@ -382,12 +382,12 @@ int main(int argc, char *argv[]) {
       goto CLEANUP_SYSTEM;
     }
   }
-  CVI_AI_APP_PersonCapture_SetConfig(app_handle, &app_cfg);
+  CVI_TDL_APP_PersonCapture_SetConfig(app_handle, &app_cfg);
 
   VIDEO_FRAME_INFO_S stVIFrame;
 
-  memset(&g_obj_meta_0, 0, sizeof(cvai_object_t));
-  memset(&g_obj_meta_1, 0, sizeof(cvai_object_t));
+  memset(&g_obj_meta_0, 0, sizeof(cvtdl_object_t));
+  memset(&g_obj_meta_1, 0, sizeof(cvtdl_object_t));
 
   pthread_t io_thread, vo_thread;
   pthread_create(&io_thread, NULL, pImageWrite, NULL);
@@ -412,16 +412,16 @@ int main(int argc, char *argv[]) {
     int alive_person_num = COUNT_ALIVE(app_handle->person_cpt_info);
     printf("ALIVE persons: %d\n", alive_person_num);
 
-    ret = CVI_AI_APP_PersonCapture_Run(app_handle, &stVIFrame);
-    if (ret != CVIAI_SUCCESS) {
-      printf("CVI_AI_APP_PersonCapture_Run failed with %#x\n", ret);
+    ret = CVI_TDL_APP_PersonCapture_Run(app_handle, &stVIFrame);
+    if (ret != CVI_TDL_SUCCESS) {
+      printf("CVI_TDL_APP_PersonCapture_Run failed with %#x\n", ret);
       break;
     }
 
     {
       SMT_MutexAutoLock(VOMutex, lock);
-      CVI_AI_Free(&g_obj_meta_0);
-      CVI_AI_Free(&g_obj_meta_1);
+      CVI_TDL_Free(&g_obj_meta_0);
+      CVI_TDL_Free(&g_obj_meta_1);
       RESTRUCTURING_OBJ_META(app_handle->person_cpt_info, &g_obj_meta_0, &g_obj_meta_1);
     }
 
@@ -458,8 +458,8 @@ int main(int argc, char *argv[]) {
         data_buffer[target_idx].state = state;
         data_buffer[target_idx].counter = counter;
 
-        CVI_AI_CopyImage(&app_handle->person_cpt_info->data[i].image,
-                         &data_buffer[target_idx].image);
+        CVI_TDL_CopyImage(&app_handle->person_cpt_info->data[i].image,
+                          &data_buffer[target_idx].image);
         {
           SMT_MutexAutoLock(IOMutex, lock);
           rear_idx = target_idx;
@@ -493,9 +493,9 @@ int main(int argc, char *argv[]) {
   pthread_join(vo_thread, NULL);
 
 CLEANUP_SYSTEM:
-  CVI_AI_APP_DestroyHandle(app_handle);
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_APP_DestroyHandle(app_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
@@ -560,8 +560,8 @@ int COUNT_ALIVE(person_capture_t *person_cpt_info) {
   return counter;
 }
 
-void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvai_object_t *obj_meta_0,
-                            cvai_object_t *obj_meta_1) {
+void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvtdl_object_t *obj_meta_0,
+                            cvtdl_object_t *obj_meta_1) {
   obj_meta_0->size = 0;
   obj_meta_1->size = 0;
   for (uint32_t i = 0; i < person_cpt_info->last_objects.size; i++) {
@@ -575,29 +575,29 @@ void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvai_object_t *ob
     }
   }
 
-  obj_meta_0->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj_meta_0->size);
-  memset(obj_meta_0->info, 0, sizeof(cvai_object_info_t) * obj_meta_0->size);
+  obj_meta_0->info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj_meta_0->size);
+  memset(obj_meta_0->info, 0, sizeof(cvtdl_object_info_t) * obj_meta_0->size);
   obj_meta_0->rescale_type = person_cpt_info->last_objects.rescale_type;
   obj_meta_0->height = person_cpt_info->last_objects.height;
   obj_meta_0->width = person_cpt_info->last_objects.width;
 
-  obj_meta_1->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj_meta_1->size);
-  memset(obj_meta_1->info, 0, sizeof(cvai_object_info_t) * obj_meta_1->size);
+  obj_meta_1->info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj_meta_1->size);
+  memset(obj_meta_1->info, 0, sizeof(cvtdl_object_info_t) * obj_meta_1->size);
   obj_meta_1->rescale_type = person_cpt_info->last_objects.rescale_type;
   obj_meta_1->height = person_cpt_info->last_objects.height;
   obj_meta_1->width = person_cpt_info->last_objects.width;
 
-  cvai_object_info_t *info_ptr_0 = obj_meta_0->info;
-  cvai_object_info_t *info_ptr_1 = obj_meta_1->info;
+  cvtdl_object_info_t *info_ptr_0 = obj_meta_0->info;
+  cvtdl_object_info_t *info_ptr_1 = obj_meta_1->info;
   for (uint32_t i = 0; i < person_cpt_info->last_objects.size; i++) {
     if (person_cpt_info->last_trackers.info[i].state != CVI_TRACKER_STABLE) {
       continue;
     }
     bool qualified = person_cpt_info->last_quality[i] >= person_cpt_info->cfg.thr_quality;
-    cvai_object_info_t **tmp_ptr = (qualified) ? &info_ptr_1 : &info_ptr_0;
+    cvtdl_object_info_t **tmp_ptr = (qualified) ? &info_ptr_1 : &info_ptr_0;
     (*tmp_ptr)->unique_id = person_cpt_info->last_objects.info[i].unique_id;
     // (*tmp_ptr)->face_quality = face_cpt_info->last_faces.info[i].face_quality;
-    memcpy(&(*tmp_ptr)->bbox, &person_cpt_info->last_objects.info[i].bbox, sizeof(cvai_bbox_t));
+    memcpy(&(*tmp_ptr)->bbox, &person_cpt_info->last_objects.info[i].bbox, sizeof(cvtdl_bbox_t));
     *tmp_ptr += 1;
   }
   return;
@@ -639,7 +639,7 @@ uint32_t GENERATE_OUTPUT_DATA(IOData **output_data, person_capture_t *person_cpt
     (*output_data)[tmp_idx].state = state;
     (*output_data)[tmp_idx].counter = counter;
 
-    CVI_AI_CopyImage(&person_cpt_info->data[i].image, &(*output_data)[tmp_idx].image);
+    CVI_TDL_CopyImage(&person_cpt_info->data[i].image, &(*output_data)[tmp_idx].image);
     tmp_idx += 1;
   }
   return output_num;
@@ -648,7 +648,7 @@ uint32_t GENERATE_OUTPUT_DATA(IOData **output_data, person_capture_t *person_cpt
 void FREE_OUTPUT_DATA(IOData *output_data, uint32_t size) {
   if (size == 0) return;
   for (uint32_t i = 0; i < size; i++) {
-    CVI_AI_Free(&output_data[i].image);
+    CVI_TDL_Free(&output_data[i].image);
   }
   free(output_data);
 }

@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-namespace cviai {
+namespace cvitdl {
 
 struct AnchorConfig {
   int stride;
@@ -55,4 +55,4 @@ class RetinaNetAnchorGenerator {
   std::vector<std::vector<AnchorBox>> anchor_bboxes;
   std::map<int, std::vector<AnchorConfig>> anchor_configs;
 };
-}  // namespace cviai
+}  // namespace cvitdl

@@ -1,10 +1,10 @@
 #include "eye_classification.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 
-#ifdef ENABLE_CVIAI_CV_UTILS
+#ifdef ENABLE_CVI_TDL_CV_UTILS
 #include "cv/imgproc.hpp"
 #else
 #include "opencv2/imgproc.hpp"
@@ -15,14 +15,14 @@
 #define MINIMUM_SIZE 10
 #define INPUT_SIZE 32
 
-namespace cviai {
+namespace cvitdl {
 
 EyeClassification::EyeClassification() : Core(CVI_MEM_SYSTEM) {}
 
-int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
+int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   int img_width = frame->stVFrame.u32Width;
@@ -34,7 +34,7 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
   // just one face
   for (uint32_t i = 0; i < 1; i++) {
-    cvai_face_info_t face_info =
+    cvtdl_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
     int eye_w = abs(meta->dms->landmarks_5.x[0] - meta->dms->landmarks_5.x[1]);
 
@@ -57,9 +57,9 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       meta->dms->reye_score = 0.0;
     } else {
       cv::Mat r_Image = image(r_roi);
-#ifdef ENABLE_CVIAI_CV_UTILS
-      cviai::resize(r_Image, r_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
-      cviai::cvtColor(r_Image, r_Image, COLOR_RGB2GRAY);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+      cvitdl::resize(r_Image, r_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
+      cvitdl::cvtColor(r_Image, r_Image, COLOR_RGB2GRAY);
 #else
       cv::resize(r_Image, r_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
       cv::cvtColor(r_Image, r_Image, cv::COLOR_RGB2GRAY);
@@ -68,7 +68,7 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
       int ret = run(frames);
-      if (ret != CVIAI_SUCCESS) {
+      if (ret != CVI_TDL_SUCCESS) {
         return ret;
       }
 
@@ -80,9 +80,9 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       meta->dms->leye_score = 0.0;
     } else {
       cv::Mat l_Image = image(l_roi);
-#ifdef ENABLE_CVIAI_CV_UTILS
-      cviai::resize(l_Image, l_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
-      cviai::cvtColor(l_Image, l_Image, COLOR_RGB2GRAY);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+      cvitdl::resize(l_Image, l_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
+      cvitdl::cvtColor(l_Image, l_Image, COLOR_RGB2GRAY);
 #else
       cv::resize(l_Image, l_Image, cv::Size(INPUT_SIZE, INPUT_SIZE));
       cv::cvtColor(l_Image, l_Image, cv::COLOR_RGB2GRAY);
@@ -95,7 +95,7 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
       float *score = getOutputRawPtr<float>(NAME_SCORE);
       meta->dms->leye_score = score[0];
     }
-    CVI_AI_FreeCpp(&face_info);
+    CVI_TDL_FreeCpp(&face_info);
   }
 
   CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
@@ -103,7 +103,7 @@ int EyeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
   frame->stVFrame.pu8VirAddr[1] = NULL;
   frame->stVFrame.pu8VirAddr[2] = NULL;
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void EyeClassification::prepareInputTensor(cv::Mat &input_mat) {
@@ -119,4 +119,4 @@ void EyeClassification::prepareInputTensor(cv::Mat &input_mat) {
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

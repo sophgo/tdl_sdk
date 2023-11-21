@@ -10,17 +10,17 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
-CVI_S32 get_facelandmarker(std::string img_path, cviai_handle_t ai_handle,
-                           VIDEO_FRAME_INFO_S* fdFrame, cvai_face_t* meta) {
+CVI_S32 get_facelandmarker(std::string img_path, cvitdl_handle_t tdl_handle,
+                           VIDEO_FRAME_INFO_S* fdFrame, cvtdl_face_t* meta) {
   printf("reading image file: %s \n", img_path.c_str());
-  CVI_S32 ret = CVI_AI_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-  // std::cout << "CVI_AI_ReadImage done!\n";
+  CVI_S32 ret = CVI_TDL_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+  // std::cout << "CVI_TDL_ReadImage done!\n";
   // printf("frame_width %d \t frame_height %d \n", fdFrame->stVFrame.u32Width,
   //        fdFrame->stVFrame.u32Height);
   if (ret != CVI_SUCCESS) {
@@ -30,11 +30,11 @@ CVI_S32 get_facelandmarker(std::string img_path, cviai_handle_t ai_handle,
     return ret;
   }
 
-  CVI_AI_DMSLDet(ai_handle, fdFrame, meta);
+  CVI_TDL_DMSLDet(tdl_handle, fdFrame, meta);
   return ret;
 }
 void bench_mark_all(std::string bench_path, std::string image_root, std::string res_path,
-                    cviai_handle_t ai_handle) {
+                    cvitdl_handle_t tdl_handle) {
   std::fstream file(bench_path);
   if (!file.is_open()) {
     return;
@@ -46,13 +46,13 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
       stringstream ss(line);
       std::string image_name;
       while (ss >> image_name) {
-        cvai_face_t meta = {0};
+        cvtdl_face_t meta = {0};
         VIDEO_FRAME_INFO_S fdFrame;
         // cout << "get image name: " << image_root + image_name << endl;
-        CVI_S32 ret = get_facelandmarker(image_root + image_name, ai_handle, &fdFrame, &meta);
+        CVI_S32 ret = get_facelandmarker(image_root + image_name, tdl_handle, &fdFrame, &meta);
         if (ret != CVI_SUCCESS) {
-          CVI_AI_Free(&meta);
-          CVI_AI_ReleaseImage(&fdFrame);
+          CVI_TDL_Free(&meta);
+          CVI_TDL_ReleaseImage(&fdFrame);
           break;
         }
         for (int i = 0; i < 68; i++) {
@@ -60,8 +60,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         }
         res_ss << "\n";
 
-        CVI_AI_Free(&meta);
-        CVI_AI_ReleaseImage(&fdFrame);
+        CVI_TDL_Free(&meta);
+        CVI_TDL_ReleaseImage(&fdFrame);
         break;
       }
     }
@@ -78,15 +78,15 @@ int main(int argc, char* argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
   std::string image_root = argv[3];  // /mnt/data/test_data/DMS/
   std::string res_path = argv[4];    // /mnt/data/mnt_data/DMS/yaw_outputs.txt
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_DMSLANDMARKERDET, model_path.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET, model_path.c_str());
   if (ret != CVI_SUCCESS) {
     printf("open model failed %#x!\n", ret);
     return ret;
@@ -103,9 +103,9 @@ int main(int argc, char* argv[]) {
 
   std::cout << "model opened:" << model_path << std::endl;
 
-  bench_mark_all(bench_path, image_root, res_path, ai_handle);
+  bench_mark_all(bench_path, image_root, res_path, tdl_handle);
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;
 }

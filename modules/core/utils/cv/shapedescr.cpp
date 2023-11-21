@@ -163,7 +163,7 @@ CvRect cvBoundingRect(CvArr* array, int update) {
 }
 
 // L677
-cv::Rect cviai::boundingRect(cv::InputArray array) {
+cv::Rect cvitdl::boundingRect(cv::InputArray array) {
   cv::Mat m = array.getMat();
 #if ENABLE_maskBoundingRect
   return m.depth() <= CV_8U ? maskBoundingRect(m) : pointSetBoundingRect(m);
@@ -177,7 +177,7 @@ cv::Rect cviai::boundingRect(cv::InputArray array) {
 
 // area of a whole sequence
 // L313
-double cviai::contourArea(cv::InputArray _contour, bool oriented) {
+double cvitdl::contourArea(cv::InputArray _contour, bool oriented) {
   cv::Mat contour = _contour.getMat();
   int npoints = contour.checkVector(2);
   int depth = contour.depth();

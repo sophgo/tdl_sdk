@@ -3,7 +3,7 @@
 #include <string>
 #include <typeinfo>
 
-namespace cviai {
+namespace cvitdl {
 namespace demangle {
 std::string demangle(const char* name);
 
@@ -23,4 +23,4 @@ std::string type_no_scope(const T& t) {
   }
 }
 }  // namespace demangle
-}  // namespace cviai
+}  // namespace cvitdl

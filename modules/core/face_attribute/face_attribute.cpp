@@ -1,13 +1,13 @@
 #include "face_attribute.hpp"
 #include "core.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
-#include "core/face/cvai_face_helper.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
+#include "core/face/cvtdl_face_helper.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #include "face_attribute_types.hpp"
 #include "img_warp.hpp"
 #ifndef NO_OPENCV
@@ -42,7 +42,7 @@ static bool IS_SUPPORTED_FORMAT(VIDEO_FRAME_INFO_S *frame) {
   return true;
 }
 
-namespace cviai {
+namespace cvitdl {
 
 FaceAttribute::FaceAttribute(bool with_attr)
     : Core(CVI_MEM_DEVICE), m_use_wrap_hw(false), m_with_attribute(with_attr) {
@@ -52,7 +52,7 @@ FaceAttribute::FaceAttribute(bool with_attr)
 int FaceAttribute::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   for (uint32_t i = 0; i < 3; i++) {
     (*data)[0].factor[i] = FACE_ATTRIBUTE_FACTOR;
@@ -60,14 +60,14 @@ int FaceAttribute::setupInputPreprocess(std::vector<InputPreprecessSetup> *data)
   }
   (*data)[0].use_quantize_scale = true;
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int FaceAttribute::onModelOpened() { return allocateION(); }
 
 int FaceAttribute::onModelClosed() {
   releaseION();
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 CVI_S32 FaceAttribute::allocateION() {
@@ -76,11 +76,11 @@ CVI_S32 FaceAttribute::allocateION() {
   if (CREATE_ION_HELPER(&m_wrap_frame, shape.dim[3], shape.dim[2], format, "tpu") != CVI_SUCCESS) {
     LOGE("Cannot allocate ion for preprocess\n");
     LOGE("error Cannot allocate ion for preprocess\n");
-    return CVIAI_ERR_ALLOC_ION_FAIL;
+    return CVI_TDL_ERR_ALLOC_ION_FAIL;
   }
   LOGI("m_wrap_frame step:%u,width:%u,height:%u\n", m_wrap_frame.stVFrame.u32Stride[0],
        m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void FaceAttribute::releaseION() {
@@ -105,7 +105,7 @@ FaceAttribute::~FaceAttribute() {
 
 void FaceAttribute::setHardwareGDC(bool use_wrap_hw) {
   if (isInitialized()) {
-    LOGW("Please invoke CVI_AI_EnableGDC before opening model\n");
+    LOGW("Please invoke CVI_TDL_EnableGDC before opening model\n");
     return;
   }
 
@@ -125,9 +125,9 @@ int FaceAttribute::dump_bgr_pack(const char *p_img_file, VIDEO_FRAME_INFO_S *p_i
   fwrite(pstVFSrc->pu8VirAddr[0], height * p_img_frm->stVFrame.u32Stride[0], 1, fp);
   printf("width:%u,stride:%u\n", width, p_img_frm->stVFrame.u32Stride[0]);
   fclose(fp);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
-int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, int face_idx) {
+int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta, int face_idx) {
   if (m_use_wrap_hw) {
 #ifdef CV181X
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
@@ -136,27 +136,27 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
           "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, PIXEL_FORMAT_YUV_PLANAR_420. Current: "
           "%x\n",
           stOutFrame->stVFrame.enPixelFormat);
-      return CVIAI_ERR_INVALID_ARGS;
+      return CVI_TDL_ERR_INVALID_ARGS;
     }
 
     for (uint32_t i = 0; i < meta->size; ++i) {
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
 
-      cvai_face_info_t face_info =
+      cvtdl_face_info_t face_info =
           info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       face_align_gdc(stOutFrame, &m_wrap_frame, face_info);
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
       int ret = run(frames);
-      if (ret != CVIAI_SUCCESS) {
+      if (ret != CVI_TDL_SUCCESS) {
         return ret;
       }
       outputParser(&meta->info[i]);
-      CVI_AI_FreeCpp(&face_info);
+      CVI_TDL_FreeCpp(&face_info);
     }
 #endif
   } else {
     if (false == IS_SUPPORTED_FORMAT(stOutFrame)) {
-      return CVIAI_ERR_INVALID_ARGS;
+      return CVI_TDL_ERR_INVALID_ARGS;
     }
 
     bool do_unmap = false;
@@ -169,7 +169,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       if (face_idx != -1 && i != (uint32_t)face_idx) continue;
 #ifdef NO_OPENCV
       int dst_size = 0;
-      cvai_face_info_t face_info =
+      cvtdl_face_info_t face_info =
           info_extern_crop_resize_img(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height,
                                       &(meta->info[i]), &dst_size);
       /*There will crop the image and resize to 256*256, export PIXEL_FORMAT_BGR_888_PACKED format*/
@@ -185,11 +185,11 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
         pts[2 * i + 1] = face_info.pts.y[i];
       }
 
-      cviai::get_face_transform(pts, 112, transm);
-      cviai::warp_affine(f->stVFrame.pu8VirAddr[0], f->stVFrame.u32Stride[0], f->stVFrame.u32Width,
-                         f->stVFrame.u32Height, m_wrap_frame.stVFrame.pu8VirAddr[0],
-                         m_wrap_frame.stVFrame.u32Stride[0], m_wrap_frame.stVFrame.u32Width,
-                         m_wrap_frame.stVFrame.u32Height, transm);
+      cvitdl::get_face_transform(pts, 112, transm);
+      cvitdl::warp_affine(f->stVFrame.pu8VirAddr[0], f->stVFrame.u32Stride[0], f->stVFrame.u32Width,
+                          f->stVFrame.u32Height, m_wrap_frame.stVFrame.pu8VirAddr[0],
+                          m_wrap_frame.stVFrame.u32Stride[0], m_wrap_frame.stVFrame.u32Width,
+                          m_wrap_frame.stVFrame.u32Height, transm);
 
       unmap_video_frame(f);
       if (f->stVFrame.u64PhyAddr[0] != 0) {
@@ -197,28 +197,28 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_face_t *meta, 
       }
       delete f;
 #else
-      cvai_face_info_t face_info =
+      cvtdl_face_info_t face_info =
           info_rescale_c(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, *meta, i);
       ALIGN_FACE_TO_FRAME(stOutFrame, &m_wrap_frame, face_info);
 #endif
 
       std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
       int ret = run(frames);
-      if (ret != CVIAI_SUCCESS) {
+      if (ret != CVI_TDL_SUCCESS) {
         return ret;
       }
       outputParser(&meta->info[i]);
-      CVI_AI_FreeCpp(&face_info);
+      CVI_TDL_FreeCpp(&face_info);
     }
     if (do_unmap) {
       unmap_video_frame(stOutFrame);
     }
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t width, uint32_t height,
-                                        uint32_t stride, cvai_face_info_t *p_face_info) {
+                                        uint32_t stride, cvtdl_face_info_t *p_face_info) {
   float pts[10];
   float transm[6];
   mmap_video_frame(&m_wrap_frame);
@@ -227,10 +227,10 @@ int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t widt
       pts[2 * i] = p_face_info->pts.x[i];
       pts[2 * i + 1] = p_face_info->pts.y[i];
     }
-    cviai::get_face_transform(pts, 112, transm);
-    cviai::warp_affine(p_rgb_pack, stride, width, height, m_wrap_frame.stVFrame.pu8VirAddr[0],
-                       m_wrap_frame.stVFrame.u32Stride[0], m_wrap_frame.stVFrame.u32Width,
-                       m_wrap_frame.stVFrame.u32Height, transm);
+    cvitdl::get_face_transform(pts, 112, transm);
+    cvitdl::warp_affine(p_rgb_pack, stride, width, height, m_wrap_frame.stVFrame.pu8VirAddr[0],
+                        m_wrap_frame.stVFrame.u32Stride[0], m_wrap_frame.stVFrame.u32Width,
+                        m_wrap_frame.stVFrame.u32Height, transm);
 
   } else {
     if (width != m_wrap_frame.stVFrame.u32Width || height != m_wrap_frame.stVFrame.u32Height) {
@@ -264,7 +264,7 @@ int FaceAttribute::extract_face_feature(const uint8_t *p_rgb_pack, uint32_t widt
     face_feature_size = tinfo.tensor_elem;
   }
   // Create feature
-  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &p_face_info->feature);
+  CVI_TDL_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &p_face_info->feature);
   memcpy(p_face_info->feature.ptr, face_blob, face_feature_size);
 
   return CVI_SUCCESS;
@@ -320,7 +320,7 @@ std::pair<U, V> getDequantTensor(const TensorInfo &tinfo, float threshold, float
   return functor(buffer, prob_size);
 }
 
-void FaceAttribute::outputParser(cvai_face_info_t *face_info) {
+void FaceAttribute::outputParser(cvtdl_face_info_t *face_info) {
   FaceAttributeInfo result;
 
   // feature
@@ -339,7 +339,7 @@ void FaceAttribute::outputParser(cvai_face_info_t *face_info) {
     face_feature_size = tinfo.tensor_elem;
   }
   // Create feature
-  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &face_info->feature);
+  CVI_TDL_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &face_info->feature);
   memcpy(face_info->feature.ptr, face_blob, face_feature_size);
 
   if (!m_with_attribute) {
@@ -348,14 +348,14 @@ void FaceAttribute::outputParser(cvai_face_info_t *face_info) {
 
   // race
   auto race = getDequantTensor(getOutputTensorInfo(RACE_OUT_NAME), RACE_OUT_THRESH,
-                               attribute_buffer, ExtractFeatures<cvai_face_race_e, RaceFeature>());
+                               attribute_buffer, ExtractFeatures<cvtdl_face_race_e, RaceFeature>());
   result.race = race.first;
   result.race_prob = std::move(race.second);
 
   // gender
   auto gender =
       getDequantTensor(getOutputTensorInfo(GENDER_OUT_NAME), GENDER_OUT_THRESH, attribute_buffer,
-                       ExtractFeatures<cvai_face_gender_e, GenderFeature>());
+                       ExtractFeatures<cvtdl_face_gender_e, GenderFeature>());
   result.gender = gender.first;
   result.gender_prob = std::move(gender.second);
 
@@ -368,7 +368,7 @@ void FaceAttribute::outputParser(cvai_face_info_t *face_info) {
   // emotion
   auto emotion =
       getDequantTensor(getOutputTensorInfo(EMOTION_OUT_NAME), EMOTION_OUT_THRESH, attribute_buffer,
-                       ExtractFeatures<cvai_face_emotion_e, EmotionFeature>());
+                       ExtractFeatures<cvtdl_face_emotion_e, EmotionFeature>());
   result.emotion = emotion.first;
   result.emotion_prob = std::move(emotion.second);
 
@@ -385,4 +385,4 @@ void FaceAttribute::outputParser(cvai_face_info_t *face_info) {
 #endif
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

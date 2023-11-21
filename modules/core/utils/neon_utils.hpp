@@ -3,7 +3,7 @@
 #include <vector>
 #include "opencv2/core.hpp"
 
-namespace cviai {
+namespace cvitdl {
 
 void NormalizeAndSplitToU8(cv::Mat &prepared, const std::vector<float> &mean,
                            const std::vector<float> &scales, std::vector<cv::Mat> &channels);
@@ -18,4 +18,4 @@ void NormalizeAndSplitToF32(cv::Mat &prepared, std::vector<cv::Mat> &channels, f
                             float alphaR, float MeanG, float alphaG, float MeanB, float alphaB,
                             int width, int height);
 
-}  // namespace cviai
+}  // namespace cvitdl

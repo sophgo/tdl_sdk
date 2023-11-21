@@ -17,7 +17,7 @@ python -m pip install paddlepaddle-gpu==2.3.2 -i https://mirror.baidu.com/pypi/s
 
 onnx导出可以参考官方文档[PaddleDetection/deploy/EXPORT_ONNX_MODEL.md at release/2.4 · PaddlePaddle/PaddleDetection (github.com)](https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.4/deploy/EXPORT_ONNX_MODEL.md)
 
-本文档提供官方版本直接导出方式以及算能版本导出onnx，算能版本导出的方式需要去掉检测头的解码部分，方便后续量化，解码部分交给AI_SDK实现
+本文档提供官方版本直接导出方式以及算能版本导出onnx，算能版本导出的方式需要去掉检测头的解码部分，方便后续量化，解码部分交给TDL_SDK实现
 
 ### 官方版本导出
 
@@ -277,8 +277,8 @@ p_yolo_param.cls = 80;
 另外的模型置信度参数设置以及NMS阈值设置如下所示：
 
 ```c++
-CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PPYOLOE, conf_threshold);
-CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PPYOLOE, nms_threshold);
+CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PPYOLOE, conf_threshold);
+CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PPYOLOE, nms_threshold);
 ```
 
 其中`conf_threshold`为置信度阈值；`nms_threshold`为 nms 阈值
@@ -299,10 +299,10 @@ CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PPYOLOE, nms_thres
 #include <string>
 #include <vector>
 #include "core.hpp"
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
 int main(int argc, char* argv[]) {
@@ -310,15 +310,15 @@ int main(int argc, char* argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
   printf("start pp-yoloe preprocess config \n");
@@ -342,7 +342,7 @@ int main(int argc, char* argv[]) {
   p_yolo_param.cls = 80;
 
   printf("setup pp-yoloe param \n");
-  ret = CVI_AI_Set_PPYOLOE_Param(ai_handle, &p_preprocess_cfg, &p_yolo_param);
+  ret = CVI_TDL_Set_PPYOLOE_Param(tdl_handle, &p_preprocess_cfg, &p_yolo_param);
   printf("pp-yoloe set param success!\n");
   if (ret != CVI_SUCCESS) {
     printf("Can not set PPYoloE parameters %#x\n", ret);
@@ -363,30 +363,30 @@ int main(int argc, char* argv[]) {
   }
 
   printf("start open cvimodel...\n");
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_PPYOLOE, model_path.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PPYOLOE, model_path.c_str());
   if (ret != CVI_SUCCESS) {
     printf("open model failed %#x!\n", ret);
     return ret;
   }
   printf("cvimodel open success!\n");
   // set thershold
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PPYOLOE, conf_threshold);
-  CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PPYOLOE, nms_threshold);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PPYOLOE, conf_threshold);
+  CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PPYOLOE, nms_threshold);
 
   std::cout << "model opened:" << model_path << std::endl;
 
   VIDEO_FRAME_INFO_S fdFrame;
-  ret = CVI_AI_ReadImage(str_src_dir.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
-  std::cout << "CVI_AI_ReadImage done!\n";
+  ret = CVI_TDL_ReadImage(str_src_dir.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
+  std::cout << "CVI_TDL_ReadImage done!\n";
 
   if (ret != CVI_SUCCESS) {
     std::cout << "Convert out video frame failed with :" << ret << ".file:" << str_src_dir
               << std::endl;
   }
 
-  cvai_object_t obj_meta = {0};
+  cvtdl_object_t obj_meta = {0};
 
-  CVI_AI_PPYoloE(ai_handle, &fdFrame, &obj_meta);
+  CVI_TDL_PPYoloE(tdl_handle, &fdFrame, &obj_meta);
 
   printf("detect number: %d\n", obj_meta.size);
   for (uint32_t i = 0; i < obj_meta.size; i++) {
@@ -396,8 +396,8 @@ int main(int argc, char* argv[]) {
   }
 
   CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
-  CVI_AI_Free(&obj_meta);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_Free(&obj_meta);
+  CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;
 }
@@ -417,8 +417,8 @@ int main(int argc, char* argv[]) {
 |                         |  官方导出  |  cv181x  |    103.62     |  110.59   |  14.68   | 量化失败 |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
 |                         |  官方导出  |  cv182x  |     77.58     |  111.18   |  14.67   | 量化失败 |   量化失败   | 官方脚本导出cvimodel，cv182x平台评测指标 |
 |                         |  官方导出  |  cv183x  |   量化失败    | 量化失败  | 量化失败 | 量化失败 |   量化失败   | 官方脚本导出cvimodel，cv183x平台评测指标 |
-|                         | AI_SDK导出 |   onnx   |      N/A      |    N/A    |   N/A    | 55.9497  |   39.8568    |            AI_SDK导出onnx指标            |
-|                         | AI_SDK导出 |  cv181x  |    101.15     |   103.8   |  14.55   |  55.36   |   39.1982    |  AI_SDI导出cvimodel, cv181x平台评测指标  |
-|                         | AI_SDK导出 |  cv182x  |     75.03     |  104.95   |  14.55   |  55.36   |   39.1982    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
-|                         | AI_SDK导出 |  cv183x  |     30.96     |   80.43   |   13.8   |  55.36   |   39.1982    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+|                         | TDL_SDK导出 |   onnx   |      N/A      |    N/A    |   N/A    | 55.9497  |   39.8568    |            TDL_SDK导出onnx指标            |
+|                         | TDL_SDK导出 |  cv181x  |    101.15     |   103.8   |  14.55   |  55.36   |   39.1982    |  TDL_SDI导出cvimodel, cv181x平台评测指标  |
+|                         | TDL_SDK导出 |  cv182x  |     75.03     |  104.95   |  14.55   |  55.36   |   39.1982    |  TDL_SDI导出cvimodel, cv182x平台评测指标  |
+|                         | TDL_SDK导出 |  cv183x  |     30.96     |   80.43   |   13.8   |  55.36   |   39.1982    |  TDL_SDI导出cvimodel, cv183x平台评测指标  |
 

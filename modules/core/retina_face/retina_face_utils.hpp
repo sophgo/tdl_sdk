@@ -1,17 +1,17 @@
 #pragma once
 #include "anchor_generator.h"
 
-#include "core/core/cvai_core_types.h"
+#include "core/core/cvtdl_core_types.h"
 #include "core_utils.hpp"
 
 // #include "opencv2/core.hpp"
 
 #include <vector>
 
-namespace cviai {
+namespace cvitdl {
 
 inline void __attribute__((always_inline))
-bbox_pred(const anchor_box &anchor, float *regress, cvai_bbox_t &bbox, PROCESS process) {
+bbox_pred(const anchor_box &anchor, float *regress, cvtdl_bbox_t &bbox, PROCESS process) {
   float width = anchor.x2 - anchor.x1 + 1;
   float height = anchor.y2 - anchor.y1 + 1;
 
@@ -46,7 +46,7 @@ bbox_pred(const anchor_box &anchor, float *regress, cvai_bbox_t &bbox, PROCESS p
 }
 
 inline void __attribute__((always_inline))
-landmark_pred(const anchor_box &anchor, cvai_pts_t &facePt) {
+landmark_pred(const anchor_box &anchor, cvtdl_pts_t &facePt) {
   float width = anchor.x2 - anchor.x1 + 1;
   float height = anchor.y2 - anchor.y1 + 1;
   float ctr_x = anchor.x1 + 0.5 * (width - 1.0);
@@ -58,4 +58,4 @@ landmark_pred(const anchor_box &anchor, cvai_pts_t &facePt) {
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

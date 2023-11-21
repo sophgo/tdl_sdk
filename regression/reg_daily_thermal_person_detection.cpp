@@ -3,24 +3,24 @@
 #include <memory>
 #include <string>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_test.hpp"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_test.hpp"
 #include "gtest.h"
 #include "json.hpp"
 #include "raii.hpp"
 #include "regression_utils.hpp"
 
 namespace fs = std::experimental::filesystem;
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
-class ThermalPersonDetectionTestSuite : public CVIAIModelTestSuite {
+class ThermalPersonDetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
   ThermalPersonDetectionTestSuite()
-      : CVIAIModelTestSuite("reg_daily_thermal_person_detection.json",
-                            "reg_daily_thermal_person_detection") {}
+      : CVI_TDLModelTestSuite("reg_daily_thermal_person_detection.json",
+                              "reg_daily_thermal_person_detection") {}
 
   virtual ~ThermalPersonDetectionTestSuite() = default;
 
@@ -28,14 +28,14 @@ class ThermalPersonDetectionTestSuite : public CVIAIModelTestSuite {
 
  protected:
   virtual void SetUp() {
-    m_ai_handle = NULL;
-    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_SetVpssTimeout(m_ai_handle, 1000), CVIAI_SUCCESS);
+    m_tdl_handle = NULL;
+    ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_SetVpssTimeout(m_tdl_handle, 1000), CVI_TDL_SUCCESS);
   }
 
   virtual void TearDown() {
-    CVI_AI_DestroyHandle(m_ai_handle);
-    m_ai_handle = NULL;
+    CVI_TDL_DestroyHandle(m_tdl_handle);
+    m_tdl_handle = NULL;
   }
 };
 
@@ -44,12 +44,12 @@ TEST_F(ThermalPersonDetectionTestSuite, open_close_model) {
     std::string model_name = std::string(m_json_object[test_index]["model"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-    AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, m_model_path.c_str(),
-                           false);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
+                             m_model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
     const char *model_path_get =
-        CVI_AI_GetModelPath(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON);
+        CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON);
 
     EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
                  std::string(model_path_get));
@@ -64,14 +64,14 @@ TEST_F(ThermalPersonDetectionTestSuite, get_vpss_config) {
     std::string model_name = std::string(m_json_object[test_index]["model"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-    AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, m_model_path.c_str(),
-                           false);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
+                             m_model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
-    cvai_vpssconfig_t vpssconfig;
-    EXPECT_EQ(CVI_AI_GetVpssChnConfig(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, 640, 640,
-                                      0, &vpssconfig),
-              CVIAI_SUCCESS);
+    cvtdl_vpssconfig_t vpssconfig;
+    EXPECT_EQ(CVI_TDL_GetVpssChnConfig(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, 640,
+                                       640, 0, &vpssconfig),
+              CVI_TDL_SUCCESS);
 
     float factor[3] = {0.50098038, 0.50098038, 0.50098038};
     float mean[3] = {0.0, 0.0, 0.0};
@@ -104,20 +104,20 @@ TEST_F(ThermalPersonDetectionTestSuite, skip_vpss_preprocess) {
     ASSERT_TRUE(frame.open());
 
     {
-      AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON,
-                             m_model_path.c_str(), false);
-      ASSERT_NO_FATAL_FAILURE(aimodel.open());
-      cvai_object_t obj;
-      memset(&obj, 0, sizeof(cvai_object_t));
-      EXPECT_EQ(CVI_AI_ThermalPerson(m_ai_handle, frame.getFrame(), &obj), CVIAI_SUCCESS);
+      TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
+                               m_model_path.c_str(), false);
+      ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
+      cvtdl_object_t obj;
+      memset(&obj, 0, sizeof(cvtdl_object_t));
+      EXPECT_EQ(CVI_TDL_ThermalPerson(m_tdl_handle, frame.getFrame(), &obj), CVI_TDL_SUCCESS);
     }
     {
-      AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON,
-                             m_model_path.c_str(), true);
-      ASSERT_NO_FATAL_FAILURE(aimodel.open());
-      cvai_object_t obj;
-      memset(&obj, 0, sizeof(cvai_object_t));
-      EXPECT_EQ(CVI_AI_ThermalPerson(m_ai_handle, frame.getFrame(), &obj), CVIAI_ERR_INFERENCE);
+      TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
+                               m_model_path.c_str(), true);
+      ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
+      cvtdl_object_t obj;
+      memset(&obj, 0, sizeof(cvtdl_object_t));
+      EXPECT_EQ(CVI_TDL_ThermalPerson(m_tdl_handle, frame.getFrame(), &obj), CVI_TDL_ERR_INFERENCE);
     }
   }
 }
@@ -127,10 +127,10 @@ TEST_F(ThermalPersonDetectionTestSuite, inference) {
     std::string model_name = std::string(m_json_object[test_index]["model"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-    AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, m_model_path.c_str(),
-                           false);
-    CVI_AI_SetModelThreshold(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, 0.01);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
+                             m_model_path.c_str(), false);
+    CVI_TDL_SetModelThreshold(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, 0.01);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
     for (int img_idx = 0; img_idx < 1; img_idx++) {
       // select image_0 for test
@@ -141,9 +141,9 @@ TEST_F(ThermalPersonDetectionTestSuite, inference) {
         Image frame(image_path, PIXEL_FORMAT_BGR_888);
         ASSERT_TRUE(frame.open());
 
-        cvai_object_t obj;
-        memset(&obj, 0, sizeof(cvai_object_t));
-        EXPECT_EQ(CVI_AI_ThermalPerson(m_ai_handle, frame.getFrame(), &obj), CVIAI_SUCCESS);
+        cvtdl_object_t obj;
+        memset(&obj, 0, sizeof(cvtdl_object_t));
+        EXPECT_EQ(CVI_TDL_ThermalPerson(m_tdl_handle, frame.getFrame(), &obj), CVI_TDL_SUCCESS);
 #if 0
         for (uint32_t i = 0; i < obj.size; i++) {
           printf(
@@ -165,10 +165,10 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
     std::string model_name = std::string(m_json_object[test_index]["model"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-    AIModelHandler aimodel(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, m_model_path.c_str(),
-                           false);
-    CVI_AI_SetModelThreshold(m_ai_handle, CVI_AI_SUPPORTED_MODEL_THERMALPERSON, 0.01);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
+                             m_model_path.c_str(), false);
+    CVI_TDL_SetModelThreshold(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, 0.01);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
     int img_num = int(m_json_object[test_index]["test_images"].size());
     float score_threshold = float(m_json_object[test_index]["score_threshold"]);
@@ -181,8 +181,8 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
       Image frame(image_path, PIXEL_FORMAT_BGR_888);
       ASSERT_TRUE(frame.open());
 
-      AIObject<cvai_object_t> obj;
-      { EXPECT_EQ(CVI_AI_ThermalPerson(m_ai_handle, frame.getFrame(), obj), CVIAI_SUCCESS); }
+      TDLObject<cvtdl_object_t> obj;
+      { EXPECT_EQ(CVI_TDL_ThermalPerson(m_tdl_handle, frame.getFrame(), obj), CVI_TDL_SUCCESS); }
 
       for (uint32_t i = 0; i < obj->size; i++) {
 #if 0
@@ -196,7 +196,7 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
             obj.info[i].name);
 #endif
 
-        cvai_bbox_t expected_bbox = {
+        cvtdl_bbox_t expected_bbox = {
             .x1 = float(m_json_object[test_index]["expected_results"][img_idx][1][i][0]),
             .y1 = float(m_json_object[test_index]["expected_results"][img_idx][1][i][1]),
             .x2 = float(m_json_object[test_index]["expected_results"][img_idx][1][i][2]),
@@ -204,7 +204,7 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
             .score = float(m_json_object[test_index]["expected_results"][img_idx][1][i][4]),
         };
 
-        auto comp = [=](cvai_object_info_t &pred, cvai_bbox_t &expected) {
+        auto comp = [=](cvtdl_object_info_t &pred, cvtdl_bbox_t &expected) {
           if (iou(pred.bbox, expected) >= iou_threshold &&
               abs(pred.bbox.score - expected.score) < score_threshold) {
             return true;
@@ -218,10 +218,10 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
                              << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
                              << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";
       }
-      CVI_AI_FreeCpp(obj);
+      CVI_TDL_FreeCpp(obj);
     }
   }
 }
 
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

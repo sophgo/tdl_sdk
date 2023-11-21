@@ -5,7 +5,7 @@
 #include <vector>
 #include "cvi_comm.h"
 
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 typedef struct {
@@ -24,4 +24,4 @@ class Tracker {
   CVI_U64 m_deleteduration = 3000;  // 3ms
 };
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

@@ -3,19 +3,19 @@
 #include <vector>
 #include "Eigen/Core"
 #include "core.hpp"
-#include "core/object/cvai_object_types.h"
+#include "core/object/cvtdl_object_types.h"
 typedef Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor> Vectorf;
 
-namespace cviai {
+namespace cvitdl {
 
 class HandKeypointClassification final : public Core {
  public:
   HandKeypointClassification();
   virtual ~HandKeypointClassification();
-  int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_handpose21_meta_t *handpose);
+  int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_handpose21_meta_t *handpose);
 
  private:
   Vectorf _data;
 };
-}  // namespace cviai
+}  // namespace cvitdl
 #endif

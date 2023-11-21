@@ -1,7 +1,7 @@
 #include <inttypes.h>
 #include <sys/time.h>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
 #include "utils/mot_auto_tuning_helper.hpp"
 
 #include <map>
@@ -18,8 +18,8 @@ extern int optopt;
 
 // #define OUTPUT_MOT_DATA
 
-#define DEFAULT_RESULT_FILE_NAME "cviai_MOT_result.txt"
-#define DEFAULT_DATA_DIR "cviai_MOT_data"
+#define DEFAULT_RESULT_FILE_NAME "cvitdl_MOT_result.txt"
+#define DEFAULT_DATA_DIR "cvitdl_MOT_data"
 #define DEFAULT_DATA_INFO_NAME "MOT_data_info.txt"
 #define DEFAULT_OUTPUT_CONFIG_NAME "opt_deepsort_config.bin"
 
@@ -149,13 +149,13 @@ int main(int argc, char *argv[]) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
-  cviai_handle_t ai_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
 
-  cvai_deepsort_config_t ds_conf;
+  cvtdl_deepsort_config_t ds_conf;
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle, false);
+  CVI_TDL_DeepSORT_Init(tdl_handle, false);
   if (args.use_predefined) {
     printf("use predefined config.\n");
     if (CVI_SUCCESS != GET_PREDEFINED_CONFIG(&ds_conf, args.target_type)) {
@@ -170,11 +170,11 @@ int main(int argc, char *argv[]) {
       printf("failed to read DeepSORT config file: %s\n", args.init_config);
       return CVI_FAILURE;
     } else {
-      fread(&ds_conf, sizeof(cvai_deepsort_config_t), 1, inFile_mot_config);
+      fread(&ds_conf, sizeof(cvtdl_deepsort_config_t), 1, inFile_mot_config);
       fclose(inFile_mot_config);
     }
   }
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, true);
+  CVI_TDL_DeepSORT_SetConfig(tdl_handle, &ds_conf, -1, true);
 
   MOT_EVALUATION_ARGS_t mot_eval_args;
   mot_eval_args.target_type = args.target_type;
@@ -187,10 +187,10 @@ int main(int argc, char *argv[]) {
 
   printf("--- Init MOT Evaluation\n");
   gettimeofday(&t0, NULL);
-  ret = RUN_MOT_EVALUATION(ai_handle, mot_eval_args, performance, args.output_result,
+  ret = RUN_MOT_EVALUATION(tdl_handle, mot_eval_args, performance, args.output_result,
                            args.result_path);
   if (CVI_SUCCESS != ret) {
-    CVI_AI_DestroyHandle(ai_handle);
+    CVI_TDL_DestroyHandle(tdl_handle);
     return CVI_FAILURE;
   }
   gettimeofday(&t1, NULL);
@@ -211,9 +211,9 @@ int main(int argc, char *argv[]) {
   printf("--- Do OPTIMIZE_CONFIG_1\n");
   MOT_PERFORMANCE_CONSTRAINT_t constraint;
   constraint.min_coverage_rate = 0.8;
-  cvai_deepsort_config_t opt_config;
+  cvtdl_deepsort_config_t opt_config;
   gettimeofday(&t0, NULL);
-  OPTIMIZE_CONFIG_1(ai_handle, mot_eval_args, opt_1_params, constraint, opt_config, performance);
+  OPTIMIZE_CONFIG_1(tdl_handle, mot_eval_args, opt_1_params, constraint, opt_config, performance);
   gettimeofday(&t1, NULL);
   elapsed_tpu = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
   printf("execution time (OPT 1): %.2f(ms)\n", (float)elapsed_tpu / 1000.);
@@ -227,9 +227,9 @@ int main(int argc, char *argv[]) {
   // GET_PREDEFINED_CONFIG(&opt_config, target_type);
 
   FILE *outFile_config = fopen(args.output_config, "w");
-  fwrite(&opt_config, sizeof(cvai_deepsort_config_t), 1, outFile_config);
+  fwrite(&opt_config, sizeof(cvtdl_deepsort_config_t), 1, outFile_config);
   fclose(outFile_config);
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   CVI_SYS_Exit();
 }

@@ -1,15 +1,15 @@
 #include "license_plate_recognition.hpp"
 #include "decode_tool.hpp"
 
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
 
 #include "cvi_sys.h"
 
-#ifdef ENABLE_CVIAI_CV_UTILS
+#ifdef ENABLE_CVI_TDL_CV_UTILS
 #include "cv/imgproc.hpp"
 #else
 #include "opencv2/imgproc.hpp"
@@ -27,7 +27,7 @@
 
 #define DEBUG_LICENSE_PLATE_DETECTION 0
 
-namespace cviai {
+namespace cvitdl {
 
 LicensePlateRecognition::LicensePlateRecognition(LP_FORMAT region) : Core(CVI_MEM_SYSTEM) {
   if (region == TAIWAN) {
@@ -46,10 +46,10 @@ LicensePlateRecognition::LicensePlateRecognition(LP_FORMAT region) : Core(CVI_ME
 LicensePlateRecognition::~LicensePlateRecognition() {}
 
 int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
-                                       cvai_object_t *vehicle_plate_meta) {
+                                       cvtdl_object_t *vehicle_plate_meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 #if DEBUG_LICENSE_PLATE_DETECTION
   printf("[%s:%d] inference\n", __FILE__, __LINE__);
@@ -64,7 +64,7 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
   cv::Mat cv_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
                    frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   for (size_t n = 0; n < vehicle_plate_meta->size; n++) {
-    cvai_vehicle_meta *v_meta = vehicle_plate_meta->info[n].vehicle_properity;
+    cvtdl_vehicle_meta *v_meta = vehicle_plate_meta->info[n].vehicle_properity;
     if (v_meta == NULL) {
       continue;
     }
@@ -83,12 +83,12 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     cv::Mat sub_cvFrame;
     cv::Mat greyMat;
 
-#ifdef ENABLE_CVIAI_CV_UTILS
-    cv::Mat M = cviai::getPerspectiveTransform(src_points, dst_points);
-    cviai::warpPerspective(cv_frame, sub_cvFrame, M, cv::Size(this->lp_width, this->lp_height),
-                           INTER_LINEAR);
-    cviai::cvtColor(sub_cvFrame, greyMat, COLOR_RGB2GRAY); /* BGR or RGB ? */
-    cviai::cvtColor(greyMat, sub_cvFrame, COLOR_GRAY2RGB);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+    cv::Mat M = cvitdl::getPerspectiveTransform(src_points, dst_points);
+    cvitdl::warpPerspective(cv_frame, sub_cvFrame, M, cv::Size(this->lp_width, this->lp_height),
+                            INTER_LINEAR);
+    cvitdl::cvtColor(sub_cvFrame, greyMat, COLOR_RGB2GRAY); /* BGR or RGB ? */
+    cvitdl::cvtColor(greyMat, sub_cvFrame, COLOR_GRAY2RGB);
 #else
     cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
     cv::warpPerspective(cv_frame, sub_cvFrame, M, cv::Size(this->lp_width, this->lp_height),
@@ -101,7 +101,7 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
 
     std::vector<VIDEO_FRAME_INFO_S *> dummyFrames = {frame};
     int ret = run(dummyFrames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       return ret;
     }
 
@@ -110,7 +110,7 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     std::string id_number;
     if (!LPR::greedy_decode(out_code, id_number, format)) {
       LOGE("LPR::decode error!!\n");
-      return CVIAI_ERR_INFERENCE;
+      return CVI_TDL_ERR_INFERENCE;
     }
 
     strncpy(v_meta->license_char, id_number.c_str(), sizeof(v_meta->license_char));
@@ -119,7 +119,7 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
     frame->stVFrame.pu8VirAddr[0] = NULL;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void LicensePlateRecognition::prepareInputTensor(cv::Mat &input_mat) {
@@ -140,4 +140,4 @@ void LicensePlateRecognition::prepareInputTensor(cv::Mat &input_mat) {
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

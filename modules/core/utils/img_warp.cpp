@@ -541,9 +541,9 @@ void _warpAffine(const uchar *src_data, size_t src_step, int src_width, int src_
 }
 
 // L5959
-void cviai::warp_affine(const unsigned char *src_data, unsigned int src_step, int src_width,
-                        int src_height, unsigned char *dst_data, unsigned int dst_step,
-                        int dst_width, int dst_height, float *fM) {
+void cvitdl::warp_affine(const unsigned char *src_data, unsigned int src_step, int src_width,
+                         int src_height, unsigned char *dst_data, unsigned int dst_step,
+                         int dst_width, int dst_height, float *fM) {
   double M[6];
   // cv::Mat matM(2, 3, CV_64F, M);
   int flags = INTER_LINEAR;
@@ -647,7 +647,7 @@ int get_similarity_transform_matrix(const float *src_pts, const float *dst_pts, 
   // return 0;
 }
 
-int cviai::get_face_transform(const float *landmark_pts, const int width, float *transform) {
+int cvitdl::get_face_transform(const float *landmark_pts, const int width, float *transform) {
   assert(width == 96 || width == 112 || width == 64);
   // assert(height == 112 || (width == 64 && height == 64));
 

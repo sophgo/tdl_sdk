@@ -1,7 +1,7 @@
 #ifndef _CVI_KALMAN_FILTER_HPP_
 #define _CVI_KALMAN_FILTER_HPP_
 
-#include "core/deepsort/cvai_deepsort_types.h"
+#include "core/deepsort/cvtdl_deepsort_types.h"
 #include "cvi_kalman_types.hpp"
 
 typedef Eigen::Matrix<float, 1, -1> ROW_VECTOR;
@@ -18,12 +18,12 @@ class KalmanFilter {
                          const K_MEASUREMENT_M &Z_) const;
 #endif
   int predict(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
-              const cvai_kalman_filter_config_t &kfilter_conf) const;
+              const cvtdl_kalman_filter_config_t &kfilter_conf) const;
   int update(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_, const K_MEASUREMENT_V &z_,
-             const cvai_kalman_filter_config_t &kfilter_conf) const;
+             const cvtdl_kalman_filter_config_t &kfilter_conf) const;
   ROW_VECTOR mahalanobis(const kalman_state_e &s_, const K_STATE_V &x_, const K_COVARIANCE_M &P_,
                          const K_MEASUREMENT_M &Z_,
-                         const cvai_kalman_filter_config_t &kfilter_conf) const;
+                         const cvtdl_kalman_filter_config_t &kfilter_conf) const;
 #if 0
   float mahalanobis(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
                     const K_MEASUREMENT_V &z_) const;

@@ -1,8 +1,8 @@
 #pragma once
 #include "core.hpp"
-#include "core/cviai_custom.h"
+#include "core/cvi_tdl_custom.h"
 
-namespace cviai {
+namespace cvitdl {
 
 struct CustomSQParam {
   uint32_t idx = 0;
@@ -34,4 +34,4 @@ class Custom final : public Core {
   std::vector<CustomSQParam> m_sq_params;
   std::vector<VIDEO_FRAME_INFO_S> m_processed_frames;
 };
-}  // namespace cviai
+}  // namespace cvitdl

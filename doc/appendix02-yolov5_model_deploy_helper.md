@@ -203,7 +203,7 @@ model_deploy.py \
 
 代码路径 https://github.com/sophgo/tpu-mlir
 
-TPU-MLIR 是 AI 芯片的 TPU 编译器工程。该工程提供了一套完整的工具链, 其可以将不同 框架下预训练的神经网络, 转化为可以在算能 TPU 上高效运算的文件。目前支持`onnx`、`Caffe`以及`TFLite`框架的模型转换，其他框架的模型需要转换成onnx模型，再通过TPU-MLIR工具转换。
+TPU-MLIR 是 TDL 芯片的 TPU 编译器工程。该工程提供了一套完整的工具链, 其可以将不同 框架下预训练的神经网络, 转化为可以在算能 TPU 上高效运算的文件。目前支持`onnx`、`Caffe`以及`TFLite`框架的模型转换，其他框架的模型需要转换成onnx模型，再通过TPU-MLIR工具转换。
 
 转换模型需要在指定的docker执行，主要的步骤可以分为两步：
 
@@ -343,9 +343,9 @@ model_deploy.py \
 
 编译完成后，会生成名为`${model_name}yolov5_cv181x_int8_sym.cvimodel$`的文件
 
-在上述步骤运行成功之后，编译cvimodel的步骤就完成了，之后就可以使用AI_SDK调用导出的cvimodel进行yolov5目标检测推理了。
+在上述步骤运行成功之后，编译cvimodel的步骤就完成了，之后就可以使用TDL_SDK调用导出的cvimodel进行yolov5目标检测推理了。
 
-## AISDK接口说明
+## TDLSDK接口说明
 
 集成的yolov5接口开放了预处理的设置，yolov5模型算法的anchor，conf置信度以及nms置信度设置
 
@@ -353,7 +353,7 @@ model_deploy.py \
 
 ```c++
 /** @struct YoloPreParam
- *  @ingroup core_cviaicore
+ *  @ingroup core_cvitdlcore
  *  @brief Config the yolov5 detection preprocess.
  *  @var YoloPreParam::factor
  *  Preprocess factor, one dimension matrix, r g b channel
@@ -389,7 +389,7 @@ yolov5算法中设置的结构体为`YOLOV5AlgParam`
 
 ```c++
 /** @struct YoloAlgParam
- *  @ingroup core_cviaicore
+ *  @ingroup core_cvitdlcore
  *  @brief Config the yolov5 detection algorithm parameters.
  *  @var YoloAlgParam::anchors
  *  Configure yolov5 model anchors
@@ -413,15 +413,15 @@ typedef struct {
 
 以下是一个简单的设置案例:
 
-* 初始化预处理设置`YoloPreParam`以及yolov5模型设置`YoloAlgParam`，使用`CVI_AI_Set_YOLOV5_Param`传入设置的参数
+* 初始化预处理设置`YoloPreParam`以及yolov5模型设置`YoloAlgParam`，使用`CVI_TDL_Set_YOLOV5_Param`传入设置的参数
   * yolov5是**anchor-based**的检测算法，为了方便使用，开放了anchor自定义设置，在设置`YoloAlgParam`中，需要注意`anchors`和`strides`的顺序需要一一对应，否则会导致推理结果出现错误
   * 另外支持自定义分类数量修改，如果修改了模型的输出分类数量，需要设置`YolovAlgParam.cls`为修改后的分类数量
   * `YoloPreParam`以及`YoloAlgParam`在下列代码中出现的属性不能为空
 
-* 然后打开模型 `CVI_AI_OpenModel`
+* 然后打开模型 `CVI_TDL_OpenModel`
 * 再打开模型之后可以设置对应的置信度和nsm阈值：
-  * `CVI_AI_SetModelThreshold` 设置置信度阈值，默认0.5
-  * `CVI_AI_SetModelNmsThreshold` 设置nsm阈值，默认0.5
+  * `CVI_TDL_SetModelThreshold` 设置置信度阈值，默认0.5
+  * `CVI_TDL_SetModelNmsThreshold` 设置nsm阈值，默认0.5
 
 ```c++
 // yolo preprocess setup
@@ -446,40 +446,40 @@ p_yolov5_param.stride_len = 3;
 p_yolov5_param.cls = 80;
 
 printf("setup yolov5 param \n");
-ret = CVI_AI_Set_YOLOV5_Param(ai_handle, &p_preprocess_cfg, &p_yolov5_param);
+ret = CVI_TDL_Set_YOLOV5_Param(tdl_handle, &p_preprocess_cfg, &p_yolov5_param);
 if (ret != CVI_SUCCESS) {
     printf("Can not set Yolov5 parameters %#x\n", ret);
     return ret;
 }
 
-ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, model_path.c_str());
+ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, model_path.c_str());
 if (ret != CVI_SUCCESS) {
     printf("open model failed %#x!\n", ret);
     return ret;
 }
 
 // set thershold for yolov5
-CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, 0.5);
-CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV5, 0.5);
+CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, 0.5);
+CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, 0.5);
 ```
 
 **推理以及结果获取**
 
-通过本地或者流获取图片，并通过`CVI_AI_ReadImage`函数读取图片，然后调用`Yolov5`推理接口`CVI_AI_Yolov5`。推理的结果存放在`obj_meta`结构体中，遍历获取边界框bbox的左上角以及右下角坐标点以及object score(x1, y1, x2, y2, score)，另外还有分类`classes`
+通过本地或者流获取图片，并通过`CVI_TDL_ReadImage`函数读取图片，然后调用`Yolov5`推理接口`CVI_TDL_Yolov5`。推理的结果存放在`obj_meta`结构体中，遍历获取边界框bbox的左上角以及右下角坐标点以及object score(x1, y1, x2, y2, score)，另外还有分类`classes`
 
 ```c++
 VIDEO_FRAME_INFO_S fdFrame;
-ret = CVI_AI_ReadImage(img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
-std::cout << "CVI_AI_ReadImage done!\n";
+ret = CVI_TDL_ReadImage(img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
+std::cout << "CVI_TDL_ReadImage done!\n";
 
 if (ret != CVI_SUCCESS) {
     std::cout << "Convert out video frame failed with :" << ret << ".file:" << str_src_dir
               << std::endl;
 }
 
-cvai_object_t obj_meta = {0};
+cvtdl_object_t obj_meta = {0};
 
-CVI_AI_Yolov5(ai_handle, &fdFrame, &obj_meta);
+CVI_TDL_Yolov5(tdl_handle, &fdFrame, &obj_meta);
 
 for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("detect res: %f %f %f %f %f %d\n", obj_meta.info[i].bbox.x1,
@@ -509,18 +509,18 @@ for (uint32_t i = 0; i < obj_meta.size; i++) {
 |         |  官方导出  |  cv181x  |     92.8      |   100.42    |  16.01  |  量化失败   |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
 |         |  官方导出  |  cv182x  |     69.89     |   102.74    |   16    |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv181x平台评测指标 |
 |         |  官方导出  |  cv183x  |     25.66     |    73.4     |   N/A   |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv181x平台评测指标 |
-|         | AI_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A   |   55.4241   |   36.6361    |            AI_SDK导出onnx指标            |
-|         | AI_SDK导出 |  cv181x  |     87.76     |    85.74    |  15.8   |   54.204    |   34.3985    |  AI_SDI导出cvimodel, cv181x平台评测指标  |
-|         | AI_SDK导出 |  cv182x  |     65.33     |    87.99    |  15.77  |   54.204    |   34.3985    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
-|         | AI_SDK导出 |  cv183x  |     22.86     |    58.38    |  14.22  |   54.204    |   34.3985    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+|         | TDL_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A   |   55.4241   |   36.6361    |            TDL_SDK导出onnx指标            |
+|         | TDL_SDK导出 |  cv181x  |     87.76     |    85.74    |  15.8   |   54.204    |   34.3985    |  TDL_SDI导出cvimodel, cv181x平台评测指标  |
+|         | TDL_SDK导出 |  cv182x  |     65.33     |    87.99    |  15.77  |   54.204    |   34.3985    |  TDL_SDI导出cvimodel, cv182x平台评测指标  |
+|         | TDL_SDK导出 |  cv183x  |     22.86     |    58.38    |  14.22  |   54.204    |   34.3985    |  TDL_SDI导出cvimodel, cv183x平台评测指标  |
 | yolov5m |  官方导出  | pytorch  |      N/A      |     N/A     |   N/A   |    64.1     |     45.4     |           pytorch官方fp32指标            |
 |         |  官方导出  |  cv181x  |  ion分配失败  | ion分配失败 |  35.96  |  量化失败   |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
 |         |  官方导出  |  cv182x  |    180.85     |   258.41    |  35.97  |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv181x平台评测指标 |
 |         |  官方导出  |  cv183x  |     59.36     |   137.86    |  30.49  |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv181x平台评测指标 |
-|         | AI_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A   |   62.7707   |   44.4973    |            AI_SDK导出onnx指标            |
-|         | AI_SDK导出 |  cv181x  |  ion分配失败  | ion分配失败 |  35.73  | ion分配失败 | ion分配失败  |  AI_SDI导出cvimodel, cv181x平台评测指标  |
-|         | AI_SDK导出 |  cv182x  |    176.04     |   243.62    |  35.74  |   61.5907   |   42.0852    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
-|         | AI_SDK导出 |  cv183x  |     56.53     |    122.9    |  30.27  |   61.5907   |   42.0852    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+|         | TDL_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A   |   62.7707   |   44.4973    |            TDL_SDK导出onnx指标            |
+|         | TDL_SDK导出 |  cv181x  |  ion分配失败  | ion分配失败 |  35.73  | ion分配失败 | ion分配失败  |  TDL_SDI导出cvimodel, cv181x平台评测指标  |
+|         | TDL_SDK导出 |  cv182x  |    176.04     |   243.62    |  35.74  |   61.5907   |   42.0852    |  TDL_SDI导出cvimodel, cv182x平台评测指标  |
+|         | TDL_SDK导出 |  cv183x  |     56.53     |    122.9    |  30.27  |   61.5907   |   42.0852    |  TDL_SDI导出cvimodel, cv183x平台评测指标  |
 
 
 

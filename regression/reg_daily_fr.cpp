@@ -2,15 +2,15 @@
 #include <string>
 #include <unordered_map>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_test.hpp"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_test.hpp"
 #include "json.hpp"
 #include "raii.hpp"
 #include "regression_utils.hpp"
 
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
 typedef enum {
@@ -19,57 +19,57 @@ typedef enum {
   MaskFR,
 } ModelType;
 
-class FaceRecognitionTestSuite : public CVIAIModelTestSuite {
+class FaceRecognitionTestSuite : public CVI_TDLModelTestSuite {
  public:
-  typedef CVI_S32 (*InferenceFunc)(const cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_face_t *);
+  typedef CVI_S32 (*InferenceFunc)(const cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
   struct ModelInfo {
     InferenceFunc inference;
-    CVI_AI_SUPPORTED_MODEL_E index;
+    CVI_TDL_SUPPORTED_MODEL_E index;
     std::string model_path;
   };
 
-  FaceRecognitionTestSuite() : CVIAIModelTestSuite("daily_reg_FR.json", "reg_daily_fr") {}
+  FaceRecognitionTestSuite() : CVI_TDLModelTestSuite("daily_reg_FR.json", "reg_daily_fr") {}
 
   virtual ~FaceRecognitionTestSuite() = default;
 
  protected:
   virtual void SetUp() {
-    m_ai_handle = NULL;
-    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_Service_CreateHandle(&m_service_handle, m_ai_handle), CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_SetVpssTimeout(m_ai_handle, 1000), CVIAI_SUCCESS);
+    m_tdl_handle = NULL;
+    ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Service_CreateHandle(&m_service_handle, m_tdl_handle), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_SetVpssTimeout(m_tdl_handle, 1000), CVI_TDL_SUCCESS);
   }
 
   virtual void TearDown() {
-    CVI_AI_Service_DestroyHandle(m_service_handle);
-    CVI_AI_DestroyHandle(m_ai_handle);
-    m_ai_handle = NULL;
+    CVI_TDL_Service_DestroyHandle(m_service_handle);
+    CVI_TDL_DestroyHandle(m_tdl_handle);
+    m_tdl_handle = NULL;
     m_service_handle = NULL;
   }
 
-  cviai_service_handle_t m_service_handle;
+  cvitdl_service_handle_t m_service_handle;
   ModelInfo getModel(ModelType model_type, const std::string &model_name);
 };
 
 FaceRecognitionTestSuite::ModelInfo FaceRecognitionTestSuite::getModel(
     ModelType model_type, const std::string &model_name) {
   ModelInfo model_info;
-  model_info.index = CVI_AI_SUPPORTED_MODEL_END;
+  model_info.index = CVI_TDL_SUPPORTED_MODEL_END;
 
   std::string model_path = (m_model_dir / model_name).string();
 
   switch (model_type) {
     case FaceRecognition: {
-      model_info.index = CVI_AI_SUPPORTED_MODEL_FACERECOGNITION;
-      model_info.inference = CVI_AI_FaceRecognition;
+      model_info.index = CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION;
+      model_info.inference = CVI_TDL_FaceRecognition;
     } break;
     case FaceAttribute: {
-      model_info.index = CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE;
-      model_info.inference = CVI_AI_FaceAttribute;
+      model_info.index = CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE;
+      model_info.inference = CVI_TDL_FaceAttribute;
     } break;
     case MaskFR: {
-      model_info.index = CVI_AI_SUPPORTED_MODEL_MASKFACERECOGNITION;
-      model_info.inference = CVI_AI_MaskFaceRecognition;
+      model_info.index = CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION;
+      model_info.inference = CVI_TDL_MaskFaceRecognition;
     } break;
     default:
       printf("unsupported model type: %d\n", model_type);
@@ -85,12 +85,12 @@ TEST_F(FaceRecognitionTestSuite, open_close_model) {
     ModelType model_type = test_config["model_type"];
 
     ModelInfo model_info = getModel(model_type, model_name);
-    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
+    ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
 
-    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), false);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, model_info.index, model_info.model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
-    const char *model_path_get = CVI_AI_GetModelPath(m_ai_handle, model_info.index);
+    const char *model_path_get = CVI_TDL_GetModelPath(m_tdl_handle, model_info.index);
 
     EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, model_info.model_path,
                  std::string(model_path_get));
@@ -104,21 +104,21 @@ TEST_F(FaceRecognitionTestSuite, get_vpss_config) {
     ModelType model_type = test_config["model_type"];
 
     ModelInfo model_info = getModel(model_type, model_name);
-    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
+    ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
 
-    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), false);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
-    cvai_vpssconfig_t vpssconfig;
+    TDLModelHandler tdlmodel(m_tdl_handle, model_info.index, model_info.model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
+    cvtdl_vpssconfig_t vpssconfig;
     vpssconfig.chn_attr.u32Height = 200;
     vpssconfig.chn_attr.u32Width = 200;
     vpssconfig.chn_attr.enPixelFormat = PIXEL_FORMAT_ARGB_1555;
     vpssconfig.chn_attr.stNormalize.bEnable = false;
 
-    // CVI_AI_GetVpssChnConfig for face recognition models should be failed.
-    EXPECT_EQ(CVI_AI_GetVpssChnConfig(m_ai_handle, model_info.index, 100, 100, 0, &vpssconfig),
-              CVIAI_ERR_GET_VPSS_CHN_CONFIG);
+    // CVI_TDL_GetVpssChnConfig for face recognition models should be failed.
+    EXPECT_EQ(CVI_TDL_GetVpssChnConfig(m_tdl_handle, model_info.index, 100, 100, 0, &vpssconfig),
+              CVI_TDL_ERR_GET_VPSS_CHN_CONFIG);
 
-    // make sure doesn't modify vpss config after CVI_AI_GetVpssChnConfig is called.
+    // make sure doesn't modify vpss config after CVI_TDL_GetVpssChnConfig is called.
     EXPECT_EQ(vpssconfig.chn_attr.u32Height, (uint32_t)200);
     EXPECT_EQ(vpssconfig.chn_attr.u32Width, (uint32_t)200);
     EXPECT_EQ(vpssconfig.chn_attr.enPixelFormat, PIXEL_FORMAT_ARGB_1555);
@@ -139,27 +139,27 @@ TEST_F(FaceRecognitionTestSuite, skip_vpss_preprocess) {
 
   {
     // test inference with skip vpss = false
-    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), false);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, model_info.index, model_info.model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
-    AIObject<cvai_face_t> face_meta;
+    TDLObject<cvtdl_face_t> face_meta;
     init_face_meta(face_meta, 1);
-    ASSERT_EQ(model_info.inference(m_ai_handle, image.getFrame(), face_meta), CVIAI_SUCCESS);
+    ASSERT_EQ(model_info.inference(m_tdl_handle, image.getFrame(), face_meta), CVI_TDL_SUCCESS);
     EXPECT_TRUE(face_meta->info[0].feature.ptr != NULL);
     EXPECT_GT(face_meta->info[0].feature.size, (uint32_t)0);
   }
 
   {
     // test inference with skip vpss = true
-    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), true);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, model_info.index, model_info.model_path.c_str(), true);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
-    AIObject<cvai_face_t> face_meta;
+    TDLObject<cvtdl_face_t> face_meta;
     init_face_meta(face_meta, 1);
 
     // This operatation shoule be fail, because face recognition model needs vpss preprocessing.
-    ASSERT_EQ(model_info.inference(m_ai_handle, image.getFrame(), face_meta),
-              CVIAI_ERR_INVALID_ARGS);
+    ASSERT_EQ(model_info.inference(m_tdl_handle, image.getFrame(), face_meta),
+              CVI_TDL_ERR_INVALID_ARGS);
   }
 }
 
@@ -168,8 +168,8 @@ TEST_F(FaceRecognitionTestSuite, inference) {
   ModelType model_type = m_json_object[0]["model_type"];
 
   ModelInfo model_info = getModel(model_type, model_name);
-  AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), false);
-  ASSERT_NO_FATAL_FAILURE(aimodel.open());
+  TDLModelHandler tdlmodel(m_tdl_handle, model_info.index, model_info.model_path.c_str(), false);
+  ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
   std::string image_path =
       (m_image_dir / std::string(m_json_object[0]["same_pairs"][0][0])).string();
@@ -181,18 +181,20 @@ TEST_F(FaceRecognitionTestSuite, inference) {
 
     // test 1 face
     {
-      AIObject<cvai_face_t> face_meta;
+      TDLObject<cvtdl_face_t> face_meta;
       init_face_meta(face_meta, 1);
-      ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
+      ASSERT_EQ(model_info.inference(m_tdl_handle, image_rgb.getFrame(), face_meta),
+                CVI_TDL_SUCCESS);
       EXPECT_TRUE(face_meta->info[0].feature.ptr != NULL);
       EXPECT_GT(face_meta->info[0].feature.size, (uint32_t)0);
     }
 
     // test 10 faces
     {
-      AIObject<cvai_face_t> face_meta;
+      TDLObject<cvtdl_face_t> face_meta;
       init_face_meta(face_meta, 10);
-      ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
+      ASSERT_EQ(model_info.inference(m_tdl_handle, image_rgb.getFrame(), face_meta),
+                CVI_TDL_SUCCESS);
       EXPECT_TRUE(face_meta->info[0].feature.ptr != NULL);
       EXPECT_GT(face_meta->info[0].feature.size, (uint32_t)0);
       for (uint32_t fid = 1; fid < 10; fid++) {
@@ -208,10 +210,10 @@ TEST_F(FaceRecognitionTestSuite, inference) {
   {
     Image image_rgb(image_path, PIXEL_FORMAT_RGB_888_PLANAR);
     ASSERT_TRUE(image_rgb.open());
-    AIObject<cvai_face_t> face_meta;
+    TDLObject<cvtdl_face_t> face_meta;
     init_face_meta(face_meta, 1);
 
-    ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
+    ASSERT_EQ(model_info.inference(m_tdl_handle, image_rgb.getFrame(), face_meta), CVI_TDL_SUCCESS);
   }
 }
 
@@ -222,10 +224,10 @@ TEST_F(FaceRecognitionTestSuite, accuracy) {
     ModelType model_type = test_config["model_type"];
 
     ModelInfo model_info = getModel(model_type, model_name);
-    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
+    ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
 
-    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path, false);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, model_info.index, model_info.model_path, false);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
     std::vector<std::pair<std::string, std::string>> pair_info = {
         {"same_pairs", "same_scores"},
@@ -240,32 +242,34 @@ TEST_F(FaceRecognitionTestSuite, accuracy) {
         std::string image_path1 = (m_image_dir / std::string(pair[0])).string();
         std::string image_path2 = (m_image_dir / std::string(pair[1])).string();
 
-        AIObject<cvai_face_t> face_meta1;
+        TDLObject<cvtdl_face_t> face_meta1;
         {
           Image image(image_path1, PIXEL_FORMAT_RGB_888);
           ASSERT_NO_FATAL_FAILURE(image.open());
           init_face_meta(face_meta1, 1);
-          ASSERT_EQ(model_info.inference(m_ai_handle, image.getFrame(), face_meta1), CVIAI_SUCCESS);
+          ASSERT_EQ(model_info.inference(m_tdl_handle, image.getFrame(), face_meta1),
+                    CVI_TDL_SUCCESS);
         }
 
-        AIObject<cvai_face_t> face_meta2;
+        TDLObject<cvtdl_face_t> face_meta2;
         {
           Image image(image_path2, PIXEL_FORMAT_RGB_888);
           ASSERT_NO_FATAL_FAILURE(image.open());
           init_face_meta(face_meta2, 1);
-          ASSERT_EQ(model_info.inference(m_ai_handle, image.getFrame(), face_meta2), CVIAI_SUCCESS);
+          ASSERT_EQ(model_info.inference(m_tdl_handle, image.getFrame(), face_meta2),
+                    CVI_TDL_SUCCESS);
         }
 
         float score = 0.0;
-        CVI_AI_Service_CalculateSimilarity(m_service_handle, &face_meta1->info[0].feature,
-                                           &face_meta2->info[0].feature, &score);
+        CVI_TDL_Service_CalculateSimilarity(m_service_handle, &face_meta1->info[0].feature,
+                                            &face_meta2->info[0].feature, &score);
 
         EXPECT_LT(std::abs(score - expected_score), 0.1);
-        CVI_AI_FreeCpp(face_meta1);
-        CVI_AI_FreeCpp(face_meta2);
+        CVI_TDL_FreeCpp(face_meta1);
+        CVI_TDL_FreeCpp(face_meta2);
       }
     }
   }
 }
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

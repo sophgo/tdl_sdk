@@ -8,12 +8,12 @@
 #include <unistd.h>
 
 #include <cvimath/cvimath.h>
-#include "core/core/cvai_core_types.h"
+#include "core/core/cvtdl_core_types.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_perfetto.h"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_perfetto.h"
 
 #define FEATURE_LENGTH 512
 #define NAME_LENGTH 1024
@@ -24,8 +24,8 @@
 #define IN_FEATURE_DIR "/in_db_feature/"
 #define NOT_FEATURE_DIR "/not_db_feature/"
 
-cviai_handle_t facelib_handle = NULL;
-cviai_service_handle_t service_handle = NULL;
+cvitdl_handle_t facelib_handle = NULL;
+cvitdl_service_handle_t service_handle = NULL;
 
 static VPSS_GRP VpssGrp = 0;
 static CVI_S32 vpssgrp_width = 1920;
@@ -81,7 +81,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
   if (0 != mkdir(feature_dir, S_IRWXO) && EEXIST != errno) {
     printf("Create %s failed.\n", feature_dir);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   removePreviousFile(feature_dir);
 
@@ -93,24 +93,24 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
     printf("%s\n", line);
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_AI_ReadImage(line, &rgb_frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
+    CVI_S32 ret = CVI_TDL_ReadImage(line, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
 
-    cvai_face_t face;
-    memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_RetinaFace(facelib_handle, &rgb_frame, &face);
+    cvtdl_face_t face;
+    memset(&face, 0, sizeof(cvtdl_face_t));
+    CVI_TDL_RetinaFace(facelib_handle, &rgb_frame, &face);
     if (face.size > 0 && do_face_quality == true) {
-      CVI_AI_Service_FaceAngleForAll(&face);
-      CVI_AI_FaceQuality(facelib_handle, &rgb_frame, &face, NULL);
+      CVI_TDL_Service_FaceAngleForAll(&face);
+      CVI_TDL_FaceQuality(facelib_handle, &rgb_frame, &face, NULL);
     }
 
     int face_idx = 0;
     float max_area = 0;
     for (int i = 0; i < face.size; i++) {
-      cvai_bbox_t bbox = face.info[i].bbox;
+      cvtdl_bbox_t bbox = face.info[i].bbox;
       float curr_area = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
       if (curr_area > max_area) {
         max_area = curr_area;
@@ -124,7 +124,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
     if (face.size > 0 &&
         (do_face_quality == false || face.info[face_idx].face_quality > quality_thresh)) {
-      CVI_AI_FaceRecognitionOne(facelib_handle, &rgb_frame, &face, face_idx);
+      CVI_TDL_FaceRecognitionOne(facelib_handle, &rgb_frame, &face, face_idx);
 
       char base_name[500] = "\0";
       strcat(base_name, feature_dir);
@@ -134,7 +134,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       FILE *fp_feature;
       if ((fp_feature = fopen(base_name, "w+")) == NULL) {
         printf("Write file open error!");
-        return CVIAI_FAILURE;
+        return CVI_TDL_FAILURE;
       }
       for (int i = 0; i < face.info[face_idx].feature.size; i++) {
         fprintf(fp_feature, "%d\n", (int)face.info[face_idx].feature.ptr[i]);
@@ -147,12 +147,12 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
                    face.size > 0 ? face.info[face_idx].face_quality : 0, quality_thresh);
     }
 
-    CVI_AI_Free(&face);
-    CVI_AI_ReleaseImage(&rgb_frame);
+    CVI_TDL_Free(&face);
+    CVI_TDL_ReleaseImage(&rgb_frame);
   }
   closedir(dirp);
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 static int loadCount(const char *dir_path) {
@@ -232,13 +232,13 @@ static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not
                           char **db_name, char **in_name, char **not_in_name, int db_count,
                           int in_count, int not_count, float threshold, FILE *fp_far,
                           FILE *fp_frr) {
-  cvai_service_feature_array_t feature_array;
+  cvtdl_service_feature_array_t feature_array;
   feature_array.data_num = db_count;
   feature_array.feature_length = FEATURE_LENGTH;
   feature_array.ptr = db_feature;
   feature_array.type = TYPE_INT8;
 
-  CVI_AI_Service_RegisterFeatureArray(service_handle, feature_array, COS_SIMILARITY);
+  CVI_TDL_Service_RegisterFeatureArray(service_handle, feature_array, COS_SIMILARITY);
 
   int frr = 0;
   int far = 0;
@@ -247,8 +247,8 @@ static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not
     uint32_t indices[topk];
     float scores[topk];
     uint32_t score_size;
-    CVI_AI_Service_RawMatching(service_handle, in_db_feature + (i * FEATURE_LENGTH), TYPE_INT8,
-                               topk, threshold, indices, scores, &score_size);
+    CVI_TDL_Service_RawMatching(service_handle, in_db_feature + (i * FEATURE_LENGTH), TYPE_INT8,
+                                topk, threshold, indices, scores, &score_size);
     if (score_size == 0 || strcmp(in_name[i], db_name[indices[0]]) != 0) frr++;
 
     log_comp_result(fp_frr, db_name[indices[0]], in_name[i], scores[0]);
@@ -257,8 +257,8 @@ static int evaluateResult(int8_t *db_feature, int8_t *in_db_feature, int8_t *not
     uint32_t indices[topk];
     float scores[topk];
     uint32_t score_size;
-    CVI_AI_Service_RawMatching(service_handle, not_db_feature + (i * FEATURE_LENGTH), TYPE_INT8,
-                               topk, threshold, indices, scores, &score_size);
+    CVI_TDL_Service_RawMatching(service_handle, not_db_feature + (i * FEATURE_LENGTH), TYPE_INT8,
+                                topk, threshold, indices, scores, &score_size);
 
     if (score_size > 0) far++;
     log_comp_result(fp_far, db_name[indices[0]], not_in_name[i], scores[0]);
@@ -287,40 +287,40 @@ int main(int argc, char *argv[]) {
     printf("quality_thresh (Optional): Threshold of face quality (Default: 0.05).\n");
     printf(
         "simularity_thresh (Optional): Threshold of face matching simularity (Default: 0.41).\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
-  CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_TDL_PerfettoInit();
+  CVI_S32 ret = CVI_TDL_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVIAI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+  ret = CVI_TDL_CreateHandle(&facelib_handle);
+  if (ret != CVI_TDL_SUCCESS) {
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_Service_CreateHandle(&service_handle, &facelib_handle);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_Service_CreateHandle(&service_handle, &facelib_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create service handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, argv[2]);
-  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, argv[2]);
+  ret |= CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_TDL_SetSkipVpssPreprocess(facelib_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, false);
 
   char db_dir_full[500] = "\0";
   char in_dir_full[500] = "\0";
@@ -344,7 +344,7 @@ int main(int argc, char *argv[]) {
 
   if (0 != mkdir(argv[5], S_IRWXO) && EEXIST != errno) {
     printf("Create %s failed.\n", argv[5]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   float quality_thresh = argc >= 7 ? atof(argv[6]) : 0.05;
@@ -396,8 +396,8 @@ int main(int argc, char *argv[]) {
   }
   free(not_name);
 
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(facelib_handle);
   CVI_VPSS_StopGrp(VpssGrp);
   CVI_VPSS_DestroyGrp(VpssGrp);
   CVI_SYS_Exit();

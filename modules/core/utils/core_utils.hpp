@@ -1,5 +1,5 @@
 #pragma once
-#include "core/core/cvai_core_types.h"
+#include "core/core/cvtdl_core_types.h"
 #include "rescale_utils.hpp"
 
 #include <cviruntime.h>
@@ -7,12 +7,12 @@
 #include <vector>
 #include "cvi_comm.h"
 
-namespace cviai {
+namespace cvitdl {
 
 void SoftMaxForBuffer(const float *src, float *dst, size_t size);
 void Dequantize(const int8_t *q_data, float *data, float threshold, size_t size);
 void DequantizeScale(const int8_t *q_data, float *data, float dequant_scale, size_t size);
-void clip_boxes(int width, int height, cvai_bbox_t &box);
+void clip_boxes(int width, int height, cvtdl_bbox_t &box);
 void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const float *qMean,
                        VIDEO_FRAME_INFO_S *outFrame);
 
@@ -49,7 +49,7 @@ void NonMaximumSuppression(std::vector<T> &bboxes, std::vector<T> &bboxes_nms,
     bboxes_nms.emplace_back(bboxes[select_idx]);
     mask_merged[select_idx] = 1;
 
-    cvai_bbox_t select_bbox = bboxes[select_idx].bbox;
+    cvtdl_bbox_t select_bbox = bboxes[select_idx].bbox;
     float area1 = static_cast<float>((select_bbox.x2 - select_bbox.x1 + 1) *
                                      (select_bbox.y2 - select_bbox.y1 + 1));
     float x1 = static_cast<float>(select_bbox.x1);
@@ -61,7 +61,7 @@ void NonMaximumSuppression(std::vector<T> &bboxes, std::vector<T> &bboxes_nms,
     for (int i = select_idx; i < num_bbox; i++) {
       if (mask_merged[i] == 1) continue;
 
-      cvai_bbox_t &bbox_i(bboxes[i].bbox);
+      cvtdl_bbox_t &bbox_i(bboxes[i].bbox);
       float x = std::max<float>(x1, static_cast<float>(bbox_i.x1));
       float y = std::max<float>(y1, static_cast<float>(bbox_i.y1));
       float w = std::min<float>(x2, static_cast<float>(bbox_i.x2)) - x + 1;
@@ -85,4 +85,4 @@ void NonMaximumSuppression(std::vector<T> &bboxes, std::vector<T> &bboxes_nms,
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

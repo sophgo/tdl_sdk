@@ -23,7 +23,7 @@ endif()
 add_library(${PROJECT_NAME} OBJECT ${UTILS_SRC})
 
 if(NOT DEFINED SIMPLY_MODEL)
-if ((NOT DEFINED NO_OPENCV) AND ("${ENABLE_CVIAI_CV_UTILS}" STREQUAL "ON"))
+if ((NOT DEFINED NO_OPENCV) AND ("${ENABLE_CVI_TDL_CV_UTILS}" STREQUAL "ON"))
 message("add cv-utils")  
 add_subdirectory(cv)
 endif()

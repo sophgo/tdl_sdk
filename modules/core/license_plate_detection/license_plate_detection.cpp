@@ -1,8 +1,8 @@
 #include "license_plate_detection.hpp"
 
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "face_utils.hpp"
@@ -11,7 +11,7 @@
 
 #include <iostream>
 #include <sstream>
-#ifdef ENABLE_CVIAI_CV_UTILS
+#ifdef ENABLE_CVI_TDL_CV_UTILS
 #include "cv/imgproc.hpp"
 #else
 #include "opencv2/imgproc.hpp"
@@ -22,7 +22,7 @@
 #define OUTPUT_NAME_PROBABILITY "conv2d_25_dequant"
 #define OUTPUT_NAME_TRANSFORM "conv2d_26_dequant"
 
-namespace cviai {
+namespace cvitdl {
 
 LicensePlateDetection::LicensePlateDetection() : Core(CVI_MEM_DEVICE) {}
 
@@ -34,7 +34,7 @@ int LicensePlateDetection::setupInputPreprocess(std::vector<InputPreprecessSetup
 #endif
   if (data->size() != 1) {
     LOGE("LicensePlateDetection only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   for (int i = 0; i < 3; i++) {
     /* VPSS clip image to 128, we divide it by 2 first, then multiply by 2 in cvimodel preprocess */
@@ -55,7 +55,7 @@ int LicensePlateDetection::setupInputPreprocess(std::vector<InputPreprecessSetup
   out_tensor_h = vehicle_h / 16;
   out_tensor_w = vehicle_w / 16;
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int LicensePlateDetection::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
@@ -69,16 +69,16 @@ int LicensePlateDetection::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
                         vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
   if (mp_vpss_inst->sendCropChnFrame(srcFrame, &vpss_config.crop_attr, &vpss_config.chn_attr,
                                      &vpss_config.chn_coeff, 1) != CVI_SUCCESS) {
-    return CVIAI_ERR_VPSS_SEND_FRAME;
+    return CVI_TDL_ERR_VPSS_SEND_FRAME;
   }
 
   if (mp_vpss_inst->getFrame(dstFrame, 0) != CVI_SUCCESS) {
-    return CVIAI_ERR_VPSS_GET_FRAME;
+    return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-static void get_resize_scale(cvai_object_t *vehicle_meta, std::vector<float> &rs_scale,
+static void get_resize_scale(cvtdl_object_t *vehicle_meta, std::vector<float> &rs_scale,
                              int vehicle_h, int vehicle_w) {
   for (uint32_t i = 0; i < vehicle_meta->size; i++) {
     float x = vehicle_meta->info[i].bbox.x1;
@@ -95,17 +95,17 @@ static void get_resize_scale(cvai_object_t *vehicle_meta, std::vector<float> &rs
   }
 }
 
-int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *vehicle_meta) {
+int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *vehicle_meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
     LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 #if DEBUG_LICENSE_PLATE_DETECTION
   std::stringstream s_str;
   printf("[%s:%d] inference\n", __FILE__, __LINE__);
 #endif
   if (vehicle_meta->size == 0) {
-    return CVIAI_SUCCESS;
+    return CVI_TDL_SUCCESS;
   }
 
   std::vector<float> rs_scale(vehicle_meta->size);  // resize scale
@@ -121,7 +121,7 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
                                              (uint32_t)(y2 - y1)};
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       return ret;
     }
 
@@ -138,7 +138,7 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
     //   add more points to bpts for false positive
     if (detection_result) {
       vehicle_meta->info[n].vehicle_properity =
-          (cvai_vehicle_meta *)malloc(sizeof(cvai_vehicle_meta));
+          (cvtdl_vehicle_meta *)malloc(sizeof(cvtdl_vehicle_meta));
       for (int m = 0; m < 4; m++) {
         vehicle_meta->info[n].vehicle_properity->license_pts.x[m] =
             corner_pts(0, m) / rs_scale[n] + vehicle_meta->info[n].bbox.x1;
@@ -146,8 +146,8 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
             corner_pts(1, m) / rs_scale[n] + vehicle_meta->info[n].bbox.y1;
       }
 
-      cvai_bbox_t &bbox = vehicle_meta->info[n].vehicle_properity->license_bbox;
-      cvai_4_pts_t &pts = vehicle_meta->info[n].vehicle_properity->license_pts;
+      cvtdl_bbox_t &bbox = vehicle_meta->info[n].vehicle_properity->license_bbox;
+      cvtdl_4_pts_t &pts = vehicle_meta->info[n].vehicle_properity->license_pts;
 
       bbox.x1 = std::min({pts.x[0], pts.x[1], pts.x[2], pts.x[3]});
       bbox.x2 = std::max({pts.x[0], pts.x[1], pts.x[2], pts.x[3]});
@@ -156,7 +156,7 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *v
       bbox.score = score;
     }
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts &c_pts,
@@ -227,8 +227,8 @@ bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts
           cv::Point2f(LICENSE_PLATE_WIDTH, LICENSE_PLATE_HEIGHT),
           cv::Point2f(0, LICENSE_PLATE_HEIGHT),
       };
-#ifdef ENABLE_CVIAI_CV_UTILS
-      cv::Mat M = cviai::getPerspectiveTransform(src_points, dst_points);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+      cv::Mat M = cvitdl::getPerspectiveTransform(src_points, dst_points);
 #else
       cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
 #endif
@@ -239,4 +239,4 @@ bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts
   return false;
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

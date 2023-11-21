@@ -4,26 +4,26 @@
 #include <cmath>
 #include <iterator>
 
-#include <core/core/cvai_errno.h>
+#include <core/core/cvtdl_errno.h>
 #include <error_msg.hpp>
 #include <iostream>
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
 #include "yolov8.hpp"
 
-namespace cviai {
-static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int im_height,
+namespace cvitdl {
+static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int im_height,
                                int im_width) {
-  CVI_AI_MemAllocInit(dets.size(), obj);
+  CVI_TDL_MemAllocInit(dets.size(), obj);
   obj->height = im_height;
   obj->width = im_width;
-  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
+  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
 
   for (uint32_t i = 0; i < obj->size; ++i) {
     obj->info[i].bbox.x1 = dets[i]->x1;
@@ -141,7 +141,7 @@ int YoloV8Detection::onModelOpened() {
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 YoloV8Detection::~YoloV8Detection() {}
@@ -149,7 +149,7 @@ YoloV8Detection::~YoloV8Detection() {}
 int YoloV8Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("YoloV8Detection only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   for (int i = 0; i < 3; i++) {
@@ -159,13 +159,13 @@ int YoloV8Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *dat
 
   (*data)[0].format = p_preprocess_cfg_.format;
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int YoloV8Detection::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
+int YoloV8Detection::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     LOGW("YoloV8Detection run inference failed\n");
     return ret;
   }
@@ -179,7 +179,7 @@ int YoloV8Detection::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_
   }
 
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 // the bbox featuremap shape is b x 4*regmax x h x w
@@ -247,7 +247,7 @@ void YoloV8Detection::decode_bbox_feature_map(int stride, int anchor_idx,
 
 void YoloV8Detection::outputParser(const int image_width, const int image_height,
                                    const int frame_width, const int frame_height,
-                                   cvai_object_t *obj_meta) {
+                                   cvtdl_object_t *obj_meta) {
   Detections vec_obj;
   CVI_SHAPE shape = getInputShape(0);
   int nn_width = shape.dim[3];
@@ -312,7 +312,7 @@ void YoloV8Detection::outputParser(const int image_width, const int image_height
 
 void YoloV8Detection::parseDecodeBranch(const int image_width, const int image_height,
                                         const int frame_width, const int frame_height,
-                                        cvai_object_t *obj_meta) {
+                                        cvtdl_object_t *obj_meta) {
   int stride = strides[0];
   TensorInfo oinfo_box = getOutputTensorInfo(bbox_out_names[stride]);
   TensorInfo oinfo_cls = getOutputTensorInfo(class_out_names[stride]);
@@ -390,7 +390,7 @@ void YoloV8Detection::parseDecodeBranch(const int image_width, const int image_h
   postProcess(vec_obj, frame_width, frame_height, obj_meta);
 }
 void YoloV8Detection::postProcess(Detections &dets, int frame_width, int frame_height,
-                                  cvai_object_t *obj_meta) {
+                                  cvtdl_object_t *obj_meta) {
   Detections final_dets = nms_multi_class(dets, m_model_nms_threshold);
   CVI_SHAPE shape = getInputShape(0);
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3]);
@@ -405,5 +405,5 @@ void YoloV8Detection::postProcess(Detections &dets, int frame_width, int frame_h
     obj_meta->height = frame_height;
   }
 }
-// namespace cviai
-}  // namespace cviai
+// namespace cvitdl
+}  // namespace cvitdl

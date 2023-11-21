@@ -3,10 +3,10 @@
 #include <cvi_vpss.h>
 #include "core/utils/vpss_helper.h"
 #include "cvi_comm.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl_media.h"
 #include "gtest.h"
 
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
 // Image
@@ -16,7 +16,7 @@ Image::Image(const std::string &file, PIXEL_FORMAT_E format)
 
 Image::~Image() {
   if (m_opened) {
-    CVI_AI_ReleaseImage(&m_frame);
+    CVI_TDL_ReleaseImage(&m_frame);
   }
 }
 
@@ -31,7 +31,7 @@ bool Image::open() {
       return false;
     }
   } else {
-    if (CVI_AI_ReadImage(m_filepath.c_str(), &m_frame, m_format) != CVI_SUCCESS) {
+    if (CVI_TDL_ReadImage(m_filepath.c_str(), &m_frame, m_format) != CVI_SUCCESS) {
       m_width = m_frame.stVFrame.u32Width;
       m_height = m_frame.stVFrame.u32Height;
       return false;
@@ -43,33 +43,34 @@ bool Image::open() {
 }
 
 bool Image::createEmpty() {
-  return CREATE_ION_HELPER(&m_frame, m_width, m_height, m_format, "cviai/image") == CVIAI_SUCCESS;
+  return CREATE_ION_HELPER(&m_frame, m_width, m_height, m_format, "cvitdl/image") ==
+         CVI_TDL_SUCCESS;
 }
 
-// AIModelHandler
+// TDLModelHandler
 ///////////////////////////////////
-AIModelHandler::AIModelHandler(cviai_handle_t handle, CVI_AI_SUPPORTED_MODEL_E index,
-                               const std::string &model_path, bool skip_vpsspreprocess)
+TDLModelHandler::TDLModelHandler(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E index,
+                                 const std::string &model_path, bool skip_vpsspreprocess)
     : m_is_model_opened(false),
       m_handle(handle),
       m_model_index(index),
       m_model_path(model_path),
       m_skip_vpsspreprocess(skip_vpsspreprocess) {}
 
-AIModelHandler::~AIModelHandler() { close(); }
+TDLModelHandler::~TDLModelHandler() { close(); }
 
-void AIModelHandler::close() {
+void TDLModelHandler::close() {
   if (m_is_model_opened) {
-    ASSERT_EQ(CVI_AI_CloseModel(m_handle, m_model_index), CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_CloseModel(m_handle, m_model_index), CVI_TDL_SUCCESS);
   }
 }
 
-void AIModelHandler::open() {
+void TDLModelHandler::open() {
   if (!m_is_model_opened) {
-    ASSERT_EQ(CVI_AI_OpenModel(m_handle, m_model_index, m_model_path.c_str()), CVIAI_SUCCESS)
+    ASSERT_EQ(CVI_TDL_OpenModel(m_handle, m_model_index, m_model_path.c_str()), CVI_TDL_SUCCESS)
         << "failed to set model path: " << m_model_path;
-    ASSERT_EQ(CVI_AI_SetSkipVpssPreprocess(m_handle, m_model_index, m_skip_vpsspreprocess),
-              CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_SetSkipVpssPreprocess(m_handle, m_model_index, m_skip_vpsspreprocess),
+              CVI_TDL_SUCCESS);
     m_is_model_opened = true;
   }
 }
@@ -132,7 +133,7 @@ void VpssPreprocessor::setGrpConfig(uint32_t width, uint32_t height, PIXEL_FORMA
   ASSERT_EQ(CVI_VPSS_SetGrpAttr(m_grp_id, &vpss_grp_attr), CVI_SUCCESS);
 }
 
-void VpssPreprocessor::setChnConfig(const cvai_vpssconfig_t &chn_config) {
+void VpssPreprocessor::setChnConfig(const cvtdl_vpssconfig_t &chn_config) {
   m_vpss_chn_config = chn_config;
 }
 
@@ -154,7 +155,7 @@ void VpssPreprocessor::resetVpss(uint32_t width, uint32_t height, PIXEL_FORMAT_E
   ASSERT_EQ(CVI_VPSS_SetChnAttr(m_grp_id, m_chn_id, &m_vpss_chn_config.chn_attr), CVI_SUCCESS);
 }
 
-void VpssPreprocessor::resetVpss(const Image &image, const cvai_vpssconfig_t &chn_config) {
+void VpssPreprocessor::resetVpss(const Image &image, const cvtdl_vpssconfig_t &chn_config) {
   m_grp_width = image.getFrame()->stVFrame.u32Width;
   m_grp_height = image.getFrame()->stVFrame.u32Height;
   m_format = image.getFrame()->stVFrame.enPixelFormat;
@@ -168,4 +169,4 @@ void VpssPreprocessor::resetVpss(const Image &image, const cvai_vpssconfig_t &ch
 }
 
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

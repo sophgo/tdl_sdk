@@ -3,9 +3,9 @@
 #include <iterator>
 
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "yolov8_pose.hpp"
@@ -18,7 +18,7 @@
 #define B_MEAN 0
 #define NMS_THRESH 0.7  // official: 0.7
 
-namespace cviai {
+namespace cvitdl {
 
 template <typename T>
 inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor_idx, float qscale,
@@ -82,13 +82,13 @@ int YoloV8Pose::onModelOpened() {
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int YoloV8Pose::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("YoloV8Pose only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   (*data)[0].factor[0] = R_SCALE;
@@ -100,13 +100,13 @@ int YoloV8Pose::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   (*data)[0].use_quantize_scale = true;
   // (*data)[0].rescale_type = RESCALE_RB;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int YoloV8Pose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
+int YoloV8Pose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     LOGW("YoloV8Pose run inference failed\n");
     return ret;
   }
@@ -117,7 +117,7 @@ int YoloV8Pose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta)
                srcFrame->stVFrame.u32Height, obj_meta);
 
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 // the bbox featuremap shape is b x 4*regmax x h x w
@@ -228,7 +228,7 @@ void YoloV8Pose::decode_keypoints_feature_map(int stride, int anchor_idx,
 }
 
 void YoloV8Pose::outputParser(const int image_width, const int image_height, const int frame_width,
-                              const int frame_height, cvai_object_t *obj_meta) {
+                              const int frame_height, cvtdl_object_t *obj_meta) {
   Detections vec_obj;
   CVI_SHAPE shape = getInputShape(0);
   int nn_width = shape.dim[3];
@@ -288,17 +288,17 @@ void YoloV8Pose::outputParser(const int image_width, const int image_height, con
 }
 
 void YoloV8Pose::postProcess(Detections &dets, int frame_width, int frame_height,
-                             cvai_object_t *obj, std::vector<std::pair<int, int>> &valild_pairs) {
+                             cvtdl_object_t *obj, std::vector<std::pair<int, int>> &valild_pairs) {
   CVI_SHAPE shape = getInputShape(0);
 
   std::vector<int> keep(dets.size(), 0);
 
   Detections final_dets = nms_multi_class_with_ids(dets, NMS_THRESH, keep);
 
-  CVI_AI_MemAllocInit(final_dets.size(), obj);
+  CVI_TDL_MemAllocInit(final_dets.size(), obj);
   obj->height = shape.dim[2];
   obj->width = shape.dim[3];
-  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
+  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
 
   for (uint32_t i = 0; i < final_dets.size(); i++) {
     obj->info[i].bbox.x1 = final_dets[i]->x1;
@@ -309,7 +309,7 @@ void YoloV8Pose::postProcess(Detections &dets, int frame_width, int frame_height
     obj->info[i].classes = final_dets[i]->label;
 
     obj->info[i].pedestrian_properity =
-        (cvai_pedestrian_meta *)malloc(sizeof(cvai_pedestrian_meta));
+        (cvtdl_pedestrian_meta *)malloc(sizeof(cvtdl_pedestrian_meta));
 
     std::pair<int, int> final_ids = valild_pairs[keep[i]];
 
@@ -333,4 +333,4 @@ void YoloV8Pose::postProcess(Detections &dets, int frame_width, int frame_height
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

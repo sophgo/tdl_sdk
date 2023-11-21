@@ -1,5 +1,5 @@
 #pragma once
-#include "core/object/cvai_object_types.h"
+#include "core/object/cvtdl_object_types.h"
 
 // #include <deque>
 #include <iostream>
@@ -8,7 +8,7 @@
 class FallDet {
  public:
   FallDet(int id);
-  void detect(cvai_object_info_t* meta, float fps);
+  void detect(cvtdl_object_info_t* meta, float fps);
   void update_queue(std::queue<int>& q, int val);
   std::queue<int> valid_list;
 
@@ -21,9 +21,9 @@ class FallDet {
  private:
   void get_kps(std::vector<std::pair<float, float>>& val_list, int index, float* x, float* y);
   float human_orientation();
-  bool keypoints_useful(cvai_pose17_meta_t* kps_meta);
-  float body_box_calculation(cvai_bbox_t* bbox);
-  float speed_detection(cvai_bbox_t* bbox, cvai_pose17_meta_t* kps_meta, float fps);
+  bool keypoints_useful(cvtdl_pose17_meta_t* kps_meta);
+  float body_box_calculation(cvtdl_bbox_t* bbox);
+  float speed_detection(cvtdl_bbox_t* bbox, cvtdl_pose17_meta_t* kps_meta, float fps);
   int elem_count(std::queue<int>& q);
   //   void update_queue(std::queue<int>& q, int val);
   int action_analysis(float human_angle, float aspect_ratio, float moving_speed);

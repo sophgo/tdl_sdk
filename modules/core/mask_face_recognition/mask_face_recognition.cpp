@@ -1,9 +1,9 @@
 #include "mask_face_recognition.hpp"
 
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
-#include "core/face/cvai_face_helper.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
+#include "core/face/cvtdl_face_helper.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
@@ -14,7 +14,7 @@
 
 #define FACE_OUT_NAME "pre_fc1"
 
-namespace cviai {
+namespace cvitdl {
 
 MaskFaceRecognition::MaskFaceRecognition() : Core(CVI_MEM_DEVICE) {}
 
@@ -23,21 +23,21 @@ MaskFaceRecognition::~MaskFaceRecognition() {}
 int MaskFaceRecognition::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Face attribute only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   for (uint32_t i = 0; i < 3; i++) {
     (*data)[0].factor[i] = FACE_ATTRIBUTE_SCALE;
     (*data)[0].mean[i] = FACE_ATTRIBUTE_MEAN;
   }
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int MaskFaceRecognition::onModelOpened() { return allocateION(); }
 
 int MaskFaceRecognition::onModelClosed() {
   releaseION();
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 CVI_S32 MaskFaceRecognition::allocateION() {
@@ -45,9 +45,9 @@ CVI_S32 MaskFaceRecognition::allocateION() {
   if (CREATE_ION_HELPER(&m_wrap_frame, shape.dim[3], shape.dim[2], PIXEL_FORMAT_RGB_888, "tpu") !=
       CVI_SUCCESS) {
     LOGE("Cannot allocate ion for preprocess\n");
-    return CVIAI_ERR_ALLOC_ION_FAIL;
+    return CVI_TDL_ERR_ALLOC_ION_FAIL;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void MaskFaceRecognition::releaseION() {
@@ -62,7 +62,7 @@ void MaskFaceRecognition::releaseION() {
   }
 }
 
-int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta) {
+int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta) {
   uint32_t img_width = frame->stVFrame.u32Width;
   uint32_t img_height = frame->stVFrame.u32Height;
   cv::Mat image(img_height, img_width, CV_8UC3);
@@ -80,7 +80,7 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
   frame->stVFrame.pu8VirAddr[0] = NULL;
 
   for (uint32_t i = 0; i < meta->size; ++i) {
-    cvai_face_info_t face_info =
+    cvtdl_face_info_t face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *meta, i);
     cv::Mat warp_image(cv::Size(m_wrap_frame.stVFrame.u32Width, m_wrap_frame.stVFrame.u32Height),
                        image.type(), m_wrap_frame.stVFrame.pu8VirAddr[0],
@@ -92,21 +92,21 @@ int MaskFaceRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta)
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {&m_wrap_frame};
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       return ret;
     }
     outputParser(meta, i);
-    CVI_AI_FreeCpp(&face_info);
+    CVI_TDL_FreeCpp(&face_info);
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-void MaskFaceRecognition::outputParser(cvai_face_t *meta, int meta_i) {
+void MaskFaceRecognition::outputParser(cvtdl_face_t *meta, int meta_i) {
   int8_t *face_blob = getOutputRawPtr<int8_t>(FACE_OUT_NAME);
   size_t face_feature_size = getOutputTensorElem(FACE_OUT_NAME);
 
-  CVI_AI_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &meta->info[meta_i].feature);
+  CVI_TDL_MemAlloc(sizeof(int8_t), face_feature_size, TYPE_INT8, &meta->info[meta_i].feature);
   memcpy(meta->info[meta_i].feature.ptr, face_blob, face_feature_size);
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

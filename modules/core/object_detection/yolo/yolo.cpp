@@ -4,16 +4,16 @@
 #include <cmath>
 #include <iterator>
 
-#include <core/core/cvai_errno.h>
+#include <core/core/cvtdl_errno.h>
 #include <error_msg.hpp>
 #include <iostream>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
@@ -35,14 +35,14 @@ int yolo_max_val(int x, int y) {
   return y;
 }
 
-namespace cviai {
+namespace cvitdl {
 
-static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int im_height,
+static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int im_height,
                                int im_width) {
-  CVI_AI_MemAllocInit(dets.size(), obj);
+  CVI_TDL_MemAllocInit(dets.size(), obj);
   obj->height = im_height;
   obj->width = im_width;
-  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
+  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
 
   for (uint32_t i = 0; i < obj->size; ++i) {
     obj->info[i].bbox.x1 = dets[i]->x1;
@@ -76,7 +76,7 @@ int Yolo::onModelOpened() {
            output_shape.dim[2], output_shape.dim[3]);
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 Yolo::~Yolo() {}
@@ -84,7 +84,7 @@ Yolo::~Yolo() {}
 int Yolo::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Yolo only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   for (int i = 0; i < 3; i++) {
@@ -94,7 +94,7 @@ int Yolo::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
 
   (*data)[0].format = p_preprocess_cfg_.format;
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Yolo::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -113,21 +113,21 @@ int Yolo::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
   if (ret != CVI_SUCCESS) {
     LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_SEND_FRAME;
+    return CVI_TDL_ERR_VPSS_SEND_FRAME;
   }
 
   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   if (ret != CVI_SUCCESS) {
     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_GET_FRAME;
+    return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int Yolo::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
+int Yolo::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     LOGE("Yolo run inference failed!\n");
     return ret;
   }
@@ -137,7 +137,7 @@ int Yolo::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, obj_meta);
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void yolo_xywh2xxyy(float x, float y, float w, float h, PtrDectRect &det) {
@@ -202,7 +202,7 @@ void Yolo::getYoloDetections(int8_t *ptr_int8, float *ptr_float, int num_per_pix
   }
 }
 
-void Yolo::clip_bbox(int frame_width, int frame_height, cvai_bbox_t *bbox) {
+void Yolo::clip_bbox(int frame_width, int frame_height, cvtdl_bbox_t *bbox) {
   if (bbox->x1 < 0) {
     bbox->x1 = 0;
   } else if (bbox->x1 > frame_width) {
@@ -228,9 +228,9 @@ void Yolo::clip_bbox(int frame_width, int frame_height, cvai_bbox_t *bbox) {
   }
 }
 
-cvai_bbox_t Yolo::Yolo_box_rescale(int frame_width, int frame_height, int width, int height,
-                                   cvai_bbox_t bbox) {
-  cvai_bbox_t rescale_bbox;
+cvtdl_bbox_t Yolo::Yolo_box_rescale(int frame_width, int frame_height, int width, int height,
+                                    cvtdl_bbox_t bbox) {
+  cvtdl_bbox_t rescale_bbox;
   int max_board = yolo_max_val(frame_width, frame_height);
   float ratio = float(max_board) / float(width);
   rescale_bbox.x1 = int(bbox.x1 * ratio);
@@ -243,7 +243,7 @@ cvai_bbox_t Yolo::Yolo_box_rescale(int frame_width, int frame_height, int width,
 }
 
 void Yolo::YoloPostProcess(Detections &dets, int frame_width, int frame_height,
-                           cvai_object_t *obj_meta) {
+                           cvtdl_object_t *obj_meta) {
   Detections final_dets = nms_multi_class(dets, m_model_nms_threshold);
   CVI_SHAPE shape = getInputShape(0);
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3]);
@@ -259,7 +259,7 @@ void Yolo::YoloPostProcess(Detections &dets, int frame_width, int frame_height,
 }
 
 void Yolo::outputParser(const int image_width, const int image_height, const int frame_width,
-                        const int frame_height, cvai_object_t *obj_meta) {
+                        const int frame_height, cvtdl_object_t *obj_meta) {
   return;
 
   Detections vec_obj;
@@ -280,5 +280,5 @@ void Yolo::outputParser(const int image_width, const int image_height, const int
 
   YoloPostProcess(vec_obj, frame_width, frame_height, obj_meta);
 }
-// namespace cviai
-}  // namespace cviai
+// namespace cvitdl
+}  // namespace cvitdl

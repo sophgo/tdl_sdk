@@ -1,9 +1,9 @@
 
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "cvi_deepsort.hpp"
 #include "cvi_deepsort_utils.hpp"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -135,7 +135,7 @@ MatchResult get_init_match_result(const std::vector<stObjInfo> &dets,
 }
 
 void DeepSORT::consumer_counting_fun(stObjInfo obj, int index,
-                                     const cvai_counting_line_t *counting_line_t,
+                                     const cvtdl_counting_line_t *counting_line_t,
                                      const randomRect *rect) {
   float pre_x = k_trackers[index].old_x;
   float pre_y = k_trackers[index].old_y;
@@ -206,7 +206,7 @@ void DeepSORT::update_pair_info(std::vector<stObjInfo> &dets_a, std::vector<stOb
 
 MatchResult DeepSORT::get_match_result(MatchResult &prev_match, const std::vector<BBOX> &BBoxes,
                                        const std::vector<FEATURE> &Features, bool use_reid,
-                                       float crowd_iou_thresh, cvai_deepsort_config_t *conf) {
+                                       float crowd_iou_thresh, cvtdl_deepsort_config_t *conf) {
   std::vector<std::pair<int, int>> matched_pairs;
   std::vector<int> unmatched_bbox_idxes = prev_match.unmatched_bbox_idxes;
 
@@ -316,7 +316,7 @@ MatchResult DeepSORT::get_match_result_consumer_counting(MatchResult &prev_match
                                                          const std::vector<BBOX> &BBoxes,
                                                          const std::vector<FEATURE> &Features,
                                                          bool use_reid, float crowd_iou_thresh,
-                                                         cvai_deepsort_config_t *conf, bool is_ped,
+                                                         cvtdl_deepsort_config_t *conf, bool is_ped,
                                                          std::vector<stObjInfo> &objs) {
   std::vector<std::pair<int, int>> matched_pairs;
   std::vector<int> unmatched_bbox_idxes = prev_match.unmatched_bbox_idxes;
@@ -480,7 +480,7 @@ void DeepSORT::get_pair_trackids(std::map<int, std::vector<stObjInfo>> &cls_objs
   }
 }
 
-void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
+void DeepSORT::update_tracks(cvtdl_deepsort_config_t *conf,
                              std::map<int, std::vector<stObjInfo>> &cls_objs) {
   // update matched tracks
   std::map<uint64_t, int> processed_tracks;
@@ -639,14 +639,14 @@ void DeepSORT::update_tracks(cvai_deepsort_config_t *conf,
   }
 }
 
-CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker_t *tracker) {
+CVI_S32 DeepSORT::track_fuse(cvtdl_object_t *ped, cvtdl_face_t *face, cvtdl_tracker_t *tracker) {
 #ifdef DEBUG_CAPTURE
   std::cout << "start to track_fuse,face num:" << face->size << ",pedsize:" << ped->size
             << ",frameid:" << frame_id_ << std::endl;
   show_INFO_KalmanTrackers();
 #endif
 
-  cvai_deepsort_config_t *conf;
+  cvtdl_deepsort_config_t *conf;
   auto it_conf = specific_conf.find(0);
   if (it_conf != specific_conf.end()) {
     conf = &it_conf->second;
@@ -728,7 +728,7 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
   MatchResult ped_res =
       get_init_match_result(cls_objs[ped_label], k_trackers, track_indices_, ped_label);
 
-  cvai_deepsort_config_t ped_cfg = *conf;
+  cvtdl_deepsort_config_t ped_cfg = *conf;
   ped_cfg.max_distance_iou = 0.6;
   ped_cfg.kfilter_conf.chi2_threshold *= 0.85;
   ped_cfg.ktracker_conf.max_unmatched_num = 15;
@@ -812,11 +812,11 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
     }
     auto *p_track = &k_trackers[index];
     if (p_track->ages_ == 1) {
-      face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      face->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (p_track->tracker_state == k_tracker_state_e::PROBATION) {
-      face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      face->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (p_track->tracker_state == k_tracker_state_e::ACCREDITATION) {
-      face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      face->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       printf("track unknown type error\n");
@@ -825,16 +825,16 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
   }
   int tsdiff = current_timestamp_ - last_timestamp_;
   float sec = tsdiff / 1000.0;
-  CVI_AI_MemAlloc(face_tracks_inds.size(), tracker);
+  CVI_TDL_MemAlloc(face_tracks_inds.size(), tracker);
   for (uint32_t i = 0; i < tracker->size; i++) {
     memset(&tracker->info[i], 0, sizeof(tracker->info[i]));
     auto *p_track = &k_trackers[face_tracks_inds[i]];
     if (p_track->ages_ == 1) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (p_track->tracker_state == k_tracker_state_e::PROBATION) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (p_track->tracker_state == k_tracker_state_e::ACCREDITATION) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       printf("track unknown type error\n");
@@ -872,10 +872,10 @@ CVI_S32 DeepSORT::track_fuse(cvai_object_t *ped, cvai_face_t *face, cvai_tracker
   std::cout << "finish track,face num:" << face->size << std::endl;
   show_INFO_KalmanTrackers();
 #endif
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-void DeepSORT::update_out_num(cvai_tracker_t *tracker) {
+void DeepSORT::update_out_num(cvtdl_tracker_t *tracker) {
   for (uint32_t i = 0; i < tracker->size; i++) {
     uint32_t trackid = tracker->info[i].id;
     int index = track_indices_[trackid];
@@ -889,39 +889,39 @@ void DeepSORT::update_out_num(cvai_tracker_t *tracker) {
   }
 }
 
-CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *tracker, bool use_reid,
-                                 cvai_object_t *head, cvai_object_t *ped,
-                                 const cvai_counting_line_t *counting_line_t,
+CVI_S32 DeepSORT::track_headfuse(cvtdl_object_t *origin_obj, cvtdl_tracker_t *tracker,
+                                 bool use_reid, cvtdl_object_t *head, cvtdl_object_t *ped,
+                                 const cvtdl_counting_line_t *counting_line_t,
                                  const randomRect *rect) {
   {
-    std::map<int, std::vector<cvai_object_info_t>> tmp_objs;
+    std::map<int, std::vector<cvtdl_object_info_t>> tmp_objs;
     for (uint32_t i = 0; i < origin_obj->size; i++) {
       if (origin_obj->info[i].classes == 0)
         tmp_objs[0].push_back(origin_obj->info[i]);
       else
         tmp_objs[1].push_back(origin_obj->info[i]);
     }
-    CVI_AI_MemAllocInit(tmp_objs[0].size(), head);
-    CVI_AI_MemAllocInit(tmp_objs[1].size(), ped);
-    memset(head->info, 0, sizeof(cvai_object_info_t) * head->size);
+    CVI_TDL_MemAllocInit(tmp_objs[0].size(), head);
+    CVI_TDL_MemAllocInit(tmp_objs[1].size(), ped);
+    memset(head->info, 0, sizeof(cvtdl_object_info_t) * head->size);
     head->rescale_type = origin_obj->rescale_type;
     head->height = origin_obj->height;
     head->width = origin_obj->width;
     for (uint32_t i = 0; i < tmp_objs[0].size(); i++) {
-      memcpy(&head->info[i].bbox, &tmp_objs[0][i].bbox, sizeof(cvai_bbox_t));
+      memcpy(&head->info[i].bbox, &tmp_objs[0][i].bbox, sizeof(cvtdl_bbox_t));
       head->info[i].classes = 0;
     }
 
-    memset(ped->info, 0, sizeof(cvai_object_info_t) * ped->size);
+    memset(ped->info, 0, sizeof(cvtdl_object_info_t) * ped->size);
     ped->rescale_type = origin_obj->rescale_type;
     ped->height = origin_obj->height;
     ped->width = origin_obj->width;
     for (uint32_t i = 0; i < tmp_objs[1].size(); i++) {
-      memcpy(&ped->info[i].bbox, &tmp_objs[1][i].bbox, sizeof(cvai_bbox_t));
+      memcpy(&ped->info[i].bbox, &tmp_objs[1][i].bbox, sizeof(cvtdl_bbox_t));
       ped->info[i].classes = 1;
     }
   }
-  CVI_AI_Free(origin_obj);
+  CVI_TDL_Free(origin_obj);
 
 #ifdef DEBUG_CAPTURE
   std::cout << "start to track_fuse,head num:" << head->size << ",pedsize:" << ped->size
@@ -929,7 +929,7 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
   show_INFO_KalmanTrackers();
 #endif
 
-  cvai_deepsort_config_t *conf;
+  cvtdl_deepsort_config_t *conf;
   auto it_conf = specific_conf.find(0);
   if (it_conf != specific_conf.end()) {
     conf = &it_conf->second;
@@ -1013,7 +1013,7 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
   MatchResult ped_res =
       get_init_match_result(cls_objs[ped_label], k_trackers, track_indices_, ped_label);
 
-  cvai_deepsort_config_t ped_cfg = *conf;
+  cvtdl_deepsort_config_t ped_cfg = *conf;
   ped_cfg.max_distance_iou = 0.6;
   ped_cfg.kfilter_conf.chi2_threshold = 0.6;
   ped_cfg.ktracker_conf.max_unmatched_num = 15;
@@ -1166,27 +1166,27 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
     }
     auto *p_track = &k_trackers[index];
     if (p_track->ages_ == 1) {
-      head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      head->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (p_track->tracker_state == k_tracker_state_e::PROBATION) {
-      head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      head->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (p_track->tracker_state == k_tracker_state_e::ACCREDITATION) {
-      head->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      head->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       printf("track unknown type error\n");
       continue;
     }
   }
-  CVI_AI_MemAlloc(head_tracks_inds.size(), tracker);
+  CVI_TDL_MemAlloc(head_tracks_inds.size(), tracker);
   for (uint32_t i = 0; i < tracker->size; i++) {
     memset(&tracker->info[i], 0, sizeof(tracker->info[i]));
     auto *p_track = &k_trackers[head_tracks_inds[i]];
     if (p_track->ages_ == 1) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (p_track->tracker_state == k_tracker_state_e::PROBATION) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (p_track->tracker_state == k_tracker_state_e::ACCREDITATION) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       printf("track unknown type error\n");
@@ -1205,5 +1205,5 @@ CVI_S32 DeepSORT::track_headfuse(cvai_object_t *origin_obj, cvai_tracker_t *trac
   std::cout << "finish track,head num:" << head->size << std::endl;
   show_INFO_KalmanTrackers();
 #endif
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }

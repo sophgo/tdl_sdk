@@ -6,7 +6,7 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #define CC_MAX_NUM_LABELS 200
 #define MAX_CC_OBJECTS 200
 

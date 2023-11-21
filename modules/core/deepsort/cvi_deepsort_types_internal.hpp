@@ -3,8 +3,8 @@
 
 #include <Eigen/Eigen>
 #include <vector>
-#include "core/cviai_core.h"
-#include "core/deepsort/cvai_deepsort_types.h"
+#include "core/cvi_tdl_core.h"
+#include "core/deepsort/cvtdl_deepsort_types.h"
 typedef Eigen::Matrix<float, 1, 4> BBOX;
 typedef Eigen::Matrix<float, -1, 4> BBOXES;
 typedef Eigen::Matrix<float, 1, -1> FEATURE;
@@ -27,7 +27,7 @@ struct stRect {
 
 typedef struct _stObjInfo {
   int src_idx;
-  cvai_bbox_t box;
+  cvtdl_bbox_t box;
   uint64_t track_id;
   int classes;
   int pair_obj_id;

@@ -8,12 +8,12 @@
 #include <numeric>
 #include <string>
 
-#include <core/core/cvai_errno.h>
+#include <core/core/cvtdl_errno.h>
 #include <error_msg.hpp>
 #include "coco_utils.hpp"
-#include "core/core/cvai_core_types.h"
-#include "core/cviai_types_mem_internal.h"
-#include "core/object/cvai_object_types.h"
+#include "core/core/cvtdl_core_types.h"
+#include "core/cvi_tdl_types_mem_internal.h"
+#include "core/object/cvtdl_object_types.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_comm.h"
@@ -39,7 +39,7 @@ static const float MODEL_MEAN_B = 0.406 * 255.0;
 
 using namespace std;
 
-namespace cviai {
+namespace cvitdl {
 using MDetV2Config = MobileDetV2::CvimodelInfo;
 int get_level(int val) {
   int num_level = 0;
@@ -49,15 +49,15 @@ int get_level(int val) {
   }
   return num_level;
 }
-static void convert_det_struct(const Detections &dets, cvai_object_t *out, int im_height,
+static void convert_det_struct(const Detections &dets, cvtdl_object_t *out, int im_height,
                                int im_width, meta_rescale_type_e type,
                                const MobileDetV2::CvimodelInfo &config) {
-  CVI_AI_MemAllocInit(dets.size(), out);
+  CVI_TDL_MemAllocInit(dets.size(), out);
   out->height = im_height;
   out->width = im_width;
   out->rescale_type = type;
 
-  memset(out->info, 0, sizeof(cvai_object_info_t) * out->size);
+  memset(out->info, 0, sizeof(cvtdl_object_info_t) * out->size);
   for (uint32_t i = 0; i < out->size; ++i) {
     out->info[i].bbox.x1 = dets[i]->x1;
     out->info[i].bbox.y1 = dets[i]->y1;
@@ -132,7 +132,7 @@ void MobileDetV2::setModelThreshold(float threshold) {
 int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Mobiledetv2 only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = static_cast<float>(FACTOR_R);
   (*data)[0].factor[1] = static_cast<float>(FACTOR_G);
@@ -143,7 +143,7 @@ int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].use_quantize_scale = true;
   (*data)[0].rescale_type = RESCALE_RB;
   (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -157,16 +157,16 @@ int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S
   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
   if (ret != CVI_SUCCESS) {
     LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_SEND_FRAME;
+    return CVI_TDL_ERR_VPSS_SEND_FRAME;
   }
 
   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   if (ret != CVI_SUCCESS) {
     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_GET_FRAME;
+    return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int MobileDetV2::onModelOpened() {
@@ -246,7 +246,7 @@ int MobileDetV2::onModelOpened() {
 
   m_quant_inverse_score_threshold = constructInverseThresh(
       m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void MobileDetV2::generate_dets_for_tensor(Detections *det_vec, float class_dequant_thresh,
@@ -337,7 +337,7 @@ void MobileDetV2::select_classes(const std::vector<uint32_t> &selected_classes) 
   }
 }
 
-int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *meta) {
+int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *meta) {
   int ret = CVI_SUCCESS;
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
 
@@ -414,42 +414,42 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2::Category model) {
     case Category::person_vehicle:
       config.num_classes = 6;
       config.class_id_map = [](int orig_id) {
-        if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);
-        if (orig_id == 1) return static_cast<int>(CVI_AI_DET_TYPE_BICYCLE);
-        if (orig_id == 2) return static_cast<int>(CVI_AI_DET_TYPE_CAR);
-        if (orig_id == 3) return static_cast<int>(CVI_AI_DET_TYPE_MOTORBIKE);
-        if (orig_id == 4) return static_cast<int>(CVI_AI_DET_TYPE_BUS);
-        if (orig_id == 5) return static_cast<int>(CVI_AI_DET_TYPE_TRUCK);
-        return static_cast<int>(CVI_AI_DET_TYPE_END);
+        if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
+        if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_BICYCLE);
+        if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_CAR);
+        if (orig_id == 3) return static_cast<int>(CVI_TDL_DET_TYPE_MOTORBIKE);
+        if (orig_id == 4) return static_cast<int>(CVI_TDL_DET_TYPE_BUS);
+        if (orig_id == 5) return static_cast<int>(CVI_TDL_DET_TYPE_TRUCK);
+        return static_cast<int>(CVI_TDL_DET_TYPE_END);
       };
       break;
     case Category::person_pets:
       config.num_classes = 3;
       config.class_id_map = [](int orig_id) {
-        if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);
-        if (orig_id == 1) return static_cast<int>(CVI_AI_DET_TYPE_CAT);
-        if (orig_id == 2) return static_cast<int>(CVI_AI_DET_TYPE_DOG);
-        return static_cast<int>(CVI_AI_DET_TYPE_END);
+        if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
+        if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_CAT);
+        if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_DOG);
+        return static_cast<int>(CVI_TDL_DET_TYPE_END);
       };
       break;
     case Category::vehicle:
       config.num_classes = 3;
       config.class_id_map = [](int orig_id) {
-        if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_CAR);
-        if (orig_id == 1) return static_cast<int>(CVI_AI_DET_TYPE_TRUCK);
-        if (orig_id == 2) return static_cast<int>(CVI_AI_DET_TYPE_MOTORBIKE);
-        return static_cast<int>(CVI_AI_DET_TYPE_END);
+        if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_CAR);
+        if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_TRUCK);
+        if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_MOTORBIKE);
+        return static_cast<int>(CVI_TDL_DET_TYPE_END);
       };
       break;
     case Category::pedestrian:
       config.num_classes = 1;
       config.class_id_map = [](int orig_id) {
-        if (orig_id == 0) return static_cast<int>(CVI_AI_DET_TYPE_PERSON);
-        return static_cast<int>(CVI_AI_DET_TYPE_END);
+        if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
+        return static_cast<int>(CVI_TDL_DET_TYPE_END);
       };
       break;
   }
 
   return config;
 }
-}  // namespace cviai
+}  // namespace cvitdl

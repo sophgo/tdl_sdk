@@ -1,5 +1,5 @@
 #pragma once
-#include "core/object/cvai_object_types.h"
+#include "core/object/cvtdl_object_types.h"
 
 #include <deque>
 #include <iostream>
@@ -21,7 +21,7 @@ class FixedQueue : public std::queue<T, Container> {
 class FallMD {
  public:
   FallMD();
-  int detect(cvai_object_t* meta);
+  int detect(cvtdl_object_t* meta);
 
  private:
   FixedQueue<float, HISTORY_UPDATE> history_q_extra_pred_x;

@@ -6,7 +6,7 @@ pushd $TMP_WORKING_DIR
 doxygen Doxyfile
 pushd latex
 make
-cp refman.pdf ../cviai.pdf
+cp refman.pdf ../cvitdl.pdf
 popd
 rm -r latex
 popd

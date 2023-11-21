@@ -43,6 +43,8 @@ message("Content downloaded to ${libeigen_SOURCE_DIR}")
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/libeigen-src/include/eigen3)
 
+set(BUILD_GMOCK OFF CACHE BOOL "Build GMOCK")
+set(INSTALL_GTEST OFF CACHE BOOL "Install GMOCK")
 if (NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/googletest-src")
 FetchContent_Declare(
   googletest
@@ -93,7 +95,7 @@ endif()
 set(stb_SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/stb-src)
 include_directories(${stb_SOURCE_DIR})
 
-install(DIRECTORY  ${stb_SOURCE_DIR}/ DESTINATION include/stb
+install(DIRECTORY  ${stb_SOURCE_DIR}/ DESTINATION sample/3rd/include/stb
     FILES_MATCHING PATTERN "*.h"
     PATTERN ".git" EXCLUDE
     PATTERN ".github" EXCLUDE

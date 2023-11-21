@@ -30,6 +30,7 @@ function(buildninstallcpp)
   # foreach(src ${PARSED_ARGS_SRCS})
   #   message("- ${src}")
   # endforeach(src)
+  set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "VERBOSE")
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PARSED_ARGS_SRCS})
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
@@ -38,12 +39,14 @@ endfunction(buildninstallcpp)
 
 
 set(SAMPLE_INC
-${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_app
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_evaluation
     ${MIDDLEWARE_SDK_ROOT}/include
     ${IVE_INCLUDES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../preprocess
-    ${CMAKE_CURRENT_SOURCE_DIR}/../md
-    ${CMAKE_CURRENT_SOURCE_DIR}/../draw_rect
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cvi_preprocess
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cvi_md
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cvi_draw_rect
 )
 
 set(SAMPLE_LIBS
@@ -86,3 +89,6 @@ buildninstallcpp(NAME sample_lib_draw_rect INC ${SAMPLE_INC} DEPS cvi_draw_rect 
 endif()
 buildninstallcpp(NAME sample_lib_cvimd INC  ${SAMPLE_INC} DEPS cvi_md ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
 buildninstallcpp(NAME sample_lib_preprocess INC ${SAMPLE_INC} DEPS cvi_preprocess ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
+
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation DESTINATION sample/include/)
+

@@ -1,18 +1,18 @@
 #pragma once
 #include <cvi_comm_vb.h>
 #include "core.hpp"
-#include "core/face/cvai_face_types.h"
+#include "core/face/cvtdl_face_types.h"
 
-namespace cviai {
+namespace cvitdl {
 
 class MaskFaceRecognition final : public Core {
  public:
   MaskFaceRecognition();
   virtual ~MaskFaceRecognition();
-  int inference(VIDEO_FRAME_INFO_S *frame, cvai_face_t *meta);
+  int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta);
 
  private:
-  void outputParser(cvai_face_t *meta, int meta_i);
+  void outputParser(cvtdl_face_t *meta, int meta_i);
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;
   virtual int onModelClosed() override;
@@ -21,4 +21,4 @@ class MaskFaceRecognition final : public Core {
 
   VIDEO_FRAME_INFO_S m_wrap_frame;
 };
-}  // namespace cviai
+}  // namespace cvitdl

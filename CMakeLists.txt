@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18.4)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-project(cviai)
+project(cvitdl)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
@@ -187,7 +187,4 @@ add_subdirectory(regression)
 add_subdirectory(tool)
 endif()
 endif()
-
-# Install doc
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc DESTINATION doc)
 

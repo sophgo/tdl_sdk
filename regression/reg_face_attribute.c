@@ -9,10 +9,10 @@
 
 #include <cvimath/cvimath.h>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_perfetto.h"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_perfetto.h"
 
 #define FEATURE_LENGTH 512
 #define NAME_LENGTH 1024
@@ -23,7 +23,7 @@
 #define IN_FEATURE_DIR "/in_db_feature/"
 #define NOT_FEATURE_DIR "/not_db_feature/"
 
-cviai_handle_t facelib_handle = NULL;
+cvitdl_handle_t facelib_handle = NULL;
 
 static VPSS_GRP VpssGrp = 0;
 static CVI_S32 vpssgrp_width = 1920;
@@ -57,13 +57,13 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
   if (0 != mkdir(feature_dir, S_IRWXO) && EEXIST != errno) {
     printf("Create %s failed: %s\n", feature_dir, strerror(errno));
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   if (0 != chmod(feature_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IROTH | S_IWOTH | S_IXOTH | S_IWGRP |
                                   S_IRGRP | S_IXGRP)) {
     printf("chmod %s failed: %s\n", feature_dir, strerror(errno));
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   removePreviousFile(feature_dir);
@@ -76,24 +76,24 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
     printf("%s\n", line);
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_AI_ReadImage(line, &rgb_frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
+    CVI_S32 ret = CVI_TDL_ReadImage(line, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
 
-    cvai_face_t face;
-    memset(&face, 0, sizeof(cvai_face_t));
-    CVI_AI_RetinaFace(facelib_handle, &rgb_frame, &face);
+    cvtdl_face_t face;
+    memset(&face, 0, sizeof(cvtdl_face_t));
+    CVI_TDL_RetinaFace(facelib_handle, &rgb_frame, &face);
     if (face.size > 0 && do_face_quality == true) {
-      CVI_AI_Service_FaceAngleForAll(&face);
-      CVI_AI_FaceQuality(facelib_handle, &rgb_frame, &face, NULL);
+      CVI_TDL_Service_FaceAngleForAll(&face);
+      CVI_TDL_FaceQuality(facelib_handle, &rgb_frame, &face, NULL);
     }
 
     int face_idx = 0;
     float max_area = 0;
     for (int i = 0; i < face.size; i++) {
-      cvai_bbox_t bbox = face.info[i].bbox;
+      cvtdl_bbox_t bbox = face.info[i].bbox;
       float curr_area = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
       if (curr_area > max_area) {
         max_area = curr_area;
@@ -102,7 +102,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     }
 
     if (face.size > 0 && (do_face_quality == false || face.info[face_idx].face_quality > 0.05)) {
-      CVI_AI_FaceAttributeOne(facelib_handle, &rgb_frame, &face, face_idx);
+      CVI_TDL_FaceAttributeOne(facelib_handle, &rgb_frame, &face, face_idx);
 
       char *file_name;
       file_name = strrchr(line, '/');
@@ -116,7 +116,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       FILE *fp_feature;
       if ((fp_feature = fopen(base_name, "w+")) == NULL) {
         printf("Write file %s open failed: %s\n", base_name, strerror(errno));
-        return CVIAI_FAILURE;
+        return CVI_TDL_FAILURE;
       }
       for (int i = 0; i < face.info[face_idx].feature.size; i++) {
         fprintf(fp_feature, "%d\n", (int)face.info[face_idx].feature.ptr[i]);
@@ -124,12 +124,12 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
       fclose(fp_feature);
     }
 
-    CVI_AI_Free(&face);
-    CVI_AI_ReleaseImage(&rgb_frame);
+    CVI_TDL_Free(&face);
+    CVI_TDL_ReleaseImage(&rgb_frame);
   }
   closedir(dirp);
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 static int loadCount(const char *dir_path) {
@@ -272,34 +272,34 @@ int main(int argc, char *argv[]) {
     printf("Face quality model path: Path to face quaity cvimodel.\n");
     printf("Image root dir: Image root directory.\n");
     printf("Feature root dir: Root directory to temporarily save feature file.\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
-  CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_TDL_PerfettoInit();
+  CVI_S32 ret = CVI_TDL_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_CreateHandle(&facelib_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, argv[1]);
-  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
-  ret |= CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, argv[1]);
+  ret |= CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE, argv[2]);
+  ret |= CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_FACEQUALITY, argv[3]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_TDL_SetSkipVpssPreprocess(facelib_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, false);
 
   char db_dir_full[500] = "\0";
   char in_dir_full[500] = "\0";
@@ -325,7 +325,7 @@ int main(int argc, char *argv[]) {
   genFeatureFile(in_dir_full, in_feature_full, false);
   genFeatureFile(not_dir_full, not_feature_full, false);
 
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_TDL_DestroyHandle(facelib_handle);
   CVI_VPSS_StopGrp(VpssGrp);
   CVI_VPSS_DestroyGrp(VpssGrp);
   CVI_SYS_Exit();

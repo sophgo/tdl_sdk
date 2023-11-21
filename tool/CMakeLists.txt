@@ -26,8 +26,7 @@ function(buildninstall)
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.c ${PARSED_ARGS_SRCS})
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
-  install(TARGETS ${PROJECT_NAME} DESTINATION bin/tool)
-  # install(FILES ${PROJECT_NAME}.c DESTINATION tool)
+  #install(TARGETS ${PROJECT_NAME} DESTINATION bin/tool)
 endfunction(buildninstall)
 
 function(buildninstallcpp)
@@ -45,8 +44,7 @@ function(buildninstallcpp)
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PARSED_ARGS_SRCS})
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
-  install(TARGETS ${PROJECT_NAME} DESTINATION bin/tool)
-  # install(FILES ${PROJECT_NAME}.cpp DESTINATION tool)
+  #install(TARGETS ${PROJECT_NAME} DESTINATION bin/tool)
 endfunction(buildninstallcpp)
 
 set(SAMPLE_INC
@@ -54,6 +52,8 @@ set(SAMPLE_INC
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation
     ${MIDDLEWARE_SDK_ROOT}/sample/common
     ${IVE_INCLUDES}
     ${CVI_RTSP_INCLUDE}
@@ -96,14 +96,12 @@ if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" )
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
 
-buildninstall(NAME sample_read_mot INC ${SAMPLE_INC} SRCS utils/od.c sample_mot_utils.c DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME visual_app_face_capture INC ${SAMPLE_INC}  SRCS vi_vo_utils.c DEPS cviai cviai_app ${SAMPLE_LIBS})
+buildninstall(NAME sample_read_mot INC ${SAMPLE_INC} SRCS utils/od.c sample_mot_utils.c DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME visual_app_face_capture INC ${SAMPLE_INC}  SRCS vi_vo_utils.c DEPS cvi_tdl cvi_tdl_app ${SAMPLE_LIBS})
 
 buildninstallcpp(NAME mot_dump_data INC ${SAMPLE_INC}
                  SRCS utils/od.c utils/mot_base.cpp utils/mot_evaluation.cpp 
-                 DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
+                 DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME mot_auto_tuning INC ${SAMPLE_INC}
                  SRCS utils/od.c utils/mot_base.cpp utils/mot_evaluation.cpp utils/mot_auto_tuning_helper.cpp
-                 DEPS cviai ${SAMPLE_LIBS})
-
-install(DIRECTORY utils DESTINATION tool)
+                 DEPS cvi_tdl ${SAMPLE_LIBS})

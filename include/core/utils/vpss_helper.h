@@ -13,7 +13,7 @@
 
 /**
  * \addtogroup core_vpss Vpss Helper Functions
- * \ingroup core_cviaicore
+ * \ingroup core_cvitdlcore
  */
 
 /** @def MMF_INIT_HELPER_BLKCNT_DEFAULT
@@ -250,7 +250,7 @@ VPSS_CHN_RATIO_MANUAL_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth,
 }
 
 /**
- * @brief A helper function to help developers to create a quantization + scaling step for AI
+ * @brief A helper function to help developers to create a quantization + scaling step for TDL
  * preprocessing using vpss hardware.
  * @ingroup core_vpss
  *
@@ -294,7 +294,7 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
 }
 
 /**
- * @brief A helper function to help developers to create a quantization + scaling step for AI
+ * @brief A helper function to help developers to create a quantization + scaling step for TDL
  * preprocessing using vpss hardware, but only pad right and bottom instead of four directions.
  * @ingroup core_vpss
  *

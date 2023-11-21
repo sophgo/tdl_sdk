@@ -9,19 +9,19 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 
 static float cal_similarity(cv::Mat feature1, cv::Mat feature2) {
   return feature1.dot(feature2) / (cv::norm(feature1) * cv::norm(feature2));
 }
 
-int process_image_file(cviai_handle_t ai_handle, const std::string &imgf, cvai_face_t *p_obj) {
+int process_image_file(cvitdl_handle_t tdl_handle, const std::string &imgf, cvtdl_face_t *p_obj) {
   VIDEO_FRAME_INFO_S bg;
 
-  int ret = CVI_AI_ReadImage(imgf.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
+  int ret = CVI_TDL_ReadImage(imgf.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     std::cout << "failed to open file:" << imgf << std::endl;
     return ret;
@@ -29,23 +29,23 @@ int process_image_file(cviai_handle_t ai_handle, const std::string &imgf, cvai_f
     printf("image read,width:%d\n", bg.stVFrame.u32Width);
   }
 
-  ret = CVI_AI_ScrFDFace(ai_handle, &bg, p_obj);
+  ret = CVI_TDL_ScrFDFace(tdl_handle, &bg, p_obj);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_AI_ScrFDFace failed with %#x!\n", ret);
+    printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
     return ret;
   }
 
   if (p_obj->size > 0) {
-    ret = CVI_AI_FaceRecognition(ai_handle, &bg, p_obj);
+    ret = CVI_TDL_FaceRecognition(tdl_handle, &bg, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_FaceAttribute failed with %#x!\n", ret);
+      printf("CVI_TDL_FaceAttribute failed with %#x!\n", ret);
       return ret;
     }
   } else {
     printf("cannot find faces\n");
   }
 
-  CVI_AI_ReleaseImage(&bg);
+  CVI_TDL_ReleaseImage(&bg);
   return ret;
 }
 
@@ -54,15 +54,15 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
@@ -70,22 +70,22 @@ int main(int argc, char *argv[]) {
   std::string fr_model(argv[2]);  // fr ai_model
   std::string img(argv[3]);       // img1;
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_SCRFDFACE, fd_model.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, fd_model.c_str());
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_AI_SUPPORTED_MODEL_SCRFDFACE model failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_SCRFDFACE model failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, fr_model.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, fr_model.c_str());
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_AI_SUPPORTED_MODEL_FACERECOGNITION model failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION model failed with %#x!\n", ret);
     return ret;
   }
 
   std::string str_res;
   std::stringstream ss;
-  cvai_face_t obj_meta = {0};
-  process_image_file(ai_handle, img, &obj_meta);
+  cvtdl_face_t obj_meta = {0};
+  process_image_file(tdl_handle, img, &obj_meta);
 
   ss << "boxes=[";
   for (uint32_t i = 0; i < obj_meta.size; i++) {
@@ -102,8 +102,8 @@ int main(int argc, char *argv[]) {
     std::string img1(argv[4]);  // img2;
     std::string str_res1;
     std::stringstream ss1;
-    cvai_face_t obj_meta1 = {0};
-    process_image_file(ai_handle, img1, &obj_meta1);
+    cvtdl_face_t obj_meta1 = {0};
+    process_image_file(tdl_handle, img1, &obj_meta1);
 
     ss1 << "boxes=[";
     for (uint32_t i = 0; i < obj_meta1.size; i++) {
@@ -116,8 +116,8 @@ int main(int argc, char *argv[]) {
     std::cout << str_res1 << std::endl;
 
     // compare cal_similarity
-    cvai_feature_t feature = obj_meta.info[0].feature;
-    cvai_feature_t feature1 = obj_meta1.info[0].feature;
+    cvtdl_feature_t feature = obj_meta.info[0].feature;
+    cvtdl_feature_t feature1 = obj_meta1.info[0].feature;
     cv::Mat mat_feature(feature.size, 1, CV_8SC1);
     cv::Mat mat_feature1(feature1.size, 1, CV_8SC1);
     memcpy(mat_feature.data, feature.ptr, feature.size);
@@ -127,10 +127,10 @@ int main(int argc, char *argv[]) {
 
     float similarity = cal_similarity(mat_feature, mat_feature1);
     std::cout << "similarity:" << similarity << std::endl;
-    CVI_AI_Free(&obj_meta1);
+    CVI_TDL_Free(&obj_meta1);
   }
 
-  CVI_AI_Free(&obj_meta);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_Free(&obj_meta);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

@@ -1,40 +1,41 @@
 #include <fstream>
 #include <string>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_test.hpp"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_test.hpp"
 #include "json.hpp"
 #include "raii.hpp"
 #include "regression_utils.hpp"
 
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
-class EyeCTestSuite : public CVIAIModelTestSuite {
+class EyeCTestSuite : public CVI_TDLModelTestSuite {
  public:
-  typedef CVI_S32 (*InferenceFunc)(const cviai_handle_t, VIDEO_FRAME_INFO_S *, cvai_face_t *);
+  typedef CVI_S32 (*InferenceFunc)(const cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
   struct ModelInfo {
     InferenceFunc inference;
-    CVI_AI_SUPPORTED_MODEL_E index;
+    CVI_TDL_SUPPORTED_MODEL_E index;
     std::string model_path;
   };
 
   EyeCTestSuite()
-      : CVIAIModelTestSuite("reg_daily_eye_classification.json", "reg_daily_eye_classification") {}
+      : CVI_TDLModelTestSuite("reg_daily_eye_classification.json", "reg_daily_eye_classification") {
+  }
 
   virtual ~EyeCTestSuite() = default;
 
  protected:
   virtual void SetUp() {
-    m_ai_handle = NULL;
-    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
+    m_tdl_handle = NULL;
+    ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
   }
 
   virtual void TearDown() {
-    CVI_AI_DestroyHandle(m_ai_handle);
-    m_ai_handle = NULL;
+    CVI_TDL_DestroyHandle(m_tdl_handle);
+    m_tdl_handle = NULL;
   }
 
   ModelInfo getModel(const std::string &model_name);
@@ -43,8 +44,8 @@ class EyeCTestSuite : public CVIAIModelTestSuite {
 EyeCTestSuite::ModelInfo EyeCTestSuite::getModel(const std::string &model_name) {
   ModelInfo model_info;
   std::string model_path = (m_model_dir / model_name).string();
-  model_info.index = CVI_AI_SUPPORTED_MODEL_EYECLASSIFICATION;
-  model_info.inference = CVI_AI_EyeClassification;
+  model_info.index = CVI_TDL_SUPPORTED_MODEL_EYECLASSIFICATION;
+  model_info.inference = CVI_TDL_EyeClassification;
   model_info.model_path = model_path;
   return model_info;
 }
@@ -55,12 +56,12 @@ TEST_F(EyeCTestSuite, open_close_model) {
     std::string model_name =
         std::string(std::string(test_config["reg_config"][0]["model_name"][0]).c_str());
     ModelInfo model_info = getModel(model_name);
-    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
+    ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
 
-    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), false);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, model_info.index, model_info.model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
-    const char *model_path_get = CVI_AI_GetModelPath(m_ai_handle, model_info.index);
+    const char *model_path_get = CVI_TDL_GetModelPath(m_tdl_handle, model_info.index);
 
     EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, model_info.model_path,
                  std::string(model_path_get));
@@ -74,10 +75,10 @@ TEST_F(EyeCTestSuite, inference_and_accuracy) {
         std::string(std::string(test_config["reg_config"][0]["model_name"][0]).c_str());
 
     ModelInfo model_info = getModel(model_name);
-    ASSERT_LT(model_info.index, CVI_AI_SUPPORTED_MODEL_END);
+    ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
 
-    AIModelHandler aimodel(m_ai_handle, model_info.index, model_info.model_path.c_str(), false);
-    ASSERT_NO_FATAL_FAILURE(aimodel.open());
+    TDLModelHandler tdlmodel(m_tdl_handle, model_info.index, model_info.model_path.c_str(), false);
+    ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
     float threshold = float(test_config["reg_config"][0]["threshold"]);
     for (size_t img_idx = 0; img_idx < test_config["reg_config"][0]["test_images"].size();
@@ -90,7 +91,7 @@ TEST_F(EyeCTestSuite, inference_and_accuracy) {
       Image image_rgb(image_path, PIXEL_FORMAT_RGB_888);
       ASSERT_TRUE(image_rgb.open());
 
-      AIObject<cvai_face_t> face_meta;
+      TDLObject<cvtdl_face_t> face_meta;
       init_face_meta(face_meta, 1);
 
       face_meta->width = 1280;
@@ -120,14 +121,15 @@ TEST_F(EyeCTestSuite, inference_and_accuracy) {
       face_meta->dms->landmarks_5.y[4] =
           (float)test_config["reg_config"][0]["face_landmarks"][img_idx][9];
 
-      ASSERT_EQ(model_info.inference(m_ai_handle, image_rgb.getFrame(), face_meta), CVIAI_SUCCESS);
+      ASSERT_EQ(model_info.inference(m_tdl_handle, image_rgb.getFrame(), face_meta),
+                CVI_TDL_SUCCESS);
       EXPECT_EQ(
           ((face_meta->dms->leye_score > threshold) || (face_meta->dms->reye_score > threshold)),
           expected_res);
-      CVI_AI_FreeDMS(face_meta->dms);
-      CVI_AI_FreeCpp(face_meta);
+      CVI_TDL_FreeDMS(face_meta->dms);
+      CVI_TDL_FreeCpp(face_meta);
     }
   }
 }
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

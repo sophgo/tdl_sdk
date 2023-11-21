@@ -2,8 +2,8 @@
 #include <fstream>
 #include <string>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_test.hpp"
+#include "cvi_tdl.h"
+#include "cvi_tdl_test.hpp"
 #include "gtest.h"
 #include "json.hpp"
 #include "raii.hpp"
@@ -12,45 +12,46 @@
 #define BIAS 1.0
 
 namespace fs = std::experimental::filesystem;
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
-class MultiObjectTrackingTestSuite : public CVIAIModelTestSuite {
+class MultiObjectTrackingTestSuite : public CVI_TDLModelTestSuite {
  public:
-  MultiObjectTrackingTestSuite() : CVIAIModelTestSuite("daily_reg_MOT.json", "") {}
+  MultiObjectTrackingTestSuite() : CVI_TDLModelTestSuite("daily_reg_MOT.json", "") {}
 
   virtual ~MultiObjectTrackingTestSuite() = default;
 
   struct MOTResult {
     uint64_t unique_id;
     int state;
-    cvai_bbox_t bbox;
+    cvtdl_bbox_t bbox;
   };
 
   std::vector<std::string> TARGETS = {"pedestrian", "vehicle", "pet", "face"};
-  std::map<std::string, cvai_deepsort_config_t> m_config;
+  std::map<std::string, cvtdl_deepsort_config_t> m_config;
 
-  bool SetTestConfig(cvai_deepsort_config_t &conf, std::string target);
+  bool SetTestConfig(cvtdl_deepsort_config_t &conf, std::string target);
 
  protected:
   virtual void SetUp() {
-    m_ai_handle = NULL;
-    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
+    m_tdl_handle = NULL;
+    ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
     for (size_t i = 0; i < TARGETS.size(); i++) {
-      cvai_deepsort_config_t conf;
-      ASSERT_EQ(CVI_AI_DeepSORT_GetDefaultConfig(&conf), CVIAI_SUCCESS);
+      cvtdl_deepsort_config_t conf;
+      ASSERT_EQ(CVI_TDL_DeepSORT_GetDefaultConfig(&conf), CVI_TDL_SUCCESS);
       ASSERT_EQ(SetTestConfig(conf, TARGETS[i]), true);
       m_config[TARGETS[i]] = conf;
     }
   }
 
   virtual void TearDown() {
-    CVI_AI_DestroyHandle(m_ai_handle);
-    m_ai_handle = NULL;
+    CVI_TDL_DestroyHandle(m_tdl_handle);
+    m_tdl_handle = NULL;
   }
 };
 
-bool MultiObjectTrackingTestSuite::SetTestConfig(cvai_deepsort_config_t &conf, std::string target) {
+bool MultiObjectTrackingTestSuite::SetTestConfig(cvtdl_deepsort_config_t &conf,
+                                                 std::string target) {
   if (target == "pedestrian") {
     return true;
   } else if (target == "vehicle") {
@@ -78,10 +79,10 @@ bool MultiObjectTrackingTestSuite::SetTestConfig(cvai_deepsort_config_t &conf, s
 }
 
 TEST_F(MultiObjectTrackingTestSuite, init) {
-  ASSERT_EQ(CVI_AI_DeepSORT_Init(m_ai_handle, false), CVIAI_SUCCESS);
-  cvai_deepsort_config_t conf;
-  ASSERT_EQ(CVI_AI_DeepSORT_GetDefaultConfig(&conf), CVIAI_SUCCESS);
-  ASSERT_EQ(CVI_AI_DeepSORT_SetConfig(m_ai_handle, &conf, -1, false), CVIAI_SUCCESS);
+  ASSERT_EQ(CVI_TDL_DeepSORT_Init(m_tdl_handle, false), CVI_TDL_SUCCESS);
+  cvtdl_deepsort_config_t conf;
+  ASSERT_EQ(CVI_TDL_DeepSORT_GetDefaultConfig(&conf), CVI_TDL_SUCCESS);
+  ASSERT_EQ(CVI_TDL_DeepSORT_SetConfig(m_tdl_handle, &conf, -1, false), CVI_TDL_SUCCESS);
 }
 
 TEST_F(MultiObjectTrackingTestSuite, accruacy) {
@@ -96,16 +97,17 @@ TEST_F(MultiObjectTrackingTestSuite, accruacy) {
     int feature_size = int(m_json_object["reg_config"][reg_idx]["feature_size"]);
 
     // Init DeepSORT
-    ASSERT_EQ(CVI_AI_DeepSORT_Init(m_ai_handle, false), CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_DeepSORT_SetConfig(m_ai_handle, &m_config[target], -1, false), CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_DeepSORT_Init(m_tdl_handle, false), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_DeepSORT_SetConfig(m_tdl_handle, &m_config[target], -1, false),
+              CVI_TDL_SUCCESS);
 
     for (int img_idx = 0; img_idx < img_num; img_idx++) {
-      cvai_object_t obj_meta;
-      cvai_face_t face_meta;
-      cvai_tracker_t tracker_meta;
-      memset(&obj_meta, 0, sizeof(cvai_object_t));
-      memset(&face_meta, 0, sizeof(cvai_face_t));
-      memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
+      cvtdl_object_t obj_meta;
+      cvtdl_face_t face_meta;
+      cvtdl_tracker_t tracker_meta;
+      memset(&obj_meta, 0, sizeof(cvtdl_object_t));
+      memset(&face_meta, 0, sizeof(cvtdl_face_t));
+      memset(&tracker_meta, 0, sizeof(cvtdl_tracker_t));
 
       int output_size = int(m_json_object["reg_config"][reg_idx]["output_size"][img_idx]);
 
@@ -129,8 +131,8 @@ TEST_F(MultiObjectTrackingTestSuite, accruacy) {
         // *******************************************
         // Detection & ReID
         obj_meta.size = static_cast<uint32_t>(output_size);
-        obj_meta.info = (cvai_object_info_t *)malloc(obj_meta.size * sizeof(cvai_object_info_t));
-        memset(obj_meta.info, 0, obj_meta.size * sizeof(cvai_object_info_t));
+        obj_meta.info = (cvtdl_object_info_t *)malloc(obj_meta.size * sizeof(cvtdl_object_info_t));
+        memset(obj_meta.info, 0, obj_meta.size * sizeof(cvtdl_object_info_t));
         for (int out_i = 0; out_i < output_size; out_i++) {
           obj_meta.info[out_i].classes =
               int(m_json_object["reg_config"][reg_idx]["bbox_info"][img_idx][out_i]["classes"]);
@@ -153,16 +155,16 @@ TEST_F(MultiObjectTrackingTestSuite, accruacy) {
             }
           }
         }
-        ASSERT_EQ(CVI_AI_DeepSORT_Obj(m_ai_handle, &obj_meta, &tracker_meta, use_ReID),
-                  CVIAI_SUCCESS);
+        ASSERT_EQ(CVI_TDL_DeepSORT_Obj(m_tdl_handle, &obj_meta, &tracker_meta, use_ReID),
+                  CVI_TDL_SUCCESS);
         // *******************************************
 
       } else { /* face */
         // *******************************************
         // Detection & ReID
         face_meta.size = static_cast<uint32_t>(output_size);
-        face_meta.info = (cvai_face_info_t *)malloc(face_meta.size * sizeof(cvai_face_info_t));
-        memset(face_meta.info, 0, face_meta.size * sizeof(cvai_face_info_t));
+        face_meta.info = (cvtdl_face_info_t *)malloc(face_meta.size * sizeof(cvtdl_face_info_t));
+        memset(face_meta.info, 0, face_meta.size * sizeof(cvtdl_face_info_t));
         for (int out_i = 0; out_i < output_size; out_i++) {
           face_meta.info[out_i].bbox.x1 =
               float(m_json_object["reg_config"][reg_idx]["bbox_info"][img_idx][out_i]["x1"]);
@@ -173,7 +175,7 @@ TEST_F(MultiObjectTrackingTestSuite, accruacy) {
           face_meta.info[out_i].bbox.y2 =
               float(m_json_object["reg_config"][reg_idx]["bbox_info"][img_idx][out_i]["y2"]);
         }
-        ASSERT_EQ(CVI_AI_DeepSORT_Face(m_ai_handle, &face_meta, &tracker_meta), CVIAI_SUCCESS);
+        ASSERT_EQ(CVI_TDL_DeepSORT_Face(m_tdl_handle, &face_meta, &tracker_meta), CVI_TDL_SUCCESS);
         // *******************************************
       }
 
@@ -197,12 +199,12 @@ TEST_F(MultiObjectTrackingTestSuite, accruacy) {
       }
       delete[] expected_res;
 
-      CVI_AI_Free(&obj_meta);
-      CVI_AI_Free(&face_meta);
-      CVI_AI_Free(&tracker_meta);
+      CVI_TDL_Free(&obj_meta);
+      CVI_TDL_Free(&face_meta);
+      CVI_TDL_Free(&tracker_meta);
     }
   }
 }
 
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

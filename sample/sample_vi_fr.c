@@ -1,5 +1,5 @@
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 
@@ -32,7 +32,7 @@ static void SampleHandleSig(CVI_S32 signo) {
 }
 
 /* helper functions */
-CVI_S32 COSINE_SIMILARITY(cvai_feature_t *a, cvai_feature_t *b, float *score);
+CVI_S32 COSINE_SIMILARITY(cvtdl_feature_t *a, cvtdl_feature_t *b, float *score);
 CVI_S32 GET_PIXEL_FORMAT_BY_NAME(PIXEL_FORMAT_E *format, char *name);
 
 typedef struct {
@@ -133,26 +133,26 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
 
-  int ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, args.fd_m_path);
+  int ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
+  ret |= CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, args.fd_m_path);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
   }
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, args.fr_m_path);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, args.fr_m_path);
   if (ret != CVI_SUCCESS) {
     printf("Facelib open failed with %#x!\n", ret);
     return ret;
   }
   // Do vpss frame transform in retina face
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, false);
 
-  cvai_feature_t base_face_feature;
-  memset(&base_face_feature, 0, sizeof(cvai_feature_t));
+  cvtdl_feature_t base_face_feature;
+  memset(&base_face_feature, 0, sizeof(cvtdl_feature_t));
   if (args.input_feature) {
     base_face_feature.size = FACE_FEATURE_SIZE;
     base_face_feature.ptr = (int8_t *)malloc(FACE_FEATURE_SIZE * sizeof(uint8_t));
@@ -168,8 +168,8 @@ int main(int argc, char *argv[]) {
   }
 
   VIDEO_FRAME_INFO_S stfdFrame, stVOFrame;
-  cvai_face_t face;
-  memset(&face, 0, sizeof(cvai_face_t));
+  cvtdl_face_t face;
+  memset(&face, 0, sizeof(cvtdl_face_t));
   uint32_t counter = 0;
   while (bExit == false) {
     printf("\nFrame[%u]\n", counter++);
@@ -179,12 +179,12 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    CVI_AI_RetinaFace(ai_handle, &stfdFrame, &face);
+    CVI_TDL_RetinaFace(tdl_handle, &stfdFrame, &face);
 #ifdef EXECUTION_TIME
     struct timeval t0, t1;
     gettimeofday(&t0, NULL);
 #endif
-    CVI_AI_FaceRecognition(ai_handle, &stfdFrame, &face);
+    CVI_TDL_FaceRecognition(tdl_handle, &stfdFrame, &face);
 #ifdef EXECUTION_TIME
     gettimeofday(&t1, NULL);
     unsigned long execution_time = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
@@ -230,8 +230,8 @@ int main(int argc, char *argv[]) {
         printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
         break;
       }
-      CVI_AI_Service_FaceDrawRect(service_handle, &face, &stVOFrame, true,
-                                  CVI_AI_Service_GetDefaultBrush());
+      CVI_TDL_Service_FaceDrawRect(service_handle, &face, &stVOFrame, true,
+                                   CVI_TDL_Service_GetDefaultBrush());
       if (CVI_SUCCESS != SendOutputFrame(&stVOFrame, &vs_ctx.outputContext)) {
         printf("Send Output Frame NG\n");
       }
@@ -244,18 +244,18 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    CVI_AI_Free(&face);
+    CVI_TDL_Free(&face);
   }
-  CVI_AI_Free(&base_face_feature);
+  CVI_TDL_Free(&base_face_feature);
 
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
 }
 
-CVI_S32 COSINE_SIMILARITY(cvai_feature_t *a, cvai_feature_t *b, float *score) {
+CVI_S32 COSINE_SIMILARITY(cvtdl_feature_t *a, cvtdl_feature_t *b, float *score) {
   if (a->ptr == NULL || b->ptr == NULL || a->size != b->size) {
     printf("cosine distance failed.\n");
     return CVI_FAILURE;

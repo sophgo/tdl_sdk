@@ -1,5 +1,5 @@
 #include "image_classification.hpp"
-#include <core/core/cvai_errno.h>
+#include <core/core/cvtdl_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm>
@@ -12,9 +12,9 @@
 #include <string>
 #include <vector>
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
@@ -40,7 +40,7 @@ std::vector<int> TopKIndex(std::vector<float> &vec, int topk) {
   return topKIndex;
 }
 
-namespace cviai {
+namespace cvitdl {
 
 ImageClassification::ImageClassification() : Core(CVI_MEM_DEVICE) {}
 
@@ -49,7 +49,7 @@ int ImageClassification::onModelOpened() {
     LOGE("ImageClassification only expected 1 output branch!\n");
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 ImageClassification::~ImageClassification() {}
@@ -57,7 +57,7 @@ ImageClassification::~ImageClassification() {}
 int ImageClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("ImageClassification only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   for (int i = 0; i < 3; i++) {
     (*data)[0].factor[i] = p_preprocess_cfg_->factor[i];
@@ -68,7 +68,7 @@ int ImageClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> 
   (*data)[0].use_quantize_scale = p_preprocess_cfg_->use_quantize_scale;
   (*data)[0].rescale_type = p_preprocess_cfg_->rescale_type;
   (*data)[0].keep_aspect_ratio = p_preprocess_cfg_->keep_aspect_ratio;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void ImageClassification::set_param(VpssPreParam *p_preprocess_cfg) {
@@ -89,32 +89,32 @@ int ImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAM
   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
   if (ret != CVI_SUCCESS) {
     LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_SEND_FRAME;
+    return CVI_TDL_ERR_VPSS_SEND_FRAME;
   }
 
   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   if (ret != CVI_SUCCESS) {
     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_GET_FRAME;
+    return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int ImageClassification::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_class_meta_t *cls_meta) {
+int ImageClassification::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_meta_t *cls_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     LOGE("ImageClassification run inference failed\n");
     return ret;
   }
 
   outputParser(cls_meta);
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-void ImageClassification::outputParser(cvai_class_meta_t *cls_meta) {
+void ImageClassification::outputParser(cvtdl_class_meta_t *cls_meta) {
   TensorInfo oinfo = getOutputTensorInfo(0);
   int8_t *ptr_int8 = static_cast<int8_t *>(oinfo.raw_pointer);
   float *ptr_float = static_cast<float *>(oinfo.raw_pointer);
@@ -141,5 +141,5 @@ void ImageClassification::outputParser(cvai_class_meta_t *cls_meta) {
     cls_meta->score[i] = scores[topKIndex[i]];
   }
 }
-// namespace cviai
-}  // namespace cviai
+// namespace cvitdl
+}  // namespace cvitdl

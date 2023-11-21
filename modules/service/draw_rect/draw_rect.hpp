@@ -1,10 +1,10 @@
 #pragma once
-#include "core/face/cvai_face_types.h"
-#include "core/object/cvai_object_types.h"
+#include "core/face/cvtdl_face_types.h"
+#include "core/object/cvtdl_object_types.h"
 
 #include <vector>
 #include "cvi_comm.h"
-#include "service/cviai_service_types.h"
+#include "service/cvi_tdl_service_types.h"
 
 #define DEFAULT_RECT_COLOR_R (53. / 255.)
 #define DEFAULT_RECT_COLOR_G (208. / 255.)
@@ -13,7 +13,7 @@
 #define DEFAULT_TEXT_THICKNESS 1
 #define DEFAULT_RADIUS 1
 
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 typedef struct {
@@ -32,22 +32,22 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r, 
 
 template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
-             cvai_service_brush_t brush);
+             cvtdl_service_brush_t brush);
 
 template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
-             const std::vector<cvai_service_brush_t> &brushes);
+             const std::vector<cvtdl_service_brush_t> &brushes);
 
-int DrawPose17(const cvai_object_t *obj, VIDEO_FRAME_INFO_S *frame);
+int DrawPose17(const cvtdl_object_t *obj, VIDEO_FRAME_INFO_S *frame);
 
-int DrawPts(cvai_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame);
+int DrawPts(cvtdl_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame);
 
-void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvai_pts_t *pts, color_rgb color, int raduis);
+void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvtdl_pts_t *pts, color_rgb color, int raduis);
 
-int Draw5Landmark(const cvai_face_t *meta, VIDEO_FRAME_INFO_S *frame);
+int Draw5Landmark(const cvtdl_face_t *meta, VIDEO_FRAME_INFO_S *frame);
 
-int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvai_pts_t *pts, cvai_service_brush_t brush);
+int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvtdl_pts_t *pts, cvtdl_service_brush_t brush);
 
-int DrawHandPose21(const cvai_handpose21_meta_ts *obj, VIDEO_FRAME_INFO_S *bg);
+int DrawHandPose21(const cvtdl_handpose21_meta_ts *obj, VIDEO_FRAME_INFO_S *bg);
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

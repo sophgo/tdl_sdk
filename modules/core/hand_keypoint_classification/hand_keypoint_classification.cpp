@@ -1,16 +1,16 @@
 #include "hand_keypoint_classification.hpp"
 #include <cmath>
 #include <iostream>
-#include "core/core/cvai_errno.h"
-#include "cviai_log.hpp"
-using namespace cviai;
+#include "core/core/cvtdl_errno.h"
+#include "cvi_tdl_log.hpp"
+using namespace cvitdl;
 
 HandKeypointClassification::HandKeypointClassification() : Core(CVI_MEM_SYSTEM) {}
 
 HandKeypointClassification::~HandKeypointClassification() {}
 
 int HandKeypointClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame,
-                                          cvai_handpose21_meta_t *handpose) {
+                                          cvtdl_handpose21_meta_t *handpose) {
   float *temp_buffer = reinterpret_cast<float *>(stOutFrame->stVFrame.pu8VirAddr[0]);
   const TensorInfo &tinfo = getInputTensorInfo(0);
   int8_t *input_ptr = tinfo.get<int8_t>();
@@ -27,7 +27,7 @@ int HandKeypointClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame,
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
   int ret = run(frames);
 
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     LOGW("hand keypoint classification inference failed\n");
     return ret;
   }

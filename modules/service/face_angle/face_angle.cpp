@@ -1,13 +1,13 @@
 #include "face_angle.hpp"
 #include <cvi_sys.h>
 #include <cmath>
-#include "core/core/cvai_errno.h"
+#include "core/core/cvtdl_errno.h"
 // include core_c.h if opencv version greater than 4.5
 #if CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR >= 5
 #include "opencv2/core/core_c.h"
 #endif
 
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 template <typename T>
@@ -21,7 +21,7 @@ T Saturate(const T& val, const T& minVal, const T& maxVal) {
 // (x3, y3) = Nose tip
 // (x4, y4) = Left Mouth corner
 // (x5, y5) = Right mouth corner
-int Predict(const cvai_pts_t* pFacial5points, cvai_head_pose_t* hp) {
+int Predict(const cvtdl_pts_t* pFacial5points, cvtdl_head_pose_t* hp) {
   cv::Point leye = cv::Point(pFacial5points->x[0], pFacial5points->y[0]);
   cv::Point reye = cv::Point(pFacial5points->x[1], pFacial5points->y[1]);
   cv::Point lmouth = cv::Point(pFacial5points->x[3], pFacial5points->y[3]);
@@ -52,12 +52,12 @@ int Predict(const cvai_pts_t* pFacial5points, cvai_head_pose_t* hp) {
   hp->roll /= 90;
   hp->roll = Saturate(hp->roll, -1.f, 1.f);
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Predict3DFacialNormal(const cv::Point& noseTip, const cv::Point& noseBase,
                           const cv::Point& midEye, const cv::Point& midMouth,
-                          cvai_head_pose_t* hp) {
+                          cvtdl_head_pose_t* hp) {
   float noseBase_noseTip_distance = CalDistance(noseTip, noseBase);
   float midEye_midMouth_distance = CalDistance(midEye, midMouth);
 
@@ -78,7 +78,7 @@ int Predict3DFacialNormal(const cv::Point& noseTip, const cv::Point& noseBase,
   hp->facialUnitNormalVector[1] = sin(slant) * (sin((360 - tilt) * (PI / 180.0)));
   hp->facialUnitNormalVector[2] = -cos(slant);
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 float CalDistance(const cv::Point& p1, const cv::Point& p2) {
@@ -110,4 +110,4 @@ float CalSlant(int ln, int lf, const float Rn, float theta) {
   return slant;
 }
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

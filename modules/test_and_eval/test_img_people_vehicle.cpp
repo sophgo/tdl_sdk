@@ -1,6 +1,6 @@
-#include "app/cviai_app.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app/cvi_tdl_app.h"
 #include "sample_comm.h"
 // #include "vi_vo_utils.h"
 
@@ -18,7 +18,7 @@
 #include <chrono>
 #include <sstream>
 #include <string>
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl_media.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "sys_utils.hpp"
@@ -42,7 +42,7 @@ __attribute__((always_inline)) inline void AutoUnLock(void *mutex) {
 typedef struct {
   uint64_t u_id;
   float quality;
-  cvai_image_t image;
+  cvtdl_image_t image;
   tracker_state_e state;
   uint32_t counter;
 } IOData;
@@ -66,8 +66,8 @@ bool CHECK_OUTPUT_CONDITION(person_capture_t *person_cpt_info, uint32_t idx, APP
  * Restructure the object meta of the person capture to 2 output object struct.
  * 0: Low quality, 1: Otherwise (Ignore unstable trackers)
  */
-void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvai_object_t *obj_meta_0,
-                            cvai_object_t *obj_meta_1);
+void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvtdl_object_t *obj_meta_0,
+                            cvtdl_object_t *obj_meta_1);
 
 #ifdef USE_OUTPUT_DATA_API
 uint32_t GENERATE_OUTPUT_DATA(IOData **output_data, person_capture_t *person_cpt_info);
@@ -102,7 +102,7 @@ void export_tracking_info(personvehicle_capture_t *p_cap_info, const std::string
   printf("txt  :%s\n", sz_dstf);
   FILE *fp = fopen(sz_dstf, "w");
 
-  cvai_object_t *p_objinfo = &(p_cap_info->last_objects);
+  cvtdl_object_t *p_objinfo = &(p_cap_info->last_objects);
   if (p_objinfo->size == 0) return;
   for (uint32_t i = 0; i < p_objinfo->size; i++) {
     char szinfo[128];
@@ -119,11 +119,11 @@ void export_tracking_info(personvehicle_capture_t *p_cap_info, const std::string
 
   fclose(fp);
 }
-void release_system(cviai_handle_t ai_handle, cviai_service_handle_t service_handle,
-                    cviai_app_handle_t app_handle) {
-  CVI_AI_APP_DestroyHandle(app_handle);
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
+void release_system(cvitdl_handle_t tdl_handle, cvitdl_service_handle_t service_handle,
+                    cvitdl_app_handle_t app_handle) {
+  CVI_TDL_APP_DestroyHandle(app_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   // DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
@@ -168,47 +168,48 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  cviai_app_handle_t app_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
+  cvitdl_app_handle_t app_handle = NULL;
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
-    release_system(ai_handle, service_handle, app_handle);
+    release_system(tdl_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-
-  if (ret != CVI_SUCCESS) {
-    printf("failed with %#x!\n", ret);
-    release_system(ai_handle, service_handle, app_handle);
-    return CVI_FAILURE;
-  }
-  ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
+  ret |= CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
 
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
-    release_system(ai_handle, service_handle, app_handle);
+    release_system(tdl_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
-  ret |= CVI_AI_APP_PersonVehicleCapture_Init(app_handle, (uint32_t)buffer_size);
+  ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
+
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
-    release_system(ai_handle, service_handle, app_handle);
+    release_system(tdl_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
-  ret |= CVI_AI_APP_PersonVehicleCapture_QuickSetUp(
+  ret |= CVI_TDL_APP_PersonVehicleCapture_Init(app_handle, (uint32_t)buffer_size);
+  if (ret != CVI_SUCCESS) {
+    printf("failed with %#x!\n", ret);
+    release_system(tdl_handle, service_handle, app_handle);
+    return CVI_FAILURE;
+  }
+  ret |= CVI_TDL_APP_PersonVehicleCapture_QuickSetUp(
       app_handle, od_model_name, od_model_path,
       (!strcmp(reid_model_path, "NULL")) ? NULL : reid_model_path);
-  ret |= CVI_AI_APP_PersonVehicleCapture_Line(app_handle, A_x, A_y, B_x, B_y, s_mode);  // draw line
-  if (ret != CVIAI_SUCCESS) {
+  ret |=
+      CVI_TDL_APP_PersonVehicleCapture_Line(app_handle, A_x, A_y, B_x, B_y, s_mode);  // draw line
+  if (ret != CVI_TDL_SUCCESS) {
     printf("failed with %#x!\n", ret);
-    release_system(ai_handle, service_handle, app_handle);
+    release_system(tdl_handle, service_handle, app_handle);
     return CVI_FAILURE;
   }
-  CVI_AI_SetModelThreshold(ai_handle, app_handle->personvehicle_cpt_info->od_model_index,
-                           det_threshold);
+  CVI_TDL_SetModelThreshold(tdl_handle, app_handle->personvehicle_cpt_info->od_model_index,
+                            det_threshold);
 
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
@@ -221,8 +222,8 @@ int main(int argc, char *argv[]) {
   }
 
   personvehicle_capture_config_t app_cfg;
-  CVI_AI_APP_PersonVehicleCapture_GetDefaultConfig(&app_cfg);
-  CVI_AI_APP_PersonVehicleCapture_SetConfig(app_handle, &app_cfg);
+  CVI_TDL_APP_PersonVehicleCapture_GetDefaultConfig(&app_cfg);
+  CVI_TDL_APP_PersonVehicleCapture_SetConfig(app_handle, &app_cfg);
 
   std::string cap_result = str_dst_video + std::string("/cap_result.log");
   //   FILE *fp = fopen(cap_result.c_str(), "w");
@@ -243,7 +244,7 @@ int main(int argc, char *argv[]) {
 
     bool empty_img = false;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_AI_ReadImage(img_path, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+    ret = CVI_TDL_ReadImage(img_path, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     if (ret != CVI_SUCCESS) {
       std::cout << "Convert to video frame failed with:" << ret << ",file:" << str_image_root
                 << std::endl;
@@ -255,7 +256,7 @@ int main(int argc, char *argv[]) {
 
     // printf("ALIVE persons: %d\n", alive_person_num);
     std::chrono::steady_clock::time_point tick0 = std::chrono::steady_clock::now();
-    ret = CVI_AI_APP_PersonVehicleCapture_Run(app_handle, &fdFrame);
+    ret = CVI_TDL_APP_PersonVehicleCapture_Run(app_handle, &fdFrame);
     std::chrono::steady_clock::time_point tick1 = std::chrono::steady_clock::now();
     if (!empty_img) {
       time_elapsed +=
@@ -264,14 +265,14 @@ int main(int argc, char *argv[]) {
     }
 
     if (ret != CVI_SUCCESS) {
-      printf("CVI_AI_APP_PersonVehicleCapture_Run failed with %#x\n", ret);
+      printf("CVI_TDL_APP_PersonVehicleCapture_Run failed with %#x\n", ret);
       break;
     }
 
     export_tracking_info(app_handle->personvehicle_cpt_info, str_dst_video, img_idx,
                          fdFrame.stVFrame.u32Width, fdFrame.stVFrame.u32Height, 4);
 
-    CVI_AI_ReleaseImage(&fdFrame);
+    CVI_TDL_ReleaseImage(&fdFrame);
   }
   //   fclose(fp);
 
@@ -279,35 +280,35 @@ int main(int argc, char *argv[]) {
   //   pthread_join(io_thread, NULL);
 
   //   CVI_IVE_DestroyHandle(ive_handle);
-  CVI_AI_Service_DestroyHandle(service_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
   // DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();
-  CVI_AI_DestroyHandle(ai_handle);
-  CVI_AI_APP_DestroyHandle(app_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
+  CVI_TDL_APP_DestroyHandle(app_handle);
 
   // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed / num_images
   //           << std::endl;
 }
 
-void RESTRUCTURING_OBJ_META(cvai_object_t *origin_obj, cvai_object_t *obj_meta) {
+void RESTRUCTURING_OBJ_META(cvtdl_object_t *origin_obj, cvtdl_object_t *obj_meta) {
   obj_meta->size = 0;
   for (uint32_t i = 0; i < origin_obj->size; i++) {
     obj_meta->size += 1;
   }
 
-  obj_meta->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj_meta->size);
-  memset(obj_meta->info, 0, sizeof(cvai_object_info_t) * obj_meta->size);
+  obj_meta->info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj_meta->size);
+  memset(obj_meta->info, 0, sizeof(cvtdl_object_info_t) * obj_meta->size);
   obj_meta->rescale_type = origin_obj->rescale_type;
   obj_meta->height = origin_obj->height;
   obj_meta->width = origin_obj->width;
 
-  cvai_object_info_t *info_ptr_0 = obj_meta->info;
+  cvtdl_object_info_t *info_ptr_0 = obj_meta->info;
   for (uint32_t i = 0; i < origin_obj->size; i++) {
-    cvai_object_info_t **tmp_ptr = &info_ptr_0;
+    cvtdl_object_info_t **tmp_ptr = &info_ptr_0;
     (*tmp_ptr)->unique_id = origin_obj->info[i].unique_id;
     (*tmp_ptr)->classes = origin_obj->info[i].classes;
-    memcpy(&(*tmp_ptr)->bbox, &origin_obj->info[i].bbox, sizeof(cvai_bbox_t));
+    memcpy(&(*tmp_ptr)->bbox, &origin_obj->info[i].bbox, sizeof(cvtdl_bbox_t));
     (*tmp_ptr)->is_cross = origin_obj->info[i].is_cross;
     *tmp_ptr += 1;
   }

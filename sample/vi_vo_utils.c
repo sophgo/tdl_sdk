@@ -84,7 +84,7 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
   vs_ctx->vpssConfigs.voHeight = VO_HEIGHT;
   vs_ctx->vpssConfigs.vpssChnVideoOutput = VPSS_CHN1;
 
-  // CHN for AI inference
+  // CHN for TDL inference
   vs_ctx->vpssConfigs.aiFormat = aiInputFormat;
   vs_ctx->vpssConfigs.aiWidth = aiInputSize->u32Width;
   vs_ctx->vpssConfigs.aiHeight = aiInputSize->u32Height;

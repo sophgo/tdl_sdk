@@ -1,14 +1,14 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_perfetto.h"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_perfetto.h"
 #include "inttypes.h"
 #include "od_utils.h"
 
 int main(int argc, char *argv[]) {
-  CVI_AI_PerfettoInit();
+  CVI_TDL_PerfettoInit();
   if (argc != 6) {
     printf(
         "Usage: %s <detection_model_name>\n"
@@ -17,46 +17,46 @@ int main(int argc, char *argv[]) {
         "          <sample_imagelist_path>\n"
         "          <MOT16_dataset_index(ex:MOT-03)>\n",
         argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
-  cviai_handle_t ai_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
 
   ODInferenceFunc inference;
-  CVI_AI_SUPPORTED_MODEL_E od_model_id;
-  if (get_od_model_info(argv[1], &od_model_id, &inference) == CVIAI_FAILURE) {
+  CVI_TDL_SUPPORTED_MODEL_E od_model_id;
+  if (get_od_model_info(argv[1], &od_model_id, &inference) == CVI_TDL_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
 
-  ret = CVI_AI_OpenModel(ai_handle, od_model_id, argv[2]);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[3]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(tdl_handle, od_model_id, argv[2]);
+  ret |= CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_OSNET, argv[3]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("model open failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, od_model_id, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, od_model_id, false);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_OSNET, false);
 
   // Init DeepSORT
-  CVI_AI_DeepSORT_Init(ai_handle, false);
+  CVI_TDL_DeepSORT_Init(tdl_handle, false);
 #if 1
-  cvai_deepsort_config_t ds_conf;
-  CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, false);
+  cvtdl_deepsort_config_t ds_conf;
+  CVI_TDL_DeepSORT_GetDefaultConfig(&ds_conf);
+  CVI_TDL_DeepSORT_SetConfig(tdl_handle, &ds_conf, -1, false);
 #endif
 
   FILE *outFile;
@@ -98,27 +98,27 @@ int main(int argc, char *argv[]) {
     printf("[%d/%d]\n", counter, imageNum);
 
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image_path, &frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
+    CVI_S32 ret = CVI_TDL_ReadImage(image_path, &frame, PIXEL_FORMAT_RGB_888);
+    if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
 
-    cvai_object_t obj_meta;
-    cvai_tracker_t tracker_meta;
-    memset(&obj_meta, 0, sizeof(cvai_object_t));
-    memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
+    cvtdl_object_t obj_meta;
+    cvtdl_tracker_t tracker_meta;
+    memset(&obj_meta, 0, sizeof(cvtdl_object_t));
+    memset(&tracker_meta, 0, sizeof(cvtdl_tracker_t));
 
-    CVI_AI_SelectDetectClass(ai_handle, od_model_id, 1, CVI_AI_DET_TYPE_PERSON);
+    CVI_TDL_SelectDetectClass(tdl_handle, od_model_id, 1, CVI_TDL_DET_TYPE_PERSON);
 
     //*******************************************
     // Tracking function calls.
     // Step 1. Object detect inference.
-    inference(ai_handle, &frame, &obj_meta);
+    inference(tdl_handle, &frame, &obj_meta);
     // Step 2. Object feature generator.
-    CVI_AI_OSNet(ai_handle, &frame, &obj_meta);
+    CVI_TDL_OSNet(tdl_handle, &frame, &obj_meta);
     // Step 3. Tracker.
-    CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, true);
+    CVI_TDL_DeepSORT_Obj(tdl_handle, &obj_meta, &tracker_meta, true);
     // Tracking function calls ends here.
     //*******************************************
     for (uint32_t i = 0; i < tracker_meta.size; i++) {
@@ -128,13 +128,13 @@ int main(int argc, char *argv[]) {
               obj_meta.info[i].bbox.y2 - obj_meta.info[i].bbox.y1, 1, -1, -1, -1);
     }
 
-    CVI_AI_Free(&obj_meta);
-    CVI_AI_Free(&tracker_meta);
-    CVI_AI_ReleaseImage(&frame);
+    CVI_TDL_Free(&obj_meta);
+    CVI_TDL_Free(&tracker_meta);
+    CVI_TDL_ReleaseImage(&frame);
   }
   printf("\nDone\n");
 
   fclose(outFile);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   CVI_SYS_Exit();
 }

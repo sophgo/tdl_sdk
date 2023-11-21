@@ -1,14 +1,14 @@
 #include "image_utils.hpp"
 
-#include "core/cviai_utils.h"
+#include "core/cvi_tdl_utils.h"
 
 #include <cvi_sys.h>
 #include "core_utils.hpp"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #include "rescale_utils.hpp"
 
 #include "opencv2/core.hpp"
-#ifdef ENABLE_CVIAI_CV_UTILS
+#ifdef ENABLE_CVI_TDL_CV_UTILS
 #include "cv/imgproc.hpp"
 #else
 #include "opencv2/imgproc.hpp"
@@ -55,7 +55,7 @@ static void DO_UNMAP_IF_NEEDED(VIDEO_FRAME_INFO_S *frame, bool do_unmap) {
   }
 }
 
-static void GET_BBOX_COORD(cvai_bbox_t *bbox, uint32_t &x1, uint32_t &y1, uint32_t &x2,
+static void GET_BBOX_COORD(cvtdl_bbox_t *bbox, uint32_t &x1, uint32_t &y1, uint32_t &x2,
                            uint32_t &y2, uint32_t &height, uint32_t &width, PIXEL_FORMAT_E fmt,
                            uint32_t frame_height, uint32_t frame_width) {
   x1 = (uint32_t)floor(bbox->x1);
@@ -125,9 +125,9 @@ static void BBOX_PIXEL_COPY_2(uint8_t *src, uint8_t *dst, uint32_t src_width, ui
   }
 }
 
-namespace cviai {
+namespace cvitdl {
 
-CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_bbox_t *bbox,
+CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst_image, cvtdl_bbox_t *bbox,
                    bool cvtRGB888) {
   if (false == IS_SUPPORTED_FORMAT(srcFrame)) {
     return CVI_FAILURE;
@@ -137,20 +137,20 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
   GET_BBOX_COORD(bbox, x1, y1, x2, y2, height, width, srcFrame->stVFrame.enPixelFormat,
                  srcFrame->stVFrame.u32Height, srcFrame->stVFrame.u32Width);
 
-  cvai_image_t tmp_image;
-  memset(&tmp_image, 0, sizeof(cvai_image_t));
+  cvtdl_image_t tmp_image;
+  memset(&tmp_image, 0, sizeof(cvtdl_image_t));
   if (cvtRGB888 && srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
-    if (CVIAI_SUCCESS !=
-        CVI_AI_CreateImage(&tmp_image, height, width, srcFrame->stVFrame.enPixelFormat)) {
-      return CVIAI_FAILURE;
+    if (CVI_TDL_SUCCESS !=
+        CVI_TDL_CreateImage(&tmp_image, height, width, srcFrame->stVFrame.enPixelFormat)) {
+      return CVI_TDL_FAILURE;
     }
-    if (CVIAI_SUCCESS != CVI_AI_CreateImage(dst_image, height, width, PIXEL_FORMAT_RGB_888)) {
-      return CVIAI_FAILURE;
+    if (CVI_TDL_SUCCESS != CVI_TDL_CreateImage(dst_image, height, width, PIXEL_FORMAT_RGB_888)) {
+      return CVI_TDL_FAILURE;
     }
   } else {
-    if (CVIAI_SUCCESS !=
-        CVI_AI_CreateImage(dst_image, height, width, srcFrame->stVFrame.enPixelFormat)) {
-      return CVIAI_FAILURE;
+    if (CVI_TDL_SUCCESS !=
+        CVI_TDL_CreateImage(dst_image, height, width, srcFrame->stVFrame.enPixelFormat)) {
+      return CVI_TDL_FAILURE;
     }
   }
 
@@ -164,7 +164,7 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
                       3);
     } break;
     case PIXEL_FORMAT_RGB_888_PLANAR: {
-      cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
+      cvtdl_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
       BBOX_PIXEL_COPY(srcFrame->stVFrame.pu8VirAddr[0], p_image->pix[0],
                       srcFrame->stVFrame.u32Stride[0], p_image->stride[0], x1, y1, width, height,
                       1);
@@ -184,7 +184,7 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
       }
     } break;
     case PIXEL_FORMAT_NV21: {
-      cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
+      cvtdl_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
       BBOX_PIXEL_COPY(srcFrame->stVFrame.pu8VirAddr[0], p_image->pix[0],
                       srcFrame->stVFrame.u32Stride[0], p_image->stride[0], x1, y1, width, height,
                       1);
@@ -196,15 +196,15 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
                              tmp_image.stride[0]);
         cv::Mat cvImage_RGB888(dst_image->height, dst_image->width, CV_8UC3, dst_image->pix[0],
                                dst_image->stride[0]);
-#ifdef ENABLE_CVIAI_CV_UTILS
-        cviai::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+        cvitdl::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
 #else
         cv::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
 #endif
       }
     } break;
     case PIXEL_FORMAT_YUV_PLANAR_420: {
-      cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
+      cvtdl_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
       BBOX_PIXEL_COPY(srcFrame->stVFrame.pu8VirAddr[0], p_image->pix[0],
                       srcFrame->stVFrame.u32Stride[0], p_image->stride[0], x1, y1, width, height,
                       1);
@@ -219,8 +219,8 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
                                tmp_image.stride[0]);
         cv::Mat cvImage_RGB888(dst_image->height, dst_image->width, CV_8UC3, dst_image->pix[0],
                                dst_image->stride[0]);
-#ifdef ENABLE_CVIAI_CV_UTILS
-        cviai::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+        cvitdl::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
 #else
         cv::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
 #endif
@@ -230,13 +230,13 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_b
       break;
   }
 
-  CVI_AI_Free(&tmp_image);
+  CVI_TDL_Free(&tmp_image);
   DO_UNMAP_IF_NEEDED(srcFrame, do_unmap);
 
   return CVI_SUCCESS;
 }
 
-CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, cvai_bbox_t *bbox,
+CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst_image, cvtdl_bbox_t *bbox,
                          bool cvtRGB888, float exten_ratio, float *offset_x, float *offset_y) {
   if (false == IS_SUPPORTED_FORMAT(srcFrame)) {
     return CVI_FAILURE;
@@ -258,22 +258,23 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, 
   *offset_x = edge_exten + (edge - width) / 2;
   *offset_y = edge_exten + (edge - height) / 2;
 
-  cvai_image_t tmp_image;
-  memset(&tmp_image, 0, sizeof(cvai_image_t));
+  cvtdl_image_t tmp_image;
+  memset(&tmp_image, 0, sizeof(cvtdl_image_t));
   if (cvtRGB888 && srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
-    if (CVIAI_SUCCESS != CVI_AI_CreateImage(&tmp_image, edge + 2 * edge_exten,
-                                            edge + 2 * edge_exten,
-                                            srcFrame->stVFrame.enPixelFormat)) {
-      return CVIAI_FAILURE;
+    if (CVI_TDL_SUCCESS != CVI_TDL_CreateImage(&tmp_image, edge + 2 * edge_exten,
+                                               edge + 2 * edge_exten,
+                                               srcFrame->stVFrame.enPixelFormat)) {
+      return CVI_TDL_FAILURE;
     }
-    if (CVIAI_SUCCESS != CVI_AI_CreateImage(dst_image, edge + 2 * edge_exten, edge + 2 * edge_exten,
-                                            PIXEL_FORMAT_RGB_888)) {
-      return CVIAI_FAILURE;
+    if (CVI_TDL_SUCCESS != CVI_TDL_CreateImage(dst_image, edge + 2 * edge_exten,
+                                               edge + 2 * edge_exten, PIXEL_FORMAT_RGB_888)) {
+      return CVI_TDL_FAILURE;
     }
   } else {
-    if (CVIAI_SUCCESS != CVI_AI_CreateImage(dst_image, edge + 2 * edge_exten, edge + 2 * edge_exten,
-                                            srcFrame->stVFrame.enPixelFormat)) {
-      return CVIAI_FAILURE;
+    if (CVI_TDL_SUCCESS != CVI_TDL_CreateImage(dst_image, edge + 2 * edge_exten,
+                                               edge + 2 * edge_exten,
+                                               srcFrame->stVFrame.enPixelFormat)) {
+      return CVI_TDL_FAILURE;
     }
   }
 
@@ -288,7 +289,7 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, 
                         dst_image->width, dst_image->height, 3);
     } break;
     case PIXEL_FORMAT_RGB_888_PLANAR: {
-      cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
+      cvtdl_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
       BBOX_PIXEL_COPY_2(srcFrame->stVFrame.pu8VirAddr[0], p_image->pix[0],
                         (int)srcFrame->stVFrame.u32Width, (int)srcFrame->stVFrame.u32Height,
                         srcFrame->stVFrame.u32Stride[0], p_image->stride[0], ext_x1, ext_y1,
@@ -311,7 +312,7 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, 
       }
     } break;
     case PIXEL_FORMAT_NV21: {
-      cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
+      cvtdl_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
       BBOX_PIXEL_COPY_2(srcFrame->stVFrame.pu8VirAddr[0], p_image->pix[0],
                         (int)srcFrame->stVFrame.u32Width, (int)srcFrame->stVFrame.u32Height,
                         srcFrame->stVFrame.u32Stride[0], p_image->stride[0], ext_x1, ext_y1,
@@ -325,15 +326,15 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, 
                              tmp_image.stride[0]);
         cv::Mat cvImage_RGB888(dst_image->height, dst_image->width, CV_8UC3, dst_image->pix[0],
                                dst_image->stride[0]);
-#ifdef ENABLE_CVIAI_CV_UTILS
-        cviai::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+        cvitdl::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
 #else
         cv::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
 #endif
       }
     } break;
     case PIXEL_FORMAT_YUV_PLANAR_420: {
-      cvai_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
+      cvtdl_image_t *p_image = (cvtRGB888) ? &tmp_image : dst_image;
       BBOX_PIXEL_COPY_2(srcFrame->stVFrame.pu8VirAddr[0], p_image->pix[0],
                         (int)srcFrame->stVFrame.u32Width, (int)srcFrame->stVFrame.u32Height,
                         srcFrame->stVFrame.u32Stride[0], p_image->stride[0], ext_x1, ext_y1,
@@ -351,8 +352,8 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, 
                                tmp_image.stride[0]);
         cv::Mat cvImage_RGB888(dst_image->height, dst_image->width, CV_8UC3, dst_image->pix[0],
                                dst_image->stride[0]);
-#ifdef ENABLE_CVIAI_CV_UTILS
-        cviai::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+        cvitdl::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
 #else
         cv::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
 #endif
@@ -362,15 +363,15 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image, 
       break;
   }
 
-  CVI_AI_Free(&tmp_image);
+  CVI_TDL_Free(&tmp_image);
   DO_UNMAP_IF_NEEDED(srcFrame, do_unmap);
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-static CVI_S32 PREPARE_FACE_ALIGNMENT_DATA(VIDEO_FRAME_INFO_S *frame, cvai_image_t *image,
-                                           cvai_face_info_t *face_info,
-                                           cvai_face_info_t *new_face_info, uint32_t *height,
+static CVI_S32 PREPARE_FACE_ALIGNMENT_DATA(VIDEO_FRAME_INFO_S *frame, cvtdl_image_t *image,
+                                           cvtdl_face_info_t *face_info,
+                                           cvtdl_face_info_t *new_face_info, uint32_t *height,
                                            uint32_t *width, uint32_t *stride, uint8_t **data_ptr) {
   if (frame->stVFrame.enPixelFormat == PIXEL_FORMAT_RGB_888) {
     *height = frame->stVFrame.u32Height;
@@ -386,9 +387,9 @@ static CVI_S32 PREPARE_FACE_ALIGNMENT_DATA(VIDEO_FRAME_INFO_S *frame, cvai_image
     }
   } else {
     float x_offset, y_offset;
-    if (CVIAI_SUCCESS != crop_image_exten(frame, image, &face_info->bbox, true,
-                                          FACE_CROP_EXTEN_RATIO, &x_offset, &y_offset)) {
-      return CVIAI_FAILURE;
+    if (CVI_TDL_SUCCESS != crop_image_exten(frame, image, &face_info->bbox, true,
+                                            FACE_CROP_EXTEN_RATIO, &x_offset, &y_offset)) {
+      return CVI_TDL_FAILURE;
     }
     *height = image->height;
     *width = image->width;
@@ -402,13 +403,13 @@ static CVI_S32 PREPARE_FACE_ALIGNMENT_DATA(VIDEO_FRAME_INFO_S *frame, cvai_image
       new_face_info->pts.y[i] = face_info->pts.y[i] - face_info->bbox.y1 + y_offset;
     }
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image,
-                        cvai_face_info_t *face_info, bool align, bool cvtRGB888) {
+CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst_image,
+                        cvtdl_face_info_t *face_info, bool align, bool cvtRGB888) {
   if (false == IS_SUPPORTED_FORMAT(srcFrame)) {
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   if (!align) {
@@ -418,18 +419,18 @@ CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image,
   bool do_unmap = false;
   DO_MAP_IF_NEEDED(srcFrame, &do_unmap);
 
-  cvai_image_t tmp_image;
-  memset(&tmp_image, 0, sizeof(cvai_image_t));
-  cvai_face_info_t tmp_face_info;
-  memset(&tmp_face_info, 0, sizeof(cvai_face_info_t));
+  cvtdl_image_t tmp_image;
+  memset(&tmp_image, 0, sizeof(cvtdl_image_t));
+  cvtdl_face_info_t tmp_face_info;
+  memset(&tmp_face_info, 0, sizeof(cvtdl_face_info_t));
   uint32_t h, w, s;
   uint8_t *p;
-  if (CVIAI_SUCCESS != PREPARE_FACE_ALIGNMENT_DATA(srcFrame, &tmp_image, face_info, &tmp_face_info,
-                                                   &h, &w, &s, &p)) {
-    return CVIAI_FAILURE;
+  if (CVI_TDL_SUCCESS != PREPARE_FACE_ALIGNMENT_DATA(srcFrame, &tmp_image, face_info,
+                                                     &tmp_face_info, &h, &w, &s, &p)) {
+    return CVI_TDL_FAILURE;
   }
 
-  CVI_AI_CreateImage(dst_image, FACE_IMAGE_H, FACE_IMAGE_W, PIXEL_FORMAT_RGB_888);
+  CVI_TDL_CreateImage(dst_image, FACE_IMAGE_H, FACE_IMAGE_W, PIXEL_FORMAT_RGB_888);
 
   cv::Mat image(h, w, CV_8UC3, p, s);
   cv::Mat warp_image(cv::Size(dst_image->width, dst_image->height), image.type(), dst_image->pix[0],
@@ -437,7 +438,7 @@ CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image,
 
   if (face_align(image, warp_image, tmp_face_info) != 0) {
     LOGE("face align failed.\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   free(tmp_face_info.pts.x);
@@ -446,7 +447,7 @@ CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image,
   DO_UNMAP_IF_NEEDED(srcFrame, do_unmap);
 
   if (srcFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
-    CVI_AI_Free(&tmp_image);
+    CVI_TDL_Free(&tmp_image);
   }
 
 #if 0 /* for debug */
@@ -454,21 +455,21 @@ CVI_S32 crop_image_face(VIDEO_FRAME_INFO_S *srcFrame, cvai_image_t *dst_image,
   cv::imwrite("visual/aligned_face.jpg", warp_image);
 #endif
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 CVI_S32 ALIGN_FACE_TO_FRAME(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                            cvai_face_info_t &face_info) {
+                            cvtdl_face_info_t &face_info) {
   if (false == IS_SUPPORTED_FORMAT(srcFrame)) {
     return CVI_FAILURE;
   }
   bool do_unmap = false;
   DO_MAP_IF_NEEDED(srcFrame, &do_unmap);
 
-  cvai_image_t tmp_image;
-  memset(&tmp_image, 0, sizeof(cvai_image_t));
-  cvai_face_info_t tmp_face_info;
-  memset(&tmp_face_info, 0, sizeof(cvai_face_info_t));
+  cvtdl_image_t tmp_image;
+  memset(&tmp_image, 0, sizeof(cvtdl_image_t));
+  cvtdl_face_info_t tmp_face_info;
+  memset(&tmp_face_info, 0, sizeof(cvtdl_face_info_t));
   uint32_t h, w, s;
   uint8_t *p;
   if (CVI_SUCCESS != PREPARE_FACE_ALIGNMENT_DATA(srcFrame, &tmp_image, &face_info, &tmp_face_info,
@@ -489,7 +490,7 @@ CVI_S32 ALIGN_FACE_TO_FRAME(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *ds
   free(tmp_face_info.pts.x);
   free(tmp_face_info.pts.y);
 
-  CVI_AI_Free(&tmp_image);
+  CVI_TDL_Free(&tmp_image);
   DO_UNMAP_IF_NEEDED(srcFrame, do_unmap);
 
   return CVI_SUCCESS;
@@ -497,7 +498,7 @@ CVI_S32 ALIGN_FACE_TO_FRAME(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *ds
 
 // #define VISUAL_LAPLACIAN_RESULT
 
-CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *face_info,
+CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_info_t *face_info,
                                float *score) {
 #ifdef VISUAL_LAPLACIAN_RESULT
   static uint32_t counter = 0;
@@ -509,8 +510,8 @@ CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *f
   bool do_unmap = false;
   DO_MAP_IF_NEEDED(srcFrame, &do_unmap);
 
-  cvai_image_t tmp_image;
-  memset(&tmp_image, 0, sizeof(cvai_image_t));
+  cvtdl_image_t tmp_image;
+  memset(&tmp_image, 0, sizeof(cvtdl_image_t));
   bool cvtRGB888 = true;
   crop_image(srcFrame, &tmp_image, &face_info->bbox, cvtRGB888);
 
@@ -519,14 +520,14 @@ CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *f
   cv::Mat image(h, w, CV_8UC3, p, s);
   cv::Mat image_gray;
   cv::Mat ed;
-#ifdef ENABLE_CVIAI_CV_UTILS
-  cviai::cvtColor(image, image_gray, COLOR_RGB2GRAY);
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+  cvitdl::cvtColor(image, image_gray, COLOR_RGB2GRAY);
 #else
   cv::cvtColor(image, image_gray, cv::COLOR_RGB2GRAY);
 #endif
   double laplacian_score = 0.0;
   double mean = 0.0;
-  cvai_pts_t *pts_info = &face_info->pts;
+  cvtdl_pts_t *pts_info = &face_info->pts;
   int x_l = (int)(std::min(pts_info->x[0], pts_info->x[3]) - face_info->bbox.x1);
   int x_r = (int)(std::max(pts_info->x[1], pts_info->x[4]) - face_info->bbox.x1);
 
@@ -572,10 +573,10 @@ CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvai_face_info_t *f
   // free(tmp_face_info.pts.x);
   // free(tmp_face_info.pts.y);
 
-  CVI_AI_Free(&tmp_image);
+  CVI_TDL_Free(&tmp_image);
   DO_UNMAP_IF_NEEDED(srcFrame, do_unmap);
 
   return CVI_SUCCESS;
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

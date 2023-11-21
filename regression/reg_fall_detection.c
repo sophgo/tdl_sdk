@@ -1,49 +1,49 @@
 #define _GNU_SOURCE
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
 
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("Usage: %s <detection_model_path> <alphapose_model_path> <video_frames_folder>.\n",
            argv[0]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
 
   // Init VB pool size.
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 5);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  // Init cviai handle.
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
-  if (ret != CVIAI_SUCCESS) {
+  // Init cvitdl handle.
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
   // Setup model path and model config.
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, argv[1]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, false);
-  CVI_AI_SelectDetectClass(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_COCO80, 1,
-                           CVI_AI_DET_TYPE_PERSON);
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_ALPHAPOSE, argv[2]);
-  if (ret != CVIAI_SUCCESS) {
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, false);
+  CVI_TDL_SelectDetectClass(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, 1,
+                            CVI_TDL_DET_TYPE_PERSON);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_ALPHAPOSE, argv[2]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model alphapose failed with %#x!\n", ret);
     return ret;
   }
@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
   }
 
   VIDEO_FRAME_INFO_S fdFrame;
-  cvai_object_t obj;
-  memset(&obj, 0, sizeof(cvai_object_t));
+  cvtdl_object_t obj;
+  memset(&obj, 0, sizeof(cvtdl_object_t));
   for (i = 0; i < count; i++) {
     struct dirent *dp;
 
@@ -78,26 +78,26 @@ int main(int argc, char *argv[]) {
       strcat(image_path, "/");
       strcat(image_path, dp->d_name);
 
-      ret = CVI_AI_ReadImage(image_path, &fdFrame, PIXEL_FORMAT_RGB_888);
-      if (ret != CVIAI_SUCCESS) {
+      ret = CVI_TDL_ReadImage(image_path, &fdFrame, PIXEL_FORMAT_RGB_888);
+      if (ret != CVI_TDL_SUCCESS) {
         printf("Read image1 failed with %#x!\n", ret);
         return ret;
       }
       printf("\nRead image : %s ", image_path);
 
       // Run inference and print result.
-      CVI_AI_MobileDetV2_COCO80(ai_handle, &fdFrame, &obj);
+      CVI_TDL_MobileDetV2_COCO80(tdl_handle, &fdFrame, &obj);
       printf("; People found %x ", obj.size);
 
-      CVI_AI_AlphaPose(ai_handle, &fdFrame, &obj);
+      CVI_TDL_AlphaPose(tdl_handle, &fdFrame, &obj);
 
-      CVI_AI_Fall(ai_handle, &obj);
+      CVI_TDL_Fall(tdl_handle, &obj);
       if (obj.size > 0 && obj.info[0].pedestrian_properity != NULL) {
         printf("; fall score %d ", obj.info[0].pedestrian_properity->fall);
       }
 
-      CVI_AI_ReleaseImage(&fdFrame);
-      CVI_AI_Free(&obj);
+      CVI_TDL_ReleaseImage(&fdFrame);
+      CVI_TDL_Free(&obj);
 
       free(dp);
     }
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   free(entry_list);
   // Free image and handles.
   // CVI_SYS_FreeI(ive_handle, &image);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;
 }

@@ -1,6 +1,6 @@
 #include "yolov3.hpp"
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
+#include "core/core/cvtdl_errno.h"
 #include "core_utils.hpp"
 
 #define YOLOV3_CLASSES 80
@@ -15,7 +15,7 @@
 
 using namespace std;
 
-namespace cviai {
+namespace cvitdl {
 
 Yolov3::Yolov3() : Core(CVI_MEM_DEVICE) {
   m_det_buf_size = YOLOV3_DEFAULT_DET_BUFFER;
@@ -37,26 +37,26 @@ Yolov3::~Yolov3() { free(mp_total_dets); }
 int Yolov3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Yolov3 only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   for (int i = 0; i < 3; i++) {
     (*data)[0].factor[i] = YOLOV3_SCALE;
   }
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj) {
+int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (run(frames) == CVIAI_SUCCESS) {
+  if (run(frames) == CVI_TDL_SUCCESS) {
     outputParser(srcFrame, obj);
   }
 
   return ret;
 }
 
-void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj) {
+void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj) {
   vector<float *> features;
   vector<string> output_name = {YOLOV3_OUTPUT1, YOLOV3_OUTPUT2, YOLOV3_OUTPUT3};
   vector<CVI_SHAPE> output_shape;
@@ -115,12 +115,12 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj) {
 
   // fill obj
   obj->size = results.size();
-  obj->info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj->size);
+  obj->info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj->size);
   obj->width = yolov3_w;
   obj->height = yolov3_h;
   obj->rescale_type = m_vpss_config[0].rescale_type;
 
-  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
+  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
   for (uint32_t i = 0; i < obj->size; ++i) {
     obj->info[i].bbox.x1 = results[i].x1;
     obj->info[i].bbox.y1 = results[i].y1;
@@ -229,4 +229,4 @@ void Yolov3::getYOLOResults(detection *dets, int num, float threshold, int ori_w
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

@@ -1,19 +1,19 @@
 #pragma once
 #include <cvi_comm_vb.h>
 #include "core.hpp"
-#include "core/object/cvai_object_types.h"
+#include "core/object/cvtdl_object_types.h"
 
 #include "license_plate_detection_utils.hpp"
 #include "opencv2/core.hpp"
 
-namespace cviai {
+namespace cvitdl {
 
 /* WPODNet */
 class LicensePlateDetection final : public Core {
  public:
   LicensePlateDetection();
   virtual ~LicensePlateDetection();
-  int inference(VIDEO_FRAME_INFO_S *frame, cvai_object_t *vehicle_meta);
+  int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *vehicle_meta);
   int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 
  private:
@@ -26,4 +26,4 @@ class LicensePlateDetection final : public Core {
   int vehicle_h, vehicle_w;
   int out_tensor_h, out_tensor_w;
 };
-}  // namespace cviai
+}  // namespace cvitdl

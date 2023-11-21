@@ -1,9 +1,9 @@
 #include "sound_classification_v2.hpp"
 #include <iostream>
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #include "cviruntime.h"
 using namespace melspec;
-using namespace cviai;
+using namespace cvitdl;
 using namespace std;
 
 SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {}
@@ -81,28 +81,25 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
   return CVI_SUCCESS;
 }
 int SoundClassificationV2::get_top_k(float *result, size_t count) {
+  // int TOP_K = 1;
+  // float *data = result;
+  // float conf_fg = 1.0 / (1 + std::exp(-result[1]));
+  // if (conf_fg > m_model_threshold) {
+  //   return 1;
+  // } else {
+  //   return 0;
+  // }
   int idx = -1;
-  float max_e = -10000;
-  float cur_e;
-
-  float sum_e = 0.;
+  float max = -10000;
   for (size_t i = 0; i < count; i++) {
-    cur_e = std::exp(result[i]);
-    if (cur_e > max_e) {
-      max_e = cur_e;
+    float conf_fg = 1.0 / (1 + std::exp(-result[i]));
+    // std::cout<<"i:"<<i<<", score:"<<conf_fg<<std::endl;
+    if (conf_fg > max) {
+      max = conf_fg;
       idx = i;
     }
-    sum_e = float(sum_e) + float(cur_e);
-    // std::cout << "\ti:" << i << ", score:" << result[i] << ", cur_e:" << cur_e << ", sum_e:" <<
-    // sum_e;
   }
 
-  // for (size_t i = 0; i < count; i++) {
-  //   cur_e = std::exp(result[i]) / sum_e;
-  //   std::cout << "  i:" << i << ", score:" << cur_e;
-  // }
-
-  float max = max_e / sum_e;
   if (idx != 0 && max < m_model_threshold) {
     idx = 0;
   }

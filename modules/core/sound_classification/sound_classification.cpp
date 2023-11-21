@@ -2,7 +2,7 @@
 #define N_FFT 1024
 #define ESC_OUT_NAME "prob_dequant"
 
-namespace cviai {
+namespace cvitdl {
 
 int borderInterpolate(int p, int len) {
   int delta = 1;
@@ -173,4 +173,4 @@ int SoundClassification::getClassesNum() {
   const TensorInfo &info = getOutputTensorInfo(ESC_OUT_NAME);
   return info.tensor_elem;
 }
-}  // namespace cviai
+}  // namespace cvitdl

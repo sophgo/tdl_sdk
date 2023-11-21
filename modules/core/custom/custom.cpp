@@ -1,12 +1,12 @@
 #include "custom.hpp"
 
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 
 #include <cvi_buffer.h>
 #include <cvi_vpss.h>
 
-namespace cviai {
+namespace cvitdl {
 
 Custom::Custom() : Core(CVI_MEM_DEVICE) {}
 
@@ -20,7 +20,7 @@ int Custom::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
     }
     if (p_sqparam == nullptr) {
       LOGE("Error! Factor and mean of input index %u is not set.\n", idx);
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
     }
     if (p_sqparam->factor.size() == 1) {
       for (int i = 0; i < 3; i++) {
@@ -34,17 +34,17 @@ int Custom::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
       }
     } else {
       LOGE("factor and mean must have 1 or 3 values. Current: %zu.\n", p_sqparam->factor.size());
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
     }
     (*data)[idx].keep_aspect_ratio = p_sqparam->keep_aspect_ratio;
     (*data)[idx].use_quantize_scale = p_sqparam->use_model_threashold;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Custom::onModelOpened() {
   m_processed_frames.resize(getInputNum());
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Custom::setSQParam(const uint32_t idx, const float *factor, const float *mean,
@@ -52,7 +52,7 @@ int Custom::setSQParam(const uint32_t idx, const float *factor, const float *mea
                        const bool keep_aspect_ratio) {
   if (length != 1 && length != 3) {
     LOGE("Scale parameter only supports legnth of 1 or 3. Given: %u.\n", length);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   CustomSQParam *p_sqparam = nullptr;
   for (uint32_t i = 0; i < m_sq_params.size(); i++) {
@@ -73,13 +73,13 @@ int Custom::setSQParam(const uint32_t idx, const float *factor, const float *mea
   }
   p_sqparam->use_model_threashold = use_model_threshold;
   p_sqparam->keep_aspect_ratio = keep_aspect_ratio;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Custom::setPreProcessFunc(preProcessFunc func, bool use_tensor_input, bool use_vpss_sq) {
   if (func == NULL && use_tensor_input) {
     LOGE("Function pointer cannot be NULL if use_tensor_input is enabled.\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   preprocessfunc = func;
   if (use_tensor_input) {
@@ -90,7 +90,7 @@ int Custom::setPreProcessFunc(preProcessFunc func, bool use_tensor_input, bool u
   if (use_tensor_input) {
     setInputMemType(CVI_MEM_SYSTEM);
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Custom::getInputShape(const char *tensor_name, uint32_t *n, uint32_t *c, uint32_t *h,
@@ -101,7 +101,7 @@ int Custom::getInputShape(const char *tensor_name, uint32_t *n, uint32_t *c, uin
   *c = shape.dim[1];
   *h = shape.dim[2];
   *w = shape.dim[3];
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Custom::getInputNum() { return getNumInputTensor(); }
@@ -113,14 +113,14 @@ int Custom::getInputShape(const uint32_t idx, uint32_t *n, uint32_t *c, uint32_t
   *c = shape.dim[1];
   *h = shape.dim[2];
   *w = shape.dim[3];
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Custom::inference(VIDEO_FRAME_INFO_S *inFrames, uint32_t num_of_frames) {
   if (num_of_frames != getNumInputTensor()) {
     LOGE("The number of input frames does not match the number of input tensors. (%u != %zd)\n",
          num_of_frames, getNumInputTensor());
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   std::vector<VIDEO_FRAME_INFO_S *> frames;
   if (preprocessfunc != NULL) {
@@ -152,7 +152,7 @@ int Custom::getOutputTensor(const char *tensor_name, int8_t **tensor, uint32_t *
   *tensor = info.get<int8_t>();
   *tensor_count = info.tensor_elem;
   *unit_size = info.tensor_size / *tensor_count;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

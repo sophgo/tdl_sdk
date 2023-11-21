@@ -1,25 +1,25 @@
 #include "digital_tracking.hpp"
 #include "../draw_rect/draw_rect.hpp"
-#include "core/core/cvai_errno.h"
+#include "core/core/cvtdl_errno.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 #include "rescale_utils.hpp"
 
 #include <algorithm>
 
 #define DEFAULT_DT_ZOOM_TRANS_RATIO 0.1f
 
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 int DigitalTracking::setVpssTimeout(uint32_t timeout) {
   m_vpss_timeout = timeout;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int DigitalTracking::setVpssEngine(VpssEngine *engine) {
   mp_vpss_inst = engine;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 template <typename T>
@@ -29,7 +29,7 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
                          const float trans_ratio) {
   if (mp_vpss_inst == nullptr) {
     LOGE("vpss_inst not set.\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   uint32_t width = srcFrame->stVFrame.u32Width;
   uint32_t height = srcFrame->stVFrame.u32Height;
@@ -41,8 +41,8 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
     rect = Rect(width, 0, height, 0);
     const float total_size = width * height;
     for (uint32_t i = 0; i < meta->size; ++i) {
-      cvai_bbox_t bbox = cviai::box_rescale(width, height, meta->width, meta->height,
-                                            meta->info[i].bbox, meta->rescale_type);
+      cvtdl_bbox_t bbox = cvitdl::box_rescale(width, height, meta->width, meta->height,
+                                              meta->info[i].bbox, meta->rescale_type);
       const float &&ww = bbox.x2 - bbox.x1;
       const float &&hh = bbox.y2 - bbox.y1;
       if (ww < 4 || hh < 4) {
@@ -98,11 +98,11 @@ int DigitalTracking::run(const VIDEO_FRAME_INFO_S *srcFrame, const T *meta,
   rgb_color.r = DEFAULT_RECT_COLOR_R;
   rgb_color.g = DEFAULT_RECT_COLOR_G;
   rgb_color.b = DEFAULT_RECT_COLOR_B;
-  cviai::service::DrawRect(dstFrame, rect.l, rect.r, rect.t, rect.b, "", rgb_color,
-                           DEFAULT_RECT_THICKNESS, false);
+  cvitdl::service::DrawRect(dstFrame, rect.l, rect.r, rect.t, rect.b, "", rgb_color,
+                            DEFAULT_RECT_THICKNESS, false);
 #endif
   m_prev_rect = rect;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void DigitalTracking::transformRect(const float trans_ratio, const Rect &prev_rect,
@@ -153,17 +153,17 @@ void DigitalTracking::fitFrame(const float width, const float height, Rect *rect
   }
 }
 
-template int DigitalTracking::run<cvai_face_t>(const VIDEO_FRAME_INFO_S *srcFrame,
-                                               const cvai_face_t *meta,
-                                               VIDEO_FRAME_INFO_S *dstFrame, const float pad_l,
-                                               const float pad_r, const float pad_t,
-                                               const float pad_b, const float face_skip_ratio,
-                                               const float trans_ratio);
-template int DigitalTracking::run<cvai_object_t>(const VIDEO_FRAME_INFO_S *srcFrame,
-                                                 const cvai_object_t *meta,
-                                                 VIDEO_FRAME_INFO_S *dstFrame, const float pad_l,
-                                                 const float pad_r, const float pad_t,
-                                                 const float pad_b, const float face_skip_ratio,
-                                                 const float trans_ratio);
+template int DigitalTracking::run<cvtdl_face_t>(const VIDEO_FRAME_INFO_S *srcFrame,
+                                                const cvtdl_face_t *meta,
+                                                VIDEO_FRAME_INFO_S *dstFrame, const float pad_l,
+                                                const float pad_r, const float pad_t,
+                                                const float pad_b, const float face_skip_ratio,
+                                                const float trans_ratio);
+template int DigitalTracking::run<cvtdl_object_t>(const VIDEO_FRAME_INFO_S *srcFrame,
+                                                  const cvtdl_object_t *meta,
+                                                  VIDEO_FRAME_INFO_S *dstFrame, const float pad_l,
+                                                  const float pad_r, const float pad_t,
+                                                  const float pad_b, const float face_skip_ratio,
+                                                  const float trans_ratio);
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

@@ -4,16 +4,16 @@
 #include <cmath>
 #include <iterator>
 
-#include <core/core/cvai_errno.h>
+#include <core/core/cvtdl_errno.h>
 #include <error_msg.hpp>
 #include <iostream>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
@@ -22,7 +22,7 @@
 #define SCALE 0.003922
 #define MEAN 0
 
-namespace cviai {
+namespace cvitdl {
 
 template <typename T>
 inline void parse_cls_info(T *p_cls_ptr, int num_cls, int anchor_idx, float qscale,
@@ -44,12 +44,12 @@ float sigmoid(float x) { return 1.0 / (1.0 + exp(-x)); }
 
 int max_val(int x, int y) { return x > y ? x : y; }
 
-static void convert_det_struct(const Detections &dets, cvai_object_t *obj, int im_height,
+static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int im_height,
                                int im_width) {
-  CVI_AI_MemAllocInit(dets.size(), obj);
+  CVI_TDL_MemAllocInit(dets.size(), obj);
   obj->height = im_height;
   obj->width = im_width;
-  memset(obj->info, 0, sizeof(cvai_object_info_t) * obj->size);
+  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
 
   for (uint32_t i = 0; i < obj->size; ++i) {
     obj->info[i].bbox.x1 = dets[i]->x1;
@@ -110,11 +110,11 @@ int Yolov6::onModelOpened() {
 
   for (size_t i = 0; i < strides.size(); i++) {
     if (!class_out_names.count(strides[i]) || !bbox_out_names.count(strides[i])) {
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 Yolov6::~Yolov6() {}
@@ -122,7 +122,7 @@ Yolov6::~Yolov6() {}
 int Yolov6::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Yolov6 only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   for (int i = 0; i < 3; i++) {
@@ -132,7 +132,7 @@ int Yolov6::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
 
   (*data)[0].format = p_preprocess_cfg_.format;
   (*data)[0].use_quantize_scale = true;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int Yolov6::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -151,21 +151,21 @@ int Yolov6::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dst
   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
   if (ret != CVI_SUCCESS) {
     LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_SEND_FRAME;
+    return CVI_TDL_ERR_VPSS_SEND_FRAME;
   }
 
   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   if (ret != CVI_SUCCESS) {
     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVIAI_ERR_VPSS_GET_FRAME;
+    return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int Yolov6::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
+int Yolov6::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     LOGE("Yolov6 run inference failed!\n");
     return ret;
   }
@@ -175,7 +175,7 @@ int Yolov6::inference(VIDEO_FRAME_INFO_S *srcFrame, cvai_object_t *obj_meta) {
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                srcFrame->stVFrame.u32Height, obj_meta);
   model_timer_.TicToc("post");
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void Yolov6::decode_bbox_feature_map(int stride, int anchor_idx, std::vector<float> &decode_box) {
@@ -215,7 +215,7 @@ void Yolov6::decode_bbox_feature_map(int stride, int anchor_idx, std::vector<flo
   decode_box = box;
 }
 
-void Yolov6::clip_bbox(int frame_width, int frame_height, cvai_bbox_t *bbox) {
+void Yolov6::clip_bbox(int frame_width, int frame_height, cvtdl_bbox_t *bbox) {
   if (bbox->x1 < 0) {
     bbox->x1 = 0;
   } else if (bbox->x1 > frame_width) {
@@ -240,9 +240,9 @@ void Yolov6::clip_bbox(int frame_width, int frame_height, cvai_bbox_t *bbox) {
     bbox->y2 = frame_height;
   }
 }
-cvai_bbox_t Yolov6::boxRescale(int frame_width, int frame_height, int width, int height,
-                               cvai_bbox_t bbox) {
-  cvai_bbox_t rescale_bbox;
+cvtdl_bbox_t Yolov6::boxRescale(int frame_width, int frame_height, int width, int height,
+                                cvtdl_bbox_t bbox) {
+  cvtdl_bbox_t rescale_bbox;
   int max_board = max_val(frame_width, frame_height);
   float ratio = float(max_board) / float(width);
   rescale_bbox.x1 = int(bbox.x1 * ratio);
@@ -255,7 +255,7 @@ cvai_bbox_t Yolov6::boxRescale(int frame_width, int frame_height, int width, int
 }
 
 void Yolov6::postProcess(Detections &dets, int frame_width, int frame_height,
-                         cvai_object_t *obj_meta) {
+                         cvtdl_object_t *obj_meta) {
   Detections final_dets = nms_multi_class(dets, m_model_nms_threshold);
   CVI_SHAPE shape = getInputShape(0);
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3]);
@@ -271,7 +271,7 @@ void Yolov6::postProcess(Detections &dets, int frame_width, int frame_height,
 }
 
 void Yolov6::outputParser(const int iamge_width, const int image_height, const int frame_width,
-                          const int frame_height, cvai_object_t *obj_meta) {
+                          const int frame_height, cvtdl_object_t *obj_meta) {
   Detections vec_obj;
 
   float inverse_th = std::log(m_model_threshold / (1 - m_model_threshold));
@@ -317,5 +317,5 @@ void Yolov6::outputParser(const int iamge_width, const int image_height, const i
   }
   postProcess(vec_obj, frame_width, frame_height, obj_meta);
 }
-// namespace cviai
-}  // namespace cviai
+// namespace cvitdl
+}  // namespace cvitdl

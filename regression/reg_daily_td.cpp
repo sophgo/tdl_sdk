@@ -2,8 +2,8 @@
 #include <fstream>
 #include <string>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_test.hpp"
+#include "cvi_tdl.h"
+#include "cvi_tdl_test.hpp"
 #include "gtest.h"
 #include "json.hpp"
 #include "raii.hpp"
@@ -11,12 +11,12 @@
 #define SCORE_BIAS 0.05
 
 namespace fs = std::experimental::filesystem;
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
-class TamperDetectionTestSuite : public CVIAIModelTestSuite {
+class TamperDetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
-  TamperDetectionTestSuite() : CVIAIModelTestSuite("daily_reg_TD.json", "reg_daily_td") {}
+  TamperDetectionTestSuite() : CVI_TDLModelTestSuite("daily_reg_TD.json", "reg_daily_td") {}
 
   virtual ~TamperDetectionTestSuite() = default;
 
@@ -24,14 +24,14 @@ class TamperDetectionTestSuite : public CVIAIModelTestSuite {
 
  protected:
   virtual void SetUp() {
-    m_ai_handle = NULL;
-    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 1, 0), CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_SetVpssTimeout(m_ai_handle, 1000), CVIAI_SUCCESS);
+    m_tdl_handle = NULL;
+    ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_SetVpssTimeout(m_tdl_handle, 1000), CVI_TDL_SUCCESS);
   }
 
   virtual void TearDown() {
-    CVI_AI_DestroyHandle(m_ai_handle);
-    m_ai_handle = NULL;
+    CVI_TDL_DestroyHandle(m_tdl_handle);
+    m_tdl_handle = NULL;
   }
 };
 
@@ -46,7 +46,8 @@ TEST_F(TamperDetectionTestSuite, accruacy) {
     ASSERT_TRUE(image.open());
 
     float moving_score;
-    ASSERT_EQ(CVI_AI_TamperDetection(m_ai_handle, image.getFrame(), &moving_score), CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_TamperDetection(m_tdl_handle, image.getFrame(), &moving_score),
+              CVI_TDL_SUCCESS);
     // printf("[%d] %f (expected: %f)\n", img_idx, moving_score, expected_res);
 
     ASSERT_LT(ABS(moving_score - expected_res), SCORE_BIAS);
@@ -54,4 +55,4 @@ TEST_F(TamperDetectionTestSuite, accruacy) {
 }
 
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

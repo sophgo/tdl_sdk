@@ -7,7 +7,7 @@
 
 #define FLT_MIN_SOUND 1.175494351e-38F
 
-namespace cviai {
+namespace cvitdl {
 
 int borderInterpolate(int p, int len);
 
@@ -168,4 +168,4 @@ class SoundClassification final : public Core {
   std::vector<Mat *> hannWindows;
   ESCFFT fft;
 };
-}  // namespace cviai
+}  // namespace cvitdl

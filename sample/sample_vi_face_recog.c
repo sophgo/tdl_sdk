@@ -1,7 +1,6 @@
-#include "app/cviai_app.h"
-#include "cviai.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app.h"
 #include "middleware_utils.h"
-#include "sample_log.h"
 #include "sample_utils.h"
 #include "vi_vo_utils.h"
 
@@ -10,9 +9,9 @@
 #include <cvi_sys.h>
 #include <cvi_vb.h>
 #include <cvi_vi.h>
-#include <cviai.h>
 #include <rtsp.h>
 #include <sample_comm.h>
+#include "cvi_tdl.h"
 
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
@@ -36,16 +35,16 @@
 typedef struct {
   uint64_t u_id;
   float quality;
-  cvai_image_t image;
+  cvtdl_image_t image;
   tracker_state_e state;
   uint32_t counter;
 } IOData;
 
 typedef struct {
   CVI_S32 voType;
-  SAMPLE_AI_MW_CONTEXT *pstMWContext;
-  cviai_service_handle_t service_handle;
-} SAMPLE_AI_VENC_THREAD_ARG_S;
+  SAMPLE_TDL_MW_CONTEXT *pstMWContext;
+  cvitdl_service_handle_t service_handle;
+} SAMPLE_TDL_VENC_THREAD_ARG_S;
 
 MUTEXAUTOLOCK_INIT(IOMutex);
 MUTEXAUTOLOCK_INIT(VOMutex);
@@ -58,7 +57,7 @@ static volatile bool bRunVideoOutput = true;
 int rear_idx = 0;
 int front_idx = 0;
 static IOData data_buffer[OUTPUT_BUFFER_SIZE];
-static cvai_face_t g_face_meta_0;
+static cvtdl_face_t g_face_meta_0;
 
 double cal_time_elapsed(struct timeval start, struct timeval end) {
   double sec = end.tv_sec - start.tv_sec + (end.tv_usec - start.tv_usec) / 1000000.;
@@ -113,7 +112,7 @@ static void *pImageWrite(void *args) {
     }
 
     free(filename);
-    CVI_AI_Free(&data_buffer[target_idx].image);
+    CVI_TDL_Free(&data_buffer[target_idx].image);
     {
       MutexAutoLock(IOMutex, lock);
       front_idx = target_idx;
@@ -122,7 +121,7 @@ static void *pImageWrite(void *args) {
 
   printf("[APP] free buffer data...\n");
   while (front_idx != rear_idx) {
-    CVI_AI_Free(&data_buffer[(front_idx + 1) % OUTPUT_BUFFER_SIZE].image);
+    CVI_TDL_Free(&data_buffer[(front_idx + 1) % OUTPUT_BUFFER_SIZE].image);
     {
       MutexAutoLock(IOMutex, lock);
       front_idx = (front_idx + 1) % OUTPUT_BUFFER_SIZE;
@@ -134,14 +133,14 @@ static void *pImageWrite(void *args) {
 
 static void *run_venc(void *args) {
   printf("[APP] Video Output Up\n");
-  SAMPLE_AI_VENC_THREAD_ARG_S *vo_args = (SAMPLE_AI_VENC_THREAD_ARG_S *)args;
+  SAMPLE_TDL_VENC_THREAD_ARG_S *vo_args = (SAMPLE_TDL_VENC_THREAD_ARG_S *)args;
   if (!vo_args->voType) {
     return NULL;
   }
-  cviai_service_handle_t service_handle = vo_args->service_handle;
+  cvitdl_service_handle_t service_handle = vo_args->service_handle;
   CVI_S32 s32Ret = CVI_SUCCESS;
 
-  cvai_face_t face_meta_0;
+  cvtdl_face_t face_meta_0;
 
   VIDEO_FRAME_INFO_S stVOFrame;
   while (bRunVideoOutput) {
@@ -153,7 +152,7 @@ static void *run_venc(void *args) {
 
     {
       MutexAutoLock(VOMutex, lock);
-      CVI_AI_CopyFaceMeta(&g_face_meta_0, &face_meta_0);
+      CVI_TDL_CopyFaceMeta(&g_face_meta_0, &face_meta_0);
     }
 
     size_t image_size = stVOFrame.stVFrame.u32Length[0] + stVOFrame.stVFrame.u32Length[1] +
@@ -172,7 +171,7 @@ static void *run_venc(void *args) {
       }
       printf("trackid:%d,lb:%d,name:%s\n", (int)face_meta_0.info[i].unique_id, lb,
              face_meta_0.info[i].name);
-      cvai_service_brush_t brushi;
+      cvtdl_service_brush_t brushi;
       int num_clr = 7;
       int ind = lb % num_clr;
 
@@ -180,21 +179,21 @@ static void *run_venc(void *args) {
       brushi.color.g = g_draw_clrs[3 * ind + 1];
       brushi.color.b = g_draw_clrs[3 * ind + 2];
       brushi.size = 4;
-      cvai_face_t face_metai = face_meta_0;
+      cvtdl_face_t face_metai = face_meta_0;
       face_metai.size = 1;
       face_metai.info = &face_meta_0.info[i];
-      CVI_AI_Service_FaceDrawRect(service_handle, &face_metai, &stVOFrame, false, brushi);
+      CVI_TDL_Service_FaceDrawRect(service_handle, &face_metai, &stVOFrame, false, brushi);
     }
-    //     CVI_AI_Service_FaceDrawRect(service_handle, &face_meta_0, &stVOFrame, false, brush_0);
+    //     CVI_TDL_Service_FaceDrawRect(service_handle, &face_meta_0, &stVOFrame, false, brush_0);
     // #ifdef VISUAL_FACE_LANDMARK
-    //     CVI_AI_Service_FaceDraw5Landmark(&face_meta_0, &stVOFrame);
+    //     CVI_TDL_Service_FaceDraw5Landmark(&face_meta_0, &stVOFrame);
     // #endif
 
     CVI_SYS_Munmap((void *)stVOFrame.stVFrame.pu8VirAddr[0], image_size);
     stVOFrame.stVFrame.pu8VirAddr[0] = NULL;
     stVOFrame.stVFrame.pu8VirAddr[1] = NULL;
     stVOFrame.stVFrame.pu8VirAddr[2] = NULL;
-    s32Ret = SAMPLE_AI_Send_Frame_RTSP(&stVOFrame, vo_args->pstMWContext);
+    s32Ret = SAMPLE_TDL_Send_Frame_RTSP(&stVOFrame, vo_args->pstMWContext);
     // s32Ret = SendOutputFrame(&stVOFrame, &vo_args->vs_ctx.outputContext);
     if (s32Ret != CVI_SUCCESS) {
       printf("Send Output Frame NG\n");
@@ -206,16 +205,16 @@ static void *run_venc(void *args) {
       break;
     }
 
-    CVI_AI_Free(&face_meta_0);
+    CVI_TDL_Free(&face_meta_0);
   }
   return NULL;
 }
-int init_middleware(SAMPLE_AI_MW_CONTEXT *p_context) {
-  SAMPLE_AI_MW_CONFIG_S stMWConfig = {0};
+int init_middleware(SAMPLE_TDL_MW_CONTEXT *p_context) {
+  SAMPLE_TDL_MW_CONFIG_S stMWConfig = {0};
 
-  CVI_S32 s32Ret = SAMPLE_AI_Get_VI_Config(&stMWConfig.stViConfig);
+  CVI_S32 s32Ret = SAMPLE_TDL_Get_VI_Config(&stMWConfig.stViConfig);
   if (s32Ret != CVI_SUCCESS || stMWConfig.stViConfig.s32WorkingViNum <= 0) {
-    AI_LOGE("Failed to get senor infomation from ini file (/mnt/data/sensor_cfg.ini).\n");
+    printf("Failed to get senor infomation from ini file (/mnt/data/sensor_cfg.ini).\n");
     return -1;
   }
 
@@ -224,14 +223,14 @@ int init_middleware(SAMPLE_AI_MW_CONTEXT *p_context) {
   s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(stMWConfig.stViConfig.astViInfo[0].stSnsInfo.enSnsType,
                                           &enPicSize);
   if (s32Ret != CVI_SUCCESS) {
-    AI_LOGE("Cannot get senor size\n");
+    printf("Cannot get senor size\n");
     return -1;
   }
 
   SIZE_S stSensorSize;
   s32Ret = SAMPLE_COMM_SYS_GetPicSize(enPicSize, &stSensorSize);
   if (s32Ret != CVI_SUCCESS) {
-    AI_LOGE("Cannot get senor size\n");
+    printf("Cannot get senor size\n");
     return -1;
   }
 
@@ -261,7 +260,7 @@ int init_middleware(SAMPLE_AI_MW_CONTEXT *p_context) {
   stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32VpssChnBinding = VPSS_CHN1;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[1].u32VpssGrpBinding = (VPSS_GRP)0;
 
-  // VBPool 2 for AI preprocessing
+  // VBPool 2 for TDL preprocessing
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].enFormat = PIXEL_FORMAT_BGR_888_PLANAR;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32BlkCount = 1;
   stMWConfig.stVBPoolConfig.astVBPoolSetup[2].u32Height = 720;
@@ -276,7 +275,7 @@ int init_middleware(SAMPLE_AI_MW_CONTEXT *p_context) {
   stMWConfig.stVPSSPoolConfig.stVpssMode.aenInput[1] = VPSS_INPUT_ISP;
   stMWConfig.stVPSSPoolConfig.stVpssMode.ViPipe[1] = 0;
 
-  SAMPLE_AI_VPSS_CONFIG_S *pstVpssConfig = &stMWConfig.stVPSSPoolConfig.astVpssConfig[0];
+  SAMPLE_TDL_VPSS_CONFIG_S *pstVpssConfig = &stMWConfig.stVPSSPoolConfig.astVpssConfig[0];
   pstVpssConfig->bBindVI = true;
 
   // Assign device 1 to VPSS Grp0, because device1 has 3 outputs in dual mode.
@@ -290,15 +289,15 @@ int init_middleware(SAMPLE_AI_MW_CONTEXT *p_context) {
                           stVencSize.u32Height, VI_PIXEL_FORMAT, true);
 
   // Get default VENC configurations
-  SAMPLE_AI_Get_Input_Config(&stMWConfig.stVencConfig.stChnInputCfg);
+  SAMPLE_TDL_Get_Input_Config(&stMWConfig.stVencConfig.stChnInputCfg);
   stMWConfig.stVencConfig.u32FrameWidth = stVencSize.u32Width;
   stMWConfig.stVencConfig.u32FrameHeight = stVencSize.u32Height;
 
   // Get default RTSP configurations
-  SAMPLE_AI_Get_RTSP_Config(&stMWConfig.stRTSPConfig.stRTSPConfig);
-  s32Ret = SAMPLE_AI_Init_WM(&stMWConfig, p_context);
+  SAMPLE_TDL_Get_RTSP_Config(&stMWConfig.stRTSPConfig.stRTSPConfig);
+  s32Ret = SAMPLE_TDL_Init_WM(&stMWConfig, p_context);
   if (s32Ret != CVI_SUCCESS) {
-    AI_LOGE("init middleware failed! ret=%x\n", s32Ret);
+    printf("init middleware failed! ret=%x\n", s32Ret);
     return -1;
   }
   return s32Ret;
@@ -307,9 +306,9 @@ int init_middleware(SAMPLE_AI_MW_CONTEXT *p_context) {
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("Usage: sample_vi_face_recog scrfd_model_file fr_model_file gallery_root\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
@@ -328,59 +327,59 @@ int main(int argc, char *argv[]) {
   int voType = 2;            // atoi(argv[11]);
   // int vi_format = 1;//atoi(argv[12]);
 
-  CVI_AI_SUPPORTED_MODEL_E fd_model_id = CVI_AI_SUPPORTED_MODEL_SCRFDFACE;
-  CVI_AI_SUPPORTED_MODEL_E fr_model_id = CVI_AI_SUPPORTED_MODEL_FACERECOGNITION;
+  CVI_TDL_SUPPORTED_MODEL_E fd_model_id = CVI_TDL_SUPPORTED_MODEL_SCRFDFACE;
+  CVI_TDL_SUPPORTED_MODEL_E fr_model_id = CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION;
 
   if (buffer_size <= 0) {
     printf("buffer size must be larger than 0.\n");
     return CVI_FAILURE;
   }
 
-  SAMPLE_AI_MW_CONTEXT stMWContext = {0};
+  SAMPLE_TDL_MW_CONTEXT stMWContext = {0};
   ret = init_middleware(&stMWContext);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
-  cviai_handle_t ai_handle = NULL;
-  cviai_service_handle_t service_handle = NULL;
-  cviai_app_handle_t app_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
+  cvitdl_service_handle_t service_handle = NULL;
+  cvitdl_app_handle_t app_handle = NULL;
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
-  ret |= CVI_AI_Service_CreateHandle(&service_handle, ai_handle);
-  ret |= CVI_AI_APP_CreateHandle(&app_handle, ai_handle);
-  ret |= CVI_AI_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_AI_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                           fr_model_path, NULL, NULL);
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
+  ret |= CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
+  ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
+  ret |= CVI_TDL_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
+  ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
+                                            fr_model_path, NULL, NULL);
   app_handle->face_cpt_info->fr_flag = 2;
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("failed with %#x!\n", ret);
     goto CLEANUP_SYSTEM;
   }
-  CVI_AI_SetVpssTimeout(ai_handle, 1000);
-  CVI_AI_SetModelThreshold(ai_handle, fd_model_id, det_threshold);
-  CVI_AI_APP_FaceCapture_SetMode(app_handle, CYCLE);
+  CVI_TDL_SetVpssTimeout(tdl_handle, 1000);
+  CVI_TDL_SetModelThreshold(tdl_handle, fd_model_id, det_threshold);
+  CVI_TDL_APP_FaceCapture_SetMode(app_handle, CYCLE);
 
   face_capture_config_t app_cfg;
-  CVI_AI_APP_FaceCapture_GetDefaultConfig(&app_cfg);
-  CVI_AI_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
+  CVI_TDL_APP_FaceCapture_GetDefaultConfig(&app_cfg);
+  CVI_TDL_APP_FaceCapture_SetConfig(app_handle, &app_cfg);
 
-  cvai_service_feature_array_t feat_gallery;
+  cvtdl_service_feature_array_t feat_gallery;
   memset(&feat_gallery, 0, sizeof(feat_gallery));
   printf("to register face gallery\n");
   for (int i = 1; i < 10; i++) {
     char szbinf[128];
     sprintf(szbinf, "%s/%d.bin_feat.bin", gallery_root, i);
-    register_gallery_feature(ai_handle, szbinf, &feat_gallery);
+    register_gallery_feature(tdl_handle, szbinf, &feat_gallery);
   }
-  ret = CVI_AI_Service_RegisterFeatureArray(service_handle, feat_gallery, COS_SIMILARITY);
+  ret = CVI_TDL_Service_RegisterFeatureArray(service_handle, feat_gallery, COS_SIMILARITY);
 
   VIDEO_FRAME_INFO_S stfdFrame;
-  memset(&g_face_meta_0, 0, sizeof(cvai_face_t));
+  memset(&g_face_meta_0, 0, sizeof(cvtdl_face_t));
   pthread_t io_thread;
   pthread_t vo_thread;
   pthread_create(&io_thread, NULL, pImageWrite, NULL);
-  SAMPLE_AI_VENC_THREAD_ARG_S vo_args = {
+  SAMPLE_TDL_VENC_THREAD_ARG_S vo_args = {
       .voType = voType, .service_handle = service_handle, .pstMWContext = &stMWContext};
 
   // vo_args.vs_ctx = vs_ctx;
@@ -413,9 +412,9 @@ int main(int argc, char *argv[]) {
     time_elapsed += cal_time_elapsed(last_t, cur_t);
     last_t = cur_t;
 
-    ret = CVI_AI_APP_FaceCapture_Run(app_handle, &stfdFrame);
-    if (ret != CVIAI_SUCCESS) {
-      printf("CVI_AI_APP_FaceCapture_Run failed with %#x\n", ret);
+    ret = CVI_TDL_APP_FaceCapture_Run(app_handle, &stfdFrame);
+    if (ret != CVI_TDL_SUCCESS) {
+      printf("CVI_TDL_APP_FaceCapture_Run failed with %#x\n", ret);
       break;
     }
 
@@ -426,7 +425,7 @@ int main(int argc, char *argv[]) {
 
     {
       MutexAutoLock(VOMutex, lock);
-      CVI_AI_CopyFaceMeta(&app_handle->face_cpt_info->last_faces, &g_face_meta_0);
+      CVI_TDL_CopyFaceMeta(&app_handle->face_cpt_info->last_faces, &g_face_meta_0);
     }
 
     /* Producer */
@@ -461,7 +460,8 @@ int main(int argc, char *argv[]) {
         data_buffer[target_idx].state = state;
         data_buffer[target_idx].counter = counter;
         /* NOTE: Make sure the image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
-        CVI_AI_CopyImage(&app_handle->face_cpt_info->data[i].image, &data_buffer[target_idx].image);
+        CVI_TDL_CopyImage(&app_handle->face_cpt_info->data[i].image,
+                          &data_buffer[target_idx].image);
         {
           MutexAutoLock(IOMutex, lock);
           rear_idx = target_idx;
@@ -483,10 +483,10 @@ int main(int argc, char *argv[]) {
   pthread_join(vo_thread, NULL);
 
 CLEANUP_SYSTEM:
-  CVI_AI_APP_DestroyHandle(app_handle);
-  CVI_AI_Service_DestroyHandle(service_handle);
-  CVI_AI_DestroyHandle(ai_handle);
-  SAMPLE_AI_Destroy_MW(&stMWContext);
+  CVI_TDL_APP_DestroyHandle(app_handle);
+  CVI_TDL_Service_DestroyHandle(service_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
+  SAMPLE_TDL_Destroy_MW(&stMWContext);
   CVI_SYS_Exit();
   CVI_VB_Exit();
 }

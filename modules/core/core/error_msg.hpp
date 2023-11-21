@@ -3,7 +3,7 @@
 #include <cviruntime.h>
 #include "cvi_comm.h"
 
-namespace cviai {
+namespace cvitdl {
 inline const char *get_tpu_error_msg(CVI_RC code) {
   switch (code) {
     case CVI_RC_AGAIN:
@@ -61,4 +61,4 @@ inline const char *get_vpss_error_msg(CVI_RC code) {
       return "Unknown error.";
   };
 }
-}  // namespace cviai
+}  // namespace cvitdl

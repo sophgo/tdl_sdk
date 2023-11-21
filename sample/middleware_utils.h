@@ -33,7 +33,7 @@ typedef struct {
   VPSS_GRP u32VpssGrpBinding;
   VPSS_CHN u32VpssChnBinding;
   CVI_BOOL bBind;
-} SAMPLE_AI_VB_CONFIG_S;
+} SAMPLE_TDL_VB_CONFIG_S;
 
 /**
  * @brief structure for VB pool configurations
@@ -43,9 +43,9 @@ typedef struct {
  * Number of VBPool would be created.
  */
 typedef struct {
-  SAMPLE_AI_VB_CONFIG_S astVBPoolSetup[VB_MAX_COMM_POOLS];
+  SAMPLE_TDL_VB_CONFIG_S astVBPoolSetup[VB_MAX_COMM_POOLS];
   CVI_U32 u32VBPoolCount;
-} SAMPLE_AI_VB_POOL_CONFIG_S;
+} SAMPLE_TDL_VB_POOL_CONFIG_S;
 
 /**
  * @brief structure for a VPSS Grp configuration
@@ -66,7 +66,7 @@ typedef struct {
   CVI_U32 u32ChnCount;
   CVI_BOOL bBindVI;
   CVI_U32 u32ChnBindVI;
-} SAMPLE_AI_VPSS_CONFIG_S;
+} SAMPLE_TDL_VPSS_CONFIG_S;
 
 /**
  * @brief structure for VPSS configurations
@@ -78,10 +78,10 @@ typedef struct {
  * Vpss mode
  */
 typedef struct {
-  SAMPLE_AI_VPSS_CONFIG_S astVpssConfig[VPSS_MAX_GRP_NUM];
+  SAMPLE_TDL_VPSS_CONFIG_S astVpssConfig[VPSS_MAX_GRP_NUM];
   CVI_U32 u32VpssGrpCount;
   VPSS_MODE_S stVpssMode;
-} SAMPLE_AI_VPSS_POOL_CONFIG_S;
+} SAMPLE_TDL_VPSS_POOL_CONFIG_S;
 
 typedef chnInputCfg SAMPLE_COMM_CHN_INPUT_CONFIG_S;
 
@@ -98,7 +98,7 @@ typedef struct {
   SAMPLE_COMM_CHN_INPUT_CONFIG_S stChnInputCfg;
   CVI_U32 u32FrameHeight;
   CVI_U32 u32FrameWidth;
-} SAMPLE_AI_VENC_CONFIG_S;
+} SAMPLE_TDL_VENC_CONFIG_S;
 
 /**
  * @brief rtsp configuration
@@ -115,7 +115,7 @@ typedef struct {
     void (*onConnect)(const char *ip, void *arg);
     void (*onDisconnect)(const char *ip, void *arg);
   } Lisener;
-} SAMPLE_AI_RTSP_CONFIG;
+} SAMPLE_TDL_RTSP_CONFIG;
 
 /**
  * @brief structure for middleware configurations
@@ -132,11 +132,11 @@ typedef struct {
  */
 typedef struct {
   SAMPLE_VI_CONFIG_S stViConfig;
-  SAMPLE_AI_VPSS_POOL_CONFIG_S stVPSSPoolConfig;
-  SAMPLE_AI_VB_POOL_CONFIG_S stVBPoolConfig;
-  SAMPLE_AI_RTSP_CONFIG stRTSPConfig;
-  SAMPLE_AI_VENC_CONFIG_S stVencConfig;
-} SAMPLE_AI_MW_CONFIG_S;
+  SAMPLE_TDL_VPSS_POOL_CONFIG_S stVPSSPoolConfig;
+  SAMPLE_TDL_VB_POOL_CONFIG_S stVBPoolConfig;
+  SAMPLE_TDL_RTSP_CONFIG stRTSPConfig;
+  SAMPLE_TDL_VENC_CONFIG_S stVencConfig;
+} SAMPLE_TDL_MW_CONFIG_S;
 
 /**
  * @brief A context structure for middleware
@@ -155,28 +155,28 @@ typedef struct {
   CVI_RTSP_SESSION *pstSession;
   SAMPLE_VI_CONFIG_S stViConfig;
   CVI_U32 u32VencChn;
-  SAMPLE_AI_VPSS_POOL_CONFIG_S stVPSSPoolConfig;
-} SAMPLE_AI_MW_CONTEXT;
+  SAMPLE_TDL_VPSS_POOL_CONFIG_S stVPSSPoolConfig;
+} SAMPLE_TDL_MW_CONTEXT;
 
 /**
  * @brief get vi configurations from ini file (/mnt/data/sensor_cfg.ini).
  * @param pstViConfig vi config.
  * @return CV_S32 return code
  */
-CVI_S32 SAMPLE_AI_Get_VI_Config(SAMPLE_VI_CONFIG_S *pstViConfig);
+CVI_S32 SAMPLE_TDL_Get_VI_Config(SAMPLE_VI_CONFIG_S *pstViConfig);
 
 /**
  * @brief Get default VENC input configuration
  *
  * @param pstInCfg output, pointer to config structure.
  */
-void SAMPLE_AI_Get_Input_Config(SAMPLE_COMM_CHN_INPUT_CONFIG_S *pstInCfg);
+void SAMPLE_TDL_Get_Input_Config(SAMPLE_COMM_CHN_INPUT_CONFIG_S *pstInCfg);
 
 /**
  * @brief Get default RTSP configurations
  * @param pstRTSPConfig rtsp config
  */
-void SAMPLE_AI_Get_RTSP_Config(CVI_RTSP_CONFIG *pstRTSPConfig);
+void SAMPLE_TDL_Get_RTSP_Config(CVI_RTSP_CONFIG *pstRTSPConfig);
 
 /**
  * @brief Convert width and height to PIC_SIZE_E
@@ -185,7 +185,7 @@ void SAMPLE_AI_Get_RTSP_Config(CVI_RTSP_CONFIG *pstRTSPConfig);
  * @param height height
  * @return PIC_SIZE_E enum of PIC size
  */
-PIC_SIZE_E SAMPLE_AI_Get_PIC_Size(CVI_S32 width, CVI_S32 height);
+PIC_SIZE_E SAMPLE_TDL_Get_PIC_Size(CVI_S32 width, CVI_S32 height);
 
 /**
  * @brief initialize cvitek middleware.
@@ -194,7 +194,8 @@ PIC_SIZE_E SAMPLE_AI_Get_PIC_Size(CVI_S32 width, CVI_S32 height);
  * @return CV_S32 return CVI_SUCCESS if initialize middleware successfully, otherwise return error
  * code instead.
  */
-CVI_S32 SAMPLE_AI_Init_WM(SAMPLE_AI_MW_CONFIG_S *pstMWConfig, SAMPLE_AI_MW_CONTEXT *pstMWContext);
+CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
+                           SAMPLE_TDL_MW_CONTEXT *pstMWContext);
 
 /**
  * @brief initialize cvitek middleware.
@@ -203,8 +204,8 @@ CVI_S32 SAMPLE_AI_Init_WM(SAMPLE_AI_MW_CONFIG_S *pstMWConfig, SAMPLE_AI_MW_CONTE
  * @return CV_S32 return CVI_SUCCESS if initialize middleware successfully, otherwise return error
  * code instead.
  */
-CVI_S32 SAMPLE_AI_Init_WM_NO_RTSP(SAMPLE_AI_MW_CONFIG_S *pstMWConfig,
-                                  SAMPLE_AI_MW_CONTEXT *pstMWContext);
+CVI_S32 SAMPLE_TDL_Init_WM_NO_RTSP(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
+                                   SAMPLE_TDL_MW_CONTEXT *pstMWContext);
 
 /**
  * @brief Send video frame to RTSP and Venc.
@@ -213,8 +214,8 @@ CVI_S32 SAMPLE_AI_Init_WM_NO_RTSP(SAMPLE_AI_MW_CONFIG_S *pstMWConfig,
  * @param pstMWContext middleware context
  * @return CVI_S32 CVI_SUCCESS if operation is success, otherwise return CVI_FAILURE
  */
-CVI_S32 SAMPLE_AI_Send_Frame_RTSP(VIDEO_FRAME_INFO_S *stVencFrame,
-                                  SAMPLE_AI_MW_CONTEXT *pstMWContext);
+CVI_S32 SAMPLE_TDL_Send_Frame_RTSP(VIDEO_FRAME_INFO_S *stVencFrame,
+                                   SAMPLE_TDL_MW_CONTEXT *pstMWContext);
 
 /**
  * @brief Send video frame to RTSP and Venc.
@@ -223,20 +224,20 @@ CVI_S32 SAMPLE_AI_Send_Frame_RTSP(VIDEO_FRAME_INFO_S *stVencFrame,
  * @param pstMWContext middleware context
  * @return CVI_S32 CVI_SUCCESS if operation is success, otherwise return CVI_FAILURE
  */
-CVI_S32 SAMPLE_AI_Send_Frame_WEB(VIDEO_FRAME_INFO_S *stVencFrame,
-                                 SAMPLE_AI_MW_CONTEXT *pstMWContext);
+CVI_S32 SAMPLE_TDL_Send_Frame_WEB(VIDEO_FRAME_INFO_S *stVencFrame,
+                                  SAMPLE_TDL_MW_CONTEXT *pstMWContext);
 
 /**
  * @brief Destroy middleware
  *
  * @param pstMWContext middleware context
  */
-void SAMPLE_AI_Destroy_MW(SAMPLE_AI_MW_CONTEXT *pstMWContext);
+void SAMPLE_TDL_Destroy_MW(SAMPLE_TDL_MW_CONTEXT *pstMWContext);
 
 /**
  * @brief Destroy middleware
  *
  * @param pstMWContext middleware context
  */
-void SAMPLE_AI_Destroy_MW_NO_RTSP(SAMPLE_AI_MW_CONTEXT *pstMWContext);
+void SAMPLE_TDL_Destroy_MW_NO_RTSP(SAMPLE_TDL_MW_CONTEXT *pstMWContext);
 #endif

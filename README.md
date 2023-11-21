@@ -1,4 +1,4 @@
-# CVIAI
+# CVI_TDL
 
 Programming guide is available under ``doc/``.
 
@@ -49,4 +49,4 @@ $ ninja -j8 && ninja install
 ## Coding Rules
 
 1. Files in ``include`` should be C style. C++ style stuffs should stay in ``modules``.
-2. Please put the AI inference function in correct category. In same category, put the function in alphabetical order.
+2. Please put the TDL inference function in correct category. In same category, put the function in alphabetical order.

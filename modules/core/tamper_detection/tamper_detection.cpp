@@ -3,10 +3,10 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include "core/core/cvai_errno.h"
+#include "core/core/cvtdl_errno.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_log.hpp"
+#include "cvi_tdl.h"
+#include "cvi_tdl_log.hpp"
 #include "ive.hpp"
 
 #include "tamper_detection.hpp"
@@ -45,9 +45,9 @@ void print_IVE_IMAGE_S(IVE_IMAGE_S &ive_image, int c = 3) {
 
 #define RETURN_IF_FAILED(x, errmsg) \
   do {                              \
-    if ((x) != CVIAI_SUCCESS) {     \
+    if ((x) != CVI_TDL_SUCCESS) {   \
       LOGE(errmsg "\n");            \
-      return CVIAI_ERR_INFERENCE;   \
+      return CVI_TDL_ERR_INFERENCE; \
     }                               \
   } while (0)
 
@@ -217,7 +217,7 @@ int TamperDetectorMD::update(VIDEO_FRAME_INFO_S *frame) {
   frame_diff_2.free();
   min_diff.free();
   this->counter = 1;
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
@@ -311,7 +311,7 @@ int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame, float *moving_score) {
   frame_diff.free();
   frame_move.free();
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int TamperDetectorMD::detect(VIDEO_FRAME_INFO_S *frame) {

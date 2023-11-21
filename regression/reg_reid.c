@@ -2,38 +2,38 @@
 #include <stdlib.h>
 
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "cviai_perfetto.h"
-#include "evaluation/cviai_evaluation.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_evaluation.h"
+#include "cvi_tdl_media.h"
+#include "cvi_tdl_perfetto.h"
 
-cviai_handle_t facelib_handle = NULL;
+cvitdl_handle_t facelib_handle = NULL;
 
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
-static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
+static int prepareFeature(cvitdl_eval_handle_t eval_handle, bool is_query) {
   uint32_t num = 0;
-  CVI_AI_Eval_Market1501GetImageNum(eval_handle, is_query, &num);
+  CVI_TDL_Eval_Market1501GetImageNum(eval_handle, is_query, &num);
   for (int i = 0; i < num; ++i) {
     char *image = NULL;
     int cam_id;
     int pid;
 
-    CVI_AI_Eval_Market1501GetPathIdPair(eval_handle, i, is_query, &image, &cam_id, &pid);
+    CVI_TDL_Eval_Market1501GetPathIdPair(eval_handle, i, is_query, &image, &cam_id, &pid);
 
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_AI_ReadImage(image, &rgb_frame, PIXEL_FORMAT_RGB_888);
-    if (ret != CVIAI_SUCCESS) {
+    CVI_S32 ret = CVI_TDL_ReadImage(image, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
     }
 
-    cvai_object_t obj;
-    memset(&obj, 0, sizeof(cvai_object_t));
+    cvtdl_object_t obj;
+    memset(&obj, 0, sizeof(cvtdl_object_t));
     obj.size = 1;
-    obj.info = (cvai_object_info_t *)malloc(sizeof(cvai_object_info_t) * obj.size);
-    memset(obj.info, 0, sizeof(cvai_object_info_t) * obj.size);
+    obj.info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj.size);
+    memset(obj.info, 0, sizeof(cvtdl_object_info_t) * obj.size);
     obj.width = rgb_frame.stVFrame.u32Width;
     obj.height = rgb_frame.stVFrame.u32Height;
     obj.info[0].bbox.x1 = 0;
@@ -42,19 +42,19 @@ static int prepareFeature(cviai_eval_handle_t eval_handle, bool is_query) {
     obj.info[0].bbox.y2 = rgb_frame.stVFrame.u32Height;
     obj.info[0].bbox.score = 0.99;
     obj.info[0].classes = 0;
-    memset(&obj.info[0].feature, 0, sizeof(cvai_feature_t));
+    memset(&obj.info[0].feature, 0, sizeof(cvtdl_feature_t));
 
-    CVI_AI_OSNet(facelib_handle, &rgb_frame, &obj);
-    CVI_AI_Eval_Market1501InsertFeature(eval_handle, i, is_query, &obj.info[0].feature);
+    CVI_TDL_OSNet(facelib_handle, &rgb_frame, &obj);
+    CVI_TDL_Eval_Market1501InsertFeature(eval_handle, i, is_query, &obj.info[0].feature);
 
     printf("image %s, cam %d, pid %d\n", image, cam_id, pid);
     free(image);
 
-    CVI_AI_Free(&obj);
-    CVI_AI_ReleaseImage(&rgb_frame);
+    CVI_TDL_Free(&obj);
+    CVI_TDL_ReleaseImage(&rgb_frame);
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
@@ -62,48 +62,48 @@ int main(int argc, char *argv[]) {
     printf("Usage: %s <reid model path> <image_root_dir>.\n", argv[0]);
     printf("Reid model path: Path to the reid cvimodel.\n");
     printf("Image root dir: Root directory to the test images.\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
-  CVI_AI_PerfettoInit();
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_TDL_PerfettoInit();
+  CVI_S32 ret = CVI_TDL_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
-  if (ret != CVIAI_SUCCESS) {
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_CreateHandle(&facelib_handle);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_CreateHandle(&facelib_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create handle failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_AI_OpenModel(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, argv[1]);
-  if (ret != CVIAI_SUCCESS) {
+  ret = CVI_TDL_OpenModel(facelib_handle, CVI_TDL_SUPPORTED_MODEL_OSNET, argv[1]);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(facelib_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
+  CVI_TDL_SetSkipVpssPreprocess(facelib_handle, CVI_TDL_SUPPORTED_MODEL_OSNET, false);
 
-  cviai_eval_handle_t eval_handle;
-  ret = CVI_AI_Eval_CreateHandle(&eval_handle);
-  if (ret != CVIAI_SUCCESS) {
+  cvitdl_eval_handle_t eval_handle;
+  ret = CVI_TDL_Eval_CreateHandle(&eval_handle);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_Eval_Market1501Init(eval_handle, argv[2]);
+  CVI_TDL_Eval_Market1501Init(eval_handle, argv[2]);
 
   prepareFeature(eval_handle, true);
   prepareFeature(eval_handle, false);
 
-  CVI_AI_Eval_Market1501EvalCMC(eval_handle);
+  CVI_TDL_Eval_Market1501EvalCMC(eval_handle);
 
-  CVI_AI_Eval_DestroyHandle(eval_handle);
-  CVI_AI_DestroyHandle(facelib_handle);
+  CVI_TDL_Eval_DestroyHandle(eval_handle);
+  CVI_TDL_DestroyHandle(facelib_handle);
   CVI_SYS_Exit();
 }

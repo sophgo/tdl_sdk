@@ -3,8 +3,8 @@
 #include <cmath>
 #include <iostream>
 #include <string>
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
 #include "cvi_sys.h"
 #include "rescale_utils.hpp"
 
@@ -17,7 +17,7 @@
 #define CROP_PCT 0.875
 #define HAND_OUTNAME "output0_Gemm_dequant"
 
-namespace cviai {
+namespace cvitdl {
 
 HandClassification::HandClassification() : Core(CVI_MEM_DEVICE) {}
 
@@ -26,7 +26,7 @@ HandClassification::~HandClassification() {}
 int HandClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Hand classification only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = R_SCALE;
   (*data)[0].factor[1] = G_SCALE;
@@ -38,10 +38,10 @@ int HandClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *
   (*data)[0].use_crop = true;
   (*data)[0].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *meta) {
+int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *meta) {
   uint32_t img_width = stOutFrame->stVFrame.u32Width;
   uint32_t img_height = stOutFrame->stVFrame.u32Height;
   for (uint32_t i = 0; i < meta->size; i++) {
@@ -49,7 +49,7 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     if (meta->info[i].classes != 0) {  // not hand object
       continue;
     }
-    cvai_object_info_t hand_info = info_rescale_c(img_width, img_height, *meta, i);
+    cvtdl_object_info_t hand_info = info_rescale_c(img_width, img_height, *meta, i);
 
     int box_x1 = hand_info.bbox.x1;
     int box_y1 = hand_info.bbox.y1;
@@ -73,7 +73,7 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     if (box_x1 < 0) box_x1 = 0;
     if (box_y1 < 0) box_y1 = 0;
 
-    CVI_AI_FreeCpp(&hand_info);
+    CVI_TDL_FreeCpp(&hand_info);
 
     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
     m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
@@ -82,7 +82,7 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
 
     int ret = run(frames);
 
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       LOGW("hand classification inference failed\n");
       return ret;
     }
@@ -126,7 +126,7 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t 
     strncpy(meta->info[i].name, classname.c_str(), classname.size());
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

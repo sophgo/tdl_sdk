@@ -9,25 +9,25 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
 double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }
 
-void run_hand_detction(cviai_handle_t ai_handle, std::string model_path,
-                       VIDEO_FRAME_INFO_S *p_frame, cvai_object_t &obj_meta) {
+void run_hand_detction(cvitdl_handle_t tdl_handle, std::string model_path,
+                       VIDEO_FRAME_INFO_S *p_frame, cvtdl_object_t &obj_meta) {
   printf("---------------------to do detection-----------------------\n");
-  CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, model_path.c_str());
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_DETECTION, 0.5);
+  CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, model_path.c_str());
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, 0.5);
 
   struct timeval start_time, stop_time;
   gettimeofday(&start_time, NULL);
-  CVI_AI_Hand_Detection(ai_handle, p_frame, &obj_meta);
+  CVI_TDL_Hand_Detection(tdl_handle, p_frame, &obj_meta);
   gettimeofday(&stop_time, NULL);
-  printf("CVI_AI_Hand_Detection Time use %f ms\n",
+  printf("CVI_TDL_Hand_Detection Time use %f ms\n",
          (__get_us(stop_time) - __get_us(start_time)) / 1000);
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     std::cout << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
@@ -36,13 +36,14 @@ void run_hand_detction(cviai_handle_t ai_handle, std::string model_path,
   }
 }
 
-void run_hand_keypoint(cviai_handle_t ai_handle, std::string model_path,
-                       VIDEO_FRAME_INFO_S *p_frame, cvai_handpose21_meta_ts &hand_obj,
-                       cvai_object_t &obj_meta) {
+void run_hand_keypoint(cvitdl_handle_t tdl_handle, std::string model_path,
+                       VIDEO_FRAME_INFO_S *p_frame, cvtdl_handpose21_meta_ts &hand_obj,
+                       cvtdl_object_t &obj_meta) {
   printf("---------------------to do detection keypoint-----------------------\n");
-  CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT, model_path.c_str());
+  CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_KEYPOINT, model_path.c_str());
   hand_obj.size = obj_meta.size;
-  hand_obj.info = (cvai_handpose21_meta_t *)malloc(sizeof(cvai_handpose21_meta_t) * hand_obj.size);
+  hand_obj.info =
+      (cvtdl_handpose21_meta_t *)malloc(sizeof(cvtdl_handpose21_meta_t) * hand_obj.size);
   hand_obj.height = p_frame->stVFrame.u32Height;
   hand_obj.width = p_frame->stVFrame.u32Width;
   for (uint32_t i = 0; i < hand_obj.size; i++) {
@@ -53,9 +54,9 @@ void run_hand_keypoint(cviai_handle_t ai_handle, std::string model_path,
   }
   struct timeval start_time, stop_time;
   gettimeofday(&start_time, NULL);
-  CVI_AI_HandKeypoint(ai_handle, p_frame, &hand_obj);
+  CVI_TDL_HandKeypoint(tdl_handle, p_frame, &hand_obj);
   gettimeofday(&stop_time, NULL);
-  printf("CVI_AI_HandKeypoint Time use %f ms\n",
+  printf("CVI_TDL_HandKeypoint Time use %f ms\n",
          (__get_us(stop_time) - __get_us(start_time)) / 1000);
 
   // generate detection result
@@ -64,11 +65,11 @@ void run_hand_keypoint(cviai_handle_t ai_handle, std::string model_path,
   }
 }
 
-void run_hand_keypoint_cls(cviai_handle_t ai_handle, std::string model_path,
-                           cvai_handpose21_meta_ts &hand_obj, cvai_handpose21_meta_t &meta) {
+void run_hand_keypoint_cls(cvitdl_handle_t tdl_handle, std::string model_path,
+                           cvtdl_handpose21_meta_ts &hand_obj, cvtdl_handpose21_meta_t &meta) {
   printf("---------------------to do detection keypoint classification-----------------------\n");
-  CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION,
-                   model_path.c_str());
+  CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION,
+                    model_path.c_str());
   std::vector<float> keypoints;
   for (uint32_t i = 0; i < hand_obj.size; i++) {
     for (uint32_t j = 0; j < 21; j++) {
@@ -91,9 +92,9 @@ void run_hand_keypoint_cls(cviai_handle_t ai_handle, std::string model_path,
 
     struct timeval start_time, stop_time;
     gettimeofday(&start_time, NULL);
-    CVI_AI_HandKeypointClassification(ai_handle, &Frame, &meta);
+    CVI_TDL_HandKeypointClassification(tdl_handle, &Frame, &meta);
     gettimeofday(&stop_time, NULL);
-    printf("CVI_AI_HandKeypointClassification Time use %f ms\n",
+    printf("CVI_TDL_HandKeypointClassification Time use %f ms\n",
            (__get_us(stop_time) - __get_us(start_time)) / 1000);
   }
   printf("meta.label = %d, meta.score = %f\n", meta.label, meta.score);
@@ -116,30 +117,30 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
 
   VIDEO_FRAME_INFO_S fdFrame;
-  ret = CVI_AI_ReadImage(image_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+  ret = CVI_TDL_ReadImage(image_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     printf("open img failed with %#x!\n", ret);
     return ret;
   }
 
-  cvai_object_t obj_meta = {0};
-  cvai_handpose21_meta_ts hand_obj = {0};
-  cvai_handpose21_meta_t meta = {0};
-  run_hand_detction(ai_handle, hd_model_path, &fdFrame, obj_meta);
-  run_hand_keypoint(ai_handle, kp_model_path, &fdFrame, hand_obj, obj_meta);
-  run_hand_keypoint_cls(ai_handle, kc_model_path, hand_obj, meta);
+  cvtdl_object_t obj_meta = {0};
+  cvtdl_handpose21_meta_ts hand_obj = {0};
+  cvtdl_handpose21_meta_t meta = {0};
+  run_hand_detction(tdl_handle, hd_model_path, &fdFrame, obj_meta);
+  run_hand_keypoint(tdl_handle, kp_model_path, &fdFrame, hand_obj, obj_meta);
+  run_hand_keypoint_cls(tdl_handle, kc_model_path, hand_obj, meta);
 
-  CVI_AI_Free(&obj_meta);
-  // CVI_AI_Free(&hand_obj);
-  CVI_AI_ReleaseImage(&fdFrame);
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_Free(&obj_meta);
+  // CVI_TDL_Free(&hand_obj);
+  CVI_TDL_ReleaseImage(&fdFrame);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

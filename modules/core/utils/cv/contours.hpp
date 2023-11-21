@@ -41,10 +41,10 @@ enum ContourApproximationModes {
 
 // clang-format on
 
-namespace cviai {
+namespace cvitdl {
 void findContours(cv::InputOutputArray image, cv::OutputArrayOfArrays contours, int mode,
                   int method, cv::Point offset = cv::Point());
 
-}  // namespace cviai
+}  // namespace cvitdl
 
 #endif  // _UTILS_CV_IMGPROC_CONTOURS_HPP_

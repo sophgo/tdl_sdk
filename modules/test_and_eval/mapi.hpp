@@ -13,7 +13,7 @@
 struct PreprocessArg {
   int width;
   int height;
-  cvai_vpssconfig_t vpssConfig;
+  cvtdl_vpssconfig_t vpssConfig;
 };
 
 static void _SYS_HandleSig(int nSignal, siginfo_t *si, void *arg) {

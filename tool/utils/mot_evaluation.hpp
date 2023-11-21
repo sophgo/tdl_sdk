@@ -4,7 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
-#include "cviai.h"
+#include "cvi_tdl.h"
 
 typedef struct {
   TARGET_TYPE_e target_type;
@@ -19,14 +19,14 @@ typedef struct {
   double score;
 } MOT_Performance_t;
 
-CVI_S32 RUN_MOT_EVALUATION(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t &args,
+CVI_S32 RUN_MOT_EVALUATION(cvitdl_handle_t tdl_handle, const MOT_EVALUATION_ARGS_t &args,
                            MOT_Performance_t &performance, bool output_result, char *result_path);
 
 class MOT_Evaluation {
  public:
   MOT_Evaluation();
   ~MOT_Evaluation();
-  CVI_S32 update(const cvai_tracker_t &trackers, const cvai_tracker_t &inact_trackers);
+  CVI_S32 update(const cvtdl_tracker_t &trackers, const cvtdl_tracker_t &inact_trackers);
   void summary(MOT_Performance_t &performance);
 
   std::set<uint64_t> stable_id;

@@ -1,8 +1,8 @@
 #include "cvi_deepsort.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "cvi_deepsort_utils.hpp"
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 
 #include <algorithm>
 #include <iomanip>
@@ -19,8 +19,8 @@
 #define DEFAULT_X_CONSTRAINT_H_MAX 512
 
 /* helper functions */
-// static void FACE_QUALITY_ASSESSMENT(cvai_face_t *face);
-static void show_deepsort_config(cvai_deepsort_config_t &ds_conf);
+// static void FACE_QUALITY_ASSESSMENT(cvtdl_face_t *face);
+static void show_deepsort_config(cvtdl_deepsort_config_t &ds_conf);
 bool isCrossPointInRect(const randomRect *rect, float p_x, float p_y) {
   // a×b=(x1y2-x2y1)
   float a = (rect->lt_x - rect->lb_x) * (p_y - rect->lb_y) -
@@ -58,12 +58,12 @@ DeepSORT::DeepSORT(bool use_specific_counter) {
 }
 
 DeepSORT::~DeepSORT() {}
-CVI_S32 DeepSORT::track_cross(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid,
-                              const cvai_counting_line_t *cross_line_t, const randomRect *rect) {
+CVI_S32 DeepSORT::track_cross(cvtdl_object_t *obj, cvtdl_tracker_t *tracker, bool use_reid,
+                              const cvtdl_counting_line_t *cross_line_t, const randomRect *rect) {
   /** statistic what classes ID in bbox and tracker,
    *  and counting bbox number for each class */
 
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   std::map<int, int> class_bbox_counter;
   std::set<int> class_ids_bbox;
   std::set<int> class_ids_trackers;
@@ -81,7 +81,7 @@ CVI_S32 DeepSORT::track_cross(cvai_object_t *obj, cvai_tracker_t *tracker, bool 
     class_ids_trackers.insert(k_trackers[j].class_id);
   }
 
-  CVI_AI_MemAlloc(obj->size, tracker);
+  CVI_TDL_MemAlloc(obj->size, tracker);
 
   /** run tracking function for each class ID in bbox
    */
@@ -103,7 +103,7 @@ CVI_S32 DeepSORT::track_cross(cvai_object_t *obj, cvai_tracker_t *tracker, bool 
         bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
         if (obj->info[i].feature.type != TYPE_INT8) {
           LOGE("Feature Type not support now.\n");
-          return CVIAI_ERR_INVALID_ARGS;
+          return CVI_TDL_ERR_INVALID_ARGS;
         }
         int type_size = getFeatureTypeSize(obj->info[i].feature.type);
         for (uint32_t d = 0; d < feature_size; d++) {
@@ -119,10 +119,10 @@ CVI_S32 DeepSORT::track_cross(cvai_object_t *obj, cvai_tracker_t *tracker, bool 
      *    - ReID flag is only avaliable for PERSON now.
      */
     Tracking_Result2 result_(bboxes.size());
-    ret =
-        track_impl_cross(result_, bboxes, features, 0.3, e.first,
-                         use_reid && (e.first == CVI_AI_DET_TYPE_PERSON), NULL, cross_line_t, rect);
-    if (CVIAI_SUCCESS != ret) {
+    ret = track_impl_cross(result_, bboxes, features, 0.3, e.first,
+                           use_reid && (e.first == CVI_TDL_DET_TYPE_PERSON), NULL, cross_line_t,
+                           rect);
+    if (CVI_TDL_SUCCESS != ret) {
       return ret;
     }
 
@@ -135,14 +135,14 @@ CVI_S32 DeepSORT::track_cross(cvai_object_t *obj, cvai_tracker_t *tracker, bool 
       bool &is_C = std::get<4>(result_[i]);
 
       if (!matched) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
       } else if (t_state == k_tracker_state_e::PROBATION) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
       } else if (t_state == k_tracker_state_e::ACCREDITATION) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
       } else {
         LOGE("Tracker State Unknow.\n");
-        return CVIAI_ERR_INVALID_ARGS;
+        return CVI_TDL_ERR_INVALID_ARGS;
       }
       tracker->info[idx].bbox.x1 = t_bbox(0);
       tracker->info[idx].bbox.y1 = t_bbox(1);
@@ -163,12 +163,12 @@ CVI_S32 DeepSORT::track_cross(cvai_object_t *obj, cvai_tracker_t *tracker, bool 
       std::vector<FEATURE> features;
       Tracking_Result result_;
       if (CVI_SUCCESS != track_impl(result_, bboxes, features, 0.3, *it, use_reid)) {
-        return CVIAI_FAILURE;
+        return CVI_TDL_FAILURE;
       }
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 CVI_S32 DeepSORT::track_impl(Tracking_Result &high_result, Tracking_Result &low_result,
                              const std::vector<BBOX> &HighBBoxes,
@@ -176,7 +176,7 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &high_result, Tracking_Result &low_
                              const std::vector<FEATURE> &HighFeatures,
                              const std::vector<FEATURE> &LowFeatures, float crowd_iou_thresh,
                              int class_id, bool use_reid, float *Quality) {
-  cvai_deepsort_config_t *conf;
+  cvtdl_deepsort_config_t *conf;
   auto it_conf = specific_conf.find(class_id);
   if (it_conf != specific_conf.end()) {
     conf = &it_conf->second;
@@ -185,7 +185,7 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &high_result, Tracking_Result &low_
   }
   if (conf->ktracker_conf.enable_QA_feature_update && Quality == NULL) {
     LOGE("Enable QA feature upate, but Quality is not initialized.");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   std::vector<int> tracker_ids;
   for (size_t i = 0; i < k_trackers.size(); i++) {
@@ -495,14 +495,14 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &high_result, Tracking_Result &low_
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
-CVI_S32 DeepSORT::byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid,
+CVI_S32 DeepSORT::byte_track(cvtdl_object_t *obj, cvtdl_tracker_t *tracker, bool use_reid,
                              float low_score, float high_score) {
   /** statistic what classes ID in bbox and tracker,
    *  and counting bbox number for each class */
 
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   std::map<int, int> class_bbox_counter;
   std::set<int> class_ids_bbox;
   std::set<int> class_ids_trackers;
@@ -520,7 +520,7 @@ CVI_S32 DeepSORT::byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool u
     class_ids_trackers.insert(k_trackers[j].class_id);
   }
 
-  CVI_AI_MemAlloc(obj->size, tracker);
+  CVI_TDL_MemAlloc(obj->size, tracker);
 
   /** run tracking function for each class ID in bbox
    */
@@ -547,7 +547,7 @@ CVI_S32 DeepSORT::byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool u
           bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
           if (obj->info[i].feature.type != TYPE_INT8) {
             LOGE("Feature Type not support now.\n");
-            return CVIAI_ERR_INVALID_ARGS;
+            return CVI_TDL_ERR_INVALID_ARGS;
           }
           int type_size = getFeatureTypeSize(obj->info[i].feature.type);
           for (uint32_t d = 0; d < feature_size; d++) {
@@ -566,7 +566,7 @@ CVI_S32 DeepSORT::byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool u
           bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
           if (obj->info[i].feature.type != TYPE_INT8) {
             LOGE("Feature Type not support now.\n");
-            return CVIAI_ERR_INVALID_ARGS;
+            return CVI_TDL_ERR_INVALID_ARGS;
           }
           int type_size = getFeatureTypeSize(obj->info[i].feature.type);
           for (uint32_t d = 0; d < feature_size; d++) {
@@ -585,8 +585,8 @@ CVI_S32 DeepSORT::byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool u
     Tracking_Result high_result_(high_bboxes.size());
     Tracking_Result low_result_(low_bboxes.size());
     ret = track_impl(high_result_, low_result_, high_bboxes, low_bboxes, high_features,
-                     low_features, 0.3, e.first, use_reid && (e.first == CVI_AI_DET_TYPE_PERSON));
-    if (CVIAI_SUCCESS != ret) {
+                     low_features, 0.3, e.first, use_reid && (e.first == CVI_TDL_DET_TYPE_PERSON));
+    if (CVI_TDL_SUCCESS != ret) {
       return ret;
     }
     /* high bbox update state */
@@ -597,14 +597,14 @@ CVI_S32 DeepSORT::byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool u
       k_tracker_state_e &t_state = std::get<2>(high_result_[i]);
       BBOX &t_bbox = std::get<3>(high_result_[i]);
       if (!matched) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
       } else if (t_state == k_tracker_state_e::PROBATION) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
       } else if (t_state == k_tracker_state_e::ACCREDITATION) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
       } else {
         LOGE("Tracker State Unknow.\n");
-        return CVIAI_ERR_INVALID_ARGS;
+        return CVI_TDL_ERR_INVALID_ARGS;
       }
       tracker->info[idx].bbox.x1 = t_bbox(0);
       tracker->info[idx].bbox.y1 = t_bbox(1);
@@ -623,12 +623,12 @@ CVI_S32 DeepSORT::byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool u
       BBOX &t_bbox = std::get<3>(low_result_[i]);
       if (matched) {
         if (t_state == k_tracker_state_e::PROBATION) {
-          tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+          tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
         } else if (t_state == k_tracker_state_e::ACCREDITATION) {
-          tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+          tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
         } else {
           LOGE("Tracker State Unknow.\n");
-          return CVIAI_ERR_INVALID_ARGS;
+          return CVI_TDL_ERR_INVALID_ARGS;
         }
         tracker->info[idx].bbox.x1 = t_bbox(0);
         tracker->info[idx].bbox.y1 = t_bbox(1);
@@ -651,17 +651,17 @@ CVI_S32 DeepSORT::byte_track(cvai_object_t *obj, cvai_tracker_t *tracker, bool u
       std::vector<FEATURE> features;
       Tracking_Result result_;
       if (CVI_SUCCESS != track_impl(result_, bboxes, features, 0.3, *it, use_reid)) {
-        return CVIAI_FAILURE;
+        return CVI_TDL_FAILURE;
       }
     }
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
-CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_reid) {
+CVI_S32 DeepSORT::track(cvtdl_object_t *obj, cvtdl_tracker_t *tracker, bool use_reid) {
   /** statistic what classes ID in bbox and tracker,
    *  and counting bbox number for each class */
 
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   std::map<int, int> class_bbox_counter;
   std::set<int> class_ids_bbox;
   std::set<int> class_ids_trackers;
@@ -679,7 +679,7 @@ CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_re
     class_ids_trackers.insert(k_trackers[j].class_id);
   }
 
-  CVI_AI_MemAlloc(obj->size, tracker);
+  CVI_TDL_MemAlloc(obj->size, tracker);
 
   /** run tracking function for each class ID in bbox
    */
@@ -701,7 +701,7 @@ CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_re
         bbox_(0, 3) = obj->info[i].bbox.y2 - obj->info[i].bbox.y1;
         if (obj->info[i].feature.type != TYPE_INT8) {
           LOGE("Feature Type not support now.\n");
-          return CVIAI_ERR_INVALID_ARGS;
+          return CVI_TDL_ERR_INVALID_ARGS;
         }
         int type_size = getFeatureTypeSize(obj->info[i].feature.type);
         for (uint32_t d = 0; d < feature_size; d++) {
@@ -718,8 +718,8 @@ CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_re
      */
     Tracking_Result result_(bboxes.size());
     ret = track_impl(result_, bboxes, features, 0.3, e.first,
-                     use_reid && (e.first == CVI_AI_DET_TYPE_PERSON));
-    if (CVIAI_SUCCESS != ret) {
+                     use_reid && (e.first == CVI_TDL_DET_TYPE_PERSON));
+    if (CVI_TDL_SUCCESS != ret) {
       return ret;
     }
 
@@ -730,14 +730,14 @@ CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_re
       k_tracker_state_e &t_state = std::get<2>(result_[i]);
       BBOX &t_bbox = std::get<3>(result_[i]);
       if (!matched) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
       } else if (t_state == k_tracker_state_e::PROBATION) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
       } else if (t_state == k_tracker_state_e::ACCREDITATION) {
-        tracker->info[idx].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+        tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
       } else {
         LOGE("Tracker State Unknow.\n");
-        return CVIAI_ERR_INVALID_ARGS;
+        return CVI_TDL_ERR_INVALID_ARGS;
       }
       tracker->info[idx].bbox.x1 = t_bbox(0);
       tracker->info[idx].bbox.y1 = t_bbox(1);
@@ -757,20 +757,20 @@ CVI_S32 DeepSORT::track(cvai_object_t *obj, cvai_tracker_t *tracker, bool use_re
       std::vector<FEATURE> features;
       Tracking_Result result_;
       if (CVI_SUCCESS != track_impl(result_, bboxes, features, 0.3, *it, use_reid)) {
-        return CVIAI_FAILURE;
+        return CVI_TDL_FAILURE;
       }
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker) {
+CVI_S32 DeepSORT::track(cvtdl_face_t *face, cvtdl_tracker_t *tracker) {
 #ifdef DEBUG_TRACK
   std::cout << "start to track,face num:" << face->size << std::endl;
   show_INFO_KalmanTrackers();
 #endif
-  CVI_S32 ret = CVIAI_SUCCESS;
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   std::vector<BBOX> bboxes;
   std::vector<FEATURE> features;
   uint32_t bbox_num = face->size;
@@ -795,7 +795,7 @@ CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker) {
     if (use_reid) {
       if (face->info[i].feature.type != TYPE_INT8) {
         LOGE("Feature Type not support now.\n");
-        return CVIAI_FAILURE;
+        return CVI_TDL_FAILURE;
       }
       int type_size = getFeatureTypeSize(face->info[i].feature.type);
       for (uint32_t d = 0; d < feature_size; d++) {
@@ -815,23 +815,23 @@ CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker) {
 
   Tracking_Result result_(bboxes.size());
   ret = track_impl(result_, bboxes, features, 0.1, -1, use_reid, bbox_quality);
-  if (CVIAI_SUCCESS != ret) {
+  if (CVI_TDL_SUCCESS != ret) {
     free(bbox_quality);
     printf("ERROR\n");
     return ret;
   }
   free(bbox_quality);
 
-  CVI_AI_MemAlloc(k_trackers.size(), tracker);
+  CVI_TDL_MemAlloc(k_trackers.size(), tracker);
   for (uint32_t i = 0; i < k_trackers.size(); i++) {
     memset(&tracker->info[i], 0, sizeof(tracker->info[i]));
     auto *p_track = &k_trackers[i];
     if (p_track->ages_ == 1) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (p_track->tracker_state == k_tracker_state_e::PROBATION) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (p_track->tracker_state == k_tracker_state_e::ACCREDITATION) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
       printf("track unknown type error\n");
@@ -853,17 +853,17 @@ CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker) {
     k_tracker_state_e &t_state = std::get<2>(result_[i]);
     BBOX &t_bbox = std::get<3>(result_[i]);
     if (!matched) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
-      face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
+      face->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
     } else if (t_state == k_tracker_state_e::PROBATION) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
-      face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+      face->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
     } else if (t_state == k_tracker_state_e::ACCREDITATION) {
-      tracker->info[i].state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
-      face->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_STABLE;
+      tracker->info[i].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
+      face->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
     } else {
       LOGE("Tracker State Unknow.\n");
-      return CVIAI_ERR_INVALID_ARGS;
+      return CVI_TDL_ERR_INVALID_ARGS;
     }
     tracker->info[i].bbox.x1 = t_bbox(0);
     tracker->info[i].bbox.y1 = t_bbox(1);
@@ -876,15 +876,15 @@ CVI_S32 DeepSORT::track(cvai_face_t *face, cvai_tracker_t *tracker) {
   std::cout << "finish track,face num:" << face->size << std::endl;
   show_INFO_KalmanTrackers();
 #endif
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 CVI_S32 DeepSORT::track_impl_cross(Tracking_Result2 &result, const std::vector<BBOX> &BBoxes,
                                    const std::vector<FEATURE> &Features, float crowd_iou_thresh,
                                    int class_id, bool use_reid, float *Quality,
-                                   const cvai_counting_line_t *cross_line_t,
+                                   const cvtdl_counting_line_t *cross_line_t,
                                    const randomRect *rect) {
-  cvai_deepsort_config_t *conf;
+  cvtdl_deepsort_config_t *conf;
   auto it_conf = specific_conf.find(class_id);
   if (it_conf != specific_conf.end()) {
     conf = &it_conf->second;
@@ -893,7 +893,7 @@ CVI_S32 DeepSORT::track_impl_cross(Tracking_Result2 &result, const std::vector<B
   }
   if (conf->ktracker_conf.enable_QA_feature_update && Quality == NULL) {
     LOGE("Enable QA feature upate, but Quality is not initialized.");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   std::vector<int> tracker_ids;
@@ -1143,12 +1143,12 @@ CVI_S32 DeepSORT::track_impl_cross(Tracking_Result2 &result, const std::vector<B
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &BBoxes,
                              const std::vector<FEATURE> &Features, float crowd_iou_thresh,
                              int class_id, bool use_reid, float *Quality) {
-  cvai_deepsort_config_t *conf;
+  cvtdl_deepsort_config_t *conf;
   auto it_conf = specific_conf.find(class_id);
   if (it_conf != specific_conf.end()) {
     conf = &it_conf->second;
@@ -1157,7 +1157,7 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
   }
   if (conf->ktracker_conf.enable_QA_feature_update && Quality == NULL) {
     LOGE("Enable QA feature upate, but Quality is not initialized.");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   std::vector<int> tracker_ids;
@@ -1372,9 +1372,9 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
     }
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
-void DeepSORT::check_bound_state(cvai_deepsort_config_t *conf) {
+void DeepSORT::check_bound_state(cvtdl_deepsort_config_t *conf) {
   if (!conf->kfilter_conf.enable_bounding_stay) return;
   stRect imgroi(0, 0, image_width_, image_height_);
   for (KalmanTracker &tracker_ : k_trackers) {
@@ -1390,7 +1390,7 @@ void DeepSORT::check_bound_state(cvai_deepsort_config_t *conf) {
 MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<FEATURE> &Features,
                             const std::vector<int> &Tracker_IDXes,
                             const std::vector<int> &BBox_IDXes,
-                            cvai_kalman_filter_config_t &kf_conf, cost_matrix_algo_e cost_method,
+                            cvtdl_kalman_filter_config_t &kf_conf, cost_matrix_algo_e cost_method,
                             float max_distance) {
   MatchResult result_;
 
@@ -1585,27 +1585,28 @@ void DeepSORT::cleanCounter() {
   }
 }
 
-CVI_S32 DeepSORT::getConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type) {
+CVI_S32 DeepSORT::getConfig(cvtdl_deepsort_config_t *ds_conf, int cvitdl_obj_type) {
   if (ds_conf == NULL) {
     LOGE("input config is NULL.");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
-  if (cviai_obj_type == -1) {
-    memcpy(ds_conf, &default_conf, sizeof(cvai_deepsort_config_t));
-    return CVIAI_SUCCESS;
+  if (cvitdl_obj_type == -1) {
+    memcpy(ds_conf, &default_conf, sizeof(cvtdl_deepsort_config_t));
+    return CVI_TDL_SUCCESS;
   }
-  if (specific_conf.find(cviai_obj_type) == specific_conf.end()) {
-    LOGE("specific config[%d] not found.", cviai_obj_type);
-    return CVIAI_FAILURE;
+  if (specific_conf.find(cvitdl_obj_type) == specific_conf.end()) {
+    LOGE("specific config[%d] not found.", cvitdl_obj_type);
+    return CVI_TDL_FAILURE;
   }
-  memcpy(ds_conf, &specific_conf[cviai_obj_type], sizeof(cvai_deepsort_config_t));
-  return CVIAI_SUCCESS;
+  memcpy(ds_conf, &specific_conf[cvitdl_obj_type], sizeof(cvtdl_deepsort_config_t));
+  return CVI_TDL_SUCCESS;
 }
 
-CVI_S32 DeepSORT::setConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type, bool show_config) {
+CVI_S32 DeepSORT::setConfig(cvtdl_deepsort_config_t *ds_conf, int cvitdl_obj_type,
+                            bool show_config) {
   if (ds_conf == NULL) {
     LOGE("Input config is NULL.");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
   if (ds_conf->kfilter_conf.enable_X_constraint_1) {
     LOGW("Enable X constraint 1 is not verified now.");
@@ -1628,21 +1629,21 @@ CVI_S32 DeepSORT::setConfig(cvai_deepsort_config_t *ds_conf, int cviai_obj_type,
     } break;
     default:
       LOGE("unknown mahalanobis confidence[%d]", ds_conf->kfilter_conf.confidence_level);
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
   }
-  if (cviai_obj_type == -1) {
-    memcpy(&default_conf, ds_conf, sizeof(cvai_deepsort_config_t));
+  if (cvitdl_obj_type == -1) {
+    memcpy(&default_conf, ds_conf, sizeof(cvtdl_deepsort_config_t));
   } else {
-    specific_conf[cviai_obj_type] = *ds_conf;
+    specific_conf[cvitdl_obj_type] = *ds_conf;
   }
   if (show_config) {
     show_deepsort_config(*ds_conf);
   }
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-cvai_deepsort_config_t DeepSORT::get_DefaultConfig() {
-  cvai_deepsort_config_t conf;
+cvtdl_deepsort_config_t DeepSORT::get_DefaultConfig() {
+  cvtdl_deepsort_config_t conf;
   conf.max_distance_consine = 0.2;
   conf.max_distance_iou = 0.7;
   conf.max_unmatched_times_for_bbox_matching = 2;
@@ -1816,15 +1817,15 @@ std::string DeepSORT::get_TrackersInfo_UnmatchedLastTime(std::string &str_info) 
   return str_info;
 }
 
-CVI_S32 DeepSORT::get_trackers_inactive(cvai_tracker_t *tracker) const {
+CVI_S32 DeepSORT::get_trackers_inactive(cvtdl_tracker_t *tracker) const {
   std::vector<KalmanTracker> unmatched_trackers = get_Trackers_UnmatchedLastTime();
-  if (unmatched_trackers.size() == 0) return CVIAI_SUCCESS;
-  CVI_AI_MemAlloc(static_cast<uint32_t>(unmatched_trackers.size()), tracker);
+  if (unmatched_trackers.size() == 0) return CVI_TDL_SUCCESS;
+  CVI_TDL_MemAlloc(static_cast<uint32_t>(unmatched_trackers.size()), tracker);
   for (uint32_t i = 0; i < static_cast<uint32_t>(unmatched_trackers.size()); i++) {
     KalmanTracker &u_tkr = unmatched_trackers[i];
     if (u_tkr.tracker_state != k_tracker_state_e::ACCREDITATION) {
       LOGE("[BUG] This is an illegal condition.\n");
-      return CVIAI_FAILURE;
+      return CVI_TDL_FAILURE;
     }
     BBOX tracker_bbox = u_tkr.getBBox_TLWH();
     tracker->info[i].id = u_tkr.id;
@@ -1835,18 +1836,18 @@ CVI_S32 DeepSORT::get_trackers_inactive(cvai_tracker_t *tracker) const {
     tracker->info[i].bbox.y2 = tracker_bbox(0, 1) + tracker_bbox(0, 3);
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-// static void FACE_QUALITY_ASSESSMENT(cvai_face_t *face) {
+// static void FACE_QUALITY_ASSESSMENT(cvtdl_face_t *face) {
 //   for (uint32_t i = 0; i < face->size; i++) {
-//     cvai_bbox_t &bbox = face->info[i].bbox;
+//     cvtdl_bbox_t &bbox = face->info[i].bbox;
 //     float a = (bbox.x2 - bbox.x1) / (bbox.y2 - bbox.y1);
 //     face->info[i].face_quality = 1.0 - fabs(a - 1.0);
 //   }
 // }
 
-static void show_deepsort_config(cvai_deepsort_config_t &ds_conf) {
+static void show_deepsort_config(cvtdl_deepsort_config_t &ds_conf) {
   std::cout << "[DeepSORT] Max Distance Consine : " << ds_conf.max_distance_consine << std::endl
             << "[DeepSORT] Max Distance IoU     : " << ds_conf.max_distance_iou << std::endl
             << "[DeepSORT] Max Unmatched Times for BBox Matching : "

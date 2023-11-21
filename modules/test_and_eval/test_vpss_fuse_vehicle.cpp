@@ -9,15 +9,15 @@
 #include <string>
 #include <vector>
 #include "core.hpp"
-#include "core/cviai_types_mem_internal.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "mapi.hpp"
 
 std::string g_model_root;
-cvai_bbox_t box;
-cvai_vpssconfig_t vpssConfig;
+cvtdl_bbox_t box;
+cvtdl_vpssconfig_t vpssConfig;
 
 int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
   FILE *fp = fopen(filepath.c_str(), "wb");
@@ -44,11 +44,11 @@ int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
   return CVI_SUCCESS;
 }
 
-std::string run_image_vehicle_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handle_t ai_handle) {
+std::string run_image_vehicle_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle_t tdl_handle) {
   CVI_S32 ret;
-  cvai_object_t person_obj;
-  memset(&person_obj, 0, sizeof(cvai_object_t));
-  ret = CVI_AI_PersonVehicle_Detection(ai_handle, p_frame, &person_obj);
+  cvtdl_object_t person_obj;
+  memset(&person_obj, 0, sizeof(cvtdl_object_t));
+  ret = CVI_TDL_PersonVehicle_Detection(tdl_handle, p_frame, &person_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect face failed:" << ret << std::endl;
   }
@@ -61,7 +61,7 @@ std::string run_image_vehicle_detection(VIDEO_FRAME_INFO_S *p_frame, cviai_handl
        << " " << box.x2 << " " << box.y2 << "\n";
   }
 
-  CVI_AI_Free(&person_obj);
+  CVI_TDL_Free(&person_obj);
   return ss.str();
 }
 
@@ -82,7 +82,7 @@ static void get_frame_from_mat(VIDEO_FRAME_INFO_S &in_frame, const cv::Mat &mat)
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printf("need 3 arg, eg ./test_vpss_pd xxxx.cvimodel xxx.jpg vehicle\n");
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
   CVI_S32 ret = 0;
@@ -113,13 +113,13 @@ int main(int argc, char *argv[]) {
   memset(&frame_in, 0x00, sizeof(frame_in));
   memset(&frame_preprocessed, 0x00, sizeof(frame_preprocessed));
 
-  cviai_handle_t ai_handle = NULL;
-  ret = CVI_AI_CreateHandle(&ai_handle);
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
   if (ret != CVI_SUCCESS) {
-    printf("Create ai handle failed with %#x!\n", ret);
+    printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
-  std::map<std::string, std::function<std::string(VIDEO_FRAME_INFO_S *, cviai_handle_t)>>
+  std::map<std::string, std::function<std::string(VIDEO_FRAME_INFO_S *, cvitdl_handle_t)>>
       process_funcs = {{"vehicle", run_image_vehicle_detection}};
   if (process_funcs.count(process_flag) == 0) {
     std::cout << "error flag:" << process_flag << std::endl;
@@ -131,14 +131,15 @@ int main(int argc, char *argv[]) {
   if (model_init == 0) {
     std::cout << "to init vehicle model" << std::endl;
     std::string str_vehicle_model = g_model_root;
-    ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
-                           str_vehicle_model.c_str());
+    ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
+                            str_vehicle_model.c_str());
     if (ret != CVI_SUCCESS) {
       std::cout << "open model failed:" << str_vehicle_model << std::endl;
       return -1;
     }
-    CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, 0.6);
-    CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, true);
+    CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, 0.6);
+    CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
+                                  true);
     model_init = 1;
   }
 
@@ -159,7 +160,7 @@ int main(int argc, char *argv[]) {
   CVI_MAPI_ReleaseFrame(&frame_in);
   /* dump_frame_result, support rgb, nv21, nv12*/
   // dump_frame_result("test2.yuv", &frame_preprocessed);
-  std::string str_res = process_funcs[process_flag](&frame_preprocessed, ai_handle);
+  std::string str_res = process_funcs[process_flag](&frame_preprocessed, tdl_handle);
   if (str_res.size() > 0) {
     FILE *fp = fopen("test.txt", "w");
     fwrite(str_res.c_str(), str_res.size(), 1, fp);
@@ -171,6 +172,6 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

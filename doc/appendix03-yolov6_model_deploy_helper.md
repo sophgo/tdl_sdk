@@ -86,8 +86,8 @@ cvimodel转换操作可以参考[appendix02-yolov5_model_deploy_helper](./append
 
 另外是yolov6的两个参数设置：
 
-* `CVI_AI_SetModelThreshold ` 设置置信度阈值，默认为0.5
-* `CVI_AI_SetModelNmsThreshold` 设置nms阈值，默认为0.5
+* `CVI_TDL_SetModelThreshold ` 设置置信度阈值，默认为0.5
+* `CVI_TDL_SetModelNmsThreshold` 设置nms阈值，默认为0.5
 
 ```c++
 // setup preprocess
@@ -106,23 +106,23 @@ printf("start yolov algorithm config \n");
 YoloAlgParam p_yolov6_param;
 p_yolov6_param.cls = 80;
 
-ret = CVI_AI_Set_YOLOV6_Param(ai_handle, &p_preprocess_cfg, &p_yolov6_param);
+ret = CVI_TDL_Set_YOLOV6_Param(tdl_handle, &p_preprocess_cfg, &p_yolov6_param);
 printf("yolov6 set param success!\n");
 if (ret != CVI_SUCCESS) {
     printf("Can not set Yolov6 parameters %#x\n", ret);
     return ret;
 }
 
-ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV6, model_path.c_str());
+ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, model_path.c_str());
 if (ret != CVI_SUCCESS) {
     printf("open model failed %#x!\n", ret);
     return ret;
 }
 // set thershold
-CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV6, 0.5);
-CVI_AI_SetModelNmsThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_YOLOV6, 0.5);
+CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, 0.5);
+CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, 0.5);
 
-CVI_AI_Yolov6(ai_handle, &fdFrame, &obj_meta);
+CVI_TDL_Yolov6(tdl_handle, &fdFrame, &obj_meta);
 
 for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("detect res: %f %f %f %f %f %d\n", 
@@ -152,16 +152,16 @@ for (uint32_t i = 0; i < obj_meta.size; i++) {
 |         |  官方导出  |  cv181x  |  ion分配失败  | ion分配失败 |  11.58   |  量化失败   |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
 |         |  官方导出  |  cv182x  |     39.17     |    47.08    |  11.56   |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv182x平台评测指标 |
 |         |  官方导出  |  cv183x  |   量化失败    |  量化失败   | 量化失败 |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv183x平台评测指标 |
-|         | AI_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A    |   51.6373   |   36.4384    |            AI_SDK导出onnx指标            |
-|         | AI_SDK导出 |  cv181x  |     49.11     |    31.35    |   8.46   |   49.8226   |    34.284    |  AI_SDI导出cvimodel, cv181x平台评测指标  |
-|         | AI_SDK导出 |  cv182x  |     34.14     |    30.53    |   8.45   |   49.8226   |    34.284    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
-|         | AI_SDK导出 |  cv183x  |     10.89     |    21.22    |   8.49   |   49.8226   |    34.284    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+|         | TDL_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A    |   51.6373   |   36.4384    |            TDL_SDK导出onnx指标            |
+|         | TDL_SDK导出 |  cv181x  |     49.11     |    31.35    |   8.46   |   49.8226   |    34.284    |  TDL_SDI导出cvimodel, cv181x平台评测指标  |
+|         | TDL_SDK导出 |  cv182x  |     34.14     |    30.53    |   8.45   |   49.8226   |    34.284    |  TDL_SDI导出cvimodel, cv182x平台评测指标  |
+|         | TDL_SDK导出 |  cv183x  |     10.89     |    21.22    |   8.49   |   49.8226   |    34.284    |  TDL_SDI导出cvimodel, cv183x平台评测指标  |
 | yolov6s |  官方导出  | pytorch  |      N/A      |     N/A     |   N/A    |    61.8     |      45      |           pytorch官方fp32指标            |
 |         |  官方导出  |  cv181x  |  ion分配失败  | ion分配失败 |  27.56   |  量化失败   |   量化失败   | 官方脚本导出cvimodel, cv181x平台评测指标 |
 |         |  官方导出  |  cv182x  |     131.1     |   115.81    |  27.56   |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv182x平台评测指标 |
 |         |  官方导出  |  cv183x  |   量化失败    |  量化失败   | 量化失败 |  量化失败   |   量化失败   | 官方脚本导出cvimodel，cv183x平台评测指标 |
-|         | AI_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A    |   60.1657   |   43.5878    |            AI_SDK导出onnx指标            |
-|         | AI_SDK导出 |  cv181x  |  ion分配失败  | ion分配失败 |  25.33   | ion分配失败 | ion分配失败  |  AI_SDI导出cvimodel, cv181x平台评测指标  |
-|         | AI_SDK导出 |  cv182x  |    126.04     |    99.16    |  25.32   |   56.2774   |   40.0781    |  AI_SDI导出cvimodel, cv182x平台评测指标  |
-|         | AI_SDK导出 |  cv183x  |     38.55     |    57.26    |  23.59   |   56.2774   |   40.0781    |  AI_SDI导出cvimodel, cv183x平台评测指标  |
+|         | TDL_SDK导出 |   onnx   |      N/A      |     N/A     |   N/A    |   60.1657   |   43.5878    |            TDL_SDK导出onnx指标            |
+|         | TDL_SDK导出 |  cv181x  |  ion分配失败  | ion分配失败 |  25.33   | ion分配失败 | ion分配失败  |  TDL_SDI导出cvimodel, cv181x平台评测指标  |
+|         | TDL_SDK导出 |  cv182x  |    126.04     |    99.16    |  25.32   |   56.2774   |   40.0781    |  TDL_SDI导出cvimodel, cv182x平台评测指标  |
+|         | TDL_SDK导出 |  cv183x  |     38.55     |    57.26    |  23.59   |   56.2774   |   40.0781    |  TDL_SDI导出cvimodel, cv183x平台评测指标  |
 

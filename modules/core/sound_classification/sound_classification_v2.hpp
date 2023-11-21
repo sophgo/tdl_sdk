@@ -4,7 +4,7 @@
 #include "melspec.hpp"
 #define SCALE_FACTOR_FOR_INT16 32768.0
 
-namespace cviai {
+namespace cvitdl {
 
 class SoundClassificationV2 final : public Core {
  public:
@@ -34,5 +34,5 @@ class SoundClassificationV2 final : public Core {
   int top_num = 500;
   float max_rate = 0.2;
 };
-}  // namespace cviai
+}  // namespace cvitdl
 #endif

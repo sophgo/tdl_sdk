@@ -7,7 +7,7 @@
 #include <cvi_sys.h>
 #include <inttypes.h>
 
-#include "cviai_log.hpp"
+#include "cvi_tdl_log.hpp"
 
 using namespace ive;
 

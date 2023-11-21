@@ -1,2 +1,2 @@
 #pragma once
-#cmakedefine CVIAI_TAG     "@CVIAI_TAG@"
+#cmakedefine CVI_TDL_TAG     "@CVI_TDL_TAG@"

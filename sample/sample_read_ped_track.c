@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 
 int ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
   CVI_S32 ret = CVI_SUCCESS;
@@ -18,7 +18,7 @@ int ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
   }
   return ret;
 }
-void export_img_result(const char *sz_dstf, cvai_object_t *p_objinfo, int imgw, int imgh) {
+void export_img_result(const char *sz_dstf, cvtdl_object_t *p_objinfo, int imgw, int imgh) {
   FILE *fp = fopen(sz_dstf, "w");
 
   for (uint32_t i = 0; i < p_objinfo->size; i++) {
@@ -42,9 +42,9 @@ void export_img_result(const char *sz_dstf, cvai_object_t *p_objinfo, int imgw, 
 int main(int argc, char *argv[]) {
   CVI_S32 ret = CVI_SUCCESS;
 
-  cviai_handle_t ai_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
 
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
@@ -55,35 +55,35 @@ int main(int argc, char *argv[]) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
-  ret = CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, argv[1]);
-  CVI_AI_DeepSORT_Init(ai_handle, true);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, argv[1]);
+  CVI_TDL_DeepSORT_Init(tdl_handle, true);
 
-  cvai_deepsort_config_t ds_conf;
-  CVI_AI_DeepSORT_GetDefaultConfig(&ds_conf);
+  cvtdl_deepsort_config_t ds_conf;
+  CVI_TDL_DeepSORT_GetDefaultConfig(&ds_conf);
   ds_conf.ktracker_conf.accreditation_threshold = 4;
   ds_conf.ktracker_conf.P_beta[2] = 0.01;
   ds_conf.ktracker_conf.P_beta[6] = 1e-5;
   ds_conf.kfilter_conf.Q_beta[2] = 0.01;
   ds_conf.kfilter_conf.Q_beta[6] = 1e-5;
   ds_conf.kfilter_conf.R_beta[2] = 0.1;
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, true);
+  CVI_TDL_DeepSORT_SetConfig(tdl_handle, &ds_conf, -1, true);
 
   for (int img_idx = 0; img_idx < 10; img_idx++) {
     char szimg[256];
     sprintf(szimg, "%s/%08d.bin", argv[2], img_idx);
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_AI_LoadBinImage(szimg, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+    ret = CVI_TDL_LoadBinImage(szimg, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     int imgw = fdFrame.stVFrame.u32Width;
     int imgh = fdFrame.stVFrame.u32Width;
     printf("start to process:%s,width:%d,height:%d\n", szimg, imgw, imgh);
-    cvai_object_t obj_meta;
-    memset(&obj_meta, 0, sizeof(cvai_object_t));
-    cvai_tracker_t tracker_meta;
-    memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
-    CVI_AI_MobileDetV2_Pedestrian(ai_handle, &fdFrame, &obj_meta);
+    cvtdl_object_t obj_meta;
+    memset(&obj_meta, 0, sizeof(cvtdl_object_t));
+    cvtdl_tracker_t tracker_meta;
+    memset(&tracker_meta, 0, sizeof(cvtdl_tracker_t));
+    CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, &fdFrame, &obj_meta);
     int objnum = obj_meta.size;
     printf("objnum:%d\n", objnum);
-    CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, false);
+    CVI_TDL_DeepSORT_Obj(tdl_handle, &obj_meta, &tracker_meta, false);
     char dstf[256];
     sprintf(dstf, "%s/%08d.txt", argv[3], img_idx);
 
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     ReleaseImage(&fdFrame);
   }
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   CVI_SYS_Exit();
   CVI_VB_Exit();
   return 0;

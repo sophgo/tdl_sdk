@@ -1,4 +1,4 @@
-#include "cviai.h"
+#include "cvi_tdl.h"
 
 #include <cvimath/cvimath_internal.h>
 #include <math.h>
@@ -6,10 +6,10 @@
 #include <time.h>
 #include <limits>
 #include <random>
-#include "core/core/cvai_core_types.h"
-#include "cviai_test.hpp"
+#include "core/core/cvtdl_core_types.h"
+#include "cvi_tdl_test.hpp"
 
-namespace cviai {
+namespace cvitdl {
 namespace unitest {
 
 // type traits for feature type. Currently, only int8 type are supported
@@ -90,8 +90,8 @@ struct GoldenResult {
     free(buffer_f);
   }
 
-  cvai_service_feature_array_t db_feature;
-  cvai_feature_t input_feature;
+  cvtdl_service_feature_array_t db_feature;
+  cvtdl_feature_t input_feature;
   uint32_t topk;
   uint32_t *topk_indices;
   float *topk_similarity;
@@ -102,38 +102,38 @@ struct Similarity {
   uint32_t index;
 };
 
-class FeatureMatchingTestSuite : public CVIAITestSuite {
+class FeatureMatchingTestSuite : public CVI_TDLTestSuite {
  public:
   FeatureMatchingTestSuite() {}
   virtual ~FeatureMatchingTestSuite() = default;
 
  protected:
   virtual void SetUp() {
-    ASSERT_EQ(CVI_AI_CreateHandle2(&m_ai_handle, 0, 0), CVIAI_SUCCESS);
-    ASSERT_EQ(CVI_AI_Service_CreateHandle(&m_service_handle, m_ai_handle), CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 0, 0), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Service_CreateHandle(&m_service_handle, m_tdl_handle), CVI_TDL_SUCCESS);
   }
 
   virtual void TearDown() {
-    CVI_AI_Service_DestroyHandle(m_service_handle);
-    CVI_AI_DestroyHandle(m_ai_handle);
-    m_ai_handle = NULL;
+    CVI_TDL_Service_DestroyHandle(m_service_handle);
+    CVI_TDL_DestroyHandle(m_tdl_handle);
+    m_tdl_handle = NULL;
     m_service_handle = NULL;
   }
 
-  cviai_handle_t m_ai_handle;
-  cviai_service_handle_t m_service_handle;
+  cvitdl_handle_t m_tdl_handle;
+  cvitdl_service_handle_t m_service_handle;
 };
 
 TEST_F(FeatureMatchingTestSuite, object_info_matching) {
   // test without register
   {
-    cvai_object_info_t obj_info;
+    cvtdl_object_info_t obj_info;
     float sims[10];
     uint32_t indices[10];
     uint32_t score_size;
-    ASSERT_EQ(CVI_AI_Service_ObjectInfoMatching(m_service_handle, &obj_info, 5, 0, indices, sims,
-                                                &score_size),
-              CVIAI_ERR_NOT_YET_INITIALIZED);
+    ASSERT_EQ(CVI_TDL_Service_ObjectInfoMatching(m_service_handle, &obj_info, 5, 0, indices, sims,
+                                                 &score_size),
+              CVI_TDL_ERR_NOT_YET_INITIALIZED);
   }
 
   std::vector<uint32_t> num_features = {100, 500, 2000};
@@ -149,17 +149,17 @@ TEST_F(FeatureMatchingTestSuite, object_info_matching) {
 
     uint32_t score_size;
 
-    cvai_object_info_t obj_info;
+    cvtdl_object_info_t obj_info;
     obj_info.feature = golden.input_feature;
 
     ASSERT_EQ(
-        CVI_AI_Service_RegisterFeatureArray(m_service_handle, golden.db_feature, COS_SIMILARITY),
-        CVIAI_SUCCESS);
+        CVI_TDL_Service_RegisterFeatureArray(m_service_handle, golden.db_feature, COS_SIMILARITY),
+        CVI_TDL_SUCCESS);
 
     // test matching top-k similarity without threshold
-    ASSERT_EQ(CVI_AI_Service_ObjectInfoMatching(m_service_handle, &obj_info, golden.topk, 0,
-                                                indices, sims, &score_size),
-              CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Service_ObjectInfoMatching(m_service_handle, &obj_info, golden.topk, 0,
+                                                 indices, sims, &score_size),
+              CVI_TDL_SUCCESS);
 
     EXPECT_EQ(score_size, golden.topk);
 
@@ -170,9 +170,9 @@ TEST_F(FeatureMatchingTestSuite, object_info_matching) {
 
     // test matching with threshold
     float threshold = golden.topk_similarity[golden.topk - 1];
-    ASSERT_EQ(CVI_AI_Service_ObjectInfoMatching(m_service_handle, &obj_info, 0, threshold, indices,
-                                                sims, &score_size),
-              CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Service_ObjectInfoMatching(m_service_handle, &obj_info, 0, threshold, indices,
+                                                 sims, &score_size),
+              CVI_TDL_SUCCESS);
 
     EXPECT_EQ(score_size, golden.topk);
 
@@ -182,9 +182,9 @@ TEST_F(FeatureMatchingTestSuite, object_info_matching) {
     }
 
     // test matching with top-k and threshold
-    ASSERT_EQ(CVI_AI_Service_ObjectInfoMatching(m_service_handle, &obj_info, golden.topk, threshold,
-                                                indices, sims, &score_size),
-              CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Service_ObjectInfoMatching(m_service_handle, &obj_info, golden.topk,
+                                                 threshold, indices, sims, &score_size),
+              CVI_TDL_SUCCESS);
 
     EXPECT_EQ(score_size, golden.topk);
     for (uint32_t i = 0; i < golden.topk; i++) {
@@ -193,28 +193,28 @@ TEST_F(FeatureMatchingTestSuite, object_info_matching) {
     }
 
     // test matching with wrong top-k and threshold value
-    ASSERT_EQ(CVI_AI_Service_ObjectInfoMatching(m_service_handle, &obj_info, 0, 0, indices, sims,
-                                                &score_size),
-              CVIAI_ERR_INVALID_ARGS);
+    ASSERT_EQ(CVI_TDL_Service_ObjectInfoMatching(m_service_handle, &obj_info, 0, 0, indices, sims,
+                                                 &score_size),
+              CVI_TDL_ERR_INVALID_ARGS);
 
     // test matching with wrong type value
     obj_info.feature.type = TYPE_BF16;
-    ASSERT_EQ(CVI_AI_Service_ObjectInfoMatching(m_service_handle, &obj_info, 0, 0, indices, sims,
-                                                &score_size),
-              CVIAI_ERR_INVALID_ARGS);
+    ASSERT_EQ(CVI_TDL_Service_ObjectInfoMatching(m_service_handle, &obj_info, 0, 0, indices, sims,
+                                                 &score_size),
+              CVI_TDL_ERR_INVALID_ARGS);
   }
 }
 
 TEST_F(FeatureMatchingTestSuite, face_info_matching) {
   // test without register
   {
-    cvai_face_info_t face_info;
+    cvtdl_face_info_t face_info;
     float sims[10];
     uint32_t indices[10];
     uint32_t score_size;
-    ASSERT_EQ(CVI_AI_Service_FaceInfoMatching(m_service_handle, &face_info, 5, 0, indices, sims,
-                                              &score_size),
-              CVIAI_ERR_NOT_YET_INITIALIZED);
+    ASSERT_EQ(CVI_TDL_Service_FaceInfoMatching(m_service_handle, &face_info, 5, 0, indices, sims,
+                                               &score_size),
+              CVI_TDL_ERR_NOT_YET_INITIALIZED);
   }
 
   std::vector<uint32_t> num_features = {100, 500, 2000};
@@ -223,21 +223,21 @@ TEST_F(FeatureMatchingTestSuite, face_info_matching) {
     golden.init();
 
     ASSERT_EQ(
-        CVI_AI_Service_RegisterFeatureArray(m_service_handle, golden.db_feature, COS_SIMILARITY),
-        CVIAI_SUCCESS);
+        CVI_TDL_Service_RegisterFeatureArray(m_service_handle, golden.db_feature, COS_SIMILARITY),
+        CVI_TDL_SUCCESS);
 
     std::vector<float> sims(golden.topk);
     std::vector<uint32_t> indices(golden.topk);
 
     uint32_t score_size;
 
-    cvai_face_info_t face_info;
+    cvtdl_face_info_t face_info;
     face_info.feature = golden.input_feature;
 
     // test matching top-k similarity without threshold
-    ASSERT_EQ(CVI_AI_Service_FaceInfoMatching(m_service_handle, &face_info, golden.topk, 0,
-                                              indices.data(), sims.data(), &score_size),
-              CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Service_FaceInfoMatching(m_service_handle, &face_info, golden.topk, 0,
+                                               indices.data(), sims.data(), &score_size),
+              CVI_TDL_SUCCESS);
 
     EXPECT_EQ(score_size, golden.topk);
 
@@ -248,9 +248,9 @@ TEST_F(FeatureMatchingTestSuite, face_info_matching) {
 
     // test matching with threshold
     float threshold = golden.topk_similarity[golden.topk - 1];
-    ASSERT_EQ(CVI_AI_Service_FaceInfoMatching(m_service_handle, &face_info, 0, threshold,
-                                              indices.data(), sims.data(), &score_size),
-              CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Service_FaceInfoMatching(m_service_handle, &face_info, 0, threshold,
+                                               indices.data(), sims.data(), &score_size),
+              CVI_TDL_SUCCESS);
 
     EXPECT_EQ(score_size, golden.topk);
 
@@ -260,9 +260,9 @@ TEST_F(FeatureMatchingTestSuite, face_info_matching) {
     }
 
     // test matching with top-k and threshold
-    ASSERT_EQ(CVI_AI_Service_FaceInfoMatching(m_service_handle, &face_info, golden.topk, threshold,
-                                              indices.data(), sims.data(), &score_size),
-              CVIAI_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Service_FaceInfoMatching(m_service_handle, &face_info, golden.topk, threshold,
+                                               indices.data(), sims.data(), &score_size),
+              CVI_TDL_SUCCESS);
 
     EXPECT_EQ(score_size, golden.topk);
     for (uint32_t i = 0; i < golden.topk; i++) {
@@ -271,15 +271,15 @@ TEST_F(FeatureMatchingTestSuite, face_info_matching) {
     }
 
     // test matching with wrong top-k and threshold value
-    ASSERT_EQ(CVI_AI_Service_FaceInfoMatching(m_service_handle, &face_info, 0, 0, indices.data(),
-                                              sims.data(), &score_size),
-              CVIAI_ERR_INVALID_ARGS);
+    ASSERT_EQ(CVI_TDL_Service_FaceInfoMatching(m_service_handle, &face_info, 0, 0, indices.data(),
+                                               sims.data(), &score_size),
+              CVI_TDL_ERR_INVALID_ARGS);
 
     // test matching with wrong type value
     face_info.feature.type = TYPE_BF16;
-    ASSERT_EQ(CVI_AI_Service_FaceInfoMatching(m_service_handle, &face_info, 0, 0, indices.data(),
-                                              sims.data(), &score_size),
-              CVIAI_ERR_INVALID_ARGS);
+    ASSERT_EQ(CVI_TDL_Service_FaceInfoMatching(m_service_handle, &face_info, 0, 0, indices.data(),
+                                               sims.data(), &score_size),
+              CVI_TDL_ERR_INVALID_ARGS);
   }
 }
 
@@ -288,8 +288,8 @@ TEST_F(FeatureMatchingTestSuite, raw_matching) {
   golden.init();
 
   ASSERT_EQ(
-      CVI_AI_Service_RegisterFeatureArray(m_service_handle, golden.db_feature, COS_SIMILARITY),
-      CVIAI_SUCCESS);
+      CVI_TDL_Service_RegisterFeatureArray(m_service_handle, golden.db_feature, COS_SIMILARITY),
+      CVI_TDL_SUCCESS);
 
   std::vector<float> vec_sims(golden.topk);
   std::vector<uint32_t> vec_indices(golden.topk);
@@ -298,9 +298,9 @@ TEST_F(FeatureMatchingTestSuite, raw_matching) {
   uint32_t *indices = vec_indices.data();
 
   uint32_t score_size;
-  ASSERT_EQ(CVI_AI_Service_RawMatching(m_service_handle, (uint8_t *)golden.input_feature.ptr,
-                                       TYPE_INT8, golden.topk, 0, indices, sims, &score_size),
-            CVIAI_SUCCESS);
+  ASSERT_EQ(CVI_TDL_Service_RawMatching(m_service_handle, (uint8_t *)golden.input_feature.ptr,
+                                        TYPE_INT8, golden.topk, 0, indices, sims, &score_size),
+            CVI_TDL_SUCCESS);
 
   EXPECT_EQ(score_size, golden.topk);
 
@@ -314,12 +314,12 @@ TEST_F(FeatureMatchingTestSuite, calculate_similarity) {
   // test with wrong arguments
   {
     int8_t features[512];
-    cvai_feature_t db_feature;
+    cvtdl_feature_t db_feature;
     db_feature.ptr = features;
     db_feature.size = 512;
     db_feature.type = TYPE_INT8;
 
-    cvai_feature_t input_feature;
+    cvtdl_feature_t input_feature;
     input_feature.ptr = features;
     input_feature.size = 512;
     input_feature.type = TYPE_FLOAT;
@@ -328,23 +328,23 @@ TEST_F(FeatureMatchingTestSuite, calculate_similarity) {
 
     // test with inconsistent feature type
     ASSERT_EQ(
-        CVI_AI_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
-        CVIAI_ERR_INVALID_ARGS);
+        CVI_TDL_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
+        CVI_TDL_ERR_INVALID_ARGS);
 
     // test with inconsistent feature size
     input_feature.type = TYPE_INT8;
     input_feature.size = 511;
     ASSERT_EQ(
-        CVI_AI_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
-        CVIAI_ERR_INVALID_ARGS);
+        CVI_TDL_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
+        CVI_TDL_ERR_INVALID_ARGS);
 
     // test with unsupported feature type
     input_feature.size = 512;
     input_feature.type = TYPE_FLOAT;
     db_feature.type = TYPE_FLOAT;
     ASSERT_EQ(
-        CVI_AI_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
-        CVIAI_ERR_INVALID_ARGS);
+        CVI_TDL_Service_CalculateSimilarity(m_service_handle, &input_feature, &db_feature, &sim),
+        CVI_TDL_ERR_INVALID_ARGS);
   }
 
   // test with large amount of features
@@ -355,13 +355,13 @@ TEST_F(FeatureMatchingTestSuite, calculate_similarity) {
     std::vector<Similarity> sims(golden.db_feature.data_num);
 
     for (uint32_t i = 0; i < golden.db_feature.data_num; i++) {
-      cvai_feature_t db_feature;
+      cvtdl_feature_t db_feature;
       db_feature.ptr = &((int8_t *)golden.db_feature.ptr)[i * golden.db_feature.feature_length];
       db_feature.size = golden.db_feature.feature_length;
       db_feature.type = TYPE_INT8;
-      ASSERT_EQ(CVI_AI_Service_CalculateSimilarity(m_service_handle, &golden.input_feature,
-                                                   &db_feature, &sims[i].value),
-                CVIAI_SUCCESS);
+      ASSERT_EQ(CVI_TDL_Service_CalculateSimilarity(m_service_handle, &golden.input_feature,
+                                                    &db_feature, &sims[i].value),
+                CVI_TDL_SUCCESS);
       sims[i].index = i;
     }
 
@@ -376,4 +376,4 @@ TEST_F(FeatureMatchingTestSuite, calculate_similarity) {
   }
 }
 }  // namespace unitest
-}  // namespace cviai
+}  // namespace cvitdl

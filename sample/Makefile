@@ -1,15 +1,9 @@
-SHELL = /bin/bash
-# include ./Makefile.param
-
-CHECK_SDK = 1
+CONFIRM_ENV_VAR = 1
 ifeq ($(MAKECMDGOALS), $(filter $(MAKECMDGOALS), install clean))
-CHECK_SDK = 0
-endif
-ifndef MAKECMDGOALS
-CHECK_SDK = 1
+CONFIRM_ENV_VAR = 0
 endif
 
-ifeq ($(CHECK_SDK), 1)
+ifeq ($(CONFIRM_ENV_VAR), 1)
 ifndef MW_PATH
 $(error "Please set middleware sdk root path to MW_PATH")
 endif
@@ -40,13 +34,6 @@ CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
 CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
 
-# link OpenCV shared object only if platform is cv183X series
-ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520 CV183X))
-LINK_OPENCV = 1
-else
-LINK_OPENCV = 0
-endif
-
 ifeq ($(SDK_VER), 32bit)
 ARCH=arm
 CROSS_COMPILE = $(CROSS_COMPILE_32)
@@ -70,11 +57,20 @@ CFLAGS += -march=rv64imafd
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif
+#####################################################
+# Gcc Compiler
+#####################################################
+CC = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+AR = $(CROSS_COMPILE)ar
+LD = $(CROSS_COMPILE)ld
+STRIP = $(CROSS_COMPILE)strip
 
+#####################################################
 # Middleware stuffs
 #####################################################
 MW_LIB_PATH = $(MW_PATH)/lib
-MW_3RD_LIB_PATH = $(MW_PATH)/lib/3rd
+MW_3RD_LIB_PATH = $(MW_LIB_PATH)/3rd
 MW_INC_PATH = $(MW_PATH)/include
 MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
 MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1 -lcli
@@ -89,89 +85,90 @@ else
 MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
 endif
-#####################################################
 
-
-# AISDK stuffs
 #####################################################
-AISDK_ROOT_PATH ?= $(abspath ..)
-AISDK_LIB_PATH = $(AISDK_ROOT_PATH)/lib
-AISDK_INC_PATH = $(AISDK_ROOT_PATH)/include/cviai
+# TDL SDK stuffs
 #####################################################
+SDK_ROOT_PATH ?= $(abspath ../..)
+SDK_LIB_PATH = $(SDK_ROOT_PATH)/lib
+SDK_INC_PATH = $(SDK_ROOT_PATH)/include
+SDK_TDL_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_tdl
+SDK_APP_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_tdl_app
+SDK_SAMPLE_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include
+SDK_TDL_LIBS = -lcvi_tdl
+SDK_APP_LIBS = -lcvi_tdl_app
 
-
-# RTSP stuffs
 #####################################################
-RTSP_LIB_PATH = $(AISDK_ROOT_PATH)/lib
-RTSP_INC_PATH = $(AISDK_ROOT_PATH)/include/cvi_rtsp
-#####################################################
-
 # Opencv
 #####################################################
 OPENCV_INC_PATH = $(TPU_PATH)/opencv/include
 OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
-OPENCV_LIB = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
-#####################################################
+OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
 
+#####################################################
 # TPU
 #####################################################
 TPU_LIB_PATH = $(TPU_PATH)/lib
+TPU_LIBS = -lcnpy -lcvikernel -lcvimath -lcviruntime -lz -lm
 
-# IVE
+#####################################################
+# IVE SDK
 #####################################################
 ifeq ($(USE_TPU_IVE), ON)
 IVE_SDK_LIB_PATH = $(IVE_PATH)/lib
 IVE_SDK_INC_PATH = $(IVE_PATH)/include
+IVE_LIBS = -lcvi_ive_tpu
+CFLAGS += -DUSE_TPU_IVE
 else
 IVE_SDK_LIB_PATH = $(MW_PATH)/lib
 IVE_SDK_INC_PATH = $(MW_PATH)/include
+IVE_LIBS = -lcvi_ive
 endif
-# cvi tracer
+
+#####################################################
+# RTSP stuffs
+#####################################################
+RTSP_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
+RTSP_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include/cvi_rtsp
+RTSP_LIBS = -lcvi_rtsp
+
+#####################################################
+# STB
+#####################################################
+STB_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include/stb
+
+#####################################################
+# CVI LIB stuffs
+#####################################################
+MD_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_md
+DRAW_RECT_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_draw_rect
+PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
+
+#####################################################
+# CVI TDL Evaluation
+#####################################################
+EVA_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
+EVA_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include/cvi_tdl_evaluation
+EVA_LIBS = -lcvi_tdl_evaluation
+
+#####################################################
+# CVI Tracer
 #####################################################
 CVI_TRACER_LIB_PATH = $(CVI_TRACER_PATH)/$(ARCH)/lib/3rd
 CVI_TRACER_INC_PATH = $(CVI_TRACER_PATH)/include
 
 # OpenCV
-ifeq ($(LINK_OPENCV), 1)
-OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
-OPENCV_LIBS = -lopencv_core -lopencv_imgproc
+# link OpenCV shared object only if platform is cv183X series
+ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520 CV183X))
+SAMPLE_LIBS_OPENCV += -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
 endif
 
-CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s 
+CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
-STRIPSYMBOL =
 else
 CFLAGS += -O3 -DNDEBUG
-STRIPSYMBOL = @$(STRIP) $@
-endif
-
-
-## GCC COMPILER ##
-CC = $(CROSS_COMPILE)gcc
-CXX = $(CROSS_COMPILE)g++
-AR = $(CROSS_COMPILE)ar
-LD = $(CROSS_COMPILE)ld
-STRIP = $(CROSS_COMPILE)strip
-
-
-ifeq ($(CHECK_SDK), 1)
-$(info ---------------------------------------)
-$(info CHIP: $(CHIP))
-$(info SDK_VER: $(SDK_VER))
-$(info Middleware include path: $(MW_INC_PATH))
-$(info Middleware library path: $(MW_LIB_PATH))
-$(info AI SDK library path: $(AISDK_LIB_PATH))
-$(info AI SDK include path: $(AISDK_INC_PATH))
-$(info IVE library path: $(IVE_SDK_LIB_PATH))
-$(info IVE include path: $(IVE_SDK_INC_PATH))
-$(info TPU library path: $(TPU_LIB_PATH))
-$(info CFLAGS: $(CFLAGS))
-$(info CC: $(CC))
-$(info CXX: $(CXX))
-$(info USE_TPU_IVE: $(USE_TPU_IVE))
-$(info ---------------------------------------)
 endif
 
 ifeq ($(CHIP), CV181X)
@@ -183,100 +180,112 @@ CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
 endif
 endif
 
-RTSP_LIBS = -lcvi_rtsp
-AISDK_BASIC_LIBS = -lcviai
-AISDK_APP_LIBS = -lcviai_app
-
-TPU_LIBS = -lcnpy  -lcvikernel  -lcvimath  -lcviruntime  -lz -lm
-
-ifeq ($(USE_TPU_IVE), ON)
-IVE_LIBS = -lcvi_ive_tpu
-else
-IVE_LIBS = -lcvi_ive
-endif
-
 SRCS := $(wildcard $(PWD)/*.c)
-OBJS := $(SRCS:%.c=%.o)
-DEPS = $(SRCS:.c=.d)
+CPPS := $(wildcard $(PWD)/*.cpp)
+OBJS := $(SRCS:%.c=%.o) $(CPPS:%.cpp=%.o)
 
-TMP_SAMPLE_LIBS = $(AISDK_BASIC_LIBS) $(TPU_LIBS) $(IVE_LIBS) -L$(MW_LIB_PATH) -L$(TPU_LIB_PATH) -L$(IVE_SDK_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -lpthread
-SAMPLE_LIBS = -L$(AISDK_LIB_PATH) $(TMP_SAMPLE_LIBS)
+SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -L$(TPU_LIB_PATH) $(TPU_LIBS) -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -lpthread
 
 ifneq ($(CHIP), CV181X)
 SAMPLE_LIBS += -L$(CVI_TRACER_LIB_PATH)
-TMP_SAMPLE_LIBS += -L$(CVI_TRACER_LIB_PATH)
-endif
-
-ifeq ($(LINK_OPENCV), 1)
-SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
+CFLAGS += -I$(CVI_TRACER_INC_PATH)
+else
+CFLAGS += -I$(CV181X_INC_PATH)
 endif
 
 SAMPLE_LIBS += $(SAMPLE_LIBS_OPENCV)
-SAMPLE_VI_LIBS = $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) $(SAMPLE_LIBS_OPENCV)
-SAMPLE_READ_LIBS = -lcviai_evaluation $(TMP_SAMPLE_LIBS) $(OPENCV_LIB) -L$(OPENCV_LIB_PATH) -L$(AISDK_LIB_PATH)
-SAMPLE_APP_LIBS = -L../tmp_install/lib $(SAMPLE_LIBS) $(RTSP_LIBS) -L$(RTSP_LIB_PATH) -lcviai_app $(SAMPLE_LIBS_OPENCV)
+SAMPLE_VI_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
+SAMPLE_READ_LIBS = $(SAMPLE_LIBS) -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
+SAMPLE_APP_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS) -L$(SDK_LIB_PATH) $(SDK_APP_LIBS)
 
-CFLAGS += -I$(AISDK_INC_PATH) -I$(MW_INC_PATH)  -I$(RTSP_INC_PATH) -I$(MW_SAMPLE_INC_PATH) -I$(MW_ISP_INC_PATH) -I$(RTSP_INC_PATH) -I$(IVE_SDK_INC_PATH) -I$(OPENCV_INC_PATH)
+CFLAGS += -I$(SDK_INC_PATH) \
+          -I$(SDK_TDL_INC_PATH) \
+          -I$(SDK_APP_INC_PATH) \
+          -I$(SDK_SAMPLE_INC_PATH) \
+          -I$(MW_INC_PATH) \
+          -I$(RTSP_INC_PATH) \
+          -I$(MW_SAMPLE_INC_PATH) \
+          -I$(MW_ISP_INC_PATH) \
+          -I$(IVE_SDK_INC_PATH) \
+          -I$(OPENCV_INC_PATH) \
+          -I$(STB_INC_PATH) \
+          -I$(EVA_INC_PATH)
 
-ifeq ($(USE_TPU_IVE), ON)
-CFLAGS += -DUSE_TPU_IVE
-endif
-
-ifeq ($(CHIP), CV181X)
-CFLAGS += -I$(CV181X_INC_PATH)
-else
-CFLAGS += -I$(CVI_TRACER_INC_PATH)
-endif
-
-# stb
-CFLAGS += -I$(AISDK_ROOT_PATH)/include/stb
 
 ifneq (,$(findstring middleware/v2,$(MW_PATH)))
     CFLAGS += -D_MIDDLEWARE_V2_
 endif
 
+ifeq ($(CONFIRM_ENV_VAR), 1)
+$(info ---------------------------------------)
+$(info CHIP: $(CHIP))
+$(info SDK_VER: $(SDK_VER))
+$(info TDL SDK library path: $(SDK_LIB_PATH))
+$(info TDL SDK include path: $(SDK_INC_PATH))
+$(info Middleware include path: $(MW_INC_PATH))
+$(info Middleware library path: $(MW_LIB_PATH))
+$(info IVE library path: $(IVE_SDK_LIB_PATH))
+$(info IVE include path: $(IVE_SDK_INC_PATH))
+$(info TPU library path: $(TPU_LIB_PATH))
+$(info CFLAGS: $(CFLAGS))
+$(info CC: $(CC))
+$(info CXX: $(CXX))
+$(info USE_TPU_IVE: $(USE_TPU_IVE))
+$(info ---------------------------------------)
+endif
+
+TARGETS_SAMPLE_INIT := $(shell find . -type f -name 'sample_init.c' -exec basename {} .c ';')
 TARGETS_VI_SAMPLE := $(shell find . -type f -name 'sample_vi_*.c' -exec basename {} .c ';')
 TARGETS_AUDIO_SAMPLE := $(shell find . -type f -name 'sample_aud_*.c' -exec basename {} .c ';')
+TARGETS_AUDIO_SAMPLE += $(shell find . -type f -name 'sample_aud_*.cpp' -exec basename {} .cpp ';')
+
 TARGETS_IMAGE_SAMPLE := $(shell find . -type f -name 'sample_read_*.c' -exec basename {} .c ';')
 TARGETS_APP_SAMPLE := $(shell find . -type f -name 'sample_app_*.c' -exec basename {} .c ';')
 TARGETS_READ_SAMPLE := $(shell find . -type f -name 'sample_read*.cpp' -exec basename {} .cpp ';')
+TARGETS_YOLO_SAMPLE := $(shell find . -type f -name 'sample_yolo*.cpp' -exec basename {} .cpp ';')
 
-TARGETS = sample_init \
-		$(TARGETS_VI_SAMPLE) \
-		$(TARGETS_AUDIO_SAMPLE) \
-		$(TARGETS_IMAGE_SAMPLE) \
-		$(TARGETS_READ_SAMPLE) \
-		$(TARGETS_APP_SAMPLE)
+TARGETS = $(TARGETS_SAMPLE_INIT) \
+  	      $(TARGETS_VI_SAMPLE) \
+ 	      $(TARGETS_AUDIO_SAMPLE) \
+	      $(TARGETS_IMAGE_SAMPLE) \
+	      $(TARGETS_READ_SAMPLE) \
+	      $(TARGETS_APP_SAMPLE) \
+	      $(TARGETS_YOLO_SAMPLE)
 
 .PHONY : all clean install
 
 all: $(TARGETS)
 
 clean:
-	rm -f $(OBJS) $(TARGETS) $(DEPS)
-	rm -rf $(THIRD_PARTY_PATH)
+	rm -f $(OBJS) $(TARGETS) $(SDK_ROOT_PATH)/sample/utils/*.o
 
 install:
 	mkdir -p ../tmp_install/bin
 	cp $(TARGETS) ../tmp_install/bin
 
 $(PWD)/%.o: $(PWD)/%.c
-	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<
+	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
 
 $(PWD)/%.o: $(PWD)/%.cpp
-	$(CXX) $(DEPFLAGS) $(CFLAGS) -o $@  -c $<
+	$(CXX) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
 
-sample_read_od: $(PWD)/sample_read_od.o $(PWD)/sample_utils.o
+$(SDK_ROOT_PATH)/sample/utils/%.o: $(SDK_ROOT_PATH)/sample/utils/%.c
+	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
+
+sample_read_od: $(PWD)/sample_read_od.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o
 	$(CXX) $(DEPFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^
 
-sample_aud_%: $(PWD)/sample_aud_%.o $(PWD)/sample_utils.o
-	$(CC) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS)  -o $@ $^
+sample_aud_%: $(PWD)/sample_aud_%.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o
+	$(CXX) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS) -o $@ $^
 
-sample_app_%: $(PWD)/sample_app_%.o $(PWD)/vi_vo_utils.o
-	$(CC) $(SAMPLE_APP_LIBS)  -o $@ $^
+sample_app_%: $(PWD)/sample_app_%.o $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o
+	$(CC) $(SAMPLE_APP_LIBS) -o $@ $^
 
-sample_vi_%: $(PWD)/sample_vi_%.o $(PWD)/vi_vo_utils.o $(PWD)/sample_utils.o $(PWD)/middleware_utils.o
-	$(CC) $(SAMPLE_APP_LIBS)  -o $@ $^
+sample_vi_%: $(PWD)/sample_vi_%.o $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o $(SDK_ROOT_PATH)/sample/utils/middleware_utils.o
+	$(CC) $(SAMPLE_APP_LIBS) -o $@ $^
 
 sample_init: $(PWD)/sample_init.o
-	$(CC) $(SAMPLE_LIBS)  -o $@ $^
+	$(CC) $(SAMPLE_LIBS) -o $@ $^
+
+sample_yol%: $(PWD)/sample_yol%.o
+	$(CXX) $(SAMPLE_LIBS) -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS) -L$(EVA_LIB_PATH) $(EVA_LIBS) -o $@ $^

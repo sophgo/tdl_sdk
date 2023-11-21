@@ -4,9 +4,9 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include "core/core/cvai_core_types.h"
+#include "core/core/cvtdl_core_types.h"
 
-namespace cviai {
+namespace cvitdl {
 namespace service {
 
 typedef struct {
@@ -19,11 +19,11 @@ class ConvexPolygon {
   ConvexPolygon() = default;
   ~ConvexPolygon();
   void show();
-  bool set_vertices(const cvai_pts_t &pts);
+  bool set_vertices(const cvtdl_pts_t &pts);
 
   /* member data */
-  cvai_pts_t vertices;
-  cvai_pts_t orthogonals;
+  cvtdl_pts_t vertices;
+  cvtdl_pts_t orthogonals;
 
  private:
   bool is_convex(float *edges_x, float *edges_y, uint32_t size);
@@ -33,25 +33,25 @@ class IntrusionDetect {
  public:
   IntrusionDetect();
   ~IntrusionDetect();
-  int setRegion(const cvai_pts_t &pts);
-  void getRegion(cvai_pts_t ***region_info, uint32_t *size);
+  int setRegion(const cvtdl_pts_t &pts);
+  void getRegion(cvtdl_pts_t ***region_info, uint32_t *size);
   void clean();
-  bool run(const cvai_bbox_t &bbox);
+  bool run(const cvtdl_bbox_t &bbox);
   void show();
 
  private:
-  bool is_separating_axis(const vertex_t &axis, const cvai_pts_t &region_pts,
-                          const cvai_bbox_t &bbox);
+  bool is_separating_axis(const vertex_t &axis, const cvtdl_pts_t &region_pts,
+                          const cvtdl_bbox_t &bbox);
   bool is_point_in_triangle(const vertex_t &o, const vertex_t &v1, const vertex_t &v2,
                             const vertex_t &v3);
-  float get_SignedGaussArea(const cvai_pts_t &pts);
-  bool Triangulate_EC(const cvai_pts_t &pts, std::vector<std::vector<int>> &triangle_idxes);
-  bool ConvexPartition_HM(const cvai_pts_t &pts, std::vector<std::vector<int>> &convex_idxes);
+  float get_SignedGaussArea(const cvtdl_pts_t &pts);
+  bool Triangulate_EC(const cvtdl_pts_t &pts, std::vector<std::vector<int>> &triangle_idxes);
+  bool ConvexPartition_HM(const cvtdl_pts_t &pts, std::vector<std::vector<int>> &convex_idxes);
 
   /* member data */
   std::vector<std::shared_ptr<ConvexPolygon>> regions;
-  cvai_pts_t base;
+  cvtdl_pts_t base;
 };
 
 }  // namespace service
-}  // namespace cviai
+}  // namespace cvitdl

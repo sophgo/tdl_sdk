@@ -26,7 +26,7 @@ function(buildninstall)
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.c ${PARSED_ARGS_SRCS})
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
-  install(TARGETS ${PROJECT_NAME} DESTINATION regression)
+  #install(TARGETS ${PROJECT_NAME} DESTINATION regression)
 endfunction(buildninstall)
 
 function(buildninstallcpp)
@@ -51,7 +51,9 @@ function(buildninstallcpp)
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PARSED_ARGS_SRCS})
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
-  install(TARGETS ${PROJECT_NAME} DESTINATION regression)
+  if (PROJECT_NAME STREQUAL "test_main")
+      install(TARGETS ${PROJECT_NAME} DESTINATION regression)
+  endif ()
 endfunction(buildninstallcpp)
 
 set(REG_INCLUDES
@@ -59,6 +61,8 @@ set(REG_INCLUDES
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation
     ${TRACER_PATH}
     ${MIDDLEWARE_SDK_ROOT}/sample/common
     ${CMAKE_SOURCE_DIR}/3rdparty
@@ -118,7 +122,7 @@ if (NOT "${CVI_PLATFORM}" STREQUAL "CV181X")
 endif()
 
 set(UnitTest_SRCS
-  cviai_test.cpp
+  cvi_tdl_test.cpp
   raii.cpp
   regression_utils.cpp
   ${UnitTests}
@@ -142,33 +146,33 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../modules/log
 )
 
-buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_face_quality INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_lfw INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_wider_face INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_mobiledetv2 INC ${REG_INCLUDES} SRCS od_utils.c DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_yolov3 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_thermal INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} SRCS od_utils.c DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_quality INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_lfw INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_wider_face INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_mobiledetv2 INC ${REG_INCLUDES} SRCS od_utils.c DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_yolov3 INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_thermal INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} SRCS od_utils.c DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
 
-buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cviai  cviai_evaluation cviai_app gtest_main ${SAMPLE_LIBS})
-buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cviai  cviai_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_evaluation cvi_tdl_app gtest_main ${SAMPLE_LIBS})
+buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
 
-buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cviai cviai_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cviai   cviai_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
+buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
 
 if ("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")

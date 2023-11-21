@@ -1,6 +1,6 @@
 # Appendix 1 Vpss Helper
 
-``vpss_helper.h`` header is a indepentant header which only relies on Middleware SDK. The header provides some common coding pattern templates used in AI SDK.
+``vpss_helper.h`` header is a indepentant header which only relies on Middleware SDK. The header provides some common coding pattern templates used in TDL SDK.
 
 ## Init Middleware
 
@@ -75,7 +75,7 @@ VPSS_INIT_HELPER2(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
 
 ## Setup VPSS Channel Config
 
-These functions are frequently used inside AI SDK. Any operation such as resize, and scale with quantization is done by setting the ``VPSS_CHN_ATTR_S`` parameter.
+These functions are frequently used inside TDL SDK. Any operation such as resize, and scale with quantization is done by setting the ``VPSS_CHN_ATTR_S`` parameter.
 
 ### Resize
 

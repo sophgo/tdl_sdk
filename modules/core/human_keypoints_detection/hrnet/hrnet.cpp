@@ -5,9 +5,9 @@
 
 #include <iostream>
 #include "coco_utils.hpp"
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
-#include "core/cviai_types_mem_internal.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "hrnet.hpp"
@@ -38,7 +38,7 @@ static const float MODEL_MEAN_B = 0.406 * 255.0;
 #define EXPAND_RATIO 2.0f
 #define MAX_NUM 20
 
-namespace cviai {
+namespace cvitdl {
 
 float getSignedValue(float value) {
   if (value < 0) {
@@ -56,7 +56,7 @@ Hrnet::~Hrnet() {}
 int Hrnet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("Hrnet pose only has 1 input.\n");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
   (*data)[0].factor[0] = FACTOR_R;
   (*data)[0].factor[1] = FACTOR_G;
@@ -70,16 +70,16 @@ int Hrnet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   // (*data)[0].keep_aspect_ratio=true;
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
-int Hrnet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *obj_meta) {
+int Hrnet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *obj_meta) {
   int infer_num = std::min((int)obj_meta->size, MAX_NUM);
   for (int i = 0; i < infer_num; i++) {
     uint32_t img_width = stOutFrame->stVFrame.u32Width;
     uint32_t img_height = stOutFrame->stVFrame.u32Height;
 
-    cvai_object_info_t obj_info = info_rescale_c(img_width, img_height, *obj_meta, i);
+    cvtdl_object_info_t obj_info = info_rescale_c(img_width, img_height, *obj_meta, i);
 
     int box_x1 = obj_info.bbox.x1;
     int box_y1 = obj_info.bbox.y1;
@@ -101,14 +101,14 @@ int Hrnet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *obj_meta) {
       box_h = img_height - box_y1;
     }
 
-    CVI_AI_FreeCpp(&obj_info);
+    CVI_TDL_FreeCpp(&obj_info);
 
     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
     m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       LOGW("Hrnet pose inference failed\n");
       return ret;
     }
@@ -120,11 +120,11 @@ int Hrnet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvai_object_t *obj_meta) {
   }
   model_timer_.TicToc("after_run");
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void Hrnet::outputParser(const float nn_width, const float nn_height, const int frame_width,
-                         const int frame_height, cvai_object_t *obj, std::vector<float> &box,
+                         const int frame_height, cvtdl_object_t *obj, std::vector<float> &box,
                          int index) {
   TensorInfo oinfo = getOutputTensorInfo(0);
   CVI_SHAPE output_shape = oinfo.shape;
@@ -133,7 +133,7 @@ void Hrnet::outputParser(const float nn_width, const float nn_height, const int 
   float qscale = num_per_pixel == 1 ? oinfo.qscale : 1;
 
   obj->info[index].pedestrian_properity =
-      (cvai_pedestrian_meta *)malloc(sizeof(cvai_pedestrian_meta));
+      (cvtdl_pedestrian_meta *)malloc(sizeof(cvtdl_pedestrian_meta));
   int batch_size = output_shape.dim[0];
   int num_joints = output_shape.dim[1];
   int height = output_shape.dim[2];
@@ -241,4 +241,4 @@ void Hrnet::getMaxPreds(int batch_size, int num_joints, int height, int width, T
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

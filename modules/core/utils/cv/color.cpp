@@ -539,7 +539,7 @@ inline bool swapBlue(int code) {
 //                                   The main function                                  //
 //////////////////////////////////////////////////////////////////////////////////////////
 // L9694
-void cviai::cvtColor(cv::InputArray _src, cv::OutputArray _dst, int code, int dcn) {
+void cvitdl::cvtColor(cv::InputArray _src, cv::OutputArray _dst, int code, int dcn) {
   int stype = _src.type();
   int scn = CV_MAT_CN(stype), depth = CV_MAT_DEPTH(stype);
   int uidx;

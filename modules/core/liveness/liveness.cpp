@@ -1,13 +1,13 @@
 #include "liveness.hpp"
 #include "template_matching.hpp"
 
-#include "core/core/cvai_errno.h"
-#include "core/cviai_types_mem.h"
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
 
 #include "cvi_sys.h"
-#ifdef ENABLE_CVIAI_CV_UTILS
+#ifdef ENABLE_CVI_TDL_CV_UTILS
 #include "cv/imgproc.hpp"
 #else
 #include "opencv2/imgproc.hpp"
@@ -25,12 +25,12 @@
 #define MATCH_IOU_THRESHOLD 0.2
 #define OUTPUT_NAME "fc2_dequant"
 
-namespace cviai {
+namespace cvitdl {
 
 static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *frame,
                                                           VIDEO_FRAME_INFO_S *sink_buffer,
-                                                          cvai_face_t *rgb_meta,
-                                                          cvai_face_t *ir_meta) {
+                                                          cvtdl_face_t *rgb_meta,
+                                                          cvtdl_face_t *ir_meta) {
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
@@ -55,7 +55,7 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
   std::vector<cv::Rect> ir_boxs;
 
   for (uint32_t i = 0; i < rgb_meta->size; i++) {
-    cvai_face_info_t rgb_face_info =
+    cvtdl_face_info_t rgb_face_info =
         info_rescale_c(frame->stVFrame.u32Width, frame->stVFrame.u32Height, *rgb_meta, i);
     cv::Rect rgb_box;
     rgb_box.x = rgb_face_info.bbox.x1;
@@ -63,13 +63,13 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
     rgb_box.width = rgb_face_info.bbox.x2 - rgb_box.x;
     rgb_box.height = rgb_face_info.bbox.y2 - rgb_box.y;
     rgb_boxs.push_back(rgb_box);
-    CVI_AI_FreeCpp(&rgb_face_info);
+    CVI_TDL_FreeCpp(&rgb_face_info);
   }
 
   for (uint32_t i = 0; i < ir_meta->size; i++) {
-    // cvai_face_info_t ir_face_info = rgb_face_info;
-    cvai_face_info_t ir_face_info = info_rescale_c(sink_buffer->stVFrame.u32Width,
-                                                   sink_buffer->stVFrame.u32Height, *ir_meta, i);
+    // cvtdl_face_info_t ir_face_info = rgb_face_info;
+    cvtdl_face_info_t ir_face_info = info_rescale_c(sink_buffer->stVFrame.u32Width,
+                                                    sink_buffer->stVFrame.u32Height, *ir_meta, i);
 
     cv::Rect ir_box;
     ir_box.x = ir_face_info.bbox.x1;
@@ -77,7 +77,7 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
     ir_box.width = ir_face_info.bbox.x2 - ir_box.x;
     ir_box.height = ir_face_info.bbox.y2 - ir_box.y;
     ir_boxs.push_back(ir_box);
-    CVI_AI_FreeCpp(&ir_face_info);
+    CVI_TDL_FreeCpp(&ir_face_info);
   }
 
   std::vector<std::vector<cv::Mat>> input_mat(rgb_boxs.size(), std::vector<cv::Mat>());
@@ -114,9 +114,9 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
     cv::Mat crop_ir_frame = ir_frame(ir_box);
 
     cv::Mat color, ir;
-#ifdef ENABLE_CVIAI_CV_UTILS
-    cviai::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
-    cviai::resize(crop_ir_frame, ir, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+#ifdef ENABLE_CVI_TDL_CV_UTILS
+    cvitdl::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
+    cvitdl::resize(crop_ir_frame, ir, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
 #else
     cv::resize(crop_rgb_frame, color, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
     cv::resize(crop_ir_frame, ir, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
@@ -145,17 +145,17 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
 Liveness::Liveness() : Core(CVI_MEM_SYSTEM) {}
 
 int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFrame,
-                        cvai_face_t *rgb_meta, cvai_face_t *ir_meta) {
+                        cvtdl_face_t *rgb_meta, cvtdl_face_t *ir_meta) {
   if (rgb_meta->size <= 0) {
     LOGE("rgb_meta->size <= 0");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   std::vector<std::vector<cv::Mat>> input_mats =
       image_preprocess(rgbFrame, irFrame, rgb_meta, ir_meta);
   if (input_mats.empty() || input_mats.size() != rgb_meta->size) {
     LOGE("Get input_mats failed");
-    return CVIAI_ERR_INVALID_ARGS;
+    return CVI_TDL_ERR_INVALID_ARGS;
   }
 
   for (uint32_t i = 0; i < input_mats.size(); i++) {
@@ -172,7 +172,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {rgbFrame};
     int ret = run(frames);
-    if (ret != CVIAI_SUCCESS) {
+    if (ret != CVI_TDL_SUCCESS) {
       return ret;
     }
 
@@ -194,7 +194,7 @@ int Liveness::inference(VIDEO_FRAME_INFO_S *rgbFrame, VIDEO_FRAME_INFO_S *irFram
     // cout << "Face[" << i << "] liveness score: " << score << endl;
   }
 
-  return CVIAI_SUCCESS;
+  return CVI_TDL_SUCCESS;
 }
 
 void Liveness::prepareInputTensor(std::vector<cv::Mat> &input_mat) {
@@ -219,4 +219,4 @@ void Liveness::prepareInputTensor(std::vector<cv::Mat> &input_mat) {
   }
 }
 
-}  // namespace cviai
+}  // namespace cvitdl

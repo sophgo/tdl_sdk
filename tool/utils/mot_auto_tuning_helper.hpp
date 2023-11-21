@@ -43,14 +43,14 @@ typedef struct {
 } MOT_GRID_SEARCH_PARAMS_t;
 
 /* helper functions (core) */
-CVI_S32 OPTIMIZE_CONFIG_1(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t &args,
+CVI_S32 OPTIMIZE_CONFIG_1(cvitdl_handle_t tdl_handle, const MOT_EVALUATION_ARGS_t &args,
                           const MOT_GRID_SEARCH_PARAMS_t &params,
                           const MOT_PERFORMANCE_CONSTRAINT_t &constraint,
-                          cvai_deepsort_config_t &config, MOT_Performance_t &performance);
-// CVI_S32 OPTIMIZE_CONFIG_2(cviai_handle_t ai_handle, const MOT_EVALUATION_ARGS_t &args);
+                          cvtdl_deepsort_config_t &config, MOT_Performance_t &performance);
+// CVI_S32 OPTIMIZE_CONFIG_2(cvitdl_handle_t tdl_handle, const MOT_EVALUATION_ARGS_t &args);
 
 /* helper functions */
 CVI_S32 GET_PREDEFINED_OPT_1_PARAMS(MOT_GRID_SEARCH_PARAMS_t &params);
-CVI_S32 GET_CONFIG_BY_PARAMS_1(cvai_deepsort_config_t &config,
+CVI_S32 GET_CONFIG_BY_PARAMS_1(cvtdl_deepsort_config_t &config,
                                const MOT_GRID_SEARCH_PARAMS_t &params,
                                const std::vector<uint32_t> &idxes);

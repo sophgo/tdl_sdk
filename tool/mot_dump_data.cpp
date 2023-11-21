@@ -1,7 +1,7 @@
 #include <inttypes.h>
 #include "core/utils/vpss_helper.h"
-#include "cviai.h"
-#include "evaluation/cviai_media.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "utils/mot_evaluation.hpp"
 #include "utils/od.h"
 
@@ -21,8 +21,8 @@ extern int optopt;
 
 #define OUTPUT_MOT_RESULT
 
-#define DEFAULT_RESULT_FILE_NAME "cviai_MOT_result.txt"
-#define DEFAULT_DUMP_DATA_DIR "cviai_MOT_data"
+#define DEFAULT_RESULT_FILE_NAME "cvitdl_MOT_result.txt"
+#define DEFAULT_DUMP_DATA_DIR "cvitdl_MOT_data"
 #define DEFAULT_DUMP_DATA_INFO_NAME "MOT_data_info.txt"
 
 typedef struct {
@@ -183,36 +183,36 @@ int main(int argc, char *argv[]) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
-  cviai_handle_t ai_handle = NULL;
+  cvitdl_handle_t tdl_handle = NULL;
 
   ODInferenceFunc inference;
-  CVI_AI_SUPPORTED_MODEL_E od_model_id;
-  if (get_od_model_info(args.od_m_name, &od_model_id, &inference) == CVIAI_FAILURE) {
+  CVI_TDL_SUPPORTED_MODEL_E od_model_id;
+  if (get_od_model_info(args.od_m_name, &od_model_id, &inference) == CVI_TDL_FAILURE) {
     printf("unsupported model: %s\n", argv[1]);
-    return CVIAI_FAILURE;
+    return CVI_TDL_FAILURE;
   }
 
-  ret = CVI_AI_CreateHandle2(&ai_handle, 1, 0);
+  ret = CVI_TDL_CreateHandle2(&tdl_handle, 1, 0);
 
-  ret |= CVI_AI_OpenModel(ai_handle, od_model_id, args.od_m_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, args.fd_m_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, args.reid_m_path);
-  ret |= CVI_AI_OpenModel(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, args.fr_m_path);
+  ret |= CVI_TDL_OpenModel(tdl_handle, od_model_id, args.od_m_path);
+  ret |= CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, args.fd_m_path);
+  ret |= CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_OSNET, args.reid_m_path);
+  ret |= CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, args.fr_m_path);
   if (ret != CVI_SUCCESS) {
     printf("model open failed with %#x!\n", ret);
     return ret;
   }
 
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, od_model_id, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_OSNET, false);
-  CVI_AI_SetSkipVpssPreprocess(ai_handle, CVI_AI_SUPPORTED_MODEL_FACERECOGNITION, false);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, od_model_id, false);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, false);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_OSNET, false);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, false);
 
   switch (args.target_type) {
     case FACE:
       break;
     case PERSON:
-      CVI_AI_SelectDetectClass(ai_handle, od_model_id, 1, CVI_AI_DET_TYPE_PERSON);
+      CVI_TDL_SelectDetectClass(tdl_handle, od_model_id, 1, CVI_TDL_DET_TYPE_PERSON);
       break;
     case VEHICLE:
     case PET:
@@ -220,13 +220,13 @@ int main(int argc, char *argv[]) {
       printf("not support target type[%d] now\n", args.target_type);
       return CVI_FAILURE;
   }
-  CVI_AI_SetModelThreshold(ai_handle, od_model_id, args.det_threshold);
-  CVI_AI_SetModelThreshold(ai_handle, CVI_AI_SUPPORTED_MODEL_RETINAFACE, args.det_threshold);
+  CVI_TDL_SetModelThreshold(tdl_handle, od_model_id, args.det_threshold);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, args.det_threshold);
 
 #ifdef OUTPUT_MOT_RESULT
   // Init DeepSORT
-  cvai_deepsort_config_t ds_conf;
-  CVI_AI_DeepSORT_Init(ai_handle, false);
+  cvtdl_deepsort_config_t ds_conf;
+  CVI_TDL_DeepSORT_Init(tdl_handle, false);
   if (args.use_predefined) {
     printf("use predefined config.\n");
     if (CVI_SUCCESS != GET_PREDEFINED_CONFIG(&ds_conf, args.target_type)) {
@@ -241,11 +241,11 @@ int main(int argc, char *argv[]) {
       printf("failed to read DeepSORT config file: %s\n", args.init_config);
       return CVI_FAILURE;
     } else {
-      fread(&ds_conf, sizeof(cvai_deepsort_config_t), 1, inFile_mot_config);
+      fread(&ds_conf, sizeof(cvtdl_deepsort_config_t), 1, inFile_mot_config);
       fclose(inFile_mot_config);
     }
   }
-  CVI_AI_DeepSORT_SetConfig(ai_handle, &ds_conf, -1, true);
+  CVI_TDL_DeepSORT_SetConfig(tdl_handle, &ds_conf, -1, true);
 
   char outFile_result_path[256];
   sprintf(outFile_result_path, "%s/%s", args.output_dir, DEFAULT_RESULT_FILE_NAME);
@@ -278,12 +278,12 @@ int main(int argc, char *argv[]) {
 
   fprintf(outFile_data, "%u %d\n", img_num, (int)args.enable_DeepSORT);
 
-  cvai_object_t obj_meta;
-  cvai_face_t face_meta;
-  cvai_tracker_t tracker_meta;
-  memset(&obj_meta, 0, sizeof(cvai_object_t));
-  memset(&face_meta, 0, sizeof(cvai_face_t));
-  memset(&tracker_meta, 0, sizeof(cvai_tracker_t));
+  cvtdl_object_t obj_meta;
+  cvtdl_face_t face_meta;
+  cvtdl_tracker_t tracker_meta;
+  memset(&obj_meta, 0, sizeof(cvtdl_object_t));
+  memset(&face_meta, 0, sizeof(cvtdl_face_t));
+  memset(&tracker_meta, 0, sizeof(cvtdl_tracker_t));
 
 #ifdef OUTPUT_MOT_RESULT
   MOT_Evaluation mot_eval_data;
@@ -297,20 +297,20 @@ int main(int argc, char *argv[]) {
     printf("[%i] image path = %s\n", counter, text_buf);
 
     VIDEO_FRAME_INFO_S frame;
-    CVI_AI_ReadImage(text_buf, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_TDL_ReadImage(text_buf, &frame, PIXEL_FORMAT_RGB_888);
 
     switch (args.target_type) {
       case PERSON: {
-        inference(ai_handle, &frame, &obj_meta);
+        inference(tdl_handle, &frame, &obj_meta);
         if (args.enable_DeepSORT) {
-          CVI_AI_OSNet(ai_handle, &frame, &obj_meta);
+          CVI_TDL_OSNet(tdl_handle, &frame, &obj_meta);
         }
-        CVI_AI_DeepSORT_Obj(ai_handle, &obj_meta, &tracker_meta, args.enable_DeepSORT);
+        CVI_TDL_DeepSORT_Obj(tdl_handle, &obj_meta, &tracker_meta, args.enable_DeepSORT);
       } break;
       case FACE: {
-        CVI_AI_RetinaFace(ai_handle, &frame, &face_meta);
+        CVI_TDL_RetinaFace(tdl_handle, &frame, &face_meta);
         if (args.enable_DeepSORT) {
-          CVI_AI_FaceRecognition(ai_handle, &frame, &face_meta);
+          CVI_TDL_FaceRecognition(tdl_handle, &frame, &face_meta);
         }
         for (uint32_t i = 0; i < face_meta.size; i++) {
           printf("face[%u] bbox: x1[%.2f], y1[%.2f], x2[%.2f], y2[%.2f]\n", i,
@@ -319,9 +319,9 @@ int main(int argc, char *argv[]) {
         }
 #ifdef OUTPUT_MOT_RESULT
 #ifdef ENABLE_FACE_DEEPSORT_EVALUATION
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta);
+        CVI_TDL_DeepSORT_Face(tdl_handle, &face_meta, &tracker_meta);
 #else
-        CVI_AI_DeepSORT_Face(ai_handle, &face_meta, &tracker_meta);
+        CVI_TDL_DeepSORT_Face(tdl_handle, &face_meta, &tracker_meta);
 #endif
 #endif
       } break;
@@ -330,14 +330,14 @@ int main(int argc, char *argv[]) {
     }
 
 #ifdef OUTPUT_MOT_RESULT
-    cvai_tracker_t inact_trackers;
-    memset(&inact_trackers, 0, sizeof(cvai_tracker_t));
-    CVI_AI_DeepSORT_GetTracker_Inactive(ai_handle, &inact_trackers);
+    cvtdl_tracker_t inact_trackers;
+    memset(&inact_trackers, 0, sizeof(cvtdl_tracker_t));
+    CVI_TDL_DeepSORT_GetTracker_Inactive(tdl_handle, &inact_trackers);
     mot_eval_data.update(tracker_meta, inact_trackers);
 
     fprintf(outFile_result, "%u\n", tracker_meta.size);
     for (uint32_t i = 0; i < tracker_meta.size; i++) {
-      cvai_bbox_t *target_bbox =
+      cvtdl_bbox_t *target_bbox =
           (args.target_type == FACE) ? &face_meta.info[i].bbox : &obj_meta.info[i].bbox;
       uint64_t u_id =
           (args.target_type == FACE) ? face_meta.info[i].unique_id : obj_meta.info[i].unique_id;
@@ -354,7 +354,7 @@ int main(int argc, char *argv[]) {
               (int)inact_trackers.info[i].bbox.y1, (int)inact_trackers.info[i].bbox.x2,
               (int)inact_trackers.info[i].bbox.y2);
     }
-    CVI_AI_Free(&inact_trackers);
+    CVI_TDL_Free(&inact_trackers);
 #endif
 
     if (args.enable_DeepSORT) {
@@ -366,13 +366,13 @@ int main(int argc, char *argv[]) {
     uint32_t bbox_size = (args.target_type == FACE) ? face_meta.size : obj_meta.size;
     fprintf(outFile_data, "%u\n", bbox_size);
     for (uint32_t i = 0; i < bbox_size; i++) {
-      cvai_bbox_t *target_bbox =
+      cvtdl_bbox_t *target_bbox =
           (args.target_type == FACE) ? &face_meta.info[i].bbox : &obj_meta.info[i].bbox;
       int class_id = (args.target_type == FACE) ? -1 : obj_meta.info[i].classes;
       fprintf(outFile_data, "%d %f %f %f %f\n", class_id, target_bbox->x1, target_bbox->y1,
               target_bbox->x2, target_bbox->y2);
       if (args.enable_DeepSORT) {
-        cvai_feature_t *target_feature =
+        cvtdl_feature_t *target_feature =
             (args.target_type == FACE) ? &face_meta.info[i].feature : &obj_meta.info[i].feature;
         if (target_feature->type != TYPE_INT8) {
           printf("[WARNING] feature type is not TYPE_INT8.\n");
@@ -396,18 +396,18 @@ int main(int argc, char *argv[]) {
 
     switch (args.target_type) {
       case FACE:
-        CVI_AI_Free(&face_meta);
+        CVI_TDL_Free(&face_meta);
         break;
       case PERSON:
       case VEHICLE:
       case PET:
-        CVI_AI_Free(&obj_meta);
+        CVI_TDL_Free(&obj_meta);
         break;
       default:
         break;
     }
-    CVI_AI_Free(&tracker_meta);
-    CVI_AI_ReleaseImage(&frame);
+    CVI_TDL_Free(&tracker_meta);
+    CVI_TDL_ReleaseImage(&frame);
   }
 
 #ifdef OUTPUT_MOT_RESULT
@@ -424,6 +424,6 @@ int main(int argc, char *argv[]) {
 
   fclose(outFile_data);
 
-  CVI_AI_DestroyHandle(ai_handle);
+  CVI_TDL_DestroyHandle(tdl_handle);
   CVI_SYS_Exit();
 }

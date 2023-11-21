@@ -1,12 +1,12 @@
 #pragma once
 #include "fall_det.hpp"
 
-// obj->info[i].track_state = cvai_trk_state_type_t::CVI_TRACKER_NEW;
+// obj->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
 
 class FallDetMonitor {
  public:
   FallDetMonitor();
-  int monitor(cvai_object_t* obj_meta);
+  int monitor(cvtdl_object_t* obj_meta);
   int set_fps(float fps);
 
  private:
