@@ -56,7 +56,7 @@ CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
 else ifeq ($(SDK_VER), glibc_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_GLIBC)
-CFLAGS += -march=rv64imafdcvxthead -mabi=lp64dv
+CFLAGS += -march=rv64imafdcv0p7xthead -mabi=lp64d
 else ifeq ($(SDK_VER), musl_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_MUSL)
