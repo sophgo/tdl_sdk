@@ -1,5 +1,6 @@
 #pragma once
 #include <cvi_comm_vb.h>
+#include <cvi_sys.h>
 #include <memory>
 #include <string>
 #include "cvi_comm.h"

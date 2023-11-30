@@ -5,7 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <cvimath/cvimath.h>
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"

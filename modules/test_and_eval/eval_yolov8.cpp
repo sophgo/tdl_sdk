@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core.hpp"
+
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"

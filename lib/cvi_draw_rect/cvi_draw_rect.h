@@ -1,11 +1,7 @@
 #ifndef _CVI_DARW_RECT_HEAD_
 #define _CVI_DARW_RECT_HEAD_
 
-#if defined(_MIDDLEWARE_V2_)
-#include <linux/cvi_type.h>
-#else
 #include <cvi_type.h>
-#endif
 #define DLL_EXPORT __attribute__((visibility("default")))
 #include "cvi_tdl.h"
 #ifdef __cplusplus

@@ -1,5 +1,9 @@
 #pragma once
+#ifdef ATHENA2
+#include "core_a2.hpp"
+#else
 #include "core.hpp"
+#endif
 #include "core/face/cvtdl_face_types.h"
 
 namespace cvitdl {

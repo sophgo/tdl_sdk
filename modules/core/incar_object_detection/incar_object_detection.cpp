@@ -24,7 +24,6 @@ int IncarObjectDetection::setupInputPreprocess(std::vector<InputPreprecessSetup>
   (*data)[0].use_quantize_scale = false;
   (*data)[0].use_crop = false;
   (*data)[0].rescale_type = RESCALE_CENTER;
-  (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
 
   return CVI_TDL_SUCCESS;
 }

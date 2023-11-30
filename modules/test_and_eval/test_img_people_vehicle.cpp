@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include "cvi_tdl_media.h"

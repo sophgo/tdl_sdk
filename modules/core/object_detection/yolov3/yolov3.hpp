@@ -1,5 +1,9 @@
 #pragma once
+#ifdef ATHENA2
+#include "core_a2.hpp"
+#else
 #include "core.hpp"
+#endif
 #include "core/object/cvtdl_object_types.h"
 #include "object_utils.hpp"
 #include "yolov3_utils.h"

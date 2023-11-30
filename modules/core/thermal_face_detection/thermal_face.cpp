@@ -128,11 +128,13 @@ int ThermalFace::onModelOpened() {
   std::vector<float> ratios = {1, 2};
   std::vector<float> scales = {1, 1.25992105, 1.58740105};
 
-  CVI_TENSOR *input = getInputTensor(0);
+  CVI_SHAPE input_shape = getInputShape(0);
+  uint32_t input_w = input_shape.dim[3];
+  uint32_t input_h = input_shape.dim[2];
   std::vector<std::vector<int>> image_shapes;
   image_shapes.reserve(strides.size());
   for (int s : strides) {
-    image_shapes.push_back({(input->shape.dim[2] + s - 1) / s, (input->shape.dim[3] + s - 1) / s});
+    image_shapes.push_back({(input_h + s - 1) / s, (input_w + s - 1) / s});
   }
 
   for (size_t i = 0; i < sizes.size(); i++) {

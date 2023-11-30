@@ -36,7 +36,6 @@ int LicensePlateRecognitionV2::setupInputPreprocess(std::vector<InputPreprecessS
     (*data)[0].factor[i] = SCALE;
     (*data)[0].mean[i] = MEAN;
   }
-  (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
   (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   (*data)[0].use_quantize_scale = true;
   (*data)[0].keep_aspect_ratio = false;

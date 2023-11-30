@@ -1,5 +1,4 @@
 #pragma once
-#include <cvi_comm_vb.h>
 #include "cvi_comm.h"
 
 namespace cvitdl {

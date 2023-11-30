@@ -269,11 +269,13 @@ int init_middleware(SAMPLE_TDL_MW_CONTEXT *p_context) {
 
   // Setup VPSS Grp0
   stMWConfig.stVPSSPoolConfig.u32VpssGrpCount = 1;
+#ifndef ATHENA2
   stMWConfig.stVPSSPoolConfig.stVpssMode.aenInput[0] = VPSS_INPUT_MEM;
   stMWConfig.stVPSSPoolConfig.stVpssMode.enMode = VPSS_MODE_DUAL;
   stMWConfig.stVPSSPoolConfig.stVpssMode.ViPipe[0] = 0;
   stMWConfig.stVPSSPoolConfig.stVpssMode.aenInput[1] = VPSS_INPUT_ISP;
   stMWConfig.stVPSSPoolConfig.stVpssMode.ViPipe[1] = 0;
+#endif
 
   SAMPLE_TDL_VPSS_CONFIG_S *pstVpssConfig = &stMWConfig.stVPSSPoolConfig.astVpssConfig[0];
   pstVpssConfig->bBindVI = true;

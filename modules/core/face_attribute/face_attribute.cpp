@@ -1,5 +1,4 @@
 #include "face_attribute.hpp"
-#include "core.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -129,7 +128,7 @@ int FaceAttribute::dump_bgr_pack(const char *p_img_file, VIDEO_FRAME_INFO_S *p_i
 }
 int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta, int face_idx) {
   if (m_use_wrap_hw) {
-#ifdef CV181X
+#if defined(CV181X) || defined(ATHENA2)
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
       LOGE(

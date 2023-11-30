@@ -116,7 +116,7 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
 
 void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
   DestoryOutput(&vs_ctx->outputContext);
-#if defined(CV181X) || defined(CV180X)
+#if defined(CV181X) || defined(CV180X) || defined(ATHENA2)
   SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
 #else
   SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
@@ -130,7 +130,7 @@ void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
                PIXEL_FORMAT_E aiFormat, CVI_U32 *devNum) {
-#if defined(CV181X) || defined(CV180X)
+#if defined(CV181X) || defined(CV180X) || defined(ATHENA2)
   SAMPLE_INI_CFG_S stIniCfg = {};
 
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
@@ -150,7 +150,9 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   stIniCfg.s32BusId[1] = 0;
   stIniCfg.MipiDev[1] = 0xFF;
 
+#ifndef ATHENA2
   VPSS_MODE_E enVPSSMode = VPSS_MODE_DUAL;
+#endif
   VB_CONFIG_S stVbConf;
   PIC_SIZE_E enPicSize;
   CVI_U32 u32BlkSize;
@@ -226,7 +228,9 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   stIniCfg.s32Sns2BusId = 0;
   stIniCfg.Sns2MipiDev = 0xFF;
 
+#ifndef ATHENA2
   VPSS_MODE_E enVPSSMode = VPSS_MODE_DUAL;
+#endif
   VB_CONFIG_S stVbConf;
   PIC_SIZE_E enPicSize;
   CVI_U32 u32BlkSize;
@@ -348,12 +352,13 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);
     return s32Ret;
   }
-
+#ifndef ATHENA2
   s32Ret = CVI_SYS_SetVPSSMode(enVPSSMode);
   if (s32Ret != CVI_SUCCESS) {
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);
     return s32Ret;
   }
+#endif
 
   /************************************************
    * step4:  Init VI ISP
@@ -419,15 +424,12 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
 
 static CVI_S32 CheckInputCfg(chnInputCfg *pIc) {
   if (!strcmp(pIc->codec, "264") || !strcmp(pIc->codec, "265")) {
-    CVI_VENC_CFG("framerate = %d\n", pIc->framerate);
-
     if (pIc->gop < 1) {
       if (!strcmp(pIc->codec, "264"))
         pIc->gop = DEF_264_GOP;
       else
         pIc->gop = DEF_GOP;
     }
-    CVI_VENC_CFG("gop = %d\n", pIc->gop);
 
     if (!strcmp(pIc->codec, "265")) {
       if (pIc->single_LumaBuf > 0) {
@@ -454,38 +456,30 @@ static CVI_S32 CheckInputCfg(chnInputCfg *pIc) {
           SAMPLE_PRT("CBR bitrate must be not less than 0");
           return -1;
         }
-        CVI_VENC_CFG("RC_CBR, bitrate = %d\n", pIc->bitrate);
       } else if (pIc->rcMode == SAMPLE_RC_VBR) {
         if (pIc->maxbitrate <= 0) {
           SAMPLE_PRT("VBR must be not less than 0");
           return -1;
         }
-        CVI_VENC_CFG("RC_VBR, maxbitrate = %d\n", pIc->maxbitrate);
       }
 
       pIc->firstFrmstartQp =
           (pIc->firstFrmstartQp < 0 || pIc->firstFrmstartQp > 51) ? 63 : pIc->firstFrmstartQp;
-      CVI_VENC_CFG("firstFrmstartQp = %d\n", pIc->firstFrmstartQp);
 
       pIc->maxIqp = (pIc->maxIqp >= 0) ? pIc->maxIqp : DEF_264_MAXIQP;
       pIc->minIqp = (pIc->minIqp >= 0) ? pIc->minIqp : DEF_264_MINIQP;
       pIc->maxQp = (pIc->maxQp >= 0) ? pIc->maxQp : DEF_264_MAXQP;
       pIc->minQp = (pIc->minQp >= 0) ? pIc->minQp : DEF_264_MINQP;
-      CVI_VENC_CFG("maxQp = %d, minQp = %d, maxIqp = %d, minIqp = %d\n", pIc->maxQp, pIc->minQp,
-                   pIc->maxIqp, pIc->minIqp);
 
       if (pIc->statTime == 0) {
         pIc->statTime = DEF_STAT_TIME;
       }
-      CVI_VENC_CFG("statTime = %d\n", pIc->statTime);
     } else if (pIc->rcMode == SAMPLE_RC_FIXQP) {
       if (pIc->firstFrmstartQp != -1) {
-        CVI_VENC_WARN("firstFrmstartQp is invalid in FixQP mode\n");
         pIc->firstFrmstartQp = -1;
       }
 
       pIc->bitrate = 0;
-      CVI_VENC_CFG("RC_FIXQP, iqp = %d, pqp = %d\n", pIc->iqp, pIc->pqp);
     } else {
       SAMPLE_PRT("codec = %s, rcMode = %d, not supported RC mode\n", pIc->codec, pIc->rcMode);
       return -1;
@@ -570,7 +564,7 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
   }
-#if defined(CV181X) || defined(CV180X)
+#if defined(CV181X) || defined(CV180X) || defined(ATHENA2)
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
 #else
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);

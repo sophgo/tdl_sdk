@@ -13,13 +13,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <fstream>
+#include <iostream>
 #include <opencv2/opencv.hpp>
-
-#include "core/cvi_tdl_types_mem_internal.h"
-
 #include <sstream>
 #include <string>
-#ifdef CV181X
+#include "core/cvi_tdl_types_mem_internal.h"
+#if defined(CV181X) || defined(ATHENA2)
 #include <cvi_ive.h>
 #else
 #include "ive/ive.h"
@@ -399,20 +398,10 @@ int main(int argc, char *argv[]) {
     }
 
     // printf("to release frame\n");
-
+  inf_error:
     CVI_TDL_ReleaseImage(&fdFrame);
     CVI_TDL_Free(&stObjMeta);
     CVI_TDL_Free(&stTrackerMeta);
-
-#ifndef CV181X
-    // CVI_TDL_ReleaseImage(&fdFrame);
-#endif
-
-  inf_error:
-    CVI_TDL_ReleaseImage(&fdFrame);
-    // get_frame_failed:
-    // CVI_TDL_Free(&stObjMeta);
-    // CVI_TDL_Free(&stTrackerMeta);
   }
 
   int prediction = fall == true ? 1 : 0;

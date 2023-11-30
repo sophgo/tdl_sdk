@@ -17,8 +17,6 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_comm.h"
-#include "cvi_sys.h"
-#include "cviruntime.h"
 #include "misc.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_utils.hpp"
@@ -142,7 +140,9 @@ int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].mean[2] = static_cast<float>(MEAN_B);
   (*data)[0].use_quantize_scale = true;
   (*data)[0].rescale_type = RESCALE_RB;
+#ifndef ATHENA2
   (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
+#endif
   return CVI_TDL_SUCCESS;
 }
 

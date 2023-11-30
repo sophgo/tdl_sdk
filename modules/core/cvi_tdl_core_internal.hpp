@@ -1,19 +1,21 @@
 #pragma once
 #include <unordered_map>
 #include <vector>
+#ifdef ATHENA2
+#include "core/core_a2.hpp"
+#else
 #include "core/core.hpp"
+#endif
 #include "core/cvi_tdl_core.h"
 #include "core/vpss_engine.hpp"
 
 #include "deepsort/cvi_deepsort.hpp"
 #include "ive/ive.hpp"
 #include "motion_detection/md.hpp"
-#ifndef SIMPLY_MODEL
 #ifndef CV180X
 #include "fall_detection/fall_det_monitor.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "tamper_detection/tamper_detection.hpp"
-#endif
 #endif
 typedef struct {
   cvitdl::Core *instance = nullptr;
@@ -36,13 +38,11 @@ typedef struct {
   uint32_t vpss_timeout_value = 100;  // default value.
   ive::IVE *ive_handle = NULL;
   MotionDetection *md_model = nullptr;
-#ifndef SIMPLY_MODEL
   DeepSORT *ds_tracker = nullptr;
 #ifndef CV180X
   TamperDetectorMD *td_model = nullptr;
   FallMD *fall_model = nullptr;
   FallDetMonitor *fall_monitor_model = nullptr;
-#endif
 #endif
   bool use_gdc_wrap = false;
 } cvitdl_context_t;

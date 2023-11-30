@@ -22,15 +22,9 @@ if [[ "$SIMPLY_MODEL" == "1" ]]; then
 fi
 
 REPO_USER=""
-echo "envis:${LOCAL_USER}"
-if [[ "$LOCAL_USER" != "" ]]; then
-  tmp="@"
-  REPO_USER="${LOCAL_USER}${tmp}"
-else
-  CURRENT_USER="$(git config user.name)"
-  if [[ "${CURRENT_USER}" != "sw_jenkins" ]]; then
-    REPO_USER="$(git config user.name)@"
-  fi
+CURRENT_USER="$(git config user.name)"
+if [[ "${CURRENT_USER}" != "sw_jenkins" ]]; then
+REPO_USER="$(git config user.name)@"
 fi
 echo "repo user : $REPO_USER"
 
@@ -84,24 +78,22 @@ else
     exit 1
 fi
 
-
 if [[ "$CHIP_ARCH" == "CV183X" ]]; then
+    # 3X use tpu opencv
     SHRINK_OPENCV_SIZE=OFF
     USE_TPU_IVE=ON
 elif [[ "$CHIP_ARCH" == "CV182X" ]]; then
     SHRINK_OPENCV_SIZE=ON
-    OPENCV_INSTALL_PATH=""
     USE_TPU_IVE=ON
 elif [[ "$CHIP_ARCH" == "CV181X" ]]; then
-    CHIP_ARCH="CV181X"
     USE_TPU_IVE=OFF
-    IVE_SDK_INSTALL_PATH=""
     SHRINK_OPENCV_SIZE=ON
 elif [[ "$CHIP_ARCH" == "CV180X" ]]; then
-    CHIP_ARCH="CV180X"
     SHRINK_OPENCV_SIZE=ON
-    OPENCV_INSTALL_PATH=""
     USE_TPU_IVE=ON
+elif [[ "$CHIP_ARCH" == "ATHENA2" ]]; then
+    SHRINK_OPENCV_SIZE=OFF
+    USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
     exit 1
@@ -114,6 +106,7 @@ $CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DENABLE_CVI_TDL_CV_UTILS=ON \
                                         -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                         -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
+                                        -DSYSTEM_OUT_DIR=$SYSTEM_OUT_DIR \
                                         -DTPU_IVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
                                         -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
                                         -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
@@ -132,57 +125,43 @@ ninja -j8 || exit 1
 ninja install || exit 1
 popd
 
-if [[ "$ENV_SIMPLY_MODEL" != "ON" && -z "$ENV_SIMPLY_MODEL" ]]; then
 echo "trying to build sample in released folder."
-for v in $CVI_TARGET_PACKAGES_LIBDIR; do
-    if [[ "$v" == *"cvitracer"* ]]; then
-        CVI_TRACER_LIB_PATH=${v:2:$((${#v}-2))}
-        searchstring="cvitracer"
-        rest=${CVI_TRACER_LIB_PATH#*$searchstring}
-        index=$((${#CVI_TRACER_LIB_PATH} - ${#rest} - ${#searchstring}))
-        CVI_TRACER_ROOT_PATH=${CVI_TRACER_LIB_PATH:0:$index}cvitracer
-        break
-    fi
-done
-
 if [[ "$CHIP_ARCH" != "CV180X" ]]; then
-
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl
-  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE="$USE_TPU_IVE" SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR CHIP=$CHIP_ARCH -j10 || exit 1
   make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl_app
-  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
   make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_md
-  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
   make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_preprocess
-  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
   make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_draw_rect
-  make MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" CVI_TRACER_PATH="$CVI_TRACER_ROOT_PATH" USE_TPU_IVE=$USE_TPU_IVE CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" W_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
   make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
-fi
 fi
 
 rm -rf ${AI_SDK_INSTALL_PATH}/sample/tmp_install

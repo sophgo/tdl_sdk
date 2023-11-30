@@ -110,7 +110,6 @@ else()
       $<TARGET_OBJECTS:draw_rect>
       $<TARGET_OBJECTS:tracker>
       $<TARGET_OBJECTS:area_detect>
-      $<TARGET_OBJECTS:feature_matching>
       $<TARGET_OBJECTS:face_angle>
       $<TARGET_OBJECTS:ivewrapper>
       $<TARGET_OBJECTS:motion_detection>
@@ -122,6 +121,10 @@ else()
       $<TARGET_OBJECTS:simcc>
       $<TARGET_OBJECTS:hrnet>
       $<TARGET_OBJECTS:image_classification>)
+
+    if(NOT ${CVI_PLATFORM} STREQUAL "ATHENA2")
+    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:feature_matching>)
+    endif()
 
     if ("${ENABLE_CVI_TDL_CV_UTILS}" STREQUAL "ON")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:utils-cv>)

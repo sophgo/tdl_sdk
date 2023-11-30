@@ -1,10 +1,14 @@
 #pragma once
 
+#ifndef ATHENA2
 #include <cviruntime.h>
+#endif
 #include "cvi_comm.h"
 
 namespace cvitdl {
-inline const char *get_tpu_error_msg(CVI_RC code) {
+
+#ifndef ATHENA2
+inline const char *get_tpu_error_msg(int code) {
   switch (code) {
     case CVI_RC_AGAIN:
       return "TPU not ready yet.";
@@ -28,8 +32,9 @@ inline const char *get_tpu_error_msg(CVI_RC code) {
       return "Unknown error.";
   };
 }
+#endif
 
-inline const char *get_vpss_error_msg(CVI_RC code) {
+inline const char *get_vpss_error_msg(int code) {
   switch (code) {
     case CVI_ERR_VPSS_NULL_PTR:
       return "VPSS null pointer.";

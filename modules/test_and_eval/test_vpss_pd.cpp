@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <opencv2/opencv.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core.hpp"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
@@ -22,7 +22,7 @@ cvtdl_vpssconfig_t vpssConfig;
 int dump_frame_result(const std::string &filepath, VIDEO_FRAME_INFO_S *frame) {
   FILE *fp = fopen(filepath.c_str(), "wb");
   if (fp == nullptr) {
-    LOGE("failed to open: %s.\n", filepath.c_str());
+    printf("failed to open: %s.\n", filepath.c_str());
     return CVI_FAILURE;
   }
 

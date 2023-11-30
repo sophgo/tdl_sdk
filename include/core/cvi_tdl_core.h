@@ -9,9 +9,6 @@
 #include "core/face/cvtdl_face_helper.h"
 #include "core/face/cvtdl_face_types.h"
 #include "core/object/cvtdl_object_types.h"
-
-#include <cvi_comm_vb.h>
-#include <cvi_sys.h>
 #include "cvi_comm.h"
 
 /** @def CVI_TDL_Free

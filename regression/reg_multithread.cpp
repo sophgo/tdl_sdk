@@ -7,9 +7,6 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"
 #include "cvi_tdl_media.h"
-#ifndef CV181X
-#include "cvi_tracer.h"
-#endif
 static bool stopped = false;
 
 static void SampleHandleSig(CVI_S32 signo) {
@@ -43,7 +40,9 @@ int main(int argc, char *argv[]) {
   const CVI_S32 vpssgrp_height = 2160;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 8, 608, 608,
                          PIXEL_FORMAT_RGB_888_PLANAR, 10);
+#ifndef ATHENA2
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
+#endif
   std::string arg_val = argv[3];
   uint32_t total_lanes = std::stoi(arg_val);
   if (!(total_lanes >= 1 && total_lanes < 10)) {
@@ -101,17 +100,13 @@ int main(int argc, char *argv[]) {
         }
         continue;
       }
-      CVI_SYS_TraceBegin("Lane");
       cvtdl_face_t face;
       memset(&face, 0, sizeof(cvtdl_face_t));
-      CVI_SYS_TraceBegin("Retina face");
       CVI_TDL_RetinaFace(tdl_handle, &frame, &face);
-      CVI_SYS_TraceEnd();
       printf("Face found %x.\n", face.size);
       CVI_TDL_Free(&face);
       CVI_VPSS_ReleaseChnFrame(0, 0, &frame);
       CVI_VPSS_ReleaseChnFrame(0, 0, &frFrame);
-      CVI_SYS_TraceEnd();
     }
   }
 
@@ -147,7 +142,6 @@ void timer() {
 void SWBinding(std::vector<vpssPair> vpss_vec, cvtdl_vpssconfig_t *vpssConfig) {
   while (!stopped) {
     for (uint32_t i = 0; i < vpss_vec.size(); i++) {
-      CVI_SYS_TraceBegin("Send frame");
       VIDEO_FRAME_INFO_S *fdFrame = &vpss_vec[i].frame;
       VPSS_GRP_ATTR_S vpss_grp_attr;
       VPSS_CHN_ATTR_S vpss_chn_attr;
@@ -162,7 +156,6 @@ void SWBinding(std::vector<vpssPair> vpss_vec, cvtdl_vpssconfig_t *vpssConfig) {
       CVI_VPSS_SetChnAttr(vpss_vec[i].groupId, 1, &vpss_chn_attr);
       CVI_VPSS_SetChnScaleCoefLevel(vpss_vec[i].groupId, 0, vpssConfig->chn_coeff);
       CVI_VPSS_SendFrame(vpss_vec[i].groupId, &vpss_vec[i].frame, -1);
-      CVI_SYS_TraceEnd();
     }
     std::unique_lock<std::mutex> lk(cv_m);
     cv.wait(lk, [] { return i == 1; });

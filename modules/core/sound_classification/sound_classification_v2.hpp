@@ -1,6 +1,10 @@
 #ifndef FILE_SOUND_CLASSIFICATION_V2_HPP
 #define FILE_SOUND_CLASSIFICATION_V2_HPP
+#ifdef ATHENA2
+#include "core_a2.hpp"
+#else
 #include "core.hpp"
+#endif
 #include "melspec.hpp"
 #define SCALE_FACTOR_FOR_INT16 32768.0
 

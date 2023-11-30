@@ -69,6 +69,28 @@ set(REG_INCLUDES
     ${CVI_RTSP_INCLUDE}
 )
 
+if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+set(SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
+    ${CVI_RTSP_LIBPATH})
+else()
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
@@ -85,8 +107,23 @@ set(SAMPLE_LIBS
     ${CVI_RTSP_LIBPATH}
 )
 
+
+if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X")
+  set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+endif()
+
+if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
+set(SAMPLE_LIBS ${SAMPLE_LIBS}
+    ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
+)
+else()
+set(SAMPLE_LIBS ${SAMPLE_LIBS}
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
+)
+endif()
+endif()
+
 set(UnitTests
-  reg_daily_feature_matching.cpp
   reg_daily_fq.cpp
   reg_daily_mobiledet.cpp
   reg_daily_md.cpp
@@ -115,6 +152,10 @@ set(UnitTests
   reg_daily_face_cap.cpp
 )
 
+if(NOT ${CVI_PLATFORM} STREQUAL "ATHENA2")
+  set(UnitTests ${UnitTests} reg_daily_feature_matching.cpp)
+endif()
+
 if (NOT "${CVI_PLATFORM}" STREQUAL "CV181X")
   list(APPEND UnitTests
     reg_daily_td.cpp
@@ -128,25 +169,13 @@ set(UnitTest_SRCS
   ${UnitTests}
 )
 
-if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X")
-  set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
-endif()
-
-if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
-set(SAMPLE_LIBS ${SAMPLE_LIBS}
-    ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
-)
-else()
-set(SAMPLE_LIBS ${SAMPLE_LIBS}
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
-)
-endif()
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../modules/log
 )
 
+if(NOT ${CVI_PLATFORM} STREQUAL "ATHENA2")
 buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
+endif()
 buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_face_quality INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_lfw INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
@@ -166,13 +195,13 @@ buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_ev
 buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-
 buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_evaluation cvi_tdl_app gtest_main ${SAMPLE_LIBS})
 buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-
 buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
 buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
+
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_evaluation cvi_tdl_app gtest_main ${SAMPLE_LIBS})
+
 
 if ("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")

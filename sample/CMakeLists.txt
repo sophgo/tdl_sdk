@@ -80,6 +80,28 @@ set(SAMPLE_INC ${SAMPLE_INC}
 )
 endif()
 
+if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+set(SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
+    ${CVI_RTSP_LIBPATH})
+else()
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
@@ -96,15 +118,6 @@ set(SAMPLE_LIBS
     ${CVI_RTSP_LIBPATH}
 )
 
-set(AUDIO_SAMPLE_LIBS
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcli.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so)
-
 if("${CVI_PLATFORM}" STREQUAL "CV181X"  OR "${CVI_PLATFORM}" STREQUAL "CV180X")
 set(SAMPLE_LIBS ${SAMPLE_LIBS}
     ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
@@ -118,6 +131,16 @@ endif()
 if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
+endif()
+
+set(AUDIO_SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcli.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so)
 
 if((DEFINED BUILD_WEB_VIEW) AND ("${CVI_PLATFORM}" STREQUAL "CV182X"))
   set(SAMPLE_LIBS_WEB ${SAMPLE_LIBS}
@@ -148,24 +171,20 @@ if(DEFINED NO_OPENCV)
   buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
   buildninstall(NAME sample_vi_intrusion_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
   buildninstall(NAME sample_vi_md INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
-  #buildninstall(NAME sample_read_fd INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS})
   buildninstall(NAME sample_aud_cls_read INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_aud_cry INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_read_ped_track INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
   buildninstall(NAME sample_read_fdfr INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
   buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
 else()
-  if(DEFINED SIMPLY_MODEL)
-  buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
-  else()
   buildninstallcpp(NAME sample_read_od INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
+  buildninstallcpp(NAME sample_aud_order INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
   buildninstall(NAME sample_baby_aud_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_aud_esc INC ${SAMPLE_INC} SRCS sample_utils.c DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_aud_soundcmd INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_aud_cls_read INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_aud_cry INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstallcpp(NAME sample_aud_order INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
   buildninstall(NAME sample_hand_detect INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
   buildninstall(NAME sample_hand_keypoint INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
@@ -187,12 +206,10 @@ else()
   buildninstall(NAME sample_stream_face_recognition INC ${SAMPLE_INC} SRCS vi_vo_utils.c DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_consumer_counting INC ${SAMPLE_INC} SRCS vi_vo_utils.c DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_personvehicle_cross INC ${SAMPLE_INC} SRCS vi_vo_utils.c DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
-
   buildninstall(NAME sample_stream_hardhat INC ${SAMPLE_INC} SRCS vi_vo_utils.c DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
   buildninstall(NAME sample_meeting INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl ${SAMPLE_LIBS} )
   buildninstall(NAME sample_vi_face_recog INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl cvi_tdl_app ${SAMPLE_LIBS})
   buildninstall(NAME sample_cap_face INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
-  endif()
 endif()
 buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
 

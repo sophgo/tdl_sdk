@@ -71,8 +71,10 @@ CVI_S32 SAMPLE_TDL_Init_WM_NO_RTSP(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
   printf("Initialize VPSS\n");
   memcpy(&pstMWContext->stVPSSPoolConfig, &pstMWConfig->stVPSSPoolConfig,
          sizeof(SAMPLE_TDL_VPSS_POOL_CONFIG_S));
+#ifndef ATHENA2
   VPSS_MODE_S stVPSSMode = pstMWConfig->stVPSSPoolConfig.stVpssMode;
   CVI_SYS_SetVPSSModeEx(&stVPSSMode);
+#endif
 
   for (uint32_t u32VpssGrpIndex = 0;
        u32VpssGrpIndex < pstMWConfig->stVPSSPoolConfig.u32VpssGrpCount; u32VpssGrpIndex++) {

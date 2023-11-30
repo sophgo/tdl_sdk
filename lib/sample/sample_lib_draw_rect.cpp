@@ -12,7 +12,6 @@
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_draw_rect.h"
-#include "cvi_tdl_media.h"
 
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;

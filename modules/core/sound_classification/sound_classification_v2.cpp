@@ -1,7 +1,7 @@
 #include "sound_classification_v2.hpp"
 #include <iostream>
+#include <numeric>
 #include "cvi_tdl_log.hpp"
-#include "cviruntime.h"
 using namespace melspec;
 using namespace cvitdl;
 using namespace std;

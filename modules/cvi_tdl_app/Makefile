@@ -20,6 +20,10 @@ $(error "Please set rtsp sdk root path to IVE_PATH)
 endif
 endif
 
+ifndef KERNEL_ROOT
+$(error "Please set path to kernrel_root)
+endif
+
 ifndef TPU_PATH
 $(error "Please set rtsp sdk root path to TPU_PATH)
 endif
@@ -86,21 +90,10 @@ IVE_SDK_INC_PATH = $(IVE_PATH)/include
 
 ifeq ($(CHIP), CV181X)
 CFLAGS += -DCV181X
-ifeq ($(SYSTEM_PROCESSOR), RISCV)
-CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
-else ifeq ($(SYSTEM_PROCESSOR), ARM)
-CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
-endif
 endif
 
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -fdiagnostics-color=always -s 
-
-
-ifeq ($(CHIP), CV180X)
-CV180X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
-CFLAGS += -I$(POBOS_INC_PATH)
-endif
-
+CFLAGS += -I$(KERNEL_ROOT)/include
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -O0
@@ -128,10 +121,6 @@ ifeq ($(USE_TPU_IVE), ON)
 CFLAGS += -I$(IVE_SDK_INC_PATH)
 endif
 
-ifeq ($(CHIP), CV181X)
-CFLAGS += -I$(CV181X_INC_PATH)
-endif
-
 CFLAGS += -Wl,-gc-sections
 
 ifneq (,$(findstring middleware/v2,$(MW_PATH)))
@@ -146,6 +135,8 @@ $(info Middleware include path: $(MW_INC_PATH))
 $(info Middleware library path: $(MW_LIB_PATH))
 $(info TDL SDK library path: $(TDLSDK_LIB_PATH))
 $(info TDL SDK include path: $(TDLSDK_INC_PATH))
+$(info Kernel library path: $(KERNEL_ROOT))
+
 $(info IVE library path: $(IVE_SDK_LIB_PATH))
 $(info IVE include path: $(IVE_SDK_INC_PATH))
 $(info TPU library path: $(TPU_LIB_PATH))

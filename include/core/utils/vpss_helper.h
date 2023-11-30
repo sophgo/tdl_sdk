@@ -1,7 +1,5 @@
 #pragma once
 #include <cvi_buffer.h>
-#include <cvi_comm_vb.h>
-#include <cvi_sys.h>
 #include <cvi_vb.h>
 #include <cvi_vpss.h>
 #include "cvi_comm.h"
@@ -149,7 +147,9 @@ VPSS_GRP_DEFAULT_HELPER2(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_
   pstVpssGrpAttr->enPixelFormat = enSrcFormat;
   pstVpssGrpAttr->u32MaxW = srcWidth;
   pstVpssGrpAttr->u32MaxH = srcHeight;
+#ifndef ATHENA2
   pstVpssGrpAttr->u8VpssDev = dev;
+#endif
 }
 
 /**
@@ -474,28 +474,6 @@ VPSS_INIT_HELPER2(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
   }
 
   return s32Ret;
-}
-
-/**
- * @brief A helper function to init vpss hardware with given image information. This function sets
- VPSS mode for you.
-
- * @param enSrcWidth Input image width.
- * @param enSrcHeight Intput image height.
- * @param enSrcFormat Input image format.
- * @param enDstWidth Output image width.
- * @param enDstHeight Output image height.
- * @param enDstFormat Output image format.
- * @param mode The mode of VPSS. Support single mode (1->4) and dual mode (1->3, 1->1)
- * @param keepAspectRatio Keep aspect ratio or not.
- */
-inline int __attribute__((always_inline))
-VPSS_INIT_HELPER(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
-                 PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
-                 PIXEL_FORMAT_E enDstFormat, VPSS_MODE_E mode, bool keepAspectRatio) {
-  CVI_SYS_SetVPSSMode(mode);
-  return VPSS_INIT_HELPER2(vpssGrpId, enSrcWidth, enSrcHeight, enSrcFormat, enDstWidth, enDstHeight,
-                           enDstFormat, 1, keepAspectRatio);
 }
 
 /**

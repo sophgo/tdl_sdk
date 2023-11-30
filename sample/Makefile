@@ -14,14 +14,12 @@ $(error "Please set ive sdk root path to IVE_PATH)
 endif
 endif
 
-ifndef TPU_PATH
-$(error "Please set tpu sdk root path to TPU_PATH)
+ifndef KERNEL_ROOT
+$(error "Please set path to kernrel_root)
 endif
 
-ifneq ($(CHIP), CV181X)
-ifndef CVI_TRACER_PATH
-$(error "Please set cvi_tracer sdk root path to CVI_TRACER_PATH)
-endif
+ifndef TPU_PATH
+$(error "Please set tpu sdk root path to TPU_PATH)
 endif
 endif
 
@@ -33,6 +31,8 @@ CROSS_COMPILE_64 ?= aarch64-linux-gnu-
 CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
 CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
+
+# link OpenCV shared object only if platform is cv183X series
 
 ifeq ($(SDK_VER), 32bit)
 ARCH=arm
@@ -57,6 +57,13 @@ CFLAGS += -march=rv64imafd
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif
+
+ifeq ($(DEBUG), 1)
+CFLAGS += -g -O0
+else
+CFLAGS += -O3 -DNDEBUG
+endif
+
 #####################################################
 # Gcc Compiler
 #####################################################
@@ -75,15 +82,23 @@ MW_INC_PATH = $(MW_PATH)/include
 MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
 MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1 -lcli
 
-ifeq ($(CHIP), CV182X)
-MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
+ifeq ($(CHIP), ATHENA2)
+MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
+MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
+else ifeq ($(CHIP), CV183X)
+MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu
+MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
+else ifeq ($(CHIP), CV182X)
+MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu -lisp_algo
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
 else ifeq ($(CHIP), CV181X)
-MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lisp_algo -lvenc -lvdec -lvenc -lae -laf -lawb -lsys -lsns_full -lini -lmisc
+MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu 
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
-else
-MW_LIBS = -lsample -lcvi_bin -lcvi_bin_isp -lvpu -lisp -lvenc -lvdec -lcvi_jpeg -lcvi_vcodec -lae -laf -lawb -lsys -lsns_full -lcvitracer -lini
-MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
+CFLAGS += -DCV181X
+else ifeq ($(CHIP), CV180X)
+MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu 
+MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
+CFLAGS += -DATHENA2
 endif
 
 #####################################################
@@ -101,15 +116,29 @@ SDK_APP_LIBS = -lcvi_tdl_app
 #####################################################
 # Opencv
 #####################################################
+ifeq ($(CHIP), ATHENA2)
+OPENCV_INC_PATH = $(TPU_PATH)/include
+OPENCV_LIB_PATH = $(TPU_PATH)/lib
+else
 OPENCV_INC_PATH = $(TPU_PATH)/opencv/include
 OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
+endif
 OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
+
+ifeq ($(CHIP), $(filter $(CHIP), CV183X ATHENA2))
+SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
+endif
 
 #####################################################
 # TPU
 #####################################################
+ifeq ($(CHIP), ATHENA2)
+TPU_LIB_PATH = ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/lib/
+TPU_LIBS = -lbmrt -lbmlib
+else
 TPU_LIB_PATH = $(TPU_PATH)/lib
-TPU_LIBS = -lcnpy -lcvikernel -lcvimath -lcviruntime -lz -lm
+TPU_LIBS = -lcnpy  -lcvikernel  -lcvimath  -lcviruntime  -lz -lm
+endif
 
 #####################################################
 # IVE SDK
@@ -151,52 +180,24 @@ EVA_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
 EVA_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include/cvi_tdl_evaluation
 EVA_LIBS = -lcvi_tdl_evaluation
 
-#####################################################
-# CVI Tracer
-#####################################################
-CVI_TRACER_LIB_PATH = $(CVI_TRACER_PATH)/$(ARCH)/lib/3rd
-CVI_TRACER_INC_PATH = $(CVI_TRACER_PATH)/include
-
-# OpenCV
-# link OpenCV shared object only if platform is cv183X series
-ifeq ($(CHIP), $(filter $(CHIP), cv1832 cv1835 cv1838 cv9520 CV183X))
-SAMPLE_LIBS_OPENCV += -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
-endif
-
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s
 
-ifeq ($(DEBUG), 1)
-CFLAGS += -g -O0
-else
-CFLAGS += -O3 -DNDEBUG
-endif
-
-ifeq ($(CHIP), CV181X)
-CFLAGS += -DCV181X
-ifeq ($(SYSTEM_PROCESSOR), RISCV)
-CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
-else ifeq ($(SYSTEM_PROCESSOR), ARM)
-CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
-endif
-endif
+AISDK_BASIC_LIBS = -lcviai
+AISDK_APP_LIBS = -lcviai_app
 
 SRCS := $(wildcard $(PWD)/*.c)
 CPPS := $(wildcard $(PWD)/*.cpp)
 OBJS := $(SRCS:%.c=%.o) $(CPPS:%.cpp=%.o)
 
-SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -L$(TPU_LIB_PATH) $(TPU_LIBS) -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -lpthread
-
-ifneq ($(CHIP), CV181X)
-SAMPLE_LIBS += -L$(CVI_TRACER_LIB_PATH)
-CFLAGS += -I$(CVI_TRACER_INC_PATH)
-else
-CFLAGS += -I$(CV181X_INC_PATH)
-endif
+SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
+			  -L$(TPU_LIB_PATH) $(TPU_LIBS) \
+			  -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) \
+			  -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -lpthread
 
 SAMPLE_LIBS += $(SAMPLE_LIBS_OPENCV)
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
 SAMPLE_READ_LIBS = $(SAMPLE_LIBS) -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
-SAMPLE_APP_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS) -L$(SDK_LIB_PATH) $(SDK_APP_LIBS)
+SAMPLE_APP_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS) $(SDK_APP_LIBS)
 
 CFLAGS += -I$(SDK_INC_PATH) \
           -I$(SDK_TDL_INC_PATH) \
@@ -209,8 +210,9 @@ CFLAGS += -I$(SDK_INC_PATH) \
           -I$(IVE_SDK_INC_PATH) \
           -I$(OPENCV_INC_PATH) \
           -I$(STB_INC_PATH) \
-          -I$(EVA_INC_PATH)
-
+          -I$(EVA_INC_PATH) \
+		  -I$(KERNEL_ROOT)/include \
+		  -I$(AISDK_ROOT_PATH)/include/stb
 
 ifneq (,$(findstring middleware/v2,$(MW_PATH)))
     CFLAGS += -D_MIDDLEWARE_V2_

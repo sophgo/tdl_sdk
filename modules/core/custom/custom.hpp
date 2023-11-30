@@ -1,5 +1,10 @@
 #pragma once
+
+#ifdef ATHENA2
+#include "core_a2.hpp"
+#else
 #include "core.hpp"
+#endif
 #include "core/cvi_tdl_custom.h"
 
 namespace cvitdl {

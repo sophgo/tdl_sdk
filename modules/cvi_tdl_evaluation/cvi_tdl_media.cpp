@@ -114,37 +114,6 @@ inline void BufferC12C1Copy(const uint8_t *buffer, uint32_t width, uint32_t heig
   }
 }
 
-CVI_S32 CVI_TDL_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height,
-                               uint32_t stride, const PIXEL_FORMAT_E inFormat, VB_BLK *blk,
-                               VIDEO_FRAME_INFO_S *frame, const PIXEL_FORMAT_E outFormat) {
-  if (CREATE_VBFRAME_HELPER(blk, frame, width, height, outFormat) != CVI_SUCCESS) {
-    LOGE("Create VBFrame failed.\n");
-    return CVI_TDL_FAILURE;
-  }
-
-  int ret = CVI_TDL_SUCCESS;
-  if ((inFormat == PIXEL_FORMAT_RGB_888 && outFormat == PIXEL_FORMAT_BGR_888) ||
-      (inFormat == PIXEL_FORMAT_BGR_888 && outFormat == PIXEL_FORMAT_RGB_888)) {
-    BufferRGBPackedCopy(buffer, width, height, stride, frame, true);
-  } else if ((inFormat == PIXEL_FORMAT_RGB_888 && outFormat == PIXEL_FORMAT_RGB_888) ||
-             (inFormat == PIXEL_FORMAT_BGR_888 && outFormat == PIXEL_FORMAT_BGR_888)) {
-    BufferRGBPackedCopy(buffer, width, height, stride, frame, false);
-  } else if (inFormat == PIXEL_FORMAT_BGR_888 && outFormat == PIXEL_FORMAT_RGB_888_PLANAR) {
-    BufferRGBPacked2PlanarCopy(buffer, width, height, stride, frame, true);
-  } else if (inFormat == PIXEL_FORMAT_RGB_888 && outFormat == PIXEL_FORMAT_RGB_888_PLANAR) {
-    BufferRGBPacked2PlanarCopy(buffer, width, height, stride, frame, false);
-  } else if (inFormat == PIXEL_FORMAT_BF16_C1 && outFormat == PIXEL_FORMAT_BF16_C1) {
-    BufferC12C1Copy<uint16_t>(buffer, width, height, stride, frame);
-  } else if (inFormat == PIXEL_FORMAT_FP32_C1 && outFormat == PIXEL_FORMAT_FP32_C1) {
-    BufferC12C1Copy<float>(buffer, width, height, stride, frame);
-  } else {
-    LOGE("Unsupported convert format: %u -> %u.\n", inFormat, outFormat);
-    ret = CVI_TDL_FAILURE;
-  }
-  CACHED_VBFRAME_FLUSH_UNMAP(frame);
-  return ret;
-}
-
 CVI_S32 CVI_TDL_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format) {
   int ret = CVI_TDL_SUCCESS;
   try {

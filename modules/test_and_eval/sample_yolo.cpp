@@ -10,12 +10,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
-//#include "core.hpp"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-//#include "sys_utils.hpp"
 
 int main(int argc, char* argv[]) {
   int vpssgrp_width = 1920;

@@ -7,7 +7,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef ATHENA2
 #include <cvimath/cvimath.h>
+#endif
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"

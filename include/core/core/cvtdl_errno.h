@@ -22,7 +22,7 @@ typedef enum _MODULE_ID {
   CVI_TDL_MODULE_ID_CORE       = 1,
   CVI_TDL_MODULE_ID_SERVICE    = 2,
   CVI_TDL_MODULE_ID_EVALUATION = 3,
-} MODULE_ID;
+} CVI_MODULE_ID;
 
 typedef enum _CVI_TDL_FUNC_ID {
   CVI_TDL_FUNC_ID_CORE                       = 1,

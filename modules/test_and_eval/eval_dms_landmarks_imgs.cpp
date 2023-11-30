@@ -26,7 +26,6 @@ CVI_S32 get_facelandmarker(std::string img_path, cvitdl_handle_t tdl_handle,
   if (ret != CVI_SUCCESS) {
     std::cout << "Convert out video frame failed with :" << ret << ".file:" << img_path
               << std::endl;
-    // continue;
     return ret;
   }
 

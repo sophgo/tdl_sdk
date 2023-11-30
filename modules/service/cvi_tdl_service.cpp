@@ -1,6 +1,9 @@
 #include "service/cvi_tdl_service.h"
 
+#ifndef ATHENA2
 #include <cvimath/cvimath.h>
+#include "feature_matching/feature_matching.hpp"
+#endif
 #include "area_detect/intrusion_detect.hpp"
 #include "cvi_tdl_core_internal.hpp"
 #include "digital_tracking/digital_tracking.hpp"
@@ -8,11 +11,12 @@
 #ifndef NO_OPENCV
 #include "face_angle/face_angle.hpp"
 #endif
-#include "feature_matching/feature_matching.hpp"
 
 typedef struct {
   cvitdl_handle_t tdl_handle = NULL;
+#ifndef ATHENA2
   cvitdl::service::FeatureMatching *m_fm = nullptr;
+#endif
   cvitdl::service::DigitalTracking *m_dt = nullptr;
   cvitdl::service::IntrusionDetect *m_intrusion_det = nullptr;
 } cvitdl_service_context_t;
@@ -30,7 +34,9 @@ CVI_S32 CVI_TDL_Service_CreateHandle(cvitdl_service_handle_t *handle, cvitdl_han
 
 CVI_S32 CVI_TDL_Service_DestroyHandle(cvitdl_service_handle_t handle) {
   cvitdl_service_context_t *ctx = static_cast<cvitdl_service_context_t *>(handle);
+#ifndef ATHENA2
   delete ctx->m_fm;
+#endif
   delete ctx->m_dt;
   delete ctx;
   return CVI_TDL_SUCCESS;
@@ -39,6 +45,9 @@ CVI_S32 CVI_TDL_Service_DestroyHandle(cvitdl_service_handle_t handle) {
 CVI_S32 CVI_TDL_Service_RegisterFeatureArray(cvitdl_service_handle_t handle,
                                              const cvtdl_service_feature_array_t featureArray,
                                              const cvtdl_service_feature_matching_e method) {
+#ifdef ATHENA2
+  return CVI_TDL_SUCCESS;
+#else
   cvitdl_service_context_t *ctx = static_cast<cvitdl_service_context_t *>(handle);
   int ret = CVI_TDL_SUCCESS;
   if (ctx->m_fm == nullptr) {
@@ -51,6 +60,7 @@ CVI_S32 CVI_TDL_Service_RegisterFeatureArray(cvitdl_service_handle_t handle,
     }
   }
   return ctx->m_fm->registerData(featureArray, method);
+#endif
 }
 
 CVI_S32 CVI_TDL_Service_CalculateSimilarity(cvitdl_service_handle_t handle,
@@ -86,6 +96,9 @@ CVI_S32 CVI_TDL_Service_FaceInfoMatching(cvitdl_service_handle_t handle,
                                          const cvtdl_face_info_t *face_info, const uint32_t topk,
                                          float threshold, uint32_t *indices, float *sims,
                                          uint32_t *size) {
+#ifdef ATHENA2
+  return CVI_TDL_SUCCESS;
+#else
   cvitdl_service_context_t *ctx = static_cast<cvitdl_service_context_t *>(handle);
   if (ctx->m_fm == nullptr) {
     LOGE(
@@ -95,12 +108,16 @@ CVI_S32 CVI_TDL_Service_FaceInfoMatching(cvitdl_service_handle_t handle,
   }
   return ctx->m_fm->run((uint8_t *)face_info->feature.ptr, face_info->feature.type, topk, indices,
                         sims, size, threshold);
+#endif
 }
 
 CVI_S32 CVI_TDL_Service_ObjectInfoMatching(cvitdl_service_handle_t handle,
                                            const cvtdl_object_info_t *object_info,
                                            const uint32_t topk, float threshold, uint32_t *indices,
                                            float *sims, uint32_t *size) {
+#ifdef ATHENA2
+  return CVI_TDL_SUCCESS;
+#else
   cvitdl_service_context_t *ctx = static_cast<cvitdl_service_context_t *>(handle);
   if (ctx->m_fm == nullptr) {
     LOGE(
@@ -110,11 +127,15 @@ CVI_S32 CVI_TDL_Service_ObjectInfoMatching(cvitdl_service_handle_t handle,
   }
   return ctx->m_fm->run((uint8_t *)object_info->feature.ptr, object_info->feature.type, topk,
                         indices, sims, size, threshold);
+#endif
 }
 
 CVI_S32 CVI_TDL_Service_RawMatching(cvitdl_service_handle_t handle, const void *feature,
                                     const feature_type_e type, const uint32_t topk, float threshold,
                                     uint32_t *indices, float *scores, uint32_t *size) {
+#ifdef ATHENA2
+  return CVI_TDL_SUCCESS;
+#else
   cvitdl_service_context_t *ctx = static_cast<cvitdl_service_context_t *>(handle);
   if (ctx->m_fm == nullptr) {
     LOGE(
@@ -123,6 +144,7 @@ CVI_S32 CVI_TDL_Service_RawMatching(cvitdl_service_handle_t handle, const void *
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
   return ctx->m_fm->run(feature, type, topk, indices, scores, size, threshold);
+#endif
 }
 
 CVI_S32 CVI_TDL_Service_FaceDigitalZoom(cvitdl_service_handle_t handle,

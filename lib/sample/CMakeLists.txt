@@ -2,15 +2,6 @@
 
 project(sample)
 
-# include_directories(
-                    # ${MIDDLEWARE_INCLUDES}
-                    # ${CMAKE_CURRENT_SOURCE_DIR}
-                    # ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-                    # ${CMAKE_CURRENT_SOURCE_DIR}/../../include/core/utils
-                    # ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/core
-                    # )
-
-
 function(buildninstallcpp)
   # From https://stackoverflow.com/questions/23327687/how-to-write-a-cmake-function-with-more-than-one-parameter-groups
   cmake_parse_arguments(
@@ -49,6 +40,27 @@ set(SAMPLE_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/../cvi_draw_rect
 )
 
+if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+set(SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+else()
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
@@ -62,11 +74,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MLIR_SDK_ROOT}/lib/libz.so
-)
-set(OPENCV_LIB
-    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_core.so
-    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgproc.so
-    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgcodecs.so
 )
 
 if("${CVI_PLATFORM}" STREQUAL "CV181X"  OR "${CVI_PLATFORM}" STREQUAL "CV180X")
@@ -83,9 +90,18 @@ endif()
 if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
   set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
+endif()
 
-if(NOT "${CVI_PLATFORM}" STREQUAL "CV180X")
+set(OPENCV_LIB
+    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_core.so
+    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgproc.so
+    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgcodecs.so
+)
+
+if(NOT ${CVI_PLATFORM} STREQUAL "ATHENA2")
+if(NOT ${CVI_PLATFORM} STREQUAL "CV180X")
 buildninstallcpp(NAME sample_lib_draw_rect INC ${SAMPLE_INC} DEPS cvi_draw_rect  ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS} ${OPENCV_LIB})
+endif()
 endif()
 buildninstallcpp(NAME sample_lib_cvimd INC  ${SAMPLE_INC} DEPS cvi_md ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
 buildninstallcpp(NAME sample_lib_preprocess INC ${SAMPLE_INC} DEPS cvi_preprocess ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})

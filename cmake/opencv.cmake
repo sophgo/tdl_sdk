@@ -35,10 +35,12 @@ if (SHRINK_OPENCV_SIZE)
   if ("${CVI_SYSTEM_PROCESSOR}" STREQUAL "RISCV")
     set(OPENCV_LIBS_MIN ${OPENCV_ROOT}/lib/libopencv_core.a)
     set(OPENCV_LIBS_IMGPROC ${OPENCV_ROOT}/lib/libopencv_imgproc.a)
-    set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_core.so ${OPENCV_ROOT}/lib/libopencv_imgproc.so ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
+    set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_core.so
+                            ${OPENCV_ROOT}/lib/libopencv_imgproc.so
+                            ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
   else()
     set(OPENCV_LIBS_MIN ${OPENCV_ROOT}/lib/libopencv_core.a
-                      ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a)
+                        ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a)
     set(OPENCV_LIBS_IMGPROC ${OPENCV_ROOT}/lib/libopencv_imgproc.a)
     set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
   endif()

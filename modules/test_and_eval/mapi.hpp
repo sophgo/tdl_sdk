@@ -360,7 +360,9 @@ static CVI_S32 set_vpss_config(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *stVpssGrpAttr,
   } else {
     return -1;
   }
+#ifndef ATHENA2
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
+#endif
 
   /*start vpss*/
   s32Ret = vproc_init(VpssGrp, abChnEnable, stVpssGrpAttr, astVpssChnAttr);
@@ -381,8 +383,10 @@ int init_vpss(int in_width, int in_height, PreprocessArg *arg) {
   stVpssGrpAttr.enPixelFormat = PIXEL_FORMAT_BGR_888;
   stVpssGrpAttr.u32MaxW = vpssgrp_width;
   stVpssGrpAttr.u32MaxH = vpssgrp_height;
+#ifndef ATHENA2
   // only for test here. u8VpssDev should be decided by VPSS_MODE and usage.
   stVpssGrpAttr.u8VpssDev = 0;
+#endif
   s32Ret = set_vpss_config(0, &stVpssGrpAttr, arg);
   if (s32Ret != CVI_SUCCESS) {
     printf("CVI_Init_Video_Process Grp0 failed with %d\n", s32Ret);

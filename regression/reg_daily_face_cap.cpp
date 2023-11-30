@@ -10,7 +10,7 @@
 #include "json.hpp"
 #include "raii.hpp"
 #include "regression_utils.hpp"
-#ifdef CV181X
+#if defined(CV181X) || defined(ATHENA2)
 #include <cvi_ive.h>
 #else
 #include "ive/ive.h"

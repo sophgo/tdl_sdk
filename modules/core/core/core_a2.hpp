@@ -4,23 +4,26 @@
 #include "core/core/cvtdl_vpss_types.h"
 
 #include "cvi_tdl_log.hpp"
-#ifndef SIMPLY_MODEL
-#include "model_debugger.hpp"
-#endif
 #include "vpss_engine.hpp"
 
-#include <cviruntime.h>
+#include "bmlib_runtime.h"
+#include "bmodel.hpp"
+#include "bmruntime_common.h"
+#include "bmruntime_profile.h"
+
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#ifndef SIMPLY_MODEL
 #include "profiler.hpp"
-#endif
+
 #define DEFAULT_MODEL_THRESHOLD 0.5
 #define DEFAULT_MODEL_NMS_THRESHOLD 0.5
 
 namespace cvitdl {
+
+typedef enum { CVI_MEM_SYSTEM = 1, CVI_MEM_DEVICE = 2 } CVI_MEM_TYPE_E;
 
 struct CvimodelConfig {
   bool debug_mode = false;
@@ -28,24 +31,28 @@ struct CvimodelConfig {
 };
 
 struct CvimodelPair {
-  CVI_TENSOR *tensors = nullptr;
+  std::vector<void *> raw_pointer;
+  std::vector<bm_tensor_t> tensors;
   int32_t num = 0;
 };
 
 struct CvimodelInfo {
   CvimodelConfig conf;
-  CVI_MODEL_HANDLE handle = nullptr;
+  void *handle = nullptr;
+  const char **net_names = NULL;
   CvimodelPair in;
   CvimodelPair out;
 };
+
+typedef struct {
+  std::vector<int> dim;
+  size_t dim_size;
+} CVI_SHAPE;
 
 struct TensorInfo {
   std::string tensor_name;
   void *raw_pointer;
   CVI_SHAPE shape;
-  CVI_TENSOR *tensor_handle;
-
-  // Tensor size = (number of tensor elements) * typeof(tensor type))
   size_t tensor_size;
 
   // number of tensor elements
@@ -69,6 +76,25 @@ struct InputPreprecessSetup {
   PIXEL_FORMAT_E format = PIXEL_FORMAT_RGB_888_PLANAR;
 };
 
+typedef enum {
+  CVI_NN_PIXEL_RGB_PACKED = 0,
+  CVI_NN_PIXEL_BGR_PACKED = 1,
+  CVI_NN_PIXEL_RGB_PLANAR = 2,
+  CVI_NN_PIXEL_BGR_PLANAR = 3,
+  CVI_NN_PIXEL_YUV_NV12 = 11,
+  CVI_NN_PIXEL_YUV_NV21 = 12,
+  CVI_NN_PIXEL_YUV_420_PLANAR = 13,
+  CVI_NN_PIXEL_GRAYSCALE = 15,
+  CVI_NN_PIXEL_TENSOR = 100,
+  CVI_NN_PIXEL_RGBA_PLANAR = 1000,
+  // please don't use below values,
+  // only for backward compatibility
+  CVI_NN_PIXEL_PLANAR = 101,
+  CVI_NN_PIXEL_PACKED = 102
+} CVI_NN_PIXEL_FORMAT_E;
+typedef CVI_NN_PIXEL_FORMAT_E CVI_FRAME_TYPE;
+#define CVI_FRAME_PLANAR CVI_NN_PIXEL_PLANAR
+
 struct VPSSConfig {
   meta_rescale_type_e rescale_type = RESCALE_CENTER;
   VPSS_CROP_INFO_S crop_attr;
@@ -84,6 +110,7 @@ class Core {
   Core(const Core &) = delete;
   Core &operator=(const Core &) = delete;
 
+  bm_handle_t bm_handle;
   virtual ~Core() = default;
   int modelOpen(const char *filepath);
   int getInputMemType();
@@ -104,23 +131,11 @@ class Core {
   float getModelThreshold();
   float getModelNmsThreshold();
   bool isInitialized();
+  void cleanupError();
   virtual bool allowExportChannelAttribute() const { return false; }
-#ifndef SIMPLY_MODEL
-  void enableDebugger(bool enable) { m_debugger.setEnable(enable); }
-  void setDebuggerOutputPath(const std::string &dump_path) {
-    m_debugger.setDirPath(dump_path);
-
-    if (m_debugger.isEnable()) {
-      LOGW("************************TDL SDK Debugger***********************\n");
-      LOGW("TDL SDK Debugger is enabled!\n");
-      LOGW("execute 'echo 1 > %s/enable' command to turn on debugger\n", dump_path.c_str());
-      LOGW("execute 'echo 0 > %s/enable' command to turn off debugger\n", dump_path.c_str());
-      LOGW("**************************************************************\n");
-    }
-  }
-
+  void enableDebugger(bool enable) {}
+  void setDebuggerOutputPath(const std::string &dump_path) {}
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
-#endif
   int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,
                     uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
                     VPSS_SCALE_COEF_E reize_mode = VPSS_SCALE_COEF_BICUBIC);
@@ -138,9 +153,12 @@ class Core {
   /*
    * Input/Output getter functions
    */
-  CVI_TENSOR *getInputTensor(int idx);
-  CVI_TENSOR *getOutputTensor(int idx);
-
+  void input_preprocess_config(const bm_net_info_t *net_info,
+                               std::vector<VPSSConfig> &m_vpss_config);
+  void setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
+                             std::map<std::string, TensorInfo> &tensor_info);
+  void setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
+                            std::map<std::string, TensorInfo> &tensor_info);
   const TensorInfo &getOutputTensorInfo(const std::string &name);
   const TensorInfo &getInputTensorInfo(const std::string &name);
 
@@ -201,25 +219,15 @@ class Core {
 
   // External handle
   VpssEngine *mp_vpss_inst = nullptr;
-#ifndef SIMPLY_MODEL
   Timer model_timer_;
-#endif
 
  protected:
   // vpss related control
   int32_t m_vpss_timeout = 100;
   std::string m_model_file;
-#ifndef ATHENA2
-#ifndef SIMPLY_MODEL
-  debug::ModelDebugger m_debugger;
-#endif
-#endif
- private:
-  template <typename T>
-  inline int __attribute__((always_inline)) registerFrame2Tensor(std::vector<T> &frames);
 
-  void setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
-                       std::map<std::string, TensorInfo> *tensor_info);
+ private:
+  int registerFrame2Tensor(std::vector<VIDEO_FRAME_INFO_S *> frames);
 
   std::map<std::string, TensorInfo> m_input_tensor_info;
   std::map<std::string, TensorInfo> m_output_tensor_info;

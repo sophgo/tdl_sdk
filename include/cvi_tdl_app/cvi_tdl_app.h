@@ -5,9 +5,6 @@
 #include "capture/personvehicle_capture_type.h"
 #include "core/core/cvtdl_core_types.h"
 #include "core/cvi_tdl_core.h"
-
-#include <cvi_comm_vb.h>
-#include <cvi_sys.h>
 #include "cvi_comm.h"
 
 typedef struct {

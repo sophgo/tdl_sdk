@@ -1,6 +1,10 @@
 #ifndef FILE_SCRFD_HPP
 #define FILE_SCRFD_HPP
+#ifdef ATHENA2
+#include "core_a2.hpp"
+#else
 #include "core.hpp"
+#endif
 #include "core/face/cvtdl_face_types.h"
 
 #include "anchor_generator.h"

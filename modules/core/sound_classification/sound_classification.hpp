@@ -3,7 +3,11 @@
 #endif
 #pragma once
 #include "ESCFFT.hpp"
+#ifdef ATHENA2
+#include "core_a2.hpp"
+#else
 #include "core.hpp"
+#endif
 
 #define FLT_MIN_SOUND 1.175494351e-38F
 
