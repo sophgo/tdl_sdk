@@ -1,7 +1,6 @@
 #ifndef _CVI_TDL_MEDIA_H_
 #define _CVI_TDL_MEDIA_H_
-#include <cvi_comm_vb.h>
-#include <cvi_sys.h>
+#include "cvi_comm.h"
 
 #define DLL_EXPORT __attribute__((visibility("default")))
 

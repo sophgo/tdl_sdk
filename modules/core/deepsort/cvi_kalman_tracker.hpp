@@ -1,5 +1,4 @@
-#ifndef _CVI_KALMAN_TRACKER_HPP_
-#define _CVI_KALMAN_TRACKER_HPP_
+#pragma once
 
 #include <vector>
 #include "cvi_deepsort_types_internal.hpp"
@@ -104,5 +103,3 @@ class KalmanTracker : public Tracker {
  private:
   int feature_update_counter;
 };
-
-#endif /* _CVI_KALMAN_TRACKER_HPP_ */

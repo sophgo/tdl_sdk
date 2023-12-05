@@ -1,5 +1,4 @@
-#ifndef _CVI_MUNKRES_HPP_
-#define _CVI_MUNKRES_HPP_
+#pragma once
 
 #include <Eigen/Eigen>
 
@@ -50,4 +49,3 @@ class CVIMunkres {
 
   // bool find_prime_by_col(int row, int &c);
 };
-#endif  // _CVI_MUNKRES_HPP_

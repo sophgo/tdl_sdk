@@ -5,12 +5,8 @@
 #include <vector>
 
 #include "anchors.hpp"
-#ifdef ATHENA2
-#include "core_a2.hpp"
-#else
-#include "core.hpp"
-#endif
 #include "core/object/cvtdl_object_types.h"
+#include "core_internel.hpp"
 #include "object_utils.hpp"
 
 namespace cvitdl {

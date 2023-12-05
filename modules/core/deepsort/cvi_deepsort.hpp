@@ -1,5 +1,4 @@
-#ifndef _CVI_DEEPSORT_HPP_
-#define _CVI_DEEPSORT_HPP_
+#pragma once
 
 #include "cvi_deepsort_types_internal.hpp"
 #include "cvi_distance_metric.hpp"
@@ -126,5 +125,3 @@ class DeepSORT {
   void solve_assignment();
   bool track_face_ = false;
 };
-
-#endif /* _CVI_DEEPSORT_HPP_*/

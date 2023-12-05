@@ -1,5 +1,4 @@
-#ifndef _CVI_DEEPSORT_UTILS_HPP_
-#define _CVI_DEEPSORT_UTILS_HPP_
+#pragma once
 
 #include "cvi_deepsort_types_internal.hpp"
 
@@ -24,4 +23,3 @@ bool is_bbox_crowded(const std::vector<BBOX> &bboxes, int check_idx, float expan
 void update_corre(const BBOX &cur_box, const BBOX &pair_box, stCorrelateInfo &prev, float w_cur);
 float cal_object_pair_score(stRect boxa, stRect boxb, ObjectType typea, ObjectType typeb,
                             bool strict_order = true);
-#endif

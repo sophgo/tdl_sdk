@@ -1,6 +1,4 @@
-#ifndef HeadPosePredictor_h__
-#define HeadPosePredictor_h__
-
+#pragma once
 #include "core/face/cvtdl_face_types.h"
 #include "opencv2/core/core.hpp"
 
@@ -28,4 +26,3 @@ float CalAngle(const cv::Point &pt1, const cv::Point &pt2);
 float CalSlant(int ln, int lf, const float Rn, float theta);
 }  // namespace service
 }  // namespace cvitdl
-#endif  // HeadPosePredictor_h__

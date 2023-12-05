@@ -1,13 +1,10 @@
 #pragma once
 #include <unordered_map>
 #include <vector>
-#ifdef ATHENA2
-#include "core/core_a2.hpp"
-#else
-#include "core/core.hpp"
-#endif
+
 #include "core/cvi_tdl_core.h"
 #include "core/vpss_engine.hpp"
+#include "core_internel.hpp"
 
 #include "deepsort/cvi_deepsort.hpp"
 #include "ive/ive.hpp"

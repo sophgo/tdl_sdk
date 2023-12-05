@@ -1,6 +1,4 @@
-#ifndef _UTILS_CV_IMGPROC_CONTOURS_HPP_
-#define _UTILS_CV_IMGPROC_CONTOURS_HPP_
-
+#pragma once
 #include "opencv2/core.hpp"
 
 // clang-format off
@@ -46,5 +44,3 @@ void findContours(cv::InputOutputArray image, cv::OutputArrayOfArrays contours, 
                   int method, cv::Point offset = cv::Point());
 
 }  // namespace cvitdl
-
-#endif  // _UTILS_CV_IMGPROC_CONTOURS_HPP_

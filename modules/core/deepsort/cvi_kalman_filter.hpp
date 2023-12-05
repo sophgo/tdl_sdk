@@ -1,5 +1,4 @@
-#ifndef _CVI_KALMAN_FILTER_HPP_
-#define _CVI_KALMAN_FILTER_HPP_
+#pragma once
 
 #include "core/deepsort/cvtdl_deepsort_types.h"
 #include "cvi_kalman_types.hpp"
@@ -33,5 +32,3 @@ class KalmanFilter {
   K_EXTRAPOLATION_M F_;
   K_OBSERVATION_M H_;
 };
-
-#endif /* _CVI_KALMAN_FILTER_HPP_ */

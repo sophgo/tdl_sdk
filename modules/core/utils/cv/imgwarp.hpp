@@ -1,6 +1,4 @@
-#ifndef _UTILS_CV_IMGPROC_IMGWARP_HPP_
-#define _UTILS_CV_IMGPROC_IMGWARP_HPP_
-
+#pragma once
 #include "opencv2/core.hpp"
 
 // clang-format off
@@ -62,5 +60,3 @@ cv::Mat getPerspectiveTransform(cv::InputArray _src, cv::InputArray _dst);
 cv::Mat getAffineTransform(cv::InputArray _src, cv::InputArray _dst);
 
 }  // namespace cvitdl
-
-#endif  // _UTILS_CV_IMGPROC_IMGWARP_HPP_

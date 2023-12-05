@@ -1,5 +1,4 @@
-#ifndef _CVI_DISTANCE_METRIC_HPP_
-#define _CVI_DISTANCE_METRIC_HPP_
+#pragma once
 
 #include "cvi_deepsort_types_internal.hpp"
 
@@ -23,5 +22,3 @@ void restrict_cost_matrix(COST_MATRIX &M, float upper_bound);
 
 ROW_VECTOR get_min_colwise(COST_MATRIX &M);
 COL_VECTOR get_min_rowwise(COST_MATRIX &M);
-
-#endif /* _CVI_DISTANCE_METRIC_HPP_ */

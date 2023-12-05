@@ -1,6 +1,4 @@
-#ifndef PROFILER_HPP
-#define PROFILER_HPP
-
+#pragma once
 #include <sys/time.h>
 #include <map>
 #include <string>
@@ -54,5 +52,3 @@ class FpsProfiler {
   float tmp_fps_ = 0;
   float average_fps_ = 0;
 };
-
-#endif

@@ -1,13 +1,9 @@
-#ifndef FILE_HAND_KEYPOINT_CLASSIFICATION_HPP
-#define FILE_HAND_KEYPOINT_CLASSIFICATION_HPP
+#pragma once
+
 #include <vector>
 #include "Eigen/Core"
-#ifdef ATHENA2
-#include "core_a2.hpp"
-#else
-#include "core.hpp"
-#endif
 #include "core/object/cvtdl_object_types.h"
+#include "core_internel.hpp"
 typedef Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor> Vectorf;
 
 namespace cvitdl {
@@ -22,4 +18,3 @@ class HandKeypointClassification final : public Core {
   Vectorf _data;
 };
 }  // namespace cvitdl
-#endif

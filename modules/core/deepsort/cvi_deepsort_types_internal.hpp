@@ -1,5 +1,4 @@
-#ifndef _CVI_DEEPSORT_TYPES_INTERNAL_HPP_
-#define _CVI_DEEPSORT_TYPES_INTERNAL_HPP_
+#pragma once
 
 #include <Eigen/Eigen>
 #include <vector>
@@ -61,5 +60,3 @@ enum ObjectType {
   OBJ_TYPE_ERROR,   // 11
   OBJ_NONE
 };
-
-#endif /* _CVI_DEEPSORT_TYPES_INTERNAL_HPP_ */

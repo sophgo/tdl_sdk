@@ -4,9 +4,7 @@
 #include "core/face/cvtdl_face_types.h"
 #include "core/object/cvtdl_object_types.h"
 
-#include <cvi_comm_vb.h>
-#include <cvi_sys.h>
-
+#include "cvi_comm.h"
 #ifdef __cplusplus
 DLL_EXPORT CVI_S32 CVI_TDL_RescaleMetaCenterCpp(const VIDEO_FRAME_INFO_S *frame,
                                                 cvtdl_face_t *face);

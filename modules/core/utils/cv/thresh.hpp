@@ -1,7 +1,4 @@
-
-#ifndef _UTILS_CV_IMGPROC_THRESH_HPP_
-#define _UTILS_CV_IMGPROC_THRESH_HPP_
-
+#pragma once
 #include "opencv2/core.hpp"
 
 // clang-format off
@@ -25,5 +22,3 @@ enum ThresholdTypes {
 /* From imgproc_c.hpp */
 double cvThreshold(const CvArr* src, CvArr* dst, double threshold, double max_value,
                    int threshold_type);
-
-#endif  // _UTILS_CV_IMGPROC_THRESH_HPP_

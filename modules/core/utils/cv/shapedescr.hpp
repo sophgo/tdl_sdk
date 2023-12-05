@@ -1,6 +1,4 @@
-#ifndef _UTILS_CV_IMGPROC_SHAPEDESCR_HPP_
-#define _UTILS_CV_IMGPROC_SHAPEDESCR_HPP_
-
+#pragma once
 #include "opencv2/core.hpp"
 
 /* From imgproc_c.h */
@@ -17,5 +15,3 @@ double contourArea(cv::InputArray contour, bool oriented = false);
 cv::Rect boundingRect(cv::InputArray points);
 
 }  // namespace cvitdl
-
-#endif  // _UTILS_CV_IMGPROC_SHAPEDESCR_HPP_

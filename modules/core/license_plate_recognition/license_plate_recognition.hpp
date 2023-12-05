@@ -1,12 +1,7 @@
 #pragma once
-#include <cvi_comm_vb.h>
-#include <cvi_sys.h>
-#ifdef ATHENA2
-#include "core_a2.hpp"
-#else
-#include "core.hpp"
-#endif
 #include "core/object/cvtdl_object_types.h"
+#include "core_internel.hpp"
+#include "cvi_comm.h"
 #include "decode_tool.hpp"
 
 #include "opencv2/core.hpp"

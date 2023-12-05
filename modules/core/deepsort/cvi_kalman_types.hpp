@@ -1,5 +1,4 @@
-#ifndef _CVI_KALMAN_TYPES_HPP_
-#define _CVI_KALMAN_TYPES_HPP_
+#pragma once
 
 #include <vector>
 #include "cvi_tracker.hpp"
@@ -28,5 +27,3 @@ typedef Eigen::Matrix<float, DIM_Z, DIM_X> K_OBSERVATION_M;
 
 typedef Eigen::Matrix<float, DIM_X, DIM_X> K_PROCESS_NOISE_M;
 typedef Eigen::Matrix<float, DIM_Z, DIM_Z> K_MEASUREMENT_NOISE_M;
-
-#endif /* _CVI_KALMAN_TYPES_HPP_ */

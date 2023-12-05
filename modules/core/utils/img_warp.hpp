@@ -1,5 +1,4 @@
-#ifndef _UTILS_CV_IMGPROC_IMGWARP_HPP_
-#define _UTILS_CV_IMGPROC_IMGWARP_HPP_
+#pragma once
 #include <stdint.h>
 
 namespace cvitdl {
@@ -8,5 +7,3 @@ void warp_affine(const unsigned char* src_data, unsigned int src_step, int src_w
                  int src_height, unsigned char* dst_data, unsigned int dst_step, int dst_width,
                  int dst_height, float* fM);
 }  // namespace cvitdl
-
-#endif  // _UTILS_CV_IMGPROC_IMGWARP_HPP_
