@@ -1,5 +1,5 @@
 CONFIRM_ENV_VAR = 1
-ifeq ($(MAKECMDGOALS), $(filter $(MAKECMDGOALS), install clean))
+ifneq (, $(filter install clean, $(MAKECMDGOALS)))
 CONFIRM_ENV_VAR = 0
 endif
 
@@ -12,10 +12,6 @@ ifeq ($(USE_TPU_IVE), ON)
 ifndef IVE_PATH
 $(error "Please set ive sdk root path to IVE_PATH)
 endif
-endif
-
-ifndef KERNEL_ROOT
-$(error "Please set path to kernrel_root)
 endif
 
 ifndef TPU_PATH
@@ -50,18 +46,14 @@ else ifeq ($(SDK_VER), glibc_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_GLIBC)
 CFLAGS += -march=rv64imafdcv0p7xthead -mabi=lp64d
+LDFLAGS = -mcpu=c906fdv
 else ifeq ($(SDK_VER), musl_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_MUSL)
 CFLAGS += -march=rv64imafd
+LDFLAGS = -mcpu=c906fdv
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
-endif
-
-ifeq ($(DEBUG), 1)
-CFLAGS += -g -O0
-else
-CFLAGS += -O3 -DNDEBUG
 endif
 
 #####################################################
@@ -72,6 +64,12 @@ CXX = $(CROSS_COMPILE)g++
 AR = $(CROSS_COMPILE)ar
 LD = $(CROSS_COMPILE)ld
 STRIP = $(CROSS_COMPILE)strip
+
+ifeq ($(DEBUG), 1)
+CFLAGS += -g -O0
+else
+CFLAGS += -O3 -DNDEBUG
+endif
 
 #####################################################
 # Middleware stuffs
@@ -99,6 +97,18 @@ CFLAGS += -DCV181X
 else ifeq ($(CHIP), CV180X)
 MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu 
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
+endif
+
+#####################################################
+# Kernel
+#####################################################
+ifeq ($(CHIP), CV181X)
+CFLAGS += -DCV181X
+ifeq ($(SYSTEM_PROCESSOR), RISCV)
+CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
+else ifeq ($(SYSTEM_PROCESSOR), ARM)
+CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
+endif
 endif
 
 #####################################################
@@ -211,8 +221,12 @@ CFLAGS += -I$(SDK_INC_PATH) \
           -I$(OPENCV_INC_PATH) \
           -I$(STB_INC_PATH) \
           -I$(EVA_INC_PATH) \
-		  -I$(KERNEL_ROOT)/include \
-		  -I$(AISDK_ROOT_PATH)/include/stb
+          -I$(KERNEL_ROOT)/include \
+          -I$(AISDK_ROOT_PATH)/include/stb
+
+ifeq ($(CHIP), CV181X)
+    CFLAGS += -I$(CV181X_INC_PATH)
+endif
 
 ifneq (,$(findstring middleware/v2,$(MW_PATH)))
     CFLAGS += -D_MIDDLEWARE_V2_
@@ -275,19 +289,19 @@ $(SDK_ROOT_PATH)/sample/utils/%.o: $(SDK_ROOT_PATH)/sample/utils/%.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
 
 sample_read_od: $(PWD)/sample_read_od.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o
-	$(CXX) $(DEPFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(DEPFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^
 
 sample_aud_%: $(PWD)/sample_aud_%.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o
-	$(CXX) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS) -o $@ $^
 
 sample_app_%: $(PWD)/sample_app_%.o $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o
-	$(CC) $(SAMPLE_APP_LIBS) -o $@ $^
+	$(CC) $(LDFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
 
 sample_vi_%: $(PWD)/sample_vi_%.o $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o $(SDK_ROOT_PATH)/sample/utils/middleware_utils.o
-	$(CC) $(SAMPLE_APP_LIBS) -o $@ $^
+	$(CC) $(LDFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
 
 sample_init: $(PWD)/sample_init.o
-	$(CC) $(SAMPLE_LIBS) -o $@ $^
+	$(CC) $(LDFLAGS) $(SAMPLE_LIBS) -o $@ $^
 
 sample_yol%: $(PWD)/sample_yol%.o
-	$(CXX) $(SAMPLE_LIBS) -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS) -L$(EVA_LIB_PATH) $(EVA_LIBS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(SAMPLE_LIBS) -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS) -L$(EVA_LIB_PATH) $(EVA_LIBS) -o $@ $^

@@ -1,5 +1,5 @@
 CONFIRM_ENV_VAR = 1
-ifeq ($(MAKECMDGOALS), $(filter $(MAKECMDGOALS), install clean))
+ifneq (, $(filter install clean, $(MAKECMDGOALS)))
 CONFIRM_ENV_VAR = 0
 endif
 
@@ -12,10 +12,6 @@ ifeq ($(USE_TPU_IVE), ON)
 ifndef IVE_PATH
 $(error "Please set ive sdk root path to IVE_PATH)
 endif
-endif
-
-ifndef KERNEL_ROOT
-$(error "Please set path to kernrel_root)
 endif
 
 ifndef TPU_PATH
@@ -31,6 +27,8 @@ CROSS_COMPILE_64 ?= aarch64-linux-gnu-
 CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
 CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
+
+# link OpenCV shared object only if platform is cv183X series
 
 ifeq ($(SDK_VER), 32bit)
 ARCH=arm
@@ -48,13 +46,16 @@ else ifeq ($(SDK_VER), glibc_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_GLIBC)
 CFLAGS += -march=rv64imafdcv0p7xthead -mabi=lp64d
+LDFLAGS = -mcpu=c906fdv
 else ifeq ($(SDK_VER), musl_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_MUSL)
 CFLAGS += -march=rv64imafd
+LDFLAGS = -mcpu=c906fdv
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif
+
 #####################################################
 # Gcc Compiler
 #####################################################
@@ -90,12 +91,24 @@ else ifeq ($(CHIP), CV182X)
 MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu -lisp_algo
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
 else ifeq ($(CHIP), CV181X)
-MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo  -lsys -lvpu
+MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu 
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
 CFLAGS += -DCV181X
 else ifeq ($(CHIP), CV180X)
-MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo  -lsys -lvpu
+MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu 
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
+endif
+
+#####################################################
+# Kernel
+#####################################################
+ifeq ($(CHIP), CV181X)
+CFLAGS += -DCV181X
+ifeq ($(SYSTEM_PROCESSOR), RISCV)
+CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
+else ifeq ($(SYSTEM_PROCESSOR), ARM)
+CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
+endif
 endif
 
 #####################################################
@@ -158,7 +171,7 @@ MD_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_md
 DRAW_RECT_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_draw_rect
 PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
-CFLAGS += -latomic -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s 
+CFLAGS += -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s 
 
 
 CFLAGS +=  -I$(KERNEL_ROOT)/include
@@ -167,19 +180,24 @@ SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -L$(TPU_LIB_PATH)
 
 SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
 
+LDFLAGS += -latomic
+
 CFLAGS += -I$(SDK_INC_PATH) \
           -I$(SDK_TDL_INC_PATH) \
-		  -I$(SDK_SAMPLE_INC_PATH) \
-		  -I$(MW_INC_PATH) \
-		  -I$(MD_INC_PATH) \
-		  -I$(DRAW_RECT_INC_PATH) \
-	  	  -I$(PREPROCESS_INC_PATH) \
-		  -I$(MW_SAMPLE_INC_PATH) \
-		  -I$(MW_ISP_INC_PATH) \
-		  -I$(IVE_SDK_INC_PATH) \
-	  	  -I$(OPENCV_INC_PATH) \
-		  -I$(KERNEL_ROOT)/include
+          -I$(SDK_SAMPLE_INC_PATH) \
+	  -I$(MW_INC_PATH) \
+	  -I$(MD_INC_PATH) \
+	  -I$(DRAW_RECT_INC_PATH) \
+  	  -I$(PREPROCESS_INC_PATH) \
+	  -I$(MW_SAMPLE_INC_PATH) \
+	  -I$(MW_ISP_INC_PATH) \
+	  -I$(IVE_SDK_INC_PATH) \
+  	  -I$(OPENCV_INC_PATH) \
+	  -I$(KERNEL_ROOT)/include
 
+ifeq ($(CHIP), CV181X)
+CFLAGS += -I$(CV181X_INC_PATH)
+endif
 
 ifneq (,$(findstring middleware/v2,$(MW_PATH)))
     CFLAGS += -D_MIDDLEWARE_V2_
@@ -210,18 +228,21 @@ TARGETS := $(shell find . -type f -name 'sample_lib_*.cpp' -exec basename {} .cp
 all: $(TARGETS)
 
 clean:
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) *.o
 
 install:
 	mkdir -p ../tmp_install/bin
 	cp $(TARGETS) ../tmp_install/bin
 
-sample_lib_cvimd: sample_lib_cvimd.cpp
-	$(CXX) $(DEPFLAGS) $(CFLAGS) $(SAMPLE_LIBS) -lcvi_md -o $@ $^
+$(PWD)/%.o: $(PWD)/%.cpp
+	$(CXX) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
+	
+sample_lib_cvimd: $(PWD)/sample_lib_cvimd.o
+	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) -lcvi_md -o $@ $^
 
-sample_lib_draw_rect: sample_lib_draw_rect.cpp
-	$(CXX) $(DEPFLAGS) $(CFLAGS) $(SAMPLE_LIBS) $(SAMPLE_LIBS_OPENCV) -lcvi_draw_rect -o $@ $^
+sample_lib_draw_rect: $(PWD)/sample_lib_draw_rect.o
+	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) $(SAMPLE_LIBS_OPENCV) -lcvi_draw_rect -o $@ $^
 
-sample_lib_preprocess: sample_lib_preprocess.cpp
-	$(CXX) $(DEPFLAGS) $(CFLAGS) $(SAMPLE_LIBS) -lcvi_preprocess -o $@ $^
+sample_lib_preprocess: $(PWD)/sample_lib_preprocess.o
+	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) -lcvi_preprocess -o $@ $^
 
