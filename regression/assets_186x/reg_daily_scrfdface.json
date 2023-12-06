@@ -1,0 +1,14 @@
+[
+  {
+    "model" : "scrfd_500m_bnkps_432_768_v186x.cvimodel", 
+    "test_images" : ["friends.jpg"], 
+    "expected_results" : [[1, [[263.938263, 110.619125, 391.588074, 299.315094]]]],
+    "threshold" : 0.85
+  },
+  {
+    "model" : "scrfd_500m_bnkps_768_432_cv186x.cvimodel", 
+    "test_images" : ["friends.jpg"], 
+    "expected_results" : [[1, [[264.432617, 118.377480, 388.198944, 286.183929]]]],
+    "threshold" : 0.85
+  }
+]

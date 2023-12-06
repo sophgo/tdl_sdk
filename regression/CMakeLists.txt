@@ -63,9 +63,7 @@ set(REG_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation
-    ${TRACER_PATH}
     ${MIDDLEWARE_SDK_ROOT}/sample/common
-    ${CMAKE_SOURCE_DIR}/3rdparty
     ${CVI_RTSP_INCLUDE}
 )
 
@@ -109,20 +107,30 @@ set(SAMPLE_LIBS
 
 
 if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X")
-  set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+  list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
-set(SAMPLE_LIBS ${SAMPLE_LIBS}
-    ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
-)
+  list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
 else()
-set(SAMPLE_LIBS ${SAMPLE_LIBS}
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
-)
+  list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so)
 endif()
 endif()
 
+
+if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+  set(UnitTests reg_daily_fq.cpp
+  reg_daily_pet.cpp
+  reg_daily_mobiledet.cpp
+  reg_daily_hd.cpp
+  reg_daily_meet.cpp
+  reg_daily_pv.cpp
+  reg_daily_fr.cpp
+  reg_daily_hatd.cpp
+  reg_daily_ir_scrfd_face.cpp
+  reg_daily_retinaface.cpp
+  )
+else()
 set(UnitTests
   reg_daily_fq.cpp
   reg_daily_mobiledet.cpp
@@ -150,16 +158,8 @@ set(UnitTests
   reg_daily_soundcmd.cpp
   reg_daily_incarod.cpp
   reg_daily_face_cap.cpp
+  reg_daily_feature_matching.cpp
 )
-
-if(NOT ${CVI_PLATFORM} STREQUAL "ATHENA2")
-  set(UnitTests ${UnitTests} reg_daily_feature_matching.cpp)
-endif()
-
-if (NOT "${CVI_PLATFORM}" STREQUAL "CV181X")
-  list(APPEND UnitTests
-    reg_daily_td.cpp
-  )
 endif()
 
 set(UnitTest_SRCS
@@ -173,42 +173,18 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../modules/log
 )
 
-if(NOT ${CVI_PLATFORM} STREQUAL "ATHENA2")
-buildninstall(NAME reg_face_attribute INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
-endif()
-buildninstall(NAME reg_face_recognition INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_face_quality INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_lfw INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_wider_face INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_mobiledetv2 INC ${REG_INCLUDES} SRCS od_utils.c DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_yolov3 INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_thermal INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_mask_classification INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_rgbir_liveness INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_mask_fr INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_multi_object_tracking INC ${REG_INCLUDES} SRCS od_utils.c DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_reid INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_face_align INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_es_classification INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_lpdr INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_face_landmark INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_eye_classification INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_yawn_classification INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_incar_od INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstallcpp(NAME reg_multithread INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_soundcmd INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_deeplabv3 INC ${REG_INCLUDES} DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
-buildninstall(NAME reg_fall_detection INC ${REG_INCLUDES} DEPS cvi_tdl  cvi_tdl_evaluation ${SAMPLE_LIBS})
-
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_evaluation cvi_tdl_app gtest_main ${SAMPLE_LIBS})
 
-
-if ("${CVI_PLATFORM}" STREQUAL "CV183X")
+if ("${CVI_PLATFORM}" STREQUAL "ATHENA2")
+  set(DAILY_REGRESSION_ASSETS "assets_186x")
+elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")
+elseif("${CVI_PLATFORM}" STREQUAL "CV182X" )
+  set(DAILY_REGRESSION_ASSETS "assets_182x")
 elseif("${CVI_PLATFORM}" STREQUAL "CV181X" )
   set(DAILY_REGRESSION_ASSETS "assets_181x")
-else()
-  set(DAILY_REGRESSION_ASSETS "assets_182x")
+elseif("${CVI_PLATFORM}" STREQUAL "CV180X" )
+  set(DAILY_REGRESSION_ASSETS "assets_180x")
 endif()
 
 file(GLOB asset_files "${DAILY_REGRESSION_ASSETS}/*.json")

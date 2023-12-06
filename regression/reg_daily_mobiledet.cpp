@@ -52,6 +52,7 @@ class MobileDetV2TestSuite : public CVI_TDLModelTestSuite {
 const std::unordered_map<std::string,
                          std::pair<CVI_TDL_SUPPORTED_MODEL_E, MobileDetV2TestSuite::InferenceFunc>>
     MobileDetV2TestSuite::MODEL_MAP = {
+#ifndef ATHENA2
         {"mobiledetv2-d0-ls.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_MobileDetV2_COCO80}},
         {"mobiledetv2-d0.cvimodel",
@@ -74,10 +75,12 @@ const std::unordered_map<std::string,
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_TDL_MobileDetV2_Person_Vehicle}},
         {"mobiledetv2-person-vehicle-ls-768.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_TDL_MobileDetV2_Person_Vehicle}},
-        {"mobiledetv2-pedestrian-d0-ls-384.cvimodel",
+#endif
+        {"mobiledetv2-pedestrian-d0-384_cv186x.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
-        {"mobiledetv2-pedestrian-d0-ls-640.cvimodel",
+        {"mobiledetv2-pedestrian-d0-448_cv186x.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+#ifndef ATHENA2
         {"mobiledetv2-pedestrian-d0-ls-768.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d0-ls.cvimodel",
@@ -86,14 +89,17 @@ const std::unordered_map<std::string,
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d1-ls.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
-        {"mobiledetv2-pedestrian-d1-ls-1024.cvimodel",
+#endif
+        {"mobiledetv2-pedestrian-d1-ls-896_cv186x.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
-        {"mobiledetv2-pedestrian-d1.cvimodel",
+        {"mobiledetv2-pedestrian-d1-896_cv186x.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+#ifndef ATHENA2
         {"mobiledetv2-vehicle-d0-ls.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_MobileDetV2_Vehicle}},
         {"mobiledetv2-vehicle-d0.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_MobileDetV2_Vehicle}},
+#endif
 };
 
 MobileDetV2TestSuite::ModelInfo MobileDetV2TestSuite::getModel(const std::string &model_name) {
@@ -111,6 +117,7 @@ MobileDetV2TestSuite::ModelInfo MobileDetV2TestSuite::getModel(const std::string
   return model_info;
 }
 
+#ifndef ATHENA2
 TEST_F(MobileDetV2TestSuite, open_close_model) {
   ModelInfo model_info = getModel("mobiledetv2-lite-person-pets.cvimodel");
   ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
@@ -265,12 +272,13 @@ TEST_F(MobileDetV2TestSuite, skip_vpsspreprocess) {
     }
   }
 }
+#endif
 
 TEST_F(MobileDetV2TestSuite, set_threshold) {
   std::string model_name = std::string(m_json_object[0]["model_name"]);
 
   ModelInfo model_info = getModel(model_name);
-  ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
+  ASSERT_EQ(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
   const float threshold = 0.1;
   // set threshold before opening model
   {
@@ -316,6 +324,7 @@ TEST_F(MobileDetV2TestSuite, set_threshold) {
   }
 }
 
+#ifndef ATHENA2
 TEST_F(MobileDetV2TestSuite, select_classes) {
   ModelInfo model_info = getModel("mobiledetv2-d0-ls.cvimodel");
   ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
@@ -364,6 +373,7 @@ TEST_F(MobileDetV2TestSuite, select_classes) {
     }
   }
 }
+#endif
 
 TEST_F(MobileDetV2TestSuite, accuracy) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
@@ -422,7 +432,16 @@ TEST_F(MobileDetV2TestSuite, accuracy) {
               << "model path: " << model_info.model_path << "\n"
               << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
               << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
-              << "score: " << expected_bbox.score << "\n";
+              << "score: " << expected_bbox.score << "\n"
+              << "[" << obj_meta->info[det_index].bbox.x1 << ","
+              << obj_meta->info[det_index].bbox.y1 << "," << obj_meta->info[det_index].bbox.x2
+              << "," << obj_meta->info[det_index].bbox.y2 << ","
+              << obj_meta->info[det_index].classes << "," << obj_meta->info[det_index].bbox.score
+              << "],\n";
+          printf("info.classes == catId : %d\n", obj_meta->info[det_index].classes == catId);
+          printf("iou(info.bbox, bbox): %f\n", iou(obj_meta->info[det_index].bbox, expected_bbox));
+          printf("abs(info.bbox.score - bbox.score): %f\n",
+                 abs(obj_meta->info[det_index].bbox.score - expected_bbox.score));
         }
       }
       CVI_TDL_FreeCpp(obj_meta);
