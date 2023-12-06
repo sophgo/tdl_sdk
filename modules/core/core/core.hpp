@@ -118,6 +118,7 @@ class Core {
       LOGW("**************************************************************\n");
     }
   }
+  int after_inference() { return 0; }
 
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
 #endif

@@ -1,5 +1,4 @@
 #pragma once
-
 #include "core/face/cvtdl_face_types.h"
 #include "core_internel.hpp"
 #include "opencv2/core.hpp"

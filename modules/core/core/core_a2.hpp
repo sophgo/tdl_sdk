@@ -134,7 +134,9 @@ class Core {
   void cleanupError();
   virtual bool allowExportChannelAttribute() const { return false; }
   void enableDebugger(bool enable) {}
+  void setUseMmap(bool mmap);
   void setDebuggerOutputPath(const std::string &dump_path) {}
+  int after_inference();
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
   int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,
                     uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
@@ -227,7 +229,8 @@ class Core {
   std::string m_model_file;
 
  private:
-  int registerFrame2Tensor(std::vector<VIDEO_FRAME_INFO_S *> frames);
+  template <typename T>
+  inline int __attribute__((always_inline)) registerFrame2Tensor(std::vector<T> &frames);
 
   std::map<std::string, TensorInfo> m_input_tensor_info;
   std::map<std::string, TensorInfo> m_output_tensor_info;
@@ -238,5 +241,7 @@ class Core {
 
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;
+  const bm_net_info_t *net_info;
+  bool use_mmap = false;
 };
 }  // namespace cvitdl

@@ -85,6 +85,7 @@ MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lc
 ifeq ($(CHIP), ATHENA2)
 MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
+CFLAGS += -DATHENA2
 else ifeq ($(CHIP), CV183X)
 MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
@@ -98,7 +99,6 @@ CFLAGS += -DCV181X
 else ifeq ($(CHIP), CV180X)
 MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu 
 MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
-CFLAGS += -DATHENA2
 endif
 
 #####################################################

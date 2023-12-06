@@ -686,7 +686,11 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
       if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                 \
         return CVI_TDL_ERR_INIT_VPSS;                                                          \
       } else {                                                                                 \
-        return obj->inference(frame, arg1);                                                    \
+        CVI_S32 ret = obj->inference(frame, arg1);                                             \
+        if (ret != CVI_TDL_SUCCESS)                                                            \
+          return ret;                                                                          \
+        else                                                                                   \
+          return obj->after_inference();                                                       \
       }                                                                                        \
     } else {                                                                                   \
       LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
@@ -709,7 +713,11 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
       if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                 \
         return CVI_TDL_ERR_INIT_VPSS;                                                          \
       } else {                                                                                 \
-        return obj->inference(frame, arg1, arg2);                                              \
+        CVI_S32 ret = obj->inference(frame, arg1, arg2);                                       \
+        if (ret != CVI_TDL_SUCCESS)                                                            \
+          return ret;                                                                          \
+        else                                                                                   \
+          return obj->after_inference();                                                       \
       }                                                                                        \
     } else {                                                                                   \
       LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
@@ -732,7 +740,11 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
       if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                 \
         return CVI_TDL_ERR_INIT_VPSS;                                                          \
       } else {                                                                                 \
-        return obj->inference(frame1, frame2, arg1);                                           \
+        CVI_S32 ret = obj->inference(frame1, frame2, arg1);                                    \
+        if (ret != CVI_TDL_SUCCESS)                                                            \
+          return ret;                                                                          \
+        else                                                                                   \
+          return obj->after_inference();                                                       \
       }                                                                                        \
     } else {                                                                                   \
       LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
@@ -755,7 +767,11 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
       if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                 \
         return CVI_TDL_ERR_INIT_VPSS;                                                          \
       } else {                                                                                 \
-        return obj->inference(frame1, frame2, arg1, arg2);                                     \
+        CVI_S32 ret = obj->inference(frame1, frame2, arg1, arg2);                              \
+        if (ret != CVI_TDL_SUCCESS)                                                            \
+          return ret;                                                                          \
+        else                                                                                   \
+          return obj->after_inference();                                                       \
       }                                                                                        \
     } else {                                                                                   \
       LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
@@ -1482,6 +1498,8 @@ CVI_S32 CVI_TDL_PersonVehicle_Detection(const cvitdl_handle_t handle, VIDEO_FRAM
       return CVI_TDL_ERR_INIT_VPSS;
     } else {
       int ret = yolo_model->inference(frame, obj_meta);
+      ret = yolo_model->after_inference();
+
       if (ret == CVI_TDL_SUCCESS) {
         for (uint32_t i = 0; i < obj_meta->size; i++) {
           if (obj_meta->info[i].classes == 4) {

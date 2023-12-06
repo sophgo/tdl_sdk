@@ -14,7 +14,13 @@
 #include <cvi_errno.h>
 #include <cvi_math.h>
 #endif
+
+#ifdef ATHENA2
+#include <linux/cvi_comm_vb.h>
+#else
 #include <cvi_comm_vb.h>
+#endif
+
 #include <cvi_sys.h>
 #include <cvi_type.h>
 
