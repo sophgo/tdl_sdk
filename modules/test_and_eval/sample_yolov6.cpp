@@ -15,7 +15,6 @@
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-//#include "sys_utils.hpp"
 
 // set preprocess and algorithm param for yolov6 detection
 // if use official model, no need to change param

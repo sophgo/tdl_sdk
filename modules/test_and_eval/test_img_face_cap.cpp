@@ -1,12 +1,3 @@
-#include "core/utils/vpss_helper.h"
-#include "cvi_tdl.h"
-#include "cvi_tdl_app/cvi_tdl_app.h"
-#include "sample_comm.h"
-
-#include <cvi_sys.h>
-#include <cvi_vb.h>
-#include <cvi_vi.h>
-
 #include <inttypes.h>
 #include <signal.h>
 #include <stdio.h>
@@ -16,6 +7,10 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "core/utils/vpss_helper.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app/cvi_tdl_app.h"
+#include "sample_comm.h"
 #if defined(CV181X) || defined(ATHENA2)
 #include <cvi_ive.h>
 #else

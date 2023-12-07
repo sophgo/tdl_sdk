@@ -1,8 +1,6 @@
 #ifndef __MIDDLEWARE_UTILS_H__
 #define __MIDDLEWARE_UTILS_H__
 #include <cvi_comm.h>
-#include <cvi_sys.h>
-#include <cvi_vi.h>
 #include <pthread.h>
 #include <rtsp.h>
 #include <sample_comm.h>

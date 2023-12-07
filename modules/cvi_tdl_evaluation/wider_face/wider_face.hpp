@@ -1,7 +1,6 @@
 #pragma once
 #include "core/face/cvtdl_face_types.h"
 
-#include <cvi_sys.h>
 #include <string>
 #include <vector>
 

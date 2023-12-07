@@ -1,5 +1,4 @@
 #include "face_angle.hpp"
-#include <cvi_sys.h>
 #include <cmath>
 #include "core/core/cvtdl_errno.h"
 // include core_c.h if opencv version greater than 4.5

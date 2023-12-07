@@ -1,6 +1,5 @@
 #pragma once
 #include <cnpy.h>
-#include <cvi_sys.h>
 #include <cviruntime.h>
 #include <memory>
 #include <string>

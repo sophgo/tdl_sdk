@@ -1,19 +1,13 @@
-#include "core/utils/vpss_helper.h"
-#include "cvi_tdl.h"
-#include "cvi_tdl_app/cvi_tdl_app.h"
-#include "sample_comm.h"
-// #include "vi_vo_utils.h"
-
-#include <cvi_sys.h>
-#include <cvi_vb.h>
-#include <cvi_vi.h>
-
 #include <inttypes.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "core/utils/vpss_helper.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_app/cvi_tdl_app.h"
+#include "sample_comm.h"
 
 #include <chrono>
 #include <iostream>

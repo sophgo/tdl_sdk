@@ -1,11 +1,8 @@
 #include "core_utils.hpp"
 #include "cvi_tdl_log.hpp"
-#ifndef SIMPLY_MODEL
 #ifndef CV180X
 #include "neon_utils.hpp"
 #endif
-#endif
-#include <cvi_sys.h>
 #include <math.h>
 #include <string.h>
 #include <algorithm>

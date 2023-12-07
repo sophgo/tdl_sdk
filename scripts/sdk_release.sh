@@ -21,6 +21,10 @@ if [[ "$SIMPLY_MODEL" == "1" ]]; then
     ENV_SIMPLY_MODEL="ON"
 fi
 
+if [[ "$CONFIG_DUAL_OS" == "y" ]]; then
+    CONFIG_DUAL_OS="ON"
+fi
+
 REPO_USER=""
 CURRENT_USER="$(git config user.name)"
 if [[ "${CURRENT_USER}" != "sw_jenkins" ]]; then
@@ -119,7 +123,8 @@ $CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE" \
                                         -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR \
                                         -DREPO_USER=$REPO_USER \
-                                        -DENV_SIMPLY_MODEL=$ENV_SIMPLY_MODEL
+                                        -DENV_SIMPLY_MODEL=$ENV_SIMPLY_MODEL \
+                                        -DCONFIG_DUAL_OS=$CONFIG_DUAL_OS
 
 ninja -j8 || exit 1
 ninja install || exit 1

@@ -6,10 +6,6 @@
 #include <core/utils/vpss_helper.h>
 #include <sample_comm.h>
 
-#include <cvi_sys.h>
-#include <cvi_vb.h>
-#include <cvi_vi.h>
-
 #include <inttypes.h>
 #include <signal.h>
 #include <stdio.h>

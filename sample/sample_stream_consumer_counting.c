@@ -4,10 +4,6 @@
 #include "sample_comm.h"
 #include "vi_vo_utils.h"
 
-#include <cvi_sys.h>
-#include <cvi_vb.h>
-#include <cvi_vi.h>
-
 #include <inttypes.h>
 #include <signal.h>
 #include <stdio.h>

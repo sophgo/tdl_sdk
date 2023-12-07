@@ -13,7 +13,6 @@
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-// #include "../service/draw_rect/draw_rect.hpp"
 
 std::vector<cv::Scalar> color = {cv::Scalar(51, 153, 255), cv::Scalar(0, 153, 76),
                                  cv::Scalar(255, 215, 0), cv::Scalar(255, 128, 0),

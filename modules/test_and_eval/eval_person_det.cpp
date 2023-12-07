@@ -12,6 +12,7 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
+
 std::string g_model_root;
 
 std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle_t tdl_handle,

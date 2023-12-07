@@ -4,9 +4,7 @@
 #include <memory>
 #include "ccl.hpp"
 
-#include <cvi_sys.h>
 #include <inttypes.h>
-
 #include "cvi_tdl_log.hpp"
 
 using namespace ive;

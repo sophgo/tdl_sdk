@@ -6,19 +6,9 @@
 
 #include <core/utils/vpss_helper.h>
 #include <cvi_comm.h>
-#include <cvi_sys.h>
-#include <cvi_vb.h>
-#include <cvi_vi.h>
 #include <rtsp.h>
 #include <sample_comm.h>
 #include "cvi_tdl.h"
-
-#include "sample_comm.h"
-#include "vi_vo_utils.h"
-
-#include <cvi_sys.h>
-#include <cvi_vb.h>
-#include <cvi_vi.h>
 
 #include <inttypes.h>
 #include <signal.h>
@@ -26,6 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "sample_comm.h"
+#include "vi_vo_utils.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image.h"
 #include "stb_image_write.h"

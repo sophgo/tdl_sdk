@@ -6,8 +6,6 @@
 #include "core/face/cvtdl_face_types.h"
 #include "core/object/cvtdl_object_types.h"
 
-#include <cvi_sys.h>
-
 /** @typedef cvitdl_service_handle_t
  *  @ingroup core_cvitdlservice
  *  @brief A cvitdl objservice handle.

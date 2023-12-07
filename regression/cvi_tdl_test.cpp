@@ -47,6 +47,8 @@ int64_t CVI_TDLTestSuite::get_ion_memory_size() {
 }
 
 void CVI_TDLTestSuite::SetUpTestCase() {
+#
+
   int64_t ion_size = get_ion_memory_size();
 
   const CVI_S32 vpssgrp_width = DEFAULT_IMG_WIDTH;

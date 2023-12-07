@@ -1,7 +1,5 @@
 #pragma once
 #include <signal.h>
-#include "cvi_sys.h"
-#include "cvi_type.h"
 #include "sample_comm.h"
 
 #define CVI_MAPI_SUCCESS ((int)(0))

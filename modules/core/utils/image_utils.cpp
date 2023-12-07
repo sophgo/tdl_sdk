@@ -2,7 +2,6 @@
 
 #include "core/cvi_tdl_utils.h"
 
-#include <cvi_sys.h>
 #include "core_utils.hpp"
 #include "cvi_tdl_log.hpp"
 #include "rescale_utils.hpp"

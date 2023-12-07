@@ -1,8 +1,6 @@
 #include "core/cvi_tdl_types_mem.h"
-#include "core/cvi_tdl_types_mem_internal.h"
-
-#include <cvi_sys.h>
 #include <string.h>
+#include "core/cvi_tdl_types_mem_internal.h"
 // Free
 
 void CVI_TDL_FreeCpp(cvtdl_feature_t *feature) {

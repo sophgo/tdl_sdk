@@ -55,9 +55,11 @@ static void load_ion_totalmem(void) {
 CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
                         PIXEL_FORMAT_E aiInputFormat, int voType) {
   CVI_S32 s32Ret = CVI_SUCCESS;
-  //****************************************************************
-  // Init VI, VO, Vpss
-
+//****************************************************************
+// Init VI, VO, Vpss
+#ifdef CONFIG_DUAL_OS
+  CVI_MSG_Init();
+#endif
   load_ion_totalmem();
 
   SIZE_S viSize;
