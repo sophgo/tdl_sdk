@@ -1,0 +1,18 @@
+{
+  "model_name": "hand_detection_cv186x.cvimodel",
+  "image_num": 1,
+  "results": {
+      "hand.jpg": [
+          {
+              "bbox": [
+                  79.579742,
+                  36.831833,
+                  188.900909,
+                  124.219582
+              ],
+              "category_id": 0,
+              "score": 0.550068
+          }
+      ]
+  }
+}
