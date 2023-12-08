@@ -1,8 +1,8 @@
 {
-  "model_name": "yolov8n_384_640_person_vehicle_cv186x.cvimodel",
+  "model_name": "meeting_detection_cv186x.cvimodel",
   "image_num": 1,
   "results": {
-      "people_and_vehicle.jpg": [
+      "meeting0.jpg": [
           {
               "bbox": [
                   119.102104,

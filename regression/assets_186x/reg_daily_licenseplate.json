@@ -1,7 +1,7 @@
 [
   {
-    "model" : "ir_scrfd_320_256_cv186x.cvimodel", 
-    "test_images" : ["friends.jpg"], 
+    "model" : "license_plate_detection_cv186x.cvimodel", 
+    "test_images" : ["0008A2_00_vehicle.jpg"], 
     "expected_results" : [[6, [[897.233521, 60.133812, 1008.490234, 208.103012], 
                                [461.719910, 272.236145, 577.342590, 409.290222], 
                                [745.684509, 347.811432, 846.026062, 470.030670], 

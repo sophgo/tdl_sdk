@@ -37,7 +37,11 @@ void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir, std:
 }
 
 int64_t CVI_TDLTestSuite::get_ion_memory_size() {
+#ifdef ATHENA2
   const char ION_SUMMARY_PATH[255] = "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem";
+#else
+  const char ION_SUMMARY_PATH[255] = "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem";
+#endif
   std::ifstream ifs(ION_SUMMARY_PATH);
   std::string line;
   if (std::getline(ifs, line)) {

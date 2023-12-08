@@ -40,9 +40,11 @@ model_dir=${model_dir:-/mnt/data/cvimodel}
 dataset_dir=${dataset_dir:-/mnt/data/dataset}
 asset_dir=${asset_dir:-/mnt/data/asset}
 
-
 if [ -f "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem" ]; then
   total_ion_size=$(cat /sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem)
+elif [ -f "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem" ]; then
+  total_ion_size=$(cat /sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem)
+  CHIP_ARCH="ATHENA2"
 else
   # if ion size is unknown then execute basic tests.
   total_ion_size=20000000
@@ -91,6 +93,16 @@ fi
 # ION requirement >= 70 MB
 if [ "$total_ion_size" -gt "70000000" ]; then
 test_suites="${test_suites}:FallTestSuite.*"
+fi
+
+if [ $CHIP_ARCH == "ATHENA2" ];then
+  test_suites="PersonPet_DetectionTestSuite.*"
+  test_suites="${test_suites}:Hand_DetectionTestSuite.*"
+  test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
+  test_suites="${test_suites}:People_Vehicle_DetectionTestSuite.*"
+  test_suites="${test_suites}:ScrfdDetTestSuite.*"
+  test_suites="${test_suites}:IrScrfdFaceTestSuite.*"
+  test_suites="${test_suites}:LicensePlateDetectionV2TestSuite.*"
 fi
 
 echo "----------------------"

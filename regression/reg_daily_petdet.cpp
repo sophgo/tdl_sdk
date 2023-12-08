@@ -15,12 +15,12 @@ namespace fs = std::experimental::filesystem;
 namespace cvitdl {
 namespace unitest {
 
-class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
+class PersonPet_DetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
-  People_Vehicle_DetectionTestSuite()
-      : CVI_TDLModelTestSuite("reg_daily_person_vehicle.json", "reg_daily_person_vehicle") {}
+  PersonPet_DetectionTestSuite()
+      : CVI_TDLModelTestSuite("reg_daily_petdet.json", "reg_daily_petdet") {}
 
-  virtual ~People_Vehicle_DetectionTestSuite() = default;
+  virtual ~PersonPet_DetectionTestSuite() = default;
 
   std::string m_model_path;
 
@@ -40,24 +40,24 @@ class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
   }
 };
 
-TEST_F(People_Vehicle_DetectionTestSuite, open_close_model) {
-  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
+TEST_F(PersonPet_DetectionTestSuite, open_close_model) {
+  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
                               m_model_path.c_str()),
             CVI_TDL_SUCCESS)
       << "failed to set model path: " << m_model_path.c_str();
 
   const char *model_path_get =
-      CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION);
+      CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION);
 
   EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
                std::string(model_path_get));
 
-  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION),
+  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION),
             CVI_TDL_SUCCESS);
 }
 
-TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
-  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
+TEST_F(PersonPet_DetectionTestSuite, accuracy) {
+  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
                               m_model_path.c_str()),
             CVI_TDL_SUCCESS);
 
@@ -70,14 +70,13 @@ TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
     Image image(image_path, PIXEL_FORMAT_RGB_888);
     ASSERT_TRUE(image.open());
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
-    TDLObject<cvtdl_object_t> people_vehicle_meta;
-    init_obj_meta(people_vehicle_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    ASSERT_EQ(CVI_TDL_PersonVehicle_Detection(m_tdl_handle, vframe, people_vehicle_meta),
-              CVI_TDL_SUCCESS);
+    TDLObject<cvtdl_object_t> pet_meta;
+    init_obj_meta(pet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
+    ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, pet_meta), CVI_TDL_SUCCESS);
 
     auto expected_dets = iter.value();
 
-    ASSERT_EQ(people_vehicle_meta->size, expected_dets.size());
+    ASSERT_EQ(pet_meta->size, expected_dets.size());
 
     for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
       auto bbox = expected_dets[det_index]["bbox"];
@@ -98,24 +97,21 @@ TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
         }
         return false;
       };
-      EXPECT_TRUE(match_dets(*people_vehicle_meta, expected_bbox, comp))
+      EXPECT_TRUE(match_dets(*pet_meta, expected_bbox, comp))
           << "Error!"
           << "\n"
           << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
           << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
           << "score: " << expected_bbox.score << "\n"
-          << "[" << people_vehicle_meta->info[det_index].bbox.x1 << ","
-          << people_vehicle_meta->info[det_index].bbox.y1 << ","
-          << people_vehicle_meta->info[det_index].bbox.x2 << ","
-          << people_vehicle_meta->info[det_index].bbox.y2 << ","
-          << people_vehicle_meta->info[det_index].classes << ","
-          << people_vehicle_meta->info[det_index].bbox.score << "],\n";
+          << "[" << pet_meta->info[det_index].bbox.x1 << "," << pet_meta->info[det_index].bbox.y1
+          << "," << pet_meta->info[det_index].bbox.x2 << "," << pet_meta->info[det_index].bbox.y2
+          << "," << pet_meta->info[det_index].classes << "," << pet_meta->info[det_index].bbox.score
+          << "],\n";
     }
-    CVI_TDL_FreeCpp(people_vehicle_meta);  // delete expected_res;
+    CVI_TDL_FreeCpp(pet_meta);  // delete expected_res;
   }
-  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION),
+  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION),
             CVI_TDL_SUCCESS);
 }
-
 }  // namespace unitest
 }  // namespace cvitdl

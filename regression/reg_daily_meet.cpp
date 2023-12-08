@@ -17,7 +17,8 @@ namespace unitest {
 
 class Meeting_DetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
-  Meeting_DetectionTestSuite() : CVI_TDLModelTestSuite("daily_reg_meet.json", "reg_daily_meet") {}
+  Meeting_DetectionTestSuite()
+      : CVI_TDLModelTestSuite("reg_daily_meetdet.json", "reg_daily_meetdet") {}
 
   virtual ~Meeting_DetectionTestSuite() = default;
 
@@ -66,58 +67,63 @@ TEST_F(Meeting_DetectionTestSuite, accuracy) {
   const float score_threshold = 0.1;
   for (nlohmann::json::iterator iter = results.begin(); iter != results.end(); iter++) {
     std::string image_path = (m_image_dir / iter.key()).string();
+
     Image image(image_path, PIXEL_FORMAT_RGB_888);
     ASSERT_TRUE(image.open());
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     TDLObject<cvtdl_object_t> vehicle_meta;
     init_obj_meta(vehicle_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
     ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, vehicle_meta), CVI_TDL_SUCCESS);
-    // printf("boxes===================================\n");
-    // for (uint32_t i = 0; i < vehicle_meta->size; i++) {
-    //   printf("bbox.x1 = %f\n", vehicle_meta->info[i].bbox.x1);
-    //   printf("bbox.y1 = %f\n", vehicle_meta->info[i].bbox.y1);
-    //   printf("bbox.x2 = %f\n", vehicle_meta->info[i].bbox.x2);
-    //   printf("bbox.y2 = %f\n", vehicle_meta->info[i].bbox.y2);
-    //   printf("bbox.classes = %d\n", vehicle_meta->info[i].classes);
-    //   printf("bbox.score = %f\n", vehicle_meta->info[i].bbox.score);
-
-    //   // ss << "[" << vehicle_meta->info[i].bbox.x1 << "," << vehicle_meta->info[i].bbox.y1 <<
-    //   ","
-    //   //    << vehicle_meta->info[i].bbox.x2 << "," << vehicle_meta->info[i].bbox.y2 << ","
-    //   //    << vehicle_meta->info[i].classes << "," << vehicle_meta->info[i].bbox.score << "],";
-    // }
-    // printf("boxes===================================\n");
+    printf("boxes===================================\n");
+    for (uint32_t i = 0; i < vehicle_meta->size; i++) {
+      printf("bbox.x1 = %f\n", vehicle_meta->info[i].bbox.x1);
+      printf("bbox.y1 = %f\n", vehicle_meta->info[i].bbox.y1);
+      printf("bbox.x2 = %f\n", vehicle_meta->info[i].bbox.x2);
+      printf("bbox.y2 = %f\n", vehicle_meta->info[i].bbox.y2);
+      printf("bbox.classes = %d\n", vehicle_meta->info[i].classes);
+      printf("bbox.score = %f\n", vehicle_meta->info[i].bbox.score);
+    }
+    printf("boxes===================================\n");
     auto expected_dets = iter.value();
 
-    bool missed = false;
-    if (vehicle_meta->size != expected_dets.size()) {
-      missed = true;
-    }
+    ASSERT_EQ(vehicle_meta->size, expected_dets.size());
 
-    if (!missed) {
-      for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
-        auto bbox = expected_dets[det_index]["bbox"];
-        int catId = int(expected_dets[det_index]["category_id"]) - 1;
+    for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
+      auto bbox = expected_dets[det_index]["bbox"];
+      int catId = int(expected_dets[det_index]["category_id"]);
 
-        cvtdl_bbox_t expected_bbox = {
-            .x1 = float(bbox[0]),
-            .y1 = float(bbox[1]),
-            .x2 = float(bbox[2]) + float(bbox[0]),
-            .y2 = float(bbox[3]) + float(bbox[1]),
-            .score = float(expected_dets[det_index]["score"]),
-        };
+      cvtdl_bbox_t expected_bbox = {
+          .x1 = float(bbox[0]),
+          .y1 = float(bbox[1]),
+          .x2 = float(bbox[2]),
+          .y2 = float(bbox[3]),
+          .score = float(expected_dets[det_index]["score"]),
+      };
 
-        auto comp = [=](cvtdl_object_info_t &info, cvtdl_bbox_t &bbox) {
-          if (info.classes == catId && iou(info.bbox, bbox) >= bbox_threshold &&
-              abs(info.bbox.score - bbox.score) <= score_threshold) {
-            return true;
-          }
-          return false;
-        };
-      }
+      auto comp = [=](cvtdl_object_info_t &info, cvtdl_bbox_t &bbox) {
+        if (info.classes == catId && iou(info.bbox, bbox) >= bbox_threshold &&
+            abs(info.bbox.score - bbox.score) <= score_threshold) {
+          return true;
+        }
+        return false;
+      };
+      EXPECT_TRUE(match_dets(*vehicle_meta, expected_bbox, comp))
+          << "Error!"
+          << "\n"
+          << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
+          << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
+          << "score: " << expected_bbox.score << "\n"
+          << "expectedID: " << catId << "\n"
+          << "[" << vehicle_meta->info[det_index].bbox.x1 << ","
+          << vehicle_meta->info[det_index].bbox.y1 << "," << vehicle_meta->info[det_index].bbox.x2
+          << "," << vehicle_meta->info[det_index].bbox.y2 << ","
+          << vehicle_meta->info[det_index].classes << ","
+          << vehicle_meta->info[det_index].bbox.score << "],\n";
     }
     CVI_TDL_FreeCpp(vehicle_meta);  // delete expected_res;
   }
+  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION),
+            CVI_TDL_SUCCESS);
 }
 
 }  // namespace unitest

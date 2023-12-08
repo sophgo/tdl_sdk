@@ -120,17 +120,14 @@ endif()
 
 if(${CVI_PLATFORM} STREQUAL "ATHENA2")
   set(UnitTests
-  reg_daily_pet.cpp
-  # reg_daily_mobiledet.cpp
-  reg_daily_hand.cpp
+  reg_daily_petdet.cpp
+  reg_daily_handdet.cpp
   reg_daily_meet.cpp
   reg_daily_person_vehicle.cpp
-  # reg_daily_scrfd.cpp
-  # reg_daily_a2_lpd.cpp
-  # reg_daily_fr.cpp
-  # reg_daily_hatd.cpp
-  # reg_daily_ir_scrfd_face.cpp
-  # reg_daily_retinaface.cpp
+  reg_daily_hardhat_det.cpp
+  reg_daily_ir_scrfd_face.cpp
+  reg_daily_scrfd_det.cpp
+  reg_daily_lp_det.cpp
   )
 else()
 set(UnitTests
