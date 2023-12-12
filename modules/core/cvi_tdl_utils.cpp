@@ -132,13 +132,13 @@ CVI_S32 CVI_TDL_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWi
     }
     bool do_unmap_in = false, do_unmap_out = false;
     if (inFrame->stVFrame.pu8VirAddr[0] == NULL) {
-      inFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(inFrame->stVFrame.u64PhyAddr[0],
-                                                                    inFrame->stVFrame.u32Length[0]);
+      inFrame->stVFrame.pu8VirAddr[0] =
+          (CVI_U8 *)CVI_SYS_Mmap(inFrame->stVFrame.u64PhyAddr[0], inFrame->stVFrame.u32Length[0]);
       do_unmap_in = true;
     }
     if (outFrame->stVFrame.pu8VirAddr[0] == NULL) {
-      outFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
-          outFrame->stVFrame.u64PhyAddr[0], outFrame->stVFrame.u32Length[0]);
+      outFrame->stVFrame.pu8VirAddr[0] =
+          (CVI_U8 *)CVI_SYS_Mmap(outFrame->stVFrame.u64PhyAddr[0], outFrame->stVFrame.u32Length[0]);
       do_unmap_out = true;
     }
     cv::Mat image(cv::Size(inFrame->stVFrame.u32Width, inFrame->stVFrame.u32Height), CV_8UC3,

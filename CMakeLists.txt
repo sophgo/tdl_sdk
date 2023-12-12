@@ -69,7 +69,6 @@ endif()
 
 if ("${CONFIG_DUAL_OS}" STREQUAL "ON")
   add_definitions(-DCONFIG_DUAL_OS)
-  set(CONFIG_DUAL_OS ON)
 endif()
 
 if ("${ENABLE_PERFETTO}" STREQUAL "ON")

@@ -36,7 +36,7 @@ static void DO_MAP_IF_NEEDED(VIDEO_FRAME_INFO_S *frame, bool *do_unmap) {
       frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
     frame->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame_size);
+        (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame_size);
     frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
     frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
     *do_unmap = true;

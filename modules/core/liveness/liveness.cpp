@@ -32,7 +32,7 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
                                                           cvtdl_face_t *rgb_meta,
                                                           cvtdl_face_t *ir_meta) {
   frame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+      (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat rgb_frame(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
                     frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   if (rgb_frame.data == nullptr) {
@@ -40,8 +40,8 @@ static std::vector<std::vector<cv::Mat>> image_preprocess(VIDEO_FRAME_INFO_S *fr
     return std::vector<std::vector<cv::Mat>>{};
   }
 
-  sink_buffer->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
-      sink_buffer->stVFrame.u64PhyAddr[0], sink_buffer->stVFrame.u32Length[0]);
+  sink_buffer->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(sink_buffer->stVFrame.u64PhyAddr[0],
+                                                               sink_buffer->stVFrame.u32Length[0]);
   cv::Mat ir_frame(sink_buffer->stVFrame.u32Height, sink_buffer->stVFrame.u32Width, CV_8UC3,
                    sink_buffer->stVFrame.pu8VirAddr[0], sink_buffer->stVFrame.u32Stride[0]);
   if (ir_frame.data == nullptr) {

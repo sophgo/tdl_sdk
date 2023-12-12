@@ -83,7 +83,7 @@ void _DrawPts(VIDEO_FRAME_INFO_S *frame, cvtdl_pts_t *pts, color_rgb color, int 
   bool do_unmap = false;
   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
     frame->stVFrame.pu8VirAddr[0] =
-        (uint8_t *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+        (uint8_t *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], image_size);
     frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
     frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
     do_unmap = true;
@@ -187,7 +187,7 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_
   bool do_unmap = false;
   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
     frame->stVFrame.pu8VirAddr[0] =
-        (uint8_t *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+        (uint8_t *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], image_size);
     frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
     frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
     do_unmap = true;
@@ -527,7 +527,7 @@ int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvtdl_pts_t *pts, cvtdl_service
   bool do_unmap = false;
   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
     frame->stVFrame.pu8VirAddr[0] =
-        (uint8_t *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+        (uint8_t *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], image_size);
     frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
     frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
     do_unmap = true;
@@ -619,7 +619,7 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
   bool do_unmap = false;
   if (drawFrame->stVFrame.pu8VirAddr[0] == NULL) {
     drawFrame->stVFrame.pu8VirAddr[0] =
-        (uint8_t *)CVI_SYS_MmapCache(drawFrame->stVFrame.u64PhyAddr[0], image_size);
+        (uint8_t *)CVI_SYS_Mmap(drawFrame->stVFrame.u64PhyAddr[0], image_size);
     drawFrame->stVFrame.pu8VirAddr[1] =
         drawFrame->stVFrame.pu8VirAddr[0] + drawFrame->stVFrame.u32Length[0];
     drawFrame->stVFrame.pu8VirAddr[2] =
@@ -678,7 +678,7 @@ int DrawPose17(const cvtdl_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   return CVI_TDL_FAILURE;
 #else
   frame->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
+      (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
               frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   if (img.data == nullptr) {
@@ -756,7 +756,7 @@ int DrawPose17(const cvtdl_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
   frame->stVFrame.pu8VirAddr[0] = NULL;
 
-  // frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0],
+  // frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0],
   //                                                             frame->stVFrame.u32Length[0]);
   // cv::Mat draw_img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
   //             frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);

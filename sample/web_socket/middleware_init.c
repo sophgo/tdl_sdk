@@ -44,13 +44,16 @@ CVI_S32 SAMPLE_TDL_Init_WM_NO_RTSP(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
   }
   printf("Total memory of VB pool: %u bytes\n", u32TotalBlkSize);
 
+  CVI_S32 s32Ret;
+#ifndef CONFIG_DUAL_OS
   // Init system & vb pool
   printf("Initialize SYS and VB\n");
-  CVI_S32 s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
+  s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
   if (s32Ret != CVI_SUCCESS) {
     printf("system init failed with %#x\n", s32Ret);
     return s32Ret;
   }
+#endif
 
   // Init VI
 
@@ -126,7 +129,7 @@ CVI_S32 SAMPLE_TDL_Init_WM_NO_RTSP(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
 
     if (pstVPSSConf->bBindVI) {
       printf("Bind VI with VPSS Grp(%u), Chn(%u)\n", u32VpssGrpIndex, pstVPSSConf->u32ChnBindVI);
-#ifdef _MIDDLEWARE_V2_
+#if (defined _MIDDLEWARE_V2_ || defined _MIDDLEWARE_V3_)
       s32Ret = SAMPLE_COMM_VI_Bind_VPSS(0, pstVPSSConf->u32ChnBindVI, u32VpssGrpIndex);
 #else
       s32Ret = SAMPLE_COMM_VI_Bind_VPSS(pstVPSSConf->u32ChnBindVI, u32VpssGrpIndex);
@@ -210,7 +213,9 @@ vpss_start_error:
   SAMPLE_COMM_VI_DestroyIsp(&pstMWConfig->stViConfig);
   SAMPLE_COMM_VI_DestroyVi(&pstMWConfig->stViConfig);
 vi_start_error:
+#ifndef CONFIG_DUAL_OS
   SAMPLE_COMM_SYS_Exit();
+#endif
 
   return s32Ret;
 }

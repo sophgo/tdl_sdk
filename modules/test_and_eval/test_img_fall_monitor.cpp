@@ -37,7 +37,7 @@ int skeleton[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12}, {5, 11}
 void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta, std::string save_path,
                     std::string text, float score) {
   bg->stVFrame.pu8VirAddr[0] =
-      (CVI_U8 *)CVI_SYS_MmapCache(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
+      (CVI_U8 *)CVI_SYS_Mmap(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
 
   cv::Mat img_rgb(bg->stVFrame.u32Height, bg->stVFrame.u32Width, CV_8UC3,
                   bg->stVFrame.pu8VirAddr[0], bg->stVFrame.u32Stride[0]);

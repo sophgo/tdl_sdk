@@ -75,28 +75,64 @@ endif
 # Middleware stuffs
 #####################################################
 MW_LIB_PATH = $(MW_PATH)/lib
-MW_3RD_LIB_PATH = $(MW_LIB_PATH)/3rd
 MW_INC_PATH = $(MW_PATH)/include
-MW_SAMPLE_INC_PATH = $(MW_PATH)/sample/common
+MW_PANEL_INC_PATH += ${MW_PATH}/include/panel
+MW_SAMPLE_PATH = $(MW_PATH)/sample/common
+MW_3RD_LIB_PATH = $(MW_LIB_PATH)/3rd
+
 MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1 -lcli
 
-ifeq ($(CHIP), ATHENA2)
-MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
-MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
-CFLAGS += -DATHENA2
-else ifeq ($(CHIP), CV183X)
-MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu
-MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
-else ifeq ($(CHIP), CV182X)
-MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu -lisp_algo
-MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
-else ifeq ($(CHIP), CV181X)
-MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu 
-MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
-CFLAGS += -DCV181X
-else ifeq ($(CHIP), CV180X)
-MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu 
-MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
+ifneq (,$(findstring middleware/v1,$(MW_PATH)))
+    MW_VERSION = v1
+else ifneq (,$(findstring middleware/v2,$(MW_PATH)))
+    MW_VERSION = v2
+	CFLAGS += -D_MIDDLEWARE_V2_
+else ifneq (,$(findstring middleware/v3,$(MW_PATH)))
+    MW_VERSION = v3
+	CFLAGS += -D_MIDDLEWARE_V3_ -Wno-maybe-uninitialized
+endif
+
+ifeq ($(MW_VERSION), v1)
+	ifeq ($(CHIP), CV183X)
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu
+		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
+	else ifeq ($(CHIP), CV182X)
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu -lisp_algo
+		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
+	endif
+else ifeq ($(MW_VERSION), v2)
+	ifeq ($(CHIP), ATHENA2)
+		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
+		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
+		CFLAGS += -DATHENA2
+	else ifeq ($(CHIP), CV181X)
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
+		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
+		CFLAGS += -DCV181X
+	else ifeq ($(CHIP), CV180X)
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
+		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
+	endif
+else ifeq ($(MW_VERSION), v3)
+	ifeq ($(CHIP), CV181X)
+		MW_LIBS = -lini -lmsg -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
+		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
+		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv181x
+		CFLAGS += -DCV181X
+		SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
+			 ${MW_SAMPLE_PATH}/sample_common_sys.c \
+			 ${MW_SAMPLE_PATH}/sample_common_platform.c \
+			 ${MW_SAMPLE_PATH}/sample_common_vpss.c \
+			 ${MW_SAMPLE_PATH}/sample_common_vi.c \
+			 ${MW_SAMPLE_PATH}/sample_common_isp.c \
+			 ${MW_SAMPLE_PATH}/sample_common_bin.c \
+			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
+			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
+	else ifeq ($(CHIP), CV180X)
+		MW_LIBS = -lini -lmsg -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
+		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
+		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv180x
+	endif
 endif
 
 #####################################################
@@ -215,21 +251,19 @@ CFLAGS += -I$(SDK_INC_PATH) \
           -I$(SDK_SAMPLE_INC_PATH) \
           -I$(MW_INC_PATH) \
           -I$(RTSP_INC_PATH) \
-          -I$(MW_SAMPLE_INC_PATH) \
+          -I$(MW_SAMPLE_PATH) \
           -I$(MW_ISP_INC_PATH) \
           -I$(IVE_SDK_INC_PATH) \
           -I$(OPENCV_INC_PATH) \
           -I$(STB_INC_PATH) \
           -I$(EVA_INC_PATH) \
+		  -I$(MW_PANEL_INC_PATH) \
+		  -I$(MW_PANEL_BOARD_INC_PATH) \
           -I$(KERNEL_ROOT)/include \
           -I$(AISDK_ROOT_PATH)/include/stb
 
 ifeq ($(CHIP), CV181X)
     CFLAGS += -I$(CV181X_INC_PATH)
-endif
-
-ifneq (,$(findstring middleware/v2,$(MW_PATH)))
-    CFLAGS += -D_MIDDLEWARE_V2_
 endif
 
 ifeq ($(CONFIRM_ENV_VAR), 1)
@@ -268,16 +302,12 @@ TARGETS = $(TARGETS_SAMPLE_INIT) \
 	      $(TARGETS_APP_SAMPLE) \
 	      $(TARGETS_YOLO_SAMPLE)
 
-.PHONY : all clean install
+.PHONY : all clean
 
 all: $(TARGETS)
 
 clean:
-	rm -f $(OBJS) $(TARGETS) $(SDK_ROOT_PATH)/sample/utils/*.o
-
-install:
-	mkdir -p ../tmp_install/bin
-	cp $(TARGETS) ../tmp_install/bin
+	rm -f $(OBJS) $(TARGETS)
 
 $(PWD)/%.o: $(PWD)/%.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
@@ -294,11 +324,17 @@ sample_read_od: $(PWD)/sample_read_od.o $(SDK_ROOT_PATH)/sample/utils/sample_uti
 sample_aud_%: $(PWD)/sample_aud_%.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o
 	$(CXX) $(LDFLAGS) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS) -o $@ $^
 
-sample_app_%: $(PWD)/sample_app_%.o $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o
-	$(CC) $(LDFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
+sample_app_%: $(PWD)/sample_app_%.o \
+			  $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o \
+			  $(SAMPLE_COMMON_FILE)
+	$(CC) $(CFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
 
-sample_vi_%: $(PWD)/sample_vi_%.o $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o $(SDK_ROOT_PATH)/sample/utils/middleware_utils.o
-	$(CC) $(LDFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
+sample_vi_%: $(PWD)/sample_vi_%.o \
+			 $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o \
+			 $(SDK_ROOT_PATH)/sample/utils/sample_utils.o \
+			 $(SDK_ROOT_PATH)/sample/utils/middleware_utils.o \
+			 $(SAMPLE_COMMON_FILE)
+	$(CC) $(CFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
 
 sample_init: $(PWD)/sample_init.o
 	$(CC) $(LDFLAGS) $(SAMPLE_LIBS) -o $@ $^

@@ -127,6 +127,10 @@ ifneq (,$(findstring middleware/v2,$(MW_PATH)))
     CFLAGS += -D_MIDDLEWARE_V2_
 endif
 
+ifneq (,$(findstring middleware/v3,$(MW_PATH)))
+    CFLAGS += -D_MIDDLEWARE_V3_
+endif
+
 ifeq ($(CHECK_SDK), 1)
 $(info ---------------------------------------)
 $(info CHIP: $(CHIP))

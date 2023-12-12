@@ -37,7 +37,7 @@ typedef struct {
   cvitdl_handle_t stTDLHandle;
 } SAMPLE_TDL_TDL_THREAD_ARG_S;
 
-CVI_S32 SAMPLE_COMM_VPSS_Stop(VPSS_GRP VpssGrp, CVI_BOOL *pabChnEnable) {
+CVI_S32 SAMPLE_COMM_VPSS_Stop_MD(VPSS_GRP VpssGrp, CVI_BOOL *pabChnEnable) {
   CVI_S32 j;
   CVI_S32 s32Ret = CVI_SUCCESS;
   VPSS_CHN VpssChn;
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
       CVI_TRUE,
   };
   for (VPSS_GRP VpssGrp = 0; VpssGrp < VPSS_MAX_GRP_NUM; ++VpssGrp)
-    SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
+    SAMPLE_COMM_VPSS_Stop_MD(VpssGrp, abChnEnable);
 
   CVI_S32 s32Ret = SAMPLE_TDL_Get_VI_Config(&stMWConfig.stViConfig);
   if (s32Ret != CVI_SUCCESS || stMWConfig.stViConfig.s32WorkingViNum <= 0) {

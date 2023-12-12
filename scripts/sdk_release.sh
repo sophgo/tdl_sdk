@@ -23,6 +23,8 @@ fi
 
 if [[ "$CONFIG_DUAL_OS" == "y" ]]; then
     CONFIG_DUAL_OS="ON"
+else
+    CONFIG_DUAL_OS="OFF"
 fi
 
 REPO_USER=""
@@ -134,35 +136,30 @@ echo "trying to build sample in released folder."
 if [[ "$CHIP_ARCH" != "CV180X" ]]; then
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl
   make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE="$USE_TPU_IVE" SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR CHIP=$CHIP_ARCH -j10 || exit 1
-  make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl_app
   make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
-  make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_md
   make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
-  make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_preprocess
   make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
-  make install || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_draw_rect
   make KERNEL_ROOT="$KERNEL_ROOT" W_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
-  make install || exit 1
   make clean || exit 1
   echo "done"
   popd

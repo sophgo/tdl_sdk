@@ -15,6 +15,11 @@ if("${MW_VER}" STREQUAL "v2")
   add_definitions(-D_MIDDLEWARE_V2_)
 endif()
 
+if("${MW_VER}" STREQUAL "v3")
+  add_definitions(-D_MIDDLEWARE_V3_)
+endif()
+
+
 if("${CVI_PLATFORM}" STREQUAL "ATHENA2")
   set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv186x/)
 elseif ("${CVI_PLATFORM}" STREQUAL "CV183X")

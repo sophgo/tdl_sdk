@@ -54,8 +54,8 @@ void cityscapesEval::getImage(int index, std::string &image_path) { image_path =
 void cityscapesEval::getImageNum(uint32_t *num) { *num = m_images.size(); }
 
 void cityscapesEval::writeResult(VIDEO_FRAME_INFO_S *label_frame, const int index) {
-  label_frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(
-      label_frame->stVFrame.u64PhyAddr[0], label_frame->stVFrame.u32Length[0]);
+  label_frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(label_frame->stVFrame.u64PhyAddr[0],
+                                                               label_frame->stVFrame.u32Length[0]);
 
   cv::Mat image(label_frame->stVFrame.u32Height, label_frame->stVFrame.u32Width, CV_8SC1,
                 label_frame->stVFrame.pu8VirAddr[0], label_frame->stVFrame.u32Stride[0]);

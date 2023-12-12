@@ -56,13 +56,15 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
-elseif()
+elseif(${CONFIG_DUAL_OS} STREQUAL "ON")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libmsg.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvilink.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so

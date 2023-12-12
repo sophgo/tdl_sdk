@@ -707,7 +707,7 @@ static CVI_S32 capture_target(person_capture_t *person_cpt_info, VIDEO_FRAME_INF
       frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
     frame->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], image_size);
+        (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], image_size);
     frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
     frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
     do_unmap = true;

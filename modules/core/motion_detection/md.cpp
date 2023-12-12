@@ -15,8 +15,7 @@ static CVI_S32 VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src,
   size_t image_size =
       src->stVFrame.u32Length[0] + src->stVFrame.u32Length[1] + src->stVFrame.u32Length[2];
   if (src->stVFrame.pu8VirAddr[0] == NULL) {
-    src->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(src->stVFrame.u64PhyAddr[0], image_size);
+    src->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(src->stVFrame.u64PhyAddr[0], image_size);
     do_unmap = true;
   }
   CVI_S32 ret = CVI_SUCCESS;
@@ -182,7 +181,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, std::vector<std::v
                       srcframe->stVFrame.u32Length[2];
   if (srcframe->stVFrame.pu8VirAddr[0] == NULL) {
     srcframe->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(srcframe->stVFrame.u64PhyAddr[0], image_size);
+        (CVI_U8 *)CVI_SYS_Mmap(srcframe->stVFrame.u64PhyAddr[0], image_size);
     do_unmap_src = true;
   }
 

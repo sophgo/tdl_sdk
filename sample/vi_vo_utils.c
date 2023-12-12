@@ -148,7 +148,9 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   stIniCfg.enWDRMode[0] = WDR_MODE_NONE;
   stIniCfg.s32BusId[0] = 3;
   stIniCfg.MipiDev[0] = 0xFF;
+#ifndef _MIDDLEWARE_V3_
   stIniCfg.enSnsType[1] = SONY_IMX327_SLAVE_MIPI_2M_30FPS_12BIT;
+#endif
   stIniCfg.s32BusId[1] = 0;
   stIniCfg.MipiDev[1] = 0xFF;
 
@@ -226,7 +228,9 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   stIniCfg.s32BusId = 3;
   stIniCfg.MipiDev = 0xFF;
   stIniCfg.u8UseDualSns = 0;
+#ifndef _MIDDLEWARE_V3_
   stIniCfg.enSns2Type = SONY_IMX327_SLAVE_MIPI_2M_30FPS_12BIT;
+#endif
   stIniCfg.s32Sns2BusId = 0;
   stIniCfg.Sns2MipiDev = 0xFF;
 
@@ -349,11 +353,13 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
                stVbConf.astCommPool[poolId].u32BlkCnt);
   }
 
+#ifndef CONFIG_DUAL_OS
   s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
   if (s32Ret != CVI_SUCCESS) {
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);
     return s32Ret;
   }
+#endif
 #ifndef ATHENA2
   s32Ret = CVI_SYS_SetVPSSMode(enVPSSMode);
   if (s32Ret != CVI_SUCCESS) {

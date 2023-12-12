@@ -63,13 +63,13 @@ void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const 
   }
   bool do_unmap_in = false, do_unmap_out = false;
   if (inFrame->stVFrame.pu8VirAddr[0] == NULL) {
-    inFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(inFrame->stVFrame.u64PhyAddr[0],
-                                                                  inFrame->stVFrame.u32Length[0]);
+    inFrame->stVFrame.pu8VirAddr[0] =
+        (CVI_U8 *)CVI_SYS_Mmap(inFrame->stVFrame.u64PhyAddr[0], inFrame->stVFrame.u32Length[0]);
     do_unmap_in = true;
   }
   if (outFrame->stVFrame.pu8VirAddr[0] == NULL) {
-    outFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(outFrame->stVFrame.u64PhyAddr[0],
-                                                                   outFrame->stVFrame.u32Length[0]);
+    outFrame->stVFrame.pu8VirAddr[0] =
+        (CVI_U8 *)CVI_SYS_Mmap(outFrame->stVFrame.u64PhyAddr[0], outFrame->stVFrame.u32Length[0]);
     do_unmap_out = true;
   }
   cv::Mat image(cv::Size(inFrame->stVFrame.u32Width, inFrame->stVFrame.u32Height), CV_8UC3,
@@ -101,7 +101,7 @@ void mmap_video_frame(VIDEO_FRAME_INFO_S *frame) {
       frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
     frame->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_MmapCache(frame->stVFrame.u64PhyAddr[0], f_frame_size);
+        (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], f_frame_size);
     if (frame->stVFrame.u32Length[1] != 0) {
       frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
     } else {

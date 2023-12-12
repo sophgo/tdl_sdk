@@ -150,7 +150,7 @@ static void *run_venc(void *args) {
     size_t image_size = stVOFrame.stVFrame.u32Length[0] + stVOFrame.stVFrame.u32Length[1] +
                         stVOFrame.stVFrame.u32Length[2];
     stVOFrame.stVFrame.pu8VirAddr[0] =
-        (uint8_t *)CVI_SYS_MmapCache(stVOFrame.stVFrame.u64PhyAddr[0], image_size);
+        (uint8_t *)CVI_SYS_Mmap(stVOFrame.stVFrame.u64PhyAddr[0], image_size);
     stVOFrame.stVFrame.pu8VirAddr[1] =
         stVOFrame.stVFrame.pu8VirAddr[0] + stVOFrame.stVFrame.u32Length[0];
     stVOFrame.stVFrame.pu8VirAddr[2] =

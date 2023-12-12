@@ -203,8 +203,8 @@ int AlphaPose::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
 }
 
 int AlphaPose::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *objects) {
-  srcFrame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_MmapCache(srcFrame->stVFrame.u64PhyAddr[0],
-                                                                 srcFrame->stVFrame.u32Length[0]);
+  srcFrame->stVFrame.pu8VirAddr[0] =
+      (CVI_U8 *)CVI_SYS_Mmap(srcFrame->stVFrame.u64PhyAddr[0], srcFrame->stVFrame.u32Length[0]);
   cv::Mat img_rgb(srcFrame->stVFrame.u32Height, srcFrame->stVFrame.u32Width, CV_8UC3,
                   srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Stride[0]);
   if (img_rgb.data == nullptr) {
