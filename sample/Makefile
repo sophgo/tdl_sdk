@@ -79,6 +79,9 @@ MW_INC_PATH = $(MW_PATH)/include
 MW_PANEL_INC_PATH += ${MW_PATH}/include/panel
 MW_SAMPLE_PATH = $(MW_PATH)/sample/common
 MW_3RD_LIB_PATH = $(MW_LIB_PATH)/3rd
+ifeq ($(origin MW_PANEL_BOARD_INC_PATH), undefined)
+  MW_PANEL_BOARD_INC_PATH := $(MW_PATH)/include
+endif
 
 MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1 -lcli
 
