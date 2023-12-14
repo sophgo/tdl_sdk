@@ -171,9 +171,7 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, std::vector<std::v
     return CVI_FAILURE;
     ;
   }
-#ifndef SIMPLY_MODEL
   md_timer_.TicToc("start");
-#endif
   CVI_S32 ret = CVI_SUCCESS;
 
   bool do_unmap_src = false;
@@ -190,14 +188,10 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, std::vector<std::v
     LOGE("Convert frame to IVE_IMAGE_S fail %x\n", ret);
     return CVI_FAILURE;
   }
-#ifndef SIMPLY_MODEL
   md_timer_.TicToc("preprocess");
-#endif
   ret = ive_instance->frame_diff(&tmp_src_img_, &background_img, &md_output, threshold);
 
-#ifndef SIMPLY_MODEL
   md_timer_.TicToc("tpu_ive");
-#endif
   if (do_unmap_src) {
     CVI_SYS_Munmap((void *)srcframe->stVFrame.pu8VirAddr[0], image_size);
   }
@@ -248,8 +242,6 @@ CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, std::vector<std::v
       objs.push_back(box);
     }
   }
-#ifndef SIMPLY_MODEL
   md_timer_.TicToc("post");
-#endif
   return CVI_SUCCESS;
 }

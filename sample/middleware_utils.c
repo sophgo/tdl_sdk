@@ -180,7 +180,7 @@ CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
   printf("Initialize VPSS\n");
   memcpy(&pstMWContext->stVPSSPoolConfig, &pstMWConfig->stVPSSPoolConfig,
          sizeof(SAMPLE_TDL_VPSS_POOL_CONFIG_S));
-#ifndef ATHENA2
+#ifndef CV186X
   VPSS_MODE_S stVPSSMode = pstMWConfig->stVPSSPoolConfig.stVpssMode;
   CVI_SYS_SetVPSSModeEx(&stVPSSMode);
 #endif
@@ -194,7 +194,7 @@ CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
     printf("---------VPSS[%u]---------\n", u32VpssGrpIndex);
     printf("Input size: (%ux%u)\n", pstGrpAttr->u32MaxW, pstGrpAttr->u32MaxH);
     printf("Input format: (%d)\n", pstGrpAttr->enPixelFormat);
-#ifndef ATHENA2
+#ifndef CV186X
     printf("VPSS physical device number: %u\n", pstGrpAttr->u8VpssDev);
 #endif
     printf("Src Frame Rate: %d\n", pstGrpAttr->stFrameRate.s32SrcFrameRate);

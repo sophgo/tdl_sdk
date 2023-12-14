@@ -36,7 +36,7 @@ set(REG_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/sample/common
 )
 
-if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+if(${CVI_PLATFORM} STREQUAL "CV186X")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so

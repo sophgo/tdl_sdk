@@ -154,7 +154,7 @@ VPSS_GRP_DEFAULT_HELPER2(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_
   pstVpssGrpAttr->enPixelFormat = enSrcFormat;
   pstVpssGrpAttr->u32MaxW = srcWidth;
   pstVpssGrpAttr->u32MaxH = srcHeight;
-#ifndef ATHENA2
+#ifndef CV186X
   pstVpssGrpAttr->u8VpssDev = dev;
 #endif
 }

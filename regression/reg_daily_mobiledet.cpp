@@ -52,7 +52,7 @@ class MobileDetV2TestSuite : public CVI_TDLModelTestSuite {
 const std::unordered_map<std::string,
                          std::pair<CVI_TDL_SUPPORTED_MODEL_E, MobileDetV2TestSuite::InferenceFunc>>
     MobileDetV2TestSuite::MODEL_MAP = {
-#ifndef ATHENA2
+#ifndef CV186X
         {"mobiledetv2-d0-ls.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_MobileDetV2_COCO80}},
         {"mobiledetv2-d0.cvimodel",
@@ -80,7 +80,7 @@ const std::unordered_map<std::string,
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d0-448_cv186x.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
-#ifndef ATHENA2
+#ifndef CV186X
         {"mobiledetv2-pedestrian-d0-ls-768.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d0-ls.cvimodel",
@@ -94,7 +94,7 @@ const std::unordered_map<std::string,
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
         {"mobiledetv2-pedestrian-d1-896_cv186x.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
-#ifndef ATHENA2
+#ifndef CV186X
         {"mobiledetv2-vehicle-d0-ls.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_MobileDetV2_Vehicle}},
         {"mobiledetv2-vehicle-d0.cvimodel",
@@ -117,7 +117,7 @@ MobileDetV2TestSuite::ModelInfo MobileDetV2TestSuite::getModel(const std::string
   return model_info;
 }
 
-#ifndef ATHENA2
+#ifndef CV186X
 TEST_F(MobileDetV2TestSuite, open_close_model) {
   ModelInfo model_info = getModel("mobiledetv2-lite-person-pets.cvimodel");
   ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
@@ -324,7 +324,7 @@ TEST_F(MobileDetV2TestSuite, set_threshold) {
   }
 }
 
-#ifndef ATHENA2
+#ifndef CV186X
 TEST_F(MobileDetV2TestSuite, select_classes) {
   ModelInfo model_info = getModel("mobiledetv2-d0-ls.cvimodel");
   ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);

@@ -1,13 +1,13 @@
 #pragma once
 
-#ifndef ATHENA2
+#ifndef CV186X
 #include <cviruntime.h>
 #endif
 #include "cvi_comm.h"
 
 namespace cvitdl {
 
-#ifndef ATHENA2
+#ifndef CV186X
 inline const char *get_tpu_error_msg(int code) {
   switch (code) {
     case CVI_RC_AGAIN:

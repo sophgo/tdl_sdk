@@ -15,7 +15,7 @@
 #include <cvi_math.h>
 #endif
 
-#ifdef ATHENA2
+#ifdef CV186X
 #include <linux/cvi_comm_vb.h>
 #else
 #include <cvi_comm_vb.h>

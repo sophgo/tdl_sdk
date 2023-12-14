@@ -91,7 +91,7 @@ set(SAMPLE_INC ${SAMPLE_INC}
 endif()
 endif()
 
-if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+if(${CVI_PLATFORM} STREQUAL "CV186X")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so

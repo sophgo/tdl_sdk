@@ -16,14 +16,6 @@ if(DEFINED NO_OPENCV)
   add_subdirectory(face_attribute)
   set(CORE_INTERFACE cvi_tdl_core_phobos.cpp)
 else()
-  if (DEFINED SIMPLY_MODEL)
-    add_subdirectory(core)
-    add_subdirectory(utils)
-    add_subdirectory(object_detection/mobiledetv2)
-    add_subdirectory(motion_detection)
-    add_subdirectory(ive)
-    set(CORE_INTERFACE cvi_tdl_core_phobos.cpp)
-  else()
     if ("${ENABLE_CVI_TDL_CV_UTILS}" STREQUAL "ON")
       add_compile_definitions(ENABLE_CVI_TDL_CV_UTILS)
     endif()
@@ -72,7 +64,6 @@ else()
     add_subdirectory(image_classification)
     add_subdirectory(license_plate_recognitionv2)
     set(CORE_INTERFACE cvi_tdl_core.cpp)
-  endif()
 endif()
 
 
@@ -80,17 +71,11 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/utils
                     ${CMAKE_CURRENT_SOURCE_DIR}/ive)
-if (DEFINED SIMPLY_MODEL)
-set(CORE_SRCS cvi_tdl_types_mem.cpp
-              cvi_tdl_rescale_bbox.cpp
-              ${CORE_INTERFACE})
-else()
 set(CORE_SRCS cvi_tdl_types_mem.cpp
               cvi_tdl_rescale_bbox.cpp
               cvi_tdl_utils.cpp
               cvi_tdl_custom.cpp
               ${CORE_INTERFACE})
-endif()
 
 project(cvi_tdl_core)
 add_library(${PROJECT_NAME} OBJECT ${CORE_SRCS})

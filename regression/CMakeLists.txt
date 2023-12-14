@@ -67,7 +67,7 @@ set(REG_INCLUDES
     ${CVI_RTSP_INCLUDE}
 )
 
-if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+if(${CVI_PLATFORM} STREQUAL "CV186X")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -135,7 +135,7 @@ endif()
 endif()
 
 
-if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+if(${CVI_PLATFORM} STREQUAL "CV186X")
   set(UnitTests
   reg_daily_petdet.cpp
   reg_daily_handdet.cpp
@@ -191,7 +191,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
 
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_evaluation cvi_tdl_app gtest_main ${SAMPLE_LIBS})
 
-if ("${CVI_PLATFORM}" STREQUAL "ATHENA2")
+if ("${CVI_PLATFORM}" STREQUAL "CV186X")
   set(DAILY_REGRESSION_ASSETS "assets_186x")
 elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")

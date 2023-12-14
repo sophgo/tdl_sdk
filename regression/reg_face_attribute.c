@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef ATHENA2
+#ifndef CV186X
 #include <cvimath/cvimath.h>
 #endif
 #include "core/utils/vpss_helper.h"

@@ -118,7 +118,7 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
 
 void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
   DestoryOutput(&vs_ctx->outputContext);
-#if defined(CV181X) || defined(CV180X) || defined(ATHENA2)
+#if defined(CV181X) || defined(CV180X) || defined(CV186X)
   SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
 #else
   SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
@@ -132,7 +132,7 @@ void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
                PIXEL_FORMAT_E aiFormat, CVI_U32 *devNum) {
-#if defined(CV181X) || defined(CV180X) || defined(ATHENA2)
+#if defined(CV181X) || defined(CV180X) || defined(CV186X)
   SAMPLE_INI_CFG_S stIniCfg = {};
 
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
@@ -154,7 +154,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   stIniCfg.s32BusId[1] = 0;
   stIniCfg.MipiDev[1] = 0xFF;
 
-#ifndef ATHENA2
+#ifndef CV186X
   VPSS_MODE_E enVPSSMode = VPSS_MODE_DUAL;
 #endif
   VB_CONFIG_S stVbConf;
@@ -234,7 +234,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   stIniCfg.s32Sns2BusId = 0;
   stIniCfg.Sns2MipiDev = 0xFF;
 
-#ifndef ATHENA2
+#ifndef CV186X
   VPSS_MODE_E enVPSSMode = VPSS_MODE_DUAL;
 #endif
   VB_CONFIG_S stVbConf;
@@ -360,7 +360,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
     return s32Ret;
   }
 #endif
-#ifndef ATHENA2
+#ifndef CV186X
   s32Ret = CVI_SYS_SetVPSSMode(enVPSSMode);
   if (s32Ret != CVI_SUCCESS) {
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);
@@ -572,7 +572,7 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
   }
-#if defined(CV181X) || defined(CV180X) || defined(ATHENA2)
+#if defined(CV181X) || defined(CV180X) || defined(CV186X)
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
 #else
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);

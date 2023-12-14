@@ -30,9 +30,7 @@ MUTEXAUTOLOCK_INIT(ResultMutex);
  */
 typedef struct {
   SAMPLE_TDL_MW_CONTEXT *pstMWContext;
-#ifndef SIMPLY_MODEL
   cvitdl_service_handle_t stServiceHandle;
-#endif
 } SAMPLE_TDL_VENC_THREAD_ARG_S;
 
 /**
@@ -71,7 +69,6 @@ void *run_venc(void *args) {
       memcpy(stObjMeta.info[oid].name, name, sizeof(stObjMeta.info[oid].name));
     }
 
-#ifndef SIMPLY_MODEL
     s32Ret = CVI_TDL_Service_ObjectDrawRect(pstArgs->stServiceHandle, &stObjMeta, &stFrame, true,
                                             CVI_TDL_Service_GetDefaultBrush());
     if (s32Ret != CVI_TDL_SUCCESS) {
@@ -79,12 +76,9 @@ void *run_venc(void *args) {
       printf("Draw fame fail!, ret=%x\n", s32Ret);
       goto error;
     }
-#endif
 
     s32Ret = SAMPLE_TDL_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
-#ifndef SIMPLY_MODEL
   error:
-#endif
     CVI_TDL_Free(&stObjMeta);
     CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
@@ -225,7 +219,7 @@ CVI_S32 get_middleware_config(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig) {
 
   // Create a VPSS Grp0 for main stream, video encoder, and TDL frame.
   pstMWConfig->stVPSSPoolConfig.u32VpssGrpCount = 1;
-#ifndef ATHENA2
+#ifndef CV186X
   pstMWConfig->stVPSSPoolConfig.stVpssMode.aenInput[0] = VPSS_INPUT_MEM;
   pstMWConfig->stVPSSPoolConfig.stVpssMode.enMode = VPSS_MODE_DUAL;
   pstMWConfig->stVPSSPoolConfig.stVpssMode.ViPipe[0] = 0;
@@ -325,11 +319,9 @@ int main(int argc, char *argv[]) {
 
   CVI_TDL_SetVpssTimeout(stTDLHandle, 1000);
 
-#ifndef SIMPLY_MODEL
   cvitdl_service_handle_t stServiceHandle = NULL;
   GOTO_IF_FAILED(CVI_TDL_Service_CreateHandle(&stServiceHandle, stTDLHandle), s32Ret,
                  create_service_fail);
-#endif
   // Step 3: Open and setup TDL models
   ///////////////////////////////////////////////////
 
@@ -366,9 +358,7 @@ int main(int argc, char *argv[]) {
   pthread_t stVencThread, stTDLThread;
   SAMPLE_TDL_VENC_THREAD_ARG_S venc_args = {
       .pstMWContext = &stMWContext,
-#ifndef SIMPLY_MODEL
       .stServiceHandle = stServiceHandle,
-#endif
   };
 
   SAMPLE_TDL_TDL_THREAD_ARG_S ai_args = {
@@ -387,9 +377,7 @@ int main(int argc, char *argv[]) {
   pthread_join(stTDLThread, NULL);
 
 setup_tdl_fail:
-#ifndef SIMPLY_MODEL
   CVI_TDL_Service_DestroyHandle(stServiceHandle);
-#endif
 create_service_fail:
   CVI_TDL_DestroyHandle(stTDLHandle);
 create_ai_fail:

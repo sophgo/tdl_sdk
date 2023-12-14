@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
 
   // Setup VPSS Grp0
   stMWConfig.stVPSSPoolConfig.u32VpssGrpCount = 1;
-#ifndef ATHENA2
+#ifndef CV186X
   stMWConfig.stVPSSPoolConfig.stVpssMode.aenInput[0] = VPSS_INPUT_MEM;
   stMWConfig.stVPSSPoolConfig.stVpssMode.enMode = VPSS_MODE_DUAL;
   stMWConfig.stVPSSPoolConfig.stVpssMode.ViPipe[0] = 0;

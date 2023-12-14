@@ -291,7 +291,7 @@ void CVI_TDL_CopyObjectMeta(const cvtdl_object_t *src, cvtdl_object_t *dest) {
     }
   }
 }
-#ifndef SIMPLY_MODEL
+
 void CVI_TDL_CopyHandPoses(const cvtdl_handpose21_meta_ts *src, cvtdl_handpose21_meta_ts *dest) {
   CVI_TDL_FreeCpp(dest);
   memset(dest, 0, sizeof(cvtdl_handpose21_meta_ts));
@@ -380,4 +380,3 @@ CVI_S32 CVI_TDL_CopyVpssImage(VIDEO_FRAME_INFO_S *src_frame, cvtdl_image_t *dst_
   CVI_TDL_UnMapImage(src_frame, unmap);
   return CVI_SUCCESS;
 }
-#endif

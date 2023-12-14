@@ -5,7 +5,7 @@
 #include "cvi_bmcv.h"
 #include <cstring>
 #include "core/utils/vpss_helper.h"
-#if defined(CV181X) || defined(ATHENA2)
+#if defined(CV181X) || defined(CV186X)
 #include <cvi_ive.h>
 #else
 #include "ive/ive.h"
@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
 
   VIDEO_FRAME_INFO_S frame;
   IVE_IMAGE_S image1 = CVI_IVE_ReadImage(ive_handle, strf1, IVE_IMAGE_TYPE_U8C3_PLANAR);
-#if defined(CV181X) || defined(ATHENA2)
+#if defined(CV181X) || defined(CV186X)
   int imgw = image1.u32Width;
 #else
   int imgw = image1.u16Width;
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
   } else {
     printf("Read image ok with %d!\n", imgw);
   }
-#if defined(CV181X) || defined(ATHENA2)
+#if defined(CV181X) || defined(CV186X)
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &frame);
 #else
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &frame, false);

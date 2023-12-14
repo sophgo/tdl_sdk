@@ -140,7 +140,7 @@ int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   (*data)[0].mean[2] = static_cast<float>(MEAN_B);
   (*data)[0].use_quantize_scale = true;
   (*data)[0].rescale_type = RESCALE_RB;
-#ifndef ATHENA2
+#ifndef CV186X
   (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
 #endif
   return CVI_TDL_SUCCESS;
@@ -374,9 +374,7 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *meta) {
     meta->width = frame->stVFrame.u32Width;
     meta->height = frame->stVFrame.u32Height;
   }
-#ifndef SIMPLY_MODEL
   model_timer_.TicToc("post");
-#endif
   return ret;
 }
 

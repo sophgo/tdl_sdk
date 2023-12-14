@@ -17,10 +17,6 @@ if [ "${FTP_SERVER_IP}" = "" ]; then
     FTP_SERVER_IP=10.80.0.5/sw_rls
 fi
 
-if [[ "$SIMPLY_MODEL" == "1" ]]; then
-    ENV_SIMPLY_MODEL="ON"
-fi
-
 if [[ "$CONFIG_DUAL_OS" == "y" ]]; then
     CONFIG_DUAL_OS="ON"
 else
@@ -98,6 +94,7 @@ elif [[ "$CHIP_ARCH" == "CV180X" ]]; then
     SHRINK_OPENCV_SIZE=ON
     USE_TPU_IVE=ON
 elif [[ "$CHIP_ARCH" == "ATHENA2" ]]; then
+    CHIP_ARCH=CV186X
     SHRINK_OPENCV_SIZE=OFF
     USE_TPU_IVE=OFF
 else
@@ -125,7 +122,6 @@ $CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DCVI_MIDDLEWARE_3RD_INCCLAGS="$CVI_TARGET_PACKAGES_INCLUDE" \
                                         -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR \
                                         -DREPO_USER=$REPO_USER \
-                                        -DENV_SIMPLY_MODEL=$ENV_SIMPLY_MODEL \
                                         -DCONFIG_DUAL_OS=$CONFIG_DUAL_OS
 
 ninja -j8 || exit 1

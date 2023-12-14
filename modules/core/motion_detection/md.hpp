@@ -3,9 +3,7 @@
 #include "core/core/cvtdl_core_types.h"
 #include "cvi_comm.h"
 #include "ive.hpp"
-#ifndef SIMPLY_MODEL
 #include "profiler.hpp"
-#endif
 
 struct Padding {
   uint32_t left;
@@ -44,7 +42,5 @@ class MotionDetection {
 
   Padding m_padding;
   bool use_roi_ = false;
-#ifndef SIMPLY_MODEL
   Timer md_timer_;
-#endif
 };

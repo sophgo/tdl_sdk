@@ -12,13 +12,13 @@ endif()
 
 project(mlir-sdk)
 
-if("${CVI_PLATFORM}" STREQUAL "ATHENA2")
+if("${CVI_PLATFORM}" STREQUAL "CV186X")
   set(MLIR_INCLUDES ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/include/)
 else()
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "ATHENA2")
+if("${CVI_PLATFORM}" STREQUAL "CV186X")
   set(MLIR_LIBS
       ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/lib/libbmrt.so
       ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/lib/libbmlib.so

@@ -217,7 +217,7 @@ CVI_S32 get_middleware_config(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig) {
 
   // Create a VPSS Grp0 for main stream, video encoder, and TDL frame.
   pstMWConfig->stVPSSPoolConfig.u32VpssGrpCount = 1;
-#ifndef ATHENA2
+#ifndef CV186X
   pstMWConfig->stVPSSPoolConfig.stVpssMode.aenInput[0] = VPSS_INPUT_MEM;
   pstMWConfig->stVPSSPoolConfig.stVpssMode.enMode = VPSS_MODE_DUAL;
   pstMWConfig->stVPSSPoolConfig.stVpssMode.ViPipe[0] = 0;

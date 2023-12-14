@@ -3,9 +3,7 @@
 #include "core/cvi_tdl_core.h"
 #include "cvi_tdl_core_internal.hpp"
 #include "cvi_tdl_log.hpp"
-#ifndef SIMPLY_MODEL
 #include "cvi_tdl_trace.hpp"
-#endif
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -19,11 +17,10 @@
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "cvi_tdl_experimental.h"
-#include "object_detection/mobiledetv2/mobiledetv2.hpp"
-#ifndef SIMPLY_MODEL
 #include "cvi_tdl_perfetto.h"
 #include "face_attribute/face_attribute.hpp"
 #include "motion_detection/md.hpp"
+#include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
@@ -31,7 +28,6 @@
 #include "retina_face/scrfd_face.hpp"
 #include "sound_classification/sound_classification.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
-#endif
 #include "utils/core_utils.hpp"
 using namespace std;
 using namespace cvitdl;
@@ -115,7 +111,6 @@ unordered_map<int, CreatorFuncAud> MODEL_CREATORS_AUD = {
 };
 
 unordered_map<int, CreatorFunc> MODEL_CREATORS = {
-#ifndef SIMPLY_MODEL
     {CVI_TDL_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
     {CVI_TDL_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
@@ -125,7 +120,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
     {CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 3))},
-#endif
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::coco80)},
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
@@ -162,12 +156,10 @@ void CVI_TDL_EnableGDC(cvitdl_handle_t handle, bool use_gdc) {
 //*************************************************
 
 inline void __attribute__((always_inline)) removeCtx(cvitdl_context_t *ctx) {
-#ifndef SIMPLY_MODEL
   if (ctx->ds_tracker) {
     delete ctx->ds_tracker;
     ctx->ds_tracker = nullptr;
   }
-#endif
 
   // delete ctx->td_model;
   if (ctx->md_model) {
@@ -237,9 +229,7 @@ CVI_S32 CVI_TDL_CreateHandle2(cvitdl_handle_t *handle, const VPSS_GRP vpssGroupI
   }
 
   cvitdl_context_t *ctx = new cvitdl_context_t;
-#ifndef SIMPLY_MODEL
   ctx->ive_handle = NULL;
-#endif
   ctx->vec_vpss_engine.push_back(new VpssEngine(vpssGroupId, vpssDev));
   const char timestamp[] = __DATE__ " " __TIME__;
   LOGI("cvitdl_handle_t is created, version %s-%s", CVI_TDL_TAG, timestamp);
@@ -319,7 +309,6 @@ CVI_S32 CVI_TDL_SetSkipVpssPreprocess(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_
   return CVI_TDL_SUCCESS;
 }
 
-#ifndef SIMPLY_MODEL
 CVI_S32 CVI_TDL_SetPerfEvalInterval(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
                                     int interval) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
@@ -332,7 +321,6 @@ CVI_S32 CVI_TDL_SetPerfEvalInterval(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MO
   }
   return CVI_TDL_SUCCESS;
 }
-#endif
 
 CVI_S32 CVI_TDL_GetSkipVpssPreprocess(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
                                       bool *skip) {
@@ -373,7 +361,6 @@ CVI_S32 CVI_TDL_GetModelThreshold(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODE
   return CVI_TDL_SUCCESS;
 }
 
-#ifndef SIMPLY_MODEL
 CVI_S32 CVI_TDL_SetVpssThread(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
                               const uint32_t thread) {
   return CVI_TDL_SetVpssThread2(handle, config, thread, -1, 0);
@@ -391,7 +378,6 @@ CVI_S32 CVI_TDL_SetVpssThread2(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E
     return CVI_TDL_ERR_OPEN_MODEL;
   }
 }
-#endif
 
 CVI_S32 CVI_TDL_SetVBPool(cvitdl_handle_t handle, uint32_t thread, VB_POOL pool_id) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
@@ -411,7 +397,6 @@ CVI_S32 CVI_TDL_GetVpssThread(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E 
   return CVI_TDL_SUCCESS;
 }
 
-#ifndef SIMPLY_MODEL
 CVI_S32 CVI_TDL_GetVBPool(cvitdl_handle_t handle, uint32_t thread, VB_POOL *pool_id) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   if (thread >= ctx->vec_vpss_engine.size()) {
@@ -457,7 +442,6 @@ CVI_S32 CVI_TDL_GetVpssGrpIds(cvitdl_handle_t handle, VPSS_GRP **groups, uint32_
   *num = ctx->vec_vpss_engine.size();
   return CVI_TDL_SUCCESS;
 }
-#endif
 
 CVI_S32 CVI_TDL_SetVpssTimeout(cvitdl_handle_t handle, uint32_t timeout) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
@@ -560,7 +544,6 @@ CVI_S32 CVI_TDL_GetVpssChnConfig(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
   return instance->getChnConfig(frameWidth, frameHeight, idx, chnConfig);
 }
 
-#ifndef SIMPLY_MODEL
 CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
                                 const char *dump_path, bool enable) {
   CVI_S32 ret = CVI_TDL_SUCCESS;
@@ -575,7 +558,6 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
   instance->setDebuggerOutputPath(dump_path);
   return ret;
 }
-#endif
 
 /**
  *  Convenience macros for defining inference functions. F{NUM} stands for how many input frame
@@ -694,7 +676,6 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
  *  find a correct way to create model object.
  *
  */
-#ifndef SIMPLY_MODEL
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_RetinaFace, RetinaFace, CVI_TDL_SUPPORTED_MODEL_RETINAFACE,
                       cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_ScrFDFace, ScrFDFace, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE,
@@ -715,7 +696,6 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_SoundClassification_V2, SoundClassificationV2,
                       CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, int *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_PersonPet_Detection, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, cvtdl_object_t *)
-#endif
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_MobileDetV2_Vehicle, MobileDetV2,
                       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_MobileDetV2_Pedestrian, MobileDetV2,
@@ -727,7 +707,6 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_MobileDetV2_Person_Pets, MobileDetV2,
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_MobileDetV2_COCO80, MobileDetV2,
                       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, cvtdl_object_t *)
 
-#ifndef SIMPLY_MODEL
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *p_dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
   return CVI_TDL_ERR_NOT_YET_INITIALIZED;
@@ -893,7 +872,6 @@ CVI_S32 CVI_TDL_TamperDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S
                                 float *moving_score) {
   return CVI_TDL_ERR_NOT_YET_INITIALIZED;
 }
-#endif
 
 CVI_S32 CVI_TDL_Set_MotionDetection_Background(const cvitdl_handle_t handle,
                                                VIDEO_FRAME_INFO_S *frame) {
@@ -956,7 +934,6 @@ CVI_S32 CVI_TDL_MotionDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S
   return ret;
 }
 
-#ifndef SIMPLY_MODEL
 CVI_S32 CVI_TDL_Get_SoundClassification_ClassesNum(const cvitdl_handle_t handle) {
   return CVI_TDL_ERR_NOT_YET_INITIALIZED;
 }
@@ -1169,4 +1146,3 @@ DLL_EXPORT CVI_S32 CVI_TDL_Release_VideoFrame(const cvitdl_handle_t handle,
   }
   return CVI_SUCCESS;
 }
-#endif

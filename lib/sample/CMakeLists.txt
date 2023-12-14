@@ -40,7 +40,7 @@ set(SAMPLE_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/../cvi_draw_rect
 )
 
-if(${CVI_PLATFORM} STREQUAL "ATHENA2")
+if(${CVI_PLATFORM} STREQUAL "CV186X")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -113,7 +113,7 @@ set(OPENCV_LIB
     ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgcodecs.so
 )
 
-if(NOT ${CVI_PLATFORM} STREQUAL "ATHENA2")
+if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")
 if(NOT ${CVI_PLATFORM} STREQUAL "CV180X")
 buildninstallcpp(NAME sample_lib_draw_rect INC ${SAMPLE_INC} DEPS cvi_draw_rect  ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS} ${OPENCV_LIB})
 endif()

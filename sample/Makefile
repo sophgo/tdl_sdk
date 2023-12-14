@@ -104,10 +104,10 @@ ifeq ($(MW_VERSION), v1)
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
 	endif
 else ifeq ($(MW_VERSION), v2)
-	ifeq ($(CHIP), ATHENA2)
+	ifeq ($(CHIP), CV186X)
 		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
-		CFLAGS += -DATHENA2
+		CFLAGS += -DCV186X
 	else ifeq ($(CHIP), CV181X)
 		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
@@ -165,7 +165,7 @@ SDK_APP_LIBS = -lcvi_tdl_app
 #####################################################
 # Opencv
 #####################################################
-ifeq ($(CHIP), ATHENA2)
+ifeq ($(CHIP), CV186X)
 OPENCV_INC_PATH = $(TPU_PATH)/include
 OPENCV_LIB_PATH = $(TPU_PATH)/lib
 else
@@ -174,14 +174,14 @@ OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
 endif
 OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
 
-ifeq ($(CHIP), $(filter $(CHIP), CV183X ATHENA2))
+ifeq ($(CHIP), $(filter $(CHIP), CV183X CV186X))
 SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
 endif
 
 #####################################################
 # TPU
 #####################################################
-ifeq ($(CHIP), ATHENA2)
+ifeq ($(CHIP), CV186X)
 TPU_LIB_PATH = ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/lib/
 TPU_LIBS = -lbmrt -lbmlib
 else

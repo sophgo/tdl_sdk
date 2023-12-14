@@ -15,19 +15,15 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation)
 
-if(NOT DEFINED SIMPLY_MODEL)
 add_subdirectory(trace) # Perfetto tracer comes first
 add_subdirectory(cvi_tdl_app)
-endif()
 
 add_subdirectory(core)
 add_subdirectory(service)
 
 if(NOT DEFINED NO_OPENCV)
-  if(NOT DEFINED SIMPLY_MODEL)
     add_subdirectory(cvi_tdl_evaluation)
     add_subdirectory(test_and_eval)
-  endif()
 else()
   add_subdirectory(test_noopencv)
 endif()
@@ -60,15 +56,6 @@ if(DEFINED NO_OPENCV)
   message("module no opencv ,core_srcs:" ${CORES_SRCS} )
   set(CORES_DEPS ${PERFETTO_LIBS} ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
 else()
-  if(DEFINED SIMPLY_MODEL)
-    set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
-                   $<TARGET_OBJECTS:core>
-                   $<TARGET_OBJECTS:utils>
-                   $<TARGET_OBJECTS:ivewrapper>
-                   $<TARGET_OBJECTS:mobiledetv2>
-                   $<TARGET_OBJECTS:motion_detection>)
-    set(CORES_DEPS ${MLIR_LIBS} ${MIDDLEWARE_LIBS} ${IVE_LIBS})
-  else()
     set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
       $<TARGET_OBJECTS:cvi_tdl_service>
       $<TARGET_OBJECTS:cvi_tdl_trace>
@@ -122,7 +109,7 @@ else()
       $<TARGET_OBJECTS:hrnet>
       $<TARGET_OBJECTS:image_classification>)
 
-    if(NOT ${CVI_PLATFORM} STREQUAL "ATHENA2")
+    if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:feature_matching>)
     endif()
 
@@ -133,7 +120,6 @@ else()
     set(CORES_DEPS ${CORES_DEPS} ${OPENCV_LIBS_IMGPROC})
     set(CORES_DEPS ${CORES_DEPS} ${OPENCV_LIBS_MIN})
     message("opencv_libs_min:" ${OPENCV_LIBS_MIN})
-  endif()
 endif()
 
 project(cvi_tdl)

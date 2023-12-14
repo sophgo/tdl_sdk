@@ -20,17 +20,13 @@ CVI_S32 get_od_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *mod
   } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
     *inference_func = CVI_TDL_MobileDetV2_Pedestrian;
-  }
-#ifndef SIMPLY_MODEL
-  else if (strcmp(model_name, "yolov3") == 0) {
+  } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
     *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
     *inference_func = CVI_TDL_YoloX;
-  }
-#endif
-  else {
+  } else {
     ret = CVI_TDL_FAILURE;
   }
   return ret;
@@ -52,17 +48,13 @@ CVI_S32 get_pd_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *mod
   } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
     *inference_func = CVI_TDL_MobileDetV2_Pedestrian;
-  }
-#ifndef SIMPLY_MODEL
-  else if (strcmp(model_name, "yolov3") == 0) {
+  } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
     *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
     *inference_func = CVI_TDL_YoloX;
-  }
-#endif
-  else {
+  } else {
     ret = CVI_TDL_FAILURE;
   }
   return ret;
@@ -81,17 +73,13 @@ CVI_S32 get_vehicle_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E
   } else if (strcmp(model_name, "mobiledetv2-vehicle") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
     *inference_func = CVI_TDL_MobileDetV2_Vehicle;
-  }
-#ifndef SIMPLY_MODEL
-  else if (strcmp(model_name, "yolov3") == 0) {
+  } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
     *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
     *inference_func = CVI_TDL_YoloX;
-  }
-#endif
-  else {
+  } else {
     ret = CVI_TDL_FAILURE;
   }
   return ret;
@@ -149,7 +137,6 @@ CVI_S32 register_gallery_feature(cvitdl_handle_t tdl_handle, const char *sz_feat
   return CVI_SUCCESS;
 }
 
-#ifndef SIMPLY_MODEL
 CVI_S32 register_gallery_face(cvitdl_handle_t tdl_handle, const char *sz_img_file,
                               FaceInferFunc fd_func, FaceInferFunc fr_func,
                               cvtdl_service_feature_array_t *p_feat_gallery) {
@@ -243,4 +230,3 @@ CVI_S32 do_face_match(cvitdl_service_handle_t service_handle, cvtdl_face_info_t 
          (uint32_t)p_face->unique_id, ind + 1, score, ret, (int)p_face->feature.size, p_face->name);
   return ret;
 }
-#endif

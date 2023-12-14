@@ -81,7 +81,7 @@ TEST_F(CoreTestSuite, create_handle) {
   // create handle with VPSS_MODE_SINGLE
   {
     tdl_handle = NULL;
-#ifndef ATHENA2
+#ifndef CV186X
     CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
 #endif
     EXPECT_EQ(CVI_TDL_CreateHandle2(&tdl_handle, 0, 1), CVI_TDL_SUCCESS);
@@ -108,7 +108,7 @@ TEST_F(CoreTestSuite, create_handle) {
   // create handle with VPSS_MODE_DUAL
   {
     tdl_handle = NULL;
-#ifndef ATHENA2
+#ifndef CV186X
     CVI_SYS_SetVPSSMode(VPSS_MODE_DUAL);
 #endif
     EXPECT_EQ(CVI_TDL_CreateHandle2(&tdl_handle, 0, 1), CVI_SUCCESS);
@@ -155,7 +155,7 @@ TEST_F(CoreTestSuite, skip_vpsspreprocess) {
   ASSERT_NO_FATAL_FAILURE(preprocessor.open());
 
   cvitdl_handle_t tdl_handle = NULL;
-#ifndef ATHENA2
+#ifndef CV186X
   CVI_SYS_SetVPSSMode(VPSS_MODE_DUAL);
 #endif
   EXPECT_EQ(CVI_TDL_CreateHandle2(&tdl_handle, 1, 1), CVI_SUCCESS);

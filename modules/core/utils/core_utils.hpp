@@ -2,7 +2,7 @@
 #include "core/core/cvtdl_core_types.h"
 #include "rescale_utils.hpp"
 
-#ifndef ATHENA2
+#ifndef CV186X
 #include <cviruntime.h>
 #endif
 #include <algorithm>
