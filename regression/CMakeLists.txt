@@ -90,6 +90,8 @@ set(SAMPLE_LIBS
     ${CVI_RTSP_LIBPATH})
 elseif(${CONFIG_DUAL_OS} STREQUAL "ON")
 set(SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libmsg.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
@@ -107,6 +109,8 @@ set(SAMPLE_LIBS
 )
 else()
 set(SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
@@ -122,15 +126,14 @@ set(SAMPLE_LIBS
     ${CVI_RTSP_LIBPATH}
 )
 
-
-if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X")
-  list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
-endif()
-
-if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
+if("${MW_VER}" STREQUAL "v2")
   list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
 else()
   list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so)
+endif()
+
+if (NOT "${CVI_PLATFORM}" STREQUAL "CV183X")
+    set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
 endif()
 endif()
 

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "cvi_tdl.h"
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
 #include <cvi_ive.h>
 #else
 #include "ive/ive.h"
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   IVE_IMAGE_S image1 = CVI_IVE_ReadImage(ive_handle, strf1, IVE_IMAGE_TYPE_U8C1);
   ret = CVI_SUCCESS;
 
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   int imgw = image1.u32Width;
 #else
   int imgw = image1.u16Width;
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     printf("Read image failed with %x!\n", ret);
     return CVI_FAILURE;
   }
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &bg);
 #else
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &bg, false);
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
   const char *strf2 = "/mnt/data/admin1_data/alios_test/set/b.jpg";
   IVE_IMAGE_S image2 = CVI_IVE_ReadImage(ive_handle, strf2, IVE_IMAGE_TYPE_U8C1);
   ret = CVI_SUCCESS;
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   int imgw2 = image2.u32Width;
 #else
   int imgw2 = image2.u16Width;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
 
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   ret = CVI_IVE_Image2VideoFrameInfo(&image2, &frame);
 #else
   ret = CVI_IVE_Image2VideoFrameInfo(&image2, &frame, false);

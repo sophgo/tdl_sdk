@@ -1,7 +1,3 @@
-# Copyright 2018 Bitmain Inc.
-# License
-# Author Yangwen Huang <yangwen.huang@bitmain.com>
-
 if("${MLIR_SDK_ROOT}" STREQUAL "")
   message(FATAL_ERROR "You must set MLIR_SDK_ROOT before building IVE library.")
 elseif(EXISTS "${MLIR_SDK_ROOT}")
@@ -9,8 +5,6 @@ elseif(EXISTS "${MLIR_SDK_ROOT}")
 else()
   message(FATAL_ERROR "${MLIR_SDK_ROOT} is not a valid folder.")
 endif()
-
-project(mlir-sdk)
 
 if("${CVI_PLATFORM}" STREQUAL "CV186X")
   set(MLIR_INCLUDES ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/include/)
@@ -33,6 +27,6 @@ else()
 endif()
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
-  install(DIRECTORY ${MLIR_SDK_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/)
-  install(FILES ${MLIR_LIBS} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
+  install(DIRECTORY ${MLIR_SDK_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/sample/3rd/include/tpu)
+  install(FILES ${MLIR_LIBS} DESTINATION ${CMAKE_INSTALL_PREFIX}/sample/3rd/lib)
 endif()

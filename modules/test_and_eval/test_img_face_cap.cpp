@@ -11,7 +11,7 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_app/cvi_tdl_app.h"
 #include "sample_comm.h"
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
 #include <cvi_ive.h>
 #else
 #include "ive/ive.h"
@@ -220,7 +220,7 @@ void release_system(cvitdl_handle_t tdl_handle, cvitdl_service_handle_t service_
 int load_image_file(IVE_HANDLE ive_handle, const std::string &strf, IVE_IMAGE_S &image,
                     VIDEO_FRAME_INFO_S &fdFrame, IVE_IMAGE_TYPE_E img_format) {
   int ret = CVI_SUCCESS;
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   PIXEL_FORMAT_E pix_format = PIXEL_FORMAT_RGB_888_PLANAR;
   if (img_format == IVE_IMAGE_TYPE_U8C3_PACKAGE) {
     pix_format = PIXEL_FORMAT_RGB_888;
@@ -230,7 +230,7 @@ int load_image_file(IVE_HANDLE ive_handle, const std::string &strf, IVE_IMAGE_S 
 #endif
 
   image = CVI_IVE_ReadImage(ive_handle, strf.c_str(), img_format);
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   int imgw = image.u32Width;
 #else
   int imgw = image.u16Width;
@@ -242,7 +242,7 @@ int load_image_file(IVE_HANDLE ive_handle, const std::string &strf, IVE_IMAGE_S 
     std::cout << "readimg with:" << imgw << std::endl;
   }
 
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame);
 #else
   ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame, false);

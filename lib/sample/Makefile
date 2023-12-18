@@ -161,18 +161,9 @@ SDK_APP_LIBS = -lcvi_tdl_app
 #####################################################
 # Opencv
 #####################################################
-ifeq ($(CHIP), CV186X)
-OPENCV_INC_PATH = $(TPU_PATH)/include
-OPENCV_LIB_PATH = $(TPU_PATH)/lib
-else
 OPENCV_INC_PATH = $(TPU_PATH)/opencv/include
-OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
-endif
+OPENCV_LIB_PATH = $(TPU_PATH)/lib
 OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
-
-ifeq ($(CHIP), $(filter $(CHIP), CV183X CV186X))
-SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
-endif
 
 #####################################################
 # TPU

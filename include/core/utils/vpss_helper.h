@@ -9,7 +9,7 @@
 #include <string.h>
 #include <syslog.h>
 
-#ifdef CONFIG_DUAL_OS
+#ifdef _MIDDLEWARE_V3_
 #include "cvi_msg_client.h"
 #endif
 
@@ -98,7 +98,7 @@ MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrc
 // Init SYS and Common VB,
 // Running w/ Vi don't need to do it again. Running Vpss along need init below
 // FIXME: Can only be init once in one pipeline
-#ifdef CONFIG_DUAL_OS
+#ifdef _MIDDLEWARE_V3_
   CVI_MSG_Init();
 #endif
   VB_CONFIG_S stVbConf;

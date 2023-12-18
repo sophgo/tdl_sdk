@@ -15,7 +15,7 @@ struct PreprocessArg {
 };
 
 static void _SYS_HandleSig(int nSignal, siginfo_t *si, void *arg) {
-#ifndef CONFIG_DUAL_OS
+#ifndef _MIDDLEWARE_V3_
   SAMPLE_COMM_SYS_Exit();
 #endif
   exit(1);
@@ -61,7 +61,7 @@ int CVI_MAPI_Media_Init(uint32_t img_w, uint32_t img_h, uint32_t blk_cnt) {
   printf("common pool[1] BlkSize %d\n", u32BlkSize);
 
   int ret = CVI_MAPI_SUCCESS;
-#ifndef CONFIG_DUAL_OS
+#ifndef _MIDDLEWARE_V3_
   CVI_S32 rc = SAMPLE_COMM_SYS_Init(&stVbConf);
   if (rc != CVI_SUCCESS) {
     printf("SAMPLE_COMM_SYS_Init fail, rc = %#x\n", rc);
@@ -73,14 +73,14 @@ int CVI_MAPI_Media_Init(uint32_t img_w, uint32_t img_h, uint32_t blk_cnt) {
   return ret;
 
 error:
-#ifndef CONFIG_DUAL_OS
+#ifndef _MIDDLEWARE_V3_
   SAMPLE_COMM_SYS_Exit();
 #endif
   return ret;
 }
 
 int CVI_MAPI_Media_Deinit(void) {
-#ifndef CONFIG_DUAL_OS
+#ifndef _MIDDLEWARE_V3_
   SAMPLE_COMM_SYS_Exit();
 #endif
   return CVI_MAPI_SUCCESS;

@@ -21,11 +21,11 @@ set(EVA_SRCS $<TARGET_OBJECTS:coco>
 
 project(cvi_tdl_evaluation)
 add_library(${PROJECT_NAME} SHARED ${EVA_SRCS})
-target_link_libraries(${PROJECT_NAME} -lstdc++fs  ${OPENCV_LIBS_IMCODEC} ${OPENCV_LIBS_IMGPROC} ${OPENCV_LIBS_MIN} )
+target_link_libraries(${PROJECT_NAME} -lstdc++fs ${OPENCV_LIBS_IMGPROC})
 install(TARGETS ${PROJECT_NAME} DESTINATION sample/3rd/lib)
 
 project(cvi_tdl_evaluation-static)
 add_library(${PROJECT_NAME} STATIC ${EVA_SRCS})
-target_link_libraries(${PROJECT_NAME} -lstdc++fs)
+target_link_libraries(${PROJECT_NAME} -lstdc++fs ${OPENCV_LIBS_IMCODEC_STATIC})
 SET_TARGET_PROPERTIES(cvi_tdl_evaluation-static PROPERTIES OUTPUT_NAME "cvi_tdl_evaluation")
 install(TARGETS ${PROJECT_NAME} DESTINATION sample/3rd/lib)

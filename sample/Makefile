@@ -28,8 +28,6 @@ CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
 CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
 
-# link OpenCV shared object only if platform is cv183X series
-
 ifeq ($(SDK_VER), 32bit)
 ARCH=arm
 CROSS_COMPILE = $(CROSS_COMPILE_32)
@@ -165,18 +163,9 @@ SDK_APP_LIBS = -lcvi_tdl_app
 #####################################################
 # Opencv
 #####################################################
-ifeq ($(CHIP), CV186X)
-OPENCV_INC_PATH = $(TPU_PATH)/include
-OPENCV_LIB_PATH = $(TPU_PATH)/lib
-else
 OPENCV_INC_PATH = $(TPU_PATH)/opencv/include
-OPENCV_LIB_PATH = $(TPU_PATH)/opencv/lib
-endif
+OPENCV_LIB_PATH = $(TPU_PATH)/lib
 OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
-
-ifeq ($(CHIP), $(filter $(CHIP), CV183X CV186X))
-SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
-endif
 
 #####################################################
 # TPU
@@ -241,11 +230,11 @@ OBJS := $(SRCS:%.c=%.o) $(CPPS:%.cpp=%.o)
 SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
 			  -L$(TPU_LIB_PATH) $(TPU_LIBS) \
 			  -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) \
-			  -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -lpthread
+			  -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -lpthread -latomic \
+			  -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
 
-SAMPLE_LIBS += $(SAMPLE_LIBS_OPENCV)
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
-SAMPLE_READ_LIBS = $(SAMPLE_LIBS) -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
+SAMPLE_READ_LIBS = $(SAMPLE_LIBS)
 SAMPLE_APP_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS) $(SDK_APP_LIBS)
 
 CFLAGS += -I$(SDK_INC_PATH) \
@@ -343,4 +332,4 @@ sample_init: $(PWD)/sample_init.o
 	$(CC) $(LDFLAGS) $(SAMPLE_LIBS) -o $@ $^
 
 sample_yol%: $(PWD)/sample_yol%.o
-	$(CXX) $(LDFLAGS) $(SAMPLE_LIBS) -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS) -L$(EVA_LIB_PATH) $(EVA_LIBS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(SAMPLE_READ_LIBS) -L$(EVA_LIB_PATH) $(EVA_LIBS) -o $@ $^

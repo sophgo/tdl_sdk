@@ -14,7 +14,7 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_app/cvi_tdl_app.h"
 #include "sample_comm.h"
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
 #include <cvi_ive.h>
 #else
 #include "ive/ive.h"

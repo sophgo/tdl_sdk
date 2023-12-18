@@ -81,21 +81,15 @@ else
 fi
 
 if [[ "$CHIP_ARCH" == "CV183X" ]]; then
-    # 3X use tpu opencv
-    SHRINK_OPENCV_SIZE=OFF
     USE_TPU_IVE=ON
 elif [[ "$CHIP_ARCH" == "CV182X" ]]; then
-    SHRINK_OPENCV_SIZE=ON
     USE_TPU_IVE=ON
 elif [[ "$CHIP_ARCH" == "CV181X" ]]; then
     USE_TPU_IVE=OFF
-    SHRINK_OPENCV_SIZE=ON
 elif [[ "$CHIP_ARCH" == "CV180X" ]]; then
-    SHRINK_OPENCV_SIZE=ON
     USE_TPU_IVE=ON
 elif [[ "$CHIP_ARCH" == "ATHENA2" ]]; then
     CHIP_ARCH=CV186X
-    SHRINK_OPENCV_SIZE=OFF
     USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
@@ -105,7 +99,6 @@ fi
 $CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DCVI_SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR \
                                         -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-                                        -DOPENCV_ROOT=$OPENCV_INSTALL_PATH \
                                         -DENABLE_CVI_TDL_CV_UTILS=ON \
                                         -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
                                         -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
@@ -114,7 +107,6 @@ $CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                         -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
                                         -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
                                         -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
-                                        -DSHRINK_OPENCV_SIZE=$SHRINK_OPENCV_SIZE \
                                         -DKERNEL_ROOT=$KERNEL_ROOT \
                                         -DUSE_TPU_IVE=$USE_TPU_IVE \
                                         -DMW_VER=$MW_VER \
@@ -162,12 +154,19 @@ if [[ "$CHIP_ARCH" != "CV180X" ]]; then
 
 fi
 
+if [ "$BUILD_TYPE" != "SDKRelease" ]; then
+    base_url="https://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/"
+    files_to_download=(
+        "zh/01.software/TPU/AI_SDK_Software_Development_Guide/build/AISDKSoftwareDevelopmentGuide_zh.pdf"
+        "en/01.software/TPU/AI_SDK_Software_Development_Guide/build/AISDKSoftwareDevelopmentGuide_en.pdf"
+        "en/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_en.pdf"
+        "zh/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_zh.pdf"
+    )
+
+    for file_path in "${files_to_download[@]}"; do
+        file_url="${base_url}${file_path}"
+        wget -nc -P "${AI_SDK_INSTALL_PATH}/doc" "$file_url" || { echo "Failed to download $file_url"; exit 1; }
+    done
+fi
+
 rm -rf ${AI_SDK_INSTALL_PATH}/sample/tmp_install
-
-#wget -nc -P ${AI_SDK_INSTALL_PATH}/doc https://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/zh/01.software/TPU/AI_SDK_Software_Development_Guide/build/AISDKSoftwareDevelopmentGuide_zh.pdf
-
-#wget -nc -P ${AI_SDK_INSTALL_PATH}/doc http://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/en/01.software/TPU/AI_SDK_Software_Development_Guide/build/AISDKSoftwareDevelopmentGuide_en.pdf
-
-#wget -nc -P ${AI_SDK_INSTALL_PATH}/doc http://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/en/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_en.pdf
-
-#wget -nc -P ${AI_SDK_INSTALL_PATH}/doc http://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/zh/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_zh.pdf

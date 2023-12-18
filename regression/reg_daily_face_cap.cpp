@@ -10,7 +10,7 @@
 #include "json.hpp"
 #include "raii.hpp"
 #include "regression_utils.hpp"
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
 #include <cvi_ive.h>
 #else
 #include "ive/ive.h"

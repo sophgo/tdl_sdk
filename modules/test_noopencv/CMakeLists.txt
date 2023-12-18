@@ -37,6 +37,8 @@ set(REG_INCLUDES
 )
 
 set(SAMPLE_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
@@ -54,5 +56,5 @@ set(SAMPLE_LIBS
 )
 
 #test_model
-buildninstallcpp(NAME test_img_fd INC ${REG_INCLUDES} DEPS cvi_tdl ${SAMPLE_LIBS})
-buildninstallcpp(NAME test_img_pet INC ${REG_INCLUDES} DEPS cvi_tdl ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_img_fd INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_img_pet INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})

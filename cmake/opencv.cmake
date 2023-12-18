@@ -1,70 +1,55 @@
-# Copyright 2018 Bitmain Inc.
-# License
-# Author Yangwen Huang <yangwen.huang@bitmain.com>
 
-if (SHRINK_OPENCV_SIZE)
-  if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-uclibc-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/uclibc/opencv_aisdk.tar.gz)
-  elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-gnueabihf-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/32bit/opencv_aisdk.tar.gz)
-  elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-aarch64-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/64bit/opencv_aisdk.tar.gz)
-  elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-riscv64-linux.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/glibc_riscv64/opencv_aisdk.tar.gz)
-  elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-riscv64-musl.cmake")
-    set(OPENCV_URL ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/musl_riscv64/opencv_aisdk.tar.gz)
-  else()
-    message(FATAL_ERROR "No shrinked opencv library for ${CMAKE_TOOLCHAIN_FILE}")
-  endif()
+# Common part of the URL
+set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/")
+# Combine the common prefix and the architecture-specific part
 
-  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src/lib")
-    FetchContent_Declare(
-      opencv
-      URL ${OPENCV_URL}
-    )
-    FetchContent_MakeAvailable(opencv)
-    message("Content downloaded from ${OPENCV_URL} to ${opencv_SOURCE_DIR}")
-  endif()
-  set(OPENCV_ROOT ${BUILD_DOWNLOAD_DIR}/opencv-src)
 
-  set(OPENCV_INCLUDES
-    ${OPENCV_ROOT}/include/
-    ${OPENCV_ROOT}/include/opencv/
-  )
-
-  if ("${CVI_SYSTEM_PROCESSOR}" STREQUAL "RISCV")
-    set(OPENCV_LIBS_MIN ${OPENCV_ROOT}/lib/libopencv_core.a)
-    set(OPENCV_LIBS_IMGPROC ${OPENCV_ROOT}/lib/libopencv_imgproc.a)
-    set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_core.so
-                            ${OPENCV_ROOT}/lib/libopencv_imgproc.so
-                            ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
-  else()
-    set(OPENCV_LIBS_MIN ${OPENCV_ROOT}/lib/libopencv_core.a
-                        ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a)
-    set(OPENCV_LIBS_IMGPROC ${OPENCV_ROOT}/lib/libopencv_imgproc.a)
-    set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
-  endif()
-
-  if ("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
-    #install(DIRECTORY ${OPENCV_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/opencv)
-    #install(FILES ${OPENCV_LIBS_MIN} ${OPENCV_LIBS_IMGPROC} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
-  endif()
+# Get the architecture-specific part based on the toolchain file
+if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-uclibc-linux.cmake")
+  set(ARCHITECTURE "uclibc")
+elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-gnueabihf-linux.cmake")
+  set(ARCHITECTURE "32bit")
+elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-aarch64-linux.cmake")
+  set(ARCHITECTURE "64bit")
+elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-riscv64-linux.cmake")
+  set(ARCHITECTURE "glibc_riscv64")
+elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-riscv64-musl.cmake")
+  set(ARCHITECTURE "musl_riscv64")
 else()
-  if("${OPENCV_ROOT}" STREQUAL "")
-    message(FATAL_ERROR "You must set OPENCV_ROOT before building library.")
-  elseif(EXISTS "${OPENCV_ROOT}")
-    message("-- Found OPENCV_ROOT (directory: ${OPENCV_ROOT})")
-  else()
-    message(FATAL_ERROR "${OPENCV_ROOT} is not a valid folder.")
-  endif()
-
-  set(OPENCV_INCLUDES
-      ${OPENCV_ROOT}/include/
-      ${OPENCV_ROOT}/include/opencv/
-  )
-
-  set(OPENCV_LIBS_MIN ${OPENCV_ROOT}/lib/libopencv_core.so
-                      ${OPENCV_ROOT}/lib/libopencv_imgproc.so)
-
-  set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
+  message(FATAL_ERROR "No shrinked opencv library for ${CMAKE_TOOLCHAIN_FILE}")
 endif()
+
+set(OPENCV_URL "${COMMON_OPENCV_URL_PREFIX}${ARCHITECTURE}/opencv_aisdk.tar.gz")
+if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src/lib")
+  FetchContent_Declare(
+    opencv
+    URL ${OPENCV_URL}
+  )
+  FetchContent_MakeAvailable(opencv)
+  message("Content downloaded from ${OPENCV_URL} to ${opencv_SOURCE_DIR}")
+endif()
+set(OPENCV_ROOT ${BUILD_DOWNLOAD_DIR}/opencv-src)
+
+set(OPENCV_INCLUDES
+  ${OPENCV_ROOT}/include/
+  ${OPENCV_ROOT}/include/opencv/
+)
+
+set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_core.so
+                        ${OPENCV_ROOT}/lib/libopencv_imgproc.so
+                        ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
+set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_core.a
+                               ${OPENCV_ROOT}/lib/libopencv_imgproc.a
+                               ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a)
+if (NOT "${CVI_SYSTEM_PROCESSOR}" STREQUAL "RISCV")
+  set(OPENCV_LIBS_IMCODEC ${OPENCV_LIBS_IMCODEC}
+                          ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a)
+endif()
+
+install(DIRECTORY ${OPENCV_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/sample/3rd/include/opencv)
+
+if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
+file(GLOB OPENCV_LIBS "${OPENCV_ROOT}/lib/*so*")
+install(FILES ${OPENCV_LIBS} DESTINATION ${CMAKE_INSTALL_PREFIX}/sample/3rd/lib/)
+endif()
+install(FILES ${OPENCV_LIBS_IMCODEC_STATIC} DESTINATION ${CMAKE_INSTALL_PREFIX}/sample/3rd/lib/)

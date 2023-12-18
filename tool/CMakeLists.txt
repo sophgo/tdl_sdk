@@ -91,11 +91,6 @@ set(SAMPLE_LIBS ${SAMPLE_LIBS}
 )
 endif()
 
-
-if("${CVI_PLATFORM}" STREQUAL "CV182X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" )
-  set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
-endif()
-
 buildninstall(NAME sample_read_mot INC ${SAMPLE_INC} SRCS utils/od.c sample_mot_utils.c DEPS cvi_tdl cvi_tdl_evaluation ${SAMPLE_LIBS})
 buildninstallcpp(NAME visual_app_face_capture INC ${SAMPLE_INC}  SRCS vi_vo_utils.c DEPS cvi_tdl cvi_tdl_app ${SAMPLE_LIBS})
 

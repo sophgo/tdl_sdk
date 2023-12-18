@@ -11,7 +11,7 @@
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
 #include <cvi_ive.h>
 #else
 #include "ive/ive.h"
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
   IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
   VIDEO_FRAME_INFO_S bg;
   IVE_IMAGE_S image1 = CVI_IVE_ReadImage(ive_handle, strf1.c_str(), IVE_IMAGE_TYPE_U8C3_PACKAGE);
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   int imgw = image1.u32Width;
 #else
   int imgw = image1.u16Width;
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     return CVI_FAILURE;
   }
   memset(&bg, 0, sizeof(VIDEO_FRAME_INFO_S));
-#if defined(CV181X) || defined(CV186X)
+#ifndef USE_TPU_IVE
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &bg);
 #else
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &bg, false);

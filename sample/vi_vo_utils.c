@@ -57,7 +57,7 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
   CVI_S32 s32Ret = CVI_SUCCESS;
 //****************************************************************
 // Init VI, VO, Vpss
-#ifdef CONFIG_DUAL_OS
+#ifdef _MIDDLEWARE_V3_
   CVI_MSG_Init();
 #endif
   load_ion_totalmem();
@@ -118,7 +118,7 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
 
 void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
   DestoryOutput(&vs_ctx->outputContext);
-#if defined(CV181X) || defined(CV180X) || defined(CV186X)
+#if defined(_MIDDLEWARE_V2_)
   SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
 #else
   SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
@@ -132,7 +132,7 @@ void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
                PIXEL_FORMAT_E aiFormat, CVI_U32 *devNum) {
-#if defined(CV181X) || defined(CV180X) || defined(CV186X)
+#if defined(_MIDDLEWARE_V2_)
   SAMPLE_INI_CFG_S stIniCfg = {};
 
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
@@ -353,7 +353,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
                stVbConf.astCommPool[poolId].u32BlkCnt);
   }
 
-#ifndef CONFIG_DUAL_OS
+#ifndef _MIDDLEWARE_V3_
   s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
   if (s32Ret != CVI_SUCCESS) {
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);
@@ -572,7 +572,7 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
   }
-#if defined(CV181X) || defined(CV180X) || defined(CV186X)
+#if defined(_MIDDLEWARE_V2_)
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
 #else
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);

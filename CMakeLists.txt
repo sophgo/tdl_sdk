@@ -67,10 +67,6 @@ endif()
 #set(SYSTRACE_FALLBACK ON)
 #add_definitions(-DSYSTRACE_FALLBACK)
 
-if ("${CONFIG_DUAL_OS}" STREQUAL "ON")
-  add_definitions(-DCONFIG_DUAL_OS)
-endif()
-
 if ("${ENABLE_PERFETTO}" STREQUAL "ON")
   add_definitions(-DENABLE_PERFETTO)
   set(ENABLE_TRACE ON)
@@ -81,11 +77,9 @@ if ("${ENABLE_TRACE}" STREQUAL "ON")
 endif()
 # add_definitions(-DDEBUG_TRACK)
 
-if(DEFINED ENV{WEB_VIEW})
-  if($ENV{WEB_VIEW} STREQUAL "1")
-    set(BUILD_WEB_VIEW ON)
-    message("set BUILD_WEB_VIEW ON")
-  endif()
+IF(DEFINED ENV{WEB_VIEW})
+  set(BUILD_WEB_VIEW ON)
+  message("set BUILD_WEB_VIEW ON")
 endif()
 
 IF(DEFINED ENV{PERF_EVAL})
@@ -134,7 +128,6 @@ message("Enable Perfetto        ${ENABLE_PERFETTO}")
 message("CVI_PLATFORM           ${CVI_PLATFORM}")
 message("CVI_SYSTEM_PROCESSOR   ${CVI_SYSTEM_PROCESSOR}")
 message("CMAKE_TOOLCHAIN_FILE   ${CMAKE_TOOLCHAIN_FILE}")
-message("SHRINK_OPENCV_SIZE     ${SHRINK_OPENCV_SIZE}")
 message("USE_TPU_IVE            ${USE_TPU_IVE}")
 message("KERNEL_ROOT            ${KERNEL_ROOT}")
 message("CONFIG_DUAL_OS         ${CONFIG_DUAL_OS}")
@@ -168,14 +161,12 @@ include_directories(${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
+
 add_subdirectory(modules)
-
 add_subdirectory(sample)
-
 add_subdirectory(lib)
 
 if((NOT "${CVI_PLATFORM}" STREQUAL "CV180X") AND NOT DEFINED NO_OPENCV)
 add_subdirectory(regression)
-# add_subdirectory(tool)
 endif()
 

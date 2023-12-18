@@ -106,7 +106,7 @@ PIC_SIZE_E SAMPLE_TDL_Get_PIC_Size(CVI_S32 width, CVI_S32 height) {
 
 CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
                            SAMPLE_TDL_MW_CONTEXT *pstMWContext) {
-#ifdef CONFIG_DUAL_OS
+#ifdef _MIDDLEWARE_V3_
   CVI_MSG_Init();
 #endif
   MMF_VERSION_S stVersion;
@@ -152,7 +152,7 @@ CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
 
   // Init system & vb pool
   CVI_S32 s32Ret;
-#ifndef CONFIG_DUAL_OS
+#ifndef _MIDDLEWARE_V3_
   printf("Initialize SYS and VB\n");
   s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
   if (s32Ret != CVI_SUCCESS) {
@@ -368,7 +368,7 @@ vpss_start_error:
   SAMPLE_COMM_VI_DestroyIsp(&pstMWConfig->stViConfig);
   SAMPLE_COMM_VI_DestroyVi(&pstMWConfig->stViConfig);
 vi_start_error:
-#ifndef CONFIG_DUAL_OS
+#ifndef _MIDDLEWARE_V3_
   SAMPLE_COMM_SYS_Exit();
 #endif
 
