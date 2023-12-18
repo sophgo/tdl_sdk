@@ -15,13 +15,16 @@ int SoundClassificationV2::onModelOpened() {
   int32_t image_width = input_shape.dim[2];
   bool htk = false;
 
-  if (image_width == 188) {
+  if (image_width == 188) {  // sr16k * 3s
     sample_rate_ = 16000;
     time_len_ = 3;
-  } else if (image_width == 94) {
+  } else if (image_width == 126) {  // sr16k * 2s
+    sample_rate_ = 16000;
+    time_len_ = 2;
+  } else if (image_width == 94) {  // sr8k * 3s
     sample_rate_ = 8000;
     time_len_ = 3;
-  } else if (image_width == 63) {
+  } else if (image_width == 63) {  // sr8k * 2s
     sample_rate_ = 8000;
     time_len_ = 2;
   }
@@ -81,25 +84,27 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
   return CVI_SUCCESS;
 }
 int SoundClassificationV2::get_top_k(float *result, size_t count) {
-  // int TOP_K = 1;
-  // float *data = result;
-  // float conf_fg = 1.0 / (1 + std::exp(-result[1]));
-  // if (conf_fg > m_model_threshold) {
-  //   return 1;
-  // } else {
-  //   return 0;
-  // }
   int idx = -1;
-  float max = -10000;
+  float max_e = -10000;
+  float cur_e;
+
+  float sum_e = 0.;
   for (size_t i = 0; i < count; i++) {
-    float conf_fg = 1.0 / (1 + std::exp(-result[i]));
-    // std::cout<<"i:"<<i<<", score:"<<conf_fg<<std::endl;
-    if (conf_fg > max) {
-      max = conf_fg;
+    cur_e = std::exp(result[i]);
+    if (i != 0 && cur_e > max_e) {
+      max_e = cur_e;
       idx = i;
     }
+    sum_e = float(sum_e) + float(cur_e);
+    std::cout << "\t" << i << ": " << cur_e;
   }
 
+  // for (size_t i = 0; i < count; i++) {
+  //   cur_e = std::exp(result[i]) / sum_e;
+  //   std::cout << "  i:" << i << ", score:" << cur_e;
+  // }
+
+  float max = max_e / sum_e;
   if (idx != 0 && max < m_model_threshold) {
     idx = 0;
   }
