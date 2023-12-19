@@ -26,9 +26,6 @@ class Meeting_DetectionTestSuite : public CVI_TDLModelTestSuite {
 
  protected:
   virtual void SetUp() {
-    std::string model_name = std::string(m_json_object["model_name"]);
-    m_model_path = (m_model_dir / fs::path(model_name)).string();
-
     m_tdl_handle = NULL;
     ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
     ASSERT_EQ(CVI_TDL_SetVpssTimeout(m_tdl_handle, 1000), CVI_TDL_SUCCESS);
@@ -41,27 +38,53 @@ class Meeting_DetectionTestSuite : public CVI_TDLModelTestSuite {
 };
 
 TEST_F(Meeting_DetectionTestSuite, open_close_model) {
-  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+  std::string model_name = std::string(m_json_object["model_name"]);
+  m_model_path = (m_model_dir / fs::path(model_name)).string();
+  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION,
                               m_model_path.c_str()),
             CVI_TDL_SUCCESS)
       << "failed to set model path: " << m_model_path.c_str();
 
   const char *model_path_get =
-      CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION);
+      CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION);
 
   EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
                std::string(model_path_get));
 
-  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION),
+  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION),
+            CVI_TDL_SUCCESS);
+}
+
+TEST_F(Meeting_DetectionTestSuite, inference) {
+  std::string model_name = std::string(m_json_object["model_name"]);
+  m_model_path = (m_model_dir / fs::path(model_name)).string();
+  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION,
+                              m_model_path.c_str()),
+            CVI_TDL_SUCCESS);
+
+  auto results = m_json_object["results"];
+  const float bbox_threshold = 0.90;
+  const float score_threshold = 0.1;
+  std::string image_path = (m_image_dir / results.begin().key()).string();
+
+  Image image(image_path, PIXEL_FORMAT_RGB_888);
+  ASSERT_TRUE(image.open());
+  VIDEO_FRAME_INFO_S *vframe = image.getFrame();
+  TDLObject<cvtdl_object_t> meet_meta;
+  init_obj_meta(meet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
+  ASSERT_EQ(CVI_TDL_HandFacePerson_Detection(m_tdl_handle, vframe, meet_meta), CVI_TDL_SUCCESS);
+
+  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION),
             CVI_TDL_SUCCESS);
 }
 
 TEST_F(Meeting_DetectionTestSuite, accuracy) {
-  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+  std::string model_name = std::string(m_json_object["model_name"]);
+  m_model_path = (m_model_dir / fs::path(model_name)).string();
+  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION,
                               m_model_path.c_str()),
             CVI_TDL_SUCCESS);
 
-  int img_num = int(m_json_object["image_num"]);
   auto results = m_json_object["results"];
   const float bbox_threshold = 0.90;
   const float score_threshold = 0.1;
@@ -71,22 +94,11 @@ TEST_F(Meeting_DetectionTestSuite, accuracy) {
     Image image(image_path, PIXEL_FORMAT_RGB_888);
     ASSERT_TRUE(image.open());
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
-    TDLObject<cvtdl_object_t> vehicle_meta;
-    init_obj_meta(vehicle_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, vehicle_meta), CVI_TDL_SUCCESS);
-    printf("boxes===================================\n");
-    for (uint32_t i = 0; i < vehicle_meta->size; i++) {
-      printf("bbox.x1 = %f\n", vehicle_meta->info[i].bbox.x1);
-      printf("bbox.y1 = %f\n", vehicle_meta->info[i].bbox.y1);
-      printf("bbox.x2 = %f\n", vehicle_meta->info[i].bbox.x2);
-      printf("bbox.y2 = %f\n", vehicle_meta->info[i].bbox.y2);
-      printf("bbox.classes = %d\n", vehicle_meta->info[i].classes);
-      printf("bbox.score = %f\n", vehicle_meta->info[i].bbox.score);
-    }
-    printf("boxes===================================\n");
-    auto expected_dets = iter.value();
+    TDLObject<cvtdl_object_t> meet_meta;
+    init_obj_meta(meet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
+    ASSERT_EQ(CVI_TDL_HandFacePerson_Detection(m_tdl_handle, vframe, meet_meta), CVI_TDL_SUCCESS);
 
-    ASSERT_EQ(vehicle_meta->size, expected_dets.size());
+    auto expected_dets = iter.value();
 
     for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
       auto bbox = expected_dets[det_index]["bbox"];
@@ -107,22 +119,21 @@ TEST_F(Meeting_DetectionTestSuite, accuracy) {
         }
         return false;
       };
-      EXPECT_TRUE(match_dets(*vehicle_meta, expected_bbox, comp))
+      EXPECT_TRUE(match_dets(*meet_meta, expected_bbox, comp))
           << "Error!"
           << "\n"
           << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
           << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
           << "score: " << expected_bbox.score << "\n"
           << "expectedID: " << catId << "\n"
-          << "[" << vehicle_meta->info[det_index].bbox.x1 << ","
-          << vehicle_meta->info[det_index].bbox.y1 << "," << vehicle_meta->info[det_index].bbox.x2
-          << "," << vehicle_meta->info[det_index].bbox.y2 << ","
-          << vehicle_meta->info[det_index].classes << ","
-          << vehicle_meta->info[det_index].bbox.score << "],\n";
+          << "[" << meet_meta->info[det_index].bbox.x1 << "," << meet_meta->info[det_index].bbox.y1
+          << "," << meet_meta->info[det_index].bbox.x2 << "," << meet_meta->info[det_index].bbox.y2
+          << "," << meet_meta->info[det_index].classes << ","
+          << meet_meta->info[det_index].bbox.score << "],\n";
     }
-    CVI_TDL_FreeCpp(vehicle_meta);  // delete expected_res;
+    CVI_TDL_FreeCpp(meet_meta);  // delete expected_res;
   }
-  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION),
+  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION),
             CVI_TDL_SUCCESS);
 }
 

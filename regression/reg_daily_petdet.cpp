@@ -56,6 +56,33 @@ TEST_F(PersonPet_DetectionTestSuite, open_close_model) {
             CVI_TDL_SUCCESS);
 }
 
+TEST_F(PersonPet_DetectionTestSuite, inference) {
+  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+                              m_model_path.c_str()),
+            CVI_TDL_SUCCESS);
+
+  int img_num = int(m_json_object["image_num"]);
+  auto results = m_json_object["results"];
+
+  std::string image_path = (m_image_dir / results.begin().key()).string();
+  {
+    Image image(image_path, PIXEL_FORMAT_RGB_888);
+    ASSERT_TRUE(image.open());
+    VIDEO_FRAME_INFO_S *vframe = image.getFrame();
+    TDLObject<cvtdl_object_t> pet_meta;
+    init_obj_meta(pet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
+    ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, pet_meta), CVI_TDL_SUCCESS);
+  }
+  {
+    Image image(image_path, PIXEL_FORMAT_RGB_888_PLANAR);
+    ASSERT_TRUE(image.open());
+    VIDEO_FRAME_INFO_S *vframe = image.getFrame();
+    TDLObject<cvtdl_object_t> pet_meta;
+    init_obj_meta(pet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
+    ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, pet_meta), CVI_TDL_SUCCESS);
+  }
+}
+
 TEST_F(PersonPet_DetectionTestSuite, accuracy) {
   ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
                               m_model_path.c_str()),

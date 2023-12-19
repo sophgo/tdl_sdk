@@ -145,9 +145,12 @@ if(${CVI_PLATFORM} STREQUAL "CV186X")
   reg_daily_meet.cpp
   reg_daily_person_vehicle.cpp
   reg_daily_hardhat_det.cpp
-  reg_daily_ir_scrfd_face.cpp
   reg_daily_scrfd_det.cpp
-  reg_daily_lp_det.cpp
+  reg_daily_lpd_v2.cpp
+  reg_daily_fr.cpp
+  reg_daily_mobiledetion.cpp
+  reg_daily_handcls.cpp
+  reg_daily_handkeypoint.cpp
   )
 else()
 set(UnitTests
@@ -186,6 +189,11 @@ set(UnitTest_SRCS
   raii.cpp
   regression_utils.cpp
   ${UnitTests}
+)
+
+set(UnitTest_SRCS
+  ${UnitTest_SRCS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../modules/test_and_eval/sys_utils.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core

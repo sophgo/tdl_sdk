@@ -15,6 +15,12 @@
 #define MEAN_G 117
 #define MEAN_B 104
 
+#ifndef ATHENA2
+#define suffix_info "_f32"
+#else
+#define suffix_info "_dequant"
+#endif
+
 namespace cvitdl {
 
 RetinaFace::RetinaFace(PROCESS process) : Core(CVI_MEM_DEVICE) { this->process = process; }
@@ -104,7 +110,7 @@ int RetinaFace::onModelOpened() {
       generate_anchors_fpn(false, cfg, this->process);
   std::map<std::string, std::vector<anchor_box>> anchors_fpn_map;
   for (size_t i = 0; i < anchors_fpn.size(); i++) {
-    std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
+    std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + suffix_info;
     anchors_fpn_map[key] = anchors_fpn[i];
     m_num_anchors[key] = anchors_fpn[i].size();
   }
@@ -112,7 +118,7 @@ int RetinaFace::onModelOpened() {
   for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
     int stride = m_feat_stride_fpn[i];
 
-    std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
+    std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + suffix_info;
     std::string bbox_str = NAME_BBOX + key;
     CVI_SHAPE bbox_shape = getOutputShape(bbox_str.c_str());
 
@@ -148,7 +154,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
     std::vector<cvtdl_face_info_t> vec_bbox;
     std::vector<cvtdl_face_info_t> vec_bbox_nms;
     for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
-      std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + "_dequant";
+      std::string key = "stride" + std::to_string(m_feat_stride_fpn[i]) + suffix_info;
 
       std::string score_str = NAME_SCORE + key;
       CVI_SHAPE score_shape = getOutputShape(score_str.c_str());

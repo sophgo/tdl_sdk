@@ -15,17 +15,18 @@ namespace fs = std::experimental::filesystem;
 namespace cvitdl {
 namespace unitest {
 
-class LicensePlateDetectionV2TestSuite : public CVI_TDLModelTestSuite {
+class MobileDetectionV2TestSuite : public CVI_TDLModelTestSuite {
  public:
-  LicensePlateDetectionV2TestSuite()
-      : CVI_TDLModelTestSuite("reg_daily_licenseplate.json", "reg_daily_lpd") {}
+  MobileDetectionV2TestSuite()
+      : CVI_TDLModelTestSuite("daily_reg_mobiledet.json", "reg_daily_mobildet") {}
 
-  virtual ~LicensePlateDetectionV2TestSuite() = default;
+  virtual ~MobileDetectionV2TestSuite() = default;
 
   std::string m_model_path;
 
  protected:
   virtual void SetUp() {
+    m_tdl_handle = NULL;
     ASSERT_EQ(CVI_TDL_CreateHandle2(&m_tdl_handle, 1, 0), CVI_TDL_SUCCESS);
     ASSERT_EQ(CVI_TDL_SetVpssTimeout(m_tdl_handle, 1000), CVI_TDL_SUCCESS);
   }
@@ -36,59 +37,60 @@ class LicensePlateDetectionV2TestSuite : public CVI_TDLModelTestSuite {
   }
 };
 
-TEST_F(LicensePlateDetectionV2TestSuite, open_close_model) {
+TEST_F(MobileDetectionV2TestSuite, open_close_model) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
     std::string model_name = std::string(m_json_object[test_index]["model_name"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
-    ASSERT_EQ(
-        CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_LP_DETECTION, m_model_path.c_str()),
-        CVI_TDL_SUCCESS)
+    ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                                m_model_path.c_str()),
+              CVI_TDL_SUCCESS)
         << "failed to set model path: " << m_model_path.c_str();
-    ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_LP_DETECTION),
+    ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN),
               CVI_TDL_SUCCESS);
   }
 }
 
-TEST_F(LicensePlateDetectionV2TestSuite, inference) {
+TEST_F(MobileDetectionV2TestSuite, inference) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
     std::string model_name = std::string(m_json_object[test_index]["model_name"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_LP_DETECTION,
+    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
                              m_model_path.c_str(), false);
     ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
     auto results = m_json_object[test_index]["results"];
 
     std::string image_path = (m_image_dir / results.begin().key()).string();
+    std::cout << image_path << std::endl;
     {
       Image frame(image_path, PIXEL_FORMAT_RGB_888_PLANAR);
       ASSERT_TRUE(frame.open());
-      VIDEO_FRAME_INFO_S *vframe = frame.getFrame();
+
       TDLObject<cvtdl_object_t> obj_meta;
-      init_obj_meta(obj_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-      EXPECT_EQ(CVI_TDL_License_Plate_Detectionv2(m_tdl_handle, vframe, obj_meta), CVI_TDL_SUCCESS);
+      EXPECT_EQ(CVI_TDL_MobileDetV2_Pedestrian(m_tdl_handle, frame.getFrame(), obj_meta),
+                CVI_TDL_SUCCESS);
     }
 
     {
       Image frame(image_path, PIXEL_FORMAT_BGR_888);
       ASSERT_TRUE(frame.open());
-      VIDEO_FRAME_INFO_S *vframe = frame.getFrame();
+
       TDLObject<cvtdl_object_t> obj_meta;
-      init_obj_meta(obj_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-      EXPECT_EQ(CVI_TDL_License_Plate_Detectionv2(m_tdl_handle, vframe, obj_meta), CVI_TDL_SUCCESS);
+      EXPECT_EQ(CVI_TDL_MobileDetV2_Pedestrian(m_tdl_handle, frame.getFrame(), obj_meta),
+                CVI_TDL_SUCCESS);
     }
   }
 }
 
-TEST_F(LicensePlateDetectionV2TestSuite, accuracy) {
+TEST_F(MobileDetectionV2TestSuite, accuracy) {
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
     std::string model_name = std::string(m_json_object[test_index]["model_name"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-    ASSERT_EQ(
-        CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_LP_DETECTION, m_model_path.c_str()),
-        CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                                m_model_path.c_str()),
+              CVI_TDL_SUCCESS);
     const float bbox_threshold = 0.90;
     const float score_threshold = 0.1;
     auto results = m_json_object[test_index]["results"];
@@ -98,13 +100,13 @@ TEST_F(LicensePlateDetectionV2TestSuite, accuracy) {
       Image frame(image_path, PIXEL_FORMAT_RGB_888);
       ASSERT_TRUE(frame.open());
 
-      VIDEO_FRAME_INFO_S *vframe = frame.getFrame();
       TDLObject<cvtdl_object_t> obj_meta;
-      init_obj_meta(obj_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
 
-      ASSERT_EQ(CVI_TDL_License_Plate_Detectionv2(m_tdl_handle, vframe, obj_meta), CVI_TDL_SUCCESS);
+      ASSERT_EQ(CVI_TDL_MobileDetV2_Pedestrian(m_tdl_handle, frame.getFrame(), obj_meta),
+                CVI_TDL_SUCCESS);
 
       auto expected_dets = iter.value();
+
       ASSERT_EQ(obj_meta->size, expected_dets.size());
 
       for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
@@ -126,11 +128,17 @@ TEST_F(LicensePlateDetectionV2TestSuite, accuracy) {
           }
           return false;
         };
-
-        bool matched = match_dets(*obj_meta, expected_bbox, comp);
-        EXPECT_TRUE(matched);
+        EXPECT_TRUE(match_dets(*obj_meta, expected_bbox, comp))
+            << "Error!"
+            << "\n"
+            << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
+            << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
+            << "score: " << expected_bbox.score << "\n"
+            << "[" << obj_meta->info[det_index].bbox.x1 << "," << obj_meta->info[det_index].bbox.y1
+            << "," << obj_meta->info[det_index].bbox.x2 << "," << obj_meta->info[det_index].bbox.y2
+            << "," << obj_meta->info[det_index].bbox.score << "],\n";
+        // CVI_TDL_FreeCpp(obj_meta);
       }
-      CVI_TDL_FreeCpp(obj_meta);
     }
   }
 }

@@ -87,24 +87,37 @@ fi
 # ION requirement >= 60 MB
 if [ "$total_ion_size" -gt "60000000" ]; then
 test_suites="${test_suites}:AlphaposeTestSuite.*"
-test_suites="${test_suites}:MobileDetV2TestSuite.*"
+test_suites="${test_suites}:MobileDetTestSuite.*"
 fi
 
 # ION requirement >= 70 MB
 if [ "$total_ion_size" -gt "70000000" ]; then
 test_suites="${test_suites}:FallTestSuite.*"
+test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
+test_suites="${test_suites}:Hand_DetectionTestSuite.*"
+test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
+test_suites="${test_suites}:People_Vehicle_DetectionTestSuite.*"
+test_suites="${test_suites}:FaceRecognitionTestSuite.*"
+test_suites="${test_suites}:LicensePlateDetectionV2TestSuite.*"
+test_suites="${test_suites}:ScrfdDetTestSuite.*"
+test_suites="${test_suites}:Hand_ClassificationTestSuite.*"
+test_suites="${test_suites}:HardhatDetTestSuite.*"
+test_suites="${test_suites}:MobileDetV2TestSuite.*"
+test_suites="${test_suites}:MobileDetectionV2TestSuite.*"
 fi
 
-if [ $CHIP_ARCH == "CV186X" ];then
-  test_suites="PersonPet_DetectionTestSuite.*"
+if [ $CHIP_ARCH == "ATHENA2" ];then
+  test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
   test_suites="${test_suites}:Hand_DetectionTestSuite.*"
   test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
   test_suites="${test_suites}:People_Vehicle_DetectionTestSuite.*"
-  test_suites="${test_suites}:ScrfdDetTestSuite.*"
-  test_suites="${test_suites}:IrScrfdFaceTestSuite.*"
+  test_suites="${test_suites}:FaceRecognitionTestSuite.*"
   test_suites="${test_suites}:LicensePlateDetectionV2TestSuite.*"
+  test_suites="${test_suites}:ScrfdDetTestSuite.*"
+  test_suites="${test_suites}:Hand_ClassificationTestSuite.*"
+  test_suites="${test_suites}:HardhatDetTestSuite.*"
+  test_suites="${test_suites}:MobileDetectionV2TestSuite.*"
 fi
-
 echo "----------------------"
 echo -e "regression setting:"
 echo -e "model dir: \t\t${model_dir}"

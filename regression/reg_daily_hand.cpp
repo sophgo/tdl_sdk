@@ -72,16 +72,6 @@ TEST_F(Hand_DetectionTestSuite, accuracy) {
     TDLObject<cvtdl_object_t> vehicle_meta;
     init_obj_meta(vehicle_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
     ASSERT_EQ(CVI_TDL_Hand_Detection(m_tdl_handle, vframe, vehicle_meta), CVI_TDL_SUCCESS);
-    // printf("boxes===================================\n");
-    // for (uint32_t i = 0; i < vehicle_meta->size; i++) {
-    //   printf("bbox.x1 = %f\n", vehicle_meta->info[i].bbox.x1);
-    //   printf("bbox.y1 = %f\n", vehicle_meta->info[i].bbox.y1);
-    //   printf("bbox.x2 = %f\n", vehicle_meta->info[i].bbox.x2);
-    //   printf("bbox.y2 = %f\n", vehicle_meta->info[i].bbox.y2);
-    //   printf("bbox.classes = %d\n", vehicle_meta->info[i].classes);
-    //   printf("bbox.score = %f\n", vehicle_meta->info[i].bbox.score);
-    // }
-    // printf("boxes===================================\n");
     auto expected_dets = iter.value();
 
     bool missed = false;

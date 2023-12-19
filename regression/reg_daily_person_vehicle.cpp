@@ -56,6 +56,35 @@ TEST_F(People_Vehicle_DetectionTestSuite, open_close_model) {
             CVI_TDL_SUCCESS);
 }
 
+TEST_F(People_Vehicle_DetectionTestSuite, inference) {
+  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
+                              m_model_path.c_str()),
+            CVI_TDL_SUCCESS);
+
+  int img_num = int(m_json_object["image_num"]);
+  auto results = m_json_object["results"];
+
+  std::string image_path = (m_image_dir / results.begin().key()).string();
+  {
+    Image image(image_path, PIXEL_FORMAT_RGB_888);
+    ASSERT_TRUE(image.open());
+    VIDEO_FRAME_INFO_S *vframe = image.getFrame();
+    TDLObject<cvtdl_object_t> people_vehicle_meta;
+    init_obj_meta(people_vehicle_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
+    ASSERT_EQ(CVI_TDL_PersonVehicle_Detection(m_tdl_handle, vframe, people_vehicle_meta),
+              CVI_TDL_SUCCESS);
+  }
+  {
+    Image image(image_path, PIXEL_FORMAT_RGB_888_PLANAR);
+    ASSERT_TRUE(image.open());
+    VIDEO_FRAME_INFO_S *vframe = image.getFrame();
+    TDLObject<cvtdl_object_t> people_vehicle_meta;
+    init_obj_meta(people_vehicle_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
+    ASSERT_EQ(CVI_TDL_PersonVehicle_Detection(m_tdl_handle, vframe, people_vehicle_meta),
+              CVI_TDL_SUCCESS);
+  }
+}
+
 TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
   ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
                               m_model_path.c_str()),
@@ -76,7 +105,6 @@ TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
               CVI_TDL_SUCCESS);
 
     auto expected_dets = iter.value();
-
     ASSERT_EQ(people_vehicle_meta->size, expected_dets.size());
 
     for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
