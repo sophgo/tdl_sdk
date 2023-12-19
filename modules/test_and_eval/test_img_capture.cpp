@@ -334,6 +334,8 @@ int main(int argc, char *argv[]) {
   double time_elapsed = 0;
   int num_images = 0;
 
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   std::vector<std::string> image_files = getImgList(str_image_root);
   for (uint32_t img_idx = 0; img_idx < image_files.size(); img_idx++) {
     std::string img_path = str_image_root + "/" + image_files[img_idx];
@@ -343,7 +345,7 @@ int main(int argc, char *argv[]) {
     char szimg[256];
     bool empty_img = false;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_TDL_ReadImage(img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+    ret = CVI_TDL_ReadImage(img_handle, img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     if (ret != CVI_SUCCESS) {
       std::cout << "Convert to video frame failed with:" << ret << ",file:" << str_image_root
                 << std::endl;
@@ -432,7 +434,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    CVI_TDL_ReleaseImage(&fdFrame);
+    CVI_TDL_ReleaseImage(img_handle, &fdFrame);
   }
   fclose(fp);
 

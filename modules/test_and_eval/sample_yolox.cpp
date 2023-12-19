@@ -101,10 +101,11 @@ int main(int argc, char* argv[]) {
   CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOX, nms_threshold);
   std::cout << "model opened:" << model_path << std::endl;
 
-  VIDEO_FRAME_INFO_S fdFrame;
-  ret = CVI_TDL_ReadImage(str_src_dir.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
-  std::cout << "CVI_TDL_ReadImage done!\n";
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
 
+  VIDEO_FRAME_INFO_S fdFrame;
+  ret = CVI_TDL_ReadImage(img_handle, str_src_dir.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
   if (ret != CVI_SUCCESS) {
     std::cout << "Convert out video frame failed with :" << ret << ".file:" << str_src_dir
               << std::endl;
@@ -121,7 +122,7 @@ int main(int argc, char* argv[]) {
            obj_meta.info[i].classes);
   }
 
-  CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
+  CVI_TDL_ReleaseImage(img_handle, &fdFrame);
   CVI_TDL_Free(&obj_meta);
   CVI_TDL_DestroyHandle(tdl_handle);
 

@@ -149,7 +149,8 @@ int main(int argc, char *argv[]) {
   uint32_t image_num;
   CVI_TDL_Eval_CocoInit(eval_handle, args.image_folder_path, args.eval_json_path, &image_num);
   CVI_TDL_Eval_CocoStartEval(eval_handle, args.regression_output_path);
-
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (uint32_t i = 0; i < image_num; i++) {
     char *filename = NULL;
     int id = 0;
@@ -157,7 +158,8 @@ int main(int argc, char *argv[]) {
 
     printf("[%d/%d] Reading image %s\n", i + 1, image_num, filename);
     VIDEO_FRAME_INFO_S frame;
-    if (CVI_TDL_ReadImage(filename, &frame, PIXEL_FORMAT_RGB_888_PLANAR) != CVI_TDL_SUCCESS) {
+    if (CVI_TDL_ReadImage(img_handle, filename, &frame, PIXEL_FORMAT_RGB_888_PLANAR) !=
+        CVI_TDL_SUCCESS) {
       printf("Read image failed.\n");
       break;
     }
@@ -171,7 +173,7 @@ int main(int argc, char *argv[]) {
 
     CVI_TDL_Eval_CocoInsertObject(eval_handle, id, &obj);
     CVI_TDL_Free(&obj);
-    CVI_TDL_ReleaseImage(&frame);
+    CVI_TDL_ReleaseImage(img_handle, &frame);
   }
   CVI_TDL_Eval_CocoEndEval(eval_handle);
 

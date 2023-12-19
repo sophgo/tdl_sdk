@@ -87,7 +87,8 @@ int main(int argc, char *argv[]) {
   }
   *strchrnul(line, '\n') = '\0';
   int imageNum = atoi(line);
-
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (int counter = 1; counter <= imageNum; counter++) {
     if ((read = getline(&line, &len, inFile)) == -1) {
       printf("get line error\n");
@@ -98,7 +99,7 @@ int main(int argc, char *argv[]) {
     printf("[%d/%d]\n", counter, imageNum);
 
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_TDL_ReadImage(image_path, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_TDL_ReadImage(img_handle, image_path, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -130,7 +131,7 @@ int main(int argc, char *argv[]) {
 
     CVI_TDL_Free(&obj_meta);
     CVI_TDL_Free(&tracker_meta);
-    CVI_TDL_ReleaseImage(&frame);
+    CVI_TDL_ReleaseImage(img_handle, &frame);
   }
   printf("\nDone\n");
 

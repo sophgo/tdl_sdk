@@ -15,59 +15,6 @@
 #include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
-CVI_S32 get_yolov5_det(std::string img_path, cvitdl_handle_t tdl_handle,
-                       VIDEO_FRAME_INFO_S* fdFrame, cvtdl_object_t* obj_meta) {
-  // printf("reading image file: %s \n", img_path.c_str());
-  CVI_S32 ret = CVI_TDL_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-  // printf("frame_width %d \t frame_height %d \n", fdFrame->stVFrame.u32Width,
-  //        fdFrame->stVFrame.u32Height);
-  if (ret != CVI_SUCCESS) {
-    std::cout << "Convert out video frame failed with :" << ret << ".file:" << img_path
-              << std::endl;
-    // continue;
-    return ret;
-  }
-
-  CVI_TDL_Yolov5(tdl_handle, fdFrame, obj_meta);
-
-  return ret;
-}
-
-// CVI_S32 init_param(cvitdl_handle_t tdl_handle) {
-//   // setup preprocess
-//   YoloPreParam p_preprocess_cfg;
-
-//   for (int i = 0; i < 3; i++) {
-//     printf("asign val %d \n", i);
-//     p_preprocess_cfg.factor[i] = 0.003922;
-//     p_preprocess_cfg.mean[i] = 0.0;
-//   }
-//   p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
-
-//   // setup yolo algorithm preprocess
-//   YoloAlgParam p_yolov5_param;
-//   uint32_t *anchors = new uint32_t[18];
-//   uint32_t p_anchors[18] = {10, 13, 16, 30, 33, 23,
-//                             30, 61, 62, 45, 59, 119,
-//                             116, 90, 156, 198, 373, 326};
-//   memcpy(anchors, p_anchors, sizeof(p_anchors));
-//   p_yolov5_param.anchors = anchors;
-
-//   uint32_t *strides = new uint32_t[3];
-//   uint32_t p_strides[3] = {8, 16, 32};
-//   memcpy(strides, p_strides, sizeof(p_strides));
-//   p_yolov5_param.strides = strides;
-//   p_yolov5_param.cls = 80;
-
-//   printf("setup yolov5 param \n");
-//   CVI_S32 ret = CVI_TDL_Set_YOLOV5_Param(tdl_handle, &p_preprocess_cfg, &p_yolov5_param);
-//   if (ret != CVI_SUCCESS) {
-//     printf("Can not set Yolov5 parameters %#x\n", ret);
-//     return ret;
-//   }
-//   return ret;
-// }
-
 void bench_mark_all(std::string bench_path, std::string image_root, std::string res_path,
                     cvitdl_handle_t tdl_handle) {
   std::fstream file(bench_path);
@@ -77,6 +24,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
 
   std::string line;
   int cnt = 0;
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   while (getline(file, line)) {
     if (!line.empty()) {
       stringstream ss(line);
@@ -87,10 +36,13 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         if (++cnt % 10 == 0) {
           printf("processing idx: %d\n", cnt);
         }
-        CVI_S32 ret = get_yolov5_det(image_root + image_name, tdl_handle, &fdFrame, &obj_meta);
+
+        auto img_path = image_root + image_name;
+        CVI_TDL_ReadImage(img_handle, img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+        CVI_S32 ret = CVI_TDL_Yolov5(tdl_handle, &fdFrame, &obj_meta);
         if (ret != CVI_SUCCESS) {
           CVI_TDL_Free(&obj_meta);
-          CVI_TDL_ReleaseImage(&fdFrame);
+          CVI_TDL_ReleaseImage(img_handle, &fdFrame);
           break;
         }
         std::stringstream res_ss;
@@ -108,7 +60,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         fclose(fp);
 
         CVI_TDL_Free(&obj_meta);
-        CVI_TDL_ReleaseImage(&fdFrame);
+        CVI_TDL_ReleaseImage(img_handle, &fdFrame);
         break;
       }
     }

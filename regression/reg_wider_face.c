@@ -61,6 +61,8 @@ int main(int argc, char *argv[]) {
   }
 
   uint32_t imageNum;
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   CVI_TDL_Eval_WiderFaceInit(eval_handle, argv[2], argv[3], &imageNum);
   for (uint32_t i = 0; i < imageNum; i++) {
     char *filepath = NULL;
@@ -69,7 +71,7 @@ int main(int argc, char *argv[]) {
     cvtdl_face_t face;
     memset(&face, 0, sizeof(cvtdl_face_t));
 
-    CVI_S32 ret = CVI_TDL_ReadImage(filepath, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_TDL_ReadImage(img_handle, filepath, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed. %s!\n", filepath);
       continue;
@@ -77,7 +79,7 @@ int main(int argc, char *argv[]) {
     printf("Run image %s\n", filepath);
     CVI_TDL_RetinaFace(facelib_handle, &frame, &face);
     CVI_TDL_Eval_WiderFaceResultSave2File(eval_handle, i, &frame, &face);
-    CVI_TDL_ReleaseImage(&frame);
+    CVI_TDL_ReleaseImage(img_handle, &frame);
     CVI_TDL_Free(&face);
   }
   CVI_TDL_Eval_WiderFaceClearInput(eval_handle);

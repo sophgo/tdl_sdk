@@ -83,6 +83,8 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     return CVI_TDL_FAILURE;
   }
   removePreviousFile(feature_dir);
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
 
   while ((entry = readdir(dirp)) != NULL) {
     if (entry->d_type != 8 && entry->d_type != 0) continue;
@@ -92,7 +94,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
 
     printf("%s\n", line);
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_TDL_ReadImage(line, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    int ret = CVI_TDL_ReadImage(img_handle, line, &rgb_frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -147,7 +149,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     }
 
     CVI_TDL_Free(&face);
-    CVI_TDL_ReleaseImage(&rgb_frame);
+    CVI_TDL_ReleaseImage(img_handle, &rgb_frame);
   }
   closedir(dirp);
 

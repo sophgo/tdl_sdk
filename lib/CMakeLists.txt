@@ -1,4 +1,4 @@
-if(NOT "${CVI_PLATFORM}" STREQUAL "CV180X")
+if(NOT DEFINED NO_OPENCV)
 add_subdirectory(cvi_draw_rect)
 endif()
 add_subdirectory(cvi_md)

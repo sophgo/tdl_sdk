@@ -116,13 +116,8 @@ set(OPENCV_LIB
     ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgcodecs.so
 )
 
-if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")
-if(NOT ${CVI_PLATFORM} STREQUAL "CV180X")
-buildninstallcpp(NAME sample_lib_draw_rect INC ${SAMPLE_INC} DEPS cvi_draw_rect atomic ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS} ${OPENCV_LIB})
-endif()
+if(NOT DEFINED NO_OPENCV)
+buildninstallcpp(NAME sample_lib_draw_rect INC ${SAMPLE_INC} DEPS cvi_draw_rect atomic ${SAMPLE_LIBS} ${MIDDLEWARE_LIBS} ${OPENCV_LIB})
 endif()
 buildninstallcpp(NAME sample_lib_cvimd INC  ${SAMPLE_INC} DEPS cvi_md atomic ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
 buildninstallcpp(NAME sample_lib_preprocess INC ${SAMPLE_INC} DEPS cvi_preprocess atomic ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
-
-#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation DESTINATION sample/include/)
-

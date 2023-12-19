@@ -20,8 +20,10 @@ static float cal_similarity(cv::Mat feature1, cv::Mat feature2) {
 
 int process_image_file(cvitdl_handle_t tdl_handle, const std::string &imgf, cvtdl_face_t *p_obj) {
   VIDEO_FRAME_INFO_S bg;
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
 
-  int ret = CVI_TDL_ReadImage(imgf.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
+  int ret = CVI_TDL_ReadImage(img_handle, imgf.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     std::cout << "failed to open file:" << imgf << std::endl;
     return ret;
@@ -45,7 +47,7 @@ int process_image_file(cvitdl_handle_t tdl_handle, const std::string &imgf, cvtd
     printf("cannot find faces\n");
   }
 
-  CVI_TDL_ReleaseImage(&bg);
+  CVI_TDL_ReleaseImage(img_handle, &bg);
   return ret;
 }
 

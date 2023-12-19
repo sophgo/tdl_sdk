@@ -21,7 +21,11 @@
 #include "face_attribute/face_attribute.hpp"
 #include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
+#include "object_detection/ppyoloe/ppyoloe.hpp"
+#include "object_detection/yolo/yolo.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
+#include "object_detection/yolov5/yolov5.hpp"
+#include "object_detection/yolov6/yolov6.hpp"
 #include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
 #include "retina_face/retina_face.hpp"
@@ -112,14 +116,21 @@ unordered_map<int, CreatorFuncAud> MODEL_CREATORS_AUD = {
 
 unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV5, CREATOR(Yolov5)},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV6, CREATOR(Yolov6)},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV7, CREATOR(Yolov5)},
+    {CVI_TDL_SUPPORTED_MODEL_YOLO, CREATOR(Yolo)},
     {CVI_TDL_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
+    {CVI_TDL_SUPPORTED_MODEL_PPYOLOE, CREATOR(PPYoloE)},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 80))},
+    {CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 3))},
     {CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR(SoundClassification)},
     {CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, CREATOR(ScrFDFace)},
     {CVI_TDL_SUPPORTED_MODEL_RETINAFACE, CREATOR_P1(RetinaFace, PROCESS, CAFFE)},
     {CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE, CREATOR_P1(FaceAttribute, bool, true)},
     {CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
-    {CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
-     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 3))},
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::coco80)},
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
@@ -354,6 +365,32 @@ CVI_S32 CVI_TDL_GetModelThreshold(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODE
   Core *instance = getInferenceInstance(config, ctx);
   if (instance != nullptr) {
     *threshold = instance->getModelThreshold();
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_TDL_GetModelName(config));
+    return CVI_TDL_ERR_OPEN_MODEL;
+  }
+  return CVI_TDL_SUCCESS;
+}
+
+CVI_S32 CVI_TDL_SetModelNmsThreshold(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
+                                     float threshold) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    instance->setModelNmsThreshold(threshold);
+  } else {
+    LOGE("Cannot create model: %s\n", CVI_TDL_GetModelName(config));
+    return CVI_TDL_ERR_OPEN_MODEL;
+  }
+  return CVI_TDL_SUCCESS;
+}
+
+CVI_S32 CVI_TDL_GetModelNMmsThreshold(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
+                                      float *threshold) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  Core *instance = getInferenceInstance(config, ctx);
+  if (instance != nullptr) {
+    *threshold = instance->getModelNmsThreshold();
   } else {
     LOGE("Cannot create model: %s\n", CVI_TDL_GetModelName(config));
     return CVI_TDL_ERR_OPEN_MODEL;
@@ -689,7 +726,14 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_FaceRecognition, FaceAttribute,
 DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceRecognitionOne, FaceAttribute,
                       CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, cvtdl_face_t *, int)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Yolov3, Yolov3, CVI_TDL_SUPPORTED_MODEL_YOLOV3, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Yolov5, Yolov5, CVI_TDL_SUPPORTED_MODEL_YOLOV5, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Yolov6, Yolov6, CVI_TDL_SUPPORTED_MODEL_YOLOV6, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Yolov7, Yolov5, CVI_TDL_SUPPORTED_MODEL_YOLOV7, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Yolo, Yolo, CVI_TDL_SUPPORTED_MODEL_YOLO, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_YoloX, YoloX, CVI_TDL_SUPPORTED_MODEL_YOLOX, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_PPYoloE, PPYoloE, CVI_TDL_SUPPORTED_MODEL_PPYOLOE, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_YOLOV8_Detection, YoloV8Detection,
+                      CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_SoundClassification, SoundClassification,
                       CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_SoundClassification_V2, SoundClassificationV2,
@@ -1145,4 +1189,133 @@ DLL_EXPORT CVI_S32 CVI_TDL_Release_VideoFrame(const cvitdl_handle_t handle,
     delete frame;
   }
   return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_TDL_Set_Yolov5_ROI(const cvitdl_handle_t handle, Point_t roi_s) {
+  printf("enter CVI_TDL_Set_Yolov5_ROI...\n");
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  Yolov5 *yolov5_model =
+      dynamic_cast<Yolov5 *>(getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_YOLOV5, ctx));
+  if (yolov5_model == nullptr) {
+    LOGE("yolov5_model has not been inited\n");
+    return CVI_TDL_FAILURE;
+  }
+  return yolov5_model->set_roi(roi_s);
+}
+
+YoloPreParam CVI_TDL_Get_YOLO_Preparam(const cvitdl_handle_t handle,
+                                       const CVI_TDL_SUPPORTED_MODEL_E model_index) {
+  printf("enter CVI_TDL_Get_YOLO_Preparam...\n");
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV5 ||
+      model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV7) {
+    Yolov5 *yolov5_model = dynamic_cast<Yolov5 *>(getInferenceInstance(model_index, ctx));
+    return yolov5_model->get_preparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV6) {
+    Yolov6 *yolov6_model = dynamic_cast<Yolov6 *>(getInferenceInstance(model_index, ctx));
+    return yolov6_model->get_preparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+    YoloV8Detection *yolov8_model =
+        dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
+    return yolov8_model->get_preparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOX) {
+    YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
+    return yolox_model->get_preparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_PPYOLOE) {
+    PPYoloE *ppyoloe_model = dynamic_cast<PPYoloE *>(getInferenceInstance(model_index, ctx));
+    return ppyoloe_model->get_preparam();
+  }
+
+  return YoloPreParam();
+}
+
+CVI_S32 CVI_TDL_Set_YOLO_Preparam(const cvitdl_handle_t handle,
+                                  const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                  YoloPreParam pre_param) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV5 ||
+      model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV7) {
+    Yolov5 *yolov5_model = dynamic_cast<Yolov5 *>(getInferenceInstance(model_index, ctx));
+    yolov5_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV6) {
+    Yolov6 *yolov6_model = dynamic_cast<Yolov6 *>(getInferenceInstance(model_index, ctx));
+    yolov6_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+    YoloV8Detection *yolov8_model =
+        dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
+    yolov8_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOX) {
+    YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
+    yolox_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_PPYOLOE) {
+    PPYoloE *ppyoloe_model = dynamic_cast<PPYoloE *>(getInferenceInstance(model_index, ctx));
+    ppyoloe_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
+  }
+  LOGE("not supported model index\n");
+  return CVI_FAILURE;
+}
+
+// TODO remove model_index
+YoloAlgParam CVI_TDL_Get_YOLO_Algparam(const cvitdl_handle_t handle,
+                                       const CVI_TDL_SUPPORTED_MODEL_E model_index) {
+  printf("enter CVI_TDL_Get_YOLO_Preparam...\n");
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV5 ||
+      model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV7) {
+    Yolov5 *yolov5_model = dynamic_cast<Yolov5 *>(getInferenceInstance(model_index, ctx));
+    return yolov5_model->get_algparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV6) {
+    Yolov6 *yolov6_model = dynamic_cast<Yolov6 *>(getInferenceInstance(model_index, ctx));
+    return yolov6_model->get_algparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+    YoloV8Detection *yolov8_model =
+        dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
+    return yolov8_model->get_algparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOX) {
+    YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
+    return yolox_model->get_algparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_PPYOLOE) {
+    PPYoloE *ppyoloe_model = dynamic_cast<PPYoloE *>(getInferenceInstance(model_index, ctx));
+    return ppyoloe_model->get_algparam();
+  }
+  return YoloAlgParam();
+}
+
+CVI_S32 CVI_TDL_Set_YOLO_Algparam(const cvitdl_handle_t handle,
+                                  const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                  YoloAlgParam alg_param) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV5 ||
+      model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV7) {
+    Yolov5 *yolov5_model = dynamic_cast<Yolov5 *>(getInferenceInstance(model_index, ctx));
+    yolov5_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV6) {
+    Yolov6 *yolov6_model = dynamic_cast<Yolov6 *>(getInferenceInstance(model_index, ctx));
+    yolov6_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION) {
+    YoloV8Detection *yolov8_model =
+        dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
+    yolov8_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOX) {
+    YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
+    yolox_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_PPYOLOE) {
+    PPYoloE *ppyoloe_model = dynamic_cast<PPYoloE *>(getInferenceInstance(model_index, ctx));
+    ppyoloe_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  }
+  LOGE("not supported model index\n");
+  return CVI_FAILURE;
 }

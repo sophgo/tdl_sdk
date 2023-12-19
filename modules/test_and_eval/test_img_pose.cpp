@@ -147,8 +147,9 @@ int main(int argc, char *argv[]) {
   if (show) img_format = PIXEL_FORMAT_BGR_888;
 
   VIDEO_FRAME_INFO_S bg;
-
-  ret = CVI_TDL_ReadImage(imgf.c_str(), &bg, img_format);
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+  ret = CVI_TDL_ReadImage(img_handle, imgf.c_str(), &bg, img_format);
   if (ret != CVI_SUCCESS) {
     std::cout << "failed to open file:" << imgf << std::endl;
     return ret;
@@ -185,7 +186,7 @@ int main(int argc, char *argv[]) {
     // cvitdl::service::DrawPose17(&obj_meta, &bg);
   }
 
-  CVI_TDL_ReleaseImage(&bg);
+  CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_Free(&obj_meta);
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;

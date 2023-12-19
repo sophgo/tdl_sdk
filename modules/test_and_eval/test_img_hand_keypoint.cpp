@@ -125,7 +125,9 @@ int main(int argc, char *argv[]) {
   }
 
   VIDEO_FRAME_INFO_S fdFrame;
-  ret = CVI_TDL_ReadImage(image_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+  ret = CVI_TDL_ReadImage(img_handle, image_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     printf("open img failed with %#x!\n", ret);
     return ret;
@@ -140,7 +142,7 @@ int main(int argc, char *argv[]) {
 
   CVI_TDL_Free(&obj_meta);
   // CVI_TDL_Free(&hand_obj);
-  CVI_TDL_ReleaseImage(&fdFrame);
+  CVI_TDL_ReleaseImage(img_handle, &fdFrame);
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

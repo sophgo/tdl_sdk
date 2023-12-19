@@ -71,6 +71,8 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (uint32_t i = 0; i < imageNum; i++) {
     char *name1 = NULL;
     char *name2 = NULL;
@@ -79,7 +81,7 @@ int main(int argc, char *argv[]) {
     printf("[%d/%d] label %d: image1 %s image2 %s\n", i + 1, imageNum, label, name1, name2);
 
     VIDEO_FRAME_INFO_S frame1;
-    CVI_S32 ret = CVI_TDL_ReadImage(name1, &frame1, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_TDL_ReadImage(img_handle, name1, &frame1, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image1 failed with %#x!\n", ret);
       return ret;
@@ -95,10 +97,10 @@ int main(int argc, char *argv[]) {
     } else {
       printf("cannot find face: %s\n", name1);
     }
-    CVI_TDL_ReleaseImage(&frame1);
+    CVI_TDL_ReleaseImage(img_handle, &frame1);
 
     VIDEO_FRAME_INFO_S frame2;
-    ret = CVI_TDL_ReadImage(name2, &frame2, PIXEL_FORMAT_RGB_888);
+    ret = CVI_TDL_ReadImage(img_handle, name2, &frame2, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image2 failed with %#x!\n", ret);
       return ret;
@@ -117,7 +119,7 @@ int main(int argc, char *argv[]) {
 
     CVI_TDL_Free(&face1);
     CVI_TDL_Free(&face2);
-    CVI_TDL_ReleaseImage(&frame2);
+    CVI_TDL_ReleaseImage(img_handle, &frame2);
     free(name1);
     free(name2);
   }

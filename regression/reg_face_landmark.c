@@ -47,6 +47,8 @@ static int run(const char *img_dir, float *nme, int *total) {
   char file_name[256];
   sprintf(file_name, "%s/list_test.txt", img_dir);
   FILE *fp = fopen(file_name, "r");
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   while ((read = getline(&line, &len, fp)) != -1) {
     memset(bbox, 0, sizeof(bbox));
     memset(landmark, 0, sizeof(landmark));
@@ -66,7 +68,7 @@ static int run(const char *img_dir, float *nme, int *total) {
     img_name[strlen(img_name) - 1] = '\0';
     printf("%s\n", img_name);
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_TDL_ReadImage(img_name, &frame, PIXEL_FORMAT_RGB_888);
+    int ret = CVI_TDL_ReadImage(img_handle, img_name, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       continue;
@@ -98,7 +100,7 @@ static int run(const char *img_dir, float *nme, int *total) {
     (*total)++;
     CVI_TDL_FreeDMS(face.dms);
     CVI_TDL_Free(&face);
-    CVI_TDL_ReleaseImage(&frame);
+    CVI_TDL_ReleaseImage(img_handle, &frame);
   }
   return CVI_TDL_SUCCESS;
 }

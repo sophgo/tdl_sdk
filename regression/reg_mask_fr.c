@@ -59,7 +59,8 @@ int main(int argc, char *argv[]) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
-
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   uint32_t imageNum;
   CVI_TDL_Eval_LfwInit(eval_handle, argv[4], true, &imageNum);
   for (uint32_t i = 0; i < imageNum; i++) {
@@ -83,14 +84,14 @@ int main(int argc, char *argv[]) {
     printf("label %d: image1 %s image2 %s\n", label, name1_full, name2_full);
 
     VIDEO_FRAME_INFO_S frame1;
-    CVI_S32 ret = CVI_TDL_ReadImage(name1_full, &frame1, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_TDL_ReadImage(img_handle, name1_full, &frame1, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image1 failed with %#x!\n", ret);
       return ret;
     }
 
     VIDEO_FRAME_INFO_S frame2;
-    ret = CVI_TDL_ReadImage(name2_full, &frame2, PIXEL_FORMAT_RGB_888);
+    ret = CVI_TDL_ReadImage(img_handle, name2_full, &frame2, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image2 failed with %#x!\n", ret);
       return ret;
@@ -112,8 +113,8 @@ int main(int argc, char *argv[]) {
 
     CVI_TDL_Free(&face1);
     CVI_TDL_Free(&face2);
-    CVI_TDL_ReleaseImage(&frame1);
-    CVI_TDL_ReleaseImage(&frame2);
+    CVI_TDL_ReleaseImage(img_handle, &frame1);
+    CVI_TDL_ReleaseImage(img_handle, &frame2);
   }
 
   CVI_TDL_Eval_LfwSave2File(eval_handle, argv[5]);

@@ -76,19 +76,9 @@ set(SAMPLE_INC
 )
 
 if(${MW_VER} STREQUAL "v1")
-set(SAMPLE_INC ${SAMPLE_INC}
-    ${TRACER_PATH}
-)
+set(SAMPLE_INC ${SAMPLE_INC} ${TRACER_PATH})
 elseif(${MW_VER} STREQUAL "v3")
-if("${CVI_PLATFORM}" STREQUAL "CV181X")
-set(SAMPLE_INC ${SAMPLE_INC}
-    ${MIDDLEWARE_SDK_ROOT}/component/panel/cv181x
-)
-elseif("${CVI_PLATFORM}" STREQUAL "CV180X")
-set(SAMPLE_INC ${SAMPLE_INC}
-    ${MIDDLEWARE_SDK_ROOT}/component/panel/cv180x
-)
-endif()
+set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/${CVI_PLATFORM_LOWER})
 endif()
 
 if(${CVI_PLATFORM} STREQUAL "CV186X")
@@ -112,7 +102,7 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
     ${CVI_RTSP_LIBPATH})
-elseif(${CONFIG_DUAL_OS} STREQUAL "ON")
+elseif(${MW_VER} STREQUAL "v3")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
@@ -220,7 +210,9 @@ if(DEFINED NO_OPENCV)
   buildninstall(NAME sample_read_ped_track INC ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
   buildninstall(NAME sample_read_fdfr INC ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
   buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl atomic ${SAMPLE_LIBS} )
+  buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
 else()
+  buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
   buildninstallcpp(NAME sample_read_od INC ${SAMPLE_INC} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
   buildninstallcpp(NAME sample_aud_order INC ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
@@ -255,7 +247,7 @@ else()
   buildninstall(NAME sample_vi_face_recog INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app atomic ${SAMPLE_LIBS})
   buildninstall(NAME sample_cap_face INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread atomic ${SAMPLE_LIBS} )
 endif()
-buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
+
 
 if((DEFINED BUILD_WEB_VIEW) AND ("${CVI_PLATFORM}" STREQUAL "CV182X"))
 buildninstall(NAME sample_web_multi_model INC ${SAMPLE_INC_WEB} SRCS middleware_utils.c ${SAMPLE_SRC_WEB} DEPS cvi_tdl ${SAMPLE_LIBS_WEB} )

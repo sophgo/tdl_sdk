@@ -77,9 +77,10 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, true);
-
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (uint32_t i = 0; i < vpss_vec.size(); i++) {
-    CVI_TDL_ReadImage(argv[2], &vpss_vec[i].frame, PIXEL_FORMAT_RGB_888);
+    CVI_TDL_ReadImage(img_handle, argv[2], &vpss_vec[i].frame, PIXEL_FORMAT_RGB_888);
   }
 
   cvtdl_vpssconfig_t vpssConfig;
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
 
   // Free image and handles.
   for (uint32_t i = 0; i < vpss_vec.size(); i++) {
-    CVI_TDL_ReleaseImage(&vpss_vec[i].frame);
+    CVI_TDL_ReleaseImage(img_handle, &vpss_vec[i].frame);
   }
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;

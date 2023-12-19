@@ -98,6 +98,8 @@ int main(int argc, char *argv[]) {
   cvtdl_object_t vehicle_obj, license_plate_obj;
   memset(&vehicle_obj, 0, sizeof(cvtdl_object_t));
   memset(&license_plate_obj, 0, sizeof(cvtdl_object_t));
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (uint32_t n = 0; n < image_num; n++) {
     char *filename = NULL;
     int id = 0;
@@ -106,7 +108,7 @@ int main(int argc, char *argv[]) {
     printf("[%u] image path = %s\n", n, filename);
 
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_TDL_ReadImage(filename, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_TDL_ReadImage(img_handle, filename, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -159,7 +161,7 @@ int main(int argc, char *argv[]) {
 
     free(filename);
     CVI_TDL_Free(&vehicle_obj);
-    CVI_TDL_ReleaseImage(&frame);
+    CVI_TDL_ReleaseImage(img_handle, &frame);
   }
 
   fclose(outFile);

@@ -54,7 +54,8 @@ int main(int argc, char *argv[]) {
     printf("Create Eval handle failed with %#x!\n", ret);
     return ret;
   }
-
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   uint32_t imageNum = 0;
   CVI_TDL_Eval_WflwInit(eval_handle, argv[2], &imageNum);
   for (uint32_t i = 0; i < imageNum; i++) {
@@ -67,7 +68,7 @@ int main(int argc, char *argv[]) {
     strcat(full_img, name);
 
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_TDL_ReadImage(full_img, &frame, PIXEL_FORMAT_RGB_888);
+    int ret = CVI_TDL_ReadImage(img_handle, full_img, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -86,7 +87,7 @@ int main(int argc, char *argv[]) {
 
     free(name);
     CVI_TDL_Free(&face);
-    CVI_TDL_ReleaseImage(&frame);
+    CVI_TDL_ReleaseImage(img_handle, &frame);
   }
 
   CVI_TDL_Eval_WflwDistance(eval_handle);

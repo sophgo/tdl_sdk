@@ -9,7 +9,7 @@
 #include "deepsort/cvi_deepsort.hpp"
 #include "ive/ive.hpp"
 #include "motion_detection/md.hpp"
-#ifndef CV180X
+#ifndef NO_OPENCV
 #include "fall_detection/fall_det_monitor.hpp"
 #include "fall_detection/fall_detection.hpp"
 #include "tamper_detection/tamper_detection.hpp"
@@ -36,7 +36,7 @@ typedef struct {
   ive::IVE *ive_handle = NULL;
   MotionDetection *md_model = nullptr;
   DeepSORT *ds_tracker = nullptr;
-#ifndef CV180X
+#ifndef NO_OPENCV
   TamperDetectorMD *td_model = nullptr;
   FallMD *fall_model = nullptr;
   FallDetMonitor *fall_monitor_model = nullptr;

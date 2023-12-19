@@ -36,9 +36,13 @@ int main(int argc, char *argv[]) {
     printf("open model failed with %#x!\n", ret);
     return ret;
   }
+
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+
   VIDEO_FRAME_INFO_S bg;
   // printf("toread image:%s\n",argv[1]);
-  ret = CVI_TDL_ReadImage(strf1.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
+  ret = CVI_TDL_ReadImage(img_handle, strf1.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     printf("open img failed with %#x!\n", ret);
     return ret;
@@ -59,7 +63,7 @@ int main(int argc, char *argv[]) {
     CVI_TDL_Free(&obj_meta);
   }
   std::cout << str_res << std::endl;
-  CVI_TDL_ReleaseImage(&bg);
+  CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;

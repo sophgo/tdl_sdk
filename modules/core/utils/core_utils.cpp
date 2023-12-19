@@ -1,6 +1,6 @@
 #include "core_utils.hpp"
 #include "cvi_tdl_log.hpp"
-#ifndef CV180X
+#ifndef NO_OPENCV
 #include "neon_utils.hpp"
 #endif
 #include <math.h>
@@ -52,7 +52,7 @@ void clip_boxes(int width, int height, cvtdl_bbox_t &box) {
 
 void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const float *qMean,
                        VIDEO_FRAME_INFO_S *outFrame) {
-#ifdef CV180X
+#ifdef NO_OPENCV
   LOGE("not supported");
 #else
   if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 ||

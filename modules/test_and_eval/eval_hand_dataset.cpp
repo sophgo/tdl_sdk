@@ -270,6 +270,9 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+
   for (size_t i = 0; i < image_files.size(); i++) {
     std::cout << "processing :" << i << "/" << image_files.size() << "\t" << image_files[i]
               << std::endl;
@@ -278,9 +281,10 @@ int main(int argc, char *argv[]) {
     VIDEO_FRAME_INFO_S fdFrame;
     std::string s_vehicle = "vehicle";
     if (process_flag == s_vehicle) {
-      ret = CVI_TDL_ReadImage_Resize(strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR, 640, 384);
+      ret = CVI_TDL_ReadImage_Resize(img_handle, strf.c_str(), &fdFrame,
+                                     PIXEL_FORMAT_RGB_888_PLANAR, 640, 384);
     } else {
-      ret = CVI_TDL_ReadImage(strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+      ret = CVI_TDL_ReadImage(img_handle, strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     }
     std::cout << "CVI_TDL_ReadImage done\t";
 
@@ -301,7 +305,7 @@ int main(int argc, char *argv[]) {
       fclose(fp);
     }
     std::cout << "write results done\t";
-    CVI_TDL_ReleaseImage(&fdFrame);
+    CVI_TDL_ReleaseImage(img_handle, &fdFrame);
     std::cout << "CVI_TDL_ReleaseImage done\t" << std::endl;
   }
 

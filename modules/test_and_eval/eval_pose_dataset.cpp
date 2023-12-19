@@ -339,6 +339,9 @@ int main(int argc, char *argv[]) {
 
   std::vector<std::vector<int>> boxes;
   FILE *fp = fopen(dst_root.c_str(), "w");
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+
   for (i = starti; i < image_files.size(); i++) {
     boxes.clear();
 
@@ -351,7 +354,7 @@ int main(int argc, char *argv[]) {
     VIDEO_FRAME_INFO_S bg;
     // std::cout << strf<< std::endl;
 
-    ret = CVI_TDL_ReadImage(strf.c_str(), &bg, img_format);
+    ret = CVI_TDL_ReadImage(img_handle, strf.c_str(), &bg, img_format);
     std::cout << "ret: " << ret << std::endl;
 
     std::cout << "CVI_TDL_ReadImage done\t";
@@ -380,7 +383,7 @@ int main(int argc, char *argv[]) {
       printf("Error: process_flag should be simcc, hrnet or yolov8pose, but got %s !\n",
              process_flag.c_str());
       fclose(fp);
-      CVI_TDL_ReleaseImage(&bg);
+      CVI_TDL_ReleaseImage(img_handle, &bg);
       CVI_TDL_DestroyHandle(tdl_handle);
       return -1;
     }
@@ -402,11 +405,9 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // CVI_TDL_ReleaseImage(&bg);
-
     PIXEL_FORMAT_E img_format2 = PIXEL_FORMAT_BGR_888;
     VIDEO_FRAME_INFO_S bg2;
-    CVI_TDL_ReadImage(strf.c_str(), &bg2, img_format2);
+    CVI_TDL_ReadImage(img_handle, strf.c_str(), &bg2, img_format2);
     std::cout << "done 1 " << std::endl;
     std::string show_root2 = argv[8];
     std::string save_path = join_path(show_root2, file_name);
@@ -417,8 +418,8 @@ int main(int argc, char *argv[]) {
     //   std::string save_path = join_path(show_root, file_name);
     //   show_keypoints(&bg, &obj_meta, save_path, score);
     // }
-    CVI_TDL_ReleaseImage(&bg);
-    CVI_TDL_ReleaseImage(&bg2);
+    CVI_TDL_ReleaseImage(img_handle, &bg);
+    CVI_TDL_ReleaseImage(img_handle, &bg2);
     CVI_TDL_Free(&obj_meta);
   }
   fclose(fp);

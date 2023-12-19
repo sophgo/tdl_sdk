@@ -217,41 +217,9 @@ void release_system(cvitdl_handle_t tdl_handle, cvitdl_service_handle_t service_
   CVI_SYS_Exit();
   CVI_VB_Exit();
 }
-int load_image_file(IVE_HANDLE ive_handle, const std::string &strf, IVE_IMAGE_S &image,
-                    VIDEO_FRAME_INFO_S &fdFrame, IVE_IMAGE_TYPE_E img_format) {
-  int ret = CVI_SUCCESS;
-#ifndef USE_TPU_IVE
-  PIXEL_FORMAT_E pix_format = PIXEL_FORMAT_RGB_888_PLANAR;
-  if (img_format == IVE_IMAGE_TYPE_U8C3_PACKAGE) {
-    pix_format = PIXEL_FORMAT_RGB_888;
-  }
-  ret = CVI_TDL_ReadImage(strf.c_str(), &fdFrame, pix_format);
-  return ret;
-#endif
-
-  image = CVI_IVE_ReadImage(ive_handle, strf.c_str(), img_format);
-#ifndef USE_TPU_IVE
-  int imgw = image.u32Width;
-#else
-  int imgw = image.u16Width;
-#endif
-  if (imgw == 0) {
-    std::cout << "read image failed:" << strf << std::endl;
-    return CVI_FAILURE;
-  } else {
-    std::cout << "readimg with:" << imgw << std::endl;
-  }
-
-#ifndef USE_TPU_IVE
-  ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame);
-#else
-  ret = CVI_IVE_Image2VideoFrameInfo(&image, &fdFrame, false);
-#endif
-  if (ret != CVI_SUCCESS) {
-    std::cout << "Convert to video frame failed with:" << ret << ",file:" << strf << std::endl;
-    CVI_SYS_FreeI(ive_handle, &image);
-    return CVI_FAILURE;
-  }
+int load_image_file(imgprocess_t img_handle, const std::string &strf, VIDEO_FRAME_INFO_S &fdFrame,
+                    PIXEL_FORMAT_E img_format) {
+  CVI_TDL_ReadImage(img_handle, strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
   return CVI_SUCCESS;
 }
 std::string get_img_name(const std::string &strf) {
@@ -260,13 +228,14 @@ std::string get_img_name(const std::string &strf) {
   std::string name = strf.substr(pos0 + 1, pos1 - pos0);
   return name;
 }
-int register_gallery_face(cvitdl_app_handle_t app_handle, IVE_HANDLE ive_handle,
-                          const std::string &strf, cvtdl_service_feature_array_t *p_feat_gallery,
+int register_gallery_face(imgprocess_t img_handle, cvitdl_app_handle_t app_handle,
+                          IVE_HANDLE ive_handle, const std::string &strf,
+                          cvtdl_service_feature_array_t *p_feat_gallery,
                           std::vector<std::string> &gallery_names) {
   IVE_IMAGE_S image;
   VIDEO_FRAME_INFO_S fdFrame;
 
-  int ret = load_image_file(ive_handle, strf, image, fdFrame, IVE_IMAGE_TYPE_U8C3_PLANAR);
+  int ret = load_image_file(img_handle, strf, fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     return NULL;
   }
@@ -404,6 +373,9 @@ int main(int argc, char *argv[]) {
   const CVI_S32 vpssgrp_width = 1920;
   const CVI_S32 vpssgrp_height = 1080;
 
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 1);
   cvitdl_handle_t tdl_handle = NULL;
@@ -449,7 +421,8 @@ int main(int argc, char *argv[]) {
   }
   if (do_face_recog) {
     const char *gimg = "/mnt/data/admin1_data/datasets/ivs_eval_set/image/yitong/register.jpg";
-    ret = register_gallery_face(app_handle, ive_handle, gimg, &feat_gallery, gallery_names);
+    ret = register_gallery_face(img_handle, app_handle, ive_handle, gimg, &feat_gallery,
+                                gallery_names);
     std::cout << "register ret:" << ret << std::endl;
     if (ret == CVI_SUCCESS) {
       std::cout << "to register gallery\n";
@@ -489,7 +462,7 @@ int main(int argc, char *argv[]) {
   FILE *fp = fopen(cap_result.c_str(), "w");
 
   int num_append = 0;
-  IVE_IMAGE_TYPE_E img_format = IVE_IMAGE_TYPE_U8C3_PACKAGE;  // IVE_IMAGE_TYPE_U8C3_PACKAGE;
+  PIXEL_FORMAT_E img_format = PIXEL_FORMAT_RGB_888_PLANAR;  // IVE_IMAGE_TYPE_U8C3_PACKAGE;
   for (int img_idx = 0; img_idx < 1000; img_idx++) {
     if (bExit) break;
     std::cout << "processing:" << img_idx << "/1000\n";
@@ -499,7 +472,7 @@ int main(int argc, char *argv[]) {
     bool empty_img = false;
     IVE_IMAGE_S image;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = load_image_file(ive_handle, szimg, image, fdFrame, img_format);
+    ret = load_image_file(ive_handle, szimg, fdFrame, img_format);
     printf("read image ret:%d width:%d\n", ret, (int)fdFrame.stVFrame.u32Width);
     if (ret != CVI_SUCCESS) {
       if (img_idx < 100) {
@@ -508,8 +481,8 @@ int main(int argc, char *argv[]) {
       }
       printf("load image failed\n");
       empty_img = true;
-      ret = load_image_file(ive_handle, "/mnt/data/admin1_data/alios_test/black_1080p.jpg", image,
-                            fdFrame, img_format);
+      ret = load_image_file(ive_handle, "/mnt/data/admin1_data/alios_test/black_1080p.jpg", fdFrame,
+                            img_format);
       num_append++;
       if (num_append > 30) {
         break;
@@ -586,12 +559,7 @@ int main(int argc, char *argv[]) {
       }
     }
     printf("to release frame\n");
-#ifndef CV181X
-    CVI_TDL_ReleaseImage(&fdFrame);
-#if !defined(CV181X) && !defined(CV186X)
-    CVI_SYS_FreeI(ive_handle, &image);
-#endif
-#endif
+    CVI_TDL_ReleaseImage(img_handle, &fdFrame);
   }
   fclose(fp);
   printf("to release system\n");

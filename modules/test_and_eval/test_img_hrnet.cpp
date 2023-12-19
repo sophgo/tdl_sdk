@@ -60,38 +60,6 @@ void show_keypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta, float scor
   CVI_SYS_Munmap((void *)bg->stVFrame.pu8VirAddr[0], bg->stVFrame.u32Length[0]);
 }
 
-int process_image_file(cvitdl_handle_t tdl_handle, const std::string &imgf, cvtdl_object_t *p_obj,
-                       VIDEO_FRAME_INFO_S *bg) {
-  // int ret = CVI_TDL_ReadImage(imgf.c_str(), bg, PIXEL_FORMAT_RGB_888_PLANAR);
-  int ret = CVI_TDL_ReadImage(imgf.c_str(), bg, PIXEL_FORMAT_BGR_888);
-  if (ret != CVI_SUCCESS) {
-    std::cout << "failed to open file:" << imgf << std::endl;
-    return ret;
-  } else {
-    printf("image read,width:%d\n", bg->stVFrame.u32Width);
-  }
-  // std::cout << "pixel format is " << bg->stVFrame.enPixelFormat << std::endl;
-  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, bg, p_obj);
-  if (ret != CVI_SUCCESS) {
-    printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
-    return ret;
-  }
-
-  // ret=CVI_TDL_ReadImage(imgf.c_str(),bg,PIXEL_FORMAT_RGB_888_PLANAR);
-
-  if (p_obj->size > 0) {
-    ret = CVI_TDL_Hrnet_Pose(tdl_handle, bg, p_obj);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_TDL_Hrnet_Pose failed with %#x!\n", ret);
-      return ret;
-    }
-  } else {
-    printf("cannot find person\n");
-  }
-
-  return ret;
-}
-
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
@@ -130,7 +98,25 @@ int main(int argc, char *argv[]) {
   cvtdl_object_t obj_meta = {0};
 
   VIDEO_FRAME_INFO_S bg;
-  process_image_file(tdl_handle, img, &obj_meta, &bg);
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+  ret = CVI_TDL_ReadImage(img_handle, img.c_str(), &bg, PIXEL_FORMAT_BGR_888);
+
+  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, &bg, &obj_meta);
+  if (ret != CVI_SUCCESS) {
+    printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
+    return ret;
+  }
+
+  if (obj_meta.size > 0) {
+    ret = CVI_TDL_Hrnet_Pose(tdl_handle, &bg, &obj_meta);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_TDL_Hrnet_Pose failed with %#x!\n", ret);
+      return ret;
+    }
+  } else {
+    printf("cannot find person\n");
+  }
 
   int det_num = std::min((int)obj_meta.size, 5);  // max det_num set to 5
   for (int i = 0; i < det_num; i++) {
@@ -150,7 +136,7 @@ int main(int argc, char *argv[]) {
     show_keypoints(&bg, &obj_meta, score);
   }
 
-  CVI_TDL_ReleaseImage(&bg);
+  CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_Free(&obj_meta);
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;

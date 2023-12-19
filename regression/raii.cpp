@@ -12,16 +12,20 @@ namespace unitest {
 // Image
 ////////////////////////////////
 Image::Image(const std::string &file, PIXEL_FORMAT_E format)
-    : m_format(format), m_filepath(file), m_opened(false) {}
+    : m_format(format), m_filepath(file), m_opened(false) {
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+}
 
 Image::~Image() {
   if (m_opened) {
-    CVI_TDL_ReleaseImage(&m_frame);
+    CVI_TDL_ReleaseImage(img_handle, &m_frame);
   }
 }
 
 Image::Image(PIXEL_FORMAT_E format, uint32_t width, uint32_t height)
-    : m_format(format), m_width(width), m_height(height), m_opened(false) {}
+    : m_format(format), m_width(width), m_height(height), m_opened(false) {
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+}
 
 bool Image::open() {
   if (m_opened) return true;
@@ -31,7 +35,7 @@ bool Image::open() {
       return false;
     }
   } else {
-    if (CVI_TDL_ReadImage(m_filepath.c_str(), &m_frame, m_format) != CVI_SUCCESS) {
+    if (CVI_TDL_ReadImage(img_handle, m_filepath.c_str(), &m_frame, m_format) != CVI_SUCCESS) {
       m_width = m_frame.stVFrame.u32Width;
       m_height = m_frame.stVFrame.u32Height;
       return false;

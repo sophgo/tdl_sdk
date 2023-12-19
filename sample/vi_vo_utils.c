@@ -708,6 +708,7 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
   context->type = outputType;
   CVI_S32 s32Ret = CVI_SUCCESS;
   switch (outputType) {
+#ifndef CV180X
     case OUTPUT_TYPE_PANEL: {
       printf("Init panel\n");
       context->voChn = 0;
@@ -721,6 +722,7 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
       CVI_VO_HideChn(context->voLayer, context->voChn);
       return CVI_SUCCESS;
     }
+#endif
     case OUTPUT_TYPE_RTSP: {
       printf("Init rtsp\n");
       return InitRTSP(CODEC_H264, frameWidth, frameHeight, context);
@@ -734,12 +736,17 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
 }
 
 static CVI_S32 panel_send_frame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context) {
+#ifdef CV180X
+  return 0;
+#else
   CVI_S32 s32Ret = CVI_VO_SendFrame(context->voLayer, context->voChn, stVencFrame, -1);
   if (s32Ret != CVI_SUCCESS) {
     printf("CVI_VO_SendFrame failed with %#x\n", s32Ret);
   }
   CVI_VO_ShowChn(context->voLayer, context->voChn);
   return s32Ret;
+  return 0;
+#endif
 }
 
 static CVI_S32 rtsp_send_frame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context) {

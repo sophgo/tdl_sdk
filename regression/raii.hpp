@@ -3,6 +3,7 @@
 #include <string>
 #include "cvi_comm.h"
 #include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 
 namespace cvitdl {
 namespace unitest {
@@ -26,6 +27,7 @@ class Image {
  private:
   bool createEmpty();
 
+  imgprocess_t img_handle;
   VIDEO_FRAME_INFO_S m_frame;
   PIXEL_FORMAT_E m_format;
   std::string m_filepath;

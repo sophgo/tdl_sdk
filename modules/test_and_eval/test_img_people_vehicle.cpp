@@ -239,7 +239,9 @@ int main(int argc, char *argv[]) {
 
     bool empty_img = false;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_TDL_ReadImage(img_path, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+    imgprocess_t img_handle;
+    CVI_TDL_Create_ImageProcessor(&img_handle);
+    ret = CVI_TDL_ReadImage(img_handle, img_path, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     if (ret != CVI_SUCCESS) {
       std::cout << "Convert to video frame failed with:" << ret << ",file:" << str_image_root
                 << std::endl;
@@ -267,7 +269,7 @@ int main(int argc, char *argv[]) {
     export_tracking_info(app_handle->personvehicle_cpt_info, str_dst_video, img_idx,
                          fdFrame.stVFrame.u32Width, fdFrame.stVFrame.u32Height, 4);
 
-    CVI_TDL_ReleaseImage(&fdFrame);
+    CVI_TDL_ReleaseImage(img_handle, &fdFrame);
   }
   //   fclose(fp);
 

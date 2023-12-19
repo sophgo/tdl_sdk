@@ -15,6 +15,8 @@ static CVI_S32 vpssgrp_height = 1080;
 static int prepareFeature(cvitdl_eval_handle_t eval_handle, bool is_query) {
   uint32_t num = 0;
   CVI_TDL_Eval_Market1501GetImageNum(eval_handle, is_query, &num);
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (int i = 0; i < num; ++i) {
     char *image = NULL;
     int cam_id;
@@ -23,7 +25,7 @@ static int prepareFeature(cvitdl_eval_handle_t eval_handle, bool is_query) {
     CVI_TDL_Eval_Market1501GetPathIdPair(eval_handle, i, is_query, &image, &cam_id, &pid);
 
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_TDL_ReadImage(image, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_TDL_ReadImage(img_handle, image, &rgb_frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -51,7 +53,7 @@ static int prepareFeature(cvitdl_eval_handle_t eval_handle, bool is_query) {
     free(image);
 
     CVI_TDL_Free(&obj);
-    CVI_TDL_ReleaseImage(&rgb_frame);
+    CVI_TDL_ReleaseImage(img_handle, &rgb_frame);
   }
 
   return CVI_TDL_SUCCESS;

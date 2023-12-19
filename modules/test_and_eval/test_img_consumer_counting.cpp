@@ -317,6 +317,8 @@ int main(int argc, char *argv[]) {
   int num_images = 0;
   printf("strat.............................\n");
   std::vector<std::string> image_files = getImgList(str_image_root);
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (uint32_t img_idx = 0; img_idx < 7000; img_idx++) {
     // std::string img_path = str_image_root + "/" + image_files[img_idx];
     char img_path[256];
@@ -328,7 +330,7 @@ int main(int argc, char *argv[]) {
 
     bool empty_img = false;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_TDL_ReadImage(img_path, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+    ret = CVI_TDL_ReadImage(img_handle, img_path, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     if (ret != CVI_SUCCESS) {
       std::cout << "Convert to video frame failed with:" << ret << ",file:" << str_image_root
                 << std::endl;
@@ -401,7 +403,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    CVI_TDL_ReleaseImage(&fdFrame);
+    CVI_TDL_ReleaseImage(img_handle, &fdFrame);
   }
   std::cout << "total entrying num: " << app_handle->person_cpt_info->last_head.entry_num << "\n";
   std::cout << "total miss people: " << app_handle->person_cpt_info->last_head.miss_num << "\n";

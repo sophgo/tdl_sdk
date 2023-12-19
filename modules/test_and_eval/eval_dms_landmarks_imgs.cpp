@@ -16,22 +16,6 @@
 #include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
-CVI_S32 get_facelandmarker(std::string img_path, cvitdl_handle_t tdl_handle,
-                           VIDEO_FRAME_INFO_S* fdFrame, cvtdl_face_t* meta) {
-  printf("reading image file: %s \n", img_path.c_str());
-  CVI_S32 ret = CVI_TDL_ReadImage(img_path.c_str(), fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-  // std::cout << "CVI_TDL_ReadImage done!\n";
-  // printf("frame_width %d \t frame_height %d \n", fdFrame->stVFrame.u32Width,
-  //        fdFrame->stVFrame.u32Height);
-  if (ret != CVI_SUCCESS) {
-    std::cout << "Convert out video frame failed with :" << ret << ".file:" << img_path
-              << std::endl;
-    return ret;
-  }
-
-  CVI_TDL_DMSLDet(tdl_handle, fdFrame, meta);
-  return ret;
-}
 void bench_mark_all(std::string bench_path, std::string image_root, std::string res_path,
                     cvitdl_handle_t tdl_handle) {
   std::fstream file(bench_path);
@@ -40,6 +24,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
   }
   std::string line;
   std::stringstream res_ss;
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   while (getline(file, line)) {
     if (!line.empty()) {
       stringstream ss(line);
@@ -48,10 +34,14 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         cvtdl_face_t meta = {0};
         VIDEO_FRAME_INFO_S fdFrame;
         // cout << "get image name: " << image_root + image_name << endl;
-        CVI_S32 ret = get_facelandmarker(image_root + image_name, tdl_handle, &fdFrame, &meta);
+
+        auto name = image_root + image_name;
+        int ret =
+            CVI_TDL_ReadImage(img_handle, name.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+        ret = CVI_TDL_DMSLDet(tdl_handle, &fdFrame, &meta);
         if (ret != CVI_SUCCESS) {
           CVI_TDL_Free(&meta);
-          CVI_TDL_ReleaseImage(&fdFrame);
+          CVI_TDL_ReleaseImage(img_handle, &fdFrame);
           break;
         }
         for (int i = 0; i < 68; i++) {
@@ -60,7 +50,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         res_ss << "\n";
 
         CVI_TDL_Free(&meta);
-        CVI_TDL_ReleaseImage(&fdFrame);
+        CVI_TDL_ReleaseImage(img_handle, &fdFrame);
         break;
       }
     }

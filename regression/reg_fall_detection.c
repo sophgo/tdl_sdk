@@ -60,6 +60,8 @@ int main(int argc, char *argv[]) {
 
   VIDEO_FRAME_INFO_S fdFrame;
   cvtdl_object_t obj;
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   memset(&obj, 0, sizeof(cvtdl_object_t));
   for (i = 0; i < count; i++) {
     struct dirent *dp;
@@ -78,7 +80,7 @@ int main(int argc, char *argv[]) {
       strcat(image_path, "/");
       strcat(image_path, dp->d_name);
 
-      ret = CVI_TDL_ReadImage(image_path, &fdFrame, PIXEL_FORMAT_RGB_888);
+      ret = CVI_TDL_ReadImage(img_handle, image_path, &fdFrame, PIXEL_FORMAT_RGB_888);
       if (ret != CVI_TDL_SUCCESS) {
         printf("Read image1 failed with %#x!\n", ret);
         return ret;
@@ -96,7 +98,7 @@ int main(int argc, char *argv[]) {
         printf("; fall score %d ", obj.info[0].pedestrian_properity->fall);
       }
 
-      CVI_TDL_ReleaseImage(&fdFrame);
+      CVI_TDL_ReleaseImage(img_handle, &fdFrame);
       CVI_TDL_Free(&obj);
 
       free(dp);

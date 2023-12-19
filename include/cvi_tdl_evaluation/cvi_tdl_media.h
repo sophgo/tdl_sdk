@@ -8,29 +8,8 @@
 extern "C" {
 #endif
 
-/**
- * \addtogroup core_media Convert Buffer or File to VIDEO_FRAME_INFO_S
- * \ingroup core_cvitdlcore
- */
-/**@{*/
-
-/**
- * @brief Convert given image buffer to VB frame.
- *
- * @param buffer The input image buffer.
- * @param width Input image width.
- * @param height Input image height.
- * @param stride Input image stride.
- * @param inFormat Input image buffer format.
- * @param blk VB block id.
- * @param frame Output read image.
- * @param outFormat Set output format, only supports RGB, BGR, planar.
- * @return int Return CVI_TDL_SUCCESS if read succeed.
- */
-DLL_EXPORT CVI_S32 CVI_TDL_Buffer2VBFrame(const uint8_t *buffer, uint32_t width, uint32_t height,
-                                          uint32_t stride, const PIXEL_FORMAT_E inFormat,
-                                          VB_BLK *blk, VIDEO_FRAME_INFO_S *frame,
-                                          const PIXEL_FORMAT_E outFormat);
+typedef void *imgprocess_t;
+DLL_EXPORT CVI_S32 CVI_TDL_Create_ImageProcessor(imgprocess_t *hanlde);
 
 /**
  * @brief Read image from given path and return a VIDEO_FRAME_INFO_S allocated from ION.
@@ -40,10 +19,11 @@ DLL_EXPORT CVI_S32 CVI_TDL_Buffer2VBFrame(const uint8_t *buffer, uint32_t width,
  * @param format Set output format, only supports RGB, BGR, planar.
  * @return int Return CVI_TDL_SUCCESS if read succeed.
  */
-DLL_EXPORT CVI_S32 CVI_TDL_ReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
-                                     const PIXEL_FORMAT_E format);
-DLL_EXPORT CVI_S32 CVI_TDL_ReadImage_Resize(const char *filepath, VIDEO_FRAME_INFO_S *frame,
-                                            PIXEL_FORMAT_E format, uint32_t width, uint32_t height);
+DLL_EXPORT CVI_S32 CVI_TDL_ReadImage(imgprocess_t hanlde, const char *filepath,
+                                     VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format);
+DLL_EXPORT CVI_S32 CVI_TDL_ReadImage_Resize(imgprocess_t hanlde, const char *filepath,
+                                            VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format,
+                                            uint32_t width, uint32_t height);
 /**
  * @brief Release image which is read from CVI_TDL_ReadImage.
  *
@@ -51,7 +31,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_ReadImage_Resize(const char *filepath, VIDEO_FRAME_IN
  * @param frame Output read image.
  * @return int Return CVI_TDL_SUCCESS if read succeed.
  */
-DLL_EXPORT CVI_S32 CVI_TDL_ReleaseImage(VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_TDL_ReleaseImage(imgprocess_t hanlde, VIDEO_FRAME_INFO_S *frame);
 
 #ifdef __cplusplus
 }

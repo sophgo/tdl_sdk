@@ -252,6 +252,8 @@ int main(int argc, char *argv[]) {
 
   FILE *fp = fopen(dst_root.c_str(), "w");
   bool fall = false;
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (int img_idx = 0; img_idx < num_end; img_idx++) {
     cvtdl_object_t stObjMeta = {0};
     cvtdl_tracker_t stTrackerMeta = {0};
@@ -284,18 +286,9 @@ int main(int argc, char *argv[]) {
     // sprintf(szimg, "%s/%08d.jpg", str_image_root.c_str(), img_idx);
     sprintf(szimg, "%s/%d.jpg", str_image_root.c_str(), img_idx);
     std::cout << "processing:" << szimg << std::endl;
-    // std::cout << "processing:" << img_idx << "/1000,path:" << szimg << std::endl;
 
-    // bool empty_img = false;
-    // IVE_IMAGE_S image;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = CVI_TDL_ReadImage(szimg, &fdFrame, PIXEL_FORMAT_BGR_888);
-    // printf("read image ret:%d width:%d\n", ret, (int)fdFrame.stVFrame.u32Width);
-    // if (ret != CVI_SUCCESS) {
-    //   printf("load_image_file failed\n");
-    //   // AI_LOGE("load_image_file failed with %#x\n", s32Ret);
-    //   goto get_frame_failed;
-    // }
+    ret = CVI_TDL_ReadImage(img_handle, szimg, &fdFrame, PIXEL_FORMAT_BGR_888);
 
     while (getline(kps_file, f_line)) {
       if (!f_line.empty()) {
@@ -395,7 +388,7 @@ int main(int argc, char *argv[]) {
 
     // printf("to release frame\n");
   inf_error:
-    CVI_TDL_ReleaseImage(&fdFrame);
+    CVI_TDL_ReleaseImage(img_handle, &fdFrame);
     CVI_TDL_Free(&stObjMeta);
     CVI_TDL_Free(&stTrackerMeta);
   }

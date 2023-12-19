@@ -15,7 +15,8 @@ static int run(const char *img_dir, int *count, int *total) {
   DIR *dirp;
   struct dirent *entry;
   dirp = opendir(img_dir);
-
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   while ((entry = readdir(dirp)) != NULL) {
     if (entry->d_type != 8 && entry->d_type != 0) continue;
     char line[500] = "\0";
@@ -25,7 +26,7 @@ static int run(const char *img_dir, int *count, int *total) {
 
     printf("%s\n", line);
     VIDEO_FRAME_INFO_S frame;
-    CVI_S32 ret = CVI_TDL_ReadImage(line, &frame, PIXEL_FORMAT_RGB_888);
+    CVI_S32 ret = CVI_TDL_ReadImage(img_handle, line, &frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Read image failed with %#x!\n", ret);
       return ret;
@@ -45,7 +46,7 @@ static int run(const char *img_dir, int *count, int *total) {
     (*total)++;
     CVI_TDL_FreeDMS(face.dms);
     CVI_TDL_Free(&face);
-    CVI_TDL_ReleaseImage(&frame);
+    CVI_TDL_ReleaseImage(img_handle, &frame);
   }
   closedir(dirp);
 

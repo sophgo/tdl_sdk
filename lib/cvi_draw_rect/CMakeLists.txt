@@ -2,7 +2,6 @@
 
 include_directories(${MIDDLEWARE_INCLUDES}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/ive
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/utils
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/service/

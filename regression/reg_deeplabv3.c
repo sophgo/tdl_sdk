@@ -26,6 +26,9 @@ int main(int argc, char *argv[]) {
   CVI_TDL_PerfettoInit();
   CVI_S32 ret = CVI_TDL_SUCCESS;
 
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 5, vpssgrp_width,
                          vpssgrp_height, PIXEL_FORMAT_RGB_888, 5);
   if (ret != CVI_TDL_SUCCESS) {
@@ -61,7 +64,7 @@ int main(int argc, char *argv[]) {
     printf("Read: %s\n", img_name);
 
     VIDEO_FRAME_INFO_S rgb_frame;
-    CVI_S32 ret = CVI_TDL_ReadImage(img_name, &rgb_frame, PIXEL_FORMAT_RGB_888);
+    int ret = CVI_TDL_ReadImage(img_handle, img_name, &rgb_frame, PIXEL_FORMAT_RGB_888);
     if (ret != CVI_TDL_SUCCESS) {
       printf("Failed to read image: %s\n", img_name);
       return ret;
@@ -74,7 +77,7 @@ int main(int argc, char *argv[]) {
 
     CVI_VPSS_ReleaseChnFrame(0, 0, &label_frame);
     free(img_name);
-    CVI_TDL_ReleaseImage(&rgb_frame);
+    CVI_TDL_ReleaseImage(img_handle, &rgb_frame);
   }
 
   CVI_TDL_DestroyHandle(tdl_handle);
