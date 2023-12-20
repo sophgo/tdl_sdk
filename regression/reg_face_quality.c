@@ -59,7 +59,7 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
   *num = fail_num;
   *total = idx;
   closedir(dirp);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   return CVI_TDL_SUCCESS;
 }
 

@@ -55,7 +55,7 @@ static int prepareFeature(cvitdl_eval_handle_t eval_handle, bool is_query) {
     CVI_TDL_Free(&obj);
     CVI_TDL_ReleaseImage(img_handle, &rgb_frame);
   }
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   return CVI_TDL_SUCCESS;
 }
 

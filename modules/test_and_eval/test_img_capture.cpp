@@ -433,7 +433,6 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-
     CVI_TDL_ReleaseImage(img_handle, &fdFrame);
   }
   fclose(fp);
@@ -446,6 +445,7 @@ int main(int argc, char *argv[]) {
   CVI_TDL_APP_DestroyHandle(app_handle);
   CVI_TDL_Service_DestroyHandle(service_handle);
   CVI_TDL_DestroyHandle(tdl_handle);
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   // DestroyVideoSystem(&vs_ctx);
   CVI_SYS_Exit();
   CVI_VB_Exit();

@@ -46,8 +46,8 @@ int process_image_file(cvitdl_handle_t tdl_handle, const std::string &imgf, cvtd
   } else {
     printf("cannot find faces\n");
   }
-
   CVI_TDL_ReleaseImage(img_handle, &bg);
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   return ret;
 }
 

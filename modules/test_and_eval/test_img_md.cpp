@@ -32,10 +32,8 @@ int main(int argc, char *argv[]) {
   }
   std::string strf1(argv[1]);
   std::string strf2(argv[2]);
-
-  imgprocess_t img_handle;
+  imgprocess_t img_handle = NULL;
   CVI_TDL_Create_ImageProcessor(&img_handle);
-
   VIDEO_FRAME_INFO_S bg;
   CVI_TDL_ReadImage(img_handle, strf1.c_str(), &bg, PIXEL_FORMAT_YUV_400);
   std::cout << "read image1 done\n";
@@ -70,6 +68,6 @@ int main(int argc, char *argv[]) {
   CVI_TDL_ReleaseImage(img_handle, &frame);
 
   CVI_TDL_DestroyHandle(tdl_handle);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   return ret;
 }

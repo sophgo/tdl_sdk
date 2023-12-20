@@ -107,6 +107,7 @@ int main(int argc, char *argv[]) {
   free(entry_list);
   // Free image and handles.
   // CVI_SYS_FreeI(ive_handle, &image);
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   CVI_TDL_DestroyHandle(tdl_handle);
 
   return ret;

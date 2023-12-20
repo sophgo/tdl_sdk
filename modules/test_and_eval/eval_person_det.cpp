@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
     CVI_TDL_ReleaseImage(img_handle, &fdFrame);
     std::cout << "CVI_TDL_ReleaseImage done\t" << std::endl;
   }
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

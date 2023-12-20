@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
   for (uint32_t i = 0; i < vpss_vec.size(); i++) {
     CVI_TDL_ReleaseImage(img_handle, &vpss_vec[i].frame);
   }
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

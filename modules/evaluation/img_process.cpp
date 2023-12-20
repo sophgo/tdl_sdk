@@ -267,7 +267,7 @@ class ImageProcessorNoOpenCV : public ImageProcessor {
 };
 
 #ifndef NO_OPENCV
-class ImageProcessorWithOpenCV : public ImageProcessor {
+class ImageProcessorOpenCV : public ImageProcessor {
  public:
   int read(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format) override {
     return read_image(filepath, frame, format);
@@ -282,13 +282,13 @@ class ImageProcessorWithOpenCV : public ImageProcessor {
 };
 #endif
 
-CVI_S32 CVI_TDL_Create_ImageProcessor(imgprocess_t *hanlde) {
+CVI_S32 CVI_TDL_Create_ImageProcessor(imgprocess_t *handle) {
 #ifdef NO_OPENCV
-  auto imageProcessor = std::make_unique<ImageProcessorNoOpenCV>();
+  auto imageProcessor = new ImageProcessorNoOpenCV();
 #else
-  auto imageProcessor = std::make_unique<ImageProcessorWithOpenCV>();
+  auto imageProcessor = new ImageProcessorOpenCV();
 #endif
-  *hanlde = imageProcessor.get();
+  *handle = static_cast<void *>(imageProcessor);
   return 0;
 }
 
@@ -296,6 +296,7 @@ CVI_S32 CVI_TDL_ReadImage(imgprocess_t handle, const char *filepath, VIDEO_FRAME
                           PIXEL_FORMAT_E format) {
   ImageProcessor *ctx = static_cast<ImageProcessor *>(handle);
   return ctx->read(filepath, frame, format);
+  ;
 }
 
 CVI_S32 CVI_TDL_ReadImage_Resize(imgprocess_t handle, const char *filepath,
@@ -308,4 +309,13 @@ CVI_S32 CVI_TDL_ReadImage_Resize(imgprocess_t handle, const char *filepath,
 CVI_S32 CVI_TDL_ReleaseImage(imgprocess_t handle, VIDEO_FRAME_INFO_S *frame) {
   ImageProcessor *ctx = static_cast<ImageProcessor *>(handle);
   return ctx->release(frame);
+}
+
+CVI_S32 CVI_TDL_Destroy_ImageProcessor(imgprocess_t handle) {
+  ImageProcessor *ctx = static_cast<ImageProcessor *>(handle);
+  if (ctx) {
+    delete ctx;
+    ctx = nullptr;
+  }
+  return 0;
 }

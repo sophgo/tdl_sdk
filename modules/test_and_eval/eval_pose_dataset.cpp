@@ -423,7 +423,7 @@ int main(int argc, char *argv[]) {
     CVI_TDL_Free(&obj_meta);
   }
   fclose(fp);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

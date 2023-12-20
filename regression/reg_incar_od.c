@@ -58,6 +58,7 @@ static int run(const char *img_dir) {
     CVI_TDL_Free(&face);
     CVI_TDL_ReleaseImage(img_handle, &frame);
   }
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   closedir(dirp);
 
   return CVI_TDL_SUCCESS;

@@ -55,7 +55,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
       }
     }
   }
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   std::cout << "write results to file: " << res_path << std::endl;
   FILE* fp = fopen(res_path.c_str(), "w");
   fwrite(res_ss.str().c_str(), res_ss.str().size(), 1, fp);

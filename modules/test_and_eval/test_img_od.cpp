@@ -57,6 +57,6 @@ int main(int argc, char *argv[]) {
   // std::cout << str_res << std::endl;
   CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_DestroyHandle(tdl_handle);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   return ret;
 }

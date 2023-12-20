@@ -405,7 +405,7 @@ int main(int argc, char *argv[]) {
   bRunImageWriter = false;
   bRunVideoOutput = false;
   // pthread_join(io_thread, NULL);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   // CVI_TDL_APP_DestroyHandle(app_handle);
   CVI_TDL_Service_DestroyHandle(service_handle);
   CVI_TDL_DestroyHandle(tdl_handle);

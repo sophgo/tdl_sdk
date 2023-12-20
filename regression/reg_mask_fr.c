@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
   CVI_TDL_Eval_LfwSave2File(eval_handle, argv[5]);
   CVI_TDL_Eval_LfwClearInput(eval_handle);
   CVI_TDL_Eval_LfwClearEvalData(eval_handle);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   CVI_TDL_Eval_DestroyHandle(eval_handle);
   CVI_TDL_DestroyHandle(facelib_handle);
   CVI_SYS_Exit();

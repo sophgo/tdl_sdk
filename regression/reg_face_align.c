@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
   }
 
   CVI_TDL_Eval_WflwDistance(eval_handle);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   CVI_TDL_Eval_DestroyHandle(eval_handle);
   CVI_TDL_DestroyHandle(facelib_handle);
   CVI_SYS_Exit();

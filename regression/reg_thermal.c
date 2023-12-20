@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
     CVI_TDL_Free(&obj);
     CVI_TDL_ReleaseImage(img_handle, &frame);
   }
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   CVI_TDL_Eval_CocoEndEval(eval_handle);
 
   CVI_TDL_Eval_DestroyHandle(eval_handle);

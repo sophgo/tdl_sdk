@@ -62,7 +62,7 @@ static int run(const char *img_dir, int *mask_count, int *total) {
     CVI_TDL_ReleaseImage(img_handle, &frame);
   }
   closedir(dirp);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   return CVI_TDL_SUCCESS;
 }
 

@@ -42,7 +42,7 @@ set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_core.a
                                ${OPENCV_ROOT}/lib/libopencv_imgproc.a
                                ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a)
 if (NOT "${CVI_SYSTEM_PROCESSOR}" STREQUAL "RISCV")
-  set(OPENCV_LIBS_IMCODEC ${OPENCV_LIBS_IMCODEC}
+  set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_LIBS_IMCODEC_STATIC}
                           ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a)
 endif()
 

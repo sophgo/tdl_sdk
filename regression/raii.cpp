@@ -19,6 +19,7 @@ Image::Image(const std::string &file, PIXEL_FORMAT_E format)
 Image::~Image() {
   if (m_opened) {
     CVI_TDL_ReleaseImage(img_handle, &m_frame);
+    CVI_TDL_Destroy_ImageProcessor(img_handle);
   }
 }
 

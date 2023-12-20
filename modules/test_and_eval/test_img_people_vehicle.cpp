@@ -228,6 +228,8 @@ int main(int argc, char *argv[]) {
   int num_images = 0;
   printf("strat.............................\n");
   std::vector<std::string> image_files = getImgList(str_image_root);
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
   for (uint32_t img_idx = 0; img_idx < 7000; img_idx++) {
     // std::string img_path = str_image_root + "/" + image_files[img_idx];
     char img_path[256];
@@ -239,8 +241,7 @@ int main(int argc, char *argv[]) {
 
     bool empty_img = false;
     VIDEO_FRAME_INFO_S fdFrame;
-    imgprocess_t img_handle;
-    CVI_TDL_Create_ImageProcessor(&img_handle);
+
     ret = CVI_TDL_ReadImage(img_handle, img_path, &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
     if (ret != CVI_SUCCESS) {
       std::cout << "Convert to video frame failed with:" << ret << ",file:" << str_image_root
@@ -283,7 +284,7 @@ int main(int argc, char *argv[]) {
   CVI_VB_Exit();
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_TDL_APP_DestroyHandle(app_handle);
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed / num_images
   //           << std::endl;
 }

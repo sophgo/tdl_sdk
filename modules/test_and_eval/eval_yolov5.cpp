@@ -65,7 +65,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
       }
     }
   }
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   std::cout << "write done!" << std::endl;
 }
 

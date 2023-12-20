@@ -151,6 +151,7 @@ int genFeatureFile(const char *img_dir, const char *feature_dir, bool do_face_qu
     CVI_TDL_Free(&face);
     CVI_TDL_ReleaseImage(img_handle, &rgb_frame);
   }
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   closedir(dirp);
 
   return CVI_TDL_SUCCESS;

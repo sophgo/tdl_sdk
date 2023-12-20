@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
     CVI_TDL_ReleaseImage(img_handle, &frame);
   }
   printf("\nDone\n");
-
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
   fclose(outFile);
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_SYS_Exit();
