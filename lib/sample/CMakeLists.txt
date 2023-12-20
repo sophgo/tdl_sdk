@@ -111,9 +111,9 @@ endif()
 endif()
 
 set(OPENCV_LIB
-    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_core.so
-    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgproc.so
-    ${MLIR_SDK_ROOT}/opencv/lib/libopencv_imgcodecs.so
+    ${MLIR_SDK_ROOT}/lib/libopencv_core.so
+    ${MLIR_SDK_ROOT}/lib/libopencv_imgproc.so
+    ${MLIR_SDK_ROOT}/lib/libopencv_imgcodecs.so
 )
 
 if(NOT DEFINED NO_OPENCV)

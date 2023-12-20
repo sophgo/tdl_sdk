@@ -150,7 +150,7 @@ if(${CVI_PLATFORM} STREQUAL "CV186X")
   reg_daily_fr.cpp
   reg_daily_mobiledetion.cpp
   reg_daily_handcls.cpp
-  reg_daily_handkeypoint.cpp
+  # reg_daily_handkeypoint.cpp
   )
 else()
 set(UnitTests
