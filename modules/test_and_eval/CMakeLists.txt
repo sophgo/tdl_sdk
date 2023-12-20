@@ -169,4 +169,4 @@ buildninstallcpp(NAME eval_ppyoloe INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_t
 buildninstallcpp(NAME eval_pose_dataset INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 buildninstallcpp(NAME eval_dms_landmarks_imgs INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_evaluation ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/sys_utils.cpp)
 endif()
-install(FILES sample_yolo.cpp sample_yolov5.cpp sample_yolov5_roi.cpp sample_yolov6.cpp sample_yolov7.cpp sample_yolov8.cpp sample_ppyoloe.cpp DESTINATION sample/cvi_tdl/)
+install(FILES sample_yolo.cpp sample_yolov5.cpp sample_yolov5_roi.cpp sample_yolov6.cpp sample_yolov7.cpp sample_yolov8.cpp sample_ppyoloe.cpp DESTINATION sample/cvi_yolo/)

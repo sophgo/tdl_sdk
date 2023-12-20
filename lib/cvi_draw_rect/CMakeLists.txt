@@ -6,11 +6,14 @@ include_directories(${MIDDLEWARE_INCLUDES}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/utils
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/service/
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/ive
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_evaluation
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_app 
                     ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(PROJ_SRCS   $<TARGET_OBJECTS:utils>
+                ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/cvi_tdl_utils.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/cvi_tdl_types_mem.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/service/draw_rect/draw_rect.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/cvi_draw_rect.cpp )
 

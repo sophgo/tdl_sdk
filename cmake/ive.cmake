@@ -12,9 +12,10 @@ if(USE_TPU_IVE)
 
     add_definitions(-DUSE_TPU_IVE)
 
-    if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
-    install(DIRECTORY ${TPU_IVE_SDK_ROOT}/include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/sample/3rd/include/ive)
-    install(FILES ${IVE_LIBS} DESTINATION ${CMAKE_INSTALL_PREFIX}/sample/3rd/lib)
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    set(IVE_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/ive)
+    install(DIRECTORY ${TPU_IVE_SDK_ROOT}/include/ DESTINATION ${IVE_PATH}/include)
+    install(DIRECTORY ${TPU_IVE_SDK_ROOT}/lib DESTINATION ${IVE_PATH})
     endif()
 else()
     # Use standalone IVE hardware

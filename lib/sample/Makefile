@@ -135,23 +135,12 @@ else ifeq ($(MW_VERSION), v3)
 endif
 
 #####################################################
-# Kernel
-#####################################################
-ifeq ($(CHIP), CV181X)
-CFLAGS += -DCV181X
-ifeq ($(SYSTEM_PROCESSOR), RISCV)
-CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
-else ifeq ($(SYSTEM_PROCESSOR), ARM)
-CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
-endif
-endif
-
-#####################################################
 # TDL SDK stuffs
 #####################################################
 SDK_ROOT_PATH ?= $(abspath ../..)
 SDK_LIB_PATH = $(SDK_ROOT_PATH)/lib
 SDK_INC_PATH = $(SDK_ROOT_PATH)/include
+SDK_3RD_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
 SDK_TDL_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_tdl
 SDK_APP_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_tdl_app
 SDK_SAMPLE_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include
@@ -161,8 +150,8 @@ SDK_APP_LIBS = -lcvi_tdl_app
 #####################################################
 # Opencv
 #####################################################
-OPENCV_INC_PATH = $(TPU_PATH)/opencv/include
-OPENCV_LIB_PATH = $(TPU_PATH)/lib
+OPENCV_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/opencv/include
+OPENCV_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/opencv/lib
 OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
 
 #####################################################
@@ -202,7 +191,7 @@ CFLAGS += -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=a
 
 CFLAGS +=  -I$(KERNEL_ROOT)/include
 
-SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -L$(TPU_LIB_PATH) $(TPU_LIBS) -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) -L$(SDK_LIB_PATH) -lpthread
+SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(SDK_3RD_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -L$(TPU_LIB_PATH) $(TPU_LIBS) -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) -L$(SDK_LIB_PATH) -lpthread
 
 SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
 

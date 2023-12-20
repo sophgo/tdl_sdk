@@ -254,7 +254,8 @@ buildninstall(NAME sample_web_multi_model INC ${SAMPLE_INC_WEB} SRCS middleware_
 endif()
 
 install(FILES vi_vo_utils.c sample_utils.c middleware_utils.c DESTINATION sample/utils)
-install(FILES vi_vo_utils.h sample_utils.h middleware_utils.h DESTINATION sample/3rd/include)
+install(FILES vi_vo_utils.h sample_utils.h middleware_utils.h DESTINATION sample/utils)
 install(FILES Makefile DESTINATION sample/cvi_tdl)
 install(FILES Makefile DESTINATION sample/cvi_tdl_app)
+install(FILES Makefile DESTINATION sample/cvi_yolo)
 

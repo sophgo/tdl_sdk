@@ -1,14 +1,13 @@
 #!/bin/bash
 
-
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CVI_TDL_ROOT=$(readlink -f $SCRIPT_DIR/../)
 TMP_WORKING_DIR=$CVI_TDL_ROOT/tmp
 BUILD_WORKING_DIR=$TMP_WORKING_DIR/build_sdk
 BUILD_DOWNLOAD_DIR=$TMP_WORKING_DIR/_deps
 
-if [[ "$1" == "Asan" ]]; then
-    BUILD_TYPE=Asan
+if [[ "$1" == "Debug" ]]; then
+    BUILD_TYPE=Debug
 else
     BUILD_TYPE=SDKRelease
 fi
@@ -17,10 +16,9 @@ if [ "${FTP_SERVER_IP}" = "" ]; then
     FTP_SERVER_IP=10.80.0.5/sw_rls
 fi
 
+CONFIG_DUAL_OS="${CONFIG_DUAL_OS:-OFF}"
 if [[ "$CONFIG_DUAL_OS" == "y" ]]; then
     CONFIG_DUAL_OS="ON"
-else
-    CONFIG_DUAL_OS="OFF"
 fi
 
 REPO_USER=""
@@ -129,43 +127,54 @@ if [[ "$CHIP_ARCH" != "CV180X" ]]; then
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl_app
-  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_md
-  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_preprocess
-  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
   make clean || exit 1
   echo "done"
   popd
 
   pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_draw_rect
-  make KERNEL_ROOT="$KERNEL_ROOT" W_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR -j10 || exit 1
+  make KERNEL_ROOT="$KERNEL_ROOT" W_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
   make clean || exit 1
   echo "done"
   popd
 
+  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_yolo
+  make KERNEL_ROOT="$KERNEL_ROOT" W_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
+  make clean || exit 1
+  echo "done"
+  popd
 fi
 
-if [ "$BUILD_TYPE" != "SDKRelease" ]; then
-    base_url="https://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/"
+if [[ "$BUILD_TYPE" == "Debug" ]]; then
+    # Clone doc to aisdk
+    remote_user="swftp"
+    remote_host="10.80.0.5"
+    remote_password="cvitek"
+    current_date=$(date +"%Y-%m-%d")
+    remote_base_path="/sw_rls/daily_build/cvitek_develop_docs/master/${current_date}/CV180x_CV181x/"
     files_to_download=(
-        "zh/01.software/TPU/AI_SDK_Software_Development_Guide/build/AISDKSoftwareDevelopmentGuide_zh.pdf"
-        "en/01.software/TPU/AI_SDK_Software_Development_Guide/build/AISDKSoftwareDevelopmentGuide_en.pdf"
-        "en/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_en.pdf"
+        "en/01.software/TPU/TDL_SDK_Software_Development_Guide/build/TDLSDKSoftwareDevelopmentGuide_en.pdf"
+        "zh/01.software/TPU/TDL_SDK_Software_Development_Guide/build/TDLSDKSoftwareDevelopmentGuide_zh.pdf"
         "zh/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_zh.pdf"
+        "en/01.software/TPU/YOLO_Development_Guide/build/YOLODevelopmentGuide_en.pdf"
     )
-
+    echo "downloading..."
     for file_path in "${files_to_download[@]}"; do
-        file_url="${base_url}${file_path}"
-        wget -nc -P "${AI_SDK_INSTALL_PATH}/doc" "$file_url" || { echo "Failed to download $file_url"; exit 1; }
+        file_name=$(basename "$file_path")
+        remote_path="${remote_base_path}${file_path}"
+        wget --user="$remote_user" --password="$remote_password" "ftp://${remote_host}/${remote_path}" -P "${AI_SDK_INSTALL_PATH}/doc" || { echo "Failed to download $file_name"; exit 1; }
     done
 fi
 

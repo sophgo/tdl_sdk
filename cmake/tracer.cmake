@@ -14,10 +14,10 @@ ExternalProject_Add(tracer
 ExternalProject_Get_Property(tracer INSTALL_DIR)
 message("Content downloaded to ${BUILD_DOWNLOAD_DIR}/tracer")
 
+set(CVI_TRACER_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/tracer)
 set(CVI_TRACER_LIBPATH ${INSTALL_DIR}/lib/libcvitracer.so)
 set(CVI_TRACER_INCLUDE ${INSTALL_DIR}/include/tracer)
 
 link_directories(${INSTALL_DIR}/lib)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lcvitracer")
-install(FILES ${CVI_TRACER_LIBPATH} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-install(DIRECTORY ${CVI_TRACER_INCLUDE} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install(FILES ${CVI_TRACER_LIBPATH} DESTINATION ${CMAKE_INSTALL_PREFIX}/sample/3rd/lib)

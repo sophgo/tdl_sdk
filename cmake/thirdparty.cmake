@@ -95,7 +95,7 @@ endif()
 set(stb_SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/stb-src)
 include_directories(${stb_SOURCE_DIR})
 
-install(DIRECTORY  ${stb_SOURCE_DIR}/ DESTINATION sample/3rd/include/stb
+install(DIRECTORY  ${stb_SOURCE_DIR}/ DESTINATION sample/3rd/stb/include
     FILES_MATCHING PATTERN "*.h"
     PATTERN ".git" EXCLUDE
     PATTERN ".github" EXCLUDE

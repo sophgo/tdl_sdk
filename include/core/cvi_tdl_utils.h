@@ -15,45 +15,6 @@ extern "C" {
 /**@{*/
 
 /**
- * @brief Do quantize scale for a given VIDEO_FRAME_INFO_S, but the quantized_factor and
- *        quantized_mean have to calculate manually.
- *
- * @param handle An TDL SDK handle.
- * @param frame Input frame.
- * @param output Output frame.
- * @param quantized_factor Quantized factor.
- * @param quantized_mean Quantized mean, must be positive.
- * @param thread Working thread id of vpss thread. A new thread will be created if thread doesn't
- * exist.
- * @param timeout Vpss wait timeout value.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_TDL_SQPreprocessRaw(cvitdl_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
-                                           VIDEO_FRAME_INFO_S *output, const float quantized_factor,
-                                           const float quantized_mean, const uint32_t thread,
-                                           uint32_t timeout);
-
-/**
- * @brief Do Quantize scale for a given VIDEO_FRAME_INFO_S.
- *        The formula of scale is (factor * x - mean).
- *
- * @param handle An TDL SDK handle.
- * @param frame Input frame.
- * @param output Output frame.
- * @param factor Factor.
- * @param mean Mean.
- * @param quantize_threshold Threshold for quantization.
- * @param thread Working thread id of vpss thread. A new thread will be created if thread doesn't
- * exist.
- * @param timeout Vpss wait timeout value.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_TDL_SQPreprocess(cvitdl_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
-                                        VIDEO_FRAME_INFO_S *output, const float factor,
-                                        const float mean, const float quantize_threshold,
-                                        const uint32_t thread, uint32_t timeout);
-
-/**
  * @brief Dequantize an int8_t output result from NN.
  *
  * @param quantizedData Input quantized data.

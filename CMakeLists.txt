@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.18.4)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(cvitdl)
 
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
-  set(CMAKE_BUILD_TYPE "Release")
-endif()
-
 if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
   set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install_soc")
 endif()
@@ -19,6 +15,10 @@ set(DL_SERVER_IP 10.132.3.76)
 
 set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
 set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CV181X")
   add_definitions(-DCV181X)

@@ -22,47 +22,6 @@
 #define GET_TDL_IMAGE_STRIDE(x) (x)
 #endif
 
-CVI_S32 CVI_TDL_SQPreprocessRaw(cvitdl_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
-                                VIDEO_FRAME_INFO_S *output, const float quantized_factor,
-                                const float quantized_mean, const uint32_t thread,
-                                uint32_t timeout) {
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  uint32_t vpss_thread;
-  int ret = CVI_TDL_AddVpssEngineThread(thread, -1, 0, &vpss_thread, &ctx->vec_vpss_engine);
-  if (ret != CVI_TDL_SUCCESS) {
-    return ret;
-  }
-
-  const float factor[] = {quantized_factor, quantized_factor, quantized_factor};
-  const float mean[] = {quantized_mean, quantized_mean, quantized_mean};
-  VPSS_CHN_ATTR_S chn_attr;
-  VPSS_CHN_SQ_HELPER(&chn_attr, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                     frame->stVFrame.enPixelFormat, factor, mean, false);
-  auto &vpss_inst = ctx->vec_vpss_engine[vpss_thread];
-  ret = vpss_inst->sendFrame(frame, &chn_attr, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("CVI_TDL_SQPreprocessRaw Send frame failed: %s\n", cvitdl::get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = vpss_inst->getFrame(output, 0, timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("Get frame failed: %s\n", cvitdl::get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-  return CVI_TDL_SUCCESS;
-}
-
-CVI_S32 CVI_TDL_SQPreprocess(cvitdl_handle_t handle, const VIDEO_FRAME_INFO_S *frame,
-                             VIDEO_FRAME_INFO_S *output, const float factor, const float mean,
-                             const float quantize_threshold, const uint32_t thread,
-                             uint32_t timeout) {
-  float quantized_factor = factor * 128 / quantize_threshold;
-  float quantized_mean = (-1) * mean * 128 / quantize_threshold;
-  return CVI_TDL_SQPreprocessRaw(handle, frame, output, quantized_factor, quantized_mean, thread,
-                                 timeout);
-}
-
 CVI_S32 CVI_TDL_Dequantize(const int8_t *quantizedData, float *data, const uint32_t bufferSize,
                            const float dequantizeThreshold) {
   cvitdl::Dequantize(quantizedData, data, dequantizeThreshold, bufferSize);

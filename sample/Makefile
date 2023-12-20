@@ -137,34 +137,24 @@ else ifeq ($(MW_VERSION), v3)
 endif
 
 #####################################################
-# Kernel
-#####################################################
-ifeq ($(CHIP), CV181X)
-CFLAGS += -DCV181X
-ifeq ($(SYSTEM_PROCESSOR), RISCV)
-CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/riscv/usr/include/
-else ifeq ($(SYSTEM_PROCESSOR), ARM)
-CV181X_INC_PATH = ${KERNEL_PATH}/build/${PROJECT_FULLNAME}/arm/usr/include/
-endif
-endif
-
-#####################################################
 # TDL SDK stuffs
 #####################################################
 SDK_ROOT_PATH ?= $(abspath ../..)
 SDK_LIB_PATH = $(SDK_ROOT_PATH)/lib
 SDK_INC_PATH = $(SDK_ROOT_PATH)/include
+SDK_3RD_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
 SDK_TDL_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_tdl
 SDK_APP_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_tdl_app
 SDK_SAMPLE_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include
+SDK_SAMPLE_UTILS_PATH = $(SDK_ROOT_PATH)/sample/utils
 SDK_TDL_LIBS = -lcvi_tdl
 SDK_APP_LIBS = -lcvi_tdl_app
 
 #####################################################
 # Opencv
 #####################################################
-OPENCV_INC_PATH = $(TPU_PATH)/opencv/include
-OPENCV_LIB_PATH = $(TPU_PATH)/lib
+OPENCV_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/opencv/include
+OPENCV_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/opencv/lib
 OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
 
 #####################################################
@@ -195,14 +185,14 @@ endif
 #####################################################
 # RTSP stuffs
 #####################################################
-RTSP_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
-RTSP_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include/cvi_rtsp
+RTSP_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/rtsp/lib
+RTSP_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/rtsp/include/cvi_rtsp
 RTSP_LIBS = -lcvi_rtsp
 
 #####################################################
 # STB
 #####################################################
-STB_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include/stb
+STB_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/stb/include
 
 #####################################################
 # CVI LIB stuffs
@@ -214,7 +204,6 @@ PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 #####################################################
 # CVI TDL Evaluation
 #####################################################
-EVA_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
 EVA_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include/cvi_tdl_evaluation
 EVA_LIBS = -lcvi_tdl_evaluation
 
@@ -231,7 +220,8 @@ SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
 			  -L$(TPU_LIB_PATH) $(TPU_LIBS) \
 			  -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) \
 			  -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -lpthread -latomic \
-			  -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
+			  -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS) \
+			  -L$(SDK_3RD_LIB_PATH)
 
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
 SAMPLE_READ_LIBS = $(SAMPLE_LIBS)
@@ -241,6 +231,7 @@ CFLAGS += -I$(SDK_INC_PATH) \
           -I$(SDK_TDL_INC_PATH) \
           -I$(SDK_APP_INC_PATH) \
           -I$(SDK_SAMPLE_INC_PATH) \
+		  -I$(SDK_SAMPLE_UTILS_PATH) \
           -I$(MW_INC_PATH) \
           -I$(RTSP_INC_PATH) \
           -I$(MW_SAMPLE_PATH) \
@@ -251,12 +242,9 @@ CFLAGS += -I$(SDK_INC_PATH) \
           -I$(EVA_INC_PATH) \
 		  -I$(MW_PANEL_INC_PATH) \
 		  -I$(MW_PANEL_BOARD_INC_PATH) \
+		  -I$(MW_INC_PATH)/linux \
           -I$(KERNEL_ROOT)/include \
           -I$(AISDK_ROOT_PATH)/include/stb
-
-ifeq ($(CHIP), CV181X)
-    CFLAGS += -I$(CV181X_INC_PATH)
-endif
 
 ifeq ($(CONFIRM_ENV_VAR), 1)
 $(info ---------------------------------------)
@@ -332,4 +320,4 @@ sample_init: $(PWD)/sample_init.o
 	$(CC) $(LDFLAGS) $(SAMPLE_LIBS) -o $@ $^
 
 sample_yol%: $(PWD)/sample_yol%.o
-	$(CXX) $(LDFLAGS) $(SAMPLE_READ_LIBS) -L$(EVA_LIB_PATH) $(EVA_LIBS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(SAMPLE_READ_LIBS) $(EVA_LIBS) -o $@ $^

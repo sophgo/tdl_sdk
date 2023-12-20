@@ -274,12 +274,11 @@ class ImageProcessorWithOpenCV : public ImageProcessor {
   }
 
   int read_resize(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format,
-                  uint32_t width, uint32_t height) {
+                  uint32_t width, uint32_t height) override {
     return read_resize_image(filepath, frame, format, width, height);
-    ;
   }
 
-  int release(VIDEO_FRAME_INFO_S *frame) { return release_image(frame); }
+  int release(VIDEO_FRAME_INFO_S *frame) override { return release_image(frame); }
 };
 #endif
 
