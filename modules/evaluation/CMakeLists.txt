@@ -2,9 +2,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils)
 
-if(DEFINED NO_OPENCV)
-set(EVA_SRCS img_process.cpp)
-else()
 add_subdirectory(coco)
 add_subdirectory(lfw)
 add_subdirectory(wider_face)
@@ -20,12 +17,10 @@ set(EVA_SRCS $<TARGET_OBJECTS:coco>
              $<TARGET_OBJECTS:wflw>
              $<TARGET_OBJECTS:cityscapes>
              $<TARGET_OBJECTS:cvi_lpdr>
-             evaluation.cpp
-             img_process.cpp)
+             evaluation.cpp)
+
 set(LINK_LIB ${OPENCV_LIBS_IMGPROC})
 set(LINK_LIB_STATIC ${OPENCV_LIBS_IMCODEC_STATIC})
-endif()
-
 project(cvi_tdl_evaluation)
 add_library(${PROJECT_NAME} SHARED ${EVA_SRCS})
 target_link_libraries(${PROJECT_NAME} -lstdc++fs ${LINK_LIB})

@@ -6,6 +6,7 @@ set(UTILS_SRC core_utils.cpp
               object_utils.cpp
               ccl.cpp
               profiler.cpp
+              img_process.cpp
               img_warp.cpp)
 
 if(NOT DEFINED NO_OPENCV)

@@ -511,7 +511,7 @@ static CVI_S32 CheckInputCfg(chnInputCfg *pIc) {
 
   return 0;
 }
-
+#ifndef CV180X
 static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   s32Ret = SAMPLE_COMM_VO_GetDefConfig(stVoConfig);
@@ -538,7 +538,7 @@ static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFI
   printf("SAMPLE_COMM_VO_StartVO done\n");
   return s32Ret;
 }
-
+#endif
 CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   VPSS_GRP_ATTR_S stVpssGrpAttr;
@@ -706,9 +706,9 @@ static CVI_S32 InitRTSP(VencCodec codec, CVI_S32 frameWidth, CVI_S32 frameHeight
 CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeight,
                    OutputContext *context) {
   context->type = outputType;
-  CVI_S32 s32Ret = CVI_SUCCESS;
   switch (outputType) {
 #ifndef CV180X
+    CVI_S32 s32Ret = CVI_SUCCESS;
     case OUTPUT_TYPE_PANEL: {
       printf("Init panel\n");
       context->voChn = 0;

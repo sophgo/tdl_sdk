@@ -21,7 +21,9 @@ add_subdirectory(app)
 add_subdirectory(core)
 add_subdirectory(service)
 
+if(NOT DEFINED NO_OPENCV)
 add_subdirectory(evaluation)
+endif()
 add_subdirectory(test_and_eval)
 
 if(DEFINED NO_OPENCV)
