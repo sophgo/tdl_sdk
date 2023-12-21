@@ -6,8 +6,8 @@ TMP_WORKING_DIR=$CVI_TDL_ROOT/tmp
 BUILD_WORKING_DIR=$TMP_WORKING_DIR/build_sdk
 BUILD_DOWNLOAD_DIR=$TMP_WORKING_DIR/_deps
 
-if [[ "$1" == "Debug" ]]; then
-    BUILD_TYPE=Debug
+if [[ "$1" == "Release" ]]; then
+    BUILD_TYPE=Release
 else
     BUILD_TYPE=SDKRelease
 fi
@@ -155,7 +155,7 @@ if [[ "$CHIP_ARCH" != "CV180X" ]]; then
   popd
 fi
 
-if [[ "$BUILD_TYPE" == "Debug" ]]; then
+if [[ "$BUILD_TYPE" == "Release" ]]; then
     # Clone doc to aisdk
     remote_user="swftp"
     remote_host="10.80.0.5"
@@ -174,6 +174,11 @@ if [[ "$BUILD_TYPE" == "Debug" ]]; then
         remote_path="${remote_base_path}${file_path}"
         wget --user="$remote_user" --password="$remote_password" "ftp://${remote_host}/${remote_path}" -P "${AI_SDK_INSTALL_PATH}/doc" || { echo "Failed to download $file_name"; exit 1; }
     done
+    pushd ${AI_SDK_INSTALL_PATH}/sample/3rd/
+    ## convenient for window user
+    tar -cf tpu.tar tpu
+    tar -cf opencv.tar opencv
+    popd
 fi
 
 rm -rf ${AI_SDK_INSTALL_PATH}/sample/tmp_install

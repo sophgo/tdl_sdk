@@ -12,7 +12,7 @@ if(USE_TPU_IVE)
 
     add_definitions(-DUSE_TPU_IVE)
 
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set(IVE_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/ive)
     install(DIRECTORY ${TPU_IVE_SDK_ROOT}/include/ DESTINATION ${IVE_PATH}/include)
     install(DIRECTORY ${TPU_IVE_SDK_ROOT}/lib DESTINATION ${IVE_PATH})

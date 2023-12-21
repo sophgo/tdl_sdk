@@ -1,7 +1,7 @@
 # Modules
 project(modules)
 # Hide symbols
-if("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
+if("${CMAKE_BUILD_TYPE}" MATCHES "(SDKRelease|Release)")
   add_compile_options(-fvisibility=hidden)
 endif()
 

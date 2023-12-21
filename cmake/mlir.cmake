@@ -27,7 +27,7 @@ else()
 endif()
 
 set(MLIR_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/tpu)
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   install(DIRECTORY ${MLIR_SDK_ROOT}/include/ DESTINATION ${MLIR_PATH}/include)
   install(DIRECTORY ${MLIR_SDK_ROOT}/lib/ DESTINATION ${MLIR_PATH}/lib)
 endif()

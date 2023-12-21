@@ -1,52 +1,31 @@
-# CVI_TDL
+# 公版深度学习TDL（turnkey deep learning）
 
-Programming guide is available under ``doc/``.
+## 如何编译整包SDK在SOC方式
 
-## How to build
+第一次下载整包sdk_package
 
-### SoC mode
-
-Replace the ``<XXXXXX>`` with the path on your PC.
-
-1. 64-bit
-
-```
-$ mkdir build
-$ cd build
-$ cmake -G Ninja .. -DENABLE_PERFETTO=ON \
-                    -DTOOLCHAIN_ROOT_DIR=<toolchain_root_dir> \
-                    -DCMAKE_TOOLCHAIN_FILE=${PWD}/../toolchain/toolchain-aarch64-linux.cmake \
-                    -DMLIR_SDK_ROOT=<mlir_root_dir> \
-                    -DOPENCV_ROOT=<opencv_root_dir> \
-                    -DIVE_SDK_ROOT=<ive_root_dir> \
-                    -DMIDDLEWARE_SDK_ROOT=<middleware_root_dir> \
-                    -DCMAKE_BUILD_TYPE=Release
-$ ninja -j8 && ninja install
+``` shell
+## zhenjie.wu应该替换为开发者名字
+git clone ssh://zhenjie.wu@gerrit-ai.sophgo.vip:29418/cvitek/cvi_manifest.git
+## 第一次经过漫长等待
+./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/default.xml
 ```
 
-2. 32-bit
-
-```
-$ mkdir build_soc
-$ cd build
-$ cmake -G Ninja .. -DENABLE_PERFETTO=ON \
-                    -DTOOLCHAIN_ROOT_DIR=<toolchain_root_dir> \
-                    -DCMAKE_TOOLCHAIN_FILE=${PWD}/../toolchain/toolchain-gnueabihf-linux.cmake \
-                    -DMLIR_SDK_ROOT=<mlir_root_dir> \
-                    -DOPENCV_ROOT=<opencv_root_dir> \
-                    -DIVE_SDK_ROOT=<ive_root_dir> \
-                    -DMIDDLEWARE_SDK_ROOT=<middleware_root_dir> \
-                    -DCMAKE_BUILD_TYPE=Release
-$ ninja -j8 && ninja install
+编译cv181x或者cv180x
+``` shell
+## 编译181x板子，建议借板子的时候也应该借cv1811c_wevb_0006a_spinor这个款板子，保证环境是一样的
+## 同理，编译180x板子也应该借cv1801c_wevb_0009a_spinor这个款板子
+source build/envsetup_soc.sh
+defconfig cv1811c_wevb_0006a_spinor
+clean_all && build_all
 ```
 
-**Note**
+### 内部Release的编译方式
+``` shell
+build_ai_sdk
+```
 
-1. ``OPENCV_ROOT`` may be inside ``<mlir_root_dir>/opencv``.
-2. ``mmf.tar.gz`` contains all the required libraries, use ``mw.tar.gz`` instead.
-3. Perfetto only supports GCC version >= 7. Please update your local toolchain to meet the requirement.
-
-## Coding Rules
-
-1. Files in ``include`` should be C style. C++ style stuffs should stay in ``modules``.
-2. Please put the TDL inference function in correct category. In same category, put the function in alphabetical order.
+### 对外开源的TDL_SDK编译方式
+``` shell
+build_ai_sdk Release
+````

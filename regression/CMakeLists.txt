@@ -193,7 +193,7 @@ set(UnitTest_SRCS
 
 set(UnitTest_SRCS
   ${UnitTest_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../modules/test_and_eval/sys_utils.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../modules/test_and_eval/utils/sys_utils.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
