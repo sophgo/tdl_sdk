@@ -32,7 +32,6 @@ endfunction(buildninstallcpp)
 set(SAMPLE_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_app
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_evaluation
     ${MIDDLEWARE_SDK_ROOT}/include
     ${IVE_INCLUDES}
     ${CMAKE_CURRENT_SOURCE_DIR}/../cvi_preprocess
@@ -110,14 +109,8 @@ if (NOT "${CVI_PLATFORM}" STREQUAL "CV183X")
 endif()
 endif()
 
-set(OPENCV_LIB
-    ${MLIR_SDK_ROOT}/lib/libopencv_core.so
-    ${MLIR_SDK_ROOT}/lib/libopencv_imgproc.so
-    ${MLIR_SDK_ROOT}/lib/libopencv_imgcodecs.so
-)
-
 if(NOT DEFINED NO_OPENCV)
-buildninstallcpp(NAME sample_lib_draw_rect INC ${SAMPLE_INC} DEPS cvi_draw_rect atomic ${SAMPLE_LIBS} ${MIDDLEWARE_LIBS} ${OPENCV_LIB})
+buildninstallcpp(NAME sample_lib_draw_rect INC ${SAMPLE_INC} DEPS cvi_draw_rect atomic ${SAMPLE_LIBS} ${MIDDLEWARE_LIBS} ${OPENCV_LIBS_IMCODEC})
 endif()
 buildninstallcpp(NAME sample_lib_cvimd INC  ${SAMPLE_INC} DEPS cvi_md atomic ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})
 buildninstallcpp(NAME sample_lib_preprocess INC ${SAMPLE_INC} DEPS cvi_preprocess atomic ${MLIR_LIBS} ${SAMPLE_LIBS} ${IVE_LIBS} ${MIDDLEWARE_LIBS})

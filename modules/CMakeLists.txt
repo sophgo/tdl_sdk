@@ -134,11 +134,9 @@ install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 #install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cvi_tdl_app/ DESTINATION sample/cvi_tdl_app PATTERN "CMakeLists.txt" EXCLUDE)
 #install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test_and_eval/ DESTINATION sample PATTERN "CMakeLists.txt" EXCLUDE)
 # Temporarily don't install custom module until complete.
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation DESTINATION sample/3rd/include/)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app DESTINATION include/)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cvi_tdl
         PATTERN "cvi_tdl_app" EXCLUDE
-        PATTERN "cvi_tdl_evaluation" EXCLUDE
         PATTERN "cvi_tdl_perfetto.h" EXCLUDE
         PATTERN "cvi_tdl_experimental.h" EXCLUDE
         PATTERN "cvi_tdl_log.hpp" EXCLUDE)

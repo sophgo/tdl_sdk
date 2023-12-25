@@ -296,7 +296,6 @@ CVI_S32 CVI_TDL_ReadImage(imgprocess_t handle, const char *filepath, VIDEO_FRAME
                           PIXEL_FORMAT_E format) {
   ImageProcessor *ctx = static_cast<ImageProcessor *>(handle);
   return ctx->read(filepath, frame, format);
-  ;
 }
 
 CVI_S32 CVI_TDL_ReadImage_Resize(imgprocess_t handle, const char *filepath,

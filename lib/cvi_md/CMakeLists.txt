@@ -3,7 +3,6 @@
 include_directories(${IVE_INCLUDES}
                     ${MIDDLEWARE_INCLUDES}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_evaluation
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_app
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/ive
                     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/utils

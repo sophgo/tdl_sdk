@@ -186,12 +186,14 @@ MD_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_md
 DRAW_RECT_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_draw_rect
 PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
-CFLAGS += -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s 
-
+CFLAGS += -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s
 
 CFLAGS +=  -I$(KERNEL_ROOT)/include
 
-SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(SDK_3RD_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -L$(TPU_LIB_PATH) $(TPU_LIBS) -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) -L$(SDK_LIB_PATH) -lpthread
+SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
+ 			  -L$(TPU_LIB_PATH) $(TPU_LIBS) \
+			  -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) \
+			  -L$(SDK_LIB_PATH) -L$(SDK_3RD_LIB_PATH) -lpthread
 
 SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
 
@@ -208,7 +210,7 @@ CFLAGS += -I$(SDK_INC_PATH) \
 		  -I$(MW_ISP_INC_PATH) \
 		  -I$(IVE_SDK_INC_PATH) \
 	  	  -I$(OPENCV_INC_PATH) \
-		  -I$(KERNEL_ROOT)/include
+		  -I$(MW_INC_PATH)/linux \
 
 ifeq ($(CHIP), CV181X)
 CFLAGS += -I$(CV181X_INC_PATH)
@@ -251,12 +253,12 @@ clean:
 
 $(PWD)/%.o: $(PWD)/%.cpp
 	$(CXX) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
-	
+
 sample_lib_cvimd: $(PWD)/sample_lib_cvimd.o
 	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) -lcvi_md -o $@ $^
 
 sample_lib_draw_rect: $(PWD)/sample_lib_draw_rect.o
-	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) $(SAMPLE_LIBS_OPENCV) -lcvi_draw_rect -o $@ $^
+	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS_OPENCV) $(SAMPLE_LIBS) -lcvi_draw_rect -o $@ $^
 
 sample_lib_preprocess: $(PWD)/sample_lib_preprocess.o
 	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) -lcvi_preprocess -o $@ $^

@@ -28,6 +28,7 @@ endif()
 
 set(MLIR_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/tpu)
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  install(FILES ${MLIR_LIBS} DESTINATION ${MLIR_PATH}/lib)
+  install(PROGRAMS ${MLIR_SDK_ROOT}/lib/libz.so.1.2.11 DESTINATION ${MLIR_PATH}/lib RENAME libz.so)
   install(DIRECTORY ${MLIR_SDK_ROOT}/include/ DESTINATION ${MLIR_PATH}/include)
-  install(DIRECTORY ${MLIR_SDK_ROOT}/lib/ DESTINATION ${MLIR_PATH}/lib)
 endif()

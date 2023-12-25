@@ -203,12 +203,6 @@ MD_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_md
 DRAW_RECT_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_draw_rect
 PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
-#####################################################
-# CVI TDL Evaluation
-#####################################################
-EVA_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include/cvi_tdl_evaluation
-EVA_LIBS = -lcvi_tdl_evaluation
-
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s
 
 AISDK_BASIC_LIBS = -lcviai
@@ -219,11 +213,10 @@ CPPS := $(wildcard $(PWD)/*.cpp)
 OBJS := $(SRCS:%.c=%.o) $(CPPS:%.cpp=%.o)
 
 SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
+			  -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS) \
 			  -L$(TPU_LIB_PATH) $(TPU_LIBS) \
 			  -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) \
-			  -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -lpthread -latomic \
-			  -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS) \
-			  -L$(SDK_3RD_LIB_PATH)
+			  -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -L$(SDK_3RD_LIB_PATH) -lpthread -latomic
 
 SAMPLE_VI_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
 SAMPLE_READ_LIBS = $(SAMPLE_LIBS)
@@ -241,11 +234,9 @@ CFLAGS += -I$(SDK_INC_PATH) \
           -I$(IVE_SDK_INC_PATH) \
           -I$(OPENCV_INC_PATH) \
           -I$(STB_INC_PATH) \
-          -I$(EVA_INC_PATH) \
 		  -I$(MW_PANEL_INC_PATH) \
 		  -I$(MW_PANEL_BOARD_INC_PATH) \
 		  -I$(MW_INC_PATH)/linux \
-          -I$(KERNEL_ROOT)/include \
           -I$(AISDK_ROOT_PATH)/include/stb
 
 ifeq ($(CONFIRM_ENV_VAR), 1)
@@ -272,14 +263,14 @@ TARGETS_AUDIO_SAMPLE := $(shell find . -type f -name 'sample_aud_*.c' -exec base
 TARGETS_AUDIO_SAMPLE += $(shell find . -type f -name 'sample_aud_*.cpp' -exec basename {} .cpp ';')
 
 TARGETS_IMAGE_SAMPLE := $(shell find . -type f -name 'sample_read_*.c' -exec basename {} .c ';')
+TARGETS_IMAGE_SAMPLE += $(shell find . -type f -name 'sample_read_*.cpp' -exec basename {} .cpp ';')
+
 TARGETS_APP_SAMPLE := $(shell find . -type f -name 'sample_app_*.c' -exec basename {} .c ';')
-TARGETS_READ_SAMPLE := $(shell find . -type f -name 'sample_read*.cpp' -exec basename {} .cpp ';')
 TARGETS_YOLO_SAMPLE := $(shell find . -type f -name 'sample_yolo*.cpp' -exec basename {} .cpp ';')
 
 TARGETS = $(TARGETS_SAMPLE_INIT) \
   	      $(TARGETS_VI_SAMPLE) \
  	      $(TARGETS_AUDIO_SAMPLE) \
-	      $(TARGETS_IMAGE_SAMPLE) \
 	      $(TARGETS_READ_SAMPLE) \
 	      $(TARGETS_APP_SAMPLE) \
 	      $(TARGETS_YOLO_SAMPLE)
@@ -300,9 +291,6 @@ $(PWD)/%.o: $(PWD)/%.cpp
 $(SDK_ROOT_PATH)/sample/utils/%.o: $(SDK_ROOT_PATH)/sample/utils/%.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
 
-sample_read_od: $(PWD)/sample_read_od.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o
-	$(CXX) $(LDFLAGS) $(DEPFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^
-
 sample_aud_%: $(PWD)/sample_aud_%.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o
 	$(CXX) $(LDFLAGS) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS) -o $@ $^
 
@@ -310,6 +298,9 @@ sample_app_%: $(PWD)/sample_app_%.o \
 			  $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o \
 			  $(SAMPLE_COMMON_FILE)
 	$(CC) $(CFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
+
+sample_read_%: $(PWD)/sample_read_%.o \
+	$(CXX) $(LDFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^
 
 sample_vi_%: $(PWD)/sample_vi_%.o \
 			 $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o \
@@ -322,4 +313,4 @@ sample_init: $(PWD)/sample_init.o
 	$(CC) $(LDFLAGS) $(SAMPLE_LIBS) -o $@ $^
 
 sample_yol%: $(PWD)/sample_yol%.o
-	$(CXX) $(LDFLAGS) $(SAMPLE_READ_LIBS) $(EVA_LIBS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^

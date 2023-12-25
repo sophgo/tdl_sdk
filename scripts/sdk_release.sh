@@ -117,42 +117,24 @@ ninja install || exit 1
 popd
 
 echo "trying to build sample in released folder."
-if [[ "$CHIP_ARCH" != "CV180X" ]]; then
-  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl
-  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE="$USE_TPU_IVE" SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR CHIP=$CHIP_ARCH -j10 || exit 1
-  make clean || exit 1
-  echo "done"
-  popd
+MAKE_OPTS=("KERNEL_ROOT=$KERNEL_ROOT" "MW_PATH=$MW_PATH" "TPU_PATH=$TPU_SDK_INSTALL_PATH" "IVE_PATH=$IVE_SDK_INSTALL_PATH" "USE_TPU_IVE=$USE_TPU_IVE" "CHIP=$CHIP_ARCH" "SDK_VER=$SDK_VER" "-j10")
 
-  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_tdl_app
-  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
-  make clean || exit 1
-  echo "done"
-  popd
+build_and_clean() {
+    pushd $1 || exit 1
+    make "${MAKE_OPTS[@]}" || exit 1
+    make clean || exit 1
+    echo "$1 done"
+    popd
+}
 
-  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_md
-  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
-  make clean || exit 1
-  echo "done"
-  popd
+build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_tdl"
+build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_tdl_app"
+build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_md"
+build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_preprocess"
+build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_yolo"
 
-  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_preprocess
-  make KERNEL_ROOT="$KERNEL_ROOT" MW_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
-  make clean || exit 1
-  echo "done"
-  popd
-
-  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_draw_rect
-  make KERNEL_ROOT="$KERNEL_ROOT" W_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
-  make clean || exit 1
-  echo "done"
-  popd
-
-  pushd ${AI_SDK_INSTALL_PATH}/sample/cvi_yolo
-  make KERNEL_ROOT="$KERNEL_ROOT" W_PATH="$MW_PATH" TPU_PATH="$TPU_SDK_INSTALL_PATH" IVE_PATH="$IVE_SDK_INSTALL_PATH" USE_TPU_IVE=$USE_TPU_IVE SYSTEM_OUT_DIR=$SYSTEM_OUT_DIR CHIP=$CHIP_ARCH SDK_VER=$SDK_VER -j10 || exit 1
-  make clean || exit 1
-  echo "done"
-  popd
+if [ -d "${AI_SDK_INSTALL_PATH}/include/cvi_draw_rect" ]; then
+    build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_draw_rect"
 fi
 
 if [[ "$BUILD_TYPE" == "Release" ]]; then
@@ -174,11 +156,6 @@ if [[ "$BUILD_TYPE" == "Release" ]]; then
         remote_path="${remote_base_path}${file_path}"
         wget --user="$remote_user" --password="$remote_password" "ftp://${remote_host}/${remote_path}" -P "${AI_SDK_INSTALL_PATH}/doc" || { echo "Failed to download $file_name"; exit 1; }
     done
-    pushd ${AI_SDK_INSTALL_PATH}/sample/3rd/
-    ## convenient for window user
-    tar -cf tpu.tar tpu
-    tar -cf opencv.tar opencv
-    popd
 fi
 
 rm -rf ${AI_SDK_INSTALL_PATH}/sample/tmp_install

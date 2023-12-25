@@ -69,7 +69,6 @@ set(SAMPLE_INC
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
     ${CVI_RTSP_INCLUDE}
     ${IVE_INCLUDES}
@@ -202,14 +201,7 @@ endif()
 
 if(DEFINED NO_OPENCV)
   buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
-  buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl atomic ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_intrusion_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl atomic ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_md INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl atomic ${SAMPLE_LIBS} )
   buildninstall(NAME sample_aud_cls_read INC ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstall(NAME sample_aud_cry INC ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstall(NAME sample_read_ped_track INC ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
-  buildninstall(NAME sample_read_fdfr INC ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
-  buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c DEPS cvi_tdl atomic ${SAMPLE_LIBS} )
   buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
 else()
   buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl atomic pthread ${SAMPLE_LIBS})
