@@ -188,41 +188,26 @@ PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
 CFLAGS += -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s
 
-CFLAGS +=  -I$(KERNEL_ROOT)/include
-
 SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
  			  -L$(TPU_LIB_PATH) $(TPU_LIBS) \
 			  -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) \
-			  -L$(SDK_LIB_PATH) -L$(SDK_3RD_LIB_PATH) -lpthread
+			  -L$(SDK_LIB_PATH) -L$(SDK_3RD_LIB_PATH) -lpthread -latomic
 
 SAMPLE_LIBS_OPENCV += $(OPENCV_LIBS) -L$(OPENCV_LIB_PATH)
-
-LDFLAGS += -latomic
 
 CFLAGS += -I$(SDK_INC_PATH) \
           -I$(SDK_TDL_INC_PATH) \
 		  -I$(SDK_SAMPLE_INC_PATH) \
-		  -I$(MW_INC_PATH) \
+		  -I$(IVE_SDK_INC_PATH) \
+	  	  -I$(OPENCV_INC_PATH) \
 		  -I$(MD_INC_PATH) \
 		  -I$(DRAW_RECT_INC_PATH) \
 	  	  -I$(PREPROCESS_INC_PATH) \
+		  -I$(MW_INC_PATH) \
 		  -I$(MW_SAMPLE_PATH) \
 		  -I$(MW_ISP_INC_PATH) \
-		  -I$(IVE_SDK_INC_PATH) \
-	  	  -I$(OPENCV_INC_PATH) \
 		  -I$(MW_INC_PATH)/linux \
-
-ifeq ($(CHIP), CV181X)
-CFLAGS += -I$(CV181X_INC_PATH)
-endif
-
-ifneq (,$(findstring middleware/v2,$(MW_PATH)))
-    CFLAGS += -D_MIDDLEWARE_V2_
-endif
-
-ifneq (,$(findstring middleware/v3,$(MW_PATH)))
-    CFLAGS += -D_MIDDLEWARE_V3_
-endif
+		  -I$(KERNEL_ROOT)/include
 
 ifeq ($(CONFIRM_ENV_VAR), 1)
 $(info ---------------------------------------)

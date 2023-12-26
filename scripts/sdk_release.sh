@@ -117,7 +117,9 @@ ninja install || exit 1
 popd
 
 echo "trying to build sample in released folder."
-MAKE_OPTS=("KERNEL_ROOT=$KERNEL_ROOT" "MW_PATH=$MW_PATH" "TPU_PATH=$TPU_SDK_INSTALL_PATH" "IVE_PATH=$IVE_SDK_INSTALL_PATH" "USE_TPU_IVE=$USE_TPU_IVE" "CHIP=$CHIP_ARCH" "SDK_VER=$SDK_VER" "-j10")
+MAKE_OPTS=("KERNEL_ROOT=$KERNEL_ROOT" "MW_PATH=$MW_PATH" "TPU_PATH=$TPU_SDK_INSTALL_PATH"
+           "IVE_PATH=$IVE_SDK_INSTALL_PATH" "USE_TPU_IVE=$USE_TPU_IVE"
+           "CHIP=$CHIP_ARCH" "SDK_VER=$SDK_VER" "-j10")
 
 build_and_clean() {
     pushd $1 || exit 1

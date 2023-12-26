@@ -105,6 +105,7 @@ else ifeq ($(MW_VERSION), v2)
 	ifeq ($(CHIP), CV186X)
 		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
+		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
 		CFLAGS += -DCV186X
 	else ifeq ($(CHIP), CV181X)
 		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
@@ -205,9 +206,6 @@ PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
 CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s
 
-AISDK_BASIC_LIBS = -lcviai
-AISDK_APP_LIBS = -lcviai_app
-
 SRCS := $(wildcard $(PWD)/*.c)
 CPPS := $(wildcard $(PWD)/*.cpp)
 OBJS := $(SRCS:%.c=%.o) $(CPPS:%.cpp=%.o)
@@ -218,8 +216,8 @@ SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
 			  -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) \
 			  -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -L$(SDK_3RD_LIB_PATH) -lpthread -latomic
 
-SAMPLE_VI_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
 SAMPLE_READ_LIBS = $(SAMPLE_LIBS)
+SAMPLE_VI_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
 SAMPLE_APP_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS) $(SDK_APP_LIBS)
 
 CFLAGS += -I$(SDK_INC_PATH) \
@@ -227,15 +225,16 @@ CFLAGS += -I$(SDK_INC_PATH) \
           -I$(SDK_APP_INC_PATH) \
           -I$(SDK_SAMPLE_INC_PATH) \
 		  -I$(SDK_SAMPLE_UTILS_PATH) \
-          -I$(MW_INC_PATH) \
           -I$(RTSP_INC_PATH) \
-          -I$(MW_SAMPLE_PATH) \
-          -I$(MW_ISP_INC_PATH) \
           -I$(IVE_SDK_INC_PATH) \
           -I$(OPENCV_INC_PATH) \
           -I$(STB_INC_PATH) \
+		  -I$(MW_SAMPLE_PATH) \
+          -I$(MW_ISP_INC_PATH) \
 		  -I$(MW_PANEL_INC_PATH) \
 		  -I$(MW_PANEL_BOARD_INC_PATH) \
+		  -I$(MW_LINUX_INC_PATH) \
+		  -I$(MW_INC_PATH) \
 		  -I$(MW_INC_PATH)/linux \
           -I$(AISDK_ROOT_PATH)/include/stb
 
