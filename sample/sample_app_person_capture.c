@@ -298,20 +298,20 @@ int main(int argc, char *argv[]) {
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
 
-  PIXEL_FORMAT_E aiInputFormat;
+  PIXEL_FORMAT_E tdlInputFormat;
   if (vi_format == 0) {
-    aiInputFormat = PIXEL_FORMAT_RGB_888;
+    tdlInputFormat = PIXEL_FORMAT_RGB_888;
   } else if (vi_format == 1) {
-    aiInputFormat = PIXEL_FORMAT_NV21;
+    tdlInputFormat = PIXEL_FORMAT_NV21;
   } else if (vi_format == 2) {
-    aiInputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
+    tdlInputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
   } else if (vi_format == 3) {
-    aiInputFormat = PIXEL_FORMAT_RGB_888_PLANAR;
+    tdlInputFormat = PIXEL_FORMAT_RGB_888_PLANAR;
   } else {
     printf("vi format[%d] unknown.\n", vi_format);
     return CVI_FAILURE;
   }
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, aiInputFormat, voType) != CVI_SUCCESS) {
+  if (InitVideoSystem(&vs_ctx, &aiInputSize, tdlInputFormat, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;
   }
@@ -398,8 +398,8 @@ int main(int argc, char *argv[]) {
     counter += 1;
     printf("\nGet Frame %zu\n", counter);
 
-    ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI, &stVIFrame,
-                               2000);
+    ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChntdl,
+                               &stVIFrame, 2000);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", ret);
       break;
@@ -476,7 +476,7 @@ int main(int argc, char *argv[]) {
     FREE_OUTPUT_DATA(sample_output_data, output_num);
 #endif
 
-    ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
+    ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChntdl,
                                    &stVIFrame);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");

@@ -44,11 +44,9 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   cvtdl_face_t p_obj = {0};
-  const char *fr_model_path =
-      argv[1];  // /mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/cviface-v5-s.cvimodel
-  const char *fd_model_path = argv
-      [2];  // /mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/scrfd_432_768_1x.cvimodel
-  const char *img_path = argv[3];  // /mnt/data/admin1_data/alios_test/a.jpg
+  const char *fr_model_path = argv[1];
+  const char *fd_model_path = argv[2];
+  const char *img_path = argv[3];
 
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, fr_model_path);
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, fd_model_path);

@@ -96,13 +96,13 @@
 typedef void *cvitdl_handle_t;
 
 /**
- * \addtogroup core_ai TDL Inference Functions
+ * \addtogroup core Inference Functions
  * \ingroup core_cvitdlcore
  */
 
 /**
- * \addtogroup core_ai_settings TDL Inference Setting Functions
- * \ingroup core_ai
+ * \addtogroup core_tdl_settings TDL Inference Setting Functions
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -468,7 +468,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_GetVpssChnConfig(cvitdl_handle_t handle, CVI_TDL_SUPP
 
 /**
  * \addtogroup core_fd Face Detection TDL Inference
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -553,7 +553,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceMaskDetection(const cvitdl_handle_t handle, VIDEO
 
 /**
  * \addtogroup core_fr Face Recognition TDL Inference
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -633,7 +633,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_MaskFaceRecognition(const cvitdl_handle_t handle,
 
 /**
  * \addtogroup core_fc Face classification TDL Inference
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -779,7 +779,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_HeadPerson_Detection(const cvitdl_handle_t handle,
 
 /**
  * \addtogroup core_od Object Detection TDL Inference
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -934,7 +934,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_PPYoloE(const cvitdl_handle_t handle, VIDEO_FRAME_INF
 /**@}*/
 /**
  * \addtogroup core_pr Person Re-Id TDL Inference
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -966,7 +966,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_OSNetOne(cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *
 
 /**
  * \addtogroup core_audio Audio TDL Inference
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -1014,7 +1014,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_SoundClassification_Threshold(const cvitdl_handle
 
 /**
  * \addtogroup core_tracker Tracker
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -1140,7 +1140,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_GetTracker_Inactive(const cvitdl_handle_t ha
 
 /**
  * \addtogroup core_segmentation Segmentation Inference
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -1195,7 +1195,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition_TW(const cvitdl_handle_t hand
 
 /**
  * \addtogroup core_pose Pose Detection
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 /**
@@ -1212,7 +1212,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_AlphaPose(const cvitdl_handle_t handle, VIDEO_FRAME_I
 
 /**
  * \addtogroup core_fall Fall Detection
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 /**
@@ -1226,7 +1226,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_Fall(const cvitdl_handle_t handle, cvtdl_object_t *ob
 
 /**
  * \addtogroup core_fall Fall Detection new API
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -1250,7 +1250,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps)
 
 /**
  * \addtogroup core_others Others
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -1307,7 +1307,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_MotionDetection(const cvitdl_handle_t handle, VIDEO_F
 
 /**
  * \addtogroup core_dms Driving Monitor System
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -1350,7 +1350,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_IncarObjectDetection(const cvitdl_handle_t handle,
 
 /**
  * \addtogroup core_face_landmark Face Landmark
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -1361,7 +1361,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceLandmarker(const cvitdl_handle_t handle, VIDEO_FR
 
 /**
  * \addtogroup core_face_landmarkdet3 Face Landmark
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 
@@ -1372,7 +1372,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceLandmarkerDet2(const cvitdl_handle_t handle, VIDE
 
 /**
  * \addtogroup core_ Dms face Landmark
- * \ingroup core_ai
+ * \ingroup core_tdl
  */
 /**@{*/
 DLL_EXPORT CVI_S32 CVI_TDL_DMSLDet(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,

@@ -173,12 +173,12 @@ static int GetWsAddrCallBack(void *param, const char *cmd, const char *val) {
 static int GetAudioInfoCallBack(void *param, const char *cmd, const char *val) {
   cJSON *cjsonAudioAttr = NULL;
   char *str = NULL;
-  SAMPLE_TDL_TYPE ai_type = ai_param_get();
+  SAMPLE_TDL_TYPE tdl_type = ai_param_get();
   cjsonAudioAttr = cJSON_CreateObject();
 
   printf("enter: %s\n", __func__);
 
-  cJSON_AddNumberToObject(cjsonAudioAttr, "main_enabled", ai_type);
+  cJSON_AddNumberToObject(cjsonAudioAttr, "main_enabled", tdl_type);
   str = cJSON_Print(cjsonAudioAttr);
   if (str) {
     CVI_NET_AddCgiResponse(param, "%s", str);
@@ -206,8 +206,8 @@ static int SetAudioInfoCallBack(void *param, const char *cmd, const char *val) {
   }
   cjsonObj = cJSON_GetObjectItem(cjsonParser, "main_enabled");
   _NULL_POINTER_CHECK_(cjsonObj->valuestring, -1);
-  SAMPLE_TDL_TYPE ai_type = (SAMPLE_TDL_TYPE)atoi(cjsonObj->valuestring);
-  ai_param_set(ai_type);
+  SAMPLE_TDL_TYPE tdl_type = (SAMPLE_TDL_TYPE)atoi(cjsonObj->valuestring);
+  ai_param_set(tdl_type);
   CVI_NET_AddCgiResponse(param, "ret: %d\n", ret);
   return 0;
 }

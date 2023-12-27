@@ -117,27 +117,17 @@ ninja install || exit 1
 popd
 
 echo "trying to build sample in released folder."
-MAKE_OPTS=("KERNEL_ROOT=$KERNEL_ROOT" "MW_PATH=$MW_PATH" "TPU_PATH=$TPU_SDK_INSTALL_PATH"
-           "IVE_PATH=$IVE_SDK_INSTALL_PATH" "USE_TPU_IVE=$USE_TPU_IVE"
-           "CHIP=$CHIP_ARCH" "SDK_VER=$SDK_VER" "-j10")
-
-build_and_clean() {
-    pushd $1 || exit 1
-    make "${MAKE_OPTS[@]}" || exit 1
-    make clean || exit 1
-    echo "$1 done"
-    popd
-}
-
-build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_tdl"
-build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_tdl_app"
-build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_md"
-build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_preprocess"
-build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_yolo"
-
-if [ -d "${AI_SDK_INSTALL_PATH}/include/cvi_draw_rect" ]; then
-    build_and_clean "${AI_SDK_INSTALL_PATH}/sample/cvi_draw_rect"
-fi
+cp -rf $CVI_TDL_ROOT/scripts/compile_sample.sh ${AI_SDK_INSTALL_PATH}/sample
+pushd "${AI_SDK_INSTALL_PATH}/sample"
+    KERNEL_ROOT=$KERNEL_ROOT\
+    MW_PATH=$MW_PATH\
+    TPU_PATH=$TPU_SDK_INSTALL_PATH\
+    IVE_PATH=$IVE_SDK_INSTALL_PATH\
+    USE_TPU_IVE=$USE_TPU_IVE\
+    CHIP=$CHIP_ARCH\
+    SDK_VER=$SDK_VER\
+    source compile_sample.sh || exit 1
+popd
 
 if [[ "$BUILD_TYPE" == "Release" ]]; then
     # Clone doc to aisdk

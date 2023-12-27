@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
   cvitdl_handle_t stTDLHandle = NULL;
 
   // Create TDL handle and assign VPSS Grp1 Device 0 to TDL SDK
-  GOTO_IF_FAILED(CVI_TDL_CreateHandle2(&stTDLHandle, 1, 0), s32Ret, create_ai_fail);
+  GOTO_IF_FAILED(CVI_TDL_CreateHandle2(&stTDLHandle, 1, 0), s32Ret, create_tdl_fail);
 
   GOTO_IF_FAILED(CVI_TDL_SetVBPool(stTDLHandle, 0, 2), s32Ret, create_service_fail);
 
@@ -279,7 +279,7 @@ setup_tdl_fail:
   CVI_TDL_Service_DestroyHandle(stServiceHandle);
 create_service_fail:
   CVI_TDL_DestroyHandle(stTDLHandle);
-create_ai_fail:
+create_tdl_fail:
   SAMPLE_TDL_Destroy_MW(&stMWContext);
 
   return 0;

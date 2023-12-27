@@ -9,7 +9,7 @@ extern "C" {
 
 /**
  * @brief Enable GDC hardware acceleration.
- * @ingroup core_ai_settings
+ * @ingroup core_tdl_settings
  *
  * @param handle An TDL SDK handle.
  * @param use_gdc Set true to use hardware.

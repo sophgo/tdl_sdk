@@ -3,12 +3,12 @@
 #include <pthread.h>
 #include "cvi_comm.h"
 #include "cvi_tdl.h"
-#define RETURN_IF_FAILED(func)   \
-  do {                           \
-    CVI_S32 ai_ret = (func);     \
-    if (ai_ret != CVI_SUCCESS) { \
-      goto ai_failed;            \
-    }                            \
+#define RETURN_IF_FAILED(func)    \
+  do {                            \
+    CVI_S32 tdl_ret = (func);     \
+    if (tdl_ret != CVI_SUCCESS) { \
+      goto tdl_failed;            \
+    }                             \
   } while (0)
 
 #define GOTO_IF_FAILED(func, result, label)                              \

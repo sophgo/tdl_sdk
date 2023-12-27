@@ -102,11 +102,11 @@ int main(int argc, char *argv[]) {
 
   CVI_S32 s32Ret = CVI_SUCCESS;
   VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
+  SIZE_S tdlInputSize = {.u32Width = 1280, .u32Height = 720};
 
-  PIXEL_FORMAT_E aiInputFormat = PIXEL_FORMAT_RGB_888;
+  PIXEL_FORMAT_E tdlInputFormat = PIXEL_FORMAT_RGB_888;
   // PIXEL_FORMAT_E aiInputFormat = PIXEL_FORMAT_NV21;
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, aiInputFormat, voType) != CVI_SUCCESS) {
+  if (InitVideoSystem(&vs_ctx, &tdlInputSize, tdlInputFormat, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;
   }
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
     frame_counter += 1;
     printf("\nFrame counter[%u]\n", frame_counter);
 
-    s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
+    s32Ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChntdl,
                                   &stVIFrame, 2000);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
     printf("ALIVE Faces: %d\n", alive_face_num);
 
     CVI_TDL_APP_FaceCapture_Run(app_handle, &stVIFrame);
-    s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
+    s32Ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChntdl,
                                       &stVIFrame);
     if (s32Ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");

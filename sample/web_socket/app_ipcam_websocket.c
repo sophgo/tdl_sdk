@@ -11,9 +11,9 @@
 
 struct lws *g_wsi = NULL;
 static unsigned char *s_imgData = NULL;
-static unsigned char *s_aiData = NULL;
+static unsigned char *s_tdl_Data = NULL;
 static int s_fileSize = 0;
-static int s_aiSize = 0;
+static int s_tdlSize = 0;
 static volatile int s_terminal = 0;
 pthread_mutex_t g_mutexLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t g_aiMutexLock = PTHREAD_MUTEX_INITIALIZER;
@@ -55,15 +55,15 @@ static int ProtocolMyCallback(struct lws *wsi, enum lws_callback_reasons reason,
 
       pthread_mutex_lock(&g_aiMutexLock);
 
-      if (s_aiSize != 0 && NULL != s_aiData) {
-        lws_write(wsi, s_aiData + LWS_PRE, s_aiSize,
+      if (s_tdlSize != 0 && NULL != s_tdl_Data) {
+        lws_write(wsi, s_tdl_Data + LWS_PRE, s_tdlSize,
                   LWS_WRITE_BINARY);  // LWS_WRITE_BINARY LWS_WRITE_TEXT
       } else {
         // printf("----- websocket filesize is 0\n");
       }
-      if (s_aiData != NULL) {
-        free(s_aiData);
-        s_aiData = NULL;
+      if (s_tdl_Data != NULL) {
+        free(s_tdl_Data);
+        s_tdl_Data = NULL;
       }
       pthread_mutex_unlock(&g_aiMutexLock);
 
@@ -83,11 +83,11 @@ static int ProtocolMyCallback(struct lws *wsi, enum lws_callback_reasons reason,
       pthread_mutex_unlock(&g_mutexLock);
 
       pthread_mutex_lock(&g_aiMutexLock);
-      if (s_aiData) {
-        free(s_aiData);
-        s_aiData = NULL;
+      if (s_tdl_Data) {
+        free(s_tdl_Data);
+        s_tdl_Data = NULL;
       }
-      s_aiSize = 0;
+      s_tdlSize = 0;
       pthread_mutex_unlock(&g_aiMutexLock);
       break;
     default:

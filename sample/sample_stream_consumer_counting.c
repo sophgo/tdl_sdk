@@ -224,20 +224,20 @@ int main(int argc, char *argv[]) {
   VideoSystemContext vs_ctx = {0};
   SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
 
-  PIXEL_FORMAT_E aiInputFormat;
+  PIXEL_FORMAT_E tdl_InputFormat;
   if (vi_format == 0) {
-    aiInputFormat = PIXEL_FORMAT_RGB_888;
+    tdl_InputFormat = PIXEL_FORMAT_RGB_888;
   } else if (vi_format == 1) {
-    aiInputFormat = PIXEL_FORMAT_NV21;
+    tdl_InputFormat = PIXEL_FORMAT_NV21;
   } else if (vi_format == 2) {
-    aiInputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
+    tdl_InputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
   } else if (vi_format == 3) {
-    aiInputFormat = PIXEL_FORMAT_RGB_888_PLANAR;
+    tdl_InputFormat = PIXEL_FORMAT_RGB_888_PLANAR;
   } else {
     printf("vi format[%d] unknown.\n", vi_format);
     return CVI_FAILURE;
   }
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, aiInputFormat, voType) != CVI_SUCCESS) {
+  if (InitVideoSystem(&vs_ctx, &aiInputSize, tdl_InputFormat, voType) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;
   }
@@ -293,8 +293,8 @@ int main(int argc, char *argv[]) {
   size_t counter = 0;
   while (bExit == false) {
     counter += 1;
-    ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI, &stfdFrame,
-                               2000);
+    ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChntdl,
+                               &stfdFrame, 2000);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", ret);
       break;
@@ -312,7 +312,7 @@ int main(int argc, char *argv[]) {
       RESTRUCTURING_OBJ_META(&app_handle->person_cpt_info->last_head, &g_obj_meta_0);
       RESTRUCTURING_OBJ_META(&app_handle->person_cpt_info->last_ped, &g_obj_meta_1);
     }
-    ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChnAI,
+    ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChntdl,
                                    &stfdFrame);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");

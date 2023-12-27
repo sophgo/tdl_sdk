@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
   while (bExit == false) {
     printf("\nFrame[%u]\n", counter++);
     if (CVI_SUCCESS != CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp,
-                                            vs_ctx.vpssConfigs.vpssChnAI, &stfdFrame, 2000)) {
+                                            vs_ctx.vpssConfigs.vpssChntdl, &stfdFrame, 2000)) {
       printf("CVI_VPSS_GetChnFrame chn0 failed with %#x\n", s32Ret);
       break;
     }
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (CVI_SUCCESS != CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp,
-                                                vs_ctx.vpssConfigs.vpssChnAI, &stfdFrame)) {
+                                                vs_ctx.vpssConfigs.vpssChntdl, &stfdFrame)) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
       break;
     }

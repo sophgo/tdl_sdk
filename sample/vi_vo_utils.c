@@ -18,7 +18,7 @@ typedef enum {
 } VencCodec;
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
-               PIXEL_FORMAT_E aiFormat, CVI_U32 *devNum);
+               PIXEL_FORMAT_E tdlFormat, CVI_U32 *devNum);
 
 CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened);
 
@@ -52,8 +52,8 @@ static void load_ion_totalmem(void) {
   }
 }
 
-CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
-                        PIXEL_FORMAT_E aiInputFormat, int voType) {
+CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *tdl_InputSize,
+                        PIXEL_FORMAT_E tdlInputFormat, int voType) {
   CVI_S32 s32Ret = CVI_SUCCESS;
 //****************************************************************
 // Init VI, VO, Vpss
@@ -63,7 +63,8 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
   load_ion_totalmem();
 
   SIZE_S viSize;
-  s32Ret = InitVI(&vs_ctx->viConfig, &viSize, aiInputSize, aiInputFormat, &vs_ctx->ViPipe.DevNum);
+  s32Ret =
+      InitVI(&vs_ctx->viConfig, &viSize, tdl_InputSize, tdlInputFormat, &vs_ctx->ViPipe.DevNum);
   if (s32Ret != CVI_SUCCESS) {
     printf("Init video input failed with %d\n", s32Ret);
     return CVI_FAILURE;
@@ -87,10 +88,10 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
   vs_ctx->vpssConfigs.vpssChnVideoOutput = VPSS_CHN1;
 
   // CHN for TDL inference
-  vs_ctx->vpssConfigs.aiFormat = aiInputFormat;
-  vs_ctx->vpssConfigs.aiWidth = aiInputSize->u32Width;
-  vs_ctx->vpssConfigs.aiHeight = aiInputSize->u32Height;
-  vs_ctx->vpssConfigs.vpssChnAI = VPSS_CHN0;
+  vs_ctx->vpssConfigs.tdlFormat = tdlInputFormat;
+  vs_ctx->vpssConfigs.tdlFormat = tdl_InputSize->u32Width;
+  vs_ctx->vpssConfigs.tdlHeight = tdl_InputSize->u32Height;
+  vs_ctx->vpssConfigs.vpssChntdl = VPSS_CHN0;
 
   ISP_PUB_ATTR_S pubAttr = {0};
   CVI_ISP_GetPubAttr(0, &pubAttr);
@@ -119,19 +120,19 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, SIZE_S *aiInputSize,
 void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
   DestoryOutput(&vs_ctx->outputContext);
 #if defined(_MIDDLEWARE_V2_)
-  SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
+  SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, vs_ctx->vpssConfigs.vpssChntdl, vs_ctx->vpssConfigs.vpssGrp);
 #else
-  SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->vpssConfigs.vpssChnAI, vs_ctx->vpssConfigs.vpssGrp);
+  SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->vpssConfigs.vpssChntdl, vs_ctx->vpssConfigs.vpssGrp);
 #endif
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
-  abChnEnable[vs_ctx->vpssConfigs.vpssChnAI] = CVI_TRUE;
+  abChnEnable[vs_ctx->vpssConfigs.vpssChntdl] = CVI_TRUE;
   abChnEnable[vs_ctx->vpssConfigs.vpssChnVideoOutput] = CVI_TRUE;
   SAMPLE_COMM_VPSS_Stop(vs_ctx->vpssConfigs.vpssGrp, abChnEnable);
   SAMPLE_COMM_VI_DestroyVi(&vs_ctx->viConfig);
 }
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
-               PIXEL_FORMAT_E aiFormat, CVI_U32 *devNum) {
+               PIXEL_FORMAT_E tdlFormat, CVI_U32 *devNum) {
 #if defined(_MIDDLEWARE_V2_)
   SAMPLE_INI_CFG_S stIniCfg = {};
 
@@ -338,7 +339,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S *aiSize,
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[0].u32BlkCnt = low_mem_profile ? 3 : 7;
 
-  u32BlkSize = COMMON_GetPicBufferSize(aiSize->u32Width, aiSize->u32Height, aiFormat,
+  u32BlkSize = COMMON_GetPicBufferSize(aiSize->u32Width, aiSize->u32Height, tdlFormat,
                                        DATA_BITWIDTH_8, COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[1].u32BlkCnt = 3;
@@ -545,10 +546,10 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {0};
   VPSS_CHN_ATTR_S stVpssChnAttr[VPSS_MAX_PHY_CHN_NUM];
 
-  abChnEnable[vpssConfigs->vpssChnAI] = CVI_TRUE;
-  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssConfigs->vpssChnAI], vpssConfigs->aiWidth,
-                          vpssConfigs->aiHeight, vpssConfigs->aiFormat, true);
-  stVpssChnAttr[vpssConfigs->vpssChnAI].u32Depth = 1;
+  abChnEnable[vpssConfigs->vpssChntdl] = CVI_TRUE;
+  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr[vpssConfigs->vpssChntdl], vpssConfigs->tdlFormat,
+                          vpssConfigs->tdlHeight, vpssConfigs->tdlFormat, true);
+  stVpssChnAttr[vpssConfigs->vpssChntdl].u32Depth = 1;
 
   if (isVOOpened) {
     abChnEnable[vpssConfigs->vpssChnVideoOutput] = CVI_TRUE;
@@ -573,9 +574,9 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
     return s32Ret;
   }
 #if defined(_MIDDLEWARE_V2_)
-  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
+  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, vpssConfigs->vpssChntdl, vpssConfigs->vpssGrp);
 #else
-  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->vpssChnAI, vpssConfigs->vpssGrp);
+  s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->vpssChntdl, vpssConfigs->vpssGrp);
 #endif
   if (s32Ret != CVI_SUCCESS) {
     printf("vi bind vpss failed. s32Ret: 0x%x !\n", s32Ret);

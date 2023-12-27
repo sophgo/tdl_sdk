@@ -21,10 +21,10 @@ typedef struct {
   CVI_U32 voHeight;
   PIXEL_FORMAT_E voFormat;
 
-  VPSS_CHN vpssChnAI;
-  CVI_U32 aiWidth;
-  CVI_U32 aiHeight;
-  PIXEL_FORMAT_E aiFormat;
+  VPSS_CHN vpssChntdl;
+  CVI_U32 tdlWidth;
+  CVI_U32 tdlHeight;
+  PIXEL_FORMAT_E tdlFormat;
 
   VI_PIPE viPipe;
 } VPSSConfigs;
@@ -62,8 +62,8 @@ typedef struct {
 extern "C" {
 #endif
 
-CVI_S32 InitVideoSystem(VideoSystemContext *vsCtx, SIZE_S *aiInputSize,
-                        PIXEL_FORMAT_E aiInputFormat, int voType);
+CVI_S32 InitVideoSystem(VideoSystemContext *vsCtx, SIZE_S *tdl_InputSize,
+                        PIXEL_FORMAT_E tdl_InputFormat, int voType);
 void DestroyVideoSystem(VideoSystemContext *vsCtx);
 CVI_S32 SendOutputFrame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context);
 

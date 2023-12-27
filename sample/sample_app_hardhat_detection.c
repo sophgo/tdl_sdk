@@ -46,11 +46,9 @@ int main(int argc, char *argv[]) {
   }
   cvtdl_face_t p_obj = {0};
 
-  const char *fd_model_path = argv
-      [1];  // /mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/scrfd_432_768_1x.cvimodel
-  const char *fm_model_path = argv
-      [2];  // /mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/mask_classifier.cvimodel
-  const char *img_path = argv[3];  // /mnt/data/admin1_data/alios_test/a.bin
+  const char *fd_model_path = argv[1];
+  const char *fm_model_path = argv[2];
+  const char *img_path = argv[3];
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, fd_model_path);
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MASKCLASSIFICATION, fm_model_path);
   VIDEO_FRAME_INFO_S bg;

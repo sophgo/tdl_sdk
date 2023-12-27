@@ -3,12 +3,12 @@
 #include "core/cvi_tdl_core.h"
 
 /**
- * \addtogroup core_ai_custom Custom TDL Inference Support
- * \ingroup core_ai
+ * \addtogroup core_tdl_custom Custom TDL Inference Support
+ * \ingroup core_tdl
  */
 
 /** @typedef preProcessFunc
- * @ingroup core_ai_custom
+ * @ingroup core_tdl_custom
  * @brief A preprocess function pointer.
  */
 typedef void (*preProcessFunc)(VIDEO_FRAME_INFO_S *inFrames, VIDEO_FRAME_INFO_S *outFrames,
@@ -19,8 +19,8 @@ extern "C" {
 #endif
 
 /**
- * \addtogroup core_custom_ai_settings Custom TDL Inference Setting Functions
- * \ingroup core_ai_custom
+ * \addtogroup core_custom_tdk_settings Custom TDL Inference Setting Functions
+ * \ingroup core_tdl_custom
  */
 /**@{*/
 
@@ -171,8 +171,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Custom_CloseModel(cvitdl_handle_t handle, const uint3
 /**@}*/
 
 /**
- * \addtogroup core_custom_ai_inference Custom TDL Inference Functions
- * \ingroup core_ai_custom
+ * \addtogroup core_custom_tdk_inference Custom TDL Inference Functions
+ * \ingroup core_tdl_custom
  */
 /**@{*/
 

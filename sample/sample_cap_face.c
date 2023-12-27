@@ -195,10 +195,10 @@ void visualize_frame(cvitdl_service_handle_t service_handle, VIDEO_FRAME_INFO_S 
     brushi.color.g = g_draw_clrs[3 * ind + 1];
     brushi.color.b = g_draw_clrs[3 * ind + 2];
     brushi.size = 4;
-    cvtdl_face_t face_metai = *face_meta_0;
-    face_metai.size = 1;
-    face_metai.info = &face_meta_0->info[i];
-    CVI_TDL_Service_FaceDrawRect(service_handle, &face_metai, &stVOFrame, false, brushi);
+    cvtdl_face_t face_met_tdl = *face_meta_0;
+    face_met_tdl.size = 1;
+    face_met_tdl.info = &face_meta_0->info[i];
+    CVI_TDL_Service_FaceDrawRect(service_handle, &face_met_tdl, &stVOFrame, false, brushi);
 
     int tid = (int)face_meta_0->info[i].unique_id;
     float quality = face_meta_0->info[i].face_quality;
@@ -222,10 +222,10 @@ void visualize_frame(cvitdl_service_handle_t service_handle, VIDEO_FRAME_INFO_S 
     brushi.color.g = g_draw_clrs[3 * ind + 1];
     brushi.color.b = g_draw_clrs[3 * ind + 2];
     brushi.size = 4;
-    cvtdl_object_t obj_metai = *obj_meta_0;
-    obj_metai.size = 1;
-    obj_metai.info = &obj_meta_0->info[i];
-    CVI_TDL_Service_ObjectDrawRect(service_handle, &obj_metai, &stVOFrame, false, brushi);
+    cvtdl_object_t obj_mete_tdl = *obj_meta_0;
+    obj_mete_tdl.size = 1;
+    obj_mete_tdl.info = &obj_meta_0->info[i];
+    CVI_TDL_Service_ObjectDrawRect(service_handle, &obj_mete_tdl, &stVOFrame, false, brushi);
 
     int tid = (int)obj_meta_0->info[i].unique_id;
     sprintf(strinfo, "id:%d", tid);
@@ -524,13 +524,13 @@ int main(int argc, char *argv[]) {
   uint32_t last_time_ms = get_time_in_ms();
   size_t last_counter = 0;
   int grp_id = 0;
-  int ai_chn = VPSS_CHN0;
+  int tdl_chn = VPSS_CHN0;
   double total_ts = 0;
   while (bExit == false) {
     counter += 1;
     // printf("to get ai frame\n");
     g_frmcounter = counter;
-    ret = CVI_VPSS_GetChnFrame(grp_id, ai_chn, &stfdFrame, 2000);
+    ret = CVI_VPSS_GetChnFrame(grp_id, tdl_chn, &stfdFrame, 2000);
 
     // printf("got ai frame,width:%u\n",stfdFrame.stVFrame.u32Width);
     if (ret != CVI_SUCCESS) {
@@ -557,7 +557,7 @@ int main(int argc, char *argv[]) {
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_APP_FaceCapture_Run failed with %#x\n", ret);
       usleep(1000);
-      CVI_VPSS_ReleaseChnFrame(grp_id, ai_chn, &stfdFrame);
+      CVI_VPSS_ReleaseChnFrame(grp_id, tdl_chn, &stfdFrame);
       continue;
     }
 
@@ -590,7 +590,7 @@ int main(int argc, char *argv[]) {
         }
         if (full) {
           printf("[WARNING] Buffer is full! Drop out!");
-          CVI_VPSS_ReleaseChnFrame(grp_id, ai_chn, &stfdFrame);
+          CVI_VPSS_ReleaseChnFrame(grp_id, tdl_chn, &stfdFrame);
           continue;
         }
         printf("to output cropface:%d,frameid:%d,counter:%u\n", (int)u_id,
@@ -617,7 +617,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    ret = CVI_VPSS_ReleaseChnFrame(grp_id, ai_chn, &stfdFrame);
+    ret = CVI_VPSS_ReleaseChnFrame(grp_id, tdl_chn, &stfdFrame);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VPSS_ReleaseChnFrame chn0 NG\n");
       break;
