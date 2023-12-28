@@ -13,8 +13,24 @@ int HandKeypointClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame,
                                           cvtdl_handpose21_meta_t *handpose) {
   float *temp_buffer = reinterpret_cast<float *>(stOutFrame->stVFrame.pu8VirAddr[0]);
   const TensorInfo &tinfo = getInputTensorInfo(0);
-  int8_t *input_ptr = tinfo.get<int8_t>();
   float qscale = tinfo.qscale;
+
+#ifdef CV186X
+
+  uint8_t *input_ptr = tinfo.get<uint8_t>();
+  for (int i = 0; i < 42; i++) {
+    float temp_float = qscale * temp_buffer[i];
+    if (temp_float < 0)
+      input_ptr[i] = 0;
+    else if (temp_float > 255)
+      input_ptr[i] = 255;
+    else
+      input_ptr[i] = (uint8_t)std::round(temp_float);
+  }
+
+#else
+
+  int8_t *input_ptr = tinfo.get<int8_t>();
   for (int i = 0; i < 42; i++) {
     float temp_float = qscale * temp_buffer[i];
     if (temp_float < -128)
@@ -24,6 +40,8 @@ int HandKeypointClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame,
     else
       input_ptr[i] = (int8_t)std::round(temp_float);
   }
+#endif
+
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
   int ret = run(frames);
 

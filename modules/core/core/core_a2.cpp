@@ -70,12 +70,14 @@ int Core::modelOpen(const char *filepath) {
   mp_mi->in.num = net_info->input_num;
   auto &in_tensor = mp_mi->in.tensors;
   in_tensor.reserve(mp_mi->in.num);
+  auto &in_raw_pointer = mp_mi->in.raw_pointer;
+  in_raw_pointer.reserve(mp_mi->in.num);
 
   mp_mi->out.num = net_info->output_num;
   auto &out_tensor = mp_mi->out.tensors;
   out_tensor.reserve(mp_mi->out.num);
-  auto &raw_pointer = mp_mi->out.raw_pointer;
-  raw_pointer.reserve(mp_mi->out.num);
+  auto &out_raw_pointer = mp_mi->out.raw_pointer;
+  out_raw_pointer.reserve(mp_mi->out.num);
 
   /* only alloc output device mem */
   auto &stage = net_info->stages[0];
@@ -97,6 +99,12 @@ int Core::modelOpen(const char *filepath) {
     bmrt_tensor(&out_tensor[i], mp_mi->handle, net_info->output_dtypes[i], stage.output_shapes[i]);
     if (!use_mmap) {
       mp_mi->out.raw_pointer.push_back(new char[bmrt_tensor_bytesize(&out_tensor[i])]);
+    }
+  }
+
+  if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
+    for (auto i = 0; i < mp_mi->in.num; i++) {
+      mp_mi->in.raw_pointer.push_back(new char[bmrt_tensor_bytesize(&in_tensor[i])]);
     }
   }
 
@@ -183,6 +191,9 @@ void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_m
     tinfo.tensor_elem = bmrt_shape_count(&stages.input_shapes[i]);
     tinfo.tensor_size = tinfo.tensor_elem * bmrt_data_type_size(net_info->input_dtypes[i]);
     tinfo.qscale = net_info->input_scales[i];
+    if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
+      tinfo.raw_pointer = p_mi->in.raw_pointer[i];
+    }
     tensor_info.emplace(std::pair<std::string, TensorInfo>(tinfo.tensor_name, tinfo));
     LOGI("input:%s,elem_num:%d,elem_size:%d\n", tinfo.tensor_name.c_str(), int(tinfo.tensor_elem),
          int(tinfo.tensor_size));
@@ -240,6 +251,12 @@ int Core::modelClose() {
     }
 
     for (auto ptr : mp_mi->out.raw_pointer) {
+      delete[] ptr;
+    }
+  }
+
+  if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
+    for (auto ptr : mp_mi->in.raw_pointer) {
       delete[] ptr;
     }
   }
@@ -497,6 +514,12 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       }
 
       ret = registerFrame2Tensor(dstFrames);
+    }
+  } else {
+    for (size_t i = 0; i < mp_mi->in.num; i++) {
+      bm_memcpy_s2d_partial(bm_handle, mp_mi->in.tensors[i].device_mem,
+                            (void *)mp_mi->in.raw_pointer[i],
+                            bmrt_tensor_bytesize(&mp_mi->in.tensors[i]));
     }
   }
 
