@@ -10,7 +10,7 @@ if("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
   message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is not set. Aborting.")
 endif()
 
-set(FTP_SERVER_IP "10.80.0.5/sw_rls")
+set(FTP_SERVER_IP "10.80.0.5" CACHE STRING "3rd party resource ftp")
 set(DL_SERVER_IP 10.132.3.76)
 
 set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")

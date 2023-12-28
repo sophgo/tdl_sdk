@@ -12,9 +12,7 @@ else
     BUILD_TYPE=SDKRelease
 fi
 
-if [ "${FTP_SERVER_IP}" = "" ]; then
-    FTP_SERVER_IP=10.80.0.5/sw_rls
-fi
+FTP_SERVER_IP=${FTP_SERVER_IP:-10.80.0.5}
 
 CONFIG_DUAL_OS="${CONFIG_DUAL_OS:-OFF}"
 if [[ "$CONFIG_DUAL_OS" == "y" ]]; then
@@ -47,7 +45,7 @@ if [ "$(printf '%s\n' "$CMAKE_REQUIRED_VERSION" "$CMAKE_VERSION" | sort -V | hea
 else
     echo "Cmake minimum required version is ${CMAKE_REQUIRED_VERSION}, trying to download from ftp."
     if [ ! -f cmake-3.18.4-Linux-x86_64.tar.gz ]; then
-        wget ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
+        wget ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
     fi
     tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
     CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
@@ -94,23 +92,25 @@ else
     exit 1
 fi
 
-$CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
-                                        -DCVI_SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR \
-                                        -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-                                        -DENABLE_CVI_TDL_CV_UTILS=ON \
-                                        -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
-                                        -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
-                                        -DSYSTEM_OUT_DIR=$SYSTEM_OUT_DIR \
-                                        -DTPU_IVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
-                                        -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
-                                        -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
-                                        -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
-                                        -DKERNEL_ROOT=$KERNEL_ROOT \
-                                        -DUSE_TPU_IVE=$USE_TPU_IVE \
-                                        -DMW_VER=$MW_VER \
-                                        -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR \
-                                        -DREPO_USER=$REPO_USER \
-                                        -DCONFIG_DUAL_OS=$CONFIG_DUAL_OS
+$CMAKE_BIN -G Ninja $CVI_TDL_ROOT \
+        -DCVI_PLATFORM=$CHIP_ARCH \
+        -DCVI_SYSTEM_PROCESSOR=$SYSTEM_PROCESSOR \
+        -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+        -DENABLE_CVI_TDL_CV_UTILS=ON \
+        -DMLIR_SDK_ROOT=$TPU_SDK_INSTALL_PATH \
+        -DMIDDLEWARE_SDK_ROOT=$MW_PATH \
+        -DSYSTEM_OUT_DIR=$SYSTEM_OUT_DIR \
+        -DTPU_IVE_SDK_ROOT=$IVE_SDK_INSTALL_PATH \
+        -DCMAKE_INSTALL_PREFIX=$AI_SDK_INSTALL_PATH \
+        -DTOOLCHAIN_ROOT_DIR=$HOST_TOOL_PATH \
+        -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
+        -DKERNEL_ROOT=$KERNEL_ROOT \
+        -DUSE_TPU_IVE=$USE_TPU_IVE \
+        -DMW_VER=$MW_VER \
+        -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR \
+        -DREPO_USER=$REPO_USER \
+        -DCONFIG_DUAL_OS=$CONFIG_DUAL_OS \
+        -DFTP_SERVER_IP=$FTP_SERVER_IP
 
 ninja -j8 || exit 1
 ninja install || exit 1

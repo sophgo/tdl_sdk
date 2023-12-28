@@ -1,6 +1,6 @@
 
 # Common part of the URL
-set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/third_party/latest/")
+set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
 # Combine the common prefix and the architecture-specific part
 
 
