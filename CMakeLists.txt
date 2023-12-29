@@ -64,29 +64,16 @@ else()
     message(FATAL_ERROR "No build type!!!")
 endif()
 
-# FIXME: Temporarily workaround
-#set(SYSTRACE_FALLBACK ON)
-#add_definitions(-DSYSTRACE_FALLBACK)
-
-if ("${ENABLE_PERFETTO}" STREQUAL "ON")
-  add_definitions(-DENABLE_PERFETTO)
-  set(ENABLE_TRACE ON)
-endif()
-
-if ("${ENABLE_TRACE}" STREQUAL "ON")
-  add_definitions(-DENABLE_TRACE)
-endif()
-# add_definitions(-DDEBUG_TRACK)
-
-IF(DEFINED ENV{WEB_VIEW})
+if(DEFINED ENV{WEB_VIEW})
   set(BUILD_WEB_VIEW ON)
   message("set BUILD_WEB_VIEW ON")
 endif()
 
-IF(DEFINED ENV{PERF_EVAL})
+if(DEFINED ENV{PERF_EVAL})
   add_definitions(-DPERF_EVAL)
   message("set PERF_EVAL")
-ENDIF()
+  endif()
+
 # Get current commit
 execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE CURRENT_COMMIT)
 execute_process(COMMAND git rev-parse --abbrev-ref HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE LATEST_BRANCH)

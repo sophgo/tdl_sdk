@@ -24,7 +24,6 @@ int main(int argc, char *argv[]) {
     return CVI_TDL_FAILURE;
   }
 
-  CVI_TDL_PerfettoInit();
   CVI_S32 ret = CVI_TDL_SUCCESS;
 
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, 5, PIXEL_FORMAT_RGB_888, vpssgrp_width,

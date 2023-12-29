@@ -200,7 +200,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../modules/log
 )
 
-buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_evaluation cvi_tdl_app gtest_main ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_app gtest_main stdc++fs ${SAMPLE_LIBS})
 
 if ("${CVI_PLATFORM}" STREQUAL "CV186X")
   set(DAILY_REGRESSION_ASSETS "assets_186x")

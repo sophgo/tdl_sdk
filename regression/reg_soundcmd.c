@@ -5,7 +5,6 @@
 
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
-#include "cvi_tdl_perfetto.h"
 
 cvitdl_handle_t tdl_handle = NULL;
 

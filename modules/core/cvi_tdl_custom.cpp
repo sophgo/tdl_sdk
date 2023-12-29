@@ -2,7 +2,6 @@
 #include "core/cvi_tdl_core.h"
 #include "cvi_tdl_core_internal.hpp"
 #include "cvi_tdl_log.hpp"
-#include "cvi_tdl_trace.hpp"
 
 #include "custom/custom.hpp"
 #include "cvi_tdl_experimental.h"
@@ -163,7 +162,6 @@ CVI_S32 CVI_TDL_Custom_GetInputTensorNCHW(cvitdl_handle_t handle, const uint32_t
 
 CVI_S32 CVI_TDL_Custom_RunInference(cvitdl_handle_t handle, const uint32_t id,
                                     VIDEO_FRAME_INFO_S *frame, uint32_t numOfFrames) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_Custom_RetinaFace");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   auto *inst_ptr = getCustomInstanceInit(id, ctx);
   if (inst_ptr == nullptr) {

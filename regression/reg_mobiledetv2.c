@@ -11,7 +11,6 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"
 #include "cvi_tdl_media.h"
-#include "cvi_tdl_perfetto.h"
 #include "od_utils.h"
 
 typedef struct _Argument {
@@ -97,7 +96,6 @@ int parse_args(int argc, char *argv[], Argument *args) {
 }
 
 int main(int argc, char *argv[]) {
-  CVI_TDL_PerfettoInit();
   CVI_S32 ret = CVI_TDL_SUCCESS;
 
   Argument args;

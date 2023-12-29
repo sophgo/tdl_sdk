@@ -5,7 +5,6 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"
 #include "cvi_tdl_media.h"
-#include "cvi_tdl_perfetto.h"
 
 cvitdl_handle_t facelib_handle = NULL;
 
@@ -16,7 +15,6 @@ int main(int argc, char *argv[]) {
     return CVI_TDL_FAILURE;
   }
 
-  CVI_TDL_PerfettoInit();
   CVI_S32 ret = CVI_TDL_SUCCESS;
   CVI_S32 vpssgrp_width = 1280;
   CVI_S32 vpssgrp_height = 720;

@@ -59,11 +59,6 @@ set(SAMPLE_INC
     ${CVI_RTSP_INCLUDE}
 )
 
-if(NOT "${CVI_PLATFORM}" STREQUAL "CV181X" )
-set(SAMPLE_INC ${SAMPLE_INC}
-    ${TRACER_PATH}
-)
-endif()
 
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so

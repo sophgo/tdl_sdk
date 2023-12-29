@@ -7,8 +7,6 @@
 #include "cvi_tdl_core_internal.hpp"
 #include "cvi_tdl_experimental.h"
 #include "cvi_tdl_log.hpp"
-#include "cvi_tdl_perfetto.h"
-#include "cvi_tdl_trace.hpp"
 #include "deepsort/cvi_deepsort.hpp"
 #include "eye_classification/eye_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
@@ -221,18 +219,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET, CREATOR(DMSLandmarkerDet)},
     {CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
 };
-
-void CVI_TDL_PerfettoInit() { prefettoInit(); }
-
-void CVI_TDL_TraceBegin(const char *name) {
-#ifdef SYSTRACE_FALLBACK
-  TRACE_EVENT_BEGIN("cvitdl_api", name);
-#else
-  TRACE_EVENT_BEGIN("cvitdl_api", perfetto::StaticString{name});
-#endif
-}
-
-void CVI_TDL_TraceEnd() { TRACE_EVENT_END("cvitdl_api"); }
 
 //*************************************************
 // Experimental features
@@ -675,7 +661,6 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
  */
 #define DEFINE_INF_FUNC_F1_P1(func_name, class_name, model_index, arg_type)                    \
   CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg_type arg1) {  \
-    TRACE_EVENT("cvi_tdl_core", #func_name);                                                   \
     cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                           \
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));      \
     if (obj == nullptr) {                                                                      \
@@ -702,7 +687,6 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
 #define DEFINE_INF_FUNC_F1_P2(func_name, class_name, model_index, arg1_type, arg2_type)        \
   CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg1_type arg1,   \
                     arg2_type arg2) {                                                          \
-    TRACE_EVENT("cvi_tdl_core", #func_name);                                                   \
     cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                           \
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));      \
     if (obj == nullptr) {                                                                      \
@@ -729,7 +713,6 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
 #define DEFINE_INF_FUNC_F2_P1(func_name, class_name, model_index, arg_type)                    \
   CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame1,                  \
                     VIDEO_FRAME_INFO_S *frame2, arg_type arg1) {                               \
-    TRACE_EVENT("cvi_tdl_core", #func_name);                                                   \
     cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                           \
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));      \
     if (obj == nullptr) {                                                                      \
@@ -756,7 +739,6 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
 #define DEFINE_INF_FUNC_F2_P2(func_name, class_name, model_index, arg1_type, arg2_type)        \
   CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame1,                  \
                     VIDEO_FRAME_INFO_S *frame2, arg1_type arg1, arg2_type arg2) {              \
-    TRACE_EVENT("cvi_tdl_core", #func_name);                                                   \
     cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                           \
     class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));      \
     if (obj == nullptr) {                                                                      \
@@ -901,27 +883,23 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_HeadPerson_Detection, YoloV8Detection,
 
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_CropImage");
   return crop_image(srcFrame, dst, bbox, cvtRGB888);
 }
 
 CVI_S32 CVI_TDL_CropImage_Exten(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst,
                                 cvtdl_bbox_t *bbox, bool cvtRGB888, float exten_ratio,
                                 float *offset_x, float *offset_y) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_CropImage_Exten");
   return crop_image_exten(srcFrame, dst, bbox, cvtRGB888, exten_ratio, offset_x, offset_y);
 }
 
 CVI_S32 CVI_TDL_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst,
                                cvtdl_face_info_t *face_info, bool align, bool cvtRGB888) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_CropImage_Face");
   return crop_image_face(srcFrame, dst, face_info, align, cvtRGB888);
 }
 
 // Tracker
 
 CVI_S32 CVI_TDL_DeepSORT_Init(const cvitdl_handle_t handle, bool use_specific_counter) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_Init");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -936,7 +914,6 @@ CVI_S32 CVI_TDL_DeepSORT_Init(const cvitdl_handle_t handle, bool use_specific_co
 }
 
 CVI_S32 CVI_TDL_DeepSORT_GetDefaultConfig(cvtdl_deepsort_config_t *ds_conf) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_GetDefaultConfig");
   cvtdl_deepsort_config_t default_conf = DeepSORT::get_DefaultConfig();
   memcpy(ds_conf, &default_conf, sizeof(cvtdl_deepsort_config_t));
 
@@ -945,7 +922,6 @@ CVI_S32 CVI_TDL_DeepSORT_GetDefaultConfig(cvtdl_deepsort_config_t *ds_conf) {
 
 CVI_S32 CVI_TDL_DeepSORT_GetConfig(const cvitdl_handle_t handle, cvtdl_deepsort_config_t *ds_conf,
                                    int cvitdl_obj_type) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_GetConfig");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -957,7 +933,6 @@ CVI_S32 CVI_TDL_DeepSORT_GetConfig(const cvitdl_handle_t handle, cvtdl_deepsort_
 
 CVI_S32 CVI_TDL_DeepSORT_SetConfig(const cvitdl_handle_t handle, cvtdl_deepsort_config_t *ds_conf,
                                    int cvitdl_obj_type, bool show_config) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_SetConfig");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -968,7 +943,6 @@ CVI_S32 CVI_TDL_DeepSORT_SetConfig(const cvitdl_handle_t handle, cvtdl_deepsort_
 }
 
 CVI_S32 CVI_TDL_DeepSORT_CleanCounter(const cvitdl_handle_t handle) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_CleanCounter");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -985,7 +959,6 @@ CVI_S32 CVI_TDL_DeepSORT_Head_FusePed(const cvitdl_handle_t handle, cvtdl_object
                                       cvtdl_object_t *head, cvtdl_object_t *ped,
                                       const cvtdl_counting_line_t *counting_line_t,
                                       const randomRect *rect) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_HeadFusePed");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   ds_tracker->set_image_size(obj->width, obj->height);
@@ -998,7 +971,6 @@ CVI_S32 CVI_TDL_DeepSORT_Head_FusePed(const cvitdl_handle_t handle, cvtdl_object
 }
 CVI_S32 CVI_TDL_DeepSORT_Obj(const cvitdl_handle_t handle, cvtdl_object_t *obj,
                              cvtdl_tracker_t *tracker, bool use_reid) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_Obj");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -1010,7 +982,6 @@ CVI_S32 CVI_TDL_DeepSORT_Obj(const cvitdl_handle_t handle, cvtdl_object_t *obj,
 
 CVI_S32 CVI_TDL_DeepSORT_Byte(const cvitdl_handle_t handle, cvtdl_object_t *obj,
                               cvtdl_tracker_t *tracker, bool use_reid) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_Obj");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -1023,7 +994,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_Obj_Cross(const cvitdl_handle_t handle, cvtd
                                               cvtdl_tracker_t *tracker, bool use_reid,
                                               const cvtdl_counting_line_t *cross_line_t,
                                               const randomRect *rect) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_Obj");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -1035,7 +1005,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_Obj_Cross(const cvitdl_handle_t handle, cvtd
 
 CVI_S32 CVI_TDL_DeepSORT_Face(const cvitdl_handle_t handle, cvtdl_face_t *face,
                               cvtdl_tracker_t *tracker) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_Face");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -1046,7 +1015,6 @@ CVI_S32 CVI_TDL_DeepSORT_Face(const cvitdl_handle_t handle, cvtdl_face_t *face,
 }
 DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_FaceFusePed(const cvitdl_handle_t handle, cvtdl_face_t *face,
                                                 cvtdl_object_t *obj, cvtdl_tracker_t *tracker_t) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_FaceFusePed");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   ds_tracker->set_image_size(face->width, face->height);
@@ -1070,7 +1038,6 @@ CVI_S32 CVI_TDL_DeepSORT_Set_Timestamp(const cvitdl_handle_t handle, uint32_t ts
 }
 
 CVI_S32 CVI_TDL_DeepSORT_UpdateOutNum(const cvitdl_handle_t handle, cvtdl_tracker_t *tracker_t) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_FaceFusePed");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
 
@@ -1082,7 +1049,6 @@ CVI_S32 CVI_TDL_DeepSORT_UpdateOutNum(const cvitdl_handle_t handle, cvtdl_tracke
   return CVI_SUCCESS;
 }
 CVI_S32 CVI_TDL_DeepSORT_DebugInfo_1(const cvitdl_handle_t handle, char *debug_info) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_DebugInfo_1");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -1098,7 +1064,6 @@ CVI_S32 CVI_TDL_DeepSORT_DebugInfo_1(const cvitdl_handle_t handle, char *debug_i
 
 CVI_S32 CVI_TDL_DeepSORT_GetTracker_Inactive(const cvitdl_handle_t handle,
                                              cvtdl_tracker_t *tracker) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_DeepSORT_GetTracker_Inactive");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   DeepSORT *ds_tracker = ctx->ds_tracker;
   if (ds_tracker == nullptr) {
@@ -1111,7 +1076,6 @@ CVI_S32 CVI_TDL_DeepSORT_GetTracker_Inactive(const cvitdl_handle_t handle,
 // Fall Detection
 
 CVI_S32 CVI_TDL_Fall(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_Fall");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   FallMD *fall_model = ctx->fall_model;
   if (fall_model == nullptr) {
@@ -1126,7 +1090,6 @@ CVI_S32 CVI_TDL_Fall(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
 // New Fall Detection
 
 CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_Fall_Monitor");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
   if (fall_monitor_model == nullptr) {
@@ -1139,7 +1102,6 @@ CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objec
 }
 
 CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_Fall_Monitor");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
   if (fall_monitor_model == nullptr) {
@@ -1154,7 +1116,6 @@ CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps) {
 // Others
 CVI_S32 CVI_TDL_TamperDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                 float *moving_score) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_TamperDetection");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   TamperDetectorMD *td_model = ctx->td_model;
   if (td_model == nullptr) {
@@ -1170,7 +1131,6 @@ CVI_S32 CVI_TDL_TamperDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S
 
 CVI_S32 CVI_TDL_Set_MotionDetection_Background(const cvitdl_handle_t handle,
                                                VIDEO_FRAME_INFO_S *frame) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_Set_MotionDetection_Background");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
@@ -1185,7 +1145,6 @@ CVI_S32 CVI_TDL_Set_MotionDetection_Background(const cvitdl_handle_t handle,
 }
 
 CVI_S32 CVI_TDL_Set_MotionDetection_ROI(const cvitdl_handle_t handle, MDROI_t *roi_s) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_Set_MotionDetection_ROI");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
@@ -1197,8 +1156,6 @@ CVI_S32 CVI_TDL_Set_MotionDetection_ROI(const cvitdl_handle_t handle, MDROI_t *r
 
 CVI_S32 CVI_TDL_MotionDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                 cvtdl_object_t *obj_meta, uint8_t threshold, double min_area) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_MotionDetection");
-
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
@@ -1254,7 +1211,6 @@ CVI_S32 CVI_TDL_FaceFeatureExtract(const cvitdl_handle_t handle, const uint8_t *
 }
 
 CVI_S32 CVI_TDL_Get_SoundClassification_ClassesNum(const cvitdl_handle_t handle) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_Get_SoundClassification_ClassesNum");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   SoundClassification *sc_model = dynamic_cast<SoundClassification *>(
       getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, ctx));
@@ -1272,7 +1228,6 @@ CVI_S32 CVI_TDL_Get_SoundClassification_ClassesNum(const cvitdl_handle_t handle)
 }
 
 CVI_S32 CVI_TDL_Set_SoundClassification_Threshold(const cvitdl_handle_t handle, const float th) {
-  TRACE_EVENT("cvi_tdl_core", "CVI_TDL_Set_SoundClassification_Threshold");
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   SoundClassification *sc_model = dynamic_cast<SoundClassification *>(
       getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, ctx));

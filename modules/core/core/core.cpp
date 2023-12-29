@@ -1,7 +1,6 @@
 #include "core.hpp"
 #include <stdexcept>
 #include "core/utils/vpss_helper.h"
-#include "cvi_tdl_trace.hpp"
 #include "demangle.hpp"
 #include "error_msg.hpp"
 
@@ -35,7 +34,6 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
 
 int Core::modelOpen(const char *filepath) {
-  TRACE_EVENT("cvi_tdl_core", "Core::modelOpen");
   if (!mp_mi) {
     LOGE("config not set\n");
     return CVI_TDL_ERR_OPEN_MODEL;
@@ -60,7 +58,6 @@ int Core::modelOpen(const char *filepath) {
   setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
   setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
 
-  TRACE_EVENT_BEGIN("cvi_tdl_core", "setupInputPreprocess");
   CVI_TENSOR *input =
       CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   // Assigning default values.
@@ -130,7 +127,6 @@ int Core::modelOpen(const char *filepath) {
     vcfg.chn_coeff = data[i].resize_method;
     m_vpss_config.push_back(vcfg);
   }
-  TRACE_EVENT_END("cvi_tdl_core");
   return CVI_TDL_SUCCESS;
 }
 
@@ -152,7 +148,6 @@ void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
 }
 
 int Core::modelClose() {
-  TRACE_EVENT("cvi_tdl_core", "Core::modelClose");
   int ret = CVI_TDL_SUCCESS;
 
   if (mp_mi->handle != nullptr) {
@@ -384,7 +379,6 @@ int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
 }
 
 int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
-  TRACE_EVENT("cvi_tdl_core", "Core::run");
   int ret = CVI_TDL_SUCCESS;
 
   if (m_skip_vpss_preprocess && !allowExportChannelAttribute()) {

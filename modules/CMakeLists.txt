@@ -9,27 +9,20 @@ set(CVI_TDL_TAG ${LATEST_TAG})
 configure_file(version.hpp.in version.hpp @ONLY)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/trace
                     ${CMAKE_CURRENT_SOURCE_DIR}/log
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation)
 
-add_subdirectory(trace) # Perfetto tracer comes first
 add_subdirectory(app)
 
 add_subdirectory(core)
 add_subdirectory(service)
-
-if(NOT DEFINED NO_OPENCV)
-add_subdirectory(evaluation)
-endif()
 add_subdirectory(test_and_eval)
 
 if(DEFINED NO_OPENCV)
   set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                   $<TARGET_OBJECTS:cvi_tdl_service>
-                  $<TARGET_OBJECTS:cvi_tdl_trace>
                   $<TARGET_OBJECTS:core>
                   $<TARGET_OBJECTS:custom>
                   $<TARGET_OBJECTS:utils>
@@ -59,7 +52,6 @@ if(DEFINED NO_OPENCV)
 else()
     set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
       $<TARGET_OBJECTS:cvi_tdl_service>
-      $<TARGET_OBJECTS:cvi_tdl_trace>
       $<TARGET_OBJECTS:core>
       $<TARGET_OBJECTS:custom>
       $<TARGET_OBJECTS:utils>
@@ -137,6 +129,5 @@ install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app DESTINATION include/)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cvi_tdl
         PATTERN "cvi_tdl_app" EXCLUDE
-        PATTERN "cvi_tdl_perfetto.h" EXCLUDE
         PATTERN "cvi_tdl_experimental.h" EXCLUDE
         PATTERN "cvi_tdl_log.hpp" EXCLUDE)

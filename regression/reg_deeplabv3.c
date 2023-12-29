@@ -6,7 +6,6 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"
 #include "cvi_tdl_media.h"
-#include "cvi_tdl_perfetto.h"
 
 cvitdl_handle_t tdl_handle = NULL;
 cvitdl_eval_handle_t eval_handle = NULL;
@@ -23,7 +22,6 @@ int main(int argc, char *argv[]) {
     return CVI_TDL_FAILURE;
   }
 
-  CVI_TDL_PerfettoInit();
   CVI_S32 ret = CVI_TDL_SUCCESS;
 
   imgprocess_t img_handle;

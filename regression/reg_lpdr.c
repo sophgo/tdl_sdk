@@ -2,13 +2,11 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"
 #include "cvi_tdl_media.h"
-#include "cvi_tdl_perfetto.h"
 
 #include <dirent.h>
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
-  CVI_TDL_PerfettoInit();
   if (argc != 8) {
     printf(
         "Usage: %s <vehicle_detection_model_path>\n"

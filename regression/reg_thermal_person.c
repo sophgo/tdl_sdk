@@ -9,7 +9,6 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"
 #include "cvi_tdl_media.h"
-#include "cvi_tdl_perfetto.h"
 
 uint32_t coco_ids[] = {1};
 
@@ -20,7 +19,6 @@ int main(int argc, char *argv[]) {
     return CVI_TDL_FAILURE;
   }
 
-  CVI_TDL_PerfettoInit();
   CVI_S32 ret = CVI_TDL_SUCCESS;
 
   uint32_t vpssgrp_width = 1280;

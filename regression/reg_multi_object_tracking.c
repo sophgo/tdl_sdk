@@ -3,12 +3,10 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"
 #include "cvi_tdl_media.h"
-#include "cvi_tdl_perfetto.h"
 #include "inttypes.h"
 #include "od_utils.h"
 
 int main(int argc, char *argv[]) {
-  CVI_TDL_PerfettoInit();
   if (argc != 6) {
     printf(
         "Usage: %s <detection_model_name>\n"

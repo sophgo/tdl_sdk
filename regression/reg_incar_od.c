@@ -4,7 +4,6 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_evaluation.h"
 #include "cvi_tdl_media.h"
-#include "cvi_tdl_perfetto.h"
 
 cvitdl_handle_t facelib_handle = NULL;
 
