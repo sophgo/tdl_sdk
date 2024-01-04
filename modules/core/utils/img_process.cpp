@@ -2,13 +2,9 @@
 #include <memory>
 #include <vector>
 #include "core/utils/vpss_helper.h"
+#include "cvi_ive.h"
 #include "cvi_tdl_log.hpp"
 #include "cvi_tdl_media.h"
-#ifndef USE_TPU_IVE
-#include <cvi_ive.h>
-#else
-#include "ive/ive.h"
-#endif
 #ifndef NO_OPENCV
 #include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -227,20 +223,12 @@ class ImageProcessorNoOpenCV : public ImageProcessor {
 
     if (ive_handle != nullptr) {
       image = CVI_IVE_ReadImage(ive_handle, filepath, ive_format);
-#ifndef USE_TPU_IVE
       int imgw = image.u32Width;
-#else
-      int imgw = image.u16Width;
-#endif
       if (imgw == 0) {
         printf("Read image failed with %x!\n", ret);
         return CVI_FAILURE;
       }
-#ifndef USE_TPU_IVE
       ret = CVI_IVE_Image2VideoFrameInfo(&image, frame);
-#else
-      ret = CVI_IVE_Image2VideoFrameInfo(&image, frame, false);
-#endif
       if (ret != CVI_SUCCESS) {
         LOGE("open img failed with %#x!\n", ret);
         return ret;

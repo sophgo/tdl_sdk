@@ -13,13 +13,8 @@
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_app/cvi_tdl_app.h"
-#include "sample_comm.h"
-#ifndef USE_TPU_IVE
-#include <cvi_ive.h>
-#else
-#include "ive/ive.h"
-#endif
 #include "cvi_tdl_media.h"
+#include "sample_comm.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "sys_utils.hpp"

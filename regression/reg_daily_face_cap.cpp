@@ -10,11 +10,6 @@
 #include "json.hpp"
 #include "raii.hpp"
 #include "regression_utils.hpp"
-#ifndef USE_TPU_IVE
-#include <cvi_ive.h>
-#else
-#include "ive/ive.h"
-#endif
 
 #define FACE_FEAT_SIZE 256
 

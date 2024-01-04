@@ -2,12 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-// #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-// #include "ive/ive.h"
-// #include "sys_utils.hpp"
+
 int ReleaseImage(VIDEO_FRAME_INFO_S *frame) {
   CVI_S32 ret = CVI_SUCCESS;
   if (frame->stVFrame.u64PhyAddr[0] != 0) {

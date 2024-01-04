@@ -3,11 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "cvi_md.h"
-#ifndef USE_TPU_IVE
 #include <cvi_ive.h>
-#else
-#include "ive/ive.h"
-#endif
 
 int main(int argc, char *argv[]) {
   cvi_md_handle_t handle = NULL;
@@ -25,23 +21,14 @@ int main(int argc, char *argv[]) {
   IVE_IMAGE_S image1 = CVI_IVE_ReadImage(ive_handle, strf1, IVE_IMAGE_TYPE_U8C1);
   ret = CVI_SUCCESS;
 
-#ifndef USE_TPU_IVE
   int imgw = image1.u32Width;
-#else
-  int imgw = image1.u16Width;
-#endif
-
   if (imgw == 0) {
     printf("Read image failed with %x!\n", ret);
     return CVI_FAILURE;
   } else {
     printf("Read image ok with %d!\n", imgw);
   }
-#ifndef USE_TPU_IVE
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &bg);
-#else
-  ret = CVI_IVE_Image2VideoFrameInfo(&image1, &bg, false);
-#endif
 
   if (ret != CVI_SUCCESS) {
     printf("Convert to video frame failed with %#x!\n", ret);
@@ -49,11 +36,7 @@ int main(int argc, char *argv[]) {
   }
   IVE_IMAGE_S image2 = CVI_IVE_ReadImage(ive_handle, strf2, IVE_IMAGE_TYPE_U8C1);
   ret = CVI_SUCCESS;
-#ifndef USE_TPU_IVE
   int imgw2 = image2.u32Width;
-#else
-  int imgw2 = image2.u16Width;
-#endif
   if (imgw2 == 0) {
     printf("Read image failed with %x!\n", ret);
     return CVI_FAILURE;
@@ -61,12 +44,7 @@ int main(int argc, char *argv[]) {
     printf("Read image1 ok with %d!\n", imgw2);
   }
 
-#ifndef USE_TPU_IVE
   ret = CVI_IVE_Image2VideoFrameInfo(&image2, &frame);
-#else
-  ret = CVI_IVE_Image2VideoFrameInfo(&image2, &frame, false);
-#endif
-
   if (ret != CVI_SUCCESS) {
     printf("Convert to video frame failed with %#x!\n", ret);
     return ret;

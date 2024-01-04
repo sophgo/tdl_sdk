@@ -12,7 +12,6 @@
 #include <unistd.h>
 
 #include <sys/time.h>
-// #include "cv_ive.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 #define OUTPUT_BUFFER_SIZE 10

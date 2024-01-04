@@ -5,12 +5,7 @@
 #include "cvi_bmcv.h"
 #include <cstring>
 #include "core/utils/vpss_helper.h"
-#ifndef USE_TPU_IVE
 #include <cvi_ive.h>
-#else
-#include "ive/ive.h"
-#endif
-
 typedef enum {
   RESZIE = 0,
   CROP,
@@ -238,24 +233,14 @@ int main(int argc, char *argv[]) {
 
   VIDEO_FRAME_INFO_S frame;
   IVE_IMAGE_S image1 = CVI_IVE_ReadImage(ive_handle, strf1, IVE_IMAGE_TYPE_U8C3_PLANAR);
-#ifndef USE_TPU_IVE
   int imgw = image1.u32Width;
-#else
-  int imgw = image1.u16Width;
-#endif
-
   if (imgw == 0) {
     printf("Read image failed with %x!\n", ret);
     return CVI_FAILURE;
   } else {
     printf("Read image ok with %d!\n", imgw);
   }
-#ifndef USE_TPU_IVE
   ret = CVI_IVE_Image2VideoFrameInfo(&image1, &frame);
-#else
-  ret = CVI_IVE_Image2VideoFrameInfo(&image1, &frame, false);
-#endif
-  
   if (ret != CVI_SUCCESS) {
     printf("Convert to video frame failed with %#x!\n", ret);
     return ret;
