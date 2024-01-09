@@ -104,6 +104,7 @@ ifeq ($(MW_VERSION), v1)
 else ifeq ($(MW_VERSION), v2)
 	ifeq ($(CHIP), CV186X)
 		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
+		MW_AUDIO_LIBS += -lcvi_dnvqe -lcvi_ssp2
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
 		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
 		CFLAGS += -DCV186X

@@ -79,7 +79,6 @@ MW_INC_PATH = $(MW_PATH)/include
 MW_SAMPLE_PATH = $(MW_PATH)/sample/common
 MW_PANEL_INC_PATH += ${MW_PATH}/include/panel
 MW_3RD_LIB_PATH = $(MW_LIB_PATH)/3rd
-MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1 -lcli
 
 ifneq (,$(findstring middleware/v1,$(MW_PATH)))
     MW_VERSION = v1
