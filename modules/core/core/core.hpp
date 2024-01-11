@@ -40,7 +40,7 @@ struct TensorInfo {
   void *raw_pointer;
   CVI_SHAPE shape;
   CVI_TENSOR *tensor_handle;
-
+  int data_type;
   // Tensor size = (number of tensor elements) * typeof(tensor type))
   size_t tensor_size;
 
