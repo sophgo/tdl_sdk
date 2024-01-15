@@ -2,6 +2,8 @@
 #include "core/utils/vpss_helper.h"
 #include "error_msg.hpp"
 
+#define ALIGN_SIZE 64
+
 namespace cvitdl {
 
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
@@ -601,8 +603,42 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
       frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
       frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
 
-      bm_memcpy_s2d_partial(bm_handle, mp_mi->in.tensors[i].device_mem,
-                            (void *)frame->stVFrame.pu8VirAddr[0], size);
+      int input_height = mp_mi->in.tensors[i].shape.dims[2];
+      int input_width = mp_mi->in.tensors[i].shape.dims[3];
+
+      if (input_width % ALIGN_SIZE == 0) {
+        bm_memcpy_s2d_partial(bm_handle, mp_mi->in.tensors[i].device_mem,
+                              (void *)frame->stVFrame.pu8VirAddr[0], size);
+      } else {
+        int align_length = (input_width / ALIGN_SIZE + 1) * ALIGN_SIZE;
+
+        for (int c = 0; c < 3; c++) {
+          for (int h = 0; h < input_height; h++) {
+            uint64_t image_bgr_devaddr = bm_mem_get_device_addr(mp_mi->in.tensors[i].device_mem);
+            bm_device_mem_t dst_addr = bm_mem_from_device(
+                image_bgr_devaddr + h * input_width + c * input_height * input_height, input_width);
+
+            bm_memcpy_s2d_partial(bm_handle, dst_addr,
+                                  (void *)(frame->stVFrame.pu8VirAddr[c] + h * align_length),
+                                  input_width);
+          }
+        }
+
+        // bm_memcpy_d2d_byte function is not ready
+
+        // for (int k =0; k<3; k++){
+        //   bm_device_mem_t src_addr =
+        //   bm_mem_from_device((uint64_t)(frame->stVFrame.pu8VirAddr[k]),
+        //   frame->stVFrame.u32Length[i]);
+
+        //   for (int n =0; n<input_height; n++){
+
+        //     bm_memcpy_d2d_byte(bm_handle, mp_mi->in.tensors[i].device_mem,
+        //                   n*input_width +k*input_height*input_height,src_addr, n*align_length,
+        //                   input_width);
+        //   }
+        // }
+      }
 
       CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);
       frame->stVFrame.pu8VirAddr[0] = NULL;
