@@ -98,12 +98,11 @@ test_suites="${test_suites}:Hand_DetectionTestSuite.*"
 test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
 test_suites="${test_suites}:People_Vehicle_DetectionTestSuite.*"
 test_suites="${test_suites}:FaceRecognitionTestSuite.*"
-test_suites="${test_suites}:LicensePlateDetectionV2TestSuite.*"
+test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
 test_suites="${test_suites}:ScrfdDetTestSuite.*"
 test_suites="${test_suites}:Hand_ClassificationTestSuite.*"
 test_suites="${test_suites}:HardhatDetTestSuite.*"
 test_suites="${test_suites}:MobileDetV2TestSuite.*"
-test_suites="${test_suites}:MobileDetectionV2TestSuite.*"
 fi
 
 if [ $CHIP_ARCH == "ATHENA2" ];then

@@ -181,6 +181,7 @@ set(UnitTests
   reg_daily_incarod.cpp
   reg_daily_face_cap.cpp
   reg_daily_feature_matching.cpp
+  reg_daily_mobiledetion.cpp
 )
 endif()
 
