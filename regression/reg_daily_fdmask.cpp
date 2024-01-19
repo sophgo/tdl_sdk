@@ -225,7 +225,13 @@ TEST_F(FaceMaskDetectionTestSuite, accruacy) {
                              << "model path: " << m_model_path << "\n"
                              << "expected bbox: (" << expected_faceinfo.bbox.x1 << ", "
                              << expected_faceinfo.bbox.y1 << ", " << expected_faceinfo.bbox.x2
-                             << ", " << expected_faceinfo.bbox.y2 << ")\n";
+                             << ", " << expected_faceinfo.bbox.y2 << ", "
+                             << expected_faceinfo.mask_score << ")\n"
+                             << "[" << face_meta->info[i].bbox.x1 << ","
+                             << face_meta->info[i].bbox.y1 << "," << face_meta->info[i].bbox.x2
+                             << "," << face_meta->info[i].bbox.y2 << ","
+                             << face_meta->info[i].bbox.score << "],\n";
+        ;
       }
       CVI_TDL_FreeCpp(face_meta);
     }
