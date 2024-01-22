@@ -19,9 +19,6 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 static cvtdl_face_t g_face_meta_0;
 
-// #define VISUAL_FACE_LANDMARK
-// #define USE_OUTPUT_DATA_API
-
 #define SMT_MUTEXAUTOLOCK_INIT(mutex) pthread_mutex_t AUTOLOCK_##mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define SMT_MutexAutoLock(mutex, lock)                                            \
@@ -37,11 +34,9 @@ typedef struct {
   float quality;
   cvtdl_image_t image;
   tracker_state_e state;
-  uint32_t counter;
 } IOData;
 
 typedef struct {
-  CVI_S32 voType;
   VideoSystemContext vs_ctx;
   cvitdl_service_handle_t service_handle;
 } pVOArgs;
@@ -94,9 +89,6 @@ void RESTRUCTURING_FACE_META(cvtdl_face_t *face_cpt_info, cvtdl_face_t *face_met
 static void *pVideoOutput(void *args) {
   printf("[APP] Video Output Up\n");
   pVOArgs *vo_args = (pVOArgs *)args;
-  if (!vo_args->voType) {
-    return NULL;
-  }
   cvitdl_service_handle_t service_handle = vo_args->service_handle;
   CVI_S32 s32Ret = CVI_SUCCESS;
 
@@ -166,42 +158,18 @@ static void *pVideoOutput(void *args) {
 }
 
 int main(int argc, char *argv[]) {
-  // if (argc != 3) {
-  //   printf(
-  //       "Usage: \n"
-  //       "          <face_hardhat_detection_model_path>\n"
-  //       "          FD threshold\n",
-  //       argv[0]);
-  //   return CVI_TDL_FAILURE;
-  // }
-  CVI_S32 ret = CVI_TDL_SUCCESS;
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
   const char *fd_model_path = argv[1];
   float det_threshold = atof(argv[2]);
-  int voType = 2;
-  int vi_format = 0;
 
+  CVI_S32 ret = CVI_TDL_SUCCESS;
   VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
-
-  PIXEL_FORMAT_E tdl_InputFormat;
-  if (vi_format == 0) {
-    tdl_InputFormat = PIXEL_FORMAT_RGB_888;
-  } else if (vi_format == 1) {
-    tdl_InputFormat = PIXEL_FORMAT_NV21;
-  } else if (vi_format == 2) {
-    tdl_InputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
-  } else if (vi_format == 3) {
-    tdl_InputFormat = PIXEL_FORMAT_RGB_888_PLANAR;
-  } else {
-    printf("vi format[%d] unknown.\n", vi_format);
-    return CVI_FAILURE;
-  }
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, tdl_InputFormat, voType) != CVI_SUCCESS) {
+  int fps = 25;
+  if (InitVideoSystem(&vs_ctx, fps) != CVI_SUCCESS) {
     printf("failed to init video system\n");
-    return CVI_FAILURE;
+    goto CLEANUP_VIDEO;
   }
 
   cvitdl_handle_t tdl_handle = NULL;
@@ -210,38 +178,29 @@ int main(int argc, char *argv[]) {
   ret = CVI_TDL_Service_CreateHandle(&service_handle, tdl_handle);
   if (ret != CVI_TDL_SUCCESS) {
     printf("failed with %#x!\n", ret);
-    goto CLEANUP_SYSTEM;
+    goto CLEANUP_TDL_HANDLE;
   }
 
   ret |= CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT, fd_model_path);
+  ret |= CVI_TDL_SetVpssTimeout(tdl_handle, 1000);
+  ret |= CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+                                   det_threshold);
   if (ret != CVI_SUCCESS) {
-    printf("failed to open mask model\n");
-    return ret;
+    printf("failed to set model\n");
+    goto CLEANUP_TDL_SERVICE;
   }
-
-  CVI_TDL_SetVpssTimeout(tdl_handle, 1000);
-  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT, det_threshold);
 
   memset(&g_face_meta_0, 0, sizeof(cvtdl_face_t));
 
   cvtdl_face_t p_obj = {0};
   pthread_t vo_thread;
   pVOArgs vo_args = {0};
-  vo_args.voType = voType;
   vo_args.service_handle = service_handle;
   vo_args.vs_ctx = vs_ctx;
-  FILE *fptr = fopen("hardhat.txt", "w");
-  if (fptr == NULL) {
-    printf("open file failed!\n");
-    return -1;
-  }
   pthread_create(&vo_thread, NULL, pVideoOutput, (void *)&vo_args);
 
   VIDEO_FRAME_INFO_S stfdFrame;
-
-  size_t counter = 0;
   while (bExit == false) {
-    counter += 1;
     ret = CVI_VPSS_GetChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChntdl,
                                &stfdFrame, 2000);
     if (ret != CVI_SUCCESS) {
@@ -253,21 +212,13 @@ int main(int argc, char *argv[]) {
     ret = CVI_TDL_RetinaFace_Hardhat(tdl_handle, &stfdFrame, &p_obj);
     if (ret != CVI_SUCCESS) {
       printf("failed to run face detection\n");
-      return ret;
+      break;
     }
 
-    fprintf(fptr, "Get Frame %zu\n", counter);
-    for (uint32_t i = 0; i < p_obj.size; i++) {
-      fprintf(fptr, "%f,%f,%f,%f,%f\n", p_obj.info[i].bbox.x1, p_obj.info[i].bbox.y1,
-              p_obj.info[i].bbox.x2, p_obj.info[i].bbox.y2, p_obj.info[i].hardhat_score);
-    }
+    SMT_MutexAutoLock(VOMutex, lock);
+    CVI_TDL_Free(&g_face_meta_0);
+    RESTRUCTURING_FACE_META(&p_obj, &g_face_meta_0);
 
-    {
-      SMT_MutexAutoLock(VOMutex, lock);
-      CVI_TDL_Free(&g_face_meta_0);
-      RESTRUCTURING_FACE_META(&p_obj, &g_face_meta_0);
-    }
-    fflush(fptr);
     ret = CVI_VPSS_ReleaseChnFrame(vs_ctx.vpssConfigs.vpssGrp, vs_ctx.vpssConfigs.vpssChntdl,
                                    &stfdFrame);
     if (ret != CVI_SUCCESS) {
@@ -278,13 +229,11 @@ int main(int argc, char *argv[]) {
   }
   bRunVideoOutput = false;
   pthread_join(vo_thread, NULL);
-  fclose(fptr);
-CLEANUP_SYSTEM:
-  CVI_TDL_Service_DestroyHandle(service_handle);
-  CVI_TDL_DestroyHandle(tdl_handle);
-  DestroyVideoSystem(&vs_ctx);
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
-}
 
-#define CHAR_SIZE 64
+CLEANUP_TDL_SERVICE:
+  CVI_TDL_Service_DestroyHandle(service_handle);
+CLEANUP_TDL_HANDLE:
+  CVI_TDL_DestroyHandle(tdl_handle);
+CLEANUP_VIDEO:
+  DestroyVideoSystem(&vs_ctx);
+}

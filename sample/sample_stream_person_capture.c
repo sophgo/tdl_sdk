@@ -41,7 +41,6 @@ typedef struct {
 } IOData;
 
 typedef struct {
-  CVI_S32 voType;
   VideoSystemContext vs_ctx;
   cvitdl_service_handle_t service_handle;
 } pVOArgs;
@@ -162,9 +161,7 @@ static void *pImageWrite(void *args) {
 static void *pVideoOutput(void *args) {
   printf("[APP] Video Output Up\n");
   pVOArgs *vo_args = (pVOArgs *)args;
-  if (!vo_args->voType) {
-    return NULL;
-  }
+
   cvitdl_service_handle_t service_handle = vo_args->service_handle;
   CVI_S32 s32Ret = CVI_SUCCESS;
 
@@ -287,8 +284,6 @@ int main(int argc, char *argv[]) {
   int buffer_size = atoi(argv[6]);
   float det_threshold = atof(argv[7]);
   bool write_image = atoi(argv[8]) == 1;
-  int voType = atoi(argv[9]);
-  int vi_format = atoi(argv[10]);
 
   if (buffer_size <= 0) {
     printf("buffer size must be larger than 0.\n");
@@ -296,22 +291,8 @@ int main(int argc, char *argv[]) {
   }
 
   VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
-
-  PIXEL_FORMAT_E tdlInputFormat;
-  if (vi_format == 0) {
-    tdlInputFormat = PIXEL_FORMAT_RGB_888;
-  } else if (vi_format == 1) {
-    tdlInputFormat = PIXEL_FORMAT_NV21;
-  } else if (vi_format == 2) {
-    tdlInputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
-  } else if (vi_format == 3) {
-    tdlInputFormat = PIXEL_FORMAT_RGB_888_PLANAR;
-  } else {
-    printf("vi format[%d] unknown.\n", vi_format);
-    return CVI_FAILURE;
-  }
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, tdlInputFormat, voType) != CVI_SUCCESS) {
+  int fps = 25;
+  if (InitVideoSystem(&vs_ctx, fps) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;
   }
@@ -388,7 +369,6 @@ int main(int argc, char *argv[]) {
   pthread_t io_thread, vo_thread;
   pthread_create(&io_thread, NULL, pImageWrite, NULL);
   pVOArgs vo_args = {0};
-  vo_args.voType = voType;
   vo_args.service_handle = service_handle;
   vo_args.vs_ctx = vs_ctx;
   pthread_create(&vo_thread, NULL, pVideoOutput, (void *)&vo_args);

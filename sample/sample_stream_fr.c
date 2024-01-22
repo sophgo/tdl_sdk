@@ -123,8 +123,8 @@ int main(int argc, char *argv[]) {
   CVI_S32 s32Ret = CVI_SUCCESS;
 
   VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, args.aiInputFormat, args.voType) != CVI_SUCCESS) {
+  int fps = 25;
+  if (InitVideoSystem(&vs_ctx, fps) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;
   }
