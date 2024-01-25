@@ -336,11 +336,13 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S tdlSize,
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);
     return s32Ret;
   }
+#ifndef CV186X
   s32Ret = CVI_SYS_SetVPSSMode(enVPSSMode);
   if (s32Ret != CVI_SUCCESS) {
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);
     return s32Ret;
   }
+#endif
 #endif
 
   /************************************************
