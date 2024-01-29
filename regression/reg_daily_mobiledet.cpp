@@ -435,21 +435,21 @@ TEST_F(MobileDetV2TestSuite, accuracy) {
             return false;
           };
 
-          EXPECT_TRUE(match_dets(*obj_meta, expected_bbox, comp));
-          //     << "image path: " << image_path << "\n"
-          //     << "model path: " << model_info.model_path << "\n"
-          //     << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
-          //     << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
-          //     << "score: " << expected_bbox.score << "\n"
-          //     << "[" << obj_meta->info[det_index].bbox.x1 << ","
-          //     << obj_meta->info[det_index].bbox.y1 << "," << obj_meta->info[det_index].bbox.x2
-          //     << "," << obj_meta->info[det_index].bbox.y2 << ","
-          //     << obj_meta->info[det_index].classes << "," << obj_meta->info[det_index].bbox.score
-          //     << "],\n";
-          // printf("info.classes == catId : %d\n", obj_meta->info[det_index].classes == catId);
-          // printf("iou(info.bbox, bbox): %f\n", iou(obj_meta->info[det_index].bbox,
-          // expected_bbox)); printf("abs(info.bbox.score - bbox.score): %f\n",
-          //        abs(obj_meta->info[det_index].bbox.score - expected_bbox.score));
+          EXPECT_TRUE(match_dets(*obj_meta, expected_bbox, comp))
+              << "image path: " << image_path << "\n"
+              << "model path: " << model_info.model_path << "\n"
+              << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
+              << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
+              << "score: " << expected_bbox.score << "\n"
+              << "[" << obj_meta->info[det_index].bbox.x1 << ","
+              << obj_meta->info[det_index].bbox.y1 << "," << obj_meta->info[det_index].bbox.x2
+              << "," << obj_meta->info[det_index].bbox.y2 << ","
+              << obj_meta->info[det_index].classes << "," << obj_meta->info[det_index].bbox.score
+              << "],\n";
+          printf("info.classes == catId : %d\n", obj_meta->info[det_index].classes == catId);
+          printf("iou(info.bbox, bbox): %f\n", iou(obj_meta->info[det_index].bbox, expected_bbox));
+          printf("abs(info.bbox.score - bbox.score): %f\n",
+                 abs(obj_meta->info[det_index].bbox.score - expected_bbox.score));
         }
       }
       CVI_TDL_FreeCpp(obj_meta);

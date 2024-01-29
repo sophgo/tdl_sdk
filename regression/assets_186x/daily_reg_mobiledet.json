@@ -1,6 +1,6 @@
 [
     {
-        "model_name": "mobiledetv2-pedestrian-d0-448-p10_bm_cv186x.bmodel",
+        "model_name": "mobiledetv2-pedestrian-d0-448_cv186x.bmodel",
         "results": {
             "000000090631.jpg": [
             ],
