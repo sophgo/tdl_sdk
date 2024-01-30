@@ -125,7 +125,7 @@ CVI_S32 InitVideoSystem(VideoSystemContext *vs_ctx, int _fps) {
 
 void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
   DestoryOutput(&vs_ctx->outputContext);
-#if defined(_MIDDLEWARE_V2_)
+#if defined(_MIDDLEWARE_V2_) || defined(_MIDDLEWARE_V3_)
   SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, vs_ctx->vpssConfigs.vpssChntdl, vs_ctx->vpssConfigs.vpssGrp);
 #else
   SAMPLE_COMM_VI_UnBind_VPSS(vs_ctx->vpssConfigs.vpssChntdl, vs_ctx->vpssConfigs.vpssGrp);
@@ -144,7 +144,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S tdlSize,
   VPSS_MODE_E enVPSSMode = VPSS_MODE_DUAL;
 #endif
 
-#if defined(_MIDDLEWARE_V2_)
+#if defined(_MIDDLEWARE_V2_) || defined(_MIDDLEWARE_V3_)
   SAMPLE_INI_CFG_S stIniCfg = {};
 
   DYNAMIC_RANGE_E enDynamicRange = DYNAMIC_RANGE_SDR8;
@@ -211,9 +211,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S tdlSize,
   stIniCfg.u8UseDualSns = 0;
   stIniCfg.s32Sns2BusId = 0;
   stIniCfg.Sns2MipiDev = 0xFF;
-#ifndef _MIDDLEWARE_V3_
   stIniCfg.enSns2Type = SONY_IMX327_SLAVE_MIPI_2M_30FPS_12BIT;
-#endif
 
   VB_CONFIG_S stVbConf;
   PIC_SIZE_E enPicSize;
@@ -551,7 +549,7 @@ CVI_S32 InitVPSS(VPSSConfigs *vpssConfigs, const CVI_BOOL isVOOpened) {
     printf("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return s32Ret;
   }
-#if defined(_MIDDLEWARE_V2_)
+#if defined(_MIDDLEWARE_V2_) || defined(_MIDDLEWARE_V3_)
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(ViPipe, vpssConfigs->vpssChntdl, vpssConfigs->vpssGrp);
 #else
   s32Ret = SAMPLE_COMM_VI_Bind_VPSS(vpssConfigs->vpssChntdl, vpssConfigs->vpssGrp);

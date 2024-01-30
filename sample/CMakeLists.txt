@@ -64,7 +64,6 @@ endfunction(buildninstallcpp)
 
 set(SAMPLE_INC
     ${MIDDLEWARE_SDK_ROOT}/include
-    ${MIDDLEWARE_SDK_ROOT}/include/panel
     ${MIDDLEWARE_SDK_ROOT}/sample/common
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
@@ -73,6 +72,7 @@ set(SAMPLE_INC
     ${CVI_RTSP_INCLUDE}
     ${IVE_INCLUDES}
 )
+
 
 if(${MW_VER} STREQUAL "v1")
 set(SAMPLE_INC ${SAMPLE_INC} ${TRACER_PATH})
