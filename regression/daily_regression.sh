@@ -105,7 +105,7 @@ test_suites="${test_suites}:HardhatDetTestSuite.*"
 test_suites="${test_suites}:MobileDetV2TestSuite.*"
 fi
 
-if [ $CHIP_ARCH == "186X" ];then
+if [ $CHIP_ARCH == "CV186X" ];then
   test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
   test_suites="${test_suites}:Hand_DetectionTestSuite.*"
   test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
