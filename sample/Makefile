@@ -43,13 +43,11 @@ CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a
 else ifeq ($(SDK_VER), glibc_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_GLIBC)
-CFLAGS += -march=rv64imafdcv0p7xthead -mabi=lp64d
-LDFLAGS = -mcpu=c906fdv
+CFLAGS += -march=rv64imafdcv0p7xthead -mabi=lp64d -mcpu=c906fdv
 else ifeq ($(SDK_VER), musl_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_MUSL)
-CFLAGS += -march=rv64imafd
-LDFLAGS = -mcpu=c906fdv
+CFLAGS += -march=rv64imafd -mcpu=c906fdv
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif
@@ -146,10 +144,10 @@ endif
 SDK_ROOT_PATH ?= $(abspath ../..)
 SDK_LIB_PATH = $(SDK_ROOT_PATH)/lib
 SDK_INC_PATH = $(SDK_ROOT_PATH)/include
-SDK_3RD_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
 SDK_TDL_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_tdl
 SDK_APP_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_tdl_app
 SDK_SAMPLE_INC_PATH = $(SDK_ROOT_PATH)/sample/3rd/include
+SDK_3RD_LIB_PATH = $(SDK_ROOT_PATH)/sample/3rd/lib
 SDK_SAMPLE_UTILS_PATH = $(SDK_ROOT_PATH)/sample/utils
 SDK_TDL_LIBS = -lcvi_tdl
 SDK_APP_LIBS = -lcvi_tdl_app
@@ -205,21 +203,21 @@ MD_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_md
 DRAW_RECT_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_draw_rect
 PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
-CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s
+CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s -lpthread -latomic
 
 SRCS := $(wildcard $(PWD)/*.c)
 CPPS := $(wildcard $(PWD)/*.cpp)
 OBJS := $(SRCS:%.c=%.o) $(CPPS:%.cpp=%.o)
 
-SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
-			  -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS) \
-			  -L$(TPU_LIB_PATH) $(TPU_LIBS) \
-			  -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) \
-			  -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS) -L$(SDK_3RD_LIB_PATH) -lpthread -latomic
+SAMPLE_BASE_LIBS = -L$(TPU_LIB_PATH) $(TPU_LIBS) -L$(IVE_SDK_LIB_PATH) $(IVE_LIBS) -L$(SDK_LIB_PATH) $(SDK_TDL_LIBS)
+SAMPLW_MW_LIB = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -L$(SDK_3RD_LIB_PATH)
+SAMPLE_OPENCV_LIB = -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
 
-SAMPLE_READ_LIBS = $(SAMPLE_LIBS)
-SAMPLE_VI_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
-SAMPLE_APP_LIBS = $(SAMPLE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS) $(SDK_APP_LIBS)
+SAMPLE_INIT_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_BASE_LIBS)
+SAMPLE_AUD_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_BASE_LIBS)  $(MW_AUDIO_LIBS)
+SAMPLE_YOLO_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_BASE_LIBS)  $(SAMPLE_OPENCV_LIB)
+SAMPLE_VI_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_OPENCV_LIB) $(SAMPLE_BASE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
+SAMPLE_APP_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_OPENCV_LIB) $(SAMPLE_BASE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS) $(SDK_APP_LIBS)
 
 CFLAGS += -I$(SDK_INC_PATH) \
           -I$(SDK_TDL_INC_PATH) \
@@ -254,6 +252,8 @@ $(info CFLAGS: $(CFLAGS))
 $(info CC: $(CC))
 $(info CXX: $(CXX))
 $(info USE_TPU_IVE: $(USE_TPU_IVE))
+$(info SAMPLW_MW_LIB: $(SAMPLW_MW_LIB))
+$(info SAMPLE_AUD_LIBS: $(SAMPLE_AUD_LIBS))
 $(info ---------------------------------------)
 endif
 
@@ -283,34 +283,31 @@ clean:
 	rm -f $(OBJS) $(TARGETS)
 
 $(PWD)/%.o: $(PWD)/%.c
-	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(PWD)/%.o: $(PWD)/%.cpp
-	$(CXX) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CXX) $(CFLAGS) -o $@ -c $<
 
 $(SDK_ROOT_PATH)/sample/utils/%.o: $(SDK_ROOT_PATH)/sample/utils/%.c
-	$(CC) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+sample_init: $(PWD)/sample_init.o
+	$(CC) $(CFLAGS) $(SAMPLE_INIT_LIBS) -o $@ $^
 
 sample_aud_%: $(PWD)/sample_aud_%.o $(SDK_ROOT_PATH)/sample/utils/sample_utils.o
-	$(CXX) $(LDFLAGS) $(SAMPLE_LIBS) $(MW_AUDIO_LIBS) -o $@ $^
+	$(CXX) $(CFLAGS) $(SAMPLE_AUD_LIBS) -o $@ $^
+
+sample_yol%: $(PWD)/sample_yol%.o
+	$(CXX) $(CFLAGS) $(SAMPLE_YOLO_LIBS) -o $@ $^
+
+sample_vi_%: $(PWD)/sample_vi_%.o \
+			 $(SDK_ROOT_PATH)/sample/utils/sample_utils.o \
+			 $(SDK_ROOT_PATH)/sample/utils/middleware_utils.o \
+			 $(SAMPLE_COMMON_FILE)
+	$(CC) $(CFLAGS) $(SAMPLE_VI_LIBS) -o $@ $^
 
 sample_app_%: $(PWD)/sample_app_%.o \
 			  $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o \
 			  $(SAMPLE_COMMON_FILE)
 	$(CC) $(CFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
 
-sample_read_%: $(PWD)/sample_read_%.o \
-	$(CXX) $(LDFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^
-
-sample_vi_%: $(PWD)/sample_vi_%.o \
-			 $(SDK_ROOT_PATH)/sample/utils/vi_vo_utils.o \
-			 $(SDK_ROOT_PATH)/sample/utils/sample_utils.o \
-			 $(SDK_ROOT_PATH)/sample/utils/middleware_utils.o \
-			 $(SAMPLE_COMMON_FILE)
-	$(CC) $(CFLAGS) $(SAMPLE_APP_LIBS) -o $@ $^
-
-sample_init: $(PWD)/sample_init.o
-	$(CC) $(LDFLAGS) $(SAMPLE_LIBS) -o $@ $^
-
-sample_yol%: $(PWD)/sample_yol%.o
-	$(CXX) $(LDFLAGS) $(SAMPLE_READ_LIBS) -o $@ $^
