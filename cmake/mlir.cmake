@@ -7,15 +7,15 @@ else()
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CV186X")
-  set(MLIR_INCLUDES ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/include/)
+  set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/libsophon-0.4.9/include/)
 else()
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CV186X")
   set(MLIR_LIBS
-      ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/lib/libbmrt.so
-      ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmrt.so
+      ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmlib.so
   )
 else()
   set(MLIR_LIBS

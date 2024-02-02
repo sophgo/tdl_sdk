@@ -163,7 +163,7 @@ OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
 # TPU
 #####################################################
 ifeq ($(CHIP), CV186X)
-TPU_LIB_PATH = ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/lib/
+TPU_LIB_PATH = $(TPU_PATH)/libsophon-0.4.9/lib/
 TPU_LIBS = -lbmrt -lbmlib
 else
 TPU_LIB_PATH = $(TPU_PATH)/lib
