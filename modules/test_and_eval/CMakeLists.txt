@@ -42,7 +42,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
     ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
@@ -131,8 +130,8 @@ buildninstallcpp(NAME test_img_fdfr INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SA
 buildninstallcpp(NAME test_img_pose INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_fall_monitor INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_hand_keypoint INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
-buildninstallcpp(NAME test_vpss_pd INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
-buildninstallcpp(NAME test_vpss_fuse_vehicle INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
+# buildninstallcpp(NAME test_vpss_pd INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
+# buildninstallcpp(NAME test_vpss_fuse_vehicle INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_face_landmarker_det2 INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_image_classification INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_audio_cls INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)

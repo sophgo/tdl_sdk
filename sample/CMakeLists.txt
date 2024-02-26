@@ -78,6 +78,10 @@ if(${MW_VER} STREQUAL "v1")
 set(SAMPLE_INC ${SAMPLE_INC} ${TRACER_PATH})
 elseif(${MW_VER} STREQUAL "v3")
 set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/${CVI_PLATFORM_LOWER})
+else()
+if(${CVI_PLATFORM} STREQUAL "CV186X")
+set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/athena2)
+endif()
 endif()
 
 set(AUDIO_SAMPLE_LIBS
@@ -99,7 +103,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
     ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
@@ -110,10 +113,22 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
     ${CVI_RTSP_LIBPATH})
-  set(AUDIO_SAMPLE_LIBS
+set(AUDIO_SAMPLE_LIBS
     ${AUDIO_SAMPLE_LIBS}
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so)
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
+)
+set(SAMPLE_LIBS_FILE
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_platform.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_sys.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vi.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_isp.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vpss.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_venc.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vo.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_bin.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.c
+)
 elseif(${MW_VER} STREQUAL "v3")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
@@ -144,7 +159,7 @@ set(SAMPLE_LIBS_FILE
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vo.c
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_bin.c
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.c
-    )
+)
 else()
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so

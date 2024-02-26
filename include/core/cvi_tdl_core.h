@@ -346,6 +346,16 @@ DLL_EXPORT CVI_S32 CVI_TDL_GetModelThreshold(cvitdl_handle_t handle, CVI_TDL_SUP
  */
 DLL_EXPORT CVI_S32 CVI_TDL_GetModelNmsThreshold(cvitdl_handle_t handle,
                                                CVI_TDL_SUPPORTED_MODEL_E model, float *threshold);
+
+/**
+ * @brief Use the mmap in model
+ *
+ * @param handle An TDL SDK handle.
+ * @param model Supported model id.
+ * @param mmap mmap in bool.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_UseMmap(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model, bool mmap);
 /**
  * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
  * to change a thread if the process is not sequential.

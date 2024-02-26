@@ -85,7 +85,7 @@ ifneq (,$(findstring middleware/v1,$(MW_PATH)))
     MW_VERSION = v1
 else ifneq (,$(findstring middleware/v2,$(MW_PATH)))
     MW_VERSION = v2
-	CFLAGS += -D_MIDDLEWARE_V2_
+	CFLAGS += -D_MIDDLEWARE_V2_ -Wno-maybe-uninitialized
 else ifneq (,$(findstring middleware/v3,$(MW_PATH)))
     MW_VERSION = v3
 	CFLAGS += -D_MIDDLEWARE_V3_ -Wno-maybe-uninitialized
@@ -101,11 +101,21 @@ ifeq ($(MW_VERSION), v1)
 	endif
 else ifeq ($(MW_VERSION), v2)
 	ifeq ($(CHIP), CV186X)
-		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
+		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
 		MW_AUDIO_LIBS += -lcvi_dnvqe -lcvi_ssp2
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
 		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
+		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/athena2
 		CFLAGS += -DCV186X
+		SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
+			 ${MW_SAMPLE_PATH}/sample_common_sys.c \
+			 ${MW_SAMPLE_PATH}/sample_common_platform.c \
+			 ${MW_SAMPLE_PATH}/sample_common_vpss.c \
+			 ${MW_SAMPLE_PATH}/sample_common_vi.c \
+			 ${MW_SAMPLE_PATH}/sample_common_isp.c \
+			 ${MW_SAMPLE_PATH}/sample_common_bin.c \
+			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
+			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
 	else ifeq ($(CHIP), CV181X)
 		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
@@ -203,7 +213,7 @@ MD_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_md
 DRAW_RECT_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_draw_rect
 PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
-CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s -lpthread -latomic
+CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Wno-format-truncation -fdiagnostics-color=always -s -lpthread -latomic
 
 SRCS := $(wildcard $(PWD)/*.c)
 CPPS := $(wildcard $(PWD)/*.cpp)

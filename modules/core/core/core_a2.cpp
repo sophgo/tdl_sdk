@@ -626,16 +626,15 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
 
         // bm_memcpy_d2d_byte function is not ready
 
-        // for (int k =0; k<3; k++){
+        // for (int k = 0; k < 3; k++) {
         //   bm_device_mem_t src_addr =
         //   bm_mem_from_device((uint64_t)(frame->stVFrame.pu8VirAddr[k]),
-        //   frame->stVFrame.u32Length[i]);
+        //                                                 frame->stVFrame.u32Length[i]);
 
-        //   for (int n =0; n<input_height; n++){
-
+        //   for (int n = 0; n < input_height; n++) {
         //     bm_memcpy_d2d_byte(bm_handle, mp_mi->in.tensors[i].device_mem,
-        //                   n*input_width +k*input_height*input_height,src_addr, n*align_length,
-        //                   input_width);
+        //                        n * input_width + k * input_height * input_height, src_addr,
+        //                        n * align_length, input_width);
         //   }
         // }
       }

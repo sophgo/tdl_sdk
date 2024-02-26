@@ -99,6 +99,7 @@ class Core {
   virtual void setModelNmsThreshold(float threshold);
   float getModelThreshold();
   float getModelNmsThreshold();
+  int setUseMmap(bool mmap) { return true; }
   bool isInitialized();
   virtual bool allowExportChannelAttribute() const { return false; }
   void enableDebugger(bool enable) { m_debugger.setEnable(enable); }

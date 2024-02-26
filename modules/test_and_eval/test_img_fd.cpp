@@ -37,6 +37,8 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
+  CVI_TDL_UseMmap(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, false);
+
   imgprocess_t img_handle;
   CVI_TDL_Create_ImageProcessor(&img_handle);
 
