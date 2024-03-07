@@ -80,7 +80,7 @@ elseif(${MW_VER} STREQUAL "v3")
 set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/${CVI_PLATFORM_LOWER})
 else()
 if(${CVI_PLATFORM} STREQUAL "CV186X")
-set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/athena2)
+set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/cv186x)
 endif()
 endif()
 

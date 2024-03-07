@@ -105,7 +105,7 @@ else ifeq ($(MW_VERSION), v2)
 		MW_AUDIO_LIBS += -lcvi_dnvqe -lcvi_ssp2
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
 		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
-		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/athena2
+		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv186x
 		CFLAGS += -DCV186X
 		SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
 			 ${MW_SAMPLE_PATH}/sample_common_sys.c \

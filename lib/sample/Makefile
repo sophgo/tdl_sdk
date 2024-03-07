@@ -103,7 +103,7 @@ else ifeq ($(MW_VERSION), v2)
 		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
 		CFLAGS += -DCV186X
-		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/athena2
+		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv186x
 		SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
 			 ${MW_SAMPLE_PATH}/sample_common_sys.c \
 			 ${MW_SAMPLE_PATH}/sample_common_platform.c \
