@@ -83,6 +83,9 @@ void SAMPLE_TDL_Get_Input_Config(SAMPLE_COMM_CHN_INPUT_CONFIG_S *pstInCfg) {
   pstInCfg->tempLayer = 0;
   pstInCfg->testRoi = 0;
   pstInCfg->bgInterval = 0;
+#ifdef CV186X
+  pstInCfg->u32GopPreset = GOP_PRESET_IDX_IPPPP;
+#endif
 }
 
 void SAMPLE_TDL_Get_RTSP_Config(CVI_RTSP_CONFIG *pstRTSPConfig) {
@@ -414,7 +417,7 @@ CVI_S32 SAMPLE_TDL_Send_Frame_RTSP(VIDEO_FRAME_INFO_S *stVencFrame,
     return s32Ret;
   }
 
-  s32Ret = CVI_VENC_GetStream(VencChn, &stStream, -1);
+  s32Ret = CVI_VENC_GetStream(VencChn, &stStream, 10000);
   if (s32Ret != CVI_SUCCESS) {
     printf("CVI_VENC_GetStream failed with %#x!\n", s32Ret);
     goto send_failed;
