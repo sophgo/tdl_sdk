@@ -1,5 +1,5 @@
 {
-  "model_name": "hand_detection_cv186x.cvimodel",
+  "model_name": "hand_detection_cv186x.bmodel",
   "image_num": 1,
   "results": {
       "hand0.jpg": [

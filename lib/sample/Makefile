@@ -84,7 +84,7 @@ ifneq (,$(findstring middleware/v1,$(MW_PATH)))
     MW_VERSION = v1
 else ifneq (,$(findstring middleware/v2,$(MW_PATH)))
     MW_VERSION = v2
-	CFLAGS += -D_MIDDLEWARE_V2_
+	CFLAGS += -D_MIDDLEWARE_V2_  -Wno-maybe-uninitialized
 else ifneq (,$(findstring middleware/v3,$(MW_PATH)))
     MW_VERSION = v3
 	CFLAGS += -D_MIDDLEWARE_V3_ -Wno-maybe-uninitialized
@@ -100,9 +100,19 @@ ifeq ($(MW_VERSION), v1)
 	endif
 else ifeq ($(MW_VERSION), v2)
 	ifeq ($(CHIP), CV186X)
-		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lsample -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
+		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
 		CFLAGS += -DCV186X
+		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv186x
+		SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
+			 ${MW_SAMPLE_PATH}/sample_common_sys.c \
+			 ${MW_SAMPLE_PATH}/sample_common_platform.c \
+			 ${MW_SAMPLE_PATH}/sample_common_vpss.c \
+			 ${MW_SAMPLE_PATH}/sample_common_vi.c \
+			 ${MW_SAMPLE_PATH}/sample_common_isp.c \
+			 ${MW_SAMPLE_PATH}/sample_common_bin.c \
+			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
+			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
 	else ifeq ($(CHIP), CV181X)
 		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
@@ -157,7 +167,7 @@ OPENCV_LIBS = -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
 # TPU
 #####################################################
 ifeq ($(CHIP), CV186X)
-TPU_LIB_PATH = ${SYSTEM_OUT_DIR}/usr/lib/libsophon-0.4.9/lib/
+TPU_LIB_PATH = ${TPU_PATH}/libsophon-0.4.9/lib/
 TPU_LIBS = -lbmrt -lbmlib
 else
 TPU_LIB_PATH = $(TPU_PATH)/lib

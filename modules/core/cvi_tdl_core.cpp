@@ -455,6 +455,16 @@ CVI_S32 CVI_TDL_GetModelNMmsThreshold(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_
   return CVI_TDL_SUCCESS;
 }
 
+CVI_S32 CVI_TDL_UseMmap(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model, bool mmap) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  Core *instance = getInferenceInstance(model, ctx);
+  if (instance == nullptr) {
+    return CVI_TDL_FAILURE;
+  }
+  instance->setUseMmap(mmap);
+  return CVI_TDL_SUCCESS;
+}
+
 CVI_S32 CVI_TDL_SetVpssThread(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
                               const uint32_t thread) {
   return CVI_TDL_SetVpssThread2(handle, config, thread, -1, 0);

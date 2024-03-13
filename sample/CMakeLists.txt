@@ -64,7 +64,6 @@ endfunction(buildninstallcpp)
 
 set(SAMPLE_INC
     ${MIDDLEWARE_SDK_ROOT}/include
-    ${MIDDLEWARE_SDK_ROOT}/include/panel
     ${MIDDLEWARE_SDK_ROOT}/sample/common
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
@@ -74,10 +73,15 @@ set(SAMPLE_INC
     ${IVE_INCLUDES}
 )
 
+
 if(${MW_VER} STREQUAL "v1")
 set(SAMPLE_INC ${SAMPLE_INC} ${TRACER_PATH})
 elseif(${MW_VER} STREQUAL "v3")
 set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/${CVI_PLATFORM_LOWER})
+else()
+if(${CVI_PLATFORM} STREQUAL "CV186X")
+set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/cv186x)
+endif()
 endif()
 
 set(AUDIO_SAMPLE_LIBS
@@ -99,7 +103,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
     ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
@@ -110,10 +113,23 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
     ${CVI_RTSP_LIBPATH})
-  set(AUDIO_SAMPLE_LIBS
+set(AUDIO_SAMPLE_LIBS
     ${AUDIO_SAMPLE_LIBS}
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so)
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
+)
+set(SAMPLE_LIBS_FILE
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_platform.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_sys.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vi.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_isp.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vpss.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_venc.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vo.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_bin.c
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.c
+)
+add_definitions(-DSENSOR_GCORE_GC4653)
 elseif(${MW_VER} STREQUAL "v3")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
@@ -144,7 +160,7 @@ set(SAMPLE_LIBS_FILE
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vo.c
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_bin.c
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.c
-    )
+)
 else()
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
@@ -208,40 +224,41 @@ if(DEFINED NO_OPENCV)
   buildninstall(NAME sample_aud_cls_read INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
 else()
-  buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
-  buildninstallcpp(NAME sample_read_od INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
-  buildninstallcpp(NAME sample_aud_order INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
-  buildninstall(NAME sample_baby_aud_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstall(NAME sample_aud_esc INC ${SAMPLE_INC} SRCS sample_utils.c DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstall(NAME sample_aud_soundcmd INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstall(NAME sample_aud_cls_read INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstall(NAME sample_aud_cry INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
+  # buildninstallcpp(NAME sample_read_od INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
+  # buildninstallcpp(NAME sample_aud_order INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
+  # buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
+  # buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
+  # buildninstall(NAME sample_aud_esc INC ${SAMPLE_INC} SRCS sample_utils.c DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
+  # buildninstall(NAME sample_aud_soundcmd INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
+  # buildninstall(NAME sample_aud_cls_read INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
+  # buildninstall(NAME sample_aud_cry INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
+  # buildninstall(NAME sample_baby_aud_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
+  # buildninstall(NAME sample_hand_detect INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_hand_keypoint INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_intrusion_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_obj_counting INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_fall INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_fall_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_dms INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_fdmask INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_lpdr INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_md INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_object_tracking INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_face_tracking INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_meeting INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+  # buildninstall(NAME sample_vi_face_recog INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app ${SAMPLE_LIBS})
+  # buildninstall(NAME sample_cap_face INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_vi_fd INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_hand_detect INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_hand_keypoint INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_fq INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_intrusion_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_obj_counting INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_fall INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_fall_det INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_dms INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_fdmask INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_lpdr INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_md INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_object_tracking INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_face_tracking INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_app_face_capture INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_app_person_capture INC ${SAMPLE_INC} SRCS vi_vo_utils ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
+  buildninstall(NAME sample_stream_face_capture INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
+  buildninstall(NAME sample_stream_person_capture INC ${SAMPLE_INC} SRCS vi_vo_utils ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_face_mask_det INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_face_recognition INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_consumer_counting INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_personvehicle_cross INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_hardhat INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
-  buildninstall(NAME sample_meeting INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-  buildninstall(NAME sample_vi_face_recog INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app ${SAMPLE_LIBS})
-  buildninstall(NAME sample_cap_face INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
+  buildninstall(NAME sample_stream_fr INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
 endif()
 
 

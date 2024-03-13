@@ -15,7 +15,7 @@
 #define MEAN_G 117
 #define MEAN_B 104
 
-#ifndef ATHENA2
+#ifdef CV186X
 #define suffix_info "_f32"
 #else
 #define suffix_info "_dequant"

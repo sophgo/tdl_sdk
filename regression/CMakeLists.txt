@@ -77,7 +77,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
     ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
@@ -181,6 +180,7 @@ set(UnitTests
   reg_daily_incarod.cpp
   reg_daily_face_cap.cpp
   reg_daily_feature_matching.cpp
+  reg_daily_mobiledetion.cpp
 )
 endif()
 

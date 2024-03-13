@@ -40,7 +40,6 @@ typedef struct {
 } IOData;
 
 typedef struct {
-  CVI_S32 voType;
   VideoSystemContext vs_ctx;
   cvitdl_service_handle_t service_handle;
 } pVOArgs;
@@ -93,9 +92,7 @@ void RESTRUCTURING_FACE_META(cvtdl_face_t *face_cpt_info, cvtdl_face_t *face_met
 static void *pVideoOutput(void *args) {
   printf("[APP] Video Output Up\n");
   pVOArgs *vo_args = (pVOArgs *)args;
-  if (!vo_args->voType) {
-    return NULL;
-  }
+
   cvitdl_service_handle_t service_handle = vo_args->service_handle;
   CVI_S32 s32Ret = CVI_SUCCESS;
 
@@ -182,26 +179,10 @@ int main(int argc, char *argv[]) {
   const char *fd_model_path = argv[1];
   const char *fr_model_path = argv[2];
   float det_threshold = atof(argv[3]);
-  int voType = 2;
-  int vi_format = 0;
 
   VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1280, .u32Height = 720};
-
-  PIXEL_FORMAT_E tdl_InputFormat;
-  if (vi_format == 0) {
-    tdl_InputFormat = PIXEL_FORMAT_RGB_888;
-  } else if (vi_format == 1) {
-    tdl_InputFormat = PIXEL_FORMAT_NV21;
-  } else if (vi_format == 2) {
-    tdl_InputFormat = PIXEL_FORMAT_YUV_PLANAR_420;
-  } else if (vi_format == 3) {
-    tdl_InputFormat = PIXEL_FORMAT_RGB_888_PLANAR;
-  } else {
-    printf("vi format[%d] unknown.\n", vi_format);
-    return CVI_FAILURE;
-  }
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, tdl_InputFormat, voType) != CVI_SUCCESS) {
+  int fps = 25;
+  if (InitVideoSystem(&vs_ctx, fps) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;
   }
@@ -232,7 +213,6 @@ int main(int argc, char *argv[]) {
   cvtdl_face_t p_obj = {0};
   pthread_t vo_thread;
   pVOArgs vo_args = {0};
-  vo_args.voType = voType;
   vo_args.service_handle = service_handle;
   vo_args.vs_ctx = vs_ctx;
   pthread_create(&vo_thread, NULL, pVideoOutput, (void *)&vo_args);

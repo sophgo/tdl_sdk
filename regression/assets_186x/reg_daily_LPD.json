@@ -1,6 +1,6 @@
 [
   {
-    "model_name" : "license_plate_detection_cv186x.cvimodel", 
+    "model_name" : "license_plate_detection_cv186x.bmodel", 
     "results": {
       "Sichuan-AH1822_0_vehicle.jpg": [
         {

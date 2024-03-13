@@ -1,6 +1,6 @@
 [
     {
-      "model_name": "cviface-v6-s_mix_cv186x.bmodel",
+      "model_name": "cviface_v6_s_cv186x.bmodel",
       "model_type": 0,
       "same_pairs": [
         ["Yukiko_Okudo_0001.jpg", "Yukiko_Okudo_0002.jpg"],

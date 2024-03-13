@@ -39,7 +39,6 @@ typedef struct {
 } IOData;
 
 typedef struct {
-  CVI_S32 voType;
   VideoSystemContext vs_ctx;
   cvitdl_service_handle_t service_handle;
   cvitdl_handle_t tdl_handle;
@@ -215,9 +214,6 @@ void visualize_frame(VideoSystemContext *vs_ctx, cvitdl_service_handle_t service
 static void *pVideoOutput(void *args) {
   printf("[APP] Video Output Up\n");
   pVOArgs *vo_args = (pVOArgs *)args;
-  if (!vo_args->voType) {
-    return NULL;
-  }
 
   cvitdl_service_handle_t service_handle = vo_args->service_handle;
   CVI_S32 s32Ret = CVI_SUCCESS;
@@ -294,7 +290,6 @@ int main(int argc, char *argv[]) {
   int buffer_size = 10;       // atoi(argv[8]);
   float det_threshold = 0.5;  // atof(argv[9]);
   bool write_image = 1;       // atoi(argv[10]) == 1;
-  int voType = 2;             // atoi(argv[11]);
 
   CVI_TDL_SUPPORTED_MODEL_E fd_model_id = CVI_TDL_SUPPORTED_MODEL_SCRFDFACE;
   CVI_TDL_SUPPORTED_MODEL_E fr_model_id = CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION;
@@ -305,11 +300,8 @@ int main(int argc, char *argv[]) {
   }
 
   VideoSystemContext vs_ctx = {0};
-  SIZE_S aiInputSize = {.u32Width = 1920, .u32Height = 1080};
-
-  PIXEL_FORMAT_E aiInputFormat = PIXEL_FORMAT_NV21;
-
-  if (InitVideoSystem(&vs_ctx, &aiInputSize, aiInputFormat, voType) != CVI_SUCCESS) {
+  int fps = 25;
+  if (InitVideoSystem(&vs_ctx, fps) != CVI_SUCCESS) {
     printf("failed to init video system\n");
     return CVI_FAILURE;
   }
@@ -363,7 +355,6 @@ int main(int argc, char *argv[]) {
   pthread_t io_thread, vo_thread;
   pthread_create(&io_thread, NULL, pImageWrite, NULL);
   pVOArgs vo_args = {0};
-  vo_args.voType = voType;
   vo_args.service_handle = service_handle;
   vo_args.vs_ctx = vs_ctx;
   pthread_create(&vo_thread, NULL, pVideoOutput, (void *)&vo_args);

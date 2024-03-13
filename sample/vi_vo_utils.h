@@ -62,8 +62,7 @@ typedef struct {
 extern "C" {
 #endif
 
-CVI_S32 InitVideoSystem(VideoSystemContext *vsCtx, SIZE_S *tdl_InputSize,
-                        PIXEL_FORMAT_E tdl_InputFormat, int voType);
+CVI_S32 InitVideoSystem(VideoSystemContext *vsCtx, int fps);
 void DestroyVideoSystem(VideoSystemContext *vsCtx);
 CVI_S32 SendOutputFrame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context);
 

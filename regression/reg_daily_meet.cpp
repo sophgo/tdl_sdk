@@ -98,8 +98,27 @@ TEST_F(Meeting_DetectionTestSuite, accuracy) {
     init_obj_meta(meet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
     ASSERT_EQ(CVI_TDL_HandFacePerson_Detection(m_tdl_handle, vframe, meet_meta), CVI_TDL_SUCCESS);
 
+    std::vector<int> predict(5, 0);
+    std::vector<int> gt(5, 0);
     auto expected_dets = iter.value();
 
+    for (uint32_t det_index = 0; det_index < meet_meta->size; det_index++) {
+      printf("x1 = %f", meet_meta->info[det_index].bbox.x1);
+      printf("y1 = %f", meet_meta->info[det_index].bbox.y1);
+      printf("x2 = %f", meet_meta->info[det_index].bbox.x2);
+      printf("y2 = %f", meet_meta->info[det_index].bbox.y2);
+      printf("score = %f", meet_meta->info[det_index].bbox.score);
+      predict[meet_meta->info[det_index].classes]++;
+    }
+
+    ASSERT_EQ(meet_meta->size, expected_dets.size());
+    for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
+      int catId = int(expected_dets[det_index]["category_id"]);
+      gt[catId]++;
+    }
+
+    ASSERT_EQ(predict, gt);  //类别匹配
+    int count = meet_meta->size;
     for (uint32_t det_index = 0; det_index < expected_dets.size(); det_index++) {
       auto bbox = expected_dets[det_index]["bbox"];
       int catId = int(expected_dets[det_index]["category_id"]);
@@ -112,25 +131,16 @@ TEST_F(Meeting_DetectionTestSuite, accuracy) {
           .score = float(expected_dets[det_index]["score"]),
       };
 
-      auto comp = [=](cvtdl_object_info_t &info, cvtdl_bbox_t &bbox) {
-        if (info.classes == catId && iou(info.bbox, bbox) >= bbox_threshold &&
-            abs(info.bbox.score - bbox.score) <= score_threshold) {
-          return true;
+      for (uint32_t j = 0; j < meet_meta->size; j++) {
+        if (meet_meta->info[j].classes == catId &&
+            iou(meet_meta->info[j].bbox, expected_bbox) >= bbox_threshold &&
+            abs(expected_bbox.score - meet_meta->info[j].bbox.score) <= score_threshold) {
+          count--;
+          break;
         }
-        return false;
-      };
-      EXPECT_TRUE(match_dets(*meet_meta, expected_bbox, comp))
-          << "Error!"
-          << "\n"
-          << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1 << ", "
-          << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n"
-          << "score: " << expected_bbox.score << "\n"
-          << "expectedID: " << catId << "\n"
-          << "[" << meet_meta->info[det_index].bbox.x1 << "," << meet_meta->info[det_index].bbox.y1
-          << "," << meet_meta->info[det_index].bbox.x2 << "," << meet_meta->info[det_index].bbox.y2
-          << "," << meet_meta->info[det_index].classes << ","
-          << meet_meta->info[det_index].bbox.score << "],\n";
+      }
     }
+    ASSERT_EQ(count, 0);
     CVI_TDL_FreeCpp(meet_meta);  // delete expected_res;
   }
   ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION),
