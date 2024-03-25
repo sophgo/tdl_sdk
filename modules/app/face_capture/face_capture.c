@@ -4,6 +4,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include "core/cvi_tdl_utils.h"
+#include "cvi_tdl_log.hpp"
 #include "cvi_venc.h"
 #include "service/cvi_tdl_service.h"
 
@@ -60,7 +61,7 @@ static uint32_t get_time_in_ms() {
 }
 
 CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info) {
-  printf("[APP::FaceCapture] Free FaceCapture Data\n");
+  LOGI("[APP::FaceCapture] Free FaceCapture Data\n");
   if (face_cpt_info != NULL) {
     _FaceCapture_CleanAll(face_cpt_info);
 
@@ -78,10 +79,10 @@ CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info) {
 
 CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info, uint32_t buffer_size) {
   if (*face_cpt_info != NULL) {
-    printf("[APP::FaceCapture] already exist.\n");
+    LOGW("[APP::FaceCapture] already exist.\n");
     return CVI_TDL_SUCCESS;
   }
-  printf("[APP::FaceCapture] Initialize (Buffer Size: %u)\n", buffer_size);
+  LOGI("[APP::FaceCapture] Initialize (Buffer Size: %u)\n", buffer_size);
   face_capture_t *new_face_cpt_info = (face_capture_t *)malloc(sizeof(face_capture_t));
   memset(new_face_cpt_info, 0, sizeof(face_capture_t));
   new_face_cpt_info->size = buffer_size;
@@ -111,16 +112,16 @@ CVI_S32 _FaceCapture_QuickSetUp(cvitdl_handle_t tdl_handle, face_capture_t *face
                                 int fd_model_id, int fr_model_id, const char *fd_model_path,
                                 const char *fr_model_path, const char *fq_model_path,
                                 const char *fl_model_path) {
-  printf("_FaceCapture_QuickSetUp");
+  LOGI("_FaceCapture_QuickSetUp");
   if (fd_model_id != CVI_TDL_SUPPORTED_MODEL_RETINAFACE &&
       fd_model_id != CVI_TDL_SUPPORTED_MODEL_FACEMASKDETECTION &&
       fd_model_id != CVI_TDL_SUPPORTED_MODEL_SCRFDFACE) {
-    printf("invalid face detection model id %d", fd_model_id);
+    LOGE("invalid face detection model id %d", fd_model_id);
     return CVI_FAILURE;
   }
   if (fr_model_id != CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION &&
       fr_model_id != CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE) {
-    printf("invalid face recognition model id %d", fr_model_id);
+    LOGE("invalid face recognition model id %d", fr_model_id);
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
@@ -294,19 +295,19 @@ CVI_S32 _FaceCapture_SetConfig(face_capture_t *face_cpt_info, face_capture_confi
 CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t tdl_handle,
                          VIDEO_FRAME_INFO_S *frame) {
   if (face_cpt_info == NULL) {
-    printf("[APP::FaceCapture] is not initialized.\n");
+    LOGE("[APP::FaceCapture] is not initialized.\n");
     return CVI_TDL_FAILURE;
   }
   if (frame->stVFrame.u32Length[0] == 0) {
-    printf("[APP::FaceCapture] got empty frame.\n");
+    LOGE("[APP::FaceCapture] got empty frame.\n");
     return CVI_TDL_FAILURE;
   }
-  printf("[APP::FaceCapture] RUN (MODE: %d, FR: %d, FQ: %d)\n", face_cpt_info->mode,
-         face_cpt_info->fr_flag, face_cpt_info->use_FQNet);
+  LOGI("[APP::FaceCapture] RUN (MODE: %d, FR: %d, FQ: %d)\n", face_cpt_info->mode,
+       face_cpt_info->fr_flag, face_cpt_info->use_FQNet);
   CVI_S32 ret;
   ret = clean_data(face_cpt_info);
   if (ret != CVI_TDL_SUCCESS) {
-    printf("[APP::FaceCapture] clean data failed.\n");
+    LOGE("[APP::FaceCapture] clean data failed.\n");
     return CVI_TDL_FAILURE;
   }
   CVI_TDL_Free(&face_cpt_info->last_faces);
@@ -391,11 +392,11 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
 
 #ifdef DEBUG_TRACK
   for (uint32_t j = 0; j < face_cpt_info->last_faces.size; j++) {
-    printf("face[%u]: quality[%.4f], pose[%.2f][%.2f][%.2f]\n", j,
-           face_cpt_info->last_faces.info[j].face_quality,
-           face_cpt_info->last_faces.info[j].head_pose.yaw,
-           face_cpt_info->last_faces.info[j].head_pose.pitch,
-           face_cpt_info->last_faces.info[j].head_pose.roll);
+    LOGI("face[%u]: quality[%.4f], pose[%.2f][%.2f][%.2f]\n", j,
+         face_cpt_info->last_faces.info[j].face_quality,
+         face_cpt_info->last_faces.info[j].head_pose.yaw,
+         face_cpt_info->last_faces.info[j].head_pose.pitch,
+         face_cpt_info->last_faces.info[j].head_pose.roll);
   }
 #endif
 
@@ -407,14 +408,14 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
     CVI_TDL_DeepSORT_Face(tdl_handle, &face_cpt_info->last_faces, &face_cpt_info->last_trackers);
   }
   if (frame->stVFrame.u32Length[0] == 0) {
-    printf("input frame turn into empty\n");
+    LOGE("input frame turn into empty\n");
     return CVI_TDL_FAILURE;
   }
 
   ret = update_data(tdl_handle, face_cpt_info, frame, &face_cpt_info->last_faces,
                     &face_cpt_info->last_trackers);
   if (ret != CVI_TDL_SUCCESS) {
-    printf("[APP::FaceCapture] update face failed.\n");
+    LOGE("[APP::FaceCapture] update face failed.\n");
     return CVI_TDL_FAILURE;
   }
 
@@ -424,7 +425,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
     extract_cropped_face(tdl_handle, face_cpt_info);
   }
   if (ret != CVI_TDL_SUCCESS) {
-    printf("[APP::FaceCapture] capture face failed.\n");
+    LOGE("[APP::FaceCapture] capture face failed.\n");
     return CVI_TDL_FAILURE;
   }
 
@@ -456,7 +457,7 @@ CVI_S32 _FaceCapture_CleanAll(face_capture_t *face_cpt_info) {
   /* Release tracking data */
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     if (face_cpt_info->data[j].state != IDLE) {
-      printf("[APP::FaceCapture] Clean Face Info[%u]\n", j);
+      LOGI("[APP::FaceCapture] Clean Face Info[%u]\n", j);
       CVI_TDL_Free(&face_cpt_info->data[j].image);
       CVI_TDL_Free(&face_cpt_info->data[j].info);
       face_cpt_info->data[j].state = IDLE;
@@ -569,7 +570,7 @@ static void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *fac
   for (uint32_t i = 0; i < face->size; i++) {
     if (skip != NULL && skip[i]) {
       face->info[i].pose_score = 0;
-      printf("skip face:%u\n", i);
+      LOGD("skip face:%u\n", i);
       continue;
     }
     face->info[i].blurness = 0;
@@ -662,7 +663,7 @@ static CVI_S32 update_output_state(cvitdl_handle_t tdl_handle, face_capture_t *f
       } else if (face_cpt_info->mode == CYCLE && _time >= face_cpt_info->cfg.m_interval && num_ok) {
         face_cpt_info->_output[j] = true;
 
-        printf("update output flag,interval:%u\n", face_cpt_info->cfg.m_interval);
+        LOGD("update output flag,interval:%u\n", face_cpt_info->cfg.m_interval);
       }
     }
     if (face_cpt_info->_output[j]) {
@@ -701,7 +702,7 @@ static void encode_img2jpg(VENC_CHN VeChn, VIDEO_FRAME_INFO_S *src_frame,
   /*do jepg encode*/
   stStream.pstPack = malloc(sizeof(VENC_PACK_S) * 8);
   if (!stStream.pstPack) {
-    printf("malloc pack fail \n");
+    LOGE("malloc pack fail \n");
     return;
   }
 
@@ -745,7 +746,7 @@ static void encode_img2jpg(VENC_CHN VeChn, VIDEO_FRAME_INFO_S *src_frame,
 static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_info,
                            VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face_meta,
                            cvtdl_tracker_t *tracker_meta) {
-  printf("[APP::FaceCapture] Update Data\n");
+  LOGI("[APP::FaceCapture] Update Data\n");
   for (uint32_t i = 0; i < face_meta->size; i++) {
     /* we only consider the stable tracker in this sample code. */
     if (face_meta->info[i].track_state != CVI_TRACKER_STABLE) {
@@ -764,12 +765,12 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
     bool skip_dist = eye_dist < face_cpt_info->cfg.eye_dist_thresh * 0.8;
 
     uint64_t trk_id = face_meta->info[i].unique_id;
-    printf("to update_data,trackid:%d,quality:%.3f,pscore:%.3f\n", (int)trk_id,
-           face_meta->info[i].face_quality, face_meta->info[i].pose_score);
+    LOGD("to update_data,trackid:%d,quality:%.3f,pscore:%.3f\n", (int)trk_id,
+         face_meta->info[i].face_quality, face_meta->info[i].pose_score);
 
     if (toskip || skip_dist) {
-      printf("update_data,skip to generate capture data,trackid:%d,pscore:%f,eyedist:%.3f\n",
-             (int)face_meta->info[i].unique_id, face_meta->info[i].pose_score, eye_dist);
+      LOGD("update_data,skip to generate capture data,trackid:%d,pscore:%f,eyedist:%.3f\n",
+           (int)face_meta->info[i].unique_id, face_meta->info[i].pose_score, eye_dist);
       continue;
     }
 
@@ -790,8 +791,8 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
       if (face_meta->info[i].face_quality > current_quality) {
         update_idx = match_idx;
       } else {
-        printf("curqu:%.3f,facequa:%.3f,posescore1:%.3f\n", current_quality,
-               face_meta->info[i].face_quality, face_cpt_info->data[match_idx].info.pose_score1);
+        LOGD("curqu:%.3f,facequa:%.3f,posescore1:%.3f\n", current_quality,
+             face_meta->info[i].face_quality, face_cpt_info->data[match_idx].info.pose_score1);
       }
     } else {
       for (uint32_t j = 0; j < face_cpt_info->size; j++) {
@@ -804,7 +805,7 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
     }
 
     if (match_idx == -1 && idle_idx == -1) {
-      printf("no valid buffer\n");
+      LOGD("no valid buffer\n");
       continue;
     }
     if (update_idx == -1) {
@@ -825,7 +826,7 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
     int ret = CVI_TDL_CropResizeImage(tdl_handle, face_cpt_info->fl_model, frame, &crop_big_box,
                                       dst_w, dst_h, PIXEL_FORMAT_RGB_888, &crop_big_frame);
     if (ret != CVI_SUCCESS) {
-      printf("skip crop failed\n");
+      LOGE("skip crop failed\n");
       if (crop_big_frame != NULL)
         CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, crop_big_frame, true);
       continue;
@@ -845,7 +846,7 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
                                   dst_wh, dst_wh, PIXEL_FORMAT_RGB_888, &crop_frame);
     // printf("to process,index:%d,face:%d\n",update_idx,(int)i);
     if (ret != CVI_SUCCESS) {
-      printf("skip crop failed\n");
+      LOGE("skip crop failed\n");
       if (crop_frame != NULL)
         CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, crop_frame, true);
       continue;
@@ -857,7 +858,7 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
       ret = CVI_TDL_FaceLandmarkerDet2(tdl_handle, crop_frame, &obj_meta);
     }
     if (ret != 0) {
-      printf("det3 failed\n");
+      LOGE("det3 failed\n");
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, crop_frame, true);
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, crop_big_frame, true);
       continue;
@@ -906,7 +907,7 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
         get_score(&face_meta->info[i], face_meta->width, face_meta->height, true);
 
     if (face_meta->info[i].pose_score1 <= face_cpt_info->data[update_idx].info.pose_score1) {
-      printf("skip track:%d,pose_score1:%.3f\n", (int)trk_id, face_meta->info[i].pose_score1);
+      LOGD("skip track:%d,pose_score1:%.3f\n", (int)trk_id, face_meta->info[i].pose_score1);
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, crop_frame, true);
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, crop_big_frame, true);
       CVI_TDL_Free(&obj_meta);
@@ -1001,7 +1002,7 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
     }
 
     if (!found && face_cpt_info->data[j].info.unique_id != 0) {
-      printf("to delete track:%u\n", (uint32_t)face_cpt_info->data[j].info.unique_id);
+      LOGD("to delete track:%u\n", (uint32_t)face_cpt_info->data[j].info.unique_id);
       face_cpt_info->data[j].miss_counter = face_cpt_info->cfg.miss_time_limit;
     }
   }
@@ -1013,7 +1014,7 @@ static CVI_S32 clean_data(face_capture_t *face_cpt_info) {
   for (uint32_t j = 0; j < face_cpt_info->size; j++) {
     // printf("buf:%u,trackid:%d,state:%d\n",j,(int)face_cpt_info->data[j].info.unique_id,face_cpt_info->data[j].state);
     if (face_cpt_info->data[j].state == MISS) {
-      printf("[APP::FaceCapture] Clean Face Info[%u]\n", j);
+      LOGI("[APP::FaceCapture] Clean Face Info[%u]\n", j);
       CVI_TDL_Free(&face_cpt_info->data[j].image);
       CVI_TDL_Free(&face_cpt_info->data[j].info);
       // memset(&face_cpt_info->data[j].info,0,sizeof(face_cpt_info->data[j].info));
@@ -1210,8 +1211,8 @@ static CVI_S32 extract_cropped_face(const cvitdl_handle_t tdl_handle,
           tdl_handle, face_cpt_info->data[i].image.pix[0], face_cpt_info->data[i].image.width,
           face_cpt_info->data[i].image.height, face_cpt_info->data[i].image.stride[0],
           &face_cpt_info->data[i].info);
-      printf("extract face feature,trackid:%d,ret:%d\n", (int)face_cpt_info->data[i].info.unique_id,
-             ret);
+      LOGI("extract face feature,trackid:%d,ret:%d\n", (int)face_cpt_info->data[i].info.unique_id,
+           ret);
     }
   }
   return CVI_SUCCESS;
@@ -1220,7 +1221,7 @@ static CVI_S32 extract_cropped_face(const cvitdl_handle_t tdl_handle,
 int image_to_video_frame(face_capture_t *face_cpt_info, cvtdl_image_t *image,
                          VIDEO_FRAME_INFO_S *dstFrame) {
   if (image->width > 256 || image->height > 256) {
-    printf("crop image size over 256,w:%u,h:%u\n", image->width, image->height);
+    LOGE("crop image size over 256,w:%u,h:%u\n", image->width, image->height);
     return CVI_FAILURE;
   }
   memset(dstFrame, 0, sizeof(VIDEO_FRAME_INFO_S));

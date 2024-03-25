@@ -483,7 +483,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   if (frames.size() != 1) {
     LOGE("can only process one frame for aligninput,got frame_num:%d\n", int(frames.size()));
   }
-
+  model_timer_.TicToc("runstart");
   if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
     if (m_skip_vpss_preprocess) {
       // skip vpss preprocess is true, just register frame directly.
@@ -527,7 +527,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
                             bmrt_tensor_bytesize(&mp_mi->in.tensors[i]));
     }
   }
-
+  model_timer_.TicToc("vpss");
   if (ret != CVI_TDL_SUCCESS) {
     LOGE("registerFrame2Tensor failed: Unsupport operation.\n");
     return ret;
@@ -569,6 +569,7 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     LOGE("bmrt_launch_tensor_ex failed: Unsupport operation.\n");
     return ret;
   }
+  model_timer_.TicToc("tpu");
   return CVI_TDL_SUCCESS;
 }
 template <typename T>
