@@ -66,6 +66,7 @@ else()
     add_subdirectory(human_keypoints_detection/hrnet)
     add_subdirectory(image_classification)
     add_subdirectory(license_plate_recognitionv2)
+    add_subdirectory(clip)
     set(CORE_INTERFACE cvi_tdl_core.cpp)
 endif()
 

@@ -100,6 +100,7 @@ else()
       $<TARGET_OBJECTS:face_mask_detection>
       $<TARGET_OBJECTS:simcc>
       $<TARGET_OBJECTS:hrnet>
+      $<TARGET_OBJECTS:clip>
       $<TARGET_OBJECTS:image_classification>)
 
     if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")

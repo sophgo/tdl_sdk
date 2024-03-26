@@ -43,9 +43,7 @@ std::vector<int> TopKIndex(std::vector<float> &vec, int topk) {
 
 namespace cvitdl {
 
-ImageClassification::ImageClassification() : Core(CVI_MEM_SYSTEM) {
-
-}
+ImageClassification::ImageClassification() : Core(CVI_MEM_SYSTEM) {}
 
 int ImageClassification::onModelOpened() {
   if (getNumOutputTensor() != 1) {
@@ -112,7 +110,8 @@ int ImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAM
 
 //   if (frame->stVFrame.pu8VirAddr[0] == NULL) {
 //     size_t image_size =
-//         frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
+//         frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
+//         frame->stVFrame.u32Length[2];
 //     frame->stVFrame.pu8VirAddr[0] =
 //         (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], image_size);
 //     frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
@@ -130,12 +129,11 @@ int ImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAM
 int ImageClassification::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_meta_t *cls_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
 
-  if(srcFrame->stVFrame.u64PhyAddr[0]==0 && hasSkippedVpssPreprocess()){
+  if (srcFrame->stVFrame.u64PhyAddr[0] == 0 && hasSkippedVpssPreprocess()) {
     const TensorInfo &tinfo = getInputTensorInfo(0);
     int8_t *input_ptr = tinfo.get<int8_t>();
-    memcpy(input_ptr,srcFrame->stVFrame.pu8VirAddr[0],srcFrame->stVFrame.u32Length[0]);
+    memcpy(input_ptr, srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Length[0]);
   }
-  
 
   // dump_frame_result("img_cls_pre.bin",srcFrame);
   int ret = run(frames);
@@ -155,27 +153,26 @@ void ImageClassification::outputParser(cvtdl_class_meta_t *cls_meta) {
   uint8_t *ptr_uint8 = static_cast<uint8_t *>(oinfo.raw_pointer);
   float *ptr_float = static_cast<float *>(oinfo.raw_pointer);
 
-  
   int channel_len = oinfo.shape.dim[1];
 
   int num_per_pixel = oinfo.tensor_size / oinfo.tensor_elem;
   float qscale = num_per_pixel == 1 ? oinfo.qscale : 1;
 
   std::vector<float> scores;
-  printf("output num:%d,datatype:%d\n",channel_len,oinfo.data_type);
+  printf("output num:%d,datatype:%d\n", channel_len, oinfo.data_type);
   // int8 output tensor need to multiply qscale
   for (int i = 0; i < channel_len; i++) {
     if (num_per_pixel == 1) {
-      if(oinfo.data_type == 3){
+      if (oinfo.data_type == 3) {
         scores.push_back(ptr_uint8[i] * qscale);
-      }else{
+      } else {
         scores.push_back(ptr_int8[i] * qscale);
       }
-      
-    } else {      
+
+    } else {
       scores.push_back(ptr_float[i]);
     }
-    printf("scales:%f\n",scores[i]);
+    printf("scales:%f\n", scores[i]);
   }
 
   std::vector<int> topKIndex = TopKIndex(scores, topK);

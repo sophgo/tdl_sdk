@@ -394,6 +394,11 @@ typedef struct {
   uint32_t num_preserved_classes;
 } cvtdl_class_filter_t;
 
+typedef struct {
+  float *out_feature;
+  int feature_dim;
+} cvtdl_clip_feature;
+
 /** @struct cvtdl_handpose21_meta_t
  * @ingroup core_cvitdlcore
  * @brief A structure to describe hand keypoint.

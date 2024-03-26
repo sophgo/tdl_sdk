@@ -168,6 +168,39 @@ CVI_S32 read_image(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT
   return CVI_SUCCESS;
 }
 
+CVI_S32 read_centercrop_resize_image(const char *filepath, VIDEO_FRAME_INFO_S *frame,
+                                     PIXEL_FORMAT_E format, uint32_t width, uint32_t height) {
+  cv::Mat src_img = cv::imread(filepath);
+  if (src_img.empty()) {
+    LOGE("Cannot read image %s.\n", filepath);
+    return CVI_FAILURE;
+  }
+  float oriWHRato = static_cast<float>(src_img.cols) / static_cast<float>(src_img.rows);
+  float preWHRato = static_cast<float>(width) / static_cast<float>(height);
+  int start_h, start_w, lenth_h, lenth_w;
+  if (preWHRato > oriWHRato) {
+    start_w = 0;
+    start_h = static_cast<int>((src_img.rows - preWHRato * src_img.cols) / 2);
+    lenth_w = src_img.cols;
+    lenth_h = static_cast<int>(preWHRato * src_img.cols);
+  } else {
+    start_w = static_cast<int>((src_img.cols - preWHRato * src_img.rows) / 2);
+    start_h = 0;
+    lenth_w = static_cast<int>(preWHRato * src_img.rows);
+    lenth_h = src_img.rows;
+  }
+  cv::Rect roi(start_w, start_h, lenth_w, lenth_h);
+  cv::Mat img_cropped = src_img(roi);
+  cv::Mat img;
+  if (width < img_cropped.cols) {
+    cv::resize(img_cropped, img, cv::Size(width, height), 0, 0, cv::INTER_AREA);
+  } else {
+    cv::resize(img_cropped, img, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
+  }
+  image_buffer_copy(img, frame, format);
+  return CVI_SUCCESS;
+}
+
 CVI_S32 release_image(VIDEO_FRAME_INFO_S *frame) {
   if (frame->stVFrame.u64PhyAddr[0] != 0) {
     CVI_SYS_IonFree(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0]);
@@ -188,6 +221,8 @@ class ImageProcessor {
   virtual int read(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format) = 0;
   virtual int read_resize(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format,
                           uint32_t width, uint32_t height) = 0;
+  virtual int read_centercrop_resize(const char *filepath, VIDEO_FRAME_INFO_S *frame,
+                                     PIXEL_FORMAT_E format, uint32_t width, uint32_t height) = 0;
   virtual int release(VIDEO_FRAME_INFO_S *frame) = 0;
 };
 
@@ -247,6 +282,11 @@ class ImageProcessorNoOpenCV : public ImageProcessor {
     return 0;
   }
 
+  int read_centercrop_resize(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format,
+                             uint32_t width, uint32_t height) {
+    return 0;
+  }
+
   int release(VIDEO_FRAME_INFO_S *frame) { CVI_SYS_FreeI(ive_handle, &image); }
 
  private:
@@ -264,6 +304,11 @@ class ImageProcessorOpenCV : public ImageProcessor {
   int read_resize(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format,
                   uint32_t width, uint32_t height) override {
     return read_resize_image(filepath, frame, format, width, height);
+  }
+
+  int read_centercrop_resize(const char *filepath, VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format,
+                             uint32_t width, uint32_t height) override {
+    return read_centercrop_resize_image(filepath, frame, format, width, height);
   }
 
   int release(VIDEO_FRAME_INFO_S *frame) override { return release_image(frame); }
@@ -296,6 +341,13 @@ CVI_S32 CVI_TDL_ReadImage_Resize(imgprocess_t handle, const char *filepath,
 CVI_S32 CVI_TDL_ReleaseImage(imgprocess_t handle, VIDEO_FRAME_INFO_S *frame) {
   ImageProcessor *ctx = static_cast<ImageProcessor *>(handle);
   return ctx->release(frame);
+}
+
+CVI_S32 CVI_TDL_ReadImage_CenrerCrop_Resize(imgprocess_t handle, const char *filepath,
+                                            VIDEO_FRAME_INFO_S *frame, PIXEL_FORMAT_E format,
+                                            uint32_t width, uint32_t height) {
+  ImageProcessor *ctx = static_cast<ImageProcessor *>(handle);
+  return ctx->read_centercrop_resize(filepath, frame, format, width, height);
 }
 
 CVI_S32 CVI_TDL_Destroy_ImageProcessor(imgprocess_t handle) {

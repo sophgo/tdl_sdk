@@ -16,7 +16,6 @@
 #include "cvi_tdl_media.h"
 // #include "sys_utils.hpp"
 
-
 bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len) {
   FILE *fp = fopen(strf.c_str(), "rb");
   if (fp == nullptr) {
@@ -34,7 +33,7 @@ bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len) {
   fclose(fp);
   return true;
 }
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
@@ -56,8 +55,8 @@ int main(int argc, char* argv[]) {
   VpssPreParam p_preprocess_cfg;
 
   // image preprocess param: mean & std
-  float mean[3] = {0,0,0};
-  float std[3] = {255,255,255};
+  float mean[3] = {0, 0, 0};
+  float std[3] = {255, 255, 255};
 
   for (int i = 0; i < 3; i++) {
     p_preprocess_cfg.mean[i] = mean[i] / std[i];
@@ -99,7 +98,7 @@ int main(int argc, char* argv[]) {
   // }
 
   VIDEO_FRAME_INFO_S fdFrame;
-  memset(&fdFrame,0,sizeof(fdFrame));
+  memset(&fdFrame, 0, sizeof(fdFrame));
   int imgwh = 256;
   int imgc = 4;
   int frame_size = imgc * imgwh * imgwh;
@@ -114,14 +113,14 @@ int main(int argc, char* argv[]) {
     return -1;
   }
   float qscale = 126.504;
-  for(int i = 0; i < frame_size; i++){
-    int val = p_buffer[i]*qscale/255;
-    if(val>=127){
+  for (int i = 0; i < frame_size; i++) {
+    int val = p_buffer[i] * qscale / 255;
+    if (val >= 127) {
       val = 127;
     }
     p_buffer[i] = val;
   }
-  CVI_TDL_SetSkipVpssPreprocess(tdl_handle,CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION,true);
+  CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, true);
   cvtdl_class_meta_t cls_meta = {0};
 
   CVI_TDL_Image_Classification(tdl_handle, &fdFrame, &cls_meta);

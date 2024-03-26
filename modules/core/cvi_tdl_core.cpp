@@ -1,6 +1,7 @@
 #include "version.hpp"
 
 #include "alphapose/alphapose.hpp"
+#include "clip/clip.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_core.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -218,6 +219,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_LANDMARK_DET3, CREATOR(FaceLandmarkDet3)},
     {CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET, CREATOR(DMSLandmarkerDet)},
     {CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
+    {CVI_TDL_SUPPORTED_MODEL_CLIP, CREATOR(Clip)},
 };
 
 //*************************************************
@@ -890,6 +892,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_HandFacePerson_Detection, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_HeadPerson_Detection, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Clip_Feature, Clip, CVI_TDL_SUPPORTED_MODEL_CLIP,
+                      cvtdl_clip_feature *)
 
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {

@@ -184,7 +184,7 @@ void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_m
                                 std::map<std::string, TensorInfo> &tensor_info) {
   for (int32_t i = 0; i < p_mi->in.num; i++) {
     TensorInfo tinfo;
-    memset(&tinfo,0,sizeof(tinfo));
+    memset(&tinfo, 0, sizeof(tinfo));
     tinfo.tensor_name = net_info->input_names[i];
     auto &stages = net_info->stages[0];
     tinfo.shape.dim_size = stages.input_shapes[i].num_dims;
@@ -208,7 +208,7 @@ void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_
                                  std::map<std::string, TensorInfo> &tensor_info) {
   for (int32_t i = 0; i < p_mi->out.num; i++) {
     TensorInfo tinfo;
-    memset(&tinfo,0,sizeof(tinfo));
+    memset(&tinfo, 0, sizeof(tinfo));
     tinfo.tensor_name = net_info->output_names[i];
     auto &stages = net_info->stages[0];
     tinfo.shape.dim_size = stages.output_shapes[i].num_dims;

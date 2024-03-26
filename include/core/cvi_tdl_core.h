@@ -168,6 +168,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION)             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HRNET_POSE)                       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP)                             \
 // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -1582,6 +1583,16 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Image_Cls_Param(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_Set_YOLO_Param(const cvitdl_handle_t handle,
                                          YoloPreParam *p_preprocess_cfg,
                                          YoloAlgParam *p_yolo_param);
+
+/**
+ * @brief get frame feature from clip model
+ *
+ * @param frame input image
+ * @param cvtdl_clip_feature save feature and dim, need custom free 
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Clip_Feature(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                     cvtdl_clip_feature *clip_feature);
+
 #ifdef __cplusplus
 }
 #endif

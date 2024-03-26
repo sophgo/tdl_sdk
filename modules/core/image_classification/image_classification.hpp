@@ -12,6 +12,7 @@ class ImageClassification final : public Core {
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_meta_t *meta);
   void set_param(VpssPreParam *p_preprocess_cfg);
   virtual bool allowExportChannelAttribute() const override { return true; }
+
  private:
   virtual int onModelOpened() override;
   int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,

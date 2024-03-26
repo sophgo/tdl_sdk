@@ -41,7 +41,7 @@ int test_binary_short_audio_data(const std::string &strf, CVI_U8 *p_buffer,
 }
 
 int main(int argc, char *argv[]) {
-  int sample_rate = 16000;//atoi(argv[5]);
+  int sample_rate = 16000;  // atoi(argv[5]);
   int frame_size = sample_rate * AUDIOFORMATSIZE * SECOND;
   CVI_U8 buffer[frame_size];  // 3 seconds
 
