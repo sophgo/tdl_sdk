@@ -15,6 +15,7 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
 
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
 void Core::setUseMmap(bool mmap) { use_mmap = mmap; }
+void Core::setraw(bool raw) { this->raw = raw; }
 
 void Core::cleanupError() {
   if (mp_mi->handle != nullptr) {
@@ -474,7 +475,6 @@ int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
 
 int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   int ret = CVI_TDL_SUCCESS;
-
   if (m_skip_vpss_preprocess && !allowExportChannelAttribute()) {
     return CVI_TDL_ERR_INVALID_ARGS;
   }
@@ -532,7 +532,6 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     LOGE("registerFrame2Tensor failed: Unsupport operation.\n");
     return ret;
   }
-
   ret =
       bmrt_launch_tensor_ex(mp_mi->handle, mp_mi->net_names[0], mp_mi->in.tensors.data(),
                             mp_mi->in.num, mp_mi->out.tensors.data(), mp_mi->out.num, true, false);
@@ -585,10 +584,12 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
 
   for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
     auto frame = frames[i];
-    if (input_w != frame->stVFrame.u32Width || input_h != frame->stVFrame.u32Height) {
-      LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]", frame->stVFrame.u32Width,
-           frame->stVFrame.u32Height, input_w, input_h);
-      return CVI_TDL_FAILURE;
+    if (!raw) {
+      if (input_w != frame->stVFrame.u32Width || input_h != frame->stVFrame.u32Height) {
+        LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]",
+             frame->stVFrame.u32Width, frame->stVFrame.u32Height, input_w, input_h);
+        return CVI_TDL_FAILURE;
+      }
     }
 
     size_t image_size =

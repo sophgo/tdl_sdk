@@ -44,6 +44,7 @@
 #include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
 #include "osnet/osnet.hpp"
+#include "raw_image_classification/raw_image_classification.hpp"
 #include "retina_face/retina_face.hpp"
 #include "retina_face/scrfd_face.hpp"
 #include "segmentation/deeplabv3.hpp"
@@ -220,6 +221,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET, CREATOR(DMSLandmarkerDet)},
     {CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
     {CVI_TDL_SUPPORTED_MODEL_CLIP, CREATOR(Clip)},
+    {CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, CREATOR(RawImageClassification)},
 };
 
 //*************************************************
@@ -882,6 +884,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_Hrnet_Pose, Hrnet, CVI_TDL_SUPPORTED_MODEL_HRNET_P
                       cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Image_Classification, ImageClassification,
                       CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, cvtdl_class_meta_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Raw_Image_Classification, RawImageClassification,
+                      CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, cvtdl_class_meta_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Hand_Detection, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_PersonPet_Detection, YoloV8Detection,
@@ -1635,5 +1639,25 @@ CVI_S32 CVI_TDL_Set_Image_Cls_Param(const cvitdl_handle_t handle, VpssPreParam *
   }
 
   image_cls_model->set_param(p_preprocess_cfg);
+  return CVI_SUCCESS;
+}
+
+CVI_S32 CVI_TDL_Set_Raw_Image_Cls_Param(const cvitdl_handle_t handle,
+                                        VpssPreParam *p_preprocess_cfg) {
+  printf("enter CVI_TDL_Set_Image_Classification_Param...\n");
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  RawImageClassification *raw_image_cls_model = dynamic_cast<RawImageClassification *>(
+      getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, ctx));
+  if (raw_image_cls_model == nullptr) {
+    LOGE("No instance found for image classification.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got image_cls_model instance\n");
+  if (p_preprocess_cfg == nullptr) {
+    LOGE("p_preprocess_cfg can not be nullptr.\n");
+    return CVI_FAILURE;
+  }
+
+  raw_image_cls_model->set_param(p_preprocess_cfg);
   return CVI_SUCCESS;
 }

@@ -166,6 +166,7 @@ buildninstallcpp(NAME eval_yolov6 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMP
 buildninstallcpp(NAME eval_yolov8 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME eval_yolox INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME eval_image_classification INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
+buildninstallcpp(NAME eval_raw_image_classification INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME eval_ppyoloe INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME eval_dms_landmarks_imgs INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 endif()

@@ -101,7 +101,8 @@ else()
       $<TARGET_OBJECTS:simcc>
       $<TARGET_OBJECTS:hrnet>
       $<TARGET_OBJECTS:clip>
-      $<TARGET_OBJECTS:image_classification>)
+      $<TARGET_OBJECTS:image_classification>
+      $<TARGET_OBJECTS:raw_image_classification>)
 
     if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:feature_matching>)

@@ -166,6 +166,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION)                  \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LP_DETECTION)                     \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION)             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION)             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HRNET_POSE)                       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP)                             \
@@ -1530,6 +1531,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_Image_Classification(const cvitdl_handle_t handle,
                                                cvtdl_class_meta_t *obj_meta);
 
 /**
+ * @brief raw image classification
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param object cvtdl_class_meta_t structure, top 5 class info and score
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Raw_Image_Classification(const cvitdl_handle_t handle,
+                                                  VIDEO_FRAME_INFO_S *frame,
+                                                  cvtdl_class_meta_t *obj_meta);
+
+/**
  * @brief get yolo preprocess param struct
  *
  * @param handle An TDL SDK handle.
@@ -1579,6 +1592,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_Byte(const cvitdl_handle_t handle, cvtdl_obj
                                         cvtdl_tracker_t *tracker, bool use_reid);
 
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Image_Cls_Param(const cvitdl_handle_t handle,
+                                              VpssPreParam *p_preprocess_cfg);
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Raw_Image_Cls_Param(const cvitdl_handle_t handle,
                                               VpssPreParam *p_preprocess_cfg);
 DLL_EXPORT CVI_S32 CVI_TDL_Set_YOLO_Param(const cvitdl_handle_t handle,
                                          YoloPreParam *p_preprocess_cfg,

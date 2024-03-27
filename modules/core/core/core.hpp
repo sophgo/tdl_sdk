@@ -123,6 +123,7 @@ class Core {
   int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
                       uint32_t rh, PIXEL_FORMAT_E enDstFormat);
   VpssEngine *get_vpss_instance() { return mp_vpss_inst; }
+  void setraw(bool raw);
 
  protected:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data);
@@ -222,5 +223,6 @@ class Core {
 
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;
+  bool raw = false;
 };
 }  // namespace cvitdl

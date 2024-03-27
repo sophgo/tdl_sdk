@@ -135,6 +135,7 @@ class Core {
   virtual bool allowExportChannelAttribute() const { return false; }
   void enableDebugger(bool enable) {}
   void setUseMmap(bool mmap);
+  void setraw(bool raw);
   void setDebuggerOutputPath(const std::string &dump_path) {}
   int after_inference();
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
@@ -243,5 +244,6 @@ class Core {
   std::unique_ptr<CvimodelInfo> mp_mi;
   const bm_net_info_t *net_info;
   bool use_mmap = false;
+  bool raw = false;
 };
 }  // namespace cvitdl
