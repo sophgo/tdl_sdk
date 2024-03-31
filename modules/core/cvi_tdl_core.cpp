@@ -222,6 +222,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
     {CVI_TDL_SUPPORTED_MODEL_CLIP, CREATOR(Clip)},
     {CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, CREATOR(RawImageClassification)},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
 };
 
 //*************************************************
@@ -898,6 +900,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_HeadPerson_Detection, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Clip_Feature, Clip, CVI_TDL_SUPPORTED_MODEL_CLIP,
                       cvtdl_clip_feature *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_YOLOV8_Hardhat, YoloV8Detection,
+                      CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT, cvtdl_object_t *)
 
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {

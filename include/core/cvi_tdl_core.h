@@ -170,6 +170,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HRNET_POSE)                       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
 // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -1608,6 +1609,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_YOLO_Param(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_Clip_Feature(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                      cvtdl_clip_feature *clip_feature);
 
+
+/**
+ * @brief Yolov8 Hardhat
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_YOLOV8_Hardhat(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                           cvtdl_object_t *obj_meta);
+
                                          
 /**
  * @brief get audio algorithm param
@@ -1634,3 +1647,4 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle, cons
 #endif
 
 #endif  // End of _CVI_TDL_CORE_H_
+
