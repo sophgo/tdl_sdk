@@ -6,7 +6,17 @@ using namespace melspec;
 using namespace cvitdl;
 using namespace std;
 
-SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {}
+SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {
+  audio_param_.win_len = 1024;
+  audio_param_.num_fft = 1024;
+  audio_param_.hop_len = 256;
+  audio_param_.sample_rate = 16000;
+  audio_param_.time_len = 3;  // 3 second
+  audio_param_.num_mel = 40;
+  audio_param_.fmin = 0;
+  audio_param_.fmax = audio_param_.sample_rate / 2;
+  audio_param_.fix = false;
+}
 
 SoundClassificationV2::~SoundClassificationV2() { delete mp_extractor_; }
 
@@ -15,27 +25,42 @@ int SoundClassificationV2::onModelOpened() {
   int32_t image_width = input_shape.dim[2];
   bool htk = false;
 
-  if (image_width == 188) {  // sr16k * 3s
-    sample_rate_ = 16000;
-    time_len_ = 3;
-  } else if (image_width == 126) {  // sr16k * 2s
-    sample_rate_ = 16000;
-    time_len_ = 2;
+  if (image_width == 63 || audio_param_.hop_len == 128) {  // sr8k * 2s
+    audio_param_.sample_rate = 8000;
+    audio_param_.time_len = 2;
   } else if (image_width == 94) {  // sr8k * 3s
-    sample_rate_ = 8000;
-    time_len_ = 3;
-  } else if (image_width == 63) {  // sr8k * 2s
-    sample_rate_ = 8000;
-    time_len_ = 2;
+    audio_param_.sample_rate = 8000;
+    audio_param_.time_len = 3;
+  } else if (image_width == 126) {  // sr16k * 2s
+    audio_param_.sample_rate = 16000;
+    audio_param_.time_len = 2;
+  } else if (image_width == 188) {  // sr16k * 3s
+    audio_param_.sample_rate = 16000;
+    audio_param_.time_len = 3;
   }
-  fmax_ = sample_rate_ / 2;
-  int num_frames = time_len_ * sample_rate_;
+
+  audio_param_.fmax = audio_param_.sample_rate / 2;
+  int num_frames = audio_param_.time_len * audio_param_.sample_rate;
 
   // std::cout << "input_shape = " << input_shape.dim[2] << ", sample_rate = " << sample_rate_
   //           << ", time_len_ = " << time_len_ << std::endl;
-  mp_extractor_ = new MelFeatureExtract(num_frames, sample_rate_, num_fft_, hop_len_, num_mel_,
-                                        fmin_, fmax_, "reflect", htk);
+  mp_extractor_ = new MelFeatureExtract(num_frames, audio_param_.sample_rate, audio_param_.num_fft,
+                                        audio_param_.hop_len, audio_param_.num_mel,
+                                        audio_param_.fmin, audio_param_.fmax, "reflect", htk);
   return CVI_SUCCESS;
+}
+
+AudioAlgParam SoundClassificationV2::get_algparam() { return audio_param_; }
+void SoundClassificationV2::set_algparam(AudioAlgParam audio_param) {
+  audio_param_.win_len = audio_param.win_len;
+  audio_param_.num_fft = audio_param.num_fft;
+  audio_param_.hop_len = audio_param.hop_len;
+  audio_param_.sample_rate = audio_param.sample_rate;
+  audio_param_.time_len = audio_param.time_len;
+  audio_param_.num_mel = audio_param.num_mel;
+  audio_param_.fmin = audio_param.fmin;
+  audio_param_.fmax = audio_param.fmax;
+  audio_param_.fix = audio_param.fix;
 }
 
 int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
@@ -57,7 +82,7 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
   // mp_extractor_->melspectrogram_impl(input_ptr, int(tinfo.tensor_elem), tinfo.qscale);
   // int8_t *optimize_ptr = new int8_t[int(tinfo.tensor_elem)];
   mp_extractor_->melspectrogram_optimze(temp_buffer, img_width * img_height, input_ptr,
-                                        int(tinfo.tensor_elem), tinfo.qscale);
+                                        int(tinfo.tensor_elem), tinfo.qscale, audio_param_.fix);
   // int iseq = 1;
   // for(int i = 0; i < int(tinfo.tensor_elem);i++){
   //   int diff = input_ptr[i] - optimize_ptr[i];
@@ -96,7 +121,7 @@ int SoundClassificationV2::get_top_k(float *result, size_t count) {
       idx = i;
     }
     sum_e = float(sum_e) + float(cur_e);
-    std::cout << "\t" << i << ": " << cur_e;
+    std::cout << i << ": " << cur_e << "\t";
   }
 
   // for (size_t i = 0; i < count; i++) {

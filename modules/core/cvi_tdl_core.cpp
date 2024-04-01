@@ -1661,3 +1661,30 @@ CVI_S32 CVI_TDL_Set_Raw_Image_Cls_Param(const cvitdl_handle_t handle,
   raw_image_cls_model->set_param(p_preprocess_cfg);
   return CVI_SUCCESS;
 }
+
+AudioAlgParam CVI_TDL_Get_Audio_Algparam(const cvitdl_handle_t handle,
+                                         const CVI_TDL_SUPPORTED_MODEL_E model_index) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2) {
+    SoundClassificationV2 *sc_v2_model =
+        dynamic_cast<SoundClassificationV2 *>(getInferenceInstance(model_index, ctx));
+    return sc_v2_model->get_algparam();
+  }
+  LOGE("not supported model index\n");
+  return AudioAlgParam();
+}
+
+CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle,
+                                   const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                   AudioAlgParam audio_param) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2) {
+    SoundClassificationV2 *sc_v2_model =
+        dynamic_cast<SoundClassificationV2 *>(getInferenceInstance(model_index, ctx));
+    sc_v2_model->set_algparam(audio_param);
+    return CVI_SUCCESS;
+  }
+  LOGE("not supported model index\n");
+  return CVI_FAILURE;
+}

@@ -25,7 +25,8 @@ class MelFeatureExtract {
   void melspectrogram_impl(int8_t *p_dst, int dst_len, float q_scale);
   Matrixf melspectrogram(std::vector<float> &wav);
   void melspectrogram_optimze(short *p_data, int data_len, int8_t *p_dst, int dst_len,
-                              float q_scale);
+                              float q_scale, bool fixed = false, float eps = 1E-6, float s = 0.025,
+                              float alpha = 0.98, float delta = 2, float r = 0.5);
   void pad(Vectorf &x, int left, int right, const std::string &mode, float value);
   // void stft(Vectorf &x, int n_fft, int n_hop, const std::string &win, bool center, const
   // std::string &mode);

@@ -504,6 +504,18 @@ typedef struct {
   uint32_t cls;
 } YoloAlgParam;
 
+typedef struct {
+  int win_len;
+  int num_fft;
+  int hop_len;
+  int sample_rate;
+  int time_len;
+  int num_mel;
+  int fmin;
+  int fmax;
+  bool fix;
+} AudioAlgParam;
+
 /** @struct VpssPreParam
  *  @ingroup core_cvitdlcore
  *  @brief Config the yolo detection preprocess.

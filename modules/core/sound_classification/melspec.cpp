@@ -318,7 +318,8 @@ void MelFeatureExtract::melspectrogram_impl(int8_t *p_dst, int dst_len, float q_
 }
 
 void MelFeatureExtract::melspectrogram_optimze(short *p_data, int data_len, int8_t *p_dst,
-                                               int dst_len, float q_scale) {
+                                               int dst_len, float q_scale, bool fix, float eps,
+                                               float s, float alpha, float delta, float r) {
   int pad_len = center_ ? num_fft_ / 2 : 0;
 
   int n_f = num_fft_ / 2 + 1;
@@ -328,6 +329,8 @@ void MelFeatureExtract::melspectrogram_optimze(short *p_data, int data_len, int8
   Eigen::FFT<float> fft;
   melspec::Vectorf segment(num_fft_);
   melspec::Vectorf specmag(n_f);
+  melspec::Vectorf last_state(num_mel_);
+
   const float scale = 1.0 / 32768.0;
   for (int i = 0; i < n_frames; ++i) {
     int start_idx = i * num_hop_;
@@ -348,21 +351,45 @@ void MelFeatureExtract::melspectrogram_optimze(short *p_data, int data_len, int8
 
     int8_t *pdst_r = p_dst + i * num_mel_;
     melspec::Vectorf rowv = specmag * mel_basis_;
-    for (int n = 0; n < num_mel_; n++) {
-      float v = rowv[n];
-      if (v < min_val_) v = min_val_;
-      if (is_log_) {
-        v = 10 * log10f(v);
+
+    if (fix) {  // use pcen
+
+      if (i == 0) {
+        last_state = rowv;
+      } else {
+        last_state = (1 - s) * last_state + s * rowv;
       }
-      int16_t qval = v * q_scale;
-      if (qval < -128) {
-        // std::cout<<"overflow qval:"<<qval<<std::endl;
-        qval = -128;
-      } else if (qval > 127) {
-        // std::cout<<"overflow qval:"<<qval<<std::endl;
-        qval = 127;
+
+      melspec::Vectorf pcen_data =
+          (rowv.array() / (last_state.array() + eps).pow(alpha) + delta).pow(r) - pow(delta, r);
+
+      for (int n = 0; n < num_mel_; n++) {
+        int16_t qval = pcen_data[n] * q_scale;
+
+        if (qval < -128) {
+          qval = -128;
+        } else if (qval > 127) {
+          qval = 127;
+        }
+        pdst_r[n] = qval;
       }
-      pdst_r[n] = qval;
+    } else {
+      for (int n = 0; n < num_mel_; n++) {
+        float v = rowv[n];
+        if (v < min_val_) v = min_val_;
+        if (is_log_) {
+          v = 10 * log10f(v);
+        }
+        int16_t qval = v * q_scale;
+        if (qval < -128) {
+          // std::cout<<"overflow qval:"<<qval<<std::endl;
+          qval = -128;
+        } else if (qval > 127) {
+          // std::cout<<"overflow qval:"<<qval<<std::endl;
+          qval = 127;
+        }
+        pdst_r[n] = qval;
+      }
     }
   }
 }

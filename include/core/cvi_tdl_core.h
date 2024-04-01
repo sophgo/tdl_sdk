@@ -1608,6 +1608,27 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_YOLO_Param(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_Clip_Feature(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                      cvtdl_clip_feature *clip_feature);
 
+                                         
+/**
+ * @brief get audio algorithm param
+ *
+ * @param handle An TDL SDK handle.
+ * @param model_index Supported model list.
+ * @return AudioAlgParam audio algorithm param struct.
+ */
+DLL_EXPORT AudioAlgParam CVI_TDL_Get_Audio_Algparam(const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index); 
+
+
+/**
+ * @brief set audio algorithm param
+ *
+ * @param handle An TDL SDK handle.
+ * @param model_index Supported model list.
+ * @param audio_param audio algorithm param struct.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index, AudioAlgParam audio_param);
+
 #ifdef __cplusplus
 }
 #endif

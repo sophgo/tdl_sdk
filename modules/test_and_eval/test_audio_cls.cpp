@@ -14,16 +14,16 @@
 #include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 #define AUDIOFORMATSIZE 2
-#define SECOND 3
+// #define SECOND 3
 #define CVI_AUDIO_BLOCK_MODE -1
 #define PERIOD_SIZE 640
 // #define SAMPLE_RATE 16000
 // #define FRAME_SIZE SAMPLE_RATE *AUDIOFORMATSIZE *SECOND  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
 
 int test_binary_short_audio_data(const std::string &strf, CVI_U8 *p_buffer,
-                                 cvitdl_handle_t tdl_handle, int sample_rate) {
+                                 cvitdl_handle_t tdl_handle, int sample_rate, int seconds) {
   VIDEO_FRAME_INFO_S Frame;
-  int frame_size = sample_rate * AUDIOFORMATSIZE * SECOND;
+  int frame_size = sample_rate * AUDIOFORMATSIZE * seconds;
   Frame.stVFrame.pu8VirAddr[0] = p_buffer;  // Global buffer
   Frame.stVFrame.u32Height = 1;
   Frame.stVFrame.u32Width = frame_size;
@@ -41,8 +41,10 @@ int test_binary_short_audio_data(const std::string &strf, CVI_U8 *p_buffer,
 }
 
 int main(int argc, char *argv[]) {
-  int sample_rate = 16000;  // atoi(argv[5]);
-  int frame_size = sample_rate * AUDIOFORMATSIZE * SECOND;
+  int sample_rate = atoi(argv[3]);
+  int seconds = atoi(argv[4]);
+  float threshold = atof(argv[5]);
+  int frame_size = sample_rate * AUDIOFORMATSIZE * seconds;
   CVI_U8 buffer[frame_size];  // 3 seconds
 
   cvitdl_handle_t tdl_handle = NULL;
@@ -51,6 +53,19 @@ int main(int argc, char *argv[]) {
     printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
+
+  AudioAlgParam audio_param =
+      CVI_TDL_Get_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2);
+  audio_param.hop_len = 128;
+  audio_param.fix = true;
+  printf("setup audio algorithm parameters \n");
+  ret = CVI_TDL_Set_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
+                                   audio_param);
+  if (ret != CVI_SUCCESS) {
+    printf("Can not set audio algorithm parameters %#x\n", ret);
+    return ret;
+  }
+
   std::string modelf(argv[1]);
 
   ret =
@@ -59,34 +74,69 @@ int main(int argc, char *argv[]) {
     printf("open modelfile failed %#x!\n", ret);
     return ret;
   }
-  std::cout << "model opened:" << modelf << std::endl;
-  if (argc == 6) {
+
+  ret = CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
+                                  threshold);
+  if (ret != CVI_SUCCESS) {
+    printf("set threshold failed %#x!\n", ret);
+    return ret;
+  }
+  std::cout << "model opened:" << modelf << ", set threshold:" << threshold << std::endl;
+  if (argc == 8) {
     std::string str_root_dir = argv[2];
-    std::string str_list_file = argv[3];
-    std::string str_res_file = argv[4];
+    std::string str_list_file = argv[6];
+    std::string str_res_file = argv[7];
     std::vector<std::string> strfiles = read_file_lines(str_list_file);
     FILE *fp = fopen(str_res_file.c_str(), "w");
-    int num_correct = 0;
+    int TP = 0;
+    int FN = 0;
+    int FP = 0;
+    int TN = 0;
+    int total;
+    float accuracy;
+
     size_t num_total = strfiles.size();
     for (size_t i = 0; i < num_total; i++) {
-      std::cout << "process:" << i << "/" << num_total << ",file:" << strfiles[i] << "\t";
+      std::cout << "process:" << i << "/" << num_total << ",   file:" << strfiles[i] << "\t";
       std::string strf = str_root_dir + std::string("/") + strfiles[i];
-      int cls = test_binary_short_audio_data(strf, buffer, tdl_handle, sample_rate);
+      int cls = test_binary_short_audio_data(strf, buffer, tdl_handle, sample_rate, seconds);
       std::string str_res =
           strfiles[i] + std::string(",") + std::to_string(cls) + std::string("\t");
       fwrite(str_res.c_str(), str_res.length(), 1, fp);
       if (cls == -1) continue;
       std::string strlabel = std::string("/") + std::to_string(cls) + std::string("/");
-      if (strf.find(strlabel) != strf.npos) {
-        num_correct++;
+
+      bool correct = strf.find(strlabel) != strf.npos;
+
+      if (cls == 0) {
+        if (correct) {
+          TN += 1;
+        } else {
+          FN += 1;
+        }
+      } else {
+        if (correct) {
+          TP += 1;
+        } else {
+          FP += 1;
+        }
       }
-      std::cout << str_res << "correct num:" << num_correct << std::endl;
+      total = TP + FN + FP + TN;
+      accuracy = (float)(TP + TN) / total;
+
+      std::cout << "accuracy: " << accuracy << std::endl;
     }
     fclose(fp);
-    std::cout << "total:" << strfiles.size() << ", correct:" << num_correct
-              << ", false:" << strfiles.size() - num_correct << std::endl;
+
+    float recall = (float)TP / (TP + FN);
+    float false_det_rate = (float)FP / total;
+
+    std::cout << "accuracy: " << accuracy << std::endl;
+    std::cout << "recall: " << recall << std::endl;
+    std::cout << "false_det_rate: " << false_det_rate << std::endl;
+
   } else {
-    int cls = test_binary_short_audio_data(argv[2], buffer, tdl_handle, sample_rate);
+    int cls = test_binary_short_audio_data(argv[2], buffer, tdl_handle, sample_rate, seconds);
     std::cout << "result:" << cls << std::endl;
   }
 
@@ -98,10 +148,22 @@ int main(int argc, char *argv[]) {
 /*
 how to use:
 
-./test_audio_cls \                                                                         // cpp
-name /mnt/data/nfsuser_xq/models/sound_cls/c10_lightv2_mel40_mix_sr8k_cv181x.cvimodel \         //
-model path /mnt/data/nfsuser_xq/models/sound_cls/audio_data_new_sr8k_eval_bin/0 \ // file dir
-/mnt/data/nfsuser_xq/models/sound_cls/audio_data_new_sr8k_eval_bin/0/files_list.txt \      // file
-list.txt /mnt/data/nfsuser_xq/models/sound_cls/audio_data_new_sr8k_eval_bin/new_8k_0_res.txt \ //
-save path 8000 // sample_rate [8000 | 16000]
+for dataset:
+
+./test_audio_cls
+/tmp/yzx/infer/sound/models/shiyun_v5_int8_cv181x.cvimodel \           #model path
+/tmp/yzx/infer/sound/data/nihaoshiyun/5m_normsound                     #data dir
+8000  \                                                                #sample rate  [8000 | 16000]
+2     \                                                                #time (s)
+0.5   \                                                                #threshold    0 - 1.0
+/tmp/yzx/infer/sound/data/nihaoshiyun/5m_normsound/files_list.txt \    # data relative path
+/tmp/yzx/infer/sound/output/shiyun_v5_5m_normsound.txt                 # result path
+
+for single data:
+
+./test_audio_cls \
+/tmp/yzx/infer/sound/models/shiyun_v5_int8_cv181x.cvimodel  \ #model path
+/tmp/yzx/infer/sound/data/nihaoshiyun/test_normsound/3/collection_guanbipingmu/0_23_3_2.bin \ #data
+path 8000 \ #sample rate  [8000 | 16000] 2  \ #time (s) 0.5 #threshold    0 - 1.0
+
 */
