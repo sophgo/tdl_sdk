@@ -2,7 +2,7 @@
 #ifndef CVI_BMCV_FILE_H
 #define CVI_BMCV_FILE_H
 
-#if defined(_MIDDLEWARE_V2_)
+#if defined(CV181X) || defined(CV180X)
 #include <linux/cvi_comm_vpss.h>
 #include <linux/cvi_type.h>
 #else
