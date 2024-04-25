@@ -17,6 +17,7 @@ DLL_EXPORT void CVI_TDL_FreeCpp(cvtdl_dms_od_t *dms_od);
 DLL_EXPORT void CVI_TDL_FreeCpp(cvtdl_dms_t *dms);
 DLL_EXPORT void CVI_TDL_FreeCpp(cvtdl_handpose21_meta_ts *handposes);
 DLL_EXPORT void CVI_TDL_FreeCpp(cvtdl_class_meta_t *cls_meta);
+DLL_EXPORT void CVI_TDL_FreeCpp(cvtdl_lane_t *lane_meta);
 
 DLL_EXPORT void CVI_TDL_CopyInfoCpp(const cvtdl_face_info_t *info, cvtdl_face_info_t *infoNew);
 DLL_EXPORT void CVI_TDL_CopyInfoCpp(const cvtdl_dms_od_info_t *info, cvtdl_dms_od_info_t *infoNew);

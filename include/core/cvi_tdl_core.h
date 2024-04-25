@@ -171,6 +171,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LANE_DET)                         \
 // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -1641,6 +1642,17 @@ DLL_EXPORT AudioAlgParam CVI_TDL_Get_Audio_Algparam(const cvitdl_handle_t handle
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index, AudioAlgParam audio_param);
+
+
+/**
+ * @brief Lane Detection
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param lane_meta cvtdl_lane_t structure,.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Lane_Det(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvtdl_lane_t *lane_meta);
 
 #ifdef __cplusplus
 }

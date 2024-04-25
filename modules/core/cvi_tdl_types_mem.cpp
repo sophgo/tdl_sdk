@@ -127,6 +127,15 @@ void CVI_TDL_FreeCpp(cvtdl_class_meta_t *cls_meta) {
   }
 }
 
+void CVI_TDL_FreeCpp(cvtdl_lane_t *lane_meta) {
+  if (lane_meta->lane != NULL) {
+    // for (uint32_t i = 0; i < lane_meta->size; i++) {
+    free(lane_meta->lane);
+    // }
+  }
+  lane_meta->lane == NULL;
+}
+
 void CVI_TDL_FreeFeature(cvtdl_feature_t *feature) { CVI_TDL_FreeCpp(feature); }
 
 void CVI_TDL_FreePts(cvtdl_pts_t *pts) { CVI_TDL_FreeCpp(pts); }

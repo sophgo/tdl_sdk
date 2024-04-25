@@ -68,6 +68,7 @@ else()
     add_subdirectory(raw_image_classification)
     add_subdirectory(license_plate_recognitionv2)
     add_subdirectory(clip)
+    add_subdirectory(lane_detection)
     set(CORE_INTERFACE cvi_tdl_core.cpp)
 endif()
 

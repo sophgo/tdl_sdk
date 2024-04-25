@@ -355,6 +355,21 @@ typedef struct {
   cvtdl_object_info_t *info;
 } cvtdl_object_t;
 
+typedef struct {
+  float x[56];
+  float y[56];
+  float score;
+} cvtdl_lane_point_t;
+
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+
+  meta_rescale_type_e rescale_type;
+  cvtdl_lane_point_t *lane;
+} cvtdl_lane_t;
+
 // consumer line
 typedef struct {
   float A_x;
