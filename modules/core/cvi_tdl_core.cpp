@@ -28,6 +28,7 @@
 #include "image_classification/image_classification.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "lane_detection/lane_detection.hpp"
+#include "lane_detection/polylanenet/polylanenet.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "license_plate_recognitionv2/license_plate_recognitionv2.hpp"
@@ -226,6 +227,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
     {CVI_TDL_SUPPORTED_MODEL_LANE_DET, CREATOR(BezierLaneNet)},
+    {CVI_TDL_SUPPORTED_MODEL_POLYLANE, CREATOR(Polylanenet)},
 };
 
 //*************************************************
@@ -906,7 +908,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_YOLOV8_Hardhat, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Lane_Det, BezierLaneNet, CVI_TDL_SUPPORTED_MODEL_LANE_DET,
                       cvtdl_lane_t *)
-
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_PolyLane_Det, Polylanenet, CVI_TDL_SUPPORTED_MODEL_POLYLANE,
+                      cvtdl_lane_t *)
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
   return crop_image(srcFrame, dst, bbox, cvtRGB888);
@@ -1691,6 +1694,20 @@ CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle,
     SoundClassificationV2 *sc_v2_model =
         dynamic_cast<SoundClassificationV2 *>(getInferenceInstance(model_index, ctx));
     sc_v2_model->set_algparam(audio_param);
+    return CVI_SUCCESS;
+  }
+  LOGE("not supported model index\n");
+  return CVI_FAILURE;
+}
+
+CVI_S32 CVI_TDL_Set_Polylanenet_Lower(const cvitdl_handle_t handle,
+                                      const CVI_TDL_SUPPORTED_MODEL_E model_index, float th) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_POLYLANE) {
+    Polylanenet *polylane_model =
+        dynamic_cast<Polylanenet *>(getInferenceInstance(model_index, ctx));
+    polylane_model->set_lower(th);
     return CVI_SUCCESS;
   }
   LOGE("not supported model index\n");
