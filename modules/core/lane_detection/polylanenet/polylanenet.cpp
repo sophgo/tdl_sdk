@@ -4,25 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
-#include <chrono>
-#include <ctime>
-#include <fstream>
-#include <map>
-#include <memory>
+#include <error_msg.hpp>
 #include <numeric>
 #include <string>
-#include <thread>
 #include <vector>
 #include "core/core/cvtdl_core_types.h"
 #include "core/core/cvtdl_errno.h"
-#include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/object/cvtdl_object_types.h"
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_comm.h"
-#include "cvi_sys.h"
-#include "error_msg.hpp"
 #include "misc.hpp"
 #include "object_utils.hpp"
 
