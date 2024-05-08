@@ -146,6 +146,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LPRNET_TW)                        \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LPRNET_CN)                        \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DEEPLABV3)                        \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION)               \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_ALPHAPOSE)                        \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_EYECLASSIFICATION)                \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YAWNCLASSIFICATION)               \
@@ -1170,6 +1171,19 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_GetTracker_Inactive(const cvitdl_handle_t ha
  */
 DLL_EXPORT CVI_S32 CVI_TDL_DeeplabV3(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                     VIDEO_FRAME_INFO_S *out_frame, cvtdl_class_filter_t *filter);
+/**@}*/
+
+/**
+ * @brief Motion segmentation.
+ *
+ * @param handle An TDL SDK handle.
+ * @param input0 Input image 0.
+ * @param input1 Input image 1.
+ * @param output Output segmentation mask.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_MotionSegmentation(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *input0,
+                                    VIDEO_FRAME_INFO_S *input1, cvtdl_seg_logits_t *seg_logits);
 /**@}*/
 
 /**

@@ -576,4 +576,14 @@ typedef struct {
   int cls[5];
 } cvtdl_class_meta_t;
 
+typedef struct {
+  int w;
+  int h;
+  int c;
+  int b;
+  bool is_int;
+  float *float_logits;
+  int8_t *int_logits;
+  float qscale;
+} cvtdl_seg_logits_t;
 #endif

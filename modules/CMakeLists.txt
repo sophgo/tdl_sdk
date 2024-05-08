@@ -100,6 +100,8 @@ else()
       $<TARGET_OBJECTS:face_mask_detection>
       $<TARGET_OBJECTS:simcc>
       $<TARGET_OBJECTS:hrnet>
+      $<TARGET_OBJECTS:motion_segmentation>
+      $<TARGET_OBJECTS:image_classification>
       $<TARGET_OBJECTS:clip>
       $<TARGET_OBJECTS:image_classification>
       $<TARGET_OBJECTS:raw_image_classification>
