@@ -1,7 +1,7 @@
 #ifndef _CVI_MD_HEAD_
 #define _CVI_MD_HEAD_
 
-#if defined(CV181X) || defined(CV180X)
+#if (defined(ARCH_CV181X) || defined(ARCH_CV180X) || defined(CV181X) || defined(CV180X)) && !defined(_MIDDLEWARE_V3_)
 #include <linux/cvi_comm_vpss.h>
 #else
 #include <cvi_comm_vpss.h>
