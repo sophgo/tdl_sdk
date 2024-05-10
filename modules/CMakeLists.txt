@@ -106,7 +106,10 @@ else()
       $<TARGET_OBJECTS:image_classification>
       $<TARGET_OBJECTS:raw_image_classification>
       $<TARGET_OBJECTS:lane_detection>
-      $<TARGET_OBJECTS:polylanenet>)
+      $<TARGET_OBJECTS:polylanenet>
+      $<TARGET_OBJECTS:super_resolution>
+      $<TARGET_OBJECTS:ocr_detection>
+      $<TARGET_OBJECTS:ocr_recognition>)
 
     if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:feature_matching>)

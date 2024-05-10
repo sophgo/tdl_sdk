@@ -46,6 +46,8 @@
 #include "object_detection/yolov6/yolov6.hpp"
 #include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
+#include "ocr/ocr_detection/ocr_detection.hpp"
+#include "ocr/ocr_recognition/ocr_recognition.hpp"
 #include "osnet/osnet.hpp"
 #include "raw_image_classification/raw_image_classification.hpp"
 #include "retina_face/retina_face.hpp"
@@ -54,6 +56,7 @@
 #include "smoke_classification/smoke_classification.hpp"
 #include "sound_classification/sound_classification.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
+#include "super_resolution/super_resolution.hpp"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -230,6 +233,9 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
     {CVI_TDL_SUPPORTED_MODEL_LANE_DET, CREATOR(BezierLaneNet)},
     {CVI_TDL_SUPPORTED_MODEL_POLYLANE, CREATOR(Polylanenet)},
+    {CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, CREATOR(SuperResolution)},
+    {CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION, CREATOR(OCRDetection)},
+    {CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, CREATOR(OCRRecognition)},
 };
 
 //*************************************************
@@ -914,6 +920,12 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_Lane_Det, BezierLaneNet, CVI_TDL_SUPPORTED_MODEL_L
                       cvtdl_lane_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_PolyLane_Det, Polylanenet, CVI_TDL_SUPPORTED_MODEL_POLYLANE,
                       cvtdl_lane_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Super_Resolution, SuperResolution,
+                      CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, cvtdl_sr_feature *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Detection, OCRDetection, CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION,
+                      cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Recognition, OCRRecognition,
+                      CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, cvtdl_object_t *)
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
   return crop_image(srcFrame, dst, bbox, cvtRGB888);

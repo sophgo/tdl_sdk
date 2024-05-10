@@ -174,6 +174,9 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LANE_DET)                         \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_POLYLANE)                         \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION)                 \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION)                    \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION)                  \
 // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -1522,6 +1525,15 @@ DLL_EXPORT CVI_S32 CVI_TDL_Yolov8_Pose(const cvitdl_handle_t handle, VIDEO_FRAME
  * pedestrian_properity must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
+DLL_EXPORT CVI_S32 CVI_TDL_Super_Resolution(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            cvtdl_sr_feature *srfeature);
+
+DLL_EXPORT CVI_S32 CVI_TDL_OCR_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            cvtdl_object_t *obj_meta);
+
+DLL_EXPORT CVI_S32 CVI_TDL_OCR_Recognition(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            cvtdl_object_t *obj_meta);
+                                            
 DLL_EXPORT CVI_S32 CVI_TDL_Simcc_Pose(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                      cvtdl_object_t *obj_meta);
 /**
