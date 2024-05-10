@@ -89,6 +89,8 @@ set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so)
@@ -113,11 +115,11 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
     ${CVI_RTSP_LIBPATH})
-set(AUDIO_SAMPLE_LIBS
-    ${AUDIO_SAMPLE_LIBS}
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
-)
+# set(AUDIO_SAMPLE_LIBS
+#     ${AUDIO_SAMPLE_LIBS}
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
+# )
 set(SAMPLE_LIBS_FILE
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_platform.c
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_sys.c
