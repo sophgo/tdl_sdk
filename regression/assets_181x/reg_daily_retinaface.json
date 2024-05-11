@@ -1,0 +1,23 @@
+[
+  {
+    "model" : "retinaface_mnet0.25_342_608.cvimodel", 
+    "test_images" : ["liveness_rgb_1.jpg"], 
+    "expected_results" : [
+                          [1, [[263.938263, 110.619125, 391.588074, 299.315094]]]],
+    "threshold" : 0.85
+  },
+  {
+    "model" : "retinaface_mnet0.25_608_342.cvimodel", 
+    "test_images" : ["liveness_rgb_1.jpg"], 
+    "expected_results" : [
+                          [1, [[264.432617, 118.377480, 388.198944, 286.183929]]]],
+    "threshold" : 0.85
+  },
+  {
+    "model" : "retinaface_mnet0.25_608.cvimodel", 
+    "test_images" : ["liveness_rgb_1.jpg"], 
+    "expected_results" : [
+                          [1, [[260.391815, 113.239616, 392.546783, 291.497223]]]],
+    "threshold" : 0.85
+  }
+]
