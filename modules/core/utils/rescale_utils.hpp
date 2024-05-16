@@ -23,9 +23,11 @@ cvtdl_object_info_t info_rescale_c(const float width, const float height, const 
 cvtdl_face_info_t info_rescale_rb(const float width, const float height, const float new_width,
                                   const float new_height, const cvtdl_face_info_t &face_info);
 cvtdl_object_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
-                                                const cvtdl_object_info_t *obj_info);
+                                                const cvtdl_object_info_t *obj_info,
+                                                float w_pad_ratio = 0.2, float h_pad_ratio = 0.2);
 cvtdl_face_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
-                                              const cvtdl_face_info_t *face_info, int *p_dst_size);
+                                              const cvtdl_face_info_t *face_info, int *p_dst_size,
+                                              float w_pad_ratio = 0.2, float h_pad_ratio = 0.2);
 void info_rescale_nocopy_c(const float width, const float height, const float new_width,
                            const float new_height, cvtdl_face_info_t *face_info);
 void info_rescale_nocopy_rb(const float width, const float height, const float new_width,

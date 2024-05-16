@@ -108,58 +108,11 @@ void NMS(std::vector<cvtdl_object_info_t> &bboxes, std::vector<cvtdl_object_info
   }
 }
 
-// void OCRDetection::outputParser(const cv::Mat &probMap, float thresh, float boxThresh,
-// cvtdl_object_t *obj_meta) {
-//     cv::Mat binaryMap;
-//     probMap.convertTo(binaryMap, CV_8UC1, 255.0);
-//     cv::threshold(binaryMap, binaryMap, thresh * 255, 255, cv::THRESH_BINARY);
-
-//     std::vector<std::vector<cv::Point>> contours;
-//     cv::findContours(binaryMap, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
-
-//     // CVI_TDL_MemAllocInit(contours.size(), obj_meta);
-//     // obj_meta->rescale_type = RESCALE_RB;
-//     // memset(obj_meta->info, 0, sizeof(cvtdl_object_info_t) * contours.size());
-//     // obj_meta->size = contours.size();
-//     // obj_meta->entry_num = 0;
-//     std::vector<cvtdl_object_info_t> all_boxes;
-
-//     for (auto &contour : contours) {
-//         double area = cv::contourArea(contour);
-//         if (area < 10)
-//             continue;
-
-//         cv::Rect boundingBox = cv::boundingRect(contour);
-
-//         cvtdl_object_info_t objInfo;
-//         objInfo.bbox.x1 = boundingBox.x;
-//         objInfo.bbox.y1 = boundingBox.y;
-//         objInfo.bbox.x2 = boundingBox.x + boundingBox.width;
-//         objInfo.bbox.y2 = boundingBox.y + boundingBox.height;
-//         all_boxes.push_back(objInfo);
-//     }
-//     std::vector<cvtdl_object_info_t> nms_boxes;
-//     printf("1111111111111111");
-//     NMS(all_boxes, nms_boxes, boxThresh, 'u');
-//     printf("2222222222222222");
-//     CVI_TDL_MemAllocInit(nms_boxes.size(), obj_meta);
-//     memset(obj_meta->info, 0, sizeof(cvtdl_object_info_t) * nms_boxes.size());
-//     printf("3333333333333333333");
-//     obj_meta->size = nms_boxes.size();
-//     obj_meta->entry_num = 0;
-
-//     for (auto &box : nms_boxes) {
-//       cvtdl_object_info_t &obj_info = obj_meta->info[obj_meta->entry_num++];
-//       obj_info = box;
-//     }
-//     printf("44444444444444444");
-// }
 void OCRDetection::outputParser(float thresh, float boxThresh, cvtdl_object_t *obj_meta) {
   float *out = getOutputRawPtr<float>(0);
   CVI_SHAPE output_shape = getOutputShape(0);
-  int outShapeC = output_shape.dim[1];
-  int outWidth = output_shape.dim[3];
   int outHeight = output_shape.dim[2];
+  int outWidth = output_shape.dim[3];
   cv::Mat probMap(outHeight, outWidth, CV_32FC1, out);
   cv::Mat binaryMap;
   probMap.convertTo(binaryMap, CV_8UC1, 255.0);
@@ -168,17 +121,8 @@ void OCRDetection::outputParser(float thresh, float boxThresh, cvtdl_object_t *o
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(binaryMap, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
 
-  // std::vector<cvtdl_object_info_t> boxes;
-  CVI_TDL_MemAllocInit(contours.size(), obj_meta);
-  obj_meta->rescale_type = RESCALE_RB;
-  memset(obj_meta->info, 0, sizeof(cvtdl_object_info_t) * contours.size());
-  obj_meta->size = contours.size();
-  obj_meta->entry_num = 0;
+  std::vector<cvtdl_object_info_t> bboxes;
   CVI_SHAPE shape = getInputShape(0);
-  // printf("shape.dim[3] = %d\n",shape.dim[3]);
-  // printf("shape.dim[2] = %d\n",shape.dim[2]);
-  // printf("obj_meta->width = %d\n",obj_meta->width);
-  // printf("obj_meta->height = %d\n", obj_meta->height);
   for (auto &contour : contours) {
     double area = cv::contourArea(contour);
     if (area < 10) continue;
@@ -190,40 +134,25 @@ void OCRDetection::outputParser(float thresh, float boxThresh, cvtdl_object_t *o
     cvtdl_bbox_t rescaled_bbox =
         box_rescale(obj_meta->width, obj_meta->height, shape.dim[3], shape.dim[2], bbox,
                     meta_rescale_type_e::RESCALE_CENTER);
-    cvtdl_object_info_t &objInfo = obj_meta->info[obj_meta->entry_num];
+
+    cvtdl_object_info_t objInfo;
     objInfo.bbox = rescaled_bbox;
-    // objInfo.bbox = bbox;
+    bboxes.push_back(objInfo);
+  }
+
+  std::vector<cvtdl_object_info_t> bboxes_nms;
+  NMS(bboxes, bboxes_nms, boxThresh, 'u');
+
+  CVI_TDL_MemAllocInit(bboxes_nms.size(), obj_meta);
+
+  obj_meta->rescale_type = RESCALE_RB;
+  memset(obj_meta->info, 0, sizeof(cvtdl_object_info_t) * bboxes_nms.size());
+  obj_meta->size = bboxes_nms.size();
+  obj_meta->entry_num = 0;
+  for (auto &bbox_nms : bboxes_nms) {
+    obj_meta->info[obj_meta->entry_num] = bbox_nms;
     obj_meta->entry_num++;
   }
 }
-// void OCRDetection::outputParser(const cv::Mat &probMap, float thresh, float boxThresh,
-// cvtdl_object_t *obj_meta) {
-//     cv::Mat binaryMap;
-//     probMap.convertTo(binaryMap, CV_8UC1, 255.0);
-//     cv::threshold(binaryMap, binaryMap, thresh * 255, 255, cv::THRESH_BINARY);
 
-//     std::vector<std::vector<cv::Point>> contours;
-//     cv::findContours(binaryMap, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
-
-//     CVI_TDL_MemAllocInit(contours.size(), obj_meta);
-//     obj_meta->rescale_type = RESCALE_RB;
-//     memset(obj_meta->info, 0, sizeof(cvtdl_object_info_t) * contours.size());
-//     obj_meta->size = contours.size();
-//     obj_meta->entry_num = 0;
-
-//     for (auto &contour : contours) {
-//         double area = cv::contourArea(contour);
-//         if (area < 10)
-//             continue;
-
-//         cv::Rect boundingBox = cv::boundingRect(contour);
-
-//         cvtdl_object_info_t &objInfo = obj_meta->info[obj_meta->entry_num];
-//         objInfo.bbox.x1 = boundingBox.x;
-//         objInfo.bbox.y1 = boundingBox.y;
-//         objInfo.bbox.x2 = boundingBox.x + boundingBox.width;
-//         objInfo.bbox.y2 = boundingBox.y + boundingBox.height;
-//         obj_meta->entry_num++;
-//     }
-// }
 }  // namespace cvitdl

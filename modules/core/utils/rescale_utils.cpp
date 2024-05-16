@@ -79,13 +79,14 @@ cvtdl_bbox_t box_rescale(const float frame_width, const float frame_height, cons
 }
 
 cvtdl_face_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
-                                              const cvtdl_face_info_t *face_info, int *p_dst_size) {
+                                              const cvtdl_face_info_t *face_info, int *p_dst_size,
+                                              float w_pad_ratio, float h_pad_ratio) {
   cvtdl_face_info_t face_info_new;
   CVI_TDL_CopyInfoCpp(face_info, &face_info_new);
 
   cvtdl_bbox_t bbox = face_info_new.bbox;
-  int w_pad = (bbox.x2 - bbox.x1) * 0.2;
-  int h_pad = (bbox.y2 - bbox.y1) * 0.2;
+  int w_pad = (bbox.x2 - bbox.x1) * w_pad_ratio;
+  int h_pad = (bbox.y2 - bbox.y1) * h_pad_ratio;
 
   // bbox new coordinate after extern
   float x1 = bbox.x1 - w_pad;
@@ -124,13 +125,14 @@ cvtdl_face_info_t info_extern_crop_resize_img(const float frame_width, const flo
 }
 
 cvtdl_object_info_t info_extern_crop_resize_img(const float frame_width, const float frame_height,
-                                                const cvtdl_object_info_t *obj_info) {
+                                                const cvtdl_object_info_t *obj_info,
+                                                float w_pad_ratio, float h_pad_ratio) {
   cvtdl_object_info_t obj_info_new = {0};
   CVI_TDL_CopyInfoCpp(obj_info, &obj_info_new);
 
   cvtdl_bbox_t bbox = obj_info_new.bbox;
-  int w_pad = (bbox.x2 - bbox.x1) * 0.2;
-  int h_pad = (bbox.y2 - bbox.y1) * 0.2;
+  int w_pad = (bbox.x2 - bbox.x1) * w_pad_ratio;
+  int h_pad = (bbox.y2 - bbox.y1) * h_pad_ratio;
 
   // bbox new coordinate after extern
   float x1 = bbox.x1 - w_pad;

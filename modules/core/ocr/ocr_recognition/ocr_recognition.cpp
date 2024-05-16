@@ -1,5 +1,4 @@
 #include "ocr_recognition.hpp"
-#include <numeric>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include "core/core/cvtdl_errno.h"
@@ -10,8 +9,10 @@
 
 #include "core/utils/vpss_helper.h"
 
+#include <codecvt>
 #include <fstream>
 #include <iostream>
+#include <locale>
 #include <sstream>
 #ifdef ENABLE_CVI_TDL_CV_UTILS
 #include "cv/imgproc.hpp"
@@ -46,46 +47,25 @@ int OCRRecognition::setupInputPreprocess(std::vector<InputPreprecessSetup>* data
   return CVI_TDL_SUCCESS;
 }
 
-void draw_and_save_picture(VIDEO_FRAME_INFO_S* bg, const std::string& save_path) {
-  CVI_U8* r_plane = (CVI_U8*)CVI_SYS_Mmap(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
-  CVI_U8* g_plane = (CVI_U8*)CVI_SYS_Mmap(bg->stVFrame.u64PhyAddr[1], bg->stVFrame.u32Length[1]);
-  CVI_U8* b_plane = (CVI_U8*)CVI_SYS_Mmap(bg->stVFrame.u64PhyAddr[2], bg->stVFrame.u32Length[2]);
-
-  cv::Mat r_mat(bg->stVFrame.u32Height, bg->stVFrame.u32Width, CV_8UC1, r_plane);
-  cv::Mat g_mat(bg->stVFrame.u32Height, bg->stVFrame.u32Width, CV_8UC1, g_plane);
-  cv::Mat b_mat(bg->stVFrame.u32Height, bg->stVFrame.u32Width, CV_8UC1, b_plane);
-
-  std::vector<cv::Mat> channels = {b_mat, g_mat, r_mat};
-  cv::Mat img_rgb;
-  cv::merge(channels, img_rgb);
-
-  cv::imwrite(save_path, img_rgb);
-
-  CVI_SYS_Munmap(r_plane, bg->stVFrame.u32Length[0]);
-  CVI_SYS_Munmap(g_plane, bg->stVFrame.u32Length[1]);
-  CVI_SYS_Munmap(b_plane, bg->stVFrame.u32Length[2]);
-}
-
 int argmax(float* start, float* end) {
   float* max_iter = std::max_element(start, end);
   int max_idx = max_iter - start;
   return max_idx;
 }
 
-void read_char(std::vector<std::string>& chars) {
-  std::string filePath = "/tmp/zhiling/180x/ppocr_keys_v1.txt";
-  std::ifstream file(filePath);
-  if (!file.is_open()) {
-    throw std::runtime_error("Unable to open character map file.");
-  }
-
-  chars.clear();
+std::vector<std::string> ReadDict(const std::string& path) {
+  std::ifstream in(path);
   std::string line;
-  while (std::getline(file, line)) {
-    chars.push_back(line);
+  std::vector<std::string> m_vec;
+  if (in) {
+    while (getline(in, line)) {
+      m_vec.push_back(line);
+    }
+  } else {
+    std::cout << "no such label file: " << path << ", exit the program..." << std::endl;
+    exit(1);
   }
-  std::string request = "Finish read txt!!!";
-  std::cout << request << std::endl;
+  return m_vec;
 }
 
 std::pair<std::string, float> OCRRecognition::decode(const std::vector<int>& text_index,
@@ -123,7 +103,8 @@ void OCRRecognition::greedy_decode(float* prebs, std::vector<std::string>& chars
     float* start = prebs + t * outWidth * outHeight;
     float* end = prebs + (t + 1) * outWidth * outHeight;
     int argmax_idx = argmax(start, end);
-    argmax_results[t] = argmax_idx;
+
+    argmax_results[t] = argmax_idx - 1;
     confidences[t] = *(start + argmax_idx);
   }
   auto result = decode(argmax_results, confidences, chars, true);
@@ -131,39 +112,98 @@ void OCRRecognition::greedy_decode(float* prebs, std::vector<std::string>& chars
             << std::endl;
 }
 
-void saveToCSV(float** data, int numRows, int numCols, const std::string& filename) {
-  std::ofstream outputFile(filename);
-  for (int i = 0; i < numRows; ++i) {
-    for (int j = 0; j < numCols; ++j) {
-      outputFile << data[i][j];
+//可以不通过det，打开下方接口
+// int OCRRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta) {
 
-      if (j != numCols - 1) {
-        outputFile << ",";
-      }
-    }
-    outputFile << std::endl;
-  }
-  outputFile.close();
+//     std::vector<std::string> myCharacters;
+//     std::string filePath = "./ppocr_keys_v1.txt";
+//     myCharacters = ReadDict(filePath);
+
+//     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+//     int ret = run(frames);
+//     if (ret != CVI_TDL_SUCCESS) {
+//         return ret;
+//     }
+
+//     float *out = getOutputRawPtr<float>(0);
+//     greedy_decode(out, myCharacters);
+
+//     return CVI_TDL_SUCCESS;
+//   }
+
+void save_cropped_frame(VIDEO_FRAME_INFO_S* cropped_frame, const std::string& save_path) {
+  CVI_U8* r_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[0],
+                                          cropped_frame->stVFrame.u32Length[0]);
+  CVI_U8* g_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[1],
+                                          cropped_frame->stVFrame.u32Length[1]);
+  CVI_U8* b_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[2],
+                                          cropped_frame->stVFrame.u32Length[2]);
+
+  cv::Mat r_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
+                r_plane);
+  cv::Mat g_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
+                g_plane);
+  cv::Mat b_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
+                b_plane);
+
+  std::vector<cv::Mat> channels = {b_mat, g_mat, r_mat};
+  cv::Mat img_rgb;
+  cv::merge(channels, img_rgb);
+
+  cv::imwrite(save_path, img_rgb);
+
+  CVI_SYS_Munmap(r_plane, cropped_frame->stVFrame.u32Length[0]);
+  CVI_SYS_Munmap(g_plane, cropped_frame->stVFrame.u32Length[1]);
+  CVI_SYS_Munmap(b_plane, cropped_frame->stVFrame.u32Length[2]);
+}
+
+cvtdl_object_info_t crop_resize_img(const float frame_width, const float frame_height,
+                                    const cvtdl_object_info_t* obj_info) {
+  cvtdl_object_info_t obj_info_new = {0};
+  CVI_TDL_CopyInfoCpp(obj_info, &obj_info_new);
+
+  cvtdl_bbox_t bbox = obj_info_new.bbox;
+  int w_pad = (bbox.x2 - bbox.x1) * 0.2;
+  int h_pad = (bbox.y2 - bbox.y1) * 0.5;
+
+  // bbox new coordinate after extern
+  float x1 = bbox.x1 - w_pad;
+  float y1 = bbox.y1 - h_pad;
+  float x2 = bbox.x2 + w_pad;
+  float y2 = bbox.y2 + h_pad;
+
+  cvtdl_bbox_t new_bbox;
+  new_bbox.score = bbox.score;
+  new_bbox.x1 = std::max(x1, (float)0);
+  new_bbox.y1 = std::max(y1, (float)0);
+  new_bbox.x2 = std::min(x2, (float)(frame_width - 1));
+  new_bbox.y2 = std::min(y2, (float)(frame_height - 1));
+  obj_info_new.bbox = new_bbox;
+
+  return obj_info_new;
 }
 
 int OCRRecognition::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_object_t* obj_meta) {
   if (obj_meta->size == 0) {
     return CVI_TDL_SUCCESS;
   }
-
   std::vector<std::string> myCharacters;
-  read_char(myCharacters);
+  std::string filePath = "./ppocr_keys_v1.txt";
+  myCharacters = ReadDict(filePath);
 
   for (uint32_t i = 0; i < obj_meta->size; ++i) {
     cvtdl_object_info_t obj_info = info_extern_crop_resize_img(
-        frame->stVFrame.u32Width, frame->stVFrame.u32Height, &(obj_meta->info[i]));
+        frame->stVFrame.u32Width, frame->stVFrame.u32Height, &(obj_meta->info[i]), 0.2, 0.5);
     VIDEO_FRAME_INFO_S* cropped_frame = new VIDEO_FRAME_INFO_S;
     memset(cropped_frame, 0, sizeof(VIDEO_FRAME_INFO_S));
     CVI_SHAPE shape = getInputShape(0);
     int height = shape.dim[2];
     int width = shape.dim[3];
-    vpssCropImage(frame, cropped_frame, obj_meta->info[i].bbox, width, height,
-                  PIXEL_FORMAT_RGB_888_PLANAR);
+    vpssCropImage(frame, cropped_frame, obj_info.bbox, width, height, PIXEL_FORMAT_RGB_888_PLANAR);
+
+    // 可以保存cropped_frame
+    // std::string save_path = std::to_string(i) + ".jpg";
+    // save_cropped_frame(cropped_frame, save_path);
 
     std::vector<VIDEO_FRAME_INFO_S*> frames = {cropped_frame};
     int ret = run(frames);

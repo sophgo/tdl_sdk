@@ -109,11 +109,14 @@ int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object
     std::vector<VIDEO_FRAME_INFO_S *> frames = {f};
     int ret = run(frames);
     if (ret != CVI_TDL_SUCCESS) {
+      mp_vpss_inst->releaseFrame(f, 0);
+      delete f;
       return ret;
     }
 
     float *out = getOutputRawPtr<float>(OUTPUT_NAME_PROBABILITY);
     greedy_decode(out);
+    mp_vpss_inst->releaseFrame(f, 0);
     delete f;
 
     CVI_TDL_FreeCpp(&obj_info);
