@@ -53,6 +53,14 @@ int argmax(float* start, float* end) {
   return max_idx;
 }
 
+template <typename InputIt, typename T>
+T my_accumulate(InputIt first, InputIt last, T init) {
+  for (; first != last; ++first) {
+    init = init + *first;
+  }
+  return init;
+}
+
 std::vector<std::string> ReadDict(const std::string& path) {
   std::ifstream in(path);
   std::string line;
@@ -83,10 +91,9 @@ std::pair<std::string, float> OCRRecognition::decode(const std::vector<int>& tex
     conf_list.push_back(text_prob[idx]);
   }
 
-  float average_conf =
-      conf_list.empty()
-          ? 0.0f
-          : std::accumulate(conf_list.begin(), conf_list.end(), 0.0f) / conf_list.size();
+  float average_conf = conf_list.empty() ? 0.0f
+                                         : my_accumulate(conf_list.begin(), conf_list.end(), 0.0f) /
+                                               conf_list.size();
   return {text, average_conf};
 }
 
