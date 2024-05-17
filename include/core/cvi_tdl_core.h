@@ -32,7 +32,9 @@
            cvtdl_object_t*: CVI_TDL_FreeObject,          \
            cvtdl_handpose21_meta_ts*: CVI_TDL_FreeHandPoses, \
            cvtdl_class_meta_t*: CVI_TDL_FreeClassMeta, \
-           cvtdl_image_t*: CVI_TDL_FreeImage)(X)
+           cvtdl_image_t*: CVI_TDL_FreeImage,          \
+           cvtdl_lane_t* : CVI_TDL_FreeLane)(X)
+
 // clang-format on
 #endif
 

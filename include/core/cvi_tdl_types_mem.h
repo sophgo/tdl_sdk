@@ -41,6 +41,7 @@ DLL_EXPORT void CVI_TDL_FreeDMS(cvtdl_dms_t *dms);
 DLL_EXPORT void CVI_TDL_FreeHandPoses(cvtdl_handpose21_meta_ts *handposes);
 DLL_EXPORT void CVI_TDL_FreeClassMeta(cvtdl_class_meta_t *cls_meta);
 DLL_EXPORT void CVI_TDL_FreeSegLogits(cvtdl_seg_logits_t *seg_logits);
+DLL_EXPORT void CVI_TDL_FreeLane(cvtdl_lane_t *lane_meta);
 
 DLL_EXPORT void CVI_TDL_CopyFaceInfo(const cvtdl_face_info_t *src, cvtdl_face_info_t *dst);
 DLL_EXPORT void CVI_TDL_CopyObjectInfo(const cvtdl_object_info_t *src, cvtdl_object_info_t *dst);

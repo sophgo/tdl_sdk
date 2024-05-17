@@ -144,7 +144,7 @@ void getBufferRect(const cvtdl_counting_line_t *counting_line_t, randomRect *rec
 }
 
 CVI_S32 _PersonCapture_Free(person_capture_t *person_cpt_info) {
-  printf("[APP::PersonCapture] Free PersonCapture Data\n");
+  // printf("[APP::PersonCapture] Free PersonCapture Data\n");
   if (person_cpt_info != NULL) {
     _PersonCapture_CleanAll(person_cpt_info);
 

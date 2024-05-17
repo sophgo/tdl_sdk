@@ -231,6 +231,8 @@ typedef enum {
 
 #undef GROUP_ID
 
+typedef enum { NORMAL = 0, START, COLLISION_WARNING, DANGER } adas_state_e;
+
 /** @struct cvtdl_pose17_meta_t
  * @ingroup core_cvitdlcore
  * @brief A structure to describe person pose.
@@ -284,6 +286,12 @@ typedef struct {
   bool fall;
 } cvtdl_pedestrian_meta;
 
+typedef struct {
+  float dis;
+  float speed;
+  adas_state_e state;
+} cvtdl_adas_meta;
+
 /** @struct cvtdl_object_info_t
  * @ingroup core_cvitdlcore
  * @brief A structure to describe a found object.
@@ -320,6 +328,7 @@ typedef struct {
   int classes;
   cvtdl_vehicle_meta *vehicle_properity;
   cvtdl_pedestrian_meta *pedestrian_properity;
+  cvtdl_adas_meta adas_properity;
   int track_state;
   // float human_angle;
   // float aspect_ratio;
@@ -356,8 +365,8 @@ typedef struct {
 } cvtdl_object_t;
 
 typedef struct {
-  float x[56];
-  float y[56];
+  float x[2];
+  float y[2];
   float score;
 } cvtdl_lane_point_t;
 

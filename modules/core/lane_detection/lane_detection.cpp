@@ -53,6 +53,10 @@ float sample_comb(int x) {  // C(3, x)
   return 3;
 }
 
+float gen_x_by_y(float y, std::vector<float> &pts) {
+  return (y - pts[2]) / (pts[4] - pts[2]) * (pts[3] - pts[1]) + pts[1];
+}
+
 BezierLaneNet::BezierLaneNet() : Core(CVI_MEM_DEVICE) {
   for (int i = 0; i < NUM_POINTS; i++) {
     // float t = H_GAP + i*(1 - H_GAP)/NUM_POINTS;
@@ -79,6 +83,7 @@ int BezierLaneNet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data)
   (*data)[0].mean[1] = static_cast<float>(MEAN_G);
   (*data)[0].mean[2] = static_cast<float>(MEAN_B);
   (*data)[0].use_quantize_scale = true;
+  // keep_aspect_ratio = true;
   (*data)[0].rescale_type = RESCALE_RB;
   return CVI_TDL_SUCCESS;
 }
@@ -106,13 +111,6 @@ void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const 
   CVI_SHAPE output0_shape = getOutputShape(0);
   CVI_SHAPE output1_shape = getOutputShape(1);
 
-  // for (int i = 0; i< 4; i++){
-  //   printf("output0_shape.dim[%d]: %d\n", i, output0_shape.dim[i]);
-  //   printf("output1_shape.dim[%d]: %d\n", i, output1_shape.dim[i]);
-
-  //   printf("curves[i]:%f, logits[i]:%f \n", curves[i], logits[i]);
-  // }
-
   map<float, int> valid_scores;
 
   int counter = 0;
@@ -127,7 +125,8 @@ void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const 
 
     if (pos == counter) {
       float score = ld_sigmoid(logits[counter]);
-      if (score > 0.4) {
+      if (score > 0.9) {
+        // printf(" score: %.4f ", score);
         valid_scores.insert(make_pair(score, counter));
       }
     }
@@ -135,39 +134,68 @@ void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const 
     counter++;
   }
 
-  printf("valid_scores.size(): %d\n", valid_scores.size());
+  // printf("valid_scores.size(): %d\n", valid_scores.size());
 
-  //
-
-  CVI_TDL_MemAllocInit(std::min((int)valid_scores.size(), MAX_LANE), lane_meta);
+  counter = 0;
+  std::vector<std::vector<float>> lane_info(valid_scores.size());  // score,x1,y1,x2,y2
+  std::vector<float> lane_dis;
 
   map<float, int>::reverse_iterator map_iter;
-  counter = 0;
-
   for (map_iter = valid_scores.rbegin(); map_iter != valid_scores.rend(); map_iter++) {
-    if (counter == MAX_LANE) break;
-
     int valid_index = map_iter->second;
-
     int start_index = valid_index * output0_shape.dim[2] * output0_shape.dim[3];
 
-    // printf("####################################################\n");
+    lane_info[counter].push_back(map_iter->first);
 
     for (int i = 0; i < NUM_POINTS; i++) {
-      float x = c_matrix[i][0] * curves[start_index] + c_matrix[i][1] * curves[start_index + 2] +
-                c_matrix[i][2] * curves[start_index + 4] + c_matrix[i][3] * curves[start_index + 6];
+      if (i == 13 || i == 41) {
+        float x = c_matrix[i][0] * curves[start_index] + c_matrix[i][1] * curves[start_index + 2] +
+                  c_matrix[i][2] * curves[start_index + 4] +
+                  c_matrix[i][3] * curves[start_index + 6];
 
-      float y = c_matrix[i][0] * curves[start_index + 1] +
-                c_matrix[i][1] * curves[start_index + 3] +
-                c_matrix[i][2] * curves[start_index + 5] + c_matrix[i][3] * curves[start_index + 7];
-
-      lane_meta->lane[counter].x[i] = x * frame_width;
-      lane_meta->lane[counter].y[i] = y * frame_height;
-
-      // printf("x: %f, y:%f\n", x, y);
+        float y =
+            c_matrix[i][0] * curves[start_index + 1] + c_matrix[i][1] * curves[start_index + 3] +
+            c_matrix[i][2] * curves[start_index + 5] + c_matrix[i][3] * curves[start_index + 7];
+        lane_info[counter].push_back(x);
+        lane_info[counter].push_back(y);
+      }
     }
 
+    float cur_dis = gen_x_by_y(1.0, lane_info[counter]);
+    cur_dis = (cur_dis - 0.5) * frame_width;
+
+    lane_dis.push_back(cur_dis);
     counter++;
+  }
+
+  vector<int> sort_index(valid_scores.size(), 0);
+  for (int i = 0; i != sort_index.size(); i++) {
+    sort_index[i] = i;
+  }
+
+  sort(sort_index.begin(), sort_index.end(),
+       [&](const int &a, const int &b) { return (lane_dis[a] < lane_dis[b]); });
+
+  std::vector<int> final_index;
+  for (int i = 0; i != sort_index.size(); i++) {
+    if (lane_dis[sort_index[i]] < 0) {
+      if (i == sort_index.size() - 1 || lane_dis[sort_index[i + 1]] > 0) {
+        final_index.push_back(sort_index[i]);
+      }
+
+    } else {
+      final_index.push_back(sort_index[i]);
+      break;
+    }
+  }
+
+  CVI_TDL_MemAllocInit(final_index.size(), lane_meta);
+  for (int i = 0; i < final_index.size(); i++) {
+    lane_meta->lane[i].x[0] = gen_x_by_y(0.6, lane_info[final_index[i]]) * frame_width;
+    lane_meta->lane[i].y[0] = 0.6 * frame_height;
+    lane_meta->lane[i].x[1] = gen_x_by_y(0.8, lane_info[final_index[i]]) * frame_width;
+    lane_meta->lane[i].y[1] = 0.8 * frame_height;
+    lane_meta->lane[i].score = lane_info[final_index[i]][0];
   }
 }
 

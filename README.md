@@ -7,8 +7,13 @@
 ``` shell
 ## zhenjie.wu应该替换为开发者名字
 git clone ssh://zhenjie.wu@gerrit-ai.sophgo.vip:29418/cvitek/cvi_manifest.git
-## 第一次经过漫长等待
-./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/default.xml
+
+#然后根据分支选择下面四条指令中的一个，进行代码下载:
+./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/default.xml  #master分支
+./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/golden/cv181x_cv180x_v4.1.0.xml  #V4.1.0分支
+./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/projects/cv182x_consumer_operator_ipc.xml #consumer_operator_ipc分支
+./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/development/cv186ah_dev.xml #A2分支
+
 ```
 
 编译cv181x或者cv180x

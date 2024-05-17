@@ -3,6 +3,7 @@
 #include "face_capture/face_capture.h"
 #include "person_capture/person_capture.h"
 #include "personvehicle_capture/personvehicle_capture.h"
+#include "vehicle_adas/vehicle_adas.h"
 
 CVI_S32 CVI_TDL_APP_CreateHandle(cvitdl_app_handle_t *handle, cvitdl_handle_t tdl_handle) {
   if (tdl_handle == NULL) {
@@ -14,6 +15,7 @@ CVI_S32 CVI_TDL_APP_CreateHandle(cvitdl_app_handle_t *handle, cvitdl_handle_t td
   ctx->face_cpt_info = NULL;
   ctx->person_cpt_info = NULL;
   ctx->personvehicle_cpt_info = NULL;
+  ctx->adas_info = NULL;
   *handle = ctx;
   return CVI_TDL_SUCCESS;
 }
@@ -23,9 +25,11 @@ CVI_S32 CVI_TDL_APP_DestroyHandle(cvitdl_app_handle_t handle) {
   _FaceCapture_Free(ctx->face_cpt_info);
   _PersonCapture_Free(ctx->person_cpt_info);
   _PersonVehicleCapture_Free(ctx->personvehicle_cpt_info);
+  _ADAS_Free(ctx->adas_info);
   ctx->face_cpt_info = NULL;
   ctx->person_cpt_info = NULL;
   ctx->personvehicle_cpt_info = NULL;
+  ctx->adas_info = NULL;
   return CVI_TDL_SUCCESS;
 }
 
@@ -188,4 +192,16 @@ DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCapture_Line(const cvitdl_app_handle
 CVI_S32 CVI_TDL_APP_PersonVehicleCapture_CleanAll(const cvitdl_app_handle_t handle) {
   cvitdl_app_context_t *ctx = handle;
   return _PersonVehicleCapture_CleanAll(ctx->personvehicle_cpt_info);
+}
+
+/* ADAS */
+
+CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size) {
+  cvitdl_app_context_t *ctx = handle;
+  return _ADAS_Init(&(ctx->adas_info), buffer_size);
+}
+
+CVI_S32 CVI_TDL_APP_ADAS_Run(const cvitdl_app_handle_t handle, VIDEO_FRAME_INFO_S *frame) {
+  cvitdl_app_context_t *ctx = handle;
+  return _ADAS_Run(ctx->adas_info, ctx->tdl_handle, frame);
 }

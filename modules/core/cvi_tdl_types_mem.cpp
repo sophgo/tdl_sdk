@@ -174,7 +174,8 @@ void CVI_TDL_FreeHandPoses(cvtdl_handpose21_meta_ts *handposes) { CVI_TDL_FreeCp
 
 void CVI_TDL_FreeClassMeta(cvtdl_class_meta_t *cls_meta) { CVI_TDL_FreeCpp(cls_meta); }
 
-void CVI_TDL_FreeSegLogits(cvtdl_seg_logits_t *seg_logits) { CVI_TDL_FreeCpp(seg_logits); }
+void CVI_TDL_FreeLane(cvtdl_lane_t *lane_meta) { CVI_TDL_FreeCpp(lane_meta); }
+
 // Copy
 
 void CVI_TDL_CopyInfoCpp(const cvtdl_face_info_t *info, cvtdl_face_info_t *infoNew) {
@@ -221,6 +222,10 @@ void CVI_TDL_CopyInfoCpp(const cvtdl_object_info_t *info, cvtdl_object_info_t *i
   infoNew->bbox = info->bbox;
   infoNew->feature.type = info->feature.type;
   infoNew->feature.size = info->feature.size;
+
+  infoNew->adas_properity.dis = info->adas_properity.dis;
+  infoNew->adas_properity.speed = info->adas_properity.speed;
+  infoNew->adas_properity.state = info->adas_properity.state;
 
   // infoNew->human_angle = info->human_angle;
   // infoNew->aspect_ratio = info->aspect_ratio;

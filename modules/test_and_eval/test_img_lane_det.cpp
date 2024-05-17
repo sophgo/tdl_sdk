@@ -28,11 +28,12 @@ void show_points(VIDEO_FRAME_INFO_S *bg, cvtdl_lane_t *lane_meta, std::string sa
   int det_num = lane_meta->size;
 
   for (int i = 0; i < det_num; i++) {
-    for (int j = 0; j < 56; j++) {
-      int x = (int)lane_meta->lane[i].x[j];
-      int y = (int)lane_meta->lane[i].y[j];
-      cv::circle(img_rgb, cv::Point(x, y), 7, color[i], -1);
-    }
+    int x0 = (int)lane_meta->lane[i].x[0];
+    int y0 = (int)lane_meta->lane[i].y[0];
+    int x1 = (int)lane_meta->lane[i].x[1];
+    int y1 = (int)lane_meta->lane[i].y[1];
+
+    cv::line(img_rgb, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 255, 0), 3);
   }
 
   // cv::imwrite("/tmp/yzx/3_data/test_lane.jpg", img_rgb);
