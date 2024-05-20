@@ -74,6 +74,7 @@ else()
     add_subdirectory(super_resolution)
     add_subdirectory(ocr/ocr_detection)
     add_subdirectory(ocr/ocr_recognition)
+    add_subdirectory(lane_detection/lstr)
     set(CORE_INTERFACE cvi_tdl_core.cpp)
 endif()
 

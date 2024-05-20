@@ -28,17 +28,16 @@ void show_points(VIDEO_FRAME_INFO_S *bg, cvtdl_lane_t *lane_meta, std::string sa
   int det_num = lane_meta->size;
 
   for (int i = 0; i < det_num; i++) {
-    for (int j = 0; j < 56; j++) {
-      int x = (int)lane_meta->lane[i].x[j];
-      int y = (int)lane_meta->lane[i].y[j];
-      cv::circle(img_rgb, cv::Point(x, y), 7, color[i], -1);
-    }
-  }
+    int x0 = (int)lane_meta->lane[i].x[0];
+    int y0 = (int)lane_meta->lane[i].y[0];
+    int x1 = (int)lane_meta->lane[i].x[1];
+    int y1 = (int)lane_meta->lane[i].y[1];
 
+    cv::line(img_rgb, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 255, 0), 3);
+  }
   cv::imwrite(save_path.c_str(), img_rgb);
   CVI_SYS_Munmap((void *)bg->stVFrame.pu8VirAddr[0], bg->stVFrame.u32Length[0]);
 }
-
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
@@ -59,18 +58,14 @@ int main(int argc, char *argv[]) {
   std::string strf1(argv[2]);
   std::string save_path(argv[3]);
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_POLYLANE, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_LSTR, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
     return ret;
   }
-  ret = CVI_TDL_Set_Polylanenet_Lower(tdl_handle, CVI_TDL_SUPPORTED_MODEL_POLYLANE, 0.4);
-  if (ret != CVI_SUCCESS) {
-    printf("Set_Polylanenet_Lower failed with %#x!\n", ret);
-    return ret;
-  }
+
   VIDEO_FRAME_INFO_S bg;
-  // printf("toread image:%s\n",argv[1]);
+
   imgprocess_t img_handle;
   CVI_TDL_Create_ImageProcessor(&img_handle);
   ret = CVI_TDL_ReadImage(img_handle, strf1.c_str(), &bg, PIXEL_FORMAT_BGR_888);
@@ -80,16 +75,15 @@ int main(int argc, char *argv[]) {
   } else {
     printf("image read,width:%d\n", bg.stVFrame.u32Width);
   }
-  // std::string str_res;
+
   for (int i = 0; i < 1; i++) {
     cvtdl_lane_t lane_meta = {0};
-    CVI_TDL_PolyLane_Det(tdl_handle, &bg, &lane_meta);
+    CVI_TDL_LSTR_Det(tdl_handle, &bg, &lane_meta);
     show_points(&bg, &lane_meta, save_path);
     printf("obj_size: %d\n", lane_meta.size);
     CVI_TDL_Free(&lane_meta);
   }
 
-  // std::cout << str_res << std::endl;
   CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_TDL_Destroy_ImageProcessor(img_handle);

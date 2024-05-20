@@ -179,6 +179,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION)                    \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION)                  \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LSTR)                         \
 // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -1695,6 +1696,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_PolyLane_Det(const cvitdl_handle_t handle, VIDEO_FRAM
 
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Polylanenet_Lower(const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index, float th);
 
+DLL_EXPORT CVI_S32 CVI_TDL_LSTR_Det(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvtdl_lane_t *lane_meta);
 #ifdef __cplusplus
 }
 #endif

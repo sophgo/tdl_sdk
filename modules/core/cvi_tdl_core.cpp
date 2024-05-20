@@ -28,6 +28,7 @@
 #include "image_classification/image_classification.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "lane_detection/lane_detection.hpp"
+#include "lane_detection/lstr/lstr.hpp"
 #include "lane_detection/polylanenet/polylanenet.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
@@ -236,6 +237,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, CREATOR(SuperResolution)},
     {CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION, CREATOR(OCRDetection)},
     {CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, CREATOR(OCRRecognition)},
+    {CVI_TDL_SUPPORTED_MODEL_LSTR, CREATOR(LSTR)},
 };
 
 //*************************************************
@@ -926,6 +928,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Detection, OCRDetection, CVI_TDL_SUPPORTED_MOD
                       cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Recognition, OCRRecognition,
                       CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_LSTR_Det, LSTR, CVI_TDL_SUPPORTED_MODEL_LSTR, cvtdl_lane_t *)
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
   return crop_image(srcFrame, dst, bbox, cvtRGB888);

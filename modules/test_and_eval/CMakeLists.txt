@@ -121,7 +121,7 @@ buildninstallcpp(NAME test_img_lpd_lpr_v2 INC ${REG_INCLUDES} DEPS cvi_tdl atomi
 buildninstallcpp(NAME test_img_od INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_fd INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_lane_det INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
-buildninstallcpp(NAME test_img_polylane INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_img_lstr INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_hand_detection INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_hand_cls INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_img_pet_detection INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
