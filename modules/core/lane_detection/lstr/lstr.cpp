@@ -92,12 +92,15 @@ int LSTR::outputParser(cvtdl_lane_t *lane_meta) {
   for (int i = 0; i != sort_index.size(); i++) {
     if (lane_dis[sort_index[i]] < 0) {
       if (i == sort_index.size() - 1 || lane_dis[sort_index[i + 1]] > 0) {
-        final_index.push_back(sort_index[i]);
+        if (point_map[sort_index[i]][1] - point_map[sort_index[i]][0] > 0.4)
+          final_index.push_back(sort_index[i]);
       }
 
     } else {
-      final_index.push_back(sort_index[i]);
-      break;
+      if (point_map[sort_index[i]][1] - point_map[sort_index[i]][0] > 0.4) {
+        final_index.push_back(sort_index[i]);
+        break;
+      }
     }
   }
   lane_meta->size = final_index.size();
@@ -107,8 +110,8 @@ int LSTR::outputParser(cvtdl_lane_t *lane_meta) {
     return CVI_TDL_SUCCESS;
   }
   for (int i = 0; i < lane_meta->size; i++) {
-    float lower = std::max(0.0f, point_map[final_index[i]][1]);
-    float upper = std::min(1.0f, point_map[final_index[i]][0]);
+    float upper = std::min(1.0f, point_map[final_index[i]][1]);
+    float lower = std::max(0.0f, point_map[final_index[i]][0]);
     float slice = (upper - lower) / 100;
     float true_y1 = lower + 25 * slice;
     float true_x1 = gen_x_by_y(true_y1, point_map[final_index[i]]);
