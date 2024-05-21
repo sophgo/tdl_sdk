@@ -72,7 +72,7 @@ endif
 #####################################################
 MW_LIB_PATH = $(MW_PATH)/lib
 MW_INC_PATH = $(MW_PATH)/include
-MW_PANEL_INC_PATH += ${MW_PATH}/include/panel
+MW_PANEL_INC_PATH = ${MW_PATH}/include/panel
 MW_SAMPLE_PATH = $(MW_PATH)/sample/common
 MW_3RD_LIB_PATH = $(MW_LIB_PATH)/3rd
 ifeq ($(origin MW_PANEL_BOARD_INC_PATH), undefined)
@@ -130,6 +130,7 @@ else ifeq ($(MW_VERSION), v3)
 		MW_LIBS = -lini -lmsg -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
 		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv181x
+		MW_PANEL_INC_PATH = ${MW_PATH}/include
 		CFLAGS += -DCV181X
 		SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
 			 ${MW_SAMPLE_PATH}/sample_common_sys.c \

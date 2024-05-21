@@ -1,4 +1,4 @@
-#include "image_classification.hpp"
+#include "raw_image_classification.hpp"
 #include <core/core/cvtdl_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +22,21 @@
 
 #define topK 5
 
-std::vector<int> TopKIndex(std::vector<float> &vec, int topk) {
+namespace cvitdl {
+
+RawImageClassification::RawImageClassification() : Core(CVI_MEM_DEVICE) {
+  this->setUseMmap(true);
+  this->setraw(true);
+}
+
+int RawImageClassification::onModelOpened() {
+  if (getNumOutputTensor() != 1) {
+    LOGE("RawImageClassification only expected 1 output branch!\n");
+  }
+
+  return CVI_TDL_SUCCESS;
+}
+std::vector<int> RawImageClassification::TopKIndex(std::vector<float> &vec, int topk) {
   std::vector<int> topKIndex;
   topKIndex.clear();
 
@@ -41,23 +55,11 @@ std::vector<int> TopKIndex(std::vector<float> &vec, int topk) {
   return topKIndex;
 }
 
-namespace cvitdl {
+RawImageClassification::~RawImageClassification() {}
 
-ImageClassification::ImageClassification() : Core(CVI_MEM_SYSTEM) {}
-
-int ImageClassification::onModelOpened() {
-  if (getNumOutputTensor() != 1) {
-    LOGE("ImageClassification only expected 1 output branch!\n");
-  }
-
-  return CVI_TDL_SUCCESS;
-}
-
-ImageClassification::~ImageClassification() {}
-
-int ImageClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
+int RawImageClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
-    LOGE("ImageClassification only has 1 input.\n");
+    LOGE("RawImageClassification only has 1 input.\n");
     return CVI_TDL_ERR_INVALID_ARGS;
   }
   for (int i = 0; i < 3; i++) {
@@ -72,12 +74,12 @@ int ImageClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> 
   return CVI_TDL_SUCCESS;
 }
 
-void ImageClassification::set_param(VpssPreParam *p_preprocess_cfg) {
+void RawImageClassification::set_param(VpssPreParam *p_preprocess_cfg) {
   p_preprocess_cfg_ = p_preprocess_cfg;
 }
 
-int ImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                                        VPSSConfig &vpss_config) {
+int RawImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
+                                           VIDEO_FRAME_INFO_S *dstFrame, VPSSConfig &vpss_config) {
   auto &vpssChnAttr = vpss_config.chn_attr;
   auto &factor = vpssChnAttr.stNormalize.factor;
   auto &mean = vpssChnAttr.stNormalize.mean;
@@ -126,19 +128,20 @@ int ImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAM
 //   fclose(fp);
 //   return CVI_SUCCESS;
 // }
-int ImageClassification::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_meta_t *cls_meta) {
+int RawImageClassification::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_meta_t *cls_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
 
   if (srcFrame->stVFrame.u64PhyAddr[0] == 0 && hasSkippedVpssPreprocess()) {
     const TensorInfo &tinfo = getInputTensorInfo(0);
     int8_t *input_ptr = tinfo.get<int8_t>();
+    printf("Copy during inference\n");
     memcpy(input_ptr, srcFrame->stVFrame.pu8VirAddr[0], srcFrame->stVFrame.u32Length[0]);
   }
 
   // dump_frame_result("img_cls_pre.bin",srcFrame);
   int ret = run(frames);
   if (ret != CVI_TDL_SUCCESS) {
-    LOGE("ImageClassification run inference failed\n");
+    LOGE("RawImageClassification run inference failed\n");
     return ret;
   }
 
@@ -147,7 +150,7 @@ int ImageClassification::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_met
   return CVI_TDL_SUCCESS;
 }
 
-void ImageClassification::outputParser(cvtdl_class_meta_t *cls_meta) {
+void RawImageClassification::outputParser(cvtdl_class_meta_t *cls_meta) {
   TensorInfo oinfo = getOutputTensorInfo(0);
   int8_t *ptr_int8 = static_cast<int8_t *>(oinfo.raw_pointer);
   uint8_t *ptr_uint8 = static_cast<uint8_t *>(oinfo.raw_pointer);
@@ -159,16 +162,11 @@ void ImageClassification::outputParser(cvtdl_class_meta_t *cls_meta) {
   float qscale = num_per_pixel == 1 ? oinfo.qscale : 1;
 
   std::vector<float> scores;
-  printf("output num:%d,datatype:%d\n", channel_len, oinfo.data_type);
+  // printf("output num:%d,datatype:%d\n",channel_len,oinfo.data_type);
   // int8 output tensor need to multiply qscale
   for (int i = 0; i < channel_len; i++) {
     if (num_per_pixel == 1) {
-      if (oinfo.data_type == 3) {
-        scores.push_back(ptr_uint8[i] * qscale);
-      } else {
-        scores.push_back(ptr_int8[i] * qscale);
-      }
-
+      scores.push_back(ptr_int8[i] * qscale);
     } else {
       scores.push_back(ptr_float[i]);
     }

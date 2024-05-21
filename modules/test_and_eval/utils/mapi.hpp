@@ -42,11 +42,10 @@ int CVI_MAPI_Media_Init(uint32_t img_w, uint32_t img_h, uint32_t blk_cnt) {
   memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
   stVbConf.u32MaxPoolCnt = 2;
 
-  u32BlkSize = COMMON_GetPicBufferSize(stSize.u32Width, stSize.u32Height, SAMPLE_PIXEL_FORMAT,
-                                       DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
-  u32BlkRotSize = COMMON_GetPicBufferSize(stSize.u32Height, stSize.u32Width, SAMPLE_PIXEL_FORMAT,
-                                          DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
-  u32BlkSize = u32BlkSize > u32BlkRotSize ? u32BlkSize : u32BlkRotSize;
+  u32BlkSize =
+      COMMON_GetPicBufferSize(stSize.u32Width, stSize.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
+                              DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
+  u32BlkSize = u32BlkSize;
 
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[0].u32BlkCnt = blk_cnt;  // 10
@@ -352,7 +351,7 @@ static CVI_S32 set_vpss_config(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *stVpssGrpAttr,
     astVpssChnAttr[VpssChn].u32Width = arg->width;
     astVpssChnAttr[VpssChn].u32Height = arg->height;
     astVpssChnAttr[VpssChn].enVideoFormat = VIDEO_FORMAT_LINEAR;
-    astVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_BGR_888_PLANAR;
+    astVpssChnAttr[VpssChn].enPixelFormat = PIXEL_FORMAT_BGR_888;
     astVpssChnAttr[VpssChn].stFrameRate.s32SrcFrameRate = 30;
     astVpssChnAttr[VpssChn].stFrameRate.s32DstFrameRate = 30;
     astVpssChnAttr[VpssChn].u32Depth = 1;

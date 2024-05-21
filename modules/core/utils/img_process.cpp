@@ -310,6 +310,7 @@ class ImageProcessorOpenCV : public ImageProcessor {
                              uint32_t width, uint32_t height) override {
     return read_centercrop_resize_image(filepath, frame, format, width, height);
   }
+
   int release(VIDEO_FRAME_INFO_S *frame) override { return release_image(frame); }
 };
 #endif
@@ -348,7 +349,6 @@ CVI_S32 CVI_TDL_ReadImage_CenrerCrop_Resize(imgprocess_t handle, const char *fil
   ImageProcessor *ctx = static_cast<ImageProcessor *>(handle);
   return ctx->read_centercrop_resize(filepath, frame, format, width, height);
 }
-
 
 CVI_S32 CVI_TDL_Destroy_ImageProcessor(imgprocess_t handle) {
   ImageProcessor *ctx = static_cast<ImageProcessor *>(handle);

@@ -5,13 +5,14 @@
 
 namespace cvitdl {
 
-class ImageClassification final : public Core {
+class RawImageClassification final : public Core {
  public:
-  ImageClassification();
-  virtual ~ImageClassification();
+  RawImageClassification();
+  virtual ~RawImageClassification();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_meta_t *meta);
   void set_param(VpssPreParam *p_preprocess_cfg);
   virtual bool allowExportChannelAttribute() const override { return true; }
+  std::vector<int> TopKIndex(std::vector<float> &vec, int topk);
 
  private:
   virtual int onModelOpened() override;

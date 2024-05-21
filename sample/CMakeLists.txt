@@ -129,6 +129,7 @@ set(SAMPLE_LIBS_FILE
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_bin.c
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.c
 )
+add_definitions(-DSENSOR_GCORE_GC4653)
 elseif(${MW_VER} STREQUAL "v3")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so

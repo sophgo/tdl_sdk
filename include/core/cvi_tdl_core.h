@@ -166,9 +166,11 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION)                  \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LP_DETECTION)                     \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION)             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION)             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HRNET_POSE)                       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
 // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -1530,6 +1532,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_Image_Classification(const cvitdl_handle_t handle,
                                                cvtdl_class_meta_t *obj_meta);
 
 /**
+ * @brief raw image classification
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param object cvtdl_class_meta_t structure, top 5 class info and score
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Raw_Image_Classification(const cvitdl_handle_t handle,
+                                                  VIDEO_FRAME_INFO_S *frame,
+                                                  cvtdl_class_meta_t *obj_meta);
+
+/**
  * @brief get yolo preprocess param struct
  *
  * @param handle An TDL SDK handle.
@@ -1580,6 +1594,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_Byte(const cvitdl_handle_t handle, cvtdl_obj
 
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Image_Cls_Param(const cvitdl_handle_t handle,
                                               VpssPreParam *p_preprocess_cfg);
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Raw_Image_Cls_Param(const cvitdl_handle_t handle,
+                                              VpssPreParam *p_preprocess_cfg);
 DLL_EXPORT CVI_S32 CVI_TDL_Set_YOLO_Param(const cvitdl_handle_t handle,
                                          YoloPreParam *p_preprocess_cfg,
                                          YoloAlgParam *p_yolo_param);
@@ -1591,10 +1607,44 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_YOLO_Param(const cvitdl_handle_t handle,
  * @param cvtdl_clip_feature save feature and dim, need custom free 
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Clip_Feature(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                        cvtdl_clip_feature *clip_feature);
+                                     cvtdl_clip_feature *clip_feature);
+
+
+/**
+ * @brief Yolov8 Hardhat
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_YOLOV8_Hardhat(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                           cvtdl_object_t *obj_meta);
+
+                                         
+/**
+ * @brief get audio algorithm param
+ *
+ * @param handle An TDL SDK handle.
+ * @param model_index Supported model list.
+ * @return AudioAlgParam audio algorithm param struct.
+ */
+DLL_EXPORT AudioAlgParam CVI_TDL_Get_Audio_Algparam(const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index); 
+
+
+/**
+ * @brief set audio algorithm param
+ *
+ * @param handle An TDL SDK handle.
+ * @param model_index Supported model list.
+ * @param audio_param audio algorithm param struct.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index, AudioAlgParam audio_param);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif  // End of _CVI_TDL_CORE_H_
+

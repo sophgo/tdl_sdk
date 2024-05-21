@@ -33,6 +33,8 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
 
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
 
+void Core::setraw(bool raw) { this->raw = raw; }
+
 int Core::modelOpen(const char *filepath) {
   if (!mp_mi) {
     LOGE("config not set\n");

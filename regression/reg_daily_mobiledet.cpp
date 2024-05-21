@@ -445,11 +445,13 @@ TEST_F(MobileDetV2TestSuite, accuracy) {
               << obj_meta->info[det_index].bbox.y1 << "," << obj_meta->info[det_index].bbox.x2
               << "," << obj_meta->info[det_index].bbox.y2 << ","
               << obj_meta->info[det_index].classes << "," << obj_meta->info[det_index].bbox.score
-              << "],\n";
-          printf("info.classes == catId : %d\n", obj_meta->info[det_index].classes == catId);
-          printf("iou(info.bbox, bbox): %f\n", iou(obj_meta->info[det_index].bbox, expected_bbox));
-          printf("abs(info.bbox.score - bbox.score): %f\n",
-                 abs(obj_meta->info[det_index].bbox.score - expected_bbox.score));
+              << "], \n"
+              << "[ info.classes == catId : " << (obj_meta->info[det_index].classes == catId)
+              << "], \n"
+              << "[ iou(info.bbox, bbox): " << iou(obj_meta->info[det_index].bbox, expected_bbox)
+              << "], \n"
+              << "[ abs(info.bbox.score - bbox.score): "
+              << abs(obj_meta->info[det_index].bbox.score - expected_bbox.score) << "], \n";
         }
       }
       CVI_TDL_FreeCpp(obj_meta);

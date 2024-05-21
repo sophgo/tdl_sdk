@@ -15,6 +15,7 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
 
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
 void Core::setUseMmap(bool mmap) { use_mmap = mmap; }
+void Core::setraw(bool raw) { this->raw = raw; }
 
 void Core::cleanupError() {
   if (mp_mi->handle != nullptr) {
@@ -184,6 +185,7 @@ void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_m
                                 std::map<std::string, TensorInfo> &tensor_info) {
   for (int32_t i = 0; i < p_mi->in.num; i++) {
     TensorInfo tinfo;
+    memset(&tinfo, 0, sizeof(tinfo));
     tinfo.tensor_name = net_info->input_names[i];
     auto &stages = net_info->stages[0];
     tinfo.shape.dim_size = stages.input_shapes[i].num_dims;
@@ -192,6 +194,7 @@ void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_m
 
     tinfo.tensor_elem = bmrt_shape_count(&stages.input_shapes[i]);
     tinfo.tensor_size = tinfo.tensor_elem * bmrt_data_type_size(net_info->input_dtypes[i]);
+    tinfo.data_type = net_info->output_dtypes[i];
     tinfo.qscale = net_info->input_scales[i];
     if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
       tinfo.raw_pointer = p_mi->in.raw_pointer[i];
@@ -206,6 +209,7 @@ void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_
                                  std::map<std::string, TensorInfo> &tensor_info) {
   for (int32_t i = 0; i < p_mi->out.num; i++) {
     TensorInfo tinfo;
+    memset(&tinfo, 0, sizeof(tinfo));
     tinfo.tensor_name = net_info->output_names[i];
     auto &stages = net_info->stages[0];
     tinfo.shape.dim_size = stages.output_shapes[i].num_dims;
@@ -215,7 +219,7 @@ void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_
 
     tinfo.tensor_elem = bmrt_shape_count(&stages.output_shapes[i]);
     tinfo.tensor_size = tinfo.tensor_elem * bmrt_data_type_size(net_info->output_dtypes[i]);
-
+    tinfo.data_type = net_info->output_dtypes[i];
     tinfo.qscale = net_info->output_scales[i];
     tinfo.raw_pointer = p_mi->out.raw_pointer[i];
     tensor_info.emplace(std::pair<std::string, TensorInfo>(tinfo.tensor_name, tinfo));
@@ -471,7 +475,6 @@ int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
 
 int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   int ret = CVI_TDL_SUCCESS;
-
   if (m_skip_vpss_preprocess && !allowExportChannelAttribute()) {
     return CVI_TDL_ERR_INVALID_ARGS;
   }
@@ -529,7 +532,6 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     LOGE("registerFrame2Tensor failed: Unsupport operation.\n");
     return ret;
   }
-
   ret =
       bmrt_launch_tensor_ex(mp_mi->handle, mp_mi->net_names[0], mp_mi->in.tensors.data(),
                             mp_mi->in.num, mp_mi->out.tensors.data(), mp_mi->out.num, true, false);
@@ -582,10 +584,12 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
 
   for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
     auto frame = frames[i];
-    if (input_w != frame->stVFrame.u32Width || input_h != frame->stVFrame.u32Height) {
-      LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]", frame->stVFrame.u32Width,
-           frame->stVFrame.u32Height, input_w, input_h);
-      return CVI_TDL_FAILURE;
+    if (!raw) {
+      if (input_w != frame->stVFrame.u32Width || input_h != frame->stVFrame.u32Height) {
+        LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]",
+             frame->stVFrame.u32Width, frame->stVFrame.u32Height, input_w, input_h);
+        return CVI_TDL_FAILURE;
+      }
     }
 
     size_t image_size =
