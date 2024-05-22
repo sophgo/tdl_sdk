@@ -89,6 +89,29 @@ set(SAMPLE_LIBS
 )
 
 if("${MW_VER}" STREQUAL "v2")
+    if(${CVI_PLATFORM} STRLESS "CV186X")
+        set(SAMPLE_LIBS
+            ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libldc.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+            ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+            ${MLIR_SDK_ROOT}/lib/libz.so
+        )
+    endif()
 set(SAMPLE_LIBS ${SAMPLE_LIBS}
     ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
 )
@@ -179,7 +202,7 @@ buildninstallcpp(NAME eval_raw_image_classification INC ${REG_INCLUDES} DEPS cvi
 buildninstallcpp(NAME eval_ppyoloe INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME eval_dms_landmarks_imgs INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 endif()
-install(FILES sample_yolo.cpp sample_yolov5.cpp sample_yolov5_roi.cpp 
-              sample_yolov6.cpp sample_yolov7.cpp sample_yolov8.cpp 
-              sample_ppyoloe.cpp sample_yolox.cpp sample_yolo.cpp 
+install(FILES sample_yolo.cpp sample_yolov5.cpp sample_yolov5_roi.cpp
+              sample_yolov6.cpp sample_yolov7.cpp sample_yolov8.cpp
+              sample_ppyoloe.cpp sample_yolox.cpp sample_yolo.cpp
               DESTINATION sample/cvi_yolo/)
