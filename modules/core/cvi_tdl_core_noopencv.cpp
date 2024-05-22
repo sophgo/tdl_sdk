@@ -1318,3 +1318,20 @@ CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle,
   LOGE("not supported model index\n");
   return CVI_FAILURE;
 }
+
+CVI_S32 CVI_TDL_SoundClassification_V2_Pack(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            int pack_idx, int pack_len, int *index) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  SoundClassificationV2 *sc_model = dynamic_cast<SoundClassificationV2 *>(
+      getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, ctx));
+  if (sc_model == nullptr) {
+    LOGE("No instance found for SoundClassificationV2.\n");
+    return CVI_FAILURE;
+  }
+  if (!sc_model->isInitialized()) {
+    LOGE("SoundClassificationV2 has not been initialized");
+    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
+  }
+  int ret = sc_model->inference_pack(frame, pack_idx, pack_len, index);
+  return ret;
+}

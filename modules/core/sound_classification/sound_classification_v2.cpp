@@ -42,11 +42,11 @@ int SoundClassificationV2::onModelOpened() {
   audio_param_.fmax = audio_param_.sample_rate / 2;
   int num_frames = audio_param_.time_len * audio_param_.sample_rate;
 
-  // std::cout << "input_shape = " << input_shape.dim[2] << ", sample_rate = " << sample_rate_
-  //           << ", time_len_ = " << time_len_ << std::endl;
   mp_extractor_ = new MelFeatureExtract(num_frames, audio_param_.sample_rate, audio_param_.num_fft,
                                         audio_param_.hop_len, audio_param_.num_mel,
                                         audio_param_.fmin, audio_param_.fmax, "reflect", htk);
+  LOGI("model input width:%d,height:%d,sample_rate:%d,time_len:%d\n", image_width,
+       input_shape.dim[3], audio_param_.sample_rate, audio_param_.time_len);
   return CVI_SUCCESS;
 }
 
@@ -66,7 +66,6 @@ void SoundClassificationV2::set_algparam(AudioAlgParam audio_param) {
 int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   int img_width = stOutFrame->stVFrame.u32Width / 2;  // unit: 16 bits
   int img_height = stOutFrame->stVFrame.u32Height;
-  // Mat *image = new Mat(img_height, img_width);
 
   // save audio to image array
   short *temp_buffer = reinterpret_cast<short *>(stOutFrame->stVFrame.pu8VirAddr[0]);
@@ -74,38 +73,51 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
   mp_extractor_->update_data(temp_buffer, img_width * img_height);
 
   model_timer_.TicToc("start");
-  // mp_extractor_->update_data(temp_buffer,img_width*img_height);
 
-  // std::cout<<"update data done\n";
   const TensorInfo &tinfo = getInputTensorInfo(0);
   int8_t *input_ptr = tinfo.get<int8_t>();
-  // mp_extractor_->melspectrogram_impl(input_ptr, int(tinfo.tensor_elem), tinfo.qscale);
-  // int8_t *optimize_ptr = new int8_t[int(tinfo.tensor_elem)];
+
   mp_extractor_->melspectrogram_optimze(temp_buffer, img_width * img_height, input_ptr,
                                         int(tinfo.tensor_elem), tinfo.qscale, audio_param_.fix);
-  // int iseq = 1;
-  // for(int i = 0; i < int(tinfo.tensor_elem);i++){
-  //   int diff = input_ptr[i] - optimize_ptr[i];
-  //   if(diff != 0){
-  //     std::cout<<"not
-  //     equal:"<<i<<",src:"<<int(input_ptr[i])<<",new:"<<int(optimize_ptr[i])<<std::endl; break;
-  //   }
-  // }
-
-  // FILE *fp = fopen("/mnt/data/admin1_data/alios_test/feat.bin","wb");
-  // fwrite(input_ptr,tinfo.tensor_elem,1,fp);
-  // fclose(fp);
-  // std::cout<<"melspectrogram_impl data done\n";
 
   std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
   run(frames);
-  // std::cout<<"run data done\n";
+
   const TensorInfo &info = getOutputTensorInfo(0);
 
   // get top k
   *index = get_top_k(info.get<float>(), info.tensor_elem);
   model_timer_.TicToc("post");
   // std::cout<<"output index:"<<*index<<std::endl;
+  return CVI_SUCCESS;
+}
+
+int SoundClassificationV2::inference_pack(VIDEO_FRAME_INFO_S *stOutFrame, int pack_idx,
+                                          int pack_len, int *index) {
+  int img_width = stOutFrame->stVFrame.u32Width / 2;  // unit: 16 bits
+  int img_height = stOutFrame->stVFrame.u32Height;
+
+  // save audio to image array
+  short *temp_buffer = reinterpret_cast<short *>(stOutFrame->stVFrame.pu8VirAddr[0]);
+  // normal_sound(temp_buffer, img_width * img_height);
+  model_timer_.TicToc("start");
+
+  const TensorInfo &tinfo = getInputTensorInfo(0);
+  int8_t *input_ptr = tinfo.get<int8_t>();
+
+  mp_extractor_->melspectrogram_pack_optimize(temp_buffer, img_width * img_height, pack_len,
+                                              pack_idx, input_ptr, int(tinfo.tensor_elem),
+                                              tinfo.qscale, audio_param_.fix);
+
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
+  run(frames);
+
+  const TensorInfo &info = getOutputTensorInfo(0);
+
+  // get top k
+  *index = get_top_k(info.get<float>(), info.tensor_elem);
+  model_timer_.TicToc("post");
+
   return CVI_SUCCESS;
 }
 int SoundClassificationV2::get_top_k(float *result, size_t count) {
@@ -121,9 +133,9 @@ int SoundClassificationV2::get_top_k(float *result, size_t count) {
       idx = i;
     }
     sum_e = float(sum_e) + float(cur_e);
-    std::cout << i << ": " << cur_e << "\t";
+    // std::cout << i << ": " << cur_e << "\t";
   }
-
+  // std::cout << "\n";
   // for (size_t i = 0; i < count; i++) {
   //   cur_e = std::exp(result[i]) / sum_e;
   //   std::cout << "  i:" << i << ", score:" << cur_e;

@@ -12,6 +12,8 @@ class SoundClassificationV2 final : public Core {
   virtual ~SoundClassificationV2();
   int onModelOpened();
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index);
+  int inference_pack(VIDEO_FRAME_INFO_S *stOutFrame, int pack_idx, int pack_len, int *index);
+
   int setThreshold(const float th) {
     threshold_ = th;
     return CVI_SUCCESS;

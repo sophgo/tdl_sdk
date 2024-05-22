@@ -3,20 +3,19 @@
 #include <signal.h>
 #include <unistd.h>
 #include <iostream>
-#include <map>
-#include <queue>
-#include <sstream>
-#include <string>
+
 #include <vector>
 #include "cvi_audio.h"
 #include "cvi_tdl.h"
 #include "sample_utils.h"
 
-#include <fcntl.h>
-#include <sys/ioctl.h>
+// #include <fcntl.h>
+// #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include "acodec.h"
+
 #define ACODEC_ADC "/dev/cvitekaadc"
 
 #define AUDIOFORMATSIZE 2
@@ -25,26 +24,20 @@
 #define PERIOD_SIZE 640
 #define SIZE PERIOD_SIZE *AUDIOFORMATSIZE
 
-// #define SAMPLE_RATE 8000
-// #define FRAME_SIZE SAMPLE_RATE *AUDIOFORMATSIZE *SECOND  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
+static int g_flag = 0;
 
-// ESC class name
-enum Classes { NO_BABY_CRY, BABY_CRY };
-// This model has 6 classes, including Sneezing, Coughing, Clapping, Baby Cry, Glass breaking,
-// Office. There will be a Normal option in the end, becuase the score is lower than threshold, we
-// will set it to Normal.
-// static const char *enumStr[] = {"无指令", "小晶小晶", "拨打电话", "关闭屏幕", "无指令",
-// "我要拍照", "我要录像"};
 static const char *enumStr[] = {"无指令", "小爱小爱", "拨打电话", "关闭屏幕", "打开屏幕",
                                 "无指令", "小宝小宝", "拨打电话", "关闭屏幕", "打开屏幕",
                                 "无指令", "小蓝小蓝", "拨打电话", "关闭屏幕", "打开屏幕",
                                 "无指令", "小胖小胖", "拨打电话", "关闭屏幕", "打开屏幕",
                                 "无指令", "你好视云", "拨打电话", "关闭屏幕", "打开屏幕"};
 
-static std::queue<std::array<int, SIZE>> que;
-bool gRun = true;     // signal
-bool record = false;  // record to output
-char *outpath;        // output file path
+static std::vector<uint8_t *> g_pack_buf_vec;
+static int g_pack_idx = 0;
+bool gRun = true;  // signal
+int g_record = false;
+char *g_outpath = nullptr;  // output file path
+
 static int start_index;
 static int SAMPLE_RATE;
 static int SECOND;
@@ -66,27 +59,41 @@ void *thread_audio(void *arg) {
   CVI_S32 s32Ret;
   AUDIO_FRAME_S stFrame;
   AEC_FRAME_S stAecFrm;
-
-  std::array<int, SIZE> buffer_temp;
+  uint32_t loop = SAMPLE_RATE / PERIOD_SIZE * SECOND;
+  printf("enter thread_audio\n");
   while (gRun) {
     s32Ret = CVI_AI_GetFrame(0, 0, &stFrame, &stAecFrm, CVI_AUDIO_BLOCK_MODE);  // Get audio frame
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("CVI_AI_GetFrame --> none!!\n");
       continue;
     } else {
-      // 3 seconds
-      // memcpy(buffer_temp, (CVI_U8 *)stFrame.u64VirAddr[0], size);
-      {
-        MutexAutoLock(ResultMutex, lock);
-        std::copy(stFrame.u64VirAddr[0], stFrame.u64VirAddr[0] + SIZE, buffer_temp.begin());
-        que.push(buffer_temp);
-        que.pop();
+      MutexAutoLock(ResultMutex, lock);
+      uint8_t *p_pack_buf = nullptr;
+      if (g_pack_buf_vec.size() >= loop) {
+        p_pack_buf = g_pack_buf_vec[0];
+        g_pack_buf_vec.erase(g_pack_buf_vec.begin());
+        g_pack_idx += 1;
+      } else {
+        p_pack_buf = (uint8_t *)malloc(SIZE);
       }
+      short *p_data = (short *)stFrame.u64VirAddr[0];
+      int min_val = 1e5, max_val = 0;
+      for (int k = 0; k < PERIOD_SIZE; k++) {
+        if (p_data[k] < min_val) min_val = p_data[k];
+        if (p_data[k] > max_val) max_val = p_data[k];
+      }
+
+      memcpy(p_pack_buf, (CVI_U8 *)stFrame.u64VirAddr[0], SIZE);
+      g_pack_buf_vec.push_back(p_pack_buf);
     }
+    s32Ret = CVI_AI_ReleaseFrame(0, 0, &stFrame, &stAecFrm);
+    if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_ReleaseFrame Failed!!\n");
   }
 
-  s32Ret = CVI_AI_ReleaseFrame(0, 0, &stFrame, &stAecFrm);
-  if (s32Ret != CVI_TDL_SUCCESS) printf("CVI_AI_ReleaseFrame Failed!!\n");
+  for (size_t i = 0; i < g_pack_buf_vec.size(); i++) {
+    free(g_pack_buf_vec[i]);
+  }
+  g_pack_buf_vec.clear();
 
   pthread_exit(NULL);
 }
@@ -94,7 +101,6 @@ void *thread_audio(void *arg) {
 // Get frame and set it to global buffer
 void *thread_infer(void *arg) {
   uint32_t loop = SAMPLE_RATE / PERIOD_SIZE * SECOND;  // 3 seconds
-  uint32_t size = 640 * 2;  // PERIOD_SIZE * AUDIOFORMATSIZE;       // PCM_FORMAT_S16_LE (2bytes)
 
   // Set video frame interface
   CVI_U8 buffer[FRAME_SIZE];  // 3 seconds
@@ -107,59 +113,69 @@ void *thread_infer(void *arg) {
   printf("SAMPLE_RATE %d, SIZE:%d, FRAME_SIZE:%d \n", SAMPLE_RATE, SIZE, FRAME_SIZE);
 
   // classify the sound result
-  int index = 0;
+  int cal_counter = 0;
   int pre_label = -1;
   int maxval_sound = 0;
-
-  std::array<int, SIZE> buffer_temp;
-
+  int pack_idx = 0;
+  int pack_len = PERIOD_SIZE;
+  int ret = CVI_TDL_SUCCESS;
+  float ts_avg = 0;
+  int wait_ts = 250;
+  if (g_flag == 1) {
+    wait_ts =
+        310;  // because inference time of pack version is about 60ms less than original version
+  }
+  struct timeval last_ts;
+  gettimeofday(&last_ts, NULL);
   while (gRun) {
+    if (g_pack_buf_vec.size() < loop) {
+      usleep(100);
+      continue;
+    }
     {
       MutexAutoLock(ResultMutex, lock);
+      pack_idx = g_pack_idx;
       for (uint32_t i = 0; i < loop; i++) {
-        // memcpy(buffer + i * size, (CVI_U8 *)que[i],
-        //          size);  // Set the period size date to global buffer
-        buffer_temp = que.front();
-        que.pop();
-        std::copy(std::begin(buffer_temp), std::end(buffer_temp), buffer + i * size);
-        que.push(buffer_temp);
+        memcpy(buffer + i * SIZE, (CVI_U8 *)g_pack_buf_vec[i],
+               SIZE);  // Set the period size date to global buffer
       }
     }
-
-    int16_t *psound = (int16_t *)buffer;
-    float meanval = 0;
-    for (int i = 0; i < SAMPLE_RATE * SECOND; i++) {
-      meanval += psound[i];
-      if (psound[i] > maxval_sound) {
-        maxval_sound = psound[i];
-      }
+    struct timeval start;
+    gettimeofday(&start, NULL);
+    if (g_flag == 0) {
+      ret = CVI_TDL_SoundClassification_V2(tdl_handle, &Frame, &pre_label);  // Detect the audio
+    } else {
+      ret = CVI_TDL_SoundClassification_V2_Pack(tdl_handle, &Frame, pack_idx, pack_len,
+                                                &pre_label);  // Detect the audio
     }
-    // printf("maxvalsound:%d,meanv:%f\n", maxval_sound, meanval / (SAMPLE_RATE * SECOND));
-    if (!record) {
-      int ret = CVI_TDL_SoundClassification_V2(tdl_handle, &Frame, &pre_label);  // Detect the audio
-      if (ret == CVI_TDL_SUCCESS) {
-        printf("esc class: %s\n", enumStr[pre_label + start_index]);
-        if (pre_label != 0) {
-          // char output_cur[128] ;
-          // sprintf(output_cur, "%s%d%s", outpath, index, ".raw");
-          // // sprintf(output_cur, "%s%s", output_cur, ".raw");
-          // FILE *fp = fopen(output_cur, "wb");
-          // printf("to write:%s\n", output_cur);
-          // fwrite((char *)buffer, 1, FRAME_SIZE, fp);
-          // fclose(fp);
-          usleep(2500 * 1000);
+    struct timeval end;
+    gettimeofday(&end, NULL);
+    float sec = end.tv_sec - start.tv_sec + (end.tv_usec - start.tv_usec) / 1000000.;
+    float frame_sec = end.tv_sec - last_ts.tv_sec + (end.tv_usec - last_ts.tv_usec) / 1000000.;
+    last_ts = end;
+    if (ts_avg == 0) {
+      ts_avg = sec;
 
-        } else {
-          usleep(250 * 1000);
-        }
+    } else {
+      ts_avg = ts_avg * 0.9 + sec * 0.1;
+    }
+    if (ret == CVI_TDL_SUCCESS) {
+      printf("class: %s,infer ts(ms):%.2f,fps:%.2f\n", enumStr[pre_label + start_index],
+             ts_avg * 1000, 1.0 / frame_sec);
+      if (pre_label != 0) {
+        usleep(2000 * 1000);
 
       } else {
-        printf("detect failed\n");
-        gRun = false;
+        usleep(wait_ts * 1000);
       }
+
     } else {
+      printf("detect failed\n");
+      gRun = false;
+    }
+    if (g_outpath != nullptr) {
       char output_cur[128];
-      sprintf(output_cur, "%s%d%s", outpath, index, ".raw");
+      sprintf(output_cur, "%s%d%s", g_outpath, cal_counter, ".raw");
       // sprintf(output_cur, "%s%s", output_cur, ".raw");
       FILE *fp = fopen(output_cur, "wb");
       printf("to write:%s\n", output_cur);
@@ -169,7 +185,7 @@ void *thread_infer(void *arg) {
       // gRun = false;
     }
 
-    index++;
+    cal_counter++;
   }
 
   pthread_exit(NULL);
@@ -209,23 +225,27 @@ CVI_S32 SET_AUDIO_ATTR(CVI_VOID) {
 }
 
 int main(int argc, char **argv) {
-  if (argc != 5 && argc != 7) {
+  if (argc != 6 && argc != 7) {
     printf(
-        "Usage: %s ESC_MODEL_PATH SAMPLE_RATE ORDER_TYPE SECOND RECORD OUTPUT\n"
+        "Usage: %s ESC_MODEL_PATH SAMPLE_RATE ORDER_TYPE SECOND tORDER_TYPE "
+        "FLAG(0:oriversion,1:packversion) "
+        "[record_path]\n"
         "\t\tESC_MODEL_PATH, esc model path.\n"
         "\t\tSAMPLE_RATE, sample rate.\n"
         "\t\tSECOND, input time (s).\n"
         "\t\tORDER_TYPE, 0 for ipc, 1 for car.\n"
-        "\t\tRECORD, record input to file, 0: disable 1. enable.\n"
-        "\t\tOUTPUT, output file path: {output file path}.raw\n",
+        "\t\tFLAG, 0: use original version, 1. use optimized version.\n"
+        "\t\trecord_path, optional,specify path to dump reord data\n",
         argv[0]);
+    printf("xxxxx\n");
     return CVI_TDL_FAILURE;
   }
 
   SAMPLE_RATE = atoi(argv[2]);
   SECOND = atoi(argv[3]);
   int ORDER_TYPE = atoi(argv[4]);
-  // start_index = ORDER_TYPE == 0 ? 0 : 4;
+  g_flag = atoi(argv[5]);
+
   start_index = ORDER_TYPE * 5;
 
   FRAME_SIZE = SAMPLE_RATE * AUDIOFORMATSIZE * SECOND;
@@ -233,12 +253,6 @@ int main(int argc, char **argv) {
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
-
-  uint32_t loop = SAMPLE_RATE / PERIOD_SIZE * SECOND;
-  for (uint32_t i = 0; i < loop; i++) {
-    std::array<int, SIZE> tmp_arr = {0};
-    que.push(tmp_arr);
-  }
 
   CVI_S32 ret = CVI_TDL_SUCCESS;
   if (CVI_AUDIO_INIT() == CVI_TDL_SUCCESS) {
@@ -256,12 +270,20 @@ int main(int argc, char **argv) {
     return ret;
   }
 
-  ret = CVI_TDL_CreateHandle(&tdl_handle);
+  ret = CVI_TDL_CreateHandle3(&tdl_handle);
 
   if (ret != CVI_TDL_SUCCESS) {
     printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
+
+  AudioAlgParam param =
+      CVI_TDL_Get_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2);
+  param.hop_len = 128;
+  param.fix = true;
+
+  ret =
+      CVI_TDL_Set_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, param);
 
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, argv[1]);
   if (ret != CVI_TDL_SUCCESS) {
@@ -269,14 +291,9 @@ int main(int argc, char **argv) {
     return ret;
   }
 
-  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
-  // true);
-  CVI_TDL_SetPerfEvalInterval(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
-                              10);  // only used to performance evaluation
   if (argc == 7) {
-    record = atoi(argv[5]) ? true : false;
-    outpath = (char *)malloc(strlen(argv[6]));
-    strcpy(outpath, argv[6]);
+    g_outpath = (char *)malloc(strlen(argv[6]));
+    strcpy(g_outpath, argv[6]);
   }
 
   pthread_t pcm_output_thread, get_sound;
@@ -285,9 +302,6 @@ int main(int argc, char **argv) {
 
   pthread_join(pcm_output_thread, NULL);
   pthread_join(get_sound, NULL);
-  if (argc == 7) {
-    free(outpath);
-  }
 
   CVI_TDL_DestroyHandle(tdl_handle);
   return 0;

@@ -1013,6 +1013,19 @@ DLL_EXPORT CVI_S32 CVI_TDL_SoundClassification(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_SoundClassification_V2(const cvitdl_handle_t handle,
                                                  VIDEO_FRAME_INFO_S *frame, int *index);
 /**
+ * @brief Do sound classification.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param pack_idx The start pack index of this frame
+ * @param pack_len Pack length,the frame is combined with many packs
+ * @param index The index of sound classes.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_SoundClassification_V2_Pack(const cvitdl_handle_t handle,
+                                                      VIDEO_FRAME_INFO_S *frame, 
+                                                      int pack_idx,int pack_len,int *index);
+/**
  * @brief Get sound classification classes num.
  *
  * @param handle An TDL SDK handle.
