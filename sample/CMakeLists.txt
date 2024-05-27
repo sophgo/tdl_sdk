@@ -85,7 +85,6 @@ endif()
 endif()
 
 set(AUDIO_SAMPLE_LIBS
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcli.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
@@ -94,6 +93,13 @@ set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so)
+
+if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")
+set(AUDIO_SAMPLE_LIBS
+    ${AUDIO_SAMPLE_LIBS}
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libcli.so
+)
+endif()
 
 if(${CVI_PLATFORM} STREQUAL "CV186X")
 set(SAMPLE_LIBS

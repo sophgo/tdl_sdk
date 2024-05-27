@@ -79,7 +79,10 @@ ifeq ($(origin MW_PANEL_BOARD_INC_PATH), undefined)
   MW_PANEL_BOARD_INC_PATH := $(MW_PATH)/include
 endif
 
-MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -lcvi_dnvqe -lcvi_ssp2 -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1 -lcli
+MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -lcvi_dnvqe -lcvi_ssp2 -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
+ifneq ($(CHIP), CV186X)
+	MW_AUDIO_LIBS += -lcli
+endif
 
 ifneq (,$(findstring middleware/v1,$(MW_PATH)))
     MW_VERSION = v1
