@@ -22,6 +22,12 @@ CVI_S32 _PersonVehicleCapture_SetConfig(personvehicle_capture_t *personvehicle_c
 
 CVI_S32 _PersonVehicleCapture_Run(personvehicle_capture_t *personvehicle_cpt_info,
                                   const cvitdl_handle_t tdl_handle, VIDEO_FRAME_INFO_S *frame);
+// Irregular
+CVI_S32 _PersonVehicleCaptureIrregular_Run(personvehicle_capture_t *personvehicle_cpt_info,
+                                           const cvitdl_handle_t tdl_handle,
+                                           VIDEO_FRAME_INFO_S *frame);
+CVI_S32 _PersonVehicleCaptureIrregular_Region(personvehicle_capture_t *personvehicle_cpt_info,
+                                              int w_num, int h_num, bool *regin_flags);
 
 // Draw line
 CVI_S32 _PersonVehicleCapture_Line(personvehicle_capture_t *personvehicle_cpt_info, int A_x,

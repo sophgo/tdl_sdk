@@ -412,6 +412,12 @@ typedef struct {
   float k, b;
 } randomRect;
 
+typedef struct {
+  int h_num, w_num;
+  float h_size, w_size;
+  bool regin_flags[1000];
+} irregularRegins;
+
 /** @struct cvtdl_class_filter_t
  *  @ingroup core_cvitdlcore
  *  @brief Preserve class id of model output and filter out the others. This struct can be used in

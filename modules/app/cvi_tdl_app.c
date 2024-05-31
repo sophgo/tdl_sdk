@@ -205,3 +205,17 @@ CVI_S32 CVI_TDL_APP_ADAS_Run(const cvitdl_app_handle_t handle, VIDEO_FRAME_INFO_
   cvitdl_app_context_t *ctx = handle;
   return _ADAS_Run(ctx->adas_info, ctx->tdl_handle, frame);
 }
+
+// Irregular
+CVI_S32 CVI_TDL_APP_PersonVehicleCaptureIrregular_Run(const cvitdl_app_handle_t handle,
+                                                      VIDEO_FRAME_INFO_S *frame) {
+  cvitdl_app_context_t *ctx = handle;
+  return _PersonVehicleCaptureIrregular_Run(ctx->personvehicle_cpt_info, ctx->tdl_handle, frame);
+}
+
+CVI_S32 CVI_TDL_APP_PersonVehicleCaptureIrregular_Region(const cvitdl_app_handle_t handle,
+                                                         int h_num, int w_num, bool *regin_flags) {
+  cvitdl_app_context_t *ctx = handle;
+  return _PersonVehicleCaptureIrregular_Region(ctx->personvehicle_cpt_info, w_num, h_num,
+                                               regin_flags);
+}
