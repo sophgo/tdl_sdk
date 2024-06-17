@@ -191,6 +191,8 @@ typedef struct {
   cvtdl_face_gender_e gender;
   cvtdl_face_race_e race;
   float score;
+  float gender_score;
+  float glass;
   float age;
   float liveness_score;
   float hardhat_score;

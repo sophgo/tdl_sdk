@@ -120,6 +120,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_THERMALFACE)                      \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_THERMALPERSON)                    \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE)                    \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE_CLS)                    \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION)                  \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION)              \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_FACEQUALITY)                      \
@@ -589,6 +590,17 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceMaskDetection(const cvitdl_handle_t handle, VIDEO
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceAttribute(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                         cvtdl_face_t *faces);
+
+/*
+ * @brief Do face recognition and attribute with bbox info stored in faces.
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_FaceAttribute_cls(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                             cvtdl_face_t *faces);
 
 /**
  * @brief Do face recognition and attribute with bbox info stored in faces. Only do inference on the

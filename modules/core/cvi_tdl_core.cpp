@@ -11,6 +11,7 @@
 #include "deepsort/cvi_deepsort.hpp"
 #include "eye_classification/eye_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
+#include "face_attribute_cls/face_attribute_cls.hpp"
 #include "face_landmarker/dms_landmark.hpp"
 #include "face_landmarker/face_landmark_det3.hpp"
 #include "face_landmarker/face_landmarker.hpp"
@@ -195,6 +196,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT, CREATOR_P1(RetinaFace, PROCESS, PYTORCH)},
     {CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE, CREATOR_P1(FaceAttribute, bool, true)},
     {CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
+    {CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE_CLS, CREATOR(FaceAttribute_cls)},
     {CVI_TDL_SUPPORTED_MODEL_LPRNET_TW, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, TAIWAN)},
     {CVI_TDL_SUPPORTED_MODEL_LPRNET_CN, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, CHINA)},
     {CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION,
@@ -818,6 +820,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_ThermalPerson, ThermalPerson, CVI_TDL_SUPPORTED_MO
                       cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_FaceAttribute, FaceAttribute, CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE,
                       cvtdl_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_FaceAttribute_cls, FaceAttribute_cls,
+                      CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE_CLS, cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceAttributeOne, FaceAttribute,
                       CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE, cvtdl_face_t *, int)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_FaceRecognition, FaceAttribute,

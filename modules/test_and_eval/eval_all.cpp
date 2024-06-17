@@ -414,7 +414,7 @@ std::string run_image_yolov8_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
     // setup yolo algorithm preprocess
     YoloAlgParam yolov8_param =
         CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
-    yolov8_param.cls = 2;
+    yolov8_param.cls = 1;
 
     printf("setup yolov8 algorithm param \n");
     ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,

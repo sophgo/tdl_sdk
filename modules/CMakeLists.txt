@@ -56,6 +56,7 @@ else()
       $<TARGET_OBJECTS:custom>
       $<TARGET_OBJECTS:utils>
       $<TARGET_OBJECTS:face_attribute>
+      $<TARGET_OBJECTS:face_attribute_cls>
       $<TARGET_OBJECTS:face_quality>
       $<TARGET_OBJECTS:liveness>
       $<TARGET_OBJECTS:mobiledetv2>
