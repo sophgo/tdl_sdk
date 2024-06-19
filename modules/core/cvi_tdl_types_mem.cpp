@@ -323,6 +323,19 @@ void CVI_TDL_CopyObjectMeta(const cvtdl_object_t *src, cvtdl_object_t *dest) {
   }
 }
 
+void CVI_TDL_CopyLaneMeta(cvtdl_lane_t *src, cvtdl_lane_t *dst) {
+  CVI_TDL_FreeCpp(dst);
+  memset(dst, 0, sizeof(cvtdl_lane_t));
+  if (src->size > 0) {
+    dst->size = src->size;
+    dst->width = src->width;
+    dst->height = src->height;
+    dst->rescale_type = src->rescale_type;
+    dst->lane = (cvtdl_lane_point_t *)malloc(sizeof(cvtdl_lane_point_t) * src->size);
+    memcpy(dst->lane, src->lane, sizeof(cvtdl_lane_point_t) * src->size);
+  }
+}
+
 void CVI_TDL_CopyHandPoses(const cvtdl_handpose21_meta_ts *src, cvtdl_handpose21_meta_ts *dest) {
   CVI_TDL_FreeCpp(dest);
   memset(dest, 0, sizeof(cvtdl_handpose21_meta_ts));

@@ -92,12 +92,12 @@ int LSTR::outputParser(cvtdl_lane_t *lane_meta) {
   for (int i = 0; i != sort_index.size(); i++) {
     if (lane_dis[sort_index[i]] < 0) {
       if (i == sort_index.size() - 1 || lane_dis[sort_index[i + 1]] > 0) {
-        if (point_map[sort_index[i]][1] - point_map[sort_index[i]][0] > 0.4)
+        if (point_map[sort_index[i]][1] - point_map[sort_index[i]][0] > 0.2)
           final_index.push_back(sort_index[i]);
       }
 
     } else {
-      if (point_map[sort_index[i]][1] - point_map[sort_index[i]][0] > 0.4) {
+      if (point_map[sort_index[i]][1] - point_map[sort_index[i]][0] > 0.2) {
         final_index.push_back(sort_index[i]);
         break;
       }

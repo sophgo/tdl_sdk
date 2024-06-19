@@ -70,9 +70,10 @@ CVI_S32 _FaceCapture_Free(face_capture_t *face_cpt_info) {
     CVI_TDL_Free(&face_cpt_info->last_trackers);
     free(face_cpt_info->_output);
     free(face_cpt_info);
-  }
-  if (face_cpt_info->tmp_buf_physic_addr != 0) {
-    CVI_SYS_IonFree(face_cpt_info->tmp_buf_physic_addr, face_cpt_info->p_tmp_buf_addr);
+
+    if (face_cpt_info->tmp_buf_physic_addr != 0) {
+      CVI_SYS_IonFree(face_cpt_info->tmp_buf_physic_addr, face_cpt_info->p_tmp_buf_addr);
+    }
   }
   return CVI_TDL_SUCCESS;
 }

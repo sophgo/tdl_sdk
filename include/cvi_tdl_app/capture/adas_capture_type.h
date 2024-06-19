@@ -11,19 +11,15 @@
 // #ifdef __cplusplus
 // }
 
-// #include <queue>
-
 typedef struct {
   cvtdl_object_info_t info;
   tracker_state_e t_state;
-  float speed[3];
+  float speed;
   float dis;
   float dis_tmp;
 
-  // std::queue<float> acc; //acceleration
-
-  // float acc[3];
-  int speed_counter;
+  float start_score;
+  float warning_score;
 
   uint32_t miss_counter;
 
@@ -32,8 +28,19 @@ typedef struct {
 } adas_data_t;
 
 typedef struct {
+  int x;
+  int y;
+  int z;
+  uint64_t counter;
+} gsensor_data_t;
+
+typedef struct {
   uint32_t size;
-  uint32_t FPS;
+  float FPS;
+  uint32_t lane_model_type;
+  uint32_t lane_counter;
+  uint32_t departure_time;
+  float lane_score;
 
   adas_data_t *data;
   cvtdl_lane_t lane_meta;
@@ -43,12 +50,12 @@ typedef struct {
 
   uint32_t miss_time_limit;
 
-  bool is_shifting[3];
+  int center_info[3];
   adas_state_e lane_state;
 
-  float AVG_CAR_HEIGHT;   // 1.4
-  float AVG_BUS_HEIGHT;   // 2.6
-  float AVG_TRUCK_WIDTH;  // 2.0
+  gsensor_data_t gsensor_data;
+  gsensor_data_t gsensor_tmp_data;
+  int gsensor_queue[10];
 
   bool is_static;
 

@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include <math.h>
 #include "core/cvi_tdl_utils.h"
+#include "cvi_tdl_log.hpp"
 #include "default_config.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -144,7 +145,7 @@ void getBufferRect(const cvtdl_counting_line_t *counting_line_t, randomRect *rec
 }
 
 CVI_S32 _PersonCapture_Free(person_capture_t *person_cpt_info) {
-  // printf("[APP::PersonCapture] Free PersonCapture Data\n");
+  LOGI("[APP::PersonCapture] Free PersonCapture Data\n");
   if (person_cpt_info != NULL) {
     _PersonCapture_CleanAll(person_cpt_info);
 

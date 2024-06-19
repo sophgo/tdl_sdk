@@ -7,6 +7,26 @@
 #include "cvi_venc.h"
 #include "service/cvi_tdl_service.h"
 
+#define AVG_CAR_HEIGHT 1.4
+#define AVG_BUS_HEIGHT 2.6
+#define AVG_TRUCK_HEIGHT 3.5
+#define AVG_RIDER_HEIGHT 1.4
+#define AVG_PERSON_HEIGHT 1.6
+#define AVG_DEFAULT_HEIGHT 1.2
+
+#define ALPHA_ADAS 0.475
+
+int update_easy_queue(int *data, int new_val, int size) {
+  int sum = 0;
+  for (int i = 0; i < size - 1; i++) {
+    data[i] = data[i + 1];
+    sum += data[i];
+  }
+  data[size - 1] = new_val;
+  sum += new_val;
+  return sum;
+}
+
 CVI_S32 _ADAS_Init(adas_info_t **adas_info, uint32_t buffer_size) {
   if (*adas_info != NULL) {
     LOGW("[APP::ADAS] already exist.\n");
@@ -18,6 +38,8 @@ CVI_S32 _ADAS_Init(adas_info_t **adas_info, uint32_t buffer_size) {
   new_adas_info->size = buffer_size;
   new_adas_info->miss_time_limit = 10;
   new_adas_info->is_static = true;
+  new_adas_info->FPS = 25;
+  new_adas_info->departure_time = 1;
 
   new_adas_info->data = (adas_data_t *)malloc(sizeof(adas_data_t) * buffer_size);
   memset(new_adas_info->data, 0, sizeof(adas_data_t) * buffer_size);
@@ -57,12 +79,39 @@ float sum_acc(float *data, int size) {
   return sum;
 }
 
-void update_dis(cvtdl_object_info_t *info, adas_data_t *data, bool first_time) {
-  float cur_dis = 582.488 * 0.5 * 1.4 / (info->bbox.y2 - info->bbox.y1);
-
-  if (info->bbox.y2 > 900) {
-    cur_dis *= 0.6;
+float obj_dis(cvtdl_object_info_t *info, float height) {
+  float obj_height;
+  switch (info->classes) {
+    case 0:
+      obj_height = AVG_CAR_HEIGHT;
+      break;
+    case 1:
+      obj_height = AVG_BUS_HEIGHT;
+      break;
+    case 2:
+      obj_height = AVG_TRUCK_HEIGHT;
+      break;
+    case 3:
+      obj_height = AVG_RIDER_HEIGHT;
+      break;
+    case 4:
+      obj_height = AVG_PERSON_HEIGHT;
+      break;
+    default:
+      obj_height = AVG_DEFAULT_HEIGHT;
   }
+
+  float dis = ALPHA_ADAS * obj_height * height / (info->bbox.y2 - info->bbox.y1);
+
+  if (info->bbox.y2 / height > 0.83) {
+    dis *= 0.6;
+  }
+
+  return dis;
+}
+
+void update_dis(cvtdl_object_info_t *info, adas_data_t *data, float height, bool first_time) {
+  float cur_dis = obj_dis(info, height);
 
   if (!first_time) {
     cur_dis = 0.9 * data->dis + 0.1 * cur_dis;
@@ -74,22 +123,13 @@ void update_dis(cvtdl_object_info_t *info, adas_data_t *data, bool first_time) {
   info->adas_properity.dis = cur_dis;
 }
 
-void update_apeed(cvtdl_object_info_t *info, adas_data_t *data) {
-  info->adas_properity.speed = data->speed[2];
+void update_apeed(cvtdl_object_info_t *info, adas_data_t *data, float fps) {
+  info->adas_properity.speed = data->speed;
 
-  if (data->counter >= 5) {
-    float cur_speed = (data->dis - data->dis_tmp) / ((float)(data->counter - 1) / 30);
+  if (data->counter >= 3) {
+    float cur_speed = (data->dis - data->dis_tmp) / ((float)(data->counter - 1) / fps);
 
-    // printf("cur_speed;%.2f,  data->speed;%.2f,   data->dis;%.2f,  data->dis_tmp;%.2f,  \n",
-    // cur_speed, data->speed, data->dis, data->dis_tmp );
-
-    if (data->speed_counter < 3) {
-      data->speed_counter += 1;
-    }
-
-    data->speed[0] = data->speed[1];
-    data->speed[1] = data->speed[2];
-    data->speed[2] = cur_speed;
+    data->speed = cur_speed;
 
     // printf(" data->dis  %.2f   data->dis_tmp   %.2f  cur_speed: %.2f\n", data->dis,
     // data->dis_tmp, cur_speed); data->speed = cur_speed;
@@ -100,21 +140,51 @@ void update_apeed(cvtdl_object_info_t *info, adas_data_t *data) {
   }
 }
 
-void update_state(cvtdl_object_info_t *info, adas_data_t *data, uint32_t width, bool self_static) {
-  if (data->speed_counter == 3) {
-    bool center = info->bbox.x1 > (float)width * 0.25 && info->bbox.x2 < (float)width * 0.75;
+void update_object_state(cvtdl_object_info_t *info, adas_data_t *data, adas_info_t *adas_info,
+                         uint32_t width, int obj_index, bool self_static) {
+  info->adas_properity.state = NORMAL;
+  int *center_info = adas_info->center_info;
 
-    float avg_speed = sum_acc(data->speed, 3) / 3.0f;
-    // printf("avg_speed: %.2f\n", avg_speed);
+  float cur_start_score = 0;
+  float cur_warning_score = 0;
+  if (self_static && center_info[0] == obj_index && info->adas_properity.dis < 4.0f &&
+      data->speed > 0.25) {
+    cur_start_score = 1.0f;
+  }
 
-    if (self_static && center && info->adas_properity.dis < 6.0f && avg_speed > 0.5f) {
-      info->adas_properity.state = START;
+  data->start_score = 0.9 * data->start_score + 0.1 * cur_start_score;
+
+  if (data->start_score > adas_info->FPS / 50.0) {
+    info->adas_properity.state = START;
+  }
+
+  bool center = center_info[0] == obj_index;
+  if ((center && info->adas_properity.dis < 6.0 && data->speed < info->adas_properity.dis / -2.0) ||
+      (center && info->adas_properity.dis < 2.6)) {
+    cur_warning_score = 1.0f;
+  }
+  data->warning_score = 0.9 * data->warning_score + 0.1 * cur_warning_score;
+  if (data->warning_score > adas_info->FPS / 50.0) {
+    info->adas_properity.state = COLLISION_WARNING;
+  }
+}
+
+void update_frame_state(adas_info_t *adas_info) {
+  if (adas_info->gsensor_data.counter > adas_info->gsensor_tmp_data.counter) {
+    if (adas_info->gsensor_data.counter > 1) {
+      int diff = abs(adas_info->gsensor_data.x - adas_info->gsensor_tmp_data.x) +
+                 abs(adas_info->gsensor_data.y - adas_info->gsensor_tmp_data.y) +
+                 abs(adas_info->gsensor_data.z - adas_info->gsensor_tmp_data.z);
+
+      int gsensor_period_sum = update_easy_queue(adas_info->gsensor_queue, diff, 10);
+
+      if (gsensor_period_sum > 22) {
+        adas_info->is_static = false;
+      } else {
+        adas_info->is_static = true;
+      }
     }
-
-    if (info->adas_properity.dis < 6.0f && avg_speed < -1.0f) {
-      // if (center && info->adas_properity.dis < 6.0f && avg_speed < -1.0f) {
-      info->adas_properity.state = COLLISION_WARNING;
-    }
+    adas_info->gsensor_tmp_data = adas_info->gsensor_data;
   }
 }
 
@@ -167,9 +237,6 @@ static CVI_S32 clean_data(adas_info_t *adas_info) {
       adas_info->data[j].t_state = IDLE;
       adas_info->data[j].counter = 0;
       adas_info->data[j].miss_counter = 0;
-      adas_info->data[j].speed_counter = 0;
-
-      // adas_info->data[j].speed = 0;
       adas_info->data[j].dis = 0;
       adas_info->data[j].dis_tmp = 0;
     }
@@ -179,36 +246,111 @@ static CVI_S32 clean_data(adas_info_t *adas_info) {
 
 static CVI_S32 update_lane_state(adas_info_t *adas_info, uint32_t height, uint32_t width) {
   cvtdl_lane_t *lane_meta = &adas_info->lane_meta;
-  adas_info->is_shifting[0] = adas_info->is_shifting[1];
-  adas_info->is_shifting[1] = adas_info->is_shifting[2];
+
+  float cur_score = 0;
 
   for (uint32_t i = 0; i < lane_meta->size; i++) {
     cvtdl_lane_point_t *point = &lane_meta->lane[i];
 
+    float k = (point->y[1] - point->y[0]) / (point->x[1] - point->x[0]);
+    k = k > 0 ? k : -k;
     float x_i = ((float)height * 0.78 - point->y[0]) / (point->y[1] - point->y[0]) *
                     (point->x[1] - point->x[0]) +
                 point->x[0];
 
-    if (x_i > (float)width * 0.4 && x_i < (float)width * 0.6) {
-      adas_info->is_shifting[2] = true;
+    if (x_i > (float)width * 0.3 && x_i < (float)width * 0.7 && k > 1.2) {
+      cur_score = 1.0f;
       break;
     }
-    adas_info->is_shifting[2] = false;
   }
 
-  if (adas_info->is_shifting[0] && adas_info->is_shifting[1] && adas_info->is_shifting[2]) {
-    adas_info->lane_state = 1;
+  adas_info->lane_score = 0.95 * adas_info->lane_score + 0.05 * cur_score;
+  float departure_time = adas_info->departure_time - 0.4;
+  if (adas_info->lane_score > adas_info->FPS / 50.0) {
+    adas_info->lane_counter++;
+    if ((float)adas_info->lane_counter / adas_info->FPS > departure_time) {
+      adas_info->lane_state = 1;
+    } else {
+      adas_info->lane_state = 0;
+    }
   } else {
+    adas_info->lane_counter = 0;
     adas_info->lane_state = 0;
   }
 
   // printf("adas_info->lane_state: %d\n", adas_info->lane_state);
 }
 
+void front_obj_index(cvtdl_object_t *obj_meta, cvtdl_lane_t *lane_meta, int *center_info,
+                     float width) {
+  center_info[0] = -1;
+  float dis = width;
+
+  float left_x = 0.33 * width;
+  float right_x = 0.66 * width;
+
+  if (lane_meta->size == 2) {
+    float xmin = lane_meta->lane[0].y[0] < lane_meta->lane[0].y[1] ? lane_meta->lane[0].x[0]
+                                                                   : lane_meta->lane[0].x[1];
+    float xmax = lane_meta->lane[1].y[0] < lane_meta->lane[1].y[1] ? lane_meta->lane[1].x[0]
+                                                                   : lane_meta->lane[1].x[1];
+
+    if (xmin > xmax) {
+      float tmp = xmin;
+      xmin = xmax;
+      xmax = tmp;
+    }
+
+    if (xmax - xmin > 0.15 * width && xmax - xmin < 0.35 * width) {  // valid lane
+      left_x = xmin;
+      right_x = xmax;
+    }
+  }
+
+  center_info[1] = left_x;
+  center_info[2] = right_x;
+
+  float center = (left_x + right_x) / 2.0f;
+
+  for (uint32_t i = 0; i < obj_meta->size; i++) {
+    if (obj_meta->info[i].classes < 3) {  //机动车
+
+      float c_x = (obj_meta->info[i].bbox.x1 + obj_meta->info[i].bbox.x2) / 2.0f;
+
+      if (c_x > left_x && c_x < right_x) {
+        float cur_dis = center > c_x ? center - c_x : c_x - center;
+
+        if (cur_dis < dis) {
+          center_info[0] = i;
+          dis = cur_dis;
+        }
+      }
+    }
+  }
+}
+
+uint64_t update_unique_id_with_classes(cvtdl_object_t *obj_meta) {
+  for (uint32_t i = 0; i < obj_meta->size; i++) {
+    uint64_t uid = obj_meta->info[i].unique_id;
+    int classes = obj_meta->info[i].classes;
+
+    char str[16];
+    sprintf(str, "%d", uid);
+    int num = strlen(str);
+
+    uint64_t trk_id = classes * pow(10, num) + uid;
+    obj_meta->info[i].unique_id = trk_id;
+  }
+}
+
 static CVI_S32 update_data(cvitdl_handle_t tdl_handle, adas_info_t *adas_info,
                            VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta,
                            cvtdl_tracker_t *tracker_meta) {
   LOGI("[APP::VehicleAdas] Update Data\n");
+
+  update_unique_id_with_classes(obj_meta);
+  front_obj_index(obj_meta, &adas_info->lane_meta, adas_info->center_info,
+                  frame->stVFrame.u32Width);
 
   for (uint32_t i = 0; i < obj_meta->size; i++) {
     uint64_t trk_id = obj_meta->info[i].unique_id;
@@ -226,14 +368,15 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, adas_info_t *adas_info,
 
     if (match_idx != -1) {
       adas_info->data[match_idx].miss_counter = 0;
-      update_dis(&obj_meta->info[i], &adas_info->data[match_idx], false);
+      update_dis(&obj_meta->info[i], &adas_info->data[match_idx], frame->stVFrame.u32Height, false);
 
       update_idx = match_idx;
     } else {
       for (uint32_t j = 0; j < adas_info->size; j++) {
         if (adas_info->data[j].t_state == IDLE) {
           idle_idx = (int)j;
-          update_dis(&obj_meta->info[i], &adas_info->data[idle_idx], true);
+          update_dis(&obj_meta->info[i], &adas_info->data[idle_idx], frame->stVFrame.u32Height,
+                     true);
           update_idx = idle_idx;
           break;
         }
@@ -251,15 +394,16 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, adas_info_t *adas_info,
     adas_info->data[update_idx].counter += 1;
 
     if (match_idx != -1) {
-      update_apeed(&obj_meta->info[i], &adas_info->data[match_idx]);
-      update_state(&obj_meta->info[i], &adas_info->data[match_idx], obj_meta->width, true);
+      update_apeed(&obj_meta->info[i], &adas_info->data[match_idx], adas_info->FPS);
+      update_object_state(&obj_meta->info[i], &adas_info->data[match_idx], adas_info,
+                          obj_meta->width, i, adas_info->is_static);
     }
   }
 
   for (uint32_t j = 0; j < adas_info->size; j++) {
     bool found = false;
-    for (uint32_t k = 0; k < tracker_meta->size; k++) {
-      if (adas_info->data[j].info.unique_id == tracker_meta->info[k].id) {
+    for (uint32_t k = 0; k < obj_meta->size; k++) {
+      if (adas_info->data[j].info.unique_id == obj_meta->info[k].unique_id) {
         found = true;
         break;
       }
@@ -306,7 +450,7 @@ CVI_S32 _ADAS_Run(adas_info_t *adas_info, const cvitdl_handle_t tdl_handle,
     return CVI_TDL_FAILURE;
   }
 
-  if (CVI_SUCCESS != CVI_TDL_PersonVehicle_Detection(tdl_handle, frame, &adas_info->last_objects)) {
+  if (CVI_SUCCESS != CVI_TDL_YOLOV8_Detection(tdl_handle, frame, &adas_info->last_objects)) {
     // CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
     // frame,
     //  true);
@@ -318,13 +462,19 @@ CVI_S32 _ADAS_Run(adas_info_t *adas_info, const cvitdl_handle_t tdl_handle,
 
   CVI_TDL_DeepSORT_Obj(tdl_handle, &adas_info->last_objects, &adas_info->last_trackers, false);
 
-  if (CVI_SUCCESS != CVI_TDL_Lane_Det(tdl_handle, frame, &adas_info->lane_meta)) {
+  if (adas_info->lane_model_type == 0) {
+    ret = CVI_TDL_Lane_Det(tdl_handle, frame, &adas_info->lane_meta);
+  } else if (adas_info->lane_model_type == 1) {
+    ret = CVI_TDL_LSTR_Det(tdl_handle, frame, &adas_info->lane_meta);
+  }
+  if (ret != CVI_SUCCESS) {
     // CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_LANE_DET, frame, true);
     printf("lane detection failed\n");
     return CVI_TDL_FAILURE;
   }
 
   update_lane_state(adas_info, frame->stVFrame.u32Height, frame->stVFrame.u32Width);
+  update_frame_state(adas_info);
 
   ret = update_data(tdl_handle, adas_info, frame, &adas_info->last_objects,
                     &adas_info->last_trackers);

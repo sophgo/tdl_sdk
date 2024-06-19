@@ -50,6 +50,7 @@ DLL_EXPORT void CVI_TDL_CopyObjectMeta(const cvtdl_object_t *src, cvtdl_object_t
 DLL_EXPORT void CVI_TDL_CopyTrackerMeta(const cvtdl_tracker_t *src, cvtdl_tracker_t *dst);
 DLL_EXPORT void CVI_TDL_CopyHandPoses(const cvtdl_handpose21_meta_ts *src,
                                       cvtdl_handpose21_meta_ts *dest);
+DLL_EXPORT void CVI_TDL_CopyLaneMeta(cvtdl_lane_t *src, cvtdl_lane_t *dst);
 
 DLL_EXPORT void CVI_TDL_CopyImage(const cvtdl_image_t *src_image, cvtdl_image_t *dst_image);
 DLL_EXPORT void CVI_TDL_MapImage(VIDEO_FRAME_INFO_S *src_image, bool *p_is_mapped);

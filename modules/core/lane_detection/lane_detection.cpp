@@ -137,7 +137,7 @@ void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const 
   // printf("valid_scores.size(): %d\n", valid_scores.size());
 
   counter = 0;
-  std::vector<std::vector<float>> lane_info(valid_scores.size());  // score,x1,y1,x2,y2
+  std::vector<std::vector<float>> lane_info;  // score,x1,y1,x2,y2
   std::vector<float> lane_dis;
 
   map<float, int>::reverse_iterator map_iter;
@@ -145,8 +145,11 @@ void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const 
     int valid_index = map_iter->second;
     int start_index = valid_index * output0_shape.dim[2] * output0_shape.dim[3];
 
-    lane_info[counter].push_back(map_iter->first);
+    std::vector<float> tmp_info;
 
+    tmp_info.push_back(map_iter->first);
+
+    bool valid_lane = true;
     for (int i = 0; i < NUM_POINTS; i++) {
       if (i == 13 || i == 41) {
         float x = c_matrix[i][0] * curves[start_index] + c_matrix[i][1] * curves[start_index + 2] +
@@ -156,19 +159,28 @@ void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const 
         float y =
             c_matrix[i][0] * curves[start_index + 1] + c_matrix[i][1] * curves[start_index + 3] +
             c_matrix[i][2] * curves[start_index + 5] + c_matrix[i][3] * curves[start_index + 7];
-        lane_info[counter].push_back(x);
-        lane_info[counter].push_back(y);
+
+        if (x < 0 || x > 1 || y < 0 || y > 1) {
+          valid_lane = false;
+          break;
+        } else {
+          tmp_info.push_back(x);
+          tmp_info.push_back(y);
+        }
       }
     }
 
-    float cur_dis = gen_x_by_y(1.0, lane_info[counter]);
-    cur_dis = (cur_dis - 0.5) * frame_width;
+    if (valid_lane) {
+      lane_info.push_back(tmp_info);
+      float cur_dis = gen_x_by_y(1.0, lane_info[counter]);
+      cur_dis = (cur_dis - 0.5) * frame_width;
 
-    lane_dis.push_back(cur_dis);
-    counter++;
+      lane_dis.push_back(cur_dis);
+      counter++;
+    }
   }
 
-  vector<int> sort_index(valid_scores.size(), 0);
+  vector<int> sort_index(lane_info.size(), 0);
   for (int i = 0; i != sort_index.size(); i++) {
     sort_index[i] = i;
   }
@@ -191,9 +203,11 @@ void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const 
 
   CVI_TDL_MemAllocInit(final_index.size(), lane_meta);
   for (int i = 0; i < final_index.size(); i++) {
-    lane_meta->lane[i].x[0] = gen_x_by_y(0.6, lane_info[final_index[i]]) * frame_width;
+    lane_meta->lane[i].x[0] =
+        std::max(gen_x_by_y(0.6, lane_info[final_index[i]]) * frame_width, 0.0f);
     lane_meta->lane[i].y[0] = 0.6 * frame_height;
-    lane_meta->lane[i].x[1] = gen_x_by_y(0.8, lane_info[final_index[i]]) * frame_width;
+    lane_meta->lane[i].x[1] =
+        std::max(gen_x_by_y(0.8, lane_info[final_index[i]]) * frame_width, 0.0f);
     lane_meta->lane[i].y[1] = 0.8 * frame_height;
     lane_meta->lane[i].score = lane_info[final_index[i]][0];
   }
