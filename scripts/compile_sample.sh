@@ -9,6 +9,23 @@ USE_TPU_IVE="${USE_TPU_IVE:-ON}"
 CHIP_ARCH="${CHIP_ARCH:-CV180X}"
 SDK_VER="${SDK_VER:-musl_riscv64}"
 
+
+if [[ "$CHIP_ARCH" == "CV183X" ]]; then
+    USE_TPU_IVE=ON
+elif [[ "$CHIP_ARCH" == "CV182X" ]]; then
+    USE_TPU_IVE=ON
+elif [[ "$CHIP_ARCH" == "CV181X" ]]; then
+    USE_TPU_IVE=OFF
+elif [[ "$CHIP_ARCH" == "CV180X" ]]; then
+    USE_TPU_IVE=ON
+elif [[ "$CHIP_ARCH" == "SOPHON" ]] || [[ "$CHIP_ARCH" == "CV186X" ]]; then
+    CHIP_ARCH=CV186X
+    USE_TPU_IVE=OFF
+else
+    echo "Unsupported chip architecture: ${CHIP_ARCH}"
+    exit 1
+fi
+
 echo "enter compile_sample.sh !!!"
 echo "MW_PATH: $MW_PATH"
 echo "TPU_PATH: $TPU_PATH"
