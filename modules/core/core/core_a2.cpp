@@ -105,16 +105,12 @@ int Core::modelOpen(const char *filepath) {
 
   for (auto i = 0; i < mp_mi->out.num; i++) {
     bmrt_tensor(&out_tensor[i], mp_mi->handle, net_info->output_dtypes[i], stage.output_shapes[i]);
-    if (!use_mmap) {
-      mp_mi->out.raw_pointer.push_back(new char[bmrt_tensor_bytesize(&out_tensor[i])]);
-    } else {
-      bm_status_t status =
-          bm_mem_mmap_device_mem(bm_handle, &out_tensor[i].device_mem,
-                                 reinterpret_cast<long long unsigned int *>(&out_raw_pointer[i]));
-      if (CVI_TDL_SUCCESS != status) {
-        cleanupError();
-        return CVI_TDL_ERR_OPEN_MODEL;
-      }
+    bm_status_t status =
+        bm_mem_mmap_device_mem(bm_handle, &out_tensor[i].device_mem,
+                               reinterpret_cast<long long unsigned int *>(&out_raw_pointer[i]));
+    if (CVI_TDL_SUCCESS != status) {
+      cleanupError();
+      return CVI_TDL_ERR_OPEN_MODEL;
     }
   }
 
@@ -549,28 +545,14 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     auto &raw_pointer = mp_mi->out.raw_pointer;
     bm_thread_sync(bm_handle);
 
-    if (use_mmap) {
-      for (auto i = 0; i < mp_mi->out.num; i++) {
-        // bm_status_t status =
-        //     bm_mem_mmap_device_mem(bm_handle, &out_tensor[i].device_mem,
-        //                            reinterpret_cast<long long unsigned int *>(&raw_pointer[i]));
-        // if (CVI_TDL_SUCCESS != status) {
-        //   cleanupError();
-        //   return CVI_TDL_ERR_OPEN_MODEL;
-        // }
-        bm_status_t status = bm_mem_invalidate_device_mem(bm_handle, &(out_tensor[i].device_mem));
-        if (CVI_TDL_SUCCESS != status) {
-          cleanupError();
-          return CVI_TDL_ERR_OPEN_MODEL;
-        }
-      }
-
-    } else {
-      for (int32_t i = 0; i < mp_mi->out.num; i++) {
-        bm_memcpy_d2s_partial(bm_handle, raw_pointer[i], out_tensor[i].device_mem,
-                              bmrt_tensor_bytesize(&out_tensor[i]));
+    for (auto i = 0; i < mp_mi->out.num; i++) {
+      bm_status_t status = bm_mem_invalidate_device_mem(bm_handle, &(out_tensor[i].device_mem));
+      if (CVI_TDL_SUCCESS != status) {
+        cleanupError();
+        return CVI_TDL_ERR_OPEN_MODEL;
       }
     }
+
   } else {
     LOGE("bmrt_launch_tensor_ex failed: Unsupport operation.\n");
     return ret;
@@ -584,9 +566,11 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
   uint32_t input_w = input_shape.dim[3];
   uint32_t input_h = input_shape.dim[2];
 
-  if (frames.size() != (uint32_t)mp_mi->in.num) {
-    LOGE("frames.size() != (uint32_t)mp_mi->in.num\n");
-    return CVI_TDL_FAILURE;
+  if (!raw) {
+    if (frames.size() != (uint32_t)mp_mi->in.num) {
+      LOGE("frames.size() != (uint32_t)mp_mi->in.num\n");
+      return CVI_TDL_FAILURE;
+    }
   }
 
   for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
