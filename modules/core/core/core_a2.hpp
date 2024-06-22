@@ -211,6 +211,8 @@ class Core {
   }
   ////////////////////////////////////////////////////
 
+  std::unique_ptr<CvimodelInfo> &getModelInfo() { return mp_mi; }
+
   virtual int onModelOpened() { return CVI_TDL_SUCCESS; }
   virtual int onModelClosed() { return CVI_TDL_SUCCESS; }
 

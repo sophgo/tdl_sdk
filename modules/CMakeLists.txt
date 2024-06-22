@@ -74,7 +74,10 @@ set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
   $<TARGET_OBJECTS:super_resolution>
   $<TARGET_OBJECTS:ocr_recognition>
   $<TARGET_OBJECTS:lstr>)
-
+if("${CVI_PLATFORM}" STREQUAL "CV186X")
+  set(CORES_SRCS ${CORES_SRCS}
+  $<TARGET_OBJECTS:isp_image_classification>)
+endif()
 if(NOT DEFINED NO_OPENCV)
   set(CORES_SRCS ${CORES_SRCS}
   $<TARGET_OBJECTS:face_quality>

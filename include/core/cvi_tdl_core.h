@@ -171,6 +171,7 @@ CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT)               \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LP_DETECTION)                     \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION)             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION)             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION)             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HRNET_POSE)                       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE)                             \
@@ -1389,6 +1390,23 @@ DLL_EXPORT CVI_S32 CVI_TDL_Image_Classification(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_Raw_Image_Classification(const cvitdl_handle_t handle,
                                                     VIDEO_FRAME_INFO_S *frame,
                                                     cvtdl_class_meta_t *obj_meta);
+
+#ifdef CV186X
+/**
+ * @brief isp image classification
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param object cvtdl_class_meta_t structure, top 5 class info and score
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Isp_Image_Classification(const cvitdl_handle_t handle,
+                                                    VIDEO_FRAME_INFO_S *frame,
+                                                    cvtdl_class_meta_t *obj_meta,
+                                                    cvtdl_isp_meta_t *isp_meta);
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Isp_Image_Cls_Param(const cvitdl_handle_t handle,
+                                                   VpssPreParam *p_preprocess_cfg);
+#endif
 
 /**
  * @brief get Detection model preprocess param struct

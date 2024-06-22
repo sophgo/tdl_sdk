@@ -56,6 +56,9 @@
 #include "segmentation/deeplabv3.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
 #include "super_resolution/super_resolution.hpp"
+#ifdef CV186X
+#include "isp_image_classification/isp_image_classification.hpp"
+#endif
 #ifndef NO_OPENCV
 #include "eye_classification/eye_classification.hpp"
 #include "face_quality/face_quality.hpp"
@@ -181,7 +184,9 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION, CREATOR(OCRDetection)},
     {CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
 #endif
-
+#ifdef CV186X
+    {CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, CREATOR(IspImageClassification)},
+#endif
     {CVI_TDL_SUPPORTED_MODEL_THERMALFACE, CREATOR(ThermalFace)},
     {CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, CREATOR(ThermalPerson)},
 
@@ -996,12 +1001,16 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_PolyLane_Det, Polylanenet, CVI_TDL_SUPPORTED_MODEL
                       cvtdl_lane_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Super_Resolution, SuperResolution,
                       CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, cvtdl_sr_feature *)
-
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Recognition, OCRRecognition,
                       CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_LSTR_Det, LSTR, CVI_TDL_SUPPORTED_MODEL_LSTR, cvtdl_lane_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_IrLiveness, IrLiveness, CVI_TDL_SUPPORTED_MODEL_IRLIVENESS,
                       cvtdl_face_t *)
+#ifdef CV186X
+DEFINE_INF_FUNC_F1_P2(CVI_TDL_Isp_Image_Classification, IspImageClassification,
+                      CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, cvtdl_class_meta_t *,
+                      cvtdl_isp_meta_t *)
+#endif
 
 CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                           CVI_TDL_SUPPORTED_MODEL_E model_index, cvtdl_object_t *obj) {
@@ -1770,6 +1779,28 @@ CVI_S32 CVI_TDL_Set_Raw_Image_Cls_Param(const cvitdl_handle_t handle,
   return CVI_SUCCESS;
 }
 
+#ifdef CV186X
+CVI_S32 CVI_TDL_Set_Isp_Image_Cls_Param(const cvitdl_handle_t handle,
+                                        VpssPreParam *p_preprocess_cfg) {
+  printf("enter CVI_TDL_Set_Isp_Image_Classification_Param...\n");
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  IspImageClassification *isp_image_cls_model = dynamic_cast<IspImageClassification *>(
+      getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, ctx));
+  if (isp_image_cls_model == nullptr) {
+    LOGE("No instance found for image classification.\n");
+    return CVI_FAILURE;
+  }
+  LOGI("got image_cls_model instance\n");
+  if (p_preprocess_cfg == nullptr) {
+    LOGE("p_preprocess_cfg can not be nullptr.\n");
+    return CVI_FAILURE;
+  }
+
+  isp_image_cls_model->set_param(p_preprocess_cfg);
+  return CVI_SUCCESS;
+}
+#endif
+
 cvitdl_sound_param CVI_TDL_GetSoundClassificationParam(
     const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
@@ -1876,7 +1907,7 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
   }
   if (function_id == 0) {
     // softmax
-    std::cout << "****** funtrion 2 ******" << std::endl;
+    std::cout << "****** function 1 ******" << std::endl;
     for (int i = 0; i < result_eigen.rows(); ++i) {
       float sum = 0.0;
       float maxVal = result_eigen.row(i).maxCoeff();
@@ -1905,7 +1936,7 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
       }
     }
   } else {
-    std::cout << "****** funtrion 2 ******" << std::endl;
+    std::cout << "****** function 2 ******" << std::endl;
     if (result_eigen.cols() > 1) {
       LOGE("Error! Please input a text\n");
       return CVI_FAILURE;

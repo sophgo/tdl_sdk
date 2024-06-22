@@ -5,8 +5,8 @@
 #include <string.h>
 #include <algorithm>
 #include <error_msg.hpp>
-#include <numeric>
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <vector>
 #include "core/core/cvtdl_core_types.h"

@@ -603,6 +603,12 @@ typedef struct {
 } cvtdl_class_meta_t;
 
 typedef struct {
+  float rgain;
+  float contant_1024;
+  float bgain;
+} cvtdl_isp_meta_t;
+
+typedef struct {
   int w;
   int h;
   int c;
