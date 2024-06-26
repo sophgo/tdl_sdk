@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    CVI_TDL_RetinaFace(tdl_handle, &stfdFrame, &face);
+    CVI_TDL_FaceDetection(tdl_handle, &stfdFrame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face);
 #ifdef EXECUTION_TIME
     struct timeval t0, t1;
     gettimeofday(&t0, NULL);

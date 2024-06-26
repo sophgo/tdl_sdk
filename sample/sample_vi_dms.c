@@ -295,7 +295,9 @@ void *run_tdl_thread(void *args) {
       goto get_frame_failed;
     }
 
-    CVI_TDL_RetinaFace(pstTDLArgs->stTDLHandle, &stFrame, &stFaceMeta);
+    CVI_TDL_FaceDetection(pstTDLArgs->stTDLHandle, &stFrame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE,
+                          &stFaceMeta);
+
     // Just calculate the first one
     if (stFaceMeta.size > 0) {
       // Detect phones, foods

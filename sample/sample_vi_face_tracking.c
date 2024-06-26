@@ -150,8 +150,9 @@ void *run_tdl_thread(void *args) {
 
     //*******************************************
     // Step 1: Face detection.
-    GOTO_IF_FAILED(CVI_TDL_RetinaFace(pstTDLArgs->stTDLHandle, &stFrame, &stFaceMeta), s32Ret,
-                   inf_error);
+    GOTO_IF_FAILED(CVI_TDL_FaceDetection(pstTDLArgs->stTDLHandle, &stFrame,
+                                         CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &stFaceMeta),
+                   s32Ret, inf_error);
 
     if (pstTDLArgs->bTrackingWithFeature) {
       // Step 2: Extract feature for all face in stFaceMeta.

@@ -95,12 +95,15 @@ class Core {
   int getVpssDepth(uint32_t in_index, uint32_t *depth);
   virtual int getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
                            cvtdl_vpssconfig_t *chn_config);
-  virtual void setModelThreshold(float threshold);
-  virtual void setModelNmsThreshold(float threshold);
-  float getModelThreshold();
-  float getModelNmsThreshold();
+  const float &getModelThreshold() { return m_model_threshold; }
+  virtual void setModelThreshold(const float &threshold) { m_model_threshold = threshold; };
+  const float &getModelNmsThreshold() { return m_model_nms_threshold; }
+  virtual void setModelNmsThreshold(const float &threshold) { m_model_nms_threshold = threshold; };
+
   int setUseMmap(bool mmap) { return true; }
+  virtual int after_inference() { return CVI_TDL_SUCCESS; }
   bool isInitialized();
+  // TODO:remove this interface
   virtual bool allowExportChannelAttribute() const { return false; }
   void enableDebugger(bool enable) { m_debugger.setEnable(enable); }
   void setDebuggerOutputPath(const std::string &dump_path) {
@@ -114,7 +117,6 @@ class Core {
       LOGW("**************************************************************\n");
     }
   }
-  int after_inference() { return 0; }
 
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
   int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,

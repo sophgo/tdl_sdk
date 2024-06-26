@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   // std::string str_res;
   for (int i = 0; i < 1; i++) {
     cvtdl_object_t obj_meta = {0};
-    CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, &bg, &obj_meta);
+    CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &obj_meta);
     printf("obj_size: %d\n", obj_meta.size);
     CVI_TDL_Free(&obj_meta);
   }

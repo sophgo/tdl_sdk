@@ -103,7 +103,8 @@ int main(int argc, char *argv[]) {
       }
       cvtdl_face_t face;
       memset(&face, 0, sizeof(cvtdl_face_t));
-      CVI_TDL_RetinaFace(tdl_handle, &frame, &face);
+      CVI_TDL_FaceDetection(tdl_handle, &frame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face);
+
       printf("Face found %x.\n", face.size);
       CVI_TDL_Free(&face);
       CVI_VPSS_ReleaseChnFrame(0, 0, &frame);

@@ -113,7 +113,8 @@ int infer_func(cvitdl_handle_t tdl_handle, SAMPLE_TDL_TYPE algo_type, VIDEO_FRAM
                cvtdl_object_t *p_stObjMeta, cvtdl_face_t *p_face) {
   int ret = 0;
   if (algo_type == CVI_TDL_HAND) {
-    ret = CVI_TDL_Hand_Detection(tdl_handle, ptr_frame, p_stObjMeta);
+    ret = CVI_TDL_Detection(tdl_handle, ptr_frame, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION,
+                            p_stObjMeta);
     if (ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", ret);
       return ret;
@@ -123,18 +124,21 @@ int infer_func(cvitdl_handle_t tdl_handle, SAMPLE_TDL_TYPE algo_type, VIDEO_FRAM
       printf("inference failed!, ret=%x\n", ret);
     }
   } else if (algo_type == CVI_TDL_OBJECT) {
-    ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, ptr_frame, p_stObjMeta);
+    ret = CVI_TDL_Detection(tdl_handle, ptr_frame, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                            p_stObjMeta);
   } else if (algo_type == CVI_TDL_PET) {
-    ret = CVI_TDL_PersonPet_Detection(tdl_handle, ptr_frame, p_stObjMeta);
+    ret = CVI_TDL_Detection(tdl_handle, ptr_frame, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+                            p_stObjMeta);
   } else if (algo_type == CVI_TDL_PERSON_VEHICLE) {
     ret = CVI_TDL_PersonVehicle_Detection(tdl_handle, ptr_frame, p_stObjMeta);
   } else if (algo_type == CVI_TDL_FACE) {
-    ret = CVI_TDL_ScrFDFace(tdl_handle, ptr_frame, p_face);
+    ret = CVI_TDL_FaceDetection(tdl_handle, ptr_frame, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, p_face);
     if (p_face->size > 0) {
       ret = CVI_TDL_FaceRecognition(tdl_handle, ptr_frame, p_face);
     }
   } else if (algo_type == CVI_TDL_MEET) {
-    ret = CVI_TDL_HandFacePerson_Detection(tdl_handle, ptr_frame, p_stObjMeta);
+    ret = CVI_TDL_Detection(tdl_handle, ptr_frame,
+                            CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, p_stObjMeta);
     ret = CVI_TDL_HandClassification(tdl_handle, ptr_frame, p_stObjMeta);
   }
   return ret;

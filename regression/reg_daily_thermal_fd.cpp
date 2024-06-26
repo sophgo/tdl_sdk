@@ -93,7 +93,9 @@ TEST_F(ThermalFaceDetectionTestSuite, accruacy) {
     VIDEO_FRAME_INFO_S *vframe = image_rgb.getFrame();
 
     TDLObject<cvtdl_face_t> face_meta;
-    ASSERT_EQ(CVI_TDL_ThermalFace(m_tdl_handle, vframe, face_meta), CVI_TDL_SUCCESS);
+    ASSERT_EQ(
+        CVI_TDL_FaceDetection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_THERMALFACE, face_meta),
+        CVI_TDL_SUCCESS);
 
     uint32_t expected_bbox_num =
         uint32_t(m_json_object["reg_config"][0]["expected_results"][img_idx]["bbox_num"]);

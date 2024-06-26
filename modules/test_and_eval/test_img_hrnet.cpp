@@ -102,14 +102,15 @@ int main(int argc, char *argv[]) {
   CVI_TDL_Create_ImageProcessor(&img_handle);
   ret = CVI_TDL_ReadImage(img_handle, img.c_str(), &bg, PIXEL_FORMAT_BGR_888);
 
-  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, &bg, &obj_meta);
+  ret =
+      CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &obj_meta);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
+    printf("CVI_TDL_MOBILEDETV2_PEDESTRIAN failed with %#x!\n", ret);
     return ret;
   }
 
   if (obj_meta.size > 0) {
-    ret = CVI_TDL_Hrnet_Pose(tdl_handle, &bg, &obj_meta);
+    ret = CVI_TDL_PoseDetection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, &obj_meta);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_Hrnet_Pose failed with %#x!\n", ret);
       return ret;

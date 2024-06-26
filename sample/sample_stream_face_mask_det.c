@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
     }
 
     // get bbox
-    ret = CVI_TDL_ScrFDFace(tdl_handle, &stfdFrame, &p_obj);
+    ret = CVI_TDL_FaceDetection(tdl_handle, &stfdFrame, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, &p_obj);
     if (ret != CVI_SUCCESS) {
       printf("failed to run face detection\n");
       return ret;

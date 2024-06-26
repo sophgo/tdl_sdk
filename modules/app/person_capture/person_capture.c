@@ -279,36 +279,9 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cvitdl_handl
   /* set output signal to 0. */
   memset(person_cpt_info->_output, 0, sizeof(bool) * person_cpt_info->size);
 
-  switch (person_cpt_info->od_model_index) {
-    case CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE:
-      if (CVI_TDL_SUCCESS !=
-          CVI_TDL_MobileDetV2_Person_Vehicle(tdl_handle, frame, &person_cpt_info->last_objects)) {
-        return CVI_TDL_FAILURE;
-      }
-      break;
-    case CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS:
-      CVI_TDL_MobileDetV2_Person_Pets(tdl_handle, frame, &person_cpt_info->last_objects);
-      break;
-    case CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80:
-      CVI_TDL_MobileDetV2_COCO80(tdl_handle, frame, &person_cpt_info->last_objects);
-      break;
-    case CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN:
-      CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, frame, &person_cpt_info->last_objects);
-      break;
-    case CVI_TDL_SUPPORTED_MODEL_YOLOV3:
-      if (CVI_TDL_SUCCESS != CVI_TDL_Yolov3(tdl_handle, frame, &person_cpt_info->last_objects)) {
-        return CVI_TDL_FAILURE;
-      }
-      break;
-    case CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION:
-      if (CVI_TDL_SUCCESS !=
-          CVI_TDL_HeadPerson_Detection(tdl_handle, frame, &person_cpt_info->last_objects)) {
-        return CVI_TDL_FAILURE;
-      }
-      break;
-    default:
-      printf("unknown object detection model index.");
-      return CVI_TDL_FAILURE;
+  if (CVI_TDL_SUCCESS != CVI_TDL_Detection(tdl_handle, frame, person_cpt_info->od_model_index,
+                                           &person_cpt_info->last_objects)) {
+    return CVI_TDL_FAILURE;
   }
 #ifndef NO_OPENCV
   if (person_cpt_info->enable_DeepSORT) {
@@ -401,17 +374,9 @@ CVI_S32 _ConsumerCounting_Run(person_capture_t *person_cpt_info, const cvitdl_ha
 
   /* set output signal to 0. */
   memset(person_cpt_info->_output, 0, sizeof(bool) * person_cpt_info->size);
-
-  switch (person_cpt_info->od_model_index) {
-    case CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION:
-      if (CVI_TDL_SUCCESS !=
-          CVI_TDL_HeadPerson_Detection(tdl_handle, frame, &person_cpt_info->last_objects)) {
-        return CVI_TDL_FAILURE;
-      }
-      break;
-    default:
-      printf("unknown object detection model index.");
-      return CVI_TDL_FAILURE;
+  if (CVI_TDL_SUCCESS != CVI_TDL_Detection(tdl_handle, frame, person_cpt_info->od_model_index,
+                                           &person_cpt_info->last_objects)) {
+    return CVI_TDL_FAILURE;
   }
 #ifndef NO_OPENCV
   if (person_cpt_info->enable_DeepSORT) {

@@ -50,51 +50,33 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 
-YoloV10Detection::YoloV10Detection() : Core(CVI_MEM_DEVICE) {
+YoloV10Detection::YoloV10Detection() {
   // Default value
-  // for (int i = 0; i < 3; i++) {
-  //   p_preprocess_cfg_.factor[i] = 0.003922;
-  //   p_preprocess_cfg_.mean[i] = 0.0;
-  // }
-  // p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  // p_alg_param_.cls = 80;
-}
-
-YoloPreParam YoloV10Detection::get_preparam() { return p_preprocess_cfg_; }
-void YoloV10Detection::set_preparam(YoloPreParam pre_param) {
   for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
-    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
+    preprocess_param_.factor[i] = 0.003922;
+    preprocess_param_.mean[i] = 0.0;
   }
-  p_preprocess_cfg_.rescale_type = pre_param.rescale_type;
-  p_preprocess_cfg_.format = pre_param.format;
+  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  alg_param_.cls = 80;
 }
 
-YoloAlgParam YoloV10Detection::get_algparam() { return p_alg_param_; }
-
-void YoloV10Detection::set_algparam(YoloAlgParam alg_param) {
-  p_alg_param_.cls = alg_param.cls;
-  p_alg_param_.max_det = alg_param.max_det;
-  m_cls_channel_ = alg_param.cls;
-}
-
-YoloV10Detection::YoloV10Detection(PAIR_INT yolov10_pair) : Core(CVI_MEM_DEVICE) {
+YoloV10Detection::YoloV10Detection(PAIR_INT yolov10_pair) {
   for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = 0.003922;
-    p_preprocess_cfg_.mean[i] = 0.0;
+    preprocess_param_.factor[i] = 0.003922;
+    preprocess_param_.mean[i] = 0.0;
   }
-  p_preprocess_cfg_.rescale_type = RESCALE_CENTER;
-  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_param_.rescale_type = RESCALE_CENTER;
+  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   m_box_channel_ = yolov10_pair.first;
   m_cls_channel_ = yolov10_pair.second;
-  p_alg_param_.cls = m_cls_channel_;
+  alg_param_.cls = m_cls_channel_;
 }
 
 // would parse 3 cases,1:box,cls seperate feature map,2 box+cls seperate featuremap,3 output decoded
 // results
 int YoloV10Detection::onModelOpened() {
-  m_cls_channel_ = p_alg_param_.cls;
+  m_cls_channel_ = alg_param_.cls;
   CVI_SHAPE input_shape = getInputShape(0);
   int input_h = input_shape.dim[2];
   int input_w = input_shape.dim[3];
@@ -146,8 +128,6 @@ int YoloV10Detection::onModelOpened() {
   return CVI_TDL_SUCCESS;
 }
 
-YoloV10Detection::~YoloV10Detection() {}
-
 int YoloV10Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   if (data->size() != 1) {
     LOGE("YoloV10Detection only has 1 input.\n");
@@ -155,12 +135,12 @@ int YoloV10Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *da
   }
 
   for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
+    (*data)[0].factor[i] = preprocess_param_.factor[i];
+    (*data)[0].mean[i] = preprocess_param_.mean[i];
   }
 
-  (*data)[0].rescale_type = p_preprocess_cfg_.rescale_type;
-  (*data)[0].format = p_preprocess_cfg_.format;
+  (*data)[0].rescale_type = preprocess_param_.rescale_type;
+  (*data)[0].format = preprocess_param_.format;
   (*data)[0].use_quantize_scale = true;
   return CVI_TDL_SUCCESS;
 }
@@ -395,7 +375,7 @@ void YoloV10Detection::parseDecodeBranch(const int image_width, const int image_
 void YoloV10Detection::postProcess(Detections &dets, int frame_width, int frame_height,
                                    cvtdl_object_t *obj_meta) {
   // Detections final_dets = nms_multi_class(dets, m_model_nms_threshold);
-  Detections final_dets = topk_dets(dets, p_alg_param_.max_det);
+  Detections final_dets = topk_dets(dets, alg_param_.max_det);
   CVI_SHAPE shape = getInputShape(0);
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3]);
 

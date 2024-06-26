@@ -173,13 +173,13 @@ int main(int argc, char *argv[]) {
   }
 
   // setup yolo algorithm preprocess
-  YoloAlgParam yolov8_param =
-      CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+  cvtdl_det_algo_param_t yolov8_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
   yolov8_param.cls = 7;
 
   printf("setup yolov8 algorithm param \n");
-  ret =
-      CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, yolov8_param);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+                                      yolov8_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov8 algorithm parameters %#x\n", ret);
     return ret;

@@ -9,3 +9,5 @@ install*
 prebuilt
 doxygen/latex
 tmp
+*.out
+*.cvimodel

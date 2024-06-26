@@ -241,9 +241,7 @@ static void *pVideoOutput(void *args) {
       usleep(1000);
       continue;
     }
-    // if(do_ped){
-    //  CVI_TDL_MobileDetV2_Pedestrian_D0(tdl_handle, &stVOFrame, &obj_meta_0);
-    //}
+
     {
       SMT_MutexAutoLock(VOMutex, lock);
       CVI_TDL_CopyFaceMeta(&g_face_meta_0, &face_meta_0);

@@ -71,7 +71,9 @@ TEST_F(PersonPet_DetectionTestSuite, inference) {
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     TDLObject<cvtdl_object_t> pet_meta;
     init_obj_meta(pet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, pet_meta), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Detection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+                                pet_meta),
+              CVI_TDL_SUCCESS);
   }
   {
     Image image(image_path, PIXEL_FORMAT_RGB_888_PLANAR);
@@ -79,7 +81,9 @@ TEST_F(PersonPet_DetectionTestSuite, inference) {
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     TDLObject<cvtdl_object_t> pet_meta;
     init_obj_meta(pet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, pet_meta), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Detection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+                                pet_meta),
+              CVI_TDL_SUCCESS);
   }
 }
 
@@ -99,7 +103,9 @@ TEST_F(PersonPet_DetectionTestSuite, accuracy) {
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     TDLObject<cvtdl_object_t> pet_meta;
     init_obj_meta(pet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, pet_meta), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Detection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+                                pet_meta),
+              CVI_TDL_SUCCESS);
 
     auto expected_dets = iter.value();
 

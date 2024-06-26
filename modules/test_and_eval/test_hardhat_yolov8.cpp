@@ -20,8 +20,8 @@ bool CompareFileNames(std::string a, std::string b) { return a < b; }
 // if use official model, no need to change param
 CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup preprocess
-  YoloPreParam preprocess_cfg =
-      CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT);
+  cvtdl_pre_param_t preprocess_cfg =
+      CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT);
 
   for (int i = 0; i < 3; i++) {
     printf("asign val %d \n", i);
@@ -32,19 +32,20 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
 
   printf("setup yolov8 param \n");
   CVI_S32 ret =
-      CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT, preprocess_cfg);
+      CVI_TDL_SetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT, preprocess_cfg);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov8 preprocess parameters %#x\n", ret);
     return ret;
   }
 
   // setup yolo algorithm preprocess
-  YoloAlgParam yolov8_param =
-      CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT);
+  cvtdl_det_algo_param_t yolov8_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT);
   yolov8_param.cls = 2;
 
   printf("setup yolov8 algorithm param \n");
-  ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT, yolov8_param);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
+                                      yolov8_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov8 algorithm parameters %#x\n", ret);
     return ret;
@@ -133,7 +134,7 @@ int main(int argc, char *argv[]) {
     }
     std::string str_res;
     cvtdl_object_t obj_meta = {0};
-    CVI_TDL_YOLOV8_Hardhat(tdl_handle, &rgb_frame, &obj_meta);
+    CVI_TDL_Detection(tdl_handle, &rgb_frame, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT, &obj_meta);
     std::cout << "objnum:" << obj_meta.size << std::endl;
     for (uint32_t i = 0; i < obj_meta.size; i++) {
       outfile << obj_meta.info[i].classes << ' ' << obj_meta.info[i].bbox.x1 << " "

@@ -32,7 +32,7 @@ int test_binary_short_audio_data(const std::string &strf, CVI_U8 *p_buffer,
     return -1;
   }
   int index = -1;
-  int ret = CVI_TDL_SoundClassification_V2(tdl_handle, &Frame, &index);
+  int ret = CVI_TDL_SoundClassification(tdl_handle, &Frame, &index);
   if (ret != 0) {
     printf("sound classification failed\n");
     return -1;
@@ -54,13 +54,13 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  AudioAlgParam audio_param =
-      CVI_TDL_Get_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2);
+  cvitdl_sound_param audio_param =
+      CVI_TDL_GetSoundClassificationParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION);
   audio_param.hop_len = 128;
   audio_param.fix = true;
   printf("setup audio algorithm parameters \n");
-  ret = CVI_TDL_Set_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
-                                   audio_param);
+  ret = CVI_TDL_SetSoundClassificationParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION,
+                                            audio_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set audio algorithm parameters %#x\n", ret);
     return ret;
@@ -68,15 +68,14 @@ int main(int argc, char *argv[]) {
 
   std::string modelf(argv[1]);
 
-  ret =
-      CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, modelf.c_str());
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, modelf.c_str());
   if (ret != CVI_SUCCESS) {
     printf("open modelfile failed %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
-                                  threshold);
+  ret =
+      CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, threshold);
   if (ret != CVI_SUCCESS) {
     printf("set threshold failed %#x!\n", ret);
     return ret;

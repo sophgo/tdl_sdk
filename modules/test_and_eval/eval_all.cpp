@@ -38,7 +38,7 @@ std::string run_image_hand_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle_
   cvtdl_object_t hand_obj = {0};
 
   memset(&hand_obj, 0, sizeof(cvtdl_object_t));
-  ret = CVI_TDL_Hand_Detection(tdl_handle, p_frame, &hand_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, &hand_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect hand failed:" << ret << std::endl;
   }
@@ -77,7 +77,7 @@ std::string run_image_object_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   cvtdl_object_t obj = {0};
   memset(&obj, 0, sizeof(cvtdl_object_t));
 
-  ret = CVI_TDL_MobileDetV2_COCO80(tdl_handle, p_frame, &obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, &obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect object failed:" << ret << std::endl;
   }
@@ -116,7 +116,8 @@ std::string run_image_pet_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle_t
   cvtdl_object_t hand_obj = {0};
   memset(&hand_obj, 0, sizeof(cvtdl_object_t));
 
-  ret = CVI_TDL_PersonPet_Detection(tdl_handle, p_frame, &hand_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+                          &hand_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect hand failed:" << ret << std::endl;
   }
@@ -196,7 +197,8 @@ std::string run_image_face_hand_person_detection(VIDEO_FRAME_INFO_S *p_frame,
   cvtdl_object_t hand_obj = {0};
   memset(&hand_obj, 0, sizeof(cvtdl_object_t));
 
-  ret = CVI_TDL_HandFacePerson_Detection(tdl_handle, p_frame, &hand_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION,
+                          &hand_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect vehicle failed:" << ret << std::endl;
   }
@@ -281,7 +283,7 @@ std::string run_image_scrfd_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle
   cvtdl_face_t obj_meta = {0};
   memset(&obj_meta, 0, sizeof(cvtdl_object_t));
 
-  ret = CVI_TDL_ScrFDFace(tdl_handle, p_frame, &obj_meta);
+  ret = CVI_TDL_FaceDetection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, &obj_meta);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect vehicle failed:" << ret << std::endl;
   }
@@ -325,7 +327,8 @@ std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   }
   cvtdl_object_t person_obj;
   memset(&person_obj, 0, sizeof(cvtdl_object_t));
-  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, p_frame, &person_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                          &person_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect person failed:" << ret << std::endl;
   }
@@ -394,8 +397,8 @@ std::string run_image_yolov8_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   CVI_S32 ret;
   if (model_init == 0) {
     std::cout << "init model done\t";
-    YoloPreParam preprocess_cfg =
-        CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+    cvtdl_pre_param_t preprocess_cfg =
+        CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
 
     for (int i = 0; i < 3; i++) {
       printf("asign val %d \n", i);
@@ -405,20 +408,21 @@ std::string run_image_yolov8_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
     preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
     printf("setup yolov8 param \n");
-    CVI_S32 ret = CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
-                                            preprocess_cfg);
+    CVI_S32 ret =
+        CVI_TDL_SetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, preprocess_cfg);
     if (ret != CVI_SUCCESS) {
       printf("Can not set yolov8 preprocess parameters %#x\n", ret);
     }
 
     // setup yolo algorithm preprocess
-    YoloAlgParam yolov8_param =
-        CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+
+    cvtdl_det_algo_param_t yolov8_param =
+        CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
     yolov8_param.cls = 1;
 
     printf("setup yolov8 algorithm param \n");
-    ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
-                                    yolov8_param);
+    ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+                                        yolov8_param);
     if (ret != CVI_SUCCESS) {
       printf("Can not set yolov8 algorithm parameters %#x\n", ret);
     }
@@ -442,7 +446,7 @@ std::string run_image_yolov8_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   cvtdl_object_t hand_obj = {0};
   memset(&hand_obj, 0, sizeof(cvtdl_object_t));
 
-  ret = CVI_TDL_YOLOV8_Detection(tdl_handle, p_frame, &hand_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, &hand_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect vehicle failed:" << ret << std::endl;
   }

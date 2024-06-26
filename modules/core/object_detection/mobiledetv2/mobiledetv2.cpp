@@ -101,9 +101,7 @@ static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<in
 }
 
 MobileDetV2::MobileDetV2(MobileDetV2::Category model, float iou_thresh)
-    : Core(CVI_MEM_DEVICE),
-      m_model_config(MDetV2Config::create_config(model)),
-      m_iou_threshold(iou_thresh) {
+    : m_model_config(MDetV2Config::create_config(model)), m_iou_threshold(iou_thresh) {
   m_model_threshold = m_model_config.default_score_threshold;
   /**
    *  To speedup post-process of MobileDetV2, we apply inverse function of sigmoid to threshold
@@ -117,9 +115,7 @@ MobileDetV2::MobileDetV2(MobileDetV2::Category model, float iou_thresh)
   m_filter.set();  // select all classes
 }
 
-MobileDetV2::~MobileDetV2() {}
-
-void MobileDetV2::setModelThreshold(float threshold) {
+void MobileDetV2::setModelThreshold(const float &threshold) {
   if (m_model_threshold != threshold) {
     m_model_threshold = threshold;
     m_quant_inverse_score_threshold = constructInverseThresh(
@@ -143,29 +139,6 @@ int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
 #ifndef CV186X
   (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
 #endif
-  return CVI_TDL_SUCCESS;
-}
-
-int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                                VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-
   return CVI_TDL_SUCCESS;
 }
 

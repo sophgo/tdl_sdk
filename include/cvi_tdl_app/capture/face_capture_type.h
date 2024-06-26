@@ -59,7 +59,8 @@ typedef struct {
 
   bool use_FQNet; /* don't set manually */
 
-  int (*fd_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
+  int (*fd_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, CVI_TDL_SUPPORTED_MODEL_E,
+                      cvtdl_face_t *);
   int (*fr_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
   bool *_output;   // output signal (# = .size)
   uint64_t _time;  // timer

@@ -75,7 +75,8 @@ CVI_S32 CVI_TDL_APP_FaceCapture_FDFR(const cvitdl_app_handle_t handle, VIDEO_FRA
   cvitdl_app_context_t *ctx = handle;
   face_capture_t *face_cpt_info = ctx->face_cpt_info;
   cvitdl_handle_t tdl_handle = ctx->tdl_handle;
-  if (CVI_SUCCESS != face_cpt_info->fd_inference(tdl_handle, frame, p_face)) {
+  if (CVI_SUCCESS !=
+      face_cpt_info->fd_inference(tdl_handle, frame, face_cpt_info->fd_model, p_face)) {
     printf("fd_inference failed\n");
     return CVI_FAILURE;
   }

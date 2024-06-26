@@ -450,7 +450,8 @@ CVI_S32 _ADAS_Run(adas_info_t *adas_info, const cvitdl_handle_t tdl_handle,
     return CVI_TDL_FAILURE;
   }
 
-  if (CVI_SUCCESS != CVI_TDL_YOLOV8_Detection(tdl_handle, frame, &adas_info->last_objects)) {
+  if (CVI_SUCCESS != CVI_TDL_Detection(tdl_handle, frame, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+                                       &adas_info->last_objects)) {
     // CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
     // frame,
     //  true);

@@ -36,17 +36,17 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  AudioAlgParam param =
-      CVI_TDL_Get_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2);
+  cvitdl_sound_param param =
+      CVI_TDL_GetSoundClassificationParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION);
   param.hop_len = 128;
   param.fix = true;
 
   printf("setup audio algorithm parameters \n");
 
-  ret =
-      CVI_TDL_Set_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, param);
+  ret = CVI_TDL_SetSoundClassificationParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION,
+                                            param);
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("open modelfile failed %#x!\n", ret);
     return ret;
@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
     printf("read file done,datalen:%d,addr:%0x\n", buffer_len, p_buffer);
   }
 
-  param = CVI_TDL_Get_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2);
+  param =
+      CVI_TDL_GetSoundClassificationParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION);
   // printf("get new param,sample_rate:%d,\n");
 
   int flag = atoi(argv[3]);
@@ -86,7 +87,7 @@ int main(int argc, char *argv[]) {
 
     int src_label = 0, pack_label = 0;
     if (flag == 0 || flag == 2) {
-      ret = CVI_TDL_SoundClassification_V2(tdl_handle, &Frame, &src_label);
+      ret = CVI_TDL_SoundClassification(tdl_handle, &Frame, &src_label);
       if (ret != 0) {
         printf("sound classification failed\n");
         break;
@@ -94,8 +95,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (flag == 1 || flag == 2) {
-      ret =
-          CVI_TDL_SoundClassification_V2_Pack(tdl_handle, &Frame, pack_idx, pack_len, &pack_label);
+      ret = CVI_TDL_SoundClassificationPack(tdl_handle, &Frame, pack_idx, pack_len, &pack_label);
       if (ret != 0) {
         printf("sound classification failed\n");
         break;

@@ -495,20 +495,20 @@ typedef struct {
   cvtdl_handpose21_meta_t *info;
 } cvtdl_handpose21_meta_ts;
 
-/** @struct YoloPreParam
+/** @struct cvtdl_pre_param_t
  *  @ingroup core_cvitdlcore
- *  @brief Config the yolo detection preprocess.
- *  @var YoloPreParam::factor
+ *  @brief Config the detection model preprocess.
+ *  @var cvtdl_pre_param_t::factor
  *  Preprocess factor, one dimension matrix, r g b channel
- *  @var YoloPreParam::mean
+ *  @var cvtdl_pre_param_t::mean
  *  Preprocess mean, one dimension matrix, r g b channel
- *  @var YoloPreParam::rescale_type
+ *  @var cvtdl_pre_param_t::rescale_type
  *  Preprocess config, vpss rescale type config
- *  @var YoloPreParam::keep_aspect_ratio
+ *  @var cvtdl_pre_param_t::keep_aspect_ratio
  *  Preprocess config  scale
- *  @var YoloPreParam:: resize_method
+ *  @var cvtdl_pre_param_t:: resize_method
  *  Preprocess resize method config
- *  @var YoloPreParam::format
+ *  @var cvtdl_pre_param_t::format
  *  Preprocess pixcel format config
  */
 typedef struct {
@@ -518,21 +518,21 @@ typedef struct {
   bool keep_aspect_ratio;
   VPSS_SCALE_COEF_E resize_method;
   PIXEL_FORMAT_E format;
-} YoloPreParam;
+} cvtdl_pre_param_t;
 
-/** @struct YoloAlgParam
+/** @struct cvtdl_det_algo_param_t
  *  @ingroup core_cvitdlcore
- *  @brief Config the yolo detection algorithm parameters.
- *  @var YoloAlgParam::anchors
- *  Configure yolo model anchors
- *  @var YoloAlgParam::anchor_len
- *  Configure number of yolo model anchors
- *  @var YoloAlgParam::strides
- *  Configure yolo model strides
- *  @var YoloAlgParam::stride_len
- *  Configure number of yolo model stride
- *  @var YoloAlgParam::cls
- *  Configure the number of yolo model predict classes
+ *  @brief Config the detection algorithm parameters.
+ *  @var cvtdl_det_algo_param_t::anchors
+ *  Configure detection model anchors
+ *  @var cvtdl_det_algo_param_t::anchor_len
+ *  Configure number of detection model anchors
+ *  @var cvtdl_det_algo_param_t::strides
+ *  Configure detection model strides
+ *  @var cvtdl_det_algo_param_t::stride_len
+ *  Configure number of detection model stride
+ *  @var cvtdl_det_algo_param_t::cls
+ *  Configure the number of detection model predict classes
  */
 typedef struct {
   uint32_t *anchors;
@@ -541,7 +541,8 @@ typedef struct {
   int stride_len;
   uint32_t cls;
   uint32_t max_det;
-} YoloAlgParam;
+  int *mapping_class;
+} cvtdl_det_algo_param_t;
 
 typedef struct {
   int win_len;
@@ -553,7 +554,7 @@ typedef struct {
   int fmin;
   int fmax;
   bool fix;
-} AudioAlgParam;
+} cvitdl_sound_param;
 
 /** @struct VpssPreParam
  *  @ingroup core_cvitdlcore

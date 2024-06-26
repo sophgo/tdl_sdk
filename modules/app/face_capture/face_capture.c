@@ -156,20 +156,20 @@ CVI_S32 _FaceCapture_QuickSetUp(cvitdl_handle_t tdl_handle, face_capture_t *face
 #ifndef NO_OPENCV
   printf("enter opencv\n");
   if (fd_model_id == CVI_TDL_SUPPORTED_MODEL_RETINAFACE) {
-    face_cpt_info->fd_inference = CVI_TDL_RetinaFace;
+    face_cpt_info->fd_inference = CVI_TDL_FaceDetection;
     CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, false);
   } else if (fd_model_id == CVI_TDL_SUPPORTED_MODEL_SCRFDFACE) {
-    face_cpt_info->fd_inference = CVI_TDL_ScrFDFace;
+    face_cpt_info->fd_inference = CVI_TDL_FaceDetection;
     CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, false);
   } else {
-    face_cpt_info->fd_inference = CVI_TDL_FaceMaskDetection;
+    face_cpt_info->fd_inference = CVI_TDL_FaceDetection;
     CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACEMASKDETECTION, false);
   }
 #else
   if (fd_model_id == CVI_TDL_SUPPORTED_MODEL_SCRFDFACE) {
-    face_cpt_info->fd_inference = CVI_TDL_ScrFDFace;
+    face_cpt_info->fd_inference = CVI_TDL_FaceDetection;
     CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, false);
-    printf("set fd_inference as CVI_TDL_ScrFDFace\n");
+    printf("set fd_inference as CVI_TDL_FaceDetection\n");
   }
 #endif
 
@@ -338,13 +338,14 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
       return CVI_TDL_FAILURE;
     }
 
-    if (CVI_SUCCESS !=
-        CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, infer_frame, &face_cpt_info->last_objects)) {
+    if (CVI_SUCCESS != CVI_TDL_Detection(tdl_handle, infer_frame, face_cpt_info->od_model,
+                                         &face_cpt_info->last_objects)) {
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fd_model, infer_frame, true);
       printf("ped detection failed\n");
       return CVI_TDL_FAILURE;
     }
-    ret = face_cpt_info->fd_inference(tdl_handle, infer_frame, &face_cpt_info->last_faces);
+    ret = face_cpt_info->fd_inference(tdl_handle, infer_frame, face_cpt_info->fd_model,
+                                      &face_cpt_info->last_faces);
     if (ret != CVI_SUCCESS) {
       printf("fd detection failed\n");
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fd_model, infer_frame, true);
@@ -359,8 +360,8 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
       return CVI_TDL_FAILURE;
     }
   } else {
-    if (CVI_TDL_SUCCESS !=
-        face_cpt_info->fd_inference(tdl_handle, frame, &face_cpt_info->last_faces)) {
+    if (CVI_TDL_SUCCESS != face_cpt_info->fd_inference(tdl_handle, frame, face_cpt_info->fd_model,
+                                                       &face_cpt_info->last_faces)) {
       return CVI_TDL_FAILURE;
     }
   }

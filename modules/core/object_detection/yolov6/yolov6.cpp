@@ -59,31 +59,16 @@ static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int 
   }
 }
 
-Yolov6::Yolov6() : Core(CVI_MEM_DEVICE) {
+Yolov6::Yolov6() {
   // defalut param
 
   for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = 0.003922;
-    p_preprocess_cfg_.mean[i] = 0.0;
+    preprocess_param_.factor[i] = 0.003922;
+    preprocess_param_.mean[i] = 0.0;
   }
-  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  p_alg_param_.cls = 80;
+  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  alg_param_.cls = 80;
 }
-
-YoloPreParam Yolov6::get_preparam() { return p_preprocess_cfg_; }
-
-void Yolov6::set_preparam(YoloPreParam pre_param) {
-  for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
-    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
-  }
-
-  p_preprocess_cfg_.format = pre_param.format;
-}
-
-YoloAlgParam Yolov6::get_algparam() { return p_alg_param_; }
-
-void Yolov6::set_algparam(YoloAlgParam alg_param) { p_alg_param_.cls = alg_param.cls; }
 
 int Yolov6::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
@@ -97,7 +82,7 @@ int Yolov6::onModelOpened() {
     uint32_t channel = output_shape.dim[3];
     int stride_h = input_h / feat_h;
 
-    if (channel == p_alg_param_.cls) {
+    if (channel == alg_param_.cls) {
       class_out_names[stride_h] = oinfo.tensor_name;
       strides.push_back(stride_h);
       LOGI("parase class decode branch: %s, channel: %d\n", oinfo.tensor_name.c_str(), channel);
@@ -116,49 +101,6 @@ int Yolov6::onModelOpened() {
 }
 
 Yolov6::~Yolov6() {}
-
-int Yolov6::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Yolov6 only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
-  }
-
-  (*data)[0].format = p_preprocess_cfg_.format;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
-}
-
-int Yolov6::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                           VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-
-  // set dump config
-  vpssChnAttr.stNormalize.bEnable = false;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-  return CVI_TDL_SUCCESS;
-}
 
 int Yolov6::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
@@ -283,7 +225,7 @@ void Yolov6::outputParser(const int iamge_width, const int image_height, const i
     int8_t *p_cls_int8 = static_cast<int8_t *>(classinfo.raw_pointer);
     float *p_cls_float = static_cast<float *>(classinfo.raw_pointer);
 
-    int num_cls = p_alg_param_.cls;
+    int num_cls = alg_param_.cls;
     int num_anchor = classinfo.shape.dim[1] * classinfo.shape.dim[2];
     float cls_qscale = num_per_pixel == 1 ? classinfo.qscale : 1;
 

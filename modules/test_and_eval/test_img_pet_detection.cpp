@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
   std::string str_res;
   cvtdl_object_t obj_meta = {0};
-  CVI_TDL_PersonPet_Detection(tdl_handle, &bg, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, &obj_meta);
 
   // CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[2]);
   // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION, false);
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   if (eval_perf) {
     for (int i = 0; i < 101; i++) {
       cvtdl_object_t obj_meta = {0};
-      CVI_TDL_PersonPet_Detection(tdl_handle, &bg, &obj_meta);
+      CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, &obj_meta);
       CVI_TDL_Free(&obj_meta);
     }
   }

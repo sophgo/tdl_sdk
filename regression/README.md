@@ -44,7 +44,6 @@
 3. 測試程式對應相關文檔
     | Regression code | Json file | Cvimodel | Image folder |
     | ------ | ------| ------ | ------ |
-    |reg_daily_alphapose.cpp|reg_daily_alphapose.json|alphapose.cvimodel|reg_daily_alphapose|
     |reg_daily_core.cpp | ----- | ----- | -----|
     |reg_daily_es_classification.cpp|reg_daily_es_classification.json|es_classification.cvimodel|reg_daily_es_classification|
     |reg_daily_eye_classification.cpp|reg_daily_eye_classification.jsoneye_v1_bf16.cvimodel|eye_v1_bf16.cvimodel|reg_daily_eye_classification|

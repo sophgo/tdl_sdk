@@ -181,10 +181,10 @@ int main(int argc, char *argv[]) {
     goto CLEANUP_TDL_HANDLE;
   }
 
-  ret |= CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT, fd_model_path);
+  ret |= CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, fd_model_path);
   ret |= CVI_TDL_SetVpssTimeout(tdl_handle, 1000);
-  ret |= CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
-                                   det_threshold);
+  ret |=
+      CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, det_threshold);
   if (ret != CVI_SUCCESS) {
     printf("failed to set model\n");
     goto CLEANUP_TDL_SERVICE;
@@ -209,7 +209,8 @@ int main(int argc, char *argv[]) {
     }
 
     // get bbox and hardhat
-    ret = CVI_TDL_RetinaFace_Hardhat(tdl_handle, &stfdFrame, &p_obj);
+    ret = CVI_TDL_FaceDetection(tdl_handle, &stfdFrame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
+                                &p_obj);
     if (ret != CVI_SUCCESS) {
       printf("failed to run face detection\n");
       break;

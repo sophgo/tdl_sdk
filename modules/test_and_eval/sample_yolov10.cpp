@@ -17,8 +17,8 @@
 // if use official model, no need to change param
 CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup preprocess
-  YoloPreParam preprocess_cfg =
-      CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
+  cvtdl_pre_param_t preprocess_cfg =
+      CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
 
   for (int i = 0; i < 3; i++) {
     printf("asign val %d \n", i);
@@ -28,22 +28,22 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   printf("setup yolov10 param \n");
-  CVI_S32 ret = CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
-                                          preprocess_cfg);
+  CVI_S32 ret =
+      CVI_TDL_SetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, preprocess_cfg);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov10 preprocess parameters %#x\n", ret);
     return ret;
   }
 
   // setup yolo algorithm preprocess
-  YoloAlgParam yolov10_param =
-      CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
+  cvtdl_det_algo_param_t yolov10_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
   yolov10_param.cls = 80;
   yolov10_param.max_det = 300;
 
   printf("setup yolov10 algorithm param \n");
-  ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
-                                  yolov10_param);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
+                                      yolov10_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov10 algorithm parameters %#x\n", ret);
     return ret;
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
   }
   std::string str_res;
   cvtdl_object_t obj_meta = {0};
-  CVI_TDL_YOLOV10_Detection(tdl_handle, &bg, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, &obj_meta);
 
   std::cout << "objnum:" << obj_meta.size << std::endl;
   std::stringstream ss;
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   if (eval_perf) {
     for (int i = 0; i < 101; i++) {
       cvtdl_object_t obj_meta = {0};
-      CVI_TDL_PersonPet_Detection(tdl_handle, &bg, &obj_meta);
+      CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, &obj_meta);
       CVI_TDL_Free(&obj_meta);
     }
   }

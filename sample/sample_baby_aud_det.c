@@ -86,7 +86,7 @@ void *thread_uplink_audio(void *pHandle) {
     }
     printf("maxvalsound:%d,meanv:%f\n", maxval_sound, meanval / (SAMPLE_RATE * SECOND));
     if (!record) {
-      int ret = CVI_TDL_SoundClassification_V2(pstTDLHandle, &Frame, &index);  // Detect the audio
+      int ret = CVI_TDL_SoundClassification(pstTDLHandle, &Frame, &index);  // Detect the audio
       if (ret == CVI_TDL_SUCCESS) {
         printf("esc class: %s\n", enumStr[index]);
         g_index = index;
@@ -210,7 +210,8 @@ void *run_tdl_thread(void *pHandle) {
       goto get_frame_failed;
     }
 
-    s32Ret = CVI_TDL_MobileDetV2_Pedestrian(pstTDLHandle, &stFrame, &stFaceMeta);
+    s32Ret = CVI_TDL_Detection(pstTDLHandle, &stFrame,
+                               CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &stFaceMeta);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
@@ -375,10 +376,10 @@ int main(int argc, char *argv[]) {
       s32Ret, setup_tdl_fail);
 
   GOTO_IF_FAILED(
-      CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, argv[2]),
-      s32Ret, setup_tdl_fail);
+      CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[2]), s32Ret,
+      setup_tdl_fail);
 
-  CVI_TDL_SetModelThreshold(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, 0.7);
+  CVI_TDL_SetModelThreshold(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, 0.7);
   CVI_TDL_SetModelThreshold(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, 0.5);
   if (argc == 4) {
     record = atoi(argv[3]) ? true : false;

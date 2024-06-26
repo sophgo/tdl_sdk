@@ -80,7 +80,8 @@ int main(int argc, char *argv[]) {
     memset(&obj_meta, 0, sizeof(cvtdl_object_t));
     cvtdl_tracker_t tracker_meta;
     memset(&tracker_meta, 0, sizeof(cvtdl_tracker_t));
-    CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, &fdFrame, &obj_meta);
+    CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                      &obj_meta);
     int objnum = obj_meta.size;
     printf("objnum:%d\n", objnum);
     CVI_TDL_DeepSORT_Obj(tdl_handle, &obj_meta, &tracker_meta, false);

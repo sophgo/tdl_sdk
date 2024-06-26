@@ -75,7 +75,9 @@ TEST_F(RetinafaceTestSuite, inference) {
 
         cvtdl_face_t face_meta;
         memset(&face_meta, 0, sizeof(cvtdl_face_t));
-        EXPECT_EQ(CVI_TDL_RetinaFace(m_tdl_handle, frame.getFrame(), &face_meta), CVI_TDL_SUCCESS);
+        EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                        CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face_meta),
+                  CVI_TDL_SUCCESS);
       }
 
       {
@@ -84,7 +86,9 @@ TEST_F(RetinafaceTestSuite, inference) {
 
         cvtdl_face_t face_meta;
         memset(&face_meta, 0, sizeof(cvtdl_face_t));
-        EXPECT_EQ(CVI_TDL_RetinaFace(m_tdl_handle, frame.getFrame(), &face_meta), CVI_TDL_SUCCESS);
+        EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                        CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face_meta),
+                  CVI_TDL_SUCCESS);
       }
     }
   }
@@ -111,7 +115,11 @@ TEST_F(RetinafaceTestSuite, accruacy) {
 
       TDLObject<cvtdl_face_t> face_meta;
 
-      { EXPECT_EQ(CVI_TDL_RetinaFace(m_tdl_handle, frame.getFrame(), face_meta), CVI_TDL_SUCCESS); }
+      {
+        EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                        CVI_TDL_SUPPORTED_MODEL_RETINAFACE, face_meta),
+                  CVI_TDL_SUCCESS);
+      }
 
       for (uint32_t i = 0; i < face_meta->size; i++) {
         float expected_res_x1 =

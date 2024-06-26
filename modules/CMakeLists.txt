@@ -83,9 +83,7 @@ else()
       $<TARGET_OBJECTS:sound_classification>
       $<TARGET_OBJECTS:segmentation>
       $<TARGET_OBJECTS:license_plate_recognition>
-      $<TARGET_OBJECTS:license_plate_recognitionv2>
       $<TARGET_OBJECTS:license_plate_detection>
-      $<TARGET_OBJECTS:alphapose>
       $<TARGET_OBJECTS:fall_detection>
       $<TARGET_OBJECTS:eye_classification>
       $<TARGET_OBJECTS:yawn_classification>

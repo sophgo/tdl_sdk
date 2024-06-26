@@ -1,20 +1,19 @@
 #pragma once
 #include "core/object/cvtdl_object_types.h"
-#include "core_internel.hpp"
+#include "obj_detection.hpp"
 #include "object_utils.hpp"
 #include "yolov3_utils.h"
 
 namespace cvitdl {
 
-class Yolov3 final : public Core {
+class Yolov3 final : public DetectionBase {
  public:
   Yolov3();
   ~Yolov3();
-  int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj);
-  virtual bool allowExportChannelAttribute() const override { return true; }
+  int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) override;
+  bool allowExportChannelAttribute() const override { return true; }
 
  private:
-  int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   void outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj);
   void doYolo(YOLOLayer &l);
   void getYOLOResults(detection *dets, int num, float threshold, int ori_w, int ori_h,

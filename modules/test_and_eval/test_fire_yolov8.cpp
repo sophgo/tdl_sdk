@@ -23,8 +23,8 @@ bool CompareFileNames(std::string a, std::string b) { return a < b; }
 // if use official model, no need to change param
 CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup preprocess
-  YoloPreParam preprocess_cfg =
-      CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+  cvtdl_pre_param_t preprocess_cfg =
+      CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
 
   for (int i = 0; i < 3; i++) {
     printf("asign val %d \n", i);
@@ -34,21 +34,21 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   printf("setup yolov8 param \n");
-  CVI_S32 ret = CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
-                                          preprocess_cfg);
+  CVI_S32 ret =
+      CVI_TDL_SetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, preprocess_cfg);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov8 preprocess parameters %#x\n", ret);
     return ret;
   }
 
   // setup yolo algorithm preprocess
-  YoloAlgParam yolov8_param =
-      CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+  cvtdl_det_algo_param_t yolov8_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
   yolov8_param.cls = 1;
 
   printf("setup yolov8 algorithm param \n");
-  ret =
-      CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, yolov8_param);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+                                      yolov8_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov8 algorithm parameters %#x\n", ret);
     return ret;
@@ -138,11 +138,12 @@ int main(int argc, char *argv[]) {
     std::string str_res;
     cvtdl_object_t obj_meta = {0};
 
-    CVI_TDL_YOLOV8_Detection(tdl_handle, &rgb_frame, &obj_meta);
+    CVI_TDL_Detection(tdl_handle, &rgb_frame, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, &obj_meta);
     // struct timeval start_time, stop_time;
     // gettimeofday(&start_time, NULL);
     // for (int k=0; k<1000; k++) {
-    //   CVI_TDL_YOLOV8_Detection(tdl_handle, &rgb_frame, &obj_meta);
+    //   CVI_TDL_Detection(tdl_handle, &rgb_frame,
+    //   &obj_meta,CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
     // }
     // gettimeofday(&stop_time, NULL);
     // printf("CVI_TDL_Topformer Time use %f ms\n", (__get_us(stop_time) - __get_us(start_time)) /

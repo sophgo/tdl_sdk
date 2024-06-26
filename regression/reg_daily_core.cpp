@@ -73,7 +73,8 @@ TEST_F(CoreTestSuite, create_handle) {
               CVI_TDL_SUCCESS);
 
     TDLObject<cvtdl_object_t> obj_meta;
-    EXPECT_EQ(CVI_TDL_MobileDetV2_Person_Vehicle(tdl_handle, image.getFrame(), obj_meta),
+    EXPECT_EQ(CVI_TDL_Detection(tdl_handle, image.getFrame(),
+                                CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, obj_meta),
               CVI_TDL_ERR_INIT_VPSS);
     EXPECT_EQ(CVI_TDL_DestroyHandle(tdl_handle), CVI_TDL_SUCCESS);
   }
@@ -100,7 +101,8 @@ TEST_F(CoreTestSuite, create_handle) {
               CVI_TDL_SUCCESS);
 
     TDLObject<cvtdl_object_t> obj_meta;
-    EXPECT_EQ(CVI_TDL_MobileDetV2_Person_Vehicle(tdl_handle, image.getFrame(), obj_meta),
+    EXPECT_EQ(CVI_TDL_Detection(tdl_handle, image.getFrame(),
+                                CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, obj_meta),
               CVI_TDL_SUCCESS);
     EXPECT_EQ(CVI_TDL_DestroyHandle(tdl_handle), CVI_TDL_SUCCESS);
   }
@@ -127,7 +129,8 @@ TEST_F(CoreTestSuite, create_handle) {
               CVI_TDL_SUCCESS);
 
     TDLObject<cvtdl_object_t> obj_meta;
-    EXPECT_EQ(CVI_TDL_MobileDetV2_Person_Vehicle(tdl_handle, image.getFrame(), obj_meta),
+    EXPECT_EQ(CVI_TDL_Detection(tdl_handle, image.getFrame(),
+                                CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, obj_meta),
               CVI_TDL_SUCCESS);
 
     ASSERT_TRUE(tdl_handle != NULL);
@@ -192,7 +195,8 @@ TEST_F(CoreTestSuite, skip_vpsspreprocess) {
   preprocessor.preprocess(frame, output_frame.get());
 
   TDLObject<cvtdl_object_t> obj_meta;
-  EXPECT_EQ(CVI_TDL_MobileDetV2_Person_Vehicle(tdl_handle, output_frame.get(), obj_meta),
+  EXPECT_EQ(CVI_TDL_Detection(tdl_handle, output_frame.get(),
+                              CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, obj_meta),
             CVI_TDL_SUCCESS);
 
   // TDL SDK won't create VPSS if we skip vpss preporcessing.
@@ -275,7 +279,8 @@ TEST_F(CoreTestSuite, set_vpss_thread) {
 
   {
     TDLObject<cvtdl_object_t> obj_meta;
-    EXPECT_EQ(CVI_TDL_MobileDetV2_Person_Vehicle(tdl_handle, image.getFrame(), obj_meta),
+    EXPECT_EQ(CVI_TDL_Detection(tdl_handle, image.getFrame(),
+                                CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, obj_meta),
               CVI_TDL_SUCCESS);
   }
 
@@ -296,7 +301,8 @@ TEST_F(CoreTestSuite, set_vpss_thread) {
 
   {
     TDLObject<cvtdl_object_t> obj_meta;
-    EXPECT_EQ(CVI_TDL_MobileDetV2_Person_Vehicle(tdl_handle, image.getFrame(), obj_meta),
+    EXPECT_EQ(CVI_TDL_Detection(tdl_handle, image.getFrame(),
+                                CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, obj_meta),
               CVI_TDL_SUCCESS);
   }
 

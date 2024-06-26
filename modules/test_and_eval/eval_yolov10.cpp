@@ -36,7 +36,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         VIDEO_FRAME_INFO_S fdFrame;
         auto img_path = image_root + image_name;
         CVI_TDL_ReadImage(img_handle, img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-        CVI_S32 ret = CVI_TDL_YOLOV10_Detection(tdl_handle, &fdFrame, &obj_meta);
+        CVI_S32 ret = CVI_TDL_Detection(tdl_handle, &fdFrame,
+                                        CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, &obj_meta);
         if (ret != CVI_SUCCESS) {
           CVI_TDL_Free(&obj_meta);
           CVI_TDL_ReleaseImage(img_handle, &fdFrame);
@@ -101,14 +102,14 @@ int main(int argc, char* argv[]) {
     max_det = std::stoi(argv[6]);
   }
 
-  YoloAlgParam yolov10_param =
-      CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
+  cvtdl_det_algo_param_t yolov10_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
   yolov10_param.cls = 80;
   yolov10_param.max_det = max_det;
 
   printf("setup yolov10 algorithm param \n");
-  ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
-                                  yolov10_param);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
+                                      yolov10_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov10 algorithm parameters %#x\n", ret);
     return ret;

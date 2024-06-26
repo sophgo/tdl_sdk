@@ -35,7 +35,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         VIDEO_FRAME_INFO_S fdFrame;
         auto img_path = image_root + image_name;
         CVI_TDL_ReadImage(img_handle, img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-        CVI_S32 ret = CVI_TDL_YOLOV8_Detection(tdl_handle, &fdFrame, &obj_meta);
+        CVI_S32 ret = CVI_TDL_Detection(tdl_handle, &fdFrame,
+                                        CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, &obj_meta);
         if (ret != CVI_SUCCESS) {
           CVI_TDL_Free(&obj_meta);
           CVI_TDL_ReleaseImage(img_handle, &fdFrame);

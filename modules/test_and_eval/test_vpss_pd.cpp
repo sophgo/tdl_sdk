@@ -48,7 +48,8 @@ std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   CVI_S32 ret;
   cvtdl_object_t person_obj;
   memset(&person_obj, 0, sizeof(cvtdl_object_t));
-  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, p_frame, &person_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                          &person_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect face failed:" << ret << std::endl;
   }

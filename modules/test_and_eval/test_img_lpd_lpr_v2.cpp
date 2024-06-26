@@ -63,9 +63,10 @@ int main(int argc, char *argv[]) {
     printf("obj_size: %d\n", obj_meta.size);
     printf("obj_meta bbox %f %f %f %f\n", obj_meta.info[0].bbox.x1, obj_meta.info[0].bbox.y1,
            obj_meta.info[0].bbox.x2, obj_meta.info[0].bbox.y2);
-    ret = CVI_TDL_License_Plate_Recognitionv2(tdl_handle, &bg, &obj_meta);
+    ret = CVI_TDL_LicensePlateRecognition(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION,
+                                          &obj_meta);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_TDL_License_Plate_Recognitionv2 failed with %#x!\n", ret);
+      printf("CVI_TDL_LicensePlateRecognition failed with %#x!\n", ret);
       return ret;
     }
   } else {

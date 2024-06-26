@@ -38,7 +38,7 @@ static int genFeatureFile(const char *img_dir, int *num, int *total) {
 
     cvtdl_face_t face;
     memset(&face, 0, sizeof(cvtdl_face_t));
-    CVI_TDL_RetinaFace(facelib_handle, &frFrame, &face);
+    CVI_TDL_FaceDetection(facelib_handle, &frFrame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face);
     if (face.size > 0) {
       CVI_TDL_Service_FaceAngleForAll(&face);
       CVI_TDL_FaceQuality(facelib_handle, &frFrame, &face, NULL);

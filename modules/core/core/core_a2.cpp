@@ -404,12 +404,6 @@ int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32
   return 0;
 }
 
-void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
-float Core::getModelThreshold() { return m_model_threshold; };
-
-void Core::setModelNmsThreshold(float threshold) { m_model_nms_threshold = threshold; }
-float Core::getModelNmsThreshold() { return m_model_nms_threshold; };
-
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
 
 int Core::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) { return 0; }

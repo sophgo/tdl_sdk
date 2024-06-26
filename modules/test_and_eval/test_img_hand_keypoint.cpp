@@ -25,7 +25,7 @@ void run_hand_detction(cvitdl_handle_t tdl_handle, std::string model_path,
 
   struct timeval start_time, stop_time;
   gettimeofday(&start_time, NULL);
-  CVI_TDL_Hand_Detection(tdl_handle, p_frame, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, &obj_meta);
   gettimeofday(&stop_time, NULL);
   printf("CVI_TDL_Hand_Detection Time use %f ms\n",
          (__get_us(stop_time) - __get_us(start_time)) / 1000);

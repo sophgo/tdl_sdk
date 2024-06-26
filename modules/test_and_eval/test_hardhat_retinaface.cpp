@@ -47,13 +47,13 @@ int main(int argc, char *argv[]) {
   }
 
   printf("---------------------openmodel-----------------------");
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
     return ret;
   }
-  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT, 0.5);
-  CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT, 0.5);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, 0.5);
+  CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, 0.5);
   printf("---------------------to do detection-----------------------\n");
 
   //  IMAGE_LIST
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     }
     std::string str_res;
     cvtdl_face_t obj_meta = {0};
-    CVI_TDL_RetinaFace_Hardhat(tdl_handle, &rgb_frame, &obj_meta);
+    CVI_TDL_FaceDetection(tdl_handle, &rgb_frame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, &obj_meta);
     std::cout << "objnum:" << obj_meta.size << std::endl;
     int classes = 0;
     for (uint32_t i = 0; i < obj_meta.size; i++) {

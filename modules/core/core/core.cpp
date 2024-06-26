@@ -67,7 +67,11 @@ int Core::modelOpen(const char *filepath) {
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     CVI_TENSOR *tensor = mp_mi->in.tensors + i;
     float quant_scale = CVI_NN_TensorQuantScale(tensor);
-    data[i].use_quantize_scale = quant_scale == 0 ? false : true;
+    if (quant_scale == 0 || quant_scale == 1.0) {
+      data[i].use_quantize_scale = false;
+    } else {
+      data[i].use_quantize_scale = true;
+    }
 
     if (((mp_mi->in.tensors[i].shape.dim[3] % 64) != 0)) {
       aligned_input = false;
@@ -307,12 +311,6 @@ int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32
   chn_config->chn_coeff = m_vpss_config[idx].chn_coeff;
   return CVI_TDL_SUCCESS;
 }
-
-void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
-float Core::getModelThreshold() { return m_model_threshold; };
-
-void Core::setModelNmsThreshold(float threshold) { m_model_nms_threshold = threshold; }
-float Core::getModelNmsThreshold() { return m_model_nms_threshold; };
 
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
 

@@ -308,7 +308,7 @@ int main(int argc, char *argv[]) {
         CVI_TDL_DeepSORT_Obj(tdl_handle, &obj_meta, &tracker_meta, args.enable_DeepSORT);
       } break;
       case FACE: {
-        CVI_TDL_RetinaFace(tdl_handle, &frame, &face_meta);
+        CVI_TDL_FaceDetection(tdl_handle, &frame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face_meta);
         if (args.enable_DeepSORT) {
           CVI_TDL_FaceRecognition(tdl_handle, &frame, &face_meta);
         }

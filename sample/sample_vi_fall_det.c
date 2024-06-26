@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
 
   SAMPLE_TDL_TDL_THREAD_ARG_S ai_args = {
       .enOdModelId = enOdModelId,
-      .object_detect = CVI_TDL_Yolov8_Pose,
+      .object_detect = CVI_TDL_PoseDetection,
       .stTDLHandle = stTDLHandle,
       .bTrackingWithFeature = bTrackingWithFeature,
   };

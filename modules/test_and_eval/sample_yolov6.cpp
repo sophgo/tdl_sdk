@@ -20,8 +20,8 @@
 // if use official model, no need to change param
 CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup preprocess
-  YoloPreParam preprocess_cfg =
-      CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
+  cvtdl_pre_param_t preprocess_cfg =
+      CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
 
   for (int i = 0; i < 3; i++) {
     printf("asign val %d \n", i);
@@ -31,19 +31,19 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   printf("setup yolov6 param \n");
-  CVI_S32 ret =
-      CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, preprocess_cfg);
+  CVI_S32 ret = CVI_TDL_SetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, preprocess_cfg);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov6 preprocess parameters %#x\n", ret);
     return ret;
   }
 
   // setup yolo algorithm preprocess
-  YoloAlgParam yolov6_param = CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
+  cvtdl_det_algo_param_t yolov6_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
   yolov6_param.cls = 80;
 
   printf("setup yolov6 algorithm param \n");
-  ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, yolov6_param);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, yolov6_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov6 algorithm parameters %#x\n", ret);
     return ret;
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 
   cvtdl_object_t obj_meta = {0};
 
-  CVI_TDL_Yolov6(tdl_handle, &fdFrame, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV6, &obj_meta);
 
   printf("detect number: %d\n", obj_meta.size);
 

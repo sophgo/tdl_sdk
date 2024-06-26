@@ -39,18 +39,18 @@ class HardhatDetTestSuite : public CVI_TDLModelTestSuite {
 TEST_F(HardhatDetTestSuite, open_close_model) {
   std::string model_name = std::string(m_json_object["model_name"]);
   m_model_path = (m_model_dir / fs::path(model_name)).string();
-  ASSERT_EQ(CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
-                              m_model_path.c_str()),
-            CVI_TDL_SUCCESS)
+  ASSERT_EQ(
+      CVI_TDL_OpenModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, m_model_path.c_str()),
+      CVI_TDL_SUCCESS)
       << "failed to set model path: " << m_model_path.c_str();
-  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT),
+  ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR),
             CVI_TDL_SUCCESS);
 }
 
 TEST_F(HardhatDetTestSuite, inference) {
   std::string model_name = std::string(m_json_object["model_name"]);
   m_model_path = (m_model_dir / fs::path(model_name)).string();
-  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
                            m_model_path.c_str(), false);
   ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
   auto results = m_json_object["results"];
@@ -63,7 +63,8 @@ TEST_F(HardhatDetTestSuite, inference) {
 
     cvtdl_face_t face_meta;
     memset(&face_meta, 0, sizeof(cvtdl_face_t));
-    EXPECT_EQ(CVI_TDL_RetinaFace_Hardhat(m_tdl_handle, frame.getFrame(), &face_meta),
+    EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                    CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, &face_meta),
               CVI_TDL_SUCCESS);
   }
 
@@ -73,7 +74,8 @@ TEST_F(HardhatDetTestSuite, inference) {
 
     cvtdl_face_t face_meta;
     memset(&face_meta, 0, sizeof(cvtdl_face_t));
-    EXPECT_EQ(CVI_TDL_RetinaFace_Hardhat(m_tdl_handle, frame.getFrame(), &face_meta),
+    EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                    CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, &face_meta),
               CVI_TDL_SUCCESS);
   }
 }
@@ -82,7 +84,7 @@ TEST_F(HardhatDetTestSuite, accuracy) {
   std::string model_name = std::string(m_json_object["model_name"]);
   m_model_path = (m_model_dir / fs::path(model_name)).string();
 
-  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
                            m_model_path.c_str(), false);
   ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
@@ -96,7 +98,9 @@ TEST_F(HardhatDetTestSuite, accuracy) {
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     TDLObject<cvtdl_face_t> hard_meta;
 
-    ASSERT_EQ(CVI_TDL_RetinaFace_Hardhat(m_tdl_handle, vframe, hard_meta), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
+                                    hard_meta),
+              CVI_TDL_SUCCESS);
 
     auto expected_dets = iter.value();
 

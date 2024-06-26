@@ -143,10 +143,10 @@ void *thread_infer(void *arg) {
     struct timeval start;
     gettimeofday(&start, NULL);
     if (g_flag == 0) {
-      ret = CVI_TDL_SoundClassification_V2(tdl_handle, &Frame, &pre_label);  // Detect the audio
+      ret = CVI_TDL_SoundClassification(tdl_handle, &Frame, &pre_label);  // Detect the audio
     } else {
-      ret = CVI_TDL_SoundClassification_V2_Pack(tdl_handle, &Frame, pack_idx, pack_len,
-                                                &pre_label);  // Detect the audio
+      ret = CVI_TDL_SoundClassificationPack(tdl_handle, &Frame, pack_idx, pack_len,
+                                            &pre_label);  // Detect the audio
     }
     struct timeval end;
     gettimeofday(&end, NULL);
@@ -277,15 +277,15 @@ int main(int argc, char **argv) {
     return ret;
   }
 
-  AudioAlgParam param =
-      CVI_TDL_Get_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2);
+  cvitdl_sound_param param =
+      CVI_TDL_GetSoundClassificationParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION);
   param.hop_len = 128;
   param.fix = true;
 
-  ret =
-      CVI_TDL_Set_Audio_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, param);
+  ret = CVI_TDL_SetSoundClassificationParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION,
+                                            param);
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
   if (ret != CVI_TDL_SUCCESS) {
     CVI_TDL_DestroyHandle(tdl_handle);
     return ret;

@@ -39,7 +39,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
 
         auto img_path = image_root + image_name;
         CVI_TDL_ReadImage(img_handle, img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-        CVI_S32 ret = CVI_TDL_Yolov7(tdl_handle, &fdFrame, &obj_meta);
+        CVI_S32 ret =
+            CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV7, &obj_meta);
         if (ret != CVI_SUCCESS) {
           CVI_TDL_Free(&obj_meta);
           CVI_TDL_ReleaseImage(img_handle, &fdFrame);
@@ -87,13 +88,14 @@ int main(int argc, char* argv[]) {
     return ret;
   }
 
-  YoloAlgParam p_yolov7_cfg = CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV7);
+  cvtdl_det_algo_param_t p_yolov7_cfg =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV7);
   uint32_t p_anchors[18] = {12, 16, 19,  36,  40,  28,  36,  75,  76,
                             55, 72, 146, 142, 110, 192, 243, 459, 401};
   for (int i = 0; i < 18; i++) {
     p_yolov7_cfg.anchors[i] = p_anchors[i];
   }
-  ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV7, p_yolov7_cfg);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV7, p_yolov7_cfg);
   std::string model_path = argv[1];
   std::string bench_path = argv[2];
   std::string image_root = argv[3];

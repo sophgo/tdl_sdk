@@ -80,14 +80,14 @@ int process_img_simcc(cvitdl_handle_t tdl_handle, std::string &pd_model, std::st
 
   //   CVI_TDL_SetMaxDetNum(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, 1);
 
-  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, bg, p_obj);
+  ret = CVI_TDL_Detection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, p_obj);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
+    printf("CVI_TDL_MOBILEDETV2_PEDESTRIAN failed with %#x!\n", ret);
     return ret;
   }
 
   if (p_obj->size > 0) {
-    ret = CVI_TDL_Simcc_Pose(tdl_handle, bg, p_obj);
+    ret = CVI_TDL_PoseDetection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, p_obj);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_Simcc_Pose failed with %#x!\n", ret);
       return ret;
@@ -107,7 +107,7 @@ int process_img_yolov8pose(cvitdl_handle_t tdl_handle, std::string &pose_model,
     return ret;
   }
 
-  ret = CVI_TDL_Yolov8_Pose(tdl_handle, bg, p_obj);
+  ret = CVI_TDL_PoseDetection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE, p_obj);
   if (ret != CVI_SUCCESS) {
     printf("CVI_TDL_Yolov8_Pose failed with %#x!\n", ret);
     return ret;
@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
   if (show) {  // img format should be PIXEL_FORMAT_BGR_888
     float score;
     CVI_TDL_GetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &score);
-    std::string save_path = "/mnt/data/3_data/test.jpg";
+    std::string save_path = "/mnt/data/xiaochuan.liao/sdk_package/cviai/test_simcc.jpg";
     show_keypoints(&bg, &obj_meta, save_path, score);
     // cvitdl::service::DrawKeypoints(&bg, &obj_meta, save_path, score );
     // cvitdl::service::DrawPose17(&obj_meta, &bg);

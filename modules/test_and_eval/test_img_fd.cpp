@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   std::string str_res;
   for (int i = 0; i < 1; i++) {
     cvtdl_face_t obj_meta = {0};
-    ret = CVI_TDL_ScrFDFace(tdl_handle, &bg, &obj_meta);
+    ret = CVI_TDL_FaceDetection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, &obj_meta);
     std::stringstream ss;
     ss << "boxes=[";
     for (uint32_t i = 0; i < obj_meta.size; i++) {

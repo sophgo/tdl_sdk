@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
   cvtdl_object_t obj_meta = {0};
 
-  CVI_TDL_MobileDetV2_Vehicle(tdl_handle, &bg, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, &obj_meta);
   CVI_TDL_LicensePlateDetection(tdl_handle, &bg, &obj_meta);
   if (obj_meta.size > 0) {
     printf("obj_size: %d\n", obj_meta.size);
