@@ -18,7 +18,7 @@
 CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup preprocess
   YoloPreParam preprocess_cfg =
-      CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+      CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
 
   for (int i = 0; i < 3; i++) {
     printf("asign val %d \n", i);
@@ -27,32 +27,32 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   }
   preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
-  printf("setup yolov8 param \n");
-  CVI_S32 ret = CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+  printf("setup yolov10 param \n");
+  CVI_S32 ret = CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
                                           preprocess_cfg);
   if (ret != CVI_SUCCESS) {
-    printf("Can not set yolov8 preprocess parameters %#x\n", ret);
+    printf("Can not set yolov10 preprocess parameters %#x\n", ret);
     return ret;
   }
 
   // setup yolo algorithm preprocess
-  YoloAlgParam yolov8_param =
-      CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
-  yolov8_param.cls = 80;
+  YoloAlgParam yolov10_param =
+      CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
+  yolov10_param.cls = 80;
+  yolov10_param.max_det = 300;
 
-  printf("setup yolov8 algorithm param \n");
-  ret =
-      CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, yolov8_param);
+  printf("setup yolov10 algorithm param \n");
+  ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
+                                  yolov10_param);
   if (ret != CVI_SUCCESS) {
-    printf("Can not set yolov8 algorithm parameters %#x\n", ret);
+    printf("Can not set yolov10 algorithm parameters %#x\n", ret);
     return ret;
   }
 
   // set theshold
-  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, 0.5);
-  CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, 0.5);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, 0.5);
 
-  printf("yolov8 algorithm parameters setup success!\n");
+  printf("yolov10 algorithm parameters setup success!\n");
   return ret;
 }
 
@@ -79,13 +79,13 @@ int main(int argc, char *argv[]) {
     eval_perf = atoi(argv[3]);
   }
 
-  // change param of yolov8_detection
+  // change param of yolov10_detection
   ret = init_param(tdl_handle);
 
   printf("---------------------openmodel-----------------------");
-  // CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, 0.5);
-  // CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, 0.5);
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, argv[1]);
+  // CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, 0.5);
+  // CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, 0.5);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, argv[1]);
 
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
   }
   std::string str_res;
   cvtdl_object_t obj_meta = {0};
-  CVI_TDL_YOLOV8_Detection(tdl_handle, &bg, &obj_meta);
+  CVI_TDL_YOLOV10_Detection(tdl_handle, &bg, &obj_meta);
 
   std::cout << "objnum:" << obj_meta.size << std::endl;
   std::stringstream ss;

@@ -30,6 +30,7 @@ if(DEFINED NO_OPENCV)
                   $<TARGET_OBJECTS:yolov5>
                   $<TARGET_OBJECTS:yolov6>
                   $<TARGET_OBJECTS:yolov8>
+                  $<TARGET_OBJECTS:yolov10>
                   $<TARGET_OBJECTS:yolox>
                   $<TARGET_OBJECTS:ppyoloe>
                   $<TARGET_OBJECTS:yolo>
@@ -71,6 +72,7 @@ else()
       $<TARGET_OBJECTS:yolov5>
       $<TARGET_OBJECTS:yolov6>
       $<TARGET_OBJECTS:yolov8>
+      $<TARGET_OBJECTS:yolov10>
       $<TARGET_OBJECTS:yolox>
       $<TARGET_OBJECTS:ppyoloe>
       $<TARGET_OBJECTS:yolo>

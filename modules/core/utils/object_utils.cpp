@@ -33,6 +33,17 @@ static vector<size_t> calculate_area(const Detections &dets) {
   return areas;
 }
 
+Detections topk_dets(const Detections &dets, uint32_t max_det) {
+  vector<size_t> order = sort_indexes(dets);
+
+  uint32_t num_to_keep = dets.size() > max_det ? max_det : dets.size();
+  Detections final_dets(num_to_keep);
+  for (size_t k = 0; k < num_to_keep; k++) {
+    final_dets[k] = dets[k];
+  }
+  return final_dets;
+}
+
 Detections nms_multi_class(const Detections &dets, float iou_threshold) {
   vector<int> keep(dets.size(), 0);
   vector<int> suppressed(dets.size(), 0);

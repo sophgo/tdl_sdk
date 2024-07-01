@@ -161,6 +161,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_IRLIVENESS)                       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION)            \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION)                 \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION)         \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION)       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION)            \
@@ -1509,6 +1510,17 @@ DLL_EXPORT CVI_S32 CVI_TDL_PersonPet_Detection(const cvitdl_handle_t handle,
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_YOLOV8_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                           cvtdl_object_t *obj_meta);
+
+/**
+ * @brief Yolov10 Detection
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_YOLOV10_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                            cvtdl_object_t *obj_meta);
 
 /**

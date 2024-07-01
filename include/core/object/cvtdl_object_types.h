@@ -540,6 +540,7 @@ typedef struct {
   uint32_t *strides;
   int stride_len;
   uint32_t cls;
+  uint32_t max_det;
 } YoloAlgParam;
 
 typedef struct {

@@ -43,6 +43,7 @@
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/ppyoloe/ppyoloe.hpp"
 #include "object_detection/yolo/yolo.hpp"
+#include "object_detection/yolov10/yolov10.hpp"
 #include "object_detection/yolov3/yolov3.hpp"
 #include "object_detection/yolov5/yolov5.hpp"
 #include "object_detection/yolov6/yolov6.hpp"
@@ -205,6 +206,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 3))},
     {CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 80))},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
+     CREATOR_P1(YoloV10Detection, PAIR_INT, std::make_pair(64, 80))},
     {CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 7))},
     {CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION,
@@ -914,6 +917,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_PersonPet_Detection, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_YOLOV8_Detection, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_YOLOV10_Detection, YoloV10Detection,
+                      CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_HandFacePerson_Detection, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_HeadPerson_Detection, YoloV8Detection,
@@ -1556,6 +1561,10 @@ YoloPreParam CVI_TDL_Get_YOLO_Preparam(const cvitdl_handle_t handle,
     YoloV8Detection *yolov8_model =
         dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
     return yolov8_model->get_preparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION) {
+    YoloV10Detection *yolov10_model =
+        dynamic_cast<YoloV10Detection *>(getInferenceInstance(model_index, ctx));
+    return yolov10_model->get_preparam();
   } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOX) {
     YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
     return yolox_model->get_preparam();
@@ -1586,6 +1595,11 @@ CVI_S32 CVI_TDL_Set_YOLO_Preparam(const cvitdl_handle_t handle,
         dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
     yolov8_model->set_preparam(pre_param);
     return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION) {
+    YoloV10Detection *yolov10_model =
+        dynamic_cast<YoloV10Detection *>(getInferenceInstance(model_index, ctx));
+    yolov10_model->set_preparam(pre_param);
+    return CVI_SUCCESS;
   } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOX) {
     YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
     yolox_model->set_preparam(pre_param);
@@ -1615,6 +1629,10 @@ YoloAlgParam CVI_TDL_Get_YOLO_Algparam(const cvitdl_handle_t handle,
     YoloV8Detection *yolov8_model =
         dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
     return yolov8_model->get_algparam();
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION) {
+    YoloV10Detection *yolov10_model =
+        dynamic_cast<YoloV10Detection *>(getInferenceInstance(model_index, ctx));
+    return yolov10_model->get_algparam();
   } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOX) {
     YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
     return yolox_model->get_algparam();
@@ -1643,6 +1661,11 @@ CVI_S32 CVI_TDL_Set_YOLO_Algparam(const cvitdl_handle_t handle,
     YoloV8Detection *yolov8_model =
         dynamic_cast<YoloV8Detection *>(getInferenceInstance(model_index, ctx));
     yolov8_model->set_algparam(alg_param);
+    return CVI_SUCCESS;
+  } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION) {
+    YoloV10Detection *yolov10_model =
+        dynamic_cast<YoloV10Detection *>(getInferenceInstance(model_index, ctx));
+    yolov10_model->set_algparam(alg_param);
     return CVI_SUCCESS;
   } else if (model_index == CVI_TDL_SUPPORTED_MODEL_YOLOX) {
     YoloX *yolox_model = dynamic_cast<YoloX *>(getInferenceInstance(model_index, ctx));
