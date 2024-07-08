@@ -16,14 +16,17 @@ int FallDetMonitor::monitor(cvtdl_object_t* obj_meta) {
   std::map<int, int> track_index;
   std::vector<int> new_index;
   for (uint32_t i = 0; i < obj_meta->size; i++) {
-    track_index[obj_meta->info[i].unique_id] = i;
+    if (obj_meta->info[i].track_state == cvtdl_trk_state_type_t::CVI_TRACKER_NEW) {
+      new_index.push_back(i);
+
+    } else {
+      track_index[obj_meta->info[i].unique_id] = i;
+    }
+
 #ifdef DEBUG_FALL
     printf("unique_id: %d, track_state: %d\n", obj_meta->info[i].unique_id,
            obj_meta->info[i].track_state);
 #endif
-    if (obj_meta->info[i].track_state == cvtdl_trk_state_type_t::CVI_TRACKER_NEW) {
-      new_index.push_back(i);
-    }
   }
 #ifdef DEBUG_FALL
   printf("0 muti_person size: %d\n", muti_person.size());
