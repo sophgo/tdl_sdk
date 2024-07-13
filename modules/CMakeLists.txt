@@ -103,7 +103,8 @@ else()
       $<TARGET_OBJECTS:hrnet>
       $<TARGET_OBJECTS:motion_segmentation>
       $<TARGET_OBJECTS:image_classification>
-      $<TARGET_OBJECTS:clip>
+      $<TARGET_OBJECTS:clip_image>
+      $<TARGET_OBJECTS:clip_text>
       $<TARGET_OBJECTS:image_classification>
       $<TARGET_OBJECTS:raw_image_classification>
       $<TARGET_OBJECTS:lane_detection>

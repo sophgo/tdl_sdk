@@ -1,8 +1,7 @@
-#include "version.hpp"
-
-#include "clip/clip.hpp"
-#include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_core.h"
+#include "clip/clip_image/clip_image.hpp"
+#include "clip/clip_text/clip_text.hpp"
+#include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "cvi_tdl_core_internal.hpp"
 #include "cvi_tdl_experimental.h"
@@ -10,6 +9,7 @@
 #include "deepsort/cvi_deepsort.hpp"
 #include "eye_classification/eye_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
+#include "version.hpp"
 
 #include "face_attribute_cls/face_attribute_cls.hpp"
 
@@ -237,7 +237,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_LANDMARK_DET3, CREATOR(FaceLandmarkDet3)},
     {CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET, CREATOR(DMSLandmarkerDet)},
     {CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, CREATOR(ImageClassification)},
-    {CVI_TDL_SUPPORTED_MODEL_CLIP, CREATOR(Clip)},
+    {CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE, CREATOR(Clip_Image)},
+    {CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT, CREATOR(Clip_Text)},
     {CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, CREATOR(RawImageClassification)},
     // {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
     //  CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
@@ -873,7 +874,9 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_Image_Classification, ImageClassification,
                       CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, cvtdl_class_meta_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Raw_Image_Classification, RawImageClassification,
                       CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, cvtdl_class_meta_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_Clip_Feature, Clip, CVI_TDL_SUPPORTED_MODEL_CLIP,
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Clip_Image_Feature, Clip_Image, CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE,
+                      cvtdl_clip_feature *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Clip_Text_Feature, Clip_Text, CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT,
                       cvtdl_clip_feature *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Lane_Det, BezierLaneNet, CVI_TDL_SUPPORTED_MODEL_LANE_DET,
                       cvtdl_lane_t *)

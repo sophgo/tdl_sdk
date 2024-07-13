@@ -22,17 +22,14 @@ cvitdl_handle_t tdl_handle = NULL;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
-bool CompareFileNames(std::string a, std::string b) { return a < b; }
-
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
+  if (argc != 3) {
     printf(
         "Usage: %s <clip model path> <input image directory list.txt> <output result "
         "directory/>.\n",
         argv[0]);
     printf("clip model path: Path to clip bmodel.\n");
     printf("Input image directory: Directory containing input images for clip.\n");
-    printf("Output result directory: Directory to save clip feature.bin\n");
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
@@ -48,17 +45,14 @@ int main(int argc, char *argv[]) {
     printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
-  // MODEL_DIR
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_CLIP, argv[1]);
+
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("Set model retinaface failed with %#x!\n", ret);
     return ret;
   }
-  //  IMAGE_LIST
-  std::string image_list(argv[2]);
 
-  //  dir_name
-  std::string dir_name(argv[3]);
+  std::string image_list(argv[2]);
 
   std::cout << "to read file_list:" << image_list << std::endl;
   std::vector<std::string> file_list = read_file_lines(image_list);
@@ -67,11 +61,12 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  std::sort(file_list.begin(), file_list.end(), CompareFileNames);
-
   std::string input_image_path;
   cvtdl_clip_feature clip_feature;
 
+  std::ofstream outfile("a2_image_output.txt");
+
+  std::cout << file_list.size() << std::endl;
   for (size_t i = 0; i < file_list.size(); i++) {
     input_image_path = file_list[i];
     VIDEO_FRAME_INFO_S rgb_frame;
@@ -84,33 +79,32 @@ int main(int argc, char *argv[]) {
     imgprocess_t img_handle;
     CVI_TDL_Create_ImageProcessor(&img_handle);
     ret = CVI_TDL_ReadImage_CenrerCrop_Resize(img_handle, input_image_path.c_str(), &rgb_frame,
-                                              PIXEL_FORMAT_RGB_888_PLANAR, 288, 288);
+                                              PIXEL_FORMAT_RGB_888_PLANAR, 224, 224);
     if (ret != CVI_SUCCESS) {
       printf("open img failed with %#x!\n", ret);
       return ret;
     }
-    std::ofstream outfile(dir_name + pic_name + ".bin", std::ios::binary);
-    if (!outfile) {
-      std::cerr << "无法打开文件" << std::endl;
-      return -1;
-    }
-    printf("SUCCESS to read image: %s\n", input_image_path.c_str());
-    ret = CVI_TDL_Clip_Feature(tdl_handle, &rgb_frame, &clip_feature);
+
+    ret = CVI_TDL_Clip_Image_Feature(tdl_handle, &rgb_frame, &clip_feature);
     if (ret != CVI_SUCCESS) {
       printf("Failed to CVI_TDL_Clip_Feature\n");
       return 0;
     }
+
     for (int y = 0; y < clip_feature.feature_dim; ++y) {
-      outfile.write(reinterpret_cast<const char *>(&clip_feature.out_feature[y]), sizeof(float));
+      outfile << clip_feature.out_feature[y];
+      if (y < clip_feature.feature_dim - 1) {
+        outfile << " ";
+      }
     }
-    // 需要释放结构体out_feature指针
+    outfile << "\n";
     free(clip_feature.out_feature);
-    outfile.close();
+
     std::cout << "after free:" << std::endl;
 
     CVI_TDL_ReleaseImage(img_handle, &rgb_frame);
   }
-
+  outfile.close();
   CVI_TDL_DestroyHandle(tdl_handle);
 
   return CVI_SUCCESS;

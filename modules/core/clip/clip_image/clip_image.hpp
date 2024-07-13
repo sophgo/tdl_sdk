@@ -4,16 +4,14 @@
 
 namespace cvitdl {
 
-class Clip final : public Core {
+class Clip_Image final : public Core {
  public:
-  Clip();
-  virtual ~Clip();
+  Clip_Image();
+  virtual ~Clip_Image();
   int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_clip_feature *clip_feature);
   virtual bool allowExportChannelAttribute() const override { return true; }
 
  private:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
-  int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                     VPSSConfig &vpss_config) override;
 };
 }  // namespace cvitdl

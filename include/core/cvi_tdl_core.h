@@ -172,7 +172,8 @@ CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT)               \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION)             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HRNET_POSE)                       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
-  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LANE_DET)                         \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_POLYLANE)                         \
@@ -1456,8 +1457,29 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Raw_Image_Cls_Param(const cvitdl_handle_t handle,
  * @param frame input image
  * @param cvtdl_clip_feature save feature and dim, need custom free
  */
-DLL_EXPORT CVI_S32 CVI_TDL_Clip_Feature(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                        cvtdl_clip_feature *clip_feature);
+DLL_EXPORT CVI_S32 CVI_TDL_Clip_Image_Feature(const cvitdl_handle_t handle,
+                                              VIDEO_FRAME_INFO_S *frame,
+                                              cvtdl_clip_feature *clip_feature);
+
+/**
+ * @brief get frame feature from openclip model
+ *
+ * @param frame input image
+ * @param cvtdl_clip_feature save feature and dim, need custom free
+ */
+// DLL_EXPORT CVI_S32 CVI_TDL_OpenClip_Image_Feature(const cvitdl_handle_t handle,
+// VIDEO_FRAME_INFO_S *frame,
+//                                      cvtdl_clip_feature *clip_feature);
+
+/**
+ * @brief get frame feature from clip model
+ *
+ * @param frame input image
+ * @param cvtdl_clip_feature save feature and dim, need custom free
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Clip_Text_Feature(const cvitdl_handle_t handle,
+                                             VIDEO_FRAME_INFO_S *frame,
+                                             cvtdl_clip_feature *clip_feature);
 
 /**
  * @brief get audio algorithm param

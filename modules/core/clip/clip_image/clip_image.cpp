@@ -1,4 +1,4 @@
-#include "clip.hpp"
+#include "clip_image.hpp"
 #include <core/core/cvtdl_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,11 +22,11 @@
 
 namespace cvitdl {
 
-Clip::Clip() : Core(CVI_MEM_DEVICE) {}
+Clip_Image::Clip_Image() : Core(CVI_MEM_DEVICE) {}
 
-Clip::~Clip() {}
+Clip_Image::~Clip_Image() {}
 
-int Clip::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
+int Clip_Image::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
   if (data->size() != 1) {
     LOGE("CLIP only has 1 input.\n");
     return CVI_TDL_ERR_INVALID_ARGS;
@@ -43,25 +43,8 @@ int Clip::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
   std::cout << "setupInputPreprocess done" << std::endl;
   return CVI_TDL_SUCCESS;
 }
-int Clip::vpssPreprocess(VIDEO_FRAME_INFO_S* srcFrame, VIDEO_FRAME_INFO_S* dstFrame,
-                         VPSSConfig& vpss_config) {
-  auto& vpssChnAttr = vpss_config.chn_attr;
-  auto& factor = vpssChnAttr.stNormalize.factor;
-  auto& mean = vpssChnAttr.stNormalize.mean;
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n");
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
 
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n");
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-  return CVI_TDL_SUCCESS;
-}
-int Clip::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_clip_feature* clip_feature) {
+int Clip_Image::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_clip_feature* clip_feature) {
   std::vector<VIDEO_FRAME_INFO_S*> frames = {frame};
   int ret = run(frames);
   if (ret != CVI_TDL_SUCCESS) {
