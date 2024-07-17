@@ -102,6 +102,14 @@ int Core::modelOpen(const char *filepath) {
     bmrt_tensor(&out_tensor[i], mp_mi->handle, net_info->output_dtypes[i], stage.output_shapes[i]);
     if (!use_mmap) {
       mp_mi->out.raw_pointer.push_back(new char[bmrt_tensor_bytesize(&out_tensor[i])]);
+    } else {
+      bm_status_t status =
+          bm_mem_mmap_device_mem(bm_handle, &out_tensor[i].device_mem,
+                                 reinterpret_cast<long long unsigned int *>(&out_raw_pointer[i]));
+      if (CVI_TDL_SUCCESS != status) {
+        cleanupError();
+        return CVI_TDL_ERR_OPEN_MODEL;
+      }
     }
   }
 
@@ -111,8 +119,10 @@ int Core::modelOpen(const char *filepath) {
     }
   }
 
+  m_input_tensor_info.clear();
   setupInputTensorInfo(net_info, mp_mi.get(), m_input_tensor_info);
-  setupOutputTensorInfo(net_info, mp_mi.get(), m_output_tensor_info);
+  m_output_tensor_info.clear();
+  setupOutputTensorInfo(net_info, mp_mi.get(), m_output_tensor_info);  // to update raw_pointer
 
   /* input preprocess param */
   m_vpss_config.clear();
@@ -228,20 +238,7 @@ void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_
   }
 }
 
-int Core::after_inference() {
-  if (use_mmap) {
-    for (int32_t i = 0; i < mp_mi->out.num; i++) {
-      auto size = bm_mem_get_device_size(mp_mi->out.tensors[i].device_mem);
-      bm_status_t status = bm_mem_unmap_device_mem(bm_handle, mp_mi->out.raw_pointer[i], size);
-
-      if (CVI_TDL_SUCCESS != status) {
-        LOGE("bm_mem_unmap_device_mem failed: %s\n");
-        return CVI_TDL_FAILURE;
-      }
-    }
-  }
-  return CVI_TDL_SUCCESS;
-}
+int Core::after_inference() { return CVI_TDL_SUCCESS; }
 
 int Core::modelClose() {
   int ret = CVI_TDL_SUCCESS;
@@ -259,6 +256,16 @@ int Core::modelClose() {
     for (auto ptr : mp_mi->out.raw_pointer) {
       delete[] ptr;
     }
+  } else {
+    for (int32_t i = 0; i < mp_mi->out.num; i++) {
+      auto size = bm_mem_get_device_size(mp_mi->out.tensors[i].device_mem);
+      bm_status_t status = bm_mem_unmap_device_mem(bm_handle, mp_mi->out.raw_pointer[i], size);
+
+      if (CVI_TDL_SUCCESS != status) {
+        LOGE("bm_mem_unmap_device_mem failed: %s\n");
+        return CVI_TDL_FAILURE;
+      }
+    }
   }
 
   if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
@@ -266,7 +273,10 @@ int Core::modelClose() {
       delete[] ptr;
     }
   }
-
+  if (register_temp_buffer) {
+    delete[] register_temp_buffer;
+    register_temp_buffer = nullptr;
+  }
   for (int32_t i = 0; i < mp_mi->out.num; i++) {
     bm_free_device(bm_handle, mp_mi->out.tensors[i].device_mem);
   }
@@ -536,22 +546,20 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
 
     if (use_mmap) {
       for (auto i = 0; i < mp_mi->out.num; i++) {
-        bm_status_t status =
-            bm_mem_mmap_device_mem(bm_handle, &out_tensor[i].device_mem,
-                                   reinterpret_cast<long long unsigned int *>(&raw_pointer[i]));
-        if (CVI_TDL_SUCCESS != status) {
-          cleanupError();
-          return CVI_TDL_ERR_OPEN_MODEL;
-        }
-
-        status = bm_mem_invalidate_device_mem(bm_handle, &(out_tensor[i].device_mem));
+        // bm_status_t status =
+        //     bm_mem_mmap_device_mem(bm_handle, &out_tensor[i].device_mem,
+        //                            reinterpret_cast<long long unsigned int *>(&raw_pointer[i]));
+        // if (CVI_TDL_SUCCESS != status) {
+        //   cleanupError();
+        //   return CVI_TDL_ERR_OPEN_MODEL;
+        // }
+        bm_status_t status = bm_mem_invalidate_device_mem(bm_handle, &(out_tensor[i].device_mem));
         if (CVI_TDL_SUCCESS != status) {
           cleanupError();
           return CVI_TDL_ERR_OPEN_MODEL;
         }
       }
-      m_output_tensor_info.clear();
-      setupOutputTensorInfo(net_info, mp_mi.get(), m_output_tensor_info);  // to update raw_pointer
+
     } else {
       for (int32_t i = 0; i < mp_mi->out.num; i++) {
         bm_memcpy_d2s_partial(bm_handle, raw_pointer[i], out_tensor[i].device_mem,
@@ -606,36 +614,24 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
       int input_width = mp_mi->in.tensors[i].shape.dims[3];
 
       if (input_width % ALIGN_SIZE == 0) {
-        bm_memcpy_s2d_partial(bm_handle, mp_mi->in.tensors[i].device_mem,
-                              (void *)frame->stVFrame.pu8VirAddr[0], size);
+        bm_set_device_mem(&(mp_mi->in.tensors[i].device_mem), size,
+                          (unsigned long long)frame->stVFrame.u64PhyAddr[0]);
       } else {
         int align_length = (input_width / ALIGN_SIZE + 1) * ALIGN_SIZE;
-
+        uint64_t image_bgr_devaddr = bm_mem_get_device_addr(mp_mi->in.tensors[i].device_mem);
+        int input_height_squared = input_width * input_height;
+        //  for(for(s2s_cpy))+s2d_cpy greater than for(for(s2d_cpy))
+        if (!register_temp_buffer) {
+          register_temp_buffer = new uint8_t[3 * input_height_squared];
+        }
         for (int c = 0; c < 3; c++) {
           for (int h = 0; h < input_height; h++) {
-            uint64_t image_bgr_devaddr = bm_mem_get_device_addr(mp_mi->in.tensors[i].device_mem);
-            bm_device_mem_t dst_addr = bm_mem_from_device(
-                image_bgr_devaddr + h * input_width + c * input_height * input_height, input_width);
-
-            bm_memcpy_s2d_partial(bm_handle, dst_addr,
-                                  (void *)(frame->stVFrame.pu8VirAddr[c] + h * align_length),
-                                  input_width);
+            memcpy(register_temp_buffer + c * input_height_squared + h * input_width,
+                   frame->stVFrame.pu8VirAddr[c] + h * align_length, input_width);
           }
         }
-
-        // bm_memcpy_d2d_byte function is not ready
-
-        // for (int k = 0; k < 3; k++) {
-        //   bm_device_mem_t src_addr =
-        //   bm_mem_from_device((uint64_t)(frame->stVFrame.pu8VirAddr[k]),
-        //                                                 frame->stVFrame.u32Length[i]);
-
-        //   for (int n = 0; n < input_height; n++) {
-        //     bm_memcpy_d2d_byte(bm_handle, mp_mi->in.tensors[i].device_mem,
-        //                        n * input_width + k * input_height * input_height, src_addr,
-        //                        n * align_length, input_width);
-        //   }
-        // }
+        bm_device_mem_t dst_addr = bm_mem_from_device(image_bgr_devaddr, image_size);
+        bm_memcpy_s2d_partial(bm_handle, dst_addr, (void *)(register_temp_buffer), image_size);
       }
 
       CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);
