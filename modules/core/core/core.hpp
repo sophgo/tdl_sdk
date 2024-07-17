@@ -206,9 +206,8 @@ class Core {
   // vpss related control
   int32_t m_vpss_timeout = 100;
   std::string m_model_file;
-#ifndef CV186X
   debug::ModelDebugger m_debugger;
-#endif
+
  private:
   template <typename T>
   inline int __attribute__((always_inline)) registerFrame2Tensor(std::vector<T> &frames);
