@@ -80,6 +80,7 @@ void RESTRUCTURING_OBJ_META(cvtdl_object_t *origin_obj, cvtdl_object_t *obj_meta
   obj_meta->rescale_type = origin_obj->rescale_type;
   obj_meta->height = origin_obj->height;
   obj_meta->width = origin_obj->width;
+
   obj_meta->entry_num = origin_obj->entry_num;
   obj_meta->miss_num = origin_obj->miss_num;
 
@@ -90,7 +91,7 @@ void RESTRUCTURING_OBJ_META(cvtdl_object_t *origin_obj, cvtdl_object_t *obj_meta
     memcpy(&(*tmp_ptr)->bbox, &origin_obj->info[i].bbox, sizeof(cvtdl_bbox_t));
     *tmp_ptr += 1;
   }
-
+  //  printf("e: %d   m:  %d\n",obj_meta->entry_num,obj_meta->miss_num);
   return;
 }
 
@@ -240,9 +241,12 @@ static void *pVideoOutput(void *args) {
       usleep(1000);
       continue;
     }
-
+    char *en = calloc(32, sizeof(char));
+    char *mi = calloc(32, sizeof(char));
     {
       MutexAutoLock(VOMutex, lock);
+      sprintf(en, "Number of entering: %d", g_obj_meta_0.entry_num);
+      sprintf(mi, "Number of leaving: %d", g_obj_meta_0.miss_num);
 
       // memcpy(&obj_meta_0, &g_obj_meta_0, sizeof(cvtdl_object_t));
       // memcpy(&obj_meta_1, &g_obj_meta_1, sizeof(cvtdl_object_t));
@@ -252,11 +256,12 @@ static void *pVideoOutput(void *args) {
       obj_meta_0.info =
           (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * g_obj_meta_0.size);
       memset(obj_meta_0.info, 0, sizeof(cvtdl_object_info_t) * obj_meta_0.size);
-
       for (uint32_t i = 0; i < g_obj_meta_0.size; i++) {
         obj_meta_0.info[i].unique_id = MAX(0, g_obj_meta_0.info[i].unique_id);
         memcpy(&obj_meta_0.info[i].bbox, &g_obj_meta_0.info[i].bbox, sizeof(cvtdl_bbox_t));
       }
+      obj_meta_0.entry_num = g_obj_meta_0.entry_num;
+      obj_meta_0.miss_num = g_obj_meta_0.miss_num;
 
       obj_meta_1.info =
           (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * g_obj_meta_1.size);
@@ -265,6 +270,8 @@ static void *pVideoOutput(void *args) {
         obj_meta_1.info[i].unique_id = MAX(0, g_obj_meta_1.info[i].unique_id);
         memcpy(&obj_meta_1.info[i].bbox, &g_obj_meta_1.info[i].bbox, sizeof(cvtdl_bbox_t));
       }
+      obj_meta_1.entry_num = g_obj_meta_1.entry_num;
+      obj_meta_1.miss_num = g_obj_meta_1.miss_num;
     }
     size_t image_size = stVOFrame.stVFrame.u32Length[0] + stVOFrame.stVFrame.u32Length[1] +
                         stVOFrame.stVFrame.u32Length[2];
@@ -298,13 +305,15 @@ static void *pVideoOutput(void *args) {
     sprintf(num_person, "Number of people: %d", obj_meta_0.size);
     CVI_TDL_Service_ObjectWriteText(num_person, 200, 100, &stVOFrame, 2, 2, 2);
 
-    sprintf(num_person, "Number of entering: %d", obj_meta_0.entry_num);
-    CVI_TDL_Service_ObjectWriteText(num_person, 200, 200, &stVOFrame, 2, 2, 2);
+    // sprintf(num_person, "Number of entering: %d", obj_meta_0.entry_num);
+    CVI_TDL_Service_ObjectWriteText(en, 200, 200, &stVOFrame, 2, 2, 2);
 
-    sprintf(num_person, "Number of leaving: %d", obj_meta_0.miss_num);
-    CVI_TDL_Service_ObjectWriteText(num_person, 200, 300, &stVOFrame, 2, 2, 2);
+    // sprintf(num_person, "Number of leaving: %d", obj_meta_0.miss_num);
+    CVI_TDL_Service_ObjectWriteText(mi, 200, 300, &stVOFrame, 2, 2, 2);
 
     free(num_person);
+    free(en);
+    free(mi);
     CVI_SYS_Munmap((void *)stVOFrame.stVFrame.pu8VirAddr[0], image_size);
     stVOFrame.stVFrame.pu8VirAddr[0] = NULL;
     stVOFrame.stVFrame.pu8VirAddr[1] = NULL;
@@ -462,9 +471,9 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    CVI_TDL_Free(&app_handle->person_cpt_info->last_ped);
-    CVI_TDL_Free(&app_handle->person_cpt_info->last_head);
-    CVI_TDL_Free(&app_handle->person_cpt_info->last_objects);
+    // CVI_TDL_Free(&app_handle->person_cpt_info->last_ped);
+    // CVI_TDL_Free(&app_handle->person_cpt_info->last_head);
+    // CVI_TDL_Free(&app_handle->person_cpt_info->last_objects);
   }
   bRunVideoOutput = false;
   pthread_join(vo_thread, NULL);
