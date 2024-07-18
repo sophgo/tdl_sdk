@@ -32,7 +32,9 @@
            cvtdl_object_t*: CVI_TDL_FreeObject,          \
            cvtdl_handpose21_meta_ts*: CVI_TDL_FreeHandPoses, \
            cvtdl_class_meta_t*: CVI_TDL_FreeClassMeta, \
-           cvtdl_image_t*: CVI_TDL_FreeImage)(X)
+           cvtdl_image_t*: CVI_TDL_FreeImage,          \
+           cvtdl_lane_t* : CVI_TDL_FreeLane)(X)
+
 // clang-format on
 #endif
 
@@ -146,6 +148,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LPRNET_TW)                        \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LPRNET_CN)                        \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DEEPLABV3)                        \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION)               \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_ALPHAPOSE)                        \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_EYECLASSIFICATION)                \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YAWNCLASSIFICATION)               \
@@ -171,6 +174,12 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LANE_DET)                         \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_POLYLANE)                         \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION)                 \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION)                    \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION)                  \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LSTR)                         \
 // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -1004,6 +1013,19 @@ DLL_EXPORT CVI_S32 CVI_TDL_SoundClassification(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_SoundClassification_V2(const cvitdl_handle_t handle,
                                                  VIDEO_FRAME_INFO_S *frame, int *index);
 /**
+ * @brief Do sound classification.
+ *
+ * @param handle An AI SDK handle.
+ * @param frame Input video frame.
+ * @param pack_idx The start pack index of this frame
+ * @param pack_len Pack length,the frame is combined with many packs
+ * @param index The index of sound classes.
+ * @return int Return CVIAI_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_SoundClassification_V2_Pack(const cvitdl_handle_t handle,
+                                                      VIDEO_FRAME_INFO_S *frame, 
+                                                      int pack_idx,int pack_len,int *index);
+/**
  * @brief Get sound classification classes num.
  *
  * @param handle An TDL SDK handle.
@@ -1168,6 +1190,19 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_GetTracker_Inactive(const cvitdl_handle_t ha
  */
 DLL_EXPORT CVI_S32 CVI_TDL_DeeplabV3(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                     VIDEO_FRAME_INFO_S *out_frame, cvtdl_class_filter_t *filter);
+/**@}*/
+
+/**
+ * @brief Motion segmentation.
+ *
+ * @param handle An TDL SDK handle.
+ * @param input0 Input image 0.
+ * @param input1 Input image 1.
+ * @param output Output segmentation mask.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_MotionSegmentation(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *input0,
+                                    VIDEO_FRAME_INFO_S *input1, cvtdl_seg_logits_t *seg_logits);
 /**@}*/
 
 /**
@@ -1506,6 +1541,15 @@ DLL_EXPORT CVI_S32 CVI_TDL_Yolov8_Pose(const cvitdl_handle_t handle, VIDEO_FRAME
  * pedestrian_properity must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
+DLL_EXPORT CVI_S32 CVI_TDL_Super_Resolution(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            cvtdl_sr_feature *srfeature);
+
+DLL_EXPORT CVI_S32 CVI_TDL_OCR_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            cvtdl_object_t *obj_meta);
+
+DLL_EXPORT CVI_S32 CVI_TDL_OCR_Recognition(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            cvtdl_object_t *obj_meta);
+                                            
 DLL_EXPORT CVI_S32 CVI_TDL_Simcc_Pose(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                      cvtdl_object_t *obj_meta);
 /**
@@ -1642,6 +1686,30 @@ DLL_EXPORT AudioAlgParam CVI_TDL_Get_Audio_Algparam(const cvitdl_handle_t handle
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index, AudioAlgParam audio_param);
 
+
+/**
+ * @brief Lane Detection
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param lane_meta cvtdl_lane_t structure,.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Lane_Det(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvtdl_lane_t *lane_meta);
+
+/**
+ * @brief Polylane Detection
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param lane_meta cvtdl_lane_t structure,.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_PolyLane_Det(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvtdl_lane_t *lane_meta);
+
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Polylanenet_Lower(const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index, float th);
+
+DLL_EXPORT CVI_S32 CVI_TDL_LSTR_Det(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, cvtdl_lane_t *lane_meta);
 #ifdef __cplusplus
 }
 #endif

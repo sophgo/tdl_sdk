@@ -52,7 +52,7 @@ typedef struct {
   uint32_t _m_limit;
   cvtdl_counting_line_t cross_line_t;
   randomRect rect;
-
+  irregularRegins ir_regins;
 } personvehicle_capture_t;
 
 #endif  // End of _CVI_TDL_APP_PERSONVEHICLE_CAPTURE_TYPE_H_

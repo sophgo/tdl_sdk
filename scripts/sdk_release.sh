@@ -12,6 +12,7 @@ else
     BUILD_TYPE=SDKRelease
 fi
 
+FTP_SERVER_IP=${FTP_SERVER_IP:-10.80.0.5}
 
 CONFIG_DUAL_OS="${CONFIG_DUAL_OS:-OFF}"
 if [[ "$CONFIG_DUAL_OS" == "y" ]]; then
@@ -44,8 +45,7 @@ if [ "$(printf '%s\n' "$CMAKE_REQUIRED_VERSION" "$CMAKE_VERSION" | sort -V | hea
 else
     echo "Cmake minimum required version is ${CMAKE_REQUIRED_VERSION}, trying to download from ftp."
     if [ ! -f cmake-3.18.4-Linux-x86_64.tar.gz ]; then
-	pip3 install dfss --upgrade
-        python -m dfss --url=open@sophgo.com:/gemini-sdk/tools/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
+        wget ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
     fi
     tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
     CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
@@ -108,8 +108,8 @@ $CMAKE_BIN -G Ninja $CVI_TDL_ROOT \
         -DMW_VER=$MW_VER \
         -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR \
         -DREPO_USER=$REPO_USER \
-        -DCONFIG_DUAL_OS=$CONFIG_DUAL_OS
-       
+        -DCONFIG_DUAL_OS=$CONFIG_DUAL_OS \
+        -DFTP_SERVER_IP=$FTP_SERVER_IP
 
 ninja -j8 || exit 1
 ninja install || exit 1

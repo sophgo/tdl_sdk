@@ -114,6 +114,7 @@ int Core::modelOpen(const char *filepath) {
       height = input->shape.dim[1];
       vcfg.frame_type = CVI_FRAME_PACKAGE;
     } else {
+      CVI_TENSOR *input = &(mp_mi->in.tensors[i]);
       width = input->shape.dim[3];
       height = input->shape.dim[2];
       vcfg.frame_type = CVI_FRAME_PLANAR;
@@ -494,7 +495,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
     }
 
     if (aligned_input == true) {
-      ret = CVI_NN_SetTensorPhysicalAddr(mp_mi->in.tensors, frame->stVFrame.u64PhyAddr[0]);
+      ret = CVI_NN_SetTensorPhysicalAddr(mp_mi->in.tensors + i, frame->stVFrame.u64PhyAddr[0]);
     } else {
       ret = CVI_NN_FeedTensorWithFrames(mp_mi->handle, mp_mi->in.tensors,
                                         m_vpss_config[0].frame_type, CVI_FMT_INT8, paddrs.size(),

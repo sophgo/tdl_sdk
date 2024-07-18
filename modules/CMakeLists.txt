@@ -100,9 +100,17 @@ else()
       $<TARGET_OBJECTS:face_mask_detection>
       $<TARGET_OBJECTS:simcc>
       $<TARGET_OBJECTS:hrnet>
+      $<TARGET_OBJECTS:motion_segmentation>
+      $<TARGET_OBJECTS:image_classification>
       $<TARGET_OBJECTS:clip>
       $<TARGET_OBJECTS:image_classification>
-      $<TARGET_OBJECTS:raw_image_classification>)
+      $<TARGET_OBJECTS:raw_image_classification>
+      $<TARGET_OBJECTS:lane_detection>
+      $<TARGET_OBJECTS:polylanenet>
+      $<TARGET_OBJECTS:super_resolution>
+      $<TARGET_OBJECTS:ocr_detection>
+      $<TARGET_OBJECTS:ocr_recognition>
+      $<TARGET_OBJECTS:lstr>)
 
     if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")
     set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:feature_matching>)

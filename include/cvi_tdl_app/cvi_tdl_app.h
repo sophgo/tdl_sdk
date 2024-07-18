@@ -1,5 +1,6 @@
 #ifndef _CVI_TDL_APP_H_
 #define _CVI_TDL_APP_H_
+#include "capture/adas_capture_type.h"
 #include "capture/face_capture_type.h"
 #include "capture/person_capture_type.h"
 #include "capture/personvehicle_capture_type.h"
@@ -12,6 +13,7 @@ typedef struct {
   face_capture_t *face_cpt_info;
   person_capture_t *person_cpt_info;
   personvehicle_capture_t *personvehicle_cpt_info;
+  adas_info_t *adas_info;
 } cvitdl_app_context_t;
 
 #ifdef __cplusplus
@@ -119,7 +121,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCapture_Line(const cvitdl_app_handle
                                                          int A_y, int B_x, int B_y,
                                                          statistics_mode s_mode);
 
+DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCaptureIrregular_Run(const cvitdl_app_handle_t handle,
+                                                                 VIDEO_FRAME_INFO_S *frame);
+
+DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCaptureIrregular_Region(
+    const cvitdl_app_handle_t handle, int w_num, int h_num, bool *regin_flags);
+
 DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCapture_CleanAll(const cvitdl_app_handle_t handle);
+
+DLL_EXPORT CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size);
+
+DLL_EXPORT CVI_S32 CVI_TDL_APP_ADAS_Run(const cvitdl_app_handle_t handle,
+                                        VIDEO_FRAME_INFO_S *frame);
 
 #ifdef __cplusplus
 }

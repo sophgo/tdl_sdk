@@ -127,6 +127,31 @@ void CVI_TDL_FreeCpp(cvtdl_class_meta_t *cls_meta) {
   }
 }
 
+void CVI_TDL_FreeCpp(cvtdl_seg_logits_t *seg_logits) {
+  if (seg_logits->float_logits != NULL) {
+    delete seg_logits->float_logits;
+    seg_logits->float_logits = NULL;
+  }
+  if (seg_logits->int_logits != NULL) {
+    delete[] seg_logits->int_logits;
+    seg_logits->int_logits = NULL;
+  }
+  seg_logits->w = 0;
+  seg_logits->h = 0;
+  seg_logits->c = 0;
+  seg_logits->is_int = false;
+  seg_logits->qscale = 0;
+}
+
+void CVI_TDL_FreeCpp(cvtdl_lane_t *lane_meta) {
+  if (lane_meta->lane != NULL) {
+    // for (uint32_t i = 0; i < lane_meta->size; i++) {
+    free(lane_meta->lane);
+    // }
+  }
+  lane_meta->lane == NULL;
+}
+
 void CVI_TDL_FreeFeature(cvtdl_feature_t *feature) { CVI_TDL_FreeCpp(feature); }
 
 void CVI_TDL_FreePts(cvtdl_pts_t *pts) { CVI_TDL_FreeCpp(pts); }
@@ -148,6 +173,8 @@ void CVI_TDL_FreeDMS(cvtdl_dms_t *dms) { CVI_TDL_FreeCpp(dms); }
 void CVI_TDL_FreeHandPoses(cvtdl_handpose21_meta_ts *handposes) { CVI_TDL_FreeCpp(handposes); }
 
 void CVI_TDL_FreeClassMeta(cvtdl_class_meta_t *cls_meta) { CVI_TDL_FreeCpp(cls_meta); }
+
+void CVI_TDL_FreeLane(cvtdl_lane_t *lane_meta) { CVI_TDL_FreeCpp(lane_meta); }
 
 // Copy
 
@@ -195,6 +222,10 @@ void CVI_TDL_CopyInfoCpp(const cvtdl_object_info_t *info, cvtdl_object_info_t *i
   infoNew->bbox = info->bbox;
   infoNew->feature.type = info->feature.type;
   infoNew->feature.size = info->feature.size;
+
+  infoNew->adas_properity.dis = info->adas_properity.dis;
+  infoNew->adas_properity.speed = info->adas_properity.speed;
+  infoNew->adas_properity.state = info->adas_properity.state;
 
   // infoNew->human_angle = info->human_angle;
   // infoNew->aspect_ratio = info->aspect_ratio;

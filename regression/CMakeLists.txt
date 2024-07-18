@@ -126,6 +126,30 @@ set(SAMPLE_LIBS
 )
 
 if("${MW_VER}" STREQUAL "v2")
+    if(${CVI_PLATFORM} STRLESS "CV186X")
+      set(SAMPLE_LIBS
+          ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libldc.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+          ${MLIR_SDK_ROOT}/lib/libz.so
+          ${CVI_RTSP_LIBPATH}
+      )
+    endif()
   list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
 else()
   list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so)

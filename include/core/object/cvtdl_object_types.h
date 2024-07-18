@@ -231,6 +231,8 @@ typedef enum {
 
 #undef GROUP_ID
 
+typedef enum { NORMAL = 0, START, COLLISION_WARNING, DANGER } adas_state_e;
+
 /** @struct cvtdl_pose17_meta_t
  * @ingroup core_cvitdlcore
  * @brief A structure to describe person pose.
@@ -284,6 +286,12 @@ typedef struct {
   bool fall;
 } cvtdl_pedestrian_meta;
 
+typedef struct {
+  float dis;
+  float speed;
+  adas_state_e state;
+} cvtdl_adas_meta;
+
 /** @struct cvtdl_object_info_t
  * @ingroup core_cvitdlcore
  * @brief A structure to describe a found object.
@@ -320,6 +328,7 @@ typedef struct {
   int classes;
   cvtdl_vehicle_meta *vehicle_properity;
   cvtdl_pedestrian_meta *pedestrian_properity;
+  cvtdl_adas_meta adas_properity;
   int track_state;
   // float human_angle;
   // float aspect_ratio;
@@ -355,6 +364,29 @@ typedef struct {
   cvtdl_object_info_t *info;
 } cvtdl_object_t;
 
+typedef struct {
+  float x[2];
+  float y[2];
+  float score;
+} cvtdl_lane_point_t;
+
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+
+  VIDEO_FRAME_INFO_S *dstframe;
+} cvtdl_sr_feature;
+
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+
+  meta_rescale_type_e rescale_type;
+  cvtdl_lane_point_t *lane;
+} cvtdl_lane_t;
+
 // consumer line
 typedef struct {
   float A_x;
@@ -379,6 +411,12 @@ typedef struct {
   float b_x, b_y;
   float k, b;
 } randomRect;
+
+typedef struct {
+  int h_num, w_num;
+  float h_size, w_size;
+  bool regin_flags[1000];
+} irregularRegins;
 
 /** @struct cvtdl_class_filter_t
  *  @ingroup core_cvitdlcore
@@ -561,4 +599,14 @@ typedef struct {
   int cls[5];
 } cvtdl_class_meta_t;
 
+typedef struct {
+  int w;
+  int h;
+  int c;
+  int b;
+  bool is_int;
+  float *float_logits;
+  int8_t *int_logits;
+  float qscale;
+} cvtdl_seg_logits_t;
 #endif

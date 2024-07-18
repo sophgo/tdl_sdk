@@ -27,6 +27,9 @@
 #include "human_keypoints_detection/yolov8_pose/yolov8_pose.hpp"
 #include "image_classification/image_classification.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
+#include "lane_detection/lane_detection.hpp"
+#include "lane_detection/lstr/lstr.hpp"
+#include "lane_detection/polylanenet/polylanenet.hpp"
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "license_plate_recognitionv2/license_plate_recognitionv2.hpp"
@@ -35,6 +38,7 @@
 #include "mask_classification/mask_classification.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
 #include "motion_detection/md.hpp"
+#include "motion_segmentation/motion_segmentation.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/ppyoloe/ppyoloe.hpp"
 #include "object_detection/yolo/yolo.hpp"
@@ -43,6 +47,8 @@
 #include "object_detection/yolov6/yolov6.hpp"
 #include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
+#include "ocr/ocr_detection/ocr_detection.hpp"
+#include "ocr/ocr_recognition/ocr_recognition.hpp"
 #include "osnet/osnet.hpp"
 #include "raw_image_classification/raw_image_classification.hpp"
 #include "retina_face/retina_face.hpp"
@@ -51,6 +57,7 @@
 #include "smoke_classification/smoke_classification.hpp"
 #include "sound_classification/sound_classification.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
+#include "super_resolution/super_resolution.hpp"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -173,6 +180,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
     {CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION, CREATOR(LicensePlateRecognitionV2)},
     {CVI_TDL_SUPPORTED_MODEL_DEEPLABV3, CREATOR(Deeplabv3)},
+    {CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION, CREATOR(MotionSegmentation)},
     {CVI_TDL_SUPPORTED_MODEL_ALPHAPOSE, CREATOR(AlphaPose)},
     {CVI_TDL_SUPPORTED_MODEL_EYECLASSIFICATION, CREATOR(EyeClassification)},
     {CVI_TDL_SUPPORTED_MODEL_YAWNCLASSIFICATION, CREATOR(YawnClassification)},
@@ -224,6 +232,12 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, CREATOR(RawImageClassification)},
     {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
+    {CVI_TDL_SUPPORTED_MODEL_LANE_DET, CREATOR(BezierLaneNet)},
+    {CVI_TDL_SUPPORTED_MODEL_POLYLANE, CREATOR(Polylanenet)},
+    {CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, CREATOR(SuperResolution)},
+    {CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION, CREATOR(OCRDetection)},
+    {CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, CREATOR(OCRRecognition)},
+    {CVI_TDL_SUPPORTED_MODEL_LSTR, CREATOR(LSTR)},
 };
 
 //*************************************************
@@ -850,6 +864,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_SoundClassification_V2, SoundClassificationV2,
                       CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, int *)
 DEFINE_INF_FUNC_F2_P1(CVI_TDL_DeeplabV3, Deeplabv3, CVI_TDL_SUPPORTED_MODEL_DEEPLABV3,
                       cvtdl_class_filter_t *)
+DEFINE_INF_FUNC_F2_P1(CVI_TDL_MotionSegmentation, MotionSegmentation,
+                      CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION, cvtdl_seg_logits_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_TW, LicensePlateRecognition,
                       CVI_TDL_SUPPORTED_MODEL_LPRNET_TW, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_CN, LicensePlateRecognition,
@@ -902,7 +918,17 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_Clip_Feature, Clip, CVI_TDL_SUPPORTED_MODEL_CLIP,
                       cvtdl_clip_feature *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_YOLOV8_Hardhat, YoloV8Detection,
                       CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT, cvtdl_object_t *)
-
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Lane_Det, BezierLaneNet, CVI_TDL_SUPPORTED_MODEL_LANE_DET,
+                      cvtdl_lane_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_PolyLane_Det, Polylanenet, CVI_TDL_SUPPORTED_MODEL_POLYLANE,
+                      cvtdl_lane_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Super_Resolution, SuperResolution,
+                      CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, cvtdl_sr_feature *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Detection, OCRDetection, CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION,
+                      cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Recognition, OCRRecognition,
+                      CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_LSTR_Det, LSTR, CVI_TDL_SUPPORTED_MODEL_LSTR, cvtdl_lane_t *)
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
   return crop_image(srcFrame, dst, bbox, cvtRGB888);
@@ -1687,6 +1713,37 @@ CVI_S32 CVI_TDL_Set_Audio_Algparam(const cvitdl_handle_t handle,
     SoundClassificationV2 *sc_v2_model =
         dynamic_cast<SoundClassificationV2 *>(getInferenceInstance(model_index, ctx));
     sc_v2_model->set_algparam(audio_param);
+    return CVI_SUCCESS;
+  }
+  LOGE("not supported model index\n");
+  return CVI_FAILURE;
+}
+
+CVI_S32 CVI_TDL_SoundClassification_V2_Pack(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                            int pack_idx, int pack_len, int *index) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  SoundClassificationV2 *sc_model = dynamic_cast<SoundClassificationV2 *>(
+      getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, ctx));
+  if (sc_model == nullptr) {
+    LOGE("No instance found for SoundClassificationV2.\n");
+    return CVI_FAILURE;
+  }
+  if (!sc_model->isInitialized()) {
+    LOGE("SoundClassificationV2 has not been initialized");
+    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
+  }
+  int ret = sc_model->inference_pack(frame, pack_idx, pack_len, index);
+  return ret;
+}
+
+CVI_S32 CVI_TDL_Set_Polylanenet_Lower(const cvitdl_handle_t handle,
+                                      const CVI_TDL_SUPPORTED_MODEL_E model_index, float th) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_POLYLANE) {
+    Polylanenet *polylane_model =
+        dynamic_cast<Polylanenet *>(getInferenceInstance(model_index, ctx));
+    polylane_model->set_lower(th);
     return CVI_SUCCESS;
   }
   LOGE("not supported model index\n");

@@ -79,7 +79,10 @@ ifeq ($(origin MW_PANEL_BOARD_INC_PATH), undefined)
   MW_PANEL_BOARD_INC_PATH := $(MW_PATH)/include
 endif
 
-MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1 -lcli
+MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -lcvi_dnvqe -lcvi_ssp2 -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
+ifneq ($(CHIP), CV186X)
+	MW_AUDIO_LIBS += -lcli
+endif
 
 ifneq (,$(findstring middleware/v1,$(MW_PATH)))
     MW_VERSION = v1
@@ -102,7 +105,6 @@ ifeq ($(MW_VERSION), v1)
 else ifeq ($(MW_VERSION), v2)
 	ifeq ($(CHIP), CV186X)
 		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
-		MW_AUDIO_LIBS += -lcvi_dnvqe -lcvi_ssp2
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
 		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
 		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv186x
@@ -117,17 +119,17 @@ else ifeq ($(MW_VERSION), v2)
 			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
 			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
 	else ifeq ($(CHIP), CV181X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lldc -lrgn -lgdc
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
 		CFLAGS += -DCV181X
 	else ifeq ($(CHIP), CV180X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lldc -lrgn -lgdc
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
 		CFLAGS += -DCV180X
 	endif
 else ifeq ($(MW_VERSION), v3)
 	ifeq ($(CHIP), CV181X)
-		MW_LIBS = -lini -lmsg -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
+		MW_LIBS = -lini -lmsg  -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
 		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv181x
 		MW_PANEL_INC_PATH = ${MW_PATH}/include
@@ -142,7 +144,7 @@ else ifeq ($(MW_VERSION), v3)
 			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
 			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
 	else ifeq ($(CHIP), CV180X)
-		MW_LIBS = -lini -lmsg -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
+		MW_LIBS = -lini -lmsg  -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
 		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv180x
 		CFLAGS += -DCV180X
@@ -225,7 +227,7 @@ SAMPLW_MW_LIB = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) -L$(SDK_3RD_LIB
 SAMPLE_OPENCV_LIB = -L$(OPENCV_LIB_PATH) $(OPENCV_LIBS)
 
 SAMPLE_INIT_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_BASE_LIBS)
-SAMPLE_AUD_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_BASE_LIBS)  $(MW_AUDIO_LIBS)
+SAMPLE_AUD_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_BASE_LIBS)  $(MW_AUDIO_LIBS)  $(SAMPLE_OPENCV_LIB)
 SAMPLE_YOLO_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_BASE_LIBS)  $(SAMPLE_OPENCV_LIB)
 SAMPLE_VI_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_OPENCV_LIB) $(SAMPLE_BASE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS)
 SAMPLE_APP_LIBS = $(SAMPLW_MW_LIB) $(SAMPLE_OPENCV_LIB) $(SAMPLE_BASE_LIBS) -L$(RTSP_LIB_PATH) $(RTSP_LIBS) $(SDK_APP_LIBS)

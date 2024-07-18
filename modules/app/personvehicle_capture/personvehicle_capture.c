@@ -15,7 +15,23 @@
 
 static CVI_S32 clean_data(personvehicle_capture_t *personvehicle_cpt_info);
 static void SHOW_CONFIG(personvehicle_capture_config_t *cfg);
-
+void irregularReginJudge(const irregularRegins *regin_flags,
+                         personvehicle_capture_t *personvehicle_cpt_info) {
+  for (int i = 0; i < personvehicle_cpt_info->last_objects.size; i++) {
+    int x = (personvehicle_cpt_info->last_objects.info[i].bbox.x1 +
+             personvehicle_cpt_info->last_objects.info[i].bbox.x2) /
+            2;
+    int y = (personvehicle_cpt_info->last_objects.info[i].bbox.y1 +
+             personvehicle_cpt_info->last_objects.info[i].bbox.y2) /
+            2;
+    int flag_x = floor(1.0 * x / regin_flags->w_size * 1.0);
+    int flag_y = floor(1.0 * y / regin_flags->h_size * 1.0);
+    if (regin_flags->regin_flags[flag_y * regin_flags->w_num + flag_x])
+      personvehicle_cpt_info->last_objects.info[i].is_cross = 1;
+    else
+      personvehicle_cpt_info->last_objects.info[i].is_cross = 0;
+  }
+}
 void getVehicleBufferRect(const cvtdl_counting_line_t *counting_line_t, randomRect *rect,
                           int expand_width) {
   statistics_mode s_mode = counting_line_t->s_mode;
@@ -127,8 +143,83 @@ void getVehicleBufferRect(const cvtdl_counting_line_t *counting_line_t, randomRe
          rect->rt_y, rect->rb_x, rect->rb_y, rect->lb_x, rect->lb_y);
 }
 
+CVI_S32 _PersonVehicleCaptureIrregular_Run(personvehicle_capture_t *personvehicle_cpt_info,
+                                           const cvitdl_handle_t tdl_handle,
+                                           VIDEO_FRAME_INFO_S *frame) {
+  if (personvehicle_cpt_info == NULL) {
+    return CVI_TDL_FAILURE;
+  }
+  CVI_S32 ret;
+  ret = clean_data(personvehicle_cpt_info);
+  if (ret != CVI_TDL_SUCCESS) {
+    return CVI_TDL_FAILURE;
+  }
+  CVI_TDL_Free(&personvehicle_cpt_info->last_objects);
+  CVI_TDL_Free(&personvehicle_cpt_info->last_trackers);
+  personvehicle_cpt_info->ir_regins.w_size =
+      frame->stVFrame.u32Width / personvehicle_cpt_info->ir_regins.w_num;
+  personvehicle_cpt_info->ir_regins.h_size =
+      frame->stVFrame.u32Height / personvehicle_cpt_info->ir_regins.h_num;
+
+  /* set output signal to 0. */
+  memset(personvehicle_cpt_info->_output, 0, sizeof(bool) * personvehicle_cpt_info->size);
+  switch (personvehicle_cpt_info->od_model_index) {
+    case CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE:
+      if (CVI_TDL_SUCCESS != CVI_TDL_MobileDetV2_Person_Vehicle(
+                                 tdl_handle, frame, &personvehicle_cpt_info->last_objects)) {
+        return CVI_TDL_FAILURE;
+      }
+      break;
+    case CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION:
+      if (CVI_TDL_SUCCESS != CVI_TDL_PersonVehicle_Detection(
+                                 tdl_handle, frame, &personvehicle_cpt_info->last_objects)) {
+        return CVI_TDL_FAILURE;
+      }
+      break;
+    default:
+      return CVI_TDL_FAILURE;
+  }
+  for (int i = 0; i < personvehicle_cpt_info->last_objects.size; i++) {
+    personvehicle_cpt_info->last_objects.info[i].is_cross = false;
+  }
+#ifndef NO_OPENCV
+  if (personvehicle_cpt_info->enable_DeepSORT) {
+    if (CVI_TDL_SUCCESS !=
+        CVI_TDL_OSNet(tdl_handle, frame, &personvehicle_cpt_info->last_objects)) {
+      return CVI_TDL_FAILURE;
+    }
+  }
+#endif
+  if (CVI_TDL_SUCCESS != CVI_TDL_DeepSORT_Obj(tdl_handle, &personvehicle_cpt_info->last_objects,
+                                              &personvehicle_cpt_info->last_trackers,
+                                              personvehicle_cpt_info->enable_DeepSORT)) {
+    return CVI_TDL_FAILURE;
+  }
+  // regin judge
+  irregularReginJudge(&personvehicle_cpt_info->ir_regins, personvehicle_cpt_info);
+
+#if 0
+  uint64_t mem_used;
+  SUMMARY(person_cpt_info, &mem_used, true);
+#endif
+
+  /* update timestamp*/
+  personvehicle_cpt_info->_time =
+      (personvehicle_cpt_info->_time == 0xffffffffffffffff) ? 0 : personvehicle_cpt_info->_time + 1;
+
+  return CVI_TDL_SUCCESS;
+}
+
+CVI_S32 _PersonVehicleCaptureIrregular_Region(personvehicle_capture_t *personvehicle_cpt_info,
+                                              int w_num, int h_num, bool *regin_flags) {
+  personvehicle_cpt_info->ir_regins.h_num = h_num;
+  personvehicle_cpt_info->ir_regins.w_num = w_num;
+  memcpy(personvehicle_cpt_info->ir_regins.regin_flags, regin_flags, w_num * h_num * sizeof(_Bool));
+  return CVI_TDL_SUCCESS;
+}
+
 CVI_S32 _PersonVehicleCapture_Free(personvehicle_capture_t *personvehicle_cpt_info) {
-  printf("[APP::PersonCapture] Free PersonCapture Data\n");
+  // printf("[APP::PersonCapture] Free PersonCapture Data\n");
   if (personvehicle_cpt_info != NULL) {
     _PersonVehicleCapture_CleanAll(personvehicle_cpt_info);
 

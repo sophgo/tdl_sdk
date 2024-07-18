@@ -114,16 +114,16 @@ else ifeq ($(MW_VERSION), v2)
 			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
 			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
 	else ifeq ($(CHIP), CV181X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lldc -lrgn -lgdc
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
 		CFLAGS += -DCV181X
 	else ifeq ($(CHIP), CV180X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys -lvpu
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lldc -lrgn -lgdc
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
 	endif
 else ifeq ($(MW_VERSION), v3)
 	ifeq ($(CHIP), CV181X)
-		MW_LIBS = -lini -lmsg -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
+		MW_LIBS = -lini -lmsg  -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
 		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv181x
 		CFLAGS += -DCV181X
@@ -137,7 +137,7 @@ else ifeq ($(MW_VERSION), v3)
 			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
 			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
 	else ifeq ($(CHIP), CV180X)
-		MW_LIBS = -lini -lmsg -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
+		MW_LIBS = -lini -lmsg  -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
 		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv180x
 	endif
