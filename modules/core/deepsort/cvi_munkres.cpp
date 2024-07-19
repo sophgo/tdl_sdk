@@ -4,6 +4,7 @@
  */
 
 #include "cvi_munkres.hpp"
+#include <cassert>
 #include "cvi_tdl_log.hpp"
 
 #include <iomanip>

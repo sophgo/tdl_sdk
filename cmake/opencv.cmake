@@ -1,8 +1,5 @@
-
-# Common part of the URL
-set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
-# Combine the common prefix and the architecture-specific part
-
+# Common part of the local directory
+set(COMMON_OPENCV_URL_PREFIX "https://github.com/sophgo/cvi_opencv/raw/main/")
 
 # Get the architecture-specific part based on the toolchain file
 if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "toolchain-uclibc-linux.cmake")
@@ -20,14 +17,21 @@ else()
 endif()
 
 set(OPENCV_URL "${COMMON_OPENCV_URL_PREFIX}${ARCHITECTURE}/opencv_aisdk.tar.gz")
-if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src/lib")
-  FetchContent_Declare(
-    opencv
-    URL ${OPENCV_URL}
+set(DOWNLOAD_PATH "${BUILD_DOWNLOAD_DIR}/opencv_aisdk.tar.gz")
+
+if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src")
+  # Create the opencv-src directory if it doesn't exist
+  file(MAKE_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src")
+  file(DOWNLOAD ${OPENCV_URL} ${DOWNLOAD_PATH} SHOW_PROGRESS)
+
+  # Extract the tar.gz file
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} -E tar xzf ${DOWNLOAD_PATH}
+    WORKING_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src"
   )
-  FetchContent_MakeAvailable(opencv)
-  message("Content downloaded from ${OPENCV_URL} to ${opencv_SOURCE_DIR}")
+  message("Content extracted from ${OPENCV_URL} to ${BUILD_DOWNLOAD_DIR}/opencv-src")
 endif()
+
 set(OPENCV_ROOT ${BUILD_DOWNLOAD_DIR}/opencv-src)
 
 set(OPENCV_INCLUDES

@@ -1,4 +1,5 @@
 #include "cvi_kalman_tracker.hpp"
+#include <cassert>
 #include "cvi_deepsort_utils.hpp"
 
 #include <math.h>

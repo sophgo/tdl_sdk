@@ -5,6 +5,7 @@
 #include "cvi_tdl_log.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
