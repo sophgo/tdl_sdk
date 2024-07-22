@@ -11,29 +11,25 @@ namespace cvitdl {
 DetectionBase::DetectionBase() : Core(CVI_MEM_DEVICE) {}
 int DetectionBase::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                                   VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-
-  // set dump config
-  vpssChnAttr.stNormalize.bEnable = false;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
+  int ret;
+  LOGI("to vpss preprocess,crop_enable:%d\n", (int)vpss_config.crop_attr.bEnable);
+  if (!vpss_config.crop_attr.bEnable) {
+    ret = mp_vpss_inst->sendFrame(srcFrame, &vpss_config.chn_attr, &vpss_config.chn_coeff, 1);
+  } else {
+    ret = mp_vpss_inst->sendCropChnFrame(srcFrame, &vpss_config.crop_attr, &vpss_config.chn_attr,
+                                         &vpss_config.chn_coeff, 1);
+  }
   if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
+    LOGE("Send frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVI_TDL_ERR_VPSS_SEND_FRAME;
   }
 
   ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
   if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
+    LOGE("Get frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
-  return CVI_TDL_SUCCESS;
+  return 0;
 }
 
 void DetectionBase::set_algparam(const cvtdl_det_algo_param_t &alg_param) {
