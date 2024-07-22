@@ -63,6 +63,8 @@ class MobileDetV2 final : public DetectionBase {
                                 float bbox_dequant_thresh, int8_t quant_thresh,
                                 const int8_t *logits, const int8_t *objectness, int8_t *bboxes,
                                 size_t class_tensor_size, const std::vector<AnchorBox> &anchors);
+  int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                     VPSSConfig &vpss_config) override;
 
   std::vector<std::vector<AnchorBox>> m_anchors;
   CvimodelInfo m_model_config;

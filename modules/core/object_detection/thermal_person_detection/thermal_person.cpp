@@ -134,7 +134,7 @@ void ThermalPerson::outputParser(const int image_width, const int image_height,
   if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < obj->size; ++i) {
       obj->info[i].bbox = box_rescale(frame_width, frame_height, obj->width, obj->height,
-                                      obj->info[i].bbox, meta_rescale_type_e::RESCALE_RB);
+                                      obj->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
       /*
       printf("RESCALE YOLOX: %s (%d): %*.2lf %*.2lf %*.2lf %*.2lf, score=%*.5lf\n",
              obj->info[i].name,
