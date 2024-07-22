@@ -142,6 +142,29 @@ int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
   return CVI_TDL_SUCCESS;
 }
 
+int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                                VPSSConfig &vpss_config) {
+  auto &vpssChnAttr = vpss_config.chn_attr;
+  auto &factor = vpssChnAttr.stNormalize.factor;
+  auto &mean = vpssChnAttr.stNormalize.mean;
+  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
+                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
+                        factor, mean, false);
+  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
+    return CVI_TDL_ERR_VPSS_SEND_FRAME;
+  }
+
+  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
+  if (ret != CVI_SUCCESS) {
+    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
+    return CVI_TDL_ERR_VPSS_GET_FRAME;
+  }
+
+  return CVI_TDL_SUCCESS;
+}
+
 int MobileDetV2::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
   m_model_config.image_height = input_shape.dim[2];
