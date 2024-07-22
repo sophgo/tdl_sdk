@@ -5,7 +5,6 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "face_utils.hpp"
 
 #define SCALE_R float(1.0 / (255.0 * 0.229))
 #define SCALE_G float(1.0 / (255.0 * 0.224))

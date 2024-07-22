@@ -283,13 +283,11 @@ CVI_S32 _PersonCapture_Run(person_capture_t *person_cpt_info, const cvitdl_handl
                                            &person_cpt_info->last_objects)) {
     return CVI_TDL_FAILURE;
   }
-#ifndef NO_OPENCV
   if (person_cpt_info->enable_DeepSORT) {
     if (CVI_TDL_SUCCESS != CVI_TDL_OSNet(tdl_handle, frame, &person_cpt_info->last_objects)) {
       return CVI_TDL_FAILURE;
     }
   }
-#endif
   if (CVI_TDL_SUCCESS != CVI_TDL_DeepSORT_Obj(tdl_handle, &person_cpt_info->last_objects,
                                               &person_cpt_info->last_trackers,
                                               person_cpt_info->enable_DeepSORT)) {

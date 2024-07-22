@@ -1,15 +1,10 @@
 #include "face_utils.hpp"
 #include "cvi_tdl_log.hpp"
 
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
-#include "opencv2/imgproc.hpp"
-#endif
-
 #include <cvi_gdc.h>
 #include <algorithm>
 #include "cvi_comm.h"
+#include "opencv2/imgproc.hpp"
 
 using namespace std;
 
@@ -140,11 +135,7 @@ int face_align(const cv::Mat &image, cv::Mat &aligned, const cvtdl_face_info_t &
   if (getTfmFromFaceInfo(face_info, aligned.cols, aligned.rows, &tfm) != 0) {
     return -1;
   }
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-  cvitdl::warpAffine(image, aligned, tfm, aligned.size(), INTER_NEAREST);
-#else
   cv::warpAffine(image, aligned, tfm, aligned.size(), cv::INTER_NEAREST);
-#endif
   return 0;
 }
 

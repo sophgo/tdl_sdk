@@ -1,10 +1,10 @@
 #include "retinaface_yolox.hpp"
+#include <Eigen/Eigen>
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "face_utils.hpp"
 
 #define R_SCALE (1 / (256.0 * 0.229))
 #define G_SCALE (1 / (256.0 * 0.224))

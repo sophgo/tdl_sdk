@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -13,8 +12,6 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 #include "mapi.hpp"
-#include "opencv2/core.hpp"
-#include "opencv2/imgcodecs.hpp"
 #include "sys_utils.hpp"
 
 double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }

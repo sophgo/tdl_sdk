@@ -153,8 +153,6 @@ CVI_S32 _FaceCapture_QuickSetUp(cvitdl_handle_t tdl_handle, face_capture_t *face
     }
   }
 
-#ifndef NO_OPENCV
-  printf("enter opencv\n");
   if (fd_model_id == CVI_TDL_SUPPORTED_MODEL_RETINAFACE) {
     face_cpt_info->fd_inference = CVI_TDL_FaceDetection;
     CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, false);
@@ -165,13 +163,6 @@ CVI_S32 _FaceCapture_QuickSetUp(cvitdl_handle_t tdl_handle, face_capture_t *face
     face_cpt_info->fd_inference = CVI_TDL_FaceDetection;
     CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACEMASKDETECTION, false);
   }
-#else
-  if (fd_model_id == CVI_TDL_SUPPORTED_MODEL_SCRFDFACE) {
-    face_cpt_info->fd_inference = CVI_TDL_FaceDetection;
-    CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, false);
-    printf("set fd_inference as CVI_TDL_FaceDetection\n");
-  }
-#endif
 
   face_cpt_info->fd_model = fd_model_id;
   printf("frmodelid:%d\n", (int)fr_model_id);

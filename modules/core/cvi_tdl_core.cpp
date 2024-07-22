@@ -7,22 +7,17 @@
 #include "cvi_tdl_experimental.h"
 #include "cvi_tdl_log.hpp"
 #include "deepsort/cvi_deepsort.hpp"
-#include "eye_classification/eye_classification.hpp"
 #include "face_attribute/face_attribute.hpp"
-#include "version.hpp"
-
 #include "face_attribute_cls/face_attribute_cls.hpp"
-
 #include "face_landmarker/dms_landmark.hpp"
 #include "face_landmarker/face_landmark_det3.hpp"
 #include "face_landmarker/face_landmarker.hpp"
 #include "face_landmarker/face_landmarker_det2.hpp"
-#include "face_quality/face_quality.hpp"
-#include "fall_detection/fall_det_monitor.hpp"
-#include "fall_detection/fall_detection.hpp"
+
 #include "hand_classification/hand_classification.hpp"
 #include "hand_keypoint/hand_keypoint.hpp"
 #include "hand_keypoint_classification/hand_keypoint_classification.hpp"
+#include "version.hpp"
 
 #include "human_keypoints_detection/hrnet/hrnet.hpp"
 #include "human_keypoints_detection/simcc/simcc.hpp"
@@ -37,10 +32,6 @@
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "license_plate_recognition/license_plate_recognitionv2.hpp"
-
-#include "liveness/ir_liveness.hpp"
-#include "liveness/liveness.hpp"
-#include "mask_face_recognition/mask_face_recognition.hpp"
 #include "motion_detection/md.hpp"
 #include "motion_segmentation/motion_segmentation.hpp"
 
@@ -56,21 +47,29 @@
 #include "object_detection/yolox/yolox.hpp"
 
 #include "face_detection/face_mask_detection/retinaface_yolox.hpp"
-
 #include "face_detection/retina_face/retina_face.hpp"
 #include "face_detection/retina_face/scrfd_face.hpp"
 #include "face_detection/thermal_face_detection/thermal_face.hpp"
-
 #include "mask_classification/mask_classification.hpp"
-#include "ocr/ocr_detection/ocr_detection.hpp"
 #include "ocr/ocr_recognition/ocr_recognition.hpp"
 #include "osnet/osnet.hpp"
 #include "raw_image_classification/raw_image_classification.hpp"
 #include "segmentation/deeplabv3.hpp"
-#include "smoke_classification/smoke_classification.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
 #include "super_resolution/super_resolution.hpp"
-
+#ifndef NO_OPENCV
+#include "eye_classification/eye_classification.hpp"
+#include "face_quality/face_quality.hpp"
+#include "fall_detection/fall_det_monitor.hpp"
+#include "fall_detection/fall_detection.hpp"
+#include "liveness/ir_liveness.hpp"
+#include "liveness/liveness.hpp"
+#include "mask_face_recognition/mask_face_recognition.hpp"
+#include "ocr/ocr_detection/ocr_detection.hpp"
+#include "smoke_classification/smoke_classification.hpp"
+#include "utils/image_utils.hpp"
+#include "yawn_classification/yawn_classification.hpp"
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -82,8 +81,6 @@
 #include <unordered_map>
 #include <vector>
 #include "utils/core_utils.hpp"
-#include "utils/image_utils.hpp"
-#include "yawn_classification/yawn_classification.hpp"
 
 using namespace std;
 using namespace cvitdl;
@@ -169,11 +166,23 @@ unordered_map<int, CreatorFuncAud> MODEL_CREATORS_AUD = {
 };
 
 unordered_map<int, CreatorFunc> MODEL_CREATORS = {
+#ifndef NO_OPENCV
     {CVI_TDL_SUPPORTED_MODEL_FACEQUALITY, CREATOR(FaceQuality)},
-    {CVI_TDL_SUPPORTED_MODEL_THERMALFACE, CREATOR(ThermalFace)},
-    {CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, CREATOR(ThermalPerson)},
     {CVI_TDL_SUPPORTED_MODEL_LIVENESS, CREATOR(Liveness)},
     {CVI_TDL_SUPPORTED_MODEL_IRLIVENESS, CREATOR(IrLiveness)},
+    {CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION, CREATOR(LicensePlateRecognitionV2)},
+    {CVI_TDL_SUPPORTED_MODEL_EYECLASSIFICATION, CREATOR(EyeClassification)},
+    {CVI_TDL_SUPPORTED_MODEL_YAWNCLASSIFICATION, CREATOR(YawnClassification)},
+    {CVI_TDL_SUPPORTED_MODEL_SMOKECLASSIFICATION, CREATOR(SmokeClassification)},
+    {CVI_TDL_SUPPORTED_MODEL_LPRNET_TW, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, TAIWAN)},
+    {CVI_TDL_SUPPORTED_MODEL_LPRNET_CN, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, CHINA)},
+    {CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION, CREATOR(OCRDetection)},
+    {CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
+#endif
+
+    {CVI_TDL_SUPPORTED_MODEL_THERMALFACE, CREATOR(ThermalFace)},
+    {CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, CREATOR(ThermalPerson)},
+
     {CVI_TDL_SUPPORTED_MODEL_MASKCLASSIFICATION, CREATOR(MaskClassification)},
     {CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION, CREATOR(HandClassification)},
     {CVI_TDL_SUPPORTED_MODEL_HAND_KEYPOINT, CREATOR(HandKeypoint)},
@@ -188,24 +197,21 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_FACEMASKDETECTION, CREATOR(RetinafaceYolox)},
     {CVI_TDL_SUPPORTED_MODEL_OSNET, CREATOR(OSNet)},
     {CVI_TDL_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
-    {CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION, CREATOR(LicensePlateRecognitionV2)},
+
     {CVI_TDL_SUPPORTED_MODEL_DEEPLABV3, CREATOR(Deeplabv3)},
     {CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION, CREATOR(MotionSegmentation)},
-    {CVI_TDL_SUPPORTED_MODEL_EYECLASSIFICATION, CREATOR(EyeClassification)},
-    {CVI_TDL_SUPPORTED_MODEL_YAWNCLASSIFICATION, CREATOR(YawnClassification)},
-    {CVI_TDL_SUPPORTED_MODEL_SMOKECLASSIFICATION, CREATOR(SmokeClassification)},
+
     {CVI_TDL_SUPPORTED_MODEL_FACELANDMARKER, CREATOR(FaceLandmarker)},
     {CVI_TDL_SUPPORTED_MODEL_FACELANDMARKERDET2, CREATOR(FaceLandmarkerDet2)},
     {CVI_TDL_SUPPORTED_MODEL_INCAROBJECTDETECTION, CREATOR(IncarObjectDetection)},
-    {CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
+
     {CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, CREATOR(ScrFDFace)},
     {CVI_TDL_SUPPORTED_MODEL_RETINAFACE, CREATOR_P1(RetinaFace, PROCESS, CAFFE)},
     {CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, CREATOR_P1(RetinaFace, PROCESS, PYTORCH)},
     {CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE, CREATOR_P1(FaceAttribute, bool, true)},
     {CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
     {CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE_CLS, CREATOR(FaceAttribute_cls)},
-    {CVI_TDL_SUPPORTED_MODEL_LPRNET_TW, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, TAIWAN)},
-    {CVI_TDL_SUPPORTED_MODEL_LPRNET_CN, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, CHINA)},
+
     {CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 1))},
     {CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
@@ -245,7 +251,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_LANE_DET, CREATOR(BezierLaneNet)},
     {CVI_TDL_SUPPORTED_MODEL_POLYLANE, CREATOR(Polylanenet)},
     {CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, CREATOR(SuperResolution)},
-    {CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION, CREATOR(OCRDetection)},
+
     {CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, CREATOR(OCRRecognition)},
     {CVI_TDL_SUPPORTED_MODEL_LSTR, CREATOR(LSTR)},
 };
@@ -259,6 +265,7 @@ void CVI_TDL_EnableGDC(cvitdl_handle_t handle, bool use_gdc) {
 }
 //*************************************************
 
+#ifndef NO_OPENCV
 inline void __attribute__((always_inline)) removeCtx(cvitdl_context_t *ctx) {
   delete ctx->ds_tracker;
   delete ctx->td_model;
@@ -273,6 +280,30 @@ inline void __attribute__((always_inline)) removeCtx(cvitdl_context_t *ctx) {
   }
   delete ctx;
 }
+#else
+inline void __attribute__((always_inline)) removeCtx(cvitdl_context_t *ctx) {
+  if (ctx->ds_tracker) {
+    delete ctx->ds_tracker;
+    ctx->ds_tracker = nullptr;
+  }
+
+  // delete ctx->td_model;
+  if (ctx->md_model) {
+    delete ctx->md_model;
+    ctx->md_model = nullptr;
+  }
+
+  if (ctx->ive_handle) {
+    ctx->ive_handle->destroy();
+    ctx->ive_handle = nullptr;
+  }
+
+  for (auto it : ctx->vec_vpss_engine) {
+    delete it;
+  }
+  delete ctx;
+}
+#endif
 
 inline Core *__attribute__((always_inline))
 getInferenceInstance(const CVI_TDL_SUPPORTED_MODEL_E index, cvitdl_context_t *ctx) {
@@ -811,6 +842,101 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
  *  find a correct way to create model object.
  *
  */
+#ifndef NO_OPENCV
+DEFINE_INF_FUNC_F2_P2(CVI_TDL_Liveness, Liveness, CVI_TDL_SUPPORTED_MODEL_LIVENESS, cvtdl_face_t *,
+                      cvtdl_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_IrLiveness, IrLiveness, CVI_TDL_SUPPORTED_MODEL_IRLIVENESS,
+                      cvtdl_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Detection, OCRDetection, CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION,
+                      cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_EyeClassification, EyeClassification,
+                      CVI_TDL_SUPPORTED_MODEL_EYECLASSIFICATION, cvtdl_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_YawnClassification, YawnClassification,
+                      CVI_TDL_SUPPORTED_MODEL_YAWNCLASSIFICATION, cvtdl_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_SmokeClassification, SmokeClassification,
+                      CVI_TDL_SUPPORTED_MODEL_SMOKECLASSIFICATION, cvtdl_face_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_TW, LicensePlateRecognition,
+                      CVI_TDL_SUPPORTED_MODEL_LPRNET_TW, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_CN, LicensePlateRecognition,
+                      CVI_TDL_SUPPORTED_MODEL_LPRNET_CN, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceQuality, FaceQuality, CVI_TDL_SUPPORTED_MODEL_FACEQUALITY,
+                      cvtdl_face_t *, bool *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_MaskFaceRecognition, MaskFaceRecognition,
+                      CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, cvtdl_face_t *)
+
+CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
+                          bool cvtRGB888) {
+  return crop_image(srcFrame, dst, bbox, cvtRGB888);
+}
+
+CVI_S32 CVI_TDL_CropImage_Exten(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst,
+                                cvtdl_bbox_t *bbox, bool cvtRGB888, float exten_ratio,
+                                float *offset_x, float *offset_y) {
+  return crop_image_exten(srcFrame, dst, bbox, cvtRGB888, exten_ratio, offset_x, offset_y);
+}
+
+CVI_S32 CVI_TDL_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst,
+                               cvtdl_face_info_t *face_info, bool align, bool cvtRGB888) {
+  return crop_image_face(srcFrame, dst, face_info, align, cvtRGB888);
+}
+
+// Fall Detection
+
+CVI_S32 CVI_TDL_Fall(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  FallMD *fall_model = ctx->fall_model;
+  if (fall_model == nullptr) {
+    LOGD("Init Fall Detection Model.\n");
+    ctx->fall_model = new FallMD();
+    ctx->fall_model->detect(objects);
+    return CVI_TDL_SUCCESS;
+  }
+  return ctx->fall_model->detect(objects);
+}
+
+// New Fall Detection
+
+CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
+  if (fall_monitor_model == nullptr) {
+    LOGD("Init Fall Detection Model.\n");
+    ctx->fall_monitor_model = new FallDetMonitor();
+    ctx->fall_monitor_model->monitor(objects);
+    return CVI_TDL_SUCCESS;
+  }
+  return ctx->fall_monitor_model->monitor(objects);
+}
+
+CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
+  if (fall_monitor_model == nullptr) {
+    LOGD("Init Fall Detection Model.\n");
+    ctx->fall_monitor_model = new FallDetMonitor();
+    ctx->fall_monitor_model->set_fps(fps);
+    return CVI_TDL_SUCCESS;
+  }
+  return ctx->fall_monitor_model->set_fps(fps);
+}
+#else
+CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *p_dst, cvtdl_bbox_t *bbox,
+                          bool cvtRGB888) {
+  return CVI_TDL_ERR_NOT_YET_INITIALIZED;
+}
+
+CVI_S32 CVI_TDL_CropImage_Exten(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *p_dst,
+                                cvtdl_bbox_t *bbox, bool cvtRGB888, float exten_ratio,
+                                float *offset_x, float *offset_y) {
+  return CVI_TDL_ERR_NOT_YET_INITIALIZED;
+}
+
+CVI_S32 CVI_TDL_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *p_dst,
+                               cvtdl_face_info_t *face_info, bool align, bool cvtRGB888) {
+  return CVI_TDL_ERR_NOT_YET_INITIALIZED;
+}
+#endif
+
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_DMSLDet, DMSLandmarkerDet, CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET,
                       cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_FLDet3, FaceLandmarkDet3, CVI_TDL_SUPPORTED_MODEL_LANDMARK_DET3,
@@ -825,10 +951,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_FaceRecognition, FaceAttribute,
                       CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceRecognitionOne, FaceAttribute,
                       CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, cvtdl_face_t *, int)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_MaskFaceRecognition, MaskFaceRecognition,
-                      CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, cvtdl_face_t *)
-DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceQuality, FaceQuality, CVI_TDL_SUPPORTED_MODEL_FACEQUALITY,
-                      cvtdl_face_t *, bool *)
+
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_MaskClassification, MaskClassification,
                       CVI_TDL_SUPPORTED_MODEL_MASKCLASSIFICATION, cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_HandClassification, HandClassification,
@@ -846,28 +969,14 @@ DEFINE_INF_FUNC_F2_P1(CVI_TDL_DeeplabV3, Deeplabv3, CVI_TDL_SUPPORTED_MODEL_DEEP
                       cvtdl_class_filter_t *)
 DEFINE_INF_FUNC_F2_P1(CVI_TDL_MotionSegmentation, MotionSegmentation,
                       CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION, cvtdl_seg_logits_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_TW, LicensePlateRecognition,
-                      CVI_TDL_SUPPORTED_MODEL_LPRNET_TW, cvtdl_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_CN, LicensePlateRecognition,
-                      CVI_TDL_SUPPORTED_MODEL_LPRNET_CN, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateDetection, LicensePlateDetection,
                       CVI_TDL_SUPPORTED_MODEL_WPODNET, cvtdl_object_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_EyeClassification, EyeClassification,
-                      CVI_TDL_SUPPORTED_MODEL_EYECLASSIFICATION, cvtdl_face_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_YawnClassification, YawnClassification,
-                      CVI_TDL_SUPPORTED_MODEL_YAWNCLASSIFICATION, cvtdl_face_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_SmokeClassification, SmokeClassification,
-                      CVI_TDL_SUPPORTED_MODEL_SMOKECLASSIFICATION, cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_FaceLandmarker, FaceLandmarker,
                       CVI_TDL_SUPPORTED_MODEL_FACELANDMARKER, cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_FaceLandmarkerDet2, FaceLandmarkerDet2,
                       CVI_TDL_SUPPORTED_MODEL_FACELANDMARKERDET2, cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_IncarObjectDetection, IncarObjectDetection,
                       CVI_TDL_SUPPORTED_MODEL_INCAROBJECTDETECTION, cvtdl_face_t *)
-DEFINE_INF_FUNC_F2_P2(CVI_TDL_Liveness, Liveness, CVI_TDL_SUPPORTED_MODEL_LIVENESS, cvtdl_face_t *,
-                      cvtdl_face_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_IrLiveness, IrLiveness, CVI_TDL_SUPPORTED_MODEL_IRLIVENESS,
-                      cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_License_Plate_Detectionv2, YoloV8Pose,
                       CVI_TDL_SUPPORTED_MODEL_LP_DETECTION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Image_Classification, ImageClassification,
@@ -884,8 +993,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_PolyLane_Det, Polylanenet, CVI_TDL_SUPPORTED_MODEL
                       cvtdl_lane_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Super_Resolution, SuperResolution,
                       CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, cvtdl_sr_feature *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Detection, OCRDetection, CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION,
-                      cvtdl_object_t *)
+
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Recognition, OCRRecognition,
                       CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_LSTR_Det, LSTR, CVI_TDL_SUPPORTED_MODEL_LSTR, cvtdl_lane_t *)
@@ -1033,22 +1141,6 @@ CVI_S32 CVI_TDL_LicensePlateRecognition(const cvitdl_handle_t handle, VIDEO_FRAM
          CVI_TDL_GetModelName(model_id));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
-}
-
-CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
-                          bool cvtRGB888) {
-  return crop_image(srcFrame, dst, bbox, cvtRGB888);
-}
-
-CVI_S32 CVI_TDL_CropImage_Exten(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst,
-                                cvtdl_bbox_t *bbox, bool cvtRGB888, float exten_ratio,
-                                float *offset_x, float *offset_y) {
-  return crop_image_exten(srcFrame, dst, bbox, cvtRGB888, exten_ratio, offset_x, offset_y);
-}
-
-CVI_S32 CVI_TDL_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst,
-                               cvtdl_face_info_t *face_info, bool align, bool cvtRGB888) {
-  return crop_image_face(srcFrame, dst, face_info, align, cvtRGB888);
 }
 
 // Tracker
@@ -1225,46 +1317,6 @@ CVI_S32 CVI_TDL_DeepSORT_GetTracker_Inactive(const cvitdl_handle_t handle,
     return CVI_FAILURE;
   }
   return ctx->ds_tracker->get_trackers_inactive(tracker);
-}
-
-// Fall Detection
-
-CVI_S32 CVI_TDL_Fall(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  FallMD *fall_model = ctx->fall_model;
-  if (fall_model == nullptr) {
-    LOGD("Init Fall Detection Model.\n");
-    ctx->fall_model = new FallMD();
-    ctx->fall_model->detect(objects);
-    return CVI_TDL_SUCCESS;
-  }
-  return ctx->fall_model->detect(objects);
-}
-
-// New Fall Detection
-
-CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
-  if (fall_monitor_model == nullptr) {
-    LOGD("Init Fall Detection Model.\n");
-    ctx->fall_monitor_model = new FallDetMonitor();
-    ctx->fall_monitor_model->monitor(objects);
-    return CVI_TDL_SUCCESS;
-  }
-  return ctx->fall_monitor_model->monitor(objects);
-}
-
-CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps) {
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
-  if (fall_monitor_model == nullptr) {
-    LOGD("Init Fall Detection Model.\n");
-    ctx->fall_monitor_model = new FallDetMonitor();
-    ctx->fall_monitor_model->set_fps(fps);
-    return CVI_TDL_SUCCESS;
-  }
-  return ctx->fall_monitor_model->set_fps(fps);
 }
 
 // Others

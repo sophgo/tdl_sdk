@@ -3,7 +3,6 @@
 #include "core/cvi_tdl_types_mem.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "face_utils.hpp"
 
 #include <cmath>
 #include "cvi_tdl_log.hpp"

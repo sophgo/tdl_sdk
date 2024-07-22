@@ -1,7 +1,7 @@
 #pragma once
 #include <signal.h>
+#include <cassert>
 #include "sample_comm.h"
-
 #define CVI_MAPI_SUCCESS ((int)(0))
 #define CVI_MAPI_ERR_FAILURE ((int)(-1001))
 #define CVI_MAPI_ERR_NOMEM ((int)(-1002))

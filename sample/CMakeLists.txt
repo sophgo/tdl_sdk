@@ -250,11 +250,7 @@ if((DEFINED BUILD_WEB_VIEW) AND ("${CVI_PLATFORM}" STREQUAL "CV182X"))
     ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/app_ipcam_websocket.c)
 endif()
 
-if(DEFINED NO_OPENCV)
-  buildninstall(NAME sample_init INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
-  buildninstall(NAME sample_aud_cls_read INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
-  buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
-else()
+
   # buildninstallcpp(NAME sample_read_od INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
   buildninstallcpp(NAME sample_aud_order INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
   # buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
@@ -292,7 +288,6 @@ else()
   buildninstall(NAME sample_stream_personvehicle_cross INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
   buildninstall(NAME sample_stream_hardhat INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
   buildninstall(NAME sample_stream_fr INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
-endif()
 
 
 if((DEFINED BUILD_WEB_VIEW) AND ("${CVI_PLATFORM}" STREQUAL "CV182X"))

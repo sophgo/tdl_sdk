@@ -5,19 +5,18 @@
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "face_utils.hpp"
 
 #include "core/utils/vpss_helper.h"
 
 #include <iostream>
 #include <sstream>
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
+#define MIN(a, b) ((a) <= (b) ? (a) : (b))
+#define MAX(a, b) ((a) >= (b) ? (a) : (b))
+#define DEBUG_LICENSE_PLATE_DETECTION 0
+#if DEBUG_LICENSE_PLATE_DETECTION2 && !NO_OPENCV
+#include <opencv2/opencv.hpp>
 #include "opencv2/imgproc.hpp"
 #endif
-
-#define DEBUG_LICENSE_PLATE_DETECTION 0
 
 #define OUTPUT_NAME_PROBABILITY "conv2d_25_dequant"
 #define OUTPUT_NAME_TRANSFORM "conv2d_26_dequant"
@@ -226,11 +225,9 @@ bool LicensePlateDetection::reconstruct(float *t_prob, float *t_trans, CornerPts
           cv::Point2f(LICENSE_PLATE_WIDTH, LICENSE_PLATE_HEIGHT),
           cv::Point2f(0, LICENSE_PLATE_HEIGHT),
       };
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-      cv::Mat M = cvitdl::getPerspectiveTransform(src_points, dst_points);
-#else
+
       cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
-#endif
+
       std::cout << "M: " << std::endl << M << std::endl;
 #endif
     }
