@@ -7,11 +7,7 @@
 #include "rescale_utils.hpp"
 
 #include "opencv2/core.hpp"
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
 #include "opencv2/imgproc.hpp"
-#endif
 
 #include <sys/time.h>
 
@@ -195,11 +191,7 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst_image, cvtdl
                              tmp_image.stride[0]);
         cv::Mat cvImage_RGB888(dst_image->height, dst_image->width, CV_8UC3, dst_image->pix[0],
                                dst_image->stride[0]);
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-        cvitdl::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
-#else
         cv::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
-#endif
       }
     } break;
     case PIXEL_FORMAT_YUV_PLANAR_420: {
@@ -218,11 +210,7 @@ CVI_S32 crop_image(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst_image, cvtdl
                                tmp_image.stride[0]);
         cv::Mat cvImage_RGB888(dst_image->height, dst_image->width, CV_8UC3, dst_image->pix[0],
                                dst_image->stride[0]);
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-        cvitdl::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
-#else
         cv::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
-#endif
       }
     }
     default:
@@ -325,11 +313,7 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst_image,
                              tmp_image.stride[0]);
         cv::Mat cvImage_RGB888(dst_image->height, dst_image->width, CV_8UC3, dst_image->pix[0],
                                dst_image->stride[0]);
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-        cvitdl::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
-#else
         cv::cvtColor(cvImage_NV21, cvImage_RGB888, CV_YUV2RGB_NV21);
-#endif
       }
     } break;
     case PIXEL_FORMAT_YUV_PLANAR_420: {
@@ -351,11 +335,8 @@ CVI_S32 crop_image_exten(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst_image,
                                tmp_image.stride[0]);
         cv::Mat cvImage_RGB888(dst_image->height, dst_image->width, CV_8UC3, dst_image->pix[0],
                                dst_image->stride[0]);
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-        cvitdl::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
-#else
+
         cv::cvtColor(cvImage_YUV420, cvImage_RGB888, CV_YUV2RGB_I420);
-#endif
       }
     } break;
     default:
@@ -519,11 +500,7 @@ CVI_S32 face_quality_laplacian(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_info_t *
   cv::Mat image(h, w, CV_8UC3, p, s);
   cv::Mat image_gray;
   cv::Mat ed;
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-  cvitdl::cvtColor(image, image_gray, COLOR_RGB2GRAY);
-#else
   cv::cvtColor(image, image_gray, cv::COLOR_RGB2GRAY);
-#endif
   double laplacian_score = 0.0;
   double mean = 0.0;
   cvtdl_pts_t *pts_info = &face_info->pts;

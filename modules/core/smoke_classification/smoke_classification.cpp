@@ -5,12 +5,7 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "face_utils.hpp"
-
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
 #include "opencv2/imgproc.hpp"
-#endif
 
 #define SMOKECLASSIFICATION_SCALE (1.0 / (255.0))
 #define NAME_SCORE "prob_Sigmoid_dequant"
@@ -42,12 +37,8 @@ int SmokeClassification::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta
       LOGE("Failed to align face\n");
       return CVI_TDL_ERR_INFERENCE;
     }
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-    cvitdl::cvtColor(warp_image, warp_image, COLOR_RGB2GRAY);
-#else
-    cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2GRAY);
-#endif
 
+    cv::cvtColor(warp_image, warp_image, cv::COLOR_RGB2GRAY);
     prepareInputTensor(warp_image);
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     int ret = run(frames);

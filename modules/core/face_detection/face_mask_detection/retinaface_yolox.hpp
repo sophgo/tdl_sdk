@@ -2,8 +2,6 @@
 #include "core/face/cvtdl_face_types.h"
 #include "face_detection.hpp"
 
-#include "opencv2/opencv.hpp"
-
 namespace cvitdl {
 
 class RetinafaceYolox final : public FaceDetectionBase {

@@ -8,13 +8,10 @@
 #include "core/utils/vpss_helper.h"
 
 #include <iostream>
-#include <sstream>
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
 #include <opencv2/opencv.hpp>
+#include <sstream>
 #include "opencv2/imgproc.hpp"
-#endif
+
 #define R_SCALE (0.003922)
 #define G_SCALE (0.003922)
 #define B_SCALE (0.003922)

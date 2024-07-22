@@ -5,18 +5,11 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "face_utils.hpp"
 #include "image_utils.hpp"
 
 // include core_c.h if opencv version greater than 4.5
 #if CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR >= 5
 #include "opencv2/core/core_c.h"
-#endif
-
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
-#include "opencv2/imgproc.hpp"
 #endif
 
 #define SCALE_R (1.0 / (255.0 * 0.229))

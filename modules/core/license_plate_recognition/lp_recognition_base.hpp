@@ -4,8 +4,6 @@
 #include "cvi_comm.h"
 #include "decode_tool.hpp"
 
-#include "opencv2/core.hpp"
-
 namespace cvitdl {
 
 class LicensePlateRecognitionBase : public Core {

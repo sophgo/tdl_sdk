@@ -4,7 +4,6 @@
 #include "cvi_comm.h"
 
 #include "license_plate_detection_utils.hpp"
-#include "opencv2/core.hpp"
 
 namespace cvitdl {
 
@@ -21,7 +20,6 @@ class LicensePlateDetection final : public Core {
                      VPSSConfig &vpss_config) override;
   bool reconstruct(float *t_prob, float *t_trans, CornerPts &c_pts, float &ret_prob,
                    float threshold_prob = 0.9);
-  void prepareInputTensor(cv::Mat &input_mat);
 
   int vehicle_h, vehicle_w;
   int out_tensor_h, out_tensor_w;

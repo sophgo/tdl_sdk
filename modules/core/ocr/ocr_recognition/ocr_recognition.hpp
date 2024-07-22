@@ -3,8 +3,6 @@
 #include "core_internel.hpp"
 #include "cvi_comm.h"
 
-#include "opencv2/core.hpp"
-
 namespace cvitdl {
 
 class OCRRecognition final : public Core {

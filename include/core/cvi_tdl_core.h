@@ -605,17 +605,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceRecognitionOne(const cvitdl_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *faces,
                                               int face_idx);
 
-/**
- * @brief Do face recognition with mask wearing.
- *
- * @param handle An TDL SDK handle.
- * @param frame Input video frame.
- * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_TDL_MaskFaceRecognition(const cvitdl_handle_t handle,
-                                               VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *faces);
-
 /**@}*/
 
 /**
@@ -623,19 +612,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_MaskFaceRecognition(const cvitdl_handle_t handle,
  * \ingroup core_tdl
  */
 /**@{*/
-
-/**
- * @brief FaceQuality. Assess the quality of the faces.
- *
- * @param handle An TDL SDK handle.
- * @param frame Input video frame.
- * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
- * @param skip bool array, whether skip quailty assessment at corresponding index (NULL for running
- * without skip)
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_TDL_FaceQuality(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                       cvtdl_face_t *face, bool *skip);
 
 /**
  * @brief Crop image in given frame.
@@ -676,24 +652,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_CropImage_Exten(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_i
  */
 DLL_EXPORT CVI_S32 CVI_TDL_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst,
                                           cvtdl_face_info_t *face_info, bool align, bool cvtRGB888);
-
-/**
- * @brief Liveness. Gives a score to present how real the face is. The score will be low if the face
- * is not directly taken by a camera.
- *
- * @param handle An TDL SDK handle.
- * @param rgbFrame Input RGB video frame.
- * @param irFrame Input IR video frame.
- * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
- * @param ir_position The position relationship netween the ir and the rgb camera.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_TDL_Liveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
-                                    VIDEO_FRAME_INFO_S *irFrame, cvtdl_face_t *rgb_face,
-                                    cvtdl_face_t *ir_face);
-
-DLL_EXPORT CVI_S32 CVI_TDL_IrLiveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *irFrame,
-                                      cvtdl_face_t *ir_face);
 
 /**
  * @brief Mask classification. Tells if a face is wearing a mask.
@@ -1046,6 +1004,82 @@ DLL_EXPORT CVI_S32 CVI_TDL_License_Plate_Detectionv2(const cvitdl_handle_t handl
 DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateDetection(const cvitdl_handle_t handle,
                                                  VIDEO_FRAME_INFO_S *frame,
                                                  cvtdl_object_t *vehicle_meta);
+
+#ifndef NO_OPENCV
+/**
+ * @brief Do face recognition with mask wearing.
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_MaskFaceRecognition(const cvitdl_handle_t handle,
+                                               VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *faces);
+/**
+ * @brief FaceQuality. Assess the quality of the faces.
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param skip bool array, whether skip quailty assessment at corresponding index (NULL for running
+ * without skip)
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_FaceQuality(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                       cvtdl_face_t *face, bool *skip);
+/**
+ * @brief Do smoke classification.
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param cvtdl_face_t structure. Calculate the smoke_score in cvtdl_dms_t.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+
+DLL_EXPORT CVI_S32 CVI_TDL_SmokeClassification(const cvitdl_handle_t handle,
+                                               VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face);
+/**
+ * @brief Do eye classification.
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param cvtdl_face_t structure. Calculate the eye_score in cvtdl_dms_t.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+
+DLL_EXPORT CVI_S32 CVI_TDL_EyeClassification(const cvitdl_handle_t handle,
+                                             VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face);
+
+/**
+ * @brief Do yawn classification.
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param cvtdl_face_t structure. Calculate the yawn_score in cvtdl_dms_t.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+
+DLL_EXPORT CVI_S32 CVI_TDL_YawnClassification(const cvitdl_handle_t handle,
+                                              VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face);
+/**
+ * @brief Liveness. Gives a score to present how real the face is. The score will be low if the face
+ * is not directly taken by a camera.
+ *
+ * @param handle An TDL SDK handle.
+ * @param rgbFrame Input RGB video frame.
+ * @param irFrame Input IR video frame.
+ * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param ir_position The position relationship netween the ir and the rgb camera.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Liveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
+                                    VIDEO_FRAME_INFO_S *irFrame, cvtdl_face_t *rgb_face,
+                                    cvtdl_face_t *ir_face);
+
+DLL_EXPORT CVI_S32 CVI_TDL_IrLiveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *irFrame,
+                                      cvtdl_face_t *ir_face);
+
 DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition_CN(const cvitdl_handle_t handle,
                                                       VIDEO_FRAME_INFO_S *frame,
                                                       cvtdl_object_t *vehicle);
@@ -1057,6 +1091,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition(const cvitdl_handle_t handle,
                                                    CVI_TDL_SUPPORTED_MODEL_E model_id,
                                                    cvtdl_object_t *vehicle);
 
+DLL_EXPORT CVI_S32 CVI_TDL_OCR_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                         cvtdl_object_t *obj_meta);
 /**
  * \addtogroup core_fall Fall Detection
  * \ingroup core_tdl
@@ -1094,6 +1130,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_obje
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps);
+#endif
 
 /**
  * \addtogroup core_others Others
@@ -1159,29 +1196,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_MotionDetection(const cvitdl_handle_t handle, VIDEO_F
 /**@{*/
 
 /**
- * @brief Do eye classification.
- *
- * @param handle An TDL SDK handle.
- * @param frame Input video frame.
- * @param cvtdl_face_t structure. Calculate the eye_score in cvtdl_dms_t.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-
-DLL_EXPORT CVI_S32 CVI_TDL_EyeClassification(const cvitdl_handle_t handle,
-                                             VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face);
-
-/**
- * @brief Do yawn classification.
- *
- * @param handle An TDL SDK handle.
- * @param frame Input video frame.
- * @param cvtdl_face_t structure. Calculate the yawn_score in cvtdl_dms_t.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-
-DLL_EXPORT CVI_S32 CVI_TDL_YawnClassification(const cvitdl_handle_t handle,
-                                              VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face);
-/**
  * @brief Do face landmark.
  *
  * @param handle An TDL SDK handle.
@@ -1224,18 +1238,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceLandmarkerDet2(const cvitdl_handle_t handle,
 /**@{*/
 DLL_EXPORT CVI_S32 CVI_TDL_DMSLDet(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                    cvtdl_face_t *face);
-
-/**
- * @brief Do smoke classification.
- *
- * @param handle An TDL SDK handle.
- * @param frame Input video frame.
- * @param cvtdl_face_t structure. Calculate the smoke_score in cvtdl_dms_t.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-
-DLL_EXPORT CVI_S32 CVI_TDL_SmokeClassification(const cvitdl_handle_t handle,
-                                               VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face);
 
 /**
  * @brief Dump model input frame to npz.
@@ -1360,9 +1362,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_PoseDetection(const cvitdl_handle_t handle, VIDEO_FRA
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Super_Resolution(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                             cvtdl_sr_feature *srfeature);
-
-DLL_EXPORT CVI_S32 CVI_TDL_OCR_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                         cvtdl_object_t *obj_meta);
 
 DLL_EXPORT CVI_S32 CVI_TDL_OCR_Recognition(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                            cvtdl_object_t *obj_meta);

@@ -2,7 +2,6 @@
 #include "core/face/cvtdl_face_types.h"
 #include "core_internel.hpp"
 #include "cvi_comm.h"
-#include "opencv2/core.hpp"
 
 namespace cvitdl {
 typedef struct HeadInfo {
@@ -25,7 +24,7 @@ class IncarObjectDetection final : public Core {
 
  private:
   int setupInputPreprocess(std::vector<InputPreprecessSetup>* data);
-  void prepareInputTensor(cv::Mat& input_mat);
+
   void outputParser(int image_width, int image_height, cvtdl_face_t* meta);
   void decode_infer(float* cls_pred, float* dis_pred, int stride, float threshold,
                     std::vector<std::vector<cvtdl_dms_od_info_t>>& results);
