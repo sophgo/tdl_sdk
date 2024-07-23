@@ -33,4 +33,5 @@ Revision          Date                      Description
    5_Application.rst
    6_Data_Types.rst
    7_Error_Codes.rst
+   8_Yolo_Development_Guide.rst
 
