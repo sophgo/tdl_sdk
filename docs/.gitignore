@@ -10,7 +10,6 @@ templates/
 _templates/
 
 # static common materials including disclaimer and images
-common/
 _static/
 
 .vscode/
