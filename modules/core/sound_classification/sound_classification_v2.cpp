@@ -6,8 +6,6 @@ using namespace melspec;
 using namespace cvitdl;
 using namespace std;
 
-#define ESC_OUT_NAME "prob_dequant"
-
 SoundClassification::SoundClassification() : Core(CVI_MEM_SYSTEM) {
   audio_param_.win_len = 1024;
   audio_param_.num_fft = 1024;
@@ -27,7 +25,10 @@ int SoundClassification::onModelOpened() {
   int32_t image_width = input_shape.dim[2];
   bool htk = false;
 
-  if (image_width == 63 || audio_param_.hop_len == 128) {  // sr8k * 2s
+  if (image_width == 251 && audio_param_.hop_len == 128) {  // sr16k * 2s, hop_len = 128
+    audio_param_.sample_rate = 16000;
+    audio_param_.time_len = 2;
+  } else if (image_width == 63 || audio_param_.hop_len == 128) {  // sr8k * 2s
     audio_param_.sample_rate = 8000;
     audio_param_.time_len = 2;
   } else if (image_width == 94) {  // sr8k * 3s
@@ -183,6 +184,6 @@ void SoundClassification::normal_sound(short *audio_data, int n) {
 }
 
 int SoundClassification::getClassesNum() {
-  const TensorInfo &info = getOutputTensorInfo(ESC_OUT_NAME);
+  const TensorInfo &info = getOutputTensorInfo(0);
   return info.tensor_elem;
 }

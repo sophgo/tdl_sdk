@@ -25,12 +25,18 @@
 #define SIZE PERIOD_SIZE *AUDIOFORMATSIZE
 
 static int g_flag = 0;
+static int g_class_num = 0;
 
 static const char *enumStr[] = {"无指令", "小爱小爱", "拨打电话", "关闭屏幕", "打开屏幕",
                                 "无指令", "小宝小宝", "拨打电话", "关闭屏幕", "打开屏幕",
                                 "无指令", "小蓝小蓝", "拨打电话", "关闭屏幕", "打开屏幕",
                                 "无指令", "小胖小胖", "拨打电话", "关闭屏幕", "打开屏幕",
                                 "无指令", "你好视云", "拨打电话", "关闭屏幕", "打开屏幕"};
+
+static const char *enumStr_juntaida[] = {
+    "无指令",   "打开前录", "打开后录", "关闭屏幕", "打开屏幕", "紧急录像",
+    "我要拍照", "关闭录音", "打开录音", "打开wifi", "关闭wifi",
+};
 
 static std::vector<uint8_t *> g_pack_buf_vec;
 static int g_pack_idx = 0;
@@ -117,7 +123,7 @@ void *thread_infer(void *arg) {
   int pre_label = -1;
   int maxval_sound = 0;
   int pack_idx = 0;
-  int pack_len = PERIOD_SIZE;
+  int pack_len = 512;
   int ret = CVI_TDL_SUCCESS;
   float ts_avg = 0;
   int wait_ts = 250;
@@ -160,8 +166,14 @@ void *thread_infer(void *arg) {
       ts_avg = ts_avg * 0.9 + sec * 0.1;
     }
     if (ret == CVI_TDL_SUCCESS) {
-      printf("class: %s,infer ts(ms):%.2f,fps:%.2f\n", enumStr[pre_label + start_index],
-             ts_avg * 1000, 1.0 / frame_sec);
+      if (g_class_num == 5) {
+        printf("class: %s,infer ts(ms):%.2f,fps:%.2f\n", enumStr[pre_label + start_index],
+               ts_avg * 1000, 1.0 / frame_sec);
+      } else {
+        printf("class: %s,infer ts(ms):%.2f,fps:%.2f\n", enumStr_juntaida[pre_label + start_index],
+               ts_avg * 1000, 1.0 / frame_sec);
+      }
+
       if (pre_label != 0) {
         usleep(2000 * 1000);
 
@@ -290,6 +302,9 @@ int main(int argc, char **argv) {
     CVI_TDL_DestroyHandle(tdl_handle);
     return ret;
   }
+
+  g_class_num = CVI_TDL_GetSoundClassificationClassesNum(tdl_handle);
+  printf("g_class_num: %d\n", g_class_num);
 
   if (argc == 7) {
     g_outpath = (char *)malloc(strlen(argv[6]));
