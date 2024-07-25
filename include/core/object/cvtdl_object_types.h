@@ -385,6 +385,7 @@ typedef struct {
 
   meta_rescale_type_e rescale_type;
   cvtdl_lane_point_t *lane;
+  int lane_state;
 } cvtdl_lane_t;
 
 // consumer line

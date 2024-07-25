@@ -23,7 +23,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-static const char *enumStr[] = {"NORMAL", "START", "WARNING", "DANGER"};
+static const char *enumStr[] = {"NORMAL", "START", "WARNING"};
 
 static volatile bool bExit = false;
 
@@ -42,7 +42,7 @@ typedef struct {
 } SAMPLE_TDL_TDL_THREAD_ARG_S;
 
 static cvtdl_object_t g_stObjMeta = {0};
-static cvtdl_tracker_t g_stTrackerMeta = {0};
+static cvtdl_lane_t g_stLaneMeta = {0};
 
 static uint32_t get_time_in_ms() {
   struct timeval tv;
@@ -81,17 +81,13 @@ void *run_venc(void *args) {
   VIDEO_FRAME_INFO_S stFrame;
   CVI_S32 s32Ret;
   cvtdl_object_t stObjMeta = {0};
-  cvtdl_tracker_t stTrackerMeta = {0};
+  cvtdl_lane_t stLaneMeta = {0};
+  cvtdl_service_brush_t brush_lane = {.size = 4, .color.r = 0, .color.g = 255, .color.b = 0};
 
-  cvtdl_service_brush_t stGreyBrush = CVI_TDL_Service_GetDefaultBrush();
-  stGreyBrush.color.r = 105;
-  stGreyBrush.color.g = 105;
-  stGreyBrush.color.b = 105;
-
-  cvtdl_service_brush_t stGreenBrush = CVI_TDL_Service_GetDefaultBrush();
-  stGreenBrush.color.r = 0;
-  stGreenBrush.color.g = 255;
-  stGreenBrush.color.b = 0;
+  cvtdl_pts_t pts;
+  pts.size = 2;
+  pts.x = (float *)malloc(2 * sizeof(float));
+  pts.y = (float *)malloc(2 * sizeof(float));
 
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, 0, &stFrame, 2000);
@@ -103,19 +99,12 @@ void *run_venc(void *args) {
     {
       MutexAutoLock(ResultMutex, lock);
       CVI_TDL_CopyObjectMeta(&g_stObjMeta, &stObjMeta);
-      CVI_TDL_CopyTrackerMeta(&g_stTrackerMeta, &stTrackerMeta);
+      CVI_TDL_CopyLaneMeta(&g_stLaneMeta, &stLaneMeta);
     }
 
-    // Draw different color for bbox accourding to tracker state.
     cvtdl_service_brush_t *brushes = malloc(stObjMeta.size * sizeof(cvtdl_service_brush_t));
     for (uint32_t oid = 0; oid < stObjMeta.size; oid++) {
-      if (stTrackerMeta.info[oid].state == CVI_TRACKER_NEW) {
-        brushes[oid] = stGreenBrush;
-      } else if (stTrackerMeta.info[oid].state == CVI_TRACKER_UNSTABLE) {
-        brushes[oid] = stGreyBrush;
-      } else {  // CVI_TRACKER_STABLE
-        brushes[oid] = get_random_brush(stObjMeta.info[oid].unique_id, 64);
-      }
+      brushes[oid] = get_random_brush(stObjMeta.info[oid].unique_id, 64);
     }
 
     // Fill name with unique id.
@@ -129,21 +118,48 @@ void *run_venc(void *args) {
     s32Ret = CVI_TDL_Service_ObjectDrawRect2(pstArgs->stServiceHandle, &stObjMeta, &stFrame, true,
                                              brushes);
     if (s32Ret != CVI_TDL_SUCCESS) {
-      CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
       printf("Draw fame fail!, ret=%x\n", s32Ret);
       goto error;
+    }
+
+    char lane_info[64];
+    int txt_x = (int)(0.5 * stFrame.stVFrame.u32Width);
+    int txt_y = (int)(0.8 * stFrame.stVFrame.u32Height);
+    if (stLaneMeta.lane_state == 0) {
+      strcpy(lane_info, "NORMAL");
+      s32Ret = CVI_TDL_Service_ObjectWriteText(lane_info, txt_x, txt_y, &stFrame, 0, 255, 0);
+    } else {
+      strcpy(lane_info, "LANE DEPARTURE WARNING !");
+      s32Ret = CVI_TDL_Service_ObjectWriteText(lane_info, txt_x, txt_y, &stFrame, 255, 0, 0);
+    }
+    if (s32Ret != CVI_TDL_SUCCESS) {
+      printf("Draw txt fail!, ret=%x\n", s32Ret);
+      goto error;
+    }
+
+    for (uint32_t i = 0; i < stLaneMeta.size; i++) {
+      pts.x[0] = (int)stLaneMeta.lane[i].x[0];
+      pts.y[0] = (int)stLaneMeta.lane[i].y[0];
+      pts.x[1] = (int)stLaneMeta.lane[i].x[1];
+      pts.y[1] = (int)stLaneMeta.lane[i].y[1];
+
+      s32Ret = CVI_TDL_Service_DrawPolygon(pstArgs->stServiceHandle, &stFrame, &pts, brush_lane);
+      if (s32Ret != CVI_TDL_SUCCESS) {
+        printf("Draw line fail!, ret=%x\n", s32Ret);
+        goto error;
+      }
     }
 
     s32Ret = SAMPLE_TDL_Send_Frame_RTSP(&stFrame, pstArgs->pstMWContext);
   error:
     free(brushes);
     CVI_TDL_Free(&stObjMeta);
-    CVI_TDL_Free(&stTrackerMeta);
     CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
     if (s32Ret != CVI_SUCCESS) {
       bExit = true;
     }
   }
+  CVI_TDL_Free(&pts);
   printf("Exit encoder thread\n");
   pthread_exit(NULL);
 }
@@ -185,13 +201,10 @@ void *run_tdl_thread(cvitdl_app_handle_t app_handle) {
       goto inf_error;
     }
 
-    // printf("obj detect: %d\n", app_handle->adas_info->last_objects.size);
-    //*******************************************
-
     {
       MutexAutoLock(ResultMutex, lock);
       CVI_TDL_CopyObjectMeta(&app_handle->adas_info->last_objects, &g_stObjMeta);
-      CVI_TDL_CopyTrackerMeta(&app_handle->adas_info->last_trackers, &g_stTrackerMeta);
+      CVI_TDL_CopyLaneMeta(&app_handle->adas_info->lane_meta, &g_stLaneMeta);
     }
 
   inf_error:
@@ -216,17 +229,16 @@ static void SampleHandleSig(CVI_S32 signo) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 3) {
-    printf("\nUsage: %s PERSON_VEHICLE_MODEL_PATH LANE_DET_MODEL_PATH \n\n", argv[0]);
+  if (argc != 3 && argc != 4) {
+    printf(
+        "\nUsage: %s PERSON_VEHICLE_MODEL_PATH LANE_DET_MODEL_PATH [LANE_DET_MODEL_TYPE]\n\n"
+        "LANE_DET_MODEL_TYPE (optional), should be 0 or 1, 0 for LANE_DET, 1 for LSTR \n",
+        argv[0]);
     return -1;
   }
 
   ODInferenceFunc inference_func;
   CVI_TDL_SUPPORTED_MODEL_E enOdModelId;
-  // if (get_od_model_info(argv[1], &enOdModelId, &inference_func) == CVI_TDL_FAILURE) {
-  //   printf("unsupported model: %s\n", argv[1]);
-  //   return -1;
-  // }
 
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
@@ -339,13 +351,6 @@ int main(int argc, char *argv[]) {
   GOTO_IF_FAILED(CVI_TDL_Service_CreateHandle(&stServiceHandle, stTDLHandle), s32Ret,
                  create_service_fail);
 
-  GOTO_IF_FAILED(
-      CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, argv[1]),
-      s32Ret, setup_tdl_fail);
-
-  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_LANE_DET, argv[2]), s32Ret,
-                 setup_tdl_fail);
-
   uint32_t buffer_size = 20;
   cvitdl_handle_t tdl_handle = stTDLHandle;
   cvitdl_app_handle_t app_handle = NULL;
@@ -357,14 +362,36 @@ int main(int argc, char *argv[]) {
     goto setup_tdl_fail;
   }
 
-  /**
-   * We only track person object in this sample. If you want to track other category of object,
-   * please add any category you need to CVI_TDL_SelectDetectClass. Additionally, person ReID
-   * feature is only meaningful if tracked object is belong to person category. Algorithm would not
-   * track non-person object with ReID feature even if enable ReID in CVI_TDL_DeepSORT_Obj.
-   */
-  // GOTO_IF_FAILED(CVI_TDL_SelectDetectClass(stTDLHandle, enOdModelId, 1, CVI_TDL_DET_TYPE_PERSON),
-  //                s32Ret, setup_tdl_fail);
+  // setup yolo algorithm preprocess
+  cvtdl_det_algo_param_t yolov8_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+  yolov8_param.cls = 7;
+
+  s32Ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+                                         yolov8_param);
+  if (s32Ret != CVI_SUCCESS) {
+    printf("Can not set yolov8 algorithm parameters %#x\n", s32Ret);
+    return s32Ret;
+  }
+
+  if (argc == 4) {
+    app_handle->adas_info->lane_model_type = atoi(argv[3]);
+  }
+
+  CVI_TDL_SUPPORTED_MODEL_E lane_model_id;
+  if (app_handle->adas_info->lane_model_type == 0) {
+    lane_model_id = CVI_TDL_SUPPORTED_MODEL_LANE_DET;
+  } else if (app_handle->adas_info->lane_model_type == 1) {
+    lane_model_id = CVI_TDL_SUPPORTED_MODEL_LSTR;
+  } else {
+    printf(" err lane_model_type !\n");
+    return -1;
+  }
+
+  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, argv[1]),
+                 s32Ret, setup_tdl_fail);
+
+  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, lane_model_id, argv[2]), s32Ret, setup_tdl_fail);
 
   // Init DeepSORT
   CVI_TDL_DeepSORT_Init(stTDLHandle, true);
@@ -378,11 +405,6 @@ int main(int argc, char *argv[]) {
       .pstMWContext = &stMWContext,
       .stServiceHandle = stServiceHandle,
   };
-
-  // SAMPLE_TDL_TDL_THREAD_ARG_S ai_args = {.enOdModelId = enOdModelId,
-  //                                        .object_detect = inference_func,
-  //                                        .stTDLHandle = stTDLHandle,
-  //                                        .bTrackingWithFeature = bTrackingWithFeature};
 
   pthread_create(&stVencThread, NULL, run_venc, &venc_args);
   pthread_create(&stTDLThread, NULL, run_tdl_thread, app_handle);
