@@ -331,6 +331,7 @@ void CVI_TDL_CopyLaneMeta(cvtdl_lane_t *src, cvtdl_lane_t *dst) {
     dst->width = src->width;
     dst->height = src->height;
     dst->rescale_type = src->rescale_type;
+    dst->lane_state = src->lane_state;
     dst->lane = (cvtdl_lane_point_t *)malloc(sizeof(cvtdl_lane_point_t) * src->size);
     memcpy(dst->lane, src->lane, sizeof(cvtdl_lane_point_t) * src->size);
   }

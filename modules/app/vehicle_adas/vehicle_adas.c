@@ -277,6 +277,7 @@ static CVI_S32 update_lane_state(adas_info_t *adas_info, uint32_t height, uint32
     adas_info->lane_counter = 0;
     adas_info->lane_state = 0;
   }
+  adas_info->lane_meta.lane_state = adas_info->lane_state;
 
   // printf("adas_info->lane_state: %d\n", adas_info->lane_state);
 }
