@@ -19,6 +19,7 @@
 #include "face_attribute/face_attribute.hpp"
 #include "face_detection/retina_face/retina_face.hpp"
 #include "face_detection/retina_face/scrfd_face.hpp"
+#include "liveness/ir_liveness/ir_liveness.hpp"
 #include "motion_detection/md.hpp"
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/ppyoloe/ppyoloe.hpp"
@@ -137,6 +138,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::pedestrian)},
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
+    {CVI_TDL_SUPPORTED_MODEL_IRLIVENESS, CREATOR(IrLiveness)},
 };
 
 //*************************************************
@@ -709,6 +711,8 @@ DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceRecognitionOne, FaceAttribute,
                       CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, cvtdl_face_t *, int)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_SoundClassification, SoundClassification,
                       CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_IrLiveness, IrLiveness, CVI_TDL_SUPPORTED_MODEL_IRLIVENESS,
+                      cvtdl_face_t *)
 
 CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                           CVI_TDL_SUPPORTED_MODEL_E model_index, cvtdl_object_t *obj) {

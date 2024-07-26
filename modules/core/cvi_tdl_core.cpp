@@ -13,6 +13,7 @@
 #include "face_landmarker/face_landmark_det3.hpp"
 #include "face_landmarker/face_landmarker.hpp"
 #include "face_landmarker/face_landmarker_det2.hpp"
+#include "liveness/ir_liveness/ir_liveness.hpp"
 
 #include "hand_classification/hand_classification.hpp"
 #include "hand_keypoint/hand_keypoint.hpp"
@@ -62,7 +63,6 @@
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_det_monitor.hpp"
 #include "fall_detection/fall_detection.hpp"
-#include "liveness/ir_liveness.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
 #include "ocr/ocr_detection/ocr_detection.hpp"
@@ -845,8 +845,6 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
 #ifndef NO_OPENCV
 DEFINE_INF_FUNC_F2_P2(CVI_TDL_Liveness, Liveness, CVI_TDL_SUPPORTED_MODEL_LIVENESS, cvtdl_face_t *,
                       cvtdl_face_t *)
-DEFINE_INF_FUNC_F1_P1(CVI_TDL_IrLiveness, IrLiveness, CVI_TDL_SUPPORTED_MODEL_IRLIVENESS,
-                      cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Detection, OCRDetection, CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION,
                       cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_EyeClassification, EyeClassification,
@@ -997,6 +995,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_Super_Resolution, SuperResolution,
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Recognition, OCRRecognition,
                       CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_LSTR_Det, LSTR, CVI_TDL_SUPPORTED_MODEL_LSTR, cvtdl_lane_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_IrLiveness, IrLiveness, CVI_TDL_SUPPORTED_MODEL_IRLIVENESS,
+                      cvtdl_face_t *)
 
 CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                           CVI_TDL_SUPPORTED_MODEL_E model_index, cvtdl_object_t *obj) {

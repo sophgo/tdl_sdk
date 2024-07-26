@@ -67,6 +67,7 @@ endif()
 
   add_subdirectory(ocr/ocr_recognition)
   add_subdirectory(lane_detection/lstr)
+  add_subdirectory(liveness/ir_liveness)
   set(CORE_INTERFACE cvi_tdl_core.cpp)
 
 
