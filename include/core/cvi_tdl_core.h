@@ -1004,6 +1004,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_License_Plate_Detectionv2(const cvitdl_handle_t handl
 DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateDetection(const cvitdl_handle_t handle,
                                                  VIDEO_FRAME_INFO_S *frame,
                                                  cvtdl_object_t *vehicle_meta);
+DLL_EXPORT CVI_S32 CVI_TDL_IrLiveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *irFrame,
+                                      cvtdl_face_t *ir_face);
 
 #ifndef NO_OPENCV
 /**
@@ -1076,9 +1078,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_YawnClassification(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_Liveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
                                     VIDEO_FRAME_INFO_S *irFrame, cvtdl_face_t *rgb_face,
                                     cvtdl_face_t *ir_face);
-
-DLL_EXPORT CVI_S32 CVI_TDL_IrLiveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *irFrame,
-                                      cvtdl_face_t *ir_face);
 
 DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition_CN(const cvitdl_handle_t handle,
                                                       VIDEO_FRAME_INFO_S *frame,

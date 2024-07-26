@@ -29,7 +29,7 @@ set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
   $<TARGET_OBJECTS:face_attribute>
   $<TARGET_OBJECTS:face_attribute_cls>
   $<TARGET_OBJECTS:mobiledetv2>
-  
+  $<TARGET_OBJECTS:ir_liveness>
   $<TARGET_OBJECTS:mask_classification>
   $<TARGET_OBJECTS:hand_classification>
   $<TARGET_OBJECTS:hand_keypoint>
