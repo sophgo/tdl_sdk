@@ -2,8 +2,6 @@
 #include "core/object/cvtdl_object_types.h"
 #include "obj_detection.hpp"
 
-#include "opencv2/opencv.hpp"
-
 namespace cvitdl {
 
 class ThermalPerson final : public DetectionBase {
