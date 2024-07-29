@@ -116,8 +116,9 @@ else ifeq ($(MW_VERSION), v2)
 			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
 			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
 	else ifeq ($(CHIP), CV181X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lldc -lrgn -lgdc
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lrgn -lgdc
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
+		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
 		CFLAGS += -DCV181X
 	else ifeq ($(CHIP), CV180X)
 		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lldc -lrgn -lgdc
@@ -251,6 +252,8 @@ ifeq ($(CONFIRM_ENV_VAR), 1)
 $(info ---------------------------------------)
 $(info CHIP: $(CHIP))
 $(info SDK_VER: $(SDK_VER))
+$(info KERNEL_ROOT: $(KERNEL_ROOT))
+$(info MW_LINUX_INC_PATH: $(MW_LINUX_INC_PATH))
 $(info TDL SDK library path: $(SDK_LIB_PATH))
 $(info TDL SDK include path: $(SDK_INC_PATH))
 $(info Middleware include path: $(MW_INC_PATH))
