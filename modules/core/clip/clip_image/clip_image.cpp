@@ -20,7 +20,7 @@
 
 namespace cvitdl {
 
-Clip_Image::Clip_Image() : Core(CVI_MEM_DEVICE) {}
+Clip_Image::Clip_Image() : Core(CVI_MEM_DEVICE) { setUseMmap(false); }
 
 Clip_Image::~Clip_Image() {}
 

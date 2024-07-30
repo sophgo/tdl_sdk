@@ -152,6 +152,14 @@ void CVI_TDL_FreeCpp(cvtdl_lane_t *lane_meta) {
   lane_meta->lane == NULL;
 }
 
+void CVI_TDL_FreeCpp(cvtdl_clip_feature *clip_meta) {
+  if (clip_meta->out_feature != NULL) {
+    free(clip_meta->out_feature);
+  }
+  clip_meta->out_feature = NULL;
+  clip_meta->feature_dim = 0;
+}
+
 void CVI_TDL_FreeFeature(cvtdl_feature_t *feature) { CVI_TDL_FreeCpp(feature); }
 
 void CVI_TDL_FreePts(cvtdl_pts_t *pts) { CVI_TDL_FreeCpp(pts); }
@@ -176,6 +184,7 @@ void CVI_TDL_FreeClassMeta(cvtdl_class_meta_t *cls_meta) { CVI_TDL_FreeCpp(cls_m
 
 void CVI_TDL_FreeLane(cvtdl_lane_t *lane_meta) { CVI_TDL_FreeCpp(lane_meta); }
 
+void CVI_TDL_FreeClip(cvtdl_clip_feature *clip_meta) { CVI_TDL_FreeCpp(clip_meta); }
 // Copy
 
 void CVI_TDL_CopyInfoCpp(const cvtdl_face_info_t *info, cvtdl_face_info_t *infoNew) {

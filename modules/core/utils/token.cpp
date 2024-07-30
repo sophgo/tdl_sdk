@@ -1,3 +1,4 @@
+#include "token.hpp"
 #include <algorithm>
 #include <cassert>
 #include <fstream>
@@ -188,7 +189,7 @@ int token_bpe(const std::string& encoderFile, const std::string& bpeFile,
     return 1;
   }
 
-  tokens.resize(text.size());
+  // tokens.resize(text.size());
   // process each sentence
   for (int j = 0; j < text.size(); j++) {
     std::transform(text[j].begin(), text[j].end(), text[j].begin(),

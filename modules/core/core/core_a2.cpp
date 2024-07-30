@@ -9,6 +9,11 @@ namespace cvitdl {
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
   mp_mi = std::make_unique<CvimodelInfo>();
   mp_mi->conf = {.debug_mode = false, .input_mem_type = input_mem_type};
+  if (input_mem_type == CVI_MEM_SYSTEM) {
+    use_mmap = false;
+  } else {
+    use_mmap = true;
+  }
 }
 
 Core::Core() : Core(CVI_MEM_SYSTEM) {}
