@@ -80,8 +80,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "utils/clip_postprocess.hpp"
 #include "utils/core_utils.hpp"
-
+#include "utils/token.hpp"
 using namespace std;
 using namespace cvitdl;
 
@@ -1820,5 +1821,105 @@ CVI_S32 CVI_TDL_Set_Polylanenet_Lower(const cvitdl_handle_t handle,
     return CVI_SUCCESS;
   }
   LOGE("not supported model index\n");
+  return CVI_FAILURE;
+}
+
+CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
+                                   const char *textFile, int32_t **tokens, int numSentences) {
+  std::vector<std::vector<int32_t>> tokens_cpp(numSentences);
+  // 调用 token_bpe 函数
+  int result =
+      token_bpe(std::string(encoderFile), std::string(bpeFile), std::string(textFile), tokens_cpp);
+  // 计算总元素个数
+  for (int i = 0; i < numSentences; i++) {
+    // tokens[i] = new int32_t[tokens_cpp[i].size()];
+    tokens[i] = (int32_t *)malloc(tokens_cpp[i].size() * sizeof(int32_t));
+    memcpy(tokens[i], tokens_cpp[i].data(), tokens_cpp[i].size() * sizeof(int32_t));
+  }
+
+  if (result == 0) {
+    return CVI_SUCCESS;
+  }
+  LOGE("Tokenization error\n");
+  return CVI_FAILURE;
+}
+
+CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
+                                    float **image_features, int image_features_num,
+                                    int *prods_index, int function_id, float threshold) {
+  Eigen::MatrixXf text_features_eigen(text_features_num, 512);
+  for (int i = 0; i < text_features_num; ++i) {
+    for (int j = 0; j < 512; ++j) {
+      text_features_eigen(i, j) = text_features[i][j];
+    }
+  }
+  Eigen::MatrixXf image_features_eigen(image_features_num, 512);
+  for (int i = 0; i < image_features_num; ++i) {
+    for (int j = 0; j < 512; ++j) {
+      image_features_eigen(i, j) = image_features[i][j];
+    }
+  }
+
+  Eigen::MatrixXf result_eigen;
+  // 调用 clip_postprocess 函数
+  int res = clip_postprocess(text_features_eigen, image_features_eigen, result_eigen);
+
+  for (int i = 0; i < result_eigen.rows(); ++i) {
+    for (int j = 0; j < result_eigen.cols(); ++j) {
+      std::cout << result_eigen(i, j) << " ";
+    }
+    std::cout << std::endl;
+  }
+  if (function_id == 0) {
+    // softmax
+    std::cout << "****** funtrion 2 ******" << std::endl;
+    for (int i = 0; i < result_eigen.rows(); ++i) {
+      float sum = 0.0;
+      float maxVal = result_eigen.row(i).maxCoeff();
+      Eigen::MatrixXf expInput = (result_eigen.row(i).array() - maxVal).exp();
+      sum = expInput.sum();
+      result_eigen.row(i) = expInput / sum;
+    }
+
+    for (int i = 0; i < result_eigen.rows(); ++i) {
+      for (int j = 0; j < result_eigen.cols(); ++j) {
+        std::cout << result_eigen(i, j) << " ";
+      }
+      std::cout << std::endl;
+    }
+
+    for (int i = 0; i < result_eigen.rows(); i++) {
+      bool found = false;
+      for (int j = 0; j < result_eigen.cols(); j++) {
+        if (result_eigen(i, j) > threshold) {
+          prods_index[i] = j;
+          found = true;
+        }
+      }
+      if (!found) {
+        prods_index[i] = -1;  // 如果没有大于0.5的值，则保存特定标记（这里使用-1）
+      }
+    }
+  } else {
+    std::cout << "****** funtrion 2 ******" << std::endl;
+    if (result_eigen.cols() > 1) {
+      LOGE("Error! Please input a text\n");
+      return CVI_FAILURE;
+    } else {
+      for (int i = 0; i < result_eigen.rows(); i++) {
+        if (result_eigen(i, 0) > threshold * 10.0 + 20.0) {
+          prods_index[i] = i;
+        } else {
+          prods_index[i] = -1;
+        }
+      }
+    }
+  }
+
+  if (res == 0) {
+    return CVI_SUCCESS;
+  }
+
+  LOGE("Tokenization error\n");
   return CVI_FAILURE;
 }

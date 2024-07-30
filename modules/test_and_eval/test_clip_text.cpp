@@ -20,7 +20,7 @@ cvitdl_handle_t tdl_handle = NULL;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   if (argc != 3) {
     printf(
         "Usage: %s <clip model path> <input image directory list.txt> <output result "
@@ -43,40 +43,59 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  std::string token_path(argv[2]);
-  cvtdl_clip_feature clip_feature;
-
+  std::string text_list(argv[2]);
+  cvtdl_clip_feature clip_feature_text;
   std::string encoderFile = "./encoder.txt";
   std::string bpeFile = "./bpe_simple_vocab_16e6.txt";
-  std::vector<std::vector<int32_t>> tokens;
-  int result = cvitdl::token_bpe(encoderFile, bpeFile, token_path, tokens);
-  std::ofstream outfile("a2_text_output.txt");
 
-  for (int i = 0; i < tokens.size(); i++) {
-    CVI_U8 buffer[tokens[0].size() * sizeof(int32_t)];
-    memcpy(buffer, &tokens[i][0], sizeof(int32_t) * tokens[0].size());
+  std::cout << "to read file_list:" << text_list << std::endl;
+  std::vector<std::string> text_file_list = read_file_lines(text_list);
+  if (text_file_list.size() == 0) {
+    std::cout << ", file_list empty\n";
+    return -1;
+  }
+  int32_t** tokens = (int32_t**)malloc(text_file_list.size() * sizeof(int32_t*));
+  ret = CVI_TDL_Set_TextPreprocess(encoderFile.c_str(), bpeFile.c_str(), text_list.c_str(), tokens,
+                                   text_file_list.size());
+  if (ret != CVI_SUCCESS) {
+    printf("CVI_TDL_Set_TextPreprocess\n");
+    return 0;
+  }
+
+  float** text_features = new float*[text_file_list.size()];
+  for (int i = 0; i < text_file_list.size(); i++) {
+    CVI_U8 buffer[77 * sizeof(int32_t)];
+    memcpy(buffer, tokens[i], sizeof(int32_t) * 77);
     VIDEO_FRAME_INFO_S Frame;
     Frame.stVFrame.pu8VirAddr[0] = buffer;
     Frame.stVFrame.u32Height = 1;
-    Frame.stVFrame.u32Width = tokens[0].size();
+    Frame.stVFrame.u32Width = 77;
 
-    ret = CVI_TDL_Clip_Text_Feature(tdl_handle, &Frame, &clip_feature);
+    ret = CVI_TDL_Clip_Text_Feature(tdl_handle, &Frame, &clip_feature_text);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_OpenClip_Text_Feature\n");
       return 0;
     }
 
-    for (int y = 0; y < clip_feature.feature_dim; ++y) {
-      outfile << clip_feature.out_feature[y];
-      if (y < clip_feature.feature_dim - 1) {
-        outfile << " ";
-      }
+    text_features[i] = new float[clip_feature_text.feature_dim];
+    for (int y = 0; y < clip_feature_text.feature_dim; ++y) {
+      text_features[i][y] = clip_feature_text.out_feature[y];
     }
-    outfile << "\n";
-    free(clip_feature.out_feature);
+    CVI_TDL_Free(&clip_feature_text);
   }
-  outfile.close();
 
+  for (int i = 0; i < text_file_list.size(); i++) {
+    free(tokens[i]);
+  }
+  free(tokens);
+
+  for (int i = 0; i < text_file_list.size(); i++) {
+    for (int j = 0; i < 512; j++) {
+      std::cout << text_features[i][j] << " ";
+    }
+    std::cout << std::endl;
+  }
+  delete[] text_features;
   std::cout << "after free:" << std::endl;
 
   CVI_TDL_DestroyHandle(tdl_handle);

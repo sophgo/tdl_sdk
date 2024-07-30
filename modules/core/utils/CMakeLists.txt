@@ -8,6 +8,7 @@ set(UTILS_SRC core_utils.cpp
               profiler.cpp
               img_process.cpp
               token.cpp
+              clip_postprocess.cpp
               img_warp.cpp)
 
 if(NOT DEFINED NO_OPENCV)

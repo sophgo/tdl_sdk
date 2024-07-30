@@ -1,5 +1,6 @@
 #pragma once
-#include "cvi_comm.h"
+#include <string>
+#include <vector>
 
 namespace cvitdl {
 int token_bpe(const std::string& encoderFile, const std::string& bpeFile,
