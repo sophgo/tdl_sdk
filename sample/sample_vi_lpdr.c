@@ -110,7 +110,8 @@ void *run_tdl_thread(void *args) {
       goto get_frame_failed;
     }
 
-    GOTO_IF_FAILED(pstTDLArgs->detect_vehicle(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta),
+    GOTO_IF_FAILED(pstTDLArgs->detect_vehicle(pstTDLArgs->stTDLHandle, &stFrame,
+                                              pstTDLArgs->enOdModelId, &stObjMeta),
                    s32Ret, inf_error);
     GOTO_IF_FAILED(CVI_TDL_LicensePlateDetection(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta),
                    s32Ret, inf_error);

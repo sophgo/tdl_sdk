@@ -107,7 +107,8 @@ void *run_tdl_thread(void *args) {
 
     struct timeval t0, t1;
     gettimeofday(&t0, NULL);
-    s32Ret = pstTDLArgs->inference_func(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta);
+    s32Ret = pstTDLArgs->inference_func(pstTDLArgs->stTDLHandle, &stFrame, pstTDLArgs->enOdModelId,
+                                        &stObjMeta);
     gettimeofday(&t1, NULL);
 
     if (s32Ret != CVI_TDL_SUCCESS) {

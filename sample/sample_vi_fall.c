@@ -106,7 +106,8 @@ void *run_tdl_thread(void *args) {
       goto get_frame_failed;
     }
 
-    s32Ret = pstTDLArgs->inference_func(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta);
+    s32Ret = pstTDLArgs->inference_func(pstTDLArgs->stTDLHandle, &stFrame, pstTDLArgs->enOdModelId,
+                                        &stObjMeta);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
@@ -118,7 +119,6 @@ void *run_tdl_thread(void *args) {
       // Predict keypoint for persons
       CVI_TDL_PoseDetection(pstTDLArgs->stTDLHandle, &stFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE,
                             &stObjMeta);
-
       // Predict fall score of first person.
       CVI_TDL_Fall(pstTDLArgs->stTDLHandle, &stObjMeta);
 
