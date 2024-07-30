@@ -181,7 +181,8 @@ void *run_tdl_thread(void *args) {
     }
 
     // Detect objects first.
-    GOTO_IF_FAILED(pstTDLArgs->inference_func(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta),
+    GOTO_IF_FAILED(pstTDLArgs->inference_func(pstTDLArgs->stTDLHandle, &stFrame,
+                                              pstTDLArgs->enOdModelId, &stObjMeta),
                    s32Ret, inf_error);
     struct timeval t0, t1;
     gettimeofday(&t0, NULL);

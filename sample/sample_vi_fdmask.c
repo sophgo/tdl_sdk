@@ -103,7 +103,8 @@ void *run_tdl_thread(void *pHandle) {
       goto get_frame_failed;
     }
 
-    s32Ret = CVI_TDL_FaceMaskDetection(pstTDLHandle, &stFrame, &stFaceMeta);
+    s32Ret = CVI_TDL_FaceDetection(pstTDLHandle, &stFrame,
+                                   CVI_TDL_SUPPORTED_MODEL_FACEMASKDETECTION, &stFaceMeta);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;

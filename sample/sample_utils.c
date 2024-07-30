@@ -120,7 +120,8 @@ CVI_S32 register_gallery_feature(cvitdl_handle_t tdl_handle, const char *sz_feat
 }
 
 CVI_S32 register_gallery_face(cvitdl_handle_t tdl_handle, const char *sz_img_file,
-                              FaceInferFunc fd_func, FaceInferFunc fr_func,
+                              CVI_TDL_SUPPORTED_MODEL_E *fd_index, FaceDetInferFunc fd_func,
+                              FaceRecInferFunc fr_func,
                               cvtdl_service_feature_array_t *p_feat_gallery) {
   VIDEO_FRAME_INFO_S img_frm;
   CVI_S32 ret = CVI_SUCCESS;
@@ -132,7 +133,7 @@ CVI_S32 register_gallery_face(cvitdl_handle_t tdl_handle, const char *sz_img_fil
 
   cvtdl_face_t faceinfo;
   memset(&faceinfo, 0, sizeof(faceinfo));
-  if (CVI_SUCCESS != fd_func(tdl_handle, &img_frm, &faceinfo)) {
+  if (CVI_SUCCESS != fd_func(tdl_handle, &img_frm, *fd_index, &faceinfo)) {
     printf("fd_inference failed\n");
     return CVI_FAILURE;
   }
