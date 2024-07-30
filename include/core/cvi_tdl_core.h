@@ -33,6 +33,7 @@
            cvtdl_handpose21_meta_ts*: CVI_TDL_FreeHandPoses, \
            cvtdl_class_meta_t*: CVI_TDL_FreeClassMeta, \
            cvtdl_image_t*: CVI_TDL_FreeImage,          \
+           cvtdl_clip_feature*: CVI_TDL_FreeClip,      \
            cvtdl_lane_t* : CVI_TDL_FreeLane)(X)
 
 // clang-format on
@@ -1529,6 +1530,15 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Polylanenet_Lower(const cvitdl_handle_t handle,
 
 DLL_EXPORT CVI_S32 CVI_TDL_LSTR_Det(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                     cvtdl_lane_t *lane_meta);
+
+DLL_EXPORT CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
+                                              const char *textFile, int32_t **tokens,
+                                              int numSentences);
+
+DLL_EXPORT CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
+                                               float **image_features, int image_features_num,
+                                               int *prods_index, int function_id, float threshold);
+
 #ifdef __cplusplus
 }
 #endif

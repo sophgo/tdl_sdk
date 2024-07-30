@@ -8,49 +8,19 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "Eigen/Core"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 #include "mapi.hpp"
 #include "sys_utils.hpp"
+#include "utils/clip_postprocess.hpp"
 #include "utils/token.hpp"
 
 double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }
 cvitdl_handle_t tdl_handle = NULL;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
-
-void normalize_matrix(Eigen::MatrixXf& matrix) {
-  for (int i = 0; i < matrix.rows(); ++i) {
-    float norm = matrix.row(i).norm();
-    if (norm != 0.0f) {
-      matrix.row(i) /= norm;
-    }
-  }
-}
-
-Eigen::MatrixXf softmax(const Eigen::MatrixXf& input) {
-  Eigen::MatrixXf result(input.rows(), input.cols());
-  for (int i = 0; i < input.rows(); ++i) {
-    float sum = 0.0;
-    float maxVal = input.row(i).maxCoeff();
-    Eigen::MatrixXf expInput = (input.row(i).array() - maxVal).exp();
-    sum = expInput.sum();
-    result.row(i) = expInput / sum;
-  }
-  return result;
-}
-int clip_postprocess(Eigen::MatrixXf& text_features, Eigen::MatrixXf& image_features,
-                     Eigen::MatrixXf& prods) {
-  normalize_matrix(image_features);
-  normalize_matrix(text_features);
-  Eigen::MatrixXf text_features_transposed = text_features.transpose();
-  Eigen::MatrixXf result = 100.0 * image_features * text_features_transposed;
-  prods = softmax(result);
-  return 0;
-}
 
 int main(int argc, char* argv[]) {
   if (argc != 5) {
@@ -92,7 +62,7 @@ int main(int argc, char* argv[]) {
     std::cout << ", file_list empty\n";
     return -1;
   }
-  std::ofstream outfile("a2_output.txt");
+
   std::string input_image_path;
   cvtdl_clip_feature clip_feature_image;
 
@@ -101,9 +71,8 @@ int main(int argc, char* argv[]) {
   int rows_image = image_file_list.size();
   int cols_image = 512;
 
-  Eigen::MatrixXf clip_image_output(rows_image, cols_image);
+  float** image_features = new float*[image_file_list.size()];
 
-  outfile << "********************image feature*********************************\n";
   for (size_t i = 0; i < image_file_list.size(); i++) {
     input_image_path = image_file_list[i];
     VIDEO_FRAME_INFO_S rgb_frame;
@@ -126,26 +95,16 @@ int main(int argc, char* argv[]) {
       printf("Failed to CVI_TDL_Clip_Feature\n");
       return 0;
     }
-    std::cout << clip_feature_image.feature_dim << std::endl;
+
+    image_features[i] = new float[clip_feature_image.feature_dim];
     for (int y = 0; y < clip_feature_image.feature_dim; ++y) {
-      clip_image_output(i, y) = clip_feature_image.out_feature[y];
-      outfile << clip_image_output(i, y);
-      if (y < clip_feature_image.feature_dim - 1) {
-        outfile << " ";
-      }
+      image_features[i][y] = clip_feature_image.out_feature[y];
     }
 
-    free(clip_feature_image.out_feature);
+    CVI_TDL_Free(&clip_feature_image);
     std::cout << "after free:" << std::endl;
 
     CVI_TDL_ReleaseImage(img_handle, &rgb_frame);
-  }
-  outfile << "********************text feature*********************************\n";
-
-  ret = CVI_TDL_CreateHandle(&tdl_handle);
-  if (ret != CVI_SUCCESS) {
-    printf("Create tdl handle failed with %#x!\n", ret);
-    return ret;
   }
 
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT, argv[3]);
@@ -166,26 +125,25 @@ int main(int argc, char* argv[]) {
 
   std::cout << text_file_list.size() << std::endl;
 
-  int rows_text = text_file_list.size();
-  int cols_text = 512;
-  Eigen::MatrixXf clip_text_output(rows_text, cols_text);
-
   std::string encoderFile = "./encoder.txt";
   std::string bpeFile = "./bpe_simple_vocab_16e6.txt";
 
-  std::vector<std::vector<int32_t>> tokens;
-  int result = cvitdl::token_bpe(encoderFile, bpeFile, text_list, tokens);
-  if (result != 0) {
-    printf("Tokenization error\n");
+  int32_t** tokens = (int32_t**)malloc(text_file_list.size() * sizeof(int32_t*));
+  ret = CVI_TDL_Set_TextPreprocess(encoderFile.c_str(), bpeFile.c_str(), text_list.c_str(), tokens,
+                                   text_file_list.size());
+  if (ret != CVI_SUCCESS) {
+    printf("CVI_TDL_Set_TextPreprocess\n");
     return 0;
   }
+
+  float** text_features = new float*[text_file_list.size()];
   for (int i = 0; i < text_file_list.size(); i++) {
-    CVI_U8 buffer[tokens[0].size() * sizeof(int32_t)];
-    memcpy(buffer, &tokens[i][0], sizeof(int32_t) * tokens[0].size());
+    CVI_U8 buffer[77 * sizeof(int32_t)];
+    memcpy(buffer, tokens[i], sizeof(int32_t) * 77);
     VIDEO_FRAME_INFO_S Frame;
     Frame.stVFrame.pu8VirAddr[0] = buffer;
     Frame.stVFrame.u32Height = 1;
-    Frame.stVFrame.u32Width = tokens[0].size();
+    Frame.stVFrame.u32Width = 77;
 
     ret = CVI_TDL_Clip_Text_Feature(tdl_handle, &Frame, &clip_feature_text);
     if (ret != CVI_SUCCESS) {
@@ -193,29 +151,31 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
+    text_features[i] = new float[clip_feature_text.feature_dim];
     for (int y = 0; y < clip_feature_text.feature_dim; ++y) {
-      clip_text_output(i, y) = clip_feature_text.out_feature[y];
-      outfile << clip_text_output(i, y);
-      if (y < clip_feature_text.feature_dim - 1) {
-        outfile << " ";
-      }
+      text_features[i][y] = clip_feature_text.out_feature[y];
     }
-    outfile << "\n";
-    free(clip_feature_text.out_feature);
+    CVI_TDL_Free(&clip_feature_text);
   }
-  outfile.close();
 
-  Eigen::MatrixXf prods;
-  int final_result = clip_postprocess(clip_text_output, clip_image_output, prods);
-
-  std::ofstream out_prods("clip_pipeline_prods.txt");
-  for (int i = 0; i < prods.rows(); ++i) {
-    for (int j = 0; j < prods.cols(); ++j) {
-      out_prods << prods(i, j) << " ";
-    }
-    out_prods << "\n";
+  for (int i = 0; i < text_file_list.size(); i++) {
+    free(tokens[i]);
   }
-  out_prods.close();
+  free(tokens);
+  int* prods_index = (int*)malloc(image_file_list.size() * sizeof(int));
+  float thres = 0.5;
+  int function_id = 1;
+  ret = CVI_TDL_Set_ClipPostprocess(text_features, text_file_list.size(), image_features,
+                                    image_file_list.size(), prods_index, function_id, thres);
+
+  delete[] text_features;
+  delete[] image_features;
+
+  for (int i = 0; i < image_file_list.size(); i++) {
+    std::cout << prods_index[i] << " ";
+  }
+  std::cout << std::endl;
+  free(prods_index);
   CVI_TDL_DestroyHandle(tdl_handle);
   return CVI_SUCCESS;
 }

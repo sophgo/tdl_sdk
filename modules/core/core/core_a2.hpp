@@ -244,7 +244,7 @@ class Core {
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;
   const bm_net_info_t *net_info;
-  bool use_mmap = true;
+  bool use_mmap;
   bool raw = false;
   uint8_t *register_temp_buffer = nullptr;
 };
