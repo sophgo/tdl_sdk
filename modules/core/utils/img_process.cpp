@@ -287,7 +287,7 @@ class ImageProcessorNoOpenCV : public ImageProcessor {
     return 0;
   }
 
-  int release(VIDEO_FRAME_INFO_S *frame) { CVI_SYS_FreeI(ive_handle, &image); }
+  int release(VIDEO_FRAME_INFO_S *frame) { return CVI_SYS_FreeI(ive_handle, &image); }
 
  private:
   IVE_HANDLE ive_handle;
