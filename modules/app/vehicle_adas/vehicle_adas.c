@@ -280,6 +280,7 @@ static CVI_S32 update_lane_state(adas_info_t *adas_info, uint32_t height, uint32
   adas_info->lane_meta.lane_state = adas_info->lane_state;
 
   // printf("adas_info->lane_state: %d\n", adas_info->lane_state);
+  return CVI_TDL_SUCCESS;
 }
 
 void front_obj_index(cvtdl_object_t *obj_meta, cvtdl_lane_t *lane_meta, int *center_info,
@@ -336,12 +337,13 @@ uint64_t update_unique_id_with_classes(cvtdl_object_t *obj_meta) {
     int classes = obj_meta->info[i].classes;
 
     char str[16];
-    sprintf(str, "%d", uid);
+    sprintf(str, "%ld", uid);
     int num = strlen(str);
 
     uint64_t trk_id = classes * pow(10, num) + uid;
     obj_meta->info[i].unique_id = trk_id;
   }
+  return CVI_TDL_SUCCESS;
 }
 
 static CVI_S32 update_data(cvitdl_handle_t tdl_handle, adas_info_t *adas_info,

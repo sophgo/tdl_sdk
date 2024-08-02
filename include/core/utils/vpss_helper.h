@@ -586,7 +586,11 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
   vFrame->u64PhyAddr[1] = vFrame->u64PhyAddr[0] + vFrame->u32Length[0];
   vFrame->u64PhyAddr[2] = vFrame->u64PhyAddr[1] + vFrame->u32Length[1];
 
+#ifdef CONFIG_ALIOS
+  vFrame->pu8VirAddr[0] = (uint8_t *)vFrame->u64PhyAddr[0];
+#else
   vFrame->pu8VirAddr[0] = (uint8_t *)CVI_SYS_MmapCache(vFrame->u64PhyAddr[0], u32MapSize);
+#endif
   vFrame->pu8VirAddr[1] = vFrame->pu8VirAddr[0] + vFrame->u32Length[0];
   vFrame->pu8VirAddr[2] = vFrame->pu8VirAddr[1] + vFrame->u32Length[1];
 

@@ -149,7 +149,7 @@ void CVI_TDL_FreeCpp(cvtdl_lane_t *lane_meta) {
     free(lane_meta->lane);
     // }
   }
-  lane_meta->lane == NULL;
+  lane_meta->lane = NULL;
 }
 
 void CVI_TDL_FreeCpp(cvtdl_clip_feature *clip_meta) {

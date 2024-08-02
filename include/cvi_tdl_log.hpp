@@ -2,6 +2,12 @@
 #include <inttypes.h>
 #include <syslog.h>
 
+#ifdef CONFIG_ALIOS
+#ifndef syslog
+#define syslog(level, fmt, ...) printf(fmt, ##__VA_ARGS__)
+#endif
+#endif
+
 #define MODULE_NAME "TDLSDK"
 #define CVI_TDL_LOG_CHN LOG_LOCAL7
 #define LOGD(fmt, ...) \

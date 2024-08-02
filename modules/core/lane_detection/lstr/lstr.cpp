@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <error_msg.hpp>
 #include <numeric>
+#include <iostream>
 #include <string>
 #include <vector>
 #include "core/core/cvtdl_core_types.h"

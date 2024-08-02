@@ -65,10 +65,11 @@ void mergePairs(
     const std::unordered_map<std::pair<std::string, std::string>, int, pair_hash>& bpe_ranks) {
   while (true) {
     std::pair<std::string, std::string> bigram;
-    int a_size = pairs.size();
+
     if (pairs.size() > 1) {
       bigram = *std::min_element(pairs.begin(), pairs.end(),
-                                 [&bpe_ranks](const auto& pair1, const auto& pair2) {
+                                 [&bpe_ranks](const std::pair<std::string, std::string>& pair1,
+                                              const std::pair<std::string, std::string>& pair2) {
                                    int pair1Value = bpe_ranks.find(pair1) != bpe_ranks.end()
                                                         ? bpe_ranks.at(pair1)
                                                         : std::numeric_limits<int>::max();
