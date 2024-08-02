@@ -13,12 +13,10 @@
 #include "face_landmarker/face_landmark_det3.hpp"
 #include "face_landmarker/face_landmarker.hpp"
 #include "face_landmarker/face_landmarker_det2.hpp"
-#include "liveness/ir_liveness/ir_liveness.hpp"
 
 #include "hand_classification/hand_classification.hpp"
 #include "hand_keypoint/hand_keypoint.hpp"
 #include "hand_keypoint_classification/hand_keypoint_classification.hpp"
-#include "version.hpp"
 
 #include "human_keypoints_detection/hrnet/hrnet.hpp"
 #include "human_keypoints_detection/simcc/simcc.hpp"
@@ -31,8 +29,8 @@
 #include "lane_detection/polylanenet/polylanenet.hpp"
 
 #include "license_plate_detection/license_plate_detection.hpp"
-#include "license_plate_recognition/license_plate_recognition.hpp"
 #include "license_plate_recognition/license_plate_recognitionv2.hpp"
+#include "liveness/ir_liveness/ir_liveness.hpp"
 #include "motion_detection/md.hpp"
 #include "motion_segmentation/motion_segmentation.hpp"
 
@@ -63,6 +61,7 @@
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_det_monitor.hpp"
 #include "fall_detection/fall_detection.hpp"
+#include "license_plate_recognition/license_plate_recognition.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
 #include "ocr/ocr_detection/ocr_detection.hpp"
@@ -83,6 +82,8 @@
 #include "utils/clip_postprocess.hpp"
 #include "utils/core_utils.hpp"
 #include "utils/token.hpp"
+#include "version.hpp"
+
 using namespace std;
 using namespace cvitdl;
 
@@ -721,8 +722,11 @@ CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_
     return CVI_TDL_ERR_OPEN_MODEL;
   }
 
+#ifdef CONFIG_ALIOS
+#else
   instance->enableDebugger(enable);
   instance->setDebuggerOutputPath(dump_path);
+#endif
   return ret;
 }
 
