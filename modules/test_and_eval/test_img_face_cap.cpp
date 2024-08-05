@@ -340,6 +340,8 @@ int main(int argc, char *argv[]) {
   std::string ped_modelf =
       "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/"
       "mobiledetv2-pedestrian-d0-ls-448.cvimodel";
+  
+  std::string fa_modelf = "face_attr_112_bf16.cvimodel";
 
   std::string str_model_file = modelf;
   CVI_TDL_SUPPORTED_MODEL_E fd_model_id = model;
@@ -395,7 +397,7 @@ int main(int argc, char *argv[]) {
   memset(&feat_gallery, 0, sizeof(feat_gallery));
   CVI_TDL_SUPPORTED_MODEL_E fr_model_id = CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION;
   ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                            NULL, NULL, fl_modelf.c_str());
+                                            NULL, NULL, fl_modelf.c_str(), fa_modelf.c_str());
   CVI_TDL_SUPPORTED_MODEL_E ped_model_id = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
   ret |= CVI_TDL_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_modelf.c_str());
   IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();

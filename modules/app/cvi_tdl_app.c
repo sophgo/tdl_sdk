@@ -42,10 +42,11 @@ CVI_S32 CVI_TDL_APP_FaceCapture_Init(const cvitdl_app_handle_t handle, uint32_t 
 CVI_S32 CVI_TDL_APP_FaceCapture_QuickSetUp(const cvitdl_app_handle_t handle, int fd_model_id,
                                            int fr_model_id, const char *fd_model_path,
                                            const char *fr_model_path, const char *fq_model_path,
-                                           const char *fl_model_path) {
+                                           const char *fl_model_path, const char *fa_model_path) {
   cvitdl_app_context_t *ctx = handle;
   return _FaceCapture_QuickSetUp(ctx->tdl_handle, ctx->face_cpt_info, fd_model_id, fr_model_id,
-                                 fd_model_path, fr_model_path, fq_model_path, fl_model_path);
+                                 fd_model_path, fr_model_path, fq_model_path, fl_model_path,
+                                 fa_model_path);
 }
 
 CVI_S32 CVI_TDL_APP_FaceCapture_FusePedSetup(const cvitdl_app_handle_t handle, int ped_model_id,

@@ -7,6 +7,7 @@
 #include "cvi_tdl_log.hpp"
 #include "cvi_venc.h"
 #include "service/cvi_tdl_service.h"
+#include "vpss_helper.h"
 
 #define ABS(x) ((x) >= 0 ? (x) : (-(x)))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -112,7 +113,7 @@ CVI_S32 _FaceCapture_Init(face_capture_t **face_cpt_info, uint32_t buffer_size) 
 CVI_S32 _FaceCapture_QuickSetUp(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_info,
                                 int fd_model_id, int fr_model_id, const char *fd_model_path,
                                 const char *fr_model_path, const char *fq_model_path,
-                                const char *fl_model_path) {
+                                const char *fl_model_path, const char *fa_model_path) {
   LOGI("_FaceCapture_QuickSetUp");
   if (fd_model_id != CVI_TDL_SUPPORTED_MODEL_RETINAFACE &&
       fd_model_id != CVI_TDL_SUPPORTED_MODEL_FACEMASKDETECTION &&
@@ -135,6 +136,13 @@ CVI_S32 _FaceCapture_QuickSetUp(cvitdl_handle_t tdl_handle, face_capture_t *face
     ret |= CVI_TDL_OpenModel(tdl_handle, fr_model_id, fr_model_path);
     if (ret == CVI_SUCCESS) {
       printf("fr model %s open sucessfull\n", fr_model_path);
+    }
+  }
+
+  if (fa_model_path != NULL) {
+    ret |= CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE_CLS, fa_model_path);
+    if (ret == CVI_SUCCESS) {
+      printf("fa model %s open sucessfull\n", fa_model_path);
     }
   }
 
@@ -170,6 +178,8 @@ CVI_S32 _FaceCapture_QuickSetUp(cvitdl_handle_t tdl_handle, face_capture_t *face
                                     ? CVI_TDL_FaceRecognition
                                     : CVI_TDL_FaceAttribute;
 
+  face_cpt_info->fa_inference = CVI_TDL_FaceAttribute_cls;
+
   if (ret != CVI_TDL_SUCCESS) {
     printf("_FaceCapture_QuickSetUp failed with %#x!\n", ret);
     return ret;
@@ -178,6 +188,11 @@ CVI_S32 _FaceCapture_QuickSetUp(cvitdl_handle_t tdl_handle, face_capture_t *face
   face_cpt_info->use_FQNet = fq_model_path != NULL;
   if (fr_model_path != NULL) {
     face_cpt_info->fr_flag = 1;
+  }
+  if (fa_model_path != NULL) {
+    face_cpt_info->fa_flag = 1;
+  } else {
+    face_cpt_info->fa_flag = 0;
   }
 
   /* Init DeepSORT */
@@ -303,6 +318,7 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
     return CVI_TDL_FAILURE;
   }
   CVI_TDL_Free(&face_cpt_info->last_faces);
+  CVI_TDL_Free(&face_cpt_info->face_data);
   CVI_TDL_Free(&face_cpt_info->last_trackers);
   CVI_TDL_Free(&face_cpt_info->last_objects);
 
@@ -413,6 +429,60 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
   }
 
   update_output_state(tdl_handle, face_cpt_info);
+
+  for (size_t i = 0; i < face_cpt_info->size; i++) {
+    if (face_cpt_info->fa_flag == 1 && face_cpt_info->_output[i]) {
+      VIDEO_FRAME_INFO_S image_frame;
+      VIDEO_FRAME_INFO_S *face_frame = NULL;
+
+      // printf("face_cpt_info->data.image height width: %d %d\n", face_cpt_info->data[i].image.height,
+      //        face_cpt_info->data[i].image.width);
+      // printf("face_cpt_info->data.image full_length %d\n",
+      //        face_cpt_info->data[i].image.full_length);
+
+      // printf("face_cpt_info->data.image length: %d %d %d\n", face_cpt_info->data[i].image.length[0],
+      //        face_cpt_info->data[i].image.length[1], face_cpt_info->data[i].image.length[2]);
+      // printf("face_cpt_info->data.image stride: %d %d %d\n", face_cpt_info->data[i].image.stride[0],
+      //        face_cpt_info->data[i].image.stride[1], face_cpt_info->data[i].image.stride[2]);
+
+      image_to_video_frame(face_cpt_info, &face_cpt_info->data[i].image, &image_frame);
+
+      // printf("image_frame height width: %d %d\n", image_frame.stVFrame.u32Height,
+      //        image_frame.stVFrame.u32Width);
+      // printf("image_frame stride: %d %d %d\n", image_frame.stVFrame.u32Stride[0],
+      //        image_frame.stVFrame.u32Stride[1], image_frame.stVFrame.u32Stride[2]);
+      // printf("image_frame length: %d %d %d\n", image_frame.stVFrame.u32Length[0],
+      //        image_frame.stVFrame.u32Length[1], image_frame.stVFrame.u32Length[2]);
+
+      // printf("crop_face_box: %f %f %f %f %f \n", face_cpt_info->data[i].crop_face_box.x1,
+      //        face_cpt_info->data[i].crop_face_box.y1, face_cpt_info->data[i].crop_face_box.x2,
+      //        face_cpt_info->data[i].crop_face_box.y2, face_cpt_info->data[i].crop_face_box.score);
+      CVI_TDL_CropResizeImage(tdl_handle, face_cpt_info->fl_model, &image_frame,
+                              &face_cpt_info->data[i].crop_face_box, 112, 112, PIXEL_FORMAT_RGB_888,
+                              &face_frame);
+
+      // printf("face_frame height width: %d %d\n", face_frame->stVFrame.u32Height,
+      //        face_frame->stVFrame.u32Width);
+
+      if (CVI_SUCCESS !=
+          face_cpt_info->fa_inference(tdl_handle, face_frame, &face_cpt_info->face_data)) {
+        return CVI_TDL_FAILURE;
+      }
+
+      // printf("run face_attribute inference done\n");
+
+      for (size_t j = 0; j < face_cpt_info->face_data.size; j++) {
+        printf("gender: %s  score: %f \n",face_cpt_info->face_data.info[j].gender_score < 0.5 ? "female": "male", face_cpt_info->face_data.info[j].gender_score);
+
+        printf("age: %d  score: %f \n", (int)(face_cpt_info->face_data.info[j].age * 100), face_cpt_info->face_data.info[j].age);
+        printf("glass: %d  score: %f \n",face_cpt_info->face_data.info[j].glass < 0.5 ? 0: 1 , face_cpt_info->face_data.info[j].glass);
+        printf("mask: %d  score: %f\n",face_cpt_info->face_data.info[j].mask_score < 0.5 ? 0 : 1 , face_cpt_info->face_data.info[j].mask_score);
+      }
+      CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, &image_frame, 0);
+      CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, face_frame, 0);
+    }
+  }
+
   if (face_cpt_info->fr_flag == 2) {
     // extract face feature from cropped image
     extract_cropped_face(tdl_handle, face_cpt_info);
@@ -813,11 +883,14 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
     cvtdl_bbox_t crop_big_box;
     int dst_w = 0;
     int dst_h = 0;
-    float scale = cal_crop_big_box(frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                                   face_meta->info[i].bbox, &crop_big_box, &dst_w, &dst_h);
+    float scale = cal_crop_big_box(
+        frame->stVFrame.u32Width, frame->stVFrame.u32Height, face_meta->info[i].bbox, &crop_big_box,
+        &dst_w, &dst_h);  // crop_big_box为外扩后的当前人脸框坐标，dst_w
+                          // dst_h为外扩后的64位对齐的宽和高，scale为外扩后的宽与64位对齐宽的比值
     VIDEO_FRAME_INFO_S *crop_big_frame = NULL;
     int ret = CVI_TDL_CropResizeImage(tdl_handle, face_cpt_info->fl_model, frame, &crop_big_box,
-                                      dst_w, dst_h, PIXEL_FORMAT_RGB_888, &crop_big_frame);
+                                      dst_w, dst_h, PIXEL_FORMAT_RGB_888,
+                                      &crop_big_frame);  // crop_big_frame为外扩后的大人脸图
     if (ret != CVI_SUCCESS) {
       LOGE("skip crop failed\n");
       if (crop_big_frame != NULL)
@@ -825,13 +898,13 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
       continue;
     }
 
-    cvtdl_bbox_t scale_box;
+    cvtdl_bbox_t scale_box;  // 人脸图相对于crop_big_frame的坐标
     scale_box.x1 = (face_meta->info[i].bbox.x1 - crop_big_box.x1) / scale;
     scale_box.y1 = (face_meta->info[i].bbox.y1 - crop_big_box.y1) / scale;
     scale_box.x2 = (face_meta->info[i].bbox.x2 - crop_big_box.x1) / scale;
     scale_box.y2 = (face_meta->info[i].bbox.y2 - crop_big_box.y1) / scale;
     scale_box.score = face_meta->info[i].bbox.score;
-    cvtdl_bbox_t crop_box;
+    cvtdl_bbox_t crop_box;  // crop_box为小幅度外扩的人脸坐标（相对于crop_big_box）
     int dst_wh = cal_crop_box(crop_big_frame->stVFrame.u32Width, crop_big_frame->stVFrame.u32Height,
                               scale_box, &crop_box);
     VIDEO_FRAME_INFO_S *crop_frame = NULL;
@@ -844,6 +917,21 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
         CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, crop_frame, true);
       continue;
     }
+
+    // cvtdl_bbox_t scale_box2;  // 人脸图相对于crop_frame的坐标
+    // scale_box2.x1 = (scale_box.x1 - crop_box.x1) / ((crop_box.x2 - crop_box.x1) / dst_wh);
+    // scale_box2.y1 = (scale_box.y1 - crop_box.y1) / ((crop_box.y2 - crop_box.y1) / dst_wh);
+    // scale_box2.x2 = (scale_box.x2 - crop_box.x1) / ((crop_box.x2 - crop_box.x1) / dst_wh);
+    // scale_box2.y2 = (scale_box.y2 - crop_box.y1) / ((crop_box.y2 - crop_box.y1) / dst_wh);
+    // scale_box2.score = face_meta->info[i].bbox.score;
+
+    cvtdl_bbox_t origin_box;  // 人脸属性分类使用稍微外扩的人脸图，效果较好
+    origin_box.x1 = 1;
+    origin_box.y1 = 1;
+    origin_box.x2 = crop_frame->stVFrame.u32Width - 1;
+    origin_box.y2 = crop_frame->stVFrame.u32Height - 1;
+    origin_box.score = face_meta->info[i].bbox.score;
+
     cvtdl_face_t obj_meta = {0};
     if (face_cpt_info->fl_model == CVI_TDL_SUPPORTED_MODEL_LANDMARK_DET3) {
       ret = CVI_TDL_FLDet3(tdl_handle, crop_frame, &obj_meta);
@@ -936,7 +1024,19 @@ static CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_
     memcpy(face_cpt_info->data[update_idx].info.pts.y, obj_meta.info[0].pts.y, sizeof(float) * 5);
 
     face_cpt_info->data[update_idx]._capture = true;
-    if (face_cpt_info->cfg.img_capture_flag == 1 || face_cpt_info->cfg.img_capture_flag == 3) {
+
+    if (face_cpt_info->cfg.img_capture_flag == 0 || face_cpt_info->cfg.img_capture_flag == 1) {
+      // face_cpt_info->data[update_idx].crop_face_box = scale_box2;
+      face_cpt_info->data[update_idx].crop_face_box = origin_box;
+
+    } else if (face_cpt_info->cfg.img_capture_flag == 2 ||
+               face_cpt_info->cfg.img_capture_flag == 3) {
+      // face_cpt_info->data[update_idx].crop_face_box = scale_box;
+      face_cpt_info->data[update_idx].crop_face_box = crop_box;
+    }
+
+    if (face_cpt_info->cfg.img_capture_flag == 1 ||
+        face_cpt_info->cfg.img_capture_flag == 3) {  // 抓拍模式
       VIDEO_FRAME_INFO_S *p_frame = frame;
       VENC_CHN VeChn = face_cpt_info->cfg.venc_channel_id;
       uint8_t yuv_fmt = false;

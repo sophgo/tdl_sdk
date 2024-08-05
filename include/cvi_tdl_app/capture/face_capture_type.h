@@ -9,7 +9,8 @@ typedef struct {
   tracker_state_e state;
   uint32_t miss_counter;
   cvtdl_image_t image;
-  cvtdl_bbox_t crop_box;  // box used to crop image
+  cvtdl_bbox_t crop_box;       // box used to crop image
+  cvtdl_bbox_t crop_face_box;  // box used to crop face from image
   bool _capture;
   uint64_t _timestamp;  // output timestamp
   uint32_t _out_counter;
@@ -46,13 +47,17 @@ typedef struct {
   face_capture_config_t cfg;
 
   uint32_t size;
-  face_cpt_data_t *data;
+  face_cpt_data_t *data;   // 缓存的20张人脸存放在data
+  cvtdl_face_t face_data;  // store the result of face attribute inference
   cvtdl_face_t last_faces;
   cvtdl_object_t last_objects;  // if fuse with PD,would have PD result stored here
   cvtdl_tracker_t last_trackers;
   CVI_TDL_SUPPORTED_MODEL_E fd_model;
   CVI_TDL_SUPPORTED_MODEL_E od_model;
   CVI_TDL_SUPPORTED_MODEL_E fl_model;
+  CVI_TDL_SUPPORTED_MODEL_E fa_model;
+
+  int fa_flag;  // 1: open face attribute classification
 
   int fr_flag;  // 0:only face detect and track,no fr,1:reid,2:no reid but fr for captured face
                 // image,used for later face_recognition
@@ -62,7 +67,8 @@ typedef struct {
   int (*fd_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, CVI_TDL_SUPPORTED_MODEL_E,
                       cvtdl_face_t *);
   int (*fr_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
-  bool *_output;   // output signal (# = .size)
+  int (*fa_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
+  bool *_output;   // output signal (# = .size)   // 缓存的20张人脸对应的_output
   uint64_t _time;  // timer
   uint32_t _m_limit;
 
