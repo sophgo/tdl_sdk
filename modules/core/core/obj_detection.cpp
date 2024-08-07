@@ -9,8 +9,8 @@
 namespace cvitdl {
 
 DetectionBase::DetectionBase() : Core(CVI_MEM_DEVICE) {
-  alg_param_.anchor_len = 3;
-  alg_param_.stride_len = 3;
+  alg_param_.anchor_len = 0;
+  alg_param_.stride_len = 0;
   alg_param_.cls = 80;
   alg_param_.max_det = 100;
 }
