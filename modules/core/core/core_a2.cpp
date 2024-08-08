@@ -1,7 +1,6 @@
 #include "core_a2.hpp"
 #include "core/utils/vpss_helper.h"
 #include "error_msg.hpp"
-
 #define ALIGN_SIZE 64
 
 namespace cvitdl {

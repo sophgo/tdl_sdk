@@ -31,7 +31,6 @@ set(REG_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include
     ${MIDDLEWARE_SDK_ROOT}/sample/common
 )
-
 # CMAKE_CURRENT_SOURCE_DIR 指 当前cmakelists所在路径
 if(${CVI_PLATFORM} STREQUAL "CV186X")
 set(SAMPLE_LIBS
