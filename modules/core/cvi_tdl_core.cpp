@@ -1896,18 +1896,13 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
   }
 
   Eigen::MatrixXf result_eigen;
-  // 调用 clip_postprocess 函数
+  // using clip_postprocess which can be found in utils/clip_postpostprocess.cpp
   int res = clip_postprocess(text_features_eigen, image_features_eigen, result_eigen);
 
-  for (int i = 0; i < result_eigen.rows(); ++i) {
-    for (int j = 0; j < result_eigen.cols(); ++j) {
-      std::cout << result_eigen(i, j) << " ";
-    }
-    std::cout << std::endl;
-  }
+
   if (function_id == 0) {
-    // softmax
-    std::cout << "****** function 1 ******" << std::endl;
+    // if function_id == 0, providing image classification functionality.
+    // using softmax after mutil 100 scale
     for (int i = 0; i < result_eigen.rows(); ++i) {
       float sum = 0.0;
       float maxVal = result_eigen.row(i).maxCoeff();
@@ -1916,27 +1911,21 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
       result_eigen.row(i) = expInput / sum;
     }
 
-    for (int i = 0; i < result_eigen.rows(); ++i) {
-      for (int j = 0; j < result_eigen.cols(); ++j) {
-        std::cout << result_eigen(i, j) << " ";
-      }
-      std::cout << std::endl;
-    }
-
     for (int i = 0; i < result_eigen.rows(); i++) {
-      bool found = false;
+      float max_score = 0;
       for (int j = 0; j < result_eigen.cols(); j++) {
-        if (result_eigen(i, j) > threshold) {
+        if (result_eigen(i, j) > max_score) {
           prods_index[i] = j;
-          found = true;
+          max_score = result_eigen(i, j);
         }
       }
-      if (!found) {
-        prods_index[i] = -1;  // 如果没有大于0.5的值，则保存特定标记（这里使用-1）
+
+      if (max_score < threshold) {
+        prods_index[i] = -1;  // if top1 score < threshold,return -1.
       }
     }
   } else {
-    std::cout << "****** function 2 ******" << std::endl;
+    // This branch can searches for text class in the database.
     if (result_eigen.cols() > 1) {
       LOGE("Error! Please input a text\n");
       return CVI_FAILURE;

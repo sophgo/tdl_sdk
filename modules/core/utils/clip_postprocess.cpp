@@ -21,6 +21,8 @@ int clip_postprocess(Eigen::MatrixXf& text_features, Eigen::MatrixXf& image_feat
   normalize_matrix(text_features);
   Eigen::MatrixXf text_features_transposed = text_features.transpose();
   result = 100 * image_features * text_features_transposed;
+  // prods = softmax(result);
+
   return 0;
 }
 }  // namespace cvitdl

@@ -36,13 +36,20 @@ int Clip_Image::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
   (*data)[0].mean[1] = 1.7465649;
   (*data)[0].mean[2] = 1.4802198;
   (*data)[0].use_quantize_scale = true;
-  (*data)[0].use_crop = false;
+  (*data)[0].use_crop = true;
   (*data)[0].keep_aspect_ratio = true;
   std::cout << "setupInputPreprocess done" << std::endl;
   return CVI_TDL_SUCCESS;
 }
 
+
+
 int Clip_Image::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_clip_feature* clip_feature) {
+  int height = frame->stVFrame.u32Height;
+  int width = frame->stVFrame.u32Width;
+  int left_up = (width - height)/2;
+  m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
+  m_vpss_config[0].crop_attr.stCropRect = {left_up, 0, height, height};
   std::vector<VIDEO_FRAME_INFO_S*> frames = {frame};
   int ret = run(frames);
   if (ret != CVI_TDL_SUCCESS) {

@@ -23,15 +23,17 @@ static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;
 
 int main(int argc, char* argv[]) {
-  if (argc != 5) {
+  if (argc != 7) {
     printf(
         "Usage: %s <clip model path> <input image directory list.txt> <output result "
-        "directory/>.\n",
+        "directory/> <min th>.\n",
         argv[0]);
     printf("clip image model path: Path to clip image bmodel.\n");
     printf("Input image directory: Directory containing input images for clip.\n");
     printf("clip text model path: Path to clip text bmodel.\n");
     printf("Input text directory: Directory containing input text for clip.\n");
+    printf("output text directory: Directory containing output class for clip.\n");
+    printf("If top1 score < th, return -1 not in dataset, else return top1 class.\n");
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
@@ -95,7 +97,6 @@ int main(int argc, char* argv[]) {
       printf("Failed to CVI_TDL_Clip_Feature\n");
       return 0;
     }
-
     image_features[i] = new float[clip_feature_image.feature_dim];
     for (int y = 0; y < clip_feature_image.feature_dim; ++y) {
       image_features[i][y] = clip_feature_image.out_feature[y];
@@ -125,8 +126,8 @@ int main(int argc, char* argv[]) {
 
   std::cout << text_file_list.size() << std::endl;
 
-  std::string encoderFile = "./encoder.txt";
-  std::string bpeFile = "./bpe_simple_vocab_16e6.txt";
+  std::string encoderFile = "/mnt/sd/186ah_sdk/clip_dataset/encoder.txt";
+  std::string bpeFile = "/mnt/sd/186ah_sdk/clip_dataset/bpe_simple_vocab_16e6.txt";
 
   int32_t** tokens = (int32_t**)malloc(text_file_list.size() * sizeof(int32_t*));
   ret = CVI_TDL_Set_TextPreprocess(encoderFile.c_str(), bpeFile.c_str(), text_list.c_str(), tokens,
@@ -163,8 +164,8 @@ int main(int argc, char* argv[]) {
   }
   free(tokens);
   int* prods_index = (int*)malloc(image_file_list.size() * sizeof(int));
-  float thres = 0.5;
-  int function_id = 1;
+  float thres = atof(argv[6]);
+  int function_id = 0;
   ret = CVI_TDL_Set_ClipPostprocess(text_features, text_file_list.size(), image_features,
                                     image_file_list.size(), prods_index, function_id, thres);
 
@@ -175,6 +176,18 @@ int main(int argc, char* argv[]) {
     std::cout << prods_index[i] << " ";
   }
   std::cout << std::endl;
+  // 打开一个文本文件进行写入
+  std::ofstream outfile(argv[5]);
+  // 检查文件是否成功打开
+  if (!outfile.is_open()) {
+      std::cerr << "Failed to open the file." << std::endl;
+      return 1;
+  }
+  // 将 prods_index 的值写入文件
+  for (size_t i = 0; i < image_file_list.size(); i++) {
+      outfile <<  image_file_list[i] <<":"<<prods_index[i] << std::endl;
+  }
+  outfile.close();
   free(prods_index);
   CVI_TDL_DestroyHandle(tdl_handle);
   return CVI_SUCCESS;
