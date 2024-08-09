@@ -152,9 +152,4 @@ include_directories(${IVE_INCLUDES}
 
 add_subdirectory(modules)
 add_subdirectory(sample)
-add_subdirectory(lib)
-
-if(NOT DEFINED NO_OPENCV)
-add_subdirectory(regression)
-endif()
 

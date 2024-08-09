@@ -31,9 +31,6 @@ set(REG_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include
     ${MIDDLEWARE_SDK_ROOT}/sample/common
 )
-set(utils_bpe
-    ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils
-)
 
 # CMAKE_CURRENT_SOURCE_DIR 指 当前cmakelists所在路径
 if(${CVI_PLATFORM} STREQUAL "CV186X")
@@ -115,8 +112,6 @@ if (NOT "${CVI_PLATFORM}" STREQUAL "CV183X")
 endif()
 endif()
 
-add_library(text_token STATIC  ${utils_bpe}/token.cpp)
-
 if (NOT DEFINED NO_OPENCV)
     buildninstallcpp(NAME eval_pose_dataset INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
     buildninstallcpp(NAME test_img_fall_monitor INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
@@ -161,8 +156,8 @@ buildninstallcpp(NAME test_img_irregular_people_vehicle INC ${REG_INCLUDES} DEPS
 buildninstallcpp(NAME test_img_people_vehicle INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
 buildninstallcpp(NAME test_dms_landmarks INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS})
 buildninstallcpp(NAME test_clip_image INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
-buildninstallcpp(NAME test_clip_text INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} text_token SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
-buildninstallcpp(NAME test_clip_pipeline INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} text_token SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
+buildninstallcpp(NAME test_clip_text INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
+buildninstallcpp(NAME test_clip_pipeline INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
 buildninstallcpp(NAME test_hardhat_yolov8 INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
 buildninstallcpp(NAME test_hardhat_retinaface INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
 buildninstallcpp(NAME test_fire_yolov8 INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
