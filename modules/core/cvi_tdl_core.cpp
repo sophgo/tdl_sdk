@@ -359,7 +359,7 @@ CVI_S32 CVI_TDL_CreateHandle2(cvitdl_handle_t *handle, const VPSS_GRP vpssGroupI
   ctx->ive_handle = NULL;
   ctx->vec_vpss_engine.push_back(new VpssEngine(vpssGroupId, vpssDev));
   const char timestamp[] = __DATE__ " " __TIME__;
-  LOGI("cvitdl_handle_t is created, version %s-%s", CVI_TDL_TAG, timestamp);
+  LOGI("cvitdl_handle_t is created, version %s-%s\n", CVI_TDL_TAG, timestamp);
   *handle = ctx;
   return CVI_TDL_SUCCESS;
 }
@@ -368,7 +368,7 @@ CVI_S32 CVI_TDL_CreateHandle3(cvitdl_handle_t *handle) {
   cvitdl_context_t *ctx = new cvitdl_context_t;
   ctx->ive_handle = NULL;
   const char timestamp[] = __DATE__ " " __TIME__;
-  LOGI("cvitdl_handle_t is created, version %s-%s", CVI_TDL_TAG, timestamp);
+  LOGI("cvitdl_handle_t is created, version %s-%s\n", CVI_TDL_TAG, timestamp);
   *handle = ctx;
   return CVI_TDL_SUCCESS;
 }
@@ -377,7 +377,7 @@ CVI_S32 CVI_TDL_DestroyHandle(cvitdl_handle_t handle) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   CVI_TDL_CloseAllModel(handle);
   removeCtx(ctx);
-  LOGI("cvitdl_handle_t is destroyed.");
+  LOGI("cvitdl_handle_t is destroyed.\n");
   return CVI_TDL_SUCCESS;
 }
 
@@ -420,7 +420,7 @@ CVI_S32 CVI_TDL_OpenModel(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E conf
   m_t.model_path = filepath;
   CVI_S32 ret = m_t.instance->modelOpen(m_t.model_path.c_str());
   if (ret != CVI_TDL_SUCCESS) {
-    LOGE("Failed to open model: %s (%s)", CVI_TDL_GetModelName(config), m_t.model_path.c_str());
+    LOGE("Failed to open model: %s (%s)\n", CVI_TDL_GetModelName(config), m_t.model_path.c_str());
     return ret;
   }
   LOGI("Model is opened successfully: %s \n", CVI_TDL_GetModelName(config));
@@ -1039,13 +1039,13 @@ CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *fram
       CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION};
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   if (detect_set.find(model_index) == detect_set.end()) {
-    LOGE("unknown object detection model index.");
+    LOGE("unknown object detection model index.\n");
     return CVI_TDL_ERR_OPEN_MODEL;
   }
 
   DetectionBase *model = dynamic_cast<DetectionBase *>(getInferenceInstance(model_index, ctx));
   if (model == nullptr) {
-    LOGE("No instance found");
+    LOGE("No instance found\n");
     return CVI_TDL_ERR_OPEN_MODEL;
   }
   if (model->isInitialized()) {
@@ -1073,13 +1073,13 @@ CVI_S32 CVI_TDL_FaceDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *
       CVI_TDL_SUPPORTED_MODEL_FACEMASKDETECTION};
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   if (face_detect_set.find(model_index) == face_detect_set.end()) {
-    LOGE("unknown face detection model index.");
+    LOGE("unknown face detection model index.\n");
     return CVI_TDL_ERR_OPEN_MODEL;
   }
   FaceDetectionBase *model =
       dynamic_cast<FaceDetectionBase *>(getInferenceInstance(model_index, ctx));
   if (model == nullptr) {
-    LOGE("No instance found");
+    LOGE("No instance found\n");
     return CVI_TDL_ERR_OPEN_MODEL;
   }
   if (model->isInitialized()) {
@@ -1106,13 +1106,13 @@ CVI_S32 CVI_TDL_PoseDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *
                                                          CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE};
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   if (pose_detect_set.find(model_index) == pose_detect_set.end()) {
-    LOGE("unknown pose detection model index.");
+    LOGE("unknown pose detection model index.\n");
     return CVI_TDL_ERR_OPEN_MODEL;
   }
   PoseDetectionBase *model =
       dynamic_cast<PoseDetectionBase *>(getInferenceInstance(model_index, ctx));
   if (model == nullptr) {
-    LOGE("No instance found");
+    LOGE("No instance found\n");
     return CVI_TDL_ERR_OPEN_MODEL;
   }
   if (model->isInitialized()) {
@@ -1139,7 +1139,7 @@ CVI_S32 CVI_TDL_LicensePlateRecognition(const cvitdl_handle_t handle, VIDEO_FRAM
                                                     CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION};
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   if (detect_set.find(model_id) == detect_set.end()) {
-    LOGE("unknown license plate recognition model index.");
+    LOGE("unknown license plate recognition model index.\n");
     return CVI_TDL_ERR_OPEN_MODEL;
   }
   LicensePlateRecognitionBase *sc_model =
@@ -1537,13 +1537,13 @@ CVI_S32 CVI_TDL_CropImage_With_VPSS(const cvitdl_handle_t handle,
   for (int i = 0; i < 3; i++) {
     if ((p_dst->pix[i] == 0 && f->stVFrame.pu8VirAddr[i] != 0) ||
         (p_dst->pix[i] != 0 && f->stVFrame.pu8VirAddr[i] == 0)) {
-      LOGE("error,plane:%d,dst_addr:%p,video_frame_addr:%p", i, p_dst->pix[i],
+      LOGE("error,plane:%d,dst_addr:%p,video_frame_addr:%p\n", i, p_dst->pix[i],
            f->stVFrame.pu8VirAddr[i]);
       ret = CVI_FAILURE;
       break;
     }
     if (f->stVFrame.u32Length[i] > p_dst->length[i]) {
-      LOGE("size overflow,plane:%d,dst_len:%u,video_frame_len:%u", i, p_dst->length[i],
+      LOGE("size overflow,plane:%d,dst_len:%u,video_frame_len:%u\n", i, p_dst->length[i],
            f->stVFrame.u32Length[i]);
       ret = CVI_FAILURE;
       break;
@@ -1588,13 +1588,13 @@ CVI_S32 CVI_TDL_Copy_VideoFrameToImage(VIDEO_FRAME_INFO_S *f, cvtdl_image_t *p_d
   for (int i = 0; i < 3; i++) {
     if ((p_dst->pix[i] == 0 && f->stVFrame.pu8VirAddr[i] != 0) ||
         (p_dst->pix[i] != 0 && f->stVFrame.pu8VirAddr[i] == 0)) {
-      LOGE("error,plane:%d,dst_addr:%p,video_frame_addr:%p", i, p_dst->pix[i],
+      LOGE("error,plane:%d,dst_addr:%p,video_frame_addr:%p\n", i, p_dst->pix[i],
            f->stVFrame.pu8VirAddr[i]);
       ret = CVI_FAILURE;
       break;
     }
     if (f->stVFrame.u32Length[i] > p_dst->length[i]) {
-      LOGE("size overflow,plane:%d,dst_len:%u,video_frame_len:%u", i, p_dst->length[i],
+      LOGE("size overflow,plane:%d,dst_len:%u,video_frame_len:%u\n", i, p_dst->length[i],
            f->stVFrame.u32Length[i]);
       ret = CVI_FAILURE;
       break;
@@ -1838,7 +1838,7 @@ CVI_S32 CVI_TDL_SoundClassificationPack(const cvitdl_handle_t handle, VIDEO_FRAM
     return CVI_FAILURE;
   }
   if (!sc_model->isInitialized()) {
-    LOGE("SoundClassification has not been initialized");
+    LOGE("SoundClassification has not been initialized\n");
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
   int ret = sc_model->inference_pack(frame, pack_idx, pack_len, index);

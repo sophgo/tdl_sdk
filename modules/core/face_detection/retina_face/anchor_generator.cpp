@@ -45,8 +45,8 @@ static vector<anchor_box> _ratio_enum(anchor_box anchor, const vector<float> &ra
     float size = win.w * win.h;
     float scale = size / ratios[i];
 
-    win.w = std::round(std::sqrt(scale));
-    win.h = std::round(win.w * ratios[i]);
+    win.w = round(std::sqrt(scale));
+    win.h = round(win.w * ratios[i]);
 
     anchor_box tmp = _mkanchors(win);
     anchors.push_back(tmp);
@@ -99,8 +99,8 @@ vector<anchor_box> generate_anchors(int base_size, const vector<float> &ratios,
       float ori_ct_y = (anchors[i].y1 + anchors[i].y2) / 2;
       float new_ct_x = stride / 2;
       float new_ct_y = stride / 2;
-      float x_shift = std::round(ori_ct_x - new_ct_x);
-      float y_shift = std::round(ori_ct_y - new_ct_y);
+      float x_shift = round(ori_ct_x - new_ct_x);
+      float y_shift = round(ori_ct_y - new_ct_y);
       anchors[i].x1 = anchors[i].x1 - x_shift;
       anchors[i].x2 = anchors[i].x2 - x_shift;
       anchors[i].y1 = anchors[i].y1 - y_shift;
