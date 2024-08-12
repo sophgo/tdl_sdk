@@ -4,7 +4,9 @@
 #include "core/core/cvtdl_vpss_types.h"
 
 #include "cvi_tdl_log.hpp"
+#ifndef CONFIG_ALIOS
 #include "model_debugger.hpp"
+#endif
 #include "vpss_engine.hpp"
 
 #include <cviruntime.h>
@@ -40,7 +42,9 @@ struct TensorInfo {
   void *raw_pointer;
   CVI_SHAPE shape;
   CVI_TENSOR *tensor_handle;
+#ifndef CONFIG_ALIOS
   int data_type;
+#endif
   // Tensor size = (number of tensor elements) * typeof(tensor type))
   size_t tensor_size;
 
@@ -105,6 +109,7 @@ class Core {
   bool isInitialized();
   // TODO:remove this interface
   virtual bool allowExportChannelAttribute() const { return false; }
+#ifndef CONFIG_ALIOS
   void enableDebugger(bool enable) { m_debugger.setEnable(enable); }
   void setDebuggerOutputPath(const std::string &dump_path) {
     m_debugger.setDirPath(dump_path);
@@ -117,6 +122,7 @@ class Core {
       LOGW("**************************************************************\n");
     }
   }
+#endif
 
   void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
   int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,
@@ -125,7 +131,9 @@ class Core {
   int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
                       uint32_t rh, PIXEL_FORMAT_E enDstFormat);
   VpssEngine *get_vpss_instance() { return mp_vpss_inst; }
+#ifndef CONFIG_ALIOS
   void setraw(bool raw);
+#endif
 
  protected:
   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data);
@@ -206,7 +214,9 @@ class Core {
   // vpss related control
   int32_t m_vpss_timeout = 100;
   std::string m_model_file;
+#ifndef CONFIG_ALIOS
   debug::ModelDebugger m_debugger;
+#endif
 
  private:
   template <typename T>
@@ -224,6 +234,8 @@ class Core {
 
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;
+#ifndef CONFIG_ALIOS
   bool raw = false;
+#endif
 };
 }  // namespace cvitdl
