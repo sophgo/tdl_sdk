@@ -214,7 +214,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 3))},
     {CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
-
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::coco80)},
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
@@ -258,7 +257,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(YoloV8Pose, TUPLE_INT, std::make_tuple(64, 17, 1))},
     {CVI_TDL_SUPPORTED_MODEL_LP_DETECTION,
      CREATOR_P1(YoloV8Pose, TUPLE_INT, std::make_tuple(64, 4, 2))},
-
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION,
+     CREATOR_P1(YoloV10Detection, PAIR_INT, std::make_pair(64, 80))},
     {CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, CREATOR(Simcc)},
     {CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, CREATOR(Hrnet)},
     {CVI_TDL_SUPPORTED_MODEL_LANDMARK_DET3, CREATOR(FaceLandmarkDet3)},
