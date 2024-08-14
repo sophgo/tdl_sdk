@@ -23,10 +23,10 @@ endif()
 
 set(SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp)
 
-if(NOT EXISTS "${SOURCE_DIR}/src/libcvi_rtsp.so")
-  if(EXISTS $ENV{TOP_DIR}/cvi_rtsp)
+if(NOT EXISTS "$ENV{TOP_DIR}/cvi_rtsp/src/libcvi_rtsp.so")
+  if(NOT EXISTS ${SOURCE_DIR}/src/libcvi_rtsp.so)
     ExternalProject_Add(cvi_rtsp
-      URL ${PROJECT_URL}
+      GIT_REPOSITORY ${PROJECT_URL}
       PREFIX ${BUILD_DOWNLOAD_DIR}/cvi_rtsp
       BUILD_COMMAND CROSS_COMPILE=${TC_PATH}${CROSS_COMPILE} SDK_VER=${RTSP_SDK_VER} ./build.sh
       CONFIGURE_COMMAND ""
@@ -34,11 +34,11 @@ if(NOT EXISTS "${SOURCE_DIR}/src/libcvi_rtsp.so")
       BUILD_IN_SOURCE true
       BUILD_BYPRODUCTS <SOURCE_DIR>/src/libcvi_rtsp.so
     )
+    ExternalProject_Get_property(cvi_rtsp SOURCE_DIR)  
+    message("Content downloaded to ${SOURCE_DIR}")
   endif()
-  ExternalProject_Get_property(cvi_rtsp SOURCE_DIR)
-  message("Content downloaded to ${SOURCE_DIR}")
 else()
-  set(SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp)
+  set(SOURCE_DIR $ENV{TOP_DIR}/cvi_rtsp)
 endif()
 
 set(CVI_RTSP_LIBPATH ${SOURCE_DIR}/src/libcvi_rtsp.so)
