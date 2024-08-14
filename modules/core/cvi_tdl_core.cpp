@@ -1911,7 +1911,6 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
   // using clip_postprocess which can be found in utils/clip_postpostprocess.cpp
   int res = clip_postprocess(text_features_eigen, image_features_eigen, result_eigen);
 
-
   if (function_id == 0) {
     // if function_id == 0, providing image classification functionality.
     // using softmax after mutil 100 scale

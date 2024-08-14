@@ -45,8 +45,8 @@ std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   std::stringstream ss;
   for (uint32_t i = 0; i < person_obj.size; i++) {
     cvtdl_bbox_t box = person_obj.info[i].bbox;
-    ss << (person_obj.info[i].classes + 1) << " " << box.score << " " << box.x1 << " " << box.y1
-       << " " << box.x2 << " " << box.y2 << "\n";
+    ss << person_obj.info[i].classes + 1 << " " << box.x1 << " " << box.y1 << " " << box.x2 << " "
+       << box.y2 << " " << box.score << "\n";
   }
   CVI_TDL_Free(&person_obj);
   return ss.str();

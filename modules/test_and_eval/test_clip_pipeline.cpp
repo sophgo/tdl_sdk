@@ -180,12 +180,12 @@ int main(int argc, char* argv[]) {
   std::ofstream outfile(argv[5]);
   // 检查文件是否成功打开
   if (!outfile.is_open()) {
-      std::cerr << "Failed to open the file." << std::endl;
-      return 1;
+    std::cerr << "Failed to open the file." << std::endl;
+    return 1;
   }
   // 将 prods_index 的值写入文件
   for (size_t i = 0; i < image_file_list.size(); i++) {
-      outfile <<  image_file_list[i] <<":"<<prods_index[i] << std::endl;
+    outfile << image_file_list[i] << ":" << prods_index[i] << std::endl;
   }
   outfile.close();
   free(prods_index);

@@ -42,12 +42,10 @@ int Clip_Image::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
   return CVI_TDL_SUCCESS;
 }
 
-
-
 int Clip_Image::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_clip_feature* clip_feature) {
   int height = frame->stVFrame.u32Height;
   int width = frame->stVFrame.u32Width;
-  int left_up = (width - height)/2;
+  int left_up = (width - height) / 2;
   m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
   m_vpss_config[0].crop_attr.stCropRect = {left_up, 0, height, height};
   std::vector<VIDEO_FRAME_INFO_S*> frames = {frame};
