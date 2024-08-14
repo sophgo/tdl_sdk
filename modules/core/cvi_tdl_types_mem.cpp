@@ -160,7 +160,6 @@ void CVI_TDL_FreeCpp(cvtdl_clip_feature *clip_meta) {
   clip_meta->feature_dim = 0;
 }
 
-
 void CVI_TDL_FreeFeature(cvtdl_feature_t *feature) { CVI_TDL_FreeCpp(feature); }
 
 void CVI_TDL_FreePts(cvtdl_pts_t *pts) { CVI_TDL_FreeCpp(pts); }

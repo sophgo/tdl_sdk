@@ -32,31 +32,21 @@ typedef struct {
   SAMPLE_TDL_MW_CONTEXT *pstMWContext;
   cvitdl_service_handle_t stServiceHandle;
   cvitdl_handle_t stTDLHandle;
-  char * imageModelDir;
-  char * textModelDir;
-  char * textFileDir;
-  char * directoryFileDir;
-  char * frequencyFileDir;
+  char *imageModelDir;
+  char *textModelDir;
+  char *textFileDir;
+  char *directoryFileDir;
+  char *frequencyFileDir;
 } SAMPLE_TDL_VENC_THREAD_ARG_S;
 
-
-
-static const char *cls_name[] = {"this is a photo of mobilephone", "this is a photo of dog",  "this is a photo of people"};
-
-
-
-
-
-
-
+static const char *cls_name[] = {"this is a photo of mobilephone", "this is a photo of dog",
+                                 "this is a photo of people"};
 
 void *run_venc(void *args) {
   printf("Enter encoder thread\n");
   SAMPLE_TDL_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_TDL_VENC_THREAD_ARG_S *)args;
   VIDEO_FRAME_INFO_S stFrame;
   CVI_S32 s32Ret;
-
-
 
   while (bExit == false) {
     s32Ret = CVI_VPSS_GetChnFrame(0, 0, &stFrame, 2000);
@@ -67,10 +57,9 @@ void *run_venc(void *args) {
     char *id_num = calloc(64, sizeof(char));
     {
       MutexAutoLock(ResultMutex, lock);
-      if (pic_class == -1){
+      if (pic_class == -1) {
         sprintf(id_num, "this pic is not in dataset.");
-      }
-      else{
+      } else {
         sprintf(id_num, "cls:%s", cls_name[pic_class]);
       }
     }
@@ -91,25 +80,15 @@ void *run_venc(void *args) {
   pthread_exit(NULL);
 }
 
-
-
-
-
 void *run_tdl_thread(void *args) {
-
-
   SAMPLE_TDL_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_TDL_VENC_THREAD_ARG_S *)args;
   printf("Enter TDL thread\n");
   cvitdl_handle_t pstTDLHandle = pstArgs->stTDLHandle;
-  char * imageModelDir = pstArgs->imageModelDir;
-  char * textModelDir = pstArgs->textModelDir;
-  char * textFileDir = pstArgs->textFileDir;
-  char * directoryFileDir = pstArgs->directoryFileDir;
-  char * frequencyFileDir = pstArgs->frequencyFileDir;
-
-  
-
-
+  char *imageModelDir = pstArgs->imageModelDir;
+  char *textModelDir = pstArgs->textModelDir;
+  char *textFileDir = pstArgs->textFileDir;
+  char *directoryFileDir = pstArgs->directoryFileDir;
+  char *frequencyFileDir = pstArgs->frequencyFileDir;
 
   CVI_U32 openclip_frame = 0;
   CVI_U32 line_count = 0;
@@ -121,16 +100,15 @@ void *run_tdl_thread(void *args) {
   float **text_features = NULL;
   cvtdl_clip_feature clip_feature_text;
 
-
-
   CVI_TDL_OpenModel(pstTDLHandle, CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT, textModelDir);
   FILE *fp = fopen(textFileDir, "r");
   while (fgets(line, sizeof(line), fp) != NULL) {
     line_count++;
   }
-  tokens = (int32_t**)malloc(line_count * sizeof(int32_t*));
+  tokens = (int32_t **)malloc(line_count * sizeof(int32_t *));
 
-  s32Ret = CVI_TDL_Set_TextPreprocess(directoryFileDir,frequencyFileDir,textFileDir, tokens, line_count);
+  s32Ret = CVI_TDL_Set_TextPreprocess(directoryFileDir, frequencyFileDir, textFileDir, tokens,
+                                      line_count);
 
   fseek(fp, 0, SEEK_SET);
 
@@ -145,7 +123,7 @@ void *run_tdl_thread(void *args) {
     stOpenclipFrame.stVFrame.u32Width = 77;
 
     s32Ret = CVI_TDL_Clip_Text_Feature(pstTDLHandle, &stOpenclipFrame, &clip_feature_text);
-    if (s32Ret != CVI_SUCCESS){
+    if (s32Ret != CVI_SUCCESS) {
       printf("CVI_TDL_Clip_Feature failed with %#x\n", s32Ret);
     }
 
@@ -160,20 +138,19 @@ void *run_tdl_thread(void *args) {
     CVI_TDL_Free(&clip_feature_text);
   }
 
-
   CVI_TDL_OpenModel(pstTDLHandle, CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE, imageModelDir);
   // CVI_TDL_SetSkipVpssPreprocess(pstTDLHandle, CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE, true);
   image_features = (float **)malloc(sizeof(float *));
   printf("***********************TDL sub thread******************************\n");
   while (bExit == false) {
     VIDEO_FRAME_INFO_S stFrame;
-    
+
     static uint32_t count = 0;
     s32Ret = CVI_VPSS_GetChnFrame(0, 1, &stFrame, 2000);
 
     cvtdl_clip_feature clip_feature_image;
     s32Ret = CVI_TDL_Clip_Image_Feature(pstTDLHandle, &stFrame, &clip_feature_image);
-    if (s32Ret != CVI_SUCCESS){
+    if (s32Ret != CVI_SUCCESS) {
       printf("inference failed!\n");
       CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
       goto inf_error;
@@ -184,11 +161,11 @@ void *run_tdl_thread(void *args) {
     }
 
     CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
-    int* prods_index = (int*)malloc(sizeof(int));
+    int *prods_index = (int *)malloc(sizeof(int));
     float thres = 0.55;
     int function_id = 0;
-    s32Ret = CVI_TDL_Set_ClipPostprocess(text_features, line_count, image_features,
-                                    1, prods_index, function_id, thres);
+    s32Ret = CVI_TDL_Set_ClipPostprocess(text_features, line_count, image_features, 1, prods_index,
+                                         function_id, thres);
     free(image_features[0]);
 
     {
@@ -201,7 +178,7 @@ void *run_tdl_thread(void *args) {
   }
 inf_error:
   // release:
-  for(int i = 0;i < line_count; ++i){
+  for (int i = 0; i < line_count; ++i) {
     free(text_features[i]);
   }
   free(text_features);
@@ -250,7 +227,7 @@ CVI_S32 get_middleware_config(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig) {
       .u32Width = 1920,
       .u32Height = 1080,
   };
-  printf("this is stSensorSize.u32Height:%d\n",stSensorSize.u32Height);
+  printf("this is stSensorSize.u32Height:%d\n", stSensorSize.u32Height);
   // VBPool configurations
   //////////////////////////////////////////////////
   pstMWConfig->stVBPoolConfig.u32VBPoolCount = 3;
@@ -316,8 +293,6 @@ CVI_S32 get_middleware_config(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig) {
   VPSS_CHN_DEFAULT_HELPER(&pstVpssConfig->astVpssChnAttr[1], stVencSize.u32Width,
                           stVencSize.u32Height, PIXEL_FORMAT_RGB_888_PLANAR, true);
 
-
-
   // VENC
   //////////////////////////////////////////////////
   // Get default VENC configurations
@@ -343,18 +318,19 @@ static void SampleHandleSig(CVI_S32 signo) {
 }
 
 int main(int argc, char *argv[]) {
-
   if (argc != 7) {
     printf(
         "Usage: %s <clip image model path> <clip text model path> <input txt directory list.txt>"
-        "<total txt directory list.txt> <frequency for charactors list.txt> <1:sub thread; 0:main thread> \n ",
+        "<total txt directory list.txt> <frequency for charactors list.txt> <1:sub thread; 0:main "
+        "thread> \n ",
         argv[0]);
     printf("clip image model path: Path to clip image bmodel.\n");
     printf("clip text model path: Path to clip text bmodel.\n");
     printf("Input text directory: Directory containing input text for clip.\n");
     printf("total txt directory: Directory containing all directory.\n");
     printf("frequency for charactors list: frequency of every word in directory.\n");
-    // printf("min conf for dataset: If the top 1 classification is less than th, return -1,else return top 1 classification.\n");
+    // printf("min conf for dataset: If the top 1 classification is less than th, return -1,else
+    // return top 1 classification.\n");
     printf("sub thread flag:1:sub thread; 0:main thread.\n");
     return CVI_FAILURE;
   }
@@ -398,13 +374,6 @@ int main(int argc, char *argv[]) {
   GOTO_IF_FAILED(CVI_TDL_Service_CreateHandle(&stServiceHandle, stTDLHandle), s32Ret,
                  create_service_fail);
 
-
-
-
-
-
-
-
   // Step 3: Run venc in thread.
   ///////////////////////////////////////////////////
 
@@ -423,18 +392,17 @@ int main(int argc, char *argv[]) {
   pthread_create(&stVencThread, NULL, run_venc, &args);
   // if flag ==1, run stTDLThread and block main thread.
   ///////////////////////////////////////////////////
-  if(atoi(argv[6])){
+  if (atoi(argv[6])) {
     pthread_create(&stTDLThread, NULL, run_tdl_thread, &args);
     pthread_join(stVencThread, NULL);
     pthread_join(stTDLThread, NULL);
-  
   }
 
-  
   // Step 4: else: Open and setup TDL models
   ///////////////////////////////////////////////////
 
-  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT, argv[2]), s32Ret, setup_tdl_fail);
+  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT, argv[2]), s32Ret,
+                 setup_tdl_fail);
 
   float **image_features = NULL;
   float **text_features = NULL;
@@ -443,16 +411,14 @@ int main(int argc, char *argv[]) {
   int32_t **tokens = NULL;
   cvtdl_clip_feature clip_feature_text;
 
-
-
   FILE *fp = fopen(argv[3], "r");
 
   while (fgets(line, sizeof(line), fp) != NULL) {
     line_count++;
   }
-  tokens = (int32_t**)malloc(line_count * sizeof(int32_t*));
+  tokens = (int32_t **)malloc(line_count * sizeof(int32_t *));
 
-  s32Ret = CVI_TDL_Set_TextPreprocess(argv[4],argv[5], argv[3], tokens, line_count);
+  s32Ret = CVI_TDL_Set_TextPreprocess(argv[4], argv[5], argv[3], tokens, line_count);
 
   fseek(fp, 0, SEEK_SET);
 
@@ -467,7 +433,7 @@ int main(int argc, char *argv[]) {
     stOpenclipFrame.stVFrame.u32Width = 77;
 
     s32Ret = CVI_TDL_Clip_Text_Feature(stTDLHandle, &stOpenclipFrame, &clip_feature_text);
-    if (s32Ret != CVI_SUCCESS){
+    if (s32Ret != CVI_SUCCESS) {
       printf("CVI_TDL_Clip_Feature failed with %#x\n", s32Ret);
       goto inf_error;
     }
@@ -484,13 +450,13 @@ int main(int argc, char *argv[]) {
     CVI_TDL_Free(&clip_feature_text);
   }
 
-
-  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE, argv[1]), s32Ret, setup_tdl_fail);
+  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE, argv[1]),
+                 s32Ret, setup_tdl_fail);
   image_features = (float **)malloc(sizeof(float *));
   printf("***********************main thread******************************\n");
   while (bExit == false) {
     VIDEO_FRAME_INFO_S stFrame;
-    
+
     static uint32_t count = 0;
     s32Ret = CVI_VPSS_GetChnFrame(0, 1, &stFrame, 2000);
     cvtdl_clip_feature clip_feature_image;
@@ -502,11 +468,11 @@ int main(int argc, char *argv[]) {
     }
     CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
 
-    int* prods_index = (int*)malloc(sizeof(int));
+    int *prods_index = (int *)malloc(sizeof(int));
     float thres = 0.6;
     int function_id = 0;
-    s32Ret = CVI_TDL_Set_ClipPostprocess(text_features, line_count, image_features,
-                                    1, prods_index, function_id, thres);
+    s32Ret = CVI_TDL_Set_ClipPostprocess(text_features, line_count, image_features, 1, prods_index,
+                                         function_id, thres);
     free(image_features[0]);
     {
       MutexAutoLock(ResultMutex, lock);
@@ -519,7 +485,7 @@ int main(int argc, char *argv[]) {
 
 inf_error:
   // release:
-  for(int i = 0;i < line_count; ++i){
+  for (int i = 0; i < line_count; ++i) {
     free(text_features[i]);
   }
   free(text_features);
