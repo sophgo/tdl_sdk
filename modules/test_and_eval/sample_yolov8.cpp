@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
   if (eval_perf) {
     for (int i = 0; i < 101; i++) {
       cvtdl_object_t obj_meta = {0};
-      CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, &obj_meta);
+      CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, &obj_meta);
       CVI_TDL_Free(&obj_meta);
     }
   }
