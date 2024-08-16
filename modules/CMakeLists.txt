@@ -66,6 +66,7 @@ set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
   $<TARGET_OBJECTS:image_classification>
   $<TARGET_OBJECTS:clip_image>
   $<TARGET_OBJECTS:clip_text>
+  $<TARGET_OBJECTS:yolov8_seg>
   $<TARGET_OBJECTS:image_classification>
   $<TARGET_OBJECTS:raw_image_classification>
   $<TARGET_OBJECTS:lane_detection>

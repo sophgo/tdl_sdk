@@ -326,6 +326,11 @@ typedef struct {
   int is_cross;
   cvtdl_feature_t feature;
   int classes;
+  uint8_t *mask;
+
+  float *mask_point;
+  uint32_t mask_point_size;
+
   cvtdl_vehicle_meta *vehicle_properity;
   cvtdl_pedestrian_meta *pedestrian_properity;
   cvtdl_adas_meta adas_properity;
@@ -356,6 +361,9 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
+
+  uint32_t mask_height;
+  uint32_t mask_width;
 
   // consumer counting
   uint32_t entry_num;
