@@ -176,6 +176,7 @@ CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT)               \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LANE_DET)                         \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_POLYLANE)                         \
@@ -1491,6 +1492,9 @@ DLL_EXPORT CVI_S32 CVI_TDL_Clip_Text_Feature(const cvitdl_handle_t handle,
                                              VIDEO_FRAME_INFO_S *frame,
                                              cvtdl_clip_feature *clip_feature);
 
+DLL_EXPORT CVI_S32 CVI_TDL_YoloV8_Seg(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                      cvtdl_object_t *obj_meta);
+
 /**
  * @brief get audio algorithm param
  *
@@ -1550,6 +1554,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_f
                                                float **image_features, int image_features_num,
                                                float **probs);
 
+DLL_EXPORT CVI_S32 CVI_TDL_Set_MaskOutlinePoint(VIDEO_FRAME_INFO_S *frame,
+                                                cvtdl_object_t *obj_meta);
 #ifdef __cplusplus
 }
 #endif

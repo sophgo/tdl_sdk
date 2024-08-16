@@ -6,6 +6,7 @@
 #include "cvi_tdl_core_internal.hpp"
 #include "cvi_tdl_experimental.h"
 #include "cvi_tdl_log.hpp"
+
 #include "deepsort/cvi_deepsort.hpp"
 #include "face_attribute/face_attribute.hpp"
 #include "face_attribute_cls/face_attribute_cls.hpp"
@@ -64,10 +65,12 @@
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_det_monitor.hpp"
 #include "fall_detection/fall_detection.hpp"
+#include "instance_segmentation/yolov8_seg/yolov8_seg.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
 #include "ocr/ocr_detection/ocr_detection.hpp"
+#include "opencv2/opencv.hpp"
 #include "smoke_classification/smoke_classification.hpp"
 #include "utils/image_utils.hpp"
 #include "yawn_classification/yawn_classification.hpp"
@@ -182,6 +185,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_LPRNET_CN, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, CHINA)},
     {CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION, CREATOR(OCRDetection)},
     {CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG, CREATOR(YoloV8Seg)},
 #endif
 #ifdef CV186X
     {CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, CREATOR(IspImageClassification)},
@@ -195,7 +199,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_YOLO, CREATOR(Yolo)},
     {CVI_TDL_SUPPORTED_MODEL_YOLOX, CREATOR(YoloX)},
     {CVI_TDL_SUPPORTED_MODEL_PPYOLOE, CREATOR(PPYoloE)},
-
     {CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, CREATOR(ScrFDFace)},
     {CVI_TDL_SUPPORTED_MODEL_RETINAFACE, CREATOR_P1(RetinaFace, PROCESS, CAFFE)},
     {CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, CREATOR_P1(RetinaFace, PROCESS, PYTORCH)},
@@ -883,7 +886,8 @@ DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceQuality, FaceQuality, CVI_TDL_SUPPORTED_MODEL_
                       cvtdl_face_t *, bool *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_MaskFaceRecognition, MaskFaceRecognition,
                       CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, cvtdl_face_t *)
-
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_YoloV8_Seg, YoloV8Seg, CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG,
+                      cvtdl_object_t *)
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
   return crop_image(srcFrame, dst, bbox, cvtRGB888);
@@ -915,7 +919,6 @@ CVI_S32 CVI_TDL_Fall(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
 }
 
 // New Fall Detection
-
 CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
@@ -926,6 +929,57 @@ CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objec
     return CVI_TDL_SUCCESS;
   }
   return ctx->fall_monitor_model->monitor(objects);
+}
+
+CVI_S32 CVI_TDL_Set_MaskOutlinePoint(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta) {
+  int proto_h = obj_meta->mask_height;
+  int proto_w = obj_meta->mask_width;
+  for (uint32_t i = 0; i < obj_meta->size; i++) {
+    cv::Mat src(proto_h, proto_w, CV_8UC1, obj_meta->info[i].mask, proto_w * sizeof(uint8_t));
+
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+    // search for contours
+    cv::findContours(src, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+    // find the longest contour
+    int longest_index = -1;
+    size_t max_length = 0;
+    for (size_t i = 0; i < contours.size(); i++) {
+      if (contours[i].size() > max_length) {
+        max_length = contours[i].size();
+        longest_index = i;
+      }
+    }
+    if (longest_index >= 0 && max_length >= 1) {
+      float ratio_height = (proto_h / static_cast<float>(frame->stVFrame.u32Height));
+      float ratio_width = (proto_w / static_cast<float>(frame->stVFrame.u32Width));
+      int source_y_offset, source_x_offset;
+      if (ratio_height > ratio_width) {
+        source_x_offset = 0;
+        source_y_offset = (proto_h - frame->stVFrame.u32Height * ratio_width) / 2;
+      } else {
+        source_x_offset = (proto_w - frame->stVFrame.u32Width * ratio_height) / 2;
+        source_y_offset = 0;
+      }
+      int source_region_height = proto_h - 2 * source_y_offset;
+      int source_region_width = proto_w - 2 * source_x_offset;
+      // calculate scaling factor
+      float height_scale =
+          static_cast<float>(frame->stVFrame.u32Height) / static_cast<float>(source_region_height);
+      float width_scale =
+          static_cast<float>(frame->stVFrame.u32Width) / static_cast<float>(source_region_width);
+      obj_meta->info[i].mask_point_size = max_length;
+      obj_meta->info[i].mask_point = (float *)malloc(2 * max_length * sizeof(float));
+
+      size_t j = 0;
+      for (const auto &point : contours[longest_index]) {
+        obj_meta->info[i].mask_point[2 * j] = (point.x - source_x_offset) * width_scale;
+        obj_meta->info[i].mask_point[2 * j + 1] = (point.y - source_y_offset) * height_scale;
+        j++;
+      }
+    }
+  }
+  return CVI_SUCCESS;
 }
 
 CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps) {
@@ -1241,6 +1295,7 @@ CVI_S32 CVI_TDL_DeepSORT_Head_FusePed(const cvitdl_handle_t handle, cvtdl_object
   ctx->ds_tracker->track_headfuse(obj, tracker_t, use_reid, head, ped, counting_line_t, rect);
   return CVI_SUCCESS;
 }
+
 CVI_S32 CVI_TDL_DeepSORT_Obj(const cvitdl_handle_t handle, cvtdl_object_t *obj,
                              cvtdl_tracker_t *tracker, bool use_reid) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
@@ -1812,10 +1867,10 @@ CVI_S32 CVI_TDL_Set_Polylanenet_Lower(const cvitdl_handle_t handle,
 CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
                                    const char *textFile, int32_t **tokens, int numSentences) {
   std::vector<std::vector<int32_t>> tokens_cpp(numSentences);
-  // 调用 token_bpe 函数
+  // call token_bpe function
   int result =
       token_bpe(std::string(encoderFile), std::string(bpeFile), std::string(textFile), tokens_cpp);
-  // 计算总元素个数
+  // calculate the total number of elements
   for (int i = 0; i < numSentences; i++) {
     // tokens[i] = new int32_t[tokens_cpp[i].size()];
     tokens[i] = (int32_t *)malloc(tokens_cpp[i].size() * sizeof(int32_t));
