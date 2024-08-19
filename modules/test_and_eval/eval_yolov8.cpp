@@ -45,11 +45,15 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         std::stringstream res_ss;
 
         for (uint32_t i = 0; i < obj_meta.size; i++) {
-          cvtdl_bbox_t box = obj_meta.info[i].bbox;
-          res_ss << obj_meta.info[i].classes << " " << box.x1 << " " << box.y1 << " " << box.x2
-                 << " " << box.y2 << " " << box.score << "\n";
+          res_ss << obj_meta.info[i].classes << " " << obj_meta.info[i].bbox.x1 << " "
+                 << obj_meta.info[i].bbox.y1 << " " << obj_meta.info[i].bbox.x2 << " "
+                 << obj_meta.info[i].bbox.y2 << " " << obj_meta.info[i].bbox.score << "\n";
         }
-        std::string save_path = res_path + image_name.substr(0, image_name.length() - 4) + ".txt";
+
+        size_t pos = image_name.find_last_of("/");
+        size_t start_idx = pos == std::string::npos ? 0 : pos + 1;
+        std::string save_path =
+            res_path + image_name.substr(start_idx, image_name.length() - 4 - (pos + 1)) + ".txt";
         FILE* fp = fopen(save_path.c_str(), "w");
         fwrite(res_ss.str().c_str(), res_ss.str().size(), 1, fp);
         fclose(fp);
@@ -95,6 +99,20 @@ int main(int argc, char* argv[]) {
 
   if (argc > 6) {
     nms_threshold = std::stof(argv[6]);
+  }
+
+  if (argc > 7) {
+    cvtdl_det_algo_param_t yolov8_param =
+        CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+    yolov8_param.cls = atoi(argv[7]);
+
+    printf("setup yolov8 algorithm param \n");
+    ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+                                        yolov8_param);
+    if (ret != CVI_SUCCESS) {
+      printf("Can not set yolov8 algorithm parameters %#x\n", ret);
+      return ret;
+    }
   }
 
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, model_path.c_str());
