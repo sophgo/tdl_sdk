@@ -319,10 +319,11 @@ int main(int argc, char *argv[]) {
   // ret |= CVI_TDL_Service_EnableTPUDraw(service_handle, true);
   ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
   ret |= CVI_TDL_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                            (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
-                                            (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path,
-                                            NULL, (!strcmp(fa_model_path, "NULL")) ? NULL : fa_model_path);
+  ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(
+      app_handle, fd_model_id, fr_model_id, fd_model_path,
+      (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
+      (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path, NULL,
+      (!strcmp(fa_model_path, "NULL")) ? NULL : fa_model_path);
   if (strcmp(ped_model_path, "NULL")) {
     CVI_TDL_SUPPORTED_MODEL_E ped_model_id = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
     ret |= CVI_TDL_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_model_path);

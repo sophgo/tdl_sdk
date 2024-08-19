@@ -340,7 +340,7 @@ int main(int argc, char *argv[]) {
   std::string ped_modelf =
       "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/"
       "mobiledetv2-pedestrian-d0-ls-448.cvimodel";
-  
+
   std::string fa_modelf = "face_attr_112_bf16.cvimodel";
 
   std::string str_model_file = modelf;

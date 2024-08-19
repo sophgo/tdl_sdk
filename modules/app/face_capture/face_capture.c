@@ -435,14 +435,17 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
       VIDEO_FRAME_INFO_S image_frame;
       VIDEO_FRAME_INFO_S *face_frame = NULL;
 
-      // printf("face_cpt_info->data.image height width: %d %d\n", face_cpt_info->data[i].image.height,
+      // printf("face_cpt_info->data.image height width: %d %d\n",
+      // face_cpt_info->data[i].image.height,
       //        face_cpt_info->data[i].image.width);
       // printf("face_cpt_info->data.image full_length %d\n",
       //        face_cpt_info->data[i].image.full_length);
 
-      // printf("face_cpt_info->data.image length: %d %d %d\n", face_cpt_info->data[i].image.length[0],
+      // printf("face_cpt_info->data.image length: %d %d %d\n",
+      // face_cpt_info->data[i].image.length[0],
       //        face_cpt_info->data[i].image.length[1], face_cpt_info->data[i].image.length[2]);
-      // printf("face_cpt_info->data.image stride: %d %d %d\n", face_cpt_info->data[i].image.stride[0],
+      // printf("face_cpt_info->data.image stride: %d %d %d\n",
+      // face_cpt_info->data[i].image.stride[0],
       //        face_cpt_info->data[i].image.stride[1], face_cpt_info->data[i].image.stride[2]);
 
       image_to_video_frame(face_cpt_info, &face_cpt_info->data[i].image, &image_frame);
@@ -456,7 +459,8 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
 
       // printf("crop_face_box: %f %f %f %f %f \n", face_cpt_info->data[i].crop_face_box.x1,
       //        face_cpt_info->data[i].crop_face_box.y1, face_cpt_info->data[i].crop_face_box.x2,
-      //        face_cpt_info->data[i].crop_face_box.y2, face_cpt_info->data[i].crop_face_box.score);
+      //        face_cpt_info->data[i].crop_face_box.y2,
+      //        face_cpt_info->data[i].crop_face_box.score);
       CVI_TDL_CropResizeImage(tdl_handle, face_cpt_info->fl_model, &image_frame,
                               &face_cpt_info->data[i].crop_face_box, 112, 112, PIXEL_FORMAT_RGB_888,
                               &face_frame);
@@ -472,11 +476,16 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
       // printf("run face_attribute inference done\n");
 
       for (size_t j = 0; j < face_cpt_info->face_data.size; j++) {
-        printf("gender: %s  score: %f \n",face_cpt_info->face_data.info[j].gender_score < 0.5 ? "female": "male", face_cpt_info->face_data.info[j].gender_score);
+        printf("gender: %s  score: %f \n",
+               face_cpt_info->face_data.info[j].gender_score < 0.5 ? "female" : "male",
+               face_cpt_info->face_data.info[j].gender_score);
 
-        printf("age: %d  score: %f \n", (int)(face_cpt_info->face_data.info[j].age * 100), face_cpt_info->face_data.info[j].age);
-        printf("glass: %d  score: %f \n",face_cpt_info->face_data.info[j].glass < 0.5 ? 0: 1 , face_cpt_info->face_data.info[j].glass);
-        printf("mask: %d  score: %f\n",face_cpt_info->face_data.info[j].mask_score < 0.5 ? 0 : 1 , face_cpt_info->face_data.info[j].mask_score);
+        printf("age: %d  score: %f \n", (int)(face_cpt_info->face_data.info[j].age * 100),
+               face_cpt_info->face_data.info[j].age);
+        printf("glass: %d  score: %f \n", face_cpt_info->face_data.info[j].glass < 0.5 ? 0 : 1,
+               face_cpt_info->face_data.info[j].glass);
+        printf("mask: %d  score: %f\n", face_cpt_info->face_data.info[j].mask_score < 0.5 ? 0 : 1,
+               face_cpt_info->face_data.info[j].mask_score);
       }
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, &image_frame, 0);
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, face_frame, 0);
