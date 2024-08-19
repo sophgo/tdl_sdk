@@ -46,20 +46,10 @@ namespace cvitdl {
 FaceAttribute::FaceAttribute(bool with_attr)
     : Core(CVI_MEM_DEVICE), m_use_wrap_hw(false), m_with_attribute(with_attr) {
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
-}
-
-int FaceAttribute::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Face attribute only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
   for (uint32_t i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = FACE_ATTRIBUTE_FACTOR;
-    (*data)[0].mean[i] = FACE_ATTRIBUTE_MEAN;
+    m_preprocess_param[0].factor[i] = FACE_ATTRIBUTE_FACTOR;
+    m_preprocess_param[0].mean[i] = FACE_ATTRIBUTE_MEAN;
   }
-  (*data)[0].use_quantize_scale = true;
-
-  return CVI_TDL_SUCCESS;
 }
 
 int FaceAttribute::onModelOpened() { return allocateION(); }

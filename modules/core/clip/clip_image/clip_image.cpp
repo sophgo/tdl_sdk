@@ -20,27 +20,19 @@
 
 namespace cvitdl {
 
-Clip_Image::Clip_Image() : Core(CVI_MEM_DEVICE) { setUseMmap(false); }
+Clip_Image::Clip_Image() : Core(CVI_MEM_DEVICE) {
+  setUseMmap(false);
+  m_preprocess_param[0].factor[0] = 0.0145984266;
+  m_preprocess_param[0].factor[1] = 0.0150077685;
+  m_preprocess_param[0].factor[2] = 0.0142200657;
+  m_preprocess_param[0].mean[0] = 1.7922625;
+  m_preprocess_param[0].mean[1] = 1.7465649;
+  m_preprocess_param[0].mean[2] = 1.4802198;
+  m_preprocess_param[0].use_crop = true;
+  m_preprocess_param[0].keep_aspect_ratio = true;
+}
 
 Clip_Image::~Clip_Image() {}
-
-int Clip_Image::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
-  if (data->size() != 1) {
-    LOGE("CLIP only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = 0.0145984266;
-  (*data)[0].factor[1] = 0.0150077685;
-  (*data)[0].factor[2] = 0.0142200657;
-  (*data)[0].mean[0] = 1.7922625;
-  (*data)[0].mean[1] = 1.7465649;
-  (*data)[0].mean[2] = 1.4802198;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].use_crop = true;
-  (*data)[0].keep_aspect_ratio = true;
-  std::cout << "setupInputPreprocess done" << std::endl;
-  return CVI_TDL_SUCCESS;
-}
 
 int Clip_Image::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_clip_feature* clip_feature) {
   int height = frame->stVFrame.u32Height;

@@ -14,12 +14,5 @@ class PoseDetectionBase : public Core {
     return 0;
   }
   virtual bool allowExportChannelAttribute() const override { return true; }
-
- protected:
-  cvtdl_pre_param_t preprocess_param_;
-  bool use_crop_ = false;
-
- private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 };
 }  // namespace cvitdl

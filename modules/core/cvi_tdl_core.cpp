@@ -1720,19 +1720,18 @@ CVI_S32 CVI_TDL_Set_Yolov5_ROI(const cvitdl_handle_t handle, Point_t roi_s) {
   return yolov5_model->set_roi(roi_s);
 }
 
-cvtdl_pre_param_t CVI_TDL_GetPreParam(const cvitdl_handle_t handle,
-                                      const CVI_TDL_SUPPORTED_MODEL_E model_index) {
+InputPreParam CVI_TDL_GetPreParam(const cvitdl_handle_t handle,
+                                  const CVI_TDL_SUPPORTED_MODEL_E model_index) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  DetectionBase *model = dynamic_cast<DetectionBase *>(getInferenceInstance(model_index, ctx));
-  return model->get_preparam();
+  cvitdl::Core *instance = getInferenceInstance(model_index, ctx);
+  return instance->get_preparam();
 }
 
 CVI_S32 CVI_TDL_SetPreParam(const cvitdl_handle_t handle,
-                            const CVI_TDL_SUPPORTED_MODEL_E model_index,
-                            cvtdl_pre_param_t pre_param) {
+                            const CVI_TDL_SUPPORTED_MODEL_E model_index, InputPreParam pre_param) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  DetectionBase *model = dynamic_cast<DetectionBase *>(getInferenceInstance(model_index, ctx));
-  model->set_preparam(pre_param);
+  cvitdl::Core *instance = getInferenceInstance(model_index, ctx);
+  instance->set_preparam(pre_param);
   return CVI_SUCCESS;
 }
 
@@ -1751,67 +1750,6 @@ CVI_S32 CVI_TDL_SetDetectionAlgoParam(const cvitdl_handle_t handle,
   model->set_algparam(alg_param);
   return CVI_SUCCESS;
 }
-
-CVI_S32 CVI_TDL_Set_Image_Cls_Param(const cvitdl_handle_t handle, VpssPreParam *p_preprocess_cfg) {
-  printf("enter CVI_TDL_Set_Image_Classification_Param...\n");
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  ImageClassification *image_cls_model = dynamic_cast<ImageClassification *>(
-      getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION, ctx));
-  if (image_cls_model == nullptr) {
-    LOGE("No instance found for image classification.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got image_cls_model instance\n");
-  if (p_preprocess_cfg == nullptr) {
-    LOGE("p_preprocess_cfg can not be nullptr.\n");
-    return CVI_FAILURE;
-  }
-
-  image_cls_model->set_param(p_preprocess_cfg);
-  return CVI_SUCCESS;
-}
-
-CVI_S32 CVI_TDL_Set_Raw_Image_Cls_Param(const cvitdl_handle_t handle,
-                                        VpssPreParam *p_preprocess_cfg) {
-  printf("enter CVI_TDL_Set_Image_Classification_Param...\n");
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  RawImageClassification *raw_image_cls_model = dynamic_cast<RawImageClassification *>(
-      getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, ctx));
-  if (raw_image_cls_model == nullptr) {
-    LOGE("No instance found for image classification.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got image_cls_model instance\n");
-  if (p_preprocess_cfg == nullptr) {
-    LOGE("p_preprocess_cfg can not be nullptr.\n");
-    return CVI_FAILURE;
-  }
-
-  raw_image_cls_model->set_param(p_preprocess_cfg);
-  return CVI_SUCCESS;
-}
-
-#ifdef CV186X
-CVI_S32 CVI_TDL_Set_Isp_Image_Cls_Param(const cvitdl_handle_t handle,
-                                        VpssPreParam *p_preprocess_cfg) {
-  printf("enter CVI_TDL_Set_Isp_Image_Classification_Param...\n");
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  IspImageClassification *isp_image_cls_model = dynamic_cast<IspImageClassification *>(
-      getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, ctx));
-  if (isp_image_cls_model == nullptr) {
-    LOGE("No instance found for image classification.\n");
-    return CVI_FAILURE;
-  }
-  LOGI("got image_cls_model instance\n");
-  if (p_preprocess_cfg == nullptr) {
-    LOGE("p_preprocess_cfg can not be nullptr.\n");
-    return CVI_FAILURE;
-  }
-
-  isp_image_cls_model->set_param(p_preprocess_cfg);
-  return CVI_SUCCESS;
-}
-#endif
 
 cvitdl_sound_param CVI_TDL_GetSoundClassificationParam(
     const cvitdl_handle_t handle, const CVI_TDL_SUPPORTED_MODEL_E model_index) {

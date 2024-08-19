@@ -18,7 +18,6 @@ class YoloV10Detection final : public DetectionBase {
 
  private:
   int onModelOpened() override;
-  int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 
   void outputParser(const int image_width, const int image_height, const int frame_width,
                     const int frame_height, cvtdl_object_t *obj_meta);

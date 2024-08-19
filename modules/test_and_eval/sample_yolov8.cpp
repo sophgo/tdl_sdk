@@ -17,7 +17,7 @@
 // if use official model, no need to change param
 CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup preprocess
-  cvtdl_pre_param_t preprocess_cfg =
+  InputPreParam preprocess_cfg =
       CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
 
   for (int i = 0; i < 3; i++) {

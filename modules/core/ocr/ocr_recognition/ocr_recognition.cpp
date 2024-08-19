@@ -55,24 +55,15 @@ void save_cropped_frame(VIDEO_FRAME_INFO_S* cropped_frame, const std::string& sa
 
 namespace cvitdl {
 
-OCRRecognition::OCRRecognition() : Core(CVI_MEM_DEVICE) {}
-
-OCRRecognition::~OCRRecognition() {}
-
-int OCRRecognition::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
-  if (data->size() != 1) {
-    LOGE("OCRRecognition only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = R_SCALE;
-  (*data)[0].factor[1] = G_SCALE;
-  (*data)[0].factor[2] = B_SCALE;
-  (*data)[0].mean[0] = R_MEAN;
-  (*data)[0].mean[1] = G_MEAN;
-  (*data)[0].mean[2] = B_MEAN;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
+OCRRecognition::OCRRecognition() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = R_SCALE;
+  m_preprocess_param[0].factor[1] = G_SCALE;
+  m_preprocess_param[0].factor[2] = B_SCALE;
+  m_preprocess_param[0].mean[0] = R_MEAN;
+  m_preprocess_param[0].mean[1] = G_MEAN;
+  m_preprocess_param[0].mean[2] = B_MEAN;
 }
+OCRRecognition::~OCRRecognition() {}
 
 int argmax(float* start, float* end) {
   float* max_iter = std::max_element(start, end);

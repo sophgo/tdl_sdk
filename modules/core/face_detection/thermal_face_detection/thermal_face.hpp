@@ -6,13 +6,12 @@ namespace cvitdl {
 
 class ThermalFace final : public FaceDetectionBase {
  public:
-  ThermalFace(){};
+  ThermalFace();
   ~ThermalFace(){};
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *meta) override;
   bool allowExportChannelAttribute() const override { return true; }
 
  private:
-  int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   int onModelOpened() override;
   int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                      VPSSConfig &vpss_config) override;

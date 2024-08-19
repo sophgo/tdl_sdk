@@ -74,11 +74,11 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
 ThermalPerson::ThermalPerson() {
   // default param
   for (int i = 0; i < 3; i++) {
-    preprocess_param_.mean[i] = 0;
-    preprocess_param_.factor[i] = 1;
+    m_preprocess_param[0].mean[i] = 0;
+    m_preprocess_param[0].factor[i] = 1;
   }
 
-  preprocess_param_.format = PIXEL_FORMAT_BGR_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
   alg_param_.cls = NUM_CLASSES;
   m_model_nms_threshold = 0.55;
 }

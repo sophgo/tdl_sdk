@@ -14,23 +14,15 @@
 
 namespace cvitdl {
 
-OSNet::OSNet() : Core(CVI_MEM_DEVICE) {}
-
-int OSNet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("OSNet only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = 1 / STD_R;
-  (*data)[0].factor[1] = 1 / STD_G;
-  (*data)[0].factor[2] = 1 / STD_B;
-  (*data)[0].mean[0] = MODEL_MEAN_R / STD_R;
-  (*data)[0].mean[1] = MODEL_MEAN_G / STD_G;
-  (*data)[0].mean[2] = MODEL_MEAN_B / STD_B;
-  (*data)[0].keep_aspect_ratio = false;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].use_crop = true;
-  return CVI_TDL_SUCCESS;
+OSNet::OSNet() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = 1 / STD_R;
+  m_preprocess_param[0].factor[1] = 1 / STD_G;
+  m_preprocess_param[0].factor[2] = 1 / STD_B;
+  m_preprocess_param[0].mean[0] = MODEL_MEAN_R / STD_R;
+  m_preprocess_param[0].mean[1] = MODEL_MEAN_G / STD_G;
+  m_preprocess_param[0].mean[2] = MODEL_MEAN_B / STD_B;
+  m_preprocess_param[0].keep_aspect_ratio = false;
+  m_preprocess_param[0].use_crop = true;
 }
 
 int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *meta, int obj_idx) {

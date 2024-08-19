@@ -12,6 +12,5 @@ class Clip_Image final : public Core {
   virtual bool allowExportChannelAttribute() const override { return true; }
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 };
 }  // namespace cvitdl

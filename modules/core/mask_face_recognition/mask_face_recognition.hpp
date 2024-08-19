@@ -13,7 +13,7 @@ class MaskFaceRecognition final : public Core {
 
  private:
   void outputParser(cvtdl_face_t *meta, int meta_i);
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
+
   virtual int onModelOpened() override;
   virtual int onModelClosed() override;
   CVI_S32 allocateION();

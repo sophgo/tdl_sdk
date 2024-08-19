@@ -37,35 +37,19 @@ void dump_frame(VIDEO_FRAME_INFO_S *frame, std::string name) {
   image_count++;
 }
 
-MotionSegmentation::MotionSegmentation() : Core(CVI_MEM_DEVICE) {}
+MotionSegmentation::MotionSegmentation() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = 0.017124753831663668;
+  m_preprocess_param[0].factor[1] = 0.01750700280112045;
+  m_preprocess_param[0].factor[2] = 0.017429193899782137;
+  m_preprocess_param[0].mean[0] = 2.1179039301310043;
+  m_preprocess_param[0].mean[1] = 2.035714285714286;
+  m_preprocess_param[0].mean[2] = 1.8044444444444445;
+  m_preprocess_param[0].use_crop = false;
+  m_preprocess_param[0].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
+  m_preprocess_param.emplace_back(m_preprocess_param[0]);
+}
 
 MotionSegmentation::~MotionSegmentation() {}
-
-int MotionSegmentation::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 2) {
-    LOGE("Motion Segmentation has 2 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  for (int i = 0; i < 2; i++) {
-    (*data)[i].factor[0] = 0.017124753831663668;
-    (*data)[i].factor[1] = 0.01750700280112045;
-    (*data)[i].factor[2] = 0.017429193899782137;
-    (*data)[i].mean[0] = 2.1179039301310043;
-    (*data)[i].mean[1] = 2.035714285714286;
-    (*data)[i].mean[2] = 1.8044444444444445;
-    (*data)[i].use_quantize_scale = true;
-    // (*data)[i].factor[0] = 1;
-    // (*data)[i].factor[1] = 1;
-    // (*data)[i].factor[2] = 1;
-    // (*data)[i].mean[0] = 0;
-    // (*data)[i].mean[1] = 0;
-    // (*data)[i].mean[2] = 0;
-    // (*data)[i].use_quantize_scale = false;
-    (*data)[i].use_crop = false;
-    (*data)[i].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
-  }
-  return CVI_TDL_SUCCESS;
-}
 
 // int MotionSegmentation::vpssPreprocess(VIDEO_FRAME_INFO_S* srcFrame, VIDEO_FRAME_INFO_S*
 // dstFrame,

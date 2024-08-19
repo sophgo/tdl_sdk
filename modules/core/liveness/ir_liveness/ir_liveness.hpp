@@ -11,6 +11,5 @@ class IrLiveness final : public Core {
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta);
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 };
 }  // namespace cvitdl

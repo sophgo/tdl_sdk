@@ -55,20 +55,4 @@ void DetectionBase::set_algparam(const cvtdl_det_algo_param_t &alg_param) {
   alg_param_.strides = strides;
 }
 
-int DetectionBase::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Detection model only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = preprocess_param_.factor[i];
-    (*data)[0].mean[i] = preprocess_param_.mean[i];
-  }
-
-  (*data)[0].format = preprocess_param_.format;
-  // (*data)[0].use_quantize_scale = true; // #parse from model
-  return CVI_TDL_SUCCESS;
-}
-// namespace cvitdl
 }  // namespace cvitdl

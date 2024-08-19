@@ -1404,31 +1404,29 @@ DLL_EXPORT CVI_S32 CVI_TDL_Isp_Image_Classification(const cvitdl_handle_t handle
                                                     VIDEO_FRAME_INFO_S *frame,
                                                     cvtdl_class_meta_t *obj_meta,
                                                     cvtdl_isp_meta_t *isp_meta);
-DLL_EXPORT CVI_S32 CVI_TDL_Set_Isp_Image_Cls_Param(const cvitdl_handle_t handle,
-                                                   VpssPreParam *p_preprocess_cfg);
 #endif
 
 /**
- * @brief get Detection model preprocess param struct
+ * @brief get model preprocess param struct
  *
  * @param handle An TDL SDK handle.
  * @param model_index Supported model list.
- * @return  cvtdl_pre_param_t preprocess param struct.
+ * @return  InputPreParam preprocess param struct.
  */
-DLL_EXPORT cvtdl_pre_param_t CVI_TDL_GetPreParam(const cvitdl_handle_t handle,
-                                                 const CVI_TDL_SUPPORTED_MODEL_E model_index);
+DLL_EXPORT InputPreParam CVI_TDL_GetPreParam(const cvitdl_handle_t handle,
+                                             const CVI_TDL_SUPPORTED_MODEL_E model_index);
 
 /**
- * @brief set Detection model preprocess param struct
+ * @brief set model preprocess param struct
  *
  * @param handle An TDL SDK handle.
  * @param model_index Supported model list.
- * @param pre_param cvtdl_pre_param_t preprocess struct
+ * @param pre_param InputPreParam preprocess struct
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_SetPreParam(const cvitdl_handle_t handle,
                                        const CVI_TDL_SUPPORTED_MODEL_E model_index,
-                                       cvtdl_pre_param_t pre_param);
+                                       InputPreParam pre_param);
 
 /**
  * @brief get Detection algorithm param struct
@@ -1462,11 +1460,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Yolov5_ROI(const cvitdl_handle_t handle, Point_t 
  */
 DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_Byte(const cvitdl_handle_t handle, cvtdl_object_t *obj,
                                          cvtdl_tracker_t *tracker, bool use_reid);
-
-DLL_EXPORT CVI_S32 CVI_TDL_Set_Image_Cls_Param(const cvitdl_handle_t handle,
-                                               VpssPreParam *p_preprocess_cfg);
-DLL_EXPORT CVI_S32 CVI_TDL_Set_Raw_Image_Cls_Param(const cvitdl_handle_t handle,
-                                                   VpssPreParam *p_preprocess_cfg);
 
 /**
  * @brief get frame feature from clip model

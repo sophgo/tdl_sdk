@@ -20,7 +20,20 @@
 
 namespace cvitdl {
 
-IspImageClassification::IspImageClassification() : Core(CVI_MEM_DEVICE) { this->setraw(true); }
+IspImageClassification::IspImageClassification() : Core(CVI_MEM_DEVICE) {
+  this->setraw(true);
+  float mean[3] = {123.675, 116.28, 103.52};
+  float std[3] = {58.395, 57.12, 57.375};
+
+  for (int i = 0; i < 3; i++) {
+    m_preprocess_param[0].mean[i] = mean[i] / std[i];
+    m_preprocess_param[0].factor[i] = 1.0 / std[i];
+  }
+
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].rescale_type = RESCALE_CENTER;
+  m_preprocess_param[0].keep_aspect_ratio = true;
+}
 
 int IspImageClassification::onModelOpened() {
   // if (getNumOutputTensor() != 1) {
@@ -62,27 +75,6 @@ std::vector<int> IspImageClassification::TopKIndex(std::vector<float> &vec, int 
 }
 
 IspImageClassification::~IspImageClassification() {}
-
-int IspImageClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  // if (data->size() != 1) {
-  //   LOGE("IspImageClassification only has 1 input.\n");
-  //   return CVI_TDL_ERR_INVALID_ARGS;
-  // }
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_->factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_->mean[i];
-  }
-
-  (*data)[0].format = p_preprocess_cfg_->format;
-  (*data)[0].use_quantize_scale = p_preprocess_cfg_->use_quantize_scale;
-  (*data)[0].rescale_type = p_preprocess_cfg_->rescale_type;
-  (*data)[0].keep_aspect_ratio = p_preprocess_cfg_->keep_aspect_ratio;
-  return CVI_TDL_SUCCESS;
-}
-
-void IspImageClassification::set_param(VpssPreParam *p_preprocess_cfg) {
-  p_preprocess_cfg_ = p_preprocess_cfg;
-}
 
 int IspImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
                                            VIDEO_FRAME_INFO_S *dstFrame, VPSSConfig &vpss_config) {

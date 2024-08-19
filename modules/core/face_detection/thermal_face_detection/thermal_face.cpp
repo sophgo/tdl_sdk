@@ -100,20 +100,14 @@ static void bbox_pred(const cvtdl_bbox_t &anchor, float *regress, std::vector<fl
   bbox.y2 = (pred_ctr_y + 0.5 * (pred_h - 1.0));
 }
 
-int ThermalFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Thermal face only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = static_cast<float>(SCALE_R);
-  (*data)[0].factor[1] = static_cast<float>(SCALE_G);
-  (*data)[0].factor[2] = static_cast<float>(SCALE_B);
-  (*data)[0].mean[0] = static_cast<float>(MEAN_R);
-  (*data)[0].mean[1] = static_cast<float>(MEAN_G);
-  (*data)[0].mean[2] = static_cast<float>(MEAN_B);
-  (*data)[0].rescale_type = RESCALE_RB;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
+ThermalFace::ThermalFace() {
+  m_preprocess_param[0].factor[0] = static_cast<float>(SCALE_R);
+  m_preprocess_param[0].factor[1] = static_cast<float>(SCALE_G);
+  m_preprocess_param[0].factor[2] = static_cast<float>(SCALE_B);
+  m_preprocess_param[0].mean[0] = static_cast<float>(MEAN_R);
+  m_preprocess_param[0].mean[1] = static_cast<float>(MEAN_G);
+  m_preprocess_param[0].mean[2] = static_cast<float>(MEAN_B);
+  m_preprocess_param[0].rescale_type = RESCALE_RB;
 }
 
 int ThermalFace::onModelOpened() {

@@ -306,7 +306,7 @@ TDL_SDK接口说明
   // if use official model, no need to change param
   CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
     // setup preprocess
-    cvtdl_pre_param_t preprocess_cfg =
+    InputPreParam preprocess_cfg =
         CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5);
 
     for (int i = 0; i < 3; i++) {
@@ -788,7 +788,6 @@ yolov6接口说明
 
   * factor 预处理方差的倒数
   * mean 预处理均值
-  * use_quantize_scale 预处理图片尺寸
   * format 图片格式
 
 * YoloAlgParam
@@ -808,7 +807,7 @@ yolov6接口说明
   // if use official model, no need to change param
   CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
     // setup preprocess
-    cvtdl_pre_param_t preprocess_cfg =
+    InputPreParam preprocess_cfg =
         CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
 
     for (int i = 0; i < 3; i++) {
@@ -1205,7 +1204,7 @@ yolov7模型与yolov5模型检测与解码过程基本类似，主要不同是an
   // if use official model, no need to change param
   CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
     // setup preprocess
-    cvtdl_pre_param_t preprocess_cfg =
+    InputPreParam preprocess_cfg =
         CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV7);
 
     for (int i = 0; i < 3; i++) {
@@ -1485,7 +1484,7 @@ yolov8的预处理设置参考如下：
   // if use official model, no need to change param
   CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
     // setup preprocess
-    cvtdl_pre_param_t preprocess_cfg =
+    InputPreParam preprocess_cfg =
         CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
 
     for (int i = 0; i < 3; i++) {
@@ -1916,7 +1915,6 @@ TDL_SDK接口说明
     float mean[3];
     meta_rescale_type_e rescale_type;
 
-    bool use_quantize_scale;
     PIXEL_FORMAT_E format;
   } YoloPreParam;
 
@@ -1924,7 +1922,6 @@ TDL_SDK接口说明
 
 * factor 预处理scale参数
 * mean 预处理均值参数
-* use_quantize_scale 是否使用模型的尺寸，默认为true
 * format 图片格式，PIXEL_FORMAT_RGB_888_PLANAR
 
 其中预处理factor以及mean的公式为
@@ -1981,7 +1978,7 @@ $$
   // if use official model, no need to change param
   CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
     // setup preprocess
-    cvtdl_pre_param_t preprocess_cfg = CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOX);
+    InputPreParam preprocess_cfg = CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOX);
 
     for (int i = 0; i < 3; i++) {
       printf("asign val %d \n", i);
@@ -2445,7 +2442,7 @@ TDL_SDK接口说明
   // if use official model, no need to change param
   CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
     // setup preprocess
-    cvtdl_pre_param_t preprocess_cfg =
+    InputPreParam preprocess_cfg =
         CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PPYOLOE);
 
     for (int i = 0; i < 3; i++) {
@@ -2713,7 +2710,7 @@ yolov10的预处理设置参考如下：
   // if use official model, no need to change param
   CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
     // setup preprocess
-    cvtdl_pre_param_t preprocess_cfg =
+    InputPreParam preprocess_cfg =
         CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION);
 
     for (int i = 0; i < 3; i++) {

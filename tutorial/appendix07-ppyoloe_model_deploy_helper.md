@@ -242,16 +242,14 @@ typedef struct {
   float mean[3];
   meta_rescale_type_e rescale_type;
 
-  bool use_quantize_scale;
   PIXEL_FORMAT_E format;
-} cvtdl_pre_param_t;
+} InputPreParam;
 ```
 
 而对于YOLOX，需要传入以下四个参数：
 
 * `factor `预处理scale参数
 * `mean `预处理均值参数
-* `use_quantize_scale` 是否使用模型的尺寸，默认为`true`
 * `format` 图片格式，`PIXEL_FORMAT_RGB_888_PLANAR`
 
 其中预处理factor以及mean的公式为
@@ -323,7 +321,7 @@ int main(int argc, char* argv[]) {
   }
   printf("start pp-yoloe preprocess config \n");
   // // setup preprocess
-  cvtdl_pre_param_t p_preprocess_cfg;
+  InputPreParam p_preprocess_cfg;
 
   float mean[3] = {123.675, 116.28, 103.52};
   float std[3] = {58.395, 57.12, 57.375};
@@ -333,7 +331,6 @@ int main(int argc, char* argv[]) {
     p_preprocess_cfg.factor[i] = 1.0 / std[i];
   }
   
-  p_preprocess_cfg.use_quantize_scale = true;
   p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   printf("start yolo algorithm config \n");

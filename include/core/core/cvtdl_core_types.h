@@ -185,6 +185,32 @@ typedef struct {
   uint32_t full_length;
 } cvtdl_image_t;
 
+/** @struct InputPreParam
+ *  @ingroup core_cvitdlcore
+ *  @brief Config the detection model preprocess.
+ *  @param InputPreParam::factor
+ *  Preprocess factor, one dimension matrix, r g b channel
+ *  @param InputPreParam::mean
+ *  Preprocess mean, one dimension matrix, r g b channel
+ *  @param InputPreParam::keep_aspect_ratio
+ *  Preprocess config  scale
+ *  @param InputPreParam:: use_crop
+ *  Preprocess config crop
+ *  @param InputPreParam::format
+ *  Preprocess pixcel format config
+ *  @param InputPreParam::VpssPreParam
+ *  Vpss preprocess param
+ */
+typedef struct {
+  float factor[3];
+  float mean[3];
+  bool keep_aspect_ratio;
+  bool use_crop;
+  PIXEL_FORMAT_E format;
+  meta_rescale_type_e rescale_type;
+  VPSS_SCALE_COEF_E resize_method;
+} InputPreParam;
+
 /**
  * @brief A helper function to get the unit size of feature_type_e.
  * @ingroup core_cvitdlcore

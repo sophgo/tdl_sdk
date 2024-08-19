@@ -22,23 +22,17 @@
 
 namespace cvitdl {
 
-int RetinaFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Retina face only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
+RetinaFace::RetinaFace(PROCESS process) : process_(process) {
   std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
   for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = 1;
+    m_preprocess_param[0].factor[i] = 1;
     if (this->process_ == PYTORCH) {
-      (*data)[0].mean[i] = mean[i];
+      m_preprocess_param[0].mean[i] = mean[i];
     }
   }
   if (this->process_ == PYTORCH) {
-    (*data)[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
+    m_preprocess_param[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
   }
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
 }
 
 int RetinaFace::onModelOpened() {

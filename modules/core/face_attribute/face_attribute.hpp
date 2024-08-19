@@ -16,7 +16,6 @@ class FaceAttribute final : public Core {
                            uint32_t stride, cvtdl_face_info_t *p_face_info);
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;
   virtual int onModelClosed() override;
   void outputParser(cvtdl_face_info_t *face_info);

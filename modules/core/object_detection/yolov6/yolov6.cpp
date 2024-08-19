@@ -63,10 +63,10 @@ Yolov6::Yolov6() {
   // defalut param
 
   for (int i = 0; i < 3; i++) {
-    preprocess_param_.factor[i] = 0.003922;
-    preprocess_param_.mean[i] = 0.0;
+    m_preprocess_param[0].factor[i] = 0.003922;
+    m_preprocess_param[0].mean[i] = 0.0;
   }
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   alg_param_.cls = 80;
 }
 

@@ -8,13 +8,12 @@ namespace cvitdl {
 
 class RetinaFace final : public FaceDetectionBase {
  public:
-  RetinaFace(PROCESS process) : process_(process){};
+  RetinaFace(PROCESS process);
   ~RetinaFace(){};
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *meta) override;
   bool allowExportChannelAttribute() const override { return true; }
 
  private:
-  int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   int onModelOpened() override;
   void outputParser(int image_width, int image_height, int frame_width, int frame_height,
                     cvtdl_face_t *meta);

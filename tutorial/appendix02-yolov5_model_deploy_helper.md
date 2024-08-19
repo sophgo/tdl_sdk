@@ -352,37 +352,33 @@ model_deploy.py \
 预处理设置的结构体为`Yolov5PreParam`
 
 ```c++
-/** @struct cvtdl_pre_param_t
+/** @struct InputPreParam
  *  @ingroup core_cvitdlcore
  *  @brief Config the yolov5 detection preprocess.
- *  @var cvtdl_pre_param_t::factor
+ *  @var InputPreParam::factor
  *  Preprocess factor, one dimension matrix, r g b channel
- *  @var cvtdl_pre_param_t::mean
+ *  @var InputPreParam::mean
  *  Preprocess mean, one dimension matrix, r g b channel
- *  @var cvtdl_pre_param_t::rescale_type
+ *  @var InputPreParam::rescale_type
  *  Preprocess config, vpss rescale type config
- *  @var cvtdl_pre_param_t::pad_reverse
- *  Preprocess padding config
- *  @var cvtdl_pre_param_t::keep_aspect_ratio
+ *  @var InputPreParam::keep_aspect_ratio
  *  Preprocess config quantize scale
- *  @var cvtdl_pre_param_t::use_crop
+ *  @var InputPreParam::use_crop
  *  Preprocess config, config crop
- *  @var cvtdl_pre_param_t:: resize_method
+ *  @var InputPreParam:: resize_method
  *  Preprocess resize method config
- *  @var cvtdl_pre_param_t::format
+ *  @var InputPreParam::format
  *  Preprocess pixcel format config
  */
 typedef struct {
   float factor[3];
   float mean[3];
   meta_rescale_type_e rescale_type;
-  bool pad_reverse;
   bool keep_aspect_ratio;
-  bool use_quantize_scale;
   bool use_crop;
   VPSS_SCALE_COEF_E resize_method;
   PIXEL_FORMAT_E format;
-} cvtdl_pre_param_t;
+} InputPreParam;
 ```
 
 yolov5算法中设置的结构体为`YOLOV5AlgParam`
@@ -416,10 +412,10 @@ typedef struct {
 
 以下是一个简单的设置案例:
 
-* 初始化预处理设置`cvtdl_pre_param_t`以及yolov5模型设置`cvtdl_det_algo_param_t`，使用`CVI_TDL_Set_YOLOV5_Param`传入设置的参数
+* 初始化预处理设置`InputPreParam`以及yolov5模型设置`cvtdl_det_algo_param_t`，使用`CVI_TDL_Set_YOLOV5_Param`传入设置的参数
   * yolov5是**anchor-based**的检测算法，为了方便使用，开放了anchor自定义设置，在设置`cvtdl_det_algo_param_t`中，需要注意`anchors`和`strides`的顺序需要一一对应，否则会导致推理结果出现错误
   * 另外支持自定义分类数量修改，如果修改了模型的输出分类数量，需要设置`YolovAlgParam.cls`为修改后的分类数量
-  * `cvtdl_pre_param_t`以及`cvtdl_det_algo_param_t`在下列代码中出现的属性不能为空
+  * `InputPreParam`以及`cvtdl_det_algo_param_t`在下列代码中出现的属性不能为空
 
 * 然后打开模型 `CVI_TDL_OpenModel`
 * 再打开模型之后可以设置对应的置信度和nsm阈值：
@@ -428,12 +424,11 @@ typedef struct {
 
 ```c++
 // yolo preprocess setup
-cvtdl_pre_param_t p_preprocess_cfg;
+InputPreParam p_preprocess_cfg;
 for (int i = 0; i < 3; i++) {
     p_preprocess_cfg.factor[i] = 0.003922;
     p_preprocess_cfg.mean[i] = 0.0;
 }
-p_preprocess_cfg.use_quantize_scale = true;
 p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
 // setup yolov5 param

@@ -17,7 +17,6 @@ if("${CVI_PLATFORM}" STREQUAL "CV186X")
   add_subdirectory(isp_image_classification)
 endif()
   add_subdirectory(core)
-  add_subdirectory(custom)
   add_subdirectory(utils)
   add_subdirectory(face_attribute)
 
@@ -79,7 +78,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core
       set(CORE_SRCS cvi_tdl_types_mem.cpp
               cvi_tdl_rescale_bbox.cpp
               cvi_tdl_utils.cpp
-              cvi_tdl_custom.cpp
               ${CORE_INTERFACE})
 
 project(cvi_tdl_core)

@@ -12,7 +12,6 @@ class FaceQuality final : public Core {
   int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta, bool *skip);
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;
   virtual int onModelClosed() override;
   CVI_S32 allocateION();

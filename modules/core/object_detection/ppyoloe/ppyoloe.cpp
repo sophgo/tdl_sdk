@@ -128,11 +128,11 @@ PPYoloE::PPYoloE() {
   float std[3] = {58.395, 57.12, 57.375};
 
   for (int i = 0; i < 3; i++) {
-    preprocess_param_.mean[i] = mean[i] / std[i];
-    preprocess_param_.factor[i] = 1.0 / std[i];
+    m_preprocess_param[0].mean[i] = mean[i] / std[i];
+    m_preprocess_param[0].factor[i] = 1.0 / std[i];
   }
 
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   alg_param_.cls = 80;
 }
 

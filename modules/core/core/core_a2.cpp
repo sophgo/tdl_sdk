@@ -13,6 +13,16 @@ Core::Core(CVI_MEM_TYPE_E input_mem_type) {
   } else {
     use_mmap = true;
   }
+
+  InputPreParam first_in_pre_param;
+  std::fill(std::begin(first_in_pre_param.factor), std::end(first_in_pre_param.factor), 0.0f);
+  std::fill(std::begin(first_in_pre_param.mean), std::end(first_in_pre_param.mean), 0.0f);
+  first_in_pre_param.keep_aspect_ratio = true;
+  first_in_pre_param.use_crop = false;
+  first_in_pre_param.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  first_in_pre_param.rescale_type = RESCALE_CENTER;
+  first_in_pre_param.resize_method = VPSS_SCALE_COEF_BICUBIC;
+  m_preprocess_param.emplace_back(first_in_pre_param);
 }
 
 Core::Core() : Core(CVI_MEM_SYSTEM) {}
@@ -139,14 +149,9 @@ int Core::modelOpen(const char *filepath) {
 
 void Core::input_preprocess_config(const bm_net_info_t *net_info,
                                    std::vector<VPSSConfig> &m_vpss_config) {
-  std::vector<InputPreprecessSetup> data(mp_mi->in.num);
+  bool use_quantize_scale;
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
-    data[i].use_quantize_scale = net_info->input_scales[i] == 1 ? false : true;
-  }
-
-  auto ret = setupInputPreprocess(&data);
-  if (ret != CVI_TDL_SUCCESS) {
-    LOGE("return failed in setupInputPreprocess\n");
+    use_quantize_scale = net_info->input_scales[i] == 1 ? false : true;
   }
 
   auto &stage = net_info->stages[0];
@@ -154,16 +159,16 @@ void Core::input_preprocess_config(const bm_net_info_t *net_info,
   constexpr float factor_limit = 8191.f / 8192;
 
   for (auto i = 0; i < mp_mi->in.num; i++) {
-    if (data[i].use_quantize_scale) {
+    if (use_quantize_scale) {
       float quant_scale = net_info->input_scales[i];
 
       for (uint32_t j = 0; j < 3; j++) {
-        data[i].factor[j] *= quant_scale;
-        data[i].mean[j] *= quant_scale;
+        m_preprocess_param[i].factor[j] *= quant_scale;
+        m_preprocess_param[i].mean[j] *= quant_scale;
 
-        if (data[i].factor[j] > factor_limit) {
-          LOGW("factor[%d] is bigger than limit: %f\n", i, data[i].factor[j]);
-          data[i].factor[j] = factor_limit;
+        if (m_preprocess_param[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, m_preprocess_param[i].factor[j]);
+          m_preprocess_param[i].factor[j] = factor_limit;
         }
       }
     }
@@ -174,19 +179,19 @@ void Core::input_preprocess_config(const bm_net_info_t *net_info,
     auto width = stage.input_shapes->dims[3];
     vcfg.frame_type = CVI_FRAME_PLANAR;
 
-    vcfg.rescale_type = data[i].rescale_type;
-    vcfg.crop_attr.bEnable = data[i].use_crop;
+    vcfg.rescale_type = m_preprocess_param[i].rescale_type;
+    vcfg.crop_attr.bEnable = m_preprocess_param[i].use_crop;
 
     if (net_info->input_dtypes[i] == BM_UINT8) {
-      data[i].format = PIXEL_FORMAT_UINT8_C3_PLANAR;
+      m_preprocess_param[i].format = PIXEL_FORMAT_UINT8_C3_PLANAR;
     }
-
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, data[i].format, data[i].factor, data[i].mean,
-                       data[i].pad_reverse);
-    if (!data[i].keep_aspect_ratio) {
+    bool pad_reverse = false;
+    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, m_preprocess_param[i].format,
+                       m_preprocess_param[i].factor, m_preprocess_param[i].mean, pad_reverse);
+    if (!m_preprocess_param[i].keep_aspect_ratio) {
       vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
     }
-    vcfg.chn_coeff = data[i].resize_method;
+    vcfg.chn_coeff = m_preprocess_param[i].resize_method;
     m_vpss_config.push_back(vcfg);
   }
 }
@@ -415,8 +420,6 @@ int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32
 }
 
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
-
-int Core::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) { return 0; }
 
 CVI_SHAPE Core::getInputShape(size_t index) { return getInputTensorInfo(index).shape; }
 
