@@ -11,21 +11,15 @@
 
 namespace cvitdl {
 
-int ScrFDFace::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Retina face only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
+ScrFDFace::ScrFDFace() {
   std::vector<float> means = {127.5, 127.5, 127.5};
   std::vector<float> scales = {1.0 / 128, 1.0 / 128, 1.0 / 128};
 
   for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = scales[i];
-    (*data)[0].mean[i] = means[i] * scales[i];
+    m_preprocess_param[0].factor[i] = scales[i];
+    m_preprocess_param[0].mean[i] = means[i] * scales[i];
   }
-  (*data)[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
+  m_preprocess_param[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
 }
 
 int ScrFDFace::onModelOpened() {

@@ -21,29 +21,18 @@
 
 namespace cvitdl {
 
-LSTR::LSTR() : Core(CVI_MEM_DEVICE) {}
-LSTR::~LSTR() {}
+LSTR::LSTR() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = 0.014598;
+  m_preprocess_param[0].factor[1] = 0.0150078;
+  m_preprocess_param[0].factor[2] = 0.0142201;
 
-int LSTR::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("LSTR only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  (*data)[0].factor[0] = 0.014598;
-  (*data)[0].factor[1] = 0.0150078;
-  (*data)[0].factor[2] = 0.0142201;
-
-  (*data)[0].mean[0] = 1.79226;
-  (*data)[0].mean[1] = 1.752097;
-  (*data)[0].mean[2] = 1.48022;
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].keep_aspect_ratio = false;
-
-  std::cout << "setupInputPreprocess done" << std::endl;
-  return CVI_TDL_SUCCESS;
+  m_preprocess_param[0].mean[0] = 1.79226;
+  m_preprocess_param[0].mean[1] = 1.752097;
+  m_preprocess_param[0].mean[2] = 1.48022;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].keep_aspect_ratio = false;
 }
+LSTR::~LSTR() {}
 
 int LSTR::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_lane_t *lane_meta) {
   lane_meta->height = frame->stVFrame.u32Height;

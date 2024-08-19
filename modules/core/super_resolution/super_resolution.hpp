@@ -12,7 +12,6 @@ class SuperResolution final : public Core {
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_sr_feature *srfeature);
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   void outputParser(VIDEO_FRAME_INFO_S *dstFrame);
 };
 }  // namespace cvitdl

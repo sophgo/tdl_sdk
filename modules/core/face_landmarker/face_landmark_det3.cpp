@@ -18,7 +18,15 @@
 
 namespace cvitdl {
 
-FaceLandmarkDet3::FaceLandmarkDet3() : Core(CVI_MEM_DEVICE) {}
+FaceLandmarkDet3::FaceLandmarkDet3() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = 0.0078125;
+  m_preprocess_param[0].factor[1] = 0.0078125;
+  m_preprocess_param[0].factor[2] = 0.0078125;
+  m_preprocess_param[0].mean[0] = 0.99609375;
+  m_preprocess_param[0].mean[1] = 0.99609375;
+  m_preprocess_param[0].mean[2] = 0.99609375;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+}
 
 int FaceLandmarkDet3::onModelOpened() {
   CVI_SHAPE shape = getInputShape(0);
@@ -45,23 +53,6 @@ int FaceLandmarkDet3::onModelOpened() {
 }
 
 FaceLandmarkDet3::~FaceLandmarkDet3() {}
-
-int FaceLandmarkDet3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("FaceLandmarkDet3 only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  (*data)[0].factor[0] = 0.0078125;
-  (*data)[0].factor[1] = 0.0078125;
-  (*data)[0].factor[2] = 0.0078125;
-  (*data)[0].mean[0] = 0.99609375;
-  (*data)[0].mean[1] = 0.99609375;
-  (*data)[0].mean[2] = 0.99609375;
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
-}
 
 int FaceLandmarkDet3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *facemeta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};

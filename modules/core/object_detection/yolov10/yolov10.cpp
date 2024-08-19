@@ -50,23 +50,15 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 
-YoloV10Detection::YoloV10Detection() {
-  // Default value
-  for (int i = 0; i < 3; i++) {
-    preprocess_param_.factor[i] = 0.003922;
-    preprocess_param_.mean[i] = 0.0;
-  }
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  alg_param_.cls = 80;
-}
+YoloV10Detection::YoloV10Detection() : YoloV10Detection(std::make_pair(64, 80)) {}
 
 YoloV10Detection::YoloV10Detection(PAIR_INT yolov10_pair) {
   for (int i = 0; i < 3; i++) {
-    preprocess_param_.factor[i] = 0.003922;
-    preprocess_param_.mean[i] = 0.0;
+    m_preprocess_param[0].factor[i] = 0.003922;
+    m_preprocess_param[0].mean[i] = 0.0;
   }
-  preprocess_param_.rescale_type = RESCALE_CENTER;
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].rescale_type = RESCALE_CENTER;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   m_box_channel_ = yolov10_pair.first;
   m_cls_channel_ = yolov10_pair.second;
@@ -125,23 +117,6 @@ int YoloV10Detection::onModelOpened() {
     }
   }
 
-  return CVI_TDL_SUCCESS;
-}
-
-int YoloV10Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("YoloV10Detection only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = preprocess_param_.factor[i];
-    (*data)[0].mean[i] = preprocess_param_.mean[i];
-  }
-
-  (*data)[0].rescale_type = preprocess_param_.rescale_type;
-  (*data)[0].format = preprocess_param_.format;
-  (*data)[0].use_quantize_scale = true;
   return CVI_TDL_SUCCESS;
 }
 

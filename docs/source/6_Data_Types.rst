@@ -1962,16 +1962,8 @@ Yolov5PreParam
      - 缩放模式
 
    * - bool\*
-     - pad_reverse
-     - 反向填充
-
-   * - bool\*
      - keep_aspect_ratio
      - 保持宽高比例缩放
-
-   * - bool\*
-     - use_quantize_scale
-     - 量化缩放
 
    * - bool\*
      - use_crop

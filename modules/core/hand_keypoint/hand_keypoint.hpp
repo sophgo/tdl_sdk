@@ -11,6 +11,5 @@ class HandKeypoint final : public Core {
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_handpose21_meta_ts *meta);
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 };
 }  // namespace cvitdl

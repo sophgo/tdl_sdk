@@ -7,14 +7,18 @@
 namespace cvitdl {
 
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
-#ifndef CONFIG_ALIOS
   mp_mi = std::make_unique<CvimodelInfo>();
   mp_mi->conf = {.debug_mode = false, .input_mem_type = input_mem_type};
-#else
-  mp_mi = std::unique_ptr<CvimodelInfo>(new CvimodelInfo);
-  mp_mi->conf.debug_mode = false;
-  mp_mi->conf.input_mem_type = input_mem_type;
-#endif
+
+  InputPreParam first_in_pre_param;
+  std::fill(std::begin(first_in_pre_param.factor), std::end(first_in_pre_param.factor), 0.0f);
+  std::fill(std::begin(first_in_pre_param.mean), std::end(first_in_pre_param.mean), 0.0f);
+  first_in_pre_param.keep_aspect_ratio = true;
+  first_in_pre_param.use_crop = false;
+  first_in_pre_param.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  first_in_pre_param.rescale_type = RESCALE_CENTER;
+  first_in_pre_param.resize_method = VPSS_SCALE_COEF_BICUBIC;
+  m_preprocess_param.emplace_back(first_in_pre_param);
 }
 
 Core::Core() : Core(CVI_MEM_SYSTEM) {}
@@ -71,15 +75,11 @@ int Core::modelOpen(const char *filepath) {
   CVI_TENSOR *input =
       CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   // Assigning default values.
-  std::vector<InputPreprecessSetup> data(mp_mi->in.num);
+  bool use_quantize_scale;
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     CVI_TENSOR *tensor = mp_mi->in.tensors + i;
     float quant_scale = CVI_NN_TensorQuantScale(tensor);
-    if (quant_scale == 0 || quant_scale == 1.0) {
-      data[i].use_quantize_scale = false;
-    } else {
-      data[i].use_quantize_scale = true;
-    }
+    use_quantize_scale = quant_scale != 0 || quant_scale != 1.0;
 
     if (((mp_mi->in.tensors[i].shape.dim[3] % 64) != 0)) {
       aligned_input = false;
@@ -97,24 +97,23 @@ int Core::modelOpen(const char *filepath) {
     LOGI("parse model with aligned input tensor\n");
   }
 
-  CLOSE_MODEL_IF_FAILED(setupInputPreprocess(&data), "Failed to setup preprocess setting.");
   CLOSE_MODEL_IF_FAILED(onModelOpened(), "return failed in onModelOpened");
 
   m_vpss_config.clear();
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
-    if (data[i].use_quantize_scale) {
+    if (use_quantize_scale) {
       CVI_TENSOR *tensor = mp_mi->in.tensors + i;
       float quant_scale = CVI_NN_TensorQuantScale(tensor);
       for (uint32_t j = 0; j < 3; j++) {
-        data[i].factor[j] *= quant_scale;
-        data[i].mean[j] *= quant_scale;
+        m_preprocess_param[i].factor[j] *= quant_scale;
+        m_preprocess_param[i].mean[j] *= quant_scale;
       }
       // FIXME: Behavior will changed in 1822.
       float factor_limit = 8191.f / 8192;
       for (uint32_t j = 0; j < 3; j++) {
-        if (data[i].factor[j] > factor_limit) {
-          LOGW("factor[%d] is bigger than limit: %f\n", i, data[i].factor[j]);
-          data[i].factor[j] = factor_limit;
+        if (m_preprocess_param[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, m_preprocess_param[i].factor[j]);
+          m_preprocess_param[i].factor[j] = factor_limit;
         }
       }
     }
@@ -131,16 +130,16 @@ int Core::modelOpen(const char *filepath) {
       height = input->shape.dim[2];
       vcfg.frame_type = CVI_FRAME_PLANAR;
     }
-    vcfg.rescale_type = data[i].rescale_type;
-    vcfg.crop_attr.bEnable = data[i].use_crop;
-
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, data[i].format, data[i].factor, data[i].mean,
-                       data[i].pad_reverse);
-    if (!data[i].keep_aspect_ratio) {
+    vcfg.rescale_type = m_preprocess_param[i].rescale_type;
+    vcfg.crop_attr.bEnable = m_preprocess_param[i].use_crop;
+    bool pad_reverse = false;
+    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, m_preprocess_param[i].format,
+                       m_preprocess_param[i].factor, m_preprocess_param[i].mean, pad_reverse);
+    if (!m_preprocess_param[i].keep_aspect_ratio) {
       vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
     }
-    vcfg.chn_coeff = data[i].resize_method;
-    m_vpss_config.push_back(vcfg);
+    vcfg.chn_coeff = m_preprocess_param[i].resize_method;
+    m_vpss_config.emplace_back(vcfg);
   }
   return CVI_TDL_SUCCESS;
 }
@@ -321,8 +320,6 @@ int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32
 }
 
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
-
-int Core::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) { return CVI_TDL_SUCCESS; }
 
 CVI_SHAPE Core::getInputShape(size_t index) { return getInputTensorInfo(index).shape; }
 

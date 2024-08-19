@@ -23,28 +23,17 @@
 
 namespace cvitdl {
 
-FaceAttribute_cls::FaceAttribute_cls() : Core(CVI_MEM_DEVICE) {}
-FaceAttribute_cls::~FaceAttribute_cls() {}
-
-int FaceAttribute_cls::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Data only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
+FaceAttribute_cls::FaceAttribute_cls() : Core(CVI_MEM_DEVICE) {
   for (uint32_t i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = FACE_ATTRIBUTE_CLS_FACTOR;
-    (*data)[0].mean[i] = FACE_ATTRIBUTE_CLS_MEAN;
+    m_preprocess_param[0].factor[i] = FACE_ATTRIBUTE_CLS_FACTOR;
+    m_preprocess_param[0].mean[i] = FACE_ATTRIBUTE_CLS_MEAN;
   }
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].keep_aspect_ratio = true;
-  (*data)[0].rescale_type = RESCALE_NOASPECT;
-  (*data)[0].use_crop = true;
-
-  std::cout << "setupInputPreprocess done" << std::endl;
-  return CVI_TDL_SUCCESS;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].keep_aspect_ratio = true;
+  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
+  m_preprocess_param[0].use_crop = true;
 }
+FaceAttribute_cls::~FaceAttribute_cls() {}
 
 int FaceAttribute_cls::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face_attribute_cls_meta) {
   uint32_t img_width = frame->stVFrame.u32Width;

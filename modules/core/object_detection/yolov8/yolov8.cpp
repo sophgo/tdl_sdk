@@ -50,22 +50,14 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 
-YoloV8Detection::YoloV8Detection() {
-  // Default value
-  for (int i = 0; i < 3; i++) {
-    preprocess_param_.factor[i] = 0.003922;
-    preprocess_param_.mean[i] = 0.0;
-  }
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  alg_param_.cls = 0;
-}
+YoloV8Detection::YoloV8Detection() : YoloV8Detection(std::make_pair(64, 80)) {}
 
 YoloV8Detection::YoloV8Detection(PAIR_INT yolov8_pair) {
   for (int i = 0; i < 3; i++) {
-    preprocess_param_.factor[i] = 0.003922;
-    preprocess_param_.mean[i] = 0.0;
+    m_preprocess_param[0].factor[i] = 0.003922;
+    m_preprocess_param[0].mean[i] = 0.0;
   }
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   m_box_channel_ = yolov8_pair.first;
   alg_param_.cls = yolov8_pair.second;

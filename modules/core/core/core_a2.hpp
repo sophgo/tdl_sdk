@@ -64,18 +64,6 @@ struct TensorInfo {
   float qscale;
 };
 
-struct InputPreprecessSetup {
-  float factor[3] = {0};
-  float mean[3] = {0};
-  meta_rescale_type_e rescale_type = RESCALE_CENTER;
-  bool pad_reverse = false;
-  bool keep_aspect_ratio = true;
-  bool use_quantize_scale = false;
-  bool use_crop = false;
-  VPSS_SCALE_COEF_E resize_method = VPSS_SCALE_COEF_BICUBIC;
-  PIXEL_FORMAT_E format = PIXEL_FORMAT_RGB_888_PLANAR;
-};
-
 typedef enum {
   CVI_NN_PIXEL_RGB_PACKED = 0,
   CVI_NN_PIXEL_BGR_PACKED = 1,
@@ -97,10 +85,10 @@ typedef CVI_NN_PIXEL_FORMAT_E CVI_FRAME_TYPE;
 
 struct VPSSConfig {
   meta_rescale_type_e rescale_type = RESCALE_CENTER;
-  VPSS_CROP_INFO_S crop_attr;
+  CVI_FRAME_TYPE frame_type = CVI_FRAME_PLANAR;
   VPSS_SCALE_COEF_E chn_coeff = VPSS_SCALE_COEF_BICUBIC;
   VPSS_CHN_ATTR_S chn_attr;
-  CVI_FRAME_TYPE frame_type = CVI_FRAME_PLANAR;
+  VPSS_CROP_INFO_S crop_attr;
 };
 
 class Core {
@@ -130,6 +118,8 @@ class Core {
   virtual void setModelThreshold(const float &threshold) { m_model_threshold = threshold; };
   const float &getModelNmsThreshold() { return m_model_nms_threshold; }
   virtual void setModelNmsThreshold(const float &threshold) { m_model_nms_threshold = threshold; };
+  const InputPreParam &get_preparam() { return m_preprocess_param[0]; }
+  virtual void set_preparam(const InputPreParam &pre_param) { m_preprocess_param[0] = pre_param; }
 
   bool isInitialized();
   void cleanupError();
@@ -148,8 +138,6 @@ class Core {
   VpssEngine *get_vpss_instance() { return mp_vpss_inst; }
 
  protected:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data);
-
   virtual int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                              VPSSConfig &config);
   int run(std::vector<VIDEO_FRAME_INFO_S *> &frames);
@@ -218,6 +206,7 @@ class Core {
 
   void setInputMemType(CVI_MEM_TYPE_E type) { mp_mi->conf.input_mem_type = type; }
   std::vector<VPSSConfig> m_vpss_config;
+  std::vector<InputPreParam> m_preprocess_param;
 
   // Post processing related control
   float m_model_threshold = DEFAULT_MODEL_THRESHOLD;

@@ -20,7 +20,17 @@
 
 namespace cvitdl {
 
-Polylanenet::Polylanenet() : Core(CVI_MEM_DEVICE) {}
+Polylanenet::Polylanenet() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = 0.01712475;
+  m_preprocess_param[0].factor[1] = 0.0175070;
+  m_preprocess_param[0].factor[2] = 0.0174291;
+
+  m_preprocess_param[0].mean[0] = 2.117903;
+  m_preprocess_param[0].mean[1] = 2.035714;
+  m_preprocess_param[0].mean[2] = 1.804444;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].rescale_type = RESCALE_RB;
+}
 Polylanenet::~Polylanenet() {}
 
 float Polylanenet::ld_sigmoid(float x) { return 1.0 / (1.0 + exp(-x)); }
@@ -42,27 +52,6 @@ void dump_frame(VIDEO_FRAME_INFO_S *frame, FILE *fp) {
     printf("towrite channel len: %d, %d\n", frame->stVFrame.u32Length[i], i);
     fwrite(paddr, frame->stVFrame.u32Length[i], 1, fp);
   }
-}
-
-int Polylanenet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Polylanenet only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = 0.01712475;
-  (*data)[0].factor[1] = 0.0175070;
-  (*data)[0].factor[2] = 0.0174291;
-
-  (*data)[0].mean[0] = 2.117903;
-  (*data)[0].mean[1] = 2.035714;
-  (*data)[0].mean[2] = 1.804444;
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].rescale_type = RESCALE_RB;
-
-  std::cout << "setupInputPreprocess done" << std::endl;
-  return CVI_TDL_SUCCESS;
 }
 
 int Polylanenet::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_lane_t *lane_meta) {

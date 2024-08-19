@@ -31,12 +31,11 @@ Hrnet::Hrnet() {
   const float MODEL_MEAN_RGB[3] = {0.485 * 255.0, 0.456 * 255.0, 0.406 * 255.0};
   for (int i = 0; i < 3; i++) {
     // default param
-    preprocess_param_.factor[i] = 1.0 / STD_RGB[i];
-    preprocess_param_.mean[i] = MODEL_MEAN_RGB[i] / STD_RGB[i];
+    m_preprocess_param[0].factor[i] = 1.0 / STD_RGB[i];
+    m_preprocess_param[0].mean[i] = MODEL_MEAN_RGB[i] / STD_RGB[i];
   }
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  preprocess_param_.rescale_type = RESCALE_NOASPECT;
-  use_crop_ = true;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
   m_model_threshold = 0.3f;
 }
 

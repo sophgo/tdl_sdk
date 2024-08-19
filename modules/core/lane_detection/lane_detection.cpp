@@ -67,26 +67,17 @@ BezierLaneNet::BezierLaneNet() : Core(CVI_MEM_DEVICE) {
       c_matrix[i][k] = pow(t, k) * pow(1 - t, 3 - k) * sample_comb(k);
     }
   }
+  m_preprocess_param[0].factor[0] = static_cast<float>(FACTOR_R);
+  m_preprocess_param[0].factor[1] = static_cast<float>(FACTOR_G);
+  m_preprocess_param[0].factor[2] = static_cast<float>(FACTOR_B);
+  m_preprocess_param[0].mean[0] = static_cast<float>(MEAN_R);
+  m_preprocess_param[0].mean[1] = static_cast<float>(MEAN_G);
+  m_preprocess_param[0].mean[2] = static_cast<float>(MEAN_B);
+  // keep_aspect_ratio = true;
+  m_preprocess_param[0].rescale_type = RESCALE_RB;
 }
 
 BezierLaneNet::~BezierLaneNet() {}
-
-int BezierLaneNet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("BezierLaneNet only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = static_cast<float>(FACTOR_R);
-  (*data)[0].factor[1] = static_cast<float>(FACTOR_G);
-  (*data)[0].factor[2] = static_cast<float>(FACTOR_B);
-  (*data)[0].mean[0] = static_cast<float>(MEAN_R);
-  (*data)[0].mean[1] = static_cast<float>(MEAN_G);
-  (*data)[0].mean[2] = static_cast<float>(MEAN_B);
-  (*data)[0].use_quantize_scale = true;
-  // keep_aspect_ratio = true;
-  (*data)[0].rescale_type = RESCALE_RB;
-  return CVI_TDL_SUCCESS;
-}
 
 int BezierLaneNet::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_lane_t *lane_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};

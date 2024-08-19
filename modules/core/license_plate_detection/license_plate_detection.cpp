@@ -23,29 +23,20 @@
 
 namespace cvitdl {
 
-LicensePlateDetection::LicensePlateDetection() : Core(CVI_MEM_DEVICE) {}
+LicensePlateDetection::LicensePlateDetection() : Core(CVI_MEM_DEVICE) {
+  for (int i = 0; i < 3; i++) {
+    /* VPSS clip image to 128, we divide it by 2 first, then multiply by 2 in cvimodel preprocess */
+    m_preprocess_param[0].factor[i] = 0.5;
+    m_preprocess_param[0].mean[i] = 0.0;
+  }
+  m_preprocess_param[0].rescale_type = RESCALE_RB;
+  m_preprocess_param[0].use_crop = true;
+  m_preprocess_param[0].keep_aspect_ratio = true;
+}
 
 LicensePlateDetection::~LicensePlateDetection() {}
 
-int LicensePlateDetection::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-#if DEBUG_LICENSE_PLATE_DETECTION
-  std::cout << "LicensePlateDetection::setupInputPreprocess" << std::endl;
-#endif
-  if (data->size() != 1) {
-    LOGE("LicensePlateDetection only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  for (int i = 0; i < 3; i++) {
-    /* VPSS clip image to 128, we divide it by 2 first, then multiply by 2 in cvimodel preprocess */
-    (*data)[0].factor[i] = 0.5;
-    // (*data)[0].factor[i] = 1.0;
-    (*data)[0].mean[i] = 0.0;
-  }
-  (*data)[0].rescale_type = RESCALE_RB;
-  (*data)[0].use_quantize_scale = false;
-  (*data)[0].use_crop = true;
-  (*data)[0].keep_aspect_ratio = true;
-
+int LicensePlateDetection::onModelOpened() {
   /* set model config */
   CVI_SHAPE in_tensor_shape = getInputShape("input_raw");
   vehicle_h = static_cast<int>(in_tensor_shape.dim[2]);

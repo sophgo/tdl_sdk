@@ -16,7 +16,6 @@ class MotionSegmentation final : public Core {
   virtual bool allowExportChannelAttribute() const { return true; };
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   // virtual int vpssPreprocess(VIDEO_FRAME_INFO_S* srcFrame, VIDEO_FRAME_INFO_S* dstFrame,
   //                             VPSSConfig& vpss_config) override;
 };

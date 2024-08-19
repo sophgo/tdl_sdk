@@ -496,31 +496,6 @@ typedef struct {
   cvtdl_handpose21_meta_t *info;
 } cvtdl_handpose21_meta_ts;
 
-/** @struct cvtdl_pre_param_t
- *  @ingroup core_cvitdlcore
- *  @brief Config the detection model preprocess.
- *  @var cvtdl_pre_param_t::factor
- *  Preprocess factor, one dimension matrix, r g b channel
- *  @var cvtdl_pre_param_t::mean
- *  Preprocess mean, one dimension matrix, r g b channel
- *  @var cvtdl_pre_param_t::rescale_type
- *  Preprocess config, vpss rescale type config
- *  @var cvtdl_pre_param_t::keep_aspect_ratio
- *  Preprocess config  scale
- *  @var cvtdl_pre_param_t:: resize_method
- *  Preprocess resize method config
- *  @var cvtdl_pre_param_t::format
- *  Preprocess pixcel format config
- */
-typedef struct {
-  float factor[3];
-  float mean[3];
-  meta_rescale_type_e rescale_type;
-  bool keep_aspect_ratio;
-  VPSS_SCALE_COEF_E resize_method;
-  PIXEL_FORMAT_E format;
-} cvtdl_pre_param_t;
-
 /** @struct cvtdl_det_algo_param_t
  *  @ingroup core_cvitdlcore
  *  @brief Config the detection algorithm parameters.
@@ -556,38 +531,6 @@ typedef struct {
   int fmax;
   bool fix;
 } cvitdl_sound_param;
-
-/** @struct VpssPreParam
- *  @ingroup core_cvitdlcore
- *  @brief Config the yolo detection preprocess.
- *  @var VpssPreParam::factor
- *  Preprocess factor, one dimension matrix, r g b channel
- *  @var VpssPreParam::mean
- *  Preprocess mean, one dimension matrix, r g b channel
- *  @var VpssPreParam::rescale_type
- *  Preprocess config, vpss rescale type config
- *  @var VpssPreParam::pad_reverse
- *  Preprocess padding config
- *  @var VpssPreParam::keep_aspect_ratio
- *  Preprocess config quantize scale
- *  @var VpssPreParam::use_crop
- *  Preprocess config, config crop
- *  @var VpssPreParam:: resize_method
- *  Preprocess resize method config
- *  @var VpssPreParam::format
- *  Preprocess pixcel format config
- */
-typedef struct {
-  float factor[3];
-  float mean[3];
-  meta_rescale_type_e rescale_type;
-  bool pad_reverse;
-  bool keep_aspect_ratio;
-  bool use_quantize_scale;
-  bool use_crop;
-  VPSS_SCALE_COEF_E resize_method;
-  PIXEL_FORMAT_E format;
-} VpssPreParam;
 
 /** @struct cvtdl_class_meta_t
  * @ingroup core_cvitdlcore

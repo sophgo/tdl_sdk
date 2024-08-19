@@ -23,20 +23,14 @@ std::vector<std::string> CHARS = {
     "H",    "J",     "K",      "L",    "M",   "N",    "P",    "Q",    "R",     "S",
     "T",    "U",     "V",      "W",    "X",   "Y",    "Z",    "I",    "O",     "-"};
 
-int LicensePlateRecognitionV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("LicensePlateRecognitionV2 only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
+LicensePlateRecognitionV2::LicensePlateRecognitionV2()
+    : LicensePlateRecognitionBase(CVI_MEM_SYSTEM) {
   for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = SCALE;
-    (*data)[0].mean[i] = MEAN;
+    m_preprocess_param[0].factor[i] = SCALE;
+    m_preprocess_param[0].mean[i] = MEAN;
   }
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].keep_aspect_ratio = false;
-
-  return CVI_TDL_SUCCESS;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].keep_aspect_ratio = false;
 }
 
 void LicensePlateRecognitionV2::greedy_decode(float *prebs) {

@@ -69,13 +69,12 @@ cvimodel转换操作可以参考[appendix02-yolov5_model_deploy_helper](./append
 
 提供预处理参数以及算法参数设置，其中参数设置：
 
-* `cvtdl_pre_param_t `输入预处理设置
+* `InputPreParam `输入预处理设置
 
   $y=(x-mean)\times factor$
 
   * factor 预处理方差的倒数
   * mean 预处理均值
-  * use_quantize_scale 预处理图片尺寸
   * format 图片格式
 
 * `cvtdl_det_algo_param_t`
@@ -91,14 +90,13 @@ cvimodel转换操作可以参考[appendix02-yolov5_model_deploy_helper](./append
 
 ```c++
 // setup preprocess
-cvtdl_pre_param_t p_preprocess_cfg;
+InputPreParam p_preprocess_cfg;
 
 for (int i = 0; i < 3; i++) {
     printf("asign val %d \n", i);
     p_preprocess_cfg.factor[i] = 0.003922;
     p_preprocess_cfg.mean[i] = 0.0;
 }
-p_preprocess_cfg.use_quantize_scale = true;
 p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
 printf("start yolov algorithm config \n");

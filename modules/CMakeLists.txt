@@ -24,7 +24,6 @@ add_subdirectory(test_and_eval)
 set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
   $<TARGET_OBJECTS:cvi_tdl_service>
   $<TARGET_OBJECTS:core>
-  $<TARGET_OBJECTS:custom>
   $<TARGET_OBJECTS:utils>
   $<TARGET_OBJECTS:face_attribute>
   $<TARGET_OBJECTS:face_attribute_cls>

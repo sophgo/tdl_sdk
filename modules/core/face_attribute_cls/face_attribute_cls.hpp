@@ -14,7 +14,6 @@ class FaceAttribute_cls final : public Core {
  private:
   // int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
   //                    VPSSConfig &vpss_config) override;
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 
   int outputParser(cvtdl_face_t *face_attribute_cls_meta);
 };

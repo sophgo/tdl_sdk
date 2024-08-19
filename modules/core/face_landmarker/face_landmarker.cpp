@@ -9,23 +9,15 @@
 
 namespace cvitdl {
 
-FaceLandmarker::FaceLandmarker() : Core(CVI_MEM_DEVICE) {}
+FaceLandmarker::FaceLandmarker() : Core(CVI_MEM_DEVICE) {
+  for (uint32_t i = 0; i < 3; i++) {
+    m_preprocess_param[0].factor[i] = 0.99;
+    m_preprocess_param[0].mean[i] = 0.0;
+  }
+  m_preprocess_param[0].use_crop = true;
+}
 
 FaceLandmarker::~FaceLandmarker() {}
-
-int FaceLandmarker::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Face attribute only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  for (uint32_t i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = 0.99;
-    (*data)[0].mean[i] = 0.0;
-  }
-  (*data)[0].use_quantize_scale = false;
-  (*data)[0].use_crop = true;
-  return CVI_TDL_SUCCESS;
-}
 
 int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {

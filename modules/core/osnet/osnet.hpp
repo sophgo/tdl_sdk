@@ -10,6 +10,5 @@ class OSNet final : public Core {
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *meta, int obj_idx = -1);
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
 };
 }  // namespace cvitdl

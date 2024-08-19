@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CHIPSET="${CHIP:=182x}"
+CHIPSET="${CHIP:=181x}"
 CHIPSET=$(echo ${CHIP} | tr '[:upper:]' '[:lower:]')
 
 print_usage() {

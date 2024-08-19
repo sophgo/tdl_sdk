@@ -18,7 +18,17 @@
 
 namespace cvitdl {
 
-FaceLandmarkerDet2::FaceLandmarkerDet2() : Core(CVI_MEM_DEVICE) {}
+FaceLandmarkerDet2::FaceLandmarkerDet2() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = 1 / 127.5;
+  m_preprocess_param[0].factor[1] = 1 / 127.5;
+  m_preprocess_param[0].factor[2] = 1 / 127.5;
+  m_preprocess_param[0].mean[0] = 1.0;
+  m_preprocess_param[0].mean[1] = 1.0;
+  m_preprocess_param[0].mean[2] = 1.0;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
+  m_preprocess_param[0].keep_aspect_ratio = false;
+}
 
 int FaceLandmarkerDet2::onModelOpened() {
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
@@ -40,25 +50,6 @@ int FaceLandmarkerDet2::onModelOpened() {
 }
 
 FaceLandmarkerDet2::~FaceLandmarkerDet2() {}
-
-int FaceLandmarkerDet2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("FaceLandmarkerDet2 only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  (*data)[0].factor[0] = 1 / 127.5;
-  (*data)[0].factor[1] = 1 / 127.5;
-  (*data)[0].factor[2] = 1 / 127.5;
-  (*data)[0].mean[0] = 1.0;
-  (*data)[0].mean[1] = 1.0;
-  (*data)[0].mean[2] = 1.0;
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].rescale_type = RESCALE_NOASPECT;
-  (*data)[0].keep_aspect_ratio = false;
-  return CVI_TDL_SUCCESS;
-}
 
 int FaceLandmarkerDet2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                                        VPSSConfig &vpss_config) {

@@ -58,10 +58,10 @@ static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int 
 Yolov5::Yolov5() {
   // default param
   for (int i = 0; i < 3; i++) {
-    preprocess_param_.factor[i] = 0.003922;
-    preprocess_param_.mean[i] = 0.0;
+    m_preprocess_param[0].factor[i] = 0.003922;
+    m_preprocess_param[0].mean[i] = 0.0;
   }
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   uint32_t *anchors = new uint32_t[18];
   uint32_t p_anchors[18] = {10, 13, 16,  30,  33, 23,  30,  61,  62,

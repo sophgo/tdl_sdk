@@ -16,8 +16,6 @@ class DetectionBase : public Core {
     return 0;
   }
 
-  virtual const cvtdl_pre_param_t &get_preparam() { return preprocess_param_; }
-  virtual void set_preparam(const cvtdl_pre_param_t &pre_param) { preprocess_param_ = pre_param; }
   virtual const cvtdl_det_algo_param_t &get_algparam() { return alg_param_; }
   virtual void set_algparam(const cvtdl_det_algo_param_t &alg_param);
 
@@ -29,13 +27,10 @@ class DetectionBase : public Core {
 
   virtual int onModelClosed() override { return CVI_TDL_SUCCESS; }
 
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
-
   virtual int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                              VPSSConfig &vpss_config) override;
 
  protected:
-  cvtdl_pre_param_t preprocess_param_;
   cvtdl_det_algo_param_t alg_param_;
 };
 }  // namespace cvitdl

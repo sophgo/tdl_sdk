@@ -28,23 +28,15 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 
-YoloV8Pose::YoloV8Pose() {
-  for (int i = 0; i < 3; i++) {
-    // default param
-    preprocess_param_.factor[i] = 1 / 255.f;
-    preprocess_param_.mean[i] = 0.0;
-  }
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  m_model_nms_threshold = 0.7;
-}
+YoloV8Pose::YoloV8Pose() : YoloV8Pose(std::make_tuple(64, 17, 1)) {}
 
 YoloV8Pose::YoloV8Pose(TUPLE_INT pose_pair) {
   for (int i = 0; i < 3; i++) {
     // default param
-    preprocess_param_.factor[i] = 1 / 255.f;
-    preprocess_param_.mean[i] = 0.0;
+    m_preprocess_param[0].factor[i] = 1 / 255.f;
+    m_preprocess_param[0].mean[i] = 0.0;
   }
-  preprocess_param_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   m_model_nms_threshold = 0.7;
   m_box_channel_ = std::get<0>(pose_pair);
   m_kpts_channel_ = std::get<1>(pose_pair) * 3;

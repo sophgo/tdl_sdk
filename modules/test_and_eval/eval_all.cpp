@@ -397,7 +397,7 @@ std::string run_image_yolov8_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   CVI_S32 ret;
   if (model_init == 0) {
     std::cout << "init model done\t";
-    cvtdl_pre_param_t preprocess_cfg =
+    InputPreParam preprocess_cfg =
         CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
 
     for (int i = 0; i < 3; i++) {

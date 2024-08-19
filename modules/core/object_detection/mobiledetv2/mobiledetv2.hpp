@@ -47,7 +47,6 @@ class MobileDetV2 final : public DetectionBase {
 
   explicit MobileDetV2(MobileDetV2::Category category, float iou_thresh = 0.5);
   ~MobileDetV2(){};
-  int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *meta) override;
   int onModelOpened() override;
   void select_classes(const std::vector<uint32_t> &selected_classes);
