@@ -44,7 +44,7 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup yolo algorithm preprocess
   cvtdl_det_algo_param_t yolov8_param =
       CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
-  yolov8_param.cls = 1;
+  yolov8_param.cls = 2;
 
   printf("setup yolov8 algorithm param \n");
   ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
@@ -61,12 +61,12 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   if (argc != 4) {
     printf(
-        "Usage: %s <fire model path> <input image directory list.txt> <output result "
+        "Usage: %s <fire_smoke model path> <input image directory list.txt> <output result "
         "directory/>.\n",
         argv[0]);
-    printf("fire model path: Path to fire cvimodel.\n");
-    printf("Input image directory: Directory containing input images for fire.\n");
-    printf("Output result directory: Directory to save fire feature.bin\n");
+    printf("fire_smoke model path: Path to fire_smoke cvimodel.\n");
+    printf("Input image directory: Directory containing input images for fire_smoke.\n");
+    printf("Output result directory: Directory to save fire_smoke feature.bin\n");
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
@@ -138,16 +138,18 @@ int main(int argc, char *argv[]) {
     std::string str_res;
     cvtdl_object_t obj_meta = {0};
 
-    CVI_TDL_Detection(tdl_handle, &rgb_frame, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, &obj_meta);
-    // struct timeval start_time, stop_time;
-    // gettimeofday(&start_time, NULL);
-    // for (int k=0; k<1000; k++) {
-    //   CVI_TDL_Detection(tdl_handle, &rgb_frame,
-    //   &obj_meta,CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
-    // }
-    // gettimeofday(&stop_time, NULL);
-    // printf("CVI_TDL_Detect_yolov8 Time use %f ms\n", (__get_us(stop_time) - __get_us(start_time))
-    // / 1000);
+    // CVI_TDL_Detection(tdl_handle, &rgb_frame, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+    // &obj_meta);
+
+    struct timeval start_time, stop_time;
+    gettimeofday(&start_time, NULL);
+    for (int k = 0; k < 100; k++) {
+      CVI_TDL_Detection(tdl_handle, &rgb_frame, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+                        &obj_meta);
+    }
+    gettimeofday(&stop_time, NULL);
+    printf("CVI_TDL_Detect_yolov8 Time use %f ms\n",
+           (__get_us(stop_time) - __get_us(start_time)) / 1000);
 
     std::cout << "objnum:" << obj_meta.size << std::endl;
     for (uint32_t i = 0; i < obj_meta.size; i++) {
