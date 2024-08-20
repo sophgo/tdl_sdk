@@ -1,5 +1,6 @@
 #include "cvi_tdl_app/cvi_tdl_app.h"
 
+#include "face_cap_utils/face_cap_utils.h"
 #include "face_capture/face_capture.h"
 #include "person_capture/person_capture.h"
 #include "personvehicle_capture/personvehicle_capture.h"
