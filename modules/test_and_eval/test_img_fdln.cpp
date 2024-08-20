@@ -5,7 +5,6 @@
 #include <functional>
 #include <iostream>
 #include <map>
-#include <opencv2/opencv.hpp>
 #include <sstream>
 #include <string>
 #include <vector>

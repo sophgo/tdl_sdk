@@ -5,7 +5,6 @@
 #include "Eigen/Core"
 #include "Eigen/Dense"
 // #include "arm_neon.h"
-// #include <opencv2/opencv.hpp>
 #define EXT_FUNCTION 0
 #undef SHRT_MIN
 #define SHRT_MIN -32768
