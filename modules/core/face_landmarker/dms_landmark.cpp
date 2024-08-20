@@ -7,8 +7,6 @@
 #include <error_msg.hpp>
 #include <iostream>
 #include <iterator>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/opencv.hpp>
 #include <string>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"

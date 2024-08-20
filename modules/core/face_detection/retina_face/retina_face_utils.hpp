@@ -4,8 +4,6 @@
 #include "core/core/cvtdl_core_types.h"
 #include "core_utils.hpp"
 
-// #include "opencv2/core.hpp"
-
 #include <vector>
 
 namespace cvitdl {

@@ -7,8 +7,6 @@
 #include <core/core/cvtdl_errno.h>
 #include <error_msg.hpp>
 #include <iostream>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/opencv.hpp>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
