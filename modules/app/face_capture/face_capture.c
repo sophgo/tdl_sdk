@@ -151,7 +151,6 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
     return CVI_TDL_FAILURE;
   }
   CVI_TDL_Free(&face_cpt_info->last_faces);
-  CVI_TDL_Free(&face_cpt_info->face_data);
   CVI_TDL_Free(&face_cpt_info->last_trackers);
   CVI_TDL_Free(&face_cpt_info->last_objects);
 
@@ -302,23 +301,25 @@ CVI_S32 _FaceCapture_Run(face_capture_t *face_cpt_info, const cvitdl_handle_t td
       //        face_frame->stVFrame.u32Width);
 
       if (CVI_SUCCESS !=
-          face_cpt_info->fa_inference(tdl_handle, face_frame, &face_cpt_info->face_data)) {
+          face_cpt_info->fa_inference(tdl_handle, face_frame, &face_cpt_info->data[i].face_data)) {
         return CVI_TDL_FAILURE;
       }
 
       // printf("run face_attribute inference done\n");
 
-      for (size_t j = 0; j < face_cpt_info->face_data.size; j++) {
+      for (size_t j = 0; j < face_cpt_info->data[i].face_data.size; j++) {
         printf("gender: %s  score: %f \n",
-               face_cpt_info->face_data.info[j].gender_score < 0.5 ? "female" : "male",
-               face_cpt_info->face_data.info[j].gender_score);
+               face_cpt_info->data[i].face_data.info[j].gender_score < 0.5 ? "female" : "male",
+               face_cpt_info->data[i].face_data.info[j].gender_score);
 
-        printf("age: %d  score: %f \n", (int)(face_cpt_info->face_data.info[j].age * 100),
-               face_cpt_info->face_data.info[j].age);
-        printf("glass: %d  score: %f \n", face_cpt_info->face_data.info[j].glass < 0.5 ? 0 : 1,
-               face_cpt_info->face_data.info[j].glass);
-        printf("mask: %d  score: %f\n", face_cpt_info->face_data.info[j].mask_score < 0.5 ? 0 : 1,
-               face_cpt_info->face_data.info[j].mask_score);
+        printf("age: %d  score: %f \n", (int)(face_cpt_info->data[i].face_data.info[j].age * 100),
+               face_cpt_info->data[i].face_data.info[j].age);
+        printf("glass: %d  score: %f \n",
+               face_cpt_info->data[i].face_data.info[j].glass < 0.5 ? 0 : 1,
+               face_cpt_info->data[i].face_data.info[j].glass);
+        printf("mask: %d  score: %f\n",
+               face_cpt_info->data[i].face_data.info[j].mask_score < 0.5 ? 0 : 1,
+               face_cpt_info->data[i].face_data.info[j].mask_score);
       }
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, &image_frame, 0);
       CVI_TDL_Release_VideoFrame(tdl_handle, face_cpt_info->fl_model, face_frame, 0);
