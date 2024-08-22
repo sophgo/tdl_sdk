@@ -17,6 +17,7 @@ typedef struct {
   uint64_t cap_timestamp;       // frame id of the captured image
   uint64_t last_cap_timestamp;  // frame id of the last captured image
   int matched_gallery_idx;      // used for face recognition
+  cvtdl_face_t face_data;       // store the result of face attribute inference
 
 } face_cpt_data_t;
 
@@ -47,8 +48,7 @@ typedef struct {
   face_capture_config_t cfg;
 
   uint32_t size;
-  face_cpt_data_t *data;   // 缓存的20张人脸存放在data
-  cvtdl_face_t face_data;  // store the result of face attribute inference
+  face_cpt_data_t *data;  // 缓存的20张人脸存放在data
   cvtdl_face_t last_faces;
   cvtdl_object_t last_objects;  // if fuse with PD,would have PD result stored here
   cvtdl_tracker_t last_trackers;
