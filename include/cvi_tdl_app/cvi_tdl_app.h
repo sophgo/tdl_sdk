@@ -130,7 +130,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCaptureIrregular_Region(
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCapture_CleanAll(const cvitdl_app_handle_t handle);
 
-DLL_EXPORT CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size);
+DLL_EXPORT CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size,
+                                         int det_type);
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_ADAS_Run(const cvitdl_app_handle_t handle,
                                         VIDEO_FRAME_INFO_S *frame);
