@@ -83,7 +83,6 @@ set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
     ${CVI_RTSP_LIBPATH})
@@ -144,7 +143,6 @@ if("${MW_VER}" STREQUAL "v2")
           ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
           ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
           ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-          ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
           ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
           ${MLIR_SDK_ROOT}/lib/libz.so
           ${CVI_RTSP_LIBPATH}

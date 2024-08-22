@@ -101,7 +101,7 @@ ifeq ($(MW_VERSION), v1)
 	endif
 else ifeq ($(MW_VERSION), v2)
 	ifeq ($(CHIP), CV186X)
-		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
+		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin -lisp_algo
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
 		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
 		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv186x
