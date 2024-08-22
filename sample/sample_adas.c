@@ -32,6 +32,7 @@ MUTEXAUTOLOCK_INIT(ResultMutex);
 typedef struct {
   SAMPLE_TDL_MW_CONTEXT *pstMWContext;
   cvitdl_service_handle_t stServiceHandle;
+  int det_lane;
 } SAMPLE_TDL_VENC_THREAD_ARG_S;
 
 typedef struct {
@@ -122,31 +123,33 @@ void *run_venc(void *args) {
       goto error;
     }
 
-    char lane_info[64];
-    int txt_x = (int)(0.5 * stFrame.stVFrame.u32Width);
-    int txt_y = (int)(0.8 * stFrame.stVFrame.u32Height);
-    if (stLaneMeta.lane_state == 0) {
-      strcpy(lane_info, "NORMAL");
-      s32Ret = CVI_TDL_Service_ObjectWriteText(lane_info, txt_x, txt_y, &stFrame, 0, 255, 0);
-    } else {
-      strcpy(lane_info, "LANE DEPARTURE WARNING !");
-      s32Ret = CVI_TDL_Service_ObjectWriteText(lane_info, txt_x, txt_y, &stFrame, 255, 0, 0);
-    }
-    if (s32Ret != CVI_TDL_SUCCESS) {
-      printf("Draw txt fail!, ret=%x\n", s32Ret);
-      goto error;
-    }
-
-    for (uint32_t i = 0; i < stLaneMeta.size; i++) {
-      pts.x[0] = (int)stLaneMeta.lane[i].x[0];
-      pts.y[0] = (int)stLaneMeta.lane[i].y[0];
-      pts.x[1] = (int)stLaneMeta.lane[i].x[1];
-      pts.y[1] = (int)stLaneMeta.lane[i].y[1];
-
-      s32Ret = CVI_TDL_Service_DrawPolygon(pstArgs->stServiceHandle, &stFrame, &pts, brush_lane);
+    if (pstArgs->det_lane) {
+      char lane_info[64];
+      int txt_x = (int)(0.5 * stFrame.stVFrame.u32Width);
+      int txt_y = (int)(0.8 * stFrame.stVFrame.u32Height);
+      if (stLaneMeta.lane_state == 0) {
+        strcpy(lane_info, "NORMAL");
+        s32Ret = CVI_TDL_Service_ObjectWriteText(lane_info, txt_x, txt_y, &stFrame, 0, 255, 0);
+      } else {
+        strcpy(lane_info, "LANE DEPARTURE WARNING !");
+        s32Ret = CVI_TDL_Service_ObjectWriteText(lane_info, txt_x, txt_y, &stFrame, 255, 0, 0);
+      }
       if (s32Ret != CVI_TDL_SUCCESS) {
-        printf("Draw line fail!, ret=%x\n", s32Ret);
+        printf("Draw txt fail!, ret=%x\n", s32Ret);
         goto error;
+      }
+
+      for (uint32_t i = 0; i < stLaneMeta.size; i++) {
+        pts.x[0] = (int)stLaneMeta.lane[i].x[0];
+        pts.y[0] = (int)stLaneMeta.lane[i].y[0];
+        pts.x[1] = (int)stLaneMeta.lane[i].x[1];
+        pts.y[1] = (int)stLaneMeta.lane[i].y[1];
+
+        s32Ret = CVI_TDL_Service_DrawPolygon(pstArgs->stServiceHandle, &stFrame, &pts, brush_lane);
+        if (s32Ret != CVI_TDL_SUCCESS) {
+          printf("Draw line fail!, ret=%x\n", s32Ret);
+          goto error;
+        }
       }
     }
 
@@ -192,7 +195,15 @@ void *run_tdl_thread(cvitdl_app_handle_t app_handle) {
       last_time_ms = cur_ts_ms;
       last_counter = counter;
       printf("++++++++++++ frame:%d,fps:%.2f\n", (int)counter, fps);
+      app_handle->adas_info->FPS = fps;  // set FPS, only set once if fps is stable
     }
+
+    // update gsensor data every time if using gsensor:
+
+    // app_handle->adas_info->gsensor_data.x = 0;
+    // app_handle->adas_info->gsensor_data.y = 0;
+    // app_handle->adas_info->gsensor_data.z = 0;
+    // app_handle->adas_info->gsensor_data.counter += 1;
 
     s32Ret = CVI_TDL_APP_ADAS_Run(app_handle, &stFrame);
 
@@ -229,10 +240,14 @@ static void SampleHandleSig(CVI_S32 signo) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 3 && argc != 4) {
+  if (argc != 3 && argc != 5) {
     printf(
-        "\nUsage: %s PERSON_VEHICLE_MODEL_PATH LANE_DET_MODEL_PATH [LANE_DET_MODEL_TYPE]\n\n"
-        "LANE_DET_MODEL_TYPE (optional), should be 0 or 1, 0 for LANE_DET, 1 for LSTR \n",
+        "\nUsage: %s \n"
+        "person_vehicle_model_path\n"
+        "det_type(0: only object, 1: object and lane) \n"
+        "[lane_det_model_path](optional, if det_type=1, must exist) \n"
+        "[lane_model_type](optional, 0 for lane_det model, 1 for lstr model, if det_type=1, must "
+        "exist) \n",
         argv[0]);
     return -1;
   }
@@ -351,11 +366,12 @@ int main(int argc, char *argv[]) {
   GOTO_IF_FAILED(CVI_TDL_Service_CreateHandle(&stServiceHandle, stTDLHandle), s32Ret,
                  create_service_fail);
 
+  int det_type = atoi(argv[2]);
   uint32_t buffer_size = 20;
   cvitdl_handle_t tdl_handle = stTDLHandle;
   cvitdl_app_handle_t app_handle = NULL;
   s32Ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
-  s32Ret |= CVI_TDL_APP_ADAS_Init(app_handle, (uint32_t)buffer_size);
+  s32Ret |= CVI_TDL_APP_ADAS_Init(app_handle, (uint32_t)buffer_size, det_type);
 
   if (s32Ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", s32Ret);
@@ -374,24 +390,23 @@ int main(int argc, char *argv[]) {
     return s32Ret;
   }
 
-  if (argc == 4) {
-    app_handle->adas_info->lane_model_type = atoi(argv[3]);
-  }
-
-  CVI_TDL_SUPPORTED_MODEL_E lane_model_id;
-  if (app_handle->adas_info->lane_model_type == 0) {
-    lane_model_id = CVI_TDL_SUPPORTED_MODEL_LANE_DET;
-  } else if (app_handle->adas_info->lane_model_type == 1) {
-    lane_model_id = CVI_TDL_SUPPORTED_MODEL_LSTR;
-  } else {
-    printf(" err lane_model_type !\n");
-    return -1;
-  }
-
   GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, argv[1]),
                  s32Ret, setup_tdl_fail);
 
-  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, lane_model_id, argv[2]), s32Ret, setup_tdl_fail);
+  if (argc == 5) {  // detect lane
+    app_handle->adas_info->lane_model_type = atoi(argv[4]);
+    CVI_TDL_SUPPORTED_MODEL_E lane_model_id;
+    if (app_handle->adas_info->lane_model_type == 0) {
+      lane_model_id = CVI_TDL_SUPPORTED_MODEL_LANE_DET;
+    } else if (app_handle->adas_info->lane_model_type == 1) {
+      lane_model_id = CVI_TDL_SUPPORTED_MODEL_LSTR;
+    } else {
+      printf(" err lane_model_type !\n");
+      return -1;
+    }
+
+    GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, lane_model_id, argv[3]), s32Ret, setup_tdl_fail);
+  }
 
   // Init DeepSORT
   CVI_TDL_DeepSORT_Init(stTDLHandle, true);
@@ -404,6 +419,7 @@ int main(int argc, char *argv[]) {
   SAMPLE_TDL_VENC_THREAD_ARG_S venc_args = {
       .pstMWContext = &stMWContext,
       .stServiceHandle = stServiceHandle,
+      .det_lane = det_type,
   };
 
   pthread_create(&stVencThread, NULL, run_venc, &venc_args);

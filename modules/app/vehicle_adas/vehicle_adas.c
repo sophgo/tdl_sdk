@@ -27,7 +27,7 @@ int update_easy_queue(int *data, int new_val, int size) {
   return sum;
 }
 
-CVI_S32 _ADAS_Init(adas_info_t **adas_info, uint32_t buffer_size) {
+CVI_S32 _ADAS_Init(adas_info_t **adas_info, uint32_t buffer_size, int det_type) {
   if (*adas_info != NULL) {
     LOGW("[APP::ADAS] already exist.\n");
     return CVI_TDL_SUCCESS;
@@ -40,6 +40,7 @@ CVI_S32 _ADAS_Init(adas_info_t **adas_info, uint32_t buffer_size) {
   new_adas_info->is_static = true;
   new_adas_info->FPS = 25;
   new_adas_info->departure_time = 1;
+  new_adas_info->det_type = det_type;
 
   new_adas_info->data = (adas_data_t *)malloc(sizeof(adas_data_t) * buffer_size);
   memset(new_adas_info->data, 0, sizeof(adas_data_t) * buffer_size);
@@ -284,14 +285,14 @@ static CVI_S32 update_lane_state(adas_info_t *adas_info, uint32_t height, uint32
 }
 
 void front_obj_index(cvtdl_object_t *obj_meta, cvtdl_lane_t *lane_meta, int *center_info,
-                     float width) {
+                     float width, int det_lane) {
   center_info[0] = -1;
   float dis = width;
 
   float left_x = 0.33 * width;
   float right_x = 0.66 * width;
 
-  if (lane_meta->size == 2) {
+  if (det_lane && lane_meta->size == 2) {
     float xmin = lane_meta->lane[0].y[0] < lane_meta->lane[0].y[1] ? lane_meta->lane[0].x[0]
                                                                    : lane_meta->lane[0].x[1];
     float xmax = lane_meta->lane[1].y[0] < lane_meta->lane[1].y[1] ? lane_meta->lane[1].x[0]
@@ -346,14 +347,13 @@ uint64_t update_unique_id_with_classes(cvtdl_object_t *obj_meta) {
   return CVI_TDL_SUCCESS;
 }
 
-static CVI_S32 update_data(cvitdl_handle_t tdl_handle, adas_info_t *adas_info,
-                           VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta,
-                           cvtdl_tracker_t *tracker_meta) {
+static CVI_S32 update_data(adas_info_t *adas_info, VIDEO_FRAME_INFO_S *frame,
+                           cvtdl_object_t *obj_meta, cvtdl_tracker_t *tracker_meta) {
   LOGI("[APP::VehicleAdas] Update Data\n");
 
   update_unique_id_with_classes(obj_meta);
-  front_obj_index(obj_meta, &adas_info->lane_meta, adas_info->center_info,
-                  frame->stVFrame.u32Width);
+  front_obj_index(obj_meta, &adas_info->lane_meta, adas_info->center_info, frame->stVFrame.u32Width,
+                  adas_info->det_type);
 
   for (uint32_t i = 0; i < obj_meta->size; i++) {
     uint64_t trk_id = obj_meta->info[i].unique_id;
@@ -466,24 +466,25 @@ CVI_S32 _ADAS_Run(adas_info_t *adas_info, const cvitdl_handle_t tdl_handle,
 
   CVI_TDL_DeepSORT_Obj(tdl_handle, &adas_info->last_objects, &adas_info->last_trackers, false);
 
-  if (adas_info->lane_model_type == 0) {
-    ret = CVI_TDL_Lane_Det(tdl_handle, frame, &adas_info->lane_meta);
-  } else if (adas_info->lane_model_type == 1) {
-    ret = CVI_TDL_LSTR_Det(tdl_handle, frame, &adas_info->lane_meta);
-  }
-  if (ret != CVI_SUCCESS) {
-    // CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_LANE_DET, frame, true);
-    printf("lane detection failed\n");
-    return CVI_TDL_FAILURE;
+  if (adas_info->det_type) {
+    if (adas_info->lane_model_type == 0) {
+      ret = CVI_TDL_Lane_Det(tdl_handle, frame, &adas_info->lane_meta);
+    } else if (adas_info->lane_model_type == 1) {
+      ret = CVI_TDL_LSTR_Det(tdl_handle, frame, &adas_info->lane_meta);
+    }
+    if (ret != CVI_SUCCESS) {
+      // CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_LANE_DET, frame, true);
+      printf("lane detection failed\n");
+      return CVI_TDL_FAILURE;
+    }
+
+    update_lane_state(adas_info, frame->stVFrame.u32Height, frame->stVFrame.u32Width);
+    update_frame_state(adas_info);
   }
 
-  update_lane_state(adas_info, frame->stVFrame.u32Height, frame->stVFrame.u32Width);
-  update_frame_state(adas_info);
-
-  ret = update_data(tdl_handle, adas_info, frame, &adas_info->last_objects,
-                    &adas_info->last_trackers);
+  ret = update_data(adas_info, frame, &adas_info->last_objects, &adas_info->last_trackers);
   if (ret != CVI_TDL_SUCCESS) {
-    LOGE("[APP::ADAS] update face failed.\n");
+    LOGE("[APP::ADAS] update data failed.\n");
     return CVI_TDL_FAILURE;
   }
 

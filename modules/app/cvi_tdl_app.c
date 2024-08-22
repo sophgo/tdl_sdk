@@ -157,7 +157,6 @@ CVI_S32 CVI_TDL_APP_PersonCapture_CleanAll(const cvitdl_app_handle_t handle) {
 CVI_S32 CVI_TDL_APP_PersonVehicleCapture_Init(const cvitdl_app_handle_t handle,
                                               uint32_t buffer_size) {
   cvitdl_app_context_t *ctx = handle;
-  printf("2353536346346436\n");
   return _PersonVehicleCapture_Init(&(ctx->personvehicle_cpt_info), buffer_size);
 }
 
@@ -199,9 +198,10 @@ CVI_S32 CVI_TDL_APP_PersonVehicleCapture_CleanAll(const cvitdl_app_handle_t hand
 
 /* ADAS */
 
-CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size) {
+CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size,
+                              int det_type) {
   cvitdl_app_context_t *ctx = handle;
-  return _ADAS_Init(&(ctx->adas_info), buffer_size);
+  return _ADAS_Init(&(ctx->adas_info), buffer_size, det_type);
 }
 
 CVI_S32 CVI_TDL_APP_ADAS_Run(const cvitdl_app_handle_t handle, VIDEO_FRAME_INFO_S *frame) {
