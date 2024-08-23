@@ -23,6 +23,8 @@
 
 typedef enum { fast = 0, interval, leave, intelligent } APP_MODE_e;
 
+bool g_use_face_attribute;
+
 #define SMT_MUTEXAUTOLOCK_INIT(mutex) pthread_mutex_t AUTOLOCK_##mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define SMT_MutexAutoLock(mutex, lock)                                            \
@@ -42,6 +44,10 @@ typedef struct {
   char name[128];
   float match_score;
   uint64_t frame_id;
+  float gender;
+  float age;
+  float glass;
+  float mask;
 } IOData;
 
 SMT_MUTEXAUTOLOCK_INIT(IOMutex);
@@ -129,14 +135,33 @@ static void *pImageWrite(void *args) {
       printf("[WARNING] Target image is empty.\n");
     } else {
       if (data_buffer[target_idx].image.pix_format == PIXEL_FORMAT_RGB_888) {
-        sprintf(filename, "%s/frm_%d_face_%d_%u_score_%.3f_qua_%.3f_name_%s.png", g_out_dir.c_str(),
-                int(data_buffer[target_idx].frame_id), int(data_buffer[target_idx].u_id),
-                data_buffer[target_idx].counter, data_buffer[target_idx].match_score,
-                data_buffer[target_idx].quality, data_buffer[target_idx].name);
-        stbi_write_png(filename, data_buffer[target_idx].image.width,
-                       data_buffer[target_idx].image.height, STBI_rgb,
-                       data_buffer[target_idx].image.pix[0],
-                       data_buffer[target_idx].image.stride[0]);
+        if (!g_use_face_attribute) {
+          sprintf(filename, "%s/frm_%d_face_%d_%u_score_%.3f_qua_%.3f_name_%s.png",
+                  g_out_dir.c_str(), int(data_buffer[target_idx].frame_id),
+                  int(data_buffer[target_idx].u_id), data_buffer[target_idx].counter,
+                  data_buffer[target_idx].match_score, data_buffer[target_idx].quality,
+                  data_buffer[target_idx].name);
+          stbi_write_png(filename, data_buffer[target_idx].image.width,
+                         data_buffer[target_idx].image.height, STBI_rgb,
+                         data_buffer[target_idx].image.pix[0],
+                         data_buffer[target_idx].image.stride[0]);
+        } else if (g_use_face_attribute) {
+          sprintf(filename,
+                  "%s/"
+                  "frm_%d_face_%d_%u_score_%.3f_qua_%.3f_gender_%.3f_age_%.3f_glass_%.3f_mask_%.3f_"
+                  "name_%s.png",
+                  g_out_dir.c_str(), int(data_buffer[target_idx].frame_id),
+                  int(data_buffer[target_idx].u_id), data_buffer[target_idx].counter,
+                  data_buffer[target_idx].match_score, data_buffer[target_idx].quality,
+                  data_buffer[target_idx].name, data_buffer[target_idx].gender,
+                  data_buffer[target_idx].age, data_buffer[target_idx].glass,
+                  data_buffer[target_idx].mask);
+          stbi_write_png(filename, data_buffer[target_idx].image.width,
+                         data_buffer[target_idx].image.height, STBI_rgb,
+                         data_buffer[target_idx].image.pix[0],
+                         data_buffer[target_idx].image.stride[0]);
+        }
+
       } else {
         printf("to output image format:%d,not :%d\n", (int)data_buffer[target_idx].image.pix_format,
                (int)PIXEL_FORMAT_RGB_888);
@@ -391,6 +416,7 @@ int main(int argc, char *argv[]) {
   CVI_TDL_SUPPORTED_MODEL_E fr_model_id = CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION;
   ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
                                             NULL, NULL, fl_modelf.c_str(), NULL);
+  g_use_face_attribute = app_handle->face_cpt_info->fa_flag;
   CVI_TDL_SUPPORTED_MODEL_E ped_model_id = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
   ret |= CVI_TDL_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_modelf.c_str());
 
@@ -536,6 +562,14 @@ int main(int argc, char *argv[]) {
         data_buffer[target_idx].counter = counter;
         data_buffer[target_idx].match_score = pface_info->recog_score;
         data_buffer[target_idx].frame_id = app_handle->face_cpt_info->data[i].cap_timestamp;
+        if (g_use_face_attribute) {
+          data_buffer[target_idx].gender =
+              app_handle->face_cpt_info->data[i].face_data.info->gender_score;
+          data_buffer[target_idx].age = app_handle->face_cpt_info->data[i].face_data.info->age;
+          data_buffer[target_idx].glass = app_handle->face_cpt_info->data[i].face_data.info->glass;
+          data_buffer[target_idx].mask =
+              app_handle->face_cpt_info->data[i].face_data.info->mask_score;
+        }
         memcpy(data_buffer[target_idx].name, pface_info->name, 128);
         /* NOTE: Make sure the image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
 
