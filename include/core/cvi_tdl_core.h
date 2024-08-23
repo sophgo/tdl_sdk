@@ -1548,7 +1548,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const cha
 
 DLL_EXPORT CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
                                                float **image_features, int image_features_num,
-                                               int *prods_index, int function_id, float threshold);
+                                               float **probs);
 
 #ifdef __cplusplus
 }

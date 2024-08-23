@@ -1,4 +1,4 @@
-#define LOG_TAG "SampleOD"
+#define LOG_TAG "SampleCLIP"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 #include "middleware_utils.h"
@@ -161,19 +161,31 @@ void *run_tdl_thread(void *args) {
     }
 
     CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
-    int *prods_index = (int *)malloc(sizeof(int));
-    float thres = 0.55;
+    float **probs = (float **)malloc(sizeof(float*));
+    probs[0] = (float *)malloc(sizeof(float));
+    float thres = 0.6;
     int function_id = 0;
-    s32Ret = CVI_TDL_Set_ClipPostprocess(text_features, line_count, image_features, 1, prods_index,
-                                         function_id, thres);
+    s32Ret = CVI_TDL_Set_ClipPostprocess(text_features, line_count, image_features, 1, probs);
     free(image_features[0]);
+    float max_prob = 0;
+    int top1_id = -1;
+    for(int j = 0;j<line_count;j++){
+      if(probs[0][j]>max_prob){
+        max_prob = probs[0][j];
+        top1_id = j;
+      }
+    }
+    if(max_prob < thres){
+        top1_id = -1;
+    }
 
     {
       MutexAutoLock(ResultMutex, lock);
-      pic_class = prods_index[0];
+      pic_class = top1_id;
     }
 
-    free(prods_index);
+    free(probs[0]);
+    free(probs);
     CVI_TDL_Free(&clip_feature_image);
   }
 inf_error:
@@ -468,18 +480,31 @@ int main(int argc, char *argv[]) {
     }
     CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
 
-    int *prods_index = (int *)malloc(sizeof(int));
+    float **probs = (float **)malloc(sizeof(float*));
+    probs[0] = (float *)malloc(sizeof(float));
     float thres = 0.6;
     int function_id = 0;
-    s32Ret = CVI_TDL_Set_ClipPostprocess(text_features, line_count, image_features, 1, prods_index,
-                                         function_id, thres);
+    s32Ret = CVI_TDL_Set_ClipPostprocess(text_features, line_count, image_features, 1, probs);
     free(image_features[0]);
-    {
-      MutexAutoLock(ResultMutex, lock);
-      pic_class = prods_index[0];
+    float max_prob = 0;
+    int top1_id = -1;
+    for(int j = 0;j<line_count;j++){
+      if(probs[0][j]>max_prob){
+        max_prob = probs[0][j];
+        top1_id = j;
+      }
+    }
+    if(max_prob < thres){
+        top1_id = -1;
     }
 
-    free(prods_index);
+    {
+      MutexAutoLock(ResultMutex, lock);
+      pic_class = top1_id;
+    }
+
+    free(probs[0]);
+    free(probs);
     CVI_TDL_Free(&clip_feature_image);
   }
 

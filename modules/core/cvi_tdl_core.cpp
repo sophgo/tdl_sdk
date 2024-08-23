@@ -1831,7 +1831,7 @@ CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
 
 CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
                                     float **image_features, int image_features_num,
-                                    int *prods_index, int function_id, float threshold) {
+                                    float **probs) {
   Eigen::MatrixXf text_features_eigen(text_features_num, 512);
   for (int i = 0; i < text_features_num; ++i) {
     for (int j = 0; j < 512; ++j) {
@@ -1849,45 +1849,40 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
   // using clip_postprocess which can be found in utils/clip_postpostprocess.cpp
   int res = clip_postprocess(text_features_eigen, image_features_eigen, result_eigen);
 
-  if (function_id == 0) {
-    // if function_id == 0, providing image classification functionality.
-    // using softmax after mutil 100 scale
-    for (int i = 0; i < result_eigen.rows(); ++i) {
-      float sum = 0.0;
-      float maxVal = result_eigen.row(i).maxCoeff();
-      Eigen::MatrixXf expInput = (result_eigen.row(i).array() - maxVal).exp();
-      sum = expInput.sum();
-      result_eigen.row(i) = expInput / sum;
-    }
 
-    for (int i = 0; i < result_eigen.rows(); i++) {
-      float max_score = 0;
-      for (int j = 0; j < result_eigen.cols(); j++) {
-        if (result_eigen(i, j) > max_score) {
-          prods_index[i] = j;
-          max_score = result_eigen(i, j);
-        }
-      }
+  // providing image classification functionality.
+  // using softmax after mutil 100 scale
+  for (int i = 0; i < result_eigen.rows(); ++i) {
+    float sum = 0.0;
+    float maxVal = result_eigen.row(i).maxCoeff();
+    Eigen::MatrixXf expInput = (result_eigen.row(i).array() - maxVal).exp();
+    sum = expInput.sum();
+    result_eigen.row(i) = expInput / sum;
+  }
 
-      if (max_score < threshold) {
-        prods_index[i] = -1;  // if top1 score < threshold,return -1.
-      }
-    }
-  } else {
-    // This branch can searches for text class in the database.
-    if (result_eigen.cols() > 1) {
-      LOGE("Error! Please input a text\n");
-      return CVI_FAILURE;
-    } else {
-      for (int i = 0; i < result_eigen.rows(); i++) {
-        if (result_eigen(i, 0) > threshold * 10.0 + 20.0) {
-          prods_index[i] = i;
-        } else {
-          prods_index[i] = -1;
-        }
-      }
+  for (int i = 0; i < result_eigen.rows(); i++) {
+    float max_score = 0;
+    for (int j = 0; j < result_eigen.cols(); j++) {
+      probs[i][j] = result_eigen(i,j);
     }
   }
+
+  
+  // else {
+  //   // This branch can searches for text class in the database.
+  //   if (result_eigen.cols() > 1) {
+  //     LOGE("Error! Please input a text\n");
+  //     return CVI_FAILURE;
+  //   } else {
+  //     for (int i = 0; i < result_eigen.rows(); i++) {
+  //       if (result_eigen(i, 0) > threshold * 10.0 + 20.0) {
+  //         prods_index[i] = i;
+  //       } else {
+  //         prods_index[i] = -1;
+  //       }
+  //     }
+  //   }
+  // }
 
   if (res == 0) {
     return CVI_SUCCESS;
