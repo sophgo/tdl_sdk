@@ -22,12 +22,20 @@ namespace cvitdl {
 
 Clip_Image::Clip_Image() : Core(CVI_MEM_DEVICE) {
   setUseMmap(false);
-  m_preprocess_param[0].factor[0] = 0.0145984266;
-  m_preprocess_param[0].factor[1] = 0.0150077685;
-  m_preprocess_param[0].factor[2] = 0.0142200657;
-  m_preprocess_param[0].mean[0] = 1.7922625;
-  m_preprocess_param[0].mean[1] = 1.7465649;
-  m_preprocess_param[0].mean[2] = 1.4802198;
+  // m_preprocess_param[0].factor[0] = 0.0145984266;
+  // m_preprocess_param[0].factor[1] = 0.0150077685;
+  // m_preprocess_param[0].factor[2] = 0.0142200657;
+  // m_preprocess_param[0].mean[0] = 1.7922625;
+  // m_preprocess_param[0].mean[1] = 1.7465649;
+  // m_preprocess_param[0].mean[2] = 1.4802198;
+
+  //use fused_precess w4f16 model
+  m_preprocess_param[0].factor[0] = 1;
+  m_preprocess_param[0].factor[1] = 1;
+  m_preprocess_param[0].factor[2] = 1;
+  m_preprocess_param[0].mean[0] = 0;
+  m_preprocess_param[0].mean[1] = 0;
+  m_preprocess_param[0].mean[2] = 0;
   m_preprocess_param[0].use_crop = true;
   m_preprocess_param[0].keep_aspect_ratio = true;
 }
@@ -37,9 +45,15 @@ Clip_Image::~Clip_Image() {}
 int Clip_Image::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_clip_feature* clip_feature) {
   int height = frame->stVFrame.u32Height;
   int width = frame->stVFrame.u32Width;
-  int left_up = (width - height) / 2;
   m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-  m_vpss_config[0].crop_attr.stCropRect = {left_up, 0, height, height};
+  int left_up = 0;
+  if (width>height){
+    left_up = (width - height) / 2;
+    m_vpss_config[0].crop_attr.stCropRect = {left_up, 0, height, height};
+  }else{
+    left_up = (height-width) / 2;
+    m_vpss_config[0].crop_attr.stCropRect = {0, left_up, width, width};
+  }
   std::vector<VIDEO_FRAME_INFO_S*> frames = {frame};
   int ret = run(frames);
   if (ret != CVI_TDL_SUCCESS) {

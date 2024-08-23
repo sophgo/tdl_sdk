@@ -163,19 +163,16 @@ int main(int argc, char* argv[]) {
     free(tokens[i]);
   }
   free(tokens);
-  int* prods_index = (int*)malloc(image_file_list.size() * sizeof(int));
+
   float thres = atof(argv[6]);
   int function_id = 0;
+  float **probs = (float **)malloc(sizeof(float*));
+  probs[0] = (float *)malloc(sizeof(float));
   ret = CVI_TDL_Set_ClipPostprocess(text_features, text_file_list.size(), image_features,
-                                    image_file_list.size(), prods_index, function_id, thres);
+                                    image_file_list.size(), probs);
 
   delete[] text_features;
   delete[] image_features;
-
-  for (int i = 0; i < image_file_list.size(); i++) {
-    std::cout << prods_index[i] << " ";
-  }
-  std::cout << std::endl;
   // 打开一个文本文件进行写入
   std::ofstream outfile(argv[5]);
   // 检查文件是否成功打开
@@ -183,12 +180,27 @@ int main(int argc, char* argv[]) {
     std::cerr << "Failed to open the file." << std::endl;
     return 1;
   }
-  // 将 prods_index 的值写入文件
-  for (size_t i = 0; i < image_file_list.size(); i++) {
-    outfile << image_file_list[i] << ":" << prods_index[i] << std::endl;
+  for (int i = 0; i < image_file_list.size(); i++) {
+    float max_prob = 0;
+    int top1_id = -1;
+    for(int j = 0; j < text_file_list.size(); j++){
+      if(probs[i][j]>max_prob){
+        max_prob = probs[i][j];
+        top1_id = j;
+      }
+    }
+    if(max_prob < thres){
+        top1_id = -1;
+    }
+    std::cout << top1_id << " ";
+    outfile << image_file_list[i] << ":" << top1_id << std::endl;
   }
+  std::cout << std::endl;
   outfile.close();
-  free(prods_index);
+  for(int i=0; i<image_file_list.size();i++){
+    free(probs[i]);
+  }
+  free(probs);
   CVI_TDL_DestroyHandle(tdl_handle);
   return CVI_SUCCESS;
 }
