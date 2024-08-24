@@ -1171,7 +1171,9 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
   LOGD("Kalman Trackers predict\n");
   for (KalmanTracker &tracker_ : k_trackers) {
     // kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P, conf->kfilter_conf);
-    tracker_.predict(kf_, conf);
+    if (tracker_.class_id == class_id) {
+      tracker_.predict(kf_, conf);
+    }
   }
   check_bound_state(conf);
 
