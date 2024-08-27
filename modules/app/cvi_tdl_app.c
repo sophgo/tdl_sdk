@@ -2,6 +2,7 @@
 
 #include "face_cap_utils/face_cap_utils.h"
 #include "face_capture/face_capture.h"
+#include "face_pet_capture/face_pet_capture.h"
 #include "person_capture/person_capture.h"
 #include "personvehicle_capture/personvehicle_capture.h"
 #include "vehicle_adas/vehicle_adas.h"
@@ -57,6 +58,15 @@ CVI_S32 CVI_TDL_APP_FaceCapture_FusePedSetup(const cvitdl_app_handle_t handle, i
                                    ped_model_path);
 }
 
+CVI_S32 CVI_TDL_APP_FacePetCapture_QuickSetUp(const cvitdl_app_handle_t handle, int od_model_id,
+                                              int fr_model_id, const char *od_model_path,
+                                              const char *fr_model_path, const char *fl_model_path,
+                                              const char *fa_model_path) {
+  cvitdl_app_context_t *ctx = handle;
+  return _FacePetCapture_QuickSetUp(ctx->tdl_handle, ctx->face_cpt_info, od_model_id, fr_model_id,
+                                    od_model_path, fr_model_path, fl_model_path, fa_model_path);
+}
+
 CVI_S32 CVI_TDL_APP_FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
   return _FaceCapture_GetDefaultConfig(cfg);
 }
@@ -70,6 +80,12 @@ CVI_S32 CVI_TDL_APP_FaceCapture_SetConfig(const cvitdl_app_handle_t handle,
 CVI_S32 CVI_TDL_APP_FaceCapture_Run(const cvitdl_app_handle_t handle, VIDEO_FRAME_INFO_S *frame) {
   cvitdl_app_context_t *ctx = handle;
   return _FaceCapture_Run(ctx->face_cpt_info, ctx->tdl_handle, frame);
+}
+
+CVI_S32 CVI_TDL_APP_FacePetCapture_Run(const cvitdl_app_handle_t handle,
+                                       VIDEO_FRAME_INFO_S *frame) {
+  cvitdl_app_context_t *ctx = handle;
+  return _FacePetCapture_Run(ctx->face_cpt_info, ctx->tdl_handle, frame);
 }
 
 CVI_S32 CVI_TDL_APP_FaceCapture_FDFR(const cvitdl_app_handle_t handle, VIDEO_FRAME_INFO_S *frame,

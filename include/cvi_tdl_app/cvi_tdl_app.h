@@ -55,6 +55,10 @@ DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_QuickSetUp(
     const char *fr_model_path, const char *fq_model_path, const char *fl_model_path,
     const char *fa_model_path);
 
+DLL_EXPORT CVI_S32 CVI_TDL_APP_FacePetCapture_QuickSetUp(
+    const cvitdl_app_handle_t handle, int od_model_id, int fr_model_id, const char *od_model_path,
+    const char *fr_model_path, const char *fl_model_path, const char *fa_model_path);
+
 DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_FusePedSetup(const cvitdl_app_handle_t handle,
                                                         int ped_model_id,
                                                         const char *ped_model_path);
@@ -65,6 +69,9 @@ DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_SetConfig(const cvitdl_app_handle_t h
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_Run(const cvitdl_app_handle_t handle,
                                                VIDEO_FRAME_INFO_S *frame);
+
+DLL_EXPORT CVI_S32 CVI_TDL_APP_FacePetCapture_Run(const cvitdl_app_handle_t handle,
+                                                  VIDEO_FRAME_INFO_S *frame);
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_FDFR(const cvitdl_app_handle_t handle,
                                                 VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *p_face);

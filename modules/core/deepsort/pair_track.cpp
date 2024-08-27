@@ -22,6 +22,16 @@ stRect extract_box(const stObjInfo &obj) {
   box.height = obj.box.y2 - box.y;
   return box;
 }
+
+stRect extract_box(const cvtdl_bbox_t &bbox) {
+  stRect box;
+  box.x = bbox.x1;
+  box.y = bbox.y1;
+  box.width = bbox.x2 - box.x;
+  box.height = bbox.y2 - box.y;
+  return box;
+}
+
 BBOX cvt_box(const stObjInfo &obj) {
   BBOX box;
   box(0) = obj.box.x1;
@@ -202,6 +212,46 @@ void DeepSORT::update_pair_info(std::vector<stObjInfo> &dets_a, std::vector<stOb
       dets_b[bbox_j].pair_type = typea;
     }
   }
+}
+
+CVI_S32 DeepSORT::face_head_iou_score(cvtdl_face_t *faces, cvtdl_face_t *heads) {
+  // generate pair score matrix
+  if (faces->size == 0 || heads->size == 0) {
+    return CVI_TDL_SUCCESS;
+  }
+  COST_MATRIX pair_cost(faces->size, heads->size);
+
+  for (size_t i = 0; i < faces->size; i++) {
+    stRect boxa = extract_box(faces->info[i].bbox);
+
+    for (size_t j = 0; j < heads->size; j++) {
+      stRect boxb = extract_box(heads->info[i].bbox);
+      float cur_iou = cal_iou(boxa, boxb);
+      pair_cost(i, j) = 1 - cur_iou;
+    }
+  }
+#ifdef DEBUG_TRACK
+  std::cout << "pair cost matrix:\n" << pair_cost << std::endl;
+#endif
+  // use hungeria solver
+  CVIMunkres cvi_munkres_solver(&pair_cost);
+  if (cvi_munkres_solver.solve() == MUNKRES_FAILURE) {
+    return CVI_TDL_FAILURE;
+  }
+
+  for (int i = 0; i < (int)faces->size; i++) {
+    int bbox_j = cvi_munkres_solver.m_match_result[i];
+    if (bbox_j != -1) {
+#ifdef DEBUG_TRACK
+      std::cout << "found pair boxa:" << i << ",boxj:" << bbox_j << ",cost:" << pair_cost(i, bbox_j)
+                << std::endl;
+#endif
+      faces->info[i].pose_score = 1 - pair_cost(i, bbox_j);
+      // printf("faces->info[i].pose_score: %f\n", faces->info[i].pose_score);
+    }
+  }
+
+  return CVI_TDL_SUCCESS;
 }
 
 MatchResult DeepSORT::get_match_result(MatchResult &prev_match, const std::vector<BBOX> &BBoxes,
