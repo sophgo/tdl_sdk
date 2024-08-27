@@ -57,6 +57,8 @@ class DeepSORT {
                          std::map<uint64_t, uint64_t> &pair_trackids);
   void update_pair_info(std::vector<stObjInfo> &dets_a, std::vector<stObjInfo> &dets_b,
                         ObjectType typea, ObjectType typeb, float corre_thresh);
+  CVI_S32 face_head_iou_score(cvtdl_face_t *faces, cvtdl_face_t *heads);
+
   CVI_S32 track_fuse(cvtdl_object_t *obj, cvtdl_face_t *face, cvtdl_tracker_t *tracker);
   CVI_S32 track_headfuse(cvtdl_object_t *origin_obj, cvtdl_tracker_t *tracker, bool use_reid,
                          cvtdl_object_t *head, cvtdl_object_t *ped,

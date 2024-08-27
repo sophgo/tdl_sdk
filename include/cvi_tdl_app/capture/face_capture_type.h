@@ -51,6 +51,7 @@ typedef struct {
   face_cpt_data_t *data;  // 缓存的20张人脸存放在data
   cvtdl_face_t last_faces;
   cvtdl_object_t last_objects;  // if fuse with PD,would have PD result stored here
+  cvtdl_object_t pet_objects;
   cvtdl_tracker_t last_trackers;
   CVI_TDL_SUPPORTED_MODEL_E fd_model;
   CVI_TDL_SUPPORTED_MODEL_E od_model;
@@ -68,6 +69,9 @@ typedef struct {
                       cvtdl_face_t *);
   int (*fr_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
   int (*fa_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
+  int (*od_inference)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, CVI_TDL_SUPPORTED_MODEL_E,
+                      cvtdl_object_t *);
+
   bool *_output;   // output signal (# = .size)   // 缓存的20张人脸对应的_output
   uint64_t _time;  // timer
   uint32_t _m_limit;

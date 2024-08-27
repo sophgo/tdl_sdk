@@ -955,6 +955,17 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_DebugInfo_1(const cvitdl_handle_t handle, ch
 DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_GetTracker_Inactive(const cvitdl_handle_t handle,
                                                         cvtdl_tracker_t *tracker);
 
+/**
+ * @brief Calculate iou score between faces and heads.
+ *
+ * @param handle An TDL SDK handle.
+ * @param faces Input detected faces.
+ * @param heads Input detected heads.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_FaceHeadIouScore(const cvitdl_handle_t handle, cvtdl_face_t *faces,
+                                            cvtdl_face_t *heads);
+
 /**@}*/
 
 /**

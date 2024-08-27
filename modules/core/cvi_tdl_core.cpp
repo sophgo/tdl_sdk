@@ -1400,6 +1400,17 @@ CVI_S32 CVI_TDL_DeepSORT_GetTracker_Inactive(const cvitdl_handle_t handle,
   return ctx->ds_tracker->get_trackers_inactive(tracker);
 }
 
+CVI_S32 CVI_TDL_FaceHeadIouScore(const cvitdl_handle_t handle, cvtdl_face_t *faces,
+                                 cvtdl_face_t *heads) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  DeepSORT *ds_tracker = ctx->ds_tracker;
+  if (ds_tracker == nullptr) {
+    LOGE("Please initialize DeepSORT first.\n");
+    return CVI_FAILURE;
+  }
+  return ctx->ds_tracker->face_head_iou_score(faces, heads);
+}
+
 // Others
 CVI_S32 CVI_TDL_TamperDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                 float *moving_score) {
@@ -1696,9 +1707,9 @@ CVI_S32 CVI_TDL_Resize_VideoFrame(const cvitdl_handle_t handle,
   bbox.x2 = frame->stVFrame.u32Width;
   bbox.y2 = frame->stVFrame.u32Height;
   VPSS_SCALE_COEF_E scale = VPSS_SCALE_COEF_NEAREST;
-  modelt.instance->vpssCropImage(frame, f, bbox, dst_w, dst_h, dst_format, scale);
+  CVI_S32 ret = modelt.instance->vpssCropImage(frame, f, bbox, dst_w, dst_h, dst_format, scale);
   *dst_frame = f;
-  return CVI_SUCCESS;
+  return ret;
 }
 DLL_EXPORT CVI_S32 CVI_TDL_Release_VideoFrame(const cvitdl_handle_t handle,
                                               CVI_TDL_SUPPORTED_MODEL_E model_type,
@@ -1885,8 +1896,7 @@ CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
 }
 
 CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
-                                    float **image_features, int image_features_num,
-                                    float **probs) {
+                                    float **image_features, int image_features_num, float **probs) {
   Eigen::MatrixXf text_features_eigen(text_features_num, 512);
   for (int i = 0; i < text_features_num; ++i) {
     for (int j = 0; j < 512; ++j) {
@@ -1904,7 +1914,6 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
   // using clip_postprocess which can be found in utils/clip_postpostprocess.cpp
   int res = clip_postprocess(text_features_eigen, image_features_eigen, result_eigen);
 
-
   // providing image classification functionality.
   // using softmax after mutil 100 scale
   for (int i = 0; i < result_eigen.rows(); ++i) {
@@ -1918,11 +1927,10 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
   for (int i = 0; i < result_eigen.rows(); i++) {
     float max_score = 0;
     for (int j = 0; j < result_eigen.cols(); j++) {
-      probs[i][j] = result_eigen(i,j);
+      probs[i][j] = result_eigen(i, j);
     }
   }
 
-  
   // else {
   //   // This branch can searches for text class in the database.
   //   if (result_eigen.cols() > 1) {
