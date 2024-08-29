@@ -91,20 +91,14 @@ set(SAMPLE_LIBS
     ${MLIR_SDK_ROOT}/lib/libz.so
 )
 
-if("${MW_VER}" STREQUAL "v2")
-    if(${CVI_PLATFORM} STRLESS "CV186X")
-        set(SAMPLE_LIBS
-        ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
-        )
-    endif()
+if(${CVI_PLATFORM} STRLESS "CV186X")
+    set(SAMPLE_LIBS
+    ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
+    )
+endif()
 set(SAMPLE_LIBS ${SAMPLE_LIBS}
     ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
 )
-else()
-set(SAMPLE_LIBS ${SAMPLE_LIBS}
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
-)
-endif()
 
 if (NOT "${CVI_PLATFORM}" STREQUAL "CV183X")
     set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)

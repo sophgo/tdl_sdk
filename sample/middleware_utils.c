@@ -16,23 +16,12 @@ CVI_S32 SAMPLE_TDL_Get_VI_Config(SAMPLE_VI_CONFIG_S *pstViConfig) {
   SAMPLE_INI_CFG_S stIniCfg = {
     .enSource = VI_PIPE_FRAME_SOURCE_DEV,
     .devNum = 1,
-#if (defined _MIDDLEWARE_V2_ || defined _MIDDLEWARE_V3_)
     .enSnsType[0] = SONY_IMX327_MIPI_2M_30FPS_12BIT,
     .enWDRMode[0] = WDR_MODE_NONE,
     .s32BusId[0] = 3,
     .s32SnsI2cAddr[0] = -1,
     .MipiDev[0] = 0xFF,
     .u8UseMultiSns = 0,
-#else
-    .enSnsType = SONY_IMX327_MIPI_2M_30FPS_12BIT,
-    .enWDRMode = WDR_MODE_NONE,
-    .s32BusId = 3,
-    .MipiDev = 0xFF,
-    .u8UseDualSns = 0,
-    .enSns2Type = SONY_IMX327_SLAVE_MIPI_2M_30FPS_12BIT,
-    .s32Sns2BusId = 0,
-    .Sns2MipiDev = 0xFF,
-#endif
   };
 
   // Get config from ini if found.
@@ -109,9 +98,6 @@ PIC_SIZE_E SAMPLE_TDL_Get_PIC_Size(CVI_S32 width, CVI_S32 height) {
 
 CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
                            SAMPLE_TDL_MW_CONTEXT *pstMWContext) {
-#ifdef _MIDDLEWARE_V3_
-  CVI_MSG_Init();
-#endif
   MMF_VERSION_S stVersion;
   CVI_SYS_GetVersion(&stVersion);
   printf("MMF Version:%s\n", stVersion.version);
@@ -155,14 +141,12 @@ CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
 
   // Init system & vb pool
   CVI_S32 s32Ret;
-#ifndef _MIDDLEWARE_V3_
   printf("Initialize SYS and VB\n");
   s32Ret = SAMPLE_COMM_SYS_Init(&stVbConf);
   if (s32Ret != CVI_SUCCESS) {
     printf("system init failed with %#x\n", s32Ret);
     return s32Ret;
   }
-#endif
 
   // Init VI
 
@@ -243,11 +227,7 @@ CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
 
     if (pstVPSSConf->bBindVI) {
       printf("Bind VI with VPSS Grp(%u), Chn(%u)\n", u32VpssGrpIndex, pstVPSSConf->u32ChnBindVI);
-#if (defined _MIDDLEWARE_V2_ || defined _MIDDLEWARE_V3_)
       s32Ret = SAMPLE_COMM_VI_Bind_VPSS(0, pstVPSSConf->u32ChnBindVI, u32VpssGrpIndex);
-#else
-      s32Ret = SAMPLE_COMM_VI_Bind_VPSS(pstVPSSConf->u32ChnBindVI, u32VpssGrpIndex);
-#endif
       if (s32Ret != CVI_SUCCESS) {
         printf("vi bind vpss failed. s32Ret: 0x%x !\n", s32Ret);
         goto vpss_start_error;
@@ -374,9 +354,7 @@ vpss_start_error:
   SAMPLE_COMM_VI_DestroyIsp(&pstMWConfig->stViConfig);
   SAMPLE_COMM_VI_DestroyVi(&pstMWConfig->stViConfig);
 vi_start_error:
-#ifndef _MIDDLEWARE_V3_
   SAMPLE_COMM_SYS_Exit();
-#endif
 
   return s32Ret;
 }

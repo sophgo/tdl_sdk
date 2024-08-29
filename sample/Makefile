@@ -81,66 +81,32 @@ endif
 
 MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -lcvi_dnvqe -lcvi_ssp2 -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
 
-MW_VERSION = v2
-CFLAGS += -D_MIDDLEWARE_V2_  -Wno-maybe-uninitialized
 
-ifeq ($(MW_VERSION), v1)
-	ifeq ($(CHIP), CV183X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu
-		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
-	else ifeq ($(CHIP), CV182X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu -lisp_algo
-		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
-	endif
-else ifeq ($(MW_VERSION), v2)
-	ifeq ($(CHIP), CV186X)
-		MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
-		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
-		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
-		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv186x
-		CFLAGS += -DCV186X
-		SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
-			 ${MW_SAMPLE_PATH}/sample_common_sys.c \
-			 ${MW_SAMPLE_PATH}/sample_common_platform.c \
-			 ${MW_SAMPLE_PATH}/sample_common_vpss.c \
-			 ${MW_SAMPLE_PATH}/sample_common_vi.c \
-			 ${MW_SAMPLE_PATH}/sample_common_isp.c \
-			 ${MW_SAMPLE_PATH}/sample_common_bin.c \
-			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
-			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
-	else ifeq ($(CHIP), CV181X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lrgn -lgdc
-		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
-		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
-		CFLAGS += -DCV181X
-	else ifeq ($(CHIP), CV180X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lrgn -lgdc
-		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
-		MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
-		CFLAGS += -DCV180X
-	endif
-else ifeq ($(MW_VERSION), v3)
-	ifeq ($(CHIP), CV181X)
-		MW_LIBS = -lini -lmsg  -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
-		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
-		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv181x
-		MW_PANEL_INC_PATH = ${MW_PATH}/include
-		CFLAGS += -DCV181X
-		SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
-			 ${MW_SAMPLE_PATH}/sample_common_sys.c \
-			 ${MW_SAMPLE_PATH}/sample_common_platform.c \
-			 ${MW_SAMPLE_PATH}/sample_common_vpss.c \
-			 ${MW_SAMPLE_PATH}/sample_common_vi.c \
-			 ${MW_SAMPLE_PATH}/sample_common_isp.c \
-			 ${MW_SAMPLE_PATH}/sample_common_bin.c \
-			 ${MW_SAMPLE_PATH}/sample_common_venc.c \
-			 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
-	else ifeq ($(CHIP), CV180X)
-		MW_LIBS = -lini -lmsg  -lvpu -lcvilink -lsys -lvenc -lvdec -lcvi_bin -lcvi_bin_isp -lisp -lae -lawb -lae -laf
-		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
-		MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv180x
-		CFLAGS += -DCV180X
-	endif
+ifeq ($(CHIP), CV186X)
+	MW_LIBS = -lsys -lvi -lvpss -lvenc -lvdec -lvo -lrgn -lgdc -lini -lisp -lsns_full -lawb -lae -laf -lcvi_bin_isp -lcvi_bin -lisp_algo
+	MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv186x/
+	MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
+	MW_PANEL_BOARD_INC_PATH = ${MW_PATH}/component/panel/cv186x
+	CFLAGS += -DCV186X
+	SAMPLE_COMMON_FILE = ${MW_SAMPLE_PATH}/sample_common_vo.c \
+		 ${MW_SAMPLE_PATH}/sample_common_sys.c \
+		 ${MW_SAMPLE_PATH}/sample_common_platform.c \
+		 ${MW_SAMPLE_PATH}/sample_common_vpss.c \
+		 ${MW_SAMPLE_PATH}/sample_common_vi.c \
+		 ${MW_SAMPLE_PATH}/sample_common_isp.c \
+		 ${MW_SAMPLE_PATH}/sample_common_bin.c \
+		 ${MW_SAMPLE_PATH}/sample_common_venc.c \
+		 ${MW_SAMPLE_PATH}/sample_common_peripheral.c
+else ifeq ($(CHIP), CV181X)
+	MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lrgn -lgdc
+	MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv181x/
+	MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
+	CFLAGS += -DCV181X -D__CV181X__
+else ifeq ($(CHIP), CV180X)
+	MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lmisc -lisp_algo -lsys  -lvi -lvo -lvpss -lrgn -lgdc
+	MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv180x
+	MW_LINUX_INC_PATH = $(KERNEL_ROOT)/include/
+	CFLAGS += -DCV180X -D__CV180X__
 endif
 
 #####################################################

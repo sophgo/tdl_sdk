@@ -74,14 +74,8 @@ set(SAMPLE_INC
 )
 
 
-if(${MW_VER} STREQUAL "v1")
-set(SAMPLE_INC ${SAMPLE_INC} ${TRACER_PATH})
-elseif(${MW_VER} STREQUAL "v3")
-set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/${CVI_PLATFORM_LOWER})
-else()
 if(${CVI_PLATFORM} STREQUAL "CV186X")
 set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/cv186x)
-endif()
 endif()
 
 set(AUDIO_SAMPLE_LIBS
@@ -137,37 +131,6 @@ set(SAMPLE_LIBS_FILE
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.c
 )
 add_definitions(-DSENSOR_GCORE_GC4653)
-elseif(${MW_VER} STREQUAL "v3")
-set(SAMPLE_LIBS
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libmsg.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvilink.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-    ${MLIR_SDK_ROOT}/lib/libz.so
-    ${CVI_RTSP_LIBPATH}
-)
-set(SAMPLE_LIBS_FILE
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_platform.c
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_sys.c
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vi.c
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_isp.c
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vpss.c
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_venc.c
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vo.c
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_bin.c
-    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.c
-)
 else()
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
@@ -187,38 +150,32 @@ set(SAMPLE_LIBS
     ${CVI_RTSP_LIBPATH}
 )
 
-if("${MW_VER}" STREQUAL "v2")
-    if(${CVI_PLATFORM} STRLESS "CV186X")
-        set(SAMPLE_LIBS
-            ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-        	  ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-            ${MLIR_SDK_ROOT}/lib/libz.so
-            ${CVI_RTSP_LIBPATH}
-        )
-    endif()
+if(${CVI_PLATFORM} STRLESS "CV186X")
+    set(SAMPLE_LIBS
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+    	  ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+        ${MLIR_SDK_ROOT}/lib/libz.so
+        ${CVI_RTSP_LIBPATH}
+    )
+endif()
 set(SAMPLE_LIBS ${SAMPLE_LIBS}
     ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so
 )
-else()
-set(SAMPLE_LIBS ${SAMPLE_LIBS}
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so
-)
-endif()
 
 if (NOT "${CVI_PLATFORM}" STREQUAL "CV183X")
     set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
