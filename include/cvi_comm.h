@@ -15,9 +15,7 @@
 #include <cvi_errno.h>
 #include <cvi_math.h>
 #endif
-
 #include <cvi_comm_vb.h>
 #include <cvi_sys.h>
 #include <cvi_type.h>
-
 #endif
