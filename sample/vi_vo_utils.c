@@ -685,8 +685,8 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
   context->type = outputType;
   switch (outputType) {
 #ifndef CV180X
-    CVI_S32 s32Ret = CVI_SUCCESS;
     case OUTPUT_TYPE_PANEL: {
+      CVI_S32 s32Ret = CVI_SUCCESS;
       printf("Init panel\n");
       context->voChn = 0;
       context->voLayer = 0;

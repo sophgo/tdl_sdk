@@ -170,9 +170,10 @@ void *run_venc(void *args) {
   pthread_exit(NULL);
 }
 
-void *run_tdl_thread(cvitdl_app_handle_t app_handle) {
+void *run_tdl_thread(void *arg) {
   printf("Enter TDL thread\n");
 
+  cvitdl_app_handle_t app_handle = (cvitdl_app_handle_t)arg;
   VIDEO_FRAME_INFO_S stFrame;
   size_t counter = 0;
   uint32_t last_time_ms = get_time_in_ms();

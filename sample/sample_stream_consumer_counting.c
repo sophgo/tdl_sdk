@@ -475,12 +475,13 @@ int main(int argc, char *argv[]) {
     // CVI_TDL_Free(&app_handle->person_cpt_info->last_head);
     // CVI_TDL_Free(&app_handle->person_cpt_info->last_objects);
   }
+  
   bRunVideoOutput = false;
   pthread_join(vo_thread, NULL);
 CLEANUP_SYSTEM:
   CVI_TDL_Service_DestroyHandle(service_handle);
   CVI_TDL_DestroyHandle(tdl_handle);
-  DestroyVideoSystem(&stMWContext);
+  SAMPLE_TDL_Destroy_MW(&stMWContext);
   CVI_SYS_Exit();
   CVI_VB_Exit();
 }

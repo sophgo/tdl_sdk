@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     printf("model opened\n");
   }
 
-  char *p_buffer;
+  void *p_buffer = NULL;
   int buffer_len = 0;
   if (!read_binary_file(argv[2], &p_buffer, &buffer_len)) {
     printf("read file failed\n");
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 
   printf("num_wav_len:%d,num_pack:%d\n", num_wav_len, num_pack);
 
-  short *p_frame_buf = p_buffer;
+  short *p_frame_buf = (short *)p_buffer;
   int pack_idx = 0;
 
   while ((pack_idx + num_pack) * pack_len * AUDIOFORMATSIZE <= buffer_len) {

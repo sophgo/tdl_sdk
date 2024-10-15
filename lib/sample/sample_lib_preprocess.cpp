@@ -43,7 +43,7 @@ void unmap_video_frame(VIDEO_FRAME_INFO_S *frame) {
   frame->stVFrame.pu8VirAddr[2] = NULL;
 }
 
-void dump_img(IVE_HANDLE ive_handle,VIDEO_FRAME_INFO_S *frame, uint8_t index, char *name) {
+void dump_img(IVE_HANDLE ive_handle,VIDEO_FRAME_INFO_S *frame, uint8_t index, const char *name) {
   char img_name[40];
   IVE_IMAGE_S ive_img;
   memset(&ive_img, 0, sizeof(IVE_IMAGE_S));

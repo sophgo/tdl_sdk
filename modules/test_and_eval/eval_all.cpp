@@ -283,7 +283,7 @@ std::string run_image_scrfd_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle
   }
 
   cvtdl_face_t obj_meta = {0};
-  memset(&obj_meta, 0, sizeof(cvtdl_object_t));
+  memset(&obj_meta, 0, sizeof(cvtdl_face_t));
 
   ret = CVI_TDL_FaceDetection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, &obj_meta);
   if (ret != CVI_SUCCESS) {
@@ -307,6 +307,7 @@ std::string run_image_scrfd_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle
     }
   }
   str_res << "]" << std::endl;
+  return str_res.str();
 }
 
 std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handle_t tdl_handle,
