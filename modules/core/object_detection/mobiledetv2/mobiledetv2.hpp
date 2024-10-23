@@ -6,12 +6,12 @@
 
 #include "anchors.hpp"
 #include "core/object/cvtdl_object_types.h"
-#include "core_internel.hpp"
+#include "obj_detection.hpp"
 #include "object_utils.hpp"
 
 namespace cvitdl {
 
-class MobileDetV2 final : public Core {
+class MobileDetV2 final : public DetectionBase {
  public:
   enum class Category {
     coco80,          // COCO 80 classes
@@ -46,17 +46,14 @@ class MobileDetV2 final : public Core {
   };
 
   explicit MobileDetV2(MobileDetV2::Category category, float iou_thresh = 0.5);
-  virtual ~MobileDetV2();
-  int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
-  int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *meta);
-  virtual void setModelThreshold(float threshold) override;
-  virtual bool allowExportChannelAttribute() const override { return true; }
-  virtual int onModelOpened() override;
+  ~MobileDetV2(){};
+  int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *meta) override;
+  int onModelOpened() override;
   void select_classes(const std::vector<uint32_t> &selected_classes);
+  void setModelThreshold(const float &threshold) override;
+  bool allowExportChannelAttribute() const override { return true; }
 
  private:
-  int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                     VPSSConfig &vpss_config) override;
   void get_raw_outputs(std::vector<std::pair<int8_t *, size_t>> *cls_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *objectness_tensor_ptr,
                        std::vector<std::pair<int8_t *, size_t>> *bbox_tensor_ptr);
@@ -65,6 +62,8 @@ class MobileDetV2 final : public Core {
                                 float bbox_dequant_thresh, int8_t quant_thresh,
                                 const int8_t *logits, const int8_t *objectness, int8_t *bboxes,
                                 size_t class_tensor_size, const std::vector<AnchorBox> &anchors);
+  int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                     VPSSConfig &vpss_config) override;
 
   std::vector<std::vector<AnchorBox>> m_anchors;
   CvimodelInfo m_model_config;

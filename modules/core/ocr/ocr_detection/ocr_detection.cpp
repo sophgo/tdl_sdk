@@ -8,13 +8,10 @@
 #include "core/utils/vpss_helper.h"
 
 #include <iostream>
-#include <sstream>
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
 #include <opencv2/opencv.hpp>
+#include <sstream>
 #include "opencv2/imgproc.hpp"
-#endif
+
 #define R_SCALE (0.003922)
 #define G_SCALE (0.003922)
 #define B_SCALE (0.003922)
@@ -24,24 +21,15 @@
 
 namespace cvitdl {
 
-OCRDetection::OCRDetection() : Core(CVI_MEM_DEVICE) {}
-
-OCRDetection::~OCRDetection() {}
-
-int OCRDetection::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("OCRDetection only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = R_SCALE;
-  (*data)[0].factor[1] = G_SCALE;
-  (*data)[0].factor[2] = B_SCALE;
-  (*data)[0].mean[0] = R_MEAN;
-  (*data)[0].mean[1] = G_MEAN;
-  (*data)[0].mean[2] = B_MEAN;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
+OCRDetection::OCRDetection() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = R_SCALE;
+  m_preprocess_param[0].factor[1] = G_SCALE;
+  m_preprocess_param[0].factor[2] = B_SCALE;
+  m_preprocess_param[0].mean[0] = R_MEAN;
+  m_preprocess_param[0].mean[1] = G_MEAN;
+  m_preprocess_param[0].mean[2] = B_MEAN;
 }
+OCRDetection::~OCRDetection() {}
 
 int OCRDetection::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};

@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
     printf("Run image %s\n", filepath);
-    CVI_TDL_RetinaFace(facelib_handle, &frame, &face);
+    CVI_TDL_FaceDetection(facelib_handle, &frame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face);
     CVI_TDL_Eval_WiderFaceResultSave2File(eval_handle, i, &frame, &face);
     CVI_TDL_ReleaseImage(img_handle, &frame);
     CVI_TDL_Free(&face);

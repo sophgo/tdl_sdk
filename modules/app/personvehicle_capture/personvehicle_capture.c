@@ -163,21 +163,10 @@ CVI_S32 _PersonVehicleCaptureIrregular_Run(personvehicle_capture_t *personvehicl
 
   /* set output signal to 0. */
   memset(personvehicle_cpt_info->_output, 0, sizeof(bool) * personvehicle_cpt_info->size);
-  switch (personvehicle_cpt_info->od_model_index) {
-    case CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE:
-      if (CVI_TDL_SUCCESS != CVI_TDL_MobileDetV2_Person_Vehicle(
-                                 tdl_handle, frame, &personvehicle_cpt_info->last_objects)) {
-        return CVI_TDL_FAILURE;
-      }
-      break;
-    case CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION:
-      if (CVI_TDL_SUCCESS != CVI_TDL_PersonVehicle_Detection(
-                                 tdl_handle, frame, &personvehicle_cpt_info->last_objects)) {
-        return CVI_TDL_FAILURE;
-      }
-      break;
-    default:
-      return CVI_TDL_FAILURE;
+  if (CVI_TDL_SUCCESS != CVI_TDL_Detection(tdl_handle, frame,
+                                           personvehicle_cpt_info->od_model_index,
+                                           &personvehicle_cpt_info->last_objects)) {
+    return CVI_TDL_FAILURE;
   }
   for (int i = 0; i < personvehicle_cpt_info->last_objects.size; i++) {
     personvehicle_cpt_info->last_objects.info[i].is_cross = false;
@@ -346,22 +335,10 @@ CVI_S32 _PersonVehicleCapture_Run(personvehicle_capture_t *personvehicle_cpt_inf
   CVI_TDL_Free(&personvehicle_cpt_info->last_trackers);
   /* set output signal to 0. */
   memset(personvehicle_cpt_info->_output, 0, sizeof(bool) * personvehicle_cpt_info->size);
-  switch (personvehicle_cpt_info->od_model_index) {
-    case CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE:
-      if (CVI_TDL_SUCCESS != CVI_TDL_MobileDetV2_Person_Vehicle(
-                                 tdl_handle, frame, &personvehicle_cpt_info->last_objects)) {
-        return CVI_TDL_FAILURE;
-      }
-      break;
-    case CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION:
-      if (CVI_TDL_SUCCESS != CVI_TDL_PersonVehicle_Detection(
-                                 tdl_handle, frame, &personvehicle_cpt_info->last_objects)) {
-        return CVI_TDL_FAILURE;
-      }
-      break;
-    default:
-      printf("unknown object detection model index.");
-      return CVI_TDL_FAILURE;
+  if (CVI_TDL_SUCCESS != CVI_TDL_Detection(tdl_handle, frame,
+                                           personvehicle_cpt_info->od_model_index,
+                                           &personvehicle_cpt_info->last_objects)) {
+    return CVI_TDL_FAILURE;
   }
   for (int i = 0; i < personvehicle_cpt_info->last_objects.size; i++) {
     personvehicle_cpt_info->last_objects.info[i].is_cross = false;

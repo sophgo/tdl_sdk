@@ -190,7 +190,8 @@ void *run_tdl_thread(void *args) {
 
     //*******************************************
     // Step 1: Object detect inference.
-    s32Ret = pstTDLArgs->object_detect(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta);
+    s32Ret = pstTDLArgs->object_detect(pstTDLArgs->stTDLHandle, &stFrame, pstTDLArgs->enOdModelId,
+                                       &stObjMeta);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
@@ -409,7 +410,7 @@ int main(int argc, char *argv[]) {
 
   SAMPLE_TDL_TDL_THREAD_ARG_S ai_args = {
       .enOdModelId = enOdModelId,
-      .object_detect = CVI_TDL_Yolov8_Pose,
+      .object_detect = CVI_TDL_PoseDetection,
       .stTDLHandle = stTDLHandle,
       .bTrackingWithFeature = bTrackingWithFeature,
   };

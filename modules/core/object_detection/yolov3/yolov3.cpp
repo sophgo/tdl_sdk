@@ -17,7 +17,7 @@ using namespace std;
 
 namespace cvitdl {
 
-Yolov3::Yolov3() : Core(CVI_MEM_DEVICE) {
+Yolov3::Yolov3() {
   m_det_buf_size = YOLOV3_DEFAULT_DET_BUFFER;
 
   m_yolov3_param = {
@@ -33,18 +33,6 @@ Yolov3::Yolov3() : Core(CVI_MEM_DEVICE) {
 }
 
 Yolov3::~Yolov3() { free(mp_total_dets); }
-
-int Yolov3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Yolov3 only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = YOLOV3_SCALE;
-  }
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
-}
 
 int Yolov3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};

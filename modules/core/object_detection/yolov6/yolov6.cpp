@@ -8,6 +8,7 @@
 #include <error_msg.hpp>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -59,78 +60,15 @@ static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int 
   }
 }
 
-Yolov6::Yolov6() : Core(CVI_MEM_DEVICE) {
+Yolov6::Yolov6() {
   // defalut param
 
   for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = 0.003922;
-    p_preprocess_cfg_.mean[i] = 0.0;
+    m_preprocess_param[0].factor[i] = 0.003922;
+    m_preprocess_param[0].mean[i] = 0.0;
   }
-  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  p_alg_param_.cls = 80;
-}
-
-YoloPreParam Yolov6::get_preparam() { return p_preprocess_cfg_; }
-
-void Yolov6::set_preparam(YoloPreParam pre_param) {
-  for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
-    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
-  }
-
-  p_preprocess_cfg_.format = pre_param.format;
-}
-
-YoloAlgParam Yolov6::get_algparam() { return p_alg_param_; }
-
-void Yolov6::set_algparam(YoloAlgParam alg_param) { p_alg_param_.cls = alg_param.cls; }
-
-int Yolov6::onModelOpened() {
-  CVI_SHAPE input_shape = getInputShape(0);
-  int input_h = input_shape.dim[2];
-  strides.clear();
-  for (size_t j = 0; j < getNumOutputTensor(); j++) {
-    TensorInfo oinfo = getOutputTensorInfo(j);
-    CVI_SHAPE output_shape = oinfo.shape;
-
-    int feat_h = output_shape.dim[1];
-    uint32_t channel = output_shape.dim[3];
-    int stride_h = input_h / feat_h;
-
-    if (channel == p_alg_param_.cls) {
-      class_out_names[stride_h] = oinfo.tensor_name;
-      strides.push_back(stride_h);
-      LOGI("parase class decode branch: %s, channel: %d\n", oinfo.tensor_name.c_str(), channel);
-    } else {
-      bbox_out_names[stride_h] = oinfo.tensor_name;
-    }
-  }
-
-  for (size_t i = 0; i < strides.size(); i++) {
-    if (!class_out_names.count(strides[i]) || !bbox_out_names.count(strides[i])) {
-      return CVI_TDL_FAILURE;
-    }
-  }
-
-  return CVI_TDL_SUCCESS;
-}
-
-Yolov6::~Yolov6() {}
-
-int Yolov6::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Yolov6 only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
-  }
-
-  (*data)[0].format = p_preprocess_cfg_.format;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  alg_param_.cls = 80;
 }
 
 int Yolov6::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -160,6 +98,52 @@ int Yolov6::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dst
   return CVI_TDL_SUCCESS;
 }
 
+int Yolov6::onModelOpened() {
+  CVI_SHAPE input_shape = getInputShape(0);
+  int input_h = input_shape.dim[2];
+  strides_.clear();
+  std::unordered_map<std::string, int> setting_out_names_index_map;
+  if (!setting_out_names_.empty()) {
+    for (size_t i = 0; i < setting_out_names_.size(); i++) {
+      setting_out_names_index_map[setting_out_names_[i]] = i;
+    }
+  }
+  for (size_t j = 0; j < getNumOutputTensor(); j++) {
+    TensorInfo oinfo = getOutputTensorInfo(j);
+    CVI_SHAPE output_shape = oinfo.shape;
+
+    int feat_h = output_shape.dim[1];
+    uint32_t channel = output_shape.dim[3];
+    int stride_h = input_h / feat_h;
+
+    if (setting_out_names_.empty() || setting_out_names_.size() != getNumOutputTensor()) {
+      if (j % 2 == 1) {
+        class_out_names_[stride_h] = oinfo.tensor_name;
+        strides_.push_back(stride_h);
+      } else {
+        box_out_names_[stride_h] = oinfo.tensor_name;
+      }
+    } else {
+      if (setting_out_names_index_map[oinfo.tensor_name] < 3) {
+        box_out_names_[stride_h] = oinfo.tensor_name;
+        strides_.push_back(stride_h);
+      } else {
+        class_out_names_[stride_h] = oinfo.tensor_name;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < strides_.size(); i++) {
+    if (!class_out_names_.count(strides_[i]) || !box_out_names_.count(strides_[i])) {
+      return CVI_TDL_FAILURE;
+    }
+  }
+
+  return CVI_TDL_SUCCESS;
+}
+
+Yolov6::~Yolov6() {}
+
 int Yolov6::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
@@ -177,7 +161,7 @@ int Yolov6::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
 }
 
 void Yolov6::decode_bbox_feature_map(int stride, int anchor_idx, std::vector<float> &decode_box) {
-  std::string box_name = bbox_out_names[stride];
+  std::string box_name = box_out_names_[stride];
   TensorInfo boxinfo = getOutputTensorInfo(box_name);
   CVI_SHAPE input_shape = getInputShape(0);
   int box_val_num = 4;
@@ -274,16 +258,16 @@ void Yolov6::outputParser(const int iamge_width, const int image_height, const i
 
   float inverse_th = std::log(m_model_threshold / (1 - m_model_threshold));
 
-  for (size_t i = 0; i < strides.size(); i++) {
-    int stride = strides[i];
-    std::string cls_name = class_out_names[stride];
+  for (size_t i = 0; i < strides_.size(); i++) {
+    int stride = strides_[i];
+    std::string cls_name = class_out_names_[stride];
 
     TensorInfo classinfo = getOutputTensorInfo(cls_name);
     int num_per_pixel = classinfo.tensor_size / classinfo.tensor_elem;
     int8_t *p_cls_int8 = static_cast<int8_t *>(classinfo.raw_pointer);
     float *p_cls_float = static_cast<float *>(classinfo.raw_pointer);
 
-    int num_cls = p_alg_param_.cls;
+    int num_cls = alg_param_.cls;
     int num_anchor = classinfo.shape.dim[1] * classinfo.shape.dim[2];
     float cls_qscale = num_per_pixel == 1 ? classinfo.qscale : 1;
 

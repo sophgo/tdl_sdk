@@ -7,8 +7,6 @@
 #include <error_msg.hpp>
 #include <iostream>
 #include <iterator>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/opencv.hpp>
 #include <string>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
@@ -20,7 +18,17 @@
 
 namespace cvitdl {
 
-DMSLandmarkerDet::DMSLandmarkerDet() : Core(CVI_MEM_DEVICE) {}
+DMSLandmarkerDet::DMSLandmarkerDet() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = 1 / 59.395;
+  m_preprocess_param[0].factor[1] = 1 / 57.12;
+  m_preprocess_param[0].factor[2] = 1 / 57.375;
+  m_preprocess_param[0].mean[0] = 2.1179;
+  m_preprocess_param[0].mean[1] = 2.0357;
+  m_preprocess_param[0].mean[2] = 1.8044;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
+  m_preprocess_param[0].keep_aspect_ratio = false;
+}
 
 int DMSLandmarkerDet::onModelOpened() {
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
@@ -38,25 +46,6 @@ int DMSLandmarkerDet::onModelOpened() {
 }
 
 DMSLandmarkerDet::~DMSLandmarkerDet() {}
-
-int DMSLandmarkerDet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("DMSLandmarkerDet only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  (*data)[0].factor[0] = 1 / 59.395;
-  (*data)[0].factor[1] = 1 / 57.12;
-  (*data)[0].factor[2] = 1 / 57.375;
-  (*data)[0].mean[0] = 2.1179;
-  (*data)[0].mean[1] = 2.0357;
-  (*data)[0].mean[2] = 1.8044;
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].rescale_type = RESCALE_NOASPECT;
-  (*data)[0].keep_aspect_ratio = false;
-  return CVI_TDL_SUCCESS;
-}
 
 int DMSLandmarkerDet::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                                      VPSSConfig &vpss_config) {

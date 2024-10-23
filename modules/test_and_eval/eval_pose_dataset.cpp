@@ -98,9 +98,9 @@ std::string process_simcc_pose(cvitdl_handle_t tdl_handle, std::string &pd_model
   }
 
   if (pd_model_path != no_model) {
-    ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, bg, p_obj);
+    ret = CVI_TDL_Detection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
+      printf("CVI_TDL_MOBILEDETV2_PEDESTRIAN failed with %#x!\n", ret);
       return "";
     }
   } else {
@@ -123,7 +123,7 @@ std::string process_simcc_pose(cvitdl_handle_t tdl_handle, std::string &pd_model
   }
 
   if (p_obj->size > 0) {
-    ret = CVI_TDL_Simcc_Pose(tdl_handle, bg, p_obj);
+    ret = CVI_TDL_PoseDetection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, p_obj);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_Simcc_Pose failed with %#x!\n", ret);
       return "";
@@ -166,7 +166,7 @@ std::string process_yolov8_pose(cvitdl_handle_t tdl_handle, std::string &pose_mo
     model_init = 1;
   }
 
-  ret = CVI_TDL_Yolov8_Pose(tdl_handle, bg, p_obj);
+  ret = CVI_TDL_PoseDetection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE, p_obj);
   if (ret != CVI_SUCCESS) {
     printf("CVI_TDL_Yolov8_Pose failed with %#x!\n", ret);
     return "";
@@ -224,9 +224,9 @@ std::string process_hrnet_pose(cvitdl_handle_t tdl_handle, std::string &pd_model
   }
 
   if (pd_model_path != no_model) {
-    ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, bg, p_obj);
+    ret = CVI_TDL_Detection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
+      printf("CVI_TDL_MOBILEDETV2_PEDESTRIAN failed with %#x!\n", ret);
       return "";
     }
   } else {
@@ -252,7 +252,7 @@ std::string process_hrnet_pose(cvitdl_handle_t tdl_handle, std::string &pd_model
   }
 
   if (p_obj->size > 0) {
-    ret = CVI_TDL_Hrnet_Pose(tdl_handle, bg, p_obj);
+    ret = CVI_TDL_PoseDetection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, p_obj);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_Hrnet_Pose failed with %#x!\n", ret);
       return "";

@@ -68,8 +68,8 @@ void SAMPLE_TDL_Get_Input_Config(SAMPLE_COMM_CHN_INPUT_CONFIG_S *pstInCfg) {
   pstInCfg->maxIqp = DEF_264_MAXIQP;
   pstInCfg->minQp = DEF_264_MINQP;
   pstInCfg->maxQp = DEF_264_MAXQP;
-  pstInCfg->srcFramerate = 15;
-  pstInCfg->framerate = 15;
+  pstInCfg->srcFramerate = 30;
+  pstInCfg->framerate = 30;
   pstInCfg->bVariFpsEn = 0;
   pstInCfg->maxbitrate = -1;
   pstInCfg->statTime = -1;
@@ -178,7 +178,10 @@ CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
     printf("vi init failed. s32Ret: 0x%x !\n", s32Ret);
     goto vi_start_error;
   }
-
+  ISP_PUB_ATTR_S stPubAttr = {0};
+  CVI_ISP_GetPubAttr(0, &stPubAttr);
+  stPubAttr.f32FrameRate = 30;
+  CVI_ISP_SetPubAttr(0, &stPubAttr);
   // Init VPSS
   printf("Initialize VPSS\n");
   memcpy(&pstMWContext->stVPSSPoolConfig, &pstMWConfig->stVPSSPoolConfig,

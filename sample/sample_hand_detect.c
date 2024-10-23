@@ -90,7 +90,8 @@ void *run_tdl_thread(void *pHandle) {
       goto get_frame_failed;
     }
 
-    s32Ret = CVI_TDL_Hand_Detection(pstTDLHandle, &stFrame, &stHandMeta);
+    s32Ret = CVI_TDL_Detection(pstTDLHandle, &stFrame, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION,
+                               &stHandMeta);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;

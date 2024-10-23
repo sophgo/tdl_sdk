@@ -35,7 +35,8 @@ std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   }
   cvtdl_object_t person_obj;
   memset(&person_obj, 0, sizeof(cvtdl_object_t));
-  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, p_frame, &person_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+                          &person_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect person failed:" << ret << std::endl;
   }
@@ -44,8 +45,8 @@ std::string run_image_person_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_handl
   std::stringstream ss;
   for (uint32_t i = 0; i < person_obj.size; i++) {
     cvtdl_bbox_t box = person_obj.info[i].bbox;
-    ss << (person_obj.info[i].classes + 1) << " " << box.score << " " << box.x1 << " " << box.y1
-       << " " << box.x2 << " " << box.y2 << "\n";
+    ss << person_obj.info[i].classes + 1 << " " << box.x1 << " " << box.y1 << " " << box.x2 << " "
+       << box.y2 << " " << box.score << "\n";
   }
   CVI_TDL_Free(&person_obj);
   return ss.str();
@@ -65,7 +66,8 @@ std::string run_image_person_pets_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_
   }
   cvtdl_object_t person_pets_obj;
   memset(&person_pets_obj, 0, sizeof(cvtdl_object_t));
-  ret = CVI_TDL_MobileDetV2_Person_Pets(tdl_handle, p_frame, &person_pets_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
+                          &person_pets_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect person pets failed:" << ret << std::endl;
   }

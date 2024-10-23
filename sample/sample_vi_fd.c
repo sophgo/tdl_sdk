@@ -95,7 +95,8 @@ void *run_tdl_thread(void *pHandle) {
     }
 
     memset(&stFaceMeta, 0, sizeof(cvtdl_face_t));
-    s32Ret = CVI_TDL_ScrFDFace(pstTDLHandle, &stFrame, &stFaceMeta);
+    s32Ret = CVI_TDL_FaceDetection(pstTDLHandle, &stFrame, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE,
+                                   &stFaceMeta);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;

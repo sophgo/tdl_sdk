@@ -1,7 +1,6 @@
 #include "core_a2.hpp"
 #include "core/utils/vpss_helper.h"
 #include "error_msg.hpp"
-
 #define ALIGN_SIZE 64
 
 namespace cvitdl {
@@ -9,6 +8,21 @@ namespace cvitdl {
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
   mp_mi = std::make_unique<CvimodelInfo>();
   mp_mi->conf = {.debug_mode = false, .input_mem_type = input_mem_type};
+  if (input_mem_type == CVI_MEM_SYSTEM) {
+    use_mmap = false;
+  } else {
+    use_mmap = true;
+  }
+
+  InputPreParam first_in_pre_param;
+  std::fill(std::begin(first_in_pre_param.factor), std::end(first_in_pre_param.factor), 0.0f);
+  std::fill(std::begin(first_in_pre_param.mean), std::end(first_in_pre_param.mean), 0.0f);
+  first_in_pre_param.keep_aspect_ratio = true;
+  first_in_pre_param.use_crop = false;
+  first_in_pre_param.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  first_in_pre_param.rescale_type = RESCALE_CENTER;
+  first_in_pre_param.resize_method = VPSS_SCALE_COEF_BICUBIC;
+  m_preprocess_param.emplace_back(first_in_pre_param);
 }
 
 Core::Core() : Core(CVI_MEM_SYSTEM) {}
@@ -100,8 +114,12 @@ int Core::modelOpen(const char *filepath) {
 
   for (auto i = 0; i < mp_mi->out.num; i++) {
     bmrt_tensor(&out_tensor[i], mp_mi->handle, net_info->output_dtypes[i], stage.output_shapes[i]);
-    if (!use_mmap) {
-      mp_mi->out.raw_pointer.push_back(new char[bmrt_tensor_bytesize(&out_tensor[i])]);
+    bm_status_t status =
+        bm_mem_mmap_device_mem(bm_handle, &out_tensor[i].device_mem,
+                               reinterpret_cast<long long unsigned int *>(&out_raw_pointer[i]));
+    if (CVI_TDL_SUCCESS != status) {
+      cleanupError();
+      return CVI_TDL_ERR_OPEN_MODEL;
     }
   }
 
@@ -111,8 +129,10 @@ int Core::modelOpen(const char *filepath) {
     }
   }
 
+  m_input_tensor_info.clear();
   setupInputTensorInfo(net_info, mp_mi.get(), m_input_tensor_info);
-  setupOutputTensorInfo(net_info, mp_mi.get(), m_output_tensor_info);
+  m_output_tensor_info.clear();
+  setupOutputTensorInfo(net_info, mp_mi.get(), m_output_tensor_info);  // to update raw_pointer
 
   /* input preprocess param */
   m_vpss_config.clear();
@@ -129,14 +149,9 @@ int Core::modelOpen(const char *filepath) {
 
 void Core::input_preprocess_config(const bm_net_info_t *net_info,
                                    std::vector<VPSSConfig> &m_vpss_config) {
-  std::vector<InputPreprecessSetup> data(mp_mi->in.num);
+  bool use_quantize_scale;
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
-    data[i].use_quantize_scale = net_info->input_scales[i] == 1 ? false : true;
-  }
-
-  auto ret = setupInputPreprocess(&data);
-  if (ret != CVI_TDL_SUCCESS) {
-    LOGE("return failed in setupInputPreprocess\n");
+    use_quantize_scale = net_info->input_scales[i] == 1 ? false : true;
   }
 
   auto &stage = net_info->stages[0];
@@ -144,16 +159,16 @@ void Core::input_preprocess_config(const bm_net_info_t *net_info,
   constexpr float factor_limit = 8191.f / 8192;
 
   for (auto i = 0; i < mp_mi->in.num; i++) {
-    if (data[i].use_quantize_scale) {
+    if (use_quantize_scale) {
       float quant_scale = net_info->input_scales[i];
 
       for (uint32_t j = 0; j < 3; j++) {
-        data[i].factor[j] *= quant_scale;
-        data[i].mean[j] *= quant_scale;
+        m_preprocess_param[i].factor[j] *= quant_scale;
+        m_preprocess_param[i].mean[j] *= quant_scale;
 
-        if (data[i].factor[j] > factor_limit) {
-          LOGW("factor[%d] is bigger than limit: %f\n", i, data[i].factor[j]);
-          data[i].factor[j] = factor_limit;
+        if (m_preprocess_param[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, m_preprocess_param[i].factor[j]);
+          m_preprocess_param[i].factor[j] = factor_limit;
         }
       }
     }
@@ -164,19 +179,19 @@ void Core::input_preprocess_config(const bm_net_info_t *net_info,
     auto width = stage.input_shapes->dims[3];
     vcfg.frame_type = CVI_FRAME_PLANAR;
 
-    vcfg.rescale_type = data[i].rescale_type;
-    vcfg.crop_attr.bEnable = data[i].use_crop;
+    vcfg.rescale_type = m_preprocess_param[i].rescale_type;
+    vcfg.crop_attr.bEnable = m_preprocess_param[i].use_crop;
 
     if (net_info->input_dtypes[i] == BM_UINT8) {
-      data[i].format = PIXEL_FORMAT_UINT8_C3_PLANAR;
+      m_preprocess_param[i].format = PIXEL_FORMAT_UINT8_C3_PLANAR;
     }
-
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, data[i].format, data[i].factor, data[i].mean,
-                       data[i].pad_reverse);
-    if (!data[i].keep_aspect_ratio) {
+    bool pad_reverse = false;
+    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, m_preprocess_param[i].format,
+                       m_preprocess_param[i].factor, m_preprocess_param[i].mean, pad_reverse);
+    if (!m_preprocess_param[i].keep_aspect_ratio) {
       vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
     }
-    vcfg.chn_coeff = data[i].resize_method;
+    vcfg.chn_coeff = m_preprocess_param[i].resize_method;
     m_vpss_config.push_back(vcfg);
   }
 }
@@ -194,7 +209,7 @@ void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_m
 
     tinfo.tensor_elem = bmrt_shape_count(&stages.input_shapes[i]);
     tinfo.tensor_size = tinfo.tensor_elem * bmrt_data_type_size(net_info->input_dtypes[i]);
-    tinfo.data_type = net_info->output_dtypes[i];
+    tinfo.data_type = net_info->input_dtypes[i];
     tinfo.qscale = net_info->input_scales[i];
     if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
       tinfo.raw_pointer = p_mi->in.raw_pointer[i];
@@ -228,20 +243,7 @@ void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_
   }
 }
 
-int Core::after_inference() {
-  if (use_mmap) {
-    for (int32_t i = 0; i < mp_mi->out.num; i++) {
-      auto size = bm_mem_get_device_size(mp_mi->out.tensors[i].device_mem);
-      bm_status_t status = bm_mem_unmap_device_mem(bm_handle, mp_mi->out.raw_pointer[i], size);
-
-      if (CVI_TDL_SUCCESS != status) {
-        LOGE("bm_mem_unmap_device_mem failed: %s\n");
-        return CVI_TDL_FAILURE;
-      }
-    }
-  }
-  return CVI_TDL_SUCCESS;
-}
+int Core::after_inference() { return CVI_TDL_SUCCESS; }
 
 int Core::modelClose() {
   int ret = CVI_TDL_SUCCESS;
@@ -259,6 +261,16 @@ int Core::modelClose() {
     for (auto ptr : mp_mi->out.raw_pointer) {
       delete[] ptr;
     }
+  } else {
+    for (int32_t i = 0; i < mp_mi->out.num; i++) {
+      auto size = bm_mem_get_device_size(mp_mi->out.tensors[i].device_mem);
+      bm_status_t status = bm_mem_unmap_device_mem(bm_handle, mp_mi->out.raw_pointer[i], size);
+
+      if (CVI_TDL_SUCCESS != status) {
+        LOGE("bm_mem_unmap_device_mem failed: %s\n");
+        return CVI_TDL_FAILURE;
+      }
+    }
   }
 
   if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
@@ -266,7 +278,10 @@ int Core::modelClose() {
       delete[] ptr;
     }
   }
-
+  if (register_temp_buffer) {
+    delete[] register_temp_buffer;
+    register_temp_buffer = nullptr;
+  }
   for (int32_t i = 0; i < mp_mi->out.num; i++) {
     bm_free_device(bm_handle, mp_mi->out.tensors[i].device_mem);
   }
@@ -404,15 +419,7 @@ int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32
   return 0;
 }
 
-void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
-float Core::getModelThreshold() { return m_model_threshold; };
-
-void Core::setModelNmsThreshold(float threshold) { m_model_nms_threshold = threshold; }
-float Core::getModelNmsThreshold() { return m_model_nms_threshold; };
-
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
-
-int Core::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) { return 0; }
 
 CVI_SHAPE Core::getInputShape(size_t index) { return getInputTensorInfo(index).shape; }
 
@@ -540,30 +547,14 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     auto &raw_pointer = mp_mi->out.raw_pointer;
     bm_thread_sync(bm_handle);
 
-    if (use_mmap) {
-      for (auto i = 0; i < mp_mi->out.num; i++) {
-        bm_status_t status =
-            bm_mem_mmap_device_mem(bm_handle, &out_tensor[i].device_mem,
-                                   reinterpret_cast<long long unsigned int *>(&raw_pointer[i]));
-        if (CVI_TDL_SUCCESS != status) {
-          cleanupError();
-          return CVI_TDL_ERR_OPEN_MODEL;
-        }
-
-        status = bm_mem_invalidate_device_mem(bm_handle, &(out_tensor[i].device_mem));
-        if (CVI_TDL_SUCCESS != status) {
-          cleanupError();
-          return CVI_TDL_ERR_OPEN_MODEL;
-        }
-      }
-      m_output_tensor_info.clear();
-      setupOutputTensorInfo(net_info, mp_mi.get(), m_output_tensor_info);  // to update raw_pointer
-    } else {
-      for (int32_t i = 0; i < mp_mi->out.num; i++) {
-        bm_memcpy_d2s_partial(bm_handle, raw_pointer[i], out_tensor[i].device_mem,
-                              bmrt_tensor_bytesize(&out_tensor[i]));
+    for (auto i = 0; i < mp_mi->out.num; i++) {
+      bm_status_t status = bm_mem_invalidate_device_mem(bm_handle, &(out_tensor[i].device_mem));
+      if (CVI_TDL_SUCCESS != status) {
+        cleanupError();
+        return CVI_TDL_ERR_OPEN_MODEL;
       }
     }
+
   } else {
     LOGE("bmrt_launch_tensor_ex failed: Unsupport operation.\n");
     return ret;
@@ -577,9 +568,11 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
   uint32_t input_w = input_shape.dim[3];
   uint32_t input_h = input_shape.dim[2];
 
-  if (frames.size() != (uint32_t)mp_mi->in.num) {
-    LOGE("frames.size() != (uint32_t)mp_mi->in.num\n");
-    return CVI_TDL_FAILURE;
+  if (!raw) {
+    if (frames.size() != (uint32_t)mp_mi->in.num) {
+      LOGE("frames.size() != (uint32_t)mp_mi->in.num\n");
+      return CVI_TDL_FAILURE;
+    }
   }
 
   for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
@@ -612,36 +605,24 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
       int input_width = mp_mi->in.tensors[i].shape.dims[3];
 
       if (input_width % ALIGN_SIZE == 0) {
-        bm_memcpy_s2d_partial(bm_handle, mp_mi->in.tensors[i].device_mem,
-                              (void *)frame->stVFrame.pu8VirAddr[0], size);
+        bm_set_device_mem(&(mp_mi->in.tensors[i].device_mem), size,
+                          (unsigned long long)frame->stVFrame.u64PhyAddr[0]);
       } else {
         int align_length = (input_width / ALIGN_SIZE + 1) * ALIGN_SIZE;
-
+        uint64_t image_bgr_devaddr = bm_mem_get_device_addr(mp_mi->in.tensors[i].device_mem);
+        int input_height_squared = input_width * input_height;
+        //  for(for(s2s_cpy))+s2d_cpy greater than for(for(s2d_cpy))
+        if (!register_temp_buffer) {
+          register_temp_buffer = new uint8_t[3 * input_height_squared];
+        }
         for (int c = 0; c < 3; c++) {
           for (int h = 0; h < input_height; h++) {
-            uint64_t image_bgr_devaddr = bm_mem_get_device_addr(mp_mi->in.tensors[i].device_mem);
-            bm_device_mem_t dst_addr = bm_mem_from_device(
-                image_bgr_devaddr + h * input_width + c * input_height * input_height, input_width);
-
-            bm_memcpy_s2d_partial(bm_handle, dst_addr,
-                                  (void *)(frame->stVFrame.pu8VirAddr[c] + h * align_length),
-                                  input_width);
+            memcpy(register_temp_buffer + c * input_height_squared + h * input_width,
+                   frame->stVFrame.pu8VirAddr[c] + h * align_length, input_width);
           }
         }
-
-        // bm_memcpy_d2d_byte function is not ready
-
-        // for (int k = 0; k < 3; k++) {
-        //   bm_device_mem_t src_addr =
-        //   bm_mem_from_device((uint64_t)(frame->stVFrame.pu8VirAddr[k]),
-        //                                                 frame->stVFrame.u32Length[i]);
-
-        //   for (int n = 0; n < input_height; n++) {
-        //     bm_memcpy_d2d_byte(bm_handle, mp_mi->in.tensors[i].device_mem,
-        //                        n * input_width + k * input_height * input_height, src_addr,
-        //                        n * align_length, input_width);
-        //   }
-        // }
+        bm_device_mem_t dst_addr = bm_mem_from_device(image_bgr_devaddr, image_size);
+        bm_memcpy_s2d_partial(bm_handle, dst_addr, (void *)(register_temp_buffer), image_size);
       }
 
       CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);

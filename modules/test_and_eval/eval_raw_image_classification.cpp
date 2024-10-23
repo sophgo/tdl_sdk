@@ -188,29 +188,6 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  // setup preprocess
-  VpssPreParam p_preprocess_cfg;
-  float mean[3] = {123.675, 116.28, 103.52};
-  float std[3] = {58.395, 57.12, 57.375};
-
-  for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg.mean[i] = mean[i] / std[i];
-    p_preprocess_cfg.factor[i] = 1.0 / std[i];
-  }
-
-  p_preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  p_preprocess_cfg.use_quantize_scale = true;
-  p_preprocess_cfg.rescale_type = RESCALE_CENTER;
-  p_preprocess_cfg.keep_aspect_ratio = true;
-
-  printf("setup image classification param \n");
-  ret = CVI_TDL_Set_Raw_Image_Cls_Param(tdl_handle, &p_preprocess_cfg);
-  printf("image classification set param success!\n");
-  if (ret != CVI_SUCCESS) {
-    printf("Can not set image classification parameters %#x\n", ret);
-    return ret;
-  }
-
   std::string model_path = argv[1];
   std::string bench_path = argv[2];
   std::string image_root = argv[3];

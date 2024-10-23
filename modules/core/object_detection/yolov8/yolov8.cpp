@@ -50,49 +50,22 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 
-YoloV8Detection::YoloV8Detection() : Core(CVI_MEM_DEVICE) {
-  // Default value
-  // for (int i = 0; i < 3; i++) {
-  //   p_preprocess_cfg_.factor[i] = 0.003922;
-  //   p_preprocess_cfg_.mean[i] = 0.0;
-  // }
-  // p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  // p_alg_param_.cls = 80;
-}
+YoloV8Detection::YoloV8Detection() : YoloV8Detection(std::make_pair(64, 80)) {}
 
-YoloPreParam YoloV8Detection::get_preparam() { return p_preprocess_cfg_; }
-void YoloV8Detection::set_preparam(YoloPreParam pre_param) {
+YoloV8Detection::YoloV8Detection(PAIR_INT yolov8_pair) {
   for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
-    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
+    m_preprocess_param[0].factor[i] = 0.003922;
+    m_preprocess_param[0].mean[i] = 0.0;
   }
-
-  p_preprocess_cfg_.format = pre_param.format;
-}
-
-YoloAlgParam YoloV8Detection::get_algparam() { return p_alg_param_; }
-
-void YoloV8Detection::set_algparam(YoloAlgParam alg_param) {
-  p_alg_param_.cls = alg_param.cls;
-  m_cls_channel_ = alg_param.cls;
-}
-
-YoloV8Detection::YoloV8Detection(PAIR_INT yolov8_pair) : Core(CVI_MEM_DEVICE) {
-  for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = 0.003922;
-    p_preprocess_cfg_.mean[i] = 0.0;
-  }
-  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   m_box_channel_ = yolov8_pair.first;
-  m_cls_channel_ = yolov8_pair.second;
-  p_alg_param_.cls = m_cls_channel_;
+  alg_param_.cls = yolov8_pair.second;
 }
 
 // would parse 3 cases,1:box,cls seperate feature map,2 box+cls seperate featuremap,3 output decoded
 // results
 int YoloV8Detection::onModelOpened() {
-  m_cls_channel_ = p_alg_param_.cls;
   CVI_SHAPE input_shape = getInputShape(0);
   int input_h = input_shape.dim[2];
   int input_w = input_shape.dim[3];
@@ -108,7 +81,7 @@ int YoloV8Detection::onModelOpened() {
     int stride_w = input_w / feat_w;
 
     if (stride_h == 0 && num_output == 2) {
-      if (channel == m_cls_channel_) {
+      if (channel == alg_param_.cls) {
         class_out_names[stride_h] = oinfo.tensor_name;
         strides.push_back(stride_h);
         LOGI("parse class decode branch:%s,channel:%d\n", oinfo.tensor_name.c_str(), channel);
@@ -128,10 +101,15 @@ int YoloV8Detection::onModelOpened() {
       bbox_out_names[stride_h] = oinfo.tensor_name;
       strides.push_back(stride_h);
       LOGI("parse box branch,name:%s,stride:%d\n", oinfo.tensor_name.c_str(), stride_h);
-    } else if (channel == m_cls_channel_) {
+    } else if (alg_param_.cls == 0 && num_output == 6) {
+      alg_param_.cls = channel;
+      class_out_names[stride_h] = oinfo.tensor_name;
+      LOGI("parse class branch,name:%s,stride:%d,num_cls:%d\n", oinfo.tensor_name.c_str(), stride_h,
+           channel);
+    } else if (channel == alg_param_.cls) {
       class_out_names[stride_h] = oinfo.tensor_name;
       LOGI("parse class branch,name:%s,stride:%d\n", oinfo.tensor_name.c_str(), stride_h);
-    } else if (channel == (m_box_channel_ + m_cls_channel_)) {
+    } else if (channel == (m_box_channel_ + alg_param_.cls)) {
       strides.push_back(stride_h);
       bbox_class_out_names[stride_h] = oinfo.tensor_name;
       LOGI("parse box+class branch,name: %s,stride:%d\n", oinfo.tensor_name.c_str(), stride_h);
@@ -145,22 +123,6 @@ int YoloV8Detection::onModelOpened() {
 }
 
 YoloV8Detection::~YoloV8Detection() {}
-
-int YoloV8Detection::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("YoloV8Detection only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
-  }
-
-  (*data)[0].format = p_preprocess_cfg_.format;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
-}
 
 int YoloV8Detection::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
@@ -270,7 +232,7 @@ void YoloV8Detection::outputParser(const int image_width, const int image_height
     int8_t *p_cls_int8 = static_cast<int8_t *>(classinfo.raw_pointer);
     float *p_cls_float = static_cast<float *>(classinfo.raw_pointer);
 
-    int num_cls = m_cls_channel_;
+    int num_cls = alg_param_.cls;
     int num_anchor = classinfo.shape.dim[2] * classinfo.shape.dim[3];
     // LOGI("stride:%d,featw:%d,feath:%d,numperpixel:%d,numcls:%d\n", stride,
     // classinfo.shape.dim[3],
@@ -325,7 +287,7 @@ void YoloV8Detection::parseDecodeBranch(const int image_width, const int image_h
   int8_t *p_box_int8 = static_cast<int8_t *>(oinfo_box.raw_pointer);
   float *p_box_float = static_cast<float *>(oinfo_box.raw_pointer);
 
-  int num_cls = m_cls_channel_;
+  int num_cls = alg_param_.cls;
   float cls_qscale = num_per_pixel_cls == 1 ? oinfo_cls.qscale : 1;
   float box_qscale = num_per_pixel_box == 1 ? oinfo_box.qscale : 1;
   int cls_offset = 0;

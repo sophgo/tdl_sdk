@@ -13,24 +13,15 @@
 
 namespace cvitdl {
 
-Deeplabv3::Deeplabv3() : Core(CVI_MEM_DEVICE) {}
+Deeplabv3::Deeplabv3() : Core(CVI_MEM_DEVICE) {
+  for (uint32_t i = 0; i < 3; i++) {
+    m_preprocess_param[0].factor[i] = SCALE;
+    m_preprocess_param[0].mean[i] = MEAN;
+  }
+  m_preprocess_param[0].keep_aspect_ratio = false;
+}
 
 Deeplabv3::~Deeplabv3() {}
-
-int Deeplabv3::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Face quality only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (uint32_t i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = SCALE;
-    (*data)[0].mean[i] = MEAN;
-  }
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].keep_aspect_ratio = false;
-  return CVI_TDL_SUCCESS;
-}
 
 int Deeplabv3::onModelOpened() { return allocateION(); }
 

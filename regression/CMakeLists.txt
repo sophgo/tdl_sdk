@@ -190,17 +190,14 @@ set(UnitTests
   reg_daily_thermal_person_detection.cpp
   reg_daily_core.cpp
   reg_daily_liveness.cpp
-  reg_daily_alphapose.cpp
   reg_daily_fall.cpp
   reg_daily_retinaface.cpp
   reg_daily_retinafaceIR.cpp
   reg_daily_retinaface_hardhat.cpp
   reg_daily_fdmask.cpp
-  reg_daily_es_classification.cpp
   reg_daily_eye_classification.cpp
   reg_daily_yawn_classification.cpp
   reg_daily_fl.cpp
-  reg_daily_soundcmd.cpp
   reg_daily_incarod.cpp
   reg_daily_face_cap.cpp
   reg_daily_feature_matching.cpp

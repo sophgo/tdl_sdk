@@ -10,7 +10,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-//#include "core.hpp"
+// #include "core.hpp"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
@@ -18,10 +18,9 @@
 
 // set preprocess and algorithm param for yolov6 detection
 // if use official model, no need to change param
-CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
+CVI_S32 init_param(const cvitdl_handle_t tdl_handle, bool assign_out_string) {
   // setup preprocess
-  YoloPreParam preprocess_cfg =
-      CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
+  InputPreParam preprocess_cfg = CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
 
   for (int i = 0; i < 3; i++) {
     printf("asign val %d \n", i);
@@ -31,22 +30,32 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   printf("setup yolov6 param \n");
-  CVI_S32 ret =
-      CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, preprocess_cfg);
+  CVI_S32 ret = CVI_TDL_SetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, preprocess_cfg);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov6 preprocess parameters %#x\n", ret);
     return ret;
   }
 
   // setup yolo algorithm preprocess
-  YoloAlgParam yolov6_param = CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
+  cvtdl_det_algo_param_t yolov6_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6);
   yolov6_param.cls = 80;
 
   printf("setup yolov6 algorithm param \n");
-  ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, yolov6_param);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, yolov6_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set yolov6 algorithm parameters %#x\n", ret);
     return ret;
+  }
+
+  if (assign_out_string) {
+    const char* names_array[] = {"282_Transpose", "295_Transpose", "308_Transpose",
+                                 "294_Transpose", "307_Transpose", "outputs_Transpose"};
+    CVI_TDL_Set_Outputlayer_Names(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, names_array, 6);
+    if (ret != CVI_SUCCESS) {
+      printf("Outputlayer names set failed %#x!\n", ret);
+      return ret;
+    }
   }
 
   // set thershold
@@ -75,11 +84,11 @@ int main(int argc, char* argv[]) {
   }
 
   // change param of yolov6
-  // ret = init_param(tdl_handle);
+  // bool assign_out_string = false;
+  // ret = init_param(tdl_handle, assign_out_string);
 
   std::string model_path = argv[1];
   std::string str_src_dir = argv[2];
-
   printf("start open cvimodel...\n");
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV6, model_path.c_str());
   if (ret != CVI_SUCCESS) {
@@ -104,7 +113,7 @@ int main(int argc, char* argv[]) {
 
   cvtdl_object_t obj_meta = {0};
 
-  CVI_TDL_Yolov6(tdl_handle, &fdFrame, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV6, &obj_meta);
 
   printf("detect number: %d\n", obj_meta.size);
 

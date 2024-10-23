@@ -14,7 +14,6 @@ class Deeplabv3 final : public Core {
   virtual bool allowExportChannelAttribute() const override { return true; }
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
   virtual int onModelOpened() override;
   virtual int onModelClosed() override;
   CVI_S32 allocateION();

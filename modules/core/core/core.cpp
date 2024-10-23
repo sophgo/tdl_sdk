@@ -7,8 +7,24 @@
 namespace cvitdl {
 
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
+#ifndef CONFIG_ALIOS
   mp_mi = std::make_unique<CvimodelInfo>();
   mp_mi->conf = {.debug_mode = false, .input_mem_type = input_mem_type};
+#else
+  mp_mi = std::unique_ptr<CvimodelInfo>(new CvimodelInfo);
+  mp_mi->conf.debug_mode = false;
+  mp_mi->conf.input_mem_type = input_mem_type;
+#endif
+
+  InputPreParam first_in_pre_param;
+  std::fill(std::begin(first_in_pre_param.factor), std::end(first_in_pre_param.factor), 0.0f);
+  std::fill(std::begin(first_in_pre_param.mean), std::end(first_in_pre_param.mean), 0.0f);
+  first_in_pre_param.keep_aspect_ratio = true;
+  first_in_pre_param.use_crop = false;
+  first_in_pre_param.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  first_in_pre_param.rescale_type = RESCALE_CENTER;
+  first_in_pre_param.resize_method = VPSS_SCALE_COEF_BICUBIC;
+  m_preprocess_param.emplace_back(first_in_pre_param);
 }
 
 Core::Core() : Core(CVI_MEM_SYSTEM) {}
@@ -33,7 +49,9 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
 
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
 
+#ifndef CONFIG_ALIOS
 void Core::setraw(bool raw) { this->raw = raw; }
+#endif
 
 int Core::modelOpen(const char *filepath) {
   if (!mp_mi) {
@@ -63,11 +81,11 @@ int Core::modelOpen(const char *filepath) {
   CVI_TENSOR *input =
       CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
   // Assigning default values.
-  std::vector<InputPreprecessSetup> data(mp_mi->in.num);
+  bool use_quantize_scale;
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     CVI_TENSOR *tensor = mp_mi->in.tensors + i;
     float quant_scale = CVI_NN_TensorQuantScale(tensor);
-    data[i].use_quantize_scale = quant_scale == 0 ? false : true;
+    use_quantize_scale = quant_scale != 0 || quant_scale != 1.0;
 
     if (((mp_mi->in.tensors[i].shape.dim[3] % 64) != 0)) {
       aligned_input = false;
@@ -85,24 +103,23 @@ int Core::modelOpen(const char *filepath) {
     LOGI("parse model with aligned input tensor\n");
   }
 
-  CLOSE_MODEL_IF_FAILED(setupInputPreprocess(&data), "Failed to setup preprocess setting.");
   CLOSE_MODEL_IF_FAILED(onModelOpened(), "return failed in onModelOpened");
 
   m_vpss_config.clear();
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
-    if (data[i].use_quantize_scale) {
+    if (use_quantize_scale) {
       CVI_TENSOR *tensor = mp_mi->in.tensors + i;
       float quant_scale = CVI_NN_TensorQuantScale(tensor);
       for (uint32_t j = 0; j < 3; j++) {
-        data[i].factor[j] *= quant_scale;
-        data[i].mean[j] *= quant_scale;
+        m_preprocess_param[i].factor[j] *= quant_scale;
+        m_preprocess_param[i].mean[j] *= quant_scale;
       }
       // FIXME: Behavior will changed in 1822.
       float factor_limit = 8191.f / 8192;
       for (uint32_t j = 0; j < 3; j++) {
-        if (data[i].factor[j] > factor_limit) {
-          LOGW("factor[%d] is bigger than limit: %f\n", i, data[i].factor[j]);
-          data[i].factor[j] = factor_limit;
+        if (m_preprocess_param[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, m_preprocess_param[i].factor[j]);
+          m_preprocess_param[i].factor[j] = factor_limit;
         }
       }
     }
@@ -119,16 +136,113 @@ int Core::modelOpen(const char *filepath) {
       height = input->shape.dim[2];
       vcfg.frame_type = CVI_FRAME_PLANAR;
     }
-    vcfg.rescale_type = data[i].rescale_type;
-    vcfg.crop_attr.bEnable = data[i].use_crop;
-
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, data[i].format, data[i].factor, data[i].mean,
-                       data[i].pad_reverse);
-    if (!data[i].keep_aspect_ratio) {
+    vcfg.rescale_type = m_preprocess_param[i].rescale_type;
+    vcfg.crop_attr.bEnable = m_preprocess_param[i].use_crop;
+    bool pad_reverse = false;
+    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, m_preprocess_param[i].format,
+                       m_preprocess_param[i].factor, m_preprocess_param[i].mean, pad_reverse);
+    if (!m_preprocess_param[i].keep_aspect_ratio) {
       vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
     }
-    vcfg.chn_coeff = data[i].resize_method;
-    m_vpss_config.push_back(vcfg);
+    vcfg.chn_coeff = m_preprocess_param[i].resize_method;
+    m_vpss_config.emplace_back(vcfg);
+  }
+  return CVI_TDL_SUCCESS;
+}
+
+int Core::modelOpen(const int8_t *buf, uint32_t size) {
+  if (!mp_mi) {
+    LOGE("config not set\n");
+    return CVI_TDL_ERR_OPEN_MODEL;
+  }
+
+  if (mp_mi->handle != nullptr) {
+    LOGE("failed to open model from buffer: %d \n", (int)*buf);
+    return CVI_TDL_FAILURE;
+  }
+
+  CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_RegisterModelFromBuffer(buf, size, &mp_mi->handle),
+                            "CVI_NN_RegisterModelFromBuffer failed");
+
+  CVI_NN_SetConfig(mp_mi->handle, OPTION_OUTPUT_ALL_TENSORS,
+                   static_cast<int>(mp_mi->conf.debug_mode));
+
+  CLOSE_MODEL_IF_TPU_FAILED(
+      CVI_NN_GetInputOutputTensors(mp_mi->handle, &mp_mi->in.tensors, &mp_mi->in.num,
+                                   &mp_mi->out.tensors, &mp_mi->out.num),
+      "CVI_NN_GetINputsOutputs failed");
+
+  setupTensorInfo(mp_mi->in.tensors, mp_mi->in.num, &m_input_tensor_info);
+  setupTensorInfo(mp_mi->out.tensors, mp_mi->out.num, &m_output_tensor_info);
+
+  CVI_TENSOR *input =
+      CVI_NN_GetTensorByName(CVI_NN_DEFAULT_TENSOR, mp_mi->in.tensors, mp_mi->in.num);
+  // Assigning default values.
+  bool use_quantize_scale;
+  for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
+    CVI_TENSOR *tensor = mp_mi->in.tensors + i;
+    float quant_scale = CVI_NN_TensorQuantScale(tensor);
+    use_quantize_scale = quant_scale != 0 || quant_scale != 1.0;
+
+    if (((mp_mi->in.tensors[i].shape.dim[3] % 64) != 0)) {
+      aligned_input = false;
+    }
+  }
+
+  if (CVI_MEM_SYSTEM == getInputMemType()) {
+    aligned_input = false;
+  }
+
+  if (true == aligned_input) {
+    for (int32_t i = 0; i < mp_mi->in.num; i++)
+      CLOSE_MODEL_IF_TPU_FAILED(CVI_NN_SetTensorPhysicalAddr(&mp_mi->in.tensors[i], (uint64_t)0),
+                                "CVI_NN_SetTensorPhysicalAddr failed");
+    LOGI("parse model with aligned input tensor\n");
+  }
+
+  CLOSE_MODEL_IF_FAILED(onModelOpened(), "return failed in onModelOpened");
+
+  m_vpss_config.clear();
+  for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
+    if (use_quantize_scale) {
+      CVI_TENSOR *tensor = mp_mi->in.tensors + i;
+      float quant_scale = CVI_NN_TensorQuantScale(tensor);
+      for (uint32_t j = 0; j < 3; j++) {
+        m_preprocess_param[i].factor[j] *= quant_scale;
+        m_preprocess_param[i].mean[j] *= quant_scale;
+      }
+      // FIXME: Behavior will changed in 1822.
+      float factor_limit = 8191.f / 8192;
+      for (uint32_t j = 0; j < 3; j++) {
+        if (m_preprocess_param[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, m_preprocess_param[i].factor[j]);
+          m_preprocess_param[i].factor[j] = factor_limit;
+        }
+      }
+    }
+    VPSSConfig vcfg;
+    int32_t width, height;
+    // FIXME: Future support for nhwc input. Currently disabled.
+    if (false) {
+      width = input->shape.dim[2];
+      height = input->shape.dim[1];
+      vcfg.frame_type = CVI_FRAME_PACKAGE;
+    } else {
+      CVI_TENSOR *input = &(mp_mi->in.tensors[i]);
+      width = input->shape.dim[3];
+      height = input->shape.dim[2];
+      vcfg.frame_type = CVI_FRAME_PLANAR;
+    }
+    vcfg.rescale_type = m_preprocess_param[i].rescale_type;
+    vcfg.crop_attr.bEnable = m_preprocess_param[i].use_crop;
+    bool pad_reverse = false;
+    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, m_preprocess_param[i].format,
+                       m_preprocess_param[i].factor, m_preprocess_param[i].mean, pad_reverse);
+    if (!m_preprocess_param[i].keep_aspect_ratio) {
+      vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
+    }
+    vcfg.chn_coeff = m_preprocess_param[i].resize_method;
+    m_vpss_config.emplace_back(vcfg);
   }
   return CVI_TDL_SUCCESS;
 }
@@ -308,15 +422,7 @@ int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32
   return CVI_TDL_SUCCESS;
 }
 
-void Core::setModelThreshold(float threshold) { m_model_threshold = threshold; }
-float Core::getModelThreshold() { return m_model_threshold; };
-
-void Core::setModelNmsThreshold(float threshold) { m_model_nms_threshold = threshold; }
-float Core::getModelNmsThreshold() { return m_model_nms_threshold; };
-
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
-
-int Core::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) { return CVI_TDL_SUCCESS; }
 
 CVI_SHAPE Core::getInputShape(size_t index) { return getInputTensorInfo(index).shape; }
 
@@ -394,10 +500,12 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   model_timer_.TicToc("runstart");
   std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
 
+#ifndef CONFIG_ALIOS
   m_debugger.newSession(demangle::type_no_scope(*this));
   m_debugger.save_field("skip_vpss_preprocess", ((uint8_t)m_skip_vpss_preprocess));
   m_debugger.save_field("model_file", m_model_file.c_str(), {m_model_file.size()});
   m_debugger.save_field("input_mem_type", (uint8_t)mp_mi->conf.input_mem_type);
+#endif
   if (aligned_input && frames.size() != 1) {
     LOGE("can only process one frame for aligninput,got frame_num:%d\n", int(frames.size()));
   }
@@ -416,7 +524,9 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       dstFrames.reserve(frames.size());
       for (uint32_t i = 0; i < frames.size(); i++) {
         VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
+#ifndef CONFIG_ALIOS
         m_debugger.save_origin_frame(frames[i], mp_mi->in.tensors + i);
+#endif
         memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
         int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
         if (vpssret != CVI_TDL_SUCCESS) {
@@ -445,11 +555,15 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     if (rcret == CVI_RC_SUCCESS) {
       // save debuginfo
       for (int32_t i = 0; i < mp_mi->in.num; i++) {
+#ifndef CONFIG_ALIOS
         CVI_TENSOR *tensor = mp_mi->in.tensors + i;
         m_debugger.save_tensor(tensor, getInputRawPtr<void>(0));
+#endif
         // save normalizer only if model needs vpss precprcossing
         if (!m_skip_vpss_preprocess && mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
+#ifndef CONFIG_ALIOS
           m_debugger.save_normalizer(tensor, m_vpss_config[i].chn_attr.stNormalize);
+#endif
         }
       }
     } else {

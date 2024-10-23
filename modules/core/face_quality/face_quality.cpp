@@ -5,18 +5,11 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "face_utils.hpp"
 #include "image_utils.hpp"
 
 // include core_c.h if opencv version greater than 4.5
 #if CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR >= 5
 #include "opencv2/core/core_c.h"
-#endif
-
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
-#include "opencv2/imgproc.hpp"
 #endif
 
 #define SCALE_R (1.0 / (255.0 * 0.229))
@@ -40,26 +33,16 @@ static bool IS_SUPPORTED_FORMAT(VIDEO_FRAME_INFO_S *frame) {
 
 namespace cvitdl {
 
-FaceQuality::FaceQuality() : Core(CVI_MEM_DEVICE) {}
-
-FaceQuality::~FaceQuality() {}
-
-int FaceQuality::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Face quality only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
+FaceQuality::FaceQuality() : Core(CVI_MEM_DEVICE) {
   std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
   std::vector<float> scale = {SCALE_R, SCALE_G, SCALE_B};
   for (uint32_t i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = scale[i];
-    (*data)[0].mean[i] = mean[i];
+    m_preprocess_param[0].factor[i] = scale[i];
+    m_preprocess_param[0].mean[i] = mean[i];
   }
-  (*data)[0].use_quantize_scale = true;
-
-  return CVI_TDL_SUCCESS;
 }
+
+FaceQuality::~FaceQuality() {}
 
 int FaceQuality::onModelOpened() { return allocateION(); }
 

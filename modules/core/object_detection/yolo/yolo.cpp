@@ -52,47 +52,18 @@ static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int 
   }
 }
 
-Yolo::Yolo() : Core(CVI_MEM_DEVICE) {
+Yolo::Yolo() {
   // default param
   float mean[3] = {123.675, 116.28, 103.52};
   float std[3] = {58.395, 57.12, 57.375};
 
   for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.mean[i] = mean[i] / std[i];
-    p_preprocess_cfg_.factor[i] = 1.0 / std[i];
+    m_preprocess_param[0].mean[i] = mean[i] / std[i];
+    m_preprocess_param[0].factor[i] = 1.0 / std[i];
   }
 
-  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  p_Yolo_param_.cls = 80;
-}
-
-int Yolo::onModelOpened() {
-  for (size_t j = 0; j < getNumOutputTensor(); j++) {
-    TensorInfo oinfo = getOutputTensorInfo(j);
-    CVI_SHAPE output_shape = oinfo.shape;
-    printf("output shape: %d %d %d %d\n", output_shape.dim[0], output_shape.dim[1],
-           output_shape.dim[2], output_shape.dim[3]);
-  }
-
-  return CVI_TDL_SUCCESS;
-}
-
-Yolo::~Yolo() {}
-
-int Yolo::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Yolo only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
-  }
-
-  (*data)[0].format = p_preprocess_cfg_.format;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  alg_param_.cls = 80;
 }
 
 int Yolo::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -119,6 +90,17 @@ int Yolo::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFr
     LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
     return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
+  return CVI_TDL_SUCCESS;
+}
+
+int Yolo::onModelOpened() {
+  for (size_t j = 0; j < getNumOutputTensor(); j++) {
+    TensorInfo oinfo = getOutputTensorInfo(j);
+    CVI_SHAPE output_shape = oinfo.shape;
+    printf("output shape: %d %d %d %d\n", output_shape.dim[0], output_shape.dim[1],
+           output_shape.dim[2], output_shape.dim[3]);
+  }
+
   return CVI_TDL_SUCCESS;
 }
 

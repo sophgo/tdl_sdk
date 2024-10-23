@@ -8,6 +8,7 @@
 #include <error_msg.hpp>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -55,26 +56,26 @@ static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int 
   }
 }
 
-Yolov5::Yolov5() : Core(CVI_MEM_DEVICE) {
+Yolov5::Yolov5() {
   // default param
   for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = 0.003922;
-    p_preprocess_cfg_.mean[i] = 0.0;
+    m_preprocess_param[0].factor[i] = 0.003922;
+    m_preprocess_param[0].mean[i] = 0.0;
   }
-  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   uint32_t *anchors = new uint32_t[18];
   uint32_t p_anchors[18] = {10, 13, 16,  30,  33, 23,  30,  61,  62,
                             45, 59, 119, 116, 90, 156, 198, 373, 326};
   memcpy(anchors, p_anchors, sizeof(p_anchors));
-  p_yolov5_param_.anchors = anchors;
-  p_yolov5_param_.anchor_len = 18;
+  alg_param_.anchors = anchors;
+  alg_param_.anchor_len = 18;
   uint32_t *strides = new uint32_t[3];
   uint32_t p_strides[3] = {8, 16, 32};
   memcpy(strides, p_strides, sizeof(p_strides));
-  p_yolov5_param_.strides = strides;
-  p_yolov5_param_.stride_len = 3;
-  p_yolov5_param_.cls = 80;
+  alg_param_.strides = strides;
+  alg_param_.stride_len = 3;
+  alg_param_.cls = 80;
 }
 
 int Yolov5::onModelOpened() {
@@ -82,6 +83,12 @@ int Yolov5::onModelOpened() {
   int input_h = input_shape.dim[2];
 
   strides_.clear();
+  std::unordered_map<std::string, int> setting_out_names_index_map;
+  if (!setting_out_names_.empty()) {
+    for (size_t i = 0; i < setting_out_names_.size(); i++) {
+      setting_out_names_index_map[setting_out_names_[i]] = i;
+    }
+  }
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
     TensorInfo oinfo = getOutputTensorInfo(j);
     CVI_SHAPE output_shape = oinfo.shape;
@@ -90,17 +97,24 @@ int Yolov5::onModelOpened() {
     int feat_h = output_shape.dim[1];
     uint32_t channel = output_shape.dim[3];
     int stride_h = input_h / feat_h;
-
-    if (channel == 1) {
-      conf_out_names_[stride_h] = oinfo.tensor_name;
-      strides_.push_back(stride_h);
-    } else if (channel == 4) {
-      box_out_names_[stride_h] = oinfo.tensor_name;
-    } else if (channel == p_yolov5_param_.cls) {
-      class_out_names_[stride_h] = oinfo.tensor_name;
+    if (setting_out_names_.empty() || setting_out_names_.size() != getNumOutputTensor()) {
+      if (j % 3 == 0) {
+        conf_out_names_[stride_h] = oinfo.tensor_name;
+        strides_.push_back(stride_h);
+      } else if (j % 3 == 2) {
+        box_out_names_[stride_h] = oinfo.tensor_name;
+      } else {
+        class_out_names_[stride_h] = oinfo.tensor_name;
+      }
     } else {
-      LOGE("unmatched channel!\n");
-      return CVI_TDL_FAILURE;
+      if (setting_out_names_index_map[oinfo.tensor_name] < 3) {
+        conf_out_names_[stride_h] = oinfo.tensor_name;
+        strides_.push_back(stride_h);
+      } else if (setting_out_names_index_map[oinfo.tensor_name] >= 6) {
+        class_out_names_[stride_h] = oinfo.tensor_name;
+      } else {
+        box_out_names_[stride_h] = oinfo.tensor_name;
+      }
     }
   }
 
@@ -115,53 +129,6 @@ int Yolov5::onModelOpened() {
 }
 
 Yolov5::~Yolov5() {}
-
-int Yolov5::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Yolov5 only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
-  }
-
-  (*data)[0].format = p_preprocess_cfg_.format;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
-}
-
-YoloPreParam Yolov5::get_preparam() { return p_preprocess_cfg_; }
-
-void Yolov5::set_preparam(YoloPreParam pre_param) {
-  for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
-    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
-  }
-
-  p_preprocess_cfg_.format = pre_param.format;
-}
-
-YoloAlgParam Yolov5::get_algparam() { return p_yolov5_param_; }
-
-void Yolov5::set_algparam(YoloAlgParam alg_param) {
-  p_yolov5_param_.anchor_len = alg_param.anchor_len;
-  p_yolov5_param_.stride_len = alg_param.stride_len;
-  p_yolov5_param_.cls = alg_param.cls;
-
-  uint32_t *anchors = new uint32_t[18];
-  for (int i = 0; i < alg_param.anchor_len; i++) {
-    anchors[i] = alg_param.anchors[i];
-  }
-  p_yolov5_param_.anchors = anchors;
-
-  uint32_t *strides = new uint32_t[3];
-  for (int i = 0; i < alg_param.stride_len; i++) {
-    strides[i] = alg_param.strides[i];
-  }
-  p_yolov5_param_.strides = strides;
-}
 
 uint32_t Yolov5::set_roi(Point_t &roi) {
   yolo_box.x1 = (float)(roi.x1);
@@ -255,7 +222,7 @@ void Yolov5::generate_yolov5_proposals(Detections &vec_obj) {
   int target_h = shape.dim[2];
   int anchor_pos = 0;
   for (uint32_t i = 0; i < strides_.size(); i++) {
-    int stride = p_yolov5_param_.strides[i];
+    int stride = alg_param_.strides[i];
     int num_grid_w = target_w / stride;
     int num_grid_h = target_h / stride;
 
@@ -284,7 +251,7 @@ void Yolov5::generate_yolov5_proposals(Detections &vec_obj) {
     CVI_SHAPE output_shape = oinfo_class.shape;
     uint32_t anchor_len = output_shape.dim[0];
     for (uint32_t anchor_idx = 0; anchor_idx < anchor_len; anchor_idx++) {
-      uint32_t *anchors = p_yolov5_param_.anchors + anchor_pos;
+      uint32_t *anchors = alg_param_.anchors + anchor_pos;
 
       float pw = anchors[0];
       float ph = anchors[1];
@@ -304,10 +271,10 @@ void Yolov5::generate_yolov5_proposals(Detections &vec_obj) {
 
           // parse class score
           if (num_per_pixel_object == 1) {
-            label = yolov5_argmax<int8_t>(ptr_int8_class, basic_pos_class, p_yolov5_param_.cls);
+            label = yolov5_argmax<int8_t>(ptr_int8_class, basic_pos_class, alg_param_.cls);
             class_score = ptr_int8_class[basic_pos_class + label] * qscale_class;
           } else {
-            label = yolov5_argmax<float>(ptr_float_class, basic_pos_class, p_yolov5_param_.cls);
+            label = yolov5_argmax<float>(ptr_float_class, basic_pos_class, alg_param_.cls);
             class_score = ptr_float_class[basic_pos_class + label];
           }
 
@@ -316,7 +283,7 @@ void Yolov5::generate_yolov5_proposals(Detections &vec_obj) {
           float box_prob = box_objectness * class_score;
 
           if (box_prob < m_model_threshold) {
-            basic_pos_class += p_yolov5_param_.cls;
+            basic_pos_class += alg_param_.cls;
             basic_pos_box += 4;
             basic_pos_object += 1;
             continue;
@@ -330,7 +297,7 @@ void Yolov5::generate_yolov5_proposals(Detections &vec_obj) {
                             grid_y, stride, stride, pw, ph, target_w, target_h, vec_obj);
           }
 
-          basic_pos_class += p_yolov5_param_.cls;
+          basic_pos_class += alg_param_.cls;
           basic_pos_box += 4;
           basic_pos_object += 1;
         }

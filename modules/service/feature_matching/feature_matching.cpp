@@ -4,7 +4,11 @@
 #include <cvimath/cvimath_internal.h>
 #include <cviruntime.h>
 #include <string.h>
+#ifndef CONFIG_ALIOS
 #include <sys/sysinfo.h>
+#else
+#include <yoc/sysinfo.h>
+#endif
 #include <algorithm>
 #include <cmath>
 #include <numeric>
@@ -109,16 +113,20 @@ int FeatureMatching::createHandle(CVI_RT_HANDLE *rt_handle, cvk_context_t **cvk_
     LOGE("Runtime init failed.\n");
     return CVI_TDL_FAILURE;
   }
+#ifndef CONFIG_ALIOS
   struct sysinfo info;
   if (sysinfo(&info) < 0) {
     return CVI_TDL_FAILURE;
   }
+#endif
   // FIXME: Rewrite command buffer to fit feature matching size.
   uint64_t mem = 50000;
+#ifndef CONFIG_ALIOS
   if (info.freeram <= mem) {
     LOGE("Memory insufficient.\n");
     return CVI_TDL_FAILURE;
   }
+#endif
   *cvk_ctx = (cvk_context_t *)CVI_RT_RegisterKernel(*rt_handle, mem);
   return CVI_TDL_SUCCESS;
 }

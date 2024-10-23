@@ -94,6 +94,7 @@ void init_obj_meta(cvtdl_object_t *meta, uint32_t size, uint32_t height, uint32_
     meta->info[i].feature.ptr = NULL;
     meta->info[i].pedestrian_properity = NULL;
     meta->info[i].vehicle_properity = NULL;
+    meta->info[i].mask_properity = NULL;
   }
 }
 

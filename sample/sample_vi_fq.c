@@ -95,7 +95,9 @@ void *run_tdl_thread(void *pHandle) {
     GOTO_IF_FAILED(CVI_VPSS_GetChnFrame(0, VPSS_CHN1, &stFrame, 2000), s32Ret, get_frame_failed);
 
     // Do face detection to find face bbox and five facial landmarks.
-    GOTO_IF_FAILED(CVI_TDL_RetinaFace(pstTDLHandle, &stFrame, &stFaceMeta), s32Ret, inf_error);
+    GOTO_IF_FAILED(CVI_TDL_FaceDetection(pstTDLHandle, &stFrame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE,
+                                         &stFaceMeta),
+                   s32Ret, inf_error);
 
     // Calculate face angle by using five facial landmarks and stores the result to
     // stFaceMeta.info[i].head_pose.

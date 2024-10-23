@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iterator>
 
+#include <unordered_map>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -75,7 +76,7 @@ void PPYoloE::generate_ppyoloe_proposals(Detections &detections, int frame_width
     int8_t *ptr_int8_box = static_cast<int8_t *>(oinfo_box.raw_pointer);
     float *ptr_float_box = static_cast<float *>(oinfo_box.raw_pointer);
 
-    TensorInfo oinfo_cls = getOutputTensorInfo(cls_out_names_[stride]);
+    TensorInfo oinfo_cls = getOutputTensorInfo(class_out_names_[stride]);
     int num_per_pixel_cls = oinfo_cls.tensor_size / oinfo_cls.tensor_elem;
     float qscale_cls = num_per_pixel_cls == 1 ? oinfo_cls.qscale : 1;
     int8_t *ptr_int8_cls = static_cast<int8_t *>(oinfo_cls.raw_pointer);
@@ -91,16 +92,16 @@ void PPYoloE::generate_ppyoloe_proposals(Detections &detections, int frame_width
         float class_score = 0.0f;
         int label = 0;
         if (num_per_pixel_cls == 1) {
-          label = yoloe_argmax<int8_t>(ptr_int8_cls, basic_pos_cls, p_alg_param_.cls);
+          label = yoloe_argmax<int8_t>(ptr_int8_cls, basic_pos_cls, alg_param_.cls);
           class_score = ptr_int8_cls[label + basic_pos_cls] * qscale_cls;
         } else {
-          label = yoloe_argmax<float>(ptr_float_cls, basic_pos_cls, p_alg_param_.cls);
+          label = yoloe_argmax<float>(ptr_float_cls, basic_pos_cls, alg_param_.cls);
           class_score = ptr_float_cls[label + basic_pos_cls];
         }
 
         class_score = yoloe_sigmoid(class_score);
         if (class_score < m_model_threshold) {
-          basic_pos_cls += p_alg_param_.cls;
+          basic_pos_cls += alg_param_.cls;
           basic_pos_box += 4;
           continue;
         }
@@ -113,7 +114,7 @@ void PPYoloE::generate_ppyoloe_proposals(Detections &detections, int frame_width
           decode_yoloe_bbox<float>(ptr_float_box, qscale_box, basic_pos_box, g0, g1, stride, label,
                                    class_score, det);
         }
-        basic_pos_cls += p_alg_param_.cls;
+        basic_pos_cls += alg_param_.cls;
         basic_pos_box += 4;
         clip_bbox(frame_width, frame_height, det);
         detections.push_back(det);
@@ -122,34 +123,19 @@ void PPYoloE::generate_ppyoloe_proposals(Detections &detections, int frame_width
   }
 }
 
-PPYoloE::PPYoloE() : Core(CVI_MEM_DEVICE) {
+PPYoloE::PPYoloE() {
   // default param
   float mean[3] = {123.675, 116.28, 103.52};
   float std[3] = {58.395, 57.12, 57.375};
 
   for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.mean[i] = mean[i] / std[i];
-    p_preprocess_cfg_.factor[i] = 1.0 / std[i];
+    m_preprocess_param[0].mean[i] = mean[i] / std[i];
+    m_preprocess_param[0].factor[i] = 1.0 / std[i];
   }
 
-  p_preprocess_cfg_.format = PIXEL_FORMAT_RGB_888_PLANAR;
-  p_alg_param_.cls = 80;
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  alg_param_.cls = 80;
 }
-
-YoloPreParam PPYoloE::get_preparam() { return p_preprocess_cfg_; }
-
-void PPYoloE::set_preparam(YoloPreParam pre_param) {
-  for (int i = 0; i < 3; i++) {
-    p_preprocess_cfg_.factor[i] = pre_param.factor[i];
-    p_preprocess_cfg_.mean[i] = pre_param.mean[i];
-  }
-
-  p_preprocess_cfg_.format = pre_param.format;
-}
-
-YoloAlgParam PPYoloE::get_algparam() { return p_alg_param_; }
-
-void PPYoloE::set_algparam(YoloAlgParam alg_param) { p_alg_param_.cls = alg_param.cls; }
 
 int PPYoloE::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
@@ -157,6 +143,12 @@ int PPYoloE::onModelOpened() {
   int input_h = input_shape.dim[2];
 
   strides_.clear();
+  std::unordered_map<std::string, int> setting_out_names_index_map;
+  if (!setting_out_names_.empty()) {
+    for (size_t i = 0; i < setting_out_names_.size(); i++) {
+      setting_out_names_index_map[setting_out_names_[i]] = i;
+    }
+  }
   for (size_t j = 0; j < getNumOutputTensor(); j++) {
     TensorInfo oinfo = getOutputTensorInfo(j);
     CVI_SHAPE output_shape = oinfo.shape;
@@ -166,20 +158,25 @@ int PPYoloE::onModelOpened() {
     uint32_t channel = output_shape.dim[3];
     int stride_h = input_h / feat_h;
 
-    if (channel == p_alg_param_.cls) {
-      cls_out_names_[stride_h] = oinfo.tensor_name;
-      strides_.push_back(stride_h);
-      LOGI("cls parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(),
-           channel, stride_h);
-    } else if (channel == 4) {
-      box_out_names_[stride_h] = oinfo.tensor_name;
-      LOGI("box parse output name: %s, channel: %d, stride: %d\n", oinfo.tensor_name.c_str(),
-           channel, stride_h);
+    if (setting_out_names_.empty() || setting_out_names_.size() != getNumOutputTensor()) {
+      if (j < 3) {
+        box_out_names_[stride_h] = oinfo.tensor_name;
+        strides_.push_back(stride_h);
+      } else {
+        class_out_names_[stride_h] = oinfo.tensor_name;
+      }
+    } else {
+      if (setting_out_names_index_map[oinfo.tensor_name] < 3) {
+        box_out_names_[stride_h] = oinfo.tensor_name;
+        strides_.push_back(stride_h);
+      } else {
+        class_out_names_[stride_h] = oinfo.tensor_name;
+      }
     }
   }
 
   for (auto stride : strides_) {
-    if (cls_out_names_.count(stride) == 0 || box_out_names_.count(stride) == 0) {
+    if (class_out_names_.count(stride) == 0 || box_out_names_.count(stride) == 0) {
       return CVI_TDL_FAILURE;
     }
   }
@@ -188,22 +185,6 @@ int PPYoloE::onModelOpened() {
 }
 
 PPYoloE::~PPYoloE() {}
-
-int PPYoloE::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("PPYoloE only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = p_preprocess_cfg_.factor[i];
-    (*data)[0].mean[i] = p_preprocess_cfg_.mean[i];
-  }
-
-  (*data)[0].format = p_preprocess_cfg_.format;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
-}
 
 int PPYoloE::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};

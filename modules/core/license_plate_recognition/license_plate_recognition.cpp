@@ -1,22 +1,13 @@
 #include "license_plate_recognition.hpp"
-#include "decode_tool.hpp"
-
+#include <iostream>
+#include <sstream>
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
-#include "face_utils.hpp"
-
 #include "cvi_sys.h"
-
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
+#include "decode_tool.hpp"
 #include "opencv2/imgproc.hpp"
-#endif
-
-#include <iostream>
-#include <sstream>
 
 #define LICENSE_PLATE_TW_HEIGHT 24
 #define LICENSE_PLATE_TW_WIDTH 94
@@ -29,7 +20,8 @@
 
 namespace cvitdl {
 
-LicensePlateRecognition::LicensePlateRecognition(LP_FORMAT region) : Core(CVI_MEM_SYSTEM) {
+LicensePlateRecognition::LicensePlateRecognition(LP_FORMAT region)
+    : LicensePlateRecognitionBase(CVI_MEM_SYSTEM) {
   if (region == TAIWAN) {
     this->format = region;
     this->lp_height = LICENSE_PLATE_TW_HEIGHT;
@@ -42,8 +34,6 @@ LicensePlateRecognition::LicensePlateRecognition(LP_FORMAT region) : Core(CVI_ME
     LOGE("unknown region: %d\n", region);
   }
 }
-
-LicensePlateRecognition::~LicensePlateRecognition() {}
 
 int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
                                        cvtdl_object_t *vehicle_plate_meta) {
@@ -82,20 +72,11 @@ int LicensePlateRecognition::inference(VIDEO_FRAME_INFO_S *frame,
     };
     cv::Mat sub_cvFrame;
     cv::Mat greyMat;
-
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-    cv::Mat M = cvitdl::getPerspectiveTransform(src_points, dst_points);
-    cvitdl::warpPerspective(cv_frame, sub_cvFrame, M, cv::Size(this->lp_width, this->lp_height),
-                            INTER_LINEAR);
-    cvitdl::cvtColor(sub_cvFrame, greyMat, COLOR_RGB2GRAY); /* BGR or RGB ? */
-    cvitdl::cvtColor(greyMat, sub_cvFrame, COLOR_GRAY2RGB);
-#else
     cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
     cv::warpPerspective(cv_frame, sub_cvFrame, M, cv::Size(this->lp_width, this->lp_height),
                         cv::INTER_LINEAR);
     cv::cvtColor(sub_cvFrame, greyMat, cv::COLOR_RGB2GRAY); /* BGR or RGB ? */
     cv::cvtColor(greyMat, sub_cvFrame, cv::COLOR_GRAY2RGB);
-#endif
 
     prepareInputTensor(sub_cvFrame);
 

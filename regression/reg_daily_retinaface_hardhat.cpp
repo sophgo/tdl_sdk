@@ -43,19 +43,19 @@ class RetinafaceHardhatTestSuite : public CVI_TDLModelTestSuite {
 };
 
 TEST_F(RetinafaceHardhatTestSuite, open_close_model) {
-  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
                            m_model_path.c_str(), false);
   ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
   const char *model_path_get =
-      CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT);
+      CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR);
 
   EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
                std::string(model_path_get));
 }
 
 TEST_F(RetinafaceHardhatTestSuite, get_vpss_config) {
-  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
                            m_model_path.c_str(), false);
   ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
   cvtdl_vpssconfig_t vpssconfig;
@@ -64,8 +64,8 @@ TEST_F(RetinafaceHardhatTestSuite, get_vpss_config) {
   vpssconfig.chn_attr.enPixelFormat = PIXEL_FORMAT_ARGB_1555;
   vpssconfig.chn_attr.stNormalize.bEnable = false;
 
-  EXPECT_EQ(CVI_TDL_GetVpssChnConfig(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT, 342,
-                                     608, 0, &vpssconfig),
+  EXPECT_EQ(CVI_TDL_GetVpssChnConfig(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, 342, 608,
+                                     0, &vpssconfig),
             CVI_TDL_SUCCESS);
 
   uint32_t dstWidth = 1280;
@@ -95,27 +95,29 @@ TEST_F(RetinafaceHardhatTestSuite, skip_vpss_preprocess) {
   ASSERT_TRUE(frame.open());
 
   {
-    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
                              m_model_path.c_str(), false);
     ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
     cvtdl_face_t face_meta;
     memset(&face_meta, 0, sizeof(cvtdl_face_t));
-    EXPECT_EQ(CVI_TDL_RetinaFace_Hardhat(m_tdl_handle, frame.getFrame(), &face_meta),
+    EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                    CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, &face_meta),
               CVI_TDL_SUCCESS);
   }
   {
-    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+    TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
                              m_model_path.c_str(), true);
     ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
     TDLObject<cvtdl_face_t> face_meta;
     init_face_meta(face_meta, 1);
-    EXPECT_EQ(CVI_TDL_RetinaFace_Hardhat(m_tdl_handle, frame.getFrame(), face_meta),
+    EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                    CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, face_meta),
               CVI_TDL_ERR_INFERENCE);
   }
 }
 
 TEST_F(RetinafaceHardhatTestSuite, inference) {
-  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
                            m_model_path.c_str(), false);
   ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
@@ -130,7 +132,8 @@ TEST_F(RetinafaceHardhatTestSuite, inference) {
 
       cvtdl_face_t face_meta;
       memset(&face_meta, 0, sizeof(cvtdl_face_t));
-      EXPECT_EQ(CVI_TDL_RetinaFace_Hardhat(m_tdl_handle, frame.getFrame(), &face_meta),
+      EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                      CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, &face_meta),
                 CVI_TDL_SUCCESS);
     }
 
@@ -140,14 +143,15 @@ TEST_F(RetinafaceHardhatTestSuite, inference) {
 
       cvtdl_face_t face_meta;
       memset(&face_meta, 0, sizeof(cvtdl_face_t));
-      EXPECT_EQ(CVI_TDL_RetinaFace_Hardhat(m_tdl_handle, frame.getFrame(), &face_meta),
+      EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                      CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, &face_meta),
                 CVI_TDL_SUCCESS);
     }
   }
 }
 
 TEST_F(RetinafaceHardhatTestSuite, accruacy) {
-  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_HARDHAT,
+  TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR,
                            m_model_path.c_str(), false);
   ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
 
@@ -166,7 +170,8 @@ TEST_F(RetinafaceHardhatTestSuite, accruacy) {
     TDLObject<cvtdl_face_t> face_meta;
 
     {
-      EXPECT_EQ(CVI_TDL_RetinaFace_Hardhat(m_tdl_handle, frame.getFrame(), face_meta),
+      EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                      CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, face_meta),
                 CVI_TDL_SUCCESS);
     }
 

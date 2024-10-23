@@ -61,6 +61,9 @@ elif [[ "$SDK_VER" == "32bit" ]]; then
     KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr
 elif [[ "$SDK_VER" == "64bit" ]]; then
     TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain-aarch64-linux.cmake
+    if [[ "$CROSS_COMPILE" == "aarch64-linux-" ]]; then
+        TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain930-aarch64-linux.cmake
+    fi
     SYSTEM_PROCESSOR=ARM64
     KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm64/usr
 elif [[ "$SDK_VER" == "glibc_riscv64" ]]; then

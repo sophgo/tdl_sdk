@@ -72,7 +72,9 @@ TEST_F(Meeting_DetectionTestSuite, inference) {
   VIDEO_FRAME_INFO_S *vframe = image.getFrame();
   TDLObject<cvtdl_object_t> meet_meta;
   init_obj_meta(meet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-  ASSERT_EQ(CVI_TDL_HandFacePerson_Detection(m_tdl_handle, vframe, meet_meta), CVI_TDL_SUCCESS);
+  ASSERT_EQ(CVI_TDL_Detection(m_tdl_handle, vframe,
+                              CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, meet_meta),
+            CVI_TDL_SUCCESS);
 
   ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION),
             CVI_TDL_SUCCESS);
@@ -96,7 +98,9 @@ TEST_F(Meeting_DetectionTestSuite, accuracy) {
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     TDLObject<cvtdl_object_t> meet_meta;
     init_obj_meta(meet_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    ASSERT_EQ(CVI_TDL_HandFacePerson_Detection(m_tdl_handle, vframe, meet_meta), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Detection(m_tdl_handle, vframe,
+                                CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION, meet_meta),
+              CVI_TDL_SUCCESS);
 
     std::vector<int> predict(5, 0);
     std::vector<int> gt(5, 0);

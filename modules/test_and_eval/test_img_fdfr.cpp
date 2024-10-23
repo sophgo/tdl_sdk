@@ -31,7 +31,7 @@ int process_image_file(cvitdl_handle_t tdl_handle, const std::string &imgf, cvtd
     printf("image read,width:%d\n", bg.stVFrame.u32Width);
   }
 
-  ret = CVI_TDL_ScrFDFace(tdl_handle, &bg, p_obj);
+  ret = CVI_TDL_FaceDetection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, p_obj);
   if (ret != CVI_SUCCESS) {
     printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
     return ret;

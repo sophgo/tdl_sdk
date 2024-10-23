@@ -52,7 +52,12 @@ DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_Init(const cvitdl_app_handle_t handle
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_QuickSetUp(
     const cvitdl_app_handle_t handle, int fd_model_id, int fr_model_id, const char *fd_model_path,
-    const char *fr_model_path, const char *fq_model_path, const char *fl_model_path);
+    const char *fr_model_path, const char *fq_model_path, const char *fl_model_path,
+    const char *fa_model_path);
+
+DLL_EXPORT CVI_S32 CVI_TDL_APP_FacePetCapture_QuickSetUp(
+    const cvitdl_app_handle_t handle, int od_model_id, int fr_model_id, const char *od_model_path,
+    const char *fr_model_path, const char *fl_model_path, const char *fa_model_path);
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_FusePedSetup(const cvitdl_app_handle_t handle,
                                                         int ped_model_id,
@@ -64,6 +69,9 @@ DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_SetConfig(const cvitdl_app_handle_t h
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_Run(const cvitdl_app_handle_t handle,
                                                VIDEO_FRAME_INFO_S *frame);
+
+DLL_EXPORT CVI_S32 CVI_TDL_APP_FacePetCapture_Run(const cvitdl_app_handle_t handle,
+                                                  VIDEO_FRAME_INFO_S *frame);
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_FaceCapture_FDFR(const cvitdl_app_handle_t handle,
                                                 VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *p_face);
@@ -129,7 +137,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCaptureIrregular_Region(
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_PersonVehicleCapture_CleanAll(const cvitdl_app_handle_t handle);
 
-DLL_EXPORT CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size);
+DLL_EXPORT CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size,
+                                         int det_type);
 
 DLL_EXPORT CVI_S32 CVI_TDL_APP_ADAS_Run(const cvitdl_app_handle_t handle,
                                         VIDEO_FRAME_INFO_S *frame);

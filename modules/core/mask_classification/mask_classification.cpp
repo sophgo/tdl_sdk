@@ -18,26 +18,17 @@
 
 namespace cvitdl {
 
-MaskClassification::MaskClassification() : Core(CVI_MEM_DEVICE) {}
+MaskClassification::MaskClassification() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = R_SCALE;
+  m_preprocess_param[0].factor[1] = G_SCALE;
+  m_preprocess_param[0].factor[2] = B_SCALE;
+  m_preprocess_param[0].mean[0] = R_MEAN;
+  m_preprocess_param[0].mean[1] = G_MEAN;
+  m_preprocess_param[0].mean[2] = B_MEAN;
+  m_preprocess_param[0].use_crop = true;
+}
 
 MaskClassification::~MaskClassification() {}
-
-int MaskClassification::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Mask classification only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = R_SCALE;
-  (*data)[0].factor[1] = G_SCALE;
-  (*data)[0].factor[2] = B_SCALE;
-  (*data)[0].mean[0] = R_MEAN;
-  (*data)[0].mean[1] = G_MEAN;
-  (*data)[0].mean[2] = B_MEAN;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].use_crop = true;
-
-  return CVI_TDL_SUCCESS;
-}
 
 int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta) {
   uint32_t img_width = stOutFrame->stVFrame.u32Width;

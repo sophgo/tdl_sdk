@@ -16,10 +16,9 @@
 
 // set preprocess and algorithm param for yolov5 detection
 // if use official model, no need to change param
-CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
+CVI_S32 init_param(const cvitdl_handle_t tdl_handle, bool assign_out_string) {
   // setup preprocess
-  YoloPreParam preprocess_cfg =
-      CVI_TDL_Get_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5);
+  InputPreParam preprocess_cfg = CVI_TDL_GetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5);
 
   for (int i = 0; i < 3; i++) {
     printf("asign val %d \n", i);
@@ -29,15 +28,15 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   preprocess_cfg.format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   printf("setup yolov5 param \n");
-  CVI_S32 ret =
-      CVI_TDL_Set_YOLO_Preparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, preprocess_cfg);
+  CVI_S32 ret = CVI_TDL_SetPreParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, preprocess_cfg);
   if (ret != CVI_SUCCESS) {
     printf("Can not set Yolov5 preprocess parameters %#x\n", ret);
     return ret;
   }
 
   // setup yolo algorithm preprocess
-  YoloAlgParam yolov5_param = CVI_TDL_Get_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5);
+  cvtdl_det_algo_param_t yolov5_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5);
   uint32_t *anchors = new uint32_t[18];
   uint32_t p_anchors[18] = {10, 13, 16,  30,  33, 23,  30,  61,  62,
                             45, 59, 119, 116, 90, 156, 198, 373, 326};
@@ -53,12 +52,21 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   yolov5_param.cls = 80;
 
   printf("setup yolov5 algorithm param \n");
-  ret = CVI_TDL_Set_YOLO_Algparam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, yolov5_param);
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, yolov5_param);
   if (ret != CVI_SUCCESS) {
     printf("Can not set Yolov5 algorithm parameters %#x\n", ret);
     return ret;
   }
-
+  if (assign_out_string) {
+    const char *names_array[] = {"346_Gather", "369_Gather", "392_Gather",
+                                 "367_Gather", "390_Gather", "output0_Gather",
+                                 "348_Gather", "371_Gather", "394_Gather"};
+    CVI_TDL_Set_Outputlayer_Names(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, names_array, 9);
+    if (ret != CVI_SUCCESS) {
+      printf("Outputlayer names set failed %#x!\n", ret);
+      return ret;
+    }
+  }
   // set thershold
   CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, 0.5);
   CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, 0.5);
@@ -85,7 +93,8 @@ int main(int argc, char *argv[]) {
   }
 
   // change param of yolov5
-  // ret = init_param(tdl_handle);
+  // bool assign_out_string = false;
+  // ret = init_param(tdl_handle, assign_out_string);
 
   std::string model_path = argv[1];
   std::string str_src_dir = argv[2];
@@ -114,7 +123,7 @@ int main(int argc, char *argv[]) {
 
   cvtdl_object_t obj_meta = {0};
 
-  CVI_TDL_Yolov5(tdl_handle, &fdFrame, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &obj_meta);
 
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("detect res: %f %f %f %f %f %d\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,

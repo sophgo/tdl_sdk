@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -20,7 +21,7 @@
 #include <opencv2/opencv.hpp>
 
 static const char *enumStr[] = {"NORMAL", "START", "COLLISION_WARNING", "DANGER"};
-
+int g_count = 0;
 std::vector<cv::Scalar> color = {cv::Scalar(51, 153, 255), cv::Scalar(0, 153, 76),
                                  cv::Scalar(255, 215, 0), cv::Scalar(255, 128, 0),
                                  cv::Scalar(0, 255, 0)};
@@ -74,47 +75,92 @@ void draw_adas(cvitdl_app_handle_t app_handle, VIDEO_FRAME_INFO_S *bg, std::stri
     cv::rectangle(img_rgb, top_left, bottom_right, box_color, 2);
 
     char txt_info[256];
-    snprintf(txt_info, sizeof(txt_info), "S:%d m, V:%.1f m/s, [%s]",
-             (int)obj_meta->info[oid].adas_properity.dis, obj_meta->info[oid].adas_properity.speed,
+    snprintf(txt_info, sizeof(txt_info), "[%d]S:%d m, V:%.1f m/s, [%s]",
+             obj_meta->info[oid].classes, (int)obj_meta->info[oid].adas_properity.dis,
+             obj_meta->info[oid].adas_properity.speed,
              enumStr[obj_meta->info[oid].adas_properity.state]);
 
-    cv::putText(img_rgb, txt_info, cv::Point(top_left.x, top_left.y - 10), 0, 1, box_color, 2);
+    if (obj_meta->info[oid].adas_properity.state != 0) box_color = cv::Scalar(0, 0, 255);
+
+    cv::putText(img_rgb, txt_info, cv::Point(top_left.x, top_left.y - 10), 0, 0.5, box_color, 1);
   }
 
-  int size = bg->stVFrame.u32Width >= 1080 ? 6 : 3;
+  if (app_handle->adas_info->det_type) {
+    int size = bg->stVFrame.u32Width >= 1080 ? 6 : 3;
 
-  for (int i = 0; i < lane_meta->size; i++) {
-    int x0 = (int)lane_meta->lane[i].x[0];
-    int y0 = (int)lane_meta->lane[i].y[0];
-    int x1 = (int)lane_meta->lane[i].x[1];
-    int y1 = (int)lane_meta->lane[i].y[1];
+    for (int i = 0; i < lane_meta->size; i++) {
+      int x1 = (int)lane_meta->lane[i].x[0];
+      int y1 = (int)lane_meta->lane[i].y[0];
+      int x2 = (int)lane_meta->lane[i].x[1];
+      int y2 = (int)lane_meta->lane[i].y[1];
 
-    cv::line(img_rgb, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 255, 0), size);
+      cv::line(img_rgb, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), size);
+    }
+
+    char lane_info[64];
+
+    if (app_handle->adas_info->lane_state == 0) {
+      strcpy(lane_info, "NORMAL");
+      box_color = cv::Scalar(0, 255, 0);
+    } else {
+      strcpy(lane_info, "LANE DEPARTURE WARNING !");
+      box_color = cv::Scalar(0, 0, 255);
+    }
+
+    cv::putText(img_rgb, lane_info,
+                cv::Point((int)(0.3 * bg->stVFrame.u32Width), (int)(0.8 * bg->stVFrame.u32Height)),
+                0, size / 3, box_color, size / 3);
+
+    snprintf(lane_info, sizeof(lane_info), "%d", g_count);
+    cv::putText(img_rgb, lane_info, cv::Point(10, 50), 0, size / 3, cv::Scalar(0, 255, 0),
+                size / 3);
+
+    g_count++;
   }
-
-  char lane_info[64];
-
-  if (app_handle->adas_info->lane_state == 0) {
-    strcpy(lane_info, "NORMAL");
-    box_color = cv::Scalar(0, 255, 0);
-  } else {
-    strcpy(lane_info, "LANE DEPARTURE WARNING !");
-    box_color = cv::Scalar(0, 0, 255);
-  }
-
-  cv::putText(img_rgb, lane_info,
-              cv::Point((int)(0.3 * bg->stVFrame.u32Width), (int)(0.8 * bg->stVFrame.u32Height)), 0,
-              size / 3, box_color, size / 3);
 
   cv::imwrite(save_path, img_rgb);
   CVI_SYS_Munmap((void *)bg->stVFrame.pu8VirAddr[0], bg->stVFrame.u32Length[0]);
 }
 
+std::string adas_info(cvitdl_app_handle_t app_handle) {
+  cvtdl_object_t *obj_meta = &app_handle->adas_info->last_objects;
+  cvtdl_lane_t *lane_meta = &app_handle->adas_info->lane_meta;
+
+  std::stringstream ss;
+  // unique_id class x1 y1 x2 y2 distance speed object_state;......; x1 y1 x2 y2 x1 y1 x2 y2
+  // lane_state
+  for (uint32_t oid = 0; oid < obj_meta->size; oid++) {
+    ss << obj_meta->info[oid].unique_id << " " << obj_meta->info[oid].classes << " "
+       << (int)obj_meta->info[oid].bbox.x1 << " " << (int)obj_meta->info[oid].bbox.y1 << " "
+       << (int)obj_meta->info[oid].bbox.x2 << " " << (int)obj_meta->info[oid].bbox.y2 << " "
+       << std::fixed << std::setprecision(2) << obj_meta->info[oid].adas_properity.dis << " "
+       << std::fixed << std::setprecision(2) << obj_meta->info[oid].adas_properity.speed << " "
+       << obj_meta->info[oid].adas_properity.state << "\n";
+  }
+
+  if (app_handle->adas_info->det_type) {
+    for (uint32_t i = 0; i < lane_meta->size; i++) {
+      int x1 = (int)lane_meta->lane[i].x[0];
+      int y1 = (int)lane_meta->lane[i].y[0];
+      int x2 = (int)lane_meta->lane[i].x[1];
+      int y2 = (int)lane_meta->lane[i].y[1];
+
+      ss << x1 << " " << y1 << " " << x2 << " " << y2 << " ";
+    }
+    ss << app_handle->adas_info->lane_state << "\n";
+  }
+  return ss.str();
+}
+
 int main(int argc, char *argv[]) {
-  if (argc != 6) {
+  if (argc != 7 && argc != 9 && argc != 11) {
     printf(
-        "\nUsage: %s people_vehicle_model_path lane_det_model_path  image_dir_path "
-        "output_dir_path img_list_path  \n",
+        "\nUsage: %s \nperson_vehicle_model_path  image_dir_path img_list_path output_dir_path \n"
+        "det_type(0: only object, 1: object and lane) \n"
+        "save_mode(0: draw, 1: save txt info, 2: both) \n"
+        "[lane_det_model_path](optional, if det_type=1, must exist) \n"
+        "[lane_model_type](optional, 0 for lane_det model, 1 for lstr model, if det_type=1, must "
+        "exist) \n",
         argv[0]);
     return -1;
   }
@@ -136,10 +182,24 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
+  // setup yolo algorithm preprocess
+  cvtdl_det_algo_param_t yolov8_param =
+      CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
+  yolov8_param.cls = 7;
+
+  printf("setup yolov8 algorithm param \n");
+  ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
+                                      yolov8_param);
+  if (ret != CVI_SUCCESS) {
+    printf("Can not set yolov8 algorithm parameters %#x\n", ret);
+    return ret;
+  }
+
   uint32_t buffer_size = 20;
+  int det_type = atoi(argv[5]);
   cvitdl_app_handle_t app_handle = NULL;
   ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
-  ret |= CVI_TDL_APP_ADAS_Init(app_handle, (uint32_t)buffer_size);
+  ret |= CVI_TDL_APP_ADAS_Init(app_handle, (uint32_t)buffer_size, det_type);
 
   if (ret != CVI_SUCCESS) {
     printf("failed with %#x!\n", ret);
@@ -152,26 +212,40 @@ int main(int argc, char *argv[]) {
   set_sample_mot_config(&ds_conf);
   CVI_TDL_DeepSORT_SetConfig(tdl_handle, &ds_conf, -1, false);
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, argv[1]);
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION failed with %#x!\n", ret);
     return ret;
   }
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_LANE_DET, argv[2]);
-  if (ret != CVI_SUCCESS) {
-    printf("open CVI_TDL_SUPPORTED_MODEL_LANE_DET failed with %#x!\n", ret);
-    return ret;
+  if (det_type == 1) {  // detect lane
+    app_handle->adas_info->lane_model_type = atoi(argv[8]);
+
+    CVI_TDL_SUPPORTED_MODEL_E lane_model_id;
+    if (app_handle->adas_info->lane_model_type == 0) {
+      lane_model_id = CVI_TDL_SUPPORTED_MODEL_LANE_DET;
+    } else if (app_handle->adas_info->lane_model_type == 1) {
+      lane_model_id = CVI_TDL_SUPPORTED_MODEL_LSTR;
+    } else {
+      printf(" err lane_model_type !\n");
+      return -1;
+    }
+
+    ret = CVI_TDL_OpenModel(tdl_handle, lane_model_id, argv[7]);
+    if (ret != CVI_SUCCESS) {
+      printf("open lane det model failed with %#x!\n", ret);
+      return ret;
+    }
   }
 
   imgprocess_t img_handle;
   CVI_TDL_Create_ImageProcessor(&img_handle);
 
-  std::string str_image_root(argv[3]);
+  std::string str_image_root(argv[2]);
+  std::string image_list(argv[3]);
   std::string str_dst_root = std::string(argv[4]);
-  std::string image_list(argv[5]);
-  // int starti = atoi(argv[5]);
-  // int endi = atoi(argv[6]);
+  int save_mode = atoi(argv[6]);
+
   if (!create_directory(str_dst_root)) {
     // std::cout << "create directory:" << str_dst_root << " failed\n";
     std::cout << " \n";
@@ -193,7 +267,16 @@ int main(int argc, char *argv[]) {
     str_image_root = str_image_root + std::string("/");
   }
 
-  for (int img_idx = 0; img_idx < image_files.size(); img_idx++) {
+  int start_idx = 0;
+  int end_idx = image_files.size();
+
+  if (argc == 11) {
+    start_idx = atoi(argv[9]);
+    end_idx = atoi(argv[10]);
+  }
+  printf("start_idx: %d, end_idx:%d\n", start_idx, end_idx);
+
+  for (int img_idx = start_idx; img_idx < end_idx; img_idx++) {
     VIDEO_FRAME_INFO_S bg;
 
     // std::cout << "processing:" << img_idx << "/1000\n";
@@ -215,6 +298,13 @@ int main(int argc, char *argv[]) {
       printf("image read,width:%d\n", bg.stVFrame.u32Width);
     }
 
+    // set FPS and gsensor data
+    // app_handle->adas_info->FPS = 15;
+    // app_handle->adas_info->gsensor_data.x = 0;
+    // app_handle->adas_info->gsensor_data.y = 0;
+    // app_handle->adas_info->gsensor_data.z = 0;
+    // app_handle->adas_info->gsensor_data.counter += 1;
+
     ret = CVI_TDL_APP_ADAS_Run(app_handle, &bg);
 
     if (ret != CVI_TDL_SUCCESS) {
@@ -224,22 +314,27 @@ int main(int argc, char *argv[]) {
       // goto inf_error;
     }
 
-    cvtdl_lane_t lane_meta = {0};
-    CVI_TDL_Lane_Det(app_handle->tdl_handle, &bg, &lane_meta);
-
-    cvtdl_object_t *obj_meta = &app_handle->adas_info->last_objects;
-
+    // cvtdl_object_t *obj_meta = &app_handle->adas_info->last_objects;
     // for (uint32_t i = 0; i < obj_meta->size; i++) {
     //     std::cout << "[" << obj_meta->info[i].bbox.x1 << "," << obj_meta->info[i].bbox.y1 << ","
     //         << obj_meta->info[i].bbox.x2 << "," << obj_meta->info[i].bbox.y2 << "]," <<std::endl;
     // }
+    if (save_mode == 0 || save_mode == 2) {
+      char save_path[256];
+      sprintf(save_path, "%s/%s", str_dst_video.c_str(), image_files[img_idx].c_str());
+      draw_adas(app_handle, &bg, save_path);
+    }
 
-    char save_path[256];
-    sprintf(save_path, "%s/%08d.jpg", str_dst_video.c_str(), img_idx);
-    draw_adas(app_handle, &bg, save_path);
+    if (save_mode == 1 || save_mode == 2) {
+      std::string dstf = str_dst_video + "/" + replace_file_ext(image_files[img_idx], "txt");
+      std::cout << "writing file:" << dstf << std::endl;
+      std::string str_res = adas_info(app_handle);
+      FILE *fp = fopen(dstf.c_str(), "w");
+      fwrite(str_res.c_str(), str_res.size(), 1, fp);
+      fclose(fp);
+    }
 
     CVI_TDL_ReleaseImage(img_handle, &bg);
-    CVI_TDL_Free(&lane_meta);
   }
 
   CVI_TDL_APP_DestroyHandle(app_handle);

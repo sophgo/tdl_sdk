@@ -13,7 +13,7 @@ class FaceLandmarkDet3 final : public Core {
 
  private:
   virtual int onModelOpened() override;
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
+
   void outputParser(const int image_width, const int image_height, const int frame_width,
                     const int frame_height, cvtdl_face_t *meta);
 

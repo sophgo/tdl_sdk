@@ -4,16 +4,16 @@
 #include "cvi_comm.h"
 #include "decode_tool.hpp"
 
+#include "lp_recognition_base.hpp"
 #include "opencv2/core.hpp"
-
 namespace cvitdl {
 
 /* WPODNet */
-class LicensePlateRecognition final : public Core {
+class LicensePlateRecognition final : public LicensePlateRecognitionBase {
  public:
   LicensePlateRecognition(LP_FORMAT format);
-  virtual ~LicensePlateRecognition();
-  int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *vehicle_plate_meta);
+  ~LicensePlateRecognition(){};
+  int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *vehicle_plate_meta) override;
 
  private:
   void prepareInputTensor(cv::Mat &input_mat);

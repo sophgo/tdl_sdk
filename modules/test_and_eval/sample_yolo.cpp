@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 
   cvtdl_object_t obj_meta = {0};
 
-  CVI_TDL_Yolo(tdl_handle, &fdFrame, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLO, &obj_meta);
 
   printf("detect number: %d\n", obj_meta.size);
 

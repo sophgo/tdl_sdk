@@ -42,7 +42,8 @@ std::string run_image_headperson_detection(VIDEO_FRAME_INFO_S *p_frame, cvitdl_h
   memset(&hand_obj, 0, sizeof(cvtdl_object_t));
   struct timeval start_time, stop_time;
   gettimeofday(&start_time, NULL);
-  ret = CVI_TDL_HeadPerson_Detection(tdl_handle, p_frame, &hand_obj);
+  ret = CVI_TDL_Detection(tdl_handle, p_frame, CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION,
+                          &hand_obj);
   if (ret != CVI_SUCCESS) {
     std::cout << "detect headperson failed:" << ret << std::endl;
   }

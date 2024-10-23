@@ -6,7 +6,7 @@ using namespace melspec;
 using namespace cvitdl;
 using namespace std;
 
-SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {
+SoundClassification::SoundClassification() : Core(CVI_MEM_SYSTEM) {
   audio_param_.win_len = 1024;
   audio_param_.num_fft = 1024;
   audio_param_.hop_len = 256;
@@ -18,14 +18,17 @@ SoundClassificationV2::SoundClassificationV2() : Core(CVI_MEM_SYSTEM) {
   audio_param_.fix = false;
 }
 
-SoundClassificationV2::~SoundClassificationV2() { delete mp_extractor_; }
+SoundClassification::~SoundClassification() { delete mp_extractor_; }
 
-int SoundClassificationV2::onModelOpened() {
+int SoundClassification::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
   int32_t image_width = input_shape.dim[2];
   bool htk = false;
 
-  if (image_width == 63 || audio_param_.hop_len == 128) {  // sr8k * 2s
+  if (image_width == 251 && audio_param_.hop_len == 128) {  // sr16k * 2s, hop_len = 128
+    audio_param_.sample_rate = 16000;
+    audio_param_.time_len = 2;
+  } else if (image_width == 63 || audio_param_.hop_len == 128) {  // sr8k * 2s
     audio_param_.sample_rate = 8000;
     audio_param_.time_len = 2;
   } else if (image_width == 94) {  // sr8k * 3s
@@ -50,8 +53,8 @@ int SoundClassificationV2::onModelOpened() {
   return CVI_SUCCESS;
 }
 
-AudioAlgParam SoundClassificationV2::get_algparam() { return audio_param_; }
-void SoundClassificationV2::set_algparam(AudioAlgParam audio_param) {
+cvitdl_sound_param SoundClassification::get_algparam() { return audio_param_; }
+void SoundClassification::set_algparam(cvitdl_sound_param audio_param) {
   audio_param_.win_len = audio_param.win_len;
   audio_param_.num_fft = audio_param.num_fft;
   audio_param_.hop_len = audio_param.hop_len;
@@ -63,7 +66,7 @@ void SoundClassificationV2::set_algparam(AudioAlgParam audio_param) {
   audio_param_.fix = audio_param.fix;
 }
 
-int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
+int SoundClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index) {
   int img_width = stOutFrame->stVFrame.u32Width / 2;  // unit: 16 bits
   int img_height = stOutFrame->stVFrame.u32Height;
 
@@ -92,8 +95,8 @@ int SoundClassificationV2::inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index)
   return CVI_SUCCESS;
 }
 
-int SoundClassificationV2::inference_pack(VIDEO_FRAME_INFO_S *stOutFrame, int pack_idx,
-                                          int pack_len, int *index) {
+int SoundClassification::inference_pack(VIDEO_FRAME_INFO_S *stOutFrame, int pack_idx, int pack_len,
+                                        int *index) {
   int img_width = stOutFrame->stVFrame.u32Width / 2;  // unit: 16 bits
   int img_height = stOutFrame->stVFrame.u32Height;
 
@@ -120,7 +123,7 @@ int SoundClassificationV2::inference_pack(VIDEO_FRAME_INFO_S *stOutFrame, int pa
 
   return CVI_SUCCESS;
 }
-int SoundClassificationV2::get_top_k(float *result, size_t count) {
+int SoundClassification::get_top_k(float *result, size_t count) {
   int idx = -1;
   float max_e = -10000;
   float cur_e;
@@ -148,7 +151,7 @@ int SoundClassificationV2::get_top_k(float *result, size_t count) {
   return idx;
 }
 
-void SoundClassificationV2::normal_sound(short *audio_data, int n) {
+void SoundClassification::normal_sound(short *audio_data, int n) {
   // std::cout << "before:" << audio_data[0];
   std::vector<double> audio_abs(n);
   for (int i = 0; i < n; i++) {
@@ -178,4 +181,9 @@ void SoundClassificationV2::normal_sound(short *audio_data, int n) {
     }
   }
   // std::cout << ", after:" << audio_data[0];
+}
+
+int SoundClassification::getClassesNum() {
+  const TensorInfo &info = getOutputTensorInfo(0);
+  return info.tensor_elem;
 }

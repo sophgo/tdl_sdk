@@ -1,6 +1,4 @@
 #include "ocr_recognition.hpp"
-#include <opencv2/imgproc.hpp>
-#include <opencv2/opencv.hpp>
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -14,11 +12,40 @@
 #include <iostream>
 #include <locale>
 #include <sstream>
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
+#ifndef NO_OPENCV
+#include <opencv2/opencv.hpp>
 #include "opencv2/imgproc.hpp"
+namespace cvitdl {
+
+void save_cropped_frame(VIDEO_FRAME_INFO_S* cropped_frame, const std::string& save_path) {
+  CVI_U8* r_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[0],
+                                          cropped_frame->stVFrame.u32Length[0]);
+  CVI_U8* g_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[1],
+                                          cropped_frame->stVFrame.u32Length[1]);
+  CVI_U8* b_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[2],
+                                          cropped_frame->stVFrame.u32Length[2]);
+
+  cv::Mat r_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
+                r_plane);
+  cv::Mat g_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
+                g_plane);
+  cv::Mat b_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
+                b_plane);
+
+  std::vector<cv::Mat> channels = {b_mat, g_mat, r_mat};
+  cv::Mat img_rgb;
+  cv::merge(channels, img_rgb);
+
+  cv::imwrite(save_path, img_rgb);
+
+  CVI_SYS_Munmap(r_plane, cropped_frame->stVFrame.u32Length[0]);
+  CVI_SYS_Munmap(g_plane, cropped_frame->stVFrame.u32Length[1]);
+  CVI_SYS_Munmap(b_plane, cropped_frame->stVFrame.u32Length[2]);
+}
+}  // namespace cvitdl
+
 #endif
+
 #define R_SCALE (0.003922)
 #define G_SCALE (0.003922)
 #define B_SCALE (0.003922)
@@ -28,24 +55,15 @@
 
 namespace cvitdl {
 
-OCRRecognition::OCRRecognition() : Core(CVI_MEM_DEVICE) {}
-
-OCRRecognition::~OCRRecognition() {}
-
-int OCRRecognition::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
-  if (data->size() != 1) {
-    LOGE("OCRRecognition only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = R_SCALE;
-  (*data)[0].factor[1] = G_SCALE;
-  (*data)[0].factor[2] = B_SCALE;
-  (*data)[0].mean[0] = R_MEAN;
-  (*data)[0].mean[1] = G_MEAN;
-  (*data)[0].mean[2] = B_MEAN;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
+OCRRecognition::OCRRecognition() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = R_SCALE;
+  m_preprocess_param[0].factor[1] = G_SCALE;
+  m_preprocess_param[0].factor[2] = B_SCALE;
+  m_preprocess_param[0].mean[0] = R_MEAN;
+  m_preprocess_param[0].mean[1] = G_MEAN;
+  m_preprocess_param[0].mean[2] = B_MEAN;
 }
+OCRRecognition::~OCRRecognition() {}
 
 int argmax(float* start, float* end) {
   float* max_iter = std::max_element(start, end);
@@ -119,8 +137,8 @@ void OCRRecognition::greedy_decode(float* prebs, std::vector<std::string>& chars
             << std::endl;
 }
 
-//可以不通过det，打开下方接口
-// int OCRRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta) {
+// 可以不通过det，打开下方接口
+//  int OCRRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta) {
 
 //     std::vector<std::string> myCharacters;
 //     std::string filePath = "./ppocr_keys_v1.txt";
@@ -137,32 +155,6 @@ void OCRRecognition::greedy_decode(float* prebs, std::vector<std::string>& chars
 
 //     return CVI_TDL_SUCCESS;
 //   }
-
-void save_cropped_frame(VIDEO_FRAME_INFO_S* cropped_frame, const std::string& save_path) {
-  CVI_U8* r_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[0],
-                                          cropped_frame->stVFrame.u32Length[0]);
-  CVI_U8* g_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[1],
-                                          cropped_frame->stVFrame.u32Length[1]);
-  CVI_U8* b_plane = (CVI_U8*)CVI_SYS_Mmap(cropped_frame->stVFrame.u64PhyAddr[2],
-                                          cropped_frame->stVFrame.u32Length[2]);
-
-  cv::Mat r_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
-                r_plane);
-  cv::Mat g_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
-                g_plane);
-  cv::Mat b_mat(cropped_frame->stVFrame.u32Height, cropped_frame->stVFrame.u32Width, CV_8UC1,
-                b_plane);
-
-  std::vector<cv::Mat> channels = {b_mat, g_mat, r_mat};
-  cv::Mat img_rgb;
-  cv::merge(channels, img_rgb);
-
-  cv::imwrite(save_path, img_rgb);
-
-  CVI_SYS_Munmap(r_plane, cropped_frame->stVFrame.u32Length[0]);
-  CVI_SYS_Munmap(g_plane, cropped_frame->stVFrame.u32Length[1]);
-  CVI_SYS_Munmap(b_plane, cropped_frame->stVFrame.u32Length[2]);
-}
 
 cvtdl_object_info_t crop_resize_img(const float frame_width, const float frame_height,
                                     const cvtdl_object_info_t* obj_info) {
@@ -208,7 +200,7 @@ int OCRRecognition::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_object_t* obj_met
     int width = shape.dim[3];
     vpssCropImage(frame, cropped_frame, obj_info.bbox, width, height, PIXEL_FORMAT_RGB_888_PLANAR);
 
-    // 可以保存cropped_frame
+    // 可以保存cropped_frame,此功能必须提供opencv支持
     // std::string save_path = std::to_string(i) + ".jpg";
     // save_cropped_frame(cropped_frame, save_path);
 

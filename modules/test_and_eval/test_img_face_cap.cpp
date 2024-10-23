@@ -23,6 +23,8 @@
 
 typedef enum { fast = 0, interval, leave, intelligent } APP_MODE_e;
 
+bool g_use_face_attribute;
+
 #define SMT_MUTEXAUTOLOCK_INIT(mutex) pthread_mutex_t AUTOLOCK_##mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define SMT_MutexAutoLock(mutex, lock)                                            \
@@ -42,6 +44,10 @@ typedef struct {
   char name[128];
   float match_score;
   uint64_t frame_id;
+  float gender;
+  float age;
+  float glass;
+  float mask;
 } IOData;
 
 SMT_MUTEXAUTOLOCK_INIT(IOMutex);
@@ -129,14 +135,33 @@ static void *pImageWrite(void *args) {
       printf("[WARNING] Target image is empty.\n");
     } else {
       if (data_buffer[target_idx].image.pix_format == PIXEL_FORMAT_RGB_888) {
-        sprintf(filename, "%s/frm_%d_face_%d_%u_score_%.3f_qua_%.3f_name_%s.png", g_out_dir.c_str(),
-                int(data_buffer[target_idx].frame_id), int(data_buffer[target_idx].u_id),
-                data_buffer[target_idx].counter, data_buffer[target_idx].match_score,
-                data_buffer[target_idx].quality, data_buffer[target_idx].name);
-        stbi_write_png(filename, data_buffer[target_idx].image.width,
-                       data_buffer[target_idx].image.height, STBI_rgb,
-                       data_buffer[target_idx].image.pix[0],
-                       data_buffer[target_idx].image.stride[0]);
+        if (!g_use_face_attribute) {
+          sprintf(filename, "%s/frm_%d_face_%d_%u_score_%.3f_qua_%.3f_name_%s.png",
+                  g_out_dir.c_str(), int(data_buffer[target_idx].frame_id),
+                  int(data_buffer[target_idx].u_id), data_buffer[target_idx].counter,
+                  data_buffer[target_idx].match_score, data_buffer[target_idx].quality,
+                  data_buffer[target_idx].name);
+          stbi_write_png(filename, data_buffer[target_idx].image.width,
+                         data_buffer[target_idx].image.height, STBI_rgb,
+                         data_buffer[target_idx].image.pix[0],
+                         data_buffer[target_idx].image.stride[0]);
+        } else if (g_use_face_attribute) {
+          sprintf(filename,
+                  "%s/"
+                  "frm_%d_face_%d_%u_score_%.3f_qua_%.3f_gender_%.3f_age_%.3f_glass_%.3f_mask_%.3f_"
+                  "name_%s.png",
+                  g_out_dir.c_str(), int(data_buffer[target_idx].frame_id),
+                  int(data_buffer[target_idx].u_id), data_buffer[target_idx].counter,
+                  data_buffer[target_idx].match_score, data_buffer[target_idx].quality,
+                  data_buffer[target_idx].name, data_buffer[target_idx].gender,
+                  data_buffer[target_idx].age, data_buffer[target_idx].glass,
+                  data_buffer[target_idx].mask);
+          stbi_write_png(filename, data_buffer[target_idx].image.width,
+                         data_buffer[target_idx].image.height, STBI_rgb,
+                         data_buffer[target_idx].image.pix[0],
+                         data_buffer[target_idx].image.stride[0]);
+        }
+
       } else {
         printf("to output image format:%d,not :%d\n", (int)data_buffer[target_idx].image.pix_format,
                (int)PIXEL_FORMAT_RGB_888);
@@ -213,11 +238,6 @@ void release_system(cvitdl_handle_t tdl_handle, cvitdl_service_handle_t service_
   CVI_SYS_Exit();
   CVI_VB_Exit();
 }
-int load_image_file(imgprocess_t img_handle, const std::string &strf, VIDEO_FRAME_INFO_S &fdFrame,
-                    PIXEL_FORMAT_E img_format) {
-  CVI_TDL_ReadImage(img_handle, strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-  return CVI_SUCCESS;
-}
 std::string get_img_name(const std::string &strf) {
   size_t pos0 = strf.find_last_of('/');
   size_t pos1 = strf.find_last_of('.');
@@ -225,13 +245,11 @@ std::string get_img_name(const std::string &strf) {
   return name;
 }
 int register_gallery_face(imgprocess_t img_handle, cvitdl_app_handle_t app_handle,
-                          IVE_HANDLE ive_handle, const std::string &strf,
-                          cvtdl_service_feature_array_t *p_feat_gallery,
+                          const std::string &strf, cvtdl_service_feature_array_t *p_feat_gallery,
                           std::vector<std::string> &gallery_names) {
-  IVE_IMAGE_S image;
   VIDEO_FRAME_INFO_S fdFrame;
 
-  int ret = load_image_file(img_handle, strf, fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
+  int ret = CVI_TDL_ReadImage(img_handle, strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
     return NULL;
   }
@@ -251,7 +269,6 @@ int register_gallery_face(imgprocess_t img_handle, cvitdl_app_handle_t app_handl
   }
   if (ret == CVI_FAILURE) {
     CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
-    CVI_SYS_FreeI(ive_handle, &image);
     CVI_TDL_Free(&faceinfo);
     return ret;
   }
@@ -288,7 +305,6 @@ int register_gallery_face(imgprocess_t img_handle, cvitdl_app_handle_t app_handl
   }
   std::cout << "copy done\n";
   CVI_VPSS_ReleaseChnFrame(0, 0, &fdFrame);
-  CVI_SYS_FreeI(ive_handle, &image);
   CVI_TDL_Free(&faceinfo);
   std::cout << "register done\n";
   return ret;
@@ -333,13 +349,17 @@ int main(int argc, char *argv[]) {
 
   CVI_TDL_SUPPORTED_MODEL_E model = CVI_TDL_SUPPORTED_MODEL_SCRFDFACE;
   std::string modelf = std::string(
-      "/mnt/data/admin1_data/AI_CV/cv182x/ai_models_output/cv181x/"
+      "/mnt/data/wkz/faceCapture_pull_package/cviai/face_cvimodel/"
       "scrfd_500m_bnkps_432_768.cvimodel");
 
-  std::string fl_modelf = "/mnt/data/admin1_data/alios_test/fl/onet_int8.cvimodel";
+  std::string fl_modelf =
+      "/mnt/data/wkz/faceCapture_pull_package/cviai/face_cvimodel/"
+      "pipnet_mbv1_at_50ep_v8_cv181x.cvimodel";
   std::string ped_modelf =
-      "/mnt/data/admin1_data/AI_CV/cv182x/ai_models/output/cv181x/"
+      "/mnt/data/wkz/faceCapture_pull_package/cviai/face_cvimodel/"
       "mobiledetv2-pedestrian-d0-ls-448.cvimodel";
+
+  std::string fa_modelf = "NULL";
 
   std::string str_model_file = modelf;
   CVI_TDL_SUPPORTED_MODEL_E fd_model_id = model;
@@ -372,8 +392,8 @@ int main(int argc, char *argv[]) {
   imgprocess_t img_handle;
   CVI_TDL_Create_ImageProcessor(&img_handle);
 
-  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1, vpssgrp_width,
-                         vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 1);
+  ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 3, vpssgrp_width,
+                         vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR, 3);
   cvitdl_handle_t tdl_handle = NULL;
   cvitdl_service_handle_t service_handle = NULL;
   cvitdl_app_handle_t app_handle = NULL;
@@ -395,10 +415,10 @@ int main(int argc, char *argv[]) {
   memset(&feat_gallery, 0, sizeof(feat_gallery));
   CVI_TDL_SUPPORTED_MODEL_E fr_model_id = CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION;
   ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                            NULL, NULL, fl_modelf.c_str());
+                                            NULL, NULL, fl_modelf.c_str(), NULL);
+  g_use_face_attribute = app_handle->face_cpt_info->fa_flag;
   CVI_TDL_SUPPORTED_MODEL_E ped_model_id = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
   ret |= CVI_TDL_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_modelf.c_str());
-  IVE_HANDLE ive_handle = CVI_IVE_CreateHandle();
 
   if (ret != CVI_SUCCESS) {
     release_system(tdl_handle, service_handle, app_handle);
@@ -411,14 +431,10 @@ int main(int argc, char *argv[]) {
 
   std::vector<std::string> gallery_names;
   bool do_face_recog = false;
-  if (ive_handle == NULL) {
-    printf("CreateHandle failed with %#x!\n", ret);
-    ret = CVI_FAILURE;
-  }
+
   if (do_face_recog) {
     const char *gimg = "/mnt/data/admin1_data/datasets/ivs_eval_set/image/yitong/register.jpg";
-    ret = register_gallery_face(img_handle, app_handle, ive_handle, gimg, &feat_gallery,
-                                gallery_names);
+    ret = register_gallery_face(img_handle, app_handle, gimg, &feat_gallery, gallery_names);
     std::cout << "register ret:" << ret << std::endl;
     if (ret == CVI_SUCCESS) {
       std::cout << "to register gallery\n";
@@ -459,28 +475,33 @@ int main(int argc, char *argv[]) {
 
   int num_append = 0;
   PIXEL_FORMAT_E img_format = PIXEL_FORMAT_RGB_888_PLANAR;  // IVE_IMAGE_TYPE_U8C3_PACKAGE;
-  for (int img_idx = 0; img_idx < 1000; img_idx++) {
+  for (int img_idx = 0; img_idx < 1100; img_idx++) {
     if (bExit) break;
-    std::cout << "processing:" << img_idx << "/1000\n";
+    std::cout << "processing:" << img_idx << "/1100\n";
     char szimg[256];
     sprintf(szimg, "%s/%08d.jpg", str_image_root.c_str(), img_idx);
-    std::cout << "processing:" << img_idx << "/1000,path:" << szimg << std::endl;
+    std::cout << "processing:" << img_idx << "/1100,path:" << szimg << std::endl;
     bool empty_img = false;
     IVE_IMAGE_S image;
     VIDEO_FRAME_INFO_S fdFrame;
-    ret = load_image_file(ive_handle, szimg, fdFrame, img_format);
+    ret = CVI_TDL_ReadImage(img_handle, szimg, &fdFrame, img_format);
     printf("read image ret:%d width:%d\n", ret, (int)fdFrame.stVFrame.u32Width);
     if (ret != CVI_SUCCESS) {
       if (img_idx < 100) {
+        CVI_TDL_ReleaseImage(img_handle, &fdFrame);
         release_system(tdl_handle, service_handle, app_handle);
         break;
       }
       printf("load image failed\n");
       empty_img = true;
-      ret = load_image_file(ive_handle, "/mnt/data/admin1_data/alios_test/black_1080p.jpg", fdFrame,
-                            img_format);
+
+      ret = CVI_TDL_ReadImage(
+          img_handle, "/mnt/data/algo_pub/eval_data/dataset/face_cap_val_dataset/black_image.jpg",
+          &fdFrame, img_format);
+
       num_append++;
       if (num_append > 30) {
+        CVI_TDL_ReleaseImage(img_handle, &fdFrame);
         break;
       }
     }
@@ -543,6 +564,14 @@ int main(int argc, char *argv[]) {
         data_buffer[target_idx].counter = counter;
         data_buffer[target_idx].match_score = pface_info->recog_score;
         data_buffer[target_idx].frame_id = app_handle->face_cpt_info->data[i].cap_timestamp;
+        if (g_use_face_attribute) {
+          data_buffer[target_idx].gender =
+              app_handle->face_cpt_info->data[i].face_data.info->gender_score;
+          data_buffer[target_idx].age = app_handle->face_cpt_info->data[i].face_data.info->age;
+          data_buffer[target_idx].glass = app_handle->face_cpt_info->data[i].face_data.info->glass;
+          data_buffer[target_idx].mask =
+              app_handle->face_cpt_info->data[i].face_data.info->mask_score;
+        }
         memcpy(data_buffer[target_idx].name, pface_info->name, 128);
         /* NOTE: Make sure the image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
 
@@ -559,7 +588,6 @@ int main(int argc, char *argv[]) {
   }
   fclose(fp);
   printf("to release system\n");
-  CVI_IVE_DestroyHandle(ive_handle);
   bRunImageWriter = false;
   bRunVideoOutput = false;
   pthread_join(io_thread, NULL);

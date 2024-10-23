@@ -20,12 +20,23 @@
     }                                                                    \
   } while (0)
 
-typedef int (*FaceInferFunc)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
+/**
+ * @typedef ODInferenceFunc
+ * @brief Inference function pointer of face deteciton
+ */
+typedef int (*FaceDetInferFunc)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, CVI_TDL_SUPPORTED_MODEL_E,
+                                cvtdl_face_t *);
+/**
+ * @typedef ODInferenceFunc
+ * @brief Inference function pointer of facec recognition
+ */
+typedef int (*FaceRecInferFunc)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_face_t *);
 /**
  * @typedef ODInferenceFunc
  * @brief Inference function pointer of object deteciton
  */
-typedef int (*ODInferenceFunc)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_object_t *);
+typedef int (*ODInferenceFunc)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, CVI_TDL_SUPPORTED_MODEL_E,
+                               cvtdl_object_t *);
 
 /**
  * @typedef LPRInferenceFunc
@@ -68,7 +79,8 @@ CVI_S32 get_vehicle_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E
 
 int release_image(VIDEO_FRAME_INFO_S *frame);
 CVI_S32 register_gallery_face(cvitdl_handle_t tdl_handle, const char *sz_img_file,
-                              FaceInferFunc fd_func, FaceInferFunc fr_func,
+                              CVI_TDL_SUPPORTED_MODEL_E *fd_index, FaceDetInferFunc fd_func,
+                              FaceRecInferFunc fr_func,
                               cvtdl_service_feature_array_t *p_feat_gallery);
 CVI_S32 register_gallery_feature(cvitdl_handle_t tdl_handle, const char *sz_feat_file,
                                  cvtdl_service_feature_array_t *p_feat_gallery);

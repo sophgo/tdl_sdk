@@ -1,7 +1,6 @@
 #pragma once
 #include "core/face/cvtdl_face_types.h"
 #include "core/utils/vpss_helper.h"
-#include "face_utils.hpp"
 
 #include <string>
 #include <vector>

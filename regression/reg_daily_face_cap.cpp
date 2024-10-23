@@ -114,7 +114,7 @@ TEST_F(FaceCaptureTestSuite, match_det) {
   // FaceCapture Models Setup
   ASSERT_EQ(CVI_TDL_APP_FaceCapture_QuickSetUp(m_app_handle, fd_info.index, fr_info.index,
                                                fd_info.model_path.c_str(),
-                                               fr_info.model_path.c_str(), NULL, NULL),
+                                               fr_info.model_path.c_str(), NULL, NULL, NULL),
             CVI_TDL_SUCCESS);
   int feature_len = m_json_object[0]["reg_feature"].size();
   std::string reg_face_str =
@@ -200,7 +200,7 @@ TEST_F(FaceCaptureTestSuite, accuracy) {
   // FaceCapture Models Setup
   ASSERT_EQ(CVI_TDL_APP_FaceCapture_QuickSetUp(
                 m_app_handle, fd_info.index, fr_info.index, fd_info.model_path.c_str(),
-                fr_info.model_path.c_str(), NULL, fl_info.model_path.c_str()),
+                fr_info.model_path.c_str(), NULL, fl_info.model_path.c_str(), NULL),
             CVI_TDL_SUCCESS);
 
   // ASSERT_EQ(CVI_TDL_APP_FaceCapture_FusePedSetup(m_app_handle, ped_info.index,

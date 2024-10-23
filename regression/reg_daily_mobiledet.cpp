@@ -17,7 +17,8 @@ namespace unitest {
 
 class MobileDetV2TestSuite : public CVI_TDLModelTestSuite {
  public:
-  typedef int (*InferenceFunc)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, cvtdl_object_t *);
+  typedef int (*InferenceFunc)(cvitdl_handle_t, VIDEO_FRAME_INFO_S *, CVI_TDL_SUPPORTED_MODEL_E,
+                               cvtdl_object_t *);
   struct ModelInfo {
     InferenceFunc inference;
     CVI_TDL_SUPPORTED_MODEL_E index;
@@ -49,64 +50,65 @@ class MobileDetV2TestSuite : public CVI_TDLModelTestSuite {
   const float score_threshold = 0.1;
 };
 
+// @attention 需要整改
 const std::unordered_map<std::string,
                          std::pair<CVI_TDL_SUPPORTED_MODEL_E, MobileDetV2TestSuite::InferenceFunc>>
     MobileDetV2TestSuite::MODEL_MAP = {
 #ifndef CV186X
         {"mobiledetv2-d0-ls.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_MobileDetV2_COCO80}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_Detection}},
         {"mobiledetv2-d0.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_MobileDetV2_COCO80}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_Detection}},
         {"mobiledetv2-d1-ls.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_MobileDetV2_COCO80}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_Detection}},
         {"mobiledetv2-d1.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_MobileDetV2_COCO80}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_Detection}},
         {"mobiledetv2-d2-ls.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_MobileDetV2_COCO80}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_Detection}},
         {"mobiledetv2-d2.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_MobileDetV2_COCO80}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_Detection}},
         {"mobiledetv2-person-vehicle.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_TDL_MobileDetV2_Person_Vehicle}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_TDL_Detection}},
         {"mobiledetv2-lite-person-pets-ls.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, CVI_TDL_MobileDetV2_Person_Pets}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, CVI_TDL_Detection}},
         {"mobiledetv2-lite-person-pets.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, CVI_TDL_MobileDetV2_Person_Pets}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, CVI_TDL_Detection}},
         {"mobiledetv2-person-vehicle-ls.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_TDL_MobileDetV2_Person_Vehicle}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_TDL_Detection}},
         {"mobiledetv2-person-vehicle-ls-768.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_TDL_MobileDetV2_Person_Vehicle}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE, CVI_TDL_Detection}},
 #endif
         {"mobiledetv2-pedestrian-d0-384_cv186x.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d0-448_cv186x.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
 #ifndef CV186X
         {"mobiledetv2-pedestrian-d0-ls-768.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d0-ls-384.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d0-ls-640.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d0-ls.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d0.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d1.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d1-ls.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d1-ls-1024.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
 #endif
         {"mobiledetv2-pedestrian-d1-ls-896_cv186x.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d1-896_cv186x.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_MobileDetV2_Pedestrian}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
 #ifndef CV186X
         {"mobiledetv2-vehicle-d0-ls.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_MobileDetV2_Vehicle}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_Detection}},
         {"mobiledetv2-vehicle-d0.cvimodel",
-         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_MobileDetV2_Vehicle}},
+         {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_Detection}},
 #endif
 };
 
@@ -226,7 +228,8 @@ TEST_F(MobileDetV2TestSuite, skip_vpsspreprocess) {
       ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
       CVI_TDL_SetModelThreshold(m_tdl_handle, model_info.index, 0.6);
 
-      ASSERT_EQ(model_info.inference(m_tdl_handle, image.getFrame(), obj_meta_w_preproc),
+      ASSERT_EQ(model_info.inference(m_tdl_handle, image.getFrame(), model_info.index,
+                                     obj_meta_w_preproc),
                 CVI_TDL_SUCCESS);
       ASSERT_GT(obj_meta_w_preproc->size, (uint32_t)0);
     }
@@ -255,7 +258,8 @@ TEST_F(MobileDetV2TestSuite, skip_vpsspreprocess) {
       ASSERT_EQ(output_frame->stVFrame.u32Width, vpssconfig.chn_attr.u32Width);
       ASSERT_EQ(output_frame->stVFrame.u32Height, vpssconfig.chn_attr.u32Height);
       ASSERT_EQ(output_frame->stVFrame.enPixelFormat, vpssconfig.chn_attr.enPixelFormat);
-      ASSERT_EQ(model_info.inference(m_tdl_handle, output_frame.get(), obj_meta_no_preproc),
+      ASSERT_EQ(model_info.inference(m_tdl_handle, output_frame.get(), model_info.index,
+                                     obj_meta_no_preproc),
                 CVI_TDL_SUCCESS);
       CVI_TDL_RescaleMetaRB(frame, obj_meta_no_preproc);
 
@@ -323,7 +327,7 @@ TEST_F(MobileDetV2TestSuite, set_threshold) {
               CVI_TDL_SUCCESS);
 
     TDLObject<cvtdl_object_t> obj_meta;
-    model_info.inference(m_tdl_handle, image.getFrame(), obj_meta);
+    model_info.inference(m_tdl_handle, image.getFrame(), model_info.index, obj_meta);
 
     for (uint32_t oid = 0; oid < obj_meta->size; oid++) {
       EXPECT_GE((float)std::ceil(obj_meta->info[oid].bbox.score * 100.0) / 100.0 + 0.001,
@@ -354,7 +358,7 @@ TEST_F(MobileDetV2TestSuite, select_classes) {
         CVI_TDL_SUCCESS);
 
     TDLObject<cvtdl_object_t> obj_meta;
-    model_info.inference(m_tdl_handle, image.getFrame(), obj_meta);
+    model_info.inference(m_tdl_handle, image.getFrame(), model_info.index, obj_meta);
 
     for (uint32_t oid = 0; oid < obj_meta->size; oid++) {
       EXPECT_EQ(obj_meta->info[oid].classes, CVI_TDL_DET_TYPE_DINING_TABLE);
@@ -372,7 +376,7 @@ TEST_F(MobileDetV2TestSuite, select_classes) {
               CVI_TDL_SUCCESS);
 
     TDLObject<cvtdl_object_t> obj_meta;
-    model_info.inference(m_tdl_handle, image.getFrame(), obj_meta);
+    model_info.inference(m_tdl_handle, image.getFrame(), model_info.index, obj_meta);
 
     for (uint32_t oid = 0; oid < obj_meta->size; oid++) {
       EXPECT_TRUE(obj_meta->info[oid].classes == CVI_TDL_DET_TYPE_KNIFE ||
@@ -402,7 +406,8 @@ TEST_F(MobileDetV2TestSuite, accuracy) {
 
       TDLObject<cvtdl_object_t> obj_meta;
 
-      ASSERT_EQ(model_info.inference(m_tdl_handle, image.getFrame(), obj_meta), CVI_TDL_SUCCESS);
+      ASSERT_EQ(model_info.inference(m_tdl_handle, image.getFrame(), model_info.index, obj_meta),
+                CVI_TDL_SUCCESS);
 
       auto expected_dets = iter.value();
 

@@ -4,28 +4,21 @@
 CVI_S32 get_od_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_index,
                           ODInferenceFunc *inference_func) {
   CVI_S32 ret = CVI_SUCCESS;
-
+  *inference_func = CVI_TDL_Detection;
   if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    *inference_func = CVI_TDL_MobileDetV2_Person_Vehicle;
   } else if (strcmp(model_name, "mobiledetv2-person-pets") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS;
-    *inference_func = CVI_TDL_MobileDetV2_Person_Pets;
   } else if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    *inference_func = CVI_TDL_MobileDetV2_COCO80;
   } else if (strcmp(model_name, "mobiledetv2-vehicle") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
-    *inference_func = CVI_TDL_MobileDetV2_Vehicle;
   } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-    *inference_func = CVI_TDL_MobileDetV2_Pedestrian;
   } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
-    *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
-    *inference_func = CVI_TDL_YoloX;
   } else {
     ret = CVI_TDL_FAILURE;
   }
@@ -35,25 +28,19 @@ CVI_S32 get_od_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *mod
 CVI_S32 get_pd_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_index,
                           ODInferenceFunc *inference_func) {
   CVI_S32 ret = CVI_SUCCESS;
-
+  *inference_func = CVI_TDL_Detection;
   if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    *inference_func = CVI_TDL_MobileDetV2_Person_Vehicle;
   } else if (strcmp(model_name, "mobiledetv2-person-pets") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS;
-    *inference_func = CVI_TDL_MobileDetV2_Person_Pets;
   } else if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    *inference_func = CVI_TDL_MobileDetV2_COCO80;
   } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
-    *inference_func = CVI_TDL_MobileDetV2_Pedestrian;
   } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
-    *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
-    *inference_func = CVI_TDL_YoloX;
   } else {
     ret = CVI_TDL_FAILURE;
   }
@@ -63,22 +50,17 @@ CVI_S32 get_pd_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *mod
 CVI_S32 get_vehicle_model_info(const char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_index,
                                ODInferenceFunc *inference_func) {
   CVI_S32 ret = CVI_SUCCESS;
-
+  *inference_func = CVI_TDL_Detection;
   if (strcmp(model_name, "mobiledetv2-person-vehicle") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
-    *inference_func = CVI_TDL_MobileDetV2_Person_Vehicle;
   } else if (strcmp(model_name, "mobiledetv2-coco80") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80;
-    *inference_func = CVI_TDL_MobileDetV2_COCO80;
   } else if (strcmp(model_name, "mobiledetv2-vehicle") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
-    *inference_func = CVI_TDL_MobileDetV2_Vehicle;
   } else if (strcmp(model_name, "yolov3") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
-    *inference_func = CVI_TDL_Yolov3;
   } else if (strcmp(model_name, "yolox") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
-    *inference_func = CVI_TDL_YoloX;
   } else {
     ret = CVI_TDL_FAILURE;
   }
@@ -138,7 +120,8 @@ CVI_S32 register_gallery_feature(cvitdl_handle_t tdl_handle, const char *sz_feat
 }
 
 CVI_S32 register_gallery_face(cvitdl_handle_t tdl_handle, const char *sz_img_file,
-                              FaceInferFunc fd_func, FaceInferFunc fr_func,
+                              CVI_TDL_SUPPORTED_MODEL_E *fd_index, FaceDetInferFunc fd_func,
+                              FaceRecInferFunc fr_func,
                               cvtdl_service_feature_array_t *p_feat_gallery) {
   VIDEO_FRAME_INFO_S img_frm;
   CVI_S32 ret = CVI_SUCCESS;
@@ -150,7 +133,7 @@ CVI_S32 register_gallery_face(cvitdl_handle_t tdl_handle, const char *sz_img_fil
 
   cvtdl_face_t faceinfo;
   memset(&faceinfo, 0, sizeof(faceinfo));
-  if (CVI_SUCCESS != fd_func(tdl_handle, &img_frm, &faceinfo)) {
+  if (CVI_SUCCESS != fd_func(tdl_handle, &img_frm, *fd_index, &faceinfo)) {
     printf("fd_inference failed\n");
     return CVI_FAILURE;
   }

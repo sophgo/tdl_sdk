@@ -47,7 +47,7 @@ CFLAGS += -march=rv64imafdcv0p7xthead -mabi=lp64d -mcpu=c906fdv
 else ifeq ($(SDK_VER), musl_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_MUSL)
-CFLAGS += -march=rv64imafd -mcpu=c906fdv
+CFLAGS += -march=rv64imafdcv0p7xthead -mcpu=c906fdv
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif
@@ -80,9 +80,6 @@ ifeq ($(origin MW_PANEL_BOARD_INC_PATH), undefined)
 endif
 
 MW_AUDIO_LIBS = -lcvi_audio -lcvi_vqe -lcvi_ssp -lcvi_dnvqe -lcvi_ssp2 -ltinyalsa -lcvi_VoiceEngine -lcvi_RES1
-ifneq ($(CHIP), CV186X)
-	MW_AUDIO_LIBS += -lcli
-endif
 
 ifneq (,$(findstring middleware/v1,$(MW_PATH)))
     MW_VERSION = v1

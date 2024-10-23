@@ -106,9 +106,8 @@ int main(int argc, char *argv[]) {
     cvtdl_face_t ir_face;
     memset(&ir_face, 0, sizeof(cvtdl_face_t));
 
-    CVI_TDL_RetinaFace(handle, &frame1, &rgb_face);
-    CVI_TDL_RetinaFace(handle, &frame2, &ir_face);
-
+    CVI_TDL_FaceDetection(handle, &frame1, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &frame1);
+    CVI_TDL_FaceDetection(handle, &frame2, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &ir_face);
     if (rgb_face.size > 0) {
       if (ir_face.size > 0) {
         CVI_TDL_Liveness(handle, &frame1, &frame2, &rgb_face, &ir_face);

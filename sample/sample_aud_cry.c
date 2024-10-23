@@ -75,7 +75,7 @@ void *thread_uplink_audio(void *arg) {
     }
     printf("maxvalsound:%d,meanv:%f\n", maxval_sound, meanval / (SAMPLE_RATE * SECOND));
     if (!record) {
-      int ret = CVI_TDL_SoundClassification_V2(tdl_handle, &Frame, &index);  // Detect the audio
+      int ret = CVI_TDL_SoundClassification(tdl_handle, &Frame, &index);  // Detect the audio
       if (ret == CVI_TDL_SUCCESS) {
         printf("esc class: %s\n", enumStr[index]);
       } else {
@@ -159,15 +159,15 @@ int main(int argc, char **argv) {
     return ret;
   }
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, argv[1]);
   if (ret != CVI_TDL_SUCCESS) {
     CVI_TDL_DestroyHandle(tdl_handle);
     return ret;
   }
 
-  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
+  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION,
   // true);
-  CVI_TDL_SetPerfEvalInterval(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION_V2,
+  CVI_TDL_SetPerfEvalInterval(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION,
                               10);  // only used to performance evaluation
   if (argc == 4) {
     record = atoi(argv[2]) ? true : false;

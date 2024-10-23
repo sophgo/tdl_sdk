@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 
   std::cout << "set image bg done\n";
   CVI_TDL_Set_Yolov5_ROI(tdl_handle, roi_s);
-  CVI_TDL_Yolov5(tdl_handle, &fdFrame, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &obj_meta);
 
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("detect res: %f %f %f %f %f %d\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,

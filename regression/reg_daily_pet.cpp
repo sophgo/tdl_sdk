@@ -71,7 +71,9 @@ TEST_F(PersonPet_DetectionTestSuite, accuracy) {
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     TDLObject<cvtdl_object_t> vehicle_meta;
     init_obj_meta(vehicle_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    ASSERT_EQ(CVI_TDL_PersonPet_Detection(m_tdl_handle, vframe, vehicle_meta), CVI_TDL_SUCCESS);
+    ASSERT_EQ(CVI_TDL_Detection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+                                vehicle_meta),
+              CVI_TDL_SUCCESS);
     // printf("boxes===================================\n");
     // for (uint32_t i = 0; i < vehicle_meta->size; i++) {
     //   printf("bbox.x1 = %f\n", vehicle_meta->info[i].bbox.x1);

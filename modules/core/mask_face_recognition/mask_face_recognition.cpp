@@ -16,22 +16,14 @@
 
 namespace cvitdl {
 
-MaskFaceRecognition::MaskFaceRecognition() : Core(CVI_MEM_DEVICE) {}
+MaskFaceRecognition::MaskFaceRecognition() : Core(CVI_MEM_DEVICE) {
+  for (uint32_t i = 0; i < 3; i++) {
+    m_preprocess_param[0].factor[i] = FACE_ATTRIBUTE_SCALE;
+    m_preprocess_param[0].mean[i] = FACE_ATTRIBUTE_MEAN;
+  }
+}
 
 MaskFaceRecognition::~MaskFaceRecognition() {}
-
-int MaskFaceRecognition::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Face attribute only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  for (uint32_t i = 0; i < 3; i++) {
-    (*data)[0].factor[i] = FACE_ATTRIBUTE_SCALE;
-    (*data)[0].mean[i] = FACE_ATTRIBUTE_MEAN;
-  }
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
-}
 
 int MaskFaceRecognition::onModelOpened() { return allocateION(); }
 

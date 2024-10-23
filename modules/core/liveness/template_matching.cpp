@@ -3,12 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-#include "cv/imgproc.hpp"
-#else
 #include "opencv2/imgproc.hpp"
-#endif
 
 #define RESIZE_SIZE 112
 #define IMAGE_SIZE 32
@@ -17,11 +12,7 @@
 using namespace std;
 
 vector<cv::Mat> TTA_9_cropps(cv::Mat image) {
-#ifdef ENABLE_CVI_TDL_CV_UTILS
-  cvitdl::resize(image, image, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
-#else
   cv::resize(image, image, cv::Size(RESIZE_SIZE, RESIZE_SIZE));
-#endif
 
   int width = image.cols;
   int height = image.rows;

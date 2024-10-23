@@ -16,6 +16,7 @@ struct object_detect_rect_t {
 typedef std::shared_ptr<object_detect_rect_t> PtrDectRect;
 typedef std::vector<PtrDectRect> Detections;
 
+Detections topk_dets(const Detections &dets, uint32_t max_det);
 Detections nms_multi_class(const Detections &dets, float iou_threshold);
 Detections nms_multi_class_with_ids(const Detections &dets, float iou_threshold,
                                     std::vector<int> &keep);

@@ -327,12 +327,6 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // ret = CVI_TDL_Yolov8_Pose(tdl_handle, &fdFrame, &stObjMeta);
-    // if (ret != CVI_SUCCESS) {
-    //   printf("CVI_TDL_Yolov8_Pose failed with %#x!\n", ret);
-    //   goto inf_error;
-    // }
-
     ret = CVI_TDL_DeepSORT_Obj(tdl_handle, &stObjMeta, &stTrackerMeta, false);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_DeepSORT_Obj failed with %#x!\n", ret);

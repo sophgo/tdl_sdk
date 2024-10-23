@@ -100,22 +100,23 @@ int main(int argc, char *argv[]) {
   VIDEO_FRAME_INFO_S bg;
   imgprocess_t img_handle;
   CVI_TDL_Create_ImageProcessor(&img_handle);
-  int ret = CVI_TDL_ReadImage(img_handle, imgf.c_str(), &bg, PIXEL_FORMAT_BGR_888);
+  ret = CVI_TDL_ReadImage(img_handle, img.c_str(), &bg, PIXEL_FORMAT_BGR_888);
   if (ret != CVI_SUCCESS) {
-    std::cout << "failed to open file:" << imgf << std::endl;
+    std::cout << "failed to open file:" << img << std::endl;
     return ret;
   } else {
-    printf("image read,width:%d\n", bg->stVFrame.u32Width);
+    printf("image read,width:%d\n", bg.stVFrame.u32Width);
   }
 
-  ret = CVI_TDL_MobileDetV2_Pedestrian(tdl_handle, bg, p_obj);
+  ret =
+      CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &obj_meta);
   if (ret != CVI_SUCCESS) {
-    printf("CVI_TDL_ScrFDFace failed with %#x!\n", ret);
+    printf("CVI_TDL_MOBILEDETV2_PEDESTRIAN failed with %#x!\n", ret);
     return ret;
   }
 
-  if (p_obj->size > 0) {
-    ret = CVI_TDL_Simcc_Pose(tdl_handle, bg, p_obj);
+  if (obj_meta.size > 0) {
+    ret = CVI_TDL_PoseDetection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, &obj_meta);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_Simcc_Pose failed with %#x!\n", ret);
       return ret;

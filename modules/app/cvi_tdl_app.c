@@ -1,6 +1,8 @@
 #include "cvi_tdl_app/cvi_tdl_app.h"
 
+#include "face_cap_utils/face_cap_utils.h"
 #include "face_capture/face_capture.h"
+#include "face_pet_capture/face_pet_capture.h"
 #include "person_capture/person_capture.h"
 #include "personvehicle_capture/personvehicle_capture.h"
 #include "vehicle_adas/vehicle_adas.h"
@@ -42,10 +44,11 @@ CVI_S32 CVI_TDL_APP_FaceCapture_Init(const cvitdl_app_handle_t handle, uint32_t 
 CVI_S32 CVI_TDL_APP_FaceCapture_QuickSetUp(const cvitdl_app_handle_t handle, int fd_model_id,
                                            int fr_model_id, const char *fd_model_path,
                                            const char *fr_model_path, const char *fq_model_path,
-                                           const char *fl_model_path) {
+                                           const char *fl_model_path, const char *fa_model_path) {
   cvitdl_app_context_t *ctx = handle;
   return _FaceCapture_QuickSetUp(ctx->tdl_handle, ctx->face_cpt_info, fd_model_id, fr_model_id,
-                                 fd_model_path, fr_model_path, fq_model_path, fl_model_path);
+                                 fd_model_path, fr_model_path, fq_model_path, fl_model_path,
+                                 fa_model_path);
 }
 
 CVI_S32 CVI_TDL_APP_FaceCapture_FusePedSetup(const cvitdl_app_handle_t handle, int ped_model_id,
@@ -53,6 +56,15 @@ CVI_S32 CVI_TDL_APP_FaceCapture_FusePedSetup(const cvitdl_app_handle_t handle, i
   cvitdl_app_context_t *ctx = handle;
   return _FaceCapture_FusePedSetUp(ctx->tdl_handle, ctx->face_cpt_info, ped_model_id,
                                    ped_model_path);
+}
+
+CVI_S32 CVI_TDL_APP_FacePetCapture_QuickSetUp(const cvitdl_app_handle_t handle, int od_model_id,
+                                              int fr_model_id, const char *od_model_path,
+                                              const char *fr_model_path, const char *fl_model_path,
+                                              const char *fa_model_path) {
+  cvitdl_app_context_t *ctx = handle;
+  return _FacePetCapture_QuickSetUp(ctx->tdl_handle, ctx->face_cpt_info, od_model_id, fr_model_id,
+                                    od_model_path, fr_model_path, fl_model_path, fa_model_path);
 }
 
 CVI_S32 CVI_TDL_APP_FaceCapture_GetDefaultConfig(face_capture_config_t *cfg) {
@@ -70,12 +82,19 @@ CVI_S32 CVI_TDL_APP_FaceCapture_Run(const cvitdl_app_handle_t handle, VIDEO_FRAM
   return _FaceCapture_Run(ctx->face_cpt_info, ctx->tdl_handle, frame);
 }
 
+CVI_S32 CVI_TDL_APP_FacePetCapture_Run(const cvitdl_app_handle_t handle,
+                                       VIDEO_FRAME_INFO_S *frame) {
+  cvitdl_app_context_t *ctx = handle;
+  return _FacePetCapture_Run(ctx->face_cpt_info, ctx->tdl_handle, frame);
+}
+
 CVI_S32 CVI_TDL_APP_FaceCapture_FDFR(const cvitdl_app_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                      cvtdl_face_t *p_face) {
   cvitdl_app_context_t *ctx = handle;
   face_capture_t *face_cpt_info = ctx->face_cpt_info;
   cvitdl_handle_t tdl_handle = ctx->tdl_handle;
-  if (CVI_SUCCESS != face_cpt_info->fd_inference(tdl_handle, frame, p_face)) {
+  if (CVI_SUCCESS !=
+      face_cpt_info->fd_inference(tdl_handle, frame, face_cpt_info->fd_model, p_face)) {
     printf("fd_inference failed\n");
     return CVI_FAILURE;
   }
@@ -154,7 +173,6 @@ CVI_S32 CVI_TDL_APP_PersonCapture_CleanAll(const cvitdl_app_handle_t handle) {
 CVI_S32 CVI_TDL_APP_PersonVehicleCapture_Init(const cvitdl_app_handle_t handle,
                                               uint32_t buffer_size) {
   cvitdl_app_context_t *ctx = handle;
-  printf("2353536346346436\n");
   return _PersonVehicleCapture_Init(&(ctx->personvehicle_cpt_info), buffer_size);
 }
 
@@ -196,9 +214,10 @@ CVI_S32 CVI_TDL_APP_PersonVehicleCapture_CleanAll(const cvitdl_app_handle_t hand
 
 /* ADAS */
 
-CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size) {
+CVI_S32 CVI_TDL_APP_ADAS_Init(const cvitdl_app_handle_t handle, uint32_t buffer_size,
+                              int det_type) {
   cvitdl_app_context_t *ctx = handle;
-  return _ADAS_Init(&(ctx->adas_info), buffer_size);
+  return _ADAS_Init(&(ctx->adas_info), buffer_size, det_type);
 }
 
 CVI_S32 CVI_TDL_APP_ADAS_Run(const cvitdl_app_handle_t handle, VIDEO_FRAME_INFO_S *frame) {

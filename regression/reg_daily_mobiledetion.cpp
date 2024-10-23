@@ -68,7 +68,8 @@ TEST_F(MobileDetectionV2TestSuite, inference) {
       ASSERT_TRUE(frame.open());
 
       TDLObject<cvtdl_object_t> obj_meta;
-      EXPECT_EQ(CVI_TDL_MobileDetV2_Pedestrian(m_tdl_handle, frame.getFrame(), obj_meta),
+      EXPECT_EQ(CVI_TDL_Detection(m_tdl_handle, frame.getFrame(),
+                                  CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, obj_meta),
                 CVI_TDL_SUCCESS);
     }
 
@@ -77,7 +78,8 @@ TEST_F(MobileDetectionV2TestSuite, inference) {
       ASSERT_TRUE(frame.open());
 
       TDLObject<cvtdl_object_t> obj_meta;
-      EXPECT_EQ(CVI_TDL_MobileDetV2_Pedestrian(m_tdl_handle, frame.getFrame(), obj_meta),
+      EXPECT_EQ(CVI_TDL_Detection(m_tdl_handle, frame.getFrame(),
+                                  CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, obj_meta),
                 CVI_TDL_SUCCESS);
     }
   }
@@ -102,7 +104,8 @@ TEST_F(MobileDetectionV2TestSuite, accuracy) {
 
       TDLObject<cvtdl_object_t> obj_meta;
 
-      ASSERT_EQ(CVI_TDL_MobileDetV2_Pedestrian(m_tdl_handle, frame.getFrame(), obj_meta),
+      ASSERT_EQ(CVI_TDL_Detection(m_tdl_handle, frame.getFrame(),
+                                  CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, obj_meta),
                 CVI_TDL_SUCCESS);
 
       auto expected_dets = iter.value();

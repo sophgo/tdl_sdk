@@ -6,10 +6,10 @@
 
 namespace cvitdl {
 
-class SoundClassificationV2 final : public Core {
+class SoundClassification final : public Core {
  public:
-  SoundClassificationV2();
-  virtual ~SoundClassificationV2();
+  SoundClassification();
+  virtual ~SoundClassification();
   int onModelOpened();
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, int *index);
   int inference_pack(VIDEO_FRAME_INFO_S *stOutFrame, int pack_idx, int pack_len, int *index);
@@ -21,14 +21,14 @@ class SoundClassificationV2 final : public Core {
   int getClassesNum();
   int get_top_k(float *result, size_t count);
   void normal_sound(short *temp_buffer, int n);
-  AudioAlgParam get_algparam();
-  void set_algparam(AudioAlgParam audio_param);
+  cvitdl_sound_param get_algparam();
+  void set_algparam(cvitdl_sound_param audio_param);
 
  private:
   float threshold_;
   melspec::MelFeatureExtract *mp_extractor_ = nullptr;
   int top_num = 500;
   float max_rate = 0.2;
-  AudioAlgParam audio_param_;
+  cvitdl_sound_param audio_param_;
 };
 }  // namespace cvitdl

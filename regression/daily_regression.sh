@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CHIPSET="${CHIP:=182x}"
+CHIPSET="${CHIP:=181x}"
 CHIPSET=$(echo ${CHIP} | tr '[:upper:]' '[:lower:]')
 
 print_usage() {
@@ -86,7 +86,6 @@ fi
 
 # ION requirement >= 60 MB
 if [ "$total_ion_size" -gt "60000000" ]; then
-test_suites="${test_suites}:AlphaposeTestSuite.*"
 test_suites="${test_suites}:MobileDetTestSuite.*"
 fi
 

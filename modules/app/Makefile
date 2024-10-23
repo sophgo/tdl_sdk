@@ -64,7 +64,7 @@ CFLAGS += -march=rv64imafdcv0p7xthead -mabi=lp64d
 else ifeq ($(SDK_VER), musl_riscv64)
 ARCH=riscv64
 CROSS_COMPILE = $(CROSS_COMPILE_RISCV64_MUSL)
-CFLAGS += -march=rv64imafd
+CFLAGS += -march=rv64imafdcv0p7xthead
 else
 $(error "Unknown SDK_VER: $(SDK_VER")")
 endif

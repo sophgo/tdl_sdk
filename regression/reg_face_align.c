@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     cvtdl_face_t face;
     memset(&face, 0, sizeof(cvtdl_face_t));
 
-    CVI_TDL_RetinaFace(facelib_handle, &frame, &face);
+    CVI_TDL_FaceDetection(facelib_handle, &frame, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face);
 
     printf("img_name: %s\n", full_img);
     if (face.size > 0) {

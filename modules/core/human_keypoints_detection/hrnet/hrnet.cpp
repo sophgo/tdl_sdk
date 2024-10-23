@@ -20,25 +20,24 @@
 // #define G_MEAN 116.28
 // #define B_MEAN 103.53
 
-static const float STD_R = (255.0 * 0.229);
-static const float STD_G = (255.0 * 0.224);
-static const float STD_B = (255.0 * 0.225);
-static const float MODEL_MEAN_R = 0.485 * 255.0;
-static const float MODEL_MEAN_G = 0.456 * 255.0;
-static const float MODEL_MEAN_B = 0.406 * 255.0;
-
-#define FACTOR_R (1.0 / STD_R)
-#define FACTOR_G (1.0 / STD_G)
-#define FACTOR_B (1.0 / STD_B)
-#define MEAN_R (MODEL_MEAN_R / STD_R)
-#define MEAN_G (MODEL_MEAN_G / STD_G)
-#define MEAN_B (MODEL_MEAN_B / STD_B)
-
 #define NUM_KEYPOINTS 17
 #define EXPAND_RATIO 2.0f
 #define MAX_NUM 20
 
 namespace cvitdl {
+
+Hrnet::Hrnet() {
+  const float STD_RGB[3] = {255.0 * 0.229, 255.0 * 0.224, 255.0 * 0.225};
+  const float MODEL_MEAN_RGB[3] = {0.485 * 255.0, 0.456 * 255.0, 0.406 * 255.0};
+  for (int i = 0; i < 3; i++) {
+    // default param
+    m_preprocess_param[0].factor[i] = 1.0 / STD_RGB[i];
+    m_preprocess_param[0].mean[i] = MODEL_MEAN_RGB[i] / STD_RGB[i];
+  }
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
+  m_model_threshold = 0.3f;
+}
 
 float getSignedValue(float value) {
   if (value < 0) {
@@ -48,29 +47,6 @@ float getSignedValue(float value) {
   } else {
     return 1.0;
   }
-}
-Hrnet::Hrnet() : Core(CVI_MEM_DEVICE) { m_model_threshold = 0.3f; }
-
-Hrnet::~Hrnet() {}
-
-int Hrnet::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Hrnet pose only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = FACTOR_R;
-  (*data)[0].factor[1] = FACTOR_G;
-  (*data)[0].factor[2] = FACTOR_B;
-  (*data)[0].mean[0] = MEAN_R;
-  (*data)[0].mean[1] = MEAN_G;
-  (*data)[0].mean[2] = MEAN_B;
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].rescale_type = RESCALE_NOASPECT;
-  (*data)[0].use_crop = true;
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  // (*data)[0].keep_aspect_ratio=true;
-
-  return CVI_TDL_SUCCESS;
 }
 
 int Hrnet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *obj_meta) {

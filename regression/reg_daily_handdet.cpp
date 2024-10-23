@@ -74,7 +74,9 @@ TEST_F(Hand_DetectionTestSuite, inference) {
     TDLObject<cvtdl_object_t> hand_meta;
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     init_obj_meta(hand_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    EXPECT_EQ(CVI_TDL_Hand_Detection(m_tdl_handle, vframe, hand_meta), CVI_TDL_SUCCESS);
+    EXPECT_EQ(
+        CVI_TDL_Detection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, hand_meta),
+        CVI_TDL_SUCCESS);
   }
 
   {
@@ -83,7 +85,9 @@ TEST_F(Hand_DetectionTestSuite, inference) {
     TDLObject<cvtdl_object_t> hand_meta;
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     init_obj_meta(hand_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    EXPECT_EQ(CVI_TDL_Hand_Detection(m_tdl_handle, vframe, hand_meta), CVI_TDL_SUCCESS);
+    EXPECT_EQ(
+        CVI_TDL_Detection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, hand_meta),
+        CVI_TDL_SUCCESS);
   }
 }
 
@@ -103,7 +107,9 @@ TEST_F(Hand_DetectionTestSuite, accuracy) {
     VIDEO_FRAME_INFO_S *vframe = image.getFrame();
     TDLObject<cvtdl_object_t> hand_meta;
     init_obj_meta(hand_meta, 1, vframe->stVFrame.u32Height, vframe->stVFrame.u32Width, 0);
-    ASSERT_EQ(CVI_TDL_Hand_Detection(m_tdl_handle, vframe, hand_meta), CVI_TDL_SUCCESS);
+    ASSERT_EQ(
+        CVI_TDL_Detection(m_tdl_handle, vframe, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, hand_meta),
+        CVI_TDL_SUCCESS);
 
     auto expected_dets = iter.value();
 

@@ -82,6 +82,19 @@ void CVI_TDL_FreeCpp(cvtdl_object_info_t *obj_info) {
     free(obj_info->pedestrian_properity);
     obj_info->pedestrian_properity = NULL;
   }
+
+  if (obj_info->mask_properity) {
+    if (obj_info->mask_properity->mask) {
+      free(obj_info->mask_properity->mask);
+      obj_info->mask_properity->mask = NULL;
+    }
+    if (obj_info->mask_properity->mask_point) {
+      free(obj_info->mask_properity->mask_point);
+      obj_info->mask_properity->mask_point = NULL;
+    }
+    free(obj_info->mask_properity);
+    obj_info->mask_properity = NULL;
+  }
 }
 
 void CVI_TDL_FreeCpp(cvtdl_object_t *obj) {
@@ -149,7 +162,15 @@ void CVI_TDL_FreeCpp(cvtdl_lane_t *lane_meta) {
     free(lane_meta->lane);
     // }
   }
-  lane_meta->lane == NULL;
+  lane_meta->lane = NULL;
+}
+
+void CVI_TDL_FreeCpp(cvtdl_clip_feature *clip_meta) {
+  if (clip_meta->out_feature != NULL) {
+    free(clip_meta->out_feature);
+  }
+  clip_meta->out_feature = NULL;
+  clip_meta->feature_dim = 0;
 }
 
 void CVI_TDL_FreeFeature(cvtdl_feature_t *feature) { CVI_TDL_FreeCpp(feature); }
@@ -176,6 +197,7 @@ void CVI_TDL_FreeClassMeta(cvtdl_class_meta_t *cls_meta) { CVI_TDL_FreeCpp(cls_m
 
 void CVI_TDL_FreeLane(cvtdl_lane_t *lane_meta) { CVI_TDL_FreeCpp(lane_meta); }
 
+void CVI_TDL_FreeClip(cvtdl_clip_feature *clip_meta) { CVI_TDL_FreeCpp(clip_meta); }
 // Copy
 
 void CVI_TDL_CopyInfoCpp(const cvtdl_face_info_t *info, cvtdl_face_info_t *infoNew) {
@@ -320,6 +342,20 @@ void CVI_TDL_CopyObjectMeta(const cvtdl_object_t *src, cvtdl_object_t *dest) {
         CVI_TDL_CopyObjectInfo(&src->info[fid], &dest->info[fid]);
       }
     }
+  }
+}
+
+void CVI_TDL_CopyLaneMeta(cvtdl_lane_t *src, cvtdl_lane_t *dst) {
+  CVI_TDL_FreeCpp(dst);
+  memset(dst, 0, sizeof(cvtdl_lane_t));
+  if (src->size > 0) {
+    dst->size = src->size;
+    dst->width = src->width;
+    dst->height = src->height;
+    dst->rescale_type = src->rescale_type;
+    dst->lane_state = src->lane_state;
+    dst->lane = (cvtdl_lane_point_t *)malloc(sizeof(cvtdl_lane_point_t) * src->size);
+    memcpy(dst->lane, src->lane, sizeof(cvtdl_lane_point_t) * src->size);
   }
 }
 

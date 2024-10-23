@@ -7,25 +7,16 @@
 
 namespace cvitdl {
 
-IncarObjectDetection::IncarObjectDetection() : Core(CVI_MEM_DEVICE) {}
-int IncarObjectDetection::setupInputPreprocess(std::vector<InputPreprecessSetup>* data) {
-  if (data->size() != 1) {
-    LOGE("Face attribute only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
+IncarObjectDetection::IncarObjectDetection() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = 0.999;
+  m_preprocess_param[0].factor[1] = 0.999;
+  m_preprocess_param[0].factor[2] = 0.999;
+  m_preprocess_param[0].mean[0] = 0.0;
+  m_preprocess_param[0].mean[1] = 0.0;
+  m_preprocess_param[0].mean[2] = 0.0;
 
-  (*data)[0].factor[0] = 0.999;
-  (*data)[0].factor[1] = 0.999;
-  (*data)[0].factor[2] = 0.999;
-  (*data)[0].mean[0] = 0.0;
-  (*data)[0].mean[1] = 0.0;
-  (*data)[0].mean[2] = 0.0;
-
-  (*data)[0].use_quantize_scale = false;
-  (*data)[0].use_crop = false;
-  (*data)[0].rescale_type = RESCALE_CENTER;
-
-  return CVI_TDL_SUCCESS;
+  m_preprocess_param[0].use_crop = false;
+  m_preprocess_param[0].rescale_type = RESCALE_CENTER;
 }
 int IncarObjectDetection::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_face_t* meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {

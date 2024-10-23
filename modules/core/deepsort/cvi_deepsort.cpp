@@ -731,10 +731,13 @@ CVI_S32 DeepSORT::track(cvtdl_object_t *obj, cvtdl_tracker_t *tracker, bool use_
       BBOX &t_bbox = std::get<3>(result_[i]);
       if (!matched) {
         tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
+        obj->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_NEW;
       } else if (t_state == k_tracker_state_e::PROBATION) {
         tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
+        obj->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_UNSTABLE;
       } else if (t_state == k_tracker_state_e::ACCREDITATION) {
         tracker->info[idx].state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
+        obj->info[i].track_state = cvtdl_trk_state_type_t::CVI_TRACKER_STABLE;
       } else {
         LOGE("Tracker State Unknow.\n");
         return CVI_TDL_ERR_INVALID_ARGS;
@@ -1168,7 +1171,9 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
   LOGD("Kalman Trackers predict\n");
   for (KalmanTracker &tracker_ : k_trackers) {
     // kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P, conf->kfilter_conf);
-    tracker_.predict(kf_, conf);
+    if (tracker_.class_id == class_id) {
+      tracker_.predict(kf_, conf);
+    }
   }
   check_bound_state(conf);
 

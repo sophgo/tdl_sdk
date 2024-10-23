@@ -23,6 +23,8 @@
 float g_draw_clrs[] = {0,   0,   0,   255, 0,   0, 0,   255, 0,   0,  0,
                        255, 255, 255, 0,   255, 0, 255, 0,   255, 255};
 
+bool g_use_face_attribute;
+
 typedef struct {
   float x1;
   float y1;
@@ -41,6 +43,10 @@ typedef struct {
   uint64_t frame_id;
   float boxw;
   float eye_dist;
+  float gender;
+  float age;
+  float glass;
+  float mask;
 } IOData;
 
 typedef struct {
@@ -126,14 +132,31 @@ static void *pImageWrite(void *args) {
         printf("to output :%s %d\n", filename, data_buffer[target_idx].image.pix_format);
         write_jpg_file(filename, target_idx);
 
-        sprintf(filename, "%s/face_%d_%u_frm_%d_qua_%.3f_eyedist_%.1f_crop.png", g_out_dir,
-                track_id, data_buffer[target_idx].counter, frame_id,
-                data_buffer[target_idx].quality, data_buffer[target_idx].eye_dist);
-        printf("to output :%s %d\n", filename, data_buffer[target_idx].image.pix_format);
-        stbi_write_png(filename, data_buffer[target_idx].image.width,
-                       data_buffer[target_idx].image.height, STBI_rgb,
-                       data_buffer[target_idx].image.pix[0],
-                       data_buffer[target_idx].image.stride[0]);
+        if (!g_use_face_attribute) {
+          sprintf(filename, "%s/face_%d_%u_frm_%d_qua_%.3f_eyedist_%.1f_crop.png", g_out_dir,
+                  track_id, data_buffer[target_idx].counter, frame_id,
+                  data_buffer[target_idx].quality, data_buffer[target_idx].eye_dist);
+          printf("to output :%s %d\n", filename, data_buffer[target_idx].image.pix_format);
+          stbi_write_png(filename, data_buffer[target_idx].image.width,
+                         data_buffer[target_idx].image.height, STBI_rgb,
+                         data_buffer[target_idx].image.pix[0],
+                         data_buffer[target_idx].image.stride[0]);
+        } else if (g_use_face_attribute) {
+          sprintf(
+              filename,
+              "%s/"
+              "face_%d_%u_frm_%d_qua_%.3f_eyedist_%.1f_gender_%.3f_age_%.3f_glass_%.3f_mask_%.3f"
+              "_crop.png",
+              g_out_dir, track_id, data_buffer[target_idx].counter, frame_id,
+              data_buffer[target_idx].quality, data_buffer[target_idx].eye_dist,
+              data_buffer[target_idx].gender, data_buffer[target_idx].age,
+              data_buffer[target_idx].glass, data_buffer[target_idx].mask);
+          printf("to output :%s %d\n", filename, data_buffer[target_idx].image.pix_format);
+          stbi_write_png(filename, data_buffer[target_idx].image.width,
+                         data_buffer[target_idx].image.height, STBI_rgb,
+                         data_buffer[target_idx].image.pix[0],
+                         data_buffer[target_idx].image.stride[0]);
+        }
       } else {
         if (data_buffer[target_idx].image.pix_format == PIXEL_FORMAT_RGB_888) {
           sprintf(filename, "%s/face_%d_%u_frm_%d_qua_%.3f_boxw_%.1f_eyedist_%.1f.png", g_out_dir,
@@ -412,9 +435,11 @@ CVI_S32 get_middleware_config(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig) {
   return s32Ret;
 }
 int main(int argc, char *argv[]) {
-  if (argc != 4 && argc != 5) {
+  if (argc != 4 && argc != 5 && argc != 6) {
     printf("Usage: %s fdmodel_path ldmodel_path capture_path\n", argv[0]);
     printf("Usage: %s fdmodel_path pedmodel_path ldmodel_path capture_path\n", argv[0]);
+    printf("Usage: %s fdmodel_path pedmodel_path ldmodel_path famodel_path capture_path\n",
+           argv[0]);
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
@@ -425,6 +450,7 @@ int main(int argc, char *argv[]) {
   const char *fd_model_path = argv[1];
   const char *ped_model_path = "NULL";
   const char *ld_model_path = "NULL";
+  const char *fa_model_path = "NULL";
   if (argc == 4) {
     ld_model_path = argv[2];
     sprintf(g_out_dir, "%s", argv[3]);
@@ -433,6 +459,12 @@ int main(int argc, char *argv[]) {
     ld_model_path = argv[3];
 
     sprintf(g_out_dir, "%s", argv[4]);
+  } else if (argc == 6) {
+    ped_model_path = argv[2];
+    ld_model_path = argv[3];
+    fa_model_path = argv[4];
+
+    sprintf(g_out_dir, "%s", argv[5]);
   }
   printf("ped_model:%s\n", ped_model_path);
 
@@ -479,7 +511,9 @@ int main(int argc, char *argv[]) {
   ret |= CVI_TDL_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
   ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(
       app_handle, fd_model_id, fr_model_id, fd_model_path, NULL, NULL,
-      (!strcmp(ld_model_path, "NULL")) ? NULL : ld_model_path);
+      (!strcmp(ld_model_path, "NULL")) ? NULL : ld_model_path,
+      (!strcmp(fa_model_path, "NULL")) ? NULL : fa_model_path);
+  g_use_face_attribute = app_handle->face_cpt_info->fa_flag;
   if (strcmp(ped_model_path, "NULL")) {
     CVI_TDL_SUPPORTED_MODEL_E ped_model_id = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
     ret |= CVI_TDL_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_model_path);
@@ -607,7 +641,14 @@ int main(int argc, char *argv[]) {
                                        app_handle->face_cpt_info->data[i].info.bbox.x1;
         data_buffer[target_idx].eye_dist = app_handle->face_cpt_info->data[i].info.pts.x[1] -
                                            app_handle->face_cpt_info->data[i].info.pts.x[0];
-
+        if (g_use_face_attribute) {
+          data_buffer[target_idx].gender =
+              app_handle->face_cpt_info->data[i].face_data.info->gender_score;
+          data_buffer[target_idx].age = app_handle->face_cpt_info->data[i].face_data.info->age;
+          data_buffer[target_idx].glass = app_handle->face_cpt_info->data[i].face_data.info->glass;
+          data_buffer[target_idx].mask =
+              app_handle->face_cpt_info->data[i].face_data.info->mask_score;
+        }
         /* NOTE: Make sure the image type is IVE_IMAGE_TYPE_U8C3_PACKAGE */
         CVI_TDL_CopyImage(&app_handle->face_cpt_info->data[i].image,
                           &data_buffer[target_idx].image);

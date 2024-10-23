@@ -39,7 +39,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
 
         auto img_path = image_root + image_name;
         CVI_TDL_ReadImage(img_handle, img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-        CVI_S32 ret = CVI_TDL_Yolov5(tdl_handle, &fdFrame, &obj_meta);
+        CVI_S32 ret =
+            CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &obj_meta);
         if (ret != CVI_SUCCESS) {
           CVI_TDL_Free(&obj_meta);
           CVI_TDL_ReleaseImage(img_handle, &fdFrame);
@@ -48,9 +49,9 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         std::stringstream res_ss;
 
         for (uint32_t i = 0; i < obj_meta.size; i++) {
-          res_ss << obj_meta.info[i].bbox.x1 << " " << obj_meta.info[i].bbox.y1 << " "
-                 << obj_meta.info[i].bbox.x2 << " " << obj_meta.info[i].bbox.y2 << " "
-                 << obj_meta.info[i].bbox.score << " " << obj_meta.info[i].classes << "\n";
+          cvtdl_bbox_t box = obj_meta.info[i].bbox;
+          res_ss << obj_meta.info[i].classes << " " << box.x1 << " " << box.y1 << " " << box.x2
+                 << " " << box.y2 << " " << box.score << "\n";
         }
         // std::cout << "write results to file: " << res_path << std::endl;
         std::string save_path = res_path + image_name.substr(0, image_name.length() - 4) + ".txt";

@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     memset(&face1, 0, sizeof(cvtdl_face_t));
     memset(&face2, 0, sizeof(cvtdl_face_t));
 
-    CVI_TDL_RetinaFace(facelib_handle, &frame1, &face1);
+    CVI_TDL_FaceDetection(facelib_handle, &frame1, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face1);
     if (face1.size > 0) {
       inference(facelib_handle, &frame1, &face1);
     } else {
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
       return ret;
     }
 
-    CVI_TDL_RetinaFace(facelib_handle, &frame2, &face2);
+    CVI_TDL_FaceDetection(facelib_handle, &frame2, CVI_TDL_SUPPORTED_MODEL_RETINAFACE, &face2);
     if (face2.size > 0) {
       inference(facelib_handle, &frame2, &face2);
     } else {

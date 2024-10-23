@@ -109,7 +109,9 @@ TEST_F(ThermalPersonDetectionTestSuite, skip_vpss_preprocess) {
       ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
       cvtdl_object_t obj;
       memset(&obj, 0, sizeof(cvtdl_object_t));
-      EXPECT_EQ(CVI_TDL_ThermalPerson(m_tdl_handle, frame.getFrame(), &obj), CVI_TDL_SUCCESS);
+      EXPECT_EQ(CVI_TDL_Detection(m_tdl_handle, frame.getFrame(),
+                                  CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, &obj),
+                CVI_TDL_SUCCESS);
     }
     {
       TDLModelHandler tdlmodel(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
@@ -117,7 +119,9 @@ TEST_F(ThermalPersonDetectionTestSuite, skip_vpss_preprocess) {
       ASSERT_NO_FATAL_FAILURE(tdlmodel.open());
       cvtdl_object_t obj;
       memset(&obj, 0, sizeof(cvtdl_object_t));
-      EXPECT_EQ(CVI_TDL_ThermalPerson(m_tdl_handle, frame.getFrame(), &obj), CVI_TDL_ERR_INFERENCE);
+      EXPECT_EQ(CVI_TDL_Detection(m_tdl_handle, frame.getFrame(),
+                                  CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, &obj),
+                CVI_TDL_ERR_INFERENCE);
     }
   }
 }
@@ -143,7 +147,9 @@ TEST_F(ThermalPersonDetectionTestSuite, inference) {
 
         cvtdl_object_t obj;
         memset(&obj, 0, sizeof(cvtdl_object_t));
-        EXPECT_EQ(CVI_TDL_ThermalPerson(m_tdl_handle, frame.getFrame(), &obj), CVI_TDL_SUCCESS);
+        EXPECT_EQ(CVI_TDL_Detection(m_tdl_handle, frame.getFrame(),
+                                    CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, &obj),
+                  CVI_TDL_SUCCESS);
 #if 0
         for (uint32_t i = 0; i < obj.size; i++) {
           printf(
@@ -182,7 +188,11 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
       ASSERT_TRUE(frame.open());
 
       TDLObject<cvtdl_object_t> obj;
-      { EXPECT_EQ(CVI_TDL_ThermalPerson(m_tdl_handle, frame.getFrame(), obj), CVI_TDL_SUCCESS); }
+      {
+        EXPECT_EQ(CVI_TDL_Detection(m_tdl_handle, frame.getFrame(),
+                                    CVI_TDL_SUPPORTED_MODEL_THERMALPERSON, obj),
+                  CVI_TDL_SUCCESS);
+      }
 
       for (uint32_t i = 0; i < obj->size; i++) {
 #if 0
@@ -213,7 +223,6 @@ TEST_F(ThermalPersonDetectionTestSuite, accruacy) {
         };
 
         bool matched = match_dets(*obj, expected_bbox, comp);
-
         EXPECT_TRUE(matched) << "image path: " << image_path << "\n"
                              << "expected bbox: (" << expected_bbox.x1 << ", " << expected_bbox.y1
                              << ", " << expected_bbox.x2 << ", " << expected_bbox.y2 << ")\n";

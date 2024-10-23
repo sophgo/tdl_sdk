@@ -241,9 +241,7 @@ static void *pVideoOutput(void *args) {
       usleep(1000);
       continue;
     }
-    // if(do_ped){
-    //  CVI_TDL_MobileDetV2_Pedestrian_D0(tdl_handle, &stVOFrame, &obj_meta_0);
-    //}
+
     {
       SMT_MutexAutoLock(VOMutex, lock);
       CVI_TDL_CopyFaceMeta(&g_face_meta_0, &face_meta_0);
@@ -264,9 +262,10 @@ static void *pVideoOutput(void *args) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 3 && argc != 4) {
+  if (argc != 3 && argc != 4 && argc != 5) {
     printf("Usage: %s fdmodel_path path capture_path\n", argv[0]);
     printf("Usage: %s fdmodel_path ped_model path capture_path\n", argv[0]);
+    printf("Usage: %s fdmodel_path ped_model path famodel_path capture_path\n", argv[0]);
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;
@@ -276,11 +275,16 @@ int main(int argc, char *argv[]) {
 
   const char *fd_model_path = argv[1];
   const char *ped_model_path = "NULL";
+  const char *fa_model_path = "NULL";
   if (argc == 3) {
     sprintf(g_out_dir, "%s", argv[2]);
-  } else {
+  } else if (argc == 4) {
     ped_model_path = argv[2];
     sprintf(g_out_dir, "%s", argv[3]);
+  } else if (argc == 5) {
+    ped_model_path = argv[2];
+    fa_model_path = argv[3];
+    sprintf(g_out_dir, "%s", argv[4]);
   }
   printf("ped_model:%s\n", ped_model_path);
 
@@ -315,10 +319,11 @@ int main(int argc, char *argv[]) {
   // ret |= CVI_TDL_Service_EnableTPUDraw(service_handle, true);
   ret |= CVI_TDL_APP_CreateHandle(&app_handle, tdl_handle);
   ret |= CVI_TDL_APP_FaceCapture_Init(app_handle, (uint32_t)buffer_size);
-  ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(app_handle, fd_model_id, fr_model_id, fd_model_path,
-                                            (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
-                                            (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path,
-                                            NULL);
+  ret |= CVI_TDL_APP_FaceCapture_QuickSetUp(
+      app_handle, fd_model_id, fr_model_id, fd_model_path,
+      (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path,
+      (!strcmp(fq_model_path, "NULL")) ? NULL : fq_model_path, NULL,
+      (!strcmp(fa_model_path, "NULL")) ? NULL : fa_model_path);
   if (strcmp(ped_model_path, "NULL")) {
     CVI_TDL_SUPPORTED_MODEL_E ped_model_id = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
     ret |= CVI_TDL_APP_FaceCapture_FusePedSetup(app_handle, ped_model_id, ped_model_path);

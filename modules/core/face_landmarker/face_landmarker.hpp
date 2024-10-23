@@ -2,7 +2,6 @@
 #include "core/face/cvtdl_face_types.h"
 #include "core_internel.hpp"
 #include "cvi_comm.h"
-#include "opencv2/core.hpp"
 
 namespace cvitdl {
 
@@ -13,8 +12,6 @@ class FaceLandmarker final : public Core {
   int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta);
 
  private:
-  virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
-  void prepareInputTensor(cv::Mat &input_mat);
   void Preprocessing(cvtdl_face_info_t *face_info, int *max_side, int img_width, int img_height);
 
   int landmark_num = 106;

@@ -106,7 +106,8 @@ void *run_tdl_thread(void *args) {
       goto get_frame_failed;
     }
 
-    s32Ret = pstTDLArgs->inference_func(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta);
+    s32Ret = pstTDLArgs->inference_func(pstTDLArgs->stTDLHandle, &stFrame, pstTDLArgs->enOdModelId,
+                                        &stObjMeta);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
@@ -116,8 +117,8 @@ void *run_tdl_thread(void *args) {
 
     if (stObjMeta.size > 0) {
       // Predict keypoint for persons
-      CVI_TDL_AlphaPose(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta);
-
+      CVI_TDL_PoseDetection(pstTDLArgs->stTDLHandle, &stFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE,
+                            &stObjMeta);
       // Predict fall score of first person.
       CVI_TDL_Fall(pstTDLArgs->stTDLHandle, &stObjMeta);
 
@@ -342,8 +343,8 @@ int main(int argc, char *argv[]) {
   }
 
   GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, enOdModelId, argv[2]), s32Ret, setup_tdl_fail);
-  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_ALPHAPOSE, argv[3]), s32Ret,
-                 setup_tdl_fail);
+  GOTO_IF_FAILED(CVI_TDL_OpenModel(stTDLHandle, CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE, argv[3]),
+                 s32Ret, setup_tdl_fail);
 
   // Select which classes we want to focus.
   GOTO_IF_FAILED(CVI_TDL_SelectDetectClass(stTDLHandle, enOdModelId, 1, CVI_TDL_DET_TYPE_PERSON),

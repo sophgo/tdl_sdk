@@ -8,8 +8,6 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
 #include "coco_utils.hpp"
@@ -29,24 +27,16 @@
 
 namespace cvitdl {
 
-SuperResolution::SuperResolution() : Core(CVI_MEM_DEVICE) {}
+SuperResolution::SuperResolution() : Core(CVI_MEM_DEVICE) {
+  m_preprocess_param[0].factor[0] = R_SCALE;
+  m_preprocess_param[0].factor[1] = G_SCALE;
+  m_preprocess_param[0].factor[2] = B_SCALE;
+  m_preprocess_param[0].mean[0] = R_MEAN;
+  m_preprocess_param[0].mean[1] = G_MEAN;
+  m_preprocess_param[0].mean[2] = B_MEAN;
+}
 
 SuperResolution::~SuperResolution() {}
-
-int SuperResolution::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("SuperResolution only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = R_SCALE;
-  (*data)[0].factor[1] = G_SCALE;
-  (*data)[0].factor[2] = B_SCALE;
-  (*data)[0].mean[0] = R_MEAN;
-  (*data)[0].mean[1] = G_MEAN;
-  (*data)[0].mean[2] = B_MEAN;
-  (*data)[0].use_quantize_scale = true;
-  return CVI_TDL_SUCCESS;
-}
 
 int SuperResolution::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_sr_feature *srfeature) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
@@ -84,7 +74,7 @@ void SuperResolution::outputParser(VIDEO_FRAME_INFO_S *dstFrame) {
       for (int c = 0; c < outShapeC; ++c) {
         int index = (c * outHeight * outWidth) + (h * outWidth) + w;
         float value = out[index];
-        uchar pixel_value = static_cast<uchar>(std::min(std::max(value * 255.0f, 0.0f), 255.0f));
+        u_char pixel_value = static_cast<u_char>(std::min(std::max(value * 255.0f, 0.0f), 255.0f));
         int cvChannel = c == 0 ? 2 : (c == 2 ? 0 : 1);  // BGR to RGB conversion if needed
         if (cvChannel == 0) {
           vFrame->pu8VirAddr[0][w + h * vFrame->u32Stride[2]] = pixel_value;

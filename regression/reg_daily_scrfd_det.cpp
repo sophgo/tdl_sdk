@@ -66,7 +66,9 @@ TEST_F(ScrfdDetTestSuite, inference) {
       ASSERT_TRUE(frame.open());
       cvtdl_face_t face_meta;
       memset(&face_meta, 0, sizeof(cvtdl_face_t));
-      EXPECT_EQ(CVI_TDL_ScrFDFace(m_tdl_handle, frame.getFrame(), &face_meta), CVI_TDL_SUCCESS);
+      EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                      CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, &face_meta),
+                CVI_TDL_SUCCESS);
     }
 
     {
@@ -74,7 +76,9 @@ TEST_F(ScrfdDetTestSuite, inference) {
       ASSERT_TRUE(frame.open());
       cvtdl_face_t face_meta;
       memset(&face_meta, 0, sizeof(cvtdl_face_t));
-      EXPECT_EQ(CVI_TDL_ScrFDFace(m_tdl_handle, frame.getFrame(), &face_meta), CVI_TDL_SUCCESS);
+      EXPECT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                      CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, &face_meta),
+                CVI_TDL_SUCCESS);
     }
   }
 }
@@ -99,7 +103,9 @@ TEST_F(ScrfdDetTestSuite, accuracy) {
 
       TDLObject<cvtdl_face_t> face_meta;
 
-      ASSERT_EQ(CVI_TDL_ScrFDFace(m_tdl_handle, frame.getFrame(), face_meta), CVI_TDL_SUCCESS);
+      ASSERT_EQ(CVI_TDL_FaceDetection(m_tdl_handle, frame.getFrame(),
+                                      CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, face_meta),
+                CVI_TDL_SUCCESS);
 
       auto expected_dets = iter.value();
       ASSERT_EQ(face_meta->size, expected_dets.size());

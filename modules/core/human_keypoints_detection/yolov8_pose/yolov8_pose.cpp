@@ -10,14 +10,6 @@
 #include "cvi_sys.h"
 #include "yolov8_pose.hpp"
 
-#define R_SCALE 1 / 255.f
-#define G_SCALE 1 / 255.f
-#define B_SCALE 1 / 255.f
-#define R_MEAN 0
-#define G_MEAN 0
-#define B_MEAN 0
-#define NMS_THRESH 0.7  // official: 0.7
-
 namespace cvitdl {
 
 template <typename T>
@@ -36,15 +28,20 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 
-YoloV8Pose::YoloV8Pose() : Core(CVI_MEM_DEVICE) {}
+YoloV8Pose::YoloV8Pose() : YoloV8Pose(std::make_tuple(64, 17, 1)) {}
 
-YoloV8Pose::YoloV8Pose(TUPLE_INT pose_pair) : Core(CVI_MEM_DEVICE) {
+YoloV8Pose::YoloV8Pose(TUPLE_INT pose_pair) {
+  for (int i = 0; i < 3; i++) {
+    // default param
+    m_preprocess_param[0].factor[i] = 1 / 255.f;
+    m_preprocess_param[0].mean[i] = 0.0;
+  }
+  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_model_nms_threshold = 0.7;
   m_box_channel_ = std::get<0>(pose_pair);
   m_kpts_channel_ = std::get<1>(pose_pair) * 3;
   m_cls_channel_ = std::get<2>(pose_pair);
 }
-
-YoloV8Pose::~YoloV8Pose() {}
 
 int YoloV8Pose::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
@@ -82,24 +79,6 @@ int YoloV8Pose::onModelOpened() {
     }
   }
 
-  return CVI_TDL_SUCCESS;
-}
-
-int YoloV8Pose::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("YoloV8Pose only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  (*data)[0].factor[0] = R_SCALE;
-  (*data)[0].factor[1] = G_SCALE;
-  (*data)[0].factor[2] = B_SCALE;
-  (*data)[0].mean[0] = R_MEAN;
-  (*data)[0].mean[1] = G_MEAN;
-  (*data)[0].mean[2] = B_MEAN;
-  (*data)[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  (*data)[0].use_quantize_scale = true;
-  // (*data)[0].rescale_type = RESCALE_RB;
   return CVI_TDL_SUCCESS;
 }
 
@@ -293,7 +272,7 @@ void YoloV8Pose::postProcess(Detections &dets, int frame_width, int frame_height
 
   std::vector<int> keep(dets.size(), 0);
 
-  Detections final_dets = nms_multi_class_with_ids(dets, NMS_THRESH, keep);
+  Detections final_dets = nms_multi_class_with_ids(dets, m_model_nms_threshold, keep);
 
   CVI_TDL_MemAllocInit(final_dets.size(), obj);
   obj->height = shape.dim[2];

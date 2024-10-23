@@ -101,9 +101,7 @@ static std::vector<int8_t> constructInverseThresh(float threshld, std::vector<in
 }
 
 MobileDetV2::MobileDetV2(MobileDetV2::Category model, float iou_thresh)
-    : Core(CVI_MEM_DEVICE),
-      m_model_config(MDetV2Config::create_config(model)),
-      m_iou_threshold(iou_thresh) {
+    : m_model_config(MDetV2Config::create_config(model)), m_iou_threshold(iou_thresh) {
   m_model_threshold = m_model_config.default_score_threshold;
   /**
    *  To speedup post-process of MobileDetV2, we apply inverse function of sigmoid to threshold
@@ -115,35 +113,24 @@ MobileDetV2::MobileDetV2(MobileDetV2::Category model, float iou_thresh)
       m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
 
   m_filter.set();  // select all classes
+  m_preprocess_param[0].factor[0] = static_cast<float>(FACTOR_R);
+  m_preprocess_param[0].factor[1] = static_cast<float>(FACTOR_G);
+  m_preprocess_param[0].factor[2] = static_cast<float>(FACTOR_B);
+  m_preprocess_param[0].mean[0] = static_cast<float>(MEAN_R);
+  m_preprocess_param[0].mean[1] = static_cast<float>(MEAN_G);
+  m_preprocess_param[0].mean[2] = static_cast<float>(MEAN_B);
+  m_preprocess_param[0].rescale_type = RESCALE_RB;
+#ifndef CV186X
+  m_preprocess_param[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
+#endif
 }
 
-MobileDetV2::~MobileDetV2() {}
-
-void MobileDetV2::setModelThreshold(float threshold) {
+void MobileDetV2::setModelThreshold(const float &threshold) {
   if (m_model_threshold != threshold) {
     m_model_threshold = threshold;
     m_quant_inverse_score_threshold = constructInverseThresh(
         m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
   }
-}
-
-int MobileDetV2::setupInputPreprocess(std::vector<InputPreprecessSetup> *data) {
-  if (data->size() != 1) {
-    LOGE("Mobiledetv2 only has 1 input.\n");
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  (*data)[0].factor[0] = static_cast<float>(FACTOR_R);
-  (*data)[0].factor[1] = static_cast<float>(FACTOR_G);
-  (*data)[0].factor[2] = static_cast<float>(FACTOR_B);
-  (*data)[0].mean[0] = static_cast<float>(MEAN_R);
-  (*data)[0].mean[1] = static_cast<float>(MEAN_G);
-  (*data)[0].mean[2] = static_cast<float>(MEAN_B);
-  (*data)[0].use_quantize_scale = true;
-  (*data)[0].rescale_type = RESCALE_RB;
-#ifndef CV186X
-  (*data)[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
-#endif
-  return CVI_TDL_SUCCESS;
 }
 
 int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
