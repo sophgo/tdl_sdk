@@ -30,7 +30,7 @@ set(REG_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/sample/common
 )
 # CMAKE_CURRENT_SOURCE_DIR 指 当前cmakelists所在路径
-if(${CVI_PLATFORM} STREQUAL "CV186X")
+if(${CVI_PLATFORM} STREQUAL "SOPHON")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -86,7 +86,7 @@ set(SAMPLE_LIBS
 )
 
 if("${MW_VER}" STREQUAL "v2")
-    if(${CVI_PLATFORM} STRLESS "CV186X")
+    if(${CVI_PLATFORM} STRLESS "SOPHON")
         set(SAMPLE_LIBS
             ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
             ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -126,7 +126,7 @@ if (NOT DEFINED NO_OPENCV)
     buildninstallcpp(NAME eval_pose_dataset INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "CV186X")
+if("${CVI_PLATFORM}" STREQUAL "SOPHON")
     buildninstallcpp(NAME eval_isp_image_classification INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 endif()
 

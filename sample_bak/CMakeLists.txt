@@ -79,7 +79,7 @@ set(SAMPLE_INC ${SAMPLE_INC} ${TRACER_PATH})
 elseif(${MW_VER} STREQUAL "v3")
 set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/${CVI_PLATFORM_LOWER})
 else()
-if(${CVI_PLATFORM} STREQUAL "CV186X")
+if(${CVI_PLATFORM} STREQUAL "SOPHON")
 set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/cv186x)
 endif()
 endif()
@@ -94,13 +94,13 @@ set(AUDIO_SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so)
 
-if(NOT ${CVI_PLATFORM} STREQUAL "CV186X")
+if(NOT ${CVI_PLATFORM} STREQUAL "SOPHON")
 set(AUDIO_SAMPLE_LIBS
     ${AUDIO_SAMPLE_LIBS}
 )
 endif()
 
-if(${CVI_PLATFORM} STREQUAL "CV186X")
+if(${CVI_PLATFORM} STREQUAL "SOPHON")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -187,7 +187,7 @@ set(SAMPLE_LIBS
 )
 
 if("${MW_VER}" STREQUAL "v2")
-    if(${CVI_PLATFORM} STRLESS "CV186X")
+    if(${CVI_PLATFORM} STRLESS "SOPHON")
         set(SAMPLE_LIBS
             ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
         	  ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so

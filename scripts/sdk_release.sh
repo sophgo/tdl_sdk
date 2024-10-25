@@ -90,7 +90,6 @@ elif [[ "$CHIP_ARCH" == "CV181X" ]]; then
 elif [[ "$CHIP_ARCH" == "CV180X" ]]; then
     USE_TPU_IVE=ON
 elif [[ "$CHIP_ARCH" == "SOPHON" ]]; then
-    CHIP_ARCH=CV186X
     USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"

@@ -14,7 +14,7 @@ set( TC_PATH "${TOOLCHAIN_ROOT_DIR}/bin/" )
 
 # The toolchain prefix for all toolchain executables
 set( CROSS_COMPILE riscv64-unknown-linux-musl- )
-set( ARCH riscv64 )
+set( ARCH riscv )
 
 # specify the cross compiler. We force the compiler so that CMake doesn't
 # attempt to build a simple test program as this will fail without us using

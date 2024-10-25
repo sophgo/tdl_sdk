@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.18.4)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-project(cvitdl)
+project(cvi_tdl)
 
-if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
-  set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install_soc")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
+  set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install")
 endif()
+
 # Find toolchain cmake file and toolchain folder
 if("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
   message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is not set. Aborting.")
@@ -34,7 +36,7 @@ elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   add_definitions(-D__CV183X__)
   include (cmake/tracer.cmake)
   add_definitions(-DUSE_NEON)
-elseif("${CVI_PLATFORM}" STREQUAL "CV186X")
+elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
   add_definitions(-D__CV186X__)
 else()
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
@@ -63,11 +65,6 @@ else()
     message(FATAL_ERROR "No build type!!!")
 endif()
 
-if(DEFINED ENV{WEB_VIEW})
-  set(BUILD_WEB_VIEW ON)
-  message("set BUILD_WEB_VIEW ON")
-endif()
-
 if(DEFINED ENV{PERF_EVAL})
   add_definitions(-DPERF_EVAL)
   message("set PERF_EVAL")
@@ -78,7 +75,7 @@ execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_
 execute_process(COMMAND git rev-parse --abbrev-ref HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE LATEST_BRANCH)
 string(STRIP ${LATEST_BRANCH} LATEST_BRANCH)
 
-if ("${LATEST_BRANCH}" STREQUAL "master")
+if("${LATEST_BRANCH}" STREQUAL "master")
   string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
   list(GET WORD_LIST 0 COMMITID)
   set(LATEST_TAG "nightly-${COMMITID}")
@@ -88,7 +85,7 @@ elseif("${LATEST_BRANCH}" STREQUAL "HEAD")
   set(LATEST_TAG "${COMMITID}")
 else()
   string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)*[^(\\\n).]+" LATEST_TAG ${LATEST_BRANCH})
-  if ("${LATEST_TAG}" STREQUAL "")
+  if("${LATEST_TAG}" STREQUAL "")
     set(LATEST_TAG "unknown")
   endif()
   string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
@@ -99,6 +96,9 @@ endif()
 foreach(flags CMAKE_CXX_FLAGS CMAKE_C_FLAGS)
     string(REPLACE "-O3" "-Os" ${flags} "${${flags}}")
 endforeach()
+
+include(${CMAKE_TOOLCHAIN_FILE})
+set(KERNEL_ROOT $ENV{KERNEL_PATH}/build/$ENV{PROJECT_FULLNAME}/${ARCH}/usr/)
 
 message("==================================================")
 message("Branch                 ${LATEST_BRANCH}")
@@ -113,7 +113,6 @@ message("CXX Flags              ${CMAKE_CXX_FLAGS}")
 message("Install dir            ${CMAKE_INSTALL_PREFIX}")
 message("Enable Perfetto        ${ENABLE_PERFETTO}")
 message("CVI_PLATFORM           ${CVI_PLATFORM}")
-message("CVI_SYSTEM_PROCESSOR   ${CVI_SYSTEM_PROCESSOR}")
 message("CMAKE_TOOLCHAIN_FILE   ${CMAKE_TOOLCHAIN_FILE}")
 message("USE_TPU_IVE            ${USE_TPU_IVE}")
 message("KERNEL_ROOT            ${KERNEL_ROOT}")
@@ -133,15 +132,17 @@ endif()
 # Check if MLIR SDK exists.
 include(cmake/mlir.cmake)
 
-# Check if middleware exists.
-include (cmake/middleware.cmake)
+# Check if mpi SDK exists.
+include(cmake/middleware.cmake)
 
 # 3rdparty libraries
 include(cmake/thirdparty.cmake)
 
-include (cmake/ive.cmake)
+include(cmake/ive.cmake)
 
-include (cmake/cvi_rtsp.cmake)
+# ===========need remove this=============
+include(cmake/cvi_rtsp.cmake)
+# ===========need remove this=============
 
 # 3rdpart includes
 include_directories(${IVE_INCLUDES}
@@ -149,10 +150,19 @@ include_directories(${IVE_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
 
-add_subdirectory(modules)
-# add_subdirectory(sample)
-add_subdirectory(sample_bak)
-
-if(NOT DEFINED NO_OPENCV)
-add_subdirectory(regression)
+if("${BUILD_OPTION}" STREQUAL "")
+  add_subdirectory(modules)
+elseif("${BUILD_OPTION}" STREQUAL "sample")
+  add_subdirectory(sample)
+elseif("${BUILD_OPTION}" STREQUAL "all")
+  add_subdirectory(modules)
+  add_subdirectory(sample)
+else()
+  message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}. Valid options are '', 'sample', or 'all'.")
 endif()
+
+# add_subdirectory(sample_bak)
+
+# if(NOT DEFINED NO_OPENCV)
+#   add_subdirectory(regression)
+# endif()

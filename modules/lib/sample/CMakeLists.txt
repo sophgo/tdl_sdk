@@ -39,7 +39,7 @@ set(SAMPLE_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/../cvi_draw_rect
 )
 
-if(${CVI_PLATFORM} STREQUAL "CV186X")
+if(${CVI_PLATFORM} STREQUAL "SOPHON")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -93,7 +93,7 @@ set(SAMPLE_LIBS
 )
 
 if("${MW_VER}" STREQUAL "v2")
-    if(${CVI_PLATFORM} STRLESS "CV186X")
+    if(${CVI_PLATFORM} STRLESS "SOPHON")
         set(SAMPLE_LIBS
             ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
             ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so

@@ -67,7 +67,7 @@ set(REG_INCLUDES
     ${CVI_RTSP_INCLUDE}
 )
 
-if(${CVI_PLATFORM} STREQUAL "CV186X")
+if(${CVI_PLATFORM} STREQUAL "SOPHON")
 set(SAMPLE_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -125,7 +125,7 @@ set(SAMPLE_LIBS
 )
 
 if("${MW_VER}" STREQUAL "v2")
-    if(${CVI_PLATFORM} STRLESS "CV186X")
+    if(${CVI_PLATFORM} STRLESS "SOPHON")
       set(SAMPLE_LIBS
           ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
           ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -160,7 +160,7 @@ endif()
 endif()
 
 
-if(${CVI_PLATFORM} STREQUAL "CV186X")
+if(${CVI_PLATFORM} STREQUAL "SOPHON")
   set(UnitTests
   reg_daily_petdet.cpp
   reg_daily_handdet.cpp
@@ -222,7 +222,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
 
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_app gtest_main stdc++fs ${SAMPLE_LIBS})
 
-if ("${CVI_PLATFORM}" STREQUAL "CV186X")
+if ("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(DAILY_REGRESSION_ASSETS "assets_186x")
 elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")
