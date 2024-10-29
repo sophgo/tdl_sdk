@@ -475,7 +475,7 @@ int main(int argc, char *argv[]) {
     // CVI_TDL_Free(&app_handle->person_cpt_info->last_head);
     // CVI_TDL_Free(&app_handle->person_cpt_info->last_objects);
   }
-  
+
   bRunVideoOutput = false;
   pthread_join(vo_thread, NULL);
 CLEANUP_SYSTEM:

@@ -2,17 +2,17 @@
 
 include_directories(${IVE_INCLUDES}
                     ${MIDDLEWARE_INCLUDES}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_app
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/ive
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/utils
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/motion_detection
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/cvi_tdl_app
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ive
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/motion_detection
                     ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(PROJ_SRCS $<TARGET_OBJECTS:ivewrapper> 
               $<TARGET_OBJECTS:motion_detection>
-              ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/utils/ccl.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/utils/profiler.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/ccl.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/../../core/utils/profiler.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/cvi_md.cpp )
 project(cvi_md)
 

@@ -19,7 +19,7 @@ extern "C" {
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceDrawRect(const cvtdl_face_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                               const bool drawText, cvtdl_service_brush_t brush);
+                                        const bool drawText, cvtdl_service_brush_t brush);
 
 /**
  * @brief Draw rect to frame with given face meta with individual brushes.
@@ -32,7 +32,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceDrawRect(const cvtdl_face_t *meta, VIDEO_FRAME_IN
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceDrawRect2(const cvtdl_face_t *meta, VIDEO_FRAME_INFO_S *frame,
-                                                const bool drawText, cvtdl_service_brush_t *brushes);
+                                         const bool drawText, cvtdl_service_brush_t *brushes);
 
 /**
  * @brief Draw rect to frame with given object meta with a global brush.
@@ -44,9 +44,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceDrawRect2(const cvtdl_face_t *meta, VIDEO_FRAME_I
  * @param brush A brush for drawing
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_TDL_ObjectDrawRect(const cvtdl_object_t *meta,
-                                                 VIDEO_FRAME_INFO_S *frame, const bool drawText,
-                                                 cvtdl_service_brush_t brush);
+DLL_EXPORT CVI_S32 CVI_TDL_ObjectDrawRect(const cvtdl_object_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                          const bool drawText, cvtdl_service_brush_t brush);
 
 /**
  * @brief Draw rect to frame with given object meta with individual brushes.
@@ -58,10 +57,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_ObjectDrawRect(const cvtdl_object_t *meta,
  * @param brushes brushes for drawing. The count of brushes must be same as meta->size.
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
-DLL_EXPORT CVI_S32 CVI_TDL_ObjectDrawRect2(const cvtdl_object_t *meta,
-                                                  VIDEO_FRAME_INFO_S *frame, const bool drawText,
-                                                  cvtdl_service_brush_t *brushes);
-
+DLL_EXPORT CVI_S32 CVI_TDL_ObjectDrawRect2(const cvtdl_object_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                           const bool drawText, cvtdl_service_brush_t *brushes);
 
 #ifdef __cplusplus
 }

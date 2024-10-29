@@ -1,4 +1,4 @@
- #ifndef _GNU_SOURCE
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 #include <stdio.h>
@@ -12,8 +12,8 @@
 #include <vector>
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
-#include "cvi_tdl.h"
 #include "cvi_draw_rect.h"
+#include "cvi_tdl.h"
 
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;

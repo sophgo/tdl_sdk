@@ -3,14 +3,14 @@
 include_directories(
                     ${MIDDLEWARE_INCLUDES}
                     ${CMAKE_CURRENT_SOURCE_DIR}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_app
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/core/utils
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/core
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/cvi_tdl_app
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/core/utils
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../../core/core
                     )
 
 set(PROJ_SRCS 
-              ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/core/core/vpss_engine.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/../../core/core/vpss_engine.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/cvi_bmcv.cpp
               )
 project(cvi_preprocess)

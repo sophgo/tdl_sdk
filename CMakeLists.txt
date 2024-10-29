@@ -12,7 +12,6 @@ endif()
 
 set(FTP_SERVER_IP "10.80.0.5" CACHE STRING "3rd party resource ftp")
 set(DL_SERVER_IP 10.132.3.76)
-
 set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
 set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
 
@@ -152,9 +151,7 @@ include_directories(${IVE_INCLUDES}
 
 add_subdirectory(modules)
 add_subdirectory(sample)
-add_subdirectory(lib)
 
 if(NOT DEFINED NO_OPENCV)
 add_subdirectory(regression)
 endif()
-

@@ -2,7 +2,8 @@
 #ifndef CVI_BMCV_FILE_H
 #define CVI_BMCV_FILE_H
 
-#if (defined(ARCH_CV181X) || defined(ARCH_CV180X) || defined(CV181X) || defined(CV180X)) && !defined(_MIDDLEWARE_V3_)
+#if (defined(ARCH_CV181X) || defined(ARCH_CV180X) || defined(CV181X) || defined(CV180X)) && \
+    !defined(_MIDDLEWARE_V3_)
 #include <linux/cvi_comm_vpss.h>
 #include <linux/cvi_type.h>
 #else
@@ -57,20 +58,25 @@ DLL_EXPORT CVI_S32 CVI_Preprocess_Create_Handle(cvi_pre_handle_t* handle);
 DLL_EXPORT CVI_S32 CVI_Preprocess_Destroy_Handle(cvi_pre_handle_t handle);
 
 DLL_EXPORT CVI_S32 CVI_Peprocess_Crop(cvi_pre_handle_t handle, int crop_num, bmcv_rect_t* rects,
-                           VIDEO_FRAME_INFO_S* input_frame, VIDEO_FRAME_INFO_S** output_frame);
+                                      VIDEO_FRAME_INFO_S* input_frame,
+                                      VIDEO_FRAME_INFO_S** output_frame);
 
 DLL_EXPORT CVI_S32 CVI_Preprocess_Resize(cvi_pre_handle_t handle, bmcv_resize_image resize_param,
-                              VIDEO_FRAME_INFO_S* input_frame, VIDEO_FRAME_INFO_S** output_frame);
+                                         VIDEO_FRAME_INFO_S* input_frame,
+                                         VIDEO_FRAME_INFO_S** output_frame);
 
 DLL_EXPORT CVI_S32 CVI_Preprocess_ConvertTo(cvi_pre_handle_t handle,
-                                 bmcv_convert_to_attr convert_to_attr,
-                                 VIDEO_FRAME_INFO_S* input_frame, VIDEO_FRAME_INFO_S** output_frame);
+                                            bmcv_convert_to_attr convert_to_attr,
+                                            VIDEO_FRAME_INFO_S* input_frame,
+                                            VIDEO_FRAME_INFO_S** output_frame);
 
 DLL_EXPORT CVI_S32 CVI_Preprocess_All(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S* input_frame,
-                           bmcv_resize_image* p_crop_resize_param,
-                           bmcv_convert_to_attr* p_cvt_param, VIDEO_FRAME_INFO_S** output_frame);
+                                      bmcv_resize_image* p_crop_resize_param,
+                                      bmcv_convert_to_attr* p_cvt_param,
+                                      VIDEO_FRAME_INFO_S** output_frame);
 
-DLL_EXPORT CVI_S32 CVI_Preprocess_ReleaseFrame(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S* output_frame);
+DLL_EXPORT CVI_S32 CVI_Preprocess_ReleaseFrame(cvi_pre_handle_t handle,
+                                               VIDEO_FRAME_INFO_S* output_frame);
 #ifdef __cplusplus
 }
 #endif

@@ -30,8 +30,8 @@ endfunction(buildninstallcpp)
 
 
 set(SAMPLE_INC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/cvi_tdl_app
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/cvi_tdl_app
     ${MIDDLEWARE_SDK_ROOT}/include
     ${IVE_INCLUDES}
     ${CMAKE_CURRENT_SOURCE_DIR}/../cvi_preprocess

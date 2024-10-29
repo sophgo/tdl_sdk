@@ -1,7 +1,8 @@
 #ifndef _CVI_MD_HEAD_
 #define _CVI_MD_HEAD_
 
-#if (defined(ARCH_CV181X) || defined(ARCH_CV180X) || defined(CV181X) || defined(CV180X)) && !defined(_MIDDLEWARE_V3_)
+#if (defined(ARCH_CV181X) || defined(ARCH_CV180X) || defined(CV181X) || defined(CV180X)) && \
+    !defined(_MIDDLEWARE_V3_)
 #include <linux/cvi_comm_vpss.h>
 #else
 #include <cvi_comm_vpss.h>
@@ -36,8 +37,7 @@ DLL_EXPORT CVI_S32 CVI_MD_Destroy_Handle(cvi_md_handle_t handle);
  * be returned.
  * @return int Return CVI_SUCCESS on success.
  */
-DLL_EXPORT CVI_S32 CVI_MD_Set_Background(const cvi_md_handle_t handle,
-                                                         VIDEO_FRAME_INFO_S *frame);
+DLL_EXPORT CVI_S32 CVI_MD_Set_Background(const cvi_md_handle_t handle, VIDEO_FRAME_INFO_S *frame);
 
 /**
  * @brief Set ROI frame for motion detection.
@@ -65,9 +65,8 @@ DLL_EXPORT CVI_S32 CVI_MD_Set_ROI(const cvi_md_handle_t handle, MDROI *_roi_s);
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_MD_Detect(const cvi_md_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                       int **pp_boxes,uint32_t *p_num_boxes, uint8_t threshold,
-                                        double min_area);
-
+                                 int **pp_boxes, uint32_t *p_num_boxes, uint8_t threshold,
+                                 double min_area);
 
 #ifdef __cplusplus
 }

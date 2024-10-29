@@ -1,25 +1,25 @@
 
 #include "cvi_bmcv.h"
+#include <map>
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl_log.hpp"
 #include "vpss_engine.hpp"
-#include <map>
 
-typedef struct _stVpssInfo{
+typedef struct _stVpssInfo {
   int vpss_grp;
   int vpss_chn;
-}stVpssInfo;
-static std::map<VIDEO_FRAME_INFO_S *,stVpssInfo> g_outframe_vpss_info_;
+} stVpssInfo;
+static std::map<VIDEO_FRAME_INFO_S *, stVpssInfo> g_outframe_vpss_info_;
 using namespace cvitdl;
 
-template<typename T> 
-void release_buffer(T *p_buf){
-  if(p_buf == nullptr){
+template <typename T>
+void release_buffer(T *p_buf) {
+  if (p_buf == nullptr) {
     return;
   }
   delete p_buf;
 }
-DLL_EXPORT CVI_S32 CVI_Preprocess_Create_Handle(cvi_pre_handle_t* handle){
+DLL_EXPORT CVI_S32 CVI_Preprocess_Create_Handle(cvi_pre_handle_t *handle) {
   VpssEngine *vpss_inst = new VpssEngine(-1, 0);
   if (!vpss_inst->isInitialized()) {
     vpss_inst->init();
@@ -27,8 +27,8 @@ DLL_EXPORT CVI_S32 CVI_Preprocess_Create_Handle(cvi_pre_handle_t* handle){
   *handle = vpss_inst;
   return CVI_SUCCESS;
 }
-DLL_EXPORT CVI_S32 CVI_Preprocess_Destroy_Handle(cvi_pre_handle_t handle){
-  if(handle == nullptr){
+DLL_EXPORT CVI_S32 CVI_Preprocess_Destroy_Handle(cvi_pre_handle_t handle) {
+  if (handle == nullptr) {
     LOGW("handle is null\n");
     return CVI_FAILURE;
   }
@@ -43,10 +43,9 @@ VPSS_CROP_INFO_S *generate_crop_chn_attr(bmcv_resize_t resize_param) {
 
   auto p_crop_attr = new VPSS_CROP_INFO_S;
   p_crop_attr->bEnable = true;
-  p_crop_attr->stCropRect = {resize_param.start_x, resize_param.start_y, 
-                          (uint32_t)resize_param.in_width,
-                          (uint32_t)resize_param.in_height};
-  
+  p_crop_attr->stCropRect = {resize_param.start_x, resize_param.start_y,
+                             (uint32_t)resize_param.in_width, (uint32_t)resize_param.in_height};
+
   return p_crop_attr;
 }
 VPSS_CHN_ATTR_S *generate_vpss_chn_attr(uint32_t src_width, uint32_t src_height, uint8_t index,
@@ -93,15 +92,15 @@ VPSS_CHN_ATTR_S *generate_vpss_chn_attr(uint32_t src_width, uint32_t src_height,
       }
     }
   }
-  VPSS_CHN_SQ_HELPER_X(p_chn_attr, src_width, src_height, dst_width, dst_height, dst_format,
-                        factor, mean, pad_val, pad_type);
-  delete []factor;
-  delete []mean;
+  VPSS_CHN_SQ_HELPER_X(p_chn_attr, src_width, src_height, dst_width, dst_height, dst_format, factor,
+                       mean, pad_val, pad_type);
+  delete[] factor;
+  delete[] mean;
   return p_chn_attr;
 }
 
 CVI_S32 CVI_Peprocess_Crop(cvi_pre_handle_t handle, int crop_num, bmcv_rect_t *rects,
-                               VIDEO_FRAME_INFO_S *input_frame, VIDEO_FRAME_INFO_S **output_frame) {
+                           VIDEO_FRAME_INFO_S *input_frame, VIDEO_FRAME_INFO_S **output_frame) {
   VPSS_CROP_INFO_S *p_crop_attr = new VPSS_CROP_INFO_S[crop_num];
   bmcv_resize_image resize_param;
   memset(&resize_param, 0, sizeof(resize_param));
@@ -116,26 +115,25 @@ CVI_S32 CVI_Peprocess_Crop(cvi_pre_handle_t handle, int crop_num, bmcv_rect_t *r
     resize_param.resize_img_attr[i].out_height = rects[i].crop_h;
   }
   int ret = CVI_Preprocess_All(handle, input_frame, &resize_param, nullptr, output_frame);
-  delete [] resize_param.resize_img_attr;
-  delete [] p_crop_attr;
+  delete[] resize_param.resize_img_attr;
+  delete[] p_crop_attr;
   return ret;
 }
 
 CVI_S32 CVI_Preprocess_Resize(cvi_pre_handle_t handle, bmcv_resize_image resize_param,
-                              VIDEO_FRAME_INFO_S* input_frame, VIDEO_FRAME_INFO_S** output_frame){
+                              VIDEO_FRAME_INFO_S *input_frame, VIDEO_FRAME_INFO_S **output_frame) {
   int ret = CVI_Preprocess_All(handle, input_frame, &resize_param, nullptr, output_frame);
-  return ret;   
+  return ret;
 }
-CVI_S32 CVI_Preprocess_ConvertTo(cvi_pre_handle_t handle,
-                                 bmcv_convert_to_attr convert_to_attr,
-                                 VIDEO_FRAME_INFO_S* input_frame, VIDEO_FRAME_INFO_S** output_frame){
-  int ret = CVI_Preprocess_All(handle, input_frame, nullptr, &convert_to_attr, output_frame);   
-  return ret;                            
+CVI_S32 CVI_Preprocess_ConvertTo(cvi_pre_handle_t handle, bmcv_convert_to_attr convert_to_attr,
+                                 VIDEO_FRAME_INFO_S *input_frame,
+                                 VIDEO_FRAME_INFO_S **output_frame) {
+  int ret = CVI_Preprocess_All(handle, input_frame, nullptr, &convert_to_attr, output_frame);
+  return ret;
 }
 CVI_S32 CVI_Preprocess_All(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S *input_frame,
-                               bmcv_resize_image *p_crop_resize_param,
-                               bmcv_convert_to_attr *p_cvt_param,
-                               VIDEO_FRAME_INFO_S **output_frame) {
+                           bmcv_resize_image *p_crop_resize_param,
+                           bmcv_convert_to_attr *p_cvt_param, VIDEO_FRAME_INFO_S **output_frame) {
   if (handle == nullptr) {
     LOGE("vpss handle not inited\n");
     return CVI_FAILURE;
@@ -154,7 +152,7 @@ CVI_S32 CVI_Preprocess_All(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S *input_fr
 
   int ret = CVI_SUCCESS;
   auto _output_frame = new VIDEO_FRAME_INFO_S[num_chs];
-  memset(_output_frame, 0, sizeof(VIDEO_FRAME_INFO_S)*num_chs);
+  memset(_output_frame, 0, sizeof(VIDEO_FRAME_INFO_S) * num_chs);
   int grp_id = (int)vpss_inst->getGrpId();
   bmcv_resize_t img_crop_attr;
   memset(&img_crop_attr, 0, sizeof(bmcv_resize_t));
@@ -162,7 +160,7 @@ CVI_S32 CVI_Preprocess_All(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S *input_fr
     PIXEL_FORMAT_E dst_format = input_frame->stVFrame.enPixelFormat;
     auto vpss_chn_attr =
         generate_vpss_chn_attr(input_frame->stVFrame.u32Width, input_frame->stVFrame.u32Height, i,
-                              p_crop_resize_param, p_cvt_param, dst_format);
+                               p_crop_resize_param, p_cvt_param, dst_format);
     if (p_crop_resize_param != nullptr && p_crop_resize_param->resize_img_attr != nullptr) {
       img_crop_attr = p_crop_resize_param->resize_img_attr[i];
     }
@@ -176,7 +174,7 @@ CVI_S32 CVI_Preprocess_All(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S *input_fr
     }
     auto o_frame = &_output_frame[i];
     ret = vpss_inst->getFrame(o_frame, 0, 2000);
-    if(ret == CVI_SUCCESS){
+    if (ret == CVI_SUCCESS) {
       stVpssInfo info;
       info.vpss_grp = grp_id;
       info.vpss_chn = 1;
@@ -188,14 +186,14 @@ CVI_S32 CVI_Preprocess_All(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S *input_fr
   *output_frame = _output_frame;
   return ret;
 }
-CVI_S32 CVI_Preprocess_ReleaseFrame(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S* output_frame){
+CVI_S32 CVI_Preprocess_ReleaseFrame(cvi_pre_handle_t handle, VIDEO_FRAME_INFO_S *output_frame) {
   if (handle == nullptr) {
     LOGE("vpss handle not inited\n");
     return CVI_FAILURE;
   }
   VpssEngine *vpss_inst = (VpssEngine *)handle;
   auto size = g_outframe_vpss_info_.size();
-  for (uint8_t i=0 ;i < size; i++){
+  for (uint8_t i = 0; i < size; i++) {
     auto frame = &output_frame[i];
     vpss_inst->releaseFrame(frame, 1);
     g_outframe_vpss_info_.erase(frame);

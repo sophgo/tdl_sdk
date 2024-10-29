@@ -1,11 +1,11 @@
- #ifndef _GNU_SOURCE
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include <cvi_ive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include "cvi_md.h"
-#include <cvi_ive.h>
 
 int main(int argc, char *argv[]) {
   cvi_md_handle_t handle = NULL;
