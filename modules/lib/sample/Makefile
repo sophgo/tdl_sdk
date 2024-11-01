@@ -23,7 +23,7 @@ CHIP ?= cv1835
 SDK_VER ?= 64bit
 
 CROSS_COMPILE_32 ?= arm-linux-gnueabihf-
-CROSS_COMPILE_64 ?= aarch64-linux-gnu-
+CROSS_COMPILE_64 ?= aarch64-none-linux-gnu-
 CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
 CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
@@ -195,7 +195,7 @@ MD_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_md
 DRAW_RECT_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_draw_rect
 PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
-CFLAGS += -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s
+CFLAGS += -fsigned-char -Werror=all -Wno-format-truncation -fdiagnostics-color=always -s -fdata-sections -Wl,-gc-sections
 
 SAMPLE_LIBS = -L$(MW_LIB_PATH) -L$(MW_3RD_LIB_PATH) $(MW_LIBS) \
  			  -L$(TPU_LIB_PATH) $(TPU_LIBS) \
@@ -249,11 +249,11 @@ $(PWD)/%.o: $(PWD)/%.cpp
 	$(CXX) $(DEPFLAGS) $(CFLAGS) -o $@ -c $<
 
 sample_lib_cvimd: $(PWD)/sample_lib_cvimd.o
-	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) -lcvi_md -o $@ $^
+	$(CXX) $(DEPFLAGS) $(CFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) -lcvi_md -o $@ $^
 
 sample_lib_draw_rect: $(PWD)/sample_lib_draw_rect.o
-	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS_OPENCV) $(SAMPLE_LIBS) -lcvi_draw_rect -o $@ $^
+	$(CXX) $(DEPFLAGS) $(CFLAGS) $(LDFLAGS) $(SAMPLE_LIBS_OPENCV) $(SAMPLE_LIBS) -lcvi_draw_rect -o $@ $^
 
 sample_lib_preprocess: $(PWD)/sample_lib_preprocess.o
-	$(CXX) $(DEPFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) -lcvi_preprocess -o $@ $^
+	$(CXX) $(DEPFLAGS) $(CFLAGS) $(LDFLAGS) $(SAMPLE_LIBS) -lcvi_preprocess -o $@ $^
 

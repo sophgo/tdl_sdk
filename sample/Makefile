@@ -23,7 +23,7 @@ CHIP ?= cv1835
 SDK_VER ?= 64bit
 
 CROSS_COMPILE_32 ?= arm-linux-gnueabihf-
-CROSS_COMPILE_64 ?= aarch64-linux-gnu-
+CROSS_COMPILE_64 ?= aarch64-none-linux-gnu-
 CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
 CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-
@@ -213,7 +213,7 @@ MD_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_md
 DRAW_RECT_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_draw_rect
 PREPROCESS_INC_PATH = $(SDK_ROOT_PATH)/include/cvi_preprocess
 
-CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Wno-format-truncation -fdiagnostics-color=always -s -lpthread -latomic
+CFLAGS += -std=gnu11 -Wno-pointer-to-int-cast -fsigned-char -Wno-format-truncation -fdiagnostics-color=always -s -lpthread -latomic -fdata-sections -Wl,-gc-sections
 
 SRCS := $(wildcard $(PWD)/*.c)
 CPPS := $(wildcard $(PWD)/*.cpp)

@@ -8,6 +8,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <limits>
+
 namespace cvitdl {
 std::set<std::pair<std::string, std::string>> get_pairs(const std::vector<std::string>& word) {
   std::set<std::pair<std::string, std::string>> pairs;
