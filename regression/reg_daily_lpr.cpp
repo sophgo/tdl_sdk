@@ -66,7 +66,7 @@ TEST_F(LicensePlateRecognitionTestSuite, open_close_model) {
 
     const char *model_path_get = CVI_TDL_GetModelPath(m_tdl_handle, m_info.idx);
 
-    EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_info.path,
+    EXPECT_PRED2([](const std::string &s1, const std::string &s2) { return s1 == s2; }, m_info.path,
                  std::string(model_path_get));
 
     ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, m_info.idx), CVI_TDL_SUCCESS);

@@ -8,8 +8,9 @@ namespace cvitdl {
 
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
 #ifndef CONFIG_ALIOS
-  mp_mi = std::make_unique<CvimodelInfo>();
-  mp_mi->conf = {.debug_mode = false, .input_mem_type = input_mem_type};
+  std::unique_ptr<CvimodelInfo> mp_mi(new CvimodelInfo());
+  mp_mi->conf.debug_mode = false;
+  mp_mi->conf.input_mem_type = input_mem_type;
 #else
   mp_mi = std::unique_ptr<CvimodelInfo>(new CvimodelInfo);
   mp_mi->conf.debug_mode = false;

@@ -19,7 +19,6 @@ add_subdirectory(app)
 add_subdirectory(core)
 add_subdirectory(service)
 add_subdirectory(test_and_eval)
-
 add_subdirectory(lib)
 
 set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>

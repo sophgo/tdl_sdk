@@ -13,7 +13,7 @@ endif()
 set(FTP_SERVER_IP "10.80.0.5" CACHE STRING "3rd party resource ftp")
 set(DL_SERVER_IP 10.132.3.76)
 set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
-set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
+set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++11 -pthread")
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
