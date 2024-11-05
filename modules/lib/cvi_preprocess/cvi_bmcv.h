@@ -2,8 +2,7 @@
 #ifndef CVI_BMCV_FILE_H
 #define CVI_BMCV_FILE_H
 
-#if (defined(ARCH_CV181X) || defined(ARCH_CV180X) || defined(CV181X) || defined(CV180X)) && \
-    !defined(_MIDDLEWARE_V3_)
+#if (defined(__CV181X__) || defined(__CV180X__)) && !defined(_MIDDLEWARE_V3_)
 #include <linux/cvi_comm_vpss.h>
 #include <linux/cvi_type.h>
 #else

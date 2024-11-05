@@ -485,7 +485,7 @@ static CVI_S32 CheckInputCfg(chnInputCfg *pIc) {
 
   return 0;
 }
-#ifndef CV180X
+#ifndef __CV180X__
 static CVI_S32 InitVO(const CVI_U32 width, const CVI_U32 height, SAMPLE_VO_CONFIG_S *stVoConfig) {
   CVI_S32 s32Ret = CVI_SUCCESS;
   s32Ret = SAMPLE_COMM_VO_GetDefConfig(stVoConfig);
@@ -684,7 +684,7 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
                    OutputContext *context) {
   context->type = outputType;
   switch (outputType) {
-#ifndef CV180X
+#ifndef __CV180X__
     case OUTPUT_TYPE_PANEL: {
       CVI_S32 s32Ret = CVI_SUCCESS;
       printf("Init panel\n");
@@ -713,7 +713,7 @@ CVI_S32 InitOutput(OutputType outputType, CVI_S32 frameWidth, CVI_S32 frameHeigh
 }
 
 static CVI_S32 panel_send_frame(VIDEO_FRAME_INFO_S *stVencFrame, OutputContext *context) {
-#ifdef CV180X
+#ifdef __CV180X__
   return 0;
 #else
   CVI_S32 s32Ret = CVI_VO_SendFrame(context->voLayer, context->voChn, stVencFrame, -1);
