@@ -7,15 +7,9 @@
 namespace cvitdl {
 
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
-#ifndef CONFIG_ALIOS
-  std::unique_ptr<CvimodelInfo> mp_mi(new CvimodelInfo());
-  mp_mi->conf.debug_mode = false;
-  mp_mi->conf.input_mem_type = input_mem_type;
-#else
   mp_mi = std::unique_ptr<CvimodelInfo>(new CvimodelInfo);
   mp_mi->conf.debug_mode = false;
   mp_mi->conf.input_mem_type = input_mem_type;
-#endif
 
   InputPreParam first_in_pre_param;
   std::fill(std::begin(first_in_pre_param.factor), std::end(first_in_pre_param.factor), 0.0f);

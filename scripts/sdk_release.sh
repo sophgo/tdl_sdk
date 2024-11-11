@@ -120,18 +120,18 @@ ninja -j8 || exit 1
 ninja install || exit 1
 popd
 
-echo "trying to build sample in released folder."
-cp -rf $CVI_TDL_ROOT/scripts/compile_sample.sh ${AI_SDK_INSTALL_PATH}/sample
-pushd "${AI_SDK_INSTALL_PATH}/sample"
-    KERNEL_ROOT=$KERNEL_ROOT\
-    MW_PATH=$MW_PATH\
-    TPU_PATH=$TPU_SDK_INSTALL_PATH\
-    IVE_PATH=$IVE_SDK_INSTALL_PATH\
-    USE_TPU_IVE=$USE_TPU_IVE\
-    CHIP=$CHIP_ARCH\
-    SDK_VER=$SDK_VER\
-    source compile_sample.sh || exit 1
-popd
+# echo "trying to build sample in released folder."
+# cp -rf $CVI_TDL_ROOT/scripts/compile_sample.sh ${AI_SDK_INSTALL_PATH}/sample
+# pushd "${AI_SDK_INSTALL_PATH}/sample"
+#     KERNEL_ROOT=$KERNEL_ROOT\
+#     MW_PATH=$MW_PATH\
+#     TPU_PATH=$TPU_SDK_INSTALL_PATH\
+#     IVE_PATH=$IVE_SDK_INSTALL_PATH\
+#     USE_TPU_IVE=$USE_TPU_IVE\
+#     CHIP=$CHIP_ARCH\
+#     SDK_VER=$SDK_VER\
+#     source compile_sample.sh || exit 1
+# popd
 
 if [[ "$BUILD_TYPE" == "Release" ]]; then
     # Clone doc to aisdk

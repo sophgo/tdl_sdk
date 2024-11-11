@@ -213,7 +213,7 @@ set(UnitTest_SRCS
 
 set(UnitTest_SRCS
   ${UnitTest_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../modules/test_and_eval/utils/sys_utils.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../sample/utils/sys_utils.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
@@ -228,9 +228,9 @@ elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")
 elseif("${CVI_PLATFORM}" STREQUAL "CV182X" )
   set(DAILY_REGRESSION_ASSETS "assets_182x")
-elseif("${CVI_PLATFORM}" STREQUAL "__CV181X__" )
+elseif("${CVI_PLATFORM}" STREQUAL "CV181X" )
   set(DAILY_REGRESSION_ASSETS "assets_181x")
-elseif("${CVI_PLATFORM}" STREQUAL "__CV180X__" )
+elseif("${CVI_PLATFORM}" STREQUAL "CV180X" )
   set(DAILY_REGRESSION_ASSETS "assets_180x")
 endif()
 
