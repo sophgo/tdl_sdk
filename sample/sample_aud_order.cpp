@@ -16,7 +16,6 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include "acodec.h"
 
 #define ACODEC_ADC "/dev/cvitekaadc"
 
@@ -38,6 +37,10 @@ static const char *enumStr[] = {"无指令", "小爱小爱", "拨打电话", "�
 static const char *enumStr_juntaida[] = {
     "无指令",   "打开前录", "打开后录", "关闭屏幕", "打开屏幕", "紧急录像",
     "我要拍照", "关闭录音", "打开录音", "打开wifi", "关闭wifi",
+};
+
+static const char *enumStr_help_me[] = {
+    "无指令", "help 911", "help me", "emergency", "尖叫声", "枪声", "玻璃声",
 };
 
 static std::vector<uint8_t *> g_pack_buf_vec;
@@ -170,6 +173,9 @@ void *thread_infer(void *arg) {
     if (ret == CVI_TDL_SUCCESS) {
       if (g_class_num == 5) {
         printf("class: %s,infer ts(ms):%.2f,fps:%.2f\n", enumStr[pre_label + start_index],
+               ts_avg * 1000, 1.0 / frame_sec);
+      } else if (g_class_num == 7) {
+        printf("class: %s,infer ts(ms):%.2f,fps:%.2f\n", enumStr_help_me[pre_label + start_index],
                ts_avg * 1000, 1.0 / frame_sec);
       } else {
         printf("class: %s,infer ts(ms):%.2f,fps:%.2f\n", enumStr_juntaida[pre_label + start_index],
