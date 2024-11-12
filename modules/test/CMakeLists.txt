@@ -23,10 +23,9 @@ function(buildninstallcpp)
 endfunction(buildninstallcpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/core/core
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/core/utils)
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../core
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../core/core
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../core/utils)
 
 set(REG_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/include

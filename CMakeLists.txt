@@ -150,7 +150,8 @@ include_directories(${IVE_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
 
 add_subdirectory(modules)
-add_subdirectory(sample)
+# add_subdirectory(sample)
+add_subdirectory(sample_bak)
 
 if(NOT DEFINED NO_OPENCV)
 add_subdirectory(regression)
