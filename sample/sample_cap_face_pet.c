@@ -69,6 +69,7 @@ static IOData data_buffer[OUTPUT_BUFFER_SIZE];
 
 static cvtdl_face_t g_face_meta_0;   // face
 static cvtdl_object_t g_obj_meta_0;  // person
+static cvtdl_object_t g_pet_meta_0;  // pet
 char g_out_dir[128];
 uint64_t g_frmcounter = 0;
 int COUNT_ALIVE(face_capture_t *face_cpt_info);
@@ -219,7 +220,7 @@ static void *pImageWrite(void *args) {
 }
 
 void visualize_frame(cvitdl_service_handle_t service_handle, VIDEO_FRAME_INFO_S stVOFrame,
-                     cvtdl_face_t *face_meta_0, cvtdl_object_t *obj_meta_0) {
+                     cvtdl_face_t *face_meta_0, cvtdl_object_t *obj_meta_0, cvtdl_object_t *pet_meta_0) {
   // cvitdl_service_handle_t service_handle = vo_args->service_handle;
 
   size_t image_size = stVOFrame.stVFrame.u32Length[0] + stVOFrame.stVFrame.u32Length[1] +
@@ -283,6 +284,20 @@ void visualize_frame(cvitdl_service_handle_t service_handle, VIDEO_FRAME_INFO_S 
                                     obj_meta_0->info[i].bbox.y1, &stVOFrame, 0, 200, 0);
   }
 
+  for (int i = 0; i < pet_meta_0->size; i++) {
+
+    cvtdl_service_brush_t brushi;
+    brushi.color.r = g_draw_clrs[0];
+    brushi.color.g = g_draw_clrs[1];
+    brushi.color.b = g_draw_clrs[2];
+    brushi.size = 4;
+    
+    cvtdl_object_t pet_mete_tdl = *pet_meta_0;
+    pet_mete_tdl.size = 1;
+    pet_mete_tdl.info = &pet_meta_0->info[i];
+    CVI_TDL_Service_ObjectDrawRect(service_handle, &pet_mete_tdl, &stVOFrame, false, brushi);
+  }
+
   CVI_SYS_Munmap((void *)stVOFrame.stVFrame.pu8VirAddr[0], image_size);
   stVOFrame.stVFrame.pu8VirAddr[0] = NULL;
   stVOFrame.stVFrame.pu8VirAddr[1] = NULL;
@@ -300,8 +315,10 @@ static void *pVideoOutput(void *args) {
 
   cvtdl_face_t face_meta_0;
   cvtdl_object_t obj_meta_0;
+  cvtdl_object_t pet_meta_0;
   memset(&face_meta_0, 0, sizeof(cvtdl_face_t));
   memset(&obj_meta_0, 0, sizeof(cvtdl_object_t));
+  memset(&pet_meta_0, 0, sizeof(cvtdl_object_t));
 
   /*tdl_handle_t tdl_handle = vo_args->tdl_handle;
   bool do_ped = strlen(vo_args->sz_ped_model)>0;
@@ -328,8 +345,9 @@ static void *pVideoOutput(void *args) {
       MutexAutoLock(VOMutex, lock);
       CVI_TDL_CopyFaceMeta(&g_face_meta_0, &face_meta_0);
       CVI_TDL_CopyObjectMeta(&g_obj_meta_0, &obj_meta_0);
+      CVI_TDL_CopyObjectMeta(&g_pet_meta_0, &pet_meta_0);
     }
-    visualize_frame(service_handle, stVOFrame, &face_meta_0, &obj_meta_0);
+    visualize_frame(service_handle, stVOFrame, &face_meta_0, &obj_meta_0, &pet_meta_0);
     s32Ret = SAMPLE_TDL_Send_Frame_RTSP(&stVOFrame, vo_args->p_mv_ctx);
     s32Ret = CVI_VPSS_ReleaseChnFrame(grp_id, vo_chn, &stVOFrame);
     if (s32Ret != CVI_SUCCESS) {
@@ -619,10 +637,12 @@ int main(int argc, char *argv[]) {
       MutexAutoLock(VOMutex, lock);
       CVI_TDL_Free(&g_face_meta_0);
       CVI_TDL_Free(&g_obj_meta_0);
+      CVI_TDL_Free(&g_pet_meta_0);
       // printf("CVI_TDL_CopyFaceMeta start\n");
       CVI_TDL_CopyFaceMeta(&app_handle->face_cpt_info->last_faces, &g_face_meta_0);
       // printf("CVI_TDL_CopyFaceMeta end\n");
       CVI_TDL_CopyObjectMeta(&app_handle->face_cpt_info->last_objects, &g_obj_meta_0);
+      CVI_TDL_CopyObjectMeta(&app_handle->face_cpt_info->pet_objects, &g_pet_meta_0);
       // RESTRUCTURING_FACE_META(app_handle->face_cpt_info, &g_face_meta_0, &g_face_meta_1);
       // printf("CVI_TDL_CopyObjectMeta end\n");
     }

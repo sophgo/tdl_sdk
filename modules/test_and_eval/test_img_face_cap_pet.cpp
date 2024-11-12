@@ -226,6 +226,21 @@ void export_tracking_info(face_capture_t *p_cap_info, const std::string &str_dst
     fwrite(szinfo, 1, strlen(szinfo), fp);
     // }
   }
+
+  cvtdl_object_t *p_objinfo2 = &(p_cap_info->last_objects);
+
+  for (uint32_t i = 0; i < p_objinfo2->size; i++) {
+    char szinfo[128];
+    float ctx = (p_objinfo2->info[i].bbox.x1 + p_objinfo2->info[i].bbox.x2) / 2 / imgw;
+    float cty = (p_objinfo2->info[i].bbox.y1 + p_objinfo2->info[i].bbox.y2) / 2 / imgh;
+    float ww = (p_objinfo2->info[i].bbox.x2 - p_objinfo2->info[i].bbox.x1) / imgw;
+    float hh = (p_objinfo2->info[i].bbox.y2 - p_objinfo2->info[i].bbox.y1) / imgh;
+    sprintf(szinfo, "%d %f %f %f %f %d %.3f\n", lb, ctx, cty, ww, hh,
+            int(p_objinfo2->info[i].unique_id), p_objinfo2->info[i].bbox.score);
+
+    fwrite(szinfo, 1, strlen(szinfo), fp);
+  }
+
   std::cout << "write done\n";
   fclose(fp);
 }
@@ -465,9 +480,8 @@ int main(int argc, char *argv[]) {
 
   int num_append = 0;
   PIXEL_FORMAT_E img_format = PIXEL_FORMAT_RGB_888_PLANAR;  // IVE_IMAGE_TYPE_U8C3_PACKAGE;
-  for (int img_idx = 0; img_idx < atoi(argv[3]); img_idx++) {
+  for (int img_idx = atoi(argv[3]); img_idx < atoi(argv[4]); img_idx++) {
     if (bExit) break;
-    std::cout << "processing:" << img_idx << "/1100\n";
     char szimg[256];
     sprintf(szimg, "%s/%08d.jpg", str_image_root.c_str(), img_idx);
     std::cout << "processing:" << img_idx << "/1100,path:" << szimg << std::endl;

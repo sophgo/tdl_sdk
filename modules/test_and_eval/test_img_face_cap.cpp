@@ -226,6 +226,21 @@ void export_tracking_info(face_capture_t *p_cap_info, const std::string &str_dst
     fwrite(szinfo, 1, strlen(szinfo), fp);
     // }
   }
+
+  cvtdl_object_t *p_objinfo2 = &(p_cap_info->last_objects);
+
+  for (uint32_t i = 0; i < p_objinfo2->size; i++) {
+    char szinfo[128];
+    float ctx = (p_objinfo2->info[i].bbox.x1 + p_objinfo2->info[i].bbox.x2) / 2 / imgw;
+    float cty = (p_objinfo2->info[i].bbox.y1 + p_objinfo2->info[i].bbox.y2) / 2 / imgh;
+    float ww = (p_objinfo2->info[i].bbox.x2 - p_objinfo2->info[i].bbox.x1) / imgw;
+    float hh = (p_objinfo2->info[i].bbox.y2 - p_objinfo2->info[i].bbox.y1) / imgh;
+    sprintf(szinfo, "%d %f %f %f %f %d %.3f\n", lb, ctx, cty, ww, hh,
+            int(p_objinfo2->info[i].unique_id), p_objinfo2->info[i].bbox.score);
+
+    fwrite(szinfo, 1, strlen(szinfo), fp);
+  }
+  
   std::cout << "write done\n";
   fclose(fp);
 }
