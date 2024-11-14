@@ -98,7 +98,6 @@ class Core {
   Core(const Core &) = delete;
   Core &operator=(const Core &) = delete;
 
-  bm_handle_t bm_handle;
   virtual ~Core() = default;
   int modelOpen(const char *filepath);
   int getInputMemType();
@@ -120,22 +119,22 @@ class Core {
   virtual void setModelThreshold(const float &threshold) { m_model_threshold = threshold; };
   const float &getModelNmsThreshold() { return m_model_nms_threshold; }
   virtual void setModelNmsThreshold(const float &threshold) { m_model_nms_threshold = threshold; };
-  const InputPreParam &get_preparam() { return m_preprocess_param[0]; }
-  virtual void set_preparam(const InputPreParam &pre_param) { m_preprocess_param[0] = pre_param; }
+  const InputPreParam &getPreparam() { return m_preprocess_param[0]; }
+  virtual void setPreparam(const InputPreParam &pre_param) { m_preprocess_param[0] = pre_param; }
 
   bool isInitialized();
   void cleanupError();
   virtual bool allowExportChannelAttribute() const { return false; }
-  void setUseMmap(bool mmap);
-  void setraw(bool raw);
-  virtual int after_inference();
-  void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
+
+  void setRaw(bool raw);
+  virtual int afterInference();
+  void setPerfEvalInterval(int interval) { model_timer_.Config("", interval); }
   int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,
                     uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
                     VPSS_SCALE_COEF_E reize_mode = VPSS_SCALE_COEF_BICUBIC);
   int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
                       uint32_t rh, PIXEL_FORMAT_E enDstFormat);
-  VpssEngine *get_vpss_instance() { return mp_vpss_inst; }
+  VpssEngine *getVpssInstance() { return mp_vpss_inst; }
 
  protected:
   virtual int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
@@ -145,7 +144,7 @@ class Core {
   /*
    * Input/Output getter functions
    */
-  void input_preprocess_config(const bm_net_info_t *net_info,
+  void inputPreprocessConfig(const bm_net_info_t *net_info,
                                std::vector<VPSSConfig> &m_vpss_config);
   void setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
                              std::map<std::string, TensorInfo> &tensor_info);
@@ -215,6 +214,7 @@ class Core {
   // External handle
   VpssEngine *mp_vpss_inst = nullptr;
   Timer model_timer_;
+  bm_handle_t bm_handle;
 
  protected:
   // vpss related control
@@ -235,8 +235,8 @@ class Core {
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;
   const bm_net_info_t *net_info;
-  bool use_mmap;
   bool raw = false;
   uint8_t *register_temp_buffer = nullptr;
 };
 }  // namespace cvitdl
+

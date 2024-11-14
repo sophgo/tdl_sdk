@@ -20,8 +20,7 @@
 
 namespace cvitdl {
 
-Clip_Image::Clip_Image() : Core(CVI_MEM_DEVICE) {
-  setUseMmap(false);
+Clip_Image::Clip_Image() : Core(CVI_MEM_SYSTEM) {
   // m_preprocess_param[0].factor[0] = 0.0145984266;
   // m_preprocess_param[0].factor[1] = 0.0150077685;
   // m_preprocess_param[0].factor[2] = 0.0142200657;

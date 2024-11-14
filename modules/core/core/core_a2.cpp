@@ -9,12 +9,6 @@ Core::Core(CVI_MEM_TYPE_E input_mem_type) {
   mp_mi = std::unique_ptr<CvimodelInfo>(new CvimodelInfo);
   mp_mi->conf.debug_mode = false;
   mp_mi->conf.input_mem_type = input_mem_type;
-  if (input_mem_type == CVI_MEM_SYSTEM) {
-    use_mmap = false;
-  } else {
-    use_mmap = true;
-  }
-
   InputPreParam first_in_pre_param;
   std::fill(std::begin(first_in_pre_param.factor), std::end(first_in_pre_param.factor), 0.0f);
   std::fill(std::begin(first_in_pre_param.mean), std::end(first_in_pre_param.mean), 0.0f);
@@ -29,8 +23,7 @@ Core::Core(CVI_MEM_TYPE_E input_mem_type) {
 Core::Core() : Core(CVI_MEM_SYSTEM) {}
 
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
-void Core::setUseMmap(bool mmap) { use_mmap = mmap; }
-void Core::setraw(bool raw) { this->raw = raw; }
+void Core::setRaw(bool raw) { this->raw = raw; }
 
 void Core::cleanupError() {
   if (mp_mi->handle != nullptr) {
@@ -107,7 +100,7 @@ int Core::modelOpen(const char *filepath) {
 
   /* only alloc output device mem */
   auto &stage = net_info->stages[0];
-  if (use_mmap) {
+  if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
     for (auto i = 0; i < mp_mi->in.num; i++) {
       in_tensor[i].dtype = net_info->input_dtypes[i];
       in_tensor[i].st_mode = BM_STORE_1N;
@@ -145,7 +138,7 @@ int Core::modelOpen(const char *filepath) {
 
   /* input preprocess param */
   m_vpss_config.clear();
-  input_preprocess_config(net_info, m_vpss_config);
+  inputPreprocessConfig(net_info, m_vpss_config);
 
   ret = onModelOpened();
   if (ret != CVI_TDL_SUCCESS) {
@@ -156,7 +149,7 @@ int Core::modelOpen(const char *filepath) {
   return 0;
 }
 
-void Core::input_preprocess_config(const bm_net_info_t *net_info,
+void Core::inputPreprocessConfig(const bm_net_info_t *net_info,
                                    std::vector<VPSSConfig> &m_vpss_config) {
   bool use_quantize_scale;
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
@@ -259,7 +252,7 @@ void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_
   }
 }
 
-int Core::after_inference() { return CVI_TDL_SUCCESS; }
+int Core::afterInference() { return CVI_TDL_SUCCESS; }
 
 int Core::modelClose() {
   int ret = CVI_TDL_SUCCESS;
@@ -269,7 +262,7 @@ int Core::modelClose() {
     return CVI_TDL_FAILURE;
   }
 
-  if (!use_mmap) {
+  if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
     for (int i = 0; i < net_info->input_num; ++i) {
       bm_free_device(bm_handle, mp_mi->in.tensors[i].device_mem);
     }
@@ -605,7 +598,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
         frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
 
     auto size = bmrt_tensor_bytesize(&mp_mi->in.tensors[i]);
-    if (use_mmap) {
+    if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
       bm_set_device_mem(&(mp_mi->in.tensors[i].device_mem), size,
                         (unsigned long long)frame->stVFrame.u64PhyAddr[0]);
 

@@ -13,7 +13,7 @@ class LicensePlateRecognitionBase : public Core {
   virtual ~LicensePlateRecognitionBase(){};
   virtual int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *object_meta) = 0;
   virtual bool allowExportChannelAttribute() const override { return false; }
-  int after_inference() { return 0; }
+  int afterInference() { return 0; }
 };
 
 }  // namespace cvitdl

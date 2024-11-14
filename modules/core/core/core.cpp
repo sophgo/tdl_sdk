@@ -45,7 +45,7 @@ Core::Core() : Core(CVI_MEM_SYSTEM) {}
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
 
 #ifndef CONFIG_ALIOS
-void Core::setraw(bool raw) { this->raw = raw; }
+void Core::setRaw(bool raw) { this->raw = raw; }
 #endif
 
 int Core::modelOpen(const char *filepath) {

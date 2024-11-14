@@ -90,24 +90,23 @@ class Core {
   virtual void setModelNmsThreshold(const float &threshold) { m_model_nms_threshold = threshold; };
   // @todo
   // 正常来说get方法就应该返回const常量不被修改，但仓库demo中经常会使用get获取原本参数，修改部分后再set回去
-  const InputPreParam &get_preparam() { return m_preprocess_param[0]; }
-  virtual void set_preparam(const InputPreParam &pre_param) { m_preprocess_param[0] = pre_param; }
+  const InputPreParam &getPreparam() { return m_preprocess_param[0]; }
+  virtual void setPreparam(const InputPreParam &pre_param) { m_preprocess_param[0] = pre_param; }
 
-  int setUseMmap(bool mmap) { return true; }
-  virtual int after_inference() { return CVI_TDL_SUCCESS; }
+  virtual int afterInference() { return CVI_TDL_SUCCESS; }
   bool isInitialized();
   // TODO:remove this interface
   virtual bool allowExportChannelAttribute() const { return false; }
 
-  void set_perf_eval_interval(int interval) { model_timer_.Config("", interval); }
+  void setPerfEvalInterval(int interval) { model_timer_.Config("", interval); }
   int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,
                     uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
                     VPSS_SCALE_COEF_E reize_mode = VPSS_SCALE_COEF_BICUBIC);
   int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
                       uint32_t rh, PIXEL_FORMAT_E enDstFormat);
-  VpssEngine *get_vpss_instance() { return mp_vpss_inst; }
+  VpssEngine *getVpssInstance() { return mp_vpss_inst; }
 #ifndef CONFIG_ALIOS
-  void setraw(bool raw);
+  void setRaw(bool raw);
 #endif
 
  protected:
