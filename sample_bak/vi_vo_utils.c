@@ -140,7 +140,7 @@ void DestroyVideoSystem(VideoSystemContext *vs_ctx) {
 
 CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S tdlSize,
                PIXEL_FORMAT_E tdlFormat) {
-#ifndef CV186X
+#ifndef __CV186X__
   VPSS_MODE_E enVPSSMode = VPSS_MODE_DUAL;
 #endif
 
@@ -334,7 +334,7 @@ CVI_S32 InitVI(SAMPLE_VI_CONFIG_S *pstViConfig, SIZE_S *viSize, SIZE_S tdlSize,
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);
     return s32Ret;
   }
-#ifndef CV186X
+#ifndef __CV186X__
   s32Ret = CVI_SYS_SetVPSSMode(enVPSSMode);
   if (s32Ret != CVI_SUCCESS) {
     SAMPLE_PRT("system init failed with %#x\n", s32Ret);

@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef CV186X
+#ifndef __CV186X__
 #include <cvimath/cvimath.h>
 #endif
 #include "core/utils/vpss_helper.h"

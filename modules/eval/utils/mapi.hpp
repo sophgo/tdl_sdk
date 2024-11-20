@@ -365,7 +365,7 @@ static CVI_S32 set_vpss_config(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *stVpssGrpAttr,
   } else {
     return -1;
   }
-#ifndef CV186X
+#ifndef __CV186X__
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
 #endif
 
@@ -388,7 +388,7 @@ int init_vpss(int in_width, int in_height, PreprocessArg *arg) {
   stVpssGrpAttr.enPixelFormat = PIXEL_FORMAT_BGR_888;
   stVpssGrpAttr.u32MaxW = vpssgrp_width;
   stVpssGrpAttr.u32MaxH = vpssgrp_height;
-#ifndef CV186X
+#ifndef __CV186X__
   // only for test here. u8VpssDev should be decided by VPSS_MODE and usage.
   stVpssGrpAttr.u8VpssDev = 0;
 #endif

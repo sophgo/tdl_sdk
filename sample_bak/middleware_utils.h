@@ -78,7 +78,7 @@ typedef struct {
 typedef struct {
   SAMPLE_TDL_VPSS_CONFIG_S astVpssConfig[VPSS_MAX_GRP_NUM];
   CVI_U32 u32VpssGrpCount;
-#ifndef CV186X
+#ifndef __CV186X__
   VPSS_MODE_S stVpssMode;
 #endif
 } SAMPLE_TDL_VPSS_POOL_CONFIG_S;

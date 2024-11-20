@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef CV186X
+#ifdef __CV186X__
 #include "core_a2.hpp"
 #else
 #include "core.hpp"

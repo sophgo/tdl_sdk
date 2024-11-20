@@ -1425,7 +1425,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_Raw_Image_Classification(const cvitdl_handle_t handle
                                                     VIDEO_FRAME_INFO_S *frame,
                                                     cvtdl_class_meta_t *obj_meta);
 
-#ifdef CV186X
+#ifdef __CV186X__
 /**
  * @brief isp image classification
  *

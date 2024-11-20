@@ -58,7 +58,7 @@
 #include "segmentation/deeplabv3.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
 #include "super_resolution/super_resolution.hpp"
-#ifdef CV186X
+#ifdef __CV186X__
 #include "isp_image_classification/isp_image_classification.hpp"
 #endif
 #ifndef NO_OPENCV
@@ -188,7 +188,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
     {CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG, CREATOR(YoloV8Seg)},
 #endif
-#ifdef CV186X
+#ifdef __CV186X__
     {CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, CREATOR(IspImageClassification)},
 #endif
     {CVI_TDL_SUPPORTED_MODEL_IRLIVENESS, CREATOR(IrLiveness)},
@@ -445,7 +445,7 @@ CVI_S32 CVI_TDL_OpenModel(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E conf
   return CVI_TDL_SUCCESS;
 }
 
-#ifndef CV186X
+#ifndef __CV186X__
 CVI_S32 CVI_TDL_OpenModel_FromBuffer(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
                                      int8_t *buf, uint32_t size) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
@@ -1108,7 +1108,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_OCR_Recognition, OCRRecognition,
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_LSTR_Det, LSTR, CVI_TDL_SUPPORTED_MODEL_LSTR, cvtdl_lane_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_IrLiveness, IrLiveness, CVI_TDL_SUPPORTED_MODEL_IRLIVENESS,
                       cvtdl_face_t *)
-#ifdef CV186X
+#ifdef __CV186X__
 DEFINE_INF_FUNC_F1_P2(CVI_TDL_Isp_Image_Classification, IspImageClassification,
                       CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, cvtdl_class_meta_t *,
                       cvtdl_isp_meta_t *)

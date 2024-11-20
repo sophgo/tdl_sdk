@@ -37,7 +37,7 @@ void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir, std:
 }
 
 int64_t CVI_TDLTestSuite::get_ion_memory_size() {
-#ifdef CV186X
+#ifdef __CV186X__
   const char ION_SUMMARY_PATH[255] = "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem";
 #else
   const char ION_SUMMARY_PATH[255] = "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem";

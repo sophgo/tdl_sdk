@@ -261,7 +261,7 @@ int init_middleware(SAMPLE_TDL_MW_CONTEXT *p_context) {
 
   // Setup VPSS Grp0
   stMWConfig.stVPSSPoolConfig.u32VpssGrpCount = 1;
-#ifndef CV186X
+#ifndef __CV186X__
   stMWConfig.stVPSSPoolConfig.stVpssMode.aenInput[0] = VPSS_INPUT_MEM;
   stMWConfig.stVPSSPoolConfig.stVpssMode.enMode = VPSS_MODE_DUAL;
   stMWConfig.stVPSSPoolConfig.stVpssMode.ViPipe[0] = 0;
