@@ -800,7 +800,7 @@ CVI_S32 CVI_TDL_GetVpssChnConfig(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
         if (ret != CVI_TDL_SUCCESS)                                                            \
           return ret;                                                                          \
         else                                                                                   \
-          return obj->afterInference();                                                       \
+          return obj->afterInference();                                                        \
       }                                                                                        \
     } else {                                                                                   \
       LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
@@ -826,7 +826,7 @@ CVI_S32 CVI_TDL_GetVpssChnConfig(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
         if (ret != CVI_TDL_SUCCESS)                                                            \
           return ret;                                                                          \
         else                                                                                   \
-          return obj->afterInference();                                                       \
+          return obj->afterInference();                                                        \
       }                                                                                        \
     } else {                                                                                   \
       LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
@@ -852,7 +852,7 @@ CVI_S32 CVI_TDL_GetVpssChnConfig(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
         if (ret != CVI_TDL_SUCCESS)                                                            \
           return ret;                                                                          \
         else                                                                                   \
-          return obj->afterInference();                                                       \
+          return obj->afterInference();                                                        \
       }                                                                                        \
     } else {                                                                                   \
       LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
@@ -878,7 +878,7 @@ CVI_S32 CVI_TDL_GetVpssChnConfig(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
         if (ret != CVI_TDL_SUCCESS)                                                            \
           return ret;                                                                          \
         else                                                                                   \
-          return obj->afterInference();                                                       \
+          return obj->afterInference();                                                        \
       }                                                                                        \
     } else {                                                                                   \
       LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \

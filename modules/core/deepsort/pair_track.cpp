@@ -802,12 +802,11 @@ CVI_S32 DeepSORT::track_fuse(cvtdl_object_t *ped, cvtdl_face_t *face, cvtdl_trac
     int pair_face_idx = cls_objs[ped_label][det_idx].pair_obj_id;
     uint64_t pair_face_trackid = k_trackers[t_idx].get_pair_trackid();
 
-    if (face_track_indices.count(pair_face_trackid) > 0){
-
+    if (face_track_indices.count(pair_face_trackid) > 0) {
       stRect box_face = extract_box(cls_objs[face_label][face_track_indices[pair_face_trackid]]);
       stRect box_ped = tlwh2rect(k_trackers[t_idx].getBBox_TLWH());
 
-      if(self_iou(box_face, box_ped) < 0.8){
+      if (self_iou(box_face, box_ped) < 0.8) {
         LOGI("skip det_idx:%d, track_id: %d\n", det_idx, k_trackers[t_idx].id);
         continue;
       }

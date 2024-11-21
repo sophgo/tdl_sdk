@@ -1467,7 +1467,7 @@ MatchResult DeepSORT::match(const std::vector<BBOX> &BBoxes, const std::vector<F
       BBOX tracker_box = k_trackers[tracker_idx].getBBox_TLWH();
       BBOX det_box = BBoxes[bbox_idx];
       float matched_iou = cal_iou_bbox(tracker_box, det_box);
-      if (cost_matrix(i, bbox_j) < max_distance  && matched_iou > 0.3) {
+      if (cost_matrix(i, bbox_j) < max_distance && matched_iou > 0.3) {
         matched_tracker_i[i] = true;
         matched_bbox_j[bbox_j] = true;
         result_.matched_pairs.push_back(std::make_pair(tracker_idx, bbox_idx));

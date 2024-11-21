@@ -240,7 +240,7 @@ void export_tracking_info(face_capture_t *p_cap_info, const std::string &str_dst
 
     fwrite(szinfo, 1, strlen(szinfo), fp);
   }
-  
+
   std::cout << "write done\n";
   fclose(fp);
 }

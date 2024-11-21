@@ -80,13 +80,14 @@ void assign_object(const cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_in
 
 #ifdef DEBUG_TRACK
 
-  printf("last_objects: %d, last_faces: %d, lhead_meta:%d\n",face_cpt_info->last_objects.size,
-        face_cpt_info->last_faces.size, head_meta.size );
+  printf("last_objects: %d, last_faces: %d, lhead_meta:%d\n", face_cpt_info->last_objects.size,
+         face_cpt_info->last_faces.size, head_meta.size);
 
   for (uint32_t i = 0; i < face_cpt_info->last_objects.size; i++) {
-    printf("last_objects: %.4f, %.4f, %.4f, %.4f, %d, %.4f\n", face_cpt_info->last_objects.info[i].bbox.x1,
-           face_cpt_info->last_objects.info[i].bbox.y1, face_cpt_info->last_objects.info[i].bbox.x2,
-           face_cpt_info->last_objects.info[i].bbox.y2, face_cpt_info->last_objects.info[i].classes,
+    printf("last_objects: %.4f, %.4f, %.4f, %.4f, %d, %.4f\n",
+           face_cpt_info->last_objects.info[i].bbox.x1, face_cpt_info->last_objects.info[i].bbox.y1,
+           face_cpt_info->last_objects.info[i].bbox.x2, face_cpt_info->last_objects.info[i].bbox.y2,
+           face_cpt_info->last_objects.info[i].classes,
            face_cpt_info->last_objects.info[i].bbox.score);
   }
 
@@ -96,8 +97,9 @@ void assign_object(const cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_in
            face_cpt_info->last_faces.info[i].bbox.y2, face_cpt_info->last_faces.info[i].bbox.score);
   }
   for (uint32_t i = 0; i < head_meta.size; i++) {
-    printf("head_meta: %.4f, %.4f, %.4f, %.4f, %.4f\n", head_meta.info[i].bbox.x1, head_meta.info[i].bbox.y1,
-           head_meta.info[i].bbox.x2, head_meta.info[i].bbox.y2, head_meta.info[i].bbox.score);
+    printf("head_meta: %.4f, %.4f, %.4f, %.4f, %.4f\n", head_meta.info[i].bbox.x1,
+           head_meta.info[i].bbox.y1, head_meta.info[i].bbox.x2, head_meta.info[i].bbox.y2,
+           head_meta.info[i].bbox.score);
   }
 #endif
 
