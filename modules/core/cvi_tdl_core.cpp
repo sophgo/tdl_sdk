@@ -89,7 +89,6 @@
 #include "utils/clip_postprocess.hpp"
 #include "utils/core_utils.hpp"
 #include "utils/token.hpp"
-#include "version.hpp"
 
 using namespace std;
 using namespace cvitdl;
@@ -377,7 +376,7 @@ CVI_S32 CVI_TDL_CreateHandle2(cvitdl_handle_t *handle, const VPSS_GRP vpssGroupI
   ctx->ive_handle = NULL;
   ctx->vec_vpss_engine.push_back(new VpssEngine(vpssGroupId, vpssDev));
   const char timestamp[] = __DATE__ " " __TIME__;
-  LOGI("cvitdl_handle_t is created, version %s-%s\n", CVI_TDL_TAG, timestamp);
+  LOGI("cvitdl_handle_t is created, %s\n", timestamp);
   *handle = ctx;
   return CVI_TDL_SUCCESS;
 }
@@ -386,7 +385,7 @@ CVI_S32 CVI_TDL_CreateHandle3(cvitdl_handle_t *handle) {
   cvitdl_context_t *ctx = new cvitdl_context_t;
   ctx->ive_handle = NULL;
   const char timestamp[] = __DATE__ " " __TIME__;
-  LOGI("cvitdl_handle_t is created, version %s-%s\n", CVI_TDL_TAG, timestamp);
+  LOGI("cvitdl_handle_t is created, %s\n", timestamp);
   *handle = ctx;
   return CVI_TDL_SUCCESS;
 }

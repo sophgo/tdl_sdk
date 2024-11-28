@@ -5,9 +5,6 @@ if("${CMAKE_BUILD_TYPE}" MATCHES "(SDKRelease|Release)")
   add_compile_options(-fvisibility=hidden)
 endif()
 
-set(CVI_TDL_TAG ${LATEST_TAG})
-configure_file(version.hpp.in version.hpp @ONLY)
-
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/log
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -124,4 +121,4 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app DESTINATION
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cvi_tdl
         PATTERN "cvi_tdl_app" EXCLUDE
         PATTERN "cvi_tdl_experimental.h" EXCLUDE
-        PATTERN "cvi_tdl_log.hpp" EXCLUDE)
+        PATTERN "cvi_tdl_log.hpp" EXCLUDE)   
