@@ -73,10 +73,6 @@ MPI_PATH="$TOP_DIR"/cvi_mpi
 TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
 IVE_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_ive_sdk
 
-# get repo user name
-REPO_USER="$(git config user.name)"
-echo "repo user : $REPO_USER"
-
 # init build working dir
 if [ -d "${BUILD_WORKING_DIR}" ]; then
     echo "Cleanup tmp folder."
@@ -135,11 +131,11 @@ $CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                   -DKERNEL_ROOT=$KERNEL_ROOT \
                                   -DUSE_TPU_IVE=$USE_TPU_IVE \
                                   -DBUILD_DOWNLOAD_DIR=$BUILD_DOWNLOAD_DIR \
-                                  -DREPO_USER=$REPO_USER \
                                   -DCONFIG_DUAL_OS=$CONFIG_DUAL_OS \
                                   -DBUILD_OPTION=$BUILD_OPTION \
                                   -DTARGET_MACHINE=$TARGET_MACHINE \
-                                  -DMW_VER=$MW_VER
+                                  -DMW_VER=$MW_VER \
+                                  -DFTP_SERVER_IP=$FTP_SERVER_IP
 
 
 ninja -j8 || return 1

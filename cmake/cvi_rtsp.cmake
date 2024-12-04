@@ -18,7 +18,7 @@ endif()
 if(EXISTS $ENV{TOP_DIR}/cvi_rtsp)
   set(PROJECT_URL "file://$ENV{TOP_DIR}/cvi_rtsp")
 else()
-  set(PROJECT_URL "ssh://${REPO_USER}${DL_SERVER_IP}:29418/cvitek/cvi_rtsp")
+  set(PROJECT_URL "ssh://${DL_SERVER_IP}:29418/cvitek/cvi_rtsp")
 endif()
 
 set(SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/cvi_rtsp/src/cvi_rtsp)
