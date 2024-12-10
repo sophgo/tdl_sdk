@@ -139,9 +139,10 @@ $CMAKE_BIN -G Ninja $CVI_TDL_ROOT -DCVI_PLATFORM=$CHIP_ARCH \
                                   -DMW_VER=$MW_VER \
                                   -DFTP_SERVER_IP=$FTP_SERVER_IP
 
+test $? -ne 0 && echo "cmake tdl_sdk failed !!" && popd && exit 1
 
-ninja -j8 || return 1
-ninja install || return 1
+ninja -j8 || exit 1
+ninja install || exit 1
 popd
 # build end
 

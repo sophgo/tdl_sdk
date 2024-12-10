@@ -2,13 +2,8 @@
 #ifndef CVI_BMCV_FILE_H
 #define CVI_BMCV_FILE_H
 
-#if (defined(__CV181X__) || defined(__CV180X__))
-#include <linux/cvi_comm_vpss.h>
-#include <linux/cvi_type.h>
-#else
 #include <cvi_comm_vpss.h>
 #include <cvi_type.h>
-#endif
 
 #define DLL_EXPORT __attribute__((visibility("default")))
 
