@@ -3,7 +3,7 @@
 #include <string.h>
 #include <string>
 #include "cvi_tdl_log.hpp"
-#include "linux/cvi_comm_ive.h"
+#include "cvi_comm_ive.h"
 
 namespace ive {
 
