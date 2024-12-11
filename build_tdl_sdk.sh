@@ -69,6 +69,8 @@ HOST_TOOL_PATH="$CROSS_COMPILE_PATH"
 TARGET_MACHINE="$(${CROSS_COMPILE}gcc -dumpmachine)"
 TOOLCHAIN_FILE="$CVI_TDL_ROOT"/toolchain/"$TARGET_MACHINE".cmake
 
+# set dependency
+MW_VER=v2
 MPI_PATH="$TOP_DIR"/cvi_mpi
 TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
 IVE_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_ive_sdk

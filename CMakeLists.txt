@@ -164,6 +164,6 @@ endif()
 
 # add_subdirectory(sample_bak)
 
-# if(NOT DEFINED NO_OPENCV)
-#   add_subdirectory(regression)
-# endif()
+if(NOT DEFINED NO_OPENCV)
+  add_subdirectory(regression)
+endif()
