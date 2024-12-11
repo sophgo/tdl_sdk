@@ -86,7 +86,7 @@ struct TensorInfo {
 #ifndef __CV186X__
   CVI_TENSOR *tensor_handle;
 #endif
-  
+
 #ifndef CONFIG_ALIOS
   int data_type;
 #endif
