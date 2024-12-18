@@ -54,10 +54,7 @@ DLL_EXPORT void CVI_TDL_CopyHandPoses(const cvtdl_handpose21_meta_ts *src,
 DLL_EXPORT void CVI_TDL_CopyLaneMeta(cvtdl_lane_t *src, cvtdl_lane_t *dst);
 
 DLL_EXPORT void CVI_TDL_CopyImage(const cvtdl_image_t *src_image, cvtdl_image_t *dst_image);
-DLL_EXPORT void CVI_TDL_MapImage(VIDEO_FRAME_INFO_S *src_image, bool *p_is_mapped);
-DLL_EXPORT void CVI_TDL_UnMapImage(VIDEO_FRAME_INFO_S *src_image);
 
-DLL_EXPORT CVI_S32 CVI_TDL_CopyVpssImage(VIDEO_FRAME_INFO_S *src_image, cvtdl_image_t *dst_image);
 #ifdef __cplusplus
 }
 #endif

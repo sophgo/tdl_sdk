@@ -451,7 +451,8 @@ int MelFeatureExtract::melspectrogram_pack_optimize(short *p_data, int data_len,
       Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>> rowv(
           mp_sft_mag_vec_ + i * num_mel_, 1, num_mel_);
       rowv = specmag * mel_basis_;
-      // memcpy(mp_sft_mag_vec_ + i * num_mel_, rowv.data(), sizeof(mp_sft_mag_vec_[0]) * num_mel_);
+      // memcpy(mp_sft_mag_vec_ + i * num_mel_, rowv.data(),
+      // sizeof(mp_sft_mag_vec_[0]) * num_mel_);
       if (i == 0) {
         last_state = rowv;
       } else {

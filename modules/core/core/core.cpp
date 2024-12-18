@@ -1,5 +1,7 @@
 #include "core.hpp"
+
 #include <stdexcept>
+
 #include "core/utils/vpss_helper.h"
 #include "demangle.hpp"
 #include "error_msg.hpp"
@@ -19,7 +21,7 @@ Core::Core(CVI_MEM_TYPE_E input_mem_type) {
   first_in_pre_param.format = PIXEL_FORMAT_RGB_888_PLANAR;
   first_in_pre_param.rescale_type = RESCALE_CENTER;
   first_in_pre_param.resize_method = VPSS_SCALE_COEF_BICUBIC;
-  m_preprocess_param.emplace_back(first_in_pre_param);
+  preprocess_params_.emplace_back(first_in_pre_param);
 }
 
 Core::Core() : Core(CVI_MEM_SYSTEM) {}
@@ -94,9 +96,7 @@ float Core::getInputQuantScale(const std::string &name) { return getInputTensorI
 
 int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   int ret = CVI_TDL_SUCCESS;
-  if (m_skip_vpss_preprocess && !allowExportChannelAttribute()) {
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
+
   std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
 
   if (frames.size() != 1) {
@@ -108,9 +108,12 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       // skip vpss preprocess is true, just register frame directly.
       ret = registerFrame2Tensor(frames);
     } else {
-      if (m_vpss_config.size() != frames.size()) {
-        LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
-             m_vpss_config.size(), frames.size());
+      if (preprocess_params_.size() != frames.size()) {
+        LOGE(
+            "The size of preprocess params does not match the number of "
+            "frames. "
+            "(%zu vs %zu)\n",
+            preprocess_params_.size(), frames.size());
         return CVI_TDL_FAILURE;
       }
 
@@ -126,7 +129,8 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
           delete f;
         };
 
-        int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
+        int vpssret =
+            mp_vpss_inst->vpssPreprocess(frames[i], f, preprocess_params_[i], m_vpss_timeout);
         if (vpssret != 0) {
           releaseVideoFrame(f);
           /* preprocess fail, auto delete frame. */
@@ -245,52 +249,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
   }
   return CVI_TDL_SUCCESS;
 }
-int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
-                       cvtdl_vpssconfig_t *chn_config) {
-  if (!allowExportChannelAttribute()) {
-    LOGE("This model does not support exporting channel attributes.\n");
-    return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
-  }
 
-  if (!isInitialized()) {
-    LOGE(
-        "Model is not yet opened. Please call CVI_TDL_OpenModel to initialize model before getting "
-        "channel config.\n");
-    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
-  }
-
-  if (idx >= (uint32_t)mp_mi->in.num) {
-    LOGE("Input index exceed input tensor num.\n");
-    return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
-  }
-
-  if (!m_skip_vpss_preprocess) {
-    LOGW("VPSS preprocessing is enabled. Remember to skip vpss preprocess.\n");
-  }
-
-  switch (m_vpss_config[idx].rescale_type) {
-    case RESCALE_CENTER: {
-      chn_config->chn_attr = m_vpss_config[idx].chn_attr;
-    } break;
-    case RESCALE_RB: {
-      CVI_SHAPE input_shape = getInputShape(idx);
-      auto input_h = input_shape.dim[2];
-      auto input_w = input_shape.dim[3];
-      auto &factor = m_vpss_config[idx].chn_attr.stNormalize.factor;
-      auto &mean = m_vpss_config[idx].chn_attr.stNormalize.mean;
-      VPSS_CHN_SQ_RB_HELPER(&chn_config->chn_attr, width, height, input_w, input_h,
-                            m_vpss_config[idx].chn_attr.enPixelFormat, factor, mean, false);
-      chn_config->chn_attr.stAspectRatio.u32BgColor =
-          m_vpss_config[idx].chn_attr.stAspectRatio.u32BgColor;
-    } break;
-    default: {
-      LOGE("Unsupported rescale type.\n");
-      return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
-    } break;
-  }
-  chn_config->chn_coeff = m_vpss_config[idx].chn_coeff;
-  return 0;
-}
 int Core::modelOpen(const char *filepath) {
   if (mp_mi == nullptr || mp_mi->handle != nullptr) {
     LOGE("failed to open model: \"%s\" has already opened.\n", filepath);
@@ -380,11 +339,10 @@ int Core::modelOpen(const char *filepath) {
   m_input_tensor_info.clear();
   setupInputTensorInfo(net_info, mp_mi.get(), m_input_tensor_info);
   m_output_tensor_info.clear();
-  setupOutputTensorInfo(net_info, mp_mi.get(), m_output_tensor_info);  // to update raw_pointer
+  setupOutputTensorInfo(net_info, mp_mi.get(),
+                        m_output_tensor_info);  // to update raw_pointer
 
-  /* input preprocess param */
-  m_vpss_config.clear();
-  inputPreprocessConfig(net_info, m_vpss_config);
+  inputPreprocessConfig(net_info);
 
   ret = onModelOpened();
   if (ret != CVI_TDL_SUCCESS) {
@@ -395,8 +353,7 @@ int Core::modelOpen(const char *filepath) {
   return 0;
 }
 
-void Core::inputPreprocessConfig(const bm_net_info_t *net_info,
-                                 std::vector<VPSSConfig> &m_vpss_config) {
+void Core::inputPreprocessConfig(const bm_net_info_t *net_info) {
   bool use_quantize_scale;
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     use_quantize_scale = net_info->input_scales[i] == 1 ? false : true;
@@ -411,36 +368,22 @@ void Core::inputPreprocessConfig(const bm_net_info_t *net_info,
       float quant_scale = net_info->input_scales[i];
 
       for (uint32_t j = 0; j < 3; j++) {
-        m_preprocess_param[i].factor[j] *= quant_scale;
-        m_preprocess_param[i].mean[j] *= quant_scale;
+        preprocess_params_[i].factor[j] *= quant_scale;
+        preprocess_params_[i].mean[j] *= quant_scale;
 
-        if (m_preprocess_param[i].factor[j] > factor_limit) {
-          LOGW("factor[%d] is bigger than limit: %f\n", i, m_preprocess_param[i].factor[j]);
-          m_preprocess_param[i].factor[j] = factor_limit;
+        if (preprocess_params_[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, preprocess_params_[i].factor[j]);
+          preprocess_params_[i].factor[j] = factor_limit;
         }
       }
     }
-
-    VPSSConfig vcfg;
-    // FIXME: Future support for nhwc input. Currently disabled.
-    auto height = stage.input_shapes->dims[2];
-    auto width = stage.input_shapes->dims[3];
-    vcfg.frame_type = CVI_FRAME_PLANAR;
-
-    vcfg.rescale_type = m_preprocess_param[i].rescale_type;
-    vcfg.crop_attr.bEnable = m_preprocess_param[i].use_crop;
-
+    auto height = stage.input_shapes[i].dims[2];
+    auto width = stage.input_shapes[i].dims[3];
+    preprocess_params_[i].dst_h = height;
+    preprocess_params_[i].dst_w = width;
     if (net_info->input_dtypes[i] == BM_UINT8) {
-      m_preprocess_param[i].format = PIXEL_FORMAT_UINT8_C3_PLANAR;
+      preprocess_params_[i].format = PIXEL_FORMAT_UINT8_C3_PLANAR;
     }
-    bool pad_reverse = false;
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, m_preprocess_param[i].format,
-                       m_preprocess_param[i].factor, m_preprocess_param[i].mean, pad_reverse);
-    if (!m_preprocess_param[i].keep_aspect_ratio) {
-      vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-    }
-    vcfg.chn_coeff = m_preprocess_param[i].resize_method;
-    m_vpss_config.push_back(vcfg);
   }
 }
 
@@ -526,13 +469,6 @@ float Core::getInputQuantScale(const std::string &name) {
 int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
   int ret = CVI_TDL_SUCCESS;
 
-  if (m_skip_vpss_preprocess && !allowExportChannelAttribute()) {
-    LOGE(
-        "cannot skip vpss preprocessing for model: %s, please set false to "
-        "CVI_TDL_SetSkipVpssPreprocess\n",
-        demangle::type_no_scope(*this).c_str());
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
   model_timer_.TicToc("runstart");
   std::vector<std::shared_ptr<VIDEO_FRAME_INFO_S>> dstFrames;
 
@@ -545,9 +481,12 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       // skip vpss preprocess is true, just register frame directly.
       ret = registerFrame2Tensor(frames);
     } else {
-      if (m_vpss_config.size() != frames.size()) {
-        LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
-             m_vpss_config.size(), frames.size());
+      if (preprocess_params_.size() != frames.size()) {
+        LOGE(
+            "The size of preprocess params does not match the number of "
+            "frames. "
+            "(%zu vs %zu)\n",
+            preprocess_params_.size(), frames.size());
         return CVI_TDL_ERR_INFERENCE;
       }
 
@@ -555,7 +494,8 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       for (uint32_t i = 0; i < frames.size(); i++) {
         VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
         memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-        int vpssret = vpssPreprocess(frames[i], f, m_vpss_config[i]);
+        int vpssret =
+            mp_vpss_inst->vpssPreprocess(frames[i], f, preprocess_params_[i], m_vpss_timeout);
         if (vpssret != CVI_TDL_SUCCESS) {
           // if preprocess fail, just delete frame.
           if (f->stVFrame.u64PhyAddr[0] != 0) {
@@ -631,9 +571,8 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
     if (aligned_input == true) {
       ret = CVI_NN_SetTensorPhysicalAddr(mp_mi->in.tensors + i, frame->stVFrame.u64PhyAddr[0]);
     } else {
-      ret = CVI_NN_FeedTensorWithFrames(mp_mi->handle, mp_mi->in.tensors,
-                                        m_vpss_config[0].frame_type, CVI_FMT_INT8, paddrs.size(),
-                                        paddrs.data(), frame->stVFrame.u32Height,
+      ret = CVI_NN_FeedTensorWithFrames(mp_mi->handle, mp_mi->in.tensors, frame_type_, CVI_FMT_INT8,
+                                        paddrs.size(), paddrs.data(), frame->stVFrame.u32Height,
                                         frame->stVFrame.u32Width, frame->stVFrame.u32Stride[0]);
     }
     if (ret != CVI_RC_SUCCESS) {
@@ -643,51 +582,7 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
   }
   return CVI_TDL_SUCCESS;
 }
-int Core::getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
-                       cvtdl_vpssconfig_t *chn_config) {
-  if (!allowExportChannelAttribute()) {
-    LOGE("This model does not support exporting channel attributes.\n");
-    return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
-  }
 
-  if (!isInitialized()) {
-    LOGE(
-        "Model is not yet opened. Please call CVI_TDL_OpenModel to initialize model before getting "
-        "channel config.\n");
-    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
-  }
-
-  if (idx >= (uint32_t)mp_mi->in.num) {
-    LOGE("Input index exceed input tensor num.\n");
-    return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
-  }
-
-  if (!m_skip_vpss_preprocess) {
-    LOGW("VPSS preprocessing is enabled. Remember to skip vpss preprocess.\n");
-  }
-
-  switch (m_vpss_config[idx].rescale_type) {
-    case RESCALE_CENTER: {
-      chn_config->chn_attr = m_vpss_config[idx].chn_attr;
-    } break;
-    case RESCALE_RB: {
-      CVI_TENSOR *input = mp_mi->in.tensors + idx;
-      auto &factor = m_vpss_config[idx].chn_attr.stNormalize.factor;
-      auto &mean = m_vpss_config[idx].chn_attr.stNormalize.mean;
-      VPSS_CHN_SQ_RB_HELPER(&chn_config->chn_attr, width, height, input->shape.dim[3],
-                            input->shape.dim[2], m_vpss_config[idx].chn_attr.enPixelFormat, factor,
-                            mean, false);
-      chn_config->chn_attr.stAspectRatio.u32BgColor =
-          m_vpss_config[idx].chn_attr.stAspectRatio.u32BgColor;
-    } break;
-    default: {
-      LOGE("Unsupported rescale type.\n");
-      return CVI_TDL_ERR_GET_VPSS_CHN_CONFIG;
-    } break;
-  }
-  chn_config->chn_coeff = m_vpss_config[idx].chn_coeff;
-  return CVI_TDL_SUCCESS;
-}
 int Core::modelClose() {
   int ret = CVI_TDL_SUCCESS;
 
@@ -756,47 +651,28 @@ int Core::modelOpen(const char *filepath) {
 
   CLOSE_MODEL_IF_FAILED(onModelOpened(), "return failed in onModelOpened");
 
-  m_vpss_config.clear();
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     if (use_quantize_scale) {
       CVI_TENSOR *tensor = mp_mi->in.tensors + i;
       float quant_scale = CVI_NN_TensorQuantScale(tensor);
       for (uint32_t j = 0; j < 3; j++) {
-        m_preprocess_param[i].factor[j] *= quant_scale;
-        m_preprocess_param[i].mean[j] *= quant_scale;
+        preprocess_params_[i].factor[j] *= quant_scale;
+        preprocess_params_[i].mean[j] *= quant_scale;
       }
       // FIXME: Behavior will changed in 1822.
       float factor_limit = 8191.f / 8192;
       for (uint32_t j = 0; j < 3; j++) {
-        if (m_preprocess_param[i].factor[j] > factor_limit) {
-          LOGW("factor[%d] is bigger than limit: %f\n", i, m_preprocess_param[i].factor[j]);
-          m_preprocess_param[i].factor[j] = factor_limit;
+        if (preprocess_params_[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, preprocess_params_[i].factor[j]);
+          preprocess_params_[i].factor[j] = factor_limit;
         }
       }
     }
-    VPSSConfig vcfg;
-    int32_t width, height;
-    // FIXME: Future support for nhwc input. Currently disabled.
-    if (false) {
-      width = input->shape.dim[2];
-      height = input->shape.dim[1];
-      vcfg.frame_type = CVI_FRAME_PACKAGE;
-    } else {
-      CVI_TENSOR *input = &(mp_mi->in.tensors[i]);
-      width = input->shape.dim[3];
-      height = input->shape.dim[2];
-      vcfg.frame_type = CVI_FRAME_PLANAR;
-    }
-    vcfg.rescale_type = m_preprocess_param[i].rescale_type;
-    vcfg.crop_attr.bEnable = m_preprocess_param[i].use_crop;
-    bool pad_reverse = false;
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, m_preprocess_param[i].format,
-                       m_preprocess_param[i].factor, m_preprocess_param[i].mean, pad_reverse);
-    if (!m_preprocess_param[i].keep_aspect_ratio) {
-      vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-    }
-    vcfg.chn_coeff = m_preprocess_param[i].resize_method;
-    m_vpss_config.emplace_back(vcfg);
+    CVI_TENSOR *input = &(mp_mi->in.tensors[i]);
+    uint32_t width = input->shape.dim[3];
+    uint32_t height = input->shape.dim[2];
+    preprocess_params_[i].dst_w = width;
+    preprocess_params_[i].dst_h = height;
   }
   return CVI_TDL_SUCCESS;
 }
@@ -853,47 +729,23 @@ int Core::modelOpen(const int8_t *buf, uint32_t size) {
 
   CLOSE_MODEL_IF_FAILED(onModelOpened(), "return failed in onModelOpened");
 
-  m_vpss_config.clear();
   for (uint32_t i = 0; i < (uint32_t)mp_mi->in.num; i++) {
     if (use_quantize_scale) {
       CVI_TENSOR *tensor = mp_mi->in.tensors + i;
       float quant_scale = CVI_NN_TensorQuantScale(tensor);
       for (uint32_t j = 0; j < 3; j++) {
-        m_preprocess_param[i].factor[j] *= quant_scale;
-        m_preprocess_param[i].mean[j] *= quant_scale;
+        preprocess_params_[i].factor[j] *= quant_scale;
+        preprocess_params_[i].mean[j] *= quant_scale;
       }
       // FIXME: Behavior will changed in 1822.
       float factor_limit = 8191.f / 8192;
       for (uint32_t j = 0; j < 3; j++) {
-        if (m_preprocess_param[i].factor[j] > factor_limit) {
-          LOGW("factor[%d] is bigger than limit: %f\n", i, m_preprocess_param[i].factor[j]);
-          m_preprocess_param[i].factor[j] = factor_limit;
+        if (preprocess_params_[i].factor[j] > factor_limit) {
+          LOGW("factor[%d] is bigger than limit: %f\n", i, preprocess_params_[i].factor[j]);
+          preprocess_params_[i].factor[j] = factor_limit;
         }
       }
     }
-    VPSSConfig vcfg;
-    int32_t width, height;
-    // FIXME: Future support for nhwc input. Currently disabled.
-    if (false) {
-      width = input->shape.dim[2];
-      height = input->shape.dim[1];
-      vcfg.frame_type = CVI_FRAME_PACKAGE;
-    } else {
-      CVI_TENSOR *input = &(mp_mi->in.tensors[i]);
-      width = input->shape.dim[3];
-      height = input->shape.dim[2];
-      vcfg.frame_type = CVI_FRAME_PLANAR;
-    }
-    vcfg.rescale_type = m_preprocess_param[i].rescale_type;
-    vcfg.crop_attr.bEnable = m_preprocess_param[i].use_crop;
-    bool pad_reverse = false;
-    VPSS_CHN_SQ_HELPER(&vcfg.chn_attr, width, height, m_preprocess_param[i].format,
-                       m_preprocess_param[i].factor, m_preprocess_param[i].mean, pad_reverse);
-    if (!m_preprocess_param[i].keep_aspect_ratio) {
-      vcfg.chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-    }
-    vcfg.chn_coeff = m_preprocess_param[i].resize_method;
-    m_vpss_config.emplace_back(vcfg);
   }
   return CVI_TDL_SUCCESS;
 }
@@ -966,35 +818,6 @@ int Core::setVpssEngine(VpssEngine *engine) {
   return CVI_TDL_SUCCESS;
 }
 
-int Core::setVpssDepth(uint32_t in_index, uint32_t depth) {
-  if (m_vpss_config.size() <= 0) {
-    LOGE("Model is not opened yet! Please set vpss depth when model is ready.\n");
-    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
-  }
-
-  if (in_index >= m_vpss_config.size()) {
-    LOGE("Wrong input index: %d\n", in_index);
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-
-  m_vpss_config[in_index].chn_attr.u32Depth = depth;
-  return CVI_TDL_SUCCESS;
-}
-
-int Core::getVpssDepth(uint32_t in_index, uint32_t *depth) {
-  if (m_vpss_config.size() <= 0) {
-    LOGE("Model is not opened yet! Please set vpss depth when model is ready.\n");
-    return CVI_TDL_ERR_NOT_YET_INITIALIZED;
-  }
-
-  if (in_index >= m_vpss_config.size()) {
-    LOGE("Wrong input index: %d\n", in_index);
-    return CVI_TDL_ERR_INVALID_ARGS;
-  }
-  *depth = m_vpss_config[in_index].chn_attr.u32Depth;
-  return CVI_TDL_SUCCESS;
-}
-
 void Core::skipVpssPreprocess(bool skip) { m_skip_vpss_preprocess = skip; }
 
 bool Core::isInitialized() { return mp_mi->handle == nullptr ? false : true; }
@@ -1015,53 +838,16 @@ size_t Core::getOutputTensorElem(const std::string &name) {
 #ifndef CONFIG_ALIOS
 void Core::setRaw(bool raw) { this->raw = raw; }
 #endif
-int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                         VPSSConfig &vpss_config) {
-  int ret;
-  LOGI("to vpss preprocess,crop_enable:%d\n", (int)vpss_config.crop_attr.bEnable);
-  if (!vpss_config.crop_attr.bEnable) {
-    ret = mp_vpss_inst->sendFrame(srcFrame, &vpss_config.chn_attr, &vpss_config.chn_coeff, 1);
+
+const InputPreParam &Core::getPreparam(int idx) {
+  InputPreParam pre_param;
+  memset(&pre_param, 0, sizeof(pre_param));
+  if (idx >= (uint32_t)mp_mi->in.num) {
+    LOGE("Input index exceed input tensor num.\n");
   } else {
-    ret = mp_vpss_inst->sendCropChnFrame(srcFrame, &vpss_config.crop_attr, &vpss_config.chn_attr,
-                                         &vpss_config.chn_coeff, 1);
+    pre_param = preprocess_params_[idx];
   }
-  if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("Get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-  return CVI_TDL_SUCCESS;
+  return pre_param;
 }
 
-/* vpssCropImage api need new  dstFrame and remember delete and release frame*/
-int Core::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                        cvtdl_bbox_t bbox, uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
-                        VPSS_SCALE_COEF_E reize_mode /* = VPSS_SCALE_COEF_NEAREST*/) {
-  VPSS_CROP_INFO_S cropAttr;
-  cropAttr.bEnable = true;
-  uint32_t u32Width = bbox.x2 - bbox.x1;
-  uint32_t u32Height = bbox.y2 - bbox.y1;
-  cropAttr.stCropRect = {(int)bbox.x1, (int)bbox.y1, u32Width, u32Height};
-  VPSS_CHN_ATTR_S chnAttr;
-  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, false);
-  int ret = mp_vpss_inst->sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, &reize_mode, 1);
-  if (ret != CVI_SUCCESS) return ret;
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, 2000);
-  return ret;
-}
-
-/* vpssCropImage api need new  dstFrame and remember delete and release frame*/
-int Core::vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
-                          uint32_t rh, PIXEL_FORMAT_E enDstFormat) {
-  VPSS_CHN_ATTR_S chnAttr;
-  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, false);
-  mp_vpss_inst->sendFrame(srcFrame, &chnAttr, 1);
-  mp_vpss_inst->getFrame(dstFrame, 0, 2000);
-  return CVI_TDL_SUCCESS;
-}
 }  // namespace cvitdl

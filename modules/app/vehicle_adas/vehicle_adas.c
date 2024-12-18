@@ -225,8 +225,8 @@ void update_apeed(cvtdl_object_info_t *info, adas_data_t *data, float fps) {
 
     data->speed = cur_speed;
 
-    // printf(" data->dis  %.2f   data->dis_tmp   %.2f  cur_speed: %.2f\n", data->dis,
-    // data->dis_tmp, cur_speed); data->speed = cur_speed;
+    // printf(" data->dis  %.2f   data->dis_tmp   %.2f  cur_speed: %.2f\n",
+    // data->dis, data->dis_tmp, cur_speed); data->speed = cur_speed;
     info->adas_properity.speed = cur_speed;
 
     data->dis_tmp = data->dis;
@@ -559,8 +559,8 @@ CVI_S32 _ADAS_Run(adas_info_t *adas_info, const cvitdl_handle_t tdl_handle,
 
   if (CVI_SUCCESS != CVI_TDL_Detection(tdl_handle, frame, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
                                        &adas_info->last_objects)) {
-    // CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,
-    // frame,
+    // CVI_TDL_Release_VideoFrame(tdl_handle,
+    // CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, frame,
     //  true);
     printf("PersonVehicle detection failed\n");
     return CVI_TDL_FAILURE;
@@ -577,7 +577,8 @@ CVI_S32 _ADAS_Run(adas_info_t *adas_info, const cvitdl_handle_t tdl_handle,
       ret = CVI_TDL_LSTR_Det(tdl_handle, frame, &adas_info->lane_meta);
     }
     if (ret != CVI_SUCCESS) {
-      // CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_LANE_DET, frame, true);
+      // CVI_TDL_Release_VideoFrame(tdl_handle,
+      // CVI_TDL_SUPPORTED_MODEL_LANE_DET, frame, true);
       printf("lane detection failed\n");
       return CVI_TDL_FAILURE;
     }

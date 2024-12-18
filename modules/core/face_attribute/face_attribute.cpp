@@ -1,4 +1,5 @@
 #include "face_attribute.hpp"
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -47,8 +48,8 @@ FaceAttribute::FaceAttribute(bool with_attr)
     : Core(CVI_MEM_DEVICE), m_use_wrap_hw(false), m_with_attribute(with_attr) {
   attribute_buffer = new float[ATTR_AGE_FEATURE_DIM];
   for (uint32_t i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = FACE_ATTRIBUTE_FACTOR;
-    m_preprocess_param[0].mean[i] = FACE_ATTRIBUTE_MEAN;
+    preprocess_params_[0].factor[i] = FACE_ATTRIBUTE_FACTOR;
+    preprocess_params_[0].mean[i] = FACE_ATTRIBUTE_MEAN;
   }
 }
 
@@ -122,7 +123,8 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta,
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
       LOGE(
-          "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, PIXEL_FORMAT_YUV_PLANAR_420. Current: "
+          "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, "
+          "PIXEL_FORMAT_YUV_PLANAR_420. Current: "
           "%x\n",
           stOutFrame->stVFrame.enPixelFormat);
       return CVI_TDL_ERR_INVALID_ARGS;
@@ -161,10 +163,12 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta,
       cvtdl_face_info_t face_info =
           info_extern_crop_resize_img(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height,
                                       &(meta->info[i]), &dst_size);
-      /*There will crop the image and resize to 256*256, export PIXEL_FORMAT_BGR_888_PACKED format*/
+      /*There will crop the image and resize to 256*256, export
+       * PIXEL_FORMAT_BGR_888_PACKED format*/
       VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
       memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-      vpssCropImage(stOutFrame, f, face_info.bbox, dst_size, dst_size, PIXEL_FORMAT_RGB_888);
+      mp_vpss_inst->vpssCropImage(stOutFrame, f, face_info.bbox, dst_size, dst_size,
+                                  PIXEL_FORMAT_RGB_888);
       mmap_video_frame(f);
 
       float pts[10];

@@ -18,8 +18,8 @@ namespace cvitdl {
 
 MaskFaceRecognition::MaskFaceRecognition() : Core(CVI_MEM_DEVICE) {
   for (uint32_t i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = FACE_ATTRIBUTE_SCALE;
-    m_preprocess_param[0].mean[i] = FACE_ATTRIBUTE_MEAN;
+    preprocess_params_[0].factor[i] = FACE_ATTRIBUTE_SCALE;
+    preprocess_params_[0].mean[i] = FACE_ATTRIBUTE_MEAN;
   }
 }
 

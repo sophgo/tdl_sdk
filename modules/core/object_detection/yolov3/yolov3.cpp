@@ -1,4 +1,5 @@
 #include "yolov3.hpp"
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core_utils.hpp"
@@ -106,7 +107,7 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj) {
   obj->info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj->size);
   obj->width = yolov3_w;
   obj->height = yolov3_h;
-  obj->rescale_type = m_vpss_config[0].rescale_type;
+  obj->rescale_type = preprocess_params_[0].rescale_type;
 
   memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
   for (uint32_t i = 0; i < obj->size; ++i) {
@@ -118,8 +119,8 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj) {
     obj->info[i].classes = results[i].label;
     strncpy(obj->info[i].name, coco_utils::class_names_80[results[i].label].c_str(),
             sizeof(obj->info[i].name));
-    // printf("YOLO3: %s (%d): %lf %lf %lf %lf, score=%.2f\n", obj->info[i].name,
-    // obj->info[i].classes,
+    // printf("YOLO3: %s (%d): %lf %lf %lf %lf, score=%.2f\n",
+    // obj->info[i].name, obj->info[i].classes,
     //        obj->info[i].bbox.x1, obj->info[i].bbox.x2, obj->info[i].bbox.y1,
     //        obj->info[i].bbox.y2, results[i].score);
   }
@@ -127,7 +128,7 @@ void Yolov3::outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj) {
     for (uint32_t i = 0; i < obj->size; ++i) {
       obj->info[i].bbox =
           box_rescale(srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height, obj->width,
-                      obj->height, obj->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
+                      obj->height, obj->info[i].bbox, preprocess_params_[0].rescale_type);
     }
     obj->width = srcFrame->stVFrame.u32Width;
     obj->height = srcFrame->stVFrame.u32Height;

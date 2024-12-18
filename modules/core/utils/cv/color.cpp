@@ -17,7 +17,8 @@ struct ColorChannel {
   static _Tp half() { return (_Tp)(max() / 2 + 1); }
 };
 
-///////////////////////////// Top-level template function ////////////////////////////////
+///////////////////////////// Top-level template function
+///////////////////////////////////
 // L260
 template <typename Cvt>
 class CvtColorLoop_Invoker : public cv::ParallelLoopBody {
@@ -62,7 +63,8 @@ void CvtColorLoop(const uchar* src_data, size_t src_step, uchar* dst_data, size_
                     (width * height) / static_cast<double>(1 << 16));
 }
 
-////////////////// Various 3/4-channel to 3/4-channel RGB transformations /////////////////
+////////////////// Various 3/4-channel to 3/4-channel RGB transformations
+////////////////////
 // L652
 template <typename _Tp>
 struct RGB2RGB {
@@ -104,7 +106,8 @@ struct RGB2RGB {
   int srccn, dstcn, blueIdx;
 };
 
-///////////////////////////////// Color to/from Grayscale ////////////////////////////////
+///////////////////////////////// Color to/from Grayscale
+///////////////////////////////////
 // L1037
 template <typename _Tp>
 struct Gray2RGB {
@@ -191,7 +194,8 @@ struct RGB2Gray<uchar> {
 };
 
 // L7373
-///////////////////////////////////// YUV420 -> RGB /////////////////////////////////////
+///////////////////////////////////// YUV420 -> RGB
+////////////////////////////////////////
 
 const int ITUR_BT_601_CY = 1220542;
 const int ITUR_BT_601_CUB = 2116026;
@@ -236,9 +240,10 @@ struct YUV420sp2RGB888Invoker : cv::ParallelLoopBody {
     // G = 1.164(Y - 16) - 0.813(V - 128) - 0.391(U - 128)
     // B = 1.164(Y - 16)                  + 2.018(U - 128)
 
-    // R = (1220542(Y - 16) + 1673527(V - 128)                  + (1 << 19)) >> 20
-    // G = (1220542(Y - 16) - 852492(V - 128) - 409993(U - 128) + (1 << 19)) >> 20
-    // B = (1220542(Y - 16)                  + 2116026(U - 128) + (1 << 19)) >> 20
+    // R = (1220542(Y - 16) + 1673527(V - 128)                  + (1 << 19)) >>
+    // 20 G = (1220542(Y - 16) - 852492(V - 128) - 409993(U - 128) + (1 << 19))
+    // >> 20 B = (1220542(Y - 16)                  + 2116026(U - 128) + (1 <<
+    // 19)) >> 20
 
     const uchar *y1 = my1 + rangeBegin * stride, *uv = muv + rangeBegin * stride / 2;
 

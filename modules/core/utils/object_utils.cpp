@@ -167,7 +167,8 @@ std::vector<std::vector<float>> generate_mmdet_grid_anchors(
         std::vector<float> grid_anchor = {base_anchor[0] + sw, base_anchor[1] + sh,
                                           base_anchor[2] + sw, base_anchor[3] + sh};
         // if (grid_anchors.size() < 10)
-        //   std::cout << "gridanchor:" << grid_anchor[0] << "," << grid_anchor[1] << ","
+        //   std::cout << "gridanchor:" << grid_anchor[0] << "," <<
+        //   grid_anchor[1] << ","
         //             << grid_anchor[2] << "," << grid_anchor[3] << std::endl;
         grid_anchors.emplace_back(grid_anchor);
       }

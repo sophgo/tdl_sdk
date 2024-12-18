@@ -1,4 +1,5 @@
 #include "thermal_face.hpp"
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -101,13 +102,13 @@ static void bbox_pred(const cvtdl_bbox_t &anchor, float *regress, std::vector<fl
 }
 
 ThermalFace::ThermalFace() {
-  m_preprocess_param[0].factor[0] = static_cast<float>(SCALE_R);
-  m_preprocess_param[0].factor[1] = static_cast<float>(SCALE_G);
-  m_preprocess_param[0].factor[2] = static_cast<float>(SCALE_B);
-  m_preprocess_param[0].mean[0] = static_cast<float>(MEAN_R);
-  m_preprocess_param[0].mean[1] = static_cast<float>(MEAN_G);
-  m_preprocess_param[0].mean[2] = static_cast<float>(MEAN_B);
-  m_preprocess_param[0].rescale_type = RESCALE_RB;
+  preprocess_params_[0].factor[0] = static_cast<float>(SCALE_R);
+  preprocess_params_[0].factor[1] = static_cast<float>(SCALE_G);
+  preprocess_params_[0].factor[2] = static_cast<float>(SCALE_B);
+  preprocess_params_[0].mean[0] = static_cast<float>(MEAN_R);
+  preprocess_params_[0].mean[1] = static_cast<float>(MEAN_G);
+  preprocess_params_[0].mean[2] = static_cast<float>(MEAN_B);
+  preprocess_params_[0].rescale_type = RESCALE_RB;
 }
 
 int ThermalFace::onModelOpened() {
@@ -130,29 +131,6 @@ int ThermalFace::onModelOpened() {
     std::vector<cvtdl_bbox_t> anchors = generate_anchors(sizes[i], ratios, scales);
     std::vector<cvtdl_bbox_t> shifted_anchors = shift(image_shapes[i], strides[i], anchors);
     m_all_anchors.insert(m_all_anchors.end(), shifted_anchors.begin(), shifted_anchors.end());
-  }
-  return CVI_TDL_SUCCESS;
-}
-
-int ThermalFace::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                                VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed with %#x!\n", ret);
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("Get frame failed with %#x!\n", ret);
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
   }
   return CVI_TDL_SUCCESS;
 }
@@ -205,7 +183,7 @@ void ThermalFace::outputParser(const int image_width, const int image_height, co
   // Init face meta
   meta->width = image_width;
   meta->height = image_height;
-  meta->rescale_type = m_vpss_config[0].rescale_type;
+  meta->rescale_type = preprocess_params_[0].rescale_type;
   if (vec_bbox_nms.size() == 0) {
     meta->size = vec_bbox_nms.size();
     meta->info = NULL;

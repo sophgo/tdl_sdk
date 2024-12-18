@@ -1,5 +1,7 @@
 #include "retinaface_yolox.hpp"
+
 #include <Eigen/Eigen>
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -90,12 +92,12 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
 }
 
 RetinafaceYolox::RetinafaceYolox() {
-  m_preprocess_param[0].factor[0] = R_SCALE;
-  m_preprocess_param[0].factor[1] = G_SCALE;
-  m_preprocess_param[0].factor[2] = B_SCALE;
-  m_preprocess_param[0].mean[0] = R_MEAN;
-  m_preprocess_param[0].mean[1] = G_MEAN;
-  m_preprocess_param[0].mean[2] = B_MEAN;
+  preprocess_params_[0].factor[0] = R_SCALE;
+  preprocess_params_[0].factor[1] = G_SCALE;
+  preprocess_params_[0].factor[2] = B_SCALE;
+  preprocess_params_[0].mean[0] = R_MEAN;
+  preprocess_params_[0].mean[1] = G_MEAN;
+  preprocess_params_[0].mean[2] = B_MEAN;
 }
 
 int RetinafaceYolox::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *face_meta) {
@@ -138,7 +140,7 @@ void RetinafaceYolox::outputParser(const int image_width, const int image_height
     return;
   }
   face_meta->info = (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * face_meta->size);
-  face_meta->rescale_type = m_vpss_config[0].rescale_type;
+  face_meta->rescale_type = preprocess_params_[0].rescale_type;
 
   memset(face_meta->info, 0, sizeof(cvtdl_face_info_t) * face_meta->size);
   CVI_TDL_MemAllocInit(vec_face_nms.size(), FACE_POINTS_SIZE, face_meta);
@@ -158,7 +160,7 @@ void RetinafaceYolox::outputParser(const int image_width, const int image_height
     // Recover coordinate if internal vpss engine is used.
     face_meta->width = frame_width;
     face_meta->height = frame_height;
-    face_meta->rescale_type = m_vpss_config[0].rescale_type;
+    face_meta->rescale_type = preprocess_params_[0].rescale_type;
     for (uint32_t i = 0; i < face_meta->size; ++i) {
       clip_boxes(image_width, image_height, vec_face_nms[i].bbox);
       cvtdl_face_info_t info =

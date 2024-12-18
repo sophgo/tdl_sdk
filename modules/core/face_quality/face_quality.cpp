@@ -37,8 +37,8 @@ FaceQuality::FaceQuality() : Core(CVI_MEM_DEVICE) {
   std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
   std::vector<float> scale = {SCALE_R, SCALE_G, SCALE_B};
   for (uint32_t i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = scale[i];
-    m_preprocess_param[0].mean[i] = mean[i];
+    preprocess_params_[0].factor[i] = scale[i];
+    preprocess_params_[0].mean[i] = mean[i];
   }
 }
 

@@ -11,7 +11,6 @@ class Deeplabv3 final : public Core {
   virtual ~Deeplabv3();
   int inference(VIDEO_FRAME_INFO_S *frame, VIDEO_FRAME_INFO_S *out_frame,
                 cvtdl_class_filter_t *filter);
-  virtual bool allowExportChannelAttribute() const override { return true; }
 
  private:
   virtual int onModelOpened() override;

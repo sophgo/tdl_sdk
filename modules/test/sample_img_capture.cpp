@@ -67,7 +67,8 @@ static APP_MODE_e app_mode;
 std::string g_out_dir;
 
 /* helper functions */
-// bool READ_CONFIG(const char *config_path, person_capture_config_t *app_config);
+// bool READ_CONFIG(const char *config_path, person_capture_config_t
+// *app_config);
 
 bool CHECK_OUTPUT_CONDITION(person_capture_t *person_cpt_info, uint32_t idx, APP_MODE_e mode);
 
@@ -132,7 +133,8 @@ static void *pImageWrite(void *args) {
                        data_buffer[target_idx].image.pix[0],
                        data_buffer[target_idx].image.stride[0]);
 
-        /* if there is no first capture target in INTELLIGENT mode, we need to create one */
+        /* if there is no first capture target in INTELLIGENT mode, we need to
+         * create one */
         if (app_mode == intelligent && data_buffer[target_idx].counter == 0) {
           sprintf(filename, "%s/person_%" PRIu64 "_1.png", g_out_dir.c_str(),
                   data_buffer[target_idx].u_id);
@@ -450,7 +452,8 @@ int main(int argc, char *argv[]) {
   CVI_SYS_Exit();
   CVI_VB_Exit();
 
-  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed / num_images
+  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed /
+  // num_images
   //           << std::endl;
 }
 
@@ -500,7 +503,8 @@ void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvtdl_object_t *o
     bool qualified = person_cpt_info->last_quality[i] >= person_cpt_info->cfg.thr_quality;
     cvtdl_object_info_t **tmp_ptr = (qualified) ? &info_ptr_1 : &info_ptr_0;
     (*tmp_ptr)->unique_id = person_cpt_info->last_objects.info[i].unique_id;
-    // (*tmp_ptr)->face_quality = face_cpt_info->last_faces.info[i].face_quality;
+    // (*tmp_ptr)->face_quality =
+    // face_cpt_info->last_faces.info[i].face_quality;
     memcpy(&(*tmp_ptr)->bbox, &person_cpt_info->last_objects.info[i].bbox, sizeof(cvtdl_bbox_t));
     *tmp_ptr += 1;
   }

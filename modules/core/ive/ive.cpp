@@ -51,7 +51,8 @@ CVI_S32 IVEImage::setZero(IVE *ive_instance) {
   std::vector<CVI_U32> strides = getStride();
 
   if (v_addrs.size() != strides.size()) {
-    // LOGE("vaddrs num:%d,strides num:%d\n",(int)v_addrs.size(),(int)strides.size());
+    // LOGE("vaddrs num:%d,strides
+    // num:%d\n",(int)v_addrs.size(),(int)strides.size());
     return CVI_FAILURE;
   }
   CVI_U32 imh = getHeight();

@@ -1,9 +1,10 @@
+#include "face_cap_utils.h"
+
 #include <math.h>
 #include <sys/time.h>
 
 #include "cvi_tdl_log.hpp"
 #include "cvi_venc.h"
-#include "face_cap_utils.h"
 #include "service/cvi_tdl_service.h"
 #include "vpss_helper.h"
 
@@ -102,8 +103,8 @@ float get_score(cvtdl_face_info_t *face_info, uint32_t img_w, uint32_t img_h, bo
     float face_size = ((bbox->y2 - bbox->y1) + (bbox->x2 - bbox->x1)) / 2;
     float size_score = 0;
     float pose_score = 1. - (ABS(pose->yaw) + ABS(pose->pitch) + ABS(pose->roll) * 0.5) / 3.;
-    // printf("pose_score_angle: %f, pose->yaw: %f, pose->pitch: %f, pose->roll: %f\n", pose_score,
-    // pose->yaw, pose->pitch, pose->roll);
+    // printf("pose_score_angle: %f, pose->yaw: %f, pose->pitch: %f, pose->roll:
+    // %f\n", pose_score, pose->yaw, pose->pitch, pose->roll);
 
     float area_score;
     float wpose = 0.8;
@@ -139,8 +140,9 @@ float get_score(cvtdl_face_info_t *face_info, uint32_t img_w, uint32_t img_h, bo
       velscore = 0.2;
     }
 
-    // printf("img_h: %d, face_size:%f, size_score:%f, area_score: %f, vel:%f, velscore: %f,
-    // blurness:%f\n", img_h, face_size,size_score , area_score, vel, velscore, blurness);
+    // printf("img_h: %d, face_size:%f, size_score:%f, area_score: %f, vel:%f,
+    // velscore: %f, blurness:%f\n", img_h, face_size,size_score , area_score,
+    // vel, velscore, blurness);
 
     pose_score = pose_score * wpose + wsize * size_score + area_score - blurness * 0.2;
 
@@ -189,8 +191,8 @@ void face_quality_assessment(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face, bool
       face->info[i].pose_score = score1;
       if (score1 >= 0.1) {
         float face_area = (bbox->y2 - bbox->y1) * (bbox->x2 - bbox->x1);
-        float laplacian_threshold =
-            thr_laplacian; /* tune this value for different condition default:100 */
+        float laplacian_threshold = thr_laplacian; /* tune this value for different condition
+                                                      default:100 */
         CVI_TDL_Face_Quality_Laplacian(frame, &face->info[i], &score2);
         // score2 = sqrt(score2);
         float area_score = MIN(1.0, face_area / (90 * 90));
@@ -546,8 +548,10 @@ CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_info,
          face_meta->info[i].face_quality, face_meta->info[i].pose_score);
 
     if (toskip || (with_pts && skip_dist)) {
-      LOGD("update_data,skip to generate capture data,trackid:%d,pscore:%f,eyedist:%.3f\n",
-           (int)face_meta->info[i].unique_id, face_meta->info[i].pose_score, eye_dist);
+      LOGD(
+          "update_data,skip to generate capture "
+          "data,trackid:%d,pscore:%f,eyedist:%.3f\n",
+          (int)face_meta->info[i].unique_id, face_meta->info[i].pose_score, eye_dist);
       continue;
     }
 
@@ -599,8 +603,9 @@ CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_info,
     int dst_h = 0;
     float scale = cal_crop_big_box(
         frame->stVFrame.u32Width, frame->stVFrame.u32Height, face_meta->info[i].bbox, &crop_big_box,
-        &dst_w, &dst_h);  // crop_big_box为外扩后的当前人脸框坐标，dst_w
-                          // dst_h为外扩后的64位对齐的宽和高，scale为外扩后的宽与64位对齐宽的比值
+        &dst_w,
+        &dst_h);  // crop_big_box为外扩后的当前人脸框坐标，dst_w
+                  // dst_h为外扩后的64位对齐的宽和高，scale为外扩后的宽与64位对齐宽的比值
     VIDEO_FRAME_INFO_S *crop_big_frame = NULL;
     int ret = CVI_TDL_CropResizeImage(tdl_handle, face_cpt_info->fl_model, frame, &crop_big_box,
                                       dst_w, dst_h, PIXEL_FORMAT_RGB_888,
@@ -633,10 +638,11 @@ CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_info,
     }
 
     // cvtdl_bbox_t scale_box2;  // 人脸图相对于crop_frame的坐标
-    // scale_box2.x1 = (scale_box.x1 - crop_box.x1) / ((crop_box.x2 - crop_box.x1) / dst_wh);
-    // scale_box2.y1 = (scale_box.y1 - crop_box.y1) / ((crop_box.y2 - crop_box.y1) / dst_wh);
-    // scale_box2.x2 = (scale_box.x2 - crop_box.x1) / ((crop_box.x2 - crop_box.x1) / dst_wh);
-    // scale_box2.y2 = (scale_box.y2 - crop_box.y1) / ((crop_box.y2 - crop_box.y1) / dst_wh);
+    // scale_box2.x1 = (scale_box.x1 - crop_box.x1) / ((crop_box.x2 -
+    // crop_box.x1) / dst_wh); scale_box2.y1 = (scale_box.y1 - crop_box.y1) /
+    // ((crop_box.y2 - crop_box.y1) / dst_wh); scale_box2.x2 = (scale_box.x2 -
+    // crop_box.x1) / ((crop_box.x2 - crop_box.x1) / dst_wh); scale_box2.y2 =
+    // (scale_box.y2 - crop_box.y1) / ((crop_box.y2 - crop_box.y1) / dst_wh);
     // scale_box2.score = face_meta->info[i].bbox.score;
 
     cvtdl_bbox_t origin_box;  // 人脸属性分类使用稍微外扩的人脸图，效果较好
@@ -716,9 +722,10 @@ CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_info,
       face_cpt_info->data[update_idx].info.pts.x = (float *)malloc(5 * sizeof(float));
       face_cpt_info->data[update_idx].info.pts.y = (float *)malloc(5 * sizeof(float));
       face_cpt_info->data[update_idx]._timestamp =
-          face_cpt_info->_time;  // new unique_id, now maybe face_cpt_info->_time subtract
-                                 // _timestamp (since _timestamp defult 0) is a large number, update
-                                 // _timestamp to avoid  output directly
+          face_cpt_info->_time;  // new unique_id, now maybe face_cpt_info->_time
+                                 // subtract _timestamp (since _timestamp defult 0) is a
+                                 // large number, update _timestamp to avoid  output
+                                 // directly
     } else {
       int8_t *p_feature = face_cpt_info->data[update_idx].info.feature.ptr;
       float *p_pts_x = face_cpt_info->data[update_idx].info.pts.x;
@@ -859,7 +866,8 @@ CVI_S32 update_output_state(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt
       if (face_cpt_info->data[j].info.face_quality < face_cpt_info->cfg.thr_quality) continue;
       if (face_cpt_info->data[j].last_cap_timestamp == face_cpt_info->data[j].cap_timestamp)
         continue;
-      // printf("to output miss track:%d\n", (int)face_cpt_info->data[j].info.unique_id);
+      // printf("to output miss track:%d\n",
+      // (int)face_cpt_info->data[j].info.unique_id);
       if (face_cpt_info->mode == AUTO &&
           num_ok) {  // when leaving,auto mode would output left best face
         face_cpt_info->_output[j] = true;
@@ -878,7 +886,8 @@ CVI_S32 update_output_state(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt
           /* Time's up */
           face_cpt_info->_output[j] = true;
           // printf("output,interval:%d,capts:%d,ts:%d\n", _time,
-          //       (int)face_cpt_info->data[j].cap_timestamp, (int)face_cpt_info->_time);
+          //       (int)face_cpt_info->data[j].cap_timestamp,
+          //       (int)face_cpt_info->_time);
         }
       } else if (face_cpt_info->mode == FAST) {
         if (face_cpt_info->data[j]._out_counter < 1) {

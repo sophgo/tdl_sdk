@@ -253,7 +253,8 @@ int FeatureMatching::cosSimilarityRun(const void *feature, const feature_type_e 
 
   if (m_cpu_ipfeature.feature_array.data_num == 0 && m_tpu_ipfeature.data_num == 0) {
     LOGE(
-        "Not yet register features, please invoke CVI_TDL_Service_RegisterFeatureArray to "
+        "Not yet register features, please invoke "
+        "CVI_TDL_Service_RegisterFeatureArray to "
         "register.\n");
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }

@@ -1,13 +1,16 @@
 #include "dms_landmark.hpp"
+
 #include <core/core/cvtdl_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <algorithm>
 #include <cmath>
 #include <error_msg.hpp>
 #include <iostream>
 #include <iterator>
 #include <string>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -19,15 +22,15 @@
 namespace cvitdl {
 
 DMSLandmarkerDet::DMSLandmarkerDet() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = 1 / 59.395;
-  m_preprocess_param[0].factor[1] = 1 / 57.12;
-  m_preprocess_param[0].factor[2] = 1 / 57.375;
-  m_preprocess_param[0].mean[0] = 2.1179;
-  m_preprocess_param[0].mean[1] = 2.0357;
-  m_preprocess_param[0].mean[2] = 1.8044;
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
-  m_preprocess_param[0].keep_aspect_ratio = false;
+  preprocess_params_[0].factor[0] = 1 / 59.395;
+  preprocess_params_[0].factor[1] = 1 / 57.12;
+  preprocess_params_[0].factor[2] = 1 / 57.375;
+  preprocess_params_[0].mean[0] = 2.1179;
+  preprocess_params_[0].mean[1] = 2.0357;
+  preprocess_params_[0].mean[2] = 1.8044;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].rescale_type = RESCALE_NOASPECT;
+  preprocess_params_[0].keep_aspect_ratio = false;
 }
 
 int DMSLandmarkerDet::onModelOpened() {
@@ -46,31 +49,6 @@ int DMSLandmarkerDet::onModelOpened() {
 }
 
 DMSLandmarkerDet::~DMSLandmarkerDet() {}
-
-int DMSLandmarkerDet::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                                     VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-  vpssChnAttr.stNormalize.bEnable = false;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-  return CVI_TDL_SUCCESS;
-}
 
 int DMSLandmarkerDet::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *facemeta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};

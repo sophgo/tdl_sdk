@@ -1,6 +1,9 @@
 #include "core/cvi_tdl_types_mem.h"
+
 #include <string.h>
+
 #include <cvi_tdl_log.hpp>
+
 #include "core/cvi_tdl_types_mem_internal.h"
 // Free
 
@@ -414,41 +417,4 @@ void CVI_TDL_CopyImage(const cvtdl_image_t *src_image, cvtdl_image_t *dst_image)
       dst_image->pix[i] = dst_image->pix[i - 1] + dst_image->length[i - 1];
     }
   }
-}
-
-void CVI_TDL_MapImage(VIDEO_FRAME_INFO_S *frame, bool *p_is_mapped) {
-  *p_is_mapped = false;
-  CVI_U32 frame_size =
-      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
-    frame->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame_size);
-    frame->stVFrame.pu8VirAddr[1] = frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
-    frame->stVFrame.pu8VirAddr[2] = frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
-    *p_is_mapped = true;
-  }
-}
-void CVI_TDL_UnMapImage(VIDEO_FRAME_INFO_S *frame, bool do_unmap) {
-  CVI_U32 frame_size =
-      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-  if (do_unmap) {
-    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame_size);
-    frame->stVFrame.pu8VirAddr[0] = NULL;
-    frame->stVFrame.pu8VirAddr[1] = NULL;
-    frame->stVFrame.pu8VirAddr[2] = NULL;
-  }
-}
-CVI_S32 CVI_TDL_CopyVpssImage(VIDEO_FRAME_INFO_S *src_frame, cvtdl_image_t *dst_image) {
-  if (src_frame->stVFrame.enPixelFormat != dst_image->pix_format) {
-    printf("pixel format type not match,src:%d,dst:%d\n", (int)src_frame->stVFrame.enPixelFormat,
-           (int)dst_image->pix_format);
-    return CVI_FAILURE;
-  }
-  bool unmap = false;
-  CVI_TDL_MapImage(src_frame, &unmap);
-  CVI_U32 frame_size = src_frame->stVFrame.u32Length[0] + src_frame->stVFrame.u32Length[1] +
-                       src_frame->stVFrame.u32Length[2];
-  memcpy(dst_image->pix[0], src_frame->stVFrame.pu8VirAddr[0], frame_size);
-  CVI_TDL_UnMapImage(src_frame, unmap);
-  return CVI_SUCCESS;
 }

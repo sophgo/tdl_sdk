@@ -97,7 +97,8 @@ static CvContourScanner _cvStartFindContours_Impl(void *_img, CvMemStorage *stor
   if (!((CV_IS_MASK_ARR(mat) && mode < CV_RETR_FLOODFILL) ||
         (CV_MAT_TYPE(mat->type) == CV_32SC1 && mode == CV_RETR_FLOODFILL)))
     CV_Error(CV_StsUnsupportedFormat,
-             "[Start]FindContours supports only CV_8UC1 images when mode != CV_RETR_FLOODFILL "
+             "[Start]FindContours supports only CV_8UC1 images when mode != "
+             "CV_RETR_FLOODFILL "
              "otherwise supports CV_32SC1 images only");
 
   CvSize size = cvSize(mat->width, mat->height);
@@ -548,7 +549,8 @@ void _findContours(cv::InputOutputArray _image, cv::OutputArrayOfArrays _contour
   CV_Assert(_contours.empty() || (_contours.channels() == 2 && _contours.depth() == CV_32S));
 
   cv::Mat image = _image.getMatRef();
-  // copyMakeBorder(_image, image, 1, 1, 1, 1, cv::BORDER_CONSTANT | cv::BORDER_ISOLATED,
+  // copyMakeBorder(_image, image, 1, 1, 1, 1, cv::BORDER_CONSTANT |
+  // cv::BORDER_ISOLATED,
   //                cv::Scalar(0));
 
   cv::MemStorage storage(cvCreateMemStorage());

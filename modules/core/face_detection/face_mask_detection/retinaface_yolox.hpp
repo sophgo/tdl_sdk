@@ -9,7 +9,6 @@ class RetinafaceYolox final : public FaceDetectionBase {
   RetinafaceYolox();
   ~RetinafaceYolox(){};
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *face_meta) override;
-  bool allowExportChannelAttribute() const override { return true; }
 
  private:
   void outputParser(const int image_width, const int image_height, const int frame_width,

@@ -25,16 +25,16 @@ enum InterpolationFlags {
   INTER_LINEAR = 1,
   /** bicubic interpolation */
   INTER_CUBIC = 2,
-  /** resampling using pixel area relation. It may be a preferred method for image decimation, as
-  it gives moire'-free results. But when the image is zoomed, it is similar to the INTER_NEAREST
-  method. */
+  /** resampling using pixel area relation. It may be a preferred method for
+  image decimation, as it gives moire'-free results. But when the image is
+  zoomed, it is similar to the INTER_NEAREST method. */
   INTER_AREA = 3,
   /** Lanczos interpolation over 8x8 neighborhood */
   INTER_LANCZOS4 = 4,
   /** mask for interpolation codes */
   INTER_MAX = 7,
-  /** flag, fills all of the destination image pixels. If some of them correspond to outliers in the
-  source image, they are set to zero */
+  /** flag, fills all of the destination image pixels. If some of them
+  correspond to outliers in the source image, they are set to zero */
   WARP_FILL_OUTLIERS = 8,
   /** flag, inverse transformation
 
@@ -151,7 +151,8 @@ static const void *initInterTab2D(int method, bool fixpt) {
   } else if (method == INTER_LANCZOS4) {
     assert(0);
   } else
-    assert(0);  // CV_Error(CV_StsBadArg, "Unknown/unsupported interpolation type");
+    assert(0);  // CV_Error(CV_StsBadArg, "Unknown/unsupported interpolation
+                // type");
 
   if (!inittab[method]) {
     float *_tab = new float[8 * INTER_TAB_SIZE];
@@ -341,7 +342,8 @@ static void remapBilinear_impl(const uchar *S0, int src_width, int src_height, i
   }
 }
 
-// void remap_bilinear(const cv::Mat* src, cv::Mat* dst, const cv::Mat* m1, const cv::Mat* m2,
+// void remap_bilinear(const cv::Mat* src, cv::Mat* dst, const cv::Mat* m1,
+// const cv::Mat* m2,
 //                int borderType, const cv::Scalar& borderValue,
 //                const cv::Range& range){
 void remap_bilinear(const uchar *p_src_img, int src_width, int src_height, int src_stride,
@@ -350,7 +352,8 @@ void remap_bilinear(const uchar *p_src_img, int src_width, int src_height, int s
                     int m1_channel, uint16_t *p_m2, int m2_width, int m2_height, int m2_stride,
                     int m2_channel, int borderType, const uchar *borderValue, int range_start,
                     int range_end) {
-  // std::cout << "range start:" << range_start << ",end:" << range_end << std::endl;
+  // std::cout << "range start:" << range_start << ",end:" << range_end <<
+  // std::endl;
   int x, y, x1, y1;
   const int buf_size = 1 << 14;
   int brows0 = std::min(128, dst_width);  //, map_depth = m1->depth();
@@ -424,7 +427,8 @@ void WarpAffineInvoker_impl(const uchar *p_src_img, int src_width, int src_heigh
   int range_end = dst_height;
 
   // uchar border_val[4];
-  // for (int k = 0; k < 3; k++) border_val[k] = saturate_cast_uchar(borderValue[k & 3]);
+  // for (int k = 0; k < 3; k++) border_val[k] =
+  // saturate_cast_uchar(borderValue[k & 3]);
   for (y = range_start; y < range_end; y += bh0) {
     for (x = 0; x < dst_width; x += bw0) {
       int bw = std::min(bw0, dst_width - x);
@@ -504,13 +508,16 @@ void WarpAffineInvoker_impl(const uchar *p_src_img, int src_width, int src_heigh
 
       if (interpolation == INTER_NEAREST) {
       }
-      // remap(src, dpart, _XY, cv::Mat(), interpolation, borderType, borderValue);
+      // remap(src, dpart, _XY, cv::Mat(), interpolation, borderType,
+      // borderValue);
       else {
         // cv::Mat _matA(bh, bw, CV_16U, A);
         // uint16_t *pmata = new uint16_t[bh*bw];
         // std::cout << "intertype:" << interpolation << std::endl;
-        // remap(src, dpart, _XY, _matA, interpolation, borderType, borderValue);
-        // remap_bilinear(&src,&dpart,&_XY,&_matA,borderType,borderValue,cv::Range(0, dpart.rows));
+        // remap(src, dpart, _XY, _matA, interpolation, borderType,
+        // borderValue);
+        // remap_bilinear(&src,&dpart,&_XY,&_matA,borderType,borderValue,cv::Range(0,
+        // dpart.rows));
         remap_bilinear(p_src_img, src_width, src_height, src_stride, src_channel, p_dpart, bw, bh,
                        dst_stride, dst_channel, XY, bw, bh, bw * 2, 2, (uint16_t *)A, bw, bh, bw, 1,
                        borderType, border_val, 0, bh);
@@ -555,8 +562,8 @@ void cvitdl::warp_affine(const unsigned char *src_data, unsigned int src_step, i
   double borderValue[4] = {0};
   if (interpolation == INTER_AREA) interpolation = INTER_LINEAR;
 
-  // assert((M0.type() == CV_32F || M0.type() == CV_64F) && M0.rows == 2 && M0.cols == 3);
-  // M0.convertTo(matM, matM.type());
+  // assert((M0.type() == CV_32F || M0.type() == CV_64F) && M0.rows == 2 &&
+  // M0.cols == 3); M0.convertTo(matM, matM.type());
   for (int i = 0; i < 6; i++) {
     M[i] = fM[i];
   }
@@ -575,7 +582,8 @@ void cvitdl::warp_affine(const unsigned char *src_data, unsigned int src_step, i
   }
 
   // printf("[warpAffine] flags = %d, borderType = %d\n", flags, borderType);
-  // std::cout << "dststep:" << dst_step << ",srcstep:" << src_step << std::endl;
+  // std::cout << "dststep:" << dst_step << ",srcstep:" << src_step <<
+  // std::endl;
   _warpAffine(src_data, src_step, src_width, src_height, dst_data, dst_step, dst_width, dst_height,
               M, interpolation, borderType, borderValue);
 }
@@ -630,7 +638,8 @@ int get_similarity_transform_matrix(const float *src_pts, const float *dst_pts, 
   //   src_pts_reflect[2*i+1] = src_pts[2*i+1];
   // }
   // float d_1;
-  // Eigen::Matrix<float, 4, 1> stm_1 = solve_stm_no_reflection(src_pts_reflect, dst_pts, &d_1);
+  // Eigen::Matrix<float, 4, 1> stm_1 = solve_stm_no_reflection(src_pts_reflect,
+  // dst_pts, &d_1);
 
   // bool do_reflect = d_0 > d_1;
   // Eigen::Matrix<float, 4, 1> stm = (do_reflect) ? stm_1 : stm_0;

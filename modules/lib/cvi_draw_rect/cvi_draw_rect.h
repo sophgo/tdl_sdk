@@ -28,7 +28,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceDrawRect(const cvtdl_face_t *meta, VIDEO_FRAME_IN
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the face.
- * @param brushes brushes for drawing. The count of brushes must be same as meta->size.
+ * @param brushes brushes for drawing. The count of brushes must be same as
+ * meta->size.
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceDrawRect2(const cvtdl_face_t *meta, VIDEO_FRAME_INFO_S *frame,
@@ -54,7 +55,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_ObjectDrawRect(const cvtdl_object_t *meta, VIDEO_FRAM
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the object.
- * @param brushes brushes for drawing. The count of brushes must be same as meta->size.
+ * @param brushes brushes for drawing. The count of brushes must be same as
+ * meta->size.
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_ObjectDrawRect2(const cvtdl_object_t *meta, VIDEO_FRAME_INFO_S *frame,

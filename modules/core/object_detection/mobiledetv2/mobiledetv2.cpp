@@ -1,15 +1,18 @@
+#include "object_detection/mobiledetv2/mobiledetv2.hpp"
+
+#include <core/core/cvtdl_errno.h>
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <algorithm>
+#include <error_msg.hpp>
 #include <map>
 #include <memory>
 #include <numeric>
 #include <string>
 
-#include <core/core/cvtdl_errno.h>
-#include <error_msg.hpp>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_core_types.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -18,7 +21,6 @@
 #include "core_utils.hpp"
 #include "cvi_comm.h"
 #include "misc.hpp"
-#include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_utils.hpp"
 
 static const float STD_R = (255.0 * 0.229);
@@ -104,24 +106,24 @@ MobileDetV2::MobileDetV2(MobileDetV2::Category model, float iou_thresh)
     : m_model_config(MDetV2Config::create_config(model)), m_iou_threshold(iou_thresh) {
   m_model_threshold = m_model_config.default_score_threshold;
   /**
-   *  To speedup post-process of MobileDetV2, we apply inverse function of sigmoid to threshold
-   *  and compare with logits directly. That improve post-process speed because of skipping
-   *  compute sigmoid on whole class logits tensors.
-   *  The inverse function of sigmoid is f(x) = ln(y / 1-y)
+   *  To speedup post-process of MobileDetV2, we apply inverse function of
+   * sigmoid to threshold and compare with logits directly. That improve
+   * post-process speed because of skipping compute sigmoid on whole class
+   * logits tensors. The inverse function of sigmoid is f(x) = ln(y / 1-y)
    */
   m_quant_inverse_score_threshold = constructInverseThresh(
       m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
 
   m_filter.set();  // select all classes
-  m_preprocess_param[0].factor[0] = static_cast<float>(FACTOR_R);
-  m_preprocess_param[0].factor[1] = static_cast<float>(FACTOR_G);
-  m_preprocess_param[0].factor[2] = static_cast<float>(FACTOR_B);
-  m_preprocess_param[0].mean[0] = static_cast<float>(MEAN_R);
-  m_preprocess_param[0].mean[1] = static_cast<float>(MEAN_G);
-  m_preprocess_param[0].mean[2] = static_cast<float>(MEAN_B);
-  m_preprocess_param[0].rescale_type = RESCALE_RB;
+  preprocess_params_[0].factor[0] = static_cast<float>(FACTOR_R);
+  preprocess_params_[0].factor[1] = static_cast<float>(FACTOR_G);
+  preprocess_params_[0].factor[2] = static_cast<float>(FACTOR_B);
+  preprocess_params_[0].mean[0] = static_cast<float>(MEAN_R);
+  preprocess_params_[0].mean[1] = static_cast<float>(MEAN_G);
+  preprocess_params_[0].mean[2] = static_cast<float>(MEAN_B);
+  preprocess_params_[0].rescale_type = RESCALE_RB;
 #ifndef __CV186X__
-  m_preprocess_param[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
+  preprocess_params_[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
 #endif
 }
 
@@ -131,29 +133,6 @@ void MobileDetV2::setModelThreshold(const float &threshold) {
     m_quant_inverse_score_threshold = constructInverseThresh(
         m_model_threshold, m_model_config.strides, m_model_config.class_dequant_thresh);
   }
-}
-
-int MobileDetV2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                                VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-
-  return CVI_TDL_SUCCESS;
 }
 
 int MobileDetV2::onModelOpened() {
@@ -349,8 +328,8 @@ int MobileDetV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *meta) {
 
   CVI_SHAPE shape = getInputShape(0);
 
-  convert_det_struct(final_dets, meta, shape.dim[2], shape.dim[3], m_vpss_config[0].rescale_type,
-                     m_model_config);
+  convert_det_struct(final_dets, meta, shape.dim[2], shape.dim[3],
+                     preprocess_params_[0].rescale_type, m_model_config);
 
   if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < meta->size; ++i) {

@@ -9,7 +9,6 @@ class ThermalPerson final : public DetectionBase {
   ThermalPerson();
   ~ThermalPerson();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj) override;
-  bool allowExportChannelAttribute() const override { return true; }
 
  private:
   //   // @attention 原本该类缺少onModelOpened方法，即模型打开时不做任何处理

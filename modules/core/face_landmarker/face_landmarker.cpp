@@ -1,4 +1,5 @@
 #include "face_landmarker.hpp"
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -11,10 +12,10 @@ namespace cvitdl {
 
 FaceLandmarker::FaceLandmarker() : Core(CVI_MEM_DEVICE) {
   for (uint32_t i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = 0.99;
-    m_preprocess_param[0].mean[i] = 0.0;
+    preprocess_params_[0].factor[i] = 0.99;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].use_crop = true;
+  preprocess_params_[0].use_crop = true;
 }
 
 FaceLandmarker::~FaceLandmarker() {}
@@ -34,10 +35,11 @@ int FaceLandmarker::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *meta) {
 
     int max_side = 0;
     Preprocessing(&face_info, &max_side, img_width, img_height);
-    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-    m_vpss_config[0].crop_attr.stCropRect = {(int)face_info.bbox.x1, (int)face_info.bbox.y1,
-                                             (uint32_t)(face_info.bbox.x2 - face_info.bbox.x1),
-                                             (uint32_t)(face_info.bbox.y2 - face_info.bbox.y1)};
+    preprocess_params_[0].use_crop = true;
+    preprocess_params_[0].crop_x = face_info.bbox.x1;
+    preprocess_params_[0].crop_y = face_info.bbox.y1;
+    preprocess_params_[0].crop_w = face_info.bbox.x2 - face_info.bbox.x1;
+    preprocess_params_[0].crop_h = face_info.bbox.y2 - face_info.bbox.y1;
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
     int ret = run(frames);

@@ -1,13 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <algorithm>
-#include <cmath>
-#include <iterator>
+#include "yolov8_seg.hpp"
 
 #include <core/core/cvtdl_errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <algorithm>
+#include <cmath>
 #include <error_msg.hpp>
 #include <fstream>
 #include <iostream>
+#include <iterator>
+
 #include "Eigen/Core"
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
@@ -18,7 +21,6 @@
 #include "cvi_sys.h"
 #include "object_utils.hpp"
 #include "opencv2/opencv.hpp"
-#include "yolov8_seg.hpp"
 
 namespace cvitdl {
 
@@ -57,18 +59,18 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
 YoloV8Seg::YoloV8Seg() {
   // Default value
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = 0.003922;
-    m_preprocess_param[0].mean[i] = 0.0;
+    preprocess_params_[0].factor[i] = 0.003922;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   alg_param_.cls = 0;
 }
 YoloV8Seg::YoloV8Seg(PAIR_INT yolov8_pair) {
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = 0.003922;
-    m_preprocess_param[0].mean[i] = 0.0;
+    preprocess_params_[0].factor[i] = 0.003922;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   m_box_channel_ = yolov8_pair.first;
   alg_param_.cls = yolov8_pair.second;
@@ -175,8 +177,10 @@ void YoloV8Seg::decode_bbox_feature_map(int stride, int anchor_idx,
   int anchor_y = anchor_idx / feat_w;
   int anchor_x = anchor_idx % feat_w;
 
-  // LOGI("box numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
-  //      num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x, num_anchor);
+  // LOGI("box
+  // numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
+  //      num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x,
+  //      num_anchor);
 
   float grid_y = anchor_y + 0.5;
   float grid_x = anchor_x + 0.5;
@@ -242,7 +246,8 @@ void YoloV8Seg::outputParser(const int image_width, const int image_height, cons
   Eigen::MatrixXf mask_map(num_dets_to_crop, m_mask_channel_);
   int row = 0;
 
-  // extract the corresponding mask_map based on the ID of the final detection box
+  // extract the corresponding mask_map based on the ID of the final detection
+  // box
   for (const auto &pair : final_dets_id) {
     std::string mask_name;
     mask_name = mask_out_names[pair.first];
@@ -321,7 +326,7 @@ void YoloV8Seg::outputParser(const int image_width, const int image_height, cons
     if (!hasSkippedVpssPreprocess()) {
       obj_meta->info[i].bbox =
           box_rescale(frame_width, frame_height, obj_meta->width, obj_meta->height,
-                      obj_meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
+                      obj_meta->info[i].bbox, preprocess_params_[0].rescale_type);
     }
   }
 }
@@ -330,8 +335,8 @@ void YoloV8Seg::detPostProcess(Detections &dets, cvtdl_object_t *obj_meta,
                                std::vector<std::pair<int, int>> &final_dets_id) {
   CVI_SHAPE shape = getInputShape(0);
 
-  // used to record the features and index of the detection box at which stride after NMS
-  // post-processing
+  // used to record the features and index of the detection box at which stride
+  // after NMS post-processing
   std::vector<std::pair<int, int>> temp;
 
   int nn_width = shape.dim[3];

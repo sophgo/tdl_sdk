@@ -1,13 +1,16 @@
 #include "face_landmarker_det2.hpp"
+
 #include <core/core/cvtdl_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <algorithm>
 #include <cmath>
 #include <error_msg.hpp>
 #include <iostream>
 #include <iterator>
 #include <string>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -19,15 +22,15 @@
 namespace cvitdl {
 
 FaceLandmarkerDet2::FaceLandmarkerDet2() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = 1 / 127.5;
-  m_preprocess_param[0].factor[1] = 1 / 127.5;
-  m_preprocess_param[0].factor[2] = 1 / 127.5;
-  m_preprocess_param[0].mean[0] = 1.0;
-  m_preprocess_param[0].mean[1] = 1.0;
-  m_preprocess_param[0].mean[2] = 1.0;
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
-  m_preprocess_param[0].keep_aspect_ratio = false;
+  preprocess_params_[0].factor[0] = 1 / 127.5;
+  preprocess_params_[0].factor[1] = 1 / 127.5;
+  preprocess_params_[0].factor[2] = 1 / 127.5;
+  preprocess_params_[0].mean[0] = 1.0;
+  preprocess_params_[0].mean[1] = 1.0;
+  preprocess_params_[0].mean[2] = 1.0;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].rescale_type = RESCALE_NOASPECT;
+  preprocess_params_[0].keep_aspect_ratio = false;
 }
 
 int FaceLandmarkerDet2::onModelOpened() {
@@ -46,35 +49,12 @@ int FaceLandmarkerDet2::onModelOpened() {
       out_names_.count("point_y") == 0) {
     return CVI_TDL_FAILURE;
   }
+  preprocess_params_[0].rescale_type = RESCALE_NOASPECT;
+  preprocess_params_[0].keep_aspect_ratio = false;
   return CVI_TDL_SUCCESS;
 }
 
 FaceLandmarkerDet2::~FaceLandmarkerDet2() {}
-
-int FaceLandmarkerDet2::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                                       VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-  vpssChnAttr.stNormalize.bEnable = false;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-  return CVI_TDL_SUCCESS;
-}
 
 int FaceLandmarkerDet2::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *facemeta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};

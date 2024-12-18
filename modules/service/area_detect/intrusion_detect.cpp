@@ -166,7 +166,8 @@ void IntrusionDetect::getRegion(cvtdl_pts_t ***region_info, uint32_t *size) {
 void IntrusionDetect::clean() { this->regions.clear(); }
 
 bool IntrusionDetect::run(const cvtdl_bbox_t &bbox) {
-  // printf("[RUN] BBox: (%.1f,%.1f,%.1f,%.1f)\n", bbox.x1, bbox.y1, bbox.x2, bbox.y2);
+  // printf("[RUN] BBox: (%.1f,%.1f,%.1f,%.1f)\n", bbox.x1, bbox.y1, bbox.x2,
+  // bbox.y2);
   /* transfer coordinate system from Image to Euclidean */
   cvtdl_bbox_t t_bbox = bbox;
   t_bbox.y1 *= -1;

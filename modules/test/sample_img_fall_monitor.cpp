@@ -242,8 +242,8 @@ int main(int argc, char *argv[]) {
   string::size_type iPos = str_image_root.find_last_of('/') + 1;
   std::string dir_name = str_image_root.substr(iPos, str_image_root.length() - iPos);
   std::string dst_root = dst_dir + "/" + dir_name + ".txt";
-  // std::string dst_root = dst_dir + "/" + str_image_root.substr(iPos, str_image_root.length() -
-  // iPos) + ".txt";
+  // std::string dst_root = dst_dir + "/" + str_image_root.substr(iPos,
+  // str_image_root.length() - iPos) + ".txt";
 
   FILE *fp = fopen(dst_root.c_str(), "w");
   bool fall = false;
@@ -263,7 +263,8 @@ int main(int argc, char *argv[]) {
     std::string f_line;
     float val;
 
-    // sprintf(keypoint_path_ , "/mnt/data/3_data/infer/fall_det/keypoints_result/%s#%d.jpg.txt",
+    // sprintf(keypoint_path_ ,
+    // "/mnt/data/3_data/infer/fall_det/keypoints_result/%s#%d.jpg.txt",
     // dir_name.c_str(), img_idx);
     sprintf(keypoint_path_, "/mnt/data/3_data/infer/fall_det/kps_result/%s/%s#%d.jpg.txt", argv[6],
             dir_name.c_str(), img_idx);
@@ -301,7 +302,8 @@ int main(int argc, char *argv[]) {
     kps_file.close();
 
     // if (dets.size() > 0) {
-    //   printf("dets.size(): %d, dets[0].size()%d\n", dets.size(), dets[0].size());
+    //   printf("dets.size(): %d, dets[0].size()%d\n", dets.size(),
+    //   dets[0].size());
     // }
 
     // getchar();
@@ -340,9 +342,12 @@ int main(int argc, char *argv[]) {
                 << std::endl;
 
       // for (int j = 0; j < 17; j++) {
-      //   std::cout << j << ": " << stObjMeta.info[i].pedestrian_properity->pose_17.x[j] << " "
-      //             << stObjMeta.info[i].pedestrian_properity->pose_17.y[j] << " "
-      //             << stObjMeta.info[i].pedestrian_properity->pose_17.score[j] << std::endl;
+      //   std::cout << j << ": " <<
+      //   stObjMeta.info[i].pedestrian_properity->pose_17.x[j] << " "
+      //             << stObjMeta.info[i].pedestrian_properity->pose_17.y[j] <<
+      //             " "
+      //             << stObjMeta.info[i].pedestrian_properity->pose_17.score[j]
+      //             << std::endl;
       // }
     }
 #endif
@@ -364,9 +369,11 @@ int main(int argc, char *argv[]) {
     save_img = save_img_;
 
     // if (stObjMeta.size > 0) {
-    //   sprintf(text_, "id:%ld, a:%.1f,r:%.2f,s:%.1f,m:%d,st:%d", stObjMeta.info[0].unique_id,
+    //   sprintf(text_, "id:%ld, a:%.1f,r:%.2f,s:%.1f,m:%d,st:%d",
+    //   stObjMeta.info[0].unique_id,
     //           stObjMeta.info[0].human_angle, stObjMeta.info[0].aspect_ratio,
-    //           stObjMeta.info[0].speed, stObjMeta.info[0].is_moving, stObjMeta.info[0].status);
+    //           stObjMeta.info[0].speed, stObjMeta.info[0].is_moving,
+    //           stObjMeta.info[0].status);
     // }
     text = text_;
     printf("#####################  stObjMeta size: %d #########################\n", stObjMeta.size);

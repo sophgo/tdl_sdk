@@ -599,7 +599,8 @@ static CVI_S32 update_data(person_capture_t *person_cpt_info, cvtdl_object_t *ob
   }
 
   for (uint32_t j = 0; j < person_cpt_info->size; j++) {
-    /* NOTE: For more flexible application, we do not remove the tracker immediately when time out
+    /* NOTE: For more flexible application, we do not remove the tracker
+     * immediately when time out
      */
     if (person_cpt_info->data[j].state == ALIVE &&
         person_cpt_info->data[j].miss_counter >
@@ -731,7 +732,8 @@ static bool IS_MEMORY_ENOUGH(uint32_t mem_limit, uint64_t mem_used, cvtdl_image_
   if (mem_limit - mem_used < new_size) {
     return false;
   } else {
-    // printf("<remaining: %u, needed: %u>\n", mem_limit - mem_used, new_s * new_h);
+    // printf("<remaining: %u, needed: %u>\n", mem_limit - mem_used, new_s *
+    // new_h);
     return true;
   }
 }

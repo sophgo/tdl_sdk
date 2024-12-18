@@ -62,8 +62,9 @@ int main(int argc, char *argv[]) {
   cvtdl_object_t obj_meta = {0};
   CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION, &obj_meta);
 
-  // CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[2]);
-  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION, false);
+  // CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION,
+  // argv[2]); CVI_TDL_SetSkipVpssPreprocess(tdl_handle,
+  // CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION, false);
   // CVI_TDL_HandClassification(tdl_handle, &bg, &obj_meta);
 
   std::cout << "objnum:" << obj_meta.size << std::endl;

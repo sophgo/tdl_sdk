@@ -50,17 +50,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_RegisterFeatureArray(
     const cvtdl_service_feature_matching_e method);
 
 /**
- * @brief Do a single cvitdl_face_t feature matching with registed feature array.
+ * @brief Do a single cvitdl_face_t feature matching with registed feature
+ * array.
  * @ingroup core_cvitdlservice
  *
  * @param handle A service handle.
  * @param object_info The cvtdl_object_info_t from NN output with feature data.
  * @param threshold threshold. Set 0 to ignore.
  * @param topk top-k matching results. Set 0 to ignore.
- * @param indices Output top k indices. Array size should be same as number of dataset features if
- * topk is ignored.
- * @param sims Output simlarities. Array size should be same as number of dataset features if topk
- * is ignored.
+ * @param indices Output top k indices. Array size should be same as number of
+ * dataset features if topk is ignored.
+ * @param sims Output simlarities. Array size should be same as number of
+ * dataset features if topk is ignored.
  * @param size Output length of indices and sims array
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
@@ -70,17 +71,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_FaceInfoMatching(cvitdl_service_handle_t hand
                                                     uint32_t *indices, float *sims, uint32_t *size);
 
 /**
- * @brief Do a single cvtdl_object_info_t feature matching with registed feature array.
+ * @brief Do a single cvtdl_object_info_t feature matching with registed feature
+ * array.
  * @ingroup core_cvitdlservice
  *
  * @param handle A service handle.
  * @param object_info The cvtdl_object_info_t from NN output with feature data.
  * @param topk top-k matching results. Set 0 to ignore.
  * @param threshold threshold. Set 0 to ignore.
- * @param indices Output top k indices. Array size should be same as number of dataset features if
- * topk is ignored.
- * @param sims Output similarities. Array size should be same as number of dataset features if topk
- * is ignored.
+ * @param indices Output top k indices. Array size should be same as number of
+ * dataset features if topk is ignored.
+ * @param sims Output similarities. Array size should be same as number of
+ * dataset features if topk is ignored.
  * @param size Output length of indices and sims array
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
@@ -114,10 +116,10 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_CalculateSimilarity(cvitdl_service_handle_t h
  * @param type The data type of the feature vector.
  * @param topk Output top k results.
  * @param threshold threshold. Set 0 to ignore.
- * @param indices Output top k indices. Array size should be same as number of dataset features if
- * topk is ignored.
- * @param sims Output similarities. Array size should be same as number of dataset features if topk
- * is ignored.
+ * @param indices Output top k indices. Array size should be same as number of
+ * dataset features if topk is ignored.
+ * @param sims Output similarities. Array size should be same as number of
+ * dataset features if topk is ignored.
  * @param size Output length of indices and sims array
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
@@ -127,14 +129,15 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_RawMatching(cvitdl_service_handle_t handle, c
                                                uint32_t *size);
 
 /**
- * @brief Zoom in to the union of faces from the output of face detection results.
+ * @brief Zoom in to the union of faces from the output of face detection
+ * results.
  * @ingroup core_cvitdlservice
  *
  * @param handle A service handle.
  * @param inFrame Input frame.
  * @param meta THe result from face detection.
- * @param face_skip_ratio Skip the faces that are too small comparing to the area of the image.
- * Default is 0.05.
+ * @param face_skip_ratio Skip the faces that are too small comparing to the
+ * area of the image. Default is 0.05.
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
  * @param padding_ratio Bounding box padding ratio. Default is 0.3. (0 ~ 1)
  * @param outFrame Output result image, will keep aspect ratio.
@@ -146,14 +149,15 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_FaceDigitalZoom(
     VIDEO_FRAME_INFO_S *outFrame);
 
 /**
- * @brief Zoom in to the union of objects from the output of object detection results.
+ * @brief Zoom in to the union of objects from the output of object detection
+ * results.
  * @ingroup core_cvitdlservice
  *
  * @param handle A service handle.
  * @param inFrame Input frame.
  * @param meta THe result from face detection.
- * @param obj_skip_ratio Skip the objects that are too small comparing to the area of the image.
- * Default is 0.05.
+ * @param obj_skip_ratio Skip the objects that are too small comparing to the
+ * area of the image. Default is 0.05.
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
  * @param padding_ratio Bounding box padding ratio. Default is 0.3. (0 ~ 1)
  * @param outFrame Output result image, will keep aspect ratio.
@@ -165,19 +169,23 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_ObjectDigitalZoom(
     VIDEO_FRAME_INFO_S *outFrame);
 
 /**
- * @brief Zoom in to the union of objects from the output of object detection results.
+ * @brief Zoom in to the union of objects from the output of object detection
+ * results.
  * @ingroup core_cvitdlservice
  *
  * @param handle A service handle.
  * @param inFrame Input frame.
  * @param meta THe result from face detection.
- * @param obj_skip_ratio Skip the objects that are too small comparing to the area of the image.
- * Default is 0.05.
+ * @param obj_skip_ratio Skip the objects that are too small comparing to the
+ * area of the image. Default is 0.05.
  * @param trans_ratio Change to zoom in ratio. Default is 0.1.
- * @param pad_ratio_left Left bounding box padding ratio. Default is 0.3. (-1 ~ 1)
- * @param pad_ratio_right Right bounding box padding ratio. Default is 0.3. (-1 ~ 1)
+ * @param pad_ratio_left Left bounding box padding ratio. Default is 0.3. (-1 ~
+ * 1)
+ * @param pad_ratio_right Right bounding box padding ratio. Default is 0.3. (-1
+ * ~ 1)
  * @param pad_ratio_top Top bounding box padding ratio. Default is 0.3. (-1 ~ 1)
- * @param pad_ratio_bottom Bottom bounding box padding ratio. Default is 0.3. (-1 ~ 1)
+ * @param pad_ratio_bottom Bottom bounding box padding ratio. Default is 0.3.
+ * (-1 ~ 1)
  * @param outFrame Output result image, will keep aspect ratio.
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
@@ -210,7 +218,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_FaceDrawRect(cvitdl_service_handle_t handle,
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the face.
- * @param brushes brushes for drawing. The count of brushes must be same as meta->size.
+ * @param brushes brushes for drawing. The count of brushes must be same as
+ * meta->size.
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Service_FaceDrawRect2(cvitdl_service_handle_t handle,
@@ -245,7 +254,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_ObjectDrawRect(cvitdl_service_handle_t handle
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
  * @param drawText Choose to draw name of the object.
- * @param brushes brushes for drawing. The count of brushes must be same as meta->size.
+ * @param brushes brushes for drawing. The count of brushes must be same as
+ * meta->size.
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Service_ObjectDrawRect2(cvitdl_service_handle_t handle,
@@ -337,7 +347,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_Polygon_CleanAll(cvitdl_service_handle_t hand
  *
  * @param handle A service handle.
  * @param bbox Object meta structure.
- * @param has_intersect true if two polygons has intersection, otherwise return false.
+ * @param has_intersect true if two polygons has intersection, otherwise return
+ * false.
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Service_Polygon_Intersect(cvitdl_service_handle_t handle,

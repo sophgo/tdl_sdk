@@ -12,7 +12,8 @@
 
 /** @struct cvtdl_vpssconfig_t
  * @ingroup core_cvitdlvpss
- * @brief A structure wrapper that returns the scale quantization parameters of a loaded model.
+ * @brief A structure wrapper that returns the scale quantization parameters of
+ * a loaded model.
  */
 typedef struct {
   VPSS_SCALE_COEF_E chn_coeff;

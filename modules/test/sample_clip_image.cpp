@@ -22,7 +22,8 @@ static CVI_S32 vpssgrp_height = 1080;
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printf(
-        "Usage: %s <clip model path> <input image directory list.txt> <output result "
+        "Usage: %s <clip model path> <input image directory list.txt> <output "
+        "result "
         "directory/>.\n",
         argv[0]);
     printf("clip model path: Path to clip bmodel.\n");

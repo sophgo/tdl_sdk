@@ -38,8 +38,8 @@ typedef enum {
 
 /** @enum cvtdl_liveness_ir_position_e
  *  @ingroup core_cvitdlcore
- *  @brief Give liveness TDL inference the hint the physical position of the IR camera is on the
- * left or right side of the RGB camera.
+ *  @brief Give liveness TDL inference the hint the physical position of the IR
+ * camera is on the left or right side of the RGB camera.
  */
 typedef enum { LIVENESS_IR_LEFT = 0, LIVENESS_IR_RIGHT } cvtdl_liveness_ir_position_e;
 

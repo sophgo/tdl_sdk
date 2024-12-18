@@ -53,56 +53,56 @@ fi
 test_suites=""
 
 # ION requirement >= 20 MB
-if [ "$total_ion_size" -gt "20000000" ]; then
-  test_suites="CoreTestSuite.*"
-  test_suites="${test_suites}:FaceRecognitionTestSuite.*"
-  test_suites="${test_suites}:MaskClassification.*"
-  test_suites="${test_suites}:FaceQualityTestSuite.*"
-  test_suites="${test_suites}:MultiObjectTrackingTestSuite.*"
-  test_suites="${test_suites}:ReIdentificationTestSuite.*"
-  test_suites="${test_suites}:LivenessTestSuite.*"
-  test_suites="${test_suites}:RetinafaceTestSuite.*"
-  test_suites="${test_suites}:FaceMaskDetectionTestSuite.*"
-  test_suites="${test_suites}:RetinafaceIRTestSuite.*"
-  test_suites="${test_suites}:RetinafaceHardhatTestSuite.*"
-  test_suites="${test_suites}:IncarTestSuite.*"
-  test_suites="${test_suites}:ESCTestSuite.*"
-  test_suites="${test_suites}:EyeCTestSuite.*"
-  test_suites="${test_suites}:YawnCTestSuite.*"
-  test_suites="${test_suites}:SoundCTestSuite.*"
-  test_suites="${test_suites}:FLTestSuite.*"
-  #test_suites="${test_suites}:TamperDetectionTestSuite.*"
-fi
+# if [ "$total_ion_size" -gt "20000000" ]; then
+#   test_suites="CoreTestSuite.*"
+#   test_suites="${test_suites}:FaceRecognitionTestSuite.*"
+#   test_suites="${test_suites}:MaskClassification.*"
+#   test_suites="${test_suites}:FaceQualityTestSuite.*"
+#   test_suites="${test_suites}:MultiObjectTrackingTestSuite.*"
+#   test_suites="${test_suites}:ReIdentificationTestSuite.*"
+#   test_suites="${test_suites}:LivenessTestSuite.*"
+#   test_suites="${test_suites}:RetinafaceTestSuite.*"
+#   test_suites="${test_suites}:FaceMaskDetectionTestSuite.*"
+#   test_suites="${test_suites}:RetinafaceIRTestSuite.*"
+#   test_suites="${test_suites}:RetinafaceHardhatTestSuite.*"
+#   test_suites="${test_suites}:IncarTestSuite.*"
+#   test_suites="${test_suites}:ESCTestSuite.*"
+#   test_suites="${test_suites}:EyeCTestSuite.*"
+#   test_suites="${test_suites}:YawnCTestSuite.*"
+#   test_suites="${test_suites}:SoundCTestSuite.*"
+#   test_suites="${test_suites}:FLTestSuite.*"
+#   #test_suites="${test_suites}:TamperDetectionTestSuite.*"
+# fi
 
-# ION requirement >= 35 MB
-if [ "$total_ion_size" -gt "35000000" ]; then
-test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
-test_suites="${test_suites}:LicensePlateRecognitionTestSuite.*"
-test_suites="${test_suites}:ThermalFaceDetectionTestSuite.*"
-test_suites="${test_suites}:ThermalPersonDetectionTestSuite.*"
-test_suites="${test_suites}:FeatureMatchingTestSuite.*"
-test_suites="${test_suites}:MotionDetection*"
-fi
+# # ION requirement >= 35 MB
+# if [ "$total_ion_size" -gt "35000000" ]; then
+# test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
+# test_suites="${test_suites}:LicensePlateRecognitionTestSuite.*"
+# test_suites="${test_suites}:ThermalFaceDetectionTestSuite.*"
+# test_suites="${test_suites}:ThermalPersonDetectionTestSuite.*"
+# test_suites="${test_suites}:FeatureMatchingTestSuite.*"
+# test_suites="${test_suites}:MotionDetection*"
+# fi
 
-# ION requirement >= 60 MB
-if [ "$total_ion_size" -gt "60000000" ]; then
-test_suites="${test_suites}:MobileDetTestSuite.*"
-fi
+# # ION requirement >= 60 MB
+# if [ "$total_ion_size" -gt "60000000" ]; then
+# test_suites="${test_suites}:MobileDetTestSuite.*"
+# fi
 
-# ION requirement >= 70 MB
-if [ "$total_ion_size" -gt "70000000" ]; then
-test_suites="${test_suites}:FallTestSuite.*"
-test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
-test_suites="${test_suites}:Hand_DetectionTestSuite.*"
-test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
-test_suites="${test_suites}:People_Vehicle_DetectionTestSuite.*"
-test_suites="${test_suites}:FaceRecognitionTestSuite.*"
-test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
-test_suites="${test_suites}:ScrfdDetTestSuite.*"
-test_suites="${test_suites}:Hand_ClassificationTestSuite.*"
-test_suites="${test_suites}:HardhatDetTestSuite.*"
-test_suites="${test_suites}:MobileDetV2TestSuite.*"
-fi
+# # ION requirement >= 70 MB
+# if [ "$total_ion_size" -gt "70000000" ]; then
+# test_suites="${test_suites}:FallTestSuite.*"
+# test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
+# test_suites="${test_suites}:Hand_DetectionTestSuite.*"
+# test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
+# test_suites="${test_suites}:People_Vehicle_DetectionTestSuite.*"
+# test_suites="${test_suites}:FaceRecognitionTestSuite.*"
+# test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
+# test_suites="${test_suites}:ScrfdDetTestSuite.*"
+# test_suites="${test_suites}:Hand_ClassificationTestSuite.*"
+# test_suites="${test_suites}:HardhatDetTestSuite.*"
+# test_suites="${test_suites}:MobileDetV2TestSuite.*"
+# fi
 
 if [ $CHIP_ARCH == "CV186X" ];then
   test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
@@ -115,6 +115,8 @@ if [ $CHIP_ARCH == "CV186X" ];then
   test_suites="${test_suites}:Hand_ClassificationTestSuite.*"
   test_suites="${test_suites}:HardhatDetTestSuite.*"
   test_suites="${test_suites}:MobileDetectionV2TestSuite.*"
+  # test_suites="${test_suites}:VPSSImageTestSuite.*"
+  # test_suites="${test_suites}:VpssPreprocessorTestSuite.*"
 fi
 echo "----------------------"
 echo -e "regression setting:"

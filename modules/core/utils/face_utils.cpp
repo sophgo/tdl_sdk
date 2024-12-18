@@ -151,13 +151,13 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
     return -1;
   }
   // double t =
-  //     (tfm.at<double>(0, 0) / tfm.at<double>(0, 1) - tfm.at<double>(1, 0) / tfm.at<double>(1,
-  //     1));
+  //     (tfm.at<double>(0, 0) / tfm.at<double>(0, 1) - tfm.at<double>(1, 0) /
+  //     tfm.at<double>(1, 1));
   // double a = 1 / tfm.at<double>(0, 1) / t;
   // double b = -1 / tfm.at<double>(1, 1) / t;
   // double c =
-  //     (-tfm.at<double>(0, 2) / tfm.at<double>(0, 1) + tfm.at<double>(1, 2) / tfm.at<double>(1,
-  //     1)) / t;
+  //     (-tfm.at<double>(0, 2) / tfm.at<double>(0, 1) + tfm.at<double>(1, 2) /
+  //     tfm.at<double>(1, 1)) / t;
   // vector<cv::Point2f> search_points;
   // const float sp_x = outFrame->stVFrame.u32Width - 1;
   // const float sp_y = outFrame->stVFrame.u32Height - 1;
@@ -169,11 +169,12 @@ int face_align_gdc(const VIDEO_FRAME_INFO_S *inFrame, VIDEO_FRAME_INFO_S *outFra
   // for (auto &e : search_points) {
   //   face_box[i].x = e.x * a + e.y * b + c;
   //   face_box[i].y =
-  //       (e.x - tfm.at<double>(0, 2) - face_box[i].x * tfm.at<double>(0, 0)) / tfm.at<double>(0,
-  //       1);
+  //       (e.x - tfm.at<double>(0, 2) - face_box[i].x * tfm.at<double>(0, 0)) /
+  //       tfm.at<double>(0, 1);
   //   ++i;
   // }
-  // stAffineAttr.stDestSize = {outFrame->stVFrame.u32Width, outFrame->stVFrame.u32Height};
+  // stAffineAttr.stDestSize = {outFrame->stVFrame.u32Width,
+  // outFrame->stVFrame.u32Height};
 
   // GDC_HANDLE hHandle;
   // GDC_TASK_ATTR_S stTask;

@@ -1,8 +1,10 @@
+#include "ppyoloe.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <iterator>
-
 #include <unordered_map>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -10,7 +12,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "ppyoloe.hpp"
 
 namespace cvitdl {
 
@@ -129,11 +130,11 @@ PPYoloE::PPYoloE() {
   float std[3] = {58.395, 57.12, 57.375};
 
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].mean[i] = mean[i] / std[i];
-    m_preprocess_param[0].factor[i] = 1.0 / std[i];
+    preprocess_params_[0].mean[i] = mean[i] / std[i];
+    preprocess_params_[0].factor[i] = 1.0 / std[i];
   }
 
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   alg_param_.cls = 80;
 }
 
@@ -211,7 +212,7 @@ void PPYoloE::outputParser(const int image_width, const int image_height, const 
   CVI_SHAPE shape = getInputShape(0);
 
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3],
-                     m_vpss_config[0].rescale_type);
+                     preprocess_params_[0].rescale_type);
 
   if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < obj_meta->size; ++i) {

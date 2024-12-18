@@ -67,7 +67,8 @@ int main(int argc, char *argv[]) {
         "          mode, 0: fast, 1: interval, 2: leave, 3: intelligent\n"
         "          tracking buffer size\n"
         "          FD threshold\n"
-        "          video output, 0: disable, 1: output to panel, 2: output through rtsp\n",
+        "          video output, 0: disable, 1: output to panel, 2: output "
+        "through rtsp\n",
         argv[0]);
     return CVI_FAILURE;
   }

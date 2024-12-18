@@ -1,6 +1,9 @@
 #include "cvi_tdl_test.hpp"
+
 #include <inttypes.h>
+
 #include <fstream>
+
 #include "core/utils/vpss_helper.h"
 
 namespace fs = std::experimental::filesystem;
@@ -27,7 +30,11 @@ fs::path CVI_TDLTestContext::getJsonBaseDir() { return m_json_dir; }
 
 CVI_TDLTestContext::CVI_TDLTestContext() : m_inited(false) {}
 
-void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir, std::string json_dir) {
+void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir,
+                              std::string json_dir) {
+  std::cout << "model_dir: " << m_model_dir << ", image_dir: " << m_image_dir
+            << ", json_dir: " << m_json_dir << std::endl;
+
   if (!m_inited) {
     m_model_dir = model_dir;
     m_image_dir = image_dir;
@@ -38,9 +45,11 @@ void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir, std:
 
 int64_t CVI_TDLTestSuite::get_ion_memory_size() {
 #ifdef __CV186X__
-  const char ION_SUMMARY_PATH[255] = "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem";
+  const char ION_SUMMARY_PATH[255] =
+      "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem";
 #else
-  const char ION_SUMMARY_PATH[255] = "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem";
+  const char ION_SUMMARY_PATH[255] =
+      "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem";
 #endif
   std::ifstream ifs(ION_SUMMARY_PATH);
   std::string line;
@@ -51,8 +60,6 @@ int64_t CVI_TDLTestSuite::get_ion_memory_size() {
 }
 
 void CVI_TDLTestSuite::SetUpTestCase() {
-#
-
   int64_t ion_size = get_ion_memory_size();
 
   const CVI_S32 vpssgrp_width = DEFAULT_IMG_WIDTH;
@@ -70,8 +77,9 @@ void CVI_TDLTestSuite::SetUpTestCase() {
   memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
   stVbConf.u32MaxPoolCnt = 1;
   CVI_U32 u32BlkSize;
-  u32BlkSize = COMMON_GetPicBufferSize(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR,
-                                       DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
+  u32BlkSize = COMMON_GetPicBufferSize(
+      vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR,
+      DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[0].u32BlkCnt = num_buffer;
 
@@ -83,6 +91,7 @@ void CVI_TDLTestSuite::SetUpTestCase() {
   ASSERT_EQ(CVI_VB_Init(), CVI_SUCCESS);
 
   ASSERT_EQ(CVI_SYS_Init(), CVI_SUCCESS);
+  std::cout << "CVI_TDLTestSuite::SetUpTestCase done" << std::endl;
 }
 
 void CVI_TDLTestSuite::TearDownTestCase() {
@@ -90,18 +99,29 @@ void CVI_TDLTestSuite::TearDownTestCase() {
   CVI_VB_Exit();
 }
 
-CVI_TDLModelTestSuite::CVI_TDLModelTestSuite(const std::string &json_file_name,
-                                             const std::string &image_dir_name) {
+CVI_TDLModelTestSuite::CVI_TDLModelTestSuite(
+    const std::string &json_file_name, const std::string &image_dir_name) {
   CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
 
   fs::path json_file_path = context.getJsonBaseDir();
   json_file_path /= json_file_name;
-  std::ifstream filestr(json_file_path);
-  filestr >> m_json_object;
-  filestr.close();
 
-  m_image_dir = context.getImageBaseDir() / fs::path(image_dir_name);
+  if (!json_file_name.empty()) {
+    std::ifstream filestr(json_file_path);
+    filestr >> m_json_object;
+    filestr.close();
+  }
+  if (m_json_object.contains("image_dir")) {
+    m_image_dir =
+        context.getImageBaseDir() / fs::path(m_json_object["image_dir"]);
+  } else {
+    m_image_dir = context.getImageBaseDir() / fs::path(image_dir_name);
+  }
   m_model_dir = context.getModelBaseDir();
+
+  std::cout << "json_file_path: " << json_file_path
+            << ",image_dir_name: " << m_image_dir
+            << ",model_dir: " << m_model_dir << std::endl;
 }
 }  // namespace unitest
 }  // namespace cvitdl

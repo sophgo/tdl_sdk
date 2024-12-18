@@ -8,7 +8,6 @@ class Hrnet final : public PoseDetectionBase {
   Hrnet();
   ~Hrnet(){};
   int inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *obj_meta) override;
-  bool allowExportChannelAttribute() const override { return true; }
 
  private:
   void outputParser(const float nn_width, const float nn_height, const int frame_width,

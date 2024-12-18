@@ -13,9 +13,9 @@ using std::vector;
 
 int EntryIndex(int w, int h, int classes, int batch, int location, int entry, int outputs) {
   // w, h is the feature map width and height
-  int n = location / (w * h);  // The number of anchor, n: [0, max_anchors_num), default max is 5;
-  int loc = location %
-            (w * h);  // The loc bounding box of the anchor loc: [0, w * h), which grid in w * h
+  int n = location / (w * h);    // The number of anchor, n: [0, max_anchors_num), default max is 5;
+  int loc = location % (w * h);  // The loc bounding box of the anchor loc: [0,
+                                 // w * h), which grid in w * h
   // The nth of anchors, n * w * h * (l.coords+l.classes+1), the 1 is conf.
   return batch * outputs + n * w * h * (4 + classes + 1) + entry * w * h + loc;
 };

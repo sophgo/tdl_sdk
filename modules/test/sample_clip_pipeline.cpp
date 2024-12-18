@@ -25,7 +25,8 @@ static CVI_S32 vpssgrp_height = 1080;
 int main(int argc, char* argv[]) {
   if (argc != 7) {
     printf(
-        "Usage: %s <clip model path> <input image directory list.txt> <output result "
+        "Usage: %s <clip model path> <input image directory list.txt> <output "
+        "result "
         "directory/> <min th>.\n",
         argv[0]);
     printf("clip image model path: Path to clip image bmodel.\n");
@@ -33,7 +34,9 @@ int main(int argc, char* argv[]) {
     printf("clip text model path: Path to clip text bmodel.\n");
     printf("Input text directory: Directory containing input text for clip.\n");
     printf("output text directory: Directory containing output class for clip.\n");
-    printf("If top1 score < th, return -1 not in dataset, else return top1 class.\n");
+    printf(
+        "If top1 score < th, return -1 not in dataset, else return top1 "
+        "class.\n");
     return CVI_FAILURE;
   }
   CVI_S32 ret = CVI_SUCCESS;

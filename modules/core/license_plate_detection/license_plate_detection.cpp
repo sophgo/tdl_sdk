@@ -1,20 +1,20 @@
 #include "license_plate_detection.hpp"
 
+#include <iostream>
+#include <sstream>
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
+#include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-
-#include "core/utils/vpss_helper.h"
-
-#include <iostream>
-#include <sstream>
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))
 #define DEBUG_LICENSE_PLATE_DETECTION 0
 #if DEBUG_LICENSE_PLATE_DETECTION2 && !NO_OPENCV
 #include <opencv2/opencv.hpp>
+
 #include "opencv2/imgproc.hpp"
 #endif
 
@@ -25,13 +25,14 @@ namespace cvitdl {
 
 LicensePlateDetection::LicensePlateDetection() : Core(CVI_MEM_DEVICE) {
   for (int i = 0; i < 3; i++) {
-    /* VPSS clip image to 128, we divide it by 2 first, then multiply by 2 in cvimodel preprocess */
-    m_preprocess_param[0].factor[i] = 0.5;
-    m_preprocess_param[0].mean[i] = 0.0;
+    /* VPSS clip image to 128, we divide it by 2 first, then multiply by 2 in
+     * cvimodel preprocess */
+    preprocess_params_[0].factor[i] = 0.5;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].rescale_type = RESCALE_RB;
-  m_preprocess_param[0].use_crop = true;
-  m_preprocess_param[0].keep_aspect_ratio = true;
+  preprocess_params_[0].rescale_type = RESCALE_RB;
+  preprocess_params_[0].use_crop = true;
+  preprocess_params_[0].keep_aspect_ratio = true;
 }
 
 LicensePlateDetection::~LicensePlateDetection() {}
@@ -44,26 +45,6 @@ int LicensePlateDetection::onModelOpened() {
   out_tensor_h = vehicle_h / 16;
   out_tensor_w = vehicle_w / 16;
 
-  return CVI_TDL_SUCCESS;
-}
-
-int LicensePlateDetection::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
-                                          VIDEO_FRAME_INFO_S *dstFrame, VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &vpssCropAttr = vpss_config.crop_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, vpssCropAttr.stCropRect.u32Width,
-                        vpssCropAttr.stCropRect.u32Height, vpssChnAttr.u32Width,
-                        vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR, factor, mean, false);
-  if (mp_vpss_inst->sendCropChnFrame(srcFrame, &vpss_config.crop_attr, &vpss_config.chn_attr,
-                                     &vpss_config.chn_coeff, 1) != CVI_SUCCESS) {
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  if (mp_vpss_inst->getFrame(dstFrame, 0) != CVI_SUCCESS) {
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
   return CVI_TDL_SUCCESS;
 }
 
@@ -101,14 +82,14 @@ int LicensePlateDetection::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *
   get_resize_scale(vehicle_meta, rs_scale, vehicle_h, vehicle_w);
 
   for (uint32_t n = 0; n < vehicle_meta->size; n++) {
-    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_ABS_COOR;
-    float x1 = vehicle_meta->info[n].bbox.x1;
-    float y1 = vehicle_meta->info[n].bbox.y1;
-    float x2 = vehicle_meta->info[n].bbox.x2;
-    float y2 = vehicle_meta->info[n].bbox.y2;
-    m_vpss_config[0].crop_attr.stCropRect = {(int32_t)x1, (int32_t)y1, (uint32_t)(x2 - x1),
-                                             (uint32_t)(y2 - y1)};
+    preprocess_params_[0].use_crop = true;
+    preprocess_params_[0].crop_x = vehicle_meta->info[n].bbox.x1;
+    preprocess_params_[0].crop_y = vehicle_meta->info[n].bbox.y1;
+    preprocess_params_[0].crop_w = vehicle_meta->info[n].bbox.x2 - vehicle_meta->info[n].bbox.x1;
+    preprocess_params_[0].crop_h = vehicle_meta->info[n].bbox.y2 - vehicle_meta->info[n].bbox.y1;
+
     std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
+
     int ret = run(frames);
     if (ret != CVI_TDL_SUCCESS) {
       return ret;

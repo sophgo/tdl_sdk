@@ -69,7 +69,9 @@ void run_hand_keypoint(cvitdl_handle_t tdl_handle, std::string model_path,
 
 void run_hand_keypoint_cls(cvitdl_handle_t tdl_handle, std::string model_path,
                            cvtdl_handpose21_meta_ts &hand_obj, cvtdl_handpose21_meta_t &meta) {
-  printf("---------------------to do detection keypoint classification-----------------------\n");
+  printf(
+      "---------------------to do detection keypoint "
+      "classification-----------------------\n");
   CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_KEYPOINT_CLASSIFICATION,
                     model_path.c_str());
   std::vector<float> keypoints;

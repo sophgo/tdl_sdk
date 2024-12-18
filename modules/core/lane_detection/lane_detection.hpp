@@ -1,5 +1,6 @@
 #pragma once
 #include <bitset>
+
 #include "core.hpp"
 #include "core/object/cvtdl_object_types.h"
 
@@ -11,7 +12,6 @@ class BezierLaneNet final : public Core {
 
   virtual ~BezierLaneNet();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_lane_t *lane_meta);
-  virtual bool allowExportChannelAttribute() const override { return true; }
 
  private:
   // virtual int onModelOpened() override;

@@ -15,10 +15,10 @@ namespace cvitdl {
 
 Deeplabv3::Deeplabv3() : Core(CVI_MEM_DEVICE) {
   for (uint32_t i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = SCALE;
-    m_preprocess_param[0].mean[i] = MEAN;
+    preprocess_params_[0].factor[i] = SCALE;
+    preprocess_params_[0].mean[i] = MEAN;
   }
-  m_preprocess_param[0].keep_aspect_ratio = false;
+  preprocess_params_[0].keep_aspect_ratio = false;
 }
 
 Deeplabv3::~Deeplabv3() {}

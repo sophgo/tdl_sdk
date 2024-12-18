@@ -154,7 +154,8 @@ CVI_S32 DeepSORT::track_cross(cvtdl_object_t *obj, cvtdl_tracker_t *tracker, boo
     }
   }
 
-  /** update tracker state even though there is no relative bbox (by class ID) at this time.
+  /** update tracker state even though there is no relative bbox (by class ID)
+   * at this time.
    */
   for (std::set<int>::iterator it = class_ids_trackers.begin(); it != class_ids_trackers.end();
        ++it) {
@@ -194,7 +195,8 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &high_result, Tracking_Result &low_
 
   LOGD("Kalman Trackers predict\n");
   for (KalmanTracker &tracker_ : k_trackers) {
-    // kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P, conf->kfilter_conf);
+    // kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P,
+    // conf->kfilter_conf);
     tracker_.predict(kf_, conf);
   }
   check_bound_state(conf);
@@ -310,7 +312,8 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &high_result, Tracking_Result &low_
     const BBOX &bbox_ = HighBBoxes[bbox_idx];
     // tracker_.update_state(true, conf->ktracker_conf.max_unmatched_num,
     //                       conf->ktracker_conf.accreditation_threshold);
-    // kf_.update(tracker_.kalman_state, tracker_.x, tracker_.P, bbox_tlwh2xyah(bbox_),
+    // kf_.update(tracker_.kalman_state, tracker_.x, tracker_.P,
+    // bbox_tlwh2xyah(bbox_),
     //            conf->kfilter_conf);
     stRect rct(bbox_(0), bbox_(1), bbox_(2), bbox_(3));
     tracker_.update(kf_, &rct, conf);
@@ -642,7 +645,8 @@ CVI_S32 DeepSORT::byte_track(cvtdl_object_t *obj, cvtdl_tracker_t *tracker, bool
       }
     }
   }
-  /** update tracker state even though there is no relative bbox (by class ID) at this time.
+  /** update tracker state even though there is no relative bbox (by class ID)
+   * at this time.
    */
   for (std::set<int>::iterator it = class_ids_trackers.begin(); it != class_ids_trackers.end();
        ++it) {
@@ -751,7 +755,8 @@ CVI_S32 DeepSORT::track(cvtdl_object_t *obj, cvtdl_tracker_t *tracker, bool use_
     }
   }
 
-  /** update tracker state even though there is no relative bbox (by class ID) at this time.
+  /** update tracker state even though there is no relative bbox (by class ID)
+   * at this time.
    */
   for (std::set<int>::iterator it = class_ids_trackers.begin(); it != class_ids_trackers.end();
        ++it) {
@@ -906,7 +911,8 @@ CVI_S32 DeepSORT::track_impl_cross(Tracking_Result2 &result, const std::vector<B
 
   LOGD("Kalman Trackers predict\n");
   for (KalmanTracker &tracker_ : k_trackers) {
-    // kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P, conf->kfilter_conf);
+    // kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P,
+    // conf->kfilter_conf);
     tracker_.predict(kf_, conf);
   }
   check_bound_state(conf);
@@ -1019,11 +1025,14 @@ CVI_S32 DeepSORT::track_impl_cross(Tracking_Result2 &result, const std::vector<B
   unmatched_tracker_idxes.insert(unmatched_tracker_idxes.end(),
                                  match_result_bbox.unmatched_tracker_idxes.begin(),
                                  match_result_bbox.unmatched_tracker_idxes.end());
-  // MatchResult match_recall = refine_uncrowd(BBoxes, Features, unmatched_tracker_idxes,
-  //                                           unmatched_bbox_idxes, crowd_iou_thresh);
+  // MatchResult match_recall = refine_uncrowd(BBoxes, Features,
+  // unmatched_tracker_idxes,
+  //                                           unmatched_bbox_idxes,
+  //                                           crowd_iou_thresh);
 
   // /* Match remain trackers */
-  // matched_pairs.insert(matched_pairs.end(), match_recall.matched_pairs.begin(),
+  // matched_pairs.insert(matched_pairs.end(),
+  // match_recall.matched_pairs.begin(),
   //                      match_recall.matched_pairs.end());
   // unmatched_bbox_idxes = match_recall.unmatched_bbox_idxes;
   // unmatched_tracker_idxes = match_recall.unmatched_tracker_idxes;
@@ -1170,7 +1179,8 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
 
   LOGD("Kalman Trackers predict\n");
   for (KalmanTracker &tracker_ : k_trackers) {
-    // kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P, conf->kfilter_conf);
+    // kf_.predict(tracker_.kalman_state, tracker_.x, tracker_.P,
+    // conf->kfilter_conf);
     if (tracker_.class_id == class_id) {
       tracker_.predict(kf_, conf);
     }
@@ -1285,11 +1295,14 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
   unmatched_tracker_idxes.insert(unmatched_tracker_idxes.end(),
                                  match_result_bbox.unmatched_tracker_idxes.begin(),
                                  match_result_bbox.unmatched_tracker_idxes.end());
-  // MatchResult match_recall = refine_uncrowd(BBoxes, Features, unmatched_tracker_idxes,
-  //                                           unmatched_bbox_idxes, crowd_iou_thresh);
+  // MatchResult match_recall = refine_uncrowd(BBoxes, Features,
+  // unmatched_tracker_idxes,
+  //                                           unmatched_bbox_idxes,
+  //                                           crowd_iou_thresh);
 
   // /* Match remain trackers */
-  // matched_pairs.insert(matched_pairs.end(), match_recall.matched_pairs.begin(),
+  // matched_pairs.insert(matched_pairs.end(),
+  // match_recall.matched_pairs.begin(),
   //                      match_recall.matched_pairs.end());
   // unmatched_bbox_idxes = match_recall.unmatched_bbox_idxes;
   // unmatched_tracker_idxes = match_recall.unmatched_tracker_idxes;
@@ -1302,7 +1315,8 @@ CVI_S32 DeepSORT::track_impl(Tracking_Result &result, const std::vector<BBOX> &B
     const BBOX &bbox_ = BBoxes[bbox_idx];
     // tracker_.update_state(true, conf->ktracker_conf.max_unmatched_num,
     //                       conf->ktracker_conf.accreditation_threshold);
-    // kf_.update(tracker_.kalman_state, tracker_.x, tracker_.P, bbox_tlwh2xyah(bbox_),
+    // kf_.update(tracker_.kalman_state, tracker_.x, tracker_.P,
+    // bbox_tlwh2xyah(bbox_),
     //            conf->kfilter_conf);
     stRect rct(bbox_(0), bbox_(1), bbox_(2), bbox_(3));
     tracker_.update(kf_, &rct, conf);
@@ -1773,7 +1787,8 @@ void DeepSORT::show_INFO_KalmanTrackers() {
               << std::endl;
     std::cout << "\t" << std::setw(20) << "kalman state = " << tracker_.get_INFO_KalmanState()
               << std::endl;
-    // std::cout << "\t" << std::setw(20) << "bbox = " << tracker_.bbox << std::endl;
+    // std::cout << "\t" << std::setw(20) << "bbox = " << tracker_.bbox <<
+    // std::endl;
     std::cout << "\t" << std::setw(20) << "unmatched times = " << tracker_.unmatched_times
               << std::endl;
     std::cout << "\t" << std::setw(20) << "matched counter = " << tracker_.get_MatchedCounter()

@@ -1,4 +1,5 @@
 #include "core/cvi_tdl_core.h"
+
 #include "clip/clip_image/clip_image.hpp"
 #include "clip/clip_text/clip_text.hpp"
 #include "core/core/cvtdl_errno.h"
@@ -6,35 +7,35 @@
 #include "cvi_tdl_core_internal.hpp"
 #include "cvi_tdl_experimental.h"
 #include "cvi_tdl_log.hpp"
-
 #include "deepsort/cvi_deepsort.hpp"
+#include "depth_estimation/stereo.hpp"
 #include "face_attribute/face_attribute.hpp"
 #include "face_attribute_cls/face_attribute_cls.hpp"
+#include "face_detection/face_mask_detection/retinaface_yolox.hpp"
+#include "face_detection/retina_face/retina_face.hpp"
+#include "face_detection/retina_face/scrfd_face.hpp"
+#include "face_detection/thermal_face_detection/thermal_face.hpp"
 #include "face_landmarker/dms_landmark.hpp"
 #include "face_landmarker/face_landmark_det3.hpp"
 #include "face_landmarker/face_landmarker.hpp"
 #include "face_landmarker/face_landmarker_det2.hpp"
-
 #include "hand_classification/hand_classification.hpp"
 #include "hand_keypoint/hand_keypoint.hpp"
 #include "hand_keypoint_classification/hand_keypoint_classification.hpp"
-
 #include "human_keypoints_detection/hrnet/hrnet.hpp"
 #include "human_keypoints_detection/simcc/simcc.hpp"
 #include "human_keypoints_detection/yolov8_pose/yolov8_pose.hpp"
-
 #include "image_classification/image_classification.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "lane_detection/lane_detection.hpp"
 #include "lane_detection/lstr/lstr.hpp"
 #include "lane_detection/polylanenet/polylanenet.hpp"
-
 #include "license_plate_detection/license_plate_detection.hpp"
 #include "license_plate_recognition/license_plate_recognitionv2.hpp"
 #include "liveness/ir_liveness/ir_liveness.hpp"
+#include "mask_classification/mask_classification.hpp"
 #include "motion_detection/md.hpp"
 #include "motion_segmentation/motion_segmentation.hpp"
-
 #include "object_detection/mobiledetv2/mobiledetv2.hpp"
 #include "object_detection/ppyoloe/ppyoloe.hpp"
 #include "object_detection/thermal_person_detection/thermal_person.hpp"
@@ -45,13 +46,6 @@
 #include "object_detection/yolov6/yolov6.hpp"
 #include "object_detection/yolov8/yolov8.hpp"
 #include "object_detection/yolox/yolox.hpp"
-
-#include "depth_estimation/stereo.hpp"
-#include "face_detection/face_mask_detection/retinaface_yolox.hpp"
-#include "face_detection/retina_face/retina_face.hpp"
-#include "face_detection/retina_face/scrfd_face.hpp"
-#include "face_detection/thermal_face_detection/thermal_face.hpp"
-#include "mask_classification/mask_classification.hpp"
 #include "ocr/ocr_recognition/ocr_recognition.hpp"
 #include "osnet/osnet.hpp"
 #include "raw_image_classification/raw_image_classification.hpp"
@@ -80,12 +74,14 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #include <functional>
 #include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include "utils/clip_postprocess.hpp"
 #include "utils/core_utils.hpp"
 #include "utils/token.hpp"
@@ -160,14 +156,15 @@ static CVI_S32 initVPSSIfNeeded(cvitdl_context_t *ctx, CVI_TDL_SUPPORTED_MODEL_E
 // Convenience macros for creator
 #define CREATOR_AUD(type) CreatorFuncAud(create_model_aud<type>)
 
-// Convenience macros for creator, P{NUM} stands for how many parameters for creator
+// Convenience macros for creator, P{NUM} stands for how many parameters for
+// creator
 #define CREATOR_P1(type, arg_type, arg1) \
   CreatorFunc(std::bind(create_model<type, arg_type>, _1, arg1))
 
 /**
  * IMPORTANT!!
- * Creators for all DNN model. Please remember to register model creator here, or
- * TDL SDK cannot instantiate model correctly.
+ * Creators for all DNN model. Please remember to register model creator here,
+ * or TDL SDK cannot instantiate model correctly.
  */
 unordered_map<int, CreatorFuncAud> MODEL_CREATORS_AUD = {
     {CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, CREATOR_AUD(SoundClassification)},
@@ -336,16 +333,20 @@ getInferenceInstance(const CVI_TDL_SUPPORTED_MODEL_E index, cvitdl_context_t *ct
     // create custom instance here
     if (index == CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION) {
       if (MODEL_CREATORS_AUD.find(index) == MODEL_CREATORS_AUD.end()) {
-        LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
-             CVI_TDL_GetModelName(index));
+        LOGE(
+            "Cannot find creator for %s, Please register a creator for this "
+            "model!\n",
+            CVI_TDL_GetModelName(index));
         return nullptr;
       }
       auto creator = MODEL_CREATORS_AUD[index];
       m_t.instance = creator();
     } else {
       if (MODEL_CREATORS.find(index) == MODEL_CREATORS.end()) {
-        LOGE("Cannot find creator for %s, Please register a creator for this model!\n",
-             CVI_TDL_GetModelName(index));
+        LOGE(
+            "Cannot find creator for %s, Please register a creator for this "
+            "model!\n",
+            CVI_TDL_GetModelName(index));
         return nullptr;
       }
 
@@ -421,8 +422,10 @@ CVI_S32 CVI_TDL_OpenModel(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E conf
 
   if (instance != nullptr) {
     if (instance->isInitialized()) {
-      LOGW("%s: Inference has already initialized. Please call CVI_TDL_CloseModel to reset.\n",
-           CVI_TDL_GetModelName(config));
+      LOGW(
+          "%s: Inference has already initialized. Please call "
+          "CVI_TDL_CloseModel to reset.\n",
+          CVI_TDL_GetModelName(config));
       return CVI_TDL_ERR_MODEL_INITIALIZED;
     }
   } else {
@@ -453,8 +456,10 @@ CVI_S32 CVI_TDL_OpenModel_FromBuffer(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_M
 
   if (instance != nullptr) {
     if (instance->isInitialized()) {
-      LOGW("%s: Inference has already initialized. Please call CVI_TDL_CloseModel to reset.\n",
-           CVI_TDL_GetModelName(config));
+      LOGW(
+          "%s: Inference has already initialized. Please call "
+          "CVI_TDL_CloseModel to reset.\n",
+          CVI_TDL_GetModelName(config));
       return CVI_TDL_ERR_MODEL_INITIALIZED;
     }
   } else {
@@ -583,16 +588,6 @@ CVI_S32 CVI_TDL_GetModelNmsThreshold(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_M
   return CVI_TDL_SUCCESS;
 }
 
-// CVI_S32 CVI_TDL_UseMmap(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model, bool mmap) {
-//   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-//   Core *instance = getInferenceInstance(model, ctx);
-//   if (instance == nullptr) {
-//     return CVI_TDL_FAILURE;
-//   }
-//   instance->setUseMmap(mmap);
-//   return CVI_TDL_SUCCESS;
-// }
-
 CVI_S32 CVI_TDL_SetVpssThread(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E config,
                               const uint32_t thread) {
   return CVI_TDL_SetVpssThread2(handle, config, thread, -1, 0);
@@ -638,30 +633,6 @@ CVI_S32 CVI_TDL_GetVpssThread(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E 
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   *thread = ctx->model_cont[config].vpss_thread;
   return CVI_TDL_SUCCESS;
-}
-
-CVI_S32 CVI_TDL_SetVpssDepth(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
-                             uint32_t input_id, uint32_t depth) {
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  Core *instance = getInferenceInstance(model, ctx);
-  if (instance != nullptr) {
-    return instance->setVpssDepth(input_id, depth);
-  } else {
-    LOGE("Cannot create model: %s\n", CVI_TDL_GetModelName(model));
-    return CVI_TDL_ERR_OPEN_MODEL;
-  }
-}
-
-CVI_S32 CVI_TDL_GetVpssDepth(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
-                             uint32_t input_id, uint32_t *depth) {
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  Core *instance = getInferenceInstance(model, ctx);
-  if (instance != nullptr) {
-    return instance->getVpssDepth(input_id, depth);
-  } else {
-    LOGE("Cannot create model: %s\n", CVI_TDL_GetModelName(model));
-    return CVI_TDL_ERR_OPEN_MODEL;
-  }
 }
 
 CVI_S32 CVI_TDL_GetVpssGrpIds(cvitdl_handle_t handle, VPSS_GRP **groups, uint32_t *num) {
@@ -773,125 +744,136 @@ CVI_S32 CVI_TDL_GetVpssChnConfig(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
     LOGE("Instance is null.\n");
     return CVI_TDL_ERR_OPEN_MODEL;
   }
-
-  return instance->getChnConfig(frameWidth, frameHeight, idx, chnConfig);
+  const InputPreParam &pre_param = instance->getPreparam(idx);
+  int vpss_thread = ctx->model_cont[config].vpss_thread;
+  VpssEngine *vpss_engine = ctx->vec_vpss_engine[vpss_thread];
+  return vpss_engine->getChnConfig(frameWidth, frameHeight, pre_param, chnConfig);
 }
 
 /**
- *  Convenience macros for defining inference functions. F{NUM} stands for how many input frame
- *  variables, P{NUM} stands for how many input parameters in inference function. All inference
- *  function should follow same function signature, that is,
- *  CVI_S32 inference(Frame1, Frame2, ... FrameN, Param1, Param2, ..., ParamN)
+ *  Convenience macros for defining inference functions. F{NUM} stands for how
+ * many input frame variables, P{NUM} stands for how many input parameters in
+ * inference function. All inference function should follow same function
+ * signature, that is, CVI_S32 inference(Frame1, Frame2, ... FrameN, Param1,
+ * Param2, ..., ParamN)
  */
-#define DEFINE_INF_FUNC_F1_P1(func_name, class_name, model_index, arg_type)                    \
-  CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg_type arg1) {  \
-    cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                           \
-    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));      \
-    if (obj == nullptr) {                                                                      \
-      LOGE("No instance found for %s.\n", #class_name);                                        \
-      return CVI_TDL_ERR_OPEN_MODEL;                                                           \
-    }                                                                                          \
-    if (obj->isInitialized()) {                                                                \
-      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                 \
-        return CVI_TDL_ERR_INIT_VPSS;                                                          \
-      } else {                                                                                 \
-        CVI_S32 ret = obj->inference(frame, arg1);                                             \
-        if (ret != CVI_TDL_SUCCESS)                                                            \
-          return ret;                                                                          \
-        else                                                                                   \
-          return obj->afterInference();                                                        \
-      }                                                                                        \
-    } else {                                                                                   \
-      LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
-           CVI_TDL_GetModelName(model_index));                                                 \
-      return CVI_TDL_ERR_NOT_YET_INITIALIZED;                                                  \
-    }                                                                                          \
+#define DEFINE_INF_FUNC_F1_P1(func_name, class_name, model_index, arg_type)                   \
+  CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg_type arg1) { \
+    cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                          \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));     \
+    if (obj == nullptr) {                                                                     \
+      LOGE("No instance found for %s.\n", #class_name);                                       \
+      return CVI_TDL_ERR_OPEN_MODEL;                                                          \
+    }                                                                                         \
+    if (obj->isInitialized()) {                                                               \
+      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                \
+        return CVI_TDL_ERR_INIT_VPSS;                                                         \
+      } else {                                                                                \
+        CVI_S32 ret = obj->inference(frame, arg1);                                            \
+        if (ret != CVI_TDL_SUCCESS)                                                           \
+          return ret;                                                                         \
+        else                                                                                  \
+          return obj->afterInference();                                                       \
+      }                                                                                       \
+    } else {                                                                                  \
+      LOGE(                                                                                   \
+          "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "                    \
+          "initialize model\n",                                                               \
+          CVI_TDL_GetModelName(model_index));                                                 \
+      return CVI_TDL_ERR_NOT_YET_INITIALIZED;                                                 \
+    }                                                                                         \
   }
 
-#define DEFINE_INF_FUNC_F1_P2(func_name, class_name, model_index, arg1_type, arg2_type)        \
-  CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg1_type arg1,   \
-                    arg2_type arg2) {                                                          \
-    cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                           \
-    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));      \
-    if (obj == nullptr) {                                                                      \
-      LOGE("No instance found for %s.\n", #class_name);                                        \
-      return CVI_TDL_ERR_OPEN_MODEL;                                                           \
-    }                                                                                          \
-    if (obj->isInitialized()) {                                                                \
-      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                 \
-        return CVI_TDL_ERR_INIT_VPSS;                                                          \
-      } else {                                                                                 \
-        CVI_S32 ret = obj->inference(frame, arg1, arg2);                                       \
-        if (ret != CVI_TDL_SUCCESS)                                                            \
-          return ret;                                                                          \
-        else                                                                                   \
-          return obj->afterInference();                                                        \
-      }                                                                                        \
-    } else {                                                                                   \
-      LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
-           CVI_TDL_GetModelName(model_index));                                                 \
-      return CVI_TDL_ERR_NOT_YET_INITIALIZED;                                                  \
-    }                                                                                          \
+#define DEFINE_INF_FUNC_F1_P2(func_name, class_name, model_index, arg1_type, arg2_type)      \
+  CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame, arg1_type arg1, \
+                    arg2_type arg2) {                                                        \
+    cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                         \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));    \
+    if (obj == nullptr) {                                                                    \
+      LOGE("No instance found for %s.\n", #class_name);                                      \
+      return CVI_TDL_ERR_OPEN_MODEL;                                                         \
+    }                                                                                        \
+    if (obj->isInitialized()) {                                                              \
+      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                               \
+        return CVI_TDL_ERR_INIT_VPSS;                                                        \
+      } else {                                                                               \
+        CVI_S32 ret = obj->inference(frame, arg1, arg2);                                     \
+        if (ret != CVI_TDL_SUCCESS)                                                          \
+          return ret;                                                                        \
+        else                                                                                 \
+          return obj->afterInference();                                                      \
+      }                                                                                      \
+    } else {                                                                                 \
+      LOGE(                                                                                  \
+          "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "                   \
+          "initialize model\n",                                                              \
+          CVI_TDL_GetModelName(model_index));                                                \
+      return CVI_TDL_ERR_NOT_YET_INITIALIZED;                                                \
+    }                                                                                        \
   }
 
-#define DEFINE_INF_FUNC_F2_P1(func_name, class_name, model_index, arg_type)                    \
-  CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame1,                  \
-                    VIDEO_FRAME_INFO_S *frame2, arg_type arg1) {                               \
-    cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                           \
-    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));      \
-    if (obj == nullptr) {                                                                      \
-      LOGE("No instance found for %s.\n", #class_name);                                        \
-      return CVI_TDL_ERR_OPEN_MODEL;                                                           \
-    }                                                                                          \
-    if (obj->isInitialized()) {                                                                \
-      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                 \
-        return CVI_TDL_ERR_INIT_VPSS;                                                          \
-      } else {                                                                                 \
-        CVI_S32 ret = obj->inference(frame1, frame2, arg1);                                    \
-        if (ret != CVI_TDL_SUCCESS)                                                            \
-          return ret;                                                                          \
-        else                                                                                   \
-          return obj->afterInference();                                                        \
-      }                                                                                        \
-    } else {                                                                                   \
-      LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
-           CVI_TDL_GetModelName(model_index));                                                 \
-      return CVI_TDL_ERR_NOT_YET_INITIALIZED;                                                  \
-    }                                                                                          \
+#define DEFINE_INF_FUNC_F2_P1(func_name, class_name, model_index, arg_type)               \
+  CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame1,             \
+                    VIDEO_FRAME_INFO_S *frame2, arg_type arg1) {                          \
+    cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                      \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx)); \
+    if (obj == nullptr) {                                                                 \
+      LOGE("No instance found for %s.\n", #class_name);                                   \
+      return CVI_TDL_ERR_OPEN_MODEL;                                                      \
+    }                                                                                     \
+    if (obj->isInitialized()) {                                                           \
+      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                            \
+        return CVI_TDL_ERR_INIT_VPSS;                                                     \
+      } else {                                                                            \
+        CVI_S32 ret = obj->inference(frame1, frame2, arg1);                               \
+        if (ret != CVI_TDL_SUCCESS)                                                       \
+          return ret;                                                                     \
+        else                                                                              \
+          return obj->afterInference();                                                   \
+      }                                                                                   \
+    } else {                                                                              \
+      LOGE(                                                                               \
+          "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "                \
+          "initialize model\n",                                                           \
+          CVI_TDL_GetModelName(model_index));                                             \
+      return CVI_TDL_ERR_NOT_YET_INITIALIZED;                                             \
+    }                                                                                     \
   }
 
-#define DEFINE_INF_FUNC_F2_P2(func_name, class_name, model_index, arg1_type, arg2_type)        \
-  CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame1,                  \
-                    VIDEO_FRAME_INFO_S *frame2, arg1_type arg1, arg2_type arg2) {              \
-    cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                           \
-    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx));      \
-    if (obj == nullptr) {                                                                      \
-      LOGE("No instance found for %s.\n", #class_name);                                        \
-      return CVI_TDL_ERR_OPEN_MODEL;                                                           \
-    }                                                                                          \
-    if (obj->isInitialized()) {                                                                \
-      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                                 \
-        return CVI_TDL_ERR_INIT_VPSS;                                                          \
-      } else {                                                                                 \
-        CVI_S32 ret = obj->inference(frame1, frame2, arg1, arg2);                              \
-        if (ret != CVI_TDL_SUCCESS)                                                            \
-          return ret;                                                                          \
-        else                                                                                   \
-          return obj->afterInference();                                                        \
-      }                                                                                        \
-    } else {                                                                                   \
-      LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n", \
-           CVI_TDL_GetModelName(model_index));                                                 \
-      return CVI_TDL_ERR_NOT_YET_INITIALIZED;                                                  \
-    }                                                                                          \
+#define DEFINE_INF_FUNC_F2_P2(func_name, class_name, model_index, arg1_type, arg2_type)   \
+  CVI_S32 func_name(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame1,             \
+                    VIDEO_FRAME_INFO_S *frame2, arg1_type arg1, arg2_type arg2) {         \
+    cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);                      \
+    class_name *obj = dynamic_cast<class_name *>(getInferenceInstance(model_index, ctx)); \
+    if (obj == nullptr) {                                                                 \
+      LOGE("No instance found for %s.\n", #class_name);                                   \
+      return CVI_TDL_ERR_OPEN_MODEL;                                                      \
+    }                                                                                     \
+    if (obj->isInitialized()) {                                                           \
+      if (initVPSSIfNeeded(ctx, model_index) != CVI_SUCCESS) {                            \
+        return CVI_TDL_ERR_INIT_VPSS;                                                     \
+      } else {                                                                            \
+        CVI_S32 ret = obj->inference(frame1, frame2, arg1, arg2);                         \
+        if (ret != CVI_TDL_SUCCESS)                                                       \
+          return ret;                                                                     \
+        else                                                                              \
+          return obj->afterInference();                                                   \
+      }                                                                                   \
+    } else {                                                                              \
+      LOGE(                                                                               \
+          "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "                \
+          "initialize model\n",                                                           \
+          CVI_TDL_GetModelName(model_index));                                             \
+      return CVI_TDL_ERR_NOT_YET_INITIALIZED;                                             \
+    }                                                                                     \
   }
 
 /**
  *  Define model inference function here.
  *
  *  IMPORTANT!!
- *  Please remember to register creator function in MODEL_CREATORS first, or TDL SDK cannot
- *  find a correct way to create model object.
+ *  Please remember to register creator function in MODEL_CREATORS first, or TDL
+ * SDK cannot find a correct way to create model object.
  *
  */
 #ifndef NO_OPENCV
@@ -1116,27 +1098,19 @@ DEFINE_INF_FUNC_F1_P2(CVI_TDL_Isp_Image_Classification, IspImageClassification,
 CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                           CVI_TDL_SUPPORTED_MODEL_E model_index, cvtdl_object_t *obj) {
   std::set<CVI_TDL_SUPPORTED_MODEL_E> detect_set = {
-      CVI_TDL_SUPPORTED_MODEL_YOLO,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV3,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV5,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV6,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV7,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
-      CVI_TDL_SUPPORTED_MODEL_YOLOX,
-      CVI_TDL_SUPPORTED_MODEL_PPYOLOE,
-      CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION,
-      CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
-      CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,  // TODO:need class mapping
+      CVI_TDL_SUPPORTED_MODEL_YOLO, CVI_TDL_SUPPORTED_MODEL_YOLOV3, CVI_TDL_SUPPORTED_MODEL_YOLOV5,
+      CVI_TDL_SUPPORTED_MODEL_YOLOV6, CVI_TDL_SUPPORTED_MODEL_YOLOV7,
+      CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
+      CVI_TDL_SUPPORTED_MODEL_YOLOX, CVI_TDL_SUPPORTED_MODEL_PPYOLOE,
+      CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION,
+      CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION,  // TODO:need class
+                                                         // mapping
       CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION,
-      CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION,
-      CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
+      CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION, CVI_TDL_SUPPORTED_MODEL_THERMALPERSON,
       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80,
       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE,
-      CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE,
-      CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
-      CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
+      CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
+      CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS, CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
       CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION};
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   if (detect_set.find(model_index) == detect_set.end()) {
@@ -1160,8 +1134,10 @@ CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *fram
         return model->afterInference();
     }
   } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n",
-         CVI_TDL_GetModelName(model_index));
+    LOGE(
+        "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "
+        "initialize model\n",
+        CVI_TDL_GetModelName(model_index));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 }
@@ -1213,8 +1189,10 @@ CVI_S32 CVI_TDL_FaceDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *
         return model->afterInference();
     }
   } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n",
-         CVI_TDL_GetModelName(model_index));
+    LOGE(
+        "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "
+        "initialize model\n",
+        CVI_TDL_GetModelName(model_index));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 }
@@ -1246,8 +1224,10 @@ CVI_S32 CVI_TDL_PoseDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *
         return model->afterInference();
     }
   } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n",
-         CVI_TDL_GetModelName(model_index));
+    LOGE(
+        "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "
+        "initialize model\n",
+        CVI_TDL_GetModelName(model_index));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 }
@@ -1271,8 +1251,10 @@ CVI_S32 CVI_TDL_LicensePlateRecognition(const cvitdl_handle_t handle, VIDEO_FRAM
   if (sc_model->isInitialized()) {
     return sc_model->inference(frame, obj);
   } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n",
-         CVI_TDL_GetModelName(model_id));
+    LOGE(
+        "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "
+        "initialize model\n",
+        CVI_TDL_GetModelName(model_id));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 }
@@ -1512,7 +1494,8 @@ CVI_S32 CVI_TDL_MotionDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S
   MotionDetection *md_model = ctx->md_model;
   if (md_model == nullptr) {
     LOGE(
-        "Failed to do motion detection! Please invoke CVI_TDL_Set_MotionDetection_Background to "
+        "Failed to do motion detection! Please invoke "
+        "CVI_TDL_Set_MotionDetection_Background to "
         "set "
         "background image first.\n");
     return CVI_TDL_FAILURE;
@@ -1555,8 +1538,10 @@ CVI_S32 CVI_TDL_FaceFeatureExtract(const cvitdl_handle_t handle, const uint8_t *
       return CVI_TDL_ERR_INIT_VPSS;
     }
   } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n",
-         CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION));
+    LOGE(
+        "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "
+        "initialize model\n",
+        CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
   return inst->extract_face_feature(p_rgb_pack, width, height, stride, p_face_info);
@@ -1573,8 +1558,10 @@ CVI_S32 CVI_TDL_GetSoundClassificationClassesNum(const cvitdl_handle_t handle) {
   if (sc_model->isInitialized()) {
     return sc_model->getClassesNum();
   } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n",
-         CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION));
+    LOGE(
+        "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "
+        "initialize model\n",
+        CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 }
@@ -1590,8 +1577,10 @@ CVI_S32 CVI_TDL_SetSoundClassificationThreshold(const cvitdl_handle_t handle, co
   if (sc_model->isInitialized()) {
     return sc_model->setThreshold(th);
   } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n",
-         CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION));
+    LOGE(
+        "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "
+        "initialize model\n",
+        CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 }
@@ -1614,8 +1603,8 @@ CVI_S32 CVI_TDL_Change_Img(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
 
   VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
   memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-  modelt.instance->vpssChangeImage(frame, f, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
-                                   enDstFormat);
+  p_vpss_inst->vpssChangeImage(frame, f, frame->stVFrame.u32Width, frame->stVFrame.u32Height,
+                               enDstFormat);
   *dst_frame = f;
   return CVI_SUCCESS;
 }
@@ -1661,8 +1650,8 @@ CVI_S32 CVI_TDL_CropImage_With_VPSS(const cvitdl_handle_t handle,
 
   VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
   memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-  modelt.instance->vpssCropImage(frame, f, *p_crop_box, p_dst->width, p_dst->height,
-                                 p_dst->pix_format);
+  p_vpss_inst->vpssCropImage(frame, f, *p_crop_box, p_dst->width, p_dst->height,
+                             (PIXEL_FORMAT_E)p_dst->pix_format);
   mmap_video_frame(f);
 
   int ret = CVI_SUCCESS;
@@ -1708,8 +1697,7 @@ CVI_S32 CVI_TDL_CropResizeImage(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_
 
   VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
   memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
-  int ret =
-      modelt.instance->vpssCropImage(frame, f, *p_crop_box, dst_width, dst_height, enDstFormat);
+  int ret = p_vpss_inst->vpssCropImage(frame, f, *p_crop_box, dst_width, dst_height, enDstFormat);
   *p_dst_img = f;
   return ret;
 }
@@ -1761,7 +1749,7 @@ CVI_S32 CVI_TDL_Resize_VideoFrame(const cvitdl_handle_t handle,
   bbox.x2 = frame->stVFrame.u32Width;
   bbox.y2 = frame->stVFrame.u32Height;
   VPSS_SCALE_COEF_E scale = VPSS_SCALE_COEF_NEAREST;
-  CVI_S32 ret = modelt.instance->vpssCropImage(frame, f, bbox, dst_w, dst_h, dst_format, scale);
+  CVI_S32 ret = p_vpss_inst->vpssCropImage(frame, f, bbox, dst_w, dst_h, dst_format, scale);
   *dst_frame = f;
   return ret;
 }
@@ -1822,8 +1810,10 @@ CVI_S32 CVI_TDL_PersonVehicle_Detection(const cvitdl_handle_t handle, VIDEO_FRAM
       return ret;
     }
   } else {
-    LOGE("Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to initialize model\n",
-         CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION));
+    LOGE(
+        "Model (%s)is not yet opened! Please call CVI_TDL_OpenModel to "
+        "initialize model\n",
+        CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
 }

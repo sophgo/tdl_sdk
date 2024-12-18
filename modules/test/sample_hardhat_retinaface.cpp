@@ -26,7 +26,8 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   if (argc != 4) {
     printf(
-        "Usage: %s <clip model path> <input image directory list.txt> <output result "
+        "Usage: %s <clip model path> <input image directory list.txt> <output "
+        "result "
         "directory/>.\n",
         argv[0]);
     printf("clip model path: Path to clip bmodel.\n");

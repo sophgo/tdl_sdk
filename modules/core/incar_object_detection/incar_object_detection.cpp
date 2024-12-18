@@ -1,4 +1,5 @@
 #include "incar_object_detection.hpp"
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -8,15 +9,15 @@
 namespace cvitdl {
 
 IncarObjectDetection::IncarObjectDetection() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = 0.999;
-  m_preprocess_param[0].factor[1] = 0.999;
-  m_preprocess_param[0].factor[2] = 0.999;
-  m_preprocess_param[0].mean[0] = 0.0;
-  m_preprocess_param[0].mean[1] = 0.0;
-  m_preprocess_param[0].mean[2] = 0.0;
+  preprocess_params_[0].factor[0] = 0.999;
+  preprocess_params_[0].factor[1] = 0.999;
+  preprocess_params_[0].factor[2] = 0.999;
+  preprocess_params_[0].mean[0] = 0.0;
+  preprocess_params_[0].mean[1] = 0.0;
+  preprocess_params_[0].mean[2] = 0.0;
 
-  m_preprocess_param[0].use_crop = false;
-  m_preprocess_param[0].rescale_type = RESCALE_CENTER;
+  preprocess_params_[0].use_crop = false;
+  preprocess_params_[0].rescale_type = RESCALE_CENTER;
 }
 int IncarObjectDetection::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_face_t* meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888) {
@@ -50,7 +51,7 @@ void IncarObjectDetection::outputParser(int image_width, int image_height, cvtdl
   meta->dms->dms_od.size = vec_bbox_nms.size();
   meta->dms->dms_od.width = image_width;
   meta->dms->dms_od.height = image_height;
-  meta->dms->dms_od.rescale_type = m_vpss_config[0].rescale_type;
+  meta->dms->dms_od.rescale_type = preprocess_params_[0].rescale_type;
   meta->dms->dms_od.info =
       (cvtdl_dms_od_info_t*)malloc(sizeof(cvtdl_dms_od_info_t) * meta->dms->dms_od.size);
 

@@ -1,14 +1,17 @@
 #include "polylanenet.hpp"
+
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <algorithm>
 #include <error_msg.hpp>
 #include <iostream>
 #include <numeric>
 #include <string>
 #include <vector>
+
 #include "core/core/cvtdl_core_types.h"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -22,15 +25,15 @@
 namespace cvitdl {
 
 Polylanenet::Polylanenet() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = 0.01712475;
-  m_preprocess_param[0].factor[1] = 0.0175070;
-  m_preprocess_param[0].factor[2] = 0.0174291;
+  preprocess_params_[0].factor[0] = 0.01712475;
+  preprocess_params_[0].factor[1] = 0.0175070;
+  preprocess_params_[0].factor[2] = 0.0174291;
 
-  m_preprocess_param[0].mean[0] = 2.117903;
-  m_preprocess_param[0].mean[1] = 2.035714;
-  m_preprocess_param[0].mean[2] = 1.804444;
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  m_preprocess_param[0].rescale_type = RESCALE_RB;
+  preprocess_params_[0].mean[0] = 2.117903;
+  preprocess_params_[0].mean[1] = 2.035714;
+  preprocess_params_[0].mean[2] = 1.804444;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].rescale_type = RESCALE_RB;
 }
 Polylanenet::~Polylanenet() {}
 

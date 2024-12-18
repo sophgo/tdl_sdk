@@ -166,7 +166,9 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name, color_
 #else
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
-    LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawPolygon\n");
+    LOGE(
+        "Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported "
+        "in DrawPolygon\n");
     return CVI_TDL_FAILURE;
   }
   std::string name_str = name;
@@ -500,7 +502,9 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2, float 
 int DrawPolygon(VIDEO_FRAME_INFO_S *frame, const cvtdl_pts_t *pts, cvtdl_service_brush_t brush) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
-    LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawPolygon\n");
+    LOGE(
+        "Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported "
+        "in DrawPolygon\n");
     return CVI_TDL_FAILURE;
   }
 #ifdef NO_OPENCV  // TODO:use draw_rect to support
@@ -605,7 +609,9 @@ int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
              const std::vector<cvtdl_service_brush_t> &brushes) {
   if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
-    LOGE("Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported in DrawMeta\n");
+    LOGE(
+        "Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported "
+        "in DrawMeta\n");
     return CVI_TDL_FAILURE;
   }
 
@@ -756,9 +762,11 @@ int DrawPose17(const cvtdl_object_t *obj, VIDEO_FRAME_INFO_S *frame) {
   CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Length[0]);
   frame->stVFrame.pu8VirAddr[0] = NULL;
 
-  // frame->stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0],
+  // frame->stVFrame.pu8VirAddr[0] = (CVI_U8
+  // *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0],
   //                                                             frame->stVFrame.u32Length[0]);
-  // cv::Mat draw_img(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
+  // cv::Mat draw_img(frame->stVFrame.u32Height, frame->stVFrame.u32Width,
+  // CV_8UC3,
   //             frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   // cv::cvtColor(draw_img, draw_img, CV_RGB2BGR);
   // cv::imwrite("/mnt/data/out2.jpg", draw_img);

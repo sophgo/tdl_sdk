@@ -1,12 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <algorithm>
-#include <cmath>
-#include <iterator>
+#include "face_landmark_det3.hpp"
 
 #include <core/core/cvtdl_errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <algorithm>
+#include <cmath>
 #include <error_msg.hpp>
 #include <iostream>
+#include <iterator>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -14,18 +17,17 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "face_landmark_det3.hpp"
 
 namespace cvitdl {
 
 FaceLandmarkDet3::FaceLandmarkDet3() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = 0.0078125;
-  m_preprocess_param[0].factor[1] = 0.0078125;
-  m_preprocess_param[0].factor[2] = 0.0078125;
-  m_preprocess_param[0].mean[0] = 0.99609375;
-  m_preprocess_param[0].mean[1] = 0.99609375;
-  m_preprocess_param[0].mean[2] = 0.99609375;
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].factor[0] = 0.0078125;
+  preprocess_params_[0].factor[1] = 0.0078125;
+  preprocess_params_[0].factor[2] = 0.0078125;
+  preprocess_params_[0].mean[0] = 0.99609375;
+  preprocess_params_[0].mean[1] = 0.99609375;
+  preprocess_params_[0].mean[2] = 0.99609375;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 }
 
 int FaceLandmarkDet3::onModelOpened() {
@@ -57,12 +59,6 @@ FaceLandmarkDet3::~FaceLandmarkDet3() {}
 int FaceLandmarkDet3::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *facemeta) {
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
 
-  // if(facemeta->size == 1){
-  //     m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-  //     int x1 = facemeta
-  //     m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
-  // }
-
   int ret = run(frames);
   if (ret != CVI_TDL_SUCCESS) {
     LOGW("FaceLandmarkDet3 run inference failed\n");
@@ -84,8 +80,10 @@ void FaceLandmarkDet3::outputParser(const int image_width, const int image_heigh
 
   TensorInfo oinfo_cls = getOutputTensorInfo(out_names_["score"]);
   float *output_score = getOutputRawPtr<float>(oinfo_cls.tensor_name);
-  // printf("to output parse,name:%s,addr:%p,name:%s,addr:%p\n", oinfo.tensor_name.c_str(),
-  //        (void *)output_point, oinfo_cls.tensor_name.c_str(), (void *)output_score);
+  // printf("to output parse,name:%s,addr:%p,name:%s,addr:%p\n",
+  // oinfo.tensor_name.c_str(),
+  //        (void *)output_point, oinfo_cls.tensor_name.c_str(), (void
+  //        *)output_score);
   float score = output_score[1];
   float ratio_height = image_width / (float)frame_height;
   float ratio_width = image_height / (float)frame_width;

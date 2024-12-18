@@ -1,9 +1,9 @@
 #include "retina_face.hpp"
-#include "retina_face_utils.hpp"
 
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
+#include "retina_face_utils.hpp"
 
 #define NAME_BBOX "face_rpn_bbox_pred_"
 #define NAME_SCORE "face_rpn_cls_prob_reshape_"
@@ -25,13 +25,13 @@ namespace cvitdl {
 RetinaFace::RetinaFace(PROCESS process) : process_(process) {
   std::vector<float> mean = {MEAN_R, MEAN_G, MEAN_B};
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = 1;
+    preprocess_params_[0].factor[i] = 1;
     if (this->process_ == PYTORCH) {
-      m_preprocess_param[0].mean[i] = mean[i];
+      preprocess_params_[0].mean[i] = mean[i];
     }
   }
   if (this->process_ == PYTORCH) {
-    m_preprocess_param[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
+    preprocess_params_[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
   }
 }
 
@@ -251,7 +251,7 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
       // Recover coordinate if internal vpss engine is used.
       facemeta->width = frame_width;
       facemeta->height = frame_height;
-      facemeta->rescale_type = m_vpss_config[0].rescale_type;
+      facemeta->rescale_type = preprocess_params_[0].rescale_type;
       for (uint32_t i = 0; i < facemeta->size; ++i) {
         clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
         cvtdl_face_info_t info =
@@ -269,7 +269,8 @@ void RetinaFace::outputParser(int image_width, int image_height, int frame_width
         CVI_TDL_FreeCpp(&info);
       }
     }
-    // Clear original bbox. bbox_nms does not need to free since it points to bbox.
+    // Clear original bbox. bbox_nms does not need to free since it points to
+    // bbox.
     for (size_t i = 0; i < vec_bbox.size(); ++i) {
       CVI_TDL_FreeCpp(&vec_bbox[i].pts);
     }

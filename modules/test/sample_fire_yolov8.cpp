@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   if (argc != 4) {
     printf(
-        "Usage: %s <fire model path> <input image directory list.txt> <output result "
+        "Usage: %s <fire model path> <input image directory list.txt> <output "
+        "result "
         "directory/>.\n",
         argv[0]);
     printf("fire model path: Path to fire cvimodel.\n");
@@ -148,8 +149,8 @@ int main(int argc, char *argv[]) {
     //   &obj_meta,CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION);
     // }
     // gettimeofday(&stop_time, NULL);
-    // printf("CVI_TDL_Detect_yolov8 Time use %f ms\n", (__get_us(stop_time) - __get_us(start_time))
-    // / 1000);
+    // printf("CVI_TDL_Detect_yolov8 Time use %f ms\n", (__get_us(stop_time) -
+    // __get_us(start_time)) / 1000);
 
     std::cout << "objnum:" << obj_meta.size << std::endl;
     for (uint32_t i = 0; i < obj_meta.size; i++) {

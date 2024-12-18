@@ -1,7 +1,9 @@
 #include "stereo.hpp"
+
 #include <core/core/cvtdl_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <algorithm>
 #include <cmath>
 #include <error_msg.hpp>
@@ -10,6 +12,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -21,15 +24,15 @@
 namespace cvitdl {
 
 Stereo::Stereo() : Core(CVI_MEM_SYSTEM) {
-  m_preprocess_param[0].factor[0] = 0.017125;
-  m_preprocess_param[0].factor[1] = 0.017507;
-  m_preprocess_param[0].factor[2] = 0.017429;
-  m_preprocess_param[0].mean[0] = 2.1179;
-  m_preprocess_param[0].mean[1] = 2.03571;
-  m_preprocess_param[0].mean[2] = 1.8044;
-  m_preprocess_param[0].keep_aspect_ratio = true;
-  m_preprocess_param[0].rescale_type = RESCALE_CENTER;
-  m_preprocess_param.emplace_back(m_preprocess_param[0]);
+  preprocess_params_[0].factor[0] = 0.017125;
+  preprocess_params_[0].factor[1] = 0.017507;
+  preprocess_params_[0].factor[2] = 0.017429;
+  preprocess_params_[0].mean[0] = 2.1179;
+  preprocess_params_[0].mean[1] = 2.03571;
+  preprocess_params_[0].mean[2] = 1.8044;
+  preprocess_params_[0].keep_aspect_ratio = true;
+  preprocess_params_[0].rescale_type = RESCALE_CENTER;
+  preprocess_params_.emplace_back(preprocess_params_[0]);
   std::cout << "setupInputPreprocess done" << std::endl;
 }
 

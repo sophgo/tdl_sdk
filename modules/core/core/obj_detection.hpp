@@ -1,7 +1,9 @@
 #pragma once
 #include <bitset>
+
 #include "core.hpp"
 #include "core/object/cvtdl_object_types.h"
+#include "object_utils.hpp"
 #define DEFAULT_MODEL_THRESHOLD 0.5
 #define DEFAULT_MODEL_NMS_THRESHOLD 0.5
 
@@ -27,9 +29,6 @@ class DetectionBase : public Core {
   };
 
   virtual int onModelClosed() override { return CVI_TDL_SUCCESS; }
-
-  virtual int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                             VPSSConfig &vpss_config) override;
 
  protected:
   cvtdl_det_algo_param_t alg_param_;

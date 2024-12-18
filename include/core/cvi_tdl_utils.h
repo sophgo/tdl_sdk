@@ -43,7 +43,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_SoftMax(const float *inputBuffer, float *outputBuffer
  * @param face Input cvtdl_face_t.
  * @param faceNMS Output result.
  * @param threshold NMS threshold.
- * @param method Support 'u' and 'm'. (intersection over union and intersection over min area)
+ * @param method Support 'u' and 'm'. (intersection over union and intersection
+ * over min area)
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceNMS(const cvtdl_face_t *face, cvtdl_face_t *faceNMS,
@@ -55,7 +56,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceNMS(const cvtdl_face_t *face, cvtdl_face_t *faceN
  * @param obj Input cvtdl_object_t.
  * @param objNMS Output result.
  * @param threshold NMS threshold.
- * @param method Support 'u' and 'm'. (intersection over union and intersection over min area)
+ * @param method Support 'u' and 'm'. (intersection over union and intersection
+ * over min area)
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_ObjectNMS(const cvtdl_object_t *obj, cvtdl_object_t *objNMS,

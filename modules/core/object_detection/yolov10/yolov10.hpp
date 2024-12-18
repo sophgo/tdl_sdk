@@ -1,5 +1,6 @@
 #pragma once
 #include <bitset>
+
 #include "core/object/cvtdl_object_types.h"
 #include "obj_detection.hpp"
 
@@ -14,7 +15,6 @@ class YoloV10Detection final : public DetectionBase {
 
   ~YoloV10Detection(){};
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) override;
-  bool allowExportChannelAttribute() const override { return true; }
 
  private:
   int onModelOpened() override;

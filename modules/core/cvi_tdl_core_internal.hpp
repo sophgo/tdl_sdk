@@ -68,7 +68,8 @@ CVI_TDL_AddVpssEngineThread(const uint32_t thread, const VPSS_GRP vpssGroupId, c
     vec_engine->push_back(inst);
     if (thread != vec_engine->size() - 1) {
       LOGW(
-          "Thread %u is not in use, thus %u is changed to %u automatically. Used vpss group id is "
+          "Thread %u is not in use, thus %u is changed to %u automatically. "
+          "Used vpss group id is "
           "%u.\n",
           *vpss_thread, thread, *vpss_thread, inst->getGrpId());
       *vpss_thread = vec_engine->size() - 1;

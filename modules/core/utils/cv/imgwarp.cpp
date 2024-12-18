@@ -174,7 +174,7 @@ struct FixedPtCast {
 };
 
 /****************************************************************************************\
-*                                         Resize                                         *
+*                                         Resize *
 \****************************************************************************************/
 
 // L450
@@ -658,13 +658,15 @@ class resizeGeneric_Invoker : public cv::ParallelLoopBody {
       for (int k = 0; k < ksize; k++) {
         int sy = clip(sy0 - ksize2 + 1 + k, 0, ssize.height);
         for (k1 = std::max(k1, k); k1 < ksize; k1++) {
-          if (sy == prev_sy[k1])  // if the sy-th row has been computed already, reuse it.
+          if (sy == prev_sy[k1])  // if the sy-th row has been computed already,
+                                  // reuse it.
           {
             if (k1 > k) memcpy(rows[k], rows[k1], bufstep * sizeof(rows[0][0]));
             break;
           }
         }
-        if (k1 == ksize) k0 = std::min(k0, k);  // remember the first row that needs to be computed
+        if (k1 == ksize) k0 = std::min(k0,
+                                       k);  // remember the first row that needs to be computed
         srows[k] = src.template ptr<T>(sy);
         prev_sy[k] = sy;
       }
@@ -781,8 +783,9 @@ void _resize(int src_type, const uchar* src_data, size_t src_step, int src_width
     if (interpolation == INTER_LINEAR && is_area_fast && iscale_x == 2 && iscale_y == 2)
       interpolation = INTER_AREA;
 
-    // true "area" interpolation is only implemented for the case (scale_x <= 1 && scale_y <= 1).
-    // In other cases it is emulated using some variant of bilinear interpolation
+    // true "area" interpolation is only implemented for the case (scale_x <= 1
+    // && scale_y <= 1). In other cases it is emulated using some variant of
+    // bilinear interpolation
     if (interpolation == INTER_AREA && scale_x >= 1 && scale_y >= 1) {
       CV_Assert(0);
     }
@@ -924,7 +927,7 @@ void cvitdl::resize(cv::InputArray _src, cv::OutputArray _dst, cv::Size dsize, d
 }
 
 /****************************************************************************************\
-*                       General warping (affine, perspective, remap)                     *
+*                       General warping (affine, perspective, remap) *
 \****************************************************************************************/
 
 // L3531
@@ -1400,7 +1403,8 @@ void cvitdl::warpPerspective(cv::InputArray _src, cv::OutputArray _dst, cv::Inpu
     cv::invert(matM, matM);
   }
 
-  // printf("[warpPerspective] flags = %d, borderType = %d\n", flags, borderType);
+  // printf("[warpPerspective] flags = %d, borderType = %d\n", flags,
+  // borderType);
   _warpPerspectve(src.type(), src.data, src.step, src.cols, src.rows, dst.data, dst.step, dst.cols,
                   dst.rows, matM.ptr<double>(), interpolation, borderType, borderValue.val);
 }

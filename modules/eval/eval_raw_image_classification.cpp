@@ -51,7 +51,8 @@ bool parse_bin_file(const std::string &bin_path, VIDEO_FRAME_INFO_S *frame,
 
   // 读取数组形状信息的 12 个字节
   // int shape[3]; // 假设形状为三维数组
-  // file.read(reinterpret_cast<char*>(&shape), sizeof(int) * 3); // 读取 12 字节
+  // file.read(reinterpret_cast<char*>(&shape), sizeof(int) * 3); // 读取 12
+  // 字节
 
   // 输出读取到的形状信息（可选）
   // printf("Shape: (%d, %d, %d)\n", shape[0], shape[1], shape[2]);
@@ -60,13 +61,14 @@ bool parse_bin_file(const std::string &bin_path, VIDEO_FRAME_INFO_S *frame,
   frame->stVFrame.u32Length[0] = 1440 * 3840;
 
   // 创建物理地址
-  // CVI_U32 u32MapSize = frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
-  // frame->stVFrame.u32Length[2]; int ret = CVI_SYS_IonAlloc(&frame->stVFrame.u64PhyAddr[0],
-  // (CVI_VOID **)&frame->stVFrame.pu8VirAddr[0],
+  // CVI_U32 u32MapSize = frame->stVFrame.u32Length[0] +
+  // frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2]; int ret =
+  // CVI_SYS_IonAlloc(&frame->stVFrame.u64PhyAddr[0], (CVI_VOID
+  // **)&frame->stVFrame.pu8VirAddr[0],
   //                             "cvitdl/image", u32MapSize);
   // if (ret != CVI_SUCCESS) {
-  //   syslog(LOG_ERR, "Cannot allocate ion, size: %d, ret=%#x\n", u32MapSize, ret);
-  //   return CVI_FAILURE;
+  //   syslog(LOG_ERR, "Cannot allocate ion, size: %d, ret=%#x\n", u32MapSize,
+  //   ret); return CVI_FAILURE;
   // }
 
   // 读取数组数据的剩余部分
@@ -91,8 +93,8 @@ bool parse_bin_file(const std::string &bin_path, VIDEO_FRAME_INFO_S *frame,
   // ret =
   // CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0],frame->stVFrame.pu8VirAddr[0],u32MapSize);
   // if (ret != CVI_SUCCESS) {
-  //   syslog(LOG_ERR, "Cannot flush ion, size: %d, ret=%#x\n", u32MapSize, ret);
-  //   return CVI_FAILURE;
+  //   syslog(LOG_ERR, "Cannot flush ion, size: %d, ret=%#x\n", u32MapSize,
+  //   ret); return CVI_FAILURE;
   // }
 
   // dump_frame_result(dump_path, frame);
@@ -126,8 +128,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         // memset(&fdFrame, 0, sizeof(VIDEO_FRAME_INFO_S));
         // fdFrame.stVFrame.pu8VirAddr[0] = p_buffer;
         // 创建物理地址
-        // CVI_U32 u32MapSize = fdFrame.stVFrame.u32Length[0] + fdFrame.stVFrame.u32Length[1] +
-        // fdFrame.stVFrame.u32Length[2];
+        // CVI_U32 u32MapSize = fdFrame.stVFrame.u32Length[0] +
+        // fdFrame.stVFrame.u32Length[1] + fdFrame.stVFrame.u32Length[2];
 
         if (++cnt % 100 == 0) {
           cout << "processing idx: " << cnt << endl;
@@ -135,7 +137,8 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
 
         auto name = image_root + image_name;
         // CVI_S32 ret =
-        //     CVI_TDL_ReadImage(img_handle, name.c_str(), &fdFrame, BAYER_FORMAT_BG);
+        //     CVI_TDL_ReadImage(img_handle, name.c_str(), &fdFrame,
+        //     BAYER_FORMAT_BG);
         printf("read file %s\n", name.c_str());
         if (!parse_bin_file(name, &fdFrame)) {
           printf("read file failed\n");

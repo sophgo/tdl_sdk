@@ -21,7 +21,8 @@
 #define CVI_AUDIO_BLOCK_MODE -1
 #define PERIOD_SIZE 640
 // #define SAMPLE_RATE 16000
-// #define FRAME_SIZE SAMPLE_RATE *AUDIOFORMATSIZE *SECOND  // PCM_FORMAT_S16_LE (2bytes) 3 seconds
+// #define FRAME_SIZE SAMPLE_RATE *AUDIOFORMATSIZE *SECOND  // PCM_FORMAT_S16_LE
+// (2bytes) 3 seconds
 
 int test_binary_short_audio_data(const std::string &strf, CVI_U8 *p_buffer,
                                  cvitdl_handle_t tdl_handle, int sample_rate, int seconds) {
@@ -136,24 +137,21 @@ how to use:
 for dataset:
 
 ./test_audio_cls
-/tmp/yzx/infer/sound/models/shiyun_v5_int8_cv181x.cvimodel \           #model path
-/tmp/yzx/infer/sound/data/nihaoshiyun/5m_normsound                     #data dir
-8000  \                                                                #sample rate  [8000 | 16000]
-2     \                                                                #time (s)
-0.5   \                                                                #threshold    0 - 1.0
-1     \                                                                #fix (0 for babycry, 1 for
-other) /tmp/yzx/infer/sound/data/nihaoshiyun/5m_normsound/files_list.txt \    # data relative path
-/tmp/yzx/infer/sound/output/shiyun_v5_5m_normsound.txt                 # result path
+/tmp/yzx/infer/sound/models/shiyun_v5_int8_cv181x.cvimodel \           #model
+path /tmp/yzx/infer/sound/data/nihaoshiyun/5m_normsound #data dir 8000  \
+#sample rate  [8000 | 16000] 2     \ #time (s) 0.5   \ #threshold    0 - 1.0 1
+\                                                                #fix (0 for
+babycry, 1 for other)
+/tmp/yzx/infer/sound/data/nihaoshiyun/5m_normsound/files_list.txt \    # data
+relative path /tmp/yzx/infer/sound/output/shiyun_v5_5m_normsound.txt # result
+path
 
 
 for single data:
 
 ./test_audio_cls \
 /tmp/yzx/infer/sound/models/shiyun_v5_int8_cv181x.cvimodel  \ #model path
-/tmp/yzx/infer/sound/data/nihaoshiyun/test_normsound/3/collection_guanbipingmu/0_23_3_2.bin \ #data
-8000  \                                                                #sample rate  [8000 | 16000]
-2     \                                                                #time (s)
-0.5   \                                                                #threshold    0 - 1.0
-1     \                                                                #fix (0 for babycry, 1 for
-other)
+/tmp/yzx/infer/sound/data/nihaoshiyun/test_normsound/3/collection_guanbipingmu/0_23_3_2.bin
+\ #data 8000  \ #sample rate  [8000 | 16000] 2     \ #time (s) 0.5   \
+#threshold    0 - 1.0 1     \ #fix (0 for babycry, 1 for other)
 */

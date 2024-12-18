@@ -96,7 +96,8 @@ int main(int argc, char *argv[]) {
     printf("open CVI_TDL_SUPPORTED_MODEL_HRNET model failed with %#x!\n", ret);
     return ret;
   }
-  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, true);
+  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle,
+  // CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, true);
   cvtdl_object_t obj_meta = {0};
 
   VIDEO_FRAME_INFO_S bg;

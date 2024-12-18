@@ -1,12 +1,14 @@
 #include "scrfd_face.hpp"
-#include "retina_face_utils.hpp"
 
 #include <math.h>
+
 #include <iostream>
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "object_utils.hpp"
+#include "retina_face_utils.hpp"
 #define FACE_POINTS_SIZE 5
 
 namespace cvitdl {
@@ -16,10 +18,10 @@ ScrFDFace::ScrFDFace() {
   std::vector<float> scales = {1.0 / 128, 1.0 / 128, 1.0 / 128};
 
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = scales[i];
-    m_preprocess_param[0].mean[i] = means[i] * scales[i];
+    preprocess_params_[0].factor[i] = scales[i];
+    preprocess_params_[0].mean[i] = means[i] * scales[i];
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
 }
 
 int ScrFDFace::onModelOpened() {
@@ -67,11 +69,14 @@ int ScrFDFace::onModelOpened() {
 
     for (size_t j = 0; j < getNumOutputTensor(); j++) {
       CVI_SHAPE oj = getOutputShape(j);
-      // std::cout << "stride:" << stride << ",w:" << feat_w << ",feath:" << feat_h
-      //           << ",node:" << getOutputTensorInfo(j).tensor_name << ",sw:" << oj.dim[3]
+      // std::cout << "stride:" << stride << ",w:" << feat_w << ",feath:" <<
+      // feat_h
+      //           << ",node:" << getOutputTensorInfo(j).tensor_name << ",sw:"
+      //           << oj.dim[3]
       //           << ",sh:" << oj.dim[2] << ",c:" << oj.dim[1] << std::endl;
       if (oj.dim[2] == feat_h && oj.dim[3] == feat_w) {
-        // std::cout << "fpnnode,stride:" << stride << ",w:" << feat_w << ",feath:" << feat_h
+        // std::cout << "fpnnode,stride:" << stride << ",w:" << feat_w <<
+        // ",feath:" << feat_h
         //           << std::endl;
         if (oj.dim[1] == num_anchors * 1) {
           fpn_out_nodes_[stride]["score"] = getOutputTensorInfo(j).tensor_name;
@@ -221,7 +226,7 @@ void ScrFDFace::outputParser(int image_width, int image_height, int frame_width,
       // Recover coordinate if internal vpss engine is used.
       facemeta->width = frame_width;
       facemeta->height = frame_height;
-      facemeta->rescale_type = m_vpss_config[0].rescale_type;
+      facemeta->rescale_type = preprocess_params_[0].rescale_type;
       for (uint32_t i = 0; i < facemeta->size; ++i) {
         clip_boxes(image_width, image_height, vec_bbox_nms[i].bbox);
         cvtdl_face_info_t info =
@@ -240,7 +245,8 @@ void ScrFDFace::outputParser(int image_width, int image_height, int frame_width,
         CVI_TDL_FreeCpp(&info);
       }
     }
-    // Clear original bbox. bbox_nms does not need to free since it points to bbox.
+    // Clear original bbox. bbox_nms does not need to free since it points to
+    // bbox.
     for (size_t i = 0; i < vec_bbox.size(); ++i) {
       CVI_TDL_FreeCpp(&vec_bbox[i].pts);
     }

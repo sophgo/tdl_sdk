@@ -296,7 +296,8 @@ int main(int argc, char *argv[]) {
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_TDL_APP_DestroyHandle(app_handle);
 
-  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed / num_images
+  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed /
+  // num_images
   //           << std::endl;
 }
 

@@ -38,7 +38,8 @@ int main(int argc, char *argv[]) {
     printf("open model failed with %#x!\n", ret);
     return ret;
   }
-  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_LICENSE_PLATE, true);
+  // CVI_TDL_SetSkipVpssPreprocess(tdl_handle,
+  // CVI_TDL_SUPPORTED_MODEL_LICENSE_PLATE, true);
   VIDEO_FRAME_INFO_S bg;
   imgprocess_t img_handle;
   CVI_TDL_Create_ImageProcessor(&img_handle);

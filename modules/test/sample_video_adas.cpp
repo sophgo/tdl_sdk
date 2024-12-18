@@ -20,7 +20,8 @@
 #ifndef NO_OPENCV
 #include <opencv2/opencv.hpp>
 
-// static const char *enumStr[] = {"NORMAL", "START", "COLLISION_WARNING", "DANGER"};
+// static const char *enumStr[] = {"NORMAL", "START", "COLLISION_WARNING",
+// "DANGER"};
 static const char *enumStr[] = {"N", "S", "C", "D"};
 int g_count = 0;
 std::vector<cv::Scalar> color = {cv::Scalar(51, 153, 255), cv::Scalar(0, 153, 76),
@@ -128,8 +129,8 @@ std::string adas_info(cvitdl_app_handle_t app_handle) {
   cvtdl_lane_t *lane_meta = &app_handle->adas_info->lane_meta;
 
   std::stringstream ss;
-  // unique_id class x1 y1 x2 y2 distance speed object_state;......; x1 y1 x2 y2 x1 y1 x2 y2
-  // lane_state
+  // unique_id class x1 y1 x2 y2 distance speed object_state;......; x1 y1 x2 y2
+  // x1 y1 x2 y2 lane_state
   for (uint32_t oid = 0; oid < obj_meta->size; oid++) {
     ss << obj_meta->info[oid].unique_id << " " << obj_meta->info[oid].classes << " "
        << (int)obj_meta->info[oid].bbox.x1 << " " << (int)obj_meta->info[oid].bbox.y1 << " "
@@ -156,12 +157,14 @@ std::string adas_info(cvitdl_app_handle_t app_handle) {
 int main(int argc, char *argv[]) {
   if (argc != 8 && argc != 10 && argc != 12) {
     printf(
-        "\nUsage: %s \n person_vehicle_model_path  image_dir_path img_list_path output_dir_path \n"
+        "\nUsage: %s \n person_vehicle_model_path  image_dir_path "
+        "img_list_path output_dir_path \n"
         "det_type(0: only object, 1: object and lane) \n"
         "sence_type(0: car, 1: motorbike) \n"
         "save_mode(0: draw, 1: save txt info, 2: both) \n"
         "[lane_det_model_path](optional, if det_type=1, must exist) \n"
-        "[lane_model_type](optional, 0 for lane_det model, 1 for lstr model, if det_type=1, must "
+        "[lane_model_type](optional, 0 for lane_det model, 1 for lstr model, "
+        "if det_type=1, must "
         "exist) \n",
         argv[0]);
     return -1;
@@ -290,7 +293,8 @@ int main(int argc, char *argv[]) {
 
     std::string strf = str_image_root + image_files[img_idx];
 
-    // std::cout << "processing:" << img_idx << "/1000,path:" << szimg << std::endl;
+    // std::cout << "processing:" << img_idx << "/1000,path:" << szimg <<
+    // std::endl;
 
     std::cout << "processing :" << img_idx + 1 << "/" << image_files.size() << "\t"
               << image_files[img_idx] << std::endl;
@@ -322,8 +326,10 @@ int main(int argc, char *argv[]) {
 
     // cvtdl_object_t *obj_meta = &app_handle->adas_info->last_objects;
     // for (uint32_t i = 0; i < obj_meta->size; i++) {
-    //     std::cout << "[" << obj_meta->info[i].bbox.x1 << "," << obj_meta->info[i].bbox.y1 << ","
-    //         << obj_meta->info[i].bbox.x2 << "," << obj_meta->info[i].bbox.y2 << "]," <<std::endl;
+    //     std::cout << "[" << obj_meta->info[i].bbox.x1 << "," <<
+    //     obj_meta->info[i].bbox.y1 << ","
+    //         << obj_meta->info[i].bbox.x2 << "," << obj_meta->info[i].bbox.y2
+    //         << "]," <<std::endl;
     // }
 #ifndef NO_OPENCV
     if (save_mode == 0 || save_mode == 2) {

@@ -166,20 +166,22 @@ int FallMD::detect(cvtdl_object_t *obj) {
       current_bbox_y2 /= (HISTORY_UPDATE - CURRENT_UPDATE);
 
       /*
-      std::cout << "\n current_extra_pred_x : " << current_extra_pred_x << std::endl;
-      std::cout << "\n current_extra_pred_y : " << current_extra_pred_y << std::endl;
-      std::cout << "\n current_bbox_x1 : " << current_bbox_x1 << std::endl;
-      std::cout << "\n current_bbox_x2 : " << current_bbox_x2 << std::endl;
-      std::cout << "\n current_bbox_y1 : " << current_bbox_y1 << std::endl;
-      std::cout << "\n current_bbox_y2 : " << current_bbox_y2 << std::endl;
+      std::cout << "\n current_extra_pred_x : " << current_extra_pred_x <<
+      std::endl; std::cout << "\n current_extra_pred_y : " <<
+      current_extra_pred_y << std::endl; std::cout << "\n current_bbox_x1 : " <<
+      current_bbox_x1 << std::endl; std::cout << "\n current_bbox_x2 : " <<
+      current_bbox_x2 << std::endl; std::cout << "\n current_bbox_y1 : " <<
+      current_bbox_y1 << std::endl; std::cout << "\n current_bbox_y2 : " <<
+      current_bbox_y2 << std::endl;
       */
 
       // fall detection
-      // std::cout << "result1 : " << ((current_bbox_x2 - current_bbox_x1) >= 1.2*(current_bbox_y2 -
-      // current_bbox_y1)) << std::endl;  std::cout << "result2 : " <<
-      // sqrt(pow((current_extra_pred_x
-      // - history_extra_pred_x), 2)+pow((current_extra_pred_y-history_extra_pred_y), 2)) <<
-      // std::endl;  std::cout << "result3 : " << sqrt(pow(history_bbox_x2-history_bbox_x1,
+      // std::cout << "result1 : " << ((current_bbox_x2 - current_bbox_x1)
+      // >= 1.2*(current_bbox_y2 - current_bbox_y1)) << std::endl;  std::cout <<
+      // "result2 : " << sqrt(pow((current_extra_pred_x
+      // - history_extra_pred_x),
+      // 2)+pow((current_extra_pred_y-history_extra_pred_y), 2)) << std::endl;
+      // std::cout << "result3 : " << sqrt(pow(history_bbox_x2-history_bbox_x1,
       // 2)+pow(history_bbox_y2-history_bbox_y1, 2)) << std::endl;
       if (this->history_q_extra_pred_x.front() != 0.0 &&
           this->history_q_extra_pred_y.front() != 0.0) {

@@ -13,6 +13,5 @@ class PoseDetectionBase : public Core {
     LOGE("inference function not implement!\n");
     return 0;
   }
-  virtual bool allowExportChannelAttribute() const override { return true; }
 };
 }  // namespace cvitdl

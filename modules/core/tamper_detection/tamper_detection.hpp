@@ -4,7 +4,8 @@
 class TamperDetectorMD {
  public:
   TamperDetectorMD() = delete;
-  // TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum=0.05, int update_interval=10);
+  // TamperDetectorMD(VIDEO_FRAME_INFO_S *init_frame, float momentum=0.05, int
+  // update_interval=10);
   TamperDetectorMD(ive::IVE *ive_instance, VIDEO_FRAME_INFO_S *init_frame, float momentum,
                    int update_interval);
   ~TamperDetectorMD();

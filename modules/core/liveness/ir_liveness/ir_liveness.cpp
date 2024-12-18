@@ -1,13 +1,13 @@
 #include "ir_liveness.hpp"
 
-#include "core/cvi_tdl_types_mem.h"
-#include "rescale_utils.hpp"
-
 #include <cmath>
 #include <iostream>
+
 #include "core/core/cvtdl_core_types.h"
 #include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
 #include "cvi_sys.h"
+#include "rescale_utils.hpp"
 
 #define R_SCALE (float)(1 / 255.0)
 #define G_SCALE (float)(1 / 255.0)
@@ -19,14 +19,14 @@
 namespace cvitdl {
 
 IrLiveness::IrLiveness() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = R_SCALE;
-  m_preprocess_param[0].factor[1] = G_SCALE;
-  m_preprocess_param[0].factor[2] = B_SCALE;
-  m_preprocess_param[0].mean[0] = R_MEAN;
-  m_preprocess_param[0].mean[1] = G_MEAN;
-  m_preprocess_param[0].mean[2] = B_MEAN;
-  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
-  m_preprocess_param[0].use_crop = true;
+  preprocess_params_[0].factor[0] = R_SCALE;
+  preprocess_params_[0].factor[1] = G_SCALE;
+  preprocess_params_[0].factor[2] = B_SCALE;
+  preprocess_params_[0].mean[0] = R_MEAN;
+  preprocess_params_[0].mean[1] = G_MEAN;
+  preprocess_params_[0].mean[2] = B_MEAN;
+  preprocess_params_[0].rescale_type = RESCALE_NOASPECT;
+  preprocess_params_[0].use_crop = true;
 }
 
 IrLiveness::~IrLiveness() {}
@@ -42,8 +42,11 @@ int IrLiveness::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta) {
     uint32_t box_h = face_info.bbox.y2 - face_info.bbox.y1;
     CVI_TDL_FreeCpp(&face_info);
 
-    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-    m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
+    preprocess_params_[0].use_crop = true;
+    preprocess_params_[0].crop_x = box_x1;
+    preprocess_params_[0].crop_y = box_y1;
+    preprocess_params_[0].crop_w = box_w;
+    preprocess_params_[0].crop_h = box_h;
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
     int ret = run(frames);

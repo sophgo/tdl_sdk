@@ -1,7 +1,9 @@
 #include "super_resolution.hpp"
+
 #include <core/core/cvtdl_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <algorithm>
 #include <cmath>
 #include <error_msg.hpp>
@@ -10,6 +12,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -28,12 +31,12 @@
 namespace cvitdl {
 
 SuperResolution::SuperResolution() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = R_SCALE;
-  m_preprocess_param[0].factor[1] = G_SCALE;
-  m_preprocess_param[0].factor[2] = B_SCALE;
-  m_preprocess_param[0].mean[0] = R_MEAN;
-  m_preprocess_param[0].mean[1] = G_MEAN;
-  m_preprocess_param[0].mean[2] = B_MEAN;
+  preprocess_params_[0].factor[0] = R_SCALE;
+  preprocess_params_[0].factor[1] = G_SCALE;
+  preprocess_params_[0].factor[2] = B_SCALE;
+  preprocess_params_[0].mean[0] = R_MEAN;
+  preprocess_params_[0].mean[1] = G_MEAN;
+  preprocess_params_[0].mean[2] = B_MEAN;
 }
 
 SuperResolution::~SuperResolution() {}
@@ -45,7 +48,7 @@ int SuperResolution::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_sr_feature *s
 
   srfeature->dstframe = (VIDEO_FRAME_INFO_S *)malloc(sizeof(VIDEO_FRAME_INFO_S));
   if (srfeature->dstframe != nullptr) {
-    outputParser(srfeature->dstframe);
+    outputParser((VIDEO_FRAME_INFO_S *)srfeature->dstframe);
   } else {
     printf("Memory allocation for dstframe failed\n");
     LOGE("Memory allocation for dstframe failed\n");

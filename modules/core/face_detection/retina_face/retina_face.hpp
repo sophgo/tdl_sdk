@@ -1,8 +1,7 @@
 #pragma once
+#include "anchor_generator.h"
 #include "core/face/cvtdl_face_types.h"
 #include "face_detection.hpp"
-
-#include "anchor_generator.h"
 
 namespace cvitdl {
 
@@ -11,7 +10,6 @@ class RetinaFace final : public FaceDetectionBase {
   RetinaFace(PROCESS process);
   ~RetinaFace(){};
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_face_t *meta) override;
-  bool allowExportChannelAttribute() const override { return true; }
 
  private:
   int onModelOpened() override;

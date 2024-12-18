@@ -63,7 +63,8 @@ static APP_MODE_e app_mode;
 std::string g_out_dir;
 
 /* helper functions */
-// bool READ_CONFIG(const char *config_path, person_capture_config_t *app_config);
+// bool READ_CONFIG(const char *config_path, person_capture_config_t
+// *app_config);
 
 bool CHECK_OUTPUT_CONDITION(person_capture_t *person_cpt_info, uint32_t idx, APP_MODE_e mode);
 
@@ -112,8 +113,9 @@ void export_tracking_info(person_capture_t *p_cap_info, const std::string &str_d
     // if(p_objinfo->info[i].unique_id != 0){
     // sprintf( buf, "\nOD DB File Size = %" PRIu64 " bytes \t"
     char szinfo[128];
-    // float ctx = (p_objinfo->info[i].bbox.x1 + p_objinfo->info[i].bbox.x2) / 2 / imgw;
-    // float cty = (p_objinfo->info[i].bbox.y1 + p_objinfo->info[i].bbox.y2) / 2 / imgh;
+    // float ctx = (p_objinfo->info[i].bbox.x1 + p_objinfo->info[i].bbox.x2) / 2
+    // / imgw; float cty = (p_objinfo->info[i].bbox.y1 +
+    // p_objinfo->info[i].bbox.y2) / 2 / imgh;
     float ww = (p_objinfo->info[i].bbox.x2 - p_objinfo->info[i].bbox.x1);
     float hh = (p_objinfo->info[i].bbox.y2 - p_objinfo->info[i].bbox.y1);
     float score = p_objinfo->info[i].bbox.score;
@@ -130,8 +132,9 @@ void export_tracking_info(person_capture_t *p_cap_info, const std::string &str_d
     // if(p_objinfo->info[i].unique_id != 0){
     // sprintf( buf, "\nOD DB File Size = %" PRIu64 " bytes \t"
     char szinfo[128];
-    // float ctx = (p_objinfo->info[i].bbox.x1 + p_objinfo->info[i].bbox.x2) / 2 / imgw;
-    // float cty = (p_objinfo->info[i].bbox.y1 + p_objinfo->info[i].bbox.y2) / 2 / imgh;
+    // float ctx = (p_objinfo->info[i].bbox.x1 + p_objinfo->info[i].bbox.x2) / 2
+    // / imgw; float cty = (p_objinfo->info[i].bbox.y1 +
+    // p_objinfo->info[i].bbox.y2) / 2 / imgh;
     float ww = (p_objinfo->info[i].bbox.x2 - p_objinfo->info[i].bbox.x1);
     float hh = (p_objinfo->info[i].bbox.y2 - p_objinfo->info[i].bbox.y1);
     float score = p_objinfo->info[i].bbox.score;
@@ -166,8 +169,9 @@ int main(int argc, char *argv[]) {
       argv[1];                          // /mnt/data/mnt_data/yolov8n_headperson_kpt_cv181x.cvimodel
   std::string str_image_root(argv[2]);  //  /mnt/data/test_data/freqs/consumer_counting/2023_9_5
   std::string str_dst_root(argv[3]);    //  /mnt/data/mnt_data/output/
-  statistics_mode s_mode = static_cast<statistics_mode>(
-      atoi(argv[4]));  // //  0 ->DOWN_UP: from down to up; 1 -> UP_DOWN: from up to down
+  statistics_mode s_mode =
+      static_cast<statistics_mode>(atoi(argv[4]));  // //  0 ->DOWN_UP: from down to up; 1 ->
+                                                    // UP_DOWN: from up to down
 
   // line coordinate
   int A_x = atoi(argv[5]);
@@ -363,7 +367,8 @@ int main(int argc, char *argv[]) {
     //   SMT_MutexAutoLock(VOMutex, lock);
     //   CVI_TDL_Free(&g_obj_meta_0);
     //   CVI_TDL_Free(&g_obj_meta_1);
-    //   RESTRUCTURING_OBJ_META(app_handle->person_cpt_info, &g_obj_meta_0, &g_obj_meta_1);
+    //   RESTRUCTURING_OBJ_META(app_handle->person_cpt_info, &g_obj_meta_0,
+    //   &g_obj_meta_1);
     // }
     export_tracking_info(app_handle->person_cpt_info, str_dst_video, img_idx,
                          fdFrame.stVFrame.u32Width, fdFrame.stVFrame.u32Height, 4);
@@ -423,7 +428,8 @@ int main(int argc, char *argv[]) {
   CVI_TDL_APP_DestroyHandle(app_handle);
   CVI_TDL_Destroy_ImageProcessor(img_handle);
 
-  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed / num_images
+  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed /
+  // num_images
   //           << std::endl;
 }
 
@@ -463,7 +469,8 @@ void RESTRUCTURING_OBJ_META(person_capture_t *person_cpt_info, cvtdl_object_t *o
     bool qualified = person_cpt_info->last_quality[i] >= person_cpt_info->cfg.thr_quality;
     cvtdl_object_info_t **tmp_ptr = (qualified) ? &info_ptr_1 : &info_ptr_0;
     (*tmp_ptr)->unique_id = person_cpt_info->last_head.info[i].unique_id;
-    // (*tmp_ptr)->face_quality = face_cpt_info->last_faces.info[i].face_quality;
+    // (*tmp_ptr)->face_quality =
+    // face_cpt_info->last_faces.info[i].face_quality;
     memcpy(&(*tmp_ptr)->bbox, &person_cpt_info->last_head.info[i].bbox, sizeof(cvtdl_bbox_t));
     *tmp_ptr += 1;
   }

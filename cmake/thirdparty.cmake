@@ -3,7 +3,7 @@ project(thirdparty_fetchcontent)
 if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/libeigen-src")
 FetchContent_Declare(
   libeigen
-  GIT_REPOSITORY ssh://${DL_SERVER_IP}:29418/cvitek/eigen
+  GIT_REPOSITORY ssh://fuquan.ke@${DL_SERVER_IP}:29418/cvitek/eigen
   GIT_TAG origin/master
 )
 FetchContent_MakeAvailable(libeigen)
@@ -16,7 +16,7 @@ set(INSTALL_GTEST OFF CACHE BOOL "Install GMOCK")
 if (NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/googletest-src")
 FetchContent_Declare(
   googletest
-  GIT_REPOSITORY ssh://${DL_SERVER_IP}:29418/cvitek/googletest
+  GIT_REPOSITORY ssh://fuquan.ke@${DL_SERVER_IP}:29418/cvitek/googletest
   GIT_TAG  e2239ee6043f73722e7aa812a459f54a28552929 # release-1.11.0
 )
 FetchContent_MakeAvailable(googletest)
@@ -30,7 +30,7 @@ include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtes
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/nlohmannjson-src")
 FetchContent_Declare(
   nlohmannjson
-  GIT_REPOSITORY ssh://${DL_SERVER_IP}:29418/cvitek/nlohmannjson
+  GIT_REPOSITORY ssh://fuquan.ke@${DL_SERVER_IP}:29418/cvitek/nlohmannjson
   GIT_TAG origin/master
 )
 FetchContent_MakeAvailable(nlohmannjson)
@@ -54,7 +54,7 @@ endif()
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/stb-src")
 FetchContent_Declare(
   stb
-  GIT_REPOSITORY ssh://${DL_SERVER_IP}:29418/cvitek/stb
+  GIT_REPOSITORY ssh://fuquan.ke@${DL_SERVER_IP}:29418/cvitek/stb
   GIT_TAG origin/master
 )
   FetchContent_MakeAvailable(stb)

@@ -1,6 +1,7 @@
 #ifndef _CVI_OBJECT_TYPES_H_
 #define _CVI_OBJECT_TYPES_H_
 #include <stdbool.h>
+
 #include "core/core/cvtdl_core_types.h"
 
 /** @enum cvtdl_obj_class_id_e
@@ -386,7 +387,7 @@ typedef struct {
   uint32_t width;
   uint32_t height;
 
-  VIDEO_FRAME_INFO_S *dstframe;
+  void *dstframe;
 } cvtdl_sr_feature;
 
 typedef struct {
@@ -432,8 +433,8 @@ typedef struct {
 
 /** @struct cvtdl_class_filter_t
  *  @ingroup core_cvitdlcore
- *  @brief Preserve class id of model output and filter out the others. This struct can be used in
- *  Semantic Segmentation.
+ *  @brief Preserve class id of model output and filter out the others. This
+ * struct can be used in Semantic Segmentation.
  *  @var cvtdl_class_filter_t::preserved_class_ids
  *  The class IDs to be preserved
  *  @var cvtdl_class_filter_t::num_preserved_classes

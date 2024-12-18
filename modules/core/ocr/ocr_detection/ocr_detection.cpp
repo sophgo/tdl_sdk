@@ -1,15 +1,15 @@
 #include "ocr_detection.hpp"
-#include "core/core/cvtdl_errno.h"
-#include "core/cvi_tdl_types_mem.h"
-#include "core/cvi_tdl_types_mem_internal.h"
-#include "core_utils.hpp"
-#include "cvi_sys.h"
-
-#include "core/utils/vpss_helper.h"
 
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <sstream>
+
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
+#include "core/utils/vpss_helper.h"
+#include "core_utils.hpp"
+#include "cvi_sys.h"
 #include "opencv2/imgproc.hpp"
 
 #define R_SCALE (0.003922)
@@ -22,12 +22,12 @@
 namespace cvitdl {
 
 OCRDetection::OCRDetection() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = R_SCALE;
-  m_preprocess_param[0].factor[1] = G_SCALE;
-  m_preprocess_param[0].factor[2] = B_SCALE;
-  m_preprocess_param[0].mean[0] = R_MEAN;
-  m_preprocess_param[0].mean[1] = G_MEAN;
-  m_preprocess_param[0].mean[2] = B_MEAN;
+  preprocess_params_[0].factor[0] = R_SCALE;
+  preprocess_params_[0].factor[1] = G_SCALE;
+  preprocess_params_[0].factor[2] = B_SCALE;
+  preprocess_params_[0].mean[0] = R_MEAN;
+  preprocess_params_[0].mean[1] = G_MEAN;
+  preprocess_params_[0].mean[2] = B_MEAN;
 }
 OCRDetection::~OCRDetection() {}
 
@@ -126,7 +126,7 @@ void OCRDetection::outputParser(float thresh, float boxThresh, cvtdl_object_t *o
                          static_cast<float>(boundingBox.y + boundingBox.height)};
     cvtdl_bbox_t rescaled_bbox =
         box_rescale(obj_meta->width, obj_meta->height, shape.dim[3], shape.dim[2], bbox,
-                    meta_rescale_type_e::RESCALE_CENTER);
+                    preprocess_params_[0].rescale_type);
 
     cvtdl_object_info_t objInfo;
     objInfo.bbox = rescaled_bbox;

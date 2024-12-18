@@ -58,7 +58,8 @@ void usage(char *bin_path) {
       "    -t <threshold>     detection threshold (default: 0.5)\n"
       "    -n <number>        inference number (default: -1, inference all)\n"
       "    -o <result>        output MOT result (default: %s)\n"
-      "    -i <config>        initial DeepSORT config (default: use predefined config)\n"
+      "    -i <config>        initial DeepSORT config (default: use predefined "
+      "config)\n"
       "    -z                 enable DeepSORT (default: disable)\n"
       "    -h                 help\n",
       getFileName(bin_path), DEFAULT_RESULT_FILE_NAME);

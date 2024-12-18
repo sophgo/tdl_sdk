@@ -12,7 +12,6 @@ class LicensePlateRecognitionBase : public Core {
   LicensePlateRecognitionBase(){};
   virtual ~LicensePlateRecognitionBase(){};
   virtual int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *object_meta) = 0;
-  virtual bool allowExportChannelAttribute() const override { return false; }
   int afterInference() { return 0; }
 };
 

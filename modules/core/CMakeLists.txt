@@ -71,6 +71,7 @@ endif()
   add_subdirectory(lane_detection/lstr)
   add_subdirectory(liveness/ir_liveness)
   add_subdirectory(depth_estimation)
+  # add_subdirectory(refactor)
   set(CORE_INTERFACE cvi_tdl_core.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core

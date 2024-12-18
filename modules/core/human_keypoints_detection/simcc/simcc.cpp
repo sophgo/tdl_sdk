@@ -1,9 +1,11 @@
 
+#include "simcc.hpp"
+
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <iterator>
 
-#include <iostream>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -11,7 +13,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "simcc.hpp"
 
 #define NUM_KEYPOINTS 17
 #define EXPAND_RATIO 2.0f
@@ -24,11 +25,11 @@ Simcc::Simcc() {
   const float MODEL_MEAN_RGB[3] = {0.485 * 255.0, 0.456 * 255.0, 0.406 * 255.0};
   for (int i = 0; i < 3; i++) {
     // default param
-    m_preprocess_param[0].factor[i] = 1.0 / STD_RGB[i];
-    m_preprocess_param[0].mean[i] = MODEL_MEAN_RGB[i] / STD_RGB[i];
+    preprocess_params_[0].factor[i] = 1.0 / STD_RGB[i];
+    preprocess_params_[0].mean[i] = MODEL_MEAN_RGB[i] / STD_RGB[i];
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  m_preprocess_param[0].rescale_type = RESCALE_NOASPECT;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].rescale_type = RESCALE_NOASPECT;
   m_model_threshold = 3.0f;  // The model output scores are all greater than 1
 }
 
@@ -64,8 +65,11 @@ int Simcc::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *obj_meta) {
 
     CVI_TDL_FreeCpp(&obj_info);
 
-    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-    m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
+    preprocess_params_[0].use_crop = true;
+    preprocess_params_[0].crop_x = box_x1;
+    preprocess_params_[0].crop_y = box_y1;
+    preprocess_params_[0].crop_w = box_w;
+    preprocess_params_[0].crop_h = box_h;
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
     int ret = run(frames);

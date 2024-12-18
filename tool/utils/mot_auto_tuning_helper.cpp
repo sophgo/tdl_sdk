@@ -134,9 +134,11 @@ CVI_S32 OPTIMIZE_CONFIG_1(cvitdl_handle_t tdl_handle, const MOT_EVALUATION_ARGS_
     CVI_TDL_DeepSORT_Init(tdl_handle, false);
     CVI_TDL_DeepSORT_SetConfig(tdl_handle, &tmp_config, -1, false);
     RUN_MOT_EVALUATION(tdl_handle, args, tmp_performance, false, NULL);
-    printf("iter[%u]: score[%.4lf] (coverage rate[%.4lf], stable ids[%u], total entropy[%.4lf])\n",
-           idx_generator.counter, tmp_performance.score, tmp_performance.coverage_rate,
-           tmp_performance.stable_id_num, tmp_performance.total_entropy);
+    printf(
+        "iter[%u]: score[%.4lf] (coverage rate[%.4lf], stable ids[%u], total "
+        "entropy[%.4lf])\n",
+        idx_generator.counter, tmp_performance.score, tmp_performance.coverage_rate,
+        tmp_performance.stable_id_num, tmp_performance.total_entropy);
     if (tmp_performance.coverage_rate < constraint.min_coverage_rate) {
       continue;
     }

@@ -1,8 +1,10 @@
+#include "yolox.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <iterator>
-
 #include <unordered_map>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -10,7 +12,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "yolox.hpp"
 
 namespace cvitdl {
 
@@ -155,10 +156,10 @@ void YoloX::generate_yolox_proposals(Detections &detections) {
 YoloX::YoloX() {
   // default param
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = 1.0;
-    m_preprocess_param[0].mean[i] = 0.0;
+    preprocess_params_[0].factor[i] = 1.0;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   alg_param_.cls = 80;
 }
 
@@ -242,7 +243,7 @@ void YoloX::outputParser(const int image_width, const int image_height, const in
   CVI_SHAPE shape = getInputShape(0);
 
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3],
-                     m_vpss_config[0].rescale_type);
+                     preprocess_params_[0].rescale_type);
 
   if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < obj_meta->size; ++i) {

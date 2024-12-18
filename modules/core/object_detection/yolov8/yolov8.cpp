@@ -1,12 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <algorithm>
-#include <cmath>
-#include <iterator>
+#include "yolov8.hpp"
 
 #include <core/core/cvtdl_errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <algorithm>
+#include <cmath>
 #include <error_msg.hpp>
 #include <iostream>
+#include <iterator>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -15,7 +18,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "yolov8.hpp"
 
 namespace cvitdl {
 static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int im_height,
@@ -54,17 +56,17 @@ YoloV8Detection::YoloV8Detection() : YoloV8Detection(std::make_pair(64, 80)) {}
 
 YoloV8Detection::YoloV8Detection(PAIR_INT yolov8_pair) {
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = 0.003922;
-    m_preprocess_param[0].mean[i] = 0.0;
+    preprocess_params_[0].factor[i] = 0.003922;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   m_box_channel_ = yolov8_pair.first;
   alg_param_.cls = yolov8_pair.second;
 }
 
-// would parse 3 cases,1:box,cls seperate feature map,2 box+cls seperate featuremap,3 output decoded
-// results
+// would parse 3 cases,1:box,cls seperate feature map,2 box+cls seperate
+// featuremap,3 output decoded results
 int YoloV8Detection::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
   int input_h = input_shape.dim[2];
@@ -171,8 +173,10 @@ void YoloV8Detection::decode_bbox_feature_map(int stride, int anchor_idx,
   int anchor_y = anchor_idx / feat_w;
   int anchor_x = anchor_idx % feat_w;
 
-  // LOGI("box numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
-  //      num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x, num_anchor);
+  // LOGI("box
+  // numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
+  //      num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x,
+  //      num_anchor);
 
   float grid_y = anchor_y + 0.5;
   float grid_x = anchor_x + 0.5;
@@ -361,7 +365,7 @@ void YoloV8Detection::postProcess(Detections &dets, int frame_width, int frame_h
     for (uint32_t i = 0; i < obj_meta->size; ++i) {
       obj_meta->info[i].bbox =
           box_rescale(frame_width, frame_height, obj_meta->width, obj_meta->height,
-                      obj_meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
+                      obj_meta->info[i].bbox, preprocess_params_[0].rescale_type);
     }
     obj_meta->width = frame_width;
     obj_meta->height = frame_height;

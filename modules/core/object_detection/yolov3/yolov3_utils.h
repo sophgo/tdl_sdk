@@ -37,9 +37,9 @@ typedef struct {
 /**
  * @breif  calculate index in outputs with some parameter with anchor,
  *         one anchor include [x, y, w, h, c, C1, C2....,Cn] information,
- *         x, y ,w, h using with location, c is mean confidence, and C1 to Cn is classes
- *         which index of anchor we need get, is use the parameter of entry.
- *         when entry = 0,  geting the anchor in outputs index, when entry = 4, geting the
+ *         x, y ,w, h using with location, c is mean confidence, and C1 to Cn is
+ *classes which index of anchor we need get, is use the parameter of entry. when
+ *entry = 0,  geting the anchor in outputs index, when entry = 4, geting the
  *confidence of this anchor entry = 5, get the index of C1,
  * @param w feature map width
  * @param h feature map height

@@ -1,14 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <algorithm>
-#include <cmath>
-#include <iterator>
+#include "yolov5.hpp"
 
 #include <core/core/cvtdl_errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <algorithm>
+#include <cmath>
 #include <error_msg.hpp>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <unordered_map>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -17,7 +20,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "yolov5.hpp"
 
 template <typename T>
 int yolov5_argmax(T *ptr, int start_idx, int arr_len) {
@@ -59,10 +61,10 @@ static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int 
 Yolov5::Yolov5() {
   // default param
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = 0.003922;
-    m_preprocess_param[0].mean[i] = 0.0;
+    preprocess_params_[0].factor[i] = 0.003922;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
 
   uint32_t *anchors = new uint32_t[18];
   uint32_t p_anchors[18] = {10, 13, 16,  30,  33, 23,  30,  61,  62,
@@ -146,7 +148,7 @@ int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
 
     uint32_t bbox_w = yolo_box.x2 - yolo_box.x1;
     uint32_t bbox_h = yolo_box.y2 - yolo_box.y1;
-    vpssCropImage(srcFrame, f, yolo_box, bbox_w, bbox_h, PIXEL_FORMAT_RGB_888);
+    mp_vpss_inst->vpssCropImage(srcFrame, f, yolo_box, bbox_w, bbox_h, PIXEL_FORMAT_RGB_888);
     std::vector<VIDEO_FRAME_INFO_S *> frames = {f};
     int ret = run(frames);
     if (ret != CVI_TDL_SUCCESS) {
@@ -317,7 +319,7 @@ void Yolov5::Yolov5PostProcess(Detections &dets, int frame_width, int frame_heig
     for (uint32_t i = 0; i < obj_meta->size; ++i) {
       obj_meta->info[i].bbox =
           box_rescale(frame_width, frame_height, obj_meta->width, obj_meta->height,
-                      obj_meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
+                      obj_meta->info[i].bbox, preprocess_params_[0].rescale_type);
     }
     obj_meta->width = frame_width;
     obj_meta->height = frame_height;

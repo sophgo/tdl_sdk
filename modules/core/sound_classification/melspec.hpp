@@ -40,8 +40,8 @@ class MelFeatureExtract {
 
   /**
    * @brief opitmize implementation for pack version
-   * @param pack_len the input data(p_data) is combined with many packs,each with size equal
-   * pack_len
+   * @param pack_len the input data(p_data) is combined with many packs,each
+   * with size equal pack_len
    * @param start_pack_idx the pack index of the first pack of the input data
    * @param q_scale quant scale of the input tensor of the KWS model
    */

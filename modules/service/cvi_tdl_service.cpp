@@ -102,7 +102,8 @@ CVI_S32 CVI_TDL_Service_FaceInfoMatching(cvitdl_service_handle_t handle,
   cvitdl_service_context_t *ctx = static_cast<cvitdl_service_context_t *>(handle);
   if (ctx->m_fm == nullptr) {
     LOGE(
-        "Not yet register features, please invoke CVI_TDL_Service_RegisterFeatureArray to "
+        "Not yet register features, please invoke "
+        "CVI_TDL_Service_RegisterFeatureArray to "
         "register.\n");
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
@@ -121,7 +122,8 @@ CVI_S32 CVI_TDL_Service_ObjectInfoMatching(cvitdl_service_handle_t handle,
   cvitdl_service_context_t *ctx = static_cast<cvitdl_service_context_t *>(handle);
   if (ctx->m_fm == nullptr) {
     LOGE(
-        "Not yet register features, please invoke CVI_TDL_Service_RegisterFeatureArray to "
+        "Not yet register features, please invoke "
+        "CVI_TDL_Service_RegisterFeatureArray to "
         "register.\n");
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
@@ -139,7 +141,8 @@ CVI_S32 CVI_TDL_Service_RawMatching(cvitdl_service_handle_t handle, const void *
   cvitdl_service_context_t *ctx = static_cast<cvitdl_service_context_t *>(handle);
   if (ctx->m_fm == nullptr) {
     LOGE(
-        "Not yet register features, please invoke CVI_TDL_Service_RegisterFeatureArray to "
+        "Not yet register features, please invoke "
+        "CVI_TDL_Service_RegisterFeatureArray to "
         "register.\n");
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }

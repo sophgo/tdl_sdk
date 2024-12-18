@@ -1,19 +1,20 @@
 #include "ocr_recognition.hpp"
-#include "core/core/cvtdl_errno.h"
-#include "core/cvi_tdl_types_mem.h"
-#include "core/cvi_tdl_types_mem_internal.h"
-#include "core_utils.hpp"
-#include "cvi_sys.h"
-
-#include "core/utils/vpss_helper.h"
 
 #include <codecvt>
 #include <fstream>
 #include <iostream>
 #include <locale>
 #include <sstream>
+
+#include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvi_tdl_types_mem_internal.h"
+#include "core/utils/vpss_helper.h"
+#include "core_utils.hpp"
+#include "cvi_sys.h"
 #ifndef NO_OPENCV
 #include <opencv2/opencv.hpp>
+
 #include "opencv2/imgproc.hpp"
 namespace cvitdl {
 
@@ -56,12 +57,12 @@ void save_cropped_frame(VIDEO_FRAME_INFO_S* cropped_frame, const std::string& sa
 namespace cvitdl {
 
 OCRRecognition::OCRRecognition() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = R_SCALE;
-  m_preprocess_param[0].factor[1] = G_SCALE;
-  m_preprocess_param[0].factor[2] = B_SCALE;
-  m_preprocess_param[0].mean[0] = R_MEAN;
-  m_preprocess_param[0].mean[1] = G_MEAN;
-  m_preprocess_param[0].mean[2] = B_MEAN;
+  preprocess_params_[0].factor[0] = R_SCALE;
+  preprocess_params_[0].factor[1] = G_SCALE;
+  preprocess_params_[0].factor[2] = B_SCALE;
+  preprocess_params_[0].mean[0] = R_MEAN;
+  preprocess_params_[0].mean[1] = G_MEAN;
+  preprocess_params_[0].mean[2] = B_MEAN;
 }
 OCRRecognition::~OCRRecognition() {}
 
@@ -138,7 +139,8 @@ void OCRRecognition::greedy_decode(float* prebs, std::vector<std::string>& chars
 }
 
 // 可以不通过det，打开下方接口
-//  int OCRRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta) {
+//  int OCRRecognition::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t
+//  *obj_meta) {
 
 //     std::vector<std::string> myCharacters;
 //     std::string filePath = "./ppocr_keys_v1.txt";
@@ -202,7 +204,8 @@ int OCRRecognition::inference(VIDEO_FRAME_INFO_S* frame, cvtdl_object_t* obj_met
     CVI_SHAPE shape = getInputShape(0);
     int height = shape.dim[2];
     int width = shape.dim[3];
-    vpssCropImage(frame, cropped_frame, obj_info.bbox, width, height, PIXEL_FORMAT_RGB_888_PLANAR);
+    mp_vpss_inst->vpssCropImage(frame, cropped_frame, obj_info.bbox, width, height,
+                                PIXEL_FORMAT_RGB_888_PLANAR);
 
     // 可以保存cropped_frame,此功能必须提供opencv支持
     // std::string save_path = std::to_string(i) + ".jpg";

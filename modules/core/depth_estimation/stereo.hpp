@@ -12,6 +12,7 @@ class Stereo final : public Core {
                 cvtdl_depth_logits_t *depth_logist);
 
   //  private:
-  //   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data) override;
+  //   virtual int setupInputPreprocess(std::vector<InputPreprecessSetup> *data)
+  //   override;
 };
 }  // namespace cvitdl

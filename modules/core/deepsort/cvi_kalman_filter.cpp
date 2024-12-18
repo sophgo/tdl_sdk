@@ -53,11 +53,12 @@ int KalmanFilter::predict(kalman_state_e &s_, K_STATE_V &x_, K_COVARIANCE_M &P_,
   //     float y2 = MIN(kfilter_conf.X_constraint_max[1], next_x_(1) + 0.5 * h);
   //     float area_clipped = (x2 - x1) * (y2 - y1);
   //     float r = area_clipped / area;
-  //     // printf("r[%.4f], area[%.4f], area_clipped[%.4f]\n", r, area, area_clipped);
-  //     if (r < BOUNDING_STAY_ALGO_1_THRESHOLD) {
-  //       // printf("x  = (%.4f,%.4f,%.4f,%.4f)\n", x_(0), x_(1), x_(2), x_(3));
-  //       // printf("x' = (%.4f,%.4f,%.4f,%.4f)\n", x_(4), x_(5), x_(6), x_(7));
-  //       return kalman_filter_ret_e::KF_PREDICT_OVER_BOUNDING;
+  //     // printf("r[%.4f], area[%.4f], area_clipped[%.4f]\n", r, area,
+  //     area_clipped); if (r < BOUNDING_STAY_ALGO_1_THRESHOLD) {
+  //       // printf("x  = (%.4f,%.4f,%.4f,%.4f)\n", x_(0), x_(1), x_(2),
+  //       x_(3));
+  //       // printf("x' = (%.4f,%.4f,%.4f,%.4f)\n", x_(4), x_(5), x_(6),
+  //       x_(7)); return kalman_filter_ret_e::KF_PREDICT_OVER_BOUNDING;
   //     }
   // #else
   // #error "unknown bounding stay algorithm"

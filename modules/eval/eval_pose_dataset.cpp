@@ -82,7 +82,10 @@ std::string process_simcc_pose(cvitdl_handle_t tdl_handle, std::string &pd_model
                               pd_model_path.c_str());
 
       if (ret != CVI_SUCCESS) {
-        printf("open CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed with %#x!\n", ret);
+        printf(
+            "open CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed "
+            "with %#x!\n",
+            ret);
         return "";
       }
     }
@@ -95,7 +98,8 @@ std::string process_simcc_pose(cvitdl_handle_t tdl_handle, std::string &pd_model
       return "";
     }
 
-    // CVI_TDL_SetMaxDetNum(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, 100);
+    // CVI_TDL_SetMaxDetNum(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE,
+    // 100);
     model_init = 1;
   }
 
@@ -209,14 +213,18 @@ std::string process_hrnet_pose(cvitdl_handle_t tdl_handle, std::string &pd_model
                               pd_model_path.c_str());
 
       if (ret != CVI_SUCCESS) {
-        printf("open CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed with %#x!\n", ret);
+        printf(
+            "open CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN model failed "
+            "with %#x!\n",
+            ret);
         return "";
       }
     }
 
     ret =
         CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, pose_model_path.c_str());
-    // CVI_TDL_SetSkipVpssPreprocess(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, true);
+    // CVI_TDL_SetSkipVpssPreprocess(tdl_handle,
+    // CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, true);
 
     if (ret != CVI_SUCCESS) {
       printf("open CVI_TDL_SUPPORTED_MODEL_HRNET_POSE model failed with %#x!\n", ret);
@@ -294,7 +302,8 @@ int main(int argc, char *argv[]) {
   std::cout << "image_root: " << image_root << std::endl;
 
   if (process_flag == "simcc" || process_flag == "hrnet") {
-    pd_model = argv[7];  // person detection model path, set to "None" if do not use pd_model
+    pd_model = argv[7];  // person detection model path, set to "None" if do not
+                         // use pd_model
   }
   if (show) {
     show_root = argv[8];  // dir to save img
@@ -328,15 +337,16 @@ int main(int argc, char *argv[]) {
   std::cout << "start i:" << starti << "\t";
   std::cout << image_files.size() << "\t";
   decltype(image_files.size()) i = starti;
-  // std::cout << "processing :" << i << "/" << image_files.size() << "\t" << image_files[i] <<
+  // std::cout << "processing :" << i << "/" << image_files.size() << "\t" <<
+  // image_files[i] <<
   // "\t";
   std::cout << (i < image_files.size()) << "\t";
   std::cout << "init i done" << std::endl;
 
   PIXEL_FORMAT_E img_format = PIXEL_FORMAT_RGB_888_PLANAR;
   if (show)
-    img_format =
-        PIXEL_FORMAT_BGR_888;  // if show, img format should be PIXEL_FORMAT_BGR_888(for opencv)
+    img_format = PIXEL_FORMAT_BGR_888;  // if show, img format should be
+                                        // PIXEL_FORMAT_BGR_888(for opencv)
   std::cout << image_files.size() << std::endl;
 
   std::vector<std::vector<int>> boxes;
@@ -382,8 +392,10 @@ int main(int argc, char *argv[]) {
           process_hrnet_pose(tdl_handle, pd_model, pose_model, &obj_meta, &bg, boxes, file_name);
       CVI_TDL_GetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HRNET_POSE, &score);
     } else {
-      printf("Error: process_flag should be simcc, hrnet or yolov8pose, but got %s !\n",
-             process_flag.c_str());
+      printf(
+          "Error: process_flag should be simcc, hrnet or yolov8pose, but got "
+          "%s !\n",
+          process_flag.c_str());
       fclose(fp);
       CVI_TDL_ReleaseImage(img_handle, &bg);
       CVI_TDL_DestroyHandle(tdl_handle);

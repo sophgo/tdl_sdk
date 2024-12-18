@@ -1,4 +1,5 @@
 #include "thermal_person.hpp"
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -74,11 +75,11 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
 ThermalPerson::ThermalPerson() {
   // default param
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].mean[i] = 0;
-    m_preprocess_param[0].factor[i] = 1;
+    preprocess_params_[0].mean[i] = 0;
+    preprocess_params_[0].factor[i] = 1;
   }
 
-  m_preprocess_param[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_BGR_888_PLANAR;
   alg_param_.cls = NUM_CLASSES;
   m_model_nms_threshold = 0.55;
 }
@@ -119,7 +120,7 @@ void ThermalPerson::outputParser(const int image_width, const int image_height,
   CVI_TDL_MemAllocInit(vec_bbox_nms.size(), obj);
   obj->width = image_width;
   obj->height = image_height;
-  obj->rescale_type = m_vpss_config[0].rescale_type;
+  obj->rescale_type = preprocess_params_[0].rescale_type;
 
   memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
   for (uint32_t i = 0; i < obj->size; ++i) {
@@ -134,16 +135,12 @@ void ThermalPerson::outputParser(const int image_width, const int image_height,
   if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < obj->size; ++i) {
       obj->info[i].bbox = box_rescale(frame_width, frame_height, obj->width, obj->height,
-                                      obj->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
+                                      obj->info[i].bbox, preprocess_params_[0].rescale_type);
       /*
-      printf("RESCALE YOLOX: %s (%d): %*.2lf %*.2lf %*.2lf %*.2lf, score=%*.5lf\n",
-             obj->info[i].name,
-             obj->info[i].classes,
-             7, obj->info[i].bbox.x1,
-             7, obj->info[i].bbox.y1,
-             7, obj->info[i].bbox.x2,
-             7, obj->info[i].bbox.y2,
-             7, obj->info[i].bbox.score);
+      printf("RESCALE YOLOX: %s (%d): %*.2lf %*.2lf %*.2lf %*.2lf,
+      score=%*.5lf\n", obj->info[i].name, obj->info[i].classes, 7,
+      obj->info[i].bbox.x1, 7, obj->info[i].bbox.y1, 7, obj->info[i].bbox.x2, 7,
+      obj->info[i].bbox.y2, 7, obj->info[i].bbox.score);
       */
     }
     obj->width = frame_width;

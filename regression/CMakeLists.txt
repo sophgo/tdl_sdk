@@ -69,22 +69,23 @@ set(REG_INCLUDES
 
 if(${CVI_PLATFORM} STREQUAL "SOPHON")
   set(SAMPLE_LIBS
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+  ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
     ${CVI_RTSP_LIBPATH}
   )
 elseif(${CONFIG_DUAL_OS} STREQUAL "ON")
@@ -179,6 +180,8 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
   reg_daily_fr.cpp
   reg_daily_mobiledetion.cpp
   reg_daily_handcls.cpp
+  reg_daily_vpss_image.cpp
+  reg_daily_preprocess.cpp
   # reg_daily_handkeypoint.cpp
   )
 else()
@@ -225,9 +228,14 @@ set(UnitTest_SRCS
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/../modules/log
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_app gtest_main stdc++fs ${SAMPLE_LIBS})
+
+# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tmp/_deps/googletest-src/googletest/include)
+# buildninstallcpp(NAME reg_daily_vpss_image INC ${REG_INCLUDES} SRCS reg_daily_vpss_image.cpp DEPS cvi_tdl cvi_tdl_app  ${SAMPLE_LIBS})
+
 
 if ("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(DAILY_REGRESSION_ASSETS "assets_186x")

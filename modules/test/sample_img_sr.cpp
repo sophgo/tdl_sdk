@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
 #include <functional>
 #include <iostream>
 #include <map>
@@ -11,6 +12,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
@@ -77,8 +79,8 @@ int main(int argc, char* argv[]) {
     cvtdl_sr_feature obj_meta = {0};
     ret = CVI_TDL_Super_Resolution(tdl_handle, &bg, &obj_meta);
     std::string save_path = "./save_test.jpg";
-    save_picture(obj_meta.dstframe, save_path);
-    free(obj_meta.dstframe);
+    save_picture((VIDEO_FRAME_INFO_S*)obj_meta.dstframe, save_path);
+    free((VIDEO_FRAME_INFO_S*)obj_meta.dstframe);
   }
   CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_DestroyHandle(tdl_handle);

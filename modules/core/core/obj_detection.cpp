@@ -1,8 +1,11 @@
 #include "obj_detection.hpp"
+
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <algorithm>
 #include <iterator>
+
 #include "core/utils/vpss_helper.h"
 #include "error_msg.hpp"
 
@@ -14,28 +17,6 @@ DetectionBase::DetectionBase() : Core(CVI_MEM_DEVICE) {
   alg_param_.cls = 80;
   alg_param_.max_det = 100;
   setting_out_names_.clear();
-}
-int DetectionBase::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                                  VPSSConfig &vpss_config) {
-  int ret;
-  LOGI("to vpss preprocess,crop_enable:%d\n", (int)vpss_config.crop_attr.bEnable);
-  if (!vpss_config.crop_attr.bEnable) {
-    ret = mp_vpss_inst->sendFrame(srcFrame, &vpss_config.chn_attr, &vpss_config.chn_coeff, 1);
-  } else {
-    ret = mp_vpss_inst->sendCropChnFrame(srcFrame, &vpss_config.crop_attr, &vpss_config.chn_attr,
-                                         &vpss_config.chn_coeff, 1);
-  }
-  if (ret != CVI_SUCCESS) {
-    LOGE("Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("Get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-  return 0;
 }
 
 void DetectionBase::set_algparam(const cvtdl_det_algo_param_t &alg_param) {
@@ -58,9 +39,10 @@ void DetectionBase::set_algparam(const cvtdl_det_algo_param_t &alg_param) {
 
 void DetectionBase::set_out_names(const std::vector<std::string> &names) {
   // As for why not make a quantitative judgment here:
-  // getNumOutputTensor()will not be assigned until the modelOpen method is called,
-  // but output layer names must be set before onModelOpened,
-  // so the quantity judgment is executed inside onModelOpened,where it is just a simple assignment
+  // getNumOutputTensor()will not be assigned until the modelOpen method is
+  // called, but output layer names must be set before onModelOpened, so the
+  // quantity judgment is executed inside onModelOpened,where it is just a
+  // simple assignment
 
   // if (names.size() != getNumOutputTensor()) {
   //   LOGE("set_out_names use unmatched names size!\n");

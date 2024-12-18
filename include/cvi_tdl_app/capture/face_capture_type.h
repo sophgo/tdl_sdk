@@ -30,14 +30,16 @@ typedef struct {
   float thr_pitch;
   float thr_roll;
   float thr_laplacian;
-  uint32_t miss_time_limit;  // missed time limit,when reach this limit the track would be destroyed
-  uint32_t m_interval;     // frame interval between current frame and last captured frame,if reach
-                           // this val would send captured image out
-  uint32_t m_capture_num;  // max capture times
-  bool auto_m_fast_cap;    // if true,would send first image out in auto mode
+  uint32_t miss_time_limit;  // missed time limit,when reach this limit the
+                             // track would be destroyed
+  uint32_t m_interval;       // frame interval between current frame and last captured
+                             // frame,if reach this val would send captured image out
+  uint32_t m_capture_num;    // max capture times
+  bool auto_m_fast_cap;      // if true,would send first image out in auto mode
   uint8_t venc_channel_id;
-  int img_capture_flag;         // 0:capture extended face,1:capture whole frame and extended
-                                // face,2:capture half body,3:capture whole frame and half body
+  int img_capture_flag;         // 0:capture extended face,1:capture whole frame and
+                                // extended face,2:capture half body,3:capture whole
+                                // frame and half body
   bool store_feature;           // if true,would export face feature ,should set FR
   float eye_dist_thresh;        // default 20
   float landmark_score_thresh;  // default 0.5
@@ -60,8 +62,8 @@ typedef struct {
 
   int fa_flag;  // 1: open face attribute classification
 
-  int fr_flag;  // 0:only face detect and track,no fr,1:reid,2:no reid but fr for captured face
-                // image,used for later face_recognition
+  int fr_flag;  // 0:only face detect and track,no fr,1:reid,2:no reid but fr
+                // for captured face image,used for later face_recognition
 
   bool use_FQNet; /* don't set manually */
 

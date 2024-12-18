@@ -66,7 +66,8 @@ void usage(char *bin_path) {
       "options:\n"
       "    -t <threshold>     detection threshold (default: 0.5)\n"
       "    -n <number>        inference number (default: -1, inference all)\n"
-      "    -i <config>        initial DeepSORT config (default: use predefined config)\n"
+      "    -i <config>        initial DeepSORT config (default: use predefined "
+      "config)\n"
       "    -d <dir>           dump data directory (default: %s)\n"
       "    -z                 enable DeepSORT (default: disable)\n"
       "    -h                 help\n",
@@ -378,7 +379,8 @@ int main(int argc, char *argv[]) {
           printf("[WARNING] feature type is not TYPE_INT8.\n");
           continue;
         }
-        // int8_t *feature_data = (int8_t *)malloc(target_feature->size * sizeof(int8_t));
+        // int8_t *feature_data = (int8_t *)malloc(target_feature->size *
+        // sizeof(int8_t));
         char feature_data_name[256];
         char feature_data_path[512];
         sprintf(feature_data_name, "features/%04d/%02u.bin", counter, i);

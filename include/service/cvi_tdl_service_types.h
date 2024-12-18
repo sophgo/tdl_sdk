@@ -23,7 +23,8 @@ typedef enum { COS_SIMILARITY } cvtdl_service_feature_matching_e;
  *  @brief Feature array structure used in Service
  *
  * @var cvtdl_service_feature_array_t::ptr
- * ptr is the raw 1-D array of the feature array. Format is feature 1, feature 2...
+ * ptr is the raw 1-D array of the feature array. Format is feature 1,
+ * feature 2...
  * @var cvtdl_service_feature_array_t::feature_length
  * feature length is the length of one single feature.
  * @var cvtdl_service_feature_array_t::data_num

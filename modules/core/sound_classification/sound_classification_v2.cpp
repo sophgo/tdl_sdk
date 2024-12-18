@@ -160,7 +160,8 @@ void SoundClassification::normal_sound(short *audio_data, int n) {
   std::vector<double> top_data;
   std::make_heap(audio_abs.begin(), audio_abs.end());
   if (top_num <= 0) {
-    std::cerr << "When top_num<=0, the volume adaptive algorithm will fail. Current top_num="
+    std::cerr << "When top_num<=0, the volume adaptive algorithm will fail. "
+                 "Current top_num="
               << top_num << std::endl;
     return;
   }

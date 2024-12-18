@@ -21,7 +21,10 @@ set( ARCH arm64 )
 # the -nostartfiles option on the command line
 set(CMAKE_C_COMPILER ${TC_PATH}${CROSS_COMPILE}gcc)
 set(CMAKE_CXX_COMPILER ${TC_PATH}${CROSS_COMPILE}g++)
-
+set(CMAKE_C_COMPILER /data/fuquan.ke/nfsuser/cv_bm_dev/sdk/host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/bin/aarch64-linux-gcc)
+set(CMAKE_CXX_COMPILER /data/fuquan.ke/nfsuser/cv_bm_dev/sdk/host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/bin/aarch64-linux-g++)
+# set(CMAKE_C_COMPILER /home/fuquan.ke/workspace/nfsuser/cv_bm_dev/sdk_package/host-tools/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++)
+# set(CMAKE_CXX_COMPILER /home/fuquan.ke/workspace/nfsuser/cv_bm_dev/sdk_package/host-tools/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++)
 # To build the tests, we need to set where the target environment containing
 # the required library is. On Debian-like systems, this is
 # /usr/aarch64-linux-gnu.

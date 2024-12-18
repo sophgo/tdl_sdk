@@ -133,8 +133,9 @@ int main(int argc, char *argv[]) {
   std::string str_model_file = argv[1];
   std::string str_image_root(argv[2]);
   std::string str_dst_root(argv[3]);
-  statistics_mode s_mode = static_cast<statistics_mode>(
-      atoi(argv[4]));  // //  0 ->DOWN_UP: from down to up; 1 -> UP_DOWN: from up to down
+  statistics_mode s_mode =
+      static_cast<statistics_mode>(atoi(argv[4]));  // //  0 ->DOWN_UP: from down to up; 1 ->
+                                                    // UP_DOWN: from up to down
 
   // line coordinate
   int A_x = atoi(argv[5]);
@@ -196,8 +197,8 @@ int main(int argc, char *argv[]) {
   ret |= CVI_TDL_APP_PersonVehicleCapture_QuickSetUp(
       app_handle, od_model_name, od_model_path,
       (!strcmp(reid_model_path, "NULL")) ? NULL : reid_model_path);
-  ret |=
-      CVI_TDL_APP_PersonVehicleCapture_Line(app_handle, A_x, A_y, B_x, B_y, s_mode);  // draw line
+  ret |= CVI_TDL_APP_PersonVehicleCapture_Line(app_handle, A_x, A_y, B_x, B_y,
+                                               s_mode);  // draw line
   if (ret != CVI_TDL_SUCCESS) {
     printf("failed with %#x!\n", ret);
     release_system(tdl_handle, service_handle, app_handle);
@@ -285,7 +286,8 @@ int main(int argc, char *argv[]) {
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_TDL_APP_DestroyHandle(app_handle);
   CVI_TDL_Destroy_ImageProcessor(img_handle);
-  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed / num_images
+  // std::cout << "numimgs:" << num_images << ",ms_per_frame:" << time_elapsed /
+  // num_images
   //           << std::endl;
 }
 

@@ -1,8 +1,11 @@
 #include "motion_segmentation.hpp"
+
 #include <string.h>
 #include <time.h>
+
 #include <cmath>
 #include <iostream>
+
 #include "core/core/cvtdl_errno.h"
 #include "cvi_tdl_log.hpp"
 using namespace cvitdl;
@@ -38,21 +41,21 @@ void dump_frame(VIDEO_FRAME_INFO_S *frame, std::string name) {
 }
 
 MotionSegmentation::MotionSegmentation() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = 0.017124753831663668;
-  m_preprocess_param[0].factor[1] = 0.01750700280112045;
-  m_preprocess_param[0].factor[2] = 0.017429193899782137;
-  m_preprocess_param[0].mean[0] = 2.1179039301310043;
-  m_preprocess_param[0].mean[1] = 2.035714285714286;
-  m_preprocess_param[0].mean[2] = 1.8044444444444445;
-  m_preprocess_param[0].use_crop = false;
-  m_preprocess_param[0].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
-  m_preprocess_param.emplace_back(m_preprocess_param[0]);
+  preprocess_params_[0].factor[0] = 0.017124753831663668;
+  preprocess_params_[0].factor[1] = 0.01750700280112045;
+  preprocess_params_[0].factor[2] = 0.017429193899782137;
+  preprocess_params_[0].mean[0] = 2.1179039301310043;
+  preprocess_params_[0].mean[1] = 2.035714285714286;
+  preprocess_params_[0].mean[2] = 1.8044444444444445;
+  preprocess_params_[0].use_crop = false;
+  preprocess_params_[0].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
+  preprocess_params_.emplace_back(preprocess_params_[0]);
 }
 
 MotionSegmentation::~MotionSegmentation() {}
 
-// int MotionSegmentation::vpssPreprocess(VIDEO_FRAME_INFO_S* srcFrame, VIDEO_FRAME_INFO_S*
-// dstFrame,
+// int MotionSegmentation::vpssPreprocess(VIDEO_FRAME_INFO_S* srcFrame,
+// VIDEO_FRAME_INFO_S* dstFrame,
 //                               VPSSConfig& vpss_config) {
 //   auto& vpssChnAttr = vpss_config.chn_attr;
 //   auto& factor = vpssChnAttr.stNormalize.factor;
@@ -60,11 +63,11 @@ MotionSegmentation::~MotionSegmentation() {}
 //   vpss_config.chn_coeff = VPSS_SCALE_COEF_NEAREST;
 //   dump_frame(srcFrame,"srcframe");
 //   std::cout<<"vpss_config.chn_coeff:"<<vpss_config.chn_coeff<<std::endl;
-//   // int ret = mp_vpss_inst->sendCropChnFrame(srcFrame, &vpss_config.crop_attr,
-//   &vpss_config.chn_attr,
+//   // int ret = mp_vpss_inst->sendCropChnFrame(srcFrame,
+//   &vpss_config.crop_attr, &vpss_config.chn_attr,
 //   //                                        &vpss_config.chn_coeff, 1);
-//   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-//   if (ret != CVI_SUCCESS) {
+//   int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr,
+//   &vpss_config.chn_coeff, 1); if (ret != CVI_SUCCESS) {
 //     LOGE("vpssPreprocess Send frame failed: %s!\n");
 //     return CVI_TDL_ERR_VPSS_GET_FRAME;
 //   }

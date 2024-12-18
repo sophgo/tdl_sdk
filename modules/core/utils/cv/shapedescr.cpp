@@ -124,7 +124,8 @@ static cv::Rect maskBoundingRect(const cv::Mat& img) {
 }
 #endif
 
-/* Calculates bounding rectagnle of a point set or retrieves already calculated */
+/* Calculates bounding rectagnle of a point set or retrieves already calculated
+ */
 // L1026
 CvRect cvBoundingRect(CvArr* array, int update) {
   CvRect rect;

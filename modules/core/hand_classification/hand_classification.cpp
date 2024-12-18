@@ -1,8 +1,10 @@
 #include "hand_classification.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <string>
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "cvi_sys.h"
@@ -20,14 +22,14 @@
 namespace cvitdl {
 
 HandClassification::HandClassification() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = R_SCALE;
-  m_preprocess_param[0].factor[1] = G_SCALE;
-  m_preprocess_param[0].factor[2] = B_SCALE;
-  m_preprocess_param[0].mean[0] = R_MEAN;
-  m_preprocess_param[0].mean[1] = G_MEAN;
-  m_preprocess_param[0].mean[2] = B_MEAN;
-  m_preprocess_param[0].use_crop = true;
-  m_preprocess_param[0].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
+  preprocess_params_[0].factor[0] = R_SCALE;
+  preprocess_params_[0].factor[1] = G_SCALE;
+  preprocess_params_[0].factor[2] = B_SCALE;
+  preprocess_params_[0].mean[0] = R_MEAN;
+  preprocess_params_[0].mean[1] = G_MEAN;
+  preprocess_params_[0].mean[2] = B_MEAN;
+  preprocess_params_[0].use_crop = true;
+  preprocess_params_[0].keep_aspect_ratio = false;  // do not keep aspect ratio,resize directly
 }
 
 HandClassification::~HandClassification() {}
@@ -66,8 +68,11 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t
 
     CVI_TDL_FreeCpp(&hand_info);
 
-    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-    m_vpss_config[0].crop_attr.stCropRect = {box_x1, box_y1, box_w, box_h};
+    preprocess_params_[0].use_crop = true;
+    preprocess_params_[0].crop_x = box_x1;
+    preprocess_params_[0].crop_y = box_y1;
+    preprocess_params_[0].crop_w = box_w;
+    preprocess_params_[0].crop_h = box_h;
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
 
@@ -78,7 +83,8 @@ int HandClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t
       return ret;
     }
 
-    // std::string classesnames[6] = {"fist", "five", "gun", "ok", "other", "thumbUp"};
+    // std::string classesnames[6] = {"fist", "five", "gun", "ok", "other",
+    // "thumbUp"};
     std::string classesnames[4] = {"fist", "five", "none", "two"};
 
     TensorInfo oinfo = getOutputTensorInfo(0);

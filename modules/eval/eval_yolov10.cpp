@@ -121,7 +121,8 @@ int main(int argc, char* argv[]) {
       CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, model_path.c_str());
   // set conf threshold and nms threshold
   CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, conf_threshold);
-  // CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, 0.6);
+  // CVI_TDL_SetModelNmsThreshold(tdl_handle,
+  // CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION, 0.6);
 
   if (ret != CVI_SUCCESS) {
     printf("open model failed %#x %s!\n", ret, model_path.c_str());

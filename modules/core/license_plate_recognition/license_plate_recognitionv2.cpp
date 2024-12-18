@@ -1,6 +1,8 @@
 
 #include "license_plate_recognitionv2.hpp"
+
 #include <iostream>
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/face/cvtdl_face_types.h"
@@ -26,11 +28,11 @@ std::vector<std::string> CHARS = {
 LicensePlateRecognitionV2::LicensePlateRecognitionV2()
     : LicensePlateRecognitionBase(CVI_MEM_SYSTEM) {
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = SCALE;
-    m_preprocess_param[0].mean[i] = MEAN;
+    preprocess_params_[0].factor[i] = SCALE;
+    preprocess_params_[0].mean[i] = MEAN;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  m_preprocess_param[0].keep_aspect_ratio = false;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].keep_aspect_ratio = false;
 }
 
 void LicensePlateRecognitionV2::greedy_decode(float *prebs) {
@@ -82,7 +84,8 @@ int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_BGR_888_PLANAR) {
     LOGE(
-        "Error: pixel format not match PIXEL_FORMAT_RGB_888_PLANAR or PIXEL_FORMAT_BGR_888_PLANAR");
+        "Error: pixel format not match PIXEL_FORMAT_RGB_888_PLANAR or "
+        "PIXEL_FORMAT_BGR_888_PLANAR");
     return CVI_TDL_ERR_INVALID_ARGS;
   }
 
@@ -94,7 +97,8 @@ int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object
     CVI_SHAPE shape = getInputShape(0);
     int height = shape.dim[2];
     int width = shape.dim[3];
-    vpssCropImage(frame, f, obj_info.bbox, width, height, PIXEL_FORMAT_RGB_888_PLANAR);
+    mp_vpss_inst->vpssCropImage(frame, f, obj_info.bbox, width, height,
+                                PIXEL_FORMAT_RGB_888_PLANAR);
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {f};
     int ret = run(frames);

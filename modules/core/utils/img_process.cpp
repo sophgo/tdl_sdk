@@ -297,7 +297,9 @@ class ImageProcessorNoOpenCV : public ImageProcessor {
         ive_format = IVE_IMAGE_TYPE_E::IVE_IMAGE_TYPE_U8C3_PLANAR;
         break;
       default:
-        LOGE("format should be PIXEL_FORMAT_RGB_888 or PIXEL_FORMAT_RGB_888_PLANAR\n");
+        LOGE(
+            "format should be PIXEL_FORMAT_RGB_888 or "
+            "PIXEL_FORMAT_RGB_888_PLANAR\n");
         ive_format = IVE_IMAGE_TYPE_E::IVE_IMAGE_TYPE_U8C1;
         break;
     }

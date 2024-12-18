@@ -1,5 +1,6 @@
 #pragma once
 #include <bitset>
+
 #include "core/object/cvtdl_object_types.h"
 #include "object_utils.hpp"
 #include "pose_detection.hpp"
@@ -15,7 +16,6 @@ class YoloV8Pose final : public PoseDetectionBase {
 
   ~YoloV8Pose(){};
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) override;
-  bool allowExportChannelAttribute() const override { return true; }
 
  private:
   int onModelOpened() override;

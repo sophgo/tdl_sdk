@@ -200,7 +200,8 @@ void KalmanTracker::restrictCostMatrix_Mahalanobis(
     const KalmanTracker &tracker_ = K_Trackers[tracker_idx];
     ROW_VECTOR maha2_d = KF_.mahalanobis(tracker_.kalman_state, tracker_.x, tracker_.P,
                                          measurement_bboxes, kfilter_conf);
-    // std::cout << "[" << i << "] mahalanobis:" << std::endl << maha2_d << std::endl;
+    // std::cout << "[" << i << "] mahalanobis:" << std::endl << maha2_d <<
+    // std::endl;
     for (int j = 0; j < maha2_d.cols(); j++) {
       if (maha2_d(0, j) > kfilter_conf.chi2_threshold) {
         cost_matrix(i, j) = upper_bound;
@@ -231,8 +232,10 @@ void KalmanTracker::restrictCostMatrix_BBox(COST_MATRIX &cost_matrix,
   for (size_t i = 0; i < Tracker_IDXes.size(); i++) {
     for (size_t j = 0; j < BBox_IDXes.size(); j++) {
       if (cost_m(i, j) > 0.9) {
-        // std::cout << "restrict iou,trackbox:" << KTrackers[Tracker_IDXes[i]].getBBox_TLWH()
-        //           << ",detbox:" << bbox_m_.row(j) << ",ioudist:" << cost_m(i, j) << std::endl;
+        // std::cout << "restrict iou,trackbox:" <<
+        // KTrackers[Tracker_IDXes[i]].getBBox_TLWH()
+        //           << ",detbox:" << bbox_m_.row(j) << ",ioudist:" << cost_m(i,
+        //           j) << std::endl;
         cost_matrix(i, j) = upper_bound;
       }
     }
@@ -312,8 +315,10 @@ void KalmanTracker::update(KalmanFilter &kf, const stRect *p_tlwh_bbox,
   } else {
     kalman_state = kalman_state_e::UPDATED;
 #ifdef DEBUG_TRACK
-    printf("missed track id:%d, tracker_state: %d, unmatched_times:%d, max_unmatched_num:%d\n", id,
-           tracker_state, unmatched_times, conf->ktracker_conf.max_unmatched_num);
+    printf(
+        "missed track id:%d, tracker_state: %d, unmatched_times:%d, "
+        "max_unmatched_num:%d\n",
+        id, tracker_state, unmatched_times, conf->ktracker_conf.max_unmatched_num);
 #endif
     if (tracker_state == k_tracker_state_e::PROBATION) {
       tracker_state = k_tracker_state_e::MISS;
@@ -352,8 +357,8 @@ void KalmanTracker::false_update_from_pair(KalmanFilter &kf, KalmanTracker *p_ot
   false_update_times_ += 1;
   kalman_state = kalman_state_e::UPDATED;
   // only linear update xyah
-  // this->x.block(0, 0, DIM_Z, 1) = this->x.block(0, 0, DIM_Z, 1) * 0.6 + false_box.transpose() *
-  // 0.4;
+  // this->x.block(0, 0, DIM_Z, 1) = this->x.block(0, 0, DIM_Z, 1) * 0.6 +
+  // false_box.transpose() * 0.4;
   kf.update(kalman_state, x, P, false_box, conf->kfilter_conf);
 }
 void KalmanTracker::update_pair_info(KalmanTracker *p_other) {

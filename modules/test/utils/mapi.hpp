@@ -34,8 +34,8 @@ int CVI_MAPI_Media_Init(uint32_t img_w, uint32_t img_h, uint32_t blk_cnt) {
   memset(&sa, 0, sizeof(struct sigaction));
   sigemptyset(&sa.sa_mask);
   sa.sa_sigaction = _SYS_HandleSig;
-  sa.sa_flags =
-      SA_SIGINFO | SA_RESETHAND;  // Reset signal handler to system default after signal triggered
+  sa.sa_flags = SA_SIGINFO | SA_RESETHAND;  // Reset signal handler to system
+                                            // default after signal triggered
   sigaction(SIGINT, &sa, NULL);
   sigaction(SIGTERM, &sa, NULL);
 
@@ -175,7 +175,8 @@ int CVI_MAPI_FrameMmap(VIDEO_FRAME_INFO_S *frm, bool enable_cache) {
   }
   assert(vir_addr && "mmap failed\n");
 
-  // CVI_SYS_IonInvalidateCache(frm->stVFrame.u64PhyAddr[0], vir_addr, mem_size);
+  // CVI_SYS_IonInvalidateCache(frm->stVFrame.u64PhyAddr[0], vir_addr,
+  // mem_size);
   uint64_t plane_offset = 0;
   for (int i = 0; i < plane_num; ++i) {
     frm->stVFrame.pu8VirAddr[i] = (uint8_t *)vir_addr + plane_offset;

@@ -1,9 +1,9 @@
 # Modules
 project(modules)
 # Hide symbols
-if("${CMAKE_BUILD_TYPE}" MATCHES "(SDKRelease|Release)")
-  add_compile_options(-fvisibility=hidden)
-endif()
+# if("${CMAKE_BUILD_TYPE}" MATCHES "(SDKRelease|Release)")
+#   add_compile_options(-fvisibility=hidden)
+# endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/log
@@ -15,7 +15,7 @@ add_subdirectory(app)
 
 add_subdirectory(core)
 add_subdirectory(service)
-add_subdirectory(eval)
+# add_subdirectory(eval)
 add_subdirectory(test)
 add_subdirectory(lib)
 
@@ -72,7 +72,9 @@ set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                $<TARGET_OBJECTS:super_resolution>
                $<TARGET_OBJECTS:ocr_recognition>
                $<TARGET_OBJECTS:lstr>
-               $<TARGET_OBJECTS:stereo>)
+               $<TARGET_OBJECTS:stereo>
+              #  $<TARGET_OBJECTS:refactor>
+               )
 if("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(CORES_SRCS ${CORES_SRCS}
                  $<TARGET_OBJECTS:isp_image_classification>)

@@ -1,14 +1,17 @@
 #include "lstr.hpp"
+
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <algorithm>
 #include <error_msg.hpp>
 #include <iostream>
 #include <numeric>
 #include <string>
 #include <vector>
+
 #include "core/core/cvtdl_core_types.h"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -22,15 +25,15 @@
 namespace cvitdl {
 
 LSTR::LSTR() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = 0.014598;
-  m_preprocess_param[0].factor[1] = 0.0150078;
-  m_preprocess_param[0].factor[2] = 0.0142201;
+  preprocess_params_[0].factor[0] = 0.014598;
+  preprocess_params_[0].factor[1] = 0.0150078;
+  preprocess_params_[0].factor[2] = 0.0142201;
 
-  m_preprocess_param[0].mean[0] = 1.79226;
-  m_preprocess_param[0].mean[1] = 1.752097;
-  m_preprocess_param[0].mean[2] = 1.48022;
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  m_preprocess_param[0].keep_aspect_ratio = false;
+  preprocess_params_[0].mean[0] = 1.79226;
+  preprocess_params_[0].mean[1] = 1.752097;
+  preprocess_params_[0].mean[2] = 1.48022;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].keep_aspect_ratio = false;
 }
 LSTR::~LSTR() {}
 

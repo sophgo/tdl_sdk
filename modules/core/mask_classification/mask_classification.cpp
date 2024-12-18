@@ -1,11 +1,11 @@
 #include "mask_classification.hpp"
 
-#include "core/cvi_tdl_types_mem.h"
-#include "rescale_utils.hpp"
-
 #include <cmath>
+
 #include "core/core/cvtdl_errno.h"
+#include "core/cvi_tdl_types_mem.h"
 #include "cvi_sys.h"
+#include "rescale_utils.hpp"
 
 #define R_SCALE (1 / (256.0 * 0.229))
 #define G_SCALE (1 / (256.0 * 0.224))
@@ -19,13 +19,13 @@
 namespace cvitdl {
 
 MaskClassification::MaskClassification() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = R_SCALE;
-  m_preprocess_param[0].factor[1] = G_SCALE;
-  m_preprocess_param[0].factor[2] = B_SCALE;
-  m_preprocess_param[0].mean[0] = R_MEAN;
-  m_preprocess_param[0].mean[1] = G_MEAN;
-  m_preprocess_param[0].mean[2] = B_MEAN;
-  m_preprocess_param[0].use_crop = true;
+  preprocess_params_[0].factor[0] = R_SCALE;
+  preprocess_params_[0].factor[1] = G_SCALE;
+  preprocess_params_[0].factor[2] = B_SCALE;
+  preprocess_params_[0].mean[0] = R_MEAN;
+  preprocess_params_[0].mean[1] = G_MEAN;
+  preprocess_params_[0].mean[2] = B_MEAN;
+  preprocess_params_[0].use_crop = true;
 }
 
 MaskClassification::~MaskClassification() {}
@@ -45,9 +45,11 @@ int MaskClassification::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *
     int box_new_x1 = (box_w - new_edge) / 2.f + box_x1;
     int box_new_y1 = (box_h - new_edge) / 2.f + box_y1;
 
-    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
-    m_vpss_config[0].crop_attr.stCropRect = {box_new_x1, box_new_y1, (uint32_t)new_edge,
-                                             (uint32_t)new_edge};
+    preprocess_params_[0].use_crop = true;
+    preprocess_params_[0].crop_x = box_new_x1;
+    preprocess_params_[0].crop_y = box_new_y1;
+    preprocess_params_[0].crop_w = new_edge;
+    preprocess_params_[0].crop_h = new_edge;
 
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
     int ret = run(frames);

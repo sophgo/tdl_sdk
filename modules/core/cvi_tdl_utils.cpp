@@ -13,7 +13,8 @@
 #endif
 #include <string>
 
-/** NOTE: If turn on DO_ALIGN_STRIDE, we can not copy the data from cv::Mat directly. */
+/** NOTE: If turn on DO_ALIGN_STRIDE, we can not copy the data from cv::Mat
+ * directly. */
 /** TODO: If ALIGN is not necessary in TDL SDK, remove it in the future. */
 #define DO_ALIGN_STRIDE
 #ifdef DO_ALIGN_STRIDE
@@ -75,7 +76,8 @@ CVI_S32 CVI_TDL_FaceAlignment(VIDEO_FRAME_INFO_S *inFrame, const uint32_t metaWi
     if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
       LOGE(
-          "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, PIXEL_FORMAT_YUV_PLANAR_420. Current: "
+          "Supported format are PIXEL_FORMAT_RGB_888_PLANAR, "
+          "PIXEL_FORMAT_YUV_PLANAR_420. Current: "
           "%x\n",
           inFrame->stVFrame.enPixelFormat);
       return CVI_TDL_FAILURE;
@@ -284,7 +286,8 @@ CVI_S32 CVI_TDL_CreateImageFromVideoFrame(const VIDEO_FRAME_INFO_S *p_src_frame,
 
 #if 1
   printf(
-      "[create image] format[%d], height[%u], width[%u], stride[%u][%u][%u], length[%u][%u][%u]\n",
+      "[create image] format[%d], height[%u], width[%u], stride[%u][%u][%u], "
+      "length[%u][%u][%u]\n",
       image->pix_format, image->height, image->width, image->stride[0], image->stride[1],
       image->stride[2], image->length[0], image->length[1], image->length[2]);
 #endif
@@ -486,17 +489,18 @@ CVI_S32 CVI_TDL_StbReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
   //     LOGE("Not support channel %s.\n", cviIveImgEnTypeStr[enType]);
   //     break;
   // }
-  // LOGI("to read image:%s,type:%d,channels:%d", filename, enType, desiredNChannels);
-  // int width, height, nChannels;
-  // stbi_uc *stbi_data = stbi_load(filename, &width, &height, &nChannels, desiredNChannels);
-  // if (stbi_data == nullptr) {
+  // LOGI("to read image:%s,type:%d,channels:%d", filename, enType,
+  // desiredNChannels); int width, height, nChannels; stbi_uc *stbi_data =
+  // stbi_load(filename, &width, &height, &nChannels, desiredNChannels); if
+  // (stbi_data == nullptr) {
   //   LOGE("Image %s read failed.\n", filename);
   //   return img;
   // }
-  // LOGI("to create cviimage,channels, width, height: %d %d %d\n", desiredNChannels, width,
-  // height); CVI_IVE_CreateImage(pIveHandle, &img, enType, width, height); LOGI("desiredNChannels,
-  // width, height: %d %d %d\n", desiredNChannels, width, height); if (enType ==
-  // IVE_IMAGE_TYPE_U8C3_PLANAR || enType == IVE_IMAGE_TYPE_S8C3_PLANAR) {
+  // LOGI("to create cviimage,channels, width, height: %d %d %d\n",
+  // desiredNChannels, width, height); CVI_IVE_CreateImage(pIveHandle, &img,
+  // enType, width, height); LOGI("desiredNChannels, width, height: %d %d %d\n",
+  // desiredNChannels, width, height); if (enType == IVE_IMAGE_TYPE_U8C3_PLANAR
+  // || enType == IVE_IMAGE_TYPE_S8C3_PLANAR) {
   //   for (size_t i = 0; i < (size_t)height; i++) {
   //     for (size_t j = 0; j < (size_t)width; j++) {
   //       size_t stb_idx = (i * width + j) * 3;
@@ -508,7 +512,8 @@ CVI_S32 CVI_TDL_StbReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
   //   }
   // } else {
   //   if (invertPackage &&
-  //       (enType == IVE_IMAGE_TYPE_U8C3_PACKAGE || enType == IVE_IMAGE_TYPE_S8C3_PACKAGE)) {
+  //       (enType == IVE_IMAGE_TYPE_U8C3_PACKAGE || enType ==
+  //       IVE_IMAGE_TYPE_S8C3_PACKAGE)) {
   //     for (size_t i = 0; i < (size_t)height; i++) {
   //       uint32_t stb_stride = i * width * 3;
   //       uint32_t image_stride = (i * img.u16Stride[0]);
@@ -523,8 +528,8 @@ CVI_S32 CVI_TDL_StbReadImage(const char *filepath, VIDEO_FRAME_INFO_S *frame,
   //   } else {
   //     stbi_uc *ptr = stbi_data;
   //     for (size_t j = 0; j < (size_t)height; j++) {
-  //       memcpy(img.pu8VirAddr[0] + (j * img.u16Stride[0]), ptr, width * desiredNChannels);
-  //       ptr += width * desiredNChannels;
+  //       memcpy(img.pu8VirAddr[0] + (j * img.u16Stride[0]), ptr, width *
+  //       desiredNChannels); ptr += width * desiredNChannels;
   //     }
   //   }
   // }

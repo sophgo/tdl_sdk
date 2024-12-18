@@ -1,15 +1,18 @@
+#include "lane_detection.hpp"
+
+#include <core/core/cvtdl_errno.h>
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <algorithm>
+#include <error_msg.hpp>
 #include <map>
 #include <memory>
 #include <numeric>
 #include <string>
 
-#include <core/core/cvtdl_errno.h>
-#include <error_msg.hpp>
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_core_types.h"
 #include "core/cvi_tdl_types_mem_internal.h"
@@ -17,7 +20,6 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_comm.h"
-#include "lane_detection.hpp"
 #include "misc.hpp"
 #include "object_utils.hpp"
 
@@ -67,14 +69,14 @@ BezierLaneNet::BezierLaneNet() : Core(CVI_MEM_DEVICE) {
       c_matrix[i][k] = pow(t, k) * pow(1 - t, 3 - k) * sample_comb(k);
     }
   }
-  m_preprocess_param[0].factor[0] = static_cast<float>(FACTOR_R);
-  m_preprocess_param[0].factor[1] = static_cast<float>(FACTOR_G);
-  m_preprocess_param[0].factor[2] = static_cast<float>(FACTOR_B);
-  m_preprocess_param[0].mean[0] = static_cast<float>(MEAN_R);
-  m_preprocess_param[0].mean[1] = static_cast<float>(MEAN_G);
-  m_preprocess_param[0].mean[2] = static_cast<float>(MEAN_B);
+  preprocess_params_[0].factor[0] = static_cast<float>(FACTOR_R);
+  preprocess_params_[0].factor[1] = static_cast<float>(FACTOR_G);
+  preprocess_params_[0].factor[2] = static_cast<float>(FACTOR_B);
+  preprocess_params_[0].mean[0] = static_cast<float>(MEAN_R);
+  preprocess_params_[0].mean[1] = static_cast<float>(MEAN_G);
+  preprocess_params_[0].mean[2] = static_cast<float>(MEAN_B);
   // keep_aspect_ratio = true;
-  m_preprocess_param[0].rescale_type = RESCALE_RB;
+  preprocess_params_[0].rescale_type = RESCALE_RB;
 }
 
 BezierLaneNet::~BezierLaneNet() {}

@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 #include "cvi_comm.h"
 #include "cvi_tdl_log.hpp"
 #include "profiler.hpp"
@@ -102,7 +103,6 @@ struct TensorInfo {
 };
 struct VPSSConfig {
   meta_rescale_type_e rescale_type = RESCALE_CENTER;
-  CVI_FRAME_TYPE frame_type = CVI_FRAME_PLANAR;
   VPSS_SCALE_COEF_E chn_coeff = VPSS_SCALE_COEF_BICUBIC;
   VPSS_CHN_ATTR_S chn_attr;
   VPSS_CROP_INFO_S crop_attr;
@@ -124,31 +124,21 @@ class Core {
   void skipVpssPreprocess(bool skip);
 
   bool hasSkippedVpssPreprocess() const { return m_skip_vpss_preprocess; }
-  int setVpssDepth(uint32_t in_index, uint32_t depth);
-  int getVpssDepth(uint32_t in_index, uint32_t *depth);
-  virtual int getChnConfig(const uint32_t width, const uint32_t height, const uint32_t idx,
-                           cvtdl_vpssconfig_t *chn_config);
+
   const float &getModelThreshold() { return m_model_threshold; }
   virtual void setModelThreshold(const float &threshold) { m_model_threshold = threshold; };
   const float &getModelNmsThreshold() { return m_model_nms_threshold; }
   virtual void setModelNmsThreshold(const float &threshold) { m_model_nms_threshold = threshold; };
   // @todo
   // 正常来说get方法就应该返回const常量不被修改，但仓库demo中经常会使用get获取原本参数，修改部分后再set回去
-  const InputPreParam &getPreparam() { return m_preprocess_param[0]; }
-  virtual void setPreparam(const InputPreParam &pre_param) { m_preprocess_param[0] = pre_param; }
+  const InputPreParam &getPreparam(int idx = 0);
+  virtual void setPreparam(const InputPreParam &pre_param) { preprocess_params_[0] = pre_param; }
 
-  int setUseMmap(bool mmap) { return true; }
   virtual int afterInference() { return CVI_TDL_SUCCESS; }
   bool isInitialized();
-  // TODO:remove this interface
-  virtual bool allowExportChannelAttribute() const { return false; }
 
   void setPerfEvalInterval(int interval) { model_timer_.Config("", interval); }
-  int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,
-                    uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
-                    VPSS_SCALE_COEF_E reize_mode = VPSS_SCALE_COEF_BICUBIC);
-  int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
-                      uint32_t rh, PIXEL_FORMAT_E enDstFormat);
+
   VpssEngine *getVpssInstance() { return mp_vpss_inst; }
 #ifndef CONFIG_ALIOS
   void setRaw(bool raw);
@@ -161,8 +151,6 @@ class Core {
   int modelOpen(const int8_t *buf, uint32_t size);
 #endif
  protected:
-  virtual int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                             VPSSConfig &config);
   int run(std::vector<VIDEO_FRAME_INFO_S *> &frames);
 
   const TensorInfo &getOutputTensorInfo(const std::string &name);
@@ -199,8 +187,8 @@ class Core {
   virtual int onModelClosed() { return CVI_TDL_SUCCESS; }
 
   void setInputMemType(CVI_MEM_TYPE_E type) { mp_mi->conf.input_mem_type = type; }
-  std::vector<VPSSConfig> m_vpss_config;
-  std::vector<InputPreParam> m_preprocess_param;
+
+  std::vector<InputPreParam> preprocess_params_;
 
   // Post processing related control
   float m_model_threshold = DEFAULT_MODEL_THRESHOLD;
@@ -212,7 +200,7 @@ class Core {
   // vpss related control
   int32_t m_vpss_timeout = 100;
 #ifdef __CV186X__
-  void inputPreprocessConfig(const bm_net_info_t *net_info, std::vector<VPSSConfig> &m_vpss_config);
+  void inputPreprocessConfig(const bm_net_info_t *net_info);
   void setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
                              std::map<std::string, TensorInfo> &tensor_info);
   void setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
@@ -232,6 +220,8 @@ class Core {
   // Preprocessing related control
   bool m_skip_vpss_preprocess = false;
   bool aligned_input = true;
+
+  CVI_FRAME_TYPE frame_type_ = CVI_FRAME_PLANAR;
 
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;

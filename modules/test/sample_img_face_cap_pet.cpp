@@ -148,7 +148,8 @@ static void *pImageWrite(void *args) {
         } else if (g_use_face_attribute) {
           sprintf(filename,
                   "%s/"
-                  "frm_%d_face_%d_%u_score_%.3f_qua_%.3f_gender_%.3f_age_%.3f_glass_%.3f_mask_%.3f_"
+                  "frm_%d_face_%d_%u_score_%.3f_qua_%.3f_gender_%.3f_age_%.3f_"
+                  "glass_%.3f_mask_%.3f_"
                   "name_%s.png",
                   g_out_dir.c_str(), int(data_buffer[target_idx].frame_id),
                   int(data_buffer[target_idx].u_id), data_buffer[target_idx].counter,
@@ -365,8 +366,9 @@ int main(int argc, char *argv[]) {
   std::string od_modelf =
       std::string("/tmp/yzx/infer/face_cap_det/models/face_cap_det_int8_cv181x.cvimodel");
 
-  std::string fl_modelf =
-      std::string("/tmp/yzx/infer/face_cap/models/1x/pipnet_mbv1_at_50ep_v8_cv181x.cvimodel");
+  std::string fl_modelf = std::string(
+      "/tmp/yzx/infer/face_cap/models/1x/"
+      "pipnet_mbv1_at_50ep_v8_cv181x.cvimodel");
 
   std::string fa_modelf = "NULL";
 
@@ -499,9 +501,10 @@ int main(int argc, char *argv[]) {
       printf("load image failed\n");
       empty_img = true;
 
-      ret = CVI_TDL_ReadImage(
-          img_handle, "/tmp/algo_pub/eval_data/dataset/face_cap_val_dataset/black_image.jpg",
-          &fdFrame, img_format);
+      ret = CVI_TDL_ReadImage(img_handle,
+                              "/tmp/algo_pub/eval_data/dataset/"
+                              "face_cap_val_dataset/black_image.jpg",
+                              &fdFrame, img_format);
 
       num_append++;
       if (num_append > 30) {

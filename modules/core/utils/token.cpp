@@ -199,8 +199,8 @@ int token_bpe(const std::string& encoderFile, const std::string& bpeFile,
                    ::tolower);  // convert all to lowercase
     std::vector<std::string> words;
 
-    // std::sregex_iterator is an iterator class in C++ used for matching regular expressions in
-    // strings
+    // std::sregex_iterator is an iterator class in C++ used for matching
+    // regular expressions in strings
     std::sregex_iterator it(text[j].begin(), text[j].end(), pattern);
     std::sregex_iterator end;
 
@@ -233,7 +233,8 @@ int token_bpe(const std::string& encoderFile, const std::string& bpeFile,
 
     tokens[j].push_back(vocab["<end_of_text>"]);
 
-    // check if the length of tokens [j] is less than 77, and add zeros if it is less than 77
+    // check if the length of tokens [j] is less than 77, and add zeros if it is
+    // less than 77
     if (tokens[j].size() < 77) {
       int zerosToAdd = 77 - tokens[j].size();
       for (int k = 0; k < zerosToAdd; ++k) {

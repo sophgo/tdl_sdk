@@ -1,4 +1,5 @@
 #include "vpss_engine.hpp"
+
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl_log.hpp"
 
@@ -279,5 +280,192 @@ int VpssEngine::getFrame(VIDEO_FRAME_INFO_S *outframe, int chn_idx, uint32_t tim
 
 int VpssEngine::releaseFrame(VIDEO_FRAME_INFO_S *frame, int chn_idx) {
   return CVI_VPSS_ReleaseChnFrame(m_grpid, chn_idx, frame);
+}
+
+// int VpssEngine::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
+//                                VIDEO_FRAME_INFO_S *dstFrame,
+//                                VPSSConfig &vpss_config, uint32_t timeout) {
+//   int ret;
+//   LOGI("to vpss preprocess,crop_enable:%d\n",
+//        (int)vpss_config.crop_attr.bEnable);
+//   if (!vpss_config.crop_attr.bEnable) {
+//     ret = sendFrame(srcFrame, &vpss_config.chn_attr, &vpss_config.chn_coeff,
+//     1);
+//   } else {
+//     ret = sendCropChnFrame(srcFrame, &vpss_config.crop_attr,
+//                            &vpss_config.chn_attr, &vpss_config.chn_coeff, 1);
+//   }
+//   if (ret != CVI_SUCCESS) {
+//     LOGE("Send frame failed: %s!\n", get_vpss_error_msg(ret));
+//     return CVI_TDL_ERR_VPSS_SEND_FRAME;
+//   }
+
+//   ret = getFrame(dstFrame, 0, timeout);
+//   if (ret != CVI_SUCCESS) {
+//     LOGE("Get frame failed: %s!\n", get_vpss_error_msg(ret));
+//     return CVI_TDL_ERR_VPSS_GET_FRAME;
+//   }
+//   return CVI_TDL_SUCCESS;
+// }
+
+int VpssEngine::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                               const InputPreParam &param, uint32_t timeout) {
+  VPSS_CHN_ATTR_S chn_attr;
+  VPSS_CROP_INFO_S crop_attr;
+  memset(&chn_attr, 0, sizeof(VPSS_CHN_ATTR_S));
+  memset(&crop_attr, 0, sizeof(VPSS_CROP_INFO_S));
+
+  float src_w = srcFrame->stVFrame.u32Width;
+  float src_h = srcFrame->stVFrame.u32Height;
+  chn_attr.u32Width = param.dst_w;
+  chn_attr.u32Height = param.dst_h;
+
+  chn_attr.enVideoFormat = VIDEO_FORMAT_LINEAR;
+  chn_attr.enPixelFormat = (PIXEL_FORMAT_E)param.format;
+  chn_attr.stFrameRate.s32SrcFrameRate = -1;
+  chn_attr.stFrameRate.s32DstFrameRate = -1;
+  chn_attr.u32Depth = 1;
+  chn_attr.bMirror = CVI_FALSE;
+  chn_attr.bFlip = CVI_FALSE;
+
+  auto chn_coeff = (VPSS_SCALE_COEF_E)param.resize_method;
+
+  if (!param.keep_aspect_ratio) {
+    chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
+  } else {
+    if (param.rescale_type == RESCALE_CENTER) {
+      chn_attr.stAspectRatio.enMode = ASPECT_RATIO_AUTO;
+      // chn_attr.stAspectRatio.bEnableBgColor = CVI_TRUE;
+    } else {
+      float ratio_w = (float)param.dst_w / src_w;
+      float ratio_h = (float)param.dst_h / src_h;
+      float ratio = std::min(ratio_w, ratio_h);
+      chn_attr.stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
+      chn_attr.stAspectRatio.stVideoRect.s32X = 0;
+      chn_attr.stAspectRatio.stVideoRect.s32Y = 0;
+      chn_attr.stAspectRatio.stVideoRect.u32Width = (src_w * ratio) + 0.5;
+      chn_attr.stAspectRatio.stVideoRect.u32Height = (src_h * ratio) + 0.5;
+    }
+
+    chn_attr.stAspectRatio.bEnableBgColor = CVI_TRUE;
+  }
+  if (param.use_crop) {
+    crop_attr.bEnable = CVI_TRUE;
+    crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
+    crop_attr.stCropRect = {param.crop_x, param.crop_y, param.crop_w, param.crop_h};
+  }
+  bool enable_normalize = param.factor[0] != 1 || param.factor[1] != 1 || param.factor[2] != 1 ||
+                          param.mean[0] != 0 || param.mean[1] != 0 || param.mean[2] != 0;
+  chn_attr.stNormalize.bEnable = enable_normalize;
+
+  for (uint32_t i = 0; i < 3; i++) {
+    chn_attr.stNormalize.factor[i] = param.factor[i];
+  }
+  for (uint32_t i = 0; i < 3; i++) {
+    chn_attr.stNormalize.mean[i] = param.mean[i];
+  }
+  chn_attr.stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  int ret = CVI_SUCCESS;
+  if (!crop_attr.bEnable) {
+    ret = sendFrame(srcFrame, &chn_attr, &chn_coeff, 1);
+  } else {
+    ret = sendCropChnFrame(srcFrame, &crop_attr, &chn_attr, &chn_coeff, 1);
+  }
+  if (ret != CVI_SUCCESS) {
+    LOGE("Send frame failed: %d!\n", ret);
+    return CVI_FAILURE;
+  }
+
+  ret = getFrame(dstFrame, 0, timeout);
+  if (ret != CVI_SUCCESS) {
+    LOGE("Get frame failed: %d!\n", ret);
+    return CVI_FAILURE;
+  }
+  return CVI_SUCCESS;
+}
+
+int VpssEngine::getChnConfig(const uint32_t width, const uint32_t height,
+                             const InputPreParam &param, cvtdl_vpssconfig_t *chn_config) {
+  // VPSSConfig &vpss_config = *chn_config;
+  memset(chn_config, 0, sizeof(cvtdl_vpssconfig_t));
+
+  float src_w = width;
+  float src_h = height;
+  chn_config->chn_attr.u32Width = param.dst_w;
+  chn_config->chn_attr.u32Height = param.dst_h;
+
+  chn_config->chn_attr.enVideoFormat = VIDEO_FORMAT_LINEAR;
+  chn_config->chn_attr.enPixelFormat = (PIXEL_FORMAT_E)param.format;
+  chn_config->chn_attr.stFrameRate.s32SrcFrameRate = -1;
+  chn_config->chn_attr.stFrameRate.s32DstFrameRate = -1;
+  chn_config->chn_attr.u32Depth = 1;
+  chn_config->chn_attr.bMirror = CVI_FALSE;
+  chn_config->chn_attr.bFlip = CVI_FALSE;
+  // chn_config->frame_type = CVI_FRAME_PLANAR;
+  // vpss_config.rescale_type = param.rescale_type;
+  // chn_config->chn_coeff = (VPSS_SCALE_COEF_E)param.resize_method;
+
+  if (!param.keep_aspect_ratio) {
+    chn_config->chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
+  } else {
+    float ratio_w = (float)param.dst_w / width;
+    float ratio_h = (float)param.dst_h / height;
+    float ratio = std::min(ratio_w, ratio_h);
+    chn_config->chn_attr.stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
+    chn_config->chn_attr.stAspectRatio.stVideoRect.s32X = 0;
+    chn_config->chn_attr.stAspectRatio.stVideoRect.s32Y = 0;
+    chn_config->chn_attr.stAspectRatio.stVideoRect.u32Width = (src_w * ratio) + 0.5;
+    chn_config->chn_attr.stAspectRatio.stVideoRect.u32Height = (src_h * ratio) + 0.5;
+
+    chn_config->chn_attr.stAspectRatio.bEnableBgColor = CVI_TRUE;
+  }
+  // TODO:this interface not support crop,has no crop_attr
+  //  if (param.use_crop) {
+  //    chn_config->crop_attr.bEnable = CVI_TRUE;
+  //    chn_config->crop_attr.enCropCoordinate = VPSS_CROP_RATIO_COOR;
+  //    chn_config->crop_attr.stCropRect = {param.crop_x, param.crop_y,
+  //                                        param.crop_w, param.crop_h};
+  //  }
+  bool enable_normalize = param.factor[0] != 1 || param.factor[1] != 1 || param.factor[2] != 1 ||
+                          param.mean[0] != 0 || param.mean[1] != 0 || param.mean[2] != 0;
+  chn_config->chn_attr.stNormalize.bEnable = enable_normalize;
+
+  for (uint32_t i = 0; i < 3; i++) {
+    chn_config->chn_attr.stNormalize.factor[i] = param.factor[i];
+  }
+  for (uint32_t i = 0; i < 3; i++) {
+    chn_config->chn_attr.stNormalize.mean[i] = param.mean[i];
+  }
+  chn_config->chn_attr.stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+
+  return CVI_SUCCESS;
+}
+
+/* vpssCropImage api need new  dstFrame and remember delete and release frame*/
+int VpssEngine::vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                              cvtdl_bbox_t bbox, uint32_t rw, uint32_t rh,
+                              PIXEL_FORMAT_E enDstFormat,
+                              VPSS_SCALE_COEF_E reize_mode /* = VPSS_SCALE_COEF_NEAREST*/) {
+  VPSS_CROP_INFO_S cropAttr;
+  cropAttr.bEnable = true;
+  uint32_t u32Width = bbox.x2 - bbox.x1;
+  uint32_t u32Height = bbox.y2 - bbox.y1;
+  cropAttr.stCropRect = {(int)bbox.x1, (int)bbox.y1, u32Width, u32Height};
+  VPSS_CHN_ATTR_S chnAttr;
+  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, false);
+  int ret = sendCropChnFrame(srcFrame, &cropAttr, &chnAttr, &reize_mode, 1);
+  if (ret != CVI_SUCCESS) return ret;
+  ret = getFrame(dstFrame, 0, 2000);
+  return ret;
+}
+
+/* vpssCropImage api need new  dstFrame and remember delete and release frame*/
+int VpssEngine::vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                                uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat) {
+  VPSS_CHN_ATTR_S chnAttr;
+  VPSS_CHN_DEFAULT_HELPER(&chnAttr, rw, rh, enDstFormat, false);
+  sendFrame(srcFrame, &chnAttr, 1);
+  getFrame(dstFrame, 0, 2000);
+  return CVI_SUCCESS;
 }
 }  // namespace cvitdl

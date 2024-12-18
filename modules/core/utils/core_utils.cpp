@@ -63,7 +63,9 @@ void NeonQuantizeScale(VIDEO_FRAME_INFO_S *inFrame, const float *qFactor, const 
 #else
   if (inFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 ||
       outFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR) {
-    LOGE("Input must be PIXEL_FORMAT_RGB_888. Output must be PIXEL_FORMAT_RGB_888_PLANAR.\n");
+    LOGE(
+        "Input must be PIXEL_FORMAT_RGB_888. Output must be "
+        "PIXEL_FORMAT_RGB_888_PLANAR.\n");
     return;
   }
   bool do_unmap_in = false, do_unmap_out = false;

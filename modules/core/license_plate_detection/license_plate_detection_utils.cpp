@@ -98,7 +98,8 @@ void nms(std::vector<LicensePlateObjBBox> &ObjectBBoxes,
   // for (std::vector<LicensePlateObjBBox>::iterator it = ObjectBBoxes.begin();
   //      it != ObjectBBoxes.end(); it++){
   //   bool non_overlap = true;
-  //   for (std::vector<LicensePlateObjBBox>::iterator it_p = SelectedBBoxes.begin();
+  //   for (std::vector<LicensePlateObjBBox>::iterator it_p =
+  //   SelectedBBoxes.begin();
   //        it_p != SelectedBBoxes.end(); it_p++){
   //     if(IOU_ObjBBoxes(*it, *it_p) > threshold_iou){
   //       non_overlap = false;
@@ -130,7 +131,8 @@ float IOU_ObjBBoxes(ObjectBBox const &obj1, ObjectBBox const &obj2) {
 float IOU(Pts const &tl1, Pts const &br1, Pts const &tl2, Pts const &br2) {
   Pts wh1 = br1 - tl1;
   Pts wh2 = br2 - tl2;
-  // Matrix OP reference: http://eigen.tuxfamily.org/dox/group__QuickRefPage.html#title6
+  // Matrix OP reference:
+  // http://eigen.tuxfamily.org/dox/group__QuickRefPage.html#title6
   Pts intersection_wh = (br1.cwiseMin(br2) - tl1.cwiseMax(tl2)).cwiseMax(0.0);
   float intersection_area = intersection_wh.prod();
   float area1 = wh1.prod();

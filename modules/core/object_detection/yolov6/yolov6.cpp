@@ -1,14 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <algorithm>
-#include <cmath>
-#include <iterator>
+#include "yolov6.hpp"
 
 #include <core/core/cvtdl_errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <algorithm>
+#include <cmath>
 #include <error_msg.hpp>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <unordered_map>
+
 #include "coco_utils.hpp"
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
@@ -16,7 +19,6 @@
 #include "core/utils/vpss_helper.h"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "yolov6.hpp"
 
 #define SCALE 0.003922
 #define MEAN 0
@@ -64,38 +66,12 @@ Yolov6::Yolov6() {
   // defalut param
 
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].factor[i] = 0.003922;
-    m_preprocess_param[0].mean[i] = 0.0;
+    preprocess_params_[0].factor[i] = 0.003922;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].use_crop = false;
   alg_param_.cls = 80;
-}
-
-int Yolov6::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
-                           VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-
-  // set dump config
-  vpssChnAttr.stNormalize.bEnable = false;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-  return CVI_TDL_SUCCESS;
 }
 
 int Yolov6::onModelOpened() {

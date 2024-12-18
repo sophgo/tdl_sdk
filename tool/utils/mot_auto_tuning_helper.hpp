@@ -47,7 +47,8 @@ CVI_S32 OPTIMIZE_CONFIG_1(cvitdl_handle_t tdl_handle, const MOT_EVALUATION_ARGS_
                           const MOT_GRID_SEARCH_PARAMS_t &params,
                           const MOT_PERFORMANCE_CONSTRAINT_t &constraint,
                           cvtdl_deepsort_config_t &config, MOT_Performance_t &performance);
-// CVI_S32 OPTIMIZE_CONFIG_2(cvitdl_handle_t tdl_handle, const MOT_EVALUATION_ARGS_t &args);
+// CVI_S32 OPTIMIZE_CONFIG_2(cvitdl_handle_t tdl_handle, const
+// MOT_EVALUATION_ARGS_t &args);
 
 /* helper functions */
 CVI_S32 GET_PREDEFINED_OPT_1_PARAMS(MOT_GRID_SEARCH_PARAMS_t &params);

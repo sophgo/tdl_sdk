@@ -54,10 +54,12 @@ DLL_EXPORT CVI_S32 CVI_MD_Set_ROI(const cvi_md_handle_t handle, MDROI *_roi_s);
  * @param handle An TDL SDK handle.
  * @param frame Input video frame, should be YUV420 format.
  * @param pp_boxes box list with [x1,y1,x2,y2,x1,y1,x2,y2,...],
- *                  the buffer would be allocated inside,and should be freed outside
+ *                  the buffer would be allocated inside,and should be freed
+ * outside
  * @param p_num_boxes number of boxes in pp_boxes
  * @param threshold Threshold of motion detection, the range between 0 and 255.
- * @param min_area Minimal pixel area. The bounding box whose area is larger than this value would
+ * @param min_area Minimal pixel area. The bounding box whose area is larger
+ * than this value would
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_MD_Detect(const cvi_md_handle_t handle, VIDEO_FRAME_INFO_S *frame,

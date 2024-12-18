@@ -71,7 +71,8 @@ CVI_S32 CVI_MD_Set_ROI(const cvi_md_handle_t handle, MDROI *roi_s) {
  * @param frame Input video frame, should be YUV420 format.
  * @param objects Detected object info
  * @param threshold Threshold of motion detection, the range between 0 and 255.
- * @param min_area Minimal pixel area. The bounding box whose area is larger than this value would
+ * @param min_area Minimal pixel area. The bounding box whose area is larger
+ * than this value would
  * @return int Return CVI_SUCCESS on success.
  */
 CVI_S32 CVI_MD_Detect(const cvi_md_handle_t handle, VIDEO_FRAME_INFO_S *frame, int **pp_boxes,

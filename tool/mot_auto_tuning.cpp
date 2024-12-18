@@ -55,9 +55,11 @@ void usage(char *bin_path) {
       "options:\n"
       "    -d <dir>           input data directory (default: %s)\n"
       "    -n <number>        inference number (default: -1, inference all)\n"
-      "    -i <config>        initial DeepSORT config (default: use predefined config)\n"
+      "    -i <config>        initial DeepSORT config (default: use predefined "
+      "config)\n"
       "    -o <config>        output DeepSORT config (default: %s)\n"
-      "    -r <result>        enable output MOT result and set path (default: false, %s)\n"
+      "    -r <result>        enable output MOT result and set path (default: "
+      "false, %s)\n"
       "    -e                 only evaluate performance (default: false)\n"
       "    -z                 enable DeepSORT (default: disable)\n"
       "    -h                 help\n",
@@ -197,9 +199,11 @@ int main(int argc, char *argv[]) {
   elapsed_tpu = ((t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec);
   printf("execution time: %.2f(ms)\n", (float)elapsed_tpu / 1000.);
 
-  printf("init: score[%.4lf] (coverage rate[%.4lf], stable ids[%u], total entropy[%.4lf])\n",
-         performance.score, performance.coverage_rate, performance.stable_id_num,
-         performance.total_entropy);
+  printf(
+      "init: score[%.4lf] (coverage rate[%.4lf], stable ids[%u], total "
+      "entropy[%.4lf])\n",
+      performance.score, performance.coverage_rate, performance.stable_id_num,
+      performance.total_entropy);
 
   if (args.evaluation) {
     return CVI_SUCCESS;

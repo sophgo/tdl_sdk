@@ -66,9 +66,10 @@ int main(int argc, char *argv[]) {
   // CVI_TDL_Create_ImageProcessor(&img_handle);
 
   // VIDEO_FRAME_INFO_S fdFrame;
-  // ret = CVI_TDL_ReadImage(img_handle, str_src_dir.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888);
-  // if (ret != CVI_SUCCESS) {
-  //   std::cout << "Convert out video frame failed with :" << ret << ".file:" << str_src_dir
+  // ret = CVI_TDL_ReadImage(img_handle, str_src_dir.c_str(), &fdFrame,
+  // PIXEL_FORMAT_RGB_888); if (ret != CVI_SUCCESS) {
+  //   std::cout << "Convert out video frame failed with :" << ret << ".file:"
+  //   << str_src_dir
   //             << std::endl;
   //   // continue;
   // }

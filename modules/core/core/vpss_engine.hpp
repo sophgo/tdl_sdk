@@ -1,6 +1,7 @@
 #pragma once
+#include "core/core/cvtdl_core_types.h"
+#include "core/core/cvtdl_vpss_types.h"
 #include "cvi_comm.h"
-
 namespace cvitdl {
 
 class __attribute__((visibility("default"))) VpssEngine {
@@ -35,6 +36,16 @@ class __attribute__((visibility("default"))) VpssEngine {
   int sendFrameBase(const VIDEO_FRAME_INFO_S *frame, const VPSS_CROP_INFO_S *grp_crop_attr,
                     const VPSS_CROP_INFO_S *chn_crop_attr, const VPSS_CHN_ATTR_S *chn_attr,
                     const VPSS_SCALE_COEF_E *coeffs, const uint32_t enable_chns);
+
+  virtual int vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
+                             const InputPreParam &param, uint32_t timeout = 100);
+  int vpssCropImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, cvtdl_bbox_t bbox,
+                    uint32_t rw, uint32_t rh, PIXEL_FORMAT_E enDstFormat,
+                    VPSS_SCALE_COEF_E reize_mode = VPSS_SCALE_COEF_BICUBIC);
+  int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
+                      uint32_t rh, PIXEL_FORMAT_E enDstFormat);
+  int getChnConfig(const uint32_t width, const uint32_t height, const InputPreParam &param,
+                   cvtdl_vpssconfig_t *chn_config);
 
  private:
   bool m_is_vpss_init = false;

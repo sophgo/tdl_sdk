@@ -41,7 +41,8 @@
 
 /** @def CVI_TDL_CopyInfo
  *  @ingroup core_cvitdlcore
- * @brief Fully copy the info structure. (including allocating new memory for you.)
+ * @brief Fully copy the info structure. (including allocating new memory for
+ * you.)
  *
  * @param IN Input info structure.
  * @param OUT Output info structure (uninitialized structure required).
@@ -63,8 +64,8 @@
 
 /** @def CVI_TDL_RescaleMetaCenter
  * @ingroup core_cvitdlcore
- * @brief Rescale the output coordinate to original image. Padding in four directions. Support the
- * following structure types written in _Generic.
+ * @brief Rescale the output coordinate to original image. Padding in four
+ * directions. Support the following structure types written in _Generic.
  *
  * @param videoFrame Original input image.
  * @param X Input data structure.
@@ -72,8 +73,8 @@
 
 /** @def CVI_TDL_RescaleMetaRB
  * @ingroup core_cvitdlcore
- * @brief Rescale the output coordinate to original image. Padding in right, bottom directions.
- * Support the following structure types written in _Generic.
+ * @brief Rescale the output coordinate to original image. Padding in right,
+ * bottom directions. Support the following structure types written in _Generic.
  *
  * @param videoFrame Original input image.
  * @param X Input data structure.
@@ -309,30 +310,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_SetPerfEvalInterval(cvitdl_handle_t handle,
                                                CVI_TDL_SUPPORTED_MODEL_E config, int interval);
 
 /**
- * @brief Set list depth for VPSS.
- *
- * @param handle An TDL SDK handle.
- * @param model Supported model id.
- * @param input_id input index of model.
- * @param depth list depth of VPSS.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_TDL_SetVpssDepth(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
-                                        uint32_t input_id, uint32_t depth);
-
-/**
- * @brief Get list depth for VPSS.
- *
- * @param handle An TDL SDK handle.
- * @param model Supported model id.
- * @param input_id input index of model.
- * @param depth list depth of VPSS.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-DLL_EXPORT CVI_S32 CVI_TDL_GetVpssDepth(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
-                                        uint32_t input_id, uint32_t *depth);
-
-/**
  * @brief Get skip preprocess value for given supported model.
  *
  * @param handle An TDL SDK handle.
@@ -398,28 +375,29 @@ DLL_EXPORT CVI_S32 CVI_TDL_GetModelNmsThreshold(cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_UseMmap(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
                                    bool mmap);
 /**
- * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
- * to change a thread if the process is not sequential.
+ * @brief Set different vpss thread for each model. Vpss group id is not thread
+ * safe. We recommended to change a thread if the process is not sequential.
  *
  * @param handle An TDL SDK handle.
  * @param model Supported model id.
- * @param thread The vpss thread index user desired. Note this param will changed if previous index
- * is not used.
+ * @param thread The vpss thread index user desired. Note this param will
+ * changed if previous index is not used.
  * @return int Return CVI_TDL_SUCCESS if successfully changed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_SetVpssThread(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
                                          const uint32_t thread);
 
 /**
- * @brief Set different vpss thread for each model. Vpss group id is not thread safe. We recommended
- * to change a thread if the process is not sequential. This function requires manually assigning a
- * vpss group id and device id.
+ * @brief Set different vpss thread for each model. Vpss group id is not thread
+ * safe. We recommended to change a thread if the process is not sequential.
+ * This function requires manually assigning a vpss group id and device id.
  *
  * @param handle An TDL SDK handle.
  * @param model Supported model id.
- * @param thread The vpss thread index user desired. Note this param will changed if previous index
- * is not used.
- * @param vpssGroupId Assign a vpss group id if a new vpss instance needs to be created.
+ * @param thread The vpss thread index user desired. Note this param will
+ * changed if previous index is not used.
+ * @param vpssGroupId Assign a vpss group id if a new vpss instance needs to be
+ * created.
  * @param dev Assign Vpss device id to Vpss group
  * @return int Return CVI_TDL_SUCCESS if successfully changed.
  */
@@ -439,17 +417,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_GetVpssThread(cvitdl_handle_t handle, CVI_TDL_SUPPORT
                                          uint32_t *thread);
 
 /**
- * @brief Set VB pool id to VPSS in TDLSDK. By default, VPSS in TDLSDK acquires VB from all
- * system-wide VB_POOLs which are created via CVI_VB_Init. In this situation, system decides which
- * VB_POOL is used according to VB allocation mechanism. The size of aquired VB maybe not optimal
- * and it could cause resource competition. To prevents this problem, you can assign a specific
- * VB_POOL to TDLSDK via this function. The VB_POOL created by CVI_VB_Init or CVI_VB_CreatePool are
- * both accepted.
+ * @brief Set VB pool id to VPSS in TDLSDK. By default, VPSS in TDLSDK acquires
+ * VB from all system-wide VB_POOLs which are created via CVI_VB_Init. In this
+ * situation, system decides which VB_POOL is used according to VB allocation
+ * mechanism. The size of aquired VB maybe not optimal and it could cause
+ * resource competition. To prevents this problem, you can assign a specific
+ * VB_POOL to TDLSDK via this function. The VB_POOL created by CVI_VB_Init or
+ * CVI_VB_CreatePool are both accepted.
  *
  * @param handle An TDL SDK handle.
  * @param thread VPSS thread index.
- * @param pool_id vb pool id. if pool id is VB_INVALID_POOLID than VPSS will get VB from all
- * system-wide VB_POOLs like default.
+ * @param pool_id vb pool id. if pool id is VB_INVALID_POOLID than VPSS will get
+ * VB from all system-wide VB_POOLs like default.
  * @return int Return CVI_TDL_SUCCESS.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_SetVBPool(cvitdl_handle_t handle, uint32_t thread, VB_POOL pool_id);
@@ -509,7 +488,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_CloseModel(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_
  * @param frameHeight The input frame height.
  * @param idx The index of the input tensors.
  * @param chnAttr Exported VPSS channel config settings.
- * @return int Return CVI_TDL_SUCCESS on success, CVI_TDL_FAILURE if exporting not supported.
+ * @return int Return CVI_TDL_SUCCESS on success, CVI_TDL_FAILURE if exporting
+ * not supported.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_GetVpssChnConfig(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
                                             const CVI_U32 frameWidth, const CVI_U32 frameHeight,
@@ -552,7 +532,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceDetection(const cvitdl_handle_t handle, VIDEO_FRA
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceAttribute(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -563,7 +544,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceAttribute(const cvitdl_handle_t handle, VIDEO_FRA
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceAttribute_cls(const cvitdl_handle_t handle,
@@ -574,19 +556,21 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceAttribute_cls(const cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceAttribute_cls(const cvitdl_handle_t handle,
                                              VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *faces);
 
 /**
- * @brief Do face recognition and attribute with bbox info stored in faces. Only do inference on the
- * given index of cvtdl_face_info_t.
+ * @brief Do face recognition and attribute with bbox info stored in faces. Only
+ * do inference on the given index of cvtdl_face_info_t.
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
  * @param face_idx The index of cvtdl_face_info_t inside cvtdl_face_t.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
@@ -598,19 +582,21 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceAttributeOne(const cvitdl_handle_t handle, VIDEO_
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceRecognition(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                            cvtdl_face_t *faces);
 
 /**
- * @brief Do face recognition with bbox info stored in faces. Only do inference on the given index
- * of cvtdl_face_info_t.
+ * @brief Do face recognition with bbox info stored in faces. Only do inference
+ * on the given index of cvtdl_face_info_t.
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
  * @param face_idx The index of cvtdl_face_info_t inside cvtdl_face_t.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
@@ -620,7 +606,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceRecognition(const cvitdl_handle_t handle, VIDEO_F
  *
  * @param handle An TDL SDK handle.
  * @param p_rgb_pack Input video frame.
- * @param p_face_info, if no data in p_face_info,p_rgb_pack means aligned packed rgb data
+ * @param p_face_info, if no data in p_face_info,p_rgb_pack means aligned packed
+ * rgb data
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceFeatureExtract(const cvitdl_handle_t handle,
@@ -684,7 +671,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_im
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_MaskClassification(const cvitdl_handle_t handle,
@@ -733,8 +721,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_HandKeypointClassification(const cvitdl_handle_t hand
 /**@{*/
 
 /**
- * @brief Select classes for detection model. Model will output objects belong to these classes.
- * Currently only support MobileDetV2 family.
+ * @brief Select classes for detection model. Model will output objects belong
+ * to these classes. Currently only support MobileDetV2 family.
  *
  * @param handle An TDL SDK handle.
  * @param model model id.
@@ -751,7 +739,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_SelectDetectClass(cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and
+ * cvtdl_bbox_t must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_PersonVehicle_Detection(const cvitdl_handle_t handle,
@@ -794,19 +783,21 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Outputlayer_Names(const cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param obj cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @param obj cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t
+ * must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_OSNet(cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                  cvtdl_object_t *obj);
 
 /**
- * @brief Do person Re-Id with bbox info stored in obj. Only do inference on the given index of
- * cvtdl_object_info_t.
+ * @brief Do person Re-Id with bbox info stored in obj. Only do inference on the
+ * given index of cvtdl_object_info_t.
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param obj cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @param obj cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t
+ * must be set.
  * @param obj_idx The index of cvtdl_object_info_t inside cvtdl_object_t.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
@@ -875,7 +866,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_SetSoundClassificationThreshold(const cvitdl_handle_t
  * @brief Initialize DeepSORT.
  *
  * @param handle An TDL SDK handle.
- * @param use_specific_counter true for using individual id counter for each class
+ * @param use_specific_counter true for using individual id counter for each
+ * class
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_Init(const cvitdl_handle_t handle, bool use_specific_counter);
@@ -893,7 +885,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_GetDefaultConfig(cvtdl_deepsort_config_t *ds
  *
  * @param handle An TDL SDK handle.
  * @param ds_conf Output config.
- * @param cvitdl_obj_type The specific class type (-1 for setting default config).
+ * @param cvitdl_obj_type The specific class type (-1 for setting default
+ * config).
  * @return int Return CVI_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_GetConfig(const cvitdl_handle_t handle,
@@ -905,7 +898,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_GetConfig(const cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param ds_conf The specific config.
- * @param cvitdl_obj_type The specific class type (-1 for setting default config).
+ * @param cvitdl_obj_type The specific class type (-1 for setting default
+ * config).
  * @param show_config show detail information or not.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
@@ -934,7 +928,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_Obj(const cvitdl_handle_t handle, cvtdl_obje
                                         cvtdl_tracker_t *tracker, bool use_reid);
 
 /**
- * @brief Run DeepSORT/SORT track for object, add function to judge cross the border.
+ * @brief Run DeepSORT/SORT track for object, add function to judge cross the
+ * border.
  *
  * @param handle An TDL SDK handle.
  * @param obj Input detected object with feature.
@@ -1062,7 +1057,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_IrLiveness(const cvitdl_handle_t handle, VIDEO_FRAME_
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
+ * @param faces cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_MaskFaceRecognition(const cvitdl_handle_t handle,
@@ -1072,9 +1068,10 @@ DLL_EXPORT CVI_S32 CVI_TDL_MaskFaceRecognition(const cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
- * @param skip bool array, whether skip quailty assessment at corresponding index (NULL for running
- * without skip)
+ * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
+ * @param skip bool array, whether skip quailty assessment at corresponding
+ * index (NULL for running without skip)
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_FaceQuality(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -1114,14 +1111,16 @@ DLL_EXPORT CVI_S32 CVI_TDL_EyeClassification(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_YawnClassification(const cvitdl_handle_t handle,
                                               VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face);
 /**
- * @brief Liveness. Gives a score to present how real the face is. The score will be low if the face
- * is not directly taken by a camera.
+ * @brief Liveness. Gives a score to present how real the face is. The score
+ * will be low if the face is not directly taken by a camera.
  *
  * @param handle An TDL SDK handle.
  * @param rgbFrame Input RGB video frame.
  * @param irFrame Input IR video frame.
- * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t must be set.
- * @param ir_position The position relationship netween the ir and the rgb camera.
+ * @param face cvtdl_face_t structure, the cvtdl_face_info_t and cvtdl_bbox_t
+ * must be set.
+ * @param ir_position The position relationship netween the ir and the rgb
+ * camera.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Liveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
@@ -1228,7 +1227,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_MotionDetection_ROI(const cvitdl_handle_t handle,
  * @param frame Input video frame, should be YUV420 format.
  * @param objects Detected object info
  * @param threshold Threshold of motion detection, the range between 0 and 255.
- * @param min_area Minimal pixel area. The bounding box whose area is larger than this value would
+ * @param min_area Minimal pixel area. The bounding box whose area is larger
+ * than this value would
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_MotionDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -1322,7 +1322,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Delete_Img(const cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and
+ * cvtdl_bbox_t must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_PersonPet_Detection(const cvitdl_handle_t handle,
@@ -1333,7 +1334,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_PersonPet_Detection(const cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and
+ * cvtdl_bbox_t must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_YOLOV8_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -1344,7 +1346,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_YOLOV8_Detection(const cvitdl_handle_t handle, VIDEO_
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and
+ * cvtdl_bbox_t must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_YOLOV10_Detection(const cvitdl_handle_t handle,
@@ -1355,7 +1358,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_YOLOV10_Detection(const cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and
+ * cvtdl_bbox_t must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_PersonVehicle_Detection(const cvitdl_handle_t handle,
@@ -1366,7 +1370,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_PersonVehicle_Detection(const cvitdl_handle_t handle,
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and
+ * cvtdl_bbox_t must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_HandFacePerson_Detection(const cvitdl_handle_t handle,
@@ -1378,8 +1383,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_HandFacePerson_Detection(const cvitdl_handle_t handle
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
  * @param model_index The object detection model id selected to use.
- * @param obj_meta cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t and
- * pedestrian_properity must be set.
+ * @param obj_meta cvtdl_object_t structure, the cvtdl_object_info_t and
+ * cvtdl_bbox_t and pedestrian_properity must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_PoseDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -1391,8 +1396,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_PoseDetection(const cvitdl_handle_t handle, VIDEO_FRA
  *
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
- * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t and
- * pedestrian_properity must be set.
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and
+ * cvtdl_bbox_t and pedestrian_properity must be set.
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Super_Resolution(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
@@ -1511,8 +1516,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Clip_Image_Feature(const cvitdl_handle_t handle,
  * @param frame input image
  * @param cvtdl_clip_feature save feature and dim, need custom free
  */
-// DLL_EXPORT CVI_S32 CVI_TDL_OpenClip_Image_Feature(const cvitdl_handle_t handle,
-// VIDEO_FRAME_INFO_S *frame,
+// DLL_EXPORT CVI_S32 CVI_TDL_OpenClip_Image_Feature(const cvitdl_handle_t
+// handle, VIDEO_FRAME_INFO_S *frame,
 //                                      cvtdl_clip_feature *clip_feature);
 
 /**

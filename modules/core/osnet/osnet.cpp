@@ -15,14 +15,14 @@
 namespace cvitdl {
 
 OSNet::OSNet() : Core(CVI_MEM_DEVICE) {
-  m_preprocess_param[0].factor[0] = 1 / STD_R;
-  m_preprocess_param[0].factor[1] = 1 / STD_G;
-  m_preprocess_param[0].factor[2] = 1 / STD_B;
-  m_preprocess_param[0].mean[0] = MODEL_MEAN_R / STD_R;
-  m_preprocess_param[0].mean[1] = MODEL_MEAN_G / STD_G;
-  m_preprocess_param[0].mean[2] = MODEL_MEAN_B / STD_B;
-  m_preprocess_param[0].keep_aspect_ratio = false;
-  m_preprocess_param[0].use_crop = true;
+  preprocess_params_[0].factor[0] = 1 / STD_R;
+  preprocess_params_[0].factor[1] = 1 / STD_G;
+  preprocess_params_[0].factor[2] = 1 / STD_B;
+  preprocess_params_[0].mean[0] = MODEL_MEAN_R / STD_R;
+  preprocess_params_[0].mean[1] = MODEL_MEAN_G / STD_G;
+  preprocess_params_[0].mean[2] = MODEL_MEAN_B / STD_B;
+  preprocess_params_[0].keep_aspect_ratio = false;
+  preprocess_params_[0].use_crop = true;
 }
 
 int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *meta, int obj_idx) {
@@ -30,10 +30,13 @@ int OSNet::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_object_t *meta, int o
     if (obj_idx != -1 && i != (uint32_t)obj_idx) continue;
     cvtdl_bbox_t box =
         box_rescale(stOutFrame->stVFrame.u32Width, stOutFrame->stVFrame.u32Height, meta->width,
-                    meta->height, meta->info[i].bbox, meta_rescale_type_e::RESCALE_CENTER);
-    m_vpss_config[0].crop_attr.enCropCoordinate = VPSS_CROP_ABS_COOR;
-    m_vpss_config[0].crop_attr.stCropRect = {
-        (int32_t)box.x1, (int32_t)box.y1, (uint32_t)(box.x2 - box.x1), (uint32_t)(box.y2 - box.y1)};
+                    meta->height, meta->info[i].bbox, preprocess_params_[0].rescale_type);
+
+    preprocess_params_[0].use_crop = true;
+    preprocess_params_[0].crop_x = box.x1;
+    preprocess_params_[0].crop_y = box.y1;
+    preprocess_params_[0].crop_w = box.x2 - box.x1;
+    preprocess_params_[0].crop_h = box.y2 - box.y1;
     std::vector<VIDEO_FRAME_INFO_S *> frames = {stOutFrame};
     int ret = run(frames);
     if (ret != CVI_TDL_SUCCESS) {

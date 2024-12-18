@@ -312,7 +312,8 @@ MatchResult DeepSORT::get_match_result(MatchResult &prev_match, const std::vecto
     }
   }
 
-  // std::cout<<"prepare for ioumatch,"<<unmatched_tracker_idxes.size()<<std::endl;
+  // std::cout<<"prepare for
+  // ioumatch,"<<unmatched_tracker_idxes.size()<<std::endl;
   std::vector<int> tmp_tracker_idxes; /* unmatch trackers' index in cascade match */
   /* Remove trackers' idx, which unmatched_times > T, from
    * unmatched_tracker_idxes */
@@ -432,7 +433,8 @@ MatchResult DeepSORT::get_match_result_consumer_counting(MatchResult &prev_match
     }
   }
 
-  // std::cout<<"prepare for ioumatch,"<<unmatched_tracker_idxes.size()<<std::endl;
+  // std::cout<<"prepare for
+  // ioumatch,"<<unmatched_tracker_idxes.size()<<std::endl;
   std::vector<int> tmp_tracker_idxes; /* unmatch trackers' index in cascade match */
   /* Remove trackers' idx, which unmatched_times > T, from
    * unmatched_tracker_idxes */
@@ -913,8 +915,9 @@ CVI_S32 DeepSORT::track_fuse(cvtdl_object_t *ped, cvtdl_face_t *face, cvtdl_trac
       velx = (t_bbox(0) - pre_box(0)) / meansize / sec;
       vely = (t_bbox(1) - pre_box(1)) / meansize / sec;
       // printf("meansize: %f, sec:%f\n", meansize, sec);
-      // printf("velx: %f, t_bbox(0):%f, pre_box(0):%f\n", velx, t_bbox(0), pre_box(0));
-      // printf("vely: %f, t_bbox(1):%f, pre_box(1):%f\n", vely, t_bbox(1), pre_box(1));
+      // printf("velx: %f, t_bbox(0):%f, pre_box(0):%f\n", velx, t_bbox(0),
+      // pre_box(0)); printf("vely: %f, t_bbox(1):%f, pre_box(1):%f\n", vely,
+      // t_bbox(1), pre_box(1));
     }
     if (face_trackid_idx_map.count(p_track->id)) {
       uint32_t faceid = face_trackid_idx_map[p_track->id];
@@ -1058,12 +1061,13 @@ CVI_S32 DeepSORT::track_headfuse(cvtdl_object_t *origin_obj, cvtdl_tracker_t *tr
 #endif
     if (pair_ped_idx != -1) {
       uint64_t pair_ped_trackid = k_trackers[t_idx].get_pair_trackid();
-      // printf("trackid:%d  pair_id:%d\n",k_trackers[t_idx].id, pair_ped_trackid);
+      // printf("trackid:%d  pair_id:%d\n",k_trackers[t_idx].id,
+      // pair_ped_trackid);
       if (pair_ped_trackid != 0) {
         cls_objs[ped_label][pair_ped_idx].track_id = pair_ped_trackid;
         // #ifdef DEBUG_TRACK
-        //         std::cout << "recall peddet:" << pair_ped_idx << " with pedtrack:" <<
-        //         pair_ped_trackid
+        //         std::cout << "recall peddet:" << pair_ped_idx << " with
+        //         pedtrack:" << pair_ped_trackid
         //                   << std::endl;
         // #endif
       }
@@ -1107,7 +1111,8 @@ CVI_S32 DeepSORT::track_headfuse(cvtdl_object_t *origin_obj, cvtdl_tracker_t *tr
 #endif
       if (pair_head_trackid == 0) continue;
       uint64_t head_trackid = cls_objs[head_label][pair_head_idx].track_id;
-      // printf("********** trackid:%d  pair_id:%d\n",pair_head_trackid, k_trackers[t_idx].id);
+      // printf("********** trackid:%d  pair_id:%d\n",pair_head_trackid,
+      // k_trackers[t_idx].id);
       if (head_trackid != 0 && head_trackid != pair_head_trackid) {
         LOGE("error matched ped pairhead trackid:%d,paired_trackid:%d\n", (int)head_trackid,
              (int)pair_head_trackid);

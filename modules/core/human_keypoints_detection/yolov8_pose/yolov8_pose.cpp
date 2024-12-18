@@ -1,3 +1,5 @@
+#include "yolov8_pose.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -8,7 +10,6 @@
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
-#include "yolov8_pose.hpp"
 
 namespace cvitdl {
 
@@ -33,10 +34,10 @@ YoloV8Pose::YoloV8Pose() : YoloV8Pose(std::make_tuple(64, 17, 1)) {}
 YoloV8Pose::YoloV8Pose(TUPLE_INT pose_pair) {
   for (int i = 0; i < 3; i++) {
     // default param
-    m_preprocess_param[0].factor[i] = 1 / 255.f;
-    m_preprocess_param[0].mean[i] = 0.0;
+    preprocess_params_[0].factor[i] = 1 / 255.f;
+    preprocess_params_[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   m_model_nms_threshold = 0.7;
   m_box_channel_ = std::get<0>(pose_pair);
   m_kpts_channel_ = std::get<1>(pose_pair) * 3;
@@ -123,8 +124,10 @@ void YoloV8Pose::decode_bbox_feature_map(int stride, int anchor_idx,
   int anchor_y = anchor_idx / feat_w;
   int anchor_x = anchor_idx % feat_w;
 
-  // LOGI("box numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
-  //      num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x, num_anchor);
+  // LOGI("box
+  // numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
+  //      num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x,
+  //      num_anchor);
 
   float grid_y = anchor_y + 0.5;
   float grid_x = anchor_x + 0.5;

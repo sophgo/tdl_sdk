@@ -11,7 +11,6 @@ class Yolov3 final : public DetectionBase {
   Yolov3();
   ~Yolov3();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) override;
-  bool allowExportChannelAttribute() const override { return true; }
 
  private:
   void outputParser(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj);

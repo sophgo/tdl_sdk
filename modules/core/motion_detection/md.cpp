@@ -162,7 +162,9 @@ void dump_frame_img(const char *szimg, uint8_t *p_img, int width, int height) {
 CVI_S32 MotionDetection::detect(VIDEO_FRAME_INFO_S *srcframe, std::vector<std::vector<float>> &objs,
                                 uint8_t threshold, double min_area) {
   if (srcframe->stVFrame.u32Height != im_height || srcframe->stVFrame.u32Width != im_width) {
-    LOGE("Height and width of frame isn't equal to background image in MotionDetection\n");
+    LOGE(
+        "Height and width of frame isn't equal to background image in "
+        "MotionDetection\n");
     return CVI_FAILURE;
   }
   if (srcframe->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {

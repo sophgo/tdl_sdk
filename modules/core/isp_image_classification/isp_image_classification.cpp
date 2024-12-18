@@ -1,13 +1,16 @@
 #include "isp_image_classification.hpp"
+
 #include <core/core/cvtdl_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <algorithm>
 #include <cmath>
 #include <error_msg.hpp>
 #include <iostream>
 #include <numeric>
 #include <vector>
+
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/utils/vpss_helper.h"
@@ -26,13 +29,13 @@ IspImageClassification::IspImageClassification() : Core(CVI_MEM_DEVICE) {
   float std[3] = {58.395, 57.12, 57.375};
 
   for (int i = 0; i < 3; i++) {
-    m_preprocess_param[0].mean[i] = mean[i] / std[i];
-    m_preprocess_param[0].factor[i] = 1.0 / std[i];
+    preprocess_params_[0].mean[i] = mean[i] / std[i];
+    preprocess_params_[0].factor[i] = 1.0 / std[i];
   }
 
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
-  m_preprocess_param[0].rescale_type = RESCALE_CENTER;
-  m_preprocess_param[0].keep_aspect_ratio = true;
+  preprocess_params_[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  preprocess_params_[0].rescale_type = RESCALE_CENTER;
+  preprocess_params_[0].keep_aspect_ratio = true;
 }
 
 int IspImageClassification::onModelOpened() {
@@ -75,32 +78,6 @@ std::vector<int> IspImageClassification::TopKIndex(std::vector<float> &vec, int 
 }
 
 IspImageClassification::~IspImageClassification() {}
-
-int IspImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
-                                           VIDEO_FRAME_INFO_S *dstFrame, VPSSConfig &vpss_config) {
-  auto &vpssChnAttr = vpss_config.chn_attr;
-  auto &factor = vpssChnAttr.stNormalize.factor;
-  auto &mean = vpssChnAttr.stNormalize.mean;
-  vpssChnAttr.stNormalize.bEnable = false;
-  vpssChnAttr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-
-  VPSS_CHN_SQ_RB_HELPER(&vpssChnAttr, srcFrame->stVFrame.u32Width, srcFrame->stVFrame.u32Height,
-                        vpssChnAttr.u32Width, vpssChnAttr.u32Height, PIXEL_FORMAT_RGB_888_PLANAR,
-                        factor, mean, false);
-  int ret = mp_vpss_inst->sendFrame(srcFrame, &vpssChnAttr, &vpss_config.chn_coeff, 1);
-  if (ret != CVI_SUCCESS) {
-    LOGE("vpssPreprocess Send frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_SEND_FRAME;
-  }
-
-  ret = mp_vpss_inst->getFrame(dstFrame, 0, m_vpss_timeout);
-  if (ret != CVI_SUCCESS) {
-    LOGE("get frame failed: %s!\n", get_vpss_error_msg(ret));
-    return CVI_TDL_ERR_VPSS_GET_FRAME;
-  }
-
-  return CVI_TDL_SUCCESS;
-}
 
 int IspImageClassification::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_meta_t *cls_meta,
                                       cvtdl_isp_meta_t *isparg) {
@@ -147,8 +124,8 @@ void IspImageClassification::outputParser(cvtdl_class_meta_t *cls_meta) {
   float *ptr_float = static_cast<float *>(oinfo.raw_pointer);
 
   // if (dump) {
-  //   dump_tensor_result("cls_output.bin", &(getModelInfo()->out.tensors[0]), bm_handle);
-  //   dump = false;
+  //   dump_tensor_result("cls_output.bin", &(getModelInfo()->out.tensors[0]),
+  //   bm_handle); dump = false;
   // }
   int channel_len = oinfo.shape.dim[1];
 

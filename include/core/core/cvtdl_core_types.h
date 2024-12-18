@@ -1,16 +1,18 @@
 #ifndef _CVI_CORE_TYPES_H_
 #define _CVI_CORE_TYPES_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "cvi_comm.h"
+// #include "cvi_comm.h"
 /**
  * \defgroup core_cvitdlcore CVI_TDL Core Module
  */
 
 /** @enum feature_type_e
  * @ingroup core_cvitdlcore
- * @brief A variable type enum to present the data type stored in cvtdl_feature_t.
+ * @brief A variable type enum to present the data type stored in
+ * cvtdl_feature_t.
  * @see cvtdl_feature_t
  */
 typedef enum {
@@ -33,7 +35,8 @@ typedef enum { RESCALE_UNKNOWN, RESCALE_NOASPECT, RESCALE_CENTER, RESCALE_RB } m
 typedef enum { DOWN_UP = 0, UP_DOWN, Two_Way } statistics_mode;
 /** @struct cvtdl_bbox_t
  * @ingroup core_cvitdlcore
- * @brief A structure to describe an area in a given image with confidence score.
+ * @brief A structure to describe an area in a given image with confidence
+ * score.
  *
  * @var cvtdl_bbox_t::x1
  * The left-upper x coordinate.
@@ -57,11 +60,12 @@ typedef struct {
 
 /** @struct cvtdl_feature_t
  * @ingroup core_cvitdlcore
- * @brief A structure to describe feature. Note that the length of the buffer is size *
- * getFeatureTypeSize(type)
+ * @brief A structure to describe feature. Note that the length of the buffer is
+ * size * getFeatureTypeSize(type)
  *
  * @var cvtdl_feature_t::ptr
- * The raw pointer of a feature. Need to convert to correct type with feature_type_e.
+ * The raw pointer of a feature. Need to convert to correct type with
+ * feature_type_e.
  * @var cvtdl_feature_t::size
  * The buffer size of ptr in unit of type.
  * @var cvtdl_feature_t::type
@@ -175,7 +179,7 @@ typedef struct {
  * The pixel data of the image.
  */
 typedef struct {
-  PIXEL_FORMAT_E pix_format;
+  uint32_t pix_format;
   uint8_t* pix[3];
   uint32_t stride[3];
   uint32_t length[3];
@@ -206,9 +210,15 @@ typedef struct {
   float mean[3];
   bool keep_aspect_ratio;
   bool use_crop;
-  PIXEL_FORMAT_E format;
+  uint32_t format;
+  uint32_t resize_method;
   meta_rescale_type_e rescale_type;
-  VPSS_SCALE_COEF_E resize_method;
+  uint32_t crop_x;
+  uint32_t crop_y;
+  uint32_t crop_w;
+  uint32_t crop_h;
+  uint32_t dst_w;
+  uint32_t dst_h;
 } InputPreParam;
 
 /**

@@ -56,8 +56,8 @@ bool FallDet::keypoints_useful(cvtdl_pose17_meta_t *kps_meta) {
     history_neck.erase(history_neck.begin());
     history_hip.erase(history_hip.begin());
   }
-  // printf("kps_meta->score[5]%f [6]%f [7]%f [8]%f\n", kps_meta->score[5], kps_meta->score[6],
-  // kps_meta->score[11], kps_meta->score[12]);
+  // printf("kps_meta->score[5]%f [6]%f [7]%f [8]%f\n", kps_meta->score[5],
+  // kps_meta->score[6], kps_meta->score[11], kps_meta->score[12]);
   if (kps_meta->score[5] > SCORE_THRESHOLD && kps_meta->score[6] > SCORE_THRESHOLD &&
       kps_meta->score[11] > SCORE_THRESHOLD && kps_meta->score[12] > SCORE_THRESHOLD) {
     float neck_x = (kps_meta->x[5] + kps_meta->x[6]) / 2.0f;
@@ -125,7 +125,8 @@ float FallDet::speed_detection(cvtdl_bbox_t *bbox, cvtdl_pose17_meta_t *kps_meta
   get_kps(history_neck, 0, &neck_x_before, &neck_y_before);
   get_kps(history_neck, FRAME_GAP, &neck_x_cur, &neck_y_cur);
 
-  //   printf("neck_x_before:%.2f, neck_y_before:%.2f, neck_x_cur:%.2f, neck_y_cur:%.2f \n",
+  //   printf("neck_x_before:%.2f, neck_y_before:%.2f, neck_x_cur:%.2f,
+  //   neck_y_cur:%.2f \n",
   //  neck_x_before, neck_y_before, neck_x_cur, neck_y_cur);
 
   float delta_position =
