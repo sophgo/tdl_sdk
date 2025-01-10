@@ -231,8 +231,10 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::pedestrian)},
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
-    // {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
-    //  CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV8_FIRE_SMOKE,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))}, 
     {CVI_TDL_SUPPORTED_MODEL_LANE_DET, CREATOR(BezierLaneNet)},
 
     {CVI_TDL_SUPPORTED_MODEL_LSTR, CREATOR(LSTR)},
@@ -1075,6 +1077,7 @@ CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *fram
       CVI_TDL_SUPPORTED_MODEL_YOLOV7,
       CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
       CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
+      CVI_TDL_SUPPORTED_MODEL_YOLOV8_FIRE_SMOKE,
       CVI_TDL_SUPPORTED_MODEL_YOLOX,
       CVI_TDL_SUPPORTED_MODEL_PPYOLOE,
       CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION,
@@ -1088,7 +1091,6 @@ CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *fram
       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE,
       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
       CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION};
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   if (detect_set.find(model_index) == detect_set.end()) {

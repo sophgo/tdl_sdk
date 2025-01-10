@@ -11,6 +11,13 @@
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 3) {
+    printf(
+        "Usage: %s <occlusion classification model path> <input image path>\n", argv[0]);
+    printf("occlusion classification model path: Path to occlusion classification model cvimodel.\n");  
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }    
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2);
   if (ret != CVI_SUCCESS) {
@@ -25,7 +32,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_OCCLUSION_CLASSIFICATION, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
     return ret;
@@ -42,13 +49,11 @@ int main(int argc, char *argv[]) {
     printf("image read,width:%d\n", bg.stVFrame.u32Width);
   }
 
-  for (int i = 0; i < 1; i++) {
-    cvtdl_object_t obj_meta = {0};
-    CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &obj_meta);
-    printf("obj_size: %d\n", obj_meta.size);
-    CVI_TDL_Free(&obj_meta);
-  }
+  cvtdl_class_meta_t cls_meta = {0};
+  CVI_TDL_Occlusion_Classification(tdl_handle, &bg, &cls_meta);
+  printf("Occlusion score: %f\n", cls_meta.score[1]);
 
+  CVI_TDL_Free(&cls_meta);
   CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_TDL_Destroy_ImageProcessor(img_handle);

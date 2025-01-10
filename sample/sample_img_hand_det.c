@@ -11,9 +11,16 @@
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
-  CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2,
-                                 vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2);
-  if (ret != CVI_SUCCESS) {
+  if (argc != 3) {
+    printf(
+        "Usage: %s <hand detection model path> <input image path>\n", argv[0]);
+    printf("hand detection model path: Path to hand detection model cvimodel.\n");  
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }  
+  CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
+                                 vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
+  if (ret != CVI_TDL_SUCCESS) {
     printf("Init sys failed with %#x!\n", ret);
     return ret;
   }
@@ -41,9 +48,9 @@ int main(int argc, char *argv[]) {
     printf("image read,hidth:%d\n", bg.stVFrame.u32Height);
   }
 
-  printf("---------------------openmodel-----------------------");
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, argv[1]);
-  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION, 0.1);
+  printf("---------------------openmodel-----------------------------\n");
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, argv[1]);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, 0.5);
   if (ret != CVI_SUCCESS) {
     printf("open model failed with %#x!\n", ret);
     return ret;
@@ -51,26 +58,25 @@ int main(int argc, char *argv[]) {
   printf("---------------------to do detection-----------------------\n");
 
   cvtdl_object_t obj_meta = {0};
-  CVI_TDL_PersonVehicle_Detection(tdl_handle, &bg, &obj_meta);
+  CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, &obj_meta);
 
-  printf("objnum: %d\n", obj_meta.size);
+  printf("objnum:%u\n", obj_meta.size);
   printf("boxes=[");
+
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("[%f,%f,%f,%f,%d,%f],", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2, obj_meta.info[i].classes,
            obj_meta.info[i].bbox.score);
   }
   printf("]\n");
-
   CVI_TDL_Free(&obj_meta);
   if (eval_perf) {
     for (int i = 0; i < 101; i++) {
       cvtdl_object_t obj_meta = {0};
-      CVI_TDL_PersonVehicle_Detection(tdl_handle, &bg, &obj_meta);
+      CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION, &obj_meta);
       CVI_TDL_Free(&obj_meta);
     }
   }
-
   CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_TDL_Destroy_ImageProcessor(img_handle);

@@ -210,6 +210,8 @@ void CVI_TDL_FreeClassMeta(cvtdl_class_meta_t *cls_meta) { CVI_TDL_FreeCpp(cls_m
 
 void CVI_TDL_FreeLane(cvtdl_lane_t *lane_meta) { CVI_TDL_FreeCpp(lane_meta); }
 
+void CVI_TDL_FreeSeg(cvtdl_seg_t *seg_ann) { CVI_TDL_FreeCpp(seg_ann); }
+
 void CVI_TDL_FreeClip(cvtdl_clip_feature *clip_meta) { CVI_TDL_FreeCpp(clip_meta); }
 // Copy
 

@@ -11,6 +11,13 @@
 int main(int argc, char* argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 3) {
+    printf(
+        "Usage: %s <face landmarker model path> <input image path>\n", argv[0]);
+    printf("face landmarker model path: Path to face landmarker model cvimodel.\n");  
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_TDL_SUCCESS) {
@@ -25,12 +32,13 @@ int main(int argc, char* argv[]) {
     return ret;
   }
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET, argv[1]);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACELANDMARKERDET2, argv[1]);
   if (ret != CVI_SUCCESS) {
     printf("open model failed %#x!\n", ret);
     return ret;
   }
-  printf("model opened: %s\n", argv[1]);
+
+  printf("model opened: %s!\n", argv[1]);
   imgprocess_t img_handle;
   CVI_TDL_Create_ImageProcessor(&img_handle);
 
@@ -46,8 +54,11 @@ int main(int argc, char* argv[]) {
 
   cvtdl_face_t meta = {0};
 
-  CVI_TDL_DMSLDet(tdl_handle, &fdFrame, &meta);
-  for (int i = 0; i < 68; i++) {
+  CVI_TDL_FaceLandmarkerDet2(tdl_handle, &fdFrame, &meta);
+
+  printf("blur score:%f\n", meta.info[0].blurness);
+
+  for (int i = 0; i < 5; i++) {
     printf(" %.2f %.2f", meta.info[0].pts.x[i], meta.info[0].pts.y[i]);
   }
   printf("\n");

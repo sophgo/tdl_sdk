@@ -47,6 +47,14 @@ int process_image_file(cvitdl_handle_t tdl_handle, char *imgf, cvtdl_face_t *p_o
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 4) {
+    printf(
+        "Usage: %s <face detection model path> <face attribute model path> <input image path>\n", argv[0]);
+    printf("face detection model path: Path to face detection model cvimodel.\n");  
+    printf("face attribute model path: Path to face attribute model cvimodel.\n");
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_TDL_SUCCESS) {
@@ -70,7 +78,7 @@ int main(int argc, char *argv[]) {
   printf("****************************************************\n");
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE_CLS, argv[2]);
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION model failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE_CLS model failed with %#x!\n", ret);
     return ret;
   }
 

@@ -13,6 +13,15 @@
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 5) {
+    printf(
+        "Usage: %s <vehicle detection model path> <license plate detection model path> <license plate recognition model path> <input image path>\n", argv[0]);
+    printf("vehicle detection model path: Path to vehicle detection model cvimodel.\n");  
+    printf("license plate detection model path: Path to license plate detection model cvimodel.\n");
+    printf("license plate recognition model path: Path to license plate recognition model cvimodel.\n");
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_TDL_SUCCESS) {
@@ -82,13 +91,11 @@ int main(int argc, char *argv[]) {
       }
     }
     printf("Recognition license number = %d\n", count);
-    // printf("obj_meta.info->vehicle_properity.size() = %d\n",
-    // obj_meta.info->vehicle_properity.size());
     printf("Recognition=[\n");
     for (int i = 0; i < obj_meta.size; i++) {
       if (obj_meta.info[i].vehicle_properity &&
           obj_meta.info[i].vehicle_properity->license_char[0] != '\0') {
-        printf("obj_meta.info[i].vehicle_properity->license_char\n");
+        printf("plate %zu; pre License char: %s\n",i,obj_meta.info[i].vehicle_properity->license_char);
       }
     }
     printf("]\n");

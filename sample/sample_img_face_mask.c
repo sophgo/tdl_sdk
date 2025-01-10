@@ -30,9 +30,9 @@ int process_image_file(cvitdl_handle_t tdl_handle, const char *imgf, cvtdl_face_
   }
 
   if (p_obj->size > 0) {
-    ret = CVI_TDL_IrLiveness(tdl_handle, &bg, p_obj);
+    ret = CVI_TDL_MaskClassification(tdl_handle, &bg, p_obj);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_TDL_FaceAttribute failed with %#x!\n", ret);
+      printf("CVI_TDL_SUPPORTED_MODEL_MASKCLASSIFICATION failed with %#x!\n", ret);
       return ret;
     }
   } else {
@@ -47,6 +47,14 @@ int process_image_file(cvitdl_handle_t tdl_handle, const char *imgf, cvtdl_face_
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 4) {
+    printf(
+        "Usage: %s <face detection model path> <mask classification model path> <input image path>\n", argv[0]);
+    printf("face detection model path: Path to face detection model cvimodel.\n");  
+    printf("mask classification model path: Path to mask classification model cvimodel.\n");
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_SUCCESS) {
@@ -71,24 +79,25 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_IRLIVENESS, ln_model);
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MASKCLASSIFICATION, ln_model);
   if (ret != CVI_SUCCESS) {
-    printf("open CVI_TDL_SUPPORTED_MODEL_IRLIVENESS model failed with %#x!\n", ret);
+    printf("open CVI_TDL_SUPPORTED_MODEL_MASKCLASSIFICATION model failed with %#x!\n", ret);
     return ret;
   }
 
   cvtdl_face_t obj_meta = {0};
-  process_image_file(tdl_handle, img, &obj_meta);
+  ret = process_image_file(tdl_handle, img, &obj_meta);
 
-  char str_res[1024];
-  char temp[128];
+  if (ret != CVI_SUCCESS) {
+    printf("Process image failed with %#x!\n", ret);
+    return ret;
+  }
 
   printf("boxes=[");
   for (uint32_t i = 0; i < obj_meta.size; i++) {
-    printf("[%d,%d,%d,%d],", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
+    printf("[%f,%f,%f,%f],", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
-    printf("liveness score %d: %f  %s\n", i, obj_meta.info[i].liveness_score,
-           obj_meta.info[i].liveness_score > 0 ? "fake person" : "real person");
+    printf("mask score %d: %f\n", i, obj_meta.info[i].mask_score);
   }
   printf("]\n");
 

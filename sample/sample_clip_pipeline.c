@@ -121,8 +121,8 @@ int main(int argc, char* argv[]) {
 
   printf("%d\n", text_file_count);
 
-  char* encoderFile = "/mnt/sd/186ah_sdk/clip_dataset/encoder.txt";
-  char* bpeFile = "/mnt/sd/186ah_sdk/clip_dataset/bpe_simple_vocab_16e6.txt";
+  char* encoderFile = "./encoder.txt";
+  char* bpeFile = "./bpe_simple_vocab_16e6.txt";
   int32_t** tokens = (int32_t**)malloc(text_file_count * sizeof(int32_t*));
   ret = CVI_TDL_Set_TextPreprocess(encoderFile, bpeFile, argv[4], tokens, text_file_count);
   if (ret != CVI_SUCCESS) {

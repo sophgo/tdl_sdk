@@ -95,6 +95,23 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
 }
 
 int main(int argc, char* argv[]) {
+    if (argc != 5 && argc != 6 && argc != 7) {
+    printf(
+        "\nUsage: %s MODEL_NAME MODEL_PATH BENCH_PATH IMAGE_ROOT RES_PATH [CONF_THRESHOLD] [NMS_THRESHOLD]\n\n"
+        "\tMODEL_NAME, detection model name should be one of {mobiledetv2-person-vehicle, "
+        "mobiledetv2-person-pets, "
+        "mobiledetv2-coco80, "
+        "mobiledetv2-vehicle, "
+        "mobiledetv2-pedestrian, "
+        "yolov3, yolox}\n"
+        "\tMODEL_PATH, cvimodel path\n"
+        "\tBENCH_PATH, txt for storing image names\n"
+        "\tIMAGE_ROOT, store images path\n"
+        "\tRES_PATH, save result path\n",
+        "\tCONF_THRESHOLD NMS_THRESHOLD(optional), threshold for detection model (default: 0.5)\n",
+        argv[0]);
+    return -1;
+  }
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
@@ -112,8 +129,8 @@ int main(int argc, char* argv[]) {
     return ret;
   }
 
-  std::string model_path = argv[1];
-  std::string model_index = argv[2];
+  std::string model_name = argv[1];
+  std::string model_path = argv[2];
   std::string bench_path = argv[3];
   std::string image_root = argv[4];
   std::string res_path = argv[5];
@@ -127,8 +144,8 @@ int main(int argc, char* argv[]) {
     nms_threshold = std::stof(argv[7]);
   }
   CVI_TDL_SUPPORTED_MODEL_E enOdModelId;
-  if (get_od_model_info(model_index, &enOdModelId) == CVI_TDL_FAILURE) {
-    printf("unsupported model: %s\n", model_index);
+  if (get_od_model_info(model_name, &enOdModelId) == CVI_TDL_FAILURE) {
+    printf("unsupported model: %s\n", model_name);
     return -1;
   }
   ret = CVI_TDL_OpenModel(tdl_handle, enOdModelId, model_path.c_str());

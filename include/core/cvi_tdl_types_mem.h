@@ -45,7 +45,7 @@ DLL_EXPORT void CVI_TDL_FreeClassMeta(cvtdl_class_meta_t *cls_meta);
 DLL_EXPORT void CVI_TDL_FreeSegLogits(cvtdl_seg_logits_t *seg_logits);
 DLL_EXPORT void CVI_TDL_FreeLane(cvtdl_lane_t *lane_meta);
 DLL_EXPORT void CVI_TDL_FreeClip(cvtdl_clip_feature *clip_meta);
-
+DLL_EXPORT void CVI_TDL_FreeSeg(cvtdl_seg_t *seg_ann);
 DLL_EXPORT void CVI_TDL_CopyFaceInfo(const cvtdl_face_info_t *src, cvtdl_face_info_t *dst);
 DLL_EXPORT void CVI_TDL_CopyObjectInfo(const cvtdl_object_info_t *src, cvtdl_object_info_t *dst);
 DLL_EXPORT void CVI_TDL_CopyFaceMeta(const cvtdl_face_t *src, cvtdl_face_t *dst);

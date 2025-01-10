@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
     return ret;
   }
 
-  printf("model opened: %s , set threshold: %s\n", modelf, threshold);
+  printf("model opened: %s , set threshold: %f\n", modelf, threshold);
   if (argc == 9) {
     char* str_root_dir = argv[2];
     char* str_list_file = argv[7];
@@ -115,15 +115,15 @@ int main(int argc, char* argv[]) {
       total += 1;
 
       accuracy = (float)correct / total;
-      printf("accuracy: %s\n", accuracy);
+      printf("accuracy: %f\n", accuracy);
     }
     fclose(fp);
 
-    printf("accuracy: %s\n", accuracy);
+    printf("accuracy: %f\n", accuracy);
 
   } else {
     int cls = test_binary_short_audio_data(argv[2], buffer, tdl_handle, sample_rate, seconds);
-    printf("result: %s\n", cls);
+    printf("result: %d\n", cls);
   }
 
   CVI_TDL_DestroyHandle(tdl_handle);
