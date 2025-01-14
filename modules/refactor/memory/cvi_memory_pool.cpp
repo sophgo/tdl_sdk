@@ -10,26 +10,8 @@ CviMemoryPool::CviMemoryPool() { CVI_VB_Init(); }
 
 CviMemoryPool::~CviMemoryPool() {}
 
-bool CviMemoryPool::initialize(uint32_t blockSize, uint32_t initialBlockCount) {
-  for (int i = 0; i < initialBlockCount; i++) {
-    std::unique_ptr<MemoryBlock> block = allocate_impl(blockSize);
-    if (block != nullptr) {
-      blockPools_[blockSize].push(std::move(block));
-    } else {
-      std::cout << "allocate block failed" << std::endl;
-      return false;
-    }
-  }
-  return true;
-}
-std::unique_ptr<MemoryBlock> CviMemoryPool::allocate(uint32_t size, uint32_t timeout_ms) {
-  std::unique_ptr<MemoryBlock> block = blockPools_[size].pop(timeout_ms);
-  if (block != nullptr) {
-    return block;
-  }
-  return allocate_impl(size);
-}
-std::unique_ptr<MemoryBlock> CviMemoryPool::allocate_impl(uint32_t size) {
+std::unique_ptr<MemoryBlock> CviMemoryPool::allocate(uint32_t size,
+                                                     uint32_t timeout_ms) {
   VB_POOL_CONFIG_S cfg;
   cfg.u32BlkSize = size;
   cfg.u32BlkCnt = 1;
@@ -39,65 +21,28 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::allocate_impl(uint32_t size) {
   std::unique_ptr<MemoryBlock> block = std::make_unique<MemoryBlock>();
 
   CVI_S32 ret =
-      CVI_SYS_IonAlloc(&block->physicalAddress, &block->virtualAddress, cfg.acName, cfg.u32BlkSize);
+      CVI_SYS_IonAlloc(&block->physicalAddress, &block->virtualAddress,
+                       cfg.acName, cfg.u32BlkSize);
   if (ret != CVI_SUCCESS) {
     std::cout << "allocate ion failed" << std::endl;
     return nullptr;
   }
 
   block->size = size;
+  block->own_memory = true;
   num_allocated_++;
 
   return block;
 }
 
-bool CviMemoryPool::recycle(std::unique_ptr<MemoryBlock> &block) {
-  if (block != nullptr) {
-    blockPools_[block->size].push(std::move(block));
-    return true;
-  }
-  return false;
-}
-
-bool CviMemoryPool::clear() {
-  for (auto &pool : blockPools_) {
-    while (pool.second.sizeUnsafe() > 0) {
-      auto block = pool.second.pop();
-      CVI_SYS_IonFree(block->physicalAddress, block->virtualAddress);
-    }
-  }
-  blockPools_.clear();
-  num_allocated_ = 0;
-  return true;
-}
-
-bool CviMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
-  if (block != nullptr) {
+int32_t CviMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
+  if (block != nullptr && block->own_memory) {
     CVI_SYS_IonFree(block->physicalAddress, block->virtualAddress);
-    return true;
+    return 0;
   }
-  return false;
+  return -1;
 }
 
-std::unique_ptr<MemoryBlock> CviMemoryPool::create(uint32_t size) {
-  VB_POOL_CONFIG_S cfg;
-  cfg.u32BlkSize = size;
-  cfg.u32BlkCnt = 1;
-  cfg.enRemapMode = VB_REMAP_MODE_NONE;
-  sprintf(cfg.acName, "cvi_ion");
-
-  std::unique_ptr<MemoryBlock> block = std::make_unique<MemoryBlock>();
-
-  CVI_S32 ret =
-      CVI_SYS_IonAlloc(&block->physicalAddress, &block->virtualAddress, cfg.acName, cfg.u32BlkSize);
-  if (ret != CVI_SUCCESS) {
-    std::cout << "allocate ion failed" << std::endl;
-    return nullptr;
-  }
-
-  block->size = size;
-  return block;
-}
 std::unique_ptr<MemoryBlock> CviMemoryPool::create_vb(uint32_t size) {
   VB_POOL_CONFIG_S cfg;
   cfg.u32BlkSize = size;
@@ -137,7 +82,7 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::create_vb(uint32_t size) {
 //     std::cout << "image is nullptr" << std::endl;
 //     return false;
 //   }
-//   if (image->getImageType() != ImageType::VPSS) {
+//   if (image->getImageType() != ImageImplType::VPSS) {
 //     std::cout << "image type is not VPSS" << std::endl;
 //     return false;
 //   }
@@ -188,3 +133,11 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::create_vb(uint32_t size) {
 //   //   image->setMemoryPool(block);
 //   return true;
 // }
+
+int32_t CviMemoryPool::flushCache(std::unique_ptr<MemoryBlock> &block) {
+  return 0;
+}
+
+int32_t CviMemoryPool::invalidateCache(std::unique_ptr<MemoryBlock> &block) {
+  return 0;
+}

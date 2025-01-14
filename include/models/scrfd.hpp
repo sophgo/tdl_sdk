@@ -1,0 +1,26 @@
+#ifndef SCRFD_HPP
+#define SCRFD_HPP
+
+#include "core/face/cvtdl_face_types.h"
+#include "image/base_image.hpp"
+#include "models/base_model.hpp"
+class SCRFD : public BaseModel {
+ public:
+  SCRFD();
+  ~SCRFD();
+
+  virtual int32_t outputParse(
+      const std::vector<std::shared_ptr<BaseImage>>& images,
+      std::vector<void*>& out_datas) override;
+  virtual int onModelOpened() override;
+
+ private:
+  std::vector<int> m_feat_stride_fpn;
+  // std::map<std::string, std::vector<anchor_box>> m_anchors;
+  // std::map<std::string, int> m_num_anchors;
+  std::map<int, std::vector<std::vector<float>>> fpn_anchors_;
+  std::map<int, std::map<std::string, std::string>>
+      fpn_out_nodes_;  //{stride:{"box":"xxxx","score":"xxx","landmark":"xxxx"}}
+  std::map<int, int> fpn_grid_anchor_num_;
+};
+#endif

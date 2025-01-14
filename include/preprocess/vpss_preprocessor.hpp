@@ -7,24 +7,35 @@ class VpssPreprocessor : public BasePreprocessor {
  public:
   VpssPreprocessor();
   ~VpssPreprocessor();
-  std::shared_ptr<BaseImage> resize(const std::shared_ptr<BaseImage>& image, int newWidth,
-                                    int newHeight) override;
-  std::shared_ptr<BaseImage> crop(const std::shared_ptr<BaseImage>& image, int x, int y, int width,
-                                  int height) override;
+  std::shared_ptr<BaseImage> resize(const std::shared_ptr<BaseImage>& image,
+                                    int newWidth, int newHeight) override;
+  std::shared_ptr<BaseImage> crop(const std::shared_ptr<BaseImage>& image,
+                                  int x, int y, int width, int height) override;
 
-  std::shared_ptr<BaseImage> preprocess(const std::shared_ptr<BaseImage>& image,
-                                        const PreprocessParams& params,
-                                        std::shared_ptr<BaseMemoryPool> memory_pool) override;
-  bool stop();
+  std::shared_ptr<BaseImage> preprocess(
+      const std::shared_ptr<BaseImage>& image, const PreprocessParams& params,
+      std::shared_ptr<BaseMemoryPool> memory_pool) override;
+  int32_t preprocessToImage(const std::shared_ptr<BaseImage>& src_image,
+                            const PreprocessParams& params,
+                            std::shared_ptr<BaseImage> dst_image) override;
+  int32_t preprocessToTensor(const std::shared_ptr<BaseImage>& src_image,
+                             const PreprocessParams& params,
+                             const int batch_idx,
+                             std::shared_ptr<BaseTensor> tensor) override;
+  std::vector<float> getRescaleConfig(const PreprocessParams& params,
+                                      const int image_width,
+                                      const int image_height) override;
 
   void setUseVbPool(bool use_vb_pool) { use_vb_pool_ = use_vb_pool; }
 
  private:
   bool init();
+  bool stop();
   int32_t prepareVPSSParams(const std::shared_ptr<BaseImage>& src_image,
                             const PreprocessParams& params);
   bool generateVPSSParams(const std::shared_ptr<BaseImage>& src_image,
-                          const PreprocessParams& params, VPSS_GRP_ATTR_S& vpss_grp_attr,
+                          const PreprocessParams& params,
+                          VPSS_GRP_ATTR_S& vpss_grp_attr,
                           VPSS_CROP_INFO_S& vpss_chn_crop_attr,
                           VPSS_CHN_ATTR_S& vpss_chn_attr) const;
   int group_id_;

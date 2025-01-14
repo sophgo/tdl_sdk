@@ -101,12 +101,6 @@ struct TensorInfo {
   }
   float qscale;
 };
-struct VPSSConfig {
-  meta_rescale_type_e rescale_type = RESCALE_CENTER;
-  VPSS_SCALE_COEF_E chn_coeff = VPSS_SCALE_COEF_BICUBIC;
-  VPSS_CHN_ATTR_S chn_attr;
-  VPSS_CROP_INFO_S crop_attr;
-};
 
 class Core {
  public:
@@ -126,13 +120,19 @@ class Core {
   bool hasSkippedVpssPreprocess() const { return m_skip_vpss_preprocess; }
 
   const float &getModelThreshold() { return m_model_threshold; }
-  virtual void setModelThreshold(const float &threshold) { m_model_threshold = threshold; };
+  virtual void setModelThreshold(const float &threshold) {
+    m_model_threshold = threshold;
+  };
   const float &getModelNmsThreshold() { return m_model_nms_threshold; }
-  virtual void setModelNmsThreshold(const float &threshold) { m_model_nms_threshold = threshold; };
+  virtual void setModelNmsThreshold(const float &threshold) {
+    m_model_nms_threshold = threshold;
+  };
   // @todo
   // 正常来说get方法就应该返回const常量不被修改，但仓库demo中经常会使用get获取原本参数，修改部分后再set回去
   const InputPreParam &getPreparam(int idx = 0);
-  virtual void setPreparam(const InputPreParam &pre_param) { preprocess_params_[0] = pre_param; }
+  virtual void setPreparam(const InputPreParam &pre_param) {
+    preprocess_params_[0] = pre_param;
+  }
 
   virtual int afterInference() { return CVI_TDL_SUCCESS; }
   bool isInitialized();
@@ -186,7 +186,9 @@ class Core {
   virtual int onModelOpened() { return CVI_TDL_SUCCESS; }
   virtual int onModelClosed() { return CVI_TDL_SUCCESS; }
 
-  void setInputMemType(CVI_MEM_TYPE_E type) { mp_mi->conf.input_mem_type = type; }
+  void setInputMemType(CVI_MEM_TYPE_E type) {
+    mp_mi->conf.input_mem_type = type;
+  }
 
   std::vector<InputPreParam> preprocess_params_;
 
@@ -201,9 +203,11 @@ class Core {
   int32_t m_vpss_timeout = 100;
 #ifdef __CV186X__
   void inputPreprocessConfig(const bm_net_info_t *net_info);
-  void setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
+  void setupOutputTensorInfo(const bm_net_info_t *net_info,
+                             CvimodelInfo *mp_mi_p,
                              std::map<std::string, TensorInfo> &tensor_info);
-  void setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
+  void setupInputTensorInfo(const bm_net_info_t *net_info,
+                            CvimodelInfo *mp_mi_p,
                             std::map<std::string, TensorInfo> &tensor_info);
   bm_handle_t bm_handle;
 #else
@@ -212,7 +216,8 @@ class Core {
 #endif
  private:
   template <typename T>
-  inline int __attribute__((always_inline)) registerFrame2Tensor(std::vector<T> &frames);
+  inline int __attribute__((always_inline)) registerFrame2Tensor(
+      std::vector<T> &frames);
 
   std::map<std::string, TensorInfo> m_input_tensor_info;
   std::map<std::string, TensorInfo> m_output_tensor_info;

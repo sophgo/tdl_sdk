@@ -8,14 +8,14 @@ class CviMemoryPool : public BaseMemoryPool {
   CviMemoryPool();
   ~CviMemoryPool();
 
-  bool initialize(uint32_t blockSize, uint32_t initialBlockCount) override;
-  std::unique_ptr<MemoryBlock> allocate(uint32_t size, uint32_t timeout_ms = 10) override;
-  std::unique_ptr<MemoryBlock> allocate_impl(uint32_t size);
-  bool recycle(std::unique_ptr<MemoryBlock> &block) override;
-  bool release(std::unique_ptr<MemoryBlock> &block) override;
-  bool clear() override;
-  static std::unique_ptr<MemoryBlock> create(uint32_t size);
+  std::unique_ptr<MemoryBlock> allocate(uint32_t size,
+                                        uint32_t timeout_ms = 10) override;
+
+  int32_t release(std::unique_ptr<MemoryBlock> &block) override;
+
   static std::unique_ptr<MemoryBlock> create_vb(uint32_t size);
+  virtual int32_t flushCache(std::unique_ptr<MemoryBlock> &block) override;
+  virtual int32_t invalidateCache(std::unique_ptr<MemoryBlock> &block) override;
   //   bool allocateImage(std::shared_ptr<BaseImage> &image) override;
 
  private:

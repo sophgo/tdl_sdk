@@ -1,23 +1,42 @@
 #include <opencv2/opencv.hpp>
+
 #include "base_image.hpp"
 
 class OpenCVImage : public BaseImage {
  public:
   // 构造与析构
-  OpenCVImage(const cv::Mat& mat);
+  OpenCVImage();
   ~OpenCVImage() override = default;
 
-  // 基础属性实现
-  int getWidth() const override;
-  int getHeight() const override;
-  int getChannels() const override;
-  uint32_t getFormat() const override;
-  void* getData() const override;
-  size_t getDataSize() const override;
-  std::string getDeviceType() const override;
-  void* getPlatformMetadata() const override;
+  OpenCVImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
+              ImagePixDataType pix_data_type,
+              std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
+
+  virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
+                                   ImageFormat imageFormat,
+                                   ImagePixDataType pix_data_type) override;
+  virtual int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
+                              uint32_t length) override;
+
+  virtual uint32_t getWidth() const override;
+  virtual uint32_t getHeight() const override;
+  virtual std::vector<uint32_t> getStrides() const override;
+  virtual std::vector<uint64_t> getPhysicalAddress() const override;
+  virtual std::vector<uint8_t*> getVirtualAddress() const override;
+  virtual uint32_t getPlaneNum() const override;
+
+  virtual uint32_t getImageByteSize() const override;
+
+  virtual uint32_t getInternalType() override;
+  virtual void* getInternalData() const override;
 
  private:
-  cv::Mat mat_;      // OpenCV 图像数据
-  uint32_t format_;  // 图像格式
+  int convertType(ImageFormat imageFormat, ImagePixDataType pix_data_type);
+
+ private:
+  std::vector<cv::Mat> mats_;  // OpenCV 图像数据
+  int32_t mat_type_;           // 图像类型
+  uint32_t img_width_;         // 图像宽度
+  uint32_t img_height_;        // 图像高度
+  char tmp_buffer[1];          // use to construct temp Mat
 };

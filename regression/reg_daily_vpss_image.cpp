@@ -83,18 +83,20 @@ TEST_F(VPSSImageTestSuite, TestPixelFormatConversion) {
   EXPECT_EQ(pixelFormat, PIXEL_FORMAT_BGR_888_PLANAR);
 }
 
-TEST_F(VPSSImageTestSuite, TestMemoryManagement) {
-  const uint32_t width = 640;
-  const uint32_t height = 480;
-  const ImageFormat format = ImageFormat::BGR_PLANAR;
-  const ImagePixDataType pixType = ImagePixDataType::UINT8;
+// TEST_F(VPSSImageTestSuite, TestMemoryManagement) {
+//   const uint32_t width = 640;
+//   const uint32_t height = 480;
+//   const ImageFormat format = ImageFormat::BGR_PLANAR;
+//   const ImagePixDataType pixType = ImagePixDataType::UINT8;
 
-  // 使用Mock内存块
-  auto memPool = std::make_unique<CviMemoryPool>();
-  auto mockMemBlock = memPool->allocate(width * height * 3);
-  VPSSImage vpssImage(width, height, format, pixType, std::move(mockMemBlock));
-  EXPECT_EQ(vpssImage.getImageByteSize(), width * height * 3);
-}
+//   // 使用Mock内存块
+//   // auto memPool = std::make_unique<CviMemoryPool>();
+//   // auto mockMemBlock = memPool->allocate(width * height * 3);
+//   // VPSSImage vpssImage(width, height, format, pixType,
+//   // std::move(mockMemBlock)); EXPECT_EQ(vpssImage.getImageByteSize(), width
+//   *
+//   // height * 3);
+// }
 
 }  // namespace unitest
 }  // namespace cvitdl

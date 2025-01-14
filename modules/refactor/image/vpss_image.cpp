@@ -7,44 +7,47 @@
 #include "opencv2/imgproc.hpp"
 #define SCALAR_4096_ALIGN_BUG 0x1000
 VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-                     ImagePixDataType pix_data_type, std::unique_ptr<MemoryBlock> memory_block) {
-  int32_t ret = initFrameInfo(width, height, imageFormat, pix_data_type, &frame_);
+                     ImagePixDataType pix_data_type,
+                     std::unique_ptr<BaseMemoryPool> memory_pool) {
+  int32_t ret =
+      initFrameInfo(width, height, imageFormat, pix_data_type, &frame_);
   if (ret != 0) {
     throw std::runtime_error("initFrameInfo failed");
   }
 
   VIDEO_FRAME_S* vFrame = &frame_.stVFrame;
-  CVI_U32 u32MapSize = vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
+  CVI_U32 u32MapSize =
+      vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
 
   uint64_t phy_addr = 0;
   void* vir_addr = nullptr;
-  if (memory_block == nullptr) {
-    int ret = CVI_SYS_IonAlloc(&phy_addr, &vir_addr, "vpss_image", u32MapSize);
-    if (ret != CVI_SUCCESS) {
-      throw std::runtime_error("CVI_SYS_IonAlloc failed");
-    }
-    is_from_pool_ = false;
-  } else {
-    if (memory_block->size < u32MapSize) {
-      throw std::runtime_error("memory_block size is too small");
-    }
-    phy_addr = memory_block->physicalAddress;
-    vir_addr = memory_block->virtualAddress;
-    memory_block_ = std::move(memory_block);
-    is_from_pool_ = true;
-  }
+  // if (memory_pool == nullptr) {
+  //   int ret = CVI_SYS_IonAlloc(&phy_addr, &vir_addr, "vpss_image",
+  //   u32MapSize); if (ret != CVI_SUCCESS) {
+  //     throw std::runtime_error("CVI_SYS_IonAlloc failed");
+  //   }
+  //   is_from_pool_ = false;
+  // } else {
+  //   if (memory_block->size < u32MapSize) {
+  //     throw std::runtime_error("memory_block size is too small");
+  //   }
+  //   phy_addr = memory_block->physicalAddress;
+  //   vir_addr = memory_block->virtualAddress;
+  //   memory_block_ = std::move(memory_block);
+  //   is_from_pool_ = true;
+  // }
 
-  ret = updateAddrInfo(phy_addr, (uint8_t*)vir_addr, u32MapSize);
+  ret = setupMemory(phy_addr, (uint8_t*)vir_addr, u32MapSize);
   if (ret != CVI_SUCCESS) {
-    LOGE("updateAddrInfo failed, ret: %d", ret);
-    throw std::runtime_error("updateAddrInfo failed");
+    LOGE("setupMemory failed, ret: %d", ret);
+    throw std::runtime_error("setupMemory failed");
   }
   LOGI(
       "VPSSImage init "
       "done,pyaddr:%lx,viraddr:%lx,widht:%d,height:%d,format:%d,pix_data_type:%"
       "d",
-      vFrame->u64PhyAddr[0], vFrame->pu8VirAddr[0], vFrame->u32Width, vFrame->u32Height,
-      (int)imageFormat, (int)pix_data_type);
+      vFrame->u64PhyAddr[0], vFrame->pu8VirAddr[0], vFrame->u32Width,
+      vFrame->u32Height, (int)imageFormat, (int)pix_data_type);
   image_format_ = imageFormat;
   pix_data_type_ = pix_data_type;
 }
@@ -61,39 +64,14 @@ VPSSImage::VPSSImage() {
   memset(&frame_, 0, sizeof(VIDEO_FRAME_INFO_S));
 }
 
-int32_t VPSSImage::prepareFrameInfo(uint32_t width, uint32_t height, ImageFormat imageFormat,
-                                    ImagePixDataType pix_data_type) {
-  return initFrameInfo(width, height, imageFormat, pix_data_type, &frame_);
-}
-
-bool VPSSImage::setupMemoryBlock(std::unique_ptr<MemoryBlock>& memory_block) {
-  if (memory_block == nullptr) {
-    return false;
-  }
-  CVI_U32 u32MapSize =
-      frame_.stVFrame.u32Length[0] + frame_.stVFrame.u32Length[1] + frame_.stVFrame.u32Length[2];
-  if (memory_block->size < u32MapSize) {
-    return false;
-  }
-  frame_.stVFrame.u64PhyAddr[0] = memory_block->physicalAddress;
-  frame_.stVFrame.pu8VirAddr[0] = (uint8_t*)memory_block->virtualAddress;
-
-  frame_.stVFrame.u64PhyAddr[1] = frame_.stVFrame.u64PhyAddr[0] + frame_.stVFrame.u32Length[0];
-  frame_.stVFrame.u64PhyAddr[2] = frame_.stVFrame.u64PhyAddr[1] + frame_.stVFrame.u32Length[1];
-  frame_.stVFrame.pu8VirAddr[1] = frame_.stVFrame.pu8VirAddr[0] + frame_.stVFrame.u32Length[0];
-  frame_.stVFrame.pu8VirAddr[2] = frame_.stVFrame.pu8VirAddr[1] + frame_.stVFrame.u32Length[1];
-  memory_block_ = std::move(memory_block);
-  is_from_pool_ = true;
-  return true;
-}
-
 VPSSImage::~VPSSImage() {
   CVI_S32 ret = CVI_SUCCESS;
-  if (memory_block_ != nullptr) {
+  if (memory_block_ != nullptr && memory_block_->own_memory) {
     if (memory_block_->id != UINT32_MAX) {
       CVI_VB_DestroyPool(memory_block_->id);
     } else {
-      ret = CVI_SYS_IonFree(memory_block_->physicalAddress, (void*)memory_block_->virtualAddress);
+      ret = CVI_SYS_IonFree(memory_block_->physicalAddress,
+                            (void*)memory_block_->virtualAddress);
     }
     memory_block_ = nullptr;
   }
@@ -102,24 +80,84 @@ VPSSImage::~VPSSImage() {
         "VPSSImage::~VPSSImage "
         "failed,ret:%d,is_from_pool_:%d,phyaddr:%lx,viraddr:%lx,width:%d,"
         "height:%d,format:%d,pix_data_type:%d",
-        ret, is_from_pool_, frame_.stVFrame.u64PhyAddr[0], frame_.stVFrame.pu8VirAddr[0],
-        frame_.stVFrame.u32Width, frame_.stVFrame.u32Height, (int)image_format_,
-        (int)pix_data_type_);
+        ret, is_from_pool_, frame_.stVFrame.u64PhyAddr[0],
+        frame_.stVFrame.pu8VirAddr[0], frame_.stVFrame.u32Width,
+        frame_.stVFrame.u32Height, (int)image_format_, (int)pix_data_type_);
   } else {
     LOGI(
         "VPSSImage::~VPSSImage "
         "done,ret:%d,is_from_pool_:%d,phyaddr:%lx,viraddr:%lx,width:%d,"
         "height:%d,format:%d,pix_data_type:%d",
-        ret, is_from_pool_, frame_.stVFrame.u64PhyAddr[0], frame_.stVFrame.pu8VirAddr[0],
-        frame_.stVFrame.u32Width, frame_.stVFrame.u32Height, (int)image_format_,
-        (int)pix_data_type_);
+        ret, is_from_pool_, frame_.stVFrame.u64PhyAddr[0],
+        frame_.stVFrame.pu8VirAddr[0], frame_.stVFrame.u32Width,
+        frame_.stVFrame.u32Height, (int)image_format_, (int)pix_data_type_);
   }
   is_from_pool_ = false;
   memory_block_ = nullptr;
+  memset(&frame_, 0, sizeof(VIDEO_FRAME_INFO_S));
 }
 
-int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height, ImageFormat imageFormat,
-                                 ImagePixDataType pix_data_type, VIDEO_FRAME_INFO_S* frame) {
+int32_t VPSSImage::prepareImageInfo(uint32_t width, uint32_t height,
+                                    ImageFormat imageFormat,
+                                    ImagePixDataType pix_data_type) {
+  return initFrameInfo(width, height, imageFormat, pix_data_type, &frame_);
+}
+int32_t VPSSImage::allocateMemory() {
+  CVI_U32 u32MapSize = getImageByteSize();
+
+  uint64_t phy_addr = 0;
+  void* vir_addr = nullptr;
+  int32_t ret =
+      CVI_SYS_IonAlloc(&phy_addr, &vir_addr, "vpss_image", u32MapSize);
+  if (ret != CVI_SUCCESS) {
+    LOGE("CVI_SYS_IonAlloc failed, ret: %d", ret);
+    return -1;
+  }
+
+  ret = setupMemory(phy_addr, (uint8_t*)vir_addr, u32MapSize);
+  if (ret != CVI_SUCCESS) {
+    LOGE("setupMemory failed, ret: %d", ret);
+    return -1;
+  }
+  memory_block_ = std::make_unique<MemoryBlock>();
+  memory_block_->physicalAddress = phy_addr;
+  memory_block_->virtualAddress = vir_addr;
+  memory_block_->size = u32MapSize;
+  memory_block_->own_memory = true;
+
+  return ret;
+}
+int32_t VPSSImage::setupMemoryBlock(
+    std::unique_ptr<MemoryBlock>& memory_block) {
+  if (memory_block == nullptr) {
+    return -1;
+  }
+
+  int32_t ret =
+      setupMemory(memory_block->physicalAddress,
+                  (uint8_t*)memory_block->virtualAddress, memory_block->size);
+  if (ret != 0) {
+    LOGE("setup memory failed");
+    return ret;
+  }
+  memory_block_ = std::move(memory_block);
+  is_from_pool_ = true;
+
+  return 0;
+}
+
+bool VPSSImage::isInitialized() const {
+  bool is_initialized = frame_.stVFrame.u64PhyAddr[0] != 0 &&
+                        frame_.stVFrame.pu8VirAddr[0] != nullptr &&
+                        frame_.stVFrame.u32Width != 0 &&
+                        frame_.stVFrame.u32Height != 0;
+  return is_initialized;
+}
+
+int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height,
+                                 ImageFormat imageFormat,
+                                 ImagePixDataType pix_data_type,
+                                 VIDEO_FRAME_INFO_S* frame) {
   PIXEL_FORMAT_E pixel_format = convertPixelFormat(imageFormat, pix_data_type);
   if (pixel_format == PIXEL_FORMAT_MAX) {
     LOGE("convertPixelFormat failed, imageFormat: %d", (int)imageFormat);
@@ -155,7 +193,8 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height, ImageFormat im
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = vFrame->u32Stride[0];
       vFrame->u32Stride[2] = vFrame->u32Stride[0];
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[1] = vFrame->u32Length[0];
       vFrame->u32Length[2] = vFrame->u32Length[0];
       break;
@@ -165,9 +204,12 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height, ImageFormat im
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
       break;
     }
 
@@ -176,9 +218,12 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height, ImageFormat im
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] =
+          ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] =
+          ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[2] =
+          ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
       break;
     }
 
@@ -196,9 +241,10 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height, ImageFormat im
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] =
-          ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2,
+                                   SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[2] = 0;
       break;
     }
@@ -207,15 +253,17 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height, ImageFormat im
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] =
-          ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2,
+                                   SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[2] = 0;
       break;
     }
 
     case PIXEL_FORMAT_FP32_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
+      vFrame->u32Stride[0] =
+          ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -225,7 +273,8 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height, ImageFormat im
     }
 
     case PIXEL_FORMAT_BF16_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
+      vFrame->u32Stride[0] =
+          ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -243,24 +292,35 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height, ImageFormat im
   return 0;
 }
 
-int32_t VPSSImage::updateAddrInfo(uint64_t phy_addr, uint8_t* vir_addr, uint32_t length) {
+int32_t VPSSImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
+                               uint32_t length) {
+  if (frame_.stVFrame.u64PhyAddr[0] != 0 ||
+      frame_.stVFrame.pu8VirAddr[0] != nullptr) {
+    LOGE("setupMemory failed, frame already initialized\n");
+    return -1;
+  }
+
   if (getImageByteSize() != length) {
-    LOGE("updateAddrInfo failed, length not match, expected: %d, actual: %d", getImageByteSize(),
-         length);
+    LOGE("setupMemory failed, length not match, expected: %d, actual: %d",
+         getImageByteSize(), length);
     return -1;
   }
   frame_.stVFrame.u64PhyAddr[0] = phy_addr;
   frame_.stVFrame.pu8VirAddr[0] = vir_addr;
-  frame_.stVFrame.u64PhyAddr[1] = frame_.stVFrame.u64PhyAddr[0] + frame_.stVFrame.u32Length[0];
-  frame_.stVFrame.u64PhyAddr[2] = frame_.stVFrame.u64PhyAddr[1] + frame_.stVFrame.u32Length[1];
-  frame_.stVFrame.pu8VirAddr[1] = frame_.stVFrame.pu8VirAddr[0] + frame_.stVFrame.u32Length[0];
-  frame_.stVFrame.pu8VirAddr[2] = frame_.stVFrame.pu8VirAddr[1] + frame_.stVFrame.u32Length[1];
+  frame_.stVFrame.u64PhyAddr[1] =
+      frame_.stVFrame.u64PhyAddr[0] + frame_.stVFrame.u32Length[0];
+  frame_.stVFrame.u64PhyAddr[2] =
+      frame_.stVFrame.u64PhyAddr[1] + frame_.stVFrame.u32Length[1];
+  frame_.stVFrame.pu8VirAddr[1] =
+      frame_.stVFrame.pu8VirAddr[0] + frame_.stVFrame.u32Length[0];
+  frame_.stVFrame.pu8VirAddr[2] =
+      frame_.stVFrame.pu8VirAddr[1] + frame_.stVFrame.u32Length[1];
 
   return 0;
 }
 
-PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat imageFormat,
-                                             ImagePixDataType pix_data_type) const {
+PIXEL_FORMAT_E VPSSImage::convertPixelFormat(
+    ImageFormat imageFormat, ImagePixDataType pix_data_type) const {
   PIXEL_FORMAT_E pixel_format = PIXEL_FORMAT_MAX;
 
   if (imageFormat == ImageFormat::GRAY) {
@@ -286,7 +346,8 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat imageFormat,
     pixel_format = PIXEL_FORMAT_MAX;
   }
 
-  if (pix_data_type != ImagePixDataType::INT8 && pix_data_type != ImagePixDataType::UINT8) {
+  if (pix_data_type != ImagePixDataType::INT8 &&
+      pix_data_type != ImagePixDataType::UINT8) {
     LOGE("pix_data_type not support, pix_data_type: %d", (int)pix_data_type);
     pixel_format = PIXEL_FORMAT_MAX;
   }
@@ -315,31 +376,42 @@ uint32_t VPSSImage::getPlaneNum() const {
   }
 }
 
+std::vector<uint32_t> VPSSImage::getStrides() const {
+  return {frame_.stVFrame.u32Stride[0], frame_.stVFrame.u32Stride[1],
+          frame_.stVFrame.u32Stride[2]};
+}
+
 int32_t VPSSImage::invalidateCache() {
-  uint32_t image_size =
-      frame_.stVFrame.u32Length[0] + frame_.stVFrame.u32Length[1] + frame_.stVFrame.u32Length[2];
+  uint32_t image_size = frame_.stVFrame.u32Length[0] +
+                        frame_.stVFrame.u32Length[1] +
+                        frame_.stVFrame.u32Length[2];
   CVI_S32 ret = CVI_SYS_IonInvalidateCache(frame_.stVFrame.u64PhyAddr[0],
-                                           (void*)frame_.stVFrame.pu8VirAddr[0], image_size);
+                                           (void*)frame_.stVFrame.pu8VirAddr[0],
+                                           image_size);
   LOGI(
       "invalidateCache "
       "done,ret:%d,phyaddr:%lx,viraddr:%lx,width:%d,height:%d,format:%d,pix_"
       "data_type:%d",
-      ret, frame_.stVFrame.u64PhyAddr[0], frame_.stVFrame.pu8VirAddr[0], frame_.stVFrame.u32Width,
-      frame_.stVFrame.u32Height, (int)image_format_, (int)pix_data_type_);
+      ret, frame_.stVFrame.u64PhyAddr[0], frame_.stVFrame.pu8VirAddr[0],
+      frame_.stVFrame.u32Width, frame_.stVFrame.u32Height, (int)image_format_,
+      (int)pix_data_type_);
   return (int32_t)ret;
 }
 
 int32_t VPSSImage::flushCache() {
-  uint32_t image_size =
-      frame_.stVFrame.u32Length[0] + frame_.stVFrame.u32Length[1] + frame_.stVFrame.u32Length[2];
-  CVI_S32 ret = CVI_SYS_IonFlushCache(frame_.stVFrame.u64PhyAddr[0],
-                                      (void*)frame_.stVFrame.pu8VirAddr[0], image_size);
+  uint32_t image_size = frame_.stVFrame.u32Length[0] +
+                        frame_.stVFrame.u32Length[1] +
+                        frame_.stVFrame.u32Length[2];
+  CVI_S32 ret =
+      CVI_SYS_IonFlushCache(frame_.stVFrame.u64PhyAddr[0],
+                            (void*)frame_.stVFrame.pu8VirAddr[0], image_size);
   LOGI(
       "flushCache "
       "done,ret:%d,phyaddr:%lx,viraddr:%lx,width:%d,height:%d,format:%d,pix_"
       "data_type:%d",
-      ret, frame_.stVFrame.u64PhyAddr[0], frame_.stVFrame.pu8VirAddr[0], frame_.stVFrame.u32Width,
-      frame_.stVFrame.u32Height, (int)image_format_, (int)pix_data_type_);
+      ret, frame_.stVFrame.u64PhyAddr[0], frame_.stVFrame.pu8VirAddr[0],
+      frame_.stVFrame.u32Width, frame_.stVFrame.u32Height, (int)image_format_,
+      (int)pix_data_type_);
   return (int32_t)ret;
 }
 
@@ -363,9 +435,10 @@ uint32_t VPSSImage::getWidth() const { return frame_.stVFrame.u32Width; }
 
 uint32_t VPSSImage::getHeight() const { return frame_.stVFrame.u32Height; }
 
-int VPSSImage::getChannels() const { return 3; }
-
-void* VPSSImage::getData() const { return (void*)&frame_; }
+uint32_t VPSSImage::getInternalType() {
+  return (uint32_t)frame_.stVFrame.enPixelFormat;
+}
+void* VPSSImage::getInternalData() const { return (void*)&frame_; }
 
 uint32_t VPSSImage::getImageByteSize() const {
   uint32_t size = 0;
@@ -377,15 +450,15 @@ uint32_t VPSSImage::getImageByteSize() const {
 
 std::string VPSSImage::getDeviceType() const { return "VPSS"; }
 
-void* VPSSImage::getPlatformMetadata() const { return (void*)&frame_; }
-
-uint32_t VPSSImage::getInternalType() { return (uint32_t)frame_.stVFrame.enPixelFormat; }
-
-VIDEO_FRAME_INFO_S* VPSSImage::getFrame() const { return const_cast<VIDEO_FRAME_INFO_S*>(&frame_); }
+VIDEO_FRAME_INFO_S* VPSSImage::getFrame() const {
+  return const_cast<VIDEO_FRAME_INFO_S*>(&frame_);
+}
 
 void VPSSImage::setFrame(const VIDEO_FRAME_INFO_S& frame) { frame_ = frame; }
 
-PIXEL_FORMAT_E VPSSImage::getPixelFormat() const { return frame_.stVFrame.enPixelFormat; }
+PIXEL_FORMAT_E VPSSImage::getPixelFormat() const {
+  return frame_.stVFrame.enPixelFormat;
+}
 
 int32_t VPSSImage::readImage(const std::string& file_path) {
   // Implementation here
@@ -394,31 +467,24 @@ int32_t VPSSImage::readImage(const std::string& file_path) {
     LOGE("Failed to load image from file: %s", file_path.c_str());
     return -1;
   } else {
-    LOGI("read image %s done, width: %d, height: %d", file_path.c_str(), img.cols, img.rows);
+    LOGI("read image %s done, width: %d, height: %d", file_path.c_str(),
+         img.cols, img.rows);
   }
-  int32_t ret =
-      prepareFrameInfo(img.cols, img.rows, ImageFormat::BGR_PACKED, ImagePixDataType::UINT8);
+  int32_t ret = prepareImageInfo(img.cols, img.rows, ImageFormat::BGR_PACKED,
+                                 ImagePixDataType::UINT8);
   if (ret != 0) {
-    LOGE("prepareFrameInfo failed, ret: %d", ret);
+    LOGE("prepareImageInfo failed, ret: %d", ret);
     return -1;
   }
-  CVI_U32 u32MapSize = getImageByteSize();
-
-  uint64_t phy_addr = 0;
-  void* vir_addr = nullptr;
-  ret = CVI_SYS_IonAlloc(&phy_addr, &vir_addr, "vpss_image", u32MapSize);
-  if (ret != CVI_SUCCESS) {
-    LOGE("CVI_SYS_IonAlloc failed, ret: %d", ret);
-    return -1;
-  }
-  ret = updateAddrInfo(phy_addr, (uint8_t*)vir_addr, u32MapSize);
-  if (ret != CVI_SUCCESS) {
-    LOGE("updateAddrInfo failed, ret: %d", ret);
+  ret = allocateMemory();
+  if (ret != 0) {
+    LOGE("allocateMemory failed, ret: %d", ret);
     return -1;
   }
   for (int r = 0; r < img.rows; r++) {
     uint8_t* ptr = img.data + r * img.step[0];
-    uint8_t* dst = (uint8_t*)vir_addr + r * frame_.stVFrame.u32Stride[0];
+    uint8_t* dst = (uint8_t*)frame_.stVFrame.pu8VirAddr[0] +
+                   r * frame_.stVFrame.u32Stride[0];
     memcpy(dst, ptr, img.cols * 3);
   }
   ret = flushCache();
@@ -431,8 +497,10 @@ int32_t VPSSImage::readImage(const std::string& file_path) {
 
 int32_t VPSSImage::writeImage(const std::string& file_path) {
   // Implementation here
-  if (image_format_ != ImageFormat::BGR_PACKED && image_format_ != ImageFormat::RGB_PACKED &&
-      image_format_ != ImageFormat::GRAY && image_format_ != ImageFormat::BGR_PLANAR &&
+  if (image_format_ != ImageFormat::BGR_PACKED &&
+      image_format_ != ImageFormat::RGB_PACKED &&
+      image_format_ != ImageFormat::GRAY &&
+      image_format_ != ImageFormat::BGR_PLANAR &&
       image_format_ != ImageFormat::RGB_PLANAR) {
     LOGE("writeImage failed, image format not supported");
     return -1;
@@ -446,7 +514,8 @@ int32_t VPSSImage::writeImage(const std::string& file_path) {
   }
   auto vir_addr = getVirtualAddress();
   for (int r = 0; r < img.rows; r++) {
-    if (image_format_ == ImageFormat::BGR_PACKED || image_format_ == ImageFormat::RGB_PACKED) {
+    if (image_format_ == ImageFormat::BGR_PACKED ||
+        image_format_ == ImageFormat::RGB_PACKED) {
       uint8_t* src = vir_addr[0] + r * frame_.stVFrame.u32Stride[0];
       uint8_t* dst = img.data + r * img.step[0];
       memcpy(dst, src, img.cols * 3);

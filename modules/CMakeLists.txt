@@ -18,7 +18,7 @@ add_subdirectory(service)
 # add_subdirectory(eval)
 add_subdirectory(test)
 add_subdirectory(lib)
-
+add_subdirectory(refactor)
 set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                $<TARGET_OBJECTS:cvi_tdl_service>
                $<TARGET_OBJECTS:core>
@@ -73,7 +73,7 @@ set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                $<TARGET_OBJECTS:ocr_recognition>
                $<TARGET_OBJECTS:lstr>
                $<TARGET_OBJECTS:stereo>
-              #  $<TARGET_OBJECTS:refactor>
+               $<TARGET_OBJECTS:refactor>
                )
 if("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(CORES_SRCS ${CORES_SRCS}

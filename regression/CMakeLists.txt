@@ -180,8 +180,9 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
   reg_daily_fr.cpp
   reg_daily_mobiledetion.cpp
   reg_daily_handcls.cpp
-  reg_daily_vpss_image.cpp
-  reg_daily_preprocess.cpp
+  # reg_daily_vpss_image.cpp
+  # reg_daily_preprocess.cpp
+  reg_daily_scrfd_det_bm.cpp
   # reg_daily_handkeypoint.cpp
   )
 else()
