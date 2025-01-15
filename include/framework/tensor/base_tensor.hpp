@@ -1,7 +1,6 @@
 #ifndef BASE_TENSOR_H
 #define BASE_TENSOR_H
 
-#include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
 

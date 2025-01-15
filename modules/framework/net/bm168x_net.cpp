@@ -3,6 +3,8 @@
 #include <bmruntime_interface.h>
 #include <bmruntime_legacy.h>
 
+#include <sstream>
+
 #include "cvi_tdl_log.hpp"
 #include "memory/bm_memory_pool.hpp"
 #include "utils/common_utils.hpp"
@@ -88,7 +90,7 @@ int32_t BM168xNet::setup() {
     LOGI("net_num: %d", net_num);
     bmrt_get_network_names(p_bmrt_, &net_names);
     if (net_num != 1) {
-      std::stringstream ss;
+            std::stringstream ss;
       for (int i = 0; i < net_num; i++) ss << net_names[i] << ",";
       LOGE("no net_name has been config,found %d,names:%s", net_num,
            ss.str().c_str());

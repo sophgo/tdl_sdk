@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
         "          <image_dir>\n"
         "          <regression_json>\n",
         argv[0]);
-    return CVI_TDL_FAILURE;
+    return -1;
   }
 
   testing::AddGlobalTestEnvironment(

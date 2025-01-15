@@ -1,10 +1,10 @@
-#include "models/scrfd.hpp"
+#include "face_detection/scrfd.hpp"
 
-#include "core/cvi_tdl_types_mem.h"
 #include "core/cvi_tdl_types_mem_internal.h"
+#include "core/face/cvtdl_face_types.h"
 #include "cvi_tdl_log.hpp"
-#include "object_utils.hpp"
-#include "retina_face_utils.hpp"
+#include "utils/detection_helper.hpp"
+
 SCRFD::SCRFD() {
   std::vector<float> means = {127.5, 127.5, 127.5};
   std::vector<float> scales = {1.0 / 128, 1.0 / 128, 1.0 / 128};
@@ -18,6 +18,13 @@ SCRFD::SCRFD() {
 }
 SCRFD::~SCRFD() {}
 int32_t SCRFD::onModelOpened() {
+  struct anchor_cfg {
+    std::vector<int> SCALES;
+    int BASE_SIZE;
+    std::vector<float> RATIOS;
+    int ALLOWED_BORDER;
+    int STRIDE;
+  };
   std::vector<anchor_cfg> cfg;
   anchor_cfg tmp;
 
@@ -44,20 +51,20 @@ int32_t SCRFD::onModelOpened() {
   tmp.STRIDE = 32;
   cfg.push_back(tmp);
   LOGI("start to parse node");
-  std::map<std::string, std::vector<anchor_box>> anchors_fpn_map;
+
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
 
   for (size_t i = 0; i < cfg.size(); i++) {
     std::vector<std::vector<float>> base_anchors =
-        cvitdl::generate_mmdet_base_anchors(cfg[i].BASE_SIZE, 0, cfg[i].RATIOS,
-                                            cfg[i].SCALES);
+        DetectionHelper::generateMmdetBaseAnchors(cfg[i].BASE_SIZE, 0,
+                                                  cfg[i].RATIOS, cfg[i].SCALES);
     int stride = cfg[i].STRIDE;
     int input_w = input_tensor.shape[3];
     int input_h = input_tensor.shape[2];
     int feat_w = ceil(input_w / float(stride));
     int feat_h = ceil(input_h / float(stride));
-    fpn_anchors_[stride] = cvitdl::generate_mmdet_grid_anchors(
+    fpn_anchors_[stride] = DetectionHelper::generateMmdetGridAnchors(
         feat_w, feat_h, stride, base_anchors);
 
     int num_feat_branch = 0;
@@ -217,29 +224,25 @@ int32_t SCRFD::outputParse(
       }
     }
     // DO nms on output result
-    vec_bbox_nms.clear();
-    cvitdl::NonMaximumSuppression(vec_bbox, vec_bbox_nms, 0.4, 'u');
+
+    DetectionHelper::nmsFaces(vec_bbox, 0.4);
     // Init face meta
     cvtdl_face_t *facemeta = new cvtdl_face_t();
     facemeta->width = image_width;
     facemeta->height = image_height;
-    LOGI("vec_bbox_nms size:%d", vec_bbox_nms.size());
-    if (vec_bbox_nms.size() == 0) {
+    LOGI("vec_bbox_nms size:%d", vec_bbox.size());
+    if (vec_bbox.size() == 0) {
       facemeta->size = vec_bbox_nms.size();
       facemeta->info = NULL;
 
       return 0;
     }
-    CVI_TDL_MemAllocInit(vec_bbox_nms.size(), 5, facemeta);
+    CVI_TDL_MemAllocInit(vec_bbox.size(), 5, facemeta);
 
     LOGI("rescale_params:%f,%f,%f,%f", scalex, scaley, pad_x, pad_y);
     std::stringstream ss;
     for (uint32_t i = 0; i < facemeta->size; ++i) {
-      //   cvitdl::clip_boxes(input_width, input_height, vec_bbox_nms[i].bbox);
-      //   cvtdl_face_info_t info =
-      //       cvitdl::info_rescale_rb(input_width, input_height, image_width,
-      //                               image_height, vec_bbox_nms[i]);
-      cvtdl_face_info_t info = vec_bbox_nms[i];
+      cvtdl_face_info_t info = vec_bbox[i];
       facemeta->info[i].bbox.x1 = info.bbox.x1;
       facemeta->info[i].bbox.x2 = info.bbox.x2;
       facemeta->info[i].bbox.y1 = info.bbox.y1;
@@ -259,11 +262,6 @@ int32_t SCRFD::outputParse(
     }
     LOGI("facemeta:%s", ss.str().c_str());
 
-    // Clear original bbox. bbox_nms does not need to free since it points to
-    // bbox.
-    for (size_t i = 0; i < vec_bbox.size(); ++i) {
-      CVI_TDL_FreeCpp(&vec_bbox[i].pts);
-    }
     out_datas.push_back((void *)facemeta);
   }
   return 0;

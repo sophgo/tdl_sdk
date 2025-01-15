@@ -1,9 +1,8 @@
 #ifndef SCRFD_HPP
 #define SCRFD_HPP
 
-#include "core/face/cvtdl_face_types.h"
 #include "image/base_image.hpp"
-#include "models/base_model.hpp"
+#include "model/base_model.hpp"
 class SCRFD : public BaseModel {
  public:
   SCRFD();

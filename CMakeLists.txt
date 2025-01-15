@@ -161,23 +161,23 @@ include(cmake/mlir.cmake)
 
 # Check if middleware exists.
 # set(MIDDLEWARE_SDK_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../middleware)
-include (cmake/middleware.cmake)
+# include (cmake/middleware.cmake)
 
 # 3rdparty libraries
 
 include(cmake/thirdparty.cmake)
 
-include (cmake/ive.cmake)
+# include (cmake/ive.cmake)
 
-include (cmake/cvi_rtsp.cmake)
+# include (cmake/cvi_rtsp.cmake)
 
 # 3rdpart includes
-include_directories(${IVE_INCLUDES}
+include_directories(
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
-                    ${MIDDLEWARE_INCLUDES})
+                    )
 
-include_directories(/path/to/cvi_sdk/include)
+# include_directories(/path/to/cvi_sdk/include)
 
 message(STATUS "Includedirectories:{${MLIR_INCLUDES}}")
 message(STATUS "${CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE}")

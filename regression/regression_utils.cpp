@@ -1,12 +1,20 @@
 #include "regression_utils.hpp"
-#include "core/utils/vpss_helper.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+
+#define MAX2(x, y) ((x) > (y) ? (x) : (y))
+
+#define MIN2(x, y) ((x) < (y) ? (x) : (y))
+// #include "core/utils/vpss_helper.h"
 namespace cvitdl {
 namespace unitest {
 
-static const float STD_FACE_LANDMARK_X[5] = {38.29459953, 73.53179932, 56.02519989, 41.54930115,
-                                             70.72990036};
-static const float STD_FACE_LANDMARK_Y[5] = {51.69630051, 51.50139999, 71.73660278, 92.3655014,
-                                             92.20410156};
+static const float STD_FACE_LANDMARK_X[5] = {
+    38.29459953, 73.53179932, 56.02519989, 41.54930115, 70.72990036};
+static const float STD_FACE_LANDMARK_Y[5] = {
+    51.69630051, 51.50139999, 71.73660278, 92.3655014, 92.20410156};
 
 void init_face_meta(cvtdl_face_t *meta, uint32_t size) {
   memset(meta, 0, sizeof(cvtdl_face_t));
@@ -15,7 +23,8 @@ void init_face_meta(cvtdl_face_t *meta, uint32_t size) {
   meta->height = 112;
   meta->width = 112;
   const int pts_num = 5;
-  meta->info = (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * meta->size);
+  meta->info =
+      (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * meta->size);
   for (uint32_t i = 0; i < meta->size; ++i) {
     meta->info[i].bbox.x1 = 0;
     meta->info[i].bbox.x2 = 111;
@@ -34,7 +43,8 @@ void init_face_meta(cvtdl_face_t *meta, uint32_t size) {
     meta->info[i].head_pose.yaw = 0;
     meta->info[i].head_pose.pitch = 0;
     meta->info[i].head_pose.roll = 0;
-    memset(&meta->info[i].head_pose.facialUnitNormalVector, 0, sizeof(float) * 3);
+    memset(&meta->info[i].head_pose.facialUnitNormalVector, 0,
+           sizeof(float) * 3);
 
     memset(&meta->info[i].feature, 0, sizeof(cvtdl_feature_t));
     if (pts_num > 0) {
@@ -55,14 +65,18 @@ void init_face_meta(cvtdl_face_t *meta, uint32_t size) {
   meta->dms->smoke_score = 0;
   meta->dms->landmarks_106.size = 106;
   meta->dms->landmarks_5.size = 5;
-  meta->dms->landmarks_5.x = (float *)malloc(sizeof(float) * meta->dms->landmarks_5.size);
-  meta->dms->landmarks_5.y = (float *)malloc(sizeof(float) * meta->dms->landmarks_5.size);
+  meta->dms->landmarks_5.x =
+      (float *)malloc(sizeof(float) * meta->dms->landmarks_5.size);
+  meta->dms->landmarks_5.y =
+      (float *)malloc(sizeof(float) * meta->dms->landmarks_5.size);
   for (uint32_t j = 0; j < meta->dms->landmarks_5.size; ++j) {
     meta->dms->landmarks_5.x[0] = 0.0;
     meta->dms->landmarks_5.y[0] = 0.0;
   }
-  meta->dms->landmarks_106.x = (float *)malloc(sizeof(float) * meta->dms->landmarks_106.size);
-  meta->dms->landmarks_106.y = (float *)malloc(sizeof(float) * meta->dms->landmarks_106.size);
+  meta->dms->landmarks_106.x =
+      (float *)malloc(sizeof(float) * meta->dms->landmarks_106.size);
+  meta->dms->landmarks_106.y =
+      (float *)malloc(sizeof(float) * meta->dms->landmarks_106.size);
   for (uint32_t j = 0; j < meta->dms->landmarks_106.size; ++j) {
     meta->dms->landmarks_106.x[0] = 0.0;
     meta->dms->landmarks_106.y[0] = 0.0;
@@ -75,13 +89,14 @@ void init_face_meta(cvtdl_face_t *meta, uint32_t size) {
   meta->dms->dms_od.size = 0;
 }
 
-void init_obj_meta(cvtdl_object_t *meta, uint32_t size, uint32_t height, uint32_t width,
-                   int class_id) {
+void init_obj_meta(cvtdl_object_t *meta, uint32_t size, uint32_t height,
+                   uint32_t width, int class_id) {
   memset(meta, 0, sizeof(cvtdl_object_t));
   meta->size = size;
   meta->height = height;
   meta->width = width;
-  meta->info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * meta->size);
+  meta->info =
+      (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * meta->size);
 
   for (uint32_t i = 0; i < meta->size; ++i) {
     meta->info[i].bbox.x1 = 0;
@@ -104,15 +119,18 @@ void init_vehicle_meta(cvtdl_object_t *meta) {
     return;
   }
   for (uint32_t i = 0; i < meta->size; ++i) {
-    meta->info[i].vehicle_properity = (cvtdl_vehicle_meta *)malloc(sizeof(cvtdl_vehicle_meta));
+    meta->info[i].vehicle_properity =
+        (cvtdl_vehicle_meta *)malloc(sizeof(cvtdl_vehicle_meta));
     meta->info[i].vehicle_properity->license_pts.x[0] = 0.0;
     meta->info[i].vehicle_properity->license_pts.x[1] = (float)meta->width - 1.;
     meta->info[i].vehicle_properity->license_pts.x[2] = (float)meta->width - 1.;
     meta->info[i].vehicle_properity->license_pts.x[3] = 0.0;
     meta->info[i].vehicle_properity->license_pts.y[0] = 0.0;
     meta->info[i].vehicle_properity->license_pts.y[1] = 0.0;
-    meta->info[i].vehicle_properity->license_pts.y[2] = (float)meta->height - 1.;
-    meta->info[i].vehicle_properity->license_pts.y[3] = (float)meta->height - 1.;
+    meta->info[i].vehicle_properity->license_pts.y[2] =
+        (float)meta->height - 1.;
+    meta->info[i].vehicle_properity->license_pts.y[3] =
+        (float)meta->height - 1.;
   }
 }
 

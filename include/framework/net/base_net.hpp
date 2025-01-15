@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "common/common_types.hpp"
-#include "net/base_tensor.hpp"
+#include "tensor/base_tensor.hpp"
 
 class BaseNet {
  public:

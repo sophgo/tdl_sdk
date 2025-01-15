@@ -57,129 +57,129 @@ function(buildninstallcpp)
 endfunction(buildninstallcpp)
 
 set(REG_INCLUDES
-    ${MIDDLEWARE_SDK_ROOT}/include
+    # ${MIDDLEWARE_SDK_ROOT}/include
     ${MLIR_SDK_PATH}/opencv/include
     ${MLIR_SDK_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation
-    ${MIDDLEWARE_SDK_ROOT}/sample/common
-    ${CVI_RTSP_INCLUDE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/framework
+    # ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation
+    # ${MIDDLEWARE_SDK_ROOT}/sample/common
+    # ${CVI_RTSP_INCLUDE}
 )
 
-if(${CVI_PLATFORM} STREQUAL "SOPHON")
-  set(SAMPLE_LIBS
-  ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-  ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
-    ${CVI_RTSP_LIBPATH}
-  )
-elseif(${CONFIG_DUAL_OS} STREQUAL "ON")
-  set(SAMPLE_LIBS
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libmsg.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvilink.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-    ${MLIR_SDK_ROOT}/lib/libz.so
-  )
-else()
-  set(SAMPLE_LIBS
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-    ${MLIR_SDK_ROOT}/lib/libz.so
-    ${CVI_RTSP_LIBPATH}
-  )
+# if(${CVI_PLATFORM} STREQUAL "SOPHON")
+#   set(SAMPLE_LIBS
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+#   ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
+#     ${CVI_RTSP_LIBPATH}
+#   )
+# elseif(${CONFIG_DUAL_OS} STREQUAL "ON")
+#   set(SAMPLE_LIBS
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libmsg.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libcvilink.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+#     ${MLIR_SDK_ROOT}/lib/libz.so
+#   )
+# else()
+#   set(SAMPLE_LIBS
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+#     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+#     ${MLIR_SDK_ROOT}/lib/libz.so
+#     ${CVI_RTSP_LIBPATH}
+#   )
 
-  if("${MW_VER}" STREQUAL "v2")
-    if(${CVI_PLATFORM} STRLESS "SOPHON")
-      set(SAMPLE_LIBS
-        ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-        ${MLIR_SDK_ROOT}/lib/libz.so
-        ${CVI_RTSP_LIBPATH}
-      )
-    endif()
-    list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
-  else()
-    list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so)
-  endif()
+#   if("${MW_VER}" STREQUAL "v2")
+#     if(${CVI_PLATFORM} STRLESS "SOPHON")
+#       set(SAMPLE_LIBS
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+#         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+#         ${MLIR_SDK_ROOT}/lib/libz.so
+#         ${CVI_RTSP_LIBPATH}
+#       )
+#     endif()
+#     list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
+#   else()
+#     list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so)
+#   endif()
 
-  if (NOT "${CVI_PLATFORM}" STREQUAL "CV183X")
-    set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
-  endif()
-endif()
+#   if (NOT "${CVI_PLATFORM}" STREQUAL "CV183X")
+#     set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+#   endif()
+# endif()
 
 
 if(${CVI_PLATFORM} STREQUAL "SOPHON")
   set(UnitTests
-  reg_daily_petdet.cpp
-  reg_daily_handdet.cpp
-  reg_daily_meet.cpp
-  reg_daily_person_vehicle.cpp
-  reg_daily_hardhat_det.cpp
-  reg_daily_scrfd_det.cpp
-  reg_daily_lpd_v2.cpp
-  reg_daily_fr.cpp
-  reg_daily_mobiledetion.cpp
-  reg_daily_handcls.cpp
+  # reg_daily_petdet.cpp
+  # reg_daily_handdet.cpp
+  # reg_daily_meet.cpp
+  # reg_daily_person_vehicle.cpp
+  # reg_daily_hardhat_det.cpp
+  # reg_daily_scrfd_det.cpp
+  # reg_daily_lpd_v2.cpp
+  # reg_daily_fr.cpp
+  # reg_daily_mobiledetion.cpp
+  # reg_daily_handcls.cpp
   # reg_daily_vpss_image.cpp
   # reg_daily_preprocess.cpp
   reg_daily_scrfd_det_bm.cpp
@@ -217,22 +217,21 @@ endif()
 
 set(UnitTest_SRCS
   cvi_tdl_test.cpp
-  raii.cpp
+  # raii.cpp
   regression_utils.cpp
   ${UnitTests}
 )
 
 set(UnitTest_SRCS
   ${UnitTest_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../modules/test/utils/sys_utils.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/log
+                    
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
-buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl cvi_tdl_app gtest_main stdc++fs ${SAMPLE_LIBS})
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl  gtest_main stdc++fs )
 
 # include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tmp/_deps/googletest-src/googletest/include)
 # buildninstallcpp(NAME reg_daily_vpss_image INC ${REG_INCLUDES} SRCS reg_daily_vpss_image.cpp DEPS cvi_tdl cvi_tdl_app  ${SAMPLE_LIBS})

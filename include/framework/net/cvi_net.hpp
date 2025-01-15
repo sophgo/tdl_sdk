@@ -2,7 +2,7 @@
 #define CVI_NET_H
 
 #include "net/base_net.hpp"
-#include "net/base_tensor.hpp"
+#include "tensor/base_tensor.hpp"
 
 class CviNet : public BaseNet {
  public:

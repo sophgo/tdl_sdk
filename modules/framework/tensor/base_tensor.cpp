@@ -1,4 +1,4 @@
-#include "net/base_tensor.hpp"
+#include "tensor/base_tensor.hpp"
 
 #include <cassert>
 #include <cstring>

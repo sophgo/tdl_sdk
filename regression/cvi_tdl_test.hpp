@@ -1,7 +1,7 @@
 #pragma once
 #include <experimental/filesystem>
 #include <string>
-#include "cvi_tdl.h"
+// #include "cvi_tdl.h"
 #include "gtest.h"
 #include "json.hpp"
 
@@ -10,7 +10,8 @@ namespace unitest {
 
 class CVI_TDLTestEnvironment : public testing::Environment {
  public:
-  explicit CVI_TDLTestEnvironment(const std::string &model_dir, const std::string &image_dir,
+  explicit CVI_TDLTestEnvironment(const std::string &model_dir,
+                                  const std::string &image_dir,
                                   const std::string &json_dir);
 };
 
@@ -51,13 +52,14 @@ class CVI_TDLTestSuite : public testing::Test {
 
 class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
  public:
-  CVI_TDLModelTestSuite(const std::string &json_file_name, const std::string &image_dir_name);
+  CVI_TDLModelTestSuite(const std::string &json_file_name,
+                        const std::string &image_dir_name);
 
   virtual ~CVI_TDLModelTestSuite() = default;
 
  protected:
   nlohmann::json m_json_object;
-  cvitdl_handle_t m_tdl_handle;
+  // cvitdl_handle_t m_tdl_handle;
   std::experimental::filesystem::path m_image_dir;
   std::experimental::filesystem::path m_model_dir;
 };

@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-#include "core/utils/vpss_helper.h"
+// #include "core/utils/vpss_helper.h"
 
 namespace fs = std::experimental::filesystem;
 
@@ -62,41 +62,41 @@ int64_t CVI_TDLTestSuite::get_ion_memory_size() {
 void CVI_TDLTestSuite::SetUpTestCase() {
   int64_t ion_size = get_ion_memory_size();
 
-  const CVI_S32 vpssgrp_width = DEFAULT_IMG_WIDTH;
-  const CVI_S32 vpssgrp_height = DEFAULT_IMG_HEIGHT;
-  const uint32_t num_buffer = 1;
+  // const CVI_S32 vpssgrp_width = DEFAULT_IMG_WIDTH;
+  // const CVI_S32 vpssgrp_height = DEFAULT_IMG_HEIGHT;
+  // const uint32_t num_buffer = 1;
 
-  // check if ION is enough to use.
-  int64_t used_size = vpssgrp_width * vpssgrp_height * num_buffer * 2;
-  ASSERT_LT(used_size, ion_size) << "insufficient ion size";
+  // // check if ION is enough to use.
+  // int64_t used_size = vpssgrp_width * vpssgrp_height * num_buffer * 2;
+  // ASSERT_LT(used_size, ion_size) << "insufficient ion size";
 
-  COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
+  // COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
 
-  // Init SYS and Common VB,
-  VB_CONFIG_S stVbConf;
-  memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
-  stVbConf.u32MaxPoolCnt = 1;
-  CVI_U32 u32BlkSize;
-  u32BlkSize = COMMON_GetPicBufferSize(
-      vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR,
-      DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
-  stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
-  stVbConf.astCommPool[0].u32BlkCnt = num_buffer;
+  // // Init SYS and Common VB,
+  // VB_CONFIG_S stVbConf;
+  // memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
+  // stVbConf.u32MaxPoolCnt = 1;
+  // CVI_U32 u32BlkSize;
+  // u32BlkSize = COMMON_GetPicBufferSize(
+  //     vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888_PLANAR,
+  //     DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
+  // stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
+  // stVbConf.astCommPool[0].u32BlkCnt = num_buffer;
 
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
+  // CVI_SYS_Exit();
+  // CVI_VB_Exit();
 
-  ASSERT_EQ(CVI_VB_SetConfig(&stVbConf), CVI_SUCCESS);
+  // ASSERT_EQ(CVI_VB_SetConfig(&stVbConf), CVI_SUCCESS);
 
-  ASSERT_EQ(CVI_VB_Init(), CVI_SUCCESS);
+  // ASSERT_EQ(CVI_VB_Init(), CVI_SUCCESS);
 
-  ASSERT_EQ(CVI_SYS_Init(), CVI_SUCCESS);
+  // ASSERT_EQ(CVI_SYS_Init(), CVI_SUCCESS);
   std::cout << "CVI_TDLTestSuite::SetUpTestCase done" << std::endl;
 }
 
 void CVI_TDLTestSuite::TearDownTestCase() {
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
+  // CVI_SYS_Exit();
+  // CVI_VB_Exit();
 }
 
 CVI_TDLModelTestSuite::CVI_TDLModelTestSuite(

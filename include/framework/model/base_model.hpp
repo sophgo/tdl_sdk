@@ -14,7 +14,7 @@ class BaseModel {
  public:
   BaseModel();
   virtual ~BaseModel() = default;
-  int32_t modelOpen(const char* filepath);
+  int32_t modelOpen(const std::string& model_path);
   int32_t setupNetwork(NetParam& net_param);
 
   int getDeviceId() const;
