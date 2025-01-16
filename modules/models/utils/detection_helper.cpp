@@ -1,7 +1,9 @@
-#include "detection_helper.hpp"
+#include "utils/detection_helper.hpp"
 
 #include <algorithm>
 #include <cmath>
+
+#include "core/cvi_tdl_types_mem_internal.h"
 std::vector<std::vector<float>> DetectionHelper::generateMmdetBaseAnchors(
     float base_size, float center_offset, const std::vector<float> &ratios,
     const std::vector<int> &scales) {
@@ -176,5 +178,43 @@ void DetectionHelper::nmsObjects(
     std::map<int, std::vector<cvtdl_bbox_t>> &bboxes, float iou_threshold) {
   for (auto &bbox : bboxes) {
     nmsObjects(bbox.second, iou_threshold);
+  }
+}
+
+void DetectionHelper::rescaleBbox(cvtdl_bbox_t &bbox,
+                                  const std::vector<float> &scale_params) {
+  float scale_x = scale_params[0];
+  float scale_y = scale_params[1];
+  float offset_x = scale_params[2];
+  float offset_y = scale_params[3];
+  bbox.x1 = (bbox.x1 - offset_x) * scale_x;
+  bbox.y1 = (bbox.y1 - offset_y) * scale_y;
+  bbox.x2 = (bbox.x2 - offset_x) * scale_x;
+  bbox.y2 = (bbox.y2 - offset_y) * scale_y;
+}
+
+void DetectionHelper::convertDetStruct(
+    std::map<int, std::vector<cvtdl_bbox_t>> &dets, cvtdl_object_t *obj,
+    int im_height, int im_width) {
+  int num_obj = 0;
+  for (auto &bbox : dets) {
+    num_obj += bbox.second.size();
+  }
+  CVI_TDL_MemAllocInit(num_obj, obj);
+  obj->height = im_height;
+  obj->width = im_width;
+  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
+
+  int idx = 0;
+  for (auto &bbox : dets) {
+    for (auto &b : bbox.second) {
+      obj->info[idx].bbox.x1 = b.x1;
+      obj->info[idx].bbox.y1 = b.y1;
+      obj->info[idx].bbox.x2 = b.x2;
+      obj->info[idx].bbox.y2 = b.y2;
+      obj->info[idx].bbox.score = b.score;
+      obj->info[idx].classes = bbox.first;
+      idx++;
+    }
   }
 }

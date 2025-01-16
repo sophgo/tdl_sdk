@@ -5,6 +5,11 @@
 #include <iostream>
 
 #include "cvi_tdl_log.hpp"
+#ifdef __SOPHON__
+#include "preprocess/opencv_preprocessor.hpp"
+#else
+#include "preprocess/vpss_preprocessor.hpp"
+#endif
 
 void print_netparam(const NetParam& net_param) {
   LOGI("scale:%f,%f,%f,mean:%f,%f,%f,format:%d,keepAspectRatio:%d",
@@ -46,6 +51,13 @@ int32_t BaseModel::modelOpen(const std::string& model_path) {
     return ret;
   } else {
     LOGI("onModelOpened success");
+  }
+  if (preprocessor_ == nullptr) {
+#ifdef __SOPHON__
+    preprocessor_ = std::make_shared<OpenCVPreprocessor>();
+#else
+    preprocessor_ = std::make_shared<VpssPreprocessor>();
+#endif
   }
   return 0;
 }
@@ -149,4 +161,8 @@ int32_t BaseModel::inference(
     process_idx += fit_batch_size;
   }
   return 0;
+}
+
+void BaseModel::setTypeMapping(const std::map<int, int>& type_mapping) {
+  type_mapping_ = type_mapping;
 }

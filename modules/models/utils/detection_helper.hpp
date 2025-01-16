@@ -1,10 +1,9 @@
-#ifndef __DETECTION_HELPER_HPP__
-#define __DETECTION_HELPER_HPP__
+#pragma once
 #include <map>
 #include <vector>
 
 #include "core/face/cvtdl_face_types.h"
-
+#include "core/object/cvtdl_object_types.h"
 class DetectionHelper {
  public:
   DetectionHelper();
@@ -25,6 +24,10 @@ class DetectionHelper {
 
   static void nmsObjects(std::map<int, std::vector<cvtdl_bbox_t>> &bboxes,
                          float iou_threshold);
-};
+  static void rescaleBbox(cvtdl_bbox_t &bbox,
+                          const std::vector<float> &scale_params);
 
-#endif
+  static void convertDetStruct(std::map<int, std::vector<cvtdl_bbox_t>> &dets,
+                               cvtdl_object_t *obj, int im_height,
+                               int im_width);
+};

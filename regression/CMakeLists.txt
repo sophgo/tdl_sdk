@@ -173,7 +173,7 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
   # reg_daily_petdet.cpp
   # reg_daily_handdet.cpp
   # reg_daily_meet.cpp
-  # reg_daily_person_vehicle.cpp
+  reg_daily_person_vehicle.cpp
   # reg_daily_hardhat_det.cpp
   # reg_daily_scrfd_det.cpp
   # reg_daily_lpd_v2.cpp

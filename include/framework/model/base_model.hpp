@@ -38,6 +38,7 @@ class BaseModel {
 
   virtual int32_t onModelOpened() { return 0; }
   virtual int32_t onModelClosed() { return 0; }
+  void setTypeMapping(const std::map<int, int>& type_mapping);
 
  private:
   int getFitBatchSize(int left_size) const;
@@ -52,13 +53,14 @@ class BaseModel {
 
   // Input and output configurations
   int input_batch_size_ = 0;
-  std::string input_layer_ = "data";
+
   std::string output_layer_;
   float model_threshold_ = 0.5;
 
   std::vector<std::vector<float>> batch_rescale_params_;
 
   std::vector<std::shared_ptr<BaseImage>> tmp_preprocess_images_;
+  std::map<int, int> type_mapping_;
 };
 
 #endif  // INCLUDE_BASE_MODEL_H_

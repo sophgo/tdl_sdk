@@ -1,6 +1,7 @@
 #include "image/opencv_image.hpp"
 
 #include "cvi_tdl_log.hpp"
+#include "utils/common_utils.hpp"
 OpenCVImage::OpenCVImage() {}
 
 OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
@@ -76,8 +77,10 @@ int32_t OpenCVImage::prepareImageInfo(uint32_t width, uint32_t height,
   mat_type_ = type;
   LOGI("CV8SC1: %d,CV8UC1: %d,CV8SC3: %d,CV8UC3: %d", CV_8SC1, CV_8UC1, CV_8SC3,
        CV_8UC3);
-  LOGI("image stride: %d,width: %d,height: %d,imgformat: %d,pixformat: %d",
-       mats_[0].step[0], width, height, imageFormat, pix_data_type);
+  LOGI(
+      "image stride: %d,width: %d,height: %d,imgformat: %d,pixformat: "
+      "%d,mat_type: %d",
+      mats_[0].step[0], width, height, imageFormat, pix_data_type, mat_type_);
   return 0;
 }
 
@@ -130,7 +133,7 @@ int32_t OpenCVImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
   uint8_t* data = (uint8_t*)vir_addr;
   for (size_t i = 0; i < mats_.size(); i++) {
     mats_[i] = cv::Mat(img_height_, img_width_, mat_type_, data);
-    data += img_height_ * img_width_ * mat_type_;
+    data += img_height_ * img_width_ * get_data_type_size(pix_data_type_);
   }
 
   return 0;
