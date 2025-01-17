@@ -10,3 +10,4 @@ doxygen/latex
 tmp
 *.out
 *.cvimodel
+build
