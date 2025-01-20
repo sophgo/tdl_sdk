@@ -1593,6 +1593,40 @@ CVI_S32 CVI_TDL_Delete_Img(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
   return CVI_SUCCESS;
 }
 
+
+CVI_S32 CVI_TDL_Set_ROI(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model_type,
+                                VIDEO_FRAME_INFO_S *frame, Point_t roi_s, PIXEL_FORMAT_E enDstFormat,
+                                VIDEO_FRAME_INFO_S **crop_frame){
+
+  if (handle == NULL || frame == NULL || crop_frame == NULL) {
+      printf("Error: Invalid parameter - handle, frame, or crop_frame is NULL.\n");
+      return CVI_FAILURE;
+  }
+
+  if (roi_s.x1 >= roi_s.x2 || roi_s.y1 >= roi_s.y2) {
+      printf("Error: Invalid ROI - roi_s.x1 >= roi_s.x2 or roi_s.y1 >= roi_s.y2.\n");
+      return CVI_FAILURE;
+  }
+
+  cvtdl_bbox_t yolo_box;               
+  yolo_box.x1 = (float)(roi_s.x1);
+  yolo_box.x2 = (float)(roi_s.x2);
+  yolo_box.y1 = (float)(roi_s.y1);
+  yolo_box.y2 = (float)(roi_s.y2);
+
+  uint32_t bbox_w = yolo_box.x2 - yolo_box.x1;
+  uint32_t bbox_h = yolo_box.y2 - yolo_box.y1;
+
+  CVI_S32 ret = CVI_TDL_CropResizeImage(handle, model_type, frame, &yolo_box, bbox_w, bbox_h, enDstFormat, crop_frame);
+
+  if (ret != CVI_SUCCESS) {
+      printf("Error: CropResizeImage failed with error code %d.\n", ret);
+      return CVI_FAILURE; 
+  }
+
+  return CVI_SUCCESS;                                  
+}
+
 CVI_S32 CVI_TDL_CropImage_With_VPSS(const cvitdl_handle_t handle,
                                     CVI_TDL_SUPPORTED_MODEL_E model_type, VIDEO_FRAME_INFO_S *frame,
                                     const cvtdl_bbox_t *p_crop_box, cvtdl_image_t *p_dst) {
@@ -1780,18 +1814,6 @@ CVI_S32 CVI_TDL_PersonVehicle_Detection(const cvitdl_handle_t handle, VIDEO_FRAM
          CVI_TDL_GetModelName(CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION));
     return CVI_TDL_ERR_NOT_YET_INITIALIZED;
   }
-}
-
-CVI_S32 CVI_TDL_Set_Yolov5_ROI(const cvitdl_handle_t handle, Point_t roi_s) {
-  printf("enter CVI_TDL_Set_Yolov5_ROI...\n");
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  Yolov5 *yolov5_model =
-      dynamic_cast<Yolov5 *>(getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_YOLOV5, ctx));
-  if (yolov5_model == nullptr) {
-    LOGE("yolov5_model has not been inited\n");
-    return CVI_TDL_FAILURE;
-  }
-  return yolov5_model->set_roi(roi_s);
 }
 
 InputPreParam CVI_TDL_GetPreParam(const cvitdl_handle_t handle,

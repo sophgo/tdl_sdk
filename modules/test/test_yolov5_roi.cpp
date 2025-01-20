@@ -66,9 +66,17 @@ int main(int argc, char* argv[]) {
   roi_s.x2 = 750;
   roi_s.y2 = 200;
 
-  std::cout << "set image bg done\n";
-  CVI_TDL_Set_Yolov5_ROI(tdl_handle, roi_s);
-  CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &obj_meta);
+  VIDEO_FRAME_INFO_S *crop_frame = NULL;
+
+  CVI_TDL_Set_ROI(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &fdFrame, roi_s, PIXEL_FORMAT_RGB_888, &crop_frame);
+
+  CVI_TDL_Detection(tdl_handle, crop_frame, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &obj_meta);
+
+  if (ret != 0) { 
+      printf("CVI_TDL_Detection failed with error code: %d\n", ret);
+  }
+  
+  CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, crop_frame, true);
 
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("detect res: %f %f %f %f %f %d\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,

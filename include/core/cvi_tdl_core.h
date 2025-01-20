@@ -1307,6 +1307,10 @@ DLL_EXPORT CVI_S32 CVI_TDL_CropResizeImage(const cvitdl_handle_t handle,
                                            const cvtdl_bbox_t *p_crop_box, int dst_width,
                                            int dst_height, PIXEL_FORMAT_E enDstFormat,
                                            VIDEO_FRAME_INFO_S **p_dst_img);
+                                           
+DLL_EXPORT CVI_S32 CVI_TDL_Set_ROI(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model_type,
+                                VIDEO_FRAME_INFO_S *frame, Point_t roi_s, PIXEL_FORMAT_E enDstFormat,
+                                VIDEO_FRAME_INFO_S **crop_frame);
 
 DLL_EXPORT CVI_S32 CVI_TDL_Copy_VideoFrameToImage(VIDEO_FRAME_INFO_S *frame, cvtdl_image_t *p_dst);
 DLL_EXPORT CVI_S32 CVI_TDL_Resize_VideoFrame(const cvitdl_handle_t handle,
@@ -1517,7 +1521,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_SetDetectionAlgoParam(const cvitdl_handle_t handle,
                                                  const CVI_TDL_SUPPORTED_MODEL_E model_index,
                                                  cvtdl_det_algo_param_t alg_param);
 
-DLL_EXPORT CVI_S32 CVI_TDL_Set_Yolov5_ROI(const cvitdl_handle_t handle, Point_t roi_s);
 /**
  * @brief image_classification setup function
  *

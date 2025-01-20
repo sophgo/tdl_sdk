@@ -163,6 +163,7 @@ if("${CVI_PLATFORM}" STREQUAL "SOPHON")
     buildninstall(NAME sample_clip_image INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.c)
 endif()
 
+buildninstall(NAME sample_img_detection_roi INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstall(NAME sample_img_face_landmarker INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS})
 buildninstall(NAME sample_img_face_mask INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS})
 buildninstall(NAME sample_img_face_attribute_cls INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS})
@@ -176,12 +177,12 @@ buildninstall(NAME sample_audio_cls INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SA
 buildninstall(NAME sample_clip_text INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app cvi_kit ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.c)
 buildninstall(NAME sample_clip_pipeline INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app cvi_kit ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.c)
 buildninstall(NAME sample_img_det INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_tdl_app ${SAMPLE_LIBS})
+
 # yolo external sample
 buildninstall(NAME sample_yolov5 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
-buildninstall(NAME sample_yolov5_roi INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
-buildninstall(NAME sample_yolov8 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
-buildninstall(NAME sample_yolov10 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstall(NAME sample_yolov6 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstall(NAME sample_yolov7 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
+buildninstall(NAME sample_yolov8 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
+buildninstall(NAME sample_yolov10 INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstall(NAME sample_yolox INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstall(NAME sample_ppyoloe INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})

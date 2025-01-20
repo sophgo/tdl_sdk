@@ -130,52 +130,22 @@ int Yolov5::onModelOpened() {
 
 Yolov5::~Yolov5() {}
 
-uint32_t Yolov5::set_roi(Point_t &roi) {
-  yolo_box.x1 = (float)(roi.x1);
-  yolo_box.x2 = (float)(roi.x2);
-  yolo_box.y1 = (float)(roi.y1);
-  yolo_box.y2 = (float)(roi.y2);
-  roi_flag = true;
-  return 0;
-}
 
 int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
-  if (roi_flag == true) {
-    VIDEO_FRAME_INFO_S *f = new VIDEO_FRAME_INFO_S;
-    memset(f, 0, sizeof(VIDEO_FRAME_INFO_S));
 
-    uint32_t bbox_w = yolo_box.x2 - yolo_box.x1;
-    uint32_t bbox_h = yolo_box.y2 - yolo_box.y1;
-    vpssCropImage(srcFrame, f, yolo_box, bbox_w, bbox_h, PIXEL_FORMAT_RGB_888);
-    std::vector<VIDEO_FRAME_INFO_S *> frames = {f};
-    int ret = run(frames);
-    if (ret != CVI_TDL_SUCCESS) {
+  std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
+
+  int ret = run(frames);
+  if (ret != CVI_TDL_SUCCESS) {
       LOGE("Yolov5 run inference failed!\n");
       return ret;
-    }
-
-    CVI_SHAPE shape = getInputShape(0);
-
-    outputParser(shape.dim[3], shape.dim[2], f->stVFrame.u32Width, f->stVFrame.u32Height, obj_meta);
-
-    if (f->stVFrame.u64PhyAddr[0] != 0) {
-      mp_vpss_inst->releaseFrame(f, 0);
-    }
-    delete f;
-  } else {
-    std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
-
-    int ret = run(frames);
-    if (ret != CVI_TDL_SUCCESS) {
-      LOGE("Yolov5 run inference failed!\n");
-      return ret;
-    }
-
-    CVI_SHAPE shape = getInputShape(0);
-
-    outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
-                 srcFrame->stVFrame.u32Height, obj_meta);
   }
+
+  CVI_SHAPE shape = getInputShape(0);
+
+  outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
+                 srcFrame->stVFrame.u32Height, obj_meta);
+  
 
   model_timer_.TicToc("post");
   return CVI_TDL_SUCCESS;

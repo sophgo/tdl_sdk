@@ -12,8 +12,6 @@ class Yolov5 final : public DetectionBase {
   ~Yolov5();
   int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) override;
 
-  uint32_t set_roi(Point_t &roi);
-
  private:
   int onModelOpened() override;
 
@@ -28,6 +26,5 @@ class Yolov5 final : public DetectionBase {
   std::map<int, std::string> box_out_names_;
   std::vector<int> strides_;
   cvtdl_bbox_t yolo_box;
-  bool roi_flag = false;
 };
 }  // namespace cvitdl
