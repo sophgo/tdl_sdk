@@ -188,7 +188,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LSTR)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_STEREO) \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCCLUSION_CLASSIFICATION)         \
-  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG)                    \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG) \
   // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -1132,7 +1132,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Liveness(const cvitdl_handle_t handle, VIDEO_FRAME_IN
                                     VIDEO_FRAME_INFO_S *irFrame, cvtdl_face_t *rgb_face,
                                     cvtdl_face_t *ir_face);
 DLL_EXPORT CVI_S32 CVI_TDL_License_Plate_Keypoint(const cvitdl_handle_t handle,
-                                                      VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *vehicle_plate_meta);
+                                                  VIDEO_FRAME_INFO_S *frame,
+                                                  cvtdl_object_t *vehicle_plate_meta);
 
 DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition_CN(const cvitdl_handle_t handle,
                                                       VIDEO_FRAME_INFO_S *frame,
@@ -1145,7 +1146,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition(const cvitdl_handle_t handle,
                                                    CVI_TDL_SUPPORTED_MODEL_E model_id,
                                                    cvtdl_object_t *vehicle);
 DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition_V2(const cvitdl_handle_t handle,
-                                                      VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *vehicle_plate_meta);
+                                                      VIDEO_FRAME_INFO_S *frame,
+                                                      cvtdl_object_t *vehicle_plate_meta);
 
 DLL_EXPORT CVI_S32 CVI_TDL_OCR_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                          cvtdl_object_t *obj_meta);
@@ -1307,10 +1309,11 @@ DLL_EXPORT CVI_S32 CVI_TDL_CropResizeImage(const cvitdl_handle_t handle,
                                            const cvtdl_bbox_t *p_crop_box, int dst_width,
                                            int dst_height, PIXEL_FORMAT_E enDstFormat,
                                            VIDEO_FRAME_INFO_S **p_dst_img);
-                                           
-DLL_EXPORT CVI_S32 CVI_TDL_Set_ROI(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model_type,
-                                VIDEO_FRAME_INFO_S *frame, Point_t roi_s, PIXEL_FORMAT_E enDstFormat,
-                                VIDEO_FRAME_INFO_S **crop_frame);
+
+DLL_EXPORT CVI_S32 CVI_TDL_Set_ROI(const cvitdl_handle_t handle,
+                                   CVI_TDL_SUPPORTED_MODEL_E model_type, VIDEO_FRAME_INFO_S *frame,
+                                   Point_t roi_s, PIXEL_FORMAT_E enDstFormat,
+                                   VIDEO_FRAME_INFO_S **crop_frame);
 
 DLL_EXPORT CVI_S32 CVI_TDL_Copy_VideoFrameToImage(VIDEO_FRAME_INFO_S *frame, cvtdl_image_t *p_dst);
 DLL_EXPORT CVI_S32 CVI_TDL_Resize_VideoFrame(const cvitdl_handle_t handle,
@@ -1434,10 +1437,10 @@ DLL_EXPORT CVI_S32 CVI_TDL_Image_Classification(const cvitdl_handle_t handle,
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Occlusion_Classification(const cvitdl_handle_t handle,
-                                                VIDEO_FRAME_INFO_S *frame,
-                                                cvtdl_class_meta_t *obj_meta);
+                                                    VIDEO_FRAME_INFO_S *frame,
+                                                    cvtdl_class_meta_t *obj_meta);
 
- /**
+/**
  * @brief Topformer segmentation.
  * @param handle An TDL SDK handle.
  * @param frame Input video frame.
@@ -1446,12 +1449,11 @@ DLL_EXPORT CVI_S32 CVI_TDL_Occlusion_Classification(const cvitdl_handle_t handle
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Topformer_Seg(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
-                                     cvtdl_seg_t *filter);   
-
+                                         cvtdl_seg_t *filter);
 
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Segmentation_DownRato(const cvitdl_handle_t handle,
-                                             const CVI_TDL_SUPPORTED_MODEL_E model_index,
-                                             int down_rato);
+                                                     const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                                     int down_rato);
 /**
  * @brief raw image classification
  *
@@ -1622,7 +1624,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_LSTR_ExportFeature(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_Depth_Stereo(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame1,
                                         VIDEO_FRAME_INFO_S *frame2,
                                         cvtdl_depth_logits_t *depth_logist);
-
 
 #ifdef __cplusplus
 }

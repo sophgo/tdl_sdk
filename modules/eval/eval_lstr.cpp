@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <fstream>
 
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   if (ret != CVI_SUCCESS) {
     printf("set export feature failed with %#x!\n", ret);
     return ret;
-  }  
+  }
 
   std::string image_dir(argv[2]);
   std::string image_list(argv[3]);
@@ -64,15 +64,13 @@ int main(int argc, char *argv[]) {
   CVI_TDL_Create_ImageProcessor(&img_handle);
 
   for (size_t i = 0; i < file_list.size(); i++) {
-
     std::string input_image_path = image_dir + file_list[i];
     VIDEO_FRAME_INFO_S bg;
 
-    std::cout << "processing :" << i + 1 << "/" << file_list.size() << "\t"
-              << file_list[i] << std::endl;
+    std::cout << "processing :" << i + 1 << "/" << file_list.size() << "\t" << file_list[i]
+              << std::endl;
 
-    ret = CVI_TDL_ReadImage(img_handle, input_image_path.c_str(), &bg,
-                            PIXEL_FORMAT_RGB_888_PLANAR);
+    ret = CVI_TDL_ReadImage(img_handle, input_image_path.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
     cvtdl_object_t obj_meta = {0};
 
     cvtdl_lane_t lane_meta = {0};
@@ -82,16 +80,16 @@ int main(int argc, char *argv[]) {
 
     std::ofstream outFile(save_path);
     if (!outFile) {
-        std::cout << "Error: Could not open file " << save_path << " for writing." << std::endl;
-        return 1;
+      std::cout << "Error: Could not open file " << save_path << " for writing." << std::endl;
+      return 1;
     }
     for (size_t j = 0; j < 56; ++j) {
-        outFile << lane_meta.feature[j] << " ";
+      outFile << lane_meta.feature[j] << " ";
     }
     outFile << std::endl;
 
     for (size_t j = 0; j < 14; ++j) {
-        outFile << lane_meta.feature[56 + j] << " ";
+      outFile << lane_meta.feature[56 + j] << " ";
     }
 
     outFile.close();
@@ -99,7 +97,6 @@ int main(int argc, char *argv[]) {
     CVI_TDL_Free(&lane_meta);
 
     CVI_TDL_ReleaseImage(img_handle, &bg);
-
   }
 
   CVI_TDL_DestroyHandle(tdl_handle);

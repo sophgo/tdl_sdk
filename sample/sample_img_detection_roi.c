@@ -12,9 +12,8 @@ int main(int argc, char* argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   if (argc != 3) {
-    printf(
-        "Usage: %s <yolov5 model path> <input image path>\n", argv[0]);
-    printf("yolov5 model path: Path to yolov5 model cvimodel.\n");  
+    printf("Usage: %s <yolov5 model path> <input image path>\n", argv[0]);
+    printf("yolov5 model path: Path to yolov5 model cvimodel.\n");
     printf("input image path: Path to input image.\n");
     return CVI_FAILURE;
   }
@@ -62,18 +61,19 @@ int main(int argc, char* argv[]) {
   roi_s.x2 = 750;
   roi_s.y2 = 200;
 
-  VIDEO_FRAME_INFO_S *crop_frame = NULL;
+  VIDEO_FRAME_INFO_S* crop_frame = NULL;
 
-  CVI_TDL_Set_ROI(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &fdFrame, roi_s, PIXEL_FORMAT_RGB_888, &crop_frame);
+  CVI_TDL_Set_ROI(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &fdFrame, roi_s, PIXEL_FORMAT_RGB_888,
+                  &crop_frame);
 
   CVI_TDL_Detection(tdl_handle, crop_frame, CVI_TDL_SUPPORTED_MODEL_YOLOV5, &obj_meta);
 
-  if (ret != 0) { 
-      printf("CVI_TDL_Detection failed with error code: %d\n", ret);
+  if (ret != 0) {
+    printf("CVI_TDL_Detection failed with error code: %d\n", ret);
   }
-  
+
   CVI_TDL_Release_VideoFrame(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV5, crop_frame, true);
-  
+
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("detect res: %f %f %f %f %f %d\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2, obj_meta.info[i].bbox.score,

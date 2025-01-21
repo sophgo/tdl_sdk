@@ -29,7 +29,7 @@ OcclusionClassification::OcclusionClassification() : Core(CVI_MEM_DEVICE) {
   m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
   m_preprocess_param[0].keep_aspect_ratio = false;
   m_preprocess_param[0].use_crop = false;
-#ifndef __CV186X__  
+#ifndef __CV186X__
   m_preprocess_param[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
 #endif
 }

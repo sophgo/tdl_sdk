@@ -18,7 +18,7 @@
 #include "cvi_tdl_media.h"
 #include "sys_utils.hpp"
 
-CVI_S32 get_od_model_info(string &model_name, CVI_TDL_SUPPORTED_MODEL_E *model_index) {
+CVI_S32 get_od_model_info(string& model_name, CVI_TDL_SUPPORTED_MODEL_E* model_index) {
   CVI_S32 ret = CVI_SUCCESS;
   if (strcmp(model_name.c_str(), "mobiledetv2-person-vehicle") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_VEHICLE;
@@ -42,8 +42,8 @@ CVI_S32 get_od_model_info(string &model_name, CVI_TDL_SUPPORTED_MODEL_E *model_i
   return ret;
 }
 
-void bench_mark_all(std::string bench_path, std::string image_root, std::string res_path,cvitdl_handle_t tdl_handle,
-                    CVI_TDL_SUPPORTED_MODEL_E enOdModelId) {
+void bench_mark_all(std::string bench_path, std::string image_root, std::string res_path,
+                    cvitdl_handle_t tdl_handle, CVI_TDL_SUPPORTED_MODEL_E enOdModelId) {
   std::fstream file(bench_path);
   if (!file.is_open()) {
     return;
@@ -61,8 +61,7 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
         VIDEO_FRAME_INFO_S fdFrame;
         auto img_path = image_root + image_name;
         CVI_TDL_ReadImage(img_handle, img_path.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-        CVI_S32 ret = CVI_TDL_Detection(tdl_handle, &fdFrame,
-                                        enOdModelId, &obj_meta);
+        CVI_S32 ret = CVI_TDL_Detection(tdl_handle, &fdFrame, enOdModelId, &obj_meta);
         if (ret != CVI_SUCCESS) {
           CVI_TDL_Free(&obj_meta);
           CVI_TDL_ReleaseImage(img_handle, &fdFrame);
@@ -95,9 +94,10 @@ void bench_mark_all(std::string bench_path, std::string image_root, std::string 
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 5 && argc != 6 && argc != 7) {
+  if (argc != 5 && argc != 6 && argc != 7) {
     printf(
-        "\nUsage: %s MODEL_NAME MODEL_PATH BENCH_PATH IMAGE_ROOT RES_PATH [CONF_THRESHOLD] [NMS_THRESHOLD]\n\n"
+        "\nUsage: %s MODEL_NAME MODEL_PATH BENCH_PATH IMAGE_ROOT RES_PATH [CONF_THRESHOLD] "
+        "[NMS_THRESHOLD]\n\n"
         "\tMODEL_NAME, detection model name should be one of {mobiledetv2-person-vehicle, "
         "mobiledetv2-person-pets, "
         "mobiledetv2-coco80, "

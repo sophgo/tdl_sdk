@@ -5,18 +5,18 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-#include "cvi_kit.h"
 #include "sys_utils.h"
 
 int main(int argc, char* argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   if (argc != 4) {
-    printf(
-        "Usage: %s <lane detection model path> <input image path> <save result path>\n", argv[0]);
-    printf("lane detection model path: Path to lane detection model cvimodel.\n");  
+    printf("Usage: %s <lane detection model path> <input image path> <save result path>\n",
+           argv[0]);
+    printf("lane detection model path: Path to lane detection model cvimodel.\n");
     printf("input image path: Path to input image.\n");
     printf("save result path: Path to save result.\n");
     return CVI_FAILURE;

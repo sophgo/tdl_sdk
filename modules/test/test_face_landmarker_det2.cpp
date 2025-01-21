@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
   }
 
   cvtdl_face_t meta = {0};
- 
+
   CVI_TDL_FaceLandmarkerDet2(tdl_handle, &fdFrame, &meta);
 
   std::cout << "score:" << std::endl

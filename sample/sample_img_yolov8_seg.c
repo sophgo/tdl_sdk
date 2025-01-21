@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-#include "cvi_kit.h"
 // set preprocess and algorithm param for yolov8 detection
 // if use official model, no need to change param
 CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
@@ -53,12 +53,11 @@ int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   if (argc != 3) {
-    printf(
-        "Usage: %s <yolov8 segmentation model path> <input image path>\n", argv[0]);
-    printf("yolov8 segmentation model path: Path to yolov8 segmentation model cvimodel.\n");  
+    printf("Usage: %s <yolov8 segmentation model path> <input image path>\n", argv[0]);
+    printf("yolov8 segmentation model path: Path to yolov8 segmentation model cvimodel.\n");
     printf("input image path: Path to input image.\n");
     return CVI_FAILURE;
-  }    
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_TDL_SUCCESS) {

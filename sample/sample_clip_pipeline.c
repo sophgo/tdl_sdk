@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 #include "sys_utils.h"
-#include "cvi_kit.h"
 double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }
 
 cvitdl_handle_t tdl_handle = NULL;

@@ -10,11 +10,11 @@
 #include <vector>
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 #include "mapi.hpp"
 #include "sys_utils.hpp"
-#include "cvi_kit.h"
 
 double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }
 cvitdl_handle_t tdl_handle = NULL;

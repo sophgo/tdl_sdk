@@ -13,4 +13,4 @@ int count_file_lines(const char *filename);
 char **read_file_lines(const char *filename, int *line_count);
 int compareFileNames(const void *a, const void *b);
 char **getImgList(const char *dir_path, int *line_count);
-#endif //__SYS_UTILS_H__
+#endif  //__SYS_UTILS_H__

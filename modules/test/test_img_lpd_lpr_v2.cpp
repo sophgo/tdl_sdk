@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
 #include <functional>
 #include <iostream>
@@ -7,15 +8,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <sys/time.h>
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #include "sys_utils.hpp"
-#include "cvi_tdl_media.h"
 
 CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup preprocess
@@ -57,7 +57,6 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   return ret;
 }
 
-
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
@@ -74,8 +73,6 @@ int main(int argc, char *argv[]) {
     printf("Create tdl handle failed with %#x!\n", ret);
     return ret;
   }
-
-
 
   ret = init_param(tdl_handle);
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, argv[1]);
@@ -112,7 +109,8 @@ int main(int argc, char *argv[]) {
   printf("obj_size: %d\n", obj_meta.size);
   if (obj_meta.size > 0) {
     CVI_TDL_License_Plate_Keypoint(tdl_handle, &bg, &obj_meta);
-    CVI_TDL_LicensePlateRecognition(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION, &obj_meta);
+    CVI_TDL_LicensePlateRecognition(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION,
+                                    &obj_meta);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_LicensePlateRecognition failed with %#x!\n", ret);
       return ret;
@@ -121,8 +119,9 @@ int main(int argc, char *argv[]) {
       printf("obj_meta bbox %f %f %f %f\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
              obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
       std::string license_str(obj_meta.info[i].vehicle_properity->license_char);
-      license_str.erase(std::remove(license_str.begin(), license_str.end(), ' '), license_str.end());
-      std::cout << "plate i :"<< i <<";pre License char:" <<license_str<< std::endl;
+      license_str.erase(std::remove(license_str.begin(), license_str.end(), ' '),
+                        license_str.end());
+      std::cout << "plate i :" << i << ";pre License char:" << license_str << std::endl;
     }
   } else {
     printf("cannot find license plate\n");

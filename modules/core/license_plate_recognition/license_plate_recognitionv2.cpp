@@ -4,9 +4,9 @@
 #include "core/core/cvtdl_errno.h"
 #include "core/cvi_tdl_types_mem.h"
 #include "core/face/cvtdl_face_types.h"
-#include "rescale_utils.hpp"
-#include "opencv2/imgproc.hpp"
 #include "core/utils/vpss_helper.h"
+#include "opencv2/imgproc.hpp"
+#include "rescale_utils.hpp"
 #define SCALE (1 / 128.)
 #define MEAN (127.5 / 128.)
 
@@ -15,16 +15,13 @@
 namespace cvitdl {
 
 std::vector<std::string> CHARS = {
-         "京", "沪", "津", "渝", "冀", "晋", "蒙", "辽", "吉", "黑",
-         "苏", "浙", "皖", "闽", "赣", "鲁", "豫", "鄂", "湘", "粤",
-         "桂", "琼", "川", "贵", "云", "藏", "陕", "甘", "青", "宁",
-         "新", "学", "警", "港", "澳", "挂", "使", "领", "民", "深",
-         "危", "险", "空",
-         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-         "A", "B", "C", "D", "E", "F", "G", "H", "J", "K",
-         "L", "M", "N", "P", "Q", "R", "S", "T", "U", "V",
-         "W", "X", "Y", "Z", "I", "O", "-"};
-LicensePlateRecognitionV2::LicensePlateRecognitionV2(): LicensePlateRecognitionBase(CVI_MEM_DEVICE){
+    "京", "沪", "津", "渝", "冀", "晋", "蒙", "辽", "吉", "黑", "苏", "浙", "皖", "闽", "赣", "鲁",
+    "豫", "鄂", "湘", "粤", "桂", "琼", "川", "贵", "云", "藏", "陕", "甘", "青", "宁", "新", "学",
+    "警", "港", "澳", "挂", "使", "领", "民", "深", "危", "险", "空", "0",  "1",  "2",  "3",  "4",
+    "5",  "6",  "7",  "8",  "9",  "A",  "B",  "C",  "D",  "E",  "F",  "G",  "H",  "J",  "K",  "L",
+    "M",  "N",  "P",  "Q",  "R",  "S",  "T",  "U",  "V",  "W",  "X",  "Y",  "Z",  "I",  "O",  "-"};
+LicensePlateRecognitionV2::LicensePlateRecognitionV2()
+    : LicensePlateRecognitionBase(CVI_MEM_DEVICE) {
   for (int i = 0; i < 3; i++) {
     m_preprocess_param[0].factor[i] = SCALE;
     m_preprocess_param[0].mean[i] = MEAN;
@@ -34,7 +31,7 @@ LicensePlateRecognitionV2::LicensePlateRecognitionV2(): LicensePlateRecognitionB
   m_preprocess_param[0].keep_aspect_ratio = false;
 }
 
-void LicensePlateRecognitionV2::greedy_decode(float *prebs,cvtdl_vehicle_meta *v_meta) {
+void LicensePlateRecognitionV2::greedy_decode(float *prebs, cvtdl_vehicle_meta *v_meta) {
   CVI_SHAPE shape = getOutputShape(0);
   // 80，18
   int rows = shape.dim[1];
@@ -76,7 +73,7 @@ void LicensePlateRecognitionV2::greedy_decode(float *prebs,cvtdl_vehicle_meta *v
 }
 
 void BufferRGBPacked2PlanarCopy(const uint8_t *buffer, uint32_t width, uint32_t height,
-                                       uint32_t stride, VIDEO_FRAME_INFO_S *frame, bool invert) {
+                                uint32_t stride, VIDEO_FRAME_INFO_S *frame, bool invert) {
   VIDEO_FRAME_S *vFrame = &frame->stVFrame;
   if (invert) {
     for (uint32_t j = 0; j < height; j++) {
@@ -100,17 +97,17 @@ void BufferRGBPacked2PlanarCopy(const uint8_t *buffer, uint32_t width, uint32_t 
     }
   }
 }
-int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *vehicle_plate_meta) {
+int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame,
+                                         cvtdl_object_t *vehicle_plate_meta) {
   if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_BGR_888) {
-    LOGE(
-        "Error: pixel format not match PIXEL_FORMAT_RGB_888 or PIXEL_FORMAT_BGR");
+    LOGE("Error: pixel format not match PIXEL_FORMAT_RGB_888 or PIXEL_FORMAT_BGR");
     return CVI_TDL_ERR_INVALID_ARGS;
   }
   frame->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.u32Length[0]);
   cv::Mat src(frame->stVFrame.u32Height, frame->stVFrame.u32Width, CV_8UC3,
-                  frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);    
+              frame->stVFrame.pu8VirAddr[0], frame->stVFrame.u32Stride[0]);
   for (size_t n = 0; n < vehicle_plate_meta->size; n++) {
     cvtdl_vehicle_meta *v_meta = vehicle_plate_meta->info[n].vehicle_properity;
     cv::Point2f srcTri[3];
@@ -119,13 +116,14 @@ int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object
     srcTri[2] = cv::Point2f(v_meta->license_pts.x[3], v_meta->license_pts.y[3]);
     cv::Point2f dstTri[3];
     dstTri[0] = cv::Point2f(0.f, 0.f);
-    dstTri[1] = cv::Point2f(94.f, 0.f); // x = 93 since the width is 94 pixels
-    dstTri[2] = cv::Point2f(0.f, 24.f); // y = 23 since the height is 24 pixels
+    dstTri[1] = cv::Point2f(94.f, 0.f);  // x = 93 since the width is 94 pixels
+    dstTri[2] = cv::Point2f(0.f, 24.f);  // y = 23 since the height is 24 pixels
     cv::Mat warpMat = cv::getAffineTransform(srcTri, dstTri);
     cv::Mat dst;
     cv::warpAffine(src, dst, warpMat, cv::Size(94, 24));
     VIDEO_FRAME_INFO_S align_frame;
-    if (CREATE_ION_HELPER(&align_frame, dst.cols, dst.rows, PIXEL_FORMAT_RGB_888_PLANAR, "cvitdl/image") != CVI_TDL_SUCCESS) {
+    if (CREATE_ION_HELPER(&align_frame, dst.cols, dst.rows, PIXEL_FORMAT_RGB_888_PLANAR,
+                          "cvitdl/image") != CVI_TDL_SUCCESS) {
       printf("alloc ion failed, imgwidth:%d,imgheight:%d\n", dst.cols, dst.rows);
     }
     BufferRGBPacked2PlanarCopy(dst.data, dst.cols, dst.rows, dst.step, &align_frame, true);
@@ -135,7 +133,7 @@ int LicensePlateRecognitionV2::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object
       return ret;
     }
     float *out = getOutputRawPtr<float>(0);
-    greedy_decode(out,v_meta);
+    greedy_decode(out, v_meta);
     if (align_frame.stVFrame.u64PhyAddr[0] != 0) {
       CVI_SYS_IonFree(align_frame.stVFrame.u64PhyAddr[0], align_frame.stVFrame.pu8VirAddr[0]);
       align_frame.stVFrame.u64PhyAddr[0] = (CVI_U64)0;

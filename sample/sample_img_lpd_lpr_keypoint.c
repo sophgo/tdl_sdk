@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
@@ -46,16 +46,19 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   return ret;
 }
 
-
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   if (argc != 5) {
     printf(
-        "Usage: %s <license plate detection model path> <license plate keypoint model path> <license plate recognition model path> <input image path>\n", argv[0]);
-    printf("license plate detection model path: Path to license plate detection model cvimodel.\n");  
+        "Usage: %s <license plate detection model path> <license plate keypoint model path> "
+        "<license plate recognition model path> <input image path>\n",
+        argv[0]);
+    printf("license plate detection model path: Path to license plate detection model cvimodel.\n");
     printf("license plate keypoint model path: Path to license plate keypoint model cvimodel.\n");
-    printf("license plate recognition model path: Path to license plate recognition model cvimodel.\n");
+    printf(
+        "license plate recognition model path: Path to license plate recognition model "
+        "cvimodel.\n");
     printf("input image path: Path to input image.\n");
     return CVI_FAILURE;
   }
@@ -89,7 +92,7 @@ int main(int argc, char *argv[]) {
     printf("open model RECONGNITION failed with %#x!\n", ret);
     return ret;
   }
-  char* strf1 = argv[4];
+  char *strf1 = argv[4];
 
   VIDEO_FRAME_INFO_S bg;
   imgprocess_t img_handle;
@@ -108,7 +111,8 @@ int main(int argc, char *argv[]) {
   printf("obj_size: %d\n", obj_meta.size);
   if (obj_meta.size > 0) {
     CVI_TDL_License_Plate_Keypoint(tdl_handle, &bg, &obj_meta);
-    CVI_TDL_LicensePlateRecognition(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION, &obj_meta);
+    CVI_TDL_LicensePlateRecognition(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION,
+                                    &obj_meta);
     if (ret != CVI_SUCCESS) {
       printf("CVI_TDL_LicensePlateRecognition failed with %#x!\n", ret);
       return ret;
@@ -116,21 +120,22 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < obj_meta.size; i++) {
       printf("obj_meta bbox %f %f %f %f\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
              obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
-        // 处理车牌字符串，去掉空格
+      // 处理车牌字符串，去掉空格
       char license_str[20];  // 假设车牌字符的最大长度为19
-      strncpy(license_str, obj_meta.info[i].vehicle_properity->license_char, sizeof(license_str) - 1);
-      license_str[sizeof(license_str) - 1] = '\0'; // 确保字符串以 '\0' 结尾
+      strncpy(license_str, obj_meta.info[i].vehicle_properity->license_char,
+              sizeof(license_str) - 1);
+      license_str[sizeof(license_str) - 1] = '\0';  // 确保字符串以 '\0' 结尾
 
-        // 去掉空格
+      // 去掉空格
       char *src = license_str;
       char *dst = license_str;
       while (*src) {
-          if (*src != ' ') {
-              *dst++ = *src; // 复制非空格字符
-          }
-          src++;
+        if (*src != ' ') {
+          *dst++ = *src;  // 复制非空格字符
+        }
+        src++;
       }
-      *dst = '\0'; // 结束字符串
+      *dst = '\0';  // 结束字符串
 
       printf("plate %zu; pre License char: %s\n", i, license_str);
     }

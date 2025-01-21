@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
 #include <functional>
 #include <iostream>
@@ -7,15 +8,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <sys/time.h>
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
 #include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
 #include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #include "sys_utils.hpp"
-#include "cvi_tdl_media.h"
 
 double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }
 bool CompareFileNames(std::string a, std::string b) { return a < b; }
@@ -76,11 +76,10 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-
-  if (atoi(argv[5]) == 0){
+  if (atoi(argv[5]) == 0) {
     ret = init_param(tdl_handle);
     ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, argv[1]);
-  }else{
+  } else {
     ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_LP_DETECTION, argv[1]);
   }
   if (ret != CVI_SUCCESS) {
@@ -117,9 +116,10 @@ int main(int argc, char *argv[]) {
     input_image_path = file_list[i];
     size_t line_position = input_image_path.find_last_of('/');
     size_t dot_position = input_image_path.find_last_of('.');
-    std::string pic_name = input_image_path.substr(line_position+1, dot_position-line_position-1);
-    std::cout<<"number of img:" << i <<";last of imgname:" << pic_name << std::endl;
-    ret = CVI_TDL_ReadImage(img_handle,input_image_path.c_str(), &bg, PIXEL_FORMAT_BGR_888);
+    std::string pic_name =
+        input_image_path.substr(line_position + 1, dot_position - line_position - 1);
+    std::cout << "number of img:" << i << ";last of imgname:" << pic_name << std::endl;
+    ret = CVI_TDL_ReadImage(img_handle, input_image_path.c_str(), &bg, PIXEL_FORMAT_BGR_888);
     if (ret != CVI_SUCCESS) {
       printf("open img failed with %#x!\n", ret);
       return ret;
@@ -127,26 +127,29 @@ int main(int argc, char *argv[]) {
       printf("image read,width:%d\n", bg.stVFrame.u32Width);
     }
     cvtdl_object_t obj_meta = {0};
-    if (atoi(argv[5])==0){
+    if (atoi(argv[5]) == 0) {
       CVI_TDL_Detection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION, &obj_meta);
-    }else{
+    } else {
       CVI_TDL_License_Plate_Detectionv2(tdl_handle, &bg, &obj_meta);
     }
     printf("obj_size: %d\n", obj_meta.size);
-    if (obj_meta.size>0){
+    if (obj_meta.size > 0) {
       CVI_TDL_License_Plate_Keypoint(tdl_handle, &bg, &obj_meta);
       // Both two interfaces are able to call
       // CVI_TDL_LicensePlateRecognition_V2(tdl_handle, &bg, &obj_meta);
-      CVI_TDL_LicensePlateRecognition(tdl_handle, &bg,CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION, &obj_meta);
+      CVI_TDL_LicensePlateRecognition(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION,
+                                      &obj_meta);
       for (size_t n = 0; n < obj_meta.size; n++) {
         std::string license_str(obj_meta.info[n].vehicle_properity->license_char);
-        license_str.erase(std::remove(license_str.begin(), license_str.end(), ' '), license_str.end());
-        std::cout << "plate i :"<<n<<";pre License char:" <<license_str<< std::endl;
+        license_str.erase(std::remove(license_str.begin(), license_str.end(), ' '),
+                          license_str.end());
+        std::cout << "plate i :" << n << ";pre License char:" << license_str << std::endl;
       }
       std::string license_str(obj_meta.info[0].vehicle_properity->license_char);
-      license_str.erase(std::remove(license_str.begin(), license_str.end(), ' '), license_str.end());
+      license_str.erase(std::remove(license_str.begin(), license_str.end(), ' '),
+                        license_str.end());
       if (license_str == pic_name) {
-        correct_count ++;
+        correct_count++;
       } else {
         std::cout << "The strings are not equal." << std::endl;
       }
@@ -155,7 +158,8 @@ int main(int argc, char *argv[]) {
     CVI_TDL_ReleaseImage(img_handle, &bg);
     CVI_TDL_Destroy_ImageProcessor(img_handle);
   }
-  std::cout << "correct_count:"<<correct_count<<";correct:" <<float(correct_count)/file_list.size()<< std::endl;
+  std::cout << "correct_count:" << correct_count
+            << ";correct:" << float(correct_count) / file_list.size() << std::endl;
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

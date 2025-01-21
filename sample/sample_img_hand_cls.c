@@ -12,9 +12,8 @@ int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   if (argc != 3) {
-    printf(
-        "Usage: %s <hand classification model path> <input image path>\n", argv[0]);
-    printf("hand classification model path: Path to hand classification model cvimodel.\n");  
+    printf("Usage: %s <hand classification model path> <input image path>\n", argv[0]);
+    printf("hand classification model path: Path to hand classification model cvimodel.\n");
     printf("input image path: Path to input image.\n");
     return CVI_FAILURE;
   }
@@ -57,7 +56,7 @@ int main(int argc, char *argv[]) {
   obj_meta.size = 1;
   obj_meta.info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj_meta.size);
   memset(obj_meta.info, 0, sizeof(cvtdl_object_info_t));
-  
+
   obj_meta.height = bg.stVFrame.u32Height;
   obj_meta.width = bg.stVFrame.u32Width;
 
@@ -73,9 +72,9 @@ int main(int argc, char *argv[]) {
   CVI_TDL_HandClassification(tdl_handle, &bg, &obj_meta);
 
   if (strlen(obj_meta.info[0].name) > 0) {
-        printf("cls result: %s\n", obj_meta.info[0].name);
+    printf("cls result: %s\n", obj_meta.info[0].name);
   } else {
-        printf("cls result: (空)\n");
+    printf("cls result: (空)\n");
   }
   CVI_TDL_Free(&obj_meta);
   CVI_TDL_ReleaseImage(img_handle, &bg);

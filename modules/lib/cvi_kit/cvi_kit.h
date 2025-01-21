@@ -17,7 +17,7 @@ DLL_EXPORT CVI_S32 CVI_TDL_ShowKeypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t 
                                          float score, char *save_path);
 
 DLL_EXPORT CVI_S32 CVI_TDL_ShowKeypointsAndText(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta,
-                                                char* save_path, char* text, float score);
+                                                char *save_path, char *text, float score);
 
 DLL_EXPORT CVI_S32 CVI_TDL_SavePicture(VIDEO_FRAME_INFO_S *bg, char *save_path);
 
@@ -27,14 +27,14 @@ DLL_EXPORT CVI_S32 CVI_TDL_Cal_Similarity(cvtdl_feature_t feature, cvtdl_feature
 DLL_EXPORT CVI_S32 CVI_TDL_Set_MaskOutlinePoint(VIDEO_FRAME_INFO_S *frame,
                                                 cvtdl_object_t *obj_meta);
 
-DLL_EXPORT CVI_S32 CVI_TDL_Draw_ADAS(cvitdl_app_handle_t app_handle, VIDEO_FRAME_INFO_S *bg, 
-                                                char* save_path);
+DLL_EXPORT CVI_S32 CVI_TDL_Draw_ADAS(cvitdl_app_handle_t app_handle, VIDEO_FRAME_INFO_S *bg,
+                                     char *save_path);
 
 #endif
 DLL_EXPORT CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
                                                float **image_features, int image_features_num,
                                                float **probs);
-                                               
+
 DLL_EXPORT CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
                                               const char *textFile, int32_t **tokens,
                                               int numSentences);

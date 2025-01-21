@@ -6,9 +6,9 @@
 #include <string.h>
 #include <time.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-#include "cvi_kit.h"
 
 int process_image_file(cvitdl_handle_t tdl_handle, char* imgf, cvtdl_face_t* p_obj) {
   VIDEO_FRAME_INFO_S bg;
@@ -48,8 +48,10 @@ int main(int argc, char* argv[]) {
   int vpssgrp_height = 1080;
   if (argc != 5) {
     printf(
-        "Usage: %s <face detection model path> <face recognition model path> <input image1 path> <input image2 path>\n", argv[0]);
-    printf("face detection model path: Path to face detection model cvimodel.\n");  
+        "Usage: %s <face detection model path> <face recognition model path> <input image1 path> "
+        "<input image2 path>\n",
+        argv[0]);
+    printf("face detection model path: Path to face detection model cvimodel.\n");
     printf("face recognition model path: Path to face recognition model cvimodel.\n");
     printf("input image1 path: Path to input image1.\n");
     printf("input image2 path: Path to input image2.\n");
@@ -102,8 +104,8 @@ int main(int argc, char* argv[]) {
 
   printf("boxes=[");
   for (uint32_t i = 0; i < obj_meta1.size; i++) {
-      printf("[%f,%f,%f,%f],", obj_meta1.info[i].bbox.x1, obj_meta1.info[i].bbox.y1,
-             obj_meta1.info[i].bbox.x2, obj_meta1.info[i].bbox.y2);
+    printf("[%f,%f,%f,%f],", obj_meta1.info[i].bbox.x1, obj_meta1.info[i].bbox.y1,
+           obj_meta1.info[i].bbox.x2, obj_meta1.info[i].bbox.y2);
   }
   printf("]\n");
 

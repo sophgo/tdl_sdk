@@ -4,10 +4,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "opencv2/opencv.hpp"
 #include "cvi_tdl_log.hpp"
-#include "utils/token.hpp"
+#include "opencv2/opencv.hpp"
 #include "utils/clip_postprocess.hpp"
+#include "utils/token.hpp"
 #ifndef NO_OPENCV
 
 using namespace cvitdl;
@@ -54,7 +54,8 @@ cv::Scalar gen_random_color(uint64_t seed, int min) {
   return cv::Scalar(r, g, b);
 }
 
-DLL_EXPORT CVI_S32 CVI_TDL_Draw_ADAS(cvitdl_app_handle_t app_handle, VIDEO_FRAME_INFO_S *bg, char* save_path) {
+DLL_EXPORT CVI_S32 CVI_TDL_Draw_ADAS(cvitdl_app_handle_t app_handle, VIDEO_FRAME_INFO_S *bg,
+                                     char *save_path) {
   static const char *enumStr[] = {"N", "S", "C", "D"};
   int g_count = 0;
   bg->stVFrame.pu8VirAddr[0] =
@@ -128,12 +129,12 @@ DLL_EXPORT CVI_S32 CVI_TDL_Draw_ADAS(cvitdl_app_handle_t app_handle, VIDEO_FRAME
 
   cv::imwrite(save_path, img_rgb);
   CVI_SYS_Munmap((void *)bg->stVFrame.pu8VirAddr[0], bg->stVFrame.u32Length[0]);
-  
+
   return CVI_SUCCESS;
 }
 
-DLL_EXPORT CVI_S32 CVI_TDL_ShowKeypointsAndText(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta, char* save_path,
-                    char* text, float score) {
+DLL_EXPORT CVI_S32 CVI_TDL_ShowKeypointsAndText(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta,
+                                                char *save_path, char *text, float score) {
   bg->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_Mmap(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
 
@@ -178,8 +179,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_ShowKeypointsAndText(VIDEO_FRAME_INFO_S *bg, cvtdl_ob
   return CVI_SUCCESS;
 }
 
-CVI_S32 CVI_TDL_ShowKeypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta,
-                                         float score, char *save_path) {
+CVI_S32 CVI_TDL_ShowKeypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta, float score,
+                              char *save_path) {
   bg->stVFrame.pu8VirAddr[0] =
       (CVI_U8 *)CVI_SYS_Mmap(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
 
@@ -240,7 +241,7 @@ CVI_S32 CVI_TDL_SavePicture(VIDEO_FRAME_INFO_S *bg, char *save_path) {
 }
 
 CVI_S32 CVI_TDL_Cal_Similarity(cvtdl_feature_t feature, cvtdl_feature_t feature1,
-                                          float *similarity) {
+                               float *similarity) {
   cv::Mat mat_feature(feature.size, 1, CV_8SC1);
   cv::Mat mat_feature1(feature1.size, 1, CV_8SC1);
   memcpy(mat_feature.data, feature.ptr, feature.size);
@@ -355,8 +356,8 @@ CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
                                    const char *textFile, int32_t **tokens, int numSentences) {
   std::vector<std::vector<int32_t>> tokens_cpp(numSentences);
   // call token_bpe function
-  int result =
-      cvitdl::token_bpe(std::string(encoderFile), std::string(bpeFile), std::string(textFile), tokens_cpp);
+  int result = cvitdl::token_bpe(std::string(encoderFile), std::string(bpeFile),
+                                 std::string(textFile), tokens_cpp);
   // calculate the total number of elements
   for (int i = 0; i < numSentences; i++) {
     // tokens[i] = new int32_t[tokens_cpp[i].size()];

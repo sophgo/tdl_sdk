@@ -12,12 +12,12 @@ int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   if (argc != 3) {
+    printf("Usage: %s <occlusion classification model path> <input image path>\n", argv[0]);
     printf(
-        "Usage: %s <occlusion classification model path> <input image path>\n", argv[0]);
-    printf("occlusion classification model path: Path to occlusion classification model cvimodel.\n");  
+        "occlusion classification model path: Path to occlusion classification model cvimodel.\n");
     printf("input image path: Path to input image.\n");
     return CVI_FAILURE;
-  }    
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 2);
   if (ret != CVI_SUCCESS) {

@@ -130,22 +130,19 @@ int Yolov5::onModelOpened() {
 
 Yolov5::~Yolov5() {}
 
-
 int Yolov5::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
-
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
 
   int ret = run(frames);
   if (ret != CVI_TDL_SUCCESS) {
-      LOGE("Yolov5 run inference failed!\n");
-      return ret;
+    LOGE("Yolov5 run inference failed!\n");
+    return ret;
   }
 
   CVI_SHAPE shape = getInputShape(0);
 
   outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
-                 srcFrame->stVFrame.u32Height, obj_meta);
-  
+               srcFrame->stVFrame.u32Height, obj_meta);
 
   model_timer_.TicToc("post");
   return CVI_TDL_SUCCESS;

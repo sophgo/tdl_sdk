@@ -14,9 +14,9 @@
 #include <vector>
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-#include "cvi_kit.h"
 
 // set preprocess and algorithm param for yolov8 detection
 // if use official model, no need to change param

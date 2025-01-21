@@ -1,7 +1,7 @@
 #pragma once
-#include "cvi_comm.h"
 #include "core.hpp"
 #include "core/object/cvtdl_object_types.h"
+#include "cvi_comm.h"
 
 namespace cvitdl {
 
@@ -15,4 +15,4 @@ class LicensePlateKeypoint final : public Core {
   int frame_w;
   cvtdl_object_info_t cur_obj_info;
 };
-}  // namespace cviai
+}  // namespace cvitdl

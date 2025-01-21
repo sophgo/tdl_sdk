@@ -23,16 +23,16 @@
 #include "human_keypoints_detection/simcc/simcc.hpp"
 #include "human_keypoints_detection/yolov8_pose/yolov8_pose.hpp"
 
-#include "occlusion_classification/occlusion_classification.hpp"
 #include "image_classification/image_classification.hpp"
 #include "incar_object_detection/incar_object_detection.hpp"
 #include "lane_detection/lane_detection.hpp"
 #include "lane_detection/lstr/lstr.hpp"
 #include "lane_detection/polylanenet/polylanenet.hpp"
+#include "occlusion_classification/occlusion_classification.hpp"
 
 #include "license_plate_detection/license_plate_detection.hpp"
-#include "license_plate_recognition/license_plate_recognitionv2.hpp"
 #include "license_plate_keypoint/license_plate_keypoint.hpp"
+#include "license_plate_recognition/license_plate_recognitionv2.hpp"
 #include "liveness/ir_liveness/ir_liveness.hpp"
 #include "motion_detection/md.hpp"
 #include "motion_segmentation/motion_segmentation.hpp"
@@ -234,7 +234,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
     {CVI_TDL_SUPPORTED_MODEL_YOLOV8_FIRE_SMOKE,
-     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))}, 
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
     {CVI_TDL_SUPPORTED_MODEL_LANE_DET, CREATOR(BezierLaneNet)},
 
     {CVI_TDL_SUPPORTED_MODEL_LSTR, CREATOR(LSTR)},
@@ -1025,7 +1025,7 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_SoundClassification, SoundClassification,
 DEFINE_INF_FUNC_F2_P1(CVI_TDL_DeeplabV3, Deeplabv3, CVI_TDL_SUPPORTED_MODEL_DEEPLABV3,
                       cvtdl_class_filter_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_Topformer_Seg, TopformerSeg, CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG,
-                      cvtdl_seg_t *)                      
+                      cvtdl_seg_t *)
 DEFINE_INF_FUNC_F2_P1(CVI_TDL_MotionSegmentation, MotionSegmentation,
                       CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION, cvtdl_seg_logits_t *)
 
@@ -1593,22 +1593,20 @@ CVI_S32 CVI_TDL_Delete_Img(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
   return CVI_SUCCESS;
 }
 
-
 CVI_S32 CVI_TDL_Set_ROI(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model_type,
-                                VIDEO_FRAME_INFO_S *frame, Point_t roi_s, PIXEL_FORMAT_E enDstFormat,
-                                VIDEO_FRAME_INFO_S **crop_frame){
-
+                        VIDEO_FRAME_INFO_S *frame, Point_t roi_s, PIXEL_FORMAT_E enDstFormat,
+                        VIDEO_FRAME_INFO_S **crop_frame) {
   if (handle == NULL || frame == NULL || crop_frame == NULL) {
-      printf("Error: Invalid parameter - handle, frame, or crop_frame is NULL.\n");
-      return CVI_FAILURE;
+    printf("Error: Invalid parameter - handle, frame, or crop_frame is NULL.\n");
+    return CVI_FAILURE;
   }
 
   if (roi_s.x1 >= roi_s.x2 || roi_s.y1 >= roi_s.y2) {
-      printf("Error: Invalid ROI - roi_s.x1 >= roi_s.x2 or roi_s.y1 >= roi_s.y2.\n");
-      return CVI_FAILURE;
+    printf("Error: Invalid ROI - roi_s.x1 >= roi_s.x2 or roi_s.y1 >= roi_s.y2.\n");
+    return CVI_FAILURE;
   }
 
-  cvtdl_bbox_t yolo_box;               
+  cvtdl_bbox_t yolo_box;
   yolo_box.x1 = (float)(roi_s.x1);
   yolo_box.x2 = (float)(roi_s.x2);
   yolo_box.y1 = (float)(roi_s.y1);
@@ -1617,14 +1615,15 @@ CVI_S32 CVI_TDL_Set_ROI(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E 
   uint32_t bbox_w = yolo_box.x2 - yolo_box.x1;
   uint32_t bbox_h = yolo_box.y2 - yolo_box.y1;
 
-  CVI_S32 ret = CVI_TDL_CropResizeImage(handle, model_type, frame, &yolo_box, bbox_w, bbox_h, enDstFormat, crop_frame);
+  CVI_S32 ret = CVI_TDL_CropResizeImage(handle, model_type, frame, &yolo_box, bbox_w, bbox_h,
+                                        enDstFormat, crop_frame);
 
   if (ret != CVI_SUCCESS) {
-      printf("Error: CropResizeImage failed with error code %d.\n", ret);
-      return CVI_FAILURE; 
+    printf("Error: CropResizeImage failed with error code %d.\n", ret);
+    return CVI_FAILURE;
   }
 
-  return CVI_SUCCESS;                                  
+  return CVI_SUCCESS;
 }
 
 CVI_S32 CVI_TDL_CropImage_With_VPSS(const cvitdl_handle_t handle,
@@ -1919,8 +1918,8 @@ CVI_S32 CVI_TDL_Set_LSTR_ExportFeature(const cvitdl_handle_t handle,
 }
 
 CVI_S32 CVI_TDL_Set_Segmentation_DownRato(const cvitdl_handle_t handle,
-                                         const CVI_TDL_SUPPORTED_MODEL_E model_index,
-                                         int down_rato) {
+                                          const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                          int down_rato) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   std::cout << "CVI_TDL_Set_Segmentation_DownRato into" << std::endl;
   if (model_index == CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG) {

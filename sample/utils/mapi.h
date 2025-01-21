@@ -9,7 +9,7 @@
 #define CVI_MAPI_ERR_NOMEM ((int)(-1002))
 #define CVI_MAPI_ERR_TIMEOUT ((int)(-1003))
 #define CVI_MAPI_ERR_INVALID ((int)(-1004))
-#endif // __MAPI_H__
+#endif  // __MAPI_H__
 
 struct PreprocessArg {
   int width;

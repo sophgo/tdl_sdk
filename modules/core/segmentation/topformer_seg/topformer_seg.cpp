@@ -13,7 +13,7 @@
 #define NAME_SCORE 0
 
 namespace cvitdl {
-TopformerSeg::TopformerSeg() : Core(CVI_MEM_DEVICE)  {
+TopformerSeg::TopformerSeg() : Core(CVI_MEM_DEVICE) {
   m_preprocess_param[0].factor[0] = R_SCALE;
   m_preprocess_param[0].factor[1] = G_SCALE;
   m_preprocess_param[0].factor[2] = B_SCALE;

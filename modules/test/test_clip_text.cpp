@@ -10,11 +10,11 @@
 #include <vector>
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 #include "mapi.hpp"
 #include "sys_utils.hpp"
-#include "cvi_kit.h"
 cvitdl_handle_t tdl_handle = NULL;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;

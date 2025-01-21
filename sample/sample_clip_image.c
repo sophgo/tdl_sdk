@@ -88,8 +88,7 @@ int main(int argc, char* argv[]) {
       ret = CVI_TDL_ReadImage_CenrerCrop_Resize(img_handle, input_image_path, &rgb_frame,
                                                 PIXEL_FORMAT_RGB_888_PLANAR, 224, 224);
     } else if (m_input_data_type == 0) {
-      ret = CVI_TDL_OpenCV_ReadImage_Float(img_handle, input_image_path, &rgb_frame,
-                                           opencv_params);
+      ret = CVI_TDL_OpenCV_ReadImage_Float(img_handle, input_image_path, &rgb_frame, opencv_params);
     }
 
     if (ret != CVI_SUCCESS) {

@@ -753,8 +753,10 @@ CVI_S32 update_data(cvitdl_handle_t tdl_handle, face_capture_t *face_cpt_info,
              sizeof(float) * obj_meta.info[0].pts.size);
 
     } else {
-      memcpy(face_cpt_info->data[update_idx].info.pts.x, obj_meta.info[0].pts.x, sizeof(float) * obj_meta.info[0].pts.size);
-      memcpy(face_cpt_info->data[update_idx].info.pts.y, obj_meta.info[0].pts.y, sizeof(float) * obj_meta.info[0].pts.size);
+      memcpy(face_cpt_info->data[update_idx].info.pts.x, obj_meta.info[0].pts.x,
+             sizeof(float) * obj_meta.info[0].pts.size);
+      memcpy(face_cpt_info->data[update_idx].info.pts.y, obj_meta.info[0].pts.y,
+             sizeof(float) * obj_meta.info[0].pts.size);
     }
     free(ori_pts_x);
     free(ori_pts_y);

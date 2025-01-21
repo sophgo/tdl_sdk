@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
+#include <algorithm>
 #include <fstream>
 #include <functional>
-#include <algorithm>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -15,9 +15,9 @@
 #include <vector>
 #include "core/cvi_tdl_types_mem_internal.h"
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-#include "cvi_kit.h"
 #include "sys_utils.hpp"
 
 double __get_us(struct timeval t) { return (t.tv_sec * 1000000 + t.tv_usec); }
@@ -53,8 +53,8 @@ int main(int argc, char *argv[]) {
   }
   // DOWN_RATO
   int down_rato = atoi(argv[3]);
-  ret =
-      CVI_TDL_Set_Segmentation_DownRato(tdl_handle, CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG, down_rato);
+  ret = CVI_TDL_Set_Segmentation_DownRato(tdl_handle, CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG,
+                                          down_rato);
   if (ret != CVI_SUCCESS) {
     printf("Set topformer downrato file %#x!\n", ret);
     return ret;
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   imgprocess_t img_handle;
   int outH, outW;
   CVI_TDL_Create_ImageProcessor(&img_handle);
-  
+
   for (size_t i = 0; i < file_list.size(); i++) {
     input_image_path = file_list[i];
     VIDEO_FRAME_INFO_S rgb_frame;
@@ -91,7 +91,8 @@ int main(int argc, char *argv[]) {
     strcpy(seg_ann.img_name,
            input_image_path.substr(line_position + 1, dot_position - line_position - 1).c_str());
     std::cout << "number of img:" << i << ";last of imgname:" << seg_ann.img_name << std::endl;
-    ret = CVI_TDL_ReadImage(img_handle,input_image_path.c_str(), &rgb_frame, PIXEL_FORMAT_RGB_888_PLANAR);
+    ret = CVI_TDL_ReadImage(img_handle, input_image_path.c_str(), &rgb_frame,
+                            PIXEL_FORMAT_RGB_888_PLANAR);
     if (ret != CVI_SUCCESS) {
       printf("open img failed with %#x!\n", ret);
       return ret;
@@ -110,7 +111,7 @@ int main(int argc, char *argv[]) {
         std::cout << std::endl;
       }
     }
-    CVI_TDL_ReleaseImage(img_handle,&rgb_frame);
+    CVI_TDL_ReleaseImage(img_handle, &rgb_frame);
     CVI_TDL_Free(&seg_ann);
   }
   CVI_TDL_Destroy_ImageProcessor(img_handle);

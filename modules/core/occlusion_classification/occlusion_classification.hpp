@@ -9,6 +9,5 @@ class OcclusionClassification final : public Core {
   OcclusionClassification();
   virtual ~OcclusionClassification();
   int inference(VIDEO_FRAME_INFO_S *frame, cvtdl_class_meta_t *occlusion_classification_meta);
-
 };
 }  // namespace cvitdl

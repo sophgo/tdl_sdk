@@ -48,9 +48,9 @@ int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   if (argc != 4) {
-    printf(
-        "Usage: %s <face detection model path> <face quality model path> <input image path>\n", argv[0]);
-    printf("face detection model path: Path to face detection model cvimodel.\n");  
+    printf("Usage: %s <face detection model path> <face quality model path> <input image path>\n",
+           argv[0]);
+    printf("face detection model path: Path to face detection model cvimodel.\n");
     printf("face quality model path: Path to face quality model cvimodel.\n");
     printf("input image path: Path to input image.\n");
     return CVI_FAILURE;
@@ -97,7 +97,8 @@ int main(int argc, char *argv[]) {
   for (uint32_t i = 0; i < obj_meta.size; i++) {
     printf("[%f,%f,%f,%f],", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
-    printf("face %d quality score %f,head pose angle %f\n", i, obj_meta.info[i].face_quality, obj_meta.info[i].head_pose);
+    printf("face %d quality score %f,head pose angle %f\n", i, obj_meta.info[i].face_quality,
+           obj_meta.info[i].head_pose);
   }
   printf("]\n");
 

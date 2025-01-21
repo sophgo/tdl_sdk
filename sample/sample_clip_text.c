@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 #include "sys_utils.h"
-#include "cvi_kit.h"
 cvitdl_handle_t tdl_handle = NULL;
 static CVI_S32 vpssgrp_width = 1920;
 static CVI_S32 vpssgrp_height = 1080;

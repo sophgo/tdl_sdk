@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-#include "cvi_kit.h"
 #include "sys_utils.h"
 
 int process_img_simcc(cvitdl_handle_t tdl_handle, char* pd_model, char* pose_model,
@@ -62,14 +62,16 @@ int process_img_yolov8pose(cvitdl_handle_t tdl_handle, char* pose_model, VIDEO_F
 
 int main(int argc, char* argv[]) {
   if (argc < 5 || argc > 6) {
-      printf(
-          "Usage: %s <pose detection model path> <process flag> <input image path> <show flag> [<person detection model path>]\n", argv[0]);
-      printf("pose detection model path: Path to pose detection model cvimodel.\n");  
-      printf("process flag: simcc or yolov8pose.\n");
-      printf("input image path: Path to the input image.\n");
-      printf("show flag: 1 to show keypoints, 0 to not show.\n");
-      printf("person detection model path (optional): Required if process_flag is 'simcc'.\n");
-      return CVI_FAILURE;
+    printf(
+        "Usage: %s <pose detection model path> <process flag> <input image path> <show flag> "
+        "[<person detection model path>]\n",
+        argv[0]);
+    printf("pose detection model path: Path to pose detection model cvimodel.\n");
+    printf("process flag: simcc or yolov8pose.\n");
+    printf("input image path: Path to the input image.\n");
+    printf("show flag: 1 to show keypoints, 0 to not show.\n");
+    printf("person detection model path (optional): Required if process_flag is 'simcc'.\n");
+    return CVI_FAILURE;
   }
   char* pose_model = argv[1];    // pose detection model path
   char* process_flag = argv[2];  // simcc | yolov8pose
@@ -77,7 +79,7 @@ int main(int argc, char* argv[]) {
   int show = atoi(argv[4]);      // 1 for show keypoints, 0 for not show;
 
   char* pd_model;  // person detection model path,
-  if(strcmp(process_flag, "simcc")==0) {
+  if (strcmp(process_flag, "simcc") == 0) {
     pd_model = argv[5];
   }
 
@@ -112,7 +114,7 @@ int main(int argc, char* argv[]) {
   }
 
   cvtdl_object_t obj_meta = {0};
-  printf("process_flag:%s\n",process_flag);
+  printf("process_flag:%s\n", process_flag);
   if (strcmp(process_flag, "simcc") == 0) {
     process_img_simcc(tdl_handle, pd_model, pose_model, &bg, &obj_meta);
   } else {

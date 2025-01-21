@@ -49,8 +49,9 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   if (argc != 4) {
     printf(
-        "Usage: %s <face detection model path> <face irliveness model path> <input image path>\n", argv[0]);
-    printf("face detection model path: Path to face detection model cvimodel.\n");  
+        "Usage: %s <face detection model path> <face irliveness model path> <input image path>\n",
+        argv[0]);
+    printf("face detection model path: Path to face detection model cvimodel.\n");
     printf("face irliveness model path: Path to face irliveness model cvimodel.\n");
     printf("input image path: Path to input image.\n");
     return CVI_FAILURE;

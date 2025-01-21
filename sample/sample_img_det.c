@@ -17,7 +17,7 @@ CVI_S32 get_od_model_info(char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_ind
   } else if (strcmp(model_name, "yolov6") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV6;
   } else if (strcmp(model_name, "yolov3") == 0) {
-    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;    
+    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV3;
   } else if (strcmp(model_name, "yolov7") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV7;
   } else if (strcmp(model_name, "yolov8") == 0) {
@@ -25,19 +25,19 @@ CVI_S32 get_od_model_info(char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_ind
   } else if (strcmp(model_name, "yolox") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOX;
   } else if (strcmp(model_name, "ppyoloe") == 0) {
-    *model_index = CVI_TDL_SUPPORTED_MODEL_PPYOLOE;    
+    *model_index = CVI_TDL_SUPPORTED_MODEL_PPYOLOE;
   } else if (strcmp(model_name, "yolov10") == 0) {
-    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION;        
+    *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION;
   } else if (strcmp(model_name, "yolov8-hardhat") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT;
   } else if (strcmp(model_name, "fire-smoke") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_YOLOV8_FIRE_SMOKE;
   } else if (strcmp(model_name, "hand") == 0) {
-    *model_index = CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION;    
+    *model_index = CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION;
   } else if (strcmp(model_name, "person-pet") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION;
   } else if (strcmp(model_name, "person-vehicle") == 0) {
-    *model_index = CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION; 
+    *model_index = CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION;
   } else if (strcmp(model_name, "hand-face-person") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION;
   } else if (strcmp(model_name, "head-person") == 0) {
@@ -47,7 +47,7 @@ CVI_S32 get_od_model_info(char *model_name, CVI_TDL_SUPPORTED_MODEL_E *model_ind
   } else if (strcmp(model_name, "mobiledetv2-vehicle") == 0) {
     *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE;
   } else if (strcmp(model_name, "mobiledetv2-pedestrian") == 0) {
-    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;                  
+    *model_index = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;
   } else {
     ret = CVI_TDL_FAILURE;
   }
@@ -58,14 +58,14 @@ int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
   if (argc != 4) {
+    printf("Usage: %s <model name> <model path> <input image path>\n", argv[0]);
     printf(
-        "Usage: %s <model name> <model path> <input image path>\n", argv[0]);
-    printf("model name: detection model name should be one of {mobiledetv2-person-vehicle, "
+        "model name: detection model name should be one of {mobiledetv2-person-vehicle, "
         "mobiledetv2-person-pets, "
         "mobiledetv2-coco80, "
         "mobiledetv2-vehicle, "
         "mobiledetv2-pedestrian, "
-        "yolov3, yolox and so on}.\n");    
+        "yolov3, yolox and so on}.\n");
     printf("model path: Path to cvimodel.\n");
     printf("input image path: Path to input image.\n");
     return CVI_FAILURE;
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
   CVI_TDL_SetModelNmsThreshold(tdl_handle, enOdModelId, 0.5);
 
   printf("---------------------to do detection-----------------\n");
-  
+
   imgprocess_t img_handle;
   CVI_TDL_Create_ImageProcessor(&img_handle);
 

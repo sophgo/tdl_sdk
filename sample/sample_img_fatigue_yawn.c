@@ -8,7 +8,6 @@
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 
-
 int process_image_file(cvitdl_handle_t tdl_handle, char *imgf, cvtdl_face_t *p_obj) {
   VIDEO_FRAME_INFO_S bg;
   imgprocess_t img_handle;
@@ -59,8 +58,10 @@ int main(int argc, char *argv[]) {
   int vpssgrp_height = 1080;
   if (argc != 5) {
     printf(
-        "Usage: %s <face detection model path> <face landmarker model path> <yawn classification model path> <input image path>\n", argv[0]);
-    printf("face detection model path: Path to face detection model cvimodel.\n");  
+        "Usage: %s <face detection model path> <face landmarker model path> <yawn classification "
+        "model path> <input image path>\n",
+        argv[0]);
+    printf("face detection model path: Path to face detection model cvimodel.\n");
     printf("face landmarker model path: Path to face landmarker model cvimodel.\n");
     printf("yawn classification model path: Path to yawn classification model cvimodel.\n");
     printf("input image path: Path to input image.\n");
