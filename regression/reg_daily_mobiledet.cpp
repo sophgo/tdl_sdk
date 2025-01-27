@@ -54,7 +54,7 @@ class MobileDetV2TestSuite : public CVI_TDLModelTestSuite {
 const std::unordered_map<std::string,
                          std::pair<CVI_TDL_SUPPORTED_MODEL_E, MobileDetV2TestSuite::InferenceFunc>>
     MobileDetV2TestSuite::MODEL_MAP = {
-#ifndef CV186X
+#ifndef __CV186X__
         {"mobiledetv2-d0-ls.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_COCO80, CVI_TDL_Detection}},
         {"mobiledetv2-d0.cvimodel",
@@ -82,7 +82,7 @@ const std::unordered_map<std::string,
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d0-448_cv186x.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
-#ifndef CV186X
+#ifndef __CV186X__
         {"mobiledetv2-pedestrian-d0-ls-768.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d0-ls-384.cvimodel",
@@ -104,7 +104,7 @@ const std::unordered_map<std::string,
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
         {"mobiledetv2-pedestrian-d1-896_cv186x.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, CVI_TDL_Detection}},
-#ifndef CV186X
+#ifndef __CV186X__
         {"mobiledetv2-vehicle-d0-ls.cvimodel",
          {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE, CVI_TDL_Detection}},
         {"mobiledetv2-vehicle-d0.cvimodel",
@@ -127,7 +127,7 @@ MobileDetV2TestSuite::ModelInfo MobileDetV2TestSuite::getModel(const std::string
   return model_info;
 }
 
-#ifndef CV186X
+#ifndef __CV186X__
 TEST_F(MobileDetV2TestSuite, open_close_model) {
   ModelInfo model_info = getModel("mobiledetv2-lite-person-pets.cvimodel");
   ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
@@ -138,8 +138,8 @@ TEST_F(MobileDetV2TestSuite, open_close_model) {
 
   const char *model_path_get = CVI_TDL_GetModelPath(m_tdl_handle, model_info.index);
 
-  EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, model_info.model_path,
-               std::string(model_path_get));
+  EXPECT_PRED2([](const std::string &s1, const std::string &s2) { return s1 == s2; },
+               model_info.model_path, std::string(model_path_get));
 
   ASSERT_EQ(CVI_TDL_CloseModel(m_tdl_handle, model_info.index), CVI_TDL_SUCCESS);
 }
@@ -336,7 +336,7 @@ TEST_F(MobileDetV2TestSuite, set_threshold) {
   }
 }
 
-#ifndef CV186X
+#ifndef __CV186X__
 TEST_F(MobileDetV2TestSuite, select_classes) {
   ModelInfo model_info = getModel("mobiledetv2-d0-ls.cvimodel");
   ASSERT_LT(model_info.index, CVI_TDL_SUPPORTED_MODEL_END);
@@ -466,3 +466,4 @@ TEST_F(MobileDetV2TestSuite, accuracy) {
 
 }  // namespace unitest
 }  // namespace cvitdl
+

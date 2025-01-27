@@ -1,5 +1,6 @@
 #include "core/cvi_tdl_types_mem.h"
 #include <string.h>
+#include <cvi_tdl_log.hpp>
 #include "core/cvi_tdl_types_mem_internal.h"
 // Free
 
@@ -158,11 +159,16 @@ void CVI_TDL_FreeCpp(cvtdl_seg_logits_t *seg_logits) {
 
 void CVI_TDL_FreeCpp(cvtdl_lane_t *lane_meta) {
   if (lane_meta->lane != NULL) {
-    // for (uint32_t i = 0; i < lane_meta->size; i++) {
     free(lane_meta->lane);
-    // }
+    lane_meta->lane = NULL;
+    lane_meta->size = 0;
   }
-  lane_meta->lane = NULL;
+
+  if (lane_meta->feature != NULL) {
+    free(lane_meta->feature);
+    lane_meta->feature = NULL;
+    lane_meta->feature_size = 0;
+  }
 }
 
 void CVI_TDL_FreeCpp(cvtdl_clip_feature *clip_meta) {
@@ -258,6 +264,10 @@ void CVI_TDL_CopyInfoCpp(const cvtdl_object_info_t *info, cvtdl_object_info_t *i
   if (infoNew->feature.size != 0) {
     uint32_t feature_size = infoNew->feature.size * getFeatureTypeSize(infoNew->feature.type);
     infoNew->feature.ptr = (int8_t *)malloc(feature_size);
+    if (infoNew->feature.ptr == nullptr) {
+      syslog(LOG_ERR, "malloc failed for feature.ptr\n");
+      return;
+    }
     memcpy(infoNew->feature.ptr, info->feature.ptr, feature_size);
   } else {
     infoNew->feature.ptr = NULL;
@@ -284,6 +294,43 @@ void CVI_TDL_CopyInfoCpp(const cvtdl_object_info_t *info, cvtdl_object_info_t *i
   }
 
   infoNew->classes = info->classes;
+}
+
+void CVI_TDL_CopyInfoCpp(const cvtdl_pts_t *info, cvtdl_pts_t *infoNew) {
+  infoNew->size = info->size;
+  infoNew->score = info->score;
+
+  if (infoNew->size != 0) {
+    uint32_t pts_size = infoNew->size * sizeof(float);
+    infoNew->x = (float *)malloc(pts_size);
+    infoNew->y = (float *)malloc(pts_size);
+    memcpy(infoNew->x, info->x, pts_size);
+    memcpy(infoNew->y, info->y, pts_size);
+  } else {
+    infoNew->x = NULL;
+    infoNew->y = NULL;
+  }
+}
+
+void CVI_TDL_CopyInfoCpp(const cvtdl_dms_t *info, cvtdl_dms_t *infoNew) {
+  infoNew->reye_score = info->reye_score;
+  infoNew->leye_score = info->leye_score;
+  infoNew->yawn_score = info->yawn_score;
+  infoNew->phone_score = info->phone_score;
+  infoNew->smoke_score = info->smoke_score;
+
+  infoNew->head_pose = info->head_pose;
+
+  CVI_TDL_CopyInfoCpp(&info->landmarks_106, &infoNew->landmarks_106);
+  CVI_TDL_CopyInfoCpp(&info->landmarks_5, &infoNew->landmarks_5);
+
+  infoNew->dms_od.size = info->dms_od.size;
+  infoNew->dms_od.width = info->dms_od.width;
+  infoNew->dms_od.height = info->dms_od.height;
+  infoNew->dms_od.rescale_type = info->dms_od.rescale_type;
+  if (info->dms_od.info) {
+    CVI_TDL_CopyInfoCpp(info->dms_od.info, infoNew->dms_od.info);
+  }
 }
 
 void CVI_TDL_CopyInfoCpp(const cvtdl_dms_od_info_t *info, cvtdl_dms_od_info_t *infoNew) {
@@ -317,12 +364,8 @@ void CVI_TDL_CopyFaceMeta(const cvtdl_face_t *src, cvtdl_face_t *dest) {
 
     if (src->dms) {
       dest->dms = (cvtdl_dms_t *)malloc(sizeof(cvtdl_dms_t));
-      memcpy(dest->dms, src->dms, sizeof(cvtdl_dms_t));
-      cvtdl_dms_od_info_t *src_dms_od_info = src->dms->dms_od.info;
-      if (src_dms_od_info) {
-        dest->dms->dms_od.info = (cvtdl_dms_od_info_t *)malloc(sizeof(cvtdl_dms_od_info_t));
-        memcpy(dest->dms->dms_od.info, src_dms_od_info, sizeof(cvtdl_dms_od_info_t));
-      }
+      memset(dest->dms, 0, sizeof(cvtdl_dms_t));
+      CVI_TDL_CopyInfoCpp(src->dms, dest->dms);
     }
   }
 }

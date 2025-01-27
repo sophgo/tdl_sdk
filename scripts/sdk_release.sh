@@ -61,7 +61,9 @@ elif [[ "$SDK_VER" == "32bit" ]]; then
     KERNEL_ROOT="${KERNEL_PATH}"/build/"${PROJECT_FULLNAME}"/arm/usr
 elif [[ "$SDK_VER" == "64bit" ]]; then
     TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain-aarch64-linux.cmake
-    if [[ "$CROSS_COMPILE" == "aarch64-linux-" ]]; then
+    if [[ "$CROSS_COMPILE" == "aarch64-none-linux-gnu-" ]]; then
+        TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain1131-aarch64-linux.cmake
+    elif [[ "$CROSS_COMPILE" == "aarch64-linux-" ]]; then
         TOOLCHAIN_FILE=$CVI_TDL_ROOT/toolchain/toolchain930-aarch64-linux.cmake
     fi
     SYSTEM_PROCESSOR=ARM64
@@ -88,7 +90,6 @@ elif [[ "$CHIP_ARCH" == "CV181X" ]]; then
 elif [[ "$CHIP_ARCH" == "CV180X" ]]; then
     USE_TPU_IVE=ON
 elif [[ "$CHIP_ARCH" == "SOPHON" ]]; then
-    CHIP_ARCH=CV186X
     USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
@@ -118,18 +119,18 @@ ninja -j8 || exit 1
 ninja install || exit 1
 popd
 
-echo "trying to build sample in released folder."
-cp -rf $CVI_TDL_ROOT/scripts/compile_sample.sh ${AI_SDK_INSTALL_PATH}/sample
-pushd "${AI_SDK_INSTALL_PATH}/sample"
-    KERNEL_ROOT=$KERNEL_ROOT\
-    MW_PATH=$MW_PATH\
-    TPU_PATH=$TPU_SDK_INSTALL_PATH\
-    IVE_PATH=$IVE_SDK_INSTALL_PATH\
-    USE_TPU_IVE=$USE_TPU_IVE\
-    CHIP=$CHIP_ARCH\
-    SDK_VER=$SDK_VER\
-    source compile_sample.sh || exit 1
-popd
+# echo "trying to build sample in released folder."
+# cp -rf $CVI_TDL_ROOT/scripts/compile_sample.sh ${AI_SDK_INSTALL_PATH}/sample
+# pushd "${AI_SDK_INSTALL_PATH}/sample"
+#     KERNEL_ROOT=$KERNEL_ROOT\
+#     MW_PATH=$MW_PATH\
+#     TPU_PATH=$TPU_SDK_INSTALL_PATH\
+#     IVE_PATH=$IVE_SDK_INSTALL_PATH\
+#     USE_TPU_IVE=$USE_TPU_IVE\
+#     CHIP=$CHIP_ARCH\
+#     SDK_VER=$SDK_VER\
+#     source compile_sample.sh || exit 1
+# popd
 
 if [[ "$BUILD_TYPE" == "Release" ]]; then
     # Clone doc to aisdk

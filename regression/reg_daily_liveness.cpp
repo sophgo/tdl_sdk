@@ -47,7 +47,7 @@ TEST_F(LivenessTestSuite, open_close_model) {
 
   const char *model_path_get = CVI_TDL_GetModelPath(m_tdl_handle, CVI_TDL_SUPPORTED_MODEL_LIVENESS);
 
-  EXPECT_PRED2([](auto s1, auto s2) { return s1 == s2; }, m_model_path,
+  EXPECT_PRED2([](const std::string &s1, const std::string &s2) { return s1 == s2; }, m_model_path,
                std::string(model_path_get));
 }
 

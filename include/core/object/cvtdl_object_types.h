@@ -393,10 +393,12 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
+  uint32_t feature_size;
+  int lane_state;
 
   meta_rescale_type_e rescale_type;
   cvtdl_lane_point_t *lane;
-  int lane_state;
+  float *feature;
 } cvtdl_lane_t;
 
 // consumer line
@@ -448,6 +450,30 @@ typedef struct {
   float *out_feature;
   int feature_dim;
 } cvtdl_clip_feature;
+
+/** @struct cvtdl_opencv_params
+ *  @ingroup core_cvitdlcore
+ *  @brief Set OpenCV Preprocessing Parameters. This struct can be used in
+ *  @ mean and std are based on normalized values
+ *  @ enum interpolationMethod
+ *  0 -> cv::INTER_NEAREST
+ *  1 -> cv::INTER_LINEA
+ *  2 -> cv::INTER_CUBIC
+ *  3 -> cv::INTER_AREA
+ *  4 -> cv::INTER_LANCZOS4
+ *  @ enum rgbFormat
+ *  0 -> RGB
+ *  1 -> BGR
+ */
+
+typedef struct {
+  int width;
+  int height;
+  float mean[3];
+  float std[3];
+  int interpolationMethod;
+  int rgbFormat;
+} cvtdl_opencv_params;
 
 /** @struct cvtdl_handpose21_meta_t
  * @ingroup core_cvitdlcore

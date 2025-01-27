@@ -253,7 +253,16 @@ DLL_EXPORT CVI_S32 CVI_TDL_DestroyHandle(cvitdl_handle_t handle);
  */
 DLL_EXPORT CVI_S32 CVI_TDL_OpenModel(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
                                      const char *filepath);
-
+/**
+ * @brief Get model input data tpye.
+ *
+ * @param handle An TDL SDK handle.
+ * @param model Supported model id.
+ * @param filepath File path to the cvimodel file.
+ * @return int Return CVI_TDL_SUCCESS if load model succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_GetModelInputTpye(cvitdl_handle_t handle,
+                                             CVI_TDL_SUPPORTED_MODEL_E model, int *inputDTpye);
 /**
  * @brief Open model with given file path.
  *
@@ -1278,19 +1287,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_FaceLandmarkerDet2(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_DMSLDet(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                    cvtdl_face_t *face);
 
-/**
- * @brief Dump model input frame to npz.
- *
- * @param handle An TDL SDK handle.
- * @param model Model id.
- * @param dump_path Output path.
- * @param enable Whether enable or not.
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-/**@}*/
-DLL_EXPORT CVI_S32 CVI_TDL_EnalbeDumpInput(cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model,
-                                           const char *dump_path, bool enable);
-
 DLL_EXPORT CVI_S32 CVI_TDL_CropImage_With_VPSS(const cvitdl_handle_t handle,
                                                CVI_TDL_SUPPORTED_MODEL_E model,
                                                VIDEO_FRAME_INFO_S *frame,
@@ -1429,7 +1425,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_Raw_Image_Classification(const cvitdl_handle_t handle
                                                     VIDEO_FRAME_INFO_S *frame,
                                                     cvtdl_class_meta_t *obj_meta);
 
-#ifdef CV186X
 /**
  * @brief isp image classification
  *
@@ -1442,7 +1437,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_Isp_Image_Classification(const cvitdl_handle_t handle
                                                     VIDEO_FRAME_INFO_S *frame,
                                                     cvtdl_class_meta_t *obj_meta,
                                                     cvtdl_isp_meta_t *isp_meta);
-#endif
 
 /**
  * @brief get model preprocess param struct
@@ -1582,6 +1576,10 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Polylanenet_Lower(const cvitdl_handle_t handle,
 
 DLL_EXPORT CVI_S32 CVI_TDL_LSTR_Det(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                     cvtdl_lane_t *lane_meta);
+
+DLL_EXPORT CVI_S32 CVI_TDL_Set_LSTR_ExportFeature(const cvitdl_handle_t handle,
+                                                  const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                                  int flag);
 
 DLL_EXPORT CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
                                               const char *textFile, int32_t **tokens,

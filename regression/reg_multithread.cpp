@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   const CVI_S32 vpssgrp_height = 2160;
   ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 8, 608, 608,
                          PIXEL_FORMAT_RGB_888_PLANAR, 10);
-#ifndef CV186X
+#ifndef __CV186X__
   CVI_SYS_SetVPSSMode(VPSS_MODE_SINGLE);
 #endif
   std::string arg_val = argv[3];

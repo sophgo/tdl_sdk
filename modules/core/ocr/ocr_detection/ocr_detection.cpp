@@ -35,6 +35,10 @@ int OCRDetection::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta)
   std::vector<VIDEO_FRAME_INFO_S *> frames = {frame};
   printf("OCRDetection running!\n");
   int ret = run(frames);
+  if (ret != CVI_TDL_SUCCESS) {
+    printf("OCR detection run failed with error code: %#x\n", ret);
+    return ret;
+  }
   float thresh = 0.95;
   float boxThresh = 0.7;
   obj_meta->height = frame->stVFrame.u32Height;
@@ -117,8 +121,9 @@ void OCRDetection::outputParser(float thresh, float boxThresh, cvtdl_object_t *o
 
     cv::Rect boundingBox = cv::boundingRect(contour);
 
-    cvtdl_bbox_t bbox = {boundingBox.x, boundingBox.y, boundingBox.x + boundingBox.width,
-                         boundingBox.y + boundingBox.height};
+    cvtdl_bbox_t bbox = {static_cast<float>(boundingBox.x), static_cast<float>(boundingBox.y),
+                         static_cast<float>(boundingBox.x + boundingBox.width),
+                         static_cast<float>(boundingBox.y + boundingBox.height)};
     cvtdl_bbox_t rescaled_bbox =
         box_rescale(obj_meta->width, obj_meta->height, shape.dim[3], shape.dim[2], bbox,
                     meta_rescale_type_e::RESCALE_CENTER);
