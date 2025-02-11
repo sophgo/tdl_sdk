@@ -6,16 +6,8 @@
 
 #include "cvi_tdl_log.hpp"
 #include "utils/common_utils.hpp"
-BaseImage::BaseImage() {
-#ifdef __SOPHON__
-  memory_pool_ =
-      BaseMemoryPoolFactory::createMemoryPool(MemoryPoolType::BM_SOC_DEVICE);
-#else
-  memory_pool_ =
-      BaseMemoryPoolFactory::createMemoryPool(MemoryPoolType::CVI_SOC_DEVICE);
-#endif
-}
 
+BaseImage::BaseImage() : memory_pool_(nullptr), memory_block_(nullptr) {}
 int32_t BaseImage::randomFill() {
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -72,6 +64,12 @@ int32_t BaseImage::allocateMemory() {
     LOGE("setup memory failed");
     return ret;
   }
+  LOGI(
+      "allocateMemory "
+      "done,width:%d,height:%d,format:%d,pix_type:%d,virtual_address:%lx,"
+      "physical_address:%lx",
+      getWidth(), getHeight(), getImageFormat(), getPixDataType(),
+      memory_block_->virtualAddress, memory_block_->physicalAddress);
   return 0;
 }
 
@@ -118,82 +116,5 @@ int32_t BaseImage::setupMemoryBlock(
     return ret;
   }
   memory_block_ = std::move(memory_block);
-  return 0;
-}
-
-int32_t BaseImage::readImage(const std::string& file_path) {
-  // Implementation here
-  cv::Mat img = cv::imread(file_path);
-  if (img.empty()) {
-    LOGE("Failed to load image from file: %s", file_path.c_str());
-    return -1;
-  } else {
-    LOGI("read image %s done, width: %d, height: %d", file_path.c_str(),
-         img.cols, img.rows);
-  }
-  int32_t ret = prepareImageInfo(img.cols, img.rows, ImageFormat::BGR_PACKED,
-                                 ImagePixDataType::UINT8);
-  if (ret != 0) {
-    LOGE("prepareImageInfo failed, ret: %d", ret);
-    return -1;
-  }
-  ret = allocateMemory();
-  if (ret != 0) {
-    LOGE("allocateMemory failed, ret: %d", ret);
-    return -1;
-  }
-  auto vir_addr = getVirtualAddress();
-  std::vector<uint32_t> strides = getStrides();
-  for (int r = 0; r < img.rows; r++) {
-    uint8_t* ptr = img.data + r * img.step[0];
-    uint8_t* dst = (uint8_t*)vir_addr[0] + r * strides[0];
-    memcpy(dst, ptr, img.cols * 3);
-  }
-  ret = flushCache();
-  if (ret != 0) {
-    LOGE("flushCache failed, ret: %d", ret);
-    return -1;
-  }
-  return 0;
-}
-
-int32_t BaseImage::writeImage(const std::string& file_path) {
-  // Implementation here
-  if (image_format_ != ImageFormat::BGR_PACKED &&
-      image_format_ != ImageFormat::RGB_PACKED &&
-      image_format_ != ImageFormat::GRAY &&
-      image_format_ != ImageFormat::BGR_PLANAR &&
-      image_format_ != ImageFormat::RGB_PLANAR) {
-    LOGE("writeImage failed, image format not supported");
-    return -1;
-  }
-  cv::Mat img(getHeight(), getWidth(), CV_8UC3);
-  int32_t ret = invalidateCache();
-  if (ret != 0) {
-    LOGE("invalidateCache failed, ret: %d", ret);
-    return -1;
-  }
-  auto vir_addr = getVirtualAddress();
-  std::vector<uint32_t> strides = getStrides();
-  for (int r = 0; r < img.rows; r++) {
-    if (image_format_ == ImageFormat::BGR_PACKED ||
-        image_format_ == ImageFormat::RGB_PACKED) {
-      uint8_t* src = vir_addr[0] + r * strides[0];
-      uint8_t* dst = img.data + r * img.step[0];
-      memcpy(dst, src, img.cols * 3);
-    } else if (image_format_ == ImageFormat::BGR_PLANAR ||
-               image_format_ == ImageFormat::RGB_PLANAR) {
-      uint8_t* dst = img.data + r * img.step[0];
-      uint8_t* src1 = (uint8_t*)vir_addr[0] + r * strides[0];
-      uint8_t* src2 = (uint8_t*)vir_addr[1] + r * strides[1];
-      uint8_t* src3 = (uint8_t*)vir_addr[2] + r * strides[2];
-      for (int c = 0; c < img.cols; c++) {
-        dst[c * 3] = src1[c];
-        dst[c * 3 + 1] = src2[c];
-        dst[c * 3 + 2] = src3[c];
-      }
-    }
-  }
-  cv::imwrite(file_path, img);
   return 0;
 }

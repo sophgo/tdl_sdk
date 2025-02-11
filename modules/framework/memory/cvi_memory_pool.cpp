@@ -6,7 +6,7 @@
 #include "cvi_sys.h"
 #include "cvi_tdl_log.hpp"
 #include "image/vpss_image.hpp"
-CviMemoryPool::CviMemoryPool() { CVI_VB_Init(); }
+CviMemoryPool::CviMemoryPool() {}
 
 CviMemoryPool::~CviMemoryPool() {}
 
@@ -77,67 +77,29 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::create_vb(uint32_t size) {
   block->size = size;
   return block;
 }
-// bool CviMemoryPool::allocateImage(std::shared_ptr<BaseImage> &image) {
-//   if (image == nullptr) {
-//     std::cout << "image is nullptr" << std::endl;
-//     return false;
-//   }
-//   if (image->getImageType() != ImageImplType::VPSS) {
-//     std::cout << "image type is not VPSS" << std::endl;
-//     return false;
-//   }
-//   VB_CAL_CONFIG_S stVbCalConfig;
-
-//   COMMON_GetPicBufferConfig(image->getWidth(), image->getHeight(),
-//                             image->getImageFormat(), DATA_BITWIDTH_8,
-//                             COMPRESS_MODE_NONE, DEFAULT_ALIGN,
-//                             &stVbCalConfig);
-
-//   VPSSImage *vpss_image = dynamic_cast<VPSSImage *>(image);
-//   VIDEO_FRAME_INFO_S *frame = vpss_image->getFrame();
-//   frame->stVFrame.enCompressMode = COMPRESS_MODE_NONE;
-//   frame->stVFrame.enPixelFormat = image->getImageFormat();
-//   frame->stVFrame.enVideoFormat = VIDEO_FORMAT_LINEAR;
-//   frame->stVFrame.enColorGamut = COLOR_GAMUT_BT709;
-//   frame->stVFrame.u32Width = image->getWidth();
-//   frame->stVFrame.u32Height = image->getHeight();
-//   frame->stVFrame.u32Stride[0] = stVbCalConfig.u32MainStride;
-//   frame->stVFrame.u32Stride[1] = stVbCalConfig.u32CStride;
-//   frame->stVFrame.u32Stride[2] = stVbCalConfig.u32CStride;
-//   frame->stVFrame.u32TimeRef = 0;
-//   frame->stVFrame.u64PTS = 0;
-//   frame->stVFrame.enDynamicRange = DYNAMIC_RANGE_SDR8;
-
-//   std::unique_ptr<MemoryBlock> block = allocate(stVbCalConfig.u32VBSize,
-//   1000); if (block == nullptr) {
-//     std::cout << "allocate block failed" << std::endl;
-//     return false;
-//   }
-
-//   //   frame->u32PoolId = block->mem_id;
-//   frame->stVFrame.u32Length[0] =
-//       ALIGN(stVbCalConfig.u32MainYSize, stVbCalConfig.u16AddrAlign);
-//   frame->stVFrame.u32Length[1] = frame->stVFrame.u32Length[2] =
-//       ALIGN(stVbCalConfig.u32MainCSize, stVbCalConfig.u16AddrAlign);
-
-//   frame->stVFrame.u64PhyAddr[0] = block->physicalAddress;
-//   frame->stVFrame.u64PhyAddr[1] =
-//       frame->stVFrame.u64PhyAddr[0] + frame->stVFrame.u32Length[0];
-//   frame->stVFrame.u64PhyAddr[2] =
-//       frame->stVFrame.u64PhyAddr[1] + frame->stVFrame.u32Length[1];
-//   frame->stVFrame.pu8VirAddr[0] = (uint8_t *)block->virtualAddress;
-//   frame->stVFrame.pu8VirAddr[1] =
-//       frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
-//   frame->stVFrame.pu8VirAddr[2] =
-//       frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
-//   //   image->setMemoryPool(block);
-//   return true;
-// }
 
 int32_t CviMemoryPool::flushCache(std::unique_ptr<MemoryBlock> &block) {
-  return 0;
+  if (block == nullptr || block->virtualAddress == nullptr ||
+      block->physicalAddress == 0) {
+    LOGI("flushCache block is nullptr");
+    return -1;
+  }
+  CVI_S32 ret = CVI_SYS_IonFlushCache(block->physicalAddress,
+                                      block->virtualAddress, block->size);
+  LOGI("flushCache done,ret:%d,phyaddr:%lx,viraddr:%lx,size:%d", ret,
+       block->physicalAddress, block->virtualAddress, block->size);
+  return (int32_t)ret;
 }
 
 int32_t CviMemoryPool::invalidateCache(std::unique_ptr<MemoryBlock> &block) {
-  return 0;
+  if (block == nullptr || block->virtualAddress == nullptr ||
+      block->physicalAddress == 0) {
+    LOGI("invalidateCache block is nullptr");
+    return -1;
+  }
+  CVI_S32 ret = CVI_SYS_IonInvalidateCache(block->physicalAddress,
+                                           block->virtualAddress, block->size);
+  LOGI("invalidateCache done,ret:%d,phyaddr:%lx,viraddr:%lx,size:%d", ret,
+       block->physicalAddress, block->virtualAddress, block->size);
+  return (int32_t)ret;
 }

@@ -38,6 +38,10 @@ message("Content downloaded to ${nlohmannjson_SOURCE_DIR}")
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/nlohmannjson-src)
 
+if(${CVI_PLATFORM} STREQUAL "BM1688")
+  return()
+endif()
+
 if (BUILD_WEB_VIEW)
   if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/sophapp-src")
     FetchContent_Declare(

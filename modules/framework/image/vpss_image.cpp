@@ -1,16 +1,18 @@
 #include "image/vpss_image.hpp"
 
+#include <cvi_buffer.h>
+
 #include "cvi_tdl_log.hpp"
 #include "cvi_vb.h"
 #include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
+
 #define SCALAR_4096_ALIGN_BUG 0x1000
 VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-                     ImagePixDataType pix_data_type,
-                     std::unique_ptr<BaseMemoryPool> memory_pool) {
-  int32_t ret =
-      initFrameInfo(width, height, imageFormat, pix_data_type, &frame_);
+                     ImagePixDataType dataType, bool alloc_memory,
+                     std::shared_ptr<BaseMemoryPool> memory_pool) {
+  int32_t ret = initFrameInfo(width, height, imageFormat, dataType, &frame_);
   if (ret != 0) {
     throw std::runtime_error("initFrameInfo failed");
   }
@@ -18,82 +20,58 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
   VIDEO_FRAME_S* vFrame = &frame_.stVFrame;
   CVI_U32 u32MapSize =
       vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
+  if (memory_pool == nullptr) {
+    memory_pool_ =
+        BaseMemoryPoolFactory::createMemoryPool(MemoryPoolType::CVI_SOC_DEVICE);
+  } else {
+    memory_pool_ = memory_pool;
+  }
+  image_format_ = imageFormat;
+  pix_data_type_ = dataType;
+  image_type_ = ImageImplType::VPSS_FRAME;
 
-  uint64_t phy_addr = 0;
-  void* vir_addr = nullptr;
-  // if (memory_pool == nullptr) {
-  //   int ret = CVI_SYS_IonAlloc(&phy_addr, &vir_addr, "vpss_image",
-  //   u32MapSize); if (ret != CVI_SUCCESS) {
-  //     throw std::runtime_error("CVI_SYS_IonAlloc failed");
-  //   }
-  //   is_from_pool_ = false;
-  // } else {
-  //   if (memory_block->size < u32MapSize) {
-  //     throw std::runtime_error("memory_block size is too small");
-  //   }
-  //   phy_addr = memory_block->physicalAddress;
-  //   vir_addr = memory_block->virtualAddress;
-  //   memory_block_ = std::move(memory_block);
-  //   is_from_pool_ = true;
-  // }
-
-  ret = setupMemory(phy_addr, (uint8_t*)vir_addr, u32MapSize);
-  if (ret != CVI_SUCCESS) {
-    LOGE("setupMemory failed, ret: %d", ret);
-    throw std::runtime_error("setupMemory failed");
+  if (alloc_memory) {
+    int32_t ret = allocateMemory();
+    if (ret != 0) {
+      LOGE("allocateMemory failed");
+      throw std::runtime_error("allocateMemory failed");
+    }
   }
   LOGI(
-      "VPSSImage init "
-      "done,pyaddr:%lx,viraddr:%lx,widht:%d,height:%d,format:%d,pix_data_type:%"
-      "d",
-      vFrame->u64PhyAddr[0], vFrame->pu8VirAddr[0], vFrame->u32Width,
-      vFrame->u32Height, (int)imageFormat, (int)pix_data_type);
-  image_format_ = imageFormat;
-  pix_data_type_ = pix_data_type;
+      "VPSSImage constructor "
+      "done,width:%d,height:%d,imageFormat:%d,dataType:%d,stride:%d,%d,%d,pix_"
+      "format:%d",
+      width, height, imageFormat, dataType, frame_.stVFrame.u32Stride[0],
+      frame_.stVFrame.u32Stride[1], frame_.stVFrame.u32Stride[2],
+      frame_.stVFrame.enPixelFormat);
 }
 
 VPSSImage::VPSSImage(const VIDEO_FRAME_INFO_S& frame) {
   frame_ = frame;
-  is_from_pool_ = false;
-  memory_block_ = nullptr;
-}
 
-VPSSImage::VPSSImage() {
-  is_from_pool_ = false;
-  memory_block_ = nullptr;
-  memset(&frame_, 0, sizeof(VIDEO_FRAME_INFO_S));
+  memory_pool_ =
+      BaseMemoryPoolFactory::createMemoryPool(MemoryPoolType::CVI_SOC_DEVICE);
+
+  int32_t ret = extractImageInfo(frame);
+  if (ret != 0) {
+    LOGE("extractImageInfo failed, ret: %d", ret);
+    throw std::runtime_error("extractImageInfo failed");
+  }
 }
 
 VPSSImage::~VPSSImage() {
-  CVI_S32 ret = CVI_SUCCESS;
+  LOGI(
+      "VPSSImage::~VPSSImage "
+      "own_memory:%d,phyaddr:%lx,viraddr:%lx,width:%d,"
+      "height:%d,format:%d,pix_data_type:%d",
+      memory_block_->own_memory, frame_.stVFrame.u64PhyAddr[0],
+      frame_.stVFrame.pu8VirAddr[0], frame_.stVFrame.u32Width,
+      frame_.stVFrame.u32Height, (int)image_format_, (int)pix_data_type_);
   if (memory_block_ != nullptr && memory_block_->own_memory) {
-    if (memory_block_->id != UINT32_MAX) {
-      CVI_VB_DestroyPool(memory_block_->id);
-    } else {
-      ret = CVI_SYS_IonFree(memory_block_->physicalAddress,
-                            (void*)memory_block_->virtualAddress);
-    }
+    memory_pool_->release(memory_block_);
     memory_block_ = nullptr;
   }
-  if (ret != CVI_SUCCESS) {
-    LOGE(
-        "VPSSImage::~VPSSImage "
-        "failed,ret:%d,is_from_pool_:%d,phyaddr:%lx,viraddr:%lx,width:%d,"
-        "height:%d,format:%d,pix_data_type:%d",
-        ret, is_from_pool_, frame_.stVFrame.u64PhyAddr[0],
-        frame_.stVFrame.pu8VirAddr[0], frame_.stVFrame.u32Width,
-        frame_.stVFrame.u32Height, (int)image_format_, (int)pix_data_type_);
-  } else {
-    LOGI(
-        "VPSSImage::~VPSSImage "
-        "done,ret:%d,is_from_pool_:%d,phyaddr:%lx,viraddr:%lx,width:%d,"
-        "height:%d,format:%d,pix_data_type:%d",
-        ret, is_from_pool_, frame_.stVFrame.u64PhyAddr[0],
-        frame_.stVFrame.pu8VirAddr[0], frame_.stVFrame.u32Width,
-        frame_.stVFrame.u32Height, (int)image_format_, (int)pix_data_type_);
-  }
-  is_from_pool_ = false;
-  memory_block_ = nullptr;
+
   memset(&frame_, 0, sizeof(VIDEO_FRAME_INFO_S));
 }
 
@@ -102,55 +80,13 @@ int32_t VPSSImage::prepareImageInfo(uint32_t width, uint32_t height,
                                     ImagePixDataType pix_data_type) {
   return initFrameInfo(width, height, imageFormat, pix_data_type, &frame_);
 }
-int32_t VPSSImage::allocateMemory() {
-  CVI_U32 u32MapSize = getImageByteSize();
-
-  uint64_t phy_addr = 0;
-  void* vir_addr = nullptr;
-  int32_t ret =
-      CVI_SYS_IonAlloc(&phy_addr, &vir_addr, "vpss_image", u32MapSize);
-  if (ret != CVI_SUCCESS) {
-    LOGE("CVI_SYS_IonAlloc failed, ret: %d", ret);
-    return -1;
-  }
-
-  ret = setupMemory(phy_addr, (uint8_t*)vir_addr, u32MapSize);
-  if (ret != CVI_SUCCESS) {
-    LOGE("setupMemory failed, ret: %d", ret);
-    return -1;
-  }
-  memory_block_ = std::make_unique<MemoryBlock>();
-  memory_block_->physicalAddress = phy_addr;
-  memory_block_->virtualAddress = vir_addr;
-  memory_block_->size = u32MapSize;
-  memory_block_->own_memory = true;
-
-  return ret;
-}
-int32_t VPSSImage::setupMemoryBlock(
-    std::unique_ptr<MemoryBlock>& memory_block) {
-  if (memory_block == nullptr) {
-    return -1;
-  }
-
-  int32_t ret =
-      setupMemory(memory_block->physicalAddress,
-                  (uint8_t*)memory_block->virtualAddress, memory_block->size);
-  if (ret != 0) {
-    LOGE("setup memory failed");
-    return ret;
-  }
-  memory_block_ = std::move(memory_block);
-  is_from_pool_ = true;
-
-  return 0;
-}
 
 bool VPSSImage::isInitialized() const {
   bool is_initialized = frame_.stVFrame.u64PhyAddr[0] != 0 &&
                         frame_.stVFrame.pu8VirAddr[0] != nullptr &&
                         frame_.stVFrame.u32Width != 0 &&
-                        frame_.stVFrame.u32Height != 0;
+                        frame_.stVFrame.u32Height != 0 &&
+                        memory_block_ != nullptr;
   return is_initialized;
 }
 
@@ -160,12 +96,24 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height,
                                  VIDEO_FRAME_INFO_S* frame) {
   PIXEL_FORMAT_E pixel_format = convertPixelFormat(imageFormat, pix_data_type);
   if (pixel_format == PIXEL_FORMAT_MAX) {
-    LOGE("convertPixelFormat failed, imageFormat: %d", (int)imageFormat);
+    LOGE("convertPixelFormat failed, imageFormat: %d,pix_data_type:",
+         (int)imageFormat, (int)pix_data_type);
     return -1;
   }
 
+  VB_CAL_CONFIG_S stVbConf;
+
+  COMMON_GetPicBufferConfig(width, height, pixel_format, DATA_BITWIDTH_8,
+                            COMPRESS_MODE_NONE, DEFAULT_ALIGN, &stVbConf);
+
+  if (stVbConf.plane_num == 0) {
+    LOGE("not supported format %u", pixel_format);
+    return -1;
+  }
+  memset(frame, 0, sizeof(VIDEO_FRAME_INFO_S));
+
   VIDEO_FRAME_S* vFrame = &frame->stVFrame;
-  memset(vFrame, 0, sizeof(VIDEO_FRAME_S));
+
   vFrame->enCompressMode = COMPRESS_MODE_NONE;
   vFrame->enPixelFormat = pixel_format;
   vFrame->enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -176,117 +124,14 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height,
 
   vFrame->u32Width = width;
   vFrame->u32Height = height;
-  switch (vFrame->enPixelFormat) {
-    case PIXEL_FORMAT_RGB_888:
-    case PIXEL_FORMAT_BGR_888: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width * 3, DEFAULT_ALIGN);
-      vFrame->u32Stride[1] = 0;
-      vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
-      vFrame->u32Length[1] = 0;
-      vFrame->u32Length[2] = 0;
-      break;
-    }
+  vFrame->u32Stride[0] = stVbConf.u32MainStride;
+  vFrame->u32Stride[1] = stVbConf.u32CStride;
+  vFrame->u32Stride[2] = stVbConf.u32CStride;
 
-    case PIXEL_FORMAT_RGB_888_PLANAR:
-    case PIXEL_FORMAT_BGR_888_PLANAR: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
-      vFrame->u32Stride[1] = vFrame->u32Stride[0];
-      vFrame->u32Stride[2] = vFrame->u32Stride[0];
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
-                                   SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = vFrame->u32Length[0];
-      vFrame->u32Length[2] = vFrame->u32Length[0];
-      break;
-    }
+  vFrame->u32Length[0] = stVbConf.u32MainYSize;
+  vFrame->u32Length[1] = stVbConf.u32MainCSize;
+  if (stVbConf.plane_num == 3) vFrame->u32Length[2] = stVbConf.u32MainCSize;
 
-    case PIXEL_FORMAT_YUV_PLANAR_422: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
-      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
-                                   SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height,
-                                   SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height,
-                                   SCALAR_4096_ALIGN_BUG);
-      break;
-    }
-
-    case PIXEL_FORMAT_YUV_PLANAR_420: {
-      uint32_t newHeight = ALIGN(vFrame->u32Height, 2);
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
-      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Length[0] =
-          ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] =
-          ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] =
-          ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
-      break;
-    }
-
-    case PIXEL_FORMAT_YUV_400: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
-      vFrame->u32Stride[1] = 0;
-      vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
-      vFrame->u32Length[1] = 0;
-      vFrame->u32Length[2] = 0;
-      break;
-    }
-
-    case PIXEL_FORMAT_NV12: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
-      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
-      vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
-                                   SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2,
-                                   SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = 0;
-      break;
-    }
-
-    case PIXEL_FORMAT_NV21: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
-      vFrame->u32Stride[1] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
-      vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
-                                   SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2,
-                                   SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = 0;
-      break;
-    }
-
-    case PIXEL_FORMAT_FP32_C1: {
-      vFrame->u32Stride[0] =
-          ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
-      vFrame->u32Stride[1] = 0;
-      vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
-      vFrame->u32Length[1] = 0;
-      vFrame->u32Length[2] = 0;
-      break;
-    }
-
-    case PIXEL_FORMAT_BF16_C1: {
-      vFrame->u32Stride[0] =
-          ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
-      vFrame->u32Stride[1] = 0;
-      vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
-      vFrame->u32Length[1] = 0;
-      vFrame->u32Length[2] = 0;
-      break;
-    }
-
-    default:
-      LOGE("Currently unsupported format %u\n", vFrame->enPixelFormat);
-      return -1;
-  }
   image_format_ = imageFormat;
   pix_data_type_ = pix_data_type;
   return 0;
@@ -307,43 +152,58 @@ int32_t VPSSImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
   }
   frame_.stVFrame.u64PhyAddr[0] = phy_addr;
   frame_.stVFrame.pu8VirAddr[0] = vir_addr;
-  frame_.stVFrame.u64PhyAddr[1] =
-      frame_.stVFrame.u64PhyAddr[0] + frame_.stVFrame.u32Length[0];
-  frame_.stVFrame.u64PhyAddr[2] =
-      frame_.stVFrame.u64PhyAddr[1] + frame_.stVFrame.u32Length[1];
-  frame_.stVFrame.pu8VirAddr[1] =
-      frame_.stVFrame.pu8VirAddr[0] + frame_.stVFrame.u32Length[0];
-  frame_.stVFrame.pu8VirAddr[2] =
-      frame_.stVFrame.pu8VirAddr[1] + frame_.stVFrame.u32Length[1];
+  for (int i = 1; i < 3; i++) {
+    if (frame_.stVFrame.u32Length[i] != 0) {
+      frame_.stVFrame.u64PhyAddr[i] =
+          frame_.stVFrame.u64PhyAddr[i - 1] + frame_.stVFrame.u32Length[i - 1];
+      frame_.stVFrame.pu8VirAddr[i] =
+          frame_.stVFrame.pu8VirAddr[i - 1] + frame_.stVFrame.u32Length[i - 1];
+    } else {
+      LOGI("plane %d is not used", i);
+      break;
+    }
+  }
 
+  LOGI("setupMemory done,width:%d,height:%d,format:%d,addr:%lx,phyaddr:%lx",
+       frame_.stVFrame.u32Width, frame_.stVFrame.u32Height,
+       frame_.stVFrame.enPixelFormat, frame_.stVFrame.pu8VirAddr[0],
+       frame_.stVFrame.u64PhyAddr[0]);
   return 0;
 }
 
-PIXEL_FORMAT_E VPSSImage::convertPixelFormat(
-    ImageFormat imageFormat, ImagePixDataType pix_data_type) const {
+PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
+                                             ImagePixDataType pix_data_type) {
   PIXEL_FORMAT_E pixel_format = PIXEL_FORMAT_MAX;
 
-  if (imageFormat == ImageFormat::GRAY) {
+  if (img_format == ImageFormat::GRAY) {
     pixel_format = PIXEL_FORMAT_YUV_400;
-  } else if (imageFormat == ImageFormat::YUV420SP_UV) {
+  } else if (img_format == ImageFormat::YUV420SP_UV) {
     pixel_format = PIXEL_FORMAT_NV12;
-  } else if (imageFormat == ImageFormat::YUV420SP_VU) {
-    LOGE("YUV420SP_VU not support, imageFormat: %d", (int)imageFormat);
-  } else if (imageFormat == ImageFormat::YUV420P_UV) {
+  } else if (img_format == ImageFormat::YUV420SP_VU) {
+    LOGE("YUV420SP_VU not support, imageFormat: %d", (int)img_format);
+  } else if (img_format == ImageFormat::YUV420P_UV) {
     pixel_format = PIXEL_FORMAT_NV21;
-  } else if (imageFormat == ImageFormat::YUV420P_VU) {
-    LOGE("YUV420SP_VU not support, imageFormat: %d", (int)imageFormat);
-  } else if (imageFormat == ImageFormat::RGB_PACKED) {
+  } else if (img_format == ImageFormat::YUV420P_VU) {
+    LOGE("YUV420SP_VU not support, imageFormat: %d", (int)img_format);
+  } else if (img_format == ImageFormat::RGB_PACKED) {
     pixel_format = PIXEL_FORMAT_RGB_888;
-  } else if (imageFormat == ImageFormat::BGR_PACKED) {
+  } else if (img_format == ImageFormat::BGR_PACKED) {
     pixel_format = PIXEL_FORMAT_BGR_888;
-  } else if (imageFormat == ImageFormat::RGB_PLANAR) {
+  } else if (img_format == ImageFormat::RGB_PLANAR) {
     pixel_format = PIXEL_FORMAT_RGB_888_PLANAR;
-  } else if (imageFormat == ImageFormat::BGR_PLANAR) {
+  } else if (img_format == ImageFormat::BGR_PLANAR) {
     pixel_format = PIXEL_FORMAT_BGR_888_PLANAR;
   } else {
-    LOGE("imageFormat not support, imageFormat: %d", (int)imageFormat);
+    LOGE("imageFormat not support, imageFormat: %d", (int)img_format);
     pixel_format = PIXEL_FORMAT_MAX;
+  }
+
+  if (pix_data_type == ImagePixDataType::UINT8 &&
+      (img_format == ImageFormat::RGB_PLANAR ||
+       img_format == ImageFormat::BGR_PLANAR)) {
+    LOGE("special case, imageFormat: %d,pix_data_type: %d", (int)img_format,
+         (int)pix_data_type);
+    pixel_format = PIXEL_FORMAT_UINT8_C3_PLANAR;
   }
 
   if (pix_data_type != ImagePixDataType::INT8 &&
@@ -379,40 +239,6 @@ uint32_t VPSSImage::getPlaneNum() const {
 std::vector<uint32_t> VPSSImage::getStrides() const {
   return {frame_.stVFrame.u32Stride[0], frame_.stVFrame.u32Stride[1],
           frame_.stVFrame.u32Stride[2]};
-}
-
-int32_t VPSSImage::invalidateCache() {
-  uint32_t image_size = frame_.stVFrame.u32Length[0] +
-                        frame_.stVFrame.u32Length[1] +
-                        frame_.stVFrame.u32Length[2];
-  CVI_S32 ret = CVI_SYS_IonInvalidateCache(frame_.stVFrame.u64PhyAddr[0],
-                                           (void*)frame_.stVFrame.pu8VirAddr[0],
-                                           image_size);
-  LOGI(
-      "invalidateCache "
-      "done,ret:%d,phyaddr:%lx,viraddr:%lx,width:%d,height:%d,format:%d,pix_"
-      "data_type:%d",
-      ret, frame_.stVFrame.u64PhyAddr[0], frame_.stVFrame.pu8VirAddr[0],
-      frame_.stVFrame.u32Width, frame_.stVFrame.u32Height, (int)image_format_,
-      (int)pix_data_type_);
-  return (int32_t)ret;
-}
-
-int32_t VPSSImage::flushCache() {
-  uint32_t image_size = frame_.stVFrame.u32Length[0] +
-                        frame_.stVFrame.u32Length[1] +
-                        frame_.stVFrame.u32Length[2];
-  CVI_S32 ret =
-      CVI_SYS_IonFlushCache(frame_.stVFrame.u64PhyAddr[0],
-                            (void*)frame_.stVFrame.pu8VirAddr[0], image_size);
-  LOGI(
-      "flushCache "
-      "done,ret:%d,phyaddr:%lx,viraddr:%lx,width:%d,height:%d,format:%d,pix_"
-      "data_type:%d",
-      ret, frame_.stVFrame.u64PhyAddr[0], frame_.stVFrame.pu8VirAddr[0],
-      frame_.stVFrame.u32Width, frame_.stVFrame.u32Height, (int)image_format_,
-      (int)pix_data_type_);
-  return (int32_t)ret;
 }
 
 std::vector<uint64_t> VPSSImage::getPhysicalAddress() const {
@@ -460,86 +286,114 @@ PIXEL_FORMAT_E VPSSImage::getPixelFormat() const {
   return frame_.stVFrame.enPixelFormat;
 }
 
-int32_t VPSSImage::readImage(const std::string& file_path) {
-  // Implementation here
-  cv::Mat img = cv::imread(file_path);
-  if (img.empty()) {
-    LOGE("Failed to load image from file: %s", file_path.c_str());
-    return -1;
-  } else {
-    LOGI("read image %s done, width: %d, height: %d", file_path.c_str(),
-         img.cols, img.rows);
-  }
-  int32_t ret = prepareImageInfo(img.cols, img.rows, ImageFormat::BGR_PACKED,
-                                 ImagePixDataType::UINT8);
-  if (ret != 0) {
-    LOGE("prepareImageInfo failed, ret: %d", ret);
-    return -1;
-  }
-  ret = allocateMemory();
-  if (ret != 0) {
-    LOGE("allocateMemory failed, ret: %d", ret);
-    return -1;
-  }
-  for (int r = 0; r < img.rows; r++) {
-    uint8_t* ptr = img.data + r * img.step[0];
-    uint8_t* dst = (uint8_t*)frame_.stVFrame.pu8VirAddr[0] +
-                   r * frame_.stVFrame.u32Stride[0];
-    memcpy(dst, ptr, img.cols * 3);
-  }
-  ret = flushCache();
-  if (ret != CVI_SUCCESS) {
-    LOGE("flushCache failed, ret: %d", ret);
-    return -1;
-  }
-  return 0;
-}
-
-int32_t VPSSImage::writeImage(const std::string& file_path) {
-  // Implementation here
-  if (image_format_ != ImageFormat::BGR_PACKED &&
-      image_format_ != ImageFormat::RGB_PACKED &&
-      image_format_ != ImageFormat::GRAY &&
-      image_format_ != ImageFormat::BGR_PLANAR &&
-      image_format_ != ImageFormat::RGB_PLANAR) {
-    LOGE("writeImage failed, image format not supported");
-    return -1;
-  }
-
-  cv::Mat img(frame_.stVFrame.u32Height, frame_.stVFrame.u32Width, CV_8UC3);
-  int32_t ret = invalidateCache();
-  if (ret != CVI_SUCCESS) {
-    LOGE("invalidateCache failed, ret: %d", ret);
-    return -1;
-  }
-  auto vir_addr = getVirtualAddress();
-  for (int r = 0; r < img.rows; r++) {
-    if (image_format_ == ImageFormat::BGR_PACKED ||
-        image_format_ == ImageFormat::RGB_PACKED) {
-      uint8_t* src = vir_addr[0] + r * frame_.stVFrame.u32Stride[0];
-      uint8_t* dst = img.data + r * img.step[0];
-      memcpy(dst, src, img.cols * 3);
-    } else if (image_format_ == ImageFormat::BGR_PLANAR ||
-               image_format_ == ImageFormat::RGB_PLANAR) {
-      uint8_t* dst = img.data + r * img.step[0];
-      uint8_t* src1 = (uint8_t*)vir_addr[0] + r * frame_.stVFrame.u32Stride[0];
-      uint8_t* src2 = (uint8_t*)vir_addr[1] + r * frame_.stVFrame.u32Stride[1];
-      uint8_t* src3 = (uint8_t*)vir_addr[2] + r * frame_.stVFrame.u32Stride[2];
-      for (int c = 0; c < img.cols; c++) {
-        dst[c * 3] = src1[c];
-        dst[c * 3 + 1] = src2[c];
-        dst[c * 3 + 2] = src3[c];
-      }
-    }
-  }
-  cv::imwrite(file_path, img);
-  return 0;
-}
-
 uint32_t VPSSImage::getVbPoolId() const {
   if (memory_block_ == nullptr) {
     LOGE("memory_block_ is nullptr");
     return UINT32_MAX;
   }
   return memory_block_->id;
+}
+
+int32_t VPSSImage::extractImageInfo(const VIDEO_FRAME_INFO_S& frame) {
+  PIXEL_FORMAT_E pixel_format = frame.stVFrame.enPixelFormat;
+  uint32_t width = frame.stVFrame.u32Width;
+  uint32_t height = frame.stVFrame.u32Height;
+
+  image_type_ = ImageImplType::VPSS_FRAME;
+
+  if (pixel_format == PIXEL_FORMAT_YUV_400) {
+    image_format_ = ImageFormat::GRAY;
+    pix_data_type_ = ImagePixDataType::UINT8;
+  } else if (pixel_format == PIXEL_FORMAT_NV12) {
+    image_format_ = ImageFormat::YUV420SP_UV;
+    pix_data_type_ = ImagePixDataType::UINT8;
+  } else if (pixel_format == PIXEL_FORMAT_NV21) {
+    image_format_ = ImageFormat::YUV420P_UV;
+    pix_data_type_ = ImagePixDataType::UINT8;
+  } else if (pixel_format == PIXEL_FORMAT_RGB_888) {
+    image_format_ = ImageFormat::RGB_PACKED;
+    pix_data_type_ = ImagePixDataType::UINT8;
+  } else if (pixel_format == PIXEL_FORMAT_BGR_888) {
+    image_format_ = ImageFormat::BGR_PACKED;
+    pix_data_type_ = ImagePixDataType::UINT8;
+  } else if (pixel_format == PIXEL_FORMAT_RGB_888_PLANAR) {
+    image_format_ = ImageFormat::RGB_PLANAR;
+    pix_data_type_ = ImagePixDataType::UINT8;
+  } else if (pixel_format == PIXEL_FORMAT_BGR_888_PLANAR) {
+    image_format_ = ImageFormat::BGR_PLANAR;
+    pix_data_type_ = ImagePixDataType::UINT8;
+  } else {
+    LOGE("pixel_format not supported, pixel_format: %d", pixel_format);
+    return -1;
+  }
+  memory_block_ = std::make_unique<MemoryBlock>();
+  memory_block_->id = 0;
+  memory_block_->size = getImageByteSize();
+  memory_block_->physicalAddress = frame.stVFrame.u64PhyAddr[0];
+  memory_block_->virtualAddress = frame.stVFrame.pu8VirAddr[0];
+  memory_block_->own_memory = false;
+
+  return 0;
+}
+
+int32_t VPSSImage::restoreVirtualAddress(bool check_swap_rgb) {
+  if (memory_block_ == nullptr) {
+    LOGE("memory_block_ is nullptr");
+    return -1;
+  }
+  if (memory_block_->virtualAddress == nullptr) {
+    LOGE("virtualAddress is nullptr");
+    return -1;
+  }
+  if (frame_.stVFrame.pu8VirAddr[0] != 0) {
+    LOGE("virtualAddress is not nullptr,do not restore");
+    return -1;
+  }
+  int num_plane_restored = 1;
+  frame_.stVFrame.pu8VirAddr[0] = (uint8_t*)(memory_block_->virtualAddress);
+
+  for (int i = 1; i < 3; i++) {
+    if (frame_.stVFrame.u32Length[i] != 0) {
+      frame_.stVFrame.pu8VirAddr[i] =
+          frame_.stVFrame.pu8VirAddr[i - 1] + frame_.stVFrame.u32Length[i - 1];
+      num_plane_restored++;
+    } else {
+      break;
+    }
+  }
+  if (check_swap_rgb &&
+      frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_UINT8_C3_PLANAR &&
+      image_format_ == ImageFormat::BGR_PLANAR) {
+    uint8_t* ptr_r = frame_.stVFrame.pu8VirAddr[0];
+    frame_.stVFrame.pu8VirAddr[0] = frame_.stVFrame.pu8VirAddr[2];
+    frame_.stVFrame.pu8VirAddr[2] = ptr_r;
+    LOGI("swap r and b,width:%d,height:%d,format:%d,addr:%lx,phyaddr:%lx",
+         frame_.stVFrame.u32Width, frame_.stVFrame.u32Height,
+         frame_.stVFrame.enPixelFormat, frame_.stVFrame.pu8VirAddr[0],
+         frame_.stVFrame.u64PhyAddr[0]);
+  }
+
+  LOGI("restoreVirtualAddress done,num_plane_restored:%d", num_plane_restored);
+  return 0;
+}
+
+int32_t VPSSImage::checkToSwapRGB() {
+  if (frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_UINT8_C3_PLANAR &&
+      image_format_ == ImageFormat::BGR_PLANAR) {
+    // PIXEL_FORMAT_UINT8_C3_PLANAR is rgb order,need to swap r and b
+    frame_.stVFrame.pu8VirAddr[0] = (uint8_t*)(memory_block_->virtualAddress) +
+                                    frame_.stVFrame.u32Length[0] +
+                                    frame_.stVFrame.u32Length[1];
+    frame_.stVFrame.pu8VirAddr[2] = (uint8_t*)(memory_block_->virtualAddress);
+    frame_.stVFrame.u64PhyAddr[0] = memory_block_->physicalAddress +
+                                    frame_.stVFrame.u32Length[0] +
+                                    frame_.stVFrame.u32Length[1];
+    frame_.stVFrame.u64PhyAddr[2] = memory_block_->physicalAddress;
+
+    LOGI("swap r and b,width:%d,height:%d,format:%d,addr:%lx,phyaddr:%lx",
+         frame_.stVFrame.u32Width, frame_.stVFrame.u32Height,
+         frame_.stVFrame.enPixelFormat, frame_.stVFrame.pu8VirAddr[0],
+         frame_.stVFrame.u64PhyAddr[0]);
+  }
+  return 0;
 }

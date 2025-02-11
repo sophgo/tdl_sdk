@@ -1,10 +1,33 @@
 #include "preprocess/vpss_preprocessor.hpp"
 
+#include <cassert>
+
 #include "core/utils/vpss_helper.h"
 #include "cvi_comm_vb.h"
 #include "cvi_tdl_log.hpp"
 #include "image/vpss_image.hpp"
 #include "memory/cvi_memory_pool.hpp"
+VpssContext::VpssContext() {
+  int s32Ret = CVI_SYS_Init();
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("CVI_SYS_Init failed!\n");
+    assert(false);
+  }
+}
+
+VpssContext::~VpssContext() {
+  int s32Ret = CVI_SYS_Exit();
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("CVI_SYS_Exit failed!\n");
+    assert(false);
+  }
+}
+
+VpssContext* VpssContext::GetInstance() {
+  static VpssContext instance;
+  return &instance;
+}
+
 VpssPreprocessor::VpssPreprocessor() {
   group_id_ = -1;
   if (!init()) {
@@ -19,11 +42,8 @@ VpssPreprocessor::~VpssPreprocessor() {
 }
 
 bool VpssPreprocessor::init() {
-  int s32Ret = CVI_SYS_Init();
-  if (s32Ret != CVI_SUCCESS) {
-    LOGE("CVI_SYS_Init failed!\n");
-    return false;
-  }
+  VpssContext* vpss_context = VpssContext::GetInstance();
+  UNUSED(vpss_context);
 
   VPSS_GRP_ATTR_S vpss_grp_attr;
   VPSS_CHN_ATTR_S vpss_chn_attr;
@@ -50,7 +70,7 @@ bool VpssPreprocessor::init() {
 
   LOGI("Create Vpss Group(%d) Dev(%d)\n", group_id_, device_);
 
-  s32Ret = CVI_VPSS_ResetGrp(group_id_);
+  CVI_S32 s32Ret = CVI_VPSS_ResetGrp(group_id_);
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", group_id_, s32Ret);
     return false;
@@ -100,14 +120,13 @@ bool VpssPreprocessor::stop() {
 std::shared_ptr<BaseImage> VpssPreprocessor::preprocess(
     const std::shared_ptr<BaseImage>& image, const PreprocessParams& params,
     std::shared_ptr<BaseMemoryPool> memory_pool) {
-  std::shared_ptr<VPSSImage> vpss_image = std::make_shared<VPSSImage>();
+  std::shared_ptr<VPSSImage> vpss_image = std::make_shared<VPSSImage>(
+      params.dstWidth, params.dstHeight, params.dstImageFormat,
+      params.dstPixDataType, false, memory_pool);
   std::unique_ptr<MemoryBlock> memory_block;
-  int32_t ret = vpss_image->prepareImageInfo(params.dstWidth, params.dstHeight,
-                                             params.dstImageFormat,
-                                             params.dstPixDataType);
-  if (ret != 0) {
-    LOGE("VPSSImage prepareImageInfo failed!\n");
-    return nullptr;
+  if (memory_pool == nullptr) {
+    LOGE("input memory_pool is nullptr,use src image memory pool\n");
+    memory_pool = image->getMemoryPool();
   }
   if (memory_pool == nullptr) {
     LOGE("memory_pool is nullptr!\n");
@@ -118,23 +137,14 @@ std::shared_ptr<BaseImage> VpssPreprocessor::preprocess(
     LOGE("VPSSImage allocate memory failed!\n");
     return nullptr;
   }
-  ret = vpss_image->setupMemoryBlock(memory_block);
-  if (!ret) {
+  int32_t ret = vpss_image->setupMemoryBlock(memory_block);
+  if (ret != 0) {
     LOGE("VPSSImage setupMemoryBlock failed!\n");
     return nullptr;
   }
   LOGI("setup output image done");
 
   preprocessToImage(image, params, vpss_image);
-  // CVI_VPSS_GetChnFrame will reset virtual address of output_frame,restore
-  // it
-  // for (int i = 0; i < vpss_image->getPlaneNum(); i++) {
-  //   LOGI("vir_addrs[%d]: %p, output_frame->stVFrame.pu8VirAddr[%d]: %p", i,
-  //        vpss_image->getVirtualAddress()[i], i,
-  //        output_frame->stVFrame.pu8VirAddr[i]);
-  //   output_frame->stVFrame.pu8VirAddr[i] =
-  //   vpss_image->getVirtualAddress()[i];
-  // }
   LOGI("CVI_VPSS_GetChnFrame done");
   return vpss_image;
 }
@@ -167,6 +177,8 @@ int32_t VpssPreprocessor::prepareVPSSParams(
     LOGE("CVI_VPSS_SetChnAttr failed with %#x\n", ret);
     return -1;
   }
+  LOGI("vpss chn attr ,width:%d,height:%d,format:%d", vpss_chn_attr.u32Width,
+       vpss_chn_attr.u32Height, vpss_chn_attr.enPixelFormat);
   ret = CVI_VPSS_SetChnCrop(group_id_, 0, &vpss_chn_crop_attr);
   if (ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_SetChnCrop failed with %#x\n", ret);
@@ -188,22 +200,25 @@ bool VpssPreprocessor::generateVPSSParams(
     LOGE("src_image is nullptr!\n");
     return false;
   }
+
+  LOGI(
+      "preprocess para "
+      "info,dstWidth:%d,dstHeight:%d,dstImageFormat:%d,dstPixDataType:%d,cropX:"
+      "%d,cropY:%d,cropWidth:%d,cropHeight:%d,mean[0]:%.2f,mean[1]:%.2f,mean[2]"
+      ":%.2f,"
+      "scale[0]:%.2f,scale[1]:%.2f,scale[2]:%.2f,aspectRatio:%d",
+      params.dstWidth, params.dstHeight, params.dstImageFormat,
+      params.dstPixDataType, params.cropX, params.cropY, params.cropWidth,
+      params.cropHeight, params.mean[0], params.mean[1], params.mean[2],
+      params.scale[0], params.scale[1], params.scale[2],
+      params.keepAspectRatio);
   memset(&vpss_grp_attr, 0, sizeof(VPSS_GRP_ATTR_S));
   memset(&vpss_chn_crop_attr, 0, sizeof(VPSS_CROP_INFO_S));
   memset(&vpss_chn_attr, 0, sizeof(VPSS_CHN_ATTR_S));
-  const VPSSImage* vpss_image_src =
-      dynamic_cast<const VPSSImage*>(src_image.get());
-  VPSS_GRP_DEFAULT_HELPER2(&vpss_grp_attr, vpss_image_src->getWidth(),
-                           vpss_image_src->getHeight(),
-                           vpss_image_src->getPixelFormat(), device_);
 
-  PIXEL_FORMAT_E dst_format = vpss_image_src->convertPixelFormat(
-      params.dstImageFormat, params.dstPixDataType);
-  VPSS_CHN_SQ_HELPER(&vpss_chn_attr, params.dstWidth, params.dstHeight,
-                     dst_format, params.mean, params.scale, false);
-  if (!params.keepAspectRatio) {
-    vpss_chn_attr.stAspectRatio.enMode = ASPECT_RATIO_NONE;
-  }
+  generateVPSSGrpAttr(src_image, params, vpss_grp_attr);
+
+  generateVPSSChnAttr(src_image, params, vpss_chn_attr);
 
   if (params.cropWidth > 0 && params.cropHeight > 0) {
     vpss_chn_crop_attr.bEnable = true;
@@ -211,6 +226,90 @@ bool VpssPreprocessor::generateVPSSParams(
                                      params.cropWidth, params.cropHeight};
   }
   return true;
+}
+int32_t VpssPreprocessor::generateVPSSGrpAttr(
+    const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
+    VPSS_GRP_ATTR_S& vpss_grp_attr) const {
+  VPSS_GRP_ATTR_S* pstVpssGrpAttr = &vpss_grp_attr;
+  const VPSSImage* vpss_image_src =
+      dynamic_cast<const VPSSImage*>(src_image.get());
+  memset(pstVpssGrpAttr, 0, sizeof(VPSS_GRP_ATTR_S));
+  pstVpssGrpAttr->stFrameRate.s32SrcFrameRate = -1;
+  pstVpssGrpAttr->stFrameRate.s32DstFrameRate = -1;
+  pstVpssGrpAttr->enPixelFormat = vpss_image_src->getPixelFormat();
+  pstVpssGrpAttr->u32MaxW = vpss_image_src->getWidth();
+  pstVpssGrpAttr->u32MaxH = vpss_image_src->getHeight();
+#ifndef __CV186X__
+  pstVpssGrpAttr->u8VpssDev = device_;
+#endif
+  LOGI("vpss grp attr ,width:%d,height:%d,format:%d", vpss_grp_attr.u32MaxW,
+       vpss_grp_attr.u32MaxH, vpss_grp_attr.enPixelFormat);
+  return 0;
+}
+int32_t VpssPreprocessor::generateVPSSChnAttr(
+    const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
+    VPSS_CHN_ATTR_S& vpss_chn_attr) const {
+  VPSS_CHN_ATTR_S* pastVpssChnAttr = &vpss_chn_attr;
+
+  PIXEL_FORMAT_E dst_format = VPSSImage::convertPixelFormat(
+      params.dstImageFormat, params.dstPixDataType);
+  pastVpssChnAttr->u32Width = params.dstWidth;
+  pastVpssChnAttr->u32Height = params.dstHeight;
+  pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
+  pastVpssChnAttr->enPixelFormat = dst_format;
+  pastVpssChnAttr->stFrameRate.s32SrcFrameRate = -1;
+  pastVpssChnAttr->stFrameRate.s32DstFrameRate = -1;
+  pastVpssChnAttr->u32Depth = 1;
+  pastVpssChnAttr->bMirror = CVI_FALSE;
+  pastVpssChnAttr->bFlip = CVI_FALSE;
+
+  pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
+
+  if (!params.keepAspectRatio) {
+    pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_NONE;
+  } else {
+    std::vector<float> rescale_params =
+        getRescaleConfig(params, src_image->getWidth(), src_image->getHeight());
+    int resized_width = rescale_params[0] * src_image->getWidth();
+    int resized_height = rescale_params[1] * src_image->getHeight();
+    int offset_x = rescale_params[2];
+    int offset_y = rescale_params[3];
+    pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.s32X = offset_x;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.s32Y = offset_y;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = resized_width;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = resized_height;
+  }
+
+  pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
+  // pastVpssChnAttr->stAspectRatio.u32BgColor =
+  //     RGB_8BIT((int)(params.mean[0] / params.scale[0]),
+  //              (int)(params.mean[1] / params.scale[1]),
+  //              (int)(params.mean[2] / params.scale[2]));
+
+  bool enable_normalize = params.scale[0] != 1 || params.scale[1] != 1 ||
+                          params.scale[2] != 1 || params.mean[0] != 0 ||
+                          params.mean[1] != 0 || params.mean[2] != 0;
+  pastVpssChnAttr->stNormalize.bEnable = enable_normalize;
+  if (enable_normalize) {
+    for (uint32_t i = 0; i < 3; i++) {
+      pastVpssChnAttr->stNormalize.factor[i] = params.scale[i];
+    }
+    for (uint32_t i = 0; i < 3; i++) {
+      pastVpssChnAttr->stNormalize.mean[i] = params.mean[i];
+    }
+    pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
+  }
+  LOGI(
+      "vpss chn attr "
+      ",width:%d,height:%d,format:%d,normalize:%d,factor[0]:%.2f,factor[1]:%."
+      "2f,factor[2]:%.2f,mean[0]:%.2f,mean[1]:%.2f,mean[2]:%.2f",
+      vpss_chn_attr.u32Width, vpss_chn_attr.u32Height,
+      vpss_chn_attr.enPixelFormat, vpss_chn_attr.stNormalize.bEnable,
+      vpss_chn_attr.stNormalize.factor[0], vpss_chn_attr.stNormalize.factor[1],
+      vpss_chn_attr.stNormalize.factor[2], vpss_chn_attr.stNormalize.mean[0],
+      vpss_chn_attr.stNormalize.mean[1], vpss_chn_attr.stNormalize.mean[2]);
+  return 0;
 }
 
 std::shared_ptr<BaseImage> VpssPreprocessor::resize(
@@ -257,84 +356,57 @@ int32_t VpssPreprocessor::preprocessToImage(
     LOGE("image is not initialized!\n");
     return -1;
   }
-  int32_t ret = prepareVPSSParams(image, params);
+  if (src_image->getImageType() != ImageImplType::VPSS_FRAME) {
+    LOGE("src_image is not VPSSImage! image type: %d\n",
+         src_image->getImageType());
+    return -1;
+  }
+  int32_t ret = prepareVPSSParams(src_image, params);
   if (ret != CVI_SUCCESS) {
     LOGE("prepareVPSSParams failed with %#x\n", ret);
     return ret;
   }
+
   VIDEO_FRAME_INFO_S* output_frame =
       static_cast<VIDEO_FRAME_INFO_S*>(image->getInternalData());
   const VIDEO_FRAME_INFO_S* input_frame =
       static_cast<const VIDEO_FRAME_INFO_S*>(src_image->getInternalData());
-
-  if (use_vb_pool_) {
-    VPSSImage* vpss_image = static_cast<VPSSImage*>(image.get());
-    uint32_t vb_pool_id = vpss_image->getVbPoolId();
-    if (vb_pool_id == UINT32_MAX) {
-      LOGE("VPSSImage getVbPoolId failed!\n");
-      return ret;
-    }
-    LOGI("vb_pool_id: %d", vb_pool_id);
-    ret = CVI_VPSS_AttachVbPool(group_id_, 0, vb_pool_id);
-    if (ret != CVI_SUCCESS) {
-      LOGE("CVI_VPSS_AttachVbPool failed with %#x\n", ret);
-      return ret;
-    }
-    ret = CVI_VPSS_SendFrame(group_id_, input_frame, -1);
-    if (ret != CVI_SUCCESS) {
-      LOGE("CVI_VPSS_SendFrame failed with %#x\n", ret);
-      return ret;
-    }
-    LOGI("to CVI_VPSS_GetChnFrame");
-    ret = CVI_VPSS_DetachVbPool(group_id_, 0);
-    if (ret != CVI_SUCCESS) {
-      LOGE("CVI_VPSS_DetachVbPool failed with %#x\n", ret);
-      return ret;
-    }
-    ret = CVI_VPSS_GetChnFrame(group_id_, 0, output_frame, -1);
-    if (ret != CVI_SUCCESS) {
-      LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-      return ret;
-    }
-
-  } else {
-    // prepare output frame
-    LOGI("to CVI_VPSS_SendChnFrame");
-    ret = CVI_VPSS_SendChnFrame(group_id_, 0, output_frame, -1);
-    if (ret != CVI_SUCCESS) {
-      LOGE("CVI_VPSS_SendChnFrame failed with %#x\n", ret);
-      return ret;
-    }
-    LOGI("to CVI_VPSS_SendFrame");
-    ret = CVI_VPSS_SendFrame(group_id_, input_frame, -1);
-    if (ret != CVI_SUCCESS) {
-      LOGE("CVI_VPSS_SendFrame failed with %#x\n", ret);
-      return ret;
-    }
-    LOGI("to CVI_VPSS_GetChnFrame");
-
-    ret = CVI_VPSS_GetChnFrame(group_id_, 0, output_frame, -1);
-    if (ret != CVI_SUCCESS) {
-      LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
-      return ret;
-    }
+  VPSSImage* vpss_image = static_cast<VPSSImage*>(image.get());
+  vpss_image->checkToSwapRGB();
+  // prepare output frame
+  LOGI("to CVI_VPSS_SendChnFrame");
+  ret = CVI_VPSS_SendChnFrame(group_id_, 0, output_frame, -1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("CVI_VPSS_SendChnFrame failed with %#x\n", ret);
+    return ret;
   }
+  LOGI("to CVI_VPSS_SendFrame");
+  ret = CVI_VPSS_SendFrame(group_id_, input_frame, -1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("CVI_VPSS_SendFrame failed with %#x\n", ret);
+    return ret;
+  }
+  LOGI("to CVI_VPSS_GetChnFrame");
+
+  ret = CVI_VPSS_GetChnFrame(group_id_, 0, output_frame, -1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
+    return ret;
+  }
+
+  vpss_image->restoreVirtualAddress(true);
   return ret;
 }
 
 int32_t VpssPreprocessor::preprocessToTensor(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     const int batch_idx, std::shared_ptr<BaseTensor> tensor) {
-  std::shared_ptr<VPSSImage> vpss_image = std::make_shared<VPSSImage>();
+  std::shared_ptr<VPSSImage> vpss_image = std::make_shared<VPSSImage>(
+      params.dstWidth, params.dstHeight, params.dstImageFormat,
+      params.dstPixDataType, false);
 
-  int32_t ret = vpss_image->prepareImageInfo(params.dstWidth, params.dstHeight,
-                                             params.dstImageFormat,
-                                             params.dstPixDataType);
-  if (ret != 0) {
-    LOGE("VPSSImage prepareImageInfo failed!\n");
-    return -1;
-  }
   std::vector<uint32_t> strides = vpss_image->getStrides();
+  int32_t ret = 0;
   if (strides[0] == tensor->getWidth()) {
     ret = tensor->constructImage(vpss_image, batch_idx);
     if (ret != 0) {
@@ -348,16 +420,28 @@ int32_t VpssPreprocessor::preprocessToTensor(
       return -1;
     }
   }
+  LOGI(
+      "to "
+      "preprocessToImage,params:%f,%f,%f,mean:%f,%f,%f,scale:%f,%f,%f,"
+      "dstHeight:%d,"
+      "dstWidth:%d,dstPixDataType:%d",
+      params.scale[0], params.scale[1], params.scale[2], params.mean[0],
+      params.mean[1], params.mean[2], params.dstHeight, params.dstWidth,
+      params.dstPixDataType);
   ret = preprocessToImage(src_image, params, vpss_image);
   if (ret != 0) {
     LOGE("preprocessToImage failed, ret: %d\n", ret);
     return -1;
   }
+  if (strides[0] != tensor->getWidth()) {
+    // copy vpss image to tensor
+    LOGI("copy vpss image to tensor");
+    ret = tensor->copyFromImage(vpss_image, batch_idx);
+    if (ret != 0) {
+      LOGE("tensor copyFromImage failed, ret: %d\n", ret);
+      return -1;
+    }
+  }
+  tensor->dumpToFile("input_tensor.bin");
   return ret;
-}
-
-std::vector<float> VpssPreprocessor::getRescaleConfig(
-    const PreprocessParams& params, const int image_width,
-    const int image_height) {
-  return {};
 }

@@ -47,7 +47,7 @@ class BaseTensor {
   int32_t copyFromImage(std::shared_ptr<BaseImage> image, int batch_idx = -1);
 
   // File I/O
-  void saveToFile(const std::string& file_path) const;
+  void dumpToFile(const std::string& file_path);
   void loadFromFile(const std::string& file_path);
 
  protected:

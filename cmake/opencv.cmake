@@ -1,5 +1,24 @@
+if(${CVI_PLATFORM} STREQUAL "BM1688")
 
-# Common part of the URL
+  if("${OPENCV_ROOT_DIR}" STREQUAL "")
+    message(FATAL_ERROR "You must set OPENCV_ROOT_DIR before building IVE library.")
+  endif()
+
+  set(OPENCV_INCLUDES ${OPENCV_ROOT_DIR}/include/opencv4)
+  set(OpenCV_LIB_DIR ${OPENCV_ROOT_DIR}/lib)
+  set(OPENCV_LIBS_IMCODEC ${OpenCV_LIB_DIR}/libopencv_core.so ${OpenCV_LIB_DIR}/libopencv_imgproc.so
+    ${OpenCV_LIB_DIR}/libopencv_highgui.so ${OpenCV_LIB_DIR}/libopencv_imgcodecs.so
+    ${OpenCV_LIB_DIR}/libopencv_videoio.so ${OpenCV_LIB_DIR}/libopencv_calib3d.so
+    ${OpenCV_LIB_DIR}/libopencv_flann.so ${OpenCV_LIB_DIR}/libopencv_features2d.so) 
+
+  set(OPENCV_LIBS_IMCODEC_STATIC ${OpenCV_LIB_DIR}/libopencv_core.a ${OpenCV_LIB_DIR}/libopencv_imgproc.a
+    ${OpenCV_LIB_DIR}/libopencv_highgui.a ${OpenCV_LIB_DIR}/libopencv_imgcodecs.a
+    ${OpenCV_LIB_DIR}/libopencv_videoio.a ${OpenCV_LIB_DIR}/libopencv_calib3d.a
+    ${OpenCV_LIB_DIR}/libopencv_flann.a ${OpenCV_LIB_DIR}/libopencv_features2d.a) 
+
+  return()
+endif()
+
 set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
 # Combine the common prefix and the architecture-specific part
 

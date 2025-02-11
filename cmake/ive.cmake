@@ -1,3 +1,7 @@
+if(${CVI_PLATFORM} STREQUAL "BM1688" OR ${CVI_PLATFORM} STREQUAL "SOPHON")
+    return()
+endif()
+
 if(USE_TPU_IVE)
     if("${TPU_IVE_SDK_ROOT}" STREQUAL "")
         message(FATAL_ERROR "Missing ${TPU_IVE_SDK_ROOT}.")

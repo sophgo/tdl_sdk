@@ -1,3 +1,6 @@
+if(${CVI_PLATFORM} STREQUAL "BM1688")
+  return()
+endif()
 get_filename_component(FILE_NAME ${CMAKE_TOOLCHAIN_FILE} NAME_WE)
 
 if ("${FILE_NAME}" MATCHES "uclibc")

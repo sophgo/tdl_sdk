@@ -24,3 +24,18 @@ uint32_t get_data_type_size(ImagePixDataType data_type) {
       return 0;
   }
 }
+
+InferencePlatform get_platform() {
+#if defined(__BM168X__)
+  return InferencePlatform::BM168X;
+#elif defined(__CV186X__)
+  return InferencePlatform::CV186X;
+#elif defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
+    defined(__CV183X__)
+  return InferencePlatform::CVITEK;
+#elif defined(__CMODEL__)
+  return InferencePlatform::CMODEL;
+#else
+  return InferencePlatform::UNKOWN;
+#endif
+}

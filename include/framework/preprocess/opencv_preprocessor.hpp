@@ -29,9 +29,6 @@ class OpenCVPreprocessor : public BasePreprocessor {
       const std::shared_ptr<BaseImage>& src_image,
       const PreprocessParams& params, const int batch_idx,
       std::shared_ptr<BaseTensor> tensor) override;
-  virtual std::vector<float> getRescaleConfig(const PreprocessParams& params,
-                                              const int image_width,
-                                              const int image_height) override;
 };
 
 #endif  // INCLUDE_OPENCV_PREPROCESSOR_H_

@@ -8,8 +8,15 @@
   * V1.8.0->sophon-img->sdcard.tgz，解压到存储卡刷机
 
 * 安装依赖
-  * 安装libsophon0.4.10.deb、opencv_1.8.0_arm64.deb、ffmpeg_1.8.0_arm64.deb获得库文件，会被安装到/opt/sophon/目录下
+  *
+  安装libsophon0.4.10.deb、opencv_1.8.0_arm64.deb、ffmpeg_1.8.0_arm64.deb获得库文件，会被安装到/opt/sophon/目录下
   * 安装opencv-dev_1.8.0_arm64.deb及ffmpeg-dev_1.8.0_arm64.deb获得头文件，会被安装到/opt/sophon/目录下
+  * 安装eigen
+
+  ```shell
+  sudo apt-get install libeigen3-dev
+  
+  ```
 
 ## 编译
 

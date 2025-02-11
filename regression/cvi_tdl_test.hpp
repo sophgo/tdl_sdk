@@ -1,7 +1,7 @@
 #pragma once
 #include <experimental/filesystem>
 #include <string>
-// #include "cvi_tdl.h"
+
 #include "gtest.h"
 #include "json.hpp"
 
@@ -56,6 +56,11 @@ class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
                         const std::string &image_dir_name);
 
   virtual ~CVI_TDLModelTestSuite() = default;
+
+  // object info:[x1,y1,x2,y2,score,class_id]
+  bool matchObjects(const std::vector<std::vector<float>> &gt_objects,
+                    const std::vector<std::vector<float>> &pred_objects,
+                    const float iout_thresh, const float score_thresh);
 
  protected:
   nlohmann::json m_json_object;

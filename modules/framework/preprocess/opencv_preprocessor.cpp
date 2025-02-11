@@ -2,58 +2,6 @@
 
 #include "cvi_tdl_log.hpp"
 #include "image/opencv_image.hpp"
-bool compute_pad_resize_param(cv::Size src_size, cv::Size dst_size,
-                              std::vector<float>& rescale_params) {
-  rescale_params.clear();
-  float src_w = src_size.width;
-  float src_h = src_size.height;
-  float ratio_w = src_w / dst_size.width;
-  float ratio_h = src_h / dst_size.height;
-  float ratio = std::max(ratio_w, ratio_h);
-  // LOG(INFO)<<src_size<<"->"<<dst_size<<",ratio:"<<ratio_w<<","<<ratio_h;
-  rescale_params.push_back(ratio);
-  rescale_params.push_back(ratio);
-  cv::Mat dst_img;
-  if (ratio_w != ratio_h) {
-    int src_resized_w = lrint(src_w / ratio);
-    int src_resized_h = lrint(src_h / ratio);
-    int roi_x = (dst_size.width - src_resized_w + 1) / 2;
-    int roi_y = (dst_size.height - src_resized_h + 1) / 2;
-    // LOG(INFO)<<"scale:"<<ratio<<",src_size:"<<src_resized_w<<","<<src_resized_h<<",roi_xy:"<<roi_x<<","<<roi_y;
-    rescale_params.push_back(roi_x);
-    rescale_params.push_back(roi_y);
-    return true;
-  } else {
-    rescale_params.push_back(0.0f);
-    rescale_params.push_back(0.0f);
-    return false;
-  }
-}
-
-void pad_resize_to_dst(
-    const cv::Mat& src_img, cv::Mat& dst_img,
-    std::vector<float>& rescale_params, bool keep_aspect_ratio,
-    cv::InterpolationFlags inter_flag /*= cv::INTER_NEAREST*/) {
-  bool need_pad_resize = false;
-  if (keep_aspect_ratio) {
-    need_pad_resize = compute_pad_resize_param(src_img.size(), dst_img.size(),
-                                               rescale_params);
-  }
-
-  if (!need_pad_resize) {
-    cv::resize(src_img, dst_img, dst_img.size(), 0, 0, inter_flag);
-  } else {
-    int src_resized_w = lrint(src_img.cols / rescale_params[0]);
-    int src_resized_h = lrint(src_img.rows / rescale_params[1]);
-    cv::Rect roi(rescale_params[2], rescale_params[3], src_resized_w,
-                 src_resized_h);
-    cv::Mat resized_img;
-    LOGI("opencv padresize,size:%d,%d,offset:%d,%d", src_resized_w,
-         src_resized_h, roi.x, roi.y);
-    cv::resize(src_img, dst_img(roi), cv::Size(src_resized_w, src_resized_h), 0,
-               0, inter_flag);
-  }
-}
 
 void bgr_split_scale(const cv::Mat& src_mat, std::vector<cv::Mat>& tmp_bgr,
                      const std::vector<cv::Mat>& input_channels,
@@ -111,13 +59,22 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     // TODO:use memory pool
     cv::Mat tmp_resized = cv::Mat::zeros(params.dstHeight, params.dstWidth,
                                          src_image->getInternalType());
-    std::vector<float> rescale_params;
     const cv::Mat& src_mat = *(const cv::Mat*)src_image->getInternalData();
     print_mat(src_mat, "src_mat");
-    compute_pad_resize_param(src_mat.size(), tmp_resized.size(),
-                             rescale_params);
-    pad_resize_to_dst(src_mat, tmp_resized, rescale_params,
-                      params.keepAspectRatio, cv::INTER_LINEAR);
+    if (params.keepAspectRatio) {
+      std::vector<float> rescale_params = getRescaleConfig(
+          params, src_image->getWidth(), src_image->getHeight());
+
+      int resized_w = src_mat.cols * rescale_params[0];
+      int resized_h = src_mat.rows * rescale_params[1];
+      cv::Rect roi(rescale_params[2], rescale_params[3], resized_w, resized_h);
+      cv::resize(src_mat, tmp_resized(roi), cv::Size(resized_w, resized_h), 0,
+                 0, cv::INTER_LINEAR);
+    } else {
+      cv::resize(src_mat, tmp_resized,
+                 cv::Size(params.dstWidth, params.dstHeight), 0, 0,
+                 cv::INTER_LINEAR);
+    }
     bool use_rgb = (src_image->getImageFormat() == ImageFormat::RGB_PACKED &&
                     dst_image->getImageFormat() == ImageFormat::BGR_PLANAR) ||
                    (src_image->getImageFormat() == ImageFormat::BGR_PACKED &&
@@ -134,7 +91,10 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     }
     bgr_split_scale(tmp_resized, tmp_bgr, input_channels, mean, scale, use_rgb);
   } else {
-    LOGE("dst_image plane num is not 3!\n");
+    LOGE(
+        "image plane num is not supported, src_image plane num: %d, "
+        "dst_image plane num: %d",
+        src_image->getPlaneNum(), dst_image->getPlaneNum());
     return -1;
   }
 
@@ -144,31 +104,13 @@ int32_t OpenCVPreprocessor::preprocessToImage(
 int32_t OpenCVPreprocessor::preprocessToTensor(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     const int batch_idx, std::shared_ptr<BaseTensor> tensor) {
-  std::shared_ptr<OpenCVImage> src_image_ptr = std::make_shared<OpenCVImage>();
-  int32_t ret = src_image_ptr->prepareImageInfo(
+  LOGI("params.dstImageFormat: %d,params.dstPixDataType: %d",
+       params.dstImageFormat, params.dstPixDataType);
+  std::shared_ptr<OpenCVImage> src_image_ptr = std::make_shared<OpenCVImage>(
       params.dstWidth, params.dstHeight, params.dstImageFormat,
-      params.dstPixDataType);
-  if (ret != 0) {
-    LOGE("OpenCVImage prepareImageInfo failed!\n");
-    return -1;
-  }
+      params.dstPixDataType, false);
+
   tensor->constructImage(src_image_ptr, batch_idx);
   preprocessToImage(src_image, params, src_image_ptr);
   return 0;
-}
-
-std::vector<float> OpenCVPreprocessor::getRescaleConfig(
-    const PreprocessParams& params, const int image_width,
-    const int image_height) {
-  std::vector<float> rescale_params;
-  if (params.keepAspectRatio) {
-    compute_pad_resize_param(cv::Size(image_width, image_height),
-                             cv::Size(params.dstWidth, params.dstHeight),
-                             rescale_params);
-  } else {
-    float scale_x = image_width / float(params.dstWidth);
-    float scale_y = image_height / float(params.dstHeight);
-    rescale_params = {scale_x, scale_y, 0.0f, 0.0f};
-  }
-  return rescale_params;
 }

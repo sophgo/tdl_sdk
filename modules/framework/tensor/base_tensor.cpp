@@ -73,7 +73,7 @@ int BaseTensor::getChannels() const { return shape_[1]; }
 
 int BaseTensor::getBatchSize() const { return shape_[0]; }
 
-void BaseTensor::saveToFile(const std::string& file_path) const {
+void BaseTensor::dumpToFile(const std::string& file_path) {
   std::ofstream file(file_path, std::ios::binary);
   if (!file.is_open()) {
     std::cerr << "Error: Unable to open file " << file_path
@@ -85,7 +85,11 @@ void BaseTensor::saveToFile(const std::string& file_path) const {
     std::cerr << "Error: Host memory is not allocated.\n";
     return;
   }
-
+  int32_t ret = invalidateCache();
+  if (ret != 0) {
+    LOGE("invalidateCache failed, ret: %d\n", ret);
+    return;
+  }
   int capacity = getCapacity();
   file.write(reinterpret_cast<const char*>(memory_block_->virtualAddress),
              capacity);
@@ -185,11 +189,19 @@ int32_t BaseTensor::release() {
 }
 
 int32_t BaseTensor::invalidateCache() {
+  if (memory_block_ == nullptr) {
+    LOGE("memory_block_ is nullptr\n");
+    return -1;
+  }
   int32_t ret = memory_pool_->invalidateCache(memory_block_);
   return ret;
 }
 
 int32_t BaseTensor::flushCache() {
+  if (memory_block_ == nullptr) {
+    LOGE("memory_block_ is nullptr\n");
+    return -1;
+  }
   int32_t ret = memory_pool_->flushCache(memory_block_);
   return ret;
 }

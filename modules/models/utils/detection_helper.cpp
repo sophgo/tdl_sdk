@@ -187,10 +187,10 @@ void DetectionHelper::rescaleBbox(cvtdl_bbox_t &bbox,
   float scale_y = scale_params[1];
   float offset_x = scale_params[2];
   float offset_y = scale_params[3];
-  bbox.x1 = (bbox.x1 - offset_x) * scale_x;
-  bbox.y1 = (bbox.y1 - offset_y) * scale_y;
-  bbox.x2 = (bbox.x2 - offset_x) * scale_x;
-  bbox.y2 = (bbox.y2 - offset_y) * scale_y;
+  bbox.x1 = (bbox.x1 - offset_x) / scale_x;
+  bbox.y1 = (bbox.y1 - offset_y) / scale_y;
+  bbox.x2 = (bbox.x2 - offset_x) / scale_x;
+  bbox.y2 = (bbox.y2 - offset_y) / scale_y;
 }
 
 void DetectionHelper::convertDetStruct(

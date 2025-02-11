@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 #include "core/cvi_tdl_types_mem.h"
@@ -9,7 +10,6 @@
 #include "core/object/cvtdl_object_types.h"
 #include "cvi_tdl_log.hpp"
 #include "utils/detection_helper.hpp"
-
 template <typename T>
 inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls,
                            int anchor_idx, int cls_offset, float qscale,
@@ -46,6 +46,7 @@ YoloV8Detection::YoloV8Detection(std::pair<int, int> yolov8_pair) {
     net_param_.pre_params.mean[i] = 0.0;
   }
   net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keepAspectRatio = true;
 
   num_box_channel_ = yolov8_pair.first;
   num_cls_ = yolov8_pair.second;
@@ -216,6 +217,13 @@ int32_t YoloV8Detection::outputParse(
   LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
        input_tensor.shape[3]);
+
+  std::vector<std::string> output_names = net_->getOutputNames();
+  for (auto &name : output_names) {
+    std::shared_ptr<BaseTensor> tensor = net_->getOutputTensor(name);
+    tensor->invalidateCache();
+  }
+  std::stringstream ss;
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
@@ -274,16 +282,18 @@ int32_t YoloV8Detection::outputParse(
     }
     DetectionHelper::nmsObjects(lb_boxes, 0.5);
     std::vector<float> scale_params = batch_rescale_params_[b];
-    int num_obj = 0;
+    ss << "batch:" << b << "\n";
     for (auto &bbox : lb_boxes) {
-      num_obj += bbox.second.size();
       for (auto &b : bbox.second) {
         DetectionHelper::rescaleBbox(b, scale_params);
+        ss << "bbox:[" << b.x1 << "," << b.y1 << "," << b.x2 << "," << b.y2
+           << "],score:" << b.score << ",label:" << bbox.first << "\n";
       }
     }
     cvtdl_object_t *obj = new cvtdl_object_t();
     DetectionHelper::convertDetStruct(lb_boxes, obj, image_height, image_width);
     out_datas.push_back(obj);
   }
+  LOGI("outputParse done,ss:%s", ss.str().c_str());
   return 0;
 }

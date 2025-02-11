@@ -25,20 +25,28 @@ class BasePreprocessor {
   virtual std::shared_ptr<BaseImage> preprocess(
       const std::shared_ptr<BaseImage>& src_image,
       const PreprocessParams& params,
-      std::shared_ptr<BaseMemoryPool> memory_pool) = 0;
+      std::shared_ptr<BaseMemoryPool> memory_pool = nullptr) = 0;
   virtual int32_t preprocessToImage(const std::shared_ptr<BaseImage>& src_image,
                                     const PreprocessParams& params,
                                     std::shared_ptr<BaseImage> dst_image) = 0;
   //[scalex,scaley,offsetx,offsety]
-  // use as : new_x = (x - offsetx) * scalex
-  //          new_y = (y - offsety) * scaley
+  // dst_img[offsetx:offsetx+dst_w,offsety:offsety+dst_h] =
+  // resize(src_img,(src_w*scalex,src_h*scaley))
+  // use to restore the bbox after resize
+  // use as : new_x = (x - offsetx) / scalex
+  //          new_y = (y - offsety) / scaley
   virtual std::vector<float> getRescaleConfig(const PreprocessParams& params,
                                               const int image_width,
-                                              const int image_height) = 0;
+                                              const int image_height) const;
   virtual int32_t preprocessToTensor(
       const std::shared_ptr<BaseImage>& src_image,
       const PreprocessParams& params, const int batch_idx,
       std::shared_ptr<BaseTensor> tensor) = 0;
 };
 
+class PreprocessorFactory {
+ public:
+  static std::shared_ptr<BasePreprocessor> createPreprocessor(
+      InferencePlatform platform);
+};
 #endif  // BASE_PREPROCESSOR_H

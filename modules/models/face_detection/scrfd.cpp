@@ -118,6 +118,13 @@ int32_t SCRFD::outputParse(
   LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
        input_tensor.shape[3]);
+
+  std::vector<std::string> output_names = net_->getOutputNames();
+  for (auto &name : output_names) {
+    std::shared_ptr<BaseTensor> tensor = net_->getOutputTensor(name);
+    tensor->invalidateCache();
+  }
+
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
@@ -234,8 +241,8 @@ int32_t SCRFD::outputParse(
     if (vec_bbox.size() == 0) {
       facemeta->size = vec_bbox_nms.size();
       facemeta->info = NULL;
-
-      return 0;
+      out_datas.push_back((void *)facemeta);
+      continue;
     }
     CVI_TDL_MemAllocInit(vec_bbox.size(), 5, facemeta);
 

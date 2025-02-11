@@ -5,14 +5,10 @@
 #include <iostream>
 
 #include "cvi_tdl_log.hpp"
-#ifdef __SOPHON__
-#include "preprocess/opencv_preprocessor.hpp"
-#else
-#include "preprocess/vpss_preprocessor.hpp"
-#endif
-
+#include "preprocess/base_preprocessor.hpp"
+#include "utils/common_utils.hpp"
 void print_netparam(const NetParam& net_param) {
-  LOGI("scale:%f,%f,%f,mean:%f,%f,%f,format:%d,keepAspectRatio:%d",
+  LOGI("scale:%f,%f,%f,mean:%f,%f,%f,format:%d,aspect_ratio:%d",
        net_param.pre_params.scale[0], net_param.pre_params.scale[1],
        net_param.pre_params.scale[2], net_param.pre_params.mean[0],
        net_param.pre_params.mean[1], net_param.pre_params.mean[2],
@@ -22,13 +18,7 @@ void print_netparam(const NetParam& net_param) {
 
 BaseModel::BaseModel() {
   memset(&net_param_, 0, sizeof(NetParam));
-#ifdef __SOPHON__
-  net_param_.platform = InferencePlatform::BM168X;
-
-#else
-  net_param_.platform = InferencePlatform::CVITEK;
-
-#endif
+  net_param_.platform = get_platform();
 }
 
 int32_t BaseModel::setPreprocessor(
@@ -53,11 +43,8 @@ int32_t BaseModel::modelOpen(const std::string& model_path) {
     LOGI("onModelOpened success");
   }
   if (preprocessor_ == nullptr) {
-#ifdef __SOPHON__
-    preprocessor_ = std::make_shared<OpenCVPreprocessor>();
-#else
-    preprocessor_ = std::make_shared<VpssPreprocessor>();
-#endif
+    preprocessor_ =
+        PreprocessorFactory::createPreprocessor(net_param_.platform);
   }
   return 0;
 }
@@ -113,7 +100,15 @@ int32_t BaseModel::setupNetwork(NetParam& net_param) {
     preprocess_params.dstHeight = tensor_info.shape[2];
     preprocess_params.dstWidth = tensor_info.shape[3];
     preprocess_params.dstPixDataType = tensor_info.data_type;
-    // preprocess_params.dstImageFormat = ImageFormat::BGR_PLANAR;
+    LOGI(
+        "input_name:%s,qscale:%f,mean:%f,%f,%f,scale:%f,%f,%f,dstHeight:%d,"
+        "dstWidth:%d,dstPixDataType:%d",
+        name.c_str(), tensor_info.qscale, preprocess_params.mean[0],
+        preprocess_params.mean[1], preprocess_params.mean[2],
+        preprocess_params.scale[0], preprocess_params.scale[1],
+        preprocess_params.scale[2], preprocess_params.dstHeight,
+        preprocess_params.dstWidth, preprocess_params.dstPixDataType);
+
     preprocess_params_[name] = preprocess_params;
   }
 }
@@ -133,7 +128,18 @@ int32_t BaseModel::inference(
   int batch_size = images.size();
   int process_idx = 0;
   std::string input_layer_name = net_->getInputNames()[0];
-  PreprocessParams preprocess_params = preprocess_params_[input_layer_name];
+  const PreprocessParams& preprocess_params =
+      preprocess_params_[input_layer_name];
+  LOGI(
+      "BaseModel::inference "
+      "preprocess_params:%f,%f,%f,mean:%f,%f,%f,scale:%f,%f,%f,dstHeight:%d,"
+      "dstWidth:%d,dstPixDataType:%d",
+      preprocess_params.scale[0], preprocess_params.scale[1],
+      preprocess_params.scale[2], preprocess_params.mean[0],
+      preprocess_params.mean[1], preprocess_params.mean[2],
+      preprocess_params.scale[0], preprocess_params.scale[1],
+      preprocess_params.scale[2], preprocess_params.dstHeight,
+      preprocess_params.dstWidth, preprocess_params.dstPixDataType);
   while (process_idx < batch_size) {
     int fit_batch_size = getFitBatchSize(batch_size - process_idx);
     setInputBatchSize(input_layer_name, fit_batch_size);

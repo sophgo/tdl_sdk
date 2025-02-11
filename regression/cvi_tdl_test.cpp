@@ -105,11 +105,12 @@ CVI_TDLModelTestSuite::CVI_TDLModelTestSuite(
 
   fs::path json_file_path = context.getJsonBaseDir();
   json_file_path /= json_file_name;
-
+  std::cout << "to parse json file: " << json_file_path << std::endl;
   if (!json_file_name.empty()) {
     std::ifstream filestr(json_file_path);
     filestr >> m_json_object;
     filestr.close();
+    std::cout << "m_json_object: " << m_json_object << std::endl;
   }
   if (m_json_object.contains("image_dir")) {
     m_image_dir =
@@ -122,6 +123,77 @@ CVI_TDLModelTestSuite::CVI_TDLModelTestSuite(
   std::cout << "json_file_path: " << json_file_path
             << ",image_dir_name: " << m_image_dir
             << ",model_dir: " << m_model_dir << std::endl;
+}
+
+float iou(const std::vector<float> &gt_object,
+          const std::vector<float> &pred_object) {
+  float iout = 0.0f;
+  float gt_x1 = gt_object[0];
+  float gt_y1 = gt_object[1];
+  float gt_x2 = gt_object[2];
+  float gt_y2 = gt_object[3];
+  float pred_x1 = pred_object[0];
+  float pred_y1 = pred_object[1];
+  float pred_x2 = pred_object[2];
+  float pred_y2 = pred_object[3];
+  float area1 = (gt_x2 - gt_x1) * (gt_y2 - gt_y1);
+  float area2 = (pred_x2 - pred_x1) * (pred_y2 - pred_y1);
+  float inter_x1 = std::max(gt_x1, pred_x1);
+  float inter_y1 = std::max(gt_y1, pred_y1);
+  float inter_x2 = std::min(gt_x2, pred_x2);
+  float inter_y2 = std::min(gt_y2, pred_y2);
+  float area_inter = (inter_x2 - inter_x1) * (inter_y2 - inter_y1);
+  return area_inter / (area1 + area2 - area_inter);
+}
+
+// object info:[x1,y1,x2,y2,score,class_id]
+bool CVI_TDLModelTestSuite::matchObjects(
+    const std::vector<std::vector<float>> &gt_objects,
+    const std::vector<std::vector<float>> &pred_objects,
+    const float iout_thresh, const float score_thresh) {
+  for (const auto &gt_object : gt_objects) {
+    std::vector<std::vector<float>> matched_dets;
+    for (const auto &pred_object : pred_objects) {
+      if (gt_object[5] == pred_object[5]) {
+        float iout = iou(gt_object, pred_object);
+        if (iout > iout_thresh) {
+          matched_dets.push_back(pred_object);
+        }
+      }
+    }
+    if (matched_dets.size() == 0) {
+      std::cout << "no matched det,gtbox:[" << gt_object[0] << ","
+                << gt_object[1] << "," << gt_object[2] << "," << gt_object[3]
+                << "]"
+                << ",score:" << gt_object[4] << ",class_id:" << gt_object[5]
+                << std::endl;
+      return false;
+    } else if (matched_dets.size() > 1) {
+      std::cout << "has multiple matched det,gtbox:[" << gt_object[0] << ","
+                << gt_object[1] << "," << gt_object[2] << "," << gt_object[3]
+                << "]"
+                << ",score:" << gt_object[4] << ",class_id:" << gt_object[5]
+                << std::endl;
+      for (const auto &matched_det : matched_dets) {
+        std::cout << "matched det:[" << matched_det[0] << "," << matched_det[1]
+                  << "," << matched_det[2] << "," << matched_det[3] << "]"
+                  << ",score:" << matched_det[4]
+                  << ",class_id:" << matched_det[5] << std::endl;
+      }
+      return false;
+    } else {
+      float score_diff = std::abs(matched_dets[0][4] - gt_object[4]);
+      if (score_diff > score_thresh) {
+        std::cout << "score diff: " << score_diff << ",gtbox:[" << gt_object[0]
+                  << "," << gt_object[1] << "," << gt_object[2] << ","
+                  << gt_object[3] << "]"
+                  << ",score:" << gt_object[4] << ",class_id:" << gt_object[5]
+                  << std::endl;
+        return false;
+      }
+    }
+  }
+  return true;
 }
 }  // namespace unitest
 }  // namespace cvitdl

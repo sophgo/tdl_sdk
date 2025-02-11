@@ -28,12 +28,17 @@ class BaseMemoryPool {
    */
   virtual int32_t initialize(uint32_t blockSize, uint32_t initialBlockCount);
 
+  // 从缓存中获取内存块,假如缓存里没有,则新分配一块
   virtual std::unique_ptr<MemoryBlock> getBlock(uint32_t size,
                                                 uint32_t timeout_ms = 0);
+
+  // 回收内存块
   virtual int32_t recycle(std::unique_ptr<MemoryBlock> &block);
 
+  // 分配内存块
   virtual std::unique_ptr<MemoryBlock> allocate(uint32_t size,
                                                 uint32_t timeout_ms = 0) = 0;
+  // 释放内存块,不放回换成池
   virtual int32_t release(std::unique_ptr<MemoryBlock> &block) = 0;
 
   virtual int32_t invalidateCache(std::unique_ptr<MemoryBlock> &block) = 0;

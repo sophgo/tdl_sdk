@@ -53,7 +53,8 @@
  * @param stVbConf The middleware config structure.
  * @return int Return CVI_SUCCESS on success.
  */
-static inline int __attribute__((always_inline)) MMF_INIT(const VB_CONFIG_S *stVbConf) {
+static inline int __attribute__((always_inline)) MMF_INIT(
+    const VB_CONFIG_S *stVbConf) {
   CVI_S32 s32Ret = CVI_FAILURE;
 
   CVI_SYS_Exit();
@@ -94,10 +95,10 @@ static inline int __attribute__((always_inline)) MMF_INIT(const VB_CONFIG_S *stV
  * @param outBlkCount Max available images in the output pool.
  * @return int Return CVI_SUCCESS on success.
  */
-static inline int __attribute__((always_inline))
-MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
-                 const uint32_t inBlkCount, uint32_t enDstWidth, uint32_t enDstHeight,
-                 PIXEL_FORMAT_E enDstFormat, const uint32_t outBlkCount) {
+static inline int __attribute__((always_inline)) MMF_INIT_HELPER2(
+    uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
+    const uint32_t inBlkCount, uint32_t enDstWidth, uint32_t enDstHeight,
+    PIXEL_FORMAT_E enDstFormat, const uint32_t outBlkCount) {
   COMPRESS_MODE_E enCompressMode = COMPRESS_MODE_NONE;
 // Init SYS and Common VB,
 // Running w/ Vi don't need to do it again. Running Vpss along need init below
@@ -109,12 +110,14 @@ MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrc
   memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
   stVbConf.u32MaxPoolCnt = 2;
   CVI_U32 u32BlkSize;
-  u32BlkSize = COMMON_GetPicBufferSize(enSrcWidth, enSrcHeight, enSrcFormat, DATA_BITWIDTH_8,
-                                       enCompressMode, DEFAULT_ALIGN);
+  u32BlkSize =
+      COMMON_GetPicBufferSize(enSrcWidth, enSrcHeight, enSrcFormat,
+                              DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
   stVbConf.astCommPool[0].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[0].u32BlkCnt = inBlkCount;
-  u32BlkSize = COMMON_GetPicBufferSize(enDstWidth, enDstHeight, enDstFormat, DATA_BITWIDTH_8,
-                                       enCompressMode, DEFAULT_ALIGN);
+  u32BlkSize =
+      COMMON_GetPicBufferSize(enDstWidth, enDstHeight, enDstFormat,
+                              DATA_BITWIDTH_8, enCompressMode, DEFAULT_ALIGN);
   stVbConf.astCommPool[1].u32BlkSize = u32BlkSize;
   stVbConf.astCommPool[1].u32BlkCnt = outBlkCount;
 
@@ -134,11 +137,12 @@ MMF_INIT_HELPER2(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrc
  * @param enDstFormat Desired output image format..
  * @return int Return CVI_SUCCESS on success.
  */
-static inline int __attribute__((always_inline))
-MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
-                uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
-  return MMF_INIT_HELPER2(enSrcWidth, enSrcHeight, enSrcFormat, MMF_INIT_HELPER_BLKCNT_DEFAULT,
-                          enDstWidth, enDstHeight, enDstFormat, MMF_INIT_HELPER_BLKCNT_DEFAULT);
+static inline int __attribute__((always_inline)) MMF_INIT_HELPER(
+    uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcFormat,
+    uint32_t enDstWidth, uint32_t enDstHeight, PIXEL_FORMAT_E enDstFormat) {
+  return MMF_INIT_HELPER2(
+      enSrcWidth, enSrcHeight, enSrcFormat, MMF_INIT_HELPER_BLKCNT_DEFAULT,
+      enDstWidth, enDstHeight, enDstFormat, MMF_INIT_HELPER_BLKCNT_DEFAULT);
 }
 
 /**
@@ -150,9 +154,9 @@ MMF_INIT_HELPER(uint32_t enSrcWidth, uint32_t enSrcHeight, PIXEL_FORMAT_E enSrcF
  * @param srcHeight Input image height.
  * @param enSrcFormat Input image format.
  */
-inline void __attribute__((always_inline))
-VPSS_GRP_DEFAULT_HELPER2(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
-                         PIXEL_FORMAT_E enSrcFormat, CVI_U8 dev) {
+inline void __attribute__((always_inline)) VPSS_GRP_DEFAULT_HELPER2(
+    VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
+    PIXEL_FORMAT_E enSrcFormat, CVI_U8 dev) {
   memset(pstVpssGrpAttr, 0, sizeof(VPSS_GRP_ATTR_S));
   pstVpssGrpAttr->stFrameRate.s32SrcFrameRate = -1;
   pstVpssGrpAttr->stFrameRate.s32DstFrameRate = -1;
@@ -173,9 +177,9 @@ VPSS_GRP_DEFAULT_HELPER2(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_
  * @param srcHeight Input image height.
  * @param enSrcFormat Input image format.
  */
-inline void __attribute__((always_inline))
-VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
-                        PIXEL_FORMAT_E enSrcFormat) {
+inline void __attribute__((always_inline)) VPSS_GRP_DEFAULT_HELPER(
+    VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U32 srcHeight,
+    PIXEL_FORMAT_E enSrcFormat) {
   VPSS_GRP_DEFAULT_HELPER2(pstVpssGrpAttr, srcWidth, srcHeight, enSrcFormat, 0);
 }
 
@@ -189,9 +193,9 @@ VPSS_GRP_DEFAULT_HELPER(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_U
  * @param enDstFormat Output image format.
  * @param keepAspectRatio Keep aspect ratio or not.
  */
-inline void __attribute__((always_inline))
-VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_U32 dstHeight,
-                        PIXEL_FORMAT_E enDstFormat, CVI_BOOL keepAspectRatio) {
+inline void __attribute__((always_inline)) VPSS_CHN_DEFAULT_HELPER(
+    VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_U32 dstHeight,
+    PIXEL_FORMAT_E enDstFormat, CVI_BOOL keepAspectRatio) {
   pastVpssChnAttr->u32Width = dstWidth;
   pastVpssChnAttr->u32Height = dstHeight;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -233,10 +237,10 @@ VPSS_CHN_DEFAULT_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_
  * @param ratioHeight The desired height of the image grom group. Black will be
  * filled if (ratioY + ratioWidth) < dstHeight.
  */
-inline void __attribute__((always_inline))
-VPSS_CHN_RATIO_MANUAL_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_U32 dstHeight,
-                             PIXEL_FORMAT_E enDstFormat, CVI_U32 ratioX, CVI_U32 ratioY,
-                             CVI_U32 ratioWidth, CVI_U32 ratioHeight) {
+inline void __attribute__((always_inline)) VPSS_CHN_RATIO_MANUAL_HELPER(
+    VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth, CVI_U32 dstHeight,
+    PIXEL_FORMAT_E enDstFormat, CVI_U32 ratioX, CVI_U32 ratioY,
+    CVI_U32 ratioWidth, CVI_U32 ratioHeight) {
   pastVpssChnAttr->u32Width = dstWidth;
   pastVpssChnAttr->u32Height = dstHeight;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -276,10 +280,10 @@ VPSS_CHN_RATIO_MANUAL_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, CVI_U32 dstWidth,
  * @param padReverse If your code do quantization + scale before padding, set
  * this to true. Default if false.
  */
-inline void __attribute__((always_inline))
-VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
-                   const CVI_U32 dstHeight, const PIXEL_FORMAT_E enDstFormat,
-                   const CVI_FLOAT *factor, const CVI_FLOAT *mean, const bool padReverse) {
+inline void __attribute__((always_inline)) VPSS_CHN_SQ_HELPER(
+    VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
+    const CVI_U32 dstHeight, const PIXEL_FORMAT_E enDstFormat,
+    const CVI_FLOAT *factor, const CVI_FLOAT *mean, const bool padReverse) {
   pastVpssChnAttr->u32Width = dstWidth;
   pastVpssChnAttr->u32Height = dstHeight;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -292,19 +296,24 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
   pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_AUTO;
   pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
   if (padReverse) {
-    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(
-        (int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]), (int)(mean[2] / factor[2]));
+    pastVpssChnAttr->stAspectRatio.u32BgColor =
+        RGB_8BIT((int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]),
+                 (int)(mean[2] / factor[2]));
   } else {
     pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
   }
-  pastVpssChnAttr->stNormalize.bEnable = CVI_TRUE;
-  for (uint32_t i = 0; i < 3; i++) {
-    pastVpssChnAttr->stNormalize.factor[i] = factor[i];
+  bool enable_normalize = factor[0] != 1 || factor[1] != 1 || factor[2] != 1 ||
+                          mean[0] != 0 || mean[1] != 0 || mean[2] != 0;
+  pastVpssChnAttr->stNormalize.bEnable = enable_normalize;
+  if (enable_normalize) {
+    for (uint32_t i = 0; i < 3; i++) {
+      pastVpssChnAttr->stNormalize.factor[i] = factor[i];
+    }
+    for (uint32_t i = 0; i < 3; i++) {
+      pastVpssChnAttr->stNormalize.mean[i] = mean[i];
+    }
+    pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
   }
-  for (uint32_t i = 0; i < 3; i++) {
-    pastVpssChnAttr->stNormalize.mean[i] = mean[i];
-  }
-  pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }
 
 /**
@@ -323,11 +332,11 @@ VPSS_CHN_SQ_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 dstWidth,
  * @param padReverse If your code do quantization + scale before padding, set
  * this to true. Default if false.
  */
-inline void __attribute__((always_inline))
-VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
-                      const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
-                      const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
-                      const CVI_FLOAT *mean, const bool padReverse) {
+inline void __attribute__((always_inline)) VPSS_CHN_SQ_RB_HELPER(
+    VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
+    const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
+    const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
+    const CVI_FLOAT *mean, const bool padReverse) {
   float ratio_w = (float)dstWidth / srcWidth;
   float ratio_h = (float)dstHeight / srcHeight;
   float ratio = min(ratio_w, ratio_h);
@@ -344,13 +353,16 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
   pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
   pastVpssChnAttr->stAspectRatio.stVideoRect.s32X = 0;
   pastVpssChnAttr->stAspectRatio.stVideoRect.s32Y = 0;
-  pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = (srcWidth * ratio) + 0.5;
-  pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = (srcHeight * ratio) + 0.5;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width =
+      (srcWidth * ratio) + 0.5;
+  pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height =
+      (srcHeight * ratio) + 0.5;
   pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
 
   if (padReverse) {
-    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(
-        (int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]), (int)(mean[2] / factor[2]));
+    pastVpssChnAttr->stAspectRatio.u32BgColor =
+        RGB_8BIT((int)(mean[0] / factor[0]), (int)(mean[1] / factor[1]),
+                 (int)(mean[2] / factor[2]));
   } else {
     pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
   }
@@ -368,11 +380,11 @@ VPSS_CHN_SQ_RB_HELPER(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
  * pad_val,rgb order
  * pad_type ,0:pad none, 1:pad center,2:pad right bottom
  */
-inline void __attribute__((always_inline))
-VPSS_CHN_SQ_HELPER_X(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
-                     const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
-                     const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
-                     const CVI_FLOAT *mean, int *pad_val, int pad_type) {
+inline void __attribute__((always_inline)) VPSS_CHN_SQ_HELPER_X(
+    VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
+    const CVI_U32 srcHeight, const CVI_U32 dstWidth, const CVI_U32 dstHeight,
+    const PIXEL_FORMAT_E enDstFormat, const CVI_FLOAT *factor,
+    const CVI_FLOAT *mean, int *pad_val, int pad_type) {
   pastVpssChnAttr->u32Width = dstWidth;
   pastVpssChnAttr->u32Height = dstHeight;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -394,12 +406,15 @@ VPSS_CHN_SQ_HELPER_X(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
     pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
     pastVpssChnAttr->stAspectRatio.stVideoRect.s32X = 0;
     pastVpssChnAttr->stAspectRatio.stVideoRect.s32Y = 0;
-    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = (srcWidth * ratio) + 0.5;
-    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = (srcHeight * ratio) + 0.5;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width =
+        (srcWidth * ratio) + 0.5;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height =
+        (srcHeight * ratio) + 0.5;
     pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
   }
   if (pad_val != NULL) {
-    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(pad_val[0], pad_val[1], pad_val[2]);
+    pastVpssChnAttr->stAspectRatio.u32BgColor =
+        RGB_8BIT(pad_val[0], pad_val[1], pad_val[2]);
   } else {
     pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
   }
@@ -443,29 +458,32 @@ VPSS_CHN_SQ_HELPER_X(VPSS_CHN_ATTR_S *pastVpssChnAttr, const CVI_U32 srcWidth,
  1->1)
  * @param keepAspectRatio Keep aspect ratio or not.
  */
-inline int __attribute__((always_inline))
-VPSS_INIT_HELPER2(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
-                  PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
-                  PIXEL_FORMAT_E enDstFormat, uint32_t enabledChannel, bool keepAspectRatio) {
-  syslog(LOG_INFO, "VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth, enSrcHeight,
-         enDstWidth, enDstHeight);
+inline int __attribute__((always_inline)) VPSS_INIT_HELPER2(
+    CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
+    PIXEL_FORMAT_E enSrcFormat, uint32_t enDstWidth, uint32_t enDstHeight,
+    PIXEL_FORMAT_E enDstFormat, uint32_t enabledChannel, bool keepAspectRatio) {
+  syslog(LOG_INFO, "VPSS init with src (%u, %u) dst (%u, %u).\n", enSrcWidth,
+         enSrcHeight, enDstWidth, enDstHeight);
   CVI_S32 s32Ret = CVI_FAILURE;
 
   VPSS_GRP_ATTR_S stVpssGrpAttr;
   VPSS_CHN_ATTR_S stVpssChnAttr;
   VPSS_GRP_DEFAULT_HELPER(&stVpssGrpAttr, enSrcWidth, enSrcHeight, enSrcFormat);
-  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr, enDstWidth, enDstHeight, enDstFormat, keepAspectRatio);
+  VPSS_CHN_DEFAULT_HELPER(&stVpssChnAttr, enDstWidth, enDstHeight, enDstFormat,
+                          keepAspectRatio);
 
   /*start vpss*/
   s32Ret = CVI_VPSS_CreateGrp(vpssGrpId, &stVpssGrpAttr);
   if (s32Ret != CVI_SUCCESS) {
     printf("???? %d\n", vpssGrpId);
-    syslog(LOG_ERR, "CVI_VPSS_CreateGrp(grp:%d) failed with %#x!\n", vpssGrpId, s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_CreateGrp(grp:%d) failed with %#x!\n", vpssGrpId,
+           s32Ret);
     return s32Ret;
   }
   s32Ret = CVI_VPSS_ResetGrp(vpssGrpId);
   if (s32Ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", vpssGrpId, s32Ret);
+    syslog(LOG_ERR, "CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", vpssGrpId,
+           s32Ret);
     return s32Ret;
   }
   if (enabledChannel > 3) {
@@ -503,9 +521,9 @@ VPSS_INIT_HELPER2(CVI_U32 vpssGrpId, uint32_t enSrcWidth, uint32_t enSrcHeight,
  * @param srcHeight Desired image height.
  * @param pixelFormat Desired image format.
  */
-inline int __attribute__((always_inline))
-CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeight,
-                      PIXEL_FORMAT_E pixelFormat) {
+inline int __attribute__((always_inline)) CREATE_VBFRAME_HELPER(
+    VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth,
+    CVI_U32 srcHeight, PIXEL_FORMAT_E pixelFormat) {
   // Create Src Video Frame
   VIDEO_FRAME_S *vFrame = &vbFrame->stVFrame;
   memset(vFrame, 0, sizeof(VIDEO_FRAME_S));
@@ -534,7 +552,8 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = vFrame->u32Stride[0];
       vFrame->u32Stride[2] = vFrame->u32Stride[0];
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[1] = vFrame->u32Length[0];
       vFrame->u32Length[2] = vFrame->u32Length[0];
     } break;
@@ -542,18 +561,24 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
     } break;
     case PIXEL_FORMAT_YUV_PLANAR_420: {
       uint32_t newHeight = ALIGN(vFrame->u32Height, 2);
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] =
+          ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] =
+          ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[2] =
+          ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
     } break;
     case PIXEL_FORMAT_YUV_400: {
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
@@ -564,7 +589,8 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_FP32_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
+      vFrame->u32Stride[0] =
+          ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -572,7 +598,8 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_BF16_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
+      vFrame->u32Stride[0] =
+          ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -580,12 +607,14 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
       vFrame->u32Length[2] = 0;
     } break;
     default:
-      syslog(LOG_ERR, "Currently unsupported format %u\n", vFrame->enPixelFormat);
+      syslog(LOG_ERR, "Currently unsupported format %u\n",
+             vFrame->enPixelFormat);
       return CVI_FAILURE;
       break;
   }
 
-  CVI_U32 u32MapSize = vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
+  CVI_U32 u32MapSize =
+      vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
   *blk = CVI_VB_GetBlock(VB_INVALID_POOLID, u32MapSize);
   if (*blk == VB_INVALID_HANDLE) {
     syslog(LOG_ERR, "Can't acquire vb block Size: %d\n", u32MapSize);
@@ -599,7 +628,8 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
 #ifdef CONFIG_ALIOS
   vFrame->pu8VirAddr[0] = (uint8_t *)vFrame->u64PhyAddr[0];
 #else
-  vFrame->pu8VirAddr[0] = (uint8_t *)CVI_SYS_MmapCache(vFrame->u64PhyAddr[0], u32MapSize);
+  vFrame->pu8VirAddr[0] =
+      (uint8_t *)CVI_SYS_MmapCache(vFrame->u64PhyAddr[0], u32MapSize);
 #endif
   vFrame->pu8VirAddr[1] = vFrame->pu8VirAddr[0] + vFrame->u32Length[0];
   vFrame->pu8VirAddr[2] = vFrame->pu8VirAddr[1] + vFrame->u32Length[1];
@@ -618,9 +648,9 @@ CREATE_VBFRAME_HELPER(VB_BLK *blk, VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth
  * @param pixelFormat Desired image format.
  * @param alloc_name ION block name
  */
-inline int __attribute__((always_inline))
-CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeight,
-                  PIXEL_FORMAT_E pixelFormat, const char *alloc_name) {
+inline int __attribute__((always_inline)) CREATE_ION_HELPER(
+    VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeight,
+    PIXEL_FORMAT_E pixelFormat, const char *alloc_name) {
   // Create Src Video Frame
   VIDEO_FRAME_S *vFrame = &vbFrame->stVFrame;
   memset(vFrame, 0, sizeof(VIDEO_FRAME_S));
@@ -649,7 +679,8 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = vFrame->u32Stride[0];
       vFrame->u32Stride[2] = vFrame->u32Stride[0];
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[1] = vFrame->u32Length[0];
       vFrame->u32Length[2] = vFrame->u32Length[0];
     } break;
@@ -657,18 +688,24 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
     } break;
     case PIXEL_FORMAT_YUV_PLANAR_420: {
       uint32_t newHeight = ALIGN(vFrame->u32Height, 2);
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = ALIGN(vFrame->u32Width >> 1, DEFAULT_ALIGN);
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[2] = ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] =
+          ALIGN(vFrame->u32Stride[0] * newHeight, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] =
+          ALIGN(vFrame->u32Stride[1] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[2] =
+          ALIGN(vFrame->u32Stride[2] * newHeight / 2, SCALAR_4096_ALIGN_BUG);
     } break;
     case PIXEL_FORMAT_YUV_400: {
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
@@ -682,22 +719,25 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] =
-          ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2,
+                                   SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_NV21: {
       vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[1] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN);
       vFrame->u32Stride[2] = 0;
-      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height, SCALAR_4096_ALIGN_BUG);
-      vFrame->u32Length[1] =
-          ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2, SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[0] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height,
+                                   SCALAR_4096_ALIGN_BUG);
+      vFrame->u32Length[1] = ALIGN(vFrame->u32Stride[0] * vFrame->u32Height / 2,
+                                   SCALAR_4096_ALIGN_BUG);
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_FP32_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
+      vFrame->u32Stride[0] =
+          ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(float);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -705,7 +745,8 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
       vFrame->u32Length[2] = 0;
     } break;
     case PIXEL_FORMAT_BF16_C1: {
-      vFrame->u32Stride[0] = ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
+      vFrame->u32Stride[0] =
+          ALIGN(vFrame->u32Width, DEFAULT_ALIGN) * sizeof(uint16_t);
       vFrame->u32Stride[1] = 0;
       vFrame->u32Stride[2] = 0;
       vFrame->u32Length[0] = vFrame->u32Stride[0] * vFrame->u32Height;
@@ -713,16 +754,20 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
       vFrame->u32Length[2] = 0;
     } break;
     default:
-      syslog(LOG_ERR, "Currently unsupported format %u\n", vFrame->enPixelFormat);
+      syslog(LOG_ERR, "Currently unsupported format %u\n",
+             vFrame->enPixelFormat);
       return CVI_FAILURE;
       break;
   }
 
-  CVI_U32 u32MapSize = vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
-  int ret = CVI_SYS_IonAlloc(&vFrame->u64PhyAddr[0], (CVI_VOID **)&vFrame->pu8VirAddr[0],
-                             alloc_name, u32MapSize);
+  CVI_U32 u32MapSize =
+      vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
+  int ret = CVI_SYS_IonAlloc(&vFrame->u64PhyAddr[0],
+                             (CVI_VOID **)&vFrame->pu8VirAddr[0], alloc_name,
+                             u32MapSize);
   if (ret != CVI_SUCCESS) {
-    syslog(LOG_ERR, "Cannot allocate ion, size: %d, ret=%#x\n", u32MapSize, ret);
+    syslog(LOG_ERR, "Cannot allocate ion, size: %d, ret=%#x\n", u32MapSize,
+           ret);
     return CVI_FAILURE;
   }
 
@@ -740,13 +785,16 @@ CREATE_ION_HELPER(VIDEO_FRAME_INFO_S *vbFrame, CVI_U32 srcWidth, CVI_U32 srcHeig
  *
  * @param frame Input frame.
  */
-inline void __attribute__((always_inline)) CACHED_VBFRAME_FLUSH_UNMAP(VIDEO_FRAME_INFO_S *frame) {
-  uint32_t image_size =
-      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2];
-  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0], frame->stVFrame.pu8VirAddr[0], image_size);
-  CVI_SYS_Munmap(
-      (void *)frame->stVFrame.pu8VirAddr[0],
-      frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] + frame->stVFrame.u32Length[2]);
+inline void __attribute__((always_inline)) CACHED_VBFRAME_FLUSH_UNMAP(
+    VIDEO_FRAME_INFO_S *frame) {
+  uint32_t image_size = frame->stVFrame.u32Length[0] +
+                        frame->stVFrame.u32Length[1] +
+                        frame->stVFrame.u32Length[2];
+  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0],
+                        frame->stVFrame.pu8VirAddr[0], image_size);
+  CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0],
+                 frame->stVFrame.u32Length[0] + frame->stVFrame.u32Length[1] +
+                     frame->stVFrame.u32Length[2]);
   frame->stVFrame.pu8VirAddr[0] = NULL;
   frame->stVFrame.pu8VirAddr[1] = NULL;
   frame->stVFrame.pu8VirAddr[2] = NULL;

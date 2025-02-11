@@ -16,7 +16,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
 # add_subdirectory(core)
 # add_subdirectory(service)
 # add_subdirectory(eval)
-# add_subdirectory(test)
+
 # add_subdirectory(lib)
 add_subdirectory(framework)
 add_subdirectory(models)
@@ -116,6 +116,9 @@ project(cvi_tdl-static)
 add_library(${PROJECT_NAME} STATIC ${CORES_SRCS})
 target_link_libraries(${PROJECT_NAME} ${CORES_DEPS} ${OPENCV_LIBS_IMCODEC_STATIC})
 SET_TARGET_PROPERTIES(cvi_tdl-static PROPERTIES OUTPUT_NAME "cvi_tdl")
+
+add_subdirectory(test)
+
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 #install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cvi_tdl_app/ DESTINATION sample/cvi_tdl_app PATTERN "CMakeLists.txt" EXCLUDE)

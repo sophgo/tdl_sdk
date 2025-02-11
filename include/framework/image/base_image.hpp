@@ -11,9 +11,9 @@
 class BaseImage {
  public:
   virtual ~BaseImage() = default;
-  BaseImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-            ImagePixDataType pix_data_type,
-            std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
+  // BaseImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
+  //           ImagePixDataType pix_data_type, bool alloc_memory = false,
+  //           std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
   BaseImage();
 
   virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
@@ -47,13 +47,12 @@ class BaseImage {
   virtual int32_t flushCache();
 
   virtual int32_t randomFill();
-  virtual int32_t readImage(const std::string& file_path);
-  virtual int32_t writeImage(const std::string& file_path);
 
   virtual int32_t setupMemoryBlock(std::unique_ptr<MemoryBlock>& memory_block);
 
   virtual int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
                               uint32_t length) = 0;
+  std::shared_ptr<BaseMemoryPool> getMemoryPool() { return memory_pool_; }
 
  private:
   MemoryPoolType getMemoryPoolType();
@@ -63,11 +62,27 @@ class BaseImage {
   ImagePixDataType pix_data_type_ = ImagePixDataType::UINT8;
   ImageFormat image_format_ = ImageFormat::UNKOWN;
 
-  std::unique_ptr<MemoryBlock> memory_block_;
-  std::shared_ptr<BaseMemoryPool> memory_pool_;
+  std::unique_ptr<MemoryBlock> memory_block_ = nullptr;
+  std::shared_ptr<BaseMemoryPool> memory_pool_ = nullptr;
 
   bool is_local_mempool_ =
       false;  // True:本地创建的内存池，False:外部传入的内存池
 };
 
+class ImageFactory {
+ public:
+  static std::shared_ptr<BaseImage> createImage(
+      uint32_t width, uint32_t height, ImageFormat imageFormat,
+      ImagePixDataType pixDataType, bool alloc_memory,
+      InferencePlatform platform = InferencePlatform::AUTOMATIC);
+
+  static std::shared_ptr<BaseImage> constructImage(void* custom_frame,
+                                                   ImageImplType frame_type);
+
+  static std::shared_ptr<BaseImage> readImage(
+      const std::string& file_path, bool use_rgb = false,
+      InferencePlatform platform = InferencePlatform::AUTOMATIC);
+  static int32_t writeImage(const std::string& file_path,
+                            const std::shared_ptr<BaseImage>& image);
+};
 #endif  // BaseImage_H

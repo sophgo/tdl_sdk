@@ -1,18 +1,18 @@
 import cv2
 import sys
 import numpy as np
-def draw_image(img,boxes,kpts=None):
+def draw_image(img,boxes,kpts=None,color=(0,0,255)):
 
     if not boxes is None:
         for box in boxes:
             ib = [int(v) for v in box]
-            cv2.rectangle(img,tuple(ib[:2]),tuple(ib[2:4]),(0,0,255),2)
+            cv2.rectangle(img,tuple(ib[:2]),tuple(ib[2:4]),color,2)
     if kpts is None:
         return
     for kpt in kpts:
         ipt = [int(v) for v in kpt]
         for j in range(len(ipt)//2):
-            cv2.circle(img,(ipt[2*j],ipt[2*j+1]),2,(0,0,255),-1)
+            cv2.circle(img,(ipt[2*j],ipt[2*j+1]),2,color,-1)
 
 
 if __name__ == "__main__":
@@ -25,12 +25,48 @@ if __name__ == "__main__":
     kpts=[[50.3906,60.0586,100.781,52.4414,73.8281,86.7188,53.6133,112.5,93.1641,106.055]]
     kpts=[[64.1602,41.0156,103.125,43.0664,71.7773,65.918,60.3516,98.4375,97.8516,98.4375]]
     kpts=[[64.1602,41.0156,103.125,43.0664,71.7773,65.918,60.3516,98.4375,97.8516,98.4375]]
-    boxes = None
+    kpts = None
+    boxes = [[18.4887,45.796,297.431,164.231],[14.0899,16.5386,295.698,166]]
+
+    gt_boxes = [
+      {
+          "bbox": [
+            110.153839,
+            36.459969,
+            184.118073,
+            210.167465
+          ],
+          "category_id": 0,
+          "score": 0.897523
+      },
+      {
+        "bbox": [
+          0.000000,
+          24.177584,
+          147.177231,
+          218.000000
+        ],
+        "category_id": 1,
+        "score": 0.786171
+      },
+      {
+        "bbox": [
+          160.642593,
+          51.142765,
+          216.224289,
+          113.625603
+        ],
+        "category_id": 1,
+        "score": 0.833967
+      }
+    ]
+    boxes = [box['bbox'] for box in gt_boxes]
     img = cv2.imread(imgf)
 
-
+    boxes1 = [[110.428,35.4436,184.141,211.937],[0.422243,23.9578,146.321,218.836],[161.548,51.9683,216.543,114.181]]
     print('imgshape:',img.shape,img.dtype)
-    draw_image(img,boxes,kpts)
+    draw_image(img,boxes,kpts,color=(0,255,0))
+    draw_image(img,boxes1,kpts,color=(0,0,255))
     cv2.imwrite("xx.jpg",img)
     # cv2.imshow('box',img)
     # cv2.waitKey(0c

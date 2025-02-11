@@ -5,16 +5,19 @@
 class OpenCVImage : public BaseImage {
  public:
   // 构造与析构
-  OpenCVImage();
+  // OpenCVImage();
   ~OpenCVImage() override = default;
 
   OpenCVImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-              ImagePixDataType pix_data_type,
+              ImagePixDataType pix_data_type, bool alloc_memory = false,
               std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
+
+  OpenCVImage(cv::Mat& mat);
 
   virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
                                    ImageFormat imageFormat,
                                    ImagePixDataType pix_data_type) override;
+
   virtual int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
                               uint32_t length) override;
 

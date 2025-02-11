@@ -5,7 +5,14 @@
 #include <string>
 #include <vector>
 
-enum class InferencePlatform { CVITEK = 0, BM168X, CMODEL, UNKOWN };
+enum class InferencePlatform {
+  UNKOWN = 0,
+  CVITEK = 1,
+  CV186X = 2,
+  BM168X = 3,
+  CMODEL = 4,
+  AUTOMATIC = 5
+};
 
 enum class ImagePixDataType {
   INT8 = 0,
