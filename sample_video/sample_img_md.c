@@ -8,6 +8,10 @@
 #include "cvi_tdl.h"
 
 int main(int argc, char *argv[]) {
+  if (CVI_MSG_Init()) {
+		SAMPLE_PRT("CVI_MSG_Init fail\n");
+		return 0;
+	}
   cvitdl_handle_t tdl_handle = NULL;
   printf("start to run img md\n");
   CVI_S32 ret = CVI_TDL_CreateHandle(&tdl_handle);
@@ -71,5 +75,6 @@ int main(int argc, char *argv[]) {
 
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_IVE_DestroyHandle(ive_handle);
+	CVI_MSG_Deinit();
   return ret;
 }

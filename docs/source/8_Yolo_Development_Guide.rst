@@ -447,7 +447,7 @@ TDL_SDK接口说明
         
       .. code-block:: shell
 
-        mount -t nfs 10.80.39.3:/sophgo/nfsuser ./admin1_data -o nolock
+        mount -t nfs xx.xx.xx.xx:/sophgo/nfsuser ./admin1_data -o nolock
 
       主要修改ip地址为自己电脑的ip，路径同样修改为自己的路径
 

@@ -19,8 +19,6 @@ Core提供了算法相关接口，封装复杂的底层操作及算法细节，�
 目前TDL SDK包含 [移动侦测](./modules/core/motion_detection)， [人脸检测](./modules/core/face_detection)， [人脸识别](./modules/core/mask_face_recognition)， [人脸关键点检测](./modules/core/face_landmarker)， [跌倒检测](./modules/core/fall_detection)， [语义分割](./modules/core/segmentation)， [车牌检测](./modules/core/license_plate_detection)， [车牌辨识](./modules/core/license_plate_recognition)， [活体识别](./modules/core/liveness)，[声音分类](./modules/core/sound_classification)， [人体关键点检测](./modules/core/human_keypoints_detection)， [车道线识别](./modules/core/lane_detection)， [目标追踪](./modules/core/deepsort)， [手势侦测](./modules/core/hand_classification)， [手势识别](./modules/core/hand_keypoint_classification)，[文字检测](./modules/core/ocr/ocr_detection)，[文本识别](./modules/core/ocr/ocr_recognition)等算法。
 
 
-
-
 ## 2. 仓库目录
 **cmake**: 包含项目所需的 CMake 配置文件。
 **docs**: 包含项目文档及其生成相关的文件。
@@ -32,7 +30,7 @@ Core提供了算法相关接口，封装复杂的底层操作及算法细节，�
 **tool**: 包含各种工具和实用程序代码。
 **toolchain**: 提供不同平台的工具链配置文件。
 **tutorial**: 包含项目的教程文档，帮助用户快速上手和使用项目。
-编译产生的中间文件以及第三方库的下载都会位于tmp文件夹内
+编译产生的中间文件及第三方库的下载都会位于tmp文件夹内
 ## 3. 编译流程
 
 ```
@@ -158,17 +156,16 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-<div style="text-align: center;">
-    <video width="960" controls>
-  <source src="tutorial/assets/人脸检测.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-</div>
-<div style="text-align: center;">
-    人脸检测效果
+<div align="center">
+
+![人脸检测 GIF](tutorial/assets/demo.gif)
+
+人脸检测效果
+
 </div>
 
-更多案例还请参考[教程](tutorial)
+
+更多案例请参考[教程](tutorial)
 
 ## 5. 模型
 相关模型获取：[tdl_models](https://github.com/sophgo/tdl_models)

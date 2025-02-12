@@ -1,3 +1,4 @@
+project(opencv_fetchcontent)
 
 # Get the architecture-specific part based on the toolchain file
 if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "arm-cvitek-linux-uclibcgnueabihf.cmake")
@@ -18,28 +19,22 @@ else()
   message(FATAL_ERROR "No shrinked opencv library for ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-set(DOWNLOAD_PATH "${BUILD_DOWNLOAD_DIR}/opencv-src/${ARCHITECTURE}/opencv_aisdk.tar.gz")
 
-if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src")
-  # Create the opencv-src directory if it doesn't exist
-  file(MAKE_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src")
+if (IS_LOCAL)
+  set(OPENCV_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/opencv_aisdk.tar.gz)
+else()
+  set(OPENCV_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/opencv_aisdk.tar.gz)
+endif()
 
+
+if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src/lib")
   FetchContent_Declare(
     opencv
-    GIT_REPOSITORY https://github.com/sophgo/cvi_opencv.git
-    GIT_TAG origin/${ARCHITECTURE}
+    URL ${OPENCV_URL}
   )
   FetchContent_MakeAvailable(opencv)
   message("Content downloaded to ${opencv_SOURCE_DIR}")
-
-  # Extract the tar.gz file
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${DOWNLOAD_PATH}
-    WORKING_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src"
-  )
-  message("Content extracted to ${BUILD_DOWNLOAD_DIR}/opencv-src")
 endif()
-
 set(OPENCV_ROOT ${BUILD_DOWNLOAD_DIR}/opencv-src)
 
 set(OPENCV_INCLUDES

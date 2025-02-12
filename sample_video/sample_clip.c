@@ -351,6 +351,11 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
 
+  if (CVI_MSG_Init()) {
+		SAMPLE_PRT("CVI_MSG_Init fail\n");
+		return 0;
+	}
+
   //  Step 1: Initialize middleware stuff.
   ////////////////////////////////////////////////////
 
@@ -524,5 +529,6 @@ create_service_fail:
 create_tdl_fail:
   SAMPLE_TDL_Destroy_MW(&stMWContext);
 
+	CVI_MSG_Deinit();
   return 0;
 }

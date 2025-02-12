@@ -24,7 +24,6 @@ endif()
 set(MIDDLEWARE_INCLUDES ${ISP_HEADER_PATH}
                         ${MIDDLEWARE_SDK_ROOT}/include/
                         ${MIDDLEWARE_SDK_ROOT}/include/linux/
-                        ${KERNEL_ROOT}/include/
 )
 
 set(MIDDLEWARE_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/middleware/${MW_VER})

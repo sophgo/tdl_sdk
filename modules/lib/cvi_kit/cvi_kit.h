@@ -30,6 +30,9 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_MaskOutlinePoint(VIDEO_FRAME_INFO_S *frame,
 DLL_EXPORT CVI_S32 CVI_TDL_Draw_ADAS(cvitdl_app_handle_t app_handle, VIDEO_FRAME_INFO_S *bg,
                                      char *save_path);
 
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Occlusion_Laplacian(VIDEO_FRAME_INFO_S *frame,
+                                                   cvtdl_occlusion_meta_t *occlusion_meta);
+
 #endif
 DLL_EXPORT CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
                                                float **image_features, int image_features_num,

@@ -93,10 +93,10 @@ endif
 
 ifeq ($(MW_VERSION), v1)
 	ifeq ($(CHIP), CV183X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvi_jpeg -lvpu
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv183x
 	else ifeq ($(CHIP), CV182X)
-		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvitracer -lcvi_jpeg -lvpu -lisp_algo
+		MW_LIBS = -lini -lsns_full -lsample -lisp -lvdec -lvenc -lawb -lae -laf -lcvi_bin -lcvi_bin_isp -lcvi_vcodec -lsys -lcvi_jpeg -lvpu -lisp_algo
 		MW_ISP_INC_PATH = $(MW_INC_PATH)/isp/cv182x
 	endif
 else ifeq ($(MW_VERSION), v2)

@@ -303,6 +303,10 @@ int main(int argc, char *argv[]) {
         "Usage: sample_vi_face_recog scrfd_model_file fr_model_file fl_model_file gallery_root\n");
     return CVI_TDL_FAILURE;
   }
+  if (CVI_MSG_Init()) {
+		SAMPLE_PRT("CVI_MSG_Init fail\n");
+		return 0;
+	}
   CVI_S32 ret = CVI_TDL_SUCCESS;
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
@@ -487,4 +491,5 @@ CLEANUP_SYSTEM:
   SAMPLE_TDL_Destroy_MW(&stMWContext);
   CVI_SYS_Exit();
   CVI_VB_Exit();
+	CVI_MSG_Deinit();
 }
