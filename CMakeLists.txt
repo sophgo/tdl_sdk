@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18.4)
+cmake_minimum_required(VERSION 3.16)
 project(cvi_tdl)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

@@ -96,7 +96,7 @@ pushd ${BUILD_WORKING_DIR}
 
 # Check cmake version
 CMAKE_VERSION="$(cmake --version | grep 'cmake version' | sed 's/cmake version //g')"
-CMAKE_REQUIRED_VERSION="3.18.4"
+CMAKE_REQUIRED_VERSION="3.16.0"
 CMAKE_TAR="cmake-3.18.4-Linux-x86_64.tar.gz"
 CMAKE_DOWNLOAD_URL="ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/cmake/${CMAKE_TAR}"
 echo "Checking cmake..."

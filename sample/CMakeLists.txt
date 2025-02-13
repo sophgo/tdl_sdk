@@ -1,5 +1,5 @@
 # Copyright 2020 cvitek Inc.
-cmake_minimum_required(VERSION 3.18.4)
+cmake_minimum_required(VERSION 3.16)
 
 project(sample)
 
