@@ -30,6 +30,7 @@
 #include "lane_detection/polylanenet/polylanenet.hpp"
 
 #include "license_plate_detection/license_plate_detection.hpp"
+#include "license_plate_keypoint/license_plate_keypoint.hpp"
 #include "license_plate_recognition/license_plate_recognitionv2.hpp"
 #include "liveness/ir_liveness/ir_liveness.hpp"
 #include "motion_detection/md.hpp"
@@ -57,6 +58,7 @@
 #include "osnet/osnet.hpp"
 #include "raw_image_classification/raw_image_classification.hpp"
 #include "segmentation/deeplabv3.hpp"
+#include "segmentation/topformer_seg/topformer_seg.hpp"
 #include "sound_classification/sound_classification_v2.hpp"
 #include "super_resolution/super_resolution.hpp"
 
@@ -67,6 +69,7 @@
 #include "fall_detection/fall_detection.hpp"
 #include "instance_segmentation/yolov8_seg/yolov8_seg.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
+#include "occlusion_classification/occlusion_classification.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
 #include "ocr/ocr_detection/ocr_detection.hpp"
@@ -182,9 +185,11 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_SMOKECLASSIFICATION, CREATOR(SmokeClassification)},
     {CVI_TDL_SUPPORTED_MODEL_LPRNET_TW, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, TAIWAN)},
     {CVI_TDL_SUPPORTED_MODEL_LPRNET_CN, CREATOR_P1(LicensePlateRecognition, LP_FORMAT, CHINA)},
+    {CVI_TDL_SUPPORTED_MODEL_LP_KEYPOINT, CREATOR(LicensePlateKeypoint)},
     {CVI_TDL_SUPPORTED_MODEL_OCR_DETECTION, CREATOR(OCRDetection)},
     {CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, CREATOR(MaskFaceRecognition)},
     {CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG, CREATOR(YoloV8Seg)},
+    {CVI_TDL_SUPPORTED_MODEL_OCCLUSION_CLASSIFICATION, CREATOR(OcclusionClassification)},
 #endif
 
     {CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, CREATOR(IspImageClassification)},
@@ -226,9 +231,10 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::pedestrian)},
     {CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
      CREATOR_P1(MobileDetV2, MobileDetV2::Category, MobileDetV2::Category::person_pets)},
-
-    // {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
-    //  CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
+    {CVI_TDL_SUPPORTED_MODEL_YOLOV8_FIRE_SMOKE,
+     CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 2))},
     {CVI_TDL_SUPPORTED_MODEL_LANE_DET, CREATOR(BezierLaneNet)},
 
     {CVI_TDL_SUPPORTED_MODEL_LSTR, CREATOR(LSTR)},
@@ -247,6 +253,7 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_WPODNET, CREATOR(LicensePlateDetection)},
 
     {CVI_TDL_SUPPORTED_MODEL_DEEPLABV3, CREATOR(Deeplabv3)},
+    {CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG, CREATOR(TopformerSeg)},
     {CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION, CREATOR(MotionSegmentation)},
 
     {CVI_TDL_SUPPORTED_MODEL_FACELANDMARKER, CREATOR(FaceLandmarker)},
@@ -906,12 +913,16 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_TW, LicensePlateRecognitio
                       CVI_TDL_SUPPORTED_MODEL_LPRNET_TW, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_CN, LicensePlateRecognition,
                       CVI_TDL_SUPPORTED_MODEL_LPRNET_CN, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_LicensePlateRecognition_V2, LicensePlateRecognitionV2,
+                      CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION, cvtdl_object_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_License_Plate_Keypoint, LicensePlateKeypoint,
+                      CVI_TDL_SUPPORTED_MODEL_LP_KEYPOINT, cvtdl_object_t *)
 DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceQuality, FaceQuality, CVI_TDL_SUPPORTED_MODEL_FACEQUALITY,
                       cvtdl_face_t *, bool *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_MaskFaceRecognition, MaskFaceRecognition,
                       CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_YoloV8_Seg, YoloV8Seg, CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG,
-                      cvtdl_object_t *)
+                      cvtdl_object_t *)                   
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
   return crop_image(srcFrame, dst, bbox, cvtRGB888);
@@ -955,61 +966,6 @@ CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objec
   return ctx->fall_monitor_model->monitor(objects);
 }
 
-CVI_S32 CVI_TDL_Set_MaskOutlinePoint(VIDEO_FRAME_INFO_S *frame, cvtdl_object_t *obj_meta) {
-  int proto_h = obj_meta->mask_height;
-  int proto_w = obj_meta->mask_width;
-  for (uint32_t i = 0; i < obj_meta->size; i++) {
-    cv::Mat src(proto_h, proto_w, CV_8UC1, obj_meta->info[i].mask_properity->mask,
-                proto_w * sizeof(uint8_t));
-
-    std::vector<std::vector<cv::Point>> contours;
-    std::vector<cv::Vec4i> hierarchy;
-    // search for contours
-    cv::findContours(src, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
-    // find the longest contour
-    int longest_index = -1;
-    size_t max_length = 0;
-    for (size_t i = 0; i < contours.size(); i++) {
-      if (contours[i].size() > max_length) {
-        max_length = contours[i].size();
-        longest_index = i;
-      }
-    }
-    if (longest_index >= 0 && max_length >= 1) {
-      float ratio_height = (proto_h / static_cast<float>(frame->stVFrame.u32Height));
-      float ratio_width = (proto_w / static_cast<float>(frame->stVFrame.u32Width));
-      int source_y_offset, source_x_offset;
-      if (ratio_height > ratio_width) {
-        source_x_offset = 0;
-        source_y_offset = (proto_h - frame->stVFrame.u32Height * ratio_width) / 2;
-      } else {
-        source_x_offset = (proto_w - frame->stVFrame.u32Width * ratio_height) / 2;
-        source_y_offset = 0;
-      }
-      int source_region_height = proto_h - 2 * source_y_offset;
-      int source_region_width = proto_w - 2 * source_x_offset;
-      // calculate scaling factor
-      float height_scale =
-          static_cast<float>(frame->stVFrame.u32Height) / static_cast<float>(source_region_height);
-      float width_scale =
-          static_cast<float>(frame->stVFrame.u32Width) / static_cast<float>(source_region_width);
-      obj_meta->info[i].mask_properity->mask_point_size = max_length;
-      obj_meta->info[i].mask_properity->mask_point =
-          (float *)malloc(2 * max_length * sizeof(float));
-
-      size_t j = 0;
-      for (const auto &point : contours[longest_index]) {
-        obj_meta->info[i].mask_properity->mask_point[2 * j] =
-            (point.x - source_x_offset) * width_scale;
-        obj_meta->info[i].mask_properity->mask_point[2 * j + 1] =
-            (point.y - source_y_offset) * height_scale;
-        j++;
-      }
-    }
-  }
-  return CVI_SUCCESS;
-}
-
 CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   FallDetMonitor *fall_monitor_model = ctx->fall_monitor_model;
@@ -1021,6 +977,21 @@ CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps) {
   }
   return ctx->fall_monitor_model->set_fps(fps);
 }
+
+CVI_S32 CVI_TDL_Set_Occlusion_Algparam(const cvitdl_handle_t handle,
+                                       const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                       const OcclusionAlgParam occ_pre_param) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_OCCLUSION_CLASSIFICATION) {
+    OcclusionClassification *occlusion_model =
+        dynamic_cast<OcclusionClassification *>(getInferenceInstance(model_index, ctx));
+    occlusion_model->set_algparam(occ_pre_param);
+    return CVI_SUCCESS;
+  }
+  LOGE("not supported model index\n");
+  return CVI_FAILURE;
+}
+
 #else
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *p_dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
@@ -1038,7 +1009,6 @@ CVI_S32 CVI_TDL_CropImage_Face(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *p_ds
   return CVI_TDL_ERR_NOT_YET_INITIALIZED;
 }
 #endif
-
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_DMSLDet, DMSLandmarkerDet, CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET,
                       cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_FLDet3, FaceLandmarkDet3, CVI_TDL_SUPPORTED_MODEL_LANDMARK_DET3,
@@ -1069,6 +1039,8 @@ DEFINE_INF_FUNC_F1_P1(CVI_TDL_SoundClassification, SoundClassification,
                       CVI_TDL_SUPPORTED_MODEL_SOUNDCLASSIFICATION, int *)
 DEFINE_INF_FUNC_F2_P1(CVI_TDL_DeeplabV3, Deeplabv3, CVI_TDL_SUPPORTED_MODEL_DEEPLABV3,
                       cvtdl_class_filter_t *)
+DEFINE_INF_FUNC_F1_P1(CVI_TDL_Topformer_Seg, TopformerSeg, CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG,
+                      cvtdl_seg_t *)
 DEFINE_INF_FUNC_F2_P1(CVI_TDL_MotionSegmentation, MotionSegmentation,
                       CVI_TDL_SUPPORTED_MODEL_MOTIONSEGMENTATION, cvtdl_seg_logits_t *)
 
@@ -1118,6 +1090,7 @@ CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *fram
       CVI_TDL_SUPPORTED_MODEL_YOLOV7,
       CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION,
       CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
+      CVI_TDL_SUPPORTED_MODEL_YOLOV8_FIRE_SMOKE,
       CVI_TDL_SUPPORTED_MODEL_YOLOX,
       CVI_TDL_SUPPORTED_MODEL_PPYOLOE,
       CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION,
@@ -1131,7 +1104,6 @@ CVI_S32 CVI_TDL_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *fram
       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_VEHICLE,
       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN,
       CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PERSON_PETS,
-      CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT,
       CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION};
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
   if (detect_set.find(model_index) == detect_set.end()) {
@@ -1634,6 +1606,39 @@ CVI_S32 CVI_TDL_Delete_Img(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL
   return CVI_SUCCESS;
 }
 
+CVI_S32 CVI_TDL_Set_ROI(const cvitdl_handle_t handle, CVI_TDL_SUPPORTED_MODEL_E model_type,
+                        VIDEO_FRAME_INFO_S *frame, Point_t roi_s, PIXEL_FORMAT_E enDstFormat,
+                        VIDEO_FRAME_INFO_S **crop_frame) {
+  if (handle == NULL || frame == NULL || crop_frame == NULL) {
+    printf("Error: Invalid parameter - handle, frame, or crop_frame is NULL.\n");
+    return CVI_FAILURE;
+  }
+
+  if (roi_s.x1 >= roi_s.x2 || roi_s.y1 >= roi_s.y2) {
+    printf("Error: Invalid ROI - roi_s.x1 >= roi_s.x2 or roi_s.y1 >= roi_s.y2.\n");
+    return CVI_FAILURE;
+  }
+
+  cvtdl_bbox_t yolo_box;
+  yolo_box.x1 = (float)(roi_s.x1);
+  yolo_box.x2 = (float)(roi_s.x2);
+  yolo_box.y1 = (float)(roi_s.y1);
+  yolo_box.y2 = (float)(roi_s.y2);
+
+  uint32_t bbox_w = yolo_box.x2 - yolo_box.x1;
+  uint32_t bbox_h = yolo_box.y2 - yolo_box.y1;
+
+  CVI_S32 ret = CVI_TDL_CropResizeImage(handle, model_type, frame, &yolo_box, bbox_w, bbox_h,
+                                        enDstFormat, crop_frame);
+
+  if (ret != CVI_SUCCESS) {
+    printf("Error: CropResizeImage failed with error code %d.\n", ret);
+    return CVI_FAILURE;
+  }
+
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_TDL_CropImage_With_VPSS(const cvitdl_handle_t handle,
                                     CVI_TDL_SUPPORTED_MODEL_E model_type, VIDEO_FRAME_INFO_S *frame,
                                     const cvtdl_bbox_t *p_crop_box, cvtdl_image_t *p_dst) {
@@ -1823,18 +1828,6 @@ CVI_S32 CVI_TDL_PersonVehicle_Detection(const cvitdl_handle_t handle, VIDEO_FRAM
   }
 }
 
-CVI_S32 CVI_TDL_Set_Yolov5_ROI(const cvitdl_handle_t handle, Point_t roi_s) {
-  printf("enter CVI_TDL_Set_Yolov5_ROI...\n");
-  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
-  Yolov5 *yolov5_model =
-      dynamic_cast<Yolov5 *>(getInferenceInstance(CVI_TDL_SUPPORTED_MODEL_YOLOV5, ctx));
-  if (yolov5_model == nullptr) {
-    LOGE("yolov5_model has not been inited\n");
-    return CVI_TDL_FAILURE;
-  }
-  return yolov5_model->set_roi(roi_s);
-}
-
 InputPreParam CVI_TDL_GetPreParam(const cvitdl_handle_t handle,
                                   const CVI_TDL_SUPPORTED_MODEL_E model_index) {
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
@@ -1937,66 +1930,18 @@ CVI_S32 CVI_TDL_Set_LSTR_ExportFeature(const cvitdl_handle_t handle,
   return CVI_FAILURE;
 }
 
-CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
-                                   const char *textFile, int32_t **tokens, int numSentences) {
-  std::vector<std::vector<int32_t>> tokens_cpp(numSentences);
-  // call token_bpe function
-  int result =
-      token_bpe(std::string(encoderFile), std::string(bpeFile), std::string(textFile), tokens_cpp);
-  // calculate the total number of elements
-  for (int i = 0; i < numSentences; i++) {
-    // tokens[i] = new int32_t[tokens_cpp[i].size()];
-    tokens[i] = (int32_t *)malloc(tokens_cpp[i].size() * sizeof(int32_t));
-    memcpy(tokens[i], tokens_cpp[i].data(), tokens_cpp[i].size() * sizeof(int32_t));
-  }
-
-  if (result == 0) {
+CVI_S32 CVI_TDL_Set_Segmentation_DownRato(const cvitdl_handle_t handle,
+                                          const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                          int down_rato) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  std::cout << "CVI_TDL_Set_Segmentation_DownRato into" << std::endl;
+  if (model_index == CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG) {
+    TopformerSeg *topformer_model =
+        dynamic_cast<TopformerSeg *>(getInferenceInstance(model_index, ctx));
+    topformer_model->setDownRato(down_rato);
     return CVI_SUCCESS;
   }
-  LOGE("Tokenization error\n");
-  return CVI_FAILURE;
-}
-
-CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
-                                    float **image_features, int image_features_num, float **probs) {
-  Eigen::MatrixXf text_features_eigen(text_features_num, 512);
-  for (int i = 0; i < text_features_num; ++i) {
-    for (int j = 0; j < 512; ++j) {
-      text_features_eigen(i, j) = text_features[i][j];
-    }
-  }
-  Eigen::MatrixXf image_features_eigen(image_features_num, 512);
-  for (int i = 0; i < image_features_num; ++i) {
-    for (int j = 0; j < 512; ++j) {
-      image_features_eigen(i, j) = image_features[i][j];
-    }
-  }
-
-  Eigen::MatrixXf result_eigen;
-  // using clip_postprocess which can be found in utils/clip_postpostprocess.cpp
-  int res = clip_postprocess(text_features_eigen, image_features_eigen, result_eigen);
-
-  // providing image classification functionality.
-  // using softmax after mutil 100 scale
-  for (int i = 0; i < result_eigen.rows(); ++i) {
-    float sum = 0.0;
-    float maxVal = result_eigen.row(i).maxCoeff();
-    Eigen::MatrixXf expInput = (result_eigen.row(i).array() - maxVal).exp();
-    sum = expInput.sum();
-    result_eigen.row(i) = expInput / sum;
-  }
-
-  for (int i = 0; i < result_eigen.rows(); i++) {
-    float max_score = 0;
-    for (int j = 0; j < result_eigen.cols(); j++) {
-      probs[i][j] = result_eigen(i, j);
-    }
-  }
-
-  if (res == 0) {
-    return CVI_SUCCESS;
-  }
-
-  LOGE("Tokenization error\n");
+  LOGE("not supported model index\n");
+  std::cout << "CVI_TDL_Set_Segmentation_DownRato out" << std::endl;
   return CVI_FAILURE;
 }

@@ -61,6 +61,12 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle, bool assign_out_string) {
 int main(int argc, char* argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 3) {
+    printf("Usage: %s <yolov6 model path> <input image path>\n", argv[0]);
+    printf("yolov6 model path: Path to yolov6 model cvimodel.\n");
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_TDL_SUCCESS) {

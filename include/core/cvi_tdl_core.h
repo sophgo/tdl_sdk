@@ -168,6 +168,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE)                       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LANDMARK_DET3)                    \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LP_RECONGNITION)                  \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LP_KEYPOINT)                      \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LP_DETECTION)                     \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION)             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION)             \
@@ -178,6 +179,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_FIRE_SMOKE)                   \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LANE_DET)                         \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_POLYLANE)                         \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION)                 \
@@ -185,6 +187,8 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCR_RECOGNITION)                  \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_LSTR)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_STEREO) \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_OCCLUSION_CLASSIFICATION)         \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_TOPFORMER_SEG) \
   // clang-format on
 
 #define CVI_TDL_NAME_WRAP(x) x,
@@ -834,12 +838,12 @@ DLL_EXPORT CVI_S32 CVI_TDL_SoundClassification(const cvitdl_handle_t handle,
 /**
  * @brief Do sound classification.
  *
- * @param handle An AI SDK handle.
+ * @param handle An TDL SDK handle.
  * @param frame Input video frame.
  * @param pack_idx The start pack index of this frame
  * @param pack_len Pack length,the frame is combined with many packs
  * @param index The index of sound classes.
- * @return int Return CVIAI_SUCCESS on success.
+ * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_SoundClassificationPack(const cvitdl_handle_t handle,
                                                    VIDEO_FRAME_INFO_S *frame, int pack_idx,
@@ -1127,6 +1131,9 @@ DLL_EXPORT CVI_S32 CVI_TDL_YawnClassification(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_Liveness(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *rgbFrame,
                                     VIDEO_FRAME_INFO_S *irFrame, cvtdl_face_t *rgb_face,
                                     cvtdl_face_t *ir_face);
+DLL_EXPORT CVI_S32 CVI_TDL_License_Plate_Keypoint(const cvitdl_handle_t handle,
+                                                  VIDEO_FRAME_INFO_S *frame,
+                                                  cvtdl_object_t *vehicle_plate_meta);
 
 DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition_CN(const cvitdl_handle_t handle,
                                                       VIDEO_FRAME_INFO_S *frame,
@@ -1138,6 +1145,9 @@ DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition(const cvitdl_handle_t handle,
                                                    VIDEO_FRAME_INFO_S *frame,
                                                    CVI_TDL_SUPPORTED_MODEL_E model_id,
                                                    cvtdl_object_t *vehicle);
+DLL_EXPORT CVI_S32 CVI_TDL_LicensePlateRecognition_V2(const cvitdl_handle_t handle,
+                                                      VIDEO_FRAME_INFO_S *frame,
+                                                      cvtdl_object_t *vehicle_plate_meta);
 
 DLL_EXPORT CVI_S32 CVI_TDL_OCR_Detection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                          cvtdl_object_t *obj_meta);
@@ -1170,6 +1180,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_Fall(const cvitdl_handle_t handle, cvtdl_object_t *ob
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objects);
 
+/**
+ * @brief occlusion classification
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param object cvtdl_class_meta_t structure, no occlusion score and occlusion score
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Occlusion_Algparam(const cvitdl_handle_t handle,
+                                                  const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                                  const OcclusionAlgParam occ_pre_param);
 /**
  * @brief Set fall detection FPS.
  *
@@ -1300,6 +1322,11 @@ DLL_EXPORT CVI_S32 CVI_TDL_CropResizeImage(const cvitdl_handle_t handle,
                                            int dst_height, PIXEL_FORMAT_E enDstFormat,
                                            VIDEO_FRAME_INFO_S **p_dst_img);
 
+DLL_EXPORT CVI_S32 CVI_TDL_Set_ROI(const cvitdl_handle_t handle,
+                                   CVI_TDL_SUPPORTED_MODEL_E model_type, VIDEO_FRAME_INFO_S *frame,
+                                   Point_t roi_s, PIXEL_FORMAT_E enDstFormat,
+                                   VIDEO_FRAME_INFO_S **crop_frame);
+
 DLL_EXPORT CVI_S32 CVI_TDL_Copy_VideoFrameToImage(VIDEO_FRAME_INFO_S *frame, cvtdl_image_t *p_dst);
 DLL_EXPORT CVI_S32 CVI_TDL_Resize_VideoFrame(const cvitdl_handle_t handle,
                                              CVI_TDL_SUPPORTED_MODEL_E model,
@@ -1414,6 +1441,20 @@ DLL_EXPORT CVI_S32 CVI_TDL_Image_Classification(const cvitdl_handle_t handle,
                                                 cvtdl_class_meta_t *obj_meta);
 
 /**
+ * @brief Topformer segmentation.
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param out_frame Output frame which each pixel represents class label.
+ * @param filter Class id filter. Set NULL to ignore.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Topformer_Seg(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                         cvtdl_seg_t *filter);
+
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Segmentation_DownRato(const cvitdl_handle_t handle,
+                                                     const CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                                     int down_rato);
+/**
  * @brief raw image classification
  *
  * @param handle An TDL SDK handle.
@@ -1482,7 +1523,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_SetDetectionAlgoParam(const cvitdl_handle_t handle,
                                                  const CVI_TDL_SUPPORTED_MODEL_E model_index,
                                                  cvtdl_det_algo_param_t alg_param);
 
-DLL_EXPORT CVI_S32 CVI_TDL_Set_Yolov5_ROI(const cvitdl_handle_t handle, Point_t roi_s);
 /**
  * @brief image_classification setup function
  *
@@ -1581,20 +1621,10 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_LSTR_ExportFeature(const cvitdl_handle_t handle,
                                                   const CVI_TDL_SUPPORTED_MODEL_E model_index,
                                                   int flag);
 
-DLL_EXPORT CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
-                                              const char *textFile, int32_t **tokens,
-                                              int numSentences);
-
-DLL_EXPORT CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
-                                               float **image_features, int image_features_num,
-                                               float **probs);
-
-DLL_EXPORT CVI_S32 CVI_TDL_Set_MaskOutlinePoint(VIDEO_FRAME_INFO_S *frame,
-                                                cvtdl_object_t *obj_meta);
-
 DLL_EXPORT CVI_S32 CVI_TDL_Depth_Stereo(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame1,
                                         VIDEO_FRAME_INFO_S *frame2,
                                         cvtdl_depth_logits_t *depth_logist);
+
 #ifdef __cplusplus
 }
 #endif

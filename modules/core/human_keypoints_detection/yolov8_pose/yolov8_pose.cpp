@@ -320,7 +320,6 @@ void YoloV8Pose::postProcess(Detections &dets, int frame_width, int frame_height
             rescale_info.pedestrian_properity->pose_17.y[j];
       }
       CVI_TDL_FreeCpp(&rescale_info);
-      
     }
     obj->width = frame_width;
     obj->height = frame_height;

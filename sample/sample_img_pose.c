@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
-#include "sample_utils.h"
 #include "sys_utils.h"
 
 int process_img_simcc(cvitdl_handle_t tdl_handle, char* pd_model, char* pose_model,
@@ -23,8 +23,6 @@ int process_img_simcc(cvitdl_handle_t tdl_handle, char* pd_model, char* pose_mod
     printf("open CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE model failed with %#x!\n", ret);
     return ret;
   }
-
-  //   CVI_TDL_SetMaxDetNum(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SIMCC_POSE, 1);
 
   ret = CVI_TDL_Detection(tdl_handle, bg, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, p_obj);
   if (ret != CVI_SUCCESS) {
@@ -63,13 +61,25 @@ int process_img_yolov8pose(cvitdl_handle_t tdl_handle, char* pose_model, VIDEO_F
 }
 
 int main(int argc, char* argv[]) {
+  if (argc < 5 || argc > 6) {
+    printf(
+        "Usage: %s <pose detection model path> <process flag> <input image path> <show flag> "
+        "[<person detection model path>]\n",
+        argv[0]);
+    printf("pose detection model path: Path to pose detection model cvimodel.\n");
+    printf("process flag: simcc or yolov8pose.\n");
+    printf("input image path: Path to the input image.\n");
+    printf("show flag: 1 to show keypoints, 0 to not show.\n");
+    printf("person detection model path (optional): Required if process_flag is 'simcc'.\n");
+    return CVI_FAILURE;
+  }
   char* pose_model = argv[1];    // pose detection model path
   char* process_flag = argv[2];  // simcc | yolov8pose
   char* imgf = argv[3];          // img path;
   int show = atoi(argv[4]);      // 1 for show keypoints, 0 for not show;
 
   char* pd_model;  // person detection model path,
-  if (process_flag == "simcc") {
+  if (strcmp(process_flag, "simcc") == 0) {
     pd_model = argv[5];
   }
 
@@ -104,8 +114,8 @@ int main(int argc, char* argv[]) {
   }
 
   cvtdl_object_t obj_meta = {0};
-
-  if (process_flag == "simcc") {
+  printf("process_flag:%s\n", process_flag);
+  if (strcmp(process_flag, "simcc") == 0) {
     process_img_simcc(tdl_handle, pd_model, pose_model, &bg, &obj_meta);
   } else {
     process_img_yolov8pose(tdl_handle, pose_model, &bg, &obj_meta);
@@ -113,7 +123,7 @@ int main(int argc, char* argv[]) {
 
   printf("obj_meta.size:%d\n", obj_meta.size);
   for (int i = 0; i < obj_meta.size; i++) {
-    printf("[%d,%d,%d,%d],\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
+    printf("[%f,%f,%f,%f],\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
 
     for (int j = 0; j < 17; j++) {
@@ -126,10 +136,8 @@ int main(int argc, char* argv[]) {
   if (show) {  // img format should be PIXEL_FORMAT_BGR_888
     float score;
     CVI_TDL_GetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN, &score);
-    char* show_save_path = "/mnt/data/xiaochuan.liao/sdk_package/cviai/test_simcc.jpg";
+    char* show_save_path = "/mnt/data/test_simcc.jpg";
     CVI_TDL_ShowKeypoints(&bg, &obj_meta, score, show_save_path);
-    // cvitdl::service::DrawKeypoints(&bg, &obj_meta, save_path, score );
-    // cvitdl::service::DrawPose17(&obj_meta, &bg);
   }
 
   CVI_TDL_ReleaseImage(img_handle, &bg);

@@ -11,6 +11,12 @@
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 3) {
+    printf("Usage: %s <hand classification model path> <input image path>\n", argv[0]);
+    printf("hand classification model path: Path to hand classification model cvimodel.\n");
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_TDL_SUCCESS) {
@@ -38,7 +44,7 @@ int main(int argc, char *argv[]) {
     printf("image read,hidth:%d\n", bg.stVFrame.u32Height);
   }
 
-  printf("---------------------openmodel-----------------------");
+  printf("---------------------openmodel-----------------------\n");
   ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION, argv[1]);
   CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_HANDCLASSIFICATION, 0.1);
   if (ret != CVI_SUCCESS) {
@@ -47,24 +53,9 @@ int main(int argc, char *argv[]) {
   }
 
   cvtdl_object_t obj_meta = {0};
-  // CVI_TDL_MemAllocInit(1, &obj_meta);
-  int size = 1;
-  if (obj_meta.size != size) {
-    obj_meta.size = size;
-    obj_meta.info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj_meta.size);
-  }
-
-  for (uint32_t i = 0; i < obj_meta.size; ++i) {
-    memset(&obj_meta.info[i], 0, sizeof(cvtdl_object_info_t));
-    obj_meta.info[i].bbox.x1 = -1;
-    obj_meta.info[i].bbox.x2 = -1;
-    obj_meta.info[i].bbox.y1 = -1;
-    obj_meta.info[i].bbox.y2 = -1;
-
-    obj_meta.info[i].name[0] = '\0';
-    obj_meta.info[i].classes = -1;
-  }
-  // CVI_TDL_MemAllocInit(1, &obj_meta);
+  obj_meta.size = 1;
+  obj_meta.info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * obj_meta.size);
+  memset(obj_meta.info, 0, sizeof(cvtdl_object_info_t));
 
   obj_meta.height = bg.stVFrame.u32Height;
   obj_meta.width = bg.stVFrame.u32Width;
@@ -74,13 +65,17 @@ int main(int argc, char *argv[]) {
     obj_meta.info[i].bbox.x2 = bg.stVFrame.u32Width - 1;
     obj_meta.info[i].bbox.y1 = 0;
     obj_meta.info[i].bbox.y2 = bg.stVFrame.u32Height - 1;
+    obj_meta.info[i].classes = 0;
     printf("init objbox:%f,%f,%f,%f\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
   }
   CVI_TDL_HandClassification(tdl_handle, &bg, &obj_meta);
 
-  printf("cls result: %s\n", obj_meta.info[0].name);
-
+  if (strlen(obj_meta.info[0].name) > 0) {
+    printf("cls result: %s\n", obj_meta.info[0].name);
+  } else {
+    printf("cls result: (空)\n");
+  }
   CVI_TDL_Free(&obj_meta);
   CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_DestroyHandle(tdl_handle);

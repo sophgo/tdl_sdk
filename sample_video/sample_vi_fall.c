@@ -291,6 +291,10 @@ int main(int argc, char *argv[]) {
         argv[0]);
     return -1;
   }
+  if (CVI_MSG_Init()) {
+		SAMPLE_PRT("CVI_MSG_Init fail\n");
+		return 0;
+	}
 
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
@@ -381,5 +385,6 @@ create_service_fail:
 create_tdl_fail:
   SAMPLE_TDL_Destroy_MW(&stMWContext);
 
+	CVI_MSG_Deinit();
   return 0;
 }

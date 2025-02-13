@@ -94,10 +94,10 @@ int LSTR::outputParser(cvtdl_lane_t *lane_meta) {
     }
   }
 
-  if(export_feature){
-    CVI_TDL_MemAllocInit(final_index.size(), lane_meta, 7*2 + 7*8);
-    memcpy(lane_meta->feature, out_feature, sizeof(float) * 7*8);
-    memcpy(lane_meta->feature + 7*8, out_conf, sizeof(float) * 7*2);
+  if (export_feature) {
+    CVI_TDL_MemAllocInit(final_index.size(), lane_meta, 7 * 2 + 7 * 8);
+    memcpy(lane_meta->feature, out_feature, sizeof(float) * 7 * 8);
+    memcpy(lane_meta->feature + 7 * 8, out_conf, sizeof(float) * 7 * 2);
   }
 
   if (final_index.size() > 0) {

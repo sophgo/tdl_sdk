@@ -345,6 +345,10 @@ static void *pVideoOutput(void *args) {
 }
 
 int main(int argc, char *argv[]) {
+  if (CVI_MSG_Init()) {
+		SAMPLE_PRT("CVI_MSG_Init fail\n");
+		return 0;
+	}
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
   signal(SIGTERM, SampleHandleSig);
@@ -484,6 +488,7 @@ CLEANUP_SYSTEM:
   SAMPLE_TDL_Destroy_MW(&stMWContext);
   CVI_SYS_Exit();
   CVI_VB_Exit();
+	CVI_MSG_Deinit();
 }
 
 #define CHAR_SIZE 64

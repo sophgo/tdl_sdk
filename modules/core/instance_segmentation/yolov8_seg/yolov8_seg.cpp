@@ -17,7 +17,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "opencv2/opencv.hpp"
 #include "yolov8_seg.hpp"
 
 namespace cvitdl {

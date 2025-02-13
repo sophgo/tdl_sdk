@@ -1,8 +1,4 @@
-
-# Common part of the URL
-set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
-# Combine the common prefix and the architecture-specific part
-
+project(opencv_fetchcontent)
 
 # Get the architecture-specific part based on the toolchain file
 if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "arm-cvitek-linux-uclibcgnueabihf.cmake")
@@ -23,14 +19,21 @@ else()
   message(FATAL_ERROR "No shrinked opencv library for ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-set(OPENCV_URL "${COMMON_OPENCV_URL_PREFIX}${ARCHITECTURE}/opencv_aisdk.tar.gz")
+
+if (IS_LOCAL)
+  set(OPENCV_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/opencv_aisdk.tar.gz)
+else()
+  set(OPENCV_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/opencv_aisdk.tar.gz)
+endif()
+
+
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src/lib")
   FetchContent_Declare(
     opencv
     URL ${OPENCV_URL}
   )
   FetchContent_MakeAvailable(opencv)
-  message("Content downloaded from ${OPENCV_URL} to ${opencv_SOURCE_DIR}")
+  message("Content downloaded to ${opencv_SOURCE_DIR}")
 endif()
 set(OPENCV_ROOT ${BUILD_DOWNLOAD_DIR}/opencv-src)
 

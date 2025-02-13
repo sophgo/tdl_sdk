@@ -12,8 +12,6 @@ if("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
   message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is not set. Aborting.")
 endif()
 
-set(FTP_SERVER_IP "10.80.0.5" CACHE STRING "3rd party resource ftp")
-set(DL_SERVER_IP 10.132.3.76)
 set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
 set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++11 -pthread")
 
@@ -31,10 +29,8 @@ elseif("${CVI_PLATFORM}" STREQUAL "CV180X")
   endif()
 elseif("${CVI_PLATFORM}" STREQUAL "CV182X")
   add_definitions(-D__CV182X__)
-  include (cmake/tracer.cmake)
 elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   add_definitions(-D__CV183X__)
-  include (cmake/tracer.cmake)
   add_definitions(-DUSE_NEON)
 elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
   add_definitions(-D__CV186X__)
@@ -98,7 +94,6 @@ foreach(flags CMAKE_CXX_FLAGS CMAKE_C_FLAGS)
 endforeach()
 
 include(${CMAKE_TOOLCHAIN_FILE})
-set(KERNEL_ROOT $ENV{KERNEL_PATH}/build/$ENV{PROJECT_FULLNAME}/${ARCH}/usr/)
 
 message("==================================================")
 message("Branch                 ${LATEST_BRANCH}")
@@ -115,7 +110,6 @@ message("CMAKE_TOOLCHAIN_FILE   ${CMAKE_TOOLCHAIN_FILE}")
 message("Enable Perfetto        ${ENABLE_PERFETTO}")
 message("CVI_PLATFORM           ${CVI_PLATFORM}")
 message("USE_TPU_IVE            ${USE_TPU_IVE}")
-message("KERNEL_ROOT            ${KERNEL_ROOT}")
 message("FTP_SERVER_IP          ${FTP_SERVER_IP}")
 message("CONFIG_DUAL_OS         ${CONFIG_DUAL_OS}")
 message("==================================================")
@@ -124,6 +118,38 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 include(FetchContent)
 get_filename_component(_deps "${BUILD_DOWNLOAD_DIR}" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
 set(FETCHCONTENT_BASE_DIR ${_deps})
+
+# set 3rd_party url
+set(3RD_PARTY_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
+
+execute_process(
+    COMMAND git remote -v
+    OUTPUT_VARIABLE REMOTE_URL
+    ERROR_VARIABLE GIT_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE 
+)
+
+if(NOT GIT_ERROR)
+    if(REMOTE_URL MATCHES "github.com")
+      set(IS_LOCAL FALSE)
+    else()
+        set(IS_LOCAL TRUE)
+    endif()
+else()
+    message(FATAL_ERROR "Failed to execute git command: ${GIT_ERROR}")
+endif()
+
+
+# 获取当前文件的目录
+set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+# 获取上一级目录
+get_filename_component(TOP_DIR ${CURRENT_DIR} DIRECTORY)
+
+# 打印上一级目录
+message(STATUS "Current Directory: ${CURRENT_DIR}")
+message(STATUS "Parent Directory: ${TOP_DIR}")
+
 
 # Check if OpenCV exists.
 if (NOT DEFINED NO_OPENCV)
@@ -155,15 +181,15 @@ if("${BUILD_OPTION}" STREQUAL "")
   add_subdirectory(modules)
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)
+  add_subdirectory(sample_video)
 elseif("${BUILD_OPTION}" STREQUAL "all")
   add_subdirectory(modules)
   add_subdirectory(sample)
+  add_subdirectory(sample_video)
 else()
   message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}. Valid options are '', 'sample', or 'all'.")
 endif()
 
-add_subdirectory(sample_video)
-
-if(NOT DEFINED NO_OPENCV)
+if(IS_LOCAL AND NOT DEFINED NO_OPENCV )
   add_subdirectory(regression)
 endif()

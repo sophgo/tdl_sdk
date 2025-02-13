@@ -15,9 +15,12 @@ add_subdirectory(app)
 
 add_subdirectory(core)
 add_subdirectory(service)
-add_subdirectory(eval)
-add_subdirectory(test)
 add_subdirectory(lib)
+
+if(IS_LOCAL)
+  add_subdirectory(eval)
+  add_subdirectory(test)
+endif()
 
 set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                $<TARGET_OBJECTS:cvi_tdl_service>
@@ -47,6 +50,7 @@ set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                $<TARGET_OBJECTS:deepsort>
                $<TARGET_OBJECTS:sound_classification>
                $<TARGET_OBJECTS:segmentation>
+               $<TARGET_OBJECTS:topformer_seg>
                $<TARGET_OBJECTS:license_plate_detection>
                $<TARGET_OBJECTS:face_landmarker>
                $<TARGET_OBJECTS:incar_object_detection>
@@ -85,7 +89,9 @@ if(NOT DEFINED NO_OPENCV)
                  $<TARGET_OBJECTS:smoke_classification>
                  $<TARGET_OBJECTS:ocr_detection>
                  $<TARGET_OBJECTS:license_plate_recognition>
+                 $<TARGET_OBJECTS:license_plate_keypoint>
                  $<TARGET_OBJECTS:face_angle>
+                 $<TARGET_OBJECTS:occlusion_classification>
                  $<TARGET_OBJECTS:mask_face_recognition>)
   
   if("${ENABLE_CVI_TDL_CV_UTILS}" STREQUAL "ON")

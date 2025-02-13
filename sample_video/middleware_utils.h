@@ -5,6 +5,13 @@
 #include <rtsp.h>
 #include <sample_comm.h>
 
+#ifdef CONFIG_DUAL_OS
+#include <cvi_msg_client.h>
+#else
+CVI_S32 CVI_MSG_Init(CVI_VOID);
+CVI_S32 CVI_MSG_Deinit(CVI_VOID);
+#endif
+
 /**
  * @brief configuration for a VBPool
  * @var u32Width

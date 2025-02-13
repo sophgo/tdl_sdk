@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "core/utils/vpss_helper.h"
+#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 // set preprocess and algorithm param for yolov8 detection
@@ -31,7 +32,7 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
   // setup yolo algorithm preprocess
   cvtdl_det_algo_param_t yolov8_param =
       CVI_TDL_GetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG);
-  yolov8_param.cls = 1;
+  yolov8_param.cls = 80;
 
   printf("setup yolov8 algorithm param \n");
   ret = CVI_TDL_SetDetectionAlgoParam(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG, yolov8_param);
@@ -51,6 +52,12 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 3) {
+    printf("Usage: %s <yolov8 segmentation model path> <input image path>\n", argv[0]);
+    printf("yolov8 segmentation model path: Path to yolov8 segmentation model cvimodel.\n");
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_TDL_SUCCESS) {
@@ -109,10 +116,10 @@ int main(int argc, char *argv[]) {
 
     printf("points=[");
     for (uint32_t j = 0; j < obj_meta.info[i].mask_properity->mask_point_size; j++) {
-      printf("(%d,%d),", obj_meta.info[i].mask_properity->mask_point[2 * j],
+      printf("(%f,%f),", obj_meta.info[i].mask_properity->mask_point[2 * j],
              obj_meta.info[i].mask_properity->mask_point[2 * j + 1]);
 
-      fprintf(file, "(%d,%d),", obj_meta.info[i].mask_properity->mask_point[2 * j],
+      fprintf(file, "(%f,%f),", obj_meta.info[i].mask_properity->mask_point[2 * j],
               obj_meta.info[i].mask_properity->mask_point[2 * j + 1]);
     }
     printf("]\n");

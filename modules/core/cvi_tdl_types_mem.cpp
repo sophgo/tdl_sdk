@@ -179,6 +179,13 @@ void CVI_TDL_FreeCpp(cvtdl_clip_feature *clip_meta) {
   clip_meta->feature_dim = 0;
 }
 
+void CVI_TDL_FreeCpp(cvtdl_seg_t *seg_ann) {
+  free(seg_ann->class_id);
+  free(seg_ann->class_conf);
+  seg_ann->srcWidth = 0;
+  seg_ann->srcHeight = 0;
+}
+
 void CVI_TDL_FreeFeature(cvtdl_feature_t *feature) { CVI_TDL_FreeCpp(feature); }
 
 void CVI_TDL_FreePts(cvtdl_pts_t *pts) { CVI_TDL_FreeCpp(pts); }
@@ -202,6 +209,8 @@ void CVI_TDL_FreeHandPoses(cvtdl_handpose21_meta_ts *handposes) { CVI_TDL_FreeCp
 void CVI_TDL_FreeClassMeta(cvtdl_class_meta_t *cls_meta) { CVI_TDL_FreeCpp(cls_meta); }
 
 void CVI_TDL_FreeLane(cvtdl_lane_t *lane_meta) { CVI_TDL_FreeCpp(lane_meta); }
+
+void CVI_TDL_FreeSeg(cvtdl_seg_t *seg_ann) { CVI_TDL_FreeCpp(seg_ann); }
 
 void CVI_TDL_FreeClip(cvtdl_clip_feature *clip_meta) { CVI_TDL_FreeCpp(clip_meta); }
 // Copy

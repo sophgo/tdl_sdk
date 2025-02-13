@@ -62,6 +62,12 @@ function(buildninstallcpp)
   endif()
 endfunction(buildninstallcpp)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/core/core
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/core/utils
+                    ${CMAKE_CURRENT_SOURCE_DIR}/../modules/lib/cvi_kit)
 set(SAMPLE_INC
     ${MIDDLEWARE_SDK_ROOT}/include
     ${MIDDLEWARE_SDK_ROOT}/sample/common
@@ -76,7 +82,7 @@ set(SAMPLE_INC
 
 
 if(${MW_VER} STREQUAL "v1")
-  set(SAMPLE_INC ${SAMPLE_INC} ${TRACER_PATH})
+  set(SAMPLE_INC ${SAMPLE_INC})
 elseif(${MW_VER} STREQUAL "v3")
   set(SAMPLE_INC ${SAMPLE_INC} ${MIDDLEWARE_SDK_ROOT}/component/panel/${CVI_PLATFORM_LOWER})
 else()
@@ -93,13 +99,22 @@ set(AUDIO_SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
                       ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
                       ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
                       ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so
+
 )
 
+if(${CVI_PLATFORM} STREQUAL "SOPHON")
+else()
+  set(AUDIO_SAMPLE_LIBS
+    ${AUDIO_SAMPLE_LIBS}
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.so
+  )
+endif()
+
 if(${CONFIG_DUAL_OS} STREQUAL "ON")
+  add_definitions(-DCONFIG_DUAL_OS)
   set(AUDIO_SAMPLE_LIBS
     ${AUDIO_SAMPLE_LIBS}
     ${MIDDLEWARE_SDK_ROOT}/lib/libdnvqe.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.so
   )
 else()
   set(AUDIO_SAMPLE_LIBS
@@ -231,31 +246,9 @@ else()
     set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
   endif()
 endif()
-
-if((DEFINED BUILD_WEB_VIEW) AND ("${CVI_PLATFORM}" STREQUAL "CV182X"))
-  set(SAMPLE_LIBS_WEB ${SAMPLE_LIBS}
-    ${sophapp_SOURCE_DIR}/prebuilt/thttpd/lib32bit/libthttpd.so
-    ${sophapp_SOURCE_DIR}/prebuilt/openssl/lib32bit/libssl.so
-    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/lib32bit/libwebsockets.so)
-
-  set(SAMPLE_INC_WEB ${SAMPLE_INC}
-    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket
-    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/include
-    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/include/libwebsockets
-    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/include/libwebsockets/abstract/protocols
-    ${sophapp_SOURCE_DIR}/prebuilt/libwebsockets/include/libwebsockets/abstract/transports
-    ${sophapp_SOURCE_DIR}/prebuilt/thttpd/include
-    ${sophapp_SOURCE_DIR}/prebuilt/openssl/include
-  )
-
-  set(SAMPLE_SRC_WEB
-    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/cJSON.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/middleware_init.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/app_ipcam_net.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/app_ipcam_netctrl.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/web_socket/app_ipcam_websocket.c)
+if (NOT DEFINED NO_OPENCV)
+  buildninstall(NAME sample_vi_occ INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_kit ${SAMPLE_LIBS} )
 endif()
-
 # buildninstallcpp(NAME sample_read_od INC ${SAMPLE_INC} DEPS cvi_tdl ${SAMPLE_LIBS})
 buildninstallcpp(NAME sample_aud_order INC ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS} ${AUDIO_SAMPLE_LIBS})
 # buildninstall(NAME sample_img_md INC  ${SAMPLE_INC} DEPS cvi_tdl pthread ${SAMPLE_LIBS})
@@ -295,15 +288,11 @@ buildninstall(NAME sample_stream_consumer_counting INC ${SAMPLE_INC} SRCS middle
 buildninstall(NAME sample_stream_personvehicle_cross INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
 buildninstall(NAME sample_stream_hardhat INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
 buildninstall(NAME sample_stream_fr INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
-buildninstall(NAME sample_clip INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+buildninstall(NAME sample_clip INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_kit ${SAMPLE_LIBS} )
 
-if((DEFINED BUILD_WEB_VIEW) AND ("${CVI_PLATFORM}" STREQUAL "CV182X"))
-  buildninstall(NAME sample_web_multi_model INC ${SAMPLE_INC_WEB} SRCS middleware_utils.c ${SAMPLE_SRC_WEB} DEPS cvi_tdl ${SAMPLE_LIBS_WEB} )
-endif()
 
 install(FILES vi_vo_utils.c sample_utils.c middleware_utils.c DESTINATION sample/utils)
 install(FILES vi_vo_utils.h sample_utils.h middleware_utils.h DESTINATION sample/utils)
 install(FILES Makefile DESTINATION sample/cvi_tdl)
 install(FILES Makefile DESTINATION sample/cvi_tdl_app)
 install(FILES Makefile DESTINATION sample/cvi_yolo)
-

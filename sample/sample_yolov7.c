@@ -61,6 +61,12 @@ CVI_S32 init_param(const cvitdl_handle_t tdl_handle) {
 int main(int argc, char *argv[]) {
   int vpssgrp_width = 1920;
   int vpssgrp_height = 1080;
+  if (argc != 3) {
+    printf("Usage: %s <yolov7 model path> <input image path>\n", argv[0]);
+    printf("yolov7 model path: Path to yolov7 model cvimodel.\n");
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
                                  vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
   if (ret != CVI_TDL_SUCCESS) {
@@ -85,7 +91,7 @@ int main(int argc, char *argv[]) {
   }
 
   // set thershold
-  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV7, 0.5);
+  CVI_TDL_SetModelThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV7, 0.4);
   CVI_TDL_SetModelNmsThreshold(tdl_handle, CVI_TDL_SUPPORTED_MODEL_YOLOV7, 0.5);
 
   imgprocess_t img_handle;
@@ -105,11 +111,14 @@ int main(int argc, char *argv[]) {
 
   CVI_TDL_Detection(tdl_handle, &fdFrame, CVI_TDL_SUPPORTED_MODEL_YOLOV7, &obj_meta);
 
+  printf("objnum: %d\n", obj_meta.size);
+  printf("boxes=[");
   for (uint32_t i = 0; i < obj_meta.size; i++) {
-    printf("detect res: %f %f %f %f %f %d\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
-           obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2, obj_meta.info[i].bbox.score,
-           obj_meta.info[i].classes);
+    printf("[%f,%f,%f,%f,%d,%f],", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
+           obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2, obj_meta.info[i].classes,
+           obj_meta.info[i].bbox.score);
   }
+  printf("]\n");
 
   CVI_TDL_ReleaseImage(img_handle, &fdFrame);
   CVI_TDL_Free(&obj_meta);

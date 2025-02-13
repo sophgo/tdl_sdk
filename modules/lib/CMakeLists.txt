@@ -1,10 +1,8 @@
-if(NOT DEFINED NO_OPENCV)
 add_subdirectory(cvi_draw_rect)
-endif()
 add_subdirectory(cvi_md)
 add_subdirectory(cvi_preprocess)
 add_subdirectory(sample)
-add_subdirectory(sample_utils)
+add_subdirectory(cvi_kit)
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample/sample_lib_cvimd.cpp ${CMAKE_CURRENT_SOURCE_DIR}/sample/Makefile DESTINATION sample/cvi_md/)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample/sample_lib_preprocess.cpp ${CMAKE_CURRENT_SOURCE_DIR}/sample/Makefile DESTINATION sample/cvi_preprocess/)

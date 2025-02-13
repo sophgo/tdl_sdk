@@ -485,6 +485,10 @@ int main(int argc, char *argv[]) {
     printf("Usage: %s odmodel_path ldmodel_path famodel_path capture_path\n", argv[0]);
     return CVI_FAILURE;
   }
+  if (CVI_MSG_Init()) {
+		SAMPLE_PRT("CVI_MSG_Init fail\n");
+		return 0;
+	}
   CVI_S32 ret = CVI_SUCCESS;
   // Set signal catch
   signal(SIGINT, SampleHandleSig);
@@ -722,6 +726,7 @@ setup_tdl_fail:
   CVI_TDL_Service_DestroyHandle(stServiceHandle);
   CVI_TDL_DestroyHandle(stTDLHandle);
   SAMPLE_TDL_Destroy_MW(&stMWContext);
+	CVI_MSG_Deinit();
 }
 
 int COUNT_ALIVE(face_capture_t *face_cpt_info) {

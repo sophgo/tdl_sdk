@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
     obj_meta.info[i].bbox.x2 = bg.stVFrame.u32Width - 1;
     obj_meta.info[i].bbox.y1 = 0;
     obj_meta.info[i].bbox.y2 = bg.stVFrame.u32Height - 1;
+    obj_meta.info[i].classes = 0;
     printf("init objbox:%f,%f,%f,%f\n", obj_meta.info[i].bbox.x1, obj_meta.info[i].bbox.y1,
            obj_meta.info[i].bbox.x2, obj_meta.info[i].bbox.y2);
   }

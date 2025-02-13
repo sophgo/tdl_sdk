@@ -1,78 +1,177 @@
-# TDL_SDK 公版深度学习软件包（Turnkey Deep Learning SDK）
-
-该文档介绍如何编译及使用tdl_sdk。
-
-该版本已完成对
-
-- v4.1.0
-- v4.2.0
-- athena2
-- mars3
-
-四个版本的SDK支持，只需将tdl_sdk放置在对应版本的项目根路径中便可使用。
+# 公版深度学习TDL（turnkey deep learning）
+## 1. 概述
 
 
-## 下载
+Cvitek所提供的TDL（Turnkey Deep Learning）集成算法， 用以缩短应用程序开发所需的时间。此架构实现了TDL所需算法包含其前后处理， 提供统一且便捷的编程接口。
 
-在空文件夹中下载cvi_manifest来辅助下载不同版本的SDK：
 
-``` shell
-# 内部从gerrit上clone
-git clone ssh://user.name@gerrit-ai.sophgo.vip:29418/cvi_manifest
+TDL_SDK基于算能自研的Middleware和TPU SDK，包括内部两大模块（Core和Service）、算法C接口、算法应用（Application）。
+
+
+![TDL SDK系统框架](tutorial/assets/architecture.png)
+<div style="text-align: center;">
+    图1 TDL SDK系统框架
+</div>
+
+Core提供了算法相关接口，封装复杂的底层操作及算法细节，在内部会对模型进行相应的前后处理，并完成推理。Service提供算法相关辅助API，例如：绘图, 特征比对, 区域入侵判定等功能。C接口实现对现有现有算法模块的功能封装，除了支持TDL SDK内部模型外，还支持开发者自有模型（需按文档进行模型转换）。Application封装应用逻辑，如包含人脸抓拍的应用逻辑。
+
+
+目前TDL SDK包含 [移动侦测](./modules/core/motion_detection)， [人脸检测](./modules/core/face_detection)， [人脸识别](./modules/core/mask_face_recognition)， [人脸关键点检测](./modules/core/face_landmarker)， [跌倒检测](./modules/core/fall_detection)， [语义分割](./modules/core/segmentation)， [车牌检测](./modules/core/license_plate_detection)， [车牌辨识](./modules/core/license_plate_recognition)， [活体识别](./modules/core/liveness)，[声音分类](./modules/core/sound_classification)， [人体关键点检测](./modules/core/human_keypoints_detection)， [车道线识别](./modules/core/lane_detection)， [目标追踪](./modules/core/deepsort)， [手势侦测](./modules/core/hand_classification)， [手势识别](./modules/core/hand_keypoint_classification)，[文字检测](./modules/core/ocr/ocr_detection)，[文本识别](./modules/core/ocr/ocr_recognition)等算法。
+
+
+## 2. 仓库目录
+**cmake**: 包含项目所需的 CMake 配置文件。
+**docs**: 包含项目文档及其生成相关的文件。
+**doxygen**: 包含 Doxygen 配置文件，用于生成 API 文档。
+**include**: 存放项目的头文件，按模块组织。
+**modules**: 包含项目的各个功能模块及核心模块的具体实现。
+**sample**: 提供多个示例程序及其构建脚本，展示项目的功能和用法。
+**scripts**: 包含各种辅助脚本，如代码检查、编译和测试脚本。
+**tool**: 包含各种工具和实用程序代码。
+**toolchain**: 提供不同平台的工具链配置文件。
+**tutorial**: 包含项目的教程文档，帮助用户快速上手和使用项目。
+编译产生的中间文件及第三方库的下载都会位于tmp文件夹内
+## 3. 编译流程
+
 ```
+第一步:
+git clone -b sg200x-evb git@github.com:sophgo/sophpi.git
+cd sophpi
+./scripts/repo_clone.sh --gitclone scripts/subtree.xml
 
-根据不同的芯片，先下载对应的项目包：
-
-``` shell
-# v4.1.0
-./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/golden/cv181x_cv180x_v4.1.0.xml
-
-# v4.2.0
-./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/golden/cv181x_cv180x_v4.2.0.xml
-
-# athena2 edge
-./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/athena2/master/edge.xml
-
-# athena2 device
-./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/athena2/master/device.xml
-
-# mars3
-./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/mars3.xml
-```
-
-下载完整包项目SDK之后，若根路径下没有tdl_sdk，可执行以下命令下载tdl_sdk：
-
-``` shell
-# 项目根路径下载tdl_sdk
-./cvi_manifest/cvitek_repo_clone.sh --gitclone cvi_manifest/tdl_sdk.xml
-```
-
-## 编译
-
-首先，在编译tdl_sdk之前，需要确保项目已完成编译，因为tdl_sdk将依赖其中部分库：
-
-``` shell
-source build/envsetup_soc.sh
-
-# 请依据对应的板卡进行选择
-defconfig cv18xxx_xxx_xxx
-
+第二步:
+source build/cvisetup.sh
+defconfig sg2002_wevb_riscv64_sd
+clean_all
 export TPU_REL=1
+build_all
 
-clean_all && build_all
+第三步: (后续修改TDL_SDK内容后执行第三步即可)
+clean_tdl_sdk
+build_tdl_sdk
+
+```
+## 4. 使用案例
+算法接口
+以人脸检测为例子
+```
+/**
+ * @brief Detect face with score.
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param face_meta Output detect result. The bbox will be given.
+ * @param model_index The face detection model id selected to use.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_FaceDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                         CVI_TDL_SUPPORTED_MODEL_E model_index,
+                                         cvtdl_face_t *face_meta);
+```
+辅助功能接口
+            以人脸画框为例
+```
+/**
+ * @brief Draw rect to frame with given face meta with a global brush.
+ * @ingroup core_cvitdlservice
+ *
+ * @param handle A service handle.
+ * @param meta meta structure.
+ * @param frame In/ out YUV frame.
+ * @param drawText Choose to draw name of the face.
+ * @param brush A brush for drawing
+ * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Service_FaceDrawRect(cvitdl_service_handle_t handle,
+                                                const cvtdl_face_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                                const bool drawText, cvtdl_service_brush_t brush);
 ```
 
-完成整包SDK的编译之后，便可编译tdl_sdk：
-
-``` shell
-cd tdl_sdk
-
-# 编译 modules
-./build_tdl_sdk.sh
-
-# 编译 samples
-./build_tdl_sdk.sh sample
-
-# 编译 modules + samples
-./build_tdl_sdk.sh all
+一个简单的调用例子:
 ```
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <iostream>
+#include <string>
+#include "core/utils/vpss_helper.h"
+#include "cvi_tdl.h"
+#include "cvi_tdl_media.h"
+int main(int argc, char *argv[]) {
+  int vpssgrp_width = 1920;
+  int vpssgrp_height = 1080;
+  CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
+                                 vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
+  if (ret != CVI_TDL_SUCCESS) {
+    printf("Init sys failed with %#x!\n", ret);
+    return ret;
+  }
+
+  cvitdl_handle_t tdl_handle = NULL;
+  ret = CVI_TDL_CreateHandle(&tdl_handle);
+  if (ret != CVI_SUCCESS) {
+    printf("Create tdl handle failed with %#x!\n", ret);
+    return ret;
+  }
+
+  std::string strf1(argv[2]);
+
+  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, argv[1]);
+  if (ret != CVI_SUCCESS) {
+    printf("open model failed with %#x!\n", ret);
+    return ret;
+  }
+
+  CVI_TDL_UseMmap(tdl_handle, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, false);
+
+  imgprocess_t img_handle;
+  CVI_TDL_Create_ImageProcessor(&img_handle);
+
+  VIDEO_FRAME_INFO_S bg;
+  // printf("toread image:%s\n",argv[1]);
+  ret = CVI_TDL_ReadImage(img_handle, strf1.c_str(), &bg, PIXEL_FORMAT_RGB_888_PLANAR);
+  if (ret != CVI_SUCCESS) {
+    printf("open img failed with %#x!\n", ret);
+    return ret;
+  } else {
+    printf("image read,width:%d\n", bg.stVFrame.u32Width);
+  }
+  std::string str_res;
+  for (int i = 0; i < 1; i++) {
+    cvtdl_face_t obj_meta = {0};
+    ret = CVI_TDL_FaceDetection(tdl_handle, &bg, CVI_TDL_SUPPORTED_MODEL_SCRFDFACE, &obj_meta);
+    std::stringstream ss;
+    ss << "boxes=[";
+    for (uint32_t i = 0; i < obj_meta.size; i++) {
+      ss << "[" << obj_meta.info[i].bbox.x1 << "," << obj_meta.info[i].bbox.y1 << ","
+         << obj_meta.info[i].bbox.x2 << "," << obj_meta.info[i].bbox.y2 << "],";
+    }
+    str_res = ss.str();
+    CVI_TDL_Free(&obj_meta);
+  }
+  std::cout << str_res << std::endl;
+  CVI_TDL_ReleaseImage(img_handle, &bg);
+  CVI_TDL_DestroyHandle(tdl_handle);
+  CVI_TDL_Destroy_ImageProcessor(img_handle);
+  return ret;
+}
+```
+
+<div align="center">
+
+![人脸检测 GIF](tutorial/assets/demo.gif)
+
+人脸检测效果
+
+</div>
+
+
+更多案例请参考[教程](tutorial)
+
+## 5. 模型
+相关模型获取：[tdl_models](https://github.com/sophgo/tdl_models)
+
+## 6. 开发指南
+详见[TDL SDK软件开发指南](https://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/zh/01.software/TPU/TDL_SDK_Software_Development_Guide/build/html/index.html#)
+
+## 7. SDK问题反馈
+最后，如果您对仓库有任何的疑问或者改进想法，请通过 Issues 提交。我们欢迎所有形式的贡献，包括文档改进、bug 修复、新特性添加等等，直接参与到项目的开发和维护中，帮助我们不断改进。我们期待在您的帮助下，将本项目发展成为更加完善、易于使用的深度学习SDK库。

@@ -12,7 +12,6 @@ else
     BUILD_TYPE=SDKRelease
 fi
 
-FTP_SERVER_IP=${FTP_SERVER_IP:-10.80.0.5}
 
 CONFIG_DUAL_OS="${CONFIG_DUAL_OS:-OFF}"
 if [[ "$CONFIG_DUAL_OS" == "y" ]]; then
@@ -45,7 +44,7 @@ if [ "$(printf '%s\n' "$CMAKE_REQUIRED_VERSION" "$CMAKE_VERSION" | sort -V | hea
 else
     echo "Cmake minimum required version is ${CMAKE_REQUIRED_VERSION}, trying to download from ftp."
     if [ ! -f cmake-3.18.4-Linux-x86_64.tar.gz ]; then
-        wget ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
+        wget ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/cmake/cmake-3.18.4-Linux-x86_64.tar.gz
     fi
     tar zxf cmake-3.18.4-Linux-x86_64.tar.gz
     CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
@@ -134,8 +133,8 @@ popd
 
 if [[ "$BUILD_TYPE" == "Release" ]]; then
     # Clone doc to aisdk
-    remote_user="swftp"
-    remote_host="10.80.0.5"
+    remote_user= FTP_SERVER_NAME
+    remote_host= FTP_SERVER_IP
     remote_password="cvitek"
     current_date=$(date +"%Y-%m-%d")
     remote_base_path="/sw_rls/daily_build/cvitek_develop_docs/master/${current_date}/CV180x_CV181x/"

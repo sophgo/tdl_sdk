@@ -94,6 +94,19 @@ void run_hand_keypoint_cls(cvitdl_handle_t tdl_handle, const char *model_path,
 }
 
 int main(int argc, char *argv[]) {
+  if (argc != 5) {
+    printf(
+        "Usage: %s <hand detection model path> <hand keypoint model path> <hand keypoint "
+        "classification model path> <input image path>\n",
+        argv[0]);
+    printf("hand detection model path: Path to hand detection model cvimodel.\n");
+    printf("hand keypoint model path: Path to hand keypoint model cvimodel.\n");
+    printf(
+        "hand keypoint classification model path: Path to hand keypoint classification model "
+        "cvimodel.\n");
+    printf("input image path: Path to input image.\n");
+    return CVI_FAILURE;
+  }
   char *hd_model_path = argv[1];
   char *kp_model_path = argv[2];
   char *kc_model_path = argv[3];

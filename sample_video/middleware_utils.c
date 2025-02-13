@@ -2,6 +2,17 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 #include "middleware_utils.h"
 
+
+#ifndef CONFIG_DUAL_OS
+CVI_S32 CVI_MSG_Init(CVI_VOID) {
+  return 0;
+}
+
+CVI_S32 CVI_MSG_Deinit(CVI_VOID) {
+  return 0;
+}
+#endif
+
 static void SAMPLE_TDL_RTSP_ON_CONNECT(const char *ip, void *arg) {
   printf("RTSP client connected from: %s\n", ip);
 }
@@ -109,9 +120,6 @@ PIC_SIZE_E SAMPLE_TDL_Get_PIC_Size(CVI_S32 width, CVI_S32 height) {
 
 CVI_S32 SAMPLE_TDL_Init_WM(SAMPLE_TDL_MW_CONFIG_S *pstMWConfig,
                            SAMPLE_TDL_MW_CONTEXT *pstMWContext) {
-#ifdef _MIDDLEWARE_V3_
-  CVI_MSG_Init();
-#endif
   MMF_VERSION_S stVersion;
   CVI_SYS_GetVersion(&stVersion);
   printf("MMF Version:%s\n", stVersion.version);
