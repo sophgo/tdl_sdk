@@ -1,28 +1,26 @@
-/**
- * This is a sample code for object tracking.
- */
-#define LOG_TAG "SampleObjectTracking"
-#define LOG_LEVEL LOG_LEVEL_INFO
-
 #include "middleware_utils.h"
 #include "sample_utils.h"
 #include "vi_vo_utils.h"
-
-#include <core/utils/vpss_helper.h>
-#include <cvi_comm.h>
 #include <rtsp.h>
 #include <sample_comm.h>
 #include "cvi_tdl.h"
 
+#include <core/utils/vpss_helper.h>
+#include <cvi_comm.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <unistd.h>
+#include <cvi_sys.h>
+#include <cvi_vb.h>
+#include <cvi_vi.h>
+#include <sys/time.h>
+
 
 static volatile bool bExit = false;
+static volatile bool init_alg_param = false;
 
 MUTEXAUTOLOCK_INIT(ResultMutex);
 
@@ -36,7 +34,7 @@ typedef struct {
   CVI_TDL_SUPPORTED_MODEL_E enOdModelId;
   cvitdl_handle_t stTDLHandle;
   bool bTrackingWithFeature;
-  int img_num;
+  int smooth_type;
 } SAMPLE_TDL_TDL_THREAD_ARG_S;
 
 static cvtdl_object_t g_stObjMeta = {0};
@@ -73,15 +71,7 @@ cvtdl_service_brush_t get_random_brush(uint64_t seed, int min) {
   return brush;
 }
 
-cv_tdl_service_brush_t brush_red = {
-    .color.r = 255,
-    .color.g = 0,
-    .color.b = 0,
-    .size = 2,
-};
-
 void *run_venc(void *args) {
-  printf("Enter encoder thread\n");
   SAMPLE_TDL_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_TDL_VENC_THREAD_ARG_S *)args;
   VIDEO_FRAME_INFO_S stFrame;
   CVI_S32 s32Ret;
@@ -119,31 +109,20 @@ void *run_venc(void *args) {
       } else if (stTrackerMeta.info[oid].state == CVI_TRACKER_UNSTABLE) {
         brushes[oid] = stGreyBrush;
       } else {  // CVI_TRACKER_STABLE
-        if(stObjMeta.info[oid].pedestrian_properity->fall){
-          brushes[oid] = brush_red;
-        }else{
-          brushes[oid] = get_random_brush(stObjMeta.info[oid].unique_id, 64);
-        }
+        brushes[oid] = get_random_brush(stObjMeta.info[oid].unique_id, 64);
       }
     }
 
     for (uint32_t oid = 0; oid < stObjMeta.size; oid++) {
       snprintf(stObjMeta.info[oid].name, sizeof(stObjMeta.info[oid].name),
-               "fall: [%d], UID: %" PRIu64 "", (int)stObjMeta.info[oid].pedestrian_properity->fall,
+               "UID: %" PRIu64 "",
                stObjMeta.info[oid].unique_id);
     }
 
     s32Ret = CVI_TDL_Service_ObjectDrawRect2(pstArgs->stServiceHandle, &stObjMeta, &stFrame, true,
-                                             brushes);
+                                            brushes);
 
-    // char text[256] = {0};
-    // if (stObjMeta.size > 0) {
-    //   sprintf(text, "id:%ld, a:%.1f,r:%.2f,s:%.1f,m:%d,st:%d", stObjMeta.info[0].unique_id,
-    //           stObjMeta.info[0].human_angle, stObjMeta.info[0].aspect_ratio,
-    //           stObjMeta.info[0].speed, stObjMeta.info[0].is_moving, stObjMeta.info[0].status);
-    // }
-
-    // CVI_TDL_Service_ObjectWriteText(text, 20, 100, &stFrame, 255, 0, 0);
+    CVI_TDL_Service_ObjectDrawPose(&stObjMeta, &stFrame, 0.3);
 
     if (s32Ret != CVI_TDL_SUCCESS) {
       CVI_VPSS_ReleaseChnFrame(0, 0, &stFrame);
@@ -161,12 +140,10 @@ void *run_venc(void *args) {
       bExit = true;
     }
   }
-  printf("Exit encoder thread\n");
   pthread_exit(NULL);
 }
 
-void *run_tdl_thread(void *args) {
-  printf("Enter TDL thread\n");
+void *run_ai_thread(void *args) {
   SAMPLE_TDL_TDL_THREAD_ARG_S *pstTDLArgs = (SAMPLE_TDL_TDL_THREAD_ARG_S *)args;
 
   VIDEO_FRAME_INFO_S stFrame;
@@ -193,62 +170,53 @@ void *run_tdl_thread(void *args) {
     if (frm_diff > 20) {
       uint32_t cur_ts_ms = get_time_in_ms();
       float fps = frm_diff * 1000.0 / (cur_ts_ms - last_time_ms);
-      CVI_TDL_Set_Fall_FPS(pstTDLArgs->stTDLHandle, fps);  // set only once if fps is stable
+      // CVI_TDL_Set_Fall_FPS(pstTDLArgs->stTDLHandle, fps);  // set only once if fps is stable
       last_time_ms = cur_ts_ms;
       last_counter = counter;
       printf("++++++++++++ frame:%d,fps:%.2f\n", (int)counter, fps);
     }
 
+    if(!init_alg_param){
+      SmoothAlgParam smooth_alg_param = CVI_TDL_Get_Smooth_Algparam(pstTDLArgs->stTDLHandle);
+      smooth_alg_param.image_width = stFrame.stVFrame.u32Width;
+      smooth_alg_param.image_height = stFrame.stVFrame.u32Height;
+      smooth_alg_param.smooth_type = pstTDLArgs->smooth_type;
+      CVI_TDL_Set_Smooth_Algparam(pstTDLArgs->stTDLHandle, smooth_alg_param);
+      init_alg_param = true;
+    }
+
     //*******************************************
     // Step 1: Object detect inference.
-    s32Ret = pstTDLArgs->object_detect(pstTDLArgs->stTDLHandle, &stFrame, pstTDLArgs->enOdModelId,
-                                       &stObjMeta);
+    s32Ret = pstTDLArgs->object_detect(pstTDLArgs->stTDLHandle, &stFrame, pstTDLArgs->enOdModelId, &stObjMeta);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
 
-    if (pstTDLArgs->bTrackingWithFeature) {
-      // Step 2: Extract ReID feature for all person bbox.
-      for (uint32_t i = 0; i < stObjMeta.size; i++) {
-        if (stObjMeta.info[i].classes == CVI_TDL_DET_TYPE_PERSON) {
-          s32Ret = CVI_TDL_OSNetOne(pstTDLArgs->stTDLHandle, &stFrame, &stObjMeta, (int)i);
-          if (s32Ret != CVI_TDL_SUCCESS) {
-            printf("inference failed!, ret=%x\n", s32Ret);
-            goto inf_error;
-          }
-        }
-      }
-    }
-
-    // Step 3: Multi-Object Tracking inference.
+    // Step 2: Multi-Object Tracking inference.
     s32Ret = CVI_TDL_DeepSORT_Obj(pstTDLArgs->stTDLHandle, &stObjMeta, &stTrackerMeta,
-                                  pstTDLArgs->bTrackingWithFeature);
+                                 pstTDLArgs->bTrackingWithFeature);
     if (s32Ret != CVI_TDL_SUCCESS) {
       printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
 
-    // printf("person detect: %d\n", stObjMeta.size);
-    //*******************************************
-
-    s32Ret = CVI_TDL_Fall_Monitor(pstTDLArgs->stTDLHandle, &stObjMeta);
-    if (s32Ret != CVI_SUCCESS) {
-      printf("monitor failed with %#x!\n", s32Ret);
+    // Step 3: Smooth keypoints inference.
+    s32Ret = CVI_TDL_Smooth_Keypoints(pstTDLArgs->stTDLHandle, &stObjMeta);
+    if (s32Ret != CVI_TDL_SUCCESS) {
+      printf("inference failed!, ret=%x\n", s32Ret);
       goto inf_error;
     }
 
-    for (uint32_t i = 0; i < stObjMeta.size; i++) {
-      if (stObjMeta.info[i].pedestrian_properity->fall) {
-        printf("Falling !!!\n");
-      }
-    }
 
     {
       MutexAutoLock(ResultMutex, lock);
       CVI_TDL_CopyObjectMeta(&stObjMeta, &g_stObjMeta);
       CVI_TDL_CopyTrackerMeta(&stTrackerMeta, &g_stTrackerMeta);
     }
+
+    CVI_TDL_Free(&stObjMeta);
+    CVI_TDL_Free(&stTrackerMeta);
 
   inf_error:
     CVI_VPSS_ReleaseChnFrame(0, 1, &stFrame);
@@ -260,31 +228,25 @@ void *run_tdl_thread(void *args) {
     }
   }
 
-  printf("Exit TDL thread\n");
   pthread_exit(NULL);
 }
 
 static void SampleHandleSig(CVI_S32 signo) {
   signal(SIGINT, SIG_IGN);
   signal(SIGTERM, SIG_IGN);
-  printf("handle signal, signo: %d\n", signo);
   if (SIGINT == signo || SIGTERM == signo) {
     bExit = true;
   }
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
+  if (argc != 3) {
     printf(
-        "\nUsage: %s DET_MODEL_PATH \n\n"
-        "\tDET_MODEL_PATH, path to person detection model\n",
+        "\nUsage: %s DET_MODEL_PATH SMOOTH_TYPE \n\n"
+        "\tDET_MODEL_PATH, path to keypoints detection model\n \tSMOOTH_TYPE, should be 0 or 1 (defult to 0)\n",
         argv[0]);
     return -1;
   }
-  if (CVI_MSG_Init()) {
-		SAMPLE_PRT("CVI_MSG_Init fail\n");
-		return 0;
-	}
 
   CVI_TDL_SUPPORTED_MODEL_E enOdModelId = CVI_TDL_SUPPORTED_MODEL_YOLOV8POSE;
 
@@ -403,13 +365,6 @@ int main(int argc, char *argv[]) {
 
   bool bTrackingWithFeature = false;
 
-  /**
-   * We only track person object in this sample. If you want to track other category of object,
-   * please add any category you need to CVI_TDL_SelectDetectClass. Additionally, person ReID
-   * feature is only meaningful if tracked object is belong to person category. Algorithm would not
-   * track non-person object with ReID feature even if enable ReID in CVI_TDL_DeepSORT_Obj.
-   */
-
   // Init DeepSORT
   CVI_TDL_DeepSORT_Init(stTDLHandle, true);
   cvtdl_deepsort_config_t ds_conf;
@@ -428,10 +383,11 @@ int main(int argc, char *argv[]) {
       .object_detect = CVI_TDL_PoseDetection,
       .stTDLHandle = stTDLHandle,
       .bTrackingWithFeature = bTrackingWithFeature,
+      .smooth_type = atoi(argv[2])
   };
 
   pthread_create(&stVencThread, NULL, run_venc, &venc_args);
-  pthread_create(&stTDLThread, NULL, run_tdl_thread, &ai_args);
+  pthread_create(&stTDLThread, NULL, run_ai_thread, &ai_args);
 
   pthread_join(stVencThread, NULL);
   pthread_join(stTDLThread, NULL);
@@ -443,6 +399,5 @@ create_service_fail:
 create_tdl_fail:
   SAMPLE_TDL_Destroy_MW(&stMWContext);
 
-	CVI_MSG_Deinit();
   return 0;
 }

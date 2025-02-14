@@ -667,4 +667,16 @@ typedef struct {
   int occ_class;
 } cvtdl_occlusion_meta_t;
 
+typedef struct {
+  uint32_t image_width;
+  uint32_t image_height;
+  float fc_d;
+  float fc_min;
+  float beta;
+  float thres_mult;
+  float te;
+  int smooth_frames;
+  int smooth_type;
+} SmoothAlgParam;
+
 #endif

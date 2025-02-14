@@ -1200,6 +1200,34 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_Occlusion_Algparam(const cvitdl_handle_t handle,
  * @return int Return CVI_TDL_SUCCESS on success.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps);
+
+/**
+ * @brief Smooth hunman 17 keypoints
+ *
+ * @param handle An TDL SDK handle.
+ * @param objects Detected object info
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Smooth_Keypoints(const cvitdl_handle_t handle, cvtdl_object_t *objects);
+
+/**
+ * @brief Get smooth algorithm parameters
+ *
+ * @param handle An TDL SDK handle.
+ * @return smooth algorithm param struct.
+ */
+DLL_EXPORT SmoothAlgParam CVI_TDL_Get_Smooth_Algparam(const cvitdl_handle_t handle);
+
+/**
+ * @brief Set smooth algorithm parameters
+ *
+ * @param handle An TDL SDK handle.
+ * @param smooth_param smooth algorithm param struct.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Set_Smooth_Algparam(const cvitdl_handle_t handle,
+                                               SmoothAlgParam smooth_param);
+
 #endif
 
 /**

@@ -67,11 +67,12 @@
 #include "face_quality/face_quality.hpp"
 #include "fall_detection/fall_det_monitor.hpp"
 #include "fall_detection/fall_detection.hpp"
+#include "human_keypoints_detection/smooth_keypoints/smooth_keypoints.hpp"
 #include "instance_segmentation/yolov8_seg/yolov8_seg.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
-#include "occlusion_classification/occlusion_classification.hpp"
 #include "liveness/liveness.hpp"
 #include "mask_face_recognition/mask_face_recognition.hpp"
+#include "occlusion_classification/occlusion_classification.hpp"
 #include "ocr/ocr_detection/ocr_detection.hpp"
 #include "opencv2/opencv.hpp"
 #include "smoke_classification/smoke_classification.hpp"
@@ -922,7 +923,7 @@ DEFINE_INF_FUNC_F1_P2(CVI_TDL_FaceQuality, FaceQuality, CVI_TDL_SUPPORTED_MODEL_
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_MaskFaceRecognition, MaskFaceRecognition,
                       CVI_TDL_SUPPORTED_MODEL_MASKFACERECOGNITION, cvtdl_face_t *)
 DEFINE_INF_FUNC_F1_P1(CVI_TDL_YoloV8_Seg, YoloV8Seg, CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG,
-                      cvtdl_object_t *)                   
+                      cvtdl_object_t *)
 CVI_S32 CVI_TDL_CropImage(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_image_t *dst, cvtdl_bbox_t *bbox,
                           bool cvtRGB888) {
   return crop_image(srcFrame, dst, bbox, cvtRGB888);
@@ -976,6 +977,42 @@ CVI_S32 CVI_TDL_Set_Fall_FPS(const cvitdl_handle_t handle, float fps) {
     return CVI_TDL_SUCCESS;
   }
   return ctx->fall_monitor_model->set_fps(fps);
+}
+
+CVI_S32 CVI_TDL_Smooth_Keypoints(const cvitdl_handle_t handle, cvtdl_object_t *objects) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  SmoothKeypoints *smooth_keypoints_model = ctx->smooth_keypoints_model;
+  if (smooth_keypoints_model == nullptr) {
+    LOGD("Init Smooth keypoints Model.\n");
+    ctx->smooth_keypoints_model = new SmoothKeypoints();
+    ctx->smooth_keypoints_model->smooth(objects);
+    return CVI_TDL_SUCCESS;
+  }
+  return ctx->smooth_keypoints_model->smooth(objects);
+}
+
+CVI_S32 CVI_TDL_Set_Smooth_Algparam(const cvitdl_handle_t handle, SmoothAlgParam smooth_param) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  SmoothKeypoints *smooth_keypoints_model = ctx->smooth_keypoints_model;
+  if (smooth_keypoints_model == nullptr) {
+    LOGD("Init Smooth keypoints Model.\n");
+    ctx->smooth_keypoints_model = new SmoothKeypoints();
+    ctx->smooth_keypoints_model->set_algparam(smooth_param);
+    return CVI_TDL_SUCCESS;
+  }
+  ctx->smooth_keypoints_model->set_algparam(smooth_param);
+  return CVI_TDL_SUCCESS;
+}
+
+SmoothAlgParam CVI_TDL_Get_Smooth_Algparam(const cvitdl_handle_t handle) {
+  cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
+  SmoothKeypoints *smooth_keypoints_model = ctx->smooth_keypoints_model;
+  if (smooth_keypoints_model == nullptr) {
+    LOGD("Init Smooth keypoints Model.\n");
+    ctx->smooth_keypoints_model = new SmoothKeypoints();
+    return ctx->smooth_keypoints_model->get_algparam();
+  }
+  return ctx->smooth_keypoints_model->get_algparam();
 }
 
 CVI_S32 CVI_TDL_Set_Occlusion_Algparam(const cvitdl_handle_t handle,

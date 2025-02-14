@@ -131,7 +131,7 @@ CVI_S32 CVI_TDL_Service_ObjectWriteText(char *name, int x, int y,
                                        float b);
 
 CVI_S32 CVI_TDL_Service_ObjectDrawPose(const cvtdl_object_t *meta,
-                                      VIDEO_FRAME_INFO_S *frame);
+                                      VIDEO_FRAME_INFO_S *frame, float score_threshold);
 
 CVI_S32 CVI_TDL_Service_FaceDrawPts(cvtdl_pts_t *pts, VIDEO_FRAME_INFO_S *frame);
 

@@ -368,10 +368,11 @@ DLL_EXPORT CVI_S32 CVI_TDL_Service_FaceAngleForAll(const cvtdl_face_t *meta);
  *
  * @param meta meta structure.
  * @param frame In/ out YUV frame.
+ * @param score_threshold score threshold.
  * @return CVI_S32 Return CVI_TDL_SUCCESS if succeed.
  */
 DLL_EXPORT CVI_S32 CVI_TDL_Service_ObjectDrawPose(const cvtdl_object_t *meta,
-                                                  VIDEO_FRAME_INFO_S *frame);
+                                                  VIDEO_FRAME_INFO_S *frame, float score_threshold);
 
 DLL_EXPORT CVI_S32 CVI_TDL_Service_FaceDrawPts(cvtdl_pts_t *pts, VIDEO_FRAME_INFO_S *frame);
 

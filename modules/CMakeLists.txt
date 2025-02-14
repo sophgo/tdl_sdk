@@ -84,6 +84,7 @@ if(NOT DEFINED NO_OPENCV)
                  $<TARGET_OBJECTS:face_quality>
                  $<TARGET_OBJECTS:liveness>
                  $<TARGET_OBJECTS:fall_detection>
+                 $<TARGET_OBJECTS:smooth_keypoints>
                  $<TARGET_OBJECTS:eye_classification>
                  $<TARGET_OBJECTS:yawn_classification>
                  $<TARGET_OBJECTS:smoke_classification>

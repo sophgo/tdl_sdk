@@ -18,8 +18,14 @@ Core提供了算法相关接口，封装复杂的底层操作及算法细节，�
 
 目前TDL SDK包含 [移动侦测](./modules/core/motion_detection)， [人脸检测](./modules/core/face_detection)， [人脸识别](./modules/core/mask_face_recognition)， [人脸关键点检测](./modules/core/face_landmarker)， [跌倒检测](./modules/core/fall_detection)， [语义分割](./modules/core/segmentation)， [车牌检测](./modules/core/license_plate_detection)， [车牌辨识](./modules/core/license_plate_recognition)， [活体识别](./modules/core/liveness)，[声音分类](./modules/core/sound_classification)， [人体关键点检测](./modules/core/human_keypoints_detection)， [车道线识别](./modules/core/lane_detection)， [目标追踪](./modules/core/deepsort)， [手势侦测](./modules/core/hand_classification)， [手势识别](./modules/core/hand_keypoint_classification)，[文字检测](./modules/core/ocr/ocr_detection)，[文本识别](./modules/core/ocr/ocr_recognition)等算法。
 
+## 2. 开发指南
+详见[TDL SDK软件开发指南](https://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/zh/01.software/TPU/TDL_SDK_Software_Development_Guide/build/html/index.html#)
 
-## 2. 仓库目录
+## 3. 模型
+相关模型获取：[tdl_models](https://github.com/sophgo/tdl_models)
+
+
+## 4. 仓库目录
 **cmake**: 包含项目所需的 CMake 配置文件。
 **docs**: 包含项目文档及其生成相关的文件。
 **doxygen**: 包含 Doxygen 配置文件，用于生成 API 文档。
@@ -31,7 +37,8 @@ Core提供了算法相关接口，封装复杂的底层操作及算法细节，�
 **toolchain**: 提供不同平台的工具链配置文件。
 **tutorial**: 包含项目的教程文档，帮助用户快速上手和使用项目。
 编译产生的中间文件及第三方库的下载都会位于tmp文件夹内
-## 3. 编译流程
+
+## 5. 编译流程
 
 ```
 第一步:
@@ -51,7 +58,7 @@ clean_tdl_sdk
 build_tdl_sdk
 
 ```
-## 4. 使用案例
+## 6. 使用案例
 算法接口
 以人脸检测为例子
 ```
@@ -167,11 +174,6 @@ int main(int argc, char *argv[]) {
 
 更多案例请参考[教程](tutorial)
 
-## 5. 模型
-相关模型获取：[tdl_models](https://github.com/sophgo/tdl_models)
-
-## 6. 开发指南
-详见[TDL SDK软件开发指南](https://doc.sophgo.com/cvitek-develop-docs/master/docs_latest_release/CV180x_CV181x/zh/01.software/TPU/TDL_SDK_Software_Development_Guide/build/html/index.html#)
 
 ## 7. SDK问题反馈
 最后，如果您对仓库有任何的疑问或者改进想法，请通过 Issues 提交。我们欢迎所有形式的贡献，包括文档改进、bug 修复、新特性添加等等，直接参与到项目的开发和维护中，帮助我们不断改进。我们期待在您的帮助下，将本项目发展成为更加完善、易于使用的深度学习SDK库。

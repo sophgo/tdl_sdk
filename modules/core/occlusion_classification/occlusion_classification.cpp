@@ -197,8 +197,8 @@ int OcclusionClassification::cv_method(VIDEO_FRAME_INFO_S *frame,
   cv::Mat cur_frame_gray;
 
 #ifdef ENABLE_CVIAI_CV_UTILS
-  cviai::cvtColor(sub_frame, cur_frame_gray, COLOR_BGR2GRAY);
-  std::cout << "cviai::cvtColor: " << std::endl;
+  cvitdl::cvtColor(sub_frame, cur_frame_gray, COLOR_BGR2GRAY);
+  std::cout << "cvitdl::cvtColor: " << std::endl;
 #else
   cv::cvtColor(sub_frame, cur_frame_gray, cv::COLOR_BGR2GRAY);
 #endif
