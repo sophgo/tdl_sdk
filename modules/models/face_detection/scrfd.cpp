@@ -13,7 +13,7 @@ SCRFD::SCRFD() {
     net_param_.pre_params.scale[i] = scales[i];
     net_param_.pre_params.mean[i] = means[i] * scales[i];
   }
-  net_param_.pre_params.dstImageFormat = ImageFormat::BGR_PLANAR;
+  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
   net_param_.pre_params.keepAspectRatio = true;
 }
 SCRFD::~SCRFD() {}
@@ -119,12 +119,6 @@ int32_t SCRFD::outputParse(
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
        input_tensor.shape[3]);
 
-  std::vector<std::string> output_names = net_->getOutputNames();
-  for (auto &name : output_names) {
-    std::shared_ptr<BaseTensor> tensor = net_->getOutputTensor(name);
-    tensor->invalidateCache();
-  }
-
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
@@ -181,6 +175,7 @@ int32_t SCRFD::outputParse(
           if (conf <= model_threshold_) {
             continue;
           }
+
           std::vector<float> &grid = fpn_grids[j + count * num];
           float grid_cx = (grid[0] + grid[2]) / 2;
           float grid_cy = (grid[1] + grid[3]) / 2;
@@ -201,15 +196,21 @@ int32_t SCRFD::outputParse(
           box.bbox.y2 = grid_cy + bbox_blob[j + count * (3 + num * 4)] * stride;
 
           box.bbox.x1 =
-              std::clamp((box.bbox.x1 - pad_x) * scalex, 0.0f, image_width_f);
+              std::clamp((box.bbox.x1 - pad_x) / scalex, 0.0f, image_width_f);
           box.bbox.y1 =
-              std::clamp((box.bbox.y1 - pad_y) * scaley, 0.0f, image_height_f);
+              std::clamp((box.bbox.y1 - pad_y) / scaley, 0.0f, image_height_f);
           box.bbox.x2 =
-              std::clamp((box.bbox.x2 - pad_x) * scalex, 0.0f, image_width_f);
+              std::clamp((box.bbox.x2 - pad_x) / scalex, 0.0f, image_width_f);
           box.bbox.y2 =
-              std::clamp((box.bbox.y2 - pad_y) * scaley, 0.0f, image_height_f);
+              std::clamp((box.bbox.y2 - pad_y) / scaley, 0.0f, image_height_f);
 
           if (box.bbox.x1 >= box.bbox.x2 || box.bbox.y1 >= box.bbox.y2) {
+            LOGI(
+                "bbox "
+                "invalid,x1:%f,y1:%f,x2:%f,y2:%f,stride:%d,grid_cx:%f,grid_cy:%"
+                "f\n",
+                box.bbox.x1, box.bbox.y1, box.bbox.x2, box.bbox.y2, stride,
+                grid_cx, grid_cy);
             continue;
           }
 

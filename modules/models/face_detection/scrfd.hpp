@@ -8,6 +8,7 @@ class SCRFD : public BaseModel {
   SCRFD();
   ~SCRFD();
 
+  // TODO:add support for int8 output tensor decode
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>>& images,
       std::vector<void*>& out_datas) override;

@@ -85,6 +85,8 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     std::vector<float> scale = {params.scale[0], params.scale[1],
                                 params.scale[2]};
     cv::Mat* dsti = (cv::Mat*)dst_image->getInternalData();
+
+    LOGI("use_rgb:%d", use_rgb);
     print_mat(dsti[0], "dsti[0]");
     for (int i = 0; i < dst_image->getPlaneNum(); i++) {
       input_channels.push_back(dsti[i]);
