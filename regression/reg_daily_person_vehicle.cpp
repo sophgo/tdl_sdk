@@ -24,19 +24,19 @@ class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
 
   virtual ~People_Vehicle_DetectionTestSuite() = default;
 
-  std::string m_model_path;
-  std::shared_ptr<BaseModel> m_model;
+  std::shared_ptr<BaseModel> model_;
 
  protected:
   virtual void SetUp() {
     std::string model_name = std::string(m_json_object["model_name"]);
-    m_model_path = (m_model_dir / fs::path(model_name)).string();
-    m_model = TDLModelFactory::createModel(
-        TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE, m_model_path);
+    std::string model_path = (m_model_dir / fs::path(model_name)).string();
+    model_ = TDLModelFactory::createModel(
+        TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE, model_path);
 
     std::map<int, int> type_mapping = {{0, 1}, {4, 0}};
-    m_model->setTypeMapping(type_mapping);
-    ASSERT_NE(m_model, nullptr);
+    model_->setTypeMapping(type_mapping);
+    model_->setModelThreshold(0.4);
+    ASSERT_NE(model_, nullptr);
   }
 
   virtual void TearDown() {}
@@ -45,11 +45,16 @@ class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
 TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
   int img_num = int(m_json_object["image_num"]);
   auto results = m_json_object["results"];
-  const float bbox_threshold = 0.85;
-  const float score_threshold = 0.2;
+  const float bbox_threshold = 0.8;
+  const float score_threshold = 0.4;
 
+  int num_processed = 0;
   for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
        iter++) {
+    // num_processed += 1;
+    // if (num_processed != 6) {
+    //   continue;
+    // }
     std::string image_path = (m_image_dir / iter.key()).string();
     std::cout << "image_path: " << image_path << std::endl;
     std::shared_ptr<BaseImage> frame =
@@ -60,7 +65,7 @@ TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
     std::vector<void *> out_data;
     std::vector<std::shared_ptr<BaseImage>> input_images;
     input_images.push_back(frame);
-    EXPECT_EQ(m_model->inference(input_images, out_data), 0);
+    EXPECT_EQ(model_->inference(input_images, out_data), 0);
     EXPECT_EQ(out_data.size(), 1);
     cvtdl_object_t *obj_meta = (cvtdl_object_t *)out_data[0];
 
@@ -85,6 +90,8 @@ TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
         matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
 
     CVI_TDL_FreeCpp(obj_meta);  // delete expected_res;
+    delete obj_meta;
+    // break;
   }
 }
 

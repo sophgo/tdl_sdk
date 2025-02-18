@@ -27,8 +27,10 @@ if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" OR "${CMAKE_INSTALL_PREFIX}"
   set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install_soc")
 endif()
 # Find toolchain cmake file and toolchain folder
-if("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
+if( ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "") AND (NOT "${CVI_PLATFORM}" STREQUAL "BM1688") )
   message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is not set. Aborting.")
+else()
+  message(STATUS "CMAKE_TOOLCHAIN_FILE:${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
 set(FTP_SERVER_IP "10.80.0.5" CACHE STRING "3rd party resource ftp")
@@ -95,7 +97,7 @@ endif()
 if(DEFINED ENV{PERF_EVAL})
   add_definitions(-DPERF_EVAL)
   message("set PERF_EVAL")
-  endif()
+endif()
 
 # Get current commit
 execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE CURRENT_COMMIT)
@@ -184,6 +186,9 @@ message(STATUS "MIDDLEWARE_INCLUDES:{${MIDDLEWARE_INCLUDES}}")
 message(STATUS "Includedirectories:{${MLIR_INCLUDES}}")
 message(STATUS "${CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE}")
 
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 add_subdirectory(modules)
 # add_subdirectory(sample)
 # add_subdirectory(lib)

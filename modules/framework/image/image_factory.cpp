@@ -84,7 +84,7 @@ std::shared_ptr<BaseImage> ImageFactory::readImage(const std::string& file_path,
     }
 
   } else if (image->getImageType() == ImageImplType::OPENCV_FRAME) {
-    image = std::make_shared<OpenCVImage>(img);
+    image = std::make_shared<OpenCVImage>(img, image_format);
   }
   int32_t ret = image->flushCache();
   if (ret != 0) {

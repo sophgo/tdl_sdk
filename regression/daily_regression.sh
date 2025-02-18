@@ -45,11 +45,14 @@ if [ -f "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem" ]; then
 elif [ -f "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem" ]; then
   total_ion_size=$(cat /sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem)
   CHIP_ARCH="CV186X"
+elif [ -f "/proc/soph/vpss" ]; then
+  CHIP_ARCH="BM1688"
 else
   # if ion size is unknown then execute basic tests.
   total_ion_size=20000000
 fi
 
+echo "CHIP_ARCH: ${CHIP_ARCH}"
 test_suites=""
 
 # ION requirement >= 20 MB
@@ -104,7 +107,8 @@ test_suites=""
 # test_suites="${test_suites}:MobileDetV2TestSuite.*"
 # fi
 
-if [ $CHIP_ARCH == "CV186X" ];then
+if [ "$CHIP_ARCH" = "CV186X" ] || [ "$CHIP_ARCH" = "BM1688" ]; then
+  echo "CHIP_ARCH: ${CHIP_ARCH} is supported"
   # test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
   # test_suites="${test_suites}:Hand_DetectionTestSuite.*"
   # test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
@@ -128,7 +132,7 @@ echo -e "CHIPSET: \t\t${CHIPSET}"
 echo -e "ION size: \t\t${total_ion_size} bytes"
 
 echo "Test Suites to be executed:"
-test_suites_separated=${test_suites//":"/ }
+test_suites_separated=$(echo "$test_suites" | tr ':' ' ')
 for suite_name in ${test_suites_separated}
 do
     echo -e "\t${suite_name}"

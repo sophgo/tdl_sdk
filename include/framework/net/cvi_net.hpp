@@ -1,9 +1,10 @@
 #ifndef CVI_NET_H
 #define CVI_NET_H
 
+#include <cviruntime.h>
+
 #include "net/base_net.hpp"
 #include "tensor/base_tensor.hpp"
-
 class CviNet : public BaseNet {
  public:
   CviNet(const NetParam& param);
@@ -24,8 +25,8 @@ class CviNet : public BaseNet {
   void setupTensorInfo(void* cvi_tensor, int32_t num_tensors,
                        std::map<std::string, TensorInfo>& tensor_info);
   void* model_handle_ = nullptr;
-  void* input_tensors_ = nullptr;
-  void* output_tensors_ = nullptr;
+  CVI_TENSOR* input_tensors_ = nullptr;
+  CVI_TENSOR* output_tensors_ = nullptr;
 };
 
 #endif  // CVI_NET_H

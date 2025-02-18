@@ -154,8 +154,8 @@ bool CVI_TDLModelTestSuite::matchObjects(
   for (const auto &gt_object : gt_objects) {
     std::vector<std::vector<float>> matched_dets;
     for (const auto &pred_object : pred_objects) {
+      float iout = iou(gt_object, pred_object);
       if (gt_object[5] == pred_object[5]) {
-        float iout = iou(gt_object, pred_object);
         if (iout > iout_thresh) {
           matched_dets.push_back(pred_object);
         }
@@ -167,6 +167,12 @@ bool CVI_TDLModelTestSuite::matchObjects(
                 << "]"
                 << ",score:" << gt_object[4] << ",class_id:" << gt_object[5]
                 << std::endl;
+      for (const auto &pred_object : pred_objects) {
+        std::cout << "predbox:[" << pred_object[0] << "," << pred_object[1]
+                  << "," << pred_object[2] << "," << pred_object[3] << "]"
+                  << ",score:" << pred_object[4]
+                  << ",class_id:" << pred_object[5] << std::endl;
+      }
       return false;
     } else if (matched_dets.size() > 1) {
       std::cout << "has multiple matched det,gtbox:[" << gt_object[0] << ","
@@ -186,9 +192,12 @@ bool CVI_TDLModelTestSuite::matchObjects(
       if (score_diff > score_thresh) {
         std::cout << "score diff: " << score_diff << ",gtbox:[" << gt_object[0]
                   << "," << gt_object[1] << "," << gt_object[2] << ","
-                  << gt_object[3] << "]"
-                  << ",score:" << gt_object[4] << ",class_id:" << gt_object[5]
-                  << std::endl;
+                  << gt_object[3] << "]" << ",score:" << gt_object[4]
+                  << ",class_id:" << gt_object[5]
+                  << ",pred_score:" << matched_dets[0][4] << ",predbox:["
+                  << matched_dets[0][0] << "," << matched_dets[0][1] << ","
+                  << matched_dets[0][2] << "," << matched_dets[0][3] << "]"
+                  << ",pred_class_id:" << matched_dets[0][5] << std::endl;
         return false;
       }
     }

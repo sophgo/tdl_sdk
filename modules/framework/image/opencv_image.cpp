@@ -26,13 +26,15 @@ OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
   }
 }
 
-OpenCVImage::OpenCVImage(cv::Mat& mat) {
+OpenCVImage::OpenCVImage(cv::Mat& mat, ImageFormat imageFormat) {
   if (mat.channels() == 1) {
+    assert(imageFormat == ImageFormat::GRAY);
     prepareImageInfo(mat.cols, mat.rows, ImageFormat::GRAY,
                      ImagePixDataType::UINT8);
   } else if (mat.channels() == 3) {
-    prepareImageInfo(mat.cols, mat.rows, ImageFormat::BGR_PACKED,
-                     ImagePixDataType::UINT8);
+    assert(imageFormat == ImageFormat::BGR_PACKED ||
+           imageFormat == ImageFormat::RGB_PACKED);
+    prepareImageInfo(mat.cols, mat.rows, imageFormat, ImagePixDataType::UINT8);
   } else {
     throw std::runtime_error(
         "OpenCVImage::OpenCVImage(cv::Mat& mat) mat.channels(): " +

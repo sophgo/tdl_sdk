@@ -176,6 +176,7 @@ int32_t SCRFD::outputParse(
             continue;
           }
 
+          // TODO:could be optimized
           std::vector<float> &grid = fpn_grids[j + count * num];
           float grid_cx = (grid[0] + grid[2]) / 2;
           float grid_cy = (grid[1] + grid[3]) / 2;

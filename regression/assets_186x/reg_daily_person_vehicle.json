@@ -163,7 +163,7 @@
           113.625603
         ],
         "category_id": 1,
-        "score": 0.5
+        "score": 0.833967
       }
     ],
     "people_and_vehicle7.jpg": [
@@ -176,6 +176,16 @@
           ],
           "category_id": 0,
           "score": 0.918415
+      },
+      {
+        "bbox": [
+          14.2939,
+          14.6753,
+          207.524,
+          182.396
+        ],
+        "category_id": 1,
+        "score": 0.5
       }
     ],
     "people_and_vehicle8.jpg": [

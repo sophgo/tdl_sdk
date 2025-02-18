@@ -218,11 +218,6 @@ int32_t YoloV8Detection::outputParse(
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
        input_tensor.shape[3]);
 
-  std::vector<std::string> output_names = net_->getOutputNames();
-  for (auto &name : output_names) {
-    std::shared_ptr<BaseTensor> tensor = net_->getOutputTensor(name);
-    tensor->invalidateCache();
-  }
   std::stringstream ss;
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
@@ -274,6 +269,8 @@ int32_t YoloV8Detection::outputParse(
         bbox.y1 = std::clamp(box[1], 0.0f, input_height_f);
         bbox.x2 = std::clamp(box[2], 0.0f, input_width_f);
         bbox.y2 = std::clamp(box[3], 0.0f, input_height_f);
+        LOGI("bbox:[%f,%f,%f,%f],score:%f,label:%d,logit:%f\n", bbox.x1,
+             bbox.y1, bbox.x2, bbox.y2, bbox.score, max_logit_c, max_logit);
         if (type_mapping_.count(max_logit_c)) {
           max_logit_c = type_mapping_[max_logit_c];
         }
@@ -282,6 +279,8 @@ int32_t YoloV8Detection::outputParse(
     }
     DetectionHelper::nmsObjects(lb_boxes, 0.5);
     std::vector<float> scale_params = batch_rescale_params_[b];
+    LOGI("scale_params:%f,%f,%f,%f", scale_params[0], scale_params[1],
+         scale_params[2], scale_params[3]);
     ss << "batch:" << b << "\n";
     for (auto &bbox : lb_boxes) {
       for (auto &b : bbox.second) {

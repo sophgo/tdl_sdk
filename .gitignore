@@ -10,4 +10,5 @@ doxygen/latex
 tmp
 *.out
 *.cvimodel
-build
+build*
+*.jpg

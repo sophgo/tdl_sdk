@@ -442,6 +442,5 @@ int32_t VpssPreprocessor::preprocessToTensor(
       return -1;
     }
   }
-  tensor->dumpToFile("input_tensor.bin");
   return ret;
 }

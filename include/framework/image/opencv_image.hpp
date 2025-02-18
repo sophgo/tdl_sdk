@@ -12,7 +12,7 @@ class OpenCVImage : public BaseImage {
               ImagePixDataType pix_data_type, bool alloc_memory = false,
               std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
 
-  OpenCVImage(cv::Mat& mat);
+  OpenCVImage(cv::Mat& mat, ImageFormat imageFormat);
 
   virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
                                    ImageFormat imageFormat,

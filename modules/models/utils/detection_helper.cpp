@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <memory>
 
 #include "core/cvi_tdl_types_mem_internal.h"
 std::vector<std::vector<float>> DetectionHelper::generateMmdetBaseAnchors(
@@ -49,6 +51,45 @@ std::vector<std::vector<float>> DetectionHelper::generateMmdetGridAnchors(
     }
   }
   return grid_anchors;
+}
+
+// stride->anchor_boxes->[x,y,w,h]
+std::vector<std::vector<std::vector<float>>>
+DetectionHelper::generateRetinaNetAnchors(
+    int min_level, int max_level, int num_scales,
+    const std::vector<std::pair<float, float>> &aspect_ratios,
+    float anchor_scale, int image_width, int image_height) {
+  std::vector<std::vector<std::vector<float>>> anchor_bboxes;
+
+  // 遍历各层级（例如 3~7）
+  for (int level = min_level; level <= max_level; ++level) {
+    int stride = static_cast<int>(std::pow(2, level));
+    std::vector<std::vector<float>> boxes_level;
+
+    // 在特征图上按 stride 间隔采样中心点
+    for (int y = stride / 2; y < image_height; y += stride) {
+      for (int x = stride / 2; x < image_width; x += stride) {
+        // 对于每个尺度（octave）和每个宽高比生成一个 AnchorBox
+        for (int scale_octave = 0; scale_octave < num_scales; ++scale_octave) {
+          float octave_scale = static_cast<float>(scale_octave) / num_scales;
+          for (const auto &aspect : aspect_ratios) {
+            float base_anchor_size =
+                anchor_scale * stride * std::pow(2, octave_scale);
+            float box_width = base_anchor_size * aspect.first;
+            float box_height = base_anchor_size * aspect.second;
+            float anchor_x = x - box_width / 2.0f;
+            float anchor_y = y - box_height / 2.0f;
+            std::vector<float> anchor_box = {anchor_x, anchor_y, box_width,
+                                             box_height};
+            boxes_level.emplace_back(anchor_box);
+          }
+        }
+      }
+    }
+
+    anchor_bboxes.push_back(boxes_level);
+  }
+  return anchor_bboxes;
 }
 
 void DetectionHelper::nmsFaces(std::vector<cvtdl_face_info_t> &faces,
@@ -208,10 +249,14 @@ void DetectionHelper::convertDetStruct(
   int idx = 0;
   for (auto &bbox : dets) {
     for (auto &b : bbox.second) {
-      obj->info[idx].bbox.x1 = b.x1;
-      obj->info[idx].bbox.y1 = b.y1;
-      obj->info[idx].bbox.x2 = b.x2;
-      obj->info[idx].bbox.y2 = b.y2;
+      obj->info[idx].bbox.x1 =
+          std::clamp(b.x1, 0.0f, static_cast<float>(im_width));
+      obj->info[idx].bbox.y1 =
+          std::clamp(b.y1, 0.0f, static_cast<float>(im_height));
+      obj->info[idx].bbox.x2 =
+          std::clamp(b.x2, 0.0f, static_cast<float>(im_width));
+      obj->info[idx].bbox.y2 =
+          std::clamp(b.y2, 0.0f, static_cast<float>(im_height));
       obj->info[idx].bbox.score = b.score;
       obj->info[idx].classes = bbox.first;
       idx++;

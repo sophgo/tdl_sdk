@@ -91,8 +91,7 @@ enum class MemoryType {
 struct NetParam {
   InferencePlatform platform;
   int device_id = 0;
-  bool share_input_mem = false;  // do not allocate input tensor memory, share
-                                 // with other memory
+
   // bool share_output_mem = false;  // do not allocate output tensor memory,
   // share with other memory
   std::string model_file_path;

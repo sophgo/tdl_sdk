@@ -1,13 +1,19 @@
 #include "net/cvi_net.hpp"
 
-#include <cviruntime.h>
-
 #include "cvi_tdl_log.hpp"
 #include "net/cvi_tensor.hpp"
 
 CviNet::CviNet(const NetParam& param) : BaseNet(param) {}
 
-CviNet::~CviNet() {}
+CviNet::~CviNet() {
+  if (model_handle_ != nullptr) {
+    ret = CVI_NN_CleanupModel(model_handle_);
+    if (ret != CVI_RC_SUCCESS) {  // NOLINT
+      LOGE("CVI_NN_CleanupModel failed: %s\n", get_tpu_error_msg(ret));
+    }
+  }
+  model_handle_ = nullptr;
+}
 
 int32_t CviNet::setup() {
   int ret = CVI_NN_RegisterModel(filepath, &model_handle_);
@@ -108,12 +114,7 @@ int32_t CviNet::addInput(const std::string& name) {
   TensorInfo& tinfo = input_tensor_infos_[name];
   int element_size = tinfo.tensor_size / tinfo.tensor_elem;
   tensor->shareMemory(tinfo.sys_mem, tinfo.phy_addr, element_size, tinfo.shape);
-  if (net_param_.share_input_mem && tensor->getWidth() % 64 == 0) {
-    // release input tensor memory
-    CVI_NN_SetTensorPhysicalAddr((CVI_TENSOR*)tinfo.tensor_handle, 0);
-    tensor->shareMemory(nullptr, 0, element_size, tinfo.shape);
-    LOGI("input tensor %s share memory", name.c_str());
-  }
+
   input_tensor_hash_[name] = tensor;
   return 0;
 }
@@ -123,11 +124,7 @@ int32_t CviNet::addOutput(const std::string& name) {
   TensorInfo& tinfo = output_tensor_infos_[name];
   int element_size = tinfo.tensor_size / tinfo.tensor_elem;
   tensor->shareMemory(tinfo.sys_mem, tinfo.phy_addr, element_size, tinfo.shape);
-  // if (net_param_.share_output_mem && tensor->getWidth() % 64 == 0) {
-  //   CVI_NN_SetTensorPhysicalAddr((CVI_TENSOR*)tinfo.tensor_handle, 0);
-  //   tensor->shareMemory(nullptr, 0, element_size, tinfo.shape);
-  //   LOGI("output tensor %s share memory", name.c_str());
-  // }
+
   output_tensor_hash_[name] = tensor;
   return 0;
 }
@@ -138,18 +135,4 @@ std::shared_ptr<BaseTensor> CviNet::getInputTensor(const std::string& name) {
 
 std::shared_ptr<BaseTensor> CviNet::getOutputTensor(const std::string& name) {
   return output_tensor_hash_[name];
-}
-
-int32_t CviNet::setInputTensorPhyAddr(const std::string& tensor_name,
-                                      uint64_t phy_addr) {
-  int idx = std::find(input_tensor_names_.begin(), input_tensor_names_.end(),
-                      tensor_name) -
-            input_tensor_names_.begin();
-  if (idx < 0 || idx >= input_tensor_names_.size()) {
-    LOGE("input tensor %s not found", tensor_name.c_str());
-    return -1;
-  }
-  TensorInfo& tinfo = input_tensor_infos_[tensor_name];
-  CVI_NN_SetTensorPhysicalAddr((CVI_TENSOR*)tinfo.tensor_handle, phy_addr);
-  return 0;
 }

@@ -17,6 +17,11 @@ class DetectionHelper {
       int feat_w, int feat_h, int stride,
       std::vector<std::vector<float>> &base_anchors);
 
+  static std::vector<std::vector<std::vector<float>>> generateRetinaNetAnchors(
+      int min_level, int max_level, int num_scales,
+      const std::vector<std::pair<float, float>> &aspect_ratios,
+      float anchor_scale, int image_width, int image_height);
+
   static void nmsFaces(std::vector<cvtdl_face_info_t> &faces,
                        float iou_threshold);
   static void nmsObjects(std::vector<cvtdl_bbox_t> &bboxes,

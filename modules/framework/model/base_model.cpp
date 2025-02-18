@@ -111,6 +111,7 @@ int32_t BaseModel::setupNetwork(NetParam& net_param) {
 
     preprocess_params_[name] = preprocess_params;
   }
+  return 0;
 }
 
 int32_t BaseModel::inference(
@@ -171,4 +172,7 @@ int32_t BaseModel::inference(
 
 void BaseModel::setTypeMapping(const std::map<int, int>& type_mapping) {
   type_mapping_ = type_mapping;
+}
+void BaseModel::setModelThreshold(float threshold) {
+  model_threshold_ = threshold;
 }

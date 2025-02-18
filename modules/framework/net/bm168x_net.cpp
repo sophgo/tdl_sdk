@@ -3,12 +3,12 @@
 #include <bmruntime_interface.h>
 #include <bmruntime_legacy.h>
 
+#include <cassert>
 #include <sstream>
 
 #include "cvi_tdl_log.hpp"
 #include "memory/bm_memory_pool.hpp"
 #include "utils/common_utils.hpp"
-
 ModelInstance::~ModelInstance() {
   for (auto kv : model_bmrts_) {
     if (kv.second) {
@@ -90,7 +90,7 @@ int32_t BM168xNet::setup() {
     LOGI("net_num: %d", net_num);
     bmrt_get_network_names(p_bmrt_, &net_names);
     if (net_num != 1) {
-            std::stringstream ss;
+      std::stringstream ss;
       for (int i = 0; i < net_num; i++) ss << net_names[i] << ",";
       LOGE("no net_name has been config,found %d,names:%s", net_num,
            ss.str().c_str());
@@ -287,6 +287,7 @@ int32_t BM168xNet::updateInputTensors() {
     }
     if (stage_index == -1) {
       LOGE("batch not supported,batch:%d", input_shape[0]);
+      assert(0);
     }
     LOGI("to get stage:%d,stagenum:%d", stage_index, net_info_->stage_num);
     auto &bmrt_shape = net_info_->stages[stage_index].input_shapes[tensor_idx];

@@ -11,7 +11,7 @@ void bgr_split_scale(const cv::Mat& src_mat, std::vector<cv::Mat>& tmp_bgr,
   // cv::split is faster than vpp
   cv::split(src_mat, tmp_bgr);
   if (use_rgb) {
-    LOGI("use RGB,img size:%d,%d", src_mat.cols, src_mat.rows);
+    LOGI("swap RGB,img size:%d,%d", src_mat.cols, src_mat.rows);
     std::swap(tmp_bgr[0], tmp_bgr[2]);
   }
   for (int i = 0; i < tmp_bgr.size(); i++) {
@@ -86,7 +86,8 @@ int32_t OpenCVPreprocessor::preprocessToImage(
                                 params.scale[2]};
     cv::Mat* dsti = (cv::Mat*)dst_image->getInternalData();
 
-    LOGI("use_rgb:%d", use_rgb);
+    LOGI("use_rgb:%d,src_format:%d,dst_format:%d", use_rgb,
+         src_image->getImageFormat(), dst_image->getImageFormat());
     print_mat(dsti[0], "dsti[0]");
     for (int i = 0; i < dst_image->getPlaneNum(); i++) {
       input_channels.push_back(dsti[i]);
@@ -97,6 +98,7 @@ int32_t OpenCVPreprocessor::preprocessToImage(
         "image plane num is not supported, src_image plane num: %d, "
         "dst_image plane num: %d",
         src_image->getPlaneNum(), dst_image->getPlaneNum());
+    assert(0);
     return -1;
   }
 
@@ -114,5 +116,8 @@ int32_t OpenCVPreprocessor::preprocessToTensor(
 
   tensor->constructImage(src_image_ptr, batch_idx);
   preprocessToImage(src_image, params, src_image_ptr);
+  tensor->flushCache();
+
+  // tensor->dumpToFile("opencv_preprocessor_tensor.bin");
   return 0;
 }
