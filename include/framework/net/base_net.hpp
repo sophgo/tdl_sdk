@@ -50,7 +50,7 @@ class BaseNet {
 
   // TODO:not used in inference,fix me
   std::map<std::string, std::vector<int>> supported_batch_sizes_;
-  std::map<std::string, std::vector<int>> input_shapes_;
+
   std::map<std::string, TensorInfo> input_output_tensor_infos_;
 
   std::vector<std::string> input_tensor_names_;

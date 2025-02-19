@@ -86,6 +86,7 @@ int32_t BaseModel::setupNetwork(NetParam& net_param) {
   int32_t ret = net_->setup();
   if (ret != 0) {
     std::cout << "Net setup failed" << std::endl;
+    assert(false);
     return ret;
   }
 

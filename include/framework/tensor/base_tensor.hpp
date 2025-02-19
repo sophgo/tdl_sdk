@@ -1,6 +1,7 @@
 #ifndef BASE_TENSOR_H
 #define BASE_TENSOR_H
 
+#include <cassert>
 #include <string>
 #include <vector>
 
@@ -45,6 +46,20 @@ class BaseTensor {
 
   int32_t constructImage(std::shared_ptr<BaseImage> image, int batch_idx = -1);
   int32_t copyFromImage(std::shared_ptr<BaseImage> image, int batch_idx = -1);
+
+  template <typename T>
+  T* getBatchPtr(int batch_idx) {
+    if (sizeof(T) != element_bytes_) {
+      printf(
+          "element_bytes_ not equal to "
+          "sizeof(T),element_bytes_:%d,sizeof(T):%d",
+          element_bytes_, sizeof(T));
+      assert(0);
+    }
+    int batch_element_num = num_elements_ / shape_[0];
+    return reinterpret_cast<T*>(memory_block_->virtualAddress) +
+           batch_idx * batch_element_num;
+  }
 
   // File I/O
   void dumpToFile(const std::string& file_path);

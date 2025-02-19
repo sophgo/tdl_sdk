@@ -136,12 +136,8 @@ void YoloV8Detection::decodeBboxFeatureMap(int batch_idx, int stride,
     box_name = bbox_class_out_names[stride];
   }
   TensorInfo boxinfo = net_->getTensorInfo(box_name);
+  std::shared_ptr<BaseTensor> box_tensor = net_->getOutputTensor(box_name);
 
-  int num_per_pixel = boxinfo.tensor_size / boxinfo.tensor_elem;
-  int batch_elements = boxinfo.shape[1] * boxinfo.shape[2] * boxinfo.shape[3];
-  int batch_offset = batch_idx * batch_elements;
-  // int8_t *p_box_int8 = static_cast<int8_t *>(boxinfo.sys_mem) + batch_offset;
-  // float *p_box_float = static_cast<float *>(boxinfo.sys_mem) + batch_offset;
   int num_channel = boxinfo.shape[1];
   int num_anchor = boxinfo.shape[2] * boxinfo.shape[3];
   int box_val_num = 4;
@@ -155,29 +151,21 @@ void YoloV8Detection::decodeBboxFeatureMap(int batch_idx, int stride,
   int anchor_y = anchor_idx / feat_w;
   int anchor_x = anchor_idx % feat_w;
 
-  // LOGI("box
-  // numchannel:%d,numperpixel:%d,featw:%d,feath:%d,anchory:%d,anchorx:%d,numanchor:%d\n",
-  //      num_channel, num_per_pixel, feat_w, feat_h, anchor_y, anchor_x,
-  //      num_anchor);
-
   float grid_y = anchor_y + 0.5;
   float grid_x = anchor_x + 0.5;
 
   std::vector<float> grid_logits;  // 4x16
   float qscale = boxinfo.qscale;
   if (boxinfo.data_type == ImagePixDataType::INT8) {
-    int8_t *p_box_int8 =
-        reinterpret_cast<int8_t *>(boxinfo.sys_mem) + batch_offset;
+    int8_t *p_box_int8 = box_tensor->getBatchPtr<int8_t>(batch_idx);
     grid_logits = get_box_vals(p_box_int8, num_anchor, anchor_idx,
                                num_box_channel_, qscale);
   } else if (boxinfo.data_type == ImagePixDataType::UINT8) {
-    uint8_t *p_box_uint8 =
-        reinterpret_cast<uint8_t *>(boxinfo.sys_mem) + batch_offset;
+    uint8_t *p_box_uint8 = box_tensor->getBatchPtr<uint8_t>(batch_idx);
     grid_logits = get_box_vals(p_box_uint8, num_anchor, anchor_idx,
                                num_box_channel_, qscale);
   } else if (boxinfo.data_type == ImagePixDataType::FP32) {
-    float *p_box_float =
-        reinterpret_cast<float *>(boxinfo.sys_mem) + batch_offset;
+    float *p_box_float = box_tensor->getBatchPtr<float>(batch_idx);
     grid_logits = get_box_vals(p_box_float, num_anchor, anchor_idx,
                                num_box_channel_, qscale);
   } else {
@@ -236,26 +224,35 @@ int32_t YoloV8Detection::outputParse(
         cls_offset = num_box_channel_;
       }
       TensorInfo classinfo = net_->getTensorInfo(cls_name);
+      std::shared_ptr<BaseTensor> cls_tensor = net_->getOutputTensor(cls_name);
 
       int num_per_pixel = classinfo.tensor_size / classinfo.tensor_elem;
-      int8_t *p_cls_int8 = reinterpret_cast<int8_t *>(classinfo.sys_mem);
-      float *p_cls_float = reinterpret_cast<float *>(classinfo.sys_mem);
 
       int num_cls = num_cls_;
       int num_anchor = classinfo.shape[2] * classinfo.shape[3];
       LOGI("stride:%d,featw:%d,feath:%d,numperpixel:%d,numcls:%d,qscale:%f\n",
-           stride, classinfo.shape[3], classinfo.shape[2], num_per_pixel,
-           num_cls, classinfo.qscale);
+           stride, classinfo.shape[3], classinfo.shape[2],
+           classinfo.tensor_size / classinfo.tensor_elem, num_cls,
+           classinfo.qscale);
       float cls_qscale = num_per_pixel == 1 ? classinfo.qscale : 1;
       for (int j = 0; j < num_anchor; j++) {
         int max_logit_c = -1;
         float max_logit = -1000;
-        if (num_per_pixel == 1) {
-          parse_cls_info<int8_t>(p_cls_int8, num_anchor, num_cls, j, cls_offset,
-                                 cls_qscale, &max_logit, &max_logit_c);
+        if (classinfo.data_type == ImagePixDataType::INT8) {
+          parse_cls_info<int8_t>(cls_tensor->getBatchPtr<int8_t>(b), num_anchor,
+                                 num_cls, j, cls_offset, cls_qscale, &max_logit,
+                                 &max_logit_c);
+        } else if (classinfo.data_type == ImagePixDataType::UINT8) {
+          parse_cls_info<uint8_t>(cls_tensor->getBatchPtr<uint8_t>(b),
+                                  num_anchor, num_cls, j, cls_offset,
+                                  cls_qscale, &max_logit, &max_logit_c);
+        } else if (classinfo.data_type == ImagePixDataType::FP32) {
+          parse_cls_info<float>(cls_tensor->getBatchPtr<float>(b), num_anchor,
+                                num_cls, j, cls_offset, cls_qscale, &max_logit,
+                                &max_logit_c);
         } else {
-          parse_cls_info<float>(p_cls_float, num_anchor, num_cls, j, cls_offset,
-                                cls_qscale, &max_logit, &max_logit_c);
+          LOGE("unsupported data type:%d\n", classinfo.data_type);
+          assert(0);
         }
         if (max_logit < inverse_th) {
           continue;

@@ -119,9 +119,7 @@ int32_t BM168xNet::setup() {
            shape0.num_dims);
       return -1;
     }
-    for (int k = 0; k < shape0.num_dims; k++) {
-      input_shapes_[input_tensor_names_[i]].push_back(shape0.dims[k]);
-    }
+
     input_output_tensor_infos_[input_tensor_names_[i]] =
         extractTensorInfo(true, i);
 
@@ -178,11 +176,14 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
   }
   TensorInfo tensor_info;
 
-  for (int i = 0; i < p_shape[idx].num_dims; i++) {
-    tensor_info.shape.push_back(p_shape[idx].dims[i]);
+  tensor_info.shape.resize(4, 1);
+  int insert_idx = 4 - p_shape[idx].num_dims;
+  for (int i = insert_idx; i < 4; i++) {
+    tensor_info.shape[i] = p_shape[idx].dims[i - insert_idx];
   }
-  if (tensor_info.shape.size() != 4) {
-    LOGE("tensor shape size not equal 4,size:%d", tensor_info.shape.size());
+
+  if (p_shape[idx].num_dims != 4) {
+    LOGW("tensor shape size not equal 4,size:%d", p_shape[idx].num_dims);
   }
   tensor_info.qscale = p_qscale[idx];
   tensor_info.zero_point = p_zero_point[idx];
@@ -202,6 +203,7 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
     tensor_info.data_type = ImagePixDataType::UINT8;
   } else {
     LOGE("unsupported data type:%d", p_data_type[idx]);
+    assert(0);
   }
   uint32_t data_type_size = get_data_type_size(tensor_info.data_type);
   if (data_type_size != bmrt_data_type_size(p_data_type[idx])) {
@@ -291,6 +293,10 @@ int32_t BM168xNet::updateInputTensors() {
     }
     LOGI("to get stage:%d,stagenum:%d", stage_index, net_info_->stage_num);
     auto &bmrt_shape = net_info_->stages[stage_index].input_shapes[tensor_idx];
+    if (bmrt_shape.num_dims != 4) {
+      LOGW("input tensor shape size not equal 4,size:%d", bmrt_shape.num_dims);
+      assert(0);
+    }
     for (int i = 0; i < 4; i++) {
       LOGI("%d,tensor:%d,bmrt:%d", i, input_shape[i], bmrt_shape.dims[i]);
       if (input_shape[i] != bmrt_shape.dims[i]) LOGE("shape not equal");

@@ -1,9 +1,11 @@
 # Copyright 2020 cvitek Inc.
-cmake_minimum_required(VERSION 3.18.4)
 
+cmake_minimum_required(VERSION 3.2.2)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 project(sample)
 
-function(buildninstall)
+
+function(buildninstallcpp)
   # From https://stackoverflow.com/questions/23327687/how-to-write-a-cmake-function-with-more-than-one-parameter-groups
   cmake_parse_arguments(
     PARSED_ARGS # prefix of output variables
@@ -23,16 +25,31 @@ function(buildninstall)
   #   message("- ${src}")
   # endforeach(src)
   include_directories(${PARSED_ARGS_INC})
-  add_executable(${PROJECT_NAME} ${PROJECT_NAME}.c ${PARSED_ARGS_SRCS})
-  target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS} atomic)
+  add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PARSED_ARGS_SRCS})
+  target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
   install(TARGETS ${PROJECT_NAME} DESTINATION bin)
-  string(SUBSTRING "${PROJECT_NAME}" 0 10 substring1)
-  if (substring1 STREQUAL "sample_app")
-      install(FILES ${PROJECT_NAME}.c DESTINATION sample/cvi_tdl_app/)
-  else ()
-      install(FILES ${PROJECT_NAME}.c DESTINATION sample/cvi_tdl/)
-  endif()
-endfunction(buildninstall)
+endfunction(buildninstallcpp)
 
-# install example
-# buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+set(SAMPLE_INCLUDES
+    ${MLIR_INCLUDES}
+    ${MIDDLEWARE_INCLUDES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/framework
+)
+
+set(SAMPLE_LIBS ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
+
+
+file(GLOB SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+
+message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
+
+foreach (fname ${SAMPLE_SRC_FILES})
+  set(EXAMPLE_SRC_FILES ${EXAMPLE_SRC_FILES} ${fname})
+  get_filename_component(name ${fname} NAME_WE)
+  buildninstallcpp(NAME ${name} INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs )
+endforeach ()
+
+
+
