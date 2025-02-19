@@ -79,6 +79,8 @@ TEST_F(ScrfdDetBmTestSuite, accuracy) {
           matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
 
       CVI_TDL_FreeCpp(face_meta);
+      delete face_meta;
+      face_meta = nullptr;
     }
   }
 }
