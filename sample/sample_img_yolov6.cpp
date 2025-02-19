@@ -17,8 +17,11 @@ int main(int argc, char **argv) {
     printf("Failed to create image\n");
     return -1;
   }
-  std::shared_ptr<BaseModel> model = TDLModelFactory::createModel(
-      TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6, model_path);
+  TDLModelFactory model_factory;
+  TDL_MODEL_TYPE model_id = TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6;
+
+  std::shared_ptr<BaseModel> model =
+      model_factory.getModel(model_id, model_path);
   if (!model) {
     printf("Failed to create model\n");
     return -1;
@@ -46,9 +49,7 @@ int main(int argc, char **argv) {
                 << obj_meta->info[i].bbox.y1 << " " << obj_meta->info[i].bbox.x2
                 << " " << obj_meta->info[i].bbox.y2 << std::endl;
     }
-    CVI_TDL_FreeCpp(obj_meta);
-    free(obj_meta);
   }
-
+  model_factory.releaseOutput(model_id, out_datas);
   return 0;
 }

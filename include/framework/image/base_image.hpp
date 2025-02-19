@@ -8,6 +8,10 @@
 #include "common/common_types.hpp"
 #include "memory/base_memory_pool.hpp"
 
+#ifndef NO_OPENCV
+#include <opencv2/opencv.hpp>
+#endif
+
 class BaseImage {
  public:
   virtual ~BaseImage() = default;
@@ -53,6 +57,7 @@ class BaseImage {
   virtual int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
                               uint32_t length) = 0;
   std::shared_ptr<BaseMemoryPool> getMemoryPool() { return memory_pool_; }
+  virtual int32_t setMemoryPool(std::shared_ptr<BaseMemoryPool> memory_pool);
 
  private:
   MemoryPoolType getMemoryPoolType();
@@ -84,5 +89,18 @@ class ImageFactory {
       InferencePlatform platform = InferencePlatform::AUTOMATIC);
   static int32_t writeImage(const std::string& file_path,
                             const std::shared_ptr<BaseImage>& image);
+
+  static std::shared_ptr<BaseImage> alignFace(
+      const std::shared_ptr<BaseImage>& image, const float* src_landmark_xy,
+      const float* dst_landmark_xy, int num_points,
+      std::shared_ptr<BaseMemoryPool> memory_pool);
+#ifndef NO_OPENCV
+  static std::shared_ptr<BaseImage> convertFromMat(cv::Mat& mat,
+                                                   bool is_rgb = false);
+
+  // 返回的Mat引用image内的内存,如果后续对mat操作,将影响image的内容
+  static int32_t convertToMat(std::shared_ptr<BaseImage>& image, cv::Mat& mat,
+                              bool& is_rgb);
+#endif
 };
 #endif  // BaseImage_H

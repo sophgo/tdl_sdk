@@ -35,7 +35,7 @@ class BaseModel {
       const std::vector<std::shared_ptr<BaseImage>>& images,
       std::vector<void*>& out_datas) = 0;
   int32_t setPreprocessor(std::shared_ptr<BasePreprocessor> preprocessor);
-
+  std::shared_ptr<BasePreprocessor> getPreprocessor() { return preprocessor_; }
   virtual int32_t onModelOpened() { return 0; }
   virtual int32_t onModelClosed() { return 0; }
   void setTypeMapping(const std::map<int, int>& type_mapping);

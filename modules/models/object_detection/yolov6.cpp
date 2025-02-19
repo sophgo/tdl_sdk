@@ -250,10 +250,13 @@ int32_t YoloV6Detection::outputParse(
     for (auto &bbox : lb_boxes) {
       num_obj += bbox.second.size();
       for (auto &b : bbox.second) {
-        DetectionHelper::rescaleBbox(b, scale_params);
+        DetectionHelper::rescaleBbox(b, scale_params,
+                                     net_param_.pre_params.cropX,
+                                     net_param_.pre_params.cropY);
       }
     }
     cvtdl_object_t *obj = (cvtdl_object_t *)malloc(sizeof(cvtdl_object_t));
+    memset(obj, 0, sizeof(cvtdl_object_t));
     DetectionHelper::convertDetStruct(lb_boxes, obj, image_height, image_width);
     out_datas.push_back(obj);
   }

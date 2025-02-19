@@ -149,29 +149,54 @@ int32_t BaseTensor::constructImage(std::shared_ptr<BaseImage> image,
 
 int32_t BaseTensor::copyFromImage(std::shared_ptr<BaseImage> image,
                                   int batch_idx) {
-  uint32_t image_size = image->getImageByteSize();
-  uint32_t min_tensor_size = (batch_idx + 1) * image_size;
-  if (getCapacity() < min_tensor_size) {
-    LOGE("tensor capacity(%d) < image size(%d)\n", getCapacity(),
-         min_tensor_size);
+  if (image->getWidth() != getWidth() || image->getHeight() != getHeight()) {
+    LOGE(
+        "image width(%d) != tensor width(%d) or height(%d) != tensor "
+        "height(%d)\n",
+        image->getWidth(), getWidth(), image->getHeight(), getHeight());
     return -1;
   }
+  if (batch_idx >= shape_[0]) {
+    LOGE("batch_idx(%d) >= batch_size(%d)\n", batch_idx, shape_[0]);
+    return -1;
+  }
+  uint32_t batch_bytes = shape_[1] * shape_[2] * shape_[3] * element_bytes_;
 
-  uint8_t* dst_ptr = static_cast<uint8_t*>(memory_block_->virtualAddress) +
-                     batch_idx * image_size;
+  uint8_t* dst_tensor_ptr =
+      static_cast<uint8_t*>(memory_block_->virtualAddress) +
+      batch_idx * batch_bytes;
   std::vector<uint8_t*> src_ptrs = image->getVirtualAddress();
   uint32_t plane_size = getWidth() * getHeight() * element_bytes_;
   uint32_t w = getWidth();
   uint32_t h = getHeight();
+
+  LOGI(
+      "copyFromImage, batch_idx:%d,img_stride:[%d,%d,%d], "
+      "batch_bytes:%d,plane_size:%d,w:%d,h:%d,plane_num:%d,src_ptrs:%p,dst_ptr:"
+      "%p",
+      batch_idx, image->getStrides()[0], image->getStrides()[1],
+      image->getStrides()[2], batch_bytes, plane_size, w, h,
+      image->getPlaneNum(), src_ptrs[0], dst_tensor_ptr);
+  LOGI(
+      "tensor "
+      "bytes:%d,memory_block_bytes:%d,memory_start:%p,memory_end:%p,element_"
+      "bytes:%d",
+      getCapacity(), memory_block_->size, memory_block_->virtualAddress,
+      (uint8_t*)(memory_block_->virtualAddress + memory_block_->size),
+      element_bytes_);
   for (int i = 0; i < image->getPlaneNum(); i++) {
     uint8_t* src_ptr = src_ptrs[i];
-    uint8_t* dst_ptr = dst_ptr + i * plane_size;
-    if (image->getStrides()[i] == getWidth()) {
+    uint8_t* dst_ptr = dst_tensor_ptr + i * plane_size;
+    uint32_t img_stride_i = image->getStrides()[i];
+    if (img_stride_i == w * element_bytes_) {
       memcpy(dst_ptr, src_ptr, plane_size);
     } else {
+      LOGI("plane:%d,src_ptr:%p,dst_ptr:%p,img_stride_i:%d", i, src_ptr,
+           dst_ptr, img_stride_i);
       for (int j = 0; j < h; j++) {
-        uint8_t* src_row_ptr = src_ptr + j * image->getStrides()[i];
+        uint8_t* src_row_ptr = src_ptr + j * img_stride_i;
         uint8_t* dst_row_ptr = dst_ptr + j * w * element_bytes_;
+
         memcpy(dst_row_ptr, src_row_ptr, w * element_bytes_);
       }
     }

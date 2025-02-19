@@ -25,12 +25,14 @@ class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
   virtual ~People_Vehicle_DetectionTestSuite() = default;
 
   std::shared_ptr<BaseModel> model_;
+  TDLModelFactory model_factory_;
 
  protected:
   virtual void SetUp() {
     std::string model_name = std::string(m_json_object["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
-    model_ = TDLModelFactory::createModel(
+
+    model_ = model_factory_.getModel(
         TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE, model_path);
 
     std::map<int, int> type_mapping = {{0, 1}, {4, 0}};
@@ -89,9 +91,8 @@ TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
     EXPECT_TRUE(
         matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
 
-    CVI_TDL_FreeCpp(obj_meta);  // delete expected_res;
-    free(obj_meta);
-    obj_meta = nullptr;
+    model_factory_.releaseOutput(
+        TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE, out_data);
     // break;
   }
 }

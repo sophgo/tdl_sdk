@@ -29,19 +29,79 @@ OpenCVPreprocessor::OpenCVPreprocessor() {}
 
 std::shared_ptr<BaseImage> OpenCVPreprocessor::resize(
     const std::shared_ptr<BaseImage>& image, int newWidth, int newHeight) {
-  return nullptr;
+  PreprocessParams params;
+  params.dstWidth = newWidth;
+  params.dstHeight = newHeight;
+  params.dstImageFormat = image->getImageFormat();
+  params.dstPixDataType = image->getPixDataType();
+
+  for (int i = 0; i < 3; i++) {
+    params.mean[i] = 0;
+    params.scale[i] = 1;
+  }
+  params.cropX = 0;
+  params.cropY = 0;
+  params.cropWidth = 0;
+  params.cropHeight = 0;
+  params.keepAspectRatio = false;
+  return preprocess(image, params, nullptr);
 }
 
 std::shared_ptr<BaseImage> OpenCVPreprocessor::crop(
     const std::shared_ptr<BaseImage>& image, int x, int y, int width,
     int height) {
-  return nullptr;
+  PreprocessParams params;
+  params.dstWidth = width;
+  params.dstHeight = height;
+  params.dstImageFormat = image->getImageFormat();
+  params.dstPixDataType = image->getPixDataType();
+
+  for (int i = 0; i < 3; i++) {
+    params.mean[i] = 0;
+    params.scale[i] = 1;
+  }
+  params.cropX = x;
+  params.cropY = y;
+  params.cropWidth = width;
+  params.cropHeight = height;
+  params.keepAspectRatio = false;
+  return preprocess(image, params, nullptr);
 }
 
 std::shared_ptr<BaseImage> OpenCVPreprocessor::preprocess(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     std::shared_ptr<BaseMemoryPool> memory_pool) {
-  return nullptr;
+  std::shared_ptr<OpenCVImage> opencv_image = std::make_shared<OpenCVImage>(
+      params.dstWidth, params.dstHeight, params.dstImageFormat,
+      params.dstPixDataType, false, memory_pool);
+  std::unique_ptr<MemoryBlock> memory_block;
+  if (memory_pool == nullptr) {
+    LOGE("input memory_pool is nullptr,use src image memory pool\n");
+    memory_pool = src_image->getMemoryPool();
+  }
+  if (memory_pool == nullptr) {
+    LOGE("memory_pool is nullptr!\n");
+    return nullptr;
+  }
+  memory_block = memory_pool->allocate(opencv_image->getImageByteSize());
+  if (memory_block == nullptr) {
+    LOGE("VPSSImage allocate memory failed!\n");
+    return nullptr;
+  }
+  int32_t ret = opencv_image->setupMemoryBlock(memory_block);
+  if (ret != 0) {
+    LOGE("OpenCVImage setupMemoryBlock failed!\n");
+    return nullptr;
+  }
+  LOGI("setup output image done");
+
+  ret = preprocessToImage(src_image, params, opencv_image);
+  if (ret != 0) {
+    LOGE("preprocessToImage failed!\n");
+    return nullptr;
+  }
+  LOGI("preprocessToImage done");
+  return opencv_image;
 }
 void print_mat(const cv::Mat& mat, const std::string& name) {
   LOGI("%s: %d,%d,type:%d,addr:%0x", name.c_str(), mat.rows, mat.cols,
@@ -55,15 +115,16 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     return -1;
   }
 
+  std::vector<float> rescale_params =
+      getRescaleConfig(params, src_image->getWidth(), src_image->getHeight());
+  int pad_x = rescale_params[2];
+  int pad_y = rescale_params[3];
+  int resized_w = params.dstWidth - pad_x * 2;
+  int resized_h = params.dstHeight - pad_y * 2;
   if (src_image->getPlaneNum() == 1 && dst_image->getPlaneNum() == 3) {
     // create temp resized image
     // TODO:use memory pool
-    std::vector<float> rescale_params =
-        getRescaleConfig(params, src_image->getWidth(), src_image->getHeight());
-    int resized_w = src_image->getWidth() * rescale_params[0];
-    int resized_h = src_image->getHeight() * rescale_params[1];
-    int pad_x = rescale_params[2];
-    int pad_y = rescale_params[3];
+
     cv::Mat tmp_resized = cv::Mat::zeros(params.dstHeight, params.dstWidth,
                                          src_image->getInternalType());
     LOGI("temp_resized type:%d,src_image type:%d", tmp_resized.type(),
@@ -102,6 +163,33 @@ int32_t OpenCVPreprocessor::preprocessToImage(
       input_channels.push_back(dsti[i]);
     }
     bgr_split_scale(tmp_resized, tmp_bgr, input_channels, mean, scale, use_rgb);
+  } else if ((src_image->getPlaneNum() == 1 && dst_image->getPlaneNum() == 1) ||
+             (src_image->getPlaneNum() == 3 && dst_image->getPlaneNum() == 3)) {
+    if (src_image->getImageFormat() != dst_image->getImageFormat() ||
+        src_image->getPixDataType() != dst_image->getPixDataType()) {
+      LOGE(
+          "src_image and dst_image format:%d,%d and pixdata type:%d,%d are not "
+          "same",
+          (int)src_image->getImageFormat(), (int)dst_image->getImageFormat(),
+          (int)src_image->getPixDataType(), (int)dst_image->getPixDataType());
+      return -1;
+    }
+    cv::Mat* dsti = (cv::Mat*)dst_image->getInternalData();
+    cv::Mat* srci = (cv::Mat*)src_image->getInternalData();
+
+    cv::Rect crop_roi(params.cropX, params.cropY, params.cropWidth,
+                      params.cropHeight);
+    for (int i = 0; i < src_image->getPlaneNum(); i++) {
+      if (params.cropWidth != 0 && params.cropHeight != 0) {
+        cv::resize(srci[i](crop_roi), dsti[i],
+                   cv::Size(params.dstWidth, params.dstHeight), 0, 0,
+                   cv::INTER_NEAREST);
+      } else {
+        cv::resize(srci[i], dsti[i],
+                   cv::Size(params.dstWidth, params.dstHeight), 0, 0,
+                   cv::INTER_NEAREST);
+      }
+    }
   } else {
     LOGE(
         "image plane num is not supported, src_image plane num: %d, "

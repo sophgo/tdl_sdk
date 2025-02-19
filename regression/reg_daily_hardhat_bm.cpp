@@ -19,18 +19,18 @@ namespace unitest {
 class HardHat_DetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
   HardHat_DetectionTestSuite()
-      : CVI_TDLModelTestSuite("reg_hardhatV2_det.json",
-                              "reg_hardhat_det") {}
+      : CVI_TDLModelTestSuite("reg_hardhatV2_det.json", "reg_hardhat_det") {}
 
   virtual ~HardHat_DetectionTestSuite() = default;
 
   std::shared_ptr<BaseModel> model_;
+  TDLModelFactory model_factory_;
 
  protected:
   virtual void SetUp() {
     std::string model_name = std::string(m_json_object["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
-    model_ = TDLModelFactory::createModel(
+    model_ = model_factory_.getModel(
         TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_HARDHAT, model_path);
 
     // std::map<int, int> type_mapping = {{0, 1}, {4, 0}};
@@ -89,9 +89,8 @@ TEST_F(HardHat_DetectionTestSuite, accuracy) {
     EXPECT_TRUE(
         matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
 
-    CVI_TDL_FreeCpp(obj_meta);  // delete expected_res;
-    free(obj_meta);
-    obj_meta = nullptr;
+    model_factory_.releaseOutput(TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_HARDHAT,
+                                 out_data);
     // break;
   }
 }

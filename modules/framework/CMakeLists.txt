@@ -40,6 +40,7 @@ set(PROJ_SRCS
                 ${CMAKE_CURRENT_SOURCE_DIR}/memory/cpu_memory_pool.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/memory/memory_pool_factory.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/../core/cvi_tdl_types_mem.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/utils/image_alignment.cpp
                 )
 
 

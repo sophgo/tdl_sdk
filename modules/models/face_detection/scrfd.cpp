@@ -222,9 +222,9 @@ int32_t SCRFD::outputParse(
             box.pts.y[k] =
                 landmark_blob[j + count * (num * 10 + k * 2 + 1)] * stride +
                 grid_cy;
-            box.pts.x[k] = std::clamp((box.pts.x[k] - pad_x) * scalex, 0.0f,
+            box.pts.x[k] = std::clamp((box.pts.x[k] - pad_x) / scalex, 0.0f,
                                       image_width_f);
-            box.pts.y[k] = std::clamp((box.pts.y[k] - pad_y) * scaley, 0.0f,
+            box.pts.y[k] = std::clamp((box.pts.y[k] - pad_y) / scaley, 0.0f,
                                       image_height_f);
           }
 
@@ -236,7 +236,9 @@ int32_t SCRFD::outputParse(
 
     DetectionHelper::nmsFaces(vec_bbox, 0.4);
     // Init face meta
-    cvtdl_face_t *facemeta = new cvtdl_face_t();
+
+    cvtdl_face_t *facemeta = (cvtdl_face_t *)malloc(sizeof(cvtdl_face_t));
+    memset(facemeta, 0, sizeof(cvtdl_face_t));
     facemeta->width = image_width;
     facemeta->height = image_height;
     LOGI("vec_bbox_nms size:%d", vec_bbox.size());

@@ -19,20 +19,20 @@ namespace unitest {
 class YoloV6DetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
   YoloV6DetectionTestSuite()
-      : CVI_TDLModelTestSuite("reg_daily_yolov6.json",
-                              "reg_daily_yolov6") {}
+      : CVI_TDLModelTestSuite("reg_daily_yolov6.json", "reg_daily_yolov6") {}
 
   virtual ~YoloV6DetectionTestSuite() = default;
 
   std::string m_model_path;
   std::shared_ptr<BaseModel> m_model;
+  TDLModelFactory model_factory_;
 
  protected:
   virtual void SetUp() {
     std::string m_modelname = std::string(m_json_object["model_name"]);
     m_model_path = (m_model_dir / fs::path(m_modelname)).string();
-    m_model = TDLModelFactory::createModel(
-        TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6,m_model_path);
+    m_model = model_factory_.getModel(TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6,
+                                      m_model_path);
 
     ASSERT_NE(m_model, nullptr);
   }
@@ -79,15 +79,14 @@ TEST_F(YoloV6DetectionTestSuite, accuracy) {
            obj_meta->info[det_index].bbox.score,
            float(obj_meta->info[det_index].classes)});
     }
-    
+
     EXPECT_TRUE(
         matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
 
-    CVI_TDL_FreeCpp(obj_meta);  // delete expected_res;
-    free(obj_meta);
-    obj_meta = nullptr;
+    model_factory_.releaseOutput(TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6,
+                                 out_data);
   }
 }
 
-}  
-}  
+}  // namespace unitest
+}  // namespace cvitdl

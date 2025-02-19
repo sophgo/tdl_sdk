@@ -30,7 +30,8 @@ class DetectionHelper {
   static void nmsObjects(std::map<int, std::vector<cvtdl_bbox_t>> &bboxes,
                          float iou_threshold);
   static void rescaleBbox(cvtdl_bbox_t &bbox,
-                          const std::vector<float> &scale_params);
+                          const std::vector<float> &scale_params,
+                          const int crop_x = 0, const int crop_y = 0);
 
   static void convertDetStruct(std::map<int, std::vector<cvtdl_bbox_t>> &dets,
                                cvtdl_object_t *obj, int im_height,

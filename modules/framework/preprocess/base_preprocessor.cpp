@@ -13,6 +13,12 @@ std::vector<float> BasePreprocessor::getRescaleConfig(
   std::vector<float> rescale_params;
   float src_w = image_width;
   float src_h = image_height;
+
+  // TODO:check whether need to support crop
+  if (params.cropWidth != 0 && params.cropHeight != 0) {
+    src_w = params.cropWidth;
+    src_h = params.cropHeight;
+  }
   float scale_x = params.dstWidth / src_w;
   float scale_y = params.dstHeight / src_h;
   if (params.keepAspectRatio) {

@@ -25,6 +25,7 @@ class ScrfdDetBmTestSuite : public CVI_TDLModelTestSuite {
   virtual ~ScrfdDetBmTestSuite() = default;
 
   std::shared_ptr<BaseModel> scrfd_;
+  TDLModelFactory model_factory_;
 
  protected:
   virtual void SetUp() {}
@@ -42,8 +43,9 @@ TEST_F(ScrfdDetBmTestSuite, accuracy) {
     std::string model_name =
         std::string(m_json_object[test_index]["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
-    scrfd_ = TDLModelFactory::createModel(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD,
-                                          model_path);
+
+    scrfd_ = model_factory_.getModel(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD,
+                                     model_path);
     ASSERT_NE(scrfd_, nullptr);
     for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
          iter++) {
@@ -78,9 +80,8 @@ TEST_F(ScrfdDetBmTestSuite, accuracy) {
       EXPECT_TRUE(
           matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
 
-      CVI_TDL_FreeCpp(face_meta);
-      free(face_meta);
-      face_meta = nullptr;
+      model_factory_.releaseOutput(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD,
+                                   out_data);
     }
   }
 }

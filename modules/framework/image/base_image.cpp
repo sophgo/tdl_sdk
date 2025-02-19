@@ -118,3 +118,8 @@ int32_t BaseImage::setupMemoryBlock(
   memory_block_ = std::move(memory_block);
   return 0;
 }
+
+int32_t BaseImage::setMemoryPool(std::shared_ptr<BaseMemoryPool> memory_pool) {
+  memory_pool_ = memory_pool;
+  return 0;
+}

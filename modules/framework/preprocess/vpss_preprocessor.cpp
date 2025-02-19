@@ -407,13 +407,17 @@ int32_t VpssPreprocessor::preprocessToTensor(
 
   std::vector<uint32_t> strides = vpss_image->getStrides();
   int32_t ret = 0;
-  if (strides[0] == tensor->getWidth()) {
+  int tensor_stride = tensor->getWidth() * tensor->getElementSize();
+  if (strides[0] == tensor_stride) {
+    LOGI("vpss preprocessor, construct image from input tensor");
     ret = tensor->constructImage(vpss_image, batch_idx);
     if (ret != 0) {
       LOGE("tensor constructImage failed, ret: %d\n", ret);
       return -1;
     }
   } else {
+    LOGI("vpss preprocessor, image stride:%d, tensor stride:%d", strides[0],
+         tensor_stride);
     ret = vpss_image->allocateMemory();
     if (ret != 0) {
       LOGE("vpss_image allocateMemory failed, ret: %d\n", ret);
@@ -424,10 +428,10 @@ int32_t VpssPreprocessor::preprocessToTensor(
       "to "
       "preprocessToImage,params:%f,%f,%f,mean:%f,%f,%f,scale:%f,%f,%f,"
       "dstHeight:%d,"
-      "dstWidth:%d,dstPixDataType:%d",
+      "dstWidth:%d,dstPixDataType:%d,dstStride:%d",
       params.scale[0], params.scale[1], params.scale[2], params.mean[0],
       params.mean[1], params.mean[2], params.dstHeight, params.dstWidth,
-      params.dstPixDataType);
+      params.dstPixDataType, strides[0]);
   ret = preprocessToImage(src_image, params, vpss_image);
   if (ret != 0) {
     LOGE("preprocessToImage failed, ret: %d\n", ret);
@@ -436,6 +440,7 @@ int32_t VpssPreprocessor::preprocessToTensor(
   if (strides[0] != tensor->getWidth()) {
     // copy vpss image to tensor
     LOGI("copy vpss image to tensor");
+    vpss_image->invalidateCache();
     ret = tensor->copyFromImage(vpss_image, batch_idx);
     if (ret != 0) {
       LOGE("tensor copyFromImage failed, ret: %d\n", ret);

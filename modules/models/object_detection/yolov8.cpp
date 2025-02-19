@@ -281,12 +281,15 @@ int32_t YoloV8Detection::outputParse(
     ss << "batch:" << b << "\n";
     for (auto &bbox : lb_boxes) {
       for (auto &b : bbox.second) {
-        DetectionHelper::rescaleBbox(b, scale_params);
+        DetectionHelper::rescaleBbox(b, scale_params,
+                                     net_param_.pre_params.cropX,
+                                     net_param_.pre_params.cropY);
         ss << "bbox:[" << b.x1 << "," << b.y1 << "," << b.x2 << "," << b.y2
            << "],score:" << b.score << ",label:" << bbox.first << "\n";
       }
     }
-    cvtdl_object_t *obj = new cvtdl_object_t();
+    cvtdl_object_t *obj = (cvtdl_object_t *)malloc(sizeof(cvtdl_object_t));
+    memset(obj, 0, sizeof(cvtdl_object_t));
     DetectionHelper::convertDetStruct(lb_boxes, obj, image_height, image_width);
     out_datas.push_back(obj);
   }
