@@ -6,6 +6,7 @@
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov6.hpp"
 #include "object_detection/yolov8.hpp"
+#include "object_detection/yolov10.hpp"
 
 std::shared_ptr<BaseModel> TDLModelFactory::createModel(
     const TDL_MODEL_TYPE model_type, const std::string &model_path) {
@@ -17,6 +18,12 @@ std::shared_ptr<BaseModel> TDLModelFactory::createModel(
   } else if (model_type ==
              TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 7));
+  } else if (model_type ==
+             TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_HARDHAT) {
+    model = std::make_shared<YoloV8Detection>(std::make_pair(64, 2));
+  } else if (model_type ==
+             TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV10) {
+    model = std::make_shared<YoloV10Detection>(std::make_pair(64, 80));
   } else if (model_type == TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6) {
     model = std::make_shared<YoloV6Detection>(std::make_pair(4, 80));
   } else if (model_type ==
