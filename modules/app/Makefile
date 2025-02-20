@@ -33,7 +33,7 @@ CHIP ?= cv1835
 SDK_VER ?= 64bit
 
 CROSS_COMPILE_32 ?= arm-linux-gnueabihf-
-CROSS_COMPILE_64 ?= aarch64-linux-gnu-
+CROSS_COMPILE_64 ?= aarch64-none-linux-gnu-
 CROSS_COMPILE_32_UCLIBC ?= arm-cvitek-linux-uclibcgnueabihf-
 CROSS_COMPILE_RISCV64_GLIBC ?= riscv64-unknown-linux-gnu-
 CROSS_COMPILE_RISCV64_MUSL ?= riscv64-unknown-linux-musl-

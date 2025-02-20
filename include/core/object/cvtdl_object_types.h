@@ -393,10 +393,12 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
+  uint32_t feature_size;
+  int lane_state;
 
   meta_rescale_type_e rescale_type;
   cvtdl_lane_point_t *lane;
-  int lane_state;
+  float *feature;
 } cvtdl_lane_t;
 
 // consumer line
@@ -444,10 +446,81 @@ typedef struct {
   uint32_t num_preserved_classes;
 } cvtdl_class_filter_t;
 
+/** @struct cvtdl_seg_t
+ *  @ingroup core_cvitdlcore
+ *  @brief Returns the classification id and confidence of the original image downsampled by a
+ * @var down_ratofactor
+ * Output classification confidence of the pixel block, range 0-64
+ */
+typedef struct {
+  char img_name[128];
+  int srcWidth;
+  int srcHeight;
+  uint8_t *class_id;
+  uint8_t *class_conf;
+} cvtdl_seg_t;
+
+/** @struct cvtdl_qpmap_t
+ *  @ingroup core_cvitdlcore
+ *  @brief Returns the classification id and confidence of the original image downsampled by a
+ * factor of 64 Output classification confidence of the pixel block, range 0-100
+ *  @var cvtdl_qpmap_t::preserved_class_conf
+ *  Output classification id of the pixel block
+ *  @var cvtdl_qpmap_t::preserved_class_ids
+ *  Records whether the pixel block is smooth or not
+ *  @var cvtdl_qpmap_t::smooth_flag
+ */
+typedef struct {
+  char img_name[128];
+  int srcWidth;
+  int srcHeight;
+  int enable_subcodec;
+  int subwidth;
+  int subHeight;
+  int is_important[12];
+  int max_dqp[12];
+  int ci_table[8][16];
+  int reg_conf_scale;
+  int reg_tclip_min[12];
+  int reg_tclip_max[12];
+  int reg_smooth_qp_en;
+  uint8_t *roi_map;
+  uint8_t *class_id;
+  uint8_t *class_conf;
+  int delta_qp;
+  uint8_t *sub_roi_map;
+  uint8_t *sub_class_id;
+  uint8_t *sub_class_conf;
+} cvtdl_qpmap_t;
+
 typedef struct {
   float *out_feature;
   int feature_dim;
 } cvtdl_clip_feature;
+
+/** @struct cvtdl_opencv_params
+ *  @ingroup core_cvitdlcore
+ *  @brief Set OpenCV Preprocessing Parameters. This struct can be used in
+ *  @ mean and std are based on normalized values
+ *  @ enum interpolationMethod
+ *  0 -> cv::INTER_NEAREST
+ *  1 -> cv::INTER_LINEA
+ *  2 -> cv::INTER_CUBIC
+ *  3 -> cv::INTER_AREA
+ *  4 -> cv::INTER_LANCZOS4
+ *  @ enum rgbFormat
+ *  0 -> RGB
+ *  1 -> BGR
+ */
+
+typedef struct {
+  int width;
+  int height;
+  float mean[3];
+  float std[3];
+  int interpolationMethod;
+  int rgbFormat;
+} cvtdl_opencv_params;
 
 /** @struct cvtdl_handpose21_meta_t
  * @ingroup core_cvitdlcore
@@ -578,5 +651,20 @@ typedef struct {
   int h;
   int8_t *int_logits;
 } cvtdl_depth_logits_t;
+
+typedef struct {
+  cvtdl_bbox_t crop_bbox;
+  float lap_dev_th;
+  float ai_cv_th;
+} OcclusionAlgParam;
+
+typedef struct {
+  cvtdl_bbox_t crop_bbox;
+  float occ_ratio_th;
+  float laplacian_th;
+  float sensitive_th;
+  float occ_score;
+  int occ_class;
+} cvtdl_occlusion_meta_t;
 
 #endif

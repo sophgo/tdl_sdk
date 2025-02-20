@@ -1,42 +1,39 @@
-cmake_minimum_required(VERSION 3.18.4)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-project(cvitdl)
+cmake_minimum_required(VERSION 3.16)
+project(cvi_tdl)
 
-if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
-  set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install_soc")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
+  set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install")
 endif()
+
 # Find toolchain cmake file and toolchain folder
 if("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
   message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is not set. Aborting.")
 endif()
 
-set(FTP_SERVER_IP "10.80.0.5" CACHE STRING "3rd party resource ftp")
-set(DL_SERVER_IP 10.132.3.76)
-
 set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
-set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
+set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++11 -pthread")
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CV181X")
-  add_definitions(-DCV181X)
+  add_definitions(-D__CV181X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV180X")
-  add_definitions(-DCV180X)
+  add_definitions(-D__CV180X__)
   if ("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
     set(NO_OPENCV ON)
     add_definitions(-DNO_OPENCV)
   endif()
 elseif("${CVI_PLATFORM}" STREQUAL "CV182X")
-  add_definitions(-DCV182X)
-  include (cmake/tracer.cmake)
+  add_definitions(-D__CV182X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
-  add_definitions(-DCV183X)
-  include (cmake/tracer.cmake)
+  add_definitions(-D__CV183X__)
   add_definitions(-DUSE_NEON)
-elseif("${CVI_PLATFORM}" STREQUAL "CV186X")
-  add_definitions(-DCV186X)
+elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
+  add_definitions(-D__CV186X__)
 else()
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
@@ -64,11 +61,6 @@ else()
     message(FATAL_ERROR "No build type!!!")
 endif()
 
-if(DEFINED ENV{WEB_VIEW})
-  set(BUILD_WEB_VIEW ON)
-  message("set BUILD_WEB_VIEW ON")
-endif()
-
 if(DEFINED ENV{PERF_EVAL})
   add_definitions(-DPERF_EVAL)
   message("set PERF_EVAL")
@@ -79,7 +71,7 @@ execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_
 execute_process(COMMAND git rev-parse --abbrev-ref HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE LATEST_BRANCH)
 string(STRIP ${LATEST_BRANCH} LATEST_BRANCH)
 
-if ("${LATEST_BRANCH}" STREQUAL "master")
+if("${LATEST_BRANCH}" STREQUAL "master")
   string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
   list(GET WORD_LIST 0 COMMITID)
   set(LATEST_TAG "nightly-${COMMITID}")
@@ -89,7 +81,7 @@ elseif("${LATEST_BRANCH}" STREQUAL "HEAD")
   set(LATEST_TAG "${COMMITID}")
 else()
   string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)*[^(\\\n).]+" LATEST_TAG ${LATEST_BRANCH})
-  if ("${LATEST_TAG}" STREQUAL "")
+  if("${LATEST_TAG}" STREQUAL "")
     set(LATEST_TAG "unknown")
   endif()
   string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
@@ -100,6 +92,8 @@ endif()
 foreach(flags CMAKE_CXX_FLAGS CMAKE_C_FLAGS)
     string(REPLACE "-O3" "-Os" ${flags} "${${flags}}")
 endforeach()
+
+include(${CMAKE_TOOLCHAIN_FILE})
 
 message("==================================================")
 message("Branch                 ${LATEST_BRANCH}")
@@ -112,12 +106,11 @@ message("CXX compiler           ${CMAKE_CXX_COMPILER}")
 message("C Flags                ${CMAKE_C_FLAGS}")
 message("CXX Flags              ${CMAKE_CXX_FLAGS}")
 message("Install dir            ${CMAKE_INSTALL_PREFIX}")
+message("CMAKE_TOOLCHAIN_FILE   ${CMAKE_TOOLCHAIN_FILE}")
 message("Enable Perfetto        ${ENABLE_PERFETTO}")
 message("CVI_PLATFORM           ${CVI_PLATFORM}")
-message("CVI_SYSTEM_PROCESSOR   ${CVI_SYSTEM_PROCESSOR}")
-message("CMAKE_TOOLCHAIN_FILE   ${CMAKE_TOOLCHAIN_FILE}")
 message("USE_TPU_IVE            ${USE_TPU_IVE}")
-message("KERNEL_ROOT            ${KERNEL_ROOT}")
+message("FTP_SERVER_IP          ${FTP_SERVER_IP}")
 message("CONFIG_DUAL_OS         ${CONFIG_DUAL_OS}")
 message("==================================================")
 
@@ -125,6 +118,38 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 include(FetchContent)
 get_filename_component(_deps "${BUILD_DOWNLOAD_DIR}" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
 set(FETCHCONTENT_BASE_DIR ${_deps})
+
+# set 3rd_party url
+set(3RD_PARTY_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
+
+execute_process(
+    COMMAND git remote -v
+    OUTPUT_VARIABLE REMOTE_URL
+    ERROR_VARIABLE GIT_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE 
+)
+
+if(NOT GIT_ERROR)
+    if(REMOTE_URL MATCHES "github.com")
+      set(IS_LOCAL FALSE)
+    else()
+        set(IS_LOCAL TRUE)
+    endif()
+else()
+    message(FATAL_ERROR "Failed to execute git command: ${GIT_ERROR}")
+endif()
+
+
+# 获取当前文件的目录
+set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+# 获取上一级目录
+get_filename_component(TOP_DIR ${CURRENT_DIR} DIRECTORY)
+
+# 打印上一级目录
+message(STATUS "Current Directory: ${CURRENT_DIR}")
+message(STATUS "Parent Directory: ${TOP_DIR}")
+
 
 # Check if OpenCV exists.
 if (NOT DEFINED NO_OPENCV)
@@ -134,15 +159,17 @@ endif()
 # Check if MLIR SDK exists.
 include(cmake/mlir.cmake)
 
-# Check if middleware exists.
-include (cmake/middleware.cmake)
+# Check if mpi SDK exists.
+include(cmake/middleware.cmake)
 
 # 3rdparty libraries
 include(cmake/thirdparty.cmake)
 
-include (cmake/ive.cmake)
+include(cmake/ive.cmake)
 
-include (cmake/cvi_rtsp.cmake)
+# ===========need remove this=============
+include(cmake/cvi_rtsp.cmake)
+# ===========need remove this=============
 
 # 3rdpart includes
 include_directories(${IVE_INCLUDES}
@@ -150,11 +177,19 @@ include_directories(${IVE_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
 
-add_subdirectory(modules)
-add_subdirectory(sample)
-add_subdirectory(lib)
-
-if(NOT DEFINED NO_OPENCV)
-add_subdirectory(regression)
+if("${BUILD_OPTION}" STREQUAL "")
+  add_subdirectory(modules)
+elseif("${BUILD_OPTION}" STREQUAL "sample")
+  add_subdirectory(sample)
+  add_subdirectory(sample_video)
+elseif("${BUILD_OPTION}" STREQUAL "all")
+  add_subdirectory(modules)
+  add_subdirectory(sample)
+  add_subdirectory(sample_video)
+else()
+  message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}. Valid options are '', 'sample', or 'all'.")
 endif()
 
+if(IS_LOCAL AND NOT DEFINED NO_OPENCV )
+  add_subdirectory(regression)
+endif()

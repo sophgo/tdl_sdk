@@ -17,7 +17,6 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "opencv2/opencv.hpp"
 #include "yolov8_seg.hpp"
 
 namespace cvitdl {
@@ -28,6 +27,7 @@ static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int 
   obj->height = im_height;
   obj->width = im_width;
   memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
+
   for (uint32_t i = 0; i < obj->size; ++i) {
     obj->info[i].bbox.x1 = dets[i]->x1;
     obj->info[i].bbox.y1 = dets[i]->y1;
@@ -222,7 +222,7 @@ int YoloV8Seg::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta)
     outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                  srcFrame->stVFrame.u32Height, obj_meta);
   } else {
-    LOGE("unexpected strides size:%s\n", strides.size());
+    LOGE("unexpected strides size:%zu\n", strides.size());
     return CVI_FAILURE;
   }
 
@@ -233,15 +233,12 @@ int YoloV8Seg::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta)
 void YoloV8Seg::outputParser(const int image_width, const int image_height, const int frame_width,
                              const int frame_height, cvtdl_object_t *obj_meta) {
   Detections vec_obj;
-  CVI_SHAPE shape = getInputShape(0);
 
   std::vector<std::pair<int, int>> final_dets_id;
   detPostProcess(vec_obj, obj_meta, final_dets_id);
 
   int num_dets_to_crop = final_dets_id.size();
-
   Eigen::MatrixXf mask_map(num_dets_to_crop, m_mask_channel_);
-
   int row = 0;
 
   // extract the corresponding mask_map based on the ID of the final detection box
@@ -306,6 +303,12 @@ void YoloV8Seg::outputParser(const int image_width, const int image_height, cons
     int x2 = static_cast<int>(round(obj_meta->info[i].bbox.x2 / proto_stride));
     int y1 = static_cast<int>(round(obj_meta->info[i].bbox.y1 / proto_stride));
     int y2 = static_cast<int>(round(obj_meta->info[i].bbox.y2 / proto_stride));
+    if (obj_meta->info[i].mask_properity == NULL) {
+      obj_meta->info[i].mask_properity = (cvtdl_mask_meta *)malloc(sizeof(cvtdl_mask_meta));
+      if (obj_meta->info[i].mask_properity == NULL) {
+        LOGE("Failed to allocate memory for mask_properity\n");
+      }
+    }
     obj_meta->info[i].mask_properity->mask = (uint8_t *)calloc(proto_hw, sizeof(uint8_t));
     for (int j = y1; j < y2; ++j) {
       for (int k = x1; k < x2; ++k) {
@@ -321,6 +324,7 @@ void YoloV8Seg::outputParser(const int image_width, const int image_height, cons
     }
   }
 }
+
 void YoloV8Seg::detPostProcess(Detections &dets, cvtdl_object_t *obj_meta,
                                std::vector<std::pair<int, int>> &final_dets_id) {
   CVI_SHAPE shape = getInputShape(0);

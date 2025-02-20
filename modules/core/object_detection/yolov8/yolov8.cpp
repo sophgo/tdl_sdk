@@ -119,6 +119,7 @@ int YoloV8Detection::onModelOpened() {
     }
   }
 
+  printf("Number of yolov8 model branch: %d\n", strides.size());
   return CVI_TDL_SUCCESS;
 }
 
@@ -132,7 +133,8 @@ int YoloV8Detection::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj
     return ret;
   }
   CVI_SHAPE shape = getInputShape(0);
-  if (strides.size() == 3) {
+
+  if (strides.size() == 3 || strides.size() == 4) {
     outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
                  srcFrame->stVFrame.u32Height, obj_meta);
   } else {

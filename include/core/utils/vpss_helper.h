@@ -156,7 +156,7 @@ VPSS_GRP_DEFAULT_HELPER2(VPSS_GRP_ATTR_S *pstVpssGrpAttr, CVI_U32 srcWidth, CVI_
   pstVpssGrpAttr->enPixelFormat = enSrcFormat;
   pstVpssGrpAttr->u32MaxW = srcWidth;
   pstVpssGrpAttr->u32MaxH = srcHeight;
-#ifndef CV186X
+#ifndef __CV186X__
   pstVpssGrpAttr->u8VpssDev = dev;
 #endif
 }
