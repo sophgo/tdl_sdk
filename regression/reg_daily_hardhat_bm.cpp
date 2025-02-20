@@ -16,13 +16,13 @@ namespace fs = std::experimental::filesystem;
 namespace cvitdl {
 namespace unitest {
 
-class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
+class HardHat_DetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
-  People_Vehicle_DetectionTestSuite()
-      : CVI_TDLModelTestSuite("reg_daily_person_vehicle.json",
-                              "reg_daily_person_vehicle") {}
+  HardHat_DetectionTestSuite()
+      : CVI_TDLModelTestSuite("reg_hardhatV2_det.json",
+                              "reg_hardhat_det") {}
 
-  virtual ~People_Vehicle_DetectionTestSuite() = default;
+  virtual ~HardHat_DetectionTestSuite() = default;
 
   std::shared_ptr<BaseModel> model_;
 
@@ -31,10 +31,10 @@ class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
     std::string model_name = std::string(m_json_object["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
     model_ = TDLModelFactory::createModel(
-        TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE, model_path);
+        TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_HARDHAT, model_path);
 
-    std::map<int, int> type_mapping = {{0, 1}, {4, 0}};
-    model_->setTypeMapping(type_mapping);
+    // std::map<int, int> type_mapping = {{0, 1}, {4, 0}};
+    // model_->setTypeMapping(type_mapping);
     model_->setModelThreshold(0.4);
     ASSERT_NE(model_, nullptr);
   }
@@ -42,12 +42,12 @@ class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
   virtual void TearDown() {}
 };
 
-TEST_F(People_Vehicle_DetectionTestSuite, accuracy) {
+TEST_F(HardHat_DetectionTestSuite, accuracy) {
   int img_num = int(m_json_object["image_num"]);
   auto results = m_json_object["results"];
   const float bbox_threshold = 0.8;
   const float score_threshold = 0.4;
-
+  std::cout << "====================== " << std::endl;
   int num_processed = 0;
   for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
        iter++) {

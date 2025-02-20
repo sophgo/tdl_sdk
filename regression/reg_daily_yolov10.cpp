@@ -84,7 +84,7 @@ TEST_F(YoloV10DetectionTestSuite, accuracy) {
         matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
 
     CVI_TDL_FreeCpp(obj_meta);  // delete expected_res;
-    delete obj_meta;
+    free(obj_meta);
     obj_meta = nullptr;
   }
 }
