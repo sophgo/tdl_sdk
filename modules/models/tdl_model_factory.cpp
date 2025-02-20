@@ -4,6 +4,7 @@
 #include "face_landmark/face_landmark_det2.hpp"
 #include "feature_extract/feature_extraction.hpp"
 #include "object_detection/mobiledet.hpp"
+#include "object_detection/yolov6.hpp"
 #include "object_detection/yolov8.hpp"
 
 std::shared_ptr<BaseModel> TDLModelFactory::createModel(
@@ -16,6 +17,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createModel(
   } else if (model_type ==
              TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 7));
+  } else if (model_type == TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6) {
+    model = std::make_shared<YoloV6Detection>(std::make_pair(4, 80));
   } else if (model_type ==
              TDL_MODEL_TYPE_OBJECT_DETECTION_MOBILEDETV2_PEDESTRIAN) {
     model = std::make_shared<MobileDetV2Detection>(

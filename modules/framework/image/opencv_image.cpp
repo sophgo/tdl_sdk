@@ -177,8 +177,12 @@ int32_t OpenCVImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
   size_t num_channels = mats_.size();
   mats_.clear();
   for (size_t i = 0; i < num_channels; i++) {
-    mats_.push_back(cv::Mat(img_height_, img_width_, mat_type_, data));
-    data += img_height_ * img_width_ * get_data_type_size(pix_data_type_);
+    int step = img_width_ * get_data_type_size(pix_data_type_);
+    mats_.push_back(cv::Mat(img_height_, img_width_, mat_type_, data, step));
+
+    LOGI("update mats_[%d].data: %p,step:%d,matstep:%d", i,
+         (void*)mats_[i].data, step, mats_[i].step[0]);
+    data += img_height_ * step;
   }
 
   return 0;

@@ -26,8 +26,8 @@
 namespace cvitdl {
 
 template <typename T>
-inline void parse_cls_info(T *p_cls_ptr, int num_cls, int anchor_idx, float qscale,
-                           float *p_max_logit, int *p_max_cls) {
+inline void parse_cls_info(T *p_cls_ptr, int num_cls, int anchor_idx,
+                           float qscale, float *p_max_logit, int *p_max_cls) {
   int max_logit_c = -1;
   float max_logit = -1000;
   for (int c = 0; c < num_cls; c++) {
@@ -45,8 +45,8 @@ float sigmoid(float x) { return 1.0 / (1.0 + exp(-x)); }
 
 int max_val(int x, int y) { return x > y ? x : y; }
 
-static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int im_height,
-                               int im_width) {
+static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj,
+                               int im_height, int im_width) {
   CVI_TDL_MemAllocInit(dets.size(), obj);
   obj->height = im_height;
   obj->width = im_width;
@@ -92,7 +92,8 @@ int Yolov6::onModelOpened() {
     uint32_t channel = output_shape.dim[3];
     int stride_h = input_h / feat_h;
 
-    if (setting_out_names_.empty() || setting_out_names_.size() != getNumOutputTensor()) {
+    if (setting_out_names_.empty() ||
+        setting_out_names_.size() != getNumOutputTensor()) {
       if (j % 2 == 1) {
         class_out_names_[stride_h] = oinfo.tensor_name;
         strides_.push_back(stride_h);
@@ -110,7 +111,8 @@ int Yolov6::onModelOpened() {
   }
 
   for (size_t i = 0; i < strides_.size(); i++) {
-    if (!class_out_names_.count(strides_[i]) || !box_out_names_.count(strides_[i])) {
+    if (!class_out_names_.count(strides_[i]) ||
+        !box_out_names_.count(strides_[i])) {
       return CVI_TDL_FAILURE;
     }
   }
@@ -136,7 +138,8 @@ int Yolov6::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
   return CVI_TDL_SUCCESS;
 }
 
-void Yolov6::decode_bbox_feature_map(int stride, int anchor_idx, std::vector<float> &decode_box) {
+void Yolov6::decode_bbox_feature_map(int stride, int anchor_idx,
+                                     std::vector<float> &decode_box) {
   std::string box_name = box_out_names_[stride];
   TensorInfo boxinfo = getOutputTensorInfo(box_name);
   CVI_SHAPE input_shape = getInputShape(0);
@@ -167,8 +170,9 @@ void Yolov6::decode_bbox_feature_map(int stride, int anchor_idx, std::vector<flo
     }
   }
 
-  std::vector<float> box = {(grid_x - box_vals[0]) * stride_x, (grid_y - box_vals[1]) * stride_y,
-                            (grid_x + box_vals[2]) * stride_x, (grid_y + box_vals[3]) * stride_y};
+  std::vector<float> box = {
+      (grid_x - box_vals[0]) * stride_x, (grid_y - box_vals[1]) * stride_y,
+      (grid_x + box_vals[2]) * stride_x, (grid_y + box_vals[3]) * stride_y};
 
   decode_box = box;
 }
@@ -198,8 +202,8 @@ void Yolov6::clip_bbox(int frame_width, int frame_height, cvtdl_bbox_t *bbox) {
     bbox->y2 = frame_height;
   }
 }
-cvtdl_bbox_t Yolov6::boxRescale(int frame_width, int frame_height, int width, int height,
-                                cvtdl_bbox_t bbox) {
+cvtdl_bbox_t Yolov6::boxRescale(int frame_width, int frame_height, int width,
+                                int height, cvtdl_bbox_t bbox) {
   cvtdl_bbox_t rescale_bbox;
   int max_board = max_val(frame_width, frame_height);
   float ratio = float(max_board) / float(width);
@@ -220,16 +224,18 @@ void Yolov6::postProcess(Detections &dets, int frame_width, int frame_height,
   // rescale bounding box to original image
   if (!hasSkippedVpssPreprocess()) {
     for (uint32_t i = 0; i < obj_meta->size; ++i) {
-      obj_meta->info[i].bbox = boxRescale(frame_width, frame_height, obj_meta->width,
-                                          obj_meta->height, obj_meta->info[i].bbox);
+      obj_meta->info[i].bbox =
+          boxRescale(frame_width, frame_height, obj_meta->width,
+                     obj_meta->height, obj_meta->info[i].bbox);
     }
     obj_meta->width = frame_width;
     obj_meta->height = frame_height;
   }
 }
 
-void Yolov6::outputParser(const int iamge_width, const int image_height, const int frame_width,
-                          const int frame_height, cvtdl_object_t *obj_meta) {
+void Yolov6::outputParser(const int iamge_width, const int image_height,
+                          const int frame_width, const int frame_height,
+                          cvtdl_object_t *obj_meta) {
   Detections vec_obj;
 
   float inverse_th = std::log(m_model_threshold / (1 - m_model_threshold));
@@ -237,6 +243,7 @@ void Yolov6::outputParser(const int iamge_width, const int image_height, const i
   for (size_t i = 0; i < strides_.size(); i++) {
     int stride = strides_[i];
     std::string cls_name = class_out_names_[stride];
+    std::shared_ptr<BaseTensor> cls_tensor = net_->getOutputTensor(cls_name);
 
     TensorInfo classinfo = getOutputTensorInfo(cls_name);
     int num_per_pixel = classinfo.tensor_size / classinfo.tensor_elem;
@@ -247,17 +254,28 @@ void Yolov6::outputParser(const int iamge_width, const int image_height, const i
     int num_anchor = classinfo.shape.dim[1] * classinfo.shape.dim[2];
     float cls_qscale = num_per_pixel == 1 ? classinfo.qscale : 1;
 
+    LOGI("name:%s,num_anchor:%d,num_per_pixel:%d,cls_qscale:%f,num_cls:%d",
+         cls_name.c_str(), num_anchor, num_per_pixel, cls_qscale, num_cls);
     for (int j = 0; j < num_anchor; j++) {
       int max_logit_c = -1;
       float max_logit = -1000;
-      if (num_per_pixel == 1) {
-        parse_cls_info<int8_t>(p_cls_int8, num_cls, j, cls_qscale, &max_logit, &max_logit_c);
+      if (classinfo.data_type == DataType::INT8) {
+        parse_cls_info<int8_t>(cls_tensor->getRawPointer<int8_t>(), num_cls, j,
+                               cls_qscale, &max_logit, &max_logit_c);
+      } else if (classinfo.data_type == DataType::UINT8) {
+        parse_cls_info<uint8_t>(cls_tensor->getRawPointer<uint8_t>(), num_cls,
+                                j, cls_qscale, &max_logit, &max_logit_c);
+      } else if (classinfo.data_type == DataType::FLOAT) {
+        parse_cls_info<float>(cls_tensor->getRawPointer<float>(), num_cls, j,
+                              cls_qscale, &max_logit, &max_logit_c);
       } else {
-        parse_cls_info<float>(p_cls_float, num_cls, j, cls_qscale, &max_logit, &max_logit_c);
+        LOGE("unsupported data type:%d", classinfo.data_type);
+        assert(0);
       }
       if (max_logit < inverse_th) {
         continue;
       }
+      LOGI("max_logit:%f,max_logit_c:%d", max_logit, max_logit_c);
 
       float score = sigmoid(max_logit);
       std::vector<float> box;

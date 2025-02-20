@@ -239,7 +239,7 @@ int32_t BM168xNet::addInput(const std::string &name) {
       name.c_str(), element_bytes, shape[0], shape[1], shape[2], shape[3],
       input_output_tensor_infos_[name].qscale,
       input_output_tensor_infos_[name].zero_point,
-      input_output_tensor_infos_[name].data_type);
+      static_cast<int>(input_output_tensor_infos_[name].data_type));
   return 0;
 }
 
@@ -266,7 +266,7 @@ int32_t BM168xNet::addOutput(const std::string &name) {
       name.c_str(), element_bytes, shape[0], shape[1], shape[2], shape[3],
       input_output_tensor_infos_[name].qscale,
       input_output_tensor_infos_[name].zero_point,
-      input_output_tensor_infos_[name].data_type);
+      static_cast<int>(input_output_tensor_infos_[name].data_type));
   return 0;
 }
 

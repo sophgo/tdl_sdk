@@ -241,9 +241,14 @@ void DetectionHelper::convertDetStruct(
   for (auto &bbox : dets) {
     num_obj += bbox.second.size();
   }
-  CVI_TDL_MemAllocInit(num_obj, obj);
+  memset(obj, 0, sizeof(cvtdl_object_t));
   obj->height = im_height;
   obj->width = im_width;
+  if (num_obj == 0) {
+    return;
+  }
+  CVI_TDL_MemAllocInit(num_obj, obj);
+
   memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
 
   int idx = 0;

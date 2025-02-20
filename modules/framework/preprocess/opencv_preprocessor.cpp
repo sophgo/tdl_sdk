@@ -18,8 +18,9 @@ void bgr_split_scale(const cv::Mat& src_mat, std::vector<cv::Mat>& tmp_bgr,
     float m = 0, s = 1;
     if (mean.size() > i) m = mean[i];
     if (scale.size() > i) s = scale[i];
-    LOGI("mean:%f,scale:%f,srctype:%d,dsttype:%d", m, s, tmp_bgr[i].type(),
-         input_channels[i].type());
+    LOGI("mean:%f,scale:%f,srctype:%d,dsttype:%d,addr:%p", m, s,
+         tmp_bgr[i].type(), input_channels[i].type(),
+         (void*)input_channels[i].data);
     tmp_bgr[i].convertTo(input_channels[i], input_channels[i].type(), s, -m);
   }
 }
@@ -57,24 +58,31 @@ int32_t OpenCVPreprocessor::preprocessToImage(
   if (src_image->getPlaneNum() == 1 && dst_image->getPlaneNum() == 3) {
     // create temp resized image
     // TODO:use memory pool
+    std::vector<float> rescale_params =
+        getRescaleConfig(params, src_image->getWidth(), src_image->getHeight());
+    int resized_w = src_image->getWidth() * rescale_params[0];
+    int resized_h = src_image->getHeight() * rescale_params[1];
+    int pad_x = rescale_params[2];
+    int pad_y = rescale_params[3];
     cv::Mat tmp_resized = cv::Mat::zeros(params.dstHeight, params.dstWidth,
                                          src_image->getInternalType());
+    LOGI("temp_resized type:%d,src_image type:%d", tmp_resized.type(),
+         src_image->getInternalType());
     const cv::Mat& src_mat = *(const cv::Mat*)src_image->getInternalData();
-    print_mat(src_mat, "src_mat");
-    if (params.keepAspectRatio) {
-      std::vector<float> rescale_params = getRescaleConfig(
-          params, src_image->getWidth(), src_image->getHeight());
+    cv::Rect roi(pad_x, pad_y, resized_w, resized_h);
 
-      int resized_w = src_mat.cols * rescale_params[0];
-      int resized_h = src_mat.rows * rescale_params[1];
-      cv::Rect roi(rescale_params[2], rescale_params[3], resized_w, resized_h);
+    print_mat(src_mat, "src_mat");
+    int flags = cv::INTER_LINEAR;
+    if (params.keepAspectRatio) {
+      flags = cv::INTER_AREA;  // TODO: when using ROI, only INTER_AREA is
+                               // supported,this is a bug of bmopencv
       cv::resize(src_mat, tmp_resized(roi), cv::Size(resized_w, resized_h), 0,
-                 0, cv::INTER_LINEAR);
+                 0, flags);
     } else {
-      cv::resize(src_mat, tmp_resized,
-                 cv::Size(params.dstWidth, params.dstHeight), 0, 0,
-                 cv::INTER_LINEAR);
+      cv::resize(src_mat, tmp_resized, cv::Size(resized_w, resized_h), 0, 0,
+                 flags);
     }
+
     bool use_rgb = (src_image->getImageFormat() == ImageFormat::RGB_PACKED &&
                     dst_image->getImageFormat() == ImageFormat::BGR_PLANAR) ||
                    (src_image->getImageFormat() == ImageFormat::BGR_PACKED &&
@@ -86,8 +94,9 @@ int32_t OpenCVPreprocessor::preprocessToImage(
                                 params.scale[2]};
     cv::Mat* dsti = (cv::Mat*)dst_image->getInternalData();
 
-    LOGI("use_rgb:%d,src_format:%d,dst_format:%d", use_rgb,
-         src_image->getImageFormat(), dst_image->getImageFormat());
+    LOGI("use_rgb:%d,src_format:%d,dst_format:%d,dst_addr:%p", use_rgb,
+         src_image->getImageFormat(), dst_image->getImageFormat(),
+         (void*)dsti[0].data);
     print_mat(dsti[0], "dsti[0]");
     for (int i = 0; i < dst_image->getPlaneNum(); i++) {
       input_channels.push_back(dsti[i]);
@@ -109,7 +118,7 @@ int32_t OpenCVPreprocessor::preprocessToTensor(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     const int batch_idx, std::shared_ptr<BaseTensor> tensor) {
   LOGI("params.dstImageFormat: %d,params.dstPixDataType: %d",
-       params.dstImageFormat, params.dstPixDataType);
+       (int)params.dstImageFormat, (int)params.dstPixDataType);
   std::shared_ptr<OpenCVImage> src_image_ptr = std::make_shared<OpenCVImage>(
       params.dstWidth, params.dstHeight, params.dstImageFormat,
       params.dstPixDataType, false);
@@ -118,6 +127,5 @@ int32_t OpenCVPreprocessor::preprocessToTensor(
   preprocessToImage(src_image, params, src_image_ptr);
   tensor->flushCache();
 
-  // tensor->dumpToFile("opencv_preprocessor_tensor.bin");
   return 0;
 }
