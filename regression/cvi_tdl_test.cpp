@@ -204,5 +204,29 @@ bool CVI_TDLModelTestSuite::matchObjects(
   }
   return true;
 }
+
+bool CVI_TDLModelTestSuite::matchScore(const std::vector<std::vector<float>> &gt_info,
+                  const std::vector<std::vector<float>> &pred_info,
+                  const float score_thresh){
+
+  if (gt_info.size() != pred_info.size()) {
+      return false;
+  }
+
+  for (size_t i = 0; i < gt_info.size(); ++i) {
+    
+    const auto& gt = gt_info[i];
+    const auto& pred = pred_info[i];
+
+    if (std::abs(gt[0] - pred[0]) > score_thresh || 
+        std::abs(gt[1] - pred[1]) > score_thresh || 
+        std::abs(gt[2] - pred[2]) > score_thresh || 
+        std::abs(gt[3] - pred[3]) > score_thresh) { 
+        return false; 
+      }
+  }
+  return true;              
+};
+
 }  // namespace unitest
 }  // namespace cvitdl

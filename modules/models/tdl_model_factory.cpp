@@ -4,6 +4,7 @@
 #include "cvi_tdl_log.hpp"
 #include "face_detection/scrfd.hpp"
 #include "face_landmark/face_landmark_det2.hpp"
+#include "face_attribute/face_attribute_cls.hpp"
 #include "feature_extract/feature_extraction.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov10.hpp"
@@ -26,6 +27,8 @@ TDLModelFactory::TDLModelFactory(const std::string model_dir)
                model_dir_ + "bmface_r34" + str_ext);
   setModelPath(TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_HARDHAT,
                model_dir_ + "hardhat_detection_cv186x" + str_ext);
+  setModelPath(TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS,
+               model_dir_ + "face_attribute_cls_cv186x" + str_ext);
 
   output_datas_type_str_[TDL_MODEL_TYPE_FACE_FEATURE_BMFACER34] = "feature";
   output_datas_type_str_[TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2] =
@@ -39,6 +42,7 @@ TDLModelFactory::TDLModelFactory(const std::string model_dir)
   output_datas_type_str_[TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV10] = "objdet";
   output_datas_type_str_[TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6] = "objdet";
   output_datas_type_str_[TDL_MODEL_TYPE_FACE_DETECTION_SCRFD] = "face_det";
+  output_datas_type_str_[TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS] = "face_det";
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
@@ -75,6 +79,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
         MobileDetV2Detection::Category::pedestrian, 0.5);
   } else if (model_type == TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2) {
     model = std::make_shared<FaceLandmarkerDet2>();
+  } else if (model_type == TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS) {
+    model = std::make_shared<FaceAttribute_CLS>();
   } else if (model_type == TDL_MODEL_TYPE_FACE_FEATURE_BMFACER34) {
     model = std::make_shared<FeatureExtraction>();
   } else {

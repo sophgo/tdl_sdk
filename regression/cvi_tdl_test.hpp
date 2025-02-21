@@ -62,6 +62,10 @@ class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
                     const std::vector<std::vector<float>> &pred_objects,
                     const float iout_thresh, const float score_thresh);
 
+  bool matchScore(const std::vector<std::vector<float>> &gt_info,
+                    const std::vector<std::vector<float>> &pred_info,
+                    const float score_thresh);
+
  protected:
   nlohmann::json m_json_object;
   // cvitdl_handle_t m_tdl_handle;

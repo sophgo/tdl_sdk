@@ -89,6 +89,7 @@ if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688"))
   # reg_daily_vpss_image.cpp
   reg_daily_yolov6.cpp
   reg_daily_yolov10.cpp
+  reg_daily_face_attribute_cls.cpp
   reg_daily_mobiledetion_bm.cpp
   reg_daily_hardhat_bm.cpp
   reg_daily_preprocess.cpp
