@@ -1,112 +1,114 @@
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include "core/cvi_tdl_types_mem.h"
+#include "core/cvtdl_core_types.h"
+#include "image/base_image.hpp"
+#include "models/tdl_model_factory.hpp"
+#include <filesystem>
 #include <fstream>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
-#include "core/cvi_tdl_types_mem_internal.h"
-#include "core/utils/vpss_helper.h"
-#include "cvi_tdl.h"
-#include "cvi_tdl_media.h"
-#include "sys_utils.hpp"
-
-void bench_mark_all(std::string bench_path, std::string image_root, std::string res_path,
-                    cvitdl_handle_t tdl_handle) {
-  std::fstream file(bench_path);
-  if (!file.is_open()) {
-    printf("can not open bench path %s\n", bench_path.c_str());
-    return;
-  }
-  printf("open bench path %s success!\n", bench_path.c_str());
-  std::string line;
-  std::stringstream res_ss;
-  int cnt = 0;
-
-  imgprocess_t img_handle;
-  CVI_TDL_Create_ImageProcessor(&img_handle);
-
-  while (getline(file, line)) {
-    if (!line.empty()) {
-      stringstream ss(line);
-      std::string image_name;
-      while (ss >> image_name) {
-        cvtdl_class_meta_t meta = {0};
-        VIDEO_FRAME_INFO_S fdFrame;
-        if (++cnt % 100 == 0) {
-          cout << "processing idx: " << cnt << endl;
-        }
-
-        auto name = image_root + image_name;
-        CVI_S32 ret =
-            CVI_TDL_ReadImage(img_handle, name.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
-        ret = CVI_TDL_Image_Classification(tdl_handle, &fdFrame, &meta);
-        if (ret != CVI_SUCCESS) {
-          CVI_TDL_Free(&meta);
-          CVI_TDL_ReleaseImage(img_handle, &fdFrame);
-          break;
-        }
-
-        res_ss << image_name << " ";
-        for (int i = 0; i < 5; i++) {
-          res_ss << " " << meta.cls[i];
-        }
-        res_ss << "\n";
-
-        CVI_TDL_Free(&meta);
-        CVI_TDL_ReleaseImage(img_handle, &fdFrame);
-        break;
-      }
+#include <dirent.h>
+#include <sys/stat.h>
+#include <cstring>
+int main(int argc, char** argv) {
+    if (argc != 4) {
+        printf("Usage: %s <model_dir> <dataset_dir> <result_file>\n", argv[0]);
+        //dataset_dir下有各类别文件夹，每个文件夹下存放各类图片
+        return -1;
     }
-  }
-  CVI_TDL_Destroy_ImageProcessor(img_handle);
-  std::cout << "write results to file: " << res_path << std::endl;
-  FILE* fp = fopen(res_path.c_str(), "w");
-  fwrite(res_ss.str().c_str(), res_ss.str().size(), 1, fp);
-  fclose(fp);
-  std::cout << "write done!" << std::endl;
-}
 
-int main(int argc, char* argv[]) {
-  int vpssgrp_width = 1920;
-  int vpssgrp_height = 1080;
-  CVI_S32 ret = MMF_INIT_HELPER2(vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1,
-                                 vpssgrp_width, vpssgrp_height, PIXEL_FORMAT_RGB_888, 1);
-  if (ret != CVI_TDL_SUCCESS) {
-    printf("Init sys failed with %#x!\n", ret);
-    return ret;
-  }
+    std::string model_dir = argv[1];
+    std::string dataset_dir = argv[2];
+    std::string result_file = argv[3];
 
-  cvitdl_handle_t tdl_handle = NULL;
+    std::filesystem::path result_path(result_file);
+    if (!result_path.parent_path().empty() && !std::filesystem::exists(result_path.parent_path())) {
+        std::filesystem::create_directories(result_path.parent_path());
+    }
+    
+    std::ofstream out_file(result_file);
+    if (!out_file.is_open()) {
+        printf("Failed to open result file: %s\n", result_file.c_str());
+        return -1;
+    }
 
-  ret = CVI_TDL_CreateHandle(&tdl_handle);
-  if (ret != CVI_SUCCESS) {
-    printf("Create tdl handle failed with %#x!\n", ret);
-    return ret;
-  }
 
-  std::string model_path = argv[1];
-  std::string bench_path = argv[2];
-  std::string image_root = argv[3];
-  std::string res_path = argv[4];
+    TDLModelFactory model_factory(model_dir);
+    
+    std::shared_ptr<BaseModel> model_cls = 
+        model_factory.getModel(TDL_MODEL_TYPE_FACE_ANTI_SPOOF_CLASSIFICATION);
 
-  ret = CVI_TDL_OpenModel(tdl_handle, CVI_TDL_SUPPORTED_MODEL_IMAGE_CLASSIFICATION,
-                          model_path.c_str());
-  if (ret != CVI_SUCCESS) {
-    printf("open model failed %#x %s!\n", ret, model_path.c_str());
-    return ret;
-  }
-  std::cout << "model opened:" << model_path << std::endl;
+    if (!model_cls) {
+        printf("Failed to load classification model\n");
+        return -1;
+    }
 
-  bench_mark_all(bench_path, image_root, res_path, tdl_handle);
+    std::vector<std::string> class_names;
+    DIR* dir = opendir(dataset_dir.c_str());
+    if (dir != nullptr) {
+        struct dirent* entry;
+        while ((entry = readdir(dir)) != nullptr) {
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                continue;
+            }
+            std::string path = dataset_dir + "/" + entry->d_name;
+            struct stat path_stat;
+            stat(path.c_str(), &path_stat);
+            if (S_ISDIR(path_stat.st_mode)) {
+                class_names.push_back(entry->d_name);
+            }
+        }
+        closedir(dir);
+    } else {
+        std::cerr << "Can't open dataset dir: " << dataset_dir << std::endl;
+        return -1;
+    }
+    if (class_names.empty()) {
+        std::cerr << "Warning: No class directory found in " << dataset_dir << std::endl;
+        return -1;
+    }
 
-  CVI_TDL_DestroyHandle(tdl_handle);
+    size_t total_files = 0;
+    for (const auto& class_name : class_names) {
+        std::string class_path = dataset_dir + "/" + class_name;
+        for (const auto& entry : std::filesystem::directory_iterator(class_path)) {
+            total_files++;
+        }
+    }
+    
+    size_t processed_files = 0;
+    printf("\nStarting classification...\n");
+    for (const auto& class_name : class_names) {
+        std::string class_path = dataset_dir + "/" + class_name;
+        for (const auto& entry : std::filesystem::directory_iterator(class_path)) {
+            std::string img_path = entry.path().string();
+            auto image = ImageFactory::readImage(img_path);
+            if (!image) {
+                printf("Failed to load image: %s\n", img_path.c_str());
+                continue;
+            }
 
-  return ret;
+            std::vector<std::shared_ptr<BaseImage>> input_images = {image};
+            std::vector<void*> out_cls;
+            model_cls->inference(input_images, out_cls);
+
+            cvtdl_class_meta_t* cls_meta = static_cast<cvtdl_class_meta_t*>(out_cls[0]);
+            int pred_label = cls_meta->cls[0];
+            out_file << img_path << " " << pred_label << " " << class_name << std::endl;
+            model_factory.releaseOutput(TDL_MODEL_TYPE_FACE_ANTI_SPOOF_CLASSIFICATION, out_cls);
+            
+            processed_files++;
+            float progress = (float)processed_files / total_files * 100;
+            printf("\rProgress: [");
+            int pos = 50 * progress / 100;
+            for (int i = 0; i < 50; i++) {
+                if (i < pos) printf("=");
+                else if (i == pos) printf(">");
+                else printf(" ");
+            }
+            printf("] %.2f%% (%zu/%zu)", progress, processed_files, total_files);
+            fflush(stdout);
+        }
+    }
+    printf("\nClassification completed!\n");
+
+    out_file.close();
+    return 0;
 }

@@ -10,7 +10,7 @@
 #include "object_detection/yolov10.hpp"
 #include "object_detection/yolov6.hpp"
 #include "object_detection/yolov8.hpp"
-
+#include "image_classification/rgb_image_classification.hpp"
 TDLModelFactory::TDLModelFactory(const std::string model_dir)
     : model_dir_(model_dir + "/") {
   std::string str_ext = ".cvimodel";
@@ -18,17 +18,19 @@ TDLModelFactory::TDLModelFactory(const std::string model_dir)
   str_ext = ".bmodel";
 #endif
   setModelPath(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD,
-               model_dir_ + "scrfd_500m_bnkps_432_768_cv186x" + str_ext);
+               model_dir_ + "scrfd_500m_bnkps_432_768" + str_ext);
   setModelPath(TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE,
-               model_dir_ + "yolov8n_384_640_person_vehicle_cv186x" + str_ext);
+               model_dir_ + "yolov8n_384_640_person_vehicle" + str_ext);
   setModelPath(TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2,
                model_dir_ + "pipnet_mbv1_at_50ep_v8" + str_ext);
   setModelPath(TDL_MODEL_TYPE_FACE_FEATURE_BMFACER34,
                model_dir_ + "bmface_r34" + str_ext);
   setModelPath(TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_HARDHAT,
-               model_dir_ + "hardhat_detection_cv186x" + str_ext);
+               model_dir_ + "hardhat_detection" + str_ext);
   setModelPath(TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS,
-               model_dir_ + "face_attribute_cls_cv186x" + str_ext);
+               model_dir_ + "face_attribute_cls" + str_ext);
+  setModelPath(TDL_MODEL_TYPE_FACE_ANTI_SPOOF_CLASSIFICATION,
+               model_dir_ + "face_anti_spoof_classification" + str_ext);
 
   output_datas_type_str_[TDL_MODEL_TYPE_FACE_FEATURE_BMFACER34] = "feature";
   output_datas_type_str_[TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2] =
@@ -43,6 +45,7 @@ TDLModelFactory::TDLModelFactory(const std::string model_dir)
   output_datas_type_str_[TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV6] = "objdet";
   output_datas_type_str_[TDL_MODEL_TYPE_FACE_DETECTION_SCRFD] = "face_det";
   output_datas_type_str_[TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS] = "face_det";
+  output_datas_type_str_[TDL_MODEL_TYPE_FACE_ANTI_SPOOF_CLASSIFICATION] = "cls";
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
@@ -83,6 +86,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<FaceAttribute_CLS>();
   } else if (model_type == TDL_MODEL_TYPE_FACE_FEATURE_BMFACER34) {
     model = std::make_shared<FeatureExtraction>();
+  } else if (model_type == TDL_MODEL_TYPE_FACE_ANTI_SPOOF_CLASSIFICATION) {
+    model = std::make_shared<RgbImageClassification>();
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;
@@ -139,6 +144,12 @@ int32_t TDLModelFactory::releaseOutput(const TDL_MODEL_TYPE model_type,
       cvtdl_face_info_t *face_info = (cvtdl_face_info_t *)output_datas[i];
       CVI_TDL_FreeCpp(face_info);
       free(face_info);
+    }
+  } else if (output_datas_type == "cls") {
+    for (size_t i = 0; i < output_datas.size(); i++) {
+      cvtdl_class_meta_t *cls_meta = (cvtdl_class_meta_t *)output_datas[i];
+      CVI_TDL_FreeCpp(cls_meta);
+      free(cls_meta);
     }
   } else {
     LOGE("output datas type not supported: %s", output_datas_type.c_str());
