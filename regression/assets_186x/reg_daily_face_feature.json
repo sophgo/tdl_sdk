@@ -1,0 +1,38 @@
+[
+    {
+      "model_name": "bmface_r34.bmodel",
+      "model_type": 0,
+      "same_pairs": [
+        ["Yukiko_Okudo_0001.jpg", "Yukiko_Okudo_0002.jpg"],
+        ["Brad_Johnson_0001.jpg", "Brad_Johnson_0003.jpg"],
+        ["Ann_Veneman_0003.jpg", "Ann_Veneman_0005.jpg"],
+        ["Augusto_Pinochet_0001.jpg", "Augusto_Pinochet_0002.jpg"],
+        ["Federico_Trillo_0001.jpg", "Federico_Trillo_0002.jpg"],
+        ["Fred_Thompson_0001.jpg", "Fred_Thompson_0002.jpg"]
+      ],
+      "same_scores": [
+        0.389347,
+        0.621618,
+        0.777025,
+        0.839748,
+        0.620194,
+        0.588118
+      ],
+      "diff_pairs": [
+        ["Yukiko_Okudo_0001.jpg", "Fred_Thompson_0001.jpg"],
+        ["Fred_Thompson_0002.jpg", "Brad_Johnson_0003.jpg"],
+        ["Brad_Johnson_0003.jpg", "Ann_Veneman_0005.jpg"],
+        ["Ann_Veneman_0005.jpg", "Fred_Thompson_0002.jpg"],
+        ["Yukiko_Okudo_0002.jpg", "Fred_Thompson_0001.jpg"],
+        ["Augusto_Pinochet_0001.jpg", "Fred_Thompson_0002.jpg"]
+      ],
+      "diff_scores": [
+        0.020642,
+        0.070165,
+        0.021151,
+        0.110405,
+        -0.021952,
+        -0.043918
+      ]
+    }
+  ]

@@ -123,6 +123,8 @@ if [ "$CHIP_ARCH" = "CV186X" ] || [ "$CHIP_ARCH" = "BM1688" ]; then
   # test_suites="${test_suites}:YoloV6DetectionTestSuite.*"
   # test_suites="${test_suites}:YoloV10DetectionTestSuite.*"
   test_suites="${test_suites}:FaceAttributeClsBmTestSuite.*"
+  test_suites="${test_suites}:FaceLandmarkerDet2TestSuite.*"
+  test_suites="${test_suites}:FeatureExtraBmTestSuite.*"
   # test_suites="${test_suites}:VPSSImageTestSuite.*"
   # test_suites="${test_suites}:VpssPreprocessorTestSuite.*"
 fi

@@ -94,6 +94,8 @@ if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688"))
   reg_daily_hardhat_bm.cpp
   reg_daily_preprocess.cpp
   reg_daily_scrfd_det_bm.cpp
+  reg_daily_landmarkdet2_bm.cpp
+  reg_daily_face_feature_bm.cpp
   # reg_daily_handkeypoint.cpp
   )
 else()
