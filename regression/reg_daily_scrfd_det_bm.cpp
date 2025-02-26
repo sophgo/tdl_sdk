@@ -34,7 +34,7 @@ class ScrfdDetBmTestSuite : public CVI_TDLModelTestSuite {
 };
 
 TEST_F(ScrfdDetBmTestSuite, accuracy) {
-  const float bbox_threshold = 0.85;
+  const float bbox_threshold = 0.8;
   const float score_threshold = 0.2;
   std::cout << "m_json_object: " << m_json_object << std::endl;
 

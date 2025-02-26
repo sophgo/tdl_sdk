@@ -14,14 +14,26 @@ void bgr_split_scale(const cv::Mat& src_mat, std::vector<cv::Mat>& tmp_bgr,
     LOGI("swap RGB,img size:%d,%d", src_mat.cols, src_mat.rows);
     std::swap(tmp_bgr[0], tmp_bgr[2]);
   }
+  int src_w = src_mat.cols;
+  int src_h = src_mat.rows;
+  int dst_w = tmp_bgr[0].cols;
+  int dst_h = tmp_bgr[0].rows;
+  int pad_x = (dst_w - src_w) / 2;
+  int pad_y = (dst_h - src_h) / 2;
+  cv::Rect roi(pad_x, pad_y, src_w, src_h);
   for (int i = 0; i < tmp_bgr.size(); i++) {
     float m = 0, s = 1;
     if (mean.size() > i) m = mean[i];
     if (scale.size() > i) s = scale[i];
-    LOGI("mean:%f,scale:%f,srctype:%d,dsttype:%d,addr:%p", m, s,
-         tmp_bgr[i].type(), input_channels[i].type(),
-         (void*)input_channels[i].data);
-    tmp_bgr[i].convertTo(input_channels[i], input_channels[i].type(), s, -m);
+    LOGI("mean:%f,scale:%f,srctype:%d,dsttype:%d,addr:%p,pad_x:%d,pad_y:%d", m,
+         s, tmp_bgr[i].type(), input_channels[i].type(),
+         (void*)input_channels[i].data, pad_x, pad_y);
+    if (pad_x == 0 && pad_y == 0) {
+      tmp_bgr[i].convertTo(input_channels[i], input_channels[i].type(), s, -m);
+    } else {
+      tmp_bgr[i].convertTo(input_channels[i](roi), input_channels[i].type(), s,
+                           -m);
+    }
   }
 }
 
@@ -71,10 +83,6 @@ std::shared_ptr<BaseImage> OpenCVPreprocessor::crop(
 std::shared_ptr<BaseImage> OpenCVPreprocessor::preprocess(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     std::shared_ptr<BaseMemoryPool> memory_pool) {
-  std::shared_ptr<OpenCVImage> opencv_image = std::make_shared<OpenCVImage>(
-      params.dstWidth, params.dstHeight, params.dstImageFormat,
-      params.dstPixDataType, false, memory_pool);
-  std::unique_ptr<MemoryBlock> memory_block;
   if (memory_pool == nullptr) {
     LOGE("input memory_pool is nullptr,use src image memory pool\n");
     memory_pool = src_image->getMemoryPool();
@@ -83,6 +91,12 @@ std::shared_ptr<BaseImage> OpenCVPreprocessor::preprocess(
     LOGE("memory_pool is nullptr!\n");
     return nullptr;
   }
+
+  std::shared_ptr<OpenCVImage> opencv_image = std::make_shared<OpenCVImage>(
+      params.dstWidth, params.dstHeight, params.dstImageFormat,
+      params.dstPixDataType, false, memory_pool);
+  std::unique_ptr<MemoryBlock> memory_block;
+
   memory_block = memory_pool->allocate(opencv_image->getImageByteSize());
   if (memory_block == nullptr) {
     LOGE("VPSSImage allocate memory failed!\n");
@@ -133,15 +147,26 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     cv::Rect roi(pad_x, pad_y, resized_w, resized_h);
 
     print_mat(src_mat, "src_mat");
-    int flags = cv::INTER_LINEAR;
-    if (params.keepAspectRatio) {
-      flags = cv::INTER_AREA;  // TODO: when using ROI, only INTER_AREA is
-                               // supported,this is a bug of bmopencv
+
+    // int flags = cv::INTER_LINEAR;
+    // if (params.keepAspectRatio) {
+    //   flags = cv::INTER_AREA;  // TODO: when using ROI, only INTER_AREA is
+    //                            // supported,this is a bug of bmopencv
+    //   cv::resize(src_mat, tmp_resized(roi), cv::Size(resized_w, resized_h),
+    //   0,
+    //              0, flags);
+    // } else {
+    //   cv::resize(src_mat, tmp_resized, cv::Size(resized_w, resized_h), 0, 0,
+    //              flags);
+    // }
+    if (pad_x != 0 || pad_y != 0) {
+      cv::Rect roi(pad_x, pad_y, resized_w, resized_h);
+
       cv::resize(src_mat, tmp_resized(roi), cv::Size(resized_w, resized_h), 0,
-                 0, flags);
+                 0, cv::INTER_LINEAR);
     } else {
       cv::resize(src_mat, tmp_resized, cv::Size(resized_w, resized_h), 0, 0,
-                 flags);
+                 cv::INTER_LINEAR);
     }
 
     bool use_rgb = (src_image->getImageFormat() == ImageFormat::RGB_PACKED &&
@@ -210,7 +235,8 @@ int32_t OpenCVPreprocessor::preprocessToTensor(
   std::shared_ptr<OpenCVImage> src_image_ptr = std::make_shared<OpenCVImage>(
       params.dstWidth, params.dstHeight, params.dstImageFormat,
       params.dstPixDataType, false);
-
+  MemoryBlock* M = tensor->getMemoryBlock();
+  memset(M->virtualAddress, 0, M->size);
   tensor->constructImage(src_image_ptr, batch_idx);
   preprocessToImage(src_image, params, src_image_ptr);
   tensor->flushCache();

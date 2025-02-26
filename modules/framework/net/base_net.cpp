@@ -59,8 +59,3 @@ const std::vector<std::string>& BaseNet::getInputNames() const {
 const std::vector<std::string>& BaseNet::getOutputNames() const {
   return output_tensor_names_;
 }
-
-int32_t BaseNet::setInputTensorPhyAddr(const std::string& tensor_name,
-                                       uint64_t phy_addr) {
-  return 0;
-}

@@ -108,7 +108,7 @@ int32_t BaseModel::setupNetwork(NetParam& net_param) {
         preprocess_params.mean[1], preprocess_params.mean[2],
         preprocess_params.scale[0], preprocess_params.scale[1],
         preprocess_params.scale[2], preprocess_params.dstHeight,
-        preprocess_params.dstWidth, preprocess_params.dstPixDataType);
+        preprocess_params.dstWidth, (int)preprocess_params.dstPixDataType);
 
     preprocess_params_[name] = preprocess_params;
   }

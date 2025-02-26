@@ -26,6 +26,10 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
   } else {
     memory_pool_ = memory_pool;
   }
+  if (memory_pool_ == nullptr) {
+    LOGE("memory_pool_ is nullptr");
+    throw std::runtime_error("memory_pool_ is nullptr");
+  }
   image_format_ = imageFormat;
   pix_data_type_ = dataType;
   image_type_ = ImageImplType::VPSS_FRAME;
@@ -60,6 +64,10 @@ VPSSImage::VPSSImage(const VIDEO_FRAME_INFO_S& frame) {
 }
 
 VPSSImage::~VPSSImage() {
+  if (memory_block_ == nullptr) {
+    LOGE("memory_block_ is nullptr");
+    return;
+  }
   LOGI(
       "VPSSImage::~VPSSImage "
       "own_memory:%d,phyaddr:%lx,viraddr:%lx,width:%d,"
@@ -164,7 +172,7 @@ int32_t VPSSImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
     }
   }
 
-  LOGI("setupMemory done,width:%d,height:%d,format:%d,addr:%lx,phyaddr:%lx",
+  LOGI("setupMemory done,width:%d,height:%d,format:%d,addr:%p,phyaddr:%llu",
        frame_.stVFrame.u32Width, frame_.stVFrame.u32Height,
        frame_.stVFrame.enPixelFormat, frame_.stVFrame.pu8VirAddr[0],
        frame_.stVFrame.u64PhyAddr[0]);
@@ -237,6 +245,9 @@ uint32_t VPSSImage::getPlaneNum() const {
 }
 
 std::vector<uint32_t> VPSSImage::getStrides() const {
+  LOGI("getStrides,stride0:%d,stride1:%d,stride2:%d",
+       frame_.stVFrame.u32Stride[0], frame_.stVFrame.u32Stride[1],
+       frame_.stVFrame.u32Stride[2]);
   return {frame_.stVFrame.u32Stride[0], frame_.stVFrame.u32Stride[1],
           frame_.stVFrame.u32Stride[2]};
 }

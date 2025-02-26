@@ -16,10 +16,13 @@ std::unique_ptr<MemoryBlock> CpuMemoryPool::allocate(uint32_t size,
 }
 
 int32_t CpuMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
-  delete[] block->virtualAddress;
+  if (block->own_memory) {
+    delete[] (uint8_t *)block->virtualAddress;
+  }
   block->virtualAddress = nullptr;
   block->size = 0;
   block->physicalAddress = 0;
+  block->own_memory = false;
   return 0;
 }
 

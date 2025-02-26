@@ -92,7 +92,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     LOGE("model type not supported: %d", model_type);
     return nullptr;
   }
-
+  LOGI("to open model: %s", model_path.c_str());
   // 然后初始化模型
   if (model) {
     int ret = model->modelOpen(model_path);

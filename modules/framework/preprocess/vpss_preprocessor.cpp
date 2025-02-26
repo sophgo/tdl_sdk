@@ -1,18 +1,51 @@
 #include "preprocess/vpss_preprocessor.hpp"
 
+#include <cvi_vb.h>
+#include <cvi_vpss.h>
 #include <cassert>
-
-#include "core/utils/vpss_helper.h"
+// #include "core/utils/vpss_helper.h"
 #include "cvi_comm_vb.h"
 #include "cvi_tdl_log.hpp"
 #include "image/vpss_image.hpp"
-#include "memory/cvi_memory_pool.hpp"
+
+void init_vpss_grp_attr(VPSS_GRP_ATTR_S* pstVpssGrpAttr, CVI_U32 srcWidth,
+                        CVI_U32 srcHeight, PIXEL_FORMAT_E enSrcFormat,
+                        CVI_U8 dev);
+
+void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dstWidth,
+                        CVI_U32 dstHeight, PIXEL_FORMAT_E enDstFormat,
+                        CVI_BOOL keepAspectRatio);
 VpssContext::VpssContext() {
-  int s32Ret = CVI_SYS_Init();
+  CVI_S32 s32Ret = CVI_SUCCESS;
+
+#ifdef __CV181X__
+  CVI_VB_Exit();
+  VB_CONFIG_S stVbConf;
+  memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
+  stVbConf.u32MaxPoolCnt = 1;
+  stVbConf.astCommPool[0].u32BlkSize = 100 * 100 * 3;
+  stVbConf.astCommPool[0].u32BlkCnt = 1;
+
+  s32Ret = CVI_VB_SetConfig(&stVbConf);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("CVI_VB_SetConf failed!\n");
+    assert(false);
+  }
+
+  s32Ret = CVI_VB_Init();
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("CVI_VB_Init failed!\n");
+    assert(false);
+  }
+  LOGI("CVI_VB_Init success");
+#endif
+
+  s32Ret = CVI_SYS_Init();
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_SYS_Init failed!\n");
     assert(false);
   }
+  LOGI("VpssContext init done,ret: %d", s32Ret);
 }
 
 VpssContext::~VpssContext() {
@@ -21,6 +54,9 @@ VpssContext::~VpssContext() {
     LOGE("CVI_SYS_Exit failed!\n");
     assert(false);
   }
+#ifdef __CV181X__
+  CVI_VB_Exit();
+#endif
 }
 
 VpssContext* VpssContext::GetInstance() {
@@ -42,18 +78,17 @@ VpssPreprocessor::~VpssPreprocessor() {
 }
 
 bool VpssPreprocessor::init() {
-  VpssContext* vpss_context = VpssContext::GetInstance();
-  UNUSED(vpss_context);
+  VpssContext::GetInstance();
+  CVI_S32 s32Ret = CVI_SUCCESS;
 
   VPSS_GRP_ATTR_S vpss_grp_attr;
   VPSS_CHN_ATTR_S vpss_chn_attr;
   // Not magic number, only for init.
   uint32_t width = 100;
   uint32_t height = 100;
-  VPSS_GRP_DEFAULT_HELPER2(&vpss_grp_attr, width, height, VI_PIXEL_FORMAT,
-                           device_);
-  VPSS_CHN_DEFAULT_HELPER(&vpss_chn_attr, width, height,
-                          PIXEL_FORMAT_RGB_888_PLANAR, true);
+  init_vpss_grp_attr(&vpss_grp_attr, width, height, VI_PIXEL_FORMAT, device_);
+  init_vpss_chn_attr(&vpss_chn_attr, width, height, PIXEL_FORMAT_RGB_888_PLANAR,
+                     true);
 
   int id = CVI_VPSS_GetAvailableGrp();
   LOGI("got available groupid:%d", id);
@@ -70,30 +105,35 @@ bool VpssPreprocessor::init() {
 
   LOGI("Create Vpss Group(%d) Dev(%d)\n", group_id_, device_);
 
-  CVI_S32 s32Ret = CVI_VPSS_ResetGrp(group_id_);
+  s32Ret = CVI_VPSS_ResetGrp(group_id_);
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_ResetGrp(grp:%d) failed with %#x!\n", group_id_, s32Ret);
     return false;
   }
+  LOGI("CVI_VPSS_ResetGrp success");
   s32Ret = CVI_VPSS_SetChnAttr(group_id_, 0, &vpss_chn_attr);
 
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_SetChnAttr failed with %#x\n", s32Ret);
     return false;
   }
-
+  LOGI("CVI_VPSS_SetChnAttr success");
   s32Ret = CVI_VPSS_EnableChn(group_id_, 0);
 
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_VPSS_EnableChn failed with %#x\n", s32Ret);
     return false;
   }
+  LOGI("CVI_VPSS_EnableChn success");
   s32Ret = CVI_VPSS_StartGrp(group_id_);
   if (s32Ret != CVI_SUCCESS) {
     LOGE("start vpss group failed. s32Ret: 0x%x !\n", s32Ret);
     return false;
   }
+  LOGI("CVI_VPSS_StartGrp success");
   memset(&crop_reset_attr_, 0, sizeof(VPSS_CROP_INFO_S));
+  LOGI("VpssPreprocessor init done");
+  is_init_ = true;
   return true;
 }
 
@@ -114,6 +154,7 @@ bool VpssPreprocessor::stop() {
     LOGE("CVI_VPSS_DestroyGrp failed with %#x!\n", s32Ret);
     return false;
   }
+  LOGI("VpssPreprocessor stop done,destroy grp:%d", group_id_);
   return true;
 }
 
@@ -207,8 +248,8 @@ bool VpssPreprocessor::generateVPSSParams(
       "%d,cropY:%d,cropWidth:%d,cropHeight:%d,mean[0]:%.2f,mean[1]:%.2f,mean[2]"
       ":%.2f,"
       "scale[0]:%.2f,scale[1]:%.2f,scale[2]:%.2f,aspectRatio:%d",
-      params.dstWidth, params.dstHeight, params.dstImageFormat,
-      params.dstPixDataType, params.cropX, params.cropY, params.cropWidth,
+      params.dstWidth, params.dstHeight, (int)params.dstImageFormat,
+      (int)params.dstPixDataType, params.cropX, params.cropY, params.cropWidth,
       params.cropHeight, params.mean[0], params.mean[1], params.mean[2],
       params.scale[0], params.scale[1], params.scale[2],
       params.keepAspectRatio);
@@ -373,6 +414,7 @@ int32_t VpssPreprocessor::preprocessToImage(
       static_cast<const VIDEO_FRAME_INFO_S*>(src_image->getInternalData());
   VPSSImage* vpss_image = static_cast<VPSSImage*>(image.get());
   vpss_image->checkToSwapRGB();
+
   // prepare output frame
   LOGI("to CVI_VPSS_SendChnFrame");
   ret = CVI_VPSS_SendChnFrame(group_id_, 0, output_frame, -1);
@@ -426,12 +468,12 @@ int32_t VpssPreprocessor::preprocessToTensor(
   }
   LOGI(
       "to "
-      "preprocessToImage,params:%f,%f,%f,mean:%f,%f,%f,scale:%f,%f,%f,"
-      "dstHeight:%d,"
-      "dstWidth:%d,dstPixDataType:%d,dstStride:%d",
+      "preprocessToImage,scale:%f,%f,%f,mean:%f,%f,%f,dstHeight:%d,dstWidth:%d,"
+      "dstPixDataType:%d,dstStride:%d",
       params.scale[0], params.scale[1], params.scale[2], params.mean[0],
       params.mean[1], params.mean[2], params.dstHeight, params.dstWidth,
-      params.dstPixDataType, strides[0]);
+      (int)params.dstPixDataType, strides[0]);
+
   ret = preprocessToImage(src_image, params, vpss_image);
   if (ret != 0) {
     LOGE("preprocessToImage failed, ret: %d\n", ret);
@@ -448,4 +490,46 @@ int32_t VpssPreprocessor::preprocessToTensor(
     }
   }
   return ret;
+}
+
+void init_vpss_grp_attr(VPSS_GRP_ATTR_S* pstVpssGrpAttr, CVI_U32 srcWidth,
+                        CVI_U32 srcHeight, PIXEL_FORMAT_E enSrcFormat,
+                        CVI_U8 dev) {
+  memset(pstVpssGrpAttr, 0, sizeof(VPSS_GRP_ATTR_S));
+  pstVpssGrpAttr->stFrameRate.s32SrcFrameRate = -1;
+  pstVpssGrpAttr->stFrameRate.s32DstFrameRate = -1;
+  pstVpssGrpAttr->enPixelFormat = enSrcFormat;
+  pstVpssGrpAttr->u32MaxW = srcWidth;
+  pstVpssGrpAttr->u32MaxH = srcHeight;
+#ifndef __CV186X__
+  pstVpssGrpAttr->u8VpssDev = dev;
+#endif
+}
+void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dstWidth,
+                        CVI_U32 dstHeight, PIXEL_FORMAT_E enDstFormat,
+                        CVI_BOOL keepAspectRatio) {
+  pastVpssChnAttr->u32Width = dstWidth;
+  pastVpssChnAttr->u32Height = dstHeight;
+  pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
+  pastVpssChnAttr->enPixelFormat = enDstFormat;
+
+  pastVpssChnAttr->stFrameRate.s32SrcFrameRate = -1;
+  pastVpssChnAttr->stFrameRate.s32DstFrameRate = -1;
+  pastVpssChnAttr->u32Depth = 1;
+  pastVpssChnAttr->bMirror = CVI_FALSE;
+  pastVpssChnAttr->bFlip = CVI_FALSE;
+  if (keepAspectRatio) {
+    pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_AUTO;
+    pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
+  } else {
+    pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_NONE;
+  }
+  pastVpssChnAttr->stNormalize.bEnable = CVI_FALSE;
+  pastVpssChnAttr->stNormalize.factor[0] = 0;
+  pastVpssChnAttr->stNormalize.factor[1] = 0;
+  pastVpssChnAttr->stNormalize.factor[2] = 0;
+  pastVpssChnAttr->stNormalize.mean[0] = 0;
+  pastVpssChnAttr->stNormalize.mean[1] = 0;
+  pastVpssChnAttr->stNormalize.mean[2] = 0;
+  pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
 }

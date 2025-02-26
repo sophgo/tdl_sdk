@@ -6,7 +6,7 @@ class OpenCVImage : public BaseImage {
  public:
   // 构造与析构
   // OpenCVImage();
-  ~OpenCVImage() override = default;
+  ~OpenCVImage();
 
   OpenCVImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
               ImagePixDataType pix_data_type, bool alloc_memory = false,
@@ -38,8 +38,9 @@ class OpenCVImage : public BaseImage {
 
  private:
   std::vector<cv::Mat> mats_;  // OpenCV 图像数据
-  int32_t mat_type_;           // 图像类型
-  uint32_t img_width_;         // 图像宽度
-  uint32_t img_height_;        // 图像高度
-  char tmp_buffer[1];          // use to construct temp Mat
+  std::vector<size_t> steps_;
+  int32_t mat_type_;     // 图像类型
+  uint32_t img_width_;   // 图像宽度
+  uint32_t img_height_;  // 图像高度
+  char tmp_buffer[1];    // use to construct temp Mat
 };

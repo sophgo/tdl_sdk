@@ -151,30 +151,27 @@ bool CVI_TDLModelTestSuite::matchObjects(
     const std::vector<std::vector<float>> &gt_objects,
     const std::vector<std::vector<float>> &pred_objects,
     const float iout_thresh, const float score_thresh) {
-  for (const auto &gt_object : gt_objects) {
+  std::vector<int> gt_matched(gt_objects.size(), 0);
+  std::vector<int> pred_matched(pred_objects.size(), 0);
+
+  bool is_matched = true;
+  for (size_t i = 0; i < gt_objects.size(); i++) {
+    auto &gt_object = gt_objects[i];
     std::vector<std::vector<float>> matched_dets;
-    for (const auto &pred_object : pred_objects) {
+    float max_iout = 0.0f;
+    std::vector<int> pred_matched_idx;
+    for (size_t j = 0; j < pred_objects.size(); j++) {
+      const auto &pred_object = pred_objects[j];
       float iout = iou(gt_object, pred_object);
-      if (gt_object[5] == pred_object[5]) {
-        if (iout > iout_thresh) {
-          matched_dets.push_back(pred_object);
-        }
+      if (iout > max_iout) {
+        max_iout = iout;
+      }
+      if (gt_object[5] == pred_object[5] && iout > iout_thresh) {
+        matched_dets.push_back(pred_object);
+        pred_matched_idx.push_back(j);
       }
     }
-    if (matched_dets.size() == 0) {
-      std::cout << "no matched det,gtbox:[" << gt_object[0] << ","
-                << gt_object[1] << "," << gt_object[2] << "," << gt_object[3]
-                << "]"
-                << ",score:" << gt_object[4] << ",class_id:" << gt_object[5]
-                << std::endl;
-      for (const auto &pred_object : pred_objects) {
-        std::cout << "predbox:[" << pred_object[0] << "," << pred_object[1]
-                  << "," << pred_object[2] << "," << pred_object[3] << "]"
-                  << ",score:" << pred_object[4]
-                  << ",class_id:" << pred_object[5] << std::endl;
-      }
-      return false;
-    } else if (matched_dets.size() > 1) {
+    if (matched_dets.size() > 1) {
       std::cout << "has multiple matched det,gtbox:[" << gt_object[0] << ","
                 << gt_object[1] << "," << gt_object[2] << "," << gt_object[3]
                 << "]"
@@ -186,8 +183,8 @@ bool CVI_TDLModelTestSuite::matchObjects(
                   << ",score:" << matched_det[4]
                   << ",class_id:" << matched_det[5] << std::endl;
       }
-      return false;
-    } else {
+      is_matched = false;
+    } else if (matched_dets.size() == 1) {
       float score_diff = std::abs(matched_dets[0][4] - gt_object[4]);
       if (score_diff > score_thresh) {
         std::cout << "score diff: " << score_diff << ",gtbox:[" << gt_object[0]
@@ -198,11 +195,41 @@ bool CVI_TDLModelTestSuite::matchObjects(
                   << matched_dets[0][0] << "," << matched_dets[0][1] << ","
                   << matched_dets[0][2] << "," << matched_dets[0][3] << "]"
                   << ",pred_class_id:" << matched_dets[0][5] << std::endl;
-        return false;
+        is_matched = false;
+      } else {
+        gt_matched[i] = 1;
+        pred_matched[pred_matched_idx[0]] = 1;
       }
     }
   }
-  return true;
+  for (size_t i = 0; i < gt_objects.size(); i++) {
+    if (gt_matched[i] == 0) {
+      if (gt_objects[i][5] == 0.5) {
+        std::cout << "warning, low conf box not matched ,gtbox:["
+                  << gt_objects[i][0] << "," << gt_objects[i][1] << ","
+                  << gt_objects[i][2] << "," << gt_objects[i][3] << "]"
+                  << ",score:" << gt_objects[i][4]
+                  << ",class_id:" << gt_objects[i][5] << std::endl;
+      } else {
+        std::cout << "gt box not matched ,gtbox:[" << gt_objects[i][0] << ","
+                  << gt_objects[i][1] << "," << gt_objects[i][2] << ","
+                  << gt_objects[i][3] << "]"
+                  << ",score:" << gt_objects[i][4]
+                  << ",class_id:" << gt_objects[i][5] << std::endl;
+        is_matched = false;
+      }
+    }
+  }
+  for (size_t i = 0; i < pred_objects.size(); i++) {
+    if (pred_matched[i] == 0) {
+      std::cout << "pred box not matched ,predbox:[" << pred_objects[i][0]
+                << "," << pred_objects[i][1] << "," << pred_objects[i][2] << ","
+                << pred_objects[i][3] << "],score:" << pred_objects[i][4]
+                << ",class_id:" << pred_objects[i][5] << std::endl;
+      is_matched = false;
+    }
+  }
+  return is_matched;
 }
 
 bool CVI_TDLModelTestSuite::matchScore(const std::vector<std::vector<float>> &gt_info,

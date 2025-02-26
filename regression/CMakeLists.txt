@@ -74,7 +74,7 @@ else()
   ${MIDDLEWARE_LIBS}
   )
 endif()
-if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688"))
+if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR (${CVI_PLATFORM} STREQUAL "CV181X")) 
   set(UnitTests
   # reg_daily_petdet.cpp
   # reg_daily_handdet.cpp
@@ -98,34 +98,7 @@ if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688"))
   reg_daily_face_feature_bm.cpp
   # reg_daily_handkeypoint.cpp
   )
-else()
-set(UnitTests
-  reg_daily_fq.cpp
-  reg_daily_mobiledet.cpp
-  reg_daily_md.cpp
-  reg_daily_fr.cpp
-  reg_daily_mask_classification.cpp
-  reg_daily_lpd.cpp
-  reg_daily_lpr.cpp
-  reg_daily_mot.cpp
-  reg_daily_reid.cpp
-  reg_daily_thermal_fd.cpp
-  reg_daily_thermal_person_detection.cpp
-  reg_daily_core.cpp
-  reg_daily_liveness.cpp
-  reg_daily_fall.cpp
-  reg_daily_retinaface.cpp
-  reg_daily_retinafaceIR.cpp
-  reg_daily_retinaface_hardhat.cpp
-  reg_daily_fdmask.cpp
-  reg_daily_eye_classification.cpp
-  reg_daily_yawn_classification.cpp
-  reg_daily_fl.cpp
-  reg_daily_incarod.cpp
-  reg_daily_face_cap.cpp
-  reg_daily_feature_matching.cpp
-  reg_daily_mobiledetion.cpp
-)
+
 endif()
 
 set(UnitTest_SRCS

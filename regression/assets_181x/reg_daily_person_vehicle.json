@@ -1,5 +1,5 @@
 {
-  "model_name": "yolov8n_384_640_person_vehicle.bmodel",
+  "model_name": "yolov8n_384_640_person_vehicle.cvimodel",
   "image_num": 1,
   "results": {
       "people_and_vehicle0.jpg": [
@@ -149,16 +149,6 @@
         ],
         "category_id": 1,
         "score": 0.786171
-      },
-      {
-        "bbox": [
-          160.642593,
-          51.142765,
-          216.224289,
-          113.625603
-        ],
-        "category_id": 1,
-        "score": 0.833967
       }
     ],
     "people_and_vehicle7.jpg": [

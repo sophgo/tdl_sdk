@@ -104,7 +104,7 @@ else()
             ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
             ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
             ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-            ${MIDDLEWARE_SDK_ROOT}/lib/libldc.so
+            # ${MIDDLEWARE_SDK_ROOT}/lib/libldc.so
             ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
             ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
             ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so

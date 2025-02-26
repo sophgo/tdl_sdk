@@ -88,26 +88,39 @@ int32_t BmMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
 
 int32_t BmMemoryPool::flushCache(std::unique_ptr<MemoryBlock> &block) {
   // TODO: implement
-  if (block->virtualAddress != nullptr) {
-    bm_status_t st = bm_mem_flush_device_mem((bm_handle_t)bm_handle_,
-                                             (bm_device_mem_t *)block->handle);
-    if (st != BM_SUCCESS) {
-      return -1;
-    }
-  } else {
+  if (block == nullptr) {
+    LOGI("flushCache block is nullptr");
+    return -1;
+  } else if (block->virtualAddress == nullptr) {
+    LOGI("flushCache block->virtualAddress is nullptr");
+    return -1;
+  } else if (block->physicalAddress == 0) {
+    LOGI("flushCache block->physicalAddress is 0");
+    return -1;
+  }
+  bm_status_t st = bm_mem_flush_device_mem((bm_handle_t)bm_handle_,
+                                           (bm_device_mem_t *)block->handle);
+  if (st != BM_SUCCESS) {
     return -1;
   }
   return 0;
 }
 
 int32_t BmMemoryPool::invalidateCache(std::unique_ptr<MemoryBlock> &block) {
-  // TODO: implement
-  if (block->virtualAddress != nullptr) {
-    bm_status_t st = bm_mem_invalidate_device_mem(
-        (bm_handle_t)bm_handle_, (bm_device_mem_t *)block->handle);
-    if (st != BM_SUCCESS) {
-      return -1;
-    }
+  if (block == nullptr) {
+    LOGI("invalidateCache block is nullptr");
+    return -1;
+  } else if (block->virtualAddress == nullptr) {
+    LOGI("invalidateCache block->virtualAddress is nullptr");
+    return -1;
+  } else if (block->physicalAddress == 0) {
+    LOGI("invalidateCache block->physicalAddress is 0");
+    return -1;
+  }
+  bm_status_t st = bm_mem_invalidate_device_mem(
+      (bm_handle_t)bm_handle_, (bm_device_mem_t *)block->handle);
+  if (st != BM_SUCCESS) {
+    return -1;
   }
   return 0;
 }

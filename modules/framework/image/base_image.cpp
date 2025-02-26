@@ -57,9 +57,8 @@ int32_t BaseImage::allocateMemory() {
     LOGE("allocate memory failed");
     return -1;
   }
-  int32_t ret = setupMemory(
-      memory_block_->physicalAddress,
-      static_cast<uint8_t*>(memory_block_->virtualAddress), image_size);
+  memory_block_->own_memory = true;
+  int32_t ret = setupMemoryBlock(memory_block_);
   if (ret != 0) {
     LOGE("setup memory failed");
     return ret;

@@ -18,10 +18,10 @@ fi
 
 # get tdl_sdk root dir
 CVI_TDL_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TMP_WORKING_DIR="$CVI_TDL_ROOT"/tmp
+TMP_WORKING_DIR="$CVI_TDL_ROOT"/tmp"$CHIP_ARCH"
 BUILD_WORKING_DIR="$TMP_WORKING_DIR"/build_sdk
 BUILD_DOWNLOAD_DIR="$TMP_WORKING_DIR"/_deps
-TDL_SDK_INSTALL_PATH="$CVI_TDL_ROOT"/install
+TDL_SDK_INSTALL_PATH="$CVI_TDL_ROOT"/install"$CHIP_ARCH"
 
 # Set build opetion and type
 BUILD_OPTION=

@@ -21,8 +21,8 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::allocate(uint32_t size,
   std::unique_ptr<MemoryBlock> block = std::make_unique<MemoryBlock>();
 
   CVI_S32 ret =
-      CVI_SYS_IonAlloc(&block->physicalAddress, &block->virtualAddress,
-                       cfg.acName, cfg.u32BlkSize);
+      CVI_SYS_IonAlloc(reinterpret_cast<CVI_U64 *>(&block->physicalAddress),
+                       &block->virtualAddress, cfg.acName, cfg.u32BlkSize);
   if (ret != CVI_SUCCESS) {
     std::cout << "allocate ion failed" << std::endl;
     return nullptr;
@@ -32,14 +32,19 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::allocate(uint32_t size,
   block->own_memory = true;
   num_allocated_++;
 
+  LOGI(
+      "allocate memory success,size: %d,physicalAddress: %lx,virtualAddress: "
+      "%p",
+      size, block->physicalAddress, block->virtualAddress);
   return block;
 }
 
 int32_t CviMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
-  if (block != nullptr && block->own_memory) {
+  if (block != nullptr && block->own_memory && block->own_memory == true) {
     CVI_SYS_IonFree(block->physicalAddress, block->virtualAddress);
     return 0;
   }
+  block = nullptr;
   return -1;
 }
 
@@ -79,9 +84,14 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::create_vb(uint32_t size) {
 }
 
 int32_t CviMemoryPool::flushCache(std::unique_ptr<MemoryBlock> &block) {
-  if (block == nullptr || block->virtualAddress == nullptr ||
-      block->physicalAddress == 0) {
+  if (block == nullptr) {
     LOGI("flushCache block is nullptr");
+    return -1;
+  } else if (block->virtualAddress == nullptr) {
+    LOGI("flushCache block->virtualAddress is nullptr");
+    return -1;
+  } else if (block->physicalAddress == 0) {
+    LOGI("flushCache block->physicalAddress is 0");
     return -1;
   }
   CVI_S32 ret = CVI_SYS_IonFlushCache(block->physicalAddress,
@@ -92,9 +102,14 @@ int32_t CviMemoryPool::flushCache(std::unique_ptr<MemoryBlock> &block) {
 }
 
 int32_t CviMemoryPool::invalidateCache(std::unique_ptr<MemoryBlock> &block) {
-  if (block == nullptr || block->virtualAddress == nullptr ||
-      block->physicalAddress == 0) {
+  if (block == nullptr) {
     LOGI("invalidateCache block is nullptr");
+    return -1;
+  } else if (block->virtualAddress == nullptr) {
+    LOGI("invalidateCache block->virtualAddress is nullptr");
+    return -1;
+  } else if (block->physicalAddress == 0) {
+    LOGI("invalidateCache block->physicalAddress is 0");
     return -1;
   }
   CVI_S32 ret = CVI_SYS_IonInvalidateCache(block->physicalAddress,

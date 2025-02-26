@@ -21,6 +21,7 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
       "createImage,width:%d,height:%d,imageFormat:%d,pixDataType:%d,alloc_"
       "memory:%d,platform:%d",
       width, height, imageFormat, pixDataType, alloc_memory, platform);
+
   switch (platform) {
     case InferencePlatform::CVITEK:
     case InferencePlatform::CV186X:
@@ -32,13 +33,12 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
       return nullptr;
 #endif
     case InferencePlatform::BM168X:
-#if defined(__BM168X__)
+
       LOGI("create OpenCVImage");
       return std::make_shared<OpenCVImage>(width, height, imageFormat,
                                            pixDataType, alloc_memory);
-#else
+    default:
       return nullptr;
-#endif
   }
 }
 
@@ -68,29 +68,28 @@ std::shared_ptr<BaseImage> ImageFactory::readImage(const std::string& file_path,
     LOGE("Failed to create image");
     return nullptr;
   }
-  if (image->getImageType() == ImageImplType::VPSS_FRAME) {
-    int32_t ret = image->allocateMemory();
-    if (ret != 0) {
-      LOGE("Failed to allocate memory");
-      return nullptr;
-    }
-
-    std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
-    uint32_t stride = image->getStrides()[0];
-    uint8_t* ptr_dst = image->getVirtualAddress()[0];
-    uint8_t* ptr_src = img.data;
+  int32_t ret = image->allocateMemory();
+  if (ret != 0) {
+    LOGE("Failed to allocate memory");
+    return nullptr;
+  }
+  std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
+  uint32_t stride = image->getStrides()[0];
+  uint8_t* ptr_dst = image->getVirtualAddress()[0];
+  uint8_t* ptr_src = img.data;
+  if (img.step[0] == stride) {
+    memcpy(ptr_dst, ptr_src, img.rows * stride);
+  } else {
     for (int r = 0; r < img.rows; r++) {
       uint8_t* dst = ptr_dst + r * stride;
       memcpy(dst, ptr_src + r * img.step[0], img.cols * 3);
     }
-
-  } else if (image->getImageType() == ImageImplType::OPENCV_FRAME) {
-    image = std::make_shared<OpenCVImage>(img, image_format);
   }
-  int32_t ret = image->flushCache();
+  ret = image->flushCache();
+
   if (ret != 0) {
     LOGE("Failed to flush cache");
-    return nullptr;
+    // return nullptr;
   }
   LOGI("read image done,addr:%lx,ptr[100]:%d", image->getVirtualAddress()[0],
        image->getVirtualAddress()[0][100]);

@@ -18,15 +18,14 @@ class CviNet : public BaseNet {
   std::shared_ptr<BaseTensor> getOutputTensor(const std::string& name) override;
   int32_t updateInputTensors() override;
   int32_t updateOutputTensors() override;
-  int32_t setInputTensorPhyAddr(const std::string& tensor_name,
-                                uint64_t phy_addr) override;
 
  private:
-  void setupTensorInfo(void* cvi_tensor, int32_t num_tensors,
+  void setupTensorInfo(CVI_TENSOR* cvi_tensor, int32_t num_tensors,
                        std::map<std::string, TensorInfo>& tensor_info);
   void* model_handle_ = nullptr;
   CVI_TENSOR* input_tensors_ = nullptr;
   CVI_TENSOR* output_tensors_ = nullptr;
+  std::shared_ptr<BaseMemoryPool> memory_pool_;
 };
 
 #endif  // CVI_NET_H

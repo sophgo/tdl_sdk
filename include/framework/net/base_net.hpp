@@ -40,8 +40,6 @@ class BaseNet {
   int32_t getDeviceId() const;
   const std::vector<std::string>& getInputNames() const;
   const std::vector<std::string>& getOutputNames() const;
-  virtual int32_t setInputTensorPhyAddr(const std::string& tensor_name,
-                                        uint64_t phy_addr);
 
  protected:
   NetParam net_param_;

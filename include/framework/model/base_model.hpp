@@ -40,6 +40,7 @@ class BaseModel {
   virtual int32_t onModelClosed() { return 0; }
   void setTypeMapping(const std::map<int, int>& type_mapping);
   void setModelThreshold(float threshold);
+  float getModelThreshold() const { return model_threshold_; }
 
  private:
   int getFitBatchSize(int left_size) const;

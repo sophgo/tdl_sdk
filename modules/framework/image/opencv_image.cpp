@@ -3,6 +3,13 @@
 #include "cvi_tdl_log.hpp"
 #include "memory/cpu_memory_pool.hpp"
 #include "utils/common_utils.hpp"
+
+#if defined(__BM168X__) || defined(__CV186X__)
+#include "memory/bm_memory_pool.hpp"
+#else
+#include "memory/cvi_memory_pool.hpp"
+#endif
+
 // OpenCVImage::OpenCVImage() {}
 
 OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
@@ -15,7 +22,11 @@ OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
   image_type_ = ImageImplType::OPENCV_FRAME;
   memory_pool_ = memory_pool;
   if (memory_pool == nullptr) {
-    memory_pool_ = std::make_shared<CpuMemoryPool>();
+#if defined(__BM168X__) || defined(__CV186X__)
+    memory_pool_ = std::make_shared<BmMemoryPool>(nullptr);
+#else
+    memory_pool_ = std::make_shared<CviMemoryPool>();
+#endif
   }
   if (alloc_memory) {
     int32_t ret = allocateMemory();
@@ -46,7 +57,11 @@ OpenCVImage::OpenCVImage(cv::Mat& mat, ImageFormat imageFormat) {
       "BGR_PACKED as default",
       mat.channels());
   image_type_ = ImageImplType::OPENCV_FRAME;
-  memory_pool_ = std::make_shared<CpuMemoryPool>();
+#if defined(__BM168X__) || defined(__CV186X__)
+  memory_pool_ = std::make_shared<BmMemoryPool>(nullptr);
+#else
+  memory_pool_ = std::make_shared<CviMemoryPool>();
+#endif
   memory_block_ = std::make_unique<MemoryBlock>();
   memory_block_->physicalAddress = 0;
   memory_block_->virtualAddress = mat.data;
@@ -55,6 +70,30 @@ OpenCVImage::OpenCVImage(cv::Mat& mat, ImageFormat imageFormat) {
 
   mats_.clear();
   mats_.push_back(mat);
+}
+
+OpenCVImage::~OpenCVImage() {
+  if (memory_block_ == nullptr) {
+    LOGE("memory_block_ is nullptr");
+    return;
+  }
+  LOGI(
+      "to destroy OpenCVImage,width: %d,height: %d,image_format: "
+      "%d,pix_data_type: %d,own_memory: "
+      "%d",
+      img_width_, img_height_, image_format_, pix_data_type_,
+      memory_block_->own_memory);
+  if (memory_block_ && memory_block_->own_memory) {
+    if (memory_pool_ != nullptr) {
+      int32_t ret = memory_pool_->release(memory_block_);
+      if (ret != 0) {
+        LOGE("memory_pool_->release failed");
+      }
+    } else {
+      LOGE("memory_pool_ is nullptr");
+      assert(false);
+    }
+  }
 }
 
 int32_t OpenCVImage::convertType(ImageFormat imageFormat,
@@ -138,7 +177,11 @@ std::vector<uint32_t> OpenCVImage::getStrides() const {
 }
 std::vector<uint64_t> OpenCVImage::getPhysicalAddress() const {
   std::vector<uint64_t> physical_addresses;
-
+  uint32_t offset = 0;
+  for (const auto& mat : mats_) {
+    physical_addresses.push_back(memory_block_->physicalAddress + offset);
+    offset += mat.step[0] * mat.rows;
+  }
   return physical_addresses;
 }
 std::vector<uint8_t*> OpenCVImage::getVirtualAddress() const {
@@ -173,16 +216,27 @@ int32_t OpenCVImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
                                  uint32_t length) {
   LOGI("setupMemory, phy_addr: %llu, vir_addr: %p, length: %d,num_channels: %d",
        phy_addr, vir_addr, length, mats_.size());
-  uint8_t* data = (uint8_t*)vir_addr;
+
   size_t num_channels = mats_.size();
+  steps_.clear();
   mats_.clear();
+  uint32_t offset = 0;
   for (size_t i = 0; i < num_channels; i++) {
     int step = img_width_ * CV_ELEM_SIZE(mat_type_);
-    mats_.push_back(cv::Mat(img_height_, img_width_, mat_type_, data, step));
+    steps_.push_back(step);
+    int bytes = img_height_ * step;
+#ifdef __BM168X__
+    mats_.push_back(cv::Mat(img_height_, img_width_, bytes, mat_type_,
+                            &steps_[i], vir_addr + offset, phy_addr + offset,
+                            -1));
+#else
+    mats_.push_back(
+        cv::Mat(img_height_, img_width_, mat_type_, vir_addr + offset, step));
+#endif
 
     LOGI("update mats_[%d].data: %p,step:%d,matstep:%d", i,
          (void*)mats_[i].data, step, mats_[i].step[0]);
-    data += img_height_ * step;
+    offset += bytes;
   }
 
   return 0;

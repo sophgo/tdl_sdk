@@ -202,9 +202,12 @@ int32_t YoloV8Detection::outputParse(
   float input_width_f = float(input_width);
   float input_height_f = float(input_height);
   float inverse_th = std::log(model_threshold_ / (1 - model_threshold_));
-  LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
-       input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
-       input_tensor.shape[3]);
+  LOGI(
+      "outputParse,batch size:%d,input shape:%d,%d,%d,%d,model "
+      "threshold:%f,inverse th:%f",
+      images.size(), input_tensor.shape[0], input_tensor.shape[1],
+      input_tensor.shape[2], input_tensor.shape[3], model_threshold_,
+      inverse_th);
 
   std::stringstream ss;
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {

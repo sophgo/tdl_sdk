@@ -14,9 +14,8 @@
 #include <gtest/gtest.h>
 
 #include "cvi_tdl_test.hpp"
-#include "image/vpss_image.hpp"
-// #include "json.hpp"
-#include "memory/cvi_memory_pool.hpp"
+
+#include "image/base_image.hpp"
 
 namespace cvitdl {
 namespace unitest {
@@ -44,14 +43,14 @@ TEST_F(VPSSImageTestSuite, TestConstructorAndBasicOperations) {
   const ImageFormat format = ImageFormat::BGR_PLANAR;
   const ImagePixDataType pixType = ImagePixDataType::UINT8;
 
-  // 创建VPSSImage对象
-  VPSSImage vpssImage(width, height, format, pixType);
+  std::shared_ptr<BaseImage> image =
+      ImageFactory::createImage(width, height, format, pixType);
 
   // 验证基本属性
-  EXPECT_EQ(vpssImage.getWidth(), width);
-  EXPECT_EQ(vpssImage.getHeight(), height);
-  EXPECT_EQ(vpssImage.getImageFormat(), format);
-  EXPECT_EQ(vpssImage.getPixDataType(), pixType);
+  EXPECT_EQ(image->getWidth(), width);
+  EXPECT_EQ(image->getHeight(), height);
+  EXPECT_EQ(image->getImageFormat(), format);
+  EXPECT_EQ(image->getPixDataType(), pixType);
 }
 
 TEST_F(VPSSImageTestSuite, TestCacheOperations) {

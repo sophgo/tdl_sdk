@@ -12,7 +12,7 @@ if("${CVI_PLATFORM}" STREQUAL "BM1688")
               )
 elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/memory/cvi_memory_pool.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/image/vpss_image.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/preprocess/vpss_preprocessor.cpp)
 else()
@@ -25,8 +25,7 @@ else()
 endif()
 
 set(PROJ_SRCS   
-                ${CMAKE_CURRENT_SOURCE_DIR}/image/base_image.cpp                
-                ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp                
+                ${CMAKE_CURRENT_SOURCE_DIR}/image/base_image.cpp                            
                 ${CMAKE_CURRENT_SOURCE_DIR}/image/opencv_image.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/image/image_factory.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/preprocess/base_preprocessor.cpp

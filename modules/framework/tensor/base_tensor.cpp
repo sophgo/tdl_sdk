@@ -139,6 +139,9 @@ int32_t BaseTensor::constructImage(std::shared_ptr<BaseImage> image,
   memory_block->virtualAddress = img_ptr;
   memory_block->size = image_size;
   memory_block->own_memory = false;
+
+  LOGI("constructImage, img_addr:%llu, img_ptr:%p, size:%d", img_addr, img_ptr,
+       image_size);
   int32_t ret = image->setupMemoryBlock(memory_block);
   if (ret != 0) {
     LOGE("image setAddrInfo failed, ret: %d\n", ret);
@@ -182,7 +185,7 @@ int32_t BaseTensor::copyFromImage(std::shared_ptr<BaseImage> image,
       "bytes:%d,memory_block_bytes:%d,memory_start:%p,memory_end:%p,element_"
       "bytes:%d",
       getCapacity(), memory_block_->size, memory_block_->virtualAddress,
-      (uint8_t*)(memory_block_->virtualAddress + memory_block_->size),
+      (uint8_t*)(memory_block_->virtualAddress) + memory_block_->size,
       element_bytes_);
   for (int i = 0; i < image->getPlaneNum(); i++) {
     uint8_t* src_ptr = src_ptrs[i];
@@ -211,6 +214,8 @@ int32_t BaseTensor::release() {
   }
   num_elements_ = 0;
   shape_.clear();
+  owns_data_ = false;
+  return 0;
 }
 
 int32_t BaseTensor::invalidateCache() {

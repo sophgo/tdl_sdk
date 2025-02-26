@@ -44,13 +44,19 @@ elseif("${MW_VER}" STREQUAL "v3")
 endif()
 
 string(TOLOWER ${CVI_PLATFORM} CVI_PLATFORM_LOWER)
-set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/cv186x/)
+if("${CVI_PLATFORM}" STREQUAL "SOPHON")
+  set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/modules/isp/include/cv186x)
+else()
+  set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/${CVI_PLATFORM_LOWER}/
+                      ${MIDDLEWARE_SDK_ROOT}/component/isp/common
+    )
+endif()
 
-set(MIDDLEWARE_INCLUDES
-    ${ISP_HEADER_PATH}
-    ${MIDDLEWARE_SDK_ROOT}/include/
-    ${KERNEL_ROOT}/include/
+set(MIDDLEWARE_INCLUDES ${ISP_HEADER_PATH}
+                        ${MIDDLEWARE_SDK_ROOT}/include/
+                        ${MIDDLEWARE_SDK_ROOT}/include/linux/
 )
+
 
 
 function(set_mw_v3_libs)
@@ -127,7 +133,7 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-                ${MIDDLEWARE_SDK_ROOT}/lib/libldc.so
+                # ${MIDDLEWARE_SDK_ROOT}/lib/libldc.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
