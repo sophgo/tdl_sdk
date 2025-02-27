@@ -53,9 +53,9 @@ float LSTR::gen_x_by_y(float ys, std::vector<float> &point_line) {
 }
 
 int LSTR::outputParser(cvtdl_lane_t *lane_meta) {
-  float *out_conf = getOutputRawPtr<float>(1);
-  float *out_feature = getOutputRawPtr<float>(0);
-  CVI_SHAPE output_shape = getOutputShape(0);
+  float *out_conf = getOutputRawPtr<float>(0);
+  float *out_feature = getOutputRawPtr<float>(1);
+  CVI_SHAPE output_shape = getOutputShape(1);
   std::vector<std::vector<float>> point_map;
   std::vector<float> lane_dis;
   //(5 lanes) * (1 conf + 2 (upper & lower) + 4 poly coeffs)

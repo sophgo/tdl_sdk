@@ -48,8 +48,8 @@ int FaceAttribute_cls::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face_a
     if (ret != CVI_TDL_SUCCESS) {
       return ret;
     }
-    float *gender_score = getOutputRawPtr<float>(1);
-    float *age = getOutputRawPtr<float>(0);
+    float *gender_score = getOutputRawPtr<float>(0);
+    float *age = getOutputRawPtr<float>(1);
     float *glass = getOutputRawPtr<float>(2);
     float *mask_score = getOutputRawPtr<float>(3);
 
@@ -81,8 +81,8 @@ int FaceAttribute_cls::inference(VIDEO_FRAME_INFO_S *frame, cvtdl_face_t *face_a
         return ret;
       }
 
-      float *gender_score = getOutputRawPtr<float>(1);
-      float *age = getOutputRawPtr<float>(0);
+      float *gender_score = getOutputRawPtr<float>(0);
+      float *age = getOutputRawPtr<float>(1);
       float *glass = getOutputRawPtr<float>(2);
       float *mask_score = getOutputRawPtr<float>(3);
 

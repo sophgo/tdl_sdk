@@ -62,6 +62,8 @@ function(buildninstallcpp)
   endif()
 endfunction(buildninstallcpp)
 
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
                     ${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
@@ -246,6 +248,9 @@ else()
     set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
   endif()
 endif()
+
+set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MLIR_LIBS} ${OPENCV_LIBS} ${IVE_LIBS})
+
 if (NOT DEFINED NO_OPENCV)
   buildninstall(NAME sample_vi_occ INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_kit ${SAMPLE_LIBS} )
   buildninstall(NAME sample_vi_pose INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )

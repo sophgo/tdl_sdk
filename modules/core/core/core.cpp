@@ -445,7 +445,7 @@ void Core::inputPreprocessConfig(const bm_net_info_t *net_info,
 }
 
 void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_mi,
-                                std::map<std::string, TensorInfo> &tensor_info) {
+                                std::vector<std::pair<std::string, TensorInfo>> &tensor_info) {
   for (int32_t i = 0; i < p_mi->in.num; i++) {
     TensorInfo tinfo;
     memset(&tinfo, 0, sizeof(tinfo));
@@ -469,14 +469,14 @@ void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_m
     if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
       tinfo.raw_pointer = p_mi->in.raw_pointer[i];
     }
-    tensor_info.emplace(std::pair<std::string, TensorInfo>(tinfo.tensor_name, tinfo));
+    tensor_info.emplace_back(tinfo.tensor_name, tinfo);
     LOGI("input:%s,elem_num:%d,elem_size:%d\n", tinfo.tensor_name.c_str(), int(tinfo.tensor_elem),
          int(tinfo.tensor_size));
   }
 }
 
 void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_mi,
-                                 std::map<std::string, TensorInfo> &tensor_info) {
+                                  std::vector<std::pair<std::string, TensorInfo>> &tensor_info) {
   for (int32_t i = 0; i < p_mi->out.num; i++) {
     TensorInfo tinfo;
     memset(&tinfo, 0, sizeof(tinfo));
@@ -492,7 +492,7 @@ void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_
     tinfo.data_type = net_info->output_dtypes[i];
     tinfo.qscale = net_info->output_scales[i];
     tinfo.raw_pointer = p_mi->out.raw_pointer[i];
-    tensor_info.emplace(std::pair<std::string, TensorInfo>(tinfo.tensor_name, tinfo));
+    tensor_info.emplace_back(tinfo.tensor_name, tinfo);
     LOGI("output:%s,elem_num:%d,elem_size:%d\n", tinfo.tensor_name.c_str(), int(tinfo.tensor_elem),
          int(tinfo.tensor_size));
   }
@@ -903,7 +903,7 @@ int Core::modelOpen(const int8_t *buf, uint32_t size) {
 }
 
 void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
-                           std::map<std::string, TensorInfo> *tensor_info) {
+                          std::vector<std::pair<std::string, TensorInfo>> *tensor_info) {
   for (int32_t i = 0; i < num_tensors; i++) {
     TensorInfo tinfo;
     tinfo.tensor_handle = tensor + i;
@@ -913,7 +913,7 @@ void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
     tinfo.tensor_elem = CVI_NN_TensorCount(tinfo.tensor_handle);
     tinfo.tensor_size = CVI_NN_TensorSize(tinfo.tensor_handle);
     tinfo.qscale = CVI_NN_TensorQuantScale(tinfo.tensor_handle);
-    tensor_info->insert(std::pair<std::string, TensorInfo>(tinfo.tensor_name, tinfo));
+    tensor_info->emplace_back(tinfo.tensor_name, tinfo);
     LOGI("input:%s,elem_num:%d,elem_size:%d\n", tinfo.tensor_name.c_str(), int(tinfo.tensor_elem),
          int(tinfo.tensor_size));
   }
@@ -923,15 +923,19 @@ void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
 int Core::getInputMemType() { return mp_mi->conf.input_mem_type; }
 
 const TensorInfo &Core::getOutputTensorInfo(const std::string &name) {
-  if (m_output_tensor_info.find(name) != m_output_tensor_info.end()) {
-    return m_output_tensor_info[name];
+  for (auto iter = m_output_tensor_info.begin(); iter != m_output_tensor_info.end(); iter++) {
+    if (iter->first == name) {
+      return iter->second;
+    }
   }
   throw std::invalid_argument("cannot find output tensor name: " + name);
 }
 
 const TensorInfo &Core::getInputTensorInfo(const std::string &name) {
-  if (m_input_tensor_info.find(name) != m_input_tensor_info.end()) {
-    return m_input_tensor_info[name];
+  for (auto iter = m_input_tensor_info.begin(); iter != m_input_tensor_info.end(); iter++) {
+    if (iter->first == name) {
+      return iter->second;
+    }
   }
   throw std::invalid_argument("cannot find input tensor name: " + name);
 }

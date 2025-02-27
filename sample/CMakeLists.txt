@@ -1,5 +1,5 @@
 # Copyright 2020 cvitek Inc.
-cmake_minimum_required(VERSION 3.18.4)
+cmake_minimum_required(VERSION 3.16.3)
 
 project(sample)
 
@@ -34,6 +34,8 @@ function(buildninstall)
   endif()
 endfunction(buildninstall)
 
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
                     ${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
@@ -46,7 +48,7 @@ set(REG_INCLUDES
     ${MIDDLEWARE_SDK_ROOT}/sample/common
     ${MIDDLEWARE_SDK_ROOT}/component/isp/common
 )
-# CMAKE_CURRENT_SOURCE_DIR 指 当前cmakelists所在路径
+
 if(${CVI_PLATFORM} STREQUAL "SOPHON")
     set(SAMPLE_LIBS
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
@@ -146,6 +148,9 @@ else()
         set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
     endif()
 endif()
+
+set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MLIR_LIBS} ${OPENCV_LIBS} ${IVE_LIBS})
+
 if (NOT DEFINED NO_OPENCV)
     buildninstall(NAME sample_img_face_recognition INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_kit ${SAMPLE_LIBS})
     buildninstall(NAME sample_img_lane_det INC ${REG_INCLUDES} DEPS cvi_tdl atomic cvi_kit ${SAMPLE_LIBS})
