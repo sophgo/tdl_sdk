@@ -99,6 +99,9 @@ if(DEFINED ENV{PERF_EVAL})
   message("set PERF_EVAL")
 endif()
 
+get_directory_property(compile_defs COMPILE_DEFINITIONS)
+message(STATUS "All compile definitions: ${compile_defs}")
+
 # Get current commit
 execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE CURRENT_COMMIT)
 execute_process(COMMAND git rev-parse --abbrev-ref HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE LATEST_BRANCH)

@@ -2,8 +2,7 @@
 
 #include <numeric>
 
-#include "core/object/cvtdl_object_types.h"
-#include "cvi_tdl_log.hpp"
+#include "utils/tdl_log.hpp"
 #define topK 2
 
 std::vector<int> top_indices(std::vector<float> &vec, int topk) {
@@ -28,7 +27,7 @@ std::vector<int> top_indices(std::vector<float> &vec, int topk) {
 
 template <typename T>
 void parse_output(T *ptr_out, const int num_cls, float qscale,
-                  cvtdl_class_meta_t *cls_meta) {
+                  std::shared_ptr<ModelClassificationInfo> cls_meta) {
   std::vector<float> scores;
   for (int i = 0; i < num_cls; i++) {
     scores.push_back(ptr_out[i] * qscale);
@@ -37,8 +36,8 @@ void parse_output(T *ptr_out, const int num_cls, float qscale,
   std::vector<int> topKIndex = top_indices(scores, max_top);
 
   for (int i = 0; i < max_top; i++) {
-    cls_meta->cls[i] = topKIndex[i];
-    cls_meta->score[i] = scores[topKIndex[i]];
+    cls_meta->topk_class_ids.push_back(topKIndex[i]);
+    cls_meta->topk_scores.push_back(scores[topKIndex[i]]);
   }
 }
 
@@ -69,7 +68,7 @@ RgbImageClassification::~RgbImageClassification() {}
 
 int32_t RgbImageClassification::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
-    std::vector<void *> &out_datas) {
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string output_name = net_->getOutputNames()[0];
   TensorInfo oinfo = net_->getTensorInfo(output_name);
 
@@ -77,18 +76,17 @@ int32_t RgbImageClassification::outputParse(
       net_->getOutputTensor(output_name);
 
   for (size_t b = 0; b < images.size(); b++) {
-    cvtdl_class_meta_t *cls_meta =
-        (cvtdl_class_meta_t *)malloc(sizeof(cvtdl_class_meta_t));
-    memset(cls_meta, 0, sizeof(cvtdl_class_meta_t));
-    if (oinfo.data_type == ImagePixDataType::INT8) {
+    std::shared_ptr<ModelClassificationInfo> cls_meta =
+        std::make_shared<ModelClassificationInfo>();
+    if (oinfo.data_type == TDLDataType::INT8) {
       parse_output<int8_t>(output_tensor->getBatchPtr<int8_t>(b),
                            oinfo.tensor_elem, oinfo.qscale, cls_meta);
-    } else if (oinfo.data_type == ImagePixDataType::UINT8) {
+    } else if (oinfo.data_type == TDLDataType::UINT8) {
       parse_output<uint8_t>(output_tensor->getBatchPtr<uint8_t>(b),
                             oinfo.tensor_elem, oinfo.qscale, cls_meta);
-    } else if (oinfo.data_type == ImagePixDataType::FP32) {
-      parse_output<float>(output_tensor->getBatchPtr<float>(b), oinfo.tensor_elem,
-                          oinfo.qscale, cls_meta);
+    } else if (oinfo.data_type == TDLDataType::FP32) {
+      parse_output<float>(output_tensor->getBatchPtr<float>(b),
+                          oinfo.tensor_elem, oinfo.qscale, cls_meta);
     } else {
       LOGE("unsupported data type: %d", oinfo.data_type);
     }

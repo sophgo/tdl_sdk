@@ -4,7 +4,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "core/cvi_tdl_types_mem.h"
 #include "cvi_tdl_test.hpp"
 #include "image/base_image.hpp"
 #include "json.hpp"
@@ -35,7 +34,6 @@ class MobileDetectionV2TestSuite : public CVI_TDLModelTestSuite {
 };
 
 TEST_F(MobileDetectionV2TestSuite, accuracy) {
-
   const float bbox_threshold = 0.80;
   const float score_threshold = 0.2;
 
@@ -55,13 +53,15 @@ TEST_F(MobileDetectionV2TestSuite, accuracy) {
 
       ASSERT_NE(frame, nullptr);
       // break;
-      std::vector<void *> out_data;
+      std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
       std::vector<std::shared_ptr<BaseImage>> input_images;
       input_images.push_back(frame);
       EXPECT_EQ(m_model->inference(input_images, out_data), 0);
       EXPECT_EQ(out_data.size(), 1);
-      cvtdl_object_t *obj_meta = (cvtdl_object_t *)out_data[0];
-      std::cout << "obj_meta->size:" << obj_meta->size << std::endl;
+      EXPECT_EQ(out_data[0]->getType(), ModelOutputType::OBJECT_DETECTION);
+      std::shared_ptr<ModelBoxInfo> obj_meta =
+          std::static_pointer_cast<ModelBoxInfo>(out_data[0]);
+      std::cout << "obj_meta->size:" << obj_meta->bboxes.size() << std::endl;
       auto expected_dets = iter.value();
       // ASSERT_EQ(obj_meta->size, expected_dets.size());
       std::vector<std::vector<float>> gt_dets;
@@ -71,20 +71,17 @@ TEST_F(MobileDetectionV2TestSuite, accuracy) {
       }
 
       std::vector<std::vector<float>> pred_dets;
-      for (uint32_t det_index = 0; det_index < obj_meta->size; det_index++) {
-        pred_dets.push_back({obj_meta->info[det_index].bbox.x1,
-                             obj_meta->info[det_index].bbox.y1,
-                             obj_meta->info[det_index].bbox.x2,
-                             obj_meta->info[det_index].bbox.y2,
-                             obj_meta->info[det_index].bbox.score,
-                             float(obj_meta->info[det_index].classes)});
+      for (uint32_t det_index = 0; det_index < obj_meta->bboxes.size();
+           det_index++) {
+        pred_dets.push_back(
+            {obj_meta->bboxes[det_index].x1, obj_meta->bboxes[det_index].y1,
+             obj_meta->bboxes[det_index].x2, obj_meta->bboxes[det_index].y2,
+             obj_meta->bboxes[det_index].score,
+             float(obj_meta->bboxes[det_index].class_id)});
       }
 
       EXPECT_TRUE(
           matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
-
-      model_factory.releaseOutput(
-          TDL_MODEL_TYPE_OBJECT_DETECTION_MOBILEDETV2_PEDESTRIAN, out_data);
     }
   }
 }

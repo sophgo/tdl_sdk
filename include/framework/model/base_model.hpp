@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "common/model_output_types.hpp"
 #include "image/base_image.hpp"
 #include "net/base_net.hpp"
 #include "preprocess/base_preprocessor.hpp"
@@ -29,16 +30,15 @@ class BaseModel {
    */
   virtual int32_t inference(
       const std::vector<std::shared_ptr<BaseImage>>& images,
-      std::vector<void*>& out_datas, const int src_width = 0,
-      const int src_height = 0);
+      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas);
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>>& images,
-      std::vector<void*>& out_datas) = 0;
+      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) = 0;
   int32_t setPreprocessor(std::shared_ptr<BasePreprocessor> preprocessor);
   std::shared_ptr<BasePreprocessor> getPreprocessor() { return preprocessor_; }
   virtual int32_t onModelOpened() { return 0; }
   virtual int32_t onModelClosed() { return 0; }
-  void setTypeMapping(const std::map<int, int>& type_mapping);
+  void setTypeMapping(const std::map<int, TDLObjectType>& type_mapping);
   void setModelThreshold(float threshold);
   float getModelThreshold() const { return model_threshold_; }
 
@@ -62,7 +62,7 @@ class BaseModel {
   std::vector<std::vector<float>> batch_rescale_params_;
 
   std::vector<std::shared_ptr<BaseImage>> tmp_preprocess_images_;
-  std::map<int, int> type_mapping_;
+  std::map<int, TDLObjectType> type_mapping_;
 };
 
 #endif  // INCLUDE_BASE_MODEL_H_

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <numeric>
 
-#include "cvi_tdl_log.hpp"
+#include "utils/tdl_log.hpp"
 
 BaseTensor::BaseTensor(int element_bytes,
                        std::shared_ptr<BaseMemoryPool> memory_pool)

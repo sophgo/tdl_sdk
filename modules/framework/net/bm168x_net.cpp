@@ -6,9 +6,9 @@
 #include <cassert>
 #include <sstream>
 
-#include "cvi_tdl_log.hpp"
 #include "memory/bm_memory_pool.hpp"
 #include "utils/common_utils.hpp"
+#include "utils/tdl_log.hpp"
 ModelInstance::~ModelInstance() {
   for (auto kv : model_bmrts_) {
     if (kv.second) {
@@ -188,19 +188,19 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
   tensor_info.qscale = p_qscale[idx];
   tensor_info.zero_point = p_zero_point[idx];
   if (p_data_type[idx] == BM_FLOAT32) {
-    tensor_info.data_type = ImagePixDataType::FP32;
+    tensor_info.data_type = TDLDataType::FP32;
   } else if (p_data_type[idx] == BM_FLOAT16) {
-    tensor_info.data_type = ImagePixDataType::FP16;
+    tensor_info.data_type = TDLDataType::FP16;
   } else if (p_data_type[idx] == BM_BFLOAT16) {
-    tensor_info.data_type = ImagePixDataType::BF16;
+    tensor_info.data_type = TDLDataType::BF16;
   } else if (p_data_type[idx] == BM_INT16) {
-    tensor_info.data_type = ImagePixDataType::INT16;
+    tensor_info.data_type = TDLDataType::INT16;
   } else if (p_data_type[idx] == BM_UINT16) {
-    tensor_info.data_type = ImagePixDataType::UINT16;
+    tensor_info.data_type = TDLDataType::UINT16;
   } else if (p_data_type[idx] == BM_INT8) {
-    tensor_info.data_type = ImagePixDataType::INT8;
+    tensor_info.data_type = TDLDataType::INT8;
   } else if (p_data_type[idx] == BM_UINT8) {
-    tensor_info.data_type = ImagePixDataType::UINT8;
+    tensor_info.data_type = TDLDataType::UINT8;
   } else {
     LOGE("unsupported data type:%d", p_data_type[idx]);
     assert(0);
@@ -334,9 +334,14 @@ int32_t BM168xNet::updateInputTensors() {
     BaseTensor *tensor = dynamic_cast<BaseTensor *>(output_tensor.get());
     MemoryBlock *memory_block = tensor->getMemoryBlock();
     bm_device_mem_t output_dev_mem = *(bm_device_mem_t *)memory_block->handle;
-    out_shape.dims[0] = batch_n;
+    if (batch_n == 1 && out_shape.dims[0] > 1) {
+      LOGW("special case,batch_n:%d,out_shape:%d", batch_n, out_shape.dims[0]);
+      output_tensor->reshape(out_shape.dims[0], st[1], st[2], st[3]);
 
-    output_tensor->reshape(batch_n, st[1], st[2], st[3]);
+    } else {
+      out_shape.dims[0] = batch_n;
+      output_tensor->reshape(batch_n, st[1], st[2], st[3]);
+    }
 
     // output_dev_mem.size = output_tensor->get_size();
     output_tensors_[tensor_idx].dtype = net_info_->output_dtypes[tensor_idx];

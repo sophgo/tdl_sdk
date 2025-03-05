@@ -5,11 +5,8 @@
 #include <sstream>
 #include <vector>
 
-#include "core/cvi_tdl_types_mem.h"
-#include "core/cvi_tdl_types_mem_internal.h"
-#include "core/object/cvtdl_object_types.h"
-#include "cvi_tdl_log.hpp"
 #include "utils/detection_helper.hpp"
+#include "utils/tdl_log.hpp"
 template <typename T>
 inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls,
                            int anchor_idx, int cls_offset, float qscale,
@@ -156,15 +153,15 @@ void YoloV8Detection::decodeBboxFeatureMap(int batch_idx, int stride,
 
   std::vector<float> grid_logits;  // 4x16
   float qscale = boxinfo.qscale;
-  if (boxinfo.data_type == ImagePixDataType::INT8) {
+  if (boxinfo.data_type == TDLDataType::INT8) {
     int8_t *p_box_int8 = box_tensor->getBatchPtr<int8_t>(batch_idx);
     grid_logits = get_box_vals(p_box_int8, num_anchor, anchor_idx,
                                num_box_channel_, qscale);
-  } else if (boxinfo.data_type == ImagePixDataType::UINT8) {
+  } else if (boxinfo.data_type == TDLDataType::UINT8) {
     uint8_t *p_box_uint8 = box_tensor->getBatchPtr<uint8_t>(batch_idx);
     grid_logits = get_box_vals(p_box_uint8, num_anchor, anchor_idx,
                                num_box_channel_, qscale);
-  } else if (boxinfo.data_type == ImagePixDataType::FP32) {
+  } else if (boxinfo.data_type == TDLDataType::FP32) {
     float *p_box_float = box_tensor->getBatchPtr<float>(batch_idx);
     grid_logits = get_box_vals(p_box_float, num_anchor, anchor_idx,
                                num_box_channel_, qscale);
@@ -194,7 +191,7 @@ void YoloV8Detection::decodeBboxFeatureMap(int batch_idx, int stride,
 }
 int32_t YoloV8Detection::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
-    std::vector<void *> &out_datas) {
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
   uint32_t input_width = input_tensor.shape[3];
@@ -214,8 +211,7 @@ int32_t YoloV8Detection::outputParse(
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
 
-    std::vector<cvtdl_object_t> vec_obj;
-    std::map<int, std::vector<cvtdl_bbox_t>> lb_boxes;
+    std::map<int, std::vector<ObjectBoxInfo>> lb_boxes;
     for (size_t i = 0; i < strides.size(); i++) {
       int stride = strides[i];
       std::string cls_name;
@@ -241,15 +237,15 @@ int32_t YoloV8Detection::outputParse(
       for (int j = 0; j < num_anchor; j++) {
         int max_logit_c = -1;
         float max_logit = -1000;
-        if (classinfo.data_type == ImagePixDataType::INT8) {
+        if (classinfo.data_type == TDLDataType::INT8) {
           parse_cls_info<int8_t>(cls_tensor->getBatchPtr<int8_t>(b), num_anchor,
                                  num_cls, j, cls_offset, cls_qscale, &max_logit,
                                  &max_logit_c);
-        } else if (classinfo.data_type == ImagePixDataType::UINT8) {
+        } else if (classinfo.data_type == TDLDataType::UINT8) {
           parse_cls_info<uint8_t>(cls_tensor->getBatchPtr<uint8_t>(b),
                                   num_anchor, num_cls, j, cls_offset,
                                   cls_qscale, &max_logit, &max_logit_c);
-        } else if (classinfo.data_type == ImagePixDataType::FP32) {
+        } else if (classinfo.data_type == TDLDataType::FP32) {
           parse_cls_info<float>(cls_tensor->getBatchPtr<float>(b), num_anchor,
                                 num_cls, j, cls_offset, cls_qscale, &max_logit,
                                 &max_logit_c);
@@ -263,37 +259,41 @@ int32_t YoloV8Detection::outputParse(
         float score = 1 / (1 + exp(-max_logit));
         std::vector<float> box;
         decodeBboxFeatureMap(b, stride, j, box);
-        cvtdl_bbox_t bbox;
+        ObjectBoxInfo bbox;
         bbox.score = score;
         bbox.x1 = std::clamp(box[0], 0.0f, input_width_f);
         bbox.y1 = std::clamp(box[1], 0.0f, input_height_f);
         bbox.x2 = std::clamp(box[2], 0.0f, input_width_f);
         bbox.y2 = std::clamp(box[3], 0.0f, input_height_f);
+        bbox.class_id = max_logit_c;
         LOGI("bbox:[%f,%f,%f,%f],score:%f,label:%d,logit:%f\n", bbox.x1,
              bbox.y1, bbox.x2, bbox.y2, bbox.score, max_logit_c, max_logit);
-        if (type_mapping_.count(max_logit_c)) {
-          max_logit_c = type_mapping_[max_logit_c];
-        }
+
         lb_boxes[max_logit_c].push_back(bbox);
       }
     }
-    DetectionHelper::nmsObjects(lb_boxes, 0.5);
+    DetectionHelper::nmsObjects(lb_boxes, nms_threshold_);
     std::vector<float> scale_params = batch_rescale_params_[b];
     LOGI("scale_params:%f,%f,%f,%f", scale_params[0], scale_params[1],
          scale_params[2], scale_params[3]);
     ss << "batch:" << b << "\n";
+
+    std::shared_ptr<ModelBoxInfo> obj = std::make_shared<ModelBoxInfo>();
+    obj->image_width = image_width;
+    obj->image_height = image_height;
     for (auto &bbox : lb_boxes) {
       for (auto &b : bbox.second) {
         DetectionHelper::rescaleBbox(b, scale_params,
                                      net_param_.pre_params.cropX,
                                      net_param_.pre_params.cropY);
+        if (type_mapping_.count(b.class_id)) {
+          b.object_type = type_mapping_[b.class_id];
+        }
+        obj->bboxes.push_back(b);
         ss << "bbox:[" << b.x1 << "," << b.y1 << "," << b.x2 << "," << b.y2
            << "],score:" << b.score << ",label:" << bbox.first << "\n";
       }
     }
-    cvtdl_object_t *obj = (cvtdl_object_t *)malloc(sizeof(cvtdl_object_t));
-    memset(obj, 0, sizeof(cvtdl_object_t));
-    DetectionHelper::convertDetStruct(lb_boxes, obj, image_height, image_width);
     out_datas.push_back(obj);
   }
   LOGI("outputParse done,ss:%s", ss.str().c_str());

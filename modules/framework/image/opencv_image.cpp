@@ -1,8 +1,8 @@
 #include "image/opencv_image.hpp"
 
-#include "cvi_tdl_log.hpp"
 #include "memory/cpu_memory_pool.hpp"
 #include "utils/common_utils.hpp"
+#include "utils/tdl_log.hpp"
 
 #if defined(__BM168X__) || defined(__CV186X__)
 #include "memory/bm_memory_pool.hpp"
@@ -13,8 +13,8 @@
 // OpenCVImage::OpenCVImage() {}
 
 OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
-                         ImageFormat imageFormat,
-                         ImagePixDataType pix_data_type, bool alloc_memory,
+                         ImageFormat imageFormat, TDLDataType pix_data_type,
+                         bool alloc_memory,
                          std::shared_ptr<BaseMemoryPool> memory_pool) {
   prepareImageInfo(width, height, imageFormat, pix_data_type);
   image_format_ = imageFormat;
@@ -40,12 +40,11 @@ OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
 OpenCVImage::OpenCVImage(cv::Mat& mat, ImageFormat imageFormat) {
   if (mat.channels() == 1) {
     assert(imageFormat == ImageFormat::GRAY);
-    prepareImageInfo(mat.cols, mat.rows, ImageFormat::GRAY,
-                     ImagePixDataType::UINT8);
+    prepareImageInfo(mat.cols, mat.rows, ImageFormat::GRAY, TDLDataType::UINT8);
   } else if (mat.channels() == 3) {
     assert(imageFormat == ImageFormat::BGR_PACKED ||
            imageFormat == ImageFormat::RGB_PACKED);
-    prepareImageInfo(mat.cols, mat.rows, imageFormat, ImagePixDataType::UINT8);
+    prepareImageInfo(mat.cols, mat.rows, imageFormat, TDLDataType::UINT8);
   } else {
     throw std::runtime_error(
         "OpenCVImage::OpenCVImage(cv::Mat& mat) mat.channels(): " +
@@ -97,8 +96,8 @@ OpenCVImage::~OpenCVImage() {
 }
 
 int32_t OpenCVImage::convertType(ImageFormat imageFormat,
-                                 ImagePixDataType pix_data_type) {
-  if (pix_data_type == ImagePixDataType::UINT8) {
+                                 TDLDataType pix_data_type) {
+  if (pix_data_type == TDLDataType::UINT8) {
     if (imageFormat == ImageFormat::RGB_PACKED ||
         imageFormat == ImageFormat::BGR_PACKED) {
       return CV_8UC3;
@@ -107,7 +106,7 @@ int32_t OpenCVImage::convertType(ImageFormat imageFormat,
                imageFormat == ImageFormat::RGB_PLANAR) {
       return CV_8UC1;
     }
-  } else if (pix_data_type == ImagePixDataType::INT8) {
+  } else if (pix_data_type == TDLDataType::INT8) {
     if (imageFormat == ImageFormat::RGB_PACKED ||
         imageFormat == ImageFormat::BGR_PACKED) {
       return CV_8SC3;
@@ -116,7 +115,7 @@ int32_t OpenCVImage::convertType(ImageFormat imageFormat,
                imageFormat == ImageFormat::RGB_PLANAR) {
       return CV_8SC1;
     }
-  } else if (pix_data_type == ImagePixDataType::FP32) {
+  } else if (pix_data_type == TDLDataType::FP32) {
     if (imageFormat == ImageFormat::GRAY ||
         imageFormat == ImageFormat::BGR_PLANAR ||
         imageFormat == ImageFormat::RGB_PLANAR) {
@@ -130,7 +129,7 @@ int32_t OpenCVImage::convertType(ImageFormat imageFormat,
 }
 int32_t OpenCVImage::prepareImageInfo(uint32_t width, uint32_t height,
                                       ImageFormat imageFormat,
-                                      ImagePixDataType pix_data_type) {
+                                      TDLDataType pix_data_type) {
   int32_t type = convertType(imageFormat, pix_data_type);
   if (type == -1) {
     LOGI("unsupported image format: %d,pix_data_type: %d", imageFormat,

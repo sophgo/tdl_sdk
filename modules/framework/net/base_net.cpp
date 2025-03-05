@@ -1,6 +1,6 @@
 #include "net/base_net.hpp"
 
-#include "cvi_tdl_log.hpp"
+#include "utils/tdl_log.hpp"
 BaseNet::BaseNet(const NetParam& net_param) { net_param_ = net_param; }
 
 int32_t BaseNet::setup() { return 0; }

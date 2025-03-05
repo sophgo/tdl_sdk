@@ -5,7 +5,7 @@
 #include "models/tdl_model_factory.hpp"
 
 void visualize_object_detection(std::shared_ptr<BaseImage> image,
-                                cvtdl_object_t *object_meta,
+                                std::shared_ptr<ModelBoxInfo> obj_meta,
                                 const std::string &str_img_name) {
   cv::Mat mat;
   bool is_rgb;
@@ -19,19 +19,22 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
     std::cout << "convert to bgr" << std::endl;
     cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
   }
-  std::cout << "object_meta->size: " << object_meta->size << std::endl;
-  for (size_t i = 0; i < object_meta->size; i++) {
-    cvtdl_object_info_t *object_info = &object_meta->info[i];
-    cv::rectangle(mat,
-                  cv::Rect(int(object_info->bbox.x1), int(object_info->bbox.y1),
-                           int(object_info->bbox.x2 - object_info->bbox.x1),
-                           int(object_info->bbox.y2 - object_info->bbox.y1)),
-                  cv::Scalar(0, 0, 255), 2);
+  std::cout << "object_meta->bboxes.size(): " << obj_meta->bboxes.size()
+            << std::endl;
+  for (size_t i = 0; i < obj_meta->bboxes.size(); i++) {
+    cv::rectangle(
+        mat,
+        cv::Rect(int(obj_meta->bboxes[i].x1), int(obj_meta->bboxes[i].y1),
+                 int(obj_meta->bboxes[i].x2 - obj_meta->bboxes[i].x1),
+                 int(obj_meta->bboxes[i].y2 - obj_meta->bboxes[i].y1)),
+        cv::Scalar(0, 0, 255), 2);
     char sz_text[128];
-    sprintf(sz_text, "%d,%.2f", object_info->classes, object_info->bbox.score);
-    cv::putText(mat, sz_text,
-                cv::Point(int(object_info->bbox.x1), int(object_info->bbox.y1)),
-                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2);
+    sprintf(sz_text, "%d,%.2f", obj_meta->bboxes[i].class_id,
+            obj_meta->bboxes[i].score);
+    cv::putText(
+        mat, sz_text,
+        cv::Point(int(obj_meta->bboxes[i].x1), int(obj_meta->bboxes[i].y1)),
+        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2);
   }
   std::cout << "save image to " << str_img_name << std::endl;
 
@@ -92,25 +95,28 @@ int main(int argc, char **argv) {
     return -1;
   }
   model->setModelThreshold(model_threshold);
-  std::vector<void *> out_datas;
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image};
   model->inference(input_images, out_datas);
 
   for (size_t i = 0; i < out_datas.size(); i++) {
-    cvtdl_object_t *obj_meta = (cvtdl_object_t *)out_datas[i];
-    for (int i = 0; i < obj_meta->size; i++) {
+    if (out_datas[i]->getType() != ModelOutputType::OBJECT_DETECTION) {
+      printf("out_datas[%d] is not ModelOutputType::OBJECT_DETECTION\n", i);
+      continue;
+    }
+    std::shared_ptr<ModelBoxInfo> obj_meta =
+        std::static_pointer_cast<ModelBoxInfo>(out_datas[i]);
+    for (int i = 0; i < obj_meta->bboxes.size(); i++) {
       std::cout << "obj_meta_index: " << i << "  "
-                << "class: " << obj_meta->info[i].classes << "  "
-                << "score: " << obj_meta->info[i].bbox.score << "  "
-                << "bbox: " << obj_meta->info[i].bbox.x1 << " "
-                << obj_meta->info[i].bbox.y1 << " " << obj_meta->info[i].bbox.x2
-                << " " << obj_meta->info[i].bbox.y2 << std::endl;
+                << "class: " << obj_meta->bboxes[i].class_id << "  "
+                << "score: " << obj_meta->bboxes[i].score << "  "
+                << "bbox: " << obj_meta->bboxes[i].x1 << " "
+                << obj_meta->bboxes[i].y1 << " " << obj_meta->bboxes[i].x2
+                << " " << obj_meta->bboxes[i].y2 << std::endl;
     }
     std::string str_img_name = "object_detection_" + std::to_string(i) + ".jpg";
     visualize_object_detection(image, obj_meta, str_img_name);
   }
-
-  model_factory.releaseOutput(model_id, out_datas);
 
   return 0;
 }

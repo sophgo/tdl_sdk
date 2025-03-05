@@ -1,16 +1,15 @@
-#include "models/tdl_model_factory.hpp"
+#include "tdl_model_factory.hpp"
 
-#include "core/cvi_tdl_types_mem.h"
-#include "cvi_tdl_log.hpp"
+#include "face_attribute/face_attribute_cls.hpp"
 #include "face_detection/scrfd.hpp"
 #include "face_landmark/face_landmark_det2.hpp"
-#include "face_attribute/face_attribute_cls.hpp"
 #include "feature_extract/feature_extraction.hpp"
+#include "image_classification/rgb_image_classification.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov10.hpp"
 #include "object_detection/yolov6.hpp"
 #include "object_detection/yolov8.hpp"
-#include "image_classification/rgb_image_classification.hpp"
+#include "utils/tdl_log.hpp"
 TDLModelFactory::TDLModelFactory(const std::string model_dir)
     : model_dir_(model_dir + "/") {
   std::string str_ext = ".cvimodel";
@@ -65,6 +64,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   std::shared_ptr<BaseModel> model = nullptr;
   (void)device_id;
   // 先创建模型实例
+  std::map<int, TDLObjectType> model_type_mapping;
   if (model_type == TDL_MODEL_TYPE_FACE_DETECTION_SCRFD) {
     model = std::make_shared<SCRFD>();
   } else if (model_type ==
@@ -80,6 +80,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
              TDL_MODEL_TYPE_OBJECT_DETECTION_MOBILEDETV2_PEDESTRIAN) {
     model = std::make_shared<MobileDetV2Detection>(
         MobileDetV2Detection::Category::pedestrian, 0.5);
+    model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_PERSON;
+
   } else if (model_type == TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2) {
     model = std::make_shared<FaceLandmarkerDet2>();
   } else if (model_type == TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS) {
@@ -99,6 +101,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     if (ret != 0) {
       return nullptr;
     }
+    model->setTypeMapping(model_type_mapping);
   }
   return model;
 }
@@ -111,50 +114,4 @@ void TDLModelFactory::setModelPath(const TDL_MODEL_TYPE model_type,
 void TDLModelFactory::setModelPathMap(
     const std::map<TDL_MODEL_TYPE, std::string> &model_path_map) {
   model_path_map_ = model_path_map;
-}
-
-int32_t TDLModelFactory::releaseOutput(const TDL_MODEL_TYPE model_type,
-                                       std::vector<void *> &output_datas) {
-  if (output_datas_type_str_.find(model_type) == output_datas_type_str_.end()) {
-    LOGE("model path not found for model type: %d", model_type);
-    assert(false);
-    return -1;
-  }
-  std::string output_datas_type = output_datas_type_str_[model_type];
-  if (output_datas_type == "feature") {
-    for (size_t i = 0; i < output_datas.size(); i++) {
-      cvtdl_feature_t *feature = (cvtdl_feature_t *)output_datas[i];
-      CVI_TDL_FreeCpp(feature);
-      free(feature);
-    }
-  } else if (output_datas_type == "face_det") {
-    for (size_t i = 0; i < output_datas.size(); i++) {
-      cvtdl_face_t *face_info = (cvtdl_face_t *)output_datas[i];
-      CVI_TDL_FreeCpp(face_info);
-      free(face_info);
-    }
-  } else if (output_datas_type == "objdet") {
-    for (size_t i = 0; i < output_datas.size(); i++) {
-      cvtdl_object_t *obj_info = (cvtdl_object_t *)output_datas[i];
-      CVI_TDL_FreeCpp(obj_info);
-      free(obj_info);
-    }
-  } else if (output_datas_type == "landmark") {
-    for (size_t i = 0; i < output_datas.size(); i++) {
-      cvtdl_face_info_t *face_info = (cvtdl_face_info_t *)output_datas[i];
-      CVI_TDL_FreeCpp(face_info);
-      free(face_info);
-    }
-  } else if (output_datas_type == "cls") {
-    for (size_t i = 0; i < output_datas.size(); i++) {
-      cvtdl_class_meta_t *cls_meta = (cvtdl_class_meta_t *)output_datas[i];
-      CVI_TDL_FreeCpp(cls_meta);
-      free(cls_meta);
-    }
-  } else {
-    LOGE("output datas type not supported: %s", output_datas_type.c_str());
-    assert(false);
-    return -1;
-  }
-  return 0;
 }

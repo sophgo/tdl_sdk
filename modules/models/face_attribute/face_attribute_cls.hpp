@@ -10,7 +10,7 @@ class FaceAttribute_CLS final : public BaseModel {
 
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>> &images,
-      std::vector<void *> &out_datas) override;
+      std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) override;
   virtual int32_t onModelOpened() override;
 
  private:

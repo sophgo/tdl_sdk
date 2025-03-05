@@ -2,15 +2,15 @@
 
 #include <cvi_buffer.h>
 
-#include "cvi_tdl_log.hpp"
 #include "cvi_vb.h"
 #include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
+#include "utils/tdl_log.hpp"
 
 #define SCALAR_4096_ALIGN_BUG 0x1000
 VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-                     ImagePixDataType dataType, bool alloc_memory,
+                     TDLDataType dataType, bool alloc_memory,
                      std::shared_ptr<BaseMemoryPool> memory_pool) {
   int32_t ret = initFrameInfo(width, height, imageFormat, dataType, &frame_);
   if (ret != 0) {
@@ -85,7 +85,7 @@ VPSSImage::~VPSSImage() {
 
 int32_t VPSSImage::prepareImageInfo(uint32_t width, uint32_t height,
                                     ImageFormat imageFormat,
-                                    ImagePixDataType pix_data_type) {
+                                    TDLDataType pix_data_type) {
   return initFrameInfo(width, height, imageFormat, pix_data_type, &frame_);
 }
 
@@ -100,7 +100,7 @@ bool VPSSImage::isInitialized() const {
 
 int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height,
                                  ImageFormat imageFormat,
-                                 ImagePixDataType pix_data_type,
+                                 TDLDataType pix_data_type,
                                  VIDEO_FRAME_INFO_S* frame) {
   PIXEL_FORMAT_E pixel_format = convertPixelFormat(imageFormat, pix_data_type);
   if (pixel_format == PIXEL_FORMAT_MAX) {
@@ -180,7 +180,7 @@ int32_t VPSSImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
 }
 
 PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
-                                             ImagePixDataType pix_data_type) {
+                                             TDLDataType pix_data_type) {
   PIXEL_FORMAT_E pixel_format = PIXEL_FORMAT_MAX;
 
   if (img_format == ImageFormat::GRAY) {
@@ -206,7 +206,7 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
     pixel_format = PIXEL_FORMAT_MAX;
   }
 
-  if (pix_data_type == ImagePixDataType::UINT8 &&
+  if (pix_data_type == TDLDataType::UINT8 &&
       (img_format == ImageFormat::RGB_PLANAR ||
        img_format == ImageFormat::BGR_PLANAR)) {
     LOGE("special case, imageFormat: %d,pix_data_type: %d", (int)img_format,
@@ -214,8 +214,8 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
     pixel_format = PIXEL_FORMAT_UINT8_C3_PLANAR;
   }
 
-  if (pix_data_type != ImagePixDataType::INT8 &&
-      pix_data_type != ImagePixDataType::UINT8) {
+  if (pix_data_type != TDLDataType::INT8 &&
+      pix_data_type != TDLDataType::UINT8) {
     LOGE("pix_data_type not support, pix_data_type: %d", (int)pix_data_type);
     pixel_format = PIXEL_FORMAT_MAX;
   }
@@ -314,25 +314,25 @@ int32_t VPSSImage::extractImageInfo(const VIDEO_FRAME_INFO_S& frame) {
 
   if (pixel_format == PIXEL_FORMAT_YUV_400) {
     image_format_ = ImageFormat::GRAY;
-    pix_data_type_ = ImagePixDataType::UINT8;
+    pix_data_type_ = TDLDataType::UINT8;
   } else if (pixel_format == PIXEL_FORMAT_NV12) {
     image_format_ = ImageFormat::YUV420SP_UV;
-    pix_data_type_ = ImagePixDataType::UINT8;
+    pix_data_type_ = TDLDataType::UINT8;
   } else if (pixel_format == PIXEL_FORMAT_NV21) {
     image_format_ = ImageFormat::YUV420P_UV;
-    pix_data_type_ = ImagePixDataType::UINT8;
+    pix_data_type_ = TDLDataType::UINT8;
   } else if (pixel_format == PIXEL_FORMAT_RGB_888) {
     image_format_ = ImageFormat::RGB_PACKED;
-    pix_data_type_ = ImagePixDataType::UINT8;
+    pix_data_type_ = TDLDataType::UINT8;
   } else if (pixel_format == PIXEL_FORMAT_BGR_888) {
     image_format_ = ImageFormat::BGR_PACKED;
-    pix_data_type_ = ImagePixDataType::UINT8;
+    pix_data_type_ = TDLDataType::UINT8;
   } else if (pixel_format == PIXEL_FORMAT_RGB_888_PLANAR) {
     image_format_ = ImageFormat::RGB_PLANAR;
-    pix_data_type_ = ImagePixDataType::UINT8;
+    pix_data_type_ = TDLDataType::UINT8;
   } else if (pixel_format == PIXEL_FORMAT_BGR_888_PLANAR) {
     image_format_ = ImageFormat::BGR_PLANAR;
-    pix_data_type_ = ImagePixDataType::UINT8;
+    pix_data_type_ = TDLDataType::UINT8;
   } else {
     LOGE("pixel_format not supported, pixel_format: %d", pixel_format);
     return -1;

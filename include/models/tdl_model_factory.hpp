@@ -1,8 +1,8 @@
 #ifndef TDL_MODEL_FACTORY_H
 #define TDL_MODEL_FACTORY_H
 
-#include "framework/model/base_model.hpp"
-#include "models/tdl_model_defs.hpp"
+#include "model/base_model.hpp"
+#include "tdl_model_defs.hpp"
 class TDLModelFactory {
  public:
   TDLModelFactory(const std::string model_dir = "");
@@ -15,9 +15,6 @@ class TDLModelFactory {
                     const std::string &model_path);
   void setModelPathMap(
       const std::map<TDL_MODEL_TYPE, std::string> &model_path_map);
-
-  int32_t releaseOutput(const TDL_MODEL_TYPE model_type,
-                        std::vector<void *> &output_datas);
 
  private:
   std::string model_dir_;

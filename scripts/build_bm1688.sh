@@ -11,7 +11,7 @@ CHIP_ARCH=BM1688
 USE_TPU_IVE=OFF
 
 
-HOST_TOOL_PATH=/data/fuquan.ke/nfsuser/cv_bm_dev/sdk_package/host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu
+HOST_TOOL_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu
 
 
 if [ ! -d "$BUILD_WORKING_DIR" ]; then

@@ -4,9 +4,8 @@
 #include <opencv2/opencv.hpp>
 #include <random>
 
-#include "cvi_tdl_log.hpp"
 #include "utils/common_utils.hpp"
-
+#include "utils/tdl_log.hpp"
 BaseImage::BaseImage() : memory_pool_(nullptr), memory_block_(nullptr) {}
 int32_t BaseImage::randomFill() {
   std::random_device rd;

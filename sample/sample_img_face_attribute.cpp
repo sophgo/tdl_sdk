@@ -21,39 +21,57 @@ int main(int argc, char **argv) {
   TDLModelFactory model_factory;
   TDL_MODEL_TYPE model_id = TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS;
 
-  std::shared_ptr<BaseModel> model = model_factory.getModel(model_id, model_path);
+  std::shared_ptr<BaseModel> model =
+      model_factory.getModel(model_id, model_path);
   if (!model) {
     printf("Failed to create model\n");
     return -1;
   }
 
-  std::vector<void *> out_datas;
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image};
   model->inference(input_images, out_datas);
 
   for (size_t i = 0; i < out_datas.size(); i++) {
-    cvtdl_face_t *face_meta = (cvtdl_face_t *)out_datas[i];
-    printf("gender score:%f,age score:%f,glass score:%f,mask score:%f\n", face_meta->info->gender_score,
-           face_meta->info->age, face_meta->info->glass, face_meta->info->mask_score);
-    if(face_meta->info->gender_score>0.5){
+    if (out_datas[i]->getType() != ModelOutputType::ATTRIBUTE) {
+      printf("out_datas[%d] is not ModelOutputType::ATTRIBUTE\n", i);
+      continue;
+    }
+    std::shared_ptr<ModelAttributeInfo> face_meta =
+        std::static_pointer_cast<ModelAttributeInfo>(out_datas[i]);
+    printf(
+        "gender score:%f,age score:%f,glass score:%f,mask score:%f\n",
+        face_meta
+            ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER],
+        face_meta
+            ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE],
+        face_meta->attributes
+            [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES],
+        face_meta
+            ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK]);
+    if (face_meta->attributes
+            [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER] > 0.5) {
       printf("Gender:Male\n");
-    }else{
+    } else {
       printf("Gender:Female\n");
     }
-    printf("Age:%d\n",int(face_meta->info->age*100));
-    if(face_meta->info->glass>0.5){
+    printf("Age:%d\n",
+           int(face_meta->attributes
+                   [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
+               100));
+    if (face_meta->attributes
+            [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES] > 0.5) {
       printf("Glass:Yes\n");
-    }else{
+    } else {
       printf("Glass:No\n");
     }
-    if(face_meta->info->mask_score>0.5){
+    if (face_meta
+            ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK] >
+        0.5) {
       printf("Mask:Yes\n");
-    }else{
+    } else {
       printf("Mask:No\n");
     }
-
-    CVI_TDL_FreeCpp(face_meta);
-    free(face_meta);
   }
 
   return 0;

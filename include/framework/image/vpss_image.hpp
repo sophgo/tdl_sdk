@@ -7,7 +7,7 @@
 class VPSSImage : public BaseImage {
  public:
   VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-            ImagePixDataType pix_data_type, bool alloc_memory = false,
+            TDLDataType pix_data_type, bool alloc_memory = false,
             std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
   VPSSImage(const VIDEO_FRAME_INFO_S& frame);
   // VPSSImage();
@@ -19,7 +19,7 @@ class VPSSImage : public BaseImage {
 
   int32_t prepareImageInfo(uint32_t width, uint32_t height,
                            ImageFormat imageFormat,
-                           ImagePixDataType pix_data_type) override;
+                           TDLDataType pix_data_type) override;
 
   int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr, uint32_t length);
 
@@ -38,7 +38,7 @@ class VPSSImage : public BaseImage {
   uint32_t getImageByteSize() const override;
   std::string getDeviceType() const override;
   static PIXEL_FORMAT_E convertPixelFormat(ImageFormat imageFormat,
-                                           ImagePixDataType pix_data_type);
+                                           TDLDataType pix_data_type);
   VIDEO_FRAME_INFO_S* getFrame() const;
   void setFrame(const VIDEO_FRAME_INFO_S& frame);
 
@@ -54,7 +54,7 @@ class VPSSImage : public BaseImage {
  private:
   int32_t extractImageInfo(const VIDEO_FRAME_INFO_S& frame);
   int32_t initFrameInfo(uint32_t width, uint32_t height,
-                        ImageFormat imageFormat, ImagePixDataType pix_data_type,
+                        ImageFormat imageFormat, TDLDataType pix_data_type,
                         VIDEO_FRAME_INFO_S* frame);
 
  private:

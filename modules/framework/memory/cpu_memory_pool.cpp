@@ -1,6 +1,6 @@
 #include "memory/cpu_memory_pool.hpp"
 
-#include "cvi_tdl_log.hpp"
+#include "utils/tdl_log.hpp"
 CpuMemoryPool::CpuMemoryPool() { LOGI("CpuMemoryPool constructor"); }
 
 CpuMemoryPool::~CpuMemoryPool() { LOGI("CpuMemoryPool destructor"); }

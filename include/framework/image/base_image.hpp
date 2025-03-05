@@ -16,13 +16,13 @@ class BaseImage {
  public:
   virtual ~BaseImage() = default;
   // BaseImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-  //           ImagePixDataType pix_data_type, bool alloc_memory = false,
+  //           TDLDataType pix_data_type, bool alloc_memory = false,
   //           std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
   BaseImage();
 
   virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
                                    ImageFormat imageFormat,
-                                   ImagePixDataType pix_data_type) = 0;
+                                   TDLDataType pix_data_type) = 0;
   virtual int32_t allocateMemory();
   virtual int32_t freeMemory();
   virtual bool isInitialized() const;
@@ -40,7 +40,7 @@ class BaseImage {
   virtual ImageFormat getImageFormat() const { return image_format_; }
 
   virtual ImageImplType getImageType() const { return image_type_; }
-  virtual ImagePixDataType getPixDataType() const { return pix_data_type_; }
+  virtual TDLDataType getPixDataType() const { return pix_data_type_; }
   virtual bool isPlanar() const;
 
   virtual uint32_t getInternalType() = 0;
@@ -64,7 +64,7 @@ class BaseImage {
 
  protected:
   ImageImplType image_type_ = ImageImplType::UNKOWN;
-  ImagePixDataType pix_data_type_ = ImagePixDataType::UINT8;
+  TDLDataType pix_data_type_ = TDLDataType::UINT8;
   ImageFormat image_format_ = ImageFormat::UNKOWN;
 
   std::unique_ptr<MemoryBlock> memory_block_ = nullptr;
@@ -78,7 +78,7 @@ class ImageFactory {
  public:
   static std::shared_ptr<BaseImage> createImage(
       uint32_t width, uint32_t height, ImageFormat imageFormat,
-      ImagePixDataType pixDataType, bool alloc_memory,
+      TDLDataType pixDataType, bool alloc_memory,
       InferencePlatform platform = InferencePlatform::AUTOMATIC);
 
   static std::shared_ptr<BaseImage> constructImage(void* custom_frame,

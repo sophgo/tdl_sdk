@@ -1,9 +1,7 @@
 #include "face_detection/scrfd.hpp"
 
-#include "core/cvi_tdl_types_mem_internal.h"
-#include "core/face/cvtdl_face_types.h"
-#include "cvi_tdl_log.hpp"
 #include "utils/detection_helper.hpp"
+#include "utils/tdl_log.hpp"
 
 SCRFD::SCRFD() {
   std::vector<float> means = {127.5, 127.5, 127.5};
@@ -109,7 +107,7 @@ int32_t SCRFD::onModelOpened() {
 
 int32_t SCRFD::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
-    std::vector<void *> &out_datas) {
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
   uint32_t input_width = input_tensor.shape[3];
@@ -119,13 +117,15 @@ int32_t SCRFD::outputParse(
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
        input_tensor.shape[3]);
 
+  const int FACE_LANDMARKS_NUM = 5;
+
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
     float image_width_f = float(image_width);
     float image_height_f = float(image_height);
-    std::vector<cvtdl_face_info_t> vec_bbox;
-    std::vector<cvtdl_face_info_t> vec_bbox_nms;
+    std::vector<ObjectBoxLandmarkInfo> vec_bbox;
+    std::vector<ObjectBoxLandmarkInfo> vec_bbox_nms;
     std::vector<float> &rescale_params = batch_rescale_params_[b];
     float scalex = rescale_params[0];
     float scaley = rescale_params[1];
@@ -181,99 +181,73 @@ int32_t SCRFD::outputParse(
           float grid_cx = (grid[0] + grid[2]) / 2;
           float grid_cy = (grid[1] + grid[3]) / 2;
 
-          cvtdl_face_info_t box;
-          memset(&box, 0, sizeof(box));
-          box.pts.size = 5;
-          box.pts.x = (float *)malloc(sizeof(float) * box.pts.size);
-          box.pts.y = (float *)malloc(sizeof(float) * box.pts.size);
-          box.bbox.score = conf;
-          box.hardhat_score = 0;
+          float box_score = conf;
 
-          // cv::Vec4f regress;
-          // bbox_blob:b x (num_anchors*num_elem) x h x w
-          box.bbox.x1 = grid_cx - bbox_blob[j + count * (0 + num * 4)] * stride;
-          box.bbox.y1 = grid_cy - bbox_blob[j + count * (1 + num * 4)] * stride;
-          box.bbox.x2 = grid_cx + bbox_blob[j + count * (2 + num * 4)] * stride;
-          box.bbox.y2 = grid_cy + bbox_blob[j + count * (3 + num * 4)] * stride;
+          float box_x1 =
+              grid_cx - bbox_blob[j + count * (0 + num * 4)] * stride;
+          float box_y1 =
+              grid_cy - bbox_blob[j + count * (1 + num * 4)] * stride;
+          float box_x2 =
+              grid_cx + bbox_blob[j + count * (2 + num * 4)] * stride;
+          float box_y2 =
+              grid_cy + bbox_blob[j + count * (3 + num * 4)] * stride;
 
-          box.bbox.x1 =
-              std::clamp((box.bbox.x1 - pad_x) / scalex, 0.0f, image_width_f);
-          box.bbox.y1 =
-              std::clamp((box.bbox.y1 - pad_y) / scaley, 0.0f, image_height_f);
-          box.bbox.x2 =
-              std::clamp((box.bbox.x2 - pad_x) / scalex, 0.0f, image_width_f);
-          box.bbox.y2 =
-              std::clamp((box.bbox.y2 - pad_y) / scaley, 0.0f, image_height_f);
+          box_x1 = std::clamp((box_x1 - pad_x) / scalex, 0.0f, image_width_f);
+          box_y1 = std::clamp((box_y1 - pad_y) / scaley, 0.0f, image_height_f);
+          box_x2 = std::clamp((box_x2 - pad_x) / scalex, 0.0f, image_width_f);
+          box_y2 = std::clamp((box_y2 - pad_y) / scaley, 0.0f, image_height_f);
 
-          if (box.bbox.x1 >= box.bbox.x2 || box.bbox.y1 >= box.bbox.y2) {
+          if (box_x1 >= box_x2 || box_y1 >= box_y2) {
             LOGI(
                 "bbox "
                 "invalid,x1:%f,y1:%f,x2:%f,y2:%f,stride:%d,grid_cx:%f,grid_cy:%"
                 "f\n",
-                box.bbox.x1, box.bbox.y1, box.bbox.x2, box.bbox.y2, stride,
-                grid_cx, grid_cy);
+                box_x1, box_y1, box_x2, box_y2, stride, grid_cx, grid_cy);
             continue;
           }
 
-          for (size_t k = 0; k < box.pts.size; k++) {
-            box.pts.x[k] =
+          std::vector<float> landmarks_x;
+          std::vector<float> landmarks_y;
+          for (size_t k = 0; k < FACE_LANDMARKS_NUM; k++) {
+            float landmark_x =
                 landmark_blob[j + count * (num * 10 + k * 2)] * stride +
                 grid_cx;
-            box.pts.y[k] =
+            float landmark_y =
                 landmark_blob[j + count * (num * 10 + k * 2 + 1)] * stride +
                 grid_cy;
-            box.pts.x[k] = std::clamp((box.pts.x[k] - pad_x) / scalex, 0.0f,
-                                      image_width_f);
-            box.pts.y[k] = std::clamp((box.pts.y[k] - pad_y) / scaley, 0.0f,
-                                      image_height_f);
+            landmark_x =
+                std::clamp((landmark_x - pad_x) / scalex, 0.0f, image_width_f);
+            landmark_y =
+                std::clamp((landmark_y - pad_y) / scaley, 0.0f, image_height_f);
+            landmarks_x.push_back(landmark_x);
+            landmarks_y.push_back(landmark_y);
           }
-
+          ObjectBoxLandmarkInfo box;
+          box.class_id = 0;
+          box.object_type = OBJECT_TYPE_FACE;
+          box.score = box_score;
+          box.x1 = box_x1;
+          box.y1 = box_y1;
+          box.x2 = box_x2;
+          box.y2 = box_y2;
+          box.landmarks_x = landmarks_x;
+          box.landmarks_y = landmarks_y;
           vec_bbox.push_back(box);
         }
       }
     }
     // DO nms on output result
 
-    DetectionHelper::nmsFaces(vec_bbox, 0.4);
+    DetectionHelper::nmsObjects(vec_bbox, iou_threshold_);
     // Init face meta
 
-    cvtdl_face_t *facemeta = (cvtdl_face_t *)malloc(sizeof(cvtdl_face_t));
-    memset(facemeta, 0, sizeof(cvtdl_face_t));
-    facemeta->width = image_width;
-    facemeta->height = image_height;
-    LOGI("vec_bbox_nms size:%d", vec_bbox.size());
-    if (vec_bbox.size() == 0) {
-      facemeta->size = vec_bbox_nms.size();
-      facemeta->info = NULL;
-      out_datas.push_back((void *)facemeta);
-      continue;
-    }
-    CVI_TDL_MemAllocInit(vec_bbox.size(), 5, facemeta);
+    std::shared_ptr<ModelBoxLandmarkInfo> facemeta =
+        std::make_shared<ModelBoxLandmarkInfo>();
+    facemeta->image_width = image_width;
+    facemeta->image_height = image_height;
+    facemeta->box_landmarks = vec_bbox;
 
-    LOGI("rescale_params:%f,%f,%f,%f", scalex, scaley, pad_x, pad_y);
-    std::stringstream ss;
-    for (uint32_t i = 0; i < facemeta->size; ++i) {
-      cvtdl_face_info_t info = vec_bbox[i];
-      facemeta->info[i].bbox.x1 = info.bbox.x1;
-      facemeta->info[i].bbox.x2 = info.bbox.x2;
-      facemeta->info[i].bbox.y1 = info.bbox.y1;
-      facemeta->info[i].bbox.y2 = info.bbox.y2;
-      facemeta->info[i].bbox.score = info.bbox.score;
-      facemeta->info[i].hardhat_score = info.hardhat_score;
-      for (int j = 0; j < 5; ++j) {
-        facemeta->info[i].pts.x[j] = info.pts.x[j];
-        facemeta->info[i].pts.y[j] = info.pts.y[j];
-      }
-
-      ss << "bbox:" << facemeta->info[i].bbox.x1 << ","
-         << facemeta->info[i].bbox.y1 << "," << facemeta->info[i].bbox.x2 << ","
-         << facemeta->info[i].bbox.y2 << "," << facemeta->info[i].bbox.score
-         << ",imgwidth:" << image_width << ",imgheight:" << image_height
-         << std::endl;
-    }
-    LOGI("facemeta:%s", ss.str().c_str());
-
-    out_datas.push_back((void *)facemeta);
+    out_datas.push_back(facemeta);
   }
   return 0;
 }

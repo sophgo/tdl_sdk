@@ -11,7 +11,7 @@ class SCRFD : public BaseModel {
   // TODO:add support for int8 output tensor decode
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>>& images,
-      std::vector<void*>& out_datas) override;
+      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) override;
   virtual int onModelOpened() override;
 
  private:
@@ -22,5 +22,6 @@ class SCRFD : public BaseModel {
   std::map<int, std::map<std::string, std::string>>
       fpn_out_nodes_;  //{stride:{"box":"xxxx","score":"xxx","landmark":"xxxx"}}
   std::map<int, int> fpn_grid_anchor_num_;
+  const float iou_threshold_ = 0.5;
 };
 #endif

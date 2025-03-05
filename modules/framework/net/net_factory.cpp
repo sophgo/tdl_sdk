@@ -6,7 +6,7 @@
 #else
 #include "net/cvi_net.hpp"
 #endif
-#include "cvi_tdl_log.hpp"
+#include "utils/tdl_log.hpp"
 
 std::shared_ptr<BaseNet> NetFactory::createNet(const NetParam& net_param,
                                                InferencePlatform platform) {

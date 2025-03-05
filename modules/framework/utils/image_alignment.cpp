@@ -6,7 +6,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
-#include "cvi_tdl_log.hpp"
+#include "utils/tdl_log.hpp"
 
 #define EXT_FUNCTION 0
 #undef SHRT_MIN

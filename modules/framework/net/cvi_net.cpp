@@ -1,6 +1,6 @@
 #include "net/cvi_net.hpp"
-#include "cvi_tdl_log.hpp"
 #include "memory/cvi_memory_pool.hpp"
+#include "utils/tdl_log.hpp"
 
 CviNet::CviNet(const NetParam& param) : BaseNet(param) {}
 
@@ -83,25 +83,25 @@ void CviNet::setupTensorInfo(CVI_TENSOR* cvi_tensor, int32_t num_tensors,
     tinfo.qscale = CVI_NN_TensorQuantScale(cvi_tensor + i);
     tinfo.zero_point = CVI_NN_TensorQuantZeroPoint(cvi_tensor + i);
     if (cvi_tensor[i].fmt == CVI_FMT_UINT8) {
-      tinfo.data_type = ImagePixDataType::UINT8;
+      tinfo.data_type = TDLDataType::UINT8;
     } else if (cvi_tensor[i].fmt == CVI_FMT_INT8) {
-      tinfo.data_type = ImagePixDataType::INT8;
+      tinfo.data_type = TDLDataType::INT8;
     } else if (cvi_tensor[i].fmt == CVI_FMT_FP32) {
-      tinfo.data_type = ImagePixDataType::FP32;
+      tinfo.data_type = TDLDataType::FP32;
     } else if (cvi_tensor[i].fmt == CVI_FMT_BF16) {
-      tinfo.data_type = ImagePixDataType::BF16;
+      tinfo.data_type = TDLDataType::BF16;
     } else if (cvi_tensor[i].fmt == CVI_FMT_INT16) {
-      tinfo.data_type = ImagePixDataType::INT16;
+      tinfo.data_type = TDLDataType::INT16;
     } else if (cvi_tensor[i].fmt == CVI_FMT_UINT16) {
-      tinfo.data_type = ImagePixDataType::UINT16;
+      tinfo.data_type = TDLDataType::UINT16;
     } else if (cvi_tensor[i].fmt == CVI_FMT_INT32) {
-      tinfo.data_type = ImagePixDataType::INT32;
+      tinfo.data_type = TDLDataType::INT32;
     } else if (cvi_tensor[i].fmt == CVI_FMT_UINT32) {
-      tinfo.data_type = ImagePixDataType::UINT32;
+      tinfo.data_type = TDLDataType::UINT32;
     } else {
       LOGE("unknown tensor format %d", cvi_tensor[i].fmt);
     }
-    if (tinfo.data_type == ImagePixDataType::FP32 && tinfo.qscale == 0) {
+    if (tinfo.data_type == TDLDataType::FP32 && tinfo.qscale == 0) {
       LOGI("tensor_name:%s,qscale is 0,set to 1", tensor_name.c_str());
       tinfo.qscale = 1;
     }

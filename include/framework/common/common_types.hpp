@@ -14,7 +14,7 @@ enum class InferencePlatform {
   AUTOMATIC = 5
 };
 
-enum class ImagePixDataType {
+enum class TDLDataType {
   INT8 = 0,
   UINT8 = 1,
   INT16 = 2,
@@ -44,7 +44,13 @@ enum class ImageFormat {
   UNKOWN
 };
 
-enum class ImageImplType { VPSS_FRAME = 0, OPENCV_FRAME, FFMPEG_FRAME, BMCV_FRAME, UNKOWN };
+enum class ImageImplType {
+  VPSS_FRAME = 0,
+  OPENCV_FRAME,
+  FFMPEG_FRAME,
+  BMCV_FRAME,
+  UNKOWN
+};
 
 struct MemoryBlock {
   uint64_t physicalAddress;  // 内存块的物理地址（仅用于 SoC 场景）
@@ -65,7 +71,7 @@ struct MemoryBlock {
 
 struct PreprocessParams {
   ImageFormat dstImageFormat;
-  ImagePixDataType dstPixDataType;
+  TDLDataType dstPixDataType;
   int dstWidth;
   int dstHeight;
   int cropX;
@@ -89,11 +95,13 @@ struct NetParam {
   // bool share_output_mem = false;  // do not allocate output tensor memory,
   // share with other memory
   std::string model_file_path;
-  std::string net_name;                  // Specifies the network name in case of multiple
-                                         // networks in a model
-  std::vector<std::string> input_names;  // Leave empty to read input nodes from model file
+  std::string net_name;  // Specifies the network name in case of multiple
+                         // networks in a model
+  std::vector<std::string>
+      input_names;  // Leave empty to read input nodes from model file
   std::vector<std::string> output_names;
-  PreprocessParams pre_params;  // TODO(fuquan.ke) to support multiple preprocess params
+  PreprocessParams
+      pre_params;  // TODO(fuquan.ke) to support multiple preprocess params
 };
 
 struct TensorInfo {
@@ -101,7 +109,7 @@ struct TensorInfo {
   uint8_t *sys_mem;
   uint64_t phy_addr;
   std::vector<int> shape;
-  ImagePixDataType data_type;
+  TDLDataType data_type;
   // Tensor size = (number of tensor elements) * sizeof(data_type type))
   uint32_t tensor_size;
   // number of tensor elements

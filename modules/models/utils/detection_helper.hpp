@@ -2,8 +2,7 @@
 #include <map>
 #include <vector>
 
-#include "core/face/cvtdl_face_types.h"
-#include "core/object/cvtdl_object_types.h"
+#include "common/model_output_types.hpp"
 class DetectionHelper {
  public:
   DetectionHelper();
@@ -22,18 +21,19 @@ class DetectionHelper {
       const std::vector<std::pair<float, float>> &aspect_ratios,
       float anchor_scale, int image_width, int image_height);
 
-  static void nmsFaces(std::vector<cvtdl_face_info_t> &faces,
-                       float iou_threshold);
-  static void nmsObjects(std::vector<cvtdl_bbox_t> &bboxes,
+  static void nmsObjects(std::vector<ObjectBoxLandmarkInfo> &objects,
+                         float iou_threshold);
+  static void nmsObjects(std::vector<ObjectBoxInfo> &objects,
                          float iou_threshold);
 
-  static void nmsObjects(std::map<int, std::vector<cvtdl_bbox_t>> &bboxes,
+  static void nmsObjects(std::map<int, std::vector<ObjectBoxInfo>> &bboxes,
                          float iou_threshold);
-  static void rescaleBbox(cvtdl_bbox_t &bbox,
+  static void rescaleBbox(ObjectBoxInfo &bbox,
                           const std::vector<float> &scale_params,
                           const int crop_x = 0, const int crop_y = 0);
 
-  static void convertDetStruct(std::map<int, std::vector<cvtdl_bbox_t>> &dets,
-                               cvtdl_object_t *obj, int im_height,
-                               int im_width);
+  //   static void convertDetStruct(std::map<int, std::vector<cvtdl_bbox_t>>
+  //   &dets,
+  //                                cvtdl_object_t *obj, int im_height,
+  //                                int im_width);
 };

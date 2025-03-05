@@ -25,27 +25,29 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  std::vector<void *> out_datas;
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image};
   model->inference(input_images, out_datas);
 
   std::vector<std::vector<float>> landmarks;
   for (size_t i = 0; i < out_datas.size(); i++) {
+    std::shared_ptr<ModelLandmarksInfo> landmarks_meta =
+        std::static_pointer_cast<ModelLandmarksInfo>(out_datas[i]);
     std::vector<float> landmark;
-    cvtdl_face_info_t *face_meta = (cvtdl_face_info_t *)out_datas[i];
-    printf("face_meta size: %d,score:%f,blurness:%f\n", face_meta->pts.size,
-           face_meta->pts.score, face_meta->blurness);
-    for (size_t j = 0; j < face_meta->pts.size; j++) {
-      printf("face_meta pts: %f, %f\n", face_meta->pts.x[j],
-             face_meta->pts.y[j]);
-      landmark.push_back(face_meta->pts.x[j]);
-      landmark.push_back(face_meta->pts.y[j]);
+    printf("face_meta size: %d,score:%f,blurness:%f\n",
+           landmarks_meta->landmarks_x.size(),
+           landmarks_meta
+               ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE],
+           landmarks_meta->attributes
+               [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER]);
+    for (size_t j = 0; j < landmarks_meta->landmarks_x.size(); j++) {
+      printf("face_meta pts: %f, %f\n", landmarks_meta->landmarks_x[j],
+             landmarks_meta->landmarks_y[j]);
+      landmark.push_back(landmarks_meta->landmarks_x[j]);
+      landmark.push_back(landmarks_meta->landmarks_y[j]);
     }
     landmarks.push_back(landmark);
   }
-
-  model_factory.releaseOutput(TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2,
-                              out_datas);
 
   cv::Mat mat_img;
   bool is_rgb = false;

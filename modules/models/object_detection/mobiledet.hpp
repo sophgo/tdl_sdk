@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "anchors.hpp"
-#include "core/object/cvtdl_object_types.h"
 #include "model/base_model.hpp"
 
 class MobileDetV2Detection final : public BaseModel {
@@ -43,25 +42,30 @@ class MobileDetV2Detection final : public BaseModel {
   };
 
   MobileDetV2Detection();
-  explicit MobileDetV2Detection(MobileDetV2Detection::Category category, float iou_thresh = 0.5);
+  explicit MobileDetV2Detection(MobileDetV2Detection::Category category,
+                                float iou_thresh = 0.5);
   ~MobileDetV2Detection();
 
   int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>>& images,
-      std::vector<void*>& out_datas) override;
+      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) override;
   int32_t onModelOpened() override;
-  void select_classes(const std::vector<uint32_t>& selected_classes);
+
   void setModelThreshold(const float& threshold);
 
  private:
-  void get_raw_outputs(std::vector<std::pair<int8_t*, size_t>>* cls_tensor_ptr,
-                       std::vector<std::pair<int8_t*, size_t>>* objectness_tensor_ptr,
-                       std::vector<std::pair<int8_t*, size_t>>* bbox_tensor_ptr);
-  void generate_dets_for_each_stride(std::map<int, std::vector<cvtdl_bbox_t>> &det_vec);
-  void generate_dets_for_tensor(std::map<int, std::vector<cvtdl_bbox_t>> &det_vec, float class_dequant_thresh,
-                                float bbox_dequant_thresh, int8_t quant_thresh,
-                                const int8_t* logits, const int8_t* objectness, int8_t* bboxes,
-                                size_t class_tensor_size, const std::vector<AnchorBox>& anchors);
+  void get_raw_outputs(
+      std::vector<std::pair<int8_t*, size_t>>* cls_tensor_ptr,
+      std::vector<std::pair<int8_t*, size_t>>* objectness_tensor_ptr,
+      std::vector<std::pair<int8_t*, size_t>>* bbox_tensor_ptr);
+  void generate_dets_for_each_stride(
+      std::map<int, std::vector<ObjectBoxInfo>>& det_vec);
+  void generate_dets_for_tensor(
+      std::map<int, std::vector<ObjectBoxInfo>>& det_vec,
+      float class_dequant_thresh, float bbox_dequant_thresh,
+      int8_t quant_thresh, const int8_t* logits, const int8_t* objectness,
+      int8_t* bboxes, size_t class_tensor_size,
+      const std::vector<AnchorBox>& anchors);
 
   std::vector<std::vector<AnchorBox>> m_anchors;
   CvimodelInfo m_model_config;
@@ -69,5 +73,5 @@ class MobileDetV2Detection final : public BaseModel {
   float m_model_threshold = 0.5;
 
   std::vector<int8_t> m_quant_inverse_score_threshold;
-  std::bitset<CVI_TDL_DET_TYPE_END> m_filter;
+  // std::bitset<CVI_TDL_DET_TYPE_END> m_filter;
 };

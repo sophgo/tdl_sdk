@@ -1,10 +1,7 @@
 #include "face_landmark/face_landmark_det2.hpp"
 
-#include "core/cvi_tdl_types_mem_internal.h"
-#include "core/face/cvtdl_face_types.h"
-#include "core/object/cvtdl_object_types.h"
-#include "cvi_tdl_log.hpp"
 #include "utils/detection_helper.hpp"
+#include "utils/tdl_log.hpp"
 
 template <typename T>
 void parse_point_info(T *p_cls_ptr, int num_point, float qscale,
@@ -25,19 +22,19 @@ void parse_score_info(T *p_cls_ptr, int num_data, float qscale,
   }
 }
 
-void parse_point_info_anytype(BaseTensor *tensor, ImagePixDataType data_type,
+void parse_point_info_anytype(BaseTensor *tensor, TDLDataType data_type,
                               int batch_idx, int num_point, float qscale,
                               std::vector<float> &points) {
   switch (data_type) {
-    case ImagePixDataType::FP32:
+    case TDLDataType::FP32:
       parse_point_info<float>(tensor->getBatchPtr<float>(batch_idx), num_point,
                               qscale, points);
       break;
-    case ImagePixDataType::INT8:
+    case TDLDataType::INT8:
       parse_point_info<int8_t>(tensor->getBatchPtr<int8_t>(batch_idx),
                                num_point, qscale, points);
       break;
-    case ImagePixDataType::UINT8:
+    case TDLDataType::UINT8:
       parse_point_info<uint8_t>(tensor->getBatchPtr<uint8_t>(batch_idx),
                                 num_point, qscale, points);
       break;
@@ -87,7 +84,7 @@ FaceLandmarkerDet2::~FaceLandmarkerDet2() {}
 
 int32_t FaceLandmarkerDet2::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
-    std::vector<void *> &out_datas) {
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
   uint32_t input_width = input_tensor.shape[3];
@@ -121,39 +118,41 @@ int32_t FaceLandmarkerDet2::outputParse(
     parse_point_info_anytype(y_tensor.get(), oinfo_y.data_type, b,
                              oinfo_y.shape[3], oinfo_y.qscale, output_point_y);
 
-    if (oinfo_cls.data_type == ImagePixDataType::FP32) {
+    if (oinfo_cls.data_type == TDLDataType::FP32) {
       parse_score_info<float>(cls_tensor->getBatchPtr<float>(b),
                               oinfo_cls.shape[1], oinfo_cls.qscale,
                               output_score);
-    } else if (oinfo_cls.data_type == ImagePixDataType::INT8) {
+    } else if (oinfo_cls.data_type == TDLDataType::INT8) {
       parse_score_info<int8_t>(cls_tensor->getBatchPtr<int8_t>(b),
                                oinfo_cls.shape[1], oinfo_cls.qscale,
                                output_score);
-    } else if (oinfo_cls.data_type == ImagePixDataType::UINT8) {
+    } else if (oinfo_cls.data_type == TDLDataType::UINT8) {
       parse_score_info<uint8_t>(cls_tensor->getBatchPtr<uint8_t>(b),
                                 oinfo_cls.shape[1], oinfo_cls.qscale,
                                 output_score);
     }
 
-    cvtdl_face_info_t *face_meta =
-        (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t));
-    memset(face_meta, 0, sizeof(cvtdl_face_info_t));
-    face_meta->pts.x = (float *)malloc(sizeof(float) * 5);
-    face_meta->pts.y = (float *)malloc(sizeof(float) * 5);
-    face_meta->pts.size = 5;
-    face_meta->pts.score = output_score[0];
+    std::shared_ptr<ModelLandmarksInfo> facemeta =
+        std::make_shared<ModelLandmarksInfo>();
+    facemeta->image_width = image_width;
+    facemeta->image_height = image_height;
+    facemeta->landmarks_x = output_point_x;
+    facemeta->landmarks_y = output_point_y;
+    facemeta->landmarks_score = output_score;
 
     for (int i = 0; i < 5; i++) {
-      face_meta->pts.x[i] = output_point_x[i] * image_width;
-      face_meta->pts.y[i] = output_point_y[i] * image_height;
+      facemeta->landmarks_x[i] = output_point_x[i] * image_width;
+      facemeta->landmarks_y[i] = output_point_y[i] * image_height;
     }
 
     // blur model
     if (oinfo_cls.shape[1] == 2) {
-      face_meta->blurness = output_score[1];
+      facemeta
+          ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_FACE_BLURNESS] =
+          output_score[1];
     }
 
-    out_datas.push_back((void *)face_meta);
+    out_datas.push_back(facemeta);
   }
   return 0;
 }

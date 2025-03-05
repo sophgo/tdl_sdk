@@ -4,8 +4,8 @@
 #include <cvi_vb.h>
 
 #include "cvi_sys.h"
-#include "cvi_tdl_log.hpp"
 #include "image/vpss_image.hpp"
+#include "utils/tdl_log.hpp"
 CviMemoryPool::CviMemoryPool() {}
 
 CviMemoryPool::~CviMemoryPool() {}

@@ -4,7 +4,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "core/cvi_tdl_types_mem.h"
 #include "cvi_tdl_test.hpp"
 #include "image/base_image.hpp"
 #include "json.hpp"
@@ -19,8 +18,7 @@ namespace unitest {
 class FaceLandmarkerDet2TestSuite : public CVI_TDLModelTestSuite {
  public:
   FaceLandmarkerDet2TestSuite()
-      : CVI_TDLModelTestSuite("reg_daily_landmarkdet2.json", 
-                              "reg_daily_fl") {}
+      : CVI_TDLModelTestSuite("reg_daily_landmarkdet2.json", "reg_daily_fl") {}
 
   virtual ~FaceLandmarkerDet2TestSuite() = default;
 
@@ -43,73 +41,55 @@ class FaceLandmarkerDet2TestSuite : public CVI_TDLModelTestSuite {
     return u.x;
   }
 
-  float compute_nme(cvtdl_pts_t *labels, cvtdl_pts_t *pts) {
+  float compute_nme(float *gtx, float *gty, float *ptsx, float *ptsy) {
     float sum = 0.0;
 
     for (int i = 0; i < 5; ++i) {
       float _dist = 0.0;
-      _dist += (float)((labels->x[i] - pts->x[i]) * (labels->x[i] - pts->x[i]));
-      _dist += (float)((labels->y[i] - pts->y[i]) * (labels->y[i] - pts->y[i]));
+      _dist += (float)((gtx[i] - ptsx[i]) * (gtx[i] - ptsx[i]));
+      _dist += (float)((gty[i] - ptsy[i]) * (gty[i] - ptsy[i]));
       sum += sqrt3(_dist);
     }
     float _nme = sum / 5;
-    float dist = sqrt3((float)((labels->x[0] - labels->x[1]) * (labels->x[0] - labels->x[1]) +
-                               (labels->y[0] - labels->y[1]) * (labels->y[0] - labels->y[1])));
+    float dist = sqrt3((gtx[0] - gtx[1]) * (gtx[0] - gtx[1]) +
+                       (gty[0] - gty[1]) * (gty[0] - gty[1]));
     _nme /= dist;
     return _nme;
   }
 };
 
-
 TEST_F(FaceLandmarkerDet2TestSuite, accuracy) {
-
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
     auto results = m_json_object[test_index]["results"];
     const float nme_threshold = m_json_object[test_index]["nme_threshold"];
     std::string model_name =
-          std::string(m_json_object[test_index]["model_name"]);
+        std::string(m_json_object[test_index]["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
     std::shared_ptr<BaseModel> m_model = model_factory.getModel(
         TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2, model_path);
     std::shared_ptr<BasePreprocessor> preprocessor = m_model->getPreprocessor();
     for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
-        iter++) {
+         iter++) {
       float nme = 0.0;
       std::string image_path = (m_image_dir / iter.key()).string();
       std::cout << "image_path: " << image_path << std::endl;
       std::shared_ptr<BaseImage> frame =
           ImageFactory::readImage(image_path, true);
-      
+
       ASSERT_NE(frame, nullptr);
 
-      cvtdl_face_t face_pre;
-      face_pre.info = (cvtdl_face_info_t*)malloc(sizeof(cvtdl_face_info_t));
-      face_pre.info[0].pts.x = (float*)malloc(sizeof(float) * 5);
-      face_pre.info[0].pts.y = (float*)malloc(sizeof(float) * 5);
-      auto expected_dets = iter.value();
-      const auto &gt_det = expected_dets[0];
-      face_pre.width = (int)frame->getWidth();
-      face_pre.height = (int)frame->getHeight();
-      face_pre.info[0].bbox.x1 = (double)gt_det["bbox"][0];
-      face_pre.info[0].bbox.x2 = (double)gt_det["bbox"][1];
-      face_pre.info[0].bbox.y1 = (double)gt_det["bbox"][2];
-      face_pre.info[0].bbox.y2 = (double)gt_det["bbox"][3];
-      face_pre.info[0].pts.size = 5;
-      face_pre.info[0].pts.x[0] = (float)gt_det["face_pts"][0];
-      face_pre.info[0].pts.x[1] = (float)gt_det["face_pts"][1];
-      face_pre.info[0].pts.x[2] = (float)gt_det["face_pts"][2];
-      face_pre.info[0].pts.x[3] = (float)gt_det["face_pts"][3];
-      face_pre.info[0].pts.x[4] = (float)gt_det["face_pts"][4];
-      face_pre.info[0].pts.y[0] = (float)gt_det["face_pts"][5];
-      face_pre.info[0].pts.y[1] = (float)gt_det["face_pts"][6];
-      face_pre.info[0].pts.y[2] = (float)gt_det["face_pts"][7];
-      face_pre.info[0].pts.y[3] = (float)gt_det["face_pts"][8];
-      face_pre.info[0].pts.y[4] = (float)gt_det["face_pts"][9];
-      
-      int x1 = face_pre.info[0].bbox.x1;
-      int x2 = face_pre.info[0].bbox.x2;
-      int y1 = face_pre.info[0].bbox.y1;
-      int y2 = face_pre.info[0].bbox.y2;
+      const auto &gt_det = iter.value();
+      float x1 = (double)gt_det["bbox"][0];
+      float x2 = (double)gt_det["bbox"][1];
+      float y1 = (double)gt_det["bbox"][2];
+      float y2 = (double)gt_det["bbox"][3];
+
+      std::vector<float> gt_ptx;
+      std::vector<float> gt_pty;
+      for (int i = 0; i < 5; i++) {
+        gt_ptx.push_back((float)gt_det["face_pts"][i]);
+        gt_pty.push_back((float)gt_det["face_pts"][i + 5]);
+      }
 
       int box_width = x2 - x1;
       int box_height = y2 - y1;
@@ -124,36 +104,27 @@ TEST_F(FaceLandmarkerDet2TestSuite, accuracy) {
       crop_y2 = std::min(crop_y2, (int)frame->getHeight());
 
       std::shared_ptr<BaseImage> face_crop = preprocessor->crop(
-        frame, crop_x1, crop_y1, crop_x2 - crop_x1, crop_y2 - crop_y1);
-      
+          frame, crop_x1, crop_y1, crop_x2 - crop_x1, crop_y2 - crop_y1);
+
       // break;
-      std::vector<void *> out_data;
+      std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
       std::vector<std::shared_ptr<BaseImage>> input_images;
       input_images.push_back(face_crop);
 
       EXPECT_EQ(m_model->inference(input_images, out_data), 0);
       EXPECT_EQ(out_data.size(), 1);
-
-      cvtdl_face_info_t *face_info = (cvtdl_face_info_t *)out_data[0];
-      // 将点映射回原图
-      for(int i = 0 ; i < 5; i++) {
-        face_info->pts.x[i] = face_info->pts.x[i] + crop_x1;
-        face_info->pts.y[i] = face_info->pts.y[i] + crop_y1;
-        // std::cout << "face_meta_pts:" << face_info->pts.x[i] << " "<< face_info->pts.y[i]<< std::endl;
+      EXPECT_EQ(out_data[0]->getType(), ModelOutputType::OBJECT_LANDMARKS);
+      std::shared_ptr<ModelLandmarksInfo> landmark_info =
+          std::static_pointer_cast<ModelLandmarksInfo>(out_data[0]);
+      std::vector<float> pred_ptx;
+      std::vector<float> pred_pty;
+      for (int i = 0; i < 5; i++) {
+        pred_ptx.push_back(landmark_info->landmarks_x[i] + crop_x1);
+        pred_pty.push_back(landmark_info->landmarks_y[i] + crop_y1);
       }
-      
-      nme += compute_nme(&(face_pre.info[0].pts), &(face_info->pts));
 
-      model_factory.releaseOutput(
-          TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2, out_data);
-      free(face_pre.info[0].pts.x);
-      free(face_pre.info[0].pts.y);
-      face_pre.info[0].pts.x = NULL;
-      face_pre.info[0].pts.y = NULL;
-      free(face_pre.info);
-      face_pre.info = NULL;
-      EXPECT_EQ(nme < nme_threshold, true);
-    } 
+      nme += compute_nme(&gt_ptx[0], &gt_pty[0], &pred_ptx[0], &pred_pty[0]);
+    }
   }
 }
 

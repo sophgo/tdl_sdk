@@ -7,11 +7,8 @@
 #include <string>
 #include <vector>
 
-// #include "modules/core/utils/coco_utils.hpp"
-#include "core/cvi_tdl_types_mem_internal.h"
-#include "core/object/cvtdl_object_types.h"
-#include "cvi_tdl_log.hpp"
 #include "utils/detection_helper.hpp"
+#include "utils/tdl_log.hpp"
 
 static const float STD_R = (255.0 * 0.229);
 static const float STD_G = (255.0 * 0.224);
@@ -42,7 +39,7 @@ int get_level(int val) {
 }
 
 static void decode_box(const float *const box, const AnchorBox &anchor,
-                       cvtdl_bbox_t &det) {
+                       ObjectBoxInfo &det) {
   float ycenter_a = anchor.y + anchor.h / 2;
   float xcenter_a = anchor.x + anchor.w / 2;
 
@@ -69,7 +66,7 @@ void DequantizeScale(const int8_t *q_data, float *data, float dequant_scale,
 }
 
 void clip_bbox(const size_t image_width, const size_t image_height,
-               cvtdl_bbox_t &box) {
+               ObjectBoxInfo &box) {
   if (box.x1 < 0) box.x1 = 0;
   if (box.y1 < 0) box.y1 = 0;
   if (box.x2 < 0) box.x2 = 0;
@@ -105,7 +102,7 @@ MobileDetV2Detection::MobileDetV2Detection(
       constructInverseThresh(m_model_threshold, m_model_config.strides,
                              m_model_config.class_dequant_thresh);
 
-  m_filter.set();
+  // m_filter.set();
 
   net_param_.pre_params.scale[0] = static_cast<float>(FACTOR_R);
   net_param_.pre_params.scale[1] = static_cast<float>(FACTOR_G);
@@ -218,7 +215,7 @@ int32_t MobileDetV2Detection::onModelOpened() {
 
 int32_t MobileDetV2Detection::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
-    std::vector<void *> &out_datas) {
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
   uint32_t input_width = input_tensor.shape[3];
@@ -234,41 +231,36 @@ int32_t MobileDetV2Detection::outputParse(
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
 
-    std::vector<cvtdl_object_t> vec_obj;
-    std::map<int, std::vector<cvtdl_bbox_t>> lb_boxes;
+    std::map<int, std::vector<ObjectBoxInfo>> lb_boxes;
 
     generate_dets_for_each_stride(lb_boxes);
 
     DetectionHelper::nmsObjects(lb_boxes, m_iou_threshold);
 
-    // if (!m_filter.all()) {  // filter if not all bit are set
-    //   auto condition = [this](const PtrDectRect &det) {
-    //     return !m_filter.test(m_model_config.class_id_map(det->label));
-    //   };
-    //   final_dets.erase(remove_if(final_dets.begin(), final_dets.end(),
-    //   condition), final_dets.end());
-    // }
-
     std::vector<float> scale_params = batch_rescale_params_[b];
     int num_obj = 0;
+    std::shared_ptr<ModelBoxInfo> obj = std::make_shared<ModelBoxInfo>();
+    obj->image_width = image_width;
+    obj->image_height = image_height;
     for (auto &bbox : lb_boxes) {
       num_obj += bbox.second.size();
       for (auto &b : bbox.second) {
         DetectionHelper::rescaleBbox(b, scale_params,
                                      net_param_.pre_params.cropX,
                                      net_param_.pre_params.cropY);
+        if (type_mapping_.count(b.class_id)) {
+          b.object_type = type_mapping_[b.class_id];
+        }
+        obj->bboxes.push_back(b);
       }
     }
-    cvtdl_object_t *obj = (cvtdl_object_t *)malloc(sizeof(cvtdl_object_t));
-    memset(obj, 0, sizeof(cvtdl_object_t));
-    DetectionHelper::convertDetStruct(lb_boxes, obj, image_height, image_width);
     out_datas.push_back(obj);
   }
   return 0;
 }
 
 void MobileDetV2Detection::generate_dets_for_tensor(
-    std::map<int, std::vector<cvtdl_bbox_t>> &det_vec,
+    std::map<int, std::vector<ObjectBoxInfo>> &det_vec,
     float class_dequant_thresh, float bbox_dequant_thresh, int8_t quant_thresh,
     const int8_t *logits, const int8_t *objectness, int8_t *bboxes,
     size_t class_tensor_size, const vector<AnchorBox> &anchors) {
@@ -284,9 +276,11 @@ void MobileDetV2Detection::generate_dets_for_tensor(
           size_t anchor_index = class_idx / m_model_config.num_classes;
           size_t box_index = anchor_index * 4;
           // PtrDectRect det = make_shared<object_detect_rect_t>();
-          cvtdl_bbox_t det;
+          ObjectBoxInfo det;
           int det_label = class_idx - score_index;
-          det_label = m_model_config.class_id_map(det_label);
+          // det_label =
+          // m_model_config.class_id_map(det_label);//TODO(fuquan.ke):fix with
+          // typeMapping
           float dequant_logits = logits[class_idx] * class_dequant_thresh;
           det.score = 1.0 / (1.0 + std::exp(-dequant_logits));
 
@@ -298,6 +292,7 @@ void MobileDetV2Detection::generate_dets_for_tensor(
                     det);
           float width = det.x2 - det.x1;
           float height = det.y2 - det.y1;
+          det.class_id = det_label;
           if (width > 1 && height > 1) {
             det_vec[det_label].push_back(det);
           }
@@ -308,7 +303,7 @@ void MobileDetV2Detection::generate_dets_for_tensor(
 }
 
 void MobileDetV2Detection::generate_dets_for_each_stride(
-    std::map<int, std::vector<cvtdl_bbox_t>> &det_vec) {
+    std::map<int, std::vector<ObjectBoxInfo>> &det_vec) {
   vector<pair<int8_t *, size_t>> cls_raw_out;
   vector<pair<int8_t *, size_t>> objectness_raw_out;
   vector<pair<int8_t *, size_t>> bbox_raw_out;
@@ -362,14 +357,6 @@ void MobileDetV2Detection::get_raw_outputs(
   }
 }
 
-void MobileDetV2Detection::select_classes(
-    const std::vector<uint32_t> &selected_classes) {
-  m_filter.reset();
-  for (auto c : selected_classes) {
-    m_filter.set(c, true);
-  }
-}
-
 void MobileDetV2Detection::setModelThreshold(const float &threshold) {
   if (m_model_threshold != threshold) {
     m_model_threshold = threshold;
@@ -408,44 +395,46 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2Detection::Category model) {
   switch (model) {
     case Category::coco80:
       config.num_classes = 90;
-      config.class_id_map = [](int orig_id) { return orig_id; };
+      // config.class_id_map = [](int orig_id) { return orig_id; };
       break;
     case Category::person_vehicle:
       config.num_classes = 6;
-      config.class_id_map = [](int orig_id) {
-        if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
-        if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_BICYCLE);
-        if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_CAR);
-        if (orig_id == 3) return static_cast<int>(CVI_TDL_DET_TYPE_MOTORBIKE);
-        if (orig_id == 4) return static_cast<int>(CVI_TDL_DET_TYPE_BUS);
-        if (orig_id == 5) return static_cast<int>(CVI_TDL_DET_TYPE_TRUCK);
-        return static_cast<int>(CVI_TDL_DET_TYPE_END);
-      };
+      // config.class_id_map = [](int orig_id) {
+      //   if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
+      //   if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_BICYCLE);
+      //   if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_CAR);
+      //   if (orig_id == 3) return
+      //   static_cast<int>(CVI_TDL_DET_TYPE_MOTORBIKE); if (orig_id == 4)
+      //   return static_cast<int>(CVI_TDL_DET_TYPE_BUS); if (orig_id == 5)
+      //   return static_cast<int>(CVI_TDL_DET_TYPE_TRUCK); return
+      //   static_cast<int>(CVI_TDL_DET_TYPE_END);
+      // };
       break;
     case Category::person_pets:
       config.num_classes = 3;
-      config.class_id_map = [](int orig_id) {
-        if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
-        if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_CAT);
-        if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_DOG);
-        return static_cast<int>(CVI_TDL_DET_TYPE_END);
-      };
+      // config.class_id_map = [](int orig_id) {
+      //   if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
+      //   if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_CAT);
+      //   if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_DOG);
+      //   return static_cast<int>(CVI_TDL_DET_TYPE_END);
+      // };
       break;
     case Category::vehicle:
       config.num_classes = 3;
-      config.class_id_map = [](int orig_id) {
-        if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_CAR);
-        if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_TRUCK);
-        if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_MOTORBIKE);
-        return static_cast<int>(CVI_TDL_DET_TYPE_END);
-      };
+      // config.class_id_map = [](int orig_id) {
+      //   if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_CAR);
+      //   if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_TRUCK);
+      //   if (orig_id == 2) return
+      //   static_cast<int>(CVI_TDL_DET_TYPE_MOTORBIKE); return
+      //   static_cast<int>(CVI_TDL_DET_TYPE_END);
+      // };
       break;
     case Category::pedestrian:
       config.num_classes = 1;
-      config.class_id_map = [](int orig_id) {
-        if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
-        return static_cast<int>(CVI_TDL_DET_TYPE_END);
-      };
+      // config.class_id_map = [](int orig_id) {
+      //   if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
+      //   return static_cast<int>(CVI_TDL_DET_TYPE_END);
+      // };
       break;
   }
 

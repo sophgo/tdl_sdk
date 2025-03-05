@@ -5,7 +5,7 @@
 #include "models/tdl_model_factory.hpp"
 
 void visualize_face_detection(std::shared_ptr<BaseImage> image,
-                              cvtdl_face_t *face_meta,
+                              std::shared_ptr<ModelBoxLandmarkInfo> face_meta,
                               const std::string &str_img_name) {
   cv::Mat mat;
   bool is_rgb;
@@ -17,16 +17,19 @@ void visualize_face_detection(std::shared_ptr<BaseImage> image,
   if (is_rgb) {
     cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
   }
-  for (size_t i = 0; i < face_meta->size; i++) {
-    cvtdl_face_info_t *face_info = &face_meta->info[i];
+  for (size_t i = 0; i < face_meta->box_landmarks.size(); i++) {
     cv::rectangle(mat,
-                  cv::Rect(int(face_info->bbox.x1), int(face_info->bbox.y1),
-                           int(face_info->bbox.x2 - face_info->bbox.x1),
-                           int(face_info->bbox.y2 - face_info->bbox.y1)),
+                  cv::Rect(int(face_meta->box_landmarks[i].x1),
+                           int(face_meta->box_landmarks[i].y1),
+                           int(face_meta->box_landmarks[i].x2 -
+                               face_meta->box_landmarks[i].x1),
+                           int(face_meta->box_landmarks[i].y2 -
+                               face_meta->box_landmarks[i].y1)),
                   cv::Scalar(0, 0, 255), 2);
-    for (int j = 0; j < face_info->pts.size; j++) {
+    for (int j = 0; j < face_meta->box_landmarks[i].landmarks_x.size(); j++) {
       cv::circle(mat,
-                 cv::Point(int(face_info->pts.x[j]), int(face_info->pts.y[j])),
+                 cv::Point(int(face_meta->box_landmarks[i].landmarks_x[j]),
+                           int(face_meta->box_landmarks[i].landmarks_y[j])),
                  3, cv::Scalar(0, 0, 255), -1);
     }
   }
@@ -55,29 +58,29 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  std::vector<void *> out_datas;
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image1};
   model_fd->inference(input_images, out_datas);
 
-  std::vector<cvtdl_face_t *> face_metas;
   for (size_t i = 0; i < out_datas.size(); i++) {
-    cvtdl_face_t *face_meta = (cvtdl_face_t *)out_datas[i];
+    std::shared_ptr<ModelBoxLandmarkInfo> face_meta =
+        std::static_pointer_cast<ModelBoxLandmarkInfo>(out_datas[i]);
 
-    if (face_meta->size == 0) {
+    if (face_meta->box_landmarks.size() == 0) {
       printf("No face detected\n");
 
     } else {
-      for (size_t j = 0; j < face_meta->size; j++) {
-        cvtdl_face_info_t *face_info = &face_meta->info[j];
+      for (size_t j = 0; j < face_meta->box_landmarks.size(); j++) {
         printf("face_%d,box= [%f, %f, %f, %f],score= %f\n", j,
-               face_info->bbox.x1, face_info->bbox.y1, face_info->bbox.x2,
-               face_info->bbox.y2, face_info->bbox.score);
+               face_meta->box_landmarks[j].x1, face_meta->box_landmarks[j].y1,
+               face_meta->box_landmarks[j].x2, face_meta->box_landmarks[j].y2,
+               face_meta->box_landmarks[j].score);
       }
     }
-    face_metas.push_back(face_meta);
+    char sz_img_name[128];
+    sprintf(sz_img_name, "face_detection_%d.jpg", i);
+    visualize_face_detection(image1, face_meta, sz_img_name);
   }
 
-  visualize_face_detection(image1, face_metas[0], "face_detection.jpg");
-  model_factory.releaseOutput(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD, out_datas);
   return 0;
 }

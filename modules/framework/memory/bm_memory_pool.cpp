@@ -2,7 +2,7 @@
 
 #include <bmlib_runtime.h>
 
-#include "cvi_tdl_log.hpp"
+#include "utils/tdl_log.hpp"
 BMContext::BMContext() {}
 
 BMContext::~BMContext() {

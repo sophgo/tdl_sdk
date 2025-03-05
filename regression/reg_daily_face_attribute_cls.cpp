@@ -55,30 +55,34 @@ TEST_F(FaceAttributeClsBmTestSuite, accuracy) {
 
     ASSERT_NE(frame, nullptr);
     // break;
-    std::vector<void *> out_data;
+    std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
     std::vector<std::shared_ptr<BaseImage>> input_images;
     input_images.push_back(frame);
     EXPECT_EQ(m_model->inference(input_images, out_data), 0);
     EXPECT_EQ(out_data.size(), 1);
-    cvtdl_face_t *face_meta = (cvtdl_face_t *)out_data[0];
+    EXPECT_EQ(out_data[0]->getType(), ModelOutputType::ATTRIBUTE);
+    std::shared_ptr<ModelAttributeInfo> attr_info =
+        std::static_pointer_cast<ModelAttributeInfo>(out_data[0]);
     auto expected_info = iter.value();
-    ASSERT_EQ(face_meta->size, expected_info.size());
+    ASSERT_EQ(attr_info->attributes.size(), expected_info.size());
     std::vector<std::vector<float>> gt_info;
     for (const auto &info : expected_info) {
-      gt_info.push_back({info["gender_score"], info["age"], info["glass"],
-                         info["mask"]});
+      gt_info.push_back(
+          {info["gender_score"], info["age"], info["glass"], info["mask"]});
     }
 
     std::vector<std::vector<float>> pred_info;
     pred_info.push_back(
-        {face_meta->info->gender_score,
-          face_meta->info->age, face_meta->info->glass, face_meta->info->mask_score});
+        {attr_info->attributes
+             [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER],
+         attr_info
+             ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE],
+         attr_info->attributes
+             [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES],
+         attr_info->attributes
+             [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK]});
 
-    EXPECT_TRUE(
-          matchScore(gt_info, pred_info, score_threshold));
-
-    model_factory_.releaseOutput(TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS,
-                              out_data);
+    EXPECT_TRUE(matchScore(gt_info, pred_info, score_threshold));
   }
 }
 

@@ -9,14 +9,14 @@ class OpenCVImage : public BaseImage {
   ~OpenCVImage();
 
   OpenCVImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-              ImagePixDataType pix_data_type, bool alloc_memory = false,
+              TDLDataType pix_data_type, bool alloc_memory = false,
               std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
 
   OpenCVImage(cv::Mat& mat, ImageFormat imageFormat);
 
   virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
                                    ImageFormat imageFormat,
-                                   ImagePixDataType pix_data_type) override;
+                                   TDLDataType pix_data_type) override;
 
   virtual int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
                               uint32_t length) override;
@@ -34,7 +34,7 @@ class OpenCVImage : public BaseImage {
   virtual void* getInternalData() const override;
 
  private:
-  int convertType(ImageFormat imageFormat, ImagePixDataType pix_data_type);
+  int convertType(ImageFormat imageFormat, TDLDataType pix_data_type);
 
  private:
   std::vector<cv::Mat> mats_;  // OpenCV 图像数据

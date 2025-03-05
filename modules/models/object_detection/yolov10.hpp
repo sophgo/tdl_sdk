@@ -1,7 +1,6 @@
 #pragma once
 #include <bitset>
 
-#include "core/object/cvtdl_object_types.h"
 #include "model/base_model.hpp"
 
 class YoloV10Detection final : public BaseModel {
@@ -13,7 +12,7 @@ class YoloV10Detection final : public BaseModel {
   // override;
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>> &images,
-      std::vector<void *> &out_datas) override;
+      std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) override;
   virtual int32_t onModelOpened() override;
 
  private:

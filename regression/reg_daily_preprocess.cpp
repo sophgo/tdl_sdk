@@ -40,7 +40,7 @@ TEST_F(PreprocessorTestSuite, TestPreprocess) {
   const uint32_t width = 640;
   const uint32_t height = 480;
   const ImageFormat format = ImageFormat::BGR_PLANAR;
-  const ImagePixDataType pixType = ImagePixDataType::UINT8;
+  const TDLDataType pixType = TDLDataType::UINT8;
 
   LOGI("TestPreprocess start\n");
   // 创建VPSSImage对象
@@ -62,7 +62,7 @@ TEST_F(PreprocessorTestSuite, TestPreprocess) {
   params.scale[2] = 1;
 
   params.dstImageFormat = ImageFormat::BGR_PLANAR;
-  params.dstPixDataType = ImagePixDataType::UINT8;
+  params.dstPixDataType = TDLDataType::UINT8;
 
   auto dstImage = preprocessor_->preprocess(image, params, nullptr);
   EXPECT_NE(dstImage, nullptr);
@@ -90,7 +90,7 @@ TEST_F(PreprocessorTestSuite, TestReadPreprocess) {
     params.scale[2] = 1;
 
     ImageFormat image_format = ImageFormat::RGB_PLANAR;
-    ImagePixDataType pix_data_type = ImagePixDataType::UINT8;
+    TDLDataType pix_data_type = TDLDataType::UINT8;
     params.dstImageFormat = image_format;
     params.dstPixDataType = pix_data_type;
 

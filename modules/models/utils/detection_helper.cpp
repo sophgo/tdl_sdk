@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "core/cvi_tdl_types_mem_internal.h"
 std::vector<std::vector<float>> DetectionHelper::generateMmdetBaseAnchors(
     float base_size, float center_offset, const std::vector<float> &ratios,
     const std::vector<int> &scales) {
@@ -92,18 +91,18 @@ DetectionHelper::generateRetinaNetAnchors(
   return anchor_bboxes;
 }
 
-void DetectionHelper::nmsFaces(std::vector<cvtdl_face_info_t> &faces,
-                               float iou_threshold) {
-  std::sort(faces.begin(), faces.end(),
-            [](cvtdl_face_info_t &a, cvtdl_face_info_t &b) {
-              return a.bbox.score > b.bbox.score;
+void DetectionHelper::nmsObjects(std::vector<ObjectBoxLandmarkInfo> &objects,
+                                 float iou_threshold) {
+  std::sort(objects.begin(), objects.end(),
+            [](ObjectBoxLandmarkInfo &a, ObjectBoxLandmarkInfo &b) {
+              return a.score > b.score;
             });
 
   int select_idx = 0;
-  int num_bbox = faces.size();
+  int num_bbox = objects.size();
   std::vector<int> mask_merged(num_bbox, 0);
   std::vector<int> select_idx_merged(num_bbox, 0);
-  std::vector<cvtdl_face_info_t> faces_nms;
+  std::vector<ObjectBoxLandmarkInfo> objects_nms;
   bool all_merged = false;
 
   while (!all_merged) {
@@ -113,33 +112,32 @@ void DetectionHelper::nmsFaces(std::vector<cvtdl_face_info_t> &faces,
       continue;
     }
 
-    faces_nms.emplace_back(faces[select_idx]);
+    objects_nms.emplace_back(objects[select_idx]);
     mask_merged[select_idx] = 1;
     select_idx_merged[select_idx] = 1;
-    cvtdl_face_info_t select_face = faces[select_idx];
-    float area1 =
-        static_cast<float>((select_face.bbox.x2 - select_face.bbox.x1 + 1) *
-                           (select_face.bbox.y2 - select_face.bbox.y1 + 1));
-    float x1 = static_cast<float>(select_face.bbox.x1);
-    float y1 = static_cast<float>(select_face.bbox.y1);
-    float x2 = static_cast<float>(select_face.bbox.x2);
-    float y2 = static_cast<float>(select_face.bbox.y2);
+    ObjectBoxLandmarkInfo select_object = objects[select_idx];
+    float area1 = static_cast<float>((select_object.x2 - select_object.x1 + 1) *
+                                     (select_object.y2 - select_object.y1 + 1));
+    float x1 = static_cast<float>(select_object.x1);
+    float y1 = static_cast<float>(select_object.y1);
+    float x2 = static_cast<float>(select_object.x2);
+    float y2 = static_cast<float>(select_object.y2);
 
     select_idx++;
     for (int i = select_idx; i < num_bbox; i++) {
       if (mask_merged[i] == 1) continue;
 
-      cvtdl_face_info_t &face_i = faces[i];
-      float x = std::max<float>(x1, static_cast<float>(face_i.bbox.x1));
-      float y = std::max<float>(y1, static_cast<float>(face_i.bbox.y1));
-      float w = std::min<float>(x2, static_cast<float>(face_i.bbox.x2)) - x + 1;
-      float h = std::min<float>(y2, static_cast<float>(face_i.bbox.y2)) - y + 1;
+      ObjectBoxLandmarkInfo &object_i = objects[i];
+      float x = std::max<float>(x1, static_cast<float>(object_i.x1));
+      float y = std::max<float>(y1, static_cast<float>(object_i.y1));
+      float w = std::min<float>(x2, static_cast<float>(object_i.x2)) - x + 1;
+      float h = std::min<float>(y2, static_cast<float>(object_i.y2)) - y + 1;
       if (w <= 0 || h <= 0) {
         continue;
       }
 
-      float area2 = static_cast<float>((face_i.bbox.x2 - face_i.bbox.x1 + 1) *
-                                       (face_i.bbox.y2 - face_i.bbox.y1 + 1));
+      float area2 = static_cast<float>((object_i.x2 - object_i.x1 + 1) *
+                                       (object_i.y2 - object_i.y1 + 1));
       float area_intersect = w * h;
       if (static_cast<float>(area_intersect) /
               (area1 + area2 - area_intersect) >
@@ -149,25 +147,21 @@ void DetectionHelper::nmsFaces(std::vector<cvtdl_face_info_t> &faces,
       }
     }
   }
-  for (int i = 0; i < num_bbox; i++) {
-    if (select_idx_merged[i] == 0) {
-      free(faces[i].pts.x);
-      free(faces[i].pts.y);
-    }
-  }
-  faces = faces_nms;
+
+  objects = objects_nms;
 }
 
-void DetectionHelper::nmsObjects(std::vector<cvtdl_bbox_t> &bboxes,
+void DetectionHelper::nmsObjects(std::vector<ObjectBoxInfo> &objects,
                                  float iou_threshold) {
-  std::sort(bboxes.begin(), bboxes.end(),
-            [](cvtdl_bbox_t &a, cvtdl_bbox_t &b) { return a.score > b.score; });
+  std::sort(
+      objects.begin(), objects.end(),
+      [](ObjectBoxInfo &a, ObjectBoxInfo &b) { return a.score > b.score; });
 
   int select_idx = 0;
-  int num_bbox = bboxes.size();
+  int num_bbox = objects.size();
   std::vector<int> mask_merged(num_bbox, 0);
   std::vector<int> select_idx_merged(num_bbox, 0);
-  std::vector<cvtdl_bbox_t> bboxes_nms;
+  std::vector<ObjectBoxInfo> objects_nms;
   bool all_merged = false;
 
   while (!all_merged) {
@@ -177,10 +171,10 @@ void DetectionHelper::nmsObjects(std::vector<cvtdl_bbox_t> &bboxes,
       continue;
     }
 
-    bboxes_nms.emplace_back(bboxes[select_idx]);
+    objects_nms.emplace_back(objects[select_idx]);
     mask_merged[select_idx] = 1;
     select_idx_merged[select_idx] = 1;
-    cvtdl_bbox_t select_bbox = bboxes[select_idx];
+    ObjectBoxInfo select_bbox = objects[select_idx];
     float area1 = static_cast<float>((select_bbox.x2 - select_bbox.x1 + 1) *
                                      (select_bbox.y2 - select_bbox.y1 + 1));
     float x1 = static_cast<float>(select_bbox.x1);
@@ -192,7 +186,7 @@ void DetectionHelper::nmsObjects(std::vector<cvtdl_bbox_t> &bboxes,
     for (int i = select_idx; i < num_bbox; i++) {
       if (mask_merged[i] == 1) continue;
 
-      cvtdl_bbox_t &bbox_i = bboxes[i];
+      ObjectBoxInfo &bbox_i = objects[i];
       float x = std::max<float>(x1, static_cast<float>(bbox_i.x1));
       float y = std::max<float>(y1, static_cast<float>(bbox_i.y1));
       float w = std::min<float>(x2, static_cast<float>(bbox_i.x2)) - x + 1;
@@ -212,17 +206,17 @@ void DetectionHelper::nmsObjects(std::vector<cvtdl_bbox_t> &bboxes,
       }
     }
   }
-  bboxes = bboxes_nms;
+  objects = objects_nms;
 }
 
 void DetectionHelper::nmsObjects(
-    std::map<int, std::vector<cvtdl_bbox_t>> &bboxes, float iou_threshold) {
-  for (auto &bbox : bboxes) {
-    nmsObjects(bbox.second, iou_threshold);
+    std::map<int, std::vector<ObjectBoxInfo>> &objects, float iou_threshold) {
+  for (auto &object : objects) {
+    nmsObjects(object.second, iou_threshold);
   }
 }
 
-void DetectionHelper::rescaleBbox(cvtdl_bbox_t &bbox,
+void DetectionHelper::rescaleBbox(ObjectBoxInfo &bbox,
                                   const std::vector<float> &scale_params,
                                   const int crop_x, const int crop_y) {
   float scale_x = scale_params[0];
@@ -235,37 +229,37 @@ void DetectionHelper::rescaleBbox(cvtdl_bbox_t &bbox,
   bbox.y2 = (bbox.y2 - offset_y) / scale_y + crop_y;
 }
 
-void DetectionHelper::convertDetStruct(
-    std::map<int, std::vector<cvtdl_bbox_t>> &dets, cvtdl_object_t *obj,
-    int im_height, int im_width) {
-  int num_obj = 0;
-  for (auto &bbox : dets) {
-    num_obj += bbox.second.size();
-  }
-  memset(obj, 0, sizeof(cvtdl_object_t));
-  obj->height = im_height;
-  obj->width = im_width;
-  if (num_obj == 0) {
-    return;
-  }
-  CVI_TDL_MemAllocInit(num_obj, obj);
+// void DetectionHelper::convertDetStruct(
+//     std::map<int, std::vector<cvtdl_bbox_t>> &dets, cvtdl_object_t *obj,
+//     int im_height, int im_width) {
+//   int num_obj = 0;
+//   for (auto &bbox : dets) {
+//     num_obj += bbox.second.size();
+//   }
+//   memset(obj, 0, sizeof(cvtdl_object_t));
+//   obj->height = im_height;
+//   obj->width = im_width;
+//   if (num_obj == 0) {
+//     return;
+//   }
+//   CVI_TDL_MemAllocInit(num_obj, obj);
 
-  memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
+//   memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
 
-  int idx = 0;
-  for (auto &bbox : dets) {
-    for (auto &b : bbox.second) {
-      obj->info[idx].bbox.x1 =
-          std::clamp(b.x1, 0.0f, static_cast<float>(im_width));
-      obj->info[idx].bbox.y1 =
-          std::clamp(b.y1, 0.0f, static_cast<float>(im_height));
-      obj->info[idx].bbox.x2 =
-          std::clamp(b.x2, 0.0f, static_cast<float>(im_width));
-      obj->info[idx].bbox.y2 =
-          std::clamp(b.y2, 0.0f, static_cast<float>(im_height));
-      obj->info[idx].bbox.score = b.score;
-      obj->info[idx].classes = bbox.first;
-      idx++;
-    }
-  }
-}
+//   int idx = 0;
+//   for (auto &bbox : dets) {
+//     for (auto &b : bbox.second) {
+//       obj->info[idx].bbox.x1 =
+//           std::clamp(b.x1, 0.0f, static_cast<float>(im_width));
+//       obj->info[idx].bbox.y1 =
+//           std::clamp(b.y1, 0.0f, static_cast<float>(im_height));
+//       obj->info[idx].bbox.x2 =
+//           std::clamp(b.x2, 0.0f, static_cast<float>(im_width));
+//       obj->info[idx].bbox.y2 =
+//           std::clamp(b.y2, 0.0f, static_cast<float>(im_height));
+//       obj->info[idx].bbox.score = b.score;
+//       obj->info[idx].classes = bbox.first;
+//       idx++;
+//     }
+//   }
+// }

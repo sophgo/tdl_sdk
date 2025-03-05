@@ -4,9 +4,9 @@
 #include <cassert>
 #include <iostream>
 
-#include "cvi_tdl_log.hpp"
 #include "preprocess/base_preprocessor.hpp"
 #include "utils/common_utils.hpp"
+#include "utils/tdl_log.hpp"
 void print_netparam(const NetParam& net_param) {
   LOGI("scale:%f,%f,%f,mean:%f,%f,%f,format:%d,aspect_ratio:%d",
        net_param.pre_params.scale[0], net_param.pre_params.scale[1],
@@ -117,7 +117,7 @@ int32_t BaseModel::setupNetwork(NetParam& net_param) {
 
 int32_t BaseModel::inference(
     const std::vector<std::shared_ptr<BaseImage>>& images,
-    std::vector<void*>& out_datas, const int src_width, const int src_height) {
+    std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) {
   if (images.empty()) {
     LOGE("Input images is empty");
     return -1;
@@ -162,7 +162,7 @@ int32_t BaseModel::inference(
     net_->updateInputTensors();
     net_->forward();
     net_->updateOutputTensors();
-    std::vector<void*> batch_results;
+    std::vector<std::shared_ptr<ModelOutputInfo>> batch_results;
     outputParse(batch_images, batch_results);
     out_datas.insert(out_datas.end(), batch_results.begin(),
                      batch_results.end());
@@ -171,7 +171,8 @@ int32_t BaseModel::inference(
   return 0;
 }
 
-void BaseModel::setTypeMapping(const std::map<int, int>& type_mapping) {
+void BaseModel::setTypeMapping(
+    const std::map<int, TDLObjectType>& type_mapping) {
   type_mapping_ = type_mapping;
 }
 void BaseModel::setModelThreshold(float threshold) {

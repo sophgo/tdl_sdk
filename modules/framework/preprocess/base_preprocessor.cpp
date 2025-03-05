@@ -1,8 +1,8 @@
 
 
-#include "cvi_tdl_log.hpp"
 #include "preprocess/opencv_preprocessor.hpp"
 #include "utils/common_utils.hpp"
+#include "utils/tdl_log.hpp"
 #if not defined(__BM168X__)
 #include "preprocess/vpss_preprocessor.hpp"
 #endif

@@ -5,8 +5,8 @@
 #include <cassert>
 // #include "core/utils/vpss_helper.h"
 #include "cvi_comm_vb.h"
-#include "cvi_tdl_log.hpp"
 #include "image/vpss_image.hpp"
+#include "utils/tdl_log.hpp"
 
 void init_vpss_grp_attr(VPSS_GRP_ATTR_S* pstVpssGrpAttr, CVI_U32 srcWidth,
                         CVI_U32 srcHeight, PIXEL_FORMAT_E enSrcFormat,

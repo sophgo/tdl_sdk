@@ -5,14 +5,13 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "cvi_tdl_log.hpp"
 #include "image/opencv_image.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/image_alignment.hpp"
+#include "utils/tdl_log.hpp"
 std::shared_ptr<BaseImage> ImageFactory::createImage(
     uint32_t width, uint32_t height, ImageFormat imageFormat,
-    ImagePixDataType pixDataType, bool alloc_memory,
-    InferencePlatform platform) {
+    TDLDataType pixDataType, bool alloc_memory, InferencePlatform platform) {
   if (platform == InferencePlatform::UNKOWN ||
       platform == InferencePlatform::AUTOMATIC) {
     platform = get_platform();
@@ -61,9 +60,8 @@ std::shared_ptr<BaseImage> ImageFactory::readImage(const std::string& file_path,
     return nullptr;
   }
 
-  std::shared_ptr<BaseImage> image =
-      ImageFactory::createImage(img.cols, img.rows, image_format,
-                                ImagePixDataType::UINT8, false, platform);
+  std::shared_ptr<BaseImage> image = ImageFactory::createImage(
+      img.cols, img.rows, image_format, TDLDataType::UINT8, false, platform);
   if (image == nullptr) {
     LOGE("Failed to create image");
     return nullptr;
@@ -102,7 +100,7 @@ int32_t ImageFactory::writeImage(const std::string& file_path,
     LOGE("Image is nullptr");
     return -1;
   }
-  if (image->getPixDataType() != ImagePixDataType::UINT8) {
+  if (image->getPixDataType() != TDLDataType::UINT8) {
     LOGE("Image pix data type is not UINT8");
     return -1;
   }
@@ -211,8 +209,8 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
   }
   int dst_img_size = 112;
   std::shared_ptr<BaseImage> aligned_image = ImageFactory::createImage(
-      dst_img_size, dst_img_size, image->getImageFormat(),
-      ImagePixDataType::UINT8, false, InferencePlatform::AUTOMATIC);
+      dst_img_size, dst_img_size, image->getImageFormat(), TDLDataType::UINT8,
+      false, InferencePlatform::AUTOMATIC);
   if (aligned_image == nullptr) {
     LOGE("Failed to create aligned image");
     return nullptr;
@@ -255,7 +253,7 @@ std::shared_ptr<BaseImage> ImageFactory::convertFromMat(cv::Mat& mat,
     return nullptr;
   }
   std::shared_ptr<BaseImage> image = ImageFactory::createImage(
-      mat.cols, mat.rows, image_format, ImagePixDataType::UINT8, false);
+      mat.cols, mat.rows, image_format, TDLDataType::UINT8, false);
   if (image == nullptr) {
     LOGE("Failed to create image");
     return nullptr;

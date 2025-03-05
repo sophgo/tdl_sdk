@@ -1,24 +1,24 @@
 #include "utils/common_utils.hpp"
 
-uint32_t get_data_type_size(ImagePixDataType data_type) {
+uint32_t get_data_type_size(TDLDataType data_type) {
   switch (data_type) {
-    case ImagePixDataType::FP32:
+    case TDLDataType::FP32:
       return 4;
-    case ImagePixDataType::INT32:
+    case TDLDataType::INT32:
       return 4;
-    case ImagePixDataType::UINT32:
+    case TDLDataType::UINT32:
       return 4;
-    case ImagePixDataType::FP16:
+    case TDLDataType::FP16:
       return 2;
-    case ImagePixDataType::BF16:
+    case TDLDataType::BF16:
       return 2;
-    case ImagePixDataType::INT16:
+    case TDLDataType::INT16:
       return 2;
-    case ImagePixDataType::UINT16:
+    case TDLDataType::UINT16:
       return 2;
-    case ImagePixDataType::INT8:
+    case TDLDataType::INT8:
       return 1;
-    case ImagePixDataType::UINT8:
+    case TDLDataType::UINT8:
       return 1;
     default:
       return 0;

@@ -4,12 +4,13 @@
 #include "image/base_image.hpp"
 #include "models/tdl_model_factory.hpp"
 
-std::shared_ptr<BaseImage> face_crop_align(std::shared_ptr<BaseImage> image,
-                                           cvtdl_face_info_t *face_meta) {
+std::shared_ptr<BaseImage> face_crop_align(
+    std::shared_ptr<BaseImage> image,
+    std::shared_ptr<ModelLandmarksInfo> landmarks_meta) {
   float landmarks[10];
   for (int i = 0; i < 5; i++) {
-    landmarks[2 * i] = face_meta->pts.x[i];
-    landmarks[2 * i + 1] = face_meta->pts.y[i];
+    landmarks[2 * i] = landmarks_meta->landmarks_x[i];
+    landmarks[2 * i + 1] = landmarks_meta->landmarks_y[i];
   }
 
   std::shared_ptr<BaseImage> face_crop =
@@ -21,25 +22,29 @@ std::shared_ptr<BaseImage> face_crop_align(std::shared_ptr<BaseImage> image,
   return face_crop;
 }
 
-std::vector<std::pair<std::shared_ptr<BaseImage>, cvtdl_face_info_t *>>
-extract_crop_face_landmark(std::shared_ptr<BaseModel> model_fl,
-                           std::vector<std::shared_ptr<BaseImage>> images,
-                           std::vector<cvtdl_face_t *> face_metas) {
-  std::vector<std::pair<std::shared_ptr<BaseImage>, cvtdl_face_info_t *>>
+std::vector<
+    std::pair<std::shared_ptr<BaseImage>, std::shared_ptr<ModelLandmarksInfo>>>
+extract_crop_face_landmark(
+    std::shared_ptr<BaseModel> model_fl,
+    std::vector<std::shared_ptr<BaseImage>> images,
+    std::vector<std::shared_ptr<ModelOutputInfo>> face_metas) {
+  std::vector<std::pair<std::shared_ptr<BaseImage>,
+                        std::shared_ptr<ModelLandmarksInfo>>>
       face_crops_landmark;
   std::shared_ptr<BasePreprocessor> preprocessor = model_fl->getPreprocessor();
 
   std::vector<std::shared_ptr<BaseImage>> face_crops;
-  std::vector<void *> out_datas;
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
 
   char sz_img_name[128];
   for (size_t i = 0; i < images.size(); i++) {
-    cvtdl_face_t *face_meta = face_metas[i];
-    cvtdl_face_info_t *face_info = &face_meta->info[0];
-    int x1 = face_info->bbox.x1;
-    int y1 = face_info->bbox.y1;
-    int x2 = face_info->bbox.x2;
-    int y2 = face_info->bbox.y2;
+    std::shared_ptr<ModelBoxLandmarkInfo> face_meta =
+        std::static_pointer_cast<ModelBoxLandmarkInfo>(face_metas[i]);
+
+    int x1 = face_meta->box_landmarks[0].x1;
+    int y1 = face_meta->box_landmarks[0].y1;
+    int x2 = face_meta->box_landmarks[0].x2;
+    int y2 = face_meta->box_landmarks[0].y2;
 
     int box_width = x2 - x1;
     int box_height = y2 - y1;
@@ -64,18 +69,22 @@ extract_crop_face_landmark(std::shared_ptr<BaseModel> model_fl,
   }
   model_fl->inference(face_crops, out_datas);
   for (size_t i = 0; i < out_datas.size(); i++) {
-    cvtdl_face_info_t *face_meta = (cvtdl_face_info_t *)out_datas[i];
-    face_crops_landmark.push_back(std::make_pair(face_crops[i], face_meta));
+    std::shared_ptr<ModelLandmarksInfo> landmarks_meta =
+        std::static_pointer_cast<ModelLandmarksInfo>(out_datas[i]);
+    face_crops_landmark.push_back(
+        std::make_pair(face_crops[i], landmarks_meta));
   }
   return face_crops_landmark;
 }
 
 void visualize_face_crop(
-    std::vector<std::pair<std::shared_ptr<BaseImage>, cvtdl_face_info_t *>>
+    std::vector<std::pair<std::shared_ptr<BaseImage>,
+                          std::shared_ptr<ModelLandmarksInfo>>>
         face_crops_landmark) {
   char sz_img_name[128];
   for (size_t i = 0; i < face_crops_landmark.size(); i++) {
-    cvtdl_face_info_t *face_info = face_crops_landmark[i].second;
+    std::shared_ptr<ModelLandmarksInfo> landmarks_meta =
+        face_crops_landmark[i].second;
     std::shared_ptr<BaseImage> face_crop = face_crops_landmark[i].first;
 
     cv::Mat mat;
@@ -85,9 +94,11 @@ void visualize_face_crop(
       printf("Failed to convert to mat\n");
       return;
     }
-    for (int j = 0; j < face_info->pts.size; j++) {
-      cv::circle(mat, cv::Point(face_info->pts.x[j], face_info->pts.y[j]), 2,
-                 cv::Scalar(0, 0, 255), -1);
+    for (int j = 0; j < landmarks_meta->landmarks_x.size(); j++) {
+      cv::circle(mat,
+                 cv::Point(landmarks_meta->landmarks_x[j],
+                           landmarks_meta->landmarks_y[j]),
+                 2, cv::Scalar(0, 0, 255), -1);
     }
     sprintf(sz_img_name, "face_crop_landmark_%d.jpg", i);
     cv::imwrite(sz_img_name, mat);
@@ -133,28 +144,25 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  std::vector<void *> out_fd, out_fl, out_fe;
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_fd, out_fl, out_fe;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image1, image2};
   model_fd->inference(input_images, out_fd);
 
-  std::vector<cvtdl_face_t *> face_metas;
-  for (size_t i = 0; i < out_fd.size(); i++) {
-    cvtdl_face_t *face_meta = (cvtdl_face_t *)out_fd[i];
-    face_metas.push_back(face_meta);
-  }
-  std::vector<std::pair<std::shared_ptr<BaseImage>, cvtdl_face_info_t *>>
+  std::vector<std::pair<std::shared_ptr<BaseImage>,
+                        std::shared_ptr<ModelLandmarksInfo>>>
       face_crops_landmark =
-          extract_crop_face_landmark(model_fl, input_images, face_metas);
+          extract_crop_face_landmark(model_fl, input_images, out_fd);
 
   std::vector<std::shared_ptr<BaseImage>> face_aligns;
 
   char sz_img_name[128];
   for (size_t i = 0; i < face_crops_landmark.size(); i++) {
-    cvtdl_face_info_t *face_info = face_crops_landmark[i].second;
-    out_fl.push_back(face_info);
+    std::shared_ptr<ModelLandmarksInfo> landmarks_meta =
+        face_crops_landmark[i].second;
+    out_fl.push_back(landmarks_meta);
     std::shared_ptr<BaseImage> face_crop = face_crops_landmark[i].first;
     std::shared_ptr<BaseImage> face_align =
-        face_crop_align(face_crop, face_info);
+        face_crop_align(face_crop, landmarks_meta);
     face_aligns.push_back(face_align);
     sprintf(sz_img_name, "face_align_%d.jpg", i);
     ImageFactory::writeImage(sz_img_name, face_align);
@@ -171,12 +179,12 @@ int main(int argc, char **argv) {
   model_fe->inference(face_aligns, out_fe);
   std::vector<std::vector<float>> features;
   for (size_t i = 0; i < out_fe.size(); i++) {
-    cvtdl_feature_t *feature = (cvtdl_feature_t *)out_fe[i];
-    printf("feature size: %d\n", feature->size / sizeof(float));
-    std::vector<float> feature_vec(feature->size / sizeof(float));
-    float *feature_ptr = (float *)feature->ptr;
-    for (size_t j = 0; j < feature->size / sizeof(float); j++) {
-      feature_vec[j] = feature_ptr[j];
+    std::shared_ptr<ModelFeatureInfo> feature_meta =
+        std::static_pointer_cast<ModelFeatureInfo>(out_fe[i]);
+    printf("feature size: %d\n", feature_meta->embedding_num);
+    std::vector<float> feature_vec(feature_meta->embedding_num);
+    for (size_t j = 0; j < feature_meta->embedding_num; j++) {
+      feature_vec[j] = feature_meta->embedding[j];
     }
     features.push_back(feature_vec);
   }
@@ -191,11 +199,6 @@ int main(int argc, char **argv) {
   norm1 = sqrt(norm1);
   norm2 = sqrt(norm2);
   printf("sim: %f\n", sim / (norm1 * norm2));
-
-  model_factory.releaseOutput(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD, out_fd);
-  model_factory.releaseOutput(TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2,
-                              out_fl);
-  model_factory.releaseOutput(TDL_MODEL_TYPE_FACE_FEATURE_BMFACER34, out_fe);
 
   return 0;
 }

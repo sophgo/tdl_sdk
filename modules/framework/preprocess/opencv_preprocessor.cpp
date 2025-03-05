@@ -1,7 +1,7 @@
 #include "preprocess/opencv_preprocessor.hpp"
 
-#include "cvi_tdl_log.hpp"
 #include "image/opencv_image.hpp"
+#include "utils/tdl_log.hpp"
 
 void bgr_split_scale(const cv::Mat& src_mat, std::vector<cv::Mat>& tmp_bgr,
                      const std::vector<cv::Mat>& input_channels,
