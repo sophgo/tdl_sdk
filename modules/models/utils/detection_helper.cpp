@@ -215,6 +215,80 @@ void DetectionHelper::nmsObjects(
     nmsObjects(object.second, iou_threshold);
   }
 }
+void DetectionHelper::nmsObjects(std::vector<ObjectBoxSegmentationInfo> &objects,
+                                 float iou_threshold, std::vector<std::pair<int, uint32_t>> &stride_index) {
+ 
+  std::vector<size_t> indices(objects.size());
+  for (size_t i = 0; i < objects.size(); ++i) {
+        indices[i] = i;
+  }
+
+  std::sort(indices.begin(), indices.end(),
+              [&objects](size_t a, size_t b) {
+                  return objects[a].score > objects[b].score;});
+
+  std::vector<ObjectBoxSegmentationInfo> sorted_objects(objects.size());
+  std::vector<std::pair<int, uint32_t>> sorted_stride_index(stride_index.size());
+
+  for (size_t i = 0; i < indices.size(); ++i) {
+        sorted_objects[i] = objects[indices[i]];
+        sorted_stride_index[i] = stride_index[indices[i]];}
+
+  int select_idx = 0;
+  int num_bbox = sorted_objects.size();
+  std::vector<int> mask_merged(num_bbox, 0);
+  std::vector<int> select_idx_merged(num_bbox, 0);
+  std::vector<ObjectBoxSegmentationInfo> objects_nms;
+  std::vector<std::pair<int, uint32_t>> stride_index_nms;
+  bool all_merged = false;
+
+  while (!all_merged) {
+    while (select_idx < num_bbox && mask_merged[select_idx] == 1) select_idx++;
+    if (select_idx == num_bbox) {
+      all_merged = true;
+      continue;
+    }
+
+    objects_nms.emplace_back(sorted_objects[select_idx]);
+    stride_index_nms.emplace_back(sorted_stride_index[select_idx]);
+
+    mask_merged[select_idx] = 1;
+    select_idx_merged[select_idx] = 1;
+    ObjectBoxSegmentationInfo select_bbox = sorted_objects[select_idx];
+    float area1 = static_cast<float>((select_bbox.x2 - select_bbox.x1 + 1) *
+                                     (select_bbox.y2 - select_bbox.y1 + 1));
+    float x1 = static_cast<float>(select_bbox.x1);
+    float y1 = static_cast<float>(select_bbox.y1);
+    float x2 = static_cast<float>(select_bbox.x2);
+    float y2 = static_cast<float>(select_bbox.y2);
+
+    select_idx++;
+    for (int i = select_idx; i < num_bbox; i++) {
+      if (mask_merged[i] == 1) continue;
+
+      ObjectBoxSegmentationInfo &bbox_i = sorted_objects[i];
+      float x = std::max<float>(x1, static_cast<float>(bbox_i.x1));
+      float y = std::max<float>(y1, static_cast<float>(bbox_i.y1));
+      float w = std::min<float>(x2, static_cast<float>(bbox_i.x2)) - x + 1;
+      float h = std::min<float>(y2, static_cast<float>(bbox_i.y2)) - y + 1;
+      if (w <= 0 || h <= 0) {
+        continue;
+      }
+
+      float area2 = static_cast<float>((bbox_i.x2 - bbox_i.x1 + 1) *
+                                       (bbox_i.y2 - bbox_i.y1 + 1));
+      float area_intersect = w * h;
+      if (static_cast<float>(area_intersect) /
+              (area1 + area2 - area_intersect) >
+          iou_threshold) {
+        mask_merged[i] = 1;
+        continue;
+      }
+    }
+  }
+  objects = objects_nms;
+  stride_index = stride_index_nms;
+}
 
 void DetectionHelper::rescaleBbox(ObjectBoxInfo &bbox,
                                   const std::vector<float> &scale_params,
@@ -229,6 +303,18 @@ void DetectionHelper::rescaleBbox(ObjectBoxInfo &bbox,
   bbox.y2 = (bbox.y2 - offset_y) / scale_y + crop_y;
 }
 
+void DetectionHelper::rescaleBbox(ObjectBoxSegmentationInfo &bbox,
+                                  const std::vector<float> &scale_params,
+                                  const int crop_x, const int crop_y) {
+  float scale_x = scale_params[0];
+  float scale_y = scale_params[1];
+  float offset_x = scale_params[2];
+  float offset_y = scale_params[3];
+  bbox.x1 = (bbox.x1 - offset_x) / scale_x + crop_x;
+  bbox.y1 = (bbox.y1 - offset_y) / scale_y + crop_y;
+  bbox.x2 = (bbox.x2 - offset_x) / scale_x + crop_x;
+  bbox.y2 = (bbox.y2 - offset_y) / scale_y + crop_y;
+}
 // void DetectionHelper::convertDetStruct(
 //     std::map<int, std::vector<cvtdl_bbox_t>> &dets, cvtdl_object_t *obj,
 //     int im_height, int im_width) {

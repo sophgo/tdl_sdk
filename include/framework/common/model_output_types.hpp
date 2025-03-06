@@ -8,6 +8,7 @@
 enum class ModelOutputType {
   OBJECT_DETECTION,
   OBJECT_DETECTION_WITH_LANDMARKS,
+  OBJECT_DETECTION_WITH_SEGMENTATION,
   OBJECT_LANDMARKS,
   FEATURE_EMBEDDING,
   CLASSIFICATION,
@@ -58,6 +59,50 @@ class ObjectBoxLandmarkInfo {
   std::vector<float> landmarks_x;
   std::vector<float> landmarks_y;
   float landmarks_score;
+};
+
+class ObjectBoxSegmentationInfo {
+ public:
+  ObjectBoxSegmentationInfo()     
+      : class_id(0),
+      object_type(OBJECT_TYPE_UNDEFINED),
+      score(0.0f),
+      x1(0.0f),
+      y1(0.0f),
+      x2(0.0f),
+      y2(0.0f),
+      mask(nullptr),
+      mask_point(nullptr),
+      mask_point_size(0) {}
+  ~ObjectBoxSegmentationInfo() {
+      if (mask != nullptr) {
+          delete[] mask;          
+          mask = nullptr;         
+      }
+      if (mask_point != nullptr) {
+          delete[] mask_point;   
+          mask_point = nullptr;   
+      }
+  }
+  int32_t class_id;
+  TDLObjectType object_type = OBJECT_TYPE_UNDEFINED;
+  float score;
+  float x1, y1, x2, y2;
+  uint8_t *mask;
+  float *mask_point;
+  uint32_t mask_point_size;
+};
+class ModelBoxSegmentationInfo : public ModelOutputInfo {
+ public:
+  ~ModelBoxSegmentationInfo() = default;
+  ModelOutputType getType() const override {
+    return ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION;
+  }
+  uint32_t image_width;
+  uint32_t image_height;
+  uint32_t mask_width;
+  uint32_t mask_height;
+  std::vector<ObjectBoxSegmentationInfo> box_seg;
 };
 
 class ModelBoxLandmarkInfo : public ModelOutputInfo {
