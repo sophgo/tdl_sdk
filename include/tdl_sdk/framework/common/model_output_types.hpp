@@ -58,7 +58,7 @@ class ObjectBoxLandmarkInfo {
   float x1, y1, x2, y2;
   std::vector<float> landmarks_x;
   std::vector<float> landmarks_y;
-  float landmarks_score;
+  std::vector<float> landmarks_score;
 };
 
 class ObjectBoxSegmentationInfo {

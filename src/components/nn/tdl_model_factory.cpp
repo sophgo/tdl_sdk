@@ -10,6 +10,7 @@
 #include "object_detection/yolov6.hpp"
 #include "object_detection/yolov8.hpp"
 #include "segmentation/yolov8_seg.hpp"
+#include "keypoints_detection/yolov8_pose.hpp"
 #include "utils/tdl_log.hpp"
 
 
@@ -97,6 +98,9 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   } else if (model_type ==
              TDL_MODEL_TYPE_INSTANCE_SEGMENTATION_YOLOV8) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
+  } else if (model_type ==
+             TDL_MODEL_TYPE_KEYPOINT_DETECTION_YOLOV8) {
+    model = std::make_shared<YoloV8Pose>(std::make_tuple(64, 17, 1));
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;

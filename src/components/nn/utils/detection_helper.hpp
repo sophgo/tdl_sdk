@@ -29,10 +29,15 @@ class DetectionHelper {
                          float iou_threshold);
   static void nmsObjects(std::vector<ObjectBoxSegmentationInfo> &objects,
                          float iou_threshold, std::vector<std::pair<int, uint32_t>> &stride_index);
+  static void nmsObjects(std::vector<ObjectBoxLandmarkInfo> &objects,
+                         float iou_threshold, std::vector<std::pair<int, uint32_t>> &stride_index);                         
   static void rescaleBbox(ObjectBoxInfo &bbox,
                           const std::vector<float> &scale_params,
                           const int crop_x = 0, const int crop_y = 0);
   static void rescaleBbox(ObjectBoxSegmentationInfo &bbox,
+                                    const std::vector<float> &scale_params,
+                                    const int crop_x, const int crop_y);
+  static void rescaleBbox(ObjectBoxLandmarkInfo &bbox,
                                     const std::vector<float> &scale_params,
                                     const int crop_x, const int crop_y);
   //   static void convertDetStruct(std::map<int, std::vector<cvtdl_bbox_t>>
