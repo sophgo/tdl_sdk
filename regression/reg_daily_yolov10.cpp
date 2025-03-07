@@ -8,7 +8,7 @@
 #include "cvi_tdl_test.hpp"
 
 #include "json.hpp"
-#include "models/tdl_model_factory.hpp"
+#include "tdl_model_factory.hpp"
 
 #include "regression_utils.hpp"
 namespace fs = std::experimental::filesystem;

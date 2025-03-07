@@ -6,7 +6,7 @@
 #include "core/cvi_tdl_types_mem.h"
 #include "core/cvtdl_core_types.h"
 #include "image/base_image.hpp"
-#include "models/tdl_model_factory.hpp"
+#include "tdl_model_factory.hpp"
 int main(int argc, char** argv) {
   if (argc != 4) {
     printf("Usage: %s <model_dir> <dataset_dir> <result_file>\n", argv[0]);

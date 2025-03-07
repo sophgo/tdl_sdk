@@ -33,9 +33,10 @@ endfunction(buildninstallcpp)
 set(SAMPLE_INCLUDES
     ${MLIR_INCLUDES}
     ${MIDDLEWARE_INCLUDES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/framework
+    ${REPO_DIR}/include/tdl_sdk/framework
+    ${REPO_DIR}/include/tdl_sdk/components
+    ${REPO_DIR}/include/tdl_sdk/app
+    ${REPO_DIR}/include/tdl_sdk/nn
 )
 
 set(SAMPLE_LIBS ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})

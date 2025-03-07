@@ -1,5 +1,5 @@
 
-#include "models/tdl_model_factory.hpp"
+#include "tdl_model_factory.hpp"
 
 int main(int argc, char** argv) {
   if (argc != 3) {

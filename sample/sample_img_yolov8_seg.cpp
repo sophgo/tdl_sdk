@@ -1,10 +1,9 @@
-#include "core/cvi_tdl_types_mem.h"
-#include "core/cvtdl_core_types.h"
-#include "face/cvtdl_face_types.h"
-#include "image/base_image.hpp"
-#include "models/tdl_model_factory.hpp"
 
-void visualize_maskOutlinePoint(std::shared_ptr<ModelBoxSegmentationInfo> obj_meta,uint32_t image_height,uint32_t image_width) {
+#include "tdl_model_factory.hpp"
+
+void visualize_maskOutlinePoint(
+    std::shared_ptr<ModelBoxSegmentationInfo> obj_meta, uint32_t image_height,
+    uint32_t image_width) {
   int proto_h = obj_meta->mask_height;
   int proto_w = obj_meta->mask_width;
 
@@ -15,7 +14,8 @@ void visualize_maskOutlinePoint(std::shared_ptr<ModelBoxSegmentationInfo> obj_me
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;
     // search for contours
-    cv::findContours(src, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(src, contours, hierarchy, cv::RETR_TREE,
+                     cv::CHAIN_APPROX_SIMPLE);
     // find the longest contour
     int longest_index = -1;
     size_t max_length = 0;
@@ -39,12 +39,13 @@ void visualize_maskOutlinePoint(std::shared_ptr<ModelBoxSegmentationInfo> obj_me
       int source_region_height = proto_h - 2 * source_y_offset;
       int source_region_width = proto_w - 2 * source_x_offset;
       // calculate scaling factor
-      float height_scale =
-          static_cast<float>(image_height) / static_cast<float>(source_region_height);
-      float width_scale =
-          static_cast<float>(image_width) / static_cast<float>(source_region_width);
+      float height_scale = static_cast<float>(image_height) /
+                           static_cast<float>(source_region_height);
+      float width_scale = static_cast<float>(image_width) /
+                          static_cast<float>(source_region_width);
       obj_meta->box_seg[i].mask_point_size = max_length;
-      obj_meta->box_seg[i].mask_point = new float[2 * max_length * sizeof(float)];
+      obj_meta->box_seg[i].mask_point =
+          new float[2 * max_length * sizeof(float)];
       size_t j = 0;
       for (const auto &point : contours[longest_index]) {
         obj_meta->box_seg[i].mask_point[2 * j] =
@@ -57,9 +58,10 @@ void visualize_maskOutlinePoint(std::shared_ptr<ModelBoxSegmentationInfo> obj_me
   }
 }
 
-void visualize_object_detection(std::shared_ptr<BaseImage> image,
-                                std::shared_ptr<ModelBoxSegmentationInfo> obj_meta,
-                                const std::string &str_img_name) {
+void visualize_object_detection(
+    std::shared_ptr<BaseImage> image,
+    std::shared_ptr<ModelBoxSegmentationInfo> obj_meta,
+    const std::string &str_img_name) {
   cv::Mat mat;
   bool is_rgb;
   int32_t ret = ImageFactory::convertToMat(image, mat, is_rgb);
@@ -109,8 +111,8 @@ int main(int argc, char **argv) {
 
   TDLModelFactory model_factory;
 
-  std::shared_ptr<BaseModel> model_od =
-      model_factory.getModel(TDL_MODEL_TYPE_INSTANCE_SEGMENTATION_YOLOV8, model_path);
+  std::shared_ptr<BaseModel> model_od = model_factory.getModel(
+      TDL_MODEL_TYPE_INSTANCE_SEGMENTATION_YOLOV8, model_path);
   if (!model_od) {
     printf("Failed to create model_od\n");
     return -1;
@@ -126,7 +128,8 @@ int main(int argc, char **argv) {
     uint32_t image_width = input_images[i]->getWidth();
     uint32_t image_height = input_images[i]->getHeight();
 
-    printf("Sample Image dimensions - height: %d, width: %d\n", image_height, image_width);
+    printf("Sample Image dimensions - height: %d, width: %d\n", image_height,
+           image_width);
     visualize_maskOutlinePoint(obj_meta, image_height, image_width);
     if (obj_meta->box_seg.size() == 0) {
       printf("No object detected\n");
@@ -139,22 +142,24 @@ int main(int argc, char **argv) {
                   << "bbox: " << obj_meta->box_seg[j].x1 << " "
                   << obj_meta->box_seg[j].y1 << " " << obj_meta->box_seg[j].x2
                   << " " << obj_meta->box_seg[j].y2 << std::endl;
-            printf("points=[");
-            std::vector<cv::Point> points;
-            for (uint32_t k = 0; k < obj_meta->box_seg[j].mask_point_size; k++) {
-                printf("(%f,%f),", obj_meta->box_seg[j].mask_point[2 * k],
-                       obj_meta->box_seg[j].mask_point[2 * k + 1]);
-                points.push_back(cv::Point(static_cast<int>(obj_meta->box_seg[j].mask_point[2 * k]),
-                                           static_cast<int>(obj_meta->box_seg[j].mask_point[2 * k + 1])));
-            }
-            printf("]\n");
-
-            if (points.size() > 1) {
-                cv::polylines(image, points, true, cv::Scalar(0, 255, 0), 2, cv::LINE_AA); // 绿色线条
-            }
+        printf("points=[");
+        std::vector<cv::Point> points;
+        for (uint32_t k = 0; k < obj_meta->box_seg[j].mask_point_size; k++) {
+          printf("(%f,%f),", obj_meta->box_seg[j].mask_point[2 * k],
+                 obj_meta->box_seg[j].mask_point[2 * k + 1]);
+          points.push_back(cv::Point(
+              static_cast<int>(obj_meta->box_seg[j].mask_point[2 * k]),
+              static_cast<int>(obj_meta->box_seg[j].mask_point[2 * k + 1])));
         }
+        printf("]\n");
 
-        cv::imwrite("./yolov8_segmentation.jpg", image);
+        if (points.size() > 1) {
+          cv::polylines(image, points, true, cv::Scalar(0, 255, 0), 2,
+                        cv::LINE_AA);  // 绿色线条
+        }
+      }
+
+      cv::imwrite("./yolov8_segmentation.jpg", image);
     }
     std::string str_img_name = "object_detection_" + std::to_string(i) + ".jpg";
     visualize_object_detection(image1, obj_meta, "yolov8_seg.jpg");

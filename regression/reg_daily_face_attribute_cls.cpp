@@ -8,9 +8,9 @@
 #include "cvi_tdl_test.hpp"
 #include "image/base_image.hpp"
 #include "json.hpp"
-#include "models/tdl_model_factory.hpp"
 #include "preprocess/base_preprocessor.hpp"
 #include "regression_utils.hpp"
+#include "tdl_model_factory.hpp"
 
 namespace fs = std::experimental::filesystem;
 namespace cvitdl {

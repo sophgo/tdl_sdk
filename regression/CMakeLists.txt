@@ -112,9 +112,11 @@ set(UnitTest_SRCS
   ${UnitTest_SRCS}
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../modules/core
-                    
-                    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+include_directories(${REPO_DIR}/include/tdl_sdk/framework
+                    ${REPO_DIR}/include/tdl_sdk/components
+                    ${REPO_DIR}/include/tdl_sdk/app
+                    ${REPO_DIR}/include/tdl_sdk/nn
+                    ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl ${REG_LIBS} gtest_main stdc++fs )

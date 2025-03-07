@@ -1,0 +1,46 @@
+
+# Hide symbols
+# if("${CMAKE_BUILD_TYPE}" MATCHES "(SDKRelease|Release)")
+#   add_compile_options(-fvisibility=hidden)
+# endif()
+
+
+# tdl lib
+
+add_subdirectory(framework)
+add_subdirectory(components)
+# add_subdirectory(app)
+
+set(CORES_SRCS 
+            #    $<TARGET_OBJECTS:components>
+               $<TARGET_OBJECTS:framework>
+            #    $<TARGET_OBJECTS:app>
+               $<TARGET_OBJECTS:nn>
+               )
+
+set(CORES_DEPS ${MLIR_LIBS} )
+
+project(cvi_tdl)
+add_library(${PROJECT_NAME} SHARED ${CORES_SRCS})
+target_link_libraries(${PROJECT_NAME} ${CORES_DEPS} ${OPENCV_LIBS_IMCODEC})
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+
+project(cvi_tdl-static)
+add_library(${PROJECT_NAME} STATIC ${CORES_SRCS})
+target_link_libraries(${PROJECT_NAME} ${CORES_DEPS} ${OPENCV_LIBS_IMCODEC_STATIC})
+SET_TARGET_PROPERTIES(cvi_tdl-static PROPERTIES OUTPUT_NAME "cvi_tdl")
+
+# add_subdirectory(python)
+
+
+
+install(TARGETS cvi_tdl DESTINATION lib)
+
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cvi_tdl_app/ DESTINATION sample/cvi_tdl_app PATTERN "CMakeLists.txt" EXCLUDE)
+#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test_and_eval/ DESTINATION sample PATTERN "CMakeLists.txt" EXCLUDE)
+# Temporarily don't install custom module until complete.
+# install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app DESTINATION include/)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cvi_tdl
+        PATTERN "cvi_tdl_app" EXCLUDE
+        PATTERN "cvi_tdl_experimental.h" EXCLUDE
+        PATTERN "cvi_tdl_log.hpp" EXCLUDE)   

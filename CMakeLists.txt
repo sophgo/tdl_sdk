@@ -156,6 +156,8 @@ include(FetchContent)
 get_filename_component(_deps "${BUILD_DOWNLOAD_DIR}" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
 set(FETCHCONTENT_BASE_DIR ${_deps})
 
+
+set(REPO_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 # Check if OpenCV exists.
 if (NOT DEFINED NO_OPENCV)
 include(cmake/opencv.cmake)
@@ -194,7 +196,7 @@ message(STATUS "${CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE}")
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-add_subdirectory(modules)
+add_subdirectory(src)
 add_subdirectory(sample)
 # add_subdirectory(lib)
 

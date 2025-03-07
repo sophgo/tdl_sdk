@@ -35,21 +35,20 @@ tdl_sdk/
   │       └── tutorial1.md         # 教程1：例如如何使用 SDK 与 OpenCV 进行图像处理
   ├── include/                       # **对外导出的头文件**
   │   └── tdl_sdk/                   # 项目主头文件目录
-  │       ├── cpp/                   # 项目主头文件目录
-  │       │   ├── framework/             # **框架层 API**
-  │       │   │   ├── model/
-  │       │   │   │   ├── base_model.hpp         # 抽象基类 
-  │       │   │   │   └── llm_model.hpp          # LLM 模型 
-  │       │   │   ├── preprocess/
-  │       │   │   │   └── base_preprocess.hpp    # 预处理基类 
-  │       │   │   ├── tensor/
-  |       │   │   │   └── base_tensor.hpp        # 张量类 
-  |       │   │   ├── memory/
-  |       │   │   │   └── base_memory_pool.hpp   # 内存池 
-  |       │   │   ├── image/
-  |       │   │   │   └── base_image.hpp         # 图像类 
-  |       │   │   └── common/                    # 公共工具 
-  |       │   └── app/                    # 公共工具 
+  │       ├── framework/             # **框架层 API**
+  │       │   ├── model/
+  │       │   │   ├── base_model.hpp         # 抽象基类 
+  │       │   │   └── llm_model.hpp          # LLM 模型 
+  │       │   ├── preprocess/
+  │       │   │   └── base_preprocess.hpp    # 预处理基类 
+  │       │   ├── tensor/
+  │       │   │   └── base_tensor.hpp        # 张量类 
+  │       │   ├── memory/
+  │       │   │   └── base_memory_pool.hpp   # 内存池 
+  │       │   ├── image/
+  │       │   │   └── base_image.hpp         # 图像类 
+  │       │   └── common/                    # 公共工具 
+  │       ├── app/                    # app 
   |       └── c_apis/                     # **应用 API**
   ├── src/                           # **内部实现**
   │   ├── framework/                 # **框架层**

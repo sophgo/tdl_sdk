@@ -8,4 +8,12 @@
 
 ### BM1688平台编译准备
 
+### BM1684X平台编译准备
+
 ## 编译
+
+```sh
+source envsetup.sh
+build_tdl_sdk 
+
+```
