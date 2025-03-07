@@ -6,24 +6,23 @@ else()
   message(FATAL_ERROR "${MLIR_SDK_ROOT} is not a valid folder.")
 endif()
 
-if(${CVI_PLATFORM} STREQUAL "SOPHON")
+if("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/libsophon-0.4.9/include/)
-elseif(${CVI_PLATFORM} STREQUAL "BM1688")
+elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 else()
-    set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
+  set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 endif()
 
-if(${CVI_PLATFORM} STREQUAL "SOPHON" ) 
+if("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmrt.so
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmlib.so
   )
-elseif(${CVI_PLATFORM} STREQUAL "BM1688")
+elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libbmrt.so
       ${MLIR_SDK_ROOT}/lib/libbmlib.so
-      
   )
 else()
   set(MLIR_LIBS
@@ -34,7 +33,7 @@ else()
   )
 endif()
 
-if(${CVI_PLATFORM} STREQUAL "BM1688")
+if("${CVI_PLATFORM}" STREQUAL "BM1688")
   return()
 endif()
 

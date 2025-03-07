@@ -1,5 +1,3 @@
-
-
 if("${MIDDLEWARE_SDK_ROOT}" STREQUAL "")
   message(FATAL_ERROR "You must set MIDDLEWARE_SDK_ROOT before building IVE library.")
 elseif(EXISTS "${MIDDLEWARE_SDK_ROOT}")
@@ -7,7 +5,6 @@ elseif(EXISTS "${MIDDLEWARE_SDK_ROOT}")
 else()
   message(FATAL_ERROR "${MIDDLEWARE_SDK_ROOT} is not a valid folder.")
 endif()
-
 
 if(${CVI_PLATFORM} STREQUAL "BM1688")
   #ffmpeg
@@ -39,8 +36,6 @@ if("${MW_VER}" STREQUAL "v1")
   add_definitions(-D_MIDDLEWARE_V1_)
 elseif("${MW_VER}" STREQUAL "v2")
   add_definitions(-D_MIDDLEWARE_V2_)
-elseif("${MW_VER}" STREQUAL "v3")
-  add_definitions(-D_MIDDLEWARE_V3_)
 endif()
 
 string(TOLOWER ${CVI_PLATFORM} CVI_PLATFORM_LOWER)
@@ -57,31 +52,8 @@ set(MIDDLEWARE_INCLUDES ${ISP_HEADER_PATH}
                         ${MIDDLEWARE_SDK_ROOT}/include/linux/
 )
 
-
-
-function(set_mw_v3_libs)
-    set(PLATFORM_LIBS
-        ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libmsg.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libcvilink.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-        ${MLIR_SDK_ROOT}/lib/libz.so
-        PARENT_SCOPE
-    )
-endfunction()
-
 # Set SAMPLE_LIBS based on platform
 if(${CVI_PLATFORM} STREQUAL "SOPHON")
-    
     set(MIDDLEWARE_LIBS 
     ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -97,15 +69,9 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
     ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
     add_definitions(-DSENSOR_GCORE_GC4653)
-
-elseif(${MW_VER} STREQUAL "v3")
-    set_mw_v3_libs()
-    set(SAMPLE_LIBS ${PLATFORM_LIBS})
-
 else()
     # Default libraries for other platforms
     set(MIDDLEWARE_LIBS
@@ -166,8 +132,8 @@ message("KERNEL_ROOT: ${KERNEL_ROOT}")
 message("MIDDLEWARE_LIBS: ${MIDDLEWARE_LIBS}")
 
 set(MIDDLEWARE_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/middleware/${MW_VER})
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/include/ DESTINATION ${MIDDLEWARE_PATH}/include)
-install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/sample/common/ DESTINATION ${MIDDLEWARE_PATH}/include)
-install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/lib/ DESTINATION ${MIDDLEWARE_PATH}/lib)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/include/ DESTINATION ${MIDDLEWARE_PATH}/include)
+  install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/sample/common/ DESTINATION ${MIDDLEWARE_PATH}/include)
+  install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/lib/ DESTINATION ${MIDDLEWARE_PATH}/lib)
 endif()

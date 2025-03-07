@@ -1,9 +1,7 @@
 # Copyright 2020 cvitek Inc.
-
-cmake_minimum_required(VERSION 3.2.2)
+cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 project(sample)
-
 
 function(buildninstallcpp)
   # From https://stackoverflow.com/questions/23327687/how-to-write-a-cmake-function-with-more-than-one-parameter-groups
@@ -46,11 +44,18 @@ file(GLOB SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
 
-foreach (fname ${SAMPLE_SRC_FILES})
-  set(EXAMPLE_SRC_FILES ${EXAMPLE_SRC_FILES} ${fname})
-  get_filename_component(name ${fname} NAME_WE)
-  buildninstallcpp(NAME ${name} INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs )
-endforeach ()
+# foreach (fname ${SAMPLE_SRC_FILES})
+#   set(EXAMPLE_SRC_FILES ${EXAMPLE_SRC_FILES} ${fname})
+#   get_filename_component(name ${fname} NAME_WE)
+#   buildninstallcpp(NAME ${name} INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs )
+# endforeach ()
 
-
-
+if (NOT DEFINED NO_OPENCV)
+    buildninstallcpp(NAME sample_img_landmark INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs)
+    buildninstallcpp(NAME sample_img_face_feature INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs)
+    buildninstallcpp(NAME sample_img_objdet INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs)
+    buildninstallcpp(NAME sample_img_yolov8_seg INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs)
+    buildninstallcpp(NAME sample_img_fd INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs)
+    buildninstallcpp(NAME sample_img_classification INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs)
+    buildninstallcpp(NAME sample_img_face_attribute INC ${SAMPLE_INCLUDES} SRCS ${fname} DEPS cvi_tdl ${SAMPLE_LIBS} stdc++fs)
+endif()
