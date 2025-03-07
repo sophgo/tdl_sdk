@@ -10,8 +10,7 @@ doxygen/latex
 tmp
 *.out
 *.cvimodel
-build
-build1688
+build*
 sophon_sdk
 _deps/
 *.jpg
