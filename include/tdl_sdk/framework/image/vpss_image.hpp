@@ -44,7 +44,6 @@ class VPSSImage : public BaseImage {
   static PIXEL_FORMAT_E convertPixelFormat(ImageFormat imageFormat,
                                            TDLDataType pix_data_type);
   VIDEO_FRAME_INFO_S* getFrame() const;
-  void setFrame(const VIDEO_FRAME_INFO_S& frame);
 
   PIXEL_FORMAT_E getPixelFormat() const;
 
@@ -64,6 +63,7 @@ class VPSSImage : public BaseImage {
  private:
   VIDEO_FRAME_INFO_S frame_;
   bool is_from_pool_ = false;
+  bool own_vpss_frame_ = false;
 };
 
 #endif  // VPSS_IMAGE_H

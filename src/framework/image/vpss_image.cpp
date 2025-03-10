@@ -291,8 +291,6 @@ VIDEO_FRAME_INFO_S* VPSSImage::getFrame() const {
   return const_cast<VIDEO_FRAME_INFO_S*>(&frame_);
 }
 
-void VPSSImage::setFrame(const VIDEO_FRAME_INFO_S& frame) { frame_ = frame; }
-
 PIXEL_FORMAT_E VPSSImage::getPixelFormat() const {
   return frame_.stVFrame.enPixelFormat;
 }

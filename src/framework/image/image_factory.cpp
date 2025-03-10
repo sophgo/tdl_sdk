@@ -240,6 +240,36 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
   return aligned_image;
 }
 
+std::shared_ptr<BaseImage> ImageFactory::wrapVPSSFrame(void* vpss_frame,
+                                                       bool own_memory) {
+#if not defined(__BM168X__)
+  LOGI("create VPSSImage");
+  if (vpss_frame == nullptr) {
+    LOGE("vpss_frame is nullptr");
+    return nullptr;
+  }
+  (void)own_memory;
+  VIDEO_FRAME_INFO_S* vpss_frame_info = (VIDEO_FRAME_INFO_S*)vpss_frame;
+  return std::make_shared<VPSSImage>(*vpss_frame_info);
+#else
+  LOGI("not support wrapImage on BM168X");
+  return nullptr;
+#endif
+}
+
+std::shared_ptr<BaseImage> ImageFactory::wrapMat(void* mat_frame, bool is_rgb) {
+  if (mat_frame == nullptr) {
+    LOGE("mat_frame is nullptr");
+    return nullptr;
+  }
+#ifndef NO_OPENCV
+  cv::Mat mat = *(cv::Mat*)mat_frame;
+  return convertFromMat(mat, is_rgb);
+#else
+  LOGE("no opencv support");
+  return nullptr;
+#endif
+}
 #ifndef NO_OPENCV
 std::shared_ptr<BaseImage> ImageFactory::convertFromMat(cv::Mat& mat,
                                                         bool is_rgb) {

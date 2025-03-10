@@ -9,6 +9,7 @@
 
 add_subdirectory(framework)
 add_subdirectory(components)
+add_subdirectory(c_apis)
 # add_subdirectory(app)
 
 set(CORES_SRCS 
@@ -16,6 +17,7 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:framework>
             #    $<TARGET_OBJECTS:app>
                $<TARGET_OBJECTS:nn>
+               $<TARGET_OBJECTS:c_apis>
                )
 
 set(CORES_DEPS ${MLIR_LIBS} )
