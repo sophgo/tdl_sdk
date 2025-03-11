@@ -11,6 +11,7 @@ tmp
 *.out
 *.cvimodel
 build*
+!build.sh
 sophon_sdk
 _deps/
 *.jpg

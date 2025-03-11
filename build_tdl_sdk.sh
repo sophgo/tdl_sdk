@@ -7,7 +7,6 @@ print_usage() {
     echo "  (no option) Build modules only"
     echo "  sample      Build samples only"
     echo "  all         Build both modules and sample"
-    echo "  bm168x      Build BM168X edge"
     echo "  clean       Clean build"
 }
 
@@ -18,9 +17,6 @@ if [ "$#" -gt 2 ]; then
     exit 1
 fi
 
-if [[ "$1" == "bm168x" ]]; then
-    CHIP_ARCH=BM1688
-fi
 
 if [ -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
   source "$TOP_DIR/tdl_sdk/scripts/credential.sh"
