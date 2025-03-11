@@ -155,15 +155,14 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-if(NOT GIT_ERROR)
-    if(REMOTE_URL MATCHES "github.com")
-      set(IS_LOCAL FALSE)
-    else()
-        set(IS_LOCAL TRUE)
-    endif()
+string(FIND "${REMOTE_URL}" "cvitek" FOUND_POS)
+
+if(NOT ${FOUND_POS} EQUAL -1)
+    set(IS_LOCAL TRUE)
 else()
-    message(FATAL_ERROR "Failed to execute git command: ${GIT_ERROR}")
+    set(IS_LOCAL FALSE)
 endif()
+
 
 # 获取当前文件的目录
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})

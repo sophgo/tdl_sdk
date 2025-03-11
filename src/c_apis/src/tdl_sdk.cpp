@@ -168,7 +168,7 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
       }
 
       face_meta->info[i].landmarks.score =
-          box_landmark_output->box_landmarks[i].landmarks_score;
+          box_landmark_output->box_landmarks[i].landmarks_score[0];
     }
     face_meta->width = box_landmark_output->image_width;
     face_meta->height = box_landmark_output->image_height;

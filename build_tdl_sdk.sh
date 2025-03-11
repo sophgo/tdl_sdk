@@ -2,12 +2,14 @@
 
 # print usage
 print_usage() {
-    echo "Usage: source ${BASH_SOURCE[0]} [options]"
+    echo "Usage: ${BASH_SOURCE[0]} [options]"
     echo "Options:"
-    echo "  (no option) Build modules only"
-    echo "  sample      Build samples only"
-    echo "  all         Build both modules and sample"
-    echo "  clean       Clean build"
+    echo "  cv181x         Build soph-pi 181x"
+    echo "  cv186x         Build 186x"
+    echo "  bm168x         Build BM168X edge"
+    echo "  sample         Build samples only"
+    echo "  all            Build both modules and sample"
+    echo "  clean          Clean build"
 }
 
 # Check parameter
@@ -17,6 +19,9 @@ if [ "$#" -gt 2 ]; then
     exit 1
 fi
 
+if [ -z "$TOP_DIR" ]; then
+    TOP_DIR=$(cd $(dirname $0);cd ..; pwd)
+fi
 
 if [ -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
   source "$TOP_DIR/tdl_sdk/scripts/credential.sh"
@@ -24,6 +29,113 @@ fi
 
 # get tdl_sdk root dir
 CVI_TDL_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Handle platform-specific build commands
+if [[ "$1" == "cv181x" ]]; then
+    echo "Building for CV181X platform..."
+    export CHIP_ARCH=CV181X
+    
+    # Execute CV181X specific commands
+    source ../build/envsetup_soc.sh
+    defconfig sg2002_wevb_riscv64_sd
+    export TPU_REL=1
+    clean_all
+    build_all
+    exit 0
+
+elif [[ "$1" == "cv186x" ]]; then
+    echo "Building for CV186X platform..."
+    export CHIP_ARCH=CV186X
+    
+    # Execute CV186X specific commands
+    source build/envsetup_soc.sh
+    defconfig device_wevb_emmc
+    export TPU_REL=1
+    clean_all
+    build_all
+    exit 0
+
+elif [[ "$1" == "bm168x" ]]; then
+    echo "Building for BM168X platform..."
+    export CHIP_ARCH=BM1688
+    # Continue with the regular build process below
+    
+elif [[ "$1" == "clean" ]]; then
+    echo "Using ./${BASH_SOURCE[0]} clean"
+    echo "Cleaning build..."
+    
+    # Set CHIP_ARCH if it's not already set
+    if [ -z "$CHIP_ARCH" ]; then
+        echo "CHIP_ARCH not set, cleaning all architectures"
+        # Clean all possible build directories
+        for arch in CV181X CV186X BM1688; do
+            BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${arch}
+            TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${arch}"
+            
+            if [ -d "${BUILD_WORKING_DIR}" ]; then
+                echo "Cleanup tmp folder for ${arch}."
+                rm -rf ${BUILD_WORKING_DIR}
+            fi
+            if [ -d "${TDL_SDK_INSTALL_PATH}" ]; then
+                echo "Cleanup install folder for ${arch}."
+                rm -rf ${TDL_SDK_INSTALL_PATH}
+            fi
+        done
+    else
+        BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${CHIP_ARCH}
+        TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
+        
+        if [ -d "${BUILD_WORKING_DIR}" ]; then
+            echo "Cleanup tmp folder for ${CHIP_ARCH}."
+            rm -rf ${BUILD_WORKING_DIR}
+        fi
+        if [ -d "${TDL_SDK_INSTALL_PATH}" ]; then
+            echo "Cleanup install folder for ${CHIP_ARCH}."
+            rm -rf ${TDL_SDK_INSTALL_PATH}
+        fi
+    fi
+    exit 0
+
+elif [[ "$1" == "sample" ]]; then
+    echo "Using ./${BASH_SOURCE[0]} sample"
+    echo "Compiling sample..."
+    BUILD_OPTION=sample
+    
+    # Check if CHIP_ARCH is set
+    if [ -z "$CHIP_ARCH" ]; then
+        echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
+        print_usage
+        exit 1
+    fi
+    
+elif [[ "$1" == "all" ]]; then
+    echo "Using ./${BASH_SOURCE[0]} all"
+    echo "Compiling modules and sample..."
+    BUILD_OPTION=all
+    
+    # Check if CHIP_ARCH is set
+    if [ -z "$CHIP_ARCH" ]; then
+        echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
+        print_usage
+        exit 1
+    fi
+    
+elif [ "$#" -eq 0 ]; then
+    echo "Using ./${BASH_SOURCE[0]}"
+    echo "Compiling modules..."
+    
+    # Check if CHIP_ARCH is set
+    if [ -z "$CHIP_ARCH" ]; then
+        echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
+        print_usage
+        exit 1
+    fi
+    
+else
+    echo "Error: Invalid option"
+    print_usage
+    exit 1
+fi
 
 # set build working dir
 BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${CHIP_ARCH}
@@ -35,46 +147,11 @@ TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
 # Set build option and type
 BUILD_TYPE=Debug
 
-# print building message
-if [ "$#" -eq 0 ]; then
-    echo "Using ./${BASH_SOURCE[0]}"
-    echo "Compiling modules..."
-elif [ "$1" = "sample" ]; then
-    echo "Using ./${BASH_SOURCE[0]} sample"
-    echo "Compiling sample..."
-    BUILD_OPTION=sample
-elif [ "$1" = "all" ]; then
-    echo "Using ./${BASH_SOURCE[0]} all"
-    echo "Compiling modules and sample..."
-    BUILD_OPTION=all
-elif [ "$1" = "bm168x" ]; then
-    echo "Using ./${BASH_SOURCE[0]} bm168x"
-    echo "Compiling BM168X edge..."
-    BUILD_OPTION=bm168x
-elif [ "$1" = "clean" ]; then
-    echo "Using ./${BASH_SOURCE[0]} clean"
-    echo "Cleaning build..."
-    if [ -d "${BUILD_WORKING_DIR}" ]; then
-        echo "Cleanup tmp folder."
-        rm -rf ${BUILD_WORKING_DIR}
-    fi
-    if [ -d "${TDL_SDK_INSTALL_PATH}" ]; then
-        echo "Cleanup install folder."
-        rm -rf ${TDL_SDK_INSTALL_PATH}
-    fi
-    exit 0
-else
-    echo "Error: Invalid option"
-    print_usage
-    exit 1
-fi
-
 # check system type
 CONFIG_DUAL_OS=OFF
 if [ -n "${ALIOS_PATH}" ]; then
     CONFIG_DUAL_OS=ON
 fi
-
 
 if [[ "$CHIP_ARCH" == "BM1688" ]]; then
     CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-aarch64-none-linux-gnu/
@@ -84,7 +161,6 @@ if [[ "$CHIP_ARCH" == "BM1688" ]]; then
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/sophon_sdk/libsophon-0.4.10
     MPI_PATH=$CVI_TDL_ROOT/sophon_sdk/sophon-ffmpeg_1.8.0
     ISP_ROOT_DIR=$CVI_TDL_ROOT/sophon_sdk/sophon-soc-libisp_1.0.0
-
 else
     CV_UTILS=ON
     TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk

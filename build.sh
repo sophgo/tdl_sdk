@@ -17,7 +17,7 @@ fi
 
 if [[ "$1" == "bm168x" ]]; then
 
-    CHIP_ARCH=BM1688
+    export CHIP_ARCH=BM1688
     ./build_tdl_sdk.sh
 
 elif [ "$1" = "cv181x" ]; then
