@@ -7,24 +7,16 @@
 #include "memory/cvi_memory_pool.hpp"
 #endif
 
-std::shared_ptr<BaseMemoryPool> BaseMemoryPoolFactory::createMemoryPool(
-    MemoryPoolType memory_pool_type) {
-  switch (memory_pool_type) {
-    case MemoryPoolType::CVI_SOC_DEVICE:
-#if !defined(__BM168X__) && !defined(__CV186X__)
-      return std::make_shared<CviMemoryPool>();
-#elif defined(__CV186X__)
-      return std::make_shared<BmMemoryPool>(nullptr);
+std::shared_ptr<BaseMemoryPool> BaseMemoryPoolFactory::createMemoryPool() {
+#if defined(__BM168X__) || defined(__CV186X__)
+  return std::make_shared<BmMemoryPool>(nullptr);
+
+#elif defined(__CV180X__) || defined(__CV181X__) || defined(__CV182X__) || \
+    defined(__CV183X__)
+  return std::make_shared<CviMemoryPool>();
+
 #else
-      return nullptr;
+  LOGE("Unsupported platform");
+  return nullptr;
 #endif
-    case MemoryPoolType::BM_SOC_DEVICE:
-#ifdef __BM168X__
-      return std::make_shared<BmMemoryPool>(nullptr);
-#else
-      return nullptr;
-#endif
-    default:
-      return nullptr;
-  }
 }

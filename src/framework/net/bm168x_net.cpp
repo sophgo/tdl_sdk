@@ -113,9 +113,10 @@ int32_t BM168xNet::setup() {
     input_name_index_[net_info_->input_names[i]] = i;
     input_tensor_names_.push_back(net_info_->input_names[i]);
     LOGI("input %d,name:%s", i, net_info_->input_names[i]);
-    auto &shape0 = net_info_->stages[0].input_shapes[i];
+    // auto &shape0 = net_info_->stages[0].input_shapes[i];
     // if (shape0.num_dims != 4) {
-    //   LOGE("input %s,dim error,got:%d expect 4", input_tensor_names_[i].c_str(),
+    //   LOGE("input %s,dim error,got:%d expect 4",
+    //   input_tensor_names_[i].c_str(),
     //        shape0.num_dims);
     //   return -1;
     // }
@@ -182,9 +183,9 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
     tensor_info.shape[i] = p_shape[idx].dims[i - insert_idx];
   }
 
-  // if (p_shape[idx].num_dims != 4) {
-  //   LOGW("tensor shape size not equal 4,size:%d", p_shape[idx].num_dims);
-  // }
+  if (p_shape[idx].num_dims != 4) {
+    LOGW("tensor shape size not equal 4,size:%d", p_shape[idx].num_dims);
+  }
   tensor_info.qscale = p_qscale[idx];
   tensor_info.zero_point = p_zero_point[idx];
   if (p_data_type[idx] == BM_FLOAT32) {
@@ -234,14 +235,21 @@ int32_t BM168xNet::addInput(const std::string &name) {
       std::make_shared<BaseTensor>(element_bytes, memory_pool_);
   auto &shape = input_output_tensor_infos_[name].shape;
   input_tensor_hash_[name]->reshape(1, shape[1], shape[2], shape[3]);
+  TensorInfo &tensor_info = input_output_tensor_infos_[name];
+  tensor_info.sys_mem = reinterpret_cast<uint8_t *>(
+      input_tensor_hash_[name]->getMemoryBlock()->virtualAddress);
+  tensor_info.phy_addr =
+      input_tensor_hash_[name]->getMemoryBlock()->physicalAddress;
   LOGI(
       "finish add "
       "input:%s,element_bytes:%d,shape:%d,%d,%d,%d,qscale:%f,zero_point:%d,"
-      "dtype:%d",
+      "dtype:%d,virtual_address:%p",
       name.c_str(), element_bytes, shape[0], shape[1], shape[2], shape[3],
       input_output_tensor_infos_[name].qscale,
       input_output_tensor_infos_[name].zero_point,
-      static_cast<int>(input_output_tensor_infos_[name].data_type));
+      static_cast<int>(input_output_tensor_infos_[name].data_type),
+      (void *)tensor_info.sys_mem);
+
   return 0;
 }
 
@@ -295,14 +303,28 @@ int32_t BM168xNet::updateInputTensors() {
     }
     LOGI("to get stage:%d,stagenum:%d", stage_index, net_info_->stage_num);
     auto &bmrt_shape = net_info_->stages[stage_index].input_shapes[tensor_idx];
-    if (bmrt_shape.num_dims != 4) {
-      LOGW("input tensor shape size not equal 4,size:%d", bmrt_shape.num_dims);
+    int num_bmrt_elems = 1;
+    for (int i = 0; i < bmrt_shape.num_dims; i++) {
+      num_bmrt_elems *= bmrt_shape.dims[i];
+    }
+    int num_input_elems = 1;
+    for (int i = 0; i < input_shape.size(); i++) {
+      num_input_elems *= input_shape[i];
+    }
+    if (num_bmrt_elems != num_input_elems) {
+      LOGE("num_bmrt_elems:%d,num_input_elems:%d", num_bmrt_elems,
+           num_input_elems);
       assert(0);
     }
-    for (int i = 0; i < 4; i++) {
-      LOGI("%d,tensor:%d,bmrt:%d", i, input_shape[i], bmrt_shape.dims[i]);
-      if (input_shape[i] != bmrt_shape.dims[i]) LOGE("shape not equal");
-    }
+
+    // if (bmrt_shape.num_dims != 4) {
+    //   LOGW("input tensor shape size not equal 4,size:%d",
+    //   bmrt_shape.num_dims); assert(0);
+    // }
+    // for (int i = 0; i < 4; i++) {
+    //   LOGI("%d,tensor:%d,bmrt:%d", i, input_shape[i], bmrt_shape.dims[i]);
+    //   if (input_shape[i] != bmrt_shape.dims[i]) LOGE("shape not equal");
+    // }
 
     MemoryBlock *memory_block = input_tensor->getMemoryBlock();
     bm_device_mem_t input_dev = *(bm_device_mem_t *)memory_block->handle;

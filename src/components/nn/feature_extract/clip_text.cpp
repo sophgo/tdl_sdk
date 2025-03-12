@@ -30,10 +30,10 @@ int32_t Clip_Text::inference(
     const std::vector<std::shared_ptr<BaseImage>> &images,
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
     const std::map<std::string, float> &parameters) {
-
   for (auto &image : images) {
     // int32_t *temp_buffer = (int32_t *)image->getVirtualAddress()[0];
-    int32_t *temp_buffer = reinterpret_cast<int32_t *>(image->getVirtualAddress()[0]);
+    int32_t *temp_buffer =
+        reinterpret_cast<int32_t *>(image->getVirtualAddress()[0]);
     std::string input_layer = net_->getInputNames()[0];
 
     const TensorInfo &tinfo = net_->getTensorInfo(input_layer);
@@ -71,7 +71,7 @@ int32_t Clip_Text::outputParse(
   std::shared_ptr<BaseTensor> output_tensor =
       net_->getOutputTensor(output_layers[0]);
   auto output_shape = output_info.shape;
-  int batch_elem_num = output_shape[1];
+  int batch_elem_num = output_shape[1] * output_shape[2] * output_shape[3];
 
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     std::shared_ptr<ModelFeatureInfo> feature_meta =
@@ -98,4 +98,3 @@ int32_t Clip_Text::outputParse(
   }
   return 0;
 }
-

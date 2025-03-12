@@ -21,6 +21,24 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
       "memory:%d,platform:%d",
       width, height, imageFormat, pixDataType, alloc_memory, platform);
 
+  if (imageFormat == ImageFormat::GRAY && pixDataType != TDLDataType::UINT8) {
+    LOGI("create base image");
+    std::shared_ptr<BaseImage> img =
+        std::make_shared<BaseImage>(ImageType::RAW_FRAME);
+    int32_t ret =
+        img->prepareImageInfo(width, height, imageFormat, pixDataType);
+    std::shared_ptr<BaseMemoryPool> memory_pool =
+        BaseMemoryPoolFactory::createMemoryPool();
+    img->setMemoryPool(memory_pool);
+
+    ret = img->allocateMemory();
+    if (ret != 0) {
+      LOGE("allocateMemory failed");
+      return nullptr;
+    }
+    return img;
+  }
+
   switch (platform) {
     case InferencePlatform::CVITEK:
     case InferencePlatform::CV186X:

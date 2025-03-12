@@ -230,6 +230,7 @@ int32_t BaseImage::setupMemoryBlock(
 }
 
 int32_t BaseImage::setMemoryPool(std::shared_ptr<BaseMemoryPool> memory_pool) {
+  LOGI("set memory pool,address:%p", memory_pool.get());
   memory_pool_ = memory_pool;
   return 0;
 }

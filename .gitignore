@@ -15,3 +15,4 @@ build*
 sophon_sdk
 _deps/
 *.jpg
+python_depends

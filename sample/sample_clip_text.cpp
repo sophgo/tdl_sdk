@@ -9,21 +9,19 @@ int main(int argc, char** argv) {
   std::vector<std::vector<int32_t>> tokens;
   BytePairEncoder bpe(encoderFile, bpeFile);
   int result = bpe.tokenizerBPE(textFile, tokens);
-   // 打印 tokens 的内容
+  // 打印 tokens 的内容
   for (size_t i = 0; i < tokens.size(); ++i) {
-      for (size_t j = 0; j < tokens[i].size(); ++j) {
-          std::cout << tokens[i][j] << " ";
-      }
-      std::cout << std::endl;
+    for (size_t j = 0; j < tokens[i].size(); ++j) {
+      std::cout << tokens[i][j] << " ";
+    }
+    std::cout << "Current token index i: " << i << std::endl;
 
-      std::shared_ptr<BaseImage> text = ImageFactory::createImage(
-          77, 1, ImageFormat::GRAY, TDLDataType::INT32, true);
+    std::shared_ptr<BaseImage> text = ImageFactory::createImage(
+        77, 1, ImageFormat::GRAY, TDLDataType::INT32, true);
+    uint8_t* txt_buffer = text->getVirtualAddress()[0];
+    memcpy(txt_buffer, tokens[i].data(), 77 * sizeof(int32_t));
 
-      uint8_t buffer[77 * sizeof(int32_t)]; 
-      memcpy(buffer, tokens[i].data(), sizeof(int32_t) * 77);
-      text->getVirtualAddress()[0] = buffer;
-
-      input_texts.push_back(text);
+    input_texts.push_back(text);
   }
 
   std::string model_dir = argv[1];
@@ -47,9 +45,9 @@ int main(int argc, char** argv) {
     std::vector<float> feature_vec(feature_meta->embedding_num);
     for (size_t j = 0; j < feature_meta->embedding_num; j++) {
       feature_vec[j] = feature_meta->embedding[j];
-      std::cout<<feature_vec[j]<<" ";
+      std::cout << feature_vec[j] << " ";
     }
-    std::cout<<std::endl;
+    std::cout << std::endl;
     features.push_back(feature_vec);
   }
 

@@ -56,8 +56,7 @@ class BaseMemoryPool {
 
 class BaseMemoryPoolFactory {
  public:
-  static std::shared_ptr<BaseMemoryPool> createMemoryPool(
-      MemoryPoolType memory_pool_type);
+  static std::shared_ptr<BaseMemoryPool> createMemoryPool();
 };
 
 #endif  // BASE_MEMORY_POOL_H
