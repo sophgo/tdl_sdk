@@ -98,7 +98,7 @@
     ```sh
     cd tdl_sdk
     #会将依赖抽取到tdl_sdk/sophon_sdk文件夹下
-    ./scripts/extract_sophon_sdk.sh /path/to/sophononsdk_edge_v1.8_official_release.tar.gz
+    ./scripts/extract_sophon_sdk.sh /path/to/sophonsdk_edge_v1.8_offical_release.zip
     ```
 
 * 执行编译
