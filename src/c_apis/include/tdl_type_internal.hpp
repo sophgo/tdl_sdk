@@ -26,6 +26,10 @@ cvtdl_object_type_e convertObjectType(TDLObjectType object_type) {
 }
 
 TDL_MODEL_TYPE convertModelType(cvtdl_model_e model_type) {
+  switch(model_type) {
+    case TDL_MODEL_SCRFDFACE:
+      return TDL_MODEL_TYPE_FACE_DETECTION_SCRFD;
+  }
   return TDL_MODEL_TYPE_INVALID;
 }
 #endif

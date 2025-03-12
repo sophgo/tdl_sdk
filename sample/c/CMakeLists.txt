@@ -1,7 +1,7 @@
 # Copyright 2020 cvitek Inc.
 cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-project(sample)
+project(sample_c)
 
 
 set(SAMPLE_INCLUDES
@@ -11,13 +11,15 @@ set(SAMPLE_INCLUDES
     ${REPO_DIR}/include/tdl_sdk/components
     ${REPO_DIR}/include/tdl_sdk/app
     ${REPO_DIR}/include/tdl_sdk/nn
+    ${REPO_DIR}/include/tdl_sdk/c_apis
+    ${REPO_DIR}/include
 )
 
 set(SAMPLE_LIBS ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 include_directories(${SAMPLE_INCLUDES})
 
 
-file(GLOB SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
 
 message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
 
@@ -28,4 +30,3 @@ foreach (fname ${SAMPLE_SRC_FILES})
   target_link_libraries(${name} cvi_tdl ${SAMPLE_LIBS} stdc++fs)
   install(TARGETS ${name} DESTINATION bin)
 endforeach ()
-

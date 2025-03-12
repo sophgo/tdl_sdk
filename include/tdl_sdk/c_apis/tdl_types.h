@@ -1,7 +1,8 @@
 #ifndef TDL_TYPES_H
 #define TDL_TYPES_H
 
-#include <cstdint>
+#include <stdint.h>
+#include <stdbool.h>
 #include "tdl_object_def.h"
 
 #ifdef __cplusplus
@@ -40,10 +41,7 @@ typedef struct {
 } cvtdl_pts_t;
 
 typedef struct {
-  int32_t x;
-  int32_t y;
-  int32_t width;
-  int32_t height;
+  cvtdl_box_t box;
   float score;
   int class_id;
   cvtdl_object_type_e obj_type;
@@ -59,11 +57,11 @@ typedef struct {
 
 typedef struct {
   char name[128];
+  float score;
   uint64_t track_id;
-  cvtdl_object_info_t box;
+  cvtdl_box_t box;
   cvtdl_pts_t landmarks;
   cvtdl_feature_t feature;
-  cvtdl_feature_t feature_info;
 
   float gender_score;
   float glass;
@@ -81,9 +79,7 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
-
   cvtdl_face_info_t *info;
-
 } cvtdl_face_t;
 
 typedef struct {

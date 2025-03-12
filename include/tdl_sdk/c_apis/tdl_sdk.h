@@ -32,6 +32,14 @@ int32_t CVI_TDL_DestroyHandle(cvtdl_handle_t handle);
 cvtdl_image_t CVI_TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory);
 
 /**
+ * @brief 读取一张图片为 TDLImageHandle 对象
+ *
+ * @param path 图片路径
+ * @return  返回读取的 TDLImageHandle 对象, 如果失败返回 NULL
+ */
+cvtdl_image_t CVI_TDL_ReadImage(const char *path);
+
+/**
  * @brief 销毁一个 TDLImageHandle 对象
  *
  * @param image_handle 需要销毁的 TDLImageHandle 对象
@@ -68,6 +76,7 @@ int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_face_t *face_meta);
+
 
 #ifdef __cplusplus
 }
