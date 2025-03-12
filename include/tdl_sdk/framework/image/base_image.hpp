@@ -18,7 +18,7 @@ class BaseImage {
   // BaseImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
   //           TDLDataType pix_data_type, bool alloc_memory = false,
   //           std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
-  BaseImage(ImageImplType image_type = ImageImplType::RAW_FRAME);
+  BaseImage(ImageType image_type = ImageType::RAW_FRAME);
 
   virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
                                    ImageFormat imageFormat,
@@ -39,7 +39,7 @@ class BaseImage {
   virtual uint32_t getImageByteSize() const { return img_bytes_; }
   virtual ImageFormat getImageFormat() const { return image_format_; }
 
-  virtual ImageImplType getImageType() const { return image_type_; }
+  virtual ImageType getImageType() const { return image_type_; }
   virtual TDLDataType getPixDataType() const { return pix_data_type_; }
   virtual bool isPlanar() const;
 
@@ -56,6 +56,7 @@ class BaseImage {
 
   std::shared_ptr<BaseMemoryPool> getMemoryPool() { return memory_pool_; }
   virtual int32_t setMemoryPool(std::shared_ptr<BaseMemoryPool> memory_pool);
+  int32_t copyFromBuffer(const uint8_t* buffer, uint32_t size);
 
  protected:
   virtual int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
@@ -66,7 +67,7 @@ class BaseImage {
   int32_t initImageInfo();
 
  protected:
-  ImageImplType image_type_ = ImageImplType::UNKOWN;
+  ImageType image_type_ = ImageType::UNKOWN;
   TDLDataType pix_data_type_ = TDLDataType::UINT8;
   ImageFormat image_format_ = ImageFormat::UNKOWN;
 
@@ -92,7 +93,7 @@ class ImageFactory {
       InferencePlatform platform = InferencePlatform::AUTOMATIC);
 
   static std::shared_ptr<BaseImage> constructImage(void* custom_frame,
-                                                   ImageImplType frame_type);
+                                                   ImageType frame_type);
 
   static std::shared_ptr<BaseImage> readImage(
       const std::string& file_path, bool use_rgb = false,

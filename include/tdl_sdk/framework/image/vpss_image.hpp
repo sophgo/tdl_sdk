@@ -18,7 +18,7 @@ class VPSSImage : public BaseImage {
   ~VPSSImage();
 
   static std::unique_ptr<BaseImage> createImage(
-      uint32_t width, uint32_t height, ImageImplType imageType,
+      uint32_t width, uint32_t height, ImageType imageType,
       ImageFormat imageFormat, BaseMemoryPool* memory_pool = nullptr);
 
   int32_t prepareImageInfo(uint32_t width, uint32_t height,

@@ -397,7 +397,7 @@ int32_t VpssPreprocessor::preprocessToImage(
     LOGE("image is not initialized!\n");
     return -1;
   }
-  if (src_image->getImageType() != ImageImplType::VPSS_FRAME) {
+  if (src_image->getImageType() != ImageType::VPSS_FRAME) {
     LOGE("src_image is not VPSSImage! image type: %d\n",
          src_image->getImageType());
     return -1;

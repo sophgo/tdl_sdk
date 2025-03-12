@@ -48,7 +48,7 @@ enum class ImageFormat {
   UNKOWN
 };
 
-enum class ImageImplType {
+enum class ImageType {
   VPSS_FRAME = 0,
   OPENCV_FRAME,
   FFMPEG_FRAME,

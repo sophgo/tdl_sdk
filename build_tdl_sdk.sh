@@ -154,8 +154,8 @@ if [ -n "${ALIOS_PATH}" ]; then
 fi
 
 if [[ "$CHIP_ARCH" == "BM1688" ]]; then
-    CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-aarch64-none-linux-gnu/
-    CROSS_COMPILE=aarch64-none-linux-gnu-
+    CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
+    CROSS_COMPILE=aarch64-linux-
     CV_UTILS=OFF
     OPENCV_ROOT_DIR=$CVI_TDL_ROOT/sophon_sdk/sophon-opencv_1.8.0
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/sophon_sdk/libsophon-0.4.10
@@ -173,6 +173,7 @@ fi
 HOST_TOOL_PATH="${CROSS_COMPILE_PATH}"
 TARGET_MACHINE="$(${CROSS_COMPILE_PATH}/bin/${CROSS_COMPILE}gcc -dumpmachine)"
 TOOLCHAIN_FILE="${CVI_TDL_ROOT}"/toolchain/"${TARGET_MACHINE}".cmake
+
 
 if [ -d "${BUILD_WORKING_DIR}" ]; then
     echo "BUILD_WORKING_DIR=${BUILD_WORKING_DIR}"

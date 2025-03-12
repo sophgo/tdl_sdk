@@ -249,5 +249,6 @@ int32_t SCRFD::outputParse(
 
     out_datas.push_back(facemeta);
   }
+  LOGI("srcfd outputParse done");
   return 0;
 }

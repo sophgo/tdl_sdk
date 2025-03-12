@@ -288,7 +288,7 @@ std::shared_ptr<BaseImage> ImageFactory::convertFromMat(cv::Mat& mat,
     LOGE("Failed to create image");
     return nullptr;
   }
-  if (image->getImageType() == ImageImplType::OPENCV_FRAME) {
+  if (image->getImageType() == ImageType::OPENCV_FRAME) {
     image = std::make_shared<OpenCVImage>(mat, image_format);
   } else {
     int32_t ret = image->allocateMemory();

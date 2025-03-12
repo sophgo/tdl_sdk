@@ -24,6 +24,7 @@ if (IS_LOCAL)
 else()
   set(EIGEN_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/eigen.tar.gz)
 endif()
+message("EIGEN_URL:${EIGEN_URL},is_local:${IS_LOCAL}")
 
 if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/libeigen-src")
   FetchContent_Declare(

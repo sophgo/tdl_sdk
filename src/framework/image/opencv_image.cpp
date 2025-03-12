@@ -19,7 +19,7 @@ OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
   prepareImageInfo(width, height, imageFormat, pix_data_type);
   image_format_ = imageFormat;
   pix_data_type_ = pix_data_type;
-  image_type_ = ImageImplType::OPENCV_FRAME;
+  image_type_ = ImageType::OPENCV_FRAME;
   memory_pool_ = memory_pool;
   if (memory_pool == nullptr) {
 #if defined(__BM168X__) || defined(__CV186X__)
@@ -57,7 +57,7 @@ OpenCVImage::OpenCVImage(cv::Mat& mat, ImageFormat imageFormat) {
       "OpenCVImage::OpenCVImage(cv::Mat& mat) mat.channels(): %d, use "
       "BGR_PACKED as default",
       mat.channels());
-  image_type_ = ImageImplType::OPENCV_FRAME;
+  image_type_ = ImageType::OPENCV_FRAME;
 #if defined(__BM168X__) || defined(__CV186X__)
   memory_pool_ = std::make_shared<BmMemoryPool>(nullptr);
   LOGI("use BM memory pool");

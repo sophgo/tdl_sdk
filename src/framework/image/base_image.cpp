@@ -9,7 +9,7 @@
 
 #define ALIGN(x, a) (((x) + ((a) - 1)) & ~((a) - 1))
 
-BaseImage::BaseImage(ImageImplType image_type)
+BaseImage::BaseImage(ImageType image_type)
     : memory_pool_(nullptr), memory_block_(nullptr), image_type_(image_type) {}
 
 BaseImage::~BaseImage() {
@@ -41,7 +41,7 @@ int32_t BaseImage::prepareImageInfo(uint32_t width, uint32_t height,
 
 int32_t BaseImage::initImageInfo() {
   uint32_t pix_size = get_data_type_size(getPixDataType());
-  if (image_type_ == ImageImplType::RAW_FRAME) {
+  if (image_type_ == ImageType::RAW_FRAME) {
     strides_ = {width_ * pix_size};
     plane_num_ = 1;
     img_bytes_ = width_ * height_ * pix_size;
@@ -235,7 +235,7 @@ int32_t BaseImage::setMemoryPool(std::shared_ptr<BaseMemoryPool> memory_pool) {
 }
 
 std::vector<uint64_t> BaseImage::getPhysicalAddress() const {
-  if (image_type_ == ImageImplType::RAW_FRAME) {
+  if (image_type_ == ImageType::RAW_FRAME) {
     return {memory_block_->physicalAddress};
   }
   LOGE("get physical address failed");
@@ -243,7 +243,7 @@ std::vector<uint64_t> BaseImage::getPhysicalAddress() const {
 }
 
 std::vector<uint8_t*> BaseImage::getVirtualAddress() const {
-  if (image_type_ == ImageImplType::RAW_FRAME) {
+  if (image_type_ == ImageType::RAW_FRAME) {
     return {(uint8_t*)memory_block_->virtualAddress};
   }
   LOGE("get virtual address failed");
@@ -253,5 +253,26 @@ std::vector<uint8_t*> BaseImage::getVirtualAddress() const {
 int32_t BaseImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
                                uint32_t length) {
   LOGW("setup memory in BaseImage");
+  return 0;
+}
+
+int32_t BaseImage::copyFromBuffer(const uint8_t* buffer, uint32_t size) {
+  if (buffer == nullptr || size == 0) {
+    LOGE("copy from buffer failed,buffer is nullptr or size is 0");
+    return -1;
+  }
+  if (size != memory_block_->size) {
+    LOGE(
+        "copy from buffer failed,size is not "
+        "equal,buffer_size:%d,memoryblock_size:%d",
+        size, memory_block_->size);
+    return -1;
+  }
+  memcpy(memory_block_->virtualAddress, buffer, size);
+  int32_t ret = flushCache();
+  if (ret != 0) {
+    LOGE("flush cache failed");
+    return ret;
+  }
   return 0;
 }

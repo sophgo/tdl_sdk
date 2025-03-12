@@ -32,7 +32,7 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
   }
   image_format_ = imageFormat;
   pix_data_type_ = dataType;
-  image_type_ = ImageImplType::VPSS_FRAME;
+  image_type_ = ImageType::VPSS_FRAME;
 
   if (alloc_memory) {
     int32_t ret = allocateMemory();
@@ -308,7 +308,7 @@ int32_t VPSSImage::extractImageInfo(const VIDEO_FRAME_INFO_S& frame) {
   uint32_t width = frame.stVFrame.u32Width;
   uint32_t height = frame.stVFrame.u32Height;
 
-  image_type_ = ImageImplType::VPSS_FRAME;
+  image_type_ = ImageType::VPSS_FRAME;
 
   if (pixel_format == PIXEL_FORMAT_YUV_400) {
     image_format_ = ImageFormat::GRAY;

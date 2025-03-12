@@ -213,6 +213,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if("${BUILD_OPTION}" STREQUAL "")
   add_subdirectory(src)
+  add_subdirectory(sample)
   # add_subdirectory(modules)
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)

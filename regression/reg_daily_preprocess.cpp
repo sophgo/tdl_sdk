@@ -96,7 +96,7 @@ TEST_F(PreprocessorTestSuite, TestReadPreprocess) {
 
     auto dstImage = preprocessor_->preprocess(image, params, nullptr);
     EXPECT_NE(dstImage, nullptr);
-    EXPECT_EQ(dstImage->getImageType(), ImageImplType::VPSS_FRAME);
+    EXPECT_EQ(dstImage->getImageType(), ImageType::VPSS_FRAME);
     EXPECT_EQ(dstImage->getImageFormat(), image_format);
     EXPECT_EQ(dstImage->getPixDataType(), pix_data_type);
     EXPECT_EQ(dstImage->getWidth(), 320);

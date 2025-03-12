@@ -154,8 +154,7 @@ int32_t BaseModel::inference(
 
     for (int i = 0; i < fit_batch_size; i++) {
       batch_images.push_back(images[process_idx + i]);
-      if (images[process_idx + i]->getImageType() ==
-          ImageImplType::TENSOR_FRAME) {
+      if (images[process_idx + i]->getImageType() == ImageType::TENSOR_FRAME) {
         if (images[process_idx + i]->getVirtualAddress()[0] !=
             input_tensor->getBatchPtr<uint8_t>(i)) {
           LOGE(
