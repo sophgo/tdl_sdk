@@ -48,8 +48,8 @@ std::shared_ptr<BasePreprocessor> PreprocessorFactory::createPreprocessor(
     case InferencePlatform::CVITEK:
     case InferencePlatform::CV186X:
 #if not defined(__BM168X__)
-      // return std::make_shared<VpssPreprocessor>();
-      return std::make_shared<OpenCVPreprocessor>();
+      return std::make_shared<VpssPreprocessor>();
+      // return std::make_shared<OpenCVPreprocessor>();
 #else
       return nullptr;
 #endif
