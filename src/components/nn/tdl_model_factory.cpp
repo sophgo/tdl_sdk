@@ -4,6 +4,8 @@
 #include "face_detection/scrfd.hpp"
 #include "face_landmark/face_landmark_det2.hpp"
 #include "feature_extract/feature_extraction.hpp"
+#include "feature_extract/clip_image.hpp"
+#include "feature_extract/clip_text.hpp"
 #include "image_classification/rgb_image_classification.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov10.hpp"
@@ -101,6 +103,10 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   } else if (model_type ==
              TDL_MODEL_TYPE_KEYPOINT_DETECTION_YOLOV8) {
     model = std::make_shared<YoloV8Pose>(std::make_tuple(64, 17, 1));
+  } else if (model_type == TDL_MODEL_TYPE_CLIP_IMAGE) {
+    model = std::make_shared<Clip_Image>();
+  } else if (model_type == TDL_MODEL_TYPE_CLIP_TEXT) {
+    model = std::make_shared<Clip_Text>();
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;

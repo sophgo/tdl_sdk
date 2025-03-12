@@ -114,11 +114,11 @@ int32_t BM168xNet::setup() {
     input_tensor_names_.push_back(net_info_->input_names[i]);
     LOGI("input %d,name:%s", i, net_info_->input_names[i]);
     auto &shape0 = net_info_->stages[0].input_shapes[i];
-    if (shape0.num_dims != 4) {
-      LOGE("input %s,dim error,got:%d expect 4", input_tensor_names_[i].c_str(),
-           shape0.num_dims);
-      return -1;
-    }
+    // if (shape0.num_dims != 4) {
+    //   LOGE("input %s,dim error,got:%d expect 4", input_tensor_names_[i].c_str(),
+    //        shape0.num_dims);
+    //   return -1;
+    // }
 
     input_output_tensor_infos_[input_tensor_names_[i]] =
         extractTensorInfo(true, i);
@@ -182,9 +182,9 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
     tensor_info.shape[i] = p_shape[idx].dims[i - insert_idx];
   }
 
-  if (p_shape[idx].num_dims != 4) {
-    LOGW("tensor shape size not equal 4,size:%d", p_shape[idx].num_dims);
-  }
+  // if (p_shape[idx].num_dims != 4) {
+  //   LOGW("tensor shape size not equal 4,size:%d", p_shape[idx].num_dims);
+  // }
   tensor_info.qscale = p_qscale[idx];
   tensor_info.zero_point = p_zero_point[idx];
   if (p_data_type[idx] == BM_FLOAT32) {
@@ -201,6 +201,8 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
     tensor_info.data_type = TDLDataType::INT8;
   } else if (p_data_type[idx] == BM_UINT8) {
     tensor_info.data_type = TDLDataType::UINT8;
+  } else if (p_data_type[idx] == BM_INT32) {
+    tensor_info.data_type = TDLDataType::INT32;
   } else {
     LOGE("unsupported data type:%d", p_data_type[idx]);
     assert(0);

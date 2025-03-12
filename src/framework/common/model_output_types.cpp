@@ -6,3 +6,10 @@ ModelFeatureInfo::~ModelFeatureInfo() {
     embedding = nullptr;
   }
 }
+
+ModelClipFeatureInfo::~ModelClipFeatureInfo() {
+  if (embedding) {
+    delete[] embedding;
+    embedding = nullptr;
+  }
+}
