@@ -9,6 +9,7 @@
 #include "image_classification/rgb_image_classification.hpp"
 #include "keypoints_detection/simcc_pose.hpp"
 #include "keypoints_detection/yolov8_pose.hpp"
+#include "keypoints_detection/hand_keypoint.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov10.hpp"
 #include "object_detection/yolov6.hpp"
@@ -60,6 +61,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<SCRFD>();
   } else if (model_type == ModelType::YOLOV8N_PERSON_VEHICLE) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 7));
+  } else if (model_type == ModelType::YOLOV8N_HAND) {
+    model = std::make_shared<YoloV8Detection>(std::make_pair(64, 1));
   } else if (model_type == ModelType::YOLOV8N_HEAD_HARDHAT) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 2));
   } else if (model_type == ModelType::YOLOV10_COCO80) {
@@ -81,6 +84,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<RgbImageClassification>();
   } else if (model_type == ModelType::KEYPOINT_SIMCC) {
     model = std::make_shared<SimccPose>();
+  } else if (model_type == ModelType::KEYPOINT_HAND) {
+    model = std::make_shared<HandKeypoint>();    
   } else if (model_type == ModelType::YOLOV8_SEG_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
   } else if (model_type == ModelType::YOLOV8_POSE_PERSON17) {
