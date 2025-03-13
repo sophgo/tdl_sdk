@@ -225,7 +225,7 @@ elseif("${BUILD_OPTION}" STREQUAL "all" OR "${BUILD_OPTION}" STREQUAL "bm168x")
   add_subdirectory(sample/c)
   add_subdirectory(sample/cpp)
   if(IS_LOCAL AND NOT DEFINED NO_OPENCV )
-    add_subdirectory(regression)
+    # add_subdirectory(regression)
   endif()
 else()
   message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}. \

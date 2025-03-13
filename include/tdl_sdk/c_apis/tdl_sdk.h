@@ -59,7 +59,7 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_face_t *face_meta);
-int32_t CVI_TDL_FaceLandmarkV2(cvtdl_handle_t handle,
+int32_t CVI_TDL_FaceLandmark(cvtdl_handle_t handle,
                                const cvtdl_model_e model_id,
                                cvtdl_image_t image_handle,
                                cvtdl_face_t *face_meta);

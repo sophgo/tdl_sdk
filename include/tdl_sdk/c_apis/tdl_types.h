@@ -66,10 +66,11 @@ typedef struct {
   cvtdl_feature_t feature;
 
   float gender_score;
-  float glass;
+  float glass_score;
   float age;
   float liveness_score;
   float hardhat_score;
+  float mask_score;
 
   float recog_score;
   float face_quality;

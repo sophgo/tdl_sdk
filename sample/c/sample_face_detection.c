@@ -1,6 +1,3 @@
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +46,6 @@ int main(int argc, char *argv[]) {
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
-    return ret;
   }
 
   cvtdl_image_t image = CVI_TDL_ReadImage(argv[3]);
