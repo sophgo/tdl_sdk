@@ -38,7 +38,6 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   int ret = 0;
-  cvtdl_handle_t tdl_handle = CVI_TDL_CreateHandle(0);
 
   cvtdl_model_e enOdModelId;
   if (get_fd_model_info(argv[1], &enOdModelId) == -1) {
@@ -46,28 +45,41 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
+  cvtdl_handle_t tdl_handle = CVI_TDL_CreateHandle(0);
+
   ret = CVI_TDL_OpenModel(tdl_handle, enOdModelId, argv[2]);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
+    goto exit0;
     return ret;
   }
 
-  printf("enter path = %s\n", argv[3]);
-
   cvtdl_image_t image = CVI_TDL_ReadImage(argv[3]);
-  printf("enetr read success, image is NULL? %d\n", image==NULL);
-  cvtdl_face_t obj_meta = {0};
-  ret = CVI_TDL_InitFaceMeta(&obj_meta, 1, 0);
-  ret = CVI_TDL_FaceDetection(tdl_handle, enOdModelId, image, &obj_meta);
-  printf("boxes=[");
-  for (uint32_t i = 0; i < obj_meta.size; i++) {
-    printf("[%f,%f,%f,%f],", obj_meta.info[i].box.x1, obj_meta.info[i].box.y1,
-           obj_meta.info[i].box.x2, obj_meta.info[i].box.y2);
+  if (image == NULL) {
+    printf("read image failed with %#x!\n", ret);
+    goto exit1;
   }
-  printf("]\n");
+
+  cvtdl_face_t obj_meta = {0};
+  ret = CVI_TDL_FaceDetection(tdl_handle, enOdModelId, image, &obj_meta);
+  if (ret != 0) {
+    printf("face detection failed with %#x!\n", ret);
+  } else {
+    printf("boxes=[");
+    for (uint32_t i = 0; i < obj_meta.size; i++) {
+      printf("[%f,%f,%f,%f],", obj_meta.info[i].box.x1, obj_meta.info[i].box.y1,
+             obj_meta.info[i].box.x2, obj_meta.info[i].box.y2);
+    }
+    printf("]\n");
+  }
+
   CVI_TDL_ReleaseFaceMeta(&obj_meta);
   CVI_TDL_DestroyImage(image);
+
+exit1:
   CVI_TDL_CloseModel(tdl_handle, enOdModelId);
+
+exit0:
   CVI_TDL_DestroyHandle(tdl_handle);
   return ret;
 }

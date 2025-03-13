@@ -208,6 +208,7 @@ int32_t SCRFD::outputParse(
 
           std::vector<float> landmarks_x;
           std::vector<float> landmarks_y;
+          std::vector<float> landmarks_score;
           for (size_t k = 0; k < FACE_LANDMARKS_NUM; k++) {
             float landmark_x =
                 landmark_blob[j + count * (num * 10 + k * 2)] * stride +
@@ -221,6 +222,7 @@ int32_t SCRFD::outputParse(
                 std::clamp((landmark_y - pad_y) / scaley, 0.0f, image_height_f);
             landmarks_x.push_back(landmark_x);
             landmarks_y.push_back(landmark_y);
+            landmarks_score.push_back(0);
           }
           ObjectBoxLandmarkInfo box;
           box.class_id = 0;
@@ -232,6 +234,7 @@ int32_t SCRFD::outputParse(
           box.y2 = box_y2;
           box.landmarks_x = landmarks_x;
           box.landmarks_y = landmarks_y;
+          box.landmarks_score = landmarks_score;
           vec_bbox.push_back(box);
         }
       }
