@@ -16,6 +16,7 @@
 #include "object_detection/yolov6.hpp"
 #include "object_detection/yolov8.hpp"
 #include "segmentation/yolov8_seg.hpp"
+#include "segmentation/topformer_seg.hpp"
 #include "utils/tdl_log.hpp"
 
 TDLModelFactory::TDLModelFactory(const std::string model_dir)
@@ -99,6 +100,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<Clip_Image>();
   } else if (model_type == ModelType::TEXT_FEATURE_CLIP) {
     model = std::make_shared<Clip_Text>();
+  } else if (model_type == ModelType::SEG_PERSON_FACE_VEHICLE) {
+    model = std::make_shared<TopformerSeg>(16); // Downsampling ratio
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;
