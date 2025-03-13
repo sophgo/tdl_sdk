@@ -5,7 +5,7 @@
 
 class YoloV8Detection final : public BaseModel {
  public:
-  YoloV8Detection();
+  YoloV8Detection(const int num_cls = 0);
   YoloV8Detection(std::pair<int, int> yolov8_pair);
   ~YoloV8Detection();
   // int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta)

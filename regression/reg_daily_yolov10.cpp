@@ -30,8 +30,7 @@ class YoloV10DetectionTestSuite : public CVI_TDLModelTestSuite {
   virtual void SetUp() {
     std::string m_modelname = std::string(m_json_object["model_name"]);
     m_model_path = (m_model_dir / fs::path(m_modelname)).string();
-    m_model = model_factory_.getModel(TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV10,
-                                      m_model_path);
+    m_model = model_factory_.getModel(ModelType::YOLOV10, m_model_path);
 
     ASSERT_NE(m_model, nullptr);
   }

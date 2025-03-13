@@ -25,11 +25,23 @@ cvtdl_object_type_e convertObjectType(TDLObjectType object_type) {
   }
 }
 
-TDL_MODEL_TYPE convertModelType(cvtdl_model_e model_type) {
-  switch(model_type) {
-    case TDL_MODEL_SCRFDFACE:
-      return TDL_MODEL_TYPE_FACE_DETECTION_SCRFD;
+ModelType convertModelType(cvtdl_model_e model_type) {
+  switch (model_type) {
+    case TDL_MODEL_SCRFD_FACE:
+      return ModelType::SCRFD_FACE;
+    case TDL_MODEL_YOLOV8N_PERSON_VEHICLE:
+      return ModelType::YOLOV8N_PERSON_VEHICLE;
+    case TDL_MODEL_YOLOV8N_HEAD_HARDHAT:
+      return ModelType::YOLOV8N_HEAD_HARDHAT;
+    case TDL_MODEL_IMG_ATTRIBUTE_FACE:
+      return ModelType::IMG_ATTRIBUTE_FACE;
+    case TDL_MODEL_IMG_KEYPOINT_FACE_V2:
+      return ModelType::IMG_KEYPOINT_FACE_V2;
+    case TDL_MODEL_IMG_FEATURE_FACE_BMFACER34:
+      return ModelType::IMG_FEATURE_FACE_BMFACER34;
+    case TDL_MODEL_IMG_CLS_RGBLIVENESS:
+      return ModelType::IMG_CLS_RGBLIVENESS;
   }
-  return TDL_MODEL_TYPE_INVALID;
+  return ModelType::INVALID;
 }
 #endif

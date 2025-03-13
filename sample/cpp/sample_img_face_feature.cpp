@@ -123,19 +123,19 @@ int main(int argc, char **argv) {
   }
   TDLModelFactory model_factory(model_dir);
   std::shared_ptr<BaseModel> model_fd =
-      model_factory.getModel(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD);
+      model_factory.getModel(ModelType::SCRFD_FACE);
   if (!model_fd) {
     printf("Failed to create model_fd\n");
     return -1;
   }
   std::shared_ptr<BaseModel> model_fl =
-      model_factory.getModel(TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2);
+      model_factory.getModel(ModelType::IMG_KEYPOINT_FACE_V2);
   if (!model_fl) {
     printf("Failed to create model_fl\n");
     return -1;
   }
   std::shared_ptr<BaseModel> model_fe =
-      model_factory.getModel(TDL_MODEL_TYPE_FACE_FEATURE_BMFACER34);
+      model_factory.getModel(ModelType::IMG_FEATURE_FACE_BMFACER34);
   if (!model_fe) {
     printf("Failed to create model_fe\n");
     return -1;

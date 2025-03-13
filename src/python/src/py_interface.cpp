@@ -66,20 +66,25 @@ PYBIND11_MODULE(tdl, m) {
 
   // 神经网络模块
   py::module nn = m.def_submodule("nn", "Neural network algorithms module");
-  py::enum_<TDL_MODEL_TYPE>(nn, "ModelType")
-      .value("FD_SCRFD", TDL_MODEL_TYPE::TDL_MODEL_TYPE_FACE_DETECTION_SCRFD)
-      .value(
-          "YOLOV8_PERSON_VEHICLE",
-          TDL_MODEL_TYPE::TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE)
+  py::enum_<ModelType>(nn, "ModelType")
+      .value("FD_SCRFD", ModelType::SCRFD_FACE)
+      .value("YOLOV8N_PERSON_VEHICLE", ModelType::YOLOV8N_PERSON_VEHICLE)
+      .value("YOLOV8N_HEAD_HARDHAT", ModelType::YOLOV8N_HEAD_HARDHAT)
+      .value("YOLOV10_COCO80", ModelType::YOLOV10_COCO80)
+      .value("YOLOV6_COCO80", ModelType::YOLOV6_COCO80)
+      .value("YOLOV8_SEG_COCO80", ModelType::YOLOV8_SEG_COCO80)
+      .value("YOLOV8_POSE_PERSON17", ModelType::YOLOV8_POSE_PERSON17)
+      .value("IMG_FEATURE_CLIP", ModelType::IMG_FEATURE_CLIP)
+      .value("TEXT_FEATURE_CLIP", ModelType::TEXT_FEATURE_CLIP)
       .export_values();
   py::class_<PyObejectDetector>(nn, "ObjectDetector")
-      .def(py::init<TDL_MODEL_TYPE, std::string, int>(), py::arg("model_type"),
+      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference", &PyObejectDetector::inference, py::arg("image"),
            py::arg("parameters") = py::dict());
 
   py::class_<PyFaceDetector>(nn, "FaceDetector")
-      .def(py::init<TDL_MODEL_TYPE, std::string, int>(), py::arg("model_type"),
+      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference", &PyFaceDetector::inference, py::arg("image"),
            py::arg("parameters") = py::dict());

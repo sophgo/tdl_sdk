@@ -12,13 +12,11 @@
 int get_fd_model_info(char *model_name, cvtdl_model_e *model_index) {
   int ret = 0;
   if (strcmp(model_name, "scrfdface") == 0) {
-    *model_index = TDL_MODEL_SCRFDFACE;
+    *model_index = TDL_MODEL_SCRFD_FACE;
   } else if (strcmp(model_name, "retinaface") == 0) {
-    *model_index = TDL_MODEL_RETINAFACE;
+    *model_index = TDL_MODEL_RETINA_FACE;
   } else if (strcmp(model_name, "retinaface_ir") == 0) {
-    *model_index = TDL_MODEL_RETINAFACE_IR;
-  } else if (strcmp(model_name, "face_mask") == 0) {
-    *model_index = TDL_MODEL_MASKFACERECOGNITION;
+    *model_index = TDL_MODEL_RETINA_FACE_IR;
   } else {
     ret = -1;
   }

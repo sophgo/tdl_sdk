@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
   TDLModelFactory model_factory(model_dir);
   std::shared_ptr<BaseModel> model_fd =
-      model_factory.getModel(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD);
+      model_factory.getModel(ModelType::SCRFD_FACE);
   if (!model_fd) {
     printf("Failed to create model_fd\n");
     return -1;

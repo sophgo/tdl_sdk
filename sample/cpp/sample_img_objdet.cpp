@@ -39,19 +39,16 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
 }
 
 void construct_model_id_mapping(
-    std::map<std::string, TDL_MODEL_TYPE> &model_id_mapping) {
-  model_id_mapping["TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV10"] =
-      TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV10;
-  model_id_mapping["TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_HARDHAT"] =
-      TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_HARDHAT;
-  model_id_mapping["TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE"] =
-      TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE;
-  model_id_mapping["TDL_MODEL_TYPE_OBJECT_DETECTION_MOBILEDETV2_PEDESTRIAN"] =
-      TDL_MODEL_TYPE_OBJECT_DETECTION_MOBILEDETV2_PEDESTRIAN;
+    std::map<std::string, ModelType> &model_id_mapping) {
+  model_id_mapping["YOLOV10_COCO80"] = ModelType::YOLOV10_COCO80;
+  model_id_mapping["YOLOV8N_HEAD_HARDHAT"] = ModelType::YOLOV8N_HEAD_HARDHAT;
+  model_id_mapping["ModelType::YOLOV8N_PERSON_VEHICLE"] =
+      ModelType::YOLOV8N_PERSON_VEHICLE;
+  model_id_mapping["IMG_KEYPOINT_FACE_V2"] = ModelType::IMG_KEYPOINT_FACE_V2;
 }
 
 int main(int argc, char **argv) {
-  std::map<std::string, TDL_MODEL_TYPE> model_id_mapping;
+  std::map<std::string, ModelType> model_id_mapping;
   construct_model_id_mapping(model_id_mapping);
 
   if (argc != 4 && argc != 5) {
@@ -75,7 +72,7 @@ int main(int argc, char **argv) {
     printf("model_id_name not found\n");
     return -1;
   }
-  TDL_MODEL_TYPE model_id = model_id_mapping[model_id_name];
+  ModelType model_id = model_id_mapping[model_id_name];
   std::string model_path = argv[2];
   std::string image_path = argv[3];
 

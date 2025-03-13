@@ -56,7 +56,7 @@ int32_t CVI_TDL_OpenModel(cvtdl_handle_t handle, const cvtdl_model_e model_id,
   if (context->models.find(model_id) != context->models.end()) {
     return 0;
   }
-  TDL_MODEL_TYPE model_type = convertModelType(model_id);
+  ModelType model_type = convertModelType(model_id);
   std::shared_ptr<BaseModel> model =
       context->model_factory->getModel(model_type, model_path);
   if (model == nullptr) {

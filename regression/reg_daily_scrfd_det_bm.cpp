@@ -43,8 +43,7 @@ TEST_F(ScrfdDetBmTestSuite, accuracy) {
         std::string(m_json_object[test_index]["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
 
-    scrfd_ = model_factory_.getModel(TDL_MODEL_TYPE_FACE_DETECTION_SCRFD,
-                                     model_path);
+    scrfd_ = model_factory_.getModel(ModelType::SCRFD_FACE, model_path);
     ASSERT_NE(scrfd_, nullptr);
     for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
          iter++) {

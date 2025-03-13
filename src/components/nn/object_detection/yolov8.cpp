@@ -35,7 +35,8 @@ inline std::vector<float> get_box_vals(T *p_box_ptr, int num_anchor,
   return box_vals;
 }
 
-YoloV8Detection::YoloV8Detection() : YoloV8Detection(std::make_pair(64, 80)) {}
+YoloV8Detection::YoloV8Detection(const int num_cls)
+    : YoloV8Detection(std::make_pair(64, num_cls)) {}
 
 YoloV8Detection::YoloV8Detection(std::pair<int, int> yolov8_pair) {
   for (int i = 0; i < 3; i++) {
@@ -64,6 +65,14 @@ int32_t YoloV8Detection::onModelOpened() {
   strides.clear();
   const auto &output_layers = net_->getOutputNames();
   size_t num_output = output_layers.size();
+
+  LOGI("to parse output branch,box_channel:%d,num_cls:%d", num_box_channel_,
+       num_cls_);
+  if (num_cls_ == 0) {
+    LOGI(
+        "num_cls is 0,would take branches whose channel not equal to "
+        "num_box_channel_ as cls branch");
+  }
   for (size_t j = 0; j < num_output; j++) {
     auto oinfo = net_->getTensorInfo(output_layers[j]);
     int feat_h = oinfo.shape[2];
@@ -72,19 +81,19 @@ int32_t YoloV8Detection::onModelOpened() {
     int stride_h = input_h / feat_h;
     int stride_w = input_w / feat_w;
 
-    if (stride_h == 0 && num_output == 2) {
-      if (channel == num_cls_) {
-        class_out_names[stride_h] = output_layers[j];
-        strides.push_back(stride_h);
-        LOGI("parse class decode branch:%s,channel:%d\n",
-             output_layers[j].c_str(), channel);
-      } else {
-        bbox_out_names[stride_h] = output_layers[j];
-        LOGI("parse box decode branch:%s,channel:%d\n",
-             output_layers[j].c_str(), channel);
-      }
-      continue;
-    }
+    // if (stride_h == 0 && num_output == 2) {
+    //   if (channel == num_cls_) {
+    //     class_out_names[stride_h] = output_layers[j];
+    //     strides.push_back(stride_h);
+    //     LOGI("parse class decode branch:%s,channel:%d\n",
+    //          output_layers[j].c_str(), channel);
+    //   } else {
+    //     bbox_out_names[stride_h] = output_layers[j];
+    //     LOGI("parse box decode branch:%s,channel:%d\n",
+    //          output_layers[j].c_str(), channel);
+    //   }
+    //   continue;
+    // }
 
     if (stride_h != stride_w) {
       LOGE("stride not equal,stridew:%d,strideh:%d,featw:%d,feath:%d\n",

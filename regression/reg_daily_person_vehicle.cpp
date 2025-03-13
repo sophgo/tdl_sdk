@@ -31,8 +31,8 @@ class People_Vehicle_DetectionTestSuite : public CVI_TDLModelTestSuite {
     std::string model_name = std::string(m_json_object["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
 
-    model_ = model_factory_.getModel(
-        TDL_MODEL_TYPE_OBJECT_DETECTION_YOLOV8_PERSON_VEHICLE, model_path);
+    model_ =
+        model_factory_.getModel(ModelType::YOLOV8N_PERSON_VEHICLE, model_path);
 
     // std::map<int, int> type_mapping = {{0, 1}, {4, 0}};
     // model_->setTypeMapping(type_mapping);

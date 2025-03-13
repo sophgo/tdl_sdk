@@ -5,7 +5,7 @@
 namespace pytdl {
 TDLModelFactory g_model_factory_;
 
-PyModel::PyModel(TDL_MODEL_TYPE model_type, const std::string& model_path,
+PyModel::PyModel(ModelType model_type, const std::string& model_path,
                  const int device_id) {
   model_ = g_model_factory_.getModel(model_type, model_path, device_id);
   if (model_ == nullptr) {
@@ -13,7 +13,7 @@ PyModel::PyModel(TDL_MODEL_TYPE model_type, const std::string& model_path,
   }
 }
 
-PyObejectDetector::PyObejectDetector(TDL_MODEL_TYPE model_type,
+PyObejectDetector::PyObejectDetector(ModelType model_type,
                                      const std::string& model_path,
                                      const int device_id)
     : PyModel(model_type, model_path, device_id) {}
@@ -52,7 +52,7 @@ py::list PyObejectDetector::inference(const PyImage& image,
   return bboxes;
 }
 
-PyFaceDetector::PyFaceDetector(TDL_MODEL_TYPE model_type,
+PyFaceDetector::PyFaceDetector(ModelType model_type,
                                const std::string& model_path,
                                const int device_id)
     : PyObejectDetector(model_type, model_path, device_id) {}

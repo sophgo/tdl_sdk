@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
   TDLModelFactory model_factory(model_dir);
 
   std::shared_ptr<BaseModel> model_cls =
-      model_factory.getModel(TDL_MODEL_TYPE_FACE_ANTI_SPOOF_CLASSIFICATION);
+      model_factory.getModel(ModelType::IMG_CLS_RGBLIVENESS);
 
   if (!model_cls) {
     printf("Failed to load classification model\n");

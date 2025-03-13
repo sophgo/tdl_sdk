@@ -65,8 +65,8 @@ TEST_F(FaceLandmarkerDet2TestSuite, accuracy) {
     std::string model_name =
         std::string(m_json_object[test_index]["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
-    std::shared_ptr<BaseModel> m_model = model_factory.getModel(
-        TDL_MODEL_TYPE_FACE_LANDMARKER_LANDMARKERDETV2, model_path);
+    std::shared_ptr<BaseModel> m_model =
+        model_factory.getModel(ModelType::IMG_KEYPOINT_FACE_V2, model_path);
     std::shared_ptr<BasePreprocessor> preprocessor = m_model->getPreprocessor();
     for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
          iter++) {

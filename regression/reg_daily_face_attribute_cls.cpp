@@ -32,8 +32,8 @@ class FaceAttributeClsBmTestSuite : public CVI_TDLModelTestSuite {
   virtual void SetUp() {
     std::string model_name = std::string(m_json_object["model_name"]);
     m_model_path = (m_model_dir / fs::path(model_name)).string();
-    m_model = model_factory_.getModel(TDL_MODEL_TYPE_FACE_ATTRIBUTE_CLS,
-                                      m_model_path);
+    m_model =
+        model_factory_.getModel(ModelType::IMG_ATTRIBUTE_FACE, m_model_path);
 
     ASSERT_NE(m_model, nullptr);
   }

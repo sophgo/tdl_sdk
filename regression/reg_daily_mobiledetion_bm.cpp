@@ -42,8 +42,8 @@ TEST_F(MobileDetectionV2TestSuite, accuracy) {
     std::string model_name =
         std::string(m_json_object[test_index]["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
-    std::shared_ptr<BaseModel> m_model = model_factory.getModel(
-        TDL_MODEL_TYPE_OBJECT_DETECTION_MOBILEDETV2_PEDESTRIAN, model_path);
+    std::shared_ptr<BaseModel> m_model =
+        model_factory.getModel(ModelType::MBV2_PERSON, model_path);
     for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
          iter++) {
       std::string image_path = (m_image_dir / iter.key()).string();

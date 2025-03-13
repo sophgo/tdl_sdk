@@ -6,20 +6,16 @@
 class TDLModelFactory {
  public:
   TDLModelFactory(const std::string model_dir = "");
-  std::shared_ptr<BaseModel> getModel(const TDL_MODEL_TYPE model_type,
+  std::shared_ptr<BaseModel> getModel(const ModelType model_type,
                                       const int device_id = 0);
-  std::shared_ptr<BaseModel> getModel(const TDL_MODEL_TYPE model_type,
+  std::shared_ptr<BaseModel> getModel(const ModelType model_type,
                                       const std::string &model_path,
                                       const int device_id = 0);
-  void setModelPath(const TDL_MODEL_TYPE model_type,
-                    const std::string &model_path);
-  void setModelPathMap(
-      const std::map<TDL_MODEL_TYPE, std::string> &model_path_map);
+  void setModelPath(const ModelType model_type, const std::string &model_path);
+  void setModelPathMap(const std::map<ModelType, std::string> &model_path_map);
 
  private:
   std::string model_dir_;
-  std::map<TDL_MODEL_TYPE, std::string> model_path_map_;
-
-  std::map<TDL_MODEL_TYPE, std::string> output_datas_type_str_;
+  std::map<ModelType, std::string> model_path_map_;
 };
 #endif

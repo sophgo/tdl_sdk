@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   TDLModelFactory model_factory(model_dir);
 
   std::shared_ptr<BaseModel> model_clip_image =
-      model_factory.getModel(TDL_MODEL_TYPE_CLIP_IMAGE, argv[1]);
+      model_factory.getModel(ModelType::IMG_FEATURE_CLIP, argv[1]);
 
   if (!model_clip_image) {
     printf("Failed to load clip image model\n");
@@ -38,9 +38,9 @@ int main(int argc, char** argv) {
     std::vector<float> feature_vec(feature_meta->embedding_num);
     for (size_t j = 0; j < feature_meta->embedding_num; j++) {
       feature_vec[j] = feature_meta->embedding[j];
-      std::cout<<feature_vec[j]<<" ";
+      std::cout << feature_vec[j] << " ";
     }
-    std::cout<<std::endl;
+    std::cout << std::endl;
     features.push_back(feature_vec);
   }
 
