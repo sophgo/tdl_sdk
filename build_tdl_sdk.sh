@@ -36,11 +36,13 @@ if [[ "$1" == "cv181x" ]]; then
     export CHIP_ARCH=CV181X
     
     # Execute CV181X specific commands
-    source ../build/envsetup_soc.sh
+    cd ..
+    source build/envsetup_soc.sh
     defconfig sg2002_wevb_riscv64_sd
     export TPU_REL=1
     clean_all
     build_all
+    cd tdl_sdk
     exit 0
 
 elif [[ "$1" == "cv186x" ]]; then
@@ -48,11 +50,13 @@ elif [[ "$1" == "cv186x" ]]; then
     export CHIP_ARCH=CV186X
     
     # Execute CV186X specific commands
+    cd ..
     source build/envsetup_soc.sh
     defconfig device_wevb_emmc
     export TPU_REL=1
-    clean_all
-    build_all
+    clean_device_all
+    build_device_all
+    cd tdl_sdk
     exit 0
 
 elif [[ "$1" == "bm168x" ]]; then
@@ -111,6 +115,12 @@ elif [[ "$1" == "sample" ]]; then
 elif [[ "$1" == "all" ]]; then
     echo "Using ./${BASH_SOURCE[0]} all"
     echo "Compiling modules and sample..."
+
+    cd ..
+    source build/envsetup_soc.sh
+    oldconfig
+    cd tdl_sdk
+
     BUILD_OPTION=all
     
     # Check if CHIP_ARCH is set

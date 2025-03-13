@@ -75,7 +75,9 @@
     ```shell
     cd tdl_sdk
     git checkout edge
-    ./build.sh cv181x
+    ./build_tdl_sdk.sh cv181x
+    #再次编译
+    ./build_tdl_sdk.sh all
     ```
 
 ### 186AH平台编译
@@ -94,7 +96,8 @@
 
     git checkout edge
     ./build_tdl_sdk.sh cv186x
-
+    #再次编译
+    ./build_tdl_sdk.sh all
     ```
 
 ### BM1688平台编译
