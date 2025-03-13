@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
   }
   TDLModelFactory model_factory(model_dir);
   std::shared_ptr<BaseModel> model =
-      model_factory.getModel(ModelType::IMG_KEYPOINT_FACE_V2);
+      model_factory.getModel(ModelType::KEYPOINT_FACE_V2);
   if (!model) {
     printf("Failed to create model\n");
     return -1;

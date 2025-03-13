@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
   }
 
   TDLModelFactory model_factory;
-  ModelType model_id = ModelType::IMG_ATTRIBUTE_FACE;
+  ModelType model_id = ModelType::ATTRIBUTE_FACE;
 
   std::shared_ptr<BaseModel> model =
       model_factory.getModel(model_id, model_path);

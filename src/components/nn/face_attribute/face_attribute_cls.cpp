@@ -35,7 +35,67 @@ int32_t FaceAttribute_CLS::onModelOpened() {
 
   return 0;
 }
+int32_t FaceAttribute_CLS::inference(
+    const std::shared_ptr<BaseImage> &image,
+    const std::shared_ptr<ModelOutputInfo> &model_object_infos,
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
+    const std::map<std::string, float> &parameters) {
+  std::vector<ObjectBoxInfo> crop_boxes;
+  if (model_object_infos->getType() == ModelOutputType::OBJECT_DETECTION) {
+    std::shared_ptr<ModelBoxInfo> model_box_infos =
+        std::static_pointer_cast<ModelBoxInfo>(model_object_infos);
+    for (uint32_t i = 0; i < model_box_infos->bboxes.size(); i++) {
+      crop_boxes.push_back(model_box_infos->bboxes[i]);
+    }
+  } else if (model_object_infos->getType() ==
+             ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+    std::shared_ptr<ModelBoxLandmarkInfo> model_box_infos =
+        std::static_pointer_cast<ModelBoxLandmarkInfo>(model_object_infos);
+    // TODO(fuquan.ke):use landmarks to adjust crop boxes
+    for (uint32_t i = 0; i < model_box_infos->box_landmarks.size(); i++) {
+      ObjectBoxInfo box_info;
+      box_info.x1 = model_box_infos->box_landmarks[i].x1;
+      box_info.y1 = model_box_infos->box_landmarks[i].y1;
+      box_info.x2 = model_box_infos->box_landmarks[i].x2;
+      box_info.y2 = model_box_infos->box_landmarks[i].y2;
+      crop_boxes.push_back(box_info);
+    }
+  } else {
+    LOGE("not supported model output type: %d",
+         (int)model_object_infos->getType());
+    return -1;
+  }
+  std::string input_layer_name = net_->getInputNames()[0];
+  PreprocessParams &preprocess_params = preprocess_params_[input_layer_name];
+  std::vector<std::shared_ptr<BaseImage>> batch_images{image};
+  bool keep_aspect_ratio = preprocess_params.keepAspectRatio;
+  for (uint32_t i = 0; i < crop_boxes.size(); i++) {
+    preprocess_params.cropX = (uint32_t)crop_boxes[i].x1;
+    preprocess_params.cropY = (uint32_t)crop_boxes[i].y1;
+    preprocess_params.cropWidth =
+        (uint32_t)(crop_boxes[i].x2 - crop_boxes[i].x1);
+    preprocess_params.cropHeight =
+        (uint32_t)(crop_boxes[i].y2 - crop_boxes[i].y1);
+    preprocess_params.keepAspectRatio = false;
 
+    std::vector<std::shared_ptr<ModelOutputInfo>> batch_out_datas;
+    int ret = BaseModel::inference(batch_images, batch_out_datas);
+    if (ret != 0) {
+      LOGE("inference failed");
+      return ret;
+    }
+    out_datas.push_back(batch_out_datas[0]);
+
+    // reset preprocess params
+    preprocess_params.cropX = 0;
+    preprocess_params.cropY = 0;
+    preprocess_params.cropWidth = 0;
+    preprocess_params.cropHeight = 0;
+    preprocess_params.keepAspectRatio = keep_aspect_ratio;
+  }
+
+  return 0;
+}
 int32_t FaceAttribute_CLS::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {

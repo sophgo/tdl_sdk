@@ -26,15 +26,15 @@ TDLModelFactory::TDLModelFactory(const std::string model_dir)
                model_dir_ + "scrfd_500m_bnkps_432_768" + str_ext);
   setModelPath(ModelType::YOLOV8N_PERSON_VEHICLE,
                model_dir_ + "yolov8n_384_640_person_vehicle" + str_ext);
-  setModelPath(ModelType::IMG_KEYPOINT_FACE_V2,
+  setModelPath(ModelType::KEYPOINT_FACE_V2,
                model_dir_ + "pipnet_mbv1_at_50ep_v8" + str_ext);
-  setModelPath(ModelType::IMG_FEATURE_FACE_BMFACER34,
+  setModelPath(ModelType::FEATURE_BMFACER34,
                model_dir_ + "bmface_r34" + str_ext);
   setModelPath(ModelType::YOLOV8N_HEAD_HARDHAT,
                model_dir_ + "hardhat_detection" + str_ext);
-  setModelPath(ModelType::IMG_ATTRIBUTE_FACE,
+  setModelPath(ModelType::ATTRIBUTE_FACE,
                model_dir_ + "face_attribute_cls" + str_ext);
-  setModelPath(ModelType::IMG_CLS_RGBLIVENESS,
+  setModelPath(ModelType::CLS_RGBLIVENESS,
                model_dir_ + "face_anti_spoof_classification" + str_ext);
 }
 
@@ -71,15 +71,15 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
         MobileDetV2Detection::Category::pedestrian, 0.5);
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_PERSON;
 
-  } else if (model_type == ModelType::IMG_KEYPOINT_FACE_V2) {
+  } else if (model_type == ModelType::KEYPOINT_FACE_V2) {
     model = std::make_shared<FaceLandmarkerDet2>();
-  } else if (model_type == ModelType::IMG_ATTRIBUTE_FACE) {
+  } else if (model_type == ModelType::ATTRIBUTE_FACE) {
     model = std::make_shared<FaceAttribute_CLS>();
-  } else if (model_type == ModelType::IMG_FEATURE_FACE_BMFACER34) {
+  } else if (model_type == ModelType::FEATURE_BMFACER34) {
     model = std::make_shared<FeatureExtraction>();
-  } else if (model_type == ModelType::IMG_CLS_RGBLIVENESS) {
+  } else if (model_type == ModelType::CLS_RGBLIVENESS) {
     model = std::make_shared<RgbImageClassification>();
-  } else if (model_type == ModelType::IMG_KEYPOINT_SIMCC) {
+  } else if (model_type == ModelType::KEYPOINT_SIMCC) {
     model = std::make_shared<SimccPose>();
   } else if (model_type == ModelType::YOLOV8_SEG_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));

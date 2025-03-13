@@ -25,25 +25,25 @@ typedef enum {
   TDL_MODEL_RETINA_FACE,
   TDL_MODEL_RETINA_FACE_IR,
 
-  TDL_MODEL_IMG_CLS_MASK,         // 0:mask,1:no mask
-  TDL_MODEL_IMG_CLS_RGBLIVENESS,  // 0:live,1:fake
-  TDL_MODEL_IMG_CLS_ISPSCENE,
-  TDL_MODEL_IMG_CLS_HAND_GESTURE,  // 0:fist,1:five,2:none,3:two
+  TDL_MODEL_CLS_MASK,         // 0:mask,1:no mask
+  TDL_MODEL_CLS_RGBLIVENESS,  // 0:live,1:fake
+  TDL_MODEL_CLS_ISPSCENE,
+  TDL_MODEL_CLS_HAND_GESTURE,  // 0:fist,1:five,2:none,3:two
   TDL_MODEL_KEYPOINT_CLS_HAND_GESTURE,  // 0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two
-  TDL_MODEL_IMG_ATTRIBUTE_FACE,       // age,gener,glass,mask
-  TDL_MODEL_SOUND_CLS_BABAY_CRY,      // 0:cry
-  TDL_MODEL_SOUND_CLS_NIHAOSUANNENG,  // 0:nihao suanneng,1:清空缓存
+  TDL_MODEL_ATTRIBUTE_FACE,  // age,gener,glass,mask
+  TDL_MODEL_CLS_BABAY_CRY,   // 0:cry
+  TDL_MODEL_CLS_NI,          // 0:nihao suanneng,1:清空缓存
 
-  TDL_MODEL_IMG_KEYPOINT_FACE_V2 = 100,  // 5 landmarks + blurness score
-  TDL_MODEL_IMG_KEYPOINT_HAND,
-  TDL_MODEL_IMG_KEYPOINT_YOLOV8N_POSE_V1,
-  TDL_MODEL_IMG_FEATURE_FACE_BMFACER34,  // resnet34 512 dim feature
+  TDL_MODEL_KEYPOINT_FACE_V2 = 100,  // 5 landmarks + blurness score
+  TDL_MODEL_KEYPOINT_HAND,
+  TDL_MODEL_KEYPOINT_YOLOV8N_POSE_V1,
+  TDL_MODEL_FEATURE_BMFACER34,  // resnet34 512 dim feature
   TDL_MODEL_IMG_FEATURE_CLIP,
   TDL_MODEL_TEXT_FEATURE_CLIP,
 
-  TDL_MODEL_IMG_SEG_PERSON_FACE_VEHICLE =
+  TDL_MODEL_SEG_PERSON_FACE_VEHICLE =
       130,  // 0:background,1:person,2:face,3:vehicle,4:license plate
-  TDL_MODEL_IMG_SEG_MOTION,  // 0:static,2:transsition 3:motion
+  TDL_MODEL_SEG_MOTION,  // 0:static,2:transsition 3:motion
 
 } cvtdl_model_e;
 

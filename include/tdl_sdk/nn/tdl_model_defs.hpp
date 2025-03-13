@@ -23,36 +23,39 @@ enum class ModelType {
   SCRFD_FACE,  // 0:face + landm
 
   // image classification models
-  IMG_CLS_MASK,         // 0:mask,1:no mask
-  IMG_CLS_RGBLIVENESS,  // 0:live,1:fake
-  IMG_CLS_ISPSCENE,
-  IMG_CLS_HAND_GESTURE,  // 0:fist,1:five,2:none,3:two
+  CLS_MASK,         // 0:mask,1:no mask
+  CLS_RGBLIVENESS,  // 0:live,1:fake
+  CLS_ISPSCENE,
+  CLS_HAND_GESTURE,  // 0:fist,1:five,2:none,3:two
 
   KEYPOINT_CLS_HAND_GESTURE,  // 0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two
 
   // image attribute models
-  IMG_ATTRIBUTE_FACE,  // age,gener,glass,mask
+  ATTRIBUTE_FACE,  // age,gener,glass,mask
 
   // sound classification models
-  SOUND_CLS_BABAY_CRY,      // 0:cry
-  SOUND_CLS_NIHAOSUANNENG,  // 0:nihao suanneng,1:清空缓存
+  SOUND_CLS_BABAY_CRY,  // 0:cry
+  SOUND_CLS_COMMAND,
 
   // image keypoint models
-  IMG_KEYPOINT_FACE_V2,  // 5 landmarks + blurness score
+  KEYPOINT_FACE_V2,  // 5 landmarks + blurness score
 
-  IMG_KEYPOINT_HAND,
-  IMG_KEYPOINT_YOLOV8N_POSE_V1,
-  IMG_KEYPOINT_SIMCC,
+  KEYPOINT_HAND,
+  KEYPOINT_YOLOV8N_POSE_V1,
+  KEYPOINT_SIMCC,
+
+  // lane detection models
+  LANE_DETECTION_LSTR,
 
   // image feature models
-  IMG_FEATURE_FACE_BMFACER34,
+  FEATURE_BMFACER34,
   IMG_FEATURE_CLIP,
   TEXT_FEATURE_CLIP,
 
   // image segmentation models
-  IMG_SEG_PERSON_FACE_VEHICLE,  // 0:background,1:person,2:face,3:vehicle,4:license
-                                // plate
-  IMG_SEG_MOTION,  // 0:static,2:transsition 3:motion
+  SEG_TOP_FROMER_PERSON_FACE_VEHICLE,  // 0:background,1:person,2:face,3:vehicle,4:license
+                                       // plate
+  SEG_MOTION,  // 0:static,2:transsition 3:motion
 
   // custom models,user should specify necessary params like preprocess and
   // input/output and parse parameters

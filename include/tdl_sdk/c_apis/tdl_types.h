@@ -1,8 +1,8 @@
 #ifndef TDL_TYPES_H
 #define TDL_TYPES_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "tdl_object_def.h"
 
 #ifdef __cplusplus
@@ -17,7 +17,9 @@ typedef enum {
   TDL_TYPE_INT32,    /**< Equals to int32_t. */
   TDL_TYPE_UINT32,   /**< Equals to uint32_t. */
   TDL_TYPE_BF16,     /**< Equals to bf17. */
-  TDL_TYPE_FLOAT     /**< Equals to float. */
+  TDL_TYPE_FP16,     /**< Equals to fp16. */
+  TDL_TYPE_FP32,     /**< Equals to fp32. */
+  TDL_TYPE_UNKOWN    /**< Equals to unkown. */
 } cvtdl_data_type_e;
 
 typedef struct {
@@ -92,6 +94,40 @@ typedef struct {
 
   cvtdl_class_info_t *info;
 } cvtdl_class_t;
+
+typedef struct {
+  float x;
+  float y;
+  float score;
+} cvtdl_keypoint_info_t;
+
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+  cvtdl_keypoint_info_t *info;
+} cvtdl_keypoint_t;
+
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+} cvtdl_seg_t;
+
+typedef struct {
+  float x[2];
+  float y[2];
+  float score;
+} cvtdl_lane_point_t;
+
+typedef struct {
+  uint32_t size;
+  uint32_t width;
+  uint32_t height;
+
+  cvtdl_lane_point_t *lane;
+  int lane_state;
+} cvtdl_lane_t;
 
 typedef void *cvtdl_handle_t;
 typedef void *cvtdl_image_t;

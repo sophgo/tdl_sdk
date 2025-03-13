@@ -34,7 +34,8 @@ cvtdl_image_t CVI_TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory) {
 
 cvtdl_image_t CVI_TDL_ReadImage(const char *path) {
   tdl_image_context_t *image_context = new tdl_image_context_t();
-  image_context->image = ImageFactory::readImage(path, false, InferencePlatform::CVITEK);
+  image_context->image =
+      ImageFactory::readImage(path, false, InferencePlatform::CVITEK);
   return (cvtdl_image_t)image_context;
 }
 
@@ -56,7 +57,7 @@ int32_t CVI_TDL_OpenModel(cvtdl_handle_t handle, const cvtdl_model_e model_id,
   if (context->models.find(model_id) != context->models.end()) {
     return 0;
   }
-  ModelType model_type = convertModelType(model_id);
+  ModelType model_type = convert_model_type(model_id);
   std::shared_ptr<BaseModel> model =
       context->model_factory->getModel(model_type, model_path);
   if (model == nullptr) {
@@ -80,10 +81,9 @@ int32_t CVI_TDL_CloseModel(cvtdl_handle_t handle,
   return 0;
 }
 
-int32_t CVI_TDL_ObjectDetection(cvtdl_handle_t handle,
-                                const cvtdl_model_e model_id,
-                                cvtdl_image_t image_handle,
-                                cvtdl_object_t *object_meta) {
+int32_t CVI_TDL_Detection(cvtdl_handle_t handle, const cvtdl_model_e model_id,
+                          cvtdl_image_t image_handle,
+                          cvtdl_object_t *object_meta) {
   tdl_context_t *context = (tdl_context_t *)handle;
   if (context == nullptr) {
     return -1;
@@ -155,11 +155,10 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
       face_meta->info[i].box.x1 = box_landmark_output->box_landmarks[i].x1;
       face_meta->info[i].box.y1 = box_landmark_output->box_landmarks[i].y1;
       face_meta->width = box_landmark_output->box_landmarks[i].x2 -
-                                     box_landmark_output->box_landmarks[i].x1;
+                         box_landmark_output->box_landmarks[i].x1;
       face_meta->height = box_landmark_output->box_landmarks[i].y2 -
-                                      box_landmark_output->box_landmarks[i].y1;
-      face_meta->info[i].score =
-          box_landmark_output->box_landmarks[i].score;
+                          box_landmark_output->box_landmarks[i].y1;
+      face_meta->info[i].score = box_landmark_output->box_landmarks[i].score;
       for (size_t j = 0; j < num_landmark_per_face; j++) {
         face_meta->info[i].landmarks.x[j] =
             box_landmark_output->box_landmarks[i].landmarks_x[j];
@@ -179,9 +178,9 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
       face_meta->info[i].box.x1 = object_detection_output->bboxes[i].x1;
       face_meta->info[i].box.y1 = object_detection_output->bboxes[i].y1;
       face_meta->width = object_detection_output->bboxes[i].x2 -
-                                     object_detection_output->bboxes[i].x1;
+                         object_detection_output->bboxes[i].x1;
       face_meta->height = object_detection_output->bboxes[i].y2 -
-                                      object_detection_output->bboxes[i].y1;
+                          object_detection_output->bboxes[i].y1;
       face_meta->info[i].score = object_detection_output->bboxes[i].score;
     }
     face_meta->width = object_detection_output->image_width;
@@ -189,5 +188,176 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
     face_meta->size = object_detection_output->bboxes.size();
   }
 
+  return 0;
+}
+
+int32_t CVI_TDL_Classfification(cvtdl_handle_t handle,
+                                const cvtdl_model_e model_id,
+                                cvtdl_image_t image_handle,
+                                cvtdl_class_info_t *class_info) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+  std::vector<std::shared_ptr<BaseImage>> images;
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  images.push_back(image_context->image);
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::CLASSIFICATION) {
+    ModelClassificationInfo *classification_output =
+        (ModelClassificationInfo *)output.get();
+    class_info->class_id = classification_output->topk_class_ids[0];
+    class_info->score = classification_output->topk_scores[0];
+  }
+  return 0;
+}
+
+int32_t CVI_TDL_ObjectClassification(cvtdl_handle_t handle,
+                                     const cvtdl_model_e model_id,
+                                     cvtdl_image_t image_handle,
+                                     cvtdl_object_t *object_meta,
+                                     cvtdl_class_t *class_info) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+  // TODO(fuquan.ke): crop object from image
+  // TODO(fuquan.ke): inference
+  // TODO(fuquan.ke): set class info
+  return 0;
+}
+
+int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
+                              const cvtdl_model_e model_id,
+                              cvtdl_image_t image_handle,
+                              cvtdl_face_t *face_meta) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  std::shared_ptr<ModelBoxLandmarkInfo> face_info =
+      convert_face_meta(face_meta);
+  int32_t ret = model->inference(image_context->image, face_info, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+}
+int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
+                                  const cvtdl_model_e model_id,
+                                  cvtdl_image_t image_handle,
+                                  cvtdl_keypoint_t *keypoint_meta) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+  std::vector<std::shared_ptr<BaseImage>> images;
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  images.push_back(image_context->image);
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::OBJECT_LANDMARKS) {
+    ModelLandmarksInfo *keypoint_output = (ModelLandmarksInfo *)output.get();
+    CVI_TDL_InitKeypointMeta(keypoint_meta,
+                             keypoint_output->landmarks_x.size());
+    keypoint_meta->width = keypoint_output->image_width;
+    keypoint_meta->height = keypoint_output->image_height;
+    for (size_t i = 0; i < keypoint_output->landmarks_x.size(); i++) {
+      keypoint_meta->info[i].x = keypoint_output->landmarks_x[i];
+      keypoint_meta->info[i].y = keypoint_output->landmarks_y[i];
+      if (i < keypoint_output->landmarks_score.size()) {
+        keypoint_meta->info[i].score = keypoint_output->landmarks_score[i];
+      }
+    }
+  }
+}
+
+int32_t CVI_TDL_Segmentation(cvtdl_handle_t handle,
+                             const cvtdl_model_e model_id,
+                             cvtdl_image_t image_handle,
+                             cvtdl_seg_t *seg_meta) {
+  return 0;
+}
+
+int32_t CVI_TDL_FeatureExtraction(cvtdl_handle_t handle,
+                                  const cvtdl_model_e model_id,
+                                  cvtdl_image_t image_handle,
+                                  cvtdl_feature_t *feature_meta) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+  std::vector<std::shared_ptr<BaseImage>> images;
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  images.push_back(image_context->image);
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::FEATURE_EMBEDDING) {
+    ModelFeatureInfo *feature_output = (ModelFeatureInfo *)output.get();
+    feature_meta->size = feature_output->embedding_num;
+    feature_meta->type = convert_data_type(feature_output->embedding_type);
+    feature_meta->ptr = (int8_t *)feature_output->embedding;  // transfer
+                                                              // ownership to
+                                                              // feature_meta
+    feature_output->embedding = nullptr;  // set to null to prevent release
+  }
+  return 0;
+}
+
+int32_t CVI_TDL_LaneDetection(cvtdl_handle_t handle,
+                              const cvtdl_model_e model_id,
+                              cvtdl_image_t image_handle,
+                              cvtdl_lane_t *lane_meta) {
   return 0;
 }

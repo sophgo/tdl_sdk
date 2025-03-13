@@ -16,10 +16,11 @@ int32_t CVI_TDL_InitFaceMeta(cvtdl_face_t *face_meta, int num_faces,
 
 int32_t CVI_TDL_ReleaseFaceMeta(cvtdl_face_t *face_meta);
 
-int32_t CVI_TDL_InitClassInfoMeta(cvtdl_class_info_t *class_info,
-                                  int num_classes);
+int32_t CVI_TDL_InitKeypointMeta(cvtdl_keypoint_t *keypoint_meta,
+                                 int num_keypoints);
 
-int32_t CVI_TDL_ReleaseClassInfoMeta(cvtdl_class_info_t *class_info);
+int32_t CVI_TDL_ReleaseKeypointMeta(cvtdl_keypoint_t *keypoint_meta);
+
 #ifdef __cplusplus
 }
 #endif

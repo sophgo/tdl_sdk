@@ -129,13 +129,13 @@ int main(int argc, char **argv) {
     return -1;
   }
   std::shared_ptr<BaseModel> model_fl =
-      model_factory.getModel(ModelType::IMG_KEYPOINT_FACE_V2);
+      model_factory.getModel(ModelType::KEYPOINT_FACE_V2);
   if (!model_fl) {
     printf("Failed to create model_fl\n");
     return -1;
   }
   std::shared_ptr<BaseModel> model_fe =
-      model_factory.getModel(ModelType::IMG_FEATURE_FACE_BMFACER34);
+      model_factory.getModel(ModelType::FEATURE_BMFACER34);
   if (!model_fe) {
     printf("Failed to create model_fe\n");
     return -1;

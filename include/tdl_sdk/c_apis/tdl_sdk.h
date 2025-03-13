@@ -51,15 +51,18 @@ int32_t CVI_TDL_OpenModel(cvtdl_handle_t handle, const cvtdl_model_e model_id,
 
 int32_t CVI_TDL_CloseModel(cvtdl_handle_t handle, const cvtdl_model_e model_id);
 
-int32_t CVI_TDL_ObjectDetection(cvtdl_handle_t handle,
-                                const cvtdl_model_e model_id,
-                                cvtdl_image_t image_handle,
-                                cvtdl_object_t *object_meta);
+int32_t CVI_TDL_Detection(cvtdl_handle_t handle, const cvtdl_model_e model_id,
+                          cvtdl_image_t image_handle,
+                          cvtdl_object_t *object_meta);
 
 int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_face_t *face_meta);
+int32_t CVI_TDL_FaceLandmarkV2(cvtdl_handle_t handle,
+                               const cvtdl_model_e model_id,
+                               cvtdl_image_t image_handle,
+                               cvtdl_face_t *face_meta);
 
 int32_t CVI_TDL_Classfification(cvtdl_handle_t handle,
                                 const cvtdl_model_e model_id,
@@ -77,6 +80,23 @@ int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
                               cvtdl_image_t image_handle,
                               cvtdl_face_t *face_meta);
 
+int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
+                                  const cvtdl_model_e model_id,
+                                  cvtdl_image_t image_handle,
+                                  cvtdl_keypoint_t *keypoint_meta);
+
+int32_t CVI_TDL_Segmentation(cvtdl_handle_t handle,
+                             const cvtdl_model_e model_id,
+                             cvtdl_image_t image_handle, cvtdl_seg_t *seg_meta);
+
+int32_t CVI_TDL_FeatureExtraction(cvtdl_handle_t handle,
+                                  const cvtdl_model_e model_id,
+                                  cvtdl_image_t image_handle,
+                                  cvtdl_feature_t *feature_meta);
+int32_t CVI_TDL_LaneDetection(cvtdl_handle_t handle,
+                              const cvtdl_model_e model_id,
+                              cvtdl_image_t image_handle,
+                              cvtdl_lane_t *lane_meta);
 
 #ifdef __cplusplus
 }

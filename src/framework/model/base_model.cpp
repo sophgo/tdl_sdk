@@ -184,6 +184,14 @@ int32_t BaseModel::inference(
   return 0;
 }
 
+int32_t BaseModel::inference(
+    const std::shared_ptr<BaseImage>& image,
+    const std::shared_ptr<ModelOutputInfo>& model_object_infos,
+    std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas,
+    const std::map<std::string, float>& parameters) {
+  LOGW("inference not implemented");
+  return -1;
+}
 void BaseModel::setTypeMapping(
     const std::map<int, TDLObjectType>& type_mapping) {
   type_mapping_ = type_mapping;
