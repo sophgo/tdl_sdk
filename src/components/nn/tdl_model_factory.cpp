@@ -13,6 +13,7 @@
 #include "object_detection/yolov8.hpp"
 #include "segmentation/yolov8_seg.hpp"
 #include "keypoints_detection/yolov8_pose.hpp"
+#include "keypoints_detection/simcc_pose.hpp"
 #include "utils/tdl_log.hpp"
 
 
@@ -97,6 +98,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<FeatureExtraction>();
   } else if (model_type == TDL_MODEL_TYPE_FACE_ANTI_SPOOF_CLASSIFICATION) {
     model = std::make_shared<RgbImageClassification>();
+  } else if (model_type == TDL_MODEL_TYPE_KEYPOINT_DETECTION_SIMCC) {
+    model = std::make_shared<SimccPose>();
   } else if (model_type ==
              TDL_MODEL_TYPE_INSTANCE_SEGMENTATION_YOLOV8) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));

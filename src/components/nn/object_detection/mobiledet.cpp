@@ -223,7 +223,7 @@ int32_t MobileDetV2Detection::outputParse(
   float input_width_f = float(input_width);
   float input_height_f = float(input_height);
 
-  printf("outputParse,batch size:%d,input shape:%d,%d,%d,%d/n", images.size(),
+  printf("outputParse,batch size:%d,input shape:%d,%d,%d,%d\n", images.size(),
          input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
          input_tensor.shape[3]);
 
