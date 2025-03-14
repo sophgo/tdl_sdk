@@ -72,7 +72,7 @@ PYBIND11_MODULE(tdl, m) {
       .value("YOLOV8N_HEAD_HARDHAT", ModelType::YOLOV8N_HEAD_HARDHAT)
       .value("YOLOV10_COCO80", ModelType::YOLOV10_COCO80)
       .value("YOLOV6_COCO80", ModelType::YOLOV6_COCO80)
-      .value("YOLOV8_SEG_COCO80", ModelType::YOLOV8_SEG_COCO80)
+      .value("SEG_YOLOV8_COCO80", ModelType::SEG_YOLOV8_COCO80)
       .value("YOLOV8_POSE_PERSON17", ModelType::YOLOV8_POSE_PERSON17)
       .value("IMG_FEATURE_CLIP", ModelType::IMG_FEATURE_CLIP)
       .value("TEXT_FEATURE_CLIP", ModelType::TEXT_FEATURE_CLIP)

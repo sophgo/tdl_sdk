@@ -271,7 +271,9 @@ int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
   if (ret != 0) {
     return ret;
   }
+  return 0;
 }
+
 int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
                                   const cvtdl_model_e model_id,
                                   cvtdl_image_t image_handle,
@@ -310,6 +312,7 @@ int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
       }
     }
   }
+  return 0;
 }
 
 int32_t CVI_TDL_SemanticSeg(cvtdl_handle_t handle,
@@ -339,7 +342,7 @@ int32_t CVI_TDL_SemanticSeg(cvtdl_handle_t handle,
   if (output->getType() == ModelOutputType::SEGMENTATION) {
     ModelSegmentationInfo *segmentation_output =
         (ModelSegmentationInfo *)output.get();
-    CVI_TDL_InitSemanticSegnMeta(seg_meta,
+    CVI_TDL_InitSemanticSegMeta(seg_meta,
                              segmentation_output->output_width * segmentation_output->output_height);
     seg_meta->height = segmentation_output->image_height;
     seg_meta->width = segmentation_output->image_width;  
@@ -388,10 +391,10 @@ int32_t CVI_TDL_InstanceSeg(cvtdl_handle_t handle, const cvtdl_model_e model_id,
     object_meta->info[i].box.y2 = instance_seg_output->box_seg[i].y2;
     object_meta->info[i].class_id = instance_seg_output->box_seg[i].class_id;
     object_meta->info[i].score = instance_seg_output->box_seg[i].score;
-    object_meta->info[i].mask = instance_seg_output->box_seg[i].mask;
-    object_meta->info[i].mask_point_size = instance_seg_output->box_seg[i].mask_point_size;
-    object_meta->info[i].mask_point = (float *)malloc(2 * object_meta->info[i].mask_point_size * sizeof(float));
-    object_meta->info[i].mask_point = instance_seg_output->box_seg[i].mask_point;
+    object_meta->info[i].mask_properity->mask = instance_seg_output->box_seg[i].mask;
+    object_meta->info[i].mask_properity->mask_point_size = instance_seg_output->box_seg[i].mask_point_size;
+    object_meta->info[i].mask_properity->mask_point = (float *)malloc(2 * object_meta->info[i].mask_properity->mask_point_size * sizeof(float));
+    object_meta->info[i].mask_properity->mask_point = instance_seg_output->box_seg[i].mask_point;
   }
   return 0;
 }

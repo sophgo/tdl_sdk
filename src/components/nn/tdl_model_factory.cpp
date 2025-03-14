@@ -86,7 +86,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<SimccPose>();
   } else if (model_type == ModelType::KEYPOINT_HAND) {
     model = std::make_shared<HandKeypoint>();    
-  } else if (model_type == ModelType::YOLOV8_SEG_COCO80) {
+  } else if (model_type == ModelType::SEG_YOLOV8_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
   } else if (model_type == ModelType::YOLOV8_POSE_PERSON17) {
     model = std::make_shared<YoloV8Pose>(std::make_tuple(64, 17, 1));

@@ -16,6 +16,14 @@ int32_t CVI_TDL_InitFaceMeta(cvtdl_face_t *face_meta, int num_faces,
 
 int32_t CVI_TDL_ReleaseFaceMeta(cvtdl_face_t *face_meta);
 
+int32_t CVI_TDL_InitSemanticSegMeta(cvtdl_seg_t *seg_meta, int output_size);
+
+int32_t CVI_TDL_ReleaseSemanticSegMeta(cvtdl_seg_t *seg_meta);
+
+int32_t CVI_TDL_InitInstanceSegMeta(cvtdl_object_t *object_meta, int num_objects, uint32_t mask_size);
+
+int32_t CVI_TDL_ReleaseInstanceSegMeta(cvtdl_object_t *object_meta);
+
 int32_t CVI_TDL_InitKeypointMeta(cvtdl_keypoint_t *keypoint_meta,
                                  int num_keypoints);
 

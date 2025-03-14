@@ -179,6 +179,12 @@ class ModelSegmentationInfo : public ModelOutputInfo {
   ModelOutputType getType() const override {
     return ModelOutputType::SEGMENTATION;
   }
+  uint32_t image_width;
+  uint32_t image_height;
+  uint32_t output_width;
+  uint32_t output_height;
+  uint8_t *class_id;
+  uint8_t *class_conf;
 };
 
 #endif
