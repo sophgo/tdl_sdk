@@ -8,7 +8,8 @@ extern "C" {
 #endif
 
 int32_t CVI_TDL_InitObjectMeta(cvtdl_object_t *object_meta,
-                               int num_objects);
+                               int num_objects,
+                               int num_landmark);
 
 int32_t CVI_TDL_ReleaseObjectMeta(cvtdl_object_t *object_meta);
 
@@ -23,16 +24,20 @@ int32_t CVI_TDL_InitSemanticSegMeta(cvtdl_seg_t *seg_meta,
 
 int32_t CVI_TDL_ReleaseSemanticSegMeta(cvtdl_seg_t *seg_meta);
 
-int32_t CVI_TDL_InitInstanceSegMeta(cvtdl_object_t *object_meta,
+int32_t CVI_TDL_InitInstanceSegMeta(cvtdl_instance_seg_t *inst_seg_meta,
                                     int num_objects,
                                     uint32_t mask_size);
 
-int32_t CVI_TDL_ReleaseInstanceSegMeta(cvtdl_object_t *object_meta);
+int32_t CVI_TDL_ReleaseInstanceSegMeta(cvtdl_instance_seg_t *inst_seg_meta);
 
 int32_t CVI_TDL_InitKeypointMeta(cvtdl_keypoint_t *keypoint_meta,
                                  int num_keypoints);
 
 int32_t CVI_TDL_ReleaseKeypointMeta(cvtdl_keypoint_t *keypoint_meta);
+
+int32_t CVI_TDL_InitFeatureMeta(cvtdl_feature_t *feature_meta);
+
+int32_t CVI_TDL_ReleaseFeatureMeta(cvtdl_feature_t *feature_meta);
 
 int32_t CVI_TDL_RegisterFeature(const cvtdl_feature_t feature);
 

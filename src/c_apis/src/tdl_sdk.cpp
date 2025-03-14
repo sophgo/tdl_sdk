@@ -112,17 +112,42 @@ int32_t CVI_TDL_Detection(cvtdl_handle_t handle, const cvtdl_model_e model_id,
   }
 
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
-  ModelBoxInfo *object_detection_output = (ModelBoxInfo *)output.get();
-  CVI_TDL_InitObjectMeta(object_meta, object_detection_output->bboxes.size());
-  object_meta->width = object_detection_output->image_width;
-  object_meta->height = object_detection_output->image_height;
-  for (int i = 0; i < object_detection_output->bboxes.size(); i++) {
-    object_meta->info[i].box.x1 = object_detection_output->bboxes[i].x1;
-    object_meta->info[i].box.y1 = object_detection_output->bboxes[i].y1;
-    object_meta->info[i].box.x2 = object_detection_output->bboxes[i].x2;
-    object_meta->info[i].box.y2 = object_detection_output->bboxes[i].y2;
-    object_meta->info[i].class_id = object_detection_output->bboxes[i].class_id;
-    object_meta->info[i].score = object_detection_output->bboxes[i].score;
+  if (output->getType() == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+    ModelBoxLandmarkInfo *object_Landmark_output = (ModelBoxLandmarkInfo *)output.get();
+    CVI_TDL_InitObjectMeta(
+        object_meta,
+        object_Landmark_output->box_landmarks.size(),
+        object_Landmark_output->box_landmarks[0].landmarks_x.size());
+    for (int i = 0; i < object_Landmark_output->box_landmarks.size(); i ++) {
+      object_meta->info[i].box.x1 = object_Landmark_output->box_landmarks[i].x1;
+      object_meta->info[i].box.y1 = object_Landmark_output->box_landmarks[i].y1;
+      object_meta->info[i].box.x2 = object_Landmark_output->box_landmarks[i].x2;
+      object_meta->info[i].box.y2 = object_Landmark_output->box_landmarks[i].y2;
+      object_meta->info[i].class_id = object_Landmark_output->box_landmarks[i].class_id;
+      object_meta->info[i].score = object_Landmark_output->box_landmarks[i].score;
+      for (int j = 0; j < object_Landmark_output->box_landmarks[i].landmarks_x.size(); j++) {
+        object_meta->info[i].landmark_properity[j].x =
+            object_Landmark_output->box_landmarks[i].landmarks_x[j];
+        object_meta->info[i].landmark_properity[j].y =
+            object_Landmark_output->box_landmarks[i].landmarks_y[j];
+        object_meta->info[i].landmark_properity[j].score =
+            object_Landmark_output->box_landmarks[i].landmarks_score[j];
+      }
+    }
+  } else if (output->getType() == ModelOutputType::OBJECT_DETECTION) {
+    ModelBoxInfo *object_detection_output = (ModelBoxInfo *)output.get();
+    CVI_TDL_InitObjectMeta(object_meta, object_detection_output->bboxes.size(), 0);
+    for (int i = 0; i < object_detection_output->bboxes.size(); i++) {
+      object_meta->info[i].box.x1 = object_detection_output->bboxes[i].x1;
+      object_meta->info[i].box.y1 = object_detection_output->bboxes[i].y1;
+      object_meta->info[i].box.x2 = object_detection_output->bboxes[i].x2;
+      object_meta->info[i].box.y2 = object_detection_output->bboxes[i].y2;
+      object_meta->info[i].class_id = object_detection_output->bboxes[i].class_id;
+      object_meta->info[i].score = object_detection_output->bboxes[i].score;
+    }
+  } else {
+    LOGE("Unsupported model output type: %d", output->getType());
+    return -1;
   }
   return 0;
 }
@@ -147,6 +172,9 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
   if (output->getType() == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
     ModelBoxLandmarkInfo *box_landmark_output =
         (ModelBoxLandmarkInfo *)output.get();
+    if (box_landmark_output->box_landmarks.size() == 0) {
+      return 0;
+    }
     uint32_t num_landmark_per_face =
         box_landmark_output->box_landmarks[0].landmarks_x.size();
     CVI_TDL_InitFaceMeta(face_meta, box_landmark_output->box_landmarks.size(),
@@ -170,7 +198,6 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
     }
     face_meta->width = box_landmark_output->image_width;
     face_meta->height = box_landmark_output->image_height;
-    face_meta->size = box_landmark_output->box_landmarks.size();
   } else if (output->getType() == ModelOutputType::OBJECT_DETECTION) {
     ModelBoxInfo *object_detection_output = (ModelBoxInfo *)output.get();
     CVI_TDL_InitFaceMeta(face_meta, object_detection_output->bboxes.size(), 0);
@@ -190,7 +217,6 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
     LOGE("Unsupported model output type: %d", output->getType());
     return -1;
   }
-
   return 0;
 }
 
@@ -250,12 +276,65 @@ int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
   tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
 
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  CVI_TDL_InitFaceMeta(face_meta, 1, 0);
   std::shared_ptr<ModelBoxLandmarkInfo> face_info =
       convert_face_meta(face_meta);
   int32_t ret = model->inference(image_context->image, face_info, outputs);
   if (ret != 0) {
     return ret;
   }
+
+  for (int i = 0; i < outputs.size(); i++) {
+    std::shared_ptr<ModelOutputInfo> output = outputs[i];
+    ModelAttributeInfo *box_attribute_output = (ModelAttributeInfo *)output.get();
+    face_meta->info[i].gender_score =
+        box_attribute_output->attributes[OBJECT_ATTRIBUTE_HUMAN_GENDER];
+    face_meta->info[i].age =
+        box_attribute_output->attributes[OBJECT_ATTRIBUTE_HUMAN_AGE];
+    face_meta->info[i].glass_score =
+        box_attribute_output->attributes[OBJECT_ATTRIBUTE_HUMAN_GLASSES];
+    face_meta->info[i].mask_score =
+        box_attribute_output->attributes[OBJECT_ATTRIBUTE_HUMAN_MASK];
+  }
+
+  return ret;
+}
+
+int32_t CVI_TDL_FaceLandmark(cvtdl_handle_t handle,
+                             const cvtdl_model_e model_id,
+                             cvtdl_image_t image_handle,
+                             cvtdl_face_t *face_meta) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  CVI_TDL_InitFaceMeta(face_meta, 1, 0);
+  std::shared_ptr<ModelBoxLandmarkInfo> face_info =
+      convert_face_meta(face_meta);
+  int32_t ret = model->inference(image_context->image, face_info, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  ModelLandmarksInfo *box_landmark_output = (ModelLandmarksInfo *)output.get();
+  CVI_TDL_InitFaceMeta(face_meta, 1, box_landmark_output->landmarks_x.size());
+  for (int i = 0; i < box_landmark_output->landmarks_x.size(); i++) {
+    face_meta->info->landmarks.x[i] = box_landmark_output->landmarks_x[i];
+    face_meta->info->landmarks.y[i] = box_landmark_output->landmarks_y[i];
+  }
+  face_meta->info->landmarks.score = box_landmark_output->landmarks_score[0];
   return 0;
 }
 
@@ -335,7 +414,7 @@ int32_t CVI_TDL_SemanticSegmentation(cvtdl_handle_t handle,
 int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle,
                                      const cvtdl_model_e model_id,
                                      cvtdl_image_t image_handle,
-                                     cvtdl_object_t *object_meta) {
+                                     cvtdl_instance_seg_t *inst_seg_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -358,28 +437,25 @@ int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle,
   ModelBoxSegmentationInfo *instance_seg_output =
       (ModelBoxSegmentationInfo *)output.get();
   CVI_TDL_InitInstanceSegMeta(
-      object_meta, instance_seg_output->box_seg.size(),
+      inst_seg_meta,
+      instance_seg_output->box_seg.size(),
       instance_seg_output->mask_width * instance_seg_output->mask_height);
-  object_meta->width = instance_seg_output->image_width;
-  object_meta->height = instance_seg_output->image_height;
-  object_meta->mask_width = instance_seg_output->mask_width;
-  object_meta->mask_height = instance_seg_output->mask_height;
+  inst_seg_meta->width = instance_seg_output->image_width;
+  inst_seg_meta->height = instance_seg_output->image_height;
+  inst_seg_meta->mask_width = instance_seg_output->mask_width;
+  inst_seg_meta->mask_height = instance_seg_output->mask_height;
   for (int i = 0; i < instance_seg_output->box_seg.size(); i++) {
-    object_meta->info[i].box.x1 = instance_seg_output->box_seg[i].x1;
-    object_meta->info[i].box.y1 = instance_seg_output->box_seg[i].y1;
-    object_meta->info[i].box.x2 = instance_seg_output->box_seg[i].x2;
-    object_meta->info[i].box.y2 = instance_seg_output->box_seg[i].y2;
-    object_meta->info[i].class_id = instance_seg_output->box_seg[i].class_id;
-    object_meta->info[i].score = instance_seg_output->box_seg[i].score;
-    object_meta->info[i].mask_properity->mask =
-        instance_seg_output->box_seg[i].mask;
-    object_meta->info[i].mask_properity->mask_point_size =
-        instance_seg_output->box_seg[i].mask_point_size;
-    object_meta->info[i].mask_properity->mask_point = (float *)malloc(
-        2 * object_meta->info[i].mask_properity->mask_point_size *
-        sizeof(float));
-    object_meta->info[i].mask_properity->mask_point =
-        instance_seg_output->box_seg[i].mask_point;
+    inst_seg_meta->info[i].obj_info->box.x1 = instance_seg_output->box_seg[i].x1;
+    inst_seg_meta->info[i].obj_info->box.y1 = instance_seg_output->box_seg[i].y1;
+    inst_seg_meta->info[i].obj_info->box.x2 = instance_seg_output->box_seg[i].x2;
+    inst_seg_meta->info[i].obj_info->box.y2 = instance_seg_output->box_seg[i].y2;
+    inst_seg_meta->info[i].obj_info->class_id = instance_seg_output->box_seg[i].class_id;
+    inst_seg_meta->info[i].obj_info->score = instance_seg_output->box_seg[i].score;
+    inst_seg_meta->info[i].mask = instance_seg_output->box_seg[i].mask;
+    inst_seg_meta->info[i].mask_point_size = instance_seg_output->box_seg[i].mask_point_size;
+    inst_seg_meta->info[i].mask_point =
+        (float *)malloc( 2 * inst_seg_meta->info[i].mask_point_size * sizeof(float));
+    inst_seg_meta->info[i].mask_point = instance_seg_output->box_seg[i].mask_point;
   }
 
   return 0;

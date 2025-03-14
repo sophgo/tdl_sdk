@@ -92,7 +92,7 @@ int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
 int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle, 
                                      const cvtdl_model_e model_id,
                                      cvtdl_image_t image_handle,
-                                     cvtdl_object_t *object_meta);
+                                     cvtdl_instance_seg_t *inst_seg_meta);
 
 int32_t CVI_TDL_SemanticSegmentation(cvtdl_handle_t handle,
                                      const cvtdl_model_e model_id,
@@ -119,7 +119,6 @@ int32_t CVI_TDL_Tracking(cvtdl_handle_t handle,
                          cvtdl_image_t image_handle,
                          cvtdl_object_t *object_meta,
                          cvtdl_tracker_t *tracker_meta);
-
 
 #ifdef __cplusplus
 }

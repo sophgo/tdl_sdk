@@ -194,7 +194,7 @@ include(cmake/thirdparty.cmake)
 
 include(cmake/ive.cmake)
 
-if(("${CVI_PLATFORM}" STREQUAL "CV181X") OR ("${CVI_PLATFORM}" STREQUAL "CV180X") 
+if(("${CVI_PLATFORM}" STREQUAL "CV181X") OR ("${CVI_PLATFORM}" STREQUAL "CV180X")
 OR ("${CVI_PLATFORM}" STREQUAL "CV182X") OR ("${CVI_PLATFORM}" STREQUAL "CV183X"))
 include(cmake/cvi_rtsp.cmake)
 endif()
