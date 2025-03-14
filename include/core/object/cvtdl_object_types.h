@@ -494,6 +494,20 @@ typedef struct {
 } cvtdl_qpmap_t;
 
 typedef struct {
+  int32_t **input_ids;
+  int32_t **attention_mask;
+  char **text;
+  int max_length;
+  int sentences_num;
+} cvtdl_tokens;
+
+typedef struct {
+  float *images_embeds;
+  int width;
+  int height;
+} cvtdl_image_embeds;
+
+typedef struct {
   float *out_feature;
   int feature_dim;
 } cvtdl_clip_feature;
@@ -630,9 +644,9 @@ typedef struct {
 } cvtdl_class_meta_t;
 
 typedef struct {
-  float rgain;
-  float contant_1024;
-  float bgain;
+  float awb[3]; // rgain, ggain, bgain
+  float ccm[9]; // rgb[3][3]
+  float blc;
 } cvtdl_isp_meta_t;
 
 typedef struct {

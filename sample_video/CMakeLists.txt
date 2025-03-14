@@ -279,7 +279,8 @@ buildninstall(NAME sample_vi_od INC ${SAMPLE_INC} SRCS middleware_utils.c sample
 # buildninstall(NAME sample_vi_object_tracking INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
 # buildninstall(NAME sample_vi_face_tracking INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
 # buildninstall(NAME sample_meeting INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
-# buildninstall(NAME sample_vi_face_recog INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app ${SAMPLE_LIBS})
+buildninstall(NAME sample_vi_face_recog INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app ${SAMPLE_LIBS})
+# buildninstall(NAME sample_vi_fd_test INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app ${SAMPLE_LIBS})
 buildninstall(NAME sample_cap_face INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
 buildninstall(NAME sample_cap_face_pet INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
 buildninstall(NAME sample_adas INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
@@ -294,7 +295,8 @@ buildninstall(NAME sample_stream_consumer_counting INC ${SAMPLE_INC} SRCS middle
 buildninstall(NAME sample_stream_personvehicle_cross INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS} )
 buildninstall(NAME sample_stream_hardhat INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
 buildninstall(NAME sample_stream_fr INC ${SAMPLE_INC} SRCS vi_vo_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_tdl_app pthread ${SAMPLE_LIBS})
-buildninstall(NAME sample_clip INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl cvi_kit ${SAMPLE_LIBS} )
+buildninstall(NAME sample_vi_blip_itm INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
+buildninstall(NAME sample_vi_blip_vqa INC ${SAMPLE_INC} SRCS middleware_utils.c sample_utils.c ${SAMPLE_LIBS_FILE} DEPS cvi_tdl ${SAMPLE_LIBS} )
 
 
 install(FILES vi_vo_utils.c sample_utils.c middleware_utils.c DESTINATION sample/utils)

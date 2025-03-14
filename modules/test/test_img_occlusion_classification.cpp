@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include "core/utils/vpss_helper.h"
-#include "cvi_kit.h"
 #include "cvi_tdl.h"
 #include "cvi_tdl_media.h"
 
@@ -43,20 +42,11 @@ int main(int argc, char *argv[]) {
     printf("image read,width:%d\n", bg.stVFrame.u32Width);
   }
 
-  cvtdl_bbox_t crop_bbox = {0};
-  crop_bbox.x1 = 0;
-  crop_bbox.y1 = 0;
-  crop_bbox.x2 = 1;
-  crop_bbox.y2 = 1;
-  cvtdl_occlusion_meta_t occlusion_meta = {0};
-  occlusion_meta.crop_bbox = crop_bbox;
-  occlusion_meta.laplacian_th = atoi(argv[3]);
-  occlusion_meta.occ_ratio_th = atof(argv[4]);
-  occlusion_meta.sensitive_th = atof(argv[5]);
-  ret = CVI_TDL_Set_Occlusion_Laplacian(&bg, &occlusion_meta);
+  cvtdl_class_meta_t cls_meta = {0};
+  CVI_TDL_Occlusion_Classification(tdl_handle, &bg, &cls_meta);
+  printf("Occlusion score: %f\n", cls_meta.score[1]);
 
-  printf("this frame is: %f \n", occlusion_meta.occ_score);
-
+  CVI_TDL_Free(&cls_meta);
   CVI_TDL_ReleaseImage(img_handle, &bg);
   CVI_TDL_DestroyHandle(tdl_handle);
   CVI_TDL_Destroy_ImageProcessor(img_handle);

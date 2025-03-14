@@ -34,6 +34,8 @@
            cvtdl_class_meta_t*: CVI_TDL_FreeClassMeta, \
            cvtdl_image_t*: CVI_TDL_FreeImage,          \
            cvtdl_clip_feature*: CVI_TDL_FreeClip,      \
+           cvtdl_tokens*: CVI_TDL_FreeTokens,           \
+           cvtdl_image_embeds*: CVI_TDL_FreeImageEmbeds, \
            cvtdl_lane_t* : CVI_TDL_FreeLane)(X)
 
 // clang-format on
@@ -161,6 +163,7 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_PERSON_PETS_DETECTION)            \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_DETECTION)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV10_DETECTION)                 \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV11_DETECTION)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_PERSON_VEHICLE_DETECTION)         \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HAND_FACE_PERSON_DETECTION)       \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_HEAD_PERSON_DETECTION)            \
@@ -177,6 +180,12 @@ typedef void *cvitdl_handle_t;
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_DMSLANDMARKERDET)                 \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP_IMAGE)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_CLIP_TEXT)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_BLIP_ITM)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_BLIP_VQA_VENC)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_BLIP_VQA_TENC)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_BLIP_VQA_TDEC)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_BLIP_CAP)                             \
+  CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLO_WORLD_V2)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG)                             \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_HARDHAT)                   \
   CVI_TDL_NAME_WRAP(CVI_TDL_SUPPORTED_MODEL_YOLOV8_FIRE_SMOKE)                   \
@@ -1181,18 +1190,6 @@ DLL_EXPORT CVI_S32 CVI_TDL_Fall(const cvitdl_handle_t handle, cvtdl_object_t *ob
 DLL_EXPORT CVI_S32 CVI_TDL_Fall_Monitor(const cvitdl_handle_t handle, cvtdl_object_t *objects);
 
 /**
- * @brief occlusion classification
- *
- * @param handle An TDL SDK handle.
- * @param frame Input video frame.
- * @param object cvtdl_class_meta_t structure, no occlusion score and occlusion score
- * @return int Return CVI_TDL_SUCCESS on success.
- */
-
-DLL_EXPORT CVI_S32 CVI_TDL_Set_Occlusion_Algparam(const cvitdl_handle_t handle,
-                                                  const CVI_TDL_SUPPORTED_MODEL_E model_index,
-                                                  const OcclusionAlgParam occ_pre_param);
-/**
  * @brief Set fall detection FPS.
  *
  * @param handle An TDL SDK handle.
@@ -1284,6 +1281,18 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_MotionDetection_ROI(const cvitdl_handle_t handle,
 DLL_EXPORT CVI_S32 CVI_TDL_MotionDetection(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                            cvtdl_object_t *objects, uint8_t threshold,
                                            double min_area);
+
+/**
+ * @brief occlusion classification
+ *
+ * @param handle An TDL SDK handle.
+ * @param frame Input video frame.
+ * @param object cvtdl_class_meta_t structure, no occlusion score and occlusion score
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Occlusion_Classification(const cvitdl_handle_t handle,
+                                                    VIDEO_FRAME_INFO_S *frame,
+                                                    cvtdl_class_meta_t *obj_meta);
 
 /**@}*/
 
@@ -1567,29 +1576,109 @@ DLL_EXPORT CVI_S32 CVI_TDL_DeepSORT_Byte(const cvitdl_handle_t handle, cvtdl_obj
  * @param frame input image
  * @param cvtdl_clip_feature save feature and dim, need custom free
  */
-DLL_EXPORT CVI_S32 CVI_TDL_Clip_Image_Feature(const cvitdl_handle_t handle,
-                                              VIDEO_FRAME_INFO_S *frame,
-                                              cvtdl_clip_feature *clip_feature);
-
-/**
- * @brief get frame feature from openclip model
- *
- * @param frame input image
- * @param cvtdl_clip_feature save feature and dim, need custom free
- */
-// DLL_EXPORT CVI_S32 CVI_TDL_OpenClip_Image_Feature(const cvitdl_handle_t handle,
-// VIDEO_FRAME_INFO_S *frame,
-//                                      cvtdl_clip_feature *clip_feature);
-
-/**
- * @brief get frame feature from clip model
- *
- * @param frame input image
- * @param cvtdl_clip_feature save feature and dim, need custom free
- */
 DLL_EXPORT CVI_S32 CVI_TDL_Clip_Text_Feature(const cvitdl_handle_t handle,
                                              VIDEO_FRAME_INFO_S *frame,
                                              cvtdl_clip_feature *clip_feature);
+
+/**
+ * @brief compare the similarity between image and sentences
+ *
+ * @param handle TDL SDK handle
+ * @param frame input image
+ * @param tokens_meta tokens contain input_ids and attention_mask
+ * @param cls_meta store maximal similarity and its index
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Blip_Itm(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                    cvtdl_tokens *tokens_meta, cvtdl_class_meta_t *cls_meta);
+
+/**
+ * @brief extract the features of the image
+ *
+ * @param handle TDL SDK handle
+ * @param frame input image
+ * @param tokens_meta tokens contain input_ids and attention_mask
+ * @param cvtdl_image_embeds  the features of the image
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Blip_Vqa_Venc(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                         cvtdl_image_embeds *embeds_meta);
+
+/**
+ * @brief generate question_states for vqa
+ *
+ * @param handle TDL SDK handle
+ * @param cvtdl_image_embeds  the features of the image
+ * @param tokens_meta tokens contain input_ids and attention_mask
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Blip_Vqa_Tenc(const cvitdl_handle_t handle,
+                                         cvtdl_image_embeds *embeds_meta,
+                                         cvtdl_tokens *tokens_meta);
+
+/**
+ * @brief generate answer of the vqa
+ *
+ * @param handle TDL SDK handle
+ * @param cvtdl_image_embeds  the features of the image
+ * @param tokens_meta  answer for the input question
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Blip_Vqa_Tdec(const cvitdl_handle_t handle,
+                                         cvtdl_image_embeds *embeds_meta,
+                                         cvtdl_tokens *tokens_meta);
+
+/**
+ * @brief generate answer of the vqa
+ *
+ * @param handle TDL SDK handle
+ * @param frame input image
+ * @param tokens_meta  outpupt tokens
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_Blip_Cap(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                    cvtdl_tokens *tokens_meta);
+
+/**
+ * @brief detect open object with YoloWorldV2
+ *
+ * @param handle TDL SDK handle
+ * @param frame input image
+ * @param std::vector<cvtdl_clip_feature*> input txt features
+ * @param object cvtdl_object_t structure, the cvtdl_object_info_t and cvtdl_bbox_t must be set.
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_YoloWorldV2(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
+                                       cvtdl_clip_feature **clip_feats, cvtdl_object_t *obj_meta);
+
+/**
+ * @brief init WordPiece
+ *
+ * @param handle TDL SDK handle
+ * @param vocabFile txt vocabulary file
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_WordPieceInit(const cvitdl_handle_t handle, const char *vocabFile);
+
+/**
+ * @brief txt encode to id
+ *
+ * @param handle TDL SDK handle
+ * @param textFile input txt file
+ * @param tokens structure to store id
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_WordPieceToken(const cvitdl_handle_t handle, const char *textFile,
+                                          cvtdl_tokens *tokens);
+
+/**
+ * @brief id decode to text
+ *
+ * @param handle TDL SDK handle
+ * @param tokens structure to store decoded text
+ * @return int Return CVI_TDL_SUCCESS on success.
+ */
+DLL_EXPORT CVI_S32 CVI_TDL_WordPieceDecode(const cvitdl_handle_t handle, cvtdl_tokens *tokens);
 
 DLL_EXPORT CVI_S32 CVI_TDL_YoloV8_Seg(const cvitdl_handle_t handle, VIDEO_FRAME_INFO_S *frame,
                                       cvtdl_object_t *obj_meta);

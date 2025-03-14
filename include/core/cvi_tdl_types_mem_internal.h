@@ -125,6 +125,17 @@ inline void CVI_TDL_MemAllocInit(const uint32_t size, cvtdl_lane_t *meta,
   }
 }
 
+inline void CVI_TDL_MemAllocInit(const uint32_t embeds_h, const uint32_t embeds_w,
+                                 cvtdl_image_embeds *embeds_meta) {
+  if (embeds_meta->images_embeds) {
+    free(embeds_meta->images_embeds);
+  }
+
+  embeds_meta->images_embeds = (float *)malloc(sizeof(float) * embeds_h * embeds_w);
+  embeds_meta->height = embeds_h;
+  embeds_meta->width = embeds_w;
+}
+
 inline void __attribute__((always_inline))
 featurePtrConvert2Float(cvtdl_feature_t *feature, float *output) {
   switch (feature->type) {

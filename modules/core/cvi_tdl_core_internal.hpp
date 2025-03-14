@@ -13,6 +13,7 @@
 #include "ive/ive.hpp"
 #include "motion_detection/md.hpp"
 #include "tamper_detection/tamper_detection.hpp"
+#include "utils/token.hpp"
 
 typedef struct {
   cvitdl::Core *instance = nullptr;
@@ -41,6 +42,7 @@ typedef struct {
   FallMD *fall_model = nullptr;
   FallDetMonitor *fall_monitor_model = nullptr;
   SmoothKeypoints *smooth_keypoints_model = nullptr;
+  WordPieceTokenizer *word_piece_tokenizer = nullptr;
   bool use_gdc_wrap = false;
 } cvitdl_context_t;
 

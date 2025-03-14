@@ -32,7 +32,8 @@ DLL_EXPORT CVI_S32 CVI_TDL_Draw_ADAS(cvitdl_app_handle_t app_handle, VIDEO_FRAME
 
 DLL_EXPORT CVI_S32 CVI_TDL_Set_Occlusion_Laplacian(VIDEO_FRAME_INFO_S *frame,
                                                    cvtdl_occlusion_meta_t *occlusion_meta);
-
+DLL_EXPORT CVI_S32 CVI_TDL_ShowDetectionBox(cvtdl_object_t *obj_meta, const char *image_path,
+                              char *save_path);
 #endif
 DLL_EXPORT CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num,
                                                float **image_features, int image_features_num,
@@ -41,6 +42,9 @@ DLL_EXPORT CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_f
 DLL_EXPORT CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
                                               const char *textFile, int32_t **tokens,
                                               int numSentences);
+
+DLL_EXPORT CVI_S32 CVI_TDL_NormTextFeature(cvtdl_clip_feature **text_features,
+                                           int text_features_num);
 
 #ifdef __cplusplus
 }

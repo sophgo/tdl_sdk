@@ -152,3 +152,39 @@ std::string split_file_line(std::string &line, std::vector<std::vector<int>> &bo
 
   return file_name;
 }
+
+std::string get_file_name_without_extension(const std::string &filePath) {
+  size_t lastSlash = filePath.find_last_of("/");
+  size_t lastDot = filePath.find_last_of(".");
+
+  std::string fileName =
+      (lastSlash == std::string::npos) ? filePath : filePath.substr(lastSlash + 1);
+
+  if (lastDot == std::string::npos) {
+    return fileName;
+  }
+
+  return fileName.substr(0, lastDot - lastSlash - 1);
+}
+
+
+int gen_file_names(const std::string &folderPath, std::vector<std::string> &fileNames) {
+
+
+    DIR* dir = opendir(folderPath.c_str());
+    if (dir == nullptr) {
+        std::cerr << "无法打开目录: " << folderPath << std::endl;
+        return -1;
+    }
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (entry->d_name[0] != '.') {
+            fileNames.push_back(entry->d_name); // 获取文件名并存入 vector
+        }
+    }
+
+    closedir(dir);
+
+    return 0;
+}

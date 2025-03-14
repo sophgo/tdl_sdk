@@ -15,7 +15,7 @@
 #include "core_utils.hpp"
 #include "cvi_sys.h"
 #include "object_utils.hpp"
-#include "yolov8.hpp"
+#include "yolo_world_v2.hpp"
 
 namespace cvitdl {
 static void convert_det_struct(const Detections &dets, cvtdl_object_t *obj, int im_height,
@@ -50,22 +50,22 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 
-YoloV8Detection::YoloV8Detection() : YoloV8Detection(std::make_pair(64, 80)) {}
+Yolo_World_V2::Yolo_World_V2() : Yolo_World_V2(std::make_pair(64, 80)) {}
 
-YoloV8Detection::YoloV8Detection(PAIR_INT yolov8_pair) {
+Yolo_World_V2::Yolo_World_V2(PAIR_INT yolo_world_v2_pair) {
   for (int i = 0; i < 3; i++) {
     m_preprocess_param[0].factor[i] = 0.003922;
     m_preprocess_param[0].mean[i] = 0.0;
   }
-  m_preprocess_param[0].format = PIXEL_FORMAT_RGB_888_PLANAR;
+  m_preprocess_param[0].format = PIXEL_FORMAT_FP32_C3_PLANAR;
 
-  m_box_channel_ = yolov8_pair.first;
-  alg_param_.cls = yolov8_pair.second;
+  m_box_channel_ = yolo_world_v2_pair.first;
+  alg_param_.cls = yolo_world_v2_pair.second;
 }
 
 // would parse 3 cases,1:box,cls seperate feature map,2 box+cls seperate featuremap,3 output decoded
 // results
-int YoloV8Detection::onModelOpened() {
+int Yolo_World_V2::onModelOpened() {
   CVI_SHAPE input_shape = getInputShape(0);
   int input_h = input_shape.dim[2];
   int input_w = input_shape.dim[3];
@@ -119,36 +119,62 @@ int YoloV8Detection::onModelOpened() {
     }
   }
 
-  LOGI("Number of yolov8 model branch: %d\n", strides.size());
+  printf("Number of yolo_world_v2 model branch: %d\n", strides.size());
   return CVI_TDL_SUCCESS;
 }
 
-YoloV8Detection::~YoloV8Detection() {}
+Yolo_World_V2::~Yolo_World_V2() {}
 
-int YoloV8Detection::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta) {
+int Yolo_World_V2::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_clip_feature **clip_txt_feats,
+                             cvtdl_object_t *obj_meta) {
+  const TensorInfo &txt_feats = getInputTensorInfo(1);
+  printf("getInputTensorInfo(1): %s\n", txt_feats.tensor_name.c_str());
+
+  CVI_SHAPE input_shape = getInputShape(1);
+
+  if (!clip_txt_feats) {
+    printf("clip_txt_feats is empty!\n");
+    return CVI_TDL_FAILURE;
+  }
+
+  size_t txt_feats_size =
+      input_shape.dim[1];  // Modify after optimizing the cvtdl_clip_feature structure
+
+  if (input_shape.dim[1] != txt_feats_size ||
+      input_shape.dim[2] != clip_txt_feats[0]->feature_dim) {
+    printf("model txt input: [1, %d, %d] not match clip_txt_feats:[1, %d, %d]", input_shape.dim[1],
+           input_shape.dim[2], txt_feats_size, clip_txt_feats[0]->feature_dim);
+  }
+
+  float *txt_feats_ptr = txt_feats.get<float>();
+
+  for (int i = 0; i < txt_feats_size; i++) {
+    memcpy(txt_feats_ptr + i * clip_txt_feats[0]->feature_dim, clip_txt_feats[i]->out_feature,
+           clip_txt_feats[0]->feature_dim * sizeof(float));
+  }
+
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
   int ret = run(frames);
   if (ret != CVI_TDL_SUCCESS) {
-    LOGW("YoloV8Detection run inference failed\n");
+    std::cout << "cvi_tdl Yolo_World_V2 inference fail!\n";
     return ret;
   }
-  CVI_SHAPE shape = getInputShape(0);
 
-  if (strides.size() == 3 || strides.size() == 4) {
-    outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
-                 srcFrame->stVFrame.u32Height, obj_meta);
-  } else {
-    parseDecodeBranch(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
-                      srcFrame->stVFrame.u32Height, obj_meta);
-  }
+  float *out0 = getOutputRawPtr<float>(0);
+  float *out1 = getOutputRawPtr<float>(1);
+  float *out2 = getOutputRawPtr<float>(2);
+
+  CVI_SHAPE shape = getInputShape(0);
+  outputParser(shape.dim[3], shape.dim[2], srcFrame->stVFrame.u32Width,
+               srcFrame->stVFrame.u32Height, obj_meta);
 
   model_timer_.TicToc("post");
   return CVI_TDL_SUCCESS;
 }
 
 // the bbox featuremap shape is b x 4*regmax x h x w
-void YoloV8Detection::decode_bbox_feature_map(int stride, int anchor_idx,
-                                              std::vector<float> &decode_box) {
+void Yolo_World_V2::decode_bbox_feature_map(int stride, int anchor_idx,
+                                            std::vector<float> &decode_box) {
   std::string box_name;
   if (bbox_out_names.count(stride)) {
     box_name = bbox_out_names[stride];
@@ -209,9 +235,9 @@ void YoloV8Detection::decode_bbox_feature_map(int stride, int anchor_idx,
   decode_box = box;
 }
 
-void YoloV8Detection::outputParser(const int image_width, const int image_height,
-                                   const int frame_width, const int frame_height,
-                                   cvtdl_object_t *obj_meta) {
+void Yolo_World_V2::outputParser(const int image_width, const int image_height,
+                                 const int frame_width, const int frame_height,
+                                 cvtdl_object_t *obj_meta) {
   Detections vec_obj;
   CVI_SHAPE shape = getInputShape(0);
   int nn_width = shape.dim[3];
@@ -274,87 +300,8 @@ void YoloV8Detection::outputParser(const int image_width, const int image_height
   postProcess(vec_obj, frame_width, frame_height, obj_meta);
 }
 
-void YoloV8Detection::parseDecodeBranch(const int image_width, const int image_height,
-                                        const int frame_width, const int frame_height,
-                                        cvtdl_object_t *obj_meta) {
-  int stride = strides[0];
-  TensorInfo oinfo_box = getOutputTensorInfo(bbox_out_names[stride]);
-  TensorInfo oinfo_cls = getOutputTensorInfo(class_out_names[stride]);
-
-  int num_per_pixel_cls = oinfo_cls.tensor_size / oinfo_cls.tensor_elem;
-  int8_t *p_cls_int8 = static_cast<int8_t *>(oinfo_cls.raw_pointer);
-  float *p_cls_float = static_cast<float *>(oinfo_cls.raw_pointer);
-
-  int num_per_pixel_box = oinfo_box.tensor_size / oinfo_box.tensor_elem;
-  int8_t *p_box_int8 = static_cast<int8_t *>(oinfo_box.raw_pointer);
-  float *p_box_float = static_cast<float *>(oinfo_box.raw_pointer);
-
-  int num_cls = alg_param_.cls;
-  float cls_qscale = num_per_pixel_cls == 1 ? oinfo_cls.qscale : 1;
-  float box_qscale = num_per_pixel_box == 1 ? oinfo_box.qscale : 1;
-  int cls_offset = 0;
-
-  Detections vec_obj;
-
-  CVI_SHAPE shape = getInputShape(0);
-  // y = 1/(1+exp(-x)) ==>
-  float inverse_th = std::log(m_model_threshold / (1 - m_model_threshold));
-  int num_anchor = oinfo_cls.shape.dim[2];
-
-  LOGI("parseDecodeBranch box_pixel:%d,cls_pixel:%d,numanchor:%d\n", num_per_pixel_cls,
-       num_per_pixel_box, num_anchor);
-
-  float x, y, w, h;
-  for (int i = 0; i < num_anchor; i++) {
-    int max_logit_c = -1;
-    float max_logit = -1000;
-    if (num_per_pixel_cls == 1) {
-      parse_cls_info<int8_t>(p_cls_int8, num_anchor, num_cls, i, cls_offset, cls_qscale, &max_logit,
-                             &max_logit_c);
-    } else {
-      parse_cls_info<float>(p_cls_float, num_anchor, num_cls, i, cls_offset, cls_qscale, &max_logit,
-                            &max_logit_c);
-    }
-    if (max_logit < inverse_th) {
-      continue;
-    }
-    float score = 1 / (1 + exp(-max_logit));
-    if (num_per_pixel_box == 1) {
-      x = p_box_int8[0 * num_anchor + i] * box_qscale;
-      y = p_box_int8[1 * num_anchor + i] * box_qscale;
-      w = p_box_int8[2 * num_anchor + i] * box_qscale;
-      h = p_box_int8[3 * num_anchor + i] * box_qscale;
-    } else {
-      x = p_box_float[0 * num_anchor + i];
-      y = p_box_float[1 * num_anchor + i];
-      w = p_box_float[2 * num_anchor + i];
-      h = p_box_float[3 * num_anchor + i];
-    }
-
-    int x1 = int((x - 0.5 * w));
-    int y1 = int((y - 0.5 * h));
-
-    int x2 = int((x + 0.5 * w));
-    int y2 = int((y + 0.5 * h));
-
-    PtrDectRect det = std::make_shared<object_detect_rect_t>();
-    det->score = score;
-    det->x1 = x1;
-    det->y1 = y1;
-    det->x2 = x2;
-    det->y2 = y2;
-    det->label = 0;
-    clip_bbox(shape.dim[3], shape.dim[2], det);
-    float box_width = det->x2 - det->x1;
-    float box_height = det->y2 - det->y1;
-    if (box_width > 1 && box_height > 1) {
-      vec_obj.push_back(det);
-    }
-  }
-  postProcess(vec_obj, frame_width, frame_height, obj_meta);
-}
-void YoloV8Detection::postProcess(Detections &dets, int frame_width, int frame_height,
-                                  cvtdl_object_t *obj_meta) {
+void Yolo_World_V2::postProcess(Detections &dets, int frame_width, int frame_height,
+                                cvtdl_object_t *obj_meta) {
   Detections final_dets = nms_multi_class(dets, m_model_nms_threshold);
   CVI_SHAPE shape = getInputShape(0);
   convert_det_struct(final_dets, obj_meta, shape.dim[2], shape.dim[3]);

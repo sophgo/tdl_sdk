@@ -4,6 +4,7 @@
 #include "demangle.hpp"
 #include "error_msg.hpp"
 #define ALIGN_SIZE 64
+
 namespace cvitdl {
 
 Core::Core(CVI_MEM_TYPE_E input_mem_type) {
@@ -107,8 +108,14 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
     if (m_skip_vpss_preprocess) {
       // skip vpss preprocess is true, just register frame directly.
       ret = registerFrame2Tensor(frames);
+
+      for (size_t i = frames.size(); i < mp_mi->in.num; i++) {
+        bm_memcpy_s2d_partial(bm_handle, mp_mi->in.tensors[i].device_mem,
+                              (void *)mp_mi->in.raw_pointer[i],
+                              bmrt_tensor_bytesize(&mp_mi->in.tensors[i]));
+      }
     } else {
-      if (m_vpss_config.size() != frames.size()) {
+      if (m_vpss_config.size() != input_frames_num) {
         LOGE("The size of vpss config does not match the number of frames. (%zu vs %zu)\n",
              m_vpss_config.size(), frames.size());
         return CVI_TDL_FAILURE;
@@ -138,6 +145,12 @@ int Core::run(std::vector<VIDEO_FRAME_INFO_S *> &frames) {
       }
 
       ret = registerFrame2Tensor(dstFrames);
+
+      for (size_t i = frames.size(); i < mp_mi->in.num; i++) {
+        bm_memcpy_s2d_partial(bm_handle, mp_mi->in.tensors[i].device_mem,
+                              (void *)mp_mi->in.raw_pointer[i],
+                              bmrt_tensor_bytesize(&mp_mi->in.tensors[i]));
+      }
     }
   } else {
     for (size_t i = 0; i < mp_mi->in.num; i++) {
@@ -180,21 +193,17 @@ int Core::registerFrame2Tensor(std::vector<T> &frames) {
   uint32_t input_w = input_shape.dim[3];
   uint32_t input_h = input_shape.dim[2];
 
-  if (!raw) {
-    if (frames.size() != (uint32_t)mp_mi->in.num) {
-      LOGE("frames.size() != (uint32_t)mp_mi->in.num\n");
-      return CVI_TDL_FAILURE;
-    }
+  if (frames.size() != input_frames_num) {
+    LOGE("frames.size() != (uint32_t)mp_mi->in.num\n");
+    return CVI_TDL_FAILURE;
   }
 
   for (uint32_t i = 0; i < (uint32_t)frames.size(); i++) {
     auto frame = frames[i];
-    if (!raw) {
-      if (input_w != frame->stVFrame.u32Width || input_h != frame->stVFrame.u32Height) {
-        LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]",
-             frame->stVFrame.u32Width, frame->stVFrame.u32Height, input_w, input_h);
-        return CVI_TDL_FAILURE;
-      }
+    if (input_w != frame->stVFrame.u32Width || input_h != frame->stVFrame.u32Height) {
+      LOGE("input frame shape[%u,%u] not equal with tensor input[%u,%u]", frame->stVFrame.u32Width,
+           frame->stVFrame.u32Height, input_w, input_h);
+      return CVI_TDL_FAILURE;
     }
 
     size_t image_size =
@@ -346,16 +355,20 @@ int Core::modelOpen(const char *filepath) {
 
   /* only alloc output device mem */
   auto &stage = net_info->stages[0];
-  if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE) {
-    for (auto i = 0; i < mp_mi->in.num; i++) {
+
+  for (auto i = 0; i < mp_mi->in.num; i++) {
+    LOGI("input[%d]: input_dtypes:%d, num_dims:%d, input_names:%s\n", i, net_info->input_dtypes[i],
+         stage.input_shapes[i].num_dims, net_info->input_names[i]);
+
+    if (mp_mi->conf.input_mem_type == CVI_MEM_DEVICE && stage.input_shapes[i].num_dims == 4) {
+      input_frames_num++;
+
       in_tensor[i].dtype = net_info->input_dtypes[i];
       in_tensor[i].st_mode = BM_STORE_1N;
       in_tensor[i].shape.num_dims = stage.input_shapes[i].num_dims;
       memcpy(in_tensor[i].shape.dims, stage.input_shapes[i].dims,
              in_tensor[i].shape.num_dims * sizeof(int));
-    }
-  } else {
-    for (auto i = 0; i < mp_mi->in.num; i++) {
+    } else {
       bmrt_tensor(&in_tensor[i], mp_mi->handle, net_info->input_dtypes[i], stage.input_shapes[i]);
     }
   }
@@ -371,10 +384,8 @@ int Core::modelOpen(const char *filepath) {
     }
   }
 
-  if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
-    for (auto i = 0; i < mp_mi->in.num; i++) {
-      mp_mi->in.raw_pointer.push_back(new char[bmrt_tensor_bytesize(&in_tensor[i])]);
-    }
+  for (auto i = 0; i < mp_mi->in.num; i++) {
+    mp_mi->in.raw_pointer.push_back(new char[bmrt_tensor_bytesize(&in_tensor[i])]);
   }
 
   m_input_tensor_info.clear();
@@ -406,7 +417,7 @@ void Core::inputPreprocessConfig(const bm_net_info_t *net_info,
   // FIXME: Behavior will changed in 1822.
   constexpr float factor_limit = 8191.f / 8192;
 
-  for (auto i = 0; i < mp_mi->in.num; i++) {
+  for (auto i = 0; i < input_frames_num; i++) {
     if (use_quantize_scale) {
       float quant_scale = net_info->input_scales[i];
 
@@ -459,14 +470,8 @@ void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_m
     tinfo.tensor_size = tinfo.tensor_elem * bmrt_data_type_size(net_info->input_dtypes[i]);
     tinfo.data_type = net_info->input_dtypes[i];
 
-    if (tinfo.data_type == 2) {
-      mp_mi->conf.input_mem_type = 2;
-    } else if (tinfo.data_type == 0) {
-      mp_mi->conf.input_mem_type = 1;
-    }
-
     tinfo.qscale = net_info->input_scales[i];
-    if (mp_mi->conf.input_mem_type == CVI_MEM_SYSTEM) {
+    if (i >= input_frames_num) {
       tinfo.raw_pointer = p_mi->in.raw_pointer[i];
     }
     tensor_info.emplace_back(tinfo.tensor_name, tinfo);
@@ -476,7 +481,7 @@ void Core::setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_m
 }
 
 void Core::setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *p_mi,
-                                  std::vector<std::pair<std::string, TensorInfo>> &tensor_info) {
+                                 std::vector<std::pair<std::string, TensorInfo>> &tensor_info) {
   for (int32_t i = 0; i < p_mi->out.num; i++) {
     TensorInfo tinfo;
     memset(&tinfo, 0, sizeof(tinfo));
@@ -903,7 +908,7 @@ int Core::modelOpen(const int8_t *buf, uint32_t size) {
 }
 
 void Core::setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
-                          std::vector<std::pair<std::string, TensorInfo>> *tensor_info) {
+                           std::vector<std::pair<std::string, TensorInfo>> *tensor_info) {
   for (int32_t i = 0; i < num_tensors; i++) {
     TensorInfo tinfo;
     tinfo.tensor_handle = tensor + i;
@@ -963,6 +968,7 @@ const TensorInfo &Core::getInputTensorInfo(size_t index) {
 }
 
 size_t Core::getNumOutputTensor() const { return static_cast<size_t>(mp_mi->out.num); }
+size_t Core::getNumInputTensor() const { return static_cast<size_t>(mp_mi->in.num); }
 
 int Core::setVpssTimeout(uint32_t timeout) {
   m_vpss_timeout = timeout;
@@ -1020,9 +1026,7 @@ size_t Core::getOutputTensorElem(size_t index) { return getOutputTensorInfo(inde
 size_t Core::getOutputTensorElem(const std::string &name) {
   return getOutputTensorInfo(name).tensor_elem;
 }
-#ifndef CONFIG_ALIOS
-void Core::setRaw(bool raw) { this->raw = raw; }
-#endif
+
 int Core::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame,
                          VPSSConfig &vpss_config) {
   int ret;

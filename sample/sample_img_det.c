@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
   // set theshold
-  CVI_TDL_SetModelThreshold(tdl_handle, enOdModelId, 0.01);
+  CVI_TDL_SetModelThreshold(tdl_handle, enOdModelId, 0.5);
   CVI_TDL_SetModelNmsThreshold(tdl_handle, enOdModelId, 0.5);
 
   printf("---------------------to do detection-----------------\n");

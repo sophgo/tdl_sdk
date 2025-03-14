@@ -68,6 +68,10 @@ set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                $<TARGET_OBJECTS:image_classification>
                $<TARGET_OBJECTS:clip_image>
                $<TARGET_OBJECTS:clip_text>
+               $<TARGET_OBJECTS:blip_itm>
+               $<TARGET_OBJECTS:blip_vqa>
+               $<TARGET_OBJECTS:blip_cap>
+               $<TARGET_OBJECTS:yolo_world_v2>
                $<TARGET_OBJECTS:yolov8_seg>
                $<TARGET_OBJECTS:image_classification>
                $<TARGET_OBJECTS:raw_image_classification>
@@ -76,6 +80,7 @@ set(CORES_SRCS $<TARGET_OBJECTS:cvi_tdl_core>
                $<TARGET_OBJECTS:super_resolution>
                $<TARGET_OBJECTS:ocr_recognition>
                $<TARGET_OBJECTS:lstr>
+               $<TARGET_OBJECTS:occlusion_classification>
                $<TARGET_OBJECTS:stereo>
                $<TARGET_OBJECTS:isp_image_classification>)
 
@@ -92,7 +97,6 @@ if(NOT DEFINED NO_OPENCV)
                  $<TARGET_OBJECTS:license_plate_recognition>
                  $<TARGET_OBJECTS:license_plate_keypoint>
                  $<TARGET_OBJECTS:face_angle>
-                 $<TARGET_OBJECTS:occlusion_classification>
                  $<TARGET_OBJECTS:mask_face_recognition>)
   
   if("${ENABLE_CVI_TDL_CV_UTILS}" STREQUAL "ON")

@@ -14,3 +14,5 @@ bool create_directory(const std::string &str_dir);
 std::vector<std::string> getImgList(std::string dir_path);
 bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len);
 std::string split_file_line(std::string &line, std::vector<std::vector<int>> &boxes);
+std::string get_file_name_without_extension(const std::string &filePath);
+int gen_file_names(const std::string &folderPath, std::vector<std::string> &fileNames);

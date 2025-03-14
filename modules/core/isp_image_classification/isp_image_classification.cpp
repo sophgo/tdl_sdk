@@ -13,15 +13,43 @@
 #include "core/utils/vpss_helper.h"
 #include "core_utils.hpp"
 #include "cvi_sys.h"
+#include <unistd.h>
 
 #define topK 5
 
-// bool dump = true;
+#define ENABLE_TEAISP_PQ_DUMP 0
+
+#if ENABLE_TEAISP_PQ_DUMP
+static bool dump_aipq = false;
+
+static void dump_input_raw(const char *name, uint64_t phy_addr, size_t size) {
+  void *data = CVI_SYS_MmapCache(phy_addr, size);
+  FILE *fp = fopen(name, "wb");
+  if (fp == NULL) {
+    printf("Failed to open file %s\n", name);
+    return;
+  }
+  fwrite(data, 1, size, fp);
+  fflush(fp);
+  fclose(fp);
+  CVI_SYS_Munmap(data, size);
+}
+
+static void dump_input_output(const char *name, void *data, size_t size) {
+  FILE *fp = fopen(name, "wb");
+  if (fp == NULL) {
+    printf("Failed to open file %s\n", name);
+    return;
+  }
+  fwrite(data, 1, size, fp);
+  fflush(fp);
+  fclose(fp);
+}
+#endif
 
 namespace cvitdl {
 
 IspImageClassification::IspImageClassification() : Core(CVI_MEM_DEVICE) {
-  this->setRaw(true);
   float mean[3] = {123.675, 116.28, 103.52};
   float std[3] = {58.395, 57.12, 57.375};
 
@@ -106,22 +134,64 @@ int IspImageClassification::vpssPreprocess(VIDEO_FRAME_INFO_S *srcFrame,
 
 int IspImageClassification::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_class_meta_t *cls_meta,
                                       cvtdl_isp_meta_t *isparg) {
+  size_t input_num = getNumInputTensor();
   std::vector<VIDEO_FRAME_INFO_S *> frames = {srcFrame};
-  float awbarg[3] = {isparg->rgain, isparg->contant_1024, isparg->bgain};
-
+#if ENABLE_TEAISP_PQ_DUMP
+  if (access("/tmp/dump_aipq", F_OK) == 0) {
+    dump_aipq = true;
+    system("rm /tmp/dump_aipq");
+  }
+  if (dump_aipq) {
+    dump_input_raw("0-input_raw.bin", srcFrame->stVFrame.u64PhyAddr[0], srcFrame->stVFrame.u32Length[0]);
+  }
+#endif
 #ifdef __CV186X__
-  bm_memcpy_s2d_partial(bm_handle, getModelInfo()->in.tensors[1].device_mem, (void *)awbarg,
+  bm_memcpy_s2d_partial(bm_handle, getModelInfo()->in.tensors[1].device_mem, (void *)isparg->awb,
                         3 * sizeof(float));
   bm_status_t status =
       bm_mem_flush_device_mem(bm_handle, &(getModelInfo()->in.tensors[1].device_mem));
   assert(BM_SUCCESS == status);
 #else
-  const TensorInfo &tinfo = getInputTensorInfo(1);
-  float *input_ptr1 = tinfo.get<float>();
-  memcpy(input_ptr1, awbarg, 3 * sizeof(float));
+  const TensorInfo &tinfo = getInputTensorInfo(1); // awb
+  float *input_ptr = tinfo.get<float>();
+  memcpy(input_ptr, isparg->awb, 3 * sizeof(float));
+#if ENABLE_TEAISP_PQ_DUMP
+  if (dump_aipq) {
+    dump_input_output("1-input_awb.bin", input_ptr, 3 * sizeof(float));
+  }
+#endif
+  if (input_num == 3) { // compatible with old models
+    const TensorInfo &tinfo_blc = getInputTensorInfo(2);  // blc
+    input_ptr = tinfo_blc.get<float>();
+    memcpy(input_ptr, &isparg->blc, 1 * sizeof(float));
+#if ENABLE_TEAISP_PQ_DUMP
+  if (dump_aipq) {
+    dump_input_output("2-input_blc.bin", input_ptr, 1 * sizeof(float));
+  }
+#endif
+  } else if (input_num == 4) { // compatible with old models
+    const TensorInfo &tinfo_ccm = getInputTensorInfo(2);  // ccm
+    input_ptr = tinfo_ccm.get<float>();
+    memcpy(input_ptr, isparg->ccm, 9 * sizeof(float));
+#if ENABLE_TEAISP_PQ_DUMP
+  if (dump_aipq) {
+    dump_input_output("2-input_ccm.bin", input_ptr, 9 * sizeof(float));
+  }
+#endif
+    const TensorInfo &tinfo_blc = getInputTensorInfo(3);  // blc
+    input_ptr = tinfo_blc.get<float>();
+    memcpy(input_ptr, &isparg->blc, 1 * sizeof(float));
+#if ENABLE_TEAISP_PQ_DUMP
+  if (dump_aipq) {
+    dump_input_output("3-input_blc.bin", input_ptr, 1 * sizeof(float));
+  }
+#endif
+  } else if (input_num > 4) {
+    LOGE("IspImageClassification input tensor number error\n");
+    return -1;
+  }
   srcFrame->stVFrame.enPixelFormat = PIXEL_FORMAT_RGB_888_PLANAR;
 #endif
-  printf("***************before inference****************\n");
   if (srcFrame->stVFrame.u64PhyAddr[0] == 0 && hasSkippedVpssPreprocess()) {
     const TensorInfo &tinfo = getInputTensorInfo(0);
     int8_t *input_ptr = tinfo.get<int8_t>();
@@ -157,10 +227,14 @@ void IspImageClassification::outputParser(cvtdl_class_meta_t *cls_meta) {
   uint8_t *ptr_uint8 = static_cast<uint8_t *>(oinfo.raw_pointer);
   float *ptr_float = static_cast<float *>(oinfo.raw_pointer);
 
-  // if (dump) {
-  //   dump_tensor_result("cls_output.bin", &(getModelInfo()->out.tensors[0]), bm_handle);
-  //   dump = false;
-  // }
+#if ENABLE_TEAISP_PQ_DUMP
+  if (dump_aipq) {
+    dump_input_output("0-output.bin", ptr_float, 5 * sizeof(float));
+    dump_aipq = false;
+    printf("dump aipq done\n");
+  }
+#endif
+
   int channel_len = oinfo.shape.dim[1];
 
   int num_per_pixel = oinfo.tensor_size / oinfo.tensor_elem;
