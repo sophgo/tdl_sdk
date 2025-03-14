@@ -43,9 +43,16 @@ typedef struct {
 } cvtdl_pts_t;
 
 typedef struct {
+  uint8_t *mask; // size = mask_width*mask_height
+  float *mask_point;
+  uint32_t mask_point_size;
+} cvtdl_mask_info_t;
+
+typedef struct {
   cvtdl_box_t box;
   float score;
   int class_id;
+  cvtdl_mask_info_t *mask_properity;
   cvtdl_object_type_e obj_type;
 } cvtdl_object_info_t;
 
@@ -53,6 +60,9 @@ typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
+
+  uint32_t mask_width;
+  uint32_t mask_height;
 
   cvtdl_object_info_t *info;
 } cvtdl_object_t;
@@ -110,9 +120,12 @@ typedef struct {
 } cvtdl_keypoint_t;
 
 typedef struct {
-  uint32_t size;
   uint32_t width;
   uint32_t height;
+  uint32_t output_width;
+  uint32_t output_height;
+  uint8_t *class_id;
+  uint8_t *class_conf;
 } cvtdl_seg_t;
 
 typedef struct {

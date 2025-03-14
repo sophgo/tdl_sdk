@@ -312,10 +312,87 @@ int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
   }
 }
 
-int32_t CVI_TDL_Segmentation(cvtdl_handle_t handle,
+int32_t CVI_TDL_SemanticSeg(cvtdl_handle_t handle,
                              const cvtdl_model_e model_id,
                              cvtdl_image_t image_handle,
                              cvtdl_seg_t *seg_meta) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+  std::vector<std::shared_ptr<BaseImage>> images;
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  images.push_back(image_context->image);
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::SEGMENTATION) {
+    ModelSegmentationInfo *segmentation_output =
+        (ModelSegmentationInfo *)output.get();
+    CVI_TDL_InitSemanticSegnMeta(seg_meta,
+                             segmentation_output->output_width * segmentation_output->output_height);
+    seg_meta->height = segmentation_output->image_height;
+    seg_meta->width = segmentation_output->image_width;  
+    seg_meta->output_width = segmentation_output->output_width;
+    seg_meta->output_height = segmentation_output->output_height;
+    seg_meta->class_id = segmentation_output->class_id;
+    seg_meta->class_conf = segmentation_output->class_conf;
+  }
+  return 0;
+}
+
+int32_t CVI_TDL_InstanceSeg(cvtdl_handle_t handle, const cvtdl_model_e model_id,
+                          cvtdl_image_t image_handle,
+                          cvtdl_object_t *object_meta) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+  std::vector<std::shared_ptr<BaseImage>> images;
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  images.push_back(image_context->image);
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  ModelBoxSegmentationInfo *instance_seg_output = (ModelBoxSegmentationInfo *)output.get();
+  CVI_TDL_InitInstanceSegMeta(object_meta, instance_seg_output->box_seg.size(),instance_seg_output->mask_width*instance_seg_output->mask_height);
+  object_meta->width = instance_seg_output->image_width;
+  object_meta->height = instance_seg_output->image_height;
+  object_meta->mask_width = instance_seg_output->mask_width;
+  object_meta->mask_height = instance_seg_output->mask_height;
+  for (int i = 0; i < instance_seg_output->box_seg.size(); i++) {
+    object_meta->info[i].box.x1 = instance_seg_output->box_seg[i].x1;
+    object_meta->info[i].box.y1 = instance_seg_output->box_seg[i].y1;
+    object_meta->info[i].box.x2 = instance_seg_output->box_seg[i].x2;
+    object_meta->info[i].box.y2 = instance_seg_output->box_seg[i].y2;
+    object_meta->info[i].class_id = instance_seg_output->box_seg[i].class_id;
+    object_meta->info[i].score = instance_seg_output->box_seg[i].score;
+    object_meta->info[i].mask = instance_seg_output->box_seg[i].mask;
+    object_meta->info[i].mask_point_size = instance_seg_output->box_seg[i].mask_point_size;
+    object_meta->info[i].mask_point = (float *)malloc(2 * object_meta->info[i].mask_point_size * sizeof(float));
+    object_meta->info[i].mask_point = instance_seg_output->box_seg[i].mask_point;
+  }
   return 0;
 }
 
