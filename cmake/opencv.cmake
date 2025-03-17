@@ -1,4 +1,4 @@
-if(${CVI_PLATFORM} STREQUAL "BM1688")
+if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X"))
 
   if("${OPENCV_ROOT_DIR}" STREQUAL "")
     message(FATAL_ERROR "You must set OPENCV_ROOT_DIR before building IVE library.")
@@ -18,6 +18,8 @@ if(${CVI_PLATFORM} STREQUAL "BM1688")
 
   return()
 endif()
+
+
 
 set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
 # Combine the common prefix and the architecture-specific part

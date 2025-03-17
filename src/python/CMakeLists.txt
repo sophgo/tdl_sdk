@@ -6,8 +6,8 @@ include_directories(
                     ${REPO_DIR}/include/tdl_sdk/nn
                     # ${REPO_DIR}/include/tdl_sdk/
                     ${CMAKE_CURRENT_SOURCE_DIR}/include
-                    ${REPO_DIR}/python_depends/include/python
-                    ${REPO_DIR}/python_depends/include/pybind11/include
+                    ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends/include/python
+                    ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends/include/pybind11
                     )
 
 file(GLOB_RECURSE SRC_FRAMWORK_FILES_CUR ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
@@ -17,7 +17,7 @@ add_library(tdl MODULE
 )
 
 
-file(GLOB_RECURSE LIB_PYTHON_FILES ${REPO_DIR}/python_depends/lib/*.so)
+file(GLOB_RECURSE LIB_PYTHON_FILES ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends/lib/*.so)
 foreach(PYTHON_LIB ${LIB_PYTHON_FILES})
     if(PYTHON_LIB MATCHES "libpython([0-9]+\\.[0-9]+)\\.so")
         set(PYTHON_VERSION_SUFFIX "python${CMAKE_MATCH_1}")

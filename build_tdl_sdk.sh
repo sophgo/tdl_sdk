@@ -4,9 +4,10 @@
 print_usage() {
     echo "Usage: ${BASH_SOURCE[0]} [options]"
     echo "Options:"
-    echo "  cv181x         Build soph-pi 181x"
-    echo "  cv186x         Build 186x"
-    echo "  bm168x         Build BM168X edge"
+    echo "  CV181X         Build soph-pi 181X"
+    echo "  CV186X         Build 186X"
+    echo "  BM1688         Build BM1688 edge"
+    echo "  BM1684X        Build BM1684X edge"
     echo "  sample         Build samples only"
     echo "  all            Build both modules and sample"
     echo "  clean          Clean build"
@@ -31,7 +32,7 @@ fi
 CVI_TDL_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Handle platform-specific build commands
-if [[ "$1" == "cv181x" ]]; then
+if [[ "$1" == "CV181X" ]]; then
     echo "Building for CV181X platform..."
     export CHIP_ARCH=CV181X
     
@@ -45,7 +46,7 @@ if [[ "$1" == "cv181x" ]]; then
     cd tdl_sdk
     exit 0
 
-elif [[ "$1" == "cv186x" ]]; then
+elif [[ "$1" == "CV186X" ]]; then
     echo "Building for CV186X platform..."
     export CHIP_ARCH=CV186X
     
@@ -59,9 +60,13 @@ elif [[ "$1" == "cv186x" ]]; then
     cd tdl_sdk
     exit 0
 
-elif [[ "$1" == "bm168x" ]]; then
-    echo "Building for BM168X platform..."
+elif [[ "$1" == "BM1688" ]]; then
+    echo "Building for BM1688 platform..."
     export CHIP_ARCH=BM1688
+    # Continue with the regular build process below
+elif [[ "$1" == "BM1684X" ]]; then
+    echo "Building for BM1684X platform..."
+    export CHIP_ARCH=BM1684X
     # Continue with the regular build process below
     
 elif [[ "$1" == "clean" ]]; then
@@ -167,10 +172,19 @@ if [[ "$CHIP_ARCH" == "BM1688" ]]; then
     CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
     CROSS_COMPILE=aarch64-linux-
     CV_UTILS=OFF
-    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/sophon_sdk/sophon-opencv_1.8.0
-    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/sophon_sdk/libsophon-0.4.10
-    MPI_PATH=$CVI_TDL_ROOT/sophon_sdk/sophon-ffmpeg_1.8.0
-    ISP_ROOT_DIR=$CVI_TDL_ROOT/sophon_sdk/sophon-soc-libisp_1.0.0
+    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1688/sophon-opencv
+    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1688/libsophon
+    MPI_PATH=$CVI_TDL_ROOT/dependency/BM1688/sophon-ffmpeg
+    ISP_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1688/sophon-soc-libisp
+    
+elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
+    CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
+    CROSS_COMPILE=aarch64-linux-
+    CV_UTILS=OFF
+    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1684X/sophon-opencv
+    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1684X/libsophon
+    MPI_PATH=$CVI_TDL_ROOT/dependency/BM1684X/sophon-ffmpeg
+    
 else
     CV_UTILS=ON
     TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
@@ -209,6 +223,8 @@ elif [[ "${CHIP_ARCH}" == "SOPHON" ]]; then
     MPI_PATH="${TOP_DIR}"/middleware/"${MW_VER}"
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1688" ]]; then
+    USE_TPU_IVE=OFF
+elif [[ "${CHIP_ARCH}" == "BM1684X" ]]; then
     USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"

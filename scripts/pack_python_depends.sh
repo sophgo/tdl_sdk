@@ -1,7 +1,24 @@
 #!/bin/bash
 
+# 检查参数
+if [ "$#" -ne 1 ]; then
+    echo "Usage: \$0 <chip_arch>"
+    echo "Example: \$0 BM1684X or \$0 BM1688"
+    exit 1
+fi
+
+CHIP_ARCH="$1"
+
+# 获取脚本所在目录的绝对路径
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
 # 设置目标导出路径
-TARGET_DIR="./python_depends"
+TARGET_DIR="$SCRIPT_DIR/dependency/$CHIP_ARCH/python_depends"
+
+# 创建目标目录
+mkdir -p "$TARGET_DIR"
+
+echo "Packing Python dependencies to: $TARGET_DIR"
 
 # 创建目录结构
 mkdir -p ${TARGET_DIR}/include
@@ -30,7 +47,7 @@ else:
 
 # 获取pybind11头文件路径
 PYBIND11_INCLUDE=$(python3 -c "import pybind11; print(pybind11.get_include())")
-
+echo "PYBIND11_INCLUDE: ${PYBIND11_INCLUDE}"
 # 获取系统架构特定的pyconfig.h路径
 PYCONFIG_ARCH_PATH=$(python3 -c "
 import sysconfig, os

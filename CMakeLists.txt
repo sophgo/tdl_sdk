@@ -57,6 +57,8 @@ elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
   add_definitions(-D__CV186X__)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   add_definitions(-D__BM168X__)
+elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
+  add_definitions(-D__BM168X__)
 else()
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
@@ -163,6 +165,7 @@ else()
     set(IS_LOCAL FALSE)
 endif()
 
+set(IS_LOCAL FALSE)
 
 # 获取当前文件的目录
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -191,7 +194,10 @@ include(cmake/thirdparty.cmake)
 
 include(cmake/ive.cmake)
 
-# include(cmake/cvi_rtsp.cmake)
+if(("${CVI_PLATFORM}" STREQUAL "CV181X") OR ("${CVI_PLATFORM}" STREQUAL "CV180X") 
+OR ("${CVI_PLATFORM}" STREQUAL "CV182X") OR ("${CVI_PLATFORM}" STREQUAL "CV183X"))
+include(cmake/cvi_rtsp.cmake)
+endif()
 
 # 3rdpart includes
 include_directories(${IVE_INCLUDES}
@@ -212,6 +218,7 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if("${BUILD_OPTION}" STREQUAL "")
+  message("build tdl sdk")
   add_subdirectory(src)
   add_subdirectory(sample/c)
   add_subdirectory(sample/cpp)

@@ -10,6 +10,8 @@ if("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/libsophon-0.4.9/include/)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
+elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
+  set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 else()
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 endif()
@@ -23,6 +25,22 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libbmrt.so
       ${MLIR_SDK_ROOT}/lib/libbmlib.so
+  )
+elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
+  set(MLIR_LIBS
+      ${MLIR_SDK_ROOT}/lib/libbmrt.so
+      ${MLIR_SDK_ROOT}/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/lib/libbmjpuapi.so
+      ${MLIR_SDK_ROOT}/lib/libbmjpulite.so
+      ${MLIR_SDK_ROOT}/lib/libbmcv.so
+      ${MLIR_SDK_ROOT}/lib/libbmvpuapi.so
+      ${MLIR_SDK_ROOT}/lib/libyuv.so
+      ${MLIR_SDK_ROOT}/lib/libbmvpulite.so.0
+      ${MLIR_SDK_ROOT}/lib/libbmvideo.so.0
+      ${MLIR_SDK_ROOT}/lib/libbmion.so.0
+      ${MLIR_SDK_ROOT}/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/lib/libyuv.so
+      ${MLIR_SDK_ROOT}/lib/libvpp_cmodel.so
   )
 else()
   set(MLIR_LIBS

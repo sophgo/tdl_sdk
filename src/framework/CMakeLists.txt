@@ -6,7 +6,7 @@ include_directories(
                     ${REPO_DIR}/include/tdl_sdk/app
                     )
 
-if("${CVI_PLATFORM}" STREQUAL "BM1688")
+if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X"))
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
               )

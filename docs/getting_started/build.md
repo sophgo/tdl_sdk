@@ -75,7 +75,7 @@
     ```shell
     cd tdl_sdk
     git checkout edge
-    ./build_tdl_sdk.sh cv181x
+    ./build_tdl_sdk.sh CV181X
     #再次编译
     ./build_tdl_sdk.sh all
     ```
@@ -95,7 +95,7 @@
     cd tdl_sdk
 
     git checkout edge
-    ./build_tdl_sdk.sh cv186x
+    ./build_tdl_sdk.sh CV186X
     #再次编译
     ./build_tdl_sdk.sh all
     ```
@@ -107,15 +107,15 @@
 
     ```sh
     cd tdl_sdk
-    #会将依赖抽取到tdl_sdk/sophon_sdk文件夹下
-    ./scripts/extract_sophon_sdk.sh /path/to/sophonsdk_edge_v1.8_offical_release.zip
+    #会将依赖抽取到tdl_sdk/dependency/BM1688文件夹下
+    ./scripts/extract_sophon_sdk.sh /path/to/sophonsdk_edge_v1.8_offical_release.zip BM1688
     ```
 
 * 执行编译
 
     ```shell
     cd tdl_sdk
-    ./build_tdl_sdk.sh bm168x
+    ./build_tdl_sdk.sh BM1688
     ```
 
 #### Python导出包编译
@@ -128,7 +128,7 @@
     ```
 
 * 挂载nfs目录
-
+* 把host主机上面的sdk_package目录挂载到目标盒子上
     ```shell
     cd /data
     mkdir sdk_package
@@ -141,14 +141,63 @@
     ```shell
     cd /data/sdk_package/tdl_sdk/
     chmod +x scripts/pack_python_depends.sh
-    ./scripts/pack_python_depends.sh
+    ./scripts/pack_python_depends.sh BM1688
     ```
 
 * 到X86主机上重新执行编译
 
     ```shell
     cd /data/sdk_package/tdl_sdk/
-    ./build.sh bm186x
+    ./build.sh BM1688
     ```
 
 ### BM1684X平台编译
+* 在[算能官网](https://developer.sophgo.com/site/index/material/88/all.html)下载SDK-24.04.01的压缩包
+
+* 执行如下脚本抽取编译依赖
+
+    ```sh
+    cd tdl_sdk
+    #会将依赖抽取到tdl_sdk/dependency/BM1684X文件夹下
+    ./scripts/extract_sophon_sdk.sh /path/to/SDK-24.04.01.zip BM1684X
+    ```
+
+* 执行编译
+
+    ```shell
+    cd tdl_sdk
+    ./build_tdl_sdk.sh BM1684X
+    ```
+
+#### Python导出包编译
+
+* 到目标盒子上安装Python环境
+
+    ```shell
+    sudo apt-get install python3.8 python3-pip
+    pip3 install pybind11
+    ```
+
+* 挂载nfs目录
+* 把host主机上面的sdk_package目录挂载到目标盒子上
+    ```shell
+    cd /data
+    mkdir sdk_package
+    #HOST_IP为编译主机IP
+    sudo mount -t nfs HOST_IP:/path/to/sdk_package /data/sdk_package
+    ```
+
+* 在盒子上收集Python编译依赖
+
+    ```shell
+    cd /data/sdk_package/tdl_sdk/
+    chmod +x scripts/pack_python_depends.sh
+    ./scripts/pack_python_depends.sh BM1684X
+    ```
+
+* 到X86主机上重新执行编译
+
+    ```shell
+    cd /data/sdk_package/tdl_sdk/
+    ./build.sh BM1684X
+    ```
