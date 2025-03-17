@@ -175,7 +175,24 @@ class ModelAttributeInfo : public ModelOutputInfo {
 
 class ModelSegmentationInfo : public ModelOutputInfo {
  public:
-  ~ModelSegmentationInfo() = default;
+  ModelSegmentationInfo()
+      : image_width(0),
+        image_height(0),
+        output_width(0),
+        output_height(0),
+        class_id(nullptr),
+        class_conf(nullptr) {}
+        
+  ~ModelSegmentationInfo() {
+    if (class_id != nullptr) {
+      delete[] class_id;
+      class_id = nullptr;
+    }
+    if (class_conf != nullptr) {
+      delete[] class_conf;
+      class_conf = nullptr;
+    }
+  }
   ModelOutputType getType() const override {
     return ModelOutputType::SEGMENTATION;
   }
