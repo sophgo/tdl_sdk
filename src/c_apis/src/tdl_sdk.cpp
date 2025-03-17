@@ -315,10 +315,10 @@ int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
   return 0;
 }
 
-int32_t CVI_TDL_SemanticSeg(cvtdl_handle_t handle,
-                             const cvtdl_model_e model_id,
-                             cvtdl_image_t image_handle,
-                             cvtdl_seg_t *seg_meta) {
+int32_t CVI_TDL_SemanticSegmentation(cvtdl_handle_t handle,
+                                     const cvtdl_model_e model_id,
+                                     cvtdl_image_t image_handle,
+                                     cvtdl_seg_t *seg_meta) {
   tdl_context_t *context = (tdl_context_t *)handle;
   if (context == nullptr) {
     return -1;
@@ -354,9 +354,10 @@ int32_t CVI_TDL_SemanticSeg(cvtdl_handle_t handle,
   return 0;
 }
 
-int32_t CVI_TDL_InstanceSeg(cvtdl_handle_t handle, const cvtdl_model_e model_id,
-                          cvtdl_image_t image_handle,
-                          cvtdl_object_t *object_meta) {
+int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle,
+                                     const cvtdl_model_e model_id,
+                                     cvtdl_image_t image_handle,
+                                     cvtdl_object_t *object_meta) {
   tdl_context_t *context = (tdl_context_t *)handle;
   if (context == nullptr) {
     return -1;

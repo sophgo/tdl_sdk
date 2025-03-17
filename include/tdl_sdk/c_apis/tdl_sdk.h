@@ -46,12 +46,15 @@ cvtdl_image_t CVI_TDL_ReadImage(const char *path);
  */
 int32_t CVI_TDL_DestroyImage(cvtdl_image_t image_handle);
 
-int32_t CVI_TDL_OpenModel(cvtdl_handle_t handle, const cvtdl_model_e model_id,
+int32_t CVI_TDL_OpenModel(cvtdl_handle_t handle,
+                          const cvtdl_model_e model_id,
                           const char *model_path);
 
-int32_t CVI_TDL_CloseModel(cvtdl_handle_t handle, const cvtdl_model_e model_id);
+int32_t CVI_TDL_CloseModel(cvtdl_handle_t handle,
+                           const cvtdl_model_e model_id);
 
-int32_t CVI_TDL_Detection(cvtdl_handle_t handle, const cvtdl_model_e model_id,
+int32_t CVI_TDL_Detection(cvtdl_handle_t handle,
+                          const cvtdl_model_e model_id,
                           cvtdl_image_t image_handle,
                           cvtdl_object_t *object_meta);
 
@@ -59,6 +62,12 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_face_t *face_meta);
+
+int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
+                              const cvtdl_model_e model_id,
+                              cvtdl_image_t image_handle,
+                              cvtdl_face_t *face_meta);
+
 int32_t CVI_TDL_FaceLandmark(cvtdl_handle_t handle,
                                const cvtdl_model_e model_id,
                                cvtdl_image_t image_handle,
@@ -75,34 +84,42 @@ int32_t CVI_TDL_ObjectClassification(cvtdl_handle_t handle,
                                      cvtdl_object_t *object_meta,
                                      cvtdl_class_t *class_info);
 
-int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
-                              const cvtdl_model_e model_id,
-                              cvtdl_image_t image_handle,
-                              cvtdl_face_t *face_meta);
-
 int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
                                   const cvtdl_model_e model_id,
                                   cvtdl_image_t image_handle,
                                   cvtdl_keypoint_t *keypoint_meta);
 
-int32_t CVI_TDL_InstanceSeg(cvtdl_handle_t handle, 
-                            const cvtdl_model_e model_id,
-                            cvtdl_image_t image_handle,
-                            cvtdl_object_t *object_meta);
+int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle, 
+                                     const cvtdl_model_e model_id,
+                                     cvtdl_image_t image_handle,
+                                     cvtdl_object_t *object_meta);
 
-int32_t CVI_TDL_SemanticSeg(cvtdl_handle_t handle,
-                             const cvtdl_model_e model_id,
-                             cvtdl_image_t image_handle,
-                             cvtdl_seg_t *seg_meta);
+int32_t CVI_TDL_SemanticSegmentation(cvtdl_handle_t handle,
+                                     const cvtdl_model_e model_id,
+                                     cvtdl_image_t image_handle,
+                                     cvtdl_seg_t *seg_meta);
 
 int32_t CVI_TDL_FeatureExtraction(cvtdl_handle_t handle,
                                   const cvtdl_model_e model_id,
                                   cvtdl_image_t image_handle,
                                   cvtdl_feature_t *feature_meta);
+
 int32_t CVI_TDL_LaneDetection(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_lane_t *lane_meta);
+
+int32_t CVI_TDL_DepthStereo(cvtdl_handle_t handle,
+                            const cvtdl_model_e model_id,
+                            cvtdl_image_t image_handle,
+                            cvtdl_depth_logits_t *depth_logist);
+
+int32_t CVI_TDL_Tracking(cvtdl_handle_t handle,
+                         const cvtdl_model_e model_id,
+                         cvtdl_image_t image_handle,
+                         cvtdl_object_t *object_meta,
+                         cvtdl_tracker_t *tracker_meta);
+
 
 #ifdef __cplusplus
 }

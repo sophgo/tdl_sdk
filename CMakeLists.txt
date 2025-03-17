@@ -191,7 +191,7 @@ include(cmake/thirdparty.cmake)
 
 include(cmake/ive.cmake)
 
-include(cmake/cvi_rtsp.cmake)
+# include(cmake/cvi_rtsp.cmake)
 
 # 3rdpart includes
 include_directories(${IVE_INCLUDES}

@@ -143,6 +143,19 @@ typedef struct {
   int lane_state;
 } cvtdl_lane_t;
 
+typedef struct {
+  int w;
+  int h;
+  int8_t *int_logits;
+} cvtdl_depth_logits_t;
+
+typedef struct {
+  uint32_t size;
+  uint64_t id;
+  cvtdl_box_t bbox;
+  int out_num;
+} cvtdl_tracker_t;
+
 typedef void *cvtdl_handle_t;
 typedef void *cvtdl_image_t;
 
