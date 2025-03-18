@@ -1,7 +1,7 @@
 
 #!/bin/bash
 
-TARGET_DIR="$(dirname "\$0")/thirdparty"
+TARGET_DIR="$(dirname "\$0")/dependency/thirdparty"
 
 mkdir -p "$TARGET_DIR"
 

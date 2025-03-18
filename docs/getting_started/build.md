@@ -54,6 +54,14 @@
 
 ## 编译
 
+支持的目标平台有：
+
+* CV181X
+* CV186X
+* BM1688
+* BM1684X
+* CMODEL(TODO)
+
 ### 181平台编译
 
 * 下载sophpi
@@ -129,6 +137,7 @@
 
 * 挂载nfs目录
 * 把host主机上面的sdk_package目录挂载到目标盒子上
+
     ```shell
     cd /data
     mkdir sdk_package
@@ -140,8 +149,9 @@
 
     ```shell
     cd /data/sdk_package/tdl_sdk/
-    chmod +x scripts/pack_python_depends.sh
-    ./scripts/pack_python_depends.sh BM1688
+    chmod +x scripts/extract_python_depends.sh
+    #sudo chmod 777 -R dependency #假如dependency目录没有写入权限
+    ./scripts/extract_python_depends.sh BM1688
     ```
 
 * 到X86主机上重新执行编译
@@ -152,6 +162,7 @@
     ```
 
 ### BM1684X平台编译
+
 * 在[算能官网](https://developer.sophgo.com/site/index/material/88/all.html)下载SDK-24.04.01的压缩包
 
 * 执行如下脚本抽取编译依赖
@@ -180,6 +191,7 @@
 
 * 挂载nfs目录
 * 把host主机上面的sdk_package目录挂载到目标盒子上
+
     ```shell
     cd /data
     mkdir sdk_package
@@ -191,8 +203,9 @@
 
     ```shell
     cd /data/sdk_package/tdl_sdk/
-    chmod +x scripts/pack_python_depends.sh
-    ./scripts/pack_python_depends.sh BM1684X
+    chmod +x scripts/extract_python_depends.sh
+    #sudo chmod 777 -R dependency #假如dependency目录没有写入权限
+    ./scripts/extract_python_depends.sh BM1684X    
     ```
 
 * 到X86主机上重新执行编译

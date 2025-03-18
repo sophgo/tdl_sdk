@@ -22,7 +22,7 @@ endif()
 if (IS_LOCAL)
   set(EIGEN_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/eigen.tar.gz)
 else()
-  set(EIGEN_URL ${TOP_DIR}/tdl_sdk/thirdparty/eigen.tar.gz)
+  set(EIGEN_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/eigen.tar.gz)
 endif()
 message("EIGEN_URL:${EIGEN_URL},is_local:${IS_LOCAL}")
 
@@ -39,7 +39,7 @@ include_directories(${BUILD_DOWNLOAD_DIR}/libeigen-src/include/eigen3)
 if (IS_LOCAL)
   set(GOOGLETEST_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/googletest.tar.gz)
 else()
-  set(GOOGLETEST_URL ${TOP_DIR}/tdl_sdk/thirdparty/googletest.tar.gz)
+  set(GOOGLETEST_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/googletest.tar.gz)
 endif()
 
 set(BUILD_GMOCK OFF CACHE BOOL "Build GMOCK")
@@ -60,7 +60,7 @@ include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtes
 if (IS_LOCAL)
   set(NLOHMANNJSON_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/nlohmannjson.tar.gz)
 else()
-  set(NLOHMANNJSON_URL ${TOP_DIR}/tdl_sdk/thirdparty/nlohmannjson.tar.gz)
+  set(NLOHMANNJSON_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/nlohmannjson.tar.gz)
 endif()
 
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/nlohmannjson-src")
@@ -80,7 +80,7 @@ endif()
 if (IS_LOCAL)
   set(STB_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/stb.tar.gz)
 else()
-  set(STB_URL ${TOP_DIR}/tdl_sdk/thirdparty/stb.tar.gz)
+  set(STB_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/stb.tar.gz)
 endif()
 
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/stb-src")
@@ -94,12 +94,3 @@ endif()
 set(stb_SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/stb-src)
 include_directories(${stb_SOURCE_DIR})
 
-install(DIRECTORY  ${stb_SOURCE_DIR}/ DESTINATION sample/3rd/stb/include
-    FILES_MATCHING PATTERN "*.h"
-    PATTERN ".git" EXCLUDE
-    PATTERN ".github" EXCLUDE
-    PATTERN "data" EXCLUDE
-    PATTERN "deprecated" EXCLUDE
-    PATTERN "docs" EXCLUDE
-    PATTERN "tests" EXCLUDE
-    PATTERN "tools" EXCLUDE)

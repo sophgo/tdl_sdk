@@ -153,7 +153,8 @@ else
 fi
 
 # set build working dir
-BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${CHIP_ARCH}
+BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build/${CHIP_ARCH}
+mkdir -p ${BUILD_WORKING_DIR}
 BUILD_DOWNLOAD_DIR="${BUILD_WORKING_DIR}"/_deps
 
 # set install path
