@@ -112,3 +112,17 @@ int32_t CVI_TDL_ReleaseSemanticSegMeta(cvtdl_seg_t *seg_meta) {
   }
   return 0;
 }
+
+int32_t CVI_TDL_InitLaneMeta(cvtdl_lane_t *lane_meta, int output_size){
+ lane_meta->lane = (cvtdl_lane_point_t *)malloc(
+      output_size * sizeof(cvtdl_lane_point_t));
+  memset(lane_meta->lane, 0, output_size * sizeof(cvtdl_lane_point_t));      
+}
+
+int32_t CVI_TDL_ReleaseLaneMeta(cvtdl_lane_t *lane_meta) {
+  if (lane_meta->lane != NULL) {
+    free(lane_meta->lane);
+    lane_meta->lane = NULL;
+  }
+  return 0;
+}

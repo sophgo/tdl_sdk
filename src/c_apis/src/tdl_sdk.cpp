@@ -440,5 +440,41 @@ int32_t CVI_TDL_LaneDetection(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_lane_t *lane_meta) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> model = context->models[model_id];
+  if (model == nullptr) {
+    return -1;
+  }
+  std::vector<std::shared_ptr<BaseImage>> images;
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  images.push_back(image_context->image);
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::OBJECT_LANDMARKS) {
+    ModelBoxLandmarkInfo *lane_output = (ModelBoxLandmarkInfo *)output.get();
+
+    lane_meta->width = lane_output->image_width;
+    lane_meta->height = lane_output->image_height;
+
+    CVI_TDL_InitLaneMeta(lane_meta,
+                            lane_output->box_landmarks.size());
+    for (size_t j = 0; j < lane_output->box_landmarks.size(); j++) {
+      for (int k = 0; k < 2; k++) {
+          lane_meta->lane[j].x[k] = lane_output->box_landmarks[j].landmarks_x[k];
+          lane_meta->lane[j].y[k] = lane_output->box_landmarks[j].landmarks_y[k];
+      }
+    }
+  }
+
   return 0;
 }

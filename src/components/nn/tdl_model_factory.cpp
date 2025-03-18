@@ -11,6 +11,7 @@
 #include "keypoints_detection/yolov8_pose.hpp"
 #include "keypoints_detection/hand_keypoint.hpp"
 #include "keypoints_detection/license_plate_keypoint.hpp"
+#include "keypoints_detection/lstr_lane.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov10.hpp"
 #include "object_detection/yolov6.hpp"
@@ -102,6 +103,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<Clip_Text>();
   } else if (model_type == ModelType::SEG_PERSON_FACE_VEHICLE) {
     model = std::make_shared<TopformerSeg>(16); // Downsampling ratio
+  } else if (model_type == ModelType::LANE_DETECTION_LSTR) {
+    model = std::make_shared<LstrLane>();
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;

@@ -42,6 +42,9 @@ int32_t CVI_TDL_MatchFeature(const cvtdl_feature_t feature,
 int32_t CVI_TDL_CaculateSimilarity(const cvtdl_feature_t feature1,
                                    const cvtdl_feature_t feature2,
                                    float *similarity);
+int32_t CVI_TDL_InitLaneMeta(cvtdl_lane_t *lane_meta, int output_size);
+
+int32_t CVI_TDL_ReleaseLaneMeta(cvtdl_lane_t *lane_meta);
 
 #ifdef __cplusplus
 }
