@@ -158,7 +158,7 @@
 
     ```shell
     cd /data/sdk_package/tdl_sdk/
-    ./build.sh BM1688
+    ./build_tdl_sdk.sh BM1688
     ```
 
 ### BM1684X平台编译
@@ -212,5 +212,5 @@
 
     ```shell
     cd /data/sdk_package/tdl_sdk/
-    ./build.sh BM1684X
+    ./build_tdl_sdk.sh BM1684X
     ```

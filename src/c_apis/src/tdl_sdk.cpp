@@ -4,6 +4,20 @@
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
 #include "utils/tdl_log.hpp"
+
+std::shared_ptr<BaseModel> get_model(cvtdl_handle_t handle,
+                                     const cvtdl_model_e model_id) {
+  tdl_context_t *context = (tdl_context_t *)handle;
+  if (context == nullptr) {
+    return nullptr;
+  }
+  if (context->models.find(model_id) == context->models.end()) {
+    LOGW("model %d not found", model_id);
+    return nullptr;
+  }
+  return context->models[model_id];
+}
+
 cvtdl_handle_t CVI_TDL_CreateHandle(const int32_t tpu_device_id) {
   tdl_context_t *context = new tdl_context_t();
   return (cvtdl_handle_t)context;
@@ -84,14 +98,7 @@ int32_t CVI_TDL_CloseModel(cvtdl_handle_t handle,
 int32_t CVI_TDL_Detection(cvtdl_handle_t handle, const cvtdl_model_e model_id,
                           cvtdl_image_t image_handle,
                           cvtdl_object_t *object_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -124,14 +131,7 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_face_t *face_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -186,6 +186,9 @@ int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
     face_meta->width = object_detection_output->image_width;
     face_meta->height = object_detection_output->image_height;
     face_meta->size = object_detection_output->bboxes.size();
+  } else {
+    LOGE("Unsupported model output type: %d", output->getType());
+    return -1;
   }
 
   return 0;
@@ -195,14 +198,7 @@ int32_t CVI_TDL_Classfification(cvtdl_handle_t handle,
                                 const cvtdl_model_e model_id,
                                 cvtdl_image_t image_handle,
                                 cvtdl_class_info_t *class_info) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -220,6 +216,9 @@ int32_t CVI_TDL_Classfification(cvtdl_handle_t handle,
         (ModelClassificationInfo *)output.get();
     class_info->class_id = classification_output->topk_class_ids[0];
     class_info->score = classification_output->topk_scores[0];
+  } else {
+    LOGE("Unsupported model output type: %d", output->getType());
+    return -1;
   }
   return 0;
 }
@@ -229,14 +228,7 @@ int32_t CVI_TDL_ObjectClassification(cvtdl_handle_t handle,
                                      cvtdl_image_t image_handle,
                                      cvtdl_object_t *object_meta,
                                      cvtdl_class_t *class_info) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -250,14 +242,7 @@ int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_face_t *face_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -278,14 +263,7 @@ int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
                                   const cvtdl_model_e model_id,
                                   cvtdl_image_t image_handle,
                                   cvtdl_keypoint_t *keypoint_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -311,6 +289,9 @@ int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
         keypoint_meta->info[i].score = keypoint_output->landmarks_score[i];
       }
     }
+  } else {
+    LOGW("Unsupported model output type: %d", output->getType());
+    return -1;
   }
   return 0;
 }
@@ -319,14 +300,7 @@ int32_t CVI_TDL_SemanticSegmentation(cvtdl_handle_t handle,
                                      const cvtdl_model_e model_id,
                                      cvtdl_image_t image_handle,
                                      cvtdl_seg_t *seg_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -342,14 +316,18 @@ int32_t CVI_TDL_SemanticSegmentation(cvtdl_handle_t handle,
   if (output->getType() == ModelOutputType::SEGMENTATION) {
     ModelSegmentationInfo *segmentation_output =
         (ModelSegmentationInfo *)output.get();
-    CVI_TDL_InitSemanticSegMeta(seg_meta,
-                             segmentation_output->output_width * segmentation_output->output_height);
+    CVI_TDL_InitSemanticSegMeta(
+        seg_meta,
+        segmentation_output->output_width * segmentation_output->output_height);
     seg_meta->height = segmentation_output->image_height;
-    seg_meta->width = segmentation_output->image_width;  
+    seg_meta->width = segmentation_output->image_width;
     seg_meta->output_width = segmentation_output->output_width;
     seg_meta->output_height = segmentation_output->output_height;
     seg_meta->class_id = segmentation_output->class_id;
     seg_meta->class_conf = segmentation_output->class_conf;
+  } else {
+    LOGW("Unsupported model output type: %d", output->getType());
+    return -1;
   }
   return 0;
 }
@@ -358,14 +336,7 @@ int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle,
                                      const cvtdl_model_e model_id,
                                      cvtdl_image_t image_handle,
                                      cvtdl_object_t *object_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -379,8 +350,16 @@ int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle,
   }
 
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
-  ModelBoxSegmentationInfo *instance_seg_output = (ModelBoxSegmentationInfo *)output.get();
-  CVI_TDL_InitInstanceSegMeta(object_meta, instance_seg_output->box_seg.size(),instance_seg_output->mask_width*instance_seg_output->mask_height);
+  if (output->getType() ==
+      ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION) {
+    LOGE("Unsupported model output type: %d", output->getType());
+    return -1;
+  }
+  ModelBoxSegmentationInfo *instance_seg_output =
+      (ModelBoxSegmentationInfo *)output.get();
+  CVI_TDL_InitInstanceSegMeta(
+      object_meta, instance_seg_output->box_seg.size(),
+      instance_seg_output->mask_width * instance_seg_output->mask_height);
   object_meta->width = instance_seg_output->image_width;
   object_meta->height = instance_seg_output->image_height;
   object_meta->mask_width = instance_seg_output->mask_width;
@@ -392,11 +371,17 @@ int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle,
     object_meta->info[i].box.y2 = instance_seg_output->box_seg[i].y2;
     object_meta->info[i].class_id = instance_seg_output->box_seg[i].class_id;
     object_meta->info[i].score = instance_seg_output->box_seg[i].score;
-    object_meta->info[i].mask_properity->mask = instance_seg_output->box_seg[i].mask;
-    object_meta->info[i].mask_properity->mask_point_size = instance_seg_output->box_seg[i].mask_point_size;
-    object_meta->info[i].mask_properity->mask_point = (float *)malloc(2 * object_meta->info[i].mask_properity->mask_point_size * sizeof(float));
-    object_meta->info[i].mask_properity->mask_point = instance_seg_output->box_seg[i].mask_point;
+    object_meta->info[i].mask_properity->mask =
+        instance_seg_output->box_seg[i].mask;
+    object_meta->info[i].mask_properity->mask_point_size =
+        instance_seg_output->box_seg[i].mask_point_size;
+    object_meta->info[i].mask_properity->mask_point = (float *)malloc(
+        2 * object_meta->info[i].mask_properity->mask_point_size *
+        sizeof(float));
+    object_meta->info[i].mask_properity->mask_point =
+        instance_seg_output->box_seg[i].mask_point;
   }
+
   return 0;
 }
 
@@ -404,14 +389,7 @@ int32_t CVI_TDL_FeatureExtraction(cvtdl_handle_t handle,
                                   const cvtdl_model_e model_id,
                                   cvtdl_image_t image_handle,
                                   cvtdl_feature_t *feature_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -424,6 +402,7 @@ int32_t CVI_TDL_FeatureExtraction(cvtdl_handle_t handle,
     return ret;
   }
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  memset(feature_meta, 0, sizeof(cvtdl_feature_t));
   if (output->getType() == ModelOutputType::FEATURE_EMBEDDING) {
     ModelFeatureInfo *feature_output = (ModelFeatureInfo *)output.get();
     feature_meta->size = feature_output->embedding_num;
@@ -432,6 +411,9 @@ int32_t CVI_TDL_FeatureExtraction(cvtdl_handle_t handle,
                                                               // ownership to
                                                               // feature_meta
     feature_output->embedding = nullptr;  // set to null to prevent release
+  } else {
+    LOGE("Unsupported model output type: %d", output->getType());
+    return -1;
   }
   return 0;
 }
@@ -440,14 +422,7 @@ int32_t CVI_TDL_LaneDetection(cvtdl_handle_t handle,
                               const cvtdl_model_e model_id,
                               cvtdl_image_t image_handle,
                               cvtdl_lane_t *lane_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
-  if (context == nullptr) {
-    return -1;
-  }
-  if (context->models.find(model_id) == context->models.end()) {
-    return -1;
-  }
-  std::shared_ptr<BaseModel> model = context->models[model_id];
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
@@ -466,14 +441,16 @@ int32_t CVI_TDL_LaneDetection(cvtdl_handle_t handle,
     lane_meta->width = lane_output->image_width;
     lane_meta->height = lane_output->image_height;
 
-    CVI_TDL_InitLaneMeta(lane_meta,
-                            lane_output->box_landmarks.size());
+    CVI_TDL_InitLaneMeta(lane_meta, lane_output->box_landmarks.size());
     for (size_t j = 0; j < lane_output->box_landmarks.size(); j++) {
       for (int k = 0; k < 2; k++) {
-          lane_meta->lane[j].x[k] = lane_output->box_landmarks[j].landmarks_x[k];
-          lane_meta->lane[j].y[k] = lane_output->box_landmarks[j].landmarks_y[k];
+        lane_meta->lane[j].x[k] = lane_output->box_landmarks[j].landmarks_x[k];
+        lane_meta->lane[j].y[k] = lane_output->box_landmarks[j].landmarks_y[k];
       }
     }
+  } else {
+    LOGE("Unsupported model output type: %d", output->getType());
+    return -1;
   }
 
   return 0;

@@ -16,10 +16,15 @@ set(CORES_SRCS
             #    $<TARGET_OBJECTS:components>
                $<TARGET_OBJECTS:framework>
             #    $<TARGET_OBJECTS:app>
-               $<TARGET_OBJECTS:nn>
+               $<TARGET_OBJECTS:nn>               
                $<TARGET_OBJECTS:c_apis>
                )
-
+               
+if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR 
+               ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR 
+               ("${CVI_PLATFORM}" STREQUAL "SOPHON"))
+   set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm>)
+endif()
 set(CORES_DEPS ${MLIR_LIBS} )
 
 project(cvi_tdl)
@@ -44,7 +49,5 @@ install(TARGETS cvi_tdl DESTINATION lib)
 #install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test_and_eval/ DESTINATION sample PATTERN "CMakeLists.txt" EXCLUDE)
 # Temporarily don't install custom module until complete.
 # install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app DESTINATION include/)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/ DESTINATION include/cvi_tdl
-        PATTERN "cvi_tdl_app" EXCLUDE
-        PATTERN "cvi_tdl_experimental.h" EXCLUDE
-        PATTERN "cvi_tdl_log.hpp" EXCLUDE)   
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/tdl_sdk DESTINATION include
+        )   

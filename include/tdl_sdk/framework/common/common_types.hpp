@@ -124,4 +124,14 @@ struct TensorInfo {
   int zero_point;
 };
 
+struct LLMInferParam {
+  int max_new_tokens;
+  float top_p;
+  float temperature;
+  float repetition_penalty;
+  int repetition_last_n;
+  std::string generation_mode;
+  std::string prompt_mode;
+};
+
 #endif  // COMMON_TYPES_H

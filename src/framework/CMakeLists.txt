@@ -6,15 +6,14 @@ include_directories(
                     ${REPO_DIR}/include/tdl_sdk/app
                     )
 
-if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X"))
+if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR 
+   ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR 
+   ("${CVI_PLATFORM}" STREQUAL "SOPHON"))
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/net/bm_llm_net.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/model/llm_model.cpp
               )
-elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
-  set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/image/vpss_image.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/preprocess/vpss_preprocessor.cpp)
 else()
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/cvi_net.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/memory/cvi_memory_pool.cpp
@@ -22,6 +21,12 @@ else()
               ${CMAKE_CURRENT_SOURCE_DIR}/preprocess/vpss_preprocessor.cpp
               )
 
+endif()
+
+if("${CVI_PLATFORM}" STREQUAL "SOPHON")
+  set(NET_SRCS ${NET_SRCS} ${CMAKE_CURRENT_SOURCE_DIR}/image/vpss_image.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/preprocess/vpss_preprocessor.cpp
+              )
 endif()
 
 set(PROJ_SRCS   
