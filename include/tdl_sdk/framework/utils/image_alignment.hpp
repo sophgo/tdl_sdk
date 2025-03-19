@@ -17,4 +17,10 @@ int32_t tdl_face_warp_affine(const unsigned char* src_data,
                              int src_height, unsigned char* dst_data,
                              unsigned int dst_step, int dst_width,
                              int dst_height, const float* src_pts5_xy);
+
+int32_t tdl_license_plate_warp_affine(const unsigned char* src_data,
+                             unsigned int src_step, int src_width,
+                             int src_height, unsigned char* dst_data,
+                             unsigned int dst_step, int dst_width,
+                             int dst_height, const float* src_pts4_xy);
 #endif

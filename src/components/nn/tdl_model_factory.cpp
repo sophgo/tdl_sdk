@@ -12,6 +12,7 @@
 #include "keypoints_detection/hand_keypoint.hpp"
 #include "keypoints_detection/license_plate_keypoint.hpp"
 #include "keypoints_detection/lstr_lane.hpp"
+#include "license_plate_recognition/license_plate_recognition.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov10.hpp"
 #include "object_detection/yolov6.hpp"
@@ -93,6 +94,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<HandKeypoint>();
   } else if (model_type == ModelType::KEYPOINT_LICENSE_PLATE) {
     model = std::make_shared<LicensePlateKeypoint>();   
+  } else if (model_type == ModelType::LICENSE_PLATE_RECOGNITION) {
+    model = std::make_shared<LicensePlateRecognition>();   
   } else if (model_type == ModelType::SEG_YOLOV8_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
   } else if (model_type == ModelType::YOLOV8_POSE_PERSON17) {

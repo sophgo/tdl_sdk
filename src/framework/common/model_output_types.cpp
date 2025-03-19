@@ -13,3 +13,11 @@ ModelClipFeatureInfo::~ModelClipFeatureInfo() {
     embedding = nullptr;
   }
 }
+
+ModelOcrInfo::~ModelOcrInfo() {
+  if (text_info) {
+    delete[] text_info;
+    text_info = nullptr;
+    length = 0;
+  }
+}

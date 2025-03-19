@@ -54,6 +54,9 @@ enum class ModelType {
   // lane detection models
   LANE_DETECTION_LSTR,
 
+  // license plate recognition models
+  LICENSE_PLATE_RECOGNITION,
+
   // image segmentation models
   SEG_YOLOV8_COCO80,
   SEG_PERSON_FACE_VEHICLE,  // 0:background,1:person,2:face,3:vehicle,4:license plate

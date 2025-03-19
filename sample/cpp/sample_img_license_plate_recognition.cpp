@@ -17,12 +17,10 @@ void visualize_keypoints_detection(std::shared_ptr<BaseImage> image, std::shared
       std::cout << "convert to bgr" << std::endl;
       cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
     }
-    uint32_t image_width = obj_meta->image_width;
-    uint32_t image_height = obj_meta->image_height;
 
-    for (uint32_t j = 0; j < 21; j++) {
-        int x = static_cast<int>(obj_meta->landmarks_x[j]*image_width);
-        int y = static_cast<int>(obj_meta->landmarks_y[j]*image_height);
+    for (uint32_t j = 0; j < 4; j++) {
+        int x = static_cast<int>(obj_meta->landmarks_x[j]);
+        int y = static_cast<int>(obj_meta->landmarks_y[j]);
         cv::circle(mat, cv::Point(x, y), 3, cv::Scalar(0, 0, 255), -1);
     }
 
@@ -39,7 +37,6 @@ extract_crop_license_plate_landmark(
   std::shared_ptr<BasePreprocessor> preprocessor = model_hk->getPreprocessor();
 
   std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
-  char sz_img_name[128];
   for (size_t i = 0; i < images.size(); i++) {
     std::shared_ptr<ModelBoxInfo> license_plate_meta =
         std::static_pointer_cast<ModelBoxInfo>(license_plate_metas[i]);
@@ -64,8 +61,6 @@ extract_crop_license_plate_landmark(
       std::shared_ptr<BaseImage> license_plate_crop = preprocessor->crop(
             images[i], crop_x1, crop_y1, crop_x2 - crop_x1, crop_y2 - crop_y1);
 
-      sprintf(sz_img_name, "license_plate_crop_%d.jpg", j);
-      ImageFactory::writeImage(sz_img_name, license_plate_crop);
       license_plate_crops.push_back(license_plate_crop);
     }
 
@@ -75,14 +70,63 @@ extract_crop_license_plate_landmark(
   return out_datas;
 }
 
+
+std::vector<std::shared_ptr<ModelOutputInfo>>
+license_plate_recognition(
+    std::shared_ptr<BaseModel> model_hr,
+    std::vector<std::shared_ptr<BaseImage>> &license_plate_crops,
+    std::vector<std::shared_ptr<BaseImage>> &license_plate_aligns,
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_hk){
+
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
+  
+
+  for (size_t i = 0; i < out_hk.size(); i++) {
+    std::shared_ptr<ModelLandmarksInfo>  landmarks_meta =
+        std::static_pointer_cast<ModelLandmarksInfo>(out_hk[i]);
+    
+    float landmarks[8];
+
+    for (int k = 0; k < 4; k++) {
+
+      landmarks[2*k] = landmarks_meta->landmarks_x[k];
+      landmarks[2*k+1] = landmarks_meta->landmarks_y[k];
+    }
+    std::shared_ptr<BaseImage> license_plate_align =
+        ImageFactory::alignLicensePlate(license_plate_crops[i], landmarks, nullptr, 4, nullptr);
+
+    license_plate_aligns.push_back(license_plate_align);
+    
+  }
+
+  model_hr->inference(license_plate_aligns, out_datas);
+
+  char sz_img_name[128];
+  for (size_t i = 0; i < out_datas.size(); i++){
+    std::shared_ptr<ModelOcrInfo> text_meta =
+        std::static_pointer_cast<ModelOcrInfo>(out_datas[i]);    
+
+    sprintf(sz_img_name, "%s.jpg", text_meta->text_info);
+
+    ImageFactory::writeImage(sz_img_name, license_plate_aligns[i]);
+
+  }
+
+  return out_datas;
+
+}
+
+
 int main(int argc, char **argv) {
-  if (argc != 4) {
-    printf("Usage: %s <model_path> <image_path> \n", argv[0]);
+  if (argc != 5) {
+    printf("Usage: %s <license_plate_detection_model_path> <license_plate_keypoint_model_path> \
+           <license_plate_recognition_model_path> <image_path> \n", argv[0]);
     return -1;
   }
   std::string hd_model_path = argv[1];
   std::string hk_model_path = argv[2];
-  std::string image_path = argv[3];
+  std::string hr_model_path = argv[3];
+  std::string image_path = argv[4];
 
   std::shared_ptr<BaseImage> image1 = ImageFactory::readImage(image_path);
   if (!image1) {
@@ -100,27 +144,44 @@ int main(int argc, char **argv) {
   }
 
   std::shared_ptr<BaseModel> model_hk = model_factory.getModel(
-      ModelType::KEYPOINT_HAND, hk_model_path);
+      ModelType::KEYPOINT_LICENSE_PLATE, hk_model_path);
   if (!model_hk) {
     printf("Failed to create model_hk\n");
     return -1;
   }
 
+  std::shared_ptr<BaseModel> model_hr = model_factory.getModel(
+      ModelType::LICENSE_PLATE_RECOGNITION, hr_model_path);
+  if (!model_hr) {
+    printf("Failed to create model_hr\n");
+    return -1;
+  }
+
   std::vector<std::shared_ptr<ModelOutputInfo>> out_hd;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image1};
-    std::vector<std::shared_ptr<BaseImage>> license_plate_crops;
+  std::vector<std::shared_ptr<BaseImage>> license_plate_crops;
+  std::vector<std::shared_ptr<BaseImage>> license_plate_align;
+
   model_hd->inference(input_images, out_hd);
   std::vector<std::shared_ptr<ModelOutputInfo>>
       out_hk =
           extract_crop_license_plate_landmark(model_hk, input_images, license_plate_crops, out_hd);
 
+  std::vector<std::shared_ptr<ModelOutputInfo>>
+      out_hr =
+          license_plate_recognition(model_hr, license_plate_crops, license_plate_align, out_hk);
+
   for (size_t i = 0; i < out_hk.size(); i++) {
     std::shared_ptr<ModelLandmarksInfo> obj_meta =
         std::static_pointer_cast<ModelLandmarksInfo>(out_hk[i]);
+    std::shared_ptr<ModelOcrInfo> text_meta =
+        std::static_pointer_cast<ModelOcrInfo>(out_hr[i]);  
+    printf("keypoints:\n");
     for (int k = 0; k < 4; k++) {
-        printf("%d: %f %f\n", k, obj_meta->landmarks_x[k]*obj_meta->image_width,
-              obj_meta->landmarks_y[k]*obj_meta->image_height);
+        printf("%d: %.2f %.2f\n", k, obj_meta->landmarks_x[k], obj_meta->landmarks_y[k]);
     }
+    printf("license_plate:\n");
+    printf("%s\n", text_meta->text_info);
 // 创建文件名并添加索引
     std::ostringstream filename;
     filename << "license_plate_keypoints_" << i << ".jpg"; // 生成新的文件名

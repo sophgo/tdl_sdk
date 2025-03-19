@@ -258,6 +258,55 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
   return aligned_image;
 }
 
+std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
+    const std::shared_ptr<BaseImage>& image, const float* src_landmark_xy,
+    const float* dst_landmark_xy, int num_points,
+    std::shared_ptr<BaseMemoryPool> memory_pool) {
+  if (image == nullptr) {
+    LOGE("Image is nullptr");
+    return nullptr;
+  }
+  if (image->getImageFormat() != ImageFormat::BGR_PACKED &&
+      image->getImageFormat() != ImageFormat::RGB_PACKED) {
+    LOGE("only BGR_PACKED or RGB_PACKED format is supported,current format:%d",
+         image->getImageFormat());
+    return nullptr;
+  }
+  int dst_img_width = 96;
+  int dst_img_height = 24;
+  std::shared_ptr<BaseImage> aligned_image = ImageFactory::createImage(
+      dst_img_width, dst_img_height, image->getImageFormat(), TDLDataType::UINT8,
+      false, InferencePlatform::AUTOMATIC);
+  if (aligned_image == nullptr) {
+    LOGE("Failed to create aligned image");
+    return nullptr;
+  }
+
+  if (memory_pool != nullptr) {
+    aligned_image->setMemoryPool(memory_pool);
+  }
+  int32_t ret = aligned_image->allocateMemory();
+  if (ret != 0) {
+    LOGE("Failed to allocate memory");
+    return nullptr;
+  }
+
+  LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%lx", image->getWidth(),
+       image->getHeight(), image->getStrides()[0],
+       image->getVirtualAddress()[0]);
+  LOGI("dstimg,width:%d,height:%d,stride:%d,addr:%lx", dst_img_width,
+       dst_img_height, aligned_image->getStrides()[0],
+       aligned_image->getVirtualAddress()[0]);
+
+  tdl_license_plate_warp_affine(image->getVirtualAddress()[0], image->getStrides()[0],
+                       image->getWidth(), image->getHeight(),
+                       aligned_image->getVirtualAddress()[0],
+                       aligned_image->getStrides()[0], dst_img_width,
+                       dst_img_height, src_landmark_xy);
+  return aligned_image;
+}
+
+
 std::shared_ptr<BaseImage> ImageFactory::wrapVPSSFrame(void* vpss_frame,
                                                        bool own_memory) {
 #if not defined(__BM168X__)

@@ -105,6 +105,12 @@ class ImageFactory {
       const std::shared_ptr<BaseImage>& image, const float* src_landmark_xy,
       const float* dst_landmark_xy, int num_points,
       std::shared_ptr<BaseMemoryPool> memory_pool);
+
+  static std::shared_ptr<BaseImage> alignLicensePlate(
+      const std::shared_ptr<BaseImage>& image, const float* src_landmark_xy,
+      const float* dst_landmark_xy, int num_points,
+      std::shared_ptr<BaseMemoryPool> memory_pool);
+
   static std::shared_ptr<BaseImage> wrapVPSSFrame(void* vpss_frame,
                                                   bool own_memory);
   static std::shared_ptr<BaseImage> wrapMat(void* mat_frame, bool is_rgb);

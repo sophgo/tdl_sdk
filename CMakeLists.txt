@@ -165,7 +165,6 @@ else()
     set(IS_LOCAL FALSE)
 endif()
 
-set(IS_LOCAL FALSE)
 
 # 获取当前文件的目录
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})

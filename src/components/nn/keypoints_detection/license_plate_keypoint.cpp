@@ -40,7 +40,7 @@ int32_t LicensePlateKeypoint::outputParse(
   std::shared_ptr<BaseTensor> out_data_tensor =
       net_->getOutputTensor(out_data_name);
 
-  printf(
+  LOGI(
       "output shape:%d,%d,%d,%d\n", out_data_info.shape[0], out_data_info.shape[1],
       out_data_info.shape[2], out_data_info.shape[3]);
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {

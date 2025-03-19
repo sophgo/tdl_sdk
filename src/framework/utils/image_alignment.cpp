@@ -685,10 +685,10 @@ Eigen::Matrix<float, 4, 1> solve_stm_no_reflection(const float *src_pts,
 int tdl_get_similarity_transform_matrix(const float *src_pts_xy,
                                         const float *dst_pts_xy, int num_points,
                                         float *transform) {
-  if (num_points < 5) {
-    LOGE("get_similarity_transform_matrix num_points must be greater than 5");
-    return -1;
-  }
+  // if (num_points < 5) {
+  //   LOGE("get_similarity_transform_matrix num_points must be greater than 5");
+  //   return -1;
+  // }
   float d_0;
   // [cosθ, sinθ, tx, ty]
   Eigen::Matrix<float, 4, 1> stm =
@@ -731,6 +731,17 @@ int get_face_transform(const float *landmark_pts, const int width,
   }
 
   int ret = tdl_get_similarity_transform_matrix(landmark_pts, &refer_pts[0], 5,
+                                                transform);
+  return ret;
+}
+
+int get_license_plate_transform(const float *landmark_pts,float *transform) {
+
+  std::vector<float> refer_pts;
+
+  refer_pts = {0.0, 0.0, 96.0, 0.0, 96.0, 24.0, 0.0, 24.0};
+
+  int ret = tdl_get_similarity_transform_matrix(landmark_pts, &refer_pts[0], 4,
                                                 transform);
   return ret;
 }
@@ -855,6 +866,31 @@ int32_t tdl_face_warp_affine(const unsigned char *src_data,
 
   // tdl_warp_affine(src_data, transform, src_step, src_width, src_height,
   //                 dst_data, dst_step, dst_width, dst_height);
+
+  return 0;
+}
+
+
+int32_t tdl_license_plate_warp_affine(const unsigned char *src_data,
+                             unsigned int src_step, int src_width,
+                             int src_height, unsigned char *dst_data,
+                             unsigned int dst_step, int dst_width,
+                             int dst_height, const float *src_pts4_xy) {
+  cv::Mat src(src_height, src_width, CV_8UC3,
+              const_cast<unsigned char *>(src_data), src_step);
+  cv::Mat dst(dst_height, dst_width, CV_8UC3, dst_data, dst_step);
+
+  float transform[6];
+  int ret = get_license_plate_transform(src_pts4_xy, transform);
+  if (ret != 0) {
+    LOGE("get_face_transform failed");
+    return ret;
+  }
+  cv::Mat trans = cv::Mat::zeros(2, 3, CV_64F);
+  for (int i = 0; i < 6; i++) {
+    trans.at<double>(i) = transform[i];
+  }
+  cv::warpAffine(src, dst, trans, dst.size(), cv::INTER_LINEAR);
 
   return 0;
 }

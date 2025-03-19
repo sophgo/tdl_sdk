@@ -14,6 +14,7 @@ enum class ModelOutputType {
   CLASSIFICATION,
   ATTRIBUTE,
   SEGMENTATION,
+  OCR_INFO,
   UNKOWN
 };
 
@@ -129,6 +130,16 @@ class ModelLandmarksInfo : public ModelOutputInfo {
   std::vector<float> landmarks_y;
   std::vector<float> landmarks_score;
   std::map<TDLObjectAttributeType, float> attributes;
+};
+
+class ModelOcrInfo : public ModelOutputInfo {
+ public:
+  ~ModelOcrInfo();
+  ModelOutputType getType() const override {
+    return ModelOutputType::OCR_INFO;
+  }
+  size_t length;
+  char* text_info;
 };
 
 class ModelFeatureInfo : public ModelOutputInfo {
