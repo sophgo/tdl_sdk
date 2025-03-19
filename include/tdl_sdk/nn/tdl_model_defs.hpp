@@ -40,9 +40,8 @@ enum class ModelType {
   KEYPOINT_CLS_HAND_GESTURE,  // 0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two
 
   // sound classification models
-  SOUND_CLS_BABAY_CRY,  // 0:cry
-  SOUND_CLS_COMMAND,
-  SOUND_CLS_NI,  // 0:nihao suanneng,1:清空缓存
+  SOUND_CLS_BABAY_CRY,  // 0:background,1:cry
+  SOUND_CLS_COMMAND,     // 0:background,1:command1,2:command2 ...
 
   // image keypoint models
   KEYPOINT_LICENSE_PLATE,

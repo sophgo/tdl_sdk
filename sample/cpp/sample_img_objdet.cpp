@@ -42,7 +42,7 @@ void construct_model_id_mapping(
     std::map<std::string, ModelType> &model_id_mapping) {
   model_id_mapping["YOLOV10_COCO80"] = ModelType::YOLOV10_COCO80;
   model_id_mapping["YOLOV8N_HEAD_HARDHAT"] = ModelType::YOLOV8N_HEAD_HARDHAT;
-  model_id_mapping["ModelType::YOLOV8N_PERSON_VEHICLE"] =
+  model_id_mapping["YOLOV8N_PERSON_VEHICLE"] =
       ModelType::YOLOV8N_PERSON_VEHICLE;
   model_id_mapping["KEYPOINT_FACE_V2"] = ModelType::KEYPOINT_FACE_V2;
 }

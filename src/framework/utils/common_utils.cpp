@@ -39,3 +39,22 @@ InferencePlatform get_platform() {
   return InferencePlatform::UNKOWN;
 #endif
 }
+
+
+bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len) {
+  FILE *fp = fopen(strf.c_str(), "rb");
+  if (fp == nullptr) {
+    printf("read file failed,%s\n", strf.c_str());
+    return false;
+  }
+  fseek(fp, 0, SEEK_END);
+  int len = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  if (len != buffer_len) {
+    printf("size not equal,expect:%d,has %d\n", buffer_len, len);
+    return false;
+  }
+  fread(p_buffer, len, 1, fp);
+  fclose(fp);
+  return true;
+}

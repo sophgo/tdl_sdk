@@ -19,6 +19,7 @@
 #include "object_detection/yolov8.hpp"
 #include "segmentation/yolov8_seg.hpp"
 #include "segmentation/topformer_seg.hpp"
+#include "audio_classification/audio_classification.hpp"
 #include "utils/tdl_log.hpp"
 
 TDLModelFactory::TDLModelFactory(const std::string model_dir)
@@ -108,6 +109,10 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<TopformerSeg>(16); // Downsampling ratio
   } else if (model_type == ModelType::LANE_DETECTION_LSTR) {
     model = std::make_shared<LstrLane>();
+  } else if (model_type == ModelType::SOUND_CLS_BABAY_CRY) {
+    model = std::make_shared<AudioClassification>();
+  } else if (model_type == ModelType::SOUND_CLS_COMMAND) {
+    model = std::make_shared<AudioClassification>(std::make_pair(128, 1));
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;

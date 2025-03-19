@@ -2,16 +2,19 @@
 #include <numeric>
 #include "utils/tdl_log.hpp"
 #define SCALE_FACTOR_FOR_INT16 32768.0
-AudioClassification::AudioClassification() {
+
+AudioClassification::AudioClassification() : AudioClassification(std::make_pair(256, 0)) { }
+
+AudioClassification::AudioClassification(std::pair<int, int> sound_pair) {
   win_len_ = 1024;
   num_fft_ = 1024;
-  hop_len_ = 256;
+  hop_len_ = sound_pair.first;
   sample_rate_ = 16000;
   time_len_ = 3;  // 3 second
   num_mel_ = 40;
   fmin_ = 0;
   fmax_ = sample_rate_ / 2;
-  fix_ = 0;
+  fix_ = sound_pair.second;
 }
 
 AudioClassification::~AudioClassification() { delete mp_extractor_; }
@@ -101,10 +104,11 @@ int32_t AudioClassification::outputParse(
   std::string output_layer = net_->getOutputNames()[0];
   const TensorInfo &tinfo = net_->getTensorInfo(output_layer);
   float *output_ptr = (float *)tinfo.sys_mem;
-  int32_t index = getTopK(output_ptr, tinfo.tensor_elem);
+  float score;
+  int32_t index = getTopK(output_ptr, tinfo.tensor_elem, &score);
   std::shared_ptr<ModelClassificationInfo> output_info =
       std::make_shared<ModelClassificationInfo>();
-  output_info->topk_scores.push_back(output_ptr[index]);
+  output_info->topk_scores.push_back(score);
   output_info->topk_class_ids.push_back(index);
 
   if (type_mapping_.find(index) != type_mapping_.end()) {
@@ -114,7 +118,7 @@ int32_t AudioClassification::outputParse(
   return 0;
 }
 
-int32_t AudioClassification::getTopK(float *result, size_t count) {
+int32_t AudioClassification::getTopK(float *result, size_t count, float* score) {
   int idx = -1;
   float max_e = -10000;
   float cur_e;
@@ -133,6 +137,9 @@ int32_t AudioClassification::getTopK(float *result, size_t count) {
   float max = max_e / sum_e;
   if (idx != 0 && max < model_threshold_) {
     idx = 0;
+    *score = std::exp(result[0]) / sum_e;
+  }else{
+    *score = max;
   }
   return idx;
 }
