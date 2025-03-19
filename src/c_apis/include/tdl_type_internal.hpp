@@ -82,6 +82,8 @@ ModelType convert_model_type(cvtdl_model_e model_type) {
       return ModelType::FEATURE_BMFACER34;
     case TDL_MODEL_CLS_RGBLIVENESS:
       return ModelType::CLS_RGBLIVENESS;
+    case TDL_MODEL_LANE_DETECTION_LSTR:
+      return ModelType::LANE_DETECTION_LSTR;
   }
   return ModelType::INVALID;
 }

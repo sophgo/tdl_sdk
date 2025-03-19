@@ -10,8 +10,6 @@ int get_fd_model_info(char *model_name, cvtdl_model_e *model_index) {
   int ret = 0;
   if (strcmp(model_name, "YOLOV8_COCO80") == 0) {
     *model_index = TDL_MODEL_SEG_YOLOV8_COCO80;
-  } else if (strcmp(model_name, "FACE_VEHICLE") == 0) {
-    *model_index = TDL_MODEL_SEG_PERSON_FACE_VEHICLE;
   } else {
     ret = -1;
   }

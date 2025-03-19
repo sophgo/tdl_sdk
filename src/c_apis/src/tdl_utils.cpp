@@ -144,6 +144,8 @@ int32_t CVI_TDL_InitLaneMeta(cvtdl_lane_t *lane_meta, int output_size){
   lane_meta->lane = (cvtdl_lane_point_t *)malloc(
       output_size * sizeof(cvtdl_lane_point_t));
   memset(lane_meta->lane, 0, output_size * sizeof(cvtdl_lane_point_t));
+
+  lane_meta->size = output_size;
   return 0;
 }
 

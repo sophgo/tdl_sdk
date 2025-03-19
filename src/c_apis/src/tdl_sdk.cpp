@@ -523,10 +523,10 @@ int32_t CVI_TDL_LaneDetection(cvtdl_handle_t handle,
   if (output->getType() == ModelOutputType::OBJECT_LANDMARKS) {
     ModelBoxLandmarkInfo *lane_output = (ModelBoxLandmarkInfo *)output.get();
 
+    CVI_TDL_InitLaneMeta(lane_meta, lane_output->box_landmarks.size());
     lane_meta->width = lane_output->image_width;
     lane_meta->height = lane_output->image_height;
 
-    CVI_TDL_InitLaneMeta(lane_meta, lane_output->box_landmarks.size());
     for (size_t j = 0; j < lane_output->box_landmarks.size(); j++) {
       for (int k = 0; k < 2; k++) {
         lane_meta->lane[j].x[k] = lane_output->box_landmarks[j].landmarks_x[k];
