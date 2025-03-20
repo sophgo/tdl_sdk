@@ -8,9 +8,7 @@
 
 int get_fd_model_info(char *model_name, cvtdl_model_e *model_index) {
   int ret = 0;
-  if (strcmp(model_name, "YOLOV8_COCO80") == 0) {
-    *model_index = TDL_MODEL_SEG_YOLOV8_COCO80;
-  } else if (strcmp(model_name, "FACE_VEHICLE") == 0) {
+  if (strcmp(model_name, "FACE_VEHICLE") == 0) {
     *model_index = TDL_MODEL_SEG_PERSON_FACE_VEHICLE;
   } else {
     ret = -1;
@@ -52,34 +50,24 @@ int main(int argc, char *argv[]) {
     goto exit1;
   }
 
-  cvtdl_instance_seg_t inst_seg_meta = {0};
-  ret = CVI_TDL_InstanceSegmentation(tdl_handle, enOdModelId, image, &inst_seg_meta);
+  cvtdl_seg_t seg_meta = {0};
+  ret = CVI_TDL_SemanticSegmentation(tdl_handle, enOdModelId, image, &seg_meta);
   if (ret != 0) {
     printf("CVI_TDL_InstanceSegmentation failed with %#x!\n", ret);
   } else {
-    if (inst_seg_meta.size <= 0) {
-      printf("None to Segmentation\n");
-    } else {
-        for (int i = 0; i < inst_seg_meta.size; i++) {
-            printf("inst_seg_meta_index : %d, ", i);
-            printf("box [x1, x2, y1, y2] : %f %f %f %f, ",
-              inst_seg_meta.info[i].obj_info->box.x1,
-              inst_seg_meta.info[i].obj_info->box.x2,
-              inst_seg_meta.info[i].obj_info->box.y1,
-              inst_seg_meta.info[i].obj_info->box.y2);
-            printf("class : %d, ", inst_seg_meta.info[i].obj_info->class_id);
-            printf("score : %f\n", inst_seg_meta.info[i].obj_info->score);
-            printf("points=[");
-            for (int j = 0; j < inst_seg_meta.info[i].mask_point_size; j++) {
-                printf("(%f,%f),", inst_seg_meta.info[i].mask_point[2 * j],
-                  inst_seg_meta.info[i].mask_point[2 * j + 1]);
-              }
-              printf("]\n");
+    printf("height : %d, ", seg_meta.height);
+    printf("width : %d, ", seg_meta.width);
+    printf("output_height : %d, ", seg_meta.output_height);
+    printf("output_width : %d\n", seg_meta.output_width);
+    for (int x = 0; x < seg_meta.output_height; x ++) {
+        for (int y = 0; y < seg_meta.output_width; y ++) {
+            printf("%d ", (int)seg_meta.class_id[x * seg_meta.output_width + y]);
         }
+        printf("\n");
     }
   }
 
-  CVI_TDL_ReleaseInstanceSegMeta(&inst_seg_meta);
+  CVI_TDL_ReleaseSemanticSegMeta(&seg_meta);
   CVI_TDL_DestroyImage(image);
 
 exit1:

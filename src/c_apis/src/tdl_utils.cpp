@@ -41,7 +41,7 @@ int32_t CVI_TDL_InitInstanceSegMeta(cvtdl_instance_seg_t *inst_seg_meta, int num
     memset(inst_seg_meta->info, 0, num_objects * sizeof(cvtdl_instance_seg_info_t));
 
     for (int i = 0; i < num_objects; i++) {
-      inst_seg_meta->info[i].mask = (uint8_t *)malloc(mask_size * sizeof(uint8_t));
+      inst_seg_meta->info[i].mask = NULL;
       inst_seg_meta->info[i].mask_point = NULL;
       inst_seg_meta->info[i].mask_point_size = 0;
       inst_seg_meta->info[i].obj_info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t));
@@ -55,7 +55,7 @@ int32_t CVI_TDL_InitInstanceSegMeta(cvtdl_instance_seg_t *inst_seg_meta, int num
     return 0;
 }
 
-int32_t CVI_TDL_ReleaseInstanceSegMeta(cvtdl_instance_seg_t *inst_seg_meta) { 
+int32_t CVI_TDL_ReleaseInstanceSegMeta(cvtdl_instance_seg_t *inst_seg_meta) {
   for (int i = 0; i < inst_seg_meta->size; i++) {
     if (inst_seg_meta->info[i].obj_info) {
       free(inst_seg_meta->info[i].obj_info);
@@ -70,6 +70,7 @@ int32_t CVI_TDL_ReleaseInstanceSegMeta(cvtdl_instance_seg_t *inst_seg_meta) {
       inst_seg_meta->info[i].mask_point = NULL;
     }
   }
+
   free(inst_seg_meta->info);
   return 0;
 }
@@ -116,24 +117,25 @@ int32_t CVI_TDL_ReleaseKeypointMeta(cvtdl_keypoint_t *keypoint_meta) {
 }
 
 int32_t CVI_TDL_InitSemanticSegMeta(cvtdl_seg_t *seg_meta, int output_size){
-    seg_meta->class_id = (uint8_t *)malloc(output_size * sizeof(uint8_t));
-    seg_meta->class_conf = (uint8_t *)malloc(output_size * sizeof(uint8_t));
-    seg_meta->width = 0;
-    seg_meta->height = 0;
-    seg_meta->output_width = 0;
-    seg_meta->output_height = 0;
-    return 0;
+  seg_meta->class_id = NULL;
+  seg_meta->class_conf = NULL;
+  seg_meta->width = 0;
+  seg_meta->height = 0;
+  seg_meta->output_width = 0;
+  seg_meta->output_height = 0;
+  return 0;
 }
 
 int32_t CVI_TDL_ReleaseSemanticSegMeta(cvtdl_seg_t *seg_meta) {
   if (seg_meta->class_id) {
-      free(seg_meta->class_id);
-      seg_meta->class_id = NULL;
+    free(seg_meta->class_id);
+    seg_meta->class_id = NULL;
   }
   if (seg_meta->class_conf) {
-      free(seg_meta->class_conf);
-      seg_meta->class_conf = NULL;
+    free(seg_meta->class_conf);
+    seg_meta->class_conf = NULL;
   }
+
   return 0;
 }
 
@@ -141,7 +143,7 @@ int32_t CVI_TDL_InitLaneMeta(cvtdl_lane_t *lane_meta, int output_size){
   if (lane_meta->lane) return 0;
   lane_meta->lane = (cvtdl_lane_point_t *)malloc(
       output_size * sizeof(cvtdl_lane_point_t));
-  memset(lane_meta->lane, 0, output_size * sizeof(cvtdl_lane_point_t));      
+  memset(lane_meta->lane, 0, output_size * sizeof(cvtdl_lane_point_t));
   return 0;
 }
 

@@ -402,8 +402,14 @@ int32_t CVI_TDL_SemanticSegmentation(cvtdl_handle_t handle,
     seg_meta->width = segmentation_output->image_width;
     seg_meta->output_width = segmentation_output->output_width;
     seg_meta->output_height = segmentation_output->output_height;
-    seg_meta->class_id = segmentation_output->class_id;
-    seg_meta->class_conf = segmentation_output->class_conf;
+    if (segmentation_output->class_id != nullptr) {
+      seg_meta->class_id = segmentation_output->class_id;
+      segmentation_output->class_id = nullptr;
+    }
+    if (segmentation_output->class_conf != nullptr) {
+      seg_meta->class_conf = segmentation_output->class_conf;
+      segmentation_output->class_conf = nullptr;
+    }
   } else {
     LOGW("Unsupported model output type: %d", output->getType());
     return -1;
@@ -429,7 +435,7 @@ int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle,
   }
 
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
-  if (output->getType() ==
+  if (output->getType() !=
       ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION) {
     LOGE("Unsupported model output type: %d", output->getType());
     return -1;
@@ -451,13 +457,16 @@ int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle,
     inst_seg_meta->info[i].obj_info->box.y2 = instance_seg_output->box_seg[i].y2;
     inst_seg_meta->info[i].obj_info->class_id = instance_seg_output->box_seg[i].class_id;
     inst_seg_meta->info[i].obj_info->score = instance_seg_output->box_seg[i].score;
-    inst_seg_meta->info[i].mask = instance_seg_output->box_seg[i].mask;
-    inst_seg_meta->info[i].mask_point_size = instance_seg_output->box_seg[i].mask_point_size;
-    inst_seg_meta->info[i].mask_point =
-        (float *)malloc( 2 * inst_seg_meta->info[i].mask_point_size * sizeof(float));
-    inst_seg_meta->info[i].mask_point = instance_seg_output->box_seg[i].mask_point;
+    if (instance_seg_output->box_seg[i].mask != nullptr) {
+      inst_seg_meta->info[i].mask = instance_seg_output->box_seg[i].mask;
+      instance_seg_output->box_seg[i].mask = nullptr;
+    }
+    if (inst_seg_meta->info[i].mask_point_size > 0) {
+      inst_seg_meta->info[i].mask_point_size = instance_seg_output->box_seg[i].mask_point_size;
+      inst_seg_meta->info[i].mask_point = instance_seg_output->box_seg[i].mask_point;
+      instance_seg_output->box_seg[i].mask_point = nullptr;
+    }
   }
-
   return 0;
 }
 

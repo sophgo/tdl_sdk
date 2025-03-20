@@ -77,12 +77,12 @@ class ObjectBoxSegmentationInfo {
       mask_point_size(0) {}
   ~ObjectBoxSegmentationInfo() {
       if (mask != nullptr) {
-          delete[] mask;          
-          mask = nullptr;         
+          free(mask);
+          mask = nullptr;
       }
       if (mask_point != nullptr) {
-          delete[] mask_point;   
-          mask_point = nullptr;   
+          free(mask_point);
+          mask_point = nullptr;
       }
   }
   int32_t class_id;
@@ -196,11 +196,11 @@ class ModelSegmentationInfo : public ModelOutputInfo {
         
   ~ModelSegmentationInfo() {
     if (class_id != nullptr) {
-      delete[] class_id;
+      free(class_id);
       class_id = nullptr;
     }
     if (class_conf != nullptr) {
-      delete[] class_conf;
+      free(class_conf);
       class_conf = nullptr;
     }
   }

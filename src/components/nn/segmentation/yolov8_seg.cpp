@@ -389,19 +389,18 @@ int32_t YoloV8Segmentation::outputParse(
       int y1 = static_cast<int>(round(obj_seg->box_seg[i].y1 / proto_stride));
       int y2 = static_cast<int>(round(obj_seg->box_seg[i].y2 / proto_stride));
       if (obj_seg->box_seg[i].mask != nullptr) {
-          delete[] obj_seg->box_seg[i].mask; 
+          free(obj_seg->box_seg[i].mask); 
       }
-      obj_seg->box_seg[i].mask = new uint8_t[proto_hw]; 
+      obj_seg->box_seg[i].mask = (uint8_t*)malloc(proto_hw * sizeof(uint8_t)); 
       if (obj_seg->box_seg[i].mask == nullptr) {
           LOGE("Failed to allocate memory for mask_property\n");
       }
-      obj_seg->box_seg[i].mask = new uint8_t[proto_hw]; 
       memset(obj_seg->box_seg[i].mask, 0, proto_hw * sizeof(uint8_t));
       for (int j = y1; j < y2; ++j) {
         for (int k = x1; k < x2; ++k) {
           if (1 / (1 + exp(-masks_output(i, j * proto_w + k))) >= 0.5) {
             obj_seg->box_seg[i].mask[j * proto_w + k] = 255;
-          }else{
+          } else {
             obj_seg->box_seg[i].mask[j * proto_w + k] = 0;
           }
         }
