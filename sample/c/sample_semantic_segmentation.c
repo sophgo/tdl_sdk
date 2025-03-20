@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
     printf("Usage: %s <model name> <model name> <model path> <input image path>\n", argv[0]);
     printf(
       "model name: model name should be one of {"
-      "YOLOV8_COCO80, "
       "FACE_VEHICLE.}\n");
     printf("model path: Path to instance seg model.\n");
     printf("input image path: Path to input image.\n");

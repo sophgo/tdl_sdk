@@ -182,6 +182,8 @@ int32_t TDL_FaceDetection(tdl_handle_t handle,
     for (size_t i = 0; i < box_landmark_output->box_landmarks.size(); i++) {
       face_meta->info[i].box.x1 = box_landmark_output->box_landmarks[i].x1;
       face_meta->info[i].box.y1 = box_landmark_output->box_landmarks[i].y1;
+      face_meta->info[i].box.x2 = box_landmark_output->box_landmarks[i].x2;
+      face_meta->info[i].box.y2 = box_landmark_output->box_landmarks[i].y2;
       face_meta->width = box_landmark_output->box_landmarks[i].x2 -
                          box_landmark_output->box_landmarks[i].x1;
       face_meta->height = box_landmark_output->box_landmarks[i].y2 -
@@ -204,6 +206,8 @@ int32_t TDL_FaceDetection(tdl_handle_t handle,
     for (size_t i = 0; i < object_detection_output->bboxes.size(); i++) {
       face_meta->info[i].box.x1 = object_detection_output->bboxes[i].x1;
       face_meta->info[i].box.y1 = object_detection_output->bboxes[i].y1;
+      face_meta->info[i].box.x2 = object_detection_output->bboxes[i].x2;
+      face_meta->info[i].box.y2 = object_detection_output->bboxes[i].y2;
       face_meta->width = object_detection_output->bboxes[i].x2 -
                          object_detection_output->bboxes[i].x1;
       face_meta->height = object_detection_output->bboxes[i].y2 -
@@ -425,6 +429,7 @@ int32_t TDL_InstanceSegmentation(tdl_handle_t handle,
   if (model == nullptr) {
     return -1;
   }
+
   std::vector<std::shared_ptr<BaseImage>> images;
   tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
   images.push_back(image_context->image);
@@ -440,8 +445,9 @@ int32_t TDL_InstanceSegmentation(tdl_handle_t handle,
     LOGE("Unsupported model output type: %d", output->getType());
     return -1;
   }
+
   ModelBoxSegmentationInfo *instance_seg_output =
-      (ModelBoxSegmentationInfo *)output.get();
+    (ModelBoxSegmentationInfo *)output.get();
   TDL_InitInstanceSegMeta(
       inst_seg_meta,
       instance_seg_output->box_seg.size(),
@@ -450,6 +456,7 @@ int32_t TDL_InstanceSegmentation(tdl_handle_t handle,
   inst_seg_meta->height = instance_seg_output->image_height;
   inst_seg_meta->mask_width = instance_seg_output->mask_width;
   inst_seg_meta->mask_height = instance_seg_output->mask_height;
+
   for (int i = 0; i < instance_seg_output->box_seg.size(); i++) {
     inst_seg_meta->info[i].obj_info->box.x1 = instance_seg_output->box_seg[i].x1;
     inst_seg_meta->info[i].obj_info->box.y1 = instance_seg_output->box_seg[i].y1;
@@ -457,11 +464,60 @@ int32_t TDL_InstanceSegmentation(tdl_handle_t handle,
     inst_seg_meta->info[i].obj_info->box.y2 = instance_seg_output->box_seg[i].y2;
     inst_seg_meta->info[i].obj_info->class_id = instance_seg_output->box_seg[i].class_id;
     inst_seg_meta->info[i].obj_info->score = instance_seg_output->box_seg[i].score;
+
+    cv::Mat src(instance_seg_output->mask_height, instance_seg_output->mask_width, CV_8UC1, instance_seg_output->box_seg[i].mask,
+                instance_seg_output->mask_width * sizeof(uint8_t));
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+    cv::findContours(src, contours, hierarchy, cv::RETR_TREE,
+                     cv::CHAIN_APPROX_SIMPLE);
+
+    // find the longest contour
+    int longest_index = -1;
+    size_t max_length = 0;
+    for (size_t i = 0; i < contours.size(); i++) {
+      if (contours[i].size() > max_length) {
+        max_length = contours[i].size();
+        longest_index = i;
+      }
+    }
+
+    if (longest_index >= 0 && max_length >= 1) {
+      float ratio_height = (instance_seg_output->mask_height / static_cast<float>(inst_seg_meta->height));
+      float ratio_width = (instance_seg_output->mask_width / static_cast<float>(inst_seg_meta->width));
+      int source_y_offset, source_x_offset;
+      if (ratio_height > ratio_width) {
+        source_x_offset = 0;
+        source_y_offset = (instance_seg_output->mask_height - inst_seg_meta->height * ratio_width) / 2;
+      } else {
+        source_x_offset = (instance_seg_output->mask_width - inst_seg_meta->width * ratio_height) / 2;
+        source_y_offset = 0;
+      }
+      int source_region_height = instance_seg_output->mask_height - 2 * source_y_offset;
+      int source_region_width = instance_seg_output->mask_width - 2 * source_x_offset;
+      // calculate scaling factor
+      float height_scale = static_cast<float>(inst_seg_meta->height) /
+                           static_cast<float>(source_region_height);
+      float width_scale = static_cast<float>(inst_seg_meta->width) /
+                          static_cast<float>(source_region_width);
+      instance_seg_output->box_seg[i].mask_point_size = max_length;
+      instance_seg_output->box_seg[i].mask_point =
+          new float[2 * max_length * sizeof(float)];
+      size_t j = 0;
+      for (const auto &point : contours[longest_index]) {
+        instance_seg_output->box_seg[i].mask_point[2 * j] =
+            (point.x - source_x_offset) * width_scale;
+        instance_seg_output->box_seg[i].mask_point[2 * j + 1] =
+            (point.y - source_y_offset) * height_scale;
+        j++;
+      }
+    }
+
     if (instance_seg_output->box_seg[i].mask != nullptr) {
       inst_seg_meta->info[i].mask = instance_seg_output->box_seg[i].mask;
       instance_seg_output->box_seg[i].mask = nullptr;
     }
-    if (inst_seg_meta->info[i].mask_point_size > 0) {
+    if (instance_seg_output->box_seg[i].mask_point_size > 0) {
       inst_seg_meta->info[i].mask_point_size = instance_seg_output->box_seg[i].mask_point_size;
       inst_seg_meta->info[i].mask_point = instance_seg_output->box_seg[i].mask_point;
       instance_seg_output->box_seg[i].mask_point = nullptr;

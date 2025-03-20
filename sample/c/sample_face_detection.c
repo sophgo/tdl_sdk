@@ -5,6 +5,7 @@
 
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
+#include "meta_visualize.h"
 
 int get_model_info(char *model_name, tdl_model_e *model_index) {
   int ret = 0;
@@ -21,8 +22,8 @@ int get_model_info(char *model_name, tdl_model_e *model_index) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf("Usage: %s <model name> <model path> <input image path>\n", argv[0]);
+  if (argc != 5) {
+    printf("Usage: %s <model name> <model path> <input image path> <output image path>\n", argv[0]);
     printf(
         "model name: face detection model name should be one of {scrfdface, "
         "retinaface, "
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
         "face_mask}.\n");
     printf("model path: Path to cvimodel.\n");
     printf("input image path: Path to input image.\n");
+    printf("output image path: Path to output image.\n");
     return -1;
   }
   int ret = 0;
@@ -59,12 +61,19 @@ int main(int argc, char *argv[]) {
   if (ret != 0) {
     printf("face detection failed with %#x!\n", ret);
   } else {
+    box_t boxes[obj_meta.size];
     printf("boxes=[");
     for (uint32_t i = 0; i < obj_meta.size; i++) {
-      printf("[%f,%f,%f,%f],", obj_meta.info[i].box.x1, obj_meta.info[i].box.y1,
-             obj_meta.info[i].box.x2, obj_meta.info[i].box.y2);
+      printf("[x1:%f, y1:%f, x2:%f, y2:%f], score:%f, ", obj_meta.info[i].box.x1,
+             obj_meta.info[i].box.y1, obj_meta.info[i].box.x2, obj_meta.info[i].box.y2,
+             obj_meta.info[i].score);
+      boxes[i].x1 = obj_meta.info[i].box.x1;
+      boxes[i].y1 = obj_meta.info[i].box.y1;
+      boxes[i].x2 = obj_meta.info[i].box.x2;
+      boxes[i].y2 = obj_meta.info[i].box.y2;
     }
     printf("]\n");
+    TDL_VisualizeRectangle(boxes, obj_meta.size, argv[3], argv[4]);
   }
 
   TDL_ReleaseFaceMeta(&obj_meta);

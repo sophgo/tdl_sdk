@@ -5,6 +5,7 @@
 
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
+#include "meta_visualize.h"
 
 int get_model_info(char *model_name, tdl_model_e *model_index) {
   int ret = 0;
@@ -21,14 +22,15 @@ int get_model_info(char *model_name, tdl_model_e *model_index) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf("Usage: %s <model name> <model path> <input image path>\n", argv[0]);
+  if (argc != 5) {
+    printf("Usage: %s <model name> <model path> <input image path> <output image path>\n", argv[0]);
     printf(
       "model name: model name should be one of {"
       "HAND, "
       "LICENSE_PLATE.}\n");
     printf("model path: Path to keypoint model.\n");
     printf("input image path: Path to input image.\n");
+    printf("output image path: Path to output image.\n");
     return -1;
   }
   int ret = 0;
@@ -62,12 +64,16 @@ int main(int argc, char *argv[]) {
     if (obj_meta.size <= 0) {
       printf("None to detection\n");
     } else {
+      point_t point[obj_meta.size];
       for (int i = 0; i < obj_meta.size; i++) {
         printf("obj_meta id : %d, ", i);
         printf("[x, y, score] : %f, %f, %f\n", obj_meta.info[i].x * obj_meta.width,
                                                obj_meta.info[i].y * obj_meta.height,
                                                obj_meta.info[i].score);
+        point[i].x = obj_meta.info[i].x * obj_meta.width;
+        point[i].y = obj_meta.info[i].y * obj_meta.height;
       }
+      TDL_VisualizePoint(point, obj_meta.size, argv[3], argv[4]);
     }
   }
 

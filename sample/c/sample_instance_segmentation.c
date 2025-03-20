@@ -5,6 +5,7 @@
 
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
+#include "meta_visualize.h"
 
 int get_model_info(char *model_name, tdl_model_e *model_index) {
   int ret = 0;
@@ -17,13 +18,14 @@ int get_model_info(char *model_name, tdl_model_e *model_index) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf("Usage: %s <model name> <model name> <model path> <input image path>\n", argv[0]);
+  if (argc != 5) {
+    printf("Usage: %s <model name> <model path> <input image path> <output image path>\n", argv[0]);
     printf(
       "model name: model name should be one of {"
       "YOLOV8_COCO80.}\n");
     printf("model path: Path to instance seg model.\n");
     printf("input image path: Path to input image.\n");
+    printf("output image path: Path to output image.\n");
     return -1;
   }
   int ret = 0;
@@ -59,19 +61,29 @@ int main(int argc, char *argv[]) {
     } else {
         for (int i = 0; i < inst_seg_meta.size; i++) {
             printf("inst_seg_meta_index : %d, ", i);
-            printf("box [x1, x2, y1, y2] : %f %f %f %f, ",
+            printf("box [x1, y1, x2, y2] : %f %f %f %f, ",
               inst_seg_meta.info[i].obj_info->box.x1,
-              inst_seg_meta.info[i].obj_info->box.x2,
               inst_seg_meta.info[i].obj_info->box.y1,
+              inst_seg_meta.info[i].obj_info->box.x2,
               inst_seg_meta.info[i].obj_info->box.y2);
             printf("class : %d, ", inst_seg_meta.info[i].obj_info->class_id);
             printf("score : %f\n", inst_seg_meta.info[i].obj_info->score);
             printf("points=[");
+            point_t point[inst_seg_meta.info[i].mask_point_size];
             for (int j = 0; j < inst_seg_meta.info[i].mask_point_size; j++) {
-                printf("(%f,%f),", inst_seg_meta.info[i].mask_point[2 * j],
-                  inst_seg_meta.info[i].mask_point[2 * j + 1]);
-              }
-              printf("]\n");
+              printf("(%f,%f),", inst_seg_meta.info[i].mask_point[2 * j],
+                inst_seg_meta.info[i].mask_point[2 * j + 1]);
+              point[j].x = inst_seg_meta.info[i].mask_point[2 * j];
+              point[j].y = inst_seg_meta.info[i].mask_point[2 * j + 1];
+            }
+            printf("]\n");
+            if (i == 0) {
+              TDL_VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
+                                         argv[3], argv[4]);
+            } else {
+              TDL_VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
+                                         argv[4], argv[4]);
+            }
         }
     }
   }

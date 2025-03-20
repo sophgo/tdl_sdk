@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
   tdl_class_info_t obj_info = {0};
 
   ret = TDL_Classfification(tdl_handle, enOdModelId, image, &obj_info);
+
   if (ret != 0) {
     printf("TDL_Classfification failed with %#x!\n", ret);
   } else {
