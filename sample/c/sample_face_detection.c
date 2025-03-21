@@ -9,11 +9,11 @@
 int get_fd_model_info(char *model_name, cvtdl_model_e *model_index) {
   int ret = 0;
   if (strcmp(model_name, "scrfdface") == 0) {
-    *model_index = TDL_MODEL_SCRFD_FACE;
+    *model_index = TDL_MODEL_SCRFD_DET_FACE;
   } else if (strcmp(model_name, "retinaface") == 0) {
-    *model_index = TDL_MODEL_RETINA_FACE;
+    *model_index = TDL_MODEL_RETINA_DET_FACE;
   } else if (strcmp(model_name, "retinaface_ir") == 0) {
-    *model_index = TDL_MODEL_RETINA_FACE_IR;
+    *model_index = TDL_MODEL_RETINA_DET_FACE_IR;
   } else {
     ret = -1;
   }

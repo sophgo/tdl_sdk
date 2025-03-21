@@ -107,14 +107,14 @@ int main(int argc, char **argv) {
   TDLModelFactory model_factory;
 
   std::shared_ptr<BaseModel> model_hd = model_factory.getModel(
-      ModelType::MBV2_PERSON, hd_model_path);
+      ModelType::MBV2_DET_PERSON, hd_model_path);
   if (!model_hd) {
     printf("Failed to create model_hd\n");
     return -1;
   }
 
   std::shared_ptr<BaseModel> model_hk = model_factory.getModel(
-      ModelType::KEYPOINT_SIMCC, hk_model_path);
+      ModelType::KEYPOINT_SIMCC_PERSON17, hk_model_path);
   if (!model_hk) {
     printf("Failed to create model_hk\n");
     return -1;

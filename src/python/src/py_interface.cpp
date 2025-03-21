@@ -67,15 +67,15 @@ PYBIND11_MODULE(tdl, m) {
   // 神经网络模块
   py::module nn = m.def_submodule("nn", "Neural network algorithms module");
   py::enum_<ModelType>(nn, "ModelType")
-      .value("FD_SCRFD", ModelType::SCRFD_FACE)
-      .value("YOLOV8N_PERSON_VEHICLE", ModelType::YOLOV8N_PERSON_VEHICLE)
-      .value("YOLOV8N_HEAD_HARDHAT", ModelType::YOLOV8N_HEAD_HARDHAT)
-      .value("YOLOV10_COCO80", ModelType::YOLOV10_COCO80)
-      .value("YOLOV6_COCO80", ModelType::YOLOV6_COCO80)
-      .value("SEG_YOLOV8_COCO80", ModelType::SEG_YOLOV8_COCO80)
-      .value("YOLOV8_POSE_PERSON17", ModelType::YOLOV8_POSE_PERSON17)
-      .value("IMG_FEATURE_CLIP", ModelType::IMG_FEATURE_CLIP)
-      .value("TEXT_FEATURE_CLIP", ModelType::TEXT_FEATURE_CLIP)
+      .value("FD_SCRFD", ModelType::SCRFD_DET_FACE)
+      .value("YOLOV8N_DET_PERSON_VEHICLE", ModelType::YOLOV8N_DET_PERSON_VEHICLE)
+      .value("YOLOV8N_DET_HEAD_HARDHAT", ModelType::YOLOV8N_DET_HEAD_HARDHAT)
+      .value("YOLOV10_DET_COCO80", ModelType::YOLOV10_DET_COCO80)
+      .value("YOLOV6_DET_COCO80", ModelType::YOLOV6_DET_COCO80)
+      .value("YOLOV8_SEG_COCO80", ModelType::YOLOV8_SEG_COCO80)
+      .value("KEYPOINT_YOLOV8POSE_PERSON17", ModelType::KEYPOINT_YOLOV8POSE_PERSON17)
+      .value("CLIP_FEATURE_IMG", ModelType::CLIP_FEATURE_IMG)
+      .value("CLIP_FEATURE_TEXT", ModelType::CLIP_FEATURE_TEXT)
       .export_values();
   py::class_<PyObejectDetector>(nn, "ObjectDetector")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),

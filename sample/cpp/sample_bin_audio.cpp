@@ -6,8 +6,8 @@
 
 void construct_model_id_mapping(
     std::map<std::string, ModelType> &model_id_mapping) {
-  model_id_mapping["SOUND_CLS_COMMAND"] = ModelType::SOUND_CLS_COMMAND;
-  model_id_mapping["SOUND_CLS_BABAY_CRY"] = ModelType::SOUND_CLS_BABAY_CRY;
+  model_id_mapping["CLS_SOUND_COMMAND"] = ModelType::CLS_SOUND_COMMAND;
+  model_id_mapping["CLS_SOUND_BABAY_CRY"] = ModelType::CLS_SOUND_BABAY_CRY;
 }
 
 
@@ -74,5 +74,5 @@ std::string model_id_name = argv[1];
 
 
 
-// ./sample_bin_audio SOUND_CLS_COMMAND nihaoshiyun_cnn10_126_40_INT8_cv181x.cvimodel xxx.bin 8000 2
-// ./sample_bin_audio SOUND_CLS_BABAY_CRY baby_cry_cnn10_188_40_INT8_cv181x.cvimodel xxx.bin 16000 3
+// ./sample_bin_audio CLS_SOUND_COMMAND nihaoshiyun_cnn10_126_40_INT8_cv181x.cvimodel xxx.bin 8000 2
+// ./sample_bin_audio CLS_SOUND_BABAY_CRY baby_cry_cnn10_188_40_INT8_cv181x.cvimodel xxx.bin 16000 3

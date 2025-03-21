@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
   TDLModelFactory model_factory;
 
   std::shared_ptr<BaseModel> model_hd = model_factory.getModel(
-      ModelType::YOLOV8N_LICENSE_PLATE, hd_model_path);
+      ModelType::YOLOV8N_DET_LICENSE_PLATE, hd_model_path);
   if (!model_hd) {
     printf("Failed to create model_hd\n");
     return -1;
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   }
 
   std::shared_ptr<BaseModel> model_hr = model_factory.getModel(
-      ModelType::LICENSE_PLATE_RECOGNITION, hr_model_path);
+      ModelType::RECOGNITION_LICENSE_PLATE, hr_model_path);
   if (!model_hr) {
     printf("Failed to create model_hr\n");
     return -1;

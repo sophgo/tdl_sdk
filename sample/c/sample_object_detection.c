@@ -8,12 +8,12 @@
 
 int get_fd_model_info(char *model_name, cvtdl_model_e *model_index) {
   int ret = 0;
-  if (strcmp(model_name, "YOLOV10_COCO80") == 0) {
-    *model_index = TDL_MODEL_SCRFD_FACE;
-  } else if (strcmp(model_name, "YOLOV8N_HEAD_HARDHAT") == 0) {
-    *model_index = TDL_MODEL_YOLOV8N_HEAD_HARDHAT;
-  } else if (strcmp(model_name, "YOLOV8N_PERSON_VEHICLE") == 0) {
-    *model_index = TDL_MODEL_YOLOV8N_PERSON_VEHICLE;
+  if (strcmp(model_name, "YOLOV10_DET_COCO80") == 0) {
+    *model_index = TDL_MODEL_SCRFD_DET_FACE;
+  } else if (strcmp(model_name, "YOLOV8N_DET_HEAD_HARDHAT") == 0) {
+    *model_index = TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT;
+  } else if (strcmp(model_name, "YOLOV8N_DET_PERSON_VEHICLE") == 0) {
+    *model_index = TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE;
   } else if (strcmp(model_name, "KEYPOINT_FACE_V2") == 0) {
     *model_index = TDL_MODEL_KEYPOINT_FACE_V2;
   } else {
@@ -27,9 +27,9 @@ int main(int argc, char *argv[]) {
     printf("Usage: %s <model name> <model path> <input image path>\n", argv[0]);
     printf(
         "model name: obj detection model name should be one of {"
-        "YOLOV10_COCO80, "
-        "YOLOV8N_HEAD_HARDHAT, "
-        "YOLOV8N_PERSON_VEHICLE, "
+        "YOLOV10_DET_COCO80, "
+        "YOLOV8N_DET_HEAD_HARDHAT, "
+        "YOLOV8N_DET_PERSON_VEHICLE, "
         "KEYPOINT_FACE_V2}.\n");
     printf("model path: Path to cvimodel.\n");
     printf("input image path: Path to input image.\n");

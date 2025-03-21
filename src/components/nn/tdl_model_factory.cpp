@@ -28,17 +28,17 @@ TDLModelFactory::TDLModelFactory(const std::string model_dir)
 #if defined(__BM168X__) || defined(__CV186X__)
   str_ext = ".bmodel";
 #endif
-  setModelPath(ModelType::SCRFD_FACE,
+  setModelPath(ModelType::SCRFD_DET_FACE,
                model_dir_ + "scrfd_500m_bnkps_432_768" + str_ext);
-  setModelPath(ModelType::YOLOV8N_PERSON_VEHICLE,
+  setModelPath(ModelType::YOLOV8N_DET_PERSON_VEHICLE,
                model_dir_ + "yolov8n_384_640_person_vehicle" + str_ext);
   setModelPath(ModelType::KEYPOINT_FACE_V2,
                model_dir_ + "pipnet_mbv1_at_50ep_v8" + str_ext);
   setModelPath(ModelType::FEATURE_BMFACER34,
                model_dir_ + "bmface_r34" + str_ext);
-  setModelPath(ModelType::YOLOV8N_HEAD_HARDHAT,
+  setModelPath(ModelType::YOLOV8N_DET_HEAD_HARDHAT,
                model_dir_ + "hardhat_detection" + str_ext);
-  setModelPath(ModelType::ATTRIBUTE_FACE,
+  setModelPath(ModelType::CLS_ATTRIBUTE_FACE,
                model_dir_ + "face_attribute_cls" + str_ext);
   setModelPath(ModelType::CLS_RGBLIVENESS,
                model_dir_ + "face_anti_spoof_classification" + str_ext);
@@ -62,56 +62,56 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   (void)device_id;
   // 先创建模型实例
   std::map<int, TDLObjectType> model_type_mapping;
-  if (model_type == ModelType::SCRFD_FACE) {
+  if (model_type == ModelType::SCRFD_DET_FACE) {
     model = std::make_shared<SCRFD>();
-  } else if (model_type == ModelType::YOLOV8N_PERSON_VEHICLE) {
+  } else if (model_type == ModelType::YOLOV8N_DET_PERSON_VEHICLE) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 7));
-  } else if (model_type == ModelType::YOLOV8N_LICENSE_PLATE) {
+  } else if (model_type == ModelType::YOLOV8N_DET_LICENSE_PLATE) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 1));
-  } else if (model_type == ModelType::YOLOV8N_HAND) {
+  } else if (model_type == ModelType::YOLOV8N_DET_HAND) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 1));
-  } else if (model_type == ModelType::YOLOV8N_HEAD_HARDHAT) {
+  } else if (model_type == ModelType::YOLOV8N_DET_HEAD_HARDHAT) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 2));
-  } else if (model_type == ModelType::YOLOV10_COCO80) {
+  } else if (model_type == ModelType::YOLOV10_DET_COCO80) {
     model = std::make_shared<YoloV10Detection>(std::make_pair(64, 80));
-  } else if (model_type == ModelType::YOLOV6_COCO80) {
+  } else if (model_type == ModelType::YOLOV6_DET_COCO80) {
     model = std::make_shared<YoloV6Detection>(std::make_pair(4, 80));
-  } else if (model_type == ModelType::MBV2_PERSON) {
+  } else if (model_type == ModelType::MBV2_DET_PERSON) {
     model = std::make_shared<MobileDetV2Detection>(
         MobileDetV2Detection::Category::pedestrian, 0.5);
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_PERSON;
 
   } else if (model_type == ModelType::KEYPOINT_FACE_V2) {
     model = std::make_shared<FaceLandmarkerDet2>();
-  } else if (model_type == ModelType::ATTRIBUTE_FACE) {
+  } else if (model_type == ModelType::CLS_ATTRIBUTE_FACE) {
     model = std::make_shared<FaceAttribute_CLS>();
   } else if (model_type == ModelType::FEATURE_BMFACER34) {
     model = std::make_shared<FeatureExtraction>();
   } else if (model_type == ModelType::CLS_RGBLIVENESS) {
     model = std::make_shared<RgbImageClassification>();
-  } else if (model_type == ModelType::KEYPOINT_SIMCC) {
+  } else if (model_type == ModelType::KEYPOINT_SIMCC_PERSON17) {
     model = std::make_shared<SimccPose>();
   } else if (model_type == ModelType::KEYPOINT_HAND) {
     model = std::make_shared<HandKeypoint>();
   } else if (model_type == ModelType::KEYPOINT_LICENSE_PLATE) {
     model = std::make_shared<LicensePlateKeypoint>();   
-  } else if (model_type == ModelType::LICENSE_PLATE_RECOGNITION) {
+  } else if (model_type == ModelType::RECOGNITION_LICENSE_PLATE) {
     model = std::make_shared<LicensePlateRecognition>();   
-  } else if (model_type == ModelType::SEG_YOLOV8_COCO80) {
+  } else if (model_type == ModelType::YOLOV8_SEG_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
-  } else if (model_type == ModelType::YOLOV8_POSE_PERSON17) {
+  } else if (model_type == ModelType::KEYPOINT_YOLOV8POSE_PERSON17) {
     model = std::make_shared<YoloV8Pose>(std::make_tuple(64, 17, 1));
-  } else if (model_type == ModelType::IMG_FEATURE_CLIP) {
+  } else if (model_type == ModelType::CLIP_FEATURE_IMG) {
     model = std::make_shared<Clip_Image>();
-  } else if (model_type == ModelType::TEXT_FEATURE_CLIP) {
+  } else if (model_type == ModelType::CLIP_FEATURE_TEXT) {
     model = std::make_shared<Clip_Text>();
-  } else if (model_type == ModelType::SEG_PERSON_FACE_VEHICLE) {
+  } else if (model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE) {
     model = std::make_shared<TopformerSeg>(16); // Downsampling ratio
-  } else if (model_type == ModelType::LANE_DETECTION_LSTR) {
+  } else if (model_type == ModelType::LSTR_DET_LANE) {
     model = std::make_shared<LstrLane>();
-  } else if (model_type == ModelType::SOUND_CLS_BABAY_CRY) {
+  } else if (model_type == ModelType::CLS_SOUND_BABAY_CRY) {
     model = std::make_shared<AudioClassification>();
-  } else if (model_type == ModelType::SOUND_CLS_COMMAND) {
+  } else if (model_type == ModelType::CLS_SOUND_COMMAND) {
     model = std::make_shared<AudioClassification>(std::make_pair(128, 1));
   } else {
     LOGE("model type not supported: %d", model_type);

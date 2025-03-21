@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
   }
   int ret = 0;
 
-  cvtdl_model_e enOdModelId = TDL_MODEL_KEYPOINT_YOLOV8_POSE_PERSON17;
+  cvtdl_model_e enOdModelId = TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17;
   cvtdl_handle_t tdl_handle = CVI_TDL_CreateHandle(0);
 
   ret = CVI_TDL_OpenModel(tdl_handle, enOdModelId, argv[1]);

@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
   TDLModelFactory model_factory;
 
   std::shared_ptr<BaseModel> model_seg = model_factory.getModel(
-      ModelType::SEG_PERSON_FACE_VEHICLE, model_path);
+      ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE, model_path);
   if (!model_seg) {
     printf("Failed to create model_seg\n");
     return -1;

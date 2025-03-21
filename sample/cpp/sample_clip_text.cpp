@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   TDLModelFactory model_factory(model_dir);
 
   std::shared_ptr<BaseModel> model_clip_text =
-      model_factory.getModel(ModelType::TEXT_FEATURE_CLIP, argv[1]);
+      model_factory.getModel(ModelType::CLIP_FEATURE_TEXT, argv[1]);
 
   if (!model_clip_text) {
     printf("Failed to load clip text model\n");

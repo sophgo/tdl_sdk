@@ -52,32 +52,32 @@ inline cvtdl_data_type_e convert_data_type(TDLDataType data_type) {
 
 ModelType convert_model_type(cvtdl_model_e model_type) {
   switch (model_type) {
-    case TDL_MODEL_SCRFD_FACE:
-      return ModelType::SCRFD_FACE;
-    case TDL_MODEL_YOLOV8N_PERSON_VEHICLE:
-      return ModelType::YOLOV8N_PERSON_VEHICLE;
-    case TDL_MODEL_YOLOV8N_HEAD_HARDHAT:
-      return ModelType::YOLOV8N_HEAD_HARDHAT;
-    case TDL_MODEL_YOLOV8N_HAND:
-      return ModelType::YOLOV8N_HAND;
+    case TDL_MODEL_SCRFD_DET_FACE:
+      return ModelType::SCRFD_DET_FACE;
+    case TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE:
+      return ModelType::YOLOV8N_DET_PERSON_VEHICLE;
+    case TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT:
+      return ModelType::YOLOV8N_DET_HEAD_HARDHAT;
+    case TDL_MODEL_YOLOV8N_DET_HAND:
+      return ModelType::YOLOV8N_DET_HAND;
     case TDL_MODEL_SEG_YOLOV8_COCO80:
-      return ModelType::SEG_YOLOV8_COCO80;
+      return ModelType::YOLOV8_SEG_COCO80;
     case TDL_MODEL_SEG_PERSON_FACE_VEHICLE:
-      return ModelType::SEG_PERSON_FACE_VEHICLE;
-    case TDL_MODEL_YOLOV10_COCO80:
-      return ModelType::YOLOV10_COCO80;
-    case TDL_MODEL_ATTRIBUTE_FACE:
-      return ModelType::ATTRIBUTE_FACE;
+      return ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE;
+    case TDL_MODEL_YOLOV10_DET_COCO80:
+      return ModelType::YOLOV10_DET_COCO80;
+    case TDL_MODEL_CLS_ATTRIBUTE_FACE:
+      return ModelType::CLS_ATTRIBUTE_FACE;
     case TDL_MODEL_KEYPOINT_FACE_V2:
       return ModelType::KEYPOINT_FACE_V2;
     case TDL_MODEL_KEYPOINT_HAND:
       return ModelType::KEYPOINT_HAND;
     case TDL_MODEL_KEYPOINT_LICENSE_PLATE:
       return ModelType::KEYPOINT_LICENSE_PLATE;
-    case TDL_MODEL_KEYPOINT_YOLOV8_POSE_PERSON17:
-      return ModelType::YOLOV8_POSE_PERSON17;
+    case TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17:
+      return ModelType::KEYPOINT_YOLOV8POSE_PERSON17;
     case TDL_MODEL_KEYPOINT_SIMICC:
-      return ModelType::KEYPOINT_SIMCC;
+      return ModelType::KEYPOINT_SIMCC_PERSON17;
     case TDL_MODEL_FEATURE_BMFACER34:
       return ModelType::FEATURE_BMFACER34;
     case TDL_MODEL_CLS_RGBLIVENESS:

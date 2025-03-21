@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
   TDLModelFactory model_factory;
 
   std::shared_ptr<BaseModel> model_od =
-      model_factory.getModel(ModelType::LANE_DETECTION_LSTR, model_path);
+      model_factory.getModel(ModelType::LSTR_DET_LANE, model_path);
   if (!model_od) {
     printf("Failed to create model_od\n");
     return -1;

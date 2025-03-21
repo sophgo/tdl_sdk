@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
   TDLModelFactory model_factory;
 
   std::shared_ptr<BaseModel> model_hd = model_factory.getModel(
-      ModelType::YOLOV8N_HAND, hd_model_path);
+      ModelType::YOLOV8N_DET_HAND, hd_model_path);
   if (!model_hd) {
     printf("Failed to create model_hd\n");
     return -1;

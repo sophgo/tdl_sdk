@@ -148,7 +148,7 @@ int32_t FaceLandmarkerDet2::outputParse(
     // blur model
     if (oinfo_cls.shape[1] == 2) {
       facemeta
-          ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_FACE_BLURNESS] =
+          ->attributes[TDLObjectAttributeType::OBJECT_CLS_ATTRIBUTE_FACE_BLURNESS] =
           output_score[1];
     }
 

@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   TDLModelFactory model_factory(model_dir);
 
   std::shared_ptr<BaseModel> model_clip_image =
-      model_factory.getModel(ModelType::IMG_FEATURE_CLIP, argv[1]);
+      model_factory.getModel(ModelType::CLIP_FEATURE_IMG, argv[1]);
 
   if (!model_clip_image) {
     printf("Failed to load clip image model\n");
