@@ -6,7 +6,7 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
-int get_fd_model_info(char *model_name, cvtdl_model_e *model_index) {
+int get_model_info(char *model_name, tdl_model_e *model_index) {
   int ret = 0;
   if (strcmp(model_name, "scrfdface") == 0) {
     *model_index = TDL_MODEL_SCRFD_DET_FACE;
@@ -34,28 +34,28 @@ int main(int argc, char *argv[]) {
   }
   int ret = 0;
 
-  cvtdl_model_e enOdModelId;
-  if (get_fd_model_info(argv[1], &enOdModelId) == -1) {
+  tdl_model_e enOdModelId;
+  if (get_model_info(argv[1], &enOdModelId) == -1) {
     printf("unsupported model: %s\n", argv[1]);
     return -1;
   }
 
-  cvtdl_handle_t tdl_handle = CVI_TDL_CreateHandle(0);
+  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
 
-  ret = CVI_TDL_OpenModel(tdl_handle, enOdModelId, argv[2]);
+  ret = TDL_OpenModel(tdl_handle, enOdModelId, argv[2]);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  cvtdl_image_t image = CVI_TDL_ReadImage(argv[3]);
+  tdl_image_t image = TDL_ReadImage(argv[3]);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit1;
   }
 
-  cvtdl_face_t obj_meta = {0};
-  ret = CVI_TDL_FaceDetection(tdl_handle, enOdModelId, image, &obj_meta);
+  tdl_face_t obj_meta = {0};
+  ret = TDL_FaceDetection(tdl_handle, enOdModelId, image, &obj_meta);
   if (ret != 0) {
     printf("face detection failed with %#x!\n", ret);
   } else {
@@ -67,13 +67,13 @@ int main(int argc, char *argv[]) {
     printf("]\n");
   }
 
-  CVI_TDL_ReleaseFaceMeta(&obj_meta);
-  CVI_TDL_DestroyImage(image);
+  TDL_ReleaseFaceMeta(&obj_meta);
+  TDL_DestroyImage(image);
 
 exit1:
-  CVI_TDL_CloseModel(tdl_handle, enOdModelId);
+  TDL_CloseModel(tdl_handle, enOdModelId);
 
 exit0:
-  CVI_TDL_DestroyHandle(tdl_handle);
+  TDL_DestroyHandle(tdl_handle);
   return ret;
 }

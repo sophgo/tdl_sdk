@@ -412,13 +412,13 @@ void DetectionHelper::rescaleBbox(ObjectBoxLandmarkInfo &bbox,
 }
 
 // void DetectionHelper::convertDetStruct(
-//     std::map<int, std::vector<cvtdl_bbox_t>> &dets, cvtdl_object_t *obj,
+//     std::map<int, std::vector<tdl_bbox_t>> &dets, tdl_object_t *obj,
 //     int im_height, int im_width) {
 //   int num_obj = 0;
 //   for (auto &bbox : dets) {
 //     num_obj += bbox.second.size();
 //   }
-//   memset(obj, 0, sizeof(cvtdl_object_t));
+//   memset(obj, 0, sizeof(tdl_object_t));
 //   obj->height = im_height;
 //   obj->width = im_width;
 //   if (num_obj == 0) {
@@ -426,7 +426,7 @@ void DetectionHelper::rescaleBbox(ObjectBoxLandmarkInfo &bbox,
 //   }
 //   CVI_TDL_MemAllocInit(num_obj, obj);
 
-//   memset(obj->info, 0, sizeof(cvtdl_object_info_t) * obj->size);
+//   memset(obj->info, 0, sizeof(tdl_object_info_t) * obj->size);
 
 //   int idx = 0;
 //   for (auto &bbox : dets) {

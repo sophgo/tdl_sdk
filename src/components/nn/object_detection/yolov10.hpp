@@ -8,7 +8,7 @@ class YoloV10Detection final : public BaseModel {
   YoloV10Detection();
   YoloV10Detection(std::pair<int, int> yolov8_pair);
   ~YoloV10Detection();
-  // int inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_object_t *obj_meta)
+  // int inference(VIDEO_FRAME_INFO_S *srcFrame, tdl_object_t *obj_meta)
   // override;
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>> &images,

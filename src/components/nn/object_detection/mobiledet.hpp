@@ -73,5 +73,5 @@ class MobileDetV2Detection final : public BaseModel {
   float m_model_threshold = 0.5;
 
   std::vector<int8_t> m_quant_inverse_score_threshold;
-  // std::bitset<CVI_TDL_DET_TYPE_END> m_filter;
+  // std::bitset<TDL_DET_TYPE_END> m_filter;
 };

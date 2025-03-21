@@ -23,4 +23,4 @@ class CpuMemoryPool : public BaseMemoryPool {
   std::string str_mem_pool_name_ = "cpu_mem_pool";
 };
 
-#endif  // CVI_MEMORY_POOL_H
+#endif  // CPU_MEMORY_POOL_H

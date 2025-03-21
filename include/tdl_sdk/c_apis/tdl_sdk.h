@@ -13,14 +13,14 @@ extern "C" {
  * @param tpu_device_id 指定 TPU 设备的 ID
  * @return  返回创建的 TDLContextHandle 对象, 如果失败返回 NULL
  */
-cvtdl_handle_t CVI_TDL_CreateHandle(const int32_t tpu_device_id);
+tdl_handle_t TDL_CreateHandle(const int32_t tpu_device_id);
 
 /**
  * @brief 销毁一个 TDLContextHandle 对象
  *
  * @param context_handle 需要销毁的 TDLContextHandle 对象
  */
-int32_t CVI_TDL_DestroyHandle(cvtdl_handle_t handle);
+int32_t TDL_DestroyHandle(tdl_handle_t handle);
 
 /**
  * @brief 包装一个 VPSS 帧为 TDLImageHandle 对象
@@ -29,7 +29,7 @@ int32_t CVI_TDL_DestroyHandle(cvtdl_handle_t handle);
  * @param own_memory 是否拥有内存所有权
  * @return  返回包装的 TDLImageHandle 对象, 如果失败返回 NULL
  */
-cvtdl_image_t CVI_TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory);
+tdl_image_t TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory);
 
 /**
  * @brief 读取一张图片为 TDLImageHandle 对象
@@ -37,88 +37,88 @@ cvtdl_image_t CVI_TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory);
  * @param path 图片路径
  * @return  返回读取的 TDLImageHandle 对象, 如果失败返回 NULL
  */
-cvtdl_image_t CVI_TDL_ReadImage(const char *path);
+tdl_image_t TDL_ReadImage(const char *path);
 
 /**
  * @brief 销毁一个 TDLImageHandle 对象
  *
  * @param image_handle 需要销毁的 TDLImageHandle 对象
  */
-int32_t CVI_TDL_DestroyImage(cvtdl_image_t image_handle);
+int32_t TDL_DestroyImage(tdl_image_t image_handle);
 
-int32_t CVI_TDL_OpenModel(cvtdl_handle_t handle,
-                          const cvtdl_model_e model_id,
-                          const char *model_path);
+int32_t TDL_OpenModel(tdl_handle_t handle,
+                      const tdl_model_e model_id,
+                      const char *model_path);
 
-int32_t CVI_TDL_CloseModel(cvtdl_handle_t handle,
-                           const cvtdl_model_e model_id);
+int32_t TDL_CloseModel(tdl_handle_t handle,
+                       const tdl_model_e model_id);
 
-int32_t CVI_TDL_Detection(cvtdl_handle_t handle,
-                          const cvtdl_model_e model_id,
-                          cvtdl_image_t image_handle,
-                          cvtdl_object_t *object_meta);
+int32_t TDL_Detection(tdl_handle_t handle,
+                      const tdl_model_e model_id,
+                      tdl_image_t image_handle,
+                      tdl_object_t *object_meta);
 
-int32_t CVI_TDL_FaceDetection(cvtdl_handle_t handle,
-                              const cvtdl_model_e model_id,
-                              cvtdl_image_t image_handle,
-                              cvtdl_face_t *face_meta);
+int32_t TDL_FaceDetection(tdl_handle_t handle,
+                          const tdl_model_e model_id,
+                          tdl_image_t image_handle,
+                          tdl_face_t *face_meta);
 
-int32_t CVI_TDL_FaceAttribute(cvtdl_handle_t handle,
-                              const cvtdl_model_e model_id,
-                              cvtdl_image_t image_handle,
-                              cvtdl_face_t *face_meta);
+int32_t TDL_FaceAttribute(tdl_handle_t handle,
+                          const tdl_model_e model_id,
+                          tdl_image_t image_handle,
+                          tdl_face_t *face_meta);
 
-int32_t CVI_TDL_FaceLandmark(cvtdl_handle_t handle,
-                               const cvtdl_model_e model_id,
-                               cvtdl_image_t image_handle,
-                               cvtdl_face_t *face_meta);
+int32_t TDL_FaceLandmark(tdl_handle_t handle,
+                         const tdl_model_e model_id,
+                         tdl_image_t image_handle,
+                         tdl_face_t *face_meta);
 
-int32_t CVI_TDL_Classfification(cvtdl_handle_t handle,
-                                const cvtdl_model_e model_id,
-                                cvtdl_image_t image_handle,
-                                cvtdl_class_info_t *class_info);
+int32_t TDL_Classfification(tdl_handle_t handle,
+                            const tdl_model_e model_id,
+                            tdl_image_t image_handle,
+                            tdl_class_info_t *class_info);
 
-int32_t CVI_TDL_ObjectClassification(cvtdl_handle_t handle,
-                                     const cvtdl_model_e model_id,
-                                     cvtdl_image_t image_handle,
-                                     cvtdl_object_t *object_meta,
-                                     cvtdl_class_t *class_info);
+int32_t TDL_ObjectClassification(tdl_handle_t handle,
+                                 const tdl_model_e model_id,
+                                 tdl_image_t image_handle,
+                                 tdl_object_t *object_meta,
+                                 tdl_class_t *class_info);
 
-int32_t CVI_TDL_KeypointDetection(cvtdl_handle_t handle,
-                                  const cvtdl_model_e model_id,
-                                  cvtdl_image_t image_handle,
-                                  cvtdl_keypoint_t *keypoint_meta);
+int32_t TDL_KeypointDetection(tdl_handle_t handle,
+                              const tdl_model_e model_id,
+                              tdl_image_t image_handle,
+                              tdl_keypoint_t *keypoint_meta);
 
-int32_t CVI_TDL_InstanceSegmentation(cvtdl_handle_t handle, 
-                                     const cvtdl_model_e model_id,
-                                     cvtdl_image_t image_handle,
-                                     cvtdl_instance_seg_t *inst_seg_meta);
+int32_t TDL_InstanceSegmentation(tdl_handle_t handle, 
+                                 const tdl_model_e model_id,
+                                 tdl_image_t image_handle,
+                                 tdl_instance_seg_t *inst_seg_meta);
 
-int32_t CVI_TDL_SemanticSegmentation(cvtdl_handle_t handle,
-                                     const cvtdl_model_e model_id,
-                                     cvtdl_image_t image_handle,
-                                     cvtdl_seg_t *seg_meta);
+int32_t TDL_SemanticSegmentation(tdl_handle_t handle,
+                                 const tdl_model_e model_id,
+                                 tdl_image_t image_handle,
+                                 tdl_seg_t *seg_meta);
 
-int32_t CVI_TDL_FeatureExtraction(cvtdl_handle_t handle,
-                                  const cvtdl_model_e model_id,
-                                  cvtdl_image_t image_handle,
-                                  cvtdl_feature_t *feature_meta);
+int32_t TDL_FeatureExtraction(tdl_handle_t handle,
+                              const tdl_model_e model_id,
+                              tdl_image_t image_handle,
+                              tdl_feature_t *feature_meta);
 
-int32_t CVI_TDL_LaneDetection(cvtdl_handle_t handle,
-                              const cvtdl_model_e model_id,
-                              cvtdl_image_t image_handle,
-                              cvtdl_lane_t *lane_meta);
+int32_t TDL_LaneDetection(tdl_handle_t handle,
+                          const tdl_model_e model_id,
+                          tdl_image_t image_handle,
+                          tdl_lane_t *lane_meta);
 
-int32_t CVI_TDL_DepthStereo(cvtdl_handle_t handle,
-                            const cvtdl_model_e model_id,
-                            cvtdl_image_t image_handle,
-                            cvtdl_depth_logits_t *depth_logist);
+int32_t TDL_DepthStereo(tdl_handle_t handle,
+                        const tdl_model_e model_id,
+                        tdl_image_t image_handle,
+                        tdl_depth_logits_t *depth_logist);
 
-int32_t CVI_TDL_Tracking(cvtdl_handle_t handle,
-                         const cvtdl_model_e model_id,
-                         cvtdl_image_t image_handle,
-                         cvtdl_object_t *object_meta,
-                         cvtdl_tracker_t *tracker_meta);
+int32_t TDL_Tracking(tdl_handle_t handle,
+                     const tdl_model_e model_id,
+                     tdl_image_t image_handle,
+                     tdl_object_t *object_meta,
+                     tdl_tracker_t *tracker_meta);
 
 #ifdef __cplusplus
 }

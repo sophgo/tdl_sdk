@@ -15,23 +15,23 @@ int main(int argc, char *argv[]) {
   }
   int ret = 0;
 
-  cvtdl_model_e enOdModelId = TDL_MODEL_LANE_DETECTION_LSTR;
-  cvtdl_handle_t tdl_handle = CVI_TDL_CreateHandle(0);
+  tdl_model_e enOdModelId = TDL_MODEL_LSTR_DET_LANE;
+  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
 
-  ret = CVI_TDL_OpenModel(tdl_handle, enOdModelId, argv[1]);
+  ret = TDL_OpenModel(tdl_handle, enOdModelId, argv[1]);
   if (ret != 0) {
     printf("open lane model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  cvtdl_image_t image = CVI_TDL_ReadImage(argv[2]);
+  tdl_image_t image = TDL_ReadImage(argv[2]);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit1;
   }
 
-  cvtdl_lane_t obj_meta = {0};
-  ret = CVI_TDL_LaneDetection(tdl_handle, enOdModelId, image, &obj_meta);
+  tdl_lane_t obj_meta = {0};
+  ret = TDL_LaneDetection(tdl_handle, enOdModelId, image, &obj_meta);
   if (ret != 0) {
     printf("CVI_TDL_LaneDetection failed with %#x!\n", ret);
   } else {
@@ -47,13 +47,13 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  CVI_TDL_ReleaseLaneMeta(&obj_meta);
-  CVI_TDL_DestroyImage(image);
+  TDL_ReleaseLaneMeta(&obj_meta);
+  TDL_DestroyImage(image);
 
 exit1:
-  CVI_TDL_CloseModel(tdl_handle, enOdModelId);
+  TDL_CloseModel(tdl_handle, enOdModelId);
 
 exit0:
-  CVI_TDL_DestroyHandle(tdl_handle);
+  TDL_DestroyHandle(tdl_handle);
   return ret;
 }

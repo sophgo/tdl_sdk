@@ -20,57 +20,57 @@ typedef enum {
   TDL_TYPE_FP16,     /**< Equals to fp16. */
   TDL_TYPE_FP32,     /**< Equals to fp32. */
   TDL_TYPE_UNKOWN    /**< Equals to unkown. */
-} cvtdl_data_type_e;
+} tdl_data_type_e;
 
 typedef struct {
   float x1;
   float y1;
   float x2;
   float y2;
-} cvtdl_box_t;
+} tdl_box_t;
 
 typedef struct {
   int8_t *ptr;
   uint32_t size;
-  cvtdl_data_type_e type;
-} cvtdl_feature_t;
+  tdl_data_type_e type;
+} tdl_feature_t;
 
 typedef struct {
   float *x;
   float *y;
   uint32_t size;
   float score;
-} cvtdl_pts_t;
+} tdl_pts_t;
 
 typedef struct {
   float x;
   float y;
   float score;
-} cvtdl_landmark_info_t;
+} tdl_landmark_info_t;
 
 typedef struct {
-  cvtdl_box_t box;
+  tdl_box_t box;
   float score;
   int class_id;
-  cvtdl_landmark_info_t *landmark_properity;
-  cvtdl_object_type_e obj_type;
-} cvtdl_object_info_t;
+  tdl_landmark_info_t *landmark_properity;
+  tdl_object_type_e obj_type;
+} tdl_object_info_t;
 
 typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
 
-  cvtdl_object_info_t *info;
-} cvtdl_object_t;
+  tdl_object_info_t *info;
+} tdl_object_t;
 
 typedef struct {
   char name[128];
   float score;
   uint64_t track_id;
-  cvtdl_box_t box;
-  cvtdl_pts_t landmarks;
-  cvtdl_feature_t feature;
+  tdl_box_t box;
+  tdl_pts_t landmarks;
+  tdl_feature_t feature;
 
   float gender_score;
   float glass_score;
@@ -83,38 +83,38 @@ typedef struct {
   float face_quality;
   float pose_score;
   float blurness;
-} cvtdl_face_info_t;
+} tdl_face_info_t;
 
 typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
-  cvtdl_face_info_t *info;
-} cvtdl_face_t;
+  tdl_face_info_t *info;
+} tdl_face_t;
 
 typedef struct {
   int32_t class_id;
   float score;
-} cvtdl_class_info_t;
+} tdl_class_info_t;
 
 typedef struct {
   uint32_t size;
 
-  cvtdl_class_info_t *info;
-} cvtdl_class_t;
+  tdl_class_info_t *info;
+} tdl_class_t;
 
 typedef struct {
   float x;
   float y;
   float score;
-} cvtdl_keypoint_info_t;
+} tdl_keypoint_info_t;
 
 typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
-  cvtdl_keypoint_info_t *info;
-} cvtdl_keypoint_t;
+  tdl_keypoint_info_t *info;
+} tdl_keypoint_t;
 
 typedef struct {
   uint32_t width;
@@ -123,14 +123,14 @@ typedef struct {
   uint32_t output_height;
   uint8_t *class_id;
   uint8_t *class_conf;
-} cvtdl_seg_t;
+} tdl_seg_t;
 
 typedef struct {
   uint8_t *mask;
   float *mask_point;
   uint32_t mask_point_size;
-  cvtdl_object_info_t *obj_info;
-} cvtdl_instance_seg_info_t;
+  tdl_object_info_t *obj_info;
+} tdl_instance_seg_info_t;
 
 
 typedef struct {
@@ -139,39 +139,39 @@ typedef struct {
   uint32_t height;
   uint32_t mask_width;
   uint32_t mask_height;
-  cvtdl_instance_seg_info_t *info;
-} cvtdl_instance_seg_t;
+  tdl_instance_seg_info_t *info;
+} tdl_instance_seg_t;
 
 typedef struct {
   float x[2];
   float y[2];
   float score;
-} cvtdl_lane_point_t;
+} tdl_lane_point_t;
 
 typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
 
-  cvtdl_lane_point_t *lane;
+  tdl_lane_point_t *lane;
   int lane_state;
-} cvtdl_lane_t;
+} tdl_lane_t;
 
 typedef struct {
   int w;
   int h;
   int8_t *int_logits;
-} cvtdl_depth_logits_t;
+} tdl_depth_logits_t;
 
 typedef struct {
   uint32_t size;
   uint64_t id;
-  cvtdl_box_t bbox;
+  tdl_box_t bbox;
   int out_num;
-} cvtdl_tracker_t;
+} tdl_tracker_t;
 
-typedef void *cvtdl_handle_t;
-typedef void *cvtdl_image_t;
+typedef void *tdl_handle_t;
+typedef void *tdl_image_t;
 
 #ifdef __cplusplus
 }

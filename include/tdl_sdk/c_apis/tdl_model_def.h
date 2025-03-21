@@ -77,7 +77,7 @@ typedef enum {
   TDL_MODEL_TEXT_FEATURE_CLIP,
   TDL_LLM_MODEL_MAX,
 
-} cvtdl_model_e;
+} tdl_model_e;
 
 #ifdef __cplusplus
 }

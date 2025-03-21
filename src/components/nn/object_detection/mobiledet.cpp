@@ -400,40 +400,40 @@ MDetV2Config MDetV2Config::create_config(MobileDetV2Detection::Category model) {
     case Category::person_vehicle:
       config.num_classes = 6;
       // config.class_id_map = [](int orig_id) {
-      //   if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
-      //   if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_BICYCLE);
-      //   if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_CAR);
+      //   if (orig_id == 0) return static_cast<int>(TDL_DET_TYPE_PERSON);
+      //   if (orig_id == 1) return static_cast<int>(TDL_DET_TYPE_BICYCLE);
+      //   if (orig_id == 2) return static_cast<int>(TDL_DET_TYPE_CAR);
       //   if (orig_id == 3) return
-      //   static_cast<int>(CVI_TDL_DET_TYPE_MOTORBIKE); if (orig_id == 4)
-      //   return static_cast<int>(CVI_TDL_DET_TYPE_BUS); if (orig_id == 5)
-      //   return static_cast<int>(CVI_TDL_DET_TYPE_TRUCK); return
-      //   static_cast<int>(CVI_TDL_DET_TYPE_END);
+      //   static_cast<int>(TDL_DET_TYPE_MOTORBIKE); if (orig_id == 4)
+      //   return static_cast<int>(TDL_DET_TYPE_BUS); if (orig_id == 5)
+      //   return static_cast<int>(TDL_DET_TYPE_TRUCK); return
+      //   static_cast<int>(TDL_DET_TYPE_END);
       // };
       break;
     case Category::person_pets:
       config.num_classes = 3;
       // config.class_id_map = [](int orig_id) {
-      //   if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
-      //   if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_CAT);
-      //   if (orig_id == 2) return static_cast<int>(CVI_TDL_DET_TYPE_DOG);
-      //   return static_cast<int>(CVI_TDL_DET_TYPE_END);
+      //   if (orig_id == 0) return static_cast<int>(TDL_DET_TYPE_PERSON);
+      //   if (orig_id == 1) return static_cast<int>(TDL_DET_TYPE_CAT);
+      //   if (orig_id == 2) return static_cast<int>(TDL_DET_TYPE_DOG);
+      //   return static_cast<int>(TDL_DET_TYPE_END);
       // };
       break;
     case Category::vehicle:
       config.num_classes = 3;
       // config.class_id_map = [](int orig_id) {
-      //   if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_CAR);
-      //   if (orig_id == 1) return static_cast<int>(CVI_TDL_DET_TYPE_TRUCK);
+      //   if (orig_id == 0) return static_cast<int>(TDL_DET_TYPE_CAR);
+      //   if (orig_id == 1) return static_cast<int>(TDL_DET_TYPE_TRUCK);
       //   if (orig_id == 2) return
-      //   static_cast<int>(CVI_TDL_DET_TYPE_MOTORBIKE); return
-      //   static_cast<int>(CVI_TDL_DET_TYPE_END);
+      //   static_cast<int>(TDL_DET_TYPE_MOTORBIKE); return
+      //   static_cast<int>(TDL_DET_TYPE_END);
       // };
       break;
     case Category::pedestrian:
       config.num_classes = 1;
       // config.class_id_map = [](int orig_id) {
-      //   if (orig_id == 0) return static_cast<int>(CVI_TDL_DET_TYPE_PERSON);
-      //   return static_cast<int>(CVI_TDL_DET_TYPE_END);
+      //   if (orig_id == 0) return static_cast<int>(TDL_DET_TYPE_PERSON);
+      //   return static_cast<int>(TDL_DET_TYPE_END);
       // };
       break;
   }

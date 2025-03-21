@@ -26,7 +26,7 @@ typedef enum {
   TDL_OBJECT_TYPE_CAT = 200,
   TDL_OBJECT_TYPE_DOG,
 
-} cvtdl_object_type_e;
+} tdl_object_type_e;
 
 #ifdef __cplusplus
 }

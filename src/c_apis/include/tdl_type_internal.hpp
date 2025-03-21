@@ -10,7 +10,7 @@
 #include "tdl_sdk.h"
 #include "tdl_types.h"
 typedef struct {
-  std::unordered_map<cvtdl_model_e, std::shared_ptr<BaseModel>> models;
+  std::unordered_map<tdl_model_e, std::shared_ptr<BaseModel>> models;
   std::shared_ptr<TDLModelFactory> model_factory;
 } tdl_context_t;
 
@@ -18,14 +18,14 @@ typedef struct {
   std::shared_ptr<BaseImage> image;
 } tdl_image_context_t;
 
-cvtdl_object_type_e convert_object_type(TDLObjectType object_type) {
+tdl_object_type_e convert_object_type(TDLObjectType object_type) {
   switch (object_type) {
     case TDL_OBJECT_TYPE_PERSON:
       return TDL_OBJECT_TYPE_PERSON;
   }
 }
 
-inline cvtdl_data_type_e convert_data_type(TDLDataType data_type) {
+inline tdl_data_type_e convert_data_type(TDLDataType data_type) {
   switch (data_type) {
     case TDLDataType::INT8:
       return TDL_TYPE_INT8;
@@ -50,7 +50,7 @@ inline cvtdl_data_type_e convert_data_type(TDLDataType data_type) {
   }
 }
 
-ModelType convert_model_type(cvtdl_model_e model_type) {
+ModelType convert_model_type(tdl_model_e model_type) {
   switch (model_type) {
     case TDL_MODEL_SCRFD_DET_FACE:
       return ModelType::SCRFD_DET_FACE;
@@ -82,14 +82,14 @@ ModelType convert_model_type(cvtdl_model_e model_type) {
       return ModelType::FEATURE_BMFACER34;
     case TDL_MODEL_CLS_RGBLIVENESS:
       return ModelType::CLS_RGBLIVENESS;
-    case TDL_MODEL_LANE_DETECTION_LSTR:
-      return ModelType::LANE_DETECTION_LSTR;
+    case TDL_MODEL_LSTR_DET_LANE:
+      return ModelType::LSTR_DET_LANE;
   }
   return ModelType::INVALID;
 }
 
 inline std::shared_ptr<ModelBoxLandmarkInfo> convert_face_meta(
-    cvtdl_face_t *face_meta) {
+    tdl_face_t *face_meta) {
   std::shared_ptr<ModelBoxLandmarkInfo> face_info =
       std::make_shared<ModelBoxLandmarkInfo>();
   for (int i = 0; i < face_meta->size; i++) {

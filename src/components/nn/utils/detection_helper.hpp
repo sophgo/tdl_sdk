@@ -40,8 +40,8 @@ class DetectionHelper {
   static void rescaleBbox(ObjectBoxLandmarkInfo &bbox,
                                     const std::vector<float> &scale_params,
                                     const int crop_x, const int crop_y);
-  //   static void convertDetStruct(std::map<int, std::vector<cvtdl_bbox_t>>
+  //   static void convertDetStruct(std::map<int, std::vector<tdl_bbox_t>>
   //   &dets,
-  //                                cvtdl_object_t *obj, int im_height,
+  //                                tdl_object_t *obj, int im_height,
   //                                int im_width);
 };

@@ -6,7 +6,7 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
-int get_fd_model_info(char *model_name, cvtdl_model_e *model_index) {
+int get_model_info(char *model_name, tdl_model_e *model_index) {
   int ret = 0;
   if (strcmp(model_name, "YOLOV8_COCO80") == 0) {
     *model_index = TDL_MODEL_SEG_YOLOV8_COCO80;
@@ -28,31 +28,31 @@ int main(int argc, char *argv[]) {
   }
   int ret = 0;
 
-  cvtdl_model_e enOdModelId;
-  ret = get_fd_model_info(argv[1], &enOdModelId);
+  tdl_model_e enOdModelId;
+  ret = get_model_info(argv[1], &enOdModelId);
   if (ret != 0) {
     printf("None model name to support\n");
     return -1;
   }
 
-  cvtdl_handle_t tdl_handle = CVI_TDL_CreateHandle(0);
+  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
 
-  ret = CVI_TDL_OpenModel(tdl_handle, enOdModelId, argv[2]);
+  ret = TDL_OpenModel(tdl_handle, enOdModelId, argv[2]);
   if (ret != 0) {
     printf("open instance seg model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  cvtdl_image_t image = CVI_TDL_ReadImage(argv[3]);
+  tdl_image_t image = TDL_ReadImage(argv[3]);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit1;
   }
 
-  cvtdl_instance_seg_t inst_seg_meta = {0};
-  ret = CVI_TDL_InstanceSegmentation(tdl_handle, enOdModelId, image, &inst_seg_meta);
+  tdl_instance_seg_t inst_seg_meta = {0};
+  ret = TDL_InstanceSegmentation(tdl_handle, enOdModelId, image, &inst_seg_meta);
   if (ret != 0) {
-    printf("CVI_TDL_InstanceSegmentation failed with %#x!\n", ret);
+    printf("TDL_InstanceSegmentation failed with %#x!\n", ret);
   } else {
     if (inst_seg_meta.size <= 0) {
       printf("None to Segmentation\n");
@@ -76,13 +76,13 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  CVI_TDL_ReleaseInstanceSegMeta(&inst_seg_meta);
-  CVI_TDL_DestroyImage(image);
+  TDL_ReleaseInstanceSegMeta(&inst_seg_meta);
+  TDL_DestroyImage(image);
 
 exit1:
-  CVI_TDL_CloseModel(tdl_handle, enOdModelId);
+  TDL_CloseModel(tdl_handle, enOdModelId);
 
 exit0:
-  CVI_TDL_DestroyHandle(tdl_handle);
+  TDL_DestroyHandle(tdl_handle);
   return ret;
 }
