@@ -165,6 +165,10 @@ else()
     set(IS_LOCAL FALSE)
 endif()
 
+if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1688")
+  set(IS_LOCAL OFF)
+endif()
+
 
 # 获取当前文件的目录
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})

@@ -13,6 +13,7 @@ if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR
               ${CMAKE_CURRENT_SOURCE_DIR}/net/bm_llm_net.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/model/llm_model.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/utils/qwen_vl_helper.cpp
               )
 else()
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/cvi_net.cpp
