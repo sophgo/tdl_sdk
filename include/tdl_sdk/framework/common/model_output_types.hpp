@@ -153,17 +153,6 @@ class ModelFeatureInfo : public ModelOutputInfo {
   TDLDataType embedding_type;
 };
 
-class ModelClipFeatureInfo : public ModelOutputInfo {
- public:
-  ~ModelClipFeatureInfo();
-  ModelOutputType getType() const override {
-    return ModelOutputType::FEATURE_EMBEDDING;
-  }
-  float* embedding = nullptr;
-  int32_t embedding_num;
-  TDLDataType embedding_type;
-};
-
 class ModelClassificationInfo : public ModelOutputInfo {
  public:
   ~ModelClassificationInfo() = default;

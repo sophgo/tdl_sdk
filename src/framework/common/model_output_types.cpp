@@ -7,13 +7,6 @@ ModelFeatureInfo::~ModelFeatureInfo() {
   }
 }
 
-ModelClipFeatureInfo::~ModelClipFeatureInfo() {
-  if (embedding) {
-    delete[] embedding;
-    embedding = nullptr;
-  }
-}
-
 ModelOcrInfo::~ModelOcrInfo() {
   if (text_info) {
     delete[] text_info;

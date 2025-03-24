@@ -60,13 +60,13 @@ int32_t Clip_Image::outputParse(
   int batch_elem_num = output_shape[3] * output_shape[2] * output_shape[1];
 
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
-    std::shared_ptr<ModelClipFeatureInfo> feature_meta =
-        std::make_shared<ModelClipFeatureInfo>();
+    std::shared_ptr<ModelFeatureInfo> feature_meta =
+        std::make_shared<ModelFeatureInfo>();
     feature_meta->embedding_num = batch_elem_num;
     feature_meta->embedding_type = TDLDataType::FP32;
-    feature_meta->embedding = (float *)malloc(batch_elem_num * sizeof(float));
+    feature_meta->embedding = (uint8_t *)malloc(batch_elem_num * sizeof(float));
 
-    float *feature = feature_meta->embedding;
+    float *feature = (float *)feature_meta->embedding;
     if (output_info.data_type == TDLDataType::INT8) {
       parse_feature_info<int8_t>(output_tensor->getBatchPtr<int8_t>(b),
                                  batch_elem_num, output_info.qscale, feature);

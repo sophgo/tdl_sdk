@@ -32,12 +32,13 @@ int main(int argc, char** argv) {
   model_clip_image->inference(input_images, out_fe);
   std::vector<std::vector<float>> features;
   for (size_t i = 0; i < out_fe.size(); i++) {
-    std::shared_ptr<ModelClipFeatureInfo> feature_meta =
-        std::static_pointer_cast<ModelClipFeatureInfo>(out_fe[i]);
+    std::shared_ptr<ModelFeatureInfo> feature_meta =
+        std::static_pointer_cast<ModelFeatureInfo>(out_fe[i]);
     printf("feature size: %d\n", feature_meta->embedding_num);
     std::vector<float> feature_vec(feature_meta->embedding_num);
+    float* feature_ptr = reinterpret_cast<float*>(feature_meta->embedding);
     for (size_t j = 0; j < feature_meta->embedding_num; j++) {
-      feature_vec[j] = feature_meta->embedding[j];
+      feature_vec[j] = feature_ptr[j];
       std::cout << feature_vec[j] << " ";
     }
     std::cout << std::endl;
