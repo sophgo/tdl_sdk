@@ -25,6 +25,9 @@ OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
 #if defined(__BM168X__) || defined(__CV186X__)
     memory_pool_ = std::make_shared<BmMemoryPool>(nullptr);
     LOGI("use BM memory pool");
+#elif defined(__CMODEL_CVITEK__)
+    memory_pool_ = std::make_shared<CpuMemoryPool>();
+    LOGI("use CPU memory pool");
 #else
     memory_pool_ = std::make_shared<CviMemoryPool>();
     LOGI("use CVI memory pool");
@@ -61,6 +64,9 @@ OpenCVImage::OpenCVImage(cv::Mat& mat, ImageFormat imageFormat) {
 #if defined(__BM168X__) || defined(__CV186X__)
   memory_pool_ = std::make_shared<BmMemoryPool>(nullptr);
   LOGI("use BM memory pool");
+#elif defined(__CMODEL_CVITEK__)
+  memory_pool_ = std::make_shared<CpuMemoryPool>();
+  LOGI("use CPU memory pool");
 #else
   memory_pool_ = std::make_shared<CviMemoryPool>();
   LOGI("use CVI memory pool");

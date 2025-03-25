@@ -59,6 +59,8 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   add_definitions(-D__BM168X__)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
   add_definitions(-D__BM168X__)
+elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK")
+  add_definitions(-D__CMODEL_CVITEK__)
 else()
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
@@ -165,7 +167,7 @@ else()
     set(IS_LOCAL FALSE)
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1688")
+if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1688" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK")
   set(IS_LOCAL OFF)
 endif()
 
@@ -189,8 +191,10 @@ endif()
 # Check if MLIR SDK exists.
 include(cmake/mlir.cmake)
 
+if( NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK"))
 # Check if mpi SDK exists.
 include(cmake/middleware.cmake)
+endif()
 
 # 3rdparty libraries
 include(cmake/thirdparty.cmake)

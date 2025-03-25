@@ -1,9 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 
 # 获取脚本所在目录作为相对路径基准
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-SDK_ROOT_DIR="$( cd "${SCRIPT_DIR}/.." && pwd )"
+SCRIPT_DIR=$(cd "scripts" && pwd)
+echo "SCRIPT_DIR: ${SCRIPT_DIR}"
+SDK_ROOT_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
 
+echo "SDK_ROOT_DIR: ${SDK_ROOT_DIR}"
 # 打印帮助信息
 print_usage() {
     echo "TDL SDK 环境配置工具"
@@ -13,19 +15,27 @@ print_usage() {
     echo "  CV186X    - 配置 CV186X 平台环境"
     echo "  BM1688    - 配置 BM1688 平台环境"
     echo "  BM1684X   - 配置 BM1684X 平台环境"
+    echo "  CMODEL_CVITEK   - 配置 CMODEL_CVITEK 平台环境"
     echo ""
     echo "示例: source ${SCRIPT_DIR}/envsetup.sh bm1688"
 }
 
 # 检查是否使用了 source 命令运行脚本
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    echo "错误: 此脚本必须使用 'source' 命令运行"
-    echo "请使用: source ${BASH_SOURCE[0]} [平台]"
-    exit 1
-fi
+# 使用更兼容的方式检测
+case $0 in
+    -sh|-bash|-ksh|-zsh|*/sh|*/bash|*/ksh|*/zsh)
+        # 可能是使用source运行的
+        ;;
+    *)
+        # 直接执行脚本
+        echo "错误: 此脚本必须使用 'source' 命令运行"
+        echo "请使用: source ${0} [平台]"
+        exit 1
+        ;;
+esac
 
 # 处理平台参数
-if [[ $# -gt 0 ]]; then
+if [ $# -gt 0 ]; then
     # 转换为大写以简化处理
     platform=$(echo "$1" | tr '[:lower:]' '[:upper:]')
     case "$platform" in
@@ -41,6 +51,9 @@ if [[ $# -gt 0 ]]; then
         BM1684X)
             export CHIP_ARCH="BM1684X"
             ;;
+        CMODEL_CVITEK)
+            export CHIP_ARCH="CMODEL_CVITEK"
+            ;;
         -H|--HELP)
             print_usage
             return 0
@@ -51,7 +64,7 @@ if [[ $# -gt 0 ]]; then
             return 1
             ;;
     esac
-elif [[ -z "${CHIP_ARCH}" ]]; then
+elif [ -z "${CHIP_ARCH}" ]; then
     echo "错误: 未指定平台且 CHIP_ARCH 环境变量未设置"
     print_usage
     return 1
@@ -61,15 +74,15 @@ echo "配置 ${CHIP_ARCH} 平台环境..."
 
 # 检查安装目录是否存在
 TDL_INSTALL_DIR="${SDK_ROOT_DIR}/install/${CHIP_ARCH}"
-if [[ ! -d "${TDL_INSTALL_DIR}" ]]; then
+if [ ! -d "${TDL_INSTALL_DIR}" ]; then
     echo "警告: 安装目录不存在: ${TDL_INSTALL_DIR}"
     echo "请先构建 TDL SDK: ./build_tdl_sdk.sh ${CHIP_ARCH}"
     return 1
 fi
 
 # 设置基本库路径和Python模块路径
-LIB_PATHS=("${TDL_INSTALL_DIR}/lib")
-PYTHON_PATHS=("${TDL_INSTALL_DIR}/lib")
+LIB_PATHS="${TDL_INSTALL_DIR}/lib"
+PYTHON_PATHS="${TDL_INSTALL_DIR}/lib"
 
 # 平台依赖库路径
 DEPENDENCY_BASE="${SDK_ROOT_DIR}/dependency"
@@ -87,7 +100,7 @@ configure_platform_env() {
             add_lib_paths "${TPU_SDK_PATH}/lib" "${OPENCV_PATH}/lib" "${FFMPEG_PATH}/lib"
             
             # BM1688特有的ISP库
-            if [[ "${CHIP_ARCH}" == "BM1688" ]]; then
+            if [ "${CHIP_ARCH}" = "BM1688" ]; then
                 ISP_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/sophon-soc-libisp"
                 add_lib_paths "${ISP_PATH}/lib"
             fi
@@ -116,14 +129,25 @@ configure_platform_env() {
                           "${TDL_INSTALL_DIR}/sample/3rd/middleware/v2/lib" \
                           "${TDL_INSTALL_DIR}/sample/3rd/rtsp/lib"
             ;;
+        CMODEL_CVITEK)
+            TPU_SDK_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}"
+            OPENCV_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/opencv"
+
+            add_lib_paths "${TPU_SDK_PATH}/lib" "${OPENCV_PATH}/lib"
+
+            ;;
     esac
 }
 
 # 添加库路径的辅助函数
 add_lib_paths() {
     for path in "$@"; do
-        if [[ -d "${path}" ]]; then
-            LIB_PATHS+=("${path}")
+        if [ -d "${path}" ]; then
+            if [ -z "${LIB_PATHS}" ]; then
+                LIB_PATHS="${path}"
+            else
+                LIB_PATHS="${LIB_PATHS}:${path}"
+            fi
         else
             echo "警告: 目录不存在: ${path}"
         fi
@@ -133,7 +157,7 @@ add_lib_paths() {
 # 加载SOC环境的辅助函数
 load_soc_env() {
     SOC_ENV_SCRIPT="${SDK_ROOT_DIR}/../build/envsetup_soc.sh"
-    if [[ -f "${SOC_ENV_SCRIPT}" ]]; then
+    if [ -f "${SOC_ENV_SCRIPT}" ]; then
         echo "检测到SOC环境脚本，将自动加载基础环境变量"
         CURRENT_DIR=$(pwd)
         cd "${SDK_ROOT_DIR}/.." 
@@ -146,17 +170,17 @@ load_soc_env() {
 configure_platform_env
 
 # 构建路径字符串，并去除重复路径
-LD_LIBRARY_PATH_NEW=$(echo "${LIB_PATHS[@]}" | tr ' ' ':')
-PYTHONPATH_NEW=$(echo "${PYTHON_PATHS[@]}" | tr ' ' ':')
+LD_LIBRARY_PATH_NEW="${LIB_PATHS}"
+PYTHONPATH_NEW="${PYTHON_PATHS}"
 
 # 添加到现有路径（避免重复）
-if [[ -n "${LD_LIBRARY_PATH}" ]]; then
+if [ -n "${LD_LIBRARY_PATH}" ]; then
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH_NEW}:${LD_LIBRARY_PATH}"
 else
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH_NEW}"
 fi
 
-if [[ -n "${PYTHONPATH}" ]]; then
+if [ -n "${PYTHONPATH}" ]; then
     export PYTHONPATH="${PYTHONPATH_NEW}:${PYTHONPATH}"
 else
     export PYTHONPATH="${PYTHONPATH_NEW}"
@@ -172,18 +196,18 @@ echo "配置的环境变量:"
 echo "LD_LIBRARY_PATH = ${LD_LIBRARY_PATH}"
 echo "PYTHONPATH      = ${PYTHONPATH}"
 
-[[ -n "${SDK_VER}" ]] && echo "SDK_VER         = ${SDK_VER}"
+[ -n "${SDK_VER}" ] && echo "SDK_VER         = ${SDK_VER}"
 
 echo ""
 
 # 验证配置
-if [[ "${CHIP_ARCH}" == "BM1688" || "${CHIP_ARCH}" == "BM1684X" ]]; then
+if [ "${CHIP_ARCH}" = "BM1688" ] || [ "${CHIP_ARCH}" = "BM1684X" ]; then
     echo "验证 libbmrt.so 是否可访问..."
     if ldconfig -p 2>/dev/null | grep -q libbmrt.so; then
         echo "✓ libbmrt.so 可用"
     else
         echo "! 警告: libbmrt.so 不在系统库路径中"
-        if find ${LD_LIBRARY_PATH//:/ } -name "libbmrt.so" 2>/dev/null | grep -q .; then
+        if find $(echo ${LD_LIBRARY_PATH} | tr ':' ' ') -name "libbmrt.so" 2>/dev/null | grep -q .; then
             echo "  但在 LD_LIBRARY_PATH 中找到它"
         else 
             echo "  且在 LD_LIBRARY_PATH 中也未找到"

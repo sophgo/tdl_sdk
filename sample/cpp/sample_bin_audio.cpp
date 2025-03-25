@@ -25,7 +25,12 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-std::string model_id_name = argv[1];
+  std::string model_id_name = argv[1];
+  if (model_id_mapping.find(model_id_name) == model_id_mapping.end()) {
+    printf("model_id_name not found! \n");
+    return -1;
+  }
+
   std::string model_path = argv[2];
   std::string strf = argv[3];
   int sample_rate = atoi(argv[4]);

@@ -46,7 +46,7 @@ else()
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libcnpy.so
       ${MLIR_SDK_ROOT}/lib/libcvikernel.so
-      ${MLIR_SDK_ROOT}/lib/libcvimath.so
+      # ${MLIR_SDK_ROOT}/lib/libcvimath.so
       ${MLIR_SDK_ROOT}/lib/libcviruntime.so
   )
 endif()

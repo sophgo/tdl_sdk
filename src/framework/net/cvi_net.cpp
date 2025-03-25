@@ -1,5 +1,9 @@
 #include "net/cvi_net.hpp"
+#ifdef __CMODEL_CVITEK__
+#include "memory/cpu_memory_pool.hpp"
+#else
 #include "memory/cvi_memory_pool.hpp"
+#endif
 #include "utils/tdl_log.hpp"
 
 CviNet::CviNet(const NetParam& param) : BaseNet(param) {}
@@ -45,7 +49,11 @@ int32_t CviNet::setup() {
   input_tensors_ = input_tensors;
   output_tensors_ = output_tensors;
 
+#ifdef __CMODEL_CVITEK__
+  memory_pool_ = std::make_shared<CpuMemoryPool>();
+#else
   memory_pool_ = std::make_shared<CviMemoryPool>();
+#endif
   input_output_tensor_infos_.clear();
   setupTensorInfo(input_tensors, input_tensors_num, input_output_tensor_infos_);
   setupTensorInfo(output_tensors, output_tensors_num,

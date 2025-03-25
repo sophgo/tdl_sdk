@@ -60,7 +60,7 @@
 * CV186X
 * BM1688
 * BM1684X
-* CMODEL(TODO)
+* CMODEL
 
 ### 181平台编译
 
@@ -126,7 +126,45 @@
     ./build_tdl_sdk.sh BM1688
     ```
 
-#### Python导出包编译
+
+### BM1684X平台编译
+
+* 在[算能官网](https://developer.sophgo.com/site/index/material/88/all.html)下载SDK-24.04.01的压缩包
+
+* 执行如下脚本抽取编译依赖
+
+    ```sh
+    cd tdl_sdk
+    #会将依赖抽取到tdl_sdk/dependency/BM1684X文件夹下
+    ./scripts/extract_sophon_sdk.sh /path/to/SDK-24.04.01.zip BM1684X
+    ```
+
+* 执行编译
+
+    ```shell
+    cd tdl_sdk
+    ./build_tdl_sdk.sh BM1684X
+    ```
+
+### CMODEL_CVITEK平台编译
+
+* 执行如下脚本抽取编译依赖
+
+    ```shell
+    cd tdl_sdk
+    # 会将依赖下载到tdl_sdk/dependency/CMODEL_CVITEK文件夹下
+    ./scripts/extract_cvitek_tpu_sdk.sh
+    ```
+
+* 执行编译
+
+    ```shell
+    cd tdl_sdk
+    ./build_tdl_sdk.sh CMODEL_CVITEK
+    ```
+
+
+### BM1688 Python导出包编译
 
 * 到目标盒子上安装Python环境
 
@@ -161,26 +199,7 @@
     ./build_tdl_sdk.sh BM1688
     ```
 
-### BM1684X平台编译
-
-* 在[算能官网](https://developer.sophgo.com/site/index/material/88/all.html)下载SDK-24.04.01的压缩包
-
-* 执行如下脚本抽取编译依赖
-
-    ```sh
-    cd tdl_sdk
-    #会将依赖抽取到tdl_sdk/dependency/BM1684X文件夹下
-    ./scripts/extract_sophon_sdk.sh /path/to/SDK-24.04.01.zip BM1684X
-    ```
-
-* 执行编译
-
-    ```shell
-    cd tdl_sdk
-    ./build_tdl_sdk.sh BM1684X
-    ```
-
-#### Python导出包编译
+### BM1684X Python导出包编译
 
 * 到目标盒子上安装Python环境
 

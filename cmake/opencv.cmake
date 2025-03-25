@@ -19,7 +19,19 @@ if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X
   return()
 endif()
 
+if(("${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK") )
 
+  if("${OPENCV_ROOT_DIR}" STREQUAL "")
+    message(FATAL_ERROR "You must set OPENCV_ROOT_DIR first.")
+  endif()
+
+  set(OPENCV_INCLUDES ${OPENCV_ROOT_DIR}/include)
+  set(OpenCV_LIB_DIR ${OPENCV_ROOT_DIR}/lib)
+  set(OPENCV_LIBS_IMCODEC ${OpenCV_LIB_DIR}/libopencv_core.so ${OpenCV_LIB_DIR}/libopencv_imgproc.so
+    ${OpenCV_LIB_DIR}/libopencv_highgui.so ${OpenCV_LIB_DIR}/libopencv_imgcodecs.so)
+
+  return()
+endif()
 
 set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
 # Combine the common prefix and the architecture-specific part

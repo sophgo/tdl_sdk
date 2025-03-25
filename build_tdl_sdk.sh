@@ -8,6 +8,7 @@ print_usage() {
     echo "  CV186X         Build 186X"
     echo "  BM1688         Build BM1688 edge"
     echo "  BM1684X        Build BM1684X edge"
+    echo "  CMODEL_CVITEK   Build linux x86_64"
     echo "  sample         Build samples only"
     echo "  all            Build both modules and sample"
     echo "  clean          Clean build"
@@ -68,7 +69,16 @@ elif [[ "$1" == "BM1684X" ]]; then
     echo "Building for BM1684X platform..."
     export CHIP_ARCH=BM1684X
     # Continue with the regular build process below
-    
+elif [[ "$1" == "CMODEL_CVITEK" ]]; then
+
+    if [ -e "dependency/CMODEL_CVITEK" ]; then
+        echo "Building for CMODEL_CVITEK platform..."
+        export CHIP_ARCH=CMODEL_CVITEK
+    else
+        echo "CMODEL_CVITEK not found"
+        exit 1
+    fi
+
 elif [[ "$1" == "clean" ]]; then
     echo "Using ./${BASH_SOURCE[0]} clean"
     echo "Cleaning build..."
@@ -185,7 +195,14 @@ elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
     OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1684X/sophon-opencv
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1684X/libsophon
     MPI_PATH=$CVI_TDL_ROOT/dependency/BM1684X/sophon-ffmpeg
-    
+
+elif [[ "$CHIP_ARCH" == "CMODEL_CVITEK" ]]; then
+    CROSS_COMPILE_PATH=/usr/
+    CROSS_COMPILE=""
+    CV_UTILS=OFF
+    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL_CVITEK/opencv
+    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CVITEK
+
 else
     CV_UTILS=ON
     TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
@@ -226,6 +243,8 @@ elif [[ "${CHIP_ARCH}" == "SOPHON" ]]; then
 elif [[ "${CHIP_ARCH}" == "BM1688" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1684X" ]]; then
+    USE_TPU_IVE=OFF
+elif [[ "${CHIP_ARCH}" == "CMODEL_CVITEK" ]]; then
     USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
