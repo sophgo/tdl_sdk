@@ -342,10 +342,10 @@ int32_t TDL_FaceLandmark(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_KeypointDetection(tdl_handle_t handle,
-                                  const tdl_model_e model_id,
-                                  tdl_image_t image_handle,
-                                  tdl_keypoint_t *keypoint_meta) {
+int32_t TDL_Keypoint(tdl_handle_t handle,
+                     const tdl_model_e model_id,
+                     tdl_image_t image_handle,
+                     tdl_keypoint_t *keypoint_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -375,6 +375,44 @@ int32_t TDL_KeypointDetection(tdl_handle_t handle,
   } else {
     LOGW("Unsupported model output type: %d", output->getType());
     return -1;
+  }
+  return 0;
+}
+
+int32_t TDL_DetectionKeypoint(tdl_handle_t handle,
+                              const tdl_model_e model_id,
+                              tdl_image_t image_handle,
+                              tdl_object_t *object_meta) {
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+
+  std::shared_ptr<ModelBoxInfo> obj_info =
+      convert_obj_meta(object_meta);
+  int32_t ret = model->inference(image_context->image, obj_info, outputs);
+  if (ret != 0) {
+    return ret;
+  }    
+  for (int i = 0; i < outputs.size(); i ++) {
+    std::shared_ptr<ModelOutputInfo> output = outputs[i];
+    if (output->getType() != ModelOutputType::OBJECT_LANDMARKS) {
+      LOGW("Unsupported model output type: %d", output->getType());
+      return -1;
+    }
+    ModelLandmarksInfo *keypoint_output = (ModelLandmarksInfo *)output.get();
+    TDL_InitObjectMeta(object_meta, 1,
+      keypoint_output->landmarks_x.size());
+    object_meta->width = keypoint_output->image_width;
+    object_meta->height = keypoint_output->image_height;
+    object_meta->info[i].landmark_size = keypoint_output->landmarks_x.size();
+    for (int j = 0; j < keypoint_output->landmarks_x.size(); j++) {
+      object_meta->info[i].landmark_properity[j].x = keypoint_output->landmarks_x[j];
+      object_meta->info[i].landmark_properity[j].y = keypoint_output->landmarks_y[j];
+    }
   }
   return 0;
 }

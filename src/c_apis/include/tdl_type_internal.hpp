@@ -23,6 +23,7 @@ tdl_object_type_e convert_object_type(TDLObjectType object_type) {
     case TDL_OBJECT_TYPE_PERSON:
       return TDL_OBJECT_TYPE_PERSON;
   }
+  return TDL_OBJECT_TYPE_UNDEFINED;
 }
 
 inline tdl_data_type_e convert_data_type(TDLDataType data_type) {
@@ -52,6 +53,8 @@ inline tdl_data_type_e convert_data_type(TDLDataType data_type) {
 
 ModelType convert_model_type(tdl_model_e model_type) {
   switch (model_type) {
+    case TDL_MODEL_MBV2_DET_PERSON:
+      return ModelType::MBV2_DET_PERSON;
     case TDL_MODEL_SCRFD_DET_FACE:
       return ModelType::SCRFD_DET_FACE;
     case TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE:
@@ -60,6 +63,8 @@ ModelType convert_model_type(tdl_model_e model_type) {
       return ModelType::YOLOV8N_DET_HEAD_HARDHAT;
     case TDL_MODEL_YOLOV8N_DET_HAND:
       return ModelType::YOLOV8N_DET_HAND;
+    case TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE:
+      return ModelType::YOLOV8N_DET_LICENSE_PLATE;
     case TDL_MODEL_SEG_YOLOV8_COCO80:
       return ModelType::YOLOV8_SEG_COCO80;
     case TDL_MODEL_SEG_PERSON_FACE_VEHICLE:
@@ -109,5 +114,22 @@ inline std::shared_ptr<ModelBoxLandmarkInfo> convert_face_meta(
     face_info->box_landmarks.push_back(box_landmark_info);
   }
   return face_info;
+}
+
+inline std::shared_ptr<ModelBoxInfo> convert_obj_meta(
+    tdl_object_t *object_meta) {
+std::shared_ptr<ModelBoxInfo> obj_info =
+    std::make_shared<ModelBoxInfo>();
+for (int i = 0; i < object_meta->size; i++) {
+  ObjectBoxInfo box_landmark_info;
+  box_landmark_info.x1 = object_meta->info[i].box.x1;
+  box_landmark_info.y1 = object_meta->info[i].box.y1;
+  box_landmark_info.x2 = object_meta->info[i].box.x2;
+  box_landmark_info.y2 = object_meta->info[i].box.y2;
+  box_landmark_info.score = object_meta->info[i].score;
+
+  obj_info->bboxes.push_back(box_landmark_info);
+}
+return obj_info;
 }
 #endif

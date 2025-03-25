@@ -4,13 +4,19 @@
 #include <math.h>
 #include <stdio.h>
 int32_t TDL_InitObjectMeta(tdl_object_t *object_meta, int num_objects, int num_landmark) {
-  if (object_meta->info != NULL) return 0;
-  object_meta->info =
+  if (object_meta->info == NULL) {
+    object_meta->info =
       (tdl_object_info_t *)malloc(num_objects * sizeof(tdl_object_info_t));
+      for (int i = 0; i < num_objects; i++) {
+        object_meta->info[0].landmark_properity = NULL;
+      }
+  }
 
   for (int i = 0; i < num_objects; i ++) {
-    object_meta->info[i].landmark_properity = (tdl_landmark_info_t *)malloc(
-      num_landmark * sizeof(tdl_landmark_info_t));
+    if (num_landmark > 0 && object_meta->info[i].landmark_properity == NULL) {
+      object_meta->info[i].landmark_properity = (tdl_landmark_info_t *)malloc(
+          num_landmark * sizeof(tdl_landmark_info_t));
+    }
   }
   object_meta->size = num_objects;
   object_meta->width = 0;

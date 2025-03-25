@@ -52,6 +52,7 @@ typedef struct {
   tdl_box_t box;
   float score;
   int class_id;
+  uint32_t landmark_size;
   tdl_landmark_info_t *landmark_properity;
   tdl_object_type_e obj_type;
 } tdl_object_info_t;

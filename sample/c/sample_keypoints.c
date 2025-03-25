@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
   }
 
   tdl_keypoint_t obj_meta = {0};
-  ret = TDL_KeypointDetection(tdl_handle, enOdModelId, image, &obj_meta);
+  ret = TDL_Keypoint(tdl_handle, enOdModelId, image, &obj_meta);
   if (ret != 0) {
     printf("TDL_KeypointDetection failed with %#x!\n", ret);
   } else {

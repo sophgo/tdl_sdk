@@ -25,6 +25,40 @@ SimccPose::SimccPose() {
 
 SimccPose::~SimccPose() {}
 
+int32_t SimccPose::inference(
+  const std::shared_ptr<BaseImage> &image,
+  const std::shared_ptr<ModelOutputInfo> &model_object_infos,
+  std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
+  const std::map<std::string, float> &parameters) {
+
+  std::vector<ObjectBoxInfo> crop_boxes;
+  std::shared_ptr<ModelBoxInfo> model_box_infos =
+      std::static_pointer_cast<ModelBoxInfo>(model_object_infos);
+  for (uint32_t i = 0; i < model_box_infos->bboxes.size(); i++) {
+    crop_boxes.push_back(model_box_infos->bboxes[i]);
+  }
+  std::vector<std::shared_ptr<BaseImage>> batch_images{};
+  for (uint32_t i = 0; i < crop_boxes.size(); i++) {
+    int width = (int)crop_boxes[i].x2 - (int)crop_boxes[i].x1;
+    int height = (int)crop_boxes[i].y2 - (int)crop_boxes[i].y1;
+    int cropX = (int)crop_boxes[i].x1;
+    int cropY = (int)crop_boxes[i].y1;
+    std::shared_ptr<BaseImage> human_crop = preprocessor_->crop(
+      image, cropX, cropY, width, height);
+    batch_images.clear();
+    batch_images.push_back(human_crop);
+    std::vector<std::shared_ptr<ModelOutputInfo>> batch_out_datas;
+    int ret = BaseModel::inference(batch_images, batch_out_datas);
+    if (ret != 0) {
+      LOGE("inference failed");
+      return ret;
+    }
+    out_datas.push_back(batch_out_datas[0]);
+  }
+
+  return 0;
+}
+
 int32_t SimccPose::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {

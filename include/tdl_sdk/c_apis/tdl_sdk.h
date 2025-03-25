@@ -163,10 +163,24 @@ int32_t TDL_ObjectClassification(tdl_handle_t handle,
  * @param keypoint_meta 输出参数，存储检测到的关键点坐标及置信度
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_KeypointDetection(tdl_handle_t handle,
+int32_t TDL_Keypoint(tdl_handle_t handle,
+                     const tdl_model_e model_id,
+                     tdl_image_t image_handle,
+                     tdl_keypoint_t *keypoint_meta);
+
+/**
+ * @brief 执行关键点检测任务（根据目标的坐标进行裁剪后再执行关键点检测）
+ *
+ * @param handle TDLContextHandle 对象
+ * @param model_id 指定关键点检测模型类型枚举值
+ * @param image_handle TDLImageHandle 对象
+ * @param object_meta 输出参数，存储检测到的关键点坐标及置信度
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_DetectionKeypoint(tdl_handle_t handle,
                               const tdl_model_e model_id,
                               tdl_image_t image_handle,
-                              tdl_keypoint_t *keypoint_meta);
+                              tdl_object_t *object_meta);
 
 /**
  * @brief 执行实例分割任务
@@ -177,7 +191,7 @@ int32_t TDL_KeypointDetection(tdl_handle_t handle,
  * @param inst_seg_meta 输出参数，存储实例分割结果
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_InstanceSegmentation(tdl_handle_t handle, 
+int32_t TDL_InstanceSegmentation(tdl_handle_t handle,
                                  const tdl_model_e model_id,
                                  tdl_image_t image_handle,
                                  tdl_instance_seg_t *inst_seg_meta);
