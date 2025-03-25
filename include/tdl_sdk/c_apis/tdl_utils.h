@@ -53,6 +53,10 @@ int32_t TDL_InitLaneMeta(tdl_lane_t *lane_meta,
 
 int32_t TDL_ReleaseLaneMeta(tdl_lane_t *lane_meta);
 
+int32_t TDL_InitCharacterMeta(tdl_ocr_t *char_meta, int length);
+
+int32_t TDL_ReleaseCharacterMeta(tdl_ocr_t *char_meta);
+
 #ifdef __cplusplus
 }
 #endif

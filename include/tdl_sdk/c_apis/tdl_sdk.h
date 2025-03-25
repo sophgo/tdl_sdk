@@ -120,6 +120,10 @@ int32_t TDL_Tracking(tdl_handle_t handle,
                      tdl_object_t *object_meta,
                      tdl_tracker_t *tracker_meta);
 
+int32_t TDL_CharacterRecognition(tdl_handle_t handle,
+                              const tdl_model_e model_id,
+                              tdl_image_t image_handle,
+                              tdl_ocr_t *char_meta);
 #ifdef __cplusplus
 }
 #endif

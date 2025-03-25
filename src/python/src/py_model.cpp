@@ -13,12 +13,12 @@ PyModel::PyModel(ModelType model_type, const std::string& model_path,
   }
 }
 
-PyObejectDetector::PyObejectDetector(ModelType model_type,
+PyObjectDetector::PyObjectDetector(ModelType model_type,
                                      const std::string& model_path,
                                      const int device_id)
     : PyModel(model_type, model_path, device_id) {}
 
-py::list PyObejectDetector::inference(const PyImage& image,
+py::list PyObjectDetector::inference(const PyImage& image,
                                       py::dict parameters) {
   std::vector<std::shared_ptr<BaseImage>> images;
   images.push_back(image.getImage());
@@ -51,11 +51,15 @@ py::list PyObejectDetector::inference(const PyImage& image,
   }
   return bboxes;
 }
+py::list PyObjectDetector::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
+}
 
 PyFaceDetector::PyFaceDetector(ModelType model_type,
                                const std::string& model_path,
                                const int device_id)
-    : PyObejectDetector(model_type, model_path, device_id) {}
+    : PyObjectDetector(model_type, model_path, device_id) {}
 
 py::list PyFaceDetector::inference(const PyImage& image, py::dict parameters) {
   std::vector<std::shared_ptr<BaseImage>> images;
@@ -101,6 +105,10 @@ py::list PyFaceDetector::inference(const PyImage& image, py::dict parameters) {
   }
   return bboxes;
 }
+py::list PyFaceDetector::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
+}
 
 PyClassifier::PyClassifier(ModelType model_type,
                                const std::string& model_path,
@@ -132,6 +140,10 @@ py::dict PyClassifier::inference(const PyImage& image, py::dict parameters) {
   classification_dict[py::str("score")] = classification_output->topk_scores[0];
 
   return classification_dict;
+}
+py::dict PyClassifier::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
 }
 
 PyAttributeExtractor::PyAttributeExtractor(ModelType model_type,
@@ -177,6 +189,10 @@ py::dict PyAttributeExtractor::inference(const PyImage& image, py::dict paramete
   
   return face_attribute_dict;
 }
+py::dict PyAttributeExtractor::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
+}
 
 PyFaceLandmark::PyFaceLandmark(ModelType model_type,
                                const std::string& model_path,
@@ -212,6 +228,10 @@ py::dict PyFaceLandmark::inference(const PyImage& image, py::dict parameters) {
   }
   face_lankmark_dict[py::str("landmarks")] = landmarks;
   return face_lankmark_dict;
+}
+py::dict PyFaceLandmark::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
 }
 
 PyKeyPointDetector::PyKeyPointDetector(ModelType model_type,
@@ -256,6 +276,10 @@ py::dict PyKeyPointDetector::inference(const PyImage& image, py::dict parameters
   }
   return landmark_dict;
 }
+py::dict PyKeyPointDetector::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
+}
 
 PySemanticSegmentation::PySemanticSegmentation(ModelType model_type,
                                const std::string& model_path,
@@ -293,6 +317,10 @@ py::dict PySemanticSegmentation::inference(const PyImage& image, py::dict parame
   segmentation_dict[py::str("class_id")] = class_id;
   segmentation_dict[py::str("class_conf")] = class_conf;
   return segmentation_dict;
+}
+py::dict PySemanticSegmentation::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
 }
 
 PyInstanceSegmentation::PyInstanceSegmentation(ModelType model_type,
@@ -352,6 +380,10 @@ py::dict PyInstanceSegmentation::inference(const PyImage& image, py::dict parame
   instance_seg_dict[py::str("bboxes_seg")] = bboxes_seg;
   return instance_seg_dict;
 }
+py::dict PyInstanceSegmentation::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
+}
 
 PyLaneDetection::PyLaneDetection(ModelType model_type,
                                const std::string& model_path,
@@ -390,6 +422,10 @@ py::list PyLaneDetection::inference(const PyImage& image, py::dict parameters) {
   }
   return lanes_list;
 }
+py::list PyLaneDetection::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
+}
 
 PyFeatureExtractor::PyFeatureExtractor(ModelType model_type,
                                const std::string& model_path,
@@ -418,5 +454,43 @@ py::array_t<float> PyFeatureExtractor::inference(const PyImage& image, py::dict 
   float* feature_ptr = reinterpret_cast<float*>(feature_output->embedding);
   
   return py::array_t<float>(feature_output->embedding_num,feature_ptr);
+}
+py::array_t<float> PyFeatureExtractor::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
+}
+
+PyCharacterRecognitor::PyCharacterRecognitor(ModelType model_type,
+                               const std::string& model_path,
+                               const int device_id)
+    : PyModel(model_type, model_path, device_id) {}
+
+py::list PyCharacterRecognitor::inference(const PyImage& image, py::dict parameters) {
+  std::vector<std::shared_ptr<BaseImage>> images;
+  images.push_back(image.getImage());
+  std::map<std::string, float> parameters_map;
+  for (auto& item : parameters) {
+    parameters_map[item.first.cast<std::string>()] = item.second.cast<float>();
+  }
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
+  model_->inference(images, out_datas, parameters_map);
+  std::shared_ptr<ModelOutputInfo> output_info = out_datas[0];
+  if (output_info->getType() !=
+      ModelOutputType::OCR_INFO) {
+    throw std::runtime_error("Model output type is not OCR_INFO");
+  }
+  std::shared_ptr<ModelOcrInfo> char_output =
+      std::dynamic_pointer_cast<ModelOcrInfo>(output_info);
+  if (!char_output) {
+    throw std::runtime_error("Failed to cast to ModelOcrInfo");
+  }
+  py::list char_list;
+  std::string str(char_output->text_info);
+  char_list.append(str);
+  return char_list;
+}
+py::list PyCharacterRecognitor::inference(const py::array_t<unsigned char, py::array::c_style> &input, py::dict parameters){
+  PyImage image = PyImage::fromNumpy(input);
+  return inference(image, parameters);
 }
 }  // namespace pytdl

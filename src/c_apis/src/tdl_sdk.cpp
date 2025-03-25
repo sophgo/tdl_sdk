@@ -540,3 +540,33 @@ int32_t TDL_LaneDetection(tdl_handle_t handle,
 
   return 0;
 }
+
+int32_t TDL_CharacterRecognition(tdl_handle_t handle,
+                              const tdl_model_e model_id,
+                              tdl_image_t image_handle,
+                              tdl_ocr_t *char_meta) {
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+  std::vector<std::shared_ptr<BaseImage>> images;
+  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  images.push_back(image_context->image);
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::OCR_INFO) {
+    ModelOcrInfo *char_output = (ModelOcrInfo *)output.get();
+    TDL_InitCharacterMeta(char_meta, char_output->length);
+    char_meta->size = char_output->length;
+    char_meta->text_info = char_output->text_info;
+  } else {
+    LOGE("Unsupported model output type: %d", output->getType());
+    return -1;
+  }
+
+  return 0;
+}

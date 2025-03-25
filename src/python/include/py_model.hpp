@@ -20,18 +20,22 @@ class PyModel {
  protected:
   std::shared_ptr<BaseModel> model_;
 };
-class PyObejectDetector : public PyModel {
+class PyObjectDetector : public PyModel {
  public:
   // 构造函数
-  PyObejectDetector(ModelType model_type, const std::string& model_path,
+  PyObjectDetector(ModelType model_type, const std::string& model_path,
                     const int device_id = 0);
   py::list inference(const PyImage& image, py::dict parameters = py::dict());
+  py::list inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                     py::dict parameters = py::dict());
 };
-class PyFaceDetector : public PyObejectDetector {
+class PyFaceDetector : public PyObjectDetector {
  public:
   PyFaceDetector(ModelType model_type, const std::string& model_path,
                  const int device_id = 0);
   py::list inference(const PyImage& image, py::dict parameters = py::dict());
+  py::list inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                    py::dict parameters = py::dict());
 };
 
 class PyClassifier : public PyModel {
@@ -39,6 +43,8 @@ class PyClassifier : public PyModel {
   PyClassifier(ModelType model_type, const std::string& model_path,
                const int device_id = 0);
   py::dict inference(const PyImage& image, py::dict parameters = py::dict());
+  py::dict inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                    py::dict parameters = py::dict());
 };
 
 class PyFeatureExtractor : public PyModel {
@@ -48,6 +54,8 @@ class PyFeatureExtractor : public PyModel {
                      const int device_id = 0);
   py::array_t<float> inference(const PyImage& image,
                                py::dict parameters = py::dict());
+  py::array_t<float> inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                    py::dict parameters = py::dict());
 };
 
 class PyAttributeExtractor : public PyModel {
@@ -55,6 +63,8 @@ class PyAttributeExtractor : public PyModel {
   PyAttributeExtractor(ModelType model_type, const std::string& model_path,
                        const int device_id = 0);
   py::dict inference(const PyImage& image, py::dict parameters = py::dict());
+  py::dict inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                    py::dict parameters = py::dict());
 };
 
 class PyKeyPointDetector : public PyModel {
@@ -62,6 +72,8 @@ class PyKeyPointDetector : public PyModel {
   PyKeyPointDetector(ModelType model_type, const std::string& model_path,
                      const int device_id = 0);
   py::dict inference(const PyImage& image, py::dict parameters = py::dict());
+  py::dict inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                    py::dict parameters = py::dict());
 };
 
 class PyInstanceSegmentation : public PyModel {
@@ -69,6 +81,8 @@ class PyInstanceSegmentation : public PyModel {
   PyInstanceSegmentation(ModelType model_type, const std::string& model_path,
                  const int device_id = 0);
   py::dict inference(const PyImage& image, py::dict parameters = py::dict());
+  py::dict inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                  py::dict parameters = py::dict());
 };
 
 class PyFaceLandmark : public PyModel {
@@ -76,12 +90,16 @@ class PyFaceLandmark : public PyModel {
   PyFaceLandmark(ModelType model_type, const std::string& model_path,
                  const int device_id = 0);
   py::dict inference(const PyImage& image, py::dict parameters = py::dict());
+  py::dict inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                  py::dict parameters = py::dict());
 };
 class PySemanticSegmentation : public PyModel {
  public:
   PySemanticSegmentation(ModelType model_type, const std::string& model_path,
                  const int device_id = 0);
   py::dict inference(const PyImage& image, py::dict parameters = py::dict());
+  py::dict inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                    py::dict parameters = py::dict());
 };
 
 class PyLaneDetection : public PyModel {
@@ -89,7 +107,18 @@ class PyLaneDetection : public PyModel {
   PyLaneDetection(ModelType model_type, const std::string& model_path,
                  const int device_id = 0);
   py::list inference(const PyImage& image, py::dict parameters = py::dict());
+  py::list inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                    py::dict parameters = py::dict());
 };
 
+class PyCharacterRecognitor : public PyModel {
+ public:
+  // 构造函数
+  PyCharacterRecognitor(ModelType model_type, const std::string& model_path,
+                    const int device_id = 0);
+  py::list inference(const PyImage& image, py::dict parameters = py::dict());
+  py::list inference(const py::array_t<unsigned char, py::array::c_style> &input, 
+                     py::dict parameters = py::dict());
+};
 }  // namespace pytdl
 #endif

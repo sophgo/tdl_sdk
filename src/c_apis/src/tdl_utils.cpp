@@ -157,6 +157,22 @@ int32_t TDL_ReleaseLaneMeta(tdl_lane_t *lane_meta) {
   return 0;
 }
 
+int32_t TDL_InitCharacterMeta(tdl_ocr_t *char_meta, int length){
+  if (char_meta->text_info) return 0;
+  char_meta->text_info = (char *)malloc(length * sizeof(char));
+  memset(char_meta->text_info, 0, length * sizeof(char));
+  char_meta->size = length;
+  return 0;
+};
+
+int32_t TDL_ReleaseCharacterMeta(tdl_ocr_t *char_meta){
+  if (char_meta->text_info != NULL) {
+    free(char_meta->text_info);
+    char_meta->text_info = NULL;
+  }
+  return 0;
+};
+
 int32_t TDL_InitFeatureMeta(tdl_feature_t *feature_meta) {
   if (feature_meta->ptr != NULL) return 0;
   feature_meta->ptr = (int8_t *)malloc(sizeof(int8_t));

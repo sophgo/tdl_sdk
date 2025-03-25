@@ -170,6 +170,11 @@ typedef struct {
   int out_num;
 } tdl_tracker_t;
 
+typedef struct {
+  uint32_t size;
+  char* text_info;
+} tdl_ocr_t;
+
 typedef void *tdl_handle_t;
 typedef void *tdl_image_t;
 
