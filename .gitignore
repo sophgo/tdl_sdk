@@ -19,5 +19,9 @@ _deps/
 python_depends
 thirdparty
 dependency
+<<<<<<< HEAD
 txt_root
 json_root
+=======
+install
+>>>>>>> ad9eb60e... add tracker components

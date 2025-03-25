@@ -15,7 +15,7 @@ add_subdirectory(c_apis)
 set(CORES_SRCS 
             #    $<TARGET_OBJECTS:components>
                $<TARGET_OBJECTS:framework>
-            #    $<TARGET_OBJECTS:app>
+               $<TARGET_OBJECTS:tracker>
                $<TARGET_OBJECTS:nn>               
                $<TARGET_OBJECTS:c_apis>
                )

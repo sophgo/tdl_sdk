@@ -1,0 +1,14 @@
+project(tracker)
+
+include_directories(
+                    ${REPO_DIR}/include/tdl_sdk/framework
+                    ${REPO_DIR}/include/tdl_sdk/components
+                    ${REPO_DIR}/include/tdl_sdk/app
+                    ${REPO_DIR}/include/tdl_sdk/nn
+                    ${CMAKE_CURRENT_SOURCE_DIR}/
+                    )
+
+file(GLOB_RECURSE SRC_FRAMWORK_FILES_CUR ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+
+message(STATUS "SRC_MOT_FILES_CUR: ${SRC_FRAMWORK_FILES_CUR}")
+add_library(${PROJECT_NAME} OBJECT ${SRC_FRAMWORK_FILES_CUR})

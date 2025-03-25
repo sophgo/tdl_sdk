@@ -249,11 +249,14 @@ int32_t MobileDetV2Detection::outputParse(
                                      net_param_.pre_params.cropX,
                                      net_param_.pre_params.cropY);
         if (type_mapping_.count(b.class_id)) {
+          LOGI("class_id: %d, object_type: %d\n", b.class_id,
+               type_mapping_[b.class_id]);
           b.object_type = type_mapping_[b.class_id];
         }
         obj->bboxes.push_back(b);
       }
     }
+    LOGI("batch:%d,num_obj:%d", b, num_obj);
     out_datas.push_back(obj);
   }
   return 0;

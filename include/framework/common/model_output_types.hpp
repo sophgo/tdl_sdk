@@ -64,26 +64,26 @@ class ObjectBoxLandmarkInfo {
 
 class ObjectBoxSegmentationInfo {
  public:
-  ObjectBoxSegmentationInfo()     
+  ObjectBoxSegmentationInfo()
       : class_id(0),
-      object_type(OBJECT_TYPE_UNDEFINED),
-      score(0.0f),
-      x1(0.0f),
-      y1(0.0f),
-      x2(0.0f),
-      y2(0.0f),
-      mask(nullptr),
-      mask_point(nullptr),
-      mask_point_size(0) {}
+        object_type(OBJECT_TYPE_UNDEFINED),
+        score(0.0f),
+        x1(0.0f),
+        y1(0.0f),
+        x2(0.0f),
+        y2(0.0f),
+        mask(nullptr),
+        mask_point(nullptr),
+        mask_point_size(0) {}
   ~ObjectBoxSegmentationInfo() {
-      if (mask != nullptr) {
-          free(mask);
-          mask = nullptr;
-      }
-      if (mask_point != nullptr) {
-          free(mask_point);
-          mask_point = nullptr;
-      }
+    if (mask != nullptr) {
+      free(mask);
+      mask = nullptr;
+    }
+    if (mask_point != nullptr) {
+      free(mask_point);
+      mask_point = nullptr;
+    }
   }
   int32_t class_id;
   TDLObjectType object_type = OBJECT_TYPE_UNDEFINED;
@@ -135,11 +135,9 @@ class ModelLandmarksInfo : public ModelOutputInfo {
 class ModelOcrInfo : public ModelOutputInfo {
  public:
   ~ModelOcrInfo();
-  ModelOutputType getType() const override {
-    return ModelOutputType::OCR_INFO;
-  }
+  ModelOutputType getType() const override { return ModelOutputType::OCR_INFO; }
   size_t length;
-  char* text_info;
+  char *text_info;
 };
 
 class ModelFeatureInfo : public ModelOutputInfo {
@@ -148,7 +146,7 @@ class ModelFeatureInfo : public ModelOutputInfo {
   ModelOutputType getType() const override {
     return ModelOutputType::FEATURE_EMBEDDING;
   }
-  uint8_t* embedding = nullptr;
+  uint8_t *embedding = nullptr;
   int32_t embedding_num;
   TDLDataType embedding_type;
 };
@@ -182,7 +180,7 @@ class ModelSegmentationInfo : public ModelOutputInfo {
         output_height(0),
         class_id(nullptr),
         class_conf(nullptr) {}
-        
+
   ~ModelSegmentationInfo() {
     if (class_id != nullptr) {
       free(class_id);

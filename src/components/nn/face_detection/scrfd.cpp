@@ -118,7 +118,7 @@ int32_t SCRFD::outputParse(
        input_tensor.shape[3]);
 
   const int FACE_LANDMARKS_NUM = 5;
-
+  int total_face_num = 0;
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
@@ -249,9 +249,9 @@ int32_t SCRFD::outputParse(
     facemeta->image_width = image_width;
     facemeta->image_height = image_height;
     facemeta->box_landmarks = vec_bbox;
-
+    total_face_num += facemeta->box_landmarks.size();
     out_datas.push_back(facemeta);
   }
-  LOGI("srcfd outputParse done");
+  LOGI("srcfd outputParse done,total face num:%d", total_face_num);
   return 0;
 }
