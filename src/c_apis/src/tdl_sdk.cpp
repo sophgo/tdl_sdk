@@ -53,6 +53,23 @@ tdl_image_t TDL_ReadImage(const char *path) {
   return (tdl_image_t)image_context;
 }
 
+tdl_image_t TDL_ReadAudio(const char *path, int size){
+  FILE *file = fopen(path, "rb");
+  if (!file) {
+      return 0;
+  }
+  unsigned char *buffer = (unsigned char *)malloc(size);
+  size_t read_size = fread(buffer, 1, size, file);
+  fclose(file);
+
+  tdl_image_context_t *image_context = new tdl_image_context_t();
+  image_context->image =
+      ImageFactory::createImage(size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
+  uint8_t* data_buffer = image_context->image->getVirtualAddress()[0];
+  memcpy(data_buffer, buffer, size * sizeof(uint8_t));
+  return (tdl_image_t)image_context;
+}
+
 int32_t TDL_DestroyImage(tdl_image_t image_handle) {
   tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
   if (image_context == nullptr) {

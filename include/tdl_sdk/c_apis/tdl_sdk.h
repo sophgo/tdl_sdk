@@ -40,6 +40,15 @@ tdl_image_t TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory);
 tdl_image_t TDL_ReadImage(const char *path);
 
 /**
+ * @brief 读取一段音频为 TDLImageHandle 对象
+ *
+ * @param path 音频路径
+ * @param size 音频数据大小
+ * @return  返回读取的 TDLImageHandle 对象, 如果失败返回 NULL
+ */
+tdl_image_t TDL_ReadAudio(const char *path, int size);
+
+/**
  * @brief 销毁一个 TDLImageHandle 对象
  *
  * @param image_handle 需要销毁的 TDLImageHandle 对象

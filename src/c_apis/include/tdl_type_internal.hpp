@@ -89,6 +89,10 @@ ModelType convert_model_type(tdl_model_e model_type) {
       return ModelType::CLS_RGBLIVENESS;
     case TDL_MODEL_LSTR_DET_LANE:
       return ModelType::LSTR_DET_LANE;
+    case TDL_MODEL_CLS_BABAY_CRY:
+      return ModelType::CLS_SOUND_BABAY_CRY;
+    case TDL_MODEL_CLS_SOUND_COMMAND:
+      return ModelType::CLS_SOUND_COMMAND;
   }
   return ModelType::INVALID;
 }
