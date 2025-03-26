@@ -674,6 +674,7 @@ int32_t TDL_CharacterRecognition(tdl_handle_t handle,
     TDL_InitCharacterMeta(char_meta, char_output->length);
     char_meta->size = char_output->length;
     char_meta->text_info = char_output->text_info;
+    char_output->text_info = NULL;
   } else {
     LOGE("Unsupported model output type: %d", output->getType());
     return -1;

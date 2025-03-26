@@ -93,6 +93,8 @@ ModelType convert_model_type(tdl_model_e model_type) {
       return ModelType::CLS_SOUND_BABAY_CRY;
     case TDL_MODEL_CLS_SOUND_COMMAND:
       return ModelType::CLS_SOUND_COMMAND;
+    case TDL_MODEL_RECOGNITION_LICENSE_PLATE:
+      return ModelType::RECOGNITION_LICENSE_PLATE;
   }
   return ModelType::INVALID;
 }

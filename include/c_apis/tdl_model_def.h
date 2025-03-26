@@ -59,23 +59,29 @@ typedef enum {
   TDL_MODEL_LSTR_DET_LANE,
   TDL_KEYPOINT_MODEL_MAX,
 
+  // recogntion model list
+  TDL_RECOGNITION_MODEL = 400,
+  TDL_MODEL_RECOGNITION_LICENSE_PLATE,
+  TDL_REGOGNITION_MODEL_MAX,
+
   // segmentation model list
-  TDL_SEGMENTATION_MODEL = 400,
+  TDL_SEGMENTATION_MODEL = 500,
   TDL_MODEL_SEG_YOLOV8_COCO80,
   TDL_MODEL_SEG_PERSON_FACE_VEHICLE,  // 0:background,1:person,2:face,3:vehicle,4:license plate
   TDL_MODEL_SEG_MOTION,  // 0:static,2:transsition 3:motion
   TDL_SEGMENTATION_MODEL_MAX,
 
   // depth estimation model list
-  TDL_DEPTH_MODEL = 500,
+  TDL_DEPTH_MODEL = 600,
   TDL_MODEL_DEPTHANYTHING, // todo
   TDL_DEPTH_MODEL_MAX,
 
   // LLM model list
-  TDL_LLM_MODEL = 600,
+  TDL_LLM_MODEL = 700,
   TDL_MODEL_IMG_FEATURE_CLIP,
   TDL_MODEL_TEXT_FEATURE_CLIP,
   TDL_LLM_MODEL_MAX,
+
 
 } tdl_model_e;
 
