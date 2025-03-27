@@ -7,10 +7,9 @@ project(sample_cpp)
 set(SAMPLE_INCLUDES
     ${MLIR_INCLUDES}
     ${MIDDLEWARE_INCLUDES}
-    ${REPO_DIR}/include/tdl_sdk/framework
-    ${REPO_DIR}/include/tdl_sdk/components
-    ${REPO_DIR}/include/tdl_sdk/app
-    ${REPO_DIR}/include/tdl_sdk/nn
+    ${REPO_DIR}/include/framework
+    ${REPO_DIR}/include/components
+    ${REPO_DIR}/include/nn
 )
 
 set(SAMPLE_LIBS ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
@@ -23,6 +22,7 @@ if(("${CVI_PLATFORM}" STREQUAL "CV180X") OR
    ("${CVI_PLATFORM}" STREQUAL "CV181X") OR 
    ("${CVI_PLATFORM}" STREQUAL "CV182X") OR
    ("${CVI_PLATFORM}" STREQUAL "CV183X") OR
+   ("${CVI_PLATFORM}" STREQUAL "SOPHON") OR
    ("${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK"))
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_qwenvl_process.cpp)
 endif()

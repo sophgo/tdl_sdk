@@ -201,11 +201,6 @@ include(cmake/thirdparty.cmake)
 
 include(cmake/ive.cmake)
 
-if(("${CVI_PLATFORM}" STREQUAL "CV181X") OR ("${CVI_PLATFORM}" STREQUAL "CV180X")
-OR ("${CVI_PLATFORM}" STREQUAL "CV182X") OR ("${CVI_PLATFORM}" STREQUAL "CV183X"))
-include(cmake/cvi_rtsp.cmake)
-endif()
-
 # 3rdpart includes
 include_directories(${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}
@@ -228,12 +223,10 @@ if("${BUILD_OPTION}" STREQUAL "")
   message("build tdl sdk")
   add_subdirectory(src)
   add_subdirectory(sample)
-  # add_subdirectory(modules)
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)
 elseif("${BUILD_OPTION}" STREQUAL "all" OR "${BUILD_OPTION}" STREQUAL "bm168x")
   add_subdirectory(src)
-  # add_subdirectory(modules)
   add_subdirectory(sample)
   if(IS_LOCAL AND NOT DEFINED NO_OPENCV )
     # add_subdirectory(regression)

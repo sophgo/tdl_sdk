@@ -1,20 +1,23 @@
 project(framework)
 message(STATUS "REPO_DIR:${REPO_DIR}")
 include_directories(
-                    ${REPO_DIR}/include/tdl_sdk/framework
-                    ${REPO_DIR}/include/tdl_sdk/components
-                    ${REPO_DIR}/include/tdl_sdk/app
+                    ${REPO_DIR}/include/framework
+                    ${REPO_DIR}/include/components
                     )
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR 
    ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR 
    ("${CVI_PLATFORM}" STREQUAL "SOPHON"))
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/net/bm_llm_net.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/model/llm_model.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/utils/qwen_vl_helper.cpp
+              
               )
+  if(NOT "${CVI_PLATFORM}" STREQUAL "SOPHON")
+    set(NET_SRCS ${NET_SRCS} ${CMAKE_CURRENT_SOURCE_DIR}/utils/qwen_vl_helper.cpp
+                             ${CMAKE_CURRENT_SOURCE_DIR}/model/llm_model.cpp                        
+                             ${CMAKE_CURRENT_SOURCE_DIR}/net/bm_llm_net.cpp
+                             )
+  endif()
 elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK")
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/cvi_net.cpp)
 

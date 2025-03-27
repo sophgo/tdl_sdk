@@ -1,10 +1,9 @@
 project(nn)
 
 include_directories(
-                    ${REPO_DIR}/include/tdl_sdk/framework
-                    ${REPO_DIR}/include/tdl_sdk/components
-                    ${REPO_DIR}/include/tdl_sdk/app
-                    ${REPO_DIR}/include/tdl_sdk/nn
+                    ${REPO_DIR}/include/framework
+                    ${REPO_DIR}/include/components
+                    ${REPO_DIR}/include/nn
                     ${CMAKE_CURRENT_SOURCE_DIR}/
                     )
 

@@ -29,7 +29,8 @@ int main(int argc, char *argv[]) {
     printf(
       "model name: model name should be one of {"
       "HAND, "
-      "LICENSE_PLATE.}\n");
+      "LICENSE_PLATE"
+      "POSE_SIMCC.}\n");
     printf("model path: Path to detect model.\n");
     printf("model path: Path to keypoint model.\n");
     printf("input image path: Path to input image.\n");

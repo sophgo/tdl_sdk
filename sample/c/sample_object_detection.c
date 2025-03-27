@@ -28,9 +28,9 @@ int main(int argc, char *argv[]) {
     printf("Usage: %s <model name> <model path> <input image path> <output image path>\n", argv[0]);
     printf(
         "model name: obj detection model name should be one of {"
-        "YOLOV10_DET_COCO80, "
-        "YOLOV8N_DET_HEAD_HARDHAT, "
-        "YOLOV8N_DET_PERSON_VEHICLE, "
+        "YOLOV10_COCO80, "
+        "YOLOV8N_HEAD_HARDHAT, "
+        "YOLOV8N_PERSON_VEHICLE, "
         "KEYPOINT_FACE_V2}.\n");
     printf("model path: Path to cvimodel.\n");
     printf("input image path: Path to input image.\n");
