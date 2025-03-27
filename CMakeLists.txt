@@ -172,13 +172,10 @@ if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1688" O
 endif()
 
 
-# 获取当前文件的目录
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-# 获取上一级目录
 get_filename_component(TOP_DIR ${CURRENT_DIR} DIRECTORY)
 
-# 打印上一级目录
 message(STATUS "Current Directory: ${CURRENT_DIR}")
 message(STATUS "Parent Directory: ${TOP_DIR}")
 
@@ -220,7 +217,6 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if("${BUILD_OPTION}" STREQUAL "")
-  message("build tdl sdk")
   add_subdirectory(src)
   add_subdirectory(sample)
   add_subdirectory(evaluation)

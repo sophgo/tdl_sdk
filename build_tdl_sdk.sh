@@ -25,6 +25,20 @@ if [ -z "$TOP_DIR" ]; then
     TOP_DIR=$(cd $(dirname $0);cd ..; pwd)
 fi
 
+# Ensure credential.sh is available
+if [ ! -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
+    echo "credential.sh not found, checking git remote..."
+    pushd "${TOP_DIR}/tdl_sdk"
+    if git remote -v | grep -q "cvitek"; then
+        echo "cvitek found in git remote, syncing credential.sh from internal branch..."
+        git fetch origin internal
+        git show origin/internal:scripts/credential.sh > scripts/credential.sh
+    else
+        echo "cvitek not found in git remote, skipping credential.sh sync."
+    fi
+    popd
+fi
+
 if [ -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
   source "$TOP_DIR/tdl_sdk/scripts/credential.sh"
 fi
@@ -36,7 +50,7 @@ CVI_TDL_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [[ "$1" == "CV181X" ]]; then
     echo "Building for CV181X platform..."
     export CHIP_ARCH=CV181X
-    
+
     # Execute CV181X specific commands
     cd ..
     source build/envsetup_soc.sh
@@ -50,7 +64,7 @@ if [[ "$1" == "CV181X" ]]; then
 elif [[ "$1" == "CV186X" ]]; then
     echo "Building for CV186X platform..."
     export CHIP_ARCH=CV186X
-    
+
     # Execute CV186X specific commands
     cd ..
     source build/envsetup_soc.sh
@@ -82,7 +96,7 @@ elif [[ "$1" == "CMODEL_CVITEK" ]]; then
 elif [[ "$1" == "clean" ]]; then
     echo "Using ./${BASH_SOURCE[0]} clean"
     echo "Cleaning build..."
-    
+
     # Set CHIP_ARCH if it's not already set
     if [ -z "$CHIP_ARCH" ]; then
         echo "CHIP_ARCH not set, cleaning all architectures"
@@ -90,7 +104,7 @@ elif [[ "$1" == "clean" ]]; then
         for arch in CV181X CV186X BM1688; do
             BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${arch}
             TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${arch}"
-            
+
             if [ -d "${BUILD_WORKING_DIR}" ]; then
                 echo "Cleanup tmp folder for ${arch}."
                 rm -rf ${BUILD_WORKING_DIR}
@@ -103,7 +117,7 @@ elif [[ "$1" == "clean" ]]; then
     else
         BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${CHIP_ARCH}
         TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
-        
+
         if [ -d "${BUILD_WORKING_DIR}" ]; then
             echo "Cleanup tmp folder for ${CHIP_ARCH}."
             rm -rf ${BUILD_WORKING_DIR}
@@ -113,20 +127,27 @@ elif [[ "$1" == "clean" ]]; then
             rm -rf ${TDL_SDK_INSTALL_PATH}
         fi
     fi
+
+    # Remove credential.sh if it exists
+    if [ -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
+        echo "Removing existing credential.sh..."
+        rm -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh"
+    fi
+
     exit 0
 
 elif [[ "$1" == "sample" ]]; then
     echo "Using ./${BASH_SOURCE[0]} sample"
     echo "Compiling sample..."
     BUILD_OPTION=sample
-    
+
     # Check if CHIP_ARCH is set
     if [ -z "$CHIP_ARCH" ]; then
         echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
         print_usage
         exit 1
     fi
-    
+
 elif [[ "$1" == "all" ]]; then
     echo "Using ./${BASH_SOURCE[0]} all"
     echo "Compiling modules and sample..."
@@ -137,25 +158,25 @@ elif [[ "$1" == "all" ]]; then
     cd tdl_sdk
 
     BUILD_OPTION=all
-    
+
     # Check if CHIP_ARCH is set
     if [ -z "$CHIP_ARCH" ]; then
         echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
         print_usage
         exit 1
     fi
-    
+
 elif [ "$#" -eq 0 ]; then
     echo "Using ./${BASH_SOURCE[0]}"
     echo "Compiling modules..."
-    
+
     # Check if CHIP_ARCH is set
     if [ -z "$CHIP_ARCH" ]; then
         echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
         print_usage
         exit 1
     fi
-    
+
 else
     echo "Error: Invalid option"
     print_usage
@@ -187,7 +208,7 @@ if [[ "$CHIP_ARCH" == "BM1688" ]]; then
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1688/libsophon
     MPI_PATH=$CVI_TDL_ROOT/dependency/BM1688/sophon-ffmpeg
     ISP_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1688/sophon-soc-libisp
-    
+
 elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
     CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
     CROSS_COMPILE=aarch64-linux-
@@ -215,7 +236,6 @@ fi
 HOST_TOOL_PATH="${CROSS_COMPILE_PATH}"
 TARGET_MACHINE="$(${CROSS_COMPILE_PATH}/bin/${CROSS_COMPILE}gcc -dumpmachine)"
 TOOLCHAIN_FILE="${CVI_TDL_ROOT}"/toolchain/"${TARGET_MACHINE}".cmake
-
 
 if [ -d "${BUILD_WORKING_DIR}" ]; then
     echo "BUILD_WORKING_DIR=${BUILD_WORKING_DIR}"

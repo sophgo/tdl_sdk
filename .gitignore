@@ -11,6 +11,7 @@ tmp
 *.out
 *.cvimodel
 *.bmodel
+scripts/credential.sh
 build*
 !build_tdl_sdk.sh
 sophon_sdk
