@@ -10,6 +10,7 @@ doxygen/latex
 tmp
 *.out
 *.cvimodel
+*.bmodel
 build*
 !build_tdl_sdk.sh
 sophon_sdk
@@ -18,3 +19,5 @@ _deps/
 python_depends
 thirdparty
 dependency
+txt_root
+json_root
