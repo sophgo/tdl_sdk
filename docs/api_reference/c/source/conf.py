@@ -19,9 +19,9 @@
 # 【参考格式】release = 'v1.3'
 # -- Project information -----------------------------------------------------
 
-project = 'TDLSDKSoftwareDevelopmentGuide'
-release = 'TDLSDKSoftwareDevelopmentGuide'
-copyright = '2023, CVITEK'
+project = 'c_interface'
+release = 'c_interface'
+copyright = '2024, CVITEK'
 author = 'CVITEK'
 
 import os, subprocess
@@ -127,7 +127,7 @@ numfig = True
 # 添加版本号
 # 【参考格式】 \noindent \Large Version：1.3.0 \par
 # 添加发版日期
-# 【参考格式】 \noindent \Large Release date: 2022-06-13 \par
+# 【参考格式】 \noindent \Large Release date: 2024-10-30 \par
 
 latex_maketitle = r'''
 \begin{titlepage}
@@ -140,21 +140,15 @@ latex_maketitle = r'''
 
     \vspace*{3cm}
 
-    \Huge \textbf{TDL SDK软件开发指南} \par
+    \Huge \textbf{TDL SDK python 接口} \par
 
     \vspace*{6cm}
 
 \end{center}
 
-\noindent \Large Version: 1.1.0 \par
+\vspace*{6cm}
 
-\vspace*{2cm}
-
-\noindent \Large Release date: 2022-6-15 \par
-
-\vspace*{2cm}
-
-\noindent \normalsize ©2022北京晶视智能科技有限公司\\
+\noindent \normalsize ©2024北京晶视智能科技有限公司\\
 \noindent \normalsize 本文件所含信息归北京晶视智能科技有限公司所有。\\
 \noindent \normalsize 未经授权，严禁全部或部分复制或披露该等信息。\\
 
@@ -210,14 +204,12 @@ latex_elements = {
     \usepackage{fancyhdr}
     \setlength\headheight{10pt}
     \fancypagestyle{normal}{
-        \fancyhead[L]{\includegraphics[width=3cm,height=1cm]{header_logo.png}\quad TDL SDK软件开发指南}
         \fancyhead[R]{\leftmark}
         \fancyfoot[C]{\thepage}
         \renewcommand{\headrulewidth}{0.5pt}
         \renewcommand{\footrulewidth}{0.5pt}
     }
     \fancypagestyle{plain}{
-        \fancyhead[L]{\includegraphics[width=3cm,height=1cm]{header_logo.png}\quad TDL SDK软件开发指南}
         \fancyhead[R]{\leftmark}
         \fancyfoot[C]{\thepage}
         \renewcommand{\headrulewidth}{0.5pt}

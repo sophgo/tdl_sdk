@@ -5,8 +5,8 @@
 # 【参考格式】module_name  := BitRateControlApplicationNotes
 # 【参考格式】output_file_prefix := BitRateControlApplicationNotes
 # 【注意事项】module_name === project in conf.py, use \_ instead of _ if module name contains _
-module_name  := TDLSDKSoftwareDevelopmentGuide
-output_file_prefix := TDLSDKSoftwareDevelopmentGuide
+module_name  := c_interface
+output_file_prefix := c_interface
 LANG := zh
 pdf_name  = $(output_file_prefix)_$(LANG).pdf
 

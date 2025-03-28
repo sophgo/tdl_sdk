@@ -255,6 +255,7 @@ TDL_CloseModel
 
   int32_t TDL_CloseModel(tdl_handle_t handle,
                        const tdl_model_e model_id);
+
 【描述】
 
 卸载指定类型的模型并释放相关资源。
@@ -469,7 +470,7 @@ TDL_FaceLandmark
      - 输入人脸检测结果，输出补充关键点坐标
 
 TDL_Classfification
------------------
+--------------------
 
 【语法】
 
@@ -516,7 +517,7 @@ TDL_Classfification
      - 输出分类结果
 
 TDL_ObjectClassification
------------------
+--------------------------
 
 【语法】
 
@@ -616,7 +617,7 @@ TDL_KeypointDetection
      - 输出关键点坐标及置信度
 
 TDL_InstanceSegmentation
-------------------
+--------------------------
 
 【语法】
 
@@ -663,7 +664,7 @@ TDL_InstanceSegmentation
      - 输出实例分割结果（包含mask和bbox）
 
 TDL_SemanticSegmentation
-------------------
+--------------------------
 
 【语法】
 
@@ -710,7 +711,7 @@ TDL_SemanticSegmentation
      - 输出分割结果（类别标签图）
 
 TDL_FeatureExtraction
------------------
+----------------------
 
 【语法】
 
@@ -757,7 +758,7 @@ TDL_FeatureExtraction
      - 输出特征向量
 
 TDL_LaneDetection
----------------
+------------------
 
 【语法】
 
@@ -905,7 +906,7 @@ TDL_Tracking
      - 输出跟踪器状态信息
 
 TDL_CharacterRecognition
-----------------------
+-------------------------
 
 【语法】
 
