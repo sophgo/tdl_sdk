@@ -82,7 +82,6 @@
 
     ```shell
     cd tdl_sdk
-    git checkout edge
     ./build_tdl_sdk.sh CV181X
     #再次编译
     ./build_tdl_sdk.sh all
@@ -101,8 +100,6 @@
 
     ```shell
     cd tdl_sdk
-
-    git checkout edge
     ./build_tdl_sdk.sh CV186X
     #再次编译
     ./build_tdl_sdk.sh all
@@ -125,7 +122,6 @@
     cd tdl_sdk
     ./build_tdl_sdk.sh BM1688
     ```
-
 
 ### BM1684X平台编译
 
@@ -162,7 +158,6 @@
     cd tdl_sdk
     ./build_tdl_sdk.sh CMODEL_CVITEK
     ```
-
 
 ### BM1688 Python导出包编译
 
