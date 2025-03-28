@@ -1,60 +1,62 @@
-# TDL_SDK 公版深度学习软件包（Turnkey Deep Learning SDK）
+## 介绍
 
-TDL_SDK 是全自研的基于算能Middleware及TPU SDK的通用深度学习软件包，
-方便用户快速部署模型并测试，旨在为用户提供高效、便捷的模型部署解决方案。
+`tdl_sdk(turnkey deep learning sdk)` 是一个基于算能芯片产品的开箱即用深度学习算法SDK，致力于为用户提供跨平台（端、边）、简单易用、资源节约、性能高效的算法库及应用。
 
-![TDL SDK系统框架](docs/api_reference/source/Design_Overview/media/Design002.png)
-<p align="center"><b>图 1: TDL SDK 框架</b></p>
+当前支持的型号包括：
 
-支持算能科技发布的多种平台和芯片架构。
-包括但不限于：
-- CV180X
-- CV181X
-- CV186AH/BM1688
-- BM1684/BM1684X
+- CV181X/CV180X
+- CV186AH
+- BM1688/BM1684X
+- CMODEL
 
-当前已完成对
+## 架构
 
-- V410 SDK
-- BM1688 & CV186AH SDK
+![image](./docs/images/framework.png)
 
-等平台的SDK支持，只需将tdl_sdk置在对应版本的项目根路径中便可使用，后续还会新增更多平台的支持。
+## 特性
 
-## 文档链接
+- 实现算法部署的底座框架，适配多种芯片产品，基于该框架可以实现一次部署，多平台运行
+- 充分利用自带的硬件加速单元，实现高效推理
+- 遵循内存高效原则，避免冗余内存申请及拷贝
+- 提供C/C++/Python三种接口，方便快速集成
+- 提供众多可直接在端侧场景落地的轻量级模型，涵盖检测、分类、识别、分割、声音指令等，具体见[模型列表](https://github.com/sophgo/tdl_models)
+- 支持CMODEL环境（当前仅支持CV181X/CV180X）开发测试
 
-为了帮助用户快速上手 TDL_SDK，我们提供了以下指南文档：
+## 快速上手
 
-| 文档名称       | 描述                                   |
-|----------------|----------------------------------------|
-| [TDL SDK编译指南](getting_started/build.md) | 详细介绍如何配置环境并编译 TDL_SDK。 |
-| [TDL SDK运行指南](getting_started/run.md)   | 提供运行示例和测试模型的步骤说明。   |
-| [TDL SDK开发指南](docs/api_reference/source/index.rst) | 提供 TDL SDK 的详细开发文档和 API 参考。 |
+- 编译，参考[build.md](getting_started/build.md)
+- 运行，参考[run.md](getting_started/run.md)，以python为例
 
-## 模型获取
+  ```python
+  from tdl import nn,image
+  import sys
+  # import cv2 # 如果需要使用cv2读取图片，请取消注释
+  if __name__ == "__main__":
+      if len(sys.argv) != 3:
+          print("Usage: python sample_fd.py <model_path> <image_path>")
+          sys.exit(1)
+      model_path = sys.argv[1]
+      img_path = sys.argv[2]
+      face_detector = nn.FaceDetector(nn.ModelType.SCRFD_DET_FACE, model_path)
+      img = image.read(img_path)
+      # img = cv2.imread(img_path)
+      bboxes = face_detector.inference(img)
+      print(bboxes)
+  ```
 
-算能TPU SDK支持两种模型文件格式：
+- 开发，参考[接口文档](docs/api_reference)、[开发指南](docs/developer_guide)和[sample](sample)
 
-- *.bmodel：基于libsophon中的bmruntime推理的模型结构；
-- *.cvimodel：基于cviruntime推理的模型结构
+## 参与贡献
 
-我们已为大家准备好了经过优化的模型文件存放于 [tdl_models](https://github.com/sophgo/tdl_models) 仓库中，可直接拿来使用。
-
-``` shell
-git clone https://github.com/sophgo/tdl_models.git
-```
-
-## 测试TDL_SDK
-
-TDL_SDK为每一种任务场景及模型都提供了三种风格的sample：
-
-- c
-- cpp
-- python
-
-用户可以根据自己的喜好选择运行的sample。
+- 有任何问题，欢迎提交issue，反馈问题
+- 欢迎提交PR，贡献代码
 
 ## 版本发布
 
 | 版本号   | 发布时间       | 更新内容                                   |
 |----------|----------------|--------------------------------------------|
-| v2.0     | 2025-03-31     | 初始版本发布，支持 V410 SDK 和 BM1688 SDK。 |
+| v2.0     | 2025-03-31     | 重构框架，支持多芯片及CMODEL|
+
+## 许可证
+
+本项目基于 [BSD 2-Clause License](docs/LICENSE) 许可证开源。
