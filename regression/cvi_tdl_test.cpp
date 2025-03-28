@@ -32,8 +32,6 @@ CVI_TDLTestContext::CVI_TDLTestContext() : m_inited(false) {}
 
 void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir,
                               std::string json_dir) {
-  std::cout << "model_dir: " << m_model_dir << ", image_dir: " << m_image_dir
-            << ", json_dir: " << m_json_dir << std::endl;
 
   if (!m_inited) {
     m_model_dir = model_dir;
@@ -123,6 +121,22 @@ CVI_TDLModelTestSuite::CVI_TDLModelTestSuite(
   std::cout << "json_file_path: " << json_file_path
             << ",image_dir_name: " << m_image_dir
             << ",model_dir: " << m_model_dir << std::endl;
+}
+
+
+CVI_TDLModelTestSuite::CVI_TDLModelTestSuite() {
+  CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
+  fs::path json_file_path = context.getJsonBaseDir();
+  std::ifstream filestr(json_file_path);
+  filestr >> m_json_object;
+  filestr.close();
+  // std::cout << "m_json_object: " << m_json_object << "\n" << std::endl;
+
+  m_image_dir = context.getImageBaseDir();
+  m_model_dir = context.getModelBaseDir();
+  std::cout << "json_file_path: " << json_file_path << "\n"
+            << "image_dir_name: " << m_image_dir << "\n"
+            << "model_dir: " << m_model_dir << std::endl;
 }
 
 float iou(const std::vector<float> &gt_object,

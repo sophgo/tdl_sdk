@@ -1,8 +1,5 @@
 #!/bin/sh
 
-CHIPSET="${CHIP:=181x}"
-CHIPSET=$(echo ${CHIP} | tr '[:upper:]' '[:lower:]')
-
 print_usage() {
   echo ""
   echo "Usage: daily_regression.sh [-m] [-d] [-a] [-h]"
@@ -40,108 +37,95 @@ model_dir=${model_dir:-/mnt/data/cvimodel}
 dataset_dir=${dataset_dir:-/mnt/data/dataset}
 asset_dir=${asset_dir:-/mnt/data/asset}
 
+
+total_ion_size=30000000
 if [ -f "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem" ]; then
   total_ion_size=$(cat /sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem)
+  CHIP_ARCH="CV181X"
 elif [ -f "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem" ]; then
   total_ion_size=$(cat /sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem)
   CHIP_ARCH="CV186X"
 elif [ -f "/proc/soph/vpss" ]; then
   CHIP_ARCH="BM1688"
-else
-  # if ion size is unknown then execute basic tests.
-  total_ion_size=20000000
 fi
 
-echo "CHIP_ARCH: ${CHIP_ARCH}"
-test_suites=""
+
+
+det_test_suites="DetectionTestSuite.*"
+cls_test_suites="ClassificationTestSuite.*"
+kpt_test_suites="KeypointTestSuite.*"
+
+det_json=""
+cls_json=""
+kpt_json=""
+
 
 # ION requirement >= 20 MB
-# if [ "$total_ion_size" -gt "20000000" ]; then
-#   test_suites="CoreTestSuite.*"
-#   test_suites="${test_suites}:FaceRecognitionTestSuite.*"
-#   test_suites="${test_suites}:MaskClassification.*"
-#   test_suites="${test_suites}:FaceQualityTestSuite.*"
-#   test_suites="${test_suites}:MultiObjectTrackingTestSuite.*"
-#   test_suites="${test_suites}:ReIdentificationTestSuite.*"
-#   test_suites="${test_suites}:LivenessTestSuite.*"
-#   test_suites="${test_suites}:RetinafaceTestSuite.*"
-#   test_suites="${test_suites}:FaceMaskDetectionTestSuite.*"
-#   test_suites="${test_suites}:RetinafaceIRTestSuite.*"
-#   test_suites="${test_suites}:RetinafaceHardhatTestSuite.*"
-#   test_suites="${test_suites}:IncarTestSuite.*"
-#   test_suites="${test_suites}:ESCTestSuite.*"
-#   test_suites="${test_suites}:EyeCTestSuite.*"
-#   test_suites="${test_suites}:YawnCTestSuite.*"
-#   test_suites="${test_suites}:SoundCTestSuite.*"
-#   test_suites="${test_suites}:FLTestSuite.*"
-#   #test_suites="${test_suites}:TamperDetectionTestSuite.*"
-# fi
+if [ "$total_ion_size" -gt "20000000" ]; then
+
+  #det
+  det_json="${det_json}:mbv2_det_person.json"
+  det_json="${det_json}:yolov8n_det_fire.json"
+  det_json="${det_json}:yolov8n_det_fire_smoke.json"
+  det_json="${det_json}:yolov8n_det_hand_face_person.json"
+  det_json="${det_json}:yolov8n_det_hand.json"
+  det_json="${det_json}:yolov8n_det_head_hardhat.json"
+  det_json="${det_json}:yolov8n_det_head_shoulder.json"
+  det_json="${det_json}:yolov8n_det_license_plate.json"
+  det_json="${det_json}:yolov8n_det_person_vehicle.json"
+  det_json="${det_json}:yolov8n_det_pet_person.json"
+  det_json="${det_json}:yolov8n_det_traffic_light.json"
+
+  #cls
+  # cls_json="${cls_json}:xxx.json"
+
+  #kpt
+  # kpt_json="${kpt_json}:xxx.json"
+
+fi
 
 # # ION requirement >= 35 MB
 # if [ "$total_ion_size" -gt "35000000" ]; then
-# test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
-# test_suites="${test_suites}:LicensePlateRecognitionTestSuite.*"
-# test_suites="${test_suites}:ThermalFaceDetectionTestSuite.*"
-# test_suites="${test_suites}:ThermalPersonDetectionTestSuite.*"
-# test_suites="${test_suites}:FeatureMatchingTestSuite.*"
-# test_suites="${test_suites}:MotionDetection*"
+#   #det
+#   det_json="${det_json}:xxx.json"
+
+#   #cls
+#   cls_json="${cls_json}:xxx.json"
+
+#   #kpt
+#   kpt_json="${kpt_json}:xxx.json"
 # fi
 
-# # ION requirement >= 60 MB
-# if [ "$total_ion_size" -gt "60000000" ]; then
-# test_suites="${test_suites}:MobileDetTestSuite.*"
-# fi
 
-# # ION requirement >= 70 MB
-# if [ "$total_ion_size" -gt "70000000" ]; then
-# test_suites="${test_suites}:FallTestSuite.*"
-# test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
-# test_suites="${test_suites}:Hand_DetectionTestSuite.*"
-# test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
-# test_suites="${test_suites}:People_Vehicle_DetectionTestSuite.*"
-# test_suites="${test_suites}:FaceRecognitionTestSuite.*"
-# test_suites="${test_suites}:LicensePlateDetectionTestSuite.*"
-# test_suites="${test_suites}:ScrfdDetTestSuite.*"
-# test_suites="${test_suites}:Hand_ClassificationTestSuite.*"
-# test_suites="${test_suites}:HardhatDetTestSuite.*"
-# test_suites="${test_suites}:MobileDetV2TestSuite.*"
-# fi
+run_test_main() {
+  json_files="$1"
+  test_suites="$2"
+  json_separated=$(echo "$json_files" | tr ':' ' ')
 
-if [ "$CHIP_ARCH" = "CV186X" ] || [ "$CHIP_ARCH" = "BM1688" ]; then
-  echo "CHIP_ARCH: ${CHIP_ARCH} is supported"
-  # test_suites="${test_suites}:PersonPet_DetectionTestSuite.*"
-  # test_suites="${test_suites}:Hand_DetectionTestSuite.*"
-  # test_suites="${test_suites}:Meeting_DetectionTestSuite.*"
-  test_suites="${test_suites}:People_Vehicle_DetectionTestSuite.*"
-  # test_suites="${test_suites}:FaceRecognitionTestSuite.*"
-  # test_suites="${test_suites}:LicensePlateDetectionV2TestSuite.*"
-  # test_suites="${test_suites}:ScrfdDetTestSuite.*"
-  # test_suites="${test_suites}:Hand_ClassificationTestSuite.*"
-  # test_suites="${test_suites}:HardhatDetTestSuite.*"
-  test_suites="${test_suites}:MobileDetectionV2TestSuite.*"
-  test_suites="${test_suites}:ScrfdDetBmTestSuite.*"
-  # test_suites="${test_suites}:YoloV6DetectionTestSuite.*"
-  # test_suites="${test_suites}:YoloV10DetectionTestSuite.*"
-  test_suites="${test_suites}:FaceAttributeClsBmTestSuite.*"
-  test_suites="${test_suites}:FaceLandmarkerDet2TestSuite.*"
-  test_suites="${test_suites}:FeatureExtraBmTestSuite.*"
-  # test_suites="${test_suites}:VPSSImageTestSuite.*"
-  # test_suites="${test_suites}:VpssPreprocessorTestSuite.*"
-fi
+  echo "${test_suites} to be executed:"
+  for json_file in ${json_separated}
+  do
+      echo  "\t${json_file}"
+  done
+
+  echo "----------------------"
+
+  for json_file in ${json_separated}
+  do
+    full_json_path="${asset_dir}/${json_file}"
+    ./test_main "${model_dir}" "${dataset_dir}" "${full_json_path}" --gtest_filter="${test_suites}"
+  done
+}
+
+
 echo "----------------------"
-echo -e "regression setting:"
-echo -e "model dir: \t\t${model_dir}"
-echo -e "dataset dir: \t\t${dataset_dir}"
-echo -e "asset dir: \t\t${asset_dir}"
-echo -e "CHIPSET: \t\t${CHIPSET}"
-echo -e "ION size: \t\t${total_ion_size} bytes"
+echo  "regression setting:"
+echo  "model dir: \t\t${model_dir}"
+echo  "dataset dir: \t\t${dataset_dir}"
+echo  "asset dir: \t\t${asset_dir}"
+echo  "CHIP_ARCH: \t\t${CHIP_ARCH}"
+echo  "ION size: \t\t${total_ion_size} bytes"
 
-echo "Test Suites to be executed:"
-test_suites_separated=$(echo "$test_suites" | tr ':' ' ')
-for suite_name in ${test_suites_separated}
-do
-    echo -e "\t${suite_name}"
-done
-echo "----------------------"
-
-./test_main ${model_dir} ${dataset_dir} ${asset_dir} --gtest_filter=$test_suites
+run_test_main "${det_json}" "${det_test_suites}"
+# run_test_main "${cls_json}" "${cls_test_suites}"
+# run_test_main "${kpt_json}" "${kpt_test_suites}"

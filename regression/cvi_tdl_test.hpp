@@ -54,6 +54,7 @@ class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
  public:
   CVI_TDLModelTestSuite(const std::string &json_file_name,
                         const std::string &image_dir_name);
+  CVI_TDLModelTestSuite();
 
   virtual ~CVI_TDLModelTestSuite() = default;
 

@@ -76,27 +76,15 @@ else()
 endif()
 if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR (${CVI_PLATFORM} STREQUAL "CV181X")) 
   set(UnitTests
-  # reg_daily_petdet.cpp
-  # reg_daily_handdet.cpp
-  # reg_daily_meet.cpp
-  reg_daily_person_vehicle.cpp
-  # reg_daily_hardhat_det.cpp
-  # reg_daily_scrfd_det.cpp
-  # reg_daily_lpd_v2.cpp
-  # reg_daily_fr.cpp
-  # reg_daily_mobiledetion.cpp
-  # reg_daily_handcls.cpp
-  # reg_daily_vpss_image.cpp
-  reg_daily_yolov6.cpp
-  reg_daily_yolov10.cpp
-  reg_daily_face_attribute_cls.cpp
-  reg_daily_mobiledetion_bm.cpp
-  reg_daily_hardhat_bm.cpp
-  reg_daily_preprocess.cpp
-  reg_daily_scrfd_det_bm.cpp
-  reg_daily_landmarkdet2_bm.cpp
-  reg_daily_face_feature_bm.cpp
+
+  # reg_daily_face_attribute_cls.cpp
+  # reg_daily_mobiledetion_bm.cpp
+  # reg_daily_preprocess.cpp
+  # reg_daily_scrfd_det_bm.cpp
+  # reg_daily_landmarkdet2_bm.cpp
+  # reg_daily_face_feature_bm.cpp
   # reg_daily_handkeypoint.cpp
+  reg_daily_det.cpp
   )
 
 endif()
@@ -112,10 +100,8 @@ set(UnitTest_SRCS
   ${UnitTest_SRCS}
 )
 
-include_directories(${REPO_DIR}/include/tdl_sdk/framework
-                    ${REPO_DIR}/include/tdl_sdk/components
-                    ${REPO_DIR}/include/tdl_sdk/app
-                    ${REPO_DIR}/include/tdl_sdk/nn
+include_directories(${REPO_DIR}/include/framework/utils
+                    ${REPO_DIR}/include/nn
                     ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
