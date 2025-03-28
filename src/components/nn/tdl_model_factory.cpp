@@ -1,5 +1,6 @@
 #include "tdl_model_factory.hpp"
 
+#include "audio_classification/audio_classification.hpp"
 #include "face_attribute/face_attribute_cls.hpp"
 #include "face_detection/scrfd.hpp"
 #include "face_landmark/face_landmark_det2.hpp"
@@ -7,19 +8,18 @@
 #include "feature_extract/clip_text.hpp"
 #include "feature_extract/feature_extraction.hpp"
 #include "image_classification/rgb_image_classification.hpp"
-#include "keypoints_detection/simcc_pose.hpp"
-#include "keypoints_detection/yolov8_pose.hpp"
 #include "keypoints_detection/hand_keypoint.hpp"
 #include "keypoints_detection/license_plate_keypoint.hpp"
 #include "keypoints_detection/lstr_lane.hpp"
+#include "keypoints_detection/simcc_pose.hpp"
+#include "keypoints_detection/yolov8_pose.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov10.hpp"
 #include "object_detection/yolov6.hpp"
 #include "object_detection/yolov8.hpp"
-#include "segmentation/yolov8_seg.hpp"
 #include "segmentation/topformer_seg.hpp"
-#include "audio_classification/audio_classification.hpp"
+#include "segmentation/yolov8_seg.hpp"
 #include "utils/tdl_log.hpp"
 
 TDLModelFactory::TDLModelFactory(const std::string model_dir)
@@ -70,6 +70,18 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 1));
   } else if (model_type == ModelType::YOLOV8N_DET_HAND) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 1));
+  } else if (model_type == ModelType::YOLOV8N_DET_PET_PERSON) {
+    model = std::make_shared<YoloV8Detection>(std::make_pair(64, 3));
+  } else if (model_type == ModelType::YOLOV8N_DET_HAND_FACE_PERSON) {
+    model = std::make_shared<YoloV8Detection>(std::make_pair(64, 3));
+  } else if (model_type == ModelType::YOLOV8N_DET_FIRE_SMOKE) {
+    model = std::make_shared<YoloV8Detection>(std::make_pair(64, 2));
+  } else if (model_type == ModelType::YOLOV8N_DET_FIRE) {
+    model = std::make_shared<YoloV8Detection>(std::make_pair(64, 1));
+  } else if (model_type == ModelType::YOLOV8N_DET_HEAD_SHOULDER) {
+    model = std::make_shared<YoloV8Detection>(std::make_pair(64, 1));
+  } else if (model_type == ModelType::YOLOV8N_DET_TRAFFIC_LIGHT) {
+    model = std::make_shared<YoloV8Detection>(std::make_pair(64, 5));
   } else if (model_type == ModelType::YOLOV8N_DET_HEAD_HARDHAT) {
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 2));
   } else if (model_type == ModelType::YOLOV10_DET_COCO80) {
@@ -94,9 +106,9 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   } else if (model_type == ModelType::KEYPOINT_HAND) {
     model = std::make_shared<HandKeypoint>();
   } else if (model_type == ModelType::KEYPOINT_LICENSE_PLATE) {
-    model = std::make_shared<LicensePlateKeypoint>();   
+    model = std::make_shared<LicensePlateKeypoint>();
   } else if (model_type == ModelType::RECOGNITION_LICENSE_PLATE) {
-    model = std::make_shared<LicensePlateRecognition>();   
+    model = std::make_shared<LicensePlateRecognition>();
   } else if (model_type == ModelType::YOLOV8_SEG_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
   } else if (model_type == ModelType::KEYPOINT_YOLOV8POSE_PERSON17) {
@@ -106,7 +118,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   } else if (model_type == ModelType::CLIP_FEATURE_TEXT) {
     model = std::make_shared<Clip_Text>();
   } else if (model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE) {
-    model = std::make_shared<TopformerSeg>(16); // Downsampling ratio
+    model = std::make_shared<TopformerSeg>(16);  // Downsampling ratio
   } else if (model_type == ModelType::LSTR_DET_LANE) {
     model = std::make_shared<LstrLane>();
   } else if (model_type == ModelType::CLS_SOUND_BABAY_CRY) {

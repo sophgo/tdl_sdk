@@ -20,7 +20,7 @@ typedef enum {
   TDL_MODEL_YOLOV8N_DET_HAND_FACE_PERSON,  // 0:hand,1:face,2:person
   TDL_MODEL_YOLOV8N_DET_HEAD_PERSON,       // 0:person,1:head
   TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT,      // 0:head,1:hardhat
-  TDL_MODEL_YOLOV8N_DET_FIRRE_SMOKE,       // 0:fire,1:smoke
+  TDL_MODEL_YOLOV8N_DET_FIRE_SMOKE,        // 0:fire,1:smoke
   TDL_MODEL_YOLOV8N_DET_FIRE,              // 0:fire
   TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER,     // 0:head shoulder
   TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE,     // 0:license plate

@@ -79,7 +79,7 @@ PYBIND11_MODULE(tdl, m) {
       .value("YOLOV8N_DET_HAND_FACE_PERSON", ModelType::YOLOV8N_DET_HAND_FACE_PERSON)  // 0:hand,1:face,2:person
       .value("YOLOV8N_DET_HEAD_PERSON", ModelType::YOLOV8N_DET_HEAD_PERSON)       // 0:person,1:head
       .value("YOLOV8N_DET_HEAD_HARDHAT", ModelType::YOLOV8N_DET_HEAD_HARDHAT)      // 0:head,1:hardhat
-      .value("YOLOV8N_DET_FIRRE_SMOKE", ModelType::YOLOV8N_DET_FIRRE_SMOKE)       // 0:fire,1:smoke
+      .value("YOLOV8N_DET_FIRE_SMOKE", ModelType::YOLOV8N_DET_FIRE_SMOKE)       // 0:fire,1:smoke
       .value("YOLOV8N_DET_FIRE", ModelType::YOLOV8N_DET_FIRE)              // 0:fire
       .value("YOLOV8N_DET_HEAD_SHOULDER", ModelType::YOLOV8N_DET_HEAD_SHOULDER)     // 0:head shoulder
       .value("YOLOV8N_DET_LICENSE_PLATE", ModelType::YOLOV8N_DET_LICENSE_PLATE)     // 0:license plate

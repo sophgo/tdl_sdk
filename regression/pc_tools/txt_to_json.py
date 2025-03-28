@@ -4,25 +4,12 @@ import json
 from pathlib import Path
 
 
-class_id_map = {
-    "YOLOV8N_DET_HEAD_HARDHAT": ["head", "hardhat"],
-    "YOLOV8N_DET_PERSON_VEHICLE": [
-        "car",
-        "bus",
-        "truck",
-        "rider_with_motorcycle",
-        "person",
-        "bike",
-        "motorcycle",
-    ],
-}
-
-
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_id", type=str, default="")
     parser.add_argument("--model_name", type=str, default="")
-    parser.add_argument("--threshold", type=float, default=0.5)
+    parser.add_argument("--bbox_threshold", type=float, default=0.5)
+    parser.add_argument("--score_threshold", type=float, default=0.1)
     parser.add_argument("--image_dir", required=True, type=str)
     parser.add_argument("--chip", required=True, type=str)
     parser.add_argument("--txt_dir", required=True, type=str)
@@ -75,14 +62,16 @@ def process_detection_txt_files(txt_dir, image_dir=None, model_id=None):
         for line in lines:
             parts = line.strip().split()
             x1, y1, x2, y2 = map(float, parts[:4])
-            class_id = int(parts[4])
-            score = float(parts[5])
-            cls = class_id_map[model_id][class_id]
-
+            if len(parts) == 6:
+                class_id = int(parts[4])
+                score = float(parts[5])
+            elif len(parts) == 5:
+                score = float(parts[4])
+                class_id = None
             annotation = {
-                "box": [x1, y1, x2, y2],
+                "bbox": [x1, y1, x2, y2],
                 "score": score,
-                "classes": cls,
+                "class_id": class_id,
             }
             annotation_list.append(annotation)
         annotations[img_file] = annotation_list
@@ -124,7 +113,8 @@ def update_json(data, args, annotations, json_status):
             raise ValueError("json数据首次建立，model_id, model_name不能为空")
         data["model_id"] = args.model_id
         data["model_name"] = args.model_name
-        data["threshold"] = args.threshold
+    data["bbox_threshold"] = args.bbox_threshold
+    data["score_threshold"] = args.score_threshold
     img_dir = Path(args.image_dir).resolve()
     data["image_dir"] = img_dir.name
     data[args.chip] = annotations
