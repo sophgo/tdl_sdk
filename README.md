@@ -24,8 +24,8 @@
 
 ## 快速上手
 
-- 编译，参考[build.md](getting_started/build.md)
-- 运行，参考[run.md](getting_started/run.md)，以python为例
+- 编译，参考[build.md](docs/getting_started/build.md)
+- 运行，参考[run.md](docs/getting_started/run.md)，以python为例
 
   ```python
   from tdl import nn,image
