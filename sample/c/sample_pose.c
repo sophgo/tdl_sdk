@@ -11,27 +11,78 @@ static int skeleton[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12},
                        {5, 11},  {6, 12},  {5, 6},   {5, 7},   {6, 8},
                        {7, 9},   {8, 10},  {1, 2},   {0, 1},   {0, 2},
                        {1, 3},   {2, 4},   {3, 5},   {4, 6}};
+                      
+void print_usage(const char *prog_name) {
+    printf("Usage:\n");
+    printf("  %s -m <model_path> -i <input_image> -o <output_image>\n", prog_name);
+    printf("  %s --model_path <path> --input <image> --output <image>\n\n", prog_name);
+    printf("Options:\n");
+    printf("  -m, --model_path     Path to cvimodel\n");
+    printf("  -i, --input          Path to input image\n");
+    printf("  -o, --output         Path to output image\n");
+    printf("  -h, --help           Show this help message\n");
+}
 
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    printf("Usage: %s <model path> <input image path> <output image path>\n", argv[0]);
-    printf("model path: Path to cvimodel.\n");
-    printf("input image path: Path to input image.\n");
-    printf("output image path: Path to output image.\n");
-    return -1;
+  char *model_path = NULL;
+  char *input_image = NULL;
+  char *output_image = NULL;
+
+  struct option long_options[] = {
+      {"model_path",   required_argument, 0, 'm'},
+      {"input",        required_argument, 0, 'i'},
+      {"output",       required_argument, 0, 'o'},
+      {"help",         no_argument,       0, 'h'},
+      {NULL, 0, NULL, 0}
+  };
+
+  int opt;
+  while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
+      switch (opt) {
+          case 'm':
+              model_path = optarg;
+              break;
+          case 'i':
+              input_image = optarg;
+              break;
+          case 'o':
+              output_image = optarg;
+              break;
+          case 'h':
+              print_usage(argv[0]);
+              return 0;
+          case '?':
+              print_usage(argv[0]);
+              return -1;
+          default:
+              print_usage(argv[0]);
+              return -1;
+      }
   }
+
+  if (!model_path || !input_image || !output_image) {
+      fprintf(stderr, "Error: All arguments are required\n");
+      print_usage(argv[0]);
+      return -1;
+  }
+
+  printf("Running with:\n");
+  printf("  Model path:    %s\n", model_path);
+  printf("  Input image:   %s\n", input_image);
+  printf("  Output image:  %s\n", output_image);
+
   int ret = 0;
 
   tdl_model_e enOdModelId = TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17;
   tdl_handle_t tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, enOdModelId, argv[1]);
+  ret = TDL_OpenModel(tdl_handle, enOdModelId, model_path);
   if (ret != 0) {
     printf("open pose model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  tdl_image_t image = TDL_ReadImage(argv[2]);
+  tdl_image_t image = TDL_ReadImage(input_image);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit1;
@@ -80,8 +131,8 @@ int main(int argc, char *argv[]) {
             line[k].y2 = obj_meta.info[i].landmark_properity[kps2].y;
           }
       }
-      TDL_VisualizePoint(point, obj_meta.size * 17, argv[2], argv[3]);
-      TDL_VisualizeLine(line, 19, argv[3], argv[3]);
+      TDL_VisualizePoint(point, obj_meta.size * 17, input_image, output_image);
+      TDL_VisualizeLine(line, 19, input_image, output_image);
     }
   }
 

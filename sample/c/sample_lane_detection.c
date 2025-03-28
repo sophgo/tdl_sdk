@@ -6,25 +6,70 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
+void print_usage(const char *prog_name) {
+  printf("Usage:\n");
+  printf("  %s -m <model_path> -i <input_image>\n", prog_name);
+  printf("  %s --model_path <path> --input <image>\n\n", prog_name);
+  printf("Options:\n");
+  printf("  -m, --model_path    Path to cvimodel\n");
+  printf("  -i, --input         Path to input image\n");
+  printf("  -h, --help          Show this help message\n");
+}
+
 int main(int argc, char *argv[]) {
-  if (argc != 3) {
-    printf("Usage: %s <model name> <model path> <input image path>\n", argv[0]);
-    printf("model path: Path to cvimodel.\n");
-    printf("input image path: Path to input image.\n");
-    return -1;
+  char *model_path = NULL;
+  char *input_image = NULL;
+
+  struct option long_options[] = {
+      {"model_path",   required_argument, 0, 'm'},
+      {"input",        required_argument, 0, 'i'},
+      {"help",         no_argument,       0, 'h'},
+      {NULL, 0, NULL, 0}
+  };
+
+  int opt;
+  while ((opt = getopt_long(argc, argv, "m:i:h", long_options, NULL)) != -1) {
+      switch (opt) {
+          case 'm':
+              model_path = optarg;
+              break;
+          case 'i':
+              input_image = optarg;
+              break;
+          case 'h':
+              print_usage(argv[0]);
+              return 0;
+          case '?':
+              print_usage(argv[0]);
+              return -1;
+          default:
+              print_usage(argv[0]);
+              return -1;
+      }
   }
+
+  if (!model_path || !input_image) {
+      fprintf(stderr, "Error: Both model path and input image are required\n");
+      print_usage(argv[0]);
+      return -1;
+  }
+
+  printf("Running with:\n");
+  printf("  Model path:    %s\n", model_path);
+  printf("  Input image:   %s\n", input_image);
+
   int ret = 0;
 
   tdl_model_e enOdModelId = TDL_MODEL_LSTR_DET_LANE;
   tdl_handle_t tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, enOdModelId, argv[1]);
+  ret = TDL_OpenModel(tdl_handle, enOdModelId, model_path);
   if (ret != 0) {
     printf("open lane model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  tdl_image_t image = TDL_ReadImage(argv[2]);
+  tdl_image_t image = TDL_ReadImage(input_image);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit1;

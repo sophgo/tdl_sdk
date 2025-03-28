@@ -3,6 +3,7 @@
 
 #include "tdl_model_def.h"
 #include "tdl_types.h"
+#include <getopt.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
