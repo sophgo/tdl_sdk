@@ -84,6 +84,7 @@ PYBIND11_MODULE(tdl, m) {
       .value("YOLOV8N_DET_HEAD_SHOULDER", ModelType::YOLOV8N_DET_HEAD_SHOULDER)     // 0:head shoulder
       .value("YOLOV8N_DET_LICENSE_PLATE", ModelType::YOLOV8N_DET_LICENSE_PLATE)     // 0:license plate
       .value("YOLOV8N_DET_TRAFFIC_LIGHT", ModelType::YOLOV8N_DET_TRAFFIC_LIGHT)     // 0:red,1:yellow,2:green,3:off,4:wait on
+      .value("YOLOV8N_DET_MONITOR_PERSON", ModelType::YOLOV8N_DET_MONITOR_PERSON)  // 0:person
 
       // face detection model
       .value("SCRFD_DET_FACE", ModelType::SCRFD_DET_FACE)  // 0:face + landm

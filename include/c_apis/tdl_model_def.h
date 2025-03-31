@@ -25,6 +25,7 @@ typedef enum {
   TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER,     // 0:head shoulder
   TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE,     // 0:license plate
   TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT,     // 0:red,1:yellow,2:green,3:off,4:wait on
+  TDL_MODEL_YOLOV8N_DET_MONITOR_PERSON,   // 0:person
   TDL_DETECTION_MODEL_MAX,
 
   // face model list

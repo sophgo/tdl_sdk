@@ -95,6 +95,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<YoloV8Detection>(std::make_pair(64, 2));
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_HEAD;
     model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_HARD_HAT;
+  } else if (model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON) {
+    model = std::make_shared<YoloV10Detection>(std::make_pair(64, 1));
   } else if (model_type == ModelType::YOLOV10_DET_COCO80) {
     model = std::make_shared<YoloV10Detection>(std::make_pair(64, 80));
   } else if (model_type == ModelType::YOLOV6_DET_COCO80) {

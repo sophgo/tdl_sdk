@@ -75,7 +75,7 @@ if [ "$total_ion_size" -gt "20000000" ]; then
   det_json="${det_json}:yolov8n_det_person_vehicle.json"
   det_json="${det_json}:yolov8n_det_pet_person.json"
   det_json="${det_json}:yolov8n_det_traffic_light.json"
-
+  det_json="${det_json}:yolov8n_det_monitor_person.json"
   #cls
   # cls_json="${cls_json}:xxx.json"
 

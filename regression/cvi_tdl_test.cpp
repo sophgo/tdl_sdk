@@ -32,7 +32,6 @@ CVI_TDLTestContext::CVI_TDLTestContext() : m_inited(false) {}
 
 void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir,
                               std::string json_dir) {
-
   if (!m_inited) {
     m_model_dir = model_dir;
     m_image_dir = image_dir;
@@ -123,7 +122,6 @@ CVI_TDLModelTestSuite::CVI_TDLModelTestSuite(
             << ",model_dir: " << m_model_dir << std::endl;
 }
 
-
 CVI_TDLModelTestSuite::CVI_TDLModelTestSuite() {
   CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
   fs::path json_file_path = context.getJsonBaseDir();
@@ -156,6 +154,9 @@ float iou(const std::vector<float> &gt_object,
   float inter_y1 = std::max(gt_y1, pred_y1);
   float inter_x2 = std::min(gt_x2, pred_x2);
   float inter_y2 = std::min(gt_y2, pred_y2);
+  if (inter_x2 <= inter_x1 || inter_y2 <= inter_y1) {
+    return 0.0f;
+  }
   float area_inter = (inter_x2 - inter_x1) * (inter_y2 - inter_y1);
   return area_inter / (area1 + area2 - area_inter);
 }
@@ -171,48 +172,34 @@ bool CVI_TDLModelTestSuite::matchObjects(
   bool is_matched = true;
   for (size_t i = 0; i < gt_objects.size(); i++) {
     auto &gt_object = gt_objects[i];
-    std::vector<std::vector<float>> matched_dets;
+    std::vector<float> matched_dets;
     float max_iout = 0.0f;
-    std::vector<int> pred_matched_idx;
+    int pred_matched_idx;
     for (size_t j = 0; j < pred_objects.size(); j++) {
       const auto &pred_object = pred_objects[j];
       float iout = iou(gt_object, pred_object);
       if (iout > max_iout) {
         max_iout = iout;
-      }
-      if (gt_object[5] == pred_object[5] && iout > iout_thresh) {
-        matched_dets.push_back(pred_object);
-        pred_matched_idx.push_back(j);
+        pred_matched_idx = j;
       }
     }
-    if (matched_dets.size() > 1) {
-      std::cout << "has multiple matched det,gtbox:[" << gt_object[0] << ","
-                << gt_object[1] << "," << gt_object[2] << "," << gt_object[3]
-                << "]"
-                << ",score:" << gt_object[4] << ",class_id:" << gt_object[5]
-                << std::endl;
-      for (const auto &matched_det : matched_dets) {
-        std::cout << "matched det:[" << matched_det[0] << "," << matched_det[1]
-                  << "," << matched_det[2] << "," << matched_det[3] << "]"
-                  << ",score:" << matched_det[4]
-                  << ",class_id:" << matched_det[5] << std::endl;
-      }
-      is_matched = false;
-    } else if (matched_dets.size() == 1) {
-      float score_diff = std::abs(matched_dets[0][4] - gt_object[4]);
+    if (gt_object[5] == pred_objects[pred_matched_idx][5] &&
+        max_iout > iout_thresh) {
+      matched_dets = pred_objects[pred_matched_idx];
+      float score_diff = std::abs(matched_dets[4] - gt_object[4]);
       if (score_diff > score_thresh) {
         std::cout << "score diff: " << score_diff << ",gtbox:[" << gt_object[0]
                   << "," << gt_object[1] << "," << gt_object[2] << ","
                   << gt_object[3] << "]" << ",score:" << gt_object[4]
-                  << ",class_id:" << gt_object[5]
-                  << ",pred_score:" << matched_dets[0][4] << ",predbox:["
-                  << matched_dets[0][0] << "," << matched_dets[0][1] << ","
-                  << matched_dets[0][2] << "," << matched_dets[0][3] << "]"
-                  << ",pred_class_id:" << matched_dets[0][5] << std::endl;
+                  << ",class_id:" << gt_object[5] << ",predbox:["
+                  << matched_dets[0] << "," << matched_dets[1] << ","
+                  << matched_dets[2] << "," << matched_dets[3] << "]"
+                  << ",pred_score:" << matched_dets[4]
+                  << ",pred_class_id:" << matched_dets[5] << std::endl;
         is_matched = false;
       } else {
         gt_matched[i] = 1;
-        pred_matched[pred_matched_idx[0]] = 1;
+        pred_matched[pred_matched_idx] = 1;
       }
     }
   }
@@ -246,27 +233,26 @@ bool CVI_TDLModelTestSuite::matchObjects(
   return is_matched;
 }
 
-bool CVI_TDLModelTestSuite::matchScore(const std::vector<std::vector<float>> &gt_info,
-                  const std::vector<std::vector<float>> &pred_info,
-                  const float score_thresh){
-
+bool CVI_TDLModelTestSuite::matchScore(
+    const std::vector<std::vector<float>> &gt_info,
+    const std::vector<std::vector<float>> &pred_info,
+    const float score_thresh) {
   if (gt_info.size() != pred_info.size()) {
-      return false;
+    return false;
   }
 
   for (size_t i = 0; i < gt_info.size(); ++i) {
-    
-    const auto& gt = gt_info[i];
-    const auto& pred = pred_info[i];
+    const auto &gt = gt_info[i];
+    const auto &pred = pred_info[i];
 
-    if (std::abs(gt[0] - pred[0]) > score_thresh || 
-        std::abs(gt[1] - pred[1]) > score_thresh || 
-        std::abs(gt[2] - pred[2]) > score_thresh || 
-        std::abs(gt[3] - pred[3]) > score_thresh) { 
-        return false; 
-      }
+    if (std::abs(gt[0] - pred[0]) > score_thresh ||
+        std::abs(gt[1] - pred[1]) > score_thresh ||
+        std::abs(gt[2] - pred[2]) > score_thresh ||
+        std::abs(gt[3] - pred[3]) > score_thresh) {
+      return false;
+    }
   }
-  return true;              
+  return true;
 };
 
 }  // namespace unitest

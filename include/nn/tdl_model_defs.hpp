@@ -17,11 +17,12 @@ enum class ModelType {
   YOLOV8N_DET_HAND_FACE_PERSON,  // 0:hand,1:face,2:person
   YOLOV8N_DET_HEAD_PERSON,       // 0:person,1:head
   YOLOV8N_DET_HEAD_HARDHAT,      // 0:head,1:hardhat
-  YOLOV8N_DET_FIRE_SMOKE,       // 0:fire,1:smoke
+  YOLOV8N_DET_FIRE_SMOKE,        // 0:fire,1:smoke
   YOLOV8N_DET_FIRE,              // 0:fire
   YOLOV8N_DET_HEAD_SHOULDER,     // 0:head shoulder
   YOLOV8N_DET_LICENSE_PLATE,     // 0:license plate
   YOLOV8N_DET_TRAFFIC_LIGHT,     // 0:red,1:yellow,2:green,3:off,4:wait on
+  YOLOV8N_DET_MONITOR_PERSON,    // 0:person
 
   // face detection model
   SCRFD_DET_FACE,  // 0:face + landm

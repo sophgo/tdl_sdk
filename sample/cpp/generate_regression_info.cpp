@@ -31,6 +31,8 @@ void constructModelIdMapping(
       ModelType::YOLOV8N_DET_LICENSE_PLATE;
   model_id_mapping["YOLOV8N_DET_TRAFFIC_LIGHT"] =
       ModelType::YOLOV8N_DET_TRAFFIC_LIGHT;
+  model_id_mapping["YOLOV8N_DET_MONITOR_PERSON"] =
+      ModelType::YOLOV8N_DET_MONITOR_PERSON;
   model_id_mapping["SCRFD_DET_FACE"] = ModelType::SCRFD_DET_FACE;
 }
 
