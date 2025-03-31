@@ -10,12 +10,12 @@ API参考
 
 .. code-block:: c
   
-  typedef void *tdl_handle_t;
-  typedef void *tdl_image_t;
+  typedef void *TDLHandle;
+  typedef void *TDLImage;
 
 【描述】
 
-TDL SDK句柄，tdl_handle_t是核心操作句柄，tdl_image_t是图像数据抽象句柄。
+TDL SDK句柄，TDLHandle是核心操作句柄，TDLImage是图像数据抽象句柄。
 
 TDL_Core
 ~~~~~~~~~~~~~~~
@@ -30,11 +30,11 @@ TDL_CreateHandle
 
 .. code-block:: c
 
-  tdl_handle_t TDL_CreateHandle(const int32_t tpu_device_id);
+  TDLHandle TDL_CreateHandle(const int32_t tpu_device_id);
 
 【描述】
 
-创建一个 TDLContextHandle 对象。
+创建一个 TDLHandle 对象。
 
 【参数】
 
@@ -59,11 +59,11 @@ TDL_DestroyHandle
 
 .. code-block:: c
 
-  int32_t TDL_DestroyHandle(tdl_handle_t handle);
+  int32_t TDL_DestroyHandle(TDLHandle handle);
 
 【描述】
 
-销毁一个 TDLContextHandle 对象。
+销毁一个 TDLHandle 对象。
 
 【参数】
 
@@ -77,9 +77,9 @@ TDL_DestroyHandle
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - 需要销毁的 TDLContextHandle 对象
+     - 需要销毁的 TDLHandle 对象
 
 TDL_WrapVPSSFrame
 ---------------------
@@ -88,7 +88,7 @@ TDL_WrapVPSSFrame
 
 .. code-block:: c
 
-  tdl_image_t TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory);
+  TDLImage TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory);
 
 【描述】
 
@@ -120,7 +120,7 @@ TDL_ReadImage
 
 .. code-block:: c
 
-  tdl_image_t TDL_ReadImage(const char *path);
+  TDLImage TDL_ReadImage(const char *path);
 
 【描述】
 
@@ -149,7 +149,7 @@ TDL_ReadAudio
 
 .. code-block:: c
 
-  tdl_image_t TDL_ReadAudio(const char *path, int frame_size);
+  TDLImage TDL_ReadAudio(const char *path, int frame_size);
 
 【描述】
 
@@ -183,7 +183,7 @@ TDL_DestroyImage
 
 .. code-block:: c
 
-  int32_t TDL_DestroyImage(tdl_image_t image_handle);
+  int32_t TDL_DestroyImage(TDLImage image_handle);
 
 【描述】
 
@@ -201,7 +201,7 @@ TDL_DestroyImage
      - 说明
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - 需要销毁的 TDLImageHandle 对象
 
@@ -212,13 +212,13 @@ TDL_OpenModel
 
 .. code-block:: c
 
-  int32_t TDL_OpenModel(tdl_handle_t handle,
-                      const tdl_model_e model_id,
+  int32_t TDL_OpenModel(TDLHandle handle,
+                      const TDLModel model_id,
                       const char *model_path);
 
 【描述】
 
-加载指定类型的模型到 TDLContextHandle 对象中。
+加载指定类型的模型到 TDLHandle 对象中。
 
 【参数】
 
@@ -232,12 +232,12 @@ TDL_OpenModel
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
@@ -253,8 +253,8 @@ TDL_CloseModel
 
 .. code-block:: c
 
-  int32_t TDL_CloseModel(tdl_handle_t handle,
-                       const tdl_model_e model_id);
+  int32_t TDL_CloseModel(TDLHandle handle,
+                       const TDLModel model_id);
 
 【描述】
 
@@ -272,12 +272,12 @@ TDL_CloseModel
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
@@ -288,10 +288,10 @@ TDL_Detection
 
 .. code-block:: c
 
-  int32_t TDL_Detection(tdl_handle_t handle,
-                      const tdl_model_e model_id,
-                      tdl_image_t image_handle,
-                      tdl_object_t *object_meta);
+  int32_t TDL_Detection(TDLHandle handle,
+                      const TDLModel model_id,
+                      TDLImage image_handle,
+                      TDLObject *object_meta);
 
 【描述】
 
@@ -309,22 +309,22 @@ TDL_Detection
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_object_t\*
+     - TDLObject\*
      - object_meta
      - 输出检测结果元数据
 
@@ -335,10 +335,10 @@ TDL_FaceDetection
 
 .. code-block:: c
 
-  int32_t TDL_FaceDetection(tdl_handle_t handle,
-                          const tdl_model_e model_id,
-                          tdl_image_t image_handle,
-                          tdl_face_t *face_meta);
+  int32_t TDL_FaceDetection(TDLHandle handle,
+                          const TDLModel model_id,
+                          TDLImage image_handle,
+                          TDLFace *face_meta);
 
 【描述】
 
@@ -356,22 +356,22 @@ TDL_FaceDetection
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_face_t\*
+     - TDLFace\*
      - face_meta
      - 输出人脸检测结果元数据
 
@@ -382,10 +382,10 @@ TDL_FaceAttribute
 
 .. code-block:: c
 
-  int32_t TDL_FaceAttribute(tdl_handle_t handle,
-                          const tdl_model_e model_id,
-                          tdl_image_t image_handle,
-                          tdl_face_t *face_meta);
+  int32_t TDL_FaceAttribute(TDLHandle handle,
+                          const TDLModel model_id,
+                          TDLImage image_handle,
+                          TDLFace *face_meta);
 
 【描述】
 
@@ -403,22 +403,22 @@ TDL_FaceAttribute
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输入/输出
-     - tdl_face_t\*
+     - TDLFace\*
      - face_meta
      - 输入人脸检测结果，输出补充属性信息
 
@@ -429,10 +429,10 @@ TDL_FaceLandmark
 
 .. code-block:: c
 
-  int32_t TDL_FaceLandmark(tdl_handle_t handle,
-                         const tdl_model_e model_id,
-                         tdl_image_t image_handle,
-                         tdl_face_t *face_meta);
+  int32_t TDL_FaceLandmark(TDLHandle handle,
+                         const TDLModel model_id,
+                         TDLImage image_handle,
+                         TDLFace *face_meta);
 
 【描述】
 
@@ -450,22 +450,22 @@ TDL_FaceLandmark
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输入/输出
-     - tdl_face_t\*
+     - TDLFace\*
      - face_meta
      - 输入人脸检测结果，输出补充关键点坐标
 
@@ -476,10 +476,10 @@ TDL_Classfification
 
 .. code-block:: c
 
-  int32_t TDL_Classfification(tdl_handle_t handle,
-                            const tdl_model_e model_id,
-                            tdl_image_t image_handle,
-                            tdl_class_info_t *class_info);
+  int32_t TDL_Classfification(TDLHandle handle,
+                            const TDLModel model_id,
+                            TDLImage image_handle,
+                            TDLClassInfo *class_info);
 
 【描述】
 
@@ -497,22 +497,22 @@ TDL_Classfification
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_class_info_t\*
+     - TDLClassInfo\*
      - class_info
      - 输出分类结果
 
@@ -523,11 +523,11 @@ TDL_ObjectClassification
 
 .. code-block:: c
 
-  int32_t TDL_ObjectClassification(tdl_handle_t handle,
-                                 const tdl_model_e model_id,
-                                 tdl_image_t image_handle,
-                                 tdl_object_t *object_meta,
-                                 tdl_class_t *class_info);
+  int32_t TDL_ObjectClassification(TDLHandle handle,
+                                 const TDLModel model_id,
+                                 TDLImage image_handle,
+                                 TDLObject *object_meta,
+                                 TDLClass *class_info);
 
 【描述】
 
@@ -545,27 +545,27 @@ TDL_ObjectClassification
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输入
-     - tdl_object_t\*
+     - TDLObject\*
      - object_meta
      - 已检测到的目标信息
 
    * - 输出
-     - tdl_class_t\*
+     - TDLClass\*
      - class_info
      - 输出目标分类结果
 
@@ -576,10 +576,10 @@ TDL_KeypointDetection
 
 .. code-block:: c
 
-  int32_t TDL_KeypointDetection(tdl_handle_t handle,
-                              const tdl_model_e model_id,
-                              tdl_image_t image_handle,
-                              tdl_keypoint_t *keypoint_meta);
+  int32_t TDL_KeypointDetection(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              TDLKeypoint *keypoint_meta);
 
 【描述】
 
@@ -597,22 +597,22 @@ TDL_KeypointDetection
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_keypoint_t\*
+     - TDLKeypoint\*
      - keypoint_meta
      - 输出关键点坐标及置信度
 
@@ -623,10 +623,10 @@ TDL_InstanceSegmentation
 
 .. code-block:: c
 
-  int32_t TDL_InstanceSegmentation(tdl_handle_t handle, 
-                                 const tdl_model_e model_id,
-                                 tdl_image_t image_handle,
-                                 tdl_instance_seg_t *inst_seg_meta);
+  int32_t TDL_InstanceSegmentation(TDLHandle handle, 
+                                 const TDLModel model_id,
+                                 TDLImage image_handle,
+                                 TDLInstanceSeg *inst_seg_meta);
 
 【描述】
 
@@ -644,22 +644,22 @@ TDL_InstanceSegmentation
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_instance_seg_t\*
+     - TDLInstanceSeg\*
      - inst_seg_meta
      - 输出实例分割结果（包含mask和bbox）
 
@@ -670,10 +670,10 @@ TDL_SemanticSegmentation
 
 .. code-block:: c
 
-  int32_t TDL_SemanticSegmentation(tdl_handle_t handle,
-                                 const tdl_model_e model_id,
-                                 tdl_image_t image_handle,
-                                 tdl_seg_t *seg_meta);
+  int32_t TDL_SemanticSegmentation(TDLHandle handle,
+                                 const TDLModel model_id,
+                                 TDLImage image_handle,
+                                 TDLSegmentation *seg_meta);
 
 【描述】
 
@@ -691,22 +691,22 @@ TDL_SemanticSegmentation
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_seg_t\*
+     - TDLSegmentation\*
      - seg_meta
      - 输出分割结果（类别标签图）
 
@@ -717,10 +717,10 @@ TDL_FeatureExtraction
 
 .. code-block:: c
 
-  int32_t TDL_FeatureExtraction(tdl_handle_t handle,
-                              const tdl_model_e model_id,
-                              tdl_image_t image_handle,
-                              tdl_feature_t *feature_meta);
+  int32_t TDL_FeatureExtraction(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              TDLFeature *feature_meta);
 
 【描述】
 
@@ -738,22 +738,22 @@ TDL_FeatureExtraction
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_feature_t\*
+     - TDLFeature\*
      - feature_meta
      - 输出特征向量
 
@@ -764,10 +764,10 @@ TDL_LaneDetection
 
 .. code-block:: c
 
-  int32_t TDL_LaneDetection(tdl_handle_t handle,
-                          const tdl_model_e model_id,
-                          tdl_image_t image_handle,
-                          tdl_lane_t *lane_meta);
+  int32_t TDL_LaneDetection(TDLHandle handle,
+                          const TDLModel model_id,
+                          TDLImage image_handle,
+                          TDLLane *lane_meta);
 
 【描述】
 
@@ -785,22 +785,22 @@ TDL_LaneDetection
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_lane_t\*
+     - TDLLane\*
      - lane_meta
      - 输出车道线坐标及属性
 
@@ -811,10 +811,10 @@ TDL_DepthStereo
 
 .. code-block:: c
 
-  int32_t TDL_DepthStereo(tdl_handle_t handle,
-                        const tdl_model_e model_id,
-                        tdl_image_t image_handle,
-                        tdl_depth_logits_t *depth_logist);
+  int32_t TDL_DepthStereo(TDLHandle handle,
+                        const TDLModel model_id,
+                        TDLImage image_handle,
+                        TDLDepthLogits *depth_logist);
 
 【描述】
 
@@ -832,22 +832,22 @@ TDL_DepthStereo
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_depth_logits_t\*
+     - TDLDepthLogits\*
      - depth_logist
      - 输出深度置信度数据
 
@@ -858,11 +858,11 @@ TDL_Tracking
 
 .. code-block:: c
 
-  int32_t TDL_Tracking(tdl_handle_t handle,
-                     const tdl_model_e model_id,
-                     tdl_image_t image_handle,
-                     tdl_object_t *object_meta,
-                     tdl_tracker_t *tracker_meta);
+  int32_t TDL_Tracking(TDLHandle handle,
+                     const TDLModel model_id,
+                     TDLImage image_handle,
+                     TDLObject *object_meta,
+                     TDLTracker *tracker_meta);
 
 
 【描述】
@@ -881,27 +881,27 @@ TDL_Tracking
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输入/输出
-     - tdl_object_t\*
+     - TDLObject\*
      - object_meta
      - 输入检测结果，输出补充跟踪ID
 
    * - 输出
-     - tdl_tracker_t\*
+     - TDLTracker\*
      - tracker_meta
      - 输出跟踪器状态信息
 
@@ -912,10 +912,10 @@ TDL_CharacterRecognition
 
 .. code-block:: c
 
-  Cint32_t TDL_CharacterRecognition(tdl_handle_t handle,
-                              const tdl_model_e model_id,
-                              tdl_image_t image_handle,
-                              tdl_ocr_t *char_meta);
+  Cint32_t TDL_CharacterRecognition(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              TDLOcr *char_meta);
 
 【描述】
 
@@ -933,21 +933,21 @@ TDL_CharacterRecognition
      - 说明
 
    * - 输入
-     - tdl_handle_t
+     - TDLHandle
      - handle
-     - TDLContextHandle 对象
+     - TDLHandle 对象
 
    * - 输入
-     - const tdl_model_e
+     - const TDLModel
      - model_id
      - 模型类型枚举
 
    * - 输入
-     - tdl_image_t
+     - TDLImage
      - image_handle
      - TDLImageHandle 对象
 
    * - 输出
-     - tdl_ocr_t\*
+     - TDLOcr\*
      - char_meta
      - 输出识别结果（文本内容和位置）

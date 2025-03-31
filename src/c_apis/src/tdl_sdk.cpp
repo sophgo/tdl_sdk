@@ -5,8 +5,8 @@
 #include "tdl_utils.h"
 #include "utils/tdl_log.hpp"
 
-std::shared_ptr<BaseModel> get_model(tdl_handle_t handle,
-                                     const tdl_model_e model_id) {
+std::shared_ptr<BaseModel> get_model(TDLHandle handle,
+                                     const TDLModel model_id) {
   tdl_context_t *context = (tdl_context_t *)handle;
   if (context == nullptr) {
     return nullptr;
@@ -18,12 +18,12 @@ std::shared_ptr<BaseModel> get_model(tdl_handle_t handle,
   return context->models[model_id];
 }
 
-tdl_handle_t TDL_CreateHandle(const int32_t tpu_device_id) {
+TDLHandle TDL_CreateHandle(const int32_t tpu_device_id) {
   tdl_context_t *context = new tdl_context_t();
-  return (tdl_handle_t)context;
+  return (TDLHandle)context;
 }
 
-int32_t TDL_DestroyHandle(tdl_handle_t handle) {
+int32_t TDL_DestroyHandle(TDLHandle handle) {
   tdl_context_t *context = (tdl_context_t *)handle;
   if (context == nullptr) {
     return -1;
@@ -35,7 +35,7 @@ int32_t TDL_DestroyHandle(tdl_handle_t handle) {
   return 0;
 }
 
-tdl_image_t TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory) {
+TDLImage TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory) {
   if (vpss_frame == nullptr) {
     return nullptr;
   }
@@ -43,17 +43,17 @@ tdl_image_t TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory) {
   // TODO(fuquan.ke): use own_memory to create VPSSFrame
   tdl_image_context_t *image_context = new tdl_image_context_t();
   image_context->image = ImageFactory::wrapVPSSFrame(vpss_frame, own_memory);
-  return (tdl_image_t)image_context;
+  return (TDLImage)image_context;
 }
 
-tdl_image_t TDL_ReadImage(const char *path) {
+TDLImage TDL_ReadImage(const char *path) {
   tdl_image_context_t *image_context = new tdl_image_context_t();
   image_context->image =
       ImageFactory::readImage(path, false, InferencePlatform::CVITEK);
-  return (tdl_image_t)image_context;
+  return (TDLImage)image_context;
 }
 
-tdl_image_t TDL_ReadAudio(const char *path, int size){
+TDLImage TDL_ReadAudio(const char *path, int size){
   FILE *file = fopen(path, "rb");
   if (!file) {
       return 0;
@@ -67,10 +67,10 @@ tdl_image_t TDL_ReadAudio(const char *path, int size){
       ImageFactory::createImage(size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
   uint8_t* data_buffer = image_context->image->getVirtualAddress()[0];
   memcpy(data_buffer, buffer, size * sizeof(uint8_t));
-  return (tdl_image_t)image_context;
+  return (TDLImage)image_context;
 }
 
-int32_t TDL_DestroyImage(tdl_image_t image_handle) {
+int32_t TDL_DestroyImage(TDLImage image_handle) {
   tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
   if (image_context == nullptr) {
     return -1;
@@ -79,7 +79,7 @@ int32_t TDL_DestroyImage(tdl_image_t image_handle) {
   return 0;
 }
 
-int32_t TDL_OpenModel(tdl_handle_t handle, const tdl_model_e model_id,
+int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
                           const char *model_path) {
   tdl_context_t *context = (tdl_context_t *)handle;
   if (context == nullptr) {
@@ -98,8 +98,8 @@ int32_t TDL_OpenModel(tdl_handle_t handle, const tdl_model_e model_id,
   return 0;
 }
 
-int32_t TDL_CloseModel(tdl_handle_t handle,
-                           const tdl_model_e model_id) {
+int32_t TDL_CloseModel(TDLHandle handle,
+                           const TDLModel model_id) {
   tdl_context_t *context = (tdl_context_t *)handle;
   if (context == nullptr) {
     return -1;
@@ -112,9 +112,9 @@ int32_t TDL_CloseModel(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_Detection(tdl_handle_t handle, const tdl_model_e model_id,
-                          tdl_image_t image_handle,
-                          tdl_object_t *object_meta) {
+int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
+                          TDLImage image_handle,
+                          TDLObject *object_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -169,10 +169,10 @@ int32_t TDL_Detection(tdl_handle_t handle, const tdl_model_e model_id,
   return 0;
 }
 
-int32_t TDL_FaceDetection(tdl_handle_t handle,
-                              const tdl_model_e model_id,
-                              tdl_image_t image_handle,
-                              tdl_face_t *face_meta) {
+int32_t TDL_FaceDetection(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              TDLFace *face_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -241,10 +241,10 @@ int32_t TDL_FaceDetection(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_Classfification(tdl_handle_t handle,
-                                const tdl_model_e model_id,
-                                tdl_image_t image_handle,
-                                tdl_class_info_t *class_info) {
+int32_t TDL_Classfification(TDLHandle handle,
+                                const TDLModel model_id,
+                                TDLImage image_handle,
+                                TDLClassInfo *class_info) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -270,11 +270,11 @@ int32_t TDL_Classfification(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_ObjectClassification(tdl_handle_t handle,
-                                     const tdl_model_e model_id,
-                                     tdl_image_t image_handle,
-                                     tdl_object_t *object_meta,
-                                     tdl_class_t *class_info) {
+int32_t TDL_ObjectClassification(TDLHandle handle,
+                                     const TDLModel model_id,
+                                     TDLImage image_handle,
+                                     TDLObject *object_meta,
+                                     TDLClass *class_info) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -285,10 +285,10 @@ int32_t TDL_ObjectClassification(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_FaceAttribute(tdl_handle_t handle,
-                              const tdl_model_e model_id,
-                              tdl_image_t image_handle,
-                              tdl_face_t *face_meta) {
+int32_t TDL_FaceAttribute(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              TDLFace *face_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -321,10 +321,10 @@ int32_t TDL_FaceAttribute(tdl_handle_t handle,
   return ret;
 }
 
-int32_t TDL_FaceLandmark(tdl_handle_t handle,
-                             const tdl_model_e model_id,
-                             tdl_image_t image_handle,
-                             tdl_face_t *face_meta) {
+int32_t TDL_FaceLandmark(TDLHandle handle,
+                             const TDLModel model_id,
+                             TDLImage image_handle,
+                             TDLFace *face_meta) {
   tdl_context_t *context = (tdl_context_t *)handle;
   if (context == nullptr) {
     return -1;
@@ -359,10 +359,10 @@ int32_t TDL_FaceLandmark(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_Keypoint(tdl_handle_t handle,
-                     const tdl_model_e model_id,
-                     tdl_image_t image_handle,
-                     tdl_keypoint_t *keypoint_meta) {
+int32_t TDL_Keypoint(TDLHandle handle,
+                     const TDLModel model_id,
+                     TDLImage image_handle,
+                     TDLKeypoint *keypoint_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -396,10 +396,10 @@ int32_t TDL_Keypoint(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_DetectionKeypoint(tdl_handle_t handle,
-                              const tdl_model_e model_id,
-                              tdl_image_t image_handle,
-                              tdl_object_t *object_meta) {
+int32_t TDL_DetectionKeypoint(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              TDLObject *object_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -434,10 +434,10 @@ int32_t TDL_DetectionKeypoint(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_SemanticSegmentation(tdl_handle_t handle,
-                                     const tdl_model_e model_id,
-                                     tdl_image_t image_handle,
-                                     tdl_seg_t *seg_meta) {
+int32_t TDL_SemanticSegmentation(TDLHandle handle,
+                                     const TDLModel model_id,
+                                     TDLImage image_handle,
+                                     TDLSegmentation *seg_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -476,10 +476,10 @@ int32_t TDL_SemanticSegmentation(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_InstanceSegmentation(tdl_handle_t handle,
-                                     const tdl_model_e model_id,
-                                     tdl_image_t image_handle,
-                                     tdl_instance_seg_t *inst_seg_meta) {
+int32_t TDL_InstanceSegmentation(TDLHandle handle,
+                                     const TDLModel model_id,
+                                     TDLImage image_handle,
+                                     TDLInstanceSeg *inst_seg_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -581,10 +581,10 @@ int32_t TDL_InstanceSegmentation(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_FeatureExtraction(tdl_handle_t handle,
-                                  const tdl_model_e model_id,
-                                  tdl_image_t image_handle,
-                                  tdl_feature_t *feature_meta) {
+int32_t TDL_FeatureExtraction(TDLHandle handle,
+                                  const TDLModel model_id,
+                                  TDLImage image_handle,
+                                  TDLFeature *feature_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -598,7 +598,7 @@ int32_t TDL_FeatureExtraction(tdl_handle_t handle,
     return ret;
   }
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
-  memset(feature_meta, 0, sizeof(tdl_feature_t));
+  memset(feature_meta, 0, sizeof(TDLFeature));
   if (output->getType() == ModelOutputType::FEATURE_EMBEDDING) {
     ModelFeatureInfo *feature_output = (ModelFeatureInfo *)output.get();
     feature_meta->size = feature_output->embedding_num;
@@ -614,10 +614,10 @@ int32_t TDL_FeatureExtraction(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_LaneDetection(tdl_handle_t handle,
-                              const tdl_model_e model_id,
-                              tdl_image_t image_handle,
-                              tdl_lane_t *lane_meta) {
+int32_t TDL_LaneDetection(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              TDLLane *lane_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -652,10 +652,10 @@ int32_t TDL_LaneDetection(tdl_handle_t handle,
   return 0;
 }
 
-int32_t TDL_CharacterRecognition(tdl_handle_t handle,
-                              const tdl_model_e model_id,
-                              tdl_image_t image_handle,
-                              tdl_ocr_t *char_meta) {
+int32_t TDL_CharacterRecognition(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              TDLOcr *char_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;

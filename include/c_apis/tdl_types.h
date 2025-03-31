@@ -20,58 +20,58 @@ typedef enum {
   TDL_TYPE_FP16,     /**< Equals to fp16. */
   TDL_TYPE_FP32,     /**< Equals to fp32. */
   TDL_TYPE_UNKOWN    /**< Equals to unkown. */
-} tdl_data_type_e;
+} TDLDataTypeE;
 
 typedef struct {
   float x1;
   float y1;
   float x2;
   float y2;
-} tdl_box_t;
+} TDLBox;
 
 typedef struct {
   int8_t *ptr;
   uint32_t size;
-  tdl_data_type_e type;
-} tdl_feature_t;
+  TDLDataTypeE type;
+} TDLFeature;
 
 typedef struct {
   float *x;
   float *y;
   uint32_t size;
   float score;
-} tdl_pts_t;
+} TDLPoints;
 
 typedef struct {
   float x;
   float y;
   float score;
-} tdl_landmark_info_t;
+} TDLLandmarkInfo;
 
 typedef struct {
-  tdl_box_t box;
+  TDLBox box;
   float score;
   int class_id;
   uint32_t landmark_size;
-  tdl_landmark_info_t *landmark_properity;
-  tdl_object_type_e obj_type;
-} tdl_object_info_t;
+  TDLLandmarkInfo *landmark_properity;
+  TDLObjectTypeE obj_type;
+} TDLObjectInfo;
 
 typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
 
-  tdl_object_info_t *info;
-} tdl_object_t;
+  TDLObjectInfo *info;
+} TDLObject;
 
 typedef struct {
   char name[128];
   float score;
   uint64_t track_id;
-  tdl_box_t box;
-  tdl_pts_t landmarks;
-  tdl_feature_t feature;
+  TDLBox box;
+  TDLPoints landmarks;
+  TDLFeature feature;
 
   float gender_score;
   float glass_score;
@@ -84,38 +84,38 @@ typedef struct {
   float face_quality;
   float pose_score;
   float blurness;
-} tdl_face_info_t;
+} TDLFaceInfo;
 
 typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
-  tdl_face_info_t *info;
-} tdl_face_t;
+  TDLFaceInfo *info;
+} TDLFace;
 
 typedef struct {
   int32_t class_id;
   float score;
-} tdl_class_info_t;
+} TDLClassInfo;
 
 typedef struct {
   uint32_t size;
 
-  tdl_class_info_t *info;
-} tdl_class_t;
+  TDLClassInfo *info;
+} TDLClass;
 
 typedef struct {
   float x;
   float y;
   float score;
-} tdl_keypoint_info_t;
+} TDLKeypointInfo;
 
 typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
-  tdl_keypoint_info_t *info;
-} tdl_keypoint_t;
+  TDLKeypointInfo *info;
+} TDLKeypoint;
 
 typedef struct {
   uint32_t width;
@@ -124,14 +124,14 @@ typedef struct {
   uint32_t output_height;
   uint8_t *class_id;
   uint8_t *class_conf;
-} tdl_seg_t;
+} TDLSegmentation;
 
 typedef struct {
   uint8_t *mask;
   float *mask_point;
   uint32_t mask_point_size;
-  tdl_object_info_t *obj_info;
-} tdl_instance_seg_info_t;
+  TDLObjectInfo *obj_info;
+} TDLInstanceSegInfo;
 
 
 typedef struct {
@@ -140,44 +140,44 @@ typedef struct {
   uint32_t height;
   uint32_t mask_width;
   uint32_t mask_height;
-  tdl_instance_seg_info_t *info;
-} tdl_instance_seg_t;
+  TDLInstanceSegInfo *info;
+} TDLInstanceSeg;
 
 typedef struct {
   float x[2];
   float y[2];
   float score;
-} tdl_lane_point_t;
+} TDLLanePoint;
 
 typedef struct {
   uint32_t size;
   uint32_t width;
   uint32_t height;
 
-  tdl_lane_point_t *lane;
+  TDLLanePoint *lane;
   int lane_state;
-} tdl_lane_t;
+} TDLLane;
 
 typedef struct {
   int w;
   int h;
   int8_t *int_logits;
-} tdl_depth_logits_t;
+} TDLDepthLogits;
 
 typedef struct {
   uint32_t size;
   uint64_t id;
-  tdl_box_t bbox;
+  TDLBox bbox;
   int out_num;
-} tdl_tracker_t;
+} TDLTracker;
 
 typedef struct {
   uint32_t size;
   char* text_info;
-} tdl_ocr_t;
+} TDLOcr;
 
-typedef void *tdl_handle_t;
-typedef void *tdl_image_t;
+typedef void *TDLHandle;
+typedef void *TDLImage;
 
 #ifdef __cplusplus
 }

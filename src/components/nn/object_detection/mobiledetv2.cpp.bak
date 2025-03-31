@@ -155,7 +155,7 @@ int32_t MobileDetV2::outputParse(
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
 
-    std::vector<tdl_object_t> vec_obj;
+    std::vector<TDLObject> vec_obj;
     std::map<int, std::vector<tdl_bbox_t>> lb_boxes;
     for (size_t i = 0; i < strides_.size(); i++) {
       int stride = strides_[i];

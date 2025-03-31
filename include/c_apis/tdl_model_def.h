@@ -84,7 +84,7 @@ typedef enum {
   TDL_LLM_MODEL_MAX,
 
 
-} tdl_model_e;
+} TDLModel;
 
 #ifdef __cplusplus
 }

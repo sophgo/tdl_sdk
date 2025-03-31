@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
+  TDLHandle tdl_handle = TDL_CreateHandle(0);
 
   ret = TDL_OpenModel(tdl_handle, TDL_MODEL_SCRFD_DET_FACE, detect_model);
   if (ret != 0) {
@@ -93,13 +93,13 @@ int main(int argc, char *argv[]) {
     goto exit1;
   }
 
-  tdl_image_t image = TDL_ReadImage(input_image);
+  TDLImage image = TDL_ReadImage(input_image);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit2;
   }
 
-  tdl_face_t obj_meta = {0};
+  TDLFace obj_meta = {0};
 
   ret = TDL_FaceDetection(tdl_handle, TDL_MODEL_SCRFD_DET_FACE, image, &obj_meta);
   if(ret != 0) {

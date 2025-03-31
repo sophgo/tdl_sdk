@@ -10,7 +10,7 @@
 #include "tdl_sdk.h"
 #include "tdl_types.h"
 typedef struct {
-  std::unordered_map<tdl_model_e, std::shared_ptr<BaseModel>> models;
+  std::unordered_map<TDLModel, std::shared_ptr<BaseModel>> models;
   std::shared_ptr<TDLModelFactory> model_factory;
 } tdl_context_t;
 
@@ -18,7 +18,7 @@ typedef struct {
   std::shared_ptr<BaseImage> image;
 } tdl_image_context_t;
 
-tdl_object_type_e convert_object_type(TDLObjectType object_type) {
+TDLObjectTypeE convert_object_type(TDLObjectType object_type) {
   switch (object_type) {
     case TDL_OBJECT_TYPE_PERSON:
       return TDL_OBJECT_TYPE_PERSON;
@@ -26,7 +26,7 @@ tdl_object_type_e convert_object_type(TDLObjectType object_type) {
   return TDL_OBJECT_TYPE_UNDEFINED;
 }
 
-inline tdl_data_type_e convert_data_type(TDLDataType data_type) {
+inline TDLDataTypeE convert_data_type(TDLDataType data_type) {
   switch (data_type) {
     case TDLDataType::INT8:
       return TDL_TYPE_INT8;
@@ -51,7 +51,7 @@ inline tdl_data_type_e convert_data_type(TDLDataType data_type) {
   }
 }
 
-ModelType convert_model_type(tdl_model_e model_type) {
+ModelType convert_model_type(TDLModel model_type) {
   switch (model_type) {
     case TDL_MODEL_MBV2_DET_PERSON:
       return ModelType::MBV2_DET_PERSON;
@@ -100,7 +100,7 @@ ModelType convert_model_type(tdl_model_e model_type) {
 }
 
 inline std::shared_ptr<ModelBoxLandmarkInfo> convert_face_meta(
-    tdl_face_t *face_meta) {
+    TDLFace *face_meta) {
   std::shared_ptr<ModelBoxLandmarkInfo> face_info =
       std::make_shared<ModelBoxLandmarkInfo>();
   for (int i = 0; i < face_meta->size; i++) {
@@ -123,7 +123,7 @@ inline std::shared_ptr<ModelBoxLandmarkInfo> convert_face_meta(
 }
 
 inline std::shared_ptr<ModelBoxInfo> convert_obj_meta(
-    tdl_object_t *object_meta) {
+    TDLObject *object_meta) {
 std::shared_ptr<ModelBoxInfo> obj_info =
     std::make_shared<ModelBoxInfo>();
 for (int i = 0; i < object_meta->size; i++) {

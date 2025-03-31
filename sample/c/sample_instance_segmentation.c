@@ -7,7 +7,7 @@
 #include "tdl_utils.h"
 #include "meta_visualize.h"
 
-int get_model_info(char *model_name, tdl_model_e *model_index) {
+int get_model_info(char *model_name, TDLModel *model_index) {
   int ret = 0;
   if (strcmp(model_name, "YOLOV8_COCO80") == 0) {
     *model_index = TDL_MODEL_SEG_YOLOV8_COCO80;
@@ -86,29 +86,29 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  tdl_model_e enOdModelId;
-  ret = get_model_info(model_name, &enOdModelId);
+  TDLModel model_id;
+  ret = get_model_info(model_name, &model_id);
   if (ret != 0) {
     printf("None model name to support\n");
     return -1;
   }
 
-  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
+  TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, enOdModelId, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
   if (ret != 0) {
     printf("open instance seg model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  tdl_image_t image = TDL_ReadImage(input_image);
+  TDLImage image = TDL_ReadImage(input_image);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit1;
   }
 
-  tdl_instance_seg_t inst_seg_meta = {0};
-  ret = TDL_InstanceSegmentation(tdl_handle, enOdModelId, image, &inst_seg_meta);
+  TDLInstanceSeg inst_seg_meta = {0};
+  ret = TDL_InstanceSegmentation(tdl_handle, model_id, image, &inst_seg_meta);
   if (ret != 0) {
     printf("TDL_InstanceSegmentation failed with %#x!\n", ret);
   } else {
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
   TDL_DestroyImage(image);
 
 exit1:
-  TDL_CloseModel(tdl_handle, enOdModelId);
+  TDL_CloseModel(tdl_handle, model_id);
 
 exit0:
   TDL_DestroyHandle(tdl_handle);

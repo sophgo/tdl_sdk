@@ -8,7 +8,7 @@
 
 #define AUDIOFORMATSIZE 2
 
-int get_model_info(char *model_name, tdl_model_e *model_index) {
+int get_model_info(char *model_name, TDLModel *model_index) {
   int ret = 0;
   if (strcmp(model_name, "CLS_SOUND_BABAY_CRY") == 0) {
     *model_index = TDL_MODEL_CLS_BABAY_CRY;
@@ -120,21 +120,21 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  tdl_model_e enOdModelId;
-  if (get_model_info(model_name, &enOdModelId) == -1) {
+  TDLModel model_id;
+  if (get_model_info(model_name, &model_id) == -1) {
     printf("unsupported model: %s\n", model_name);
     return -1;
   }
 
-  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
+  TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, enOdModelId, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  tdl_image_t image;
+  TDLImage image;
 
   if (input_image) {
     image = TDL_ReadImage(input_image);
@@ -155,9 +155,9 @@ int main(int argc, char *argv[]) {
     }
 
   }
-  tdl_class_info_t obj_info = {0};
+  TDLClassInfo obj_info = {0};
 
-  ret = TDL_Classfification(tdl_handle, enOdModelId, image, &obj_info);
+  ret = TDL_Classfification(tdl_handle, model_id, image, &obj_info);
 
   if (ret != 0) {
     printf("TDL_Classfification failed with %#x!\n", ret);
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
   TDL_DestroyImage(image);
 
 exit1:
-  TDL_CloseModel(tdl_handle, enOdModelId);
+  TDL_CloseModel(tdl_handle, model_id);
 
 exit0:
   TDL_DestroyHandle(tdl_handle);

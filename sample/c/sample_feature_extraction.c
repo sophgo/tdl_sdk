@@ -6,7 +6,7 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
-int get_model_info(char *model_name, tdl_model_e *model_index) {
+int get_model_info(char *model_name, TDLModel *model_index) {
   int ret = 0;
   if (strcmp(model_name, "FEATURE_FACE") == 0) {
     *model_index = TDL_MODEL_FEATURE_BMFACER34;
@@ -95,41 +95,41 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  tdl_model_e enOdModelId;
-  ret = get_model_info(model_name, &enOdModelId);
+  TDLModel model_id;
+  ret = get_model_info(model_name, &model_id);
   if (ret != 0) {
     printf("None model name to support\n");
     return -1;
   }
 
-  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
+  TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, enOdModelId, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  tdl_image_t image1 = TDL_ReadImage(input_image1);
+  TDLImage image1 = TDL_ReadImage(input_image1);
   if (image1 == NULL) {
     printf("read image1 failed with %#x!\n", ret);
     goto exit1;
   }
 
-  tdl_image_t image2 = TDL_ReadImage(input_image2);
+  TDLImage image2 = TDL_ReadImage(input_image2);
   if (image2 == NULL) {
     printf("read image2 failed with %#x!\n", ret);
     goto exit2;
   }
 
-  tdl_feature_t obj_meta1 = {0}, obj_meta2 = {0};
-  ret = TDL_FeatureExtraction(tdl_handle, enOdModelId, image1, &obj_meta1);
+  TDLFeature obj_meta1 = {0}, obj_meta2 = {0};
+  ret = TDL_FeatureExtraction(tdl_handle, model_id, image1, &obj_meta1);
   if (ret != 0) {
     printf("TDL_FeatureExtraction failed with %#x!\n", ret);
     goto exit3;
   }
 
-  ret = TDL_FeatureExtraction(tdl_handle, enOdModelId, image2, &obj_meta2);
+  ret = TDL_FeatureExtraction(tdl_handle, model_id, image2, &obj_meta2);
   if (ret != 0) {
     printf("TDL_FeatureExtraction failed with %#x!\n", ret);
     goto exit3;
@@ -148,7 +148,7 @@ exit2:
   TDL_DestroyImage(image1);
 
 exit1:
-  TDL_CloseModel(tdl_handle, enOdModelId);
+  TDL_CloseModel(tdl_handle, model_id);
 
 exit0:
   TDL_DestroyHandle(tdl_handle);

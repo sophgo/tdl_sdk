@@ -6,7 +6,7 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
-int get_model_info(char *model_name, tdl_model_e *model_index_d,  tdl_model_e *model_index_k) {
+int get_model_info(char *model_name, TDLModel *model_index_d,  TDLModel *model_index_k) {
   int ret = 0;
   if (strcmp(model_name, "HAND") == 0) {
     *model_index_d = TDL_MODEL_YOLOV8N_DET_HAND;
@@ -111,36 +111,36 @@ int main(int argc, char *argv[]) {
   
   int ret = 0;
 
-  tdl_model_e enOdModelId_d, enOdModelId_k;
-  ret = get_model_info(model_name, &enOdModelId_d, &enOdModelId_k);
+  TDLModel model_id_d, model_id_k;
+  ret = get_model_info(model_name, &model_id_d, &model_id_k);
   if (ret != 0) {
     printf("None model name to support\n");
     return -1;
   }
 
-  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
+  TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, enOdModelId_d, detect_model);
+  ret = TDL_OpenModel(tdl_handle, model_id_d, detect_model);
   if (ret != 0) {
     printf("open hand keypoint model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret = TDL_OpenModel(tdl_handle, enOdModelId_k, kp_model);
+  ret = TDL_OpenModel(tdl_handle, model_id_k, kp_model);
   if (ret != 0) {
     printf("open hand keypoint model failed with %#x!\n", ret);
     goto exit1;
   }
 
-  tdl_image_t image = TDL_ReadImage(input_image);
+  TDLImage image = TDL_ReadImage(input_image);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit2;
   }
 
-  tdl_object_t obj_meta = {0};
+  TDLObject obj_meta = {0};
 
-  ret = TDL_Detection(tdl_handle, enOdModelId_d, image, &obj_meta);
+  ret = TDL_Detection(tdl_handle, model_id_d, image, &obj_meta);
   if (ret != 0) {
     printf("TDL_Detection failed with %#x!\n", ret);
     goto exit3;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
       goto exit3;
   }
 
-  ret = TDL_DetectionKeypoint(tdl_handle, enOdModelId_k, image, &obj_meta);
+  ret = TDL_DetectionKeypoint(tdl_handle, model_id_k, image, &obj_meta);
   if (ret != 0) {
     printf("TDL_KeypointDetection failed with %#x!\n", ret);
   } else {
@@ -167,10 +167,10 @@ exit3:
   TDL_DestroyImage(image);
 
 exit2:
-  TDL_CloseModel(tdl_handle, enOdModelId_k);
+  TDL_CloseModel(tdl_handle, model_id_k);
 
 exit1:
-  TDL_CloseModel(tdl_handle, enOdModelId_d);
+  TDL_CloseModel(tdl_handle, model_id_d);
 
 exit0:
   TDL_DestroyHandle(tdl_handle);

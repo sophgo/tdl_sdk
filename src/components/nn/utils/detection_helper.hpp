@@ -42,6 +42,6 @@ class DetectionHelper {
                                     const int crop_x, const int crop_y);
   //   static void convertDetStruct(std::map<int, std::vector<tdl_bbox_t>>
   //   &dets,
-  //                                tdl_object_t *obj, int im_height,
+  //                                TDLObject *obj, int im_height,
   //                                int im_width);
 };

@@ -73,23 +73,23 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  tdl_model_e enOdModelId = TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17;
-  tdl_handle_t tdl_handle = TDL_CreateHandle(0);
+  TDLModel model_id = TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17;
+  TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, enOdModelId, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
   if (ret != 0) {
     printf("open pose model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  tdl_image_t image = TDL_ReadImage(input_image);
+  TDLImage image = TDL_ReadImage(input_image);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
     goto exit1;
   }
 
-  tdl_object_t obj_meta = {0};
-  ret = TDL_Detection(tdl_handle, enOdModelId, image, &obj_meta);
+  TDLObject obj_meta = {0};
+  ret = TDL_Detection(tdl_handle, model_id, image, &obj_meta);
   if (ret != 0) {
     printf("TDL_Pose failed with %#x!\n", ret);
   } else {
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
   TDL_DestroyImage(image);
 
 exit1:
-  TDL_CloseModel(tdl_handle, enOdModelId);
+  TDL_CloseModel(tdl_handle, model_id);
 
 exit0:
   TDL_DestroyHandle(tdl_handle);

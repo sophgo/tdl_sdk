@@ -69,7 +69,7 @@ class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
 
  protected:
   nlohmann::json m_json_object;
-  // cvitdl_handle_t m_tdl_handle;
+  // TDLHandle m_tdl_handle;
   std::experimental::filesystem::path m_image_dir;
   std::experimental::filesystem::path m_model_dir;
 };
