@@ -2,41 +2,18 @@
 
 # print usage
 print_usage() {
-    echo "Usage: ${BASH_SOURCE[0]} [options]"
+    echo "Usage: source ${BASH_SOURCE[0]} [options]"
     echo "Options:"
-    echo "  CV181X         Build soph-pi 181X"
-    echo "  CV186X         Build 186X"
-    echo "  BM1688         Build BM1688 edge"
-    echo "  BM1684X        Build BM1684X edge"
-    echo "  CMODEL_CVITEK   Build linux x86_64"
-    echo "  sample         Build samples only"
-    echo "  all            Build both modules and sample"
-    echo "  clean          Clean build"
+    echo "  (no option) Build modules only"
+    echo "  sample      Build samples only"
+    echo "  all         Build both modules and sample"
 }
 
 # Check parameter
 if [ "$#" -gt 2 ]; then
     echo "Error: Too many arguments"
     print_usage
-    exit 1
-fi
-
-if [ -z "$TOP_DIR" ]; then
-    TOP_DIR=$(cd $(dirname $0);cd ..; pwd)
-fi
-
-# Ensure credential.sh is available
-if [ ! -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
-    echo "credential.sh not found, checking git remote..."
-    pushd "${TOP_DIR}/tdl_sdk"
-    if git remote -v | grep -q "cvitek"; then
-        echo "cvitek found in git remote, syncing credential.sh from internal branch..."
-        git fetch origin internal
-        git show origin/internal:scripts/credential.sh > scripts/credential.sh
-    else
-        echo "cvitek not found in git remote, skipping credential.sh sync."
-    fi
-    popd
+    return 1
 fi
 
 if [ -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
@@ -46,153 +23,47 @@ fi
 # get tdl_sdk root dir
 CVI_TDL_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Handle platform-specific build commands
-if [[ "$1" == "CV181X" ]]; then
-    echo "Building for CV181X platform..."
-    export CHIP_ARCH=CV181X
+# set build working dir
+TMP_WORKING_DIR="${CVI_TDL_ROOT}"/tmp
+BUILD_WORKING_DIR="${TMP_WORKING_DIR}"/build_sdk
+BUILD_DOWNLOAD_DIR="${TMP_WORKING_DIR}"/_deps
 
-    # Execute CV181X specific commands
-    cd ..
-    source build/envsetup_soc.sh
-    defconfig sg2002_wevb_riscv64_sd
-    export TPU_REL=1
-    clean_all
-    build_all
-    cd tdl_sdk
-    exit 0
+# set install path
+TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install
 
-elif [[ "$1" == "CV186X" ]]; then
-    echo "Building for CV186X platform..."
-    export CHIP_ARCH=CV186X
+# Set build option and type
+BUILD_OPTION=
+BUILD_TYPE=SDKRelease
 
-    # Execute CV186X specific commands
-    cd ..
-    source build/envsetup_soc.sh
-    defconfig device_wevb_emmc
-    export TPU_REL=1
-    clean_device_all
-    build_device_all
-    cd tdl_sdk
-    exit 0
-
-elif [[ "$1" == "BM1688" ]]; then
-    echo "Building for BM1688 platform..."
-    export CHIP_ARCH=BM1688
-    # Continue with the regular build process below
-elif [[ "$1" == "BM1684X" ]]; then
-    echo "Building for BM1684X platform..."
-    export CHIP_ARCH=BM1684X
-    # Continue with the regular build process below
-elif [[ "$1" == "CMODEL_CVITEK" ]]; then
-
-    if [ -e "dependency/CMODEL_CVITEK" ]; then
-        echo "Building for CMODEL_CVITEK platform..."
-        export CHIP_ARCH=CMODEL_CVITEK
-    else
-        echo "CMODEL_CVITEK not found"
-        exit 1
-    fi
-
-elif [[ "$1" == "clean" ]]; then
-    echo "Using ./${BASH_SOURCE[0]} clean"
-    echo "Cleaning build..."
-
-    # Set CHIP_ARCH if it's not already set
-    if [ -z "$CHIP_ARCH" ]; then
-        echo "CHIP_ARCH not set, cleaning all architectures"
-        # Clean all possible build directories
-        for arch in CV181X CV186X BM1688; do
-            BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${arch}
-            TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${arch}"
-
-            if [ -d "${BUILD_WORKING_DIR}" ]; then
-                echo "Cleanup tmp folder for ${arch}."
-                rm -rf ${BUILD_WORKING_DIR}
-            fi
-            if [ -d "${TDL_SDK_INSTALL_PATH}" ]; then
-                echo "Cleanup install folder for ${arch}."
-                rm -rf ${TDL_SDK_INSTALL_PATH}
-            fi
-        done
-    else
-        BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${CHIP_ARCH}
-        TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
-
-        if [ -d "${BUILD_WORKING_DIR}" ]; then
-            echo "Cleanup tmp folder for ${CHIP_ARCH}."
-            rm -rf ${BUILD_WORKING_DIR}
-        fi
-        if [ -d "${TDL_SDK_INSTALL_PATH}" ]; then
-            echo "Cleanup install folder for ${CHIP_ARCH}."
-            rm -rf ${TDL_SDK_INSTALL_PATH}
-        fi
-    fi
-
-    # Remove credential.sh if it exists
-    if [ -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
-        echo "Removing existing credential.sh..."
-        rm -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh"
-    fi
-
-    exit 0
-
-elif [[ "$1" == "sample" ]]; then
+# print building message
+if [ "$#" -eq 0 ]; then
+    echo "Using ./${BASH_SOURCE[0]}"
+    echo "Compiling modules..."
+elif [ "$1" = "sample" ]; then
     echo "Using ./${BASH_SOURCE[0]} sample"
     echo "Compiling sample..."
     BUILD_OPTION=sample
-
-    # Check if CHIP_ARCH is set
-    if [ -z "$CHIP_ARCH" ]; then
-        echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
-        print_usage
-        exit 1
-    fi
-
-elif [[ "$1" == "all" ]]; then
+elif [ "$1" = "all" ]; then
     echo "Using ./${BASH_SOURCE[0]} all"
     echo "Compiling modules and sample..."
-
-    cd ..
-    source build/envsetup_soc.sh
-    oldconfig
-    cd tdl_sdk
-
     BUILD_OPTION=all
-
-    # Check if CHIP_ARCH is set
-    if [ -z "$CHIP_ARCH" ]; then
-        echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
-        print_usage
-        exit 1
+elif [ "$1" = "clean" ]; then
+    echo "Using ./${BASH_SOURCE[0]} clean"
+    echo "Cleaning build..."
+    if [ -d "${BUILD_DOWNLOAD_DIR}" ]; then
+        echo "Cleanup tmp folder."
+        rm -rf ${BUILD_DOWNLOAD_DIR}
     fi
-
-elif [ "$#" -eq 0 ]; then
-    echo "Using ./${BASH_SOURCE[0]}"
-    echo "Compiling modules..."
-
-    # Check if CHIP_ARCH is set
-    if [ -z "$CHIP_ARCH" ]; then
-        echo "Error: CHIP_ARCH not set. Please specify a platform (cv181x, cv186x, bm168x) first."
-        print_usage
-        exit 1
+    if [ -d "${TDL_SDK_INSTALL_PATH}" ]; then
+        echo "Cleanup install folder."
+        rm -rf ${TDL_SDK_INSTALL_PATH}
     fi
-
+    exit 0
 else
     echo "Error: Invalid option"
     print_usage
     exit 1
 fi
-
-# set build working dir
-BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build/${CHIP_ARCH}
-mkdir -p ${BUILD_WORKING_DIR}
-BUILD_DOWNLOAD_DIR="${BUILD_WORKING_DIR}"/_deps
-
-# set install path
-TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
-
-# Set build option and type
-BUILD_TYPE=Debug
 
 # check system type
 CONFIG_DUAL_OS=OFF
@@ -200,48 +71,25 @@ if [ -n "${ALIOS_PATH}" ]; then
     CONFIG_DUAL_OS=ON
 fi
 
-if [[ "$CHIP_ARCH" == "BM1688" ]]; then
-    CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
-    CROSS_COMPILE=aarch64-linux-
-    CV_UTILS=OFF
-    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1688/sophon-opencv
-    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1688/libsophon
-    MPI_PATH=$CVI_TDL_ROOT/dependency/BM1688/sophon-ffmpeg
-    ISP_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1688/sophon-soc-libisp
-
-elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
-    CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
-    CROSS_COMPILE=aarch64-linux-
-    CV_UTILS=OFF
-    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1684X/sophon-opencv
-    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1684X/libsophon
-    MPI_PATH=$CVI_TDL_ROOT/dependency/BM1684X/sophon-ffmpeg
-
-elif [[ "$CHIP_ARCH" == "CMODEL_CVITEK" ]]; then
-    CROSS_COMPILE_PATH=/usr/
-    CROSS_COMPILE=""
-    CV_UTILS=OFF
-    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL_CVITEK/opencv
-    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CVITEK
-
-else
-    CV_UTILS=ON
-    TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
-    IVE_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_ive_sdk
-    MW_VER=v2
-    MPI_PATH="${TOP_DIR}"/cvi_mpi
-fi
 
 # set host-tool
 HOST_TOOL_PATH="${CROSS_COMPILE_PATH}"
-TARGET_MACHINE="$(${CROSS_COMPILE_PATH}/bin/${CROSS_COMPILE}gcc -dumpmachine)"
+TARGET_MACHINE="$(${CROSS_COMPILE}gcc -dumpmachine)"
 TOOLCHAIN_FILE="${CVI_TDL_ROOT}"/toolchain/"${TARGET_MACHINE}".cmake
 
+# set dependency
+MW_VER=v2
+MPI_PATH="${TOP_DIR}"/cvi_mpi
+TPU_SDK_INSTALL_PATH="${OUTPUT_DIR}"/tpu_"${SDK_VER}"/cvitek_tpu_sdk
+IVE_SDK_INSTALL_PATH="${OUTPUT_DIR}"/tpu_"${SDK_VER}"/cvitek_ive_sdk
+
+# init build working dir
 if [ -d "${BUILD_WORKING_DIR}" ]; then
-    echo "BUILD_WORKING_DIR=${BUILD_WORKING_DIR}"
-else
-    mkdir -p ${BUILD_WORKING_DIR}
+    echo "Cleanup tmp folder."
+    rm -rf ${BUILD_WORKING_DIR}
 fi
+echo "Creating tmp working directory."
+mkdir -p ${BUILD_WORKING_DIR}
 
 # into tmp/build_sdk
 pushd ${BUILD_WORKING_DIR}
@@ -260,12 +108,6 @@ elif [[ "${CHIP_ARCH}" == "CV180X" ]]; then
 elif [[ "${CHIP_ARCH}" == "SOPHON" ]]; then
     MPI_PATH="${TOP_DIR}"/middleware/"${MW_VER}"
     USE_TPU_IVE=OFF
-elif [[ "${CHIP_ARCH}" == "BM1688" ]]; then
-    USE_TPU_IVE=OFF
-elif [[ "${CHIP_ARCH}" == "BM1684X" ]]; then
-    USE_TPU_IVE=OFF
-elif [[ "${CHIP_ARCH}" == "CMODEL_CVITEK" ]]; then
-    USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"
     exit 1
@@ -274,10 +116,8 @@ fi
 # build start
 $CMAKE_BIN -G Ninja ${CVI_TDL_ROOT} -DCVI_PLATFORM=${CHIP_ARCH} \
                                     -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                                    -DENABLE_CVI_TDL_CV_UTILS=${CV_UTILS} \
+                                    -DENABLE_CVI_TDL_CV_UTILS=ON \
                                     -DMLIR_SDK_ROOT=${TPU_SDK_INSTALL_PATH} \
-                                    -DISP_ROOT_DIR=${ISP_ROOT_DIR} \
-                                    -DOPENCV_ROOT_DIR=${OPENCV_ROOT_DIR} \
                                     -DMIDDLEWARE_SDK_ROOT=${MPI_PATH} \
                                     -DTPU_IVE_SDK_ROOT=${IVE_SDK_INSTALL_PATH} \
                                     -DCMAKE_INSTALL_PREFIX=${TDL_SDK_INSTALL_PATH} \

@@ -1,4 +1,4 @@
-install
+install*
 *.o
 *.so
 *.a
@@ -10,15 +10,3 @@ doxygen/latex
 tmp
 *.out
 *.cvimodel
-*.bmodel
-scripts/credential.sh
-build*
-!build_tdl_sdk.sh
-sophon_sdk
-_deps/
-*.jpg
-python_depends
-thirdparty
-dependency
-txt_root
-json_root

@@ -15,8 +15,6 @@ elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "riscv64-unknown-linux-gnu.cmake")
   set(ARCHITECTURE "glibc_riscv64")
 elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "riscv64-unknown-linux-musl.cmake")
   set(ARCHITECTURE "musl_riscv64")
-elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "x86_64-linux-gnu.cmake")
-  set(ARCHITECTURE "x86_64")
 else()
   message(FATAL_ERROR "No shrinked 3rd party library for ${CMAKE_TOOLCHAIN_FILE}")
 endif()
@@ -24,9 +22,8 @@ endif()
 if (IS_LOCAL)
   set(EIGEN_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/eigen.tar.gz)
 else()
-  set(EIGEN_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/eigen.tar.gz)
+  set(EIGEN_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/eigen.tar.gz)
 endif()
-message("EIGEN_URL:${EIGEN_URL},is_local:${IS_LOCAL}")
 
 if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/libeigen-src")
   FetchContent_Declare(
@@ -38,10 +35,11 @@ if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/libeigen-src")
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/libeigen-src/include/eigen3)
 
+
 if (IS_LOCAL)
   set(GOOGLETEST_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/googletest.tar.gz)
 else()
-  set(GOOGLETEST_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/googletest.tar.gz)
+  set(GOOGLETEST_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/googletest.tar.gz)
 endif()
 
 set(BUILD_GMOCK OFF CACHE BOOL "Build GMOCK")
@@ -62,7 +60,7 @@ include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtes
 if (IS_LOCAL)
   set(NLOHMANNJSON_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/nlohmannjson.tar.gz)
 else()
-  set(NLOHMANNJSON_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/nlohmannjson.tar.gz)
+  set(NLOHMANNJSON_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/nlohmannjson.tar.gz)
 endif()
 
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/nlohmannjson-src")
@@ -75,15 +73,12 @@ if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/nlohmannjson-src")
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/nlohmannjson-src)
 
-if(${CVI_PLATFORM} STREQUAL "BM1688")
-  return()
-endif()
-
 if (IS_LOCAL)
   set(STB_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/stb.tar.gz)
 else()
-  set(STB_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/stb.tar.gz)
+  set(STB_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/stb.tar.gz)
 endif()
+
 
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/stb-src")
   FetchContent_Declare(
@@ -96,3 +91,12 @@ endif()
 set(stb_SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/stb-src)
 include_directories(${stb_SOURCE_DIR})
 
+install(DIRECTORY  ${stb_SOURCE_DIR}/ DESTINATION sample/3rd/stb/include
+    FILES_MATCHING PATTERN "*.h"
+    PATTERN ".git" EXCLUDE
+    PATTERN ".github" EXCLUDE
+    PATTERN "data" EXCLUDE
+    PATTERN "deprecated" EXCLUDE
+    PATTERN "docs" EXCLUDE
+    PATTERN "tests" EXCLUDE
+    PATTERN "tools" EXCLUDE)

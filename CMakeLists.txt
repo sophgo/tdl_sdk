@@ -1,40 +1,19 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(tdl)
+project(cvi_tdl)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-find_program(CCACHE_PROGRAM ccache)
-if(CCACHE_PROGRAM)
-    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-endif()
-
-# 使用并行编译
-include(ProcessorCount)
-ProcessorCount(N)
-if(NOT N EQUAL 0)
-    set(CMAKE_BUILD_PARALLEL_LEVEL ${N})
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-Winvalid-pch)
-    set_target_properties(${TARGET_NAME} PROPERTIES
-        COMPILE_FLAGS "-include ${CMAKE_CURRENT_BINARY_DIR}/pch.hpp")
-endif()
 
 if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
   set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install")
 endif()
 
 # Find toolchain cmake file and toolchain folder
-if( ("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "") AND (NOT "${CVI_PLATFORM}" STREQUAL "BM1688") )
+if("${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
   message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE is not set. Aborting.")
-else()
-  message(STATUS "CMAKE_TOOLCHAIN_FILE:${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
 set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
-set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
+set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++11 -pthread")
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
@@ -55,13 +34,6 @@ elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   add_definitions(-DUSE_NEON)
 elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
   add_definitions(-D__CV186X__)
-elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
-  add_definitions(-D__BM168X__)
-elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
-  add_definitions(-D__BM168X__)
-  add_definitions(-D__BM1684X__)
-elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK")
-  add_definitions(-D__CMODEL_CVITEK__)
 else()
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
@@ -73,8 +45,8 @@ elseif("${CMAKE_BUILD_TYPE}" STREQUAL "SDKRelease")
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE} ${CMAKE_C_INIT} -s" )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_INIT} -s" )
 elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG} ${CMAKE_C_INIT} -g" )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_INIT} -g" )
+    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG} ${CMAKE_C_INIT}" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_INIT}" )
 elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Asan")
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG} ${CMAKE_C_INIT} -fsanitize=address" )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_INIT} -fsanitize=address" )
@@ -92,10 +64,7 @@ endif()
 if(DEFINED ENV{PERF_EVAL})
   add_definitions(-DPERF_EVAL)
   message("set PERF_EVAL")
-endif()
-
-get_directory_property(compile_defs COMPILE_DEFINITIONS)
-message(STATUS "All compile definitions: ${compile_defs}")
+  endif()
 
 # Get current commit
 execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE CURRENT_COMMIT)
@@ -157,30 +126,31 @@ execute_process(
     COMMAND git remote -v
     OUTPUT_VARIABLE REMOTE_URL
     ERROR_VARIABLE GIT_ERROR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
+    OUTPUT_STRIP_TRAILING_WHITESPACE 
 )
 
-string(FIND "${REMOTE_URL}" "cvitek" FOUND_POS)
-
-if(NOT ${FOUND_POS} EQUAL -1)
-    set(IS_LOCAL TRUE)
+if(NOT GIT_ERROR)
+    if(REMOTE_URL MATCHES "github.com")
+      set(IS_LOCAL FALSE)
+    else()
+        set(IS_LOCAL TRUE)
+    endif()
 else()
-    set(IS_LOCAL FALSE)
-endif()
-
-if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1688" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK")
-  set(IS_LOCAL OFF)
+    message(FATAL_ERROR "Failed to execute git command: ${GIT_ERROR}")
 endif()
 
 
+# 获取当前文件的目录
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+# 获取上一级目录
 get_filename_component(TOP_DIR ${CURRENT_DIR} DIRECTORY)
 
+# 打印上一级目录
 message(STATUS "Current Directory: ${CURRENT_DIR}")
 message(STATUS "Parent Directory: ${TOP_DIR}")
 
-set(REPO_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Check if OpenCV exists.
 if (NOT DEFINED NO_OPENCV)
 include(cmake/opencv.cmake)
@@ -189,15 +159,17 @@ endif()
 # Check if MLIR SDK exists.
 include(cmake/mlir.cmake)
 
-if( NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK"))
 # Check if mpi SDK exists.
 include(cmake/middleware.cmake)
-endif()
 
 # 3rdparty libraries
 include(cmake/thirdparty.cmake)
 
 include(cmake/ive.cmake)
+
+# ===========need remove this=============
+include(cmake/cvi_rtsp.cmake)
+# ===========need remove this=============
 
 # 3rdpart includes
 include_directories(${IVE_INCLUDES}
@@ -205,31 +177,18 @@ include_directories(${IVE_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
 
-message(STATUS "OPENCV_INCLUDES:{${OPENCV_INCLUDES}}")
-message(STATUS "OPENCV_LIBS:{${OPENCV_LIBS}}")
-message(STATUS "MLIR_INCLUDES:{${MLIR_INCLUDES}}")
-message(STATUS "MLIR_LIBS:{${MLIR_LIBS}}")
-message(STATUS "MIDDLEWARE_INCLUDES:{${MIDDLEWARE_INCLUDES}}")
-message(STATUS "MIDDLEWARE_LIBS:{${MIDDLEWARE_LIBS}}")
-message(STATUS "${CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE}")
-
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
 if("${BUILD_OPTION}" STREQUAL "")
-  add_subdirectory(src)
-  add_subdirectory(sample)
-  add_subdirectory(regression)
+  add_subdirectory(modules)
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)
-elseif("${BUILD_OPTION}" STREQUAL "all" OR "${BUILD_OPTION}" STREQUAL "bm168x")
-  add_subdirectory(src)
+  add_subdirectory(sample_video)
+elseif("${BUILD_OPTION}" STREQUAL "all")
+  add_subdirectory(modules)
   add_subdirectory(sample)
+  add_subdirectory(sample_video)
   if(IS_LOCAL AND NOT DEFINED NO_OPENCV )
     add_subdirectory(regression)
   endif()
 else()
-  message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}. \
-                      Valid options are '', 'sample', 'bm168x' or 'all', and 'clean'.")
+  message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}. Valid options are '', 'sample', or 'all'.")
 endif()
