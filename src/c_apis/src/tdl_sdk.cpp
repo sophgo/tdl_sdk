@@ -631,7 +631,7 @@ int32_t TDL_LaneDetection(TDLHandle handle,
     return ret;
   }
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
-  if (output->getType() == ModelOutputType::OBJECT_LANDMARKS) {
+  if (output->getType() == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
     ModelBoxLandmarkInfo *lane_output = (ModelBoxLandmarkInfo *)output.get();
 
     TDL_InitLaneMeta(lane_meta, lane_output->box_landmarks.size());
