@@ -12,9 +12,9 @@ void init_vpss_grp_attr(VPSS_GRP_ATTR_S* pstVpssGrpAttr, CVI_U32 srcWidth,
                         CVI_U32 srcHeight, PIXEL_FORMAT_E enSrcFormat,
                         CVI_U8 dev);
 
-void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dstWidth,
-                        CVI_U32 dstHeight, PIXEL_FORMAT_E enDstFormat,
-                        CVI_BOOL keepAspectRatio);
+void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dst_width,
+                        CVI_U32 dst_height, PIXEL_FORMAT_E enDstFormat,
+                        CVI_BOOL keep_aspect_ratio);
 VpssContext::VpssContext() {
   CVI_S32 s32Ret = CVI_SUCCESS;
 
@@ -162,8 +162,8 @@ std::shared_ptr<BaseImage> VpssPreprocessor::preprocess(
     const std::shared_ptr<BaseImage>& image, const PreprocessParams& params,
     std::shared_ptr<BaseMemoryPool> memory_pool) {
   std::shared_ptr<VPSSImage> vpss_image = std::make_shared<VPSSImage>(
-      params.dstWidth, params.dstHeight, params.dstImageFormat,
-      params.dstPixDataType, false, memory_pool);
+      params.dst_width, params.dst_height, params.dst_image_format,
+      params.dst_pixdata_type, false, memory_pool);
   std::unique_ptr<MemoryBlock> memory_block;
   if (memory_pool == nullptr) {
     LOGE("input memory_pool is nullptr,use src image memory pool\n");
@@ -244,15 +244,15 @@ bool VpssPreprocessor::generateVPSSParams(
 
   LOGI(
       "preprocess para "
-      "info,dstWidth:%d,dstHeight:%d,dstImageFormat:%d,dstPixDataType:%d,cropX:"
-      "%d,cropY:%d,cropWidth:%d,cropHeight:%d,mean[0]:%.2f,mean[1]:%.2f,mean[2]"
+      "info,dst_width:%d,dst_height:%d,dst_image_format:%d,dst_pixdata_type:%d,crop_x:"
+      "%d,crop_y:%d,crop_width:%d,crop_height:%d,mean[0]:%.2f,mean[1]:%.2f,mean[2]"
       ":%.2f,"
       "scale[0]:%.2f,scale[1]:%.2f,scale[2]:%.2f,aspectRatio:%d",
-      params.dstWidth, params.dstHeight, (int)params.dstImageFormat,
-      (int)params.dstPixDataType, params.cropX, params.cropY, params.cropWidth,
-      params.cropHeight, params.mean[0], params.mean[1], params.mean[2],
+      params.dst_width, params.dst_height, (int)params.dst_image_format,
+      (int)params.dst_pixdata_type, params.crop_x, params.crop_y, params.crop_width,
+      params.crop_height, params.mean[0], params.mean[1], params.mean[2],
       params.scale[0], params.scale[1], params.scale[2],
-      params.keepAspectRatio);
+      params.keep_aspect_ratio);
   memset(&vpss_grp_attr, 0, sizeof(VPSS_GRP_ATTR_S));
   memset(&vpss_chn_crop_attr, 0, sizeof(VPSS_CROP_INFO_S));
   memset(&vpss_chn_attr, 0, sizeof(VPSS_CHN_ATTR_S));
@@ -261,10 +261,10 @@ bool VpssPreprocessor::generateVPSSParams(
 
   generateVPSSChnAttr(src_image, params, vpss_chn_attr);
 
-  if (params.cropWidth > 0 && params.cropHeight > 0) {
+  if (params.crop_width > 0 && params.crop_height > 0) {
     vpss_chn_crop_attr.bEnable = true;
-    vpss_chn_crop_attr.stCropRect = {params.cropX, params.cropY,
-                                     params.cropWidth, params.cropHeight};
+    vpss_chn_crop_attr.stCropRect = {params.crop_x, params.crop_y,
+                                     params.crop_width, params.crop_height};
   }
   return true;
 }
@@ -293,9 +293,9 @@ int32_t VpssPreprocessor::generateVPSSChnAttr(
   VPSS_CHN_ATTR_S* pastVpssChnAttr = &vpss_chn_attr;
 
   PIXEL_FORMAT_E dst_format = VPSSImage::convertPixelFormat(
-      params.dstImageFormat, params.dstPixDataType);
-  pastVpssChnAttr->u32Width = params.dstWidth;
-  pastVpssChnAttr->u32Height = params.dstHeight;
+      params.dst_image_format, params.dst_pixdata_type);
+  pastVpssChnAttr->u32Width = params.dst_width;
+  pastVpssChnAttr->u32Height = params.dst_height;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
   pastVpssChnAttr->enPixelFormat = dst_format;
   pastVpssChnAttr->stFrameRate.s32SrcFrameRate = -1;
@@ -306,7 +306,7 @@ int32_t VpssPreprocessor::generateVPSSChnAttr(
 
   pastVpssChnAttr->stAspectRatio.bEnableBgColor = CVI_TRUE;
 
-  if (!params.keepAspectRatio) {
+  if (!params.keep_aspect_ratio) {
     pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_NONE;
   } else {
     std::vector<float> rescale_params =
@@ -360,10 +360,10 @@ std::shared_ptr<BaseImage> VpssPreprocessor::resize(
   params.scale[0] = 1;
   params.scale[1] = 1;
   params.scale[2] = 1;
-  params.dstWidth = newWidth;
-  params.dstHeight = newHeight;
-  params.dstImageFormat = image->getImageFormat();
-  params.dstPixDataType = image->getPixDataType();
+  params.dst_width = newWidth;
+  params.dst_height = newHeight;
+  params.dst_image_format = image->getImageFormat();
+  params.dst_pixdata_type = image->getPixDataType();
   return preprocess(image, params, nullptr);
 }
 
@@ -372,21 +372,21 @@ std::shared_ptr<BaseImage> VpssPreprocessor::crop(
     int height) {
   PreprocessParams params;
   memset(&params, 0, sizeof(PreprocessParams));
-  params.cropX = x;
-  params.cropY = y;
-  params.cropWidth = width;
-  params.cropHeight = height;
-  params.dstWidth = width;
-  params.dstHeight = height;
-  params.keepAspectRatio = false;
+  params.crop_x = x;
+  params.crop_y = y;
+  params.crop_width = width;
+  params.crop_height = height;
+  params.dst_width = width;
+  params.dst_height = height;
+  params.keep_aspect_ratio = false;
   params.mean[0] = 0;
   params.mean[1] = 0;
   params.mean[2] = 0;
   params.scale[0] = 1;
   params.scale[1] = 1;
   params.scale[2] = 1;
-  params.dstImageFormat = image->getImageFormat();
-  params.dstPixDataType = image->getPixDataType();
+  params.dst_image_format = image->getImageFormat();
+  params.dst_pixdata_type = image->getPixDataType();
   return preprocess(image, params, nullptr);
 }
 
@@ -444,8 +444,8 @@ int32_t VpssPreprocessor::preprocessToTensor(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     const int batch_idx, std::shared_ptr<BaseTensor> tensor) {
   std::shared_ptr<VPSSImage> vpss_image = std::make_shared<VPSSImage>(
-      params.dstWidth, params.dstHeight, params.dstImageFormat,
-      params.dstPixDataType, false);
+      params.dst_width, params.dst_height, params.dst_image_format,
+      params.dst_pixdata_type, false);
 
   std::vector<uint32_t> strides = vpss_image->getStrides();
   int32_t ret = 0;
@@ -468,11 +468,11 @@ int32_t VpssPreprocessor::preprocessToTensor(
   }
   LOGI(
       "to "
-      "preprocessToImage,scale:%f,%f,%f,mean:%f,%f,%f,dstHeight:%d,dstWidth:%d,"
-      "dstPixDataType:%d,dstStride:%d",
+      "preprocessToImage,scale:%f,%f,%f,mean:%f,%f,%f,dst_height:%d,dst_width:%d,"
+      "dst_pixdata_type:%d,dstStride:%d",
       params.scale[0], params.scale[1], params.scale[2], params.mean[0],
-      params.mean[1], params.mean[2], params.dstHeight, params.dstWidth,
-      (int)params.dstPixDataType, strides[0]);
+      params.mean[1], params.mean[2], params.dst_height, params.dst_width,
+      (int)params.dst_pixdata_type, strides[0]);
 
   ret = preprocessToImage(src_image, params, vpss_image);
   if (ret != 0) {
@@ -505,11 +505,11 @@ void init_vpss_grp_attr(VPSS_GRP_ATTR_S* pstVpssGrpAttr, CVI_U32 srcWidth,
   pstVpssGrpAttr->u8VpssDev = dev;
 #endif
 }
-void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dstWidth,
-                        CVI_U32 dstHeight, PIXEL_FORMAT_E enDstFormat,
-                        CVI_BOOL keepAspectRatio) {
-  pastVpssChnAttr->u32Width = dstWidth;
-  pastVpssChnAttr->u32Height = dstHeight;
+void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dst_width,
+                        CVI_U32 dst_height, PIXEL_FORMAT_E enDstFormat,
+                        CVI_BOOL keep_aspect_ratio) {
+  pastVpssChnAttr->u32Width = dst_width;
+  pastVpssChnAttr->u32Height = dst_height;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
   pastVpssChnAttr->enPixelFormat = enDstFormat;
 
@@ -518,7 +518,7 @@ void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dstWidth,
   pastVpssChnAttr->u32Depth = 1;
   pastVpssChnAttr->bMirror = CVI_FALSE;
   pastVpssChnAttr->bFlip = CVI_FALSE;
-  if (keepAspectRatio) {
+  if (keep_aspect_ratio) {
     pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_AUTO;
     pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);
   } else {

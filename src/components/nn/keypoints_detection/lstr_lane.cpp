@@ -21,8 +21,8 @@ LstrLane::LstrLane() {
   net_param_.pre_params.mean[0] = 1.79226;
   net_param_.pre_params.mean[1] = 1.752097;
   net_param_.pre_params.mean[2] = 1.48022;
-  net_param_.pre_params.keepAspectRatio = false;
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = false;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
 }
 LstrLane::~LstrLane() {}
 

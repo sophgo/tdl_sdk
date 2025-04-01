@@ -11,8 +11,8 @@ SCRFD::SCRFD() {
     net_param_.pre_params.scale[i] = scales[i];
     net_param_.pre_params.mean[i] = means[i] * scales[i];
   }
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = true;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = true;
 }
 SCRFD::~SCRFD() {}
 int32_t SCRFD::onModelOpened() {

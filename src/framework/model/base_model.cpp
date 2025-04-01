@@ -12,8 +12,8 @@ void print_netparam(const NetParam& net_param) {
        net_param.pre_params.scale[0], net_param.pre_params.scale[1],
        net_param.pre_params.scale[2], net_param.pre_params.mean[0],
        net_param.pre_params.mean[1], net_param.pre_params.mean[2],
-       net_param.pre_params.dstImageFormat,
-       net_param.pre_params.keepAspectRatio);
+       net_param.pre_params.dst_image_format,
+       net_param.pre_params.keep_aspect_ratio);
 }
 
 BaseModel::BaseModel() {
@@ -83,8 +83,8 @@ int BaseModel::getDeviceId() const {
 
 int32_t BaseModel::getPreprocessParameters(PreprocessParams &pre_param){
 
-  pre_param.dstImageFormat = net_param_.pre_params.dstImageFormat;
-  pre_param.keepAspectRatio = net_param_.pre_params.keepAspectRatio;
+  pre_param.dst_image_format = net_param_.pre_params.dst_image_format;
+  pre_param.keep_aspect_ratio = net_param_.pre_params.keep_aspect_ratio;
 
   memcpy(pre_param.mean, net_param_.pre_params.mean, sizeof(pre_param.mean));
   memcpy(pre_param.scale, net_param_.pre_params.scale, sizeof(pre_param.scale));
@@ -95,8 +95,8 @@ int32_t BaseModel::getPreprocessParameters(PreprocessParams &pre_param){
 
 int32_t BaseModel::setPreprocessParameters(PreprocessParams &pre_param){
 
-  net_param_.pre_params.dstImageFormat = pre_param.dstImageFormat;
-  net_param_.pre_params.keepAspectRatio = pre_param.keepAspectRatio;
+  net_param_.pre_params.dst_image_format = pre_param.dst_image_format;
+  net_param_.pre_params.keep_aspect_ratio = pre_param.keep_aspect_ratio;
 
   memcpy(net_param_.pre_params.mean, pre_param.mean, sizeof(pre_param.mean));
   memcpy(net_param_.pre_params.scale, pre_param.scale, sizeof(pre_param.scale));
@@ -109,17 +109,17 @@ int32_t BaseModel::setPreprocessParameters(PreprocessParams &pre_param){
       preprocess_params.mean[i] *= tensor_info.qscale;
       preprocess_params.scale[i] *= tensor_info.qscale;
     }
-    preprocess_params.dstHeight = tensor_info.shape[2];
-    preprocess_params.dstWidth = tensor_info.shape[3];
-    preprocess_params.dstPixDataType = tensor_info.data_type;
+    preprocess_params.dst_height = tensor_info.shape[2];
+    preprocess_params.dst_width = tensor_info.shape[3];
+    preprocess_params.dst_pixdata_type = tensor_info.data_type;
     LOGI(
-        "input_name:%s,qscale:%f,mean:%f,%f,%f,scale:%f,%f,%f,dstHeight:%d,"
-        "dstWidth:%d,dstPixDataType:%d",
+        "input_name:%s,qscale:%f,mean:%f,%f,%f,scale:%f,%f,%f,dst_height:%d,"
+        "dst_width:%d,dst_pixdata_type:%d",
         name.c_str(), tensor_info.qscale, preprocess_params.mean[0],
         preprocess_params.mean[1], preprocess_params.mean[2],
         preprocess_params.scale[0], preprocess_params.scale[1],
-        preprocess_params.scale[2], preprocess_params.dstHeight,
-        preprocess_params.dstWidth, (int)preprocess_params.dstPixDataType);
+        preprocess_params.scale[2], preprocess_params.dst_height,
+        preprocess_params.dst_width, (int)preprocess_params.dst_pixdata_type);
 
     preprocess_params_[name] = preprocess_params;
   }
@@ -146,17 +146,17 @@ int32_t BaseModel::setupNetwork(NetParam& net_param) {
       preprocess_params.mean[i] *= tensor_info.qscale;
       preprocess_params.scale[i] *= tensor_info.qscale;
     }
-    preprocess_params.dstHeight = tensor_info.shape[2];
-    preprocess_params.dstWidth = tensor_info.shape[3];
-    preprocess_params.dstPixDataType = tensor_info.data_type;
+    preprocess_params.dst_height = tensor_info.shape[2];
+    preprocess_params.dst_width = tensor_info.shape[3];
+    preprocess_params.dst_pixdata_type = tensor_info.data_type;
     LOGI(
-        "input_name:%s,qscale:%f,mean:%f,%f,%f,scale:%f,%f,%f,dstHeight:%d,"
-        "dstWidth:%d,dstPixDataType:%d",
+        "input_name:%s,qscale:%f,mean:%f,%f,%f,scale:%f,%f,%f,dst_height:%d,"
+        "dst_width:%d,dst_pixdata_type:%d",
         name.c_str(), tensor_info.qscale, preprocess_params.mean[0],
         preprocess_params.mean[1], preprocess_params.mean[2],
         preprocess_params.scale[0], preprocess_params.scale[1],
-        preprocess_params.scale[2], preprocess_params.dstHeight,
-        preprocess_params.dstWidth, (int)preprocess_params.dstPixDataType);
+        preprocess_params.scale[2], preprocess_params.dst_height,
+        preprocess_params.dst_width, (int)preprocess_params.dst_pixdata_type);
 
     preprocess_params_[name] = preprocess_params;
   }
@@ -183,14 +183,14 @@ int32_t BaseModel::inference(
       preprocess_params_[input_layer_name];
   LOGI(
       "BaseModel::inference "
-      "preprocess_params:%f,%f,%f,mean:%f,%f,%f,scale:%f,%f,%f,dstHeight:%d,"
-      "dstWidth:%d,dstPixDataType:%d",
+      "preprocess_params:%f,%f,%f,mean:%f,%f,%f,scale:%f,%f,%f,dst_height:%d,"
+      "dst_width:%d,dst_pixdata_type:%d",
       preprocess_params.scale[0], preprocess_params.scale[1],
       preprocess_params.scale[2], preprocess_params.mean[0],
       preprocess_params.mean[1], preprocess_params.mean[2],
       preprocess_params.scale[0], preprocess_params.scale[1],
-      preprocess_params.scale[2], preprocess_params.dstHeight,
-      preprocess_params.dstWidth, preprocess_params.dstPixDataType);
+      preprocess_params.scale[2], preprocess_params.dst_height,
+      preprocess_params.dst_width, preprocess_params.dst_pixdata_type);
 
   std::shared_ptr<BaseTensor> input_tensor =
       net_->getInputTensor(input_layer_name);

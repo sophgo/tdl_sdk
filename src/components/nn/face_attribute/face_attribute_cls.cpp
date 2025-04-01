@@ -8,8 +8,8 @@ FaceAttribute_CLS::FaceAttribute_CLS() {
     net_param_.pre_params.scale[i] = 0.003922;
     net_param_.pre_params.mean[i] = 0.0;
   }
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = true;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = true;
 }
 
 FaceAttribute_CLS::~FaceAttribute_CLS() {}
@@ -68,15 +68,15 @@ int32_t FaceAttribute_CLS::inference(
   std::string input_layer_name = net_->getInputNames()[0];
   PreprocessParams &preprocess_params = preprocess_params_[input_layer_name];
   std::vector<std::shared_ptr<BaseImage>> batch_images{image};
-  bool keep_aspect_ratio = preprocess_params.keepAspectRatio;
+  bool keep_aspect_ratio = preprocess_params.keep_aspect_ratio;
   for (uint32_t i = 0; i < crop_boxes.size(); i++) {
-    preprocess_params.cropX = (uint32_t)crop_boxes[i].x1;
-    preprocess_params.cropY = (uint32_t)crop_boxes[i].y1;
-    preprocess_params.cropWidth =
+    preprocess_params.crop_x = (uint32_t)crop_boxes[i].x1;
+    preprocess_params.crop_y = (uint32_t)crop_boxes[i].y1;
+    preprocess_params.crop_width =
         (uint32_t)(crop_boxes[i].x2 - crop_boxes[i].x1);
-    preprocess_params.cropHeight =
+    preprocess_params.crop_height =
         (uint32_t)(crop_boxes[i].y2 - crop_boxes[i].y1);
-    preprocess_params.keepAspectRatio = false;
+    preprocess_params.keep_aspect_ratio = false;
 
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_out_datas;
     int ret = BaseModel::inference(batch_images, batch_out_datas);
@@ -87,11 +87,11 @@ int32_t FaceAttribute_CLS::inference(
     out_datas.push_back(batch_out_datas[0]);
 
     // reset preprocess params
-    preprocess_params.cropX = 0;
-    preprocess_params.cropY = 0;
-    preprocess_params.cropWidth = 0;
-    preprocess_params.cropHeight = 0;
-    preprocess_params.keepAspectRatio = keep_aspect_ratio;
+    preprocess_params.crop_x = 0;
+    preprocess_params.crop_y = 0;
+    preprocess_params.crop_width = 0;
+    preprocess_params.crop_height = 0;
+    preprocess_params.keep_aspect_ratio = keep_aspect_ratio;
   }
 
   return 0;

@@ -55,14 +55,14 @@ TEST_F(PreprocessorTestSuite, TestPreprocess) {
   PreprocessParams params;
   memset(&params, 0, sizeof(PreprocessParams));
 
-  params.dstWidth = 320;
-  params.dstHeight = 240;
+  params.dst_width = 320;
+  params.dst_height = 240;
   params.scale[0] = 1;
   params.scale[1] = 1;
   params.scale[2] = 1;
 
-  params.dstImageFormat = ImageFormat::BGR_PLANAR;
-  params.dstPixDataType = TDLDataType::UINT8;
+  params.dst_image_format = ImageFormat::BGR_PLANAR;
+  params.dst_pixdata_type = TDLDataType::UINT8;
 
   auto dstImage = preprocessor_->preprocess(image, params, nullptr);
   EXPECT_NE(dstImage, nullptr);
@@ -83,16 +83,16 @@ TEST_F(PreprocessorTestSuite, TestReadPreprocess) {
     PreprocessParams params;
     memset(&params, 0, sizeof(PreprocessParams));
 
-    params.dstWidth = 320;
-    params.dstHeight = 240;
+    params.dst_width = 320;
+    params.dst_height = 240;
     params.scale[0] = 1;
     params.scale[1] = 1;
     params.scale[2] = 1;
 
     ImageFormat image_format = ImageFormat::RGB_PLANAR;
     TDLDataType pix_data_type = TDLDataType::UINT8;
-    params.dstImageFormat = image_format;
-    params.dstPixDataType = pix_data_type;
+    params.dst_image_format = image_format;
+    params.dst_pixdata_type = pix_data_type;
 
     auto dstImage = preprocessor_->preprocess(image, params, nullptr);
     EXPECT_NE(dstImage, nullptr);

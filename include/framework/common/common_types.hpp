@@ -76,17 +76,17 @@ struct MemoryBlock {
 };
 
 struct PreprocessParams {
-  ImageFormat dstImageFormat;
-  TDLDataType dstPixDataType;
-  int dstWidth;
-  int dstHeight;
-  int cropX;
-  int cropY;
-  int cropWidth;
-  int cropHeight;
+  ImageFormat dst_image_format;
+  TDLDataType dst_pixdata_type;
+  int dst_width;
+  int dst_height;
+  int crop_x;
+  int crop_y;
+  int crop_width;
+  int crop_height;
   float mean[3];
   float scale[3];  // Y=X*scale+mean
-  bool keepAspectRatio;
+  bool keep_aspect_ratio;
 };
 
 enum class MemoryType {

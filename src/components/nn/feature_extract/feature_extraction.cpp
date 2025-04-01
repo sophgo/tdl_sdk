@@ -14,8 +14,8 @@ FeatureExtraction::FeatureExtraction() {
   net_param_.pre_params.scale[0] = 1.0;
   net_param_.pre_params.scale[1] = 1.0;
   net_param_.pre_params.scale[2] = 1.0;
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = false;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = false;
 }
 
 FeatureExtraction::~FeatureExtraction() {}

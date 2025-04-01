@@ -63,8 +63,8 @@ TopformerSeg::TopformerSeg(int down_rato) {
   net_param_.pre_params.mean[1] = 2.035714;
   net_param_.pre_params.mean[2] = 1.804444;
 
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = true;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = true;
 
   oriW = 0;
   oriH = 0;

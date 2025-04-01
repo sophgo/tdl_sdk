@@ -133,14 +133,14 @@ PyImage cropResize(const PyImage& src,
   const std::shared_ptr<BaseImage> src_image = src.getImage();
   PreprocessParams params;
   memset(&params, 0, sizeof(PreprocessParams));
-  params.dstImageFormat = src_image->getImageFormat();
-  params.dstPixDataType = src_image->getPixDataType();
-  params.dstWidth = width;
-  params.dstHeight = height;
-  params.cropX = std::get<0>(roi);
-  params.cropY = std::get<1>(roi);
-  params.cropWidth = std::get<2>(roi);
-  params.cropHeight = std::get<3>(roi);
+  params.dst_image_format = src_image->getImageFormat();
+  params.dst_pixdata_type = src_image->getPixDataType();
+  params.dst_width = width;
+  params.dst_height = height;
+  params.crop_x = std::get<0>(roi);
+  params.crop_y = std::get<1>(roi);
+  params.crop_width = std::get<2>(roi);
+  params.crop_height = std::get<3>(roi);
   std::shared_ptr<BaseImage> dst_image =
       gPreprocessor->preprocess(src_image, params, nullptr);
   if (dst_image == nullptr) {

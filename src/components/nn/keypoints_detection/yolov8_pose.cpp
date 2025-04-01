@@ -42,8 +42,8 @@ YoloV8Pose::YoloV8Pose(std::tuple<int, int, int> pose_tuple) {
     net_param_.pre_params.scale[i] = 0.003922;
     net_param_.pre_params.mean[i] = 0.0;
   }
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = true;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = true;
 
   num_box_channel_ = std::get<0>(pose_tuple);
   num_kpts_channel_ = std::get<1>(pose_tuple) * 3;
@@ -326,8 +326,8 @@ int32_t YoloV8Pose::outputParse(
           bboxs.second[i].landmarks_score.push_back(decode_kpts[j * 3 + 2]);
         }
         DetectionHelper::rescaleBbox(bboxs.second[i], scale_params,
-                                     net_param_.pre_params.cropX,
-                                     net_param_.pre_params.cropY);
+                                     net_param_.pre_params.crop_x,
+                                     net_param_.pre_params.crop_y);
         // ss << "bbox:[" << obj_seg->box_seg[i].x1 << "," << obj_seg->box_seg[i].y1 << "," <<obj_seg->box_seg[i].x2 << "," << obj_seg->box_seg[i].y2
         //    << "],score:" << obj_seg->box_seg[i].score << ",label:" << obj_seg->box_seg[i].class_id << "\n";
         obj->box_landmarks.push_back(bboxs.second[i]);

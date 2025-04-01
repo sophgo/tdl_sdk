@@ -23,8 +23,8 @@ HandKeypoint::HandKeypoint() {
   net_param_.pre_params.mean[0] = R_MEAN;
   net_param_.pre_params.mean[1] = G_MEAN;
   net_param_.pre_params.mean[2] = B_MEAN;
-  net_param_.pre_params.keepAspectRatio = false;
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = false;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
 }
 
 HandKeypoint::~HandKeypoint() {}
@@ -48,10 +48,10 @@ int32_t HandKeypoint::inference(
     float expansion_factor = 1.25f;
     int new_width = static_cast<int>(width * expansion_factor);
     int new_height = static_cast<int>(height * expansion_factor);
-    int cropX = (int)crop_boxes[i].x1 - (new_width - width) / 2;
-    int cropY = (int)crop_boxes[i].y1 - (new_height - height) / 2;
+    int crop_x = (int)crop_boxes[i].x1 - (new_width - width) / 2;
+    int crop_y = (int)crop_boxes[i].y1 - (new_height - height) / 2;
     std::shared_ptr<BaseImage> human_crop = preprocessor_->crop(
-      image, cropX, cropY, new_width, new_height);
+      image, crop_x, crop_y, new_width, new_height);
     batch_images.clear();
     batch_images.push_back(human_crop);
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_out_datas;

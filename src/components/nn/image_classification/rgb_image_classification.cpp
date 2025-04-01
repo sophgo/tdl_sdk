@@ -39,21 +39,6 @@ void parse_output(T *ptr_out, const int num_cls, float qscale,
     cls_meta->topk_class_ids.push_back(topKIndex[i]);
     cls_meta->topk_scores.push_back(scores[topKIndex[i]]);
   }
-
-  float max_score = *std::max_element(cls_meta->topk_scores.begin(),
-                                      cls_meta->topk_scores.end());
-  float sum = 0.0f;
-  std::vector<float> softmax_scores;
-  softmax_scores.reserve(cls_meta->topk_scores.size());
-
-  for (const auto &score : cls_meta->topk_scores) {
-    float exp_score = std::exp(score - max_score);
-    softmax_scores.push_back(exp_score);
-    sum += exp_score;
-  }
-  for (size_t i = 0; i < softmax_scores.size(); ++i) {
-    cls_meta->topk_scores[i] = softmax_scores[i] / sum;
-  }
 }
 
 RgbImageClassification::RgbImageClassification() : BaseModel() {
@@ -65,9 +50,9 @@ RgbImageClassification::RgbImageClassification() : BaseModel() {
     net_param_.pre_params.scale[i] = 1.0 / std[i];
   }
 
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
 
-  net_param_.pre_params.keepAspectRatio = true;
+  net_param_.pre_params.keep_aspect_ratio = true;
 }
 
 int RgbImageClassification::onModelOpened() {

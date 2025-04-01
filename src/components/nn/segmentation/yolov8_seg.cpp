@@ -43,8 +43,8 @@ YoloV8Segmentation::YoloV8Segmentation(std::tuple<int, int, int> yolov8_tuple) {
     net_param_.pre_params.scale[i] = 0.003922;
     net_param_.pre_params.mean[i] = 0.0;
   }
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = true;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = true;
 
   num_box_channel_ = std::get<0>(yolov8_tuple);
   num_mask_channel_ = std::get<1>(yolov8_tuple);
@@ -406,8 +406,8 @@ int32_t YoloV8Segmentation::outputParse(
         }
       }
       DetectionHelper::rescaleBbox(obj_seg->box_seg[i], scale_params,
-                                     net_param_.pre_params.cropX,
-                                     net_param_.pre_params.cropY);
+                                     net_param_.pre_params.crop_x,
+                                     net_param_.pre_params.crop_y);
       ss << "bbox:[" << obj_seg->box_seg[i].x1 << "," << obj_seg->box_seg[i].y1 << "," <<obj_seg->box_seg[i].x2 << "," << obj_seg->box_seg[i].y2
            << "],score:" << obj_seg->box_seg[i].score << ",label:" << obj_seg->box_seg[i].class_id << "\n";
     }

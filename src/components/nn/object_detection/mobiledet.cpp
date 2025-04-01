@@ -111,7 +111,7 @@ MobileDetV2Detection::MobileDetV2Detection(
   net_param_.pre_params.mean[1] = static_cast<float>(MEAN_G);
   net_param_.pre_params.mean[2] = static_cast<float>(MEAN_B);
 
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
   //   preprocess_params_[0].rescale_type = RESCALE_RB;
   // #ifndef __CV186X__
   //   preprocess_params_[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
@@ -246,8 +246,8 @@ int32_t MobileDetV2Detection::outputParse(
       num_obj += bbox.second.size();
       for (auto &b : bbox.second) {
         DetectionHelper::rescaleBbox(b, scale_params,
-                                     net_param_.pre_params.cropX,
-                                     net_param_.pre_params.cropY);
+                                     net_param_.pre_params.crop_x,
+                                     net_param_.pre_params.crop_y);
         if (type_mapping_.count(b.class_id)) {
           LOGI("class_id: %d, object_type: %d\n", b.class_id,
                type_mapping_[b.class_id]);

@@ -19,7 +19,7 @@ SimccPose::SimccPose() {
     net_param_.pre_params.scale[i] = 1.0 / STD_RGB[i];
     net_param_.pre_params.mean[i] = MODEL_MEAN_RGB[i] / STD_RGB[i];
   }
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
 }
 
 
@@ -41,10 +41,10 @@ int32_t SimccPose::inference(
   for (uint32_t i = 0; i < crop_boxes.size(); i++) {
     int width = (int)crop_boxes[i].x2 - (int)crop_boxes[i].x1;
     int height = (int)crop_boxes[i].y2 - (int)crop_boxes[i].y1;
-    int cropX = (int)crop_boxes[i].x1;
-    int cropY = (int)crop_boxes[i].y1;
+    int crop_x = (int)crop_boxes[i].x1;
+    int crop_y = (int)crop_boxes[i].y1;
     std::shared_ptr<BaseImage> human_crop = preprocessor_->crop(
-      image, cropX, cropY, width, height);
+      image, crop_x, crop_y, width, height);
     batch_images.clear();
     batch_images.push_back(human_crop);
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_out_datas;

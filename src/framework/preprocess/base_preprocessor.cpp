@@ -15,18 +15,18 @@ std::vector<float> BasePreprocessor::getRescaleConfig(
   float src_h = image_height;
 
   // TODO:check whether need to support crop
-  if (params.cropWidth != 0 && params.cropHeight != 0) {
-    src_w = params.cropWidth;
-    src_h = params.cropHeight;
+  if (params.crop_width != 0 && params.crop_height != 0) {
+    src_w = params.crop_width;
+    src_h = params.crop_height;
   }
-  float scale_x = params.dstWidth / src_w;
-  float scale_y = params.dstHeight / src_h;
-  if (params.keepAspectRatio) {
+  float scale_x = params.dst_width / src_w;
+  float scale_y = params.dst_height / src_h;
+  if (params.keep_aspect_ratio) {
     float ratio = std::min(scale_x, scale_y);
     rescale_params.push_back(ratio);
     rescale_params.push_back(ratio);
-    int offset_x = (params.dstWidth - src_w * ratio) / 2;
-    int offset_y = (params.dstHeight - src_h * ratio) / 2;
+    int offset_x = (params.dst_width - src_w * ratio) / 2;
+    int offset_y = (params.dst_height - src_h * ratio) / 2;
     rescale_params.push_back(offset_x);
     rescale_params.push_back(offset_y);
   } else {

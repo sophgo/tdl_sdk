@@ -50,8 +50,8 @@ FaceLandmarkerDet2::FaceLandmarkerDet2() {
     net_param_.pre_params.scale[i] = scales[i];
     net_param_.pre_params.mean[i] = means[i];
   }
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = false;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = false;
 
   //   preprocess_params_[0].rescale_type = RESCALE_NOASPECT;
 }

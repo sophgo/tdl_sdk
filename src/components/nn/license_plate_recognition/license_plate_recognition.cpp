@@ -26,8 +26,8 @@ LicensePlateRecognition::LicensePlateRecognition(){
     net_param_.pre_params.mean[i] = MEAN;
   }
 
-  net_param_.pre_params.dstImageFormat = ImageFormat::BGR_PLANAR;
-  net_param_.pre_params.keepAspectRatio = false;
+  net_param_.pre_params.dst_image_format = ImageFormat::BGR_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = false;
 }
 
 std::string LicensePlateRecognition::greedy_decode(float *prebs) {

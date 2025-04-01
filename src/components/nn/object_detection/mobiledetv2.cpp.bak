@@ -19,7 +19,7 @@ MobileDetV2::MobileDetV2(int num_classes) {
   net_param_.pre_params.mean[1] = MODEL_MEAN_G / STD_G;
   net_param_.pre_params.mean[2] = MODEL_MEAN_B / STD_B;
   net_param_.pre_params.dst_img_format = IMAGE_FORMAT_RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = true;
+  net_param_.pre_params.keep_aspect_ratio = true;
 }
 
 MobileDetV2::~MobileDetV2() {

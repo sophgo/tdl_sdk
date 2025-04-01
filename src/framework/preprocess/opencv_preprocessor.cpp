@@ -42,20 +42,20 @@ OpenCVPreprocessor::OpenCVPreprocessor() {}
 std::shared_ptr<BaseImage> OpenCVPreprocessor::resize(
     const std::shared_ptr<BaseImage>& image, int newWidth, int newHeight) {
   PreprocessParams params;
-  params.dstWidth = newWidth;
-  params.dstHeight = newHeight;
-  params.dstImageFormat = image->getImageFormat();
-  params.dstPixDataType = image->getPixDataType();
+  params.dst_width = newWidth;
+  params.dst_height = newHeight;
+  params.dst_image_format = image->getImageFormat();
+  params.dst_pixdata_type = image->getPixDataType();
 
   for (int i = 0; i < 3; i++) {
     params.mean[i] = 0;
     params.scale[i] = 1;
   }
-  params.cropX = 0;
-  params.cropY = 0;
-  params.cropWidth = 0;
-  params.cropHeight = 0;
-  params.keepAspectRatio = false;
+  params.crop_x = 0;
+  params.crop_y = 0;
+  params.crop_width = 0;
+  params.crop_height = 0;
+  params.keep_aspect_ratio = false;
   return preprocess(image, params, nullptr);
 }
 
@@ -63,20 +63,20 @@ std::shared_ptr<BaseImage> OpenCVPreprocessor::crop(
     const std::shared_ptr<BaseImage>& image, int x, int y, int width,
     int height) {
   PreprocessParams params;
-  params.dstWidth = width;
-  params.dstHeight = height;
-  params.dstImageFormat = image->getImageFormat();
-  params.dstPixDataType = image->getPixDataType();
+  params.dst_width = width;
+  params.dst_height = height;
+  params.dst_image_format = image->getImageFormat();
+  params.dst_pixdata_type = image->getPixDataType();
 
   for (int i = 0; i < 3; i++) {
     params.mean[i] = 0;
     params.scale[i] = 1;
   }
-  params.cropX = x;
-  params.cropY = y;
-  params.cropWidth = width;
-  params.cropHeight = height;
-  params.keepAspectRatio = false;
+  params.crop_x = x;
+  params.crop_y = y;
+  params.crop_width = width;
+  params.crop_height = height;
+  params.keep_aspect_ratio = false;
   return preprocess(image, params, nullptr);
 }
 
@@ -93,8 +93,8 @@ std::shared_ptr<BaseImage> OpenCVPreprocessor::preprocess(
   }
 
   std::shared_ptr<OpenCVImage> opencv_image = std::make_shared<OpenCVImage>(
-      params.dstWidth, params.dstHeight, params.dstImageFormat,
-      params.dstPixDataType, false, memory_pool);
+      params.dst_width, params.dst_height, params.dst_image_format,
+      params.dst_pixdata_type, false, memory_pool);
   std::unique_ptr<MemoryBlock> memory_block;
 
   memory_block = memory_pool->allocate(opencv_image->getImageByteSize());
@@ -133,13 +133,13 @@ int32_t OpenCVPreprocessor::preprocessToImage(
       getRescaleConfig(params, src_image->getWidth(), src_image->getHeight());
   int pad_x = rescale_params[2];
   int pad_y = rescale_params[3];
-  int resized_w = params.dstWidth - pad_x * 2;
-  int resized_h = params.dstHeight - pad_y * 2;
+  int resized_w = params.dst_width - pad_x * 2;
+  int resized_h = params.dst_height - pad_y * 2;
   if (src_image->getPlaneNum() == 1 && dst_image->getPlaneNum() == 3) {
     // create temp resized image
     // TODO:use memory pool
 
-    cv::Mat tmp_resized = cv::Mat::zeros(params.dstHeight, params.dstWidth,
+    cv::Mat tmp_resized = cv::Mat::zeros(params.dst_height, params.dst_width,
                                          src_image->getInternalType());
     LOGI("temp_resized type:%d,src_image type:%d", tmp_resized.type(),
          src_image->getInternalType());
@@ -149,7 +149,7 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     print_mat(src_mat, "src_mat");
 
     // int flags = cv::INTER_LINEAR;
-    // if (params.keepAspectRatio) {
+    // if (params.keep_aspect_ratio) {
     //   flags = cv::INTER_AREA;  // TODO: when using ROI, only INTER_AREA is
     //                            // supported,this is a bug of bmopencv
     //   cv::resize(src_mat, tmp_resized(roi), cv::Size(resized_w, resized_h),
@@ -202,16 +202,16 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     cv::Mat* dsti = (cv::Mat*)dst_image->getInternalData();
     cv::Mat* srci = (cv::Mat*)src_image->getInternalData();
 
-    cv::Rect crop_roi(params.cropX, params.cropY, params.cropWidth,
-                      params.cropHeight);
+    cv::Rect crop_roi(params.crop_x, params.crop_y, params.crop_width,
+                      params.crop_height);
     for (int i = 0; i < src_image->getPlaneNum(); i++) {
-      if (params.cropWidth != 0 && params.cropHeight != 0) {
+      if (params.crop_width != 0 && params.crop_height != 0) {
         cv::resize(srci[i](crop_roi), dsti[i],
-                   cv::Size(params.dstWidth, params.dstHeight), 0, 0,
+                   cv::Size(params.dst_width, params.dst_height), 0, 0,
                    cv::INTER_NEAREST);
       } else {
         cv::resize(srci[i], dsti[i],
-                   cv::Size(params.dstWidth, params.dstHeight), 0, 0,
+                   cv::Size(params.dst_width, params.dst_height), 0, 0,
                    cv::INTER_NEAREST);
       }
     }
@@ -230,11 +230,11 @@ int32_t OpenCVPreprocessor::preprocessToImage(
 int32_t OpenCVPreprocessor::preprocessToTensor(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     const int batch_idx, std::shared_ptr<BaseTensor> tensor) {
-  LOGI("params.dstImageFormat: %d,params.dstPixDataType: %d",
-       (int)params.dstImageFormat, (int)params.dstPixDataType);
+  LOGI("params.dst_image_format: %d,params.dst_pixdata_type: %d",
+       (int)params.dst_image_format, (int)params.dst_pixdata_type);
   std::shared_ptr<OpenCVImage> src_image_ptr = std::make_shared<OpenCVImage>(
-      params.dstWidth, params.dstHeight, params.dstImageFormat,
-      params.dstPixDataType, false);
+      params.dst_width, params.dst_height, params.dst_image_format,
+      params.dst_pixdata_type, false);
   MemoryBlock* M = tensor->getMemoryBlock();
   memset(M->virtualAddress, 0, M->size);
   tensor->constructImage(src_image_ptr, batch_idx);

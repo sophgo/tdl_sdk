@@ -30,8 +30,8 @@ YoloV6Detection::YoloV6Detection(std::pair<int, int> yolov6_pair) {
     net_param_.pre_params.scale[i] = 0.003922;
     net_param_.pre_params.mean[i] = 0.0;
   }
-  net_param_.pre_params.dstImageFormat = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keepAspectRatio = true;
+  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.pre_params.keep_aspect_ratio = true;
 
   num_box_channel_ = yolov6_pair.first;
   num_cls_ = yolov6_pair.second;
@@ -248,8 +248,8 @@ int32_t YoloV6Detection::outputParse(
       num_obj += bbox.second.size();
       for (auto &b : bbox.second) {
         DetectionHelper::rescaleBbox(b, scale_params,
-                                     net_param_.pre_params.cropX,
-                                     net_param_.pre_params.cropY);
+                                     net_param_.pre_params.crop_x,
+                                     net_param_.pre_params.crop_y);
         if (type_mapping_.count(b.class_id)) {
           b.object_type = type_mapping_[b.class_id];
         }
