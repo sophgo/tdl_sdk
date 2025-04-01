@@ -16,7 +16,9 @@ const std::unordered_map<std::string, ModelType> model_type_map = {
     {"YOLOV8N_DET_LICENSE_PLATE", ModelType::YOLOV8N_DET_LICENSE_PLATE},
     {"YOLOV8N_DET_TRAFFIC_LIGHT", ModelType::YOLOV8N_DET_TRAFFIC_LIGHT},
     {"YOLOV8N_DET_MONITOR_PERSON", ModelType::YOLOV8N_DET_MONITOR_PERSON},
-
+    {"CLS_RGBLIVENESS", ModelType::CLS_RGBLIVENESS},
+    {"CLS_SOUND_BABAY_CRY", ModelType::CLS_SOUND_BABAY_CRY},
+    {"CLS_SOUND_COMMAND", ModelType::CLS_SOUND_COMMAND},
     // keypoint models
     //  {"KEYPOINT_HAND", ModelType::KEYPOINT_HAND},
 

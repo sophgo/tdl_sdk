@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "tdl_model_factory.hpp"
+#include "utils/common_utils.hpp"
 namespace fs = std::experimental::filesystem;
 
 void constructModelIdMapping(
@@ -34,6 +35,9 @@ void constructModelIdMapping(
   model_id_mapping["YOLOV8N_DET_MONITOR_PERSON"] =
       ModelType::YOLOV8N_DET_MONITOR_PERSON;
   model_id_mapping["SCRFD_DET_FACE"] = ModelType::SCRFD_DET_FACE;
+  model_id_mapping["CLS_RGBLIVENESS"] = ModelType::CLS_RGBLIVENESS;
+  model_id_mapping["CLS_SOUND_BABAY_CRY"] = ModelType::CLS_SOUND_BABAY_CRY;
+  model_id_mapping["CLS_SOUND_COMMAND"] = ModelType::CLS_SOUND_COMMAND;
 }
 
 void saveDetectionResults(std::string &dst_root, std::string &img_name,
@@ -56,8 +60,7 @@ void saveDetectionResults(std::string &dst_root, std::string &img_name,
       outfile << bbox.class_id << " " << std::fixed << std::setprecision(2)
               << bbox.score << std::endl;
     }
-  } else if (out_data->getType() ==
-             ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+  } else {
     std::shared_ptr<ModelBoxLandmarkInfo> obj_meta =
         std::static_pointer_cast<ModelBoxLandmarkInfo>(out_data);
     for (const auto &box_landmark : obj_meta->box_landmarks) {
@@ -65,12 +68,62 @@ void saveDetectionResults(std::string &dst_root, std::string &img_name,
               << box_landmark.y1 << " " << box_landmark.x2 << " "
               << box_landmark.y2 << " " << box_landmark.score << std::endl;
     }
-  } else {
-    std::cout << "out_data->getType() is not supported ";
   }
   outfile.close();
   std::cout << "write file " << txt_name << " done" << std::endl;
 }
+
+void saveClassificationResults(
+    std::string &dst_root, std::string &img_name,
+    const std::shared_ptr<ModelOutputInfo> &out_data) {
+  if (!fs::exists(dst_root)) {
+    fs::create_directories(dst_root);
+  }
+  if (dst_root.back() != '/') {
+    dst_root += '/';
+  }
+  std::string txt_name = dst_root + img_name + ".txt";
+  std::ofstream outfile(txt_name);
+  std::shared_ptr<ModelClassificationInfo> cls_meta =
+      std::static_pointer_cast<ModelClassificationInfo>(out_data);
+  outfile << cls_meta->topk_class_ids[0] << " " << std::fixed
+          << std::setprecision(2) << cls_meta->topk_scores[0] << std::endl;
+
+  outfile.close();
+  std::cout << "write file " << txt_name << " done" << std::endl;
+}
+
+std::vector<std::shared_ptr<BaseImage>> getInputDatas(std::string &image_path,
+                                                      ModelType model_id) {
+  std::vector<std::shared_ptr<BaseImage>> input_datas;
+  if (image_path.size() >= 4 &&
+      image_path.substr(image_path.size() - 4) != ".bin") {
+    std::shared_ptr<BaseImage> image = ImageFactory::readImage(image_path);
+    input_datas = {image};
+  } else {
+    int frame_size = 0;
+    if (model_id == ModelType::CLS_SOUND_BABAY_CRY) {
+      frame_size = 96000;
+    } else if (model_id == ModelType::CLS_SOUND_COMMAND) {
+      frame_size = 32000;
+    } else {
+      std::cout << "model_id not supported" << std::endl;
+    }
+    unsigned char buffer[frame_size];
+    if (!read_binary_file(image_path, buffer, frame_size)) {
+      std::cout << frame_size << std::endl;
+      printf("read file failed\n");
+      throw std::runtime_error("Failed to read binary file: " + image_path);
+    }
+    std::shared_ptr<BaseImage> bin_data = ImageFactory::createImage(
+        frame_size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
+
+    uint8_t *data_buffer = bin_data->getVirtualAddress()[0];
+    memcpy(data_buffer, buffer, frame_size * sizeof(uint8_t));
+    input_datas = {bin_data};
+  }
+  return input_datas;
+};
 
 int main(int argc, char **argv) {
   std::string model_id_name = argv[1];
@@ -104,12 +157,22 @@ int main(int argc, char **argv) {
 
   for (const auto &entry : fs::directory_iterator(image_dir)) {
     std::string image_path = entry.path().string();
-    std::shared_ptr<BaseImage> image = ImageFactory::readImage(image_path);
+    std::vector<std::shared_ptr<BaseImage>> input_datas;
+    input_datas = getInputDatas(image_path, model_id);
+
     std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
-    std::vector<std::shared_ptr<BaseImage>> input_images = {image};
-    model->inference(input_images, out_datas);
+    model->inference(input_datas, out_datas);
+
     std::string img_name = fs::path(image_path).stem().string();
-    saveDetectionResults(dst_root, img_name, out_datas[0]);
+    ModelOutputType out_type = out_datas[0]->getType();
+    if (out_type == ModelOutputType::OBJECT_DETECTION ||
+        out_type == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+      saveDetectionResults(dst_root, img_name, out_datas[0]);
+    } else if (out_type == ModelOutputType::CLASSIFICATION) {
+      saveClassificationResults(dst_root, img_name, out_datas[0]);
+    } else {
+      std::cout << "out_data->getType() is not supported ";
+    }
   }
   return 0;
 }

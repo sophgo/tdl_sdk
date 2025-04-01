@@ -35,7 +35,7 @@ enum class ModelType {
 
   // image classification models
   CLS_MASK,         // 0:mask,1:no mask
-  CLS_RGBLIVENESS,  // 0:live,1:fake
+  CLS_RGBLIVENESS,  // 0:fake,1:live
   CLS_ISP_SCENE,
   CLS_HAND_GESTURE,  // 0:fist,1:five,2:none,3:two
   CLS_KEYPOINT_HAND_GESTURE,  // 0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two

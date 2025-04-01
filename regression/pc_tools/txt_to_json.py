@@ -42,7 +42,7 @@ def save_json(data, json_path, json_status):
         print(f"JSON数据已成功更新到 {json_path}\n")
 
 
-def process_detection_txt_files(txt_dir, image_dir=None, model_id=None):
+def process_detection_txt_files(txt_dir, image_dir=None):
     annotations = {}
     txt_path = Path(txt_dir)
 
@@ -78,6 +78,35 @@ def process_detection_txt_files(txt_dir, image_dir=None, model_id=None):
     return annotations
 
 
+def process_classification_txt_files(txt_dir, image_dir=None):
+    annotations = {}
+    txt_path = Path(txt_dir)
+
+    txt_files = list(txt_path.glob("*.txt"))
+    if not txt_files:
+        print(f"在目录 {txt_dir} 中未找到任何TXT文件\n")
+        return annotations
+
+    for txt_file in txt_files:
+        filename = txt_file.stem
+        img_file = list(Path(image_dir).glob(f"{filename}.*"))[0].name
+        img_file = str(img_file)
+
+        with open(txt_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        annotation_list = []
+        for line in lines:
+            parts = line.strip().split()
+            class_id, score = map(float, parts[:2])
+            annotation = {
+                "score": score,
+                "class_id": int(class_id),
+            }
+            annotation_list.append(annotation)
+        annotations[img_file] = annotation_list
+    return annotations
+
+
 def process_keypoint_txt_files(txt_dir, image_dir=None):
     annotations = {}
     txt_path = Path(txt_dir)
@@ -107,13 +136,16 @@ def process_keypoint_txt_files(txt_dir, image_dir=None):
     return annotations
 
 
-def update_json(data, args, annotations, json_status):
+def update_json(data, args, annotations, json_status, task):
     if json_status == "new":
         if args.model_id == "" or args.model_name == "":
             raise ValueError("json数据首次建立，model_id, model_name不能为空")
+    if task == "detection":
+        data["bbox_threshold"] = args.bbox_threshold
+    if args.model_id:
         data["model_id"] = args.model_id
+    if args.model_name:
         data["model_name"] = args.model_name
-    data["bbox_threshold"] = args.bbox_threshold
     data["score_threshold"] = args.score_threshold
     img_dir = Path(args.image_dir).resolve()
     data["image_dir"] = img_dir.name
@@ -126,15 +158,9 @@ def main():
     data, json_status = load_json(args.json_path)
 
     if args.task == "detection":
-        if json_status == "new":
-            model_id = args.model_id
-            if model_id == "":
-                raise ValueError("json数据首次建立，model_id, model_name不能为空")
-        else:
-            model_id = data["model_id"]
-        annotations = process_detection_txt_files(
-            args.txt_dir, args.image_dir, model_id
-        )
+        annotations = process_detection_txt_files(args.txt_dir, args.image_dir)
+    elif args.task == "classification":
+        annotations = process_classification_txt_files(args.txt_dir, args.image_dir)
     elif args.task == "keypoint":
         annotations = process_keypoint_txt_files(args.txt_dir, args.image_dir)
     else:
@@ -145,7 +171,7 @@ def main():
         print("未找到任何注释信息可供添加或更新\n")
         return
 
-    updated_data = update_json(data, args, annotations, json_status)
+    updated_data = update_json(data, args, annotations, json_status, args.task)
 
     save_json(updated_data, args.json_path, json_status)
 

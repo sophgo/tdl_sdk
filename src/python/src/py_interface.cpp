@@ -97,7 +97,7 @@ PYBIND11_MODULE(tdl, m) {
 
       // image classification models
       .value("CLS_MASK", ModelType::CLS_MASK)         // 0:mask,1:no mask
-      .value("CLS_RGBLIVENESS", ModelType::CLS_RGBLIVENESS)  // 0:live,1:fake
+      .value("CLS_RGBLIVENESS", ModelType::CLS_RGBLIVENESS)  // 0:fake,1:live
       .value("CLS_ISP_SCENE", ModelType::CLS_ISP_SCENE)
       .value("CLS_HAND_GESTURE", ModelType::CLS_HAND_GESTURE)  // 0:fist,1:five,2:none,3:two
       .value("CLS_KEYPOINT_HAND_GESTURE", ModelType::CLS_KEYPOINT_HAND_GESTURE)  // 0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two

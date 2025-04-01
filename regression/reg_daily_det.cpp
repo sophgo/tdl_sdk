@@ -1,35 +1,21 @@
 #include <gtest.h>
-#include <unordered_map>
-#include <string>
 #include <fstream>
 #include <string>
 #include <unordered_map>
 
-#include "cvi_tdl_test.hpp"
-#include "json.hpp"
-#include "tdl_model_factory.hpp"
-#include "tdl_model_defs.hpp"
 #include "cvi_tdl_model_id.hpp"
-#include "tdl_log.hpp"
+#include "cvi_tdl_test.hpp"
 #include "image/opencv_image.hpp"
+#include "json.hpp"
 #include "preprocess/opencv_preprocessor.hpp"
 #include "regression_utils.hpp"
-
+#include "tdl_log.hpp"
+#include "tdl_model_defs.hpp"
+#include "tdl_model_factory.hpp"
 
 namespace fs = std::experimental::filesystem;
 namespace cvitdl {
 namespace unitest {
-
-
-ModelType stringToModelType(const std::string &model_type_str) {
-  auto it = model_type_map.find(model_type_str);
-  if (it != model_type_map.end()) {
-      return it->second;
-  } else {
-      throw std::invalid_argument("Invalid model type: " + model_type_str);
-  }
-}
-
 
 class DetectionTestSuite : public CVI_TDLModelTestSuite {
  public:
@@ -40,33 +26,36 @@ class DetectionTestSuite : public CVI_TDLModelTestSuite {
   std::string m_model_path;
   std::shared_ptr<BaseModel> det_;
   TDLModelFactory model_factory_;
+
  protected:
   virtual void SetUp() {
     std::string model_name = std::string(m_json_object["model_name"]);
-    std::string model_path = (m_model_dir / fs::path(model_name + gen_model_suffix())).string();
+    std::string model_path =
+        (m_model_dir / fs::path(model_name + gen_model_suffix())).string();
     std::string model_id = std::string(m_json_object["model_id"]);
     ModelType model_type = stringToModelType(model_id);
     det_ = model_factory_.getModel(model_type, model_path);
     ASSERT_NE(det_, nullptr);
-
   }
-   
+
   virtual void TearDown() {}
 };
 
 TEST_F(DetectionTestSuite, accuracy) {
   const float bbox_threshold = m_json_object["bbox_threshold"];
   const float score_threshold = m_json_object["score_threshold"];
-  
+
   std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
   auto results = m_json_object[gen_platform()];
 
-
-  for (nlohmann::json::iterator iter = results.begin(); iter != results.end(); iter++) {
-    std::string image_path =(m_image_dir / m_json_object["image_dir"] / iter.key()).string();
+  for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
+       iter++) {
+    std::string image_path =
+        (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
     printf("image_path: %s\n", image_path.c_str());
 
-    std::shared_ptr<BaseImage> frame = ImageFactory::readImage(image_path, true);
+    std::shared_ptr<BaseImage> frame =
+        ImageFactory::readImage(image_path, true);
 
     ASSERT_NE(frame, nullptr);
     std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
@@ -74,13 +63,12 @@ TEST_F(DetectionTestSuite, accuracy) {
     input_images.push_back(frame);
     EXPECT_EQ(det_->inference(input_images, out_data), 0);
     EXPECT_EQ(out_data.size(), 1);
-    EXPECT_EQ(out_data[0]->getType(),
-                ModelOutputType::OBJECT_DETECTION);
+    EXPECT_EQ(out_data[0]->getType(), ModelOutputType::OBJECT_DETECTION);
 
     std::shared_ptr<ModelBoxInfo> obj_meta =
-                std::static_pointer_cast<ModelBoxInfo>(out_data[0]);
+        std::static_pointer_cast<ModelBoxInfo>(out_data[0]);
 
-    auto expected_dets = iter.value();  
+    auto expected_dets = iter.value();
     std::vector<std::vector<float>> gt_dets;
     for (const auto &det : expected_dets) {
       gt_dets.push_back({det["bbox"][0], det["bbox"][1], det["bbox"][2],
@@ -91,20 +79,15 @@ TEST_F(DetectionTestSuite, accuracy) {
     std::vector<std::string> pred_classes;
     for (uint32_t det_index = 0; det_index < obj_meta->bboxes.size();
          det_index++) {
-
-      pred_dets.push_back({obj_meta->bboxes[det_index].x1,
-                           obj_meta->bboxes[det_index].y1,
-                           obj_meta->bboxes[det_index].x2,
-                           obj_meta->bboxes[det_index].y2,
-                           obj_meta->bboxes[det_index].score,
-                           float(obj_meta->bboxes[det_index].class_id)});
+      pred_dets.push_back(
+          {obj_meta->bboxes[det_index].x1, obj_meta->bboxes[det_index].y1,
+           obj_meta->bboxes[det_index].x2, obj_meta->bboxes[det_index].y2,
+           obj_meta->bboxes[det_index].score,
+           float(obj_meta->bboxes[det_index].class_id)});
     }
     EXPECT_TRUE(
-      matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
-    
+        matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
   }
-
-
 }
 
 }  // namespace unitest

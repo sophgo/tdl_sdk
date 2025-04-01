@@ -1,10 +1,10 @@
 #pragma once
 #include <experimental/filesystem>
 #include <string>
-
 #include "gtest.h"
+#include "image/base_image.hpp"
 #include "json.hpp"
-
+#include "tdl_model_defs.hpp"
 namespace cvitdl {
 namespace unitest {
 
@@ -64,8 +64,11 @@ class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
                     const float iout_thresh, const float score_thresh);
 
   bool matchScore(const std::vector<std::vector<float>> &gt_info,
-                    const std::vector<std::vector<float>> &pred_info,
-                    const float score_thresh);
+                  const std::vector<std::vector<float>> &pred_info,
+                  const float score_thresh);
+  ModelType stringToModelType(const std::string &model_type_str);
+  std::shared_ptr<BaseImage> getInputData(std::string &image_path,
+                                          ModelType model_id);
 
  protected:
   nlohmann::json m_json_object;

@@ -1,9 +1,9 @@
 #include "cvi_tdl_test.hpp"
-
 #include <inttypes.h>
-
 #include <fstream>
-
+#include "cvi_tdl_model_id.hpp"
+#include "tdl_model_defs.hpp"
+#include "utils/common_utils.hpp"
 // #include "core/utils/vpss_helper.h"
 
 namespace fs = std::experimental::filesystem;
@@ -110,8 +110,8 @@ CVI_TDLModelTestSuite::CVI_TDLModelTestSuite(
     std::cout << "m_json_object: " << m_json_object << std::endl;
   }
   if (m_json_object.contains("image_dir")) {
-    m_image_dir =
-        context.getImageBaseDir() / fs::path(m_json_object["image_dir"]);
+    m_image_dir = context.getImageBaseDir() /
+                  fs::path(m_json_object["image_dir"].get<std::string>());
   } else {
     m_image_dir = context.getImageBaseDir() / fs::path(image_dir_name);
   }
@@ -253,6 +253,42 @@ bool CVI_TDLModelTestSuite::matchScore(
     }
   }
   return true;
+};
+
+ModelType CVI_TDLModelTestSuite::stringToModelType(
+    const std::string &model_type_str) {
+  auto it = model_type_map.find(model_type_str);
+  if (it != model_type_map.end()) {
+    return it->second;
+  } else {
+    throw std::invalid_argument("Invalid model type: " + model_type_str);
+  }
+}
+
+std::shared_ptr<BaseImage> CVI_TDLModelTestSuite::getInputData(
+    std::string &image_path, ModelType model_id) {
+  std::shared_ptr<BaseImage> frame;
+  if (image_path.size() >= 4 &&
+      image_path.substr(image_path.size() - 4) != ".bin") {
+    frame = ImageFactory::readImage(image_path, true);
+  } else {
+    int frame_size = 0;
+    if (model_id == ModelType::CLS_SOUND_BABAY_CRY) {
+      frame_size = 96000;
+    } else if (model_id == ModelType::CLS_SOUND_COMMAND) {
+      frame_size = 32000;
+    } else {
+      std::cout << "model_id not supported" << std::endl;
+    }
+    unsigned char buffer[frame_size];
+    read_binary_file(image_path, buffer, frame_size);
+    frame = ImageFactory::createImage(frame_size, 1, ImageFormat::GRAY,
+                                      TDLDataType::UINT8, true);
+
+    uint8_t *data_buffer = frame->getVirtualAddress()[0];
+    memcpy(data_buffer, buffer, frame_size * sizeof(uint8_t));
+  }
+  return frame;
 };
 
 }  // namespace unitest
