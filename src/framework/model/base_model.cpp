@@ -80,6 +80,54 @@ int BaseModel::getDeviceId() const {
   }
 }
 
+
+int32_t BaseModel::getPreprocessParameters(PreprocessParams &pre_param){
+
+  pre_param.dstImageFormat = net_param_.pre_params.dstImageFormat;
+  pre_param.keepAspectRatio = net_param_.pre_params.keepAspectRatio;
+
+  memcpy(pre_param.mean, net_param_.pre_params.mean, sizeof(pre_param.mean));
+  memcpy(pre_param.scale, net_param_.pre_params.scale, sizeof(pre_param.scale));
+
+  return 0;
+
+}
+
+int32_t BaseModel::setPreprocessParameters(PreprocessParams &pre_param){
+
+  net_param_.pre_params.dstImageFormat = pre_param.dstImageFormat;
+  net_param_.pre_params.keepAspectRatio = pre_param.keepAspectRatio;
+
+  memcpy(net_param_.pre_params.mean, pre_param.mean, sizeof(pre_param.mean));
+  memcpy(net_param_.pre_params.scale, pre_param.scale, sizeof(pre_param.scale));
+
+  const std::vector<std::string>& input_names = net_->getInputNames();
+  for (auto& name : input_names) {
+    TensorInfo tensor_info = net_->getTensorInfo(name);
+    PreprocessParams preprocess_params = net_param_.pre_params;
+    for (int i = 0; i < 3; i++) {
+      preprocess_params.mean[i] *= tensor_info.qscale;
+      preprocess_params.scale[i] *= tensor_info.qscale;
+    }
+    preprocess_params.dstHeight = tensor_info.shape[2];
+    preprocess_params.dstWidth = tensor_info.shape[3];
+    preprocess_params.dstPixDataType = tensor_info.data_type;
+    LOGI(
+        "input_name:%s,qscale:%f,mean:%f,%f,%f,scale:%f,%f,%f,dstHeight:%d,"
+        "dstWidth:%d,dstPixDataType:%d",
+        name.c_str(), tensor_info.qscale, preprocess_params.mean[0],
+        preprocess_params.mean[1], preprocess_params.mean[2],
+        preprocess_params.scale[0], preprocess_params.scale[1],
+        preprocess_params.scale[2], preprocess_params.dstHeight,
+        preprocess_params.dstWidth, (int)preprocess_params.dstPixDataType);
+
+    preprocess_params_[name] = preprocess_params;
+  }
+  return 0;
+
+}
+
+
 int32_t BaseModel::setupNetwork(NetParam& net_param) {
   std::cout << "setupNetwork" << std::endl;
   net_ = NetFactory::createNet(net_param, net_param.platform);

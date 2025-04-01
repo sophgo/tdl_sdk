@@ -56,6 +56,10 @@ class BaseModel {
     return 0;
   }
 
+  int32_t getPreprocessParameters(PreprocessParams &pre_param);
+
+  int32_t setPreprocessParameters(PreprocessParams &pre_param);
+
  private:
   int getFitBatchSize(int left_size) const;
   void setInputBatchSize(const std::string& layer_name, int batch_size);

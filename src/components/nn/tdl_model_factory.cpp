@@ -13,6 +13,7 @@
 #include "keypoints_detection/lstr_lane.hpp"
 #include "keypoints_detection/simcc_pose.hpp"
 #include "keypoints_detection/yolov8_pose.hpp"
+#include "image_classification/hand_keypopint_classification.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/yolov10.hpp"
@@ -115,12 +116,16 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     model = std::make_shared<FeatureExtraction>();
   } else if (model_type == ModelType::CLS_RGBLIVENESS) {
     model = std::make_shared<RgbImageClassification>();
+  } else if (model_type == ModelType::CLS_HAND_GESTURE) {
+    model = std::make_shared<RgbImageClassification>();
   } else if (model_type == ModelType::KEYPOINT_SIMCC_PERSON17) {
     model = std::make_shared<SimccPose>();
   } else if (model_type == ModelType::KEYPOINT_HAND) {
     model = std::make_shared<HandKeypoint>();
   } else if (model_type == ModelType::KEYPOINT_LICENSE_PLATE) {
     model = std::make_shared<LicensePlateKeypoint>();
+  } else if (model_type == ModelType::CLS_KEYPOINT_HAND_GESTURE) {
+    model = std::make_shared<HandKeypointClassification>();
   } else if (model_type == ModelType::RECOGNITION_LICENSE_PLATE) {
     model = std::make_shared<LicensePlateRecognition>();
   } else if (model_type == ModelType::YOLOV8_SEG_COCO80) {
