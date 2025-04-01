@@ -62,6 +62,11 @@ int32_t BMLLMNet::init(const std::vector<int> &devices,
   // load bmodel by file
   LOGI("Model[%s] loading ....\n", model_path.c_str());
   bool ret = bmrt_load_bmodel(p_bmrt_, model_path.c_str());
+  if (!ret) {
+    LOGE("Failed to load model: %s", model_path.c_str());
+    deinit();
+    return -1;
+  }
   assert(true == ret);
   LOGI("Done!\n");
 
@@ -124,15 +129,15 @@ int32_t BMLLMNet::init(const std::vector<int> &devices,
 }
 
 void BMLLMNet::deinit() {
-  if (false == io_alone_) {
+  if (!io_alone_) {
     for (int i = 0; i < NUM_LAYERS_; i++) {
-      bm_free_device(bm_handle_, past_key_[i]);
-      bm_free_device(bm_handle_, past_value_[i]);
+      if (past_key_[i].size != 0) bm_free_device(bm_handle_, past_key_[i]);
+      if (past_value_[i].size != 0) bm_free_device(bm_handle_, past_value_[i]);
     }
   }
-  bmrt_destroy(p_bmrt_);
+  if (p_bmrt_) bmrt_destroy(p_bmrt_);
   for (auto h : handles_) {
-    bm_dev_free(h);
+    if (h) bm_dev_free(h);
   }
 }
 

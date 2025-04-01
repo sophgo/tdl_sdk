@@ -4,6 +4,7 @@ project(tdl_python)
 include_directories(
                     ${REPO_DIR}/include/framework
                     ${REPO_DIR}/include/nn
+                    ${REPO_DIR}/src/components/llm/qwen
                     ${CMAKE_CURRENT_SOURCE_DIR}/include
                     ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends/include/python
                     ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends/include/pybind11

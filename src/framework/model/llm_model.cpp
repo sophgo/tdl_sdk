@@ -5,8 +5,22 @@ LLMModel::LLMModel() {}
 LLMModel::~LLMModel() {}
 
 int32_t LLMModel::modelOpen(const std::string& model_path) {
+  if (model_path.empty()) {
+    LOGE("Model path is empty");
+    return -1;
+  }
+
+  LOGI("Opening model from path: %s", model_path.c_str());
+
   std::vector<int> devices = {0};
-  return llm_net_.init(devices, model_path);
+  int32_t ret = llm_net_.init(devices, model_path);
+  if (ret != 0) {
+    LOGE("Failed to initialize llm_net, ret = %d", ret);
+    return ret;
+  }
+
+  LOGI("Model opened successfully");
+  return 0;
 }
 
 int32_t LLMModel::inferenceFirst(const std::vector<int>& tokens,

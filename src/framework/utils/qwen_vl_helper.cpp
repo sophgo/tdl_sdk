@@ -1,5 +1,5 @@
 #include "utils/qwen_vl_helper.hpp"
-
+#include <opencv2/core/bmcv.hpp>
 // -----------------------------------------------------------------------
 // 常量定义
 // -----------------------------------------------------------------------
@@ -94,8 +94,7 @@ std::vector<cv::Mat> QwenVLHelper::fetchImage(
     resized_width = new_size.width;
   }
   cv::Mat resized;
-  cv::resize(img, resized, cv::Size(resized_width, resized_height), 0, 0,
-             cv::INTER_CUBIC);
+  cv::resize(img, resized, cv::Size(resized_width, resized_height), 0, 0);
   std::vector<cv::Mat> bgr_frames;
   cv::split(resized, bgr_frames);
   return bgr_frames;
@@ -150,14 +149,17 @@ std::map<std::string, float> QwenVLHelper::testFetchVideoTs(
 
   double tick_process_total = 0;
   double tick_read_start = cv::getTickCount();
+  cv::Size new_size =
+      smart_resize(img_height, img_width, size_factor, min_pixels,
+                   total_pixels / std::max(nframes, 1));
+  printf("new_size: %d, %d\n", new_size.height, new_size.width);
+  cv::Mat resized = cv::Mat::zeros(new_size, CV_8UC3);
   while (cap.read(frame)) {
     if (current_frame == indices[target_idx]) {
       double tick_process = cv::getTickCount();
-      cv::Size new_size =
-          smart_resize(frame.rows, frame.cols, size_factor, min_pixels,
-                       total_pixels / std::max(nframes, 1));
-      cv::Mat resized;
-      cv::resize(frame, resized, new_size, 0, 0, cv::INTER_CUBIC);
+
+      // cv::Mat resized;
+      cv::bmcv::resize(frame, resized, true, BMCV_INTER_NEAREST);
       std::vector<cv::Mat> bgr_frames;
       cv::split(resized, bgr_frames);
       frames.push_back(bgr_frames);
@@ -250,7 +252,7 @@ std::vector<std::vector<cv::Mat>> QwenVLHelper::fetchVideo(
           smart_resize(frame.rows, frame.cols, size_factor, min_pixels,
                        total_pixels / std::max(nframes, 1));
       cv::Mat resized;
-      cv::resize(frame, resized, new_size, 0, 0, cv::INTER_CUBIC);
+      cv::resize(frame, resized, new_size, 0, 0);
       std::vector<cv::Mat> bgr_frames;
       cv::split(resized, bgr_frames);
       frames.push_back(bgr_frames);
