@@ -10,6 +10,11 @@ git clone https://github.com/sophgo/tdl_models.git
 ## BM1688运行示例
 
 * 初次登录，挂载nfs
+    如果没有安装nfs，则需要安装
+
+    ```shell
+    sudo apt-get install nfs-kernel-server
+    ```
 
     ```shell
     ssh linaro@BOX_IP #BOX_IP为盒子IP

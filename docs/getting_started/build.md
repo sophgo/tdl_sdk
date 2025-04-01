@@ -15,11 +15,12 @@
     sudo apt-get install cmake
     ```
 
-* 下载tdl_sdk
+* 下载tdl_sdk和host-tools
 
     ```shell
     mkdir sdk_package
     cd sdk_package
+    git clone https://github.com/sophgo/host-tools.git
     git clone https://github.com/sophgo/tdl_sdk.git
     ```
 
@@ -169,6 +170,12 @@
     ```
 
 * 挂载nfs目录
+  如果没有安装nfs，则需要安装
+
+  ```shell
+  sudo apt-get install nfs-kernel-server
+  ```
+
 * 把host主机上面的sdk_package目录挂载到目标盒子上
 
     ```shell
@@ -204,6 +211,12 @@
     ```
 
 * 挂载nfs目录
+  如果没有安装nfs，则需要安装
+
+    ```shell
+    sudo apt-get install nfs-kernel-server
+    ```
+
 * 把host主机上面的sdk_package目录挂载到目标盒子上
 
     ```shell
