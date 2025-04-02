@@ -68,11 +68,11 @@ int main(int argc, char *argv[]) {
 
   char *comma = strchr(input_image, ',');
   if (!comma || comma == input_image || !*(comma+1)) {
-      fprintf(stderr, "Error: Models must be in format 'detect,attr'\n");
+      fprintf(stderr, "Error: Models must be in format 'image1,image2'\n");
       return -1;
   }
   input_image1 = input_image;
-  *comma = '\0';  
+  *comma = '\0';
   input_image2 = comma + 1;
 
   if (!model_path || !input_image1 || !input_image2) {

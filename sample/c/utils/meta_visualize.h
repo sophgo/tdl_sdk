@@ -41,6 +41,15 @@ int32_t TDL_VisualizePolylines(point_t *point,
                                    char *input_path,
                                    char *output_path);
 
+int32_t TDL_CropImage(int x, int y,
+                      int weight, int height,
+                      char *input_path,
+                      char *output_path);
+
+int32_t TDL_MatToImage(int **mat,
+                       int weight, int height,
+                       char *output_path, int scale);
+
 #ifdef __cplusplus
 }
 #endif

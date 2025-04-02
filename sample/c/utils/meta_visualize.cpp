@@ -98,3 +98,56 @@ int32_t TDL_VisualizePolylines(point_t *point,
 
   return 0;
 }
+
+int32_t TDL_CropImage(int x, int y,
+                      int weight, int height,
+                      char *input_path,
+                      char *output_path) {
+  cv::Mat image = cv::imread(input_path);
+  if (image.empty()) {
+    printf("input path is empty\n");
+    return -1;
+  }
+
+  cv::Rect roi(x, y, weight, height);
+  if (roi.x + roi.width > image.cols || roi.y + roi.height > image.rows) {
+    printf("The cropping area exceeds the original image range");
+    return -1;
+  }
+
+  cv::Mat cropped = image(roi);
+
+  cv::imwrite(output_path, cropped);
+
+  return 0;
+}
+
+cv::Vec3b getColor(int value) {
+  switch (value) {
+      case 1:  // blue
+          return cv::Vec3b(255, 0, 0);
+      case 2:  // red
+          return cv::Vec3b(0, 0, 255);
+      case 3:  // green
+          return cv::Vec3b(0, 255, 0);
+      case 4:  // yellow
+          return cv::Vec3b(255, 255, 0);
+      default: // black
+          return cv::Vec3b(0, 0, 0);
+  }
+}
+
+int32_t TDL_MatToImage(int **mat,
+                       int weight, int height,
+                       char *output_path, int scale) {
+  cv::Mat image(weight * scale, height * scale, CV_8UC3, cv::Scalar(0, 0, 0));
+  for (int i = 0; i < weight; i++) {
+    for (int j = 0; j < height; j++) {
+        cv::Vec3b color = getColor(mat[i][j]);
+        cv::Rect roi(j * scale, i * scale, scale, scale);
+        cv::rectangle(image, roi, cv::Scalar(color[0], color[1], color[2]), cv::FILLED);
+    }
+  }
+  imwrite(output_path, image);
+  return 0;
+}

@@ -5,6 +5,7 @@
 
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
+#include "meta_visualize.h"
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
@@ -18,18 +19,20 @@ int get_model_info(char *model_path, TDLModel *model_index) {
 
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
-  printf("  %s -m <model_path> -i <input_image>\n", prog_name);
+  printf("  %s -m <model_path> -i <input_image> -o <output_image>\n", prog_name);
   printf("  %s --model_path <path> --input <image>\n\n", prog_name);
   printf("Options:\n");
   printf("  -m, --model_path    Path to instance segmentation model"
-         "<segmentation_topformer_xxx>\n");
+         "<topformer_seg_person_face_vehicle_xxx>\n");
   printf("  -i, --input         Path to input image\n");
+  printf("  -o, --output      Path to output image\n");
   printf("  -h, --help          Show this help message\n");
 }
 
 int main(int argc, char *argv[]) {
   char *model_path = NULL;
   char *input_image = NULL;
+  char *output_image = NULL;
 
   struct option long_options[] = {
       {"model_path",   required_argument, 0, 'm'},
@@ -39,13 +42,16 @@ int main(int argc, char *argv[]) {
   };
 
   int opt;
-  while ((opt = getopt_long(argc, argv, "m:i:h", long_options, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
       switch (opt) {
           case 'm':
               model_path = optarg;
               break;
           case 'i':
               input_image = optarg;
+              break;
+          case 'o':
+              output_image = optarg;
               break;
           case 'h':
               print_usage(argv[0]);
@@ -68,6 +74,7 @@ int main(int argc, char *argv[]) {
   printf("Running with:\n");
   printf("  Model path:    %s\n", model_path);
   printf("  Input image:   %s\n", input_image);
+  printf("  Output image:  %s\n", output_image);
 
   int ret = 0;
 
@@ -97,15 +104,20 @@ int main(int argc, char *argv[]) {
   if (ret != 0) {
     printf("CVI_TDL_InstanceSegmentation failed with %#x!\n", ret);
   } else {
-    printf("height : %d, ", seg_meta.height);
-    printf("width : %d, ", seg_meta.width);
     printf("output_height : %d, ", seg_meta.output_height);
     printf("output_width : %d\n", seg_meta.output_width);
+    int mat[seg_meta.output_height][seg_meta.output_width];
+    int *ptrs[seg_meta.output_width];
     for (int x = 0; x < seg_meta.output_height; x ++) {
         for (int y = 0; y < seg_meta.output_width; y ++) {
             printf("%d ", (int)seg_meta.class_id[x * seg_meta.output_width + y]);
+            mat[x][y] = (int)seg_meta.class_id[x * seg_meta.output_width + y];
         }
         printf("\n");
+        ptrs[x] = mat[x];
+    }
+    if (output_image != NULL) {
+      TDL_MatToImage(ptrs, seg_meta.output_height, seg_meta.output_width, output_image, 30);
     }
   }
 
