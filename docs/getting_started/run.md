@@ -9,6 +9,12 @@ git clone https://github.com/sophgo/tdl_models.git
 
 ## BM1688运行示例
 
+* 如果没有安装nfs客户端，则需要安装
+
+    ```shell
+    sudo apt install nfs-common
+    ```
+
 * 初次登录，挂载nfs
     如果没有安装nfs，则需要安装
 

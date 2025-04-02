@@ -169,12 +169,11 @@
     pip3 install pybind11
     ```
 
-* 挂载nfs目录
-  如果没有安装nfs，则需要安装
+* 如果没有安装nfs客户端，则需要安装
 
-  ```shell
-  sudo apt-get install nfs-kernel-server
-  ```
+    ```shell
+    sudo apt install nfs-common
+    ```
 
 * 把host主机上面的sdk_package目录挂载到目标盒子上
 
@@ -210,11 +209,10 @@
     pip3 install pybind11
     ```
 
-* 挂载nfs目录
-  如果没有安装nfs，则需要安装
+* 如果没有安装nfs客户端，则需要安装
 
     ```shell
-    sudo apt-get install nfs-kernel-server
+    sudo apt install nfs-common
     ```
 
 * 把host主机上面的sdk_package目录挂载到目标盒子上
