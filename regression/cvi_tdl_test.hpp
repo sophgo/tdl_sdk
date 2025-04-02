@@ -69,6 +69,13 @@ class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
   ModelType stringToModelType(const std::string &model_type_str);
   std::shared_ptr<BaseImage> getInputData(std::string &image_path,
                                           ModelType model_id);
+  bool matchKeypoints(const std::vector<float> &gt_keypoints_x,
+                      const std::vector<float> &gt_keypoints_y,
+                      const std::vector<float> &gt_keypoints_score,
+                      const std::vector<float> &pred_keypoints_x,
+                      const std::vector<float> &pred_keypoints_y,
+                      const std::vector<float> &pred_keypoints_score,
+                      const float position_thresh, const float score_thresh);
 
  protected:
   nlohmann::json m_json_object;

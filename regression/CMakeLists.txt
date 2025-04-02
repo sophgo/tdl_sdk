@@ -86,6 +86,7 @@ if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR
   # reg_daily_handkeypoint.cpp
   reg_daily_det.cpp
   reg_daily_cls.cpp
+  reg_daily_keypoint.cpp
   )
 
 endif()

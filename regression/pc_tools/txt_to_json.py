@@ -2,6 +2,7 @@ import argparse
 import os
 import json
 from pathlib import Path
+from PIL import Image
 
 
 def parse_arguments():
@@ -10,6 +11,7 @@ def parse_arguments():
     parser.add_argument("--model_name", type=str, default="")
     parser.add_argument("--bbox_threshold", type=float, default=0.5)
     parser.add_argument("--score_threshold", type=float, default=0.1)
+    parser.add_argument("--position_threshold", type=float, default=0.1)
     parser.add_argument("--image_dir", required=True, type=str)
     parser.add_argument("--chip", required=True, type=str)
     parser.add_argument("--txt_dir", required=True, type=str)
@@ -120,19 +122,48 @@ def process_keypoint_txt_files(txt_dir, image_dir=None):
 
     for txt_file in txt_files:
         filename = txt_file.stem
-        img_file = list(Path(image_dir).glob(f"{filename}.*"))[0].name
+        img_path = list(Path(image_dir).glob(f"{filename}.*"))[0]
+        img_file = img_path.name
+
+        with Image.open(img_path) as img:
+            img_width, img_height = img.size
+
         img_file = str(img_file)
         with open(txt_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
-        keypoint_list = []
+        need_normalize = False
         for line in lines:
             parts = line.strip().split()
-            keypoints = list(map(float, parts))
-            keypoint_entry = {
-                "keypoints": keypoints,
-            }
-            keypoint_list.append(keypoint_entry)
-        annotations[img_file] = keypoint_list
+            if max(map(float, parts)) > 1:
+                need_normalize = True
+                break
+
+        keypoints_x = []
+        keypoints_y = []
+        keypoints_score = []
+        for line in lines:
+            parts = line.strip().split()
+            has_score = len(parts) % 3 == 0
+
+            if has_score:
+                x, y, score = map(float, parts)
+                keypoints_score.append(round(float(score), 2))
+            else:
+                x, y = map(float, parts)
+
+            if need_normalize:
+                x /= img_width
+                y /= img_height
+
+            keypoints_x.append(round(x, 4))
+            keypoints_y.append(round(y, 4))
+
+        keypoint_entry = {
+            "keypoints_x": keypoints_x,
+            "keypoints_y": keypoints_y,
+            "keypoints_score": keypoints_score,
+        }
+        annotations[img_file] = keypoint_entry
     return annotations
 
 
@@ -140,13 +171,20 @@ def update_json(data, args, annotations, json_status, task):
     if json_status == "new":
         if args.model_id == "" or args.model_name == "":
             raise ValueError("json数据首次建立，model_id, model_name不能为空")
-    if task == "detection":
-        data["bbox_threshold"] = args.bbox_threshold
     if args.model_id:
         data["model_id"] = args.model_id
     if args.model_name:
         data["model_name"] = args.model_name
-    data["score_threshold"] = args.score_threshold
+    if task == "detection":
+        data["bbox_threshold"] = args.bbox_threshold
+        data["score_threshold"] = args.score_threshold
+    elif task == "classification":
+        data["score_threshold"] = args.score_threshold
+    elif task == "keypoint":
+        data["score_threshold"] = args.score_threshold
+        data["position_threshold"] = args.position_threshold
+    else:
+        raise ValueError("未识别的task")
     img_dir = Path(args.image_dir).resolve()
     data["image_dir"] = img_dir.name
     data[args.chip] = annotations

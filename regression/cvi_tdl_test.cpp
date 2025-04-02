@@ -291,5 +291,56 @@ std::shared_ptr<BaseImage> CVI_TDLModelTestSuite::getInputData(
   return frame;
 };
 
+bool CVI_TDLModelTestSuite::matchKeypoints(
+    const std::vector<float> &gt_keypoints_x,
+    const std::vector<float> &gt_keypoints_y,
+    const std::vector<float> &gt_keypoints_score,
+    const std::vector<float> &pred_keypoints_x,
+    const std::vector<float> &pred_keypoints_y,
+    const std::vector<float> &pred_keypoints_score, const float position_thresh,
+    const float score_thresh) {
+  if (gt_keypoints_x.size() != pred_keypoints_x.size() ||
+      gt_keypoints_y.size() != pred_keypoints_y.size() ||
+      gt_keypoints_x.size() != gt_keypoints_y.size() ||
+      gt_keypoints_score.size() != pred_keypoints_score.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < gt_keypoints_score.size(); i++) {
+    float score_diff =
+        std::abs(gt_keypoints_score[i] - pred_keypoints_score[i]);
+
+    if (score_diff > score_thresh) {
+      return false;
+    }
+  }
+
+  float total_distance = 0.0f;
+  int num_keypoints = gt_keypoints_x.size();
+  float score_thresh_for_distance = 0.5f;
+  std::vector<float> keypoints_index_for_distance;
+  if (gt_keypoints_score.size() == 0) {
+    for (int i = 0; i < num_keypoints; i++) {
+      keypoints_index_for_distance.push_back(i);
+    }
+  } else {
+    for (int i = 0; i < num_keypoints; i++) {
+      if (gt_keypoints_score[i] > score_thresh_for_distance &&
+          pred_keypoints_score[i] > score_thresh_for_distance) {
+        keypoints_index_for_distance.push_back(i);
+      }
+    }
+  }
+
+  for (auto &i : keypoints_index_for_distance) {
+    float dx = gt_keypoints_x[i] - pred_keypoints_x[i];
+    float dy = gt_keypoints_y[i] - pred_keypoints_y[i];
+    float distance = std::sqrt(dx * dx + dy * dy);
+    total_distance += distance;
+  }
+
+  float avg_distance = total_distance / keypoints_index_for_distance.size();
+  return avg_distance <= position_thresh;
+};
 }  // namespace unitest
 }  // namespace cvitdl

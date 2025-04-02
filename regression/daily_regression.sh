@@ -76,13 +76,15 @@ if [ "$total_ion_size" -gt "20000000" ]; then
   det_json="${det_json}:yolov8n_det_pet_person.json"
   det_json="${det_json}:yolov8n_det_traffic_light.json"
   det_json="${det_json}:yolov8n_det_monitor_person.json"
+  det_json="${det_json}:scrfd_det_face.json"
   #cls
   cls_json="${cls_json}:cls_rgbliveness.json"
   cls_json="${cls_json}:cls_sound_babay_cry.json"
   cls_json="${cls_json}:cls_sound_nihaoshiyun.json"
   #kpt
-  # kpt_json="${kpt_json}:xxx.json"
-
+  kpt_json="${kpt_json}:keypoint_hand.json"
+  kpt_json="${kpt_json}:keypoint_license_plate.json"
+  kpt_json="${kpt_json}:keypoint_yolov8pose_person17.json"
 fi
 
 # # ION requirement >= 35 MB
@@ -129,4 +131,4 @@ echo  "ION size: \t\t${total_ion_size} bytes"
 
 run_test_main "${det_json}" "${det_test_suites}"
 run_test_main "${cls_json}" "${cls_test_suites}"
-# run_test_main "${kpt_json}" "${kpt_test_suites}"
+run_test_main "${kpt_json}" "${kpt_test_suites}"

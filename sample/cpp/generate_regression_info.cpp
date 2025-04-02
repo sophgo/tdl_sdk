@@ -38,10 +38,16 @@ void constructModelIdMapping(
   model_id_mapping["CLS_RGBLIVENESS"] = ModelType::CLS_RGBLIVENESS;
   model_id_mapping["CLS_SOUND_BABAY_CRY"] = ModelType::CLS_SOUND_BABAY_CRY;
   model_id_mapping["CLS_SOUND_COMMAND"] = ModelType::CLS_SOUND_COMMAND;
+  model_id_mapping["KEYPOINT_HAND"] = ModelType::KEYPOINT_HAND;
+  model_id_mapping["KEYPOINT_LICENSE_PLATE"] =
+      ModelType::KEYPOINT_LICENSE_PLATE;
+  model_id_mapping["KEYPOINT_YOLOV8POSE_PERSON17"] =
+      ModelType::KEYPOINT_YOLOV8POSE_PERSON17;
+  model_id_mapping["KEYPOINT_SIMCC_PERSON17"] =
+      ModelType::KEYPOINT_SIMCC_PERSON17;
 }
 
-void saveDetectionResults(std::string &dst_root, std::string &img_name,
-                          const std::shared_ptr<ModelOutputInfo> &out_data) {
+std::string getTxtName(std::string &dst_root, std::string &img_name) {
   if (!fs::exists(dst_root)) {
     fs::create_directories(dst_root);
   }
@@ -49,6 +55,12 @@ void saveDetectionResults(std::string &dst_root, std::string &img_name,
     dst_root += '/';
   }
   std::string txt_name = dst_root + img_name + ".txt";
+  return txt_name;
+}
+
+void saveDetectionResults(std::string &dst_root, std::string &img_name,
+                          const std::shared_ptr<ModelOutputInfo> &out_data) {
+  std::string txt_name = getTxtName(dst_root, img_name);
   std::ofstream outfile(txt_name);
 
   if (out_data->getType() == ModelOutputType::OBJECT_DETECTION) {
@@ -60,7 +72,8 @@ void saveDetectionResults(std::string &dst_root, std::string &img_name,
       outfile << bbox.class_id << " " << std::fixed << std::setprecision(2)
               << bbox.score << std::endl;
     }
-  } else {
+  } else if (out_data->getType() ==
+             ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
     std::shared_ptr<ModelBoxLandmarkInfo> obj_meta =
         std::static_pointer_cast<ModelBoxLandmarkInfo>(out_data);
     for (const auto &box_landmark : obj_meta->box_landmarks) {
@@ -68,6 +81,9 @@ void saveDetectionResults(std::string &dst_root, std::string &img_name,
               << box_landmark.y1 << " " << box_landmark.x2 << " "
               << box_landmark.y2 << " " << box_landmark.score << std::endl;
     }
+  } else {
+    std::cout << "Unsupported output type: "
+              << static_cast<int>(out_data->getType()) << std::endl;
   }
   outfile.close();
   std::cout << "write file " << txt_name << " done" << std::endl;
@@ -76,18 +92,61 @@ void saveDetectionResults(std::string &dst_root, std::string &img_name,
 void saveClassificationResults(
     std::string &dst_root, std::string &img_name,
     const std::shared_ptr<ModelOutputInfo> &out_data) {
-  if (!fs::exists(dst_root)) {
-    fs::create_directories(dst_root);
-  }
-  if (dst_root.back() != '/') {
-    dst_root += '/';
-  }
-  std::string txt_name = dst_root + img_name + ".txt";
+  std::string txt_name = getTxtName(dst_root, img_name);
+
   std::ofstream outfile(txt_name);
   std::shared_ptr<ModelClassificationInfo> cls_meta =
       std::static_pointer_cast<ModelClassificationInfo>(out_data);
   outfile << cls_meta->topk_class_ids[0] << " " << std::fixed
           << std::setprecision(2) << cls_meta->topk_scores[0] << std::endl;
+
+  outfile.close();
+  std::cout << "write file " << txt_name << " done" << std::endl;
+}
+
+void saveKeypointResults(std::string &dst_root, std::string &img_name,
+                         const std::shared_ptr<ModelOutputInfo> &out_data) {
+  std::string txt_name = getTxtName(dst_root, img_name);
+  std::ofstream outfile(txt_name);
+
+  std::vector<float> landmarks_x;
+  std::vector<float> landmarks_y;
+  std::vector<float> landmarks_score;
+
+  if (out_data->getType() == ModelOutputType::OBJECT_LANDMARKS) {
+    std::shared_ptr<ModelLandmarksInfo> keypoint_meta =
+        std::static_pointer_cast<ModelLandmarksInfo>(out_data);
+    landmarks_x = keypoint_meta->landmarks_x;
+    landmarks_y = keypoint_meta->landmarks_y;
+    landmarks_score = keypoint_meta->landmarks_score;
+  } else if (out_data->getType() ==
+             ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+    std::shared_ptr<ModelBoxLandmarkInfo> obj_meta =
+        std::static_pointer_cast<ModelBoxLandmarkInfo>(out_data);
+    ObjectBoxLandmarkInfo keypoint_meta = obj_meta->box_landmarks[0];
+    landmarks_x = keypoint_meta.landmarks_x;
+    landmarks_y = keypoint_meta.landmarks_y;
+    landmarks_score = keypoint_meta.landmarks_score;
+
+  } else {
+    std::cout << "Unsupported output type: "
+              << static_cast<int>(out_data->getType()) << std::endl;
+  }
+
+  size_t num_keypoints = landmarks_x.size();
+  size_t num_landmarks_score = landmarks_score.size();
+
+  if (num_keypoints != num_landmarks_score) {
+    for (int k = 0; k < num_keypoints; k++) {
+      outfile << std::fixed << std::setprecision(4) << landmarks_x[k] << " "
+              << landmarks_y[k] << std::endl;
+    }
+  } else {
+    for (int k = 0; k < num_keypoints; k++) {
+      outfile << std::fixed << std::setprecision(4) << landmarks_x[k] << " "
+              << landmarks_y[k] << " " << landmarks_score[k] << std::endl;
+    }
+  }
 
   outfile.close();
   std::cout << "write file " << txt_name << " done" << std::endl;
@@ -165,13 +224,24 @@ int main(int argc, char **argv) {
 
     std::string img_name = fs::path(image_path).stem().string();
     ModelOutputType out_type = out_datas[0]->getType();
-    if (out_type == ModelOutputType::OBJECT_DETECTION ||
-        out_type == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+    if (out_type == ModelOutputType::OBJECT_DETECTION) {
       saveDetectionResults(dst_root, img_name, out_datas[0]);
     } else if (out_type == ModelOutputType::CLASSIFICATION) {
       saveClassificationResults(dst_root, img_name, out_datas[0]);
+    } else if (out_type == ModelOutputType::OBJECT_LANDMARKS) {
+      saveKeypointResults(dst_root, img_name, out_datas[0]);
+    } else if (out_type == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+      if (model_id == ModelType::KEYPOINT_YOLOV8POSE_PERSON17) {
+        saveKeypointResults(dst_root, img_name, out_datas[0]);
+      } else if (model_id == ModelType::SCRFD_DET_FACE) {
+        saveDetectionResults(dst_root, img_name, out_datas[0]);
+      } else {
+        std::cout << "Unsupported model_id: " << static_cast<int>(model_id)
+                  << std::endl;
+      }
     } else {
-      std::cout << "out_data->getType() is not supported ";
+      std::cout << "Unsupported output type: " << static_cast<int>(out_type)
+                << std::endl;
     }
   }
   return 0;
