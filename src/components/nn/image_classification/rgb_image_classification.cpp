@@ -32,6 +32,20 @@ void parse_output(T *ptr_out, const int num_cls, float qscale,
   for (int i = 0; i < num_cls; i++) {
     scores.push_back(ptr_out[i] * qscale);
   }
+  float max_score = *std::max_element(scores.begin(), scores.end());
+  float sum = 0.0f;
+  std::vector<float> softmax_scores;
+  softmax_scores.reserve(scores.size());
+
+  for (const auto &score : scores) {
+    float exp_score = std::exp(score - max_score);
+    softmax_scores.push_back(exp_score);
+    sum += exp_score;
+  }
+  for (size_t i = 0; i < softmax_scores.size(); ++i) {
+    scores[i] = softmax_scores[i] / sum;
+  }
+
   int max_top = std::min<int>(num_cls, topK);
   std::vector<int> topKIndex = top_indices(scores, max_top);
 
