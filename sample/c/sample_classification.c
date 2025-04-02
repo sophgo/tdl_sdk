@@ -8,13 +8,11 @@
 
 #define AUDIOFORMATSIZE 2
 
-int get_model_info(char *model_name, TDLModel *model_index) {
+int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
-  if (strcmp(model_name, "CLS_SOUND_BABAY_CRY") == 0) {
+  if (strstr(model_path, "cls_sound_babay_cry") != NULL) {
     *model_index = TDL_MODEL_CLS_BABAY_CRY;
-  } else if (strcmp(model_name, "CLS_SOUND_COMMAND") == 0) {
-    *model_index = TDL_MODEL_CLS_SOUND_COMMAND;
-  } else if (strcmp(model_name, "CLS_RGBLIVENESS") == 0) {
+  } else if (strstr(model_path, "cls_rgbliveness") != NULL) {
     *model_index = TDL_MODEL_CLS_RGBLIVENESS;
   } else {
     ret = -1;
@@ -25,14 +23,15 @@ int get_model_info(char *model_name, TDLModel *model_index) {
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
   printf("  Image processing mode:\n");
-  printf("    %s -n <name> -m <model_path> -i <input_image>\n", prog_name);
-  printf("    %s --name <name> --model_path <path> --input <image>\n", prog_name);
+  printf("    %s -m <model_path> -i <input_image>\n", prog_name);
+  printf("    %s --model_path <path> --input <image>\n", prog_name);
   printf("  Sound processing mode:\n");
-  printf("    %s -n <name> -m <model_path> -b <input_bin> -r <rate> -t <time>\n", prog_name);
-  printf("    %s --name <name> --model_path <path> --bin_data <input_bin> --sample-rate <rate> --seconds <time>\n", prog_name);
+  printf("    %s -m <model_path> -b <input_bin> -r <rate> -t <time>\n", prog_name);
+  printf("    %s --model_path <path> --bin_data <input_bin> --sample-rate <rate> --seconds <time>\n", prog_name);
   printf("\nOptions:\n");
-  printf("  -n, --name           Model name (CLS_SOUND_BABAY_CRY, CLS_SOUND_COMMAND, CLS_RGBLIVENESS)\n");
-  printf("  -m, --model_path     Path to cvimodel (image mode)\n");
+  printf("  -m, --model_path     Path to cvimodel, "
+         "<cls_sound_babay_cry_xxx>"
+         "<cls_rgbliveness_xxx>\n");
   printf("  -i, --input          Path to input image (image mode)\n");
   printf("  -b, --bin_data       Path to input data (sound mode)\n");
   printf("  -r, --sample-rate    Sample rate in Hz (sound mode)\n");
@@ -41,7 +40,6 @@ void print_usage(const char *prog_name) {
 }
 
 int main(int argc, char *argv[]) {
-  char *model_name = NULL;
   char *model_path = NULL;
   char *input_image = NULL;
   char *bin_data = NULL;
@@ -49,7 +47,6 @@ int main(int argc, char *argv[]) {
   char *seconds = NULL;
 
   struct option long_options[] = {
-      {"name",          required_argument, 0, 'n'},
       {"model_path",    required_argument, 0, 'm'},
       {"input",         required_argument, 0, 'i'},
       {"bin_data",      required_argument, 0, 'b'},
@@ -61,11 +58,8 @@ int main(int argc, char *argv[]) {
 
   int opt;
   int option_index = 0;
-  while ((opt = getopt_long(argc, argv, "n:m:i:b:r:t:h", long_options, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "m:i:b:r:t:h", long_options, &option_index)) != -1) {
       switch (opt) {
-          case 'n':
-              model_name = optarg;
-              break;
           case 'm':
               model_path = optarg;
               break;
@@ -94,24 +88,17 @@ int main(int argc, char *argv[]) {
       }
   }
 
-  // 检查必需参数
-  if (!model_name) {
-      fprintf(stderr, "Error: --model-name is required\n");
-      print_usage(argv[0]);
-      return -1;
-  }
-
   // 检查两种模式参数
   if (model_path && input_image) {
       // 图像模式
       printf("Running in image processing mode:\n");
-      printf("  Model: %s\n  Model path: %s\n  Input image: %s\n", 
-             model_name, model_path, input_image);
-  } else if (model_name && bin_data && sample_rate && seconds) {
+      printf("  Model path: %s\n  Input image: %s\n", 
+             model_path, input_image);
+  } else if (bin_data && sample_rate && seconds) {
       // 声音模式
       printf("Running in sound processing mode:\n");
-      printf("  Model: %s\n  Sound model: %s\n  Bin data: %s\n  Sample rate: %s\n  Duration: %s sec\n",
-             model_name, model_name, bin_data, sample_rate, seconds);
+      printf("  Sound model: %s\n  Bin data: %s\n  Sample rate: %s\n  Duration: %s sec\n",
+             bin_data, sample_rate, seconds);
   } else {
       fprintf(stderr, "Error: Invalid combination of parameters\n");
       print_usage(argv[0]);
@@ -121,8 +108,8 @@ int main(int argc, char *argv[]) {
   int ret = 0;
 
   TDLModel model_id;
-  if (get_model_info(model_name, &model_id) == -1) {
-    printf("unsupported model: %s\n", model_name);
+  if (get_model_info(model_path, &model_id) == -1) {
+    printf("unsupported model: %s\n", model_path);
     return -1;
   }
 

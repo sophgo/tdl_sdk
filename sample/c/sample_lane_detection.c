@@ -11,7 +11,8 @@ void print_usage(const char *prog_name) {
   printf("  %s -m <model_path> -i <input_image>\n", prog_name);
   printf("  %s --model_path <path> --input <image>\n\n", prog_name);
   printf("Options:\n");
-  printf("  -m, --model_path    Path to cvimodel\n");
+  printf("  -m, --model_path    Path to cvimodel"
+         "<lstr_top_xxx>\n");
   printf("  -i, --input         Path to input image\n");
   printf("  -h, --help          Show this help message\n");
 }

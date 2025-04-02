@@ -12,7 +12,8 @@ void print_usage(const char *prog_name) {
   printf("  %s -m <detect_model>,<attr_model> -i <input_image>\n", prog_name);
   printf("  %s --model_path <detect_path>,<attr_path> --input <image>\n\n", prog_name);
   printf("Options:\n");
-  printf("  -m, --model_path     Comma-separated model paths (detection,attribute)\n");
+  printf("  -m, --model_path     Comma-separated model paths"
+         "<scrfd_det_face_xxx,cls_attribute_face_xxx>\n");
   printf("  -i, --input      Path to input image\n");
   printf("  -h, --help       Show this help message\n");
 }

@@ -17,7 +17,8 @@ void print_usage(const char *prog_name) {
     printf("  %s -m <model_path> -i <input_image> -o <output_image>\n", prog_name);
     printf("  %s --model_path <path> --input <image> --output <image>\n\n", prog_name);
     printf("Options:\n");
-    printf("  -m, --model_path     Path to cvimodel\n");
+    printf("  -m, --model_path     Path to cvimodel"
+           "<keypoint_yolov8pose_person17_xxx>\n");
     printf("  -i, --input          Path to input image\n");
     printf("  -o, --output         Path to output image\n");
     printf("  -h, --help           Show this help message\n");
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]) {
       }
   }
 
-  if (!model_path || !input_image || !output_image) {
+  if (!model_path || !input_image) {
       fprintf(stderr, "Error: All arguments are required\n");
       print_usage(argv[0]);
       return -1;
@@ -131,8 +132,10 @@ int main(int argc, char *argv[]) {
             line[k].y2 = obj_meta.info[i].landmark_properity[kps2].y;
           }
       }
-      TDL_VisualizePoint(point, obj_meta.size * 17, input_image, output_image);
-      TDL_VisualizeLine(line, 19, input_image, output_image);
+      if (output_image != NULL) {
+        TDL_VisualizePoint(point, obj_meta.size * 17, input_image, output_image);
+        TDL_VisualizeLine(line, 19, input_image, output_image);
+      }
     }
   }
 
