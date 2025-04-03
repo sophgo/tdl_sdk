@@ -8,7 +8,7 @@ int32_t TDL_InitObjectMeta(TDLObject *object_meta, int num_objects, int num_land
     object_meta->info =
       (TDLObjectInfo *)malloc(num_objects * sizeof(TDLObjectInfo));
       for (int i = 0; i < num_objects; i++) {
-        object_meta->info[0].landmark_properity = NULL;
+        object_meta->info[i].landmark_properity = NULL;
       }
   }
 

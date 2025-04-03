@@ -32,6 +32,7 @@ int32_t TDL_DestroyHandle(TDLHandle handle) {
     TDL_CloseModel(handle, model.first);
   }
   delete context;
+  context = nullptr;
   return 0;
 }
 
@@ -49,7 +50,7 @@ TDLImage TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory) {
 TDLImage TDL_ReadImage(const char *path) {
   tdl_image_context_t *image_context = new tdl_image_context_t();
   image_context->image =
-      ImageFactory::readImage(path, false, InferencePlatform::CVITEK);
+      ImageFactory::readImage(path, false, InferencePlatform::AUTOMATIC);
   return (TDLImage)image_context;
 }
 
@@ -75,7 +76,11 @@ int32_t TDL_DestroyImage(TDLImage image_handle) {
   if (image_context == nullptr) {
     return -1;
   }
+  if (image_context->image) {
+    image_context->image.reset();
+  }
   delete image_context;
+  image_context = nullptr;
   return 0;
 }
 
