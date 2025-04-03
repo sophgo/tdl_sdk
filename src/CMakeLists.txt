@@ -47,5 +47,5 @@ install(TARGETS cvi_tdl DESTINATION lib)
 #install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test_and_eval/ DESTINATION sample PATTERN "CMakeLists.txt" EXCLUDE)
 # Temporarily don't install custom module until complete.
 # install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app DESTINATION include/)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION include
-        )   
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION .)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/envsetup.sh DESTINATION scripts)

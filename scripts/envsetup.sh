@@ -9,7 +9,7 @@ echo "SDK_ROOT_DIR: ${SDK_ROOT_DIR}"
 # 打印帮助信息
 print_usage() {
     echo "TDL SDK 环境配置工具"
-    echo "用法: source ${SCRIPT_DIR}/envsetup.sh [平台]"
+    echo "用法: source ${SCRIPT_DIR}/envsetup.sh <平台> [DEPLOY]"
     echo "平台选项:"
     echo "  CV181X    - 配置 CV181X 平台环境"
     echo "  CV186X    - 配置 CV186X 平台环境"
@@ -17,7 +17,11 @@ print_usage() {
     echo "  BM1684X   - 配置 BM1684X 平台环境"
     echo "  CMODEL_CVITEK   - 配置 CMODEL_CVITEK 平台环境"
     echo ""
-    echo "示例: source ${SCRIPT_DIR}/envsetup.sh bm1688"
+    echo "部署选项:"
+    echo "  DEPLOY    - 配置部署环境（可选）"
+    echo ""
+    echo "示例: source ${SCRIPT_DIR}/envsetup.sh BM1688"
+    echo "      source ${SCRIPT_DIR}/envsetup.sh BM1688 DEPLOY"
 }
 
 # 检查是否使用了 source 命令运行脚本
@@ -29,10 +33,13 @@ case $0 in
     *)
         # 直接执行脚本
         echo "错误: 此脚本必须使用 'source' 命令运行"
-        echo "请使用: source ${0} [平台]"
+        echo "请使用: source ${0} <平台> [DEPLOY]"
         exit 1
         ;;
 esac
+
+# 初始化部署模式变量
+DEPLOY_MODE=0
 
 # 处理平台参数
 if [ $# -gt 0 ]; then
@@ -64,6 +71,19 @@ if [ $# -gt 0 ]; then
             return 1
             ;;
     esac
+    
+    # 检查是否有第二个参数（DEPLOY）
+    if [ $# -gt 1 ]; then
+        deploy_arg=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+        if [ "$deploy_arg" = "DEPLOY" ]; then
+            DEPLOY_MODE=1
+            echo "启用部署模式..."
+        else
+            echo "错误: 未知的第二个参数 '$2'"
+            print_usage
+            return 1
+        fi
+    fi
 elif [ -z "${CHIP_ARCH}" ]; then
     echo "错误: 未指定平台且 CHIP_ARCH 环境变量未设置"
     print_usage
@@ -71,9 +91,16 @@ elif [ -z "${CHIP_ARCH}" ]; then
 fi
 
 echo "配置 ${CHIP_ARCH} 平台环境..."
+if [ $DEPLOY_MODE -eq 1 ]; then
+    echo "部署模式: 启用"
+fi
 
 # 检查安装目录是否存在
-TDL_INSTALL_DIR="${SDK_ROOT_DIR}/install/${CHIP_ARCH}"
+if [ $DEPLOY_MODE -eq 1 ]; then
+    TDL_INSTALL_DIR="/data/tdl_sdk/${CHIP_ARCH}"
+else
+    TDL_INSTALL_DIR="${SDK_ROOT_DIR}/install/${CHIP_ARCH}"
+fi
 if [ ! -d "${TDL_INSTALL_DIR}" ]; then
     echo "警告: 安装目录不存在: ${TDL_INSTALL_DIR}"
     echo "请先构建 TDL SDK: ./build_tdl_sdk.sh ${CHIP_ARCH}"
@@ -85,23 +112,68 @@ LIB_PATHS="${TDL_INSTALL_DIR}/lib"
 PYTHON_PATHS="${TDL_INSTALL_DIR}/lib"
 
 # 平台依赖库路径
-DEPENDENCY_BASE="${SDK_ROOT_DIR}/dependency"
+if [ $DEPLOY_MODE -eq 1 ]; then
+    DEPENDENCY_BASE="/opt/sophon"
+else
+    DEPENDENCY_BASE="${SDK_ROOT_DIR}/dependency"
+fi
 
 # 根据平台配置特定环境
 configure_platform_env() {
     case "${CHIP_ARCH}" in
         BM1688|BM1684X)
             # 设置通用的Sophon依赖
-            TPU_SDK_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/libsophon"
-            OPENCV_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/sophon-opencv"
-            FFMPEG_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/sophon-ffmpeg"
+            if [ $DEPLOY_MODE -eq 1 ]; then
+                TPU_SDK_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "libsophon_*" 2>/dev/null | head -n 1)
+                if [ -z "${TPU_SDK_PATH}" ]; then 
+                    TPU_SDK_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "libsophon-*" 2>/dev/null | head -n 1)
+                fi
+                if [ -z "${TPU_SDK_PATH}" ]; then 
+                    echo "错误: 未找到libsophon"
+                    return 1
+                fi
+
+                OPENCV_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "sophon-opencv_*" 2>/dev/null | head -n 1)
+                if [ -z "${OPENCV_PATH}" ]; then 
+                    OPENCV_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "sophon-opencv-*" 2>/dev/null | head -n 1)
+                fi
+                if [ -z "${OPENCV_PATH}" ]; then 
+                    echo "错误: 未找到sophon-opencv"
+                    return 1
+                fi
+
+                FFMPEG_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "sophon-ffmpeg_*" 2>/dev/null | head -n 1)
+                if [ -z "${FFMPEG_PATH}" ]; then 
+                    FFMPEG_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "sophon-ffmpeg-*" 2>/dev/null | head -n 1)
+                fi
+                if [ -z "${FFMPEG_PATH}" ]; then 
+                    echo "错误: 未找到sophon-ffmpeg"
+                    return 1
+                fi
+                
+            else
+                TPU_SDK_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/libsophon"
+                OPENCV_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/sophon-opencv"
+                FFMPEG_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/sophon-ffmpeg"
+            fi
             
             # 添加通用库路径
             add_lib_paths "${TPU_SDK_PATH}/lib" "${OPENCV_PATH}/lib" "${FFMPEG_PATH}/lib"
             
             # BM1688特有的ISP库
             if [ "${CHIP_ARCH}" = "BM1688" ]; then
-                ISP_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/sophon-soc-libisp"
+                if [ $DEPLOY_MODE -eq 1 ]; then
+                    ISP_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "sophon-soc-libisp_*" 2>/dev/null | head -n 1)
+                    if [ -z "${ISP_PATH}" ]; then 
+                        ISP_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "sophon-soc-libisp-*" 2>/dev/null | head -n 1)
+                    fi
+                    if [ -z "${ISP_PATH}" ]; then 
+                        echo "错误: 未找到Sophon-ISP库"
+                        return 1
+                    fi
+                else
+                    ISP_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/sophon-soc-libisp"
+                fi
                 add_lib_paths "${ISP_PATH}/lib"
             fi
             ;;
@@ -191,6 +263,9 @@ echo "环境配置完成!"
 echo "CHIP_ARCH       = ${CHIP_ARCH}"
 echo "SDK根目录       = ${SDK_ROOT_DIR}"
 echo "安装目录        = ${TDL_INSTALL_DIR}"
+if [ $DEPLOY_MODE -eq 1 ]; then
+    echo "部署模式        = 启用"
+fi
 echo ""
 echo "配置的环境变量:"
 echo "LD_LIBRARY_PATH = ${LD_LIBRARY_PATH}"
