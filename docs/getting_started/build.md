@@ -143,7 +143,26 @@
     ./build_tdl_sdk.sh BM1684X
     ```
 
-### CMODEL平台编译
+### BM1684平台编译
+
+* 在[算能官网](https://developer.sophgo.com/site/index/material/88/all.html)下载SDK-24.04.01的压缩包
+
+* 执行如下脚本抽取编译依赖
+
+    ```sh
+    cd tdl_sdk
+    #会将依赖抽取到tdl_sdk/dependency/BM1684文件夹下
+    ./scripts/extract_sophon_sdk.sh /path/to/SDK-24.04.01.zip BM1684
+    ```
+
+* 执行编译
+
+    ```shell
+    cd tdl_sdk
+    ./build_tdl_sdk.sh BM1684
+    ```
+
+### CMODEL_CVITEK平台编译
 
 * 执行如下脚本抽取编译依赖
 

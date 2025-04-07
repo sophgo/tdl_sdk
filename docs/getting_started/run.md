@@ -79,7 +79,34 @@ git clone https://github.com/sophgo/tdl_models.git
     python3 sample_fd.py /data/sdk_package/tdl_models/bm1684x/scrfd_500m_bnkps_432_768.bmodel /path/to/xx.jpg
     ```
 
-## CMODEL运行示例
+## BM1684运行示例
+
+* 初次登录，挂载nfs, 与BM1688相同
+
+* 配置环境
+
+    ```shell
+    cd /data/sdk_package/tdl_sdk
+    source scripts/envsetup.sh BM1684
+    ```
+
+* c++运行示例
+
+    ```shell
+    cd tdl_sdk/install/BM1684/bin
+
+    ./sample_img_fd /data/sdk_package/tdl_models/bm1684/ /path/to/xx.jpg
+    ```
+
+* python运行示例
+
+    ```shell
+    cd tdl_sdk/install/BM1684/python
+
+    python3 sample_fd.py /data/sdk_package/tdl_models/bm1684/scrfd_500m_bnkps_432_768.bmodel /path/to/xx.jpg
+    ```
+
+## CMODEL_CVITEK运行示例
 
 * 配置环境
 

@@ -7,6 +7,7 @@ print_usage() {
     echo "  CV181X         Build soph-pi 181X"
     echo "  CV186X         Build 186X"
     echo "  BM1688         Build BM1688 edge"
+    echo "  BM1684         Build BM1684 edge"
     echo "  BM1684X        Build BM1684X edge"
     echo "  CMODEL         Build linux x86_64"
     echo "  sample         Build samples only"
@@ -79,6 +80,10 @@ elif [[ "$1" == "BM1688" ]]; then
     echo "Building for BM1688 platform..."
     export CHIP_ARCH=BM1688
     # Continue with the regular build process below
+elif [[ "$1" == "BM1684" ]]; then
+    echo "Building for BM1684 platform..."
+    export CHIP_ARCH=BM1684
+    # Continue with the regular build process below    
 elif [[ "$1" == "BM1684X" ]]; then
     echo "Building for BM1684X platform..."
     export CHIP_ARCH=BM1684X
@@ -209,6 +214,14 @@ if [[ "$CHIP_ARCH" == "BM1688" ]]; then
     MPI_PATH=$CVI_TDL_ROOT/dependency/BM1688/sophon-ffmpeg
     ISP_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1688/sophon-soc-libisp
 
+elif [[ "$CHIP_ARCH" == "BM1684" ]]; then
+    CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
+    CROSS_COMPILE=aarch64-linux-
+    CV_UTILS=OFF
+    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1684/sophon-opencv
+    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1684/libsophon
+    MPI_PATH=$CVI_TDL_ROOT/dependency/BM1684/sophon-ffmpeg
+
 elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
     CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
     CROSS_COMPILE=aarch64-linux-
@@ -262,6 +275,8 @@ elif [[ "${CHIP_ARCH}" == "SOPHON" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1688" ]]; then
     USE_TPU_IVE=OFF
+elif [[ "${CHIP_ARCH}" == "BM1684" ]]; then
+    USE_TPU_IVE=OFF    
 elif [[ "${CHIP_ARCH}" == "BM1684X" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "CMODEL" ]]; then

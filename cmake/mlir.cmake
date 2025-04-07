@@ -12,6 +12,8 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
+elseif("${CVI_PLATFORM}" STREQUAL "BM1684")
+  set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)  
 else()
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 endif()
@@ -52,22 +54,22 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
       ${MLIR_SDK_ROOT}/lib/libyuv.so
       ${MLIR_SDK_ROOT}/lib/libvpp_cmodel.so
   )
-  set(MLIR_LIBS_STATIC
-      ${MLIR_SDK_ROOT}/lib/libbmrt.a
-      ${MLIR_SDK_ROOT}/lib/libbmlib.a
-      ${MLIR_SDK_ROOT}/lib/lib/libbmodel.a
-      ${MLIR_SDK_ROOT}/lib/libbmjpuapi.a
-      ${MLIR_SDK_ROOT}/lib/libbmjpulite.a
-      ${MLIR_SDK_ROOT}/lib/libbmcv.a
-      ${MLIR_SDK_ROOT}/lib/libbmvpuapi.a
-      ${MLIR_SDK_ROOT}/lib/libyuv.a
-      ${MLIR_SDK_ROOT}/lib/libbmvpulite.a
-      ${MLIR_SDK_ROOT}/lib/libbmvideo.a
-      ${MLIR_SDK_ROOT}/lib/libbmion.a
-      ${MLIR_SDK_ROOT}/lib/libbmlib.a
-      ${MLIR_SDK_ROOT}/lib/libyuv.a
-      ${MLIR_SDK_ROOT}/lib/libvpp_cmodel.a
-  )
+elseif("${CVI_PLATFORM}" STREQUAL "BM1684")
+  set(MLIR_LIBS
+      ${MLIR_SDK_ROOT}/lib/libbmrt.so
+      ${MLIR_SDK_ROOT}/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/lib/libbmjpuapi.so
+      ${MLIR_SDK_ROOT}/lib/libbmjpulite.so
+      ${MLIR_SDK_ROOT}/lib/libbmcv.so
+      ${MLIR_SDK_ROOT}/lib/libbmvpuapi.so
+      ${MLIR_SDK_ROOT}/lib/libyuv.so
+      ${MLIR_SDK_ROOT}/lib/libbmvpulite.so.0
+      ${MLIR_SDK_ROOT}/lib/libbmvideo.so.0
+      ${MLIR_SDK_ROOT}/lib/libbmion.so.0
+      ${MLIR_SDK_ROOT}/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/lib/libyuv.so
+      ${MLIR_SDK_ROOT}/lib/libvpp_cmodel.so
+  )  
 else()
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libcnpy.so

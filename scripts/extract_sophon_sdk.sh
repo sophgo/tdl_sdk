@@ -96,11 +96,35 @@ elif [ "$CHIP_ARCH" = "BM1684X" ]; then
         echo "sophon-mw tar.gz not found!"
         exit 1
     fi
+
+
+elif [ "$CHIP_ARCH" = "BM1684" ]; then
+    # BM1684 解压逻辑
+    # 动态查找并解压 libsophon 文件
+    LIBSOPHON_TAR=$(find "$TMP_DIR" -name "libsophon_*_aarch64.tar.gz" | head -n 1)
+    if [ -n "$LIBSOPHON_TAR" ]; then
+        tar -xf "$LIBSOPHON_TAR" -C "$TMP_DIR"
+        mv "$TMP_DIR"/libsophon_*/opt/sophon/libsophon-* "$TARGET_DIR/libsophon"
+    else
+        echo "libsophon tar.gz not found!"
+        exit 1
+    fi
+
+    # 动态查找并解压 sophon-mw 文件
+    SOPHON_MW_TAR=$(find "$TMP_DIR" -name "sophon-mw-soc_*_aarch64.tar.gz" | head -n 1)
+    if [ -n "$SOPHON_MW_TAR" ]; then
+        tar -xf "$SOPHON_MW_TAR" -C "$TMP_DIR"
+        mv "$TMP_DIR"/sophon-mw-soc_*/opt/sophon/sophon-ffmpeg_* "$TARGET_DIR/sophon-ffmpeg"
+        mv "$TMP_DIR"/sophon-mw-soc_*/opt/sophon/sophon-opencv_* "$TARGET_DIR/sophon-opencv"
+    else
+        echo "sophon-mw tar.gz not found!"
+        exit 1
+    fi
+
 else
     echo "Unsupported CHIP_ARCH: $CHIP_ARCH"
     exit 1
 fi
-
 
 
 rm -rf "$TMP_DIR"

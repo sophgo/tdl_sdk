@@ -29,6 +29,28 @@ if(${CVI_PLATFORM} STREQUAL "BM1684X")
   #   set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${fname})
   # endforeach ()
   return()
+elseif(${CVI_PLATFORM} STREQUAL "BM1684")
+  #ffmpeg
+  message("use ffmpeg on 1684x")
+  # set(FFMPEG_ROOT_DIR /opt/sophon/sophon-ffmpeg_1.8.0)
+  set(MIDDLEWARE_INCLUDES ${MIDDLEWARE_SDK_ROOT}/include/)
+ 
+  set(FFMPEG_LIB_DIR ${MIDDLEWARE_SDK_ROOT}/lib/)
+  file(GLOB FFMPEG_LIBS "${FFMPEG_LIB_DIR}/lib*.so")
+  foreach (fname ${FFMPEG_LIBS})
+    set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${fname})
+  endforeach ()
+  # set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} 
+  # ${MLIR_SDK_ROOT}/lib/libbmcv.so
+  # ${MLIR_SDK_ROOT}/lib/libbmjpuapi.so
+  # ${MLIR_SDK_ROOT}/lib/libbmipulite.so  
+  # )
+
+  # file(GLOB ISP_LIBS "${ISP_ROOT_DIR}/lib/*.so")
+  # foreach (fname ${ISP_LIBS})
+  #   set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${fname})
+  # endforeach ()
+  return()  
 elseif(${CVI_PLATFORM} STREQUAL "BM1688")
   #ffmpeg
   message("use ffmpeg on 1688")

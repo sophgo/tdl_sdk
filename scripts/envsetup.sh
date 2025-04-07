@@ -14,6 +14,7 @@ print_usage() {
     echo "  CV181X    - 配置 CV181X 平台环境"
     echo "  CV186X    - 配置 CV186X 平台环境"
     echo "  BM1688    - 配置 BM1688 平台环境"
+    echo "  BM1684    - 配置 BM1684 平台环境"   
     echo "  BM1684X   - 配置 BM1684X 平台环境"
     echo "  CMODEL    - 配置 CMODEL 平台环境"
     echo ""
@@ -55,6 +56,9 @@ if [ $# -gt 0 ]; then
         BM1688)
             export CHIP_ARCH="BM1688"
             ;;
+        BM1684)
+            export CHIP_ARCH="BM1684"
+            ;;            
         BM1684X)
             export CHIP_ARCH="BM1684X"
             ;;
@@ -121,7 +125,7 @@ fi
 # 根据平台配置特定环境
 configure_platform_env() {
     case "${CHIP_ARCH}" in
-        BM1688|BM1684X)
+        BM1688|BM1684X|BM1684)
             # 设置通用的Sophon依赖
             if [ $DEPLOY_MODE -eq 1 ]; then
                 TPU_SDK_PATH=$(find "${DEPENDENCY_BASE}" -maxdepth 1 -type d -name "libsophon_*" 2>/dev/null | head -n 1)
@@ -276,7 +280,7 @@ echo "PYTHONPATH      = ${PYTHONPATH}"
 echo ""
 
 # 验证配置
-if [ "${CHIP_ARCH}" = "BM1688" ] || [ "${CHIP_ARCH}" = "BM1684X" ]; then
+if [ "${CHIP_ARCH}" = "BM1688" ] || [ "${CHIP_ARCH}" = "BM1684X" || [ "${CHIP_ARCH}" = "BM1684"]; then
     echo "验证 libbmrt.so 是否可访问..."
     if ldconfig -p 2>/dev/null | grep -q libbmrt.so; then
         echo "✓ libbmrt.so 可用"
