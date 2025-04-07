@@ -4,6 +4,8 @@
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
 #include "utils/tdl_log.hpp"
+#include "tracker/tracker_types.hpp"
+#include <opencv2/opencv.hpp>
 
 std::shared_ptr<BaseModel> get_model(TDLHandle handle,
                                      const TDLModel model_id) {
@@ -685,5 +687,66 @@ int32_t TDL_CharacterRecognition(TDLHandle handle,
     return -1;
   }
 
+  return 0;
+}
+
+int32_t TDL_Tracking(TDLHandle handle,
+                     int frame_id,
+                     TDLFace *face_meta,
+                     TDLObject *obj_meta,
+                     TDLTracker *track_meta) {
+
+  std::shared_ptr<Tracker> tracker = TrackerFactory::createTracker(TrackerType::TDL_MOT_SORT);
+  if (tracker == nullptr) {
+      printf("Failed to create tracker\n");
+      return -1;
+  }
+
+  std::map<TDLObjectType, TDLObjectType> object_pair_config;
+  object_pair_config[TDLObjectType::OBJECT_TYPE_FACE] =
+      TDLObjectType::OBJECT_TYPE_PERSON;
+  tracker->setPairConfig(object_pair_config);
+  std::vector<ObjectBoxInfo> det_results;
+  std::vector<TrackerInfo> track_results;
+
+  if (face_meta != nullptr && face_meta->info != nullptr) {
+    for (uint32_t i = 0; i < face_meta->size; i++) {
+      ObjectBoxInfo box;
+      box.x1 = face_meta->info[i].box.x1;
+      box.y1 = face_meta->info[i].box.y1;
+      box.x2 = face_meta->info[i].box.x2;
+      box.y2 = face_meta->info[i].box.y2;
+      box.score = face_meta->info[i].score;
+      box.class_id = 0;
+      det_results.push_back(box);
+    }
+    tracker->setImgSize(face_meta->width, face_meta->height);
+  }
+
+  if (obj_meta != nullptr && obj_meta->info != nullptr) {
+    for (uint32_t i = 0; i < obj_meta->size; i++) {
+      ObjectBoxInfo box;
+      box.x1 = obj_meta->info[i].box.x1;
+      box.y1 = obj_meta->info[i].box.y1;
+      box.x2 = obj_meta->info[i].box.x2;
+      box.y2 = obj_meta->info[i].box.y2;
+      box.score = obj_meta->info[i].score;
+      box.class_id = obj_meta->info[i].class_id;
+      det_results.push_back(box);
+    }
+    tracker->setImgSize(obj_meta->width, obj_meta->height);
+  }
+
+  tracker->track(det_results, frame_id, track_results);
+
+  TDL_InitTrackMeta(track_meta, track_results.size());
+  for (int i = 0; i < track_results.size(); i++) {
+    TrackerInfo track_info = track_results[i];
+    track_meta->info[i].id = track_info.track_id_;
+    track_meta->info[i].bbox.x1 = track_info.box_info_.x1;
+    track_meta->info[i].bbox.x2 = track_info.box_info_.x2;
+    track_meta->info[i].bbox.y1 = track_info.box_info_.y1;
+    track_meta->info[i].bbox.y2 = track_info.box_info_.y2;
+  }
   return 0;
 }

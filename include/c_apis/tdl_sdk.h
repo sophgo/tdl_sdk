@@ -268,15 +268,15 @@ int32_t TDL_DepthStereo(TDLHandle handle,
  * @param handle TDLHandle 对象
  * @param model_id 指定跟踪模型类型枚举值
  * @param image_handle TDLImageHandle 对象
- * @param object_meta 输入/输出参数，包含待跟踪目标信息并更新跟踪状态
+ * @param obj_meta 输入/输出参数，包含待跟踪目标信息并更新跟踪状态
  * @param tracker_meta 输出参数，存储跟踪器状态信息
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_Tracking(TDLHandle handle,
-                     const TDLModel model_id,
-                     TDLImage image_handle,
-                     TDLObject *object_meta,
-                     TDLTracker *tracker_meta);
+                     int frame_id,
+                     TDLFace *face_meta,
+                     TDLObject *obj_meta,
+                     TDLTracker *track_meta);
 
 /**
  * @brief 执行字符识别任务（OCR）

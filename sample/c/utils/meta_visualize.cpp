@@ -6,9 +6,9 @@
 #include "meta_visualize.h"
 
 int32_t TDL_VisualizeRectangle(box_t *box,
-                                   int32_t num,
-                                   char *input_path,
-                                   char *output_path) {
+                               int32_t num,
+                               char *input_path,
+                               char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     printf("input path is empty\n");
@@ -29,9 +29,9 @@ int32_t TDL_VisualizeRectangle(box_t *box,
 }
 
 int32_t TDL_VisualizePoint(point_t *point,
-                               int32_t num,
-                               char *input_path,
-                               char *output_path) {
+                           int32_t num,
+                           char *input_path,
+                           char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     printf("input path is empty\n");
@@ -52,9 +52,9 @@ int32_t TDL_VisualizePoint(point_t *point,
 }
 
 int32_t TDL_VisualizeLine(box_t *box,
-                              int32_t num,
-                              char *input_path,
-                              char *output_path) {
+                          int32_t num,
+                          char *input_path,
+                          char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     printf("input path is empty\n");
@@ -74,9 +74,9 @@ int32_t TDL_VisualizeLine(box_t *box,
 }
 
 int32_t TDL_VisualizePolylines(point_t *point,
-                                   int32_t num,
-                                   char *input_path,
-                                   char *output_path) {
+                               int32_t num,
+                               char *input_path,
+                               char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     printf("input path is empty\n");
@@ -149,5 +149,29 @@ int32_t TDL_MatToImage(int **mat,
     }
   }
   imwrite(output_path, image);
+  return 0;
+}
+
+int32_t TDL_VisualizText(int32_t x,
+                         int32_t y,
+                         char *text,
+                         char *input_path,
+                         char *output_path) {
+  cv::Mat image = cv::imread(input_path);
+  if (image.empty()) {
+    printf("input path is empty\n");
+    return -1;
+  }
+
+  int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+  double fontScale = 1.0;
+  int thickness = 2;
+  cv::Scalar color(0, 255, 0); // 绿色
+  cv::Point textOrg(x, y);
+
+  cv::putText(image, text, textOrg, fontFace, fontScale, color, thickness);
+
+  cv::imwrite(output_path, image);
+
   return 0;
 }

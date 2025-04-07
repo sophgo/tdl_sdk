@@ -57,6 +57,11 @@ int32_t TDL_InitCharacterMeta(TDLOcr *char_meta, int length);
 
 int32_t TDL_ReleaseCharacterMeta(TDLOcr *char_meta);
 
+int32_t TDL_InitTrackMeta(TDLTracker *track_meta,
+                          int num_track);
+
+int32_t TDL_ReleaseTrackMeta(TDLTracker *track_meta);
+
 #ifdef __cplusplus
 }
 #endif

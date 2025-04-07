@@ -165,10 +165,13 @@ typedef struct {
 } TDLDepthLogits;
 
 typedef struct {
-  uint32_t size;
   uint64_t id;
   TDLBox bbox;
+} TDLTrackerInfo;
+typedef struct {
+  uint32_t size;
   int out_num;
+  TDLTrackerInfo *info;
 } TDLTracker;
 
 typedef struct {

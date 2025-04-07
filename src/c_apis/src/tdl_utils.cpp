@@ -78,6 +78,7 @@ int32_t TDL_ReleaseInstanceSegMeta(TDLInstanceSeg *inst_seg_meta) {
   }
 
   free(inst_seg_meta->info);
+  inst_seg_meta->info = NULL;
   return 0;
 }
 
@@ -101,8 +102,11 @@ int32_t TDL_ReleaseFaceMeta(TDLFace *face_meta) {
   for (int i = 0; i < face_meta->size; i++) {
     free(face_meta->info[i].landmarks.x);
     free(face_meta->info[i].landmarks.y);
+    face_meta->info[i].landmarks.x = NULL;
+    face_meta->info[i].landmarks.y = NULL;
   }
   free(face_meta->info);
+  face_meta->info = NULL;
   return 0;
 }
 
@@ -119,6 +123,7 @@ int32_t TDL_InitKeypointMeta(TDLKeypoint *keypoint_meta,
 
 int32_t TDL_ReleaseKeypointMeta(TDLKeypoint *keypoint_meta) {
   free(keypoint_meta->info);
+  keypoint_meta->info = NULL;
   return 0;
 }
 
@@ -190,6 +195,21 @@ int32_t TDL_ReleaseFeatureMeta(TDLFeature *feature_meta) {
     free(feature_meta->ptr);
     feature_meta->ptr = NULL;
   }
+  return 0;
+}
+
+int32_t TDL_InitTrackMeta(TDLTracker *track_meta,
+                          int num_track) {
+  if (track_meta->info) return 0;
+  track_meta->info = (TDLTrackerInfo *)malloc(
+    num_track * sizeof(TDLTrackerInfo));
+  track_meta->out_num = num_track;
+  return 0;
+}
+
+int32_t TDL_ReleaseTrackMeta(TDLTracker *track_meta) {
+  free(track_meta->info);
+  track_meta->info = NULL;
   return 0;
 }
 
