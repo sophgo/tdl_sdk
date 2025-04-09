@@ -9,6 +9,7 @@
 #include <vector>
 #include "model/llm_model.hpp"  // LLMModel基类
 #include "qwen.hpp"             // Qwen模型
+#include "qwen2VL.hpp"          // Qwen2VL模型
 #include "utils/tdl_log.hpp"    // 日志
 namespace py = pybind11;
 namespace pytdl {
@@ -85,6 +86,60 @@ class PyLLMBase {
 class PyQwen : public PyLLMBase {
  public:
   PyQwen() { model_ = std::make_shared<Qwen>(); }
+};
+
+class PyQwen2VL {
+ private:
+  std::unique_ptr<Qwen2VL> model_;
+  int device_id_;
+
+ public:
+  PyQwen2VL() : device_id_(0), model_(std::make_unique<Qwen2VL>()) {}
+
+  void init(int device_id, const std::string& model_path) {
+    device_id_ = device_id;
+    model_->init(device_id, model_path);
+  }
+
+  void deinit() {
+    if (model_) {
+      model_->deinit();
+    }
+  }
+
+  int forward_first(const std::vector<int>& tokens,
+                    const std::vector<int>& position_id,
+                    const std::vector<float>& pixel_values,
+                    const std::vector<int>& posids,
+                    const std::vector<float>& attnmask, int img_offset,
+                    int pixel_num) {
+    // 复制输入，因为原始函数参数是非const引用
+    std::vector<int> tokens_copy = tokens;
+    std::vector<int> position_id_copy = position_id;
+    std::vector<float> pixel_values_copy = pixel_values;
+    std::vector<int> posids_copy = posids;
+    std::vector<float> attnmask_copy = attnmask;
+
+    return model_->forward_first(tokens_copy, position_id_copy,
+                                 pixel_values_copy, posids_copy, attnmask_copy,
+                                 img_offset, pixel_num);
+  }
+
+  int forward_next() { return model_->forward_next(); }
+
+  py::dict get_model_info() const {
+    py::dict info;
+    if (model_) {
+      info["token_length"] = model_->token_length;
+      info["SEQLEN"] = model_->SEQLEN;
+      info["HIDDEN_SIZE"] = model_->HIDDEN_SIZE;
+      info["NUM_LAYERS"] = model_->NUM_LAYERS;
+      info["MAX_POS"] = model_->MAX_POS;
+      info["generation_mode"] = model_->generation_mode;
+      info["MAX_PIXELS"] = model_->MAX_PIXELS;
+    }
+    return info;
+  }
 };
 
 }  // namespace pytdl

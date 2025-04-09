@@ -40,7 +40,8 @@ std::vector<float> BasePreprocessor::getRescaleConfig(
 }
 std::shared_ptr<BasePreprocessor> PreprocessorFactory::createPreprocessor(
     InferencePlatform platform) {
-  if (platform == InferencePlatform::UNKOWN) {
+  if (platform == InferencePlatform::UNKOWN ||
+      platform == InferencePlatform::AUTOMATIC) {
     platform = get_platform();
   }
   LOGI("PreprocessorFactory createPreprocessor,platform:%d\n", platform);

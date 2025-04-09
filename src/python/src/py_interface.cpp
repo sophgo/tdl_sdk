@@ -334,4 +334,20 @@ PYBIND11_MODULE(tdl, m) {
       .def("__exit__", [](PyQwen& self, py::object, py::object, py::object) {
         self.modelClose();
       });
+
+  // 注册Qwen2VL类
+  py::class_<PyQwen2VL>(llm, "Qwen2VL")
+      .def(py::init<>())
+      .def("init", &PyQwen2VL::init, py::arg("device_id"),
+           py::arg("model_path"))
+      .def("deinit", &PyQwen2VL::deinit)
+      .def("forward_first", &PyQwen2VL::forward_first, py::arg("tokens"),
+           py::arg("position_id"), py::arg("pixel_values"), py::arg("posids"),
+           py::arg("attnmask"), py::arg("img_offset"), py::arg("pixel_num"))
+      .def("forward_next", &PyQwen2VL::forward_next)
+      .def("get_model_info", &PyQwen2VL::get_model_info)
+      .def("__enter__", [](PyQwen2VL& self) { return &self; })
+      .def("__exit__", [](PyQwen2VL& self, py::object, py::object, py::object) {
+        self.deinit();
+      });
 }
