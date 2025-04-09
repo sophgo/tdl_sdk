@@ -34,7 +34,7 @@ else()
 endif()
 
 set(CMAKE_C_INIT "-fsigned-char -fdiagnostics-color=always -std=gnu11")
-set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++17 -pthread")
+set(CMAKE_CXX_INIT "-fsigned-char -fPIC -fdiagnostics-color=always -std=gnu++14 -pthread")
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")

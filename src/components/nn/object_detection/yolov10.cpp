@@ -259,10 +259,10 @@ int32_t YoloV10Detection::outputParse(
         decodeBboxFeatureMap(b, stride, j, box);
         ObjectBoxInfo bbox;
         bbox.score = score;
-        bbox.x1 = std::clamp(box[0], 0.0f, input_width_f);
-        bbox.y1 = std::clamp(box[1], 0.0f, input_height_f);
-        bbox.x2 = std::clamp(box[2], 0.0f, input_width_f);
-        bbox.y2 = std::clamp(box[3], 0.0f, input_height_f);
+        bbox.x1 = std::max(0.0f, std::min(box[0], input_width_f));
+        bbox.y1 = std::max(0.0f, std::min(box[1], input_height_f));
+        bbox.x2 = std::max(0.0f, std::min(box[2], input_width_f));
+        bbox.y2 = std::max(0.0f, std::min(box[3], input_height_f));
         bbox.class_id = max_logit_c;
         LOGI("bbox:[%f,%f,%f,%f],score:%f,label:%d,logit:%f\n", bbox.x1,
              bbox.y1, bbox.x2, bbox.y2, bbox.score, max_logit_c, max_logit);

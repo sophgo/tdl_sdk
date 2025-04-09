@@ -102,7 +102,7 @@ elif [[ "$1" == "clean" ]]; then
         echo "CHIP_ARCH not set, cleaning all architectures"
         # Clean all possible build directories
         for arch in CV181X CV186X BM1688; do
-            BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${arch}
+            BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build/${arch}
             TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${arch}"
 
             if [ -d "${BUILD_WORKING_DIR}" ]; then
@@ -115,7 +115,7 @@ elif [[ "$1" == "clean" ]]; then
             fi
         done
     else
-        BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build_${CHIP_ARCH}
+        BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build/${CHIP_ARCH}
         TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
 
         if [ -d "${BUILD_WORKING_DIR}" ]; then

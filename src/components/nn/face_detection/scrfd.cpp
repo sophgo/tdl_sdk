@@ -192,10 +192,10 @@ int32_t SCRFD::outputParse(
           float box_y2 =
               grid_cy + bbox_blob[j + count * (3 + num * 4)] * stride;
 
-          box_x1 = std::clamp((box_x1 - pad_x) / scalex, 0.0f, image_width_f);
-          box_y1 = std::clamp((box_y1 - pad_y) / scaley, 0.0f, image_height_f);
-          box_x2 = std::clamp((box_x2 - pad_x) / scalex, 0.0f, image_width_f);
-          box_y2 = std::clamp((box_y2 - pad_y) / scaley, 0.0f, image_height_f);
+          box_x1 = std::max(0.0f, std::min((box_x1 - pad_x) / scalex, image_width_f));
+          box_y1 = std::max(0.0f, std::min((box_y1 - pad_y) / scaley, image_height_f));
+          box_x2 = std::max(0.0f, std::min((box_x2 - pad_x) / scalex, image_width_f));
+          box_y2 = std::max(0.0f, std::min((box_y2 - pad_y) / scaley, image_height_f));
 
           if (box_x1 >= box_x2 || box_y1 >= box_y2) {
             LOGI(
@@ -217,9 +217,9 @@ int32_t SCRFD::outputParse(
                 landmark_blob[j + count * (num * 10 + k * 2 + 1)] * stride +
                 grid_cy;
             landmark_x =
-                std::clamp((landmark_x - pad_x) / scalex, 0.0f, image_width_f);
+                std::max(0.0f, std::min((landmark_x - pad_x) / scalex, image_width_f));
             landmark_y =
-                std::clamp((landmark_y - pad_y) / scaley, 0.0f, image_height_f);
+                std::max(0.0f, std::min((landmark_y - pad_y) / scaley, image_height_f));
             landmarks_x.push_back(landmark_x);
             landmarks_y.push_back(landmark_y);
             landmarks_score.push_back(0);

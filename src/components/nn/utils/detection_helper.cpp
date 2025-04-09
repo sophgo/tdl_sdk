@@ -432,13 +432,13 @@ void DetectionHelper::rescaleBbox(ObjectBoxLandmarkInfo &bbox,
 //   for (auto &bbox : dets) {
 //     for (auto &b : bbox.second) {
 //       obj->info[idx].bbox.x1 =
-//           std::clamp(b.x1, 0.0f, static_cast<float>(im_width));
+//           std::max(0.0f, std::min(b.x1, static_cast<float>(im_width)));
 //       obj->info[idx].bbox.y1 =
-//           std::clamp(b.y1, 0.0f, static_cast<float>(im_height));
+//           std::max(0.0f, std::min(b.y1, static_cast<float>(im_height)));
 //       obj->info[idx].bbox.x2 =
-//           std::clamp(b.x2, 0.0f, static_cast<float>(im_width));
+//           std::max(0.0f, std::min(b.x2, static_cast<float>(im_width)));
 //       obj->info[idx].bbox.y2 =
-//           std::clamp(b.y2, 0.0f, static_cast<float>(im_height));
+//           std::max(0.0f, std::min(b.y2, static_cast<float>(im_height)));
 //       obj->info[idx].bbox.score = b.score;
 //       obj->info[idx].classes = bbox.first;
 //       idx++;
