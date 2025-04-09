@@ -172,6 +172,8 @@ if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1688" O
   set(IS_LOCAL OFF)
 endif()
 
+# Default dynamic compilation
+set(BUILD_SHARED ON)
 
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -190,8 +192,8 @@ endif()
 include(cmake/mlir.cmake)
 
 if( NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK"))
-# Check if mpi SDK exists.
-include(cmake/middleware.cmake)
+  # Check if mpi SDK exists.
+  include(cmake/middleware.cmake)
 endif()
 
 # 3rdparty libraries

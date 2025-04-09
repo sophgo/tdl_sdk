@@ -34,6 +34,7 @@ project(cvi_tdl-static)
 add_library(${PROJECT_NAME} STATIC ${CORES_SRCS})
 target_link_libraries(${PROJECT_NAME} ${CORES_DEPS} ${OPENCV_LIBS_IMCODEC_STATIC})
 SET_TARGET_PROPERTIES(cvi_tdl-static PROPERTIES OUTPUT_NAME "cvi_tdl")
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
     add_subdirectory(python)

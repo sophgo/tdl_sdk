@@ -239,3 +239,25 @@
     cd /data/sdk_package/tdl_sdk/
     ./build_tdl_sdk.sh BM1684X
     ```
+
+### 静态编译sample
+
+* sample的默认编译方式为动态编译，即编译好后的sample需要配置LD_LIBRARY_PATH环境变量才能执行
+
+    ``` shell
+    export LD_LIBRARY_PATH=path/to/lib
+    ```
+
+* 如果想直接运行sample，我们提供了静态编译方式，请参考如下修改
+
+    ``` cmake
+    # CMakeLists.txt
+
+    # default
+    set(BUILD_SHARED ON)
+
+    # static build
+    set(BUILD_SHARED OFF)
+    ```
+
+* 需要注意，静态编译的sample文件大小将增大，请合理决定

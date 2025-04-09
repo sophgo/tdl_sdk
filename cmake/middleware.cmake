@@ -94,6 +94,24 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+    set(MIDDLEWARE_LIBS_STATIC
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libae.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
+    ${MLIR_SDK_ROOT}/lib/libz.a)
     add_definitions(-DSENSOR_GCORE_GC4653)
 else()
     # Default libraries for other platforms
@@ -111,8 +129,22 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-        ${MLIR_SDK_ROOT}/lib/libz.so
-    )
+        ${MLIR_SDK_ROOT}/lib/libz.so)
+      set(MIDDLEWARE_LIBS_STATIC
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsample.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libawb.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libae.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
+        ${MLIR_SDK_ROOT}/lib/libz.a)
 
     # Additional libraries for v2
     if(${MW_VER} STREQUAL "v2")
@@ -136,17 +168,39 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-                ${MLIR_SDK_ROOT}/lib/libz.so
-            )
+                ${MLIR_SDK_ROOT}/lib/libz.so)
+             set(MIDDLEWARE_LIBS_STATIC
+                ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.a
+                # ${MIDDLEWARE_SDK_ROOT}/lib/libldc.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/librgn.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libsample.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libawb.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libae.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.a
+                ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
+                ${MLIR_SDK_ROOT}/lib/libz.a)
         endif()
         set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
+        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.a)
     else()
         set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so)
+        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.a)
     endif()
 
     # Add isp_algo library for non-CV183X platforms
     if(NOT ${CVI_PLATFORM} STREQUAL "CV183X")
         set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a)
     endif()
 endif()
 

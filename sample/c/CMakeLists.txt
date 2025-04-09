@@ -15,7 +15,18 @@ set(SAMPLE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/utils
 )
 
-set(SAMPLE_LIBS ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
+if(BUILD_SHARED)
+    set(SAMPLE_LIBS cvi_tdl ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
+else()
+    set(SAMPLE_LIBS
+        "-Wl,--start-group"
+        ${cvi_tdl_BINARY_DIR}/libcvi_tdl.a
+        ${MIDDLEWARE_LIBS_STATIC}
+        ${OPENCV_LIBS_IMCODEC_STATIC}
+        ${MLIR_LIBS_STATIC}
+        "-Wl,--end-group")
+endif()
+
 include_directories(${SAMPLE_INCLUDES})
 
 file(GLOB SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
@@ -27,6 +38,10 @@ foreach (fname ${SAMPLE_SRC_FILES})
   set(EXAMPLE_SRC_FILES ${EXAMPLE_SRC_FILES} ${fname})
   get_filename_component(name ${fname} NAME_WE)
   add_executable(${name} ${fname} ${UTILS_CPP})
-  target_link_libraries(${name} cvi_tdl ${SAMPLE_LIBS} atomic m)
+  target_link_libraries(${name} ${SAMPLE_LIBS} dl rt atomic m)
+  #strip
+  add_custom_command(TARGET ${name} POST_BUILD
+        COMMAND ${CROSS_COMPILE}strip $<TARGET_FILE:${name}>
+        COMMENT "Stripping binary for ${name}")
   install(TARGETS ${name} DESTINATION bin)
 endforeach ()

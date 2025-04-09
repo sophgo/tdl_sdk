@@ -21,10 +21,20 @@ if("${CVI_PLATFORM}" STREQUAL "SOPHON")
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmrt.so
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmlib.so
   )
+  set(MLIR_LIBS_STATIC
+      ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmrt.a
+      ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmlib.a
+      ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmodel.a
+)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libbmrt.so
       ${MLIR_SDK_ROOT}/lib/libbmlib.so
+  )
+  set(MLIR_LIBS_STATIC
+      ${MLIR_SDK_ROOT}/lib/libbmrt.a
+      ${MLIR_SDK_ROOT}/lib/libbmlib.a
+      ${MLIR_SDK_ROOT}/lib/lib/libbmodel.a
   )
 elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
   set(MLIR_LIBS
@@ -42,13 +52,33 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
       ${MLIR_SDK_ROOT}/lib/libyuv.so
       ${MLIR_SDK_ROOT}/lib/libvpp_cmodel.so
   )
+  set(MLIR_LIBS_STATIC
+      ${MLIR_SDK_ROOT}/lib/libbmrt.a
+      ${MLIR_SDK_ROOT}/lib/libbmlib.a
+      ${MLIR_SDK_ROOT}/lib/lib/libbmodel.a
+      ${MLIR_SDK_ROOT}/lib/libbmjpuapi.a
+      ${MLIR_SDK_ROOT}/lib/libbmjpulite.a
+      ${MLIR_SDK_ROOT}/lib/libbmcv.a
+      ${MLIR_SDK_ROOT}/lib/libbmvpuapi.a
+      ${MLIR_SDK_ROOT}/lib/libyuv.a
+      ${MLIR_SDK_ROOT}/lib/libbmvpulite.a
+      ${MLIR_SDK_ROOT}/lib/libbmvideo.a
+      ${MLIR_SDK_ROOT}/lib/libbmion.a
+      ${MLIR_SDK_ROOT}/lib/libbmlib.a
+      ${MLIR_SDK_ROOT}/lib/libyuv.a
+      ${MLIR_SDK_ROOT}/lib/libvpp_cmodel.a
+  )
 else()
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libcnpy.so
       ${MLIR_SDK_ROOT}/lib/libcvikernel.so
       # ${MLIR_SDK_ROOT}/lib/libcvimath.so
-      ${MLIR_SDK_ROOT}/lib/libcviruntime.so
-  )
+      ${MLIR_SDK_ROOT}/lib/libcviruntime.so)
+  set(MLIR_LIBS_STATIC
+      ${MLIR_SDK_ROOT}/lib/libcvikernel-static.a
+      # ${MLIR_SDK_ROOT}/lib/libcvimath.so
+      ${MLIR_SDK_ROOT}/lib/libcviruntime-static.a
+      ${MLIR_SDK_ROOT}/lib/libcnpy.a)
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "BM1688")

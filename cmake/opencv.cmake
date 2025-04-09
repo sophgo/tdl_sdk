@@ -85,12 +85,23 @@ set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_core.so
 
 set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_core.a
                                ${OPENCV_ROOT}/lib/libopencv_imgproc.a
-                               ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a)
+                               ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a
+                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libIlmImf.a
+                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjasper.a
+                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjpeg.a
+                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibpng.a
+                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibtiff.a
+                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibwebp.a)
 
 if(NOT "${ARCH}" STREQUAL "riscv" AND NOT "${ARCH}" STREQUAL "RISCV")
   list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a")
 endif()
-
+list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libIlmImf.a")
+list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjasper.a")
+list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjpeg.a")
+list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibpng.a")
+list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibtiff.a")
+list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibwebp.a")
 
 set(OPENCV_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/opencv)
 
