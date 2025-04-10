@@ -4,7 +4,8 @@
 #include "py_utils.hpp"
 #include "utils/common_utils.hpp"
 namespace pytdl {
-std::shared_ptr<BasePreprocessor> gPreprocessor = nullptr;
+std::shared_ptr<BasePreprocessor> gPreprocessor =
+    PreprocessorFactory::createPreprocessor(InferencePlatform::UNKOWN);
 PyImage::PyImage() {}
 PyImage::PyImage(std::shared_ptr<BaseImage>& image) : image_(image) {}
 
