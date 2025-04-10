@@ -330,8 +330,9 @@ CVI_S32 CVI_TDL_Service_FaceAngleForAll(const cvtdl_face_t *meta) {
 #endif
 }
 
-CVI_S32 CVI_TDL_Service_ObjectDrawPose(const cvtdl_object_t *meta, VIDEO_FRAME_INFO_S *frame) {
-  return cvitdl::service::DrawPose17(meta, frame);
+CVI_S32 CVI_TDL_Service_ObjectDrawPose(const cvtdl_object_t *meta, VIDEO_FRAME_INFO_S *frame,
+                                       float score_threshold) {
+  return cvitdl::service::DrawPose17(meta, frame, score_threshold);
 }
 CVI_S32 CVI_TDL_Service_FaceDrawPts(cvtdl_pts_t *pts, VIDEO_FRAME_INFO_S *frame) {
   return cvitdl::service::DrawPts(pts, frame);

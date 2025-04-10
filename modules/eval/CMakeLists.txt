@@ -132,6 +132,7 @@ endif()
 if (NOT DEFINED NO_OPENCV)
     buildninstallcpp(NAME eval_pose_dataset INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
     buildninstallcpp(NAME eval_lpr_pipe INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
+    buildninstallcpp(NAME eval_blip_vqa INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)
 endif()
 
 #eval_model
@@ -158,3 +159,4 @@ buildninstallcpp(NAME eval_dms_landmarks_imgs INC ${REG_INCLUDES} DEPS cvi_tdl a
 buildninstallcpp(NAME eval_isp_image_classification INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME eval_det INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
 buildninstallcpp(NAME eval_cls INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS})
+buildninstallcpp(NAME regression_info INC ${REG_INCLUDES} DEPS cvi_tdl atomic ${SAMPLE_LIBS} SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/sys_utils.cpp)

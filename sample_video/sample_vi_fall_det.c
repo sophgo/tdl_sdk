@@ -73,6 +73,13 @@ cvtdl_service_brush_t get_random_brush(uint64_t seed, int min) {
   return brush;
 }
 
+cv_tdl_service_brush_t brush_red = {
+    .color.r = 255,
+    .color.g = 0,
+    .color.b = 0,
+    .size = 2,
+};
+
 void *run_venc(void *args) {
   printf("Enter encoder thread\n");
   SAMPLE_TDL_VENC_THREAD_ARG_S *pstArgs = (SAMPLE_TDL_VENC_THREAD_ARG_S *)args;
@@ -112,7 +119,11 @@ void *run_venc(void *args) {
       } else if (stTrackerMeta.info[oid].state == CVI_TRACKER_UNSTABLE) {
         brushes[oid] = stGreyBrush;
       } else {  // CVI_TRACKER_STABLE
-        brushes[oid] = get_random_brush(stObjMeta.info[oid].unique_id, 64);
+        if(stObjMeta.info[oid].pedestrian_properity->fall){
+          brushes[oid] = brush_red;
+        }else{
+          brushes[oid] = get_random_brush(stObjMeta.info[oid].unique_id, 64);
+        }
       }
     }
 

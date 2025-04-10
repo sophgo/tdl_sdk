@@ -220,6 +220,32 @@ CVI_S32 CVI_TDL_ShowKeypoints(VIDEO_FRAME_INFO_S *bg, cvtdl_object_t *obj_meta, 
   return CVI_SUCCESS;
 }
 
+CVI_S32 CVI_TDL_ShowDetectionBox(cvtdl_object_t *obj_meta, const char *image_path,
+                              char *save_path) {
+  cv::Mat image = cv::imread(image_path);
+  if (image.empty()) {
+      printf("Could not open or find the image!\n");
+      return CVI_FAILURE;
+  }
+
+  for (uint32_t i = 0; i < obj_meta->size; i++) {
+      float x1 = obj_meta->info[i].bbox.x1;
+      float y1 = obj_meta->info[i].bbox.y1;
+      float x2 = obj_meta->info[i].bbox.x2;
+      float y2 = obj_meta->info[i].bbox.y2;
+      int class_id = obj_meta->info[i].classes;
+      float confidence = obj_meta->info[i].bbox.score;
+      cv::rectangle(image, cv::Point(int(x1), int(y1)), cv::Point(int(x2), int(y2)), cv::Scalar(255, 0, 0), 2);
+
+      char label[256];
+      snprintf(label, sizeof(label), "Class:%d Confidence:%.2f", class_id, confidence);
+      cv::putText(image, label, cv::Point(int(x1), int(y1) - 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 0), 1);   
+  }
+
+  cv::imwrite(save_path, image);
+  return CVI_SUCCESS;
+}
+
 CVI_S32 CVI_TDL_SavePicture(VIDEO_FRAME_INFO_S *bg, char *save_path) {
   CVI_U8 *r_plane = (CVI_U8 *)CVI_SYS_Mmap(bg->stVFrame.u64PhyAddr[0], bg->stVFrame.u32Length[0]);
   CVI_U8 *g_plane = (CVI_U8 *)CVI_SYS_Mmap(bg->stVFrame.u64PhyAddr[1], bg->stVFrame.u32Length[1]);
@@ -327,8 +353,8 @@ CVI_S32 CVI_TDL_Set_Occlusion_Laplacian(VIDEO_FRAME_INFO_S *frame,
   cv::Mat cur_frame_gray;
 
 #ifdef ENABLE_CVIAI_CV_UTILS
-  cviai::cvtColor(sub_frame, cur_frame_gray, COLOR_BGR2GRAY);
-  std::cout << "cviai::cvtColor: " << std::endl;
+  cvitdl::cvtColor(sub_frame, cur_frame_gray, COLOR_BGR2GRAY);
+  std::cout << "cvitdl::cvtColor: " << std::endl;
 #else
   cv::cvtColor(sub_frame, cur_frame_gray, cv::COLOR_BGR2GRAY);
 #endif
@@ -426,6 +452,18 @@ CVI_S32 CVI_TDL_Set_ClipPostprocess(float **text_features, int text_features_num
 
   LOGE("Tokenization error\n");
   return CVI_FAILURE;
+}
+
+CVI_S32 CVI_TDL_NormTextFeature(cvtdl_clip_feature **text_features, int text_features_num) {
+  for (int i = 0; i < text_features_num; ++i) {
+    Eigen::Map<Eigen::VectorXf> text_features_eigen(text_features[i]->out_feature,
+                                                    text_features[0]->feature_dim);
+    float norm = text_features_eigen.norm();
+    if (norm != 0.0f) {
+      text_features_eigen /= norm;
+    }
+  }
+  return CVI_SUCCESS;
 }
 
 CVI_S32 CVI_TDL_Set_TextPreprocess(const char *encoderFile, const char *bpeFile,
