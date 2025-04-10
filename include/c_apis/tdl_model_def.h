@@ -34,10 +34,10 @@ typedef enum {
   TDL_MODEL_SCRFD_DET_FACE,  // 0:face + landm
   TDL_MODEL_RETINA_DET_FACE,
   TDL_MODEL_RETINA_DET_FACE_IR,
-  TDL_MODEL_KEYPOINT_FACE_V2,    // 5 landmarks + blurness score
-  TDL_MODEL_CLS_ATTRIBUTE_FACE,  // age,gener,glass,mask
-  TDL_MODEL_FEATURE_BMFACER34,   // resnet34 512 dim feature
-  TDL_MODEL_FEATURE_BMFACER50,   // resnet50 512 dim feature
+  TDL_MODEL_KEYPOINT_FACE_V2,           // 5 landmarks + blurness score
+  TDL_MODEL_CLS_ATTRIBUTE_FACE,         // age,gener,glass,mask
+  TDL_MODEL_RESNET_FEATURE_BMFACE_R34,  // resnet34 512 dim feature
+  TDL_MODEL_RESNET_FEATURE_BMFACE_R50,  // resnet50 512 dim feature
   TDL_FACE_MODEL_MAX,
 
   // classification model list
@@ -84,7 +84,6 @@ typedef enum {
   TDL_MODEL_IMG_FEATURE_CLIP,
   TDL_MODEL_TEXT_FEATURE_CLIP,
   TDL_LLM_MODEL_MAX,
-
 
 } TDLModel;
 

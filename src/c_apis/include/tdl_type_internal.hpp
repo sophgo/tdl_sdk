@@ -83,8 +83,8 @@ ModelType convert_model_type(TDLModel model_type) {
       return ModelType::KEYPOINT_YOLOV8POSE_PERSON17;
     case TDL_MODEL_KEYPOINT_SIMICC:
       return ModelType::KEYPOINT_SIMCC_PERSON17;
-    case TDL_MODEL_FEATURE_BMFACER34:
-      return ModelType::FEATURE_BMFACER34;
+    case TDL_MODEL_RESNET_FEATURE_BMFACE_R34:
+      return ModelType::RESNET_FEATURE_BMFACE_R34;
     case TDL_MODEL_CLS_RGBLIVENESS:
       return ModelType::CLS_RGBLIVENESS;
     case TDL_MODEL_LSTR_DET_LANE:
@@ -122,20 +122,18 @@ inline std::shared_ptr<ModelBoxLandmarkInfo> convert_face_meta(
   return face_info;
 }
 
-inline std::shared_ptr<ModelBoxInfo> convert_obj_meta(
-    TDLObject *object_meta) {
-std::shared_ptr<ModelBoxInfo> obj_info =
-    std::make_shared<ModelBoxInfo>();
-for (int i = 0; i < object_meta->size; i++) {
-  ObjectBoxInfo box_landmark_info;
-  box_landmark_info.x1 = object_meta->info[i].box.x1;
-  box_landmark_info.y1 = object_meta->info[i].box.y1;
-  box_landmark_info.x2 = object_meta->info[i].box.x2;
-  box_landmark_info.y2 = object_meta->info[i].box.y2;
-  box_landmark_info.score = object_meta->info[i].score;
+inline std::shared_ptr<ModelBoxInfo> convert_obj_meta(TDLObject *object_meta) {
+  std::shared_ptr<ModelBoxInfo> obj_info = std::make_shared<ModelBoxInfo>();
+  for (int i = 0; i < object_meta->size; i++) {
+    ObjectBoxInfo box_landmark_info;
+    box_landmark_info.x1 = object_meta->info[i].box.x1;
+    box_landmark_info.y1 = object_meta->info[i].box.y1;
+    box_landmark_info.x2 = object_meta->info[i].box.x2;
+    box_landmark_info.y2 = object_meta->info[i].box.y2;
+    box_landmark_info.score = object_meta->info[i].score;
 
-  obj_info->bboxes.push_back(box_landmark_info);
-}
-return obj_info;
+    obj_info->bboxes.push_back(box_landmark_info);
+  }
+  return obj_info;
 }
 #endif

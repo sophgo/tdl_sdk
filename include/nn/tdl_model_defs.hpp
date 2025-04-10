@@ -24,14 +24,19 @@ enum class ModelType {
   YOLOV8N_DET_TRAFFIC_LIGHT,     // 0:red,1:yellow,2:green,3:off,4:wait on
   YOLOV8N_DET_MONITOR_PERSON,    // 0:person
 
+  // custom object detection models should specify num_cls(number of classes)
+  YOLOV8,   // custom model,should specify num_cls(number of classes)
+  YOLOV10,  // custom model,should specify num_cls(number of classes)
+  YOLOV3,   // custom model,should specify num_cls(number of classes)
+  YOLOV5,   // custom model,should specify num_cls(number of classes)
+  YOLOV6,   // custom model,should specify num_cls(number of classes)
+
   // face detection model
   SCRFD_DET_FACE,  // 0:face + landm
   RETINA_DET_FACE,
   RETINA_DET_FACE_IR,
   KEYPOINT_FACE_V2,    // 5 landmarks + blurness score
   CLS_ATTRIBUTE_FACE,  // age,gener,glass,mask
-  FEATURE_BMFACER34,   // resnet34 512 dim feature
-  FEATURE_BMFACER50,   // resnet50 512 dim feature
 
   // image classification models
   CLS_MASK,         // 0:mask,1:no mask
@@ -43,6 +48,13 @@ enum class ModelType {
   // sound classification models
   CLS_SOUND_BABAY_CRY,  // 0:background,1:cry
   CLS_SOUND_COMMAND,    // 0:background,1:command1,2:command2 ...
+
+  // custom classification models should specify rgb order and rgb mean /rgb std
+  CLS_IMG,  // should specify rgb order and rgb mean /rgb std
+
+  // custom sound classification models should specify sample rate and channel
+  // num
+  CLS_SOUND,  // should specify sample rate and channel num
 
   // image keypoint models
   KEYPOINT_LICENSE_PLATE,
@@ -57,27 +69,23 @@ enum class ModelType {
   RECOGNITION_LICENSE_PLATE,
 
   // image segmentation models
+  YOLOV8_SEG,
   YOLOV8_SEG_COCO80,
   TOPFORMER_SEG_PERSON_FACE_VEHICLE,  // 0:background,1:person,2:face,3:vehicle,4:license
                                       // plate
   TOPFORMER_SEG_MOTION,  // 0:static,2:transsition 3:motion
 
+  // custom image feature models,should specify rgb order and rgb mean /rgb std
+  FEATURE_IMG,
   // LLM models
   CLIP_FEATURE_IMG,
   CLIP_FEATURE_TEXT,
 
+  RESNET_FEATURE_BMFACE_R34,  // resnet34 512 dim feature
+  RESNET_FEATURE_BMFACE_R50,  // resnet50 512 dim feature
+
   // custom models,user should specify necessary params like preprocess and
   // input/output and parse parameters
-
-  // object detection models
-  YOLOV8,   // custom model,should specify num_cls(number of classes)
-  YOLOV10,  // custom model,should specify num_cls(number of classes)
-  YOLOV3,   // custom model,should specify num_cls(number of classes)
-  YOLOV5,   // custom model,should specify num_cls(number of classes)
-  YOLOV6,   // custom model,should specify num_cls(number of classes)
-
-  CLS_IMG,    // should specify rgb order and rgb mean /rgb std
-  CLS_SOUND,  // should specify sample rate and channel num
 
 };
 

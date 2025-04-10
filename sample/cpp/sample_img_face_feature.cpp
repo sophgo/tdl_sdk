@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     return -1;
   }
   std::shared_ptr<BaseModel> model_fe =
-      model_factory.getModel(ModelType::FEATURE_BMFACER34);
+      model_factory.getModel(ModelType::RESNET_FEATURE_BMFACE_R34);
   if (!model_fe) {
     printf("Failed to create model_fe\n");
     return -1;

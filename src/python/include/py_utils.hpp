@@ -57,7 +57,7 @@ inline std::string object_type_to_string(TDLObjectType type) {
       return "MOTORBIKE";
     case TDLObjectType::OBJECT_TYPE_BICYCLE:
       return "BICYCLE";
-    case TDLObjectType::OBJECT_TYPE_PLATE:
+    case TDLObjectType::OBJECT_TYPE_LICENSE_PLATE:
       return "PLATE";
     case TDLObjectType::OBJECT_TYPE_CAT:
       return "CAT";

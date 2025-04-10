@@ -111,10 +111,10 @@ PYBIND11_MODULE(tdl, m) {
              ModelType::KEYPOINT_FACE_V2)  // 5 landmarks + blurness score
       .value("CLS_ATTRIBUTE_FACE",
              ModelType::CLS_ATTRIBUTE_FACE)  // age,gener,glass,mask
-      .value("FEATURE_BMFACER34",
-             ModelType::FEATURE_BMFACER34)  // resnet34 512 dim feature
-      .value("FEATURE_BMFACER50",
-             ModelType::FEATURE_BMFACER50)  // resnet50 512 dim feature
+      .value("RESNET_FEATURE_BMFACE_R34",
+             ModelType::RESNET_FEATURE_BMFACE_R34)  // resnet34 512 dim feature
+      .value("RESNET_FEATURE_BMFACE_R50",
+             ModelType::RESNET_FEATURE_BMFACE_R50)  // resnet50 512 dim feature
 
       // image classification models
       .value("CLS_MASK", ModelType::CLS_MASK)                // 0:mask,1:no mask

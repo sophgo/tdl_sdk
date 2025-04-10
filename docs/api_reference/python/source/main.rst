@@ -208,10 +208,10 @@ TDLDataType
    * - CLS_ATTRIBUTE_FACE
      - 人脸属性分类模型 (年龄, 性别, 眼镜, 面具)
 
-   * - FEATURE_BMFACER34
+   * - RESNET_FEATURE_BMFACE_R34
      - ResNet34 512维特征提取模型
 
-   * - FEATURE_BMFACER50
+   * - RESNET_FEATURE_BMFACE_R50
      - ResNet50 512维特征提取模型
 
    * - CLS_MASK
@@ -398,9 +398,9 @@ TDLDataType
 
      - 特征提取
 
-     - FEATURE_BMFACER34
+     - RESNET_FEATURE_BMFACE_R34
      
-       FEATURE_BMFACER50
+       RESNET_FEATURE_BMFACE_R50
 
        CLIP_FEATURE_IMG
 

@@ -9,7 +9,7 @@
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "bmface_r34") != NULL) {
-    *model_index = TDL_MODEL_FEATURE_BMFACER34;
+    *model_index = TDL_MODEL_RESNET_FEATURE_BMFACE_R34;
   } else {
     ret = -1;
   }
@@ -32,32 +32,30 @@ int main(int argc, char *argv[]) {
   char *input_image2 = NULL;
   char *input_image = NULL;
 
-  struct option long_options[] = {
-      {"model_path",    required_argument, 0, 'm'},
-      {"input",         required_argument, 0, 'i'},
-      {"help",          no_argument,       0, 'h'},
-      {NULL, 0, NULL, 0}
-  };
+  struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
+                                  {"input", required_argument, 0, 'i'},
+                                  {"help", no_argument, 0, 'h'},
+                                  {NULL, 0, NULL, 0}};
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:h", long_options, NULL)) != -1) {
-      switch (opt) {
-          case 'm':
-              model_path = optarg;
-              break;
-          case 'i':
-              input_image = optarg;
-              break;
-          case 'h':
-              print_usage(argv[0]);
-              return 0;
-          case '?':
-              print_usage(argv[0]);
-              return -1;
-          default:
-              print_usage(argv[0]);
-              return -1;
-      }
+    switch (opt) {
+      case 'm':
+        model_path = optarg;
+        break;
+      case 'i':
+        input_image = optarg;
+        break;
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return -1;
+      default:
+        print_usage(argv[0]);
+        return -1;
+    }
   }
 
   if (!input_image) {
@@ -67,18 +65,18 @@ int main(int argc, char *argv[]) {
   }
 
   char *comma = strchr(input_image, ',');
-  if (!comma || comma == input_image || !*(comma+1)) {
-      fprintf(stderr, "Error: Models must be in format 'image1,image2'\n");
-      return -1;
+  if (!comma || comma == input_image || !*(comma + 1)) {
+    fprintf(stderr, "Error: Models must be in format 'image1,image2'\n");
+    return -1;
   }
   input_image1 = input_image;
   *comma = '\0';
   input_image2 = comma + 1;
 
   if (!model_path || !input_image1 || !input_image2) {
-      fprintf(stderr, "Error: All arguments are required\n");
-      print_usage(argv[0]);
-      return -1;
+    fprintf(stderr, "Error: All arguments are required\n");
+    print_usage(argv[0]);
+    return -1;
   }
 
   printf("Running with:\n");

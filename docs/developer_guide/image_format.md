@@ -250,3 +250,75 @@ YUV 的存储方式分为如下几种：
     ```
 
 ### 单通道图像
+
+* 单通道图像，即灰度图像，只有一个Y分量。
+* 排布格式如下(image_width = 6, image_height = 2)
+
+    ```sh
+    Y Y Y Y Y Y
+    Y Y Y Y Y Y
+    ```
+
+### RGB_PACKED
+
+* RGB_PACKED 是 RGB 的打包存储方式，R、G、B 三个分量交叉存储。
+* 排布格式如下(image_width = 5, image_height = 6)
+
+    ```sh
+    R G B R G B R G B R G B R G B
+    R G B R G B R G B R G B R G B
+    R G B R G B R G B R G B R G B
+    R G B R G B R G B R G B R G B
+    R G B R G B R G B R G B R G B
+    ```
+
+### BGR_PACKED
+
+* 别名为BGR
+* BGR_PACKED 是 BGR 的打包存储方式，B、G、R 三个分量交叉存储。
+* 排布格式如下(image_width = 5, image_height = 6)
+
+    ```sh
+    B G R B G R B G R B G R B G R
+    B G R B G R B G R B G R B G R
+    B G R B G R B G R B G R B G R
+    B G R B G R B G R B G R B G R
+    B G R B G R B G R B G R B G R
+    B G R B G R B G R B G R B G R
+    ```
+
+### RGB_PLANAR
+
+* 别名为RGB
+* RGB_PLANAR 是 RGB 的平面存储方式，R、G、B 三个分量分开存储。
+* 排布格式如下(image_width = 6, image_height = 3)
+
+    ```sh
+    R R R R R R
+    R R R R R R
+    R R R R R R
+    G G G G G G
+    G G G G G G
+    G G G G G G
+    B B B B B B
+    B B B B B B
+    B B B B B B
+    ```
+
+### BGR_PLANAR
+
+* 别名为BGR
+* BGR_PLANAR 是 BGR 的平面存储方式，B、G、R 三个分量分开存储。
+* 排布格式如下(image_width = 6, image_height = 3)
+
+    ```sh
+    B B B B B B
+    B B B B B B
+    B B B B B B
+    G G G G G G
+    G G G G G G
+    G G G G G G
+    R R R R R R
+    R R R R R R
+    R R R R R R
+    ```
