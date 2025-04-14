@@ -8,17 +8,18 @@ include_directories(
 
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR 
-("${CVI_PLATFORM}" STREQUAL "BM1684X") OR 
-("${CVI_PLATFORM}" STREQUAL "BM1684")
-)
+   ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR 
+   ("${CVI_PLATFORM}" STREQUAL "BM1684"))
   set(DECODER_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/opencv_decoder/opencv_decoder.cpp)
   
-elseif("${CVI_PLATFORM}" STREQUAL "CV181X" OR 
-       "${CVI_PLATFORM}" STREQUAL "CV180X" OR 
-       "${CVI_PLATFORM}" STREQUAL "CV182X" OR 
-       "${CVI_PLATFORM}" STREQUAL "CV183X")
-  # set(DECODER_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/video_decoder/vi_decoder/vi_decoder.cpp)
-  # TODO(fuquan.ke) add vi decoder
+elseif(${CVI_PLATFORM} STREQUAL "CV180X" OR
+       ${CVI_PLATFORM} STREQUAL "CV181X" OR
+       ${CVI_PLATFORM} STREQUAL "CV182X" OR
+       ${CVI_PLATFORM} STREQUAL "CV183X" OR
+       ${CVI_PLATFORM} STREQUAL "CV184X" OR
+       ${CVI_PLATFORM} STREQUAL "SOPHON")
+  set(DECODER_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/vi_decoder/vi_decoder.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/vi_decoder/vi_cfg.cpp)
 else()
   # add other
 endif()

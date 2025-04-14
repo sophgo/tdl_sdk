@@ -21,15 +21,27 @@ else()
     set(SAMPLE_LIBS
         "-Wl,--start-group"
         ${cvi_tdl_BINARY_DIR}/libcvi_tdl-static.a
+        "-Wl,--whole-archive"
         ${MIDDLEWARE_LIBS_STATIC}
+        "-Wl,--no-whole-archive"
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
-        "-Wl,--end-group")
+        "-Wl,--end-group"
+)
 endif()
 
 include_directories(${SAMPLE_INCLUDES})
 
 file(GLOB SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
+if(${CVI_PLATFORM} STREQUAL "CV180X" OR
+   ${CVI_PLATFORM} STREQUAL "CV181X" OR
+   ${CVI_PLATFORM} STREQUAL "CV182X" OR
+   ${CVI_PLATFORM} STREQUAL "CV183X" OR
+   ${CVI_PLATFORM} STREQUAL "CV184X" OR
+   ${CVI_PLATFORM} STREQUAL "SOPHON")
+  file(GLOB CAMERA_SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/camera/*.c)
+  list(APPEND SAMPLE_SRC_FILES ${CAMERA_SAMPLE_SRC_FILES})
+endif()
 file(GLOB UTILS_CPP ${CMAKE_CURRENT_SOURCE_DIR}/utils/*.cpp)
 
 message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")

@@ -6,6 +6,7 @@
 #include "utils/tdl_log.hpp"
 #include "tracker/tracker_types.hpp"
 #include <opencv2/opencv.hpp>
+#include "video_decoder/video_decoder_type.hpp"
 
 std::shared_ptr<BaseModel> get_model(TDLHandle handle,
                                      const TDLModel model_id) {
@@ -38,16 +39,55 @@ int32_t TDL_DestroyHandle(TDLHandle handle) {
   return 0;
 }
 
-TDLImage TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory) {
-  if (vpss_frame == nullptr) {
+TDLImage TDL_WrapFrame(void *frame, bool own_memory) {
+  if (frame == nullptr) {
     return nullptr;
   }
 
   // TODO(fuquan.ke): use own_memory to create VPSSFrame
   TDLImageContext *image_context = new TDLImageContext();
-  image_context->image = ImageFactory::wrapVPSSFrame(vpss_frame, own_memory);
+  image_context->image = ImageFactory::wrapVPSSFrame(frame, own_memory);
   return (TDLImage)image_context;
 }
+
+#if !defined(__BM168X__) && !defined(__CMODEL_CV181X__)
+int32_t TDL_InitCamera(TDLHandle handle) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+
+  context->video_decoder = 
+    VideoDecoderFactory::createVideoDecoder(VideoDecoderType::VI);
+
+  if (context->video_decoder == nullptr) {
+    printf("create video decoder failed");
+    return -1;
+  }
+
+  return 0;
+}
+
+TDLImage TDL_GetCameraFrame(TDLHandle handle, int chn) {
+
+  TDLContext *context = (TDLContext *)handle;
+
+  TDLImageContext *image_context = new TDLImageContext();
+
+  context->video_decoder->read(image_context->image, chn);
+
+  return (TDLImage)image_context;
+}
+
+int32_t TDL_DestoryCamera(TDLHandle handle) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context->video_decoder != nullptr) {
+    context->video_decoder.reset();
+    context->video_decoder = nullptr;
+  }
+  return 0;
+}
+#endif
 
 TDLImage TDL_ReadImage(const char *path) {
   TDLImageContext *image_context = new TDLImageContext();

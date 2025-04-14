@@ -29,8 +29,6 @@ std::shared_ptr<BaseNet> NetFactory::createNet(const NetParam& net_param,
 #else
       return nullptr;
 #endif
-    // case InferencePlatform::CMODEL:
-    //   return std::make_shared<CmodelNet>(net_param);
     default:
       LOGE("unknown platform %d", platform);
       return nullptr;

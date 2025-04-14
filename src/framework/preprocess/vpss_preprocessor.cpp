@@ -19,6 +19,7 @@ VpssContext::VpssContext() {
   CVI_S32 s32Ret = CVI_SUCCESS;
 
 #ifdef __CV181X__
+if(!CVI_VB_IsInited()) {
   CVI_VB_Exit();
   VB_CONFIG_S stVbConf;
   memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
@@ -38,6 +39,7 @@ VpssContext::VpssContext() {
     assert(false);
   }
   LOGI("CVI_VB_Init success");
+}
 #endif
 
   s32Ret = CVI_SYS_Init();

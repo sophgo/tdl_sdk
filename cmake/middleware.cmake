@@ -104,6 +104,7 @@ endif()
 set(MIDDLEWARE_INCLUDES ${ISP_HEADER_PATH}
                         ${MIDDLEWARE_SDK_ROOT}/include/
                         ${MIDDLEWARE_SDK_ROOT}/include/linux/
+                        ${MIDDLEWARE_SDK_ROOT}/3rdparty/inih/
 )
 
 # Set SAMPLE_LIBS based on platform
@@ -205,7 +206,7 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.so
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+        # ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
@@ -220,7 +221,7 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.a
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
-        ${MIDDLEWARE_SDK_ROOT}/lib/libsample.a
+        # ${MIDDLEWARE_SDK_ROOT}/lib/libsample.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a
@@ -244,7 +245,7 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-                ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
+                # ${MIDDLEWARE_SDK_ROOT}/lib/libsample.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
@@ -264,7 +265,7 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/librgn.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
-                ${MIDDLEWARE_SDK_ROOT}/lib/libsample.a
+                # ${MIDDLEWARE_SDK_ROOT}/lib/libsample.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a

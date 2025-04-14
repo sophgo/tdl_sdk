@@ -1,4 +1,3 @@
-
 # Hide symbols
 # if("${CMAKE_BUILD_TYPE}" MATCHES "(SDKRelease|Release)")
 #   add_compile_options(-fvisibility=hidden)
@@ -13,7 +12,7 @@ add_subdirectory(c_apis)
 add_subdirectory(pipeline)
 add_subdirectory(app)
 
-set(CORES_SRCS 
+set(CORES_SRCS
             #    $<TARGET_OBJECTS:components>
                $<TARGET_OBJECTS:framework>
                $<TARGET_OBJECTS:tracker>
@@ -26,7 +25,11 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:app>
 
                )
-               
+
+if(TARGET camera)
+    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:camera>)
+endif()
+
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm>)
 endif()

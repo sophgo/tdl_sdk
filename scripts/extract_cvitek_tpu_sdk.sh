@@ -15,7 +15,11 @@ if [ ! -d "${DEP_DIR}" ]; then
 fi
 echo "save dir: ${DEP_DIR}"
 
-curl -u cvitek_mlir_2023:"7&2Wd%cu5k" sftp://${FTP_SERVER_IP}/home/tpu_sdk_t4.1.0-23-gb920beb/cvitek_tpu_sdk_x86_64.tar.gz -o ${DEP_DIR}/cvitek_tpu_sdk.tar.gz
+if [ ! -f "${DEP_DIR}/cvitek_tpu_sdk.tar.gz" ]; then
+  curl -u cvitek_mlir_2023:"7&2Wd%cu5k" sftp://${FTP_SERVER_IP}/home/tpu_sdk_t4.1.0-23-gb920beb/cvitek_tpu_sdk_x86_64.tar.gz -o ${DEP_DIR}/cvitek_tpu_sdk.tar.gz
+else
+  echo "File ${DEP_DIR}/cvitek_tpu_sdk.tar.gz already exists. Skipping download."
+fi
 
 tar -xf ${DEP_DIR}/cvitek_tpu_sdk.tar.gz -C ${DEP_DIR}
 

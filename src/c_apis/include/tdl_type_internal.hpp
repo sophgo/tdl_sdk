@@ -9,9 +9,11 @@
 #include "tdl_object_def.h"
 #include "tdl_sdk.h"
 #include "tdl_types.h"
+#include "video_decoder/video_decoder_type.hpp"
 typedef struct {
   std::unordered_map<TDLModel, std::shared_ptr<BaseModel>> models;
   std::shared_ptr<TDLModelFactory> model_factory;
+  std::shared_ptr<VideoDecoder> video_decoder;
 } TDLContext;
 
 typedef struct {

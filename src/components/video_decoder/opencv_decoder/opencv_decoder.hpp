@@ -11,7 +11,7 @@ class OpencvDecoder : public VideoDecoder {
 
   int32_t init(const std::string &path,
                const std::map<std::string, int> &config = {}) override;
-  int32_t read(std::shared_ptr<BaseImage> &image) override;
+  int32_t read(std::shared_ptr<BaseImage> &image, int vi_chn = 0) override;
 
  private:
   cv::VideoCapture capture_;

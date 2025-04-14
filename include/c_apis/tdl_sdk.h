@@ -3,6 +3,7 @@
 
 #include "tdl_model_def.h"
 #include "tdl_types.h"
+#include "tdl_utils.h"
 #include <getopt.h>
 #ifdef __cplusplus
 extern "C" {
@@ -24,13 +25,37 @@ TDLHandle TDL_CreateHandle(const int32_t tpu_device_id);
 int32_t TDL_DestroyHandle(TDLHandle handle);
 
 /**
- * @brief 包装一个 VPSS 帧为 TDLImageHandle 对象
+ * @brief 包装一帧图像信息为 TDLImageHandle 对象
  *
- * @param vpss_frame 需要包装的 VPSS 帧
+ * @param frame 需要包装的帧图像信息
  * @param own_memory 是否拥有内存所有权
  * @return  返回包装的 TDLImageHandle 对象, 如果失败返回 NULL
  */
-TDLImage TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory);
+TDLImage TDL_WrapFrame(void *frame, bool own_memory);
+
+#if !defined(__BM168X__) && !defined(__CMODEL_CV181X__)
+/**
+ * @brief 初始化Camera，板端的/mnt/data路径下需要有sensor_cfg.ini
+ *
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_InitCamera(TDLHandle handle);
+
+/**
+ * @brief 获取camera的一帧图像
+ *
+ * @param chn 获取图像的chn通道
+ * @return 返回包装的TDLImageHandle对象, 如果失败返回 NULL
+ */
+TDLImage TDL_GetCameraFrame(TDLHandle handle, int chn);
+
+/**
+ * @brief 销毁Camera
+ *
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_DestoryCamera(TDLHandle handle);
+#endif
 
 /**
  * @brief 读取一张图片为 TDLImageHandle 对象
@@ -300,9 +325,10 @@ int32_t TDL_Tracking(TDLHandle handle,
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_CharacterRecognition(TDLHandle handle,
-                              const TDLModel model_id,
-                              TDLImage image_handle,
-                              TDLOcr *char_meta);
+                                 const TDLModel model_id,
+                                 TDLImage image_handle,
+                                 TDLOcr *char_meta);
+
 #ifdef __cplusplus
 }
 #endif

@@ -23,7 +23,7 @@ int32_t OpencvDecoder::init(const std::string &path,
   return 0;
 }
 
-int32_t OpencvDecoder::read(std::shared_ptr<BaseImage> &image) {
+int32_t OpencvDecoder::read(std::shared_ptr<BaseImage> &image, int vi_chn) {
   cv::Mat frame;
   capture_ >> frame;
   if (frame.empty()) {
