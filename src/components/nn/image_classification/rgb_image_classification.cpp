@@ -106,4 +106,5 @@ int32_t RgbImageClassification::outputParse(
     }
     out_datas.push_back(cls_meta);
   }
+  return 0;
 }

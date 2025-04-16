@@ -147,7 +147,7 @@ class ModelFeatureInfo : public ModelOutputInfo {
     return ModelOutputType::FEATURE_EMBEDDING;
   }
   uint8_t *embedding = nullptr;
-  int32_t embedding_num;
+  int32_t embedding_num; //feature element num
   TDLDataType embedding_type;
 };
 
