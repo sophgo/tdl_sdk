@@ -3,7 +3,7 @@
 #include "memory/bm_memory_pool.hpp"
 #elif defined(__CV186X__)
 #include "memory/bm_memory_pool.hpp"
-#elif defined(__CMODEL_CVITEK__)
+#elif defined(__CMODEL__)
 #include "memory/cpu_memory_pool.hpp"
 #else
 #include "memory/cvi_memory_pool.hpp"
@@ -17,7 +17,7 @@ std::shared_ptr<BaseMemoryPool> BaseMemoryPoolFactory::createMemoryPool() {
     defined(__CV183X__)
   return std::make_shared<CviMemoryPool>();
 
-#elif defined(__CMODEL_CVITEK__)
+#elif defined(__CMODEL__)
   return std::make_shared<CpuMemoryPool>();
 #else
   LOGE("Unsupported platform");

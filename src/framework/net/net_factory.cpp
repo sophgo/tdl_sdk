@@ -13,7 +13,7 @@ std::shared_ptr<BaseNet> NetFactory::createNet(const NetParam& net_param,
   LOGI("createNet,platform: %d", (int)platform);
   switch (platform) {
     case InferencePlatform::CVITEK:
-    case InferencePlatform::CMODEL_CVITEK:
+    case InferencePlatform::CMODEL:
 #if !defined(__BM168X__) && !defined(__CV186X__)
       return std::make_shared<CviNet>(net_param);
 #else

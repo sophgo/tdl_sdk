@@ -15,7 +15,7 @@ print_usage() {
     echo "  CV186X    - 配置 CV186X 平台环境"
     echo "  BM1688    - 配置 BM1688 平台环境"
     echo "  BM1684X   - 配置 BM1684X 平台环境"
-    echo "  CMODEL_CVITEK   - 配置 CMODEL_CVITEK 平台环境"
+    echo "  CMODEL    - 配置 CMODEL 平台环境"
     echo ""
     echo "部署选项:"
     echo "  DEPLOY    - 配置部署环境（可选）"
@@ -58,8 +58,8 @@ if [ $# -gt 0 ]; then
         BM1684X)
             export CHIP_ARCH="BM1684X"
             ;;
-        CMODEL_CVITEK)
-            export CHIP_ARCH="CMODEL_CVITEK"
+        CMODEL)
+            export CHIP_ARCH="CMODEL"
             ;;
         -H|--HELP)
             print_usage
@@ -201,7 +201,7 @@ configure_platform_env() {
                           "${TDL_INSTALL_DIR}/sample/3rd/middleware/v2/lib" \
                           "${TDL_INSTALL_DIR}/sample/3rd/rtsp/lib"
             ;;
-        CMODEL_CVITEK)
+        CMODEL)
             TPU_SDK_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}"
             OPENCV_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/opencv"
 

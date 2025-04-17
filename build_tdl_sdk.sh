@@ -8,7 +8,7 @@ print_usage() {
     echo "  CV186X         Build 186X"
     echo "  BM1688         Build BM1688 edge"
     echo "  BM1684X        Build BM1684X edge"
-    echo "  CMODEL_CVITEK   Build linux x86_64"
+    echo "  CMODEL         Build linux x86_64"
     echo "  sample         Build samples only"
     echo "  all            Build both modules and sample"
     echo "  clean          Clean build"
@@ -83,25 +83,25 @@ elif [[ "$1" == "BM1684X" ]]; then
     echo "Building for BM1684X platform..."
     export CHIP_ARCH=BM1684X
     # Continue with the regular build process below
-elif [[ "$1" == "CMODEL_CVITEK" ]]; then
+elif [[ "$1" == "CMODEL" ]]; then
 
-    if [ -e "dependency/CMODEL_CVITEK" ]; then
-        echo "Building for CMODEL_CVITEK platform..."
-        export CHIP_ARCH=CMODEL_CVITEK
+    if [ -e "dependency/CMODEL" ]; then
+        echo "Building for CMODEL platform..."
+        export CHIP_ARCH=CMODEL
     else
-        echo "CMODEL_CVITEK not found"
+        echo "CMODEL not found"
         exit 1
     fi
 
 elif [[ "$1" == "clean" ]]; then
-    echo "Using ./${BASH_SOURCE[0]} clean"
+    echo "Using ${BASH_SOURCE[0]} clean"
     echo "Cleaning build..."
 
     # Set CHIP_ARCH if it's not already set
     if [ -z "$CHIP_ARCH" ]; then
         echo "CHIP_ARCH not set, cleaning all architectures"
         # Clean all possible build directories
-        for arch in CV181X CV186X BM1688; do
+        for arch in CV181X CV186X BM1688 CMODEL; do
             BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build/${arch}
             TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${arch}"
 
@@ -137,7 +137,7 @@ elif [[ "$1" == "clean" ]]; then
     exit 0
 
 elif [[ "$1" == "sample" ]]; then
-    echo "Using ./${BASH_SOURCE[0]} sample"
+    echo "Using ${BASH_SOURCE[0]} sample"
     echo "Compiling sample..."
     BUILD_OPTION=sample
 
@@ -149,7 +149,7 @@ elif [[ "$1" == "sample" ]]; then
     fi
 
 elif [[ "$1" == "all" ]]; then
-    echo "Using ./${BASH_SOURCE[0]} all"
+    echo "Using ${BASH_SOURCE[0]} all"
     echo "Compiling modules and sample..."
 
     cd ..
@@ -167,7 +167,7 @@ elif [[ "$1" == "all" ]]; then
     fi
 
 elif [ "$#" -eq 0 ]; then
-    echo "Using ./${BASH_SOURCE[0]}"
+    echo "Using ${BASH_SOURCE[0]}"
     echo "Compiling modules..."
 
     # Check if CHIP_ARCH is set
@@ -217,12 +217,12 @@ elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1684X/libsophon
     MPI_PATH=$CVI_TDL_ROOT/dependency/BM1684X/sophon-ffmpeg
 
-elif [[ "$CHIP_ARCH" == "CMODEL_CVITEK" ]]; then
+elif [[ "$CHIP_ARCH" == "CMODEL" ]]; then
     CROSS_COMPILE_PATH=/usr/
     CROSS_COMPILE=""
     CV_UTILS=OFF
-    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL_CVITEK/opencv
-    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CVITEK
+    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL/opencv
+    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL
 
 else
     CV_UTILS=ON
@@ -264,7 +264,7 @@ elif [[ "${CHIP_ARCH}" == "BM1688" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1684X" ]]; then
     USE_TPU_IVE=OFF
-elif [[ "${CHIP_ARCH}" == "CMODEL_CVITEK" ]]; then
+elif [[ "${CHIP_ARCH}" == "CMODEL" ]]; then
     USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"

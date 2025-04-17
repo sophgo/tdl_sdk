@@ -10,7 +10,7 @@ enum class InferencePlatform {
   CVITEK = 1,
   CV186X = 2,
   BM168X = 3,
-  CMODEL_CVITEK = 4,
+  CMODEL = 4,
   AUTOMATIC = 5
 };
 

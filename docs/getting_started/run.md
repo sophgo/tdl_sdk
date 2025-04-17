@@ -79,19 +79,19 @@ git clone https://github.com/sophgo/tdl_models.git
     python3 sample_fd.py /data/sdk_package/tdl_models/bm1684x/scrfd_500m_bnkps_432_768.bmodel /path/to/xx.jpg
     ```
 
-## CMODEL_CVITEK运行示例
+## CMODEL运行示例
 
 * 配置环境
 
     ```shell
     cd /data/sdk_package/tdl_sdk
-    source scripts/envsetup.sh CMODEL_CVITEK
+    source scripts/envsetup.sh CMODEL
     ```
 
 * c++运行示例
 
     ```shell
-    cd tdl_sdk/install/CMODEL_CVITEK/bin
+    cd tdl_sdk/install/CMODEL/bin
 
     ./sample_img_fd /data/sdk_package/tdl_models/cv181x/ /path/to/xx.jpg
     ```
