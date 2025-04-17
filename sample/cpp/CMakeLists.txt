@@ -46,9 +46,11 @@ foreach (fname ${SAMPLE_SRC_FILES})
   add_executable(${name} ${fname})
   target_link_libraries(${name} ${SAMPLE_LIBS}  dl rt stdc++fs)
   #strip
-  add_custom_command(TARGET ${name} POST_BUILD
-    COMMAND ${CROSS_COMPILE}strip $<TARGET_FILE:${name}>
-    COMMENT "Stripping binary for ${name}")
+  if(NOT BUILD_SHARED)
+    add_custom_command(TARGET ${name} POST_BUILD
+          COMMAND ${CROSS_COMPILE}strip $<TARGET_FILE:${name}>
+          COMMENT "Stripping binary for ${name}")
+  endif()
   install(TARGETS ${name} DESTINATION bin)
 endforeach ()
 
