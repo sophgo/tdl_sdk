@@ -29,4 +29,3 @@ class BMContext {
   pthread_mutex_t lock_ = PTHREAD_MUTEX_INITIALIZER;
 };
 #endif
-

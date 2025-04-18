@@ -16,13 +16,13 @@ set(CORES_SRCS
             #    $<TARGET_OBJECTS:components>
                $<TARGET_OBJECTS:framework>
                $<TARGET_OBJECTS:tracker>
+               $<TARGET_OBJECTS:matcher>
                $<TARGET_OBJECTS:nn>               
                $<TARGET_OBJECTS:c_apis>
                )
                
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X"))
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm>)
-   set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:matcher>)
 endif()
 set(CORES_DEPS ${MLIR_LIBS} )
 
@@ -34,7 +34,7 @@ install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 project(cvi_tdl-static)
 add_library(${PROJECT_NAME} STATIC ${CORES_SRCS})
 target_link_libraries(${PROJECT_NAME} ${CORES_DEPS} ${OPENCV_LIBS_IMCODEC_STATIC})
-SET_TARGET_PROPERTIES(cvi_tdl-static PROPERTIES OUTPUT_NAME "cvi_tdl")
+# SET_TARGET_PROPERTIES(cvi_tdl-static PROPERTIES OUTPUT_NAME "cvi_tdl")
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)

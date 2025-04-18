@@ -21,7 +21,7 @@ class BmMatcher : public BaseMatcher {
                           &gallery_features) override;
   int32_t queryWithTopK(
       const std::vector<std::shared_ptr<ModelFeatureInfo>> &query_features,
-      int32_t topk, std::vector<MatchResult> &results) override;
+      int32_t topk, MatchResult &results) override;
   int32_t updateGalleryCol(void *p_data, int col) override;
 
  private:
@@ -36,6 +36,8 @@ class BmMatcher : public BaseMatcher {
   void dot(float *p_features, int query_features_num, float *p_result);
   void dotImpl(float *p_features, int query_features_num);
   void freeDevMem();
+  // 特征归一化函数
+  void normalizeFeature(float *feature, int feature_dim);
 
   // 基类变量
   std::vector<std::shared_ptr<ModelFeatureInfo>> gallery_features_;

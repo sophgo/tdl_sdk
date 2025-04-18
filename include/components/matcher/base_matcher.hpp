@@ -7,10 +7,10 @@
 #include "common/model_output_types.hpp"
 
 struct MatchResult {
-  // 匹配索引，indices[i]表示第i个查询topk最佳匹配的索引
-  std::vector<int> indices;
-  // 匹配分数，scores[i]表示第i个查询topk最佳匹配的分数
-  std::vector<float> scores;
+  // 匹配索引，indices[i][j]表示第i个查询第j个最佳匹配的索引
+  std::vector<std::vector<int>> indices;
+  // 匹配分数，scores[i][j]表示第i个查询第j个最佳匹配的分数
+  std::vector<std::vector<float>> scores;
 };
 
 class BaseMatcher {
@@ -23,7 +23,7 @@ class BaseMatcher {
   // 查询特征
   virtual int32_t queryWithTopK(
       const std::vector<std::shared_ptr<ModelFeatureInfo>>& query_features,
-      int32_t topk, std::vector<MatchResult>& results);
+      int32_t topk, MatchResult& results);
   // 更新特征库
   virtual int32_t updateGalleryCol(void* p_data, int col);
 
@@ -32,8 +32,7 @@ class BaseMatcher {
   virtual int32_t getFeatureDim() const;
 
   // 创建匹配器实例
-  static std::shared_ptr<BaseMatcher> getMatcher(
-      const std::string& matcher_type);
+  static std::shared_ptr<BaseMatcher> getMatcher();
 
  protected:
   virtual void init(int device_id) = 0;

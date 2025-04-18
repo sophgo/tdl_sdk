@@ -1,10 +1,27 @@
 #include "bm_matcher/bm_matcher.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <queue>
 #include "bm_matcher/common.hpp"
 #include "bmcv_api.h"
+
+void BmMatcher::normalizeFeature(float* feature, int feature_dim) {
+  float norm = 0.0f;
+  // 计算L2范数
+  for (int i = 0; i < feature_dim; i++) {
+    norm += feature[i] * feature[i];
+  }
+  norm = std::sqrt(norm);
+
+  // 防止除零错误
+  if (norm > 1e-10) {
+    for (int i = 0; i < feature_dim; i++) {
+      feature[i] /= norm;
+    }
+  }
+}
 
 void BmMatcher::init(int device_id) {
 #ifdef USE_BM1684
@@ -70,6 +87,7 @@ int32_t BmMatcher::loadGallery(
         reinterpret_cast<float*>(gallery_features_[i]->embedding);
     memcpy(gallery_data + i * feature_dim_, feature_data,
            feature_dim_ * sizeof(float));
+    normalizeFeature(gallery_data + i * feature_dim_, feature_dim_);
   }
 
   loadBuffer(gallery_data);
@@ -80,14 +98,14 @@ int32_t BmMatcher::loadGallery(
 
 int32_t BmMatcher::queryWithTopK(
     const std::vector<std::shared_ptr<ModelFeatureInfo>>& query_features,
-    int32_t topk, std::vector<MatchResult>& results) {
+    int32_t topk, MatchResult& results) {
   if (!is_loaded_) {
     return -1;
   }
 
   query_features_ = query_features;
   query_features_num_ = query_features.size();
-  if (query_features[0]->embedding_num != feature_dim_) {
+  if (query_features_[0]->embedding_num != feature_dim_) {
     return -1;
   }
 
@@ -98,18 +116,23 @@ int32_t BmMatcher::queryWithTopK(
         reinterpret_cast<float*>(query_features_[i]->embedding);
     memcpy(p_query_feature + i * feature_dim_, feature_data,
            feature_dim_ * sizeof(float));
+    normalizeFeature(p_query_feature + i * feature_dim_, feature_dim_);
   }
 
   std::vector<std::vector<int>> indices;
   std::vector<std::vector<float>> scores;
   queryFeatureWithTopk(p_query_feature, query_features_num_, topk, indices,
                        scores);
-
-  results.resize(query_features_num_);
-  for (uint32_t i = 0; i < query_features_num_; ++i) {
-    results[i].indices = indices[i];
-    results[i].scores = scores[i];
-  }
+  // results.clear();
+  // results.reserve(query_features_num_);
+  // for (uint32_t i = 0; i < query_features_num_; ++i) {
+  //   MatchResult result;
+  //   result.indices = indices[i];
+  //   result.scores = scores[i];
+  //   results.push_back(result);
+  // }
+  results.indices = indices;
+  results.scores = scores;
 
   delete[] p_query_feature;
   return 0;
@@ -126,8 +149,16 @@ int32_t BmMatcher::updateGalleryCol(void* p_data, int col_idx) {
   float* p_sub_b = (float*)p_data;
   Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> vec(
       feature_dim_, 1);
-  memcpy(vec.data(), p_sub_b, feature_dim_ * 1 * sizeof(float));
+
+  // 复制特征并归一化
+  float* normalized_feature = new float[feature_dim_];
+  memcpy(normalized_feature, p_sub_b, feature_dim_ * sizeof(float));
+  normalizeFeature(normalized_feature, feature_dim_);
+
+  memcpy(vec.data(), normalized_feature, feature_dim_ * sizeof(float));
   gallery_features_eigen_.col(start_idx) = vec;
+
+  delete[] normalized_feature;
 
   pthread_mutex_unlock(&lock_);
   return 0;

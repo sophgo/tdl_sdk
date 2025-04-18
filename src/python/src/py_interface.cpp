@@ -1,5 +1,6 @@
 #include "py_image.hpp"
 #include "py_llm.hpp"
+#include "py_matcher.hpp"
 #include "py_model.hpp"
 using namespace pytdl;
 
@@ -350,4 +351,25 @@ PYBIND11_MODULE(tdl, m) {
       .def("__exit__", [](PyQwen2VL& self, py::object, py::object, py::object) {
         self.deinit();
       });
+
+  // 特征匹配模块
+  py::module matcher = m.def_submodule("matcher", "Feature matcher module");
+
+  py::class_<PyMatchResult>(matcher, "MatchResult")
+      .def(py::init<>())
+      .def("get_indices", &PyMatchResult::getIndices)
+      .def("get_scores", &PyMatchResult::getScores);
+
+  py::class_<PyMatcher>(matcher, "Matcher")
+      .def(py::init<>())
+      .def("load_gallery", &PyMatcher::loadGallery, py::arg("gallery_features"))
+      .def("query_with_topk", &PyMatcher::queryWithTopK,
+           py::arg("query_features"), py::arg("topk"))
+      .def("update_gallery_col", &PyMatcher::updateGallery,
+           py::arg("update_features"), py::arg("col"))
+      .def("get_gallery_feature_num", &PyMatcher::getGalleryFeatureNum)
+      .def("get_query_feature_num", &PyMatcher::getQueryFeatureNum)
+      .def("get_feature_dim", &PyMatcher::getFeatureDim);
+
+  matcher.def("create_matcher", &createMatcher);
 }
