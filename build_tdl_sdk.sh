@@ -6,6 +6,7 @@ print_usage() {
     echo "Options:"
     echo "  CV181X         Build soph-pi 181X"
     echo "  CV186X         Build 186X"
+    echo "  CV184X         Build 184X"
     echo "  BM1688         Build BM1688 edge"
     echo "  BM1684         Build BM1684 edge"
     echo "  BM1684X        Build BM1684X edge"
@@ -73,6 +74,18 @@ elif [[ "$1" == "CV186X" ]]; then
     export TPU_REL=1
     clean_device_all
     build_device_all
+    cd tdl_sdk
+    exit 0
+
+elif [[ "$1" == "CV184X" ]]; then
+    echo "Building for CV184X platform..."
+    export CHIP_ARCH=CV184X
+
+    # Execute CV184X specific commands
+    cd ..
+    source build/envsetup_soc.sh
+    defconfig cv1841h_wevb_0014a_spinor
+    build_all
     cd tdl_sdk
     exit 0
 
@@ -273,10 +286,13 @@ elif [[ "${CHIP_ARCH}" == "CV180X" ]]; then
 elif [[ "${CHIP_ARCH}" == "SOPHON" ]]; then
     MPI_PATH="${TOP_DIR}"/middleware/"${MW_VER}"
     USE_TPU_IVE=OFF
+elif [[ "${CHIP_ARCH}" == "CV184X" ]]; then
+    MPI_PATH="${TOP_DIR}"/cvi_mpi/
+    USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1688" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1684" ]]; then
-    USE_TPU_IVE=OFF    
+    USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1684X" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "CMODEL" ]]; then
@@ -306,7 +322,8 @@ $CMAKE_BIN -G Ninja ${CVI_TDL_ROOT} -DCVI_PLATFORM=${CHIP_ARCH} \
                                     -DMW_VER=${MW_VER} \
                                     -DFTP_SERVER_IP=${FTP_SERVER_IP} \
                                     -DFTP_SERVER_NAME=${FTP_SERVER_NAME} \
-                                    -DFTP_SERVER_PWD=${FTP_SERVER_PWD}
+                                    -DFTP_SERVER_PWD=${FTP_SERVER_PWD} 
+
 
 test $? -ne 0 && echo "cmake tdl_sdk failed !!" && popd && exit 1
 

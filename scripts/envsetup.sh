@@ -13,6 +13,7 @@ print_usage() {
     echo "平台选项:"
     echo "  CV181X    - 配置 CV181X 平台环境"
     echo "  CV186X    - 配置 CV186X 平台环境"
+    echo "  CV184X    - 配置 CV184X 平台环境"    
     echo "  BM1688    - 配置 BM1688 平台环境"
     echo "  BM1684    - 配置 BM1684 平台环境"   
     echo "  BM1684X   - 配置 BM1684X 平台环境"
@@ -53,6 +54,9 @@ if [ $# -gt 0 ]; then
         CV186X)
             export CHIP_ARCH="CV186X"
             ;;
+        CV184X)
+            export CHIP_ARCH="CV184X"
+            ;;            
         BM1688)
             export CHIP_ARCH="BM1688"
             ;;
@@ -182,7 +186,7 @@ configure_platform_env() {
             fi
             ;;
             
-        CV181X|CV186X)
+        CV181X|CV186X|CV184X)
             # CVITEK 系列平台特定配置
             SDK_VER="${SDK_VER:-v2.6.0}"
             TPU_SDK_PATH="${SDK_ROOT_DIR}/../tpu_${SDK_VER}/cvitek_tpu_sdk"

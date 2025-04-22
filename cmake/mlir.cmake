@@ -8,6 +8,8 @@ endif()
 
 if("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/libsophon-0.4.9/include/)
+elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
+  set(MLIR_INCLUDES ${TOP_DIR}/libsophon/install/libsophon-0.4.9/include/)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
@@ -27,6 +29,16 @@ if("${CVI_PLATFORM}" STREQUAL "SOPHON")
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmrt.a
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmlib.a
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmodel.a
+)
+elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
+  set(MLIR_LIBS
+      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmrt.so
+      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmlib.so
+  )
+  set(MLIR_LIBS_STATIC
+      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmrt.a
+      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmlib.a
+      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmodel.a
 )
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_LIBS

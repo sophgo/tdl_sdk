@@ -42,6 +42,7 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
   switch (platform) {
     case InferencePlatform::CVITEK:
     case InferencePlatform::CV186X:
+    case InferencePlatform::CV184X:
 #if not defined(__BM168X__) && not defined(__CMODEL__)
       LOGI("create VPSSImage");
       return std::make_shared<VPSSImage>(width, height, imageFormat,

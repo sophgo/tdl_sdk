@@ -9,9 +9,10 @@ enum class InferencePlatform {
   UNKOWN = 0,
   CVITEK = 1,
   CV186X = 2,
-  BM168X = 3,
-  CMODEL = 4,
-  AUTOMATIC = 5
+  CV184X = 3,
+  BM168X = 4,
+  CMODEL = 5,
+  AUTOMATIC = 6
 };
 
 enum class TDLDataType {

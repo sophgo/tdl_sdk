@@ -30,6 +30,8 @@ InferencePlatform get_platform() {
   return InferencePlatform::BM168X;
 #elif defined(__CV186X__)
   return InferencePlatform::CV186X;
+#elif defined(__CV184X__)
+  return InferencePlatform::CV184X;
 #elif defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
     defined(__CV183X__)
   return InferencePlatform::CVITEK;

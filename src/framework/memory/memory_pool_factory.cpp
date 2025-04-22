@@ -1,7 +1,7 @@
 #include "memory/base_memory_pool.hpp"
 #ifdef __BM168X__
 #include "memory/bm_memory_pool.hpp"
-#elif defined(__CV186X__)
+#elif defined(__CV186X__) || defined(__CV184X__)
 #include "memory/bm_memory_pool.hpp"
 #elif defined(__CMODEL__)
 #include "memory/cpu_memory_pool.hpp"
@@ -10,7 +10,7 @@
 #endif
 
 std::shared_ptr<BaseMemoryPool> BaseMemoryPoolFactory::createMemoryPool() {
-#if defined(__BM168X__) || defined(__CV186X__)
+#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__)
   return std::make_shared<BmMemoryPool>(nullptr);
 
 #elif defined(__CV180X__) || defined(__CV181X__) || defined(__CV182X__) || \

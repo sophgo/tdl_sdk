@@ -280,7 +280,7 @@ int32_t VpssPreprocessor::generateVPSSGrpAttr(
   pstVpssGrpAttr->enPixelFormat = vpss_image_src->getPixelFormat();
   pstVpssGrpAttr->u32MaxW = vpss_image_src->getWidth();
   pstVpssGrpAttr->u32MaxH = vpss_image_src->getHeight();
-#ifndef __CV186X__
+#if !defined(__CV186X__) && !defined(__CV184X__)
   pstVpssGrpAttr->u8VpssDev = device_;
 #endif
   LOGI("vpss grp attr ,width:%d,height:%d,format:%d", vpss_grp_attr.u32MaxW,
@@ -501,7 +501,7 @@ void init_vpss_grp_attr(VPSS_GRP_ATTR_S* pstVpssGrpAttr, CVI_U32 srcWidth,
   pstVpssGrpAttr->enPixelFormat = enSrcFormat;
   pstVpssGrpAttr->u32MaxW = srcWidth;
   pstVpssGrpAttr->u32MaxH = srcHeight;
-#ifndef __CV186X__
+#if !defined(__CV186X__) && !defined(__CV184X__)
   pstVpssGrpAttr->u8VpssDev = dev;
 #endif
 }

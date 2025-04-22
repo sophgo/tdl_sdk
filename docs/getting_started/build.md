@@ -60,6 +60,7 @@
 * CV181X
 * CV186X
 * BM1688
+* BM1684
 * BM1684X
 * CMODEL
 
@@ -102,6 +103,24 @@
     ```shell
     cd tdl_sdk
     ./build_tdl_sdk.sh CV186X
+    #再次编译
+    ./build_tdl_sdk.sh all
+    ```
+
+### 184平台编译
+
+* 下载固件等依赖仓库
+
+    ```shell
+    repo init -u https://github.com/sophgo/manifest.git -m release/all_repos.xml
+    repo sync -j4
+    ```
+
+* 执行编译
+
+    ```shell
+    cd tdl_sdk
+    ./build_tdl_sdk.sh CV184X
     #再次编译
     ./build_tdl_sdk.sh all
     ```
