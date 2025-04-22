@@ -1,5 +1,5 @@
 #include "image/base_image.hpp"
-#if not defined(__BM168X__) && not defined(__CMODEL__)
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__)
 #include "image/vpss_image.hpp"
 #endif
 
@@ -43,7 +43,7 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
     case InferencePlatform::CVITEK:
     case InferencePlatform::CV186X:
     case InferencePlatform::CV184X:
-#if not defined(__BM168X__) && not defined(__CMODEL__)
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__)
       LOGI("create VPSSImage");
       return std::make_shared<VPSSImage>(width, height, imageFormat,
                                          pixDataType, alloc_memory);
@@ -51,7 +51,7 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
       return nullptr;
 #endif
     case InferencePlatform::BM168X:
-    case InferencePlatform::CMODEL:
+    case InferencePlatform::CMODEL_CV181X:
 
       LOGI("create OpenCVImage");
       return std::make_shared<OpenCVImage>(width, height, imageFormat,
@@ -311,7 +311,7 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
 
 std::shared_ptr<BaseImage> ImageFactory::wrapVPSSFrame(void* vpss_frame,
                                                        bool own_memory) {
-#if not defined(__BM168X__) && not defined(__CMODEL__)
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__)
   LOGI("create VPSSImage");
   if (vpss_frame == nullptr) {
     LOGE("vpss_frame is nullptr");

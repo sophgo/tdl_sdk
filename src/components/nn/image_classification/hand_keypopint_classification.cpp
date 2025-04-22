@@ -33,7 +33,7 @@ int32_t HandKeypointClassification::inference(
     const TensorInfo &tinfo = net_->getTensorInfo(input_layer);
     float *temp_buffer = reinterpret_cast<float *>(image->getVirtualAddress()[0]);
     
-#if defined(__CV181X__) || defined(__CMODEL__)
+#if defined(__CV181X__) || defined(__CMODEL_CV181X__)
 
   int8_t *input_ptr = (int8_t *)tinfo.sys_mem;
   for (int i = 0; i < 42; i++) {

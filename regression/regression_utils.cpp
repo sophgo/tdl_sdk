@@ -7,7 +7,7 @@ namespace unitest {
 
   std::string gen_model_suffix(){
 
-#if defined(__CV181X__) || defined(__CMODEL__)
+#if defined(__CV181X__) || defined(__CMODEL_CV181X__)
   return std::string("_cv181x.cvimodel");
 
 #elif defined(__CV186X__)
@@ -29,7 +29,7 @@ namespace unitest {
 
   std::string gen_platform(){
 
-#if defined(__CV181X__) || defined(__CMODEL__)
+#if defined(__CV181X__) || defined(__CMODEL_CV181X__)
   return std::string("CV181X");
 
 #elif defined(__CV186X__)

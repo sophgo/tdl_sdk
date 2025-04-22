@@ -11,16 +11,16 @@ print_usage() {
     echo "TDL SDK 环境配置工具"
     echo "用法: source ${SCRIPT_DIR}/envsetup.sh <平台> [DEPLOY]"
     echo "平台选项:"
-    echo "  CV181X    - 配置 CV181X 平台环境"
-    echo "  CV186X    - 配置 CV186X 平台环境"
-    echo "  CV184X    - 配置 CV184X 平台环境"    
-    echo "  BM1688    - 配置 BM1688 平台环境"
-    echo "  BM1684    - 配置 BM1684 平台环境"   
-    echo "  BM1684X   - 配置 BM1684X 平台环境"
-    echo "  CMODEL    - 配置 CMODEL 平台环境"
+    echo "  CV181X          - 配置 CV181X 平台环境"
+    echo "  CV186X          - 配置 CV186X 平台环境"
+    echo "  CV184X          - 配置 CV184X 平台环境"    
+    echo "  BM1688          - 配置 BM1688 平台环境"
+    echo "  BM1684          - 配置 BM1684 平台环境"   
+    echo "  BM1684X         - 配置 BM1684X 平台环境"
+    echo "  CMODEL_CV181X   - 配置 CMODEL_CV181X 平台环境"
     echo ""
     echo "部署选项:"
-    echo "  DEPLOY    - 配置部署环境（可选）"
+    echo "  DEPLOY          - 配置部署环境（可选）"
     echo ""
     echo "示例: source ${SCRIPT_DIR}/envsetup.sh BM1688"
     echo "      source ${SCRIPT_DIR}/envsetup.sh BM1688 DEPLOY"
@@ -66,8 +66,8 @@ if [ $# -gt 0 ]; then
         BM1684X)
             export CHIP_ARCH="BM1684X"
             ;;
-        CMODEL)
-            export CHIP_ARCH="CMODEL"
+        CMODEL_CV181X)
+            export CHIP_ARCH="CMODEL_CV181X"
             ;;
         -H|--HELP)
             print_usage
@@ -209,7 +209,7 @@ configure_platform_env() {
                           "${TDL_INSTALL_DIR}/sample/3rd/middleware/v2/lib" \
                           "${TDL_INSTALL_DIR}/sample/3rd/rtsp/lib"
             ;;
-        CMODEL)
+        CMODEL_CV181X)
             TPU_SDK_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}"
             OPENCV_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/opencv"
 

@@ -19,7 +19,7 @@ curl -u cvitek_mlir_2023:"7&2Wd%cu5k" sftp://${FTP_SERVER_IP}/home/tpu_sdk_t4.1.
 
 tar -xf ${DEP_DIR}/cvitek_tpu_sdk.tar.gz -C ${DEP_DIR}
 
-mv ${DEP_DIR}/cvitek_tpu_sdk ${DEP_DIR}/CMODEL
+mv ${DEP_DIR}/cvitek_tpu_sdk ${DEP_DIR}/CMODEL_CV181X
 
 rm -rf ${DEP_DIR}/cvitek_tpu_sdk.tar.gz
 

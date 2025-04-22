@@ -65,8 +65,8 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1684")
 elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
   add_definitions(-D__BM168X__)
   add_definitions(-D__BM1684X__)
-elseif("${CVI_PLATFORM}" STREQUAL "CMODEL")
-  add_definitions(-D__CMODEL__)
+elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X")
+  add_definitions(-D__CMODEL_CV181X__)
 else()
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
@@ -173,7 +173,7 @@ else()
     set(IS_LOCAL FALSE)
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1684" OR "${CVI_PLATFORM}" STREQUAL "BM1688" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CVITEK")
+if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1684" OR "${CVI_PLATFORM}" STREQUAL "BM1688" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X")
   set(IS_LOCAL OFF)
 endif()
 
@@ -197,7 +197,7 @@ endif()
 include(cmake/mlir.cmake)
 
 # Check if mpi SDK exists.
-if( NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL"))
+if( NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X"))
   include(cmake/middleware.cmake)
 endif()
 

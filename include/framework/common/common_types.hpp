@@ -11,7 +11,7 @@ enum class InferencePlatform {
   CV186X = 2,
   CV184X = 3,
   BM168X = 4,
-  CMODEL = 5,
+  CMODEL_CV181X = 5,
   AUTOMATIC = 6
 };
 

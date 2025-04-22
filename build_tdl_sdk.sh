@@ -4,13 +4,13 @@
 print_usage() {
     echo "Usage: ${BASH_SOURCE[0]} [options]"
     echo "Options:"
-    echo "  CV181X         Build soph-pi 181X"
-    echo "  CV186X         Build 186X"
-    echo "  CV184X         Build 184X"
-    echo "  BM1688         Build BM1688 edge"
-    echo "  BM1684         Build BM1684 edge"
-    echo "  BM1684X        Build BM1684X edge"
-    echo "  CMODEL         Build linux x86_64"
+    echo "  CV181X         Build sophpi CV181X"
+    echo "  CV184X         Build CV184X"
+    echo "  CV186X         Build CV186X/BM1688 device"
+    echo "  BM1688         Build CV186X/BM1688 edge"
+    echo "  BM1684         Build BM1684"
+    echo "  BM1684X        Build BM1684X"
+    echo "  CMODEL_CV181X  Build CV181X simulation on Linux x86_64"
     echo "  sample         Build samples only"
     echo "  all            Build both modules and sample"
     echo "  clean          Clean build"
@@ -101,13 +101,13 @@ elif [[ "$1" == "BM1684X" ]]; then
     echo "Building for BM1684X platform..."
     export CHIP_ARCH=BM1684X
     # Continue with the regular build process below
-elif [[ "$1" == "CMODEL" ]]; then
+elif [[ "$1" == "CMODEL_CV181X" ]]; then
 
-    if [ -e "dependency/CMODEL" ]; then
-        echo "Building for CMODEL platform..."
-        export CHIP_ARCH=CMODEL
+    if [ -e "dependency/CMODEL_CV181X" ]; then
+        echo "Building for CMODEL_CV181X platform..."
+        export CHIP_ARCH=CMODEL_CV181X
     else
-        echo "CMODEL not found"
+        echo "CMODEL_CV181X not found"
         exit 1
     fi
 
@@ -119,7 +119,7 @@ elif [[ "$1" == "clean" ]]; then
     if [ -z "$CHIP_ARCH" ]; then
         echo "CHIP_ARCH not set, cleaning all architectures"
         # Clean all possible build directories
-        for arch in CV181X CV186X BM1688 CMODEL; do
+        for arch in CV181X CV186X BM1688 CMODEL_CV181X; do
             BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build/${arch}
             TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${arch}"
 
@@ -243,12 +243,12 @@ elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1684X/libsophon
     MPI_PATH=$CVI_TDL_ROOT/dependency/BM1684X/sophon-ffmpeg
 
-elif [[ "$CHIP_ARCH" == "CMODEL" ]]; then
+elif [[ "$CHIP_ARCH" == "CMODEL_CV181X" ]]; then
     CROSS_COMPILE_PATH=/usr/
     CROSS_COMPILE=""
     CV_UTILS=OFF
-    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL/opencv
-    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL
+    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL_CV181X/opencv
+    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CV181X
 
 else
     CV_UTILS=ON
@@ -295,7 +295,7 @@ elif [[ "${CHIP_ARCH}" == "BM1684" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1684X" ]]; then
     USE_TPU_IVE=OFF
-elif [[ "${CHIP_ARCH}" == "CMODEL" ]]; then
+elif [[ "${CHIP_ARCH}" == "CMODEL_CV181X" ]]; then
     USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"

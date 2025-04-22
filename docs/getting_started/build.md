@@ -62,7 +62,7 @@
 * BM1688
 * BM1684
 * BM1684X
-* CMODEL
+* CMODEL_CV181X
 
 ### 181平台编译
 
@@ -181,13 +181,13 @@
     ./build_tdl_sdk.sh BM1684
     ```
 
-### CMODEL_CVITEK平台编译
+### CMODEL_CV181X平台编译
 
 * 执行如下脚本抽取编译依赖
 
     ```shell
     cd tdl_sdk
-    # 会将依赖下载到tdl_sdk/dependency/CMODEL文件夹下
+    # 会将依赖下载到tdl_sdk/dependency/CMODEL_CV181X文件夹下
     ./scripts/extract_cvitek_tpu_sdk.sh
     ```
 
@@ -195,7 +195,7 @@
 
     ```shell
     cd tdl_sdk
-    ./build_tdl_sdk.sh CMODEL
+    ./build_tdl_sdk.sh CMODEL_CV181X
     ```
 
 ### BM1688 Python导出包编译
