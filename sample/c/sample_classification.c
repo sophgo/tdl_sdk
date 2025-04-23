@@ -26,16 +26,16 @@ void print_usage(const char *prog_name) {
   printf("    %s -m <model_path> -i <input_image>\n", prog_name);
   printf("    %s --model_path <path> --input <image>\n", prog_name);
   printf("  Sound processing mode:\n");
-  printf("    %s -m <model_path> -b <input_bin> -r <rate> -t <time>\n", prog_name);
+  printf("    %s -m <model_path> -b <input_bin> -r <rate> -s <time>\n", prog_name);
   printf("    %s --model_path <path> --bin_data <input_bin> --sample-rate <rate> --seconds <time>\n", prog_name);
   printf("\nOptions:\n");
-  printf("  -m, --model_path     Path to cvimodel, "
+  printf("  -m, --model_path     Path to model, "
          "<cls_sound_babay_cry_xxx>"
          "<cls_rgbliveness_xxx>\n");
   printf("  -i, --input          Path to input image (image mode)\n");
   printf("  -b, --bin_data       Path to input data (sound mode)\n");
   printf("  -r, --sample-rate    Sample rate in Hz (sound mode)\n");
-  printf("  -t, --seconds        Duration in seconds (sound mode)\n");
+  printf("  -s, --seconds        Duration in seconds (sound mode)\n");
   printf("  -h, --help           Display this help message\n");
 }
 
@@ -47,62 +47,62 @@ int main(int argc, char *argv[]) {
   char *seconds = NULL;
 
   struct option long_options[] = {
-      {"model_path",    required_argument, 0, 'm'},
-      {"input",         required_argument, 0, 'i'},
-      {"bin_data",      required_argument, 0, 'b'},
-      {"sample-rate",   required_argument, 0, 'r'},
-      {"seconds",       required_argument, 0, 't'},
-      {"help",          no_argument,       0, 'h'},
-      {0, 0, 0, 0}
+    {"model_path",    required_argument, 0, 'm'},
+    {"input",         required_argument, 0, 'i'},
+    {"bin_data",      required_argument, 0, 'b'},
+    {"sample-rate",   required_argument, 0, 'r'},
+    {"seconds",       required_argument, 0, 's'},
+    {"help",          no_argument,       0, 'h'},
+    {0, 0, 0, 0}
   };
 
   int opt;
   int option_index = 0;
-  while ((opt = getopt_long(argc, argv, "m:i:b:r:t:h", long_options, &option_index)) != -1) {
-      switch (opt) {
-          case 'm':
-              model_path = optarg;
-              break;
-          case 'i':
-              input_image = optarg;
-              break;
-          case 'b':
-              bin_data = optarg;
-              break;
-          case 'r':
-              sample_rate = optarg;
-              break;
-          case 't':
-              seconds = optarg;
-              break;
-          case 'h':
-              print_usage(argv[0]);
-              return 0;
-          case '?':
-              // getopt_long 已经打印了错误信息
-              print_usage(argv[0]);
-              return -1;
-          default:
-              print_usage(argv[0]);
-              return -1;
-      }
+  while ((opt = getopt_long(argc, argv, "m:i:b:r:s:h", long_options, &option_index)) != -1) {
+    switch (opt) {
+      case 'm':
+        model_path = optarg;
+        break;
+      case 'i':
+        input_image = optarg;
+        break;
+      case 'b':
+        bin_data = optarg;
+        break;
+      case 'r':
+        sample_rate = optarg;
+        break;
+      case 's':
+        seconds = optarg;
+        break;
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        // getopt_long 已经打印了错误信息
+        print_usage(argv[0]);
+        return -1;
+      default:
+        print_usage(argv[0]);
+        return -1;
+    }
   }
 
   // 检查两种模式参数
   if (model_path && input_image) {
-      // 图像模式
-      printf("Running in image processing mode:\n");
-      printf("  Model path: %s\n  Input image: %s\n", 
-             model_path, input_image);
+    // 图像模式
+    printf("Running in image processing mode:\n");
+    printf("  Model path: %s\n  Input image: %s\n",
+            model_path, input_image);
   } else if (bin_data && sample_rate && seconds) {
-      // 声音模式
-      printf("Running in sound processing mode:\n");
-      printf("  Sound model: %s\n  Bin data: %s\n  Sample rate: %s\n  Duration: %s sec\n",
-             bin_data, sample_rate, seconds);
+    // 声音模式
+    printf("Running in sound processing mode:\n");
+    printf("  Sound model: %s\n,Bin data: %s\n, Sample rate: %s\n, Duration: %s sec\n",
+            model_path, bin_data, sample_rate, seconds);
   } else {
-      fprintf(stderr, "Error: Invalid combination of parameters\n");
-      print_usage(argv[0]);
-      return -1;
+    fprintf(stderr, "Error: Invalid combination of parameters\n");
+    print_usage(argv[0]);
+    return -1;
   }
 
   int ret = 0;
@@ -119,6 +119,13 @@ int main(int argc, char *argv[]) {
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
+  }
+
+  //The default threshold is 0.5
+  ret = TDL_SetModelThreshold(tdl_handle, model_id, 0.5);
+  if (ret != 0) {
+    printf("TDL_SetModelThreshold failed with %#x!\n", ret);
+    goto exit1;
   }
 
   TDLImage image;

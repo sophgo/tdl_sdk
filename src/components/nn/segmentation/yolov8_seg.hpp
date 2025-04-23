@@ -27,5 +27,5 @@ class YoloV8Segmentation final : public BaseModel {
   int num_box_channel_ = 64;
   int num_mask_channel_ = 32;
   int num_cls_ = 0;
-  const float nms_threshold_ = 0.5;
+  float nms_threshold_ = 0.5;
 };

@@ -42,8 +42,7 @@ class MobileDetV2Detection final : public BaseModel {
   };
 
   MobileDetV2Detection();
-  explicit MobileDetV2Detection(MobileDetV2Detection::Category category,
-                                float iou_thresh = 0.5);
+  explicit MobileDetV2Detection(MobileDetV2Detection::Category category);
   ~MobileDetV2Detection();
 
   int32_t outputParse(
@@ -51,7 +50,7 @@ class MobileDetV2Detection final : public BaseModel {
       std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) override;
   int32_t onModelOpened() override;
 
-  void setModelThreshold(const float& threshold);
+  void setModelThreshold(float threshold) override;
 
  private:
   void get_raw_outputs(
@@ -69,8 +68,7 @@ class MobileDetV2Detection final : public BaseModel {
 
   std::vector<std::vector<AnchorBox>> m_anchors;
   CvimodelInfo m_model_config;
-  float m_iou_threshold;
-  float m_model_threshold = 0.5;
+  float nms_threshold_ = 0.5;
 
   std::vector<int8_t> m_quant_inverse_score_threshold;
   // std::bitset<TDL_DET_TYPE_END> m_filter;

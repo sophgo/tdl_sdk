@@ -35,40 +35,40 @@ int main(int argc, char *argv[]) {
   char *output_image = NULL;
 
   struct option long_options[] = {
-      {"model_path",   required_argument, 0, 'm'},
-      {"input",        required_argument, 0, 'i'},
-      {"help",         no_argument,       0, 'h'},
-      {NULL, 0, NULL, 0}
+    {"model_path",   required_argument, 0, 'm'},
+    {"input",        required_argument, 0, 'i'},
+    {"help",         no_argument,       0, 'h'},
+    {NULL, 0, NULL, 0}
   };
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
-      switch (opt) {
-          case 'm':
-              model_path = optarg;
-              break;
-          case 'i':
-              input_image = optarg;
-              break;
-          case 'o':
-              output_image = optarg;
-              break;
-          case 'h':
-              print_usage(argv[0]);
-              return 0;
-          case '?':
-              print_usage(argv[0]);
-              return -1;
-          default:
-              print_usage(argv[0]);
-              return -1;
-      }
+    switch (opt) {
+      case 'm':
+        model_path = optarg;
+        break;
+      case 'i':
+        input_image = optarg;
+        break;
+      case 'o':
+        output_image = optarg;
+        break;
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return -1;
+      default:
+        print_usage(argv[0]);
+        return -1;
+    }
   }
 
   if (!model_path || !input_image) {
-      fprintf(stderr, "Error: All arguments are required\n");
-      print_usage(argv[0]);
-      return -1;
+    fprintf(stderr, "Error: All arguments are required\n");
+    print_usage(argv[0]);
+    return -1;
   }
 
   printf("Running with:\n");
@@ -102,19 +102,19 @@ int main(int argc, char *argv[]) {
   TDLSegmentation seg_meta = {0};
   ret = TDL_SemanticSegmentation(tdl_handle, model_id, image, &seg_meta);
   if (ret != 0) {
-    printf("CVI_TDL_InstanceSegmentation failed with %#x!\n", ret);
+    printf("TDL_InstanceSegmentation failed with %#x!\n", ret);
   } else {
     printf("output_height : %d, ", seg_meta.output_height);
     printf("output_width : %d\n", seg_meta.output_width);
     int mat[seg_meta.output_height][seg_meta.output_width];
     int *ptrs[seg_meta.output_width];
     for (int x = 0; x < seg_meta.output_height; x ++) {
-        for (int y = 0; y < seg_meta.output_width; y ++) {
-            printf("%d ", (int)seg_meta.class_id[x * seg_meta.output_width + y]);
-            mat[x][y] = (int)seg_meta.class_id[x * seg_meta.output_width + y];
-        }
-        printf("\n");
-        ptrs[x] = mat[x];
+      for (int y = 0; y < seg_meta.output_width; y ++) {
+        printf("%d ", (int)seg_meta.class_id[x * seg_meta.output_width + y]);
+        mat[x][y] = (int)seg_meta.class_id[x * seg_meta.output_width + y];
+      }
+      printf("\n");
+      ptrs[x] = mat[x];
     }
     if (output_image != NULL) {
       TDL_MatToImage(ptrs, seg_meta.output_height, seg_meta.output_width, output_image, 30);

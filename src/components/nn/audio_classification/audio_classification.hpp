@@ -26,7 +26,6 @@ class AudioClassification : public BaseModel {
   //   void set_algparam(cvitdl_sound_param audio_param);
 
  private:
-  float threshold_;
   melspec::MelFeatureExtract *mp_extractor_ = nullptr;
   int top_num = 500;
   float max_rate = 0.2;

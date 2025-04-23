@@ -29,5 +29,5 @@ class YoloV8Pose final : public BaseModel {
   int num_box_channel_ = 0;
   int num_kpts_channel_ = 0;
   int num_cls_ = 0;
-  const float nms_threshold_ = 0.5;
+  float nms_threshold_ = 0.5;
 };

@@ -9,7 +9,7 @@
 
 std::shared_ptr<BaseModel> get_model(TDLHandle handle,
                                      const TDLModel model_id) {
-  tdl_context_t *context = (tdl_context_t *)handle;
+  TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return nullptr;
   }
@@ -21,12 +21,12 @@ std::shared_ptr<BaseModel> get_model(TDLHandle handle,
 }
 
 TDLHandle TDL_CreateHandle(const int32_t tpu_device_id) {
-  tdl_context_t *context = new tdl_context_t();
+  TDLContext *context = new TDLContext();
   return (TDLHandle)context;
 }
 
 int32_t TDL_DestroyHandle(TDLHandle handle) {
-  tdl_context_t *context = (tdl_context_t *)handle;
+  TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
   }
@@ -44,15 +44,15 @@ TDLImage TDL_WrapVPSSFrame(void *vpss_frame, bool own_memory) {
   }
 
   // TODO(fuquan.ke): use own_memory to create VPSSFrame
-  tdl_image_context_t *image_context = new tdl_image_context_t();
+  TDLImageContext *image_context = new TDLImageContext();
   image_context->image = ImageFactory::wrapVPSSFrame(vpss_frame, own_memory);
   return (TDLImage)image_context;
 }
 
 TDLImage TDL_ReadImage(const char *path) {
-  tdl_image_context_t *image_context = new tdl_image_context_t();
+  TDLImageContext *image_context = new TDLImageContext();
   image_context->image =
-      ImageFactory::readImage(path, false, InferencePlatform::AUTOMATIC);
+    ImageFactory::readImage(path, false, InferencePlatform::AUTOMATIC);
   return (TDLImage)image_context;
 }
 
@@ -65,16 +65,16 @@ TDLImage TDL_ReadAudio(const char *path, int size){
   size_t read_size = fread(buffer, 1, size, file);
   fclose(file);
 
-  tdl_image_context_t *image_context = new tdl_image_context_t();
+  TDLImageContext *image_context = new TDLImageContext();
   image_context->image =
-      ImageFactory::createImage(size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
+    ImageFactory::createImage(size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
   uint8_t* data_buffer = image_context->image->getVirtualAddress()[0];
   memcpy(data_buffer, buffer, size * sizeof(uint8_t));
   return (TDLImage)image_context;
 }
 
 int32_t TDL_DestroyImage(TDLImage image_handle) {
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   if (image_context == nullptr) {
     return -1;
   }
@@ -86,18 +86,47 @@ int32_t TDL_DestroyImage(TDLImage image_handle) {
   return 0;
 }
 
-int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
-                          const char *model_path) {
-  tdl_context_t *context = (tdl_context_t *)handle;
+int32_t TDL_SetModelThreshold(TDLHandle handle,
+                              const TDLModel model_id,
+                              float threshold) {
+  if (threshold < 0.0 || threshold > 1.0) {
+    LOGE("Invalid threshold value: %f", threshold);
+    return -1;
+  }
+
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+
+  float oldthreshold = model->getModelThreshold();
+  if (oldthreshold == threshold) {
+    return 0;
+  }
+  LOGI("Set threshold from %f to %f", oldthreshold, threshold);
+
+  model->setModelThreshold(threshold);
+  return 0;
+}
+
+int32_t TDL_OpenModel(TDLHandle handle,
+                      const TDLModel model_id,
+                      const char *model_path) {
+  TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
   }
   if (context->models.find(model_id) != context->models.end()) {
     return 0;
   }
-  ModelType model_type = convert_model_type(model_id);
+  ModelType model_type = convertModelType(model_id);
   std::shared_ptr<BaseModel> model =
-      context->model_factory->getModel(model_type, model_path);
+    context->model_factory->getModel(model_type, model_path);
   if (model == nullptr) {
     return -1;
   }
@@ -107,7 +136,7 @@ int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
 
 int32_t TDL_CloseModel(TDLHandle handle,
                            const TDLModel model_id) {
-  tdl_context_t *context = (tdl_context_t *)handle;
+  TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
   }
@@ -119,15 +148,16 @@ int32_t TDL_CloseModel(TDLHandle handle,
   return 0;
 }
 
-int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
-                          TDLImage image_handle,
-                          TDLObject *object_meta) {
+int32_t TDL_Detection(TDLHandle handle,
+                      const TDLModel model_id,
+                      TDLImage image_handle,
+                      TDLObject *object_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -138,6 +168,10 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
   if (output->getType() == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
     ModelBoxLandmarkInfo *object_Landmark_output = (ModelBoxLandmarkInfo *)output.get();
+    if (object_Landmark_output->box_landmarks.size() <= 0) {
+      LOGI("TDL_Detection: None to detect\n");
+      return 0;
+    }
     TDL_InitObjectMeta(
         object_meta,
         object_Landmark_output->box_landmarks.size(),
@@ -185,7 +219,7 @@ int32_t TDL_FaceDetection(TDLHandle handle,
     return -1;
   }
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -194,8 +228,7 @@ int32_t TDL_FaceDetection(TDLHandle handle,
   }
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
   if (output->getType() == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
-    ModelBoxLandmarkInfo *box_landmark_output =
-        (ModelBoxLandmarkInfo *)output.get();
+    ModelBoxLandmarkInfo *box_landmark_output = (ModelBoxLandmarkInfo *)output.get();
     if (box_landmark_output->box_landmarks.size() == 0) {
       return 0;
     }
@@ -257,7 +290,7 @@ int32_t TDL_Classfification(TDLHandle handle,
     return -1;
   }
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -301,12 +334,12 @@ int32_t TDL_FaceAttribute(TDLHandle handle,
     return -1;
   }
 
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
 
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   TDL_InitFaceMeta(face_meta, 1, 0);
   std::shared_ptr<ModelBoxLandmarkInfo> face_info =
-      convert_face_meta(face_meta);
+      convertFaceMeta(face_meta);
   int32_t ret = model->inference(image_context->image, face_info, outputs);
   if (ret != 0) {
     return ret;
@@ -332,7 +365,7 @@ int32_t TDL_FaceLandmark(TDLHandle handle,
                              const TDLModel model_id,
                              TDLImage image_handle,
                              TDLFace *face_meta) {
-  tdl_context_t *context = (tdl_context_t *)handle;
+  TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
   }
@@ -344,12 +377,12 @@ int32_t TDL_FaceLandmark(TDLHandle handle,
     return -1;
   }
 
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
 
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   TDL_InitFaceMeta(face_meta, 1, 0);
   std::shared_ptr<ModelBoxLandmarkInfo> face_info =
-      convert_face_meta(face_meta);
+      convertFaceMeta(face_meta);
   int32_t ret = model->inference(image_context->image, face_info, outputs);
   if (ret != 0) {
     return ret;
@@ -375,7 +408,7 @@ int32_t TDL_Keypoint(TDLHandle handle,
     return -1;
   }
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -412,11 +445,11 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle,
     return -1;
   }
 
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
 
   std::shared_ptr<ModelBoxInfo> obj_info =
-      convert_obj_meta(object_meta);
+      convertObjMeta(object_meta);
   int32_t ret = model->inference(image_context->image, obj_info, outputs);
   if (ret != 0) {
     return ret;
@@ -450,7 +483,7 @@ int32_t TDL_SemanticSegmentation(TDLHandle handle,
     return -1;
   }
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -493,7 +526,7 @@ int32_t TDL_InstanceSegmentation(TDLHandle handle,
   }
 
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -597,7 +630,7 @@ int32_t TDL_FeatureExtraction(TDLHandle handle,
     return -1;
   }
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -609,7 +642,7 @@ int32_t TDL_FeatureExtraction(TDLHandle handle,
   if (output->getType() == ModelOutputType::FEATURE_EMBEDDING) {
     ModelFeatureInfo *feature_output = (ModelFeatureInfo *)output.get();
     feature_meta->size = feature_output->embedding_num;
-    feature_meta->type = convert_data_type(feature_output->embedding_type);
+    feature_meta->type = convertDataType(feature_output->embedding_type);
     feature_meta->ptr = (int8_t *)feature_output->embedding;  // transfer
                                                               // ownership to
                                                               // feature_meta
@@ -630,7 +663,7 @@ int32_t TDL_LaneDetection(TDLHandle handle,
     return -1;
   }
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -668,7 +701,7 @@ int32_t TDL_CharacterRecognition(TDLHandle handle,
     return -1;
   }
   std::vector<std::shared_ptr<BaseImage>> images;
-  tdl_image_context_t *image_context = (tdl_image_context_t *)image_handle;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
@@ -698,7 +731,7 @@ int32_t TDL_Tracking(TDLHandle handle,
 
   std::shared_ptr<Tracker> tracker = TrackerFactory::createTracker(TrackerType::TDL_MOT_SORT);
   if (tracker == nullptr) {
-      printf("Failed to create tracker\n");
+      LOGE("Failed to create tracker\n");
       return -1;
   }
 

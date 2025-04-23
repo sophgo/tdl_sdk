@@ -284,8 +284,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
   } else if (model_category == 2) {
     model = std::make_shared<YoloV6Detection>(std::make_pair(64, num_classes));
   } else if (model_category == 6) {
-    model = std::make_shared<MobileDetV2Detection>(
-        MobileDetV2Detection::Category::pedestrian, 0.5);
+    model = std::make_shared<MobileDetV2Detection>(MobileDetV2Detection::Category::pedestrian);
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;

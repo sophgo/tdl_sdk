@@ -45,8 +45,8 @@ class BaseModel {
   virtual int32_t onModelOpened() { return 0; }
   virtual int32_t onModelClosed() { return 0; }
   void setTypeMapping(const std::map<int, TDLObjectType>& type_mapping);
-  void setModelThreshold(float threshold);
-  float getModelThreshold() const { return model_threshold_; }
+  virtual void setModelThreshold(float threshold);
+  virtual float getModelThreshold() const { return model_threshold_; }
 
   virtual int32_t setParameters(
       const std::map<std::string, float>& parameters) {

@@ -11,7 +11,7 @@ void print_usage(const char *prog_name) {
   printf("  %s -m <model_path> -i <input_image>\n", prog_name);
   printf("  %s --model_path <path> --input <image>\n\n", prog_name);
   printf("Options:\n");
-  printf("  -m, --model_path    Path to cvimodel\n");
+  printf("  -m, --model_path    Path to model\n");
   printf("  -i, --input         Path to input image\n");
   printf("  -h, --help          Show this help message\n");
 }
@@ -21,37 +21,37 @@ int main(int argc, char *argv[]) {
   char *input_image = NULL;
 
   struct option long_options[] = {
-      {"model_path",   required_argument, 0, 'm'},
-      {"input",        required_argument, 0, 'i'},
-      {"help",         no_argument,       0, 'h'},
-      {NULL, 0, NULL, 0}
+    {"model_path",   required_argument, 0, 'm'},
+    {"input",        required_argument, 0, 'i'},
+    {"help",         no_argument,       0, 'h'},
+    {NULL, 0, NULL, 0}
   };
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:h", long_options, NULL)) != -1) {
-      switch (opt) {
-          case 'm':
-              model_path = optarg;
-              break;
-          case 'i':
-              input_image = optarg;
-              break;
-          case 'h':
-              print_usage(argv[0]);
-              return 0;
-          case '?':
-              print_usage(argv[0]);
-              return -1;
-          default:
-              print_usage(argv[0]);
-              return -1;
-      }
+    switch (opt) {
+      case 'm':
+        model_path = optarg;
+        break;
+      case 'i':
+        input_image = optarg;
+        break;
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return -1;
+      default:
+        print_usage(argv[0]);
+        return -1;
+    }
   }
 
   if (!model_path || !input_image) {
-      fprintf(stderr, "Error: All arguments are required\n");
-      print_usage(argv[0]);
-      return -1;
+    fprintf(stderr, "Error: All arguments are required\n");
+    print_usage(argv[0]);
+    return -1;
   }
 
   printf("Running with:\n");
@@ -81,9 +81,9 @@ int main(int argc, char *argv[]) {
     printf("TDL_FaceLandmark failed with %#x!\n", ret);
   } else {
     for (int i = 0; i < sizeof(obj_meta.info->landmarks.x); i ++) {
-        printf("landmarks id : %d, ", i);
-        printf("landmarks x : %f, ", obj_meta.info->landmarks.x[i]);
-        printf("landmarks y : %f\n", obj_meta.info->landmarks.y[i]);
+      printf("landmarks id : %d, ", i);
+      printf("landmarks x : %f, ", obj_meta.info->landmarks.x[i]);
+      printf("landmarks y : %f\n", obj_meta.info->landmarks.y[i]);
     }
   }
 

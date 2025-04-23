@@ -93,13 +93,11 @@ static std::vector<int8_t> constructInverseThresh(
   return inverse_threshold;
 }
 
-MobileDetV2Detection::MobileDetV2Detection(
-    MobileDetV2Detection::Category category, float iou_thresh)
-    : m_model_config(CvimodelInfo::create_config(category)),
-      m_iou_threshold(iou_thresh) {
-  m_model_threshold = m_model_config.default_score_threshold;
+MobileDetV2Detection::MobileDetV2Detection(MobileDetV2Detection::Category category)
+    : m_model_config(CvimodelInfo::create_config(category)) {
+      model_threshold_ = m_model_config.default_score_threshold;
   m_quant_inverse_score_threshold =
-      constructInverseThresh(m_model_threshold, m_model_config.strides,
+      constructInverseThresh(model_threshold_, m_model_config.strides,
                              m_model_config.class_dequant_thresh);
 
   // m_filter.set();
@@ -208,7 +206,7 @@ int32_t MobileDetV2Detection::onModelOpened() {
   }
 
   m_quant_inverse_score_threshold =
-      constructInverseThresh(m_model_threshold, m_model_config.strides,
+      constructInverseThresh(model_threshold_, m_model_config.strides,
                              m_model_config.class_dequant_thresh);
   return 0;
 }
@@ -235,7 +233,7 @@ int32_t MobileDetV2Detection::outputParse(
 
     generate_dets_for_each_stride(lb_boxes);
 
-    DetectionHelper::nmsObjects(lb_boxes, m_iou_threshold);
+    DetectionHelper::nmsObjects(lb_boxes, nms_threshold_);
 
     std::vector<float> scale_params = batch_rescale_params_[b];
     int num_obj = 0;
@@ -360,11 +358,11 @@ void MobileDetV2Detection::get_raw_outputs(
   }
 }
 
-void MobileDetV2Detection::setModelThreshold(const float &threshold) {
-  if (m_model_threshold != threshold) {
-    m_model_threshold = threshold;
+void MobileDetV2Detection::setModelThreshold(float threshold) {
+  if (model_threshold_ != threshold) {
+    model_threshold_ = threshold;
     m_quant_inverse_score_threshold =
-        constructInverseThresh(m_model_threshold, m_model_config.strides,
+        constructInverseThresh(model_threshold_, m_model_config.strides,
                                m_model_config.class_dequant_thresh);
   }
 }

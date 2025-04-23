@@ -35,44 +35,44 @@ int main(int argc, char *argv[]) {
   char *output_image = NULL;
 
   struct option long_options[] = {
-      {"model_path",   required_argument, 0, 'm'},
-      {"input",        required_argument, 0, 'i'},
-      {"output",       required_argument, 0, 'o'},
-      {"help",         no_argument,       0, 'h'},
-      {NULL, 0, NULL, 0}
+    {"model_path",   required_argument, 0, 'm'},
+    {"input",        required_argument, 0, 'i'},
+    {"output",       required_argument, 0, 'o'},
+    {"help",         no_argument,       0, 'h'},
+    {NULL, 0, NULL, 0}
   };
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
-      switch (opt) {
-          case 'm':
-              model_path = optarg;
-              break;
-          case 'i':
-              input_image = optarg;
-              break;
-          case 'o':
-              output_image = optarg;
-              break;
-          case 'h':
-              print_usage(argv[0]);
-              return 0;
-          case '?':
-              print_usage(argv[0]);
-              return -1;
-          default:
-              print_usage(argv[0]);
-              return -1;
-      }
+    switch (opt) {
+      case 'm':
+        model_path = optarg;
+        break;
+      case 'i':
+        input_image = optarg;
+        break;
+      case 'o':
+        output_image = optarg;
+        break;
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return -1;
+      default:
+        print_usage(argv[0]);
+        return -1;
+    }
   }
 
   // 验证参数
   if (!model_path || !input_image) {
-      fprintf(stderr, "Error: All arguments are required\n");
-      print_usage(argv[0]);
-      return -1;
+    fprintf(stderr, "Error: model_path and input_image are required\n");
+    print_usage(argv[0]);
+    return -1;
   }
-  
+
   printf("Running with:\n");
   printf("  Model path:    %s\n", model_path);
   printf("  Input image:   %s\n", input_image);
@@ -93,6 +93,13 @@ int main(int argc, char *argv[]) {
   if (ret != 0) {
     printf("open instance seg model failed with %#x!\n", ret);
     goto exit0;
+  }
+
+  //The default threshold is 0.5
+  ret = TDL_SetModelThreshold(tdl_handle, model_id, 0.5);
+  if (ret != 0) {
+    printf("TDL_SetModelThreshold failed with %#x!\n", ret);
+    goto exit1;
   }
 
   TDLImage image = TDL_ReadImage(input_image);

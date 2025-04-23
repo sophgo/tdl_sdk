@@ -29,5 +29,5 @@ class YoloV8Detection final : public BaseModel {
   int num_box_channel_ = 64;
   int num_cls_ = 0;  // would parse automatically,should not be equal with
                      // num_box_channel_
-  const float nms_threshold_ = 0.5;
+  float nms_threshold_ = 0.5;
 };

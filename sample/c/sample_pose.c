@@ -11,13 +11,13 @@ static int skeleton[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12},
                        {5, 11},  {6, 12},  {5, 6},   {5, 7},   {6, 8},
                        {7, 9},   {8, 10},  {1, 2},   {0, 1},   {0, 2},
                        {1, 3},   {2, 4},   {3, 5},   {4, 6}};
-                      
+
 void print_usage(const char *prog_name) {
     printf("Usage:\n");
     printf("  %s -m <model_path> -i <input_image> -o <output_image>\n", prog_name);
     printf("  %s --model_path <path> --input <image> --output <image>\n\n", prog_name);
     printf("Options:\n");
-    printf("  -m, --model_path     Path to cvimodel"
+    printf("  -m, --model_path     Path to model"
            "<keypoint_yolov8pose_person17_xxx>\n");
     printf("  -i, --input          Path to input image\n");
     printf("  -o, --output         Path to output image\n");
@@ -30,41 +30,41 @@ int main(int argc, char *argv[]) {
   char *output_image = NULL;
 
   struct option long_options[] = {
-      {"model_path",   required_argument, 0, 'm'},
-      {"input",        required_argument, 0, 'i'},
-      {"output",       required_argument, 0, 'o'},
-      {"help",         no_argument,       0, 'h'},
-      {NULL, 0, NULL, 0}
+    {"model_path",   required_argument, 0, 'm'},
+    {"input",        required_argument, 0, 'i'},
+    {"output",       required_argument, 0, 'o'},
+    {"help",         no_argument,       0, 'h'},
+    {NULL, 0, NULL, 0}
   };
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
-      switch (opt) {
-          case 'm':
-              model_path = optarg;
-              break;
-          case 'i':
-              input_image = optarg;
-              break;
-          case 'o':
-              output_image = optarg;
-              break;
-          case 'h':
-              print_usage(argv[0]);
-              return 0;
-          case '?':
-              print_usage(argv[0]);
-              return -1;
-          default:
-              print_usage(argv[0]);
-              return -1;
-      }
+    switch (opt) {
+      case 'm':
+        model_path = optarg;
+        break;
+      case 'i':
+        input_image = optarg;
+        break;
+      case 'o':
+        output_image = optarg;
+        break;
+      case 'h':
+        print_usage(argv[0]);
+        return 0;
+      case '?':
+        print_usage(argv[0]);
+        return -1;
+      default:
+        print_usage(argv[0]);
+        return -1;
+    }
   }
 
   if (!model_path || !input_image) {
-      fprintf(stderr, "Error: All arguments are required\n");
-      print_usage(argv[0]);
-      return -1;
+    fprintf(stderr, "Error: model_path and input_image are required\n");
+    print_usage(argv[0]);
+    return -1;
   }
 
   printf("Running with:\n");
@@ -81,6 +81,13 @@ int main(int argc, char *argv[]) {
   if (ret != 0) {
     printf("open pose model failed with %#x!\n", ret);
     goto exit0;
+  }
+
+  //The default threshold is 0.5
+  ret = TDL_SetModelThreshold(tdl_handle, model_id, 0.5);
+  if (ret != 0) {
+    printf("TDL_SetModelThreshold failed with %#x!\n", ret);
+    goto exit1;
   }
 
   TDLImage image = TDL_ReadImage(input_image);

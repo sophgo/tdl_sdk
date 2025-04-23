@@ -79,6 +79,18 @@ int32_t TDL_CloseModel(TDLHandle handle,
                        const TDLModel model_id);
 
 /**
+ * @brief 设置模型threshold
+ * 
+ * @param handle 已初始化的 TDLHandle 对象
+ * @param model_id 要设置的模型类型枚举值
+ * @param threshold 模型的阈值
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_SetModelThreshold(TDLHandle handle,
+                              const TDLModel model_id,
+                              float threshold);
+
+/**
  * @brief 执行通用目标检测
  *
  * @param handle 已加载模型的 TDLHandle 对象
