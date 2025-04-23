@@ -146,7 +146,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-        ${MLIR_SDK_ROOT}/lib/libz.so)
+        ${TOP_DIR}/libsophon/3rdparty/arm/soc/lib/libz.so)
       set(MIDDLEWARE_LIBS_STATIC
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
@@ -157,7 +157,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libawb.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
-        ${MLIR_SDK_ROOT}/lib/libz.a)   
+        ${TOP_DIR}/libsophon/3rdparty/arm/soc/lib/libz.a)
 else()
     # Default libraries for other platforms
     set(MIDDLEWARE_LIBS
