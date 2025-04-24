@@ -100,40 +100,40 @@ set(MIDDLEWARE_INCLUDES ${ISP_HEADER_PATH}
 # Set SAMPLE_LIBS based on platform
 if(${CVI_PLATFORM} STREQUAL "SOPHON")
     set(MIDDLEWARE_LIBS 
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/librgn.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
     set(MIDDLEWARE_LIBS_STATIC
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/librgn.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libawb.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libae.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
-    ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
-    ${MLIR_SDK_ROOT}/lib/libz.a)
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/librgn.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libgdc.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libawb.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libae.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
+        ${MLIR_SDK_ROOT}/lib/libz.a)
     add_definitions(-DSENSOR_GCORE_GC4653)
 elseif(${CVI_PLATFORM} STREQUAL "CV184X")
     set(MIDDLEWARE_LIBS
@@ -147,7 +147,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
         ${TOP_DIR}/libsophon/3rdparty/arm/soc/lib/libz.so)
-      set(MIDDLEWARE_LIBS_STATIC
+    set(MIDDLEWARE_LIBS_STATIC
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.a
@@ -175,7 +175,7 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
         ${MLIR_SDK_ROOT}/lib/libz.so)
-      set(MIDDLEWARE_LIBS_STATIC
+    set(MIDDLEWARE_LIBS_STATIC
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.a
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
@@ -214,7 +214,7 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
                 ${MLIR_SDK_ROOT}/lib/libz.so)
-             set(MIDDLEWARE_LIBS_STATIC
+            set(MIDDLEWARE_LIBS_STATIC
                 ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
@@ -236,22 +236,23 @@ else()
                 ${MLIR_SDK_ROOT}/lib/libz.a)
         endif()
         set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
-        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.a)
+        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS_STATIC} ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.a)
     else()
         set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.so)
-        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.a)
+        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS_STATIC} ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vcodec.a)
     endif()
 
     # Add isp_algo library for non-CV183X platforms
     if(NOT ${CVI_PLATFORM} STREQUAL "CV183X")
         set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
-        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a)
+        set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS_STATIC} ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a)
     endif()
 endif()
 
 message("MIDDLEWARE_INCLUDES: ${MIDDLEWARE_INCLUDES}")
 message("KERNEL_ROOT: ${KERNEL_ROOT}")
 message("MIDDLEWARE_LIBS: ${MIDDLEWARE_LIBS}")
+message("MIDDLEWARE_LIBS_STATIC: ${MIDDLEWARE_LIBS_STATIC}")
 
 set(MIDDLEWARE_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/middleware/${MW_VER})
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
