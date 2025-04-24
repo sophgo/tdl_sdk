@@ -136,28 +136,59 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MLIR_SDK_ROOT}/lib/libz.a)
     add_definitions(-DSENSOR_GCORE_GC4653)
 elseif(${CVI_PLATFORM} STREQUAL "CV184X")
+    set(COMMON_ZLIB_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
+    if (IS_LOCAL)
+      set(ZLIB_URL ${COMMON_ZLIB_URL_PREFIX}${ARCHITECTURE}/zlib.tar.gz)
+    else()
+      set(ZLIB_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/zlib.tar.gz)
+    endif()
+
+    if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/zlib-src/lib")
+      FetchContent_Declare(
+        zlib
+        URL ${ZLIB_URL}
+      )
+      FetchContent_MakeAvailable(zlib)
+      message("Zlib downloaded from ${ZLIB_URL} to ${zlib_SOURCE_DIR}")
+    endif()
+    set(ZLIB_ROOT ${BUILD_DOWNLOAD_DIR}/zlib-src)
+
     set(MIDDLEWARE_LIBS
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
-        ${TOP_DIR}/libsophon/3rdparty/arm/soc/lib/libz.so)
-    set(MIDDLEWARE_LIBS_STATIC
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+        ${ZLIB_ROOT}/lib/libz.so)
+      set(MIDDLEWARE_LIBS_STATIC
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libawb.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
-        ${TOP_DIR}/libsophon/3rdparty/arm/soc/lib/libz.a)
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
+        ${ZLIB_ROOT}/lib/libz.a)
+    if(${CONFIG_DUAL_OS} STREQUAL "OFF")
+        set(MIDDLEWARE_LIBS
+          ${MIDDLEWARE_LIBS}
+          ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+        set(MIDDLEWARE_LIBS_STATIC
+          ${MIDDLEWARE_LIBS_STATIC}
+          ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a)
+    endif()
 else()
     # Default libraries for other platforms
     set(MIDDLEWARE_LIBS

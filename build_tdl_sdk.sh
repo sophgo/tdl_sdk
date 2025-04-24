@@ -212,11 +212,8 @@ TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
 # Set build option and type
 BUILD_TYPE=Debug
 
-# check system type
+# default system type
 CONFIG_DUAL_OS=OFF
-if [ -n "${ALIOS_PATH}" ]; then
-    CONFIG_DUAL_OS=ON
-fi
 
 if [[ "$CHIP_ARCH" == "BM1688" ]]; then
     CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
@@ -281,14 +278,23 @@ elif [[ "${CHIP_ARCH}" == "CV182X" ]]; then
     USE_TPU_IVE=ON
 elif [[ "${CHIP_ARCH}" == "CV181X" ]]; then
     USE_TPU_IVE=OFF
+    if [ -n "${ALIOS_PATH}" ]; then
+        CONFIG_DUAL_OS=ON
+    fi
 elif [[ "${CHIP_ARCH}" == "CV180X" ]]; then
     USE_TPU_IVE=ON
+    if [ -n "${ALIOS_PATH}" ]; then
+        CONFIG_DUAL_OS=ON
+    fi
 elif [[ "${CHIP_ARCH}" == "SOPHON" ]]; then
     MPI_PATH="${TOP_DIR}"/middleware/"${MW_VER}"
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "CV184X" ]]; then
     MPI_PATH="${TOP_DIR}"/cvi_mpi/
     USE_TPU_IVE=OFF
+    if [ "${DUAL_OS}" = "y" ]; then
+        CONFIG_DUAL_OS=ON
+    fi
 elif [[ "${CHIP_ARCH}" == "BM1688" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "BM1684" ]]; then
