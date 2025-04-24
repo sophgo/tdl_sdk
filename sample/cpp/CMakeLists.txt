@@ -17,7 +17,7 @@ if(BUILD_SHARED)
 else()
     set(SAMPLE_LIBS
         "-Wl,--start-group"
-        ${cvi_tdl_BINARY_DIR}/libcvi_tdl.a
+        ${cvi_tdl_BINARY_DIR}/libcvi_tdl-static.a
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
