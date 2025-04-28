@@ -67,6 +67,8 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
   add_definitions(-D__BM1684X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X")
   add_definitions(-D__CMODEL_CV181X__)
+elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
+  add_definitions(-D__CMODEL_CV184X__)
 else()
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
@@ -173,7 +175,11 @@ else()
     set(IS_LOCAL FALSE)
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR "${CVI_PLATFORM}" STREQUAL "BM1684" OR "${CVI_PLATFORM}" STREQUAL "BM1688" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X")
+if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR 
+   "${CVI_PLATFORM}" STREQUAL "BM1684" OR 
+   "${CVI_PLATFORM}" STREQUAL "BM1688" OR 
+   "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" OR 
+   "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
   set(IS_LOCAL OFF)
 endif()
 
@@ -213,7 +219,7 @@ include_directories(${IVE_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
 
 message(STATUS "OPENCV_INCLUDES:{${OPENCV_INCLUDES}}")
-message(STATUS "OPENCV_LIBS:{${OPENCV_LIBS}}")
+message(STATUS "OPENCV_LIBS:{${OPENCV_LIBS} ${OPENCV_LIBS_IMCODEC}}")
 message(STATUS "MLIR_INCLUDES:{${MLIR_INCLUDES}}")
 message(STATUS "MLIR_LIBS:{${MLIR_LIBS}}")
 message(STATUS "MIDDLEWARE_INCLUDES:{${MIDDLEWARE_INCLUDES}}")
@@ -228,7 +234,11 @@ if("${BUILD_OPTION}" STREQUAL "")
   add_subdirectory(src)
   add_subdirectory(sample)
   add_subdirectory(regression)
-  add_subdirectory(evaluation)
+  if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND 
+     NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" AND
+     NOT "${CVI_PLATFORM}" STREQUAL "CV181X")
+    add_subdirectory(evaluation)
+  endif()
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)
 elseif("${BUILD_OPTION}" STREQUAL "all" OR "${BUILD_OPTION}" STREQUAL "bm168x")

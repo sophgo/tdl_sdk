@@ -3,7 +3,8 @@
 #include "preprocess/opencv_preprocessor.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
-#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__)
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
+    not defined(__CMODEL_CV184X__)
 #include "preprocess/vpss_preprocessor.hpp"
 #endif
 
@@ -49,7 +50,8 @@ std::shared_ptr<BasePreprocessor> PreprocessorFactory::createPreprocessor(
     case InferencePlatform::CVITEK:
     case InferencePlatform::CV186X:
     case InferencePlatform::CV184X:
-#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__)
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
+    not defined(__CMODEL_CV184X__)
       return std::make_shared<VpssPreprocessor>();
       // return std::make_shared<OpenCVPreprocessor>();
 #else
@@ -57,6 +59,7 @@ std::shared_ptr<BasePreprocessor> PreprocessorFactory::createPreprocessor(
 #endif
     case InferencePlatform::BM168X:
     case InferencePlatform::CMODEL_CV181X:
+    case InferencePlatform::CMODEL_CV184X:
 
       return std::make_shared<OpenCVPreprocessor>();
 

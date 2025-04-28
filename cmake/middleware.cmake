@@ -75,6 +75,15 @@ elseif(${CVI_PLATFORM} STREQUAL "BM1688")
     set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${fname})
   endforeach ()
   return()
+elseif(${CVI_PLATFORM} STREQUAL "CMODEL_CV184X")
+  message("use libcmodel on CMODEL_CV184X")
+  # set(MIDDLEWARE_INCLUDES ${MIDDLEWARE_SDK_ROOT}/include/)
+  set(MIDDLEWARE_LIBS ${MLIR_SDK_ROOT}/lib/libbmlib.so
+                      ${MLIR_SDK_ROOT}/lib/libbmlib.so.0
+                      ${MLIR_SDK_ROOT}/lib/libcmodel.so
+  )
+  # message(FATAL_ERROR "MIDDLEWARE_LIBS: ${MIDDLEWARE_LIBS}")
+  return()
 endif()
 
 if("${MW_VER}" STREQUAL "v1")

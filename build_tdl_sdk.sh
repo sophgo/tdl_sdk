@@ -11,6 +11,7 @@ print_usage() {
     echo "  BM1684         Build BM1684"
     echo "  BM1684X        Build BM1684X"
     echo "  CMODEL_CV181X  Build CV181X simulation on Linux x86_64"
+    echo "  CMODEL_CV184X  Build CV184X simulation on Linux x86_64"
     echo "  sample         Build samples only"
     echo "  all            Build both modules and sample"
     echo "  clean          Clean build"
@@ -111,6 +112,17 @@ elif [[ "$1" == "CMODEL_CV181X" ]]; then
         exit 1
     fi
 
+elif [[ "$1" == "CMODEL_CV184X" ]]; then
+    echo "$1"
+    if [ -e "dependency/CMODEL_CV184X" ]; then
+        echo "Building for CMODEL_CV184X platform..."
+        export CHIP_ARCH=CMODEL_CV184X
+    else
+        echo "CMODEL_CV184X not found"
+        exit 1
+    fi
+
+
 elif [[ "$1" == "clean" ]]; then
     echo "Using ${BASH_SOURCE[0]} clean"
     echo "Cleaning build..."
@@ -119,7 +131,7 @@ elif [[ "$1" == "clean" ]]; then
     if [ -z "$CHIP_ARCH" ]; then
         echo "CHIP_ARCH not set, cleaning all architectures"
         # Clean all possible build directories
-        for arch in CV181X CV186X BM1688 CMODEL_CV181X; do
+        for arch in CV181X CV186X BM1688 CMODEL_CV181X CMODEL_CV184X; do
             BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build/${arch}
             TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${arch}"
 
@@ -247,6 +259,14 @@ elif [[ "$CHIP_ARCH" == "CMODEL_CV181X" ]]; then
     OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL_CV181X/opencv
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CV181X
 
+elif [[ "$CHIP_ARCH" == "CMODEL_CV184X" ]]; then
+    CROSS_COMPILE_PATH=/usr/
+    CROSS_COMPILE=""
+    CV_UTILS=OFF
+    OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL_CV184X/opencv
+    TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CV184X
+    MPI_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CV184X
+
 else
     CV_UTILS=ON
     TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
@@ -302,6 +322,8 @@ elif [[ "${CHIP_ARCH}" == "BM1684" ]]; then
 elif [[ "${CHIP_ARCH}" == "BM1684X" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "CMODEL_CV181X" ]]; then
+    USE_TPU_IVE=OFF
+elif [[ "${CHIP_ARCH}" == "CMODEL_CV184X" ]]; then
     USE_TPU_IVE=OFF
 else
     echo "Unsupported chip architecture: ${CHIP_ARCH}"

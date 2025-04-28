@@ -26,7 +26,7 @@
 TDLModelFactory::TDLModelFactory(const std::string model_dir)
     : model_dir_(model_dir + "/") {
   std::string str_ext = ".cvimodel";
-#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__)
+#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__) || defined(__CMODEL_CV184X__)
   str_ext = ".bmodel";
 #endif
   setModelPath(ModelType::SCRFD_DET_FACE,

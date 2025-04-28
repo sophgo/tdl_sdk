@@ -20,7 +20,13 @@ if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR
                              ${CMAKE_CURRENT_SOURCE_DIR}/net/bm_llm_net.cpp
                              )
   endif()
-elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X")
+
+elseif(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X"))
+  set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
+      )
+
+elseif(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X"))
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/cvi_net.cpp)
 
 else()

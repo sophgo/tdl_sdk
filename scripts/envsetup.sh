@@ -18,6 +18,7 @@ print_usage() {
     echo "  BM1684          - 配置 BM1684 平台环境"   
     echo "  BM1684X         - 配置 BM1684X 平台环境"
     echo "  CMODEL_CV181X   - 配置 CMODEL_CV181X 平台环境"
+    echo "  CMODEL_CV184X   - 配置 CMODEL_CV184X 平台环境"
     echo ""
     echo "部署选项:"
     echo "  DEPLOY          - 配置部署环境（可选）"
@@ -68,6 +69,9 @@ if [ $# -gt 0 ]; then
             ;;
         CMODEL_CV181X)
             export CHIP_ARCH="CMODEL_CV181X"
+            ;;
+        CMODEL_CV184X)
+            export CHIP_ARCH="CMODEL_CV184X"
             ;;
         -H|--HELP)
             print_usage
@@ -215,6 +219,13 @@ configure_platform_env() {
 
             add_lib_paths "${TPU_SDK_PATH}/lib" "${OPENCV_PATH}/lib"
 
+            ;;
+        CMODEL_CV184X)
+            TPU_SDK_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}"
+            OPENCV_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}/opencv"
+
+            add_lib_paths "${TPU_SDK_PATH}/lib" "${OPENCV_PATH}/lib"
+            export TPUKERNEL_FIRMWARE_PATH=${TPU_SDK_PATH}/lib/libcmodel_firmware.so
             ;;
     esac
 }

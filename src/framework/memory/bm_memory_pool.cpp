@@ -6,9 +6,11 @@
 BMContext::BMContext() {}
 
 BMContext::~BMContext() {
+#ifndef __CMODEL_CV184X__
   for (auto kv : device_handles_) {
     bm_dev_free(kv.second);
   }
+#endif
   device_handles_.clear();
 }
 BMContext &BMContext::Get() {

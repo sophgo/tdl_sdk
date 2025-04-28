@@ -37,6 +37,8 @@ InferencePlatform get_platform() {
   return InferencePlatform::CVITEK;
 #elif defined(__CMODEL_CV181X__)
   return InferencePlatform::CMODEL_CV181X;
+#elif defined(__CMODEL_CV184X__)
+  return InferencePlatform::CMODEL_CV184X;
 #else
   return InferencePlatform::UNKOWN;
 #endif

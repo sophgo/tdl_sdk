@@ -12,7 +12,8 @@ enum class InferencePlatform {
   CV184X = 3,
   BM168X = 4,
   CMODEL_CV181X = 5,
-  AUTOMATIC = 6
+  CMODEL_CV184X = 6,
+  AUTOMATIC = 7
 };
 
 enum class TDLDataType {

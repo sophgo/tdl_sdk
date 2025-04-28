@@ -30,6 +30,17 @@ if("${CVI_PLATFORM}" STREQUAL "SOPHON")
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmlib.a
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmodel.a
 )
+elseif("${CVI_PLATFORM}" STREQUAL "CV181X")
+  set(MLIR_LIBS
+      ${MLIR_SDK_ROOT}/lib/libcnpy.so
+      ${MLIR_SDK_ROOT}/lib/libcvikernel.so
+      ${MLIR_SDK_ROOT}/lib/libcviruntime.so
+      )
+  set(MLIR_LIBS_STATIC
+      ${MLIR_SDK_ROOT}/lib/libcvikernel-static.a
+      ${MLIR_SDK_ROOT}/lib/libcviruntime-static.a
+      ${MLIR_SDK_ROOT}/lib/libcnpy.a
+)
 elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
   set(MLIR_LIBS
       ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmrt.so
@@ -81,8 +92,22 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1684")
       ${MLIR_SDK_ROOT}/lib/libbmlib.so
       ${MLIR_SDK_ROOT}/lib/libyuv.so
       ${MLIR_SDK_ROOT}/lib/libvpp_cmodel.so
-  )  
-else()
+  )
+elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
+  set(MLIR_LIBS
+      ${MLIR_SDK_ROOT}/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/lib/libbmlib.so.0
+      ${MLIR_SDK_ROOT}/lib/libbmrt.so
+      ${MLIR_SDK_ROOT}/lib/libcmodel.so
+      ${MLIR_SDK_ROOT}/lib/libcpuop.so
+      ${MLIR_SDK_ROOT}/lib/libmodel_combine.so
+      ${MLIR_SDK_ROOT}/lib/libusercpu.so
+  )
+  set(MLIR_LIBS_STATIC
+      ${MLIR_SDK_ROOT}/lib/libbmrt.a
+      ${MLIR_SDK_ROOT}/lib/lib/libbmodel.a
+  )
+elseif("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X")
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libcnpy.so
       ${MLIR_SDK_ROOT}/lib/libcvikernel.so

@@ -1,5 +1,6 @@
 #include "image/base_image.hpp"
-#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__)
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
+    not defined(__CMODEL_CV184X__)
 #include "image/vpss_image.hpp"
 #endif
 
@@ -43,7 +44,8 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
     case InferencePlatform::CVITEK:
     case InferencePlatform::CV186X:
     case InferencePlatform::CV184X:
-#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__)
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
+    not defined(__CMODEL_CV184X__)
       LOGI("create VPSSImage");
       return std::make_shared<VPSSImage>(width, height, imageFormat,
                                          pixDataType, alloc_memory);
@@ -52,7 +54,7 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
 #endif
     case InferencePlatform::BM168X:
     case InferencePlatform::CMODEL_CV181X:
-
+    case InferencePlatform::CMODEL_CV184X:
       LOGI("create OpenCVImage");
       return std::make_shared<OpenCVImage>(width, height, imageFormat,
                                            pixDataType, alloc_memory);
@@ -277,8 +279,8 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
   int dst_img_width = 96;
   int dst_img_height = 24;
   std::shared_ptr<BaseImage> aligned_image = ImageFactory::createImage(
-      dst_img_width, dst_img_height, image->getImageFormat(), TDLDataType::UINT8,
-      false, InferencePlatform::AUTOMATIC);
+      dst_img_width, dst_img_height, image->getImageFormat(),
+      TDLDataType::UINT8, false, InferencePlatform::AUTOMATIC);
   if (aligned_image == nullptr) {
     LOGE("Failed to create aligned image");
     return nullptr;
@@ -308,10 +310,10 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
   return aligned_image;
 }
 
-
 std::shared_ptr<BaseImage> ImageFactory::wrapVPSSFrame(void* vpss_frame,
                                                        bool own_memory) {
-#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__)
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
+    not defined(__CMODEL_CV184X__)
   LOGI("create VPSSImage");
   if (vpss_frame == nullptr) {
     LOGE("vpss_frame is nullptr");
