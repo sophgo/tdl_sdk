@@ -19,7 +19,10 @@ class BaseModel {
   int32_t setupNetwork(NetParam& net_param);
 
   int getDeviceId() const;
-
+  virtual int32_t inference(
+      const std::shared_ptr<BaseImage>& image,
+      std::shared_ptr<ModelOutputInfo>& out_data,
+      const std::map<std::string, float>& parameters = {});
   /*
    * @brief 推理接口
    * @param images 输入图像，可以是原始图像，也可以是预处理后的图像
@@ -56,9 +59,9 @@ class BaseModel {
     return 0;
   }
 
-  int32_t getPreprocessParameters(PreprocessParams &pre_param);
+  int32_t getPreprocessParameters(PreprocessParams& pre_param);
 
-  int32_t setPreprocessParameters(PreprocessParams &pre_param);
+  int32_t setPreprocessParameters(PreprocessParams& pre_param);
 
  private:
   int getFitBatchSize(int left_size) const;

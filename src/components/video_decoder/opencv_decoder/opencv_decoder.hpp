@@ -1,0 +1,20 @@
+#ifndef OPENCV_DECODER_HPP
+#define OPENCV_DECODER_HPP
+
+#include "components/video_decoder/video_decoder_type.hpp"
+#include "opencv2/opencv.hpp"
+
+class OpencvDecoder : public VideoDecoder {
+ public:
+  OpencvDecoder();
+  ~OpencvDecoder();
+
+  int32_t init(const std::string &path,
+               const std::map<std::string, int> &config = {}) override;
+  int32_t read(std::shared_ptr<BaseImage> &image) override;
+
+ private:
+  cv::VideoCapture capture_;
+};
+
+#endif

@@ -9,6 +9,9 @@ class KalmanTracker {
   KalmanTracker(const uint64_t &frame_id, const KalmanFilter &kf,
                 const uint64_t &id, const ObjectBoxInfo &box, int img_width,
                 int img_height);
+  KalmanTracker() = delete;
+
+  ~KalmanTracker();
 
  public:
   ObjectBoxInfo box_;
@@ -26,10 +29,6 @@ class KalmanTracker {
   bool bounding_;
   float velocity_x_;
   float velocity_y_;
-
-  KalmanTracker() = delete;
-
-  ~KalmanTracker();
 
   void predict(const KalmanFilter &kf);
   void update(const uint64_t &frame_id, const KalmanFilter &kf,

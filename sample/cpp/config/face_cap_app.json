@@ -1,0 +1,22 @@
+{
+  "model_dir": "./models/",
+  "frame_buffer_size": 2,
+  "pipelines": [
+    {
+      "name": "face_cap",
+      "nodes": {
+        "video_node": {
+          "video_type": "image_folder",
+          "video_path": "./images",
+          "is_loop": false
+        },
+        "face_detection_node": {
+          "config_thresh": 0.5
+        },
+        "track_node": {
+          "fuse_track": true
+        }
+      }
+    }
+  ]
+}

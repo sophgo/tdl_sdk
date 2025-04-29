@@ -10,6 +10,8 @@ set(SAMPLE_INCLUDES
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn
+    ${REPO_DIR}/include/
+    
 )
 
 if(BUILD_SHARED)
@@ -54,4 +56,5 @@ foreach (fname ${SAMPLE_SRC_FILES})
   endif()
   install(TARGETS ${name} DESTINATION bin)
 endforeach ()
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config DESTINATION ./)
 

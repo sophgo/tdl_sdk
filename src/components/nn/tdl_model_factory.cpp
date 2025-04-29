@@ -284,7 +284,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
   } else if (model_category == 2) {
     model = std::make_shared<YoloV6Detection>(std::make_pair(64, num_classes));
   } else if (model_category == 6) {
-    model = std::make_shared<MobileDetV2Detection>(MobileDetV2Detection::Category::pedestrian);
+    model = std::make_shared<MobileDetV2Detection>(
+        MobileDetV2Detection::Category::pedestrian);
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;
@@ -316,7 +317,19 @@ std::shared_ptr<BaseModel> TDLModelFactory::createLaneDetectionModel(
 
   return model;
 }
-
+void TDLModelFactory::setModelDir(const std::string &model_dir) {
+  if (model_dir_ == "") {
+    for (auto &model_type : model_path_map_) {
+      model_path_map_[model_type.first] = model_dir + model_type.second;
+    }
+  } else {
+    for (auto &model_type : model_path_map_) {
+      model_path_map_[model_type.first] =
+          model_type.second.replace(0, model_dir_.size(), model_dir);
+    }
+  }
+  model_dir_ = model_dir;
+}
 void TDLModelFactory::setModelPath(const ModelType model_type,
                                    const std::string &model_path) {
   model_path_map_[model_type] = model_path;

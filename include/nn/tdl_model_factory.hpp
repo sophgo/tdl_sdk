@@ -14,6 +14,7 @@ class TDLModelFactory {
       const ModelType model_type, const std::string &model_path,
       const std::map<std::string, std::string> &config = {},
       const int device_id = 0);
+  void setModelDir(const std::string &model_dir);
   void setModelPath(const ModelType model_type, const std::string &model_path);
   void setModelPathMap(const std::map<ModelType, std::string> &model_path_map);
 

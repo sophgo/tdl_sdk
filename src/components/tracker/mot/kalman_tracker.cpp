@@ -4,7 +4,7 @@
 #include <iostream>
 #include "utils/mot_box_helper.hpp"
 #include "utils/tdl_log.hpp"
-KalmanTracker::~KalmanTracker() {}
+KalmanTracker::~KalmanTracker() { LOGI("destroy tracker:%lu", id_); }
 
 KalmanTracker::KalmanTracker(const uint64_t &frame_id, const KalmanFilter &kf,
                              const uint64_t &id, const ObjectBoxInfo &box,
@@ -48,6 +48,16 @@ KalmanTracker::KalmanTracker(const uint64_t &frame_id, const KalmanFilter &kf,
 uint64_t KalmanTracker::getPairTrackID() {
   if (pair_track_infos_.size() == 0) {
     return 0;
+  }
+  if (pair_track_infos_.size() > 1) {
+    std::stringstream ss;
+    ss << "trackid:" << id_
+       << " has multiple pairtracks,num: " << pair_track_infos_.size()
+       << ",tracks:";
+    for (auto &pair : pair_track_infos_) {
+      ss << pair.first << ",";
+    }
+    LOGW("%s", ss.str().c_str());
   }
   return pair_track_infos_.begin()->first;
 }
@@ -149,8 +159,10 @@ void KalmanTracker::falseUpdateFromPair(const uint64_t &frame_id,
   false_box(3) = pairbox(3) * corre.pair_size_scale_y;
 
   // to keep this track alive
-  if (unmatched_times_ >= conf.max_unmatched_times_ - 1) {
-    unmatched_times_ = conf.max_unmatched_times_ - 1;
+  if (unmatched_times_ >=
+      conf.max_unmatched_times_ - conf.track_pair_update_missed_times_) {
+    unmatched_times_ =
+        conf.max_unmatched_times_ - conf.track_pair_update_missed_times_;
   }
   false_update_times_ += 1;
 
@@ -171,6 +183,11 @@ void KalmanTracker::falseUpdateFromPair(const uint64_t &frame_id,
 }
 void KalmanTracker::updatePairInfo(KalmanTracker *p_other) {
   LOGI("update pairtrack:%d,with:%d\n", id_, p_other->id_);
+  if (pair_track_infos_.size() != 0 &&
+      pair_track_infos_.count(p_other->id_) == 0) {
+    LOGW("trackid:%d already has pairtrack:%d,now to add pairtrack:%d", id_,
+         pair_track_infos_.begin()->first, p_other->id_);
+  }
 
   DETECTBOX cur_box = getBBoxTLWH();
   DETECTBOX pair_box = p_other->getBBoxTLWH();
@@ -189,7 +206,10 @@ void KalmanTracker::updatePairInfo(KalmanTracker *p_other) {
   }
   updateCorre(cur_box, pair_box, pair_track_infos_[p_other->id_], 0.5);
 }
-void KalmanTracker::resetPairInfo() { pair_track_infos_.clear(); }
+void KalmanTracker::resetPairInfo() {
+  LOGI("reset pairinfo of trackid:%d", id_);
+  pair_track_infos_.clear();
+}
 DETECTBOX KalmanTracker::getBBoxTLWH() const {
   DETECTBOX bbox_tlwh;
   bbox_tlwh(2) = mean(2) * mean(3);  // H

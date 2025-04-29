@@ -10,15 +10,21 @@
 add_subdirectory(framework)
 add_subdirectory(components)
 add_subdirectory(c_apis)
-# add_subdirectory(app)
+add_subdirectory(pipeline)
+add_subdirectory(app)
 
 set(CORES_SRCS 
             #    $<TARGET_OBJECTS:components>
                $<TARGET_OBJECTS:framework>
                $<TARGET_OBJECTS:tracker>
                $<TARGET_OBJECTS:matcher>
+               $<TARGET_OBJECTS:video_decoder>
                $<TARGET_OBJECTS:nn>               
                $<TARGET_OBJECTS:c_apis>
+               $<TARGET_OBJECTS:pipeline>
+               $<TARGET_OBJECTS:face_capture_app>
+               $<TARGET_OBJECTS:app>
+
                )
                
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))

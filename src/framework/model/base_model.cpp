@@ -80,9 +80,7 @@ int BaseModel::getDeviceId() const {
   }
 }
 
-
-int32_t BaseModel::getPreprocessParameters(PreprocessParams &pre_param){
-
+int32_t BaseModel::getPreprocessParameters(PreprocessParams& pre_param) {
   pre_param.dst_image_format = net_param_.pre_params.dst_image_format;
   pre_param.keep_aspect_ratio = net_param_.pre_params.keep_aspect_ratio;
 
@@ -90,11 +88,9 @@ int32_t BaseModel::getPreprocessParameters(PreprocessParams &pre_param){
   memcpy(pre_param.scale, net_param_.pre_params.scale, sizeof(pre_param.scale));
 
   return 0;
-
 }
 
-int32_t BaseModel::setPreprocessParameters(PreprocessParams &pre_param){
-
+int32_t BaseModel::setPreprocessParameters(PreprocessParams& pre_param) {
   net_param_.pre_params.dst_image_format = pre_param.dst_image_format;
   net_param_.pre_params.keep_aspect_ratio = pre_param.keep_aspect_ratio;
 
@@ -124,9 +120,7 @@ int32_t BaseModel::setPreprocessParameters(PreprocessParams &pre_param){
     preprocess_params_[name] = preprocess_params;
   }
   return 0;
-
 }
-
 
 int32_t BaseModel::setupNetwork(NetParam& net_param) {
   std::cout << "setupNetwork" << std::endl;
@@ -240,6 +234,21 @@ int32_t BaseModel::inference(
   LOGW("inference not implemented");
   return -1;
 }
+
+int32_t BaseModel::inference(const std::shared_ptr<BaseImage>& image,
+                             std::shared_ptr<ModelOutputInfo>& out_data,
+                             const std::map<std::string, float>& parameters) {
+  std::vector<std::shared_ptr<BaseImage>> images = {image};
+  std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
+  int32_t ret = inference(images, out_datas, parameters);
+  if (ret != 0) {
+    LOGE("inference failed");
+    return ret;
+  }
+  out_data = out_datas[0];
+  return 0;
+}
+
 void BaseModel::setTypeMapping(
     const std::map<int, TDLObjectType>& type_mapping) {
   type_mapping_ = type_mapping;

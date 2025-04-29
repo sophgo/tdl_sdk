@@ -4,7 +4,7 @@
 CostMatrixHelper::CostMatrixHelper() {}
 
 COST_MATRIX CostMatrixHelper::getCostMatrixFeature(
-    const std::vector<KalmanTracker> &trackers,
+    const std::vector<std::shared_ptr<KalmanTracker>> &trackers,
     const std::vector<ObjectBoxInfo> &detections,
     const std::vector<ModelFeatureInfo> &features,
     const std::vector<int> &tracker_idx,
@@ -40,7 +40,7 @@ COST_MATRIX CostMatrixHelper::getCostMatrixFeature(
 }
 
 COST_MATRIX CostMatrixHelper::getCostMatrixBBox(
-    const std::vector<KalmanTracker> &trackers,
+    const std::vector<std::shared_ptr<KalmanTracker>> &trackers,
     const std::vector<ObjectBoxInfo> &detections,
     const std::vector<int> &tracker_idxes,
     const std::vector<int> &detection_idxes) {
@@ -51,8 +51,8 @@ COST_MATRIX CostMatrixHelper::getCostMatrixBBox(
   for (auto &tracker_idx : tracker_idxes) {
     int j = 0;
     for (auto &detection_idx : detection_idxes) {
-      float iou = MotBoxHelper::calculateIOU(trackers[tracker_idx].getBoxInfo(),
-                                             detections[detection_idx]);
+      float iou = MotBoxHelper::calculateIOU(
+          trackers[tracker_idx]->getBoxInfo(), detections[detection_idx]);
       cost_m(i, j) = 1 - iou;
       j++;
     }

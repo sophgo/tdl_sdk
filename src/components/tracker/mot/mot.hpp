@@ -38,10 +38,11 @@ class MOT : public Tracker {
 
   void updateTrackers(const std::vector<ObjectBoxInfo> &boxes,
                       const std::vector<ModelFeatureInfo> &features);
+  void resetPairTrackerOfRemovedTracker(uint64_t tracker_id);
 
   std::map<uint64_t, uint64_t> getPairTrackIds();
   KalmanFilter kalman_filter_;
-  std::vector<KalmanTracker> trackers_;
+  std::vector<std::shared_ptr<KalmanTracker>> trackers_;
   std::vector<int> pair_obj_idxes_;
   std::vector<uint64_t> det_track_ids_;
 

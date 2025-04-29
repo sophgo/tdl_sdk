@@ -28,7 +28,7 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
   LOGI("frame_id:%lu,boxes.size:%d,trackers.size:%d", frame_id, boxes.size(),
        trackers_.size());
   for (auto &t : trackers_) {
-    t.predict(kalman_filter_);
+    t->predict(kalman_filter_);
   }
   std::set<TDLObjectType> obj_types;
   std::map<TDLObjectType, int> obj_type_size;
@@ -69,7 +69,7 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
   std::map<uint64_t, int> exported_tracks;
   std::map<uint64_t, int> track_id_to_idx;
   for (size_t i = 0; i < trackers_.size(); i++) {
-    track_id_to_idx[trackers_[i].id_] = i;
+    track_id_to_idx[trackers_[i]->id_] = i;
   }
   for (size_t i = 0; i < det_track_ids_.size(); i++) {
     uint64_t track_id = det_track_ids_[i];
@@ -78,26 +78,27 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
     }
     TrackerInfo tinfo;
     tinfo.track_id_ = track_id;
-    tinfo.box_info_ = trackers_[track_id_to_idx[track_id]].getBoxInfo();
-    tinfo.status_ = trackers_[track_id_to_idx[track_id]].status_;
-    tinfo.velocity_x_ = trackers_[track_id_to_idx[track_id]].velocity_x_;
-    tinfo.velocity_y_ = trackers_[track_id_to_idx[track_id]].velocity_y_;
+    tinfo.box_info_ = trackers_[track_id_to_idx[track_id]]->getBoxInfo();
+    tinfo.status_ = trackers_[track_id_to_idx[track_id]]->status_;
+    tinfo.velocity_x_ = trackers_[track_id_to_idx[track_id]]->velocity_x_;
+    tinfo.velocity_y_ = trackers_[track_id_to_idx[track_id]]->velocity_y_;
     tinfo.obj_idx_ = i;
     exported_tracks[track_id] = 1;
     tracker_infos.push_back(tinfo);
   }
   for (auto &t : trackers_) {
-    if (exported_tracks.count(t.id_) == 0) {
+    if (exported_tracks.count(t->id_) == 0) {
       TrackerInfo tinfo;
-      tinfo.track_id_ = t.id_;
-      tinfo.box_info_ = t.getBoxInfo();
-      tinfo.status_ = t.status_;
-      tinfo.velocity_x_ = t.velocity_x_;
-      tinfo.velocity_y_ = t.velocity_y_;
+      tinfo.track_id_ = t->id_;
+      tinfo.box_info_ = t->getBoxInfo();
+      tinfo.status_ = t->status_;
+      tinfo.velocity_x_ = t->velocity_x_;
+      tinfo.velocity_y_ = t->velocity_y_;
       tinfo.obj_idx_ = -1;
       tracker_infos.push_back(tinfo);
     }
   }
+
   return 0;
 }
 void MOT::trackAlone(std::vector<ObjectBoxInfo> &boxes,
@@ -108,7 +109,7 @@ void MOT::trackAlone(std::vector<ObjectBoxInfo> &boxes,
   std::vector<int> unmatched_tracker_idxes;
   std::map<uint64_t, int> trackid_idx_map;
   for (size_t i = 0; i < trackers_.size(); ++i) {
-    trackid_idx_map[trackers_[i].id_] = i;
+    trackid_idx_map[trackers_[i]->id_] = i;
   }
   for (size_t i = 0; i < boxes.size(); ++i) {
     if (boxes[i].object_type != obj_type && obj_type != OBJECT_TYPE_UNDEFINED) {
@@ -125,7 +126,7 @@ void MOT::trackAlone(std::vector<ObjectBoxInfo> &boxes,
   }
 
   for (size_t i = 0; i < trackers_.size(); ++i) {
-    if (trackers_[i].box_.object_type != obj_type &&
+    if (trackers_[i]->box_.object_type != obj_type &&
         obj_type != OBJECT_TYPE_UNDEFINED) {
       continue;
     }
@@ -161,9 +162,9 @@ void MOT::trackAlone(std::vector<ObjectBoxInfo> &boxes,
   for (size_t i = 0; i < match_high.matched_pairs.size(); i++) {
     int tracker_idx = match_high.matched_pairs[i].first;
     int bbox_idx = match_high.matched_pairs[i].second;
-    det_track_ids_[bbox_idx] = trackers_[tracker_idx].id_;
+    det_track_ids_[bbox_idx] = trackers_[tracker_idx]->id_;
     LOGI("trackAlone,tracker_idx:%d,bbox_idx:%d,trackid:%lu,obj_type:%d",
-         tracker_idx, bbox_idx, trackers_[tracker_idx].id_,
+         tracker_idx, bbox_idx, trackers_[tracker_idx]->id_,
          boxes[bbox_idx].object_type);
   }
 }
@@ -185,7 +186,7 @@ void MOT::trackFuse(std::vector<ObjectBoxInfo> &boxes,
   // recall unmatched object with pair info
   std::map<uint64_t, int> trackid_idx_map;
   for (size_t i = 0; i < trackers_.size(); i++) {
-    trackid_idx_map[trackers_[i].id_] = i;
+    trackid_idx_map[trackers_[i]->id_] = i;
   }
 
   // need to remove conflict pair info
@@ -200,14 +201,14 @@ void MOT::trackFuse(std::vector<ObjectBoxInfo> &boxes,
     }
     int tracker_idx = trackid_idx_map[det_track_ids_[i]];
     int pair_tracker_idx = trackid_idx_map[pair_obj_trackid];
-    uint64_t trackid = trackers_[pair_tracker_idx].getPairTrackID();
+    uint64_t trackid = trackers_[pair_tracker_idx]->getPairTrackID();
     if (trackid != 0 && pair_obj_trackid != 0 && det_track_ids_[i] != trackid) {
       LOGI(
           "got conflict pair info,det obji:%d,pair_obj_idx:%d,matched "
           "trackid:%lu,pair_trackid:%lu,pairtrackid_pair:%lu",
           i, pair_obj_idx, det_track_ids_[i], pair_obj_trackid, trackid);
-      trackers_[tracker_idx].resetPairInfo();
-      trackers_[pair_tracker_idx].resetPairInfo();
+      trackers_[tracker_idx]->resetPairInfo();
+      trackers_[pair_tracker_idx]->resetPairInfo();
     }
   }
 
@@ -222,7 +223,7 @@ void MOT::trackFuse(std::vector<ObjectBoxInfo> &boxes,
       continue;
     }
     int pair_tracker_idx = trackid_idx_map[pair_obj_trackid];
-    uint64_t trackid = trackers_[pair_tracker_idx].getPairTrackID();
+    uint64_t trackid = trackers_[pair_tracker_idx]->getPairTrackID();
     if (trackid != 0) {
       det_track_ids_[i] = trackid;
       LOGI("recall pair obj:%d,pair_obj_idx:%d,trackid:%lu,pair_trackid:%lu", i,
@@ -349,7 +350,7 @@ MatchResult MOT::match(const std::vector<ObjectBoxInfo> &dets,
     if (bbox_j != -1) {
       int tracker_idx = tracker_idxes[i];
       int bbox_idx = det_idxes[bbox_j];
-      ObjectBoxInfo tracker_box = trackers_[tracker_idx].getBoxInfo();
+      ObjectBoxInfo tracker_box = trackers_[tracker_idx]->getBoxInfo();
       ObjectBoxInfo det_box = dets[bbox_idx];
       float matched_iou =
           MotBoxHelper::calculateIOUOnFirst(tracker_box, det_box);
@@ -357,7 +358,7 @@ MatchResult MOT::match(const std::vector<ObjectBoxInfo> &dets,
         matched_tracker_i[i] = true;
         matched_bbox_j[bbox_j] = true;
         LOGI("matched,tracker_idx:%d,trackid:%lu,bbox_idx:%d,iou:%f",
-             tracker_idx, trackers_[tracker_idx].id_, bbox_idx, matched_iou);
+             tracker_idx, trackers_[tracker_idx]->id_, bbox_idx, matched_iou);
         match_result.matched_pairs.push_back(
             std::make_pair(tracker_idx, bbox_idx));
       }
@@ -388,12 +389,17 @@ void MOT::updateTrackers(const std::vector<ObjectBoxInfo> &boxes,
                          const std::vector<ModelFeatureInfo> &features) {
   std::map<uint64_t, int> trackid_idx_map;
   for (size_t i = 0; i < trackers_.size(); i++) {
-    trackid_idx_map[trackers_[i].id_] = i;
+    trackid_idx_map[trackers_[i]->id_] = i;
+    // LOGI("trackid:%lu,idx:%d", trackers_[i]->id_, i);
   }
   std::map<int, int> paired_track_idxes;
   for (size_t i = 0; i < trackers_.size(); i++) {
-    uint64_t pair_trackid = trackers_[i].getPairTrackID();
+    uint64_t pair_trackid = trackers_[i]->getPairTrackID();
     if (pair_trackid == 0) {
+      continue;
+    }
+    if (trackid_idx_map.count(pair_trackid) == 0) {
+      LOGW("pair_trackid:%lu not found,skip", pair_trackid);
       continue;
     }
     int pair_idx = trackid_idx_map[pair_trackid];
@@ -410,8 +416,8 @@ void MOT::updateTrackers(const std::vector<ObjectBoxInfo> &boxes,
       assert(false);
     }
     int idx = trackid_idx_map[trackid];
-    trackers_[idx].update(current_frame_id_, kalman_filter_, &boxes[i],
-                          tracker_config_);
+    trackers_[idx]->update(current_frame_id_, kalman_filter_, &boxes[i],
+                           tracker_config_);
     matched_trackid_flag[trackid] = 1;
   }
 
@@ -426,8 +432,11 @@ void MOT::updateTrackers(const std::vector<ObjectBoxInfo> &boxes,
     }
     id_counter_++;
     uint64_t new_id = id_counter_;
-    KalmanTracker tracker_(current_frame_id_, kalman_filter_, new_id, boxes[i],
-                           img_width_, img_height_);
+    std::shared_ptr<KalmanTracker> tracker = std::make_shared<KalmanTracker>(
+        current_frame_id_, kalman_filter_, new_id, boxes[i], img_width_,
+        img_height_);
+    trackers_.emplace_back(tracker);
+
     LOGI("create new tracker:%lu,box_id:%d,objtype:%d,x1:%f,y1:%f,x2:%f,y2:%f",
          new_id, i, boxes[i].object_type, boxes[i].x1, boxes[i].y1, boxes[i].x2,
          boxes[i].y2);
@@ -437,52 +446,69 @@ void MOT::updateTrackers(const std::vector<ObjectBoxInfo> &boxes,
       if (pair_trackid == 0) {
         continue;
       }
+      if (trackid_idx_map.count(pair_trackid) == 0) {
+        LOGW("pair_trackid:%lu not found,skip", pair_trackid);
+        continue;
+      }
       int pair_track_idx = trackid_idx_map[pair_trackid];
-      KalmanTracker &pair_track = trackers_[pair_track_idx];
-      if (pair_track.unmatched_times_ == 0 &&
-          pair_track.status_ == TrackStatus::TRACKED && boxes[i].score > 0.5) {
-        tracker_.status_ = TrackStatus::TRACKED;
-        LOGI("confirm track directly ,track:%lu,pair:%lu", tracker_.id_,
-             pair_track.id_);
+      std::shared_ptr<KalmanTracker> &pair_track = trackers_[pair_track_idx];
+      if (pair_track->unmatched_times_ == 0 &&
+          pair_track->status_ == TrackStatus::TRACKED && boxes[i].score > 0.5) {
+        tracker->status_ = TrackStatus::TRACKED;
+        LOGI("confirm track directly ,track:%lu,pair:%lu", tracker->id_,
+             pair_track->id_);
       }
     }
-    trackers_.push_back(tracker_);
     det_track_ids_[i] = new_id;
     trackid_idx_map[new_id] = trackers_.size() - 1;
     matched_trackid_flag[new_id] = 1;
+    LOGI("add new tracker:%lu,idx:%d", new_id, trackid_idx_map[new_id]);
   }
   // update paired trackers
   std::map<uint64_t, uint64_t> pair_track_ids = getPairTrackIds();
   for (auto &p : pair_track_ids) {
     uint64_t trackid = p.first;
     uint64_t pair_trackid = p.second;
-    auto &track_a = trackers_[trackid_idx_map[trackid]];
-    auto &track_b = trackers_[trackid_idx_map[pair_trackid]];
-    if (track_a.unmatched_times_ == 0 && track_b.unmatched_times_ == 0) {
-      track_a.updatePairInfo(&track_b);
-    } else if (track_a.unmatched_times_ == 0 && track_b.unmatched_times_ != 0) {
-      track_b.falseUpdateFromPair(current_frame_id_, kalman_filter_, &track_a,
-                                  tracker_config_);
+    if (trackid_idx_map.count(trackid) == 0 ||
+        trackid_idx_map.count(pair_trackid) == 0) {
+      LOGW("trackid or pair_trackid not found,skip,track:%lu,pair:%lu", trackid,
+           pair_trackid);
+      continue;
+    }
+    int track_a_idx = trackid_idx_map[trackid];
+    int track_b_idx = trackid_idx_map[pair_trackid];
+    LOGI("update paired trackers,track:%lu,idx:%d,pair:%lu,idx:%d", trackid,
+         track_a_idx, pair_trackid, track_b_idx);
+    auto &track_a = trackers_[track_a_idx];
+    auto &track_b = trackers_[track_b_idx];
+    if (track_a->unmatched_times_ == 0 && track_b->unmatched_times_ == 0) {
+      track_a->updatePairInfo(track_b.get());
+    } else if (track_a->unmatched_times_ == 0 &&
+               track_b->unmatched_times_ != 0) {
+      track_b->falseUpdateFromPair(current_frame_id_, kalman_filter_,
+                                   track_a.get(), tracker_config_);
       matched_trackid_flag[pair_trackid] = 1;
-    } else if (track_a.unmatched_times_ != 0 && track_b.unmatched_times_ == 0) {
-      track_a.falseUpdateFromPair(current_frame_id_, kalman_filter_, &track_b,
-                                  tracker_config_);
+    } else if (track_a->unmatched_times_ != 0 &&
+               track_b->unmatched_times_ == 0) {
+      track_a->falseUpdateFromPair(current_frame_id_, kalman_filter_,
+                                   track_b.get(), tracker_config_);
       matched_trackid_flag[trackid] = 1;
     }
   }
   // update unmatched trackers
   for (size_t i = 0; i < trackers_.size(); i++) {
-    if (matched_trackid_flag.count(trackers_[i].id_) == 0) {
-      LOGI("update unmatched tracker:%lu", trackers_[i].id_);
-      trackers_[i].update(current_frame_id_, kalman_filter_, nullptr,
-                          tracker_config_);
+    if (matched_trackid_flag.count(trackers_[i]->id_) == 0) {
+      LOGI("update unmatched tracker:%lu", trackers_[i]->id_);
+      trackers_[i]->update(current_frame_id_, kalman_filter_, nullptr,
+                           tracker_config_);
     }
   }
   // erase trackers with unmatched_times_ >
   // max_unmatched_times_for_bbox_matching
   for (auto it = trackers_.begin(); it != trackers_.end();) {
-    if (it->status_ == TrackStatus::REMOVED) {
-      LOGI("erase tracker:%lu", it->id_);
+    if ((*it)->status_ == TrackStatus::REMOVED) {
+      LOGI("erase tracker:%lu", (*it)->id_);
+      resetPairTrackerOfRemovedTracker((*it)->id_);
       it = trackers_.erase(it);
     } else {
       it++;
@@ -522,14 +548,26 @@ std::map<uint64_t, uint64_t> MOT::getPairTrackIds() {
     pair_track_ids[trackid] = pair_trackid;
   }
   for (auto &track : trackers_) {
-    uint64_t trackid = track.id_;
-    uint64_t pair_trackid = track.getPairTrackID();
-    if (track.unmatched_times_ == 0 && pair_trackid != 0) {
+    uint64_t trackid = track->id_;
+    uint64_t pair_trackid = track->getPairTrackID();
+    if (track->unmatched_times_ == 0 && pair_trackid != 0) {
       swap_trackid(trackid, pair_trackid);
       if (pair_track_ids.count(trackid) == 0) {
+        LOGI("add extra pair track:%lu,pair:%lu", trackid, pair_trackid);
         pair_track_ids[trackid] = pair_trackid;
       }
     }
   }
   return pair_track_ids;
+}
+
+void MOT::resetPairTrackerOfRemovedTracker(uint64_t tracker_id) {
+  if (tracker_id == 0) {
+    return;
+  }
+  for (auto &p : trackers_) {
+    if (p->getPairTrackID() == tracker_id) {
+      p->resetPairInfo();
+    }
+  }
 }

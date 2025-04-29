@@ -22,6 +22,7 @@ class TrackerConfig {
  public:
   int max_unmatched_times_ = 10;
   int track_confirmed_frames_ = 2;
+  int track_pair_update_missed_times_ = 2;
   float track_init_score_thresh_ = 0.6;
   float high_score_thresh_ = 0.5;
   float high_score_iou_dist_thresh_ = 0.7;
