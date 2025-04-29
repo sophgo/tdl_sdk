@@ -60,6 +60,7 @@ set(PROJ_SRCS
                 ${CMAKE_CURRENT_SOURCE_DIR}/memory/memory_pool_factory.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/utils/image_alignment.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/utils/pose_helper.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/utils/profiler.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/common/model_output_types.cpp
                 )
 

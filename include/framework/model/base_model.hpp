@@ -11,6 +11,9 @@
 #include "image/base_image.hpp"
 #include "net/base_net.hpp"
 #include "preprocess/base_preprocessor.hpp"
+
+#include "utils/profiler.hpp"
+
 class BaseModel {
  public:
   BaseModel();
@@ -84,6 +87,8 @@ class BaseModel {
 
   std::vector<std::shared_ptr<BaseImage>> tmp_preprocess_images_;
   std::map<int, TDLObjectType> type_mapping_;
+
+  Timer model_timer_;
 };
 
 #endif  // INCLUDE_BASE_MODEL_H_

@@ -45,6 +45,7 @@ void construct_model_id_mapping(
   model_id_mapping["YOLOV8N_DET_PERSON_VEHICLE"] =
       ModelType::YOLOV8N_DET_PERSON_VEHICLE;
   model_id_mapping["KEYPOINT_FACE_V2"] = ModelType::KEYPOINT_FACE_V2;
+  model_id_mapping["YOLOV8N_DET_MONITOR_PERSON"] = ModelType::YOLOV8N_DET_MONITOR_PERSON;
 }
 
 int main(int argc, char **argv) {
@@ -91,7 +92,12 @@ int main(int argc, char **argv) {
   model->setModelThreshold(model_threshold);
   std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image};
-  model->inference(input_images, out_datas);
+  for (int i = 0; i < 1001; i++) {
+    out_datas.clear();
+    model->inference(input_images, out_datas);
+  }
+
+  std::cout << "out_datas.size: " << out_datas.size() << std::endl;
 
   for (size_t i = 0; i < out_datas.size(); i++) {
     if (out_datas[i]->getType() != ModelOutputType::OBJECT_DETECTION) {

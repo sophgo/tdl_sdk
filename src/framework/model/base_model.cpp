@@ -185,7 +185,7 @@ int32_t BaseModel::inference(
       preprocess_params.scale[0], preprocess_params.scale[1],
       preprocess_params.scale[2], preprocess_params.dst_height,
       preprocess_params.dst_width, preprocess_params.dst_pixdata_type);
-
+  model_timer_.TicToc("runstart");
   std::shared_ptr<BaseTensor> input_tensor =
       net_->getInputTensor(input_layer_name);
   while (process_idx < batch_size) {
@@ -214,11 +214,14 @@ int32_t BaseModel::inference(
         batch_rescale_params_.push_back(rescale_params);
       }
     }
+    model_timer_.TicToc("preprocess");
     net_->updateInputTensors();
     net_->forward();
+    model_timer_.TicToc("tpu");
     net_->updateOutputTensors();
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_results;
     outputParse(batch_images, batch_results);
+    model_timer_.TicToc("post");
     out_datas.insert(out_datas.end(), batch_results.begin(),
                      batch_results.end());
     process_idx += fit_batch_size;
