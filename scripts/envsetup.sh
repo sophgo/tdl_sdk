@@ -202,10 +202,16 @@ configure_platform_env() {
 
             
             # 加载SOC环境
-            load_soc_env
+            if [ "${CHIP_ARCH}" != "CV181X" ]; then
+                load_soc_env
+            else
+                CV181X_INSTALL_PATH=$(ls -d ${SDK_ROOT_DIR}/../install/soc_*/tpu_*/cvitek_tpu_sdk | head -n 1)
+                add_lib_paths "${CV181X_INSTALL_PATH}/lib"
+            fi
+
             
             # 添加依赖库路径
-            add_lib_paths "${TPU_SDK_PATH}/lib" "${IVE_SDK_PATH}/lib" "${MPI_PATH}/lib"
+            add_lib_paths "${TPU_SDK_PATH}/lib" "${IVE_SDK_PATH}/lib" "${MPI_PATH}/lib" "${MPI_PATH}/lib/3rd"
             
             # 添加样例库路径
             add_lib_paths "${TDL_INSTALL_DIR}/sample/3rd/opencv/lib" \

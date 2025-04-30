@@ -24,6 +24,7 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:face_capture_app>
                $<TARGET_OBJECTS:app>
 
+               $<TARGET_OBJECTS:area_detect>
                )
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
