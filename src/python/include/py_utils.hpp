@@ -67,4 +67,34 @@ inline std::string object_type_to_string(TDLObjectType type) {
       return "UNKOWN";
   }
 }
+
+inline TDLObjectType string_to_object_type(const std::string& str) {
+  static const std::unordered_map<std::string, TDLObjectType> mapping = {
+      {"PERSON", TDLObjectType::OBJECT_TYPE_PERSON},
+      {"FACE", TDLObjectType::OBJECT_TYPE_FACE},
+      {"HAND", TDLObjectType::OBJECT_TYPE_HAND},
+      {"HEAD", TDLObjectType::OBJECT_TYPE_HEAD},
+      {"HEAD_SHOULDER", TDLObjectType::OBJECT_TYPE_HEAD_SHOULDER},
+      {"HARD_HAT", TDLObjectType::OBJECT_TYPE_HARD_HAT},
+      {"FACE_MASK", TDLObjectType::OBJECT_TYPE_FACE_MASK},
+      {"CAR", TDLObjectType::OBJECT_TYPE_CAR},
+      {"BUS", TDLObjectType::OBJECT_TYPE_BUS},
+      {"TRUCK", TDLObjectType::OBJECT_TYPE_TRUCK},
+      {"MOTORBIKE", TDLObjectType::OBJECT_TYPE_MOTORBIKE},
+      {"BICYCLE", TDLObjectType::OBJECT_TYPE_BICYCLE},
+      {"PLATE", TDLObjectType::OBJECT_TYPE_LICENSE_PLATE},
+      {"LICENSE_PLATE", TDLObjectType::OBJECT_TYPE_LICENSE_PLATE},
+      {"CAT", TDLObjectType::OBJECT_TYPE_CAT},
+      {"DOG", TDLObjectType::OBJECT_TYPE_DOG},
+      {"UNDEFINED", TDLObjectType::OBJECT_TYPE_UNDEFINED},
+  };
+
+  std::string upper_str = str;
+  std::transform(upper_str.begin(), upper_str.end(), upper_str.begin(),
+                 [](unsigned char c) { return std::toupper(c); });
+
+  auto it = mapping.find(upper_str);
+  return it != mapping.end() ? it->second
+                             : TDLObjectType::OBJECT_TYPE_UNDEFINED;
+}
 #endif

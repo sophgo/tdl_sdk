@@ -372,4 +372,55 @@ PYBIND11_MODULE(tdl, m) {
       .def("get_feature_dim", &PyMatcher::getFeatureDim);
 
   matcher.def("create_matcher", &createMatcher);
+
+  // 追踪模块
+  py::module tracker = m.def_submodule("tracker", "Tracker module");
+
+  py::enum_<TrackStatus>(tracker, "TrackStatus")
+      .value("NEW", TrackStatus::NEW)
+      .value("TRACKED", TrackStatus::TRACKED)
+      .value("LOST", TrackStatus::LOST)
+      .value("REMOVED", TrackStatus::REMOVED)
+      .export_values();
+
+  py::enum_<TrackerType>(tracker, "TrackerType")
+      .value("TDL_MOT_SORT", TrackerType::TDL_MOT_SORT)
+      .export_values();
+
+  py::class_<TrackerConfig>(tracker, "TrackerConfig")
+      .def(py::init<>())
+      .def_readwrite("max_unmatched_times",
+                     &TrackerConfig::max_unmatched_times_)
+      .def_readwrite("track_confirmed_frames",
+                     &TrackerConfig::track_confirmed_frames_)
+      .def_readwrite("track_init_score_thresh",
+                     &TrackerConfig::track_init_score_thresh_)
+      .def_readwrite("high_score_thresh", &TrackerConfig::high_score_thresh_)
+      .def_readwrite("high_score_iou_dist_thresh",
+                     &TrackerConfig::high_score_iou_dist_thresh_)
+      .def_readwrite("low_score_iou_dist_thresh",
+                     &TrackerConfig::low_score_iou_dist_thresh_);
+
+  py::class_<TrackerInfo>(tracker, "TrackerInfo")
+      .def(py::init<>())
+      .def_readwrite("box_info", &TrackerInfo::box_info_)
+      .def_readwrite("status", &TrackerInfo::status_)
+      .def_readwrite("obj_idx", &TrackerInfo::obj_idx_)
+      .def_readwrite("track_id", &TrackerInfo::track_id_)
+      .def_readwrite("velocity_x", &TrackerInfo::velocity_x_)
+      .def_readwrite("velocity_y", &TrackerInfo::velocity_y_);
+
+  py::class_<PyTracker>(tracker, "Tracker")
+      .def(py::init<TrackerType>(), py::arg("type"))
+      .def("set_pair_config", &PyTracker::setPairConfig,
+           py::arg("object_pair_config"))
+      .def("set_track_config", &PyTracker::setTrackConfig,
+           py::arg("track_config"))
+      .def("get_track_config", &PyTracker::getTrackConfig)
+      .def("track", &PyTracker::track, py::arg("boxes"), py::arg("frame_id"))
+      .def("set_img_size", &PyTracker::setImgSize, py::arg("width"),
+           py::arg("height"));
+
+  py::class_<TrackerFactory>(m, "TrackerFactory")
+      .def_static("createTracker", &TrackerFactory::createTracker);
 }

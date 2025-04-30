@@ -531,4 +531,67 @@ py::list PyCharacterRecognitor::inference(
   PyImage image = PyImage::fromNumpy(input);
   return inference(image, parameters);
 }
+
+PyTracker::PyTracker(TrackerType type) {
+  tracker_ = TrackerFactory::createTracker(type);
+}
+void PyTracker::setPairConfig(
+    const std::map<TDLObjectType, TDLObjectType>& object_pair_config) {
+  tracker_->setPairConfig(object_pair_config);
+}
+void PyTracker::setTrackConfig(const TrackerConfig& track_config) {
+  tracker_->setTrackConfig(track_config);
+}
+TrackerConfig PyTracker::getTrackConfig() { return tracker_->getTrackConfig(); }
+
+py::list PyTracker::track(const py::list& boxes, uint64_t frame_id) {
+  static std::unordered_map<size_t, ObjectBoxInfo> prev_boxes;
+  std::vector<ObjectBoxInfo> box_vec;
+  for (size_t i = 0; i < boxes.size(); ++i) {
+    py::dict box_dict = boxes[i].cast<py::dict>();
+    ObjectBoxInfo box_info;
+    box_info.x1 = box_dict["x1"].cast<float>();
+    box_info.y1 = box_dict["y1"].cast<float>();
+    box_info.x2 = box_dict["x2"].cast<float>();
+    box_info.y2 = box_dict["y2"].cast<float>();
+    box_info.class_id = box_dict["class_id"].cast<int>();
+    // box_info.class_name = box_dict["class_name"].cast<std::string>();
+    box_info.score = box_dict["score"].cast<float>();
+    box_info.object_type =
+        string_to_object_type(box_dict["class_name"].cast<std::string>());
+    // box_info.object_type = static_cast<TDLObjectType>(box_info.class_id);
+    box_vec.push_back(box_info);
+  }
+  std::vector<TrackerInfo> trackers;
+  tracker_->track(box_vec, frame_id, trackers);
+  py::list result;
+  for (auto& tracker : trackers) {
+    py::dict tracker_dict;
+    py::dict box_dict;
+    box_dict["x1"] = tracker.box_info_.x1;
+    box_dict["y1"] = tracker.box_info_.y1;
+    box_dict["x2"] = tracker.box_info_.x2;
+    box_dict["y2"] = tracker.box_info_.y2;
+    box_dict["class_id"] = tracker.box_info_.class_id;
+    // box_dict["class_name"] =
+    // object_type_to_string(tracker.box_info_.object_type);
+    box_dict["score"] = tracker.box_info_.score;
+    tracker_dict["box_info"] = box_dict;
+    tracker_dict["status"] = static_cast<int>(tracker.status_);
+    tracker_dict["obj_idx"] = tracker.obj_idx_;
+    tracker_dict["track_id"] = tracker.track_id_;
+    float velocity_x =
+        std::isinf(tracker.velocity_x_) ? 0.0f : tracker.velocity_x_;
+    float velocity_y =
+        std::isinf(tracker.velocity_y_) ? 0.0f : tracker.velocity_y_;
+    tracker_dict["velocity_x"] = velocity_x;
+    tracker_dict["velocity_y"] = velocity_y;
+    result.append(tracker_dict);
+    prev_boxes[tracker.track_id_] = tracker.box_info_;
+  }
+  return result;
+}
+void PyTracker::setImgSize(int width, int height) {
+  tracker_->setImgSize(width, height);
+}
 }  // namespace pytdl
