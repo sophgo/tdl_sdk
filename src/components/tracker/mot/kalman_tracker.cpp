@@ -100,6 +100,9 @@ void KalmanTracker::update(const uint64_t &frame_id, const KalmanFilter &kf,
     float x2 = tlwh(0) + tlwh(2);
     float y2 = tlwh(1) + tlwh(3);
     int frame_diff = frame_id - last_updated_frame_id_;
+    if (frame_diff == 0) {
+      frame_diff = 1;
+    }
 
     LOGI(
         "update "

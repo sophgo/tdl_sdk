@@ -40,6 +40,14 @@ void PipelineChannel::stop() { is_running_ = false; }
 
 int32_t PipelineChannel::toNextNode(PipelineNode *node,
                                     PtrFrameInfo frame_info) {
+  LOGI("channel:%s,to add frame to node:%s next,frame_id:%lu", name_.c_str(),
+       node->getNodeName().c_str(), frame_info->frame_id_);
+  if (node == nullptr) {
+    LOGE("node is nullptr,channel:%s,node:%s", name_.c_str(),
+         node->getNodeName().c_str());
+    assert(false);
+    return -1;
+  }
   int node_idx = -1;
   for (size_t i = 0; i < nodes_.size(); i++) {
     if (nodes_[i].get() == node) {
@@ -54,7 +62,11 @@ int32_t PipelineChannel::toNextNode(PipelineNode *node,
     return -1;
   }
   if (node_idx == nodes_.size() - 1) {
+    LOGI("channel:%s,to add final frame,size:%d,frame_id:%lu", name_.c_str(),
+         int(final_queue_.sizeUnsafe()), frame_info->frame_id_);
     final_queue_.push(std::move(frame_info));
+    LOGI("channel:%s,add final frame done,size:%d", name_.c_str(),
+         int(final_queue_.sizeUnsafe()));
   } else {
     nodes_[node_idx + 1]->addProcessFrame(this, std::move(frame_info));
   }
@@ -66,10 +78,14 @@ PtrFrameInfo PipelineChannel::getProcessedFrame(int wait_ms) {
 }
 
 PtrFrameInfo PipelineChannel::getFreeFrame(int wait_ms) {
+  LOGI("channel:%s,to get free frame,size:%d", name_.c_str(),
+       int(free_queue_.sizeUnsafe()));
   return free_queue_.pop(wait_ms);
 }
 
 int32_t PipelineChannel::addFreeFrame(PtrFrameInfo frame_info) {
+  LOGI("channel:%s,to add free frame,size:%d,frame_id:%lu", name_.c_str(),
+       int(free_queue_.sizeUnsafe()), frame_info->frame_id_);
   if (frame_info == nullptr) {
     LOGE("frame_info is nullptr,channel:%s", name_.c_str());
     assert(false);
@@ -80,6 +96,10 @@ int32_t PipelineChannel::addFreeFrame(PtrFrameInfo frame_info) {
   } else {
     LOGW("not cleared frame added to free frame,channel:%s", name_.c_str());
   }
+  LOGI("channel:%s,add free frame,size:%d,frame_id:%lu", name_.c_str(),
+       int(free_queue_.sizeUnsafe()), frame_info->frame_id_);
   free_queue_.push(std::move(frame_info));
+  LOGI("channel:%s,add free frame done,size:%d", name_.c_str(),
+       int(free_queue_.sizeUnsafe()));
   return 0;
 }

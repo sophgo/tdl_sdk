@@ -15,13 +15,15 @@ class BasePreprocessor {
 
   // 图像尺寸调整
   virtual std::shared_ptr<BaseImage> resize(
-      const std::shared_ptr<BaseImage>& image, int newWidth, int newHeight) = 0;
+      const std::shared_ptr<BaseImage>& image, int newWidth, int newHeight);
 
   // 裁剪图像
   virtual std::shared_ptr<BaseImage> crop(
       const std::shared_ptr<BaseImage>& image, int x, int y, int width,
-      int height) = 0;
-
+      int height);
+  virtual std::shared_ptr<BaseImage> cropResize(
+      const std::shared_ptr<BaseImage>& image, int x, int y, int width,
+      int height, int newWidth, int newHeight);
   virtual std::shared_ptr<BaseImage> preprocess(
       const std::shared_ptr<BaseImage>& src_image,
       const PreprocessParams& params,

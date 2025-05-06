@@ -13,6 +13,14 @@
 
 ![image](./docs/images/framework.png)
 
+## News
+
+- 2025.05.06 新增目标抓拍组件，基于目标质量进行目标抓拍，并更新到[face_cap_app](sample/cpp/sample_face_cap_app.cpp)
+- 2025.04.30 新增区域入侵检测组件
+- 2025.04.29 增加并行框架及app框架
+- 2025.04.14 增加vi组件
+- [更多](docs/developer_guide/version_history.md)
+
 ## 特性
 
 - 实现算法部署的底座框架，适配多种芯片产品，基于该框架可以实现一次部署，多平台运行

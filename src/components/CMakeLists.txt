@@ -1,8 +1,7 @@
 
 
 add_subdirectory(nn)
-add_subdirectory(capture)
-
+add_subdirectory(snapshot)
 add_subdirectory(tracker)
 add_subdirectory(matcher)
 add_subdirectory(video_decoder)

@@ -3,11 +3,11 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include "components/tracker/tracker_types.hpp"
 #include "image/base_image.hpp"
 #include "model/base_model.hpp"
 #include "py_image.hpp"
 #include "tdl_model_factory.hpp"
-#include "tdl_sdk/include/components/tracker/tracker_types.hpp"
 
 namespace py = pybind11;
 namespace pytdl {

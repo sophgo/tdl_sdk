@@ -39,47 +39,6 @@ void bgr_split_scale(const cv::Mat& src_mat, std::vector<cv::Mat>& tmp_bgr,
 
 OpenCVPreprocessor::OpenCVPreprocessor() {}
 
-std::shared_ptr<BaseImage> OpenCVPreprocessor::resize(
-    const std::shared_ptr<BaseImage>& image, int newWidth, int newHeight) {
-  PreprocessParams params;
-  params.dst_width = newWidth;
-  params.dst_height = newHeight;
-  params.dst_image_format = image->getImageFormat();
-  params.dst_pixdata_type = image->getPixDataType();
-
-  for (int i = 0; i < 3; i++) {
-    params.mean[i] = 0;
-    params.scale[i] = 1;
-  }
-  params.crop_x = 0;
-  params.crop_y = 0;
-  params.crop_width = 0;
-  params.crop_height = 0;
-  params.keep_aspect_ratio = false;
-  return preprocess(image, params, nullptr);
-}
-
-std::shared_ptr<BaseImage> OpenCVPreprocessor::crop(
-    const std::shared_ptr<BaseImage>& image, int x, int y, int width,
-    int height) {
-  PreprocessParams params;
-  params.dst_width = width;
-  params.dst_height = height;
-  params.dst_image_format = image->getImageFormat();
-  params.dst_pixdata_type = image->getPixDataType();
-
-  for (int i = 0; i < 3; i++) {
-    params.mean[i] = 0;
-    params.scale[i] = 1;
-  }
-  params.crop_x = x;
-  params.crop_y = y;
-  params.crop_width = width;
-  params.crop_height = height;
-  params.keep_aspect_ratio = false;
-  return preprocess(image, params, nullptr);
-}
-
 std::shared_ptr<BaseImage> OpenCVPreprocessor::preprocess(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     std::shared_ptr<BaseMemoryPool> memory_pool) {

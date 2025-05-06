@@ -73,6 +73,12 @@ else()
   message(FATAL_ERROR "Unrecognized platform ${CVI_PLATFORM}.")
 endif()
 
+if("${CVI_PLATFORM}" STREQUAL "BM1684" OR 
+   "${CVI_PLATFORM}" STREQUAL "BM1684X" OR 
+   "${CVI_PLATFORM}" STREQUAL "BM1688")
+  add_definitions(-D__EDGE_PLATFORM__)
+endif()
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE} ${CMAKE_C_INIT} -s" )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_INIT} -s" )

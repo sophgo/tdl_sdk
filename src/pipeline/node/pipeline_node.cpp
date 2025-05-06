@@ -31,9 +31,15 @@ void *PipelineNode::process(void *arg) {
     for (auto &channel : channels) {
       PipelineChannel *p_chn = channel;
 
-      if (!p_chn->isRunning()) continue;
+      if (!p_chn->isRunning()) {
+        LOGI("channel:%s,is not running,skip", p_chn->name().c_str());
+        usleep(100);
+        continue;
+      }
 
       PtrFrameInfo frame_info = nullptr;
+      LOGI("node:%s,to get process frame,input_queues_size:%d",
+           node->name_.c_str(), int(node->input_queues_[p_chn].sizeUnsafe()));
       if (node->is_frist_node_) {
         frame_info = p_chn->getFreeFrame(wait_ts);
       } else {
@@ -47,8 +53,12 @@ void *PipelineNode::process(void *arg) {
     }
 
     if (batch_frames.size() == 0) {
+      usleep(100);
+      LOGI("node:%s,no frame to process", node->name_.c_str());
       continue;
     }
+    LOGI("node:%s,got process frame,size:%d", node->name_.c_str(),
+         int(batch_frames.size()));
     for (auto &frame_info : batch_frames) {
       if (node->process_func_) {
         int32_t ret = node->process_func_(frame_info, node->worker_);
@@ -56,8 +66,12 @@ void *PipelineNode::process(void *arg) {
           LOGE("process func return %d", ret);
           // assert(false);
         }
+        LOGI("node:%s,process frame done,frame_id:%lu", node->name_.c_str(),
+             frame_info->frame_id_);
       }
     }
+    LOGI("node:%s,to send frame to next node,size:%d", node->name_.c_str(),
+         int(batch_frames.size()));
     for (size_t i = 0; i < batch_frames.size(); i++) {
       batch_channels[i]->toNextNode(node, std::move(batch_frames[i]));
     }
@@ -92,6 +106,8 @@ void PipelineNode::unregisterChannel(PipelineChannel *p_chn) {
 
 int32_t PipelineNode::addProcessFrame(PipelineChannel *p_chn,
                                       PtrFrameInfo frame_info) {
+  LOGI("node:%s,to add process frame,channel:%s,frame_id:%lu", name_.c_str(),
+       p_chn->name().c_str(), frame_info->frame_id_);
   if (std::find(channels_.begin(), channels_.end(), p_chn) == channels_.end()) {
     LOGE("channel not found,node:%s,channel:%s", name_.c_str(),
          p_chn->name().c_str());
@@ -105,6 +121,8 @@ int32_t PipelineNode::addProcessFrame(PipelineChannel *p_chn,
     PtrFrameInfo frame_info = input_queues_[p_chn].pop();
     p_chn->addFreeFrame(std::move(frame_info));
   }
+  LOGI("node:%s,add process frame done,channel:%s,size:%d", name_.c_str(),
+       p_chn->name().c_str(), int(input_queues_[p_chn].sizeUnsafe()));
   return 0;
 }
 

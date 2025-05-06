@@ -56,6 +56,34 @@ std::string packOutput(const std::vector<TrackerInfo> &track_results,
   return str_content;
 }
 
+void exportFaceSnapshots(
+    const std::string &dst_dir, uint32_t frame_id,
+    const std::vector<ObjectSnapshotInfo> &face_snapshots) {
+  char sz_frame_name[1024];
+  for (auto &face_snapshot : face_snapshots) {
+    sprintf(sz_frame_name, "%s/track_%d_frame_%04d_quality_%.2f.jpg",
+            dst_dir.c_str(), int(face_snapshot.track_id),
+            int(face_snapshot.snapshot_frame_id), face_snapshot.quality);
+    printf("write image %s\n", sz_frame_name);
+    cv::Mat mat = *(cv::Mat *)face_snapshot.object_image->getInternalData();
+    auto &box = face_snapshot.object_box_info;
+    cv::rectangle(mat,
+                  cv::Rect(box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1),
+                  cv::Scalar(0, 255, 0), 2);
+    std::vector<float> landmarks =
+        face_snapshot.other_info.at("landmarks").get<std::vector<float>>();
+    for (size_t i = 0; i < landmarks.size(); i += 2) {
+      cv::circle(mat, cv::Point(landmarks[i], landmarks[i + 1]), 2,
+                 cv::Scalar(0, 0, 255), -1);
+    }
+
+    int32_t ret =
+        ImageFactory::writeImage(sz_frame_name, face_snapshot.object_image);
+    if (ret != 0) {
+      std::cout << "write image " << sz_frame_name << " failed" << std::endl;
+    }
+  }
+}
 void visualizeDetections(const std::string &dst_dir, uint32_t frame_id,
                          std::shared_ptr<BaseImage> image,
                          const std::vector<ObjectBoxInfo> &person_boxes,
@@ -103,11 +131,13 @@ int main(int argc, char **argv) {
     return -1;
   }
   std::vector<std::string> channel_names = app_task->getChannelNames();
+  std::map<std::string, std::string> channel_output_dirs;
   char sz_frame_name[1024];
   std::map<std::string, int> channel_counter;
   for (auto &channel_name : channel_names) {
     std::string output_dir = output_folder_path + "/" + channel_name;
     make_dir(output_dir.c_str());
+    channel_output_dirs[channel_name] = output_dir;
     channel_counter[channel_name] = 0;
   }
 
@@ -119,6 +149,7 @@ int main(int argc, char **argv) {
     }
     for (const auto &channel_name : channel_names) {
       Packet result;
+      std::cout << "to get result from channel:" << channel_name << std::endl;
       int ret = app_task->getResult(channel_name, result);
       if (ret != 0) {
         std::cout << "get result failed" << std::endl;
@@ -126,11 +157,12 @@ int main(int argc, char **argv) {
         continue;
       }
       std::shared_ptr<FaceCaptureResult> cap_result =
-          result.Get<std::shared_ptr<FaceCaptureResult>>();
+          result.get<std::shared_ptr<FaceCaptureResult>>();
       if (cap_result == nullptr) {
         std::cout << "cap_result is nullptr" << std::endl;
         continue;
       }
+      std::string output_dir = channel_output_dirs[channel_name];
       // visualizeDetections(output_folder_path, cap_result->frame_id,
       //                     cap_result->image, cap_result->person_boxes,
       //                     cap_result->face_boxes);
@@ -139,12 +171,16 @@ int main(int argc, char **argv) {
           packOutput(cap_result->track_results, cap_result->frame_width,
                      cap_result->frame_height);
 
-      sprintf(sz_frame_name, "%s/%s/%08d.txt", output_folder_path.c_str(),
+      sprintf(sz_frame_name, "%s/%s/%08d.txt", output_dir.c_str(),
               channel_name.c_str(), cap_result->frame_id - 1);
+
       std::ofstream outf(sz_frame_name);
       outf << str_content;
       outf.close();
       channel_counter[channel_name]++;
+      exportFaceSnapshots(output_dir, cap_result->frame_id,
+                          cap_result->face_snapshots);
+      std::cout << "export face snapshots done" << std::endl;
     }
   }
   app_task->release();

@@ -8,15 +8,6 @@ class OpenCVPreprocessor : public BasePreprocessor {
   OpenCVPreprocessor();
   virtual ~OpenCVPreprocessor() override = default;
 
-  virtual std::shared_ptr<BaseImage> resize(
-      const std::shared_ptr<BaseImage>& image, int newWidth,
-      int newHeight) override;
-
-  // 裁剪图像
-  virtual std::shared_ptr<BaseImage> crop(
-      const std::shared_ptr<BaseImage>& image, int x, int y, int width,
-      int height) override;
-
   virtual std::shared_ptr<BaseImage> preprocess(
       const std::shared_ptr<BaseImage>& src_image,
       const PreprocessParams& params,

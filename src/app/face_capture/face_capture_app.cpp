@@ -1,9 +1,20 @@
 #include "face_capture_app.hpp"
 #include <json.hpp>
 #include "app/app_data_types.hpp"
+#include "components/snapshot/object_quality.hpp"
+#include "components/snapshot/object_snapshot.hpp"
 #include "components/tracker/tracker_types.hpp"
 #include "components/video_decoder/video_decoder_type.hpp"
 #include "utils/tdl_log.hpp"
+
+template <typename T>
+T getNodeData(const std::string &node_name, PtrFrameInfo &frame_info) {
+  if (frame_info->node_data_.find(node_name) == frame_info->node_data_.end()) {
+    printf("node %s not found\n", node_name.c_str());
+    assert(false);
+  }
+  return frame_info->node_data_[node_name].get<T>();
+}
 
 FaceCaptureApp::FaceCaptureApp(const std::string &task_name,
                                const std::string &json_config)
@@ -45,6 +56,8 @@ int32_t FaceCaptureApp::addPipeline(const std::string &pipeline_name,
       getPersonDetectionNode(get_config("person_detection_node", nodes_cfg)));
   face_capture_channel->addNode(
       getTrackNode(get_config("track_node", nodes_cfg)));
+  face_capture_channel->addNode(
+      getSnapshotNode(get_config("snapshot_node", nodes_cfg)));
   face_capture_channel->start();
   pipeline_channels_[pipeline_name] = face_capture_channel;
 
@@ -73,7 +86,7 @@ int32_t FaceCaptureApp::getResult(const std::string &pipeline_name,
       pipeline_channels_[pipeline_name]->getProcessedFrame(0);
 
   auto image =
-      frame_info->node_data_["image"].Get<std::shared_ptr<BaseImage>>();
+      frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
   if (image == nullptr) {
     std::cout << "image is nullptr" << std::endl;
     return -1;
@@ -83,14 +96,15 @@ int32_t FaceCaptureApp::getResult(const std::string &pipeline_name,
   face_capture_result->frame_width = image->getWidth();
   face_capture_result->frame_height = image->getHeight();
   face_capture_result->face_boxes =
-      frame_info->node_data_["face_meta"]
-          .Get<std::vector<ObjectBoxLandmarkInfo>>();
+      getNodeData<std::vector<ObjectBoxLandmarkInfo>>("face_meta", frame_info);
   face_capture_result->person_boxes =
-      frame_info->node_data_["person_meta"].Get<std::vector<ObjectBoxInfo>>();
+      getNodeData<std::vector<ObjectBoxInfo>>("person_meta", frame_info);
   face_capture_result->track_results =
-      frame_info->node_data_["track_results"].Get<std::vector<TrackerInfo>>();
+      getNodeData<std::vector<TrackerInfo>>("track_results", frame_info);
+  face_capture_result->face_snapshots =
+      getNodeData<std::vector<ObjectSnapshotInfo>>("snapshots", frame_info);
   pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
-  result = Packet::Make(face_capture_result);
+  result = Packet::make(face_capture_result);
   return 0;
 }
 
@@ -125,19 +139,19 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getVideoNode(
     assert(false);
   }
   std::shared_ptr<PipelineNode> video_node =
-      std::make_shared<PipelineNode>(Packet::Make(video_decoder));
+      std::make_shared<PipelineNode>(Packet::make(video_decoder));
   video_node->setName("video_node");
 
   auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
     std::shared_ptr<VideoDecoder> video_decoder =
-        packet.Get<std::shared_ptr<VideoDecoder>>();
+        packet.get<std::shared_ptr<VideoDecoder>>();
     std::shared_ptr<BaseImage> image = nullptr;
     int ret = video_decoder->read(image);
     if (ret != 0) {
       std::cout << "video_decoder read failed" << std::endl;
       // assert(false);
     }
-    frame_info->node_data_["image"] = Packet::Make(image);
+    frame_info->node_data_["image"] = Packet::make(image);
     frame_info->frame_id_ = video_decoder->getFrameId();
     return 0;
   };
@@ -162,9 +176,9 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getFaceDetectionNode(
 
   auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
     std::shared_ptr<BaseModel> face_detection_model =
-        packet.Get<std::shared_ptr<BaseModel>>();
+        packet.get<std::shared_ptr<BaseModel>>();
     auto image =
-        frame_info->node_data_["image"].Get<std::shared_ptr<BaseImage>>();
+        frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
     if (image == nullptr) {
       std::cout << "image is nullptr" << std::endl;
       return -1;
@@ -177,15 +191,15 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getFaceDetectionNode(
     }
     std::shared_ptr<ModelBoxLandmarkInfo> facemeta =
         std::dynamic_pointer_cast<ModelBoxLandmarkInfo>(out_data);
-    frame_info->node_data_["face_meta"] = Packet::Make(facemeta->box_landmarks);
+    frame_info->node_data_["face_meta"] = Packet::make(facemeta->box_landmarks);
     return 0;
   };
   face_detection_node->setProcessFunc(lambda_func);
 
-  // if (node_config.contains("config_thresh")) {
-  //   double thresh = node_config.at("config_thresh");
-  //   face_detection_model->setModelThreshold(thresh);
-  // }
+  if (node_config.contains("config_thresh")) {
+    double thresh = node_config.at("config_thresh");
+    face_detection_model->setModelThreshold(thresh);
+  }
 
   return face_detection_node;
 }
@@ -206,9 +220,9 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getPersonDetectionNode(
 
   auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
     std::shared_ptr<BaseModel> person_detection_model =
-        packet.Get<std::shared_ptr<BaseModel>>();
+        packet.get<std::shared_ptr<BaseModel>>();
     auto image =
-        frame_info->node_data_["image"].Get<std::shared_ptr<BaseImage>>();
+        frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
     if (image == nullptr) {
       std::cout << "image is nullptr" << std::endl;
       return -1;
@@ -221,15 +235,15 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getPersonDetectionNode(
     }
     std::shared_ptr<ModelBoxInfo> person_meta =
         std::dynamic_pointer_cast<ModelBoxInfo>(out_data);
-    frame_info->node_data_["person_meta"] = Packet::Make(person_meta->bboxes);
+    frame_info->node_data_["person_meta"] = Packet::make(person_meta->bboxes);
     return 0;
   };
   person_detection_node->setProcessFunc(lambda_func);
 
-  // if (node_config.contains("config_thresh")) {
-  //   double thresh = node_config.at("config_thresh");
-  //   person_detection_model->setModelThreshold(thresh);
-  // }
+  if (node_config.contains("config_thresh")) {
+    double thresh = node_config.at("config_thresh");
+    person_detection_model->setModelThreshold(thresh);
+  }
 
   return person_detection_node;
 }
@@ -239,7 +253,7 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getTrackNode(
   std::shared_ptr<Tracker> tracker =
       TrackerFactory::createTracker(TrackerType::TDL_MOT_SORT);
   std::shared_ptr<PipelineNode> track_node =
-      std::make_shared<PipelineNode>(Packet::Make(tracker));
+      std::make_shared<PipelineNode>(Packet::make(tracker));
   track_node->setName("track_node");
   std::map<TDLObjectType, TDLObjectType> object_pair_config;
   object_pair_config[OBJECT_TYPE_FACE] = OBJECT_TYPE_PERSON;
@@ -247,18 +261,18 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getTrackNode(
 
   auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
     auto image =
-        frame_info->node_data_["image"].Get<std::shared_ptr<BaseImage>>();
+        frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
     if (image == nullptr) {
       std::cout << "image is nullptr" << std::endl;
       return -1;
     }
-    std::shared_ptr<Tracker> tracker = packet.Get<std::shared_ptr<Tracker>>();
+    std::shared_ptr<Tracker> tracker = packet.get<std::shared_ptr<Tracker>>();
     tracker->setImgSize(image->getWidth(), image->getHeight());
-    std::vector<ObjectBoxLandmarkInfo> face_infos =
+    const std::vector<ObjectBoxLandmarkInfo> &face_infos =
         frame_info->node_data_["face_meta"]
-            .Get<std::vector<ObjectBoxLandmarkInfo>>();
-    std::vector<ObjectBoxInfo> person_infos =
-        frame_info->node_data_["person_meta"].Get<std::vector<ObjectBoxInfo>>();
+            .get<std::vector<ObjectBoxLandmarkInfo>>();
+    const std::vector<ObjectBoxInfo> &person_infos =
+        frame_info->node_data_["person_meta"].get<std::vector<ObjectBoxInfo>>();
 
     std::vector<ObjectBoxInfo> bbox_infos;
     for (auto &face_info : face_infos) {
@@ -272,10 +286,84 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getTrackNode(
     }
     std::vector<TrackerInfo> track_results;
     tracker->track(bbox_infos, frame_info->frame_id_, track_results);
-    frame_info->node_data_["track_results"] = Packet::Make(track_results);
+    frame_info->node_data_["track_results"] = Packet::make(track_results);
     return 0;
   };
   track_node->setProcessFunc(lambda_func);
 
   return track_node;
+}
+
+std::shared_ptr<PipelineNode> FaceCaptureApp::getSnapshotNode(
+    const nlohmann::json &node_config) {
+  std::shared_ptr<ObjectSnapshot> snapshot = std::make_shared<ObjectSnapshot>();
+  snapshot->updateConfig(node_config);
+  std::shared_ptr<PipelineNode> snapshot_node =
+      std::make_shared<PipelineNode>(Packet::make(snapshot));
+  snapshot_node->setName("snapshot_node");
+
+  auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
+    auto image =
+        frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
+    std::shared_ptr<ObjectSnapshot> snapshot =
+        packet.get<std::shared_ptr<ObjectSnapshot>>();
+    if (image == nullptr) {
+      std::cout << "image is nullptr" << std::endl;
+      std::vector<ObjectSnapshotInfo> snapshots;
+      snapshot->getSnapshotData(snapshots, true);
+      frame_info->node_data_["snapshots"] = Packet::make(snapshots);
+      return -1;
+    }
+    std::map<uint64_t, ObjectBoxInfo> face_track_boxes;
+    std::vector<TrackerInfo> face_track_results;
+    std::map<uint64_t, float> face_qaulity_scores;
+    std::vector<float> face_landmarks;
+    const std::vector<ObjectBoxLandmarkInfo> &face_infos =
+        frame_info->node_data_["face_meta"]
+            .get<std::vector<ObjectBoxLandmarkInfo>>();
+    const std::vector<TrackerInfo> &track_results =
+        frame_info->node_data_["track_results"].get<std::vector<TrackerInfo>>();
+    for (auto &t : track_results) {
+      if (t.box_info_.object_type == OBJECT_TYPE_FACE) {
+        face_track_results.push_back(t);
+        if (t.obj_idx_ != -1) {
+          ObjectBoxLandmarkInfo face_info = face_infos[t.obj_idx_];
+          face_track_boxes[t.track_id_] =
+              ObjectBoxInfo(face_info.class_id, face_info.score, face_info.x1,
+                            face_info.y1, face_info.x2, face_info.y2);
+          float vel = std::hypot(t.velocity_x_, t.velocity_y_);
+          std::map<std::string, float> other_info = {
+              {"vel", vel},
+          };
+
+          float face_quality = ObjectQualityHelper::getFaceQuality(
+              face_info, image->getWidth(), image->getHeight(), other_info);
+          LOGI("track_id:%lu,frame_id:%lu,face_quality:%f", t.track_id_,
+               frame_info->frame_id_, face_quality);
+          face_qaulity_scores[t.track_id_] = face_quality;
+        }
+      }
+    }
+
+    std::map<std::string, Packet> other_info;
+    other_info["face_landmark"] = Packet::make(face_infos);
+    LOGI("to update snapshot,frame_id:%lu,face_track_boxes.size:%zu",
+         frame_info->frame_id_, face_track_boxes.size());
+    snapshot->updateSnapshot(image, frame_info->frame_id_, face_track_boxes,
+                             face_track_results, face_qaulity_scores,
+                             other_info);
+
+    std::vector<ObjectSnapshotInfo> snapshots;
+    snapshot->getSnapshotData(snapshots);
+    for (auto &snapshot : snapshots) {
+      LOGI("snapshot_node,frame_id:%lu,track_id:%lu,quality:%f",
+           snapshot.snapshot_frame_id, snapshot.track_id, snapshot.quality);
+    }
+    frame_info->node_data_["snapshots"] = Packet::make(snapshots);
+    LOGI("snapshot_node,frame_id:%lu,snapshots.size:%zu update done",
+         frame_info->frame_id_, snapshots.size());
+    return 0;
+  };
+  snapshot_node->setProcessFunc(lambda_func);
+  return snapshot_node;
 }

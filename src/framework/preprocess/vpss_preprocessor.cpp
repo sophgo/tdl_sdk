@@ -246,14 +246,16 @@ bool VpssPreprocessor::generateVPSSParams(
 
   LOGI(
       "preprocess para "
-      "info,dst_width:%d,dst_height:%d,dst_image_format:%d,dst_pixdata_type:%d,crop_x:"
-      "%d,crop_y:%d,crop_width:%d,crop_height:%d,mean[0]:%.2f,mean[1]:%.2f,mean[2]"
+      "info,dst_width:%d,dst_height:%d,dst_image_format:%d,dst_pixdata_type:%d,"
+      "crop_x:"
+      "%d,crop_y:%d,crop_width:%d,crop_height:%d,mean[0]:%.2f,mean[1]:%.2f,"
+      "mean[2]"
       ":%.2f,"
       "scale[0]:%.2f,scale[1]:%.2f,scale[2]:%.2f,aspectRatio:%d",
       params.dst_width, params.dst_height, (int)params.dst_image_format,
-      (int)params.dst_pixdata_type, params.crop_x, params.crop_y, params.crop_width,
-      params.crop_height, params.mean[0], params.mean[1], params.mean[2],
-      params.scale[0], params.scale[1], params.scale[2],
+      (int)params.dst_pixdata_type, params.crop_x, params.crop_y,
+      params.crop_width, params.crop_height, params.mean[0], params.mean[1],
+      params.mean[2], params.scale[0], params.scale[1], params.scale[2],
       params.keep_aspect_ratio);
   memset(&vpss_grp_attr, 0, sizeof(VPSS_GRP_ATTR_S));
   memset(&vpss_chn_crop_attr, 0, sizeof(VPSS_CROP_INFO_S));
@@ -355,43 +357,6 @@ int32_t VpssPreprocessor::generateVPSSChnAttr(
   return 0;
 }
 
-std::shared_ptr<BaseImage> VpssPreprocessor::resize(
-    const std::shared_ptr<BaseImage>& image, int newWidth, int newHeight) {
-  PreprocessParams params;
-  memset(&params, 0, sizeof(PreprocessParams));
-  params.scale[0] = 1;
-  params.scale[1] = 1;
-  params.scale[2] = 1;
-  params.dst_width = newWidth;
-  params.dst_height = newHeight;
-  params.dst_image_format = image->getImageFormat();
-  params.dst_pixdata_type = image->getPixDataType();
-  return preprocess(image, params, nullptr);
-}
-
-std::shared_ptr<BaseImage> VpssPreprocessor::crop(
-    const std::shared_ptr<BaseImage>& image, int x, int y, int width,
-    int height) {
-  PreprocessParams params;
-  memset(&params, 0, sizeof(PreprocessParams));
-  params.crop_x = x;
-  params.crop_y = y;
-  params.crop_width = width;
-  params.crop_height = height;
-  params.dst_width = width;
-  params.dst_height = height;
-  params.keep_aspect_ratio = false;
-  params.mean[0] = 0;
-  params.mean[1] = 0;
-  params.mean[2] = 0;
-  params.scale[0] = 1;
-  params.scale[1] = 1;
-  params.scale[2] = 1;
-  params.dst_image_format = image->getImageFormat();
-  params.dst_pixdata_type = image->getPixDataType();
-  return preprocess(image, params, nullptr);
-}
-
 int32_t VpssPreprocessor::preprocessToImage(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     std::shared_ptr<BaseImage> image) {
@@ -470,7 +435,8 @@ int32_t VpssPreprocessor::preprocessToTensor(
   }
   LOGI(
       "to "
-      "preprocessToImage,scale:%f,%f,%f,mean:%f,%f,%f,dst_height:%d,dst_width:%d,"
+      "preprocessToImage,scale:%f,%f,%f,mean:%f,%f,%f,dst_height:%d,dst_width:%"
+      "d,"
       "dst_pixdata_type:%d,dstStride:%d",
       params.scale[0], params.scale[1], params.scale[2], params.mean[0],
       params.mean[1], params.mean[2], params.dst_height, params.dst_width,

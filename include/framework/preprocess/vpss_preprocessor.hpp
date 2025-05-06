@@ -19,10 +19,6 @@ class VpssPreprocessor : public BasePreprocessor {
  public:
   VpssPreprocessor();
   ~VpssPreprocessor();
-  std::shared_ptr<BaseImage> resize(const std::shared_ptr<BaseImage>& image,
-                                    int newWidth, int newHeight) override;
-  std::shared_ptr<BaseImage> crop(const std::shared_ptr<BaseImage>& image,
-                                  int x, int y, int width, int height) override;
 
   std::shared_ptr<BaseImage> preprocess(
       const std::shared_ptr<BaseImage>& image, const PreprocessParams& params,

@@ -7,7 +7,7 @@ std::shared_ptr<PipelineNode> NodeFactory::createModelNode(
   if (model_node_instances_.find(model) != model_node_instances_.end()) {
     node = model_node_instances_[model];
   } else {
-    Packet worker = Packet::Make(model);
+    Packet worker = Packet::make(model);
     node = std::make_shared<PipelineNode>(worker);
     model_node_instances_[model] = node;
   }

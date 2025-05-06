@@ -17,6 +17,7 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:framework>
                $<TARGET_OBJECTS:tracker>
                $<TARGET_OBJECTS:matcher>
+               $<TARGET_OBJECTS:snapshot>
                $<TARGET_OBJECTS:video_decoder>
                $<TARGET_OBJECTS:nn>               
                $<TARGET_OBJECTS:c_apis>

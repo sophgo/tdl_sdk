@@ -93,9 +93,10 @@ static std::vector<int8_t> constructInverseThresh(
   return inverse_threshold;
 }
 
-MobileDetV2Detection::MobileDetV2Detection(MobileDetV2Detection::Category category)
+MobileDetV2Detection::MobileDetV2Detection(
+    MobileDetV2Detection::Category category)
     : m_model_config(CvimodelInfo::create_config(category)) {
-      model_threshold_ = m_model_config.default_score_threshold;
+  model_threshold_ = m_model_config.default_score_threshold;
   m_quant_inverse_score_threshold =
       constructInverseThresh(model_threshold_, m_model_config.strides,
                              m_model_config.class_dequant_thresh);
@@ -220,10 +221,6 @@ int32_t MobileDetV2Detection::outputParse(
   uint32_t input_height = input_tensor.shape[2];
   float input_width_f = float(input_width);
   float input_height_f = float(input_height);
-
-  printf("outputParse,batch size:%d,input shape:%d,%d,%d,%d\n", images.size(),
-         input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
-         input_tensor.shape[3]);
 
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
