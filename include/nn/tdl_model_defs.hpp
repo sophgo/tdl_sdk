@@ -10,6 +10,7 @@ enum class ModelType {
   YOLOV6_DET_COCO80,
   YOLOV8_DET_COCO80,
   YOLOV10_DET_COCO80,
+  PPYOLOE_DET_COCO80,
   YOLOV8N_DET_HAND,
   YOLOV8N_DET_PET_PERSON,        // 0:cat,1:dog,2:person
   YOLOV8N_DET_PERSON_VEHICLE,    // 0:car,1:bus,2:truck,3:rider with
@@ -30,6 +31,7 @@ enum class ModelType {
   YOLOV3,   // custom model,should specify num_cls(number of classes)
   YOLOV5,   // custom model,should specify num_cls(number of classes)
   YOLOV6,   // custom model,should specify num_cls(number of classes)
+  PPYOLOE,  // custom model,should specify num_cls(number of classes)
 
   // face detection model
   SCRFD_DET_FACE,  // 0:face + landm

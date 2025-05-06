@@ -46,6 +46,7 @@ void construct_model_id_mapping(
       ModelType::YOLOV8N_DET_PERSON_VEHICLE;
   model_id_mapping["KEYPOINT_FACE_V2"] = ModelType::KEYPOINT_FACE_V2;
   model_id_mapping["YOLOV8N_DET_MONITOR_PERSON"] = ModelType::YOLOV8N_DET_MONITOR_PERSON;
+  model_id_mapping["PPYOLOE_DET_COCO80"] = ModelType::PPYOLOE_DET_COCO80;
 }
 
 int main(int argc, char **argv) {
@@ -92,10 +93,11 @@ int main(int argc, char **argv) {
   model->setModelThreshold(model_threshold);
   std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image};
-  for (int i = 0; i < 1001; i++) {
-    out_datas.clear();
-    model->inference(input_images, out_datas);
-  }
+  model->inference(input_images, out_datas);
+  // for (int i = 0; i < 1001; i++) {
+  //   out_datas.clear();
+  //   model->inference(input_images, out_datas);
+  // }
 
   std::cout << "out_datas.size: " << out_datas.size() << std::endl;
 
