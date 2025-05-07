@@ -23,7 +23,10 @@ class PyMatchResult {
 class PyMatcher {
  public:
   // 构造函数
-  PyMatcher();
+  PyMatcher(std::string matcher_type);
+
+  // 析构函数
+  ~PyMatcher();
 
   // 加载特征库
   int32_t loadGallery(const py::list& gallery_features);
@@ -40,11 +43,16 @@ class PyMatcher {
   int32_t getFeatureDim() const;
 
  private:
+  // 清理特征内存
+  void clearFeatures(std::vector<std::shared_ptr<ModelFeatureInfo>>& features);
+
   std::shared_ptr<BaseMatcher> matcher_;
+  std::vector<std::shared_ptr<ModelFeatureInfo>> gallery_features_;
+  std::vector<std::shared_ptr<ModelFeatureInfo>> query_features_;
 };
 
 // 模块级函数
-PyMatcher createMatcher();
+PyMatcher createMatcher(std::string matcher_type);
 
 }  // namespace pytdl
 #endif

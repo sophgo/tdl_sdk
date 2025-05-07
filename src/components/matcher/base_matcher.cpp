@@ -1,5 +1,6 @@
 #include "matcher/base_matcher.hpp"
 #include <iostream>
+#include "cpu_matcher/cpu_matcher.hpp"
 #ifdef USE_BM_MATCHER
 #include "bm_matcher/bm_matcher.hpp"
 #endif
@@ -39,13 +40,20 @@ int32_t BaseMatcher::getQueryFeatureNum() const { return query_features_num_; }
 
 int32_t BaseMatcher::getFeatureDim() const { return feature_dim_; }
 
-std::shared_ptr<BaseMatcher> BaseMatcher::getMatcher() {
+std::shared_ptr<BaseMatcher> BaseMatcher::getMatcher(std::string matcher_type) {
 #ifdef USE_BM_MATCHER
-  return std::make_shared<BmMatcher>();
+  if (matcher_type == "bm") {
+    return std::make_shared<BmMatcher>();
+  }
 #endif
 #ifdef USE_CVI_MATCHER
-  return std::make_shared<CviMatcher>();
+  if (matcher_type == "cvi") {
+    return std::make_shared<CviMatcher>();
+  }
 #endif
-  std::cout << "USE_NO_MATCHER" << std::endl;
-  return nullptr;
+  if (matcher_type == "cpu") {
+    return std::make_shared<CpuMatcher>();
+  } else {
+    throw std::invalid_argument("Only support cpu, bm, cvi matcher");
+  }
 }

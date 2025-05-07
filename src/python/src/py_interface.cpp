@@ -361,7 +361,7 @@ PYBIND11_MODULE(tdl, m) {
       .def("get_scores", &PyMatchResult::getScores);
 
   py::class_<PyMatcher>(matcher, "Matcher")
-      .def(py::init<>())
+      .def(py::init<std::string>(), py::arg("matcher_type"))
       .def("load_gallery", &PyMatcher::loadGallery, py::arg("gallery_features"))
       .def("query_with_topk", &PyMatcher::queryWithTopK,
            py::arg("query_features"), py::arg("topk"))

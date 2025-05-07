@@ -62,6 +62,7 @@ set(REG_INCLUDES
     ${MIDDLEWARE_INCLUDES}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/framework
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/components
 )
 
 
@@ -87,6 +88,7 @@ if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR
   reg_daily_det.cpp
   reg_daily_cls.cpp
   reg_daily_keypoint.cpp
+  reg_daily_matcher.cpp
   )
 
 endif()

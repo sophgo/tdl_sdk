@@ -39,13 +39,19 @@ class BmMatcher : public BaseMatcher {
   // 特征归一化函数
   void normalizeFeature(float *feature, int feature_dim);
 
+  // 将不同类型的数据转换为float类型
+  void convertToFloat(const void *src, float *dst, int dim,
+                      TDLDataType data_type);
+
   // 基类变量
-  std::vector<std::shared_ptr<ModelFeatureInfo>> gallery_features_;
-  std::vector<std::shared_ptr<ModelFeatureInfo>> query_features_;
+  const std::vector<std::shared_ptr<ModelFeatureInfo>>* gallery_features_;
+  const std::vector<std::shared_ptr<ModelFeatureInfo>>* query_features_;
   uint32_t gallery_features_num_ = 0;
   uint32_t query_features_num_ = 0;
   uint32_t feature_dim_ = 0;
   bool is_loaded_ = false;
+  // 特征数据类型
+  TDLDataType feature_data_type_ = TDLDataType::FP32;
   // 独有变量
   Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       gallery_features_eigen_;

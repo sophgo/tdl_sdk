@@ -1,6 +1,7 @@
 #pragma once
 #include "matcher/base_matcher.hpp"
 
+#include "common/common_types.hpp"
 #include "utils/cvikernel.h"
 
 class CviMatcher : public BaseMatcher {
@@ -26,8 +27,8 @@ class CviMatcher : public BaseMatcher {
                        float *scores, uint32_t *size);
 
   // 基类变量
-  std::vector<std::shared_ptr<ModelFeatureInfo>> gallery_features_;
-  std::vector<std::shared_ptr<ModelFeatureInfo>> query_features_;
+  const std::vector<std::shared_ptr<ModelFeatureInfo>>* gallery_features_;
+  const std::vector<std::shared_ptr<ModelFeatureInfo>>* query_features_;
   uint32_t gallery_features_num_ = 0;
   uint32_t query_features_num_ = 0;
   uint32_t feature_dim_ = 0;
@@ -39,4 +40,7 @@ class CviMatcher : public BaseMatcher {
   TPUFeatureArrayInfo tpu_feature_info_;
   CPUFeatureArrayInfo cpu_feature_info_;
   bool use_cpu_ = true;
+
+  // 特征数据类型
+  TDLDataType feature_data_type_;
 };

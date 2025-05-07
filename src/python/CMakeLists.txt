@@ -5,6 +5,7 @@ include_directories(
                     ${REPO_DIR}/include/framework
                     ${REPO_DIR}/include/nn
                     ${REPO_DIR}/include/components/matcher
+                    ${REPO_DIR}/include/components/tracker
                     ${REPO_DIR}/src/components/llm/qwen
                     ${REPO_DIR}/src/components/llm/qwen2VL
                     ${REPO_DIR}/include/

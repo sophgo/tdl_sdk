@@ -32,12 +32,12 @@ class BaseMatcher {
   virtual int32_t getFeatureDim() const;
 
   // 创建匹配器实例
-  static std::shared_ptr<BaseMatcher> getMatcher();
+  static std::shared_ptr<BaseMatcher> getMatcher(std::string matcher_type);
 
  protected:
   virtual void init(int device_id) = 0;
-  std::vector<std::shared_ptr<ModelFeatureInfo>> gallery_features_;
-  std::vector<std::shared_ptr<ModelFeatureInfo>> query_features_;
+  const std::vector<std::shared_ptr<ModelFeatureInfo>>* gallery_features_;
+  const std::vector<std::shared_ptr<ModelFeatureInfo>>* query_features_;
   int32_t gallery_features_num_ = 0;
   int32_t query_features_num_ = 0;
   int32_t feature_dim_ = 0;
