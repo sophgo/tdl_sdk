@@ -37,6 +37,9 @@ PyImage crop(const PyImage& src, const std::tuple<int, int, int, int>& roi);
 PyImage cropResize(const PyImage& src,
                    const std::tuple<int, int, int, int>& roi, int width,
                    int height);
+PyImage alignFace(const PyImage& image,
+                  const std::vector<float>& src_landmark_xy,
+                  const std::vector<float>& dst_landmark_xy, int num_points);
 // PyImage convert(const PyImage& src, ImageFormat dst_format,
 //                 ImageDataType dst_type);
 }  // namespace pytdl

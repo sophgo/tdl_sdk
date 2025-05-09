@@ -149,4 +149,40 @@ PyImage cropResize(const PyImage& src,
   }
   return PyImage(dst_image);
 }
+
+PyImage alignFace(const PyImage& image,
+                  const std::vector<float>& src_landmark_xy,
+                  const std::vector<float>& dst_landmark_xy, int num_points) {
+  std::shared_ptr<BaseImage> image_ptr = image.getImage();
+
+  // 验证关键点数据有效性
+  if (src_landmark_xy.size() < 2 ||
+      src_landmark_xy.size() != static_cast<size_t>(num_points * 2)) {
+    throw std::invalid_argument("Invalid number of landmark points");
+  }
+
+  // 如果未提供目标关键点，则使用默认值
+  std::vector<float> default_dst_landmarks;
+  const float* actual_dst_landmark = dst_landmark_xy.data();
+
+  if (dst_landmark_xy.empty()) {
+    // 使用默认的5点人脸对齐模板（归一化坐标）
+    default_dst_landmarks = {
+        38.2946f, 51.6963f,  // 左眼
+        73.5318f, 51.5014f,  // 右眼
+        56.0252f, 71.7366f,  // 鼻子
+        41.5493f, 92.3655f,  // 左嘴角
+        70.7299f, 99.3655f   // 右嘴角
+    };
+    actual_dst_landmark = default_dst_landmarks.data();
+    num_points = 5;  // 确保点数匹配
+  }
+
+  // 调用底层人脸对齐函数
+  std::shared_ptr<BaseImage> aligned_image =
+      ImageFactory::alignFace(image_ptr, src_landmark_xy.data(),
+                              actual_dst_landmark, num_points, nullptr);
+
+  return PyImage(aligned_image);
+}
 }  // namespace pytdl
