@@ -14,7 +14,7 @@ const int FRAME_FACTOR = 2;
 const double FPS = 2.0;
 const int FPS_MIN_FRAMES = 4;
 const int FPS_MAX_FRAMES = 768;
-const int VIDEO_TOTAL_PIXELS = int(128000 * 28 * 28 * 0.9);
+const int VIDEO_TOTAL_PIXELS = 24576 * 28 * 28;
 
 int round_by_factor(int number, int factor) {
   return int(std::round(double(number) / factor)) * factor;
@@ -113,10 +113,17 @@ std::map<std::string, float> QwenVLHelper::testFetchVideoTs(
     return {};
   }
   double tick_video_open = cv::getTickCount();
-  cv::VideoCapture cap(video_path);
-  if (!cap.isOpened()) {
+  cv::VideoCapture cap;
+  if (!cap.open(video_path, cv::CAP_ANY, 0)) {
     throw std::runtime_error("cannot open video: " + video_path);
   }
+  if (!cap.isOpened()) {
+    throw std::runtime_error("cannot open video: " + video_path);
+  } else {
+    printf("open video success\n");
+  }
+  // cap.set(cv::CAP_PROP_OUTPUT_YUV, PROP_TRUE);
+
   double tick_video_open_end = cv::getTickCount();
 
   int total_frames = int(cap.get(cv::CAP_PROP_FRAME_COUNT));
@@ -143,7 +150,6 @@ std::map<std::string, float> QwenVLHelper::testFetchVideoTs(
   std::vector<std::vector<cv::Mat>> frames;  // std::vector<cv::Mat> = <b,g,r>
   int current_frame = 0;
   int target_idx = 0;
-  cv::Mat frame;
 
   int last_frame = indices[indices.size() - 1];
 
@@ -153,8 +159,16 @@ std::map<std::string, float> QwenVLHelper::testFetchVideoTs(
       smart_resize(img_height, img_width, size_factor, min_pixels,
                    total_pixels / std::max(nframes, 1));
   printf("new_size: %d, %d\n", new_size.height, new_size.width);
-  cv::Mat resized = cv::Mat::zeros(new_size, CV_8UC3);
-  while (cap.read(frame)) {
+  cv::Mat resized(new_size.height, new_size.width, CV_8UC3);
+  // cv::Mat frame(img_height, img_width, CV_8UC3);
+  while (true) {
+    cv::Mat frame;
+
+    cap.read(frame);
+    if (frame.empty()) {
+      break;
+    }
+
     if (current_frame == indices[target_idx]) {
       double tick_process = cv::getTickCount();
 
@@ -203,7 +217,7 @@ std::vector<std::vector<cv::Mat>> QwenVLHelper::fetchVideo(
     int max_video_sec) {
   int size_factor = IMAGE_FACTOR;
   int min_pixels = VIDEO_MIN_PIXELS;
-  int total_pixels = VIDEO_TOTAL_PIXELS;
+
   if (desired_nframes > 0 && desired_fps > 0) {
     printf(
         "desired_nframes:%d,desired_fps:%f,only one of desired_nframes and "
@@ -211,10 +225,16 @@ std::vector<std::vector<cv::Mat>> QwenVLHelper::fetchVideo(
         desired_nframes, desired_fps);
     return {};
   }
-  cv::VideoCapture cap(video_path);
-  if (!cap.isOpened()) {
+  cv::VideoCapture cap;
+  if (!cap.open(video_path, cv::CAP_ANY, 0)) {
     throw std::runtime_error("cannot open video: " + video_path);
   }
+  if (!cap.isOpened()) {
+    throw std::runtime_error("cannot open video: " + video_path);
+  } else {
+    printf("open video success\n");
+  }
+
   int total_frames = int(cap.get(cv::CAP_PROP_FRAME_COUNT));
   int img_width = int(cap.get(cv::CAP_PROP_FRAME_WIDTH));
   int img_height = int(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
@@ -224,8 +244,8 @@ std::vector<std::vector<cv::Mat>> QwenVLHelper::fetchVideo(
       smart_nframes(total_frames, video_fps, desired_nframes, desired_fps);
 
   printf(
-      "total_frames: %d, video_fps: %f, img_width: %d, img_height: "
-      "%d,desired_fps:%f,desired_nframes:%d,sample_nframes:%d\n",
+      "total_frames: %d, video_fps: %f, img_width: %d, img_height: %d, "
+      "desired_fps:%f,desired_nframes:%d,sample_nframes:%d\n",
       total_frames, video_fps, img_width, img_height, desired_fps,
       desired_nframes, nframes);
 
@@ -239,20 +259,38 @@ std::vector<std::vector<cv::Mat>> QwenVLHelper::fetchVideo(
   std::vector<std::vector<cv::Mat>> frames;  // std::vector<cv::Mat> = <b,g,r>
   int current_frame = 0;
   int target_idx = 0;
-  cv::Mat frame;
-
   int last_frame = indices[indices.size() - 1];
 
   double tick_process_total = 0;
   double tick_read_start = cv::getTickCount();
-  while (cap.read(frame)) {
+
+  // 计算 custom_max_pixels，假设 TOTAL_PIXELS 等于 VIDEO_TOTAL_PIXELS
+  int total_pixels = VIDEO_TOTAL_PIXELS;
+  int computed_max_pixels = std::max(
+      std::min(VIDEO_MAX_PIXELS, int(double(total_pixels) / nframes * size_factor)),
+      int(min_pixels * 1.05)
+  );
+  int custom_max_pixels = 360 * 420;
+  // int custom_max_pixels = computed_max_pixels;
+  cv::Size new_size =
+      smart_resize(img_height, img_width, size_factor, min_pixels, custom_max_pixels);
+  printf("new_size: %d, %d\n", new_size.height, new_size.width);
+  cv::Mat resized(new_size.height, new_size.width, CV_8UC3);
+  while (true) {
+    cv::Mat frame;
+    cap.read(frame);
+    if (frame.empty()) {
+      break;
+    }
     if (current_frame == indices[target_idx]) {
       double tick_process = cv::getTickCount();
-      cv::Size new_size =
-          smart_resize(frame.rows, frame.cols, size_factor, min_pixels,
-                       total_pixels / std::max(nframes, 1));
-      cv::Mat resized;
-      cv::resize(frame, resized, new_size, 0, 0);
+      cv::bmcv::resize(frame, resized, true, BMCV_INTER_NEAREST);
+      // cv::Size new_size =
+      //     smart_resize(frame.rows, frame.cols, size_factor, min_pixels,
+      //                  total_pixels / std::max(nframes, 1));
+      // cv::Mat resized;
+      // cv::Mat resized_float;
+      // resized.convertTo(resized_float, CV_32FC3, 1.0 / 255);
       std::vector<cv::Mat> bgr_frames;
       cv::split(resized, bgr_frames);
       frames.push_back(bgr_frames);

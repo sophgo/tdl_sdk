@@ -1,6 +1,5 @@
 #include "py_image.hpp"
 #include "py_llm.hpp"
-#include "py_matcher.hpp"
 #include "py_model.hpp"
 using namespace pytdl;
 
@@ -13,10 +12,6 @@ PyImage (*crop_func)(const PyImage&,
 PyImage (*crop_resize_func)(const PyImage&,
                             const std::tuple<int, int, int, int>&, int,
                             int) = &cropResize;
-PyImage (*alignFace_func)(const PyImage& image,
-                          const std::vector<float>& src_landmark_xy,
-                          const std::vector<float>& dst_landmark_xy,
-                          int num_points) = &alignFace;
 
 // pybind11绑定实现
 PYBIND11_MODULE(tdl, m) {
@@ -69,9 +64,6 @@ PYBIND11_MODULE(tdl, m) {
   image.def("crop", crop_func, py::arg("src"), py::arg("roi"));
   image.def("crop_resize", crop_resize_func, py::arg("src"), py::arg("roi"),
             py::arg("width"), py::arg("height"));
-  image.def("alignFace", alignFace_func, py::arg("image"),
-            py::arg("src_landmark_xy"), py::arg("dst_landmark_xy"),
-            py::arg("num_points"));
 
   // 神经网络模块
   py::module nn = m.def_submodule("nn", "Neural network algorithms module");
@@ -327,107 +319,49 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("parameters") = py::dict());
 
   py::module llm = m.def_submodule("llm", "LLM module");
-
-  // 注册Qwen类
-  py::class_<PyQwen>(llm, "Qwen")
+  llm.def("fetch_video", &pytdl::fetch_video, py::arg("video_path"),
+          py::arg("desired_fps") = 2.0, py::arg("desired_nframes") = 0,
+          py::arg("max_video_sec") = 0);
+  llm.def("test_fetch_video_ts", &pytdl::test_fetch_video_ts,
+          py::arg("video_path"), py::arg("desired_fps") = 2.0,
+          py::arg("desired_nframes") = 0, py::arg("max_video_sec") = 0);
+  //   注册Qwen类
+  py::class_<pytdl::PyQwen>(llm, "Qwen")
       .def(py::init<>())
-      .def("model_open", &PyQwen::modelOpen, py::arg("model_path"))
-      .def("model_close", &PyQwen::modelClose)
-      .def("inference_first", &PyQwen::inferenceFirst, py::arg("input_tokens"))
-      .def("inference_next", &PyQwen::inferenceNext)
-      .def("inference_generate", &PyQwen::inferenceGenerate,
+      .def("model_open", &pytdl::PyQwen::modelOpen, py::arg("model_path"))
+      .def("model_close", &pytdl::PyQwen::modelClose)
+      .def("inference_first", &pytdl::PyQwen::inferenceFirst,
+           py::arg("input_tokens"))
+      .def("inference_next", &pytdl::PyQwen::inferenceNext)
+      .def("inference_generate", &pytdl::PyQwen::inferenceGenerate,
            py::arg("input_tokens"), py::arg("eos_token"))
-      .def("get_infer_param", &PyQwen::getInferParam)
-      .def("__enter__", [](PyQwen& self) { return &self; })
-      .def("__exit__", [](PyQwen& self, py::object, py::object, py::object) {
-        self.modelClose();
-      });
+      .def("get_infer_param", &pytdl::PyQwen::getInferParam)
+      .def("__enter__", [](pytdl::PyQwen& self) { return &self; })
+      .def("__exit__", [](pytdl::PyQwen& self, py::object, py::object,
+                          py::object) { self.modelClose(); });
 
   // 注册Qwen2VL类
-  py::class_<PyQwen2VL>(llm, "Qwen2VL")
+  py::class_<pytdl::PyQwen2VL>(llm, "Qwen2VL")
       .def(py::init<>())
-      .def("init", &PyQwen2VL::init, py::arg("device_id"),
+      .def("init", &pytdl::PyQwen2VL::init, py::arg("dev_id"),
            py::arg("model_path"))
-      .def("deinit", &PyQwen2VL::deinit)
-      .def("forward_first", &PyQwen2VL::forward_first, py::arg("tokens"),
-           py::arg("position_id"), py::arg("pixel_values"), py::arg("posids"),
+      .def("deinit", &pytdl::PyQwen2VL::deinit)
+      .def("forward_first", &pytdl::PyQwen2VL::forward_first, py::arg("tokens"),
+           py::arg("position_ids"), py::arg("pixel_values"), py::arg("posids"),
            py::arg("attnmask"), py::arg("img_offset"), py::arg("pixel_num"))
-      .def("forward_next", &PyQwen2VL::forward_next)
-      .def("get_model_info", &PyQwen2VL::get_model_info)
-      .def("__enter__", [](PyQwen2VL& self) { return &self; })
-      .def("__exit__", [](PyQwen2VL& self, py::object, py::object, py::object) {
-        self.deinit();
-      });
-
-  // 特征匹配模块
-  py::module matcher = m.def_submodule("matcher", "Feature matcher module");
-
-  py::class_<PyMatchResult>(matcher, "MatchResult")
-      .def(py::init<>())
-      .def("get_indices", &PyMatchResult::getIndices)
-      .def("get_scores", &PyMatchResult::getScores);
-
-  py::class_<PyMatcher>(matcher, "Matcher")
-      .def(py::init<std::string>(), py::arg("matcher_type"))
-      .def("load_gallery", &PyMatcher::loadGallery, py::arg("gallery_features"))
-      .def("query_with_topk", &PyMatcher::queryWithTopK,
-           py::arg("query_features"), py::arg("topk"))
-      .def("update_gallery_col", &PyMatcher::updateGallery,
-           py::arg("update_features"), py::arg("col"))
-      .def("get_gallery_feature_num", &PyMatcher::getGalleryFeatureNum)
-      .def("get_query_feature_num", &PyMatcher::getQueryFeatureNum)
-      .def("get_feature_dim", &PyMatcher::getFeatureDim);
-
-  matcher.def("create_matcher", &createMatcher);
-
-  // 追踪模块
-  py::module tracker = m.def_submodule("tracker", "Tracker module");
-
-  py::enum_<TrackStatus>(tracker, "TrackStatus")
-      .value("NEW", TrackStatus::NEW)
-      .value("TRACKED", TrackStatus::TRACKED)
-      .value("LOST", TrackStatus::LOST)
-      .value("REMOVED", TrackStatus::REMOVED)
-      .export_values();
-
-  py::enum_<TrackerType>(tracker, "TrackerType")
-      .value("TDL_MOT_SORT", TrackerType::TDL_MOT_SORT)
-      .export_values();
-
-  py::class_<TrackerConfig>(tracker, "TrackerConfig")
-      .def(py::init<>())
-      .def_readwrite("max_unmatched_times",
-                     &TrackerConfig::max_unmatched_times_)
-      .def_readwrite("track_confirmed_frames",
-                     &TrackerConfig::track_confirmed_frames_)
-      .def_readwrite("track_init_score_thresh",
-                     &TrackerConfig::track_init_score_thresh_)
-      .def_readwrite("high_score_thresh", &TrackerConfig::high_score_thresh_)
-      .def_readwrite("high_score_iou_dist_thresh",
-                     &TrackerConfig::high_score_iou_dist_thresh_)
-      .def_readwrite("low_score_iou_dist_thresh",
-                     &TrackerConfig::low_score_iou_dist_thresh_);
-
-  py::class_<TrackerInfo>(tracker, "TrackerInfo")
-      .def(py::init<>())
-      .def_readwrite("box_info", &TrackerInfo::box_info_)
-      .def_readwrite("status", &TrackerInfo::status_)
-      .def_readwrite("obj_idx", &TrackerInfo::obj_idx_)
-      .def_readwrite("track_id", &TrackerInfo::track_id_)
-      .def_readwrite("velocity_x", &TrackerInfo::velocity_x_)
-      .def_readwrite("velocity_y", &TrackerInfo::velocity_y_);
-
-  py::class_<PyTracker>(tracker, "Tracker")
-      .def(py::init<TrackerType>(), py::arg("type"))
-      .def("set_pair_config", &PyTracker::setPairConfig,
-           py::arg("object_pair_config"))
-      .def("set_track_config", &PyTracker::setTrackConfig,
-           py::arg("track_config"))
-      .def("get_track_config", &PyTracker::getTrackConfig)
-      .def("track", &PyTracker::track, py::arg("boxes"), py::arg("frame_id"))
-      .def("set_img_size", &PyTracker::setImgSize, py::arg("width"),
-           py::arg("height"));
-
-  py::class_<TrackerFactory>(m, "TrackerFactory")
-      .def_static("createTracker", &TrackerFactory::createTracker);
+      .def("forward_next", &pytdl::PyQwen2VL::forward_next)
+      .def("set_generation_mode", &pytdl::PyQwen2VL::set_generation_mode,
+           py::arg("mode"))
+      .def("get_generation_mode", &pytdl::PyQwen2VL::get_generation_mode)
+      .def_readwrite("generation_mode", &pytdl::PyQwen2VL::generation_mode)
+      .def_readwrite("SEQLEN", &pytdl::PyQwen2VL::SEQLEN)
+      .def_readwrite("token_length", &pytdl::PyQwen2VL::token_length)
+      .def_readwrite("HIDDEN_SIZE", &pytdl::PyQwen2VL::HIDDEN_SIZE)
+      .def_readwrite("NUM_LAYERS", &pytdl::PyQwen2VL::NUM_LAYERS)
+      .def_readwrite("MAX_POS", &pytdl::PyQwen2VL::MAX_POS)
+      .def_readwrite("MAX_PIXELS", &pytdl::PyQwen2VL::MAX_PIXELS)
+      .def_readwrite("VIT_DIMS", &pytdl::PyQwen2VL::VIT_DIMS)
+      .def("__enter__", [](pytdl::PyQwen2VL& self) { return &self; })
+      .def("__exit__", [](pytdl::PyQwen2VL& self, py::object, py::object,
+                          py::object) { self.deinit(); });
 }

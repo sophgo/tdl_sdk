@@ -1,10 +1,6 @@
 import time
 import argparse
 from PIL import Image
-import torchvision.transforms as T
-import torch.nn.functional as F
-from torchvision.transforms.functional import InterpolationMode
-from transformers import AutoModelForCausalLM, Qwen2VLForConditionalGeneration, AutoProcessor, AutoTokenizer, PretrainedConfig, Qwen2VLConfig
 from tdl import llm
 import json
 import os
@@ -12,6 +8,10 @@ import sys
 sys.path.append('/data/python-packages')
 import torch
 from typing import Optional, Tuple
+import torchvision.transforms as T
+import torch.nn.functional as F
+from torchvision.transforms.functional import InterpolationMode
+from transformers import AutoModelForCausalLM, Qwen2VLForConditionalGeneration, AutoProcessor, AutoTokenizer, PretrainedConfig, Qwen2VLConfig
 def extract_vision_info(conversations: list[dict] | list[list[dict]]) -> list[dict]:
     vision_infos = []
     if isinstance(conversations[0], dict):
@@ -32,9 +32,7 @@ def extract_vision_info(conversations: list[dict] | list[list[dict]]) -> list[di
 
 def process_vision_info(
     conversations: list[dict] | list[list[dict]],
-    return_video_kwargs: bool = False,
-) -> tuple[list[Image.Image] | None, list[torch.Tensor | list[Image.Image]] | None, Optional[dict]]:
-
+) -> tuple[list[Image.Image] | None, list[torch.Tensor | list[Image.Image]] | None]:
     vision_infos = extract_vision_info(conversations)
     ## Read images or videos
     image_inputs = []
@@ -43,9 +41,8 @@ def process_vision_info(
     for vision_info in vision_infos:
         if "video" in vision_info:
             video_path = vision_info['video']
-            fps = vision_info.get('fps', 2.0)
-            video_input = torch.from_numpy(llm.fetch_video(video_path, desired_fps=fps))
-            print("video_input", video_input)
+            fps = vision_info.get('fps', 1.0)
+            video_input = torch.tensor(llm.fetch_video(video_path, desired_fps=fps), dtype=torch.float32)
             print("fps", fps)
             video_sample_fps = fps
             video_sample_fps_list.append(video_sample_fps)
@@ -56,8 +53,6 @@ def process_vision_info(
         image_inputs = None
     if len(video_inputs) == 0:
         video_inputs = None
-    if return_video_kwargs:
-        return image_inputs, video_inputs, {'fps': video_sample_fps_list}
     return image_inputs, video_inputs
 
 def get_rope_index(
@@ -173,11 +168,11 @@ def get_position_ids(processor, config, video_path, text="Describe this video.")
                     "type": "video",
                     "video": video_path,
                     "max_pixels": 360 * 420,
-                    "fps": 1.0,
+                    "fps": 0.5,
                 },
                 {"type": "text", "text": "你是一个智能看家助理。"\
                                       "请按照以下要求对视频进行分析，并输出三个部分的内容，注意格式要点："\
-                                      "1) 描述视频主要画面与活动，不超过 100 字，需包含人物（如有）、环境背景、主要动作等信息："\
+                                      "1) 描述视频主要画面与活动，不超过 100 字，需包含人物（如有）、环境背景、主要动作等信息，但不得冗余或重复描述同一对象或细节："\
                                       "描述: <请在此处输出描述，字数不超过 100 字>"\
                                       "2) 结合视频内容，为出现的对象生成多层级标签，使用 JSON 格式，标签内容务必覆盖视频中出现的相关对象："\
                                       "标签:"\
@@ -215,7 +210,7 @@ def get_position_ids(processor, config, video_path, text="Describe this video.")
     # ]
     # breakpoint()
     text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    
+
     image_inputs, video_inputs =process_vision_info(messages)
     inputs = processor(
         text=[text],
@@ -226,7 +221,8 @@ def get_position_ids(processor, config, video_path, text="Describe this video.")
     )
 
     SEQ_LENGTH = config['max_position_embeddings']
-    # SEQ_LENGTH = 2048
+    SEQ_LENGTH = 2048
+    # SEQ_LENGTH = 6000
     # SEQ_LENGTH = self.SEQLEN
     if SEQ_LENGTH <= inputs.input_ids.shape[-1]:
         raise ValueError(
@@ -284,6 +280,9 @@ class Qwen2VL():
         # self.ID_EOS = self.tokenizer.eos_token_id
         self.ID_END = self.tokenizer.convert_tokens_to_ids("<|end|>")
         self.ID_IM_END = self.tokenizer.convert_tokens_to_ids("<|im_end|>")
+        self.video_path = args.video_path
+        if not os.path.exists(self.video_path):
+            raise FileNotFoundError(f"Video file not found: {self.video_path}")
 
     def chat(self):
         """
@@ -299,7 +298,7 @@ class Qwen2VL():
         while True:
             self.POSITION_IDS, inputs, image_offset, pixel_num = get_position_ids(processor=self.processor,
                                                                        config=self.config,
-                                                                       video_path="H264- 1080P 30Fps - 1 Min - Full Motion - Campus.mp4")
+                                                                       video_path=self.video_path)
             position_ids = self.POSITION_IDS
             
             pixel_values = inputs.pixel_values_videos
@@ -312,6 +311,7 @@ class Qwen2VL():
             attention_mask_vit = torch.full(
                 [1, pixel_values.shape[0], pixel_values.shape[0]], torch.finfo(torch.float32).min, dtype=torch.float32
             )
+            cu_seqlens_list = cu_seqlens.flatten().tolist()
             for i in range(1, len(cu_seqlens)):
                 attention_mask_vit[..., cu_seqlens[i - 1] : cu_seqlens[i], cu_seqlens[i - 1] : cu_seqlens[i]] = 0
 
@@ -339,6 +339,15 @@ class Qwen2VL():
                 pos_ids.append(torch.stack([hpos_ids, wpos_ids], dim=-1).repeat(t, 1))
             pos_ids = torch.cat(pos_ids, dim=0)
 
+            print("[DEBUG] pixel_values_videos - num_tokens: {}, feat_dim: {}".format(
+                inputs.pixel_values_videos.shape[0],
+                inputs.pixel_values_videos.shape[1]
+            ))
+
+            print("[DEBUG] pos_ids - shape: {}".format(
+                pos_ids.shape
+            ))
+
             # prefill vit
             pixel_values_prefill = torch.zeros([2000, 1176]).to(dtype=torch.float32)
             pixel_values_prefill[:inputs.pixel_values_videos.shape[0],:] = inputs.pixel_values_videos
@@ -349,12 +358,59 @@ class Qwen2VL():
 
             attention_mask_vit_prefill[0,:pos_ids.shape[0],:pos_ids.shape[0]] = attention_mask_vit
 
+            # 对 inputs.input_ids.squeeze(0).tolist() 打印长度和部分信息
+            input_ids_list = inputs.input_ids.squeeze(0).tolist()
+            print("[DEBUG] input_ids (list) - length: {}, type of element: {}, sample: {}".format(
+                len(input_ids_list),
+                type(input_ids_list[0]) if len(input_ids_list) > 0 else None,
+                input_ids_list[:10]
+            ))
+
+            # 对 position_ids.flatten().tolist() 打印长度和部分信息
+            position_ids_list = position_ids.flatten().tolist()
+            print("[DEBUG] position_ids (list) - length: {}, type of element: {}, sample: {}".format(
+                len(position_ids_list),
+                type(position_ids_list[0]) if len(position_ids_list) > 0 else None,
+                position_ids_list[:10]
+            ))
+
+            # 对 pixel_values_prefill.flatten().tolist() 打印长度和部分信息
+            pixel_values_list = pixel_values_prefill.flatten().tolist()
+            print("[DEBUG] pixel_values (list) - length: {}, type of element: {}, sample: {}".format(
+                len(pixel_values_list),
+                type(pixel_values_list[0]) if len(pixel_values_list) > 0 else None,
+                pixel_values_list[:10]
+            ))
+
+            # 对 pos_ids_prefill.flatten().tolist() 打印长度和部分信息
+            pos_ids_list = pos_ids_prefill.flatten().tolist()
+            print("[DEBUG] pos_ids (list) - length: {}, type of element: {}, sample: {}".format(
+                len(pos_ids_list),
+                type(pos_ids_list[0]) if len(pos_ids_list) > 0 else None,
+                pos_ids_list[:10]
+            ))
+
+            print("[DEBUG] cu_seqlens_list - length: {}, type of element: {}, sample: {}".format(
+                len(cu_seqlens_list),
+                type(cu_seqlens_list[0]) if len(cu_seqlens_list) > 0 else None,
+                cu_seqlens_list[:]
+            ))
+
+            attnmask = attention_mask_vit_prefill.flatten().tolist()
+            print("[DEBUG] attention_mask_vit_list - length: {}, type of element: {}, sample: {}".format(
+                len(attnmask),
+                type(attnmask[0]) if len(attnmask) > 0 else None,
+                attnmask[:10]
+            ))
+
+            # 打印 image_offset 和 actual_video_tokens（均为 int）
+            print("[DEBUG] image_offset (int): {}".format(image_offset))
+            print("[DEBUG] actual_video_tokens (int): {}".format(pixel_num))
+
             # Chat
             first_start = time.time()
-            
-            # breakpoint()
-            token = self.model.forward_first(inputs.input_ids.squeeze(0).tolist(), position_ids.flatten().tolist(), pixel_values_prefill.flatten().tolist(),
-                                             pos_ids_prefill.flatten().tolist(), attention_mask_vit_prefill.flatten().tolist(),
+            token = self.model.forward_first(input_ids_list, position_ids_list, pixel_values_list,
+                                             pos_ids_list, attnmask,
                                              image_offset, pixel_num)
             first_end = time.time()
             tok_num = 1
@@ -414,11 +470,19 @@ if __name__ == "__main__":
                         help='path to the model config file')
     parser.add_argument('-d', '--devid', type=int,
                         default=0, help='device ID to use')
+    parser.add_argument('-l', '--visual_length', type=int,
+                        default=2000, help='visual length')
     parser.add_argument('-g',
                         '--generation_mode',
                         type=str,
                         choices=["greedy", "penalty_sample"],
                         default="greedy",
                         help='mode for generating next token')
+    parser.add_argument('-v',
+                        '--video_path',
+                        type=str,
+                        required=True,
+                        default="/data/LLM-TPU/models/Qwen2_VL/python_demo_video/python_demo/test1.mp4",
+                        help='path to the video file')
     args = parser.parse_args()
     main(args)

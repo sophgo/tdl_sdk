@@ -209,29 +209,61 @@ int Qwen2VL::forward_first(std::vector<int> &tokens,
                            std::vector<int> &posids,
                            std::vector<float> &attnmask, int img_offset,
                            int pixel_num) {
+  std::cout << "[DEBUG] Enter forward_first\n";
+  std::cout << "[DEBUG] tokens.size() = " << tokens.size() << "\n";
+  std::cout << "[DEBUG] position_ids.size() = " << position_ids.size() << "\n";
+  std::cout << "[DEBUG] pixel_values.size() = " << pixel_values.size() << "\n";
+  std::cout << "[DEBUG] cu_seqlens_list.size() = " << attnmask.size() << "\n";
+
   std::vector<int> input_ids(SEQLEN, 0);
   std::vector<uint16_t> attention_mask(SEQLEN * SEQLEN, 0);
+
+  // 检查 tokens 大小是否超出 SEQLEN
+  if (tokens.size() > SEQLEN) {
+    std::cerr << "[ERROR] tokens.size() > SEQLEN (" << tokens.size() << " > " << SEQLEN << ")\n";
+    return -1;
+  }
+
   std::copy(tokens.begin(), tokens.end(), input_ids.data());
+
   POSITION_IDS.resize(position_ids.size() / 3, std::vector<int>(3));
   MAX_POS = 0;
   std::vector<int> p_ids(SEQLEN * 3, 0);
+  std::cout << "[DEBUG] POSITION_IDS resized to " << position_ids.size() / 3 << " rows\n";
 
   // std::vector<uint16_t> input_vit(500*3584, 0);
   // for (size_t i = 0; i < vit_out_ref.size(); ++i)
   //   input_vit[i] = fp32_to_bf16_bits(vit_out_ref[i]);
 
   std::vector<float> pixel_values_pad(MAX_PIXELS * VIT_DIMS, 0);
+  // 对 pixel_values 进行数据拷贝，检查尺寸是否足够
+  if (pixel_values.size() > pixel_values_pad.size()) {
+    std::cerr << "[ERROR] pixel_values.size() > pixel_values_pad.size() (" 
+              << pixel_values.size() << " > " << pixel_values_pad.size() << ")\n";
+    return -1;
+  }
   std::copy(pixel_values.begin(), pixel_values.end(), pixel_values_pad.data());
+  std::cout << "[DEBUG] Copied pixel_values to pixel_values_pad\n";
 
-  for (int i = 0; i < (int)POSITION_IDS.size(); ++i) {
+  // 遍历 position_ids 并赋值给 POSITION_IDS
+  for (size_t i = 0; i < POSITION_IDS.size(); ++i) {
     for (int j = 0; j < 3; ++j) {
-      if (MAX_POS < position_ids[j * (int)POSITION_IDS.size() + i])
-        MAX_POS = position_ids[j * (int)POSITION_IDS.size() + i];
-      POSITION_IDS[i][j] = position_ids[j * (int)POSITION_IDS.size() + i];
+      size_t pos_index = j * POSITION_IDS.size() + i;
+      if (pos_index >= position_ids.size()) {
+          std::cerr << "[ERROR] pos_index (" << pos_index 
+                    << ") out of range for position_ids.size() = " << position_ids.size() << "\n";
+          return -1;
+      }
+      int current_value = position_ids[pos_index];
+      if (MAX_POS < current_value)
+        MAX_POS = current_value;
+      POSITION_IDS[i][j] = current_value;
     }
   }
+  std::cout << "[DEBUG] POSITION_IDS populated; MAX_POS = " << MAX_POS << "\n";
 
   token_length = tokens.size();  // text input length
+  std::cout << "[DEBUG] token_length = " << token_length << "\n";
 
   for (int i = 0; i < token_length; i++) {
     for (int j = 0; j < SEQLEN; j++) {
@@ -242,6 +274,7 @@ int Qwen2VL::forward_first(std::vector<int> &tokens,
       }
     }
   }
+  std::cout << "[DEBUG] attention_mask initialized\n";
 
   std::vector<float> vit_attention_mask(MAX_PIXELS * MAX_PIXELS, 0);
   for (int i = 0; i < MAX_PIXELS * MAX_PIXELS; i++) {
@@ -249,6 +282,7 @@ int Qwen2VL::forward_first(std::vector<int> &tokens,
       vit_attention_mask[i] = std::numeric_limits<float>::lowest();
     }
   }
+  std::cout << "[DEBUG] vit_attention_mask computed\n";
 
   // forward embeding
   auto &in_mem = net_embed->stages[0].input_mems[0];
@@ -351,13 +385,14 @@ int Qwen2VL::forward_first(std::vector<int> &tokens,
                      (token_length - 1) * bytes, bytes);
   net_launch(net_lm);
   int token = 0;
-  if (generation_mode == "greedy") {
-    token = greedy_search(net_greedy_head, lm_out_mem);
-  } else {
-    // token = penalty_sample(net_penalty_sample_head, lm_out_mem, total_tokens,
-    //                        token_length);
-    throw std::runtime_error("ERROR: unsupported generation mode!\n");
-  }
+  std::cout<<"-----------"<<generation_mode<<"--------"<<std::endl;
+  // if (generation_mode == "greedy") {
+  token = greedy_search(net_greedy_head, lm_out_mem);
+  // } else {
+  //   // token = penalty_sample(net_penalty_sample_head, lm_out_mem, total_tokens,
+  //   //                        token_length);
+  //   throw std::runtime_error("ERROR: unsupported generation mode!\n");
+  // }
   token_length++;
   return token;
 }
@@ -413,12 +448,12 @@ int Qwen2VL::forward_next() {
   net_launch(net_lm);
 
   int token = 0;
-  if (generation_mode == "greedy") {
-    token = greedy_search(net_greedy_head, lm_out_mem);
-  } else {
-    std::cout << "ERROR: unsupported generation mode!" << std::endl;
-    exit(1);
-  }
+  // if (generation_mode == "greedy") {
+  token = greedy_search(net_greedy_head, lm_out_mem);
+  // } else {
+  //   std::cout << "ERROR: unsupported generation mode!" << std::endl;
+  //   exit(1);
+  // }
   // bm_memcpy_d2s(bm_handle, (void *)&token, lm_out_mem);
   token_length++;
   return token;
