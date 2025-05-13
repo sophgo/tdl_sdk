@@ -4,9 +4,9 @@
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
 
-#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__)
+#if defined(__BM168X__) 
 #include "memory/bm_memory_pool.hpp"
-#elif defined(__CV181X__)
+#elif defined(__CV181X__) || defined(__CV184X__) || defined(__CV186X__)
 #include "memory/cvi_memory_pool.hpp"
 #endif
 
@@ -22,13 +22,13 @@ OpenCVImage::OpenCVImage(uint32_t width, uint32_t height,
   image_type_ = ImageType::OPENCV_FRAME;
   memory_pool_ = memory_pool;
   if (memory_pool == nullptr) {
-#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__)
+#if defined(__BM168X__) 
     memory_pool_ = std::make_shared<BmMemoryPool>(nullptr);
     LOGI("use BM memory pool");
 #elif defined(__CMODEL_CV181X__) || defined(__CMODEL_CV184X__)
     memory_pool_ = std::make_shared<CpuMemoryPool>();
     LOGI("use CPU memory pool");
-#elif defined(__CV181X__)
+#elif defined(__CV181X__) || defined(__CV184X__) || defined(__CV186X__) 
     memory_pool_ = std::make_shared<CviMemoryPool>();
     LOGI("use CVI memory pool");
 #endif
@@ -61,13 +61,13 @@ OpenCVImage::OpenCVImage(cv::Mat& mat, ImageFormat imageFormat) {
       "BGR_PACKED as default",
       mat.channels());
   image_type_ = ImageType::OPENCV_FRAME;
-#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__)
+#if defined(__BM168X__) 
   memory_pool_ = std::make_shared<BmMemoryPool>(nullptr);
   LOGI("use BM memory pool");
 #elif defined(__CMODEL_CV181X__) || defined(__CMODEL_CV184X__)
   memory_pool_ = std::make_shared<CpuMemoryPool>();
   LOGI("use CPU memory pool");
-#elif defined(__CV181X__)
+#elif defined(__CV181X__) || defined(__CV184X__) || defined(__CV186X__)
   memory_pool_ = std::make_shared<CviMemoryPool>();
   LOGI("use CVI memory pool");
 #endif

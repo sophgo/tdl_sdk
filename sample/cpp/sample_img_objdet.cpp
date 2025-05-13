@@ -31,7 +31,7 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
     cv::putText(
         mat, sz_text,
         cv::Point(int(obj_meta->bboxes[i].x1), int(obj_meta->bboxes[i].y1)),
-        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2);
+        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
   }
   std::cout << "save image to " << str_img_name << std::endl;
 
@@ -40,13 +40,26 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
 
 void construct_model_id_mapping(
     std::map<std::string, ModelType> &model_id_mapping) {
-  model_id_mapping["YOLOV10_DET_COCO80"] = ModelType::YOLOV10_DET_COCO80;
-  model_id_mapping["YOLOV8N_DET_HEAD_HARDHAT"] = ModelType::YOLOV8N_DET_HEAD_HARDHAT;
-  model_id_mapping["YOLOV8N_DET_PERSON_VEHICLE"] =
-      ModelType::YOLOV8N_DET_PERSON_VEHICLE;
-  model_id_mapping["KEYPOINT_FACE_V2"] = ModelType::KEYPOINT_FACE_V2;
-  model_id_mapping["YOLOV8N_DET_MONITOR_PERSON"] = ModelType::YOLOV8N_DET_MONITOR_PERSON;
-  model_id_mapping["PPYOLOE_DET_COCO80"] = ModelType::PPYOLOE_DET_COCO80;
+    model_id_mapping["MBV2_DET_PERSON"] = ModelType::MBV2_DET_PERSON;
+    
+    // YOLO general models
+    model_id_mapping["YOLOV6_DET_COCO80"] = ModelType::YOLOV6_DET_COCO80;
+    model_id_mapping["YOLOV8_DET_COCO80"] = ModelType::YOLOV8_DET_COCO80;
+    model_id_mapping["YOLOV10_DET_COCO80"] = ModelType::YOLOV10_DET_COCO80;
+
+    // YOLOv8 specialized models
+    model_id_mapping["YOLOV8N_DET_HAND"] = ModelType::YOLOV8N_DET_HAND;
+    model_id_mapping["YOLOV8N_DET_PET_PERSON"] = ModelType::YOLOV8N_DET_PET_PERSON;
+    model_id_mapping["YOLOV8N_DET_PERSON_VEHICLE"] = ModelType::YOLOV8N_DET_PERSON_VEHICLE;
+    model_id_mapping["YOLOV8N_DET_HAND_FACE_PERSON"] = ModelType::YOLOV8N_DET_HAND_FACE_PERSON;
+    model_id_mapping["YOLOV8N_DET_HEAD_PERSON"] = ModelType::YOLOV8N_DET_HEAD_PERSON;
+    model_id_mapping["YOLOV8N_DET_HEAD_HARDHAT"] = ModelType::YOLOV8N_DET_HEAD_HARDHAT;
+    model_id_mapping["YOLOV8N_DET_FIRE_SMOKE"] = ModelType::YOLOV8N_DET_FIRE_SMOKE;
+    model_id_mapping["YOLOV8N_DET_FIRE"] = ModelType::YOLOV8N_DET_FIRE;
+    model_id_mapping["YOLOV8N_DET_HEAD_SHOULDER"] = ModelType::YOLOV8N_DET_HEAD_SHOULDER;
+    model_id_mapping["YOLOV8N_DET_LICENSE_PLATE"] = ModelType::YOLOV8N_DET_LICENSE_PLATE;
+    model_id_mapping["YOLOV8N_DET_TRAFFIC_LIGHT"] = ModelType::YOLOV8N_DET_TRAFFIC_LIGHT;
+    model_id_mapping["YOLOV8N_DET_MONITOR_PERSON"] = ModelType::YOLOV8N_DET_MONITOR_PERSON;
 }
 
 int main(int argc, char **argv) {

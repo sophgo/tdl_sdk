@@ -43,67 +43,56 @@ void construct_model_id_mapping(std::map<std::string, ModelType>& model_id_mappi
 
 void save_detection_results(const std::string& save_path, 
                            const std::shared_ptr<ModelBoxInfo>& obj_meta) {
-  std::stringstream res_ss;
-  for (size_t i = 0; i < obj_meta->bboxes.size(); i++) {
-    res_ss << obj_meta->bboxes[i].class_id << " "
-           << obj_meta->bboxes[i].x1 << " "
-           << obj_meta->bboxes[i].y1 << " "
-           << obj_meta->bboxes[i].x2 << " "
-           << obj_meta->bboxes[i].y2 << " "
-           << obj_meta->bboxes[i].score << "\n";
-  }
-
-  FILE* fp = fopen(save_path.c_str(), "w");
-  if (fp) {
-    fwrite(res_ss.str().c_str(), res_ss.str().size(), 1, fp);
-    fclose(fp);
-  }
+    std::ofstream file(save_path);
+    if (file.is_open()) {
+        for (const auto& bbox : obj_meta->bboxes) {
+            file << bbox.class_id << " "
+                 << bbox.x1 << " " << bbox.y1 << " "
+                 << bbox.x2 << " " << bbox.y2 << " "
+                 << bbox.score << "\n";
+        }
+    }
 }
 
-void bench_mark_all(std::string bench_path, std::string image_root, std::string res_path,
-                    std::shared_ptr<BaseModel> model) {
-  std::fstream file(bench_path);
-  if (!file.is_open()) {
-    return;
-  }
+void bench_mark_all(const std::string&    bench_path,
+                    const std::string&    image_root,
+                    const std::string&    res_path,
+                    std::shared_ptr<BaseModel> model /* 仍按值传入 */)
+{
+    std::ifstream bench_fstream(bench_path);
+    if (!bench_fstream.is_open()) {
+        std::cerr << "打开 benchmark 文件失败: " << bench_path << "\n";
+        return;
+    }
 
-  std::string line;
-  while (getline(file, line)) {
-    if (!line.empty()) {
-      std::stringstream ss(line);
-      std::string image_name;
-      while (ss >> image_name) {
-        auto img_path = image_root + image_name;
+    std::string image_name;
+    while (bench_fstream >> image_name) {
+        const std::string img_path = image_root + image_name;
+        std::cout << "Process: " << img_path << "\n" << "\n";
         std::shared_ptr<BaseImage> image = ImageFactory::readImage(img_path);
         if (!image) {
-          std::cerr << "Failed to read image: " << img_path << std::endl;
-          continue;
-        }
-
-        std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
-        std::vector<std::shared_ptr<BaseImage>> input_images = {image};
-        model->inference(input_images, out_datas);
-
-        for (auto& out_data : out_datas) {
-          if (out_data->getType() != ModelOutputType::OBJECT_DETECTION) {
+            std::cerr << "读取图像失败: " << img_path << "\n";
             continue;
-          }
-
-          std::shared_ptr<ModelBoxInfo> obj_meta =
-              std::static_pointer_cast<ModelBoxInfo>(out_data);
-
-          size_t pos = image_name.find_last_of("/");
-          size_t start_idx = pos == std::string::npos ? 0 : pos + 1;
-          std::string save_path =
-              res_path + image_name.substr(start_idx, image_name.length() - 4 - (pos + 1)) + ".txt";
-          
-          save_detection_results(save_path, obj_meta);
         }
-        break;
-      }
+        std::vector<std::shared_ptr<BaseImage>> inputs{image};
+        std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+        model->inference(inputs, outputs);
+
+        for (auto &out : outputs) {
+            if (out->getType() != ModelOutputType::OBJECT_DETECTION)
+                continue;
+            std::shared_ptr<ModelBoxInfo> obj_meta = std::static_pointer_cast<ModelBoxInfo>(out);
+
+            size_t dot = image_name.find_last_of('.');
+            std::string base = (dot == std::string::npos
+                                ? image_name
+                                : image_name.substr(0, dot));
+            save_detection_results(res_path + base + ".txt", obj_meta);
+        }
+        inputs.clear();
+        outputs.clear();
     }
-  }
-  std::cout << "write done!" << std::endl;
+    model.reset();
 }
 
 int main(int argc, char* argv[]) {
@@ -128,8 +117,7 @@ int main(int argc, char* argv[]) {
           "\tBENCH_PATH, txt for storing image names\n"
           "\tIMAGE_ROOT, store images path\n"
           "\tRES_PATH, save result path\n"
-          "\tCONF_THRESHOLD (optional), confidence threshold (default: 0.5)\n"
-          "\tNMS_THRESHOLD (optional), NMS threshold (default: 0.5)\n",
+          "\tCONF_THRESHOLD (optional), confidence threshold (default: 0.5)\n",
           argv[0]);
       return -1;
   }

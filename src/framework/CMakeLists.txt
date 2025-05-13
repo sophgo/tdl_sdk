@@ -7,22 +7,20 @@ include_directories(
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR 
    ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR 
-   ("${CVI_PLATFORM}" STREQUAL "BM1684") OR 
-   ("${CVI_PLATFORM}" STREQUAL "SOPHON") OR
-   ("${CVI_PLATFORM}" STREQUAL "CV184X"))
+   ("${CVI_PLATFORM}" STREQUAL "BM1684") )
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
               
               )
-  if(NOT "${CVI_PLATFORM}" STREQUAL "SOPHON" AND NOT "${CVI_PLATFORM}" STREQUAL "CV184X")
-    set(NET_SRCS ${NET_SRCS} ${CMAKE_CURRENT_SOURCE_DIR}/utils/qwen_vl_helper.cpp
-                             ${CMAKE_CURRENT_SOURCE_DIR}/model/llm_model.cpp                        
-                             ${CMAKE_CURRENT_SOURCE_DIR}/net/bm_llm_net.cpp
-                             )
-  endif()
-
 elseif(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X"))
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
+      )
+
+elseif(("${CVI_PLATFORM}" STREQUAL "CV184X")OR 
+        ("${CVI_PLATFORM}" STREQUAL "SOPHON"))
+  set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/memory/cvi_memory_pool.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
       )
 

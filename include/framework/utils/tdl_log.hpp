@@ -74,10 +74,11 @@
 
 #include <stdio.h>
 
-// #define LOGI(fmt, ...) printf("[%s:%d] [I] " fmt "\n", __FILENAME__,
-// __LINE__,
-// ##__VA_ARGS__) #define LOGE(fmt, ...) printf("[%s:%d] [E] " fmt "\n",
-// __FILENAME__, __LINE__, ##__VA_ARGS__) #define LOGW(fmt, ...) printf("[%s:%d]
-// [W] " fmt "\n", __FILENAME__, __LINE__, ##__VA_ARGS__)
+// #define LOGI(fmt, ...) \
+//   printf("[%s:%d] [I] " fmt "\n", __FILENAME__, __LINE__, ##__VA_ARGS__)
+// #define LOGE(fmt, ...) \
+//   printf("[%s:%d] [E] " fmt "\n", __FILENAME__, __LINE__, ##__VA_ARGS__)
+// #define LOGW(fmt, ...) \
+//   printf("[%s:%d] [W] " fmt "\n", __FILENAME__, __LINE__, ##__VA_ARGS__)
 #endif
 #endif

@@ -128,6 +128,7 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8N_DET_TRAFFIC_LIGHT ||
           model_type == ModelType::YOLOV8N_DET_HEAD_HARDHAT ||
           model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON ||
+          model_type == ModelType::YOLOV8_DET_COCO80 ||
           model_type == ModelType::YOLOV10_DET_COCO80 ||
           model_type == ModelType::YOLOV6_DET_COCO80 ||
           model_type == ModelType::PPYOLOE_DET_COCO80 ||
@@ -243,6 +244,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     num_classes = 1;
   } else if (model_type == ModelType::YOLOV10_DET_COCO80) {
     model_category = 1;
+    num_classes = 80;
+  } else if (model_type == ModelType::YOLOV8_DET_COCO80) {
     num_classes = 80;
   } else if (model_type == ModelType::YOLOV6_DET_COCO80) {
     model_category = 2;
