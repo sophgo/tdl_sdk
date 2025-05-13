@@ -1,6 +1,17 @@
 
 #include "tdl_model_factory.hpp"
 
+
+template <typename T>
+void embeddingToVec(void *embedding, size_t num, std::vector<float> &feature_vec) {
+    T *feature = reinterpret_cast<T *>(embedding);
+    for (size_t i = 0; i < num; ++i) {
+        feature_vec[i] = (float)feature[i];
+    }
+    return;
+}
+
+
 std::shared_ptr<BaseImage> face_crop_align(
     std::shared_ptr<BaseImage> image,
     std::shared_ptr<ModelLandmarksInfo> landmarks_meta) {
@@ -102,14 +113,46 @@ void visualize_face_crop(
   }
 }
 
+void construct_model_id_mapping(
+    std::map<std::string, ModelType> &model_id_mapping) {
+  model_id_mapping["RESNET_FEATURE_BMFACE_R34"] = ModelType::RESNET_FEATURE_BMFACE_R34;
+  model_id_mapping["RESNET_FEATURE_BMFACE_R50"] = ModelType::RESNET_FEATURE_BMFACE_R50;
+  model_id_mapping["RECOGNITION_INSIGHTFACE_R34"] =ModelType::RECOGNITION_INSIGHTFACE_R34;
+  model_id_mapping["RECOGNITION_CVIFACE"] = ModelType::RECOGNITION_CVIFACE;
+}
+
+void set_preprocess_parameters(std::shared_ptr<BaseModel> model) {
+  PreprocessParams pre_params;
+
+  model->getPreprocessParameters(pre_params);
+
+  pre_params.mean[0] = 0.99609375;
+  pre_params.mean[1] = 0.99609375;
+  pre_params.mean[2] = 0.99609375;
+
+  pre_params.scale[0] = 0.0078125;
+  pre_params.scale[1] = 0.0078125;
+  pre_params.scale[2] = 0.0078125;
+
+  model->setPreprocessParameters(pre_params);
+}
+
 int main(int argc, char **argv) {
-  if (argc != 4) {
-    printf("Usage: %s <model_dir> <image_path1> <image_path2>\n", argv[0]);
+
+  std::map<std::string, ModelType> model_id_mapping;
+  construct_model_id_mapping(model_id_mapping);
+
+  if (argc != 5) {
+    printf("Usage: %s <feature_extraction_model_id_name> <model_dir> <image_path1> <image_path2>\n", argv[0]);
+    printf("feature_extraction_model_id_name:\n");
+    for (auto &item : model_id_mapping) {
+      printf("%s\n", item.first.c_str());
+    }
     return -1;
   }
-  std::string model_dir = argv[1];
-  std::string image_path1 = argv[2];
-  std::string image_path2 = argv[3];
+  std::string model_dir = argv[2];
+  std::string image_path1 = argv[3];
+  std::string image_path2 = argv[4];
 
   std::shared_ptr<BaseImage> image1 = ImageFactory::readImage(image_path1);
   if (!image1) {
@@ -134,11 +177,23 @@ int main(int argc, char **argv) {
     printf("Failed to create model_fl\n");
     return -1;
   }
+
+  std::string model_id_name = argv[1];
+  if (model_id_mapping.find(model_id_name) == model_id_mapping.end()) {
+    printf("model_id_name not found\n");
+    return -1;
+  }
+  ModelType model_id = model_id_mapping[model_id_name];
   std::shared_ptr<BaseModel> model_fe =
-      model_factory.getModel(ModelType::RESNET_FEATURE_BMFACE_R34);
+      model_factory.getModel(model_id);
   if (!model_fe) {
     printf("Failed to create model_fe\n");
     return -1;
+  }
+
+  if (model_id == ModelType::RECOGNITION_INSIGHTFACE_R34 ||
+      model_id == ModelType::RECOGNITION_CVIFACE) {
+    set_preprocess_parameters(model_fe);
   }
 
   std::vector<std::shared_ptr<ModelOutputInfo>> out_fd, out_fl, out_fe;
@@ -180,9 +235,22 @@ int main(int argc, char **argv) {
         std::static_pointer_cast<ModelFeatureInfo>(out_fe[i]);
     printf("feature size: %d\n", feature_meta->embedding_num);
     std::vector<float> feature_vec(feature_meta->embedding_num);
-    for (size_t j = 0; j < feature_meta->embedding_num; j++) {
-      feature_vec[j] = feature_meta->embedding[j];
-    }
+
+    printf("feature_meta->embedding_type: %d\n", feature_meta->embedding_type);
+    switch (feature_meta->embedding_type) {
+        case TDLDataType::INT8:
+            embeddingToVec<int8_t>(feature_meta->embedding, feature_meta->embedding_num, feature_vec);
+            break;
+        case TDLDataType::UINT8:
+            embeddingToVec<uint8_t>(feature_meta->embedding, feature_meta->embedding_num, feature_vec);
+            break;
+        case TDLDataType::FP32:
+            embeddingToVec<float>(feature_meta->embedding, feature_meta->embedding_num, feature_vec);
+            break;
+        default: 
+            assert(false && "Unsupported embedding_type");
+    } 
+
     features.push_back(feature_vec);
   }
   float sim = 0;

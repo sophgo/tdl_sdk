@@ -83,6 +83,8 @@ enum class ModelType {
   CLIP_FEATURE_IMG,
   CLIP_FEATURE_TEXT,
 
+  RECOGNITION_INSIGHTFACE_R34, // resnet34 512 dim feature
+  RECOGNITION_CVIFACE,         // cviface 256 dim feature
   RESNET_FEATURE_BMFACE_R34,  // resnet34 512 dim feature
   RESNET_FEATURE_BMFACE_R50,  // resnet50 512 dim feature
 

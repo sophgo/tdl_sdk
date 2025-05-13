@@ -19,6 +19,9 @@ class PyModel {
 
   virtual ~PyModel() = default;
 
+  py::dict getPreprocessParameters();
+  void setPreprocessParameters(const py::dict& params);
+
  protected:
   std::shared_ptr<BaseModel> model_;
 };

@@ -91,8 +91,8 @@ int32_t BaseModel::getPreprocessParameters(PreprocessParams& pre_param) {
 }
 
 int32_t BaseModel::setPreprocessParameters(PreprocessParams& pre_param) {
-  net_param_.pre_params.dst_image_format = pre_param.dst_image_format;
-  net_param_.pre_params.keep_aspect_ratio = pre_param.keep_aspect_ratio;
+  // net_param_.pre_params.dst_image_format = pre_param.dst_image_format;
+  // net_param_.pre_params.keep_aspect_ratio = pre_param.keep_aspect_ratio;
 
   memcpy(net_param_.pre_params.mean, pre_param.mean, sizeof(pre_param.mean));
   memcpy(net_param_.pre_params.scale, pre_param.scale, sizeof(pre_param.scale));

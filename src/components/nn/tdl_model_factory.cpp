@@ -174,6 +174,8 @@ bool TDLModelFactory::isFeatureExtractionModel(const ModelType model_type) {
           model_type == ModelType::CLIP_FEATURE_TEXT ||
           model_type == ModelType::RESNET_FEATURE_BMFACE_R34 ||
           model_type == ModelType::RESNET_FEATURE_BMFACE_R50 ||
+          model_type == ModelType::RECOGNITION_INSIGHTFACE_R34 ||
+          model_type == ModelType::RECOGNITION_CVIFACE ||
           model_type == ModelType::FEATURE_IMG);
 }
 
@@ -392,6 +394,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createFeatureExtractionModel(
     model = std::make_shared<Clip_Text>();
   } else if (model_type == ModelType::RESNET_FEATURE_BMFACE_R34 ||
              model_type == ModelType::RESNET_FEATURE_BMFACE_R50 ||
+             model_type == ModelType::RECOGNITION_INSIGHTFACE_R34 ||
+             model_type == ModelType::RECOGNITION_CVIFACE ||
              model_type == ModelType::FEATURE_IMG) {
     model = std::make_shared<FeatureExtraction>();
   }

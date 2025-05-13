@@ -115,6 +115,10 @@ PYBIND11_MODULE(tdl, m) {
              ModelType::RESNET_FEATURE_BMFACE_R34)  // resnet34 512 dim feature
       .value("RESNET_FEATURE_BMFACE_R50",
              ModelType::RESNET_FEATURE_BMFACE_R50)  // resnet50 512 dim feature
+      .value("RECOGNITION_INSIGHTFACE_R34",
+             ModelType::RECOGNITION_INSIGHTFACE_R34)  // resnet34 512 dim feature
+      .value("RECOGNITION_CVIFACE",
+             ModelType::RECOGNITION_CVIFACE)  // cviface 256 dim feature
 
       // image classification models
       .value("CLS_MASK", ModelType::CLS_MASK)                // 0:mask,1:no mask
@@ -164,6 +168,13 @@ PYBIND11_MODULE(tdl, m) {
       .value("CLIP_FEATURE_IMG", ModelType::CLIP_FEATURE_IMG)
       .value("CLIP_FEATURE_TEXT", ModelType::CLIP_FEATURE_TEXT)
       .export_values();
+
+  py::class_<PyModel>(nn, "Model")
+    .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
+         py::arg("model_path"), py::arg("device_id") = 0)
+    .def("getPreprocessParameters", &PyModel::getPreprocessParameters)
+    .def("setPreprocessParameters", &PyModel::setPreprocessParameters);
+
   py::class_<PyObjectDetector>(nn, "ObjectDetector")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
@@ -178,7 +189,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyFaceDetector>(nn, "FaceDetector")
+  py::class_<PyFaceDetector, PyModel>(nn, "FaceDetector")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
@@ -192,7 +203,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyFaceLandmark>(nn, "FaceLandmark")
+  py::class_<PyFaceLandmark, PyModel>(nn, "FaceLandmark")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
@@ -206,7 +217,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyClassifier>(nn, "Classifier")
+  py::class_<PyClassifier, PyModel>(nn, "Classifier")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def(
@@ -220,7 +231,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyKeyPointDetector>(nn, "KeyPointDetector")
+  py::class_<PyKeyPointDetector, PyModel>(nn, "KeyPointDetector")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
@@ -234,7 +245,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PySemanticSegmentation>(nn, "SemanticSegmentation")
+  py::class_<PySemanticSegmentation, PyModel>(nn, "SemanticSegmentation")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
@@ -248,7 +259,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyInstanceSegmentation>(nn, "InstanceSegmentation")
+  py::class_<PyInstanceSegmentation, PyModel>(nn, "InstanceSegmentation")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
@@ -262,7 +273,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyLaneDetection>(nn, "LaneDetection")
+  py::class_<PyLaneDetection, PyModel>(nn, "LaneDetection")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
@@ -276,7 +287,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyAttributeExtractor>(nn, "AttributeExtractor")
+  py::class_<PyAttributeExtractor, PyModel>(nn, "AttributeExtractor")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
@@ -290,7 +301,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyFeatureExtractor>(nn, "FeatureExtractor")
+  py::class_<PyFeatureExtractor, PyModel>(nn, "FeatureExtractor")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
@@ -304,7 +315,7 @@ PYBIND11_MODULE(tdl, m) {
            py::arg("input") = py::array_t<unsigned char>(),
            py::arg("parameters") = py::dict());
 
-  py::class_<PyCharacterRecognitor>(nn, "CharacterRecognitor")
+  py::class_<PyCharacterRecognitor, PyModel>(nn, "CharacterRecognitor")
       .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
            py::arg("model_path"), py::arg("device_id") = 0)
       .def("inference",
