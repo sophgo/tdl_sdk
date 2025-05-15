@@ -46,6 +46,8 @@ TDLModelFactory::TDLModelFactory(const std::string model_dir)
                model_dir_ + "face_anti_spoof_classification" + str_ext);
   setModelPath(ModelType::MBV2_DET_PERSON,
                model_dir_ + "mobiledetv2-pedestrian-d0-448_cv186x" + str_ext);
+  setModelPath(ModelType::KEYPOINT_YOLOV8POSE_PERSON17,
+               model_dir_ + "keypoint_yolov8pose_person17_384_640_INT8_bm1688" + str_ext);
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
