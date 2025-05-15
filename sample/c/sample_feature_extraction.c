@@ -8,8 +8,10 @@
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
-  if (strstr(model_path, "bmface_r34") != NULL) {
+  if (strstr(model_path, "recognition_face_r34") != NULL) {
     *model_index = TDL_MODEL_RESNET_FEATURE_BMFACE_R34;
+  } else if (strstr(model_path, "recognition_face_112_112") != NULL) {
+    *model_index = TDL_MODEL_CVIFACE;
   } else {
     ret = -1;
   }

@@ -11,8 +11,10 @@ typedef enum {
   TDL_DETECTION_MODEL = 0,
   TDL_MODEL_MBV2_DET_PERSON,  // 0:person
   TDL_MODEL_YOLOV5_DET_COCO80,
+  TDL_MODEL_YOLOV6_DET_COCO80,
   TDL_MODEL_YOLOV8_DET_COCO80,
   TDL_MODEL_YOLOV10_DET_COCO80,
+  TDL_MODEL_PPYOLOE_DET_COCO80,
   TDL_MODEL_YOLOV8N_DET_HAND,            // 0:hand
   TDL_MODEL_YOLOV8N_DET_PET_PERSON,      // 0:cat,1:dog,2:person
   TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE,  // 0:car,1:bus,2:truck,3:rider with
@@ -38,6 +40,7 @@ typedef enum {
   TDL_MODEL_CLS_ATTRIBUTE_FACE,         // age,gener,glass,mask
   TDL_MODEL_RESNET_FEATURE_BMFACE_R34,  // resnet34 512 dim feature
   TDL_MODEL_RESNET_FEATURE_BMFACE_R50,  // resnet50 512 dim feature
+  TDL_MODEL_CVIFACE,                    // cviface 256 dim feature
   TDL_FACE_MODEL_MAX,
 
   // classification model list

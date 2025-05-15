@@ -6,6 +6,16 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
+int get_model_info(char *model_path, TDLModel *model_index) {
+  int ret = 0;
+  if (strstr(model_path, "lstr_det_lane") != NULL) {
+    *model_index = TDL_MODEL_LSTR_DET_LANE;
+  }  else {
+    ret = -1;
+  }
+  return ret;
+}
+
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
   printf("  %s -m <model_path> -i <input_image>\n", prog_name);
@@ -61,7 +71,12 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  TDLModel model_id = TDL_MODEL_LSTR_DET_LANE;
+  TDLModel model_id;
+  if (get_model_info(model_path, &model_id) == -1) {
+    printf("unsupported model: %s\n", model_path);
+    return -1;
+  }
+
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
   ret = TDL_OpenModel(tdl_handle, model_id, model_path);

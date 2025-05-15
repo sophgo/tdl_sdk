@@ -53,14 +53,38 @@ ModelType convertModelType(TDLModel model_type) {
       return ModelType::SCRFD_DET_FACE;
     case TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE:
       return ModelType::YOLOV8N_DET_PERSON_VEHICLE;
-    case TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT:
-      return ModelType::YOLOV8N_DET_HEAD_HARDHAT;
     case TDL_MODEL_YOLOV8N_DET_HAND:
       return ModelType::YOLOV8N_DET_HAND;
     case TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE:
       return ModelType::YOLOV8N_DET_LICENSE_PLATE;
+    case TDL_MODEL_YOLOV5_DET_COCO80:
+      return ModelType::YOLOV5_DET_COCO80;
+    case TDL_MODEL_YOLOV6_DET_COCO80:
+      return ModelType::YOLOV6_DET_COCO80;
+    case TDL_MODEL_YOLOV8_DET_COCO80:
+      return ModelType::YOLOV8_DET_COCO80;
+    case TDL_MODEL_PPYOLOE_DET_COCO80:
+    return ModelType::PPYOLOE_DET_COCO80;
+    case TDL_MODEL_YOLOV8N_DET_FIRE:
+      return ModelType::YOLOV8N_DET_FIRE;
+    case TDL_MODEL_YOLOV8N_DET_FIRE_SMOKE:
+      return ModelType::YOLOV8N_DET_FIRE_SMOKE;
+    case TDL_MODEL_YOLOV8N_DET_HAND_FACE_PERSON:
+      return ModelType::YOLOV8N_DET_HAND_FACE_PERSON;
+    case TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT:
+      return ModelType::YOLOV8N_DET_HEAD_HARDHAT;
+    case TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER:
+      return ModelType::YOLOV8N_DET_HEAD_SHOULDER;
+    case TDL_MODEL_YOLOV8N_DET_MONITOR_PERSON:
+      return ModelType::YOLOV8N_DET_MONITOR_PERSON;
+    case TDL_MODEL_YOLOV8N_DET_PET_PERSON:
+      return ModelType::YOLOV8N_DET_PET_PERSON;
+    case TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT:
+      return ModelType::YOLOV8N_DET_TRAFFIC_LIGHT;
     case TDL_MODEL_SEG_YOLOV8_COCO80:
       return ModelType::YOLOV8_SEG_COCO80;
+    case TDL_MODEL_SEG_MOTION:
+      return ModelType::TOPFORMER_SEG_MOTION;
     case TDL_MODEL_SEG_PERSON_FACE_VEHICLE:
       return ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE;
     case TDL_MODEL_YOLOV10_DET_COCO80:
@@ -78,9 +102,13 @@ ModelType convertModelType(TDLModel model_type) {
     case TDL_MODEL_KEYPOINT_SIMICC:
       return ModelType::KEYPOINT_SIMCC_PERSON17;
     case TDL_MODEL_RESNET_FEATURE_BMFACE_R34:
-      return ModelType::RESNET_FEATURE_BMFACE_R34;
+      return ModelType::RECOGNITION_INSIGHTFACE_R34;
+    case TDL_MODEL_CVIFACE:
+      return ModelType::RECOGNITION_CVIFACE;
     case TDL_MODEL_CLS_RGBLIVENESS:
       return ModelType::CLS_RGBLIVENESS;
+    case TDL_MODEL_CLS_HAND_GESTURE:
+      return ModelType::CLS_HAND_GESTURE;
     case TDL_MODEL_LSTR_DET_LANE:
       return ModelType::LSTR_DET_LANE;
     case TDL_MODEL_CLS_BABAY_CRY:

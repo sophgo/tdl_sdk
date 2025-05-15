@@ -14,6 +14,12 @@ int get_model_info(char *model_path, TDLModel *model_index) {
     *model_index = TDL_MODEL_CLS_BABAY_CRY;
   } else if (strstr(model_path, "cls_rgbliveness") != NULL) {
     *model_index = TDL_MODEL_CLS_RGBLIVENESS;
+  } else if (strstr(model_path, "cls_sound_dakaiqianlu") != NULL ||
+             strstr(model_path, "cls_sound_nihaoshiyun") != NULL ||
+             strstr(model_path, "cls_sound_xiaoaixiaoai") != NULL) {
+    *model_index = TDL_MODEL_CLS_SOUND_COMMAND;
+  } else if (strstr(model_path, "cls_hand_gesture_128_128") != NULL) {
+    *model_index = TDL_MODEL_CLS_HAND_GESTURE;
   } else {
     ret = -1;
   }

@@ -11,6 +11,8 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "topformer_seg_person_face_vehicle") != NULL) {
     *model_index = TDL_MODEL_SEG_PERSON_FACE_VEHICLE;
+  } else if (strstr(model_path, "topformer_seg_motion") != NULL) {
+    *model_index = TDL_MODEL_SEG_MOTION;
   } else {
     ret = -1;
   }

@@ -24,6 +24,16 @@ void print_usage(const char *prog_name) {
     printf("  -h, --help           Show this help message\n");
 }
 
+int get_model_info(char *model_path, TDLModel *model_index) {
+  int ret = 0;
+  if (strstr(model_path, "keypoint_yolov8pose_person17") != NULL) {
+    *model_index = TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17;
+  }  else {
+    ret = -1;
+  }
+  return ret;
+}
+
 int main(int argc, char *argv[]) {
   char *model_path = NULL;
   char *input_image = NULL;
@@ -74,7 +84,12 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  TDLModel model_id = TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17;
+  TDLModel model_id;
+  if (get_model_info(model_path, &model_id) == -1) {
+    printf("unsupported model: %s\n", model_path);
+    return -1;
+  }
+
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
   ret = TDL_OpenModel(tdl_handle, model_id, model_path);
