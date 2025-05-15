@@ -66,13 +66,14 @@ int32_t TDL_DestoryCamera(TDLHandle handle);
 TDLImage TDL_ReadImage(const char *path);
 
 /**
- * @brief 读取一段音频为 TDLImageHandle 对象
+ * @brief 读取文件内容为 TDLImageHandle 对象
  *
- * @param path 音频路径
- * @param size 音频数据大小
+ * @param path 文件路径
+ * @param count 文件数据量
+ * @param data_type 文件数据类型
  * @return  返回读取的 TDLImageHandle 对象, 如果失败返回 NULL
  */
-TDLImage TDL_ReadAudio(const char *path, int size);
+TDLImage TDL_ReadBin(const char *path, int count, TDLDataTypeE data_type);
 
 /**
  * @brief 销毁一个 TDLImageHandle 对象

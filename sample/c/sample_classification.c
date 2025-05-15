@@ -20,6 +20,8 @@ int get_model_info(char *model_path, TDLModel *model_index) {
     *model_index = TDL_MODEL_CLS_SOUND_COMMAND;
   } else if (strstr(model_path, "cls_hand_gesture_128_128") != NULL) {
     *model_index = TDL_MODEL_CLS_HAND_GESTURE;
+  } else if (strstr(model_path, "cls_keypoint_hand_gesture") != NULL) {
+    *model_index = TDL_MODEL_CLS_KEYPOINT_HAND_GESTURE;
   } else {
     ret = -1;
   }
@@ -31,17 +33,20 @@ void print_usage(const char *prog_name) {
   printf("  Image processing mode:\n");
   printf("    %s -m <model_path> -i <input_image>\n", prog_name);
   printf("    %s --model_path <path> --input <image>\n", prog_name);
-  printf("  Sound processing mode:\n");
+  printf("  Bin processing mode:\n");
   printf("    %s -m <model_path> -b <input_bin> -r <rate> -s <time>\n", prog_name);
+  printf("    %s -m <model_path> -b <input_bin> -c <data count>\n", prog_name);
   printf("    %s --model_path <path> --bin_data <input_bin> --sample-rate <rate> --seconds <time>\n", prog_name);
+  printf("    %s --model_path <path> --bin_data <input_bin> --count <data count>\n", prog_name);
   printf("\nOptions:\n");
   printf("  -m, --model_path     Path to model, "
          "<cls_sound_babay_cry_xxx>"
          "<cls_rgbliveness_xxx>\n");
   printf("  -i, --input          Path to input image (image mode)\n");
-  printf("  -b, --bin_data       Path to input data (sound mode)\n");
-  printf("  -r, --sample-rate    Sample rate in Hz (sound mode)\n");
-  printf("  -s, --seconds        Duration in seconds (sound mode)\n");
+  printf("  -b, --bin_data       Path to input data (bin mode)\n");
+  printf("  -r, --sample-rate    Sample rate in Hz (bin mode)\n");
+  printf("  -s, --seconds        Duration in seconds (bin mode)\n");
+  printf("  -c, --count          Data count (bin mode)\n");
   printf("  -h, --help           Display this help message\n");
 }
 
@@ -51,6 +56,7 @@ int main(int argc, char *argv[]) {
   char *bin_data = NULL;
   char *sample_rate = NULL;
   char *seconds = NULL;
+  char *data_count = NULL;
 
   struct option long_options[] = {
     {"model_path",    required_argument, 0, 'm'},
@@ -58,13 +64,14 @@ int main(int argc, char *argv[]) {
     {"bin_data",      required_argument, 0, 'b'},
     {"sample-rate",   required_argument, 0, 'r'},
     {"seconds",       required_argument, 0, 's'},
+    {"count",         required_argument, 0, 'c'},
     {"help",          no_argument,       0, 'h'},
     {0, 0, 0, 0}
   };
 
   int opt;
   int option_index = 0;
-  while ((opt = getopt_long(argc, argv, "m:i:b:r:s:h", long_options, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "m:i:b:r:s:c:h", long_options, &option_index)) != -1) {
     switch (opt) {
       case 'm':
         model_path = optarg;
@@ -80,6 +87,9 @@ int main(int argc, char *argv[]) {
         break;
       case 's':
         seconds = optarg;
+        break;
+      case 'c':
+        data_count = optarg;
         break;
       case 'h':
         print_usage(argv[0]);
@@ -103,9 +113,14 @@ int main(int argc, char *argv[]) {
   } else if (bin_data && sample_rate && seconds) {
     // 声音模式
     printf("Running in sound processing mode:\n");
-    printf("  Sound model: %s\n,Bin data: %s\n, Sample rate: %s\n, Duration: %s sec\n",
+    printf("  Sound model: %s\n  Bin data: %s\n  Sample rate: %s\n  Duration: %s sec\n",
             model_path, bin_data, sample_rate, seconds);
-  } else {
+  } else if (bin_data && data_count) {
+    //特征点模式
+    printf("Running in keypoint processing mode:\n");
+    printf("  Keypoint model: %s\n  Bin data: %s\n  Data count: %s\n\n",
+            model_path, bin_data, data_count);
+  }else {
     fprintf(stderr, "Error: Invalid combination of parameters\n");
     print_usage(argv[0]);
     return -1;
@@ -144,11 +159,19 @@ int main(int argc, char *argv[]) {
     }
   } else {
     const char *bin_data_path = bin_data;
-    int isample_rate = atoi(sample_rate);
-    int iseconds = atoi(seconds);
-    int size = isample_rate * AUDIOFORMATSIZE * iseconds;
+    int size = 0;
+    TDLDataTypeE Datatype;
+    if (data_count != NULL) {
+      size = atoi(data_count);
+      Datatype = TDL_TYPE_FP32;
+    } else {
+      int isample_rate = atoi(sample_rate);
+      int iseconds = atoi(seconds);
+      Datatype = TDL_TYPE_UINT8;
+      size = isample_rate * AUDIOFORMATSIZE * iseconds;
+    }
 
-    image = TDL_ReadAudio(bin_data_path, size);
+    image = TDL_ReadBin(bin_data_path, size, Datatype);
     if (image == NULL) {
       printf("read audio failed with %#x!\n", ret);
       goto exit1;
@@ -158,7 +181,6 @@ int main(int argc, char *argv[]) {
   TDLClassInfo obj_info = {0};
 
   ret = TDL_Classfification(tdl_handle, model_id, image, &obj_info);
-
   if (ret != 0) {
     printf("TDL_Classfification failed with %#x!\n", ret);
   } else {

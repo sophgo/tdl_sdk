@@ -45,6 +45,53 @@ inline TDLDataTypeE convertDataType(TDLDataType data_type) {
   }
 }
 
+void TDL_convertDataTypeToCpp(TDLDataTypeE data_type,
+                              size_t *type_size,
+                              TDLDataType *tdl_data_type) {
+  switch (data_type) {
+    case TDL_TYPE_INT8:
+      *type_size = sizeof(int8_t);
+      *tdl_data_type = TDLDataType::INT8;
+      break;
+    case TDL_TYPE_UINT8:
+      *type_size = sizeof(uint8_t);
+      *tdl_data_type = TDLDataType::UINT8;
+      break;
+    case TDL_TYPE_INT16:
+      *type_size = sizeof(int16_t);
+      *tdl_data_type = TDLDataType::INT16;
+      break;
+    case TDL_TYPE_UINT16:
+      *type_size = sizeof(uint16_t);
+      *tdl_data_type = TDLDataType::UINT16;
+      break;
+    case TDL_TYPE_INT32:
+      *type_size = sizeof(int32_t);
+      *tdl_data_type = TDLDataType::INT32;
+      break;
+    case TDL_TYPE_UINT32:
+      *type_size = sizeof(uint32_t);
+      *tdl_data_type = TDLDataType::UINT32;
+      break;
+    case TDL_TYPE_BF16:
+      *type_size = sizeof(uint16_t);
+      *tdl_data_type = TDLDataType::BF16;
+      break;
+    case TDL_TYPE_FP16:
+      *type_size = sizeof(uint16_t);
+      *tdl_data_type = TDLDataType::FP16;
+      break;
+    case TDL_TYPE_FP32:
+      *type_size = sizeof(float);
+      *tdl_data_type = TDLDataType::FP32;
+      break;
+    default:
+      *type_size = sizeof(uint8_t);
+      *tdl_data_type = TDLDataType::UINT8;
+      break;
+  }
+}
+
 ModelType convertModelType(TDLModel model_type) {
   switch (model_type) {
     case TDL_MODEL_MBV2_DET_PERSON:
@@ -109,6 +156,8 @@ ModelType convertModelType(TDLModel model_type) {
       return ModelType::CLS_RGBLIVENESS;
     case TDL_MODEL_CLS_HAND_GESTURE:
       return ModelType::CLS_HAND_GESTURE;
+    case TDL_MODEL_CLS_KEYPOINT_HAND_GESTURE:
+      return ModelType::CLS_KEYPOINT_HAND_GESTURE;
     case TDL_MODEL_LSTR_DET_LANE:
       return ModelType::LSTR_DET_LANE;
     case TDL_MODEL_CLS_BABAY_CRY:

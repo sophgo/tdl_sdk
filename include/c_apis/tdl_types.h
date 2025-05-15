@@ -16,7 +16,7 @@ typedef enum {
   TDL_TYPE_UINT16,   /**< Equals to uint16_t. */
   TDL_TYPE_INT32,    /**< Equals to int32_t. */
   TDL_TYPE_UINT32,   /**< Equals to uint32_t. */
-  TDL_TYPE_BF16,     /**< Equals to bf17. */
+  TDL_TYPE_BF16,     /**< Equals to bf16. */
   TDL_TYPE_FP16,     /**< Equals to fp16. */
   TDL_TYPE_FP32,     /**< Equals to fp32. */
   TDL_TYPE_UNKOWN    /**< Equals to unkown. */

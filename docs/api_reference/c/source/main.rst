@@ -1122,18 +1122,18 @@ TDL_ReadImage
      - path
      - 图片路径
 
-TDL_ReadAudio
+TDL_ReadBin
 ~~~~~~~~~~~~~~~~~~
 
 【语法】
 
 .. code-block:: c
 
-  TDLImage TDL_ReadAudio(const char *path, int frame_size);
+  TDLImage TDL_ReadBin(const char *path, int count, TDLDataTypeE data_type);
 
 【描述】
 
-读取一段音频为 TDLImageHandle 对象。
+读取文件内容为 TDLImageHandle 对象。
 
 【参数】
 
@@ -1149,12 +1149,17 @@ TDL_ReadAudio
    * - 输入
      - const char\*
      - path
-     - 音频路径
+     - bin文件路径
 
    * - 输入
      - int
-     - frame_size
-     - 音频数据大小
+     - count
+     - 文件中数据量
+
+   * - 输入
+     - TDLDataTypeE
+     - data_type
+     - 输入数据类型
 
 TDL_DestroyImage
 ~~~~~~~~~~~~~~~~~~

@@ -96,20 +96,22 @@ TDLImage TDL_ReadImage(const char *path) {
   return (TDLImage)image_context;
 }
 
-TDLImage TDL_ReadAudio(const char *path, int size){
+TDLImage TDL_ReadBin(const char *path, int count, TDLDataTypeE data_type) {
   FILE *file = fopen(path, "rb");
   if (!file) {
       return 0;
   }
-  unsigned char *buffer = (unsigned char *)malloc(size);
-  size_t read_size = fread(buffer, 1, size, file);
-  fclose(file);
+
+  size_t type_size = 0;
+  TDLDataType tdl_data_type;
+  TDL_convertDataTypeToCpp(data_type, &type_size, &tdl_data_type);
 
   TDLImageContext *image_context = new TDLImageContext();
   image_context->image =
-    ImageFactory::createImage(size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
-  uint8_t* data_buffer = image_context->image->getVirtualAddress()[0];
-  memcpy(data_buffer, buffer, size * sizeof(uint8_t));
+      ImageFactory::createImage(count, 1, ImageFormat::GRAY, tdl_data_type, true);
+  void* data_buffer = image_context->image->getVirtualAddress()[0];
+  size_t read_size = fread(data_buffer, 1, count * type_size, file);
+  fclose(file);
   return (TDLImage)image_context;
 }
 
