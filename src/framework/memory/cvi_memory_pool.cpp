@@ -48,38 +48,46 @@ int32_t CviMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
   return -1;
 }
 
-std::unique_ptr<MemoryBlock> CviMemoryPool::create_vb(uint32_t size) {
-  VB_POOL_CONFIG_S cfg;
-  cfg.u32BlkSize = size;
-  cfg.u32BlkCnt = 1;
-  cfg.enRemapMode = VB_REMAP_MODE_NONE;
-  sprintf(cfg.acName, "cvi_vb");
-  uint32_t pool_id = CVI_VB_CreatePool(&cfg);
-  if (pool_id == VB_INVALID_POOLID) {
-    std::cout << "create pool failed" << std::endl;
-    return nullptr;
-  }
-  // std::unique_ptr<MemoryBlock> block = std::make_unique<MemoryBlock>();
-  CVI_S32 ret = CVI_VB_MmapPool(pool_id);
-  if (ret != CVI_SUCCESS) {
-    std::cout << "mmap pool failed" << std::endl;
-    return nullptr;
-  }
+std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_size,
+                                                        uint32_t blk_cnt,
+                                                        uint32_t weight,
+                                                        uint32_t height) {
+  VB_POOL_CONFIG_EX_S stExconfig;
+
   std::unique_ptr<MemoryBlock> block = std::make_unique<MemoryBlock>();
-  VB_BLK blk = CVI_VB_GetBlock(pool_id, size);
-  if (blk == (unsigned long)CVI_INVALID_HANDLE) {
-    printf("Can't acquire VB block for size %d\n", size);
+
+  CVI_S32 ret =
+      CVI_SYS_IonAlloc(reinterpret_cast<CVI_U64 *>(&block->physicalAddress),
+                       &block->virtualAddress, "cvi_exvb", blk_size * blk_cnt);
+  if (ret != CVI_SUCCESS) {
+    std::cout << "CVI_SYS_IonAlloc failed" << std::endl;
     return nullptr;
   }
 
-  block->id = pool_id;
-  block->physicalAddress = CVI_VB_Handle2PhysAddr(blk);
-  ret = CVI_VB_GetBlockVirAddr(pool_id, blk, &block->virtualAddress);
-  if (ret != CVI_SUCCESS) {
-    std::cout << "get block vir addr failed" << std::endl;
-    return nullptr;
+  memset(&stExconfig, 0, sizeof(stExconfig));
+  stExconfig.u32BlkCnt = blk_cnt;
+  for (int32_t i = 0; i < blk_cnt; i++) {
+    stExconfig.astUserBlk[i].au64PhyAddr[0] = block->physicalAddress +
+                                              i * blk_size;
+    stExconfig.astUserBlk[i].au64PhyAddr[1] = block->physicalAddress +
+                                              2 * weight * height +
+                                              i * blk_size;
+    stExconfig.astUserBlk[i].au64PhyAddr[2] = block->physicalAddress +
+                                              2 * weight * height +
+                                              weight * height / 4 +
+                                              i * blk_size;
   }
-  block->size = size;
+
+  VB_POOL pool = CVI_VB_CreateExPool(&stExconfig);
+
+  block->size = blk_size * blk_cnt;
+  block->id = pool;
+  block->own_memory = true;
+
+  LOGI(
+      "allocate memory success,size: %d,physicalAddress: %lx,virtualAddress: "
+      "%p",
+      blk_size * blk_cnt, block->physicalAddress, block->virtualAddress);
   return block;
 }
 
@@ -99,6 +107,15 @@ int32_t CviMemoryPool::flushCache(std::unique_ptr<MemoryBlock> &block) {
   LOGI("flushCache done,ret:%d,phyaddr:%lx,viraddr:%lx,size:%d", ret,
        block->physicalAddress, block->virtualAddress, block->size);
   return (int32_t)ret;
+}
+
+int32_t CviMemoryPool::DestroyExVb(std::unique_ptr<MemoryBlock> &block) {
+  if (block != nullptr && block->own_memory && block->own_memory == true) {
+    CVI_VB_DestroyPool(block->id);
+    CVI_SYS_IonFree(block->physicalAddress, block->virtualAddress);
+    return 0;
+  }
+  block = nullptr;
 }
 
 int32_t CviMemoryPool::invalidateCache(std::unique_ptr<MemoryBlock> &block) {

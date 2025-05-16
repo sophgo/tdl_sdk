@@ -144,6 +144,7 @@ int main(int argc, char *argv[]) {
     }
 
     TDL_ReleaseObjectMeta(&obj_meta);
+    TDL_ReleaseCameraFrame(tdl_handle, vi_chn);
     TDL_DestroyImage(image);
     usleep(40 * 1000);  // Match Vi Frame Rate
   }

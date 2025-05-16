@@ -44,10 +44,20 @@ int32_t TDL_InitCamera(TDLHandle handle);
 /**
  * @brief 获取camera的一帧图像
  *
- * @param chn 获取图像的chn通道
+ * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
+ * @param chn Camera图像的chn通道
  * @return 返回包装的TDLImageHandle对象, 如果失败返回 NULL
  */
 TDLImage TDL_GetCameraFrame(TDLHandle handle, int chn);
+
+/**
+ * @brief 释放图像资源
+ *
+ * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
+ * @param chn Camera图像的chn通道
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_ReleaseCameraFrame(TDLHandle handle, int chn);
 
 /**
  * @brief 销毁Camera

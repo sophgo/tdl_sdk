@@ -1,10 +1,12 @@
 #include "vi_decoder/vi_decoder.hpp"
 #include "framework/image/base_image.hpp"
+#include "framework/memory/cvi_memory_pool.hpp"
 #include "vi_decoder/vi_cfg.hpp"
 
 static pthread_t g_IspPid[VI_MAX_DEV_NUM];
 static SIZE_S stSize[VI_MAX_DEV_NUM] = {0};
 static TDLViCfg stIniCfg;
+static VIDEO_FRAME_INFO_S frame_info[VI_MAX_CHN_NUM];
 
 static void callback_FPS(int fps) {
   static CVI_FLOAT uMaxFPS[VI_MAX_DEV_NUM] = {0};
@@ -23,6 +25,7 @@ static void callback_FPS(int fps) {
     }
     CVI_ISP_SetPubAttr(i, &pubAttr);
   }
+  return;
 }
 
 static void *ISP_Thread(void *arg) {
@@ -95,19 +98,18 @@ static int TDL_Vi_PQBinLoad(void) {
   return CVI_SUCCESS;
 }
 
-static int TDL_Vi_SysInit() {
+static int TDL_Vi_SysInit(std::shared_ptr<BaseMemoryPool>& memory_pool,
+                          std::vector<std::unique_ptr<MemoryBlock>>& memory_blocks) {
   int ret = 0;
+  CVI_U32 u32BlkSize;
+
+  for (int i = 0; i < stIniCfg.devNum; i++) {
+    TDL_Vi_GetSize(stIniCfg.enSnsType[i], &stSize[i]);
+  }
 
   VB_CONFIG_S stVbConf;
   memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
-  stVbConf.u32MaxPoolCnt = stIniCfg.devNum;
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    TDL_Vi_GetSize(stIniCfg.enSnsType[i], &stSize[i]);
-    stVbConf.astCommPool[i].u32BlkSize =
-        stSize[i].u32Height * stSize[i].u32Width * 3 / 2;
-    stVbConf.astCommPool[i].u32BlkCnt = 2;
-    stVbConf.astCommPool[i].enRemapMode = VB_REMAP_MODE_CACHED;
-  }
+  stVbConf.u32MaxPoolCnt = 0;
 
   ret = CVI_VB_SetConfig(&stVbConf);
   if (ret != 0) {
@@ -127,6 +129,22 @@ static int TDL_Vi_SysInit() {
     CVI_VB_Exit();
     return ret;
   }
+
+  memory_pool = BaseMemoryPoolFactory::createMemoryPool();
+  memory_blocks.clear();
+  auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool);
+  if (!pool) {
+    printf("memory_pool is nullptr");
+    return -1;
+  }
+
+  for (int i = 0; i < stIniCfg.devNum; i++) {
+    u32BlkSize = stSize[i].u32Height * stSize[i].u32Width * 3 / 2;
+    memory_blocks.push_back(pool->CreateExVb(u32BlkSize, 3, stSize[i].u32Width, stSize[i].u32Height));
+  }
+
+  return CVI_SUCCESS;
+
 }
 
 static int TDL_Vi_StartSensor() {
@@ -227,20 +245,20 @@ static int TDL_Vi_StartSensor() {
     if (pfnSnsObj->pfnExpSensorCb) {
       ret = pfnSnsObj->pfnExpSensorCb(&isp_sensor_exp_func);
       if (ret != 0) {
-        printf("pfnExpSensorCb(%d) fail with %d", i, ret);
+        printf("pfnExpSensorCb(%d) fail with %d\n", i, ret);
         return ret;
       }
 
       ret = isp_sensor_exp_func.pfn_cmos_set_image_mode(
           i, &isp_cmos_sensor_image_mode);
       if (ret != 0) {
-        printf("pfn_cmos_set_image_mode(%d) fail with %d", i, ret);
+        printf("pfn_cmos_set_image_mode(%d) fail with %d\n", i, ret);
         return ret;
       }
 
       ret = isp_sensor_exp_func.pfn_cmos_set_wdr_mode(i, stIniCfg.enWDRMode[i]);
       if (ret != 0) {
-        printf("pfn_cmos_set_wdr_mode(%d) fail with %d", i, ret);
+        printf("pfn_cmos_set_wdr_mode(%d) fail with %d\n", i, ret);
         return ret;
       }
     }
@@ -276,20 +294,20 @@ static int TDL_Vi_StartDev() {
     stViDevBindAttr.u32Num = 1;
     ret = CVI_VI_SetDevBindAttr(i, &stViDevBindAttr);
     if (ret != CVI_SUCCESS) {
-      printf("CVI_VI_SetDevBindAttr(%d) fail with %d", i, ret);
+      printf("CVI_VI_SetDevBindAttr(%d) fail with %d\n", i, ret);
       return ret;
     }
 #endif
 
     ret = CVI_VI_SetDevAttr(i, &stViDevAttr);
     if (ret != 0) {
-      printf("CVI_VI_SetDevAttr(%d) fail with %d", i, ret);
+      printf("CVI_VI_SetDevAttr(%d) fail with %d\n", i, ret);
       return ret;
     }
 
     ret = CVI_VI_EnableDev(i);
     if (ret != 0) {
-      printf("CVI_VI_EnableDev(%d) fail with %d", i, ret);
+      printf("CVI_VI_EnableDev(%d) fail with %d\n", i, ret);
       return ret;
     }
   }
@@ -461,7 +479,7 @@ static int TDL_Vi_StartIsp() {
   return ret;
 }
 
-static int TDL_Vi_StartChn() {
+static int TDL_Vi_StartChn(std::vector<std::unique_ptr<MemoryBlock>>& memory_blocks) {
   int ret = 0;
   VI_CHN_ATTR_S stViChnAttr;
   ISP_SNS_OBJ_S *pfnSnsObj = NULL;
@@ -491,6 +509,12 @@ static int TDL_Vi_StartChn() {
 
     if (pfnSnsObj && pfnSnsObj->pfnMirrorFlip) {
       CVI_VI_RegChnFlipMirrorCallBack(i, i, (void *)pfnSnsObj->pfnMirrorFlip);
+    }
+
+    ret = CVI_VI_AttachVbPool(i, i, memory_blocks[i]->id);
+    if (ret != 0) {
+      printf("CVI_VI_AttachVbPool(%d) fail with %d", i, ret);
+      return ret;
     }
 
     ret = CVI_VI_EnableChn(i, i);
@@ -557,6 +581,12 @@ static int TDL_Vi_DestroyVi() {
       return ret;
     }
 
+    ret = CVI_VI_DetachVbPool(i, i);
+    if (ret != CVI_SUCCESS) {
+      printf("CVI_VI_DetachVbPool(%d) failed\n", i);
+      return ret;
+    }
+
     ret = CVI_VI_DestroyPipe(i);
     if (ret != CVI_SUCCESS) {
       printf("CVI_VI_DestroyPipe(%d) failed\n", i);
@@ -574,8 +604,19 @@ static int TDL_Vi_DestroyVi() {
   return ret;
 }
 
-static int TDL_Vi_SysExit() {
+static int TDL_Vi_SysExit(std::shared_ptr<BaseMemoryPool>& memory_pool,
+                          std::vector<std::unique_ptr<MemoryBlock>>& memory_blocks) {
   int ret = 0;
+
+  auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool);
+  if (pool) {
+    for (auto& block : memory_blocks) {
+      pool->DestroyExVb(block);
+    }
+  }
+  memory_blocks.clear();
+  memory_pool.reset();
+
   CVI_SYS_Exit();
   CVI_VB_Exit();
   return ret;
@@ -583,6 +624,7 @@ static int TDL_Vi_SysExit() {
 
 int ViDecoder::initialize() {
   int ret = 0;
+
   VB_CONFIG_S stVbConf;
   memset(&stIniCfg, 0, sizeof(TDLViCfg));
   memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
@@ -597,7 +639,7 @@ int ViDecoder::initialize() {
   // Set sensor number
   CVI_VI_SetDevNum(stIniCfg.devNum);
 
-  ret = TDL_Vi_SysInit();
+  ret = TDL_Vi_SysInit(memory_pool_, memory_blocks_);
   if (ret != 0) {
     printf("TDL_Vi_SysInit failed\n");
     return ret;
@@ -639,7 +681,7 @@ int ViDecoder::initialize() {
     return ret;
   }
 
-  ret = TDL_Vi_StartChn();
+  ret = TDL_Vi_StartChn(memory_blocks_);
   if (ret != 0) {
     printf("TDL_Vi_StarChn failed\n");
     return ret;
@@ -654,7 +696,7 @@ int ViDecoder::deinitialize() {
   int ret = 0;
   TDL_Vi_DestroyIsp();
   TDL_Vi_DestroyVi();
-  TDL_Vi_SysExit();
+  TDL_Vi_SysExit(memory_pool_, memory_blocks_);
   isInitialized = false;
   return ret;
 }
@@ -685,20 +727,23 @@ int32_t ViDecoder::init(const std::string &path,
 
 int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int chn) {
   int ret = 0;
-  VIDEO_FRAME_INFO_S frame_info;
-  ret = CVI_VI_GetChnFrame(chn, chn, &frame_info, 3000);
+
+  ret = CVI_VI_GetChnFrame(chn, chn, &frame_info[chn], 3000);
   if (ret != 0) {
     printf("CVI_VI_GetChnFrame(%d) failed with %d\n", chn, ret);
     return ret;
   }
 
-  image = ImageFactory::wrapVPSSFrame(&frame_info, false);
+  image = ImageFactory::wrapVPSSFrame(&frame_info[chn], false);
 
-  ret = CVI_VI_ReleaseChnFrame(chn, chn, &frame_info);
+  return image ? 0 : -1;
+}
+
+int32_t ViDecoder::release(int chn) {
+  int ret = 0;
+  ret = CVI_VI_ReleaseChnFrame(chn, chn, &frame_info[chn]);
   if (ret != 0) {
     printf("CVI_VI_GetChnFrame(%d) failed with %d\n", chn, ret);
-    return ret;
   }
-
-  return 0;
+  return ret;
 }

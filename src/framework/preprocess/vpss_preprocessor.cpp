@@ -23,9 +23,7 @@ VpssContext::VpssContext() {
     CVI_VB_Exit();
     VB_CONFIG_S stVbConf;
     memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
-    stVbConf.u32MaxPoolCnt = 1;
-    stVbConf.astCommPool[0].u32BlkSize = 100 * 100 * 3;
-    stVbConf.astCommPool[0].u32BlkCnt = 1;
+    stVbConf.u32MaxPoolCnt = 0;
 
     s32Ret = CVI_VB_SetConfig(&stVbConf);
     if (s32Ret != CVI_SUCCESS) {

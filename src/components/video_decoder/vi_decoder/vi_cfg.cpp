@@ -560,6 +560,7 @@ int TDL_Vi_ParseIni(TDLViCfg *vi_cfg) {
     printf("Parse %s failed\n", INI_FILE_PATH);
     return CVI_FAILURE;
   }
+  return ret;
 }
 
 int TDL_Vi_GetSize(TDLSnsType enMode, SIZE_S *pstSize) {
