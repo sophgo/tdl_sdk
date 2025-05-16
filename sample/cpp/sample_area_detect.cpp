@@ -1,7 +1,7 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
-#include "area_detect/intrusion_detect.hpp"
+#include "cv/area_detect/intrusion_detect.hpp"
 
 // 打印点集信息的辅助函数
 void printPoints(const PointsInfo& points, const std::string& title) {
