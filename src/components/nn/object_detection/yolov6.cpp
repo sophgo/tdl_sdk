@@ -8,8 +8,12 @@
 #include "utils/tdl_log.hpp"
 
 template <typename T>
-inline void parse_cls_info(T *p_cls_ptr, int num_cls, int anchor_idx,
-                           float qscale, float *p_max_logit, int *p_max_cls) {
+inline void parse_cls_info(T *p_cls_ptr,
+                           int num_cls,
+                           int anchor_idx,
+                           float qscale,
+                           float *p_max_logit,
+                           int *p_max_cls) {
   int max_logit_c = -1;
   float max_logit = -1000;
   for (int c = 0; c < num_cls; c++) {
@@ -26,12 +30,10 @@ inline void parse_cls_info(T *p_cls_ptr, int num_cls, int anchor_idx,
 YoloV6Detection::YoloV6Detection() : YoloV6Detection(std::make_pair(4, 80)) {}
 
 YoloV6Detection::YoloV6Detection(std::pair<int, int> yolov6_pair) {
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = 0.003922;
-    net_param_.pre_params.mean[i] = 0.0;
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = true;
+  net_param_.model_config.mean = {0.0, 0.0, 0.0};
+  net_param_.model_config.std = {1.0 / 0.03922, 1.0 / 0.03922, 1.0 / 0.03922};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = true;
 
   num_box_channel_ = yolov6_pair.first;
   num_cls_ = yolov6_pair.second;
@@ -108,7 +110,8 @@ int YoloV6Detection::onModelOpened() {
   return 0;
 }
 
-void YoloV6Detection::decodeBboxFeatureMap(int batch_idx, int stride,
+void YoloV6Detection::decodeBboxFeatureMap(int batch_idx,
+                                           int stride,
                                            int anchor_idx,
                                            std::vector<float> &decode_box) {
   std::string box_name;
@@ -247,9 +250,7 @@ int32_t YoloV6Detection::outputParse(
     for (auto &bbox : lb_boxes) {
       num_obj += bbox.second.size();
       for (auto &b : bbox.second) {
-        DetectionHelper::rescaleBbox(b, scale_params,
-                                     net_param_.pre_params.crop_x,
-                                     net_param_.pre_params.crop_y);
+        DetectionHelper::rescaleBbox(b, scale_params);
         if (type_mapping_.count(b.class_id)) {
           b.object_type = type_mapping_[b.class_id];
         }

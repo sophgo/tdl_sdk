@@ -1,18 +1,23 @@
 #include "segmentation/yolov8_seg.hpp"
 
-#include "Eigen/Core"
 #include <cstdint>
 #include <memory>
 #include <sstream>
-#include <vector>
 #include <tuple>
+#include <vector>
+#include "Eigen/Core"
 
 #include "utils/detection_helper.hpp"
 #include "utils/tdl_log.hpp"
 template <typename T>
-inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor_idx,
-                           int cls_offset, float qscale,
-                           float *p_max_logit, int *p_max_cls) {
+inline void parse_cls_info(T *p_cls_ptr,
+                           int num_anchor,
+                           int num_cls,
+                           int anchor_idx,
+                           int cls_offset,
+                           float qscale,
+                           float *p_max_logit,
+                           int *p_max_cls) {
   int max_logit_c = -1;
   float max_logit = -1000;
   for (int c = 0; c < num_cls; c++) {
@@ -26,8 +31,10 @@ inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls, int anchor
   *p_max_cls = max_logit_c;
 }
 template <typename T>
-inline std::vector<float> get_box_vals(T *p_box_ptr, int num_anchor,
-                                       int anchor_idx, int num_box_channel,
+inline std::vector<float> get_box_vals(T *p_box_ptr,
+                                       int num_anchor,
+                                       int anchor_idx,
+                                       int num_box_channel,
                                        float qscale) {
   std::vector<float> box_vals;
   for (int c = 0; c < num_box_channel; c++) {
@@ -36,30 +43,33 @@ inline std::vector<float> get_box_vals(T *p_box_ptr, int num_anchor,
   return box_vals;
 }
 
-YoloV8Segmentation::YoloV8Segmentation() : YoloV8Segmentation(std::make_tuple(64, 32, 80)) {}
+YoloV8Segmentation::YoloV8Segmentation()
+    : YoloV8Segmentation(std::make_tuple(64, 32, 80)) {}
 
 YoloV8Segmentation::YoloV8Segmentation(std::tuple<int, int, int> yolov8_tuple) {
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = 0.003922;
-    net_param_.pre_params.mean[i] = 0.0;
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = true;
+  net_param_.model_config.mean = {0.0, 0.0, 0.0};
+  net_param_.model_config.std = {1.0 / 0.03922, 1.0 / 0.03922, 1.0 / 0.03922};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = true;
 
   num_box_channel_ = std::get<0>(yolov8_tuple);
   num_mask_channel_ = std::get<1>(yolov8_tuple);
   num_cls_ = std::get<2>(yolov8_tuple);
   if (num_box_channel_ == num_cls_) {
-      LOGE("Error: num_box_channel_ (%d) is equal to num_cls_ (%d)", num_box_channel_, num_cls_);
-      throw std::runtime_error("Number of box channels cannot be equal to the number of classes.");
+    LOGE("Error: num_box_channel_ (%d) is equal to num_cls_ (%d)",
+         num_box_channel_, num_cls_);
+    throw std::runtime_error(
+        "Number of box channels cannot be equal to the number of classes.");
   }
 
   if (num_mask_channel_ == num_cls_) {
-      LOGE("Error: num_mask_channel_ (%d) is equal to num_cls_ (%d)", num_mask_channel_, num_cls_);
-      throw std::runtime_error("Number of mask channels cannot be equal to the number of classes.");
+    LOGE("Error: num_mask_channel_ (%d) is equal to num_cls_ (%d)",
+         num_mask_channel_, num_cls_);
+    throw std::runtime_error(
+        "Number of mask channels cannot be equal to the number of classes.");
   }
 }
-YoloV8Segmentation::~YoloV8Segmentation(){}
+YoloV8Segmentation::~YoloV8Segmentation() {}
 // identity output branches
 int YoloV8Segmentation::onModelOpened() {
   const auto &input_layer = net_->getInputNames()[0];
@@ -78,42 +88,49 @@ int YoloV8Segmentation::onModelOpened() {
     int stride_w = input_w / feat_w;
     if (stride_h == 0 && num_output == 2) {
       if (channel == num_cls_) {
-        class_out_names[stride_h] =output_layers[j];
+        class_out_names[stride_h] = output_layers[j];
         strides.push_back(stride_h);
-        LOGI("parse class decode branch:%s,channel:%d\n",output_layers[j].c_str(), channel);
+        LOGI("parse class decode branch:%s,channel:%d\n",
+             output_layers[j].c_str(), channel);
       } else {
-        bbox_out_names[stride_h] =output_layers[j];
-        LOGI("parse box decode branch:%s,channel:%d\n",output_layers[j].c_str(), channel);
+        bbox_out_names[stride_h] = output_layers[j];
+        LOGI("parse box decode branch:%s,channel:%d\n",
+             output_layers[j].c_str(), channel);
       }
       continue;
     }
 
     if (stride_h != stride_w) {
-      LOGE("stride not equal,stridew:%d,strideh:%d,featw:%d,feath:%d\n", stride_w, stride_h, feat_w,
-           feat_h);
+      LOGE("stride not equal,stridew:%d,strideh:%d,featw:%d,feath:%d\n",
+           stride_w, stride_h, feat_w, feat_h);
       return -1;
     }
     if (channel == num_box_channel_) {
-      bbox_out_names[stride_h] =output_layers[j];
+      bbox_out_names[stride_h] = output_layers[j];
       strides.push_back(stride_h);
-      LOGI("parse box branch,name:%s,stride:%d\n",output_layers[j].c_str(), stride_h);
+      LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+           stride_h);
     } else if (num_cls_ == 0 && num_output == 6) {
       num_cls_ = channel;
-      class_out_names[stride_h] =output_layers[j];
-      LOGI("parse class branch,name:%s,stride:%d,num_cls:%d\n",output_layers[j].c_str(), stride_h,
-           channel);
+      class_out_names[stride_h] = output_layers[j];
+      LOGI("parse class branch,name:%s,stride:%d,num_cls:%d\n",
+           output_layers[j].c_str(), stride_h, channel);
     } else if (channel == num_cls_) {
-      class_out_names[stride_h] =output_layers[j];
-      LOGI("parse class branch,name:%s,stride:%d\n",output_layers[j].c_str(), stride_h);
+      class_out_names[stride_h] = output_layers[j];
+      LOGI("parse class branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+           stride_h);
     } else if (channel == num_mask_channel_) {
-      mask_out_names[stride_h] =output_layers[j];
-      LOGI("parse mask branch,name:%s,stride:%d\n",output_layers[j].c_str(), stride_h);
+      mask_out_names[stride_h] = output_layers[j];
+      LOGI("parse mask branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+           stride_h);
     } else if (channel == (num_box_channel_ + num_cls_)) {
       strides.push_back(stride_h);
       bbox_class_out_names[stride_h] = output_layers[j];
-      LOGI("parse box+class branch,name: %s,stride:%d\n",output_layers[j].c_str(), stride_h);
+      LOGI("parse box+class branch,name: %s,stride:%d\n",
+           output_layers[j].c_str(), stride_h);
     } else {
-      LOGE("unexpected branch:%s,channel:%d\n",output_layers[j].c_str(), channel);
+      LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(),
+           channel);
       return -1;
     }
   }
@@ -134,9 +151,10 @@ int YoloV8Segmentation::onModelOpened() {
 }
 
 // the bbox featuremap shape is b x 4*regmax x h   x w
-void YoloV8Segmentation::decodeBboxFeatureMap(int batch_idx, int stride,
-                                           int anchor_idx,
-                                           std::vector<float> &decode_box) {
+void YoloV8Segmentation::decodeBboxFeatureMap(int batch_idx,
+                                              int stride,
+                                              int anchor_idx,
+                                              std::vector<float> &decode_box) {
   std::string box_name;
   if (bbox_out_names.count(stride)) {
     box_name = bbox_out_names[stride];
@@ -289,8 +307,9 @@ int32_t YoloV8Segmentation::outputParse(
         boxes_temp_info[max_logit_c].push_back(std::make_pair(stride, j));
       }
     }
-    for (auto &bboxs : lb_boxes){
-        DetectionHelper::nmsObjects(bboxs.second, nms_threshold_, boxes_temp_info[bboxs.first]);
+    for (auto &bboxs : lb_boxes) {
+      DetectionHelper::nmsObjects(bboxs.second, nms_threshold_,
+                                  boxes_temp_info[bboxs.first]);
     }
 
     std::vector<float> scale_params = batch_rescale_params_[b];
@@ -303,7 +322,8 @@ int32_t YoloV8Segmentation::outputParse(
       num_obj += bbox.second.size();
     }
 
-    std::shared_ptr<ModelBoxSegmentationInfo> obj_seg = std::make_shared<ModelBoxSegmentationInfo>();
+    std::shared_ptr<ModelBoxSegmentationInfo> obj_seg =
+        std::make_shared<ModelBoxSegmentationInfo>();
     obj_seg->image_width = image_width;
     obj_seg->image_height = image_height;
 
@@ -311,28 +331,36 @@ int32_t YoloV8Segmentation::outputParse(
     int row = 0;
     for (auto &bboxs : lb_boxes) {
       for (size_t i = 0; i < bboxs.second.size(); i++) {
-
         auto &bbox_info = bboxs.second[i];
         obj_seg->box_seg.push_back(bboxs.second[i]);
         std::string mask_name;
         mask_name = mask_out_names[boxes_temp_info[bboxs.first][i].first];
         TensorInfo maskinfo = net_->getTensorInfo(mask_name);
-        std::shared_ptr<BaseTensor> mask_tensor = net_->getOutputTensor(mask_name);
+        std::shared_ptr<BaseTensor> mask_tensor =
+            net_->getOutputTensor(mask_name);
         int num_map = maskinfo.shape[2] * maskinfo.shape[3];
         if (maskinfo.data_type == TDLDataType::INT8) {
           int8_t *p_mask_int8 = mask_tensor->getBatchPtr<int8_t>(b);
           for (int c = 0; c < num_mask_channel_; c++) {
-            mask_map(row, c) = p_mask_int8[c * num_map + boxes_temp_info[bboxs.first][i].second] * maskinfo.qscale;
+            mask_map(row, c) =
+                p_mask_int8[c * num_map +
+                            boxes_temp_info[bboxs.first][i].second] *
+                maskinfo.qscale;
           }
         } else if (maskinfo.data_type == TDLDataType::UINT8) {
           uint8_t *p_mask_uint8 = mask_tensor->getBatchPtr<uint8_t>(b);
           for (int c = 0; c < num_mask_channel_; c++) {
-            mask_map(row, c) = p_mask_uint8[c * num_map + boxes_temp_info[bboxs.first][i].second] * maskinfo.qscale;
+            mask_map(row, c) =
+                p_mask_uint8[c * num_map +
+                             boxes_temp_info[bboxs.first][i].second] *
+                maskinfo.qscale;
           }
         } else if (maskinfo.data_type == TDLDataType::FP32) {
           float *p_mask_float = mask_tensor->getBatchPtr<float>(b);
           for (int c = 0; c < num_mask_channel_; c++) {
-            mask_map(row, c) = p_mask_float[c * num_map + boxes_temp_info[bboxs.first][i].second];
+            mask_map(row, c) =
+                p_mask_float[c * num_map +
+                             boxes_temp_info[bboxs.first][i].second];
           }
         } else {
           LOGE("unsupported data type:%d\n", maskinfo.data_type);
@@ -347,7 +375,8 @@ int32_t YoloV8Segmentation::outputParse(
     int proto_stride = firstElement->first;
     std::string proto_output_name = firstElement->second;
     TensorInfo protoinfo = net_->getTensorInfo(proto_output_name);
-    std::shared_ptr<BaseTensor> proto_tensor = net_->getOutputTensor(proto_output_name);
+    std::shared_ptr<BaseTensor> proto_tensor =
+        net_->getOutputTensor(proto_output_name);
     int proto_c = protoinfo.shape[1];
     int proto_h = protoinfo.shape[2];
     int proto_w = protoinfo.shape[3];
@@ -355,29 +384,31 @@ int32_t YoloV8Segmentation::outputParse(
 
     Eigen::MatrixXf proto_output(proto_c, proto_hw);  // (32,96*160)
     if (protoinfo.data_type == TDLDataType::INT8) {
-        int8_t *p_proto_int8 = proto_tensor->getBatchPtr<int8_t>(b);
-        for (int i = 0; i < proto_c; i++) {
-          for (int j = 0; j < proto_hw; j++) {
-            proto_output(i, j) = p_proto_int8[i * proto_hw + j] * protoinfo.qscale;
-          }
+      int8_t *p_proto_int8 = proto_tensor->getBatchPtr<int8_t>(b);
+      for (int i = 0; i < proto_c; i++) {
+        for (int j = 0; j < proto_hw; j++) {
+          proto_output(i, j) =
+              p_proto_int8[i * proto_hw + j] * protoinfo.qscale;
         }
+      }
     } else if (protoinfo.data_type == TDLDataType::UINT8) {
-        uint8_t *p_proto_uint8 = proto_tensor->getBatchPtr<uint8_t>(b);
-        for (int i = 0; i < proto_c; i++) {
-          for (int j = 0; j < proto_hw; j++) {
-            proto_output(i, j) = p_proto_uint8[i * proto_hw + j] * protoinfo.qscale;
-          }
+      uint8_t *p_proto_uint8 = proto_tensor->getBatchPtr<uint8_t>(b);
+      for (int i = 0; i < proto_c; i++) {
+        for (int j = 0; j < proto_hw; j++) {
+          proto_output(i, j) =
+              p_proto_uint8[i * proto_hw + j] * protoinfo.qscale;
         }
+      }
     } else if (protoinfo.data_type == TDLDataType::FP32) {
-        float *p_proto_float = proto_tensor->getBatchPtr<float>(b);
-        for (int i = 0; i < proto_c; i++) {
-          for (int j = 0; j < proto_hw; j++) {
-            proto_output(i, j) = p_proto_float[i * proto_hw + j];
-          }
+      float *p_proto_float = proto_tensor->getBatchPtr<float>(b);
+      for (int i = 0; i < proto_c; i++) {
+        for (int j = 0; j < proto_hw; j++) {
+          proto_output(i, j) = p_proto_float[i * proto_hw + j];
         }
+      }
     } else {
-        LOGE("unsupported data type:%d\n", protoinfo.data_type);
-        assert(0);
+      LOGE("unsupported data type:%d\n", protoinfo.data_type);
+      assert(0);
     }
     Eigen::MatrixXf masks_output = mask_map * proto_output;
 
@@ -389,11 +420,11 @@ int32_t YoloV8Segmentation::outputParse(
       int y1 = static_cast<int>(round(obj_seg->box_seg[i].y1 / proto_stride));
       int y2 = static_cast<int>(round(obj_seg->box_seg[i].y2 / proto_stride));
       if (obj_seg->box_seg[i].mask != nullptr) {
-          free(obj_seg->box_seg[i].mask); 
+        free(obj_seg->box_seg[i].mask);
       }
-      obj_seg->box_seg[i].mask = (uint8_t*)malloc(proto_hw * sizeof(uint8_t)); 
+      obj_seg->box_seg[i].mask = (uint8_t *)malloc(proto_hw * sizeof(uint8_t));
       if (obj_seg->box_seg[i].mask == nullptr) {
-          LOGE("Failed to allocate memory for mask_property\n");
+        LOGE("Failed to allocate memory for mask_property\n");
       }
       memset(obj_seg->box_seg[i].mask, 0, proto_hw * sizeof(uint8_t));
       for (int j = y1; j < y2; ++j) {
@@ -405,11 +436,11 @@ int32_t YoloV8Segmentation::outputParse(
           }
         }
       }
-      DetectionHelper::rescaleBbox(obj_seg->box_seg[i], scale_params,
-                                     net_param_.pre_params.crop_x,
-                                     net_param_.pre_params.crop_y);
-      ss << "bbox:[" << obj_seg->box_seg[i].x1 << "," << obj_seg->box_seg[i].y1 << "," <<obj_seg->box_seg[i].x2 << "," << obj_seg->box_seg[i].y2
-           << "],score:" << obj_seg->box_seg[i].score << ",label:" << obj_seg->box_seg[i].class_id << "\n";
+      DetectionHelper::rescaleBbox(obj_seg->box_seg[i], scale_params);
+      ss << "bbox:[" << obj_seg->box_seg[i].x1 << "," << obj_seg->box_seg[i].y1
+         << "," << obj_seg->box_seg[i].x2 << "," << obj_seg->box_seg[i].y2
+         << "],score:" << obj_seg->box_seg[i].score
+         << ",label:" << obj_seg->box_seg[i].class_id << "\n";
     }
     out_datas.push_back(obj_seg);
   }

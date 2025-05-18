@@ -2,21 +2,24 @@
 #define FALL_DETECTION_APP_HPP
 
 #include "app/app_task.hpp"
-#include "components/video_decoder/video_decoder_type.hpp"
-#include "nn/tdl_model_factory.hpp"
 #include "components/tracker/tracker_types.hpp"
+#include "components/video_decoder/video_decoder_type.hpp"
 #include "fall_detection.hpp"
+#include "nn/tdl_model_factory.hpp"
 
 class FallDetectionApp : public AppTask {
  public:
-  FallDetectionApp(const std::string &task_name, const std::string &json_config);
+  FallDetectionApp(const std::string &task_name,
+                   const std::string &json_config);
   ~FallDetectionApp() {}
 
   int32_t addPipeline(const std::string &pipeline_name,
                       int32_t frame_buffer_size,
                       const nlohmann::json &nodes_cfg);
   int32_t getResult(const std::string &pipeline_name, Packet &result) override;
-  int32_t detect(std::vector<ObjectBoxLandmarkInfo> &person_infos, std::vector<TrackerInfo> &track_results, std::map<uint64_t, int> &det_results);
+  int32_t detect(std::vector<ObjectBoxLandmarkInfo> &person_infos,
+                 std::vector<TrackerInfo> &track_results,
+                 std::map<uint64_t, int> &det_results);
   int32_t set_fps(float fps);
   int32_t init() override;
   int32_t release() override;
@@ -31,11 +34,9 @@ class FallDetectionApp : public AppTask {
 
   std::map<std::string, std::shared_ptr<BaseModel>> model_map_;
 
-  TDLModelFactory model_factory_;
   NodeFactory node_factory_;
   std::vector<FallDet> muti_person;
   float FPS = 21.0;
-
 };
 
 #endif

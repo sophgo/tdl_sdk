@@ -19,7 +19,9 @@ class BaseModel {
   BaseModel();
   virtual ~BaseModel() = default;
   int32_t modelOpen(const std::string& model_path);
-  int32_t setupNetwork(NetParam& net_param);
+
+  NetParam& getNetParam() { return net_param_; }
+  void setNetParam(const NetParam& net_param) { net_param_ = net_param; }
 
   int getDeviceId() const;
   virtual int32_t inference(
@@ -46,25 +48,23 @@ class BaseModel {
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>>& images,
       std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) = 0;
+
   int32_t setPreprocessor(std::shared_ptr<BasePreprocessor> preprocessor);
   std::shared_ptr<BasePreprocessor> getPreprocessor() { return preprocessor_; }
+
   virtual int32_t onModelOpened() { return 0; }
   virtual int32_t onModelClosed() { return 0; }
+
   void setTypeMapping(const std::map<int, TDLObjectType>& type_mapping);
   virtual void setModelThreshold(float threshold);
   virtual float getModelThreshold() const { return model_threshold_; }
 
-  virtual int32_t setParameters(
-      const std::map<std::string, float>& parameters) {
-    return 0;
-  }
-  virtual int32_t getParameters(std::map<std::string, float>& parameters) {
-    return 0;
-  }
+  int32_t getPreprocessParameters(PreprocessParams& pre_param,
+                                  const std::string& input_name = "");
 
-  int32_t getPreprocessParameters(PreprocessParams& pre_param);
-
-  int32_t setPreprocessParameters(PreprocessParams& pre_param);
+  int32_t setPreprocessParameters(const PreprocessParams& pre_param,
+                                  const std::string& input_name = "");
+  virtual int32_t setupNetwork(NetParam& net_param);
 
  private:
   int getFitBatchSize(int left_size) const;
@@ -73,6 +73,8 @@ class BaseModel {
  protected:
   // Network and parameters
   NetParam net_param_;
+  bool keep_aspect_ratio_ = false;
+
   std::shared_ptr<BaseNet> net_;
   std::shared_ptr<BasePreprocessor> preprocessor_;
   std::map<std::string, PreprocessParams> preprocess_params_;

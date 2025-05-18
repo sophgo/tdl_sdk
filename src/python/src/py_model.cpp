@@ -3,11 +3,11 @@
 #include "py_image.hpp"
 #include "py_utils.hpp"
 namespace pytdl {
-TDLModelFactory g_model_factory_;
 
 PyModel::PyModel(ModelType model_type, const std::string& model_path,
                  const int device_id) {
-  model_ = g_model_factory_.getModel(model_type, model_path, {}, device_id);
+  model_ = TDLModelFactory::getInstance().getModel(model_type, model_path, {},
+                                                   device_id);
   if (model_ == nullptr) {
     throw std::runtime_error("Failed to create model");
   }
@@ -489,20 +489,22 @@ py::array_t<float> PyFeatureExtractor::inference(const PyImage& image,
   ssize_t size = static_cast<ssize_t>(feature_output->embedding_num);
   switch (feature_output->embedding_type) {
     case TDLDataType::INT8: {
-        int8_t* feature_ptr = reinterpret_cast<int8_t*>(feature_output->embedding);
-        return py::array_t<int8_t>({size}, {sizeof(int8_t)}, feature_ptr);
+      int8_t* feature_ptr =
+          reinterpret_cast<int8_t*>(feature_output->embedding);
+      return py::array_t<int8_t>({size}, {sizeof(int8_t)}, feature_ptr);
     }
     case TDLDataType::UINT8: {
-        uint8_t* feature_ptr = reinterpret_cast<uint8_t*>(feature_output->embedding);
-        return py::array_t<uint8_t>({size}, {sizeof(uint8_t)}, feature_ptr);
+      uint8_t* feature_ptr =
+          reinterpret_cast<uint8_t*>(feature_output->embedding);
+      return py::array_t<uint8_t>({size}, {sizeof(uint8_t)}, feature_ptr);
     }
     case TDLDataType::FP32: {
-        float* feature_ptr = reinterpret_cast<float*>(feature_output->embedding);
-        return py::array_t<float>({size}, {sizeof(float)}, feature_ptr);
+      float* feature_ptr = reinterpret_cast<float*>(feature_output->embedding);
+      return py::array_t<float>({size}, {sizeof(float)}, feature_ptr);
     }
     default:
-        assert(false && "Unsupported embedding_type");
-        return py::array_t<float>();  
+      assert(false && "Unsupported embedding_type");
+      return py::array_t<float>();
   }
 }
 py::array_t<float> PyFeatureExtractor::inference(
@@ -612,24 +614,26 @@ void PyTracker::setImgSize(int width, int height) {
 }
 
 py::dict PyModel::getPreprocessParameters() {
-    PreprocessParams pre_params;
-    model_->getPreprocessParameters(pre_params);
-    py::dict params;
-    params["mean"] = py::make_tuple(pre_params.mean[0], pre_params.mean[1], pre_params.mean[2]);
-    params["scale"] = py::make_tuple(pre_params.scale[0], pre_params.scale[1], pre_params.scale[2]);
-    return params;
+  PreprocessParams pre_params;
+  model_->getPreprocessParameters(pre_params);
+  py::dict params;
+  params["mean"] = py::make_tuple(pre_params.mean[0], pre_params.mean[1],
+                                  pre_params.mean[2]);
+  params["scale"] = py::make_tuple(pre_params.scale[0], pre_params.scale[1],
+                                   pre_params.scale[2]);
+  return params;
 }
 
 void PyModel::setPreprocessParameters(const py::dict& params) {
-    PreprocessParams pre_params;
-    auto mean = params["mean"].cast<py::tuple>();
-    auto scale = params["scale"].cast<py::tuple>();
-    pre_params.mean[0] = mean[0].cast<float>();
-    pre_params.mean[1] = mean[1].cast<float>();
-    pre_params.mean[2] = mean[2].cast<float>();
-    pre_params.scale[0] = scale[0].cast<float>();
-    pre_params.scale[1] = scale[1].cast<float>();
-    pre_params.scale[2] = scale[2].cast<float>();
-    model_->setPreprocessParameters(pre_params);
+  PreprocessParams pre_params;
+  auto mean = params["mean"].cast<py::tuple>();
+  auto scale = params["scale"].cast<py::tuple>();
+  pre_params.mean[0] = mean[0].cast<float>();
+  pre_params.mean[1] = mean[1].cast<float>();
+  pre_params.mean[2] = mean[2].cast<float>();
+  pre_params.scale[0] = scale[0].cast<float>();
+  pre_params.scale[1] = scale[1].cast<float>();
+  pre_params.scale[2] = scale[2].cast<float>();
+  model_->setPreprocessParameters(pre_params);
 }
 }  // namespace pytdl

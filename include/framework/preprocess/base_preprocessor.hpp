@@ -31,12 +31,17 @@ class BasePreprocessor {
   virtual int32_t preprocessToImage(const std::shared_ptr<BaseImage>& src_image,
                                     const PreprocessParams& params,
                                     std::shared_ptr<BaseImage> dst_image) = 0;
-  //[scalex,scaley,offsetx,offsety]
-  // dst_img[offsetx:offsetx+dst_w,offsety:offsety+dst_h] =
-  // resize(src_img,(src_w*scalex,src_h*scaley))
-  // use to restore the bbox after resize
-  // use as : new_x = (x - offsetx) / scalex
-  //          new_y = (y - offsety) / scaley
+
+  /*
+   * @brief get the rescale config[scalex,scaley,offsetx,offsety],use to restore
+   * coordinates to original image after crop and resize
+   * @note: restore_x = infer_x × scalex + offsetx
+   *        restore_y = infer_y × scaley + offsety
+   * @param params: the preprocess params
+   * @param image_width: the width of the src image
+   * @param image_height: the height of the src image
+   * @return the rescale config
+   */
   virtual std::vector<float> getRescaleConfig(const PreprocessParams& params,
                                               const int image_width,
                                               const int image_height) const;

@@ -3,10 +3,10 @@
 
 int main(int argc, char **argv) {
   if (argc != 3) {
-    printf("Usage: %s <model_path> <image_path> \n", argv[0]);
+    printf("Usage: %s <model_dir> <image_path> \n", argv[0]);
     return -1;
   }
-  std::string model_path = argv[1];
+  std::string model_dir = argv[1];
   std::string image_path = argv[2];
 
   std::shared_ptr<BaseImage> image1 = ImageFactory::readImage(image_path);
@@ -15,10 +15,11 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  TDLModelFactory model_factory;
-
-  std::shared_ptr<BaseModel> model_seg = model_factory.getModel(
-      ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE, model_path);
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
+  std::shared_ptr<BaseModel> model_seg =
+      model_factory.getModel(ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE);
   if (!model_seg) {
     printf("Failed to create model_seg\n");
     return -1;

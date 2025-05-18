@@ -1,10 +1,9 @@
 
 #include "tdl_model_factory.hpp"
 
-void visualize_lane_detection(
-    std::shared_ptr<BaseImage> image,
-    std::shared_ptr<ModelBoxLandmarkInfo> obj_meta,
-    const std::string &save_path) {
+void visualize_lane_detection(std::shared_ptr<BaseImage> image,
+                              std::shared_ptr<ModelBoxLandmarkInfo> obj_meta,
+                              const std::string &save_path) {
   cv::Mat mat;
   bool is_rgb;
   int32_t ret = ImageFactory::convertToMat(image, mat, is_rgb);
@@ -24,19 +23,19 @@ void visualize_lane_detection(
     int x1 = (int)obj_meta->box_landmarks[i].landmarks_x[1];
     int y1 = (int)obj_meta->box_landmarks[i].landmarks_y[1];
 
-    cv::line(mat, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 255, 0), 3);
+    cv::line(mat, cv::Point(x0, y0), cv::Point(x1, y1), cv::Scalar(0, 255, 0),
+             3);
   }
 
   cv::imwrite(save_path, mat);
-
 }
 
 int main(int argc, char **argv) {
   if (argc != 3) {
-    printf("Usage: %s <model_path> <image_path> \n", argv[0]);
+    printf("Usage: %s <model_dir> <image_path> \n", argv[0]);
     return -1;
   }
-  std::string model_path = argv[1];
+  std::string model_dir = argv[1];
   std::string image_path = argv[2];
 
   std::shared_ptr<BaseImage> image1 = ImageFactory::readImage(image_path);
@@ -45,10 +44,11 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  TDLModelFactory model_factory;
-
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
   std::shared_ptr<BaseModel> model_od =
-      model_factory.getModel(ModelType::LSTR_DET_LANE, model_path);
+      model_factory.getModel(ModelType::LSTR_DET_LANE);
   if (!model_od) {
     printf("Failed to create model_od\n");
     return -1;
@@ -63,21 +63,20 @@ int main(int argc, char **argv) {
 
     uint32_t image_width = input_images[i]->getWidth();
     uint32_t image_height = input_images[i]->getHeight();
-  
+
     if (obj_meta->box_landmarks.size() == 0) {
       printf("No object detected\n");
     } else {
       for (size_t j = 0; j < obj_meta->box_landmarks.size(); j++) {
-        printf("lane %d\n",j);
+        printf("lane %d\n", j);
         for (int k = 0; k < 2; k++) {
           printf("%d: %f %f\n", k, obj_meta->box_landmarks[j].landmarks_x[k],
                  obj_meta->box_landmarks[j].landmarks_y[k]);
         }
       }
     }
-    visualize_lane_detection(image1, obj_meta,"lstr_lane_detection.jpg");
+    visualize_lane_detection(image1, obj_meta, "lstr_lane_detection.jpg");
   }
 
   return 0;
 }
-

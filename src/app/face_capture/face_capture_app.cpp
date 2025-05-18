@@ -24,8 +24,8 @@ int32_t FaceCaptureApp::init() {
   std::string model_dir = json_config_.at("model_dir").get<std::string>();
   int32_t frame_buffer_size =
       json_config_.at("frame_buffer_size").get<int32_t>();
-
-  model_factory_.setModelDir(model_dir);
+  TDLModelFactory::getInstance().loadModelConfig();
+  TDLModelFactory::getInstance().setModelDir(model_dir);
   for (const auto &pl : json_config_.at("pipelines")) {
     // a) 名称
     std::string pipeline_name = pl.at("name").get<std::string>();
@@ -167,7 +167,8 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getFaceDetectionNode(
   if (model_map_.count("face_detection")) {
     face_detection_model = model_map_["face_detection"];
   } else {
-    face_detection_model = model_factory_.getModel(ModelType::SCRFD_DET_FACE);
+    face_detection_model =
+        TDLModelFactory::getInstance().getModel(ModelType::SCRFD_DET_FACE);
     model_map_["face_detection"] = face_detection_model;
   }
   std::shared_ptr<PipelineNode> face_detection_node =
@@ -210,8 +211,8 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getPersonDetectionNode(
   if (model_map_.count("person_detection")) {
     person_detection_model = model_map_["person_detection"];
   } else {
-    person_detection_model =
-        model_factory_.getModel(ModelType::MBV2_DET_PERSON);
+    person_detection_model = TDLModelFactory::getInstance().getModel(
+        ModelType::MBV2_DET_PERSON_256_448);
     model_map_["person_detection"] = person_detection_model;
   }
   std::shared_ptr<PipelineNode> person_detection_node =

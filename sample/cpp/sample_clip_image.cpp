@@ -16,7 +16,8 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  TDLModelFactory model_factory(model_dir);
+  TDLModelFactory& model_factory = TDLModelFactory::getInstance();
+  model_factory.setModelDir(model_dir);
 
   std::shared_ptr<BaseModel> model_clip_image =
       model_factory.getModel(ModelType::CLIP_FEATURE_IMG, argv[1]);

@@ -15,7 +15,7 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
     TDLDataType pixDataType, bool alloc_memory, InferencePlatform platform) {
   if (platform == InferencePlatform::UNKOWN ||
       platform == InferencePlatform::AUTOMATIC) {
-    platform = get_platform();
+    platform = CommonUtils::getPlatform();
   }
   LOGI(
       "createImage,width:%d,height:%d,imageFormat:%d,pixDataType:%d,alloc_"
@@ -68,7 +68,7 @@ std::shared_ptr<BaseImage> ImageFactory::readImage(const std::string& file_path,
                                                    InferencePlatform platform) {
   if (platform == InferencePlatform::UNKOWN ||
       platform == InferencePlatform::AUTOMATIC) {
-    platform = get_platform();
+    platform = CommonUtils::getPlatform();
   }
   cv::Mat img = cv::imread(file_path);
   ImageFormat image_format = ImageFormat::BGR_PACKED;
@@ -302,11 +302,11 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
        dst_img_height, aligned_image->getStrides()[0],
        aligned_image->getVirtualAddress()[0]);
 
-  tdl_license_plate_warp_affine(image->getVirtualAddress()[0], image->getStrides()[0],
-                       image->getWidth(), image->getHeight(),
-                       aligned_image->getVirtualAddress()[0],
-                       aligned_image->getStrides()[0], dst_img_width,
-                       dst_img_height, src_landmark_xy);
+  tdl_license_plate_warp_affine(
+      image->getVirtualAddress()[0], image->getStrides()[0], image->getWidth(),
+      image->getHeight(), aligned_image->getVirtualAddress()[0],
+      aligned_image->getStrides()[0], dst_img_width, dst_img_height,
+      src_landmark_xy);
   return aligned_image;
 }
 

@@ -90,10 +90,15 @@ int32_t OpenCVPreprocessor::preprocessToImage(
 
   std::vector<float> rescale_params =
       getRescaleConfig(params, src_image->getWidth(), src_image->getHeight());
-  int pad_x = rescale_params[2];
-  int pad_y = rescale_params[3];
+
+  int pad_x = (params.crop_x - rescale_params[2]) / rescale_params[0];
+  int pad_y = (params.crop_y - rescale_params[3]) / rescale_params[1];
+
   int resized_w = params.dst_width - pad_x * 2;
   int resized_h = params.dst_height - pad_y * 2;
+  LOGI("resized_w:%d,resized_h:%d,pad_x:%d,pad_y:%d,src_w:%d,src_h:%d",
+       resized_w, resized_h, pad_x, pad_y, src_image->getWidth(),
+       src_image->getHeight());
   if (src_image->getPlaneNum() == 1 && dst_image->getPlaneNum() == 3) {
     // create temp resized image
     // TODO:use memory pool

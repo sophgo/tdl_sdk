@@ -3,13 +3,8 @@
 #include "utils/detection_helper.hpp"
 #include "utils/tdl_log.hpp"
 
-
 FeatureExtraction::FeatureExtraction() {
-  net_param_.pre_params.scale[0] = 1.0;
-  net_param_.pre_params.scale[1] = 1.0;
-  net_param_.pre_params.scale[2] = 1.0;
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = false;
+  // should be set by
 }
 
 FeatureExtraction::~FeatureExtraction() {}
@@ -19,6 +14,12 @@ int FeatureExtraction::onModelOpened() { return 0; }
 int32_t FeatureExtraction::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
+  if (net_param_.model_config.std.size() == 0 ||
+      net_param_.model_config.std[0] == 0) {
+    LOGE("model_config is not set");
+    assert(false);
+    return -1;
+  }
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
   uint32_t input_width = input_tensor.shape[3];
@@ -44,16 +45,22 @@ int32_t FeatureExtraction::outputParse(
     feature_meta->embedding_type = output_info.data_type;
 
     if (output_info.data_type == TDLDataType::FP32) {
-      feature_meta->embedding = (uint8_t *)malloc(batch_elem_num * sizeof(float));
-      memcpy(feature_meta->embedding, output_tensor->getBatchPtr<float>(b), batch_elem_num * sizeof(float));
+      feature_meta->embedding =
+          (uint8_t *)malloc(batch_elem_num * sizeof(float));
+      memcpy(feature_meta->embedding, output_tensor->getBatchPtr<float>(b),
+             batch_elem_num * sizeof(float));
 
-    } else if  (output_info.data_type == TDLDataType::INT8) {
-      feature_meta->embedding = (uint8_t *)malloc(batch_elem_num * sizeof(int8_t));
-      memcpy(feature_meta->embedding, output_tensor->getBatchPtr<int8_t>(b), batch_elem_num * sizeof(int8_t));
+    } else if (output_info.data_type == TDLDataType::INT8) {
+      feature_meta->embedding =
+          (uint8_t *)malloc(batch_elem_num * sizeof(int8_t));
+      memcpy(feature_meta->embedding, output_tensor->getBatchPtr<int8_t>(b),
+             batch_elem_num * sizeof(int8_t));
 
     } else if (output_info.data_type == TDLDataType::UINT8) {
-      feature_meta->embedding = (uint8_t *)malloc(batch_elem_num * sizeof(uint8_t));
-      memcpy(feature_meta->embedding, output_tensor->getBatchPtr<uint8_t>(b), batch_elem_num * sizeof(uint8_t));
+      feature_meta->embedding =
+          (uint8_t *)malloc(batch_elem_num * sizeof(uint8_t));
+      memcpy(feature_meta->embedding, output_tensor->getBatchPtr<uint8_t>(b),
+             batch_elem_num * sizeof(uint8_t));
     } else {
       LOGE("not supported data type:%d", (int)output_info.data_type);
     }

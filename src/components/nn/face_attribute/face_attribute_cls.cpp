@@ -4,12 +4,11 @@
 #include "utils/tdl_log.hpp"
 
 FaceAttribute_CLS::FaceAttribute_CLS() {
-  for (uint32_t i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = 0.003922;
-    net_param_.pre_params.mean[i] = 0.0;
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = true;
+  net_param_.model_config.mean = {0.0, 0.0, 0.0};
+  net_param_.model_config.std = {1.0 / 0.003922, 1.0 / 0.003922,
+                                 1.0 / 0.003922};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = false;
 }
 
 FaceAttribute_CLS::~FaceAttribute_CLS() {}

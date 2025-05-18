@@ -31,7 +31,6 @@ class FaceCaptureApp : public AppTask {
 
   std::map<std::string, std::shared_ptr<BaseModel>> model_map_;
 
-  TDLModelFactory model_factory_;
   NodeFactory node_factory_;
 };
 

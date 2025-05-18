@@ -10,10 +10,9 @@ void parse_feature_info(T *data, int num_elem, float qscale, float *features) {
 }
 
 Clip_Text::Clip_Text() {
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = 0.003922;
-    net_param_.pre_params.mean[i] = 0.0;
-  }
+  net_param_.model_config.std = {1.0 / 0.003922, 1.0 / 0.003922,
+                                 1.0 / 0.003922};
+  net_param_.model_config.mean = {0.0, 0.0, 0.0};
 }
 
 Clip_Text::~Clip_Text() {}

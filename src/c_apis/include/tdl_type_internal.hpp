@@ -44,132 +44,43 @@ inline TDLDataTypeE convertDataType(TDLDataType data_type) {
       return TDL_TYPE_UNKOWN;
   }
 }
-
-void TDL_convertDataTypeToCpp(TDLDataTypeE data_type,
-                              size_t *type_size,
-                              TDLDataType *tdl_data_type) {
+inline TDLDataType convertDataTypeE(TDLDataTypeE data_type) {
   switch (data_type) {
     case TDL_TYPE_INT8:
-      *type_size = sizeof(int8_t);
-      *tdl_data_type = TDLDataType::INT8;
-      break;
+      return TDLDataType::INT8;
     case TDL_TYPE_UINT8:
-      *type_size = sizeof(uint8_t);
-      *tdl_data_type = TDLDataType::UINT8;
-      break;
+      return TDLDataType::UINT8;
     case TDL_TYPE_INT16:
-      *type_size = sizeof(int16_t);
-      *tdl_data_type = TDLDataType::INT16;
-      break;
+      return TDLDataType::INT16;
     case TDL_TYPE_UINT16:
-      *type_size = sizeof(uint16_t);
-      *tdl_data_type = TDLDataType::UINT16;
-      break;
+      return TDLDataType::UINT16;
     case TDL_TYPE_INT32:
-      *type_size = sizeof(int32_t);
-      *tdl_data_type = TDLDataType::INT32;
-      break;
+      return TDLDataType::INT32;
     case TDL_TYPE_UINT32:
-      *type_size = sizeof(uint32_t);
-      *tdl_data_type = TDLDataType::UINT32;
-      break;
+      return TDLDataType::UINT32;
     case TDL_TYPE_BF16:
-      *type_size = sizeof(uint16_t);
-      *tdl_data_type = TDLDataType::BF16;
-      break;
+      return TDLDataType::BF16;
     case TDL_TYPE_FP16:
-      *type_size = sizeof(uint16_t);
-      *tdl_data_type = TDLDataType::FP16;
-      break;
+      return TDLDataType::FP16;
     case TDL_TYPE_FP32:
-      *type_size = sizeof(float);
-      *tdl_data_type = TDLDataType::FP32;
-      break;
+      return TDLDataType::FP32;
     default:
-      *type_size = sizeof(uint8_t);
-      *tdl_data_type = TDLDataType::UINT8;
-      break;
+      return TDLDataType::UNKOWN;
   }
 }
+ModelType convertModelType(TDLModel m) {
+  switch (m) {
+    // 对 MODEL_TYPE_LIST 中的每一项都展开一条 case
+#define X(name, comment) \
+  case TDL_MODEL_##name: \
+    return ModelType::name;
+    MODEL_TYPE_LIST
+#undef X
 
-ModelType convertModelType(TDLModel model_type) {
-  switch (model_type) {
-    case TDL_MODEL_MBV2_DET_PERSON:
-      return ModelType::MBV2_DET_PERSON;
-    case TDL_MODEL_SCRFD_DET_FACE:
-      return ModelType::SCRFD_DET_FACE;
-    case TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE:
-      return ModelType::YOLOV8N_DET_PERSON_VEHICLE;
-    case TDL_MODEL_YOLOV8N_DET_HAND:
-      return ModelType::YOLOV8N_DET_HAND;
-    case TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE:
-      return ModelType::YOLOV8N_DET_LICENSE_PLATE;
-    case TDL_MODEL_YOLOV5_DET_COCO80:
-      return ModelType::YOLOV5_DET_COCO80;
-    case TDL_MODEL_YOLOV6_DET_COCO80:
-      return ModelType::YOLOV6_DET_COCO80;
-    case TDL_MODEL_YOLOV8_DET_COCO80:
-      return ModelType::YOLOV8_DET_COCO80;
-    case TDL_MODEL_PPYOLOE_DET_COCO80:
-    return ModelType::PPYOLOE_DET_COCO80;
-    case TDL_MODEL_YOLOV8N_DET_FIRE:
-      return ModelType::YOLOV8N_DET_FIRE;
-    case TDL_MODEL_YOLOV8N_DET_FIRE_SMOKE:
-      return ModelType::YOLOV8N_DET_FIRE_SMOKE;
-    case TDL_MODEL_YOLOV8N_DET_HAND_FACE_PERSON:
-      return ModelType::YOLOV8N_DET_HAND_FACE_PERSON;
-    case TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT:
-      return ModelType::YOLOV8N_DET_HEAD_HARDHAT;
-    case TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER:
-      return ModelType::YOLOV8N_DET_HEAD_SHOULDER;
-    case TDL_MODEL_YOLOV8N_DET_MONITOR_PERSON:
-      return ModelType::YOLOV8N_DET_MONITOR_PERSON;
-    case TDL_MODEL_YOLOV8N_DET_PET_PERSON:
-      return ModelType::YOLOV8N_DET_PET_PERSON;
-    case TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT:
-      return ModelType::YOLOV8N_DET_TRAFFIC_LIGHT;
-    case TDL_MODEL_SEG_YOLOV8_COCO80:
-      return ModelType::YOLOV8_SEG_COCO80;
-    case TDL_MODEL_SEG_MOTION:
-      return ModelType::TOPFORMER_SEG_MOTION;
-    case TDL_MODEL_SEG_PERSON_FACE_VEHICLE:
-      return ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE;
-    case TDL_MODEL_YOLOV10_DET_COCO80:
-      return ModelType::YOLOV10_DET_COCO80;
-    case TDL_MODEL_CLS_ATTRIBUTE_FACE:
-      return ModelType::CLS_ATTRIBUTE_FACE;
-    case TDL_MODEL_KEYPOINT_FACE_V2:
-      return ModelType::KEYPOINT_FACE_V2;
-    case TDL_MODEL_KEYPOINT_HAND:
-      return ModelType::KEYPOINT_HAND;
-    case TDL_MODEL_KEYPOINT_LICENSE_PLATE:
-      return ModelType::KEYPOINT_LICENSE_PLATE;
-    case TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17:
-      return ModelType::KEYPOINT_YOLOV8POSE_PERSON17;
-    case TDL_MODEL_KEYPOINT_SIMICC:
-      return ModelType::KEYPOINT_SIMCC_PERSON17;
-    case TDL_MODEL_RESNET_FEATURE_BMFACE_R34:
-      return ModelType::RECOGNITION_INSIGHTFACE_R34;
-    case TDL_MODEL_CVIFACE:
-      return ModelType::RECOGNITION_CVIFACE;
-    case TDL_MODEL_CLS_RGBLIVENESS:
-      return ModelType::CLS_RGBLIVENESS;
-    case TDL_MODEL_CLS_HAND_GESTURE:
-      return ModelType::CLS_HAND_GESTURE;
-    case TDL_MODEL_CLS_KEYPOINT_HAND_GESTURE:
-      return ModelType::CLS_KEYPOINT_HAND_GESTURE;
-    case TDL_MODEL_LSTR_DET_LANE:
-      return ModelType::LSTR_DET_LANE;
-    case TDL_MODEL_CLS_BABAY_CRY:
-      return ModelType::CLS_SOUND_BABAY_CRY;
-    case TDL_MODEL_CLS_SOUND_COMMAND:
-      return ModelType::CLS_SOUND_COMMAND;
-    case TDL_MODEL_RECOGNITION_LICENSE_PLATE:
-      return ModelType::RECOGNITION_LICENSE_PLATE;
+    default:
+      return ModelType::INVALID;
   }
-  return ModelType::INVALID;
 }
-
 inline std::shared_ptr<ModelBoxLandmarkInfo> convertFaceMeta(
     TDLFace *face_meta) {
   std::shared_ptr<ModelBoxLandmarkInfo> face_info =

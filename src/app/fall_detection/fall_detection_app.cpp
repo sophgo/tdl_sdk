@@ -7,7 +7,6 @@
 #include "components/video_decoder/video_decoder_type.hpp"
 #include "utils/tdl_log.hpp"
 
-
 template <typename T>
 T getNodeData(const std::string &node_name, PtrFrameInfo &frame_info) {
   if (frame_info->node_data_.find(node_name) == frame_info->node_data_.end()) {
@@ -17,9 +16,8 @@ T getNodeData(const std::string &node_name, PtrFrameInfo &frame_info) {
   return frame_info->node_data_[node_name].get<T>();
 }
 
-
 FallDetectionApp::FallDetectionApp(const std::string &task_name,
-                               const std::string &json_config)
+                                   const std::string &json_config)
     : AppTask(task_name, json_config) {}
 
 int32_t FallDetectionApp::init() {
@@ -27,9 +25,10 @@ int32_t FallDetectionApp::init() {
   int32_t frame_buffer_size =
       json_config_.at("frame_buffer_size").get<int32_t>();
 
-  model_factory_.setModelDir(model_dir);
-  for (const auto &pl : json_config_.at("pipelines")) {
+  TDLModelFactory::getInstance().loadModelConfig();
+  TDLModelFactory::getInstance().setModelDir(model_dir);
 
+  for (const auto &pl : json_config_.at("pipelines")) {
     std::string pipeline_name = pl.at("name").get<std::string>();
     std::cout << "pipeline: " << pipeline_name << "\n";
     nlohmann::json nodes_cfg = pl.at("nodes");
@@ -38,14 +37,14 @@ int32_t FallDetectionApp::init() {
   return 0;
 }
 
-int32_t FallDetectionApp::set_fps(float fps){
+int32_t FallDetectionApp::set_fps(float fps) {
   FPS = fps;
   return 0;
 }
 
 int32_t FallDetectionApp::addPipeline(const std::string &pipeline_name,
-                                    int32_t frame_buffer_size,
-                                    const nlohmann::json &nodes_cfg) {
+                                      int32_t frame_buffer_size,
+                                      const nlohmann::json &nodes_cfg) {
   std::shared_ptr<PipelineChannel> fall_detection_channel =
       std::make_shared<PipelineChannel>(pipeline_name, frame_buffer_size);
   auto get_config = [](const std::string &key, const nlohmann::json &node_cfg) {
@@ -57,8 +56,8 @@ int32_t FallDetectionApp::addPipeline(const std::string &pipeline_name,
 
   fall_detection_channel->addNode(
       getVideoNode(get_config("video_node", nodes_cfg)));
-  fall_detection_channel->addNode(
-      getKeypointDetectionNode(get_config("keypoint_detection_node", nodes_cfg)));
+  fall_detection_channel->addNode(getKeypointDetectionNode(
+      get_config("keypoint_detection_node", nodes_cfg)));
   fall_detection_channel->addNode(
       getTrackNode(get_config("track_node", nodes_cfg)));
   fall_detection_channel->start();
@@ -142,7 +141,8 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getKeypointDetectionNode(
   if (model_map_.count("keypoint_detection")) {
     keypoint_detection_model = model_map_["keypoint_detection"];
   } else {
-    keypoint_detection_model = model_factory_.getModel(ModelType::KEYPOINT_YOLOV8POSE_PERSON17);
+    keypoint_detection_model = TDLModelFactory::getInstance().getModel(
+        ModelType::KEYPOINT_YOLOV8POSE_PERSON17);
     model_map_["keypoint_detection"] = keypoint_detection_model;
   }
   std::shared_ptr<PipelineNode> keypoint_detection_node =
@@ -166,7 +166,8 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getKeypointDetectionNode(
     }
     std::shared_ptr<ModelBoxLandmarkInfo> keypointmeta =
         std::dynamic_pointer_cast<ModelBoxLandmarkInfo>(out_data);
-    frame_info->node_data_["person_boxes_keypoints_meta"] = Packet::make(keypointmeta->box_landmarks);
+    frame_info->node_data_["person_boxes_keypoints_meta"] =
+        Packet::make(keypointmeta->box_landmarks);
     return 0;
   };
   keypoint_detection_node->setProcessFunc(lambda_func);
@@ -178,7 +179,6 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getKeypointDetectionNode(
 
   return keypoint_detection_node;
 }
-
 
 std::shared_ptr<PipelineNode> FallDetectionApp::getTrackNode(
     const nlohmann::json &node_config) {
@@ -203,8 +203,9 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getTrackNode(
 
     std::vector<ObjectBoxInfo> bbox_infos;
     for (auto &person_info : person_infos) {
-      ObjectBoxInfo box_info(person_info.class_id, person_info.score, person_info.x1,
-                             person_info.y1, person_info.x2, person_info.y2);
+      ObjectBoxInfo box_info(person_info.class_id, person_info.score,
+                             person_info.x1, person_info.y1, person_info.x2,
+                             person_info.y2);
       box_info.object_type = TDLObjectType::OBJECT_TYPE_PERSON;
       bbox_infos.push_back(box_info);
     }
@@ -219,8 +220,10 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getTrackNode(
   return track_node;
 }
 
-int32_t FallDetectionApp:: detect(std::vector<ObjectBoxLandmarkInfo> &person_infos, std::vector<TrackerInfo> &track_results, std::map<uint64_t, int> &det_results){
-
+int32_t FallDetectionApp::detect(
+    std::vector<ObjectBoxLandmarkInfo> &person_infos,
+    std::vector<TrackerInfo> &track_results,
+    std::map<uint64_t, int> &det_results) {
   det_results.clear();
   std::map<uint64_t, int> track_index;
   std::vector<int> new_index;
@@ -233,7 +236,7 @@ int32_t FallDetectionApp:: detect(std::vector<ObjectBoxLandmarkInfo> &person_inf
 
       if (t.status_ == TrackStatus::NEW) {
         new_index.push_back(i);
-      }else{
+      } else {
         track_index[track_id] = t.obj_idx_;
       }
     }
@@ -251,28 +254,27 @@ int32_t FallDetectionApp:: detect(std::vector<ObjectBoxLandmarkInfo> &person_inf
       }
 
     } else {
-
-      det_results[it->uid] = it->detect(person_infos[track_index[it->uid]], FPS);
+      det_results[it->uid] =
+          it->detect(person_infos[track_index[it->uid]], FPS);
       it->unmatched_times = 0;
       it++;
     }
   }
 
   for (uint32_t i = 0; i < new_index.size(); i++) {
-
     FallDet person(track_results[new_index[i]].track_id_);
 
-    det_results[person.uid] = person.detect(person_infos[track_results[new_index[i]].obj_idx_], FPS);
+    det_results[person.uid] =
+        person.detect(person_infos[track_results[new_index[i]].obj_idx_], FPS);
 
     muti_person.push_back(person);
   }
 
   return 0;
-
 }
 
 int32_t FallDetectionApp::getResult(const std::string &pipeline_name,
-                                  Packet &result) {
+                                    Packet &result) {
   std::shared_ptr<FallDetectionResult> fall_detection_result =
       std::make_shared<FallDetectionResult>();
   PtrFrameInfo frame_info =
@@ -289,14 +291,16 @@ int32_t FallDetectionApp::getResult(const std::string &pipeline_name,
   fall_detection_result->frame_width = image->getWidth();
   fall_detection_result->frame_height = image->getHeight();
   fall_detection_result->person_boxes_keypoints =
-      getNodeData<std::vector<ObjectBoxLandmarkInfo>>("person_boxes_keypoints_meta", frame_info);
+      getNodeData<std::vector<ObjectBoxLandmarkInfo>>(
+          "person_boxes_keypoints_meta", frame_info);
   fall_detection_result->track_results =
       getNodeData<std::vector<TrackerInfo>>("track_results", frame_info);
-  
-  detect(fall_detection_result->person_boxes_keypoints, fall_detection_result->track_results, fall_detection_result->det_results);
+
+  detect(fall_detection_result->person_boxes_keypoints,
+         fall_detection_result->track_results,
+         fall_detection_result->det_results);
 
   pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
   result = Packet::make(fall_detection_result);
   return 0;
 }
-

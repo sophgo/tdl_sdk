@@ -81,7 +81,7 @@ int32_t BM168xNet::setup() {
   LOGI("getxxx_model_bmrt: %s,%0x", net_param_.model_file_path.c_str(),
        p_bmrt_);
   // if name was not set,use the name inside bmodel as default
-  std::string net_name = net_param_.net_name;
+  std::string net_name = net_param_.model_config.net_name;
   LOGI("net_name: %s", net_name.c_str());
   if (net_name == "") {
     const char **net_names = NULL;
@@ -208,7 +208,7 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
     LOGE("unsupported data type:%d", p_data_type[idx]);
     assert(0);
   }
-  uint32_t data_type_size = get_data_type_size(tensor_info.data_type);
+  uint32_t data_type_size = CommonUtils::getDataTypeSize(tensor_info.data_type);
   if (data_type_size != bmrt_data_type_size(p_data_type[idx])) {
     LOGE("data type size not equal,expect:%d,got:%d", data_type_size,
          bmrt_data_type_size(p_data_type[idx]));
@@ -216,7 +216,8 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
   tensor_info.tensor_elem = tensor_info.shape[0] * tensor_info.shape[1] *
                             tensor_info.shape[2] * tensor_info.shape[3];
   tensor_info.tensor_size =
-      get_data_type_size(tensor_info.data_type) * tensor_info.tensor_elem;
+      CommonUtils::getDataTypeSize(tensor_info.data_type) *
+      tensor_info.tensor_elem;
   return tensor_info;
 }
 int32_t BM168xNet::addInput(const std::string &name) {
@@ -391,7 +392,7 @@ void BM168xNet::updateTensorInfo(const std::string &name,
       tensor->getShape()[3];
   input_output_tensor_infos_[name].tensor_size =
       input_output_tensor_infos_[name].tensor_elem *
-      get_data_type_size(input_output_tensor_infos_[name].data_type);
+      CommonUtils::getDataTypeSize(input_output_tensor_infos_[name].data_type);
 }
 int32_t BM168xNet::updateOutputTensors() {
   for (auto it = output_tensor_hash_.begin(); it != output_tensor_hash_.end();

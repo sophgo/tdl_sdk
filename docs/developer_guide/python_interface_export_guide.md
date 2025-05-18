@@ -83,7 +83,7 @@
     ```cpp
      py::module nn = m.def_submodule("nn", "Neural network algorithms module");
       py::enum_<ModelType>(nn, "ModelType")
-          .value("MBV2_DET_PERSON", ModelType::MBV2_DET_PERSON)
+          .value("MBV2_DET_PERSON_256_448", ModelType::MBV2_DET_PERSON_256_448)
           .export_values();
     ```
 

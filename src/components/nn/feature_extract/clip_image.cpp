@@ -9,22 +9,11 @@ void parse_feature_info(T *data, int num_elem, float qscale, float *features) {
   }
 }
 Clip_Image::Clip_Image() {
-  net_param_.pre_params.scale[0] = 0.0145984266;
-  net_param_.pre_params.scale[1] = 0.0150077685;
-  net_param_.pre_params.scale[2] = 0.0142200657;
-  net_param_.pre_params.mean[0] = 1.7922625;
-  net_param_.pre_params.mean[1] = 1.7465649;
-  net_param_.pre_params.mean[2] = 1.4802198;
-
-  // // use fused_precess w4f16 model
-  // preprocess_params_[0].factor[0] = 1;
-  // preprocess_params_[0].factor[1] = 1;
-  // preprocess_params_[0].factor[2] = 1;
-  // preprocess_params_[0].mean[0] = 0;
-  // preprocess_params_[0].mean[1] = 0;
-  // preprocess_params_[0].mean[2] = 0;
-  // preprocess_params_[0].use_crop = true;
-  // preprocess_params_[0].keep_aspect_ratio = true;
+  net_param_.model_config.std = {1.0 / 0.0145984266, 1.0 / 0.0150077685,
+                                 1.0 / 0.0142200657};
+  net_param_.model_config.mean = {1.7922625 / 0.0145984266,
+                                  1.7465649 / 0.0150077685,
+                                  1.4802198 / 0.0142200657};
 }
 
 Clip_Image::~Clip_Image() {}

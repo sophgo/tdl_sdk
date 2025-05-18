@@ -3,7 +3,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "cvi_tdl_model_id.hpp"
 #include "cvi_tdl_test.hpp"
 #include "image/opencv_image.hpp"
 #include "json.hpp"
@@ -23,18 +22,19 @@ class DetectionTestSuite : public CVI_TDLModelTestSuite {
 
   virtual ~DetectionTestSuite() = default;
 
-  std::string m_model_path;
   std::shared_ptr<BaseModel> det_;
-  TDLModelFactory model_factory_;
 
  protected:
   virtual void SetUp() {
-    std::string model_name = std::string(m_json_object["model_name"]);
-    std::string model_path =
-        (m_model_dir / fs::path(model_name + gen_model_suffix())).string();
+    int32_t ret = TDLModelFactory::getInstance().loadModelConfig();
+    if (ret != 0) {
+      LOGE("load model config failed");
+      return;
+    }
+    TDLModelFactory::getInstance().setModelDir(m_model_dir);
+
     std::string model_id = std::string(m_json_object["model_id"]);
-    ModelType model_type = stringToModelType(model_id);
-    det_ = model_factory_.getModel(model_type, model_path);
+    det_ = TDLModelFactory::getInstance().getModel(model_id);
     ASSERT_NE(det_, nullptr);
   }
 
@@ -52,7 +52,7 @@ TEST_F(DetectionTestSuite, accuracy) {
        iter++) {
     std::string image_path =
         (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
-    printf("image_path: %s\n", image_path.c_str());
+    LOGIP("image_path: %s\n", image_path.c_str());
 
     std::shared_ptr<BaseImage> frame =
         ImageFactory::readImage(image_path, true);

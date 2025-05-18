@@ -14,7 +14,9 @@ int main(int argc, char **argv) {
     printf("Failed to create image\n");
     return -1;
   }
-  TDLModelFactory model_factory(model_dir);
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
   std::shared_ptr<BaseModel> model =
       model_factory.getModel(ModelType::KEYPOINT_FACE_V2);
   if (!model) {

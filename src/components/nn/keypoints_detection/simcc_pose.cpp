@@ -13,24 +13,19 @@
 #define MAX_NUM 5
 
 SimccPose::SimccPose() {
-  const float STD_RGB[3] = {255.0 * 0.229, 255.0 * 0.224, 255.0 * 0.225};
-  const float MODEL_MEAN_RGB[3] = {0.485 * 255.0, 0.456 * 255.0, 0.406 * 255.0};
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = 1.0 / STD_RGB[i];
-    net_param_.pre_params.mean[i] = MODEL_MEAN_RGB[i] / STD_RGB[i];
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
+  net_param_.model_config.std = {255.0 * 0.229, 255.0 * 0.224, 255.0 * 0.225};
+  net_param_.model_config.mean = {0.485 * 255.0, 0.456 * 255.0, 0.406 * 255.0};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = false;
 }
-
 
 SimccPose::~SimccPose() {}
 
 int32_t SimccPose::inference(
-  const std::shared_ptr<BaseImage> &image,
-  const std::shared_ptr<ModelOutputInfo> &model_object_infos,
-  std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
-  const std::map<std::string, float> &parameters) {
-
+    const std::shared_ptr<BaseImage> &image,
+    const std::shared_ptr<ModelOutputInfo> &model_object_infos,
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
+    const std::map<std::string, float> &parameters) {
   std::vector<ObjectBoxInfo> crop_boxes;
   std::shared_ptr<ModelBoxInfo> model_box_infos =
       std::static_pointer_cast<ModelBoxInfo>(model_object_infos);
@@ -43,8 +38,8 @@ int32_t SimccPose::inference(
     int height = (int)crop_boxes[i].y2 - (int)crop_boxes[i].y1;
     int crop_x = (int)crop_boxes[i].x1;
     int crop_y = (int)crop_boxes[i].y1;
-    std::shared_ptr<BaseImage> human_crop = preprocessor_->crop(
-      image, crop_x, crop_y, width, height);
+    std::shared_ptr<BaseImage> human_crop =
+        preprocessor_->crop(image, crop_x, crop_y, width, height);
     batch_images.clear();
     batch_images.push_back(human_crop);
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_out_datas;
@@ -91,11 +86,12 @@ int32_t SimccPose::outputParse(
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
     std::vector<float> scale_params = batch_rescale_params_[b];
-    std::shared_ptr<ModelLandmarksInfo> obj = std::make_shared<ModelLandmarksInfo>();
+    std::shared_ptr<ModelLandmarksInfo> obj =
+        std::make_shared<ModelLandmarksInfo>();
 
     obj->image_width = image_width;
     obj->image_height = image_height;
- 
+
     float *data_x = x_feature_tensor->getBatchPtr<float>(b);
     float *data_y = y_feature_tensor->getBatchPtr<float>(b);
 
@@ -111,11 +107,11 @@ int32_t SimccPose::outputParse(
       uint32_t pos_y = iter_y - score_start_y;
       float score_y = *iter_y;
 
-      float x=(float)pos_x / EXPAND_RATIO;
-      float y=(float)pos_y / EXPAND_RATIO;
+      float x = (float)pos_x / EXPAND_RATIO;
+      float y = (float)pos_y / EXPAND_RATIO;
 
-      obj->landmarks_x.push_back((x - scale_params[2])/ scale_params[0]);
-      obj->landmarks_y.push_back((y - scale_params[3])/ scale_params[1]);
+      obj->landmarks_x.push_back((x - scale_params[2]) / scale_params[0]);
+      obj->landmarks_y.push_back((y - scale_params[3]) / scale_params[1]);
       obj->landmarks_score.push_back(std::min(score_x, score_y));
     }
 

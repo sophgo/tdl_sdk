@@ -3,14 +3,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "meta_visualize.h"
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
-#include "meta_visualize.h"
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "yolov8_seg_coco80") != NULL) {
-    *model_index = TDL_MODEL_SEG_YOLOV8_COCO80;
+    *model_index = TDL_MODEL_YOLOV8_SEG_COCO80;
   } else {
     ret = -1;
   }
@@ -19,11 +19,14 @@ int get_model_info(char *model_path, TDLModel *model_index) {
 
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
-  printf("  %s -m <model_path> -i <input_image> -o <output_image>\n", prog_name);
-  printf("  %s --model_path <path> --input <image> --output <image>\n\n", prog_name);
+  printf("  %s -m <model_path> -i <input_image> -o <output_image>\n",
+         prog_name);
+  printf("  %s --model_path <path> --input <image> --output <image>\n\n",
+         prog_name);
   printf("Options:\n");
-  printf("  -m, --model_path   Path to instance segmentation model"
-         "<segmentation_yolov8n_xxx>\n");
+  printf(
+      "  -m, --model_path   Path to instance segmentation model"
+      "<segmentation_yolov8n_xxx>\n");
   printf("  -i, --input        Path to input image\n");
   printf("  -o, --output       Path to output image\n");
   printf("  -h, --help         Show this help message\n");
@@ -34,13 +37,11 @@ int main(int argc, char *argv[]) {
   char *input_image = NULL;
   char *output_image = NULL;
 
-  struct option long_options[] = {
-    {"model_path",   required_argument, 0, 'm'},
-    {"input",        required_argument, 0, 'i'},
-    {"output",       required_argument, 0, 'o'},
-    {"help",         no_argument,       0, 'h'},
-    {NULL, 0, NULL, 0}
-  };
+  struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
+                                  {"input", required_argument, 0, 'i'},
+                                  {"output", required_argument, 0, 'o'},
+                                  {"help", no_argument, 0, 'h'},
+                                  {NULL, 0, NULL, 0}};
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
@@ -89,13 +90,13 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open instance seg model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  //The default threshold is 0.5
+  // The default threshold is 0.5
   ret = TDL_SetModelThreshold(tdl_handle, model_id, 0.5);
   if (ret != 0) {
     printf("TDL_SetModelThreshold failed with %#x!\n", ret);
@@ -116,34 +117,34 @@ int main(int argc, char *argv[]) {
     if (inst_seg_meta.size <= 0) {
       printf("None to Segmentation\n");
     } else {
-        for (int i = 0; i < inst_seg_meta.size; i++) {
-          printf("inst_seg_meta_index : %d, ", i);
-          printf("box [x1, y1, x2, y2] : %f %f %f %f, ",
-            inst_seg_meta.info[i].obj_info->box.x1,
-            inst_seg_meta.info[i].obj_info->box.y1,
-            inst_seg_meta.info[i].obj_info->box.x2,
-            inst_seg_meta.info[i].obj_info->box.y2);
-          printf("class : %d, ", inst_seg_meta.info[i].obj_info->class_id);
-          printf("score : %f\n", inst_seg_meta.info[i].obj_info->score);
-          printf("points=[");
-          point_t point[inst_seg_meta.info[i].mask_point_size];
-          for (int j = 0; j < inst_seg_meta.info[i].mask_point_size; j++) {
-            printf("(%f,%f),", inst_seg_meta.info[i].mask_point[2 * j],
-              inst_seg_meta.info[i].mask_point[2 * j + 1]);
-            point[j].x = inst_seg_meta.info[i].mask_point[2 * j];
-            point[j].y = inst_seg_meta.info[i].mask_point[2 * j + 1];
-          }
-          printf("]\n");
-          if (output_image != NULL) {
-            if (i == 0) {
-              TDL_VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
-                                          input_image, output_image);
-            } else {
-              TDL_VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
-                                          output_image, output_image);
-            }
+      for (int i = 0; i < inst_seg_meta.size; i++) {
+        printf("inst_seg_meta_index : %d, ", i);
+        printf("box [x1, y1, x2, y2] : %f %f %f %f, ",
+               inst_seg_meta.info[i].obj_info->box.x1,
+               inst_seg_meta.info[i].obj_info->box.y1,
+               inst_seg_meta.info[i].obj_info->box.x2,
+               inst_seg_meta.info[i].obj_info->box.y2);
+        printf("class : %d, ", inst_seg_meta.info[i].obj_info->class_id);
+        printf("score : %f\n", inst_seg_meta.info[i].obj_info->score);
+        printf("points=[");
+        point_t point[inst_seg_meta.info[i].mask_point_size];
+        for (int j = 0; j < inst_seg_meta.info[i].mask_point_size; j++) {
+          printf("(%f,%f),", inst_seg_meta.info[i].mask_point[2 * j],
+                 inst_seg_meta.info[i].mask_point[2 * j + 1]);
+          point[j].x = inst_seg_meta.info[i].mask_point[2 * j];
+          point[j].y = inst_seg_meta.info[i].mask_point[2 * j + 1];
+        }
+        printf("]\n");
+        if (output_image != NULL) {
+          if (i == 0) {
+            TDL_VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
+                                   input_image, output_image);
+          } else {
+            TDL_VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
+                                   output_image, output_image);
           }
         }
+      }
     }
   }
 

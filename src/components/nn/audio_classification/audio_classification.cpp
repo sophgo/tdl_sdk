@@ -3,7 +3,8 @@
 #include "utils/tdl_log.hpp"
 #define SCALE_FACTOR_FOR_INT16 32768.0
 
-AudioClassification::AudioClassification() : AudioClassification(std::make_pair(256, 0)) { }
+AudioClassification::AudioClassification()
+    : AudioClassification(std::make_pair(256, 0)) {}
 
 AudioClassification::AudioClassification(std::pair<int, int> sound_pair) {
   win_len_ = 1024;
@@ -19,13 +20,34 @@ AudioClassification::AudioClassification(std::pair<int, int> sound_pair) {
 
 AudioClassification::~AudioClassification() { delete mp_extractor_; }
 
+int32_t AudioClassification::setupNetwork(NetParam &net_param) {
+  net_ = NetFactory::createNet(net_param, net_param.platform);
+  int32_t ret = net_->setup();
+  if (ret != 0) {
+    std::cout << "Net setup failed" << std::endl;
+    assert(false);
+    return ret;
+  }
+  return 0;
+}
+
 int32_t AudioClassification::onModelOpened() {
   std::string input_layer = net_->getInputNames()[0];
   const TensorInfo &tinfo = net_->getTensorInfo(input_layer);
   int32_t image_width = tinfo.shape[2];
   int32_t image_height = tinfo.shape[3];
   bool htk = false;
+  auto &parameters = net_param_.model_config.custom_config_i;
 
+  if (parameters.find("hop_len") != parameters.end()) {
+    hop_len_ = static_cast<int>(parameters.at("hop_len"));
+    LOGI("hop_len:%d", hop_len_);
+  }
+
+  if (parameters.find("fix") != parameters.end()) {
+    fix_ = static_cast<int>(parameters.at("fix"));
+    LOGI("fix:%d", fix_);
+  }
   if (image_width == 251 && hop_len_ == 128) {  // sr16k * 2s, hop_len = 128
     sample_rate_ = 16000;
     time_len_ = 2;
@@ -118,7 +140,9 @@ int32_t AudioClassification::outputParse(
   return 0;
 }
 
-int32_t AudioClassification::getTopK(float *result, size_t count, float* score) {
+int32_t AudioClassification::getTopK(float *result,
+                                     size_t count,
+                                     float *score) {
   int idx = -1;
   float max_e = -10000;
   float cur_e;
@@ -138,7 +162,7 @@ int32_t AudioClassification::getTopK(float *result, size_t count, float* score) 
   if (idx != 0 && max < model_threshold_) {
     idx = 0;
     *score = std::exp(result[0]) / sum_e;
-  }else{
+  } else {
     *score = max;
   }
   return idx;
@@ -178,49 +202,4 @@ void AudioClassification::normalizeSound(short *audio_data, int n) {
     }
   }
   // std::cout << ", after:" << audio_data[0];
-}
-
-int32_t AudioClassification::getParameters(
-    std::map<std::string, float> &parameters) {
-  parameters["win_len"] = static_cast<float>(win_len_);
-  parameters["num_fft"] = static_cast<float>(num_fft_);
-  parameters["hop_len"] = static_cast<float>(hop_len_);
-  parameters["sample_rate"] = static_cast<float>(sample_rate_);
-  parameters["time_len"] = static_cast<float>(time_len_);
-  parameters["num_mel"] = static_cast<float>(num_mel_);
-  parameters["fmin"] = static_cast<float>(fmin_);
-  parameters["fmax"] = static_cast<float>(fmax_);
-  parameters["fix"] = static_cast<float>(fix_);
-  return 0;
-}
-int32_t AudioClassification::setParameters(
-    const std::map<std::string, float> &parameters) {
-  if (parameters.find("win_len") != parameters.end()) {
-    win_len_ = static_cast<int>(parameters.at("win_len"));
-  }
-  if (parameters.find("num_fft") != parameters.end()) {
-    num_fft_ = static_cast<int>(parameters.at("num_fft"));
-  }
-  if (parameters.find("hop_len") != parameters.end()) {
-    hop_len_ = static_cast<int>(parameters.at("hop_len"));
-  }
-  if (parameters.find("sample_rate") != parameters.end()) {
-    sample_rate_ = static_cast<int>(parameters.at("sample_rate"));
-  }
-  if (parameters.find("time_len") != parameters.end()) {
-    time_len_ = static_cast<int>(parameters.at("time_len"));
-  }
-  if (parameters.find("num_mel") != parameters.end()) {
-    num_mel_ = static_cast<int>(parameters.at("num_mel"));
-  }
-  if (parameters.find("fmin") != parameters.end()) {
-    fmin_ = static_cast<int>(parameters.at("fmin"));
-  }
-  if (parameters.find("fmax") != parameters.end()) {
-    fmax_ = static_cast<int>(parameters.at("fmax"));
-  }
-  if (parameters.find("fix") != parameters.end()) {
-    fix_ = static_cast<int>(parameters.at("fix"));
-  }
-  return 0;
 }

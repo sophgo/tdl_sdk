@@ -3,9 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "meta_visualize.h"
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
-#include "meta_visualize.h"
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
@@ -19,11 +19,14 @@ int get_model_info(char *model_path, TDLModel *model_index) {
 
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
-  printf("  %s -m <model_path> -i <input_image> -o <output_image>\n", prog_name);
-  printf("  %s --model_path <model_path> --input <image> --output <image>\n\n", prog_name);
+  printf("  %s -m <model_path> -i <input_image> -o <output_image>\n",
+         prog_name);
+  printf("  %s --model_path <model_path> --input <image> --output <image>\n\n",
+         prog_name);
   printf("Options:\n");
-  printf("  -m, --model_path  Path to model"
-         "<scrfd_det_face_xxx>\n");
+  printf(
+      "  -m, --model_path  Path to model"
+      "<scrfd_det_face_xxx>\n");
   printf("  -i, --input       Path to input image\n");
   printf("  -o, --output      Path to output image\n");
   printf("  -h, --help        Show this help message\n");
@@ -34,13 +37,11 @@ int main(int argc, char *argv[]) {
   char *input_image = NULL;
   char *output_image = NULL;
 
-  struct option long_options[] = {
-    {"model_path",    required_argument, 0, 'm'},
-    {"input",         required_argument, 0, 'i'},
-    {"output",        required_argument, 0, 'o'},
-    {"help",          no_argument,       0, 'h'},
-    {NULL, 0, NULL, 0}
-  };
+  struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
+                                  {"input", required_argument, 0, 'i'},
+                                  {"output", required_argument, 0, 'o'},
+                                  {"help", no_argument, 0, 'h'},
+                                  {NULL, 0, NULL, 0}};
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
@@ -86,7 +87,7 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
@@ -98,7 +99,7 @@ int main(int argc, char *argv[]) {
     goto exit1;
   }
 
-  //The default threshold is 0.5
+  // The default threshold is 0.5
   ret = TDL_SetModelThreshold(tdl_handle, model_id, 0.5);
   if (ret != 0) {
     printf("TDL_SetModelThreshold failed with %#x!\n", ret);
@@ -113,8 +114,9 @@ int main(int argc, char *argv[]) {
     box_t boxes[obj_meta.size];
     printf("boxes=[");
     for (uint32_t i = 0; i < obj_meta.size; i++) {
-      printf("[x1:%f, y1:%f, x2:%f, y2:%f], score:%f, ", obj_meta.info[i].box.x1,
-             obj_meta.info[i].box.y1, obj_meta.info[i].box.x2, obj_meta.info[i].box.y2,
+      printf("[x1:%f, y1:%f, x2:%f, y2:%f], score:%f, ",
+             obj_meta.info[i].box.x1, obj_meta.info[i].box.y1,
+             obj_meta.info[i].box.x2, obj_meta.info[i].box.y2,
              obj_meta.info[i].score);
       boxes[i].x1 = obj_meta.info[i].box.x1;
       boxes[i].y1 = obj_meta.info[i].box.y1;

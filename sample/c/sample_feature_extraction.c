@@ -11,7 +11,7 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   if (strstr(model_path, "recognition_face_r34") != NULL) {
     *model_index = TDL_MODEL_RESNET_FEATURE_BMFACE_R34;
   } else if (strstr(model_path, "recognition_face_112_112") != NULL) {
-    *model_index = TDL_MODEL_CVIFACE;
+    *model_index = TDL_MODEL_RECOGNITION_CVIFACE;
   } else {
     ret = -1;
   }
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;

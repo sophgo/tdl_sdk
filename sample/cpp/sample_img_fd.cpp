@@ -45,9 +45,14 @@ int main(int argc, char **argv) {
   if (!image1) {
     printf("Failed to create image1\n");
     return -1;
+  } else {
+    printf("image readed,width:%d,height:%d\n", image1->getWidth(),
+           image1->getHeight());
   }
 
-  TDLModelFactory model_factory(model_dir);
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
   std::shared_ptr<BaseModel> model_fd =
       model_factory.getModel(ModelType::SCRFD_DET_FACE);
   if (!model_fd) {

@@ -1,23 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <time.h>
 #include <sys/select.h>
 #include <termios.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "tdl_sdk.h"
 #include "cvi_comm_video.h"
 #include "cvi_vi.h"
+#include "tdl_sdk.h"
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "yolov8n_det_person_vehicle") != NULL) {
     *model_index = TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE;
   } else if (strstr(model_path, "yolov8n_det_hand_384_640") != NULL) {
-	  *model_index = TDL_MODEL_YOLOV8N_DET_HAND;
-  }
-  else {
+    *model_index = TDL_MODEL_YOLOV8N_DET_HAND;
+  } else {
     ret = -1;
   }
   return ret;
@@ -28,7 +27,9 @@ void print_usage(const char *prog_name) {
   printf("  %s -m <model_path> -c <vi_chn>\n", prog_name);
   printf("  %s --model_path <path> --chn <vi_chn>\n\n", prog_name);
   printf("Options:\n");
-  printf("  -m, --model_path  Path to cvimodel eg. <yolov8n_det_person_vehicle>\n");
+  printf(
+      "  -m, --model_path  Path to cvimodel eg. "
+      "<yolov8n_det_person_vehicle>\n");
   printf("  -c, --chn         Vi chn\n");
   printf("  -h, --help        Show this help message\n");
 }
@@ -38,12 +39,10 @@ int main(int argc, char *argv[]) {
   int vi_chn = 0;
   int Time = 0;
 
-  struct option long_options[] = {
-    {"model_path",   required_argument, 0, 'm'},
-    {"pipe",         required_argument, 0, 'c'},
-    {"help",         no_argument,       0, 'h'},
-    {NULL, 0, NULL, 0}
-  };
+  struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
+                                  {"pipe", required_argument, 0, 'c'},
+                                  {"help", no_argument, 0, 'h'},
+                                  {NULL, 0, NULL, 0}};
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:c:t:h", long_options, NULL)) != -1) {
@@ -98,7 +97,7 @@ int main(int argc, char *argv[]) {
   // system("cat /proc/soph/mipi-rx");
   // system("cat /proc/soph/vi");
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
@@ -121,7 +120,7 @@ int main(int argc, char *argv[]) {
     FD_SET(STDIN_FILENO, &rfds);
     int key_pressed = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
     if (key_pressed > 0 && FD_ISSET(STDIN_FILENO, &rfds)) {
-      break; // 有键盘输入，退出循环
+      break;  // 有键盘输入，退出循环
     }
 
     image = TDL_GetCameraFrame(tdl_handle, vi_chn);
@@ -139,15 +138,14 @@ int main(int argc, char *argv[]) {
         printf("class_id : %d, ", obj_meta.info[i].class_id);
         printf("score : %f, ", obj_meta.info[i].score);
         printf("bbox : [%f %f %f %f]\n", obj_meta.info[i].box.x1,
-                                          obj_meta.info[i].box.x2,
-                                          obj_meta.info[i].box.y1,
-                                          obj_meta.info[i].box.y2);
+               obj_meta.info[i].box.x2, obj_meta.info[i].box.y1,
+               obj_meta.info[i].box.y2);
       }
     }
 
     TDL_ReleaseObjectMeta(&obj_meta);
     TDL_DestroyImage(image);
-    usleep(40 * 1000); //Match Vi Frame Rate
+    usleep(40 * 1000);  // Match Vi Frame Rate
   }
 
   // 恢复终端设置

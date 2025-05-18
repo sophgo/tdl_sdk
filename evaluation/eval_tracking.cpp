@@ -103,7 +103,9 @@ int main(int argc, char **argv) {
   std::string video_file = argv[2];
   std::string output_dir = argv[3];
 
-  TDLModelFactory model_factory(model_dir);
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
   std::vector<std::string> video_files = {video_file};
 
   std::shared_ptr<BaseModel> face_model =
@@ -113,7 +115,7 @@ int main(int argc, char **argv) {
     return -1;
   }
   std::shared_ptr<BaseModel> person_model =
-      model_factory.getModel(ModelType::MBV2_DET_PERSON);
+      model_factory.getModel(ModelType::MBV2_DET_PERSON_256_448);
   if (person_model == nullptr) {
     printf("Failed to get person model\n");
     return -1;

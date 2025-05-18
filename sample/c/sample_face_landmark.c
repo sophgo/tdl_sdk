@@ -20,12 +20,10 @@ int main(int argc, char *argv[]) {
   char *model_path = NULL;
   char *input_image = NULL;
 
-  struct option long_options[] = {
-    {"model_path",   required_argument, 0, 'm'},
-    {"input",        required_argument, 0, 'i'},
-    {"help",         no_argument,       0, 'h'},
-    {NULL, 0, NULL, 0}
-  };
+  struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
+                                  {"input", required_argument, 0, 'i'},
+                                  {"help", no_argument, 0, 'h'},
+                                  {NULL, 0, NULL, 0}};
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:h", long_options, NULL)) != -1) {
@@ -60,10 +58,10 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  TDLModel model_id =TDL_MODEL_KEYPOINT_FACE_V2;
+  TDLModel model_id = TDL_MODEL_KEYPOINT_FACE_V2;
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
@@ -80,7 +78,7 @@ int main(int argc, char *argv[]) {
   if (ret != 0) {
     printf("TDL_FaceLandmark failed with %#x!\n", ret);
   } else {
-    for (int i = 0; i < sizeof(obj_meta.info->landmarks.x); i ++) {
+    for (int i = 0; i < sizeof(obj_meta.info->landmarks.x); i++) {
       printf("landmarks id : %d, ", i);
       printf("landmarks x : %f, ", obj_meta.info->landmarks.x[i]);
       printf("landmarks y : %f\n", obj_meta.info->landmarks.y[i]);

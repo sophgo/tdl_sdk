@@ -1,5 +1,6 @@
 #include "tdl_model_factory.hpp"
 
+#include <fstream>
 #include "audio_classification/audio_classification.hpp"
 #include "face_attribute/face_attribute_cls.hpp"
 #include "face_detection/scrfd.hpp"
@@ -16,63 +17,197 @@
 #include "keypoints_detection/yolov8_pose.hpp"
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "object_detection/mobiledet.hpp"
+#include "object_detection/ppyoloe.hpp"
 #include "object_detection/yolov10.hpp"
 #include "object_detection/yolov6.hpp"
-#include "object_detection/ppyoloe.hpp"
 #include "object_detection/yolov8.hpp"
 #include "segmentation/topformer_seg.hpp"
 #include "segmentation/yolov8_seg.hpp"
+#include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
+TDLModelFactory::TDLModelFactory() {
+  coco_types_ = {"person",        "bicycle",      "car",
+                 "motorcycle",    "airplane",     "bus",
+                 "train",         "truck",        "boat",
+                 "traffic light", "fire hydrant", "stop sign",
+                 "parking meter", "bench",        "bird",
+                 "cat",           "dog",          "horse",
+                 "sheep",         "cow",          "elephant",
+                 "bear",          "zebra",        "giraffe",
+                 "backpack",      "umbrella",     "handbag",
+                 "tie",           "suitcase",     "frisbee",
+                 "skis",          "snowboard",    "sports ball",
+                 "kite",          "baseball bat", "baseball glove",
+                 "skateboard",    "surfboard",    "tennis racket",
+                 "bottle",        "wine glass",   "cup",
+                 "fork",          "knife",        "spoon",
+                 "bowl",          "banana",       "apple",
+                 "sandwich",      "orange",       "broccoli",
+                 "carrot",        "hot dog",      "pizza",
+                 "donut",         "cake",         "chair",
+                 "couch",         "potted plant", "bed",
+                 "dining table",  "toilet",       "tv",
+                 "laptop",        "mouse",        "remote",
+                 "keyboard",      "cell phone",   "microwave",
+                 "oven",          "toaster",      "sink",
+                 "refrigerator",  "book",         "clock",
+                 "vase",          "scissors",     "teddy bear",
+                 "hair drier",    "toothbrush"};
+}
 
-TDLModelFactory::TDLModelFactory(const std::string model_dir)
-    : model_dir_(model_dir + "/") {
-  std::string str_ext = ".cvimodel";
-#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__) || defined(__CMODEL_CV184X__)
-  str_ext = ".bmodel";
-#endif
-  setModelPath(ModelType::SCRFD_DET_FACE,
-               model_dir_ + "scrfd_500m_bnkps_432_768" + str_ext);
-  setModelPath(ModelType::YOLOV8N_DET_PERSON_VEHICLE,
-               model_dir_ + "yolov8n_384_640_person_vehicle" + str_ext);
-  setModelPath(ModelType::KEYPOINT_FACE_V2,
-               model_dir_ + "pipnet_mbv1_at_50ep_v8" + str_ext);
-  setModelPath(ModelType::RESNET_FEATURE_BMFACE_R34,
-               model_dir_ + "bmface_r34" + str_ext);
-  setModelPath(ModelType::YOLOV8N_DET_HEAD_HARDHAT,
-               model_dir_ + "hardhat_detection" + str_ext);
-  setModelPath(ModelType::CLS_ATTRIBUTE_FACE,
-               model_dir_ + "face_attribute_cls" + str_ext);
-  setModelPath(ModelType::CLS_RGBLIVENESS,
-               model_dir_ + "face_anti_spoof_classification" + str_ext);
-  setModelPath(ModelType::MBV2_DET_PERSON,
-               model_dir_ + "mobiledetv2-pedestrian-d0-448_cv186x" + str_ext);
-  setModelPath(ModelType::KEYPOINT_YOLOV8POSE_PERSON17,
-               model_dir_ + "keypoint_yolov8pose_person17_384_640_INT8_bm1688" + str_ext);
+TDLModelFactory::~TDLModelFactory() {}
+
+int32_t TDLModelFactory::loadModelConfig(const std::string &model_config_file) {
+  std::string config_file = model_config_file;
+  if (config_file.empty()) {
+    std::string so_dir = CommonUtils::getLibraryDir();
+    std::string parent_dir = CommonUtils::getParentDir(so_dir);
+    config_file = parent_dir + "/configs/model/model_factory.json";
+    LOGIP("input model config file is empty, load model config from %s",
+          config_file.c_str());
+  }
+  std::ifstream inf(config_file);
+  nlohmann::json json_config;
+  model_config_map_.clear();
+  if (!inf.is_open()) {
+    LOGE("model config file not found: %s", config_file.c_str());
+    return -1;
+  }
+
+  try {
+    inf >> json_config;
+  } catch (const nlohmann::json::parse_error &e) {
+    LOGE("model config file %s parse error: %s", config_file.c_str(), e.what());
+    return -1;
+  }
+
+  const auto &model_list = json_config.at("model_list");
+  for (auto it = model_list.begin(); it != model_list.end(); ++it) {
+    const std::string model_name = it.key();
+    const nlohmann::json &info_json = it.value();
+    model_config_map_[model_name] = info_json;
+  }
+  LOGIP("load model config from %s done,model size:%d", config_file.c_str(),
+        model_config_map_.size());
+  return 0;
+}
+TDLModelFactory &TDLModelFactory::getInstance() {
+  static TDLModelFactory instance;
+  return instance;
+}
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(const ModelType model_type,
+                                                     const int device_id) {
+  if (model_type == ModelType::INVALID) {
+    LOGE("model type not found for model type: %d", model_type);
+    return nullptr;
+  }
+  std::string model_name = modelTypeToString(model_type);
+  if (model_config_map_.find(model_name) == model_config_map_.end()) {
+    LOGE("model path not found for model type: %s,model size:%d",
+         model_name.c_str(), model_config_map_.size());
+    return nullptr;
+  }
+
+  std::string model_path = getModelPath(model_type);
+  if (model_path.empty()) {
+    LOGE("model path not found for model type: %s",
+         modelTypeToString(model_type).c_str());
+    return nullptr;
+  }
+  ModelConfig model_config = parseModelConfig(model_config_map_[model_name]);
+  return getModel(model_type, model_path, model_config, device_id);
+}
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(
+    const std::string &model_type, const int device_id) {
+  ModelType model_type_enum = modelTypeFromString(model_type);
+  return getModel(model_type_enum, device_id);
+}
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(
+    const ModelType model_type,
+    const std::string &model_path,
+    const int device_id) {
+  ModelConfig model_config;
+  std::string model_name = modelTypeToString(model_type);
+  if (model_config_map_.find(model_name) != model_config_map_.end()) {
+    model_config = parseModelConfig(model_config_map_[model_name]);
+  }
+  return getModel(model_type, model_path, model_config, device_id);
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(
+    const std::string &model_type,
+    const std::string &model_path,
+    const int device_id) {
+  ModelType model_type_enum = modelTypeFromString(model_type);
+  return getModel(model_type_enum, model_path, device_id);
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     const ModelType model_type,
-    const std::map<std::string, std::string> &config, const int device_id) {
-  if (model_path_map_.find(model_type) == model_path_map_.end()) {
-    LOGE("model path not found for model type: %d", model_type);
+    const std::string &model_path,
+    const ModelConfig &model_config,
+    const int device_id) {
+  if (model_type == ModelType::INVALID) {
+    LOGE("model type not found for model type: %d", model_type);
     return nullptr;
   }
-  std::string model_path = model_path_map_[model_type];
-
-  return getModel(model_type, model_path, config, device_id);
+  std::string model_name = modelTypeToString(model_type);
+  std::shared_ptr<BaseModel> model = getModelInstance(model_type);
+  if (model == nullptr) {
+    LOGE("model not found for model type: %d", model_type);
+    return nullptr;
+  }
+  NetParam net_param_default = model->getNetParam();
+  net_param_default.device_id = device_id;
+  // merge net_param_default into  model_config
+  ModelConfig model_config_merged = model_config;
+  if (model_config_merged.rgb_order.empty()) {
+    model_config_merged.rgb_order = net_param_default.model_config.rgb_order;
+  }
+  if (model_config_merged.mean.empty()) {
+    model_config_merged.mean = net_param_default.model_config.mean;
+  }
+  if (model_config_merged.std.empty()) {
+    model_config_merged.std = net_param_default.model_config.std;
+  }
+  net_param_default.model_config = model_config_merged;
+  model->setNetParam(net_param_default);
+  int ret = model->modelOpen(model_path);
+  if (ret != 0) {
+    return nullptr;
+  }
+  return model;
 }
-
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
-    const ModelType model_type, const std::string &model_path,
-    const std::map<std::string, std::string> &config, const int device_id) {
+    const std::string &model_type,
+    const std::string &model_path,
+    const ModelConfig &model_config,
+    const int device_id) {
+  ModelType model_type_enum = modelTypeFromString(model_type);
+  if (model_type_enum == ModelType::INVALID) {
+    LOGE("model type not found for model type: %s", model_type.c_str());
+    return nullptr;
+  }
+  return getModel(model_type_enum, model_path, model_config, device_id);
+}
+ModelConfig TDLModelFactory::getModelConfig(const ModelType model_type) {
+  std::string model_type_str = modelTypeToString(model_type);
+  if (model_config_map_.find(model_type_str) == model_config_map_.end()) {
+    LOGE("model config not found for model type: %s", model_type_str.c_str());
+    return ModelConfig();
+  }
+  auto json_config = model_config_map_[model_type_str];
+  ModelConfig model_config = parseModelConfig(json_config);
+  return model_config;
+}
+std::shared_ptr<BaseModel> TDLModelFactory::getModelInstance(
+    const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
-  (void)device_id;
-  std::map<int, TDLObjectType> model_type_mapping;
-
-  // 按模型类别组织代码
+  LOGIP("getModelInstance model_type:%s",
+        modelTypeToString(model_type).c_str());
   // 1. 目标检测模型（YOLO和MobileNet系列）
   if (isObjectDetectionModel(model_type)) {
-    model = createObjectDetectionModel(model_type, config);
+    model = createObjectDetectionModel(model_type);
   }
   // 2. 人脸检测模型
   else if (isFaceDetectionModel(model_type)) {
@@ -92,27 +227,18 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   }
   // 6. 分割模型
   else if (isSegmentationModel(model_type)) {
-    model = createSegmentationModel(model_type, config);
+    model = createSegmentationModel(model_type);
   }
   // 7. 特征提取模型
   else if (isFeatureExtractionModel(model_type)) {
-    model = createFeatureExtractionModel(model_type, config);
+    model = createFeatureExtractionModel(model_type);
   }
   // 8. 其他模型
   else if (isOCRModel(model_type)) {
     model = createOCRModel(model_type);
   } else {
-    LOGE("model type not supported: %d", model_type);
+    LOGE("model type %s not supported", modelTypeToString(model_type).c_str());
     return nullptr;
-  }
-
-  LOGI("to open model: %s", model_path.c_str());
-  // 初始化模型
-  if (model) {
-    int ret = model->modelOpen(model_path);
-    if (ret != 0) {
-      return nullptr;
-    }
   }
   return model;
 }
@@ -130,14 +256,13 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8N_DET_TRAFFIC_LIGHT ||
           model_type == ModelType::YOLOV8N_DET_HEAD_HARDHAT ||
           model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON ||
-          model_type == ModelType::YOLOV8_DET_COCO80 ||
-          model_type == ModelType::YOLOV10_DET_COCO80 ||
-          model_type == ModelType::YOLOV6_DET_COCO80 ||
+          model_type == ModelType::YOLOV8N_DET_COCO80 ||
+          model_type == ModelType::YOLOV10N_DET_COCO80 ||
+          model_type == ModelType::YOLOV6N_DET_COCO80 ||
           model_type == ModelType::PPYOLOE_DET_COCO80 ||
           model_type == ModelType::YOLOV8 || model_type == ModelType::YOLOV10 ||
-          model_type == ModelType::YOLOV3 || model_type == ModelType::YOLOV5 ||
           model_type == ModelType::YOLOV6 || model_type == ModelType::PPYOLOE ||
-          model_type == ModelType::MBV2_DET_PERSON);
+          model_type == ModelType::MBV2_DET_PERSON_256_448);
 }
 
 bool TDLModelFactory::isFaceDetectionModel(const ModelType model_type) {
@@ -161,6 +286,9 @@ bool TDLModelFactory::isClassificationModel(const ModelType model_type) {
           model_type == ModelType::CLS_KEYPOINT_HAND_GESTURE ||
           model_type == ModelType::CLS_SOUND_BABAY_CRY ||
           model_type == ModelType::CLS_SOUND_COMMAND ||
+          model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSHIYUN ||
+          model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSUANNENG ||
+          model_type == ModelType::CLS_SOUND_COMMAND_XIAOAIXIAOAI ||
           model_type == ModelType::CLS_ATTRIBUTE_FACE ||
           model_type == ModelType::CLS_RGBLIVENESS ||
           model_type == ModelType::CLS_IMG);
@@ -177,7 +305,6 @@ bool TDLModelFactory::isFeatureExtractionModel(const ModelType model_type) {
           model_type == ModelType::CLIP_FEATURE_TEXT ||
           model_type == ModelType::RESNET_FEATURE_BMFACE_R34 ||
           model_type == ModelType::RESNET_FEATURE_BMFACE_R50 ||
-          model_type == ModelType::RECOGNITION_INSIGHTFACE_R34 ||
           model_type == ModelType::RECOGNITION_CVIFACE ||
           model_type == ModelType::FEATURE_IMG);
 }
@@ -188,9 +315,7 @@ bool TDLModelFactory::isOCRModel(const ModelType model_type) {
 
 // 创建函数实现
 std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
-    const ModelType model_type,
-
-    const std::map<std::string, std::string> &config) {
+    const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
   int num_classes = 0;
   std::map<int, TDLObjectType> model_type_mapping;
@@ -244,55 +369,29 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_HARD_HAT;
   } else if (model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON) {
     num_classes = 1;
-  } else if (model_type == ModelType::YOLOV10_DET_COCO80) {
-    model_category = 1;
+  } else if (model_type == ModelType::YOLOV8N_DET_COCO80) {
+    model_category = 0;  // YOLOV8
     num_classes = 80;
-  } else if (model_type == ModelType::YOLOV8_DET_COCO80) {
+  } else if (model_type == ModelType::YOLOV10N_DET_COCO80) {
+    model_category = 1;  // YOLOV10
     num_classes = 80;
-  } else if (model_type == ModelType::YOLOV6_DET_COCO80) {
-    model_category = 2;
+  } else if (model_type == ModelType::YOLOV6N_DET_COCO80) {
+    model_category = 2;  // YOLOV6
     num_classes = 80;
   } else if (model_type == ModelType::PPYOLOE_DET_COCO80) {
-    model_category = 7;
+    model_category = 7;  // PPYOLOE
     num_classes = 80;
-  } else if (model_type == ModelType::MBV2_DET_PERSON) {
-    model_category = 6;
+  } else if (model_type == ModelType::MBV2_DET_PERSON_256_448) {
+    model_category = 6;  // MobileDetV2
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_PERSON;
   } else if (model_type == ModelType::YOLOV8) {
-    if (config.find("num_cls") != config.end()) {
-      num_classes = std::stoi(config.at("num_cls"));
-    } else {
-      printf(
-          "num_cls not found in config for custom yolov8 model,would parse "
-          "automatically");
-    }
+    model_category = 0;  // YOLOV8
   } else if (model_type == ModelType::YOLOV10) {
-    model_category = 1;
-    if (config.find("num_cls") != config.end()) {
-      num_classes = std::stoi(config.at("num_cls"));
-    } else {
-      printf(
-          "num_cls not found in config for custom yolov8 model,would parse "
-          "automatically");
-    }
+    model_category = 1;  // YOLOV10
   } else if (model_type == ModelType::YOLOV6) {
-    model_category = 2;
-    if (config.find("num_cls") != config.end()) {
-      num_classes = std::stoi(config.at("num_cls"));
-    } else {
-      printf(
-          "num_cls not found in config for custom yolov6 model,would parse "
-          "automatically");
-    }
+    model_category = 2;  // YOLOV6
   } else if (model_type == ModelType::PPYOLOE) {
-    model_category = 7;
-    if (config.find("num_cls") != config.end()) {
-      num_classes = std::stoi(config.at("num_cls"));
-    } else {
-      printf(
-          "num_cls not found in config for custom ppyoloe model,would parse "
-          "automatically");
-    }
+    model_category = 7;  // PPYOLOE
   } else {
     LOGE("model type not supported: %d", model_type);
     return nullptr;
@@ -310,10 +409,12 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
   } else if (model_category == 7) {
     model = std::make_shared<PPYoloEDetection>(std::make_pair(4, num_classes));
   } else {
-    LOGE("model type not supported: %d", model_type);
+    LOGE("createObjectDetectionModel failed,model type not supported: %d",
+         model_type);
     return nullptr;
   }
-
+  LOGIP("createObjectDetectionModel success,model type:%d,category:%d",
+        model_type, model_category);
   model->setTypeMapping(model_type_mapping);
 
   return model;
@@ -341,44 +442,18 @@ std::shared_ptr<BaseModel> TDLModelFactory::createLaneDetectionModel(
   return model;
 }
 void TDLModelFactory::setModelDir(const std::string &model_dir) {
-  if (model_dir_ == "") {
-    for (auto &model_type : model_path_map_) {
-      model_path_map_[model_type.first] = model_dir + model_type.second;
-    }
-  } else {
-    for (auto &model_type : model_path_map_) {
-      model_path_map_[model_type.first] =
-          model_type.second.replace(0, model_dir_.size(), model_dir);
-    }
-  }
   model_dir_ = model_dir;
-}
-void TDLModelFactory::setModelPath(const ModelType model_type,
-                                   const std::string &model_path) {
-  model_path_map_[model_type] = model_path;
-}
-
-void TDLModelFactory::setModelPathMap(
-    const std::map<ModelType, std::string> &model_path_map) {
-  model_path_map_ = model_path_map;
+  LOGIP("setModelDir success,model_dir:%s", model_dir.c_str());
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::createSegmentationModel(
-    const ModelType model_type,
-    const std::map<std::string, std::string> &config) {
+    const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
   if (model_type == ModelType::YOLOV8_SEG_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
   } else if (model_type == ModelType::YOLOV8_SEG) {
     int num_cls = 0;
-    if (config.find("num_cls") != config.end()) {
-      num_cls = std::stoi(config.at("num_cls"));
-    } else {
-      printf(
-          "num_cls not found in config for custom yolov8 seg model,would parse "
-          "automatically");
-    }
     model =
         std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, num_cls));
   } else if (model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE) {
@@ -389,8 +464,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createSegmentationModel(
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::createFeatureExtractionModel(
-    const ModelType model_type,
-    const std::map<std::string, std::string> &config) {
+    const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
   if (model_type == ModelType::CLIP_FEATURE_IMG) {
@@ -399,7 +473,6 @@ std::shared_ptr<BaseModel> TDLModelFactory::createFeatureExtractionModel(
     model = std::make_shared<Clip_Text>();
   } else if (model_type == ModelType::RESNET_FEATURE_BMFACE_R34 ||
              model_type == ModelType::RESNET_FEATURE_BMFACE_R50 ||
-             model_type == ModelType::RECOGNITION_INSIGHTFACE_R34 ||
              model_type == ModelType::RECOGNITION_CVIFACE ||
              model_type == ModelType::FEATURE_IMG) {
     model = std::make_shared<FeatureExtraction>();
@@ -439,8 +512,11 @@ std::shared_ptr<BaseModel> TDLModelFactory::createClassificationModel(
     model = std::make_shared<HandKeypointClassification>();
   } else if (model_type == ModelType::CLS_SOUND_BABAY_CRY) {
     model = std::make_shared<AudioClassification>();
-  } else if (model_type == ModelType::CLS_SOUND_COMMAND) {
-    model = std::make_shared<AudioClassification>(std::make_pair(128, 1));
+  } else if (model_type == ModelType::CLS_SOUND_COMMAND ||
+             model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSHIYUN ||
+             model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSUANNENG ||
+             model_type == ModelType::CLS_SOUND_COMMAND_XIAOAIXIAOAI) {
+    model = std::make_shared<AudioClassification>();
   } else if (model_type == ModelType::CLS_ATTRIBUTE_FACE) {
     model = std::make_shared<FaceAttribute_CLS>();
   }
@@ -457,4 +533,128 @@ std::shared_ptr<BaseModel> TDLModelFactory::createOCRModel(
   }
 
   return model;
+}
+
+std::string TDLModelFactory::getModelPath(const ModelType model_type) {
+  if (model_dir_ == "") {
+    LOGE("model_dir not set");
+    return "";
+  }
+  std::string model_type_str = modelTypeToString(model_type);
+  if (model_config_map_.find(model_type_str) == model_config_map_.end()) {
+    LOGE("model config not found for model type: %s", model_type_str.c_str());
+    return "";
+  }
+  nlohmann::json model_config = model_config_map_[model_type_str];
+  std::string model_file_name = model_config.at("file_name").get<std::string>();
+  std::string model_path;
+  std::string platform;
+  std::string model_extension;
+  getPlatformAndModelExtension(platform, model_extension);
+  if (model_file_name.find(model_extension) != std::string::npos) {
+    if ('/' == model_file_name[0]) {
+      model_path = model_file_name;
+    } else {
+      model_path = model_dir_ + std::string("/") + platform + std::string("/") +
+                   model_file_name;
+    }
+  } else {
+    model_path = model_dir_ + std::string("/") + platform + std::string("/") +
+                 model_file_name + std::string("_") + platform +
+                 model_extension;
+  }
+
+  return model_path;
+}
+
+ModelConfig TDLModelFactory::parseModelConfig(
+    const nlohmann::json &json_config) {
+  ModelConfig model_config;
+
+  for (auto it = json_config.begin(); it != json_config.end(); ++it) {
+    const std::string key = it.key();
+    const nlohmann::json &val = it.value();
+
+    if (key == "_comment") {
+      model_config.comment = val.get<std::string>();
+      continue;
+    } else if (key == "is_coco_types") {
+      bool is_coco_types = val.get<bool>();
+      if (is_coco_types) {
+        model_config.types = coco_types_;
+      }
+    } else if (key == "types") {
+      model_config.types = val.get<std::vector<std::string>>();
+    } else if (key == "rgb_order") {
+      model_config.rgb_order = val.get<std::string>();
+    } else if (key == "mean") {
+      model_config.mean = val.get<std::vector<float>>();
+    } else if (key == "std") {
+      model_config.std = val.get<std::vector<float>>();
+    } else if (val.is_number_integer()) {
+      model_config.custom_config_i[key] = val.get<int>();
+      LOGI("model config parse int,key:%s,value:%d", key.c_str(),
+           val.get<int>());
+    } else if (val.is_number_float()) {
+      model_config.custom_config_f[key] = val.get<float>();
+      LOGI("model config parse float,key:%s,value:%f", key.c_str(),
+           val.get<float>());
+    } else if (val.is_string()) {
+      model_config.custom_config_str[key] = val.get<std::string>();
+      LOGI("model config parse string,key:%s,value:%s", key.c_str(),
+           val.get<std::string>().c_str());
+    } else {
+      // 修复 dump() 的临时对象悬空问题：先把它存到局部变量里
+      std::string dumped = val.dump();
+      LOGW("model config %s : %s not supported", key.c_str(), dumped.c_str());
+    }
+  }
+
+  return model_config;
+}
+
+std::vector<std::string> TDLModelFactory::getModelList() {
+  std::vector<std::string> model_list;
+  for (auto &item : model_config_map_) {
+    model_list.push_back(item.first);
+  }
+  return model_list;
+}
+
+void TDLModelFactory::getPlatformAndModelExtension(
+    std::string &platform, std::string &model_extension) {
+#if defined(__CV180X__)
+  platform = "cv180x";
+  model_extension = ".cvimodel";
+#elif defined(__CV181X__)
+  platform = "cv181x";
+  model_extension = ".cvimodel";
+#elif defined(__CV182X__)
+  platform = "cv182x";
+  model_extension = ".cvimodel";
+#elif defined(__CV184X__)
+  platform = "cv184x";
+  model_extension = ".bmodel";
+#elif defined(__CV186X__)
+  platform = "cv186x";
+  model_extension = ".bmodel";
+#elif defined(__BM1684__)
+  platform = "bm1684";
+  model_extension = ".bmodel";
+#elif defined(__BM1688__)
+  platform = "bm1688";
+  model_extension = ".bmodel";
+#elif defined(__BM1684X__)
+  platform = "bm1684x";
+  model_extension = ".bmodel";
+#elif defined(__CMODEL_CV181X__)
+  platform = "cv181x";
+  model_extension = ".cvimodel";
+#elif defined(__CMODEL_CV184X__)
+  platform = "cv184x";
+  model_extension = ".bmodel";
+#else
+  LOGE("platform not supported");
+  assert(false);
+#endif
 }

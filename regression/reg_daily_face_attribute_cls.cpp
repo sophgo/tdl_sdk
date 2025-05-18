@@ -26,16 +26,19 @@ class FaceAttributeClsBmTestSuite : public CVI_TDLModelTestSuite {
 
   std::string m_model_path;
   std::shared_ptr<BaseModel> m_model;
-  TDLModelFactory model_factory_;
 
  protected:
   virtual void SetUp() {
-    std::string model_name = std::string(m_json_object["model_name"]);
-    m_model_path = (m_model_dir / fs::path(model_name)).string();
-    m_model =
-        model_factory_.getModel(ModelType::CLS_ATTRIBUTE_FACE, m_model_path);
+    int32_t ret = TDLModelFactory::getInstance().loadModelConfig();
+    if (ret != 0) {
+      LOGE("load model config failed");
+      return;
+    }
+    TDLModelFactory::getInstance().setModelDir(m_model_dir);
 
-    ASSERT_NE(m_model, nullptr);
+    std::string model_id = std::string(m_json_object["model_id"]);
+    det_ = TDLModelFactory::getInstance().getModel(model_id);
+    ASSERT_NE(det_, nullptr);
   }
 
   virtual void TearDown() {}

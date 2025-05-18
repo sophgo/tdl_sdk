@@ -145,7 +145,7 @@ TDLDataType
    * - 模型名称
      - 注释
 
-   * - MBV2_DET_PERSON
+   * - MBV2_DET_PERSON_256_448
      - 人体检测模型
 
    * - YOLOV5_DET_COCO80
@@ -285,7 +285,7 @@ TDLDataType
 
      - 目标检测
 
-     - MBV2_DET_PERSON
+     - MBV2_DET_PERSON_256_448
 
        YOLOV5_DET_COCO80
 

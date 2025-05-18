@@ -40,7 +40,7 @@ int32_t BaseImage::prepareImageInfo(uint32_t width, uint32_t height,
 }
 
 int32_t BaseImage::initImageInfo() {
-  uint32_t pix_size = get_data_type_size(getPixDataType());
+  uint32_t pix_size = CommonUtils::getDataTypeSize(getPixDataType());
   if (image_type_ == ImageType::RAW_FRAME) {
     strides_ = {width_ * pix_size};
     plane_num_ = 1;
@@ -203,7 +203,7 @@ int32_t BaseImage::freeMemory() {
 
 bool BaseImage::isInitialized() const { return memory_block_ != nullptr; }
 bool BaseImage::isAligned() const {
-  int row_bytes = getWidth() * get_data_type_size(getPixDataType());
+  int row_bytes = getWidth() * CommonUtils::getDataTypeSize(getPixDataType());
   bool is_aligned = row_bytes == getStrides()[0];
   return is_aligned;
 }

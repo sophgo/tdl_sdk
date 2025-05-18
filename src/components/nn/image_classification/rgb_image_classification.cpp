@@ -56,20 +56,17 @@ void parse_output(T *ptr_out, const int num_cls, float qscale,
 }
 
 RgbImageClassification::RgbImageClassification() : BaseModel() {
-  float mean[3] = {0, 0, 0};
-  float std[3] = {255, 255, 255};
-
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.mean[i] = mean[i] / std[i];
-    net_param_.pre_params.scale[i] = 1.0 / std[i];
-  }
-
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-
-  net_param_.pre_params.keep_aspect_ratio = true;
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = false;
 }
 
 int RgbImageClassification::onModelOpened() {
+  if (net_param_.model_config.std.size() == 0 ||
+      net_param_.model_config.mean.size() == 0) {
+    LOGE("RgbImageClassification should set mean and std");
+    assert(false);
+    return -1;
+  }
   if (net_->getOutputNames().size() != 1) {
     LOGE("ImageClassification only expected 1 output branch!\n");
     return -1;

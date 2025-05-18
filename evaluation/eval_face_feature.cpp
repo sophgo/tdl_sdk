@@ -10,18 +10,17 @@
 #include "model/base_model.hpp"
 #include "tdl_model_factory.hpp"
 
-
 template <typename T>
 std::string embeddingToString(void *embedding, size_t num) {
-    T *feature = reinterpret_cast<T *>(embedding);
-    std::string result;
-    for (size_t i = 0; i < num; ++i) {
-        result += std::to_string(feature[i]);
-        if (i < num - 1) {
-            result += " ";
-        }
+  T *feature = reinterpret_cast<T *>(embedding);
+  std::string result;
+  for (size_t i = 0; i < num; ++i) {
+    result += std::to_string(feature[i]);
+    if (i < num - 1) {
+      result += " ";
     }
-    return result;
+  }
+  return result;
 }
 
 class FaceFeatureEvaluator : public Evaluator {
@@ -59,23 +58,25 @@ FaceFeatureEvaluator::~FaceFeatureEvaluator() {}
 std::string FaceFeatureEvaluator::packOutput(
 
     std::shared_ptr<ModelOutputInfo> model_output) {
-
   if (model_output->getType() == ModelOutputType::FEATURE_EMBEDDING) {
     auto feature_info =
         std::static_pointer_cast<ModelFeatureInfo>(model_output);
     std::string result;
 
     switch (feature_info->embedding_type) {
-        case TDLDataType::INT8:
-            return embeddingToString<int8_t>(feature_info->embedding, feature_info->embedding_num);
-        case TDLDataType::UINT8:
-            return embeddingToString<uint8_t>(feature_info->embedding, feature_info->embedding_num);
-        case TDLDataType::FP32:
-            return embeddingToString<float>(feature_info->embedding, feature_info->embedding_num);
-        default:
-            assert(false && "Unsupported embedding_type");
-            return "";
-    }    
+      case TDLDataType::INT8:
+        return embeddingToString<int8_t>(feature_info->embedding,
+                                         feature_info->embedding_num);
+      case TDLDataType::UINT8:
+        return embeddingToString<uint8_t>(feature_info->embedding,
+                                          feature_info->embedding_num);
+      case TDLDataType::FP32:
+        return embeddingToString<float>(feature_info->embedding,
+                                        feature_info->embedding_num);
+      default:
+        assert(false && "Unsupported embedding_type");
+        return "";
+    }
 
   } else {
     std::cout << "model_output->getType() is not FEATURE_EMBEDDING"
@@ -114,7 +115,8 @@ std::string FaceFeatureEvaluator::rtrim(const std::string &s) {
 }
 
 // 显示进度条
-void FaceFeatureEvaluator::showProgressBar(int current, int total,
+void FaceFeatureEvaluator::showProgressBar(int current,
+                                           int total,
                                            int bar_width) {
   float progress = float(current) / total;
   int pos = bar_width * progress;
@@ -227,71 +229,32 @@ void FaceFeatureEvaluator::process_label_file(const std::string &label_file,
       processed_count, output_file.c_str());
 }
 
-void set_preprocess_parameters(std::shared_ptr<BaseModel> model) {
-  PreprocessParams pre_params;
-
-  model->getPreprocessParameters(pre_params);
-
-  pre_params.mean[0] = 0.99609375;
-  pre_params.mean[1] = 0.99609375;
-  pre_params.mean[2] = 0.99609375;
-
-  pre_params.scale[0] = 0.0078125;
-  pre_params.scale[1] = 0.0078125;
-  pre_params.scale[2] = 0.0078125;
-
-  model->setPreprocessParameters(pre_params);
-}
-
-
-void construct_model_id_mapping(
-    std::map<std::string, ModelType> &model_id_mapping) {
-  model_id_mapping["RESNET_FEATURE_BMFACE_R34"] = ModelType::RESNET_FEATURE_BMFACE_R34;
-  model_id_mapping["RESNET_FEATURE_BMFACE_R50"] = ModelType::RESNET_FEATURE_BMFACE_R50;
-  model_id_mapping["RECOGNITION_INSIGHTFACE_R34"] =ModelType::RECOGNITION_INSIGHTFACE_R34;
-  model_id_mapping["RECOGNITION_CVIFACE"] = ModelType::RECOGNITION_CVIFACE;
-}
-
-
 int main(int argc, char **argv) {
-
-  std::map<std::string, ModelType> model_id_mapping;
-  construct_model_id_mapping(model_id_mapping);
-
   if (argc != 5) {
-    printf("Usage: %s <model_id_name> <model_path> <label_file> <output_file>\n", argv[0]);
-    printf("model_id_name:\n");
-    for (auto &item : model_id_mapping) {
-      printf("%s\n", item.first.c_str());
-    }
+    printf("Usage: %s <model_id_name> <model_dir> <label_file> <output_file>\n",
+           argv[0]);
+    printf(
+        "surpported_model_list:\nRECOGNITION_CVIFACE,RESNET_FEATURE_BMFACE_R34,"
+        "RESNET_FEATURE_BMFACE_R50");
     return -1;
   }
 
   std::string model_id_name = argv[1];
-  if (model_id_mapping.find(model_id_name) == model_id_mapping.end()) {
-    printf("model_id_name not found\n");
-    return -1;
-  }
-
-  std::string model_path = argv[2];
+  std::string model_dir = argv[2];
   std::string label_file = argv[3];
   std::string output_file = argv[4];
 
   // 创建模型工厂并获取特征提取模型
 
-  TDLModelFactory model_factory;
-  ModelType model_id = model_id_mapping[model_id_name];
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
   std::shared_ptr<BaseModel> feature_model =
-      model_factory.getModel(model_id, model_path);
+      model_factory.getModel(model_id_name);
 
   if (!feature_model) {
     printf("Failed to create feature extraction model\n");
     return -1;
-  }
-
-  if (model_id == ModelType::RECOGNITION_INSIGHTFACE_R34 ||
-      model_id == ModelType::RECOGNITION_CVIFACE) {
-    set_preprocess_parameters(feature_model);
   }
 
   // 创建评估器并运行评估

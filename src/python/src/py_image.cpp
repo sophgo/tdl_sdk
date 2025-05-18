@@ -37,7 +37,8 @@ PyImage::PyImage(const py::array& numpy_array, ImageFormat format) {
   image_ =
       ImageFactory::createImage(width, height, format, tdl_data_type, true);
   int32_t ret = image_->copyFromBuffer(
-      data, width * height * channel * get_data_type_size(tdl_data_type));
+      data,
+      width * height * channel * CommonUtils::getDataTypeSize(tdl_data_type));
   if (ret != 0) {
     throw std::invalid_argument("copy from buffer failed,ret:" +
                                 std::to_string(ret));

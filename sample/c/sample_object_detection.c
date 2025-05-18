@@ -3,9 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "meta_visualize.h"
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
-#include "meta_visualize.h"
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
@@ -13,17 +13,14 @@ int get_model_info(char *model_path, TDLModel *model_index) {
     *model_index = TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE;
   } else if (strstr(model_path, "yolov8n_det_head_hardhat") != NULL) {
     *model_index = TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT;
-  } else if (strstr(model_path, "yolov10n_det_coco80") != NULL ||
-             strstr(model_path, "yolov8s_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV10_DET_COCO80;
-  } else if (strstr(model_path, "yolov5s_det_coco80") != NULL ||
-             strstr(model_path, "yolov5m_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV5_DET_COCO80;
-  } else if (strstr(model_path, "yolov6n_det_coco80") != NULL ||
-             strstr(model_path, "yolov6s_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV6_DET_COCO80;
+  } else if (strstr(model_path, "yolov10n_det_coco80") != NULL) {
+    *model_index = TDL_MODEL_YOLOV10N_DET_COCO80;
+  } else if (strstr(model_path, "yolov6n_det_coco80") != NULL) {
+    *model_index = TDL_MODEL_YOLOV6N_DET_COCO80;
+  } else if (strstr(model_path, "yolov6s_det_coco80") != NULL) {
+    *model_index = TDL_MODEL_YOLOV6S_DET_COCO80;
   } else if (strstr(model_path, "yolov8n_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8_DET_COCO80;
+    *model_index = TDL_MODEL_YOLOV8N_DET_COCO80;
   } else if (strstr(model_path, "ppyoloe_det_coco80") != NULL) {
     *model_index = TDL_MODEL_PPYOLOE_DET_COCO80;
   } else if (strstr(model_path, "yolov8n_det_fire") != NULL) {
@@ -38,7 +35,7 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   } else if (strstr(model_path, "yolov8n_det_head_hardhat") != NULL) {
     *model_index = TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT;
   } else if (strstr(model_path, "yolov8n_det_head_shoulder") != NULL) {
-    *model_index =  TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER;
+    *model_index = TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER;
   } else if (strstr(model_path, "yolov8n_det_ir_person") != NULL ||
              strstr(model_path, "yolov8n_det_monitor_person") != NULL ||
              strstr(model_path, "yolov8n_det_overlook_person") != NULL) {
@@ -50,7 +47,7 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   } else if (strstr(model_path, "yolov8n_det_traffic_light") != NULL) {
     *model_index = TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT;
   } else if (strstr(model_path, "mbv2_det_person") != NULL) {
-    *model_index = TDL_MODEL_MBV2_DET_PERSON;
+    *model_index = TDL_MODEL_MBV2_DET_PERSON_256_448;
   } else {
     ret = -1;
   }
@@ -59,11 +56,14 @@ int get_model_info(char *model_path, TDLModel *model_index) {
 
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
-  printf("  %s -m <model_path> -i <input_image> -o <output_image>\n", prog_name);
-  printf("  %s --model_path <path> --input <image> --output <image>\n\n", prog_name);
+  printf("  %s -m <model_path> -i <input_image> -o <output_image>\n",
+         prog_name);
+  printf("  %s --model_path <path> --input <image> --output <image>\n\n",
+         prog_name);
   printf("Options:\n");
-  printf("  -m, --model_path  Path to model"
-         "<yolov8n_det_person_vehicle>\n");
+  printf(
+      "  -m, --model_path  Path to model"
+      "<yolov8n_det_person_vehicle>\n");
   printf("  -i, --input       Path to input image\n");
   printf("  -o, --output      Path to output image\n");
   printf("  -h, --help        Show this help message\n");
@@ -74,13 +74,11 @@ int main(int argc, char *argv[]) {
   char *input_image = NULL;
   char *output_image = NULL;
 
-  struct option long_options[] = {
-    {"model_path",   required_argument, 0, 'm'},
-    {"input",        required_argument, 0, 'i'},
-    {"output",       required_argument, 0, 'o'},
-    {"help",         no_argument,       0, 'h'},
-    {NULL, 0, NULL, 0}
-  };
+  struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
+                                  {"input", required_argument, 0, 'i'},
+                                  {"output", required_argument, 0, 'o'},
+                                  {"help", no_argument, 0, 'h'},
+                                  {NULL, 0, NULL, 0}};
 
   int opt;
   while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
@@ -128,13 +126,13 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  //The default threshold is 0.5
+  // The default threshold is 0.5
   ret = TDL_SetModelThreshold(tdl_handle, model_id, 0.5);
   if (ret != 0) {
     printf("TDL_SetModelThreshold failed with %#x!\n", ret);
@@ -161,9 +159,8 @@ int main(int argc, char *argv[]) {
         printf("class_id : %d, ", obj_meta.info[i].class_id);
         printf("score : %f, ", obj_meta.info[i].score);
         printf("bbox : [%f %f %f %f]\n", obj_meta.info[i].box.x1,
-                                          obj_meta.info[i].box.x2,
-                                          obj_meta.info[i].box.y1,
-                                          obj_meta.info[i].box.y2);
+               obj_meta.info[i].box.x2, obj_meta.info[i].box.y1,
+               obj_meta.info[i].box.y2);
         boxes[i].x1 = obj_meta.info[i].box.x1;
         boxes[i].y1 = obj_meta.info[i].box.y1;
         boxes[i].x2 = obj_meta.info[i].box.x2;

@@ -1,6 +1,8 @@
 #include "utils/common_utils.hpp"
-
-uint32_t get_data_type_size(TDLDataType data_type) {
+#include <dlfcn.h>
+#include <limits.h>  // for PATH_MAX
+#include <string>
+uint32_t CommonUtils::getDataTypeSize(TDLDataType data_type) {
   switch (data_type) {
     case TDLDataType::FP32:
       return 4;
@@ -25,7 +27,7 @@ uint32_t get_data_type_size(TDLDataType data_type) {
   }
 }
 
-InferencePlatform get_platform() {
+InferencePlatform CommonUtils::getPlatform() {
 #if defined(__BM168X__)
   return InferencePlatform::BM168X;
 #elif defined(__CV186X__)
@@ -44,8 +46,8 @@ InferencePlatform get_platform() {
 #endif
 }
 
-
-bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len) {
+bool CommonUtils::readBinaryFile(const std::string &strf,
+                                 std::vector<uint8_t> &buffer) {
   FILE *fp = fopen(strf.c_str(), "rb");
   if (fp == nullptr) {
     printf("read file failed,%s\n", strf.c_str());
@@ -54,11 +56,33 @@ bool read_binary_file(const std::string &strf, void *p_buffer, int buffer_len) {
   fseek(fp, 0, SEEK_END);
   int len = ftell(fp);
   fseek(fp, 0, SEEK_SET);
-  if (len != buffer_len) {
-    printf("size not equal,expect:%d,has %d\n", buffer_len, len);
-    return false;
-  }
-  fread(p_buffer, len, 1, fp);
+  buffer.resize(len);
+  fread(buffer.data(), len, 1, fp);
   fclose(fp);
   return true;
+}
+
+std::string CommonUtils::getLibraryPath() {
+  Dl_info info{};
+  // use the address of any function or static in your .so:
+  if (dladdr((void *)&CommonUtils::getLibraryPath, &info) && info.dli_fname) {
+    // info.dli_fname is the path as the dynamic loader saw it
+    char resolved[PATH_MAX];
+    if (realpath(info.dli_fname, resolved))
+      return std::string(resolved);
+    else
+      return std::string(info.dli_fname);
+  }
+  return {};
+}
+
+std::string CommonUtils::getLibraryDir() {
+  auto full = getLibraryPath();
+  auto pos = full.find_last_of('/');
+  return (pos != std::string::npos ? full.substr(0, pos) : std::string{});
+}
+
+std::string CommonUtils::getParentDir(const std::string &path) {
+  auto pos = path.find_last_of('/');
+  return (pos != std::string::npos ? path.substr(0, pos) : std::string{});
 }

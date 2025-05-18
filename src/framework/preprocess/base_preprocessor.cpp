@@ -11,33 +11,44 @@
 std::vector<float> BasePreprocessor::getRescaleConfig(
     const PreprocessParams& params, const int image_width,
     const int image_height) const {
-  std::vector<float> rescale_params;
-  float src_w = image_width;
-  float src_h = image_height;
+  // 1) determine the crop region (or full image if no crop)
+  int cx = params.crop_x;
+  int cy = params.crop_y;
+  int cw = (params.crop_width > 0 ? params.crop_width : image_width);
+  int ch = (params.crop_height > 0 ? params.crop_height : image_height);
 
-  // TODO:check whether need to support crop
-  if (params.crop_width != 0 && params.crop_height != 0) {
-    src_w = params.crop_width;
-    src_h = params.crop_height;
-  }
-  float scale_x = params.dst_width / src_w;
-  float scale_y = params.dst_height / src_h;
+  // clamp to valid region
+  cx = std::max(0, std::min(cx, image_width - 1));
+  cy = std::max(0, std::min(cy, image_height - 1));
+  cw = std::max(1, std::min(cw, image_width - cx));
+  ch = std::max(1, std::min(ch, image_height - cy));
+  // 2) compute forward scales & pads (crop → dst)
+  float sx = float(params.dst_width) / float(cw);
+  float sy = float(params.dst_height) / float(ch);
+
+  float fwd_sx, fwd_sy, pad_x = 0.0f, pad_y = 0.0f;
   if (params.keep_aspect_ratio) {
-    float ratio = std::min(scale_x, scale_y);
-    rescale_params.push_back(ratio);
-    rescale_params.push_back(ratio);
-    int offset_x = (params.dst_width - src_w * ratio) / 2;
-    int offset_y = (params.dst_height - src_h * ratio) / 2;
-    rescale_params.push_back(offset_x);
-    rescale_params.push_back(offset_y);
+    float s = std::min(sx, sy);
+    fwd_sx = fwd_sy = s;
+    pad_x = (params.dst_width - cw * s) * 0.5f;
+    pad_y = (params.dst_height - ch * s) * 0.5f;
   } else {
-    rescale_params.push_back(scale_x);
-    rescale_params.push_back(scale_y);
-    rescale_params.push_back(0.0f);
-    rescale_params.push_back(0.0f);
+    fwd_sx = sx;
+    fwd_sy = sy;
   }
 
-  return rescale_params;
+  // 3) invert them so that: original = infer * inv_scale + inv_offset
+  float inv_sx = 1.0f / fwd_sx;
+  float inv_sy = 1.0f / fwd_sy;
+
+  // account for both the pad *and* the crop origin
+  float off_x = cx - pad_x * inv_sx;
+  float off_y = cy - pad_y * inv_sy;
+
+  return {/* scalex  */ inv_sx,
+          /* scaley  */ inv_sy,
+          /* offsetx */ off_x,
+          /* offsety */ off_y};
 }
 std::shared_ptr<BaseImage> BasePreprocessor::crop(
     const std::shared_ptr<BaseImage>& image, int x, int y, int width,
@@ -102,7 +113,7 @@ std::shared_ptr<BasePreprocessor> PreprocessorFactory::createPreprocessor(
     InferencePlatform platform) {
   if (platform == InferencePlatform::UNKOWN ||
       platform == InferencePlatform::AUTOMATIC) {
-    platform = get_platform();
+    platform = CommonUtils::getPlatform();
   }
   LOGI("PreprocessorFactory createPreprocessor,platform:%d\n", platform);
   switch (platform) {

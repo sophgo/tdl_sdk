@@ -38,43 +38,16 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
   cv::imwrite(str_img_name, mat);
 }
 
-void construct_model_id_mapping(
-    std::map<std::string, ModelType> &model_id_mapping) {
-    model_id_mapping["MBV2_DET_PERSON"] = ModelType::MBV2_DET_PERSON;
-    
-    // YOLO general models
-    model_id_mapping["YOLOV6_DET_COCO80"] = ModelType::YOLOV6_DET_COCO80;
-    model_id_mapping["YOLOV8_DET_COCO80"] = ModelType::YOLOV8_DET_COCO80;
-    model_id_mapping["YOLOV10_DET_COCO80"] = ModelType::YOLOV10_DET_COCO80;
-
-    // YOLOv8 specialized models
-    model_id_mapping["YOLOV8N_DET_HAND"] = ModelType::YOLOV8N_DET_HAND;
-    model_id_mapping["YOLOV8N_DET_PET_PERSON"] = ModelType::YOLOV8N_DET_PET_PERSON;
-    model_id_mapping["YOLOV8N_DET_PERSON_VEHICLE"] = ModelType::YOLOV8N_DET_PERSON_VEHICLE;
-    model_id_mapping["YOLOV8N_DET_HAND_FACE_PERSON"] = ModelType::YOLOV8N_DET_HAND_FACE_PERSON;
-    model_id_mapping["YOLOV8N_DET_HEAD_PERSON"] = ModelType::YOLOV8N_DET_HEAD_PERSON;
-    model_id_mapping["YOLOV8N_DET_HEAD_HARDHAT"] = ModelType::YOLOV8N_DET_HEAD_HARDHAT;
-    model_id_mapping["YOLOV8N_DET_FIRE_SMOKE"] = ModelType::YOLOV8N_DET_FIRE_SMOKE;
-    model_id_mapping["YOLOV8N_DET_FIRE"] = ModelType::YOLOV8N_DET_FIRE;
-    model_id_mapping["YOLOV8N_DET_HEAD_SHOULDER"] = ModelType::YOLOV8N_DET_HEAD_SHOULDER;
-    model_id_mapping["YOLOV8N_DET_LICENSE_PLATE"] = ModelType::YOLOV8N_DET_LICENSE_PLATE;
-    model_id_mapping["YOLOV8N_DET_TRAFFIC_LIGHT"] = ModelType::YOLOV8N_DET_TRAFFIC_LIGHT;
-    model_id_mapping["YOLOV8N_DET_MONITOR_PERSON"] = ModelType::YOLOV8N_DET_MONITOR_PERSON;
-}
-
 int main(int argc, char **argv) {
-  std::map<std::string, ModelType> model_id_mapping;
-  construct_model_id_mapping(model_id_mapping);
-
   if (argc != 4 && argc != 5) {
     printf(
-        "Usage: %s <model_id_name> <model_path> <image_path> "
+        "Usage: %s <model_id_name> <model_dir> <image_path> "
         "<model_threshold>\n",
         argv[0]);
-    printf("Usage: %s <model_id_name> <model_path> <image_path>\n", argv[0]);
+    printf("Usage: %s <model_id_name> <model_dir> <image_path>\n", argv[0]);
     printf("model_id_name:\n");
-    for (auto &item : model_id_mapping) {
-      printf("%s\n", item.first.c_str());
+    for (auto &item : kAllModelTypes) {
+      printf("%s\n", modelTypeToString(item).c_str());
     }
     return -1;
   }
@@ -83,12 +56,8 @@ int main(int argc, char **argv) {
     model_threshold = atof(argv[4]);
   }
   std::string model_id_name = argv[1];
-  if (model_id_mapping.find(model_id_name) == model_id_mapping.end()) {
-    printf("model_id_name not found\n");
-    return -1;
-  }
-  ModelType model_id = model_id_mapping[model_id_name];
-  std::string model_path = argv[2];
+
+  std::string model_dir = argv[2];
   std::string image_path = argv[3];
 
   std::shared_ptr<BaseImage> image = ImageFactory::readImage(image_path);
@@ -96,9 +65,10 @@ int main(int argc, char **argv) {
     printf("Failed to create image\n");
     return -1;
   }
-  TDLModelFactory model_factory;
-  std::shared_ptr<BaseModel> model =
-      model_factory.getModel(model_id, model_path);
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
+  std::shared_ptr<BaseModel> model = model_factory.getModel(model_id_name);
   if (!model) {
     printf("Failed to create model\n");
     return -1;

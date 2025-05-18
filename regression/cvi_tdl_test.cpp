@@ -1,7 +1,6 @@
 #include "cvi_tdl_test.hpp"
 #include <inttypes.h>
 #include <fstream>
-#include "cvi_tdl_model_id.hpp"
 #include "tdl_model_defs.hpp"
 #include "utils/common_utils.hpp"
 // #include "core/utils/vpss_helper.h"
@@ -30,7 +29,8 @@ fs::path CVI_TDLTestContext::getJsonBaseDir() { return m_json_dir; }
 
 CVI_TDLTestContext::CVI_TDLTestContext() : m_inited(false) {}
 
-void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir,
+void CVI_TDLTestContext::init(std::string model_dir,
+                              std::string image_dir,
                               std::string json_dir) {
   if (!m_inited) {
     m_model_dir = model_dir;
@@ -165,7 +165,8 @@ float iou(const std::vector<float> &gt_object,
 bool CVI_TDLModelTestSuite::matchObjects(
     const std::vector<std::vector<float>> &gt_objects,
     const std::vector<std::vector<float>> &pred_objects,
-    const float iout_thresh, const float score_thresh) {
+    const float iout_thresh,
+    const float score_thresh) {
   std::vector<int> gt_matched(gt_objects.size(), 0);
   std::vector<int> pred_matched(pred_objects.size(), 0);
 
@@ -257,12 +258,11 @@ bool CVI_TDLModelTestSuite::matchScore(
 
 ModelType CVI_TDLModelTestSuite::stringToModelType(
     const std::string &model_type_str) {
-  auto it = model_type_map.find(model_type_str);
-  if (it != model_type_map.end()) {
-    return it->second;
-  } else {
+  ModelType model_type = modelTypeFromString(model_type_str);
+  if (model_type == ModelType::INVALID) {
     throw std::invalid_argument("Invalid model type: " + model_type_str);
   }
+  return model_type;
 }
 
 std::shared_ptr<BaseImage> CVI_TDLModelTestSuite::getInputData(
@@ -273,20 +273,17 @@ std::shared_ptr<BaseImage> CVI_TDLModelTestSuite::getInputData(
     frame = ImageFactory::readImage(image_path, true);
   } else {
     int frame_size = 0;
-    if (model_id == ModelType::CLS_SOUND_BABAY_CRY) {
-      frame_size = 96000;
-    } else if (model_id == ModelType::CLS_SOUND_COMMAND) {
-      frame_size = 32000;
-    } else {
-      std::cout << "model_id not supported" << std::endl;
+    FILE *fp = fopen(image_path.c_str(), "rb");
+    if (fp) {
+      fseek(fp, 0, SEEK_END);
+      frame_size = ftell(fp);
+      fseek(fp, 0, SEEK_SET);
+      frame = ImageFactory::createImage(frame_size, 1, ImageFormat::GRAY,
+                                        TDLDataType::UINT8, true);
+      uint8_t *data_buffer = frame->getVirtualAddress()[0];
+      fread(data_buffer, 1, frame_size, fp);
+      fclose(fp);
     }
-    unsigned char buffer[frame_size];
-    read_binary_file(image_path, buffer, frame_size);
-    frame = ImageFactory::createImage(frame_size, 1, ImageFormat::GRAY,
-                                      TDLDataType::UINT8, true);
-
-    uint8_t *data_buffer = frame->getVirtualAddress()[0];
-    memcpy(data_buffer, buffer, frame_size * sizeof(uint8_t));
   }
   return frame;
 };
@@ -297,7 +294,8 @@ bool CVI_TDLModelTestSuite::matchKeypoints(
     const std::vector<float> &gt_keypoints_score,
     const std::vector<float> &pred_keypoints_x,
     const std::vector<float> &pred_keypoints_y,
-    const std::vector<float> &pred_keypoints_score, const float position_thresh,
+    const std::vector<float> &pred_keypoints_score,
+    const float position_thresh,
     const float score_thresh) {
   if (gt_keypoints_x.size() != pred_keypoints_x.size() ||
       gt_keypoints_y.size() != pred_keypoints_y.size() ||

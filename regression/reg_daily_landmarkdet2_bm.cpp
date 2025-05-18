@@ -23,7 +23,6 @@ class FaceLandmarkerDet2TestSuite : public CVI_TDLModelTestSuite {
   virtual ~FaceLandmarkerDet2TestSuite() = default;
 
   std::string m_model_path;
-  TDLModelFactory model_factory;
 
  protected:
   virtual void SetUp() {}
@@ -65,6 +64,7 @@ TEST_F(FaceLandmarkerDet2TestSuite, accuracy) {
     std::string model_name =
         std::string(m_json_object[test_index]["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
+    TDLModelFactory &model_factory = TDLModelFactory::getInstance();
     std::shared_ptr<BaseModel> m_model =
         model_factory.getModel(ModelType::KEYPOINT_FACE_V2, model_path);
     std::shared_ptr<BasePreprocessor> preprocessor = m_model->getPreprocessor();

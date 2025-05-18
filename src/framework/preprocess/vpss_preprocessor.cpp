@@ -19,27 +19,27 @@ VpssContext::VpssContext() {
   CVI_S32 s32Ret = CVI_SUCCESS;
 
 #ifdef __CV181X__
-if(!CVI_VB_IsInited()) {
-  CVI_VB_Exit();
-  VB_CONFIG_S stVbConf;
-  memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
-  stVbConf.u32MaxPoolCnt = 1;
-  stVbConf.astCommPool[0].u32BlkSize = 100 * 100 * 3;
-  stVbConf.astCommPool[0].u32BlkCnt = 1;
+  if (!CVI_VB_IsInited()) {
+    CVI_VB_Exit();
+    VB_CONFIG_S stVbConf;
+    memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
+    stVbConf.u32MaxPoolCnt = 1;
+    stVbConf.astCommPool[0].u32BlkSize = 100 * 100 * 3;
+    stVbConf.astCommPool[0].u32BlkCnt = 1;
 
-  s32Ret = CVI_VB_SetConfig(&stVbConf);
-  if (s32Ret != CVI_SUCCESS) {
-    LOGE("CVI_VB_SetConf failed!\n");
-    assert(false);
-  }
+    s32Ret = CVI_VB_SetConfig(&stVbConf);
+    if (s32Ret != CVI_SUCCESS) {
+      LOGE("CVI_VB_SetConf failed!\n");
+      assert(false);
+    }
 
-  s32Ret = CVI_VB_Init();
-  if (s32Ret != CVI_SUCCESS) {
-    LOGE("CVI_VB_Init failed!\n");
-    assert(false);
+    s32Ret = CVI_VB_Init();
+    if (s32Ret != CVI_SUCCESS) {
+      LOGE("CVI_VB_Init failed!\n");
+      assert(false);
+    }
+    LOGI("CVI_VB_Init success");
   }
-  LOGI("CVI_VB_Init success");
-}
 #endif
 
   s32Ret = CVI_SYS_Init();
@@ -284,7 +284,7 @@ int32_t VpssPreprocessor::generateVPSSGrpAttr(
   pstVpssGrpAttr->enPixelFormat = vpss_image_src->getPixelFormat();
   pstVpssGrpAttr->u32MaxW = vpss_image_src->getWidth();
   pstVpssGrpAttr->u32MaxH = vpss_image_src->getHeight();
-#if !defined(__CV186X__) 
+#if !defined(__CV186X__)
   pstVpssGrpAttr->u8VpssDev = device_;
 #endif
   LOGI("vpss grp attr ,width:%d,height:%d,format:%d", vpss_grp_attr.u32MaxW,
@@ -315,15 +315,17 @@ int32_t VpssPreprocessor::generateVPSSChnAttr(
   } else {
     std::vector<float> rescale_params =
         getRescaleConfig(params, src_image->getWidth(), src_image->getHeight());
-    int resized_width = rescale_params[0] * src_image->getWidth();
-    int resized_height = rescale_params[1] * src_image->getHeight();
-    int offset_x = rescale_params[2];
-    int offset_y = rescale_params[3];
+    int pad_x = (params.crop_x - rescale_params[2]) / rescale_params[0];
+    int pad_y = (params.crop_y - rescale_params[3]) / rescale_params[1];
+
+    int resized_w = params.dst_width - pad_x * 2;
+    int resized_h = params.dst_height - pad_y * 2;
+
     pastVpssChnAttr->stAspectRatio.enMode = ASPECT_RATIO_MANUAL;
-    pastVpssChnAttr->stAspectRatio.stVideoRect.s32X = offset_x;
-    pastVpssChnAttr->stAspectRatio.stVideoRect.s32Y = offset_y;
-    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = resized_width;
-    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = resized_height;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.s32X = pad_x;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.s32Y = pad_y;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Width = resized_w;
+    pastVpssChnAttr->stAspectRatio.stVideoRect.u32Height = resized_h;
   }
 
   pastVpssChnAttr->stAspectRatio.u32BgColor = RGB_8BIT(0, 0, 0);

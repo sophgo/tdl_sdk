@@ -38,12 +38,11 @@ inline std::vector<float> get_box_vals(T *p_box_ptr, int num_anchor,
 YoloV8Pose::YoloV8Pose() : YoloV8Pose(std::make_tuple(64, 17, 1)) {}
 
 YoloV8Pose::YoloV8Pose(std::tuple<int, int, int> pose_tuple) {
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = 0.003922;
-    net_param_.pre_params.mean[i] = 0.0;
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = true;
+  net_param_.model_config.mean = {0.0, 0.0, 0.0};
+  net_param_.model_config.std = {1.0 / 0.003922, 1.0 / 0.003922,
+                                 1.0 / 0.003922};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = true;
 
   num_box_channel_ = std::get<0>(pose_tuple);
   num_kpts_channel_ = std::get<1>(pose_tuple) * 3;
@@ -69,23 +68,27 @@ int32_t YoloV8Pose::onModelOpened() {
     int stride_w = input_w / feat_w;
 
     if (stride_h != stride_w) {
-      LOGE("stride not equal,stridew:%d,strideh:%d,featw:%d,feath:%d\n", stride_w, stride_h, feat_w,
-           feat_h);
+      LOGE("stride not equal,stridew:%d,strideh:%d,featw:%d,feath:%d\n",
+           stride_w, stride_h, feat_w, feat_h);
       return -1;
     }
 
     if (channel == num_box_channel_) {
       bbox_out_names[stride_h] = output_layers[j];
       strides.push_back(stride_h);
-      LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(), stride_h);
+      LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+           stride_h);
     } else if (channel == num_kpts_channel_) {
       keypoints_out_names[stride_h] = output_layers[j];
-      LOGI("parse keypoints branch,name:%s,stride:%d\n", output_layers[j].c_str(), stride_h);
+      LOGI("parse keypoints branch,name:%s,stride:%d\n",
+           output_layers[j].c_str(), stride_h);
     } else if (channel == num_cls_) {
       class_out_names[stride_h] = output_layers[j];
-      LOGI("parse class branch,name: %s,stride:%d\n", output_layers[j].c_str(), stride_h);
+      LOGI("parse class branch,name: %s,stride:%d\n", output_layers[j].c_str(),
+           stride_h);
     } else {
-      LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(), channel);
+      LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(),
+           channel);
       return -1;
     }
   }
@@ -96,9 +99,8 @@ int32_t YoloV8Pose::onModelOpened() {
 YoloV8Pose::~YoloV8Pose() {}
 
 // the bbox featuremap shape is b x 4*regmax x h   x w
-void YoloV8Pose::decodeBboxFeatureMap(int batch_idx, int stride,
-                                           int anchor_idx,
-                                           std::vector<float> &decode_box) {
+void YoloV8Pose::decodeBboxFeatureMap(int batch_idx, int stride, int anchor_idx,
+                                      std::vector<float> &decode_box) {
   std::string box_name;
   box_name = bbox_out_names[stride];
   TensorInfo boxinfo = net_->getTensorInfo(box_name);
@@ -158,8 +160,9 @@ void YoloV8Pose::decodeBboxFeatureMap(int batch_idx, int stride,
       (grid_x + box_vals[2]) * stride, (grid_y + box_vals[3]) * stride};
   decode_box = box;
 }
-void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride, int anchor_idx,
-                                              std::vector<float> &decode_kpts) {
+void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride,
+                                           int anchor_idx,
+                                           std::vector<float> &decode_kpts) {
   decode_kpts.clear();
   std::string kpts_name;
   kpts_name = keypoints_out_names[stride];
@@ -178,13 +181,18 @@ void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride, int anchor
     int8_t *p_kpts_int8 = kpts_tensor->getBatchPtr<int8_t>(batch_idx);
     for (int c = 0; c < num_kpts_channel_; c++) {
       if (c % 3 == 0) {
-        val = (p_kpts_int8[c * num_anchor + anchor_idx] * kpts_info.qscale * 2.0 + grid_x - 0.5) *
-              (float)stride;
+        val =
+            (p_kpts_int8[c * num_anchor + anchor_idx] * kpts_info.qscale * 2.0 +
+             grid_x - 0.5) *
+            (float)stride;
       } else if (c % 3 == 1) {
-        val = (p_kpts_int8[c * num_anchor + anchor_idx] * kpts_info.qscale * 2.0 + grid_y - 0.5) *
-              (float)stride;
+        val =
+            (p_kpts_int8[c * num_anchor + anchor_idx] * kpts_info.qscale * 2.0 +
+             grid_y - 0.5) *
+            (float)stride;
       } else {
-        val = 1.0 / (1.0 + std::exp(-p_kpts_int8[c * num_anchor + anchor_idx] * kpts_info.qscale));
+        val = 1.0 / (1.0 + std::exp(-p_kpts_int8[c * num_anchor + anchor_idx] *
+                                    kpts_info.qscale));
       }
       decode_kpts.push_back(val);
     }
@@ -192,13 +200,18 @@ void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride, int anchor
     uint8_t *p_kpts_uint8 = kpts_tensor->getBatchPtr<uint8_t>(batch_idx);
     for (int c = 0; c < num_kpts_channel_; c++) {
       if (c % 3 == 0) {
-        val = (p_kpts_uint8[c * num_anchor + anchor_idx] * kpts_info.qscale * 2.0 + grid_x - 0.5) *
+        val = (p_kpts_uint8[c * num_anchor + anchor_idx] * kpts_info.qscale *
+                   2.0 +
+               grid_x - 0.5) *
               (float)stride;
       } else if (c % 3 == 1) {
-        val = (p_kpts_uint8[c * num_anchor + anchor_idx] * kpts_info.qscale * 2.0 + grid_y - 0.5) *
+        val = (p_kpts_uint8[c * num_anchor + anchor_idx] * kpts_info.qscale *
+                   2.0 +
+               grid_y - 0.5) *
               (float)stride;
       } else {
-        val = 1.0 / (1.0 + std::exp(-p_kpts_uint8[c * num_anchor + anchor_idx] * kpts_info.qscale));
+        val = 1.0 / (1.0 + std::exp(-p_kpts_uint8[c * num_anchor + anchor_idx] *
+                                    kpts_info.qscale));
       }
       decode_kpts.push_back(val);
     }
@@ -206,11 +219,14 @@ void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride, int anchor
     float *p_kpts_float = kpts_tensor->getBatchPtr<float>(batch_idx);
     for (int c = 0; c < num_kpts_channel_; c++) {
       if (c % 3 == 0) {
-        val = (p_kpts_float[c * num_anchor + anchor_idx] * 2.0 + grid_x - 0.5) * (float)stride;
+        val = (p_kpts_float[c * num_anchor + anchor_idx] * 2.0 + grid_x - 0.5) *
+              (float)stride;
       } else if (c % 3 == 1) {
-        val = (p_kpts_float[c * num_anchor + anchor_idx] * 2.0 + grid_y - 0.5) * (float)stride;
+        val = (p_kpts_float[c * num_anchor + anchor_idx] * 2.0 + grid_y - 0.5) *
+              (float)stride;
       } else {
-        val = 1.0 / (1.0 + std::exp(-p_kpts_float[c * num_anchor + anchor_idx]));
+        val =
+            1.0 / (1.0 + std::exp(-p_kpts_float[c * num_anchor + anchor_idx]));
       }
       decode_kpts.push_back(val);
     }
@@ -238,6 +254,7 @@ int32_t YoloV8Pose::outputParse(
       inverse_th);
 
   std::stringstream ss;
+  const PreprocessParams &pre_param = preprocess_params_[input_tensor_name];
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
@@ -267,8 +284,8 @@ int32_t YoloV8Pose::outputParse(
         float max_logit = -1000;
         if (classinfo.data_type == TDLDataType::INT8) {
           parse_cls_info<int8_t>(cls_tensor->getBatchPtr<int8_t>(b), num_anchor,
-                                 num_cls_, j, cls_offset, cls_qscale, &max_logit,
-                                 &max_logit_c);
+                                 num_cls_, j, cls_offset, cls_qscale,
+                                 &max_logit, &max_logit_c);
         } else if (classinfo.data_type == TDLDataType::UINT8) {
           parse_cls_info<uint8_t>(cls_tensor->getBatchPtr<uint8_t>(b),
                                   num_anchor, num_cls_, j, cls_offset,
@@ -303,33 +320,38 @@ int32_t YoloV8Pose::outputParse(
         boxes_temp_info[max_logit_c].push_back(std::make_pair(stride, j));
       }
     }
-    for (auto &bboxs : lb_boxes){
-        DetectionHelper::nmsObjects(bboxs.second, nms_threshold_, boxes_temp_info[bboxs.first]);
+    for (auto &bboxs : lb_boxes) {
+      DetectionHelper::nmsObjects(bboxs.second, nms_threshold_,
+                                  boxes_temp_info[bboxs.first]);
     }
     std::vector<float> scale_params = batch_rescale_params_[b];
     LOGI("scale_params:%f,%f,%f,%f", scale_params[0], scale_params[1],
          scale_params[2], scale_params[3]);
     ss << "batch:" << b << "\n";
 
-    std::shared_ptr<ModelBoxLandmarkInfo> obj = std::make_shared<ModelBoxLandmarkInfo>();
+    std::shared_ptr<ModelBoxLandmarkInfo> obj =
+        std::make_shared<ModelBoxLandmarkInfo>();
     obj->image_width = image_width;
     obj->image_height = image_height;
     for (auto &bboxs : lb_boxes) {
       for (size_t i = 0; i < bboxs.second.size(); i++) {
         auto &bbox_info = bboxs.second[i];
         std::vector<float> decode_kpts;
-        decodeKeypointsFeatureMap(b, boxes_temp_info[bboxs.first][i].first, boxes_temp_info[bboxs.first][i].second, decode_kpts);
+        decodeKeypointsFeatureMap(b, boxes_temp_info[bboxs.first][i].first,
+                                  boxes_temp_info[bboxs.first][i].second,
+                                  decode_kpts);
         int num_keypoints = num_kpts_channel_ / 3;
         for (int j = 0; j < num_keypoints; j++) {
           bboxs.second[i].landmarks_x.push_back(decode_kpts[j * 3]);
           bboxs.second[i].landmarks_y.push_back(decode_kpts[j * 3 + 1]);
           bboxs.second[i].landmarks_score.push_back(decode_kpts[j * 3 + 2]);
         }
-        DetectionHelper::rescaleBbox(bboxs.second[i], scale_params,
-                                     net_param_.pre_params.crop_x,
-                                     net_param_.pre_params.crop_y);
-        // ss << "bbox:[" << obj_seg->box_seg[i].x1 << "," << obj_seg->box_seg[i].y1 << "," <<obj_seg->box_seg[i].x2 << "," << obj_seg->box_seg[i].y2
-        //    << "],score:" << obj_seg->box_seg[i].score << ",label:" << obj_seg->box_seg[i].class_id << "\n";
+        DetectionHelper::rescaleBbox(bboxs.second[i], scale_params);
+        // ss << "bbox:[" << obj_seg->box_seg[i].x1 << "," <<
+        // obj_seg->box_seg[i].y1 << "," <<obj_seg->box_seg[i].x2 << "," <<
+        // obj_seg->box_seg[i].y2
+        //    << "],score:" << obj_seg->box_seg[i].score << ",label:" <<
+        //    obj_seg->box_seg[i].class_id << "\n";
         obj->box_landmarks.push_back(bboxs.second[i]);
       }
     }

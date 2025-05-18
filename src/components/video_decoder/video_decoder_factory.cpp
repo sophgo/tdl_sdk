@@ -16,7 +16,8 @@ std::shared_ptr<VideoDecoder> VideoDecoderFactory::createVideoDecoder(
 #if defined(__BM168X__) || defined(__BM1684__) || defined(__BM1684X__)
       return std::make_shared<OpencvDecoder>();
 #else
-      LOGE("opencv decoder is not supported on this platform,%d", get_platform());
+      LOGE("opencv decoder is not supported on this platform,%d",
+           CommonUtils::getPlatform());
       return nullptr;
 #endif
     case VideoDecoderType::IMAGE_FOLDER:
@@ -25,7 +26,8 @@ std::shared_ptr<VideoDecoder> VideoDecoderFactory::createVideoDecoder(
 #if defined(__CV180X__) || defined(__CV181X__) || defined(__CV186X__)
       return std::make_shared<ViDecoder>();
 #else
-      printf("vi decoder is not supported on this platform,%d", get_platform());
+      printf("vi decoder is not supported on this platform,%d",
+             CommonUtils::getPlatform());
       return nullptr;
 #endif
     default:

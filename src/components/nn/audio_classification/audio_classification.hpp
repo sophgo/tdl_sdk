@@ -8,6 +8,7 @@ class AudioClassification : public BaseModel {
   AudioClassification();
   AudioClassification(std::pair<int, int> sound_pair);
   virtual ~AudioClassification();
+  int32_t setupNetwork(NetParam &net_param) override;
   int32_t inference(
       const std::vector<std::shared_ptr<BaseImage>> &images,
       std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
@@ -17,11 +18,9 @@ class AudioClassification : public BaseModel {
       std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) override;
   virtual int32_t onModelOpened() override;
 
-  int32_t getTopK(float *result, size_t count, float* score);
+  int32_t getTopK(float *result, size_t count, float *score);
   void normalizeSound(short *temp_buffer, int n);
-  int32_t setParameters(
-      const std::map<std::string, float> &parameters) override;
-  int32_t getParameters(std::map<std::string, float> &parameters) override;
+
   //   cvitdl_sound_param get_algparam();
   //   void set_algparam(cvitdl_sound_param audio_param);
 

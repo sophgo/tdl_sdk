@@ -11,23 +11,20 @@
 #define SCALE (1 / 128.)
 #define MEAN (127.5 / 128.)
 
-
-
 std::vector<std::string> CHARS = {
-    "京", "沪", "津", "渝", "冀", "晋", "蒙", "辽", "吉", "黑", "苏", "浙", "皖", "闽", "赣", "鲁",
-    "豫", "鄂", "湘", "粤", "桂", "琼", "川", "贵", "云", "藏", "陕", "甘", "青", "宁", "新", "学",
-    "警", "港", "澳", "挂", "使", "领", "民", "深", "危", "险", "空", "0",  "1",  "2",  "3",  "4",
-    "5",  "6",  "7",  "8",  "9",  "A",  "B",  "C",  "D",  "E",  "F",  "G",  "H",  "J",  "K",  "L",
-    "M",  "N",  "P",  "Q",  "R",  "S",  "T",  "U",  "V",  "W",  "X",  "Y",  "Z",  "I",  "O",  "-"};
+    "京", "沪", "津", "渝", "冀", "晋", "蒙", "辽", "吉", "黑", "苏", "浙",
+    "皖", "闽", "赣", "鲁", "豫", "鄂", "湘", "粤", "桂", "琼", "川", "贵",
+    "云", "藏", "陕", "甘", "青", "宁", "新", "学", "警", "港", "澳", "挂",
+    "使", "领", "民", "深", "危", "险", "空", "0",  "1",  "2",  "3",  "4",
+    "5",  "6",  "7",  "8",  "9",  "A",  "B",  "C",  "D",  "E",  "F",  "G",
+    "H",  "J",  "K",  "L",  "M",  "N",  "P",  "Q",  "R",  "S",  "T",  "U",
+    "V",  "W",  "X",  "Y",  "Z",  "I",  "O",  "-"};
 
-LicensePlateRecognition::LicensePlateRecognition(){
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = SCALE;
-    net_param_.pre_params.mean[i] = MEAN;
-  }
-
-  net_param_.pre_params.dst_image_format = ImageFormat::BGR_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = false;
+LicensePlateRecognition::LicensePlateRecognition() {
+  net_param_.model_config.mean = {127.5, 127.5, 127.5};
+  net_param_.model_config.std = {128, 128, 128};
+  net_param_.model_config.rgb_order = "bgr";
+  keep_aspect_ratio_ = false;
 }
 
 std::string LicensePlateRecognition::greedy_decode(float *prebs) {
@@ -84,13 +81,12 @@ int32_t LicensePlateRecognition::outputParse(
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
   uint32_t input_width = input_tensor.shape[3];
   uint32_t input_height = input_tensor.shape[2];
-  LOGI(
-      "outputParse,batch size:%d,input shape:%d,%d,%d,%d",
-      images.size(), input_tensor.shape[0], input_tensor.shape[1],
-      input_tensor.shape[2], input_tensor.shape[3]);
+  LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
+       input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
+       input_tensor.shape[3]);
 
   std::string out_data_name = net_->getOutputNames()[0];
-  
+
   TensorInfo out_data_info = net_->getTensorInfo(out_data_name);
   std::shared_ptr<BaseTensor> out_data_tensor =
       net_->getOutputTensor(out_data_name);

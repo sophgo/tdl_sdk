@@ -7,7 +7,7 @@ print_usage() {
   echo "Options:"
   echo -e "\t-m, cvimodel directory (default: /mnt/data/cvimodel)"
   echo -e "\t-d, dataset directory (default: /mnt/data/dataset)"
-  echo -e "\t-a, json data directory (default: /mnt/data/asset)"
+  # echo -e "\t-a, json data directory (default: /mnt/data/asset)"
   echo -e "\t-h, help"
 }
 
@@ -18,9 +18,6 @@ while getopts "m:d:a:h?" opt; do
       ;;
     d)
       dataset_dir=$OPTARG
-      ;;
-    a)
-      asset_dir=$OPTARG
       ;;
     h)
       print_usage
@@ -35,7 +32,7 @@ done
 
 model_dir=${model_dir:-/mnt/data/cvimodel}
 dataset_dir=${dataset_dir:-/mnt/data/dataset}
-asset_dir=${asset_dir:-/mnt/data/asset}
+asset_dir=${dataset_dir}/json
 
 
 total_ion_size=30000000
@@ -116,6 +113,7 @@ run_test_main() {
   for json_file in ${json_separated}
   do
     full_json_path="${asset_dir}/${json_file}"
+    echo "./test_main ${model_dir} ${dataset_dir} ${full_json_path} --gtest_filter=${test_suites}"
     ./test_main "${model_dir}" "${dataset_dir}" "${full_json_path}" --gtest_filter="${test_suites}"
   done
 }

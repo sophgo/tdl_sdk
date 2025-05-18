@@ -1,16 +1,16 @@
 
 #include "tdl_model_factory.hpp"
 
-
 template <typename T>
-void embeddingToVec(void *embedding, size_t num, std::vector<float> &feature_vec) {
-    T *feature = reinterpret_cast<T *>(embedding);
-    for (size_t i = 0; i < num; ++i) {
-        feature_vec[i] = (float)feature[i];
-    }
-    return;
+void embeddingToVec(void *embedding,
+                    size_t num,
+                    std::vector<float> &feature_vec) {
+  T *feature = reinterpret_cast<T *>(embedding);
+  for (size_t i = 0; i < num; ++i) {
+    feature_vec[i] = (float)feature[i];
+  }
+  return;
 }
-
 
 std::shared_ptr<BaseImage> face_crop_align(
     std::shared_ptr<BaseImage> image,
@@ -115,9 +115,11 @@ void visualize_face_crop(
 
 void construct_model_id_mapping(
     std::map<std::string, ModelType> &model_id_mapping) {
-  model_id_mapping["RESNET_FEATURE_BMFACE_R34"] = ModelType::RESNET_FEATURE_BMFACE_R34;
-  model_id_mapping["RESNET_FEATURE_BMFACE_R50"] = ModelType::RESNET_FEATURE_BMFACE_R50;
-  model_id_mapping["RECOGNITION_INSIGHTFACE_R34"] =ModelType::RECOGNITION_INSIGHTFACE_R34;
+  model_id_mapping["RESNET_FEATURE_BMFACE_R34"] =
+      ModelType::RESNET_FEATURE_BMFACE_R34;
+  model_id_mapping["RESNET_FEATURE_BMFACE_R50"] =
+      ModelType::RESNET_FEATURE_BMFACE_R50;
+
   model_id_mapping["RECOGNITION_CVIFACE"] = ModelType::RECOGNITION_CVIFACE;
 }
 
@@ -138,12 +140,14 @@ void set_preprocess_parameters(std::shared_ptr<BaseModel> model) {
 }
 
 int main(int argc, char **argv) {
-
   std::map<std::string, ModelType> model_id_mapping;
   construct_model_id_mapping(model_id_mapping);
 
   if (argc != 5) {
-    printf("Usage: %s <feature_extraction_model_id_name> <model_dir> <image_path1> <image_path2>\n", argv[0]);
+    printf(
+        "Usage: %s <feature_extraction_model_id_name> <model_dir> "
+        "<image_path1> <image_path2>\n",
+        argv[0]);
     printf("feature_extraction_model_id_name:\n");
     for (auto &item : model_id_mapping) {
       printf("%s\n", item.first.c_str());
@@ -164,7 +168,9 @@ int main(int argc, char **argv) {
     printf("Failed to create image2\n");
     return -1;
   }
-  TDLModelFactory model_factory(model_dir);
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
   std::shared_ptr<BaseModel> model_fd =
       model_factory.getModel(ModelType::SCRFD_DET_FACE);
   if (!model_fd) {
@@ -179,21 +185,11 @@ int main(int argc, char **argv) {
   }
 
   std::string model_id_name = argv[1];
-  if (model_id_mapping.find(model_id_name) == model_id_mapping.end()) {
-    printf("model_id_name not found\n");
-    return -1;
-  }
-  ModelType model_id = model_id_mapping[model_id_name];
-  std::shared_ptr<BaseModel> model_fe =
-      model_factory.getModel(model_id);
+
+  std::shared_ptr<BaseModel> model_fe = model_factory.getModel(model_id_name);
   if (!model_fe) {
     printf("Failed to create model_fe\n");
     return -1;
-  }
-
-  if (model_id == ModelType::RECOGNITION_INSIGHTFACE_R34 ||
-      model_id == ModelType::RECOGNITION_CVIFACE) {
-    set_preprocess_parameters(model_fe);
   }
 
   std::vector<std::shared_ptr<ModelOutputInfo>> out_fd, out_fl, out_fe;
@@ -238,18 +234,21 @@ int main(int argc, char **argv) {
 
     printf("feature_meta->embedding_type: %d\n", feature_meta->embedding_type);
     switch (feature_meta->embedding_type) {
-        case TDLDataType::INT8:
-            embeddingToVec<int8_t>(feature_meta->embedding, feature_meta->embedding_num, feature_vec);
-            break;
-        case TDLDataType::UINT8:
-            embeddingToVec<uint8_t>(feature_meta->embedding, feature_meta->embedding_num, feature_vec);
-            break;
-        case TDLDataType::FP32:
-            embeddingToVec<float>(feature_meta->embedding, feature_meta->embedding_num, feature_vec);
-            break;
-        default: 
-            assert(false && "Unsupported embedding_type");
-    } 
+      case TDLDataType::INT8:
+        embeddingToVec<int8_t>(feature_meta->embedding,
+                               feature_meta->embedding_num, feature_vec);
+        break;
+      case TDLDataType::UINT8:
+        embeddingToVec<uint8_t>(feature_meta->embedding,
+                                feature_meta->embedding_num, feature_vec);
+        break;
+      case TDLDataType::FP32:
+        embeddingToVec<float>(feature_meta->embedding,
+                              feature_meta->embedding_num, feature_vec);
+        break;
+      default:
+        assert(false && "Unsupported embedding_type");
+    }
 
     features.push_back(feature_vec);
   }

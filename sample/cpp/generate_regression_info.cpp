@@ -11,7 +11,8 @@ namespace fs = std::experimental::filesystem;
 
 void constructModelIdMapping(
     std::map<std::string, ModelType> &model_id_mapping) {
-  model_id_mapping["MBV2_DET_PERSON"] = ModelType::MBV2_DET_PERSON;
+  model_id_mapping["MBV2_DET_PERSON_256_448"] =
+      ModelType::MBV2_DET_PERSON_256_448;
   model_id_mapping["YOLOV8N_DET_HAND"] = ModelType::YOLOV8N_DET_HAND;
   model_id_mapping["YOLOV8N_DET_PET_PERSON"] =
       ModelType::YOLOV8N_DET_PET_PERSON;
@@ -58,7 +59,8 @@ std::string getTxtName(std::string &dst_root, std::string &img_name) {
   return txt_name;
 }
 
-void saveDetectionResults(std::string &dst_root, std::string &img_name,
+void saveDetectionResults(std::string &dst_root,
+                          std::string &img_name,
                           const std::shared_ptr<ModelOutputInfo> &out_data) {
   std::string txt_name = getTxtName(dst_root, img_name);
   std::ofstream outfile(txt_name);
@@ -90,7 +92,8 @@ void saveDetectionResults(std::string &dst_root, std::string &img_name,
 }
 
 void saveClassificationResults(
-    std::string &dst_root, std::string &img_name,
+    std::string &dst_root,
+    std::string &img_name,
     const std::shared_ptr<ModelOutputInfo> &out_data) {
   std::string txt_name = getTxtName(dst_root, img_name);
 
@@ -104,7 +107,8 @@ void saveClassificationResults(
   std::cout << "write file " << txt_name << " done" << std::endl;
 }
 
-void saveKeypointResults(std::string &dst_root, std::string &img_name,
+void saveKeypointResults(std::string &dst_root,
+                         std::string &img_name,
                          const std::shared_ptr<ModelOutputInfo> &out_data) {
   std::string txt_name = getTxtName(dst_root, img_name);
   std::ofstream outfile(txt_name);
@@ -152,33 +156,23 @@ void saveKeypointResults(std::string &dst_root, std::string &img_name,
   std::cout << "write file " << txt_name << " done" << std::endl;
 }
 
-std::vector<std::shared_ptr<BaseImage>> getInputDatas(std::string &image_path,
-                                                      ModelType model_id) {
+std::vector<std::shared_ptr<BaseImage>> getInputDatas(std::string &image_path) {
   std::vector<std::shared_ptr<BaseImage>> input_datas;
   if (image_path.size() >= 4 &&
       image_path.substr(image_path.size() - 4) != ".bin") {
     std::shared_ptr<BaseImage> image = ImageFactory::readImage(image_path);
     input_datas = {image};
   } else {
-    int frame_size = 0;
-    if (model_id == ModelType::CLS_SOUND_BABAY_CRY) {
-      frame_size = 96000;
-    } else if (model_id == ModelType::CLS_SOUND_COMMAND) {
-      frame_size = 32000;
-    } else {
-      std::cout << "model_id not supported" << std::endl;
-    }
-    unsigned char buffer[frame_size];
-    if (!read_binary_file(image_path, buffer, frame_size)) {
-      std::cout << frame_size << std::endl;
+    std::vector<uint8_t> buffer;
+    if (!CommonUtils::readBinaryFile(image_path, buffer)) {
       printf("read file failed\n");
       throw std::runtime_error("Failed to read binary file: " + image_path);
     }
     std::shared_ptr<BaseImage> bin_data = ImageFactory::createImage(
-        frame_size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
+        buffer.size(), 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
 
     uint8_t *data_buffer = bin_data->getVirtualAddress()[0];
-    memcpy(data_buffer, buffer, frame_size * sizeof(uint8_t));
+    memcpy(data_buffer, buffer.data(), buffer.size() * sizeof(uint8_t));
     input_datas = {bin_data};
   }
   return input_datas;
@@ -186,7 +180,7 @@ std::vector<std::shared_ptr<BaseImage>> getInputDatas(std::string &image_path,
 
 int main(int argc, char **argv) {
   std::string model_id_name = argv[1];
-  std::string model_path = argv[2];
+  std::string model_dir = argv[2];
   std::string image_dir = argv[3];
   std::string dst_root = argv[4];
   float model_threshold;
@@ -196,28 +190,21 @@ int main(int argc, char **argv) {
     model_threshold = 0.5;
   }
 
-  std::map<std::string, ModelType> model_id_mapping;
-  constructModelIdMapping(model_id_mapping);
-
-  if (model_id_mapping.find(model_id_name) == model_id_mapping.end()) {
-    printf("model_id_name not found\n");
-    return -1;
-  }
-  ModelType model_id = model_id_mapping[model_id_name];
-
-  TDLModelFactory model_factory;
-  std::shared_ptr<BaseModel> model =
-      model_factory.getModel(model_id, model_path);
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.setModelDir(model_dir);
+  model_factory.loadModelConfig();
+  std::shared_ptr<BaseModel> model = model_factory.getModel(model_id_name);
   if (!model) {
     printf("Failed to create model\n");
     return -1;
   }
   model->setModelThreshold(model_threshold);
+  ModelType model_id = modelTypeFromString(model_id_name);
 
   for (const auto &entry : fs::directory_iterator(image_dir)) {
     std::string image_path = entry.path().string();
     std::vector<std::shared_ptr<BaseImage>> input_datas;
-    input_datas = getInputDatas(image_path, model_id);
+    input_datas = getInputDatas(image_path);
 
     std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
     model->inference(input_datas, out_datas);

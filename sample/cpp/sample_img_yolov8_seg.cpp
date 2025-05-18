@@ -2,7 +2,8 @@
 #include "tdl_model_factory.hpp"
 
 void visualize_maskOutlinePoint(
-    std::shared_ptr<ModelBoxSegmentationInfo> obj_meta, uint32_t image_height,
+    std::shared_ptr<ModelBoxSegmentationInfo> obj_meta,
+    uint32_t image_height,
     uint32_t image_width) {
   int proto_h = obj_meta->mask_height;
   int proto_w = obj_meta->mask_width;
@@ -97,10 +98,10 @@ void visualize_object_detection(
 
 int main(int argc, char **argv) {
   if (argc != 3) {
-    printf("Usage: %s <model_path> <image_path> \n", argv[0]);
+    printf("Usage: %s <model_dir> <image_path> \n", argv[0]);
     return -1;
   }
-  std::string model_path = argv[1];
+  std::string model_dir = argv[1];
   std::string image_path = argv[2];
 
   std::shared_ptr<BaseImage> image1 = ImageFactory::readImage(image_path);
@@ -109,10 +110,11 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  TDLModelFactory model_factory;
-
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
   std::shared_ptr<BaseModel> model_od =
-      model_factory.getModel(ModelType::YOLOV8_SEG_COCO80, model_path);
+      model_factory.getModel(ModelType::YOLOV8_SEG_COCO80);
   if (!model_od) {
     printf("Failed to create model_od\n");
     return -1;

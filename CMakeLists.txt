@@ -59,6 +59,7 @@ elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
   add_definitions(-D__CV184X__)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   add_definitions(-D__BM168X__)
+  add_definitions(-D__BM1688__)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1684")
   add_definitions(-D__BM168X__)
   add_definitions(-D__BM1684__)  
@@ -258,3 +259,5 @@ else()
   message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}. \
                       Valid options are '', 'sample', 'bm168x' or 'all', and 'clean'.")
 endif()
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/configs DESTINATION ./)

@@ -43,17 +43,10 @@ void parse_point_info_anytype(BaseTensor *tensor, TDLDataType data_type,
   }
 }
 FaceLandmarkerDet2::FaceLandmarkerDet2() {
-  std::vector<float> means = {1.0, 1.0, 1.0};
-  std::vector<float> scales = {1 / 127.5, 1 / 127.5, 1 / 127.5};
-
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = scales[i];
-    net_param_.pre_params.mean[i] = means[i];
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = false;
-
-  //   preprocess_params_[0].rescale_type = RESCALE_NOASPECT;
+  net_param_.model_config.mean = {127.5, 127.5, 127.5};
+  net_param_.model_config.std = {127.5, 127.5, 127.5};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = false;
 }
 
 int32_t FaceLandmarkerDet2::onModelOpened() {
@@ -117,7 +110,7 @@ int32_t FaceLandmarkerDet2::inference(
   bool keep_aspect_ratio = preprocess_params.keep_aspect_ratio;
   for (uint32_t i = 0; i < crop_boxes.size(); i++) {
     preprocess_params.crop_x = (uint32_t)crop_boxes[i].x1;
-    preprocess_params.crop_y= (uint32_t)crop_boxes[i].y1;
+    preprocess_params.crop_y = (uint32_t)crop_boxes[i].y1;
     preprocess_params.crop_width =
         (uint32_t)(crop_boxes[i].x2 - crop_boxes[i].x1);
     preprocess_params.crop_height =
@@ -207,8 +200,8 @@ int32_t FaceLandmarkerDet2::outputParse(
 
     // blur model
     if (oinfo_cls.shape[1] == 2) {
-      facemeta
-          ->attributes[TDLObjectAttributeType::OBJECT_CLS_ATTRIBUTE_FACE_BLURNESS] =
+      facemeta->attributes
+          [TDLObjectAttributeType::OBJECT_CLS_ATTRIBUTE_FACE_BLURNESS] =
           output_score[1];
     }
 

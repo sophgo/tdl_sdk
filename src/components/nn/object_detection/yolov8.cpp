@@ -39,12 +39,10 @@ YoloV8Detection::YoloV8Detection(const int num_cls)
     : YoloV8Detection(std::make_pair(64, num_cls)) {}
 
 YoloV8Detection::YoloV8Detection(std::pair<int, int> yolov8_pair) {
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = 0.003922;
-    net_param_.pre_params.mean[i] = 0.0;
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = true;
+  net_param_.model_config.mean = {0.0, 0.0, 0.0};
+  net_param_.model_config.std = {254.97195, 254.97195, 254.97195};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = true;
 
   num_box_channel_ = yolov8_pair.first;
   num_cls_ = yolov8_pair.second;
@@ -292,9 +290,7 @@ int32_t YoloV8Detection::outputParse(
     obj->image_height = image_height;
     for (auto &bbox : lb_boxes) {
       for (auto &b : bbox.second) {
-        DetectionHelper::rescaleBbox(b, scale_params,
-                                     net_param_.pre_params.crop_x,
-                                     net_param_.pre_params.crop_y);
+        DetectionHelper::rescaleBbox(b, scale_params);
         if (type_mapping_.count(b.class_id)) {
           b.object_type = type_mapping_[b.class_id];
         }

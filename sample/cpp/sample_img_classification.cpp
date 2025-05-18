@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  TDLModelFactory model_factory;
+  TDLModelFactory& model_factory = TDLModelFactory::getInstance();
 
   std::shared_ptr<BaseModel> model_cls =
       model_factory.getModel(ModelType::CLS_RGBLIVENESS, model_file);

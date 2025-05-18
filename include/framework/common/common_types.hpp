@@ -2,6 +2,7 @@
 #define COMMON_TYPES_H
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -87,13 +88,35 @@ struct PreprocessParams {
   int crop_width;
   int crop_height;
   float mean[3];
-  float scale[3];  // Y=X*scale+mean
+  float scale[3];  // Y=X*scale-mean
   bool keep_aspect_ratio;
 };
 
 enum class MemoryType {
   HOST_MEMORY = 0,
   ASIC_DEVICE_MEMORY = 1,
+};
+
+struct ModelConfig {
+  std::string
+      net_name;  // specify the network name in case of multiple networks in a
+                 // model,if only one network inside the model,could leave empty
+  std::string file_name;
+  std::string comment;
+  std::vector<float> mean;
+  std::vector<float> std;
+  std::string rgb_order;  // rgb,bgr,gray,if not specified,leave emp
+
+  // the model derived from BaseModel use these information to initialize
+  std::vector<std::string> types;  // specify the category types,if not
+                                   // specified,leave empty
+  std::map<std::string, std::string>
+      custom_config_str;  // could use additional info to parse input or output
+                          // node,if not necessary,leave empty
+  std::map<std::string, int>
+      custom_config_i;  // custom int type config,if not necessary,leave empty
+  std::map<std::string, float>
+      custom_config_f;  // custom float type config,if not necessary,leave empty
 };
 
 struct NetParam {
@@ -103,13 +126,7 @@ struct NetParam {
   // bool share_output_mem = false;  // do not allocate output tensor memory,
   // share with other memory
   std::string model_file_path;
-  std::string net_name;  // Specifies the network name in case of multiple
-                         // networks in a model
-  std::vector<std::string>
-      input_names;  // Leave empty to read input nodes from model file
-  std::vector<std::string> output_names;
-  PreprocessParams
-      pre_params;  // TODO(fuquan.ke) to support multiple preprocess params
+  ModelConfig model_config;
 };
 
 struct TensorInfo {

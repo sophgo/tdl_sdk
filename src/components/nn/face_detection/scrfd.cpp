@@ -4,16 +4,12 @@
 #include "utils/tdl_log.hpp"
 
 SCRFD::SCRFD() {
-  std::vector<float> means = {127.5, 127.5, 127.5};
-  std::vector<float> scales = {1.0 / 128, 1.0 / 128, 1.0 / 128};
-
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = scales[i];
-    net_param_.pre_params.mean[i] = means[i] * scales[i];
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = true;
+  net_param_.model_config.mean = {127.5, 127.5, 127.5};
+  net_param_.model_config.std = {128, 128, 128};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = true;
 }
+
 SCRFD::~SCRFD() {}
 int32_t SCRFD::onModelOpened() {
   struct anchor_cfg {
@@ -127,10 +123,6 @@ int32_t SCRFD::outputParse(
     std::vector<ObjectBoxLandmarkInfo> vec_bbox;
     std::vector<ObjectBoxLandmarkInfo> vec_bbox_nms;
     std::vector<float> &rescale_params = batch_rescale_params_[b];
-    float scalex = rescale_params[0];
-    float scaley = rescale_params[1];
-    float pad_x = rescale_params[2];
-    float pad_y = rescale_params[3];
 
     LOGI("stride size:%d", m_feat_stride_fpn.size());
     for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {
@@ -192,11 +184,6 @@ int32_t SCRFD::outputParse(
           float box_y2 =
               grid_cy + bbox_blob[j + count * (3 + num * 4)] * stride;
 
-          box_x1 = std::max(0.0f, std::min((box_x1 - pad_x) / scalex, image_width_f));
-          box_y1 = std::max(0.0f, std::min((box_y1 - pad_y) / scaley, image_height_f));
-          box_x2 = std::max(0.0f, std::min((box_x2 - pad_x) / scalex, image_width_f));
-          box_y2 = std::max(0.0f, std::min((box_y2 - pad_y) / scaley, image_height_f));
-
           if (box_x1 >= box_x2 || box_y1 >= box_y2) {
             LOGI(
                 "bbox "
@@ -216,10 +203,7 @@ int32_t SCRFD::outputParse(
             float landmark_y =
                 landmark_blob[j + count * (num * 10 + k * 2 + 1)] * stride +
                 grid_cy;
-            landmark_x =
-                std::max(0.0f, std::min((landmark_x - pad_x) / scalex, image_width_f));
-            landmark_y =
-                std::max(0.0f, std::min((landmark_y - pad_y) / scaley, image_height_f));
+
             landmarks_x.push_back(landmark_x);
             landmarks_y.push_back(landmark_y);
             landmarks_score.push_back(0);
@@ -235,6 +219,7 @@ int32_t SCRFD::outputParse(
           box.landmarks_x = landmarks_x;
           box.landmarks_y = landmarks_y;
           box.landmarks_score = landmarks_score;
+          DetectionHelper::rescaleBbox(box, rescale_params);
           vec_bbox.push_back(box);
         }
       }

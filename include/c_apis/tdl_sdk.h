@@ -1,10 +1,10 @@
 #ifndef TDL_SDK_H
 #define TDL_SDK_H
 
+#include <getopt.h>
 #include "tdl_model_def.h"
 #include "tdl_types.h"
 #include "tdl_utils.h"
-#include <getopt.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -69,11 +69,10 @@ TDLImage TDL_ReadImage(const char *path);
  * @brief 读取文件内容为 TDLImageHandle 对象
  *
  * @param path 文件路径
- * @param count 文件数据量
  * @param data_type 文件数据类型
  * @return  返回读取的 TDLImageHandle 对象, 如果失败返回 NULL
  */
-TDLImage TDL_ReadBin(const char *path, int count, TDLDataTypeE data_type);
+TDLImage TDL_ReadBin(const char *path, TDLDataTypeE data_type);
 
 /**
  * @brief 销毁一个 TDLImageHandle 对象
@@ -83,16 +82,40 @@ TDLImage TDL_ReadBin(const char *path, int count, TDLDataTypeE data_type);
 int32_t TDL_DestroyImage(TDLImage image_handle);
 
 /**
+ * @brief 加载模型配置信息，加载后可以仅通过模型id去打开模型
+ *
+ * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
+ * @param model_config_json_path
+ * 模型配置文件路径，如果为NULL，默认使用configs/model/model_config.json
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_LoadModelConfig(TDLHandle handle,
+                            const char *model_config_json_path);
+/**
+ * @brief 设置模型文件夹路径
+ *
+ * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
+ * @param model_dir 为tdl_models仓库路径(下面各平台的子文件夹)
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_SetModelDir(TDLHandle handle, const char *model_dir);
+/**
  * @brief 加载指定模型到 TDLHandle 对象
  *
  * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
  * @param model_id 要加载的模型类型枚举值
- * @param model_path 模型文件路径，绝对路径或相对路径
+ * @param model_path
+ * 模型文件路径，绝对路径，假如使用配置信息里的路径，则可以传入NULL
+ * @param model_config_json 模型配置信息
+ * 1）使用TDL_LoadModelConfig加载后可以传入NULL,
+ * 2）不使用TDL_LoadModelConfig加载，大部分专有模型也可以传入NULL，此时会使用算法类内部的默认配置，
+ *    部分通用模型如特征提取、声音指令等需要传入模型配置信息，可以参考configs/model/model_config.json
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_OpenModel(TDLHandle handle,
                       const TDLModel model_id,
-                      const char *model_path);
+                      const char *model_path,
+                      const char *model_config_json);
 
 /**
  * @brief 卸载指定模型并释放相关资源
@@ -101,12 +124,11 @@ int32_t TDL_OpenModel(TDLHandle handle,
  * @param model_id 要卸载的模型类型枚举值
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_CloseModel(TDLHandle handle,
-                       const TDLModel model_id);
+int32_t TDL_CloseModel(TDLHandle handle, const TDLModel model_id);
 
 /**
  * @brief 设置模型threshold
- * 
+ *
  * @param handle 已初始化的 TDLHandle 对象
  * @param model_id 要设置的模型类型枚举值
  * @param threshold 模型的阈值

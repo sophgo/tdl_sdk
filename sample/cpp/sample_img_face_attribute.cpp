@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  TDLModelFactory model_factory;
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
   ModelType model_id = ModelType::CLS_ATTRIBUTE_FACE;
 
   std::shared_ptr<BaseModel> model =

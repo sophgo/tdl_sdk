@@ -18,19 +18,15 @@ int yoloe_argmax(T *ptr, int basic_pos, int cls_len) {
   return max_idx;
 }
 
-PPYoloEDetection::PPYoloEDetection() : PPYoloEDetection(std::make_pair(4, 80)) {}
+PPYoloEDetection::PPYoloEDetection()
+    : PPYoloEDetection(std::make_pair(4, 80)) {}
 
 PPYoloEDetection::PPYoloEDetection(std::pair<int, int> ppyoloe_pair) {
   // default param
-  float mean[3] = {123.675, 116.28, 103.52};
-  float std[3] = {58.395, 57.12, 57.375};
-
-  for (int i = 0; i < 3; i++) {
-    net_param_.pre_params.scale[i] = mean[i] / std[i];
-    net_param_.pre_params.mean[i] = 1.0 / std[i];
-  }
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  net_param_.pre_params.keep_aspect_ratio = true;
+  net_param_.model_config.mean = {123.675, 116.28, 103.52};
+  net_param_.model_config.std = {58.395, 57.12, 57.375};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = true;
 
   num_box_channel_ = ppyoloe_pair.first;
   num_cls_ = ppyoloe_pair.second;
@@ -98,8 +94,8 @@ int PPYoloEDetection::onModelOpened() {
 }
 
 void PPYoloEDetection::decodeBboxFeatureMap(int batch_idx, int stride,
-                                           int anchor_idx,
-                                           std::vector<float> &decode_box) {
+                                            int anchor_idx,
+                                            std::vector<float> &decode_box) {
   std::string box_name;
   if (bbox_out_names.count(stride)) {
     box_name = bbox_out_names[stride];
@@ -198,14 +194,22 @@ int32_t PPYoloEDetection::outputParse(
         float class_score = 0.0f;
         int label = 0;
         if (classinfo.data_type == TDLDataType::INT8) {
-          label = yoloe_argmax<int8_t>(cls_tensor->getBatchPtr<int8_t>(b), basic_pos_cls, num_cls_);
-          class_score = cls_tensor->getBatchPtr<int8_t>(b)[label + basic_pos_cls] * cls_qscale;
+          label = yoloe_argmax<int8_t>(cls_tensor->getBatchPtr<int8_t>(b),
+                                       basic_pos_cls, num_cls_);
+          class_score =
+              cls_tensor->getBatchPtr<int8_t>(b)[label + basic_pos_cls] *
+              cls_qscale;
         } else if (classinfo.data_type == TDLDataType::UINT8) {
-          label = yoloe_argmax<uint8_t>(cls_tensor->getBatchPtr<uint8_t>(b), basic_pos_cls, num_cls_);
-          class_score = cls_tensor->getBatchPtr<uint8_t>(b)[label + basic_pos_cls] * cls_qscale;
+          label = yoloe_argmax<uint8_t>(cls_tensor->getBatchPtr<uint8_t>(b),
+                                        basic_pos_cls, num_cls_);
+          class_score =
+              cls_tensor->getBatchPtr<uint8_t>(b)[label + basic_pos_cls] *
+              cls_qscale;
         } else if (classinfo.data_type == TDLDataType::FP32) {
-          label = yoloe_argmax<float>(cls_tensor->getBatchPtr<float>(b), basic_pos_cls, num_cls_);
-          class_score = cls_tensor->getBatchPtr<float>(b)[label + basic_pos_cls];
+          label = yoloe_argmax<float>(cls_tensor->getBatchPtr<float>(b),
+                                      basic_pos_cls, num_cls_);
+          class_score =
+              cls_tensor->getBatchPtr<float>(b)[label + basic_pos_cls];
         } else {
           LOGE("unsupported data type:%d\n", classinfo.data_type);
           assert(0);
@@ -213,13 +217,13 @@ int32_t PPYoloEDetection::outputParse(
 
         class_score = 1 / (1 + exp(-class_score));
         if (class_score < m_model_threshold) {
-          basic_pos_cls += num_cls_ ;
+          basic_pos_cls += num_cls_;
           basic_pos_box += 4;
           continue;
         }
         std::vector<float> box;
         decodeBboxFeatureMap(b, stride, j, box);
-        basic_pos_cls += num_cls_ ;
+        basic_pos_cls += num_cls_;
         basic_pos_box += 4;
         ObjectBoxInfo bbox;
         bbox.score = class_score;
@@ -240,9 +244,7 @@ int32_t PPYoloEDetection::outputParse(
     for (auto &bbox : lb_boxes) {
       num_obj += bbox.second.size();
       for (auto &b : bbox.second) {
-        DetectionHelper::rescaleBbox(b, scale_params,
-                                     net_param_.pre_params.crop_x,
-                                     net_param_.pre_params.crop_y);
+        DetectionHelper::rescaleBbox(b, scale_params);
         if (type_mapping_.count(b.class_id)) {
           b.object_type = type_mapping_[b.class_id];
         }

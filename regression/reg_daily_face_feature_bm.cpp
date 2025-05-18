@@ -23,10 +23,12 @@ class FeatureExtraBmTestSuite : public CVI_TDLModelTestSuite {
   virtual ~FeatureExtraBmTestSuite() = default;
 
   std::shared_ptr<BaseModel> model_;
-  TDLModelFactory model_factory_;
 
  protected:
-  virtual void SetUp() {}
+  virtual void SetUp() {
+    TDLModelFactory::getInstance().loadModelConfig();
+    TDLModelFactory::getInstance().setModelDir(m_model_dir);
+  }
 
   virtual void TearDown() {}
 };
@@ -42,8 +44,8 @@ TEST_F(FeatureExtraBmTestSuite, accuracy) {
         std::string(m_json_object[test_index]["model_name"]);
     std::string model_path = (m_model_dir / fs::path(model_name)).string();
 
-    model_ = model_factory_.getModel(ModelType::RESNET_FEATURE_BMFACE_R34,
-                                     model_path);
+    model_ = TDLModelFactory::getInstance().getModel(
+        ModelType::RESNET_FEATURE_BMFACE_R34, model_path);
     ASSERT_NE(model_, nullptr);
 
     std::vector<std::pair<std::string, std::string>> pair_info = {

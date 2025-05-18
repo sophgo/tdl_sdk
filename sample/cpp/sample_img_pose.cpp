@@ -11,7 +11,8 @@ int skeleton[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12},
                        {1, 3},   {2, 4},   {3, 5},   {4, 6}};
 void visualize_keypoints_detection(
     std::shared_ptr<BaseImage> image,
-    std::shared_ptr<ModelBoxLandmarkInfo> obj_meta, float score,
+    std::shared_ptr<ModelBoxLandmarkInfo> obj_meta,
+    float score,
     const std::string &save_path) {
   cv::Mat mat;
   bool is_rgb;
@@ -98,10 +99,10 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
 
 int main(int argc, char **argv) {
   if (argc != 3) {
-    printf("Usage: %s <model_path> <image_path> \n", argv[0]);
+    printf("Usage: %s <model_dir> <image_path> \n", argv[0]);
     return -1;
   }
-  std::string model_path = argv[1];
+  std::string model_dir = argv[1];
   std::string image_path = argv[2];
 
   std::shared_ptr<BaseImage> image1 = ImageFactory::readImage(image_path);
@@ -110,10 +111,11 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  TDLModelFactory model_factory;
-
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
   std::shared_ptr<BaseModel> model_od =
-      model_factory.getModel(ModelType::KEYPOINT_YOLOV8POSE_PERSON17, model_path);
+      model_factory.getModel(ModelType::KEYPOINT_YOLOV8POSE_PERSON17);
   if (!model_od) {
     printf("Failed to create model_od\n");
     return -1;

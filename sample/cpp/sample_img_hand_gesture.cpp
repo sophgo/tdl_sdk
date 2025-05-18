@@ -59,13 +59,11 @@ std::vector<std::shared_ptr<ModelOutputInfo>> extract_crop_hand_landmark(
 
 int main(int argc, char **argv) {
   if (argc != 4) {
-    printf("Usage: %s <hand_det_model_path> <hand_classification_model_path>\n",
-           argv[0]);
+    printf("Usage: %s <model_dir> <image_path>\n", argv[0]);
     return -1;
   }
-  std::string hd_model_path = argv[1];
-  std::string hc_model_path = argv[2];
-  std::string image_path = argv[3];
+  std::string model_dir = argv[1];
+  std::string image_path = argv[2];
 
   std::shared_ptr<BaseImage> image1 = ImageFactory::readImage(image_path);
   if (!image1) {
@@ -73,17 +71,19 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  TDLModelFactory model_factory;
+  TDLModelFactory &model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
+  model_factory.setModelDir(model_dir);
 
   std::shared_ptr<BaseModel> model_hd =
-      model_factory.getModel(ModelType::YOLOV8N_DET_HAND, hd_model_path);
+      model_factory.getModel(ModelType::YOLOV8N_DET_HAND);
   if (!model_hd) {
     printf("Failed to create model_hd\n");
     return -1;
   }
 
   std::shared_ptr<BaseModel> model_hc =
-      model_factory.getModel(ModelType::CLS_HAND_GESTURE, hc_model_path);
+      model_factory.getModel(ModelType::CLS_HAND_GESTURE);
   if (!model_hc) {
     printf("Failed to create model_hc\n");
     return -1;

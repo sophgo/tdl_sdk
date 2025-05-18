@@ -1,6 +1,7 @@
 #ifndef TDL_LOG_HPP
 #define TDL_LOG_HPP
 #include <inttypes.h>
+#include <stdio.h>
 #include <cstring>
 
 // 辅助宏，用于提取文件名（不含路径）
@@ -72,8 +73,21 @@
   syslog(TDL_LOG_CHN | LOG_CRIT, "[%s:%d] [C] " fmt, __FILENAME__, __LINE__, \
          ##__VA_ARGS__)
 
-#include <stdio.h>
-
+#undef LOGE
+#define LOGE(fmt, ...)                                                        \
+  do {                                                                        \
+    syslog(TDL_LOG_CHN | LOG_ERR, "[%s:%d] [E] " fmt, __FILENAME__, __LINE__, \
+           ##__VA_ARGS__);                                                    \
+    fprintf(stderr, "[%s:%d] [E] " fmt "\n", __FILENAME__, __LINE__,          \
+            ##__VA_ARGS__);                                                   \
+  } while (0)
+#define LOGIP(fmt, ...)                                                        \
+  do {                                                                         \
+    syslog(TDL_LOG_CHN | LOG_INFO, "[%s:%d] [E] " fmt, __FILENAME__, __LINE__, \
+           ##__VA_ARGS__);                                                     \
+    fprintf(stderr, "[%s:%d] [I] " fmt "\n", __FILENAME__, __LINE__,           \
+            ##__VA_ARGS__);                                                    \
+  } while (0)
 // #define LOGI(fmt, ...) \
 //   printf("[%s:%d] [I] " fmt "\n", __FILENAME__, __LINE__, ##__VA_ARGS__)
 // #define LOGE(fmt, ...) \

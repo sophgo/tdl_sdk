@@ -6,7 +6,9 @@
 #include <memory>
 
 std::vector<std::vector<float>> DetectionHelper::generateMmdetBaseAnchors(
-    float base_size, float center_offset, const std::vector<float> &ratios,
+    float base_size,
+    float center_offset,
+    const std::vector<float> &ratios,
     const std::vector<int> &scales) {
   std::vector<std::vector<float>> base_anchors;
   float x_center = base_size * center_offset;
@@ -29,7 +31,9 @@ std::vector<std::vector<float>> DetectionHelper::generateMmdetBaseAnchors(
 }
 
 std::vector<std::vector<float>> DetectionHelper::generateMmdetGridAnchors(
-    int feat_w, int feat_h, int stride,
+    int feat_w,
+    int feat_h,
+    int stride,
     std::vector<std::vector<float>> &base_anchors) {
   std::vector<std::vector<float>> grid_anchors;
   for (size_t k = 0; k < base_anchors.size(); k++) {
@@ -55,9 +59,13 @@ std::vector<std::vector<float>> DetectionHelper::generateMmdetGridAnchors(
 // stride->anchor_boxes->[x,y,w,h]
 std::vector<std::vector<std::vector<float>>>
 DetectionHelper::generateRetinaNetAnchors(
-    int min_level, int max_level, int num_scales,
+    int min_level,
+    int max_level,
+    int num_scales,
     const std::vector<std::pair<float, float>> &aspect_ratios,
-    float anchor_scale, int image_width, int image_height) {
+    float anchor_scale,
+    int image_width,
+    int image_height) {
   std::vector<std::vector<std::vector<float>>> anchor_bboxes;
 
   // 遍历各层级（例如 3~7）
@@ -215,24 +223,27 @@ void DetectionHelper::nmsObjects(
     nmsObjects(object.second, iou_threshold);
   }
 }
-void DetectionHelper::nmsObjects(std::vector<ObjectBoxSegmentationInfo> &objects,
-                                 float iou_threshold, std::vector<std::pair<int, uint32_t>> &stride_index) {
- 
+void DetectionHelper::nmsObjects(
+    std::vector<ObjectBoxSegmentationInfo> &objects,
+    float iou_threshold,
+    std::vector<std::pair<int, uint32_t>> &stride_index) {
   std::vector<size_t> indices(objects.size());
   for (size_t i = 0; i < objects.size(); ++i) {
-        indices[i] = i;
+    indices[i] = i;
   }
 
-  std::sort(indices.begin(), indices.end(),
-              [&objects](size_t a, size_t b) {
-                  return objects[a].score > objects[b].score;});
+  std::sort(indices.begin(), indices.end(), [&objects](size_t a, size_t b) {
+    return objects[a].score > objects[b].score;
+  });
 
   std::vector<ObjectBoxSegmentationInfo> sorted_objects(objects.size());
-  std::vector<std::pair<int, uint32_t>> sorted_stride_index(stride_index.size());
+  std::vector<std::pair<int, uint32_t>> sorted_stride_index(
+      stride_index.size());
 
   for (size_t i = 0; i < indices.size(); ++i) {
-        sorted_objects[i] = objects[indices[i]];
-        sorted_stride_index[i] = stride_index[indices[i]];}
+    sorted_objects[i] = objects[indices[i]];
+    sorted_stride_index[i] = stride_index[indices[i]];
+  }
 
   int select_idx = 0;
   int num_bbox = sorted_objects.size();
@@ -289,24 +300,27 @@ void DetectionHelper::nmsObjects(std::vector<ObjectBoxSegmentationInfo> &objects
   objects = objects_nms;
   stride_index = stride_index_nms;
 }
-void DetectionHelper::nmsObjects(std::vector<ObjectBoxLandmarkInfo> &objects,
-                                 float iou_threshold, std::vector<std::pair<int, uint32_t>> &stride_index) {
- 
+void DetectionHelper::nmsObjects(
+    std::vector<ObjectBoxLandmarkInfo> &objects,
+    float iou_threshold,
+    std::vector<std::pair<int, uint32_t>> &stride_index) {
   std::vector<size_t> indices(objects.size());
   for (size_t i = 0; i < objects.size(); ++i) {
-        indices[i] = i;
+    indices[i] = i;
   }
 
-  std::sort(indices.begin(), indices.end(),
-              [&objects](size_t a, size_t b) {
-                  return objects[a].score > objects[b].score;});
+  std::sort(indices.begin(), indices.end(), [&objects](size_t a, size_t b) {
+    return objects[a].score > objects[b].score;
+  });
 
   std::vector<ObjectBoxLandmarkInfo> sorted_objects(objects.size());
-  std::vector<std::pair<int, uint32_t>> sorted_stride_index(stride_index.size());
+  std::vector<std::pair<int, uint32_t>> sorted_stride_index(
+      stride_index.size());
 
   for (size_t i = 0; i < indices.size(); ++i) {
-        sorted_objects[i] = objects[indices[i]];
-        sorted_stride_index[i] = stride_index[indices[i]];}
+    sorted_objects[i] = objects[indices[i]];
+    sorted_stride_index[i] = stride_index[indices[i]];
+  }
 
   int select_idx = 0;
   int num_bbox = sorted_objects.size();
@@ -364,51 +378,47 @@ void DetectionHelper::nmsObjects(std::vector<ObjectBoxLandmarkInfo> &objects,
   stride_index = stride_index_nms;
 }
 void DetectionHelper::rescaleBbox(ObjectBoxInfo &bbox,
-                                  const std::vector<float> &scale_params,
-                                  const int crop_x, const int crop_y) {
+                                  const std::vector<float> &scale_params) {
   float scale_x = scale_params[0];
   float scale_y = scale_params[1];
   float offset_x = scale_params[2];
   float offset_y = scale_params[3];
-  bbox.x1 = (bbox.x1 - offset_x) / scale_x + crop_x;
-  bbox.y1 = (bbox.y1 - offset_y) / scale_y + crop_y;
-  bbox.x2 = (bbox.x2 - offset_x) / scale_x + crop_x;
-  bbox.y2 = (bbox.y2 - offset_y) / scale_y + crop_y;
+  bbox.x1 = bbox.x1 * scale_x + offset_x;
+  bbox.y1 = bbox.y1 * scale_y + offset_y;
+  bbox.x2 = bbox.x2 * scale_x + offset_x;
+  bbox.y2 = bbox.y2 * scale_y + offset_y;
 }
 
 void DetectionHelper::rescaleBbox(ObjectBoxSegmentationInfo &bbox,
-                                  const std::vector<float> &scale_params,
-                                  const int crop_x, const int crop_y) {
+                                  const std::vector<float> &scale_params) {
   float scale_x = scale_params[0];
   float scale_y = scale_params[1];
   float offset_x = scale_params[2];
   float offset_y = scale_params[3];
-  bbox.x1 = (bbox.x1 - offset_x) / scale_x + crop_x;
-  bbox.y1 = (bbox.y1 - offset_y) / scale_y + crop_y;
-  bbox.x2 = (bbox.x2 - offset_x) / scale_x + crop_x;
-  bbox.y2 = (bbox.y2 - offset_y) / scale_y + crop_y;
+  bbox.x1 = bbox.x1 * scale_x + offset_x;
+  bbox.y1 = bbox.y1 * scale_y + offset_y;
+  bbox.x2 = bbox.x2 * scale_x + offset_x;
+  bbox.y2 = bbox.y2 * scale_y + offset_y;
 }
 
 void DetectionHelper::rescaleBbox(ObjectBoxLandmarkInfo &bbox,
-                                  const std::vector<float> &scale_params,
-                                  const int crop_x, const int crop_y) {
+                                  const std::vector<float> &scale_params) {
   float scale_x = scale_params[0];
   float scale_y = scale_params[1];
   float offset_x = scale_params[2];
   float offset_y = scale_params[3];
-  bbox.x1 = (bbox.x1 - offset_x) / scale_x + crop_x;
-  bbox.y1 = (bbox.y1 - offset_y) / scale_y + crop_y;
-  bbox.x2 = (bbox.x2 - offset_x) / scale_x + crop_x;
-  bbox.y2 = (bbox.y2 - offset_y) / scale_y + crop_y;
+  bbox.x1 = bbox.x1 * scale_x + offset_x;
+  bbox.y1 = bbox.y1 * scale_y + offset_y;
+  bbox.x2 = bbox.x2 * scale_x + offset_x;
+  bbox.y2 = bbox.y2 * scale_y + offset_y;
 
   for (size_t i = 0; i < bbox.landmarks_x.size(); ++i) {
-      bbox.landmarks_x[i] = (bbox.landmarks_x[i] - offset_x) / scale_x + crop_x;
+    bbox.landmarks_x[i] = bbox.landmarks_x[i] * scale_x + offset_x;
   }
 
   for (size_t i = 0; i < bbox.landmarks_y.size(); ++i) {
-        bbox.landmarks_y[i] = (bbox.landmarks_y[i] - offset_y) / scale_y + crop_y;;
+    bbox.landmarks_y[i] = bbox.landmarks_y[i] * scale_y + offset_y;
   }
-  
 }
 
 // void DetectionHelper::convertDetStruct(

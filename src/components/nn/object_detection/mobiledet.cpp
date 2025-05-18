@@ -102,19 +102,10 @@ MobileDetV2Detection::MobileDetV2Detection(
                              m_model_config.class_dequant_thresh);
 
   // m_filter.set();
-
-  net_param_.pre_params.scale[0] = static_cast<float>(FACTOR_R);
-  net_param_.pre_params.scale[1] = static_cast<float>(FACTOR_G);
-  net_param_.pre_params.scale[2] = static_cast<float>(FACTOR_B);
-  net_param_.pre_params.mean[0] = static_cast<float>(MEAN_R);
-  net_param_.pre_params.mean[1] = static_cast<float>(MEAN_G);
-  net_param_.pre_params.mean[2] = static_cast<float>(MEAN_B);
-
-  net_param_.pre_params.dst_image_format = ImageFormat::RGB_PLANAR;
-  //   preprocess_params_[0].rescale_type = RESCALE_RB;
-  // #ifndef __CV186X__
-  //   preprocess_params_[0].resize_method = VPSS_SCALE_COEF_OPENCV_BILINEAR;
-  // #endif
+  net_param_.model_config.std = {STD_R, STD_G, STD_B};
+  net_param_.model_config.mean = {MODEL_MEAN_R, MODEL_MEAN_G, MODEL_MEAN_B};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = false;
 }
 
 MobileDetV2Detection::~MobileDetV2Detection() {}
@@ -240,9 +231,7 @@ int32_t MobileDetV2Detection::outputParse(
     for (auto &bbox : lb_boxes) {
       num_obj += bbox.second.size();
       for (auto &b : bbox.second) {
-        DetectionHelper::rescaleBbox(b, scale_params,
-                                     net_param_.pre_params.crop_x,
-                                     net_param_.pre_params.crop_y);
+        DetectionHelper::rescaleBbox(b, scale_params);
         if (type_mapping_.count(b.class_id)) {
           LOGI("class_id: %d, object_type: %d\n", b.class_id,
                type_mapping_[b.class_id]);

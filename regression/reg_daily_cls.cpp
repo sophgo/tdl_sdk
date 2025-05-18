@@ -3,7 +3,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "cvi_tdl_model_id.hpp"
 #include "cvi_tdl_test.hpp"
 #include "image/opencv_image.hpp"
 #include "json.hpp"
@@ -25,17 +24,21 @@ class ClassificationTestSuite : public CVI_TDLModelTestSuite {
 
   std::string m_model_path;
   std::shared_ptr<BaseModel> cls_;
-  TDLModelFactory model_factory_;
+
   ModelType model_id_;
 
  protected:
   virtual void SetUp() {
-    std::string model_name = std::string(m_json_object["model_name"]);
-    std::string model_path =
-        (m_model_dir / fs::path(model_name + gen_model_suffix())).string();
-    std::string model_id_name = std::string(m_json_object["model_id"]);
-    model_id_ = stringToModelType(model_id_name);
-    cls_ = model_factory_.getModel(model_id_, model_path);
+    int32_t ret = TDLModelFactory::getInstance().loadModelConfig();
+    if (ret != 0) {
+      LOGE("load model config failed");
+      return;
+    }
+    TDLModelFactory::getInstance().setModelDir(m_model_dir);
+
+    std::string model_id_str = std::string(m_json_object["model_id"]);
+    model_id_ = modelTypeFromString(model_id_str);
+    cls_ = TDLModelFactory::getInstance().getModel(model_id_);
     ASSERT_NE(cls_, nullptr);
   }
 
