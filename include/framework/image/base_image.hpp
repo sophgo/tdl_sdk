@@ -41,6 +41,10 @@ class BaseImage {
 
   virtual ImageType getImageType() const { return image_type_; }
   virtual TDLDataType getPixDataType() const { return pix_data_type_; }
+  virtual std::unique_ptr<MemoryBlock>& getMemoryBlock() {
+    return memory_block_;
+  }
+
   virtual bool isPlanar() const;
 
   virtual uint32_t getInternalType() const { return 0; }

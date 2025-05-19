@@ -6,11 +6,13 @@ include_directories(
                     ${REPO_DIR}/include/nn
                     ${CMAKE_CURRENT_SOURCE_DIR}/
                     )
-                    
-# link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-# file(GLOB_RECURSE SRC_FRAMWORK_FILES_CUR ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
-# file(GLOB_RECURSE SRC_FRAMWORK_FILES_CUR ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+if(("${CVI_PLATFORM}" STREQUAL "CV184X"))
+    add_definitions(-DUSE_CV184X)
+endif()
+if(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X"))
+    add_definitions(-DUSE_CMODEL_CV184X)
+endif()
 set(SRC_FRAMWORK_FILES_CUR 
     ${CMAKE_CURRENT_SOURCE_DIR}/image_processor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bm_image_processor/api_tpu.c

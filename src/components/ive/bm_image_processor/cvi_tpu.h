@@ -30,12 +30,13 @@ typedef enum _TPU_BLEND_WGT_MODE {
 bm_status_t tpu_cv_subads(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
                           CVI_S32 format, CVI_S32 channel,
                           bm_device_mem_t *src1_mem, bm_device_mem_t *src2_mem,
-                          bm_device_mem_t *dst_mem);
+                          bm_device_mem_t *dst_mem, tpu_kernel_module_t tpu_module);
 
 bm_status_t tpu_cv_threshold(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
                              TPU_THRESHOLD_TYPE mode, CVI_U32 threshold,
                              CVI_U32 max_value, bm_device_mem_t *input_mem,
-                             bm_device_mem_t *output_mem);
+                             bm_device_mem_t *output_mem,
+                             tpu_kernel_module_t tpu_module);
 
 bm_status_t tpu_2way_blending(bm_handle_t handle, CVI_S32 lwidth,
                               CVI_S32 lheight, CVI_S32 rwidth, CVI_S32 rheight,
@@ -44,7 +45,8 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, CVI_S32 lwidth,
                               CVI_S32 blend_h, bm_device_mem_t *blend_mem,
                               CVI_S32 overlay_lx, CVI_S32 overlay_rx,
                               bm_device_mem_t *wgt_phy_mem,
-                              TPU_BLEND_WGT_MODE mode, int format, int channel);
+                              TPU_BLEND_WGT_MODE mode, int format, int channel,
+                              tpu_kernel_module_t tpu_module);
 
 int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img, int rwidth,
                    int rheight, unsigned char *right_img, int bwidth,

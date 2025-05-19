@@ -246,24 +246,29 @@ int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img,
 bm_status_t sg_tpu_kernel_launch(bm_handle_t handle,
                                  const char  *func_name,
                                  void        *param,
-                                 size_t      size)
+                                 size_t      size,
+                                 tpu_kernel_module_t tpu_module)
 {
-	tpu_kernel_module_t tpu_module = NULL;
+	// tpu_kernel_module_t tpu_module = NULL;
 	tpu_kernel_function_t func_id = 0;
+// #ifdef USE_CV184X
+// 	tpu_module = tpu_kernel_load_module_file(handle, "/mnt/tpu_files/lib/libtpu_kernel_module.so");
+// #else
+// 	tpu_module = tpu_kernel_load_module_file(handle, "");
+// #endif
 
-	tpu_module = tpu_kernel_load_module_file(handle, "");
-	if (!tpu_module) {
-		printf("%s:[ERROR] tpu kernel load module file failed\n", __func__);
-		return BM_ERR_FAILURE;
-	}
+	// if (!tpu_module) {
+	// 	printf("%s:[ERROR] tpu kernel load module file failed\n", __func__);
+	// 	return BM_ERR_FAILURE;
+	// }
 
 	func_id = tpu_kernel_get_function(handle, tpu_module, (char*)func_name);
 	bm_status_t ret = tpu_kernel_launch(handle, func_id, param, size);
 
-	if (tpu_kernel_free_module(handle, tpu_module)) {
-		printf("%s:[ERROR] tpu module unload failed\n", __func__);
-		return BM_ERR_FAILURE;
-	}
+	// if (tpu_kernel_free_module(handle, tpu_module)) {
+	// 	printf("%s:[ERROR] tpu module unload failed\n", __func__);
+	// 	return BM_ERR_FAILURE;
+	// }
 
 	return ret;
 }
@@ -306,7 +311,8 @@ bm_status_t tpu_cv_subads(bm_handle_t handle,
                           CVI_S32 channel,
                           bm_device_mem_t *src1_mem,
                           bm_device_mem_t *src2_mem,
-                          bm_device_mem_t *dst_mem)
+                          bm_device_mem_t *dst_mem,
+                          tpu_kernel_module_t tpu_module)
 {
 	bm_status_t ret = BM_ERR_FAILURE;
 
@@ -344,7 +350,7 @@ bm_status_t tpu_cv_subads(bm_handle_t handle,
 		api.input1_str[i] = api.input2_str[i] = api.output_str[i] = api.width[i];
 	}
 
-	ret = sg_tpu_kernel_launch(handle, "cv_subads", &api, sizeof(api));
+	ret = sg_tpu_kernel_launch(handle, "cv_subads", &api, sizeof(api), tpu_module);
 	if (ret != BM_SUCCESS) {
 		bmlib_log("SUBADS", BMLIB_LOG_ERROR, "sg_tpu_kernel_launch!\r\n");
 		return BM_ERR_FAILURE;
@@ -400,7 +406,8 @@ bm_status_t tpu_cv_threshold(bm_handle_t handle,
                              CVI_U32 threshold,
                              CVI_U32 max_value,
                              bm_device_mem_t *input_mem,
-                             bm_device_mem_t *output_mem)
+                             bm_device_mem_t *output_mem,
+                             tpu_kernel_module_t tpu_module)
 {
 	bm_status_t ret = BM_ERR_FAILURE;
 
@@ -422,7 +429,7 @@ bm_status_t tpu_cv_threshold(bm_handle_t handle,
 	api.max_value = max_value;
 	api.channel = 1; // Only Support PIXEL_FORMAT_YUV_400
 
-	ret = sg_tpu_kernel_launch(handle, "cv_threshold", &api, sizeof(api));
+	ret = sg_tpu_kernel_launch(handle, "cv_threshold", &api, sizeof(api), tpu_module);
 	if (ret != BM_SUCCESS) {
 		bmlib_log("THRESHOLD", BMLIB_LOG_ERROR, "sg_tpu_kernel_launch!\r\n");
 		return BM_ERR_FAILURE;
@@ -535,7 +542,8 @@ bm_status_t tpu_2way_blending(bm_handle_t handle,
                               CVI_S32 overlay_rx,
                               bm_device_mem_t *wgt_phy_mem,
                               TPU_BLEND_WGT_MODE mode,
-                              int format, int channel)
+                              int format, int channel,
+                              tpu_kernel_module_t tpu_module)
 {
 	bm_status_t ret;
 	sg_cv_blend_2way_t api;
@@ -595,7 +603,7 @@ bm_status_t tpu_2way_blending(bm_handle_t handle,
 		}
 	}
 
-	ret = sg_tpu_kernel_launch(handle, "cv_blend_2way", &api, sizeof(api));
+	ret = sg_tpu_kernel_launch(handle, "cv_blend_2way", &api, sizeof(api), tpu_module);
 	if (ret != BM_SUCCESS) {
 		bmlib_log("BLEND", BMLIB_LOG_ERROR, "sg_tpu_kernel_launch!\r\n");
 		return BM_ERR_FAILURE;
