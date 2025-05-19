@@ -42,11 +42,16 @@ class TDLModelFactory {
                                       const std::string &model_path,
                                       const ModelConfig &model_config,
                                       const int device_id = 0);
+
   std::shared_ptr<BaseModel> getModel(const std::string &model_type,
                                       const std::string &model_path,
                                       const ModelConfig &model_config,
                                       const int device_id = 0);
 
+  std::shared_ptr<BaseModel> getModel(const std::string &model_type,
+                                      const std::string &model_path,
+                                      const std::string &model_config_json,
+                                      const int device_id = 0);
   ModelConfig getModelConfig(const ModelType model_type);
   /*
    * load model config from model_config_file

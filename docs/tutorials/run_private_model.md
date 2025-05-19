@@ -32,9 +32,39 @@
 * 编译模型
   * YOLO系列模型编译，参考[yolo_development_guide](../developer_guide/yolo_development_guide.md)
   * 其他类型模型，直接按照标准流程进行编译
-* 使用现有接口进行调用
-  * 获取模型
-  * 配置预处理参数，只需要配置mean、scale、dst_image_format、keep_aspect_ratio
+* 配置模型，可以有三种配置方式
+  * 在[model_factory.json](../../configs/model/model_factory.json)文件中替换现有模型的参数，后续基于现有模型的ID进行调用
+  * 参考[model_factory.json](../../configs/model/model_factory.json)创建新的配置文件，后续基于新的配置文件进行调用
+  * 在代码中使用json字符串提供配置信息
+* 调用举例
+
+  ```cpp
+  //方式1:内部会使用lib_tdl.so所在目录下的configs/model/model_config.json文件
+  TDLModelFactory::getInstance().setModelDir("/path/to/tdl_models");
+  TDLModelFactory::getInstance().loadModelConfig();
+  //方式2:使用新的配置文件
+  TDLModelFactory::getInstance().setModelDir("/path/to/tdl_models");
+  TDLModelFactory::getInstance().loadModelConfig("new_model_config.json");
+  //方式3:使用json字符串
+  static const std::string cviface_config = R"JSON(
+  {
+    "_comment": "cviface 256-dimensional feature",
+    "file_name": "recognition_cviface_112_112_INT8",
+    "rgb_order": "rgb",
+    "mean": [127.5, 127.5, 127.5],
+    "std": [128, 128, 128]
+  }
+  )JSON";
+  std::shared_ptr<BaseModel> model =
+      TDLModelFactory::getInstance().getModel(ModelType::FEATURE_IMG, model_path, cviface_config);
+  
+  ```
+
+* 配置信息加载说明
+  * 为了方便使用tdl_models仓库中的所有模型，建议使用方式1加载配置信息
+  * 后续的同类型的新增模型文件，可以使用方式3补充使用
+  * 大部分模型都无需提供额外的配置信息
+  * 少数的通用模型ID如特征提取，需要提供mean、std、rgb_order等参数
 
 ### 检测模型调用举例
 
@@ -42,11 +72,11 @@
 
 ```cpp
 
-  TDLModelFactory model_factory;
+  
   std::string model_path = "/path/to/my_own_yolov8_model.bmodel";
   ModelType model_id = ModelType::YOLOV8;
   std::shared_ptr<BaseModel> model =
-      model_factory.getModel(model_id, model_path);
+      TDLModelFactory::getInstance().getModel(model_id, model_path);
   if (!model) {
     printf("Failed to create model\n");
     return -1;
@@ -70,28 +100,24 @@
 
 ```cpp
 
-  TDLModelFactory model_factory;
   std::string model_path = "/path/to/my_own_cls_model.bmodel";
   ModelType model_id = ModelType::CLS_IMG;
+  
+
+  // 配置预处理参数
+  ModelConfig config;
+  config.mean = {0, 0, 0};
+  config.std = {255.0, 255.0, 255.0};
+  config.dst_image_format = ImageFormat::RGB_PLANAR;//BGR_PLANAR
+  config.keep_aspect_ratio = false;
+
   std::shared_ptr<BaseModel> model =
-      model_factory.getModel(model_id, model_path);
+      TDLModelFactory::getInstance().getModel(model_id, model_path, config);
   if (!model) {
     printf("Failed to create model\n");
     return -1;
   }
 
-  // 配置预处理参数
-  PreprocessParams pre_param;
-  pre_param.mean[0] =  2.1179;
-  pre_param.mean[1] =  2.0357;
-  pre_param.mean[2] =  1.8044;
-  pre_param.scale[0] = 0.017126;
-  pre_param.scale[1] = 0.017509;
-  pre_param.scale[2] = 0.017431;
-  pre_param.dst_image_format = ImageFormat::RGB_PLANAR;//BGR_PLANAR
-  pre_param.keep_aspect_ratio = true;
-
-  model_hc->setPreprocessParameters(pre_param);
   std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image};
   model->inference(input_images, out_datas);
@@ -109,28 +135,20 @@
 
 ```cpp
 
-  TDLModelFactory model_factory;
+  ModelConfig config;
+  config.mean = {127.5, 127.5, 127.5};
+  config.std = {128, 128, 128};
+  config.dst_image_format = ImageFormat::RGB_PLANAR;//BGR_PLANAR
+  config.keep_aspect_ratio = false;
   std::string model_path = "/path/to/my_own_feature_model.bmodel";
   ModelType model_id = ModelType::FEATURE_IMG;
   std::shared_ptr<BaseModel> model =
-      model_factory.getModel(model_id, model_path);
+      TDLModelFactory::getInstance().getModel(model_id, model_path, config);
   if (!model) {
     printf("Failed to create model\n");
     return -1;
   }
-  // 配置预处理参数
-  PreprocessParams pre_param;
-  pre_param.mean[0] = 0;
-  pre_param.mean[1] = 0;
-  pre_param.mean[2] = 0;
-  pre_param.scale[0] = 1.0/255;
-  pre_param.scale[1] = 1.0/255;
-  pre_param.scale[2] = 1.0/255;
-  pre_param.dst_image_format = ImageFormat::RGB_PLANAR;//BGR_PLANAR
-  pre_param.keep_aspect_ratio = true;
 
-  model_hc->setPreprocessParameters(pre_param);
-  
   std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image};
   model->inference(input_images, out_datas);

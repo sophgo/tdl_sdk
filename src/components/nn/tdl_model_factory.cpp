@@ -190,6 +190,21 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   }
   return getModel(model_type_enum, model_path, model_config, device_id);
 }
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(
+    const std::string &model_type,
+    const std::string &model_path,
+    const std::string &model_config_json,
+    const int device_id) {
+  ModelConfig model_config;
+  try {
+    nlohmann::json json_config = nlohmann::json::parse(model_config_json);
+    model_config = parseModelConfig(json_config);
+  } catch (const std::exception &e) {
+    LOGE("Failed to parse model config: %s", e.what());
+    return nullptr;
+  }
+  return getModel(model_type, model_path, model_config, device_id);
+}
 ModelConfig TDLModelFactory::getModelConfig(const ModelType model_type) {
   std::string model_type_str = modelTypeToString(model_type);
   if (model_config_map_.find(model_type_str) == model_config_map_.end()) {
