@@ -37,16 +37,20 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
 }
 
 int main(int argc, char **argv) {
+  std::vector<std::string> supported_model_id_name = {"YOLOV6", "YOLOV8",
+                                                      "YOLOV10", "PPYOLOE"};
   if (argc != 4 && argc != 5) {
     printf(
-        "Usage: %s <model_id_name> <model_dir> <image_path> "
+        "Usage: %s <model_id_name> <model_file_path> <image_path> "
         "<model_threshold>\n",
         argv[0]);
-    printf("Usage: %s <model_id_name> <model_dir> <image_path>\n", argv[0]);
-    printf("model_id_name:\n");
-    for (auto &item : kAllModelTypes) {
-      printf("%s\n", modelTypeToString(item).c_str());
+    printf("Usage: %s <model_id_name> <model_file_path> <image_path>\n",
+           argv[0]);
+    printf("supported model_id_name:\n");
+    for (auto &item : supported_model_id_name) {
+      printf("%s\n", item.c_str());
     }
+
     return -1;
   }
   float model_threshold = 0.5;
@@ -54,8 +58,13 @@ int main(int argc, char **argv) {
     model_threshold = atof(argv[4]);
   }
   std::string model_id_name = argv[1];
+  if (std::find(supported_model_id_name.begin(), supported_model_id_name.end(),
+                model_id_name) == supported_model_id_name.end()) {
+    printf("model_id_name is not supported\n");
+    return -1;
+  }
 
-  std::string model_dir = argv[2];
+  std::string model_file_path = argv[2];
   std::string image_path = argv[3];
 
   std::shared_ptr<BaseImage> image = ImageFactory::readImage(image_path);
@@ -65,8 +74,9 @@ int main(int argc, char **argv) {
   }
   TDLModelFactory &model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
-  model_factory.setModelDir(model_dir);
-  std::shared_ptr<BaseModel> model = model_factory.getModel(model_id_name);
+
+  std::shared_ptr<BaseModel> model =
+      model_factory.getModel(model_id_name, model_file_path);
   if (!model) {
     printf("Failed to create model\n");
     return -1;
@@ -75,10 +85,6 @@ int main(int argc, char **argv) {
   std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   std::vector<std::shared_ptr<BaseImage>> input_images = {image};
   model->inference(input_images, out_datas);
-  // for (int i = 0; i < 1001; i++) {
-  //   out_datas.clear();
-  //   model->inference(input_images, out_datas);
-  // }
 
   std::cout << "out_datas.size: " << out_datas.size() << std::endl;
 
@@ -97,7 +103,7 @@ int main(int argc, char **argv) {
                 << obj_meta->bboxes[i].y1 << " " << obj_meta->bboxes[i].x2
                 << " " << obj_meta->bboxes[i].y2 << std::endl;
     }
-    std::string str_img_name = "object_detection_" + std::to_string(i) + ".jpg";
+    std::string str_img_name = "yolo_detection_" + std::to_string(i) + ".jpg";
     visualize_object_detection(image, obj_meta, str_img_name);
   }
 

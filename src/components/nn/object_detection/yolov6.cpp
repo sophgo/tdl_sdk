@@ -31,7 +31,7 @@ YoloV6Detection::YoloV6Detection() : YoloV6Detection(std::make_pair(4, 80)) {}
 
 YoloV6Detection::YoloV6Detection(std::pair<int, int> yolov6_pair) {
   net_param_.model_config.mean = {0.0, 0.0, 0.0};
-  net_param_.model_config.std = {1.0 / 0.03922, 1.0 / 0.03922, 1.0 / 0.03922};
+  net_param_.model_config.std = {254.97195, 254.97195, 254.97195};
   net_param_.model_config.rgb_order = "rgb";
   keep_aspect_ratio_ = true;
 

@@ -15,7 +15,7 @@
 
 ## News
 
-- 更新model_factory实现，基于模型配置信息[model_factory.json](configs/model/model_factory.json)管理模型，实例化模型更方便，参考[sample](sample/cpp/sample_img_fd.cpp)
+- 2025.05.19 更新model_factory实现，基于模型配置信息[model_factory.json](configs/model/model_factory.json)管理模型，实例化模型更方便，参考[sample](sample/cpp/sample_img_fd.cpp)
 - 2025.05.06 新增目标抓拍组件，基于目标质量进行目标抓拍，并更新到[face_cap_app](sample/cpp/sample_face_cap_app.cpp)
 - 2025.04.30 新增区域入侵检测组件
 - 2025.04.29 增加并行框架及app框架
