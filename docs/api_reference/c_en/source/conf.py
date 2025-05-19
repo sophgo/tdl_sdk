@@ -21,7 +21,7 @@
 
 project = 'c_interface'
 release = 'c_interface'
-copyright = '2024, CVITEK'
+copyright = '2025, CVITEK'
 author = 'CVITEK'
 
 import os, subprocess
@@ -73,7 +73,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = 'zh_CN'
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -127,7 +127,7 @@ numfig = True
 # 添加版本号
 # 【参考格式】 \noindent \Large Version：1.3.0 \par
 # 添加发版日期
-# 【参考格式】 \noindent \Large Release date: 2024-10-30 \par
+# 【参考格式】 \noindent \Large Release date: 2025-10-30 \par
 
 latex_maketitle = r'''
 \begin{titlepage}
@@ -140,7 +140,7 @@ latex_maketitle = r'''
 
     \vspace*{3cm}
 
-    \Huge \textbf{TDL SDK python 接口} \par
+    \Huge \textbf{TDL SDK C Interface} \par
 
     \vspace*{6cm}
 
@@ -148,9 +148,9 @@ latex_maketitle = r'''
 
 \vspace*{6cm}
 
-\noindent \normalsize ©2024北京晶视智能科技有限公司\\
-\noindent \normalsize 本文件所含信息归北京晶视智能科技有限公司所有。\\
-\noindent \normalsize 未经授权，严禁全部或部分复制或披露该等信息。\\
+\noindent \normalsize Copyright © 2025 CVITEK Co., Ltd. All rights reserved.\\
+\noindent \normalsize No part of this document may be reproduced or transmiited in any form or by any means\\
+\noindent \normalsize without prior written consent of CVITEK Co., Ltd.\\
 
 \end{titlepage}
 '''
