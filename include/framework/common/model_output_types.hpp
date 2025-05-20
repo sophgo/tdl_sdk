@@ -12,7 +12,7 @@ enum class ModelOutputType {
   OBJECT_LANDMARKS,
   FEATURE_EMBEDDING,
   CLASSIFICATION,
-  ATTRIBUTE,
+  CLS_ATTRIBUTE,
   SEGMENTATION,
   OCR_INFO,
   UNKOWN
@@ -166,7 +166,7 @@ class ModelAttributeInfo : public ModelOutputInfo {
  public:
   ~ModelAttributeInfo() = default;
   ModelOutputType getType() const override {
-    return ModelOutputType::ATTRIBUTE;
+    return ModelOutputType::CLS_ATTRIBUTE;
   }
   std::map<TDLObjectAttributeType, float> attributes;
 };

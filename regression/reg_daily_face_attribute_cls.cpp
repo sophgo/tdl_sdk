@@ -63,7 +63,7 @@ TEST_F(FaceAttributeClsBmTestSuite, accuracy) {
     input_images.push_back(frame);
     EXPECT_EQ(m_model->inference(input_images, out_data), 0);
     EXPECT_EQ(out_data.size(), 1);
-    EXPECT_EQ(out_data[0]->getType(), ModelOutputType::ATTRIBUTE);
+    EXPECT_EQ(out_data[0]->getType(), ModelOutputType::CLS_ATTRIBUTE);
     std::shared_ptr<ModelAttributeInfo> attr_info =
         std::static_pointer_cast<ModelAttributeInfo>(out_data[0]);
     auto expected_info = iter.value();

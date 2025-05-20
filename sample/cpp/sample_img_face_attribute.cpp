@@ -30,8 +30,8 @@ int main(int argc, char **argv) {
   model->inference(input_images, out_datas);
 
   for (size_t i = 0; i < out_datas.size(); i++) {
-    if (out_datas[i]->getType() != ModelOutputType::ATTRIBUTE) {
-      printf("out_datas[%d] is not ModelOutputType::ATTRIBUTE\n", i);
+    if (out_datas[i]->getType() != ModelOutputType::CLS_ATTRIBUTE) {
+      printf("out_datas[%d] is not ModelOutputType::CLS_ATTRIBUTE\n", i);
       continue;
     }
     std::shared_ptr<ModelAttributeInfo> face_meta =
