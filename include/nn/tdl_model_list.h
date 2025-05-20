@@ -9,6 +9,7 @@
     "0:car,1:bus,2:truck,3:rider with "                                       \
     "motorcycle,4:person,5:bike,6:motorcycle")                                \
   X(YOLOV8N_DET_HAND_FACE_PERSON, "0:hand,1:face,2:person")                   \
+  X(YOLOV8N_DET_FACE_HEAD_PERSON_PET, "0:face,1:head,2:person,3:pet")    \
   X(YOLOV8N_DET_HEAD_PERSON, "0:person,1:head")                               \
   X(YOLOV8N_DET_HEAD_HARDHAT, "0:head,1:hardhat")                             \
   X(YOLOV8N_DET_FIRE_SMOKE, "0:fire,1:smoke")                                 \

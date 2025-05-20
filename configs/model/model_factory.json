@@ -23,6 +23,10 @@
       "types":["hand","face","person"],
       "file_name":"yolov8n_det_hand_face_person_384_640_INT8"
     },
+    "YOLOV8N_DET_FACE_HEAD_PERSON_PET":{
+      "types":["face","head","person","pet"],
+      "file_name":"yolov8n_det_face_head_person_pet_384_640_INT8"
+    },
     "YOLOV8N_DET_HEAD_PERSON":{
       "types":["head","person"],
       "file_name":"yolov8n_det_head_person_384_640_INT8"
