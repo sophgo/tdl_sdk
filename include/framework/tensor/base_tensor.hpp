@@ -21,7 +21,9 @@ class BaseTensor {
 
   // Memory Management
 
-  void shareMemory(void* host_memory, uint64_t device_address, int element_size,
+  void shareMemory(void* host_memory,
+                   uint64_t device_address,
+                   int element_size,
                    const std::vector<int>& shape);
 
   // Shape and Size Query

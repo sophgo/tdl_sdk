@@ -30,7 +30,9 @@ class QwenVLHelper {
    * @return r、g、b三个通道的帧列表
    */
   static std::vector<std::vector<cv::Mat>> fetchVideo(
-      const std::string &video_path, double desired_fps, int desired_nframes,
+      const std::string &video_path,
+      double desired_fps,
+      int desired_nframes,
       int max_video_sec = 0);
 
   /**
@@ -44,7 +46,9 @@ class QwenVLHelper {
    * @return r、g、b三个通道的帧列表
    */
   static std::map<std::string, float> testFetchVideoTs(
-      const std::string &video_path, double desired_fps, int desired_nframes,
+      const std::string &video_path,
+      double desired_fps,
+      int desired_nframes,
       int max_video_sec = 0);
 };
 

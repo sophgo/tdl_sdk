@@ -79,7 +79,8 @@ class BlockingQueue {
 // #include "blocking_queue.hpp"
 
 template <typename T>
-BlockingQueue<T>::BlockingQueue(const std::string &name, int type) : m_stop(false) {
+BlockingQueue<T>::BlockingQueue(const std::string &name, int type)
+    : m_stop(false) {
   m_name = name;
   m_type = type;
   pthread_mutex_init(&m_qmtx, NULL);
@@ -91,7 +92,8 @@ BlockingQueue<T>::~BlockingQueue() {
   pthread_mutex_lock(&m_qmtx);
   //  std::queue<T> empty;
   //  m_queue.swap(empty);
-  std::cout << "destroy " << m_name << ",size:" << m_queue.size() + m_vec.size() << std::endl;
+  std::cout << "destroy " << m_name << ",size:" << m_queue.size() + m_vec.size()
+            << std::endl;
   m_vec.clear();
   std::queue<T> empty;
   m_queue.swap(empty);
@@ -131,7 +133,8 @@ int BlockingQueue<T>::push(const std::vector<T> &datas) {
     for (int i = 0; i < datas.size(); i++) m_queue.push(std::move(datas[i]));
     num = m_queue.size();
   } else {
-    for (int i = 0; i < datas.size(); i++) m_vec.emplace_back(std::move(datas[i]));
+    for (int i = 0; i < datas.size(); i++)
+      m_vec.emplace_back(std::move(datas[i]));
     num = m_vec.size();
   }
 
@@ -159,7 +162,8 @@ T BlockingQueue<T>::pop(int wait_ms, bool *is_timeout) {
   } else {
     int nsec = now.tv_usec * 1000 + (wait_ms % 1000) * 1000000;
     to.tv_sec = now.tv_sec + nsec / 1000000000 + wait_ms / 1000;
-    to.tv_nsec = nsec % 1000000000;  //(now.tv_usec + wait_ms * 1000UL) * 1000UL;
+    to.tv_nsec =
+        nsec % 1000000000;  //(now.tv_usec + wait_ms * 1000UL) * 1000UL;
   }
   // std::cout<<m_name<<" BlockingQueue
   // topop:"<<wait_ms<<",cursize:"<<sizeUnsafe()<<",datasize:"<<sizeof(T)<<std::endl;

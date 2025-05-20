@@ -28,7 +28,6 @@ struct FallDetectionResult {
   std::vector<ObjectBoxLandmarkInfo> person_boxes_keypoints;
   std::vector<TrackerInfo> track_results;
   std::map<uint64_t, int> det_results;
-
 };
 
 #endif

@@ -38,7 +38,8 @@ class ObjectSnapshot {
   void setConfig(SnapshotConfig config) { config_ = config; }
   SnapshotConfig getConfig() { return config_; }
   int32_t updateConfig(const nlohmann::json& config);
-  int32_t updateSnapshot(std::shared_ptr<BaseImage> image, uint64_t frame_id,
+  int32_t updateSnapshot(std::shared_ptr<BaseImage> image,
+                         uint64_t frame_id,
                          const std::map<uint64_t, ObjectBoxInfo>& track_boxes,
                          const std::vector<TrackerInfo>& tracks,
                          const std::map<uint64_t, float>& quality_scores,
@@ -48,9 +49,15 @@ class ObjectSnapshot {
                           bool force_all = false);
 
  private:
-  int32_t getCropBox(ObjectBoxInfo& box, int& x, int& y, int& width,
-                     int& height, int& dst_width, int& dst_height,
-                     int img_width, int img_height);
+  int32_t getCropBox(ObjectBoxInfo& box,
+                     int& x,
+                     int& y,
+                     int& width,
+                     int& height,
+                     int& dst_width,
+                     int& dst_height,
+                     int img_width,
+                     int img_height);
 
   void resetSnapshotInfo(ObjectSnapshotInfo& info, uint64_t frame_id);
 

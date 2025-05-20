@@ -23,7 +23,9 @@ class BMLLMNet {
   void netLaunchDyn(const bm_net_info_t *net, int stage_idx = 0);
   inline void d2d(bm_device_mem_t &dst, bm_device_mem_t &src);
   inline void d2d(bm_device_mem_t &dst, bm_device_mem_t &src, int offset);
-  inline void d2d(bm_device_mem_t &dst, bm_device_mem_t &src, int offset,
+  inline void d2d(bm_device_mem_t &dst,
+                  bm_device_mem_t &src,
+                  int offset,
                   int size);
 
   void headLaunch(const bm_net_info_t *net, bm_device_mem_t &logits_mem);
@@ -37,11 +39,11 @@ class BMLLMNet {
  private:
   // 保留必要的状态变量
   std::mt19937 sgen_;
-  int token_length_;                 // 当前token长度，需要在多次调用之间保持
-  int SEQLEN_;                       // 从bmodel读取的序列长度
-  int NUM_LAYERS_;                   // 从bmodel读取的层数
-  bool io_alone_;                    // IO模式标志
-  bool is_dynamic_;                  // 动态shape标志
+  int token_length_;  // 当前token长度，需要在多次调用之间保持
+  int SEQLEN_;        // 从bmodel读取的序列长度
+  int NUM_LAYERS_;    // 从bmodel读取的层数
+  bool io_alone_;     // IO模式标志
+  bool is_dynamic_;   // 动态shape标志
   std::vector<int> visited_tokens_;  // 已访问的token历史
 
   // 运行时环境

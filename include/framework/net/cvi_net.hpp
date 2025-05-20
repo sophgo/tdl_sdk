@@ -20,7 +20,8 @@ class CviNet : public BaseNet {
   int32_t updateOutputTensors() override;
 
  private:
-  void setupTensorInfo(CVI_TENSOR* cvi_tensor, int32_t num_tensors,
+  void setupTensorInfo(CVI_TENSOR* cvi_tensor,
+                       int32_t num_tensors,
                        std::map<std::string, TensorInfo>& tensor_info);
   void* model_handle_ = nullptr;
   CVI_TENSOR* input_tensors_ = nullptr;

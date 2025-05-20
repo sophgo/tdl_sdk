@@ -20,7 +20,8 @@ class BaseImage {
   //           std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
   BaseImage(ImageType image_type = ImageType::RAW_FRAME);
 
-  virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
+  virtual int32_t prepareImageInfo(uint32_t width,
+                                   uint32_t height,
                                    ImageFormat imageFormat,
                                    TDLDataType pix_data_type,
                                    uint32_t align_size = 0);
@@ -63,7 +64,8 @@ class BaseImage {
   int32_t copyFromBuffer(const uint8_t* buffer, uint32_t size);
 
  protected:
-  virtual int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
+  virtual int32_t setupMemory(uint64_t phy_addr,
+                              uint8_t* vir_addr,
                               uint32_t length);
 
  private:
@@ -92,27 +94,35 @@ class BaseImage {
 class ImageFactory {
  public:
   static std::shared_ptr<BaseImage> createImage(
-      uint32_t width, uint32_t height, ImageFormat imageFormat,
-      TDLDataType pixDataType, bool alloc_memory,
+      uint32_t width,
+      uint32_t height,
+      ImageFormat imageFormat,
+      TDLDataType pixDataType,
+      bool alloc_memory,
       InferencePlatform platform = InferencePlatform::AUTOMATIC);
 
   static std::shared_ptr<BaseImage> constructImage(void* custom_frame,
                                                    ImageType frame_type);
 
   static std::shared_ptr<BaseImage> readImage(
-      const std::string& file_path, bool use_rgb = false,
+      const std::string& file_path,
+      bool use_rgb = false,
       InferencePlatform platform = InferencePlatform::AUTOMATIC);
   static int32_t writeImage(const std::string& file_path,
                             const std::shared_ptr<BaseImage>& image);
 
   static std::shared_ptr<BaseImage> alignFace(
-      const std::shared_ptr<BaseImage>& image, const float* src_landmark_xy,
-      const float* dst_landmark_xy, int num_points,
+      const std::shared_ptr<BaseImage>& image,
+      const float* src_landmark_xy,
+      const float* dst_landmark_xy,
+      int num_points,
       std::shared_ptr<BaseMemoryPool> memory_pool);
 
   static std::shared_ptr<BaseImage> alignLicensePlate(
-      const std::shared_ptr<BaseImage>& image, const float* src_landmark_xy,
-      const float* dst_landmark_xy, int num_points,
+      const std::shared_ptr<BaseImage>& image,
+      const float* src_landmark_xy,
+      const float* dst_landmark_xy,
+      int num_points,
       std::shared_ptr<BaseMemoryPool> memory_pool);
 
   static std::shared_ptr<BaseImage> wrapVPSSFrame(void* vpss_frame,
@@ -123,7 +133,8 @@ class ImageFactory {
                                                    bool is_rgb = false);
 
   // 返回的Mat引用image内的内存,如果后续对mat操作,将影响image的内容
-  static int32_t convertToMat(std::shared_ptr<BaseImage>& image, cv::Mat& mat,
+  static int32_t convertToMat(std::shared_ptr<BaseImage>& image,
+                              cv::Mat& mat,
                               bool& is_rgb);
 #endif
 };

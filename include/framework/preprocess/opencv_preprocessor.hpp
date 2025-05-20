@@ -18,7 +18,8 @@ class OpenCVPreprocessor : public BasePreprocessor {
       std::shared_ptr<BaseImage> dst_image) override;
   virtual int32_t preprocessToTensor(
       const std::shared_ptr<BaseImage>& src_image,
-      const PreprocessParams& params, const int batch_idx,
+      const PreprocessParams& params,
+      const int batch_idx,
       std::shared_ptr<BaseTensor> tensor) override;
 };
 

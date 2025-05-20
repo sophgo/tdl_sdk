@@ -191,10 +191,10 @@ bool CVI_TDLModelTestSuite::matchObjects(
       if (score_diff > score_thresh) {
         std::cout << "score diff: " << score_diff << ",gtbox:[" << gt_object[0]
                   << "," << gt_object[1] << "," << gt_object[2] << ","
-                  << gt_object[3] << "]" << ",score:" << gt_object[4]
-                  << ",class_id:" << gt_object[5] << ",predbox:["
-                  << matched_dets[0] << "," << matched_dets[1] << ","
-                  << matched_dets[2] << "," << matched_dets[3] << "]"
+                  << gt_object[3] << "]"
+                  << ",score:" << gt_object[4] << ",class_id:" << gt_object[5]
+                  << ",predbox:[" << matched_dets[0] << "," << matched_dets[1]
+                  << "," << matched_dets[2] << "," << matched_dets[3] << "]"
                   << ",pred_score:" << matched_dets[4]
                   << ",pred_class_id:" << matched_dets[5] << std::endl;
         is_matched = false;

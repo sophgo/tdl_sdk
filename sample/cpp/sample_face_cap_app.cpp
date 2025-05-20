@@ -21,7 +21,8 @@ bool make_dir(const char *path, mode_t mode = 0755) {
   return false;
 }
 std::string packOutput(const std::vector<TrackerInfo> &track_results,
-                       uint32_t img_width, uint32_t img_height) {
+                       uint32_t img_width,
+                       uint32_t img_height) {
   std::string str_content;
   for (auto &track_result : track_results) {
     printf(
@@ -57,7 +58,8 @@ std::string packOutput(const std::vector<TrackerInfo> &track_results,
 }
 
 void exportFaceSnapshots(
-    const std::string &dst_dir, uint32_t frame_id,
+    const std::string &dst_dir,
+    uint32_t frame_id,
     const std::vector<ObjectSnapshotInfo> &face_snapshots) {
   char sz_frame_name[1024];
   for (auto &face_snapshot : face_snapshots) {
@@ -84,7 +86,8 @@ void exportFaceSnapshots(
     }
   }
 }
-void visualizeDetections(const std::string &dst_dir, uint32_t frame_id,
+void visualizeDetections(const std::string &dst_dir,
+                         uint32_t frame_id,
                          std::shared_ptr<BaseImage> image,
                          const std::vector<ObjectBoxInfo> &person_boxes,
                          const std::vector<ObjectBoxLandmarkInfo> &face_boxes) {
@@ -171,7 +174,8 @@ int main(int argc, char **argv) {
           packOutput(cap_result->track_results, cap_result->frame_width,
                      cap_result->frame_height);
 
-      sprintf(sz_frame_name, "%s/%08d.txt", output_dir.c_str(), cap_result->frame_id - 1);
+      sprintf(sz_frame_name, "%s/%08d.txt", output_dir.c_str(),
+              cap_result->frame_id - 1);
 
       std::ofstream outf(sz_frame_name);
       outf << str_content;

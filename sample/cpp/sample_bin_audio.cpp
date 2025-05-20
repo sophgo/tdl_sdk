@@ -34,7 +34,8 @@ int main(int argc, char **argv) {
   model_factory.loadModelConfig();
   model_factory.setModelDir(model_dir);
 
-  std::shared_ptr<BaseModel> model_sound = model_factory.getModel(model_id_name);
+  std::shared_ptr<BaseModel> model_sound =
+      model_factory.getModel(model_id_name);
   if (!model_sound) {
     printf("Failed to create model_hd\n");
     return -1;

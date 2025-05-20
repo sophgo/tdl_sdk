@@ -14,7 +14,8 @@ class PoseHelper {
  public:
   static int32_t predictFacePose(const std::vector<float>& landmark_5x,
                                  const std::vector<float>& landmark_5y,
-                                 const int img_width, const int img_height,
+                                 const int img_width,
+                                 const int img_height,
                                  FacePose* hp);
 };
 

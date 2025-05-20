@@ -13,7 +13,9 @@ namespace cvitdl {
 namespace unitest {
 
 // 生成随机特征数据的辅助函数
-void generateRandomFeatures(float* features, int num_features, int feature_dim,
+void generateRandomFeatures(float* features,
+                            int num_features,
+                            int feature_dim,
                             int seed = 42,
                             TDLDataType type = TDLDataType::FP32) {
   std::mt19937 gen(seed);
@@ -88,7 +90,8 @@ std::vector<std::shared_ptr<ModelFeatureInfo>> createModelFeatureInfos(
 }
 
 // 对比两个匹配结果是否一致
-bool compareMatchResults(const MatchResult& result1, const MatchResult& result2,
+bool compareMatchResults(const MatchResult& result1,
+                         const MatchResult& result2,
                          float tolerance = 1e-5) {
   if (result1.indices.size() != result2.indices.size() ||
       result1.scores.size() != result2.scores.size()) {

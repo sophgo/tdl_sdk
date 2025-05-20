@@ -10,19 +10,27 @@
 
 class VPSSImage : public BaseImage {
  public:
-  VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
-            TDLDataType pix_data_type, bool alloc_memory = false,
+  VPSSImage(uint32_t width,
+            uint32_t height,
+            ImageFormat imageFormat,
+            TDLDataType pix_data_type,
+            bool alloc_memory = false,
             std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
   VPSSImage(const VIDEO_FRAME_INFO_S& frame);
   // VPSSImage();
   ~VPSSImage();
 
   static std::unique_ptr<BaseImage> createImage(
-      uint32_t width, uint32_t height, ImageType imageType,
-      ImageFormat imageFormat, BaseMemoryPool* memory_pool = nullptr);
+      uint32_t width,
+      uint32_t height,
+      ImageType imageType,
+      ImageFormat imageFormat,
+      BaseMemoryPool* memory_pool = nullptr);
 
-  int32_t prepareImageInfo(uint32_t width, uint32_t height,
-                           ImageFormat imageFormat, TDLDataType pix_data_type,
+  int32_t prepareImageInfo(uint32_t width,
+                           uint32_t height,
+                           ImageFormat imageFormat,
+                           TDLDataType pix_data_type,
                            uint32_t align_size = 0) override;
 
   int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr, uint32_t length);
@@ -56,8 +64,10 @@ class VPSSImage : public BaseImage {
 
  private:
   int32_t extractImageInfo(const VIDEO_FRAME_INFO_S& frame);
-  int32_t initFrameInfo(uint32_t width, uint32_t height,
-                        ImageFormat imageFormat, TDLDataType pix_data_type,
+  int32_t initFrameInfo(uint32_t width,
+                        uint32_t height,
+                        ImageFormat imageFormat,
+                        TDLDataType pix_data_type,
                         VIDEO_FRAME_INFO_S* frame);
 
  private:

@@ -38,10 +38,11 @@ class Tracker {
   ~Tracker() = default;
 
   virtual void setPairConfig(
-      std::map<TDLObjectType, TDLObjectType> object_pair_config) {};
+      std::map<TDLObjectType, TDLObjectType> object_pair_config){};
   void setTrackConfig(const TrackerConfig &track_config);
   TrackerConfig getTrackConfig();
-  virtual int32_t track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
+  virtual int32_t track(std::vector<ObjectBoxInfo> &boxes,
+                        uint64_t frame_id,
                         std::vector<TrackerInfo> &trackers) = 0;
   void setImgSize(int width, int height);
 

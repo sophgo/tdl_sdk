@@ -26,8 +26,8 @@ class ModelOutputInfo {
 class ObjectBoxInfo {
  public:
   ObjectBoxInfo() = default;
-  ObjectBoxInfo(int32_t class_id, float score, float x1, float y1, float x2,
-                float y2)
+  ObjectBoxInfo(
+      int32_t class_id, float score, float x1, float y1, float x2, float y2)
       : class_id(class_id), score(score), x1(x1), y1(y1), x2(x2), y2(y2) {}
 
   int32_t class_id;
@@ -147,7 +147,7 @@ class ModelFeatureInfo : public ModelOutputInfo {
     return ModelOutputType::FEATURE_EMBEDDING;
   }
   uint8_t *embedding = nullptr;
-  int32_t embedding_num; //feature element num
+  int32_t embedding_num;  // feature element num
   TDLDataType embedding_type;
 };
 

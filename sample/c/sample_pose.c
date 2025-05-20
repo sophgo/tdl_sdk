@@ -31,7 +31,7 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "keypoint_yolov8pose_person17") != NULL) {
     *model_index = TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17;
-  }  else {
+  } else {
     ret = -1;
   }
   return ret;

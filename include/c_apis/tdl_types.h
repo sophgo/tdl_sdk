@@ -133,7 +133,6 @@ typedef struct {
   TDLObjectInfo *obj_info;
 } TDLInstanceSegInfo;
 
-
 typedef struct {
   uint32_t size;
   uint32_t width;
@@ -176,7 +175,7 @@ typedef struct {
 
 typedef struct {
   uint32_t size;
-  char* text_info;
+  char *text_info;
 } TDLOcr;
 
 typedef void *TDLHandle;

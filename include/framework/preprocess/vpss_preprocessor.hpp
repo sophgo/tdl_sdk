@@ -21,7 +21,8 @@ class VpssPreprocessor : public BasePreprocessor {
   ~VpssPreprocessor();
 
   std::shared_ptr<BaseImage> preprocess(
-      const std::shared_ptr<BaseImage>& image, const PreprocessParams& params,
+      const std::shared_ptr<BaseImage>& image,
+      const PreprocessParams& params,
       std::shared_ptr<BaseMemoryPool> memory_pool = nullptr) override;
   int32_t preprocessToImage(const std::shared_ptr<BaseImage>& src_image,
                             const PreprocessParams& params,

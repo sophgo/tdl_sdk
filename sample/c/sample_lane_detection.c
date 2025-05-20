@@ -10,7 +10,7 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "lstr_det_lane") != NULL) {
     *model_index = TDL_MODEL_LSTR_DET_LANE;
-  }  else {
+  } else {
     ret = -1;
   }
   return ret;

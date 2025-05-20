@@ -44,9 +44,12 @@ class IntrusionDetect {
   void print();
 
  private:
-  bool isSeparatingAxis(const Vertex &axis, const PointsInfo &region_pts,
+  bool isSeparatingAxis(const Vertex &axis,
+                        const PointsInfo &region_pts,
                         const ObjectBoxInfo &bbox);
-  bool isPointInTriangle(const Vertex &o, const Vertex &v1, const Vertex &v2,
+  bool isPointInTriangle(const Vertex &o,
+                         const Vertex &v1,
+                         const Vertex &v2,
                          const Vertex &v3);
   float getSignedGaussArea(const PointsInfo &points);
   bool triangulateUsingEarClipping(
