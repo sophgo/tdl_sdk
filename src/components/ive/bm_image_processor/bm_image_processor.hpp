@@ -2,7 +2,7 @@
 #define __BM_IMAGE_PROCESSOR_HPP__
 
 #include <memory>
-#include "cvi_tpu.h"
+#include "cvi_tpu.hpp"
 #include "image/base_image.hpp"
 #include "ive/image_processor.hpp"
 

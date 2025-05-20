@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include "cvi_tpu.h"
+#include "cvi_tpu.hpp"
 
 typedef struct sg_api_cv_subads {
 	int channel;

@@ -15,7 +15,7 @@ if(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X"))
 endif()
 set(SRC_FRAMWORK_FILES_CUR 
     ${CMAKE_CURRENT_SOURCE_DIR}/image_processor.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/bm_image_processor/api_tpu.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/bm_image_processor/api_tpu.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bm_image_processor/bm_image_processor.cpp
 )
 
