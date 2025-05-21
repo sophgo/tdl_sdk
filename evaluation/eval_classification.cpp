@@ -43,10 +43,8 @@ void save_classification_results(
   }
 }
 
-void bench_mark_all(std::string bench_path,
-                    std::string image_root,
-                    std::string res_path,
-                    std::shared_ptr<BaseModel> model) {
+void bench_mark_all(std::string bench_path, std::string image_root,
+                    std::string res_path, std::shared_ptr<BaseModel> model) {
   std::fstream file(bench_path);
   if (!file.is_open()) {
     printf("can not open bench path %s\n", bench_path.c_str());

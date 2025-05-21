@@ -123,8 +123,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   return getModel(model_type_enum, device_id);
 }
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
-    const ModelType model_type,
-    const std::string &model_path,
+    const ModelType model_type, const std::string &model_path,
     const int device_id) {
   ModelConfig model_config;
   std::string model_name = modelTypeToString(model_type);
@@ -135,18 +134,15 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
-    const std::string &model_type,
-    const std::string &model_path,
+    const std::string &model_type, const std::string &model_path,
     const int device_id) {
   ModelType model_type_enum = modelTypeFromString(model_type);
   return getModel(model_type_enum, model_path, device_id);
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
-    const ModelType model_type,
-    const std::string &model_path,
-    const ModelConfig &model_config,
-    const int device_id) {
+    const ModelType model_type, const std::string &model_path,
+    const ModelConfig &model_config, const int device_id) {
   if (model_type == ModelType::INVALID) {
     LOGE("model type not found for model type: %d", model_type);
     return nullptr;
@@ -179,10 +175,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   return model;
 }
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
-    const std::string &model_type,
-    const std::string &model_path,
-    const ModelConfig &model_config,
-    const int device_id) {
+    const std::string &model_type, const std::string &model_path,
+    const ModelConfig &model_config, const int device_id) {
   ModelType model_type_enum = modelTypeFromString(model_type);
   if (model_type_enum == ModelType::INVALID) {
     LOGE("model type not found for model type: %s", model_type.c_str());
@@ -191,10 +185,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   return getModel(model_type_enum, model_path, model_config, device_id);
 }
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
-    const std::string &model_type,
-    const std::string &model_path,
-    const std::string &model_config_json,
-    const int device_id) {
+    const std::string &model_type, const std::string &model_path,
+    const std::string &model_config_json, const int device_id) {
   ModelConfig model_config;
   try {
     nlohmann::json json_config = nlohmann::json::parse(model_config_json);

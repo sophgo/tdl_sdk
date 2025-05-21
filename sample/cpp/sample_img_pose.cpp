@@ -11,8 +11,7 @@ int skeleton[19][2] = {{15, 13}, {13, 11}, {16, 14}, {14, 12}, {11, 12},
                        {1, 3},   {2, 4},   {3, 5},   {4, 6}};
 void visualize_keypoints_detection(
     std::shared_ptr<BaseImage> image,
-    std::shared_ptr<ModelBoxLandmarkInfo> obj_meta,
-    float score,
+    std::shared_ptr<ModelBoxLandmarkInfo> obj_meta, float score,
     const std::string &save_path) {
   cv::Mat mat;
   bool is_rgb;

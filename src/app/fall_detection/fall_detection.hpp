@@ -9,7 +9,7 @@
 class FallDet {
  public:
   FallDet(uint64_t id);
-  int detect(const ObjectBoxLandmarkInfo &person_meta, float fps);
+  int detect(const ObjectBoxLandmarkInfo& person_meta, float fps);
   void update_queue(std::queue<int>& q, int val);
   std::queue<int> valid_list;
 
@@ -18,14 +18,16 @@ class FallDet {
   int MAX_UNMATCHED_TIME = 30;
 
  private:
-  void get_kps(std::vector<std::pair<float, float>>& val_list, int index, float* x, float* y);
+  void get_kps(std::vector<std::pair<float, float>>& val_list, int index,
+               float* x, float* y);
   float human_orientation();
-  bool keypoints_useful(const ObjectBoxLandmarkInfo &person_meta);
-  float body_box_calculation(const ObjectBoxLandmarkInfo &person_meta);
-  float speed_detection(const ObjectBoxLandmarkInfo &person_meta, float fps);
+  bool keypoints_useful(const ObjectBoxLandmarkInfo& person_meta);
+  float body_box_calculation(const ObjectBoxLandmarkInfo& person_meta);
+  float speed_detection(const ObjectBoxLandmarkInfo& person_meta, float fps);
   int elem_count(std::queue<int>& q);
 
-  int action_analysis(float human_angle, float aspect_ratio, float moving_speed);
+  int action_analysis(float human_angle, float aspect_ratio,
+                      float moving_speed);
   bool alert_decision(int status);
 
   std::vector<std::pair<float, float>> history_neck;

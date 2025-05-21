@@ -23,9 +23,7 @@ class BMLLMNet {
   void netLaunchDyn(const bm_net_info_t *net, int stage_idx = 0);
   inline void d2d(bm_device_mem_t &dst, bm_device_mem_t &src);
   inline void d2d(bm_device_mem_t &dst, bm_device_mem_t &src, int offset);
-  inline void d2d(bm_device_mem_t &dst,
-                  bm_device_mem_t &src,
-                  int offset,
+  inline void d2d(bm_device_mem_t &dst, bm_device_mem_t &src, int offset,
                   int size);
 
   void headLaunch(const bm_net_info_t *net, bm_device_mem_t &logits_mem);

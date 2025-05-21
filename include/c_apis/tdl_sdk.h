@@ -112,10 +112,8 @@ int32_t TDL_SetModelDir(TDLHandle handle, const char *model_dir);
  *    部分通用模型如特征提取、声音指令等需要传入模型配置信息，可以参考configs/model/model_config.json
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_OpenModel(TDLHandle handle,
-                      const TDLModel model_id,
-                      const char *model_path,
-                      const char *model_config_json);
+int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
+                      const char *model_path, const char *model_config_json);
 
 /**
  * @brief 卸载指定模型并释放相关资源
@@ -134,8 +132,7 @@ int32_t TDL_CloseModel(TDLHandle handle, const TDLModel model_id);
  * @param threshold 模型的阈值
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_SetModelThreshold(TDLHandle handle,
-                              const TDLModel model_id,
+int32_t TDL_SetModelThreshold(TDLHandle handle, const TDLModel model_id,
                               float threshold);
 
 /**
@@ -147,10 +144,8 @@ int32_t TDL_SetModelThreshold(TDLHandle handle,
  * @param object_meta 输出目标检测结果元数据
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_Detection(TDLHandle handle,
-                      const TDLModel model_id,
-                      TDLImage image_handle,
-                      TDLObject *object_meta);
+int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
+                      TDLImage image_handle, TDLObject *object_meta);
 
 /**
  * @brief 执行人脸检测
@@ -161,10 +156,8 @@ int32_t TDL_Detection(TDLHandle handle,
  * @param face_meta 输出人脸检测结果元数据
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_FaceDetection(TDLHandle handle,
-                          const TDLModel model_id,
-                          TDLImage image_handle,
-                          TDLFace *face_meta);
+int32_t TDL_FaceDetection(TDLHandle handle, const TDLModel model_id,
+                          TDLImage image_handle, TDLFace *face_meta);
 
 /**
  * @brief 执行人脸属性分析
@@ -175,10 +168,8 @@ int32_t TDL_FaceDetection(TDLHandle handle,
  * @param face_meta 输入/输出人脸数据，包含检测结果和属性信息
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_FaceAttribute(TDLHandle handle,
-                          const TDLModel model_id,
-                          TDLImage image_handle,
-                          TDLFace *face_meta);
+int32_t TDL_FaceAttribute(TDLHandle handle, const TDLModel model_id,
+                          TDLImage image_handle, TDLFace *face_meta);
 
 /**
  * @brief 执行人脸关键点检测
@@ -189,10 +180,8 @@ int32_t TDL_FaceAttribute(TDLHandle handle,
  * @param face_meta 输入/输出人脸数据，包含检测结果和关键点信息
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_FaceLandmark(TDLHandle handle,
-                         const TDLModel model_id,
-                         TDLImage image_handle,
-                         TDLFace *face_meta);
+int32_t TDL_FaceLandmark(TDLHandle handle, const TDLModel model_id,
+                         TDLImage image_handle, TDLFace *face_meta);
 
 /**
  * @brief 执行图像分类任务
@@ -203,10 +192,8 @@ int32_t TDL_FaceLandmark(TDLHandle handle,
  * @param class_info 输出参数，存储分类结果，类别置信度、标签等
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_Classfification(TDLHandle handle,
-                            const TDLModel model_id,
-                            TDLImage image_handle,
-                            TDLClassInfo *class_info);
+int32_t TDL_Classfification(TDLHandle handle, const TDLModel model_id,
+                            TDLImage image_handle, TDLClassInfo *class_info);
 
 /**
  * @brief 对检测到的目标进行细粒度分类
@@ -218,10 +205,8 @@ int32_t TDL_Classfification(TDLHandle handle,
  * @param class_info 输出参数，存储目标分类结果
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_ObjectClassification(TDLHandle handle,
-                                 const TDLModel model_id,
-                                 TDLImage image_handle,
-                                 TDLObject *object_meta,
+int32_t TDL_ObjectClassification(TDLHandle handle, const TDLModel model_id,
+                                 TDLImage image_handle, TDLObject *object_meta,
                                  TDLClass *class_info);
 
 /**
@@ -233,10 +218,8 @@ int32_t TDL_ObjectClassification(TDLHandle handle,
  * @param keypoint_meta 输出参数，存储检测到的关键点坐标及置信度
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_Keypoint(TDLHandle handle,
-                     const TDLModel model_id,
-                     TDLImage image_handle,
-                     TDLKeypoint *keypoint_meta);
+int32_t TDL_Keypoint(TDLHandle handle, const TDLModel model_id,
+                     TDLImage image_handle, TDLKeypoint *keypoint_meta);
 
 /**
  * @brief 执行关键点检测任务（根据目标的坐标进行裁剪后再执行关键点检测）
@@ -247,10 +230,8 @@ int32_t TDL_Keypoint(TDLHandle handle,
  * @param object_meta 输出参数，存储检测到的关键点坐标及置信度
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_DetectionKeypoint(TDLHandle handle,
-                              const TDLModel model_id,
-                              TDLImage image_handle,
-                              TDLObject *object_meta);
+int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
+                              TDLImage image_handle, TDLObject *object_meta);
 
 /**
  * @brief 执行实例分割任务
@@ -261,8 +242,7 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle,
  * @param inst_seg_meta 输出参数，存储实例分割结果
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_InstanceSegmentation(TDLHandle handle,
-                                 const TDLModel model_id,
+int32_t TDL_InstanceSegmentation(TDLHandle handle, const TDLModel model_id,
                                  TDLImage image_handle,
                                  TDLInstanceSeg *inst_seg_meta);
 
@@ -275,8 +255,7 @@ int32_t TDL_InstanceSegmentation(TDLHandle handle,
  * @param seg_meta 输出参数，存储语义分割结果
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_SemanticSegmentation(TDLHandle handle,
-                                 const TDLModel model_id,
+int32_t TDL_SemanticSegmentation(TDLHandle handle, const TDLModel model_id,
                                  TDLImage image_handle,
                                  TDLSegmentation *seg_meta);
 
@@ -289,10 +268,8 @@ int32_t TDL_SemanticSegmentation(TDLHandle handle,
  * @param feature_meta 输出参数，存储提取的特征向量
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_FeatureExtraction(TDLHandle handle,
-                              const TDLModel model_id,
-                              TDLImage image_handle,
-                              TDLFeature *feature_meta);
+int32_t TDL_FeatureExtraction(TDLHandle handle, const TDLModel model_id,
+                              TDLImage image_handle, TDLFeature *feature_meta);
 
 /**
  * @brief 执行车道线检测任务
@@ -303,10 +280,8 @@ int32_t TDL_FeatureExtraction(TDLHandle handle,
  * @param lane_meta 输出参数，存储检测到的车道线信息
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_LaneDetection(TDLHandle handle,
-                          const TDLModel model_id,
-                          TDLImage image_handle,
-                          TDLLane *lane_meta);
+int32_t TDL_LaneDetection(TDLHandle handle, const TDLModel model_id,
+                          TDLImage image_handle, TDLLane *lane_meta);
 
 /**
  * @brief 执行立体视觉深度估计任务
@@ -317,10 +292,8 @@ int32_t TDL_LaneDetection(TDLHandle handle,
  * @param depth_logist 输出参数，存储深度估计结果
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_DepthStereo(TDLHandle handle,
-                        const TDLModel model_id,
-                        TDLImage image_handle,
-                        TDLDepthLogits *depth_logist);
+int32_t TDL_DepthStereo(TDLHandle handle, const TDLModel model_id,
+                        TDLImage image_handle, TDLDepthLogits *depth_logist);
 
 /**
  * @brief 执行目标跟踪任务
@@ -332,11 +305,8 @@ int32_t TDL_DepthStereo(TDLHandle handle,
  * @param tracker_meta 输出参数，存储跟踪器状态信息
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_Tracking(TDLHandle handle,
-                     int frame_id,
-                     TDLFace *face_meta,
-                     TDLObject *obj_meta,
-                     TDLTracker *track_meta);
+int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
+                     TDLObject *obj_meta, TDLTracker *track_meta);
 
 /**
  * @brief 执行字符识别任务（OCR）
@@ -347,10 +317,8 @@ int32_t TDL_Tracking(TDLHandle handle,
  * @param char_meta 输出参数，存储识别结果
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_CharacterRecognition(TDLHandle handle,
-                                 const TDLModel model_id,
-                                 TDLImage image_handle,
-                                 TDLOcr *char_meta);
+int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
+                                 TDLImage image_handle, TDLOcr *char_meta);
 
 #ifdef __cplusplus
 }

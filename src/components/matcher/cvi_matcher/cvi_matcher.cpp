@@ -12,8 +12,8 @@
 #include <numeric>
 #include <vector>
 
-inline void __attribute__((always_inline)) FreeFeatureArrayExt(
-    CPUFeatureArrayInfo *feature_array_ext) {
+inline void __attribute__((always_inline))
+FreeFeatureArrayExt(CPUFeatureArrayInfo *feature_array_ext) {
   if (feature_array_ext->feature_unit_length != nullptr) {
     delete feature_array_ext->feature_unit_length;
     feature_array_ext->feature_unit_length = nullptr;
@@ -24,8 +24,9 @@ inline void __attribute__((always_inline)) FreeFeatureArrayExt(
   }
 }
 
-inline void __attribute__((always_inline)) FreeFeatureArrayTpuExt(
-    CviRtHandle rt_handle, TPUFeatureArrayInfo *feature_array_ext) {
+inline void __attribute__((always_inline))
+FreeFeatureArrayTpuExt(CviRtHandle rt_handle,
+                       TPUFeatureArrayInfo *feature_array_ext) {
   if (feature_array_ext->feature_input.rtmem != NULL) {
     CVI_RT_MemFree(rt_handle, feature_array_ext->feature_input.rtmem);
     feature_array_ext->feature_input.rtmem = NULL;
@@ -149,12 +150,12 @@ int32_t CviMatcher::loadGallery(
   int ret = cosSimilarityRegister(feature_array);
   if (ret != 0) {
     std::cout << "Cosine similarity register failed." << std::endl;
-    delete[] (int8_t *)feature_array.ptr;
+    delete[](int8_t *) feature_array.ptr;
     return -1;
   }
 
   is_loaded_ = true;
-  delete[] (int8_t *)feature_array.ptr;
+  delete[](int8_t *) feature_array.ptr;
 
   return 0;
 }

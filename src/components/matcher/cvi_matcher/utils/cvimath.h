@@ -111,16 +111,16 @@ void cvmCpuFP32dataIpMatch(float *feature, float *precached,
                            const uint32_t k);
 
 // Legacy support for hj.
-inline void __attribute__((always_inline)) cvmGenDbI8UnitLength(
-    int8_t *precached, float *unit_precached_arr, const uint32_t data_length,
-    const uint32_t data_num) {
+inline void __attribute__((always_inline))
+cvmGenDbI8UnitLength(int8_t *precached, float *unit_precached_arr,
+                     const uint32_t data_length, const uint32_t data_num) {
   cvmGenPrecachedI8UnitLength(precached, unit_precached_arr, data_length,
                               data_num);
 }
 
-inline void __attribute__((always_inline)) cvmGenDbUnitLength(
-    uint8_t *precached, float *unit_precached_arr, const uint32_t data_length,
-    const uint32_t data_num) {
+inline void __attribute__((always_inline))
+cvmGenDbUnitLength(uint8_t *precached, float *unit_precached_arr,
+                   const uint32_t data_length, const uint32_t data_num) {
   cvmGenPrecachedU8UnitLength(precached, unit_precached_arr, data_length,
                               data_num);
 }

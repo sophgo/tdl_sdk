@@ -266,14 +266,14 @@ std::vector<std::vector<cv::Mat>> QwenVLHelper::fetchVideo(
 
   // 计算 custom_max_pixels，假设 TOTAL_PIXELS 等于 VIDEO_TOTAL_PIXELS
   int total_pixels = VIDEO_TOTAL_PIXELS;
-  int computed_max_pixels = std::max(
-      std::min(VIDEO_MAX_PIXELS, int(double(total_pixels) / nframes * size_factor)),
-      int(min_pixels * 1.05)
-  );
+  int computed_max_pixels =
+      std::max(std::min(VIDEO_MAX_PIXELS,
+                        int(double(total_pixels) / nframes * size_factor)),
+               int(min_pixels * 1.05));
   int custom_max_pixels = 360 * 420;
   // int custom_max_pixels = computed_max_pixels;
-  cv::Size new_size =
-      smart_resize(img_height, img_width, size_factor, min_pixels, custom_max_pixels);
+  cv::Size new_size = smart_resize(img_height, img_width, size_factor,
+                                   min_pixels, custom_max_pixels);
   printf("new_size: %d, %d\n", new_size.height, new_size.width);
   cv::Mat resized(new_size.height, new_size.width, CV_8UC3);
   while (true) {

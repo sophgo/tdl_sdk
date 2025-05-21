@@ -115,8 +115,7 @@ std::string FaceFeatureEvaluator::rtrim(const std::string &s) {
 }
 
 // 显示进度条
-void FaceFeatureEvaluator::showProgressBar(int current,
-                                           int total,
+void FaceFeatureEvaluator::showProgressBar(int current, int total,
                                            int bar_width) {
   float progress = float(current) / total;
   int pos = bar_width * progress;

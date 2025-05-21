@@ -74,7 +74,7 @@ TEST_F(FaceLandmarkerDet2TestSuite, accuracy) {
       std::string image_path = (m_image_dir / iter.key()).string();
       std::cout << "image_path: " << image_path << std::endl;
       std::shared_ptr<BaseImage> frame =
-          ImageFactory::readImage(image_path, true);
+          ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
 
       ASSERT_NE(frame, nullptr);
 

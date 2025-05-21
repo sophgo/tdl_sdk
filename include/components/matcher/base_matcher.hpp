@@ -23,8 +23,7 @@ class BaseMatcher {
   // 查询特征
   virtual int32_t queryWithTopK(
       const std::vector<std::shared_ptr<ModelFeatureInfo>>& query_features,
-      int32_t topk,
-      MatchResult& results);
+      int32_t topk, MatchResult& results);
   // 更新特征库
   virtual int32_t updateGalleryCol(void* p_data, int col);
 

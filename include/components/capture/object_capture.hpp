@@ -17,8 +17,7 @@ struct ObjectCaptureInfo {
 // 基类
 class ObjectCapture {
  public:
-  ObjectCapture(const std::string& capture_dir,
-                ModelType model_id,
+  ObjectCapture(const std::string& capture_dir, ModelType model_id,
                 const std::string& model_path);
   virtual ~ObjectCapture() = default;
 

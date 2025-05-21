@@ -5,9 +5,7 @@
 #include <cstring>
 #include <opencv2/opencv.hpp>
 
-int32_t TDL_VisualizeRectangle(box_t *box,
-                               int32_t num,
-                               char *input_path,
+int32_t TDL_VisualizeRectangle(box_t *box, int32_t num, char *input_path,
                                char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
@@ -28,9 +26,7 @@ int32_t TDL_VisualizeRectangle(box_t *box,
   return 0;
 }
 
-int32_t TDL_VisualizePoint(point_t *point,
-                           int32_t num,
-                           char *input_path,
+int32_t TDL_VisualizePoint(point_t *point, int32_t num, char *input_path,
                            char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
@@ -48,9 +44,7 @@ int32_t TDL_VisualizePoint(point_t *point,
   return 0;
 }
 
-int32_t TDL_VisualizeLine(box_t *box,
-                          int32_t num,
-                          char *input_path,
+int32_t TDL_VisualizeLine(box_t *box, int32_t num, char *input_path,
                           char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
@@ -69,9 +63,7 @@ int32_t TDL_VisualizeLine(box_t *box,
   return 0;
 }
 
-int32_t TDL_VisualizePolylines(point_t *point,
-                               int32_t num,
-                               char *input_path,
+int32_t TDL_VisualizePolylines(point_t *point, int32_t num, char *input_path,
                                char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
@@ -92,8 +84,8 @@ int32_t TDL_VisualizePolylines(point_t *point,
   return 0;
 }
 
-int32_t TDL_CropImage(
-    int x, int y, int weight, int height, char *input_path, char *output_path) {
+int32_t TDL_CropImage(int x, int y, int weight, int height, char *input_path,
+                      char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     printf("input path is empty\n");
@@ -128,8 +120,8 @@ cv::Vec3b getColor(int value) {
   }
 }
 
-int32_t TDL_MatToImage(
-    int **mat, int weight, int height, char *output_path, int scale) {
+int32_t TDL_MatToImage(int **mat, int weight, int height, char *output_path,
+                       int scale) {
   cv::Mat image(weight * scale, height * scale, CV_8UC3, cv::Scalar(0, 0, 0));
   for (int i = 0; i < weight; i++) {
     for (int j = 0; j < height; j++) {
@@ -143,8 +135,8 @@ int32_t TDL_MatToImage(
   return 0;
 }
 
-int32_t TDL_VisualizText(
-    int32_t x, int32_t y, char *text, char *input_path, char *output_path) {
+int32_t TDL_VisualizText(int32_t x, int32_t y, char *text, char *input_path,
+                         char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     printf("input path is empty\n");

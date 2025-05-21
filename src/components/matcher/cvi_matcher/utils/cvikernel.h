@@ -822,8 +822,8 @@ typedef struct {
 } MatrixMultiplicationQmParam;
 
 typedef struct {
-  CVI_RT_MEM rtmem = NULL;   // 如果未初始化则设置为NULL
-  uint64_t paddr = -1;       // 如果未初始化则设置为uint64_t的最大值
+  CVI_RT_MEM rtmem = NULL;  // 如果未初始化则设置为NULL
+  uint64_t paddr = -1;  // 如果未初始化则设置为uint64_t的最大值
   uint8_t *vaddr = nullptr;  // 如果未初始化则设置为nullptr
 } Rinfo;
 

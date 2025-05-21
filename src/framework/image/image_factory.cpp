@@ -64,47 +64,81 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
 }
 
 std::shared_ptr<BaseImage> ImageFactory::readImage(const std::string& file_path,
-                                                   bool use_rgb,
+                                                   ImageFormat image_format,
                                                    InferencePlatform platform) {
   if (platform == InferencePlatform::UNKOWN ||
       platform == InferencePlatform::AUTOMATIC) {
     platform = CommonUtils::getPlatform();
   }
   cv::Mat img = cv::imread(file_path);
-  ImageFormat image_format = ImageFormat::BGR_PACKED;
-  if (use_rgb) {
-    image_format = ImageFormat::RGB_PACKED;
-    cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
-  }
-
   if (img.empty()) {
     LOGE("Failed to load image from file: %s", file_path.c_str());
     return nullptr;
   }
 
-  std::shared_ptr<BaseImage> image = ImageFactory::createImage(
-      img.cols, img.rows, image_format, TDLDataType::UINT8, false, platform);
+  std::shared_ptr<BaseImage> image;
+
+  switch (image_format) {
+    case ImageFormat::BGR_PACKED:
+      image = ImageFactory::createImage(img.cols, img.rows, image_format,
+                                        TDLDataType::UINT8, false, platform);
+      break;
+
+    case ImageFormat::RGB_PACKED:
+      // 从BGR转换到RGB
+      cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+      image = ImageFactory::createImage(img.cols, img.rows, image_format,
+                                        TDLDataType::UINT8, false, platform);
+      break;
+
+    case ImageFormat::GRAY:
+      // 转换为灰度图
+      cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+      image = ImageFactory::createImage(img.cols, img.rows, image_format,
+                                        TDLDataType::UINT8, false, platform);
+      break;
+
+    default:
+      LOGE("Unsupported image format: %d", image_format);
+      return nullptr;
+  }
+
   if (image == nullptr) {
     LOGE("Failed to create image");
     return nullptr;
   }
+
   int32_t ret = image->allocateMemory();
   if (ret != 0) {
     LOGE("Failed to allocate memory");
     return nullptr;
   }
-  std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
-  uint32_t stride = image->getStrides()[0];
-  uint8_t* ptr_dst = image->getVirtualAddress()[0];
-  uint8_t* ptr_src = img.data;
-  if (img.step[0] == stride) {
-    memcpy(ptr_dst, ptr_src, img.rows * stride);
-  } else {
+
+  // 根据不同格式复制数据
+  if (image_format == ImageFormat::BGR_PACKED ||
+      image_format == ImageFormat::RGB_PACKED) {
+    uint32_t stride = image->getStrides()[0];
+    uint8_t* ptr_dst = image->getVirtualAddress()[0];
+    uint8_t* ptr_src = img.data;
+    if (img.step[0] == stride) {
+      memcpy(ptr_dst, ptr_src, img.rows * stride);
+    } else {
+      for (int r = 0; r < img.rows; r++) {
+        uint8_t* dst = ptr_dst + r * stride;
+        memcpy(dst, ptr_src + r * img.step[0], img.cols * 3);
+      }
+    }
+  } else if (image_format == ImageFormat::GRAY) {
+    uint32_t stride = image->getStrides()[0];
+    uint8_t* ptr_dst = image->getVirtualAddress()[0];
+    uint8_t* ptr_src = img.data;
+
     for (int r = 0; r < img.rows; r++) {
       uint8_t* dst = ptr_dst + r * stride;
-      memcpy(dst, ptr_src + r * img.step[0], img.cols * 3);
+      memcpy(dst, ptr_src + r * img.step[0], img.cols);
     }
   }
+
   ret = image->flushCache();
 
   if (ret != 0) {
@@ -143,75 +177,42 @@ int32_t ImageFactory::writeImage(const std::string& file_path,
   if (image_format == ImageFormat::BGR_PACKED ||
       image_format == ImageFormat::RGB_PACKED) {
     cv::Mat img;
-    uint32_t stride = image->getStrides()[0];
-    if (stride != image->getWidth() * 3) {
-      LOGI(
-          "image is not aligned,stride:%d,width:%d,addr:%lx,create a new image",
-          stride, image->getWidth(), image->getVirtualAddress()[0]);
-      img = cv::Mat::zeros(image->getHeight(), image->getWidth(), CV_8UC3);
-      const uint8_t* ptr_src = image->getVirtualAddress()[0];
-
-      uint8_t* ptr_dst = img.data;
-      for (int r = 0; r < image->getHeight(); r++) {
-        uint8_t* dst = ptr_dst + r * img.step[0];
-        memcpy(dst, ptr_src + r * stride, image->getWidth() * 3);
-      }
-
-    } else {
-      img = cv::Mat(image->getHeight(), image->getWidth(), CV_8UC3,
-                    image->getVirtualAddress()[0]);
-    }
+    img = cv::Mat(image->getHeight(), image->getWidth(), CV_8UC3,
+                  image->getVirtualAddress()[0], image->getStrides()[0]);
     if (image_format == ImageFormat::RGB_PACKED) {
       cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
     }
-    LOGI(
-        "write image to "
-        "file,file_path:%s,width:%d,height:%d,stride:%d,addr:%lx",
-        file_path.c_str(), image->getWidth(), image->getHeight(), stride,
-        image->getVirtualAddress()[0]);
     cv::imwrite(file_path, img);
   } else if (image_format == ImageFormat::GRAY) {
-    cv::Mat img =
-        cv::Mat::zeros(image->getHeight(), image->getWidth(), CV_8UC1);
-
-    std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
-    uint8_t* ptr_src = virtual_addresses[0];
-    std::vector<uint32_t> strides = image->getStrides();
-    uint8_t* ptr_dst = img.data;
-    for (int r = 0; r < image->getHeight(); r++) {
-      uint8_t* dst = ptr_dst + r * img.step[0];
-      memcpy(dst, ptr_src + r * strides[0], image->getWidth());
-    }
+    cv::Mat img(image->getHeight(), image->getWidth(), CV_8UC1,
+                image->getVirtualAddress()[0], image->getStrides()[0]);
     cv::imwrite(file_path, img);
   } else if (image_format == ImageFormat::RGB_PLANAR ||
              image_format == ImageFormat::BGR_PLANAR) {
-    cv::Mat img =
-        cv::Mat::zeros(image->getHeight(), image->getWidth(), CV_8UC3);
-    std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
-    std::vector<uint32_t> strides = image->getStrides();
-    uint8_t* ptr_dst = img.data;
-    for (int r = 0; r < image->getHeight(); r++) {
-      uint8_t* dst = ptr_dst + r * img.step[0];
-      uint8_t* src_r = virtual_addresses[0] + r * strides[0];
-      uint8_t* src_g = virtual_addresses[1] + r * strides[1];
-      uint8_t* src_b = virtual_addresses[2] + r * strides[2];
-      for (int c = 0; c < image->getWidth(); c++) {
-        if (image_format == ImageFormat::RGB_PLANAR) {
-          dst[3 * c] = src_b[c];
-          dst[3 * c + 1] = src_g[c];
-          dst[3 * c + 2] = src_r[c];
-        } else {
-          dst[3 * c] = src_r[c];
-          dst[3 * c + 1] = src_g[c];
-          dst[3 * c + 2] = src_b[c];
-        }
-      }
+    std::vector<cv::Mat> channels;
+    for (int i = 0; i < 3; i++) {
+      channels.push_back(cv::Mat(image->getHeight(), image->getWidth(), CV_8UC1,
+                                 image->getVirtualAddress()[i],
+                                 image->getStrides()[i]));
     }
+    // 合并通道
+    cv::Mat img;
     if (image_format == ImageFormat::RGB_PLANAR) {
-      LOGI("convert rgb  to bgr");
+      // RGB -> BGR
+      std::vector<cv::Mat> bgr_channels = {channels[2], channels[1],
+                                           channels[0]};
+      cv::merge(bgr_channels, img);
+      LOGI("convert rgb to bgr");
+    } else {
+      cv::merge(channels, img);
     }
     cv::imwrite(file_path, img);
   }
+  LOGI(
+      "write image to "
+      "file,file_path:%s,width:%d,height:%d,stride:%d,addr:%lx",
+      file_path.c_str(), image->getWidth(), image->getHeight(),
+      image->getStrides()[0], image->getVirtualAddress()[0]);
   return 0;
 }
 

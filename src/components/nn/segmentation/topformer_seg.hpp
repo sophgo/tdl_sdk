@@ -14,7 +14,6 @@ class TopformerSeg final : public BaseModel {
       std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) override;
 
  private:
-
   int oriW, oriH;
   int outW, outH;
   int preW, preH;

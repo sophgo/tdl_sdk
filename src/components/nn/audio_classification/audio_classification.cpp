@@ -140,8 +140,7 @@ int32_t AudioClassification::outputParse(
   return 0;
 }
 
-int32_t AudioClassification::getTopK(float *result,
-                                     size_t count,
+int32_t AudioClassification::getTopK(float *result, size_t count,
                                      float *score) {
   int idx = -1;
   float max_e = -10000;

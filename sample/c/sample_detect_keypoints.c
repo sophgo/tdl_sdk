@@ -8,8 +8,7 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
-int get_model_info(char *model_path,
-                   TDLModel *model_index_d,
+int get_model_info(char *model_path, TDLModel *model_index_d,
                    TDLModel *model_index_k) {
   int ret = 0;
   if (strstr(model_path, "keypoint_hand") != NULL) {

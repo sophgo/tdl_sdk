@@ -21,8 +21,7 @@ bool make_dir(const char *path, mode_t mode = 0755) {
   return false;
 }
 std::string packOutput(const std::vector<TrackerInfo> &track_results,
-                       uint32_t img_width,
-                       uint32_t img_height,
+                       uint32_t img_width, uint32_t img_height,
                        const std::map<uint64_t, int> &det_results) {
   std::string str_content;
   for (auto &track_result : track_results) {
@@ -63,8 +62,7 @@ std::string packOutput(const std::vector<TrackerInfo> &track_results,
 }
 
 void visualizeDetections(
-    const std::string &dst_dir,
-    uint32_t frame_id,
+    const std::string &dst_dir, uint32_t frame_id,
     std::shared_ptr<BaseImage> image,
     const std::vector<ObjectBoxLandmarkInfo> &person_boxes_keypoints,
     const std::vector<TrackerInfo> &track_results,

@@ -3,21 +3,11 @@
 #include <vector>
 #include "image/base_image.hpp"
 
-extern int cpu_2way_blend(int lwidth,
-                          int lheight,
-                          unsigned char *left_img,
-                          int rwidth,
-                          int rheight,
-                          unsigned char *right_img,
-                          int bwidth,
-                          int bheight,
-                          unsigned char *blend_img,
-                          int overlay_lx,
-                          int overlay_rx,
-                          unsigned char *wgt,
-                          int channel,
-                          int format,
-                          int wgt_mode);
+extern int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img,
+                          int rwidth, int rheight, unsigned char *right_img,
+                          int bwidth, int bheight, unsigned char *blend_img,
+                          int overlay_lx, int overlay_rx, unsigned char *wgt,
+                          int channel, int format, int wgt_mode);
 
 int32_t ImageFormatToPixelFormat(ImageFormat image_format, CVI_S32 &format) {
   switch (image_format) {
@@ -47,9 +37,7 @@ int32_t ImageFormatToPixelFormat(ImageFormat image_format, CVI_S32 &format) {
   return 0;
 }
 
-int32_t getChannelSize(CVI_S32 format,
-                       CVI_S32 width,
-                       CVI_S32 height,
+int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
                        int src1_size[3]) {
   switch (format) {
     case PIXEL_FORMAT_YUV_PLANAR_420:
@@ -130,8 +118,12 @@ int32_t BmImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
   TDLDataType pix_data_type = src1->getPixDataType();
   CVI_S32 channel = (image_format == ImageFormat::GRAY) ? 1 : 3;
 
-  dst = ImageFactory::createImage(width, height, image_format, pix_data_type,
-                                  true, InferencePlatform::AUTOMATIC);
+  if (!dst || dst->getHeight() != height || dst->getWidth() != width ||
+      dst->getImageFormat() != image_format ||
+      dst->getPixDataType() != pix_data_type) {
+    dst = ImageFactory::createImage(width, height, image_format, pix_data_type,
+                                    true, InferencePlatform::AUTOMATIC);
+  }
 
   // 将ImageFormat转换为PIXEL_FORMAT_E
   CVI_S32 format;
@@ -267,8 +259,13 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
   CVI_S32 aligned_width = strides[0];
   ImageFormat image_format = input->getImageFormat();
   TDLDataType pix_data_type = input->getPixDataType();
-  output = ImageFactory::createImage(width, height, image_format, pix_data_type,
-                                     true, InferencePlatform::AUTOMATIC);
+  if (!output || output->getHeight() != height || output->getWidth() != width ||
+      output->getImageFormat() != image_format ||
+      output->getPixDataType() != pix_data_type) {
+    output =
+        ImageFactory::createImage(width, height, image_format, pix_data_type,
+                                  true, InferencePlatform::AUTOMATIC);
+  }
 
   CVI_S32 format;
   ImageFormatToPixelFormat(image_format, format);
@@ -338,8 +335,7 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
 int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
                                          std::shared_ptr<BaseImage> &right,
                                          std::shared_ptr<BaseImage> &output,
-                                         CVI_S32 overlay_lx,
-                                         CVI_S32 overlay_rx,
+                                         CVI_S32 overlay_lx, CVI_S32 overlay_rx,
                                          CVI_U8 *wgt) {
   // 参数校验
   if ((!left || !right)) {
@@ -359,9 +355,14 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   CVI_S32 channel = (image_format == ImageFormat::GRAY) ? 1 : 3;
 
   // 创建输出图像
-  output = ImageFactory::createImage(blend_w, blend_h, image_format,
-                                     left->getPixDataType(), true,
-                                     InferencePlatform::AUTOMATIC);
+  if (!output || output->getHeight() != blend_h ||
+      output->getWidth() != blend_w ||
+      output->getImageFormat() != image_format ||
+      output->getPixDataType() != left->getPixDataType()) {
+    output = ImageFactory::createImage(blend_w, blend_h, image_format,
+                                       left->getPixDataType(), true,
+                                       InferencePlatform::AUTOMATIC);
+  }
 
   std::vector<uint32_t> left_strides = left->getStrides();
   std::vector<uint32_t> right_strides = right->getStrides();
@@ -516,8 +517,7 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   return 0;
 }
 
-int32_t BmImageProcessor::compareResult(CVI_U8 *tpu_result,
-                                        CVI_U8 *cpu_result,
+int32_t BmImageProcessor::compareResult(CVI_U8 *tpu_result, CVI_U8 *cpu_result,
                                         CVI_S32 size) {
   for (int i = 0; i < size; i++) {
     if (tpu_result[i] != cpu_result[i]) {

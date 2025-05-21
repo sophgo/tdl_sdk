@@ -8,12 +8,8 @@
 #include "utils/tdl_log.hpp"
 
 template <typename T>
-inline void parse_cls_info(T *p_cls_ptr,
-                           int num_cls,
-                           int anchor_idx,
-                           float qscale,
-                           float *p_max_logit,
-                           int *p_max_cls) {
+inline void parse_cls_info(T *p_cls_ptr, int num_cls, int anchor_idx,
+                           float qscale, float *p_max_logit, int *p_max_cls) {
   int max_logit_c = -1;
   float max_logit = -1000;
   for (int c = 0; c < num_cls; c++) {
@@ -110,8 +106,7 @@ int YoloV6Detection::onModelOpened() {
   return 0;
 }
 
-void YoloV6Detection::decodeBboxFeatureMap(int batch_idx,
-                                           int stride,
+void YoloV6Detection::decodeBboxFeatureMap(int batch_idx, int stride,
                                            int anchor_idx,
                                            std::vector<float> &decode_box) {
   std::string box_name;

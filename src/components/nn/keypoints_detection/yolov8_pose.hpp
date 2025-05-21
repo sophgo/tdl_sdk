@@ -19,8 +19,8 @@ class YoloV8Pose final : public BaseModel {
   void decodeBboxFeatureMap(int batch_idx, int stride, int anchor_idx,
                             std::vector<float> &decode_box);
   void decodeKeypointsFeatureMap(int batch_idx, int stride, int anchor_idx,
-                                              std::vector<float> &decode_kpts);
-  
+                                 std::vector<float> &decode_kpts);
+
   // if output seperate featuremap
   std::vector<int> strides;
   std::map<int, std::string> bbox_out_names;

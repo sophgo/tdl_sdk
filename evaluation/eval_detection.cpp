@@ -26,8 +26,7 @@ void save_detection_results(const std::string& save_path,
 }
 
 void bench_mark_all(const std::string& bench_path,
-                    const std::string& image_root,
-                    const std::string& res_path,
+                    const std::string& image_root, const std::string& res_path,
                     std::shared_ptr<BaseModel> model /* 仍按值传入 */) {
   std::ifstream bench_fstream(bench_path);
   if (!bench_fstream.is_open()) {
@@ -38,7 +37,8 @@ void bench_mark_all(const std::string& bench_path,
   std::string image_name;
   while (bench_fstream >> image_name) {
     const std::string img_path = image_root + image_name;
-    std::cout << "Process: " << img_path << "\n" << "\n";
+    std::cout << "Process: " << img_path << "\n"
+              << "\n";
     std::shared_ptr<BaseImage> image = ImageFactory::readImage(img_path);
     if (!image) {
       std::cerr << "读取图像失败: " << img_path << "\n";

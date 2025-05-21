@@ -89,8 +89,7 @@ int32_t BmMotionDetection::setROI(const std::vector<ObjectBoxInfo> &_roi_s) {
 
 // 实现运动检测功能
 int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
-                                  uint8_t threshold,
-                                  double min_area,
+                                  uint8_t threshold, double min_area,
                                   std::vector<std::vector<float>> &objs) {
   if (!image) {
     LOGE("Input image is null\n");
@@ -160,8 +159,8 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
   std::vector<uint8_t *> virtual_addresses = md_output_->getVirtualAddress();
   uint8_t *ptr_src = virtual_addresses[0];
   std::vector<uint32_t> strides = md_output_->getStrides();
-  cv::Mat img(md_output_->getHeight(), md_output_->getWidth(), CV_8UC1,
-              ptr_src, strides[0]);
+  cv::Mat img(md_output_->getHeight(), md_output_->getWidth(), CV_8UC1, ptr_src,
+              strides[0]);
 
   // 创建5x5的矩形结构元素
   cv::Mat kernel = cv::Mat::zeros(5, 5, CV_8U);

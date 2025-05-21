@@ -444,7 +444,8 @@ int32_t HWIVE::dma(IVEImageImpl *pSrc, IVEImageImpl *pDst, DMAMode mode,
   return CVI_IVE_DMA(m_handle, &src_data, &src_dst, &ctrl, false);
 }
 
-// int32_t HWIVE::sub(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl *pDst,
+// int32_t HWIVE::sub(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2, IVEImageImpl
+// *pDst,
 //                    SubMode mode) {
 //   IVE_SUB_CTRL_S ctrl;
 //   ctrl.enMode = convert(mode);
@@ -533,7 +534,8 @@ int32_t HWIVE::dma(IVEImageImpl *pSrc, IVEImageImpl *pDst, DMAMode mode,
 //   return CVI_SUCCESS;
 // }
 
-// int32_t HWIVE::thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode mode,
+// int32_t HWIVE::thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst, ThreshMode
+// mode,
 //                       CVI_U8 u8LowThr, CVI_U8 u8HighThr, CVI_U8 u8MinVal,
 //                       CVI_U8 u8MidVal, CVI_U8 u8MaxVal) {
 //   IVE_THRESH_CTRL_S ctrl;

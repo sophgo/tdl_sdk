@@ -2,7 +2,8 @@
 #include <iostream>
 #include <sstream>
 double cal_time_elapsed(struct timeval &start, struct timeval &end) {
-  double sec = end.tv_sec - start.tv_sec + (end.tv_usec - start.tv_usec) / 1000000.;
+  double sec =
+      end.tv_sec - start.tv_sec + (end.tv_usec - start.tv_usec) / 1000000.;
   return sec;
 }
 Timer::Timer(const std::string &name, int summary_cond_times)
@@ -14,7 +15,8 @@ void Timer::Tic() { gettimeofday(&(start_), NULL); }
 
 void Timer::Toc(int times) {
   gettimeofday(&(end_), NULL);
-  total_time_ += end_.tv_sec - start_.tv_sec + (end_.tv_usec - start_.tv_usec) / 1000000.;
+  total_time_ +=
+      end_.tv_sec - start_.tv_sec + (end_.tv_usec - start_.tv_usec) / 1000000.;
   times_ += times;
   if (summary_cond_times_ > 0 && times_ > summary_cond_times_) {
     Summary();
@@ -43,7 +45,8 @@ void Timer::TicToc(const std::string &str_step) {
       ss << "[Timer] " << name_ << " ";
       for (size_t i = 1; i < step_name_vec_.size(); i++) {
         if (step_time_elpased_.count(i)) {
-          ss << step_name_vec_[i] << ":" << step_time_elpased_[i] * 1000 / times_ << ",";
+          ss << step_name_vec_[i] << ":"
+             << step_time_elpased_[i] * 1000 / times_ << ",";
           total_ts += step_time_elpased_[i] * 1000 / times_;
         }
       }
@@ -77,7 +80,8 @@ void Timer::Config(const std::string &name, int summary_cond_times) {
 
 void Timer::Summary() {
 #ifdef PERF_EVAL
-  std::cout << "[Timer] " << name_ << " " << 1000 * total_time_ / times_ << "ms" << std::endl;
+  std::cout << "[Timer] " << name_ << " " << 1000 * total_time_ / times_ << "ms"
+            << std::endl;
 #endif
   total_time_ = 0.;
   times_ = 0;
@@ -106,8 +110,8 @@ void FpsProfiler::Add(int cnts) {
 
   if (print) {
 #ifdef PERF_EVAL
-    std::cerr << "[" << name_ << "] temp_fps:" << tmp_fps_ << ",average_fps:" << average_fps_
-              << std::endl;
+    std::cerr << "[" << name_ << "] temp_fps:" << tmp_fps_
+              << ",average_fps:" << average_fps_ << std::endl;
 #endif
   }
 }
@@ -121,7 +125,8 @@ void FpsProfiler::Config(const std::string &name, int summary_cond_cnts) {
 
 float FpsProfiler::Elapse() {
   gettimeofday(&(end_), NULL);
-  return end_.tv_sec - start_.tv_sec + (end_.tv_usec - start_.tv_usec) / 1000000.;
+  return end_.tv_sec - start_.tv_sec +
+         (end_.tv_usec - start_.tv_usec) / 1000000.;
 }
 
 void FpsProfiler::Summary() {

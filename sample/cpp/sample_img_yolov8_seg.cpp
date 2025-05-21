@@ -2,8 +2,7 @@
 #include "tdl_model_factory.hpp"
 
 void visualize_maskOutlinePoint(
-    std::shared_ptr<ModelBoxSegmentationInfo> obj_meta,
-    uint32_t image_height,
+    std::shared_ptr<ModelBoxSegmentationInfo> obj_meta, uint32_t image_height,
     uint32_t image_width) {
   int proto_h = obj_meta->mask_height;
   int proto_w = obj_meta->mask_width;

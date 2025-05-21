@@ -15,14 +15,13 @@ class BmMotionDetection : public MotionDetection {
   int32_t setBackground(
       const std::shared_ptr<BaseImage> &background_image) override;
   int32_t setROI(const std::vector<ObjectBoxInfo> &_roi_s) override;
-  int32_t detect(const std::shared_ptr<BaseImage> &image,
-                 uint8_t threshold,
+  int32_t detect(const std::shared_ptr<BaseImage> &image, uint8_t threshold,
                  double min_area,
                  std::vector<std::vector<float>> &objs) override;
 
  private:
   std::shared_ptr<BaseImage> background_image_;
-  std::shared_ptr<BaseImage> md_output_;    // 保存运动检测输出图像
+  std::shared_ptr<BaseImage> md_output_;  // 保存运动检测输出图像
   std::vector<ObjectBoxInfo> roi_s_;
   void *ccl_instance_;
   bool use_roi_ = false;

@@ -55,7 +55,7 @@ TEST_F(DetectionTestSuite, accuracy) {
     LOGIP("image_path: %s\n", image_path.c_str());
 
     std::shared_ptr<BaseImage> frame =
-        ImageFactory::readImage(image_path, true);
+        ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
 
     ASSERT_NE(frame, nullptr);
     std::vector<std::shared_ptr<BaseImage>> input_images;

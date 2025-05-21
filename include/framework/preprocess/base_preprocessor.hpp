@@ -19,19 +19,11 @@ class BasePreprocessor {
 
   // 裁剪图像
   virtual std::shared_ptr<BaseImage> crop(
-      const std::shared_ptr<BaseImage>& image,
-      int x,
-      int y,
-      int width,
+      const std::shared_ptr<BaseImage>& image, int x, int y, int width,
       int height);
   virtual std::shared_ptr<BaseImage> cropResize(
-      const std::shared_ptr<BaseImage>& image,
-      int x,
-      int y,
-      int width,
-      int height,
-      int newWidth,
-      int newHeight);
+      const std::shared_ptr<BaseImage>& image, int x, int y, int width,
+      int height, int newWidth, int newHeight);
   virtual std::shared_ptr<BaseImage> preprocess(
       const std::shared_ptr<BaseImage>& src_image,
       const PreprocessParams& params,
@@ -55,8 +47,7 @@ class BasePreprocessor {
                                               const int image_height) const;
   virtual int32_t preprocessToTensor(
       const std::shared_ptr<BaseImage>& src_image,
-      const PreprocessParams& params,
-      const int batch_idx,
+      const PreprocessParams& params, const int batch_idx,
       std::shared_ptr<BaseTensor> tensor) = 0;
 };
 

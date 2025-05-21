@@ -2,8 +2,7 @@
 #include "tdl_model_factory.hpp"
 
 template <typename T>
-void embeddingToVec(void *embedding,
-                    size_t num,
+void embeddingToVec(void *embedding, size_t num,
                     std::vector<float> &feature_vec) {
   T *feature = reinterpret_cast<T *>(embedding);
   for (size_t i = 0; i < num; ++i) {

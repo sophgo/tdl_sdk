@@ -1,35 +1,6 @@
 #include "image/base_image.hpp"
 #include "motion_detect/motion_detect.hpp"
 
-std::shared_ptr<BaseImage> readGrayImage(const std::string& image_path) {
-  TDLDataType pixel_type = TDLDataType::UINT8;
-  ImageFormat image_format = ImageFormat::GRAY;
-  // 读取源图像
-  cv::Mat src_img;
-  src_img = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
-
-  // 创建目标图像
-  std::shared_ptr<BaseImage> dst_image = ImageFactory::createImage(
-      src_img.cols, src_img.rows, image_format, pixel_type,
-      true  // alloc memory
-  );
-
-  std::vector<uint8_t*> virtual_addresses = dst_image->getVirtualAddress();
-  std::vector<uint32_t> strides = dst_image->getStrides();
-  uint8_t* ptr_dst = virtual_addresses[0];
-
-  for (int r = 0; r < src_img.rows; r++) {
-    uint8_t* src = src_img.data + r * src_img.step[0];
-    uint8_t* dst = ptr_dst + r * strides[0];
-    memcpy(dst, src, src_img.cols);
-  }
-
-  // 确保数据写入设备内存
-  dst_image->flushCache();
-
-  return dst_image;
-}
-
 int main(int argc, char** argv) {
   if (argc != 3) {
     printf("Usage: %s <background_image> <detect_image>\n", argv[0]);
@@ -37,8 +8,10 @@ int main(int argc, char** argv) {
   }
 
   // 读取背景图像和检测图像
-  std::shared_ptr<BaseImage> background_image = readGrayImage(argv[1]);
-  std::shared_ptr<BaseImage> detect_image = readGrayImage(argv[2]);
+  std::shared_ptr<BaseImage> background_image =
+      ImageFactory::readImage(argv[1], ImageFormat::GRAY);
+  std::shared_ptr<BaseImage> detect_image =
+      ImageFactory::readImage(argv[2], ImageFormat::GRAY);
 
   // 设置背景图像
   printf("set background image\n");

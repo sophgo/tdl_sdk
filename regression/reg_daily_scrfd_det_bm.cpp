@@ -50,7 +50,7 @@ TEST_F(ScrfdDetBmTestSuite, accuracy) {
       std::string image_path = (m_image_dir / iter.key()).string();
       std::cout << "image_path: " << image_path << std::endl;
       std::shared_ptr<BaseImage> frame =
-          ImageFactory::readImage(image_path, true);
+          ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
       ASSERT_NE(frame, nullptr);
       std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
       std::vector<std::shared_ptr<BaseImage>> input_images;

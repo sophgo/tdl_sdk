@@ -7,7 +7,7 @@
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
 
-#define ALIGN(x, a) (((x) + ((a) - 1)) & ~((a) - 1))
+#define ALIGN(x, a) (((x) + ((a)-1)) & ~((a)-1))
 
 BaseImage::BaseImage(ImageType image_type)
     : memory_pool_(nullptr), memory_block_(nullptr), image_type_(image_type) {}

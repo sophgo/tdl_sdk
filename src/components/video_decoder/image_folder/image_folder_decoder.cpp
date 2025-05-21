@@ -60,7 +60,8 @@ int32_t ImageFolderDecoder::init(const std::string& path,
   return 0;
 }
 
-int32_t ImageFolderDecoder::read(std::shared_ptr<BaseImage>& image, int vi_chn) {
+int32_t ImageFolderDecoder::read(std::shared_ptr<BaseImage>& image,
+                                 int vi_chn) {
   if (image_index_ >= image_paths_.size()) {
     if (is_loop_) {
       image_index_ = 0;

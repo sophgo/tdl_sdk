@@ -8,23 +8,18 @@ class OpenCVImage : public BaseImage {
   // OpenCVImage();
   ~OpenCVImage();
 
-  OpenCVImage(uint32_t width,
-              uint32_t height,
-              ImageFormat imageFormat,
-              TDLDataType pix_data_type,
-              bool alloc_memory = false,
+  OpenCVImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
+              TDLDataType pix_data_type, bool alloc_memory = false,
               std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
 
   OpenCVImage(cv::Mat& mat, ImageFormat imageFormat);
 
-  virtual int32_t prepareImageInfo(uint32_t width,
-                                   uint32_t height,
+  virtual int32_t prepareImageInfo(uint32_t width, uint32_t height,
                                    ImageFormat imageFormat,
                                    TDLDataType pix_data_type,
                                    uint32_t align_size = 0) override;
 
-  virtual int32_t setupMemory(uint64_t phy_addr,
-                              uint8_t* vir_addr,
+  virtual int32_t setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
                               uint32_t length) override;
 
   virtual uint32_t getWidth() const override;

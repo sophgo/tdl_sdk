@@ -8,14 +8,9 @@
 #include "utils/detection_helper.hpp"
 #include "utils/tdl_log.hpp"
 template <typename T>
-inline void parse_cls_info(T *p_cls_ptr,
-                           int num_anchor,
-                           int num_cls,
-                           int anchor_idx,
-                           int cls_offset,
-                           float qscale,
-                           float *p_max_logit,
-                           int *p_max_cls) {
+inline void parse_cls_info(T *p_cls_ptr, int num_anchor, int num_cls,
+                           int anchor_idx, int cls_offset, float qscale,
+                           float *p_max_logit, int *p_max_cls) {
   int max_logit_c = -1;
   float max_logit = -1000;
   for (int c = 0; c < num_cls; c++) {
@@ -30,10 +25,8 @@ inline void parse_cls_info(T *p_cls_ptr,
 }
 
 template <typename T>
-inline std::vector<float> get_box_vals(T *p_box_ptr,
-                                       int num_anchor,
-                                       int anchor_idx,
-                                       int num_box_channel,
+inline std::vector<float> get_box_vals(T *p_box_ptr, int num_anchor,
+                                       int anchor_idx, int num_box_channel,
                                        float qscale) {
   std::vector<float> box_vals;
   for (int c = 0; c < num_box_channel; c++) {
@@ -129,8 +122,7 @@ int32_t YoloV10Detection::onModelOpened() {
 YoloV10Detection::~YoloV10Detection() {}
 
 // the bbox featuremap shape is b x 4*regmax x h   x w
-void YoloV10Detection::decodeBboxFeatureMap(int batch_idx,
-                                            int stride,
+void YoloV10Detection::decodeBboxFeatureMap(int batch_idx, int stride,
                                             int anchor_idx,
                                             std::vector<float> &decode_box) {
   std::string box_name;

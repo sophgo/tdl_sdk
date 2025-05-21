@@ -6,46 +6,6 @@
 #include "image/base_image.hpp"
 #include "ive/image_processor.hpp"
 
-std::shared_ptr<BaseImage> readImage(std::string image_path) {
-  cv::Mat img_mat = cv::imread(image_path, cv::IMREAD_COLOR);
-  if (img_mat.empty()) {
-    std::cerr << "Failed to load image: " << image_path << std::endl;
-    return nullptr;
-  }
-
-  // 创建BGR_PLANAR格式的BaseImage
-  std::shared_ptr<BaseImage> input_image =
-      ImageFactory::createImage(img_mat.cols,             // width
-                                img_mat.rows,             // height
-                                ImageFormat::BGR_PLANAR,  // format
-                                TDLDataType::UINT8,       // pixel type
-                                true                      // alloc memory
-      );
-
-  if (input_image == nullptr) {
-    std::cerr << "Failed to create image" << std::endl;
-    return nullptr;
-  }
-
-  // 将interleaved格式转换为planar格式
-  std::vector<cv::Mat> channels;
-  cv::split(img_mat, channels);  // 分离通道
-
-  // 获取数据指针和平面大小
-  uint8_t* base_addr = input_image->getVirtualAddress()[0];
-  size_t plane_size = img_mat.rows * img_mat.cols;
-
-  // 按B、G、R顺序复制每个通道的数据
-  memcpy(base_addr, channels[0].data, plane_size);                   // B通道
-  memcpy(base_addr + plane_size, channels[1].data, plane_size);      // G通道
-  memcpy(base_addr + 2 * plane_size, channels[2].data, plane_size);  // R通道
-
-  // 刷新缓存
-  input_image->flushCache();
-
-  return input_image;
-}
-
 int main(int argc, char* argv[]) {
   // 检查参数数量
   if (argc != 5) {
@@ -63,10 +23,18 @@ int main(int argc, char* argv[]) {
 
   // 读取图像
   std::cout << "读取图像1: " << image_path1 << std::endl;
-  std::shared_ptr<BaseImage> left_image = readImage(image_path1);
+  std::shared_ptr<BaseImage> left_image =
+      ImageFactory::readImage(image_path1, ImageFormat::GRAY);
+  std::string output_path1 = "input_blend1.jpg";
+  ImageFactory::writeImage(output_path1, left_image);
+  std::cout << "输入图像1已保存至: " << output_path1 << std::endl;
 
   std::cout << "读取图像2: " << image_path2 << std::endl;
-  std::shared_ptr<BaseImage> right_image = readImage(image_path2);
+  std::shared_ptr<BaseImage> right_image =
+      ImageFactory::readImage(image_path2, ImageFormat::GRAY);
+  std::string output_path2 = "input_blend2.jpg";
+  ImageFactory::writeImage(output_path2, right_image);
+  std::cout << "输入图像2已保存至: " << output_path2 << std::endl;
 
   std::cout << "左图尺寸: " << left_image->getWidth() << "x"
             << left_image->getHeight() << std::endl;

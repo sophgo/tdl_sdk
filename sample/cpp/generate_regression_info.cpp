@@ -59,8 +59,7 @@ std::string getTxtName(std::string &dst_root, std::string &img_name) {
   return txt_name;
 }
 
-void saveDetectionResults(std::string &dst_root,
-                          std::string &img_name,
+void saveDetectionResults(std::string &dst_root, std::string &img_name,
                           const std::shared_ptr<ModelOutputInfo> &out_data) {
   std::string txt_name = getTxtName(dst_root, img_name);
   std::ofstream outfile(txt_name);
@@ -92,8 +91,7 @@ void saveDetectionResults(std::string &dst_root,
 }
 
 void saveClassificationResults(
-    std::string &dst_root,
-    std::string &img_name,
+    std::string &dst_root, std::string &img_name,
     const std::shared_ptr<ModelOutputInfo> &out_data) {
   std::string txt_name = getTxtName(dst_root, img_name);
 
@@ -107,8 +105,7 @@ void saveClassificationResults(
   std::cout << "write file " << txt_name << " done" << std::endl;
 }
 
-void saveKeypointResults(std::string &dst_root,
-                         std::string &img_name,
+void saveKeypointResults(std::string &dst_root, std::string &img_name,
                          const std::shared_ptr<ModelOutputInfo> &out_data) {
   std::string txt_name = getTxtName(dst_root, img_name);
   std::ofstream outfile(txt_name);

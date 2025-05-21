@@ -259,7 +259,7 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
 
       *(ptrSuperPixFG0 + (rBlk * superPixMapW) + cBlk) = cumulatedBlkSum;
     } /*end of: for ( cBlk )*/
-  } /*end of: for ( rBlk )*/
+  }   /*end of: for ( rBlk )*/
 
   /**************************/
   /* Scan image for objects */
@@ -300,7 +300,7 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
       } /*end of: mark foreground.*/
 
     } /*end of: for ( c )*/
-  } /*end of: for ( r )*/
+  }   /*end of: for ( r )*/
 
   // now the map is saved in ptrSuperPixMap
   /*	Connected component labeling.*/
@@ -365,7 +365,7 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
       ptrSuperPixMap += 1;
       ptrLabelMap += 1;
     } /* col */
-  } /* row */
+  }   /* row */
 
   /* the 2nd pass to flush with equivalent labels.*/
   for (r = 1; r < superPixMapH; r += 1) {
@@ -391,7 +391,7 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
 
       ptrLabelMap += 1;
     } /* col */
-  } /* row */
+  }   /* row */
 
   // this would not happen
   if (tmpMaxLabel > CC_MAX_NUM_LABELS) {

@@ -9,10 +9,8 @@
 
 using namespace ive;
 
-static int32_t VideoFrameCopy2Image(IVE *ive_instance,
-                                    VIDEO_FRAME_INFO_S *src,
-                                    IVEImage *tmp_ive_image,
-                                    IVEImage *dst) {
+static int32_t VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src,
+                                    IVEImage *tmp_ive_image, IVEImage *dst) {
   bool do_unmap = false;
   size_t image_size = src->stVFrame.u32Length[0] + src->stVFrame.u32Length[1] +
                       src->stVFrame.u32Length[2];
@@ -133,8 +131,7 @@ int32_t CviMotionDetection::setBackground(
 }
 
 int32_t CviMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
-                                   uint8_t threshold,
-                                   double min_area,
+                                   uint8_t threshold, double min_area,
                                    std::vector<std::vector<float>> &objs) {
   VIDEO_FRAME_INFO_S video_frame;
   BaseImage2VideoFrame(image, video_frame);

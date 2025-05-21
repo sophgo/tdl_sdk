@@ -37,7 +37,7 @@ class Qwen2VL {
   int forward_next();
 
   std::mt19937 sgen;
-  Qwen2VL() : sgen(std::random_device()()) {};
+  Qwen2VL() : sgen(std::random_device()()){};
 
  private:
   void net_launch(const bm_net_info_t *net, int stage_idx = 0);

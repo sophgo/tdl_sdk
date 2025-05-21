@@ -6,9 +6,7 @@
 #include <memory>
 
 std::vector<std::vector<float>> DetectionHelper::generateMmdetBaseAnchors(
-    float base_size,
-    float center_offset,
-    const std::vector<float> &ratios,
+    float base_size, float center_offset, const std::vector<float> &ratios,
     const std::vector<int> &scales) {
   std::vector<std::vector<float>> base_anchors;
   float x_center = base_size * center_offset;
@@ -31,9 +29,7 @@ std::vector<std::vector<float>> DetectionHelper::generateMmdetBaseAnchors(
 }
 
 std::vector<std::vector<float>> DetectionHelper::generateMmdetGridAnchors(
-    int feat_w,
-    int feat_h,
-    int stride,
+    int feat_w, int feat_h, int stride,
     std::vector<std::vector<float>> &base_anchors) {
   std::vector<std::vector<float>> grid_anchors;
   for (size_t k = 0; k < base_anchors.size(); k++) {
@@ -59,13 +55,9 @@ std::vector<std::vector<float>> DetectionHelper::generateMmdetGridAnchors(
 // stride->anchor_boxes->[x,y,w,h]
 std::vector<std::vector<std::vector<float>>>
 DetectionHelper::generateRetinaNetAnchors(
-    int min_level,
-    int max_level,
-    int num_scales,
+    int min_level, int max_level, int num_scales,
     const std::vector<std::pair<float, float>> &aspect_ratios,
-    float anchor_scale,
-    int image_width,
-    int image_height) {
+    float anchor_scale, int image_width, int image_height) {
   std::vector<std::vector<std::vector<float>>> anchor_bboxes;
 
   // 遍历各层级（例如 3~7）
@@ -224,8 +216,7 @@ void DetectionHelper::nmsObjects(
   }
 }
 void DetectionHelper::nmsObjects(
-    std::vector<ObjectBoxSegmentationInfo> &objects,
-    float iou_threshold,
+    std::vector<ObjectBoxSegmentationInfo> &objects, float iou_threshold,
     std::vector<std::pair<int, uint32_t>> &stride_index) {
   std::vector<size_t> indices(objects.size());
   for (size_t i = 0; i < objects.size(); ++i) {
@@ -301,8 +292,7 @@ void DetectionHelper::nmsObjects(
   stride_index = stride_index_nms;
 }
 void DetectionHelper::nmsObjects(
-    std::vector<ObjectBoxLandmarkInfo> &objects,
-    float iou_threshold,
+    std::vector<ObjectBoxLandmarkInfo> &objects, float iou_threshold,
     std::vector<std::pair<int, uint32_t>> &stride_index) {
   std::vector<size_t> indices(objects.size());
   for (size_t i = 0; i < objects.size(); ++i) {

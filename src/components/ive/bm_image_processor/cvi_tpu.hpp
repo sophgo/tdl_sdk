@@ -1,10 +1,10 @@
 #ifndef __CVI_TPU_H__
 #define __CVI_TPU_H__
 
+#include "bmlib_runtime.h"
 #include "cvi_comm_video.h"
 #include "cvi_common.h"
 #include "cvi_type.h"
-#include "bmlib_runtime.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -12,7 +12,7 @@ extern "C" {
 #endif
 #endif /* __cplusplus */
 
-#define BM_ALIGN(x, a) (((x) + (a) - 1) / (a) * (a))
+#define BM_ALIGN(x, a) (((x) + (a)-1) / (a) * (a))
 
 typedef enum _TPU_THRESHOLD_TYPE {
   THRESHOLD_BINARY = 0,
@@ -30,7 +30,8 @@ typedef enum _TPU_BLEND_WGT_MODE {
 bm_status_t tpu_cv_subads(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
                           CVI_S32 format, CVI_S32 channel,
                           bm_device_mem_t *src1_mem, bm_device_mem_t *src2_mem,
-                          bm_device_mem_t *dst_mem, tpu_kernel_module_t tpu_module);
+                          bm_device_mem_t *dst_mem,
+                          tpu_kernel_module_t tpu_module);
 
 bm_status_t tpu_cv_threshold(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
                              TPU_THRESHOLD_TYPE mode, CVI_U32 threshold,

@@ -3,7 +3,6 @@
 
 #include "model/base_model.hpp"
 
-
 class LicensePlateRecognition final : public BaseModel {
  public:
   LicensePlateRecognition();

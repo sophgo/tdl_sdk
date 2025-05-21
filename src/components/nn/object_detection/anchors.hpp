@@ -9,7 +9,8 @@ struct AnchorConfig {
   int stride;
   float octave_scale;
   std::pair<float, float> aspect;
-  AnchorConfig(int _stride, float _octave_scale, std::pair<float, float> _aspect);
+  AnchorConfig(int _stride, float _octave_scale,
+               std::pair<float, float> _aspect);
 };
 
 struct AnchorBox {
@@ -17,16 +18,18 @@ struct AnchorBox {
   float y;
   float w;
   float h;
-  AnchorBox(float _x, float _y, float _w, float _h) : x(_x), y(_y), w(_w), h(_h) {}
+  AnchorBox(float _x, float _y, float _w, float _h)
+      : x(_x), y(_y), w(_w), h(_h) {}
 };
 
 class RetinaNetAnchorGenerator {
  public:
   // RetinaNet Anchors class
 
-  RetinaNetAnchorGenerator(int _min_level, int _max_level, int _num_scales,
-                           const std::vector<std::pair<float, float>> &_aspect_ratios,
-                           float _anchor_scale, int _image_width, int _image_height);
+  RetinaNetAnchorGenerator(
+      int _min_level, int _max_level, int _num_scales,
+      const std::vector<std::pair<float, float>> &_aspect_ratios,
+      float _anchor_scale, int _image_width, int _image_height);
 
   /**
    * @brief   Create anchor configurations

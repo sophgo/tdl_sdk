@@ -88,7 +88,8 @@ class IVEImpl {
   //     unsigned short beta = std::numeric_limits<unsigned short>::max()) = 0;
   // virtual int32_t thresh(IVEImageImpl *pSrc, IVEImageImpl *pDst,
   //                        ThreshMode mode, CVI_U8 u8LowThr, CVI_U8 u8HighThr,
-  //                        CVI_U8 u8MinVal, CVI_U8 u8MidVal, CVI_U8 u8MaxVal) = 0;
+  //                        CVI_U8 u8MinVal, CVI_U8 u8MidVal, CVI_U8 u8MaxVal) =
+  //                        0;
   virtual int32_t frameDiff(IVEImageImpl *pSrc1, IVEImageImpl *pSrc2,
                             IVEImageImpl *pDst, CVI_U8 threshold) = 0;
 

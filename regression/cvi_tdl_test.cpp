@@ -29,8 +29,7 @@ fs::path CVI_TDLTestContext::getJsonBaseDir() { return m_json_dir; }
 
 CVI_TDLTestContext::CVI_TDLTestContext() : m_inited(false) {}
 
-void CVI_TDLTestContext::init(std::string model_dir,
-                              std::string image_dir,
+void CVI_TDLTestContext::init(std::string model_dir, std::string image_dir,
                               std::string json_dir) {
   if (!m_inited) {
     m_model_dir = model_dir;
@@ -165,8 +164,7 @@ float iou(const std::vector<float> &gt_object,
 bool CVI_TDLModelTestSuite::matchObjects(
     const std::vector<std::vector<float>> &gt_objects,
     const std::vector<std::vector<float>> &pred_objects,
-    const float iout_thresh,
-    const float score_thresh) {
+    const float iout_thresh, const float score_thresh) {
   std::vector<int> gt_matched(gt_objects.size(), 0);
   std::vector<int> pred_matched(pred_objects.size(), 0);
 
@@ -270,7 +268,7 @@ std::shared_ptr<BaseImage> CVI_TDLModelTestSuite::getInputData(
   std::shared_ptr<BaseImage> frame;
   if (image_path.size() >= 4 &&
       image_path.substr(image_path.size() - 4) != ".bin") {
-    frame = ImageFactory::readImage(image_path, true);
+    frame = ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
   } else {
     int frame_size = 0;
     FILE *fp = fopen(image_path.c_str(), "rb");
@@ -294,8 +292,7 @@ bool CVI_TDLModelTestSuite::matchKeypoints(
     const std::vector<float> &gt_keypoints_score,
     const std::vector<float> &pred_keypoints_x,
     const std::vector<float> &pred_keypoints_y,
-    const std::vector<float> &pred_keypoints_score,
-    const float position_thresh,
+    const std::vector<float> &pred_keypoints_score, const float position_thresh,
     const float score_thresh) {
   if (gt_keypoints_x.size() != pred_keypoints_x.size() ||
       gt_keypoints_y.size() != pred_keypoints_y.size() ||

@@ -18,7 +18,7 @@
 #define CTRL_TP (1 << 5)       // transpose
 #define CTRL_NEURON (1 << 11)  // mark neuron address in GDMA
 #define __ALIGN_MASK(x, mask) (((x) + (mask)) & ~(mask))
-#define ALIGN(x, a) __ALIGN_MASK(x, (__typeof__(x))(a) - 1)
+#define ALIGN(x, a) __ALIGN_MASK(x, (__typeof__(x))(a)-1)
 #define LADDR_INVALID (0xFFFFFFFF)
 #define GADDR_INVALID (0x000000FFFFFFFFFFULL)
 #else

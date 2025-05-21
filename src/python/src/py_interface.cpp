@@ -10,8 +10,7 @@ PyImage (*resize_func)(const PyImage&, int, int) = &resize;
 PyImage (*crop_func)(const PyImage&,
                      const std::tuple<int, int, int, int>&) = &crop;
 PyImage (*crop_resize_func)(const PyImage&,
-                            const std::tuple<int, int, int, int>&,
-                            int,
+                            const std::tuple<int, int, int, int>&, int,
                             int) = &cropResize;
 PyImage (*alignFace_func)(const PyImage& image,
                           const std::vector<float>& src_landmark_xy,

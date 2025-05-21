@@ -13,6 +13,5 @@ class LstrLane final : public BaseModel {
       std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) override;
 
  private:
-
   float gen_x_by_y(float ys, std::vector<float> &point_line);
 };
