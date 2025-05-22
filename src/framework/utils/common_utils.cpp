@@ -1,4 +1,5 @@
 #include "utils/common_utils.hpp"
+#include "utils/tdl_log.hpp"
 #include <dlfcn.h>
 #include <limits.h>  // for PATH_MAX
 #include <string>
@@ -50,7 +51,7 @@ bool CommonUtils::readBinaryFile(const std::string &strf,
                                  std::vector<uint8_t> &buffer) {
   FILE *fp = fopen(strf.c_str(), "rb");
   if (fp == nullptr) {
-    printf("read file failed,%s\n", strf.c_str());
+    LOGE("read file failed,%s\n", strf.c_str());
     return false;
   }
   fseek(fp, 0, SEEK_END);

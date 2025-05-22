@@ -62,7 +62,7 @@ int32_t TDL_InitCamera(TDLHandle handle) {
       VideoDecoderFactory::createVideoDecoder(VideoDecoderType::VI);
 
   if (context->video_decoder == nullptr) {
-    printf("create video decoder failed\n");
+    LOGE("create video decoder failed\n");
     return -1;
   }
 
@@ -82,7 +82,7 @@ TDLImage TDL_GetCameraFrame(TDLHandle handle, int chn) {
 int32_t TDL_ReleaseCameraFrame(TDLHandle handle, int chn) {
   TDLContext *context = (TDLContext *)handle;
   if (context->video_decoder->release(chn) != 0) {
-    printf("release camera frame failed\n");
+    LOGE("release camera frame failed\n");
     return -1;
   }
   return 0;

@@ -1,3 +1,4 @@
+#include "utils/tdl_log.hpp"
 #include "tdl_utils.h"
 #include <math.h>
 #include <stdio.h>
@@ -217,7 +218,7 @@ int32_t TDL_CaculateSimilarity(const TDLFeature feature1,
                                const TDLFeature feature2, float *similarity) {
   *similarity = 0;
   if (feature1.size != feature2.size) {
-    printf("feature1.size is not equal to feature2.size");
+    LOGE("feature1.size is not equal to feature2.size");
     return -1;
   }
   float norm1 = 0;

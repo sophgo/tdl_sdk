@@ -209,14 +209,14 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
   if (pix_data_type == TDLDataType::UINT8 &&
       (img_format == ImageFormat::RGB_PLANAR ||
        img_format == ImageFormat::BGR_PLANAR)) {
-    LOGE("special case, imageFormat: %d,pix_data_type: %d", (int)img_format,
+    LOGW("special case, imageFormat: %d,pix_data_type: %d", (int)img_format,
          (int)pix_data_type);
     pixel_format = PIXEL_FORMAT_UINT8_C3_PLANAR;
   }
 
   if (pix_data_type != TDLDataType::INT8 &&
       pix_data_type != TDLDataType::UINT8) {
-    LOGE("pix_data_type not support, pix_data_type: %d", (int)pix_data_type);
+    LOGW("pix_data_type not support, pix_data_type: %d", (int)pix_data_type);
     pixel_format = PIXEL_FORMAT_MAX;
   }
 
@@ -345,15 +345,15 @@ int32_t VPSSImage::extractImageInfo(const VIDEO_FRAME_INFO_S& frame) {
 
 int32_t VPSSImage::restoreVirtualAddress(bool check_swap_rgb) {
   if (memory_block_ == nullptr) {
-    LOGE("memory_block_ is nullptr");
+    LOGW("memory_block_ is nullptr");
     return -1;
   }
   if (memory_block_->virtualAddress == nullptr) {
-    LOGE("virtualAddress is nullptr");
+    LOGW("virtualAddress is nullptr");
     return -1;
   }
   if (frame_.stVFrame.pu8VirAddr[0] != 0) {
-    LOGE("virtualAddress is not nullptr,do not restore");
+    LOGW("virtualAddress is not nullptr,do not restore");
     return -1;
   }
   int num_plane_restored = 1;
