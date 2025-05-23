@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
           packOutput(cap_result->track_results, cap_result->frame_width,
                      cap_result->frame_height);
 
-      sprintf(sz_frame_name, "%s/%08d.txt", output_dir.c_str(),
+      sprintf(sz_frame_name, "%s/%08lu.txt", output_dir.c_str(),
               cap_result->frame_id - 1);
 
       std::ofstream outf(sz_frame_name);

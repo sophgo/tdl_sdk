@@ -46,7 +46,7 @@ class ClassificationTestSuite : public CVI_TDLModelTestSuite {
 };
 
 TEST_F(ClassificationTestSuite, accuracy) {
-  const float score_threshold = m_json_object["score_threshold"];
+  // const float score_threshold = m_json_object["score_threshold"];
 
   std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
   auto results = m_json_object[gen_platform()];
@@ -64,7 +64,7 @@ TEST_F(ClassificationTestSuite, accuracy) {
     std::vector<std::shared_ptr<BaseImage>> input_images;
     input_images.push_back(frame);
     EXPECT_EQ(cls_->inference(input_images, out_data), 0);
-    EXPECT_EQ(out_data.size(), 1);
+    EXPECT_EQ(out_data.size(), 1u);
     EXPECT_EQ(out_data[0]->getType(), ModelOutputType::CLASSIFICATION);
 
     std::shared_ptr<ModelClassificationInfo> cls_meta =

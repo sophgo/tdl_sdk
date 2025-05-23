@@ -20,7 +20,7 @@ BaseTensor::~BaseTensor() { release(); }
 
 void BaseTensor::reshape(int n, int c, int h, int w) {
   shape_ = {n, c, h, w};
-  int capacity = n * c * h * w * element_bytes_;
+  uint64_t capacity = n * c * h * w * element_bytes_;
   if (memory_block_ == nullptr) {
     memory_block_ = memory_pool_->allocate(capacity);
   } else if (memory_block_->size < capacity) {
@@ -65,9 +65,9 @@ int BaseTensor::getCapacity() const {
 
 int BaseTensor::getElementSize() const { return element_bytes_; }
 
-int BaseTensor::getWidth() const { return shape_[3]; }
+uint32_t BaseTensor::getWidth() const { return shape_[3]; }
 
-int BaseTensor::getHeight() const { return shape_[2]; }
+uint32_t BaseTensor::getHeight() const { return shape_[2]; }
 
 int BaseTensor::getChannels() const { return shape_[1]; }
 
@@ -123,8 +123,8 @@ int32_t BaseTensor::constructImage(std::shared_ptr<BaseImage> image,
     return -1;
   }
 
-  uint32_t image_size = image->getImageByteSize();
-  uint32_t min_tensor_size = (batch_idx + 1) * image_size;
+  int32_t image_size = image->getImageByteSize();
+  int32_t min_tensor_size = (batch_idx + 1) * image_size;
   if (getCapacity() < min_tensor_size) {
     LOGE("tensor capacity(%d) < image size(%d)\n", getCapacity(),
          min_tensor_size);
@@ -186,7 +186,7 @@ int32_t BaseTensor::copyFromImage(std::shared_ptr<BaseImage> image,
       getCapacity(), memory_block_->size, memory_block_->virtualAddress,
       (uint8_t*)(memory_block_->virtualAddress) + memory_block_->size,
       element_bytes_);
-  for (int i = 0; i < image->getPlaneNum(); i++) {
+  for (uint32_t i = 0; i < image->getPlaneNum(); i++) {
     uint8_t* src_ptr = src_ptrs[i];
     uint8_t* dst_ptr = dst_tensor_ptr + i * plane_size;
     uint32_t img_stride_i = image->getStrides()[i];
@@ -195,7 +195,7 @@ int32_t BaseTensor::copyFromImage(std::shared_ptr<BaseImage> image,
     } else {
       LOGI("plane:%d,src_ptr:%p,dst_ptr:%p,img_stride_i:%d", i, src_ptr,
            dst_ptr, img_stride_i);
-      for (int j = 0; j < h; j++) {
+      for (uint32_t j = 0; j < h; j++) {
         uint8_t* src_row_ptr = src_ptr + j * img_stride_i;
         uint8_t* dst_row_ptr = dst_ptr + j * w * element_bytes_;
 

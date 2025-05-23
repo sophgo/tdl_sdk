@@ -23,7 +23,7 @@ void visualize_face_detection(std::shared_ptr<BaseImage> image,
                            int(face_meta->box_landmarks[i].y2 -
                                face_meta->box_landmarks[i].y1)),
                   cv::Scalar(0, 0, 255), 2);
-    for (int j = 0; j < face_meta->box_landmarks[i].landmarks_x.size(); j++) {
+    for (size_t j = 0; j < face_meta->box_landmarks[i].landmarks_x.size(); j++) {
       cv::circle(mat,
                  cv::Point(int(face_meta->box_landmarks[i].landmarks_x[j]),
                            int(face_meta->box_landmarks[i].landmarks_y[j])),
@@ -73,14 +73,14 @@ int main(int argc, char **argv) {
 
     } else {
       for (size_t j = 0; j < face_meta->box_landmarks.size(); j++) {
-        printf("face_%d,box= [%f, %f, %f, %f],score= %f\n", j,
+        printf("face_%ld,box= [%f, %f, %f, %f],score= %f\n", j,
                face_meta->box_landmarks[j].x1, face_meta->box_landmarks[j].y1,
                face_meta->box_landmarks[j].x2, face_meta->box_landmarks[j].y2,
                face_meta->box_landmarks[j].score);
       }
     }
     char sz_img_name[128];
-    sprintf(sz_img_name, "face_detection_%d.jpg", i);
+    sprintf(sz_img_name, "face_detection_%ld.jpg", i);
     visualize_face_detection(image1, face_meta, sz_img_name);
   }
 

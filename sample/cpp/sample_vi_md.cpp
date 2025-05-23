@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
   std::shared_ptr<BaseImage> image;
   std::shared_ptr<BaseImage> gray_frame;
-  std::shared_ptr<BaseImage>* foreground_frame;
+  // std::shared_ptr<BaseImage>* foreground_frame;
   uint8_t* src;
   uint8_t* dst;
   uint32_t src_stride;

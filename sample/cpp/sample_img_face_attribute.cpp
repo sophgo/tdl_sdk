@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 
   for (size_t i = 0; i < out_datas.size(); i++) {
     if (out_datas[i]->getType() != ModelOutputType::CLS_ATTRIBUTE) {
-      printf("out_datas[%d] is not ModelOutputType::CLS_ATTRIBUTE\n", i);
+      printf("out_datas[%ld] is not ModelOutputType::CLS_ATTRIBUTE\n", i);
       continue;
     }
     std::shared_ptr<ModelAttributeInfo> face_meta =

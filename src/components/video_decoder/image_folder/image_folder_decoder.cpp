@@ -22,7 +22,7 @@ std::vector<std::string> scan_image_in_dir(const std::string& dir_path,
     perror("opendir");
     return image_paths;
   }
-  int count = 0;
+  // int count = 0;
   struct dirent* entry;
   while ((entry = readdir(dir)) != nullptr) {
     // 跳过“.”、“..”

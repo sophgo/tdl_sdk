@@ -13,8 +13,8 @@ int main(int argc, char **argv) {
 
   std::string model_dir = argv[2];
   std::string strf = argv[3];
-  int sample_rate = atoi(argv[4]);
-  int seconds = atoi(argv[5]);
+  // int sample_rate = atoi(argv[4]);
+  // int seconds = atoi(argv[5]);
   int frame_size = 0;
 
   std::vector<uint8_t> buffer;
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   for (size_t i = 0; i < output_info.size(); i++) {
     std::shared_ptr<ModelClassificationInfo> output_cls =
         std::static_pointer_cast<ModelClassificationInfo>(output_info[i]);
-    printf("data[%d]:\n", i);
+    printf("data[%ld]:\n", i);
     printf("scores: %f\n", output_cls->topk_scores[0]);
     printf("class_ids: %d\n", output_cls->topk_class_ids[0]);
   }

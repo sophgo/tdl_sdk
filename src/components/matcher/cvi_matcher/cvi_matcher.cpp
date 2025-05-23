@@ -139,7 +139,7 @@ int32_t CviMatcher::loadGallery(
   feature_array.feature_length = feature_dim_;
   feature_array.data_num = gallery_features_num_;
 
-  for (int i = 0; i < gallery_features_num_; i++) {
+  for (size_t i = 0; i < gallery_features_num_; i++) {
     size_t feature_size =
         feature_dim_ *
         (feature_data_type_ == TDLDataType::FP32 ? sizeof(float) : 1);
@@ -171,12 +171,12 @@ int32_t CviMatcher::queryWithTopK(
 
   query_features_ = &query_features;
   query_features_num_ = query_features.size();
-  if ((*query_features_)[0]->embedding_num != feature_dim_) {
+  if ((*query_features_)[0]->embedding_num != static_cast<int32_t>(feature_dim_)) {
     std::cout << "Query feature dimension mismatch." << std::endl;
     return -1;
   }
 
-  for (int i = 0; i < query_features_num_; i++) {
+  for (size_t i = 0; i < query_features_num_; i++) {
     uint32_t size = 0;
 
     // 分配临时内存
@@ -205,7 +205,7 @@ int32_t CviMatcher::queryWithTopK(
 }
 
 int32_t CviMatcher::updateGalleryCol(void *p_data, int col) {
-  if (!is_loaded_ || col < 0 || col >= gallery_features_num_) {
+  if (!is_loaded_ || col < 0 || col >= static_cast<int>(gallery_features_num_)) {
     return -1;
   }
 

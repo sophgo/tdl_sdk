@@ -115,7 +115,7 @@ int32_t PipelineNode::addProcessFrame(PipelineChannel *p_chn,
     return -1;
   }
   input_queues_[p_chn].push(std::move(frame_info));
-  if (input_queues_[p_chn].size() > max_pending_frame_) {
+  if (input_queues_[p_chn].size() > static_cast<size_t>(max_pending_frame_)) {
     LOGE("drop frame in channel:%s,node:%s", p_chn->name().c_str(),
          name_.c_str());
     PtrFrameInfo frame_info = input_queues_[p_chn].pop();

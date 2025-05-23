@@ -17,9 +17,9 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
     throw std::runtime_error("initFrameInfo failed");
   }
 
-  VIDEO_FRAME_S* vFrame = &frame_.stVFrame;
-  CVI_U32 u32MapSize =
-      vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
+  // VIDEO_FRAME_S* vFrame = &frame_.stVFrame;
+  // CVI_U32 u32MapSize =
+  //     vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
   if (memory_pool == nullptr) {
     memory_pool_ = BaseMemoryPoolFactory::createMemoryPool();
   } else {
@@ -104,7 +104,7 @@ int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height,
                                  VIDEO_FRAME_INFO_S* frame) {
   PIXEL_FORMAT_E pixel_format = convertPixelFormat(imageFormat, pix_data_type);
   if (pixel_format == PIXEL_FORMAT_MAX) {
-    LOGE("convertPixelFormat failed, imageFormat: %d,pix_data_type:",
+    LOGE("convertPixelFormat failed, imageFormat: %d,pix_data_type:%d",
          (int)imageFormat, (int)pix_data_type);
     return -1;
   }
@@ -262,7 +262,7 @@ std::vector<uint32_t> VPSSImage::getStrides() const {
 
 std::vector<uint64_t> VPSSImage::getPhysicalAddress() const {
   std::vector<uint64_t> physical_address;
-  for (int i = 0; i < getPlaneNum(); i++) {
+  for (size_t i = 0; i < getPlaneNum(); i++) {
     physical_address.push_back(frame_.stVFrame.u64PhyAddr[i]);
   }
   return physical_address;
@@ -270,7 +270,7 @@ std::vector<uint64_t> VPSSImage::getPhysicalAddress() const {
 
 std::vector<uint8_t*> VPSSImage::getVirtualAddress() const {
   std::vector<uint8_t*> virtual_address;
-  for (int i = 0; i < getPlaneNum(); i++) {
+  for (size_t i = 0; i < getPlaneNum(); i++) {
     virtual_address.push_back(frame_.stVFrame.pu8VirAddr[i]);
   }
   return virtual_address;
@@ -287,7 +287,7 @@ void* VPSSImage::getInternalData() const { return (void*)&frame_; }
 
 uint32_t VPSSImage::getImageByteSize() const {
   uint32_t size = 0;
-  for (int i = 0; i < getPlaneNum(); i++) {
+  for (size_t i = 0; i < getPlaneNum(); i++) {
     size += frame_.stVFrame.u32Length[i];
   }
   return size;
@@ -311,8 +311,8 @@ uint32_t VPSSImage::getVbPoolId() const {
 
 int32_t VPSSImage::extractImageInfo(const VIDEO_FRAME_INFO_S& frame) {
   PIXEL_FORMAT_E pixel_format = frame.stVFrame.enPixelFormat;
-  uint32_t width = frame.stVFrame.u32Width;
-  uint32_t height = frame.stVFrame.u32Height;
+  // uint32_t width = frame.stVFrame.u32Width;
+  // uint32_t height = frame.stVFrame.u32Height;
 
   image_type_ = ImageType::VPSS_FRAME;
 

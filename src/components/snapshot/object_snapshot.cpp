@@ -116,7 +116,7 @@ int32_t ObjectSnapshot::updateSnapshot(
                   .get<std::vector<ObjectBoxLandmarkInfo>>();
           ObjectBoxLandmarkInfo landmark_info = face_landmarks[obj_idx];
           if (landmark_info.landmarks_x.size() != 5) {
-            printf("landmark_info.landmarks_x size err : %d\n",
+            printf("landmark_info.landmarks_x size err : %ld\n",
                    landmark_info.landmarks_x.size());
             assert(false);
           }
@@ -168,7 +168,7 @@ int32_t ObjectSnapshot::updateSnapshot(
           float scale_x = dst_width / float(crop_width);
           float scale_y = dst_height / float(crop_height);
           if (landmark_info.landmarks_x.size() != 5) {
-            printf("landmark_info.landmarks_x size err : %d\n",
+            printf("landmark_info.landmarks_x size err : %ld\n",
                    landmark_info.landmarks_x.size());
             assert(false);
           }
@@ -196,7 +196,7 @@ int32_t ObjectSnapshot::updateSnapshot(
       iter = snapshot_infos_.erase(iter);
     } else {
       // check snapshot interval
-      if (frame_id - iter->second.export_frame_id > config_.snapshot_interval) {
+      if (frame_id - iter->second.export_frame_id > static_cast<uint64_t>(config_.snapshot_interval)) {
         if (iter->second.object_image != nullptr) {
           LOGI(" to export ObjectSnapshotInfo\n");
           export_snapshots_.push_back(iter->second);

@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
   }
   std::vector<std::shared_ptr<ModelOutputInfo>> out_features;
   model_clip_image->inference(input_images, out_features);
-  for (int i = 0; i < out_features.size(); i++) {
+  for (size_t i = 0; i < out_features.size(); i++) {
     const std::shared_ptr<ModelOutputInfo>& out_feature = out_features[i];
     feature_info = std::static_pointer_cast<ModelFeatureInfo>(out_feature);
     gallery_features.push_back(feature_info);

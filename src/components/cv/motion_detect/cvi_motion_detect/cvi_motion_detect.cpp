@@ -256,13 +256,13 @@ int32_t CviMotionDetection::setROI(const std::vector<ObjectBoxInfo> &_roi_s) {
     auto p = _roi_s[i];
     if (p.x2 < p.x1 || p.x1 < 0 || p.x2 >= imw) {
       use_roi_ = false;
-      LOGE("roi[%d] x overflow,x1:%d,x2:%d,imgw:%d\n", i, p.x1, p.x2,
+      LOGE("roi[%d] x overflow,x1:%f,x2:%f,imgw:%d\n", i, p.x1, p.x2,
            md_output_.getWidth());
       return CVI_FAILURE;
     }
     if (p.y2 < p.y1 || p.y1 < 0 || p.y2 >= imh) {
       use_roi_ = false;
-      LOGE("roi[%d] y overflow,y1:%d,y2:%d,imgw:%d\n", i, p.y1, p.y2,
+      LOGE("roi[%d] y overflow,y1:%f,y2:%f,imgw:%d\n", i, p.y1, p.y2,
            md_output_.getHeight());
       return CVI_FAILURE;
     }

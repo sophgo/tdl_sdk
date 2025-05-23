@@ -154,33 +154,33 @@ void MelFeatureExtract::pad(Vectorf &x, int left, int right,
   }
 }
 
-static Matrixcf stft(Vectorf &x_paded, Vectorf &window, int n_fft, int n_hop,
-                     const std::string &win, bool center,
-                     const std::string &mode) {
-  // hanning
-  // Vectorf window = 0.5*(1.f-(Vectorf::LinSpaced(n_fft, 0.f,
-  // static_cast<float>(n_fft-1))*2.f*M_PI/n_fft).array().cos());
+// static Matrixcf stft(Vectorf &x_paded, Vectorf &window, int n_fft, int n_hop,
+//                      const std::string &win, bool center,
+//                      const std::string &mode) {
+//   // hanning
+//   // Vectorf window = 0.5*(1.f-(Vectorf::LinSpaced(n_fft, 0.f,
+//   // static_cast<float>(n_fft-1))*2.f*M_PI/n_fft).array().cos());
 
-  // int pad_len = center ? n_fft / 2 : 0;
-  // Vectorf x_paded = pad(x, pad_len, pad_len, mode, 0.f);
+//   // int pad_len = center ? n_fft / 2 : 0;
+//   // Vectorf x_paded = pad(x, pad_len, pad_len, mode, 0.f);
 
-  int n_f = n_fft / 2 + 1;
-  int n_frames = 1 + (x_paded.size() - n_fft) / n_hop;
-  Matrixcf X(n_frames, n_fft);
-  Eigen::FFT<float> fft;
+//   int n_f = n_fft / 2 + 1;
+//   int n_frames = 1 + (x_paded.size() - n_fft) / n_hop;
+//   Matrixcf X(n_frames, n_fft);
+//   Eigen::FFT<float> fft;
 
-  for (int i = 0; i < n_frames; ++i) {
-    Vectorf segment = x_paded.segment(i * n_hop, n_fft);
-    Vectorf x_frame =
-        window.array() * x_paded.segment(i * n_hop, n_fft).array();
-    X.row(i) = fft.fwd(x_frame);
-  }
-  return X.leftCols(n_f);
-}
+//   for (int i = 0; i < n_frames; ++i) {
+//     Vectorf segment = x_paded.segment(i * n_hop, n_fft);
+//     Vectorf x_frame =
+//         window.array() * x_paded.segment(i * n_hop, n_fft).array();
+//     X.row(i) = fft.fwd(x_frame);
+//   }
+//   return X.leftCols(n_f);
+// }
 
-static Matrixf spectrogram(Matrixcf &X, float power = 1.f) {
-  return X.cwiseAbs().array().pow(power);
-}
+// static Matrixf spectrogram(Matrixcf &X, float power = 1.f) {
+//   return X.cwiseAbs().array().pow(power);
+// }
 
 void MelFeatureExtract::update_data(short *p_data, int data_len) {
   if (x_pad_.cols() == 0) {

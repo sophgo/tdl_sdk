@@ -70,7 +70,7 @@ extract_crop_face_landmark(
     std::cout << "crop_x1: " << crop_x1 << " crop_y1: " << crop_y1
               << " crop_x2: " << crop_x2 << " crop_y2: " << crop_y2
               << ",face_crop_addr: " << face_crop << std::endl;
-    sprintf(sz_img_name, "face_crop_%d.jpg", i);
+    sprintf(sz_img_name, "face_crop_%ld.jpg", i);
     ImageFactory::writeImage(sz_img_name, face_crop);
     face_crops.push_back(face_crop);
   }
@@ -101,13 +101,13 @@ void visualize_face_crop(
       printf("Failed to convert to mat\n");
       return;
     }
-    for (int j = 0; j < landmarks_meta->landmarks_x.size(); j++) {
+    for (size_t j = 0; j < landmarks_meta->landmarks_x.size(); j++) {
       cv::circle(mat,
                  cv::Point(landmarks_meta->landmarks_x[j],
                            landmarks_meta->landmarks_y[j]),
                  2, cv::Scalar(0, 0, 255), -1);
     }
-    sprintf(sz_img_name, "face_crop_landmark_%d.jpg", i);
+    sprintf(sz_img_name, "face_crop_landmark_%ld.jpg", i);
     cv::imwrite(sz_img_name, mat);
   }
 }
@@ -211,7 +211,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<BaseImage> face_align =
         face_crop_align(face_crop, landmarks_meta);
     face_aligns.push_back(face_align);
-    sprintf(sz_img_name, "face_align_%d.jpg", i);
+    sprintf(sz_img_name, "face_align_%ld.jpg", i);
     ImageFactory::writeImage(sz_img_name, face_align);
   }
 
@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
     printf("feature size: %d\n", feature_meta->embedding_num);
     std::vector<float> feature_vec(feature_meta->embedding_num);
 
-    printf("feature_meta->embedding_type: %d\n", feature_meta->embedding_type);
+    printf("feature_meta->embedding_type: %d\n", (int)feature_meta->embedding_type);
     switch (feature_meta->embedding_type) {
       case TDLDataType::INT8:
         embeddingToVec<int8_t>(feature_meta->embedding,

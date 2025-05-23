@@ -37,7 +37,6 @@ void print_usage(const char *prog_name) {
 int main(int argc, char *argv[]) {
   char *model_path = NULL;
   int vi_chn = 0;
-  int Time = 0;
 
   struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
                                   {"pipe", required_argument, 0, 'c'},

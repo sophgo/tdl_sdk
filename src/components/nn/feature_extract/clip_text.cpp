@@ -65,7 +65,7 @@ int32_t Clip_Text::outputParse(
        input_tensor.shape[0], input_tensor.shape[1]);
 
   const auto &output_layers = net_->getOutputNames();
-  size_t num_output = output_layers.size();
+  // size_t num_output = output_layers.size();
   TensorInfo output_info = net_->getTensorInfo(output_layers[0]);
   std::shared_ptr<BaseTensor> output_tensor =
       net_->getOutputTensor(output_layers[0]);

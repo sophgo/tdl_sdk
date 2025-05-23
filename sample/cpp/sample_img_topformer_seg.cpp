@@ -32,10 +32,10 @@ int main(int argc, char **argv) {
     std::shared_ptr<ModelSegmentationInfo> seg_meta =
         std::static_pointer_cast<ModelSegmentationInfo>(out_datas[i]);
 
-    uint32_t image_width = input_images[i]->getWidth();
-    uint32_t image_height = input_images[i]->getHeight();
-    for (int x = 0; x < seg_meta->output_height; ++x) {
-      for (int y = 0; y < seg_meta->output_width; ++y) {
+    // uint32_t image_width = input_images[i]->getWidth();
+    // uint32_t image_height = input_images[i]->getHeight();
+    for (uint32_t x = 0; x < seg_meta->output_height; ++x) {
+      for (uint32_t y = 0; y < seg_meta->output_width; ++y) {
         printf("%d ", (int)seg_meta->class_id[x * seg_meta->output_width + y]);
       }
       printf("\n");

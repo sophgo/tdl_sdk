@@ -59,10 +59,10 @@ int32_t SimccPose::outputParse(
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
-  uint32_t input_width = input_tensor.shape[3];
-  uint32_t input_height = input_tensor.shape[2];
-  float input_width_f = float(input_width);
-  float input_height_f = float(input_height);
+  // uint32_t input_width = input_tensor.shape[3];
+  // uint32_t input_height = input_tensor.shape[2];
+  // float input_width_f = float(input_width);
+  // float input_height_f = float(input_height);
   float inverse_th = std::log(model_threshold_ / (1 - model_threshold_));
   LOGI(
       "outputParse,batch size:%d,input shape:%d,%d,%d,%d,model "

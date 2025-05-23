@@ -31,8 +31,8 @@ class BaseTensor {
   int getElementSize() const;
 
   // Accessors for Dimensions
-  int getWidth() const;
-  int getHeight() const;
+  uint32_t getWidth() const;
+  uint32_t getHeight() const;
   int getChannels() const;
   int getBatchSize() const;
 
@@ -52,7 +52,7 @@ class BaseTensor {
     if (sizeof(T) != element_bytes_) {
       printf(
           "element_bytes_ not equal to "
-          "sizeof(T),element_bytes_:%d,sizeof(T):%d",
+          "sizeof(T),element_bytes_:%d,sizeof(T):%ld",
           element_bytes_, sizeof(T));
       assert(0);
     }
@@ -66,14 +66,15 @@ class BaseTensor {
   void loadFromFile(const std::string& file_path);
 
  protected:
+  int element_bytes_;  // Size of each element in bytes
+  int num_elements_;
+  bool owns_data_;
+
   // for soc mode, host_address_ is not nullptr
   std::unique_ptr<MemoryBlock> memory_block_;
   std::shared_ptr<BaseMemoryPool> memory_pool_;
 
   std::vector<int> shape_;
-  int num_elements_;
-  int element_bytes_;  // Size of each element in bytes
-  bool owns_data_;
 
   // Deleted copy semantics
   BaseTensor(const BaseTensor&) = delete;

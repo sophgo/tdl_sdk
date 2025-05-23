@@ -138,12 +138,12 @@ void saveKeypointResults(std::string &dst_root, std::string &img_name,
   size_t num_landmarks_score = landmarks_score.size();
 
   if (num_keypoints != num_landmarks_score) {
-    for (int k = 0; k < num_keypoints; k++) {
+    for (size_t k = 0; k < num_keypoints; k++) {
       outfile << std::fixed << std::setprecision(4) << landmarks_x[k] << " "
               << landmarks_y[k] << std::endl;
     }
   } else {
-    for (int k = 0; k < num_keypoints; k++) {
+    for (size_t k = 0; k < num_keypoints; k++) {
       outfile << std::fixed << std::setprecision(4) << landmarks_x[k] << " "
               << landmarks_y[k] << " " << landmarks_score[k] << std::endl;
     }

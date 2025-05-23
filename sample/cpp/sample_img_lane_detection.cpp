@@ -17,7 +17,7 @@ void visualize_lane_detection(std::shared_ptr<BaseImage> image,
     cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
   }
 
-  for (int i = 0; i < obj_meta->box_landmarks.size(); i++) {
+  for (size_t i = 0; i < obj_meta->box_landmarks.size(); i++) {
     int x0 = (int)obj_meta->box_landmarks[i].landmarks_x[0];
     int y0 = (int)obj_meta->box_landmarks[i].landmarks_y[0];
     int x1 = (int)obj_meta->box_landmarks[i].landmarks_x[1];
@@ -61,14 +61,14 @@ int main(int argc, char **argv) {
     std::shared_ptr<ModelBoxLandmarkInfo> obj_meta =
         std::static_pointer_cast<ModelBoxLandmarkInfo>(out_datas[i]);
 
-    uint32_t image_width = input_images[i]->getWidth();
-    uint32_t image_height = input_images[i]->getHeight();
+    // uint32_t image_width = input_images[i]->getWidth();
+    // uint32_t image_height = input_images[i]->getHeight();
 
     if (obj_meta->box_landmarks.size() == 0) {
       printf("No object detected\n");
     } else {
       for (size_t j = 0; j < obj_meta->box_landmarks.size(); j++) {
-        printf("lane %d\n", j);
+        printf("lane %ld\n", j);
         for (int k = 0; k < 2; k++) {
           printf("%d: %f %f\n", k, obj_meta->box_landmarks[j].landmarks_x[k],
                  obj_meta->box_landmarks[j].landmarks_y[k]);

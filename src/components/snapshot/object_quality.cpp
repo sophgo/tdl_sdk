@@ -177,7 +177,7 @@ float ObjectQualityHelper::getFaceQuality(
       box_landmark.landmarks_y.size() != 5) {
     LOGE(
         "ObjectQualityHelper getFaceQuality landmark_xys size error, "
-        "landmarks_x.size(): %d, landmarks_y.size(): %d",
+        "landmarks_x.size(): %ld, landmarks_y.size(): %ld",
         box_landmark.landmarks_x.size(), box_landmark.landmarks_y.size());
     assert(false);
   }
@@ -198,15 +198,15 @@ void ObjectQualityHelper::getFaceQuality(
     return;
 
   } else if (head_bbox.size() == 0) {
-    for (int i = 0; i < face_bbox.size(); i++) {
+    for (size_t i = 0; i < face_bbox.size(); i++) {
       face_quality.push_back(0.4);
     }
 
   } else {
     COST_MATRIX cost_matrix(face_bbox.size(), head_bbox.size());
 
-    for (int i = 0; i < face_bbox.size(); i++) {
-      for (int j = 0; j < head_bbox.size(); j++) {
+    for (size_t i = 0; i < face_bbox.size(); i++) {
+      for (size_t j = 0; j < head_bbox.size(); j++) {
         cost_matrix(i, j) =
             1 - MotBoxHelper::calculateIOU(face_bbox[i], head_bbox[j]);
       }
@@ -215,13 +215,13 @@ void ObjectQualityHelper::getFaceQuality(
     Munkres munkres_solver(&cost_matrix);
     if (munkres_solver.solve() == MUNKRES_FAILURE) {
       LOGW("MUNKRES algorithm failed.");
-      for (int i = 0; i < face_bbox.size(); i++) {
+      for (size_t i = 0; i < face_bbox.size(); i++) {
         face_quality.push_back(0.0);
       }
       return;
     }
 
-    for (int i = 0; i < face_bbox.size(); i++) {
+    for (size_t i = 0; i < face_bbox.size(); i++) {
       int head_idx = munkres_solver.m_match_result[i];
       if (head_idx != -1) {
         float iou_score = 1 - cost_matrix(i, head_idx);

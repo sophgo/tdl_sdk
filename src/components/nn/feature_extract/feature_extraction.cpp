@@ -22,16 +22,16 @@ int32_t FeatureExtraction::outputParse(
   }
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
-  uint32_t input_width = input_tensor.shape[3];
-  uint32_t input_height = input_tensor.shape[2];
-  float input_width_f = float(input_width);
-  float input_height_f = float(input_height);
+  // uint32_t input_width = input_tensor.shape[3];
+  // uint32_t input_height = input_tensor.shape[2];
+  // float input_width_f = float(input_width);
+  // float input_height_f = float(input_height);
   LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
        input_tensor.shape[3]);
 
   const auto &output_layers = net_->getOutputNames();
-  size_t num_output = output_layers.size();
+  // size_t num_output = output_layers.size();
   TensorInfo output_info = net_->getTensorInfo(output_layers[0]);
   std::shared_ptr<BaseTensor> output_tensor =
       net_->getOutputTensor(output_layers[0]);

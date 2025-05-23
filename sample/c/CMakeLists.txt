@@ -26,6 +26,7 @@ else()
         "-Wl,--no-whole-archive"
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
+        ${IVE_LIBS_STATIC}
         "-Wl,--end-group"
 )
 endif()

@@ -79,7 +79,7 @@ void CviNet::setupTensorInfo(CVI_TENSOR* cvi_tensor, int32_t num_tensors,
     tinfo.tensor_handle = cvi_tensor + i;
     std::string tensor_name = CVI_NN_TensorName(cvi_tensor + i);
     CVI_SHAPE shape = CVI_NN_TensorShape(cvi_tensor + i);
-    for (int j = 0; j < shape.dim_size; j++) {
+    for (size_t j = 0; j < shape.dim_size; j++) {
       tinfo.shape.push_back(shape.dim[j]);
     }
     tinfo.sys_mem = (uint8_t*)CVI_NN_TensorPtr(cvi_tensor + i);

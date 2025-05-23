@@ -132,7 +132,7 @@ float MotBoxHelper::calObjectPairScore(ObjectBoxInfo boxa, ObjectBoxInfo boxb,
     float head_width = boxa.x2 - boxa.x1;
     float head_height = boxa.y2 - boxa.y1;
     float person_width = boxb.x2 - boxb.x1;
-    float person_height = boxb.y2 - boxb.y1;
+    // float person_height = boxb.y2 - boxb.y1;
 
     int head_size = std::max(head_width, head_height);
     float head_ct_x = boxa.x1 + 0.5 * (boxa.x2 - boxa.x1);

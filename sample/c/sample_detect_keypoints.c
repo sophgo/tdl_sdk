@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
                                  output_image1);
         }
         char crop_image[128] = "";
-        sprintf(crop_image, "%s%d.jpg", basename, i);
+        snprintf(crop_image, sizeof(crop_image), "%s%d.jpg", basename, i);
         int cropX = (int)obj_meta.info[i].box.x1 -
                     (int)round((0.25 * obj_meta.width) / 2);
         int cropY = (int)obj_meta.info[i].box.y1 -

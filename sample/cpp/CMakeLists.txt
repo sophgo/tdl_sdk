@@ -24,6 +24,7 @@ else()
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
+        ${IVE_LIBS_STATIC}
         "-Wl,--end-group")
 endif()
 include_directories(${SAMPLE_INCLUDES})
@@ -68,5 +69,5 @@ foreach (fname ${SAMPLE_SRC_FILES})
   endif()
   install(TARGETS ${name} DESTINATION bin)
 endforeach ()
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config DESTINATION ./)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config DESTINATION .)
 

@@ -56,7 +56,7 @@ int64_t CVI_TDLTestSuite::get_ion_memory_size() {
 }
 
 void CVI_TDLTestSuite::SetUpTestCase() {
-  int64_t ion_size = get_ion_memory_size();
+  // int64_t ion_size = get_ion_memory_size();
 
   // const CVI_S32 vpssgrp_width = DEFAULT_IMG_WIDTH;
   // const CVI_S32 vpssgrp_height = DEFAULT_IMG_HEIGHT;
@@ -138,7 +138,7 @@ CVI_TDLModelTestSuite::CVI_TDLModelTestSuite() {
 
 float iou(const std::vector<float> &gt_object,
           const std::vector<float> &pred_object) {
-  float iout = 0.0f;
+  // float iout = 0.0f;
   float gt_x1 = gt_object[0];
   float gt_y1 = gt_object[1];
   float gt_x2 = gt_object[2];

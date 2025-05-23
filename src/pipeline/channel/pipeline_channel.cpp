@@ -61,7 +61,7 @@ int32_t PipelineChannel::toNextNode(PipelineNode *node,
     assert(false);
     return -1;
   }
-  if (node_idx == nodes_.size() - 1) {
+  if (node_idx == static_cast<int>(nodes_.size()) - 1) {
     LOGI("channel:%s,to add final frame,size:%d,frame_id:%lu", name_.c_str(),
          int(final_queue_.sizeUnsafe()), frame_info->frame_id_);
     final_queue_.push(std::move(frame_info));

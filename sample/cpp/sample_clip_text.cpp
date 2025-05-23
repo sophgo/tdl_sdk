@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   std::string textFile = argv[4];
   std::vector<std::vector<int32_t>> tokens;
   BytePairEncoder bpe(encoderFile, bpeFile);
-  int result = bpe.tokenizerBPE(textFile, tokens);
+  // int result = bpe.tokenizerBPE(textFile, tokens);
   // 打印 tokens 的内容
   for (size_t i = 0; i < tokens.size(); ++i) {
     for (size_t j = 0; j < tokens[i].size(); ++j) {
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     printf("feature size: %d\n", feature_meta->embedding_num);
     std::vector<float> feature_vec(feature_meta->embedding_num);
     float* feature_ptr = reinterpret_cast<float*>(feature_meta->embedding);
-    for (size_t j = 0; j < feature_meta->embedding_num; j++) {
+    for (int32_t j = 0; j < feature_meta->embedding_num; j++) {
       feature_vec[j] = feature_ptr[j];
       std::cout << feature_vec[j] << " ";
     }

@@ -29,7 +29,7 @@ int32_t TDL_InitObjectMeta(TDLObject *object_meta, int num_objects,
 }
 
 int32_t TDL_ReleaseObjectMeta(TDLObject *object_meta) {
-  for (int i = 0; i < object_meta->size; i++) {
+  for (size_t i = 0; i < object_meta->size; i++) {
     if (object_meta->info[i].landmark_properity) {
       free(object_meta->info[i].landmark_properity);
       object_meta->info[i].landmark_properity = NULL;
@@ -69,7 +69,7 @@ int32_t TDL_InitInstanceSegMeta(TDLInstanceSeg *inst_seg_meta, int num_objects,
 }
 
 int32_t TDL_ReleaseInstanceSegMeta(TDLInstanceSeg *inst_seg_meta) {
-  for (int i = 0; i < inst_seg_meta->size; i++) {
+  for (size_t i = 0; i < inst_seg_meta->size; i++) {
     if (inst_seg_meta->info[i].obj_info) {
       free(inst_seg_meta->info[i].obj_info);
       inst_seg_meta->info[i].obj_info = NULL;
@@ -105,7 +105,7 @@ int32_t TDL_InitFaceMeta(TDLFace *face_meta, int num_faces,
 }
 
 int32_t TDL_ReleaseFaceMeta(TDLFace *face_meta) {
-  for (int i = 0; i < face_meta->size; i++) {
+  for (size_t i = 0; i < face_meta->size; i++) {
     free(face_meta->info[i].landmarks.x);
     free(face_meta->info[i].landmarks.y);
     face_meta->info[i].landmarks.x = NULL;

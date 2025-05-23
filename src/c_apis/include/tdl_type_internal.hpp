@@ -87,7 +87,7 @@ inline std::shared_ptr<ModelBoxLandmarkInfo> convertFaceMeta(
     TDLFace *face_meta) {
   std::shared_ptr<ModelBoxLandmarkInfo> face_info =
       std::make_shared<ModelBoxLandmarkInfo>();
-  for (int i = 0; i < face_meta->size; i++) {
+  for (size_t i = 0; i < face_meta->size; i++) {
     ObjectBoxLandmarkInfo box_landmark_info;
     box_landmark_info.x1 = face_meta->info[i].box.x1;
     box_landmark_info.y1 = face_meta->info[i].box.y1;
@@ -95,7 +95,7 @@ inline std::shared_ptr<ModelBoxLandmarkInfo> convertFaceMeta(
     box_landmark_info.y2 = face_meta->info[i].box.y2;
     box_landmark_info.score = face_meta->info[i].score;
 
-    for (int j = 0; j < face_meta->info[i].landmarks.size; j++) {
+    for (size_t j = 0; j < face_meta->info[i].landmarks.size; j++) {
       box_landmark_info.landmarks_x.push_back(
           face_meta->info[i].landmarks.x[j]);
       box_landmark_info.landmarks_y.push_back(
@@ -108,7 +108,7 @@ inline std::shared_ptr<ModelBoxLandmarkInfo> convertFaceMeta(
 
 inline std::shared_ptr<ModelBoxInfo> convertObjMeta(TDLObject *object_meta) {
   std::shared_ptr<ModelBoxInfo> obj_info = std::make_shared<ModelBoxInfo>();
-  for (int i = 0; i < object_meta->size; i++) {
+  for (size_t i = 0; i < object_meta->size; i++) {
     ObjectBoxInfo box_landmark_info;
     box_landmark_info.x1 = object_meta->info[i].box.x1;
     box_landmark_info.y1 = object_meta->info[i].box.y1;

@@ -133,7 +133,7 @@ class BytePairEncoder {
             R"(|'s|'t|'re|'ve|'m|'ll|'d|[[:alpha:]]+|[[:digit:]]|[^[:space:][:alpha:][:digit:]]+)",
         std::regex_constants::icase);
 
-    for (int j = 0; j < text.size(); j++) {
+    for (size_t j = 0; j < text.size(); j++) {
       std::string line = text[j];
       std::transform(line.begin(), line.end(), line.begin(),
                      ::tolower);  // convert all to lowercase

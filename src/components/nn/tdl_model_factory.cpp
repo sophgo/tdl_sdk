@@ -87,7 +87,7 @@ int32_t TDLModelFactory::loadModelConfig(const std::string &model_config_file) {
     const nlohmann::json &info_json = it.value();
     model_config_map_[model_name] = info_json;
   }
-  LOGIP("load model config from %s done,model size:%d", config_file.c_str(),
+  LOGIP("load model config from %s done,model size:%ld", config_file.c_str(),
         model_config_map_.size());
   return 0;
 }
@@ -98,12 +98,12 @@ TDLModelFactory &TDLModelFactory::getInstance() {
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(const ModelType model_type,
                                                      const int device_id) {
   if (model_type == ModelType::INVALID) {
-    LOGE("model type not found for model type: %d", model_type);
+    LOGE("model type not found for model type: %d", static_cast<int>(model_type));
     return nullptr;
   }
   std::string model_name = modelTypeToString(model_type);
   if (model_config_map_.find(model_name) == model_config_map_.end()) {
-    LOGE("model path not found for model type: %s,model size:%d",
+    LOGE("model path not found for model type: %s,model size:%ld",
          model_name.c_str(), model_config_map_.size());
     return nullptr;
   }
@@ -144,13 +144,13 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     const ModelType model_type, const std::string &model_path,
     const ModelConfig &model_config, const int device_id) {
   if (model_type == ModelType::INVALID) {
-    LOGE("model type not found for model type: %d", model_type);
+    LOGE("model type not found for model type: %d", static_cast<int>(model_type));
     return nullptr;
   }
   std::string model_name = modelTypeToString(model_type);
   std::shared_ptr<BaseModel> model = getModelInstance(model_type);
   if (model == nullptr) {
-    LOGE("model not found for model type: %d", model_type);
+    LOGE("model not found for model type: %d", static_cast<int>(model_type));
     return nullptr;
   }
   NetParam net_param_default = model->getNetParam();
@@ -407,7 +407,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
   } else if (model_type == ModelType::PPYOLOE) {
     model_category = 7;  // PPYOLOE
   } else {
-    LOGE("model type not supported: %d", model_type);
+    LOGE("model type not supported: %d", static_cast<int>(model_type));
     return nullptr;
   }
 
@@ -424,11 +424,11 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model = std::make_shared<PPYoloEDetection>(std::make_pair(4, num_classes));
   } else {
     LOGE("createObjectDetectionModel failed,model type not supported: %d",
-         model_type);
+         static_cast<int>(model_type));
     return nullptr;
   }
   LOGIP("createObjectDetectionModel success,model type:%d,category:%d",
-        model_type, model_category);
+        static_cast<int>(model_type), model_category);
   model->setTypeMapping(model_type_mapping);
 
   return model;

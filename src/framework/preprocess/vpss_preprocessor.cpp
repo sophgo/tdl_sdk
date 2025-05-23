@@ -266,7 +266,8 @@ bool VpssPreprocessor::generateVPSSParams(
   if (params.crop_width > 0 && params.crop_height > 0) {
     vpss_chn_crop_attr.bEnable = true;
     vpss_chn_crop_attr.stCropRect = {params.crop_x, params.crop_y,
-                                     params.crop_width, params.crop_height};
+                                     static_cast<CVI_U32>(params.crop_width),
+                                     static_cast<CVI_U32>(params.crop_height)};
   }
   return true;
 }
@@ -366,7 +367,7 @@ int32_t VpssPreprocessor::preprocessToImage(
   }
   if (src_image->getImageType() != ImageType::VPSS_FRAME) {
     LOGE("src_image is not VPSSImage! image type: %d\n",
-         src_image->getImageType());
+         static_cast<int>(src_image->getImageType()));
     return -1;
   }
   int32_t ret = prepareVPSSParams(src_image, params);
@@ -411,7 +412,7 @@ int32_t VpssPreprocessor::preprocessToTensor(
 
   std::vector<uint32_t> strides = vpss_image->getStrides();
   int32_t ret = 0;
-  int tensor_stride = tensor->getWidth() * tensor->getElementSize();
+  uint32_t tensor_stride = tensor->getWidth() * tensor->getElementSize();
   if (strides[0] == tensor_stride) {
     LOGI("vpss preprocessor, construct image from input tensor");
     ret = tensor->constructImage(vpss_image, batch_idx);

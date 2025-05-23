@@ -25,7 +25,7 @@ void bgr_split_scale(const cv::Mat& src_mat, std::vector<cv::Mat>& tmp_bgr,
   int pad_x = (dst_w - src_w) / 2;
   int pad_y = (dst_h - src_h) / 2;
   cv::Rect roi(pad_x, pad_y, src_w, src_h);
-  for (int i = 0; i < tmp_bgr.size(); i++) {
+  for (size_t i = 0; i < tmp_bgr.size(); i++) {
     float m = 0, s = 1;
     if (mean.size() > i) m = mean[i];
     if (scale.size() > i) s = scale[i];
@@ -169,7 +169,7 @@ int32_t OpenCVPreprocessor::preprocessToImage(
          src_image->getImageFormat(), dst_image->getImageFormat(),
          (void*)dsti[0].data);
     print_mat(dsti[0], "dsti[0]");
-    for (int i = 0; i < dst_image->getPlaneNum(); i++) {
+    for (uint32_t i = 0; i < dst_image->getPlaneNum(); i++) {
       input_channels.push_back(dsti[i]);
     }
     bgr_split_scale(tmp_resized, tmp_bgr, input_channels, mean, scale, use_rgb);
@@ -189,7 +189,7 @@ int32_t OpenCVPreprocessor::preprocessToImage(
 
     cv::Rect crop_roi(params.crop_x, params.crop_y, params.crop_width,
                       params.crop_height);
-    for (int i = 0; i < src_image->getPlaneNum(); i++) {
+    for (uint32_t i = 0; i < src_image->getPlaneNum(); i++) {
       if (params.crop_width != 0 && params.crop_height != 0) {
         cv::resize(srci[i](crop_roi), dsti[i],
                    cv::Size(params.dst_width, params.dst_height), 0, 0,

@@ -114,7 +114,7 @@ int32_t BaseImage::initImageInfo() {
     plane_num_ = 1;
     img_bytes_ = height_ * stride0;
   } else {
-    LOGE("Unsupported image format: %d", image_format_);
+    LOGE("Unsupported image format: %d", static_cast<int>(image_format_));
     return -1;
   }
   return 0;
@@ -265,7 +265,7 @@ int32_t BaseImage::copyFromBuffer(const uint8_t* buffer, uint32_t size) {
   if (size != memory_block_->size) {
     LOGE(
         "copy from buffer failed,size is not "
-        "equal,buffer_size:%d,memoryblock_size:%d",
+        "equal,buffer_size:%d,memoryblock_size:%ld",
         size, memory_block_->size);
     return -1;
   }

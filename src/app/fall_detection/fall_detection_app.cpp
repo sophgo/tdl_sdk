@@ -228,7 +228,7 @@ int32_t FallDetectionApp::detect(
   std::map<uint64_t, int> track_index;
   std::vector<int> new_index;
 
-  for (int i = 0; i < track_results.size(); i++) {
+  for (size_t i = 0; i < track_results.size(); i++) {
     TrackerInfo &t = track_results[i];
 
     if (t.obj_idx_ != -1) {

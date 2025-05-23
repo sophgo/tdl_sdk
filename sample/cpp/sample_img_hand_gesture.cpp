@@ -28,7 +28,7 @@ std::vector<std::shared_ptr<ModelOutputInfo>> extract_crop_hand_landmark(
     std::shared_ptr<ModelBoxInfo> hand_meta =
         std::static_pointer_cast<ModelBoxInfo>(hand_metas[b]);
 
-    for (int i = 0; i < hand_meta->bboxes.size(); i++) {
+    for (size_t i = 0; i < hand_meta->bboxes.size(); i++) {
       int x1 = hand_meta->bboxes[i].x1;
       int y1 = hand_meta->bboxes[i].y1;
       int x2 = hand_meta->bboxes[i].x2;
@@ -104,10 +104,10 @@ int main(int argc, char **argv) {
     std::shared_ptr<ModelClassificationInfo> cls_meta =
         std::static_pointer_cast<ModelClassificationInfo>(out_hc[i]);
 
-    printf("hand_crops[%d], label:%d, score:%.2f\n", i,
+    printf("hand_crops[%ld], label:%d, score:%.2f\n", i,
            cls_meta->topk_class_ids[0], cls_meta->topk_scores[0]);
 
-    sprintf(sz_img_name, "hand_crop_%d_label_%d.jpg", i,
+    sprintf(sz_img_name, "hand_crop_%ld_label_%d.jpg", i,
             cls_meta->topk_class_ids[0]);
     ImageFactory::writeImage(sz_img_name, hand_crops[i]);
   }

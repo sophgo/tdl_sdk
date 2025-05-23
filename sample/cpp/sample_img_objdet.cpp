@@ -84,12 +84,12 @@ int main(int argc, char **argv) {
 
   for (size_t i = 0; i < out_datas.size(); i++) {
     if (out_datas[i]->getType() != ModelOutputType::OBJECT_DETECTION) {
-      printf("out_datas[%d] is not ModelOutputType::OBJECT_DETECTION\n", i);
+      printf("out_datas[%ld] is not ModelOutputType::OBJECT_DETECTION\n", i);
       continue;
     }
     std::shared_ptr<ModelBoxInfo> obj_meta =
         std::static_pointer_cast<ModelBoxInfo>(out_datas[i]);
-    for (int i = 0; i < obj_meta->bboxes.size(); i++) {
+    for (size_t i = 0; i < obj_meta->bboxes.size(); i++) {
       std::cout << "obj_meta_index: " << i << "  "
                 << "class: " << obj_meta->bboxes[i].class_id << "  "
                 << "score: " << obj_meta->bboxes[i].score << "  "

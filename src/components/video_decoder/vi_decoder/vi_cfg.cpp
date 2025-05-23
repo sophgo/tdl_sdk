@@ -55,7 +55,7 @@ static void parse_source_enmode(TDLViCfg *cfg, const char *value,
 /* === Source section parser handler end === */
 
 /* === Sensor section parser handler begin === */
-static int parse_lane_id(CVI_S16 *LaneId, const char *value) {
+int parse_lane_id(CVI_S16 *LaneId, const char *value) {
   char buf[8];
   int offset = 0, idx = 0, k;
 
@@ -84,7 +84,7 @@ static int parse_lane_id(CVI_S16 *LaneId, const char *value) {
   return 0;
 }
 
-static int parse_lane_id_mars(CVI_S16 *LaneId, const char *value) {
+int parse_lane_id_mars(CVI_S16 *LaneId, const char *value) {
   char buf[8];
   int offset = 0, idx = 0, k;
 

@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
   model_cls->inference(input_images, out_cls);
   for (size_t i = 0; i < input_images.size(); i++) {
     if (out_cls[i]->getType() != ModelOutputType::CLASSIFICATION) {
-      printf("out_cls[%d] is not ModelOutputType::CLASSIFICATION\n", i);
+      printf("out_cls[%ld] is not ModelOutputType::CLASSIFICATION\n", i);
       continue;
     }
     std::shared_ptr<ModelClassificationInfo> cls_meta =

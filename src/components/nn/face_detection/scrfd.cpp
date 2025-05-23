@@ -106,8 +106,8 @@ int32_t SCRFD::outputParse(
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
-  uint32_t input_width = input_tensor.shape[3];
-  uint32_t input_height = input_tensor.shape[2];
+  // uint32_t input_width = input_tensor.shape[3];
+  // uint32_t input_height = input_tensor.shape[2];
 
   LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
@@ -118,8 +118,8 @@ int32_t SCRFD::outputParse(
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
-    float image_width_f = float(image_width);
-    float image_height_f = float(image_height);
+    // float image_width_f = float(image_width);
+    // float image_height_f = float(image_height);
     std::vector<ObjectBoxLandmarkInfo> vec_bbox;
     std::vector<ObjectBoxLandmarkInfo> vec_bbox_nms;
     std::vector<float> &rescale_params = batch_rescale_params_[b];

@@ -122,7 +122,7 @@ int32_t HandKeypointClassification::outputParse(
         }
       }
     } else {
-      LOGE("unsupported data type:%d\n", oinfo.data_type);
+      LOGE("unsupported data type:%d\n", static_cast<int>(oinfo.data_type));
       return -1;
     }
 

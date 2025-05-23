@@ -43,7 +43,7 @@ std::vector<std::shared_ptr<ModelOutputInfo>> extract_crop_hand_landmark(
     std::shared_ptr<ModelBoxInfo> hand_meta =
         std::static_pointer_cast<ModelBoxInfo>(hand_metas[b]);
 
-    for (int i = 0; i < hand_meta->bboxes.size(); i++) {
+    for (size_t i = 0; i < hand_meta->bboxes.size(); i++) {
       int x1 = hand_meta->bboxes[i].x1;
       int y1 = hand_meta->bboxes[i].y1;
       int x2 = hand_meta->bboxes[i].x2;
@@ -64,7 +64,7 @@ std::vector<std::shared_ptr<ModelOutputInfo>> extract_crop_hand_landmark(
       std::shared_ptr<BaseImage> hand_crop = preprocessor->crop(
           images[b], crop_x1, crop_y1, crop_x2 - crop_x1, crop_y2 - crop_y1);
 
-      sprintf(sz_img_name, "hand_crop_%d.jpg", i);
+      sprintf(sz_img_name, "hand_crop_%ld.jpg", i);
       ImageFactory::writeImage(sz_img_name, hand_crop);
       hand_crops.push_back(hand_crop);
     }
@@ -164,11 +164,11 @@ int main(int argc, char **argv) {
       printf("%d: %f %f\n", k, obj_meta->landmarks_x[k] * obj_meta->image_width,
              obj_meta->landmarks_y[k] * obj_meta->image_height);
     }
-    printf("hand[%d]: label: %d, score: %.2f\n", i, cls_meta->topk_class_ids[0],
+    printf("hand[%ld]: label: %d, score: %.2f\n", i, cls_meta->topk_class_ids[0],
            cls_meta->topk_scores[0]);
 
     char img_name[128];
-    sprintf(img_name, "hand_keypoints_%d_label_%d.jpg", i,
+    sprintf(img_name, "hand_keypoints_%ld_label_%d.jpg", i,
             cls_meta->topk_class_ids[0]);
     visualize_keypoints_detection(hand_crops[i], obj_meta, 0.5,
                                   std::string(img_name));

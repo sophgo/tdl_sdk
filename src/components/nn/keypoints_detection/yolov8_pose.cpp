@@ -137,7 +137,7 @@ void YoloV8Pose::decodeBboxFeatureMap(int batch_idx, int stride, int anchor_idx,
     grid_logits = get_box_vals(p_box_float, num_anchor, anchor_idx,
                                num_box_channel_, qscale);
   } else {
-    LOGE("unsupported data type:%d\n", boxinfo.data_type);
+    LOGE("unsupported data type:%d\n", static_cast<int>(boxinfo.data_type));
     return;
   }
 
@@ -231,7 +231,7 @@ void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride,
       decode_kpts.push_back(val);
     }
   } else {
-    LOGE("unsupported data type:%d\n", kpts_info.data_type);
+    LOGE("unsupported data type:%d\n", static_cast<int>(kpts_info.data_type));
     assert(0);
   }
 }
@@ -295,7 +295,7 @@ int32_t YoloV8Pose::outputParse(
                                 num_cls_, j, cls_offset, cls_qscale, &max_logit,
                                 &max_logit_c);
         } else {
-          LOGE("unsupported data type:%d\n", classinfo.data_type);
+          LOGE("unsupported data type:%d\n", static_cast<int>(classinfo.data_type));
           assert(0);
         }
         if (max_logit < inverse_th) {
@@ -335,7 +335,7 @@ int32_t YoloV8Pose::outputParse(
     obj->image_height = image_height;
     for (auto &bboxs : lb_boxes) {
       for (size_t i = 0; i < bboxs.second.size(); i++) {
-        auto &bbox_info = bboxs.second[i];
+        // auto &bbox_info = bboxs.second[i];
         std::vector<float> decode_kpts;
         decodeKeypointsFeatureMap(b, boxes_temp_info[bboxs.first][i].first,
                                   boxes_temp_info[bboxs.first][i].second,

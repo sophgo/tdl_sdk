@@ -68,7 +68,7 @@ void visualizeDetections(
     const std::vector<TrackerInfo> &track_results,
     const std::map<uint64_t, int> &det_results) {
   cv::Mat mat = *(cv::Mat *)image->getInternalData();
-  int obj_idx = 0;
+  // int obj_idx = 0;
   char szinfo[128];
 
   for (auto &t : track_results) {
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
           packOutput(fd_result->track_results, fd_result->frame_width,
                      fd_result->frame_height, fd_result->det_results);
 
-      sprintf(sz_frame_name, "%s/%08d.txt", output_dir.c_str(),
+      sprintf(sz_frame_name, "%s/%08lu.txt", output_dir.c_str(),
               fd_result->frame_id - 1);
 
       std::ofstream outf(sz_frame_name);

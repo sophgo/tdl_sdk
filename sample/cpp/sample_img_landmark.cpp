@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<ModelLandmarksInfo> landmarks_meta =
         std::static_pointer_cast<ModelLandmarksInfo>(out_datas[i]);
     std::vector<float> landmark;
-    printf("face_meta size: %d,score:%f,blurness:%f\n",
+    printf("face_meta size: %ld,score:%f,blurness:%f\n",
            landmarks_meta->landmarks_x.size(),
            landmarks_meta
                ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE],

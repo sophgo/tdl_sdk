@@ -358,7 +358,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
       assert(false);
     }
 
-    float quality_threshold = 0.5;
+    // float quality_threshold = 0.5;
 
     int img_width = (int)image->getWidth();
     int img_height = (int)image->getHeight();
@@ -430,7 +430,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
 
           if (landmark_meta->landmarks_x.size() != 5) {
             LOGE("landmark_detection_model predict failed!\n");
-            LOGE("landmark_meta->landmarks_x.size(): %d\n",
+            LOGE("landmark_meta->landmarks_x.size(): %ld\n",
                  landmark_meta->landmarks_x.size());
             assert(false);
           }
@@ -618,7 +618,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
       switch (feature_meta->embedding_type) {
         case TDLDataType::INT8: {
           int8_t *feature = reinterpret_cast<int8_t *>(feature_meta->embedding);
-          for (size_t i = 0; i < feature_meta->embedding_num; ++i) {
+          for (int32_t i = 0; i < feature_meta->embedding_num; ++i) {
             feature_vec[i] = (float)feature[i];
           }
           break;
@@ -626,7 +626,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
         case TDLDataType::UINT8: {
           uint8_t *feature =
               reinterpret_cast<uint8_t *>(feature_meta->embedding);
-          for (size_t i = 0; i < feature_meta->embedding_num; ++i) {
+          for (int32_t i = 0; i < feature_meta->embedding_num; ++i) {
             feature_vec[i] = (float)feature[i];
           }
           break;

@@ -17,7 +17,7 @@ std::shared_ptr<VideoDecoder> VideoDecoderFactory::createVideoDecoder(
       return std::make_shared<OpencvDecoder>();
 #else
       LOGE("opencv decoder is not supported on this platform,%d",
-           CommonUtils::getPlatform());
+           static_cast<int>(CommonUtils::getPlatform()));
       return nullptr;
 #endif
     case VideoDecoderType::IMAGE_FOLDER:
@@ -27,7 +27,7 @@ std::shared_ptr<VideoDecoder> VideoDecoderFactory::createVideoDecoder(
       return std::make_shared<ViDecoder>();
 #else
       printf("vi decoder is not supported on this platform,%d",
-             CommonUtils::getPlatform());
+             static_cast<int>(CommonUtils::getPlatform()));
       return nullptr;
 #endif
     default:

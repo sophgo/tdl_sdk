@@ -33,7 +33,7 @@ std::shared_ptr<BaseNet> NetFactory::createNet(const NetParam& net_param,
       return nullptr;
 #endif
     default:
-      LOGE("unknown platform %d", platform);
+      LOGE("unknown platform %d", static_cast<int>(platform));
       return nullptr;
   }
 }

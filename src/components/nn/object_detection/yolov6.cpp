@@ -120,8 +120,8 @@ void YoloV6Detection::decodeBboxFeatureMap(int batch_idx, int stride,
   std::shared_ptr<BaseTensor> box_tensor = net_->getOutputTensor(box_name);
   // int8_t *p_box_int8 = static_cast<int8_t *>(boxinfo.sys_mem) + batch_offset;
   // float *p_box_float = static_cast<float *>(boxinfo.sys_mem) + batch_offset;
-  int num_channel = boxinfo.shape[3];
-  int num_anchor = boxinfo.shape[1] * boxinfo.shape[2];
+  // int num_channel = boxinfo.shape[3];
+  // int num_anchor = boxinfo.shape[1] * boxinfo.shape[2];
   int box_val_num = 4;
 
   int32_t feat_w = boxinfo.shape[2];
@@ -133,7 +133,7 @@ void YoloV6Detection::decodeBboxFeatureMap(int batch_idx, int stride,
   float grid_x = anchor_x + 0.5;
 
   std::vector<float> box_vals;
-  float qscale = boxinfo.qscale;
+  // float qscale = boxinfo.qscale;
   if (boxinfo.data_type == TDLDataType::INT8) {
     int8_t *p_box_int8 = box_tensor->getBatchPtr<int8_t>(batch_idx);
     for (int i = 0; i < box_val_num; i++) {
@@ -150,7 +150,7 @@ void YoloV6Detection::decodeBboxFeatureMap(int batch_idx, int stride,
       box_vals.push_back(p_box_float[anchor_idx * 4 + i] * boxinfo.qscale);
     }
   } else {
-    LOGE("unsupported data type:%d\n", boxinfo.data_type);
+    LOGE("unsupported data type:%d\n", static_cast<int>(boxinfo.data_type));
     return;
   }
 
@@ -182,12 +182,12 @@ int32_t YoloV6Detection::outputParse(
     for (size_t i = 0; i < strides.size(); i++) {
       int stride = strides[i];
       std::string cls_name;
-      int cls_offset = 0;
+      // int cls_offset = 0;
       if (class_out_names.count(stride)) {
         cls_name = class_out_names[stride];
       } else if (bbox_class_out_names.count(stride)) {
         cls_name = bbox_class_out_names[stride];
-        cls_offset = num_box_channel_;
+        // cls_offset = num_box_channel_;
       }
       TensorInfo classinfo = net_->getTensorInfo(cls_name);
       std::shared_ptr<BaseTensor> cls_tensor = net_->getOutputTensor(cls_name);
@@ -215,7 +215,7 @@ int32_t YoloV6Detection::outputParse(
           parse_cls_info<float>(cls_tensor->getBatchPtr<float>(b), num_cls, j,
                                 cls_qscale, &max_logit, &max_logit_c);
         } else {
-          LOGE("unsupported data type:%d\n", classinfo.data_type);
+          LOGE("unsupported data type:%d\n", static_cast<int>(classinfo.data_type));
           assert(0);
         }
         if (max_logit < inverse_th) {

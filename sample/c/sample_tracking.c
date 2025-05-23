@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "meta_visualize.h"
 #include "tdl_sdk.h"
@@ -204,7 +205,7 @@ int main(int argc, char **argv) {
       }
       for (int c = 0; c < track_meta.out_num; c++) {
         printf(
-            "frame_id = %d, obj: %d, track_id = %d, box = [%f, %f, %f, %f]\n",
+            "frame_id = %d, obj: %d, track_id = %ld, box = [%f, %f, %f, %f]\n",
             i, c, track_meta.info[c].id, track_meta.info[c].bbox.x1,
             track_meta.info[c].bbox.y1, track_meta.info[c].bbox.x2,
             track_meta.info[c].bbox.y2);
@@ -214,7 +215,7 @@ int main(int argc, char **argv) {
         boxes[c].y2 = track_meta.info[c].bbox.y2;
         if (output_file != NULL) {
           char text[5] = {0};
-          snprintf(text, 5, "%d", track_meta.info[c].id);
+          snprintf(text, 5, "%ld", track_meta.info[c].id);
           if (c == 0) {
             TDL_VisualizText(boxes[c].x1 + (boxes[c].x2 - boxes[c].x1) / 2,
                              boxes[c].y1 + (boxes[c].y2 - boxes[c].y1) / 2,

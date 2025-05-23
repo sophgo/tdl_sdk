@@ -79,7 +79,7 @@ std::vector<std::shared_ptr<ModelOutputInfo>> extract_crop_human_landmark(
     std::shared_ptr<BaseImage> human_crop = preprocessor->crop(
         images[i], crop_x1, crop_y1, crop_x2 - crop_x1, crop_y2 - crop_y1);
 
-    sprintf(sz_img_name, "human_crop_%d.jpg", i);
+    sprintf(sz_img_name, "human_crop_%ld.jpg", i);
     ImageFactory::writeImage(sz_img_name, human_crop);
     human_crops.push_back(human_crop);
   }

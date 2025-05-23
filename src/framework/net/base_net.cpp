@@ -30,7 +30,7 @@ TensorInfo BaseNet::getTensorInfo(const std::string& name) {
     tensor_info = input_output_tensor_infos_[name];
   } else {
     LOGE("Tensor info not found for %s", name.c_str());
-    memset(&tensor_info, 0, sizeof(TensorInfo));
+    tensor_info = TensorInfo{};
   }
 
   return tensor_info;

@@ -167,16 +167,16 @@ int main(int argc, char *argv[]) {
     }
   } else {
     const char *bin_data_path = bin_data;
-    int size = 0;
+    // int size = 0;
     TDLDataTypeE Datatype;
     if (data_count != NULL) {
-      size = atoi(data_count);
+      // size = atoi(data_count);
       Datatype = TDL_TYPE_FP32;
     } else {
-      int isample_rate = atoi(sample_rate);
-      int iseconds = atoi(seconds);
+      // int isample_rate = atoi(sample_rate);
+      // int iseconds = atoi(seconds);
       Datatype = TDL_TYPE_UINT8;
-      size = isample_rate * AUDIOFORMATSIZE * iseconds;
+      // size = isample_rate * AUDIOFORMATSIZE * iseconds;
     }
 
     image = TDL_ReadBin(bin_data_path, Datatype);

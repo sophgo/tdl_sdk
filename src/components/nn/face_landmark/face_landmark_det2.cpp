@@ -141,8 +141,8 @@ int32_t FaceLandmarkerDet2::outputParse(
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
-  uint32_t input_width = input_tensor.shape[3];
-  uint32_t input_height = input_tensor.shape[2];
+  // uint32_t input_width = input_tensor.shape[3];
+  // uint32_t input_height = input_tensor.shape[2];
   LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
        input_tensor.shape[3]);
@@ -195,7 +195,7 @@ int32_t FaceLandmarkerDet2::outputParse(
     facemeta->landmarks_score = output_score;
 
     if (output_point_x.size() != 5) {
-      printf("face_landmark_det2 landmarks_x size should be 5, but got %d\n",
+      printf("face_landmark_det2 landmarks_x size should be 5, but got %ld\n",
              output_point_x.size());
       assert(false);
     }

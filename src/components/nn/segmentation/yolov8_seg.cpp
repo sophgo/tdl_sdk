@@ -187,7 +187,7 @@ void YoloV8Segmentation::decodeBboxFeatureMap(int batch_idx, int stride,
     grid_logits = get_box_vals(p_box_float, num_anchor, anchor_idx,
                                num_box_channel_, qscale);
   } else {
-    LOGE("unsupported data type:%d\n", boxinfo.data_type);
+    LOGE("unsupported data type:%d\n", static_cast<int>(boxinfo.data_type));
     return;
   }
 
@@ -274,7 +274,7 @@ int32_t YoloV8Segmentation::outputParse(
                                 num_cls, j, cls_offset, cls_qscale, &max_logit,
                                 &max_logit_c);
         } else {
-          LOGE("unsupported data type:%d\n", classinfo.data_type);
+          LOGE("unsupported data type:%d\n", static_cast<int>(classinfo.data_type));
           assert(0);
         }
         if (max_logit < inverse_th) {
@@ -323,7 +323,7 @@ int32_t YoloV8Segmentation::outputParse(
     int row = 0;
     for (auto &bboxs : lb_boxes) {
       for (size_t i = 0; i < bboxs.second.size(); i++) {
-        auto &bbox_info = bboxs.second[i];
+        // auto &bbox_info = bboxs.second[i];
         obj_seg->box_seg.push_back(bboxs.second[i]);
         std::string mask_name;
         mask_name = mask_out_names[boxes_temp_info[bboxs.first][i].first];
@@ -355,7 +355,7 @@ int32_t YoloV8Segmentation::outputParse(
                              boxes_temp_info[bboxs.first][i].second];
           }
         } else {
-          LOGE("unsupported data type:%d\n", maskinfo.data_type);
+          LOGE("unsupported data type:%d\n", static_cast<int>(maskinfo.data_type));
           assert(0);
         }
         row++;
@@ -399,7 +399,7 @@ int32_t YoloV8Segmentation::outputParse(
         }
       }
     } else {
-      LOGE("unsupported data type:%d\n", protoinfo.data_type);
+      LOGE("unsupported data type:%d\n", static_cast<int>(protoinfo.data_type));
       assert(0);
     }
     Eigen::MatrixXf masks_output = mask_map * proto_output;

@@ -66,7 +66,7 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_size,
 
   memset(&stExconfig, 0, sizeof(stExconfig));
   stExconfig.u32BlkCnt = blk_cnt;
-  for (int32_t i = 0; i < blk_cnt; i++) {
+  for (uint32_t i = 0; i < blk_cnt; i++) {
     stExconfig.astUserBlk[i].au64PhyAddr[0] =
         block->physicalAddress + i * blk_size;
     stExconfig.astUserBlk[i].au64PhyAddr[1] =
@@ -114,6 +114,7 @@ int32_t CviMemoryPool::DestroyExVb(std::unique_ptr<MemoryBlock> &block) {
     return 0;
   }
   block = nullptr;
+  return 0;
 }
 
 int32_t CviMemoryPool::invalidateCache(std::unique_ptr<MemoryBlock> &block) {

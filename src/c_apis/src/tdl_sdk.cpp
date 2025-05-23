@@ -120,7 +120,7 @@ TDLImage TDL_ReadBin(const char *path, TDLDataTypeE data_type) {
   int data_size = CommonUtils::getDataTypeSize(tdl_data_type);
   int num_data = file_size / data_size;
   if (file_size % data_size != 0) {
-    LOGE("file size %d is not aligned with data type size %d", file_size,
+    LOGE("file size %ld is not aligned with data type size %d", file_size,
          data_size);
     fclose(file);
     return nullptr;
@@ -262,7 +262,7 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
     TDL_InitObjectMeta(
         object_meta, object_Landmark_output->box_landmarks.size(),
         object_Landmark_output->box_landmarks[0].landmarks_x.size());
-    for (int i = 0; i < object_Landmark_output->box_landmarks.size(); i++) {
+    for (size_t i = 0; i < object_Landmark_output->box_landmarks.size(); i++) {
       object_meta->info[i].box.x1 = object_Landmark_output->box_landmarks[i].x1;
       object_meta->info[i].box.y1 = object_Landmark_output->box_landmarks[i].y1;
       object_meta->info[i].box.x2 = object_Landmark_output->box_landmarks[i].x2;
@@ -271,7 +271,7 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
           object_Landmark_output->box_landmarks[i].class_id;
       object_meta->info[i].score =
           object_Landmark_output->box_landmarks[i].score;
-      for (int j = 0;
+      for (size_t j = 0;
            j < object_Landmark_output->box_landmarks[i].landmarks_x.size();
            j++) {
         object_meta->info[i].landmark_properity[j].x =
@@ -285,7 +285,7 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
   } else if (output->getType() == ModelOutputType::OBJECT_DETECTION) {
     ModelBoxInfo *object_detection_output = (ModelBoxInfo *)output.get();
     TDL_InitObjectMeta(object_meta, object_detection_output->bboxes.size(), 0);
-    for (int i = 0; i < object_detection_output->bboxes.size(); i++) {
+    for (size_t i = 0; i < object_detection_output->bboxes.size(); i++) {
       object_meta->info[i].box.x1 = object_detection_output->bboxes[i].x1;
       object_meta->info[i].box.y1 = object_detection_output->bboxes[i].y1;
       object_meta->info[i].box.x2 = object_detection_output->bboxes[i].x2;
@@ -295,7 +295,7 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
       object_meta->info[i].score = object_detection_output->bboxes[i].score;
     }
   } else {
-    LOGE("Unsupported model output type: %d", output->getType());
+    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
     return -1;
   }
   return 0;
@@ -365,7 +365,7 @@ int32_t TDL_FaceDetection(TDLHandle handle, const TDLModel model_id,
     face_meta->height = object_detection_output->image_height;
     face_meta->size = object_detection_output->bboxes.size();
   } else {
-    LOGE("Unsupported model output type: %d", output->getType());
+    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
     return -1;
   }
   return 0;
@@ -392,7 +392,7 @@ int32_t TDL_Classfification(TDLHandle handle, const TDLModel model_id,
     class_info->class_id = classification_output->topk_class_ids[0];
     class_info->score = classification_output->topk_scores[0];
   } else {
-    LOGE("Unsupported model output type: %d", output->getType());
+    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
     return -1;
   }
   return 0;
@@ -428,7 +428,7 @@ int32_t TDL_FaceAttribute(TDLHandle handle, const TDLModel model_id,
     return ret;
   }
 
-  for (int i = 0; i < outputs.size(); i++) {
+  for (size_t i = 0; i < outputs.size(); i++) {
     std::shared_ptr<ModelOutputInfo> output = outputs[i];
     ModelAttributeInfo *box_attribute_output =
         (ModelAttributeInfo *)output.get();
@@ -472,7 +472,7 @@ int32_t TDL_FaceLandmark(TDLHandle handle, const TDLModel model_id,
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
   ModelLandmarksInfo *box_landmark_output = (ModelLandmarksInfo *)output.get();
   TDL_InitFaceMeta(face_meta, 1, box_landmark_output->landmarks_x.size());
-  for (int i = 0; i < box_landmark_output->landmarks_x.size(); i++) {
+  for (size_t i = 0; i < box_landmark_output->landmarks_x.size(); i++) {
     face_meta->info->landmarks.x[i] = box_landmark_output->landmarks_x[i];
     face_meta->info->landmarks.y[i] = box_landmark_output->landmarks_y[i];
   }
@@ -529,7 +529,7 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
   if (ret != 0) {
     return ret;
   }
-  for (int i = 0; i < outputs.size(); i++) {
+  for (size_t i = 0; i < outputs.size(); i++) {
     std::shared_ptr<ModelOutputInfo> output = outputs[i];
     if (output->getType() != ModelOutputType::OBJECT_LANDMARKS) {
       LOGW("Unsupported model output type: %d", output->getType());
@@ -540,7 +540,7 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
     object_meta->width = keypoint_output->image_width;
     object_meta->height = keypoint_output->image_height;
     object_meta->info[i].landmark_size = keypoint_output->landmarks_x.size();
-    for (int j = 0; j < keypoint_output->landmarks_x.size(); j++) {
+    for (size_t j = 0; j < keypoint_output->landmarks_x.size(); j++) {
       object_meta->info[i].landmark_properity[j].x =
           keypoint_output->landmarks_x[j];
       object_meta->info[i].landmark_properity[j].y =
@@ -610,7 +610,7 @@ int32_t TDL_InstanceSegmentation(TDLHandle handle, const TDLModel model_id,
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
   if (output->getType() !=
       ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION) {
-    LOGE("Unsupported model output type: %d", output->getType());
+    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
     return -1;
   }
 
@@ -624,7 +624,7 @@ int32_t TDL_InstanceSegmentation(TDLHandle handle, const TDLModel model_id,
   inst_seg_meta->mask_width = instance_seg_output->mask_width;
   inst_seg_meta->mask_height = instance_seg_output->mask_height;
 
-  for (int i = 0; i < instance_seg_output->box_seg.size(); i++) {
+  for (size_t i = 0; i < instance_seg_output->box_seg.size(); i++) {
     inst_seg_meta->info[i].obj_info->box.x1 =
         instance_seg_output->box_seg[i].x1;
     inst_seg_meta->info[i].obj_info->box.y1 =
@@ -736,7 +736,7 @@ int32_t TDL_FeatureExtraction(TDLHandle handle, const TDLModel model_id,
                                                               // feature_meta
     feature_output->embedding = nullptr;  // set to null to prevent release
   } else {
-    LOGE("Unsupported model output type: %d", output->getType());
+    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
     return -1;
   }
   return 0;
@@ -771,7 +771,7 @@ int32_t TDL_LaneDetection(TDLHandle handle, const TDLModel model_id,
       }
     }
   } else {
-    LOGE("Unsupported model output type: %d", output->getType());
+    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
     return -1;
   }
 
@@ -800,7 +800,7 @@ int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
     char_meta->text_info = char_output->text_info;
     char_output->text_info = NULL;
   } else {
-    LOGE("Unsupported model output type: %d", output->getType());
+    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
     return -1;
   }
 
@@ -854,7 +854,7 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
   tracker->track(det_results, frame_id, track_results);
 
   TDL_InitTrackMeta(track_meta, track_results.size());
-  for (int i = 0; i < track_results.size(); i++) {
+  for (size_t i = 0; i < track_results.size(); i++) {
     TrackerInfo track_info = track_results[i];
     track_meta->info[i].id = track_info.track_id_;
     track_meta->info[i].bbox.x1 = track_info.box_info_.x1;
@@ -891,7 +891,7 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
   if (image_format != ImageFormat::GRAY &&
       image_format != ImageFormat::BGR_PACKED &&
       image_format != ImageFormat::YUV420SP_VU) {
-    LOGE("Invalid background image format: %d\n", image_format);
+    LOGE("Invalid background image format: %d\n", static_cast<int>(image_format));
     return -1;
   }
   if (image_format == ImageFormat::YUV420SP_VU) {
@@ -918,7 +918,7 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
 
   if (roi->size > 0 && context->md->isROIEmpty()) {
     std::vector<ObjectBoxInfo> roi_s;
-    for (int i = 0; i < roi->size; i++) {
+    for (size_t i = 0; i < roi->size; i++) {
       ObjectBoxInfo box;
       box.x1 = roi->info[i].box.x1;
       box.y1 = roi->info[i].box.y1;
@@ -943,7 +943,7 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
   TDL_DestroyImage((TDLImage)background_image_context);
   TDL_DestroyImage((TDLImage)detect_image_context);
   TDL_InitObjectMeta(obj_meta, objs.size(), 0);
-  for (int i = 0; i < objs.size(); i++) {
+  for (size_t i = 0; i < objs.size(); i++) {
     obj_meta->info[i].box.x1 = objs[i].x1;
     obj_meta->info[i].box.y1 = objs[i].y1;
     obj_meta->info[i].box.x2 = objs[i].x2;

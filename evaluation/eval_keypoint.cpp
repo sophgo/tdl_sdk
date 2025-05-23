@@ -44,7 +44,7 @@ void dump_kp_to_dir_txt(
     std::shared_ptr<ModelLandmarksInfo> lm =
         std::static_pointer_cast<ModelLandmarksInfo>(outs[h]);
     ofs << h;
-    for (int k = 0; k < lm->landmarks_x.size(); ++k)
+    for (size_t k = 0; k < lm->landmarks_x.size(); ++k)
       ofs << ' ' << lm->landmarks_x[k] << ' ' << lm->landmarks_y[k];
     ofs << '\n';
   }

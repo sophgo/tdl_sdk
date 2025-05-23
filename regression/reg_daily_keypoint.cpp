@@ -76,7 +76,7 @@ TEST_F(KeypointTestSuite, accuracy) {
 
     std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
     EXPECT_EQ(keypoint_->inference(input_images, out_data), 0);
-    EXPECT_EQ(out_data.size(), 1);
+    EXPECT_EQ(out_data.size(), 1u);
 
     ModelOutputType out_type = out_data[0]->getType();
     EXPECT_TRUE(out_type == ModelOutputType::OBJECT_LANDMARKS ||

@@ -99,7 +99,7 @@ int32_t RgbImageClassification::outputParse(
       parse_output<float>(output_tensor->getBatchPtr<float>(b),
                           oinfo.tensor_elem, oinfo.qscale, cls_meta);
     } else {
-      LOGE("unsupported data type: %d", oinfo.data_type);
+      LOGE("unsupported data type: %d", static_cast<int>(oinfo.data_type));
     }
     out_datas.push_back(cls_meta);
   }

@@ -86,8 +86,8 @@ int32_t LstrLane::outputParse(
         lane_dis.push_back(cur_dis);
       }
     }
-    std::vector<int> sort_index(point_map.size(), 0);
-    for (int i = 0; i != point_map.size(); i++) {
+    std::vector<size_t> sort_index(point_map.size(), 0);
+    for (size_t i = 0; i != point_map.size(); i++) {
       sort_index[i] = i;
     }
     std::sort(sort_index.begin(), sort_index.end(),
@@ -95,7 +95,7 @@ int32_t LstrLane::outputParse(
                 return (lane_dis[a] < lane_dis[b]);
               });
     std::vector<int> final_index;
-    for (int i = 0; i != sort_index.size(); i++) {
+    for (size_t i = 0; i != sort_index.size(); i++) {
       if (lane_dis[sort_index[i]] < 0) {
         if (i == sort_index.size() - 1 || lane_dis[sort_index[i + 1]] > 0) {
           if (point_map[sort_index[i]][1] - point_map[sort_index[i]][0] > 0.2)
@@ -110,7 +110,7 @@ int32_t LstrLane::outputParse(
       }
     }
 
-    for (int i = 0; i < final_index.size(); i++) {
+    for (size_t i = 0; i < final_index.size(); i++) {
       ObjectBoxLandmarkInfo lane_landmark;
       float upper = std::min(1.0f, point_map[final_index[i]][1]);
       float lower = std::max(0.0f, point_map[final_index[i]][0]);
