@@ -1,9 +1,9 @@
-#include "utils/tdl_log.hpp"
 #include "tdl_utils.h"
 #include <math.h>
 #include <stdio.h>
 #include <cstdlib>
 #include <cstring>
+#include "utils/tdl_log.hpp"
 int32_t TDL_InitObjectMeta(TDLObject *object_meta, int num_objects,
                            int num_landmark) {
   if (object_meta->info == NULL) {

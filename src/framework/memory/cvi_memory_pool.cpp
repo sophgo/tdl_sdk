@@ -49,9 +49,9 @@ int32_t CviMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
 }
 
 std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_size,
-                                                        uint32_t blk_cnt,
-                                                        uint32_t weight,
-                                                        uint32_t height) {
+                                                       uint32_t blk_cnt,
+                                                       uint32_t weight,
+                                                       uint32_t height) {
   VB_POOL_CONFIG_EX_S stExconfig;
 
   std::unique_ptr<MemoryBlock> block = std::make_unique<MemoryBlock>();
@@ -67,15 +67,13 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_size,
   memset(&stExconfig, 0, sizeof(stExconfig));
   stExconfig.u32BlkCnt = blk_cnt;
   for (int32_t i = 0; i < blk_cnt; i++) {
-    stExconfig.astUserBlk[i].au64PhyAddr[0] = block->physicalAddress +
-                                              i * blk_size;
-    stExconfig.astUserBlk[i].au64PhyAddr[1] = block->physicalAddress +
-                                              2 * weight * height +
-                                              i * blk_size;
-    stExconfig.astUserBlk[i].au64PhyAddr[2] = block->physicalAddress +
-                                              2 * weight * height +
-                                              weight * height / 4 +
-                                              i * blk_size;
+    stExconfig.astUserBlk[i].au64PhyAddr[0] =
+        block->physicalAddress + i * blk_size;
+    stExconfig.astUserBlk[i].au64PhyAddr[1] =
+        block->physicalAddress + 2 * weight * height + i * blk_size;
+    stExconfig.astUserBlk[i].au64PhyAddr[2] =
+        block->physicalAddress + 2 * weight * height + weight * height / 4 +
+        i * blk_size;
   }
 
   VB_POOL pool = CVI_VB_CreateExPool(&stExconfig);

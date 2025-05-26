@@ -122,3 +122,28 @@ git clone https://github.com/sophgo/tdl_models.git
 
     ./sample_img_fd /data/sdk_package/tdl_models/cv181x/ /path/to/xx.jpg
     ```
+
+## MARS3使用ive算子
+
+* 配置环境
+  * 克隆ive库，并切换至Mars3_dev分支(***改成自己的名字)
+
+    ```shell
+    git clone ssh://***@gerrit-ai.sophgo.vip:29418/cvitek/ive.git
+    git checkout Mars3_dev
+    ```
+
+  * 拷贝算子库`ive/3rdparty/tpu_kernel_module/libtpu_kernel_module.so`到mars3板子`/mnt/data/tpu_files`下
+
+  * 声明环境变量
+
+    ```shell
+    export BMRUNTIME_USING_FIRMWARE=/mnt/tpu_files/lib/libtpu_kernel_module.so
+    ```
+
+* 运行示例
+
+  ```shell
+  cd tdl_sdk/install/CV184X/bin
+  ./sample_img_blend path/to/left_image path/to/right_image overlay_width
+  ```

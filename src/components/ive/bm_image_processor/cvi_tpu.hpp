@@ -1,10 +1,10 @@
 #ifndef __CVI_TPU_H__
 #define __CVI_TPU_H__
 
+#include <cvi_comm_video.h>
+#include <cvi_common.h>
+#include <vector>
 #include "bmlib_runtime.h"
-#include "cvi_comm_video.h"
-#include "cvi_common.h"
-#include "cvi_type.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -28,7 +28,7 @@ typedef enum _TPU_BLEND_WGT_MODE {
 } TPU_BLEND_WGT_MODE;
 
 bm_status_t tpu_cv_subads(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
-                          CVI_S32 format, CVI_S32 channel,
+                          PIXEL_FORMAT_E format, CVI_S32 channel,
                           bm_device_mem_t *src1_mem, bm_device_mem_t *src2_mem,
                           bm_device_mem_t *dst_mem,
                           tpu_kernel_module_t tpu_module);
@@ -39,21 +39,25 @@ bm_status_t tpu_cv_threshold(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
                              bm_device_mem_t *output_mem,
                              tpu_kernel_module_t tpu_module);
 
-bm_status_t tpu_2way_blending(bm_handle_t handle, CVI_S32 lwidth,
-                              CVI_S32 lheight, CVI_S32 rwidth, CVI_S32 rheight,
-                              bm_device_mem_t *left_mem,
-                              bm_device_mem_t *right_mem, CVI_S32 blend_w,
-                              CVI_S32 blend_h, bm_device_mem_t *blend_mem,
-                              CVI_S32 overlay_lx, CVI_S32 overlay_rx,
-                              bm_device_mem_t *wgt_phy_mem,
-                              TPU_BLEND_WGT_MODE mode, int format, int channel,
-                              tpu_kernel_module_t tpu_module);
+typedef struct Image_t {
+  int channel;
+  PIXEL_FORMAT_E format;
+  int width[3];
+  int height[3];
+  int stride[3];
+  int channel_stride[3];
+} ImageInfo;
 
-int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img, int rwidth,
-                   int rheight, unsigned char *right_img, int bwidth,
-                   int bheight, unsigned char *blend_img, int overlay_lx,
-                   int overlay_rx, unsigned char *wgt, int channel, int format,
-                   int wgt_mode);
+int set_blend_Image_param(ImageInfo *img, PIXEL_FORMAT_E img_format, int width,
+                          std::vector<uint32_t> &w_stride, int height);
+
+bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
+                              bm_device_mem_t *left_mem, ImageInfo *right_img,
+                              bm_device_mem_t *right_mem, ImageInfo *blend_img,
+                              bm_device_mem_t *blend_mem, short overlay_lx,
+                              short overlay_rx, bm_device_mem_t *wgt_phy_mem,
+                              TPU_BLEND_WGT_MODE mode,
+                              tpu_kernel_module_t tpu_module);
 
 #ifdef __cplusplus
 #if __cplusplus

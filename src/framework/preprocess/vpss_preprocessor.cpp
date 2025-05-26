@@ -346,14 +346,14 @@ int32_t VpssPreprocessor::generateVPSSChnAttr(
     pastVpssChnAttr->stNormalize.rounding = VPSS_ROUNDING_TO_EVEN;
   }
   LOGI(
-    "vpss chn attr "
-    ",width:%d,height:%d,format:%d,normalize:%d,factor[0]:%.2f,factor[1]:%."
-    "2f,factor[2]:%.2f,mean[0]:%.2f,mean[1]:%.2f,mean[2]:%.2f",
-    vpss_chn_attr.u32Width, vpss_chn_attr.u32Height,
-    vpss_chn_attr.enPixelFormat, vpss_chn_attr.stNormalize.bEnable,
-    vpss_chn_attr.stNormalize.factor[0], vpss_chn_attr.stNormalize.factor[1],
-    vpss_chn_attr.stNormalize.factor[2], vpss_chn_attr.stNormalize.mean[0],
-    vpss_chn_attr.stNormalize.mean[1], vpss_chn_attr.stNormalize.mean[2]);
+      "vpss chn attr "
+      ",width:%d,height:%d,format:%d,normalize:%d,factor[0]:%.2f,factor[1]:%."
+      "2f,factor[2]:%.2f,mean[0]:%.2f,mean[1]:%.2f,mean[2]:%.2f",
+      vpss_chn_attr.u32Width, vpss_chn_attr.u32Height,
+      vpss_chn_attr.enPixelFormat, vpss_chn_attr.stNormalize.bEnable,
+      vpss_chn_attr.stNormalize.factor[0], vpss_chn_attr.stNormalize.factor[1],
+      vpss_chn_attr.stNormalize.factor[2], vpss_chn_attr.stNormalize.mean[0],
+      vpss_chn_attr.stNormalize.mean[1], vpss_chn_attr.stNormalize.mean[2]);
   return 0;
 }
 

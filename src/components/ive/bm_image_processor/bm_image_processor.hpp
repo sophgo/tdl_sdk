@@ -16,15 +16,14 @@ class BmImageProcessor : public ImageProcessor {
                          std::shared_ptr<BaseImage> &dst) override;
 
   virtual int32_t thresholdProcess(std::shared_ptr<BaseImage> &input,
-                                   std::shared_ptr<BaseImage> &output,
                                    CVI_U32 threshold_type, CVI_U32 threshold,
-                                   CVI_U32 max_value) override;
+                                   CVI_U32 max_value,
+                                   std::shared_ptr<BaseImage> &output) override;
 
   virtual int32_t twoWayBlending(std::shared_ptr<BaseImage> &left,
                                  std::shared_ptr<BaseImage> &right,
-                                 std::shared_ptr<BaseImage> &output,
-                                 CVI_S32 overlay_lx, CVI_S32 overlay_rx,
-                                 CVI_U8 *wgt) override;
+                                 std::shared_ptr<BaseImage> &wgt,
+                                 std::shared_ptr<BaseImage> &output) override;
   int32_t compareResult(CVI_U8 *tpu_result, CVI_U8 *cpu_result, CVI_S32 size);
 
  private:

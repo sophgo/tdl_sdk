@@ -15,7 +15,7 @@ BmMotionDetection::BmMotionDetection()
   ccl_instance_ = createConnectInstance();
 
   // 创建图像处理器
-  image_processor_ = ImageProcessor::getImageProcessor("bm");
+  image_processor_ = ImageProcessor::getImageProcessor();
   if (!image_processor_) {
     LOGE("Failed to create image processor\n");
   }
@@ -142,10 +142,10 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
   }
 
   // 阈值处理
-  ret = image_processor_->thresholdProcess(md_output_, md_output_,
-                                           0,          // 二值化类型
-                                           threshold,  // 阈值
-                                           255);       // 最大值
+  ret = image_processor_->thresholdProcess(md_output_,
+                                           0,                 // 二值化类型
+                                           threshold,         // 阈值
+                                           255, md_output_);  // 最大值
 
   md_timer_.TicToc("image_process");
 

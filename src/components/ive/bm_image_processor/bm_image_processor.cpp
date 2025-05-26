@@ -9,7 +9,8 @@ extern int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img,
                           int overlay_lx, int overlay_rx, unsigned char *wgt,
                           int channel, int format, int wgt_mode);
 
-int32_t ImageFormatToPixelFormat(ImageFormat image_format, CVI_S32 &format) {
+int32_t ImageFormatToPixelFormat(ImageFormat &image_format,
+                                 PIXEL_FORMAT_E &format) {
   switch (image_format) {
     case ImageFormat::GRAY:
       format = PIXEL_FORMAT_YUV_400;
@@ -20,14 +21,11 @@ int32_t ImageFormatToPixelFormat(ImageFormat image_format, CVI_S32 &format) {
     case ImageFormat::BGR_PLANAR:
       format = PIXEL_FORMAT_BGR_888_PLANAR;
       break;
-    case ImageFormat::RGB_PACKED:
-      format = PIXEL_FORMAT_RGB_888;
+    case ImageFormat::YUV420SP_UV:
+      format = PIXEL_FORMAT_NV12;
       break;
-    case ImageFormat::BGR_PACKED:
-      format = PIXEL_FORMAT_BGR_888;
-      break;
-    case ImageFormat::YUV420P_UV:
-      format = PIXEL_FORMAT_YUV_PLANAR_420;
+    case ImageFormat::YUV420SP_VU:
+      format = PIXEL_FORMAT_NV21;
       break;
     default:
       printf("Image format not supported: %d\n",
@@ -53,9 +51,10 @@ int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
     case PIXEL_FORMAT_BGR_888_PLANAR:
       src1_size[0] = src1_size[1] = src1_size[2] = width * height;
       break;
-    case PIXEL_FORMAT_RGB_888:
-    case PIXEL_FORMAT_BGR_888:
-      src1_size[0] = src1_size[1] = src1_size[2] = width * height;
+    case PIXEL_FORMAT_NV12:
+    case PIXEL_FORMAT_NV21:
+      src1_size[0] = width * height;
+      src1_size[1] = BM_ALIGN(height / 2, 2);
       break;
     default:
       printf("Pixel format(%d) not supported!\n", format);
@@ -72,7 +71,7 @@ BmImageProcessor::BmImageProcessor() {
     printf("Failed to initialize BM handle, error code: %d\n", ret);
   }
   // 加载TPU模块
-#ifdef USE_CV184X
+#if defined(__CV184X__)
   tpu_module_ = tpu_kernel_load_module_file(
       handle_, "/mnt/tpu_files/lib/libtpu_kernel_module.so");
 #else
@@ -126,14 +125,14 @@ int32_t BmImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
   }
 
   // 将ImageFormat转换为PIXEL_FORMAT_E
-  CVI_S32 format;
+  PIXEL_FORMAT_E format;
   ImageFormatToPixelFormat(image_format, format);
   // 设备内存
   bm_device_mem_t src1_img_mem[3];
   bm_device_mem_t src2_img_mem[3];
   bm_device_mem_t dst_img_mem[3];
 
-#if defined(USE_CMODEL_CV184X)
+#if defined(__CMODEL_CV184X__)
   // 获取虚拟地址
   std::vector<uint8_t *> src1_vir_addrs_init = src1->getVirtualAddress();
   std::vector<uint8_t *> src2_vir_addrs_init = src2->getVirtualAddress();
@@ -171,12 +170,6 @@ int32_t BmImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
 
 #else
   // 获取基础设备内存
-  // src1_img_mem[0] =
-  //     *reinterpret_cast<bm_device_mem_t *>(src1->getMemoryBlock()->handle);
-  // src2_img_mem[0] =
-  //     *reinterpret_cast<bm_device_mem_t *>(src2->getMemoryBlock()->handle);
-  // dst_img_mem[0] =
-  //     *reinterpret_cast<bm_device_mem_t *>(dst->getMemoryBlock()->handle);
   src1_img_mem[0].u.device.device_addr =
       src1->getMemoryBlock()->physicalAddress;
   src2_img_mem[0].u.device.device_addr =
@@ -215,7 +208,7 @@ int32_t BmImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
   if (ret != BM_SUCCESS) {
     printf("tpu_cv_subads failed\n");
     // 释放设备内存
-#if defined(USE_CMODEL_CV184X)
+#if defined(__CMODEL_CV184X__)
     for (int c = 0; c < channel; c++) {
       bm_free_device(handle_, src1_img_mem[c]);
       bm_free_device(handle_, src2_img_mem[c]);
@@ -225,7 +218,7 @@ int32_t BmImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
     return static_cast<int32_t>(ret);
   }
 
-#if defined(USE_CMODEL_CV184X)
+#if defined(__CMODEL_CV184X__)
   // 将结果从设备内存拷贝回主机内存
   for (int c = 0; c < channel; c++) {
     bm_memcpy_d2s(handle_, dst_vir_addrs[c], dst_img_mem[c]);
@@ -242,10 +235,9 @@ int32_t BmImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
 }
 
 int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
-                                           std::shared_ptr<BaseImage> &output,
                                            CVI_U32 threshold_type,
-                                           CVI_U32 threshold,
-                                           CVI_U32 max_value) {
+                                           CVI_U32 threshold, CVI_U32 max_value,
+                                           std::shared_ptr<BaseImage> &output) {
   // 参数校验
   if (!input) {
     printf("input is nullptr\n");
@@ -267,10 +259,10 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
                                   true, InferencePlatform::AUTOMATIC);
   }
 
-  CVI_S32 format;
+  PIXEL_FORMAT_E format;
   ImageFormatToPixelFormat(image_format, format);
   if (format != PIXEL_FORMAT_YUV_400) {
-    printf("Image format not supported for thresholdProcess: %d\n",
+    printf("ImageInfo format not supported for thresholdProcess: %d\n",
            static_cast<int>(image_format));
     printf("Only grayscale images are supported for threshold operation.\n");
     return -1;
@@ -281,7 +273,7 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
   bm_device_mem_t input_mem;
   bm_device_mem_t output_mem;
 
-#if defined(USE_CMODEL_CV184X)
+#if defined(__CMODEL_CV184X__)
   // 获取虚拟地址
   std::vector<uint8_t *> input_vir_addrs_init = input->getVirtualAddress();
   std::vector<uint8_t *> output_vir_addrs_init = output->getVirtualAddress();
@@ -302,9 +294,6 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
 #else
   std::unique_ptr<MemoryBlock> &input_mem_block = input->getMemoryBlock();
   std::unique_ptr<MemoryBlock> &output_mem_block = output->getMemoryBlock();
-  // input_mem = *reinterpret_cast<bm_device_mem_t *>(input_mem_block->handle);
-  // output_mem = *reinterpret_cast<bm_device_mem_t
-  // *>(output_mem_block->handle);
   input_mem.u.device.device_addr = input_mem_block->physicalAddress;
   output_mem.u.device.device_addr = output_mem_block->physicalAddress;
   input_mem.size = input_mem_block->size;
@@ -322,7 +311,7 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
     bm_free_device(handle_, output_mem);
     return static_cast<int32_t>(ret);
   }
-#if defined(USE_CMODEL_CV184X)
+#if defined(__CMODEL_CV184X__)
   // 将结果从设备内存拷贝回主机内存
   bm_memcpy_d2s(handle_, output_vir_addrs_init[0], output_mem);
   // 释放设备内存
@@ -334,12 +323,11 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
 
 int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
                                          std::shared_ptr<BaseImage> &right,
-                                         std::shared_ptr<BaseImage> &output,
-                                         CVI_S32 overlay_lx, CVI_S32 overlay_rx,
-                                         CVI_U8 *wgt) {
+                                         std::shared_ptr<BaseImage> &wgt,
+                                         std::shared_ptr<BaseImage> &output) {
   // 参数校验
-  if ((!left || !right)) {
-    printf("left or right is nullptr\n");
+  if ((!left || !right || !wgt)) {
+    printf("left, right or wgts is nullptr or empty\n");
     return -1;  // 参数无效
   }
 
@@ -349,7 +337,9 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   CVI_S32 rwidth = right->getWidth();
   CVI_S32 rheight = right->getHeight();
   ImageFormat image_format = left->getImageFormat();
-  CVI_S32 overlay_w = overlay_rx - overlay_lx + 1;
+  CVI_S32 overlay_rx = lwidth - 1;
+  CVI_S32 overlay_w = wgt->getWidth();
+  CVI_S32 overlay_lx = overlay_rx - overlay_w + 1;
   CVI_S32 blend_w = lwidth + rwidth - overlay_w;
   CVI_S32 blend_h = lheight;
   CVI_S32 channel = (image_format == ImageFormat::GRAY) ? 1 : 3;
@@ -367,27 +357,21 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   std::vector<uint32_t> left_strides = left->getStrides();
   std::vector<uint32_t> right_strides = right->getStrides();
   std::vector<uint32_t> output_strides = output->getStrides();
-  CVI_S32 aligned_left_width = left_strides[0];
-  CVI_S32 aligned_right_width = right_strides[0];
-  CVI_S32 aligned_blend_w = output_strides[0];
 
   // 将ImageFormat转换为PIXEL_FORMAT_E
-  CVI_S32 format;
+  PIXEL_FORMAT_E format;
   ImageFormatToPixelFormat(image_format, format);
 
   // 获取虚拟地址
   std::vector<uint8_t *> left_vir_addrs_init = left->getVirtualAddress();
   std::vector<uint8_t *> right_vir_addrs_init = right->getVirtualAddress();
   std::vector<uint8_t *> output_vir_addrs_init = output->getVirtualAddress();
-
-  // 分配设备内存并拷贝数据
-  bm_handle_t handle;
-  bm_dev_request(&handle, 0);
   // 设备内存
   bm_device_mem_t left_img_mem[3];
   bm_device_mem_t right_img_mem[3];
   bm_device_mem_t output_img_mem[3];
-#if defined(USE_CMODEL_CV184X)
+
+#if defined(__CMODEL_CV184X__)
   // 计算各通道大小
   int left_size[3] = {0};
   int right_size[3] = {0};
@@ -407,28 +391,23 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   unsigned char *output_vir_addrs[3] = {
       output_vir_addrs_init[0], output_vir_addrs_init[0] + output_size[0],
       output_vir_addrs_init[0] + output_size[0] + output_size[1]};
+
   for (int c = 0; c < channel; c++) {
-    bm_malloc_device_byte(handle, &left_img_mem[c],
+    bm_malloc_device_byte(handle_, &left_img_mem[c],
                           sizeof(unsigned char) * left_size[c]);
-    bm_malloc_device_byte(handle, &right_img_mem[c],
+    bm_malloc_device_byte(handle_, &right_img_mem[c],
                           sizeof(unsigned char) * right_size[c]);
-    bm_malloc_device_byte(handle, &output_img_mem[c],
+    bm_malloc_device_byte(handle_, &output_img_mem[c],
                           sizeof(unsigned char) * output_size[c]);
 
     // 将主机内存数据拷贝到设备内存
-    bm_memcpy_s2d(handle, left_img_mem[c], left_vir_addrs[c]);
-    bm_memcpy_s2d(handle, right_img_mem[c], right_vir_addrs[c]);
-    bm_memcpy_s2d(handle, output_img_mem[c], output_vir_addrs[c]);
+    bm_memcpy_s2d(handle_, left_img_mem[c], left_vir_addrs[c]);
+    bm_memcpy_s2d(handle_, right_img_mem[c], right_vir_addrs[c]);
+    bm_memcpy_s2d(handle_, output_img_mem[c], output_vir_addrs[c]);
   }
 
 #else
   // 获取基础设备内存
-  // left_img_mem[0] =
-  //     *reinterpret_cast<bm_device_mem_t *>(left->getMemoryBlock()->handle);
-  // right_img_mem[0] =
-  //     *reinterpret_cast<bm_device_mem_t *>(right->getMemoryBlock()->handle);
-  // output_img_mem[0] =
-  //     *reinterpret_cast<bm_device_mem_t *>(output->getMemoryBlock()->handle);
   left_img_mem[0].u.device.device_addr =
       left->getMemoryBlock()->physicalAddress;
   right_img_mem[0].u.device.device_addr =
@@ -454,39 +433,49 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
     right_img_mem[c].size = right_strides[c] * rheight;
     output_img_mem[c].size = output_strides[c] * blend_h;
   }
-
 #endif
+  int wgt_size[2] = {overlay_w * blend_h, BM_ALIGN(blend_h / 2, 2) * overlay_w};
+
+  CVI_U8 *wgt_y_vir_addr = wgt->getVirtualAddress()[0];
+  CVI_U8 *wgt_uv_vir_addr = wgt_y_vir_addr + wgt_size[0];
+  uint64_t wgt_y_phy_addr = wgt->getPhysicalAddress()[0];
+  uint64_t wgt_uv_phy_addr = wgt_y_phy_addr + wgt_size[0];
 
   // 分配设备内存
-  bm_device_mem_t wgt_mem[2] = {0};
-  int wgt_size = overlay_w * blend_h * sizeof(unsigned char);
-  bm_malloc_device_byte(handle, &wgt_mem[0], wgt_size);
-  bm_malloc_device_byte(handle, &wgt_mem[1], 1);
+  bm_device_mem_t wgt_mem[2];
 
-#if defined(USE_CMODEL_CV184X)
-  bm_memcpy_s2d(handle, wgt_mem[0], wgt);
+#if defined(__CMODEL_CV184X__)
+  bm_malloc_device_byte(handle_, &wgt_mem[0], wgt_size[0]);
+  bm_malloc_device_byte(handle_, &wgt_mem[1], wgt_size[1]);
+  bm_memcpy_s2d(handle_, wgt_mem[0], wgt_y_vir_addr);
+  bm_memcpy_s2d(handle_, wgt_mem[1], wgt_uv_vir_addr);
 #else
   wgt_mem[0].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
-  wgt_mem[0].size = wgt_size;
+  wgt_mem[1].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+  wgt_mem[0].size = wgt_size[0];
+  wgt_mem[1].size = wgt_size[1];
+  wgt_mem[0].u.device.device_addr = *wgt_y_vir_addr;
+  wgt_mem[1].u.device.device_addr = *wgt_uv_vir_addr;
+  wgt_mem[0].u.system.system_addr = (void *)wgt_y_phy_addr;
+  wgt_mem[1].u.system.system_addr = (void *)wgt_uv_phy_addr;
 
-  bm_device_mem_t *p_dev = new bm_device_mem_t();
-  bm_malloc_device_byte(handle, p_dev, wgt_size);
-  unsigned long long addr;
-  bm_mem_mmap_device_mem(handle, (bm_device_mem_t *)p_dev, &addr);
-  memcpy((unsigned char *)addr, wgt, wgt_size);
-  wgt_mem[0] = *p_dev;
 #endif
 
+  ImageInfo left_img;
+  ImageInfo right_img;
+  ImageInfo output_img;
+  set_blend_Image_param(&left_img, format, lwidth, left_strides, lheight);
+  set_blend_Image_param(&right_img, format, rwidth, right_strides, rheight);
+  set_blend_Image_param(&output_img, format, blend_w, output_strides, blend_h);
   bm_status_t ret = tpu_2way_blending(
-      handle, aligned_left_width, lheight, aligned_right_width, rheight,
-      left_img_mem, right_img_mem, aligned_blend_w, blend_h, output_img_mem,
-      overlay_lx, overlay_rx, wgt_mem, TPU_BLEND_WGT_MODE::WGT_YUV_SHARE,
-      format, channel, tpu_module_);
+      handle_, &left_img, left_img_mem, &right_img, right_img_mem, &output_img,
+      output_img_mem, overlay_lx, overlay_rx, wgt_mem,
+      TPU_BLEND_WGT_MODE::WGT_UV_SHARE, tpu_module_);
 
-#if defined(USE_CMODEL_CV184X)
+#if defined(__CMODEL_CV184X__)
   // 将结果从设备内存拷贝回主机内存
   for (int c = 0; c < channel; c++) {
-    bm_memcpy_d2s(handle, output_vir_addrs[c], output_img_mem[c]);
+    bm_memcpy_d2s(handle_, output_vir_addrs[c], output_img_mem[c]);
   }
 
   // int cpu_output_size = output_size[0] + output_size[1] + output_size[2];
@@ -502,18 +491,13 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
 
   // 释放设备内存
   for (int c = 0; c < channel; c++) {
-    bm_free_device(handle, left_img_mem[c]);
-    bm_free_device(handle, right_img_mem[c]);
-    bm_free_device(handle, output_img_mem[c]);
+    bm_free_device(handle_, left_img_mem[c]);
+    bm_free_device(handle_, right_img_mem[c]);
+    bm_free_device(handle_, output_img_mem[c]);
   }
-  bm_free_device(handle, wgt_mem[0]);
-  bm_free_device(handle, wgt_mem[1]);
-#else
-  bm_mem_unmap_device_mem(handle, (void *)addr, wgt_size);
-  bm_free_device(handle, *p_dev);
-  delete p_dev;
+  bm_free_device(handle_, wgt_mem[0]);
+  bm_free_device(handle_, wgt_mem[1]);
 #endif
-  bm_dev_free(handle);
   return 0;
 }
 

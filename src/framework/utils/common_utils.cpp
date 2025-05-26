@@ -1,8 +1,8 @@
 #include "utils/common_utils.hpp"
-#include "utils/tdl_log.hpp"
 #include <dlfcn.h>
 #include <limits.h>  // for PATH_MAX
 #include <string>
+#include "utils/tdl_log.hpp"
 uint32_t CommonUtils::getDataTypeSize(TDLDataType data_type) {
   switch (data_type) {
     case TDLDataType::FP32:

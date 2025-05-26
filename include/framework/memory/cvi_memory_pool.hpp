@@ -13,10 +13,8 @@ class CviMemoryPool : public BaseMemoryPool {
 
   int32_t release(std::unique_ptr<MemoryBlock> &block) override;
 
-  std::unique_ptr<MemoryBlock> CreateExVb(uint32_t blk_size,
-                                          uint32_t blk_cnt,
-                                          uint32_t weight,
-                                          uint32_t height);
+  std::unique_ptr<MemoryBlock> CreateExVb(uint32_t blk_size, uint32_t blk_cnt,
+                                          uint32_t weight, uint32_t height);
   int32_t DestroyExVb(std::unique_ptr<MemoryBlock> &block);
 
   virtual int32_t flushCache(std::unique_ptr<MemoryBlock> &block) override;

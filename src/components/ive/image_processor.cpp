@@ -10,24 +10,23 @@ int32_t ImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
 }
 
 int32_t ImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
-                                         std::shared_ptr<BaseImage> &output,
                                          CVI_U32 threshold_type,
-                                         CVI_U32 threshold, CVI_U32 max_value) {
+                                         CVI_U32 threshold, CVI_U32 max_value,
+                                         std::shared_ptr<BaseImage> &output) {
   return 0;
 }
 
 int32_t ImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
                                        std::shared_ptr<BaseImage> &right,
-                                       std::shared_ptr<BaseImage> &output,
-                                       CVI_S32 overlay_lx, CVI_S32 overlay_rx,
-                                       CVI_U8 *wgt) {
+                                       std::shared_ptr<BaseImage> &wgt,
+                                       std::shared_ptr<BaseImage> &output) {
   return 0;
 }
 
-std::shared_ptr<ImageProcessor> ImageProcessor::getImageProcessor(
-    std::string image_processor_type) {
-  if (image_processor_type == "bm") {
-    return std::make_shared<BmImageProcessor>();
-  }
+std::shared_ptr<ImageProcessor> ImageProcessor::getImageProcessor() {
+#if defined(__CV184X__) || defined(__CMODEL_CV184X__)
+  return std::make_shared<BmImageProcessor>();
+#else
   return nullptr;
+#endif
 }
