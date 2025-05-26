@@ -2,10 +2,16 @@
 #include "utils/tokenizer_bpe.hpp"
 
 int main(int argc, char** argv) {
+  if (argc != 5) {
+    printf("Usage: %s <model_dir> <encoder_file> <bpe_file> <text_file>\n",
+           argv[0]);
+    return -1;
+  }
+
   std::vector<std::shared_ptr<BaseImage>> input_texts;
-  std::string encoderFile = "./encoder.txt";
-  std::string bpeFile = "./bpe_simple_vocab_16e6.txt";
-  std::string textFile = "./text.txt";
+  std::string encoderFile = argv[2];
+  std::string bpeFile = argv[3];
+  std::string textFile = argv[4];
   std::vector<std::vector<int32_t>> tokens;
   BytePairEncoder bpe(encoderFile, bpeFile);
   int result = bpe.tokenizerBPE(textFile, tokens);
@@ -26,10 +32,11 @@ int main(int argc, char** argv) {
 
   std::string model_dir = argv[1];
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
   model_factory.setModelDir(model_dir);
 
   std::shared_ptr<BaseModel> model_clip_text =
-      model_factory.getModel(ModelType::CLIP_FEATURE_TEXT, argv[1]);
+      model_factory.getModel(ModelType::CLIP_FEATURE_TEXT);
 
   if (!model_clip_text) {
     printf("Failed to load clip text model\n");

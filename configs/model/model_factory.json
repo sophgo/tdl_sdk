@@ -222,14 +222,14 @@
     },
     "CLIP_FEATURE_IMG":{
       "_comment":"clip image feature extraction",
-      "file_name":"",
+      "file_name":"clip_image_6x",
       "rgb_order":"rgb",
       "mean":[0,0,0],
       "std":[255.0,255.0,255.0]
     },
     "CLIP_FEATURE_TEXT":{
       "_comment":"clip text feature extraction",
-      "file_name":"",
+      "file_name":"clip_text_6x",
       "rgb_order":"rgb",
       "mean":[0,0,0],
       "std":[255.0,255.0,255.0]

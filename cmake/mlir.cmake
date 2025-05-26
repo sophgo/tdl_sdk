@@ -55,6 +55,7 @@ elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libbmrt.so
       ${MLIR_SDK_ROOT}/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/lib/libcmodel.so
   )
   set(MLIR_LIBS_STATIC
       ${MLIR_SDK_ROOT}/lib/libbmrt.a
