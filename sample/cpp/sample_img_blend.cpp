@@ -6,7 +6,7 @@
 #include "image/base_image.hpp"
 #include "ive/image_processor.hpp"
 
-#define BM_ALIGN(x, a) (((x) + (a) - 1) / (a) * (a))
+#define BM_ALIGN(x, a) (((x) + (a)-1) / (a) * (a))
 
 int main(int argc, char* argv[]) {
   // 检查参数数量

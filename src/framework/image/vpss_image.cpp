@@ -315,7 +315,7 @@ int32_t VPSSImage::extractImageInfo(const VIDEO_FRAME_INFO_S& frame) {
     image_format_ = ImageFormat::YUV420SP_UV;
     pix_data_type_ = TDLDataType::UINT8;
   } else if (pixel_format == PIXEL_FORMAT_NV21) {
-    image_format_ = ImageFormat::YUV420P_UV;
+    image_format_ = ImageFormat::YUV420SP_VU;
     pix_data_type_ = TDLDataType::UINT8;
   } else if (pixel_format == PIXEL_FORMAT_RGB_888) {
     image_format_ = ImageFormat::RGB_PACKED;

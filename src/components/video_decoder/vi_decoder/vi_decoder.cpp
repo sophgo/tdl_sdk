@@ -1,6 +1,6 @@
 #include "vi_decoder/vi_decoder.hpp"
-#include "framework/image/base_image.hpp"
-#include "framework/memory/cvi_memory_pool.hpp"
+#include "image/base_image.hpp"
+#include "memory/cvi_memory_pool.hpp"
 #include "vi_decoder/vi_cfg.hpp"
 
 static pthread_t g_IspPid[VI_MAX_DEV_NUM];
@@ -98,8 +98,9 @@ static int TDL_Vi_PQBinLoad(void) {
   return CVI_SUCCESS;
 }
 
-static int TDL_Vi_SysInit(std::shared_ptr<BaseMemoryPool>& memory_pool,
-                          std::vector<std::unique_ptr<MemoryBlock>>& memory_blocks) {
+static int TDL_Vi_SysInit(
+    std::shared_ptr<BaseMemoryPool> &memory_pool,
+    std::vector<std::unique_ptr<MemoryBlock>> &memory_blocks) {
   int ret = 0;
   CVI_U32 u32BlkSize;
 
@@ -127,7 +128,6 @@ static int TDL_Vi_SysInit(std::shared_ptr<BaseMemoryPool>& memory_pool,
   if (ret != 0) {
     printf("CVI_SYS_Init failed with %d\n", ret);
     CVI_VB_Exit();
-    return ret;
   }
 
   memory_pool = BaseMemoryPoolFactory::createMemoryPool();
@@ -140,11 +140,11 @@ static int TDL_Vi_SysInit(std::shared_ptr<BaseMemoryPool>& memory_pool,
 
   for (int i = 0; i < stIniCfg.devNum; i++) {
     u32BlkSize = stSize[i].u32Height * stSize[i].u32Width * 3 / 2;
-    memory_blocks.push_back(pool->CreateExVb(u32BlkSize, 3, stSize[i].u32Width, stSize[i].u32Height));
+    memory_blocks.push_back(pool->CreateExVb(u32BlkSize, 3, stSize[i].u32Width,
+                                             stSize[i].u32Height));
   }
 
   return CVI_SUCCESS;
-
 }
 
 static int TDL_Vi_StartSensor() {
@@ -479,7 +479,8 @@ static int TDL_Vi_StartIsp() {
   return ret;
 }
 
-static int TDL_Vi_StartChn(std::vector<std::unique_ptr<MemoryBlock>>& memory_blocks) {
+static int TDL_Vi_StartChn(
+    std::vector<std::unique_ptr<MemoryBlock>> &memory_blocks) {
   int ret = 0;
   VI_CHN_ATTR_S stViChnAttr;
   ISP_SNS_OBJ_S *pfnSnsObj = NULL;
@@ -604,13 +605,14 @@ static int TDL_Vi_DestroyVi() {
   return ret;
 }
 
-static int TDL_Vi_SysExit(std::shared_ptr<BaseMemoryPool>& memory_pool,
-                          std::vector<std::unique_ptr<MemoryBlock>>& memory_blocks) {
+static int TDL_Vi_SysExit(
+    std::shared_ptr<BaseMemoryPool> &memory_pool,
+    std::vector<std::unique_ptr<MemoryBlock>> &memory_blocks) {
   int ret = 0;
 
   auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool);
   if (pool) {
-    for (auto& block : memory_blocks) {
+    for (auto &block : memory_blocks) {
       pool->DestroyExVb(block);
     }
   }
@@ -712,6 +714,9 @@ ViDecoder::~ViDecoder() {
   if (isInitialized) {
     deinitialize();
   }
+  if (isMapped_) {
+    CVI_SYS_Munmap((void *)addr_, image_size_);
+  }
 }
 
 int32_t ViDecoder::init(const std::string &path,
@@ -726,12 +731,30 @@ int32_t ViDecoder::init(const std::string &path,
 }
 
 int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int chn) {
+  if (isMapped_) {
+    CVI_SYS_Munmap((void *)addr_, image_size_);
+    isMapped_ = false;
+  }
   int ret = 0;
 
   ret = CVI_VI_GetChnFrame(chn, chn, &frame_info[chn], 3000);
   if (ret != 0) {
     printf("CVI_VI_GetChnFrame(%d) failed with %d\n", chn, ret);
     return ret;
+  }
+
+  // 计算总的图像大小
+  size_t image_size = frame_info[chn].stVFrame.u32Length[0] +
+                      frame_info[chn].stVFrame.u32Length[1] +
+                      frame_info[chn].stVFrame.u32Length[2];
+
+  // 如果虚拟地址为空，进行内存映射
+  if (frame_info[chn].stVFrame.pu8VirAddr[0] == NULL) {
+    frame_info[chn].stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(
+        frame_info[chn].stVFrame.u64PhyAddr[0], image_size);
+    isMapped_ = true;
+    addr_ = frame_info[chn].stVFrame.pu8VirAddr[0];
+    image_size_ = image_size;
   }
 
   image = ImageFactory::wrapVPSSFrame(&frame_info[chn], false);
@@ -743,7 +766,7 @@ int32_t ViDecoder::release(int chn) {
   int ret = 0;
   ret = CVI_VI_ReleaseChnFrame(chn, chn, &frame_info[chn]);
   if (ret != 0) {
-    printf("CVI_VI_GetChnFrame(%d) failed with %d\n", chn, ret);
+    printf("CVI_VI_ReleaseChnFrame(%d) failed with %d\n", chn, ret);
   }
   return ret;
 }

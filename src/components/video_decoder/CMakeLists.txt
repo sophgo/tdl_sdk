@@ -1,7 +1,7 @@
 project(video_decoder)
 
 include_directories(
-                    ${REPO_DIR}/include
+                    ${REPO_DIR}/include/components
                     ${REPO_DIR}/include/framework
                     ${CMAKE_CURRENT_SOURCE_DIR}/
                     )

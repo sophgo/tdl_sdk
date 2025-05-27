@@ -1,8 +1,8 @@
-#include "components/video_decoder/video_decoder_type.hpp"
 #include "image_folder/image_folder_decoder.hpp"
+#include "video_decoder/video_decoder_type.hpp"
 
-#include "framework/utils/common_utils.hpp"
-#include "framework/utils/tdl_log.hpp"
+#include "utils/common_utils.hpp"
+#include "utils/tdl_log.hpp"
 #if defined(__BM168X__) || defined(__BM1684__) || defined(__BM1684X__)
 #include "opencv_decoder/opencv_decoder.hpp"
 #elif defined(__CV180X__) || defined(__CV181X__) || defined(__CV186X__)

@@ -1,7 +1,7 @@
 #ifndef IMAGE_FOLDER_DECODER_HPP
 #define IMAGE_FOLDER_DECODER_HPP
 
-#include "components/video_decoder/video_decoder_type.hpp"
+#include "video_decoder/video_decoder_type.hpp"
 
 class ImageFolderDecoder : public VideoDecoder {
  public:

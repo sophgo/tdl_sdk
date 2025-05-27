@@ -1,8 +1,8 @@
 #ifndef OPENCV_DECODER_HPP
 #define OPENCV_DECODER_HPP
 
-#include "components/video_decoder/video_decoder_type.hpp"
 #include "opencv2/opencv.hpp"
+#include "video_decoder/video_decoder_type.hpp"
 
 class OpencvDecoder : public VideoDecoder {
  public:

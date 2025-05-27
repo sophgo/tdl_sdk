@@ -41,8 +41,8 @@ static int32_t VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src,
   return CVI_SUCCESS;
 }
 
-int32_t ImageFormat2PixelFormat(ImageFormat &image_format,
-                                PIXEL_FORMAT_E &format) {
+int32_t ImageFormatToPixelFormat(ImageFormat &image_format,
+                                 PIXEL_FORMAT_E &format) {
   switch (image_format) {
     case ImageFormat::GRAY:
       format = PIXEL_FORMAT_YUV_400;
@@ -53,17 +53,14 @@ int32_t ImageFormat2PixelFormat(ImageFormat &image_format,
     case ImageFormat::BGR_PLANAR:
       format = PIXEL_FORMAT_BGR_888_PLANAR;
       break;
-    case ImageFormat::RGB_PACKED:
-      format = PIXEL_FORMAT_RGB_888;
+    case ImageFormat::YUV420SP_UV:
+      format = PIXEL_FORMAT_NV12;
       break;
-    case ImageFormat::BGR_PACKED:
-      format = PIXEL_FORMAT_BGR_888;
-      break;
-    case ImageFormat::YUV420P_UV:
-      format = PIXEL_FORMAT_YUV_PLANAR_420;
+    case ImageFormat::YUV420SP_VU:
+      format = PIXEL_FORMAT_NV21;
       break;
     default:
-      printf("Image format not supported: %d\n",
+      printf("ImageInfo format not supported: %d\n",
              static_cast<int>(image_format));
       return -1;
   }
@@ -83,7 +80,7 @@ int32_t BaseImage2VideoFrame(const std::shared_ptr<BaseImage> &image,
 
   ImageFormat base_fmt = image->getImageFormat();
   PIXEL_FORMAT_E format;
-  ImageFormat2PixelFormat(base_fmt, format);
+  ImageFormatToPixelFormat(base_fmt, format);
   video_frame.stVFrame.enPixelFormat = format;
 
   uint32_t plane_num = image->getPlaneNum();
@@ -103,7 +100,12 @@ int32_t BaseImage2VideoFrame(const std::shared_ptr<BaseImage> &image,
   return CVI_SUCCESS;
 }
 
-CviMotionDetection::CviMotionDetection() {
+CviMotionDetection::CviMotionDetection()
+    : ive_instance_(nullptr),
+      ccl_instance_(nullptr),
+      im_width_(0),
+      im_height_(0),
+      use_roi_(false) {
   ive::IVE *ive_handle = new ive::IVE;
   if (ive_handle->init() != CVI_SUCCESS) {
     printf("IVE handle init failed.\n");
@@ -123,8 +125,23 @@ int32_t CviMotionDetection::setBackground(
     const std::shared_ptr<BaseImage> &background_image) {
   VIDEO_FRAME_INFO_S video_frame;
   BaseImage2VideoFrame(background_image, video_frame);
-  constructImages(&video_frame);
-  BaseImage2VideoFrame(background_image, video_frame);
+  bool needs_reconstruction = false;
+  if (background_img_.getVAddr()[0] == NULL ||
+      md_output_.getVAddr()[0] == NULL ||
+      video_frame.stVFrame.u32Width != im_width_ ||
+      video_frame.stVFrame.u32Height != im_height_) {
+    needs_reconstruction = true;
+  }
+
+  if (needs_reconstruction) {
+    if (background_img_.getVAddr()[0] != NULL) {
+      background_img_.free();
+    }
+    if (md_output_.getVAddr()[0] != NULL) {
+      md_output_.free();
+    }
+    constructImages(&video_frame);
+  }
   int32_t ret = VideoFrameCopy2Image(ive_instance_, &video_frame, &tmp_cpy_img_,
                                      &background_img_);
   return ret;

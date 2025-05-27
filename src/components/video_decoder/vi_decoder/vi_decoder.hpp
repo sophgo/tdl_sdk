@@ -4,13 +4,16 @@
 #include <sys/prctl.h>
 #include <atomic>
 #include <thread>
-#include "components/video_decoder/video_decoder_type.hpp"
+#include "video_decoder/video_decoder_type.hpp"
 
 class ViDecoder : public VideoDecoder {
  private:
   bool isInitialized = false;
   std::vector<std::unique_ptr<MemoryBlock>> memory_blocks_;
   std::shared_ptr<BaseMemoryPool> memory_pool_ = nullptr;
+  bool isMapped_ = false;
+  void *addr_ = nullptr;
+  uint32_t image_size_ = 0;
 
   int initialize();
   int deinitialize();

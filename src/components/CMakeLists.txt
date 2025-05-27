@@ -15,10 +15,9 @@ endif()
 if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" OR
    "${CVI_PLATFORM}" STREQUAL "CV184X")
    add_subdirectory(ive)
-  #  add_subdirectory(ive2)
 endif()
 if ("${CVI_PLATFORM}" STREQUAL "CV181X" OR
     "${CVI_PLATFORM}" STREQUAL "CV184X" OR
     "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
-  add_subdirectory(motion_detect)
+  add_subdirectory(cv/motion_detect)
 endif()

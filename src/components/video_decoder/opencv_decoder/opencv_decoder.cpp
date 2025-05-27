@@ -1,5 +1,5 @@
 #include "opencv_decoder/opencv_decoder.hpp"
-#include "framework/image/opencv_image.hpp"
+#include "image/opencv_image.hpp"
 
 OpencvDecoder::OpencvDecoder() { type_ = VideoDecoderType::OPENCV; }
 
