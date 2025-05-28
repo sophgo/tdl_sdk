@@ -188,9 +188,9 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
   } else if (img_format == ImageFormat::YUV420SP_UV) {
     pixel_format = PIXEL_FORMAT_NV12;
   } else if (img_format == ImageFormat::YUV420SP_VU) {
-    LOGE("YUV420SP_VU not support, imageFormat: %d", (int)img_format);
-  } else if (img_format == ImageFormat::YUV420P_UV) {
     pixel_format = PIXEL_FORMAT_NV21;
+  } else if (img_format == ImageFormat::YUV420P_UV) {
+    LOGE("YUV420SP_VU not support, imageFormat: %d", (int)img_format);
   } else if (img_format == ImageFormat::YUV420P_VU) {
     LOGE("YUV420SP_VU not support, imageFormat: %d", (int)img_format);
   } else if (img_format == ImageFormat::RGB_PACKED) {
@@ -239,8 +239,14 @@ uint32_t VPSSImage::getPlaneNum() const {
       frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_INT8_C3_PLANAR ||
       frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_UINT8_C3_PLANAR) {
     return 3;
-  } else {
+  } else if (frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_NV12 ||
+             frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_NV21) {
+    return 2;
+  } else if (frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_YUV_400) {
     return 1;
+  } else {
+    LOGE("not supported format %u", frame_.stVFrame.enPixelFormat);
+    return -1;
   }
 }
 
