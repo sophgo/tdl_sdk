@@ -1,5 +1,5 @@
+#include "cv/motion_detect/motion_detect.hpp"
 #include "image/base_image.hpp"
-#include "motion_detect/motion_detect.hpp"
 
 int main(int argc, char** argv) {
   if (argc != 3) {

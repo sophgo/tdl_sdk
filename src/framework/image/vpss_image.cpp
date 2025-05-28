@@ -242,7 +242,9 @@ uint32_t VPSSImage::getPlaneNum() const {
   } else if (frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_NV12 ||
              frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_NV21) {
     return 2;
-  } else if (frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_YUV_400) {
+  } else if (frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_YUV_400 ||
+             frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_BGR_888 ||
+             frame_.stVFrame.enPixelFormat == PIXEL_FORMAT_RGB_888) {
     return 1;
   } else {
     LOGE("not supported format %u", frame_.stVFrame.enPixelFormat);

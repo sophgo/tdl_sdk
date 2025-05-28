@@ -17,6 +17,8 @@ class MotionDetection {
   virtual int32_t detect(const std::shared_ptr<BaseImage> &image,
                          uint8_t threshold, double min_area,
                          std::vector<std::vector<float>> &objs) = 0;
+  // 是否需要设置ROI
+  virtual bool isROIEmpty() = 0;
   // 获取运动检测实例
   static std::shared_ptr<MotionDetection> getMotionDetection();
 };

@@ -303,3 +303,5 @@ int32_t CviMotionDetection::constructImages(VIDEO_FRAME_INFO_S *init_frame) {
   }
   return CVI_SUCCESS;
 }
+
+bool CviMotionDetection::isROIEmpty() { return roi_s_.empty(); }

@@ -195,6 +195,7 @@ int32_t processGrayImage(char* argv[]) {
   std::string output_path = "output_blending.jpg";
   ImageFactory::writeImage(output_path, output_image);
   std::cout << "输出图像已保存至: " << output_path << std::endl;
+  return 0;
 }
 
 int32_t processYuvImage(int argc, char* argv[]) {

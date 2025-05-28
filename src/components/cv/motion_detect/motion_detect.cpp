@@ -1,4 +1,4 @@
-#include "motion_detect/motion_detect.hpp"
+#include "cv/motion_detect/motion_detect.hpp"
 #if defined(__CV181X__)
 #include "cvi_motion_detect/cvi_motion_detect.hpp"
 #elif defined(__CV184X__) || defined(__CMODEL_CV184X__)

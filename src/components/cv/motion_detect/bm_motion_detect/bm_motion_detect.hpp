@@ -2,9 +2,9 @@
 #include <memory>
 
 #include "common/model_output_types.hpp"
+#include "cv/motion_detect/motion_detect.hpp"
 #include "image/base_image.hpp"
 #include "ive/image_processor.hpp"
-#include "motion_detect/motion_detect.hpp"
 #include "utils/profiler.hpp"
 
 class BmMotionDetection : public MotionDetection {
@@ -18,6 +18,7 @@ class BmMotionDetection : public MotionDetection {
   int32_t detect(const std::shared_ptr<BaseImage> &image, uint8_t threshold,
                  double min_area,
                  std::vector<std::vector<float>> &objs) override;
+  bool isROIEmpty() override;
 
  private:
   std::shared_ptr<BaseImage> background_image_;

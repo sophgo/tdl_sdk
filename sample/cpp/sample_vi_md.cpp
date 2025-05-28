@@ -7,8 +7,8 @@
 #include <unistd.h>
 #include <atomic>
 
+#include "cv/motion_detect/motion_detect.hpp"
 #include "image/base_image.hpp"
-#include "motion_detect/motion_detect.hpp"
 #include "video_decoder/video_decoder_type.hpp"
 
 int main(int argc, char* argv[]) {
@@ -75,24 +75,27 @@ int main(int argc, char* argv[]) {
     if (!is_have_background) {
       is_have_background = true;
       md->setBackground(gray_frame);
-      foreground_frame = &gray_frame;
+      gray_frame.reset();
       vi_decoder->release(vi_chn);
       continue;
     }
     md->detect(gray_frame, 20, 50, detected_objects);
     md->setBackground(gray_frame);
-    // 释放前一帧
-    (*foreground_frame).reset();
-    foreground_frame = &gray_frame;
+    gray_frame.reset();
     // 打印检测结果
-    printf("移动物体数量: %d, 移动物体坐标: \n", detected_objects.size());
-    for (size_t i = 0; i < detected_objects.size(); i++) {
-      printf("[%d,%d,%d,%d]\n", static_cast<int>(detected_objects[i][0]),
-             static_cast<int>(detected_objects[i][1]),
-             static_cast<int>(detected_objects[i][2]),
-             static_cast<int>(detected_objects[i][3]));
+    if (detected_objects.size() == 0) {
+      printf("移动物体数量: %zu\n", detected_objects.size());
+    } else {
+      printf("移动物体数量: %zu, 移动物体坐标: \n", detected_objects.size());
+      for (size_t i = 0; i < detected_objects.size(); i++) {
+        printf("[%d,%d,%d,%d]\n", static_cast<int>(detected_objects[i][0]),
+               static_cast<int>(detected_objects[i][1]),
+               static_cast<int>(detected_objects[i][2]),
+               static_cast<int>(detected_objects[i][3]));
+      }
     }
     vi_decoder->release(vi_chn);
+    image.reset();
 
     usleep(40 * 1000);  // Match Vi Frame Rate
   }

@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-#include "motion_detect/motion_detect.hpp"
+#include "cv/motion_detect/motion_detect.hpp"
 #include "utils/ive.hpp"
 #include "utils/profiler.hpp"
 
@@ -22,6 +22,7 @@ class CviMotionDetection : public MotionDetection {
   int32_t detect(const std::shared_ptr<BaseImage> &image, uint8_t threshold,
                  double min_area,
                  std::vector<std::vector<float>> &objs) override;
+  bool isROIEmpty() override;
 
  private:
   int32_t constructImages(VIDEO_FRAME_INFO_S *init_frame);

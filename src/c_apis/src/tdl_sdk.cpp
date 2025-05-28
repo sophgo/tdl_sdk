@@ -96,6 +96,7 @@ int32_t TDL_DestoryCamera(TDLHandle handle) {
   }
   return 0;
 }
+
 #endif
 
 TDLImage TDL_ReadImage(const char *path) {
@@ -863,3 +864,92 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
   }
   return 0;
 }
+
+#if defined(__CV181X__) || defined(__CV184X__)
+
+int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
+                            TDLImage detect_image, TDLObject *roi,
+                            uint8_t threshold, double min_area,
+                            TDLObject *obj_meta) {
+  TDLContext *context = (TDLContext *)handle;
+  int ret = 0;
+  if (context == nullptr) {
+    return -1;
+  }
+  // 如果motion detection没有初始化，则初始化
+  if (context->md == nullptr) {
+    context->md = MotionDetection::getMotionDetection();
+    if (context->md == nullptr) {
+      LOGE("Failed to create motion detection\n");
+      return -1;
+    }
+  }
+  // 背景图和检测图转换为灰度图
+  TDLImageContext *background_image_context = (TDLImageContext *)background;
+  TDLImageContext *detect_image_context = (TDLImageContext *)detect_image;
+  ImageFormat image_format = background_image_context->image->getImageFormat();
+  if (image_format != ImageFormat::GRAY &&
+      image_format != ImageFormat::BGR_PACKED &&
+      image_format != ImageFormat::YUV420SP_VU) {
+    LOGE("Invalid background image format: %d\n", image_format);
+    return -1;
+  }
+  if (image_format == ImageFormat::YUV420SP_VU) {
+    TDLImage background_gray_image;
+    TDLImage detect_gray_image;
+    TDL_NV21ToGray(background, &background_gray_image);
+    TDL_NV21ToGray(detect_image, &detect_gray_image);
+    background_image_context = (TDLImageContext *)background_gray_image;
+    detect_image_context = (TDLImageContext *)detect_gray_image;
+  } else if (image_format == ImageFormat::BGR_PACKED) {
+    TDLImage background_gray_image;
+    TDLImage detect_gray_image;
+    TDL_BGRPACKEDToGray(background, &background_gray_image);
+    TDL_BGRPACKEDToGray(detect_image, &detect_gray_image);
+    background_image_context = (TDLImageContext *)background_gray_image;
+    detect_image_context = (TDLImageContext *)detect_gray_image;
+  }
+
+  ret = context->md->setBackground(background_image_context->image);
+  if (ret != 0) {
+    LOGE("Failed to set background image\n");
+    return -1;
+  }
+
+  if (roi->size > 0 && context->md->isROIEmpty()) {
+    std::vector<ObjectBoxInfo> roi_s;
+    for (int i = 0; i < roi->size; i++) {
+      ObjectBoxInfo box;
+      box.x1 = roi->info[i].box.x1;
+      box.y1 = roi->info[i].box.y1;
+      box.x2 = roi->info[i].box.x2;
+      box.y2 = roi->info[i].box.y2;
+      roi_s.push_back(box);
+    }
+
+    ret = context->md->setROI(roi_s);
+    if (ret != 0) {
+      LOGE("Failed to set roi\n");
+      return -1;
+    }
+  }
+  std::vector<std::vector<float>> objs;
+  ret = context->md->detect(detect_image_context->image, threshold, min_area,
+                            objs);
+  if (ret != 0) {
+    LOGE("Failed to detect\n");
+    return -1;
+  }
+  TDL_DestroyImage((TDLImage)background_image_context);
+  TDL_DestroyImage((TDLImage)detect_image_context);
+  TDL_InitObjectMeta(obj_meta, objs.size(), 0);
+  for (int i = 0; i < objs.size(); i++) {
+    obj_meta->info[i].box.x1 = objs[i][0];
+    obj_meta->info[i].box.y1 = objs[i][1];
+    obj_meta->info[i].box.x2 = objs[i][2];
+    obj_meta->info[i].box.y2 = objs[i][3];
+  }
+  return 0;
+}
+
+#endif

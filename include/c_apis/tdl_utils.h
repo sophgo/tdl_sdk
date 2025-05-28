@@ -53,6 +53,10 @@ int32_t TDL_InitTrackMeta(TDLTracker *track_meta, int num_track);
 
 int32_t TDL_ReleaseTrackMeta(TDLTracker *track_meta);
 
+int32_t TDL_NV21ToGray(TDLImage nv21_image, TDLImage *gray_image);
+
+int32_t TDL_BGRPACKEDToGray(TDLImage bgr_packed_image, TDLImage *gray_image);
+
 #ifdef __cplusplus
 }
 #endif

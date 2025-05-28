@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <cstring>
+#include "tdl_type_internal.hpp"
 #include "utils/tdl_log.hpp"
+
 int32_t TDL_InitObjectMeta(TDLObject *object_meta, int num_objects,
                            int num_landmark) {
   if (object_meta->info == NULL) {
@@ -231,5 +233,64 @@ int32_t TDL_CaculateSimilarity(const TDLFeature feature1,
   norm1 = sqrt(norm1);
   norm2 = sqrt(norm2);
   *similarity = *similarity / (norm1 * norm2);
+  return 0;
+}
+
+int32_t TDL_NV21ToGray(TDLImage nv21_image, TDLImage *gray_image) {
+  if (nv21_image == NULL) {
+    LOGE("nv21_image is NULL");
+    return -1;
+  }
+  TDLImageContext *nv21_image_context = (TDLImageContext *)nv21_image;
+  TDLImageContext *gray_image_context = new TDLImageContext();
+
+  gray_image_context->image = ImageFactory::createImage(
+      nv21_image_context->image->getWidth(),
+      nv21_image_context->image->getHeight(), ImageFormat::GRAY,
+      TDLDataType::UINT8, true, InferencePlatform::AUTOMATIC);
+
+  uint8_t *src = nv21_image_context->image->getVirtualAddress()[0];
+  uint8_t *dst = gray_image_context->image->getVirtualAddress()[0];
+  uint32_t src_stride = nv21_image_context->image->getStrides()[0];
+  uint32_t dst_stride = gray_image_context->image->getStrides()[0];
+  uint32_t height = nv21_image_context->image->getHeight();
+  uint32_t width = nv21_image_context->image->getWidth();
+  for (uint32_t i = 0; i < height; i++) {
+    memcpy(dst + i * dst_stride, src + i * src_stride, width);
+  }
+  gray_image_context->image->flushCache();
+
+  *gray_image = gray_image_context;
+  return 0;
+}
+
+int32_t TDL_BGRPACKEDToGray(TDLImage bgr_packed_image, TDLImage *gray_image) {
+  if (bgr_packed_image == NULL) {
+    LOGE("bgr_packed_image is NULL");
+    return -1;
+  }
+  TDLImageContext *bgr_packed_image_context =
+      (TDLImageContext *)bgr_packed_image;
+  TDLImageContext *gray_image_context = new TDLImageContext();
+
+  cv::Mat bgr_mat;
+  bool is_rgb;
+  ImageFactory::convertToMat(bgr_packed_image_context->image, bgr_mat, is_rgb);
+  cv::Mat gray_mat;
+  cv::cvtColor(bgr_mat, gray_mat, cv::COLOR_BGR2GRAY);
+  gray_image_context->image = ImageFactory::createImage(
+      gray_mat.cols, gray_mat.rows, ImageFormat::GRAY, TDLDataType::UINT8, true,
+      InferencePlatform::AUTOMATIC);
+  uint32_t stride = gray_image_context->image->getStrides()[0];
+  uint8_t *ptr_dst = gray_image_context->image->getVirtualAddress()[0];
+  uint8_t *ptr_src = gray_mat.data;
+
+  for (int r = 0; r < gray_mat.rows; r++) {
+    uint8_t *dst = ptr_dst + r * stride;
+    memcpy(dst, ptr_src + r * gray_mat.step[0], gray_mat.cols);
+  }
+  gray_image_context->image->flushCache();
+
+  *gray_image = gray_image_context;
   return 0;
 }

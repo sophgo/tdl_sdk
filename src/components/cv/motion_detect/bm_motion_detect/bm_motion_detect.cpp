@@ -229,3 +229,5 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
   md_timer_.TicToc("post");
   return 0;
 }
+
+bool BmMotionDetection::isROIEmpty() { return roi_s_.empty(); }

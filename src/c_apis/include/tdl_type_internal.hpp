@@ -2,6 +2,7 @@
 #define _WRAPPER_TYPE_DEF_HPP_
 
 #include <map>
+#include "cv/motion_detect/motion_detect.hpp"
 #include "model/base_model.hpp"
 #include "tdl_model_def.h"
 #include "tdl_model_defs.hpp"
@@ -14,6 +15,7 @@ typedef struct {
   std::unordered_map<TDLModel, std::shared_ptr<BaseModel>> models;
   std::shared_ptr<TDLModelFactory> model_factory;
   std::shared_ptr<VideoDecoder> video_decoder;
+  std::shared_ptr<MotionDetection> md;
 } TDLContext;
 
 typedef struct {
@@ -68,7 +70,7 @@ inline TDLDataType convertDataTypeE(TDLDataTypeE data_type) {
       return TDLDataType::UNKOWN;
   }
 }
-ModelType convertModelType(TDLModel m) {
+inline ModelType convertModelType(TDLModel m) {
   switch (m) {
     // 对 MODEL_TYPE_LIST 中的每一项都展开一条 case
 #define X(name, comment) \

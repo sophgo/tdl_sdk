@@ -65,6 +65,14 @@ int32_t TDL_ReleaseCameraFrame(TDLHandle handle, int chn);
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_DestoryCamera(TDLHandle handle);
+
+/**
+ * @brief 初始化移动侦测任务
+ *
+ * @param handle TDLHandle 对象
+ * @return 成功返回 0，失败返回-1
+ */
+
 #endif
 
 /**
@@ -294,6 +302,18 @@ int32_t TDL_LaneDetection(TDLHandle handle, const TDLModel model_id,
                           TDLImage image_handle, TDLLane *lane_meta);
 
 /**
+ * @brief 执行字符识别任务（OCR）
+ *
+ * @param handle TDLHandle 对象
+ * @param model_id 指定字符识别模型类型枚举值
+ * @param image_handle TDLImageHandle 对象
+ * @param char_meta 输出参数，存储识别结果
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
+                                 TDLImage image_handle, TDLOcr *char_meta);
+
+/**
  * @brief 执行立体视觉深度估计任务
  *
  * @param handle TDLHandle 对象
@@ -318,17 +338,13 @@ int32_t TDL_DepthStereo(TDLHandle handle, const TDLModel model_id,
 int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
                      TDLObject *obj_meta, TDLTracker *track_meta);
 
-/**
- * @brief 执行字符识别任务（OCR）
- *
- * @param handle TDLHandle 对象
- * @param model_id 指定字符识别模型类型枚举值
- * @param image_handle TDLImageHandle 对象
- * @param char_meta 输出参数，存储识别结果
- * @return 成功返回 0，失败返回-1
- */
-int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
-                                 TDLImage image_handle, TDLOcr *char_meta);
+#if defined(__CV181X__) || defined(__CV184X__)
+
+int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
+                            TDLImage detect_image, TDLObject *roi,
+                            uint8_t threshold, double min_area,
+                            TDLObject *obj_meta);
+#endif
 
 #ifdef __cplusplus
 }
