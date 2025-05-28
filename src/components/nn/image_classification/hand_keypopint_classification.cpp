@@ -80,21 +80,50 @@ int32_t HandKeypointClassification::outputParse(
   std::shared_ptr<BaseTensor> output_tensor =
       net_->getOutputTensor(output_name);
 
-  int num_cls = oinfo.shape[1];
+  int num_cls = std::max(
+      {oinfo.shape[0], oinfo.shape[1], oinfo.shape[2], oinfo.shape[3]});
 
   for (size_t b = 0; b < images.size(); b++) {
     std::shared_ptr<ModelClassificationInfo> cls_meta =
         std::make_shared<ModelClassificationInfo>();
 
-    float *out_data = output_tensor->getBatchPtr<float>(b);
-
     int max_index = -1;
-    float max_score = -1;
-    for (int k = 0; k < num_cls; k++) {
-      if (out_data[k] > max_score) {
-        max_score = out_data[k];
-        max_index = k;
+    float max_score = -1.0f;  // 用float存储分数，便于统一处理
+
+    if (oinfo.data_type == TDLDataType::INT8) {
+      std::cout << "INT8" << std::endl;
+      int8_t *out_data = output_tensor->getBatchPtr<int8_t>(b);
+      max_score = static_cast<float>(out_data[0]);
+      max_index = 0;
+      for (int k = 1; k < num_cls; k++) {
+        if (out_data[k] > out_data[max_index]) {
+          max_score = static_cast<float>(out_data[k]);
+          max_index = k;
+        }
       }
+    } else if (oinfo.data_type == TDLDataType::UINT8) {
+      uint8_t *out_data = output_tensor->getBatchPtr<uint8_t>(b);
+      max_score = static_cast<float>(out_data[0]);
+      max_index = 0;
+      for (int k = 1; k < num_cls; k++) {
+        if (out_data[k] > out_data[max_index]) {
+          max_score = static_cast<float>(out_data[k]);
+          max_index = k;
+        }
+      }
+    } else if (oinfo.data_type == TDLDataType::FP32) {
+      float *out_data = output_tensor->getBatchPtr<float>(b);
+      max_score = out_data[0];
+      max_index = 0;
+      for (int k = 1; k < num_cls; k++) {
+        if (out_data[k] > max_score) {
+          max_score = out_data[k];
+          max_index = k;
+        }
+      }
+    } else {
+      LOGE("unsupported data type:%d\n", oinfo.data_type);
+      return -1;
     }
 
     cls_meta->topk_class_ids.push_back(max_index);

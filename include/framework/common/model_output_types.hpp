@@ -114,6 +114,7 @@ class ModelBoxLandmarkInfo : public ModelOutputInfo {
   }
   uint32_t image_width;
   uint32_t image_height;
+  std::vector<float> feature;  // only be used for evaluating the LSTR model
   std::vector<ObjectBoxLandmarkInfo> box_landmarks;
 };
 

@@ -299,3 +299,9 @@ void BaseModel::setTypeMapping(
 void BaseModel::setModelThreshold(float threshold) {
   model_threshold_ = threshold;
 }
+
+void BaseModel::setExportFeature(int flag) {
+  LOGE("only can  be used for evaluating the LSTR model");
+  throw std::runtime_error(
+      "setExportFeature() should not be called on BaseModel");
+}

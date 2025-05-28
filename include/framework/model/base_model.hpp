@@ -57,6 +57,7 @@ class BaseModel {
 
   void setTypeMapping(const std::map<int, TDLObjectType>& type_mapping);
   virtual void setModelThreshold(float threshold);
+  virtual void setExportFeature(int flag);
   virtual float getModelThreshold() const { return model_threshold_; }
 
   int32_t getPreprocessParameters(PreprocessParams& pre_param,
@@ -84,6 +85,7 @@ class BaseModel {
 
   std::string output_layer_;
   float model_threshold_ = 0.5;
+  int export_feature = 0;
 
   std::vector<std::vector<float>> batch_rescale_params_;
 

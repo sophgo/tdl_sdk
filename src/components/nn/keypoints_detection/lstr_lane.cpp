@@ -63,6 +63,13 @@ int32_t LstrLane::outputParse(
     obj->image_width = image_width;
     obj->image_height = image_height;
 
+    if (export_feature) {
+      int feature_size = 7 * 2 + 7 * 8;
+      obj->feature.resize(feature_size);
+      memcpy(obj->feature.data(), out_feature, sizeof(float) * 7 * 8);
+      memcpy(obj->feature.data() + 7 * 8, out_conf, sizeof(float) * 7 * 2);
+    }
+
     std::vector<std::vector<float>> point_map;
     std::vector<float> lane_dis;
     for (int i = 0; i < 7; i++) {
@@ -134,3 +141,5 @@ int32_t LstrLane::outputParse(
 
   return 0;
 }
+
+void LstrLane::setExportFeature(int flag) { export_feature = flag; }
