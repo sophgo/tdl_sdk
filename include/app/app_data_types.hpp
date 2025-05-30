@@ -19,6 +19,20 @@ struct FaceCaptureResult {
   std::vector<ObjectSnapshotInfo> face_snapshots;
 };
 
+struct FacePetCaptureResult {
+ public:
+  uint64_t frame_id;
+  uint32_t frame_width;
+  uint32_t frame_height;
+  std::shared_ptr<BaseImage> image;
+  std::vector<ObjectBoxLandmarkInfo> face_boxes;
+  std::vector<ObjectBoxInfo> person_boxes;
+  std::vector<ObjectBoxInfo> pet_boxes;
+  std::vector<TrackerInfo> track_results;
+  std::vector<ObjectSnapshotInfo> face_snapshots;
+  std::map<uint64_t, std::vector<float>> face_features;
+};
+
 struct FallDetectionResult {
  public:
   uint64_t frame_id;

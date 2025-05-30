@@ -250,6 +250,16 @@ int main(int argc, char **argv) {
     }
 
     features.push_back(feature_vec);
+
+    // to save img1 feature
+    // if (i == 0 && feature_meta->embedding_type == TDLDataType::INT8) {
+    //   printf("to save feature, feature size:%d\n",
+    //   feature_meta->embedding_num); int8_t *feature = reinterpret_cast<int8_t
+    //   *>(feature_meta->embedding); FILE *file = fopen("1.bin", "wb");
+    //   fwrite(feature, sizeof(int8_t), feature_meta->embedding_num,
+    //          file);
+    //   fclose(file);
+    // }
   }
   float sim = 0;
   float norm1 = 0;

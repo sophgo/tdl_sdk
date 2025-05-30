@@ -49,7 +49,8 @@ int32_t ObjectSnapshot::updateSnapshot(
     const std::map<uint64_t, ObjectBoxInfo>& track_boxes,
     const std::vector<TrackerInfo>& tracks,
     const std::map<uint64_t, float>& quality_scores,
-    const std::map<std::string, Packet>& other_info) {
+    const std::map<std::string, Packet>& other_info,
+    const std::map<uint64_t, std::shared_ptr<BaseImage>>& crop_face_imgs) {
   std::map<uint64_t, int> track_valid_flag;
   LOGI("ObjectSnapshot updateSnapshot, frame_id: %lu, tracks.size(): %zu",
        frame_id, tracks.size());
@@ -93,50 +94,92 @@ int32_t ObjectSnapshot::updateSnapshot(
       snapshot_info.track_id = track.track_id_;
       snapshot_info.snapshot_frame_id = frame_id;
       snapshot_info.quality = quality_score;
-      int crop_x = 0;
-      int crop_y = 0;
-      int crop_width = 0;
-      int crop_height = 0;
-      int dst_width = 0;
-      int dst_height = 0;
-      getCropBox(box, crop_x, crop_y, crop_width, crop_height, dst_width,
-                 dst_height, image->getWidth(), image->getHeight());
-      LOGI(
-          "crop_x: %d, crop_y: %d, crop_width: %d, crop_height: %d, dst_width: "
-          "%d, dst_height: %d,track_id: %lu",
-          crop_x, crop_y, crop_width, crop_height, dst_width, dst_height,
-          track.track_id_);
-      snapshot_info.object_image =
-          preprocessor_->cropResize(image, crop_x, crop_y, crop_width,
-                                    crop_height, dst_width, dst_height);
-      if (snapshot_info.object_image == nullptr) {
-        LOGE("ObjectSnapshot updateSnapshot, object_image is nullptr");
-        assert(false);
-      }
-      LOGI(
-          "update snapshot,track_id: %lu, quality: %f,image_width: "
-          "%d,image_height: %d",
-          track.track_id_, quality_score,
-          snapshot_info.object_image->getWidth(),
-          snapshot_info.object_image->getHeight());
-      snapshot_info.object_box_info = box;  // box is updated
 
-      // TODO(fuquan.ke):wrap the code below as a callback function
-      if (other_info.count("face_landmark")) {
-        const std::vector<ObjectBoxLandmarkInfo>& face_landmarks =
-            other_info.at("face_landmark")
-                .get<std::vector<ObjectBoxLandmarkInfo>>();
-        ObjectBoxLandmarkInfo landmark_info = face_landmarks[obj_idx];
-        std::vector<float> landmarks;
-        float scale_x = dst_width / float(crop_width);
-        float scale_y = dst_height / float(crop_height);
-        for (size_t i = 0; i < landmark_info.landmarks_x.size(); i++) {
-          landmarks.push_back((landmark_info.landmarks_x[i] - crop_x) *
-                              scale_x);
-          landmarks.push_back((landmark_info.landmarks_y[i] - crop_y) *
-                              scale_y);
+      if (crop_face_imgs.count(track.track_id_)) {
+        snapshot_info.object_image = crop_face_imgs.at(track.track_id_);
+        if (snapshot_info.object_image == nullptr) {
+          LOGE("ObjectSnapshot updateSnapshot, object_image is nullptr");
+          assert(false);
         }
-        snapshot_info.other_info["landmarks"] = Packet::make(landmarks);
+        LOGI(
+            "update snapshot,track_id: %lu, quality: %f,image_width: "
+            "%d,image_height: %d",
+            track.track_id_, quality_score,
+            snapshot_info.object_image->getWidth(),
+            snapshot_info.object_image->getHeight());
+
+        snapshot_info.object_box_info = box;
+
+        if (other_info.count("face_landmark")) {
+          const std::vector<ObjectBoxLandmarkInfo>& face_landmarks =
+              other_info.at("face_landmark")
+                  .get<std::vector<ObjectBoxLandmarkInfo>>();
+          ObjectBoxLandmarkInfo landmark_info = face_landmarks[obj_idx];
+          if (landmark_info.landmarks_x.size() != 5) {
+            printf("landmark_info.landmarks_x size err : %d\n",
+                   landmark_info.landmarks_x.size());
+            assert(false);
+          }
+          std::vector<float> landmarks;
+
+          for (size_t i = 0; i < landmark_info.landmarks_x.size(); i++) {
+            landmarks.push_back(landmark_info.landmarks_x[i]);
+            landmarks.push_back(landmark_info.landmarks_y[i]);
+          }
+          snapshot_info.other_info["landmarks"] = Packet::make(landmarks);
+        }
+      } else {
+        int crop_x = 0;
+        int crop_y = 0;
+        int crop_width = 0;
+        int crop_height = 0;
+        int dst_width = 0;
+        int dst_height = 0;
+        getCropBox(box, crop_x, crop_y, crop_width, crop_height, dst_width,
+                   dst_height, image->getWidth(), image->getHeight());
+        LOGI(
+            "crop_x: %d, crop_y: %d, crop_width: %d, crop_height: %d, "
+            "dst_width: "
+            "%d, dst_height: %d,track_id: %lu",
+            crop_x, crop_y, crop_width, crop_height, dst_width, dst_height,
+            track.track_id_);
+        snapshot_info.object_image =
+            preprocessor_->cropResize(image, crop_x, crop_y, crop_width,
+                                      crop_height, dst_width, dst_height);
+        if (snapshot_info.object_image == nullptr) {
+          LOGE("ObjectSnapshot updateSnapshot, object_image is nullptr");
+          assert(false);
+        }
+        LOGI(
+            "update snapshot,track_id: %lu, quality: %f,image_width: "
+            "%d,image_height: %d",
+            track.track_id_, quality_score,
+            snapshot_info.object_image->getWidth(),
+            snapshot_info.object_image->getHeight());
+        snapshot_info.object_box_info = box;  // box is updated
+
+        // TODO(fuquan.ke):wrap the code below as a callback function
+        if (other_info.count("face_landmark")) {
+          const std::vector<ObjectBoxLandmarkInfo>& face_landmarks =
+              other_info.at("face_landmark")
+                  .get<std::vector<ObjectBoxLandmarkInfo>>();
+          ObjectBoxLandmarkInfo landmark_info = face_landmarks[obj_idx];
+          std::vector<float> landmarks;
+          float scale_x = dst_width / float(crop_width);
+          float scale_y = dst_height / float(crop_height);
+          if (landmark_info.landmarks_x.size() != 5) {
+            printf("landmark_info.landmarks_x size err : %d\n",
+                   landmark_info.landmarks_x.size());
+            assert(false);
+          }
+          for (size_t i = 0; i < landmark_info.landmarks_x.size(); i++) {
+            landmarks.push_back((landmark_info.landmarks_x[i] - crop_x) *
+                                scale_x);
+            landmarks.push_back((landmark_info.landmarks_y[i] - crop_y) *
+                                scale_y);
+          }
+          snapshot_info.other_info["landmarks"] = Packet::make(landmarks);
+        }
       }
     }
   }
@@ -154,12 +197,11 @@ int32_t ObjectSnapshot::updateSnapshot(
     } else {
       // check snapshot interval
       if (frame_id - iter->second.export_frame_id > config_.snapshot_interval) {
-        if (iter->second.object_image == nullptr) {
-          LOGE("ObjectSnapshotInfo image is nullptr");
-          assert(false);
+        if (iter->second.object_image != nullptr) {
+          LOGI(" to export ObjectSnapshotInfo\n");
+          export_snapshots_.push_back(iter->second);
+          resetSnapshotInfo(iter->second, frame_id);
         }
-        export_snapshots_.push_back(iter->second);
-        resetSnapshotInfo(iter->second, frame_id);
       }
       ++iter;
     }

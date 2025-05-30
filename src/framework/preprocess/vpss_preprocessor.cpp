@@ -166,7 +166,7 @@ std::shared_ptr<BaseImage> VpssPreprocessor::preprocess(
       params.dst_pixdata_type, false, memory_pool);
   std::unique_ptr<MemoryBlock> memory_block;
   if (memory_pool == nullptr) {
-    LOGE("input memory_pool is nullptr,use src image memory pool\n");
+    LOGW("input memory_pool is nullptr,use src image memory pool\n");
     memory_pool = image->getMemoryPool();
   }
   if (memory_pool == nullptr) {

@@ -3,6 +3,10 @@
 #include "image/opencv_image.hpp"
 #include "utils/tdl_log.hpp"
 
+#if defined(__BM168X__)
+#include <opencv2/core/bmcv.hpp>
+#endif
+
 void bgr_split_scale(const cv::Mat& src_mat, std::vector<cv::Mat>& tmp_bgr,
                      const std::vector<cv::Mat>& input_channels,
                      const std::vector<float>& mean,
@@ -43,7 +47,7 @@ std::shared_ptr<BaseImage> OpenCVPreprocessor::preprocess(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     std::shared_ptr<BaseMemoryPool> memory_pool) {
   if (memory_pool == nullptr) {
-    LOGE("input memory_pool is nullptr,use src image memory pool\n");
+    LOGW("input memory_pool is nullptr,use src image memory pool\n");
     memory_pool = src_image->getMemoryPool();
   }
   if (memory_pool == nullptr) {
@@ -126,8 +130,25 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     if (pad_x != 0 || pad_y != 0) {
       cv::Rect roi(pad_x, pad_y, resized_w, resized_h);
 
+#if defined(__BM168X__)
+      if (src_mat.u->addr) {
+        std::vector<cv::Mat> src{src_mat};
+        std::vector<cv::Rect> srcrect{
+            cv::Rect(0, 0, src_mat.cols, src_mat.rows)};
+        std::vector<cv::Rect> dstrect{roi};
+
+        cv::bmcv::stitch(src, srcrect, dstrect, tmp_resized);
+      } else {
+        cv::resize(src_mat, tmp_resized(roi), cv::Size(resized_w, resized_h), 0,
+                   0, cv::INTER_LINEAR);
+      }
+
+#else
+
       cv::resize(src_mat, tmp_resized(roi), cv::Size(resized_w, resized_h), 0,
                  0, cv::INTER_LINEAR);
+#endif
+
     } else {
       cv::resize(src_mat, tmp_resized, cv::Size(resized_w, resized_h), 0, 0,
                  cv::INTER_LINEAR);

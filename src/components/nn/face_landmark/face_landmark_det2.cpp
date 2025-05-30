@@ -56,9 +56,10 @@ int32_t FaceLandmarkerDet2::onModelOpened() {
   for (size_t j = 0; j < num_output; j++) {
     auto oinfo = net_->getTensorInfo(output_layers[j]);
 
-    if (oinfo.shape[1] != 1) {
+    if (output_layers[j].find(std::string("score")) != std::string::npos) {
       out_names_["score"] = output_layers[j];
-    } else if (out_names_.count("point_x") == 0) {
+    } else if (output_layers[j].find(std::string("x_pred")) !=
+               std::string::npos) {
       out_names_["point_x"] = output_layers[j];
     } else {
       out_names_["point_y"] = output_layers[j];
@@ -166,10 +167,10 @@ int32_t FaceLandmarkerDet2::outputParse(
     std::vector<float> output_point_y;
     std::vector<float> output_score;
 
-    parse_point_info_anytype(x_tensor.get(), oinfo_x.data_type, b,
-                             oinfo_x.shape[3], oinfo_x.qscale, output_point_x);
-    parse_point_info_anytype(y_tensor.get(), oinfo_y.data_type, b,
-                             oinfo_y.shape[3], oinfo_y.qscale, output_point_y);
+    parse_point_info_anytype(x_tensor.get(), oinfo_x.data_type, b, 5,
+                             oinfo_x.qscale, output_point_x);
+    parse_point_info_anytype(y_tensor.get(), oinfo_y.data_type, b, 5,
+                             oinfo_y.qscale, output_point_y);
 
     if (oinfo_cls.data_type == TDLDataType::FP32) {
       parse_score_info<float>(cls_tensor->getBatchPtr<float>(b),
@@ -192,6 +193,12 @@ int32_t FaceLandmarkerDet2::outputParse(
     facemeta->landmarks_x = output_point_x;
     facemeta->landmarks_y = output_point_y;
     facemeta->landmarks_score = output_score;
+
+    if (output_point_x.size() != 5) {
+      printf("face_landmark_det2 landmarks_x size should be 5, but got %d\n",
+             output_point_x.size());
+      assert(false);
+    }
 
     for (int i = 0; i < 5; i++) {
       facemeta->landmarks_x[i] = output_point_x[i] * image_width;

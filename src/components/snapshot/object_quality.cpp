@@ -5,6 +5,10 @@
 #include <stdexcept>
 #include "framework/utils/pose_helper.hpp"
 #include "framework/utils/tdl_log.hpp"
+#include "mot/munkres.hpp"
+#include "utils/cost_matrix_helper.hpp"
+#include "utils/mot_box_helper.hpp"
+
 struct FaceQualityConfig {
   // 硬阈值
   float min_area{25 * 25};
@@ -183,4 +187,57 @@ float ObjectQualityHelper::getFaceQuality(
   }
   return getFaceQuality(box_info, landmark_xys, img_width, img_height,
                         other_info);
+}
+
+void ObjectQualityHelper::getFaceQuality(
+    const std::vector<ObjectBoxInfo>& face_bbox,
+    const std::vector<ObjectBoxInfo>& head_bbox,
+    std::vector<float>& face_quality) {
+  face_quality.clear();
+  if (face_bbox.size() == 0) {
+    return;
+
+  } else if (head_bbox.size() == 0) {
+    for (int i = 0; i < face_bbox.size(); i++) {
+      face_quality.push_back(0.4);
+    }
+
+  } else {
+    COST_MATRIX cost_matrix(face_bbox.size(), head_bbox.size());
+
+    for (int i = 0; i < face_bbox.size(); i++) {
+      for (int j = 0; j < head_bbox.size(); j++) {
+        cost_matrix(i, j) =
+            1 - MotBoxHelper::calculateIOU(face_bbox[i], head_bbox[j]);
+      }
+    }
+
+    Munkres munkres_solver(&cost_matrix);
+    if (munkres_solver.solve() == MUNKRES_FAILURE) {
+      LOGW("MUNKRES algorithm failed.");
+      for (int i = 0; i < face_bbox.size(); i++) {
+        face_quality.push_back(0.0);
+      }
+      return;
+    }
+
+    for (int i = 0; i < face_bbox.size(); i++) {
+      int head_idx = munkres_solver.m_match_result[i];
+      if (head_idx != -1) {
+        float iou_score = 1 - cost_matrix(i, head_idx);
+
+        float head_width = head_bbox[head_idx].x2 - head_bbox[head_idx].x1;
+        float head_w_center =
+            (head_bbox[head_idx].x1 + head_bbox[head_idx].x2) / 2;
+        float face_w_center = (face_bbox[i].x1 + face_bbox[i].x2) / 2;
+        float pose_score =
+            1 - std::abs(head_w_center - face_w_center) / head_width;
+
+        face_quality.push_back((iou_score + pose_score) * 0.5);
+
+      } else {
+        face_quality.push_back(0.4);
+      }
+    }
+  }
 }

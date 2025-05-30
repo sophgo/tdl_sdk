@@ -42,7 +42,9 @@ class ObjectSnapshot {
                          const std::map<uint64_t, ObjectBoxInfo>& track_boxes,
                          const std::vector<TrackerInfo>& tracks,
                          const std::map<uint64_t, float>& quality_scores,
-                         const std::map<std::string, Packet>& other_info);
+                         const std::map<std::string, Packet>& other_info,
+                         const std::map<uint64_t, std::shared_ptr<BaseImage>>&
+                             crop_face_imgs = {});
 
   int32_t getSnapshotData(std::vector<ObjectSnapshotInfo>& snapshots,
                           bool force_all = false);

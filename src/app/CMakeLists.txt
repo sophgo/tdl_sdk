@@ -1,5 +1,6 @@
 project(app)
 add_subdirectory(face_capture)
+add_subdirectory(face_pet_capture)
 add_subdirectory(fall_detection)
 
 include_directories(${REPO_DIR}/include)

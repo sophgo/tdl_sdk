@@ -17,6 +17,7 @@ class TrackerInfo {
   uint64_t track_id_;
   float velocity_x_;
   float velocity_y_;
+  float blurness;
 };
 class TrackerConfig {
  public:

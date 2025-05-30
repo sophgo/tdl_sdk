@@ -11,6 +11,9 @@ class ObjectQualityHelper {
       const ObjectBoxLandmarkInfo& box_landmark, const int img_width,
       const int img_height,
       const std::map<std::string, float>& other_info = {});
+  static void getFaceQuality(const std::vector<ObjectBoxInfo>& face_bbox,
+                             const std::vector<ObjectBoxInfo>& head_bbox,
+                             std::vector<float>& face_quality);
 };
 
 #endif

@@ -189,6 +189,10 @@
       "file_name":"keypoint_simcc_person17_256_192_INT8",
       "rgb_order":"rgb"
     },
+    "KEYPOINT_FACE_V2": {
+        "_comment": "KEYPOINT_FACE_V2",
+        "file_name": "keypoint_face_v2_64_64_INT8"
+      },
     "LSTR_DET_LANE":{
       "_comment":"output lane keypoints",
       "file_name":"lstr_det_lane_360_640_MIX_bm1688",

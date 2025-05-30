@@ -23,6 +23,7 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:c_apis>
                $<TARGET_OBJECTS:pipeline>
                $<TARGET_OBJECTS:face_capture_app>
+               $<TARGET_OBJECTS:face_pet_capture_app>
                $<TARGET_OBJECTS:fall_detection_app>
                $<TARGET_OBJECTS:app>
                $<TARGET_OBJECTS:area_detect>
