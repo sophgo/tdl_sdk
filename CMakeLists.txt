@@ -103,11 +103,6 @@ else()
     message(FATAL_ERROR "No build type!!!")
 endif()
 
-if(DEFINED ENV{PERF_EVAL})
-  add_definitions(-DPERF_EVAL)
-  message("set PERF_EVAL")
-endif()
-
 get_directory_property(compile_defs COMPILE_DEFINITIONS)
 message(STATUS "All compile definitions: ${compile_defs}")
 

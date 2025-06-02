@@ -1,4 +1,5 @@
 #include "utils/profiler.hpp"
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 double cal_time_elapsed(struct timeval &start, struct timeval &end) {
@@ -6,6 +7,16 @@ double cal_time_elapsed(struct timeval &start, struct timeval &end) {
       end.tv_sec - start.tv_sec + (end.tv_usec - start.tv_usec) / 1000000.;
   return sec;
 }
+
+bool is_perf_eval() {
+  static int perf_eval = -1;
+  if (perf_eval == -1) {
+    const char *env = std::getenv("PERF_EVAL");
+    perf_eval = (env && std::string(env) == "1") ? 1 : 0;
+  }
+  return perf_eval == 1;
+}
+
 Timer::Timer(const std::string &name, int summary_cond_times)
     : name_(name), summary_cond_times_(summary_cond_times) {}
 
@@ -23,55 +34,54 @@ void Timer::Toc(int times) {
   }
 }
 void Timer::TicToc(const std::string &str_step) {
-#ifdef PERF_EVAL
-  if (step_name_vec_.size() > 0 && step_name_vec_[0] == str_step) {
-    for (auto &kv : step_time_) {
-      int step = kv.first;
-      int prev_step = step - 1;
-      if (step_time_.count(prev_step)) {
-        double ts = cal_time_elapsed(step_time_[prev_step], step_time_[step]);
-        if (step_time_elpased_.count(step) == 0) {
-          step_time_elpased_[step] = ts;
-        } else {
-          step_time_elpased_[step] += ts;
+  if (is_perf_eval()) {
+    if (step_name_vec_.size() > 0 && step_name_vec_[0] == str_step) {
+      for (auto &kv : step_time_) {
+        int step = kv.first;
+        int prev_step = step - 1;
+        if (step_time_.count(prev_step)) {
+          double ts = cal_time_elapsed(step_time_[prev_step], step_time_[step]);
+          if (step_time_elpased_.count(step) == 0) {
+            step_time_elpased_[step] = ts;
+          } else {
+            step_time_elpased_[step] += ts;
+          }
         }
       }
-    }
-    times_ += 1;
-    if (times_ == summary_cond_times_) {
-      double total_ts = 0;
-      std::stringstream ss;
-      ss.precision(3);
-      ss << "[Timer] " << name_ << " ";
-      for (size_t i = 1; i < step_name_vec_.size(); i++) {
-        if (step_time_elpased_.count(i)) {
-          ss << step_name_vec_[i] << ":"
-             << step_time_elpased_[i] * 1000 / times_ << ",";
-          total_ts += step_time_elpased_[i] * 1000 / times_;
+      times_ += 1;
+      if (times_ == summary_cond_times_) {
+        double total_ts = 0;
+        std::stringstream ss;
+        ss.precision(3);
+        ss << "[Timer] " << name_ << " ";
+        for (size_t i = 1; i < step_name_vec_.size(); i++) {
+          if (step_time_elpased_.count(i)) {
+            ss << step_name_vec_[i] << ":"
+               << step_time_elpased_[i] * 1000 / times_ << ",";
+            total_ts += step_time_elpased_[i] * 1000 / times_;
+          }
         }
+        ss << "total:" << total_ts;
+        std::cout << ss.str() << std::endl;
+        times_ = 0;
+        step_time_elpased_.clear();
       }
-      ss << "total:" << total_ts;
-      std::cout << ss.str() << std::endl;
-      times_ = 0;
-      step_time_elpased_.clear();
+      step_time_.clear();
+      step_name_vec_.clear();
     }
-    step_time_.clear();
-    step_name_vec_.clear();
-  }
-  for (size_t i = 1; i < step_name_vec_.size(); i++) {
-    if (step_name_vec_[i] == str_step) {
-      std::cout << "find duplicate name:" << str_step << std::endl;
-      return;
+    for (size_t i = 1; i < step_name_vec_.size(); i++) {
+      if (step_name_vec_[i] == str_step) {
+        std::cout << "find duplicate name:" << str_step << std::endl;
+        return;
+      }
     }
+
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    step_name_vec_.push_back(str_step);
+    int idx = int(step_name_vec_.size()) - 1;
+    step_time_[idx] = t;
   }
-
-  struct timeval t;
-  gettimeofday(&t, NULL);
-  step_name_vec_.push_back(str_step);
-  int idx = int(step_name_vec_.size()) - 1;
-  step_time_[idx] = t;
-
-#endif
 }
 void Timer::Config(const std::string &name, int summary_cond_times) {
   name_ = name;
@@ -79,10 +89,10 @@ void Timer::Config(const std::string &name, int summary_cond_times) {
 }
 
 void Timer::Summary() {
-#ifdef PERF_EVAL
-  std::cout << "[Timer] " << name_ << " " << 1000 * total_time_ / times_ << "ms"
-            << std::endl;
-#endif
+  if (is_perf_eval()) {
+    std::cout << "[Timer] " << name_ << " " << 1000 * total_time_ / times_
+              << "ms" << std::endl;
+  }
   total_time_ = 0.;
   times_ = 0;
 }
@@ -109,10 +119,10 @@ void FpsProfiler::Add(int cnts) {
   pthread_mutex_unlock(&lock_);
 
   if (print) {
-#ifdef PERF_EVAL
-    std::cerr << "[" << name_ << "] temp_fps:" << tmp_fps_
-              << ",average_fps:" << average_fps_ << std::endl;
-#endif
+    if (is_perf_eval()) {
+      std::cerr << "[" << name_ << "] temp_fps:" << tmp_fps_
+                << ",average_fps:" << average_fps_ << std::endl;
+    }
   }
 }
 
