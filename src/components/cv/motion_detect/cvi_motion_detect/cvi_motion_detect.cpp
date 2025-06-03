@@ -149,7 +149,7 @@ int32_t CviMotionDetection::setBackground(
 
 int32_t CviMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                    uint8_t threshold, double min_area,
-                                   std::vector<std::vector<float>> &objs) {
+                                   std::vector<ObjectBoxInfo> &objs) {
   VIDEO_FRAME_INFO_S video_frame;
   BaseImage2VideoFrame(image, video_frame);
 
@@ -218,11 +218,11 @@ int32_t CviMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                           imw, imh, wstride, min_area,
                                           ccl_instance_, &num_boxes);
       for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
-        std::vector<float> box;
-        box.push_back(p_boxes[i * 5 + 2] + offsetx);
-        box.push_back(p_boxes[i * 5 + 1] + offsety);
-        box.push_back(p_boxes[i * 5 + 4] + offsetx);
-        box.push_back(p_boxes[i * 5 + 3] + offsety);
+        ObjectBoxInfo box;
+        box.x1 = p_boxes[i * 5 + 2] + offsetx;
+        box.y1 = p_boxes[i * 5 + 1] + offsety;
+        box.x2 = p_boxes[i * 5 + 4] + offsetx;
+        box.y2 = p_boxes[i * 5 + 3] + offsety;
         objs.push_back(box);
       }
     }
@@ -232,11 +232,11 @@ int32_t CviMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                         ccl_instance_, &num_boxes);
     objs.clear();
     for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
-      std::vector<float> box;
-      box.push_back(p_boxes[i * 5 + 2]);
-      box.push_back(p_boxes[i * 5 + 1]);
-      box.push_back(p_boxes[i * 5 + 4]);
-      box.push_back(p_boxes[i * 5 + 3]);
+      ObjectBoxInfo box;
+      box.x1 = p_boxes[i * 5 + 2];
+      box.y1 = p_boxes[i * 5 + 1];
+      box.x2 = p_boxes[i * 5 + 4];
+      box.y2 = p_boxes[i * 5 + 3];
       objs.push_back(box);
     }
   }

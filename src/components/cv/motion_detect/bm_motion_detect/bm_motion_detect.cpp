@@ -90,7 +90,7 @@ int32_t BmMotionDetection::setROI(const std::vector<ObjectBoxInfo> &_roi_s) {
 // 实现运动检测功能
 int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                   uint8_t threshold, double min_area,
-                                  std::vector<std::vector<float>> &objs) {
+                                  std::vector<ObjectBoxInfo> &objs) {
   if (!image) {
     LOGE("Input image is null\n");
     return -1;
@@ -200,11 +200,11 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
 
       // 添加检测到的区域
       for (uint32_t j = 0; j < (uint32_t)num_boxes; ++j) {
-        std::vector<float> box;
-        box.push_back(p_boxes[j * 5 + 2] + offsetx);  // x1
-        box.push_back(p_boxes[j * 5 + 1] + offsety);  // y1
-        box.push_back(p_boxes[j * 5 + 4] + offsetx);  // x2
-        box.push_back(p_boxes[j * 5 + 3] + offsety);  // y2
+        ObjectBoxInfo box;
+        box.x1 = p_boxes[j * 5 + 2] + offsetx;  // x1
+        box.y1 = p_boxes[j * 5 + 1] + offsety;  // y1
+        box.x2 = p_boxes[j * 5 + 4] + offsetx;  // x2
+        box.y2 = p_boxes[j * 5 + 3] + offsety;  // y2
         objs.push_back(box);
       }
     }
@@ -217,11 +217,11 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
 
     objs.clear();
     for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
-      std::vector<float> box;
-      box.push_back(p_boxes[i * 5 + 2]);  // x1
-      box.push_back(p_boxes[i * 5 + 1]);  // y1
-      box.push_back(p_boxes[i * 5 + 4]);  // x2
-      box.push_back(p_boxes[i * 5 + 3]);  // y2
+      ObjectBoxInfo box;
+      box.x1 = p_boxes[i * 5 + 2];  // x1
+      box.y1 = p_boxes[i * 5 + 1];  // y1
+      box.x2 = p_boxes[i * 5 + 4];  // x2
+      box.y2 = p_boxes[i * 5 + 3];  // y2
       objs.push_back(box);
     }
   }

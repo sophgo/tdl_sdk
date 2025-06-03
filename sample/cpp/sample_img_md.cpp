@@ -37,15 +37,15 @@ int main(int argc, char** argv) {
 
   // 执行运动检测
   printf("detect\n");
-  std::vector<std::vector<float>> detected_objects;
+  std::vector<ObjectBoxInfo> detected_objects;
   md->detect(detect_image, 20, 50, detected_objects);
 
   // 打印检测结果
   for (size_t i = 0; i < detected_objects.size(); i++) {
-    printf("[%d,%d,%d,%d]\n", static_cast<int>(detected_objects[i][0]),
-           static_cast<int>(detected_objects[i][1]),
-           static_cast<int>(detected_objects[i][2]),
-           static_cast<int>(detected_objects[i][3]));
+    printf("[%d,%d,%d,%d]\n", static_cast<int>(detected_objects[i].x1),
+           static_cast<int>(detected_objects[i].y1),
+           static_cast<int>(detected_objects[i].x2),
+           static_cast<int>(detected_objects[i].y2));
   }
 
   printf("done\n");

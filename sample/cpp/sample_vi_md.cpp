@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
   uint32_t height;
   uint32_t width;
   bool is_have_background = false;
-  std::vector<std::vector<float>> detected_objects;
+  std::vector<ObjectBoxInfo> detected_objects;
 
   while (1) {
     // 检查键盘输入
@@ -88,10 +88,10 @@ int main(int argc, char* argv[]) {
     } else {
       printf("移动物体数量: %zu, 移动物体坐标: \n", detected_objects.size());
       for (size_t i = 0; i < detected_objects.size(); i++) {
-        printf("[%d,%d,%d,%d]\n", static_cast<int>(detected_objects[i][0]),
-               static_cast<int>(detected_objects[i][1]),
-               static_cast<int>(detected_objects[i][2]),
-               static_cast<int>(detected_objects[i][3]));
+        printf("[%d,%d,%d,%d]\n", static_cast<int>(detected_objects[i].x1),
+               static_cast<int>(detected_objects[i].y1),
+               static_cast<int>(detected_objects[i].x2),
+               static_cast<int>(detected_objects[i].y2));
       }
     }
     vi_decoder->release(vi_chn);

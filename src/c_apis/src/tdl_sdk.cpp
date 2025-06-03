@@ -933,7 +933,7 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
       return -1;
     }
   }
-  std::vector<std::vector<float>> objs;
+  std::vector<ObjectBoxInfo> objs;
   ret = context->md->detect(detect_image_context->image, threshold, min_area,
                             objs);
   if (ret != 0) {
@@ -944,10 +944,10 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
   TDL_DestroyImage((TDLImage)detect_image_context);
   TDL_InitObjectMeta(obj_meta, objs.size(), 0);
   for (int i = 0; i < objs.size(); i++) {
-    obj_meta->info[i].box.x1 = objs[i][0];
-    obj_meta->info[i].box.y1 = objs[i][1];
-    obj_meta->info[i].box.x2 = objs[i][2];
-    obj_meta->info[i].box.y2 = objs[i][3];
+    obj_meta->info[i].box.x1 = objs[i].x1;
+    obj_meta->info[i].box.y1 = objs[i].y1;
+    obj_meta->info[i].box.x2 = objs[i].x2;
+    obj_meta->info[i].box.y2 = objs[i].y2;
   }
   return 0;
 }
