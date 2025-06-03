@@ -94,15 +94,22 @@ int32_t SimccPose::outputParse(
 
     float *data_x = x_feature_tensor->getBatchPtr<float>(b);
     float *data_y = y_feature_tensor->getBatchPtr<float>(b);
-
+    int x_feature_info_shape, y_feature_info_shape;
+#if defined(__CV181X__)
+    x_feature_info_shape = x_feature_info.shape[2];
+    y_feature_info_shape = y_feature_info.shape[2];
+#else
+    x_feature_info_shape = x_feature_info.shape[3];
+    y_feature_info_shape = y_feature_info.shape[3];
+#endif
     for (int i = 0; i < NUM_KEYPOINTS; i++) {
-      float *score_start_x = data_x + i * x_feature_info.shape[3];
-      float *score_end_x = data_x + (i + 1) * x_feature_info.shape[3];
+      float *score_start_x = data_x + i * x_feature_info_shape;
+      float *score_end_x = data_x + (i + 1) * x_feature_info_shape;
       auto iter_x = std::max_element(score_start_x, score_end_x);
       uint32_t pos_x = iter_x - score_start_x;
       float score_x = *iter_x;
-      float *score_start_y = data_y + i * y_feature_info.shape[3];
-      float *score_end_y = data_y + (i + 1) * y_feature_info.shape[3];
+      float *score_start_y = data_y + i * y_feature_info_shape;
+      float *score_end_y = data_y + (i + 1) * y_feature_info_shape;
       auto iter_y = std::max_element(score_start_y, score_end_y);
       uint32_t pos_y = iter_y - score_start_y;
       float score_y = *iter_y;
@@ -110,8 +117,8 @@ int32_t SimccPose::outputParse(
       float x = (float)pos_x / EXPAND_RATIO;
       float y = (float)pos_y / EXPAND_RATIO;
 
-      obj->landmarks_x.push_back((x - scale_params[2]) / scale_params[0]);
-      obj->landmarks_y.push_back((y - scale_params[3]) / scale_params[1]);
+      obj->landmarks_x.push_back((x * scale_params[0]) + scale_params[2]);
+      obj->landmarks_y.push_back((y * scale_params[1]) + scale_params[3]);
       obj->landmarks_score.push_back(std::min(score_x, score_y));
     }
 
