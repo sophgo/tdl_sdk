@@ -1,7 +1,10 @@
-#include "bm_image_processor.hpp"
+#include <cstdlib>
 #include <memory>
 #include <vector>
+
+#include "bm_image_processor.hpp"
 #include "image/base_image.hpp"
+#include "utils/tdl_log.hpp"
 
 extern int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img,
                           int rwidth, int rheight, unsigned char *right_img,
@@ -64,7 +67,7 @@ int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
   return 0;
 }
 
-BmImageProcessor::BmImageProcessor() {
+BmImageProcessor::BmImageProcessor(std::string tpu_kernel_module_path) {
   // 初始化handle
   bm_status_t ret = bm_dev_request(&handle_, 0);
   if (ret != BM_SUCCESS) {
@@ -72,9 +75,16 @@ BmImageProcessor::BmImageProcessor() {
   }
   // 加载TPU模块
 #if defined(__CV184X__)
-  tpu_module_ = tpu_kernel_load_module_file(
-      handle_, "/mnt/tpu_files/lib/libtpu_kernel_module.so");
-#else
+  if (tpu_kernel_module_path.empty()) {
+    tpu_kernel_module_path = getenv("BMRUNTIME_USING_FIRMWARE");
+    if (tpu_kernel_module_path.empty()) {
+      LOGE("tpu_kernel_module_path is empty.");
+    }
+    return;
+  }
+  tpu_module_ =
+      tpu_kernel_load_module_file(handle_, tpu_kernel_module_path.c_str());
+#elif defined(__CMODEL_CV184X__)
   tpu_module_ = tpu_kernel_load_module_file(handle_, "");
 #endif
   if (!tpu_module_) {

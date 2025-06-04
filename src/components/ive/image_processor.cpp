@@ -23,9 +23,10 @@ int32_t ImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   return 0;
 }
 
-std::shared_ptr<ImageProcessor> ImageProcessor::getImageProcessor() {
+std::shared_ptr<ImageProcessor> ImageProcessor::getImageProcessor(
+    std::string tpu_kernel_module_path) {
 #if defined(__CV184X__) || defined(__CMODEL_CV184X__)
-  return std::make_shared<BmImageProcessor>();
+  return std::make_shared<BmImageProcessor>(tpu_kernel_module_path);
 #else
   return nullptr;
 #endif

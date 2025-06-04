@@ -8,7 +8,7 @@
 
 class BmImageProcessor : public ImageProcessor {
  public:
-  BmImageProcessor();
+  BmImageProcessor(std::string tpu_kernel_module_path);
   virtual ~BmImageProcessor();
 
   virtual int32_t subads(std::shared_ptr<BaseImage> &src1,
