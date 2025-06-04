@@ -109,11 +109,7 @@ include_directories(${REPO_DIR}/include/framework/utils
                     ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
-buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS cvi_tdl ${REG_LIBS} gtest_main stdc++fs )
-
-# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tmp/_deps/googletest-src/googletest/include)
-# buildninstallcpp(NAME reg_daily_vpss_image INC ${REG_INCLUDES} SRCS reg_daily_vpss_image.cpp DEPS cvi_tdl cvi_tdl_app  ${SAMPLE_LIBS})
-
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS tdl ${REG_LIBS} gtest_main stdc++fs )
 
 if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688"))
   set(DAILY_REGRESSION_ASSETS "assets_186x")

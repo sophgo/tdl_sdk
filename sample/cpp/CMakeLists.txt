@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 project(sample_cpp)
 
-
 set(SAMPLE_INCLUDES
     ${IVE_INCLUDES}
     ${MLIR_INCLUDES}
@@ -12,15 +11,14 @@ set(SAMPLE_INCLUDES
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn
     ${REPO_DIR}/include/
-    
 )
 
 if(BUILD_SHARED)
-    set(SAMPLE_LIBS cvi_tdl ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES} ${IVE_LIBS})
+    set(SAMPLE_LIBS tdl ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES} ${IVE_LIBS})
 else()
     set(SAMPLE_LIBS
         "-Wl,--start-group"
-        ${cvi_tdl_BINARY_DIR}/libcvi_tdl-static.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libtdl-static.a
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}

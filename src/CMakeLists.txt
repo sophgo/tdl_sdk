@@ -40,30 +40,19 @@ endif()
 if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:motion_detect>)
 endif()
-set(CORES_DEPS ${MLIR_LIBS} )
 
-project(cvi_tdl)
-add_library(${PROJECT_NAME} SHARED ${CORES_SRCS})
-target_link_libraries(${PROJECT_NAME} ${CORES_DEPS} ${OPENCV_LIBS_IMCODEC} ${IVE_LIBS})
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+# shared library
+add_library(tdl SHARED ${CORES_SRCS})
+target_link_libraries(tdl ${MLIR_LIBS} ${OPENCV_LIBS_IMCODEC} ${IVE_LIBS})
 
-project(cvi_tdl-static)
-add_library(${PROJECT_NAME} STATIC ${CORES_SRCS})
-target_link_libraries(${PROJECT_NAME} ${CORES_DEPS} ${OPENCV_LIBS_IMCODEC_STATIC})
-# SET_TARGET_PROPERTIES(cvi_tdl-static PROPERTIES OUTPUT_NAME "cvi_tdl")
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+# static library
+add_library(tdl-static STATIC ${CORES_SRCS})
+target_link_libraries(tdl-static ${MLIR_LIBS} ${OPENCV_LIBS_IMCODEC_STATIC})
 
 if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
     add_subdirectory(python)
 endif()
 
-
-
-install(TARGETS cvi_tdl DESTINATION lib)
-
-#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cvi_tdl_app/ DESTINATION sample/cvi_tdl_app PATTERN "CMakeLists.txt" EXCLUDE)
-#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test_and_eval/ DESTINATION sample PATTERN "CMakeLists.txt" EXCLUDE)
-# Temporarily don't install custom module until complete.
-# install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app DESTINATION include/)
+install(TARGETS tdl tdl-static DESTINATION lib)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION .)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/envsetup.sh DESTINATION scripts)

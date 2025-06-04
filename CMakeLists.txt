@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16.3)
 if(POLICY CMP0135)
   cmake_policy(SET CMP0135 NEW)
 endif()
-project(tdl)
+project(tdl_sdk)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(-Wno-psabi)
