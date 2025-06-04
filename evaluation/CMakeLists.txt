@@ -34,6 +34,6 @@ foreach (fname ${SAMPLE_SRC_FILES})
   get_filename_component(name ${fname} NAME_WE)
   add_executable(${name} ${fname} ${EVAL_SRC})
   target_link_libraries(${name} cvi_tdl ${SAMPLE_LIBS} stdc++fs)
-  install(TARGETS ${name} DESTINATION bin)
+  install(TARGETS ${name} DESTINATION bin/eval)
 endforeach ()
 

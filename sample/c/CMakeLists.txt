@@ -63,5 +63,5 @@ foreach (fname ${SAMPLE_SRC_FILES})
           COMMAND ${CROSS_COMPILE}strip $<TARGET_FILE:${name}>
           COMMENT "Stripping binary for ${name}")
   endif()
-  install(TARGETS ${name} DESTINATION bin)
+  install(TARGETS ${name} DESTINATION bin/c)
 endforeach ()

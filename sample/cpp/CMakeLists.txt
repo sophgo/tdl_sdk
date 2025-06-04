@@ -50,7 +50,7 @@ endif()
 if (NOT ("${CVI_PLATFORM}" STREQUAL "CV181X") AND
     NOT ("${CVI_PLATFORM}" STREQUAL "CV184X") AND
     NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X"))
-  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_img_md.cpp)
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_img_motion_detection.cpp)
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/camera/sample_vi_md.cpp)
 endif()
 
@@ -67,7 +67,7 @@ foreach (fname ${SAMPLE_SRC_FILES})
           COMMAND ${CROSS_COMPILE}strip $<TARGET_FILE:${name}>
           COMMENT "Stripping binary for ${name}")
   endif()
-  install(TARGETS ${name} DESTINATION bin)
+  install(TARGETS ${name} DESTINATION bin/cpp)
 endforeach ()
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config DESTINATION .)
 

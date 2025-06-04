@@ -33,7 +33,7 @@ if(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X") OR ("${CVI_PLATFORM}" STREQUAL "
   return()
 endif()
 
-set(COMMON_OPENCV_URL_PREFIX "ftp://swftp:cvitek@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
+set(COMMON_OPENCV_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
 # Combine the common prefix and the architecture-specific part
 
 
