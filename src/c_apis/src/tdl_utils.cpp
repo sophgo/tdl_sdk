@@ -1,8 +1,10 @@
 #include "tdl_utils.h"
 #include <math.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <cstdlib>
 #include <cstring>
+#include "tdl_sdk.h"
 #include "tdl_type_internal.hpp"
 #include "utils/tdl_log.hpp"
 
@@ -94,11 +96,14 @@ int32_t TDL_InitFaceMeta(TDLFace *face_meta, int num_faces,
   if (face_meta->info != NULL) return 0;
   face_meta->info = (TDLFaceInfo *)malloc(num_faces * sizeof(TDLFaceInfo));
   memset(face_meta->info, 0, num_faces * sizeof(TDLFaceInfo));
-  for (int i = 0; i < num_faces; i++) {
-    face_meta->info[i].landmarks.x =
-        (float *)malloc(num_landmark_per_face * sizeof(float));
-    face_meta->info[i].landmarks.y =
-        (float *)malloc(num_landmark_per_face * sizeof(float));
+
+  if (num_landmark_per_face > 0) {
+    for (int i = 0; i < num_faces; i++) {
+      face_meta->info[i].landmarks.x =
+          (float *)malloc(num_landmark_per_face * sizeof(float));
+      face_meta->info[i].landmarks.y =
+          (float *)malloc(num_landmark_per_face * sizeof(float));
+    }
   }
   face_meta->size = num_faces;
   return 0;
@@ -216,6 +221,28 @@ int32_t TDL_ReleaseTrackMeta(TDLTracker *track_meta) {
   return 0;
 }
 
+int32_t TDL_ReleaseAppResult(TDLFacePetCapResult *cap_result) {
+  TDL_ReleaseFaceMeta(&cap_result->face_meta);
+  TDL_ReleaseObjectMeta(&cap_result->person_meta);
+  TDL_ReleaseObjectMeta(&cap_result->pet_meta);
+  TDL_ReleaseTrackMeta(&cap_result->track_results);
+
+  for (uint32_t i = 0; i < cap_result->snapshot_size; i++) {
+    TDL_ReleaseFeatureMeta(&cap_result->features[i]);
+  }
+  free(cap_result->features);
+  cap_result->features = NULL;
+
+  free(cap_result->snapshot_info);
+  cap_result->snapshot_info = NULL;
+
+  cap_result->snapshot_size = 0;
+  cap_result->frame_id = 0;
+  cap_result->frame_width = 0;
+  cap_result->frame_height = 0;
+  return 0;
+}
+
 int32_t TDL_CaculateSimilarity(const TDLFeature feature1,
                                const TDLFeature feature2, float *similarity) {
   *similarity = 0;
@@ -292,5 +319,55 @@ int32_t TDL_BGRPACKEDToGray(TDLImage bgr_packed_image, TDLImage *gray_image) {
   gray_image_context->image->flushCache();
 
   *gray_image = gray_image_context;
+  return 0;
+}
+
+int32_t TDL_GetGalleryFeature(const char *gallery_dir,
+                              TDLFeatureInfo *feature_info,
+                              int32_t feature_size) {
+  char *files[100];
+  int file_num = 0;
+  for (int i = 0; i < 100; i++) {
+    files[i] = (char *)malloc(128);
+    sprintf(files[i], "%s/%d.bin", gallery_dir, i);
+    if (access(files[i], F_OK) == -1) {
+      break;
+    }
+
+    file_num++;
+  }
+
+  feature_info->feature = (TDLFeature *)malloc(file_num * sizeof(TDLFeature));
+  feature_info->size = file_num;
+
+  for (int i = 0; i < file_num; i++) {
+    memset(&feature_info->feature[i], 0, sizeof(TDLFeature));
+    feature_info->feature[i].size = feature_size;
+    feature_info->feature[i].type = TDL_TYPE_INT8;
+    feature_info->feature[i].ptr = (int8_t *)malloc(feature_size);
+
+    FILE *fp = fopen(files[i], "rb");
+    if (fp == NULL) {
+      printf("read %s failed\n", files[i]);
+      return -1;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    int len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    if (len != feature_size) {
+      printf("feature size %d is not equal to %d\n", len, feature_size);
+      return -1;
+    }
+
+    fread(feature_info->feature[i].ptr, 1, len, fp);
+    fclose(fp);
+    printf("read %s done,len:%d\n", files[i], len);
+  }
+
+  for (int j = 0; j < file_num; j++) {
+    free(files[j]);
+  }
+
   return 0;
 }

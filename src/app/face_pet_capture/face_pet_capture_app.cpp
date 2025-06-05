@@ -83,7 +83,7 @@ int32_t FacePetCaptureApp::addPipeline(const std::string &pipeline_name,
     }
   };
   face_capture_channel->setClearFrameFunc(lambda_clear_func);
-  LOGI("add pipeline %s", pipeline_name.c_str());
+  LOGI("add pipeline %s\n", pipeline_name.c_str());
   return 0;
 }
 
@@ -512,7 +512,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
 
             float face_quality = ObjectQualityHelper::getFaceQuality(
                 face_info, image->getWidth(), image->getHeight(), other_info);
-            LOGI("track_id:%lu,frame_id:%lu,face_quality:%f", t.track_id_,
+            LOGI("track_id:%lu,frame_id:%lu,face_quality:%f\n", t.track_id_,
                  frame_info->frame_id_, face_quality);
             face_qaulity_scores[t.track_id_] = face_quality;
           }
@@ -526,7 +526,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
 
     std::map<std::string, Packet> other_info;
     other_info["face_landmark"] = Packet::make(face_infos);
-    LOGI("to update snapshot,frame_id:%lu,face_track_boxes.size:%zu",
+    LOGI("to update snapshot,frame_id:%lu,face_track_boxes.size:%zu\n",
          frame_info->frame_id_, face_track_boxes.size());
     snapshot->updateSnapshot(image, frame_info->frame_id_, face_track_boxes,
                              face_track_results, face_qaulity_scores,
@@ -542,7 +542,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
 
     frame_info->node_data_["snapshots"] = Packet::make(snapshots);
 
-    LOGI("snapshot_node,frame_id:%lu,snapshots.size:%zu update done",
+    LOGI("snapshot_node,frame_id:%lu,snapshots.size:%zu update done\n",
          frame_info->frame_id_, snapshots.size());
     return 0;
   };

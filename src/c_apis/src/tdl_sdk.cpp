@@ -1,6 +1,7 @@
 #include "tdl_sdk.h"
 
 #include <opencv2/opencv.hpp>
+#include "app/app_data_types.hpp"
 #include "common/common_types.hpp"
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
@@ -35,6 +36,10 @@ int32_t TDL_DestroyHandle(TDLHandle handle) {
   for (auto &model : context->models) {
     TDL_CloseModel(handle, model.first);
   }
+  if (context->app_task) {
+    context->app_task->release();
+  }
+
   delete context;
   context = nullptr;
   return 0;
@@ -295,7 +300,8 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
       object_meta->info[i].score = object_detection_output->bboxes[i].score;
     }
   } else {
-    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
     return -1;
   }
   return 0;
@@ -365,7 +371,8 @@ int32_t TDL_FaceDetection(TDLHandle handle, const TDLModel model_id,
     face_meta->height = object_detection_output->image_height;
     face_meta->size = object_detection_output->bboxes.size();
   } else {
-    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
     return -1;
   }
   return 0;
@@ -392,7 +399,8 @@ int32_t TDL_Classfification(TDLHandle handle, const TDLModel model_id,
     class_info->class_id = classification_output->topk_class_ids[0];
     class_info->score = classification_output->topk_scores[0];
   } else {
-    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
     return -1;
   }
   return 0;
@@ -610,7 +618,8 @@ int32_t TDL_InstanceSegmentation(TDLHandle handle, const TDLModel model_id,
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
   if (output->getType() !=
       ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION) {
-    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
     return -1;
   }
 
@@ -736,7 +745,8 @@ int32_t TDL_FeatureExtraction(TDLHandle handle, const TDLModel model_id,
                                                               // feature_meta
     feature_output->embedding = nullptr;  // set to null to prevent release
   } else {
-    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
     return -1;
   }
   return 0;
@@ -771,7 +781,8 @@ int32_t TDL_LaneDetection(TDLHandle handle, const TDLModel model_id,
       }
     }
   } else {
-    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
     return -1;
   }
 
@@ -800,7 +811,8 @@ int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
     char_meta->text_info = char_output->text_info;
     char_output->text_info = NULL;
   } else {
-    LOGE("Unsupported model output type: %d", static_cast<int>(output->getType()));
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
     return -1;
   }
 
@@ -891,7 +903,8 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
   if (image_format != ImageFormat::GRAY &&
       image_format != ImageFormat::BGR_PACKED &&
       image_format != ImageFormat::YUV420SP_VU) {
-    LOGE("Invalid background image format: %d\n", static_cast<int>(image_format));
+    LOGE("Invalid background image format: %d\n",
+         static_cast<int>(image_format));
     return -1;
   }
   if (image_format == ImageFormat::YUV420SP_VU) {
@@ -953,3 +966,192 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
 }
 
 #endif
+
+/*******************************************
+ *          APP API implementation         *
+ *******************************************/
+
+int32_t TDL_APP_Init(TDLHandle handle, const char *task,
+                     const char *config_file, char ***channel_names,
+                     uint8_t *channel_size) {
+  TDLContext *context = (TDLContext *)handle;
+  int ret = 0;
+  if (context == nullptr) {
+    return -1;
+  }
+  // 如果app_task没有初始化，则初始化
+  if (context->app_task == nullptr) {
+    context->app_task = AppFactory::createAppTask(task, config_file);
+    if (context->app_task == nullptr) {
+      LOGE("Failed to create app_task\n");
+      return -1;
+    }
+
+    int32_t ret = context->app_task->init();
+    if (ret != 0) {
+      LOGE("app_task init failed\n");
+      return -1;
+    }
+
+    std::vector<std::string> ch_names = context->app_task->getChannelNames();
+
+    uint8_t n = ch_names.size();
+    *channel_names = (char **)malloc(sizeof(char *) * n);
+    if (!*channel_names) {
+      LOGE("malloc failed\n");
+      return -1;
+    }
+
+    for (size_t i = 0; i < n; ++i) {
+      const std::string &str = ch_names[i];
+      (*channel_names)[i] = (char *)malloc(str.size() + 1);  // +1 for '\0'
+      if (!(*channel_names)[i]) {
+        // 发生分配失败，释放已分配内存
+        for (size_t j = 0; j < i; ++j) {
+          free((*channel_names)[j]);
+        }
+        free(*channel_names);
+        *channel_names = nullptr;
+        LOGE("malloc failed\n");
+        return -1;
+      }
+      strcpy((*channel_names)[i], str.c_str());
+    }
+
+    *channel_size = n;
+    return 0;
+  }
+
+  return 0;
+}
+
+int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
+                                   TDLFacePetCapResult *cap_result) {
+  TDLContext *context = (TDLContext *)handle;
+  int ret = 0;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->app_task == nullptr) {
+    LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  int processing_channel_num = context->app_task->getProcessingChannelNum();
+  if (processing_channel_num == 0) {
+    printf("no processing channel\n");
+    return 2;
+  }
+
+  Packet result;
+  printf("to get result from channel:%s\n", channel_name);
+  ret = context->app_task->getResult(std::string(channel_name), result);
+  if (ret != 0) {
+    printf("get result failed\n");
+    context->app_task->removeChannel(std::string(channel_name));
+    return 1;
+  }
+
+  std::shared_ptr<FacePetCaptureResult> ori_cap_result =
+      result.get<std::shared_ptr<FacePetCaptureResult>>();
+  if (ori_cap_result == nullptr) {
+    printf("cap_result is nullptr\n");
+    return 1;
+  }
+
+  cap_result->frame_id = ori_cap_result->frame_id;
+  cap_result->frame_width = ori_cap_result->frame_width;
+  cap_result->frame_height = ori_cap_result->frame_height;
+
+  // TDLImageContext *image_context = new TDLImageContext();
+  // image_context->image = ori_cap_result->image;
+  // cap_result->image = (TDLImage)image_context;
+
+  if (ori_cap_result->face_boxes.size() >
+      0) {  // face_meta from object detection without landmarks
+    TDL_InitFaceMeta(&cap_result->face_meta, ori_cap_result->face_boxes.size(),
+                     0);
+    cap_result->face_meta.width = cap_result->frame_width;
+    cap_result->face_meta.height = cap_result->frame_height;
+    for (size_t i = 0; i < ori_cap_result->face_boxes.size(); i++) {
+      cap_result->face_meta.info[i].box.x1 = ori_cap_result->face_boxes[i].x1;
+      cap_result->face_meta.info[i].box.y1 = ori_cap_result->face_boxes[i].y1;
+      cap_result->face_meta.info[i].box.x2 = ori_cap_result->face_boxes[i].x2;
+      cap_result->face_meta.info[i].box.y2 = ori_cap_result->face_boxes[i].y2;
+      cap_result->face_meta.info[i].score = ori_cap_result->face_boxes[i].score;
+    }
+  }
+
+  TDL_InitObjectMeta(&cap_result->person_meta,
+                     ori_cap_result->person_boxes.size(), 0);
+  for (int i = 0; i < ori_cap_result->person_boxes.size(); i++) {
+    cap_result->person_meta.info[i].box.x1 = ori_cap_result->person_boxes[i].x1;
+    cap_result->person_meta.info[i].box.y1 = ori_cap_result->person_boxes[i].y1;
+    cap_result->person_meta.info[i].box.x2 = ori_cap_result->person_boxes[i].x2;
+    cap_result->person_meta.info[i].box.y2 = ori_cap_result->person_boxes[i].y2;
+    cap_result->person_meta.info[i].class_id =
+        ori_cap_result->person_boxes[i].class_id;
+    cap_result->person_meta.info[i].score =
+        ori_cap_result->person_boxes[i].score;
+  }
+
+  TDL_InitObjectMeta(&cap_result->pet_meta, ori_cap_result->pet_boxes.size(),
+                     0);
+  for (int i = 0; i < ori_cap_result->pet_boxes.size(); i++) {
+    cap_result->pet_meta.info[i].box.x1 = ori_cap_result->pet_boxes[i].x1;
+    cap_result->pet_meta.info[i].box.y1 = ori_cap_result->pet_boxes[i].y1;
+    cap_result->pet_meta.info[i].box.x2 = ori_cap_result->pet_boxes[i].x2;
+    cap_result->pet_meta.info[i].box.y2 = ori_cap_result->pet_boxes[i].y2;
+    cap_result->pet_meta.info[i].class_id =
+        ori_cap_result->pet_boxes[i].class_id;
+    cap_result->pet_meta.info[i].score = ori_cap_result->pet_boxes[i].score;
+  }
+
+  TDL_InitTrackMeta(&cap_result->track_results,
+                    ori_cap_result->track_results.size());
+  for (int i = 0; i < ori_cap_result->track_results.size(); i++) {
+    TrackerInfo track_info = ori_cap_result->track_results[i];
+    cap_result->track_results.info[i].id = track_info.track_id_;
+    cap_result->track_results.info[i].bbox.x1 = track_info.box_info_.x1;
+    cap_result->track_results.info[i].bbox.x2 = track_info.box_info_.x2;
+    cap_result->track_results.info[i].bbox.y1 = track_info.box_info_.y1;
+    cap_result->track_results.info[i].bbox.y2 = track_info.box_info_.y2;
+  }
+
+  cap_result->snapshot_size = ori_cap_result->face_snapshots.size();
+  if (cap_result->snapshot_size > 0) {
+    cap_result->snapshot_info = (TDLSnapshotInfo *)malloc(
+        cap_result->snapshot_size * sizeof(TDLObjectInfo));
+    cap_result->features =
+        (TDLFeature *)malloc(cap_result->snapshot_size * sizeof(TDLFeature));
+
+    for (int i = 0; i < cap_result->snapshot_size; i++) {
+      cap_result->snapshot_info[i].quality =
+          ori_cap_result->face_snapshots[i].quality;
+      cap_result->snapshot_info[i].snapshot_frame_id =
+          ori_cap_result->face_snapshots[i].snapshot_frame_id;
+      cap_result->snapshot_info[i].track_id =
+          ori_cap_result->face_snapshots[i].track_id;
+
+      // TDLImageContext *image_context = new TDLImageContext();
+      // image_context->image = ori_cap_result->face_snapshots[i].object_image;
+      // cap_result->snapshot_info[i].image = (TDLImage)image_context;
+
+      std::vector<float> feature = ori_cap_result->face_features.at(
+          ori_cap_result->face_snapshots[i].track_id);
+      if (feature.size() == 0) {
+        LOGE("face feature size = 0!\n");
+        return -1;
+      }
+
+      cap_result->features[i].size = feature.size();
+      cap_result->features[i].type = TDL_TYPE_INT8;
+      cap_result->features[i].ptr =
+          (int8_t *)malloc(feature.size() * sizeof(int8_t));
+      for (int j = 0; j < feature.size(); j++) {
+        cap_result->features[i].ptr[j] = (int)feature[j];
+      }
+    }
+  }
+  return 0;
+}

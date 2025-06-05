@@ -72,7 +72,6 @@ int32_t TDL_DestoryCamera(TDLHandle handle);
  * @param handle TDLHandle 对象
  * @return 成功返回 0，失败返回-1
  */
-
 #endif
 
 /**
@@ -345,6 +344,41 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
                             uint8_t threshold, double min_area,
                             TDLObject *obj_meta);
 #endif
+
+/*******************************************
+ *              APP API
+ * 以下接口提供一个多模型封装的简化接口
+ * 主要用于一些复杂的任务场景
+ * 如人脸抓拍、宠物检测、辅助驾驶等
+ * 这些任务通常需要多个模型的协同工作
+ * 通过APP API可以简化调用流程
+ * 使得用户可以更专注于任务逻辑而非模型细节
+ *******************************************/
+
+/**
+ * @brief 初始化APP任务
+ *
+ * @param handle TDLHandle 对象
+ * @param task APP任务名称
+ * @param config_file APP的json配置文件路径
+ * @param channel_names 每一路视频流的名称信息
+ * @param channel_size 视频流的路数
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_APP_Init(TDLHandle handle, const char *task,
+                     const char *config_file, char ***channel_names,
+                     uint8_t *channel_size);
+
+/**
+ * @brief 执行包含宠物检测、人脸识别的人脸抓拍任务
+ *
+ * @param handle TDLHandle 对象
+ * @param channel_name 每一路视频流的名称信息
+ * @param cap_result 抓拍结果
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
+                               TDLFacePetCapResult *cap_result);
 
 #ifdef __cplusplus
 }

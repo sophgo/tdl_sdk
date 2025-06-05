@@ -196,7 +196,8 @@ int32_t ObjectSnapshot::updateSnapshot(
       iter = snapshot_infos_.erase(iter);
     } else {
       // check snapshot interval
-      if (frame_id - iter->second.export_frame_id > static_cast<uint64_t>(config_.snapshot_interval)) {
+      if (frame_id - iter->second.export_frame_id >
+          static_cast<uint64_t>(config_.snapshot_interval)) {
         if (iter->second.object_image != nullptr) {
           LOGI(" to export ObjectSnapshotInfo\n");
           export_snapshots_.push_back(iter->second);

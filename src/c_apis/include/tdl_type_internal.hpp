@@ -2,6 +2,7 @@
 #define _WRAPPER_TYPE_DEF_HPP_
 
 #include <map>
+#include "app/app_task.hpp"
 #include "cv/motion_detect/motion_detect.hpp"
 #include "model/base_model.hpp"
 #include "tdl_model_def.h"
@@ -11,11 +12,13 @@
 #include "tdl_sdk.h"
 #include "tdl_types.h"
 #include "video_decoder/video_decoder_type.hpp"
+
 typedef struct {
   std::unordered_map<TDLModel, std::shared_ptr<BaseModel>> models;
   std::shared_ptr<TDLModelFactory> model_factory;
   std::shared_ptr<VideoDecoder> video_decoder;
   std::shared_ptr<MotionDetection> md;
+  std::shared_ptr<AppTask> app_task;
 } TDLContext;
 
 typedef struct {

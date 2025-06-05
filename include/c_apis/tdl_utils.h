@@ -34,13 +34,6 @@ int32_t TDL_InitFeatureMeta(TDLFeature *feature_meta);
 
 int32_t TDL_ReleaseFeatureMeta(TDLFeature *feature_meta);
 
-int32_t TDL_RegisterFeature(const TDLFeature feature);
-
-int32_t TDL_MatchFeature(const TDLFeature feature, TDLFeature *matched_feature);
-
-int32_t TDL_CaculateSimilarity(const TDLFeature feature1,
-                               const TDLFeature feature2, float *similarity);
-
 int32_t TDL_InitLaneMeta(TDLLane *lane_meta, int output_size);
 
 int32_t TDL_ReleaseLaneMeta(TDLLane *lane_meta);
@@ -53,9 +46,22 @@ int32_t TDL_InitTrackMeta(TDLTracker *track_meta, int num_track);
 
 int32_t TDL_ReleaseTrackMeta(TDLTracker *track_meta);
 
+int32_t TDL_ReleaseAppResult(TDLFacePetCapResult *cap_result);
+
+int32_t TDL_RegisterFeature(const TDLFeature feature);
+
+int32_t TDL_MatchFeature(const TDLFeature feature, TDLFeature *matched_feature);
+
+int32_t TDL_CaculateSimilarity(const TDLFeature feature1,
+                               const TDLFeature feature2, float *similarity);
+
 int32_t TDL_NV21ToGray(TDLImage nv21_image, TDLImage *gray_image);
 
 int32_t TDL_BGRPACKEDToGray(TDLImage bgr_packed_image, TDLImage *gray_image);
+
+int32_t TDL_GetGalleryFeature(const char *gallery_dir,
+                              TDLFeatureInfo *feature_info,
+                              int32_t feature_size);
 
 #ifdef __cplusplus
 }

@@ -9,6 +9,9 @@
 extern "C" {
 #endif
 
+typedef void *TDLHandle;
+typedef void *TDLImage;
+
 typedef enum {
   TDL_TYPE_INT8 = 0, /**< Equals to int8_t. */
   TDL_TYPE_UINT8,    /**< Equals to uint8_t. */
@@ -34,6 +37,11 @@ typedef struct {
   uint32_t size;
   TDLDataTypeE type;
 } TDLFeature;
+
+typedef struct {
+  uint32_t size;
+  TDLFeature *feature;
+} TDLFeatureInfo;
 
 typedef struct {
   float *x;
@@ -178,8 +186,26 @@ typedef struct {
   char *text_info;
 } TDLOcr;
 
-typedef void *TDLHandle;
-typedef void *TDLImage;
+typedef struct {
+  float quality;
+  uint64_t snapshot_frame_id;
+  uint64_t track_id;
+  TDLImage image;
+} TDLSnapshotInfo;
+
+typedef struct {
+  uint32_t snapshot_size;
+  uint64_t frame_id;
+  uint32_t frame_width;
+  uint32_t frame_height;
+  TDLImage image;
+  TDLFace face_meta;
+  TDLObject person_meta;
+  TDLObject pet_meta;
+  TDLTracker track_results;
+  TDLSnapshotInfo *snapshot_info;
+  TDLFeature *features;
+} TDLFacePetCapResult;
 
 #ifdef __cplusplus
 }
