@@ -419,6 +419,51 @@ int32_t TDL_ObjectClassification(TDLHandle handle, const TDLModel model_id,
   return 0;
 }
 
+int32_t TDL_IspClassification(TDLHandle handle, const TDLModel model_id,
+                              TDLImage image_handle, TDLIspMeta *isp_meta,
+                              TDLClass *class_info) {
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+  std::vector<std::shared_ptr<BaseImage>> images;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+  images.push_back(image_context->image);
+  std::map<std::string, float> isp_data;
+  isp_data["awb[0]"] = isp_meta->awb[0];
+  isp_data["awb[1]"] = isp_meta->awb[1];
+  isp_data["awb[2]"] = isp_meta->awb[2];
+  isp_data["ccm[0]"] = isp_meta->ccm[0];
+  isp_data["ccm[1]"] = isp_meta->ccm[1];
+  isp_data["ccm[2]"] = isp_meta->ccm[2];
+  isp_data["ccm[3]"] = isp_meta->ccm[3];
+  isp_data["ccm[4]"] = isp_meta->ccm[4];
+  isp_data["ccm[5]"] = isp_meta->ccm[5];
+  isp_data["ccm[6]"] = isp_meta->ccm[6];
+  isp_data["ccm[7]"] = isp_meta->ccm[7];
+  isp_data["ccm[8]"] = isp_meta->ccm[8];
+  isp_data["blc"] = isp_meta->blc;
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(images, outputs, isp_data);
+  if (ret != 0) {
+    return ret;
+  }
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::CLASSIFICATION) {
+    ModelClassificationInfo *classification_output =
+        (ModelClassificationInfo *)output.get();
+    class_info->size = classification_output->topk_class_ids.size();
+    for (int i = 0; i < class_info->size; i++) {
+      class_info->info[i].class_id = classification_output->topk_class_ids[i];
+      class_info->info[i].score = classification_output->topk_scores[i];
+    }
+  } else {
+    LOGE("Unsupported model output type: %d", output->getType());
+    return -1;
+  }
+  return 0;
+}
+
 int32_t TDL_FaceAttribute(TDLHandle handle, const TDLModel model_id,
                           TDLImage image_handle, TDLFace *face_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);

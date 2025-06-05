@@ -227,6 +227,20 @@ int32_t TDL_ObjectClassification(TDLHandle handle, const TDLModel model_id,
                                  TDLClass *class_info);
 
 /**
+ * @brief 执行ISP图像分类任务
+ *
+ * @param handle TDLHandle 对象
+ * @param model_id 指定目标分类模型类型枚举值
+ * @param image_handle TDLImageHandle 对象
+ * @param isp_meta 输入参数，包含isp相关的数据
+ * @param class_info 输出参数，存储目标分类结果
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_IspClassification(TDLHandle handle, const TDLModel model_id,
+                              TDLImage image_handle, TDLIspMeta *isp_meta,
+                              TDLClass *class_info);
+
+/**
  * @brief 执行关键点检测任务
  *
  * @param handle TDLHandle 对象

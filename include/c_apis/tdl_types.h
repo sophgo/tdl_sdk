@@ -207,6 +207,23 @@ typedef struct {
   TDLFeature *features;
 } TDLFacePetCapResult;
 
+typedef struct {
+  float awb[3];  // rgain, ggain, bgain
+  float ccm[9];  // rgb[3][3]
+  float blc;
+} TDLIspMeta;
+
+typedef struct {
+  float r;
+  float g;
+  float b;
+} color_rgb;
+
+typedef struct {
+  color_rgb color;
+  uint32_t size;
+} TDLBrush;
+
 #ifdef __cplusplus
 }
 #endif

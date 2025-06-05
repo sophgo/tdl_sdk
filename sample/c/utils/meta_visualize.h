@@ -2,10 +2,21 @@
 #define META_VISUALIZE_H
 
 #include <stdio.h>
+#include "tdl_types.h"
+#if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
+    defined(__CV183X__) || defined(__CV184X__) || defined(__CV186X__)
+#include "cvi_comm_vpss.h"
+#include "cvi_sys.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define DEFAULT_RECT_COLOR_R (53. / 255.)
+#define DEFAULT_RECT_COLOR_G (208. / 255.)
+#define DEFAULT_RECT_COLOR_B (217. / 255.)
+#define DEFAULT_TEXT_THICKNESS 1
 
 typedef struct {
   float x1;
@@ -41,6 +52,15 @@ int32_t TDL_MatToImage(int **mat, int weight, int height, char *output_path,
 
 int32_t TDL_VisualizText(int32_t x, int32_t y, char *text, char *input_path,
                          char *output_path);
+
+#if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
+    defined(__CV183X__) || defined(__CV184X__) || defined(__CV186X__)
+int32_t TDL_FaceDrawRect(const TDLFace *meta, void *frame, const bool drawText,
+                         TDLBrush brush);
+
+int32_t TDL_ObjectWriteText(char *name, int x, int y, void *frame, float r,
+                            float g, float b);
+#endif
 
 #ifdef __cplusplus
 }

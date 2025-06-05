@@ -121,6 +121,20 @@ int32_t TDL_ReleaseFaceMeta(TDLFace *face_meta) {
   return 0;
 }
 
+int32_t TDL_InitClassMeta(TDLClass *clas_meta, int num_classes) {
+  if (clas_meta->info != NULL) return 0;
+  clas_meta->info = (TDLClassInfo *)malloc(num_classes * sizeof(TDLClassInfo));
+  memset(clas_meta->info, 0, num_classes * sizeof(TDLClassInfo));
+  clas_meta->size = num_classes;
+  return 0;
+}
+
+int32_t TDL_ReleaseClassMeta(TDLClass *clas_meta) {
+  free(clas_meta->info);
+  clas_meta->size = 0;
+  return 0;
+}
+
 int32_t TDL_InitKeypointMeta(TDLKeypoint *keypoint_meta, int num_keypoints) {
   if (keypoint_meta->info) return 0;
   keypoint_meta->info =

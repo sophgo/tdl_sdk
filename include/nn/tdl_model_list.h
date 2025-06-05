@@ -24,7 +24,7 @@
   X(YOLOV8N_DET_COCO80, "")                                                   \
   X(YOLOV10N_DET_COCO80, "")                                                  \
   X(PPYOLOE_DET_COCO80, "")                                                   \
-  /* custom object detection (需指定 num_cls) */                           \
+  /* custom object detection (need set num_cls) */                            \
   X(YOLOV6, "custom model, specify num_cls")                                  \
   X(YOLOV8, "custom model, specify num_cls")                                  \
   X(YOLOV10, "custom model, specify num_cls")                                 \
@@ -42,7 +42,7 @@
   /* image classification */                                                  \
   X(CLS_MASK, "0:mask,1:no mask")                                             \
   X(CLS_RGBLIVENESS, "0:fake,1:live")                                         \
-  X(CLS_ISP_SCENE, "")                                                        \
+  X(CLS_ISP_SCENE, "0:snow, 1:fog, 2:backlight, 3:grass, 4:common")           \
   X(CLS_HAND_GESTURE, "0:fist,1:five,2:none,3:two")                           \
   X(CLS_KEYPOINT_HAND_GESTURE,                                                \
     "0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two")          \

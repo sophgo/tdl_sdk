@@ -17,6 +17,10 @@ int32_t TDL_InitFaceMeta(TDLFace *face_meta, int num_faces,
 
 int32_t TDL_ReleaseFaceMeta(TDLFace *face_meta);
 
+int32_t TDL_InitClassMeta(TDLClass *clas_meta, int num_classes);
+
+int32_t TDL_ReleaseClassMeta(TDLClass *clas_meta);
+
 int32_t TDL_InitSemanticSegMeta(TDLSegmentation *seg_meta, int output_size);
 
 int32_t TDL_ReleaseSemanticSegMeta(TDLSegmentation *seg_meta);

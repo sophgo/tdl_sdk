@@ -9,6 +9,7 @@
 #include "feature_extract/clip_text.hpp"
 #include "feature_extract/feature_extraction.hpp"
 #include "image_classification/hand_keypopint_classification.hpp"
+#include "image_classification/isp_image_classification.hpp"
 #include "image_classification/rgb_image_classification.hpp"
 #include "keypoints_detection/hand_keypoint.hpp"
 #include "keypoints_detection/license_plate_keypoint.hpp"
@@ -535,6 +536,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createClassificationModel(
     model = std::make_shared<AudioClassification>();
   } else if (model_type == ModelType::CLS_ATTRIBUTE_FACE) {
     model = std::make_shared<FaceAttribute_CLS>();
+  } else if (model_type == ModelType::CLS_ISP_SCENE) {
+    model = std::make_shared<IspImageClassification>();
   }
 
   return model;
