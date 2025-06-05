@@ -110,27 +110,47 @@ endif()
 get_directory_property(compile_defs COMPILE_DEFINITIONS)
 message(STATUS "All compile definitions: ${compile_defs}")
 
-# Get current commit
-execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE CURRENT_COMMIT)
-execute_process(COMMAND git rev-parse --abbrev-ref HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE LATEST_BRANCH)
-string(STRIP ${LATEST_BRANCH} LATEST_BRANCH)
+set(IS_LOCAL TRUE)
 
-if("${LATEST_BRANCH}" STREQUAL "master")
-  string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
-  list(GET WORD_LIST 0 COMMITID)
-  set(LATEST_TAG "nightly-${COMMITID}")
-elseif("${LATEST_BRANCH}" STREQUAL "HEAD")
-  string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
-  list(GET WORD_LIST 0 COMMITID)
-  set(LATEST_TAG "${COMMITID}")
-else()
-  string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)*[^(\\\n).]+" LATEST_TAG ${LATEST_BRANCH})
-  if("${LATEST_TAG}" STREQUAL "")
-    set(LATEST_TAG "unknown")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+  # Get current commit
+  execute_process(COMMAND git show --oneline -s WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE CURRENT_COMMIT)
+  execute_process(COMMAND git rev-parse --abbrev-ref HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE LATEST_BRANCH)
+  string(STRIP ${LATEST_BRANCH} LATEST_BRANCH)
+
+  if("${LATEST_BRANCH}" STREQUAL "master")
+    string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
+    list(GET WORD_LIST 0 COMMITID)
+    set(LATEST_TAG "nightly-${COMMITID}")
+  elseif("${LATEST_BRANCH}" STREQUAL "HEAD")
+    string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
+    list(GET WORD_LIST 0 COMMITID)
+    set(LATEST_TAG "${COMMITID}")
+  else()
+    string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)*[^(\\\n).]+" LATEST_TAG ${LATEST_BRANCH})
+    if("${LATEST_TAG}" STREQUAL "")
+      set(LATEST_TAG "unknown")
+    endif()
+    string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
+    list(GET WORD_LIST 0 COMMITID)
+    set(LATEST_TAG "${LATEST_TAG}-${COMMITID}")
   endif()
-  string(REPLACE " " ";" WORD_LIST ${CURRENT_COMMIT})
-  list(GET WORD_LIST 0 COMMITID)
-  set(LATEST_TAG "${LATEST_TAG}-${COMMITID}")
+
+  execute_process(
+      COMMAND git remote -v
+      OUTPUT_VARIABLE REMOTE_URL
+      ERROR_VARIABLE GIT_ERROR
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  string(FIND "${REMOTE_URL}" "cvitek" FOUND_POS)
+
+  if(NOT ${FOUND_POS} EQUAL -1)
+      set(IS_LOCAL TRUE)
+  else()
+      set(IS_LOCAL FALSE)
+  endif()
+
 endif()
 
 foreach(flags CMAKE_CXX_FLAGS CMAKE_C_FLAGS)
@@ -166,25 +186,10 @@ set(FETCHCONTENT_BASE_DIR ${_deps})
 # set 3rd_party url
 set(3RD_PARTY_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
 
-execute_process(
-    COMMAND git remote -v
-    OUTPUT_VARIABLE REMOTE_URL
-    ERROR_VARIABLE GIT_ERROR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-string(FIND "${REMOTE_URL}" "cvitek" FOUND_POS)
-
-if(NOT ${FOUND_POS} EQUAL -1)
-    set(IS_LOCAL TRUE)
-else()
-    set(IS_LOCAL FALSE)
-endif()
-
-if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR 
-   "${CVI_PLATFORM}" STREQUAL "BM1684" OR 
-   "${CVI_PLATFORM}" STREQUAL "BM1688" OR 
-   "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" OR 
+if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR
+   "${CVI_PLATFORM}" STREQUAL "BM1684" OR
+   "${CVI_PLATFORM}" STREQUAL "BM1688" OR
+   "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" OR
    "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
   set(IS_LOCAL OFF)
 endif()
