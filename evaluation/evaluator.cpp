@@ -64,8 +64,8 @@ std::string Evaluator::packOutput(
     cty = cty / img_height_;
     w = w / img_width_;
     h = h / img_height_;
-    printf("ctx:%.2f,cty:%.2f,w:%.2f,h:%.2f,imgw:%d,imgh:%d\n", ctx, cty, w,
-           h, img_width_, img_height_);
+    printf("ctx:%.2f,cty:%.2f,w:%.2f,h:%.2f,imgw:%d,imgh:%d\n", ctx, cty, w, h,
+           img_width_, img_height_);
     char sz_content[1024];
     sprintf(sz_content, "%d %.2f %.2f %.2f %.2f %d %.2f\n",
             int(track_result.box_info_.object_type), ctx, cty, w, h,

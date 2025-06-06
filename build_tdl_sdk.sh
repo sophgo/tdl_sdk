@@ -131,7 +131,7 @@ elif [[ "$1" == "clean" ]]; then
     if [ -z "$CHIP_ARCH" ]; then
         echo "CHIP_ARCH not set, cleaning all architectures"
         # Clean all possible build directories
-        for arch in CV181X CV186X BM1688 CMODEL_CV181X CMODEL_CV184X; do
+        for arch in CV181X CV184X CV186X BM1688 CMODEL_CV181X CMODEL_CV184X; do
             BUILD_WORKING_DIR="${CVI_TDL_ROOT}"/build/${arch}
             TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${arch}"
 

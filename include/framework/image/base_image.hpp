@@ -71,8 +71,8 @@ class BaseImage {
   int32_t initImageInfo();
 
  protected:
- std::shared_ptr<BaseMemoryPool> memory_pool_ = nullptr;
- std::unique_ptr<MemoryBlock> memory_block_ = nullptr;
+  std::shared_ptr<BaseMemoryPool> memory_pool_ = nullptr;
+  std::unique_ptr<MemoryBlock> memory_block_ = nullptr;
 
   ImageType image_type_ = ImageType::UNKOWN;
   TDLDataType pix_data_type_ = TDLDataType::UINT8;

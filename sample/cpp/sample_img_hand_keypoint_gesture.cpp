@@ -164,8 +164,8 @@ int main(int argc, char **argv) {
       printf("%d: %f %f\n", k, obj_meta->landmarks_x[k] * obj_meta->image_width,
              obj_meta->landmarks_y[k] * obj_meta->image_height);
     }
-    printf("hand[%ld]: label: %d, score: %.2f\n", i, cls_meta->topk_class_ids[0],
-           cls_meta->topk_scores[0]);
+    printf("hand[%ld]: label: %d, score: %.2f\n", i,
+           cls_meta->topk_class_ids[0], cls_meta->topk_scores[0]);
 
     char img_name[128];
     sprintf(img_name, "hand_keypoints_%ld_label_%d.jpg", i,

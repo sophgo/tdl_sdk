@@ -17,8 +17,8 @@ inline std::string modelTypeToString(ModelType c) {
     return #name;
     MODEL_TYPE_LIST
 #undef X
-  default:
-    break;
+    default:
+      break;
   }
   return "";
 }

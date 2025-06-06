@@ -137,7 +137,8 @@ int32_t TopformerSeg::outputParse(
                                    out_conf, outH, outW, preH, preW, outShapeH,
                                    outShapeW);
     } else {
-      LOGE("unsupported data type:%d\n", static_cast<int>(out_id_info.data_type));
+      LOGE("unsupported data type:%d\n",
+           static_cast<int>(out_id_info.data_type));
       return -1;
     }
     out_datas.push_back(seg);

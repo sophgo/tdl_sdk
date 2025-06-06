@@ -211,7 +211,8 @@ int32_t PPYoloEDetection::outputParse(
           class_score =
               cls_tensor->getBatchPtr<float>(b)[label + basic_pos_cls];
         } else {
-          LOGE("unsupported data type:%d\n", static_cast<int>(classinfo.data_type));
+          LOGE("unsupported data type:%d\n",
+               static_cast<int>(classinfo.data_type));
           assert(0);
         }
 

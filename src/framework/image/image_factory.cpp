@@ -167,7 +167,8 @@ int32_t ImageFactory::writeImage(const std::string& file_path,
       image_format != ImageFormat::GRAY &&
       image_format != ImageFormat::RGB_PLANAR &&
       image_format != ImageFormat::BGR_PLANAR) {
-    LOGE("Image format is not supported,format:%d", static_cast<int>(image_format));
+    LOGE("Image format is not supported,format:%d",
+         static_cast<int>(image_format));
     return -1;
   }
   LOGI("to write image,width:%d,height:%d,format:%d,pix_type:%d,addr:%lx",
@@ -227,7 +228,7 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
   if (image->getImageFormat() != ImageFormat::BGR_PACKED &&
       image->getImageFormat() != ImageFormat::RGB_PACKED) {
     LOGE("only BGR_PACKED or RGB_PACKED format is supported,current format:%d",
-          static_cast<int>(image->getImageFormat()));
+         static_cast<int>(image->getImageFormat()));
     return nullptr;
   }
   int dst_img_size = 112;
@@ -274,7 +275,7 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
   if (image->getImageFormat() != ImageFormat::BGR_PACKED &&
       image->getImageFormat() != ImageFormat::RGB_PACKED) {
     LOGE("only BGR_PACKED or RGB_PACKED format is supported,current format:%d",
-          static_cast<int>(image->getImageFormat()));
+         static_cast<int>(image->getImageFormat()));
     return nullptr;
   }
   int dst_img_width = 96;
@@ -393,7 +394,7 @@ int32_t ImageFactory::convertToMat(std::shared_ptr<BaseImage>& image,
   if (image->getImageFormat() != ImageFormat::BGR_PACKED &&
       image->getImageFormat() != ImageFormat::RGB_PACKED) {
     LOGE("only BGR_PACKED or RGB_PACKED format is supported,current format:%d",
-          static_cast<int>(image->getImageFormat()));
+         static_cast<int>(image->getImageFormat()));
     return -1;
   }
 

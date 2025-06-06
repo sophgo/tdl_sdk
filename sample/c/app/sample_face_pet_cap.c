@@ -97,8 +97,7 @@ int main(int argc, char *argv[]) {
   while (true) {
     for (size_t i = 0; i < channel_size; i++) {
       TDLFacePetCapResult cap_result = {0};
-      ret =
-          TDL_APP_FacePetCapture(tdl_handle, channel_names[i], &cap_result);
+      ret = TDL_APP_FacePetCapture(tdl_handle, channel_names[i], &cap_result);
       if (ret == 1) {
         continue;
       } else if (ret == 2) {

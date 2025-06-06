@@ -231,7 +231,8 @@ int main(int argc, char **argv) {
     printf("feature size: %d\n", feature_meta->embedding_num);
     std::vector<float> feature_vec(feature_meta->embedding_num);
 
-    printf("feature_meta->embedding_type: %d\n", (int)feature_meta->embedding_type);
+    printf("feature_meta->embedding_type: %d\n",
+           (int)feature_meta->embedding_type);
     switch (feature_meta->embedding_type) {
       case TDLDataType::INT8:
         embeddingToVec<int8_t>(feature_meta->embedding,

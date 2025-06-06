@@ -1026,7 +1026,7 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
 }
 
 int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
-                                   TDLFacePetCapResult *cap_result) {
+                               TDLFacePetCapResult *cap_result) {
   TDLContext *context = (TDLContext *)handle;
   int ret = 0;
   if (context == nullptr) {

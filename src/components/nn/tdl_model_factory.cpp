@@ -98,7 +98,8 @@ TDLModelFactory &TDLModelFactory::getInstance() {
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(const ModelType model_type,
                                                      const int device_id) {
   if (model_type == ModelType::INVALID) {
-    LOGE("model type not found for model type: %d", static_cast<int>(model_type));
+    LOGE("model type not found for model type: %d",
+         static_cast<int>(model_type));
     return nullptr;
   }
   std::string model_name = modelTypeToString(model_type);
@@ -144,7 +145,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     const ModelType model_type, const std::string &model_path,
     const ModelConfig &model_config, const int device_id) {
   if (model_type == ModelType::INVALID) {
-    LOGE("model type not found for model type: %d", static_cast<int>(model_type));
+    LOGE("model type not found for model type: %d",
+         static_cast<int>(model_type));
     return nullptr;
   }
   std::string model_name = modelTypeToString(model_type);

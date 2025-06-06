@@ -171,7 +171,8 @@ int32_t CviMatcher::queryWithTopK(
 
   query_features_ = &query_features;
   query_features_num_ = query_features.size();
-  if ((*query_features_)[0]->embedding_num != static_cast<int32_t>(feature_dim_)) {
+  if ((*query_features_)[0]->embedding_num !=
+      static_cast<int32_t>(feature_dim_)) {
     std::cout << "Query feature dimension mismatch." << std::endl;
     return -1;
   }
@@ -205,7 +206,8 @@ int32_t CviMatcher::queryWithTopK(
 }
 
 int32_t CviMatcher::updateGalleryCol(void *p_data, int col) {
-  if (!is_loaded_ || col < 0 || col >= static_cast<int>(gallery_features_num_)) {
+  if (!is_loaded_ || col < 0 ||
+      col >= static_cast<int>(gallery_features_num_)) {
     return -1;
   }
 

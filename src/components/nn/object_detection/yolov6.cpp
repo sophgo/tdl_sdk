@@ -215,7 +215,8 @@ int32_t YoloV6Detection::outputParse(
           parse_cls_info<float>(cls_tensor->getBatchPtr<float>(b), num_cls, j,
                                 cls_qscale, &max_logit, &max_logit_c);
         } else {
-          LOGE("unsupported data type:%d\n", static_cast<int>(classinfo.data_type));
+          LOGE("unsupported data type:%d\n",
+               static_cast<int>(classinfo.data_type));
           assert(0);
         }
         if (max_logit < inverse_th) {

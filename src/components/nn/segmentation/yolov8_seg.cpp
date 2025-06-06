@@ -274,7 +274,8 @@ int32_t YoloV8Segmentation::outputParse(
                                 num_cls, j, cls_offset, cls_qscale, &max_logit,
                                 &max_logit_c);
         } else {
-          LOGE("unsupported data type:%d\n", static_cast<int>(classinfo.data_type));
+          LOGE("unsupported data type:%d\n",
+               static_cast<int>(classinfo.data_type));
           assert(0);
         }
         if (max_logit < inverse_th) {
@@ -355,7 +356,8 @@ int32_t YoloV8Segmentation::outputParse(
                              boxes_temp_info[bboxs.first][i].second];
           }
         } else {
-          LOGE("unsupported data type:%d\n", static_cast<int>(maskinfo.data_type));
+          LOGE("unsupported data type:%d\n",
+               static_cast<int>(maskinfo.data_type));
           assert(0);
         }
         row++;

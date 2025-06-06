@@ -20,8 +20,7 @@ class CviMotionDetection : public MotionDetection {
       const std::shared_ptr<BaseImage> &background_image) override;
   int32_t setROI(const std::vector<ObjectBoxInfo> &_roi_s) override;
   int32_t detect(const std::shared_ptr<BaseImage> &image, uint8_t threshold,
-                 double min_area,
-                 std::vector<ObjectBoxInfo> &objs) override;
+                 double min_area, std::vector<ObjectBoxInfo> &objs) override;
   bool isROIEmpty() override;
 
  private:

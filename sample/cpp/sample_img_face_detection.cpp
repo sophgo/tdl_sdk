@@ -23,7 +23,8 @@ void visualize_face_detection(std::shared_ptr<BaseImage> image,
                            int(face_meta->box_landmarks[i].y2 -
                                face_meta->box_landmarks[i].y1)),
                   cv::Scalar(0, 0, 255), 2);
-    for (size_t j = 0; j < face_meta->box_landmarks[i].landmarks_x.size(); j++) {
+    for (size_t j = 0; j < face_meta->box_landmarks[i].landmarks_x.size();
+         j++) {
       cv::circle(mat,
                  cv::Point(int(face_meta->box_landmarks[i].landmarks_x[j]),
                            int(face_meta->box_landmarks[i].landmarks_y[j])),

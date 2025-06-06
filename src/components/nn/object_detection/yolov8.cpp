@@ -257,7 +257,8 @@ int32_t YoloV8Detection::outputParse(
                                 num_cls, j, cls_offset, cls_qscale, &max_logit,
                                 &max_logit_c);
         } else {
-          LOGE("unsupported data type:%d\n", static_cast<int>(classinfo.data_type));
+          LOGE("unsupported data type:%d\n",
+               static_cast<int>(classinfo.data_type));
           assert(0);
         }
         if (max_logit < inverse_th) {
