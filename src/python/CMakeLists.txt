@@ -16,7 +16,7 @@ include_directories(
 
 file(GLOB_RECURSE SRC_FRAMWORK_FILES_CUR ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 # 添加tdl_image模块的源码
-add_library(tdl MODULE
+add_library(${PROJECT_NAME} MODULE
     ${SRC_FRAMWORK_FILES_CUR}
 )
 
@@ -29,19 +29,19 @@ foreach(PYTHON_LIB ${LIB_PYTHON_FILES})
     endif()
 endforeach()
 message(STATUS "LIB_PYTHON_FILES: ${LIB_PYTHON_FILES}")
-target_link_libraries(tdl PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
     # pybind11::module
     ${LIB_PYTHON_FILES}
     tdl
 )
 
 # 设置目标文件名
-set_target_properties(tdl PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
     PREFIX ""
     SUFFIX ".so"
 )
 
 # 设置编译优化参数（可选）
-target_compile_options(tdl PRIVATE -O3 -fPIC)
+target_compile_options(${PROJECT_NAME} PRIVATE -O3 -fPIC)
 
-install(TARGETS tdl DESTINATION lib)
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
