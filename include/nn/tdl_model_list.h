@@ -19,16 +19,23 @@
   X(YOLOV8N_DET_TRAFFIC_LIGHT, "0:red,1:yellow,2:green,3:off,4:wait on")      \
   X(YOLOV8N_DET_MONITOR_PERSON, "0:person")                                   \
   /* coco 80 classes object detection models */                               \
+  X(YOLOV5S_DET_COCO80, "")                                                   \
+  X(YOLOV5M_DET_COCO80, "")                                                   \
   X(YOLOV6N_DET_COCO80, "")                                                   \
   X(YOLOV6S_DET_COCO80, "")                                                   \
+  X(YOLOV7S_DET_COCO80, "")                                                   \
   X(YOLOV8N_DET_COCO80, "")                                                   \
   X(YOLOV10N_DET_COCO80, "")                                                  \
   X(PPYOLOE_DET_COCO80, "")                                                   \
+  X(YOLOX_DET_COCO80, "")                                                     \
   /* custom object detection (need set num_cls) */                            \
+  X(YOLOV5, "custom model, specify num_cls")                                  \
   X(YOLOV6, "custom model, specify num_cls")                                  \
+  X(YOLOV7, "custom model, specify num_cls")                                  \
   X(YOLOV8, "custom model, specify num_cls")                                  \
   X(YOLOV10, "custom model, specify num_cls")                                 \
   X(PPYOLOE, "custom model, specify num_cls")                                 \
+  X(YOLOX, "custom model, specify num_cls")                                   \
                                                                               \
   /* face detection */                                                        \
   X(SCRFD_DET_FACE, "0:face")                                                 \

@@ -63,9 +63,21 @@
       "is_coco_types":true,
       "file_name":"yolov6n_det_coco80_640_640_INT8"
     },
+    "YOLOV5S_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov5s_det_coco80_640_640_INT8"
+    },
+    "YOLOV5M_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov5m_det_coco80_640_640_INT8"
+    },
     "YOLOV6S_DET_COCO80":{
       "is_coco_types":true,
       "file_name":"yolov6s_det_coco80_640_640_INT8"
+    },
+    "YOLOV7S_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov7_tiny_det_coco80_640_640_INT8"
     },
     "YOLOV8N_DET_COCO80":{
       "is_coco_types":true,
@@ -78,6 +90,14 @@
     "PPYOLOE_DET_COCO80":{
       "is_coco_types":true,
       "file_name":"ppyoloe_det_coco80_640_640_INT8"
+    },
+    "YOLOX_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolox_m_det_coco80_640_640_INT8"
+    },
+    "YOLOV5":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
     },
     "YOLOV6":{
       "_comment":"custom model, specify num_cls or branch string",
@@ -92,6 +112,10 @@
       "file_name":""
     },
     "PPYOLOE":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
+    },
+    "YOLOX":{
       "_comment":"custom model, specify num_cls or branch string",
       "file_name":""
     },

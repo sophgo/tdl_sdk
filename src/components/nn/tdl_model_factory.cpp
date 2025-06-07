@@ -20,8 +20,11 @@
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/ppyoloe.hpp"
 #include "object_detection/yolov10.hpp"
+#include "object_detection/yolov5.hpp"
 #include "object_detection/yolov6.hpp"
+#include "object_detection/yolov7.hpp"
 #include "object_detection/yolov8.hpp"
+#include "object_detection/yolox.hpp"
 #include "segmentation/topformer_seg.hpp"
 #include "segmentation/yolov8_seg.hpp"
 #include "utils/common_utils.hpp"
@@ -269,10 +272,16 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON ||
           model_type == ModelType::YOLOV8N_DET_COCO80 ||
           model_type == ModelType::YOLOV10N_DET_COCO80 ||
+          model_type == ModelType::YOLOV7S_DET_COCO80 ||
           model_type == ModelType::YOLOV6N_DET_COCO80 ||
+          model_type == ModelType::YOLOV5S_DET_COCO80 ||
+          model_type == ModelType::YOLOV5M_DET_COCO80 ||
           model_type == ModelType::PPYOLOE_DET_COCO80 ||
+          model_type == ModelType::YOLOX_DET_COCO80 ||
           model_type == ModelType::YOLOV8 || model_type == ModelType::YOLOV10 ||
           model_type == ModelType::YOLOV6 || model_type == ModelType::PPYOLOE ||
+          model_type == ModelType::YOLOV5 || model_type == ModelType::YOLOX ||
+          model_type == ModelType::YOLOV7 ||
           model_type == ModelType::MBV2_DET_PERSON_256_448);
 }
 
@@ -331,7 +340,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
   int num_classes = 0;
   std::map<int, TDLObjectType> model_type_mapping;
   int model_category =
-      0;  // 0:yolov8,1:yolov10,2:yolov6,3:yolov3,4:yolov5,5:yolov6,6:mbv2
+      0;  // 0:yolov8,1:yolov10,2:yolov6,3:yolov3,4:yolov5,5:yolov6,6:mbv2,7:ppyoloe,8:yolox,9:yolov7
   if (model_type == ModelType::YOLOV8N_DET_PERSON_VEHICLE) {
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_CAR;
     model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_BUS;
@@ -395,8 +404,18 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
   } else if (model_type == ModelType::YOLOV6N_DET_COCO80) {
     model_category = 2;  // YOLOV6
     num_classes = 80;
+  } else if (model_type == ModelType::YOLOV5S_DET_COCO80 ||
+             model_type == ModelType::YOLOV5M_DET_COCO80) {
+    model_category = 4;  // YOLOV5
+    num_classes = 80;
   } else if (model_type == ModelType::PPYOLOE_DET_COCO80) {
     model_category = 7;  // PPYOLOE
+    num_classes = 80;
+  } else if (model_type == ModelType::YOLOX_DET_COCO80) {
+    model_category = 8;  // YOLOX
+    num_classes = 80;
+  } else if (model_type == ModelType::YOLOV7S_DET_COCO80) {
+    model_category = 9;  // YOLOX
     num_classes = 80;
   } else if (model_type == ModelType::MBV2_DET_PERSON_256_448) {
     model_category = 6;  // MobileDetV2
@@ -409,6 +428,10 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model_category = 2;  // YOLOV6
   } else if (model_type == ModelType::PPYOLOE) {
     model_category = 7;  // PPYOLOE
+  } else if (model_type == ModelType::YOLOX) {
+    model_category = 8;  // YOLOX
+  } else if (model_type == ModelType::YOLOV7) {
+    model_category = 9;  // YOLOX
   } else {
     LOGE("model type not supported: %d", static_cast<int>(model_type));
     return nullptr;
@@ -420,11 +443,17 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model = std::make_shared<YoloV10Detection>(std::make_pair(64, num_classes));
   } else if (model_category == 2) {
     model = std::make_shared<YoloV6Detection>(std::make_pair(4, num_classes));
+  } else if (model_category == 4) {
+    model = std::make_shared<YoloV5Detection>(std::make_pair(4, num_classes));
   } else if (model_category == 6) {
     model = std::make_shared<MobileDetV2Detection>(
         MobileDetV2Detection::Category::pedestrian);
   } else if (model_category == 7) {
     model = std::make_shared<PPYoloEDetection>(std::make_pair(4, num_classes));
+  } else if (model_category == 8) {
+    model = std::make_shared<YoloXDetection>();
+  } else if (model_category == 9) {
+    model = std::make_shared<YoloV7Detection>(std::make_pair(4, num_classes));
   } else {
     LOGE("createObjectDetectionModel failed,model type not supported: %d",
          static_cast<int>(model_type));
