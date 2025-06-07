@@ -922,6 +922,50 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
   return 0;
 }
 
+int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
+                               TDLBox *box, bool *is_intrusion) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    LOGE("Invalid handle");
+    return -1;
+  }
+
+  if (regions == nullptr || box == nullptr || regions->size == 0) {
+    LOGE("Invalid input parameters");
+    return -1;
+  }
+
+  if (context->intrusion_detect == nullptr) {
+    context->intrusion_detect = std::make_shared<IntrusionDetection>();
+    if (context->intrusion_detect == nullptr) {
+      LOGE("Failed to create intrusion detect");
+      return -1;
+    }
+  }
+
+  context->intrusion_detect->clean();
+
+  PointsInfo points_info;
+  points_info.x.assign(regions->x, regions->x + regions->size);
+  points_info.y.assign(regions->y, regions->y + regions->size);
+
+  int ret = context->intrusion_detect->addRegion(points_info);
+  if (ret != 0) {
+    LOGE("Failed to add region");
+    return -1;
+  }
+
+  ObjectBoxInfo bbox;
+  bbox.x1 = box->x1;
+  bbox.y1 = box->y1;
+  bbox.x2 = box->x2;
+  bbox.y2 = box->y2;
+
+  *is_intrusion = context->intrusion_detect->isIntrusion(bbox);
+
+  return 0;
+}
+
 #if defined(__CV181X__) || defined(__CV184X__)
 
 int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
@@ -998,8 +1042,6 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
     LOGE("Failed to detect\n");
     return -1;
   }
-  TDL_DestroyImage((TDLImage)background_image_context);
-  TDL_DestroyImage((TDLImage)detect_image_context);
   TDL_InitObjectMeta(obj_meta, objs.size(), 0);
   for (size_t i = 0; i < objs.size(); i++) {
     obj_meta->info[i].box.x1 = objs[i].x1;

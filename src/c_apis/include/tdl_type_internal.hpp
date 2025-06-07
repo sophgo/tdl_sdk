@@ -3,6 +3,7 @@
 
 #include <map>
 #include "app/app_task.hpp"
+#include "cv/intrusion_detect/intrusion_detect.hpp"
 #include "cv/motion_detect/motion_detect.hpp"
 #include "model/base_model.hpp"
 #include "tdl_model_def.h"
@@ -19,6 +20,7 @@ typedef struct {
   std::shared_ptr<VideoDecoder> video_decoder;
   std::shared_ptr<MotionDetection> md;
   std::shared_ptr<AppTask> app_task;
+  std::shared_ptr<IntrusionDetection> intrusion_detect;
 } TDLContext;
 
 typedef struct {

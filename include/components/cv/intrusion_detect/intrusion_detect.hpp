@@ -33,10 +33,10 @@ class ConvexPolygon {
                 const std::vector<float> &edges_y);
 };
 
-class IntrusionDetect {
+class IntrusionDetection {
  public:
-  IntrusionDetect();
-  ~IntrusionDetect();
+  IntrusionDetection();
+  ~IntrusionDetection();
   int addRegion(const PointsInfo &points, const std::string &region_name = "");
   void getRegion(std::vector<PointsInfo> &region_info);
   bool isIntrusion(const ObjectBoxInfo &bbox);

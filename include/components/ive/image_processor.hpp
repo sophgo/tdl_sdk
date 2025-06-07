@@ -25,7 +25,7 @@ class ImageProcessor {
                                  std::shared_ptr<BaseImage> &output) = 0;
   // 创建匹配器实例
   static std::shared_ptr<ImageProcessor> getImageProcessor(
-      std::string tpu_kernel_module_path = "");
+      const std::string &tpu_kernel_module_path = "");
 };
 
 #endif  // __IMAGE_PROCESSOR_HPP__

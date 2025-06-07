@@ -1,12 +1,14 @@
-#include "cv/area_detect/intrusion_detect.hpp"
 #include <algorithm>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <vector>
+
 #include "assert.h"
+#include "cv/intrusion_detect/intrusion_detect.hpp"
 #include "stdio.h"
+#include "utils/tdl_log.hpp"
 
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))
@@ -57,15 +59,15 @@ bool ConvexPolygon::setVertices(const PointsInfo &points) {
   return true;
 }
 
-IntrusionDetect::IntrusionDetect() {
+IntrusionDetection::IntrusionDetection() {
   base_points_.x = {1., 0.};
   base_points_.y = {0., 1.};
 }
 
-IntrusionDetect::~IntrusionDetect() {}
+IntrusionDetection::~IntrusionDetection() {}
 
-int IntrusionDetect::addRegion(const PointsInfo &points,
-                               const std::string &region_name) {
+int IntrusionDetection::addRegion(const PointsInfo &points,
+                                  const std::string &region_name) {
   PointsInfo new_pts;
   new_pts.x = points.x;
   new_pts.y.resize(points.y.size());
@@ -80,7 +82,7 @@ int IntrusionDetect::addRegion(const PointsInfo &points,
     std::reverse(new_pts.x.begin(), new_pts.x.end());
     std::reverse(new_pts.y.begin(), new_pts.y.end());
   } else if (area == 0) {
-    std::cout << "Area = 0" << std::endl;
+    LOGI("Area = 0");
     return 0;
   }
 
@@ -93,7 +95,7 @@ int IntrusionDetect::addRegion(const PointsInfo &points,
 
   std::vector<std::vector<int>> convex_idxes;
   if (!partitionIntoConvexPolygons(new_pts, convex_idxes)) {
-    std::cout << "partitionIntoConvexPolygons Bug (1)." << std::endl;
+    LOGE("partitionIntoConvexPolygons failed");
     return -1;
   }
 
@@ -107,7 +109,7 @@ int IntrusionDetect::addRegion(const PointsInfo &points,
     }
     auto new_region = std::make_shared<ConvexPolygon>();
     if (!new_region->setVertices(new_sub_pts)) {
-      std::cout << "partitionIntoConvexPolygons Bug (2)." << std::endl;
+      LOGE("setVertices failed");
       return -1;
     }
     // 对于分解后的凸多边形，添加序号后缀
@@ -115,11 +117,10 @@ int IntrusionDetect::addRegion(const PointsInfo &points,
     regions_.push_back(new_region);
   }
 
-  this->print();
   return 0;
 }
 
-void IntrusionDetect::getRegion(std::vector<PointsInfo> &region_info) {
+void IntrusionDetection::getRegion(std::vector<PointsInfo> &region_info) {
   region_info.clear();
   region_info.resize(regions_.size());
 
@@ -137,9 +138,9 @@ void IntrusionDetect::getRegion(std::vector<PointsInfo> &region_info) {
   }
 }
 
-void IntrusionDetect::clean() { this->regions_.clear(); }
+void IntrusionDetection::clean() { this->regions_.clear(); }
 
-bool IntrusionDetect::isIntrusion(const ObjectBoxInfo &bbox) {
+bool IntrusionDetection::isIntrusion(const ObjectBoxInfo &bbox) {
   /* 将坐标系从图像坐标系转换到欧几里得坐标系 */
   ObjectBoxInfo t_bbox = bbox;
   t_bbox.y1 *= -1;
@@ -176,9 +177,9 @@ bool IntrusionDetect::isIntrusion(const ObjectBoxInfo &bbox) {
   return false;
 }
 
-bool IntrusionDetect::isSeparatingAxis(const Vertex &axis,
-                                       const PointsInfo &region_pts,
-                                       const ObjectBoxInfo &bbox) {
+bool IntrusionDetection::isSeparatingAxis(const Vertex &axis,
+                                          const PointsInfo &region_pts,
+                                          const ObjectBoxInfo &bbox) {
   float min_1 = std::numeric_limits<float>::max();
   float max_1 = -std::numeric_limits<float>::max();
   float min_2 = std::numeric_limits<float>::max();
@@ -209,8 +210,8 @@ bool IntrusionDetect::isSeparatingAxis(const Vertex &axis,
   }
 }
 
-bool IntrusionDetect::isPointInTriangle(const Vertex &o, const Vertex &v1,
-                                        const Vertex &v2, const Vertex &v3) {
+bool IntrusionDetection::isPointInTriangle(const Vertex &o, const Vertex &v1,
+                                           const Vertex &v2, const Vertex &v3) {
   /* o1 = 叉积(v1-o, v2-o)
    * o2 = 叉积(v2-o, v3-o)
    * o3 = 叉积(v3-o, v1-o)
@@ -223,7 +224,7 @@ bool IntrusionDetect::isPointInTriangle(const Vertex &o, const Vertex &v1,
   return !(has_pos && has_neg);
 }
 
-float IntrusionDetect::getSignedGaussArea(const PointsInfo &points) {
+float IntrusionDetection::getSignedGaussArea(const PointsInfo &points) {
   float area = 0;
   for (size_t i = 0; i < points.x.size(); i++) {
     size_t j = (i != points.x.size() - 1) ? (i + 1) : 0;
@@ -232,7 +233,7 @@ float IntrusionDetect::getSignedGaussArea(const PointsInfo &points) {
   return area / 2;
 }
 
-bool IntrusionDetect::triangulateUsingEarClipping(
+bool IntrusionDetection::triangulateUsingEarClipping(
     const PointsInfo &points, std::vector<std::vector<int>> &triangle_idxes) {
   std::vector<uint32_t> active_idxes;
   for (size_t i = 0; i < points.x.size(); i++) {
@@ -279,7 +280,7 @@ bool IntrusionDetect::triangulateUsingEarClipping(
       }
     }
     if (ear_idx == -1) {
-      std::cout << "EAR index not found." << std::endl;
+      LOGE("EAR index not found.");
       return false;
     }
     triangle_idxes.push_back(std::vector<int>({ear_p, ear_i, ear_q}));
@@ -287,7 +288,7 @@ bool IntrusionDetect::triangulateUsingEarClipping(
   }
 
   if (active_idxes.size() != 3) {
-    std::cout << "final active index size != 3." << std::endl;
+    LOGE("final active index size != 3.");
     return false;
   }
   triangle_idxes.push_back(std::vector<int>(
@@ -296,11 +297,11 @@ bool IntrusionDetect::triangulateUsingEarClipping(
   return true;
 }
 
-bool IntrusionDetect::partitionIntoConvexPolygons(
+bool IntrusionDetection::partitionIntoConvexPolygons(
     const PointsInfo &points, std::vector<std::vector<int>> &convex_idxes) {
   std::vector<std::vector<int>> triangle_idxes;
   if (!triangulateUsingEarClipping(points, triangle_idxes)) {
-    std::cout << "triangulateUsingEarClipping Bug" << std::endl;
+    LOGE("triangulateUsingEarClipping failed");
     return false;
   }
   bool *valid_triangle = new bool[triangle_idxes.size()];
@@ -310,7 +311,6 @@ bool IntrusionDetect::partitionIntoConvexPolygons(
     if (!valid_triangle[i]) {
       continue;
     }
-    std::cout << std::endl;
     assert(triangle_idxes[i].size() == 3);
     int edge_num = 3;
     a1 = 0;
@@ -383,7 +383,7 @@ bool IntrusionDetect::partitionIntoConvexPolygons(
   return true;
 }
 
-void IntrusionDetect::print() {
+void IntrusionDetection::print() {
   std::cout << "Region Num: " << regions_.size() << std::endl;
   for (size_t i = 0; i < regions_.size(); i++) {
     std::cout << "[" << i << "]\n";

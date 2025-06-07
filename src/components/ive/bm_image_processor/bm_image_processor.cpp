@@ -67,7 +67,7 @@ int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
   return 0;
 }
 
-BmImageProcessor::BmImageProcessor(std::string tpu_kernel_module_path) {
+BmImageProcessor::BmImageProcessor(const std::string &tpu_kernel_module_path) {
   // 初始化handle
   bm_status_t ret = bm_dev_request(&handle_, 0);
   if (ret != BM_SUCCESS) {
@@ -76,14 +76,17 @@ BmImageProcessor::BmImageProcessor(std::string tpu_kernel_module_path) {
   // 加载TPU模块
 #if defined(__CV184X__)
   if (tpu_kernel_module_path.empty()) {
-    tpu_kernel_module_path = getenv("BMRUNTIME_USING_FIRMWARE");
-    if (tpu_kernel_module_path.empty()) {
+    std::string temp_kernel_path = getenv("BMRUNTIME_USING_FIRMWARE");
+    if (temp_kernel_path.empty()) {
       LOGE("tpu_kernel_module_path is empty.");
+      return;
     }
-    return;
+    tpu_module_ =
+        tpu_kernel_load_module_file(handle_, temp_kernel_path.c_str());
+  } else {
+    tpu_module_ =
+        tpu_kernel_load_module_file(handle_, tpu_kernel_module_path.c_str());
   }
-  tpu_module_ =
-      tpu_kernel_load_module_file(handle_, tpu_kernel_module_path.c_str());
 #elif defined(__CMODEL_CV184X__)
   tpu_module_ = tpu_kernel_load_module_file(handle_, "");
 #endif

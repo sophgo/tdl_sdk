@@ -351,6 +351,17 @@ int32_t TDL_DepthStereo(TDLHandle handle, const TDLModel model_id,
 int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
                      TDLObject *obj_meta, TDLTracker *track_meta);
 
+/**
+ * @brief 执行入侵检测
+ *
+ * @param regions 背景区域点集数组
+ * @param box 检测区域bbox
+ * @param is_intrusion 输出参数，存储入侵检测结果
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
+                               TDLBox *box, bool *is_intrusion);
+
 #if defined(__CV181X__) || defined(__CV184X__)
 
 int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,

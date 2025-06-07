@@ -1,4 +1,4 @@
-project(area_detect)
+project(intrusion_detect)
 
 include_directories(
                     ${REPO_DIR}/include/framework
