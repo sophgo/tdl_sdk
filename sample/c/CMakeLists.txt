@@ -19,7 +19,7 @@ if(BUILD_SHARED)
 else()
     set(SAMPLE_LIBS
         "-Wl,--start-group"
-        ${CMAKE_INSTALL_PREFIX}/lib/libtdl-static.a
+        tdl-static
         "-Wl,--whole-archive"
         ${MIDDLEWARE_LIBS_STATIC}
         "-Wl,--no-whole-archive"

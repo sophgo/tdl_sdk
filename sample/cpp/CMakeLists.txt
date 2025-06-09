@@ -18,7 +18,7 @@ if(BUILD_SHARED)
 else()
     set(SAMPLE_LIBS
         "-Wl,--start-group"
-        ${CMAKE_INSTALL_PREFIX}/lib/libtdl-static.a
+        tdl-static
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}

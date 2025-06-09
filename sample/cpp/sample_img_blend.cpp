@@ -9,8 +9,8 @@
 
 #define BM_ALIGN(x, a) (((x) + (a)-1) / (a) * (a))
 
-int32_t ImageFormatToPixelFormat(ImageFormat& image_format,
-                                 PIXEL_FORMAT_E& format) {
+static int32_t ImageFormatToPixelFormat(ImageFormat& image_format,
+                                        PIXEL_FORMAT_E& format) {
   switch (image_format) {
     case ImageFormat::GRAY:
       format = PIXEL_FORMAT_YUV_400;

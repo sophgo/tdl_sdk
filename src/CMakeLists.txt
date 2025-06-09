@@ -47,7 +47,7 @@ target_link_libraries(tdl ${MLIR_LIBS} ${OPENCV_LIBS_IMCODEC} ${IVE_LIBS})
 
 # static library
 add_library(tdl-static STATIC ${CORES_SRCS})
-target_link_libraries(tdl-static ${MLIR_LIBS} ${OPENCV_LIBS_IMCODEC_STATIC})
+target_link_libraries(tdl-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC})
 
 if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
     add_subdirectory(python)
