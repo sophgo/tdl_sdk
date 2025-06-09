@@ -101,11 +101,61 @@ else()
     )
 endif()
 
+string(TOLOWER "${CVI_PLATFORM}" CHIP_ARCH_LOWER)
 set(MIDDLEWARE_INCLUDES ${ISP_HEADER_PATH}
                         ${MIDDLEWARE_SDK_ROOT}/include/
+                        ${MIDDLEWARE_SDK_ROOT}/include/isp/
                         ${MIDDLEWARE_SDK_ROOT}/include/linux/
                         ${MIDDLEWARE_SDK_ROOT}/3rdparty/inih/
+                        ${MIDDLEWARE_SDK_ROOT}/sample/common/
+                        ${MIDDLEWARE_SDK_ROOT}/sample_app/common/
+                        ${MIDDLEWARE_SDK_ROOT}/component/panel/${CHIP_ARCH_LOWER}
 )
+
+# Set SAMPLE_OBJ based on platform
+if(${CVI_PLATFORM} STREQUAL "CV180X" OR
+   ${CVI_PLATFORM} STREQUAL "CV181X" OR
+   ${CVI_PLATFORM} STREQUAL "CV182X" OR
+   ${CVI_PLATFORM} STREQUAL "CV183X")
+  set(MIDDLEWARE_OBJ
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_platform.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_sys.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_sensor.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vi.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_isp.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vpss.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_venc.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vo.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_bin.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.o
+    )
+elseif(${CVI_PLATFORM} STREQUAL "CV184X")
+  set(MIDDLEWARE_OBJ
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_platform.o
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_sys.o
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_vi.o
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_isp.o
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_vpss.o
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_venc.o
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_vo.o
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_bin.o
+    ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_peripheral.o
+    )
+elseif(${CVI_PLATFORM} STREQUAL "SOPHON")
+  set(MIDDLEWARE_OBJ
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_platform.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_sys.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vi.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_isp.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vpss.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_venc.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_vo.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_bin.o
+    ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_peripheral.o
+    )
+else()
+  set(MIDDLEWARE_OBJ "")
+endif()
 
 # Set SAMPLE_LIBS based on platform
 if(${CVI_PLATFORM} STREQUAL "SOPHON")
@@ -125,7 +175,8 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.so)
     set(MIDDLEWARE_LIBS_STATIC
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
@@ -143,6 +194,7 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.a
         ${MLIR_SDK_ROOT}/lib/libz.a)
     add_definitions(-DSENSOR_GCORE_GC4653)
 elseif(${CVI_PLATFORM} STREQUAL "CV184X")
@@ -176,6 +228,8 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsensor.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.so
         ${ZLIB_ROOT}/lib/libz.so)
       set(MIDDLEWARE_LIBS_STATIC
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
@@ -190,6 +244,8 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsensor.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.a
         ${ZLIB_ROOT}/lib/libz.a)
     if(${CONFIG_DUAL_OS} STREQUAL "OFF")
         set(MIDDLEWARE_LIBS

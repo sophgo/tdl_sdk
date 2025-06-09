@@ -43,11 +43,11 @@ endif()
 
 # shared library
 add_library(tdl SHARED ${CORES_SRCS})
-target_link_libraries(tdl ${MLIR_LIBS} ${OPENCV_LIBS_IMCODEC} ${IVE_LIBS})
+target_link_libraries(tdl ${MLIR_LIBS} ${OPENCV_LIBS_IMCODEC} ${IVE_LIBS} ${MIDDLEWARE_OBJ})
 
 # static library
 add_library(tdl-static STATIC ${CORES_SRCS})
-target_link_libraries(tdl-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC})
+target_link_libraries(tdl-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC} ${MIDDLEWARE_OBJ})
 
 if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
     add_subdirectory(python)

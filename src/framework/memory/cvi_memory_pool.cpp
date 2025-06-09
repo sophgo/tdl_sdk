@@ -60,7 +60,8 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_size,
       CVI_SYS_IonAlloc(reinterpret_cast<CVI_U64 *>(&block->physicalAddress),
                        &block->virtualAddress, "cvi_exvb", blk_size * blk_cnt);
   if (ret != CVI_SUCCESS) {
-    std::cout << "CVI_SYS_IonAlloc failed" << std::endl;
+    std::cout << "CVI_SYS_IonAlloc failed! Mem size: " << blk_size * blk_cnt
+              << std::endl;
     return nullptr;
   }
 
@@ -77,7 +78,14 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_size,
   }
 
   VB_POOL pool = CVI_VB_CreateExPool(&stExconfig);
-
+  if (pool == VB_INVALID_POOLID) {
+    LOGE(
+        "CVI_VB_CreateExPool failed! blk_size: %d, blk_cnt: %d, weight: %d, "
+        "height: %d",
+        blk_size, blk_cnt, weight, height);
+    CVI_SYS_IonFree(block->physicalAddress, block->virtualAddress);
+    return nullptr;
+  }
   block->size = blk_size * blk_cnt;
   block->id = pool;
   block->own_memory = true;

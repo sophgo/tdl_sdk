@@ -1,691 +1,348 @@
 #include "vi_decoder/vi_decoder.hpp"
 #include "image/base_image.hpp"
 #include "memory/cvi_memory_pool.hpp"
-#include "vi_decoder/vi_cfg.hpp"
+#include "sample_comm.h"
+#include "utils/tdl_log.hpp"
 
-static pthread_t g_IspPid[VI_MAX_DEV_NUM];
-static SIZE_S stSize[VI_MAX_DEV_NUM] = {0};
-static TDLViCfg stIniCfg;
+static SAMPLE_VI_CONFIG_S g_stViConfig;
 static VIDEO_FRAME_INFO_S frame_info[VI_MAX_CHN_NUM];
-
-static void callback_FPS(int fps) {
-  static CVI_FLOAT uMaxFPS[VI_MAX_DEV_NUM] = {0};
-  CVI_U32 i;
-  for (i = 0; i < VI_MAX_DEV_NUM && g_IspPid[i]; i++) {
-    ISP_PUB_ATTR_S pubAttr = {0};
-
-    CVI_ISP_GetPubAttr(i, &pubAttr);
-    if (uMaxFPS[i] == 0) {
-      uMaxFPS[i] = pubAttr.f32FrameRate;
-    }
-    if (fps == 0) {
-      pubAttr.f32FrameRate = uMaxFPS[i];
-    } else {
-      pubAttr.f32FrameRate = (CVI_FLOAT)fps;
-    }
-    CVI_ISP_SetPubAttr(i, &pubAttr);
-  }
-  return;
-}
-
-static void *ISP_Thread(void *arg) {
-  CVI_S32 s32Ret = 0;
-  CVI_U8 IspDev = *(CVI_U8 *)arg;
-  char szThreadName[20];
-
-  free(arg);
-  snprintf(szThreadName, sizeof(szThreadName), "ISP%d_RUN", IspDev);
-  prctl(PR_SET_NAME, szThreadName, 0, 0, 0);
-
-  if (IspDev > 0) {
-    printf("ISP Dev %d return\n", IspDev);
-    return NULL;
-  }
-
-  CVI_SYS_RegisterThermalCallback(callback_FPS);
-
-  printf("ISP Dev %d running!\n", IspDev);
-  s32Ret = CVI_ISP_Run(IspDev);
-  if (s32Ret != 0) printf("CVI_ISP_Run failed with %#x!\n", s32Ret);
-
-  return NULL;
-}
-
-static int TDL_Vi_PQBinLoad(void) {
-  CVI_S32 ret = CVI_SUCCESS;
-  FILE *fp = NULL;
-  CVI_U8 *buf = NULL;
-  CVI_U64 file_size;
-
-  CVI_CHAR binName[BIN_FILE_LENGTH] = {0};
-  ret = CVI_BIN_GetBinName(binName);
-  if (ret != 0) {
-    printf("CVI_BIN_GetBinName failed\n");
-    return CVI_FAILURE;
-  }
-
-  fp = fopen((const CVI_CHAR *)binName, "rb");
-  if (fp == NULL) {
-    printf("Can't find bin(%s), use default parameters\n", binName);
-    return CVI_FAILURE;
-  }
-
-  fseek(fp, 0L, SEEK_END);
-  file_size = ftell(fp);
-  rewind(fp);
-
-  buf = (CVI_U8 *)malloc(file_size);
-  if (buf == NULL) {
-    printf("%s\n", "Allocae memory fail");
-    fclose(fp);
-    return CVI_FAILURE;
-  }
-
-  fread(buf, file_size, 1, fp);
-
-  if (fp != NULL) {
-    fclose(fp);
-  }
-  ret = CVI_BIN_ImportBinData(buf, (CVI_U32)file_size);
-  if (ret != CVI_SUCCESS) {
-    printf("CVI_BIN_ImportBinData error! value:(0x%x)\n", ret);
-    free(buf);
-    return CVI_FAILURE;
-  }
-
-  free(buf);
-
-  return CVI_SUCCESS;
-}
-
-static int TDL_Vi_SysInit(
-    std::shared_ptr<BaseMemoryPool> &memory_pool,
-    std::vector<std::unique_ptr<MemoryBlock>> &memory_blocks) {
-  int ret = 0;
-  CVI_U32 u32BlkSize;
-
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    TDL_Vi_GetSize(stIniCfg.enSnsType[i], &stSize[i]);
-  }
-
-  VB_CONFIG_S stVbConf;
-  memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
-  stVbConf.u32MaxPoolCnt = 0;
-
-  ret = CVI_VB_SetConfig(&stVbConf);
-  if (ret != 0) {
-    printf("CVI_VB_SetConfig failed with %d\n", ret);
-    return ret;
-  }
-
-  ret = CVI_VB_Init();
-  if (ret != 0) {
-    printf("CVI_VB_Init failed with %d\n", ret);
-    return ret;
-  }
-
-  ret = CVI_SYS_Init();
-  if (ret != 0) {
-    printf("CVI_SYS_Init failed with %d\n", ret);
-    CVI_VB_Exit();
-  }
-
-  memory_pool = BaseMemoryPoolFactory::createMemoryPool();
-  memory_blocks.clear();
-  auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool);
-  if (!pool) {
-    printf("memory_pool is nullptr");
-    return -1;
-  }
-
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    u32BlkSize = stSize[i].u32Height * stSize[i].u32Width * 3 / 2;
-    memory_blocks.push_back(pool->CreateExVb(u32BlkSize, 3, stSize[i].u32Width,
-                                             stSize[i].u32Height));
-  }
-
-  return CVI_SUCCESS;
-}
-
-static int TDL_Vi_StartSensor() {
-  int ret = 0;
-  ISP_SNS_OBJ_S *pfnSnsObj = CVI_NULL;
-  RX_INIT_ATTR_S rx_init_attr;
-  ISP_INIT_ATTR_S isp_init_attr;
-  ISP_SNS_COMMBUS_U sns_bus_info;
-  ALG_LIB_S ae_lib;
-  ALG_LIB_S awb_lib;
-  ISP_CMOS_SENSOR_IMAGE_MODE_S isp_cmos_sensor_image_mode;
-  ISP_SENSOR_EXP_FUNC_S isp_sensor_exp_func;
-  ISP_PUB_ATTR_S stPubAttr;
-
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    pfnSnsObj = TDL_Vi_SnsObjGet(stIniCfg.enSnsType[i]);
-    if (pfnSnsObj == CVI_NULL) {
-      printf("sensor obj(%d) is null\n", i);
-      return -1;
-    }
-
-    memset(&rx_init_attr, 0, sizeof(RX_INIT_ATTR_S));
-    rx_init_attr.MipiDev = stIniCfg.MipiDev[i];
-    if (stIniCfg.stMclkAttr[i].bMclkEn) {
-      rx_init_attr.stMclkAttr.bMclkEn = CVI_TRUE;
-      rx_init_attr.stMclkAttr.u8Mclk = stIniCfg.stMclkAttr[i].u8Mclk;
-    }
-
-    for (int j = 0; j <= MIPI_LANE_NUM; j++) {
-      rx_init_attr.as16LaneId[j] = stIniCfg.as16LaneId[i][j];
-    }
-    for (int j = 0; j <= MIPI_LANE_NUM; j++) {
-      rx_init_attr.as8PNSwap[j] = stIniCfg.as8PNSwap[i][j];
-    }
-
-    if (pfnSnsObj->pfnPatchRxAttr) {
-#if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
-    defined(__CV183X__)
-      ret = pfnSnsObj->pfnPatchRxAttr(&rx_init_attr);
-#else
-      rx_init_attr.MipiMode = stIniCfg.enSnsMode;
-      for (int j = 0; j < 20; j++) {
-        rx_init_attr.as16FuncId[i] = stIniCfg.as16FuncId[i][j];
-      }
-      ret = pfnSnsObj->pfnPatchRxAttr(i, &rx_init_attr);
+static VI_CHN_ATTR_S CHN_ATTR_420_SDR8 = {
+    {1920, 1080},       PIXEL_FORMAT_YUV_PLANAR_420,
+    DYNAMIC_RANGE_SDR8, VIDEO_FORMAT_LINEAR,
+    COMPRESS_MODE_NONE, CVI_FALSE,
+    CVI_FALSE,          0,
+    {-1, -1},           0xFFFFFFFF,
+#ifdef __CV184X__
+    CVI_FALSE,
 #endif
-      if (ret != 0) {
-        printf("pfnPatchRxAttr(%d) failed!\n", i);
-      }
-    }
+};
 
-    memset(&isp_init_attr, 0, sizeof(ISP_INIT_ATTR_S));
-    isp_init_attr.u16UseHwSync = stIniCfg.u8HwSync[i];
-    if (pfnSnsObj->pfnSetInit) {
-      ret = pfnSnsObj->pfnSetInit(i, &isp_init_attr);
-      if (ret != 0) {
-        printf("pfnSetInit(%d) fail with %d\n", i, ret);
-      }
-    }
-
-    memset(&sns_bus_info, 0, sizeof(ISP_SNS_COMMBUS_U));
-    sns_bus_info.s8I2cDev =
-        (stIniCfg.s32BusId[i] >= 0) ? (CVI_S8)stIniCfg.s32BusId[i] : 0x3;
-    if (pfnSnsObj->pfnSetBusInfo) {
-      ret = pfnSnsObj->pfnSetBusInfo(i, sns_bus_info);
-      if (ret != 0) {
-        printf("pfnSetBusInfo(%d) fail with %d\n", i, ret);
-      }
-    }
-
-    if (pfnSnsObj->pfnPatchI2cAddr) {
-#if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
-    defined(__CV183X__)
-      pfnSnsObj->pfnPatchI2cAddr(stIniCfg.s32SnsI2cAddr[i]);
-#else
-      pfnSnsObj->pfnPatchI2cAddr(i, stIniCfg.s32SnsI2cAddr[i]);
-#endif
-    }
-
-    awb_lib.s32Id = i;
-    ae_lib.s32Id = i;
-    strncpy(ae_lib.acLibName, CVI_AE_LIB_NAME, sizeof(ae_lib.acLibName));
-    strncpy(awb_lib.acLibName, CVI_AWB_LIB_NAME, sizeof(awb_lib.acLibName));
-    if (pfnSnsObj->pfnRegisterCallback) {
-      pfnSnsObj->pfnRegisterCallback(i, &ae_lib, &awb_lib);
-    }
-
-    CVI_AE_Register(i, &ae_lib);
-    CVI_AWB_Register(i, &awb_lib);
-
-    memset(&isp_cmos_sensor_image_mode, 0,
-           sizeof(ISP_CMOS_SENSOR_IMAGE_MODE_S));
-    TDL_Vi_IspPubAttr(stIniCfg.enSnsType[i], &stPubAttr);
-
-    isp_cmos_sensor_image_mode.u16Width = stSize[i].u32Width;
-    isp_cmos_sensor_image_mode.u16Height = stSize[i].u32Height;
-    isp_cmos_sensor_image_mode.f32Fps = stPubAttr.f32FrameRate;
-    if (pfnSnsObj->pfnExpSensorCb) {
-      ret = pfnSnsObj->pfnExpSensorCb(&isp_sensor_exp_func);
-      if (ret != 0) {
-        printf("pfnExpSensorCb(%d) fail with %d\n", i, ret);
-        return ret;
-      }
-
-      ret = isp_sensor_exp_func.pfn_cmos_set_image_mode(
-          i, &isp_cmos_sensor_image_mode);
-      if (ret != 0) {
-        printf("pfn_cmos_set_image_mode(%d) fail with %d\n", i, ret);
-        return ret;
-      }
-
-      ret = isp_sensor_exp_func.pfn_cmos_set_wdr_mode(i, stIniCfg.enWDRMode[i]);
-      if (ret != 0) {
-        printf("pfn_cmos_set_wdr_mode(%d) fail with %d\n", i, ret);
-        return ret;
-      }
-    }
-  }
-
-  return ret;
-}
-
-static int TDL_Vi_StartDev() {
-  int ret = 0;
+static CVI_S32 TDL_VI_StartViChn(SAMPLE_VI_CONFIG_S *pstViConfig,
+                                 CVI_S32 *pool_id) {
+  CVI_S32 i;
+  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_S32 ViNum = 0;
+  VI_PIPE ViPipe = 0;
+  VI_CHN ViChn = 0;
+  VI_DEV ViDev = 0;
+  CVI_U32 u32SnsId = 0;
   VI_DEV_ATTR_S stViDevAttr;
+  VI_CHN_ATTR_S stChnAttr;
 
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    memset(&stViDevAttr, 0, sizeof(VI_DEV_ATTR_S));
-    TDL_Vi_DevAttrGet(stIniCfg.enSnsType[i], &stViDevAttr);
-    stViDevAttr.stSize.u32Width = stSize[i].u32Width;
-    stViDevAttr.stSize.u32Height = stSize[i].u32Height;
-    stViDevAttr.stWDRAttr.enWDRMode = stIniCfg.enWDRMode[i];
-
-#if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
-    defined(__CV183X__)
-    if (stIniCfg.u8MuxDev[i]) {
-      stViDevAttr.isMux = true;
-      stViDevAttr.switchGpioPin = stIniCfg.s16SwitchGpio[i];
-      stViDevAttr.switchGPioPol = stIniCfg.u8SwitchPol[i];
-    }
-#endif
-
-#if !(defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
-      defined(__CV183X__))
-    VI_DEV_BIND_PIPE_S stViDevBindAttr;
-    stViDevBindAttr.PipeId[0] = (CVI_S32)stIniCfg.MipiDev[i];
-    stViDevBindAttr.u32Num = 1;
-    ret = CVI_VI_SetDevBindAttr(i, &stViDevBindAttr);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VI_SetDevBindAttr(%d) fail with %d\n", i, ret);
-      return ret;
-    }
-#endif
-
-    ret = CVI_VI_SetDevAttr(i, &stViDevAttr);
-    if (ret != 0) {
-      printf("CVI_VI_SetDevAttr(%d) fail with %d\n", i, ret);
-      return ret;
-    }
-
-    ret = CVI_VI_EnableDev(i);
-    if (ret != 0) {
-      printf("CVI_VI_EnableDev(%d) fail with %d\n", i, ret);
-      return ret;
-    }
-  }
-
-  return ret;
-}
-
-static int TDL_Vi_StartMipi() {
-  int ret = 0;
-  SNS_COMBO_DEV_ATTR_S combo_dev_attr;
-  ISP_SNS_OBJ_S *pfnSnsObj = CVI_NULL;
-
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    pfnSnsObj = TDL_Vi_SnsObjGet(stIniCfg.enSnsType[i]);
-    if (pfnSnsObj == CVI_NULL) {
-      printf("sensor obj(%d) is null\n", i);
-      return -1;
-    }
-
-#if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
-    defined(__CV183X__)
-    CVI_MIPI_SetSensorReset(stIniCfg.MipiDev[i], 1);
+#ifdef __CV184X__
+  ViNum = pstViConfig->s32ViNum;
 #else
-    SNS_RST_CONFIG pstSnsrstInfo;
-    pstSnsrstInfo.devno = stIniCfg.MipiDev[i];
-    pstSnsrstInfo.gpio_pin = stIniCfg.s32RstPin[i];
-    pstSnsrstInfo.gpio_active =
-        stIniCfg.s32RstActive[i] == 0 ? RST_ACTIVE_LOW : RST_ACTIVE_HIGH;
-    CVI_MIPI_SetSensorReset(&pstSnsrstInfo, 1);
+  ViNum = pstViConfig->s32WorkingViNum;
 #endif
-    CVI_MIPI_SetMipiReset(stIniCfg.MipiDev[i], 1);
 
-    memset(&combo_dev_attr, 0, sizeof(SNS_COMBO_DEV_ATTR_S));
-    if (pfnSnsObj->pfnGetRxAttr) {
-      ret = pfnSnsObj->pfnGetRxAttr(i, &combo_dev_attr);
-      if (ret != 0) {
-        printf("pfnGetRxAttr(%d) fail with %d", i, ret);
-        return ret;
+  for (i = 0; i < ViNum; i++) {
+    if (i < VI_MAX_DEV_NUM) {
+      ViPipe = pstViConfig->astViInfo[i].stPipeInfo.aPipe[0];
+      ViChn = pstViConfig->astViInfo[i].stChnInfo.ViChn;
+      ViDev = pstViConfig->astViInfo[i].stDevInfo.ViDev;
+      u32SnsId = pstViConfig->astViInfo[i].stSnsInfo.s32SnsId;
+
+#ifndef __CV184X__
+      ISP_SNS_OBJ_S *pstSnsObj;
+      pstSnsObj = (ISP_SNS_OBJ_S *)SAMPLE_COMM_ISP_GetSnsObj(u32SnsId);
+#endif
+
+      memcpy(&stChnAttr, &CHN_ATTR_420_SDR8, sizeof(VI_CHN_ATTR_S));
+      SAMPLE_COMM_VI_GetDevAttrBySns(
+          pstViConfig->astViInfo[i].stSnsInfo.enSnsType, &stViDevAttr);
+
+      if (stViDevAttr.enInputDataType == VI_DATA_TYPE_YUV) {
+        stChnAttr.enPixelFormat = PIXEL_FORMAT_YUV_PLANAR_422;
       }
-    }
 
-    ret = CVI_MIPI_SetMipiAttr(i, (CVI_VOID *)&combo_dev_attr);
-    if (ret != 0) {
-      printf("CVI_MIPI_SetMipiAttr(%d) fail with %d", i, ret);
-      return ret;
-    }
+      stChnAttr.stSize.u32Width = stViDevAttr.stSize.u32Width;
+      stChnAttr.stSize.u32Height = stViDevAttr.stSize.u32Height;
+      stChnAttr.enDynamicRange =
+          pstViConfig->astViInfo[i].stChnInfo.enDynamicRange;
+      stChnAttr.enVideoFormat =
+          pstViConfig->astViInfo[i].stChnInfo.enVideoFormat;
+      stChnAttr.enCompressMode =
+          pstViConfig->astViInfo[i].stChnInfo.enCompressMode;
+      stChnAttr.enPixelFormat = pstViConfig->astViInfo[i].stChnInfo.enPixFormat;
+      /* fill the sensor orientation */
+      if (pstViConfig->astViInfo[i].stSnsInfo.u8Orien <= 3) {
+        stChnAttr.bMirror = pstViConfig->astViInfo[i].stSnsInfo.u8Orien & 0x1;
+        stChnAttr.bFlip = pstViConfig->astViInfo[i].stSnsInfo.u8Orien & 0x2;
+      }
 
-    CVI_MIPI_SetSensorClock(stIniCfg.MipiDev[i], 1);
-    usleep(20);
-#if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
-    defined(__CV183X__)
-    CVI_MIPI_SetSensorReset(stIniCfg.MipiDev[i], 0);
-#else
-    CVI_MIPI_SetSensorReset(&pstSnsrstInfo, 0);
+      s32Ret = CVI_VI_SetChnAttr(ViPipe, ViChn, &stChnAttr);
+      if (s32Ret != CVI_SUCCESS) {
+        LOGE("CVI_VI_SetChnAttr failed with %#x!\n", s32Ret);
+        return CVI_FAILURE;
+      }
+
+#ifndef __CV184X__
+      if (pstSnsObj && pstSnsObj->pfnMirrorFlip) {
+        CVI_VI_RegChnFlipMirrorCallBack(ViPipe, ViDev,
+                                        (void *)pstSnsObj->pfnMirrorFlip);
+      }
 #endif
-    if (pfnSnsObj->pfnSnsProbe) {
-      ret = pfnSnsObj->pfnSnsProbe(i);
-      if (ret != 0) {
-        printf("pfnSnsProbe(%d) fail with %d", i, ret);
-        return ret;
+
+      s32Ret = CVI_VI_AttachVbPool(ViPipe, ViChn, pool_id[i]);
+      if (s32Ret != 0) {
+        printf("CVI_VI_AttachVbPool(%d) fail with %d", i, s32Ret);
+        return CVI_FAILURE;
+      }
+
+      s32Ret = CVI_VI_EnableChn(ViPipe, ViChn);
+      if (s32Ret != CVI_SUCCESS) {
+        LOGE("CVI_VI_EnableChn failed with %#x!\n", s32Ret);
+        return CVI_FAILURE;
       }
     }
   }
-  return ret;
-}
 
-static int TDL_Vi_StartPipe() {
-  int ret = 0;
-  VI_PIPE_ATTR_S stViPipeAttr;
-
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    memset(&stViPipeAttr, 0, sizeof(VI_PIPE_ATTR_S));
-    TDL_Vi_PipeAttrGet(stIniCfg.enSnsType[i], &stViPipeAttr);
-
-    ret = CVI_VI_CreatePipe(i, &stViPipeAttr);
-    if (ret != 0) {
-      printf("CVI_VI_CreatePipe(%d) fail with %d", i, ret);
-      return ret;
-    }
-
-    ret = CVI_VI_StartPipe(i);
-    if (ret != 0) {
-      printf("CVI_VI_StartPipe(%d) fail with %d", i, ret);
-      return ret;
-    }
-  }
-  return ret;
-}
-
-static int TDL_Vi_InitIsp() {
-  int ret = 0;
-  ISP_BIND_ATTR_S stBindAttr;
-  ISP_PUB_ATTR_S stPubAttr;
-
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    memset(&stBindAttr, 0, sizeof(ISP_BIND_ATTR_S));
-    snprintf(stBindAttr.stAeLib.acLibName, sizeof(CVI_AE_LIB_NAME), "%s",
-             CVI_AE_LIB_NAME);
-    stBindAttr.stAeLib.s32Id = i;
-    snprintf(stBindAttr.stAwbLib.acLibName, sizeof(CVI_AWB_LIB_NAME), "%s",
-             CVI_AWB_LIB_NAME);
-    stBindAttr.stAwbLib.s32Id = i;
-    ret = CVI_ISP_SetBindAttr(i, &stBindAttr);
-    if (ret != 0) {
-      printf("CVI_ISP_SetBindAttr(%d) fail with %d", i, ret);
-      return ret;
-    }
-
-    ret = CVI_ISP_MemInit(i);
-    if (ret != 0) {
-      printf("CVI_ISP_MemInit(%d) fail with %d", i, ret);
-      return ret;
-    }
-
-    memset(&stPubAttr, 0, sizeof(ISP_PUB_ATTR_S));
-    TDL_Vi_IspPubAttr(stIniCfg.enSnsType[i], &stPubAttr);
-    stPubAttr.stWndRect.u32Width = stSize[i].u32Width;
-    stPubAttr.stWndRect.u32Height = stSize[i].u32Height;
-    stPubAttr.stSnsSize.u32Width = stSize[i].u32Width;
-    stPubAttr.stSnsSize.u32Height = stSize[i].u32Height;
-
-    ret = CVI_ISP_SetPubAttr(i, &stPubAttr);
-    if (ret != 0) {
-      printf("CVI_ISP_SetPubAttr(%d) fail with %d", i, ret);
-      return ret;
-    }
-
-    ret = CVI_ISP_Init(i);
-    if (ret != 0) {
-      printf("CVI_ISP_Init(%d) fail with %d", i, ret);
-      return ret;
-    }
-  }
-  TDL_Vi_PQBinLoad();
-  return ret;
-}
-
-static int TDL_Vi_IspRun(CVI_U8 IspDev) {
-  CVI_S32 s32Ret = 0;
-  CVI_U8 *arg = (CVI_U8 *)malloc(sizeof(*arg));
-  struct sched_param param;
-  pthread_attr_t attr;
-
-  if (arg == NULL) {
-    CVI_TRACE_LOG(CVI_DBG_ERR, "malloc failed\n");
-  }
-
-  *arg = IspDev;
-  param.sched_priority = 80;
-
-  pthread_attr_init(&attr);
-  pthread_attr_setschedpolicy(&attr, SCHED_RR);
-  pthread_attr_setschedparam(&attr, &param);
-  pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-  s32Ret = pthread_create(&g_IspPid[IspDev], &attr, ISP_Thread, arg);
-  if (s32Ret != 0) {
-    printf("create isp running thread failed!, error: %d, %s\r\n", s32Ret,
-           strerror(s32Ret));
-  }
-  pthread_attr_destroy(&attr);
   return s32Ret;
 }
 
-static int TDL_Vi_StartIsp() {
-  int ret = 0;
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    TDL_Vi_IspRun(i);
+static CVI_S32 TDL_VI_INIT(SAMPLE_VI_CONFIG_S *pstViConfig, CVI_S32 *pool_id) {
+  PIC_SIZE_E enPicSize;
+  SIZE_S stSize;
+
+  VI_DEV ViDev = 0;
+  VI_PIPE ViPipe = 0;
+  VI_PIPE_ATTR_S stPipeAttr;
+
+  CVI_S32 s32Ret = CVI_SUCCESS;
+  CVI_S32 i = 0, j = 0, ViNum = 0;
+  CVI_S32 s32DevNum;
+
+  /************************************************
+   * step1:  Get input size
+   ************************************************/
+  s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(
+      pstViConfig->astViInfo[ViDev].stSnsInfo.enSnsType, &enPicSize);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("SAMPLE_COMM_VI_GetSizeBySensor failed with %#x\n", s32Ret);
+    return s32Ret;
   }
-  return ret;
-}
 
-static int TDL_Vi_StartChn(
-    std::vector<std::unique_ptr<MemoryBlock>> &memory_blocks) {
-  int ret = 0;
-  VI_CHN_ATTR_S stViChnAttr;
-  ISP_SNS_OBJ_S *pfnSnsObj = NULL;
+  s32Ret = SAMPLE_COMM_SYS_GetPicSize(enPicSize, &stSize);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("SAMPLE_COMM_SYS_GetPicSize failed with %#x\n", s32Ret);
+    return s32Ret;
+  }
 
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    pfnSnsObj = TDL_Vi_SnsObjGet(stIniCfg.enSnsType[i]);
-    if (pfnSnsObj == NULL) {
-      printf("sensor obj(%d) is null\n", i);
-      return -1;
-    }
+  /************************************************
+   * step2:  Init VI ISP
+   ************************************************/
+#ifndef __CV184X__
+  s32Ret = SAMPLE_COMM_VI_StartSensor(pstViConfig);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("system start sensor failed with %#x\n", s32Ret);
+    return s32Ret;
+  }
+#endif
 
-    memset(&stViChnAttr, 0, sizeof(VI_CHN_ATTR_S));
-    stViChnAttr.stSize.u32Width = stSize[i].u32Width;
-    stViChnAttr.stSize.u32Height = stSize[i].u32Height;
-    stViChnAttr.enPixelFormat = VI_PIXEL_FORMAT;
-    stViChnAttr.u32Depth = 0;
-    stViChnAttr.enCompressMode = COMPRESS_MODE_TILE;
-    stViChnAttr.enVideoFormat = VIDEO_FORMAT_LINEAR;
-    stViChnAttr.bMirror = stIniCfg.u8Orien[i] & 0x1;
-    stViChnAttr.bMirror = stIniCfg.u8Orien[i] & 0x2;
+#ifdef __CV184X__
+  ViNum = pstViConfig->s32ViNum;
+#else
+  ViNum = pstViConfig->s32WorkingViNum;
+#endif
 
-    ret = CVI_VI_SetChnAttr(i, i, &stViChnAttr);
-    if (ret != 0) {
-      printf("CVI_VI_SetChnAttr(%d) fail with %d", i, ret);
-      return ret;
-    }
+  s32Ret = SAMPLE_COMM_VI_StartMIPI(pstViConfig);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("system start MIPI failed with %#x\n", s32Ret);
+    return s32Ret;
+  }
 
-    if (pfnSnsObj && pfnSnsObj->pfnMirrorFlip) {
-      CVI_VI_RegChnFlipMirrorCallBack(i, i, (void *)pfnSnsObj->pfnMirrorFlip);
-    }
+  s32Ret = SAMPLE_COMM_VI_SensorProbe(pstViConfig);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("system sensor probe failed with %#x\n", s32Ret);
+    return s32Ret;
+  }
 
-    ret = CVI_VI_AttachVbPool(i, i, memory_blocks[i]->id);
-    if (ret != 0) {
-      printf("CVI_VI_AttachVbPool(%d) fail with %d", i, ret);
-      return ret;
-    }
-
-    ret = CVI_VI_EnableChn(i, i);
-    if (ret != 0) {
-      printf("CVI_VI_EnableChn(%d) fail with %d", i, ret);
-      return ret;
+  for (i = 0; i < ViNum; i++) {
+    ViDev = i;
+    s32Ret = SAMPLE_COMM_VI_StartDev(&pstViConfig->astViInfo[ViDev]);
+    if (s32Ret != CVI_SUCCESS) {
+      LOGE("VI_StartDev failed with %#x!\n", s32Ret);
+      return s32Ret;
     }
   }
-  return ret;
-}
 
-static int TDL_Vi_DestroyIsp() {
-  int ret = 0;
-  ISP_SNS_OBJ_S *pfnSnsObj = NULL;
-  ALG_LIB_S stAeLib;
-  ALG_LIB_S stAwbLib;
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    if (g_IspPid[i]) {
-      ret = CVI_ISP_Exit(i);
-      if (ret != CVI_SUCCESS) {
-        printf("CVI_ISP_Exit(%d) fail with %d", i, ret);
-        return ret;
+  stPipeAttr.bYuvSkip = CVI_FALSE;
+  stPipeAttr.u32MaxW = stSize.u32Width;
+  stPipeAttr.u32MaxH = stSize.u32Height;
+  stPipeAttr.enPixFmt = PIXEL_FORMAT_RGB_BAYER_12BPP;
+  stPipeAttr.enBitWidth = DATA_BITWIDTH_12;
+  stPipeAttr.stFrameRate.s32SrcFrameRate = -1;
+  stPipeAttr.stFrameRate.s32DstFrameRate = -1;
+  stPipeAttr.bNrEn = CVI_TRUE;
+  stPipeAttr.bYuvBypassPath = CVI_FALSE;
+  stPipeAttr.enCompressMode =
+      pstViConfig->astViInfo[0].stChnInfo.enCompressMode;
+
+  for (i = 0; i < ViNum; i++) {
+    SAMPLE_VI_INFO_S *pstViInfo = NULL;
+
+    s32DevNum = pstViConfig->as32WorkingViId[i];
+    pstViInfo = &pstViConfig->astViInfo[s32DevNum];
+    stPipeAttr.bYuvBypassPath =
+        SAMPLE_COMM_VI_GetYuvBypassSts(pstViInfo->stSnsInfo.enSnsType);
+
+    for (j = 0; j < WDR_MAX_PIPE_NUM; j++) {
+      if (pstViInfo->stPipeInfo.aPipe[j] >= 0 &&
+          pstViInfo->stPipeInfo.aPipe[j] < VI_MAX_PIPE_NUM) {
+        ViPipe = pstViInfo->stPipeInfo.aPipe[j];
+        s32Ret = CVI_VI_CreatePipe(ViPipe, &stPipeAttr);
+        if (s32Ret != CVI_SUCCESS) {
+          LOGE("CVI_VI_CreatePipe failed with %#x!\n", s32Ret);
+          return s32Ret;
+        }
+
+        s32Ret = CVI_VI_StartPipe(ViPipe);
+        if (s32Ret != CVI_SUCCESS) {
+          LOGE("CVI_VI_StartPipe failed with %#x!\n", s32Ret);
+          return s32Ret;
+        }
       }
-      pthread_join(g_IspPid[i], NULL);
-      g_IspPid[i] = 0;
-    }
-
-    pfnSnsObj = TDL_Vi_SnsObjGet(stIniCfg.enSnsType[i]);
-    if (pfnSnsObj == NULL) {
-      printf("sensor obj(%d) is null\n", i);
-      return -1;
-    }
-
-    stAeLib.s32Id = i;
-    stAwbLib.s32Id = i;
-    strncpy(stAeLib.acLibName, CVI_AE_LIB_NAME, sizeof(stAeLib.acLibName));
-    strncpy(stAwbLib.acLibName, CVI_AWB_LIB_NAME, sizeof(stAwbLib.acLibName));
-    if (pfnSnsObj->pfnUnRegisterCallback) {
-      ret = pfnSnsObj->pfnUnRegisterCallback(i, &stAeLib, &stAwbLib);
-      if (ret != CVI_SUCCESS) {
-        printf("fnUnRegisterCallback(%d) failed\n", i);
-        return ret;
-      }
-    }
-
-    CVI_AE_UnRegister(i, &stAeLib);
-    CVI_AWB_UnRegister(i, &stAwbLib);
-  }
-  return ret;
-}
-
-static int TDL_Vi_DestroyVi() {
-  int ret = 0;
-  for (int i = 0; i < stIniCfg.devNum; i++) {
-    ret = CVI_VI_DisableChn(i, i);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VI_DisableChn(%d) failed\n", i);
-      return ret;
-    }
-
-    ret = CVI_VI_StopPipe(i);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VI_StopPipe(%d) failed\n", i);
-      return ret;
-    }
-
-    ret = CVI_VI_DetachVbPool(i, i);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VI_DetachVbPool(%d) failed\n", i);
-      return ret;
-    }
-
-    ret = CVI_VI_DestroyPipe(i);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VI_DestroyPipe(%d) failed\n", i);
-      return ret;
-    }
-
-    ret = CVI_VI_DisableDev(i);
-    if (ret != CVI_SUCCESS) {
-      printf("CVI_VI_DisableDev(%d) failed\n", i);
-      return ret;
-    }
-
-    CVI_VI_UnRegChnFlipMirrorCallBack(0, i);
-  }
-  return ret;
-}
-
-static int TDL_Vi_SysExit(
-    std::shared_ptr<BaseMemoryPool> &memory_pool,
-    std::vector<std::unique_ptr<MemoryBlock>> &memory_blocks) {
-  int ret = 0;
-
-  auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool);
-  if (pool) {
-    for (auto &block : memory_blocks) {
-      pool->DestroyExVb(block);
     }
   }
-  memory_blocks.clear();
-  memory_pool.reset();
 
-  CVI_SYS_Exit();
-  CVI_VB_Exit();
-  return ret;
+#ifndef __CV184X__
+  s32Ret = SAMPLE_COMM_VI_CreateIsp(pstViConfig);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("VI_CreateIsp failed with %#x!\n", s32Ret);
+    return s32Ret;
+  }
+#endif
+
+#ifdef __CV184X__
+  for (i = 0; i < ViNum; i++) {
+    if (CVI_SNS_SetSnsInit(i) != CVI_SUCCESS) {
+      printf("[ERROR] sensor_%d init failed!\n", i);
+      return CVI_FAILURE;
+    }
+  }
+#endif
+
+  s32Ret = TDL_VI_StartViChn(pstViConfig, pool_id);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("VI_StartViChn failed with %#x!\n", s32Ret);
+    return s32Ret;
+  }
+
+  return s32Ret;
 }
 
 int ViDecoder::initialize() {
   int ret = 0;
 
-  VB_CONFIG_S stVbConf;
-  memset(&stIniCfg, 0, sizeof(TDLViCfg));
-  memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
+#ifdef __CV184X__
+  SNS_INI_CFG_S stIniCfg;
+#else
+  SAMPLE_INI_CFG_S stIniCfg;
+#endif
 
-  // Parse ini
-  ret = TDL_Vi_ParseIni(&stIniCfg);
+  CVI_S32 ViNum = 0;
+  SAMPLE_VI_CONFIG_S stViConfig;
+  VB_CONFIG_S stVbConf;
+  PIC_SIZE_E enPicSize;
+  SIZE_S stSize;
+  CVI_U32 u32BlkSize, u32BlkRotSize;
+  CVI_U32 Vb_cnt;
+  CVI_S32 pool_id[VI_MAX_PIPE_NUM] = {};
+
+/************************************************
+ * step1:  Config VI
+ ************************************************/
+#ifdef __CV184X__
+  ret = CVI_SYS_Init();
   if (ret != 0) {
-    printf("TDL_Vi_ParseIni failed with %d\n", ret);
+    LOGE("CVI_SYS_Init failed!\n");
     return ret;
   }
+
+  ret = SAMPLE_COMM_VI_INI_INIT(&stViConfig, &stIniCfg, &stVbConf);
+  if (ret != 0) {
+    LOGE("SAMPLE_COMM_VI_INI_INIT fail\n");
+    return ret;
+  }
+#else
+  ret = SAMPLE_COMM_VI_ParseIni(&stIniCfg);
+  if (ret != 0) {
+    LOGE("Parse sensor_cfg.ini fail\n");
+    return ret;
+  }
+
+  ret = SAMPLE_COMM_VI_IniToViCfg(&stIniCfg, &stViConfig);
+  if (ret != 0) {
+    LOGE("SAMPLE_COMM_VI_IniToViCfg fail\n");
+    return ret;
+  }
+#endif
 
   // Set sensor number
   CVI_VI_SetDevNum(stIniCfg.devNum);
 
-  ret = TDL_Vi_SysInit(memory_pool_, memory_blocks_);
+  memcpy(&g_stViConfig, &stViConfig, sizeof(SAMPLE_VI_CONFIG_S));
+
+  /************************************************
+   * step2:  Set memory_pool and memory_blocks
+   ************************************************/
+  memset(&stVbConf, 0, sizeof(VB_CONFIG_S));
+  stVbConf.u32MaxPoolCnt = 0;
+
+  ret = SAMPLE_COMM_SYS_Init(&stVbConf);
   if (ret != 0) {
-    printf("TDL_Vi_SysInit failed\n");
+    LOGE("SAMPLE_COMM_SYS_Init failed. ret: 0x%x !\n", ret);
     return ret;
   }
 
-  ret = TDL_Vi_StartSensor();
-  if (ret != 0) {
-    printf("TDL_Vi_StartSensor failed\n");
-    return ret;
+  memory_pool_ = BaseMemoryPoolFactory::createMemoryPool();
+  memory_blocks_.clear();
+  auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool_);
+  if (!pool) {
+    printf("memory_pool is nullptr");
+    return -1;
   }
 
-  ret = TDL_Vi_StartDev();
-  if (ret != 0) {
-    printf("TDL_Vi_StartDev failed\n");
-    return ret;
+#ifdef __CV184X__
+  ViNum = stViConfig.s32ViNum;
+#else
+  ViNum = stViConfig.s32WorkingViNum;
+#endif
+
+  for (CVI_S32 i = 0; i < ViNum; i++) {
+    ret = SAMPLE_COMM_VI_GetSizeBySensor(stIniCfg.enSnsType[i], &enPicSize);
+    if (ret != CVI_SUCCESS) {
+      printf("SAMPLE_COMM_VI_GetSizeBySensor failed with %#x\n", ret);
+      return ret;
+    }
+
+    ret = SAMPLE_COMM_SYS_GetPicSize(enPicSize, &stSize);
+    if (ret != CVI_SUCCESS) {
+      printf("SAMPLE_COMM_SYS_GetPicSize failed with %#x\n", ret);
+      return ret;
+    }
+
+    u32BlkSize = COMMON_GetPicBufferSize(
+        stSize.u32Width, stSize.u32Height,
+        stViConfig.astViInfo[i].stChnInfo.enPixFormat, DATA_BITWIDTH_8,
+        COMPRESS_MODE_NONE, DEFAULT_ALIGN);
+    u32BlkRotSize = COMMON_GetPicBufferSize(
+        stSize.u32Height, stSize.u32Width,
+        stViConfig.astViInfo[i].stChnInfo.enPixFormat, DATA_BITWIDTH_8,
+        COMPRESS_MODE_NONE, DEFAULT_ALIGN);
+    u32BlkSize = u32BlkSize > u32BlkRotSize ? u32BlkSize : u32BlkRotSize;
+
+    memory_blocks_.push_back(
+        pool->CreateExVb(u32BlkSize, 3, stSize.u32Width, stSize.u32Height));
+    pool_id[i] = memory_blocks_.back()->id;
   }
 
-  ret = TDL_Vi_StartMipi();
+  /************************************************
+   * step3:  Init modules
+   ************************************************/
+  ret = TDL_VI_INIT(&stViConfig, pool_id);
   if (ret != 0) {
-    printf("TDL_Vi_StartMipi failed\n");
-    return ret;
-  }
-
-  ret = TDL_Vi_StartPipe();
-  if (ret != 0) {
-    printf("TDL_Vi_StartPipe failed\n");
-    return ret;
-  }
-
-  ret = TDL_Vi_InitIsp();
-  if (ret != 0) {
-    printf("TDL_Vi_InitIsp failed\n");
-    return ret;
-  }
-
-  ret = TDL_Vi_StartIsp();
-  if (ret != 0) {
-    printf("TDL_Vi_StartIsp failed\n");
-    return ret;
-  }
-
-  ret = TDL_Vi_StartChn(memory_blocks_);
-  if (ret != 0) {
-    printf("TDL_Vi_StarChn failed\n");
+    LOGE("TDL_VI_INIT failed. ret: 0x%x !\n", ret);
     return ret;
   }
 
@@ -696,9 +353,22 @@ int ViDecoder::initialize() {
 
 int ViDecoder::deinitialize() {
   int ret = 0;
-  TDL_Vi_DestroyIsp();
-  TDL_Vi_DestroyVi();
-  TDL_Vi_SysExit(memory_pool_, memory_blocks_);
+
+  auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool_);
+
+  SAMPLE_COMM_VI_DestroyIsp(&g_stViConfig);
+  SAMPLE_COMM_VI_DestroyVi(&g_stViConfig);
+
+  if (pool) {
+    for (auto &block : memory_blocks_) {
+      pool->DestroyExVb(block);
+    }
+  }
+  memory_blocks_.clear();
+  memory_pool_.reset();
+
+  SAMPLE_COMM_SYS_Exit();
+
   isInitialized = false;
   return ret;
 }
@@ -730,7 +400,7 @@ int32_t ViDecoder::init(const std::string &path,
   return 0;
 }
 
-int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int chn) {
+int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int vi_chn) {
   if (isMapped_) {
     CVI_SYS_Munmap((void *)addr_, image_size_);
     isMapped_ = false;
@@ -738,11 +408,11 @@ int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int chn) {
   int ret = 0;
 
   while (true) {
-    ret = CVI_VI_GetChnFrame(chn, chn, &frame_info[chn], 3000);
-    VIDEO_FRAME_INFO_S *vpss_frame_info = &frame_info[chn];
+    ret = CVI_VI_GetChnFrame(vi_chn, vi_chn, &frame_info[vi_chn], 3000);
+    VIDEO_FRAME_INFO_S *vpss_frame_info = &frame_info[vi_chn];
     if (ret != 0 ||
         vpss_frame_info->stVFrame.u32Width == 0) {  // CVI_VI_GetChnFrame bug
-      printf("CVI_VI_GetChnFrame(%d) failed, ret(%d) width %d\n", chn, ret,
+      printf("CVI_VI_GetChnFrame(%d) failed, ret(%d) width %d\n", vi_chn, ret,
              vpss_frame_info->stVFrame.u32Width);
     } else {
       break;
@@ -750,29 +420,49 @@ int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int chn) {
   }
 
   // 计算总的图像大小
-  size_t image_size = frame_info[chn].stVFrame.u32Length[0] +
-                      frame_info[chn].stVFrame.u32Length[1] +
-                      frame_info[chn].stVFrame.u32Length[2];
+  size_t image_size = frame_info[vi_chn].stVFrame.u32Length[0] +
+                      frame_info[vi_chn].stVFrame.u32Length[1] +
+                      frame_info[vi_chn].stVFrame.u32Length[2];
 
   // 如果虚拟地址为空，进行内存映射
-  if (frame_info[chn].stVFrame.pu8VirAddr[0] == NULL) {
-    frame_info[chn].stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(
-        frame_info[chn].stVFrame.u64PhyAddr[0], image_size);
+  if (frame_info[vi_chn].stVFrame.pu8VirAddr[0] == NULL) {
+    frame_info[vi_chn].stVFrame.pu8VirAddr[0] = (CVI_U8 *)CVI_SYS_Mmap(
+        frame_info[vi_chn].stVFrame.u64PhyAddr[0], image_size);
     isMapped_ = true;
-    addr_ = frame_info[chn].stVFrame.pu8VirAddr[0];
+    addr_ = frame_info[vi_chn].stVFrame.pu8VirAddr[0];
     image_size_ = image_size;
   }
 
-  image = ImageFactory::wrapVPSSFrame(&frame_info[chn], false);
+  image = ImageFactory::wrapVPSSFrame(&frame_info[vi_chn], false);
 
   return image ? 0 : -1;
 }
 
-int32_t ViDecoder::release(int chn) {
+int32_t ViDecoder::read(VIDEO_FRAME_INFO_S *frame, int vi_chn) {
   int ret = 0;
-  ret = CVI_VI_ReleaseChnFrame(chn, chn, &frame_info[chn]);
+  ret = CVI_VI_GetChnFrame(vi_chn, vi_chn, frame, 3000);
   if (ret != 0) {
-    printf("CVI_VI_ReleaseChnFrame(%d) failed with %d\n", chn, ret);
+    LOGE("CVI_VI_GetChnFrame(%d) failed with %d\n", vi_chn, ret);
+    return ret;
+  }
+
+  return frame ? 0 : -1;
+}
+
+int32_t ViDecoder::release(int vi_chn) {
+  int ret = 0;
+  ret = CVI_VI_ReleaseChnFrame(vi_chn, vi_chn, &frame_info[vi_chn]);
+  if (ret != 0) {
+    LOGE("CVI_VI_ReleaseChnFrame(%d) failed with %d\n", vi_chn, ret);
+  }
+  return ret;
+}
+
+int32_t ViDecoder::release(int vi_chn, VIDEO_FRAME_INFO_S *frame) {
+  int ret = 0;
+  ret = CVI_VI_ReleaseChnFrame(vi_chn, vi_chn, frame);
+  if (ret != 0) {
+    LOGE("CVI_VI_ReleaseChnFrame(%d) failed with %d\n", vi_chn, ret);
   }
   return ret;
 }
