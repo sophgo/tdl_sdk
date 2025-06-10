@@ -39,6 +39,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 set_target_properties(${PROJECT_NAME} PROPERTIES
     PREFIX ""
     SUFFIX ".so"
+    OUTPUT_NAME "tdl"
 )
 
 # 设置编译优化参数（可选）

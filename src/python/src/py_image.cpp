@@ -151,9 +151,9 @@ PyImage cropResize(const PyImage& src,
   return PyImage(dst_image);
 }
 
-PyImage alignFace(const PyImage& image,
-                  const std::vector<float>& src_landmark_xy,
-                  const std::vector<float>& dst_landmark_xy, int num_points) {
+PyImage align_face(const PyImage& image,
+                   const std::vector<float>& src_landmark_xy,
+                   const std::vector<float>& dst_landmark_xy, int num_points) {
   std::shared_ptr<BaseImage> image_ptr = image.getImage();
 
   // 验证关键点数据有效性

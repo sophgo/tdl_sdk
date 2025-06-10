@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     print("正在执行人脸对齐...")
     # 调用人脸对齐函数
-    aligned_img = image.alignFace(img_tdl, src_landmarks, dst_landmarks, 5)
+    aligned_img = image.align_face(img_tdl, src_landmarks, dst_landmarks, 5)
     
     # 保存结果
     output_path = "aligned_face.jpg"

@@ -12,10 +12,10 @@ PyImage (*crop_func)(const PyImage&,
 PyImage (*crop_resize_func)(const PyImage&,
                             const std::tuple<int, int, int, int>&, int,
                             int) = &cropResize;
-PyImage (*alignFace_func)(const PyImage& image,
-                          const std::vector<float>& src_landmark_xy,
-                          const std::vector<float>& dst_landmark_xy,
-                          int num_points) = &alignFace;
+PyImage (*align_face_func)(const PyImage& image,
+                           const std::vector<float>& src_landmark_xy,
+                           const std::vector<float>& dst_landmark_xy,
+                           int num_points) = &align_face;
 
 // pybind11绑定实现
 PYBIND11_MODULE(tdl, m) {
@@ -68,9 +68,15 @@ PYBIND11_MODULE(tdl, m) {
   image.def("crop", crop_func, py::arg("src"), py::arg("roi"));
   image.def("crop_resize", crop_resize_func, py::arg("src"), py::arg("roi"),
             py::arg("width"), py::arg("height"));
-  image.def("alignFace", alignFace_func, py::arg("image"),
+  image.def("align_face", align_face_func, py::arg("image"),
             py::arg("src_landmark_xy"), py::arg("dst_landmark_xy"),
             py::arg("num_points"));
+  image.def(
+      "from_numpy",
+      [](const py::array& arr, ImageFormat format) {
+        return PyImage(arr, format);
+      },
+      py::arg("numpy_array"), py::arg("format") = ImageFormat::BGR_PACKED);
 
   // 神经网络模块
   py::module nn = m.def_submodule("nn", "Neural network algorithms module");
