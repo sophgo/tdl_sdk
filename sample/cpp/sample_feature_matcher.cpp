@@ -96,9 +96,30 @@ std::vector<std::shared_ptr<ModelFeatureInfo>> createModelFeatureInfos(
   return feature_infos;
 }
 
+void mul100_and_colSoftmax(std::vector<std::vector<float>>& scores) {
+  if (scores.empty()) return;
+
+  const std::size_t rows = scores.size();
+  const std::size_t cols = scores[0].size();
+  /* 1. 先全部乘 100 */
+  for (auto& row : scores)
+    for (auto& v : row) v *= 100.f;
+  /* 2. 逐列做 soft-max */
+  std::vector<float> colSum(cols, 0.f);
+  // 2-a) 先做 exp，同时累计每列的和
+  for (std::size_t r = 0; r < rows; ++r)
+    for (std::size_t c = 0; c < cols; ++c) {
+      scores[r][c] = std::exp(scores[r][c]);
+      colSum[c] += scores[r][c];
+    }
+  // 2-b) 再把每个元素除以对应列的和
+  for (std::size_t r = 0; r < rows; ++r)
+    for (std::size_t c = 0; c < cols; ++c)
+      scores[r][c] /= (colSum[c] + 1e-8f);  // 加个 eps 防止除 0
+}
 // 打印匹配结果
 void printMatchResults(int argc, char* argv[], const int32_t topk,
-                       const MatchResult& results) {
+                       MatchResult& results) {
   std::string img_dir;
   std::vector<std::string> image_paths;
   std::vector<std::string> image_labels;
@@ -109,8 +130,9 @@ void printMatchResults(int argc, char* argv[], const int32_t topk,
     for (const std::string& image_path : image_paths) {
       image_labels.push_back(fs::path(image_path).filename().string());
     }
-  }
 
+    mul100_and_colSoftmax(results.scores);
+  }
   std::cout << "Top " << topk << "匹配结果:" << std::endl;
   for (size_t i = 0; i < results.indices.size(); ++i) {
     std::cout << "  查询特征 " << i << " 的匹配结果:" << std::endl;

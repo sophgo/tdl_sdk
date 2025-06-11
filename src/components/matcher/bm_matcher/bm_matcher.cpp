@@ -5,7 +5,9 @@
 #include <iostream>
 #include <queue>
 #include "bm_matcher/common.hpp"
+#if defined(__BM168X__)
 #include "bmcv_api.h"
+#endif
 
 // 将不同类型的数据转换为float类型
 void BmMatcher::convertToFloat(const void* src, float* dst, int dim,

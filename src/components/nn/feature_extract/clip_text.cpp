@@ -10,8 +10,7 @@ void parse_feature_info(T *data, int num_elem, float qscale, float *features) {
 }
 
 Clip_Text::Clip_Text() {
-  net_param_.model_config.std = {1.0 / 0.003922, 1.0 / 0.003922,
-                                 1.0 / 0.003922};
+  net_param_.model_config.std = {255.0, 255.0, 255.0};
   net_param_.model_config.mean = {0.0, 0.0, 0.0};
 }
 
@@ -37,7 +36,7 @@ int32_t Clip_Text::inference(
 
     const TensorInfo &tinfo = net_->getTensorInfo(input_layer);
     int32_t *input_ptr = (int32_t *)tinfo.sys_mem;
-    printf("*************1**************\n");
+
     memcpy(input_ptr, temp_buffer, 77 * sizeof(int32_t));
 
     net_->updateInputTensors();
@@ -50,7 +49,6 @@ int32_t Clip_Text::inference(
 
     out_datas.insert(out_datas.end(), batch_results.begin(),
                      batch_results.end());
-    printf("***************************\n");
   }
 
   return 0;

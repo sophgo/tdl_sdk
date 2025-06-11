@@ -9,11 +9,8 @@ void parse_feature_info(T *data, int num_elem, float qscale, float *features) {
   }
 }
 Clip_Image::Clip_Image() {
-  net_param_.model_config.std = {1.0 / 0.0145984266, 1.0 / 0.0150077685,
-                                 1.0 / 0.0142200657};
-  net_param_.model_config.mean = {1.7922625 / 0.0145984266,
-                                  1.7465649 / 0.0150077685,
-                                  1.4802198 / 0.0142200657};
+  net_param_.model_config.std = {68.5005327, 66.6321579, 70.32316305};
+  net_param_.model_config.mean = {122.7709383, 116.7460125, 104.09373615};
 }
 
 Clip_Image::~Clip_Image() {}

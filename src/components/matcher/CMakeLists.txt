@@ -14,13 +14,11 @@ set(SRC_FRAMWORK_FILES_CUR
 )
 
 # 根据平台添加特定源文件
-if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X"))
-    add_definitions(-DUSE_BM_MATCHER)
+if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "CV184X"))
     list(APPEND SRC_FRAMWORK_FILES_CUR 
         ${CMAKE_CURRENT_SOURCE_DIR}/bm_matcher/bm_matcher.cpp
     )
 elseif("${CVI_PLATFORM}" STREQUAL "CV181X")
-    add_definitions(-DUSE_CVI_MATCHER)
     list(APPEND SRC_FRAMWORK_FILES_CUR 
         ${CMAKE_CURRENT_SOURCE_DIR}/cvi_matcher/cvi_matcher.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/cvi_matcher/utils/cvimath.cpp
