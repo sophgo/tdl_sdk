@@ -737,10 +737,15 @@ int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int chn) {
   }
   int ret = 0;
 
-  ret = CVI_VI_GetChnFrame(chn, chn, &frame_info[chn], 3000);
-  if (ret != 0) {
-    printf("CVI_VI_GetChnFrame(%d) failed with %d\n", chn, ret);
-    return ret;
+  while (true) {
+    ret = CVI_VI_GetChnFrame(chn, chn, &frame_info[chn], 3000);
+    VIDEO_FRAME_INFO_S *vpss_frame_info = &frame_info[chn];
+    if (ret != 0 ||
+        vpss_frame_info->stVFrame.u32Width == 0) {  // CVI_VI_GetChnFrame bug
+      printf("CVI_VI_GetChnFrame(%d) failed with %d\n", chn, ret);
+    } else {
+      break;
+    }
   }
 
   // 计算总的图像大小

@@ -48,8 +48,10 @@ int32_t FaceCaptureApp::addPipeline(const std::string &pipeline_name,
     return nlohmann::json();
   };
 
-  face_capture_channel->addNode(
-      getVideoNode(get_config("video_node", nodes_cfg)));
+  if (nodes_cfg.contains("video_node")) {
+    face_capture_channel->addNode(
+        getVideoNode(get_config("video_node", nodes_cfg)));
+  }
   face_capture_channel->addNode(
       getFaceDetectionNode(get_config("face_detection_node", nodes_cfg)));
   face_capture_channel->addNode(
@@ -103,7 +105,9 @@ int32_t FaceCaptureApp::getResult(const std::string &pipeline_name,
       getNodeData<std::vector<TrackerInfo>>("track_results", frame_info);
   face_capture_result->face_snapshots =
       getNodeData<std::vector<ObjectSnapshotInfo>>("snapshots", frame_info);
-  pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
+  if (getChannelNodeName(pipeline_name, 0) == "video_node") {
+    pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
+  }
   result = Packet::make(face_capture_result);
   return 0;
 }

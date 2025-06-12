@@ -22,8 +22,11 @@ class AppTask {
   AppTask(const std::string &task_name, const std::string &json_config_file);
   ~AppTask();
   std::vector<std::string> getChannelNames();
+  std::string getChannelNodeName(const std::string &channel_name, size_t index);
   int getProcessingChannelNum();
   int32_t removeChannel(const std::string &channel_name);
+  int32_t setFrame(const std::string &pipeline_name,
+                   std::shared_ptr<BaseImage> image, uint64_t frame_id);
 
   virtual int32_t init() = 0;
   virtual int32_t release() = 0;

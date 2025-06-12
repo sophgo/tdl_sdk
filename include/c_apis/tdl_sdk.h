@@ -399,10 +399,13 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
  *
  * @param handle TDLHandle 对象
  * @param channel_name 每一路视频流的名称信息
+ * @param image_handle TDLImageHandle 对象, 如果非外部传图像，传入NULL
+ * @param frame_id 外部传入图像的id
  * @param cap_result 抓拍结果
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
+                               TDLImage image_handle, uint64_t frame_id,
                                TDLFacePetCapResult *cap_result);
 
 #ifdef __cplusplus

@@ -91,11 +91,15 @@ std::shared_ptr<BaseImage> BasePreprocessor::resize(
 }
 std::shared_ptr<BaseImage> BasePreprocessor::cropResize(
     const std::shared_ptr<BaseImage>& image, int x, int y, int width,
-    int height, int newWidth, int newHeight) {
+    int height, int newWidth, int newHeight, ImageFormat dst_image_format) {
   PreprocessParams params;
   params.dst_width = newWidth;
   params.dst_height = newHeight;
-  params.dst_image_format = image->getImageFormat();
+  if (dst_image_format == ImageFormat::UNKOWN) {
+    params.dst_image_format = image->getImageFormat();
+  } else {
+    params.dst_image_format = dst_image_format;
+  }
   params.dst_pixdata_type = image->getPixDataType();
 
   for (int i = 0; i < 3; i++) {

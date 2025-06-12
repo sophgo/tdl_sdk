@@ -15,6 +15,7 @@ class PipelineChannel {
   PtrFrameInfo getFreeFrame(int wait_ms = 5);
   // to add the frame to first node
   int32_t addFreeFrame(PtrFrameInfo frame_info);
+  std::string getNodeName(size_t index);
   void start();
   void stop();
   bool isRunning() { return is_running_; }

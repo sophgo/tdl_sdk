@@ -1113,6 +1113,7 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
 }
 
 int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
+                               TDLImage image_handle, uint64_t frame_id,
                                TDLFacePetCapResult *cap_result) {
   TDLContext *context = (TDLContext *)handle;
   int ret = 0;
@@ -1130,8 +1131,22 @@ int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
     return 2;
   }
 
+  if (image_handle != NULL) {
+    TDLImageContext *image_context = (TDLImageContext *)image_handle;
+    ret = context->app_task->setFrame(std::string(channel_name),
+                                      image_context->image, frame_id);
+    if (ret != 0) {
+      printf("app_task setFrame failed!\n");
+      return ret;
+    }
+  } else if (context->app_task->getChannelNodeName(std::string(channel_name),
+                                                   0) != "video_node") {
+    LOGE("One of image_handle and video_node should be set!");
+    return -1;
+  }
+
   Packet result;
-  printf("to get result from channel:%s\n", channel_name);
+  // printf("to get result from channel:%s\n", channel_name);
   ret = context->app_task->getResult(std::string(channel_name), result);
   if (ret != 0) {
     printf("get result failed\n");

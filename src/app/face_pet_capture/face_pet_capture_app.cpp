@@ -55,8 +55,10 @@ int32_t FacePetCaptureApp::addPipeline(const std::string &pipeline_name,
     return nlohmann::json();
   };
 
-  face_capture_channel->addNode(
-      getVideoNode(get_config("video_node", nodes_cfg)));
+  if (nodes_cfg.contains("video_node")) {
+    face_capture_channel->addNode(
+        getVideoNode(get_config("video_node", nodes_cfg)));
+  }
   face_capture_channel->addNode(
       getObjectDetectionNode(get_config("object_detection_node", nodes_cfg)));
   face_capture_channel->addNode(
@@ -105,9 +107,6 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
   face_pet_capture_result->frame_width = image->getWidth();
   face_pet_capture_result->frame_height = image->getHeight();
 
-  // face_pet_capture_result->person_boxes =
-  //     getNodeData<std::vector<ObjectBoxInfo>>("object_meta", frame_info);
-
   face_pet_capture_result->face_boxes =
       getNodeData<std::vector<ObjectBoxLandmarkInfo>>("face_meta", frame_info);
   face_pet_capture_result->person_boxes =
@@ -121,7 +120,9 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
   face_pet_capture_result->face_features =
       getNodeData<std::map<uint64_t, std::vector<float>>>("face_features",
                                                           frame_info);
-  pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
+  if (getChannelNodeName(pipeline_name, 0) == "video_node") {
+    pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
+  }
   result = Packet::make(face_pet_capture_result);
   return 0;
 }
@@ -410,7 +411,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
               landmark_detection_model->getPreprocessor();
 
           std::shared_ptr<BaseImage> crop_face_img = preprocessor->cropResize(
-              image, crop_x, crop_y, crop_w, crop_w, dst_width, dst_height);
+              image, crop_x, crop_y, crop_w, crop_w, dst_width, dst_height,
+              ImageFormat::RGB_PACKED);
 
           crop_face_imgs[t.track_id_] = crop_face_img;
 

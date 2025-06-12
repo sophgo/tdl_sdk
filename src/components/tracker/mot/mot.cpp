@@ -443,20 +443,16 @@ void MOT::updateTrackers(const std::vector<ObjectBoxInfo> &boxes,
     int pair_idx = pair_obj_idxes_[i];
     if (pair_idx != -1) {
       uint64_t pair_trackid = det_track_ids_[pair_idx];
-      if (pair_trackid == 0) {
-        continue;
-      }
-      if (trackid_idx_map.count(pair_trackid) == 0) {
-        LOGW("pair_trackid:%lu not found,skip", pair_trackid);
-        continue;
-      }
-      int pair_track_idx = trackid_idx_map[pair_trackid];
-      std::shared_ptr<KalmanTracker> &pair_track = trackers_[pair_track_idx];
-      if (pair_track->unmatched_times_ == 0 &&
-          pair_track->status_ == TrackStatus::TRACKED && boxes[i].score > 0.5) {
-        tracker->status_ = TrackStatus::TRACKED;
-        LOGI("confirm track directly ,track:%lu,pair:%lu", tracker->id_,
-             pair_track->id_);
+      if (pair_trackid != 0 && trackid_idx_map.count(pair_trackid) != 0) {
+        int pair_track_idx = trackid_idx_map[pair_trackid];
+        std::shared_ptr<KalmanTracker> &pair_track = trackers_[pair_track_idx];
+        if (pair_track->unmatched_times_ == 0 &&
+            pair_track->status_ == TrackStatus::TRACKED &&
+            boxes[i].score > 0.5) {
+          tracker->status_ = TrackStatus::TRACKED;
+          LOGI("confirm track directly ,track:%lu,pair:%lu", tracker->id_,
+               pair_track->id_);
+        }
       }
     }
     det_track_ids_[i] = new_id;

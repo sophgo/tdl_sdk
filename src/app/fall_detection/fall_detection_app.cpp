@@ -54,8 +54,10 @@ int32_t FallDetectionApp::addPipeline(const std::string &pipeline_name,
     return nlohmann::json();
   };
 
-  fall_detection_channel->addNode(
-      getVideoNode(get_config("video_node", nodes_cfg)));
+  if (nodes_cfg.contains("video_node")) {
+    fall_detection_channel->addNode(
+        getVideoNode(get_config("video_node", nodes_cfg)));
+  }
   fall_detection_channel->addNode(getKeypointDetectionNode(
       get_config("keypoint_detection_node", nodes_cfg)));
   fall_detection_channel->addNode(
@@ -300,7 +302,9 @@ int32_t FallDetectionApp::getResult(const std::string &pipeline_name,
          fall_detection_result->track_results,
          fall_detection_result->det_results);
 
-  pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
+  if (getChannelNodeName(pipeline_name, 0) == "video_node") {
+    pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
+  }
   result = Packet::make(fall_detection_result);
   return 0;
 }

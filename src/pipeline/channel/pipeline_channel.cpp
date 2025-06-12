@@ -103,3 +103,12 @@ int32_t PipelineChannel::addFreeFrame(PtrFrameInfo frame_info) {
        int(free_queue_.sizeUnsafe()));
   return 0;
 }
+
+std::string PipelineChannel::getNodeName(size_t index) {
+  if (index < nodes_.size()) {
+    return nodes_[index]->getNodeName();
+  } else {
+    LOGE("index >= nodes_ size(%d)", nodes_.size());
+    return std::string("");
+  }
+}

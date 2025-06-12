@@ -23,7 +23,8 @@ class BasePreprocessor {
       int height);
   virtual std::shared_ptr<BaseImage> cropResize(
       const std::shared_ptr<BaseImage>& image, int x, int y, int width,
-      int height, int newWidth, int newHeight);
+      int height, int newWidth, int newHeight,
+      ImageFormat dst_image_format = ImageFormat::UNKOWN);
   virtual std::shared_ptr<BaseImage> preprocess(
       const std::shared_ptr<BaseImage>& src_image,
       const PreprocessParams& params,
