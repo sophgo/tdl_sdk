@@ -102,7 +102,7 @@ int32_t CviMemoryPool::flushCache(std::unique_ptr<MemoryBlock> &block) {
   }
   CVI_S32 ret = CVI_SYS_IonFlushCache(block->physicalAddress,
                                       block->virtualAddress, block->size);
-  LOGI("flushCache done,ret:%d,phyaddr:%lx,viraddr:%lx,size:%d", ret,
+  LOGI("flushCache done,ret:%d,phyaddr:%#llx,viraddr:%lx,size:%d", ret,
        block->physicalAddress, block->virtualAddress, block->size);
   return (int32_t)ret;
 }
@@ -130,7 +130,7 @@ int32_t CviMemoryPool::invalidateCache(std::unique_ptr<MemoryBlock> &block) {
   }
   CVI_S32 ret = CVI_SYS_IonInvalidateCache(block->physicalAddress,
                                            block->virtualAddress, block->size);
-  LOGI("invalidateCache done,ret:%d,phyaddr:%lx,viraddr:%lx,size:%d", ret,
+  LOGI("invalidateCache done,ret:%d,phyaddr:%#llx,viraddr:%lx,size:%d", ret,
        block->physicalAddress, block->virtualAddress, block->size);
   return (int32_t)ret;
 }

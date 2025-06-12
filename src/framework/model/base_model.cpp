@@ -177,6 +177,9 @@ int32_t BaseModel::setupNetwork(NetParam& net_param) {
       preprocess_param.scale[i] = 1.0 / net_param_.model_config.std[i];
       preprocess_param.mean[i] *= tensor_info.qscale;
       preprocess_param.scale[i] *= tensor_info.qscale;
+      preprocess_param.scale[i] =
+          std::min(preprocess_param.scale[i],
+                   8191.0f / 8192);  // fix vpss scale overflow warning
     }
     preprocess_param.dst_height = tensor_info.shape[2];
     preprocess_param.dst_width = tensor_info.shape[3];

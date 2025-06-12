@@ -68,7 +68,7 @@ VPSSImage::~VPSSImage() {
   }
   LOGI(
       "VPSSImage::~VPSSImage "
-      "own_memory:%d,phyaddr:%lx,viraddr:%lx,width:%d,"
+      "own_memory:%d,phyaddr:%#llx,viraddr:%lx,width:%d,"
       "height:%d,format:%d,pix_data_type:%d",
       memory_block_->own_memory, frame_.stVFrame.u64PhyAddr[0],
       frame_.stVFrame.pu8VirAddr[0], frame_.stVFrame.u32Width,
@@ -172,7 +172,7 @@ int32_t VPSSImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
     }
   }
 
-  LOGI("setupMemory done,width:%d,height:%d,format:%d,addr:%p,phyaddr:%llu",
+  LOGI("setupMemory done,width:%d,height:%d,format:%d,addr:%p,phyaddr:%#llx",
        frame_.stVFrame.u32Width, frame_.stVFrame.u32Height,
        frame_.stVFrame.enPixelFormat, frame_.stVFrame.pu8VirAddr[0],
        frame_.stVFrame.u64PhyAddr[0]);
@@ -382,7 +382,7 @@ int32_t VPSSImage::restoreVirtualAddress(bool check_swap_rgb) {
     uint8_t* ptr_r = frame_.stVFrame.pu8VirAddr[0];
     frame_.stVFrame.pu8VirAddr[0] = frame_.stVFrame.pu8VirAddr[2];
     frame_.stVFrame.pu8VirAddr[2] = ptr_r;
-    LOGI("swap r and b,width:%d,height:%d,format:%d,addr:%lx,phyaddr:%lx",
+    LOGI("swap r and b,width:%d,height:%d,format:%d,addr:%lx,phyaddr:%#llx",
          frame_.stVFrame.u32Width, frame_.stVFrame.u32Height,
          frame_.stVFrame.enPixelFormat, frame_.stVFrame.pu8VirAddr[0],
          frame_.stVFrame.u64PhyAddr[0]);
@@ -405,7 +405,7 @@ int32_t VPSSImage::checkToSwapRGB() {
                                     frame_.stVFrame.u32Length[1];
     frame_.stVFrame.u64PhyAddr[2] = memory_block_->physicalAddress;
 
-    LOGI("swap r and b,width:%d,height:%d,format:%d,addr:%lx,phyaddr:%lx",
+    LOGI("swap r and b,width:%d,height:%d,format:%d,addr:%lx,phyaddr:%#llx",
          frame_.stVFrame.u32Width, frame_.stVFrame.u32Height,
          frame_.stVFrame.enPixelFormat, frame_.stVFrame.pu8VirAddr[0],
          frame_.stVFrame.u64PhyAddr[0]);
