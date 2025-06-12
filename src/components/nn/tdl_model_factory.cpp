@@ -63,9 +63,16 @@ TDLModelFactory::~TDLModelFactory() {}
 
 int32_t TDLModelFactory::loadModelConfig(const std::string &model_config_file) {
   std::string config_file = model_config_file;
+  std::string parent_dir;
   if (config_file.empty()) {
     std::string so_dir = CommonUtils::getLibraryDir();
-    std::string parent_dir = CommonUtils::getParentDir(so_dir);
+    std::string exe_dir = CommonUtils::getExecutableDir();
+    if (so_dir != exe_dir) {
+      parent_dir = CommonUtils::getParentDir(so_dir);
+    } else {
+      parent_dir =
+          CommonUtils::getParentDir(CommonUtils::getParentDir(exe_dir));
+    }
     config_file = parent_dir + "/configs/model/model_factory.json";
     LOGIP("input model config file is empty, load model config from %s",
           config_file.c_str());

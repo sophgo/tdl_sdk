@@ -14,6 +14,7 @@ class CommonUtils {
   static std::string getLibraryPath();
   static std::string getLibraryDir();
   static std::string getParentDir(const std::string &path);
+  static std::string getExecutableDir();
 };
 
 #endif  // COMMON_UTILS_H

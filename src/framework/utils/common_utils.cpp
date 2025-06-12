@@ -1,6 +1,8 @@
 #include "utils/common_utils.hpp"
 #include <dlfcn.h>
+#include <libgen.h>
 #include <limits.h>  // for PATH_MAX
+#include <unistd.h>
 #include <string>
 #include "utils/tdl_log.hpp"
 uint32_t CommonUtils::getDataTypeSize(TDLDataType data_type) {
@@ -86,4 +88,16 @@ std::string CommonUtils::getLibraryDir() {
 std::string CommonUtils::getParentDir(const std::string &path) {
   auto pos = path.find_last_of('/');
   return (pos != std::string::npos ? path.substr(0, pos) : std::string{});
+}
+
+std::string CommonUtils::getExecutableDir() {
+  char buffer[PATH_MAX];
+  auto len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+  if (len == -1) {
+    return "";
+  }
+  buffer[len] = '\0';
+  char dir[PATH_MAX];
+  strncpy(dir, buffer, PATH_MAX);
+  return std::string(dirname(dir));
 }
