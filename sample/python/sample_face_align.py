@@ -17,7 +17,7 @@ if __name__ == "__main__":
     img_tdl = image.Image.from_numpy(img)
     
     # 创建人脸检测器并进行检测
-    face_detector = nn.FaceDetector(nn.ModelType.SCRFD_DET_FACE, face_model_path)
+    face_detector = nn.get_model(nn.ModelType.SCRFD_DET_FACE, face_model_path)
     print("正在执行人脸检测...")
     bboxes = face_detector.inference(img)
     

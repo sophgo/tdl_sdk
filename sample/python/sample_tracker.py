@@ -41,7 +41,7 @@ if __name__ == "__main__":
     files = os.listdir(image_dir_path)
     files = sorted(files)
     num_frames = len(files)
-    obj_detector = nn.ObjectDetector(nn.ModelType.YOLOV8N_DET_PERSON_VEHICLE, obj_model_path)
+    obj_detector = nn.get_model(nn.ModelType.YOLOV8N_DET_PERSON_VEHICLE, obj_model_path)
     #face_detector = nn.FaceDetector(nn.ModelType.SCRFD_DET_FACE, face_model_path)
     tracker_type = tracker.TrackerType.TDL_MOT_SORT
     tracker = tracker.Tracker(tracker_type)

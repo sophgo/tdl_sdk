@@ -8,7 +8,7 @@ if __name__ == "__main__":
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
-    face_detector = nn.FaceDetector(nn.ModelType.SCRFD_DET_FACE, model_path)
+    face_detector = nn.get_model(nn.ModelType.SCRFD_DET_FACE, model_path)
     img = image.read(img_path)
     bboxes = face_detector.inference(img)
     print('number of faces: ', len(bboxes))

@@ -8,7 +8,7 @@ if __name__ == "__main__":
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
-    lane_detector = nn.LaneDetector(nn.ModelType.LSTR_DET_LANE, model_path)
+    lane_detector = nn.get_model(nn.ModelType.LSTR_DET_LANE, model_path)
     img = image.read(img_path)
     detection = lane_detector.inference(img)
     print(detection)

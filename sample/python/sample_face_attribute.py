@@ -8,7 +8,14 @@ if __name__ == "__main__":
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
-    face_attribute = nn.AttributeExtractor(nn.ModelType.CLS_ATTRIBUTE_FACE, model_path)
+    face_attribute = nn.get_model(nn.ModelType.CLS_ATTRIBUTE_FACE, model_path)
     img = image.read(img_path)
     face_attribution = face_attribute.inference(img)
-    print(face_attribution)
+    result = face_attribution[0]
+    print(result["mask_score"])
+    print(result["is_wearing_mask"])
+    print(result["gender_score"])
+    print(result["is_male"])
+    print(result["age_score"])
+    print(result["age"])
+    print(result["glass_score"])

@@ -14,16 +14,23 @@ namespace pytdl {
 
 class PyModel {
  public:
-  PyModel(ModelType model_type, const std::string& model_path,
-          const int device_id = 0);
+  PyModel(std::shared_ptr<BaseModel>& model);
+
+  py::list inference(const PyImage& image);
+
+  py::list inference(
+      const py::array_t<unsigned char, py::array::c_style>& input);
 
   virtual ~PyModel() = default;
 
   py::dict getPreprocessParameters();
-  void setPreprocessParameters(const py::dict& params);
 
  protected:
   std::shared_ptr<BaseModel> model_;
+
+ private:
+  py::list outputParse(
+      const std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas);
 };
 
 class PyTracker {
@@ -40,115 +47,15 @@ class PyTracker {
   std::shared_ptr<Tracker> tracker_;
 };
 
-class PyObjectDetector : public PyModel {
- public:
-  // 构造函数
-  PyObjectDetector(ModelType model_type, const std::string& model_path,
-                   const int device_id = 0);
-  py::list inference(const PyImage& image, py::dict parameters = py::dict());
-  py::list inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
-class PyFaceDetector : public PyObjectDetector {
- public:
-  PyFaceDetector(ModelType model_type, const std::string& model_path,
-                 const int device_id = 0);
-  py::list inference(const PyImage& image, py::dict parameters = py::dict());
-  py::list inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
+void getModelConfig(const py::dict& model_config,
+                    ModelConfig& model_config_cpp);
 
-class PyClassifier : public PyModel {
- public:
-  PyClassifier(ModelType model_type, const std::string& model_path,
-               const int device_id = 0);
-  py::dict inference(const PyImage& image, py::dict parameters = py::dict());
-  py::dict inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
-
-class PyFeatureExtractor : public PyModel {
- public:
-  PyFeatureExtractor(ModelType model_type, const std::string& model_path,
-                     const int device_id = 0);
-  py::array_t<float> inference(const PyImage& image,
-                               py::dict parameters = py::dict());
-  py::array_t<float> inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
-
-class PyAttributeExtractor : public PyModel {
- public:
-  PyAttributeExtractor(ModelType model_type, const std::string& model_path,
-                       const int device_id = 0);
-  py::dict inference(const PyImage& image, py::dict parameters = py::dict());
-  py::dict inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
-
-class PyKeyPointDetector : public PyModel {
- public:
-  PyKeyPointDetector(ModelType model_type, const std::string& model_path,
-                     const int device_id = 0);
-  py::dict inference(const PyImage& image, py::dict parameters = py::dict());
-  py::dict inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
-
-class PyInstanceSegmentation : public PyModel {
- public:
-  PyInstanceSegmentation(ModelType model_type, const std::string& model_path,
-                         const int device_id = 0);
-  py::dict inference(const PyImage& image, py::dict parameters = py::dict());
-  py::dict inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
-
-class PyFaceLandmark : public PyModel {
- public:
-  PyFaceLandmark(ModelType model_type, const std::string& model_path,
-                 const int device_id = 0);
-  py::dict inference(const PyImage& image, py::dict parameters = py::dict());
-  py::dict inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
-class PySemanticSegmentation : public PyModel {
- public:
-  PySemanticSegmentation(ModelType model_type, const std::string& model_path,
-                         const int device_id = 0);
-  py::dict inference(const PyImage& image, py::dict parameters = py::dict());
-  py::dict inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
-
-class PyLaneDetection : public PyModel {
- public:
-  PyLaneDetection(ModelType model_type, const std::string& model_path,
+PyModel get_model(ModelType model_type, const std::string& model_dir = "",
                   const int device_id = 0);
-  py::list inference(const PyImage& image, py::dict parameters = py::dict());
-  py::list inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
 
-class PyCharacterRecognitor : public PyModel {
- public:
-  // 构造函数
-  PyCharacterRecognitor(ModelType model_type, const std::string& model_path,
-                        const int device_id = 0);
-  py::list inference(const PyImage& image, py::dict parameters = py::dict());
-  py::list inference(
-      const py::array_t<unsigned char, py::array::c_style>& input,
-      py::dict parameters = py::dict());
-};
+PyModel get_model(ModelType model_type, const std::string& model_path,
+                  const py::dict& model_config = py::dict(),
+                  const int device_id = 0);
+
 }  // namespace pytdl
 #endif

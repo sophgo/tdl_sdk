@@ -8,7 +8,7 @@ if __name__ == "__main__":
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
-    character_recognitor = nn.CharacterRecognitor(nn.ModelType.RECOGNITION_LICENSE_PLATE, model_path)
+    character_recognitor = nn.get_model(nn.ModelType.RECOGNITION_LICENSE_PLATE, model_path)
     img = image.read(img_path)
     chars = character_recognitor.inference(img)
     print(chars)

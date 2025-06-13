@@ -169,14 +169,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   NetParam net_param_default = model->getNetParam();
   net_param_default.device_id = device_id;
   // merge net_param_default into  model_config
-  ModelConfig model_config_merged;
-  if (model_config.mean.size() == 0) {
-    LOGI("model_config is empty, use default config");
-    loadModelConfig();
-    model_config_merged = parseModelConfig(model_config_map_[model_name]);
-  } else {
-    model_config_merged = model_config;
-  }
+  ModelConfig model_config_merged = model_config;
   if (model_config_merged.rgb_order.empty()) {
     model_config_merged.rgb_order = net_param_default.model_config.rgb_order;
   }

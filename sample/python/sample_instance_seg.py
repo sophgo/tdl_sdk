@@ -8,7 +8,7 @@ if __name__ == "__main__":
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
-    instance_segmentator = nn.InstanceSegmentation(nn.ModelType.YOLOV8_SEG_COCO80, model_path)
+    instance_segmentator = nn.get_model(nn.ModelType.YOLOV8_SEG_COCO80, model_path)
     img = image.read(img_path)
     instance_segmentation = instance_segmentator.inference(img)
     print(instance_segmentation)

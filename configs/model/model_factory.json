@@ -219,7 +219,7 @@
       },
     "LSTR_DET_LANE":{
       "_comment":"output lane keypoints",
-      "file_name":"lstr_det_lane_360_640_MIX_bm1688",
+      "file_name":"lstr_det_lane_360_640_MIX",
       "rgb_order":"rgb"
     },
     "RECOGNITION_LICENSE_PLATE":{

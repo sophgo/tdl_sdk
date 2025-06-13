@@ -8,7 +8,7 @@ if __name__ == "__main__":
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
-    face_landmark = nn.FaceLandmark(nn.ModelType.KEYPOINT_FACE_V2, model_path)
+    face_landmark = nn.get_model(nn.ModelType.KEYPOINT_FACE_V2, model_path)
     img = image.read(img_path)
     face_landmarks = face_landmark.inference(img)
     print(face_landmarks)

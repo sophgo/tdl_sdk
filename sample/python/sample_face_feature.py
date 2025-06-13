@@ -13,7 +13,10 @@ PreprocessParameters = {
     "mean": (0.99609375, 0.99609375, 0.99609375),
     "scale": (0.0078125, 0.0078125, 0.0078125),
 }
-
+PreprocessParameters_R34_R50 = {
+    "mean":[127.5,127.5,127.5],
+    "std":[128,128,128]
+}
 
 def extract_feature(img_path, extractor):
     # 读取图片
@@ -64,7 +67,7 @@ def detect_and_align_face(img_path, detector):
 
 if __name__ == "__main__":
     if len(sys.argv) != 6:
-        print("Usage: python sample_fd.py <feature_extraction_model_id_name> <face_datection_model_path> \
+        print("Usage: python sample_face_feature.py <feature_extraction_model_id_name> <face_datection_model_path> \
               <feature_extraction_model_path> <image_path1> <image_path2>")
         print("feature_extraction_model_id_name: ", list(model_id_mapping.keys()))
         sys.exit(1)
@@ -74,12 +77,13 @@ if __name__ == "__main__":
     img_path1 = sys.argv[4]
     img_path2 = sys.argv[5]
 
-    face_detector = nn.FaceDetector(nn.ModelType.SCRFD_DET_FACE, face_detection_model_path)
+    face_detector = nn.get_model(nn.ModelType.SCRFD_DET_FACE, face_detection_model_path)
 
     model_type = model_id_mapping[feature_extraction_model_id_name]
-    feature_extractor = nn.FeatureExtractor(model_type, feature_extraction_model_path)
-    if feature_extraction_model_id_name in ["RECOGNITION_CVIFACE"]:
-        feature_extractor.setPreprocessParameters(PreprocessParameters)
+    if feature_extraction_model_id_name in ["RESNET_FEATURE_BMFACE_R34", "RESNET_FEATURE_BMFACE_R50"]:
+        feature_extractor = nn.get_model(model_type, feature_extraction_model_path, PreprocessParameters_R34_R50)
+    else:
+        feature_extractor = nn.get_model(model_type, feature_extraction_model_path, PreprocessParameters)
 
     aligned_img1 = detect_and_align_face(img_path1, face_detector)
     aligned_img2 = detect_and_align_face(img_path2, face_detector)

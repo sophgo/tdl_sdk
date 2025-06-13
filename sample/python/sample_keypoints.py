@@ -8,9 +8,10 @@ if __name__ == "__main__":
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
-    keypoint_detector = nn.KeyPointDetector(nn.ModelType.KEYPOINT_LICENSE_PLATE, model_path)
+    keypoint_detector = nn.get_model(nn.ModelType.KEYPOINT_LICENSE_PLATE, model_path)
     img = image.read(img_path)
     keypoints = keypoint_detector.inference(img)
-    print(keypoints)
+    result = keypoints[0]
+    print(result)
 
     

@@ -271,149 +271,70 @@ TDLDataType
 
 
 
-模型类
---------
+模型创建函数
+~~~~~~~~~~~~~~~~~
 
 .. list-table::
-   :widths: 2 1 4
+   :widths: 2 2 1 1
 
-   * - 模型名称
-     - 功能
-     - 模型id
+   * - 函数名
+     - 输入
+     - 输出
+     - 说明
 
-   * - ObjectDetector
+   * - get_model(model_type, model_path, model_config={}, device_id=0)
+     - model_type: 模型类型枚举值
 
-     - 目标检测
+       model_path: 模型路径
 
-     - MBV2_DET_PERSON_256_448
+       model_config: 预处理参数字典
 
-       YOLOV5_DET_COCO80
+       包含以下可选字段:
 
-       YOLOV6_DET_COCO80
+       - mean: tuple(float,float,float)
+       - scale: tuple(float,float,float)
+       - rgb_order: 【可选】str, 通道顺序(bgr, rgb, gray)，默认rdb
+       - types: 【可选】list[str], 类别列表
+       - comment: 【可选】str, 注释说明
+       - custom_config_str: 【可选】dict[str,str], 字符串配置
 
-       YOLOV8_DET_COCO80
+       device_id: 设备ID，默认为0
+     - PyModel
+     - 创建模型实例，可指定配置参数
 
-       YOLOV10_DET_COCO80
+   * - get_model(model_type, model_dir="", device_id=0)
+     - model_type: 模型类型枚举值
 
-       YOLOV8N_DET_HAND
+       model_dir: 模型文件夹路径，下面包含各平台模型文件夹(bm1688,bm1684x,cv181x,cv184x,...)
 
-       YOLOV8N_DET_PET_PERSON
+       device_id: 设备ID，默认为0
+     - PyModel
+     - 创建模型实例，使用默认配置
 
-       YOLOV8N_DET_PERSON_VEHICLE
 
-       YOLOV8N_DET_HAND_FACE_PERSON
 
-       YOLOV8N_DET_HEAD_PERSON
+PyModel 类接口说明
+~~~~~~~~~~~~~~~~~~~
 
-       YOLOV8N_DET_HEAD_HARDHAT
+.. list-table::
+   :widths: 2 2 1 1
 
-       YOLOV8N_DET_FIRE_SMOKE
+   * - 接口名
+     - 输入
+     - 输出
+     - 说明
 
-       YOLOV8N_DET_FIRE
+   * - inference(image)
+     - image: 输入图像
+       
+       支持 PyImage 对象或 numpy 数组
+     - list
+     - 执行模型推理，返回推理结果列表
 
-       YOLOV8N_DET_HEAD_SHOULDER
-
-       YOLOV8N_DET_LICENSE_PLATE
-
-       YOLOV8N_DET_TRAFFIC_LIGHT
-
-       YOLOV5
-
-       YOLOV6
-
-       YOLOV8
-
-       YOLOV10
-
-
-   * - FaceDetector
-
-     - 人脸检测
-
-     - SCRFD_DET_FACE
-
-       RETINA_DET_FACE
-
-       RETINA_DET_FACE_IR
-
-       KEYPOINT_FACE_V2 
-
-   * - Classifier
-
-     - 分类
-
-     - CLS_MASK
-
-       CLS_RGBLIVENESS
-
-       CLS_ISP_SCENE
-
-       CLS_HAND_GESTURE
-
-       CLS_KEYPOINT_HAND_GESTURE
-
-       CLS_SOUND_BABAY_CRY
-
-       CLS_SOUND_COMMAND 
-
-   * - KeyPointDetector
-
-     - 关键点检测
-    
-     - KEYPOINT_LICENSE_PLATE
-
-       KEYPOINT_HAND
-
-       KEYPOINT_YOLOV8POSE_PERSON17
-
-       KEYPOINT_SIMCC_PERSON17 
-
-   * - SemanticSegmentation
-
-     - 语义分割
-     
-     - TOPFORMER_SEG_PERSON_FACE_VEHICLE
-
-       TOPFORMER_SEG_MOTION 
-
-   * - InstanceSegmentation
-
-     - 实例分割
-
-     - YOLOV8_SEG_COCO80
-
-   * - LaneDetection
-
-     - 车道线检测
-
-     - LSTR_DET_LANE
-
-   * - AttributeExtractor
-
-     - 属性提取
-
-     - CLS_ATTRIBUTE_FACE
-
-   * - FeatureExtractor
-
-     - 特征提取
-
-     - RESNET_FEATURE_BMFACE_R34
-     
-       RESNET_FEATURE_BMFACE_R50
-
-       CLIP_FEATURE_IMG
-
-       CLIP_FEATURE_TEXT 
-
-   * - CharacterRecognitor
-
-     - 字符提取
-
-     - RECOGNITION_LICENSE_PLATE
-    
-.. note::
-    ObjectDetector类中YOLOV5、YOLOV6、YOLOV8、YOLOV10模型id，可供用户使用自主开发模型。
+   * - getPreprocessParameters()
+     - -
+     - dict
+     - 获取模型预处理参数，返回包含均值(mean)和缩放(scale)的字典
 
 使用示例
 ---------
@@ -425,7 +346,7 @@ TDLDataType
    from tdl import nn, image
 
    # 人脸检测示例
-   face_detector = nn.FaceDetector(nn.ModelType.FD_SCRFD, "model_path")
+   face_detector = nn.get_model(nn.ModelType.FD_SCRFD, "model_path")
    img = image.read("image_path")
    bboxes = face_detector.inference(img)
 
@@ -437,7 +358,7 @@ TDLDataType
    from tdl import nn, image
 
    # 人脸检测示例
-   face_detector = nn.FaceDetector(nn.ModelType.FD_SCRFD, "model_path")
+   face_detector = nn.get_model(nn.ModelType.FD_SCRFD, "model_path")
    img = cv2.imread(img_path)
    bboxes = face_detector.inference(img)
 

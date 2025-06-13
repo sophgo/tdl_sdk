@@ -17,6 +17,12 @@ PyImage (*align_face_func)(const PyImage& image,
                            const std::vector<float>& dst_landmark_xy,
                            int num_points) = &align_face;
 
+// 使用不同的名字区分两个get_model函数
+PyModel (*get_model_with_path)(ModelType, const std::string&, const py::dict&,
+                               const int) = &get_model;
+PyModel (*get_model_with_dir)(ModelType, const std::string&,
+                              const int) = &get_model;
+
 // pybind11绑定实现
 PYBIND11_MODULE(tdl, m) {
   m.doc() = "tdl sdk module python binding";
@@ -88,165 +94,17 @@ PYBIND11_MODULE(tdl, m) {
   model_type_enum.export_values();
 
   py::class_<PyModel>(nn, "Model")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
       .def("getPreprocessParameters", &PyModel::getPreprocessParameters)
-      .def("setPreprocessParameters", &PyModel::setPreprocessParameters);
-
-  py::class_<PyObjectDetector>(nn, "ObjectDetector")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyObjectDetector::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
+      .def("inference", py::overload_cast<const PyImage&>(&PyModel::inference))
       .def("inference",
            py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyObjectDetector::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyFaceDetector, PyModel>(nn, "FaceDetector")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyFaceDetector::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyFaceDetector::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyFaceLandmark, PyModel>(nn, "FaceLandmark")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyFaceLandmark::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyFaceLandmark::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyClassifier, PyModel>(nn, "Classifier")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def(
-          "inference",
-          py::overload_cast<const PyImage&, py::dict>(&PyClassifier::inference),
-          py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyClassifier::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyKeyPointDetector, PyModel>(nn, "KeyPointDetector")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyKeyPointDetector::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyKeyPointDetector::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PySemanticSegmentation, PyModel>(nn, "SemanticSegmentation")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PySemanticSegmentation::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PySemanticSegmentation::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyInstanceSegmentation, PyModel>(nn, "InstanceSegmentation")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyInstanceSegmentation::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyInstanceSegmentation::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyLaneDetection, PyModel>(nn, "LaneDetection")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyLaneDetection::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyLaneDetection::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyAttributeExtractor, PyModel>(nn, "AttributeExtractor")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyAttributeExtractor::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyAttributeExtractor::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyFeatureExtractor, PyModel>(nn, "FeatureExtractor")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyFeatureExtractor::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyFeatureExtractor::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
-  py::class_<PyCharacterRecognitor, PyModel>(nn, "CharacterRecognitor")
-      .def(py::init<ModelType, std::string, int>(), py::arg("model_type"),
-           py::arg("model_path"), py::arg("device_id") = 0)
-      .def("inference",
-           py::overload_cast<const PyImage&, py::dict>(
-               &PyCharacterRecognitor::inference),
-           py::arg("image"), py::arg("parameters") = py::dict())
-      .def("inference",
-           py::overload_cast<
-               const py::array_t<unsigned char, py::array::c_style>&, py::dict>(
-               &PyCharacterRecognitor::inference),
-           py::arg("input") = py::array_t<unsigned char>(),
-           py::arg("parameters") = py::dict());
-
+               const py::array_t<unsigned char, py::array::c_style>&>(
+               &PyModel::inference));
+  nn.def("get_model", get_model_with_path, py::arg("model_type"),
+         py::arg("model_path"), py::arg("model_config") = py::dict(),
+         py::arg("device_id") = 0);
+  nn.def("get_model", get_model_with_dir, py::arg("model_type"),
+         py::arg("model_dir") = "", py::arg("device_id") = 0);
   py::module llm = m.def_submodule("llm", "LLM module");
   llm.def("fetch_video", &pytdl::fetch_video, py::arg("video_path"),
           py::arg("desired_fps") = 2.0, py::arg("desired_nframes") = 0,
