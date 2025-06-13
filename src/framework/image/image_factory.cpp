@@ -1,15 +1,17 @@
-#include "image/base_image.hpp"
-#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
-    not defined(__CMODEL_CV184X__)
-#include "image/vpss_image.hpp"
-#endif
-
 #include <opencv2/opencv.hpp>
 
+#include "image/base_image.hpp"
 #include "image/opencv_image.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/image_alignment.hpp"
 #include "utils/tdl_log.hpp"
+#if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
+    not defined(__CMODEL_CV184X__)
+#include "image/vpss_image.hpp"
+#endif
+#if defined(__BM168X__)
+#include "image/bmcv_image.hpp"
+#endif
 std::shared_ptr<BaseImage> ImageFactory::createImage(
     uint32_t width, uint32_t height, ImageFormat imageFormat,
     TDLDataType pixDataType, bool alloc_memory, InferencePlatform platform) {
@@ -53,6 +55,15 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
       return nullptr;
 #endif
     case InferencePlatform::BM168X:
+#if defined(USE_BMCV)
+      LOGI("create BmCVImage");
+      return std::make_shared<BmCVImage>(width, height, imageFormat,
+                                         pixDataType, alloc_memory);
+#else
+      LOGI("create OpenCVImage");
+      return std::make_shared<OpenCVImage>(width, height, imageFormat,
+                                           pixDataType, alloc_memory);
+#endif
     case InferencePlatform::CMODEL_CV181X:
     case InferencePlatform::CMODEL_CV184X:
       LOGI("create OpenCVImage");

@@ -20,6 +20,10 @@ if(NOT N EQUAL 0)
     set(CMAKE_BUILD_PARALLEL_LEVEL ${N})
 endif()
 
+if(DEFINED ENV{USE_BMCV} AND "$ENV{USE_BMCV}" STREQUAL "1")
+    add_definitions(-DUSE_BMCV)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Winvalid-pch)
     set_target_properties(${TARGET_NAME} PROPERTIES

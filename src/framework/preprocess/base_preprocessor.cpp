@@ -1,11 +1,12 @@
-
-
 #include "preprocess/opencv_preprocessor.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
 #if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
     not defined(__CMODEL_CV184X__)
 #include "preprocess/vpss_preprocessor.hpp"
+#endif
+#if defined(__BM168X__)
+#include "preprocess/bmcv_preprocessor.hpp"
 #endif
 
 std::vector<float> BasePreprocessor::getRescaleConfig(
@@ -132,6 +133,11 @@ std::shared_ptr<BasePreprocessor> PreprocessorFactory::createPreprocessor(
       return nullptr;
 #endif
     case InferencePlatform::BM168X:
+#if defined(USE_BMCV)
+      return std::make_shared<BmCVPreprocessor>();
+#else
+      return std::make_shared<OpenCVPreprocessor>();
+#endif
     case InferencePlatform::CMODEL_CV181X:
     case InferencePlatform::CMODEL_CV184X:
 

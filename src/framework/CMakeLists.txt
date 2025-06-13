@@ -1,5 +1,6 @@
 project(framework)
 message(STATUS "REPO_DIR:${REPO_DIR}")
+
 include_directories(
                     ${REPO_DIR}/include/framework
                     ${REPO_DIR}/include/components
@@ -9,10 +10,12 @@ if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR
    ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR
    ("${CVI_PLATFORM}" STREQUAL "BM1684") )
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/model/llm_model.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/net/bm_llm_net.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/utils/qwen_vl_helper.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/image/bmcv_image.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/model/llm_model.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/net/bm_llm_net.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/utils/qwen_vl_helper.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/preprocess/bmcv_preprocessor.cpp
               )
 
 elseif(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X"))
@@ -46,7 +49,7 @@ if("${CVI_PLATFORM}" STREQUAL "SOPHON" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
 endif()
 
 set(PROJ_SRCS   
-                ${CMAKE_CURRENT_SOURCE_DIR}/image/base_image.cpp                            
+                ${CMAKE_CURRENT_SOURCE_DIR}/image/base_image.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/image/opencv_image.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/image/image_factory.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/preprocess/base_preprocessor.cpp

@@ -1,10 +1,10 @@
 #include <assert.h>
 #include <math.h>
+#include "cvi_tpu.hpp"
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-
-#include "cvi_tpu.hpp"
+#include "utils/tdl_log.hpp"
 
 typedef struct sg_api_cv_subads {
   int channel;
@@ -203,7 +203,7 @@ static void process_uv_plane(unsigned char *blend_uv_base,
   if (wgt_mode == WGT_YUV_SHARE) free(wgt_uv);
 }
 
-/* cmodel */
+/*cmodel*/
 
 int subads_ref(unsigned char *input1, unsigned char *input2,
                unsigned char *output, int img_size) {
@@ -365,26 +365,9 @@ int cpu_2way_blend(int lwidth, int lheight, int *left_stride,
 bm_status_t sg_tpu_kernel_launch(bm_handle_t handle, const char *func_name,
                                  void *param, size_t size,
                                  tpu_kernel_module_t tpu_module) {
-  // tpu_kernel_module_t tpu_module = NULL;
   tpu_kernel_function_t func_id = 0;
-  // #ifdef USE_CV184X
-  // 	tpu_module = tpu_kernel_load_module_file(handle,
-  // "/mnt/tpu_files/lib/libtpu_kernel_module.so"); #else 	tpu_module =
-  // tpu_kernel_load_module_file(handle, ""); #endif
-
-  // if (!tpu_module) {
-  // 	printf("%s:[ERROR] tpu kernel load module file failed\n", __func__);
-  // 	return BM_ERR_FAILURE;
-  // }
-
   func_id = tpu_kernel_get_function(handle, tpu_module, (char *)func_name);
   bm_status_t ret = tpu_kernel_launch(handle, func_id, param, size);
-
-  // if (tpu_kernel_free_module(handle, tpu_module)) {
-  // 	printf("%s:[ERROR] tpu module unload failed\n", __func__);
-  // 	return BM_ERR_FAILURE;
-  // }
-
   return ret;
 }
 
@@ -456,6 +439,9 @@ bm_status_t tpu_cv_subads(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
   }
 
   for (int i = 0; i < channel; i++) {
+    src1_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+    src2_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+    dst_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
     api.input1_addr[i] = bm_mem_get_device_addr(src1_mem[i]);
     api.input2_addr[i] = bm_mem_get_device_addr(src2_mem[i]);
     api.output_addr[i] = bm_mem_get_device_addr(dst_mem[i]);
@@ -533,7 +519,8 @@ bm_status_t tpu_cv_threshold(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
 
   sg_api_cv_threshold_t api;
   memset(&api, 0, sizeof(api));
-
+  input_mem->flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+  output_mem->flags.u.mem_type = BM_MEM_TYPE_DEVICE;
   api.input_addr[0] = bm_mem_get_device_addr(*input_mem);
   api.output_addr[0] = bm_mem_get_device_addr(*output_mem);
   api.width[0] = api.input_str[0] = api.output_str[0] = width;
@@ -816,8 +803,10 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
   api.wgt_mode = (int)mode;
 
   if ((overlay_rx - overlay_lx + 1) != 0) {
+    wgt_phy_mem[0].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
     api.wgt_mem_addr[0] = bm_mem_get_device_addr(wgt_phy_mem[0]);
     if (mode == WGT_UV_SHARE) {
+      wgt_phy_mem[1].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
       api.wgt_mem_addr[1] = bm_mem_get_device_addr(wgt_phy_mem[1]);
     }
   }
@@ -825,16 +814,19 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
     api.left_height[i] = left_img->height[i];
     api.left_width[i] = left_img->width[i];
     api.left_stride[i] = left_img->stride[i];
+    left_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
     api.left_img_addr[i] = bm_mem_get_device_addr(left_mem[i]);
 
     api.right_height[i] = right_img->height[i];
     api.right_width[i] = right_img->width[i];
     api.right_stride[i] = right_img->stride[i];
+    right_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
     api.right_img_addr[i] = bm_mem_get_device_addr(right_mem[i]);
 
     api.blend_height[i] = blend_img->height[i];
     api.blend_width[i] = blend_img->width[i];
     api.blend_stride[i] = blend_img->stride[i];
+    blend_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
     api.blend_img_addr[i] = bm_mem_get_device_addr(blend_mem[i]);
   }
   ret = sg_tpu_kernel_launch(handle, "cv_blend_2way", &api, sizeof(api),

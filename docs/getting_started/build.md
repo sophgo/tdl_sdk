@@ -140,6 +140,7 @@
 
     ```shell
     cd tdl_sdk
+    # 默认使用OpenCV做图像预处理，如果需要使用BmCV做图像预处理，先 export USE_BMCV=1
     ./build_tdl_sdk.sh BM1688
     ```
 
@@ -159,6 +160,7 @@
 
     ```shell
     cd tdl_sdk
+    # 默认使用OpenCV做图像预处理，如果需要使用BmCV做图像预处理，先 export USE_BMCV=1
     ./build_tdl_sdk.sh BM1684X
     ```
 
@@ -178,6 +180,7 @@
 
     ```shell
     cd tdl_sdk
+    # 默认使用OpenCV做图像预处理，如果需要使用BmCV做图像预处理，先 export USE_BMCV=1
     ./build_tdl_sdk.sh BM1684
     ```
 

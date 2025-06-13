@@ -1,8 +1,6 @@
 #include "preprocess/opencv_preprocessor.hpp"
-
 #include "image/opencv_image.hpp"
 #include "utils/tdl_log.hpp"
-
 #if defined(__BM168X__)
 #include <opencv2/core/bmcv.hpp>
 #endif
@@ -112,7 +110,6 @@ int32_t OpenCVPreprocessor::preprocessToImage(
     LOGI("temp_resized type:%d,src_image type:%d", tmp_resized.type(),
          src_image->getInternalType());
     const cv::Mat& src_mat = *(const cv::Mat*)src_image->getInternalData();
-    cv::Rect roi(pad_x, pad_y, resized_w, resized_h);
 
     print_mat(src_mat, "src_mat");
 
@@ -189,16 +186,24 @@ int32_t OpenCVPreprocessor::preprocessToImage(
 
     cv::Rect crop_roi(params.crop_x, params.crop_y, params.crop_width,
                       params.crop_height);
+    cv::Mat tmp_resized;
+    std::vector<float> mean = {params.mean[0], params.mean[1], params.mean[2]};
+    std::vector<float> scale = {params.scale[0], params.scale[1],
+                                params.scale[2]};
     for (uint32_t i = 0; i < src_image->getPlaneNum(); i++) {
       if (params.crop_width != 0 && params.crop_height != 0) {
-        cv::resize(srci[i](crop_roi), dsti[i],
+        cv::resize(srci[i](crop_roi), tmp_resized,
                    cv::Size(params.dst_width, params.dst_height), 0, 0,
                    cv::INTER_NEAREST);
       } else {
-        cv::resize(srci[i], dsti[i],
+        cv::resize(srci[i], tmp_resized,
                    cv::Size(params.dst_width, params.dst_height), 0, 0,
                    cv::INTER_NEAREST);
       }
+      float m = 0, s = 1;
+      if (mean.size() > i) m = mean[i];
+      if (scale.size() > i) s = scale[i];
+      tmp_resized.convertTo(dsti[i], dsti[i].type(), s, -m);
     }
   } else {
     LOGE(
