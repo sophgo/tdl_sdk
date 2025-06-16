@@ -395,7 +395,7 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
                      uint8_t *channel_size);
 
 /**
- * @brief 执行包含宠物检测、人脸识别的人脸抓拍任务
+ * @brief 执行人脸抓拍任务
  *
  * @param handle TDLHandle 对象
  * @param channel_name 每一路视频流的名称信息
@@ -404,9 +404,9 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
  * @param cap_result 抓拍结果
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
-                               TDLImage image_handle, uint64_t frame_id,
-                               TDLFacePetCapResult *cap_result);
+int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
+                        TDLImage image_handle, uint64_t frame_id,
+                        TDLCaptureInfo *cap_result);
 
 #ifdef __cplusplus
 }

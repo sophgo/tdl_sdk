@@ -50,7 +50,7 @@ int32_t TDL_InitTrackMeta(TDLTracker *track_meta, int num_track);
 
 int32_t TDL_ReleaseTrackMeta(TDLTracker *track_meta);
 
-int32_t TDL_ReleaseAppResult(TDLFacePetCapResult *cap_result);
+int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info);
 
 int32_t TDL_RegisterFeature(const TDLFeature feature);
 

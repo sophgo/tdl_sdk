@@ -202,10 +202,10 @@ typedef struct {
   TDLFace face_meta;
   TDLObject person_meta;
   TDLObject pet_meta;
-  TDLTracker track_results;
+  TDLTracker track_meta;
   TDLSnapshotInfo *snapshot_info;
   TDLFeature *features;
-} TDLFacePetCapResult;
+} TDLCaptureInfo;
 
 typedef struct {
   float awb[3];  // rgain, ggain, bgain

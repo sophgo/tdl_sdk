@@ -136,15 +136,15 @@ int main(int argc, char *argv[]) {
     }
 
     for (size_t i = 0; i < channel_size; i++) {
-      TDLFacePetCapResult cap_result = {0};
+      TDLCaptureInfo capture_info = {0};
       image = TDL_GetCameraFrame(tdl_handle, vi_chn);
       if (image == NULL) {
         printf("TDL_GetViFrame falied\n");
         continue;
       }
       channel_frame_id[i] += 1;
-      ret = TDL_APP_FacePetCapture(tdl_handle, channel_names[i], image,
-                                   channel_frame_id[i], &cap_result);
+      ret = TDL_APP_Capture(tdl_handle, channel_names[i], image,
+                            channel_frame_id[i], &capture_info);
       if (ret == 1) {
         TDL_DestroyImage(image);
         continue;
@@ -152,16 +152,16 @@ int main(int argc, char *argv[]) {
         to_exit = true;
         break;
       } else if (ret != 0) {
-        printf("TDL_APP_FacePetCapture failed with %#x!\n", ret);
+        printf("TDL_APP_Capture failed with %#x!\n", ret);
         goto exit0;
       }
 
       printf("detect person size: %d, pet size: %d\n",
-             cap_result.person_meta.size, cap_result.pet_meta.size);
+             capture_info.person_meta.size, capture_info.pet_meta.size);
 
       // todo: save snapshot img
 
-      for (uint32_t j = 0; j < cap_result.snapshot_size; j++) {
+      for (uint32_t j = 0; j < capture_info.snapshot_size; j++) {
         printf("to do TDL_CaculateSimilarity\n");
 
         float max_similarity = 0;
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
         uint8_t top_index;
         for (uint32_t k = 0; k < gallery_feature.size; k++) {
           TDL_CaculateSimilarity(gallery_feature.feature[k],
-                                 cap_result.features[j], &similarity);
+                                 capture_info.features[j], &similarity);
           if (similarity > max_similarity) {
             max_similarity = similarity;
             top_index = k;
@@ -178,12 +178,12 @@ int main(int argc, char *argv[]) {
 
         if (max_similarity > 0.4) {
           printf("match feature %d.bin, track id: %ld, similarity: %.2f\n",
-                 top_index, cap_result.snapshot_info[i].track_id,
+                 top_index, capture_info.snapshot_info[i].track_id,
                  max_similarity);
         }
       }
 
-      TDL_ReleaseAppResult(&cap_result);
+      TDL_ReleaseCaptureInfo(&capture_info);
       TDL_ReleaseCameraFrame(tdl_handle, vi_chn);
       TDL_DestroyImage(image);
     }

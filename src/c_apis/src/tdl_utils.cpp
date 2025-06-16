@@ -235,25 +235,25 @@ int32_t TDL_ReleaseTrackMeta(TDLTracker *track_meta) {
   return 0;
 }
 
-int32_t TDL_ReleaseAppResult(TDLFacePetCapResult *cap_result) {
-  TDL_ReleaseFaceMeta(&cap_result->face_meta);
-  TDL_ReleaseObjectMeta(&cap_result->person_meta);
-  TDL_ReleaseObjectMeta(&cap_result->pet_meta);
-  TDL_ReleaseTrackMeta(&cap_result->track_results);
+int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info) {
+  TDL_ReleaseFaceMeta(&capture_info->face_meta);
+  TDL_ReleaseObjectMeta(&capture_info->person_meta);
+  TDL_ReleaseObjectMeta(&capture_info->pet_meta);
+  TDL_ReleaseTrackMeta(&capture_info->track_meta);
 
-  for (uint32_t i = 0; i < cap_result->snapshot_size; i++) {
-    TDL_ReleaseFeatureMeta(&cap_result->features[i]);
+  for (uint32_t i = 0; i < capture_info->snapshot_size; i++) {
+    TDL_ReleaseFeatureMeta(&capture_info->features[i]);
   }
-  free(cap_result->features);
-  cap_result->features = NULL;
+  free(capture_info->features);
+  capture_info->features = NULL;
 
-  free(cap_result->snapshot_info);
-  cap_result->snapshot_info = NULL;
+  free(capture_info->snapshot_info);
+  capture_info->snapshot_info = NULL;
 
-  cap_result->snapshot_size = 0;
-  cap_result->frame_id = 0;
-  cap_result->frame_width = 0;
-  cap_result->frame_height = 0;
+  capture_info->snapshot_size = 0;
+  capture_info->frame_id = 0;
+  capture_info->frame_width = 0;
+  capture_info->frame_height = 0;
   return 0;
 }
 

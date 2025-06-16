@@ -1112,9 +1112,9 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
   return 0;
 }
 
-int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
-                               TDLImage image_handle, uint64_t frame_id,
-                               TDLFacePetCapResult *cap_result) {
+int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
+                        TDLImage image_handle, uint64_t frame_id,
+                        TDLCaptureInfo *capture_info) {
   TDLContext *context = (TDLContext *)handle;
   int ret = 0;
   if (context == nullptr) {
@@ -1154,104 +1154,114 @@ int32_t TDL_APP_FacePetCapture(TDLHandle handle, const char *channel_name,
     return 1;
   }
 
-  std::shared_ptr<FacePetCaptureResult> ori_cap_result =
+  std::shared_ptr<FacePetCaptureResult> ori_capture_info =
       result.get<std::shared_ptr<FacePetCaptureResult>>();
-  if (ori_cap_result == nullptr) {
-    printf("cap_result is nullptr\n");
+  if (ori_capture_info == nullptr) {
+    printf("capture_info is nullptr\n");
     return 1;
   }
 
-  cap_result->frame_id = ori_cap_result->frame_id;
-  cap_result->frame_width = ori_cap_result->frame_width;
-  cap_result->frame_height = ori_cap_result->frame_height;
+  capture_info->frame_id = ori_capture_info->frame_id;
+  capture_info->frame_width = ori_capture_info->frame_width;
+  capture_info->frame_height = ori_capture_info->frame_height;
 
   // TDLImageContext *image_context = new TDLImageContext();
-  // image_context->image = ori_cap_result->image;
-  // cap_result->image = (TDLImage)image_context;
+  // image_context->image = ori_capture_info->image;
+  // capture_info->image = (TDLImage)image_context;
 
-  if (ori_cap_result->face_boxes.size() >
+  if (ori_capture_info->face_boxes.size() >
       0) {  // face_meta from object detection without landmarks
-    TDL_InitFaceMeta(&cap_result->face_meta, ori_cap_result->face_boxes.size(),
-                     0);
-    cap_result->face_meta.width = cap_result->frame_width;
-    cap_result->face_meta.height = cap_result->frame_height;
-    for (size_t i = 0; i < ori_cap_result->face_boxes.size(); i++) {
-      cap_result->face_meta.info[i].box.x1 = ori_cap_result->face_boxes[i].x1;
-      cap_result->face_meta.info[i].box.y1 = ori_cap_result->face_boxes[i].y1;
-      cap_result->face_meta.info[i].box.x2 = ori_cap_result->face_boxes[i].x2;
-      cap_result->face_meta.info[i].box.y2 = ori_cap_result->face_boxes[i].y2;
-      cap_result->face_meta.info[i].score = ori_cap_result->face_boxes[i].score;
+    TDL_InitFaceMeta(&capture_info->face_meta,
+                     ori_capture_info->face_boxes.size(), 0);
+    capture_info->face_meta.width = capture_info->frame_width;
+    capture_info->face_meta.height = capture_info->frame_height;
+    for (size_t i = 0; i < ori_capture_info->face_boxes.size(); i++) {
+      capture_info->face_meta.info[i].box.x1 =
+          ori_capture_info->face_boxes[i].x1;
+      capture_info->face_meta.info[i].box.y1 =
+          ori_capture_info->face_boxes[i].y1;
+      capture_info->face_meta.info[i].box.x2 =
+          ori_capture_info->face_boxes[i].x2;
+      capture_info->face_meta.info[i].box.y2 =
+          ori_capture_info->face_boxes[i].y2;
+      capture_info->face_meta.info[i].score =
+          ori_capture_info->face_boxes[i].score;
     }
   }
 
-  TDL_InitObjectMeta(&cap_result->person_meta,
-                     ori_cap_result->person_boxes.size(), 0);
-  for (int i = 0; i < ori_cap_result->person_boxes.size(); i++) {
-    cap_result->person_meta.info[i].box.x1 = ori_cap_result->person_boxes[i].x1;
-    cap_result->person_meta.info[i].box.y1 = ori_cap_result->person_boxes[i].y1;
-    cap_result->person_meta.info[i].box.x2 = ori_cap_result->person_boxes[i].x2;
-    cap_result->person_meta.info[i].box.y2 = ori_cap_result->person_boxes[i].y2;
-    cap_result->person_meta.info[i].class_id =
-        ori_cap_result->person_boxes[i].class_id;
-    cap_result->person_meta.info[i].score =
-        ori_cap_result->person_boxes[i].score;
+  TDL_InitObjectMeta(&capture_info->person_meta,
+                     ori_capture_info->person_boxes.size(), 0);
+  for (int i = 0; i < ori_capture_info->person_boxes.size(); i++) {
+    capture_info->person_meta.info[i].box.x1 =
+        ori_capture_info->person_boxes[i].x1;
+    capture_info->person_meta.info[i].box.y1 =
+        ori_capture_info->person_boxes[i].y1;
+    capture_info->person_meta.info[i].box.x2 =
+        ori_capture_info->person_boxes[i].x2;
+    capture_info->person_meta.info[i].box.y2 =
+        ori_capture_info->person_boxes[i].y2;
+    capture_info->person_meta.info[i].class_id =
+        ori_capture_info->person_boxes[i].class_id;
+    capture_info->person_meta.info[i].score =
+        ori_capture_info->person_boxes[i].score;
   }
 
-  TDL_InitObjectMeta(&cap_result->pet_meta, ori_cap_result->pet_boxes.size(),
-                     0);
-  for (int i = 0; i < ori_cap_result->pet_boxes.size(); i++) {
-    cap_result->pet_meta.info[i].box.x1 = ori_cap_result->pet_boxes[i].x1;
-    cap_result->pet_meta.info[i].box.y1 = ori_cap_result->pet_boxes[i].y1;
-    cap_result->pet_meta.info[i].box.x2 = ori_cap_result->pet_boxes[i].x2;
-    cap_result->pet_meta.info[i].box.y2 = ori_cap_result->pet_boxes[i].y2;
-    cap_result->pet_meta.info[i].class_id =
-        ori_cap_result->pet_boxes[i].class_id;
-    cap_result->pet_meta.info[i].score = ori_cap_result->pet_boxes[i].score;
+  TDL_InitObjectMeta(&capture_info->pet_meta,
+                     ori_capture_info->pet_boxes.size(), 0);
+  for (int i = 0; i < ori_capture_info->pet_boxes.size(); i++) {
+    capture_info->pet_meta.info[i].box.x1 = ori_capture_info->pet_boxes[i].x1;
+    capture_info->pet_meta.info[i].box.y1 = ori_capture_info->pet_boxes[i].y1;
+    capture_info->pet_meta.info[i].box.x2 = ori_capture_info->pet_boxes[i].x2;
+    capture_info->pet_meta.info[i].box.y2 = ori_capture_info->pet_boxes[i].y2;
+    capture_info->pet_meta.info[i].class_id =
+        ori_capture_info->pet_boxes[i].class_id;
+    capture_info->pet_meta.info[i].score = ori_capture_info->pet_boxes[i].score;
   }
 
-  TDL_InitTrackMeta(&cap_result->track_results,
-                    ori_cap_result->track_results.size());
-  for (int i = 0; i < ori_cap_result->track_results.size(); i++) {
-    TrackerInfo track_info = ori_cap_result->track_results[i];
-    cap_result->track_results.info[i].id = track_info.track_id_;
-    cap_result->track_results.info[i].bbox.x1 = track_info.box_info_.x1;
-    cap_result->track_results.info[i].bbox.x2 = track_info.box_info_.x2;
-    cap_result->track_results.info[i].bbox.y1 = track_info.box_info_.y1;
-    cap_result->track_results.info[i].bbox.y2 = track_info.box_info_.y2;
+  TDL_InitTrackMeta(&capture_info->track_meta,
+                    ori_capture_info->track_results.size());
+  for (int i = 0; i < ori_capture_info->track_results.size(); i++) {
+    TrackerInfo track_info = ori_capture_info->track_results[i];
+    capture_info->track_meta.info[i].id = track_info.track_id_;
+    capture_info->track_meta.info[i].bbox.x1 = track_info.box_info_.x1;
+    capture_info->track_meta.info[i].bbox.x2 = track_info.box_info_.x2;
+    capture_info->track_meta.info[i].bbox.y1 = track_info.box_info_.y1;
+    capture_info->track_meta.info[i].bbox.y2 = track_info.box_info_.y2;
   }
 
-  cap_result->snapshot_size = ori_cap_result->face_snapshots.size();
-  if (cap_result->snapshot_size > 0) {
-    cap_result->snapshot_info = (TDLSnapshotInfo *)malloc(
-        cap_result->snapshot_size * sizeof(TDLObjectInfo));
-    cap_result->features =
-        (TDLFeature *)malloc(cap_result->snapshot_size * sizeof(TDLFeature));
+  capture_info->snapshot_size = ori_capture_info->face_snapshots.size();
+  if (capture_info->snapshot_size > 0) {
+    capture_info->snapshot_info = (TDLSnapshotInfo *)malloc(
+        capture_info->snapshot_size * sizeof(TDLObjectInfo));
+    capture_info->features =
+        (TDLFeature *)malloc(capture_info->snapshot_size * sizeof(TDLFeature));
 
-    for (int i = 0; i < cap_result->snapshot_size; i++) {
-      cap_result->snapshot_info[i].quality =
-          ori_cap_result->face_snapshots[i].quality;
-      cap_result->snapshot_info[i].snapshot_frame_id =
-          ori_cap_result->face_snapshots[i].snapshot_frame_id;
-      cap_result->snapshot_info[i].track_id =
-          ori_cap_result->face_snapshots[i].track_id;
+    for (int i = 0; i < capture_info->snapshot_size; i++) {
+      capture_info->snapshot_info[i].quality =
+          ori_capture_info->face_snapshots[i].quality;
+      capture_info->snapshot_info[i].snapshot_frame_id =
+          ori_capture_info->face_snapshots[i].snapshot_frame_id;
+      capture_info->snapshot_info[i].track_id =
+          ori_capture_info->face_snapshots[i].track_id;
 
       // TDLImageContext *image_context = new TDLImageContext();
-      // image_context->image = ori_cap_result->face_snapshots[i].object_image;
-      // cap_result->snapshot_info[i].image = (TDLImage)image_context;
+      // image_context->image =
+      // ori_capture_info->face_snapshots[i].object_image;
+      // capture_info->snapshot_info[i].image = (TDLImage)image_context;
 
-      std::vector<float> feature = ori_cap_result->face_features.at(
-          ori_cap_result->face_snapshots[i].track_id);
+      std::vector<float> feature = ori_capture_info->face_features.at(
+          ori_capture_info->face_snapshots[i].track_id);
       if (feature.size() == 0) {
         LOGE("face feature size = 0!\n");
         return -1;
       }
 
-      cap_result->features[i].size = feature.size();
-      cap_result->features[i].type = TDL_TYPE_INT8;
-      cap_result->features[i].ptr =
+      capture_info->features[i].size = feature.size();
+      capture_info->features[i].type = TDL_TYPE_INT8;
+      capture_info->features[i].ptr =
           (int8_t *)malloc(feature.size() * sizeof(int8_t));
       for (int j = 0; j < feature.size(); j++) {
-        cap_result->features[i].ptr[j] = (int)feature[j];
+        capture_info->features[i].ptr[j] = (int)feature[j];
       }
     }
   }
