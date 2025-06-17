@@ -14,13 +14,11 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   } else if (strstr(model_path, "yolov8n_det_head_hardhat") != NULL) {
     *model_index = TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT;
   } else if (strstr(model_path, "yolov10n_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV10N_DET_COCO80;
+    *model_index = TDL_MODEL_YOLOV10_DET_COCO80;
   } else if (strstr(model_path, "yolov6n_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV6N_DET_COCO80;
-  } else if (strstr(model_path, "yolov6s_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV6S_DET_COCO80;
+    *model_index = TDL_MODEL_YOLOV6_DET_COCO80;
   } else if (strstr(model_path, "yolov8n_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_COCO80;
+    *model_index = TDL_MODEL_YOLOV8_DET_COCO80;
   } else if (strstr(model_path, "ppyoloe_det_coco80") != NULL) {
     *model_index = TDL_MODEL_PPYOLOE_DET_COCO80;
   } else if (strstr(model_path, "yolov8n_det_fire") != NULL) {
@@ -47,7 +45,7 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   } else if (strstr(model_path, "yolov8n_det_traffic_light") != NULL) {
     *model_index = TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT;
   } else if (strstr(model_path, "mbv2_det_person") != NULL) {
-    *model_index = TDL_MODEL_MBV2_DET_PERSON_256_448;
+    *model_index = TDL_MODEL_MBV2_DET_PERSON;
   } else {
     ret = -1;
   }

@@ -2,7 +2,7 @@
   "github_url":"https://github.com/sophgo/tdl_models/tree/main/",
   "_comment":"model_list specify the model maintained in tdl_models,each model should at least have file name and rgb_order(choice:rgb,bgr,gray)",
   "model_list":{
-    "MBV2_DET_PERSON_256_448":{
+    "MBV2_DET_PERSON":{
       "types":["person"],
       "file_name":"mbv2_det_person_256_448_INT8",
       "rgb_order":"rgb"
@@ -59,31 +59,23 @@
       "types":["person"],
       "file_name":"yolov8n_det_monitor_person_256_448_INT8"
     },
-    "YOLOV6N_DET_COCO80":{
-      "is_coco_types":true,
-      "file_name":"yolov6n_det_coco80_640_640_INT8"
-    },
-    "YOLOV5S_DET_COCO80":{
+    "YOLOV5_DET_COCO80":{
       "is_coco_types":true,
       "file_name":"yolov5s_det_coco80_640_640_INT8"
     },
-    "YOLOV5M_DET_COCO80":{
+    "YOLOV6_DET_COCO80":{
       "is_coco_types":true,
-      "file_name":"yolov5m_det_coco80_640_640_INT8"
+      "file_name":"yolov6n_det_coco80_640_640_INT8"
     },
-    "YOLOV6S_DET_COCO80":{
-      "is_coco_types":true,
-      "file_name":"yolov6s_det_coco80_640_640_INT8"
-    },
-    "YOLOV7S_DET_COCO80":{
+    "YOLOV7_DET_COCO80":{
       "is_coco_types":true,
       "file_name":"yolov7_tiny_det_coco80_640_640_INT8"
     },
-    "YOLOV8N_DET_COCO80":{
+    "YOLOV8_DET_COCO80":{
       "is_coco_types":true,
       "file_name":"yolov8n_det_coco80_640_640_INT8"
     },
-    "YOLOV10N_DET_COCO80":{
+    "YOLOV10_DET_COCO80":{
       "is_coco_types":true,
       "file_name":"yolov10n_det_coco80_640_640_INT8"
     },
@@ -128,7 +120,7 @@
     "CLS_ATTRIBUTE_FACE":{
       "_comment":"output age,gender(0:male,1:female),glass(0:no glass,1:glass)",
       "types":["age","gender","glass"],
-      "file_name":"cls_attribute_face_112_112_INT8",
+      "file_name":"cls_4_attribute_face_112_112_INT8",
       "rgb_order":"rgb",
       "mean":[0,0,0],
       "std":[255.0,255.0,255.0]
@@ -136,7 +128,7 @@
     "CLS_RGBLIVENESS":{
       "_comment":"output 0:live or 1:spoof",
       "types":["live","spoof"],
-      "file_name":"cls_rgb_liveness_112_112_INT8",
+      "file_name":"cls_rgbliveness_256_256_INT8",
       "rgb_order":"rgb",
       "mean":[0,0,0],
       "std":[255.0,255.0,255.0]
@@ -152,8 +144,10 @@
     "CLS_KEYPOINT_HAND_GESTURE":{
       "_comment":"output hand gesture(0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two)",
       "types":["fist","five","four","none","ok","one","three","three2","two"],
-      "file_name":"cls_keypoint_hand_gesture_112_112_INT8",
-      "rgb_order":"rgb"
+      "file_name":"cls_keypoint_hand_gesture_1_42_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[1.0,1.0,1.0]
     },
     "CLS_SOUND_BABAY_CRY":{
       "_comment":"output 0:background or 1:cry,single channel",
@@ -235,7 +229,7 @@
     "YOLOV8_SEG_COCO80":{
       "is_coco_types":true,
       "_comment":"output 80 segmentation mask",
-      "file_name":"yolov8_seg_coco80_640_640_INT8"
+      "file_name":"yolov8n_seg_coco80_640_640_INT8"
     },
     "TOPFORMER_SEG_PERSON_FACE_VEHICLE":{
       "_comment":"output mask",
@@ -248,31 +242,31 @@
       "file_name":"",
       "rgb_order":"rgb"
     },
-    "CLIP_FEATURE_IMG":{
+    "FEATURE_CLIP_IMG":{
       "_comment":"clip image feature extraction",
       "file_name":"clip_feature_img_224_224_W4BF16",
       "rgb_order":"rgb"
     },
-    "CLIP_FEATURE_TEXT":{
+    "FEATURE_CLIP_TEXT":{
       "_comment":"clip text feature extraction",
       "file_name":"clip_feature_text_1_77_W4BF16",
       "rgb_order":"rgb"
     },
-    "RECOGNITION_CVIFACE":{
+    "FEATURE_CVIFACE":{
       "_comment":"cviface 256-dimensional feature",
-      "file_name":"recognition_cviface_112_112_INT8",
+      "file_name":"feature_cviface_112_112_INT8",
       "rgb_order":"rgb",
       "mean":[127.5,127.5,127.5],
       "std":[128,128,128]
     },
-    "RESNET_FEATURE_BMFACE_R34":{
+    "FEATURE_BMFACE_R34":{
       "_comment":"output 512 dim feature",
-      "file_name":"recognition_bmface_r34_112_112_INT8",
+      "file_name":"feature_bmface_r34_112_112_INT8",
       "rgb_order":"rgb",
       "mean":[127.5,127.5,127.5],
       "std":[128,128,128]
     },
-    "RESNET_FEATURE_BMFACE_R50":{
+    "FEATURE_BMFACE_R50":{
       "_comment":"output 512 dim feature",
       "file_name":"bmface_r50_v1_bmnetp.bmodel",
       "rgb_order":"rgb",

@@ -145,7 +145,7 @@ TDLDataType
    * - 模型名称
      - 注释
 
-   * - MBV2_DET_PERSON_256_448
+   * - MBV2_DET_PERSON
      - 人体检测模型
 
    * - YOLOV5_DET_COCO80
@@ -208,10 +208,10 @@ TDLDataType
    * - CLS_ATTRIBUTE_FACE
      - 人脸属性分类模型 (年龄, 性别, 眼镜, 面具)
 
-   * - RESNET_FEATURE_BMFACE_R34
+   * - FEATURE_BMFACE_R34
      - ResNet34 512维特征提取模型
 
-   * - RESNET_FEATURE_BMFACE_R50
+   * - FEATURE_BMFACE_R50
      - ResNet50 512维特征提取模型
 
    * - CLS_MASK
@@ -263,10 +263,10 @@ TDLDataType
    * - TOPFORMER_SEG_MOTION
      - 动作分割模型 (0:静态, 2:过渡, 3:运动)
 
-   * - CLIP_FEATURE_IMG
+   * - FEATURE_CLIP_IMG
      - 图像特征提取模型
 
-   * - CLIP_FEATURE_TEXT
+   * - FEATURE_CLIP_TEXT
      - 文本特征提取模型
 
 

@@ -38,7 +38,13 @@ class ClassificationTestSuite : public CVI_TDLModelTestSuite {
 
     std::string model_id_str = std::string(m_json_object["model_id"]);
     model_id_ = modelTypeFromString(model_id_str);
-    cls_ = TDLModelFactory::getInstance().getModel(model_id_);
+    std::string model_path =
+        m_model_dir.string() + "/" + gen_model_dir() + "/" +
+        m_json_object["model_name"].get<std::string>() + gen_model_suffix();
+    cls_ = TDLModelFactory::getInstance().getModel(
+        model_id_, model_path);  // One model id may correspond to multiple
+                                 // models with different sizes
+
     ASSERT_NE(cls_, nullptr);
   }
 

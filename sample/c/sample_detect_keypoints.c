@@ -18,7 +18,7 @@ int get_model_info(char *model_path, TDLModel *model_index_d,
     *model_index_d = TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE;
     *model_index_k = TDL_MODEL_KEYPOINT_LICENSE_PLATE;
   } else if (strstr(model_path, "keypoint_simcc_person17") != NULL) {
-    *model_index_d = TDL_MODEL_MBV2_DET_PERSON_256_448;
+    *model_index_d = TDL_MODEL_MBV2_DET_PERSON;
     *model_index_k = TDL_MODEL_KEYPOINT_SIMCC_PERSON17;
   } else {
     ret = -1;

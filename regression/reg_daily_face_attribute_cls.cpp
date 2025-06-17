@@ -3,28 +3,30 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
-
-#include "core/cvi_tdl_types_mem.h"
 #include "cvi_tdl_test.hpp"
 #include "image/base_image.hpp"
 #include "json.hpp"
 #include "preprocess/base_preprocessor.hpp"
 #include "regression_utils.hpp"
+#include "tdl_log.hpp"
 #include "tdl_model_factory.hpp"
+
+std::map<TDLObjectAttributeType, std::string> attributes_map = {
+    {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER, "gender"},
+    {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE, "age"},
+    {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK, "mask"},
+    {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES, "glass"}};
 
 namespace fs = std::experimental::filesystem;
 namespace cvitdl {
 namespace unitest {
 
-class FaceAttributeClsBmTestSuite : public CVI_TDLModelTestSuite {
+class AttributesTestSuite : public CVI_TDLModelTestSuite {
  public:
-  FaceAttributeClsBmTestSuite()
-      : CVI_TDLModelTestSuite("reg_daily_face_attribute_cls.json",
-                              "reg_daily_face_attribute_cls") {}
+  AttributesTestSuite() : CVI_TDLModelTestSuite() {}
 
-  virtual ~FaceAttributeClsBmTestSuite() = default;
+  virtual ~AttributesTestSuite() = default;
 
-  std::string m_model_path;
   std::shared_ptr<BaseModel> m_model;
 
  protected:
@@ -37,53 +39,53 @@ class FaceAttributeClsBmTestSuite : public CVI_TDLModelTestSuite {
     TDLModelFactory::getInstance().setModelDir(m_model_dir);
 
     std::string model_id = std::string(m_json_object["model_id"]);
-    det_ = TDLModelFactory::getInstance().getModel(model_id);
-    ASSERT_NE(det_, nullptr);
+    m_model = TDLModelFactory::getInstance().getModel(model_id);
+    ASSERT_NE(m_model, nullptr);
   }
 
   virtual void TearDown() {}
 };
 
-TEST_F(FaceAttributeClsBmTestSuite, accuracy) {
-  int img_num = int(m_json_object["image_num"]);
-  auto results = m_json_object["results"];
-  const float score_threshold = 0.2;
+TEST_F(AttributesTestSuite, accuracy) {
+  const float score_threshold = m_json_object["score_threshold"];
+
+  std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
+  auto results = m_json_object[gen_platform()];
 
   for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
        iter++) {
-    std::string image_path = (m_image_dir / iter.key()).string();
-    std::cout << "image_path: " << image_path << std::endl;
+    std::string image_path =
+        (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
+    LOGIP("image_path: %s\n", image_path.c_str());
+
     std::shared_ptr<BaseImage> frame =
         ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
 
     ASSERT_NE(frame, nullptr);
-    // break;
-    std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
     std::vector<std::shared_ptr<BaseImage>> input_images;
     input_images.push_back(frame);
+
+    std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
     EXPECT_EQ(m_model->inference(input_images, out_data), 0);
-    EXPECT_EQ(out_data.size(), 1);
-    EXPECT_EQ(out_data[0]->getType(), ModelOutputType::CLS_ATTRIBUTE);
+    EXPECT_EQ(out_data.size(), 1u);
+
+    ModelOutputType out_type = out_data[0]->getType();
+    EXPECT_TRUE(out_type == ModelOutputType::CLS_ATTRIBUTE);
+
     std::shared_ptr<ModelAttributeInfo> attr_info =
         std::static_pointer_cast<ModelAttributeInfo>(out_data[0]);
-    auto expected_info = iter.value();
-    ASSERT_EQ(attr_info->attributes.size(), expected_info.size());
-    std::vector<std::vector<float>> gt_info;
-    for (const auto &info : expected_info) {
-      gt_info.push_back(
-          {info["gender_score"], info["age"], info["glass"], info["mask"]});
-    }
 
-    std::vector<std::vector<float>> pred_info;
-    pred_info.push_back(
-        {attr_info->attributes
-             [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER],
-         attr_info
-             ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE],
-         attr_info->attributes
-             [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES],
-         attr_info->attributes
-             [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK]});
+    auto expected_info = iter.value();
+    std::vector<float> gt_info;
+    std::vector<float> pred_info;
+
+    for (auto att_iter = attr_info->attributes.begin();
+         att_iter != attr_info->attributes.end(); att_iter++) {
+      pred_info.push_back(att_iter->second);
+      EXPECT_TRUE(expected_info.count(attributes_map[att_iter->first]));
+
+      gt_info.push_back(expected_info[attributes_map[att_iter->first]]);
+    }
 
     EXPECT_TRUE(matchScore(gt_info, pred_info, score_threshold));
   }

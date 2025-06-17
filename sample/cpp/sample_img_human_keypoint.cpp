@@ -82,18 +82,34 @@ std::vector<std::shared_ptr<ModelOutputInfo>> extract_crop_human_landmark(
   std::shared_ptr<BasePreprocessor> preprocessor = model_hk->getPreprocessor();
   std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
   char sz_img_name[128];
-  for (size_t i = 0; i < images.size(); i++) {
+  for (size_t b = 0; b < images.size(); b++) {
     std::shared_ptr<ModelBoxInfo> human_meta =
-        std::static_pointer_cast<ModelBoxInfo>(human_metas[i]);
-    int x1 = human_meta->bboxes[0].x1;
-    int y1 = human_meta->bboxes[0].y1;
-    int x2 = human_meta->bboxes[0].x2;
-    int y2 = human_meta->bboxes[0].y2;
-    std::shared_ptr<BaseImage> human_crop =
-        preprocessor->crop(images[i], x1, y1, x2 - x1, y2 - y1);
-    sprintf(sz_img_name, "human_crop_%d.jpg", int(i));
-    ImageFactory::writeImage(sz_img_name, human_crop);
-    human_crops.push_back(human_crop);
+        std::static_pointer_cast<ModelBoxInfo>(human_metas[b]);
+
+    for (size_t i = 0; i < human_meta->bboxes.size(); i++) {
+      int x1 = human_meta->bboxes[i].x1;
+      int y1 = human_meta->bboxes[i].y1;
+      int x2 = human_meta->bboxes[i].x2;
+      int y2 = human_meta->bboxes[i].y2;
+
+      int width = x2 - x1;
+      int height = y2 - y1;
+
+      float expansion_factor = 1.25f;
+      int new_width = static_cast<int>(width * expansion_factor);
+      int new_height = static_cast<int>(height * expansion_factor);
+
+      int crop_x1 = std::max(x1 - (new_width - width) / 2, 0);
+      int crop_y1 = std::max(y1 - (new_height - height) / 2, 0);
+      int crop_x2 = std::min(crop_x1 + new_width, (int)images[b]->getWidth());
+      int crop_y2 = std::min(crop_y1 + new_height, (int)images[b]->getHeight());
+
+      std::shared_ptr<BaseImage> human_crop = preprocessor->crop(
+          images[b], crop_x1, crop_y1, crop_x2 - crop_x1, crop_y2 - crop_y1);
+      sprintf(sz_img_name, "human_crop_%d.jpg", int(i));
+      ImageFactory::writeImage(sz_img_name, human_crop);
+      human_crops.push_back(human_crop);
+    }
   }
   model_hk->inference(human_crops, out_datas);
   return out_datas;
@@ -120,7 +136,7 @@ int main(int argc, char **argv) {
 
   if (mode == "simcc") {
     std::shared_ptr<BaseModel> model_hd =
-        model_factory.getModel(ModelType::MBV2_DET_PERSON_256_448);
+        model_factory.getModel(ModelType::MBV2_DET_PERSON);
     if (!model_hd) {
       printf("Failed to create model_hd\n");
       return -1;
@@ -145,8 +161,11 @@ int main(int argc, char **argv) {
         printf("%d: %f %f %f\n", k, obj_meta->landmarks_x[k],
                obj_meta->landmarks_y[k], obj_meta->landmarks_score[k]);
       }
-      visualize_keypoints_detection(human_crops[0], out_hk[i], 0.5,
-                                    "simcc_keypoints.jpg");
+      char sz_img_name[128];
+      sprintf(sz_img_name, "simcc_keypoints_%d.jpg", i);
+      visualize_keypoints_detection(human_crops[i], out_hk[i],
+                                    3,  // simcc threshold greater than 1
+                                    sz_img_name);
     }
   } else if (mode == "yolov8") {
     std::shared_ptr<BaseModel> model_od =

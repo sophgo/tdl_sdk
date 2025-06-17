@@ -560,7 +560,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
     feature_extraction_model = model_map_["feature_extraction"];
   } else {
     feature_extraction_model =
-        TDLModelFactory::getInstance().getModel(ModelType::RECOGNITION_CVIFACE);
+        TDLModelFactory::getInstance().getModel(ModelType::FEATURE_CVIFACE);
     model_map_["feature_extraction"] = feature_extraction_model;
   }
   std::shared_ptr<PipelineNode> feature_extraction_node =

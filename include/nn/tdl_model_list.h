@@ -2,7 +2,7 @@
 #define TDL_MODEL_LIST_H
 
 #define MODEL_TYPE_LIST                                                       \
-  X(MBV2_DET_PERSON_256_448, "0:person")                                      \
+  X(MBV2_DET_PERSON, "0:person")                                              \
   X(YOLOV8N_DET_HAND, "")                                                     \
   X(YOLOV8N_DET_PET_PERSON, "0:cat,1:dog,2:person")                           \
   X(YOLOV8N_DET_PERSON_VEHICLE,                                               \
@@ -19,13 +19,12 @@
   X(YOLOV8N_DET_TRAFFIC_LIGHT, "0:red,1:yellow,2:green,3:off,4:wait on")      \
   X(YOLOV8N_DET_MONITOR_PERSON, "0:person")                                   \
   /* coco 80 classes object detection models */                               \
-  X(YOLOV5S_DET_COCO80, "")                                                   \
-  X(YOLOV5M_DET_COCO80, "")                                                   \
-  X(YOLOV6N_DET_COCO80, "")                                                   \
-  X(YOLOV6S_DET_COCO80, "")                                                   \
-  X(YOLOV7S_DET_COCO80, "")                                                   \
-  X(YOLOV8N_DET_COCO80, "")                                                   \
-  X(YOLOV10N_DET_COCO80, "")                                                  \
+  X(YOLOV5_DET_COCO80, "")                                                    \
+                                                                              \
+  X(YOLOV6_DET_COCO80, "")                                                    \
+  X(YOLOV7_DET_COCO80, "")                                                    \
+  X(YOLOV8_DET_COCO80, "")                                                    \
+  X(YOLOV10_DET_COCO80, "")                                                   \
   X(PPYOLOE_DET_COCO80, "")                                                   \
   X(YOLOX_DET_COCO80, "")                                                     \
   /* custom object detection (need set num_cls) */                            \
@@ -85,12 +84,12 @@
                                                                               \
   /* image feature & multimodal */                                            \
   X(FEATURE_IMG, "output image feature vector")                               \
-  X(CLIP_FEATURE_IMG, "output image clip feature vector")                     \
-  X(CLIP_FEATURE_TEXT, "output text clip feature vector")                     \
+  X(FEATURE_CLIP_IMG, "output image clip feature vector")                     \
+  X(FEATURE_CLIP_TEXT, "output text clip feature vector")                     \
                                                                               \
   /* face feature extraction */                                               \
-  X(RECOGNITION_CVIFACE, "cviface 256-dimensional feature")                   \
-  X(RESNET_FEATURE_BMFACE_R34, "resnet34 512-dimensional BMFace feature")     \
-  X(RESNET_FEATURE_BMFACE_R50, "resnet50 512-dimensional BMFace feature")
+  X(FEATURE_CVIFACE, "cviface 256-dimensional feature")                       \
+  X(FEATURE_BMFACE_R34, "resnet34 512-dimensional BMFace feature")            \
+  X(FEATURE_BMFACE_R50, "resnet50 512-dimensional BMFace feature")
 
 #endif

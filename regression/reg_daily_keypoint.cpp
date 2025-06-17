@@ -37,7 +37,13 @@ class KeypointTestSuite : public CVI_TDLModelTestSuite {
 
     std::string model_id_str = std::string(m_json_object["model_id"]);
     model_id_ = modelTypeFromString(model_id_str);
-    keypoint_ = TDLModelFactory::getInstance().getModel(model_id_str);
+    std::string model_path =
+        m_model_dir.string() + "/" + gen_model_dir() + "/" +
+        m_json_object["model_name"].get<std::string>() + gen_model_suffix();
+    keypoint_ = TDLModelFactory::getInstance().getModel(
+        model_id_, model_path);  // One model id may correspond to multiple
+                                 // models with different sizes
+
     ASSERT_NE(keypoint_, nullptr);
   }
 
@@ -87,7 +93,13 @@ TEST_F(KeypointTestSuite, accuracy) {
           std::static_pointer_cast<ModelLandmarksInfo>(out_data[0]);
       pred_keypoints_x = keypoint_meta->landmarks_x;
       pred_keypoints_y = keypoint_meta->landmarks_y;
-      pred_keypoints_score = keypoint_meta->landmarks_score;
+      if (!keypoint_meta->attributes.empty()) {
+        for (const auto& pair : keypoint_meta->attributes) {
+          pred_keypoints_score.push_back(pair.second);
+        }
+      } else {
+        pred_keypoints_score = keypoint_meta->landmarks_score;
+      }
     } else if (out_type == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
       std::shared_ptr<ModelBoxLandmarkInfo> obj_meta =
           std::static_pointer_cast<ModelBoxLandmarkInfo>(out_data[0]);

@@ -43,5 +43,25 @@ std::string gen_platform() {
 #endif
 }
 
+std::string gen_model_dir() {
+#if defined(__CV181X__) || defined(__CMODEL_CV181X__)
+  return std::string("cv181x");
+
+#elif defined(__CV186X__)
+  return std::string("cv186x");
+
+#elif defined(__BM1684X__)
+  return std::string("bm1684x");
+
+#elif defined(__BM168X__)
+  return std::string("bm1688");
+
+#else
+  printf("Unrecognized platform !\n");
+  return std::string("");
+
+#endif
+}
+
 }  // namespace unitest
 }  // namespace cvitdl

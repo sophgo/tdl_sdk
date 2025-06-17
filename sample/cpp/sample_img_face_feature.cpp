@@ -114,12 +114,10 @@ void visualize_face_crop(
 
 void construct_model_id_mapping(
     std::map<std::string, ModelType> &model_id_mapping) {
-  model_id_mapping["RESNET_FEATURE_BMFACE_R34"] =
-      ModelType::RESNET_FEATURE_BMFACE_R34;
-  model_id_mapping["RESNET_FEATURE_BMFACE_R50"] =
-      ModelType::RESNET_FEATURE_BMFACE_R50;
+  model_id_mapping["FEATURE_BMFACE_R34"] = ModelType::FEATURE_BMFACE_R34;
+  model_id_mapping["FEATURE_BMFACE_R50"] = ModelType::FEATURE_BMFACE_R50;
 
-  model_id_mapping["RECOGNITION_CVIFACE"] = ModelType::RECOGNITION_CVIFACE;
+  model_id_mapping["FEATURE_CVIFACE"] = ModelType::FEATURE_CVIFACE;
 }
 
 void set_preprocess_parameters(std::shared_ptr<BaseModel> model) {

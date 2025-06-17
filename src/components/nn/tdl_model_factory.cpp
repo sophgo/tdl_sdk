@@ -277,19 +277,18 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8N_DET_TRAFFIC_LIGHT ||
           model_type == ModelType::YOLOV8N_DET_HEAD_HARDHAT ||
           model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON ||
-          model_type == ModelType::YOLOV8N_DET_COCO80 ||
-          model_type == ModelType::YOLOV10N_DET_COCO80 ||
-          model_type == ModelType::YOLOV7S_DET_COCO80 ||
-          model_type == ModelType::YOLOV6N_DET_COCO80 ||
-          model_type == ModelType::YOLOV5S_DET_COCO80 ||
-          model_type == ModelType::YOLOV5M_DET_COCO80 ||
+          model_type == ModelType::YOLOV8_DET_COCO80 ||
+          model_type == ModelType::YOLOV10_DET_COCO80 ||
+          model_type == ModelType::YOLOV7_DET_COCO80 ||
+          model_type == ModelType::YOLOV6_DET_COCO80 ||
+          model_type == ModelType::YOLOV5_DET_COCO80 ||
           model_type == ModelType::PPYOLOE_DET_COCO80 ||
           model_type == ModelType::YOLOX_DET_COCO80 ||
           model_type == ModelType::YOLOV8 || model_type == ModelType::YOLOV10 ||
           model_type == ModelType::YOLOV6 || model_type == ModelType::PPYOLOE ||
           model_type == ModelType::YOLOV5 || model_type == ModelType::YOLOX ||
           model_type == ModelType::YOLOV7 ||
-          model_type == ModelType::MBV2_DET_PERSON_256_448);
+          model_type == ModelType::MBV2_DET_PERSON);
 }
 
 bool TDLModelFactory::isFaceDetectionModel(const ModelType model_type) {
@@ -329,11 +328,11 @@ bool TDLModelFactory::isSegmentationModel(const ModelType model_type) {
 }
 
 bool TDLModelFactory::isFeatureExtractionModel(const ModelType model_type) {
-  return (model_type == ModelType::CLIP_FEATURE_IMG ||
-          model_type == ModelType::CLIP_FEATURE_TEXT ||
-          model_type == ModelType::RESNET_FEATURE_BMFACE_R34 ||
-          model_type == ModelType::RESNET_FEATURE_BMFACE_R50 ||
-          model_type == ModelType::RECOGNITION_CVIFACE ||
+  return (model_type == ModelType::FEATURE_CLIP_IMG ||
+          model_type == ModelType::FEATURE_CLIP_TEXT ||
+          model_type == ModelType::FEATURE_BMFACE_R34 ||
+          model_type == ModelType::FEATURE_BMFACE_R50 ||
+          model_type == ModelType::FEATURE_CVIFACE ||
           model_type == ModelType::FEATURE_IMG);
 }
 
@@ -403,17 +402,16 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_HARD_HAT;
   } else if (model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON) {
     num_classes = 1;
-  } else if (model_type == ModelType::YOLOV8N_DET_COCO80) {
+  } else if (model_type == ModelType::YOLOV8_DET_COCO80) {
     model_category = 0;  // YOLOV8
     num_classes = 80;
-  } else if (model_type == ModelType::YOLOV10N_DET_COCO80) {
+  } else if (model_type == ModelType::YOLOV10_DET_COCO80) {
     model_category = 1;  // YOLOV10
     num_classes = 80;
-  } else if (model_type == ModelType::YOLOV6N_DET_COCO80) {
+  } else if (model_type == ModelType::YOLOV6_DET_COCO80) {
     model_category = 2;  // YOLOV6
     num_classes = 80;
-  } else if (model_type == ModelType::YOLOV5S_DET_COCO80 ||
-             model_type == ModelType::YOLOV5M_DET_COCO80) {
+  } else if (model_type == ModelType::YOLOV5_DET_COCO80) {
     model_category = 4;  // YOLOV5
     num_classes = 80;
   } else if (model_type == ModelType::PPYOLOE_DET_COCO80) {
@@ -422,10 +420,10 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
   } else if (model_type == ModelType::YOLOX_DET_COCO80) {
     model_category = 8;  // YOLOX
     num_classes = 80;
-  } else if (model_type == ModelType::YOLOV7S_DET_COCO80) {
+  } else if (model_type == ModelType::YOLOV7_DET_COCO80) {
     model_category = 9;  // YOLOX
     num_classes = 80;
-  } else if (model_type == ModelType::MBV2_DET_PERSON_256_448) {
+  } else if (model_type == ModelType::MBV2_DET_PERSON) {
     model_category = 6;  // MobileDetV2
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_PERSON;
   } else if (model_type == ModelType::YOLOV8) {
@@ -521,13 +519,13 @@ std::shared_ptr<BaseModel> TDLModelFactory::createFeatureExtractionModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
-  if (model_type == ModelType::CLIP_FEATURE_IMG) {
+  if (model_type == ModelType::FEATURE_CLIP_IMG) {
     model = std::make_shared<Clip_Image>();
-  } else if (model_type == ModelType::CLIP_FEATURE_TEXT) {
+  } else if (model_type == ModelType::FEATURE_CLIP_TEXT) {
     model = std::make_shared<Clip_Text>();
-  } else if (model_type == ModelType::RESNET_FEATURE_BMFACE_R34 ||
-             model_type == ModelType::RESNET_FEATURE_BMFACE_R50 ||
-             model_type == ModelType::RECOGNITION_CVIFACE ||
+  } else if (model_type == ModelType::FEATURE_BMFACE_R34 ||
+             model_type == ModelType::FEATURE_BMFACE_R50 ||
+             model_type == ModelType::FEATURE_CVIFACE ||
              model_type == ModelType::FEATURE_IMG) {
     model = std::make_shared<FeatureExtraction>();
   }

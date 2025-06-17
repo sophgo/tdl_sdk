@@ -82,14 +82,14 @@ int main(int argc, char** argv) {
   model_factory.setModelDir(model_dir);
 
   std::shared_ptr<BaseModel> model_clip_image =
-      model_factory.getModel(ModelType::CLIP_FEATURE_IMG);
+      model_factory.getModel(ModelType::FEATURE_CLIP_IMG);
   if (!model_clip_image) {
     printf("Failed to load clip image model\n");
     return -1;
   }
 
   std::shared_ptr<BaseModel> model_clip_text =
-      model_factory.getModel(ModelType::CLIP_FEATURE_TEXT);
+      model_factory.getModel(ModelType::FEATURE_CLIP_TEXT);
   if (!model_clip_text) {
     printf("Failed to load clip text model\n");
     return -1;

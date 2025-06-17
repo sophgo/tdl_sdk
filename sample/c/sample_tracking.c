@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
   printf("  Output image:  %s\n", output_file);
 
   TDLModel model_id_face = TDL_MODEL_SCRFD_DET_FACE;
-  TDLModel model_id_obj = TDL_MODEL_MBV2_DET_PERSON_256_448;
+  TDLModel model_id_obj = TDL_MODEL_MBV2_DET_PERSON;
   int ret = 0;
   char *files[MAX_FILE_COUNT];
 

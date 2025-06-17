@@ -69,10 +69,10 @@
    * - TDL_MODEL_CLS_ATTRIBUTE_FACE
      - 人脸属性分类模型 (年龄, 性别, 眼镜, 面具)
 
-   * - TDL_MODEL_RESNET_FEATURE_BMFACE_R34
+   * - TDL_MODEL_FEATURE_BMFACE_R34
      - ResNet34 512维特征提取模型
 
-   * - TDL_MODEL_RESNET_FEATURE_BMFACE_R50
+   * - TDL_MODEL_FEATURE_BMFACE_R50
      - ResNet50 512维特征提取模型
 
    * - TDL_MODEL_CLS_MASK

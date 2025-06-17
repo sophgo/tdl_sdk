@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     return -1;
   }
   std::shared_ptr<BaseModel> person_model =
-      model_factory.getModel(ModelType::MBV2_DET_PERSON_256_448);
+      model_factory.getModel(ModelType::MBV2_DET_PERSON);
   if (person_model == nullptr) {
     printf("Failed to get person model\n");
     return -1;

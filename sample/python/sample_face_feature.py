@@ -4,9 +4,9 @@ import numpy as np
 import cv2
 
 model_id_mapping = {
-    "RESNET_FEATURE_BMFACE_R34": nn.ModelType.RESNET_FEATURE_BMFACE_R34,
-    "RESNET_FEATURE_BMFACE_R50": nn.ModelType.RESNET_FEATURE_BMFACE_R50,
-    "RECOGNITION_CVIFACE": nn.ModelType.RECOGNITION_CVIFACE,
+    "FEATURE_BMFACE_R34": nn.ModelType.FEATURE_BMFACE_R34,
+    "FEATURE_BMFACE_R50": nn.ModelType.FEATURE_BMFACE_R50,
+    "FEATURE_CVIFACE": nn.ModelType.FEATURE_CVIFACE,
 }
 
 PreprocessParameters = {
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     face_detector = nn.get_model(nn.ModelType.SCRFD_DET_FACE, face_detection_model_path)
 
     model_type = model_id_mapping[feature_extraction_model_id_name]
-    if feature_extraction_model_id_name in ["RESNET_FEATURE_BMFACE_R34", "RESNET_FEATURE_BMFACE_R50"]:
+    if feature_extraction_model_id_name in ["FEATURE_BMFACE_R34", "FEATURE_BMFACE_R50"]:
         feature_extractor = nn.get_model(model_type, feature_extraction_model_path, PreprocessParameters_R34_R50)
     else:
         feature_extractor = nn.get_model(model_type, feature_extraction_model_path, PreprocessParameters)

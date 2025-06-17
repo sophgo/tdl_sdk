@@ -216,8 +216,8 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getPersonDetectionNode(
   if (model_map_.count("person_detection")) {
     person_detection_model = model_map_["person_detection"];
   } else {
-    person_detection_model = TDLModelFactory::getInstance().getModel(
-        ModelType::MBV2_DET_PERSON_256_448);
+    person_detection_model =
+        TDLModelFactory::getInstance().getModel(ModelType::MBV2_DET_PERSON);
     model_map_["person_detection"] = person_detection_model;
   }
   std::shared_ptr<PipelineNode> person_detection_node =

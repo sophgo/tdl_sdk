@@ -109,7 +109,7 @@ std::vector<std::shared_ptr<ModelOutputInfo>> license_plate_recognition(
 }
 
 int main(int argc, char **argv) {
-  if (argc != 5) {
+  if (argc != 3) {
     printf("Usage: %s <model_dir> <image_path> \n", argv[0]);
     return -1;
   }

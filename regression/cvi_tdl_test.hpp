@@ -63,8 +63,8 @@ class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
                     const std::vector<std::vector<float>> &pred_objects,
                     const float iout_thresh, const float score_thresh);
 
-  bool matchScore(const std::vector<std::vector<float>> &gt_info,
-                  const std::vector<std::vector<float>> &pred_info,
+  bool matchScore(const std::vector<float> &gt_info,
+                  const std::vector<float> &pred_info,
                   const float score_thresh);
   ModelType stringToModelType(const std::string &model_type_str);
   std::shared_ptr<BaseImage> getInputData(std::string &image_path,
@@ -76,6 +76,8 @@ class CVI_TDLModelTestSuite : public CVI_TDLTestSuite {
                       const std::vector<float> &pred_keypoints_y,
                       const std::vector<float> &pred_keypoints_score,
                       const float position_thresh, const float score_thresh);
+  bool matchSegmentation(const cv::Mat &mat1, const cv::Mat &mat2,
+                         float mask_thresh);
 
  protected:
   nlohmann::json m_json_object;

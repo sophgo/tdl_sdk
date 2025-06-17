@@ -34,7 +34,13 @@ class DetectionTestSuite : public CVI_TDLModelTestSuite {
     TDLModelFactory::getInstance().setModelDir(m_model_dir);
 
     std::string model_id = std::string(m_json_object["model_id"]);
-    det_ = TDLModelFactory::getInstance().getModel(model_id);
+    std::string model_path =
+        m_model_dir.string() + "/" + gen_model_dir() + "/" +
+        m_json_object["model_name"].get<std::string>() + gen_model_suffix();
+
+    det_ = TDLModelFactory::getInstance().getModel(
+        model_id, model_path);  // One model id may correspond to multiple
+                                // models with different sizes
     ASSERT_NE(det_, nullptr);
   }
 

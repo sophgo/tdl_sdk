@@ -232,22 +232,15 @@ bool CVI_TDLModelTestSuite::matchObjects(
   return is_matched;
 }
 
-bool CVI_TDLModelTestSuite::matchScore(
-    const std::vector<std::vector<float>> &gt_info,
-    const std::vector<std::vector<float>> &pred_info,
-    const float score_thresh) {
+bool CVI_TDLModelTestSuite::matchScore(const std::vector<float> &gt_info,
+                                       const std::vector<float> &pred_info,
+                                       const float score_thresh) {
   if (gt_info.size() != pred_info.size()) {
     return false;
   }
 
   for (size_t i = 0; i < gt_info.size(); ++i) {
-    const auto &gt = gt_info[i];
-    const auto &pred = pred_info[i];
-
-    if (std::abs(gt[0] - pred[0]) > score_thresh ||
-        std::abs(gt[1] - pred[1]) > score_thresh ||
-        std::abs(gt[2] - pred[2]) > score_thresh ||
-        std::abs(gt[3] - pred[3]) > score_thresh) {
+    if (std::abs(gt_info[i] - pred_info[i]) > score_thresh) {
       return false;
     }
   }
@@ -266,10 +259,34 @@ ModelType CVI_TDLModelTestSuite::stringToModelType(
 std::shared_ptr<BaseImage> CVI_TDLModelTestSuite::getInputData(
     std::string &image_path, ModelType model_id) {
   std::shared_ptr<BaseImage> frame;
+
   if (image_path.size() >= 4 &&
-      image_path.substr(image_path.size() - 4) != ".bin") {
-    frame = ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
-  } else {
+      image_path.substr(image_path.size() - 4) == ".txt") {
+    std::vector<float> keypoints;
+    std::ifstream infile(image_path);
+    std::string line;
+    while (std::getline(infile, line)) {
+      std::istringstream iss(line);
+      float x, y;
+      if (iss >> x >> y) {
+        keypoints.push_back(x);
+        keypoints.push_back(y);
+      }
+    }
+
+    if (keypoints.size() != 42) {
+      throw std::invalid_argument("txt file err");
+    }
+
+    frame = ImageFactory::createImage(42, 1, ImageFormat::GRAY,
+                                      TDLDataType::FP32, true);
+    float *data_buffer =
+        reinterpret_cast<float *>(frame->getVirtualAddress()[0]);
+
+    memcpy(data_buffer, &keypoints[0], 42 * sizeof(float));
+
+  } else if (image_path.size() >= 4 &&
+             image_path.substr(image_path.size() - 4) == ".bin") {
     int frame_size = 0;
     FILE *fp = fopen(image_path.c_str(), "rb");
     if (fp) {
@@ -282,7 +299,10 @@ std::shared_ptr<BaseImage> CVI_TDLModelTestSuite::getInputData(
       fread(data_buffer, 1, frame_size, fp);
       fclose(fp);
     }
+  } else {
+    frame = ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
   }
+
   return frame;
 };
 
@@ -314,7 +334,7 @@ bool CVI_TDLModelTestSuite::matchKeypoints(
   int num_keypoints = gt_keypoints_x.size();
   float score_thresh_for_distance = 0.5f;
   std::vector<float> keypoints_index_for_distance;
-  if (gt_keypoints_score.size() == 0) {
+  if (gt_keypoints_score.size() != gt_keypoints_x.size()) {
     for (int i = 0; i < num_keypoints; i++) {
       keypoints_index_for_distance.push_back(i);
     }
@@ -337,5 +357,18 @@ bool CVI_TDLModelTestSuite::matchKeypoints(
   float avg_distance = total_distance / keypoints_index_for_distance.size();
   return avg_distance <= position_thresh;
 };
+
+bool CVI_TDLModelTestSuite::matchSegmentation(const cv::Mat &mat1,
+                                              const cv::Mat &mat2,
+                                              float mask_thresh) {
+  cv::Mat diff = (mat1 != mat2);  // 元素不相等的位置为255，相等为0
+  int diffCount = cv::countNonZero(diff);
+
+  int height = mat1.rows;
+  int width = mat1.cols;
+
+  return float(diffCount) / (height * width) < mask_thresh;
+}
+
 }  // namespace unitest
 }  // namespace cvitdl

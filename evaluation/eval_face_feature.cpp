@@ -233,8 +233,8 @@ int main(int argc, char **argv) {
     printf("Usage: %s <model_id_name> <model_dir> <label_file> <output_file>\n",
            argv[0]);
     printf(
-        "surpported_model_list:\nRECOGNITION_CVIFACE,RESNET_FEATURE_BMFACE_R34,"
-        "RESNET_FEATURE_BMFACE_R50");
+        "surpported_model_list:\nFEATURE_CVIFACE,FEATURE_BMFACE_R34,"
+        "FEATURE_BMFACE_R50");
     return -1;
   }
 

@@ -2,11 +2,11 @@
 #include "utils/tokenizer_bpe.hpp"
 
 void checkModelIdName(const std::string& model_id_name) {
-  if (model_id_name != "CLIP_FEATURE_IMG" &&
-      model_id_name != "CLIP_FEATURE_TEXT" &&
-      model_id_name != "RESNET_FEATURE_BMFACE_R34" &&
-      model_id_name != "RESNET_FEATURE_BMFACE_R50" &&
-      model_id_name != "RECOGNITION_CVIFACE") {
+  if (model_id_name != "FEATURE_CLIP_IMG" &&
+      model_id_name != "FEATURE_CLIP_TEXT" &&
+      model_id_name != "FEATURE_BMFACE_R34" &&
+      model_id_name != "FEATURE_BMFACE_R50" &&
+      model_id_name != "FEATURE_CVIFACE") {
     std::cerr << "model_id_name: " << model_id_name << " not supported"
               << std::endl;
     exit(1);
@@ -25,7 +25,7 @@ void embeddingToVec(void* embedding, size_t num,
 
 void getInputData(const std::string& model_id_name, const std::string& argv_3,
                   std::vector<std::shared_ptr<BaseImage>>& input_datas) {
-  if (model_id_name == "CLIP_FEATURE_TEXT") {
+  if (model_id_name == "FEATURE_CLIP_TEXT") {
     std::string txt_dir = argv_3;
     if (!txt_dir.empty() && txt_dir.back() == '/') {
       txt_dir.pop_back();

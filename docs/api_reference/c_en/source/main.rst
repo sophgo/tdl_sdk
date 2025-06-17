@@ -69,10 +69,10 @@ Model List
    * - TDL_MODEL_CLS_ATTRIBUTE_FACE
      - Face Attribute Classification Model (age, gender, glasses, mask)
 
-   * - TDL_MODEL_RESNET_FEATURE_BMFACE_R34
+   * - TDL_MODEL_FEATURE_BMFACE_R34
      - ResNet34 512-dimensional Feature Extraction Model
 
-   * - TDL_MODEL_RESNET_FEATURE_BMFACE_R50
+   * - TDL_MODEL_FEATURE_BMFACE_R50
      - ResNet50 512-dimensional Feature Extraction Model
 
    * - TDL_MODEL_CLS_MASK

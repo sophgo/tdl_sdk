@@ -56,10 +56,10 @@ std::vector<std::shared_ptr<ModelOutputInfo>> extract_crop_hand_landmark(
       int new_width = static_cast<int>(width * expansion_factor);
       int new_height = static_cast<int>(height * expansion_factor);
 
-      int crop_x1 = x1 - (new_width - width) / 2;
-      int crop_y1 = y1 - (new_height - height) / 2;
-      int crop_x2 = crop_x1 + new_width;
-      int crop_y2 = crop_y1 + new_height;
+      int crop_x1 = std::max(x1 - (new_width - width) / 2, 0);
+      int crop_y1 = std::max(y1 - (new_height - height) / 2, 0);
+      int crop_x2 = std::min(crop_x1 + new_width, (int)images[b]->getWidth());
+      int crop_y2 = std::min(crop_y1 + new_height, (int)images[b]->getHeight());
 
       std::shared_ptr<BaseImage> hand_crop = preprocessor->crop(
           images[b], crop_x1, crop_y1, crop_x2 - crop_x1, crop_y2 - crop_y1);

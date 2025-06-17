@@ -29,13 +29,13 @@ void checkModelIdName(char* argv[]) {
   // 图像模型
   std::string img_model_id_name = argv[1];
   std::string text_model_id_name = argv[2];
-  if (img_model_id_name != "CLIP_FEATURE_IMG") {
+  if (img_model_id_name != "FEATURE_CLIP_IMG") {
     std::cerr << "model_id_name: " << img_model_id_name << " not supported"
               << std::endl;
     exit(1);
   }
   // 文本模型
-  if (text_model_id_name != "CLIP_FEATURE_TEXT") {
+  if (text_model_id_name != "FEATURE_CLIP_TEXT") {
     std::cerr << "model_id_name: " << text_model_id_name << " not supported"
               << std::endl;
     exit(1);
