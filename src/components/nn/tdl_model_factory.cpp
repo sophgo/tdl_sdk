@@ -318,6 +318,7 @@ bool TDLModelFactory::isClassificationModel(const ModelType model_type) {
           model_type == ModelType::CLS_SOUND_COMMAND_XIAOAIXIAOAI ||
           model_type == ModelType::CLS_ATTRIBUTE_FACE ||
           model_type == ModelType::CLS_RGBLIVENESS ||
+          model_type == ModelType::CLS_ISP_SCENE ||
           model_type == ModelType::CLS_IMG);
 }
 
