@@ -150,9 +150,6 @@ class Core {
   int vpssChangeImage(VIDEO_FRAME_INFO_S *srcFrame, VIDEO_FRAME_INFO_S *dstFrame, uint32_t rw,
                       uint32_t rh, PIXEL_FORMAT_E enDstFormat);
   VpssEngine *getVpssInstance() { return mp_vpss_inst; }
-#ifndef CONFIG_ALIOS
-  void setRaw(bool raw);
-#endif
 
 #ifdef __CV186X__
   void cleanupHandle();
@@ -172,6 +169,7 @@ class Core {
   const TensorInfo &getInputTensorInfo(size_t index);
 
   size_t getNumOutputTensor() const;
+  size_t getNumInputTensor() const;
 
   CVI_SHAPE getInputShape(size_t index);
   CVI_SHAPE getOutputShape(size_t index);
@@ -214,20 +212,20 @@ class Core {
 #ifdef __CV186X__
   void inputPreprocessConfig(const bm_net_info_t *net_info, std::vector<VPSSConfig> &m_vpss_config);
   void setupOutputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
-                             std::map<std::string, TensorInfo> &tensor_info);
+                             std::vector<std::pair<std::string, TensorInfo>> &tensor_info);
   void setupInputTensorInfo(const bm_net_info_t *net_info, CvimodelInfo *mp_mi_p,
-                            std::map<std::string, TensorInfo> &tensor_info);
+                            std::vector<std::pair<std::string, TensorInfo>> &tensor_info);
   bm_handle_t bm_handle;
 #else
   void setupTensorInfo(CVI_TENSOR *tensor, int32_t num_tensors,
-                       std::map<std::string, TensorInfo> *tensor_info);
+                       std::vector<std::pair<std::string, TensorInfo>> *tensor_info);
 #endif
  private:
   template <typename T>
   inline int __attribute__((always_inline)) registerFrame2Tensor(std::vector<T> &frames);
 
-  std::map<std::string, TensorInfo> m_input_tensor_info;
-  std::map<std::string, TensorInfo> m_output_tensor_info;
+  std::vector<std::pair<std::string, TensorInfo>> m_input_tensor_info;
+  std::vector<std::pair<std::string, TensorInfo>> m_output_tensor_info;
 
   // Preprocessing related control
   bool m_skip_vpss_preprocess = false;
@@ -236,9 +234,8 @@ class Core {
 
   // Cvimodel related
   std::unique_ptr<CvimodelInfo> mp_mi;
-#ifndef CONFIG_ALIOS
-  bool raw = false;
-#endif
+
+  int input_frames_num = 0;
 
 #ifdef __CV186X__
   const bm_net_info_t *net_info;

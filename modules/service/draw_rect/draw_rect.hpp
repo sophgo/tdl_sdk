@@ -38,7 +38,7 @@ template <typename T>
 int DrawMeta(const T *meta, VIDEO_FRAME_INFO_S *drawFrame, const bool drawText,
              const std::vector<cvtdl_service_brush_t> &brushes);
 
-int DrawPose17(const cvtdl_object_t *obj, VIDEO_FRAME_INFO_S *frame);
+int DrawPose17(const cvtdl_object_t *obj, VIDEO_FRAME_INFO_S *frame, float score_threshold);
 
 int DrawPts(cvtdl_pts_t *pts, VIDEO_FRAME_INFO_S *drawFrame);
 

@@ -94,22 +94,7 @@ mkdir -p ${BUILD_WORKING_DIR}
 # into tmp/build_sdk
 pushd ${BUILD_WORKING_DIR}
 
-# Check cmake version
-CMAKE_VERSION="$(cmake --version | grep 'cmake version' | sed 's/cmake version //g')"
-CMAKE_REQUIRED_VERSION="3.16.0"
-CMAKE_TAR="cmake-3.18.4-Linux-x86_64.tar.gz"
-CMAKE_DOWNLOAD_URL="ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/cmake/${CMAKE_TAR}"
-echo "Checking cmake..."
-if [ "$(printf '%s\n' "${CMAKE_REQUIRED_VERSION}" "${CMAKE_VERSION}" | sort -V | head -n1)" = "${CMAKE_REQUIRED_VERSION}" ]; then
-    CMAKE_BIN=$(command -v cmake)
-else
-    echo "Cmake version need ${CMAKE_REQUIRED_VERSION}, trying to download from ftp."
-    if [ ! -f "${CMAKE_TAR}" ]; then
-        wget "${CMAKE_DOWNLOAD_URL}"
-    fi
-    tar -zxf ${CMAKE_TAR}
-    CMAKE_BIN=$PWD/cmake-3.18.4-Linux-x86_64/bin/cmake
-fi
+CMAKE_BIN=$(command -v cmake)
 
 # check if use TPU_IVE
 if [[ "${CHIP_ARCH}" == "CV183X" ]]; then

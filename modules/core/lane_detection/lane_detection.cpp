@@ -96,20 +96,20 @@ int BezierLaneNet::inference(VIDEO_FRAME_INFO_S *srcFrame, cvtdl_lane_t *lane_me
 
 void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const int frame_width,
                                  const int frame_height, cvtdl_lane_t *lane_meta) {
-  float *curves = getOutputRawPtr<float>(0);
-  float *logits = getOutputRawPtr<float>(1);
+  float *curves = getOutputRawPtr<float>(1);
+  float *logits = getOutputRawPtr<float>(0);
 
-  CVI_SHAPE output0_shape = getOutputShape(0);
   CVI_SHAPE output1_shape = getOutputShape(1);
+  CVI_SHAPE output0_shape = getOutputShape(0);
 
   map<float, int> valid_scores;
 
   int counter = 0;
-  for (int i = -4; i < -4 + output1_shape.dim[1];
+  for (int i = -4; i < -4 + output0_shape.dim[1];
        i++) {  // max_pool1d, window_size=9, stride=1, padding=4
 
     float *score_start = logits + std::max(i, 0);
-    float *score_end = logits + std::min(i + 8, output1_shape.dim[1] - 1);
+    float *score_end = logits + std::min(i + 8, output0_shape.dim[1] - 1);
 
     auto iter = std::max_element(score_start, score_end);
     int pos = iter - logits;
@@ -134,7 +134,7 @@ void BezierLaneNet::outputParser(const int nn_width, const int nn_height, const 
   map<float, int>::reverse_iterator map_iter;
   for (map_iter = valid_scores.rbegin(); map_iter != valid_scores.rend(); map_iter++) {
     int valid_index = map_iter->second;
-    int start_index = valid_index * output0_shape.dim[2] * output0_shape.dim[3];
+    int start_index = valid_index * output1_shape.dim[2] * output1_shape.dim[3];
 
     std::vector<float> tmp_info;
 

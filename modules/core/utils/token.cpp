@@ -7,8 +7,8 @@
 #include <regex>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
+#include "cvi_tdl_log.hpp"
 
 namespace cvitdl {
 std::set<std::pair<std::string, std::string>> get_pairs(const std::vector<std::string>& word) {
@@ -248,3 +248,213 @@ int token_bpe(const std::string& encoderFile, const std::string& bpeFile,
   return 0;
 }
 }  // namespace cvitdl
+
+WordPieceTokenizer::WordPieceTokenizer(const std::string& vocabFile) { LoadVocab(vocabFile); }
+
+WordPieceTokenizer::~WordPieceTokenizer() {}
+
+void WordPieceTokenizer::LoadVocab(const std::string& fp) {
+  std::ifstream file(fp);
+  if (!file) {
+    printf("Vocabulary file not exist: %s !\n", fp);
+  }
+  std::cout << "Loading vocabulary from " << fp << " ..." << std::endl;
+  std::string line;
+
+  uint32_t idx = 0;
+  while (std::getline(file, line)) {
+    vocab[line] = idx;
+    decode_vocab[idx] = line;
+    idx++;
+  }
+  std::cout << "Read " << vocab.size() << " words from vocabulary file." << std::endl;
+}
+
+std::vector<std::string> WordPieceTokenizer::splitString(const std::string& str) {
+  std::vector<std::string> result;
+  std::string current;
+
+  for (char ch : str) {
+    if (std::isspace(ch) || std::ispunct(ch)) {
+      if (!current.empty()) {
+        result.push_back(current);
+        current.clear();
+      }
+      if (std::ispunct(ch)) {
+        result.push_back(std::string(1, ch));
+      }
+    } else {
+      current += ch;
+    }
+  }
+
+  if (!current.empty()) {
+    result.push_back(current);
+  }
+
+  return result;
+}
+
+std::vector<int32_t> WordPieceTokenizer::wordPieceTokenize(const std::string& word) {
+  std::vector<int32_t> input_ids;
+
+  // if (word.length() > max_input_chars_per_word){
+  //   continue;
+  // }
+
+  int start = 0;
+  bool found = false;
+
+  while (start < word.length()) {
+    int end = word.length();
+
+    while (start < end) {
+      std::string substr = word.substr(start, end - start);
+
+      if (start > 0) {
+        substr = "##" + substr;
+      }
+
+      auto it = vocab.find(substr);
+
+      if ((it != vocab.end())) {
+        input_ids.push_back(it->second);
+        found = true;
+        break;
+      }
+      end -= 1;
+    }
+
+    if (!found) {
+      input_ids.push_back(vocab["[UNK]"]);
+    }
+
+    start = end;
+  }
+
+  return input_ids;
+}
+
+int WordPieceTokenizer::tokenize(const std::string& textFile, cvtdl_tokens* tokens) {
+  std::vector<std::string> text;
+  std::ifstream file(textFile);
+
+  if (file.is_open()) {
+    std::string line;
+    while (std::getline(file, line)) {
+      text.push_back(line);
+    }
+    file.close();
+  } else {
+    LOGE("Unable to open txt file\n");
+    return -1;
+  }
+
+  if (text.size() == 0) {
+    LOGE("Txt file can not be empty!\n");
+    return -1;
+  }
+
+  tokens->max_length = 35;
+  tokens->sentences_num = text.size();
+  tokens->input_ids = (int32_t**)malloc(text.size() * sizeof(int32_t*));
+  tokens->attention_mask = (int32_t**)malloc(text.size() * sizeof(int32_t*));
+  tokens->text = (char**)malloc(text.size() * sizeof(char*));
+
+  for (int i = 0; i < text.size(); ++i) {
+    tokens->input_ids[i] = (int32_t*)malloc(35 * sizeof(int32_t));
+    memset(tokens->input_ids[i], 0, 35 * sizeof(int32_t));
+
+    tokens->attention_mask[i] = (int32_t*)malloc(35 * sizeof(int32_t));
+    memset(tokens->attention_mask[i], 0, 35 * sizeof(int32_t));
+
+    tokens->text[i] = (char*)malloc((text[i].length() + 1) * sizeof(char));
+    strcpy(tokens->text[i], text[i].c_str());
+  }
+
+  for (int i = 0; i < text.size(); i++) {
+    std::transform(text[i].begin(), text[i].end(), text[i].begin(),
+                   ::tolower);  // convert all to lowercase
+    std::vector<std::string> words = splitString(text[i]);
+
+    tokens->input_ids[i][0] = 101;
+
+    int idx = 1;
+    // process each word
+    for (int j = 0; j < words.size(); j++) {
+      std::vector<int32_t> token_ids = wordPieceTokenize(words[j]);
+
+      for (int k = 0; k < token_ids.size(); k++) {
+        if (idx == 34) {
+          break;
+        } else {
+          tokens->input_ids[i][idx] = token_ids[k];
+          idx++;
+        }
+      }
+
+      if (idx == 34) break;
+    }
+
+    tokens->input_ids[i][idx] = 102;
+
+    for (int j = 0; j < idx + 1; j++) {
+      tokens->attention_mask[i][j] = 1;
+    }
+  }
+
+  return 0;
+}
+
+int WordPieceTokenizer::decode(cvtdl_tokens* tokens) {
+  if (tokens->text) {
+    for (int i = 0; i < tokens->sentences_num; i++) {
+      free(tokens->text[i]);
+      tokens->text[i] = NULL;
+    }
+    free(tokens->text);
+  }
+
+  if (tokens->sentences_num) {
+    tokens->text = (char**)malloc(tokens->sentences_num * sizeof(char*));
+  } else {
+    return 0;
+  }
+
+  for (int i = 0; i < tokens->sentences_num; i++) {
+    std::string result;
+    for (int j = 1; j < tokens->max_length; j++) {  // skip first ids
+      auto it = decode_vocab.find(tokens->input_ids[i][j]);
+
+      if ((it != decode_vocab.end())) {
+        std::string word = it->second;
+
+        if (word == "[DEC]" || word == "[SEP]") {
+          continue;  // 跳过特殊标记
+        }
+
+        if (word == "[PAD]") {
+          break;
+        }
+
+        if (word.substr(0, 2) == "##") {
+          result += word.substr(2);  // 去掉 '##'
+        } else {
+          // 如果是新的词，添加空格
+          if (!result.empty()) {
+            result += " ";
+          }
+          result += word;  // 添加完整的词
+        }
+
+      } else {
+        result += " [UNK] ";
+      }
+    }
+
+    tokens->text[i] = (char*)malloc((result.length() + 1) * sizeof(char));
+    strcpy(tokens->text[i], result.c_str());
+  }
+
+  return 0;
+}

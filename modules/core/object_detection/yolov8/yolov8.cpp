@@ -119,7 +119,7 @@ int YoloV8Detection::onModelOpened() {
     }
   }
 
-  printf("Number of yolov8 model branch: %d\n", strides.size());
+  LOGI("Number of yolov8 model branch: %d\n", strides.size());
   return CVI_TDL_SUCCESS;
 }
 
