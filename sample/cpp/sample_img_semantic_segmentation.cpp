@@ -1,6 +1,18 @@
 
 #include "tdl_model_factory.hpp"
 
+void visualize_mask(std::shared_ptr<ModelSegmentationInfo> seg_meta,
+                    const std::string &str_img_name) {
+  uint32_t output_width = seg_meta->output_width;
+  uint32_t output_height = seg_meta->output_height;
+
+  cv::Mat src(output_height, output_width, CV_8UC1, seg_meta->class_id,
+              output_width * sizeof(uint8_t));
+  cv::Mat dst;
+  src.convertTo(dst, CV_8U, 50);  // x 50 to visualize
+  cv::imwrite(str_img_name, dst);
+}
+
 int main(int argc, char **argv) {
   if (argc != 3) {
     printf("Usage: %s <model_dir> <image_path> \n", argv[0]);
@@ -32,8 +44,8 @@ int main(int argc, char **argv) {
     std::shared_ptr<ModelSegmentationInfo> seg_meta =
         std::static_pointer_cast<ModelSegmentationInfo>(out_datas[i]);
 
-    // uint32_t image_width = input_images[i]->getWidth();
-    // uint32_t image_height = input_images[i]->getHeight();
+    visualize_mask(seg_meta, "topfoemer_seg_mask.png");
+
     for (uint32_t x = 0; x < seg_meta->output_height; ++x) {
       for (uint32_t y = 0; y < seg_meta->output_width; ++y) {
         printf("%d ", (int)seg_meta->class_id[x * seg_meta->output_width + y]);

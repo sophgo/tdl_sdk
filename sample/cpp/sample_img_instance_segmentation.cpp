@@ -1,6 +1,28 @@
 
 #include "tdl_model_factory.hpp"
 
+void visualize_mask(std::shared_ptr<ModelBoxSegmentationInfo> obj_meta,
+                    const std::string &str_img_name) {
+  int proto_h = obj_meta->mask_height;
+  int proto_w = obj_meta->mask_width;
+
+  cv::Mat dst;
+  for (uint32_t i = 0; i < obj_meta->box_seg.size(); i++) {
+    cv::Mat src(proto_h, proto_w, CV_8UC1, obj_meta->box_seg[i].mask,
+                proto_w * sizeof(uint8_t));
+
+    if (i == 0) {
+      dst = src.clone();
+    } else {
+      cv::bitwise_or(dst, src, dst);
+    }
+  }
+
+  if (obj_meta->box_seg.size() > 0) {
+    cv::imwrite(str_img_name, dst);
+  }
+}
+
 void visualize_maskOutlinePoint(
     std::shared_ptr<ModelBoxSegmentationInfo> obj_meta, uint32_t image_height,
     uint32_t image_width) {
@@ -131,6 +153,7 @@ int main(int argc, char **argv) {
 
     printf("Sample Image dimensions - height: %d, width: %d\n", image_height,
            image_width);
+    visualize_mask(obj_meta, "yolov8_seg_mask.png");
     visualize_maskOutlinePoint(obj_meta, image_height, image_width);
     if (obj_meta->box_seg.size() == 0) {
       printf("No object detected\n");
@@ -146,7 +169,7 @@ int main(int argc, char **argv) {
         printf("points=[");
         std::vector<cv::Point> points;
         for (uint32_t k = 0; k < obj_meta->box_seg[j].mask_point_size; k++) {
-          printf("(%f,%f),", obj_meta->box_seg[j].mask_point[2 * k],
+          printf("(%.2f,%.2f),", obj_meta->box_seg[j].mask_point[2 * k],
                  obj_meta->box_seg[j].mask_point[2 * k + 1]);
           points.push_back(cv::Point(
               static_cast<int>(obj_meta->box_seg[j].mask_point[2 * k]),
@@ -160,10 +183,10 @@ int main(int argc, char **argv) {
         }
       }
 
-      cv::imwrite("./yolov8_segmentation.jpg", image);
+      cv::imwrite("./yolov8_seg_outline.jpg", image);
     }
     std::string str_img_name = "object_detection_" + std::to_string(i) + ".jpg";
-    visualize_object_detection(image1, obj_meta, "yolov8_seg.jpg");
+    visualize_object_detection(image1, obj_meta, "yolov8_seg_box.jpg");
   }
 
   return 0;

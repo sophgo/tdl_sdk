@@ -267,7 +267,7 @@
     },
     "RESNET_FEATURE_BMFACE_R34":{
       "_comment":"output 512 dim feature",
-      "file_name":"bmface_r34.bmodel",
+      "file_name":"recognition_bmface_r34_112_112_INT8",
       "rgb_order":"rgb",
       "mean":[127.5,127.5,127.5],
       "std":[128,128,128]
