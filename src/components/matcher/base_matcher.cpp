@@ -1,7 +1,7 @@
 #include "matcher/base_matcher.hpp"
 #include <iostream>
 #include "cpu_matcher/cpu_matcher.hpp"
-#if defined(__BM168X__) || defined(__CV184X__)
+#if defined(__BM168X__) || defined(__CV184X__) || defined(__CV186X__)
 #include "bm_matcher/bm_matcher.hpp"
 #endif
 #if defined(__CV181X__)
@@ -41,7 +41,7 @@ int32_t BaseMatcher::getQueryFeatureNum() const { return query_features_num_; }
 int32_t BaseMatcher::getFeatureDim() const { return feature_dim_; }
 
 std::shared_ptr<BaseMatcher> BaseMatcher::getMatcher(std::string matcher_type) {
-#if defined(__BM168X__) || defined(__CV184X__)
+#if defined(__BM168X__) || defined(__CV184X__) || defined(__CV186X__)
   if (matcher_type == "bm") {
     return std::make_shared<BmMatcher>();
   }
