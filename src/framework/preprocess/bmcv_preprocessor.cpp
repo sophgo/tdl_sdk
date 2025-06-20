@@ -88,7 +88,11 @@ int32_t BmCVPreprocessor::preprocessToImage(
   // 获取输入bm_image
   bm_image* input = (bm_image*)src_image->getInternalData();
   bm_image* output = (bm_image*)dst_image->getInternalData();
+#if defined(__BM1684X__) || defined(__BM1684__)
+  bmcv_padding_atrr_t* padding_attr = new bmcv_padding_atrr_t;
+#else
   bmcv_padding_attr_t* padding_attr = new bmcv_padding_attr_t;
+#endif
   padding_attr->dst_crop_stx = pad_x;
   padding_attr->dst_crop_sty = pad_y;
   padding_attr->dst_crop_w = resized_w;

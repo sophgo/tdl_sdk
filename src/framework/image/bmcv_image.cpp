@@ -62,7 +62,12 @@ BmCVImage::~BmCVImage() {
   if (ret != BM_SUCCESS) {
     LOGE("bm_image_detach failed, ret: %d", ret);
   }
+#if defined(__BM1684X__) || defined(__BM1684__)
+  ret = bm_image_destroy(bm_image_);
+#else
   ret = bm_image_destroy(&bm_image_);
+
+#endif
   if (ret != BM_SUCCESS) {
     LOGE("bm_image_destroy failed, ret: %d", ret);
   }
