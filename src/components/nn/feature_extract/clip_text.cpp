@@ -38,15 +38,16 @@ int32_t Clip_Text::inference(
     int32_t *input_ptr = (int32_t *)tinfo.sys_mem;
 
     memcpy(input_ptr, temp_buffer, 77 * sizeof(int32_t));
-
+    model_timer_.TicToc("preprocess");
     net_->updateInputTensors();
     net_->forward();
+    model_timer_.TicToc("tpu");
     net_->updateOutputTensors();
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_results;
 
     std::vector<std::shared_ptr<BaseImage>> batch_images = {image};
     outputParse(batch_images, batch_results);
-
+    model_timer_.TicToc("post");
     out_datas.insert(out_datas.end(), batch_results.begin(),
                      batch_results.end());
   }
