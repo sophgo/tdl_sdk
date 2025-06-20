@@ -46,7 +46,7 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdata-sections" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pointer-to-int-cast" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pointer-to-int-cast -Wno-attributes" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsigned-char -Wl,-gc-sections -lstdc++ -lm -lpthread" )
 
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsigned-char" )
