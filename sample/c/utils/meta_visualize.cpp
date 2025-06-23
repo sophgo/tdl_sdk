@@ -192,7 +192,8 @@ static float GetYuvColor(int chanel, color_rgb *color) {
 // TODO: Need refactor
 int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name,
                color_rgb color, int thickness) {
-  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
+  if (frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV12 &&
+      frame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     LOGE(
         "Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported "
@@ -566,6 +567,7 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r,
 int DrawMeta(const TDLFace *meta, VIDEO_FRAME_INFO_S *drawFrame,
              const bool drawText, const std::vector<TDLBrush> &brushes) {
   if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
+      drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV12 &&
       drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
     LOGE(
         "Only PIXEL_FORMAT_NV21 and PIXEL_FORMAT_YUV_PLANAR_420 are supported "
@@ -606,7 +608,8 @@ int DrawMeta(const TDLFace *meta, VIDEO_FRAME_INFO_S *drawFrame,
 
     TDLBox bbox = meta->info[i].box;
 
-    if (drawFrame->stVFrame.enPixelFormat == PIXEL_FORMAT_NV21) {
+    if (drawFrame->stVFrame.enPixelFormat == PIXEL_FORMAT_NV21 ||
+        drawFrame->stVFrame.enPixelFormat == PIXEL_FORMAT_NV12) {
       DrawRect<FORMAT_NV21>(drawFrame, bbox.x1, bbox.x2, bbox.y1, bbox.y2,
                             meta->info[i].name, rgb_color, thickness, drawText);
     } else {
@@ -614,7 +617,6 @@ int DrawMeta(const TDLFace *meta, VIDEO_FRAME_INFO_S *drawFrame,
                                 meta->info[i].name, rgb_color, thickness,
                                 drawText);
     }
-    return 0;
   }
 
   CVI_SYS_IonFlushCache(drawFrame->stVFrame.u64PhyAddr[0],

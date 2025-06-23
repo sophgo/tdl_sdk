@@ -54,19 +54,19 @@ void parse_output(T *ptr_out, const int num_cls, float qscale,
 }
 
 IspImageClassification::IspImageClassification() : BaseModel() {
-  net_param_.model_config.mean = {0, 0, 0};
-  net_param_.model_config.std = {255, 255, 255};
-  net_param_.model_config.rgb_order = "rgb";
+  net_param_.model_config.mean = {123.675, 116.28, 103.52};
+  net_param_.model_config.std = {58.395, 57.12, 57.375};
+  net_param_.model_config.rgb_order = "gray";
   keep_aspect_ratio_ = true;
 }
 
 IspImageClassification::~IspImageClassification() {}
 
 int IspImageClassification::onModelOpened() {
-  if (net_->getOutputNames().size() != 1) {
-    LOGE("ImageClassification only expected 1 output branch!\n");
-    return -1;
-  }
+  // if (net_->getOutputNames().size() != 1) {
+  //  LOGE("ImageClassification only expected 1 output branch!\n");
+  //  return -1;
+  //}
 
   return 0;
 }
@@ -75,6 +75,11 @@ int32_t IspImageClassification::inference(
     const std::vector<std::shared_ptr<BaseImage>> &images,
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
     const std::map<std::string, float> &parameters) {
+  if (images.empty()) {
+    LOGE("Input images is empty");
+    return -1;
+  }
+
   float awb[3];  // rgain, ggain, bgain
   float ccm[9];  // rgb[3][3]
   float blc[1];
@@ -116,64 +121,50 @@ int32_t IspImageClassification::inference(
     memcpy(input_ptr, blc, sizeof(float));
   }
 
-  // for (auto &image : images) {
-  //  // int32_t *temp_buffer = (int32_t *)image->getVirtualAddress()[0];
-  //  int32_t *temp_buffer =
-  //      reinterpret_cast<int32_t *>(image->getVirtualAddress()[0]);
-  //  std::string input_image = net_->getInputNames()[0];
+  model_timer_.TicToc("runstart");
 
-  //  const TensorInfo &tinfo = net_->getTensorInfo(input_image);
-  //  input_ptr = (int32_t *)tinfo.sys_mem;
-  //  memcpy(input_ptr, temp_buffer, tinfo.tensor_size);
+  for (auto &image : images) {
+    std::string input_layer_name = net_->getInputNames()[0];
 
-  //  net_->updateInputTensors();
-  //  net_->forward();
-  //  net_->updateOutputTensors();
-  //  std::vector<std::shared_ptr<ModelOutputInfo>> batch_results;
+    net_->getInputTensor(input_layer_name)->copyFromImage(image, 0);
+    model_timer_.TicToc("preprocess");
 
-  //  std::vector<std::shared_ptr<BaseImage>> batch_images = {image};
-  //  outputParse(batch_images, batch_results);
+    net_->updateInputTensors();
+    net_->forward();
+    model_timer_.TicToc("tpu");
+    net_->updateOutputTensors();
+    std::shared_ptr<ModelClassificationInfo> result =
+        std::make_shared<ModelClassificationInfo>();
 
-  //  out_datas.insert(out_datas.end(), batch_results.begin(),
-  //                   batch_results.end());
-  //}
+    outputParse(result);
+    model_timer_.TicToc("post");
 
-  std::vector<std::shared_ptr<ModelOutputInfo>> batch_out_datas;
-  int ret = BaseModel::inference(images, batch_out_datas);
-  if (ret != 0) {
-    LOGE("inference failed");
-    return ret;
+    out_datas.push_back(result);
   }
-  out_datas.push_back(batch_out_datas[0]);
 
   return 0;
 }
 
 int32_t IspImageClassification::outputParse(
-    const std::vector<std::shared_ptr<BaseImage>> &images,
-    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
-  std::string output_name = net_->getOutputNames()[0];
+    std::shared_ptr<ModelClassificationInfo> &out_data) {
+  std::string output_name = net_->getOutputNames()[1];
   TensorInfo oinfo = net_->getTensorInfo(output_name);
 
   std::shared_ptr<BaseTensor> output_tensor =
       net_->getOutputTensor(output_name);
 
-  for (size_t b = 0; b < images.size(); b++) {
-    std::shared_ptr<ModelClassificationInfo> cls_meta =
-        std::make_shared<ModelClassificationInfo>();
-    if (oinfo.data_type == TDLDataType::INT8) {
-      parse_output<int8_t>(output_tensor->getBatchPtr<int8_t>(b),
-                           oinfo.tensor_elem, oinfo.qscale, cls_meta);
-    } else if (oinfo.data_type == TDLDataType::UINT8) {
-      parse_output<uint8_t>(output_tensor->getBatchPtr<uint8_t>(b),
-                            oinfo.tensor_elem, oinfo.qscale, cls_meta);
-    } else if (oinfo.data_type == TDLDataType::FP32) {
-      parse_output<float>(output_tensor->getBatchPtr<float>(b),
-                          oinfo.tensor_elem, oinfo.qscale, cls_meta);
-    } else {
-      LOGE("unsupported data type: %d", oinfo.data_type);
-    }
-    out_datas.push_back(cls_meta);
+  if (oinfo.data_type == TDLDataType::INT8) {
+    parse_output<int8_t>(output_tensor->getBatchPtr<int8_t>(0),
+                         oinfo.tensor_elem, oinfo.qscale, out_data);
+  } else if (oinfo.data_type == TDLDataType::UINT8) {
+    parse_output<uint8_t>(output_tensor->getBatchPtr<uint8_t>(0),
+                          oinfo.tensor_elem, oinfo.qscale, out_data);
+  } else if (oinfo.data_type == TDLDataType::FP32) {
+    parse_output<float>(output_tensor->getBatchPtr<float>(0), oinfo.tensor_elem,
+                        oinfo.qscale, out_data);
+  } else {
+    LOGE("unsupported data type: %d", oinfo.data_type);
   }
+
   return 0;
 }
