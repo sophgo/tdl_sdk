@@ -17,7 +17,7 @@ class VpssContext {
 };
 class VpssPreprocessor : public BasePreprocessor {
  public:
-  VpssPreprocessor();
+  VpssPreprocessor(int device = 0);
   ~VpssPreprocessor();
 
   std::shared_ptr<BaseImage> preprocess(

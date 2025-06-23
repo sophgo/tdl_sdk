@@ -64,8 +64,9 @@ VpssContext* VpssContext::GetInstance() {
   return &instance;
 }
 
-VpssPreprocessor::VpssPreprocessor() {
+VpssPreprocessor::VpssPreprocessor(int device) {
   group_id_ = -1;
+  device_ = device;
   if (!init()) {
     throw std::runtime_error("VpssPreprocessor init failed!\n");
     LOGE("VpssPreprocessor init failed!\n");
