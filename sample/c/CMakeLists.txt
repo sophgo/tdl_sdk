@@ -6,6 +6,7 @@ project(sample_c)
 set(SAMPLE_INCLUDES
     ${MLIR_INCLUDES}
     ${MIDDLEWARE_INCLUDES}
+    ${REPO_DIR}/include
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn

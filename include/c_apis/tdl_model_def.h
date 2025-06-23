@@ -1,6 +1,6 @@
 #ifndef TDL_MODEL_DEF_H
 #define TDL_MODEL_DEF_H
-#include "tdl_model_list.h"
+#include "nn/tdl_model_list.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
