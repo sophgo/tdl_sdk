@@ -80,6 +80,8 @@
     ./build_tdl_sdk.sh CV181X
     #再次编译
     ./build_tdl_sdk.sh all
+    #debug版本编译（附带log）
+    ./build_tdl_sdk.sh debug
     ```
 
 ### 186AH平台编译
@@ -98,6 +100,8 @@
     ./build_tdl_sdk.sh CV186X
     #再次编译
     ./build_tdl_sdk.sh all
+    #debug版本编译（附带log）
+    ./build_tdl_sdk.sh debug
     ```
 
 ### 184平台编译
@@ -116,6 +120,8 @@
     ./build_tdl_sdk.sh CV184X
     #再次编译
     ./build_tdl_sdk.sh all
+    #debug版本编译（附带log）
+    ./build_tdl_sdk.sh debug
     ```
 
 ### BM1688平台编译

@@ -213,7 +213,7 @@ int32_t YoloV8Detection::outputParse(
       input_tensor.shape[2], input_tensor.shape[3], model_threshold_,
       inverse_th);
 
-  std::stringstream ss;
+  // std::stringstream ss;
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
@@ -274,17 +274,17 @@ int32_t YoloV8Detection::outputParse(
         bbox.x2 = std::max(0.0f, std::min(box[2], input_width_f));
         bbox.y2 = std::max(0.0f, std::min(box[3], input_height_f));
         bbox.class_id = max_logit_c;
-        LOGI("bbox:[%f,%f,%f,%f],score:%f,label:%d,logit:%f\n", bbox.x1,
-             bbox.y1, bbox.x2, bbox.y2, bbox.score, max_logit_c, max_logit);
+        // LOGI("bbox:[%f,%f,%f,%f],score:%f,label:%d,logit:%f\n", bbox.x1,
+        //      bbox.y1, bbox.x2, bbox.y2, bbox.score, max_logit_c, max_logit);
 
         lb_boxes[max_logit_c].push_back(bbox);
       }
     }
     DetectionHelper::nmsObjects(lb_boxes, nms_threshold_);
     std::vector<float> scale_params = batch_rescale_params_[b];
-    LOGI("scale_params:%f,%f,%f,%f", scale_params[0], scale_params[1],
-         scale_params[2], scale_params[3]);
-    ss << "batch:" << b << "\n";
+    // LOGI("scale_params:%f,%f,%f,%f", scale_params[0], scale_params[1],
+    //      scale_params[2], scale_params[3]);
+    // ss << "batch:" << b << "\n";
 
     std::shared_ptr<ModelBoxInfo> obj = std::make_shared<ModelBoxInfo>();
     obj->image_width = image_width;
@@ -296,12 +296,12 @@ int32_t YoloV8Detection::outputParse(
           b.object_type = type_mapping_[b.class_id];
         }
         obj->bboxes.push_back(b);
-        ss << "bbox:[" << b.x1 << "," << b.y1 << "," << b.x2 << "," << b.y2
-           << "],score:" << b.score << ",label:" << bbox.first << "\n";
+        // ss << "bbox:[" << b.x1 << "," << b.y1 << "," << b.x2 << "," << b.y2
+        //    << "],score:" << b.score << ",label:" << bbox.first << "\n";
       }
     }
     out_datas.push_back(obj);
   }
-  LOGI("outputParse done,ss:%s", ss.str().c_str());
+  // LOGI("outputParse done,ss:%s", ss.str().c_str());
   return 0;
 }

@@ -15,6 +15,7 @@ print_usage() {
     echo "  sample         Build samples only"
     echo "  all            Build both modules and sample"
     echo "  clean          Clean build"
+    echo "  debug          Build debug sdk"
 }
 
 # Check parameter
@@ -178,7 +179,7 @@ elif [[ "$1" == "sample" ]]; then
         exit 1
     fi
 
-elif [[ "$1" == "all" ]]; then
+elif [[ "$1" == "all" || "$1" == "debug" ]]; then
     echo "Using ${BASH_SOURCE[0]} all"
     echo "Compiling modules and sample..."
 
@@ -223,6 +224,10 @@ TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
 
 # Set build option and type
 BUILD_TYPE=Debug
+
+if [[ "$1" == "all" ]]; then
+    BUILD_TYPE=SDKRelease
+fi
 
 # default system type
 CONFIG_DUAL_OS=OFF

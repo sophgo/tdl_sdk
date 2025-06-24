@@ -399,6 +399,12 @@ int32_t VpssPreprocessor::preprocessToImage(
   }
   LOGI("to CVI_VPSS_GetChnFrame");
 
+  ret = CVI_VPSS_GetChnFrame(group_id_, 0, output_frame, -1);
+  if (ret != CVI_SUCCESS) {
+    LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
+    return ret;
+  }
+
   vpss_image->restoreVirtualAddress(true);
 
   return ret;

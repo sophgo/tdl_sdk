@@ -54,6 +54,17 @@
 
 #define MODULE_NAME "TDLSDK"
 #define TDL_LOG_CHN LOG_LOCAL7
+
+#ifdef DISABLE_LOG
+
+#define LOGD(fmt, ...) ((void)0)
+#define LOGI(fmt, ...) ((void)0)
+#define LOGN(fmt, ...) ((void)0)
+#define LOGW(fmt, ...) ((void)0)
+#define LOGC(fmt, ...) ((void)0)
+
+#else
+
 #define LOGD(fmt, ...)                                                        \
   syslog(TDL_LOG_CHN | LOG_DEBUG, "[%s:%d] [D] " fmt, __FILENAME__, __LINE__, \
          ##__VA_ARGS__)
@@ -72,6 +83,8 @@
 #define LOGC(fmt, ...)                                                       \
   syslog(TDL_LOG_CHN | LOG_CRIT, "[%s:%d] [C] " fmt, __FILENAME__, __LINE__, \
          ##__VA_ARGS__)
+
+#endif
 
 #undef LOGE
 #define LOGE(fmt, ...)                                                        \
