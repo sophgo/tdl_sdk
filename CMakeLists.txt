@@ -114,7 +114,7 @@ endif()
 get_directory_property(compile_defs COMPILE_DEFINITIONS)
 message(STATUS "All compile definitions: ${compile_defs}")
 
-set(IS_LOCAL TRUE)
+set(IS_LOCAL FALSE)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   # Get current commit
@@ -153,6 +153,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
       set(IS_LOCAL TRUE)
   else()
       set(IS_LOCAL FALSE)
+  endif()
+
+endif()
+
+if (NOT IS_LOCAL AND NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dependency/thirdparty")
+
+  execute_process(
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/download_thirdparty.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE DOWNLOAD_RESULT
+  )
+  if(NOT DOWNLOAD_RESULT EQUAL 0)
+    message(FATAL_ERROR "download_thirdparty.sh failed: ${DOWNLOAD_RESULT}")
   endif()
 
 endif()

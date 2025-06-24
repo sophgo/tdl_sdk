@@ -24,13 +24,6 @@
     git clone https://github.com/sophgo/tdl_sdk.git
     ```
 
-* 下载第三方依赖
-
-    ```shell
-    cd tdl_sdk
-    ./scripts/download_thirdparty.sh
-    ```
-
 * nfs配置
 
   * 安装nfs服务端
