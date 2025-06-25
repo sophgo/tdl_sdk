@@ -51,6 +51,7 @@ int32_t FaceCaptureApp::addPipeline(const std::string &pipeline_name,
   if (nodes_cfg.contains("video_node")) {
     face_capture_channel->addNode(
         getVideoNode(get_config("video_node", nodes_cfg)));
+    face_capture_channel->setExternalFrame(false);
   }
   face_capture_channel->addNode(
       getFaceDetectionNode(get_config("face_detection_node", nodes_cfg)));

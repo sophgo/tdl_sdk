@@ -1112,8 +1112,47 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
   return 0;
 }
 
+int32_t TDL_APP_SetFrame(TDLHandle handle, const char *channel_name,
+                         TDLImage image_handle, uint64_t frame_id,
+                         int buffer_size) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->app_task == nullptr) {
+    LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  if (image_handle != NULL) {
+    int channel_max_processing_num =
+        context->app_task->getChannelMaxProcessingNum(
+            std::string(channel_name));
+
+    if (channel_max_processing_num > buffer_size) {
+      context->app_task->send_interval += 1;
+    } else if (channel_max_processing_num < buffer_size) {
+      context->app_task->send_interval =
+          std::max(context->app_task->send_interval - 1, 1);
+    }
+
+    if (channel_max_processing_num > buffer_size ||
+        frame_id % context->app_task->send_interval != 0) {
+      LOGI("to skip frame %ld", frame_id);
+      return 0;
+    }
+
+    std::shared_ptr<BaseImage> image = ((TDLImageContext *)image_handle)->image;
+    return context->app_task->setFrame(std::string(channel_name), image,
+                                       frame_id);
+
+  } else {
+    LOGE("image_handle is NULL!");
+    return -1;
+  }
+}
+
 int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
-                        TDLImage image_handle, uint64_t frame_id,
                         TDLCaptureInfo *capture_info) {
   TDLContext *context = (TDLContext *)handle;
   int ret = 0;
@@ -1130,18 +1169,10 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
     printf("no processing channel\n");
     return 2;
   }
-
-  if (image_handle != NULL) {
-    TDLImageContext *image_context = (TDLImageContext *)image_handle;
-    ret = context->app_task->setFrame(std::string(channel_name),
-                                      image_context->image, frame_id);
-    if (ret != 0) {
-      printf("app_task setFrame failed!\n");
-      return ret;
-    }
-  } else if (context->app_task->getChannelNodeName(std::string(channel_name),
-                                                   0) != "video_node") {
-    LOGE("One of image_handle and video_node should be set!");
+  if ((context->app_task->getChannelNodeName(std::string(channel_name), 0) ==
+       "video_node") ==
+      context->app_task->isExternalFrameChannel(std::string(channel_name))) {
+    LOGE("only one of TDLImage and video_node should be set!");
     return -1;
   }
 

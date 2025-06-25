@@ -16,6 +16,12 @@ class PipelineChannel {
   // to add the frame to first node
   int32_t addFreeFrame(PtrFrameInfo frame_info);
   std::string getNodeName(size_t index);
+  int32_t setPipelineFrame(PtrFrameInfo frame_info);
+  void setExternalFrame(bool external_frame) {
+    external_frame_ = external_frame;
+  }
+  bool isExternalFrame() { return external_frame_; }
+  int getMaxProcessingNum();
   void start();
   void stop();
   bool isRunning() { return is_running_; }
@@ -33,5 +39,6 @@ class PipelineChannel {
 
   std::vector<std::shared_ptr<PipelineNode>> nodes_;
   bool is_running_ = false;
+  bool external_frame_ = true;
 };
 #endif

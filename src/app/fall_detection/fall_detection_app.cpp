@@ -57,6 +57,7 @@ int32_t FallDetectionApp::addPipeline(const std::string &pipeline_name,
   if (nodes_cfg.contains("video_node")) {
     fall_detection_channel->addNode(
         getVideoNode(get_config("video_node", nodes_cfg)));
+    fall_detection_channel->setExternalFrame(false);
   }
   fall_detection_channel->addNode(getKeypointDetectionNode(
       get_config("keypoint_detection_node", nodes_cfg)));

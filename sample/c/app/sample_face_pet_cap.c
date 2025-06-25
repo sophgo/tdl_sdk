@@ -97,8 +97,7 @@ int main(int argc, char *argv[]) {
   while (true) {
     for (size_t i = 0; i < channel_size; i++) {
       TDLCaptureInfo capture_info = {0};
-      ret =
-          TDL_APP_Capture(tdl_handle, channel_names[i], NULL, 0, &capture_info);
+      ret = TDL_APP_Capture(tdl_handle, channel_names[i], &capture_info);
       if (ret == 1) {
         continue;
       } else if (ret == 2) {

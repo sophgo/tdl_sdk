@@ -24,6 +24,8 @@ class AppTask {
   std::vector<std::string> getChannelNames();
   std::string getChannelNodeName(const std::string &channel_name, size_t index);
   int getProcessingChannelNum();
+  int getChannelMaxProcessingNum(const std::string &channel_name);
+  bool isExternalFrameChannel(const std::string &channel_name);
   int32_t removeChannel(const std::string &channel_name);
   int32_t setFrame(const std::string &pipeline_name,
                    std::shared_ptr<BaseImage> image, uint64_t frame_id);
@@ -33,6 +35,7 @@ class AppTask {
 
   virtual int32_t getResult(const std::string &pipeline_name,
                             Packet &result) = 0;
+  int send_interval = 1;
 
  protected:
   std::string task_name_;

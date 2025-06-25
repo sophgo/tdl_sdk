@@ -112,3 +112,20 @@ std::string PipelineChannel::getNodeName(size_t index) {
     return std::string("");
   }
 }
+
+int32_t PipelineChannel::setPipelineFrame(PtrFrameInfo frame_info) {
+  if (nodes_[0]->getNodeName() == "video_node") {
+    LOGE("failed to setPipelineFrame with nodes_[0] = video_node\n");
+    return -1;
+  } else {
+    return nodes_[0]->addProcessFrame(this, std::move(frame_info));
+  }
+}
+
+int PipelineChannel::getMaxProcessingNum() {
+  int max_num = 0;
+  for (auto &node : nodes_) {
+    max_num = std::max(max_num, (int)node->processingNum(this));
+  }
+  return max_num;
+}

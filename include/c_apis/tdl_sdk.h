@@ -395,18 +395,29 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
                      uint8_t *channel_size);
 
 /**
+ * @brief 往APP送帧
+ *
+ * @param handle TDLHandle 对象
+ * @param channel_name 当前channel的名称
+ * @param image_handle TDLImageHandle 对象
+ * @param frame_id 当前TDLImageHandle 对象的frame id
+ * @param buffer_size 推理线程缓存的帧数
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_APP_SetFrame(TDLHandle handle, const char *channel_name,
+                         TDLImage image_handle, uint64_t frame_id,
+                         int buffer_size);
+
+/**
  * @brief 执行人脸抓拍任务
  *
  * @param handle TDLHandle 对象
- * @param channel_name 每一路视频流的名称信息
- * @param image_handle TDLImageHandle 对象, 如果非外部传图像，传入NULL
- * @param frame_id 外部传入图像的id
- * @param cap_result 抓拍结果
+ * @param channel_name 当前channel的名称
+ * @param capture_info 抓拍结果
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
-                        TDLImage image_handle, uint64_t frame_id,
-                        TDLCaptureInfo *cap_result);
+                        TDLCaptureInfo *capture_info);
 
 #ifdef __cplusplus
 }

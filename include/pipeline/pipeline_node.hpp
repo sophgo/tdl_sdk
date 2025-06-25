@@ -20,6 +20,9 @@ class PipelineNode {
   virtual void registerChannel(PipelineChannel *p_chn);
   virtual void unregisterChannel(PipelineChannel *p_chn);
   static void *process(void *arg);
+  int processingNum(PipelineChannel *p_chn) {
+    return (int)input_queues_[p_chn].sizeUnsafe();
+  }
 
   int32_t addProcessFrame(PipelineChannel *p_chn, PtrFrameInfo frame_info);
   int32_t start();

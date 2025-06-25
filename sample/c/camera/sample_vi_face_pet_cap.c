@@ -2,15 +2,40 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <pthread.h>
 #include "cvi_comm_video.h"
 #include "cvi_vi.h"
 #include "tdl_sdk.h"
 
 #define FEATURE_SIZE 256
+static volatile bool to_exit = false;
+
+static uint32_t get_time_in_ms() {
+  struct timeval tv;
+  if (gettimeofday(&tv, NULL) < 0) {
+    return 0;
+  }
+  return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
+typedef struct {
+  TDLHandle tdl_handle;
+  int vi_chn;
+  uint8_t channel_size;
+  char **channel_names;
+} SEND_FRAME_THREAD_ARG_S;
+
+typedef struct {
+  TDLHandle tdl_handle;
+  uint8_t channel_size;
+  char **channel_names;
+  TDLFeatureInfo *gallery_feature;
+} RUN_TDL_THREAD_ARG_S;
 
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
@@ -27,6 +52,135 @@ void print_usage(const char *prog_name) {
       "named 0.bin, 1.bin, 2.bin...(no more than 100)\n"
       "  -o, --output_dir : output dir to save snapshot\n"
       "  -v, --vi_chn : optional , defult 0\n");
+}
+
+void *send_frame_thread(void *args) {
+  printf("Enter send frame thread\n");
+  SEND_FRAME_THREAD_ARG_S *pstArgs = (SEND_FRAME_THREAD_ARG_S *)args;
+
+  uint64_t *channel_frame_id = malloc(pstArgs->channel_size * sizeof(uint64_t));
+  memset(channel_frame_id, 0, pstArgs->channel_size * sizeof(uint64_t));
+
+  while (to_exit == false) {
+    for (size_t i = 0; i < pstArgs->channel_size; i++) {
+      TDLImage image = NULL;
+
+      image = TDL_GetCameraFrame(
+          pstArgs->tdl_handle,
+          pstArgs->vi_chn);  // if channel_size > 1, image should be taken from
+                             // different vi_chn
+      if (image == NULL) {
+        printf("TDL_GetViFrame falied\n");
+        continue;
+      }
+
+      channel_frame_id[i] += 1;
+
+      int ret = TDL_APP_SetFrame(pstArgs->tdl_handle, pstArgs->channel_names[i],
+                                 image, channel_frame_id[i], 3);
+      if (ret != 0) {
+        printf("TDL_APP_SetFrame failed with %d\n", ret);
+        continue;
+      }
+
+      TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+      TDL_DestroyImage(image);
+    }
+  }
+
+  free(channel_frame_id);
+}
+
+void *run_tdl_thread(void *args) {
+  RUN_TDL_THREAD_ARG_S *pstArgs = (RUN_TDL_THREAD_ARG_S *)args;
+
+  uint64_t counter = 0;
+  uint64_t last_counter = 0;
+  uint32_t last_time_ms = get_time_in_ms();
+
+  while (true) {
+    // 检查键盘输入
+    fd_set rfds;
+    struct timeval tv = {0, 0};
+    FD_ZERO(&rfds);
+    FD_SET(STDIN_FILENO, &rfds);
+    int key_pressed = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
+    if (key_pressed > 0 && FD_ISSET(STDIN_FILENO, &rfds)) {
+      to_exit = true;
+      break;  // 有键盘输入，退出循环
+    }
+
+    for (size_t i = 0; i < pstArgs->channel_size; i++) {
+      TDLCaptureInfo capture_info = {0};
+
+      counter++;
+      int frm_diff = counter - last_counter;
+      if (frm_diff > 30) {
+        uint32_t cur_ts_ms = get_time_in_ms();
+        float infer_time = (float)(cur_ts_ms - last_time_ms) / frm_diff;
+        float fps = 1000.0 / infer_time;
+
+        last_time_ms = cur_ts_ms;
+        last_counter = counter;
+        printf(
+            "+++++++++++++++++++++++++++++++++++ frame:%d, infer time:%.2f, "
+            "fps:%.2f\n",
+            (int)counter, infer_time, fps);
+      }
+
+      int ret = TDL_APP_Capture(pstArgs->tdl_handle, pstArgs->channel_names[i],
+                                &capture_info);
+
+      if (ret == 1) {
+        continue;
+      } else if (ret == 2) {
+        to_exit = true;
+        break;
+      } else if (ret != 0) {
+        printf("TDL_APP_Capture failed with %#x!\n", ret);
+        goto exit0;
+      }
+
+      printf("detect person size: %d, pet size: %d\n",
+             capture_info.person_meta.size, capture_info.pet_meta.size);
+
+      // todo: save snapshot img
+
+      for (uint32_t j = 0; j < capture_info.snapshot_size; j++) {
+        printf("to do TDL_CaculateSimilarity\n");
+
+        float max_similarity = 0;
+        float similarity = 0;
+        uint8_t top_index;
+        for (uint32_t k = 0; k < pstArgs->gallery_feature->size; k++) {
+          TDL_CaculateSimilarity(pstArgs->gallery_feature->feature[k],
+                                 capture_info.features[j], &similarity);
+          if (similarity > max_similarity) {
+            max_similarity = similarity;
+            top_index = k;
+          }
+        }
+
+        if (max_similarity > 0.4) {
+          printf("match feature %d.bin, track id: %ld, similarity: %.2f\n",
+                 top_index, capture_info.snapshot_info[i].track_id,
+                 max_similarity);
+        }
+      }
+
+      TDL_ReleaseCaptureInfo(&capture_info);
+      // TDL_ReleaseCameraFrame(pstArgs->tdl_handle, vi_chn);
+      // TDL_DestroyImage(pstArgs->image);
+    }
+
+    if (to_exit) {
+      break;
+    }
+  }
+
+exit0:
+  TDL_DestoryCamera(pstArgs->tdl_handle);
+  TDL_DestroyHandle(pstArgs->tdl_handle);
 }
 
 int main(int argc, char *argv[]) {
@@ -88,7 +242,7 @@ int main(int argc, char *argv[]) {
   int ret = TDL_GetGalleryFeature(gallery_dir, &gallery_feature, FEATURE_SIZE);
   if (ret != 0) {
     printf("get gallery feature from %s failed with %#x!\n", gallery_dir, ret);
-    goto exit1;
+    goto exit0;
   }
 
   TDLImage image = NULL;
@@ -118,96 +272,38 @@ int main(int argc, char *argv[]) {
 
   printf("按任意键退出...\n");
 
-  uint64_t *channel_frame_id = malloc(channel_size * sizeof(uint64_t));
-  if (channel_frame_id) {
-    memset(channel_frame_id, 0, channel_size * sizeof(uint64_t));
-  }
+  pthread_t stFrameThread, stTDLThread;
 
-  bool to_exit = false;
-  while (true) {
-    // 检查键盘输入
-    fd_set rfds;
-    struct timeval tv = {0, 0};
-    FD_ZERO(&rfds);
-    FD_SET(STDIN_FILENO, &rfds);
-    int key_pressed = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
-    if (key_pressed > 0 && FD_ISSET(STDIN_FILENO, &rfds)) {
-      break;  // 有键盘输入，退出循环
-    }
+  SEND_FRAME_THREAD_ARG_S frame_args = {.tdl_handle = tdl_handle,
+                                        .vi_chn = vi_chn,
+                                        .channel_size = channel_size,
+                                        .channel_names = channel_names};
 
-    for (size_t i = 0; i < channel_size; i++) {
-      TDLCaptureInfo capture_info = {0};
-      image = TDL_GetCameraFrame(tdl_handle, vi_chn);
-      if (image == NULL) {
-        printf("TDL_GetViFrame falied\n");
-        continue;
-      }
-      channel_frame_id[i] += 1;
-      ret = TDL_APP_Capture(tdl_handle, channel_names[i], image,
-                            channel_frame_id[i], &capture_info);
-      if (ret == 1) {
-        TDL_DestroyImage(image);
-        continue;
-      } else if (ret == 2) {
-        to_exit = true;
-        break;
-      } else if (ret != 0) {
-        printf("TDL_APP_Capture failed with %#x!\n", ret);
-        goto exit0;
-      }
+  RUN_TDL_THREAD_ARG_S tdl_args = {.tdl_handle = tdl_handle,
+                                   .channel_size = channel_size,
+                                   .channel_names = channel_names,
+                                   .gallery_feature = &gallery_feature};
 
-      printf("detect person size: %d, pet size: %d\n",
-             capture_info.person_meta.size, capture_info.pet_meta.size);
+  pthread_create(&stFrameThread, NULL, send_frame_thread, &frame_args);
+  pthread_create(&stTDLThread, NULL, run_tdl_thread, &tdl_args);
 
-      // todo: save snapshot img
-
-      for (uint32_t j = 0; j < capture_info.snapshot_size; j++) {
-        printf("to do TDL_CaculateSimilarity\n");
-
-        float max_similarity = 0;
-        float similarity = 0;
-        uint8_t top_index;
-        for (uint32_t k = 0; k < gallery_feature.size; k++) {
-          TDL_CaculateSimilarity(gallery_feature.feature[k],
-                                 capture_info.features[j], &similarity);
-          if (similarity > max_similarity) {
-            max_similarity = similarity;
-            top_index = k;
-          }
-        }
-
-        if (max_similarity > 0.4) {
-          printf("match feature %d.bin, track id: %ld, similarity: %.2f\n",
-                 top_index, capture_info.snapshot_info[i].track_id,
-                 max_similarity);
-        }
-      }
-
-      TDL_ReleaseCaptureInfo(&capture_info);
-      TDL_ReleaseCameraFrame(tdl_handle, vi_chn);
-      TDL_DestroyImage(image);
-    }
-
-    if (to_exit) {
-      break;
-    }
-  }
+  pthread_join(stFrameThread, NULL);
+  pthread_join(stTDLThread, NULL);
 
   // 恢复终端设置
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
-exit2:
+exit1:
   for (int i = 0; i < channel_size; i++) {
     free(channel_names[i]);
   }
   free(channel_names);
-  free(channel_frame_id);
 
-exit1:
+exit0:
+
   for (int i = 0; i < gallery_feature.size; i++) {
     TDL_ReleaseFeatureMeta(&gallery_feature.feature[i]);
   }
-exit0:
   TDL_DestoryCamera(tdl_handle);
   TDL_DestroyHandle(tdl_handle);
 

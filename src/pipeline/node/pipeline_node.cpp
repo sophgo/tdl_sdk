@@ -40,7 +40,7 @@ void *PipelineNode::process(void *arg) {
       PtrFrameInfo frame_info = nullptr;
       LOGI("node:%s,to get process frame,input_queues_size:%d",
            node->name_.c_str(), int(node->input_queues_[p_chn].sizeUnsafe()));
-      if (node->is_frist_node_) {
+      if (node->is_frist_node_ && node->name_ == "video_node") {
         frame_info = p_chn->getFreeFrame(wait_ts);
       } else {
         frame_info = node->input_queues_[p_chn].pop(wait_ts);

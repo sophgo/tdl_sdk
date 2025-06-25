@@ -53,18 +53,32 @@ int32_t AppTask::removeChannel(const std::string &channel_name) {
 int32_t AppTask::setFrame(const std::string &pipeline_name,
                           std::shared_ptr<BaseImage> image, uint64_t frame_id) {
   if (pipeline_channels_.count(pipeline_name) != 0) {
-    if (image->getWidth() == 0) {
-      return 1;
-    }
     PtrFrameInfo frame_info = std::make_unique<PipelineFrameInfo>();
     frame_info->node_data_["image"] = Packet::make(image);
     frame_info->frame_id_ = frame_id;
-    pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
-    return 0;
+    return pipeline_channels_[pipeline_name]->setPipelineFrame(
+        std::move(frame_info));
 
   } else {
     LOGE("pipeline %s not found!\n", pipeline_name.c_str());
-    printf("pipeline %s not found!\n", pipeline_name.c_str());
     return -1;
+  }
+}
+
+bool AppTask::isExternalFrameChannel(const std::string &channel_name) {
+  if (pipeline_channels_.count(channel_name) == 0) {
+    LOGE("channel %s not found!\n", channel_name.c_str());
+    assert(false);
+  } else {
+    return pipeline_channels_[channel_name]->isExternalFrame();
+  }
+}
+
+int AppTask::getChannelMaxProcessingNum(const std::string &channel_name) {
+  if (pipeline_channels_.count(channel_name) == 0) {
+    LOGE("channel %s not found!\n", channel_name.c_str());
+    assert(false);
+  } else {
+    return pipeline_channels_[channel_name]->getMaxProcessingNum();
   }
 }

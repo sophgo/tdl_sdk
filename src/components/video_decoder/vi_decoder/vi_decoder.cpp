@@ -742,7 +742,8 @@ int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int chn) {
     VIDEO_FRAME_INFO_S *vpss_frame_info = &frame_info[chn];
     if (ret != 0 ||
         vpss_frame_info->stVFrame.u32Width == 0) {  // CVI_VI_GetChnFrame bug
-      printf("CVI_VI_GetChnFrame(%d) failed with %d\n", chn, ret);
+      printf("CVI_VI_GetChnFrame(%d) failed, ret(%d) width %d\n", chn, ret,
+             vpss_frame_info->stVFrame.u32Width);
     } else {
       break;
     }
