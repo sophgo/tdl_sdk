@@ -229,9 +229,10 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libsensor.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_cfg.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.so
         ${ZLIB_ROOT}/lib/libz.so)
-      set(MIDDLEWARE_LIBS_STATIC
+    set(MIDDLEWARE_LIBS_STATIC
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
@@ -245,15 +246,20 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libsensor.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_cfg.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.a
         ${ZLIB_ROOT}/lib/libz.a)
     if(${CONFIG_DUAL_OS} STREQUAL "OFF")
         set(MIDDLEWARE_LIBS
           ${MIDDLEWARE_LIBS}
-          ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so)
+          ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
+          ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_i2c.so)
         set(MIDDLEWARE_LIBS_STATIC
           ${MIDDLEWARE_LIBS_STATIC}
-          ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a)
+          ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
+          ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
+          ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_i2c.a)
     endif()
 else()
     # Default libraries for other platforms
