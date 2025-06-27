@@ -178,6 +178,7 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.so)
     set(MIDDLEWARE_LIBS_STATIC
+        "-Wl,--whole-archive"
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.a
@@ -195,6 +196,7 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.a
+        "-Wl,--no-whole-archive"
         ${MLIR_SDK_ROOT}/lib/libz.a)
     add_definitions(-DSENSOR_GCORE_GC4653)
 elseif(${CVI_PLATFORM} STREQUAL "CV184X")
@@ -233,6 +235,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.so
         ${ZLIB_ROOT}/lib/libz.so)
     set(MIDDLEWARE_LIBS_STATIC
+        "-Wl,--whole-archive"
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
@@ -248,6 +251,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libsensor.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_cfg.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.a
+        "-Wl,--no-whole-archive"
         ${ZLIB_ROOT}/lib/libz.a)
     if(${CONFIG_DUAL_OS} STREQUAL "OFF")
         set(MIDDLEWARE_LIBS
@@ -279,6 +283,7 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
         ${MLIR_SDK_ROOT}/lib/libz.so)
     set(MIDDLEWARE_LIBS_STATIC
+        "-Wl,--whole-archive"
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpu.a
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.a
@@ -292,6 +297,7 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
+        "-Wl,--no-whole-archive"
         ${MLIR_SDK_ROOT}/lib/libz.a)
 
     # Additional libraries for v2
@@ -318,6 +324,7 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
                 ${MLIR_SDK_ROOT}/lib/libz.so)
             set(MIDDLEWARE_LIBS_STATIC
+                "-Wl,--whole-archive"
                 ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvi.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
@@ -336,6 +343,7 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
+                "-Wl,--no-whole-archive"
                 ${MLIR_SDK_ROOT}/lib/libz.a)
         endif()
         set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)

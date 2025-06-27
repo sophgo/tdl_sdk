@@ -19,7 +19,9 @@ else()
     set(SAMPLE_LIBS
         "-Wl,--start-group"
         tdl-static
+        "-Wl,--whole-archive"
         ${MIDDLEWARE_LIBS_STATIC}
+        "-Wl,--no-whole-archive"
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
         ${IVE_LIBS_STATIC}
@@ -49,6 +51,7 @@ if (NOT ("${CVI_PLATFORM}" STREQUAL "CV181X") AND
     NOT ("${CVI_PLATFORM}" STREQUAL "CV184X") AND
     NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X"))
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_img_motion_detection.cpp)
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_img_motion_detection_test.cpp)
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/camera/sample_vi_md.cpp)
 endif()
 

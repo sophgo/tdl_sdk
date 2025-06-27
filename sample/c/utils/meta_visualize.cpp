@@ -13,7 +13,7 @@ int32_t TDL_VisualizeRectangle(box_t *box, int32_t num, char *input_path,
                                char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
-    printf("input path is empty\n");
+    LOGE("input path is empty\n");
     return -1;
   }
 
@@ -34,7 +34,7 @@ int32_t TDL_VisualizePoint(point_t *point, int32_t num, char *input_path,
                            char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
-    printf("input path is empty\n");
+    LOGE("input path is empty\n");
     return -1;
   }
 
@@ -52,7 +52,7 @@ int32_t TDL_VisualizeLine(box_t *box, int32_t num, char *input_path,
                           char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
-    printf("input path is empty\n");
+    LOGE("input path is empty\n");
     return -1;
   }
 
@@ -71,7 +71,7 @@ int32_t TDL_VisualizePolylines(point_t *point, int32_t num, char *input_path,
                                char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
-    printf("input path is empty\n");
+    LOGE("input path is empty\n");
     return -1;
   }
 
@@ -92,13 +92,13 @@ int32_t TDL_CropImage(int x, int y, int weight, int height, char *input_path,
                       char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
-    printf("input path is empty\n");
+    LOGE("input path is empty\n");
     return -1;
   }
 
   cv::Rect roi(x, y, weight, height);
   if (roi.x + roi.width > image.cols || roi.y + roi.height > image.rows) {
-    printf("The cropping area exceeds the original image range");
+    LOGE("The cropping area exceeds the original image range");
     return -1;
   }
 
@@ -143,7 +143,7 @@ int32_t TDL_VisualizText(int32_t x, int32_t y, char *text, char *input_path,
                          char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
-    printf("input path is empty\n");
+    LOGE("input path is empty\n");
     return -1;
   }
 
@@ -444,11 +444,12 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2,
         int offset = h * stride + draw_x1 * 2;
         if (uint32_t(offset + draw_thickness_width * 2) >=
             frame->stVFrame.u32Length[i]) {
-          printf("draw_rect overflow\n");
+          LOGE("draw_rect overflow\n");
+          break;
         }
         if (draw_x1 * 2 + draw_thickness_width * 2 >= stride) {
-          int overflow = stride - (draw_x1 * 2 + draw_thickness_width * 2) + 2;
-          offset -= overflow;
+          int overflow = (draw_x1 * 2 + draw_thickness_width * 2) - stride + 2;
+          offset = max(offset - overflow, 0);
         }
         std::fill_n((uint16_t *)(frame->stVFrame.pu8VirAddr[i] + offset),
                     draw_thickness_width, (uint16_t)color);
@@ -564,7 +565,7 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r,
   return _WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THICKNESS);
 }
 
-int DrawMeta(const TDLFace *meta, VIDEO_FRAME_INFO_S *drawFrame,
+int DrawMeta(const TDLObject *meta, VIDEO_FRAME_INFO_S *drawFrame,
              const bool drawText, const std::vector<TDLBrush> &brushes) {
   if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV12 &&
@@ -587,11 +588,13 @@ int DrawMeta(const TDLFace *meta, VIDEO_FRAME_INFO_S *drawFrame,
   if (drawFrame->stVFrame.pu8VirAddr[0] == NULL) {
     drawFrame->stVFrame.pu8VirAddr[0] =
         (uint8_t *)CVI_SYS_Mmap(drawFrame->stVFrame.u64PhyAddr[0], image_size);
+    do_unmap = true;
+  } else if (drawFrame->stVFrame.pu8VirAddr[1] == NULL) {
     drawFrame->stVFrame.pu8VirAddr[1] =
         drawFrame->stVFrame.pu8VirAddr[0] + drawFrame->stVFrame.u32Length[0];
+  } else if (drawFrame->stVFrame.pu8VirAddr[2] == NULL) {
     drawFrame->stVFrame.pu8VirAddr[2] =
         drawFrame->stVFrame.pu8VirAddr[1] + drawFrame->stVFrame.u32Length[1];
-    do_unmap = true;
   }
 
   for (size_t i = 0; i < meta->size; i++) {
@@ -630,8 +633,8 @@ int DrawMeta(const TDLFace *meta, VIDEO_FRAME_INFO_S *drawFrame,
   return 0;
 }
 
-int32_t TDL_FaceDrawRect(const TDLFace *meta, void *frame, const bool drawText,
-                         TDLBrush brush) {
+int32_t TDL_DrawRect(const TDLObject *meta, void *frame, const bool drawText,
+                     TDLBrush brush) {
   if (meta->size <= 0) return 0;
 
   std::vector<TDLBrush> brushes(meta->size, brush);

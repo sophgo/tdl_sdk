@@ -57,6 +57,7 @@ typedef struct {
 } TDLLandmarkInfo;
 
 typedef struct {
+  char name[128];
   TDLBox box;
   float score;
   int class_id;

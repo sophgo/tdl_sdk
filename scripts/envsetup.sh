@@ -217,7 +217,8 @@ configure_platform_env() {
             add_lib_paths "${TDL_INSTALL_DIR}/sample/3rd/opencv/lib" \
                           "${TDL_INSTALL_DIR}/sample/3rd/tpu/lib" \
                           "${TDL_INSTALL_DIR}/sample/3rd/middleware/v2/lib" \
-                          "${TDL_INSTALL_DIR}/sample/3rd/rtsp/lib"
+                          "${TDL_INSTALL_DIR}/sample/3rd/rtsp/lib" \
+                          "${TDL_INSTALL_DIR}/sample/utils/lib"
             ;;
         CMODEL_CV181X)
             TPU_SDK_PATH="${DEPENDENCY_BASE}/${CHIP_ARCH}"

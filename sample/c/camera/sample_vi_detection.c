@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/select.h>
@@ -6,8 +5,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "cvi_comm_video.h"
-#include "cvi_vi.h"
+#include "meta_visualize.h"
+#include "rtsp_utils.h"
 #include "tdl_sdk.h"
 
 int get_model_info(char *model_path, TDLModel *model_index) {
@@ -37,6 +36,7 @@ void print_usage(const char *prog_name) {
 int main(int argc, char *argv[]) {
   char *model_path = NULL;
   int vi_chn = 0;
+  int venc_chn = 0;
 
   struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
                                   {"pipe", required_argument, 0, 'c'},
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
   // 检查必需参数
   if (!model_path) {
-    fprintf(stderr, "Error: All arguments are required\n");
+    fprintf(stderr, "Error: Model path is required\n");
     print_usage(argv[0]);
     return -1;
   }
@@ -74,12 +74,13 @@ int main(int argc, char *argv[]) {
   printf("Running with:\n");
   printf("  Model path:    %s\n", model_path);
   printf("  vi_chn:        %d\n", vi_chn);
+  printf("  venc_chn:      %d\n", venc_chn);
 
   int ret = 0;
   TDLImage image = NULL;
   TDLObject obj_meta = {0};
   TDLModel model_id;
-  TDLHandle tdl_handle = TDL_CreateHandle(0);
+  TDLHandle tdl_handle = TDL_CreateHandle(vi_chn);
 
   if (get_model_info(model_path, &model_id) == -1) {
     printf("unsupported model: %s\n", model_path);
@@ -89,6 +90,7 @@ int main(int argc, char *argv[]) {
   ret = TDL_InitCamera(tdl_handle);
   if (ret != 0) {
     printf("TDL_InitCamera %#x!\n", ret);
+    TDL_DestroyHandle(tdl_handle);
     return ret;
   }
 
@@ -99,7 +101,36 @@ int main(int argc, char *argv[]) {
   ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
-    goto exit0;
+    TDL_DestoryCamera(tdl_handle);
+    TDL_DestroyHandle(tdl_handle);
+    return ret;
+  }
+
+  // 初始化编码器
+  TDLVENCContext venc_context = {0};
+  venc_context.venc_chn = venc_chn;
+  venc_context.pay_load_type = PT_H264;
+  venc_context.frame_width = 2560;
+  venc_context.frame_height = 1440;
+  ret = TDL_InitVENC(&venc_context);
+  if (ret != 0) {
+    printf("init venc failed with %#x!\n", ret);
+    TDL_DestoryCamera(tdl_handle);
+    TDL_DestroyHandle(tdl_handle);
+    return ret;
+  }
+
+  // 初始化RTSP
+  TDLRTSPContext rtsp_context = {0};
+  rtsp_context.venc_chn = venc_chn;
+  rtsp_context.pay_load_type = PT_H264;
+  ret = TDL_InitRTSP(&rtsp_context);
+  if (ret != 0) {
+    printf("init rtsp failed with %#x!\n", ret);
+    TDL_DestoryCamera(tdl_handle);
+    TDL_DestroyHandle(tdl_handle);
+    TDL_DestroyVENC(&venc_context);
+    return ret;
   }
 
   // 设置终端为非规范模式
@@ -109,7 +140,9 @@ int main(int argc, char *argv[]) {
   newt.c_lflag &= ~(ICANON | ECHO);
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 
+  VIDEO_FRAME_INFO_S frame = {0};
   printf("按任意键退出...\n");
+  int is_rtsp_running = 0;
 
   while (1) {
     // 检查键盘输入
@@ -124,22 +157,57 @@ int main(int argc, char *argv[]) {
 
     image = TDL_GetCameraFrame(tdl_handle, vi_chn);
     if (image == NULL) {
-      printf("TDL_GetViFrame falied\n");
+      printf("TDL_GetViFrame failed\n");
       continue;
     }
 
+    TDL_WrapImage(image, &frame);
+
+    // 执行目标检测
     ret = TDL_Detection(tdl_handle, model_id, image, &obj_meta);
     if (ret != 0) {
       printf("TDL_Detection failed with %#x!\n", ret);
     } else {
+      // 为每个检测到的目标画框
       for (int i = 0; i < obj_meta.size; i++) {
-        printf("obj_meta_index : %d, ", i);
-        printf("class_id : %d, ", obj_meta.info[i].class_id);
-        printf("score : %f, ", obj_meta.info[i].score);
-        printf("bbox : [%f %f %f %f]\n", obj_meta.info[i].box.x1,
-               obj_meta.info[i].box.x2, obj_meta.info[i].box.y1,
-               obj_meta.info[i].box.y2);
+        TDLBrush brush = {0};
+        brush.color.r = 255;
+        brush.color.g = 0;
+        brush.color.b = 0;
+        brush.size = 5;
+
+        // 创建TDLObject结构
+        TDLObjectInfo obj_info = {0};
+        obj_info.box = obj_meta.info[i].box;
+        snprintf(obj_info.name, sizeof(obj_info.name), "class:%d score:%.2f",
+                 obj_meta.info[i].class_id, obj_meta.info[i].score);
+
+        TDLObject meta = {0};
+        meta.info = &obj_info;
+        meta.size = 1;
+
+        // 使用TDL_DrawRect绘制
+        TDL_DrawRect(&meta, &frame, true, brush);
+        for (int i = 0; i < obj_meta.size; i++) {
+          printf("obj_meta_index : %d, ", i);
+          printf("class_id : %d, ", obj_meta.info[i].class_id);
+          printf("score : %f, ", obj_meta.info[i].score);
+          printf("bbox : [%f %f %f %f]\n", obj_meta.info[i].box.x1,
+                 obj_meta.info[i].box.x2, obj_meta.info[i].box.y1,
+                 obj_meta.info[i].box.y2);
+        }
       }
+    }
+
+    // 发送帧
+    ret = TDL_SendFrameRTSP(&frame, &rtsp_context);
+    if (ret != 0) {
+      printf("TDL_SendFrameRTSP failed with %#x!\n", ret);
+      continue;
+    }
+    if (is_rtsp_running == 0) {
+      is_rtsp_running = 1;
+      printf("rtsp connected!\n");
     }
 
     TDL_ReleaseObjectMeta(&obj_meta);
@@ -150,10 +218,10 @@ int main(int argc, char *argv[]) {
 
   // 恢复终端设置
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-
+  printf("rtsp disconnected!\n");
   TDL_CloseModel(tdl_handle, model_id);
-
-exit0:
+  TDL_DestroyRTSP(&rtsp_context);
+  TDL_DestroyVENC(&venc_context);
   TDL_DestoryCamera(tdl_handle);
   TDL_DestroyHandle(tdl_handle);
   return ret;
