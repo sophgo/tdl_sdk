@@ -41,65 +41,6 @@ static int32_t VideoFrameCopy2Image(IVE *ive_instance, VIDEO_FRAME_INFO_S *src,
   return CVI_SUCCESS;
 }
 
-int32_t ImageFormatToPixelFormat(ImageFormat &image_format,
-                                 PIXEL_FORMAT_E &format) {
-  switch (image_format) {
-    case ImageFormat::GRAY:
-      format = PIXEL_FORMAT_YUV_400;
-      break;
-    case ImageFormat::RGB_PLANAR:
-      format = PIXEL_FORMAT_RGB_888_PLANAR;
-      break;
-    case ImageFormat::BGR_PLANAR:
-      format = PIXEL_FORMAT_BGR_888_PLANAR;
-      break;
-    case ImageFormat::YUV420SP_UV:
-      format = PIXEL_FORMAT_NV12;
-      break;
-    case ImageFormat::YUV420SP_VU:
-      format = PIXEL_FORMAT_NV21;
-      break;
-    default:
-      printf("ImageInfo format not supported: %d\n",
-             static_cast<int>(image_format));
-      return -1;
-  }
-  return 0;
-}
-
-int32_t BaseImage2VideoFrame(const std::shared_ptr<BaseImage> &image,
-                             VIDEO_FRAME_INFO_S &video_frame) {
-  if (!image) {
-    printf("image is nullptr.\n");
-    return CVI_FAILURE;
-  }
-
-  // 基本图像信息
-  video_frame.stVFrame.u32Width = image->getWidth();
-  video_frame.stVFrame.u32Height = image->getHeight();
-
-  ImageFormat base_fmt = image->getImageFormat();
-  PIXEL_FORMAT_E format;
-  ImageFormatToPixelFormat(base_fmt, format);
-  video_frame.stVFrame.enPixelFormat = format;
-
-  uint32_t plane_num = image->getPlaneNum();
-
-  std::vector<uint32_t> strides = image->getStrides();
-  std::vector<uint64_t> phy_addrs = image->getPhysicalAddress();
-  std::vector<uint8_t *> vir_addrs = image->getVirtualAddress();
-
-  for (uint32_t i = 0; i < plane_num; ++i) {
-    video_frame.stVFrame.u32Stride[i] = strides[i];
-    video_frame.stVFrame.u64PhyAddr[i] = phy_addrs[i];
-    video_frame.stVFrame.pu8VirAddr[i] = vir_addrs[i];
-    video_frame.stVFrame.u32Length[i] =
-        video_frame.stVFrame.u32Height * strides[i];
-  }
-
-  return CVI_SUCCESS;
-}
-
 CviMotionDetection::CviMotionDetection()
     : ive_instance_(nullptr),
       ccl_instance_(nullptr),
@@ -123,13 +64,13 @@ CviMotionDetection::~CviMotionDetection() {
 
 int32_t CviMotionDetection::setBackground(
     const std::shared_ptr<BaseImage> &background_image) {
-  VIDEO_FRAME_INFO_S video_frame;
-  BaseImage2VideoFrame(background_image, video_frame);
+  VIDEO_FRAME_INFO_S *video_frame =
+      static_cast<VIDEO_FRAME_INFO_S *>(background_image->getInternalData());
   bool needs_reconstruction = false;
   if (background_img_.getVAddr()[0] == NULL ||
       md_output_.getVAddr()[0] == NULL ||
-      video_frame.stVFrame.u32Width != im_width_ ||
-      video_frame.stVFrame.u32Height != im_height_) {
+      video_frame->stVFrame.u32Width != im_width_ ||
+      video_frame->stVFrame.u32Height != im_height_) {
     needs_reconstruction = true;
   }
 
@@ -140,9 +81,9 @@ int32_t CviMotionDetection::setBackground(
     if (md_output_.getVAddr()[0] != NULL) {
       md_output_.free();
     }
-    constructImages(&video_frame);
+    constructImages(video_frame);
   }
-  int32_t ret = VideoFrameCopy2Image(ive_instance_, &video_frame, &tmp_cpy_img_,
+  int32_t ret = VideoFrameCopy2Image(ive_instance_, video_frame, &tmp_cpy_img_,
                                      &background_img_);
   return ret;
 }
@@ -150,35 +91,35 @@ int32_t CviMotionDetection::setBackground(
 int32_t CviMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                    uint8_t threshold, double min_area,
                                    std::vector<ObjectBoxInfo> &objs) {
-  VIDEO_FRAME_INFO_S video_frame;
-  BaseImage2VideoFrame(image, video_frame);
+  VIDEO_FRAME_INFO_S *video_frame =
+      static_cast<VIDEO_FRAME_INFO_S *>(image->getInternalData());
 
-  if (video_frame.stVFrame.u32Height != im_height_ ||
-      video_frame.stVFrame.u32Width != im_width_) {
+  if (video_frame->stVFrame.u32Height != im_height_ ||
+      video_frame->stVFrame.u32Width != im_width_) {
     LOGE(
         "Height and width of frame isn't equal to background image in "
         "CviMotionDetection\n");
     return CVI_FAILURE;
   }
-  if (video_frame.stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
+  if (video_frame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_400) {
     LOGE("processed image format should be PIXEL_FORMAT_YUV_400,got %d\n",
-         int(video_frame.stVFrame.enPixelFormat));
+         int(video_frame->stVFrame.enPixelFormat));
     return CVI_FAILURE;
   }
   md_timer_.TicToc("start");
   int32_t ret = CVI_SUCCESS;
 
   bool do_unmap_src = false;
-  size_t image_size = video_frame.stVFrame.u32Length[0] +
-                      video_frame.stVFrame.u32Length[1] +
-                      video_frame.stVFrame.u32Length[2];
-  if (video_frame.stVFrame.pu8VirAddr[0] == NULL) {
-    video_frame.stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_Mmap(video_frame.stVFrame.u64PhyAddr[0], image_size);
+  size_t image_size = video_frame->stVFrame.u32Length[0] +
+                      video_frame->stVFrame.u32Length[1] +
+                      video_frame->stVFrame.u32Length[2];
+  if (video_frame->stVFrame.pu8VirAddr[0] == NULL) {
+    video_frame->stVFrame.pu8VirAddr[0] =
+        (CVI_U8 *)CVI_SYS_Mmap(video_frame->stVFrame.u64PhyAddr[0], image_size);
     do_unmap_src = true;
   }
 
-  ret = tmp_src_img_.fromFrame(&video_frame);
+  ret = tmp_src_img_.fromFrame(video_frame);
   if (ret != CVI_SUCCESS) {
     LOGE("Convert frame to IVE_IMAGE_S fail %x\n", ret);
     return CVI_FAILURE;
@@ -189,7 +130,7 @@ int32_t CviMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
 
   md_timer_.TicToc("tpu_ive");
   if (do_unmap_src) {
-    CVI_SYS_Munmap((void *)video_frame.stVFrame.pu8VirAddr[0], image_size);
+    CVI_SYS_Munmap((void *)video_frame->stVFrame.pu8VirAddr[0], image_size);
   }
 
   if (ret != CVI_SUCCESS) {

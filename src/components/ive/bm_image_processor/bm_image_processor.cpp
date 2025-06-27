@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "bm_image_processor.hpp"
-#include "image/base_image.hpp"
+#include "image/vpss_image.hpp"
 #include "utils/tdl_log.hpp"
 
 extern int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img,
@@ -11,32 +11,6 @@ extern int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img,
                           int bwidth, int bheight, unsigned char *blend_img,
                           int overlay_lx, int overlay_rx, unsigned char *wgt,
                           int channel, int format, int wgt_mode);
-
-int32_t ImageFormatToPixelFormat(ImageFormat &image_format,
-                                 PIXEL_FORMAT_E &format) {
-  switch (image_format) {
-    case ImageFormat::GRAY:
-      format = PIXEL_FORMAT_YUV_400;
-      break;
-    case ImageFormat::RGB_PLANAR:
-      format = PIXEL_FORMAT_RGB_888_PLANAR;
-      break;
-    case ImageFormat::BGR_PLANAR:
-      format = PIXEL_FORMAT_BGR_888_PLANAR;
-      break;
-    case ImageFormat::YUV420SP_UV:
-      format = PIXEL_FORMAT_NV12;
-      break;
-    case ImageFormat::YUV420SP_VU:
-      format = PIXEL_FORMAT_NV21;
-      break;
-    default:
-      printf("Image format not supported: %d\n",
-             static_cast<int>(image_format));
-      return -1;
-  }
-  return 0;
-}
 
 int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
                        int src1_size[3]) {
@@ -138,8 +112,9 @@ int32_t BmImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
   }
 
   // 将ImageFormat转换为PIXEL_FORMAT_E
-  PIXEL_FORMAT_E format;
-  ImageFormatToPixelFormat(image_format, format);
+  PIXEL_FORMAT_E format =
+      VPSSImage::convertPixelFormat(image_format, pix_data_type);
+
   // 设备内存
   bm_device_mem_t src1_img_mem[3];
   bm_device_mem_t src2_img_mem[3];
@@ -272,8 +247,8 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
                                   true, InferencePlatform::AUTOMATIC);
   }
 
-  PIXEL_FORMAT_E format;
-  ImageFormatToPixelFormat(image_format, format);
+  PIXEL_FORMAT_E format =
+      VPSSImage::convertPixelFormat(image_format, pix_data_type);
   if (format != PIXEL_FORMAT_YUV_400) {
     printf("ImageInfo format not supported for thresholdProcess: %d\n",
            static_cast<int>(image_format));
@@ -350,6 +325,7 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   CVI_S32 rwidth = right->getWidth();
   CVI_S32 rheight = right->getHeight();
   ImageFormat image_format = left->getImageFormat();
+  TDLDataType pix_data_type = left->getPixDataType();
   CVI_S32 overlay_rx = lwidth - 1;
   CVI_S32 overlay_w = wgt->getWidth();
   CVI_S32 overlay_lx = overlay_rx - overlay_w + 1;
@@ -372,9 +348,8 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   std::vector<uint32_t> output_strides = output->getStrides();
 
   // 将ImageFormat转换为PIXEL_FORMAT_E
-  PIXEL_FORMAT_E format;
-  ImageFormatToPixelFormat(image_format, format);
-
+  PIXEL_FORMAT_E format =
+      VPSSImage::convertPixelFormat(image_format, pix_data_type);
   // 获取虚拟地址
   std::vector<uint8_t *> left_vir_addrs_init = left->getVirtualAddress();
   std::vector<uint8_t *> right_vir_addrs_init = right->getVirtualAddress();

@@ -9,65 +9,6 @@
 
 #define BM_ALIGN(x, a) (((x) + (a)-1) / (a) * (a))
 
-static int32_t ImageFormatToPixelFormat(ImageFormat& image_format,
-                                        PIXEL_FORMAT_E& format) {
-  switch (image_format) {
-    case ImageFormat::GRAY:
-      format = PIXEL_FORMAT_YUV_400;
-      break;
-    case ImageFormat::RGB_PLANAR:
-      format = PIXEL_FORMAT_RGB_888_PLANAR;
-      break;
-    case ImageFormat::BGR_PLANAR:
-      format = PIXEL_FORMAT_BGR_888_PLANAR;
-      break;
-    case ImageFormat::YUV420SP_UV:
-      format = PIXEL_FORMAT_NV12;
-      break;
-    case ImageFormat::YUV420SP_VU:
-      format = PIXEL_FORMAT_NV21;
-      break;
-    default:
-      printf("ImageInfo format not supported: %d\n",
-             static_cast<int>(image_format));
-      return -1;
-  }
-  return 0;
-}
-
-int32_t BaseImage2VideoFrame(const std::shared_ptr<BaseImage>& image,
-                             VIDEO_FRAME_INFO_S& video_frame) {
-  if (!image) {
-    printf("image is nullptr.\n");
-    return -1;
-  }
-
-  // 基本图像信息
-  video_frame.stVFrame.u32Width = image->getWidth();
-  video_frame.stVFrame.u32Height = image->getHeight();
-
-  ImageFormat base_fmt = image->getImageFormat();
-  PIXEL_FORMAT_E format;
-  ImageFormatToPixelFormat(base_fmt, format);
-  video_frame.stVFrame.enPixelFormat = format;
-
-  uint32_t plane_num = image->getPlaneNum();
-
-  std::vector<uint32_t> strides = image->getStrides();
-  std::vector<uint64_t> phy_addrs = image->getPhysicalAddress();
-  std::vector<uint8_t*> vir_addrs = image->getVirtualAddress();
-
-  for (uint32_t i = 0; i < plane_num; ++i) {
-    video_frame.stVFrame.u32Stride[i] = strides[i];
-    video_frame.stVFrame.u64PhyAddr[i] = phy_addrs[i];
-    video_frame.stVFrame.pu8VirAddr[i] = vir_addrs[i];
-    video_frame.stVFrame.u32Length[i] =
-        video_frame.stVFrame.u32Height * strides[i];
-  }
-
-  return 0;
-}
-
 void printImageInfo(std::shared_ptr<BaseImage>& image) {
   // 打印图像的基本信息
   std::cout << "图像宽度: " << image->getWidth() << std::endl;
@@ -116,7 +57,8 @@ void readFrameFromNv21(const std::string& nv21_image_path, int width,
                        int height, std::shared_ptr<BaseImage>& temp_image,
                        VIDEO_FRAME_INFO_S& video_frame) {
   readImageFromNv21(nv21_image_path, width, height, temp_image);
-  BaseImage2VideoFrame(temp_image, video_frame);
+  video_frame =
+      *static_cast<VIDEO_FRAME_INFO_S*>(temp_image->getInternalData());
 }
 
 void saveImageToNv21(const std::string& image_path,
@@ -294,7 +236,8 @@ int32_t processYuvImage(int argc, char* argv[]) {
 
   // 转成 VIDEO_FRAME_INFO_S
   VIDEO_FRAME_INFO_S output_video_frame;
-  BaseImage2VideoFrame(output_image, output_video_frame);
+  output_video_frame =
+      *static_cast<VIDEO_FRAME_INFO_S*>(output_image->getInternalData());
 
   std::cout << "输出图像尺寸: " << output_image->getWidth() << "x"
             << output_image->getHeight() << std::endl;
