@@ -271,6 +271,7 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8N_DET_PET_PERSON ||
           model_type == ModelType::YOLOV8N_DET_HAND_FACE_PERSON ||
           model_type == ModelType::YOLOV8N_DET_FACE_HEAD_PERSON_PET ||
+          model_type == ModelType::YOLOV8N_DET_HEAD_PERSON ||
           model_type == ModelType::YOLOV8N_DET_FIRE_SMOKE ||
           model_type == ModelType::YOLOV8N_DET_FIRE ||
           model_type == ModelType::YOLOV8N_DET_HEAD_SHOULDER ||
@@ -379,6 +380,10 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model_type_mapping[2] = TDLObjectType::OBJECT_TYPE_PERSON;
     model_type_mapping[3] = TDLObjectType::OBJECT_TYPE_PET;
     num_classes = 4;
+  } else if (model_type == ModelType::YOLOV8N_DET_HEAD_PERSON) {
+    model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_HEAD;
+    model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_PERSON;
+    num_classes = 2;
   } else if (model_type == ModelType::YOLOV8N_DET_FIRE_SMOKE) {
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_FIRE;
     model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_SMOKE;

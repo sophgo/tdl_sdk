@@ -69,6 +69,7 @@ bool AppTask::isExternalFrameChannel(const std::string &channel_name) {
   if (pipeline_channels_.count(channel_name) == 0) {
     LOGE("channel %s not found!\n", channel_name.c_str());
     assert(false);
+    return false;
   } else {
     return pipeline_channels_[channel_name]->isExternalFrame();
   }
@@ -78,6 +79,7 @@ int AppTask::getChannelMaxProcessingNum(const std::string &channel_name) {
   if (pipeline_channels_.count(channel_name) == 0) {
     LOGE("channel %s not found!\n", channel_name.c_str());
     assert(false);
+    return 0;
   } else {
     return pipeline_channels_[channel_name]->getMaxProcessingNum();
   }
