@@ -15,14 +15,13 @@ set(SAMPLE_INCLUDES
 )
 
 if(BUILD_SHARED)
-    set(SAMPLE_LIBS tdl ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES} ${IVE_LIBS})
+    set(SAMPLE_LIBS tdl_core tdl_ex ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES} ${IVE_LIBS})
 else()
     set(SAMPLE_LIBS
         "-Wl,--start-group"
-        tdl-static
-        "-Wl,--whole-archive"
+        tdl_core-static
+        tdl_ex-static
         ${MIDDLEWARE_LIBS_STATIC}
-        "-Wl,--no-whole-archive"
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
         ${IVE_LIBS_STATIC}

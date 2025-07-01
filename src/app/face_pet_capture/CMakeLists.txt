@@ -10,3 +10,6 @@ set(PROJ_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/face_pet_capture_app.cpp)
 
 message(STATUS "build ${PROJECT_NAME}")
 add_library(face_pet_capture_app OBJECT ${PROJ_SRCS})
+if(APP_VIDEO_ENABLE)
+    target_compile_definitions(face_pet_capture_app PRIVATE VIDEO_ENABLE)
+endif()

@@ -39,14 +39,14 @@ set( CMAKE_OBJCOPY      ${TC_PATH}${CROSS_COMPILE}objcopy
 	    CACHE FILEPATH "The toolchain objcopy command " FORCE )
 
 # Set the CMAKE C flags (which should also be used by the assembler!
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -std=gnu11" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdata-sections" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pointer-to-int-cast" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsigned-char -Wl,-gc-sections -lstdc++ -lm -lpthread" )
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsigned-char" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fsigned-char" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-gc-sections -lm -lpthread" )

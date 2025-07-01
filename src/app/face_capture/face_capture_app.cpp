@@ -53,11 +53,14 @@ int32_t FaceCaptureApp::addPipeline(const std::string &pipeline_name,
     return nlohmann::json();
   };
 
+#ifdef VIDEO_ENABLE
   if (nodes_cfg.contains("video_node")) {
     face_capture_channel->addNode(
         getVideoNode(get_config("video_node", nodes_cfg)));
     face_capture_channel->setExternalFrame(false);
   }
+#endif
+
   face_capture_channel->addNode(
       getFaceDetectionNode(get_config("face_detection_node", nodes_cfg)));
   face_capture_channel->addNode(
@@ -126,6 +129,7 @@ int32_t FaceCaptureApp::release() {
   return 0;
 }
 
+#ifdef VIDEO_ENABLE
 std::shared_ptr<PipelineNode> FaceCaptureApp::getVideoNode(
     const nlohmann::json &node_config) {
   std::string video_type = node_config.at("video_type");
@@ -170,6 +174,7 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getVideoNode(
 
   return video_node;
 }
+#endif
 
 std::shared_ptr<PipelineNode> FaceCaptureApp::getFaceDetectionNode(
     const nlohmann::json &node_config) {

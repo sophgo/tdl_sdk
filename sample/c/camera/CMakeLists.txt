@@ -11,10 +11,11 @@ include_directories(${CAMERA_INCLUDES})
 file(GLOB CAMERA_SRC_FILES *.c)
 
 if(BUILD_SHARED)
-    set(CAMERA_LIBS tdl tdl_utils ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
+    set(CAMERA_LIBS tdl_core tdl_ex tdl_utils ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()
     set(CAMERA_STATIC_LIBS
-        tdl-static
+        tdl_core-static
+        tdl_ex-static
         tdl_utils-static
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}

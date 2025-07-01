@@ -54,11 +54,14 @@ int32_t ConsumerCountingAPP::addPipeline(const std::string &pipeline_name,
     return nlohmann::json();
   };
 
+#ifdef VIDEO_ENABLE
   if (nodes_cfg.contains("video_node")) {
     face_capture_channel->addNode(
         getVideoNode(get_config("video_node", nodes_cfg)));
     face_capture_channel->setExternalFrame(false);
   }
+#endif
+
   face_capture_channel->addNode(getHeadPersonDetectionNode(
       get_config("head_person_detection_node", nodes_cfg)));
   face_capture_channel->addNode(
@@ -126,6 +129,7 @@ int32_t ConsumerCountingAPP::release() {
   return 0;
 }
 
+#ifdef VIDEO_ENABLE
 std::shared_ptr<PipelineNode> ConsumerCountingAPP::getVideoNode(
     const nlohmann::json &node_config) {
   std::string video_type = node_config.at("video_type");
@@ -170,6 +174,7 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::getVideoNode(
 
   return video_node;
 }
+#endif
 
 std::shared_ptr<PipelineNode> ConsumerCountingAPP::getHeadPersonDetectionNode(
     const nlohmann::json &node_config) {

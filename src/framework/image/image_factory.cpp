@@ -379,15 +379,11 @@ std::shared_ptr<BaseImage> ImageFactory::wrapMat(void* mat_frame, bool is_rgb) {
     LOGE("mat_frame is nullptr");
     return nullptr;
   }
-#ifndef NO_OPENCV
+
   cv::Mat mat = *(cv::Mat*)mat_frame;
   return convertFromMat(mat, is_rgb);
-#else
-  LOGE("no opencv support");
-  return nullptr;
-#endif
 }
-#ifndef NO_OPENCV
+
 std::shared_ptr<BaseImage> ImageFactory::convertFromMat(cv::Mat& mat,
                                                         bool is_rgb) {
   ImageFormat image_format = ImageFormat::BGR_PACKED;
@@ -451,4 +447,3 @@ int32_t ImageFactory::convertToMat(std::shared_ptr<BaseImage>& image,
   mat = cv::Mat(height, width, CV_8UC3, ptr_src, stride);
   return 0;
 }
-#endif

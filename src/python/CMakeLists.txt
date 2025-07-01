@@ -32,7 +32,8 @@ message(STATUS "LIB_PYTHON_FILES: ${LIB_PYTHON_FILES}")
 target_link_libraries(${PROJECT_NAME} PRIVATE
     # pybind11::module
     ${LIB_PYTHON_FILES}
-    tdl
+    tdl_core
+    tdl_ex
 )
 
 # 设置目标文件名

@@ -7,10 +7,7 @@
 
 #include "common/common_types.hpp"
 #include "memory/base_memory_pool.hpp"
-
-#ifndef NO_OPENCV
-#include <opencv2/opencv.hpp>
-#endif
+#include "opencv2/opencv.hpp"
 
 class BaseImage {
  public:
@@ -119,13 +116,12 @@ class ImageFactory {
   static std::shared_ptr<BaseImage> wrapVPSSFrame(void* vpss_frame,
                                                   bool own_memory);
   static std::shared_ptr<BaseImage> wrapMat(void* mat_frame, bool is_rgb);
-#ifndef NO_OPENCV
+
   static std::shared_ptr<BaseImage> convertFromMat(cv::Mat& mat,
                                                    bool is_rgb = false);
 
   // 返回的Mat引用image内的内存,如果后续对mat操作,将影响image的内容
   static int32_t convertToMat(std::shared_ptr<BaseImage>& image, cv::Mat& mat,
                               bool& is_rgb);
-#endif
 };
 #endif  // BaseImage_H

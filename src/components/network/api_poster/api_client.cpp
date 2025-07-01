@@ -9,8 +9,8 @@
 #include <regex>
 #include <sstream>
 #include <thread>
-#include "utils/volcengine_signer.hpp"
 #include "utils/dashscope_oss.hpp"
+#include "utils/volcengine_signer.hpp"
 
 namespace APIClient {
 size_t CommonFunctions::WriteCallback(void *contents, size_t size, size_t nmemb,

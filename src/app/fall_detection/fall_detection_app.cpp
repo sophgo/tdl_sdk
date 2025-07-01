@@ -59,11 +59,14 @@ int32_t FallDetectionApp::addPipeline(const std::string &pipeline_name,
     return nlohmann::json();
   };
 
+#ifdef VIDEO_ENABLE
   if (nodes_cfg.contains("video_node")) {
     fall_detection_channel->addNode(
         getVideoNode(get_config("video_node", nodes_cfg)));
     fall_detection_channel->setExternalFrame(false);
   }
+#endif
+
   fall_detection_channel->addNode(getKeypointDetectionNode(
       get_config("keypoint_detection_node", nodes_cfg)));
   fall_detection_channel->addNode(
@@ -96,6 +99,7 @@ int32_t FallDetectionApp::release() {
   return 0;
 }
 
+#ifdef VIDEO_ENABLE
 std::shared_ptr<PipelineNode> FallDetectionApp::getVideoNode(
     const nlohmann::json &node_config) {
   std::string video_type = node_config.at("video_type");
@@ -142,6 +146,7 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getVideoNode(
 
   return video_node;
 }
+#endif
 
 std::shared_ptr<PipelineNode> FallDetectionApp::getKeypointDetectionNode(
     const nlohmann::json &node_config) {

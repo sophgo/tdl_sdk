@@ -12,6 +12,7 @@ print_usage() {
     echo "  BM1684X        Build BM1684X"
     echo "  CMODEL_CV181X  Build CV181X simulation on Linux x86_64"
     echo "  CMODEL_CV184X  Build CV184X simulation on Linux x86_64"
+    echo "  ""             Build lib only"
     echo "  sample         Build samples only"
     echo "  all            Build both modules and sample"
     echo "  clean          Clean build"
@@ -223,10 +224,10 @@ BUILD_DOWNLOAD_DIR="${BUILD_WORKING_DIR}"/_deps
 TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
 
 # Set build option and type
-BUILD_TYPE=Debug
+BUILD_TYPE=SDKRelease
 
-if [[ "$1" == "all" ]]; then
-    BUILD_TYPE=SDKRelease
+if [[ "$1" == "debug" ]]; then
+    BUILD_TYPE=Debug
 fi
 
 # default system type

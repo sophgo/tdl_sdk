@@ -21,10 +21,11 @@ if (${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
 endif()
 
 if(BUILD_SHARED)
-    set(SAMPLE_LIBS tdl tdl_utils ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
+    set(SAMPLE_LIBS tdl_core tdl_ex tdl_utils ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()
     set(SAMPLE_STATIC_LIBS
-        tdl-static
+        tdl_core-static
+        tdl_ex-static
         tdl_utils-static
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}

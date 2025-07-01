@@ -48,19 +48,19 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "CV181X")
-  add_definitions(-D__CV181X__)
-elseif("${CVI_PLATFORM}" STREQUAL "CV180X")
+if("${CVI_PLATFORM}" STREQUAL "CV180X")
   add_definitions(-D__CV180X__)
+elseif("${CVI_PLATFORM}" STREQUAL "CV181X")
+  add_definitions(-D__CV181X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV182X")
   add_definitions(-D__CV182X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   add_definitions(-D__CV183X__)
   add_definitions(-DUSE_NEON)
-elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
-  add_definitions(-D__CV186X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
   add_definitions(-D__CV184X__)
+elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
+  add_definitions(-D__CV186X__)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   add_definitions(-D__BM168X__)
   add_definitions(-D__BM1688__)
@@ -212,18 +212,17 @@ endif()
 # Default dynamic compilation
 set(BUILD_SHARED ON)
 
+# Whether the absolute app module uses the video module
+set(APP_VIDEO_ENABLE OFF)
+
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component(TOP_DIR ${CURRENT_DIR} DIRECTORY)
 
-message(STATUS "Current Directory: ${CURRENT_DIR}")
-message(STATUS "Parent Directory: ${TOP_DIR}")
-
 set(REPO_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Check if OpenCV exists.
-if (NOT DEFINED NO_OPENCV)
 include(cmake/opencv.cmake)
-endif()
 
 # Check if MLIR SDK exists.
 include(cmake/mlir.cmake)
@@ -238,19 +237,11 @@ include(cmake/thirdparty.cmake)
 
 include(cmake/ive.cmake)
 
-# 3rdpart includes
+# 3rdparty includes
 include_directories(${IVE_INCLUDES}
                     ${OPENCV_INCLUDES}
                     ${MLIR_INCLUDES}
                     ${MIDDLEWARE_INCLUDES})
-
-message(STATUS "OPENCV_INCLUDES:{${OPENCV_INCLUDES}}")
-message(STATUS "OPENCV_LIBS:{${OPENCV_LIBS} ${OPENCV_LIBS_IMCODEC}}")
-message(STATUS "MLIR_INCLUDES:{${MLIR_INCLUDES}}")
-message(STATUS "MLIR_LIBS:{${MLIR_LIBS}}")
-message(STATUS "MIDDLEWARE_INCLUDES:{${MIDDLEWARE_INCLUDES}}")
-message(STATUS "MIDDLEWARE_LIBS:{${MIDDLEWARE_LIBS}}")
-message(STATUS "${CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE}")
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
@@ -259,24 +250,18 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 if("${BUILD_OPTION}" STREQUAL "")
   add_subdirectory(src)
   add_subdirectory(sample)
-  add_subdirectory(regression)
-  if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND 
-     NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" AND
-     NOT "${CVI_PLATFORM}" STREQUAL "CV181X")
-    add_subdirectory(evaluation)
-  endif()
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)
-elseif("${BUILD_OPTION}" STREQUAL "all" OR "${BUILD_OPTION}" STREQUAL "bm168x")
+elseif("${BUILD_OPTION}" STREQUAL "all")
   add_subdirectory(src)
   add_subdirectory(sample)
-  if(IS_LOCAL AND NOT DEFINED NO_OPENCV )
+  if(IS_LOCAL)
     add_subdirectory(regression)
   endif()
   add_subdirectory(evaluation)
 else()
-  message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}. \
-                      Valid options are '', 'sample', 'bm168x' or 'all', and 'clean'.")
+  message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}.
+                       Valid options are '', 'sample', or 'all', and 'clean'.")
 endif()
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/configs DESTINATION .)
