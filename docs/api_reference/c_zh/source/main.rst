@@ -1936,3 +1936,520 @@ TDL_CharacterRecognition
      - TDLOcr\*
      - char_meta
      - 输出识别结果（文本内容和位置）
+
+TDL_LoadModelConfig
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_LoadModelConfig(TDLHandle handle,
+                             const char *model_config_json_path);
+
+【描述】
+
+加载模型配置信息，加载后可以仅通过模型id去打开模型。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - model_config_json_path
+     - 模型配置文件路径，如果为NULL，默认使用configs/model/model_config.json
+
+TDL_SetModelDir
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_SetModelDir(TDLHandle handle,
+                          const char *model_dir);
+
+【描述】
+
+设置模型文件夹路径。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - model_dir
+     - 为tdl_models仓库路径(下面各平台的子文件夹)
+
+TDL_SetModelThreshold
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_SetModelThreshold(TDLHandle handle,
+                                const TDLModel model_id,
+                                float threshold);
+
+【描述】
+
+设置模型的阈值。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id
+     - 要设置的模型类型枚举值
+
+   * - 输入
+     - float
+     - threshold
+     - 模型的阈值
+
+TDL_IspClassification
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_IspClassification(TDLHandle handle,
+                                const TDLModel model_id,
+                                TDLImage image_handle,
+                                TDLIspMeta *isp_meta,
+                                TDLClass *class_info);
+
+【描述】
+
+执行ISP图像分类任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id
+     - 指定目标分类模型类型枚举值
+
+   * - 输入
+     - TDLImage
+     - image_handle
+     - TDLImageHandle 对象
+
+   * - 输入
+     - TDLIspMeta*
+     - isp_meta
+     - 输入参数，包含isp相关的数据
+
+   * - 输出
+     - TDLClass*
+     - class_info
+     - 输出参数，存储目标分类结果
+
+TDL_Keypoint
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_Keypoint(TDLHandle handle,
+                        const TDLModel model_id,
+                        TDLImage image_handle,
+                        TDLKeypoint *keypoint_meta);
+
+【描述】
+
+执行关键点检测任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id
+     - 指定关键点检测模型类型枚举值
+
+   * - 输入
+     - TDLImage
+     - image_handle
+     - TDLImageHandle 对象
+
+   * - 输出
+     - TDLKeypoint*
+     - keypoint_meta
+     - 输出参数，存储检测到的关键点坐标及置信度
+
+TDL_DetectionKeypoint
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_DetectionKeypoint(TDLHandle handle,
+                                const TDLModel model_id,
+                                TDLImage image_handle,
+                                TDLObject *object_meta);
+
+【描述】
+
+执行关键点检测任务（根据目标的坐标进行裁剪后再执行关键点检测）。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id
+     - 指定关键点检测模型类型枚举值
+
+   * - 输入
+     - TDLImage
+     - image_handle
+     - TDLImageHandle 对象
+
+   * - 输出
+     - TDLObject*
+     - object_meta
+     - 输出参数，存储检测到的关键点坐标及置信度
+
+TDL_IntrusionDetection
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_IntrusionDetection(TDLHandle handle,
+                                 TDLPoints *regions,
+                                 TDLBox *box,
+                                 bool *is_intrusion);
+
+【描述】
+
+执行入侵检测。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - TDLPoints*
+     - regions
+     - 背景区域点集数组
+
+   * - 输入
+     - TDLBox*
+     - box
+     - 检测区域bbox
+
+   * - 输出
+     - bool*
+     - is_intrusion
+     - 输出参数，存储入侵检测结果
+
+TDL_MotionDetection
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_MotionDetection(TDLHandle handle,
+                              TDLImage background,
+                              TDLImage detect_image,
+                              TDLObject *roi,
+                              uint8_t threshold,
+                              double min_area,
+                              TDLObject *obj_meta);
+
+【描述】
+
+执行移动侦测任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - TDLImage
+     - background
+     - 背景图像
+
+   * - 输入
+     - TDLImage
+     - detect_image
+     - 检测图像
+
+   * - 输入
+     - TDLObject*
+     - roi
+     - 检测区域
+
+   * - 输入
+     - uint8_t
+     - threshold
+     - 阈值
+
+   * - 输入
+     - double
+     - min_area
+     - 最小面积
+
+   * - 输出
+     - TDLObject*
+     - obj_meta
+     - 输出参数，存储检测结果
+
+TDL_APP_Init
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_APP_Init(TDLHandle handle,
+                        const char *task,
+                        const char *config_file,
+                        char ***channel_names,
+                        uint8_t *channel_size);
+
+【描述】
+
+初始化APP任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - task
+     - APP任务名称
+
+   * - 输入
+     - const char*
+     - config_file
+     - APP的json配置文件路径
+
+   * - 输出
+     - char***
+     - channel_names
+     - 每一路视频流的名称信息
+
+   * - 输出
+     - uint8_t*
+     - channel_size
+     - 视频流的路数
+
+TDL_APP_SetFrame
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_APP_SetFrame(TDLHandle handle,
+                           const char *channel_name,
+                           TDLImage image_handle,
+                           uint64_t frame_id,
+                           int buffer_size);
+
+【描述】
+
+往APP送帧。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - channel_name
+     - 当前channel的名称
+
+   * - 输入
+     - TDLImage
+     - image_handle
+     - TDLImageHandle 对象
+
+   * - 输入
+     - uint64_t
+     - frame_id
+     - 当前TDLImageHandle 对象的frame id
+
+   * - 输入
+     - int
+     - buffer_size
+     - 推理线程缓存的帧数
+
+TDL_APP_Capture
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_APP_Capture(TDLHandle handle,
+                          const char *channel_name,
+                          TDLCaptureInfo *capture_info);
+
+【描述】
+
+执行人脸抓拍任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - channel_name
+     - 当前channel的名称
+
+   * - 输出
+     - TDLCaptureInfo*
+     - capture_info
+     - 抓拍结果

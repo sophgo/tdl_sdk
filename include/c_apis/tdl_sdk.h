@@ -363,6 +363,18 @@ int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
                                TDLBox *box, bool *is_intrusion);
 
 #if defined(__CV181X__) || defined(__CV184X__)
+/**
+ * @brief 执行移动侦测任务
+ *
+ * @param handle TDLHandle 对象
+ * @param background 背景图像
+ * @param detect_image 检测图像
+ * @param roi 检测区域
+ * @param threshold 阈值
+ * @param min_area 最小面积
+ * @param obj_meta 输出参数，存储检测结果
+ * @return 成功返回 0，失败返回-1
+ */
 
 int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
                             TDLImage detect_image, TDLObject *roi,

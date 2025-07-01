@@ -1915,3 +1915,520 @@ Character recognition, supporting text detection and recognition.
      - TDLOcr\*
      - char_meta
      - Output recognition results (text content and position)
+
+TDL_LoadModelConfig
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_LoadModelConfig(TDLHandle handle,
+                             const char *model_config_json_path);
+
+【Description】
+
+Load model configuration information, after loading you can open models using only model IDs.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - model_config_json_path
+     - Model configuration file path, if NULL, defaults to configs/model/model_config.json
+
+TDL_SetModelDir
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SetModelDir(TDLHandle handle,
+                          const char *model_dir);
+
+【Description】
+
+Set the model directory path.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - model_dir
+     - Path to tdl_models repository (subfolders for different platforms)
+
+TDL_SetModelThreshold
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SetModelThreshold(TDLHandle handle,
+                                const TDLModel model_id,
+                                float threshold);
+
+【Description】
+
+Set the model threshold value.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Model type enumeration
+
+   * - Input
+     - float
+     - threshold
+     - Model threshold value
+
+TDL_IspClassification
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_IspClassification(TDLHandle handle,
+                                const TDLModel model_id,
+                                TDLImage image_handle,
+                                TDLIspMeta *isp_meta,
+                                TDLClass *class_info);
+
+【Description】
+
+Execute ISP image classification task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Model type enumeration
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Input
+     - TDLIspMeta*
+     - isp_meta
+     - Input ISP related data
+
+   * - Output
+     - TDLClass*
+     - class_info
+     - Output classification results
+
+TDL_Keypoint
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_Keypoint(TDLHandle handle,
+                        const TDLModel model_id,
+                        TDLImage image_handle,
+                        TDLKeypoint *keypoint_meta);
+
+【Description】
+
+Execute keypoint detection task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Model type enumeration
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Output
+     - TDLKeypoint*
+     - keypoint_meta
+     - Output detected keypoint coordinates and confidence
+
+TDL_DetectionKeypoint
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_DetectionKeypoint(TDLHandle handle,
+                                const TDLModel model_id,
+                                TDLImage image_handle,
+                                TDLObject *object_meta);
+
+【Description】
+
+Execute keypoint detection task based on object coordinates (performs keypoint detection after cropping based on target coordinates).
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Model type enumeration
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Output
+     - TDLObject*
+     - object_meta
+     - Output detected keypoint coordinates and confidence
+
+TDL_IntrusionDetection
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_IntrusionDetection(TDLHandle handle,
+                                 TDLPoints *regions,
+                                 TDLBox *box,
+                                 bool *is_intrusion);
+
+【Description】
+
+Execute intrusion detection.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - TDLPoints*
+     - regions
+     - Background region point set array
+
+   * - Input
+     - TDLBox*
+     - box
+     - Detection region bbox
+
+   * - Output
+     - bool*
+     - is_intrusion
+     - Output intrusion detection result
+
+TDL_MotionDetection
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_MotionDetection(TDLHandle handle,
+                              TDLImage background,
+                              TDLImage detect_image,
+                              TDLObject *roi,
+                              uint8_t threshold,
+                              double min_area,
+                              TDLObject *obj_meta);
+
+【Description】
+
+Execute motion detection task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - TDLImage
+     - background
+     - Background image
+
+   * - Input
+     - TDLImage
+     - detect_image
+     - Detection image
+
+   * - Input
+     - TDLObject*
+     - roi
+     - Detection region
+
+   * - Input
+     - uint8_t
+     - threshold
+     - Threshold value
+
+   * - Input
+     - double
+     - min_area
+     - Minimum area
+
+   * - Output
+     - TDLObject*
+     - obj_meta
+     - Output detection results
+
+TDL_APP_Init
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_Init(TDLHandle handle,
+                        const char *task,
+                        const char *config_file,
+                        char ***channel_names,
+                        uint8_t *channel_size);
+
+【Description】
+
+Initialize APP task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - task
+     - APP task name
+
+   * - Input
+     - const char*
+     - config_file
+     - APP json configuration file path
+
+   * - Output
+     - char***
+     - channel_names
+     - Name information for each video stream
+
+   * - Output
+     - uint8_t*
+     - channel_size
+     - Number of video streams
+
+TDL_APP_SetFrame
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_SetFrame(TDLHandle handle,
+                           const char *channel_name,
+                           TDLImage image_handle,
+                           uint64_t frame_id,
+                           int buffer_size);
+
+【Description】
+
+Send frame to APP.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Input
+     - uint64_t
+     - frame_id
+     - Frame ID of current TDLImageHandle object
+
+   * - Input
+     - int
+     - buffer_size
+     - Number of frames cached by inference thread
+
+TDL_APP_Capture
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_Capture(TDLHandle handle,
+                          const char *channel_name,
+                          TDLCaptureInfo *capture_info);
+
+【Description】
+
+Execute face capture task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Output
+     - TDLCaptureInfo*
+     - capture_info
+     - Capture results

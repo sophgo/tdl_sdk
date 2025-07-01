@@ -293,7 +293,7 @@ TDLDataType
 
        - mean: tuple(float,float,float)
        - scale: tuple(float,float,float)
-       - rgb_order: 【可选】str, 通道顺序(bgr, rgb, gray)，默认rdb
+       - rgb_order: 【可选】str, 通道顺序(bgr, rgb, gray)，默认rgb
        - types: 【可选】list[str], 类别列表
        - comment: 【可选】str, 注释说明
        - custom_config_str: 【可选】dict[str,str], 字符串配置
