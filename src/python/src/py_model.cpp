@@ -405,7 +405,6 @@ void PyTracker::setImgSize(int width, int height) {
 PyModel get_model(const ModelType model_type, const std::string& model_dir,
                   const int device_id) {
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
-  model_factory.loadModelConfig();
   model_factory.setModelDir(model_dir);
   auto model = model_factory.getModel(model_type, device_id);
   if (model == nullptr) {
@@ -417,9 +416,15 @@ PyModel get_model(const ModelType model_type, const std::string& model_dir,
 PyModel get_model(ModelType model_type, const std::string& model_path,
                   const py::dict& model_config, const int device_id) {
   ModelConfig model_config_cpp;
-  getModelConfig(model_config, model_config_cpp);
-  auto model = TDLModelFactory::getInstance().getModel(
-      model_type, model_path, model_config_cpp, device_id);
+  std::shared_ptr<BaseModel> model;
+  if (model_config.empty()) {
+    model = TDLModelFactory::getInstance().getModel(model_type, model_path,
+                                                    device_id);
+  } else {
+    getModelConfig(model_config, model_config_cpp);
+    model = TDLModelFactory::getInstance().getModel(
+        model_type, model_path, model_config_cpp, device_id);
+  }
   if (model == nullptr) {
     throw std::runtime_error("Failed to create model");
   }

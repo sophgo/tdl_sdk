@@ -9,15 +9,6 @@ model_id_mapping = {
     "FEATURE_CVIFACE": nn.ModelType.FEATURE_CVIFACE,
 }
 
-PreprocessParameters = {
-    "mean": (0.99609375, 0.99609375, 0.99609375),
-    "scale": (0.0078125, 0.0078125, 0.0078125),
-}
-PreprocessParameters_R34_R50 = {
-    "mean":[127.5,127.5,127.5],
-    "std":[128,128,128]
-}
-
 def extract_feature(img_path, extractor):
     # 读取图片
     img = image.read(img_path)
@@ -80,10 +71,7 @@ if __name__ == "__main__":
     face_detector = nn.get_model(nn.ModelType.SCRFD_DET_FACE, face_detection_model_path)
 
     model_type = model_id_mapping[feature_extraction_model_id_name]
-    if feature_extraction_model_id_name in ["FEATURE_BMFACE_R34", "FEATURE_BMFACE_R50"]:
-        feature_extractor = nn.get_model(model_type, feature_extraction_model_path, PreprocessParameters_R34_R50)
-    else:
-        feature_extractor = nn.get_model(model_type, feature_extraction_model_path, PreprocessParameters)
+    feature_extractor = nn.get_model(model_type, feature_extraction_model_path)
 
     aligned_img1 = detect_and_align_face(img_path1, face_detector)
     aligned_img2 = detect_and_align_face(img_path2, face_detector)

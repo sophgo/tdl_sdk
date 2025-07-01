@@ -57,6 +57,7 @@ TDLModelFactory::TDLModelFactory() {
                  "refrigerator",  "book",         "clock",
                  "vase",          "scissors",     "teddy bear",
                  "hair drier",    "toothbrush"};
+  loadModelConfig();
 }
 
 TDLModelFactory::~TDLModelFactory() {}

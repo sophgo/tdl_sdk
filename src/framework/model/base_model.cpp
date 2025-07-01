@@ -170,6 +170,8 @@ int32_t BaseModel::setupNetwork(NetParam& net_param) {
       preprocess_param.dst_image_format = ImageFormat::UNKOWN;
       LOGW("img_format:%s,dst image format is unkown",
            net_param_.model_config.rgb_order.c_str());
+      assert(false);
+      return -1;
     }
     for (int i = 0; i < 3; i++) {
       preprocess_param.mean[i] =

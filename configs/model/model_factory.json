@@ -263,15 +263,15 @@
       "_comment":"output 512 dim feature",
       "file_name":"feature_bmface_r34_112_112_INT8",
       "rgb_order":"rgb",
-      "mean":[127.5,127.5,127.5],
-      "std":[128,128,128]
+      "mean":[0,0,0],
+      "std":[1,1,1]
     },
     "FEATURE_BMFACE_R50":{
       "_comment":"output 512 dim feature",
       "file_name":"bmface_r50_v1_bmnetp.bmodel",
       "rgb_order":"rgb",
-      "mean":[127.5,127.5,127.5],
-      "std":[128,128,128]
+      "mean":[0,0,0],
+      "std":[1,1,1]
     }
     
   }

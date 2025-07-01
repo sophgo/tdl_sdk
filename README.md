@@ -54,6 +54,7 @@
   ```
 
 - 开发，参考[接口文档](docs/api_reference)、[开发指南](docs/developer_guide)和[sample](sample)
+- 部署，参考[deploy.md](docs/getting_started/deploy.md)
 
 ## 参与贡献
 
