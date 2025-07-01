@@ -303,12 +303,12 @@ elif [[ "${CHIP_ARCH}" == "CV182X" ]]; then
     USE_TPU_IVE=ON
 elif [[ "${CHIP_ARCH}" == "CV181X" ]]; then
     USE_TPU_IVE=OFF
-    if [ -n "${ALIOS_PATH}" ]; then
+    if [ -n "${ALIOS_PATH}" && -d "${ALIOS_PATH}" ]; then
         CONFIG_DUAL_OS=ON
     fi
 elif [[ "${CHIP_ARCH}" == "CV180X" ]]; then
-    USE_TPU_IVE=ON
-    if [ -n "${ALIOS_PATH}" ]; then
+    USE_TPU_IVE=OFF
+    if [ -n "${ALIOS_PATH}" && -d "${ALIOS_PATH}" ]; then
         CONFIG_DUAL_OS=ON
     fi
 elif [[ "${CHIP_ARCH}" == "SOPHON" ]]; then
