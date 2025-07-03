@@ -373,13 +373,15 @@ int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
  * @param threshold 阈值
  * @param min_area 最小面积
  * @param obj_meta 输出参数，存储检测结果
+ * @param background_update_interval 背景更新间隔
  * @return 成功返回 0，失败返回-1
  */
 
 int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
                             TDLImage detect_image, TDLObject *roi,
                             uint8_t threshold, double min_area,
-                            TDLObject *obj_meta);
+                            TDLObject *obj_meta,
+                            uint32_t background_update_interval);
 #endif
 
 /*******************************************

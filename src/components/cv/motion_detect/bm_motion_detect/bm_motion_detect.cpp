@@ -159,20 +159,23 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
   std::vector<uint8_t *> virtual_addresses = md_output_->getVirtualAddress();
   uint8_t *ptr_src = virtual_addresses[0];
   std::vector<uint32_t> strides = md_output_->getStrides();
-  cv::Mat img(md_output_->getHeight(), md_output_->getWidth(), CV_8UC1, ptr_src,
-              strides[0]);
+  cv::Mat img_in_mem = cv::Mat(md_output_->getHeight(), md_output_->getWidth(),
+                               CV_8UC1, ptr_src, strides[0]);
+  cv::Mat img = img_in_mem.clone();
+  // 创建3x3的矩形结构元素
+  cv::Mat kernel = cv::Mat::ones(3, 3, CV_8U);
 
-  // 创建5x5的矩形结构元素
-  cv::Mat kernel = cv::Mat::zeros(5, 5, CV_8U);
-  for (int i = 0; i < 5; i++) {
-    kernel.at<uchar>(2, i) = 1;  // 中间行全1
-    kernel.at<uchar>(i, 2) = 1;  // 中间列全1
-  }
+  // // 创建5x5的十字形结构元素
+  // cv::Mat kernel = cv::Mat::zeros(5, 5, CV_8U);
+  // for (int i = 0; i < 5; i++) {
+  //   kernel.at<uchar>(2, i) = 1;  // 中间行全1
+  //   kernel.at<uchar>(i, 2) = 1;  // 中间列全1
+  // }
 
   // 腐蚀操作
   cv::erode(img, img, kernel);
   // 膨胀操作
-  cv::dilate(img, img, kernel);
+  // cv::dilate(img, img, kernel);
   // 获取图像信息
   int wstride = img.step[0];
   int num_boxes = 0;
@@ -184,7 +187,6 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
     int imw = im_width_;
     int imh = im_height_;
     objs.clear();
-
     for (uint8_t i = 0; i < roi_s_.size(); i++) {
       auto pnt = roi_s_[i];
       offsetx = pnt.x1;
@@ -201,10 +203,10 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
       // 添加检测到的区域
       for (uint32_t j = 0; j < (uint32_t)num_boxes; ++j) {
         ObjectBoxInfo box;
-        box.x1 = p_boxes[j * 5 + 2] + offsetx;  // x1
-        box.y1 = p_boxes[j * 5 + 1] + offsety;  // y1
-        box.x2 = p_boxes[j * 5 + 4] + offsetx;  // x2
-        box.y2 = p_boxes[j * 5 + 3] + offsety;  // y2
+        box.x1 = p_boxes[j * 5 + 2] + offsetx;
+        box.y1 = p_boxes[j * 5 + 1] + offsety;
+        box.x2 = p_boxes[j * 5 + 4] + offsetx;
+        box.y2 = p_boxes[j * 5 + 3] + offsety;
         objs.push_back(box);
       }
     }
@@ -216,12 +218,12 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                   min_area, ccl_instance_, &num_boxes);
 
     objs.clear();
-    for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
+    for (uint32_t j = 0; j < (uint32_t)num_boxes; ++j) {
       ObjectBoxInfo box;
-      box.x1 = p_boxes[i * 5 + 2];  // x1
-      box.y1 = p_boxes[i * 5 + 1];  // y1
-      box.x2 = p_boxes[i * 5 + 4];  // x2
-      box.y2 = p_boxes[i * 5 + 3];  // y2
+      box.x1 = p_boxes[j * 5 + 2];
+      box.y1 = p_boxes[j * 5 + 1];
+      box.x2 = p_boxes[j * 5 + 4];
+      box.y2 = p_boxes[j * 5 + 3];
       objs.push_back(box);
     }
   }

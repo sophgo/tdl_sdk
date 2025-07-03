@@ -14,7 +14,7 @@
 #define CC_SUPER_PIXEL_W 2
 #define CC_SCAN_WINDOW_H 2
 #define CC_SCAN_WINDOW_W 2
-#define CC_FG_SUPER_PIX_THD 3
+#define CC_FG_SUPER_PIX_THD 1
 #define BLOCK_SIZE 2
 
 typedef struct CCTag {

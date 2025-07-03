@@ -158,12 +158,12 @@ int32_t CviMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
       p_boxes = extractConnectedComponent(md_output_.getVAddr()[0] + offset,
                                           imw, imh, wstride, min_area,
                                           ccl_instance_, &num_boxes);
-      for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
+      for (uint32_t j = 0; j < (uint32_t)num_boxes; ++j) {
         ObjectBoxInfo box;
-        box.x1 = p_boxes[i * 5 + 2] + offsetx;
-        box.y1 = p_boxes[i * 5 + 1] + offsety;
-        box.x2 = p_boxes[i * 5 + 4] + offsetx;
-        box.y2 = p_boxes[i * 5 + 3] + offsety;
+        box.x1 = p_boxes[j * 5 + 2] + offsetx;
+        box.y1 = p_boxes[j * 5 + 1] + offsety;
+        box.x2 = p_boxes[j * 5 + 4] + offsetx;
+        box.y2 = p_boxes[j * 5 + 3] + offsety;
         objs.push_back(box);
       }
     }
@@ -172,12 +172,12 @@ int32_t CviMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                         im_height_, wstride, min_area,
                                         ccl_instance_, &num_boxes);
     objs.clear();
-    for (uint32_t i = 0; i < (uint32_t)num_boxes; ++i) {
+    for (uint32_t j = 0; j < (uint32_t)num_boxes; ++j) {
       ObjectBoxInfo box;
-      box.x1 = p_boxes[i * 5 + 2];
-      box.y1 = p_boxes[i * 5 + 1];
-      box.x2 = p_boxes[i * 5 + 4];
-      box.y2 = p_boxes[i * 5 + 3];
+      box.x1 = p_boxes[j * 5 + 2];
+      box.y1 = p_boxes[j * 5 + 1];
+      box.x2 = p_boxes[j * 5 + 4];
+      box.y2 = p_boxes[j * 5 + 3];
       objs.push_back(box);
     }
   }

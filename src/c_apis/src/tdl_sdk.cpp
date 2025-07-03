@@ -971,7 +971,8 @@ int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
 int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
                             TDLImage detect_image, TDLObject *roi,
                             uint8_t threshold, double min_area,
-                            TDLObject *obj_meta) {
+                            TDLObject *obj_meta,
+                            uint32_t background_update_interval) {
   TDLContext *context = (TDLContext *)handle;
   int ret = 0;
   if (context == nullptr) {
@@ -1011,11 +1012,15 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
     background_image_context = (TDLImageContext *)background_gray_image;
     detect_image_context = (TDLImageContext *)detect_gray_image;
   }
-
-  ret = context->md->setBackground(background_image_context->image);
-  if (ret != 0) {
-    LOGE("Failed to set background image\n");
-    return -1;
+  if (context->md->background_update_count_ != background_update_interval) {
+    context->md->background_update_count_ += 1;
+  } else {
+    ret = context->md->setBackground(background_image_context->image);
+    if (ret != 0) {
+      LOGE("Failed to set background image\n");
+      return -1;
+    }
+    context->md->background_update_count_ = 0;
   }
 
   if (roi->size > 0 && context->md->isROIEmpty()) {

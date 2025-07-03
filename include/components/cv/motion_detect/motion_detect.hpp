@@ -21,4 +21,6 @@ class MotionDetection {
   virtual bool isROIEmpty() = 0;
   // 获取运动检测实例
   static std::shared_ptr<MotionDetection> getMotionDetection();
+  // 背景更新计数器
+  uint32_t background_update_count_ = 0;
 };

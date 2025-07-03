@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   TDLObject obj_meta = {0};
   printf("Begin motion detection...\n");
   TDL_MotionDetection(tdl_handle, background_image, detect_image, &roi, 20, 50,
-                      &obj_meta);
+                      &obj_meta, 0);
   free(roi.info);
   TDL_DestroyImage(background_image);
   TDL_DestroyImage(detect_image);
