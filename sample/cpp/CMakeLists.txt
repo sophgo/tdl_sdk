@@ -9,6 +9,7 @@ set(SAMPLE_INCLUDES
     ${MIDDLEWARE_INCLUDES}
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
+    ${REPO_DIR}/src/components/network/api_poster
     ${REPO_DIR}/include/nn
     ${REPO_DIR}/include/
 )
@@ -45,6 +46,10 @@ if(("${CVI_PLATFORM}" STREQUAL "CV180X") OR
 endif()
 if(NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X") AND NOT ("${CVI_PLATFORM}" STREQUAL "CV184X"))
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_img_blend.cpp)
+endif()
+
+if(NOT "${CVI_PLATFORM}" STREQUAL "CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CV184X")
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.cpp)
 endif()
 
 if (NOT ("${CVI_PLATFORM}" STREQUAL "CV181X") AND

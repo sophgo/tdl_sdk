@@ -216,6 +216,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
       message("Zlib downloaded from ${ZLIB_URL} to ${zlib_SOURCE_DIR}")
     endif()
     set(ZLIB_ROOT ${BUILD_DOWNLOAD_DIR}/zlib-src)
+    include_directories(${BUILD_DOWNLOAD_DIR}/zlib-src/include)
 
     set(MIDDLEWARE_LIBS
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so

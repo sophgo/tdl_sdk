@@ -34,6 +34,11 @@ set(CORES_SRCS
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm>)
 endif()
+
+if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
+   set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:network>)
+endif()
+
 if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:ive>)
 endif()
@@ -44,8 +49,16 @@ endif()
 
 # shared library
 add_library(tdl SHARED ${CORES_SRCS})
-target_link_libraries(tdl ${MLIR_LIBS} ${OPENCV_LIBS_IMCODEC} ${IVE_LIBS} ${MIDDLEWARE_OBJ})
-
+target_link_libraries(tdl 
+   ${MLIR_LIBS} 
+   ${OPENCV_LIBS_IMCODEC} 
+   ${IVE_LIBS}
+   ${CURL_LIBRARY}
+   ${OPENSSL_LIBRARY}
+   ${LIBWEBSOCKETS_LIBRARY}
+   ${ZLIB_LIBRARY}
+   ${MIDDLEWARE_OBJ} 
+)
 # static library
 add_library(tdl-static STATIC ${CORES_SRCS})
 target_link_libraries(tdl-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC} ${MIDDLEWARE_OBJ})

@@ -13,6 +13,9 @@ if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR
     ("${CVI_PLATFORM}" STREQUAL "BM1684"))
   add_subdirectory(llm)
 endif()
+if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
+  add_subdirectory(network)
+endif()
 if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" OR
    "${CVI_PLATFORM}" STREQUAL "CV184X")
    add_subdirectory(ive)
