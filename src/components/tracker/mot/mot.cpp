@@ -68,6 +68,8 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
   updateTrackers(boxes, features);
   std::map<uint64_t, int> exported_tracks;
   std::map<uint64_t, int> track_id_to_idx;
+  std::map<uint64_t, uint64_t> pair_track_ids = getPairTrackIds();
+
   for (size_t i = 0; i < trackers_.size(); i++) {
     track_id_to_idx[trackers_[i]->id_] = i;
   }
@@ -83,6 +85,7 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
     tinfo.velocity_x_ = trackers_[track_id_to_idx[track_id]]->velocity_x_;
     tinfo.velocity_y_ = trackers_[track_id_to_idx[track_id]]->velocity_y_;
     tinfo.obj_idx_ = i;
+    tinfo.pair_track_idx_ = pair_track_ids[track_id];
     exported_tracks[track_id] = 1;
     tracker_infos.push_back(tinfo);
   }
@@ -95,6 +98,7 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
       tinfo.velocity_x_ = t->velocity_x_;
       tinfo.velocity_y_ = t->velocity_y_;
       tinfo.obj_idx_ = -1;
+      tinfo.pair_track_idx_ = pair_track_ids[t->id_];
       tracker_infos.push_back(tinfo);
     }
   }

@@ -431,6 +431,20 @@ int32_t TDL_APP_SetFrame(TDLHandle handle, const char *channel_name,
 int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
                         TDLCaptureInfo *capture_info);
 
+/**
+ * @brief 执行客流统计任务
+ *
+ * @param handle TDLHandle 对象
+ * @param channel_name 当前channel的名称
+ * @param object_meta 检测结果
+ * @param enter_num 进入人数
+ * @param miss_num 离开人数
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
+                                 TDLObject *object_meta, uint32_t *enter_num,
+                                 uint32_t *miss_num);
+
 #ifdef __cplusplus
 }
 #endif

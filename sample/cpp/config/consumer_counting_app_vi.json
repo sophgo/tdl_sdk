@@ -1,0 +1,27 @@
+{
+    "model_dir": "./models/",
+    "frame_buffer_size": 1,
+    "pipelines": [
+      {
+        "name": "consumer_counting",
+        "nodes": {
+          "head_person_detection_node": {
+            "config_thresh": 0.5
+          },
+          "track_node": {
+            "fuse_track": true
+          },
+
+          "consumer_counting_node": {
+            "mode": 0, 
+            "x1": 0,
+            "y1": 500,
+            "x2": 1900,
+            "y2": 500,
+            "_comment": "mode为0时, 对于竖直线, 从左到右为进入, 对于非竖直线, 从上到下为进入, mode为1相反"
+          }
+
+        }
+      }
+    ]
+}

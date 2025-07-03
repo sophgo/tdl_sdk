@@ -1066,7 +1066,7 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
   if (context == nullptr) {
     return -1;
   }
-  // 如果app_task没有初始化，则初始化
+
   if (context->app_task == nullptr) {
     context->app_task = AppFactory::createAppTask(task, config_file);
     if (context->app_task == nullptr) {
@@ -1093,7 +1093,6 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
       const std::string &str = ch_names[i];
       (*channel_names)[i] = (char *)malloc(str.size() + 1);  // +1 for '\0'
       if (!(*channel_names)[i]) {
-        // 发生分配失败，释放已分配内存
         for (size_t j = 0; j < i; ++j) {
           free((*channel_names)[j]);
         }
@@ -1177,7 +1176,6 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
   }
 
   Packet result;
-  // printf("to get result from channel:%s\n", channel_name);
   ret = context->app_task->getResult(std::string(channel_name), result);
   if (ret != 0) {
     printf("get result failed\n");
@@ -1195,10 +1193,6 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
   capture_info->frame_id = ori_capture_info->frame_id;
   capture_info->frame_width = ori_capture_info->frame_width;
   capture_info->frame_height = ori_capture_info->frame_height;
-
-  // TDLImageContext *image_context = new TDLImageContext();
-  // image_context->image = ori_capture_info->image;
-  // capture_info->image = (TDLImage)image_context;
 
   if (ori_capture_info->face_boxes.size() >
       0) {  // face_meta from object detection without landmarks
@@ -1274,12 +1268,6 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
           ori_capture_info->face_snapshots[i].snapshot_frame_id;
       capture_info->snapshot_info[i].track_id =
           ori_capture_info->face_snapshots[i].track_id;
-
-      // TDLImageContext *image_context = new TDLImageContext();
-      // image_context->image =
-      // ori_capture_info->face_snapshots[i].object_image;
-      // capture_info->snapshot_info[i].image = (TDLImage)image_context;
-
       std::vector<float> feature = ori_capture_info->face_features.at(
           ori_capture_info->face_snapshots[i].track_id);
       if (feature.size() == 0) {
@@ -1296,5 +1284,71 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
       }
     }
   }
+  return 0;
+}
+
+int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
+                                 TDLObject *object_meta, uint32_t *enter_num,
+                                 uint32_t *miss_num) {
+  TDLContext *context = (TDLContext *)handle;
+  int ret = 0;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->app_task == nullptr) {
+    LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  int processing_channel_num = context->app_task->getProcessingChannelNum();
+  if (processing_channel_num == 0) {
+    printf("no processing channel\n");
+    return 2;
+  }
+  if ((context->app_task->getChannelNodeName(std::string(channel_name), 0) ==
+       "video_node") ==
+      context->app_task->isExternalFrameChannel(std::string(channel_name))) {
+    LOGE("only one of TDLImage and video_node should be set!");
+    return -1;
+  }
+
+  Packet result;
+  ret = context->app_task->getResult(std::string(channel_name), result);
+  if (ret != 0) {
+    printf("get result failed\n");
+    context->app_task->removeChannel(std::string(channel_name));
+    return 1;
+  }
+
+  std::shared_ptr<ConsumerCountingResult> consumer_counting_result =
+      result.get<std::shared_ptr<ConsumerCountingResult>>();
+  if (consumer_counting_result == nullptr) {
+    printf("capture_info is nullptr\n");
+    return 1;
+  }
+
+  if (consumer_counting_result->head_person_boxes.size() > 0) {
+    TDL_InitObjectMeta(object_meta,
+                       consumer_counting_result->head_person_boxes.size(), 0);
+    object_meta->width = consumer_counting_result->frame_width;
+    object_meta->height = consumer_counting_result->frame_height;
+    for (size_t i = 0; i < consumer_counting_result->head_person_boxes.size();
+         i++) {
+      object_meta->info[i].box.x1 =
+          consumer_counting_result->head_person_boxes[i].x1;
+      object_meta->info[i].box.y1 =
+          consumer_counting_result->head_person_boxes[i].y1;
+      object_meta->info[i].box.x2 =
+          consumer_counting_result->head_person_boxes[i].x2;
+      object_meta->info[i].box.y2 =
+          consumer_counting_result->head_person_boxes[i].y2;
+      object_meta->info[i].score =
+          consumer_counting_result->head_person_boxes[i].score;
+    }
+  }
+
+  *enter_num = consumer_counting_result->enter_num;
+  *miss_num = consumer_counting_result->miss_num;
+
   return 0;
 }

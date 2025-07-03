@@ -14,6 +14,7 @@ class TrackerInfo {
   TrackStatus status_;
   // if -1, it is not matched with current detection
   int obj_idx_;
+  int pair_track_idx_;
   uint64_t track_id_;
   float velocity_x_;
   float velocity_y_;

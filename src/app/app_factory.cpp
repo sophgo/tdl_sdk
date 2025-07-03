@@ -1,4 +1,5 @@
 #include "app/app_task.hpp"
+#include "consumer_counting/consumer_counting_app.hpp"
 #include "face_capture/face_capture_app.hpp"
 #include "face_pet_capture/face_pet_capture_app.hpp"
 #include "fall_detection/fall_detection_app.hpp"
@@ -11,6 +12,8 @@ std::shared_ptr<AppTask> AppFactory::createAppTask(
     return std::make_shared<FacePetCaptureApp>(task_name, json_config_file);
   } else if (task_name == "fall_detection") {
     return std::make_shared<FallDetectionApp>(task_name, json_config_file);
+  } else if (task_name == "consumer_counting") {
+    return std::make_shared<ConsumerCountingAPP>(task_name, json_config_file);
   }
   return nullptr;
 }

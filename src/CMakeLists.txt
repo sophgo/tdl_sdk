@@ -25,6 +25,7 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:face_capture_app>
                $<TARGET_OBJECTS:face_pet_capture_app>
                $<TARGET_OBJECTS:fall_detection_app>
+               $<TARGET_OBJECTS:consumer_counting_app>
                $<TARGET_OBJECTS:app>
                $<TARGET_OBJECTS:intrusion_detect>
                $<TARGET_OBJECTS:occlusion_detect>

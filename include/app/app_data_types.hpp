@@ -44,4 +44,16 @@ struct FallDetectionResult {
   std::map<uint64_t, int> det_results;
 };
 
+struct ConsumerCountingResult {
+ public:
+  uint64_t frame_id;
+  uint32_t frame_width;
+  uint32_t frame_height;
+  uint32_t enter_num;
+  uint32_t miss_num;
+  std::shared_ptr<BaseImage> image;
+  std::vector<ObjectBoxInfo> head_person_boxes;
+  std::vector<TrackerInfo> track_results;
+};
+
 #endif
