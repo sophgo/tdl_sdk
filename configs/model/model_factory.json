@@ -219,7 +219,7 @@
     "RECOGNITION_LICENSE_PLATE":{
       "_comment":"output 7 license plate characters",
       "file_name":"recognition_license_plate_24_96_MIX",
-      "rgb_order":"rgb"
+      "rgb_order":"bgr"
     },
     "YOLOV8_SEG":{
       "_comment":"custom segmentation,set types,file_name,specify rgb order",
@@ -244,12 +244,12 @@
     },
     "FEATURE_CLIP_IMG":{
       "_comment":"clip image feature extraction",
-      "file_name":"clip_feature_img_224_224_W4BF16",
+      "file_name":"feature_clip_img_224_224_W4BF16",
       "rgb_order":"rgb"
     },
     "FEATURE_CLIP_TEXT":{
       "_comment":"clip text feature extraction",
-      "file_name":"clip_feature_text_1_77_W4BF16",
+      "file_name":"feature_clip_text_1_77_W4BF16",
       "rgb_order":"rgb"
     },
     "FEATURE_CVIFACE":{
