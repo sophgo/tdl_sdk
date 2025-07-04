@@ -105,6 +105,7 @@ if [ "$total_ion_size" -gt "20000000" ]; then
   det_json="${det_json}:yolox_m_det_coco80_640_640_INT8.json"
   det_json="${det_json}:yolox_s_det_coco80_640_640_INT8.json"
   det_json="${det_json}:yolov8n_det_head_shoulder_384_640_INT8.json"
+  det_json="${det_json}:yolov8n_det_head_person_384_640_INT8.json"
   det_json="${det_json}:scrfd_det_face_432_768_INT8.json"
 
 
