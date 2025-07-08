@@ -693,7 +693,7 @@ void TDLModelFactory::getPlatformAndModelExtension(
   platform = "cv182x";
   model_extension = ".cvimodel";
 #elif defined(__CV184X__)
-  platform = "mars3";
+  platform = "cv184x";
   model_extension = ".bmodel";
 #elif defined(__CV186X__)
   platform = "cv186x";

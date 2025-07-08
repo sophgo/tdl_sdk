@@ -17,6 +17,25 @@
 namespace fs = std::experimental::filesystem;
 using ordered_json = nlohmann::ordered_json;
 
+static const std::unordered_map<std::string, std::string> special_model_id_map =
+    {
+
+        {"yolov8n_det_ir_person_384_640_INT8", "YOLOV8N_DET_MONITOR_PERSON"},
+        {"yolov8n_det_ir_person_mbv2_384_640_INT8",
+         "YOLOV8N_DET_MONITOR_PERSON"},
+        {"yolov8n_det_overlook_person_256_448_INT8",
+         "YOLOV8N_DET_MONITOR_PERSON"},
+        {"yolov8n_det_hand_mv3_384_640_INT8", "YOLOV8N_DET_HAND"},
+        {"yolov8n_det_person_vehicle_mv2_035_384_640_INT8",
+         "YOLOV8N_DET_PERSON_VEHICLE"},
+        {"yolov8n_det_pet_person_035_384_640_INT8", "YOLOV8N_DET_PET_PERSON"},
+
+        {"cls_4_attribute_face_112_112_INT8", "CLS_ATTRIBUTE_FACE"},
+        {"cls_sound_nihaoshiyun_126_40_INT8", "CLS_SOUND_COMMAND_NIHAOSHIYUN"},
+        {"cls_sound_xiaoaixiaoai_126_40_INT8",
+         "CLS_SOUND_COMMAND_XIAOAIXIAOAI"},
+        {"yolov8n_seg_coco80_640_640_INT8", "YOLOV8_SEG_COCO80"}};
+
 std::string to_upper(const std::string& str) {
   std::string result = str;
   std::transform(result.begin(), result.end(), result.begin(), ::toupper);
@@ -78,56 +97,45 @@ std::string common_model_id(std::string model_name) {
   return "";
 }
 
+std::string model_name_to_id(std::string& model_name) {
+  std::string model_id;
+  auto it_id = special_model_id_map.find(model_name);
+  std::string com_model_id = common_model_id(model_name);
+  if (it_id != special_model_id_map.end()) {
+    model_id = it_id->second;
+  } else if (com_model_id != "") {
+    model_id = com_model_id;
+  } else {
+    model_id = extract_model_id(model_name);
+  }
+  return model_id;
+}
+
 void extract_model_info(const std::string& model_dir,
                         std::vector<std::string>& model_names,
                         std::vector<std::string>& model_ids,
                         std::vector<std::string>& model_paths) {
-  // 1. 特殊 model_name 到特殊 model_id 的映射（可扩展）
-  static const std::unordered_map<std::string, std::string>
-      special_model_id_map = {
+  if (model_dir.rfind("model") == model_dir.size() - 5) {
+    fs::path p(model_dir);
+    model_paths.push_back(model_dir);
+    std::string filename = p.filename().string();
 
-          {"yolov8n_det_ir_person_384_640_INT8", "YOLOV8N_DET_MONITOR_PERSON"},
-          {"yolov8n_det_ir_person_mbv2_384_640_INT8",
-           "YOLOV8N_DET_MONITOR_PERSON"},
-          {"yolov8n_det_overlook_person_256_448_INT8",
-           "YOLOV8N_DET_MONITOR_PERSON"},
-          {"yolov8n_det_hand_mv3_384_640_INT8", "YOLOV8N_DET_HAND"},
-          {"yolov8n_det_person_vehicle_mv2_035_384_640_INT8",
-           "YOLOV8N_DET_PERSON_VEHICLE"},
-          {"yolov8n_det_pet_person_035_384_640_INT8", "YOLOV8N_DET_PET_PERSON"},
+    size_t last_underscore = filename.rfind('_');
+    std::string model_name = filename.substr(0, last_underscore);
+    model_names.push_back(model_name);
+    model_ids.push_back(model_name_to_id(model_name));
+  } else {
+    for (const auto& entry : fs::directory_iterator(model_dir)) {
+      if (fs::is_regular_file(entry.path())) {
+        std::string full_path = entry.path().string();  // 新增
+        model_paths.push_back(full_path);               // 存储路径
+        std::string filename = entry.path().filename().string();
 
-          {"cls_4_attribute_face_112_112_INT8", "CLS_ATTRIBUTE_FACE"},
-          {"cls_sound_nihaoshiyun_126_40_INT8",
-           "CLS_SOUND_COMMAND_NIHAOSHIYUN"},
-          {"cls_sound_xiaoaixiaoai_126_40_INT8",
-           "CLS_SOUND_COMMAND_XIAOAIXIAOAI"},
-          {"yolov8n_seg_coco80_640_640_INT8", "YOLOV8_SEG_COCO80"}
-          // {"recognition_face_r34_112_112_INT8", "FEATURE_BMFACE_R34"}
-      };
-
-  for (const auto& entry : fs::directory_iterator(model_dir)) {
-    if (fs::is_regular_file(entry.path())) {
-      std::string full_path = entry.path().string();  // 新增
-      model_paths.push_back(full_path);               // 存储路径
-      std::string filename = entry.path().filename().string();
-
-      size_t last_underscore = filename.rfind('_');
-      std::string model_name = filename.substr(0, last_underscore);
-      model_names.push_back(model_name);
-
-      // 处理特殊model_id情况（可扩展）
-      std::string model_id;
-      auto it_id = special_model_id_map.find(model_name);
-      std::string com_model_id = common_model_id(model_name);
-      if (it_id != special_model_id_map.end()) {
-        model_id = it_id->second;
-      } else if (com_model_id != "") {
-        model_id = com_model_id;
-      } else {
-        model_id = extract_model_id(model_name);
+        size_t last_underscore = filename.rfind('_');
+        std::string model_name = filename.substr(0, last_underscore);
+        model_names.push_back(model_name);
+        model_ids.push_back(model_name_to_id(model_name));
       }
-
-      model_ids.push_back(model_id);
     }
   }
 }
@@ -361,6 +369,12 @@ void process_face_feature(const std::string& model_id,
   std::map<std::string, std::pair<std::string, std::string>> pair_map;
   std::vector<std::string> pair_indices;
   std::regex pat(R"((\d+)-(\d)\.png)");
+
+  if (!fs::exists(img_dir)) {
+    std::cout << "Image directory does not exist: " << img_dir << std::endl;
+    return;
+  }
+
   for (const auto& entry : fs::directory_iterator(img_dir)) {
     std::string fname = entry.path().filename().string();
     std::smatch m;
@@ -804,11 +818,14 @@ void processModel(const std::string& model_id, const std::string& model_name,
                 << std::endl;
     }
 
-    input_datas[0].reset();
+    // input_datas[0].reset();
     input_datas.clear();
     out_datas.clear();
   }
 }
+
+std::vector<std::string> support_chips = {"CV181X", "CV184X", "CV186X",
+                                          "BM1688", "BM1684X"};
 
 int main(int argc, char** argv) {
   if (argc < 5) {
@@ -835,9 +852,24 @@ int main(int argc, char** argv) {
     model_threshold = atof(argv[8]);
   }
 
+  if (std::find(support_chips.begin(), support_chips.end(), chip) ==
+      support_chips.end()) {
+    printf("unknow chip: %s, should be one of:\n", chip.c_str());
+    for (int i = 0; i < support_chips.size(); i++) {
+      printf("%s\n", support_chips[i].c_str());
+    }
+    return -1;
+  }
+
   std::vector<std::string> model_names, model_ids, model_paths;
   fs::path p(model_dir);
-  fs::path parent = p.parent_path();
+
+  fs::path parent;
+  if (model_dir.rfind("model") == model_dir.size() - 5) {
+    parent = p.parent_path().parent_path();
+  } else {
+    parent = p.parent_path();
+  }
 
   extract_model_info(model_dir, model_names, model_ids, model_paths);
   std::cout << "Found " << model_names.size()

@@ -7,6 +7,9 @@ std::string gen_model_suffix() {
 #if defined(__CV181X__) || defined(__CMODEL_CV181X__)
   return std::string("_cv181x.cvimodel");
 
+#elif defined(__CV184X__)
+  return std::string("_cv184x.bmodel");
+
 #elif defined(__CV186X__)
   return std::string("_cv186x.bmodel");
 
@@ -27,6 +30,9 @@ std::string gen_platform() {
 #if defined(__CV181X__) || defined(__CMODEL_CV181X__)
   return std::string("CV181X");
 
+#elif defined(__CV184X__)
+  return std::string("CV184X");
+
 #elif defined(__CV186X__)
   return std::string("CV186X");
 
@@ -46,6 +52,9 @@ std::string gen_platform() {
 std::string gen_model_dir() {
 #if defined(__CV181X__) || defined(__CMODEL_CV181X__)
   return std::string("cv181x");
+
+#elif defined(__CV184X__)
+  return std::string("cv184x");
 
 #elif defined(__CV186X__)
   return std::string("cv186x");

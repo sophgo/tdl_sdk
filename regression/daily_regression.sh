@@ -7,7 +7,7 @@ print_usage() {
   echo "Options:"
   echo -e "\t-m, cvimodel directory (default: /mnt/data/cvimodel)"
   echo -e "\t-d, dataset directory (default: /mnt/data/dataset)"
-  # echo -e "\t-a, json data directory (default: /mnt/data/asset)"
+  echo -e "\t-a, json data directory (default: /mnt/data/asset)"
   echo -e "\t-h, help"
 }
 
@@ -38,18 +38,24 @@ dataset_dir=${dataset_dir:-/mnt/data/dataset}
 asset_dir=${asset_dir:-/mnt/data/asset}
 
 
-total_ion_size=30000000
-if [ -f "/sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem" ]; then
-  total_ion_size=$(cat /sys/kernel/debug/ion/cvi_carveout_heap_dump/total_mem)
+
+chip_info=$(devmem 0x300008c)
+
+if  echo "$chip_info" | grep -q "181"; then
   CHIP_ARCH="CV181X"
+elif  echo "$chip_info" | grep -q "184"; then
+  CHIP_ARCH="CV184X"
 elif [ -f "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem" ]; then
-  total_ion_size=$(cat /sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem)
   CHIP_ARCH="CV186X"
 elif [ -f "/proc/soph/vpss" ]; then
   CHIP_ARCH="BM1688"
+else 
+  echo "unkonw CHIP_ARCH!"
+  exit
 fi
 
 
+echo "CHIP_ARCH: ${CHIP_ARCH}"
 
 det_test_suites="DetectionTestSuite.*"
 cls_test_suites="ClassificationTestSuite.*"
@@ -68,91 +74,83 @@ segmentation_json=""
 ocr_json=""
 
 
-# ION requirement >= 20 MB
-if [ "$total_ion_size" -gt "20000000" ]; then
-
-  # det
-  det_json="${det_json}:mbv2_det_person_256_448_INT8.json"
-  det_json="${det_json}:mbv2_det_person_512_896_INT8.json"
-  det_json="${det_json}:mbv2_det_person_512_960_INT8.json"
-  det_json="${det_json}:mbv2_det_person_896_896_INT8.json"
-  det_json="${det_json}:ppyoloe_det_coco80_640_640_INT8.json"
-  det_json="${det_json}:yolov10n_det_coco80_640_640_INT8.json"
+# det
+det_json="${det_json}:mbv2_det_person_256_448_INT8.json"
+det_json="${det_json}:mbv2_det_person_512_896_INT8.json"
+det_json="${det_json}:mbv2_det_person_256_384_INT8.json"
+det_json="${det_json}:mbv2_det_person_896_896_INT8.json"
+det_json="${det_json}:ppyoloe_det_coco80_640_640_INT8.json"
+det_json="${det_json}:yolov10n_det_coco80_640_640_INT8.json"
+det_json="${det_json}:yolov6n_det_coco80_640_640_INT8.json"
+det_json="${det_json}:yolov6s_det_coco80_640_640_INT8.json"
+det_json="${det_json}:yolov8n_det_coco80_640_640_INT8.json"
+det_json="${det_json}:yolov8n_det_face_head_person_pet_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_fire_smoke_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_hand_face_person_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_head_hardhat_576_960_INT8.json"
+det_json="${det_json}:yolov8n_det_ir_person_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_ir_person_mbv2_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_license_plate_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_monitor_person_256_448_INT8.json"
+det_json="${det_json}:yolov8n_det_overlook_person_256_448_INT8.json"
+det_json="${det_json}:yolov8n_det_person_vehicle_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_person_vehicle_mv2_035_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_pet_person_035_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_pet_person_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_traffic_light_384_640_INT8.json"
+det_json="${det_json}:yolov8s_det_coco80_640_640_INT8.json"
+det_json="${det_json}:yolov8n_det_head_shoulder_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_head_person_384_640_INT8.json"
+if [ ${CHIP_ARCH} != "CV184X" ]; then  #tpu-milr bug
   det_json="${det_json}:yolov5m_det_coco80_640_640_INT8.json"
   det_json="${det_json}:yolov5s_det_coco80_640_640_INT8.json"
-  det_json="${det_json}:yolov6n_det_coco80_640_640_INT8.json"
-  det_json="${det_json}:yolov6s_det_coco80_640_640_INT8.json"
   det_json="${det_json}:yolov7_tiny_det_coco80_640_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_coco80_640_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_face_head_person_pet_384_640_INT8.json"
   det_json="${det_json}:yolov8n_det_fire_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_fire_smoke_384_640_INT8.json"
+  det_json="${det_json}:scrfd_det_face_432_768_INT8.json"
   det_json="${det_json}:yolov8n_det_hand_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_hand_face_person_384_640_INT8.json"
   det_json="${det_json}:yolov8n_det_hand_mv3_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_head_hardhat_576_960_INT8.json"
-  det_json="${det_json}:yolov8n_det_ir_person_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_ir_person_mbv2_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_license_plate_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_monitor_person_256_448_INT8.json"
-  det_json="${det_json}:yolov8n_det_overlook_person_256_448_INT8.json"
-  det_json="${det_json}:yolov8n_det_person_vehicle_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_person_vehicle_mv2_035_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_pet_person_035_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_pet_person_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_traffic_light_384_640_INT8.json"
-  det_json="${det_json}:yolov8s_det_coco80_640_640_INT8.json"
   det_json="${det_json}:yolox_m_det_coco80_640_640_INT8.json"
   det_json="${det_json}:yolox_s_det_coco80_640_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_head_shoulder_384_640_INT8.json"
-  det_json="${det_json}:yolov8n_det_head_person_384_640_INT8.json"
-  det_json="${det_json}:scrfd_det_face_432_768_INT8.json"
-
-
-  #cls
-  cls_json="${cls_json}:cls_hand_gesture_128_128_INT8.json"
-  cls_json="${cls_json}:cls_rgbliveness_256_256_INT8.json"
-  cls_json="${cls_json}:cls_sound_babay_cry_188_40_INT8.json"
-  cls_json="${cls_json}:cls_sound_nihaoshiyun_126_40_INT8.json"
-  cls_json="${cls_json}:cls_sound_xiaoaixiaoai_126_40_INT8.json"
-  cls_json="${cls_json}:cls_keypoint_hand_gesture_1_42_INT8.json"
-
-  #face_attribute_cls
-  face_attribute_cls_json="${face_attribute_cls_json}:cls_4_attribute_face_112_112_INT8.json"
-
-
-  #kpt
-  kpt_json="${kpt_json}:keypoint_face_v2_64_64_INT8.json"
-  kpt_json="${kpt_json}:keypoint_hand_128_128_INT8.json"
-  kpt_json="${kpt_json}:keypoint_license_plate_64_128_INT8.json"
-  kpt_json="${kpt_json}:keypoint_simcc_person17_256_192_INT8.json"
-  kpt_json="${kpt_json}:keypoint_yolov8pose_person17_384_640_INT8.json"
-  kpt_json="${kpt_json}:lstr_det_lane_360_640_MIX.json"
-  
-
-  #feature
-  feature_json="${feature_json}:feature_cviface_112_112_INT8.json"
-
-  #segmentation_json
-  segmentation_json="${segmentation_json}:yolov8n_seg_coco80_640_640_INT8.json"
-  segmentation_json="${segmentation_json}:topformer_seg_person_face_vehicle_384_640_INT8.json"
-
-  #ocr
-  ocr_json="${ocr_json}:recognition_license_plate_24_96_MIX.json"
-
 fi
 
-# # ION requirement >= 35 MB
-# if [ "$total_ion_size" -gt "35000000" ]; then
-#   #det
-#   det_json="${det_json}:xxx.json"
 
-#   #cls
-#   cls_json="${cls_json}:xxx.json"
+#cls
+cls_json="${cls_json}:cls_hand_gesture_128_128_INT8.json"
+cls_json="${cls_json}:cls_rgbliveness_256_256_INT8.json"
+cls_json="${cls_json}:cls_sound_babay_cry_188_40_INT8.json"
+cls_json="${cls_json}:cls_sound_nihaoshiyun_126_40_INT8.json"
+cls_json="${cls_json}:cls_sound_xiaoaixiaoai_126_40_INT8.json"
+cls_json="${cls_json}:cls_keypoint_hand_gesture_1_42_INT8.json"
 
-#   #kpt
-#   kpt_json="${kpt_json}:xxx.json"
-# fi
+
+#face_attribute_cls
+face_attribute_cls_json="${face_attribute_cls_json}:cls_4_attribute_face_112_112_INT8.json"
+
+
+#kpt
+kpt_json="${kpt_json}:keypoint_face_v2_64_64_INT8.json"
+kpt_json="${kpt_json}:keypoint_hand_128_128_INT8.json"
+kpt_json="${kpt_json}:keypoint_license_plate_64_128_INT8.json"
+kpt_json="${kpt_json}:keypoint_simcc_person17_256_192_INT8.json"
+kpt_json="${kpt_json}:keypoint_yolov8pose_person17_384_640_INT8.json"
+kpt_json="${kpt_json}:lstr_det_lane_360_640_MIX.json"
+
+
+#feature
+feature_json="${feature_json}:feature_cviface_112_112_INT8.json"
+
+
+#segmentation_json
+segmentation_json="${segmentation_json}:yolov8n_seg_coco80_640_640_INT8.json"
+if [ ${CHIP_ARCH} != "CV184X" ]; then  #tpu-milr bug
+  segmentation_json="${segmentation_json}:topformer_seg_person_face_vehicle_384_640_INT8.json"
+fi
+
+
+#ocr
+if [ ${CHIP_ARCH} != "CV184X" ]; then  #tpu-milr bug
+  ocr_json="${ocr_json}:recognition_license_plate_24_96_MIX.json"
+fi
 
 
 run_test_main() {
@@ -173,7 +171,14 @@ run_test_main() {
     full_json_path="${asset_dir}/${json_file}"
     echo "./test_main ${model_dir} ${dataset_dir} ${full_json_path} --gtest_filter=${test_suites}"
     ./test_main "${model_dir}" "${dataset_dir}" "${full_json_path}" --gtest_filter="${test_suites}"
+    ret=$?
+    if [ "$ret" -ne 0 ]; then
+      exit "$ret"
+    fi
   done
+
+  echo " "
+  echo "ALL TEST PASSED"
 }
 
 

@@ -133,7 +133,7 @@ git clone https://github.com/sophgo/tdl_models.git
     git checkout Mars3_dev
     ```
 
-  * 拷贝算子库`ive/3rdparty/tpu_kernel_module/libtpu_kernel_module.so`到mars3板子`/mnt/data/tpu_files`下
+  * 拷贝算子库`ive/3rdparty/tpu_kernel_module/libtpu_kernel_module.so`到cv184x板子`/mnt/data/tpu_files`下
 
   * 声明环境变量
 

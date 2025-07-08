@@ -51,7 +51,7 @@ function(buildninstallcpp)
   include_directories(${PARSED_ARGS_INC})
   add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PARSED_ARGS_SRCS})
   target_link_libraries(${PROJECT_NAME} ${PARSED_ARGS_DEPS})
-  if (PROJECT_NAME STREQUAL "test_main")
+  if (PROJECT_NAME STREQUAL "test_main" OR PROJECT_NAME STREQUAL "generate_regression_info")
       install(TARGETS ${PROJECT_NAME} DESTINATION regression)
   endif ()
 endfunction(buildninstallcpp)
@@ -75,7 +75,7 @@ else()
   ${MIDDLEWARE_LIBS}
   )
 endif()
-if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR (${CVI_PLATFORM} STREQUAL "CV181X")) 
+if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR (${CVI_PLATFORM} STREQUAL "CV181X") OR (${CVI_PLATFORM} STREQUAL "CV184X")) 
   set(UnitTests
 
   # reg_daily_face_attribute_cls.cpp
@@ -114,6 +114,8 @@ include_directories(${REPO_DIR}/include/framework/utils
 )
 
 buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS tdl ${REG_LIBS} gtest_main stdc++fs )
+buildninstallcpp(NAME generate_regression_info INC ${REG_INCLUDES} SRCS generate_regression_info.cpp DEPS tdl ${REG_LIBS} gtest_main stdc++fs )
+
 
 if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688"))
   set(DAILY_REGRESSION_ASSETS "assets_186x")
