@@ -205,8 +205,14 @@ TDLDataType
    * - KEYPOINT_FACE_V2
      - 5个关键点 + 模糊评分的人脸检测模型
 
-   * - CLS_ATTRIBUTE_FACE
-     - 人脸属性分类模型 (年龄, 性别, 眼镜, 面具)
+   * - CLS_ATTRIBUTE_GENDER_AGE_GLASS
+     - 人脸属性分类模型 (年龄, 性别, 眼镜)
+
+   * - CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK
+     - 人脸属性分类模型 (年龄, 性别, 眼镜, 口罩)
+
+   * - CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION
+     - 人脸属性分类模型 (年龄, 性别, 眼镜, 情绪)
 
    * - FEATURE_BMFACE_R34
      - ResNet34 512维特征提取模型

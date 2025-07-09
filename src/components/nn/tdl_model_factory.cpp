@@ -317,7 +317,9 @@ bool TDLModelFactory::isClassificationModel(const ModelType model_type) {
           model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSHIYUN ||
           model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSUANNENG ||
           model_type == ModelType::CLS_SOUND_COMMAND_XIAOAIXIAOAI ||
-          model_type == ModelType::CLS_ATTRIBUTE_FACE ||
+          model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS ||
+          model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK ||
+          model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION ||
           model_type == ModelType::CLS_RGBLIVENESS ||
           model_type == ModelType::CLS_ISP_SCENE ||
           model_type == ModelType::CLS_IMG);
@@ -575,8 +577,15 @@ std::shared_ptr<BaseModel> TDLModelFactory::createClassificationModel(
              model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSUANNENG ||
              model_type == ModelType::CLS_SOUND_COMMAND_XIAOAIXIAOAI) {
     model = std::make_shared<AudioClassification>();
-  } else if (model_type == ModelType::CLS_ATTRIBUTE_FACE) {
-    model = std::make_shared<FaceAttribute_CLS>();
+  } else if (model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS) {
+    model = std::make_shared<FaceAttribute_CLS>(
+        FaceAttributeModel::GENDER_AGE_GLASS);
+  } else if (model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK) {
+    model = std::make_shared<FaceAttribute_CLS>(
+        FaceAttributeModel::GENDER_AGE_GLASS_MASK);
+  } else if (model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION) {
+    model = std::make_shared<FaceAttribute_CLS>(
+        FaceAttributeModel::GENDER_AGE_GLASS_EMOTION);
   } else if (model_type == ModelType::CLS_ISP_SCENE) {
     model = std::make_shared<IspImageClassification>();
   }

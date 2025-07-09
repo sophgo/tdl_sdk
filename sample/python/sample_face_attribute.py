@@ -8,7 +8,7 @@ if __name__ == "__main__":
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
-    face_attribute = nn.get_model(nn.ModelType.CLS_ATTRIBUTE_FACE, model_path)
+    face_attribute = nn.get_model(nn.ModelType.CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK, model_path)
     img = image.read(img_path)
     face_attribution = face_attribute.inference(img)
     result = face_attribution[0]

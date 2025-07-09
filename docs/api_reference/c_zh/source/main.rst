@@ -66,8 +66,14 @@
    * - TDL_MODEL_KEYPOINT_FACE_V2
      - 5个关键点 + 模糊评分的人脸检测模型
 
-   * - TDL_MODEL_CLS_ATTRIBUTE_FACE
-     - 人脸属性分类模型 (年龄, 性别, 眼镜, 面具)
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS
+     - 人脸属性分类模型 (年龄, 性别, 眼镜)
+
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK
+     - 人脸属性分类模型 (年龄, 性别, 眼镜, 口罩)
+
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION
+     - 人脸属性分类模型 (年龄, 性别, 眼镜, 情绪)
 
    * - TDL_MODEL_FEATURE_BMFACE_R34
      - ResNet34 512维特征提取模型
@@ -2196,7 +2202,7 @@ TDL_DetectionKeypoint
      - 输出参数，存储检测到的关键点坐标及置信度
 
 TDL_IntrusionDetection
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 【语法】
 

@@ -117,10 +117,26 @@
       "file_name":"scrfd_det_face_432_768_INT8"
     },
 
-    "CLS_ATTRIBUTE_FACE":{
+    "CLS_ATTRIBUTE_GENDER_AGE_GLASS":{
       "_comment":"output age,gender(0:male,1:female),glass(0:no glass,1:glass)",
       "types":["age","gender","glass"],
-      "file_name":"cls_4_attribute_face_112_112_INT8",
+      "file_name":"cls_attribute_gender_age_glass_112_112_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
+    "CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK":{
+      "_comment":"output age,gender(0:male,1:female),glass(0:no glass,1:glass),mask(0:no mask,1:mask)",
+      "types":["age","gender","glass","mask"],
+      "file_name":"cls_attribute_gender_age_glass_mask_112_112_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
+    "CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION":{
+      "_comment":"output age,gender(0:male,1:female),glass(0:no glass,1:glass),emotion(0:anger,1:disgut,2:fear,3:happy,4:neutral,5:sad;6:surprise)",
+      "types":["age","gender","glass","emotion"],
+      "file_name":"cls_attribute_gender_age_glass_emotion_112_112_INT8",
       "rgb_order":"rgb",
       "mean":[0,0,0],
       "std":[255.0,255.0,255.0]

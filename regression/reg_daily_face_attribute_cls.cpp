@@ -15,6 +15,7 @@ std::map<TDLObjectAttributeType, std::string> attributes_map = {
     {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER, "gender"},
     {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE, "age"},
     {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK, "mask"},
+    {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION, "emotion"},
     {TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES, "glass"}};
 
 namespace fs = std::experimental::filesystem;

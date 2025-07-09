@@ -1,14 +1,16 @@
 #include "face_attribute/face_attribute_cls.hpp"
-
+#include <algorithm>
+#include <cstddef>
 #include "utils/detection_helper.hpp"
 #include "utils/tdl_log.hpp"
 
-FaceAttribute_CLS::FaceAttribute_CLS() {
+FaceAttribute_CLS::FaceAttribute_CLS(FaceAttributeModel model_name) {
   net_param_.model_config.mean = {0.0, 0.0, 0.0};
   net_param_.model_config.std = {1.0 / 0.003922, 1.0 / 0.003922,
                                  1.0 / 0.003922};
   net_param_.model_config.rgb_order = "rgb";
   keep_aspect_ratio_ = false;
+  face_attribute_model_ = model_name;
 }
 
 FaceAttribute_CLS::~FaceAttribute_CLS() {}
@@ -29,6 +31,9 @@ int32_t FaceAttribute_CLS::onModelOpened() {
     } else if (mask_name.empty() &&
                output_layers[j].find("mask") != std::string::npos) {
       mask_name = output_layers[j];
+    } else if (emotion_name.empty() &&
+               output_layers[j].find("emotion") != std::string::npos) {
+      emotion_name = output_layers[j];
     }
   }
 
@@ -98,12 +103,71 @@ int32_t FaceAttribute_CLS::inference(
 int32_t FaceAttribute_CLS::outputParse(
     const std::vector<std::shared_ptr<BaseImage>> &images,
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
+  switch (face_attribute_model_) {
+    case FaceAttributeModel::GENDER_AGE_GLASS:
+      return outputParseGenderAgeGlass(images, out_datas);
+    case FaceAttributeModel::GENDER_AGE_GLASS_MASK:
+      return outputParseGenderAgeGlassMask(images, out_datas);
+    case FaceAttributeModel::GENDER_AGE_GLASS_EMOTION:
+      return outputParseGenderAgeGlassEmotion(images, out_datas);
+    default:
+      LOGE("Unsupported output parse mode: %d", (int)face_attribute_model_);
+      return -1;
+  }
+}
+int32_t FaceAttribute_CLS::outputParseGenderAgeGlass(
+    const std::vector<std::shared_ptr<BaseImage>> &images,
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
   std::string input_tensor_name = net_->getInputNames()[0];
   TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
-  // uint32_t input_width = input_tensor.shape[3];
-  // uint32_t input_height = input_tensor.shape[2];
-  // float input_width_f = float(input_width);
-  // float input_height_f = float(input_height);
+  LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
+       input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
+       input_tensor.shape[3]);
+
+  TensorInfo oinfo_gender = net_->getTensorInfo(gender_name);
+  std::shared_ptr<BaseTensor> gender_tensor =
+      net_->getOutputTensor(gender_name);
+
+  TensorInfo oinfo_age = net_->getTensorInfo(age_name);
+  std::shared_ptr<BaseTensor> age_tensor = net_->getOutputTensor(age_name);
+
+  TensorInfo oinfo_glass = net_->getTensorInfo(glass_name);
+  std::shared_ptr<BaseTensor> glass_tensor = net_->getOutputTensor(glass_name);
+
+  for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
+    std::vector<float> feature;
+    if (oinfo_gender.data_type != TDLDataType::FP32 ||
+        oinfo_age.data_type != TDLDataType::FP32 ||
+        oinfo_glass.data_type != TDLDataType::FP32) {
+      LOGE("not supported data type: gender=%d, age=%d, glass=%d",
+           (int)oinfo_gender.data_type, (int)oinfo_age.data_type,
+           (int)oinfo_glass.data_type);
+      return -1;
+    }
+    float *gender_score = gender_tensor->getBatchPtr<float>(b);
+    float *age_score = age_tensor->getBatchPtr<float>(b);
+    float *glass_score = glass_tensor->getBatchPtr<float>(b);
+
+    std::shared_ptr<ModelAttributeInfo> attr_info =
+        std::make_shared<ModelAttributeInfo>();
+    attr_info
+        ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER] =
+        gender_score[0];
+    attr_info->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] =
+        age_score[0];
+    attr_info
+        ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES] =
+        glass_score[0];
+
+    out_datas.push_back(attr_info);
+  }
+  return 0;
+}
+int32_t FaceAttribute_CLS::outputParseGenderAgeGlassMask(
+    const std::vector<std::shared_ptr<BaseImage>> &images,
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
+  std::string input_tensor_name = net_->getInputNames()[0];
+  TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
   LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
        input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
        input_tensor.shape[3]);
@@ -150,6 +214,70 @@ int32_t FaceAttribute_CLS::outputParse(
     attr_info->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK] =
         mask_score[0];
 
+    out_datas.push_back(attr_info);
+  }
+  return 0;
+}
+int32_t FaceAttribute_CLS::outputParseGenderAgeGlassEmotion(
+    const std::vector<std::shared_ptr<BaseImage>> &images,
+    std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas) {
+  std::string input_tensor_name = net_->getInputNames()[0];
+  TensorInfo input_tensor = net_->getTensorInfo(input_tensor_name);
+  LOGI("outputParse,batch size:%d,input shape:%d,%d,%d,%d", images.size(),
+       input_tensor.shape[0], input_tensor.shape[1], input_tensor.shape[2],
+       input_tensor.shape[3]);
+
+  TensorInfo oinfo_gender = net_->getTensorInfo(gender_name);
+  std::shared_ptr<BaseTensor> gender_tensor =
+      net_->getOutputTensor(gender_name);
+
+  TensorInfo oinfo_age = net_->getTensorInfo(age_name);
+  std::shared_ptr<BaseTensor> age_tensor = net_->getOutputTensor(age_name);
+
+  TensorInfo oinfo_glass = net_->getTensorInfo(glass_name);
+  std::shared_ptr<BaseTensor> glass_tensor = net_->getOutputTensor(glass_name);
+
+  TensorInfo oinfo_emotion = net_->getTensorInfo(emotion_name);
+  std::shared_ptr<BaseTensor> emotion_tensor =
+      net_->getOutputTensor(emotion_name);
+
+  printf("oinfo_emotion:%d,%d,%d,%d\n", oinfo_emotion.shape[0],
+         oinfo_emotion.shape[1], oinfo_emotion.shape[2],
+         oinfo_emotion.shape[3]);
+
+  for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
+    std::vector<float> feature;
+    if (oinfo_gender.data_type != TDLDataType::FP32 ||
+        oinfo_age.data_type != TDLDataType::FP32 ||
+        oinfo_glass.data_type != TDLDataType::FP32 ||
+        oinfo_emotion.data_type != TDLDataType::FP32) {
+      LOGE("not supported data type: gender=%d, age=%d, glass=%d, emotion=%d",
+           (int)oinfo_gender.data_type, (int)oinfo_age.data_type,
+           (int)oinfo_glass.data_type, (int)oinfo_emotion.data_type);
+      return -1;
+    }
+    float *gender_score = gender_tensor->getBatchPtr<float>(b);
+    float *age_score = age_tensor->getBatchPtr<float>(b);
+    float *glass_score = glass_tensor->getBatchPtr<float>(b);
+    float *emotion_score = emotion_tensor->getBatchPtr<float>(b);
+
+    float *max_element_iter =
+        std::max_element(emotion_score, emotion_score + 7);
+    int argmax_index = std::distance(emotion_score, max_element_iter);
+
+    std::shared_ptr<ModelAttributeInfo> attr_info =
+        std::make_shared<ModelAttributeInfo>();
+    attr_info
+        ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER] =
+        gender_score[0];
+    attr_info->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] =
+        age_score[0];
+    attr_info
+        ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES] =
+        glass_score[0];
+    attr_info
+        ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION] =
+        float(argmax_index);
     out_datas.push_back(attr_info);
   }
   return 0;

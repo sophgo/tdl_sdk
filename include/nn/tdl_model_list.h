@@ -43,7 +43,10 @@
                                                                               \
   /* face attribute & keypoint */                                             \
   X(KEYPOINT_FACE_V2, "0:face")                                               \
-  X(CLS_ATTRIBUTE_FACE, "0:age,1:gender,2:glass")                             \
+  X(CLS_ATTRIBUTE_GENDER_AGE_GLASS, "0:age,1:gender,2:glass")                 \
+  X(CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK, "0:age,1:gender,2:glass,3:mask")     \
+  X(CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION,                                   \
+    "0:age,1:gender,2:glass,3:emotion")                                       \
                                                                               \
   /* image classification */                                                  \
   X(CLS_MASK, "0:mask,1:no mask")                                             \

@@ -1,7 +1,7 @@
 .. vim: syntax=rst
 
 Model List
-================
+===============
 
 .. list-table::
    :widths: 1 1 
@@ -66,8 +66,14 @@ Model List
    * - TDL_MODEL_KEYPOINT_FACE_V2
      - Face Detection Model with 5 Keypoints and Blur Score
 
-   * - TDL_MODEL_CLS_ATTRIBUTE_FACE
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS
+     - Face Attribute Classification Model (age, gender, glasses)
+
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK
      - Face Attribute Classification Model (age, gender, glasses, mask)
+
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION
+     - Face Attribute Classification Model (age, gender, glasses, emotion)
 
    * - TDL_MODEL_FEATURE_BMFACE_R34
      - ResNet34 512-dimensional Feature Extraction Model

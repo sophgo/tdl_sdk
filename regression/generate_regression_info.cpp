@@ -536,25 +536,51 @@ void processModel(const std::string& model_id, const std::string& model_name,
       saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
                         chip, fill_func, out_datas[0], fill_global, true);
     }
-
     // 属性分类
     else if (out_type == ModelOutputType::CLS_ATTRIBUTE) {
-      auto fill_func = [](ordered_json& results_json,
-                          const std::shared_ptr<ModelOutputInfo>& out_data) {
+      auto fill_func = [&](ordered_json& results_json,
+                           const std::shared_ptr<ModelOutputInfo>& out_data) {
         auto face_meta = std::static_pointer_cast<ModelAttributeInfo>(out_data);
-
-        results_json["mask"] =
-            round1(face_meta->attributes
-                       [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK]);
-        results_json["age"] =
-            round2(face_meta->attributes
-                       [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE]);
-        results_json["gender"] =
-            round1(face_meta->attributes
-                       [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER]);
-        results_json["glass"] = round1(
-            face_meta->attributes
-                [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES]);
+        if (model_id == "CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK") {
+          results_json["mask"] =
+              round1(face_meta->attributes
+                         [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK]);
+          results_json["age"] =
+              round2(face_meta->attributes
+                         [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE]);
+          results_json["gender"] = round1(
+              face_meta->attributes
+                  [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER]);
+          results_json["glass"] = round1(
+              face_meta->attributes
+                  [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES]);
+        } else if (model_id == "CLS_ATTRIBUTE_GENDER_AGE_GLASS") {
+          results_json["age"] =
+              round2(face_meta->attributes
+                         [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE]);
+          results_json["gender"] = round1(
+              face_meta->attributes
+                  [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER]);
+          results_json["glass"] = round1(
+              face_meta->attributes
+                  [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES]);
+        } else if (model_id == "CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION") {
+          results_json["emotion"] = round1(
+              face_meta->attributes
+                  [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION]);
+          results_json["age"] =
+              round2(face_meta->attributes
+                         [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE]);
+          results_json["gender"] = round1(
+              face_meta->attributes
+                  [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER]);
+          results_json["glass"] = round1(
+              face_meta->attributes
+                  [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES]);
+        } else {
+          std::cout << "Not support model id: " << model_id << std::endl;
+          return;
+        }
       };
 
       auto fill_global = [score_threshold](ordered_json& data) {

@@ -15,7 +15,7 @@ void print_usage(const char *prog_name) {
   printf("Options:\n");
   printf(
       "  -m, --model_path     Comma-separated model paths"
-      "<scrfd_det_face_xxx,cls_attribute_face_xxx>\n");
+      "<scrfd_det_face_xxx,CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK_xxx>\n");
   printf("  -i, --input      Path to input image\n");
   printf("  -h, --help       Show this help message\n");
 }
@@ -88,8 +88,8 @@ int main(int argc, char *argv[]) {
     goto exit0;
   }
 
-  ret =
-      TDL_OpenModel(tdl_handle, TDL_MODEL_CLS_ATTRIBUTE_FACE, attr_model, NULL);
+  ret = TDL_OpenModel(tdl_handle, TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK,
+                      attr_model, NULL);
   if (ret != 0) {
     printf("open face attribute model failed with %#x!\n", ret);
     goto exit1;
@@ -110,7 +110,8 @@ int main(int argc, char *argv[]) {
     goto exit3;
   }
 
-  ret = TDL_FaceAttribute(tdl_handle, TDL_MODEL_CLS_ATTRIBUTE_FACE, image,
+  ret = TDL_FaceAttribute(tdl_handle,
+                          TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK, image,
                           &obj_meta);
   if (ret != 0) {
     printf("TDL_FaceAttribute failed with %#x!\n", ret);
@@ -129,7 +130,7 @@ exit3:
   TDL_ReleaseFaceMeta(&obj_meta);
   TDL_DestroyImage(image);
 exit2:
-  TDL_CloseModel(tdl_handle, TDL_MODEL_CLS_ATTRIBUTE_FACE);
+  TDL_CloseModel(tdl_handle, TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK);
 exit1:
   TDL_CloseModel(tdl_handle, TDL_MODEL_SCRFD_DET_FACE);
 exit0:

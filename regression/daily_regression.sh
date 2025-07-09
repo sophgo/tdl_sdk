@@ -124,9 +124,9 @@ cls_json="${cls_json}:cls_keypoint_hand_gesture_1_42_INT8.json"
 
 
 #face_attribute_cls
-face_attribute_cls_json="${face_attribute_cls_json}:cls_4_attribute_face_112_112_INT8.json"
-
-
+face_attribute_cls_json="${face_attribute_cls_json}:cls_attribute_gender_age_glass_mask_112_112_INT8.json"
+face_attribute_cls_json="${face_attribute_cls_json}:cls_attribute_gender_age_glass_112_112_INT8.json"
+face_attribute_cls_json="${face_attribute_cls_json}:cls_attribute_gender_age_glass_emotion_112_112_INT8.json"
 #kpt
 kpt_json="${kpt_json}:keypoint_face_v2_64_64_INT8.json"
 kpt_json="${kpt_json}:keypoint_hand_128_128_INT8.json"
@@ -136,7 +136,7 @@ kpt_json="${kpt_json}:keypoint_yolov8pose_person17_384_640_INT8.json"
 kpt_json="${kpt_json}:lstr_det_lane_360_640_MIX.json"
 
 
-#feature
+# feature
 feature_json="${feature_json}:feature_cviface_112_112_INT8.json"
 
 
