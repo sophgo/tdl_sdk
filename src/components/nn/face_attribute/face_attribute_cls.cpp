@@ -241,9 +241,8 @@ int32_t FaceAttribute_CLS::outputParseGenderAgeGlassEmotion(
   std::shared_ptr<BaseTensor> emotion_tensor =
       net_->getOutputTensor(emotion_name);
 
-  // printf("oinfo_emotion:%d,%d,%d,%d\n", oinfo_emotion.shape[0],
-  //        oinfo_emotion.shape[1], oinfo_emotion.shape[2],
-  //        oinfo_emotion.shape[3]);
+  LOGI("oinfo_emotion:%d,%d,%d,%d", oinfo_emotion.shape[0],
+       oinfo_emotion.shape[1], oinfo_emotion.shape[2], oinfo_emotion.shape[3]);
 
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     std::vector<float> feature;

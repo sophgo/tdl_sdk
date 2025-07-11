@@ -4,7 +4,7 @@
 #include "tdl_model_factory.hpp"
 
 int main(int argc, char **argv) {
-  if (argc != 4) {
+  if (argc != 5) {
     printf(
         "Usage: %s <model_id_name> <model_dir> <input_txt_path> "
         "<output_txt_path>\n",
@@ -39,7 +39,9 @@ int main(int argc, char **argv) {
   }
 
   std::string line;
+  int line_count = 0;
   while (std::getline(input_file, line)) {
+    line_count++;
     if (line.empty()) {
       output_file << "\n";
       continue;
@@ -83,35 +85,83 @@ int main(int argc, char **argv) {
       std::shared_ptr<ModelAttributeInfo> face_meta =
           std::static_pointer_cast<ModelAttributeInfo>(out_datas[i]);
 
-      // 生成结果字符串
-      result_str =
-          "|pred_gender: " +
-          std::string(face_meta->attributes[TDLObjectAttributeType::
-                                                OBJECT_ATTRIBUTE_HUMAN_GENDER] >
-                              0.5
-                          ? "Male"
-                          : "Female") +
-          "|pred_age: " +
-          std::to_string(
-              int(face_meta->attributes
-                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
-                  100)) +
-          "|pred_glass: " +
-          (face_meta->attributes[TDLObjectAttributeType::
-                                     OBJECT_ATTRIBUTE_HUMAN_GLASSES] > 0.5
-               ? "Yes"
-               : "No") +
-          "|pred_mask: " +
-          (face_meta->attributes
-                       [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK] >
-                   0.5
-               ? "Yes"
-               : "No");
-      break;  // 只处理第一个符合的
+      // 根据模型ID生成不同格式的结果
+      if (model_id_name == "CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK") {
+        result_str =
+            "|pred_gender:" +
+            std::string(
+                face_meta->attributes[TDLObjectAttributeType::
+                                          OBJECT_ATTRIBUTE_HUMAN_GENDER] > 0.5
+                    ? "1.00"
+                    : "0.00") +
+            "|pred_age:" +
+            std::to_string(
+                int(face_meta->attributes
+                        [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
+                    100)) +
+            "|pred_glass:" +
+            (face_meta->attributes[TDLObjectAttributeType::
+                                       OBJECT_ATTRIBUTE_HUMAN_GLASSES] > 0.5
+                 ? "1.00"
+                 : "0.00") +
+            "|pred_mask:" +
+            (face_meta->attributes
+                         [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_MASK] >
+                     0.5
+                 ? "1.00"
+                 : "0.00");
+      } else if (model_id_name == "CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION") {
+        int emotion_id = static_cast<int>(
+            face_meta->attributes
+                [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION]);
+        result_str =
+            "|pred_gender:" +
+            std::string(
+                face_meta->attributes[TDLObjectAttributeType::
+                                          OBJECT_ATTRIBUTE_HUMAN_GENDER] > 0.5
+                    ? "1.00"
+                    : "0.00") +
+            "|pred_age:" +
+            std::to_string(
+                int(face_meta->attributes
+                        [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
+                    100)) +
+            "|pred_glass:" +
+            (face_meta->attributes[TDLObjectAttributeType::
+                                       OBJECT_ATTRIBUTE_HUMAN_GLASSES] > 0.5
+                 ? "1.00"
+                 : "0.00") +
+            "|pred_emotion:" + std::to_string(emotion_id);
+      } else if (model_id_name == "CLS_ATTRIBUTE_GENDER_AGE_GLASS") {
+        result_str =
+            "|pred_gender:" +
+            std::string(
+                face_meta->attributes[TDLObjectAttributeType::
+                                          OBJECT_ATTRIBUTE_HUMAN_GENDER] > 0.5
+                    ? "1.00"
+                    : "0.00") +
+            "|pred_age:" +
+            std::to_string(
+                int(face_meta->attributes
+                        [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
+                    100)) +
+            "|pred_glass:" +
+            (face_meta->attributes[TDLObjectAttributeType::
+                                       OBJECT_ATTRIBUTE_HUMAN_GLASSES] > 0.5
+                 ? "1.00"
+                 : "0.00");
+      } else {
+        result_str = "|error:unsupported_model_id";
+      }
+      break;  // 只处理第一个符合的结果
     }
 
     // 写入：原行 + 结果
     output_file << line << result_str << "\n";
+    // 每处理 100 行打印一次进度
+    if (line_count % 100 == 0) {
+      std::cout << "Processed " << line_count << " lines." << std::endl;
+    }
   }
 
   input_file.close();
