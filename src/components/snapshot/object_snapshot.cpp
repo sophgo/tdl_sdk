@@ -54,6 +54,12 @@ int32_t ObjectSnapshot::updateSnapshot(
   std::map<uint64_t, int> track_valid_flag;
   LOGI("ObjectSnapshot updateSnapshot, frame_id: %lu, tracks.size(): %zu",
        frame_id, tracks.size());
+
+  for (auto iter = snapshot_infos_.begin(); iter != snapshot_infos_.end();) {
+    iter->second.miss_counter++;
+    iter++;
+  }
+
   for (size_t i = 0; i < tracks.size(); i++) {
     const TrackerInfo& track = tracks[i];
     track_valid_flag[track.track_id_] = 1;
@@ -61,7 +67,7 @@ int32_t ObjectSnapshot::updateSnapshot(
     LOGI("process track_id: %lu, obj_idx: %d,i:%zu", track.track_id_, obj_idx,
          i);
     if (snapshot_infos_.count(track.track_id_)) {
-      snapshot_infos_[track.track_id_].miss_counter++;
+      snapshot_infos_[track.track_id_].miss_counter = 0;
     }
     if (obj_idx == -1) {
       continue;
@@ -84,6 +90,7 @@ int32_t ObjectSnapshot::updateSnapshot(
     } else if (quality_score > config_.snapshot_quality_threshold) {
       update_snapshot = true;
       ObjectSnapshotInfo snapshot_info;
+      snapshot_info.export_frame_id = frame_id;
       // memset(&snapshot_info, 0, sizeof(ObjectSnapshotInfo));
       snapshot_infos_[track.track_id_] = snapshot_info;
     }

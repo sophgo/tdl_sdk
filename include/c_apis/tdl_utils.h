@@ -66,6 +66,7 @@ int32_t TDL_BGRPACKEDToGray(TDLImage bgr_packed_image, TDLImage *gray_image);
 int32_t TDL_GetGalleryFeature(const char *gallery_dir,
                               TDLFeatureInfo *feature_info,
                               int32_t feature_size);
+int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path);
 
 #ifdef __cplusplus
 }

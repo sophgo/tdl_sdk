@@ -1072,6 +1072,8 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
     return -1;
   }
 
+  context->encoder = std::make_shared<ImageEncoder>();
+
   if (context->app_task == nullptr) {
     context->app_task = AppFactory::createAppTask(task, config_file);
     if (context->app_task == nullptr) {
@@ -1262,7 +1264,9 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
   capture_info->snapshot_size = ori_capture_info->face_snapshots.size();
   if (capture_info->snapshot_size > 0) {
     capture_info->snapshot_info = (TDLSnapshotInfo *)malloc(
-        capture_info->snapshot_size * sizeof(TDLObjectInfo));
+        capture_info->snapshot_size * sizeof(TDLSnapshotInfo));
+    memset(capture_info->snapshot_info, 0,
+           capture_info->snapshot_size * sizeof(TDLSnapshotInfo));
     capture_info->features =
         (TDLFeature *)malloc(capture_info->snapshot_size * sizeof(TDLFeature));
 
@@ -1275,6 +1279,35 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
           ori_capture_info->face_snapshots[i].track_id;
       std::vector<float> feature = ori_capture_info->face_features.at(
           ori_capture_info->face_snapshots[i].track_id);
+
+      if (ori_capture_info->face_snapshots[i].object_image) {
+        TDLImageContext *object_image_context = new TDLImageContext();
+        object_image_context->image =
+            ori_capture_info->face_snapshots[i].object_image;
+        capture_info->snapshot_info[i].object_image =
+            (TDLImage)object_image_context;
+      }
+
+      auto face_attribute = ori_capture_info->face_attributes[i];
+      capture_info->snapshot_info[i].male =
+          face_attribute
+                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER] >
+                  0.5
+              ? 1
+              : 0;
+      capture_info->snapshot_info[i].glass =
+          face_attribute
+                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES] >
+                  0.5
+              ? 1
+              : 0;
+      capture_info->snapshot_info[i].age =
+          (int)(face_attribute
+                    [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
+                100);
+      capture_info->snapshot_info[i].emotion = (int)face_attribute
+          [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION];
+
       if (feature.size() == 0) {
         LOGE("face feature size = 0!\n");
         return -1;

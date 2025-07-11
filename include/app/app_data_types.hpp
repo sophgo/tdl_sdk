@@ -31,6 +31,7 @@ struct FacePetCaptureResult {
   std::vector<TrackerInfo> track_results;
   std::vector<ObjectSnapshotInfo> face_snapshots;
   std::map<uint64_t, std::vector<float>> face_features;
+  std::vector<std::map<TDLObjectAttributeType, float>> face_attributes;
 };
 
 struct FallDetectionResult {

@@ -15,6 +15,9 @@
 #define FEATURE_SIZE 256
 static volatile bool to_exit = false;
 
+static const char *emotionStr[] = {"Anger",   "Disgust", "Fear",    "Happy",
+                                   "Neutral", "Sad",     "Surprise"};
+
 static uint32_t get_time_in_ms() {
   struct timeval tv;
   if (gettimeofday(&tv, NULL) < 0) {
@@ -34,6 +37,7 @@ typedef struct {
   TDLHandle tdl_handle;
   uint8_t channel_size;
   char **channel_names;
+  const char *output_dir;
   TDLFeatureInfo *gallery_feature;
 } RUN_TDL_THREAD_ARG_S;
 
@@ -144,9 +148,29 @@ void *run_tdl_thread(void *args) {
       printf("detect person size: %d, pet size: %d\n",
              capture_info.person_meta.size, capture_info.pet_meta.size);
 
-      // todo: save snapshot img
-
       for (uint32_t j = 0; j < capture_info.snapshot_size; j++) {
+        printf("snapshot[%d]: male:%d,glass:%d,age:%d,emotion:%s\n", j,
+               capture_info.snapshot_info[j].male,
+               capture_info.snapshot_info[j].glass,
+               capture_info.snapshot_info[j].age,
+               emotionStr[capture_info.snapshot_info[j].emotion]);
+
+        if (capture_info.snapshot_info[j].object_image) {  // save snapshot
+          char filename[512];
+          sprintf(filename, "%s/%d_face_%d_qua_%.3f.jpg", pstArgs->output_dir,
+                  capture_info.snapshot_info[j].snapshot_frame_id,
+                  capture_info.snapshot_info[j].track_id,
+                  capture_info.snapshot_info[j].quality);
+
+          ret = TDL_EncodeFrame(pstArgs->tdl_handle,
+                                capture_info.snapshot_info[j].object_image,
+                                filename);
+          if (ret != 0) {
+            printf("TDL_EncodeFrame failed with %#x!\n", ret);
+            goto exit0;
+          }
+        }
+
         printf("to do TDL_CaculateSimilarity\n");
 
         float max_similarity = 0;
@@ -282,7 +306,8 @@ int main(int argc, char *argv[]) {
   RUN_TDL_THREAD_ARG_S tdl_args = {.tdl_handle = tdl_handle,
                                    .channel_size = channel_size,
                                    .channel_names = channel_names,
-                                   .gallery_feature = &gallery_feature};
+                                   .gallery_feature = &gallery_feature,
+                                   .output_dir = output_dir};
 
   pthread_create(&stFrameThread, NULL, send_frame_thread, &frame_args);
   pthread_create(&stTDLThread, NULL, run_tdl_thread, &tdl_args);

@@ -31,7 +31,12 @@ int32_t FacePetCaptureApp::init() {
   std::string model_dir = json_config_.at("model_dir").get<std::string>();
   int32_t frame_buffer_size =
       json_config_.at("frame_buffer_size").get<int32_t>();
-  TDLModelFactory::getInstance().loadModelConfig();
+  if (json_config_.contains("model_config")) {
+    TDLModelFactory::getInstance().loadModelConfig(
+        json_config_.at("model_config"));
+  } else {
+    TDLModelFactory::getInstance().loadModelConfig();
+  }
   TDLModelFactory::getInstance().setModelDir(model_dir);
   for (const auto &pl : json_config_.at("pipelines")) {
     // a) 名称
@@ -70,6 +75,9 @@ int32_t FacePetCaptureApp::addPipeline(const std::string &pipeline_name,
       getSnapshotNode(get_config("snapshot_node", nodes_cfg)));
   face_capture_channel->addNode(getFeatureExtractionNode(
       get_config("feature_extraction_node", nodes_cfg)));
+  face_capture_channel->addNode(
+      getFaceAttributeNode(get_config("face_attribute_node", nodes_cfg)));
+
   face_capture_channel->start();
   pipeline_channels_[pipeline_name] = face_capture_channel;
 
@@ -121,6 +129,10 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
   face_pet_capture_result->face_features =
       getNodeData<std::map<uint64_t, std::vector<float>>>("face_features",
                                                           frame_info);
+  face_pet_capture_result->face_attributes =
+      getNodeData<std::vector<std::map<TDLObjectAttributeType, float>>>(
+          "face_attributes", frame_info);
+
   if (getChannelNodeName(pipeline_name, 0) == "video_node") {
     pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
   }
@@ -412,8 +424,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
               landmark_detection_model->getPreprocessor();
 
           std::shared_ptr<BaseImage> crop_face_img = preprocessor->cropResize(
-              image, crop_x, crop_y, crop_w, crop_w, dst_width, dst_height,
-              ImageFormat::RGB_PACKED);
+              image, crop_x, crop_y, crop_w, crop_w, dst_width, dst_height);
 
           crop_face_imgs[t.track_id_] = crop_face_img;
 
@@ -600,6 +611,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
       images.push_back(face_crop);
     }
 
+    frame_info->node_data_["align_faces"] = Packet::make(images);
+
     std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
     if (images.size() > 0) {
       int32_t ret = feature_extraction_model->inference(images, out_data);
@@ -661,4 +674,55 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
   }
 
   return feature_extraction_node;
+}
+
+std::shared_ptr<PipelineNode> FacePetCaptureApp::getFaceAttributeNode(
+    const nlohmann::json &node_config) {
+  std::shared_ptr<BaseModel> face_attribute_model = nullptr;
+  if (model_map_.count("face_attribute")) {
+    face_attribute_model = model_map_["face_attribute"];
+  } else {
+    face_attribute_model = TDLModelFactory::getInstance().getModel(
+        ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION);
+    model_map_["face_attribute"] = face_attribute_model;
+  }
+  std::shared_ptr<PipelineNode> face_attribute_node =
+      node_factory_.createModelNode(face_attribute_model);
+  face_attribute_node->setName("face_attribute_node");
+
+  auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
+    std::shared_ptr<BaseModel> face_attribute_model =
+        packet.get<std::shared_ptr<BaseModel>>();
+    auto images = frame_info->node_data_["align_faces"]
+                      .get<std::vector<std::shared_ptr<BaseImage>>>();
+
+    std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
+    if (images.size() > 0) {
+      int32_t ret = face_attribute_model->inference(images, out_data);
+      if (ret != 0) {
+        std::cout << "feature_extraction_model process failed" << std::endl;
+        assert(false);
+      }
+    }
+
+    std::vector<std::map<TDLObjectAttributeType, float>> face_attributes;
+
+    for (size_t i = 0; i < images.size(); i++) {
+      std::shared_ptr<ModelAttributeInfo> face_att_meta =
+          std::dynamic_pointer_cast<ModelAttributeInfo>(out_data[i]);
+      face_attributes.push_back(face_att_meta->attributes);
+    }
+
+    frame_info->node_data_["face_attributes"] = Packet::make(face_attributes);
+    return 0;
+  };
+
+  face_attribute_node->setProcessFunc(lambda_func);
+
+  if (node_config.contains("config_thresh")) {
+    double thresh = node_config.at("config_thresh");
+    face_attribute_model->setModelThreshold(thresh);
+  }
+
+  return face_attribute_node;
 }

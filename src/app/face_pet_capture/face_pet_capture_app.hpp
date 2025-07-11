@@ -30,6 +30,8 @@ class FacePetCaptureApp : public AppTask {
       const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> getFeatureExtractionNode(
       const nlohmann::json &node_config);
+  std::shared_ptr<PipelineNode> getFaceAttributeNode(
+      const nlohmann::json &node_config);
   std::string model_dir_;
 
   std::map<std::string, std::shared_ptr<BaseModel>> model_map_;

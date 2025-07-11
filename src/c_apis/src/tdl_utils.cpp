@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include "encoder/image_encoder.hpp"
 #include "tdl_sdk.h"
 #include "tdl_type_internal.hpp"
 #include "utils/tdl_log.hpp"
@@ -242,6 +244,9 @@ int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info) {
   TDL_ReleaseTrackMeta(&capture_info->track_meta);
 
   for (uint32_t i = 0; i < capture_info->snapshot_size; i++) {
+    if (capture_info->snapshot_info[i].object_image) {
+      TDL_DestroyImage(capture_info->snapshot_info[i].object_image);
+    }
     TDL_ReleaseFeatureMeta(&capture_info->features[i]);
   }
   free(capture_info->features);
@@ -383,5 +388,36 @@ int32_t TDL_GetGalleryFeature(const char *gallery_dir,
     free(files[j]);
   }
 
+  return 0;
+}
+
+int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image,
+                        const char *img_path) {
+  TDLContext *context = (TDLContext *)handle;
+
+  if (!context->encoder) {
+    printf("ImageEncoder not init!");
+    context->encoder = std::make_shared<ImageEncoder>();
+  }
+
+  std::vector<uint8_t> encoded_data;
+
+  TDLImageContext *image_context = (TDLImageContext *)image;
+
+  bool ret = context->encoder->encodeFrame(image_context->image, encoded_data);
+
+  if (!ret) {
+    std::cerr << "Image encoding failed.\n";
+    return -1;
+  }
+
+  std::ofstream ofs(std::string(img_path), std::ios::binary);
+  if (!ofs) {
+    std::cerr << "Failed to open output file for writing.\n";
+    return -1;
+  }
+  ofs.write(reinterpret_cast<const char *>(encoded_data.data()),
+            encoded_data.size());
+  ofs.close();
   return 0;
 }

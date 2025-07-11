@@ -25,7 +25,12 @@ int32_t FallDetectionApp::init() {
   int32_t frame_buffer_size =
       json_config_.at("frame_buffer_size").get<int32_t>();
 
-  TDLModelFactory::getInstance().loadModelConfig();
+  if (json_config_.contains("model_config")) {
+    TDLModelFactory::getInstance().loadModelConfig(
+        json_config_.at("model_config"));
+  } else {
+    TDLModelFactory::getInstance().loadModelConfig();
+  }
   TDLModelFactory::getInstance().setModelDir(model_dir);
 
   for (const auto &pl : json_config_.at("pipelines")) {

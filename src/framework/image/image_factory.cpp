@@ -237,15 +237,21 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
     return nullptr;
   }
   if (image->getImageFormat() != ImageFormat::BGR_PACKED &&
-      image->getImageFormat() != ImageFormat::RGB_PACKED) {
-    LOGE("only BGR_PACKED or RGB_PACKED format is supported,current format:%d",
-         static_cast<int>(image->getImageFormat()));
+      image->getImageFormat() != ImageFormat::RGB_PACKED &&
+      image->getImageFormat() != ImageFormat::YUV420SP_VU) {
+    LOGE(
+        "only BGR_PACKED or RGB_PACKED or YUV420SP_VU format is "
+        "supported,current format:%d",
+        static_cast<int>(image->getImageFormat()));
     return nullptr;
   }
   int dst_img_size = 112;
+  ImageFormat dst_format = image->getImageFormat() == ImageFormat::YUV420SP_VU
+                               ? ImageFormat::RGB_PACKED
+                               : image->getImageFormat();
   std::shared_ptr<BaseImage> aligned_image = ImageFactory::createImage(
-      dst_img_size, dst_img_size, image->getImageFormat(), TDLDataType::UINT8,
-      false, InferencePlatform::AUTOMATIC);
+      dst_img_size, dst_img_size, dst_format, TDLDataType::UINT8, false,
+      InferencePlatform::AUTOMATIC);
   if (aligned_image == nullptr) {
     LOGE("Failed to create aligned image");
     return nullptr;
@@ -260,12 +266,39 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
     return nullptr;
   }
 
-  LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%lx", image->getWidth(),
-       image->getHeight(), image->getStrides()[0],
-       image->getVirtualAddress()[0]);
   LOGI("dstimg,width:%d,height:%d,stride:%d,addr:%lx", dst_img_size,
        dst_img_size, aligned_image->getStrides()[0],
        aligned_image->getVirtualAddress()[0]);
+
+  if (image->getImageFormat() == ImageFormat::YUV420SP_VU) {
+    uint32_t height = image->getHeight();
+    uint32_t width = image->getWidth();
+
+    size_t nv21_size = image->getHeight() * image->getWidth() * 3 / 2;
+    unsigned char* nv21_data = (unsigned char*)malloc(nv21_size);
+
+    memcpy(nv21_data, image->getVirtualAddress()[0], width * height);
+    memcpy(nv21_data + width * height, image->getVirtualAddress()[1],
+           height * width / 2);
+
+    cv::Mat nv21_img(height + height / 2, width, CV_8UC1, nv21_data);
+
+    cv::Mat rgb_img;
+    cv::cvtColor(nv21_img, rgb_img, cv::COLOR_YUV2RGB_NV21);
+
+    LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%lx", height, width,
+         rgb_img.step, rgb_img.data);
+
+    tdl_face_warp_affine(rgb_img.data, rgb_img.step, width, height,
+                         aligned_image->getVirtualAddress()[0],
+                         aligned_image->getStrides()[0], dst_img_size,
+                         dst_img_size, src_landmark_xy);
+    return aligned_image;
+  }
+
+  LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%lx", image->getWidth(),
+       image->getHeight(), image->getStrides()[0],
+       image->getVirtualAddress()[0]);
 
   tdl_face_warp_affine(image->getVirtualAddress()[0], image->getStrides()[0],
                        image->getWidth(), image->getHeight(),

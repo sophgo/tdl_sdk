@@ -191,7 +191,11 @@ typedef struct {
   float quality;
   uint64_t snapshot_frame_id;
   uint64_t track_id;
-  TDLImage image;
+  bool male;
+  bool glass;
+  uint8_t age;
+  uint8_t emotion;
+  TDLImage object_image;
 } TDLSnapshotInfo;
 
 typedef struct {
@@ -199,7 +203,6 @@ typedef struct {
   uint64_t frame_id;
   uint32_t frame_width;
   uint32_t frame_height;
-  TDLImage image;
   TDLFace face_meta;
   TDLObject person_meta;
   TDLObject pet_meta;
