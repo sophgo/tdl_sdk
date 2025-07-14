@@ -158,7 +158,7 @@ endif()
 if (NOT IS_LOCAL AND NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dependency/thirdparty")
 
   execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/download_thirdparty.sh
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/download_thirdparty.sh "${CMAKE_TOOLCHAIN_FILE}"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     RESULT_VARIABLE DOWNLOAD_RESULT
   )

@@ -18,6 +18,8 @@ docs/
 ├── tutorials/                        # 教程
 │   ├── run_private_model.md          # 运行私有模型
 │   └── integrate_new_model.md        # 集成新模型
+├── api_poster/                       # API接口
+│   └──api_poster_guide.md            # API接口使用说明
 └── images/                           # 文档图片
 
 ```

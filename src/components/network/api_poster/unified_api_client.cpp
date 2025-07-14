@@ -139,7 +139,7 @@ void UnifiedApiClient::registerMethods() {
     // 1) 参数准备
     auto appid = p.value("appid", "");
     auto token = p.value("token", "");
-    auto cluster = p.value("cluster", "");
+    auto cluster = p.value("cluster", "volcengine_streaming_common");
     auto audio_path = p.value("audio_path", "");
     auto audio_format = p.value("audio_format", "raw");
     int channels = p.value("channels", 1);
