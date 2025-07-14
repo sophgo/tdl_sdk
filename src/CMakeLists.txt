@@ -27,6 +27,7 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:app>
                $<TARGET_OBJECTS:intrusion_detect>
                $<TARGET_OBJECTS:occlusion_detect>
+               $<TARGET_OBJECTS:encoder>
                )
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
@@ -47,7 +48,6 @@ endif()
 
 set(EX_SRCS
                $<TARGET_OBJECTS:video_decoder>
-               $<TARGET_OBJECTS:encoder>
                $<TARGET_OBJECTS:c_apis_ex>
                )
 
