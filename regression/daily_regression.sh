@@ -153,6 +153,9 @@ if [ ${CHIP_ARCH} != "CV184X" ]; then  #tpu-milr bug
 fi
 
 
+failed_list="" 
+reg_num=0
+
 run_test_main() {
   json_files="$1"
   test_suites="$2"
@@ -173,12 +176,11 @@ run_test_main() {
     ./test_main "${model_dir}" "${dataset_dir}" "${full_json_path}" --gtest_filter="${test_suites}"
     ret=$?
     if [ "$ret" -ne 0 ]; then
-      exit "$ret"
+      failed_list="$failed_list ${json_file}"
     fi
+    reg_num=$(expr "$reg_num" + 1)
   done
 
-  echo " "
-  echo "ALL TEST PASSED"
 }
 
 
@@ -197,3 +199,18 @@ run_test_main "${kpt_json}" "${kpt_test_suites}"
 run_test_main "${feature_json}" "${feature_test_suites}"
 run_test_main "${segmentation_json}" "${segmentation_suites}"
 run_test_main "${ocr_json}" "${ocr_test_suites}"
+
+
+set -- $failed_list
+failed_num=$#
+
+if [ ${failed_num} == 0 ]; then
+  echo "[${reg_num}/${reg_num}] ALL TEST PASSED"
+
+else
+  echo "failed json:"
+  for item in $failed_list; do
+    echo "$item"
+  done
+  echo "[${failed_num}/${reg_num}] TEST FAILED"
+fi

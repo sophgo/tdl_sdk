@@ -60,7 +60,7 @@ target_link_libraries(tdl_core
    ${CURL_LIBRARY}
    ${OPENSSL_LIBRARY}
    ${LIBWEBSOCKETS_LIBRARY}
-   ${ZLIB_LIBRARY}
+   # ${ZLIB_LIBRARY}
    ${MIDDLEWARE_OBJ} 
 )
 

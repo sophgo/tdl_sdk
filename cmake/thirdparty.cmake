@@ -86,7 +86,6 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   if(IS_LOCAL)
     # 在线环境：FTP 下载
     file(DOWNLOAD "${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/libwebsockets.tar.gz" "${LIBWEBSOCKETS_TGZ}"
-        SHOW_PROGRESS
         STATUS _dl_stat)
     list(GET _dl_stat 0 _rc)
     if(_rc)
@@ -133,7 +132,6 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   if(IS_LOCAL)
     # 在线环境：FTP 下载
     file(DOWNLOAD "${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/openssl.tar.gz" "${OPENSSL_TGZ}"
-        SHOW_PROGRESS
         STATUS _dl_stat)
     list(GET _dl_stat 0 _rc)
     if(_rc)
@@ -164,7 +162,6 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   if(IS_LOCAL)
     # 在线环境：FTP 下载
     file(DOWNLOAD "${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/curl.tar.gz" "${CURL_TGZ}"
-        SHOW_PROGRESS
         STATUS _dl_stat)
     list(GET _dl_stat 0 _rc)
     if(_rc)
