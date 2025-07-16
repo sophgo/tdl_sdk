@@ -12,11 +12,12 @@ print_usage() {
     echo "  BM1684X        Build BM1684X"
     echo "  CMODEL_CV181X  Build CV181X simulation on Linux x86_64"
     echo "  CMODEL_CV184X  Build CV184X simulation on Linux x86_64"
-    echo "  ""             Build lib only"
+    echo "                 Build lib only"
     echo "  sample         Build samples only"
     echo "  all            Build both modules and sample"
     echo "  clean          Clean build"
     echo "  debug          Build debug sdk"
+    echo "  static         Build static sdk"
 }
 
 # Check parameter
@@ -50,6 +51,9 @@ fi
 
 # get tdl_sdk root dir
 CVI_TDL_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# set dynamic link or static link
+BUILD_SHARED=ON
 
 # Handle platform-specific build commands
 if [[ "$1" == "CV181X" ]]; then
@@ -180,8 +184,8 @@ elif [[ "$1" == "sample" ]]; then
         exit 1
     fi
 
-elif [[ "$1" == "all" || "$1" == "debug" ]]; then
-    echo "Using ${BASH_SOURCE[0]} all"
+elif [[ "$1" == "all" || "$1" == "debug" || "$1" == "static" ]]; then
+    echo "Using ${BASH_SOURCE[0]} $1"
     echo "Compiling modules and sample..."
 
     cd ..
@@ -190,6 +194,10 @@ elif [[ "$1" == "all" || "$1" == "debug" ]]; then
     cd tdl_sdk
 
     BUILD_OPTION=all
+
+    if [[ "$1" == "static" ]]; then
+        BUILD_SHARED=OFF
+    fi
 
     # Check if CHIP_ARCH is set
     if [ -z "$CHIP_ARCH" ]; then
@@ -356,7 +364,8 @@ $CMAKE_BIN -G Ninja ${CVI_TDL_ROOT} -DCVI_PLATFORM=${CHIP_ARCH} \
                                     -DMW_VER=${MW_VER} \
                                     -DFTP_SERVER_IP=${FTP_SERVER_IP} \
                                     -DFTP_SERVER_NAME=${FTP_SERVER_NAME} \
-                                    -DFTP_SERVER_PWD=${FTP_SERVER_PWD} 
+                                    -DFTP_SERVER_PWD=${FTP_SERVER_PWD} \
+                                    -DBUILD_SHARED=${BUILD_SHARED}
 
 
 test $? -ne 0 && echo "cmake tdl_sdk failed !!" && popd && exit 1

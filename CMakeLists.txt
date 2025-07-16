@@ -210,9 +210,13 @@ if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR
 endif()
 
 # Default dynamic compilation
-set(BUILD_SHARED ON)
+if(${BUILD_SHARED})
+  set(BUILD_SHARED ON)
+else()
+  set(BUILD_SHARED OFF)
+endif()
 
-# Whether the absolute app module uses the video module
+# open app modules use the video module for test
 set(APP_VIDEO_ENABLE OFF)
 
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
