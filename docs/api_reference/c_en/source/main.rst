@@ -2181,7 +2181,7 @@ Execute keypoint detection task based on object coordinates (performs keypoint d
      - Output detected keypoint coordinates and confidence
 
 TDL_IntrusionDetection
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 【Syntax】
 
@@ -2438,3 +2438,92 @@ Execute face capture task.
      - TDLCaptureInfo*
      - capture_info
      - Capture results
+
+TDL_APP_ConsumerCounting
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_ConsumerCounting(TDLHandle handle,
+                                   const char *channel_name,
+                                   TDLObject *object_meta,
+                                   uint32_t *enter_num,
+                                   uint32_t *miss_num);
+
+【Description】
+
+Execute consumer counting task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Input
+     - TDLObject*
+     - object_meta
+     - Detection results
+
+   * - Output
+     - uint32_t*
+     - enter_num
+     - Number of people entering
+
+   * - Output
+     - uint32_t*
+     - miss_num
+     - Number of people leaving
+
+TDL_WrapImage
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_WrapImage(TDLImage image,
+                        VIDEO_FRAME_INFO_S *frame);
+
+【Description】
+
+Wrap TDLImage as VIDEO_FRAME_INFO_S.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLImage
+     - image
+     - TDLImageHandle object
+
+   * - Output
+     - VIDEO_FRAME_INFO_S*
+     - frame
+     - Output parameter, stores the wrapped frame information
+  

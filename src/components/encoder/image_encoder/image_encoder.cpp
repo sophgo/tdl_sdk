@@ -1,4 +1,4 @@
-#include "encoder/image_encoder.hpp"
+#include "encoder/image_encoder/image_encoder.hpp"
 #include "image/base_image.hpp"
 
 #include <cstring>

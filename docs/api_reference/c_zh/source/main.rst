@@ -2459,3 +2459,91 @@ TDL_APP_Capture
      - TDLCaptureInfo*
      - capture_info
      - 抓拍结果
+
+TDL_APP_ConsumerCounting
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_APP_ConsumerCounting(TDLHandle handle,
+                                   const char *channel_name,
+                                   TDLObject *object_meta,
+                                   uint32_t *enter_num,
+                                   uint32_t *miss_num);
+
+【描述】
+
+执行客流统计任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据类型
+     - 参数名称
+     - 描述
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - channel_name
+     - 当前通道名称
+
+   * - 输入
+     - TDLObject*
+     - object_meta
+     - 检测结果
+
+   * - 输出
+     - uint32_t*
+     - enter_num
+     - 进入人数
+
+   * - 输出
+     - uint32_t*
+     - miss_num
+     - 离开人数
+
+TDL_WrapImage
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_WrapImage(TDLImage image,
+                        VIDEO_FRAME_INFO_S *frame);
+
+【描述】
+
+将TDLImage包装为VIDEO_FRAME_INFO_S。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据类型
+     - 参数名称
+     - 描述
+
+   * - 输入
+     - TDLImage
+     - image
+     - TDLImageHandle 对象
+
+   * - 输出
+     - VIDEO_FRAME_INFO_S*
+     - frame
+     - 输出参数，存储包装后的帧信息

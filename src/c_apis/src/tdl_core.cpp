@@ -1341,3 +1341,11 @@ int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
 
   return 0;
 }
+
+#if defined(__CV181X__) || defined(__CV184X__)
+int32_t TDL_WrapImage(TDLImage image, VIDEO_FRAME_INFO_S *frame) {
+  TDLImageContext *image_context = (TDLImageContext *)image;
+  *frame = *(VIDEO_FRAME_INFO_S *)image_context->image->getInternalData();
+  return 0;
+}
+#endif

@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include "encoder/image_encoder.hpp"
+#include "encoder/image_encoder/image_encoder.hpp"
 #include "tdl_sdk.h"
 #include "tdl_type_internal.hpp"
 #include "utils/tdl_log.hpp"

@@ -3,6 +3,10 @@
 
 #include <getopt.h>
 #include "tdl_model_def.h"
+#if defined(__CV181X__) || defined(__CV184X__)
+#include <cvi_comm_video.h>
+#endif
+
 #include "tdl_types.h"
 #include "tdl_utils.h"
 #ifdef __cplusplus
@@ -446,6 +450,17 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
 int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
                                  TDLObject *object_meta, uint32_t *enter_num,
                                  uint32_t *miss_num);
+
+#if defined(__CV181X__) || defined(__CV184X__)
+/**
+ * @brief 将TDLImage包装为VIDEO_FRAME_INFO_S
+ *
+ * @param image TDLImageHandle 对象
+ * @param frame 输出参数，存储包装后的帧信息
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_WrapImage(TDLImage image, VIDEO_FRAME_INFO_S *frame);
+#endif
 
 #ifdef __cplusplus
 }

@@ -9,6 +9,9 @@
 #include "rtsp_utils.h"
 #include "tdl_sdk.h"
 
+#define VI_WIDTH 640
+#define VI_HEIGHT 360
+
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "yolov8n_det_person_vehicle") != NULL) {
@@ -36,7 +39,7 @@ void print_usage(const char *prog_name) {
 int main(int argc, char *argv[]) {
   char *model_path = NULL;
   int vi_chn = 0;
-  int venc_chn = 0;
+  int rtsp_chn = 0;
 
   struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
                                   {"pipe", required_argument, 0, 'c'},
@@ -74,7 +77,7 @@ int main(int argc, char *argv[]) {
   printf("Running with:\n");
   printf("  Model path:    %s\n", model_path);
   printf("  vi_chn:        %d\n", vi_chn);
-  printf("  venc_chn:      %d\n", venc_chn);
+  printf("  rtsp_chn:      %d\n", rtsp_chn);
 
   int ret = 0;
   TDLImage image = NULL;
@@ -106,32 +109,12 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  // 初始化编码器
-  TDLVENCContext venc_context = {0};
-  venc_context.venc_chn = venc_chn;
-  venc_context.pay_load_type = PT_H264;
-  venc_context.frame_width = 2560;
-  venc_context.frame_height = 1440;
-  ret = TDL_InitVENC(&venc_context);
-  if (ret != 0) {
-    printf("init venc failed with %#x!\n", ret);
-    TDL_DestoryCamera(tdl_handle);
-    TDL_DestroyHandle(tdl_handle);
-    return ret;
-  }
-
-  // 初始化RTSP
+  // 初始化RTSP参数
   TDLRTSPContext rtsp_context = {0};
-  rtsp_context.venc_chn = venc_chn;
+  rtsp_context.chn = rtsp_chn;
   rtsp_context.pay_load_type = PT_H264;
-  ret = TDL_InitRTSP(&rtsp_context);
-  if (ret != 0) {
-    printf("init rtsp failed with %#x!\n", ret);
-    TDL_DestoryCamera(tdl_handle);
-    TDL_DestroyHandle(tdl_handle);
-    TDL_DestroyVENC(&venc_context);
-    return ret;
-  }
+  rtsp_context.frame_width = VI_WIDTH;
+  rtsp_context.frame_height = VI_HEIGHT;
 
   // 设置终端为非规范模式
   struct termios oldt, newt;
@@ -220,8 +203,6 @@ int main(int argc, char *argv[]) {
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
   printf("rtsp disconnected!\n");
   TDL_CloseModel(tdl_handle, model_id);
-  TDL_DestroyRTSP(&rtsp_context);
-  TDL_DestroyVENC(&venc_context);
   TDL_DestoryCamera(tdl_handle);
   TDL_DestroyHandle(tdl_handle);
   return ret;

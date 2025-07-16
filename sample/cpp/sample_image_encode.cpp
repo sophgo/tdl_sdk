@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "encoder/image_encoder.hpp"
+#include "encoder/image_encoder/image_encoder.hpp"
 
 #define BM_ALIGN(x, a) (((x) + (a)-1) / (a) * (a))
 

@@ -1,40 +1,36 @@
 cmake_minimum_required(VERSION 3.16.3)
 project(tdl_utils)
 
-if (${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
-    set(SOURCE_DIR $ENV{TOP_DIR}/cvi_rtsp/install)
-    set(CVI_RTSP_LIBPATH ${SOURCE_DIR}/lib/libcvi_rtsp.so)
-    if(${CVI_PLATFORM} STREQUAL "CV181X")
-        set(OTHER_LIB_DIR ${MLIR_SDK_ROOT}/lib)
-    else()
-        set(OTHER_LIB_DIR ${TOP_DIR}/cvi_rtsp/prebuilt/lib)
-    endif()
-    set(CVI_RTSP_LIBPATH_STATIC 
-        ${OTHER_LIB_DIR}/libBasicUsageEnvironment.a
-        ${OTHER_LIB_DIR}/libgroupsock.a
-        ${OTHER_LIB_DIR}/libUsageEnvironment.a
-        ${OTHER_LIB_DIR}/libliveMedia.a
-        ${SOURCE_DIR}/lib/libcvi_rtsp.a
+if(${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
+add_subdirectory(
+    ${REPO_DIR}/src/components/encoder/rtsp
+    ${CMAKE_CURRENT_BINARY_DIR}/rtsp_build
     )
-    set(CVI_RTSP_INCLUDE ${SOURCE_DIR}/include/cvi_rtsp)
 endif()
 
 set(UTILS_INCLUDES
     ${SAMPLE_INCLUDES}
-    ${CVI_RTSP_INCLUDE}
     ${REPO_DIR}/src/c_apis/include
+    ${REPO_DIR}/include/components
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 set(UTILS_INCLUDES ${UTILS_INCLUDES} PARENT_SCOPE)
 
-include_directories(${UTILS_INCLUDES})
+file(GLOB UTILS_SOURCES 
+    *.cpp
+)
 
-file(GLOB UTILS_SOURCES *.cpp)
+if(${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
+    list(APPEND UTILS_INCLUDES ${RTSP_INCLUDE})
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/encoder/rtsp/rtsp.cpp)
+endif()
 
 if(NOT ${CVI_PLATFORM} STREQUAL "CV181X" AND NOT ${CVI_PLATFORM} STREQUAL "CV184X")
     list(REMOVE_ITEM UTILS_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/rtsp_utils.cpp)
 endif()
 
+include_directories(${UTILS_INCLUDES})
 # Add shared library
 add_library(tdl_utils SHARED ${UTILS_SOURCES})
 set_target_properties(tdl_utils PROPERTIES 
@@ -43,7 +39,7 @@ set_target_properties(tdl_utils PROPERTIES
 )
 
 # Add static library
-add_library(tdl_utils-static STATIC ${UTILS_SOURCES})
+add_library(tdl_utils-static STATIC ${UTILS_SOURCES} ${RTSP_LIBS_STATIC})
 set_target_properties(tdl_utils-static PROPERTIES 
     OUTPUT_NAME tdl_utils
     ENABLE_EXPORTS ON
@@ -55,6 +51,7 @@ target_link_libraries(tdl_utils-static
     "-Wl,--start-group"
     "-Wl,--whole-archive"
     ${CVI_RTSP_LIBPATH_STATIC}
+    ${RTSP_LIBS_STATIC}
     ${MIDDLEWARE_LIBS_STATIC}
     "-Wl,--no-whole-archive"
     ${OPENCV_LIBS_IMCODEC_STATIC}
@@ -67,6 +64,7 @@ target_link_libraries(tdl_utils-static
 target_link_libraries(tdl_utils
     "-Wl,--start-group"
     ${CVI_RTSP_LIBPATH}
+    ${RTSP_LIBS_SHARED}
     ${MLIR_LIBS}
     dl rt atomic m
     "-Wl,--end-group"
