@@ -58,10 +58,10 @@ target_link_libraries(tdl_core
    ${OPENCV_LIBS_IMCODEC} 
    ${IVE_LIBS}
    ${CURL_LIBRARY}
-   ${OPENSSL_LIBRARY}
    ${LIBWEBSOCKETS_LIBRARY}
+   ${MIDDLEWARE_OBJ}
+   ${OPENSSL_LIBRARY}
    # ${ZLIB_LIBRARY}
-   ${MIDDLEWARE_OBJ} 
 )
 
 add_library(tdl_ex SHARED ${EX_SRCS} ${MIDDLEWARE_OBJ})
@@ -69,7 +69,7 @@ target_link_libraries(tdl_ex)
 
 # static library
 add_library(tdl_core-static STATIC ${CORES_SRCS})
-target_link_libraries(tdl_core-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC})
+target_link_libraries(tdl_core-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC} ${CURL_LIBRARY_STATIC} ${LIBWEBSOCKETS_LIBRARY_STATIC} ${OPENSSL_LIBRARY_STATIC})
 
 add_library(tdl_ex-static STATIC ${EX_SRCS} ${MIDDLEWARE_OBJ})
 target_link_libraries(tdl_ex-static)

@@ -153,7 +153,7 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   set(OPENSSL_INCLUDE ${OPENSSL_DST}/include)
   include_directories(${OPENSSL_DST}/include)
   set(OPENSSL_LIBRARY ${OPENSSL_DST}/lib/libssl.so ${OPENSSL_DST}/lib/libcrypto.so)
-
+  set(OPENSSL_LIBRARY_STATIC ${OPENSSL_DST}/lib/libssl.a ${OPENSSL_DST}/lib/libcrypto.a)
   #--------------curl--------------
   set(CURL_TGZ "${BUILD_DOWNLOAD_DIR}/curl.tar.gz")
   set(CURL_DST "${BUILD_DOWNLOAD_DIR}/curl-src")
